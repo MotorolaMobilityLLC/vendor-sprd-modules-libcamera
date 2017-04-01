@@ -27,8 +27,6 @@
 #include "cmr_common.h"
 #include "isp_dev_access.h"
 
-
-
 /************************************ INTERNAK FUNCTION ***************************************/
 struct sprd_pdaf_context {
 	cmr_u32 camera_id;
@@ -41,18 +39,18 @@ struct sprd_pdaf_context {
 	cmr_handle altek_lib_handle;
 	cmr_handle extract_lib_handle;
 	isp_pdaf_cb pdaf_set_cb;
-	cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
+	 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
 	void *pd_left;
 	void *pd_right;
 	alPD_RECT roi;
 	PDInReg pd_reg_in;
 	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
 	cmr_u8 pdotp_pack_data[PD_OTP_PACK_SIZE];
- /*add for sharkl2 pdaf function*/
+	/*add for sharkl2 pdaf function */
 	void *caller;
 	PD_GlobalSetting pd_gobal_setting;
 	struct sprd_pdaf_report_t report_data;
-	cmr_u32(*af_set_pdinfo) (void *handle, struct pd_result* in_parm);
+	 cmr_u32(*af_set_pdinfo) (void *handle, struct pd_result * in_parm);
 };
 
 //testcode
@@ -61,9 +59,8 @@ struct sprd_pdaf_context {
 #define ROI_Width 2048
 #define ROI_Height 1536
 
-struct isp_dev_pdaf_info pdafTestCase[] =
-{
-	//bypass,  corrector_bypass	 phase_map_corr_en; block_size; grid_mode;win;block;gain_upperbound;phase_txt_smooth;phase_gfilter;phase_flat_smoother;
+struct isp_dev_pdaf_info pdafTestCase[] = {
+	//bypass,  corrector_bypass      phase_map_corr_en; block_size; grid_mode;win;block;gain_upperbound;phase_txt_smooth;phase_gfilter;phase_flat_smoother;
 	//hot_pixel_th[3]dead_pixel_th[3];flat_th;edge_ratio_hv;edge_ratio_rd;edge_ratio_hv_rd;phase_left_addr;phase_right_addr;phase_pitch;
 	//pattern_pixel_is_right[64];
 	//pattern_pixel_row[64];
@@ -71,123 +68,124 @@ struct isp_dev_pdaf_info pdafTestCase[] =
 	//gain_ori_left[2];gain_ori_right[2];extractor_bypass;mode_sel;skip_num; phase_data_dword_num;
 	//pdaf_blc_r;pdaf_blc_b;pdaf_blc_gr;pdaf_blc_gb;phase_cfg_rdy;phase_skip_num_clr;
 	{
-		0, 0, 1, {2, 2}, 1, {1048, 792, 1048+2048, 792+1536}, {24, 24, 4208-24, 3120-24},
-		{600, 800, 200, 400},  1, 1, 0,
-		{0, 1, 2}, {255, 511, 765}, 765, 127, 0, 510,
-		0x86000000, 0x86800000,
-		0,
-		{0,0,1,1,1,1,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,},
-		{5,5,8,8,21,21,24,24,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,},
-		{2,18,1,17,10,26,9,25,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,},
-		{2172, 16332}, {8087, 15728}, 0, 1, 0, 0xB,
-		{511, 1023, 127,255},{0, 0},{0, 0}
-	},
+	 0, 0, 1, {2, 2}, 1, {1048, 792, 1048 + 2048, 792 + 1536}, {24, 24, 4208 - 24, 3120 - 24},
+	 {600, 800, 200, 400}, 1, 1, 0,
+	 {0, 1, 2}, {255, 511, 765}, 765, 127, 0, 510,
+	 0x86000000, 0x86800000,
+	 0,
+	 {0, 0, 1, 1, 1, 1, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,},
+	 {5, 5, 8, 8, 21, 21, 24, 24,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,},
+	 {2, 18, 1, 17, 10, 26, 9, 25,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0,},
+	 {2172, 16332}, {8087, 15728}, 0, 1, 0, 0xB,
+	 {511, 1023, 127, 255}, {0, 0}, {0, 0}
+	 },
 };
 
-
-struct isp_dev_pdaf_info* ispGetPdafTestCase(cmr_u32 index)
+struct isp_dev_pdaf_info *ispGetPdafTestCase(cmr_u32 index)
 {
 	return &pdafTestCase[index];
 }
+
 #define PDAF_PATTERN_COUNT	 8
 cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
-	struct isp_dev_pdaf_info  *pdaf_info_ptr	 = (struct isp_dev_pdaf_info *)param;
-	struct isp_dev_pdaf_info  *pdafTestCase_ptr	 = ispGetPdafTestCase(index);
-	cmr_u16 phase_left[128] = {0},phase_right[128] = {0};
-	cmr_u32 data_left[128] = {0},data_right[128] = {0};
+	struct isp_dev_pdaf_info *pdaf_info_ptr = (struct isp_dev_pdaf_info *)param;
+	struct isp_dev_pdaf_info *pdafTestCase_ptr = ispGetPdafTestCase(index);
+	cmr_u16 phase_left[128] = { 0 }, phase_right[128] = {
+	0};
+	cmr_u32 data_left[128] = { 0 }, data_right[128] = {
+	0};
 
 #if 0
- //store_info_ptr->bypass	   = ISP_ZERO;
+	//store_info_ptr->bypass          = ISP_ZERO;
 	if (pdaf_info_ptr->bypass)
 		return rtn;
 #else
 	pdaf_info_ptr->bypass = 0;
-	pdafTestCase_ptr->phase_left_addr = (cmr_u32)&phase_left[0];
-	pdafTestCase_ptr->phase_right_addr = (cmr_u32)&phase_right[0];
-	pdafTestCase_ptr->data_ptr_left[0] = (cmr_u32)&data_left[0];
+	pdafTestCase_ptr->phase_left_addr = (cmr_u32) & phase_left[0];
+	pdafTestCase_ptr->phase_right_addr = (cmr_u32) & phase_right[0];
+	pdafTestCase_ptr->data_ptr_left[0] = (cmr_u32) & data_left[0];
 	pdafTestCase_ptr->data_ptr_left[1] = 0;
-	pdafTestCase_ptr->data_ptr_right[0] = (cmr_u32)&data_right[0];
+	pdafTestCase_ptr->data_ptr_right[0] = (cmr_u32) & data_right[0];
 	pdafTestCase_ptr->data_ptr_right[1] = 0;
 #endif
 
-	pdaf_info_ptr->corrector_bypass			= pdafTestCase_ptr->corrector_bypass;
-	pdaf_info_ptr->phase_map_corr_en		= pdafTestCase_ptr->phase_map_corr_en;
-	pdaf_info_ptr->block_size				= pdafTestCase_ptr->block_size;
-	pdaf_info_ptr->grid_mode				= pdafTestCase_ptr->grid_mode;
-	pdaf_info_ptr->win						= pdafTestCase_ptr->win;
-	pdaf_info_ptr->block					= pdafTestCase_ptr->block;
-	pdaf_info_ptr->gain_upperbound			= pdafTestCase_ptr->gain_upperbound;
-	pdaf_info_ptr->phase_txt_smooth			= pdafTestCase_ptr->phase_txt_smooth;
-	pdaf_info_ptr->phase_gfilter			= pdafTestCase_ptr->phase_gfilter;
-	pdaf_info_ptr->phase_flat_smoother		= pdafTestCase_ptr->phase_flat_smoother;
-	pdaf_info_ptr->flat_th					= pdafTestCase_ptr->flat_th;
-	pdaf_info_ptr->edge_ratio_hv			= pdafTestCase_ptr->edge_ratio_hv;
-	pdaf_info_ptr->edge_ratio_rd			= pdafTestCase_ptr->edge_ratio_rd;
-	pdaf_info_ptr->edge_ratio_hv_rd			= pdafTestCase_ptr->edge_ratio_hv_rd;
-	pdaf_info_ptr->phase_left_addr			= pdafTestCase_ptr->phase_left_addr;
-	pdaf_info_ptr->phase_right_addr			= pdafTestCase_ptr->phase_right_addr;
-	pdaf_info_ptr->phase_pitch				= pdafTestCase_ptr->phase_pitch;
-	pdaf_info_ptr->gain_ori_left[0] 		= pdafTestCase_ptr->gain_ori_left[0];
-	pdaf_info_ptr->gain_ori_left[1] 		= pdafTestCase_ptr->gain_ori_left[1];
-	pdaf_info_ptr->gain_ori_right[0] 		= pdafTestCase_ptr->gain_ori_right[0];
-	pdaf_info_ptr->gain_ori_right[1] 		= pdafTestCase_ptr->gain_ori_right[1];
+	pdaf_info_ptr->corrector_bypass = pdafTestCase_ptr->corrector_bypass;
+	pdaf_info_ptr->phase_map_corr_en = pdafTestCase_ptr->phase_map_corr_en;
+	pdaf_info_ptr->block_size = pdafTestCase_ptr->block_size;
+	pdaf_info_ptr->grid_mode = pdafTestCase_ptr->grid_mode;
+	pdaf_info_ptr->win = pdafTestCase_ptr->win;
+	pdaf_info_ptr->block = pdafTestCase_ptr->block;
+	pdaf_info_ptr->gain_upperbound = pdafTestCase_ptr->gain_upperbound;
+	pdaf_info_ptr->phase_txt_smooth = pdafTestCase_ptr->phase_txt_smooth;
+	pdaf_info_ptr->phase_gfilter = pdafTestCase_ptr->phase_gfilter;
+	pdaf_info_ptr->phase_flat_smoother = pdafTestCase_ptr->phase_flat_smoother;
+	pdaf_info_ptr->flat_th = pdafTestCase_ptr->flat_th;
+	pdaf_info_ptr->edge_ratio_hv = pdafTestCase_ptr->edge_ratio_hv;
+	pdaf_info_ptr->edge_ratio_rd = pdafTestCase_ptr->edge_ratio_rd;
+	pdaf_info_ptr->edge_ratio_hv_rd = pdafTestCase_ptr->edge_ratio_hv_rd;
+	pdaf_info_ptr->phase_left_addr = pdafTestCase_ptr->phase_left_addr;
+	pdaf_info_ptr->phase_right_addr = pdafTestCase_ptr->phase_right_addr;
+	pdaf_info_ptr->phase_pitch = pdafTestCase_ptr->phase_pitch;
+	pdaf_info_ptr->gain_ori_left[0] = pdafTestCase_ptr->gain_ori_left[0];
+	pdaf_info_ptr->gain_ori_left[1] = pdafTestCase_ptr->gain_ori_left[1];
+	pdaf_info_ptr->gain_ori_right[0] = pdafTestCase_ptr->gain_ori_right[0];
+	pdaf_info_ptr->gain_ori_right[1] = pdafTestCase_ptr->gain_ori_right[1];
 
-	cmr_s32 block_x = (pdaf_info_ptr->win.end_x - pdaf_info_ptr->win.start_x)/(8 << pdaf_info_ptr->block_size.width);
-	cmr_s32 block_y = (pdaf_info_ptr->win.end_y - pdaf_info_ptr->win.start_y)/(8 << pdaf_info_ptr->block_size.height);
-	cmr_u32 phasepixel_total_num				= block_x*block_y* PDAF_PATTERN_COUNT / 2;
-	pdaf_info_ptr->phase_data_dword_num		= (phasepixel_total_num + 5) / 6;
-	pdaf_info_ptr->extractor_bypass			= pdafTestCase_ptr->extractor_bypass;
-	pdaf_info_ptr->mode_sel					= pdafTestCase_ptr->mode_sel;
-	pdaf_info_ptr->skip_num					= pdafTestCase_ptr->skip_num;
-	pdaf_info_ptr->pdaf_blc					= pdafTestCase_ptr->pdaf_blc;
-	//pdaf_info_ptr->phase_cfg_rdy			= pdafTestCase_ptr->phase_cfg_rdy;
-	//pdaf_info_ptr->phase_skip_num_clr		= pdafTestCase_ptr->phase_skip_num_clr;
+	cmr_s32 block_x = (pdaf_info_ptr->win.end_x - pdaf_info_ptr->win.start_x) / (8 << pdaf_info_ptr->block_size.width);
+	cmr_s32 block_y = (pdaf_info_ptr->win.end_y - pdaf_info_ptr->win.start_y) / (8 << pdaf_info_ptr->block_size.height);
+	cmr_u32 phasepixel_total_num = block_x * block_y * PDAF_PATTERN_COUNT / 2;
+	pdaf_info_ptr->phase_data_dword_num = (phasepixel_total_num + 5) / 6;
+	pdaf_info_ptr->extractor_bypass = pdafTestCase_ptr->extractor_bypass;
+	pdaf_info_ptr->mode_sel = pdafTestCase_ptr->mode_sel;
+	pdaf_info_ptr->skip_num = pdafTestCase_ptr->skip_num;
+	pdaf_info_ptr->pdaf_blc = pdafTestCase_ptr->pdaf_blc;
+	//pdaf_info_ptr->phase_cfg_rdy                  = pdafTestCase_ptr->phase_cfg_rdy;
+	//pdaf_info_ptr->phase_skip_num_clr             = pdafTestCase_ptr->phase_skip_num_clr;
 
-	for(i = 0; i < 3; i++) {
-		pdaf_info_ptr->hot_pixel_th[i]		= pdafTestCase_ptr->hot_pixel_th[i];
-		pdaf_info_ptr->dead_pixel_th[i]		= pdafTestCase_ptr->dead_pixel_th[i];
+	for (i = 0; i < 3; i++) {
+		pdaf_info_ptr->hot_pixel_th[i] = pdafTestCase_ptr->hot_pixel_th[i];
+		pdaf_info_ptr->dead_pixel_th[i] = pdafTestCase_ptr->dead_pixel_th[i];
 	}
 
-	for(i = 0; i < 64; i++) {
-		pdaf_info_ptr->pattern_pixel_is_right[i]   = pdafTestCase_ptr->pattern_pixel_is_right[i];
-		pdaf_info_ptr->pattern_pixel_row[i] 	   = pdafTestCase_ptr->pattern_pixel_row[i];
-		pdaf_info_ptr->pattern_pixel_col[i] 	   = pdafTestCase_ptr->pattern_pixel_col[i];
+	for (i = 0; i < 64; i++) {
+		pdaf_info_ptr->pattern_pixel_is_right[i] = pdafTestCase_ptr->pattern_pixel_is_right[i];
+		pdaf_info_ptr->pattern_pixel_row[i] = pdafTestCase_ptr->pattern_pixel_row[i];
+		pdaf_info_ptr->pattern_pixel_col[i] = pdafTestCase_ptr->pattern_pixel_col[i];
 	}
 
-	memset((void*)pdaf_info_ptr->phase_left_addr, 0, 0x100);
-	memset((void*)pdaf_info_ptr->phase_right_addr, 0, 0x100);
+	memset((void *)pdaf_info_ptr->phase_left_addr, 0, 0x100);
+	memset((void *)pdaf_info_ptr->phase_right_addr, 0, 0x100);
 
 	//memset((void*)pdaf_info_ptr->data_ptr_left, 0, 128 * sizeof(cmr_u32));
 	//memset((void*)pdaf_info_ptr->data_ptr_right, 0, 128 * sizeof(cmr_u32));
 	return rtn;
 }
 
-
-cmr_int isp_get_pdaf_default_param(struct isp_dev_pdaf_info *pdaf_param)
+cmr_int isp_get_pdaf_default_param(struct isp_dev_pdaf_info * pdaf_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	_ispSetPdafParam(pdaf_param, 0);
@@ -205,10 +203,11 @@ static cmr_int pdaf_setup(struct sprd_pdaf_context *pdaf)
 
 	rtn = isp_get_pdaf_default_param(&pdaf_param);
 	ISP_LOGE("WUYI:pdaf_setup");
-	isp_u_pdaf_block(device, (void*)&pdaf_param);
+	isp_u_pdaf_block(device, (void *)&pdaf_param);
 
 	return rtn;
 }
+
 cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -225,7 +224,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
-#if 0/*TBD get pd_info from sensor & set to isp*/
+#if 0				/*TBD get pd_info from sensor & set to isp */
 	if (NULL == in_p->pd_info) {
 		ISP_LOGE("failed to get pd data");
 		ret = ISP_PARAM_NULL;
@@ -263,20 +262,20 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cmr_bzero(cxt->pd_left, pd_in_size);
 	cmr_bzero(cxt->pd_right, pd_in_size);
 
-	cxt->pd_gobal_setting.dImageW = IMAGE_WIDTH;/*TBD get from sensor*/
-	cxt->pd_gobal_setting.dImageH = IMAGE_HEIGHT;/*TBD get from sensor*/
-	cxt->pd_gobal_setting.dBeginX = BEGIN_X;/*TBD get from sensor*/
-	cxt->pd_gobal_setting.dBeginY = BEGIN_Y;/*TBD get from sensor*/
+	cxt->pd_gobal_setting.dImageW = IMAGE_WIDTH;	/*TBD get from sensor */
+	cxt->pd_gobal_setting.dImageH = IMAGE_HEIGHT;	/*TBD get from sensor */
+	cxt->pd_gobal_setting.dBeginX = BEGIN_X;	/*TBD get from sensor */
+	cxt->pd_gobal_setting.dBeginY = BEGIN_Y;	/*TBD get from sensor */
 
-	/*TBD dSensorID 0:for imx258 1: for OV13850*/
-	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id;*/
-	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;/*TBD get from sensor id*/
+	/*TBD dSensorID 0:for imx258 1: for OV13850 */
+	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id; */
+	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;	/*TBD get from sensor id */
 /*TBD init sharkle isp*/
 	pdaf_setup(cxt);
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
-	ISP_LOGI("pdaf PD_Init end ret = %ld",ret);
+	ISP_LOGI("pdaf PD_Init end ret = %ld", ret);
 	if (ret) {
 		ISP_LOGE("failed to init lib %ld", ret);
 		goto exit;
@@ -284,7 +283,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	cxt->is_busy = 0;
 
-	return (cmr_handle)cxt;
+	return (cmr_handle) cxt;
 
 //error_lib_init:
 	//pdafaltek_libops_deinit(pdaf);
@@ -301,7 +300,7 @@ exit:
 		free(cxt);
 		cxt = NULL;
 	}
-	return (cmr_handle)cxt;
+	return (cmr_handle) cxt;
 }
 
 static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *result)
@@ -314,7 +313,7 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 	ISP_LOGI("cxt = %p", cxt);
 	if (cxt) {
 		/* deinit lib */
-		ret = (cmr_s32)PD_Uninit();
+		ret = (cmr_s32) PD_Uninit();
 
 		if (cxt->pd_right) {
 			free(cxt->pd_right);
@@ -344,7 +343,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	char value[PROPERTY_VALUE_MAX];
 
 	UNUSED(out);
-	bzero(&pdroi,sizeof(pdroi));
+	bzero(&pdroi, sizeof(pdroi));
 	if (!in) {
 		ISP_LOGE("init param %p is null !!!", in);
 		ret = ISP_PARAM_NULL;
@@ -356,32 +355,29 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 #if 0
 	if (!cxt->pd_enable || !cxt->pd_open) {
-		ISP_LOGI("pd enable %d, open %d",cxt->pd_enable, cxt->pd_open);
+		ISP_LOGI("pd enable %d, open %d", cxt->pd_enable, cxt->pd_open);
 		ret = ISP_SUCCESS;
 		goto exit;
 	}
 #endif
 	cxt->is_busy = 1;
 
-
 	cxt->pd_reg_in.dcurrentVCM = proc_in->dcurrentVCM;
-	cxt->pd_reg_in.dBv = (float)proc_in->dBv /1000.0;
+	cxt->pd_reg_in.dBv = (float)proc_in->dBv / 1000.0;
 	pdroi.m_wLeft = 0;
 	pdroi.m_wTop = 0;
 
-
-	void *pInPhaseBuf_left = (cmr_s32 *)(proc_in->u_addr); //TODO
-	void *pInPhaseBuf_right = (cmr_s32 *)(proc_in->u_addr + 0x25800); //TODO
-	ISP_LOGI("pInPhaseBuf_left = %p",pInPhaseBuf_left);
+	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);	//TODO
+	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + 0x25800);	//TODO
+	ISP_LOGI("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 	cmr_s32 dRectX = ROI_X;
 	cmr_s32 dRectY = ROI_Y;
 	cmr_s32 dRectW = ROI_Width;
 	cmr_s32 dRectH = ROI_Height;
 	struct pd_result pd_calc_result;
 
-	for(cmr_s32 area_index=0;area_index<AREA_LOOP;area_index++) {
-		ret = PD_DoType2(pInPhaseBuf_left,pInPhaseBuf_right, dRectX, dRectY,
-			    dRectW, dRectH,area_index);
+	for (cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++) {
+		ret = PD_DoType2(pInPhaseBuf_left, pInPhaseBuf_right, dRectX, dRectY, dRectW, dRectH, area_index);
 		if (ret) {
 			ISP_LOGE("failed to do pd algo.");
 			goto exit;
@@ -393,25 +389,23 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cxt->report_data.enable = cxt->pd_enable;
 
 	callback_in.proc_out.pd_report_data = cxt->report_data;
-	/*call back to haf lib*/
+	/*call back to haf lib */
 
-	/*TBD get clac result from so & send to af*/
+	/*TBD get clac result from so & send to af */
 	ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, 4);
 	if (ret) {
-			ISP_LOGE("failed to do get pd_result.");
-			goto exit;
-		}
-	ISP_LOGI("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf",
-			pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
+		ISP_LOGE("failed to do get pd_result.");
+		goto exit;
+	}
+	ISP_LOGI("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
 	cxt->af_set_pdinfo(cxt->caller, &pd_calc_result);
-	cxt->frame_id ++;//= proc_in->pd_raw.frame_id;
+	cxt->frame_id++;	//= proc_in->pd_raw.frame_id;
 exit:
 	cxt->is_busy = 0;
 	return ret;
 }
 
-static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd,
-				   void *in, void *out)
+static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct pdaf_ctrl_param_in *in_ptr = (struct pdaf_ctrl_param_in *)in;
@@ -419,8 +413,8 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd,
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	ISP_LOGV("cmd = %d", cmd);
-#if 0/*TBD*/
-	switch (cmd) {
+#if 0	 /*TBD*/
+	    switch (cmd) {
 	case PDAF_CTRL_CMD_SET_OPEN:
 		ret = pdafaltek_adpt_set_open(adpt_handle, in_ptr);
 		break;
@@ -451,4 +445,3 @@ struct adpt_ops_type sprd_pdaf_adpt_ops = {
 	.adpt_process = sprd_pdaf_adpt_process,
 	.adpt_ioctrl = sprd_pdaf_adpt_ioctrl,
 };
-

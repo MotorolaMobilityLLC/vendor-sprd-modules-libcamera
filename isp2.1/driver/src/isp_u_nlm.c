@@ -18,7 +18,6 @@
 
 #include "isp_drv.h"
 
-
 cmr_s32 isp_u_nlm_block(void *handle, void *block_info)
 {
 	cmr_s32 ret = 0;
@@ -26,12 +25,11 @@ cmr_s32 isp_u_nlm_block(void *handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
-	file = (struct isp_file*)(handle);
+	file = (struct isp_file *)(handle);
 
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_NLM;

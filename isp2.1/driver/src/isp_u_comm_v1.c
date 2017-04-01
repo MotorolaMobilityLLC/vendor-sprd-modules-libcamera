@@ -26,8 +26,7 @@ cmr_s32 isp_u_comm_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -248,5 +247,3 @@ cmr_s32 isp_u_comm_channel1_y_aem_pos(isp_handle handle, cmr_u32 pos)
 #endif
 	return ret;
 }
-
-

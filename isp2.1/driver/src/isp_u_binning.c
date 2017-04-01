@@ -25,8 +25,7 @@ cmr_s32 isp_u_binning4awb_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -110,7 +109,7 @@ cmr_s32 isp_u_binning4awb_scaling_ratio(isp_handle handle, cmr_u32 vertical, cmr
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, cmr_u32 *vertical, cmr_u32 *horizontal)
+cmr_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, cmr_u32 * vertical, cmr_u32 * horizontal)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -158,7 +157,7 @@ cmr_s32 isp_u_binning4awb_mem_addr(isp_handle handle, cmr_u32 phy_addr)
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, cmr_u32 *buf_id)
+cmr_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, cmr_u32 * buf_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -190,8 +189,7 @@ cmr_s32 isp_u_binning4awb_transaddr(isp_handle handle, cmr_u32 phys0, cmr_u32 ph
 	struct isp_b4awb_phys phys_addr;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: %lx",
-				(cmr_uint)handle);
+		ISP_LOGE("handle is null error: %lx", (cmr_uint) handle);
 		return -1;
 	}
 
@@ -215,8 +213,7 @@ cmr_s32 isp_u_binning4awb_initbuf(isp_handle handle)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: %lx",
-				(cmr_uint)handle);
+		ISP_LOGE("handle is null error: %lx", (cmr_uint) handle);
 		return -1;
 	}
 

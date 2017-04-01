@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include "sensor_exposure_queue.h"
 
 #define MAX(x,y) (((x)>(y))?(x):(y))
@@ -45,9 +44,7 @@ static cmr_int seq_get_cur_actual_element(struct seq_cxt *cxt_ptr, struct seq_ce
 	cmr_u32 frame_id = 0;
 	cmr_u32 cur_idx = 0;
 
-
-	if (NULL == cxt_ptr
-		|| NULL == out_ptr) {
+	if (NULL == cxt_ptr || NULL == out_ptr) {
 		AE_LOGE("cxt_ptr %p, out_ptr %p param is error!", cxt_ptr, out_ptr);
 		goto exit;
 	}
@@ -67,9 +64,7 @@ static cmr_int seq_push_actual_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_i
 	cmr_u32 cur_idx = 0;
 	cmr_u32 offset_idx = 0;
 
-
-	if (NULL == cxt_ptr
-		|| NULL == in_ptr) {
+	if (NULL == cxt_ptr || NULL == in_ptr) {
 		AE_LOGE("cxt_ptr %p, in_ptr %p param is error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
@@ -105,9 +100,7 @@ static cmr_int seq_get_cur_write_element(struct seq_cxt *cxt_ptr, struct seq_cel
 	cmr_u32 frame_id = 0;
 	cmr_u32 cur_idx = 0;
 
-
-	if (NULL == cxt_ptr
-		|| NULL == out_ptr) {
+	if (NULL == cxt_ptr || NULL == out_ptr) {
 		AE_LOGE("cxt_ptr %p, out_ptr %p param is error!", cxt_ptr, out_ptr);
 		goto exit;
 	}
@@ -119,7 +112,7 @@ exit:
 	return ret;
 }
 
-static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr,cmr_u32 is_add_idx, cmr_u32 offset, struct seq_cell *in_ptr)
+static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_idx, cmr_u32 offset, struct seq_cell *in_ptr)
 {
 	cmr_int ret = -1;
 
@@ -127,9 +120,7 @@ static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr,cmr_u32 is_add_idx
 	cmr_u32 cur_idx = 0;
 	cmr_u32 offset_idx = 0;
 
-
-	if (NULL == cxt_ptr
-		|| NULL == in_ptr) {
+	if (NULL == cxt_ptr || NULL == in_ptr) {
 		AE_LOGE("cxt_ptr %p, in_ptr %p param is error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
@@ -158,21 +149,19 @@ exit:
 	return ret;
 }
 
-cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
+cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in * in_ptr, void **handle)
 {
 	cmr_int ret = -1;
 	struct seq_cxt *cxt_ptr = NULL;
 	cmr_int q_size = 0;
 
-
 	if ((queue_num < 4)
-		|| NULL == in_ptr
-		|| NULL == handle) {
+	    || NULL == in_ptr || NULL == handle) {
 		AE_LOGE("queue_num = %d, in_ptr %p, handle %p param is error!", queue_num, in_ptr, handle);
 		goto exit;
 	}
 	*handle = NULL;
-	cxt_ptr = (struct seq_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct seq_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		AE_LOGE("malloc is error!");
 		goto exit;
@@ -185,7 +174,7 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
 	cxt_ptr->write_q.max_num = queue_num;
 
 	q_size = queue_num * sizeof(struct seq_cell);
-	cxt_ptr->write_q.cell_ptr = (struct seq_cell*)malloc(q_size);
+	cxt_ptr->write_q.cell_ptr = (struct seq_cell *)malloc(q_size);
 	if (NULL == cxt_ptr->write_q.cell_ptr) {
 		AE_LOGE("malloc is error!");
 		goto exit;
@@ -193,7 +182,7 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
 	memset(cxt_ptr->write_q.cell_ptr, 0, q_size);
 
 	cxt_ptr->actual_q.max_num = queue_num;
-	cxt_ptr->actual_q.cell_ptr = (struct seq_cell*)malloc(q_size);
+	cxt_ptr->actual_q.cell_ptr = (struct seq_cell *)malloc(q_size);
 	if (NULL == cxt_ptr->actual_q.cell_ptr) {
 		AE_LOGE("malloc is error!");
 		goto exit;
@@ -209,15 +198,15 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
 		cxt_ptr->valid_offset_num = in_ptr->gain_valid_num - in_ptr->exp_valid_num;
 	}
 
-	*handle = (void*)cxt_ptr;
+	*handle = (void *)cxt_ptr;
 	return 0;
 exit:
 	//if (cxt_ptr->write_q.cell_ptr)
-		free(cxt_ptr->write_q.cell_ptr);
+	free(cxt_ptr->write_q.cell_ptr);
 	//if (cxt_ptr->actual_q.cell_ptr)
-		free(cxt_ptr->actual_q.cell_ptr);
+	free(cxt_ptr->actual_q.cell_ptr);
 	//if (cxt_ptr)
-		free(cxt_ptr);
+	free(cxt_ptr);
 	return ret;
 }
 
@@ -231,7 +220,7 @@ cmr_int seq_deinit(void *handle)
 		goto exit;
 	}
 
-	cxt_ptr = (struct seq_cxt*)handle;
+	cxt_ptr = (struct seq_cxt *)handle;
 	if (cxt_ptr->write_q.cell_ptr)
 		free(cxt_ptr->write_q.cell_ptr);
 	if (cxt_ptr->actual_q.cell_ptr)
@@ -248,11 +237,9 @@ cmr_int seq_reset(void *handle)
 	struct seq_cxt *cxt_ptr = NULL;
 	cmr_int q_size = 0;
 
-	cxt_ptr = (struct seq_cxt*)handle;
+	cxt_ptr = (struct seq_cxt *)handle;
 
-	if (NULL == cxt_ptr
-			|| NULL == cxt_ptr->write_q.cell_ptr
-			|| NULL == cxt_ptr->actual_q.cell_ptr) {
+	if (NULL == cxt_ptr || NULL == cxt_ptr->write_q.cell_ptr || NULL == cxt_ptr->actual_q.cell_ptr) {
 		goto exit;
 	}
 
@@ -266,18 +253,18 @@ exit:
 	return ret;
 }
 
-cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_actual_ptr, struct seq_cell *out_write_ptr)
+cmr_int seq_put(void *handle, struct seq_item * in_est_ptr, struct seq_cell * out_actual_ptr, struct seq_cell * out_write_ptr)
 {
 	cmr_int ret = -1;
 	struct seq_cxt *cxt_ptr = NULL;
-	cmr_u32 cur_frame_id 	= 0;
-	cmr_u32 skip_num 		= 0;
+	cmr_u32 cur_frame_id = 0;
+	cmr_u32 skip_num = 0;
 	cmr_u32 skip_offset_num = 0;
-	cmr_u32 exp_valid_num 	= 0;
-	cmr_u32 gain_valid_num 	= 0;
-	cmr_u32 max_valid_num 	= 0;
-	cmr_u32 offset_num 		= 0;
-	cmr_u32 i 				= 0;
+	cmr_u32 exp_valid_num = 0;
+	cmr_u32 gain_valid_num = 0;
+	cmr_u32 max_valid_num = 0;
+	cmr_u32 offset_num = 0;
+	cmr_u32 i = 0;
 
 	struct seq_cell cur_write_cell;
 	struct seq_cell push_write_cell;
@@ -286,17 +273,13 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	struct seq_cell cur_actual_cell;
 	struct seq_cell push_nxt_actual_cell;
 
-	if (NULL == handle
-		|| NULL == in_est_ptr
-		|| NULL == out_actual_ptr
-		|| NULL == out_write_ptr){
-		AE_LOGE("handle %p, in_est_ptr %p, out_actual_ptr %p, out_write_ptr %p param is error!",
-			handle, in_est_ptr, out_actual_ptr, out_write_ptr);
+	if (NULL == handle || NULL == in_est_ptr || NULL == out_actual_ptr || NULL == out_write_ptr) {
+		AE_LOGE("handle %p, in_est_ptr %p, out_actual_ptr %p, out_write_ptr %p param is error!", handle, in_est_ptr, out_actual_ptr, out_write_ptr);
 		goto EXIT;
 	}
 
-	cxt_ptr 		= (struct seq_cxt*)handle;
-	cur_frame_id 	= in_est_ptr->cell.frame_id;
+	cxt_ptr = (struct seq_cxt *)handle;
+	cur_frame_id = in_est_ptr->cell.frame_id;
 
 	//AE_LOGD("seq_put_fid %d\r\n", cur_frame_id);
 
@@ -305,16 +288,16 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	else if (SEQ_WORK_PREVIEW == in_est_ptr->work_mode)
 		skip_num = cxt_ptr->init_in_param.preview_skip_num;
 
-	skip_offset_num = (skip_num > cxt_ptr->max_valid_num)? 0: (cxt_ptr->max_valid_num - skip_num);
-	exp_valid_num 	= cxt_ptr->init_in_param.exp_valid_num;
-	gain_valid_num 	= cxt_ptr->init_in_param.gain_valid_num;
-	max_valid_num 	= cxt_ptr->max_valid_num;
+	skip_offset_num = (skip_num > cxt_ptr->max_valid_num) ? 0 : (cxt_ptr->max_valid_num - skip_num);
+	exp_valid_num = cxt_ptr->init_in_param.exp_valid_num;
+	gain_valid_num = cxt_ptr->init_in_param.gain_valid_num;
+	max_valid_num = cxt_ptr->max_valid_num;
 
 	memset(&push_nxt_actual_cell, 0, sizeof(push_nxt_actual_cell));
 	memset(&push_nxt_write_cell, 0, sizeof(push_nxt_write_cell));
 
-	if (0 == cur_frame_id){
-		for (i = skip_offset_num; i <=  max_valid_num; i++ ){
+	if (0 == cur_frame_id) {
+		for (i = skip_offset_num; i <= max_valid_num; i++) {
 			push_nxt_actual_cell = in_est_ptr->cell;
 			ret = seq_push_actual_element(cxt_ptr, 0, i, &push_nxt_actual_cell);
 			if (ret)
@@ -322,57 +305,57 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 		}
 	}
 
-	ret = seq_get_cur_actual_element(cxt_ptr,&cur_actual_cell);
+	ret = seq_get_cur_actual_element(cxt_ptr, &cur_actual_cell);
 	if (ret)
 		goto EXIT;
 
-	ret = seq_get_cur_write_element(cxt_ptr,&cur_write_cell);
+	ret = seq_get_cur_write_element(cxt_ptr, &cur_write_cell);
 	if (ret)
 		goto EXIT;
 
 	offset_num = cxt_ptr->valid_offset_num;
-	if (0 == offset_num){
-		/*same valid frame*/
-		push_write_cell.frame_id 	= cur_frame_id;
-		push_write_cell.dummy 		= in_est_ptr->cell.dummy;
-		push_write_cell.exp_time 	= in_est_ptr->cell.exp_time;
-		push_write_cell.exp_line 	= in_est_ptr->cell.exp_line;
-		push_write_cell.gain 		= in_est_ptr->cell.gain;
-	}else{
-		/*different valid frame*/
-		if (cxt_ptr->is_first_exp){
-			push_write_cell.frame_id 	= cur_frame_id;
-			push_write_cell.dummy 		= in_est_ptr->cell.dummy;
-			push_write_cell.exp_time 	= in_est_ptr->cell.exp_time;
-			push_write_cell.exp_line 	= in_est_ptr->cell.exp_line;
-			push_write_cell.gain 		= cur_write_cell.gain;
+	if (0 == offset_num) {
+		/*same valid frame */
+		push_write_cell.frame_id = cur_frame_id;
+		push_write_cell.dummy = in_est_ptr->cell.dummy;
+		push_write_cell.exp_time = in_est_ptr->cell.exp_time;
+		push_write_cell.exp_line = in_est_ptr->cell.exp_line;
+		push_write_cell.gain = in_est_ptr->cell.gain;
+	} else {
+		/*different valid frame */
+		if (cxt_ptr->is_first_exp) {
+			push_write_cell.frame_id = cur_frame_id;
+			push_write_cell.dummy = in_est_ptr->cell.dummy;
+			push_write_cell.exp_time = in_est_ptr->cell.exp_time;
+			push_write_cell.exp_line = in_est_ptr->cell.exp_line;
+			push_write_cell.gain = cur_write_cell.gain;
 
-			push_nxt_write_cell.gain 	= in_est_ptr->cell.gain;
-#if 0		//speed up by same exp_line
-			if (cxt_ptr->pre_cell.exp_line == in_est_ptr->cell.exp_line){
+			push_nxt_write_cell.gain = in_est_ptr->cell.gain;
+#if 0				//speed up by same exp_line
+			if (cxt_ptr->pre_cell.exp_line == in_est_ptr->cell.exp_line) {
 				push_write_cell.gain = push_nxt_write_cell.gain;
-				for (i = 0; i < offset_num; i++){
+				for (i = 0; i < offset_num; i++) {
 					ret = seq_push_write_element(cxt_ptr, 0, i, &push_nxt_write_cell);
 					if (ret)
 						goto EXIT;
 				}
-				for (i = gain_valid_num + 1; i < max_valid_num + 1; i++){
+				for (i = gain_valid_num + 1; i < max_valid_num + 1; i++) {
 					ret = seq_push_actual_element(cxt_ptr, 0, i, &push_nxt_write_cell);
 					if (ret)
 						goto EXIT;
 				}
 			}
 #endif
-		} else{
-			push_write_cell.frame_id 	= cur_frame_id;
-			push_write_cell.gain 		= in_est_ptr->cell.gain;
-			push_write_cell.exp_line 	= cur_write_cell.exp_line;
-			push_write_cell.exp_time 	= cur_write_cell.exp_time;
-			push_write_cell.dummy 		= cur_write_cell.dummy;
+		} else {
+			push_write_cell.frame_id = cur_frame_id;
+			push_write_cell.gain = in_est_ptr->cell.gain;
+			push_write_cell.exp_line = cur_write_cell.exp_line;
+			push_write_cell.exp_time = cur_write_cell.exp_time;
+			push_write_cell.dummy = cur_write_cell.dummy;
 
-			push_nxt_write_cell.exp_line 	= in_est_ptr->cell.exp_line;
-			push_nxt_write_cell.exp_time 	= in_est_ptr->cell.exp_time;
-			push_nxt_write_cell.dummy 		= in_est_ptr->cell.dummy;
+			push_nxt_write_cell.exp_line = in_est_ptr->cell.exp_line;
+			push_nxt_write_cell.exp_time = in_est_ptr->cell.exp_time;
+			push_nxt_write_cell.dummy = in_est_ptr->cell.dummy;
 		}
 	}
 
@@ -380,8 +363,8 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	if (ret)
 		goto EXIT;
 
-	offset_num 				= max_valid_num + 1;
-	push_nxt_actual_cell 	= in_est_ptr->cell;
+	offset_num = max_valid_num + 1;
+	push_nxt_actual_cell = in_est_ptr->cell;
 	ret = seq_push_actual_element(cxt_ptr, 1, offset_num, &push_nxt_actual_cell);
 
 	if (ret)

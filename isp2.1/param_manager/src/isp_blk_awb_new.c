@@ -16,32 +16,30 @@
 
 #include "isp_blocks_cfg.h"
 
-
-cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void* param1, void* param2)
+cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void *param1, void *param2)
 {
 
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1*)dst_awb_new;
+	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1 *)dst_awb_new;
 	struct sensor_awbc_param *src_ptr = (struct sensor_awbc_param *)src_awb_new;
-	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
+	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
 	dst_ptr->ct_value = 5000;
-	memset((void*)&dst_ptr->cur,0x00,sizeof(dst_ptr->cur));
-	/*AWBC*/
-	dst_ptr->cur.awbc_bypass = header_ptr->bypass;
+	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
+	 /*AWBC*/ dst_ptr->cur.awbc_bypass = header_ptr->bypass;
 
-	dst_ptr->cur.gain.r  = 0x700; //src_ptr->awbc_gain.r_gain;
-	dst_ptr->cur.gain.gr = 0x400;//src_ptr->awbc_gain.gr_gain;
-	dst_ptr->cur.gain.gb = 0x400;//src_ptr->awbc_gain.gb_gain;
-	dst_ptr->cur.gain.b  = 0x5d0;//src_ptr->awbc_gain.b_gain;
-	dst_ptr->cur.thrd.r = 0x3ff;//src_ptr->awbc.awbc_thr.r_thr;
-	dst_ptr->cur.thrd.g = 0x3ff;//src_ptr->awbc.awbc_thr.g_thr;
-	dst_ptr->cur.thrd.b = 0x3ff;//src_ptr->awbc.awbc_thr.b_thr;
-	dst_ptr->cur.gain_offset.r  = 0;//src_ptr->awbc_offset.r_offset;
-	dst_ptr->cur.gain_offset.gr = 0;//src_ptr->awbc_offset.gr_offset;
-	dst_ptr->cur.gain_offset.gb = 0;//src_ptr->awbc_offset.gb_offset;
-	dst_ptr->cur.gain_offset.b  = 0;//src_ptr->awbc_offset.b_offset;
+	dst_ptr->cur.gain.r = 0x700;	//src_ptr->awbc_gain.r_gain;
+	dst_ptr->cur.gain.gr = 0x400;	//src_ptr->awbc_gain.gr_gain;
+	dst_ptr->cur.gain.gb = 0x400;	//src_ptr->awbc_gain.gb_gain;
+	dst_ptr->cur.gain.b = 0x5d0;	//src_ptr->awbc_gain.b_gain;
+	dst_ptr->cur.thrd.r = 0x3ff;	//src_ptr->awbc.awbc_thr.r_thr;
+	dst_ptr->cur.thrd.g = 0x3ff;	//src_ptr->awbc.awbc_thr.g_thr;
+	dst_ptr->cur.thrd.b = 0x3ff;	//src_ptr->awbc.awbc_thr.b_thr;
+	dst_ptr->cur.gain_offset.r = 0;	//src_ptr->awbc_offset.r_offset;
+	dst_ptr->cur.gain_offset.gr = 0;	//src_ptr->awbc_offset.gr_offset;
+	dst_ptr->cur.gain_offset.gb = 0;	//src_ptr->awbc_offset.gb_offset;
+	dst_ptr->cur.gain_offset.b = 0;	//src_ptr->awbc_offset.b_offset;
 
 	header_ptr->is_update = ISP_ONE;
 
@@ -49,72 +47,70 @@ cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void* param1, voi
 
 }
 
-cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1*)awb_new_param;
-	struct isp_pm_block_header * awb_header_ptr = (struct isp_pm_block_header*)param_ptr1;
+	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1 *)awb_new_param;
+	struct isp_pm_block_header *awb_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	awb_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_AWBC:
-	{
-		struct isp_awbc_cfg *cfg_ptr = (struct isp_awbc_cfg*)param_ptr0;
-		dst_ptr->cur.gain.r = cfg_ptr->r_gain;
-		dst_ptr->cur.gain.gr = cfg_ptr->g_gain;
-		dst_ptr->cur.gain.gb = cfg_ptr->g_gain;
-		dst_ptr->cur.gain.b = cfg_ptr->b_gain;
-		dst_ptr->cur.gain_offset.r = cfg_ptr->r_offset;
-		dst_ptr->cur.gain_offset.gr = cfg_ptr->g_offset;
-		dst_ptr->cur.gain_offset.gb = cfg_ptr->g_offset;
-		dst_ptr->cur.gain_offset.b = cfg_ptr->b_offset;
-	}
-	break;
+		{
+			struct isp_awbc_cfg *cfg_ptr = (struct isp_awbc_cfg *)param_ptr0;
+			dst_ptr->cur.gain.r = cfg_ptr->r_gain;
+			dst_ptr->cur.gain.gr = cfg_ptr->g_gain;
+			dst_ptr->cur.gain.gb = cfg_ptr->g_gain;
+			dst_ptr->cur.gain.b = cfg_ptr->b_gain;
+			dst_ptr->cur.gain_offset.r = cfg_ptr->r_offset;
+			dst_ptr->cur.gain_offset.gr = cfg_ptr->g_offset;
+			dst_ptr->cur.gain_offset.gb = cfg_ptr->g_offset;
+			dst_ptr->cur.gain_offset.b = cfg_ptr->b_offset;
+		}
+		break;
 
 	case ISP_PM_BLK_AWBM:
 
-	break;
+		break;
 
 	case ISP_PM_BLK_AWB_CT:
-		dst_ptr->ct_value = *((cmr_u32*)param_ptr0);
-	break;
+		dst_ptr->ct_value = *((cmr_u32 *) param_ptr0);
+		break;
 
 	case ISP_PM_BLK_AWBC_BYPASS:
-		dst_ptr->cur.awbc_bypass = *((cmr_u32*)param_ptr0);
-	break;
+		dst_ptr->cur.awbc_bypass = *((cmr_u32 *) param_ptr0);
+		break;
 
 	case ISP_PM_BLK_AWBM_BYPASS:
-	break;
+		break;
 
 	case ISP_PM_BLK_MEMORY_INIT:
-	{
-		cmr_u32 i = 0;
-		struct isp_pm_memory_init_param *memory_ptr = (struct isp_pm_memory_init_param*)param_ptr0;
-		for (i = 0; i < memory_ptr->size_info.count_lines; ++i) {
-			dst_ptr->awb_statistics[i].data_ptr = ((cmr_u8*)memory_ptr->buffer.data_ptr + memory_ptr->size_info.pitch * i);
-			dst_ptr->awb_statistics[i].size = memory_ptr->size_info.pitch;
+		{
+			cmr_u32 i = 0;
+			struct isp_pm_memory_init_param *memory_ptr = (struct isp_pm_memory_init_param *)param_ptr0;
+			for (i = 0; i < memory_ptr->size_info.count_lines; ++i) {
+				dst_ptr->awb_statistics[i].data_ptr = ((cmr_u8 *) memory_ptr->buffer.data_ptr + memory_ptr->size_info.pitch * i);
+				dst_ptr->awb_statistics[i].size = memory_ptr->size_info.pitch;
+			}
 		}
-	}
-	break;
+		break;
 	default:
 		awb_header_ptr->is_update = ISP_ZERO;
-	break;
+		break;
 	}
-
-
 
 	return rtn;
 
 }
 
-cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1*awb_param_ptr = (struct isp_awb_param_v1*)awb_new_param;
-	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
+	struct isp_awb_param_v1 *awb_param_ptr = (struct isp_awb_param_v1 *)awb_new_param;
+	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
+	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_AWB_NEW;
 	param_data_ptr->cmd = cmd;
@@ -124,29 +120,28 @@ cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void* rtn_param0
 		param_data_ptr->data_ptr = &awb_param_ptr->cur;
 		param_data_ptr->data_size = sizeof(awb_param_ptr->cur);
 		*update_flag = 0;
-	break;
+		break;
 
 	case ISP_PM_BLK_AWBM:
-	break;
+		break;
 
 	case ISP_PM_BLK_AWBC_BYPASS:
-	break;
+		break;
 
 	case ISP_PM_BLK_AWB_CT:
 		param_data_ptr->data_ptr = &awb_param_ptr->ct_value;
 		param_data_ptr->data_size = sizeof(awb_param_ptr->ct_value);
-	break;
+		break;
 
 	case ISP_PM_BLK_AWBM_STATISTIC:
-		param_data_ptr->data_ptr = (void*)&awb_param_ptr->stat;
+		param_data_ptr->data_ptr = (void *)&awb_param_ptr->stat;
 		param_data_ptr->data_size = sizeof(awb_param_ptr->stat);
-	break;
+		break;
 
 	default:
-	break;
+		break;
 	}
 
 	return rtn;
 
 }
-

@@ -25,8 +25,7 @@ cmr_s32 isp_u_hist_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -47,7 +46,7 @@ cmr_s32 isp_u_hist_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
 	UNUSED(handle);
 	UNUSED(width);
 	UNUSED(height);
-#if 0/*modify for Solve compile problem*/
+#if 0				/*modify for Solve compile problem */
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;

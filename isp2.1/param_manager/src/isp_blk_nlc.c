@@ -16,10 +16,7 @@
 
 #include "isp_blocks_cfg.h"
 
-
-
-
- cmr_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void* param1, void* param2)
+cmr_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
@@ -36,7 +33,7 @@
 		dst_ptr->cur.node.b_node[i] = src_ptr->b_node[i];
 	}
 
-	for( i = 0; i < ISP_NLC_POINTER_L_NUM; ++i) {
+	for (i = 0; i < ISP_NLC_POINTER_L_NUM; ++i) {
 		dst_ptr->cur.node.l_node[i] = src_ptr->l_node[i];
 	}
 
@@ -45,13 +42,13 @@
 	return rtn;
 }
 
- cmr_s32 _pm_nlc_set_param_v1(void *nlc_param, cmr_u32 cmd, void* param_ptr0, void *param_ptr1)
+cmr_s32 _pm_nlc_set_param_v1(void *nlc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_u32 i = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_nlc_param_v1 *dst_ptr = (struct isp_nlc_param_v1*)nlc_param;
+	struct isp_nlc_param_v1 *dst_ptr = (struct isp_nlc_param_v1 *)nlc_param;
 	struct sensor_nlc_param *src_ptr = (struct sensor_nlc_param *)param_ptr0;
-	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
+	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	header_ptr->is_update = ISP_ONE;
 
@@ -62,29 +59,30 @@
 			dst_ptr->cur.node.g_node[i] = src_ptr->g_node[i];
 			dst_ptr->cur.node.b_node[i] = src_ptr->b_node[i];
 		}
-		for( i = 0; i < ISP_NLC_POINTER_L_NUM; ++i) {
+		for (i = 0; i < ISP_NLC_POINTER_L_NUM; ++i) {
 			dst_ptr->cur.node.l_node[i] = src_ptr->l_node[i];
 		}
-	break;
+		break;
 
 	case ISP_PM_BLK_NLC_BYPASS:
-		dst_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
-	break;
+		dst_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
+		break;
 
 	default:
 		header_ptr->is_update = ISP_ZERO;
-	break;
+		break;
 
 	}
 
 	return rtn;
 }
- cmr_s32 _pm_nlc_get_param_v1(void *nlc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
+
+cmr_s32 _pm_nlc_get_param_v1(void *nlc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
+	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	struct isp_nlc_param_v1 *nlc_ptr = (struct isp_nlc_param_v1 *)nlc_param;
-	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_NLC;
 	param_data_ptr->cmd = cmd;
@@ -94,15 +92,15 @@
 		param_data_ptr->data_ptr = &nlc_ptr->cur;
 		param_data_ptr->data_size = sizeof(nlc_ptr->cur);
 		*update_flag = 0;
-	break;
+		break;
 
 	case ISP_PM_BLK_NLC_BYPASS:
-		param_data_ptr->data_ptr = (void*)&nlc_ptr->cur.bypass;
+		param_data_ptr->data_ptr = (void *)&nlc_ptr->cur.bypass;
 		param_data_ptr->data_size = sizeof(nlc_ptr->cur.bypass);
-	break;
+		break;
 
 	default:
-	break;
+		break;
 	}
 
 	return rtn;

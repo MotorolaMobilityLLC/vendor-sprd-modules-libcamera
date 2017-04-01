@@ -33,7 +33,7 @@
 struct lsc_calc_golden_param {
 	struct isp_raw_image std_image;
 	//struct isp_raw_image nonstd_image[MAX_NONSTD_IMAGE];
-	/*image size/formart/pattern are the same as the standard image*/
+	/*image size/formart/pattern are the same as the standard image */
 	void *nonstd_image[MAX_NONSTD_IMAGE];
 	cmr_u32 nonstd_image_num;
 	enum isp_center_type center_type;
@@ -57,15 +57,15 @@ struct lsc_calc_golden_result {
 static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_golden_result *golden_info)
 {
 	cmr_s32 rtn = GOLDEN_ERROR;
-	struct lsc_calc_gain_param calc_gain_param = {0};
-	struct lsc_gain_info std_gain = {0};
-	struct lsc_gain_info nonstd_gain = {0};
+	struct lsc_calc_gain_param calc_gain_param = { 0 };
+	struct lsc_gain_info std_gain = { 0 };
+	struct lsc_gain_info nonstd_gain = { 0 };
 	cmr_u32 nonstd_image_num = 0;
 	struct isp_raw_image *std_img = NULL;
-	struct isp_raw_image nonstd_img = {0};
-	struct lsc_calc_center_param calc_center_param = {0};
-	struct isp_center grid_center = {0};
-	struct isp_center image_center = {0};
+	struct isp_raw_image nonstd_img = { 0 };
+	struct lsc_calc_center_param calc_center_param = { 0 };
+	struct isp_center grid_center = { 0 };
+	struct isp_center image_center = { 0 };
 	cmr_u32 lsc_gain_size = 0;
 	cmr_u32 gain_width = 0;
 	cmr_u32 gain_height = 0;
@@ -74,7 +74,7 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	cmr_u16 *nonstd_buf = NULL;
 	cmr_u32 std_center_x = 0;
 	cmr_u32 std_center_y = 0;
-	cmr_u32 i=0;
+	cmr_u32 i = 0;
 
 	if (ISP_LSC_ALG_1D_DIFF != param->algorithm_type)
 		goto EXIT;
@@ -97,9 +97,8 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 		goto EXIT;
 	}
 
-	/*calc lsc gain for standard image*/
-	rtn = lsc_calc_gain_size(std_img->width, std_img->height, param->grid_size,
-							param->algorithm_version, &gain_width, &gain_height);
+	/*calc lsc gain for standard image */
+	rtn = lsc_calc_gain_size(std_img->width, std_img->height, param->grid_size, param->algorithm_version, &gain_width, &gain_height);
 	if (GOLDEN_SUCCESS != rtn) {
 		goto EXIT;
 	}
@@ -112,7 +111,7 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	calc_gain_param.target_buf = target_buf;
 	calc_gain_param.target_buf_size = target_buf_size;
 	calc_gain_param.image = param->std_image;
-	/*calculate the center by the standard image*/
+	/*calculate the center by the standard image */
 	calc_gain_param.center_x = 0;
 	calc_gain_param.center_y = 0;
 
@@ -133,16 +132,14 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	if (GOLDEN_SUCCESS != rtn) {
 		goto EXIT;
 	}
-
 #if GOLDEN_DEBUG
 	{
-		char save_name[64] = {0};
+		char save_name[64] = { 0 };
 		cmr_u32 j = 0;
 
-		for (j=0; j<4; j++) {
+		for (j = 0; j < 4; j++) {
 			sprintf(save_name, "output\\std_gain_chn[%d].txt", j);
-			write_data_uint16_dec(save_name, std_gain.chn_gain[j], std_gain.gain_width,
-				std_gain.gain_height * std_gain.gain_width * sizeof(cmr_u16));
+			write_data_uint16_dec(save_name, std_gain.chn_gain[j], std_gain.gain_width, std_gain.gain_height * std_gain.gain_width * sizeof(cmr_u16));
 		}
 	}
 #endif
@@ -150,9 +147,9 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	golden_info->std_gain = std_gain;
 
 	target_buf_size -= lsc_gain_size;
-	target_buf = (cmr_u16 *)((uint8 *)target_buf+ lsc_gain_size);
+	target_buf = (cmr_u16 *) ((uint8 *) target_buf + lsc_gain_size);
 
-	/*calc grid center*/
+	/*calc grid center */
 	calc_center_param.algorithm_version = param->algorithm_version;
 	calc_center_param.center_type = param->center_type;
 	calc_center_param.coord_type = ISP_COORD_GRID;
@@ -164,7 +161,7 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 		goto EXIT;
 	}
 
-	/*calc image center*/
+	/*calc image center */
 	calc_center_param.algorithm_version = param->algorithm_version;
 	calc_center_param.center_type = param->center_type;
 	calc_center_param.coord_type = ISP_COORD_IMAGE;
@@ -176,17 +173,17 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 		goto EXIT;
 	}
 
-	/*used to receive nonstandard gain*/
-	nonstd_buf = (cmr_u16 *)malloc(lsc_gain_size);
+	/*used to receive nonstandard gain */
+	nonstd_buf = (cmr_u16 *) malloc(lsc_gain_size);
 	if (NULL == nonstd_buf) {
 		goto EXIT;
 	}
 
 	nonstd_img = *std_img;
 
-	for (i=0; i<nonstd_image_num; i++) {
+	for (i = 0; i < nonstd_image_num; i++) {
 
-		struct lsc_calc_diff_param calc_diff_param = {0};
+		struct lsc_calc_diff_param calc_diff_param = { 0 };
 		cmr_u32 chn_diff_num = 0;
 		cmr_u32 j = 0;
 
@@ -195,7 +192,7 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 			goto EXIT;
 		}
 
-		/*calc lsc gain for nonstandard image*/
+		/*calc lsc gain for nonstandard image */
 		calc_gain_param.image = nonstd_img;
 		calc_gain_param.target_buf = nonstd_buf;
 		calc_gain_param.target_buf_size = lsc_gain_size;
@@ -219,21 +216,19 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 		if (GOLDEN_SUCCESS != rtn) {
 			goto EXIT;
 		}
-
 #if GOLDEN_DEBUG
 		{
-			char save_name[64] = {0};
+			char save_name[64] = { 0 };
 
-			for (j=0; j<4; j++) {
+			for (j = 0; j < 4; j++) {
 				sprintf(save_name, "output\\nonstd[%d]_gain_chn[%d].txt", i, j);
-				write_data_uint16_dec(save_name, nonstd_gain.chn_gain[j], std_gain.gain_width,
-					nonstd_gain.gain_height * nonstd_gain.gain_width * sizeof(cmr_u16));
+				write_data_uint16_dec(save_name, nonstd_gain.chn_gain[j], std_gain.gain_width, nonstd_gain.gain_height * nonstd_gain.gain_width * sizeof(cmr_u16));
 			}
 		}
 #endif
 
-		/*calc 1d diff*/
-		for (j=0; j<LSC_CHN_NUM; j++) {
+		/*calc 1d diff */
+		for (j = 0; j < LSC_CHN_NUM; j++) {
 			calc_diff_param.std_gain = std_gain.chn_gain[j];
 			calc_diff_param.nonstd_gain = nonstd_gain.chn_gain[j];
 			calc_diff_param.gain_width = std_gain.gain_width;
@@ -246,18 +241,17 @@ static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 			if (GOLDEN_SUCCESS != rtn) {
 				goto EXIT;
 			}
-
 #if GOLDEN_DEBUG
 			{
-				char save_name[64] = {0};
+				char save_name[64] = { 0 };
 
-					sprintf(save_name, "output\\nonstd[%d]_diff_chn[%d].txt", i, j);
-					write_data_uint16_dec(save_name, target_buf, 16, chn_diff_num * sizeof(cmr_u16));
+				sprintf(save_name, "output\\nonstd[%d]_diff_chn[%d].txt", i, j);
+				write_data_uint16_dec(save_name, target_buf, 16, chn_diff_num * sizeof(cmr_u16));
 			}
 #endif
 
 			golden_info->nonstd_diff[i].diff[j] = target_buf;
-			target_buf = (cmr_u8 *)target_buf + chn_diff_num * sizeof(cmr_u16);
+			target_buf = (cmr_u8 *) target_buf + chn_diff_num * sizeof(cmr_u16);
 			target_buf_size -= chn_diff_num;
 		}
 
@@ -279,31 +273,30 @@ EXIT:
 /*------------------------------------------------------------------------------*
 *				Public functions												*
 *-------------------------------------------------------------------------------*/
-cmr_s32 otp_golden_size(struct otp_pack_golden_param *param, cmr_u32 *size)
+cmr_s32 otp_golden_size(struct otp_pack_golden_param * param, cmr_u32 * size)
 {
 	*size = 200 * 1024;
 	return GOLDEN_SUCCESS;
 }
 
-cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
+cmr_s32 otp_pack_golden(struct otp_pack_golden_param * param, cmr_u32 * real_size)
 {
 	cmr_s32 rtn = GOLDEN_ERROR;
-	struct lsc_calc_golden_param lsc_calc_param = {0};
-	struct lsc_calc_golden_result lsc_calc_result = {0};
-	struct golden_pack_param pack_param = {0};
+	struct lsc_calc_golden_param lsc_calc_param = { 0 };
+	struct lsc_calc_golden_result lsc_calc_result = { 0 };
+	struct golden_pack_param pack_param = { 0 };
 	struct golden_lsc_info *pack_lsc_info = NULL;
-	struct lsc_calc_center_param calc_center_param = {0};
-	struct golden_pack_result pack_result = {0};
-	struct isp_center gain_center = {0};
-	struct img_rgb average_rgb = {0};
-	struct isp_img_rect awb_roi = {0};
-	struct isp_raw_image std_img = {0};
+	struct lsc_calc_center_param calc_center_param = { 0 };
+	struct golden_pack_result pack_result = { 0 };
+	struct isp_center gain_center = { 0 };
+	struct img_rgb average_rgb = { 0 };
+	struct isp_img_rect awb_roi = { 0 };
+	struct isp_raw_image std_img = { 0 };
 	cmr_u32 lsc_gain_width = 0;
 	cmr_u32 lsc_gain_height = 0;
 	void *golden_buf = NULL;
 	cmr_u32 golden_buf_size = 0;
 	cmr_u32 i = 0;
-
 
 	if (NULL == param || NULL == real_size)
 		return GOLDEN_ERROR;
@@ -311,7 +304,7 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 	if (param->nonstd_num >= MAX_NONSTD_IMAGE)
 		return GOLDEN_ERROR;
 
-	/*only support raw now*/
+	/*only support raw now */
 	if (param->image_pattern > 3 || 0 != param->image_format)
 		return GOLDEN_ERROR;
 
@@ -336,22 +329,21 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 	lsc_calc_param.std_image = std_img;
 	lsc_calc_param.nonstd_image_num = param->nonstd_num;
 
-	for (i=0; i<param->nonstd_num; i++) {
+	for (i = 0; i < param->nonstd_num; i++) {
 		lsc_calc_param.nonstd_image[i] = param->nonstd_img[i];
 	}
 
-	/*estimate buffer size*/
+	/*estimate buffer size */
 	rtn = lsc_calc_gain_size(lsc_calc_param.std_image.width, lsc_calc_param.std_image.height,
-						lsc_calc_param.grid_size, lsc_calc_param.algorithm_version,
-						&lsc_gain_width, &lsc_gain_height);
+				 lsc_calc_param.grid_size, lsc_calc_param.algorithm_version, &lsc_gain_width, &lsc_gain_height);
 	if (GOLDEN_SUCCESS != rtn) {
 		return rtn;
 	}
 
 	golden_buf_size = lsc_gain_width * lsc_gain_height * (lsc_calc_param.nonstd_image_num + 1)
-							* sizeof(cmr_u16) * LSC_CHN_NUM;
+	    * sizeof(cmr_u16) * LSC_CHN_NUM;
 
-	/*allocate target buffer*/
+	/*allocate target buffer */
 	golden_buf = (void *)malloc(golden_buf_size);
 	if (NULL == golden_buf)
 		return GOLDEN_ERROR;
@@ -364,7 +356,7 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 		return rtn;
 	}
 
-	/*calc center*/
+	/*calc center */
 	calc_center_param.algorithm_version = param->lsc.alg_version;
 	calc_center_param.center_type = param->lsc.center_type;
 	calc_center_param.coord_type = ISP_COORD_GRID;
@@ -376,7 +368,7 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 		goto EXIT;
 	}
 
-	/*calculate awb*/
+	/*calculate awb */
 	awb_roi.x = param->awb.roi_x;
 	awb_roi.y = param->awb.roi_y;
 	awb_roi.w = param->awb.roi_width;
@@ -390,7 +382,7 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 	pack_param.awb_info.avg_g = average_rgb.g;
 	pack_param.awb_info.avg_b = average_rgb.b;
 
-	/*calculate lsc*/
+	/*calculate lsc */
 	pack_lsc_info = &pack_param.lsc_info;
 	pack_lsc_info->alg_version = param->lsc.alg_version;
 	pack_lsc_info->alg_type = param->lsc.alg_type;
@@ -412,7 +404,7 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 	pack_lsc_info->gain_height = lsc_calc_result.std_gain.gain_height;
 	pack_lsc_info->nonstd_num = param->nonstd_num;
 
-	for (i=0; i<param->nonstd_num; i++) {
+	for (i = 0; i < param->nonstd_num; i++) {
 		pack_lsc_info->nonstd_ct[i] = param->nonstd_ct[i];
 		pack_lsc_info->nonstd_diff[i] = lsc_calc_result.nonstd_diff[i];
 	}
@@ -441,7 +433,7 @@ cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 
 EXIT:
 	if (NULL != golden_buf) {
-		free (golden_buf);
+		free(golden_buf);
 		golden_buf = NULL;
 	}
 

@@ -25,8 +25,7 @@ cmr_s32 isp_u_raw_aem_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -35,7 +34,7 @@ cmr_s32 isp_u_raw_aem_block(isp_handle handle, void *block_info)
 		return ret;
 	}
 
-	if(((struct isp_dev_raw_aem_info*)block_info)->bypass > 1){
+	if (((struct isp_dev_raw_aem_info *)block_info)->bypass > 1) {
 		return ret;
 
 	}
@@ -57,8 +56,7 @@ cmr_s32 isp_u_raw_aem_bypass(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -80,8 +78,7 @@ cmr_s32 isp_u_raw_aem_mode(isp_handle handle, cmr_u32 mode)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: 0x%lx",
-				(cmr_uint)handle);
+		ISP_LOGE("handle is null error: 0x%lx", (cmr_uint) handle);
 		return -1;
 	}
 
@@ -96,10 +93,7 @@ cmr_s32 isp_u_raw_aem_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_raw_aem_statistics(isp_handle handle,
-		cmr_u32 *r_info,
-		cmr_u32 *g_info,
-		cmr_u32 *b_info)
+cmr_s32 isp_u_raw_aem_statistics(isp_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -112,8 +106,7 @@ cmr_s32 isp_u_raw_aem_statistics(isp_handle handle,
 	}
 
 	if (!r_info || !g_info || !b_info) {
-		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx",
-			(cmr_uint)r_info, (cmr_uint)g_info, (cmr_uint)b_info);
+		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx", (cmr_uint) r_info, (cmr_uint) g_info, (cmr_uint) b_info);
 		return -1;
 	}
 

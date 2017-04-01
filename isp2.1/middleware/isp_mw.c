@@ -35,18 +35,18 @@ void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_eve
 	UNUSED(grab_event_cb);
 }
 
-void isp_statis_evt_cb(cmr_int evt, void* data, void* privdata)
+void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 {
 	//struct camera_context *cxt = (struct camera_context *)privdata;
 	//struct isp_context *isp_cxt = cxt->isp_cxt;
-	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;//isp_cxt->isp_handle;
+	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;	//isp_cxt->isp_handle;
 	UNUSED(evt);
 
 	isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);
 
 }
 
-void isp_irq_proc_evt_cb(cmr_int evt, void* data, void* privdata)
+void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
 {
 	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
@@ -57,9 +57,9 @@ void isp_irq_proc_evt_cb(cmr_int evt, void* data, void* privdata)
 
 static cmr_s32 _isp_check_video_param(struct isp_video_start *param_ptr)
 {
-	cmr_s32                         rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
-	if ((ISP_ZERO != (param_ptr->size.w&ISP_ONE)) || (ISP_ZERO != (param_ptr->size.h&ISP_ONE))) {
+	if ((ISP_ZERO != (param_ptr->size.w & ISP_ONE)) || (ISP_ZERO != (param_ptr->size.h & ISP_ONE))) {
 		rtn = ISP_PARAM_ERROR;
 		ISP_RETURN_IF_FAIL(rtn, ("fail to check video param input size: w:%d, h:%d error", param_ptr->size.w, param_ptr->size.h));
 	}
@@ -67,11 +67,11 @@ static cmr_s32 _isp_check_video_param(struct isp_video_start *param_ptr)
 	return rtn;
 }
 
-static cmr_s32 _isp_check_proc_start_param(struct ips_in_param* in_param_ptr)
+static cmr_s32 _isp_check_proc_start_param(struct ips_in_param *in_param_ptr)
 {
-	cmr_s32                         rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
-	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w&ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_frame.img_size.h&ISP_ONE))) {
+	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w & ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_frame.img_size.h & ISP_ONE))) {
 		rtn = ISP_PARAM_ERROR;
 		ISP_RETURN_IF_FAIL(rtn, ("ifail to check start param input size: w:%d, h:%d error", in_param_ptr->src_frame.img_size.w, in_param_ptr->src_frame.img_size.h));
 	}
@@ -79,11 +79,11 @@ static cmr_s32 _isp_check_proc_start_param(struct ips_in_param* in_param_ptr)
 	return rtn;
 }
 
-static cmr_s32 _isp_check_proc_next_param(struct ipn_in_param* in_param_ptr)
+static cmr_s32 _isp_check_proc_next_param(struct ipn_in_param *in_param_ptr)
 {
-	cmr_s32                         rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
-	if ((ISP_ZERO != (in_param_ptr->src_slice_height&ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_avail_height&ISP_ONE))) {
+	if ((ISP_ZERO != (in_param_ptr->src_slice_height & ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_avail_height & ISP_ONE))) {
 		rtn = ISP_PARAM_ERROR;
 		ISP_RETURN_IF_FAIL(rtn, ("fail to check param,input size:src_slice_h:%d,src_avail_h:%d error", in_param_ptr->src_slice_height, in_param_ptr->src_avail_height));
 	}
@@ -92,7 +92,7 @@ static cmr_s32 _isp_check_proc_next_param(struct ipn_in_param* in_param_ptr)
 }
 
 /* Public Function Prototypes */
-cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
+cmr_int isp_init(struct isp_init_param * input_ptr, cmr_handle * isp_handler)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = NULL;
@@ -101,9 +101,9 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 	ISP_LOGI(":ISP:E");
 
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
-	memset((void*)cxt, 0x00, sizeof(cxt));
+	memset((void *)cxt, 0x00, sizeof(cxt));
 	if (!input_ptr || !isp_handler) {
-		ISP_LOGE("fail to check init param,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint)input_ptr,(cmr_uint)isp_handler);
+		ISP_LOGE("fail to check init param,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint) input_ptr, (cmr_uint) isp_handler);
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -124,11 +124,11 @@ exit:
 		if (cxt) {
 			rtn = isp_alg_fw_deinit(cxt->alg_fw_handle);
 			rtn = isp_dev_access_deinit(cxt->dev_access_handle);
-			free((void*)cxt);
+			free((void *)cxt);
 			cxt = NULL;
 		}
 	} else {
-		*isp_handler = (isp_handle)cxt;
+		*isp_handler = (isp_handle) cxt;
 	}
 
 	ISP_LOGI(":ISP:X %ld", rtn);
@@ -183,7 +183,7 @@ cmr_int isp_capability(cmr_handle isp_handler, enum isp_capbility_cmd cmd, void 
 
 cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr)
 {
-	cmr_int                             rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
 
 	if (NULL == cxt) {
@@ -198,9 +198,9 @@ cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr
 	return rtn;
 }
 
-cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start *param_ptr)
+cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start * param_ptr)
 {
-	cmr_int                             rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
 	if (!isp_handler || !param_ptr) {
 		rtn = ISP_PARAM_ERROR;
@@ -230,7 +230,7 @@ exit:
 	return rtn;
 }
 
-cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_ptr, struct ips_out_param *out_ptr)
+cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param * in_ptr, struct ips_out_param * out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
@@ -249,7 +249,7 @@ cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_ptr, stru
 	return rtn;
 }
 
-cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
+cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param * in_ptr, struct ips_out_param * out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
@@ -268,12 +268,11 @@ cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param *in_ptr, struc
 	return rtn;
 }
 
-cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
+cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param * buf_cfg)
 {
-	cmr_int                    ret = ISP_SUCCESS;
+	cmr_int ret = ISP_SUCCESS;
 	UNUSED(isp_handle);
 	UNUSED(buf_cfg);
 
 	return ret;
 }
-

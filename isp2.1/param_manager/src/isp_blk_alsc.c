@@ -16,8 +16,6 @@
 
 #include "isp_blocks_cfg.h"
 
-
-
 cmr_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -27,8 +25,8 @@ cmr_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, 
 	UNUSED(param_ptr2);
 #if 0
 	struct alsc_alg0_turn_param *src_ptr = (struct alsc_alg0_turn_param *)src_alsc_param;
-	struct alsc_alg0_turn_param *dst_ptr = (struct alsc_alg0_turn_param*)dst_alsc_param;
-	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
+	struct alsc_alg0_turn_param *dst_ptr = (struct alsc_alg0_turn_param *)dst_alsc_param;
+	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
 	memcpy(dst_ptr, src_ptr, sizeof(struct alsc_alg0_turn_param));
@@ -49,7 +47,7 @@ cmr_s32 _pm_alsc_set_param(void *alsc_param, cmr_u32 cmd, void *param_ptr0, void
 	return rtn;
 }
 
-cmr_s32 _pm_alsc_get_param(void *alsc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_alsc_get_param(void *alsc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(alsc_param);
@@ -57,22 +55,22 @@ cmr_s32 _pm_alsc_get_param(void *alsc_param, cmr_u32 cmd, void* rtn_param0, void
 	UNUSED(rtn_param0);
 	UNUSED(rtn_param1);
 #if 0
-	struct isp_alsc_param *alsc_ptr = (struct isp_alsc_param*)alsc_param;
-	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
+	struct isp_alsc_param *alsc_ptr = (struct isp_alsc_param *)alsc_param;
+	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
+	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 	param_data_ptr->cmd = cmd;
-	param_data_ptr->id =ISP_BLK_SMART;
+	param_data_ptr->id = ISP_BLK_SMART;
 
 	switch (cmd) {
-		case ISP_PM_BLK_SMART_SETTING:
+	case ISP_PM_BLK_SMART_SETTING:
 		{
-			param_data_ptr->data_ptr = (void*)alsc_ptr;
+			param_data_ptr->data_ptr = (void *)alsc_ptr;
 			param_data_ptr->data_size = sizeof(struct isp_alsc_param);
 			*update_flag = ISP_ZERO;
 		}
 		break;
 	default:
-	break;
+		break;
 	}
 #endif
 	return rtn;

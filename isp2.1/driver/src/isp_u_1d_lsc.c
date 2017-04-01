@@ -25,12 +25,11 @@ cmr_s32 isp_u_1d_lsc_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
-	file = (struct isp_file*)(handle);
+	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_1D_LSC;
 	param.property = ISP_PRO_1D_LSC_BLOCK;
@@ -41,7 +40,7 @@ cmr_s32 isp_u_1d_lsc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_1d_lsc_slice_size(isp_handle handle,cmr_u32 width, cmr_u32 height)
+cmr_s32 isp_u_1d_lsc_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -53,7 +52,7 @@ cmr_s32 isp_u_1d_lsc_slice_size(isp_handle handle,cmr_u32 width, cmr_u32 height)
 		return -1;
 	}
 
-	file = (struct isp_file*)(handle);
+	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_1D_LSC;
 	param.property = ISP_PRO_1D_LSC_SLICE_SIZE;
@@ -66,7 +65,7 @@ cmr_s32 isp_u_1d_lsc_slice_size(isp_handle handle,cmr_u32 width, cmr_u32 height)
 	return ret;
 }
 
-cmr_s32 isp_u_1d_lsc_pos(isp_handle handle,struct img_offset pos)
+cmr_s32 isp_u_1d_lsc_pos(isp_handle handle, struct img_offset pos)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -77,7 +76,7 @@ cmr_s32 isp_u_1d_lsc_pos(isp_handle handle,struct img_offset pos)
 		return -1;
 	}
 
-	file = (struct isp_file*)(handle);
+	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_1D_LSC;
 	param.property = ISP_PRO_1D_LSC_POS;

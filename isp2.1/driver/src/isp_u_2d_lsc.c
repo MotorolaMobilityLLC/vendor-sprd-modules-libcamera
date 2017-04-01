@@ -25,133 +25,130 @@
 #define TABLE_LEN_128	128
 #define TABLE_LEN_96	96
 
-typedef struct lnc_bicubic_weight_t_64_tag
-{
+typedef struct lnc_bicubic_weight_t_64_tag {
 	cmr_s16 w0;
 	cmr_s16 w1;
 	cmr_s16 w2;
-}LNC_BICUBIC_WEIGHT_TABLE_T;
+} LNC_BICUBIC_WEIGHT_TABLE_T;
 
-static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_96_simple[] =
-{
-	{0,	1024,	0},
-	{-5,1024,	6},
-	{-10,1023,	12},
-	{-15,1022,	18},
-	{-20,1020,	25},
-	{-24,1017,	32},
-	{-28,1014,	40},
-	{-32,1011,	48},
-	{-36,1007,	56},
-	{-39,1003,	65},
-	{-43,998,	74},
-	{-46,993,	83},
-	{-49,987,	93},
-	{-52,981,	103},
-	{-54,974,	113},
-	{-57,967,	124},
-	{-59,960,	135},
-	{-61,952,	146},
-	{-63,944,	158},
-	{-65,936,	170},
-	{-67,927,	182},
-	{-68,918,	194},
-	{-70,908,	206},
-	{-71,898,	219},
-	{-72,888,	232},
-	{-73,878,	245},
-	{-74,867,	258},
-	{-74,856,	272},
-	{-75,844,	285},
-	{-75,833,	299},
-	{-76,821,	313},
-	{-76,809,	327},
-	{-76,796,	341},
-	{-76,784,	356},
-	{-76,771,	370},
-	{-75,758,	384},
-	{-75,745,	399},
-	{-75,732,	414},
-	{-74,718,	428},
-	{-73,704,	443},
-	{-73,691,	458},
-	{-72,677,	473},
-	{-71,663,	487},
-	{-70,648,	502},
-	{-69,634,	517},
-	{-68,620,	532},
-	{-67,605,	547},
-	{-65,591,	561},
-	{-64,576,	576},
+static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_96_simple[] = {
+	{0, 1024, 0},
+	{-5, 1024, 6},
+	{-10, 1023, 12},
+	{-15, 1022, 18},
+	{-20, 1020, 25},
+	{-24, 1017, 32},
+	{-28, 1014, 40},
+	{-32, 1011, 48},
+	{-36, 1007, 56},
+	{-39, 1003, 65},
+	{-43, 998, 74},
+	{-46, 993, 83},
+	{-49, 987, 93},
+	{-52, 981, 103},
+	{-54, 974, 113},
+	{-57, 967, 124},
+	{-59, 960, 135},
+	{-61, 952, 146},
+	{-63, 944, 158},
+	{-65, 936, 170},
+	{-67, 927, 182},
+	{-68, 918, 194},
+	{-70, 908, 206},
+	{-71, 898, 219},
+	{-72, 888, 232},
+	{-73, 878, 245},
+	{-74, 867, 258},
+	{-74, 856, 272},
+	{-75, 844, 285},
+	{-75, 833, 299},
+	{-76, 821, 313},
+	{-76, 809, 327},
+	{-76, 796, 341},
+	{-76, 784, 356},
+	{-76, 771, 370},
+	{-75, 758, 384},
+	{-75, 745, 399},
+	{-75, 732, 414},
+	{-74, 718, 428},
+	{-73, 704, 443},
+	{-73, 691, 458},
+	{-72, 677, 473},
+	{-71, 663, 487},
+	{-70, 648, 502},
+	{-69, 634, 517},
+	{-68, 620, 532},
+	{-67, 605, 547},
+	{-65, 591, 561},
+	{-64, 576, 576},
 };
 
-static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_128_simple[] =
-{
-	 {0,	1024,	0},
-	 {-4,	1024,	4},
-	 {-8,	1023,	8},
-	 {-11,	1023,	13},
-	 {-15,	1022,	18},
-	 {-18,	1020,	23},
-	 {-22,	1019,	28},
-	 {-25,	1017,	34},
-	 {-28,	1014,	40},
-	 {-31,	1012,	46},
-	 {-34,	1009,	52},
-	 {-37,	1006,	58},
-	 {-39,	1003,	65},
-	 {-42,	999,	72},
-	 {-44,	995,	78},
-	 {-47,	991,	86},
-	 {-49,	987,	93},
-	 {-51,	982,	101},
-	 {-53,	978,	108},
-	 {-55,	973,	116},
-	 {-57,	967,	124},
-	 {-59,	962,	132},
-	 {-60,	956,	141},
-	 {-62,	950,	149},
-	 {-63,	944,	158},
-	 {-65,	938,	167},
-	 {-66,	931,	176},
-	 {-67,	925,	185},
-	 {-68,	918,	194},
-	 {-69,	910,	203},
-	 {-70,	903,	213},
-	 {-71,	896,	222},
-	 {-72,	888,	232},
-	 {-73,	880,	242},
-	 {-73,	872,	252},
-	 {-74,	864,	262},
-	 {-74,	856,	272},
-	 {-75,	847,	282},
-	 {-75,	839,	292},
-	 {-75,	830,	303},
-	 {-76,	821,	313},
-	 {-76,	812,	324},
-	 {-76,	803,	334},
-	{-76,	793,	345},
-	{-76,	784,	356},
-	{-76,	774,	366},
-	{-76,	765,	377},
-	{-75,	755,	388},
-	{-75,	745,	399},
-	{-75,	735,	410},
-	{-74,	725,	421},
-	{-74,	715,	432},
-	{-73,	704,	443},
-	{-73,	694,	454},
-	{-72,	684,	465},
-	{-72,	673,	476},
-	{-71,	663,	487},
-	{-70,	652,	498},
-	{-69,	641,	510},
-	{-69,	631,	521},
-	{-68,	620,	532},
-	{-67,	609,	543},
-	{-66,	598,	554},
-	{-65,	587,	565},
-	{-64,	576,	576},
+static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_128_simple[] = {
+	{0, 1024, 0},
+	{-4, 1024, 4},
+	{-8, 1023, 8},
+	{-11, 1023, 13},
+	{-15, 1022, 18},
+	{-18, 1020, 23},
+	{-22, 1019, 28},
+	{-25, 1017, 34},
+	{-28, 1014, 40},
+	{-31, 1012, 46},
+	{-34, 1009, 52},
+	{-37, 1006, 58},
+	{-39, 1003, 65},
+	{-42, 999, 72},
+	{-44, 995, 78},
+	{-47, 991, 86},
+	{-49, 987, 93},
+	{-51, 982, 101},
+	{-53, 978, 108},
+	{-55, 973, 116},
+	{-57, 967, 124},
+	{-59, 962, 132},
+	{-60, 956, 141},
+	{-62, 950, 149},
+	{-63, 944, 158},
+	{-65, 938, 167},
+	{-66, 931, 176},
+	{-67, 925, 185},
+	{-68, 918, 194},
+	{-69, 910, 203},
+	{-70, 903, 213},
+	{-71, 896, 222},
+	{-72, 888, 232},
+	{-73, 880, 242},
+	{-73, 872, 252},
+	{-74, 864, 262},
+	{-74, 856, 272},
+	{-75, 847, 282},
+	{-75, 839, 292},
+	{-75, 830, 303},
+	{-76, 821, 313},
+	{-76, 812, 324},
+	{-76, 803, 334},
+	{-76, 793, 345},
+	{-76, 784, 356},
+	{-76, 774, 366},
+	{-76, 765, 377},
+	{-75, 755, 388},
+	{-75, 745, 399},
+	{-75, 735, 410},
+	{-74, 725, 421},
+	{-74, 715, 432},
+	{-73, 704, 443},
+	{-73, 694, 454},
+	{-72, 684, 465},
+	{-72, 673, 476},
+	{-71, 663, 487},
+	{-70, 652, 498},
+	{-69, 641, 510},
+	{-69, 631, 521},
+	{-68, 620, 532},
+	{-67, 609, 543},
+	{-66, 598, 554},
+	{-65, 587, 565},
+	{-64, 576, 576},
 };
 
 static cmr_u16 ISP_Cubic1D(cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16 box)
@@ -164,148 +161,137 @@ static cmr_u16 ISP_Cubic1D(cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u
 	cmr_s16 sub_tmp1;
 	cmr_s16 sub_tmp2;
 
-	if(box ==96)
-	{
+	if (box == 96) {
 		//use simple table
-		if ( u < (TABLE_LEN_96/2 + 1) )
-		{
-			w0 = lnc_bicubic_weight_t_96_simple[u].w0 ;
-			w1 = lnc_bicubic_weight_t_96_simple[u].w1 ;
-			w2 = lnc_bicubic_weight_t_96_simple[u].w2 ;
+		if (u < (TABLE_LEN_96 / 2 + 1)) {
+			w0 = lnc_bicubic_weight_t_96_simple[u].w0;
+			w1 = lnc_bicubic_weight_t_96_simple[u].w1;
+			w2 = lnc_bicubic_weight_t_96_simple[u].w2;
 
-			sub_tmp0 = a-d;
-			sub_tmp1 = b-d;
-			sub_tmp2 = c-d;
-			out_value_tmp = ((cmr_u32)d)<<10;
-			out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
-		}
-		else
-		{
-			w1 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w2 ;
-			w2 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w1 ;
-			w3 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w0 ;
+			sub_tmp0 = a - d;
+			sub_tmp1 = b - d;
+			sub_tmp2 = c - d;
+			out_value_tmp = ((cmr_u32) d) << 10;
+			out_value = out_value_tmp + sub_tmp0 * w0 + sub_tmp1 * w1 + sub_tmp2 * w2;
+		} else {
+			w1 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w2;
+			w2 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w1;
+			w3 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w0;
 
-			sub_tmp0 = b-a;
-			sub_tmp1 = c-a;
-			sub_tmp2 = d-a;
-			out_value_tmp = ((cmr_u32)a)<<10;
-			out_value = out_value_tmp + sub_tmp0 * w1  + sub_tmp1 * w2 + sub_tmp2 * w3;
+			sub_tmp0 = b - a;
+			sub_tmp1 = c - a;
+			sub_tmp2 = d - a;
+			out_value_tmp = ((cmr_u32) a) << 10;
+			out_value = out_value_tmp + sub_tmp0 * w1 + sub_tmp1 * w2 + sub_tmp2 * w3;
 		}
 
-	}
-	else
-	{
+	} else {
 		u = u * (TABLE_LEN_128 / box);
 
 		//use simple table
-		if ( u < (TABLE_LEN_128/2 + 1) )
-		{
-			w0 = lnc_bicubic_weight_t_128_simple[u].w0 ;
-			w1 = lnc_bicubic_weight_t_128_simple[u].w1 ;
-			w2 = lnc_bicubic_weight_t_128_simple[u].w2 ;
+		if (u < (TABLE_LEN_128 / 2 + 1)) {
+			w0 = lnc_bicubic_weight_t_128_simple[u].w0;
+			w1 = lnc_bicubic_weight_t_128_simple[u].w1;
+			w2 = lnc_bicubic_weight_t_128_simple[u].w2;
 
-			sub_tmp0 = a-d;
-			sub_tmp1 = b-d;
-			sub_tmp2 = c-d;
-			out_value_tmp = ((cmr_u32)d)<<10;
-			out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
-		}
-		else
-		{
-			w1 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w2 ;
-			w2 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w1 ;
-			w3 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w0 ;
+			sub_tmp0 = a - d;
+			sub_tmp1 = b - d;
+			sub_tmp2 = c - d;
+			out_value_tmp = ((cmr_u32) d) << 10;
+			out_value = out_value_tmp + sub_tmp0 * w0 + sub_tmp1 * w1 + sub_tmp2 * w2;
+		} else {
+			w1 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w2;
+			w2 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w1;
+			w3 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w0;
 
-			sub_tmp0 = b-a;
-			sub_tmp1 = c-a;
-			sub_tmp2 = d-a;
-			out_value_tmp = ((cmr_u32)a)<<10;
-			out_value = out_value_tmp + sub_tmp0 * w1  + sub_tmp1 * w2 + sub_tmp2 * w3;
+			sub_tmp0 = b - a;
+			sub_tmp1 = c - a;
+			sub_tmp2 = d - a;
+			out_value_tmp = ((cmr_u32) a) << 10;
+			out_value = out_value_tmp + sub_tmp0 * w1 + sub_tmp1 * w2 + sub_tmp2 * w3;
 		}
 	}
 
-	//CLIP(out_value, 4095*1024*2, 1024*1024);	// for LSC gain, 1024 = 1.0, 4095 = 4.0 ; 4095*2 is for boundary extension.
-	CLIP1(out_value, 16383*1024, 1024*1024);	// for LSC gain, 1024 = 1.0, 16383 = 16.0 ; 16383 is for boundary extension, 14 bit parameter is used.
+	//CLIP(out_value, 4095*1024*2, 1024*1024);      // for LSC gain, 1024 = 1.0, 4095 = 4.0 ; 4095*2 is for boundary extension.
+	CLIP1(out_value, 16383 * 1024, 1024 * 1024);	// for LSC gain, 1024 = 1.0, 16383 = 16.0 ; 16383 is for boundary extension, 14 bit parameter is used.
 
-	out_value_uint16_t = (cmr_u16)((out_value + 512) >> 10);
+	out_value_uint16_t = (cmr_u16) ((out_value + 512) >> 10);
 
 	return out_value_uint16_t;
 }
-
 
 static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_uint param_address, cmr_u16 grid_w, cmr_u16 grid_num, cmr_u16 u)
 {
 	cmr_u8 i;
 	cmr_u16 a0 = 0, b0 = 0, c0 = 0, d0 = 0;
 	cmr_u16 a1 = 0, b1 = 0, c1 = 0, d1 = 0;
-	cmr_u32 *addr = (cmr_u32 *)param_address;
+	cmr_u32 *addr = (cmr_u32 *) param_address;
 
 	if (param_address == 0x0 || grid_num == 0x0) {
-		ISP_LOGE("ISP_GenerateQValues param_address error addr=0x%lx grid_num=%d \n",param_address, grid_num);
+		ISP_LOGE("ISP_GenerateQValues param_address error addr=0x%lx grid_num=%d \n", param_address, grid_num);
 		return -1;
 	}
-
-
-	#if 0
+#if 0
 	for (i = 0; i < 5; i++) {
-		A0  = (cmr_u16)*(addr + i * 2) & 0xFFFF;
-		B0  = (cmr_u16)*(addr + i * 2 + grid_w * 2) & 0xFFFF;
-		C0  = (cmr_u16)*(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
-		D0  = (cmr_u16)*(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
-		A1  = (cmr_u16)(*(addr + i * 2) >> 16);
-		B1  = (cmr_u16)(*(addr + i * 2 + grid_w * 2) >> 16);
-		C1  = (cmr_u16)(*(addr + i * 2 + grid_w * 2 * 2) >> 16);
-		D1  = (cmr_u16)(*(addr + i * 2 + grid_w * 2 * 3) >> 16);
+		A0 = (cmr_u16) * (addr + i * 2) & 0xFFFF;
+		B0 = (cmr_u16) * (addr + i * 2 + grid_w * 2) & 0xFFFF;
+		C0 = (cmr_u16) * (addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
+		D0 = (cmr_u16) * (addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
+		A1 = (cmr_u16) (*(addr + i * 2) >> 16);
+		B1 = (cmr_u16) (*(addr + i * 2 + grid_w * 2) >> 16);
+		C1 = (cmr_u16) (*(addr + i * 2 + grid_w * 2 * 2) >> 16);
+		D1 = (cmr_u16) (*(addr + i * 2 + grid_w * 2 * 3) >> 16);
 		q_val[0][i] = ISP_Cubic1D(A0, B0, C0, D0, u, grid_num);
 		q_val[1][i] = ISP_Cubic1D(A1, B1, C1, D1, u, grid_num);
 	}
-	#endif
-	#if 1
+#endif
+#if 1
 	for (i = 0; i < 5; i++) {
 		if (1 == word_endian) {	// ABCD = 1 word
-			a0  = *(addr + i * 2) >> 16;					// AB
-			b0  = *(addr + i * 2 + grid_w * 2) >> 16;       // AB
-			c0  = *(addr + i * 2 + grid_w * 2 * 2) >> 16;   // AB
-			d0  = *(addr + i * 2 + grid_w * 2 * 3) >> 16;   // AB
-			a1  = *(addr + i * 2) & 0xFFFF;					// CD
-			b1  = *(addr + i * 2 + grid_w * 2) & 0xFFFF;    // CD
-			c1  = *(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;// CD
-			d1  = *(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;// CD
-		} else if (2 == word_endian) { // CDAB = 1 word
-			a0  = *(addr + i * 2) & 0xFFFF;
-			b0  = *(addr + i * 2 + grid_w * 2) & 0xFFFF;
-			c0  = *(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
-			d0  = *(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
-			a1  = *(addr + i * 2) >> 16;
-			b1  = *(addr + i * 2 + grid_w * 2) >> 16;
-			c1  = *(addr + i * 2 + grid_w * 2 * 2) >> 16;
-			d1  = *(addr + i * 2 + grid_w * 2 * 3) >> 16;
-		} else if (0 == word_endian) { // DCBA = 1 word
-			a0  = ((*(addr + i * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2) >> 8) & 0x000000FF);
-			b0  = ((*(addr + i * 2 + grid_w * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x000000FF);
-			c0  = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x000000FF);
-			d0  = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x000000FF);
-			a1  = ((*(addr + i * 2) << 8) & 0xFF000000) | ((*(addr + i * 2) >> 8) & 0x00FF0000);
-			b1  = ((*(addr + i * 2 + grid_w * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x00FF0000);
-			c1  = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x00FF0000);
-			d1  = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x00FF0000);
-		} else if (3 == word_endian) { // BADC = 1 word
-			a0  = ((*(addr + i * 2) << 8) & 0xFF000000) | ((*(addr + i * 2) >> 8) & 0x00FF0000);
-			b0  = ((*(addr + i * 2 + grid_w * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x00FF0000);
-			c0  = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x00FF0000);
-			d0  = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x00FF0000);
-			a1  = ((*(addr + i * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2) >> 8) & 0x000000FF);
-			b1  = ((*(addr + i * 2 + grid_w * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x000000FF);
-			c1  = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x000000FF);
-			d1  = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x000000FF);
+			a0 = *(addr + i * 2) >> 16;	// AB
+			b0 = *(addr + i * 2 + grid_w * 2) >> 16;	// AB
+			c0 = *(addr + i * 2 + grid_w * 2 * 2) >> 16;	// AB
+			d0 = *(addr + i * 2 + grid_w * 2 * 3) >> 16;	// AB
+			a1 = *(addr + i * 2) & 0xFFFF;	// CD
+			b1 = *(addr + i * 2 + grid_w * 2) & 0xFFFF;	// CD
+			c1 = *(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;	// CD
+			d1 = *(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;	// CD
+		} else if (2 == word_endian) {	// CDAB = 1 word
+			a0 = *(addr + i * 2) & 0xFFFF;
+			b0 = *(addr + i * 2 + grid_w * 2) & 0xFFFF;
+			c0 = *(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
+			d0 = *(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
+			a1 = *(addr + i * 2) >> 16;
+			b1 = *(addr + i * 2 + grid_w * 2) >> 16;
+			c1 = *(addr + i * 2 + grid_w * 2 * 2) >> 16;
+			d1 = *(addr + i * 2 + grid_w * 2 * 3) >> 16;
+		} else if (0 == word_endian) {	// DCBA = 1 word
+			a0 = ((*(addr + i * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2) >> 8) & 0x000000FF);
+			b0 = ((*(addr + i * 2 + grid_w * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x000000FF);
+			c0 = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x000000FF);
+			d0 = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x000000FF);
+			a1 = ((*(addr + i * 2) << 8) & 0xFF000000) | ((*(addr + i * 2) >> 8) & 0x00FF0000);
+			b1 = ((*(addr + i * 2 + grid_w * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x00FF0000);
+			c1 = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x00FF0000);
+			d1 = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x00FF0000);
+		} else if (3 == word_endian) {	// BADC = 1 word
+			a0 = ((*(addr + i * 2) << 8) & 0xFF000000) | ((*(addr + i * 2) >> 8) & 0x00FF0000);
+			b0 = ((*(addr + i * 2 + grid_w * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x00FF0000);
+			c0 = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x00FF0000);
+			d0 = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0xFF000000) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x00FF0000);
+			a1 = ((*(addr + i * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2) >> 8) & 0x000000FF);
+			b1 = ((*(addr + i * 2 + grid_w * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2) >> 8) & 0x000000FF);
+			c1 = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x000000FF);
+			d1 = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x000000FF);
 		}
 		q_val[0][i] = ISP_Cubic1D(a0, b0, c0, d0, u, grid_num);
 		q_val[1][i] = ISP_Cubic1D(a1, b1, c1, d1, u, grid_num);
 	}
-	#endif
+#endif
 
 	return 0;
 }
+
 /*end cal Q value*/
 
 cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
@@ -315,8 +301,7 @@ cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -326,12 +311,12 @@ cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 	cmr_uint buf_addr;
 
 #if __WORDSIZE == 64
-	buf_addr = ((cmr_uint)lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
+	buf_addr = ((cmr_uint) lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
 #else
 	buf_addr = lens_info->buf_addr[0];
 #endif
 
-	if (0 == file->reserved || 0 == buf_addr ||  ISP_LSC_BUF_SIZE < lens_info->buf_len) {
+	if (0 == file->reserved || 0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
 		ISP_LOGE("lsc memory error: 0x%p %lx %x", file->reserved, buf_addr, lens_info->buf_len);
 		return ret;
 	} else {
@@ -339,7 +324,7 @@ cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 	}
 
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,
-			((cmr_u16)lens_info->grid_x_num & 0xFF) + 2,(lens_info->grid_width & 0xFF), (lens_info->relative_y & 0xFF)>>1);
+				  ((cmr_u16) lens_info->grid_x_num & 0xFF) + 2, (lens_info->grid_width & 0xFF), (lens_info->relative_y & 0xFF) >> 1);
 	if (0 != ret) {
 		ISP_LOGE("ISP_GenerateQValues is error");
 		return ret;
@@ -475,7 +460,7 @@ cmr_s32 isp_u_2d_lsc_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input *buf)
+cmr_s32 isp_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input * buf)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

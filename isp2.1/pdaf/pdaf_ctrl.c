@@ -47,7 +47,6 @@ struct pdafctrl_context {
 	struct pdafctrl_work_lib work_lib;
 };
 
-
 struct pdaf_init_msg_ctrl {
 	struct pdaf_ctrl_init_in *in;
 	struct pdaf_ctrl_init_out *out;
@@ -59,10 +58,9 @@ struct pdaf_ctrl_msg_ctrl {
 	struct pdaf_ctrl_param_out *out;
 };
 
-
-static cmr_u32 af_set_pdinfo(void* handle, struct pd_result* in_param)
+static cmr_u32 af_set_pdinfo(void *handle, struct pd_result *in_param)
 {
-	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context*)handle;
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
 	if (cxt_ptr->pdaf_set_cb) {
 		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_PD_INFO, in_param, NULL);
@@ -97,7 +95,7 @@ exit:
 static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context*)handle;
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 	struct pdafctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
@@ -117,12 +115,10 @@ exit:
 	return rtn;
 }
 
-static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd,
-			      struct pdaf_ctrl_param_in *in,
-			      struct pdaf_ctrl_param_out *out)
+static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_in *in, struct pdaf_ctrl_param_out *out)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context*)handle;
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 	struct pdafctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
@@ -143,9 +139,7 @@ exit:
 
 }
 
-static cmr_int pdafctrl_process(cmr_handle handle,
-				 struct pdaf_ctrl_process_in *in,
-				 struct pdaf_ctrl_process_out *out)
+static cmr_int pdafctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in, struct pdaf_ctrl_process_out *out)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
@@ -194,12 +188,10 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case PDAFCTRL_EVT_IOCTRL:
 		msg_ctrl = (struct pdaf_ctrl_msg_ctrl *)message->data;
-		ret = pdafctrl_ioctrl(handle, msg_ctrl->cmd,
-				   msg_ctrl->in, msg_ctrl->out);
+		ret = pdafctrl_ioctrl(handle, msg_ctrl->cmd, msg_ctrl->in, msg_ctrl->out);
 		break;
 	case PDAFCTRL_EVT_PROCESS:
-		ret = pdafctrl_process(handle, (struct pdaf_ctrl_process_in *)message->data,
-					NULL);
+		ret = pdafctrl_process(handle, (struct pdaf_ctrl_process_in *)message->data, NULL);
 		break;
 	default:
 		ISP_LOGE("fail to proc,don't support msg");
@@ -215,10 +207,7 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
 
-	ret = cmr_thread_create(&cxt->thread_cxt.ctrl_thr_handle,
-				PDAFCTRL_MSG_QUEUE_SIZE,
-				pdafctrl_thread_proc,
-				(void *)handle);
+	ret = cmr_thread_create(&cxt->thread_cxt.ctrl_thr_handle, PDAFCTRL_MSG_QUEUE_SIZE, pdafctrl_thread_proc, (void *)handle);
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create main thread %ld", ret);
 		ret = ISP_ERROR;
@@ -270,14 +259,13 @@ exit:
 	return ret;
 }
 
-cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
-		     struct pdaf_ctrl_init_out *out, cmr_handle *handle)
+cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out * out, cmr_handle * handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	/* create handle */
 	struct pdafctrl_context *cxt = NULL;
 
-	if (!in ||  !handle) {
+	if (!in || !handle) {
 		ISP_LOGE("fail to check init param, input_ptr is %p", in);
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -307,7 +295,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	}
 
 	/* find vendor adpter */
-	ret  = adpt_get_ops(ADPT_LIB_PDAF, &in->lib_param, &cxt->work_lib.adpt_ops);
+	ret = adpt_get_ops(ADPT_LIB_PDAF, &in->lib_param, &cxt->work_lib.adpt_ops);
 
 	if (ret) {
 		ISP_LOGE("fail to get adapter layer ret = %ld", ret);
@@ -331,7 +319,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 		goto error_adpt_init;
 	}
 sucess_exit:
-	ISP_LOGI(":ISP: done ret=%ld",ret);
+	ISP_LOGI(":ISP: done ret=%ld", ret);
 	*handle = (cmr_handle) cxt;
 	return ret;
 error_adpt_init:
@@ -345,7 +333,7 @@ exit:
 	return ret;
 }
 
-cmr_int pdaf_ctrl_deinit(cmr_handle *handle)
+cmr_int pdaf_ctrl_deinit(cmr_handle * handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct pdafctrl_context *cxt_ptr = *handle;
@@ -373,15 +361,14 @@ cmr_int pdaf_ctrl_deinit(cmr_handle *handle)
 
 exit:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 		*handle = NULL;
 	}
 	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }
 
-cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
-			struct pdaf_ctrl_process_out *out)
+cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in * in, struct pdaf_ctrl_process_out * out)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
@@ -421,9 +408,7 @@ exit:
 	return ret;
 }
 
-cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
-		       struct pdaf_ctrl_param_in *in,
-		       struct pdaf_ctrl_param_out *out)
+cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_in * in, struct pdaf_ctrl_param_out * out)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;

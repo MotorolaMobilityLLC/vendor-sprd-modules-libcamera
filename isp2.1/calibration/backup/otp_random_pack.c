@@ -39,7 +39,7 @@
 /*------------------------------------------------------------------------------*
 *				Public functions												*
 *-------------------------------------------------------------------------------*/
-cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u32 *real_size)
+cmr_s32 otp_random_size(struct otp_pack_random_param * param, cmr_u32 * real_size)
 {
 	if (NULL == param || NULL == real_size)
 		return RANDOM_ERROR;
@@ -49,36 +49,36 @@ cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u32 *real_size)
 	return RANDOM_SUCCESS;
 }
 
-cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
+cmr_s32 otp_pack_random(struct otp_pack_random_param * param, cmr_u32 * real_size)
 {
 	cmr_s32 rtn = RANDOM_ERROR;
-	struct random_pack_param pack_param = {0};
-	struct random_pack_result pack_result = {0};
-	struct lsc_calc_gain_param lsc_calc_param = {0};
-	struct lsc_calc_center_param calc_center_param = {0};
-	struct lsc_gain_info lsc_gain = {0};
-	struct isp_raw_image std_image = {0};
-	struct isp_raw_image flash_image = {0};
-	struct isp_center gain_center = {0};
-	struct img_rgb average_rgb = {0};
-	struct isp_img_rect awb_roi = {0};
+	struct random_pack_param pack_param = { 0 };
+	struct random_pack_result pack_result = { 0 };
+	struct lsc_calc_gain_param lsc_calc_param = { 0 };
+	struct lsc_calc_center_param calc_center_param = { 0 };
+	struct lsc_gain_info lsc_gain = { 0 };
+	struct isp_raw_image std_image = { 0 };
+	struct isp_raw_image flash_image = { 0 };
+	struct isp_center gain_center = { 0 };
+	struct img_rgb average_rgb = { 0 };
+	struct isp_img_rect awb_roi = { 0 };
 	cmr_u32 lsc_gain_width = 0;
 	cmr_u32 lsc_gain_height = 0;
 	void *lsc_gain_buf = NULL;
 	cmr_u32 lsc_gain_size = 0;
 	cmr_u32 grid_size = 0;
-	cmr_u16 chn_size=0;
-	cmr_u16 * lsc_gain_chn[4] = {NULL};
+	cmr_u16 chn_size = 0;
+	cmr_u16 *lsc_gain_chn[4] = { NULL };
 
-	cmr_u16 * lsc_r_gain = NULL;
-	cmr_u16 * lsc_gr_gain = NULL;
-	cmr_u16 * lsc_gb_gain = NULL;
-	cmr_u16 * lsc_b_gain = NULL;
+	cmr_u16 *lsc_r_gain = NULL;
+	cmr_u16 *lsc_gr_gain = NULL;
+	cmr_u16 *lsc_gb_gain = NULL;
+	cmr_u16 *lsc_b_gain = NULL;
 
-	cmr_u32 i=0;
-	cmr_u32 chn_gain_size=0;
+	cmr_u32 i = 0;
+	cmr_u32 chn_gain_size = 0;
 
-	cmr_u16 * compress_buf = NULL;
+	cmr_u16 *compress_buf = NULL;
 
 	const char file_path[] = "output\\";
 	static char pack_name[128] = "";
@@ -86,7 +86,7 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 	if (NULL == param || NULL == real_size)
 		return RANDOM_ERROR;
 
-	/*only support raw now*/
+	/*only support raw now */
 	if (param->image_pattern > 3 || 0 != param->image_format)
 		return RANDOM_ERROR;
 
@@ -107,16 +107,15 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 	std_image.height = param->image_height;
 	std_image.data = param->image_data;
 
-	/*estimate buffer size*/
-	rtn = lsc_calc_gain_size(std_image.width, std_image.height, grid_size,
-							param->lsc.alg_version, &lsc_gain_width, &lsc_gain_height);
+	/*estimate buffer size */
+	rtn = lsc_calc_gain_size(std_image.width, std_image.height, grid_size, param->lsc.alg_version, &lsc_gain_width, &lsc_gain_height);
 	if (RANDOM_SUCCESS != rtn) {
 		goto EXIT;
 	}
 
 	lsc_gain_size = lsc_gain_width * lsc_gain_height * sizeof(cmr_u16) * LSC_CHN_NUM * 2;
 
-	/*allocate target buffer*/
+	/*allocate target buffer */
 	lsc_gain_buf = (void *)malloc(lsc_gain_size);
 	if (NULL == lsc_gain_buf) {
 		goto EXIT;
@@ -149,31 +148,30 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 	if (RANDOM_SUCCESS != rtn) {
 		goto EXIT;
 	}
-
 #ifdef TEST_COMPRESS
-	for(i=0;i<LSC_CHN_NUM;i++){
-		sprintf(pack_name, "%sgain_not_compress[%d].bin",file_path,i);
+	for (i = 0; i < LSC_CHN_NUM; i++) {
+		sprintf(pack_name, "%sgain_not_compress[%d].bin", file_path, i);
 		write_data_uint16(pack_name, lsc_gain.chn_gain[i], lsc_gain.chn_size);
 	}
 #endif
 
-	/*compress gain or not*/
-	if(COMPRESS==lsc_calc_param.compress){
-		rtn = Calc_chn_size(param->lsc.grid_height, param->image_width,param->image_height,param->lsc.alg_version,& chn_size);
+	/*compress gain or not */
+	if (COMPRESS == lsc_calc_param.compress) {
+		rtn = Calc_chn_size(param->lsc.grid_height, param->image_width, param->image_height, param->lsc.alg_version, &chn_size);
 		if (RANDOM_SUCCESS != rtn) {
-		goto EXIT;
+			goto EXIT;
 		}
 
-		compress_buf = (cmr_u16 *)malloc(chn_size*LSC_CHN_NUM);
-		if(NULL == compress_buf){
-		goto EXIT;
+		compress_buf = (cmr_u16 *) malloc(chn_size * LSC_CHN_NUM);
+		if (NULL == compress_buf) {
+			goto EXIT;
 		}
-		memset(compress_buf, 0, chn_size*LSC_CHN_NUM);
+		memset(compress_buf, 0, chn_size * LSC_CHN_NUM);
 
 		lsc_r_gain = compress_buf;
-		lsc_gr_gain = (cmr_u16 *)((cmr_u8 *)lsc_r_gain + chn_size);
-		lsc_gb_gain = (cmr_u16 *)((cmr_u8 *)lsc_gr_gain + chn_size);
-		lsc_b_gain = (cmr_u16 *)((cmr_u8 *)lsc_gb_gain + chn_size);
+		lsc_gr_gain = (cmr_u16 *) ((cmr_u8 *) lsc_r_gain + chn_size);
+		lsc_gb_gain = (cmr_u16 *) ((cmr_u8 *) lsc_gr_gain + chn_size);
+		lsc_b_gain = (cmr_u16 *) ((cmr_u8 *) lsc_gb_gain + chn_size);
 
 		compress_bit14(lsc_gain.gain_width, lsc_gain.gain_height, lsc_r_gain, lsc_gain.chn_gain[0], &chn_gain_size);
 		compress_bit14(lsc_gain.gain_width, lsc_gain.gain_height, lsc_gr_gain, lsc_gain.chn_gain[1], &chn_gain_size);
@@ -181,22 +179,20 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 		compress_bit14(lsc_gain.gain_width, lsc_gain.gain_height, lsc_b_gain, lsc_gain.chn_gain[3], &chn_gain_size);
 
 		lsc_gain.chn_gain[0] = lsc_r_gain;
-		lsc_gain.chn_gain[1] = (cmr_u16 *)((cmr_u8 *)lsc_gain.chn_gain[0]+chn_size);
-		lsc_gain.chn_gain[2] = (cmr_u16 *)((cmr_u8 *)lsc_gain.chn_gain[1]+chn_size);
-		lsc_gain.chn_gain[3] = (cmr_u16 *)((cmr_u8 *)lsc_gain.chn_gain[2]+chn_size);
-
+		lsc_gain.chn_gain[1] = (cmr_u16 *) ((cmr_u8 *) lsc_gain.chn_gain[0] + chn_size);
+		lsc_gain.chn_gain[2] = (cmr_u16 *) ((cmr_u8 *) lsc_gain.chn_gain[1] + chn_size);
+		lsc_gain.chn_gain[3] = (cmr_u16 *) ((cmr_u8 *) lsc_gain.chn_gain[2] + chn_size);
 
 		lsc_gain.chn_size = chn_size;
 	}
-
 #ifdef TEST_COMPRESS
-	for(i=0;i<LSC_CHN_NUM;i++){
-		sprintf(pack_name, "%sgain_compress[%d].bin",file_path,i);
+	for (i = 0; i < LSC_CHN_NUM; i++) {
+		sprintf(pack_name, "%sgain_compress[%d].bin", file_path, i);
 		write_data_uint16(pack_name, lsc_gain.chn_gain[i], lsc_gain.chn_size);
 	}
 #endif
 
-	/*calc center*/
+	/*calc center */
 	calc_center_param.algorithm_version = param->lsc.alg_version;
 	calc_center_param.center_type = param->lsc.center_type;
 	calc_center_param.coord_type = ISP_COORD_GRID;
@@ -208,7 +204,7 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 		goto EXIT;
 	}
 
-	/*calculate awb info for standard image*/
+	/*calculate awb info for standard image */
 	awb_roi.x = param->awb.roi_x;
 	awb_roi.y = param->awb.roi_y;
 	awb_roi.w = param->awb.roi_width;
@@ -222,7 +218,7 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 	pack_param.awb_info.avg_g = average_rgb.g;
 	pack_param.awb_info.avg_b = average_rgb.b;
 
-	/*pack*/
+	/*pack */
 	pack_param.lsc_info.alg_version = param->lsc.alg_version;
 	pack_param.lsc_info.base_gain = param->base_gain;
 	pack_param.lsc_info.bayer_pattern = std_image.bayer_pattern;
@@ -255,15 +251,14 @@ cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 
 EXIT:
 	if (NULL != lsc_gain_buf) {
-		free (lsc_gain_buf);
+		free(lsc_gain_buf);
 		lsc_gain_buf = NULL;
 	}
 
-	if(NULL != compress_buf){
+	if (NULL != compress_buf) {
 		free(compress_buf);
 		compress_buf = NULL;
 	}
 
 	return rtn;
 }
-

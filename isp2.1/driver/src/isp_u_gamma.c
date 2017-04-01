@@ -25,8 +25,7 @@ cmr_s32 isp_u_gamma_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -63,15 +62,14 @@ cmr_s32 isp_u_gamma_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_gamma_node(isp_handle handle, cmr_u16 *node_ptr)
+cmr_s32 isp_u_gamma_node(isp_handle handle, cmr_u16 * node_ptr)
 {
 	cmr_s32 ret = 0, i = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !node_ptr) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)node_ptr);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) node_ptr);
 		return -1;
 	}
 

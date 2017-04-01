@@ -21,7 +21,6 @@
 		input.param_data_ptr = &param_data;\
 		input.param_num = 1;} while (0);
 
-
 #define AFCTRL_EVT_BASE				0x2000
 #define AFCTRL_EVT_INIT				AFCTRL_EVT_BASE
 #define AFCTRL_EVT_DEINIT			(AFCTRL_EVT_BASE + 1)
@@ -44,9 +43,9 @@ struct afctrl_cxt {
 */
 cmr_s32 g_af_log_level = LOG_LEVEL_LOGD;
 
-static cmr_s32 af_set_pos(void* handle_af, struct af_motor_pos* in_param)
+static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
@@ -55,37 +54,37 @@ static cmr_s32 af_set_pos(void* handle_af, struct af_motor_pos* in_param)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_end_notice(void* handle_af, struct af_result_param* in_param)
+static cmr_s32 af_end_notice(void *handle_af, struct af_result_param *in_param)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct isp_af_notice af_notice = {0x00, 0x00};
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+	struct isp_af_notice af_notice = { 0x00, 0x00 };
 
 	af_notice.mode = ISP_FOCUS_MOVE_END;
 	af_notice.valid_win = in_param->suc_win;
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_END_NOTICE, (void*)&af_notice, NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_END_NOTICE, (void *)&af_notice, NULL);
 	}
 
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_start_notice(void* handle_af)
+static cmr_s32 af_start_notice(void *handle_af)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct isp_af_notice af_notice = {0x00, 0x00};
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+	struct isp_af_notice af_notice = { 0x00, 0x00 };
 
 	af_notice.mode = ISP_FOCUS_MOVE_START;
 	af_notice.valid_win = 0x00;
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_START_NOTICE, (void*)&af_notice, NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_START_NOTICE, (void *)&af_notice, NULL);
 	}
 
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_ae_awb_lock(void* handle_af)
+static cmr_s32 af_ae_awb_lock(void *handle_af)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	struct ae_calc_out ae_result;
 
 	memset(&ae_result, 0x00, sizeof(ae_result));
@@ -96,9 +95,9 @@ static cmr_s32 af_ae_awb_lock(void* handle_af)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_ae_awb_release(void* handle_af)
+static cmr_s32 af_ae_awb_release(void *handle_af)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	struct ae_calc_out ae_result;
 
 	memset(&ae_result, 0x00, sizeof(ae_result));
@@ -109,9 +108,9 @@ static cmr_s32 af_ae_awb_release(void* handle_af)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_lock_module(void* handle_af, cmr_int af_locker_type)
+static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	struct ae_calc_out ae_result;
 
 	memset(&ae_result, 0x00, sizeof(ae_result));
@@ -122,7 +121,7 @@ static cmr_s32 af_lock_module(void* handle_af, cmr_int af_locker_type)
 		return ISP_PARAM_NULL;
 	}
 
-	switch(af_locker_type){
+	switch (af_locker_type) {
 	case AF_LOCKER_AE:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_LOCK, NULL, (void *)&ae_result);
 		break;
@@ -143,9 +142,9 @@ static cmr_s32 af_lock_module(void* handle_af, cmr_int af_locker_type)
 	return rtn;
 }
 
-static cmr_s32 af_unlock_module(void* handle_af, cmr_int af_locker_type)
+static cmr_s32 af_unlock_module(void *handle_af, cmr_int af_locker_type)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	struct ae_calc_out ae_result;
 
 	memset(&ae_result, 0x00, sizeof(ae_result));
@@ -156,7 +155,7 @@ static cmr_s32 af_unlock_module(void* handle_af, cmr_int af_locker_type)
 		return ISP_PARAM_NULL;
 	}
 
-	switch(af_locker_type){
+	switch (af_locker_type) {
 	case AF_LOCKER_AE:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_UNLOCK, NULL, (void *)&ae_result);
 		break;
@@ -177,9 +176,9 @@ static cmr_s32 af_unlock_module(void* handle_af, cmr_int af_locker_type)
 	return rtn;
 }
 
-static cmr_s32 af_set_monitor(void* handle_af, struct af_monitor_set* in_param, cmr_u32 cur_envi)
+static cmr_s32 af_set_monitor(void *handle_af, struct af_monitor_set *in_param, cmr_u32 cur_envi)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_MONITOR, (void *)in_param, (void *)&cur_envi);
@@ -188,9 +187,9 @@ static cmr_s32 af_set_monitor(void* handle_af, struct af_monitor_set* in_param, 
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_set_monitor_win(void* handle_af, struct af_monitor_win* in_param)
+static cmr_s32 af_set_monitor_win(void *handle_af, struct af_monitor_win *in_param)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_MONITOR_WIN, (void *)(in_param->win_pos), NULL);
@@ -199,9 +198,9 @@ static cmr_s32 af_set_monitor_win(void* handle_af, struct af_monitor_win* in_par
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_get_monitor_win_num(void* handle_af, cmr_u32 *win_num)
+static cmr_s32 af_get_monitor_win_num(void *handle_af, cmr_u32 * win_num)
 {
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_GET_MONITOR_WIN_NUM, (void *)win_num, NULL);
@@ -253,7 +252,6 @@ exit:
 	return rtn;
 }
 
-
 static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -263,8 +261,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGV(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
-		 message->data);
+	ISP_LOGV(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case AFCTRL_EVT_INIT:
@@ -289,12 +286,11 @@ exit:
 	return rtn;
 }
 
-
 static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, afctrl_ctrl_thr_proc, (void*)cxt_ptr);
+	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, afctrl_ctrl_thr_proc, (void *)cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
@@ -340,10 +336,10 @@ static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
-		if(NULL == lib_ptr->lib_handle){
+		if (NULL == lib_ptr->lib_handle) {
 			ISP_LOGE("fail to check af lib_handle!");
 			ret = ISP_ERROR;
-        }
+		}
 	} else {
 		ISP_LOGI(":ISP:adpt_init fun is NULL");
 	}
@@ -364,7 +360,7 @@ static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct afctrl_init_i
 	}
 
 	/* find vendor adpter */
-	rtn  = adpt_get_ops(ADPT_LIB_AF, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
+	rtn = adpt_get_ops(ADPT_LIB_AF, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
 		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
 		goto exit;
@@ -376,25 +372,25 @@ exit:
 	return rtn;
 }
 
-cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
+cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = NULL;
 	struct afctrl_init_out result;
 
-	memset((void*)&result, 0, sizeof(result));
+	memset((void *)&result, 0, sizeof(result));
 	input_ptr->go_position = af_set_pos;
 	input_ptr->end_notice = af_end_notice;
 	input_ptr->start_notice = af_start_notice;
 	input_ptr->set_monitor = af_set_monitor;
 	input_ptr->set_monitor_win = af_set_monitor_win;
-	input_ptr->get_monitor_win_num  = af_get_monitor_win_num;
+	input_ptr->get_monitor_win_num = af_get_monitor_win_num;
 	//input_ptr->ae_awb_lock = af_ae_awb_lock;
 	//input_ptr->ae_awb_release = af_ae_awb_release;
 	input_ptr->lock_module = af_lock_module;
 	input_ptr->unlock_module = af_unlock_module;
 
-	cxt_ptr = (struct afctrl_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct afctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("fail to create af ctrl context!");
 		rtn = ISP_ALLOC_ERROR;
@@ -415,7 +411,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 		goto error_adpt_init;
 	}
 
-	*handle_af = (cmr_handle)cxt_ptr;
+	*handle_af = (cmr_handle) cxt_ptr;
 
 	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
@@ -423,19 +419,19 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 error_adpt_init:
 	rtn = afctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("fail to destroy afctrl thr %ld", rtn );
+		ISP_LOGE("fail to destroy afctrl thr %ld", rtn);
 	}
 
 exit:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 		cxt_ptr = NULL;
 	}
 
 	return ISP_SUCCESS;
 }
 
-cmr_int af_ctrl_deinit(cmr_handle *handle_af)
+cmr_int af_ctrl_deinit(cmr_handle * handle_af)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = *handle_af;
@@ -451,19 +447,19 @@ cmr_int af_ctrl_deinit(cmr_handle *handle_af)
 	message.data = NULL;
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 	if (rtn) {
-		ISP_LOGE("fail to send msg to main thr %ld", rtn );
+		ISP_LOGE("fail to send msg to main thr %ld", rtn);
 		goto exit;
 	}
 
 	rtn = afctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("fail to destroy afctrl thr %ld", rtn );
+		ISP_LOGE("fail to destroy afctrl thr %ld", rtn);
 		goto exit;
 	}
 
 exit:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 		*handle_af = NULL;
 	}
 
@@ -471,10 +467,10 @@ exit:
 	return rtn;
 }
 
-cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result)
+cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out * result)
 {
-	cmr_int                         rtn = ISP_SUCCESS;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	cmr_int rtn = ISP_SUCCESS;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	ISP_CHECK_HANDLE_VALID(handle_af);
 	CMR_MSG_INIT(message);
@@ -511,7 +507,7 @@ exit:
 cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	struct afctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {

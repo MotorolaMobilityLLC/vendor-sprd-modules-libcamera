@@ -17,18 +17,10 @@
 #define RANDOM_NO 2
 #define GOLDEN_NO 2
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 extern int32_t test_create_calibration_data(uint32_t image_pattern, const char *golden_file,
 										const char *random_lsc_file, const char *random_awb_file,
 										const char *output_file);
-
-#ifdef __cplusplus
-}
-#endif
 
 char *get_output_path()
 {

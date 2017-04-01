@@ -18,7 +18,6 @@
 
 #include "isp_drv.h"
 
-
 cmr_s32 isp_u_edge_block(isp_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
@@ -26,8 +25,7 @@ cmr_s32 isp_u_edge_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -65,10 +63,7 @@ cmr_s32 isp_u_edge_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_edge_param(isp_handle handle,
-		cmr_u32 detail,
-		cmr_u32 smooth,
-		cmr_u32 strength)
+cmr_s32 isp_u_edge_param(isp_handle handle, cmr_u32 detail, cmr_u32 smooth, cmr_u32 strength)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

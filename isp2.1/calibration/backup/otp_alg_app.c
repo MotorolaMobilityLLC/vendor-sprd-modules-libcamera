@@ -36,23 +36,23 @@
 *				Local functions													*
 *-------------------------------------------------------------------------------*/
 /*compress 14 bit value to 12 bit*/
-static cmr_s32 compress_bit12(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u16 *src, cmr_u32 *size)
+static cmr_s32 compress_bit12(cmr_u16 width, cmr_u16 height, cmr_u16 * dst, cmr_u16 * src, cmr_u32 * size)
 {
 	cmr_u32 y = 0;
 	cmr_u32 x = 0;
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
 	cmr_u32 bits_left = 0;
-	cmr_u16* src_ptr = (cmr_u16*)src;
-	cmr_u16* dst_ptr = (cmr_u16*)dst;
+	cmr_u16 *src_ptr = (cmr_u16 *) src;
+	cmr_u16 *dst_ptr = (cmr_u16 *) dst;
 	cmr_u32 bits_buf = 0;
 	cmr_u32 bpp = COMPRESS_12;
 
-	for (y=0; y<height; y++) {
+	for (y = 0; y < height; y++) {
 
-		for (x=0; x<width; x++) {
+		for (x = 0; x < width; x++) {
 
-			/*source range from 1024 to 4095, ignore the lowest 2 bits*/
+			/*source range from 1024 to 4095, ignore the lowest 2 bits */
 			cmr_u16 src_value = src_ptr[i] >> 2;
 
 			bits_buf |= ((src_value) & ((1 << (bpp)) - 1)) << bits_left;
@@ -60,7 +60,7 @@ static cmr_s32 compress_bit12(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u
 
 			if (bits_left >= 16) {
 
-				dst_ptr[j] = (cmr_u16)(bits_buf & 0xffff);
+				dst_ptr[j] = (cmr_u16) (bits_buf & 0xffff);
 				bits_buf >>= 16;
 				bits_left -= 16;
 				j++;
@@ -70,8 +70,8 @@ static cmr_s32 compress_bit12(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u
 		}
 	}
 
-	if (bits_left > 0)  {
-		dst_ptr[j++] = (cmr_u16)(bits_buf & 0xffff);
+	if (bits_left > 0) {
+		dst_ptr[j++] = (cmr_u16) (bits_buf & 0xffff);
 	}
 
 	*size = j;
@@ -79,30 +79,30 @@ static cmr_s32 compress_bit12(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u
 	return OTP_SUCCESS;
 }
 
-cmr_s32 compress_bit14(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u16 *src, cmr_u32 *size)
+cmr_s32 compress_bit14(cmr_u16 width, cmr_u16 height, cmr_u16 * dst, cmr_u16 * src, cmr_u32 * size)
 {
 	cmr_u32 y = 0;
 	cmr_u32 x = 0;
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
 	cmr_u32 bits_left = 0;
-	cmr_u16* src_ptr = (cmr_u16*)src;
-	cmr_u16* dst_ptr = (cmr_u16*)dst;
+	cmr_u16 *src_ptr = (cmr_u16 *) src;
+	cmr_u16 *dst_ptr = (cmr_u16 *) dst;
 	cmr_u32 bits_buf = 0;
 	cmr_u32 bpp = COMPRESS_14;
 
-	for (y=0; y<height; y++) {
+	for (y = 0; y < height; y++) {
 
-		for (x=0; x<width; x++) {
+		for (x = 0; x < width; x++) {
 
 			cmr_u16 src_value = src_ptr[i] & 0x3fff;
 
-			bits_buf |= (src_value)  << bits_left;
+			bits_buf |= (src_value) << bits_left;
 			bits_left += bpp;
 
 			if (bits_left >= 16) {
 
-				dst_ptr[j] = (cmr_u16)(bits_buf & 0xffff);
+				dst_ptr[j] = (cmr_u16) (bits_buf & 0xffff);
 				bits_buf >>= 16;
 				bits_left -= 16;
 				j++;
@@ -112,24 +112,24 @@ cmr_s32 compress_bit14(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u16 *src
 		}
 	}
 
-	if (bits_left > 0)  {
-		dst_ptr[j++] = (cmr_u16)(bits_buf & 0xffff);
+	if (bits_left > 0) {
+		dst_ptr[j++] = (cmr_u16) (bits_buf & 0xffff);
 	}
 
 	*size = j;
 
 	return OTP_SUCCESS;
 }
+
 /*------------------------------------------------------------------------------*
 *				Public functions												*
 *-------------------------------------------------------------------------------*/
-cmr_s32 calcOpticalCenter(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 data_pattern,
-					cmr_u32 data_type, cmr_u32 version_id, cmr_u32 grid, cmr_u32 base_gain,cmr_u32 corr_per,
-					cmr_u32 center_type, cmr_u16* oc_centerx, cmr_u16* oc_centery)
+cmr_s32 calcOpticalCenter(void *raw_image, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 data_pattern,
+			  cmr_u32 data_type, cmr_u32 version_id, cmr_u32 grid, cmr_u32 base_gain, cmr_u32 corr_per, cmr_u32 center_type, cmr_u16 * oc_centerx, cmr_u16 * oc_centery)
 {
 	int32 rtn = OTP_ERROR;
-	struct lsc_calc_center_param param = {0};
-	struct isp_center center = {0};
+	struct lsc_calc_center_param param = { 0 };
+	struct isp_center center = { 0 };
 
 	if (NULL == oc_centerx || NULL == oc_centery)
 		return OTP_ERROR;
@@ -197,9 +197,7 @@ cmr_s32 calcOpticalCenter(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, 
 	return OTP_SUCCESS;
 }
 
-
-
-cmr_s32 Calc_chn_size(cmr_u32 grid, cmr_u32 raw_width,cmr_u32 raw_height,cmr_u32 alg_version,cmr_u16 *chn_size)
+cmr_s32 Calc_chn_size(cmr_u32 grid, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 alg_version, cmr_u16 * chn_size)
 {
 	cmr_u32 gain_width = 0;
 	cmr_u32 gain_height = 0;
@@ -210,15 +208,12 @@ cmr_s32 Calc_chn_size(cmr_u32 grid, cmr_u32 raw_width,cmr_u32 raw_height,cmr_u32
 		return rtn;
 	}
 
-
-	*chn_size = (gain_width * gain_height  * COMPRESS_14 + 15) / 16 * 2;
+	*chn_size = (gain_width * gain_height * COMPRESS_14 + 15) / 16 * 2;
 
 	return OTP_SUCCESS;
 }
 
-
-cmr_s32 getLSCOneChannelSize(cmr_u32 grid, cmr_u32 raw_width,cmr_u32 raw_height,
-						cmr_u32 lsc_algid, cmr_u32 compress, cmr_u32 *chnnel_size)
+cmr_s32 getLSCOneChannelSize(cmr_u32 grid, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 lsc_algid, cmr_u32 compress, cmr_u32 * chnnel_size)
 {
 	cmr_s32 rtn = 0;
 	cmr_u32 alg_version = 0;
@@ -260,22 +255,22 @@ cmr_s32 getLSCOneChannelSize(cmr_u32 grid, cmr_u32 raw_width,cmr_u32 raw_height,
 	if (0 == compress) {
 		*chnnel_size = gain_width * gain_height * sizeof(cmr_u16);
 	} else if (1 == compress) {
-		*chnnel_size = (gain_width * gain_height  * COMPRESS_14 + 15) / 16 * 2;
-	}else{
+		*chnnel_size = (gain_width * gain_height * COMPRESS_14 + 15) / 16 * 2;
+	} else {
 		return OTP_ERROR;
 	}
 
 	return OTP_SUCCESS;
 }
 
-cmr_s32 calcLSC(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 data_pattern,cmr_u32 data_type,
+cmr_s32 calcLSC(void *raw_image, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 data_pattern, cmr_u32 data_type,
 		cmr_u32 lsc_algid, cmr_u32 compress, cmr_u32 grid, cmr_u32 base_gain, cmr_u32 corr_per,
-		cmr_u16* lsc_r_gain,cmr_u16* lsc_gr_gain,cmr_u16* lsc_gb_gain, cmr_u16* lsc_b_gain, cmr_u32* lsc_versionid)
+		cmr_u16 * lsc_r_gain, cmr_u16 * lsc_gr_gain, cmr_u16 * lsc_gb_gain, cmr_u16 * lsc_b_gain, cmr_u32 * lsc_versionid)
 {
 	cmr_s32 rtn = OTP_ERROR;
 	cmr_u32 compress_size = 0x00;
-	struct lsc_calc_gain_param calc_gain_param = {0};
-	struct lsc_gain_info lsc_gain = {0};
+	struct lsc_calc_gain_param calc_gain_param = { 0 };
+	struct lsc_gain_info lsc_gain = { 0 };
 	struct isp_raw_image *image = NULL;
 	enum isp_center_type center_type = ISP_PHYSCIAL_CENTER;
 	cmr_u32 alg_version = 0;
@@ -284,8 +279,7 @@ cmr_s32 calcLSC(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 da
 	cmr_u32 lsc_gain_size = 0;
 	cmr_u32 lsc_gain_buf = NULL;
 
-	if (NULL == lsc_r_gain || NULL == lsc_gr_gain || NULL == lsc_gb_gain
-			|| NULL == lsc_b_gain || NULL == lsc_versionid)
+	if (NULL == lsc_r_gain || NULL == lsc_gr_gain || NULL == lsc_gb_gain || NULL == lsc_b_gain || NULL == lsc_versionid)
 		return OTP_ERROR;
 
 	if (NULL == raw_image)
@@ -340,9 +334,8 @@ cmr_s32 calcLSC(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 da
 	image->height = raw_height;
 	image->data = raw_image;
 
-	/*calc lsc gain for standard image*/
-	rtn = lsc_calc_gain_size(raw_width, raw_height, grid,
-							alg_version, &gain_width, &gain_height);
+	/*calc lsc gain for standard image */
+	rtn = lsc_calc_gain_size(raw_width, raw_height, grid, alg_version, &gain_width, &gain_height);
 	if (OTP_SUCCESS != rtn) {
 		goto EXIT;
 	}
@@ -356,7 +349,7 @@ cmr_s32 calcLSC(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 da
 	calc_gain_param.target_buf = lsc_gain_buf;
 	calc_gain_param.target_buf_size = lsc_gain_size;
 	calc_gain_param.image = *image;
-	/*do not set center, calculate the center by the image*/
+	/*do not set center, calculate the center by the image */
 	calc_gain_param.center_x = 0;
 	calc_gain_param.center_y = 0;
 
@@ -397,20 +390,19 @@ EXIT:
 	return rtn;
 }
 
-cmr_s32 calcAWB(void* raw_image, cmr_u32 raw_width, cmr_u32 raw_height,
-			cmr_u32 data_pattern, cmr_u32 data_type, cmr_u32 trim_width, cmr_u32 trim_height, int32 trim_x, int32 trim_y,
-			cmr_u16* awb_r_Mean, cmr_u16* awb_g_Mean, cmr_u16* awb_b_Mean, cmr_u32* awb_versionid)
+cmr_s32 calcAWB(void *raw_image, cmr_u32 raw_width, cmr_u32 raw_height,
+		cmr_u32 data_pattern, cmr_u32 data_type, cmr_u32 trim_width, cmr_u32 trim_height, int32 trim_x, int32 trim_y,
+		cmr_u16 * awb_r_Mean, cmr_u16 * awb_g_Mean, cmr_u16 * awb_b_Mean, cmr_u32 * awb_versionid)
 {
 	int32 rtn = 0;
-	struct isp_raw_image image = {0};
-	struct isp_img_rect roi = {0};
-	struct img_rgb avg = {0};
+	struct isp_raw_image image = { 0 };
+	struct isp_img_rect roi = { 0 };
+	struct img_rgb avg = { 0 };
 
 	if (NULL == raw_image)
 		return OTP_ERROR;
 
-	if (NULL == awb_r_Mean || NULL == awb_g_Mean
-		|| NULL == awb_b_Mean || NULL == awb_versionid)
+	if (NULL == awb_r_Mean || NULL == awb_g_Mean || NULL == awb_b_Mean || NULL == awb_versionid)
 		return OTP_ERROR;
 
 	if ((raw_width & 1) > 0 || (raw_height & 1) > 0)
@@ -424,8 +416,8 @@ cmr_s32 calcAWB(void* raw_image, cmr_u32 raw_width, cmr_u32 raw_height,
 	image.bayer_pattern = data_pattern;
 	image.data_format = data_type;
 	image.data = (void *)raw_image;
-	roi.x = (cmr_u32)trim_x;
-	roi.y = (cmr_u32)trim_y;
+	roi.x = (cmr_u32) trim_x;
+	roi.y = (cmr_u32) trim_y;
 	roi.w = trim_width;
 	roi.h = trim_height;
 

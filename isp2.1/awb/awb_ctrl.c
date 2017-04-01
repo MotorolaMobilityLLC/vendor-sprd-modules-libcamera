@@ -24,8 +24,6 @@
 
 /**************************************** MACRO DEFINE *****************************************/
 
-
-
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct awbctrl_work_lib {
 	cmr_handle lib_handle;
@@ -61,7 +59,6 @@ exit:
 	return rtn;
 }
 
-
 static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_init_param *in_ptr, struct awb_ctrl_init_result *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -94,7 +91,7 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	}
 
 	/* find vendor adpter */
-	rtn  = adpt_get_ops(ADPT_LIB_AWB, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
+	rtn = adpt_get_ops(ADPT_LIB_AWB, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
 		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
 		goto exit;
@@ -106,15 +103,15 @@ exit:
 	return rtn;
 }
 
-cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle *handle_awb)
+cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handle_awb)
 {
-	cmr_int                         rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct awbctrl_cxt *cxt_ptr = NULL;
-	struct awb_ctrl_init_result     result;
+	struct awb_ctrl_init_result result;
 
-	memset((void*)&result, 0, sizeof(result));
+	memset((void *)&result, 0, sizeof(result));
 
-	cxt_ptr = (struct awbctrl_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct awbctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("fail to create awb ctrl context!");
 		rtn = ISP_ALLOC_ERROR;
@@ -133,7 +130,7 @@ exit:
 			free(cxt_ptr);
 		}
 	} else {
-		*handle_awb = (cmr_handle)cxt_ptr;
+		*handle_awb = (cmr_handle) cxt_ptr;
 	}
 	ISP_LOGI(":ISP:isp_3a_ctrl awb_init rtn = %ld", rtn);
 
@@ -160,15 +157,15 @@ exit:
 	return rtn;
 }
 
-cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result)
+cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param * param, struct awb_ctrl_calc_result * result)
 {
-	cmr_int                         rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handle_awb;
 
 	ISP_CHECK_HANDLE_VALID(handle_awb);
 
 	if (!param || !result) {
-		ISP_LOGI(":ISP:input param is error 0x%lx", (cmr_uint)param);
+		ISP_LOGI(":ISP:input param is error 0x%lx", (cmr_uint) param);
 		goto exit;
 	}
 
@@ -179,9 +176,9 @@ exit:
 	return rtn;
 }
 
-cmr_int awb_ctrl_deinit(cmr_handle *handle_awb)
+cmr_int awb_ctrl_deinit(cmr_handle * handle_awb)
 {
-	cmr_int		rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct awbctrl_cxt *cxt_ptr = *handle_awb;
 
 	if (!cxt_ptr) {
@@ -195,7 +192,7 @@ cmr_int awb_ctrl_deinit(cmr_handle *handle_awb)
 	}
 
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 		*handle_awb = NULL;
 	}
 
@@ -206,7 +203,7 @@ cmr_int awb_ctrl_deinit(cmr_handle *handle_awb)
 cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt*)handle_awb;
+	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handle_awb;
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {

@@ -16,8 +16,7 @@
 
 #include "isp_blocks_cfg.h"
 
-
-cmr_s32 _pm_ae_new_init(void *dst_ae_new, void *src_ae_new, void* param1, void* param2)
+cmr_s32 _pm_ae_new_init(void *dst_ae_new, void *src_ae_new, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(dst_ae_new);
@@ -25,11 +24,10 @@ cmr_s32 _pm_ae_new_init(void *dst_ae_new, void *src_ae_new, void* param1, void* 
 	UNUSED(param1);
 	UNUSED(param2);
 
-
 	return rtn;
 }
 
-cmr_s32 _pm_ae_new_set_param(void *ae_new_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_ae_new_set_param(void *ae_new_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(ae_new_param);
@@ -37,11 +35,10 @@ cmr_s32 _pm_ae_new_set_param(void *ae_new_param, cmr_u32 cmd, void* param_ptr0, 
 	UNUSED(param_ptr0);
 	UNUSED(param_ptr1);
 
-
 	return rtn;
 }
 
-cmr_s32 _pm_ae_new_get_param(void *ae_new_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_ae_new_get_param(void *ae_new_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(ae_new_param);
@@ -50,10 +47,10 @@ cmr_s32 _pm_ae_new_get_param(void *ae_new_param, cmr_u32 cmd, void* rtn_param0, 
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
-	break;
+		break;
 
 	default:
-	break;
+		break;
 	}
 
 	return rtn;

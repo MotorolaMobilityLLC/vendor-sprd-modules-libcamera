@@ -42,14 +42,14 @@ struct golden_gain_info {
 /*------------------------------------------------------------------------------*
 *				Local functions													*
 *-------------------------------------------------------------------------------*/
-static cmr_s32 _module_pack_size(struct golden_module_info *module_info, cmr_u32 *real_size)
+static cmr_s32 _module_pack_size(struct golden_module_info *module_info, cmr_u32 * real_size)
 {
 	*real_size = sizeof(struct golden_map_module);
 
 	return GOLDEN_SUCCESS;
 }
 
-static cmr_s32 _module_pack(struct golden_module_info *module_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _module_pack(struct golden_module_info *module_info, struct data_info *target, cmr_u32 * real_size)
 {
 	struct golden_map_module *module_map = NULL;
 	cmr_u8 *data_start = NULL;
@@ -63,7 +63,7 @@ static cmr_s32 _module_pack(struct golden_module_info *module_info, struct data_
 		return GOLDEN_ERROR;
 	}
 
-	data_start = (cmr_u8 *)target->data;
+	data_start = (cmr_u8 *) target->data;
 	module_map = (struct golden_map_module *)data_start;
 	module_map->core_version = module_info->core_version;
 	module_map->sensor_maker = module_info->sensor_maker;
@@ -81,7 +81,7 @@ static cmr_s32 _module_pack(struct golden_module_info *module_info, struct data_
 	return GOLDEN_SUCCESS;
 }
 
-static cmr_s32 _lsc_basic_pack(struct golden_lsc_info *lsc_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _lsc_basic_pack(struct golden_lsc_info *lsc_info, struct data_info *target, cmr_u32 * real_size)
 {
 	struct golden_map_lsc_basic *basic_map = NULL;
 	cmr_u8 *data_start = NULL;
@@ -95,20 +95,20 @@ static cmr_s32 _lsc_basic_pack(struct golden_lsc_info *lsc_info, struct data_inf
 	}
 
 	basic_map = (struct golden_map_lsc_basic *)target->data;
-	basic_map->base_gain = (cmr_u16)lsc_info->base_gain;
-	basic_map->algorithm_version = (cmr_u16)((cmr_u8)lsc_info->alg_version << 8)
-									+ (cmr_u8)lsc_info->alg_type;
-	basic_map->compress_flag = (cmr_u16)lsc_info->compress;
-	basic_map->image_width = (cmr_u16)lsc_info->img_width;
-	basic_map->image_height = (cmr_u16)lsc_info->img_height;
-	basic_map->gain_width = (cmr_u16)lsc_info->gain_width;
-	basic_map->gain_height = (cmr_u16)lsc_info->gain_height;
-	basic_map->optical_x = (cmr_u16)lsc_info->center_x;
-	basic_map->optical_y = (cmr_u16)lsc_info->center_y;
-	basic_map->grid_width = (cmr_u16)lsc_info->grid_width;
-	basic_map->grid_height = (cmr_u16)lsc_info->grid_height;
-	basic_map->percent = (cmr_u16)lsc_info->percent;
-	basic_map->bayer_pattern = (cmr_u16)lsc_info->bayer_pattern;
+	basic_map->base_gain = (cmr_u16) lsc_info->base_gain;
+	basic_map->algorithm_version = (cmr_u16) ((cmr_u8) lsc_info->alg_version << 8)
+	    + (cmr_u8) lsc_info->alg_type;
+	basic_map->compress_flag = (cmr_u16) lsc_info->compress;
+	basic_map->image_width = (cmr_u16) lsc_info->img_width;
+	basic_map->image_height = (cmr_u16) lsc_info->img_height;
+	basic_map->gain_width = (cmr_u16) lsc_info->gain_width;
+	basic_map->gain_height = (cmr_u16) lsc_info->gain_height;
+	basic_map->optical_x = (cmr_u16) lsc_info->center_x;
+	basic_map->optical_y = (cmr_u16) lsc_info->center_y;
+	basic_map->grid_width = (cmr_u16) lsc_info->grid_width;
+	basic_map->grid_height = (cmr_u16) lsc_info->grid_height;
+	basic_map->percent = (cmr_u16) lsc_info->percent;
+	basic_map->bayer_pattern = (cmr_u16) lsc_info->bayer_pattern;
 	basic_map->reserved = 0;
 
 	*real_size = sizeof(*basic_map);
@@ -116,7 +116,7 @@ static cmr_s32 _lsc_basic_pack(struct golden_lsc_info *lsc_info, struct data_inf
 	return GOLDEN_SUCCESS;
 }
 
-static cmr_s32 _lsc_gain_pack(struct golden_gain_info *gain_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _lsc_gain_pack(struct golden_gain_info *gain_info, struct data_info *target, cmr_u32 * real_size)
 {
 	cmr_u8 *data_cur = NULL;
 	cmr_u32 chn_gain_size = 0;
@@ -128,24 +128,24 @@ static cmr_s32 _lsc_gain_pack(struct golden_gain_info *gain_info, struct data_in
 		return GOLDEN_ERROR;
 	}
 
-	data_cur = (cmr_u8 *)target->data;
+	data_cur = (cmr_u8 *) target->data;
 
-	*(cmr_u32 *)data_cur = gain_info->ct;
+	*(cmr_u32 *) data_cur = gain_info->ct;
 	data_cur += 4;
-	*(cmr_u32 *)data_cur = gain_info->chn_gain_num;
+	*(cmr_u32 *) data_cur = gain_info->chn_gain_num;
 	data_cur += 4;
 
-	for (i=0; i<LSC_CHN_NUM; i++) {
+	for (i = 0; i < LSC_CHN_NUM; i++) {
 		memcpy(data_cur, gain_info->chn_gain[i], chn_gain_size);
 		data_cur += chn_gain_size;
 	}
 
-	*real_size = data_cur - (cmr_u8 *)target->data;
+	*real_size = data_cur - (cmr_u8 *) target->data;
 
 	return GOLDEN_SUCCESS;
 }
 
-static cmr_s32 _lsc_pack_size(struct golden_lsc_info *lsc_info, cmr_u32 *real_size)
+static cmr_s32 _lsc_pack_size(struct golden_lsc_info *lsc_info, cmr_u32 * real_size)
 {
 	cmr_u32 header_size = 0;
 	cmr_u32 block_info_size = 0;
@@ -168,13 +168,11 @@ static cmr_s32 _lsc_pack_size(struct golden_lsc_info *lsc_info, cmr_u32 *real_si
 	basic_data_size = sizeof(struct golden_map_lsc_basic);
 	data_size += basic_data_size;
 
-	std_data_size = lsc_info->std_gain.gain_width * lsc_info->std_gain.gain_height
-						* sizeof(cmr_u16) * LSC_CHN_NUM + std_header_size;
+	std_data_size = lsc_info->std_gain.gain_width * lsc_info->std_gain.gain_height * sizeof(cmr_u16) * LSC_CHN_NUM + std_header_size;
 	data_size += std_data_size;
 
-	for (i=0; i<lsc_info->nonstd_num; i++) {
-		nonstd_data_size = lsc_info->nonstd_diff[i].chn_num * sizeof(cmr_u16) * LSC_CHN_NUM
-												+ nonstd_header_size;
+	for (i = 0; i < lsc_info->nonstd_num; i++) {
+		nonstd_data_size = lsc_info->nonstd_diff[i].chn_num * sizeof(cmr_u16) * LSC_CHN_NUM + nonstd_header_size;
 		data_size += nonstd_data_size;
 	}
 
@@ -183,17 +181,17 @@ static cmr_s32 _lsc_pack_size(struct golden_lsc_info *lsc_info, cmr_u32 *real_si
 	return GOLDEN_SUCCESS;
 }
 
-static cmr_s32 _lsc_pack(struct golden_lsc_info *lsc_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _lsc_pack(struct golden_lsc_info *lsc_info, struct data_info *target, cmr_u32 * real_size)
 {
 	cmr_s32 rtn = GOLDEN_ERROR;
-	struct data_info basic_pack = {0};
-	struct data_info gain_pack = {0};
+	struct data_info basic_pack = { 0 };
+	struct data_info gain_pack = { 0 };
 	cmr_u8 *target_cur = NULL;
 	cmr_u8 *data_cur = NULL;
 	cmr_u8 *target_end = NULL;
 	struct golden_lsc_header *header = NULL;
 	struct golden_block_info *block_info = NULL;
-	struct golden_gain_info gain_info = {0};
+	struct golden_gain_info gain_info = { 0 };
 	cmr_u32 lsc_pack_size = 0;
 	cmr_u32 block_real_size = 0;
 	cmr_u32 block_index = 0;
@@ -206,7 +204,7 @@ static cmr_s32 _lsc_pack(struct golden_lsc_info *lsc_info, struct data_info *tar
 
 	memset(target->data, 0, target->size);
 
-	target_cur = (cmr_u8 *)target->data;
+	target_cur = (cmr_u8 *) target->data;
 	target_end = target_cur + target->size;
 
 	//write header
@@ -236,13 +234,13 @@ static cmr_s32 _lsc_pack(struct golden_lsc_info *lsc_info, struct data_info *tar
 
 	basic_pack.size = block_real_size;
 	block_info[block_index].id = GOLDEN_BLOCK_ID_LSC_BASIC;
-	block_info[block_index].offset = target_cur - (cmr_u8 *)header;
+	block_info[block_index].offset = target_cur - (cmr_u8 *) header;
 	block_info[block_index].size = basic_pack.size;
 	block_index++;
 	target_cur += basic_pack.size;
 
 	//block 2: std gain pack
-	for (i=0; i<LSC_CHN_NUM; i++)
+	for (i = 0; i < LSC_CHN_NUM; i++)
 		gain_info.chn_gain[i] = lsc_info->std_gain.chn_gain[i];
 
 	gain_info.chn_gain_num = lsc_info->std_gain.gain_width * lsc_info->std_gain.gain_height;
@@ -256,17 +254,17 @@ static cmr_s32 _lsc_pack(struct golden_lsc_info *lsc_info, struct data_info *tar
 
 	gain_pack.size = block_real_size;
 	block_info[block_index].id = GOLDEN_BLOCK_ID_LSC_STD_GAIN;
-	block_info[block_index].offset = target_cur - (cmr_u8 *)header;
+	block_info[block_index].offset = target_cur - (cmr_u8 *) header;
 	block_info[block_index].size = gain_pack.size;
 	block_index++;
 	target_cur += gain_pack.size;
 
-	for (i=0; i<lsc_info->nonstd_num; i++) {
+	for (i = 0; i < lsc_info->nonstd_num; i++) {
 
 		cmr_u32 j = 0;
 
 		//block 2 + i: diff gain pack
-		for (j=0; j<LSC_CHN_NUM; j++)
+		for (j = 0; j < LSC_CHN_NUM; j++)
 			gain_info.chn_gain[j] = lsc_info->nonstd_diff[i].diff[j];
 
 		gain_info.chn_gain_num = lsc_info->nonstd_diff[i].chn_num;
@@ -280,27 +278,26 @@ static cmr_s32 _lsc_pack(struct golden_lsc_info *lsc_info, struct data_info *tar
 
 		gain_pack.size = block_real_size;
 		block_info[block_index].id = GOLDEN_BLOCK_ID_LSC_DIFF_GAIN;
-		block_info[block_index].offset = target_cur - (cmr_u8 *)header;
+		block_info[block_index].offset = target_cur - (cmr_u8 *) header;
 		block_info[block_index].size = gain_pack.size;
 		block_index++;
 		target_cur += gain_pack.size;
 	}
 
-	header->length = target_cur - (cmr_u8 *)header;
+	header->length = target_cur - (cmr_u8 *) header;
 	*real_size = header->length;
 
 	return GOLDEN_SUCCESS;
 }
 
-static cmr_s32 _awb_pack_size(struct golden_awb_info *awb_info, cmr_u32 *real_size)
+static cmr_s32 _awb_pack_size(struct golden_awb_info *awb_info, cmr_u32 * real_size)
 {
 	*real_size = sizeof(struct golden_map_awb);
 
 	return GOLDEN_SUCCESS;
 }
 
-
-static cmr_s32 _awb_pack(struct golden_awb_info *awb_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _awb_pack(struct golden_awb_info *awb_info, struct data_info *target, cmr_u32 * real_size)
 {
 
 	struct golden_map_awb *awb_map = (struct golden_map_awb *)target->data;
@@ -322,7 +319,7 @@ static cmr_s32 _awb_pack(struct golden_awb_info *awb_info, struct data_info *tar
 /*------------------------------------------------------------------------------*
 *				Public functions												*
 *-------------------------------------------------------------------------------*/
-cmr_s32 get_golden_pack_size(struct golden_pack_param *param, cmr_u32 *size)
+cmr_s32 get_golden_pack_size(struct golden_pack_param * param, cmr_u32 * size)
 {
 	cmr_s32 rtn = GOLDEN_ERROR;
 	cmr_u32 module_size = 0;
@@ -365,12 +362,12 @@ cmr_s32 get_golden_pack_size(struct golden_pack_param *param, cmr_u32 *size)
 	return GOLDEN_SUCCESS;
 }
 
-cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *result)
+cmr_s32 golden_pack(struct golden_pack_param * param, struct golden_pack_result * result)
 {
 	cmr_s32 rtn = GOLDEN_ERROR;
-	struct data_info awb = {0};
-	struct data_info lsc = {0};
-	struct data_info module = {0};
+	struct data_info awb = { 0 };
+	struct data_info lsc = { 0 };
+	struct data_info module = { 0 };
 	cmr_u8 *target_cur = NULL;
 	cmr_u8 *data_cur = NULL;
 	cmr_u8 *target_end = NULL;
@@ -395,7 +392,7 @@ cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *
 
 	memset(param->target_buf, 0, param->target_buf_size);
 
-	target_cur = (cmr_u8 *)param->target_buf;
+	target_cur = (cmr_u8 *) param->target_buf;
 	target_end = target_cur + param->target_buf_size;
 
 	//write random header
@@ -425,7 +422,7 @@ cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *
 
 	module.size = real_size;
 	block_info[block_index].id = GOLDEN_MODULE_BLOCK_ID;
-	block_info[block_index].offset = target_cur - (cmr_u8 *)header;
+	block_info[block_index].offset = target_cur - (cmr_u8 *) header;
 	block_info[block_index].size = module.size;
 	block_index++;
 	target_cur += module.size;
@@ -439,7 +436,7 @@ cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *
 
 	lsc.size = real_size;
 	block_info[block_index].id = GOLDEN_LSC_BLOCK_ID;
-	block_info[block_index].offset = target_cur - (cmr_u8 *)header;
+	block_info[block_index].offset = target_cur - (cmr_u8 *) header;
 	block_info[block_index].size = lsc.size;
 	block_index++;
 	target_cur += lsc.size;
@@ -453,18 +450,18 @@ cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *
 
 	awb.size = real_size;
 	block_info[block_index].id = GOLDEN_AWB_BLOCK_ID;
-	block_info[block_index].offset = target_cur - (cmr_u8 *)header;
+	block_info[block_index].offset = target_cur - (cmr_u8 *) header;
 	block_info[block_index].size = awb.size;
 	block_index++;
 	target_cur += awb.size;
 
-	*(cmr_u32 *)target_cur = crc_value;
+	*(cmr_u32 *) target_cur = crc_value;
 	target_cur += crc_size;
 
-	*(cmr_u32 *)target_cur = GOLDEN_END;
+	*(cmr_u32 *) target_cur = GOLDEN_END;
 	target_cur += end_size;
 
-	result->real_size = target_cur - (cmr_u8 *)header;
+	result->real_size = target_cur - (cmr_u8 *) header;
 	header->length = result->real_size;
 
 	rtn = GOLDEN_SUCCESS;

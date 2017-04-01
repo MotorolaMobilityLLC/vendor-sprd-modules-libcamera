@@ -15,19 +15,17 @@
  */
 #include "isp_blocks_cfg.h"
 
-
-
-cmr_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,void * param2)
+cmr_s32 _pm_1d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0, index = 0;
-	struct isp_1d_lsc_param *dst_ptr = (struct isp_1d_lsc_param*)dst_lnc_param;
-	struct sensor_1d_lsc_param *src_ptr = (struct sensor_1d_lsc_param*)src_lnc_param;
-	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
+	struct isp_1d_lsc_param *dst_ptr = (struct isp_1d_lsc_param *)dst_lnc_param;
+	struct sensor_1d_lsc_param *src_ptr = (struct sensor_1d_lsc_param *)src_lnc_param;
+	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-	memset((void*)&dst_ptr->cur,0x00,sizeof(dst_ptr->cur));
-	memcpy((void*)dst_ptr->map,(void*)src_ptr->map,sizeof(dst_ptr->map));
+	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
+	memcpy((void *)dst_ptr->map, (void *)src_ptr->map, sizeof(dst_ptr->map));
 	dst_ptr->cur.bypass = header_ptr->bypass;
 
 	dst_ptr->cur_index_info.x0 = src_ptr->cur_idx.x0;
@@ -40,7 +38,7 @@ cmr_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,
 			dst_ptr->map[i].curve_distcptn[j].center_pos.x = src_ptr->map[i].curve_distcptn[j].center_pos.x;
 			dst_ptr->map[i].curve_distcptn[j].center_pos.y = src_ptr->map[i].curve_distcptn[j].center_pos.y;
 
-			dst_ptr->map[i].curve_distcptn[j].rlsc_init_r =src_ptr->map[i].curve_distcptn[j].rlsc_init_r;
+			dst_ptr->map[i].curve_distcptn[j].rlsc_init_r = src_ptr->map[i].curve_distcptn[j].rlsc_init_r;
 			dst_ptr->map[i].curve_distcptn[j].rlsc_init_r2 = src_ptr->map[i].curve_distcptn[j].rlsc_init_r2;
 			dst_ptr->map[i].curve_distcptn[j].rlsc_init_dr2 = src_ptr->map[i].curve_distcptn[j].rlsc_init_dr2;
 		}
@@ -74,66 +72,66 @@ cmr_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,
 	dst_ptr->cur.init_dr2_r1c0 = src_ptr->map[index].curve_distcptn[2].rlsc_init_dr2;
 	dst_ptr->cur.init_dr2_r1c1 = src_ptr->map[index].curve_distcptn[3].rlsc_init_dr2;
 	header_ptr->is_update = header_ptr->is_update | ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
-	#if __WORDSIZE == 64
-	dst_ptr->cur.data_ptr[0] = (cmr_uint)(src_ptr->data_area) & 0xffffffff;
-	dst_ptr->cur.data_ptr[1] = (cmr_uint)(src_ptr->data_area) >> 32;
-	#else
-	dst_ptr->cur.data_ptr[0] = (cmr_uint)(src_ptr->data_area);
+#if __WORDSIZE == 64
+	dst_ptr->cur.data_ptr[0] = (cmr_uint) (src_ptr->data_area) & 0xffffffff;
+	dst_ptr->cur.data_ptr[1] = (cmr_uint) (src_ptr->data_area) >> 32;
+#else
+	dst_ptr->cur.data_ptr[0] = (cmr_uint) (src_ptr->data_area);
 	dst_ptr->cur.data_ptr[1] = 0;
-	#endif
+#endif
 	return rtn;
 }
 
-cmr_s32 _pm_1d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void* param_ptr0, void *param_ptr1)
+cmr_s32 _pm_1d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_1d_lsc_param *dst_lnc_ptr = PNULL;
-	struct isp_pm_block_header *lnc_header_ptr = (struct isp_pm_block_header*)param_ptr1;
-	dst_lnc_ptr = (struct isp_1d_lsc_param*)lnc_param;
+	struct isp_pm_block_header *lnc_header_ptr = (struct isp_pm_block_header *)param_ptr1;
+	dst_lnc_ptr = (struct isp_1d_lsc_param *)lnc_param;
 
 	lnc_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_LSC_BYPASS:
-		dst_lnc_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
+		dst_lnc_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 		lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
-	break;
+		break;
 
 	case ISP_PM_BLK_SMART_SETTING:
-	break;
+		break;
 
 	default:
 		lnc_header_ptr->is_update = ISP_ZERO;
-	break;
+		break;
 	}
 
 	return rtn;
 }
 
- cmr_s32 _pm_1d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_1d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	struct isp_1d_lsc_param *lnc_ptr = (struct isp_1d_lsc_param*)lnc_param;
-	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
+	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
+	struct isp_1d_lsc_param *lnc_ptr = (struct isp_1d_lsc_param *)lnc_param;
+	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_1D_LSC;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
-		param_data_ptr->data_ptr = (void*)&lnc_ptr->cur;
+		param_data_ptr->data_ptr = (void *)&lnc_ptr->cur;
 		param_data_ptr->data_size = sizeof(lnc_ptr->cur);
 		*update_flag &= (~ISP_PM_BLK_LSC_UPDATE_MASK_PARAM);
-	break;
+		break;
 
 	case ISP_PM_BLK_LSC_BYPASS:
-		param_data_ptr->data_ptr = (void*)&lnc_ptr->cur.bypass;
+		param_data_ptr->data_ptr = (void *)&lnc_ptr->cur.bypass;
 		param_data_ptr->data_size = sizeof(lnc_ptr->cur.bypass);
-	break;
+		break;
 
 	default:
-	break;
+		break;
 	}
 
 	return rtn;

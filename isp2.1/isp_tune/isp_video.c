@@ -27,7 +27,7 @@
 #include <pthread.h>
 #define LOG_TAG "isp-video"
 #include <cutils/log.h>
-#if 0/*Solve compile problem*/
+#if 0				/*Solve compile problem */
 //#include <hardware/camera.h>
 #endif
 #include "isp_param_tune_com.h"
@@ -67,11 +67,11 @@ enum {
 	CMD_GET_INFO,
 	CMD_OTP_WRITE,
 	CMD_OTP_READ,
-	CMD_READ_ISP_PARAM_V1,//15
-	CMD_WRITE_ISP_PARAM_V1,//16
-	CMD_DOWNLOAD_RAW_PIC,  //17
-	CMD_WRTIE_SCENE_PARAM, //18
-	CMD_START_SIMULATION,  //19
+	CMD_READ_ISP_PARAM_V1,	//15
+	CMD_WRITE_ISP_PARAM_V1,	//16
+	CMD_DOWNLOAD_RAW_PIC,	//17
+	CMD_WRTIE_SCENE_PARAM,	//18
+	CMD_START_SIMULATION,	//19
 
 	CMD_SFT_READ = 200,
 	CMD_SFT_WRITE,
@@ -85,7 +85,6 @@ enum {
 
 	CMD_ASIC_TAKE_PICTURE,
 	CMD_ASIC_TAKE_PICTURE_NEW
-
 };
 
 typedef enum {
@@ -129,7 +128,7 @@ typedef enum {
 	V21IIRCNR,
 	V21NOISEFILTER,
 	FILE_NAME_MAX
-}DENOISE_DATA_NAME;
+} DENOISE_DATA_NAME;
 
 typedef enum {
 	NORMAL = 0x00,
@@ -137,7 +136,7 @@ typedef enum {
 	SPORT,
 	PORTRAIT,
 	LANDSPACE,
-	PANORAMA, //0x05
+	PANORAMA,		//0x05
 	USER0,
 	USER1,
 	USER2,
@@ -149,9 +148,9 @@ typedef enum {
 	USER8,
 	USER9,
 	SCENE_MODE_MAX
-}DENOISE_SCENE_NAME;
+} DENOISE_SCENE_NAME;
 
-enum{
+enum {
 	MODE_DUMP_DATA,
 	MODE_NR_DATA,
 	MODE_ISP_ID = 0x02,
@@ -167,30 +166,30 @@ enum{
 	MODE_MAX
 };
 
-enum{
+enum {
 	AE_TABLE_FIVE_AUTO = 0x00,
 	AE_TABLE_FIVE_ONE,
-	AE_TABLE_FIVE_TWO,//'FIVE' is 50Hz,'SIX' is 60Hz;'ONE/TWO/FOUR....' is ISO100/ISO200/ISO400....
+	AE_TABLE_FIVE_TWO,	//'FIVE' is 50Hz,'SIX' is 60Hz;'ONE/TWO/FOUR....' is ISO100/ISO200/ISO400....
 	AE_TABLE_FIVE_FOUR,
 	AE_TABLE_FIVE_AEIGHT,
 	AE_TABLE_FIVE_SIXTEEN,
 	AE_TABLE_SIX_AUTO = 0x10,
 	AE_TABLE_SIX_ONE,
-	AE_TABLE_SIX_TWO,//'FIVE' is 50Hz,'SIX' is 60Hz;'ONE/TWO/FOUR....' is ISO100/ISO200/ISO400....
+	AE_TABLE_SIX_TWO,	//'FIVE' is 50Hz,'SIX' is 60Hz;'ONE/TWO/FOUR....' is ISO100/ISO200/ISO400....
 	AE_TABLE_SIX_FOUR,
 	AE_TABLE_SIX_AEIGHT,
 	AE_TABLE_SIX_SIXTEEN,
 	AE_TABLE_MAX
 };
 
-enum{
+enum {
 	AE_WEIGHT_AVG = 0X00,
 	AE_WEIGHT_CENTER,
 	AE_WEIGHT_SPOT,
 	AE_WEIGHT_MAX
 };
 
-enum{
+enum {
 	AE_SCENE_ZERO_FIVE = 0x00,
 	AE_SCENE_ZERO_SIX,
 	AE_SCENE_ONE_FIVE = 0x10,
@@ -206,17 +205,17 @@ enum{
 	AE_SCENE_SIX_FIVE = 0x60,
 	AE_SCENE_SIX_SIX,
 	AE_SCENE_SEVEN_FIVE = 0x70,
-	AE_SCENE_SEVEN_SIX ,
+	AE_SCENE_SEVEN_SIX,
 	AE_SCENE_MAX
 };
 
-enum{
+enum {
 	AE_AUTO_ISO_ONE = 0x00,
 	AE_AUTO_ISO_TWO,
 	AE_AUTO_ISO_MAX
 };
 
-enum{
+enum {
 	LNC_CT_ZERO = 0x00,
 	LNC_CT_ONE,
 	LNC_CT_TWO,
@@ -229,21 +228,20 @@ enum{
 	LNC_CT_MAX
 };
 
-enum{
+enum {
 	AWB_WIN_MAP = 0x00,
 	AWB_WEIGHT,
 	AWB_MAX
 };
 
 // This is the communication frame head
-typedef struct msg_head_tag
-{
-	cmr_u32  seq_num;      // Message sequence number, used for flow control
-	cmr_u16  len;          // The totoal size of the packet "sizeof(MSG_HEAD_T)
-	                      // + packet size"
-	cmr_u8   type;         // Main command type
-	cmr_u8   subtype;      // Sub command type
-}__attribute__((packed)) MSG_HEAD_T;
+typedef struct msg_head_tag {
+	cmr_u32 seq_num;	// Message sequence number, used for flow control
+	cmr_u16 len;		// The totoal size of the packet "sizeof(MSG_HEAD_T)
+	// + packet size"
+	cmr_u8 type;		// Main command type
+	cmr_u8 subtype;		// Sub command type
+} __attribute__ ((packed)) MSG_HEAD_T;
 
 typedef struct {
 	cmr_u32 headlen;
@@ -251,25 +249,23 @@ typedef struct {
 	cmr_u32 img_size;
 	cmr_u32 totalpacket;
 	cmr_u32 packetsn;
-}ISP_IMAGE_HEADER_T;
+} ISP_IMAGE_HEADER_T;
 //add
 typedef struct {
 	cmr_u32 totalpacket;
 	cmr_u32 packetsn;
 	cmr_u32 reserve[3];
-}ISP_DATA_HEADER_T;
+} ISP_DATA_HEADER_T;
 
-struct isp_data_header_read
-{
+struct isp_data_header_read {
 	cmr_u16 main_type;
 	cmr_u16 sub_type;
 	cmr_u8 isp_mode;
 	cmr_u8 nr_mode;
 	cmr_u8 reserved[26];
-}__attribute__((packed));
+} __attribute__ ((packed));
 
-struct isp_data_header_normal
-{
+struct isp_data_header_normal {
 	cmr_u32 data_total_len;
 	cmr_u16 main_type;
 	cmr_u16 sub_type;
@@ -277,17 +273,15 @@ struct isp_data_header_normal
 	cmr_u8 packet_status;
 	cmr_u8 nr_mode;
 	cmr_u8 reserved[21];
-}__attribute__((packed));
+} __attribute__ ((packed));
 
-struct isp_check_cmd_valid
-{
+struct isp_check_cmd_valid {
 	cmr_u16 main_type;
 	cmr_u16 sub_type;
 	cmr_u8 isp_mode;
-}__attribute__((packed));
+} __attribute__ ((packed));
 
-
-struct camera_func{
+struct camera_func {
 	cmr_s32(*start_preview) (cmr_u32 param1, cmr_u32 param2);
 	cmr_s32(*stop_preview) (cmr_u32 param1, cmr_u32 param2);
 	cmr_s32(*take_picture) (cmr_u32 param1, cmr_u32 param2);
@@ -297,11 +291,11 @@ struct camera_func{
 #define PREVIEW_MAX_WIDTH 640
 #define PREVIEW_MAX_HEIGHT 480
 
-#define CMD_BUF_SIZE  65536 // 64k
-#define SEND_IMAGE_SIZE 64512 // 63k
-#define SEND_DATA_SIZE 64512 //63k
-#define DATA_BUF_SIZE 65536 //64k
-#define PORT_NUM 16666        /* Port number for server */
+#define CMD_BUF_SIZE  65536	// 64k
+#define SEND_IMAGE_SIZE 64512	// 63k
+#define SEND_DATA_SIZE 64512	//63k
+#define DATA_BUF_SIZE 65536	//64k
+#define PORT_NUM 16666		/* Port number for server */
 #define BACKLOG 5
 #define ISP_CMD_SUCCESS             0x0000
 #define ISP_CMD_FAIL                0x0001
@@ -312,89 +306,86 @@ struct camera_func{
 #ifdef CLIENT_DEBUG
 #define DBG ISP_LOGE
 #endif
-static cmr_u8* preview_buf_ptr = 0;
+static cmr_u8 *preview_buf_ptr = 0;
 static cmr_u8 diag_rx_buf[CMD_BUF_SIZE];
 static cmr_u8 temp_rx_buf[CMD_BUF_SIZE];
 static cmr_u8 diag_cmd_buf[CMD_BUF_SIZE];
 static cmr_u8 eng_rsp_diag[DATA_BUF_SIZE];
-static cmr_s32 preview_flag = 0; // 1: start preview
-static cmr_s32 preview_img_end_flag = 1; // 1: preview image send complete
-static cmr_s32 capture_img_end_flag = 1; // 1: capture image send complete
-static cmr_s32 capture_format = 1; // 1: start preview
-static cmr_s32 capture_flag = 0; // 1: call get pic
-char raw_filename[200] = {0};
+static cmr_s32 preview_flag = 0;	// 1: start preview
+static cmr_s32 preview_img_end_flag = 1;	// 1: preview image send complete
+static cmr_s32 capture_img_end_flag = 1;	// 1: capture image send complete
+static cmr_s32 capture_format = 1;	// 1: start preview
+static cmr_s32 capture_flag = 0;	// 1: call get pic
+char raw_filename[200] = { 0 };
+
 cmr_u32 tool_fmt_pattern = INVALID_FORMAT_PATTERN;
-static FILE* raw_fp = NULL;
-static struct isptool_scene_param scene_param = {0,0,0,0,0,0,0,0};
+static FILE *raw_fp = NULL;
+static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static sem_t preview_sem_lock;
 static sem_t capture_sem_lock;
 static pthread_mutex_t ispstream_lock;
 static cmr_s32 wire_connected = 0;
 static cmr_s32 sockfd = 0;
-static cmr_s32 sock_fd=0;
-static cmr_s32 rx_packet_len=0;
-static cmr_s32 rx_packet_total_len=0;
+static cmr_s32 sock_fd = 0;
+static cmr_s32 rx_packet_len = 0;
+static cmr_s32 rx_packet_total_len = 0;
 cmr_s32 sequence_num = 0;
-struct camera_func s_camera_fun={PNULL, PNULL, PNULL, PNULL};
-struct camera_func* s_camera_fun_ptr=&s_camera_fun;
-static void* isp_handler;
+struct camera_func s_camera_fun = { PNULL, PNULL, PNULL, PNULL };
 
-static cmr_u32 g_af_pos=0;// the af position
-static cmr_u32 g_type = 8;// the mipi
-static cmr_u32 g_command=CMD_TAKE_PICTURE;
+struct camera_func *s_camera_fun_ptr = &s_camera_fun;
+static void *isp_handler;
+
+static cmr_u32 g_af_pos = 0;	// the af position
+static cmr_u32 g_type = 8;	// the mipi
+static cmr_u32 g_command = CMD_TAKE_PICTURE;
 struct denoise_param_update nr_update_param;
 
-struct camera_func* ispvideo_GetCameraFunc(void)
+struct camera_func *ispvideo_GetCameraFunc(void)
 {
 	return s_camera_fun_ptr;
 }
 
-cmr_s32 ispvideo_SetreTurnValue(cmr_u8* rtn_ptr, cmr_u32 rtn)
+cmr_s32 ispvideo_SetreTurnValue(cmr_u8 * rtn_ptr, cmr_u32 rtn)
 {
-	cmr_u32* rtn_value=(cmr_u32*)rtn_ptr;
+	cmr_u32 *rtn_value = (cmr_u32 *) rtn_ptr;
 
-	*rtn_value=rtn;
+	*rtn_value = rtn;
 
 	return 0x04;
 }
 
-cmr_u32 ispvideo_GetIspParamLenFromSt(cmr_u8* dig_ptr)
+cmr_u32 ispvideo_GetIspParamLenFromSt(cmr_u8 * dig_ptr)
 {
-	cmr_u32 data_len=0x00;
-	cmr_u16* data_ptr=(cmr_u16*)(dig_ptr+0x05);
+	cmr_u32 data_len = 0x00;
+	cmr_u16 *data_ptr = (cmr_u16 *) (dig_ptr + 0x05);
 
-	if(NULL!=dig_ptr)
-	{
-		data_len=data_ptr[0];
-		data_len-=0x08;
+	if (NULL != dig_ptr) {
+		data_len = data_ptr[0];
+		data_len -= 0x08;
 	}
 
 	return data_len;
 }
 
-
-cmr_u32 ispvideo_GetImgDataLen(cmr_u8* dig_ptr)
+cmr_u32 ispvideo_GetImgDataLen(cmr_u8 * dig_ptr)
 {
-	cmr_u32 data_len=0x00;
-	cmr_u16* data_ptr=(cmr_u16*)(dig_ptr+0x05);
+	cmr_u32 data_len = 0x00;
+	cmr_u16 *data_ptr = (cmr_u16 *) (dig_ptr + 0x05);
 
-	if(NULL!=dig_ptr)
-	{
-		data_len=data_ptr[0];
-		data_len-=0x08;
-		data_len-=sizeof(ISP_IMAGE_HEADER_T);
+	if (NULL != dig_ptr) {
+		data_len = data_ptr[0];
+		data_len -= 0x08;
+		data_len -= sizeof(ISP_IMAGE_HEADER_T);
 	}
 
 	return data_len;
 }
 
-
-cmr_u8* ispvideo_GetImgDataInfo(cmr_u8* dig_ptr, cmr_u32* packet_sn, cmr_u32* total_pack,
-											cmr_u32* img_width, cmr_u32* img_height, cmr_u32* img_headlen)
+cmr_u8 *ispvideo_GetImgDataInfo(cmr_u8 * dig_ptr, cmr_u32 * packet_sn, cmr_u32 * total_pack, cmr_u32 * img_width, cmr_u32 * img_height, cmr_u32 * img_headlen)
 {
-	cmr_u8* data_ptr = NULL;
-	char*tmp_ptr;
+	cmr_u8 *data_ptr = NULL;
+	char *tmp_ptr;
 	ISP_IMAGE_HEADER_T img_info;
 
 	if (!dig_ptr || !packet_sn || !total_pack || !img_width || !img_height) {
@@ -402,24 +393,23 @@ cmr_u8* ispvideo_GetImgDataInfo(cmr_u8* dig_ptr, cmr_u32* packet_sn, cmr_u32* to
 		return data_ptr;
 	}
 
-	tmp_ptr = (char*)dig_ptr + 1 + sizeof(MSG_HEAD_T);
+	tmp_ptr = (char *)dig_ptr + 1 + sizeof(MSG_HEAD_T);
 
-	memcpy((char*)&img_info, (char*)tmp_ptr, sizeof(ISP_IMAGE_HEADER_T));
+	memcpy((char *)&img_info, (char *)tmp_ptr, sizeof(ISP_IMAGE_HEADER_T));
 	*img_headlen = img_info.headlen;
 	*packet_sn = img_info.packetsn;
 	*total_pack = img_info.totalpacket;
-	*img_width = (img_info.img_size>>0x10)&0xFFFF;
-	*img_height = img_info.img_size&0xFFFF;
-	ISP_LOGI("ImageInfo headlen %d, packetsn %d, total_packet %d, img_width %d, img_height %d",
-		*img_headlen, *packet_sn, *total_pack, *img_width, *img_height);
+	*img_width = (img_info.img_size >> 0x10) & 0xFFFF;
+	*img_height = img_info.img_size & 0xFFFF;
+	ISP_LOGI("ImageInfo headlen %d, packetsn %d, total_packet %d, img_width %d, img_height %d", *img_headlen, *packet_sn, *total_pack, *img_width, *img_height);
 
 	data_ptr = dig_ptr + 1 + sizeof(MSG_HEAD_T) + sizeof(ISP_IMAGE_HEADER_T);
 	return data_ptr;
 }
 
-cmr_s32 ispvideo_GetSceneInfo(cmr_u8* dig_ptr, struct isptool_scene_param *scene_parm)
+cmr_s32 ispvideo_GetSceneInfo(cmr_u8 * dig_ptr, struct isptool_scene_param * scene_parm)
 {
-	cmr_u8* data_ptr = NULL;
+	cmr_u8 *data_ptr = NULL;
 	cmr_s32 rtn = 0;
 
 	if (!dig_ptr || !scene_parm) {
@@ -428,270 +418,270 @@ cmr_s32 ispvideo_GetSceneInfo(cmr_u8* dig_ptr, struct isptool_scene_param *scene
 
 	data_ptr = dig_ptr + 1 + sizeof(MSG_HEAD_T);
 	//little endian
-	memcpy(((char *)scene_parm)+8, data_ptr, sizeof(struct isptool_scene_param) -8);
+	memcpy(((char *)scene_parm) + 8, data_ptr, sizeof(struct isptool_scene_param) - 8);
 
 	return rtn;
 }
 
-cmr_s32 ispvideo_GetIspParamFromSt(cmr_u8* dig_ptr, struct isp_parser_buf_rtn* isp_ptr)
+cmr_s32 ispvideo_GetIspParamFromSt(cmr_u8 * dig_ptr, struct isp_parser_buf_rtn * isp_ptr)
 {
-	cmr_s32 rtn=0x00;
+	cmr_s32 rtn = 0x00;
 
-	if((NULL != dig_ptr)
-		&& (NULL != (void *)(isp_ptr->buf_addr))
-		&& (0x00 != isp_ptr->buf_len))
-	{
-		memcpy((void*)isp_ptr->buf_addr, (void*)dig_ptr, isp_ptr->buf_len);
+	if ((NULL != dig_ptr)
+	    && (NULL != (void *)(isp_ptr->buf_addr))
+	    && (0x00 != isp_ptr->buf_len)) {
+		memcpy((void *)isp_ptr->buf_addr, (void *)dig_ptr, isp_ptr->buf_len);
 	}
 
 	return rtn;
 }
 
-void*  ispvideo_GetIspHandle(void)
+void *ispvideo_GetIspHandle(void)
 {
 	return isp_handler;
 }
 
-cmr_u32 ispvideo_SetIspParamToSt(cmr_u8* dig_ptr, struct isp_parser_buf_in* isp_ptr)
+cmr_u32 ispvideo_SetIspParamToSt(cmr_u8 * dig_ptr, struct isp_parser_buf_in * isp_ptr)
 {
-	cmr_u32 buf_len=0x00;
+	cmr_u32 buf_len = 0x00;
 
-	if((NULL != dig_ptr)
-		&& (NULL != (void *)(isp_ptr->buf_addr))
-		&& (0x00!=isp_ptr->buf_len))
-	{
-		memcpy((void*)dig_ptr, (void*)isp_ptr->buf_addr, isp_ptr->buf_len);
+	if ((NULL != dig_ptr)
+	    && (NULL != (void *)(isp_ptr->buf_addr))
+	    && (0x00 != isp_ptr->buf_len)) {
+		memcpy((void *)dig_ptr, (void *)isp_ptr->buf_addr, isp_ptr->buf_len);
 
-		buf_len=isp_ptr->buf_len;
+		buf_len = isp_ptr->buf_len;
 	}
 
 	return buf_len;
 }
 
-static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width,cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len,char *ch1_ptr, cmr_s32 ch1_len,char *ch2_ptr, cmr_s32 ch2_len)
+static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
 {
-	cmr_s32 i,  res, total_number;
-	cmr_s32 send_number=0;
+	cmr_s32 i, res, total_number;
+	cmr_s32 send_number = 0;
 	cmr_s32 chn0_number, chn1_number, chn2_number;
 	cmr_s32 len = 0, rlen = 0, rsp_len = 0, extra_len = 0;
 	MSG_HEAD_T *msg_ret;
 	ISP_IMAGE_HEADER_T isp_msg;
 
-	chn0_number = (ch0_len + SEND_IMAGE_SIZE - 1) /SEND_IMAGE_SIZE;
-	chn1_number = (ch1_len + SEND_IMAGE_SIZE - 1) /SEND_IMAGE_SIZE;
-	chn2_number = (ch2_len + SEND_IMAGE_SIZE - 1) /SEND_IMAGE_SIZE;
+	chn0_number = (ch0_len + SEND_IMAGE_SIZE - 1) / SEND_IMAGE_SIZE;
+	chn1_number = (ch1_len + SEND_IMAGE_SIZE - 1) / SEND_IMAGE_SIZE;
+	chn2_number = (ch2_len + SEND_IMAGE_SIZE - 1) / SEND_IMAGE_SIZE;
 
 	total_number = chn0_number + chn1_number + chn2_number;
 	//total_number = (ch0_len + SEND_IMAGE_SIZE - 1) /SEND_IMAGE_SIZE;
 
-	msg_ret = (MSG_HEAD_T *)(eng_rsp_diag+1);
+	msg_ret = (MSG_HEAD_T *) (eng_rsp_diag + 1);
 
-	for (i=0; i<chn0_number; i++, send_number++)
-	{// chn0
-		if (i < chn0_number-1)
+	for (i = 0; i < chn0_number; i++, send_number++) {	// chn0
+		if (i < chn0_number - 1)
 			len = SEND_IMAGE_SIZE;
 		else
-			len = ch0_len-SEND_IMAGE_SIZE*i;
-		rsp_len = sizeof(MSG_HEAD_T)+1;
+			len = ch0_len - SEND_IMAGE_SIZE * i;
+		rsp_len = sizeof(MSG_HEAD_T) + 1;
 
 		// combine data
 		isp_msg.headlen = 20;
 		isp_msg.img_format = format;
-		isp_msg.img_size = (width<<0x10)|height;
+		isp_msg.img_size = (width << 0x10) | height;
 		isp_msg.totalpacket = total_number;
-		isp_msg.packetsn = send_number+1;
+		isp_msg.packetsn = send_number + 1;
 
-		memcpy(eng_rsp_diag+rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
+		memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
 		rsp_len += sizeof(ISP_IMAGE_HEADER_T);
 
 		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-		memcpy(eng_rsp_diag+rsp_len, (char *)ch0_ptr+i*SEND_IMAGE_SIZE, len);
+		memcpy(eng_rsp_diag + rsp_len, (char *)ch0_ptr + i * SEND_IMAGE_SIZE, len);
 		rsp_len += len;
 
 		eng_rsp_diag[rsp_len] = 0x7e;
-		msg_ret->len = rsp_len-1;
+		msg_ret->len = rsp_len - 1;
 		msg_ret->seq_num = sequence_num++;
 		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
 	}
 
-	for (i=0; i<chn1_number; i++, send_number++)
-	{// chn1
-		if (i < chn1_number-1)
+	for (i = 0; i < chn1_number; i++, send_number++) {	// chn1
+		if (i < chn1_number - 1)
 			len = SEND_IMAGE_SIZE;
 		else
-			len = ch1_len-SEND_IMAGE_SIZE*i;
-		rsp_len = sizeof(MSG_HEAD_T)+1;
+			len = ch1_len - SEND_IMAGE_SIZE * i;
+		rsp_len = sizeof(MSG_HEAD_T) + 1;
 
 		// combine data
 		isp_msg.headlen = 20;
 		isp_msg.img_format = format;
-		isp_msg.img_size = (width<<0x10)|height;
+		isp_msg.img_size = (width << 0x10) | height;
 		isp_msg.totalpacket = total_number;
-		isp_msg.packetsn = send_number+1;
+		isp_msg.packetsn = send_number + 1;
 
-		memcpy(eng_rsp_diag+rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
+		memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
 		rsp_len += sizeof(ISP_IMAGE_HEADER_T);
 
 		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-		memcpy(eng_rsp_diag+rsp_len, (char *)ch1_ptr+i*SEND_IMAGE_SIZE, len);
+		memcpy(eng_rsp_diag + rsp_len, (char *)ch1_ptr + i * SEND_IMAGE_SIZE, len);
 		rsp_len += len;
 
 		eng_rsp_diag[rsp_len] = 0x7e;
-		msg_ret->len = rsp_len-1;
+		msg_ret->len = rsp_len - 1;
 		msg_ret->seq_num = sequence_num++;
 		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
 	}
 
-	for (i=0; i<chn2_number; i++, send_number++)
-	{// chn2
-		if (i < chn2_number-1)
+	for (i = 0; i < chn2_number; i++, send_number++) {	// chn2
+		if (i < chn2_number - 1)
 			len = SEND_IMAGE_SIZE;
 		else
-			len = ch2_len-SEND_IMAGE_SIZE*i;
-		rsp_len = sizeof(MSG_HEAD_T)+1;
+			len = ch2_len - SEND_IMAGE_SIZE * i;
+		rsp_len = sizeof(MSG_HEAD_T) + 1;
 
 		// combine data
 		isp_msg.headlen = 20;
 		isp_msg.img_format = format;
-		isp_msg.img_size = (width<<0x10)|height;
+		isp_msg.img_size = (width << 0x10) | height;
 		isp_msg.totalpacket = total_number;
-		isp_msg.packetsn = send_number+1;
+		isp_msg.packetsn = send_number + 1;
 
-		memcpy(eng_rsp_diag+rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
+		memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
 		rsp_len += sizeof(ISP_IMAGE_HEADER_T);
 
 		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-		memcpy(eng_rsp_diag+rsp_len, (char *)ch2_ptr+i*SEND_IMAGE_SIZE, len);
+		memcpy(eng_rsp_diag + rsp_len, (char *)ch2_ptr + i * SEND_IMAGE_SIZE, len);
 		rsp_len += len;
 
 		eng_rsp_diag[rsp_len] = 0x7e;
-		msg_ret->len = rsp_len-1;
+		msg_ret->len = rsp_len - 1;
 		msg_ret->seq_num = sequence_num++;
 		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
 	}
 
 	return 0;
 }
 
-static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width,cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len,char *ch1_ptr, cmr_s32 ch1_len,char *ch2_ptr, cmr_s32 ch2_len)
+static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
 {
 	UNUSED(format);
 	UNUSED(width);
 	UNUSED(height);
-	char name[100] = {'\0'};
-	FILE* fp = NULL;
-	switch( capture_format ){
-	case 8:// the mipi
-		sprintf(name,"/data/internal-asec/the_pic_%u.mipi_raw",g_af_pos);
+	char name[100] = { '\0' };
+	FILE *fp = NULL;
+	switch (capture_format) {
+	case 8:		// the mipi
+		sprintf(name, "/data/internal-asec/the_pic_%u.mipi_raw", g_af_pos);
 		break;
-	case 16://jpeg
-		sprintf(name,"/data/internal-asec/the_pic_%u.jpg",g_af_pos);
+	case 16:		//jpeg
+		sprintf(name, "/data/internal-asec/the_pic_%u.jpg", g_af_pos);
 		break;
 	}
-	fp = fopen(name,"wb");
+	fp = fopen(name, "wb");
 
-	if( fp==NULL ){
+	if (fp == NULL) {
 		ISP_LOGI("Chj--create file fails");
 		return 0;
 	}
 
-	fwrite(ch0_ptr, 1,ch0_len,fp);
+	fwrite(ch0_ptr, 1, ch0_len, fp);
 
-	fwrite(ch1_ptr, 1,ch1_len,fp);
+	fwrite(ch1_ptr, 1, ch1_len, fp);
 
-	fwrite(ch2_ptr, 1,ch2_len,fp);
+	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
 	ISP_LOGI("Chj--writing one pic succeeds");
 	return 0;
 }
 
-static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width,cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len,char *ch1_ptr, cmr_s32 ch1_len,char *ch2_ptr, cmr_s32 ch2_len)
+static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
 {
 	UNUSED(format);
 	UNUSED(width);
 	UNUSED(height);
-	char name[100] = {'\0'};
-	FILE* fp = NULL;
-	switch( capture_format ){
-	case 8:// the mipi
-		sprintf(name, "/data/misc/cameraserver/the_pic_%u.mipi_raw",g_af_pos);
+	char name[100] = { '\0' };
+	FILE *fp = NULL;
+	switch (capture_format) {
+	case 8:		// the mipi
+		sprintf(name, "/data/misc/cameraserver/the_pic_%u.mipi_raw", g_af_pos);
 		break;
-	case 16://jpeg
-		sprintf(name,"/data/misc/cameraserver/the_pic_%u.jpg",g_af_pos);
+	case 16:		//jpeg
+		sprintf(name, "/data/misc/cameraserver/the_pic_%u.jpg", g_af_pos);
 		break;
 	}
-	fp = fopen(name,"wb");
+	fp = fopen(name, "wb");
 
-	if( fp==NULL ){
+	if (fp == NULL) {
 		ISP_LOGI("Chj--create file fails");
 		return 0;
 	}
 
-	fwrite(ch0_ptr, 1,ch0_len,fp);
+	fwrite(ch0_ptr, 1, ch0_len, fp);
 
-	fwrite(ch1_ptr, 1,ch1_len,fp);
+	fwrite(ch1_ptr, 1, ch1_len, fp);
 
-	fwrite(ch2_ptr, 1,ch2_len,fp);
+	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
 	ISP_LOGI("Chj--writing one pic succeeds");
 	return 0;
 }
 
-cmr_s32 isp_sft_read(cmr_handle handler, cmr_u8 *data_buf, cmr_u32* data_size){
+cmr_s32 isp_sft_read(cmr_handle handler, cmr_u8 * data_buf, cmr_u32 * data_size)
+{
 	cmr_s32 ret = 0;
-	struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
+	struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 
-	rtn_param.buf_addr = (cmr_uint)data_buf;
+	rtn_param.buf_addr = (cmr_uint) data_buf;
 
-	ret = isp_ioctl(handler, ISP_CTRL_SFT_READ, (void*)&rtn_param);// get af info after auto focus
+	ret = isp_ioctl(handler, ISP_CTRL_SFT_READ, (void *)&rtn_param);	// get af info after auto focus
 
 	*data_size = rtn_param.buf_len;
 
 	return ret;
 }
-cmr_s32 isp_sft_write(cmr_handle handler, cmr_u8 *data_buf, cmr_u32 *data_size){//DATA
+
+cmr_s32 isp_sft_write(cmr_handle handler, cmr_u8 * data_buf, cmr_u32 * data_size)
+{				//DATA
 	cmr_s32 ret = 0;
-	struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
-	rtn_param.buf_addr = (cmr_uint)data_buf;
+	struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
+	rtn_param.buf_addr = (cmr_uint) data_buf;
 	rtn_param.buf_len = *data_size;
-	ret = isp_ioctl(handler, ISP_CTRL_SFT_WRITE, (void*)&rtn_param);// set af info after auto focus
+	ret = isp_ioctl(handler, ISP_CTRL_SFT_WRITE, (void *)&rtn_param);	// set af info after auto focus
 
 	return ret;
 }
-static cmr_s32 isp_tool_calc_nr_addr_offset(cmr_u8 isp_mode, cmr_u8 nr_mode, cmr_u32 * one_multi_mode_ptr, cmr_u32 *offset_units_ptr)
+
+static cmr_s32 isp_tool_calc_nr_addr_offset(cmr_u8 isp_mode, cmr_u8 nr_mode, cmr_u32 * one_multi_mode_ptr, cmr_u32 * offset_units_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32  offset_units = 0;
+	cmr_u32 offset_units = 0;
 	cmr_u32 i = 0, j = 0;
 
-	if(isp_mode > (MAX_MODE_NUM - 1))
+	if (isp_mode > (MAX_MODE_NUM - 1))
 		return ISP_ERROR;
-	if(nr_mode > (MAX_SCENEMODE_NUM- 1))
+	if (nr_mode > (MAX_SCENEMODE_NUM - 1))
 		return ISP_ERROR;
-	if(!one_multi_mode_ptr)
+	if (!one_multi_mode_ptr)
 		return ISP_ERROR;
 
-	for( i = 0; i < isp_mode; i++) {
-		if(one_multi_mode_ptr[i]) {
-			for( j = 0; j < MAX_SCENEMODE_NUM; j++ ) {
+	for (i = 0; i < isp_mode; i++) {
+		if (one_multi_mode_ptr[i]) {
+			for (j = 0; j < MAX_SCENEMODE_NUM; j++) {
 				offset_units += (one_multi_mode_ptr[i] >> j) & 0x01;
 			}
 		}
 	}
 
-	for( j = 0; j < nr_mode; j++ ) {
+	for (j = 0; j < nr_mode; j++) {
 		offset_units += (one_multi_mode_ptr[isp_mode] >> j) & 0x01;
 	}
 	*offset_units_ptr = offset_units;
 	return rtn;
 }
-cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
+
+cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u8 *data_actual_ptr;
@@ -713,61 +703,61 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 	data_actual_ptr = data_buf + sizeof(struct isp_data_header_normal);
 	data_actual_len = *data_size - sizeof(struct isp_data_header_normal);
 
-	if(nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
+	if (nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
 		isp_mode = 0;
 		nr_mode = 0;
 	} else {
 		isp_mode = data_head->isp_mode;
 		nr_mode = data_head->nr_mode;
-		multi_nr_scene_map_ptr =  (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
 		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
 		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
 	}
-	switch(data_head->sub_type) {
-        case SCENEINFO :
+	switch (data_head->sub_type) {
+	case SCENEINFO:
 		{
-			memcpy((cmr_u8*)nr_update_param.nr_scene_map_ptr, (cmr_u8*)data_actual_ptr, sizeof(struct sensor_nr_scene_map_param));
-			memcpy((cmr_u8*)nr_update_param.nr_level_number_map_ptr, ((cmr_u8*)data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param),
-					sizeof(struct sensor_nr_level_map_param));
-			memcpy((cmr_u8*)nr_update_param.nr_default_level_map_ptr,
-					((cmr_u8*)data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param) + sizeof(struct sensor_nr_level_map_param),
-						sizeof(struct sensor_nr_level_map_param));
+			memcpy((cmr_u8 *) nr_update_param.nr_scene_map_ptr, (cmr_u8 *) data_actual_ptr, sizeof(struct sensor_nr_scene_map_param));
+			memcpy((cmr_u8 *) nr_update_param.nr_level_number_map_ptr, ((cmr_u8 *) data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param),
+			       sizeof(struct sensor_nr_level_map_param));
+			memcpy((cmr_u8 *) nr_update_param.nr_default_level_map_ptr,
+			       ((cmr_u8 *) data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param) + sizeof(struct sensor_nr_level_map_param),
+			       sizeof(struct sensor_nr_level_map_param));
 #if 0
-            data_head_ptr->sub_type = SCENEINFO; //0x14
-            src_size = sizeof(struct sensor_nr_scene_map_param)
-                        + sizeof(struct sensor_nr_level_map_param)
-                        + sizeof(struct sensor_nr_level_map_param);
-				//static cmr_u32 bpc_ptr_offset;
-            if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
-                nr_scene_and_level_map = (cmr_u8 *)ispParserAlloc(src_size);
-                if (!nr_scene_and_level_map) {
-                    ISP_LOGE("ISP_TOOL:nr_scene_and_level_map malloc error !");
-                    return -1;
-			}
-                memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
+			data_head_ptr->sub_type = SCENEINFO;	//0x14
+			src_size = sizeof(struct sensor_nr_scene_map_param)
+			    + sizeof(struct sensor_nr_level_map_param)
+			    + sizeof(struct sensor_nr_level_map_param);
+			//static cmr_u32 bpc_ptr_offset;
+			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
+				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
+				if (!nr_scene_and_level_map) {
+					ISP_LOGE("ISP_TOOL:nr_scene_and_level_map malloc error !");
+					return -1;
+				}
+				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
 				//static cmr_u32 cce_ptr_offset;
-                temp_nr_map_addr = (cmr_u32 *)((cmr_u8 *)nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
 				//struct nr_param_ptr *nr_ptr = (struct nr_param_ptr*)nr_update_param.cce_uvdiv_level_ptr;
-                memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-                temp_nr_map_addr = (cmr_u32 *)((cmr_u8 *)temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
 				//memcpy(((cmr_u8*)(nr_ptr->common_param_ptr)) + cce_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
-                memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
 				//if (0x01 != data_head->packet_status)
-				//	cce_ptr_offset += data_actual_len;
-                nr_offset_addr = (cmr_u32 *)nr_scene_and_level_map;
-                ISP_LOGE("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-            } else {
-                ISP_LOGE("ISP_TOOL:nr_scene_and_level_map is null error");
+				//      cce_ptr_offset += data_actual_len;
+				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
+				ISP_LOGE("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+			} else {
+				ISP_LOGE("ISP_TOOL:nr_scene_and_level_map is null error");
 			}
-				break;
+			break;
 #endif
 		}
-        case V21PPI :
+	case V21PPI:
 		{
 			static cmr_u32 ppi_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
-			memcpy(((cmr_u8*)(nr_update_param.pdaf_correction_level_ptr)) + nr_offset_addr + ppi_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.pdaf_correction_level_ptr)) + nr_offset_addr + ppi_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ppi_ptr_offset += data_actual_len;
 			else
@@ -775,12 +765,12 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[8] = 1;
 			break;
 		}
-        case V21BAYER_NR :
+	case V21BAYER_NR:
 		{
 			static cmr_u32 bayer_nr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
-			memcpy(((cmr_u8*)(nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				bayer_nr_ptr_offset += data_actual_len;
 			else
@@ -788,51 +778,51 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[7] = 1;
 			break;
 		}
-        case V21VST :
-        {
+	case V21VST:
+		{
 			static cmr_u32 vst_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
-			memcpy(((cmr_u8*)(nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				vst_ptr_offset += data_actual_len;
 			else
 				vst_ptr_offset = 0;
 			nr_tool_flag[7] = 1;
 			break;
-        }
-        case V21IVST :
-        {
+		}
+	case V21IVST:
+		{
 			static cmr_u32 ivst_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
-			memcpy(((cmr_u8*)(nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ivst_ptr_offset += data_actual_len;
 			else
 				ivst_ptr_offset = 0;
 			nr_tool_flag[7] = 1;
 			break;
-        }
-        case V21DITHER :
-        {
+		}
+	case V21DITHER:
+		{
 			static cmr_u32 rgb_dither_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
-			memcpy(((cmr_u8*)(nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				rgb_dither_ptr_offset += data_actual_len;
 			else
 				rgb_dither_ptr_offset = 0;
 			nr_tool_flag[10] = 1;
 			break;
-        }
-		case V21BPC :
+		}
+	case V21BPC:
 		{
 			static cmr_u32 bpc_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((cmr_u8*)(nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				bpc_ptr_offset += data_actual_len;
 			else
@@ -840,103 +830,103 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[2] = 1;
 			break;
 		}
-        case V21GRGB :
-        {
+	case V21GRGB:
+		{
 			static cmr_u32 grgb_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
-			memcpy(((cmr_u8*)(nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				grgb_ptr_offset += data_actual_len;
 			else
 				grgb_ptr_offset = 0;
 			nr_tool_flag[5] = 1;
 			break;
-        }
-        case V21CFA :
-        {
+		}
+	case V21CFA:
+		{
 			static cmr_u32 cfae_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
-			memcpy(((cmr_u8*)(nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				cfae_ptr_offset += data_actual_len;
 			else
 				cfae_ptr_offset = 0;
 			nr_tool_flag[3] = 1;
 			break;
-        }
-        case V21RGB_AFM :
-        {
+		}
+	case V21RGB_AFM:
+		{
 			static cmr_u32 rgb_afm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
-			memcpy(((cmr_u8*)(nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				rgb_afm_ptr_offset += data_actual_len;
 			else
 				rgb_afm_ptr_offset = 0;
 			nr_tool_flag[9] = 1;
 			break;
-        }
-        case V21UVDIV :
-        {
+		}
+	case V21UVDIV:
+		{
 			static cmr_u32 uvdiv_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
-			memcpy(((cmr_u8*)(nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				uvdiv_ptr_offset += data_actual_len;
 			else
 				uvdiv_ptr_offset = 0;
 			nr_tool_flag[12] = 1;
 			break;
-        }
-        case V21PRE3DNR :
-        {
+		}
+	case V21PRE3DNR:
+		{
 			static cmr_u32 dnr_pre_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
-			memcpy(((cmr_u8*)(nr_update_param.dnr_pre_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_pre_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				dnr_pre_ptr_offset += data_actual_len;
 			else
 				dnr_pre_ptr_offset = 0;
 			nr_tool_flag[1] = 1;
 			break;
-        }
-        case V21CAP3DNR :
-        {
+		}
+	case V21CAP3DNR:
+		{
 			static cmr_u32 dnr_cap_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
-			memcpy(((cmr_u8*)(nr_update_param.dnr_cap_level_ptr)) + nr_offset_addr + dnr_cap_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_cap_level_ptr)) + nr_offset_addr + dnr_cap_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				dnr_cap_ptr_offset += data_actual_len;
 			else
 				dnr_cap_ptr_offset = 0;
 			nr_tool_flag[0] = 1;
 			break;
-        }
-		case V21EDGE :
-        {
+		}
+	case V21EDGE:
+		{
 			static cmr_u32 edge_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
-			memcpy(((cmr_u8*)(nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				edge_ptr_offset += data_actual_len;
 			else
 				edge_ptr_offset = 0;
 			nr_tool_flag[4] = 1;
 			break;
-        }
-		case YUV_PRECDN :
+		}
+	case YUV_PRECDN:
 		{
 			static cmr_u32 precdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
-			memcpy(((cmr_u8*)(nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				precdn_ptr_offset += data_actual_len;
 			else
@@ -944,12 +934,12 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[16] = 1;
 			break;
 		}
-		case V21Y_NR :
+	case V21Y_NR:
 		{
 			static cmr_u32 ynr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
-			memcpy(((cmr_u8*)(nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ynr_ptr_offset += data_actual_len;
 			else
@@ -957,12 +947,12 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[14] = 1;
 			break;
 		}
-		case V21CDN :
+	case V21CDN:
 		{
 			static cmr_u32 cdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
-			memcpy(((cmr_u8*)(nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				cdn_ptr_offset += data_actual_len;
 			else
@@ -970,12 +960,12 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[11] = 1;
 			break;
 		}
-		case V21POSTCDN :
+	case V21POSTCDN:
 		{
 			static cmr_u32 postcdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
-			memcpy(((cmr_u8*)(nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				postcdn_ptr_offset += data_actual_len;
 			else
@@ -983,25 +973,25 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[13] = 1;
 			break;
 		}
-        case V21IIRCNR :
-        {
+	case V21IIRCNR:
+		{
 			static cmr_u32 ynr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			memcpy(((cmr_u8*)(nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ynr_ptr_offset += data_actual_len;
 			else
 				ynr_ptr_offset = 0;
 			nr_tool_flag[6] = 1;
 			break;
-        }
-		case V21NOISEFILTER:
+		}
+	case V21NOISEFILTER:
 		{
 			static cmr_u32 yuv_noisefilter_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
-			memcpy(((cmr_u8*)(nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				yuv_noisefilter_ptr_offset += data_actual_len;
 			else
@@ -1009,14 +999,13 @@ cmr_s32 isp_denoise_write(cmr_u8 *data_buf, cmr_u32 *data_size)
 			nr_tool_flag[15] = 1;
 			break;
 		}
-		default :
-			break;
+	default:
+		break;
 	}
 	return ret;
 }
 
-cmr_s32 denoise_param_send(cmr_u8 *tx_buf, cmr_u32 valid_len, void *src_ptr, cmr_u32 src_size,
-								cmr_u8 *data_ptr, cmr_u16 *actual_len, cmr_u8 *data_status)
+cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cmr_u32 src_size, cmr_u8 * data_ptr, cmr_u16 * actual_len, cmr_u8 * data_status)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_s32 i, num;
@@ -1031,7 +1020,7 @@ cmr_s32 denoise_param_send(cmr_u8 *tx_buf, cmr_u32 valid_len, void *src_ptr, cmr
 
 	if (0 != num) {
 		for (i = 0; i < num; i++) {
-			memcpy(data_ptr, (cmr_u8*)src_ptr + i * valid_len, valid_len);
+			memcpy(data_ptr, (cmr_u8 *) src_ptr + i * valid_len, valid_len);
 			*actual_len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + valid_len;
 			*(tx_buf + (*actual_len) + 1) = 0x7e;
 			if ((i == (num - 1)) && (0 == tail_len))
@@ -1043,7 +1032,7 @@ cmr_s32 denoise_param_send(cmr_u8 *tx_buf, cmr_u32 valid_len, void *src_ptr, cmr
 		}
 	}
 	if (0 != tail_len) {
-		memcpy(data_ptr, (cmr_u8*)src_ptr + num * valid_len, tail_len);
+		memcpy(data_ptr, (cmr_u8 *) src_ptr + num * valid_len, tail_len);
 		*actual_len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
 		*(tx_buf + (*actual_len) + 1) = 0x7e;
 		*data_status = 0x01;
@@ -1053,7 +1042,7 @@ cmr_s32 denoise_param_send(cmr_u8 *tx_buf, cmr_u32 valid_len, void *src_ptr, cmr
 	return ret;
 }
 
-cmr_s32 isp_denoise_read(cmr_u8 *tx_buf, cmr_u32 len, struct isp_data_header_read *data_head)
+cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_s32 num;
@@ -1070,18 +1059,18 @@ cmr_s32 isp_denoise_read(cmr_u8 *tx_buf, cmr_u32 len, struct isp_data_header_rea
 	cmr_u32 *temp_nr_map_addr = NULL;
 
 	if (NULL == tx_buf) {
-		ISP_LOGE("param error:tx_buf:%p",tx_buf);
+		ISP_LOGE("param error:tx_buf:%p", tx_buf);
 		return ISP_PARAM_ERROR;
 	}
 
-	msg_ret = (MSG_HEAD_T *)(tx_buf + 1);
+	msg_ret = (MSG_HEAD_T *) (tx_buf + 1);
 	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
-	data_head_ptr->main_type= 0x01;     //denoise param
-	data_ptr = ((cmr_u8*)data_head_ptr) + sizeof(struct isp_data_header_normal);
+	data_head_ptr->main_type = 0x01;	//denoise param
+	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
 	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
 	file_num = data_head->sub_type;
 	cmr_u32 offset_units = 0;
-	void * nr_offset_addr = PNULL;
+	void *nr_offset_addr = PNULL;
 	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
 	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
 	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
@@ -1089,198 +1078,197 @@ cmr_s32 isp_denoise_read(cmr_u8 *tx_buf, cmr_u32 len, struct isp_data_header_rea
 	isp_mode = data_head->isp_mode;
 	nr_mode = data_head->nr_mode;
 	if (nr_update_param.nr_scene_map_ptr != PNULL) {
-		multi_nr_scene_map_ptr =  (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
 	}
 	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
-		multi_nr_level_map_ptr =  (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
 	}
 	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
-		multi_nr_default_level_map_ptr =  (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
 	}
-	switch(file_num) {
-		case SCENEINFO :
+	switch (file_num) {
+	case SCENEINFO:
 		{
-			data_head_ptr->sub_type = SCENEINFO; //0x00
+			data_head_ptr->sub_type = SCENEINFO;	//0x00
 			src_size = sizeof(struct sensor_nr_scene_map_param)
-						+ sizeof(struct sensor_nr_level_map_param)
-						+ sizeof(struct sensor_nr_level_map_param);
+			    + sizeof(struct sensor_nr_level_map_param)
+			    + sizeof(struct sensor_nr_level_map_param);
 
 			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
-				nr_scene_and_level_map = (cmr_u8 *)ispParserAlloc(src_size);
+				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
 				if (!nr_scene_and_level_map) {
 					ISP_LOGE("ISP_TOOL:nr_scene_and_level_map malloc error !");
 					return -1;
 				}
 				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
-				temp_nr_map_addr = (cmr_u32 *)((cmr_u8 *)nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
 				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				temp_nr_map_addr = (cmr_u32 *)((cmr_u8 *)temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
 				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				nr_offset_addr = (cmr_u32 *)nr_scene_and_level_map;
+				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
 
 			} else {
 				ISP_LOGE("ISP_TOOL:nr_scene_and_level_map is null error");
 			}
 			break;
 		}
-		case V21PPI :
+	case V21PPI:
 		{
-			data_head_ptr->sub_type = V21PPI; //0x14
+			data_head_ptr->sub_type = V21PPI;	//0x14
 			src_size = sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.pdaf_correction_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.pdaf_correction_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21BAYER_NR :
+	case V21BAYER_NR:
 		{
-			data_head_ptr->sub_type = V21BAYER_NR;//0x15
+			data_head_ptr->sub_type = V21BAYER_NR;	//0x15
 			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.nlm_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.nlm_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21VST :
+	case V21VST:
 		{
-			data_head_ptr->sub_type = V21VST;//0x16
+			data_head_ptr->sub_type = V21VST;	//0x16
 			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.vst_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.vst_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21IVST :
+	case V21IVST:
 		{
-			data_head_ptr->sub_type = V21IVST;//0x17
+			data_head_ptr->sub_type = V21IVST;	//0x17
 			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.ivst_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21DITHER :
+	case V21DITHER:
 		{
-			data_head_ptr->sub_type = V21DITHER; //0x18
+			data_head_ptr->sub_type = V21DITHER;	//0x18
 			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21BPC :
+	case V21BPC:
 		{
-			data_head_ptr->sub_type = V21BPC; //0x19
+			data_head_ptr->sub_type = V21BPC;	//0x19
 			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.bpc_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.bpc_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21GRGB :
+	case V21GRGB:
 		{
-			data_head_ptr->sub_type = V21GRGB;//0x1A
+			data_head_ptr->sub_type = V21GRGB;	//0x1A
 			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.grgb_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.grgb_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21CFA :
+	case V21CFA:
 		{
-			data_head_ptr->sub_type = V21CFA;//0x1B
+			data_head_ptr->sub_type = V21CFA;	//0x1B
 			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.cfae_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cfae_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21RGB_AFM :
+	case V21RGB_AFM:
 		{
-			data_head_ptr->sub_type = V21RGB_AFM;//0x0C
+			data_head_ptr->sub_type = V21RGB_AFM;	//0x0C
 			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21UVDIV :
+	case V21UVDIV:
 		{
-			data_head_ptr->sub_type = V21UVDIV;//0x0D
+			data_head_ptr->sub_type = V21UVDIV;	//0x0D
 			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21PRE3DNR :
+	case V21PRE3DNR:
 		{
-			data_head_ptr->sub_type = V21PRE3DNR;//0x0E
+			data_head_ptr->sub_type = V21PRE3DNR;	//0x0E
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.dnr_pre_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_pre_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21CAP3DNR :
+	case V21CAP3DNR:
 		{
-			data_head_ptr->sub_type = V21CAP3DNR;//0x0F
+			data_head_ptr->sub_type = V21CAP3DNR;	//0x0F
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21EDGE :
+	case V21EDGE:
 		{
-			data_head_ptr->sub_type = V21EDGE;//0x20
+			data_head_ptr->sub_type = V21EDGE;	//0x20
 			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.ee_level_ptr+ offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ee_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21PRECDN :
+	case V21PRECDN:
 		{
-			data_head_ptr->sub_type = V21PRECDN;//0x21
+			data_head_ptr->sub_type = V21PRECDN;	//0x21
 			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21Y_NR :
+	case V21Y_NR:
 		{
-			data_head_ptr->sub_type = V21Y_NR;//0x22
+			data_head_ptr->sub_type = V21Y_NR;	//0x22
 			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.ynr_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ynr_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21CDN :
+	case V21CDN:
 		{
-			data_head_ptr->sub_type = V21CDN;//0x23
+			data_head_ptr->sub_type = V21CDN;	//0x23
 			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21POSTCDN :
+	case V21POSTCDN:
 		{
-			data_head_ptr->sub_type = V21POSTCDN;//0x24
+			data_head_ptr->sub_type = V21POSTCDN;	//0x24
 			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21IIRCNR :
+	case V21IIRCNR:
 		{
-			data_head_ptr->sub_type = V21IIRCNR;//0x25
+			data_head_ptr->sub_type = V21IIRCNR;	//0x25
 			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.iircnr_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
 			break;
 		}
-		case V21NOISEFILTER :
+	case V21NOISEFILTER:
 		{
-			data_head_ptr->sub_type = V21NOISEFILTER;//0x26
+			data_head_ptr->sub_type = V21NOISEFILTER;	//0x26
 			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *)nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
 			break;
 		}
-		default :
-			break;
+	default:
+		break;
 	}
 	ISP_LOGI("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void*)nr_offset_addr, src_size, data_ptr,
-							&msg_ret->len, &data_head_ptr->packet_status);
+	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &msg_ret->len, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);
@@ -1288,7 +1276,7 @@ cmr_s32 isp_denoise_read(cmr_u8 *tx_buf, cmr_u32 len, struct isp_data_header_rea
 	return ret;
 }
 
-cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 *tx_buf, cmr_u32 len)
+cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_info param_info;
@@ -1302,17 +1290,17 @@ cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 *tx_buf, cmr_u32 len)
 	cmr_u32 tail_len;
 
 	if (NULL == tx_buf || NULL == handler) {
-			ISP_LOGE("ISP_TOOL:param error");
-			return ISP_PARAM_ERROR;
+		ISP_LOGE("ISP_TOOL:param error");
+		return ISP_PARAM_ERROR;
 	}
 
-	msg_ret = (MSG_HEAD_T *)(tx_buf + 1);
+	msg_ret = (MSG_HEAD_T *) (tx_buf + 1);
 	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
-	data_head_ptr->main_type = 0x00;     //dump isp reg
-	data_ptr = ((cmr_u8 *)data_head_ptr) + sizeof(struct isp_data_header_normal);
+	data_head_ptr->main_type = 0x00;	//dump isp reg
+	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
 	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
 
-	ret = isp_ioctl(handler, ISP_CTRL_DUMP_REG,(void*)&param_info);
+	ret = isp_ioctl(handler, ISP_CTRL_DUMP_REG, (void *)&param_info);
 
 	src_ptr = param_info.addr;
 	src_size = param_info.size;
@@ -1321,24 +1309,24 @@ cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 *tx_buf, cmr_u32 len)
 	tail_len = src_size % data_valid_len;
 
 	for (i = 0; i < num; i++) {
-		memcpy(data_ptr, (cmr_u8*)src_ptr + i * data_valid_len, data_valid_len);
+		memcpy(data_ptr, (cmr_u8 *) src_ptr + i * data_valid_len, data_valid_len);
 		msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + data_valid_len;
 		*(tx_buf + (msg_ret->len) + 1) = 0x7e;
-		if (0 == tail_len && i == (num-1))
-			data_head_ptr->packet_status= 0x01; //last one
+		if (0 == tail_len && i == (num - 1))
+			data_head_ptr->packet_status = 0x01;	//last one
 		else
 			data_head_ptr->packet_status = 0x00;
 
 		ret = send(sockfd, tx_buf, (msg_ret->len) + 2, 0);
 	}
 	if (0 != tail_len) {
-		memcpy(data_ptr, (cmr_u8*)src_ptr + num * data_valid_len, tail_len);
+		memcpy(data_ptr, (cmr_u8 *) src_ptr + num * data_valid_len, tail_len);
 		msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
 		*(tx_buf + (msg_ret->len) + 1) = 0x7e;
-		data_head_ptr->packet_status = 0x01;  //last one
+		data_head_ptr->packet_status = 0x01;	//last one
 		ret = send(sockfd, tx_buf, (msg_ret->len) + 2, 0);
 	}
-	if(NULL != src_ptr) {
+	if (NULL != src_ptr) {
 		free(src_ptr);
 		src_ptr = NULL;
 	}
@@ -1346,7 +1334,7 @@ cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 *tx_buf, cmr_u32 len)
 	return ret;
 }
 
-static cmr_s32 isp_nr_reg_read(cmr_handle handler, cmr_u8 *tx_buf, cmr_u32 len, cmr_u8 *rx_buf)
+static cmr_s32 isp_nr_reg_read(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len, cmr_u8 * rx_buf)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_data_header_read *data_head = (struct isp_data_header_read *)(rx_buf + sizeof(MSG_HEAD_T) + 1);
@@ -1363,29 +1351,29 @@ static cmr_s32 isp_nr_reg_read(cmr_handle handler, cmr_u8 *tx_buf, cmr_u32 len, 
 	return ret;
 }
 
-static cmr_s32 isp_nr_write(cmr_handle handler, cmr_u8 *tx_buf, cmr_u8 *rx_buf)
+static cmr_s32 isp_nr_write(cmr_handle handler, cmr_u8 * tx_buf, cmr_u8 * rx_buf)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	MSG_HEAD_T *msg, *msg_ret;
 	cmr_s32 rsp_len = 0;
 	UNUSED(handler);
 
-	msg = (MSG_HEAD_T *)(rx_buf + 1);
-	msg_ret = (MSG_HEAD_T *)(tx_buf + 1);
+	msg = (MSG_HEAD_T *) (rx_buf + 1);
+	msg_ret = (MSG_HEAD_T *) (tx_buf + 1);
 	cmr_u32 data_len = msg->len - 8;
 	struct isp_data_header_normal *data_head = (struct isp_data_header_normal *)(rx_buf + sizeof(MSG_HEAD_T) + 1);
 	rsp_len = sizeof(MSG_HEAD_T) + 1;
 
 	if (0x01 == data_head->main_type) {
-		ret = isp_denoise_write((cmr_u8*)data_head, &data_len);
+		ret = isp_denoise_write((cmr_u8 *) data_head, &data_len);
 		if (0x01 == data_head->packet_status) {
 			if (ISP_SUCCESS == ret) {
 				rsp_len += ispvideo_SetreTurnValue(tx_buf + rsp_len, ISP_SUCCESS);
 				*(tx_buf + rsp_len) = 0x7e;
 				msg_ret->len = rsp_len - 1;
 				ret = send(sockfd, tx_buf, rsp_len + 1, 0);
-			}else {
-				rsp_len+=ispvideo_SetreTurnValue(tx_buf + rsp_len, 0x01);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue(tx_buf + rsp_len, 0x01);
 				*(tx_buf + rsp_len) = 0x7e;
 				msg_ret->len = rsp_len - 1;
 				ret = send(sockfd, tx_buf, rsp_len + 1, 0);
@@ -1396,16 +1384,15 @@ static cmr_s32 isp_nr_write(cmr_handle handler, cmr_u8 *tx_buf, cmr_u8 *rx_buf)
 	return ret;
 }
 
-
 cmr_u32 get_tune_packet_num(cmr_u32 packet_len)
 {
 	cmr_u32 packet_num = 0;
 	cmr_u32 len_tmp = 0;
 	len_tmp = 0;
-	if (0 != ((packet_len - len_tmp)%(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH -len_tmp - 2))) {
-		packet_num = (packet_len - len_tmp)/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2) + 1;
-	}else {
-		packet_num = (packet_len - len_tmp)/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2);
+	if (0 != ((packet_len - len_tmp) % (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2))) {
+		packet_num = (packet_len - len_tmp) / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2) + 1;
+	} else {
+		packet_num = (packet_len - len_tmp) / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2);
 	}
 	return packet_num;
 }
@@ -1414,10 +1401,10 @@ cmr_u32 get_fix_packet_num(cmr_u32 packet_len)
 {
 	cmr_u32 packet_num = 0;
 	cmr_u32 len_tmp = 0;
-	if (0 != ((packet_len - len_tmp)%(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2))) {
-		packet_num = (packet_len - len_tmp)/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH -len_tmp - 2) + 1;
-	}else {
-		packet_num = (packet_len - len_tmp)/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH -len_tmp - 2);
+	if (0 != ((packet_len - len_tmp) % (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2))) {
+		packet_num = (packet_len - len_tmp) / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2) + 1;
+	} else {
+		packet_num = (packet_len - len_tmp) / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - len_tmp - 2);
 	}
 	return packet_num;
 }
@@ -1425,10 +1412,10 @@ cmr_u32 get_fix_packet_num(cmr_u32 packet_len)
 cmr_u32 get_note_packet_num(cmr_u32 packet_len)
 {
 	cmr_u32 packet_num = 0;
-	if (0 != (packet_len%(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2))) {
-		packet_num = packet_len/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2) + 1;
-	}else {
-		packet_num = packet_len/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2);
+	if (0 != (packet_len % (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2))) {
+		packet_num = packet_len / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2) + 1;
+	} else {
+		packet_num = packet_len / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2);
 	}
 	return packet_num;
 }
@@ -1436,18 +1423,18 @@ cmr_u32 get_note_packet_num(cmr_u32 packet_len)
 cmr_u32 get_libuse_info_packet_num(cmr_u32 packet_len)
 {
 	cmr_u32 packet_num = 0;
-	if (0 != (packet_len%(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2))) {
-		packet_num = packet_len/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2) + 1;
-	}else {
-		packet_num = packet_len/(DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2);
+	if (0 != (packet_len % (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2))) {
+		packet_num = packet_len / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2) + 1;
+	} else {
+		packet_num = packet_len / (DATA_BUF_SIZE - PACKET_MSG_HEADER - DATA_CMD_LENGTH - 2);
 	}
 	return packet_num;
 }
 
-cmr_s32 send_isp_mode_id_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *msg,cmr_u32 *data_addr,cmr_u32 data_len)
+cmr_s32 send_isp_mode_id_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg, cmr_u32 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u32 i ;
+	cmr_u32 i;
 	cmr_s32 res;
 	cmr_u32 len = 0;
 	cmr_u32 rsp_len = 0;
@@ -1469,29 +1456,28 @@ cmr_s32 send_isp_mode_id_param(struct isp_data_header_read *read_cmd,struct msg_
 	msg_tag.subtype = msg->subtype;
 	msg_tag.type = msg->type;
 
-	len = data_len+len_msg + len_data_header ;
+	len = data_len + len_msg + len_data_header;
 	msg_tag.len = len;
 	data_header.packet_status = 0x01;
 
-	memcpy(eng_rsp_diag+1,(cmr_u8 *)&msg_tag,len_msg);
-	rsp_len = len_msg+1;
-	memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)&data_header,len_data_header);
+	memcpy(eng_rsp_diag + 1, (cmr_u8 *) & msg_tag, len_msg);
+	rsp_len = len_msg + 1;
+	memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 	rsp_len = rsp_len + len_data_header;
 
-	memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_addr,data_len);
+	memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_addr, data_len);
 	rsp_len = len + 1;
 	eng_rsp_diag[rsp_len] = 0x7e;
-	res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+	res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 	return rtn;
 }
 
-
-cmr_s32 send_tune_info_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *msg,cmr_u32 *data_addr,cmr_u32 data_len)
+cmr_s32 send_tune_info_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg, cmr_u32 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x00;
 
 	cmr_u32 packet_num = 0;
-	cmr_u32 i ;
+	cmr_u32 i;
 	cmr_s32 res;
 	cmr_u32 len = 0;
 
@@ -1512,47 +1498,47 @@ cmr_s32 send_tune_info_param(struct isp_data_header_read *read_cmd,struct msg_he
 	msg_tag.type = msg->type;
 
 	packet_num = get_tune_packet_num(data_len);
-	data_ptr = (cmr_u8 *)data_addr;
+	data_ptr = (cmr_u8 *) data_addr;
 
 	for (i = 0; i < packet_num; i++) {
 		cmr_u32 rsp_len = 0;
-		if (i < (packet_num-1)) {
-			len = DATA_BUF_SIZE -2 ;
+		if (i < (packet_num - 1)) {
+			len = DATA_BUF_SIZE - 2;
 			msg_tag.len = len;
 			data_header.packet_status = 0x00;
 		} else {
 			if (0 != i) {
-				len = data_len + packet_num*(len_msg + len_data_header + 2) -DATA_BUF_SIZE*i-2;
-			}else {
-				len = data_len + packet_num*(len_msg + len_data_header + 2) -DATA_BUF_SIZE*i-2;
+				len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
+			} else {
+				len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
 			}
 			msg_tag.len = len;
 			data_header.packet_status = 0x01;
 		}
-		memcpy(eng_rsp_diag+1,(cmr_u8 *)&msg_tag,len_msg);
-		rsp_len = len_msg+1;
-		memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)&data_header,len_data_header);
+		memcpy(eng_rsp_diag + 1, (cmr_u8 *) & msg_tag, len_msg);
+		rsp_len = len_msg + 1;
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 		rsp_len = rsp_len + len_data_header;
 		if (0 == i) {
-			memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_ptr,len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *)data_ptr + len - len_msg - len_data_header;
-		}else {
-			memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_ptr,len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *)data_ptr + len - len_msg - len_data_header ;
+			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
+		} else {
+			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
 		}
 		rsp_len = len + 1;
 		eng_rsp_diag[rsp_len] = 0x7e;
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 	}
 	return rtn;
 }
 
-cmr_s32 send_fix_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *msg,cmr_u32 *data_addr,cmr_u32 data_len)
+cmr_s32 send_fix_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg, cmr_u32 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x00;
 
 	cmr_u32 packet_num = 0;
-	cmr_u32 i ;
+	cmr_u32 i;
 	cmr_s32 res;
 	cmr_u32 len = 0;
 	cmr_u32 rsp_len = 0;
@@ -1574,54 +1560,54 @@ cmr_s32 send_fix_param(struct isp_data_header_read *read_cmd,struct msg_head_tag
 	msg_tag.type = msg->type;
 
 	packet_num = get_fix_packet_num(data_len);
-	data_ptr = (cmr_u8 *)data_addr;
+	data_ptr = (cmr_u8 *) data_addr;
 
-	for (i=0; i<packet_num; i++) {
+	for (i = 0; i < packet_num; i++) {
 		cmr_u32 tmp = 0;
-		if (i < (packet_num-1)) {
-			len = DATA_BUF_SIZE -2 ;
+		if (i < (packet_num - 1)) {
+			len = DATA_BUF_SIZE - 2;
 			msg_tag.len = len;
 			data_header.packet_status = 0x00;
-		}else {
+		} else {
 			if (0 != i) {
-				len = data_len + packet_num*(len_msg + len_data_header + 2) -DATA_BUF_SIZE*i -2;
-			}else {
+				len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
+			} else {
 				len = data_len + len_msg + len_data_header;
 			}
 			msg_tag.len = len;
 			data_header.packet_status = 0x01;
 		}
-		memcpy(eng_rsp_diag+1,(cmr_u8 *)&msg_tag,len_msg);
-		rsp_len = len_msg+1;
-		memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)&data_header,len_data_header);
+		memcpy(eng_rsp_diag + 1, (cmr_u8 *) & msg_tag, len_msg);
+		rsp_len = len_msg + 1;
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 		rsp_len = rsp_len + len_data_header;
 		if (0 == i) {
-			memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_ptr,len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *)data_ptr + len - len_msg - len_data_header;
-		}else {
-			memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_ptr,len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *)data_ptr + len - len_msg - len_data_header ;
+			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
+		} else {
+			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
 		}
 		rsp_len = len + 1;
 		eng_rsp_diag[rsp_len] = 0x7e;
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 	}
 	return rtn;
 }
 
-cmr_s32 send_note_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *msg,cmr_u32 *data_addr,cmr_u32 data_len)
+cmr_s32 send_note_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg, cmr_u32 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x00;
 
 	cmr_u32 packet_num = 0;
-	cmr_u32 i ;
+	cmr_u32 i;
 	cmr_s32 res;
 	cmr_u32 len = 0;
 
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
-	cmr_u8 *data_ptr = (cmr_u8 *)data_addr;
+	cmr_u8 *data_ptr = (cmr_u8 *) data_addr;
 	struct isp_data_header_normal data_header;
 	struct msg_head_tag msg_tag;
 	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
@@ -1635,44 +1621,43 @@ cmr_s32 send_note_param(struct isp_data_header_read *read_cmd,struct msg_head_ta
 	msg_tag.type = msg->type;
 
 	packet_num = get_note_packet_num(data_len);
-	for (i=0; i<packet_num; i++) {
+	for (i = 0; i < packet_num; i++) {
 		cmr_u32 rsp_len = 0;
-		if (i < (packet_num-1)) {
-			len = DATA_BUF_SIZE -2 ;
+		if (i < (packet_num - 1)) {
+			len = DATA_BUF_SIZE - 2;
 			msg_tag.len = len;
 			data_header.packet_status = 0x00;
-		}else {
-			len = data_len + packet_num*(len_msg + len_data_header + 2) -DATA_BUF_SIZE*i-2;
+		} else {
+			len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
 			msg_tag.len = len;
 			data_header.packet_status = 0x01;
 		}
-		memcpy(eng_rsp_diag+1,(cmr_u8 *)&msg_tag,len_msg);
-		rsp_len = len_msg+1;
-		memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)&data_header,len_data_header);
+		memcpy(eng_rsp_diag + 1, (cmr_u8 *) & msg_tag, len_msg);
+		rsp_len = len_msg + 1;
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 		rsp_len = rsp_len + len_data_header;
-		memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_ptr,len - len_msg - len_data_header);
-		data_ptr = (cmr_u8 *)data_ptr + len - len_msg - len_data_header ;
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+		data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
 		rsp_len = len + 1;
 		eng_rsp_diag[rsp_len] = 0x7e;
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 	}
 	return rtn;
 }
 
-cmr_s32 send_libuse_info_param(struct isp_data_header_read *read_cmd, struct msg_head_tag *msg,
-		cmr_u32 *data_addr, cmr_u32 data_len)
+cmr_s32 send_libuse_info_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg, cmr_u32 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x0;
 
 	cmr_u32 packet_num = 0;
-	cmr_u32 i ;
+	cmr_u32 i;
 	cmr_s32 res;
 	cmr_u32 len = 0;
 
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
-	cmr_u8 *data_ptr = (cmr_u8 *)data_addr;
+	cmr_u8 *data_ptr = (cmr_u8 *) data_addr;
 	struct isp_data_header_normal data_header;
 	struct msg_head_tag msg_tag;
 	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
@@ -1686,38 +1671,38 @@ cmr_s32 send_libuse_info_param(struct isp_data_header_read *read_cmd, struct msg
 	msg_tag.type = msg->type;
 
 	packet_num = get_libuse_info_packet_num(data_len);
-	for (i=0; i<packet_num; i++) {
+	for (i = 0; i < packet_num; i++) {
 		cmr_u32 rsp_len = 0;
-		if (i < (packet_num-1)) {
-			len = DATA_BUF_SIZE -2 ;
+		if (i < (packet_num - 1)) {
+			len = DATA_BUF_SIZE - 2;
 			msg_tag.len = len;
 			data_header.packet_status = 0x00;
-		}else {
-			len = data_len + packet_num*(len_msg + len_data_header + 2) -DATA_BUF_SIZE*i-2;
+		} else {
+			len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
 			msg_tag.len = len;
 			data_header.packet_status = 0x01;
 		}
-		memcpy(eng_rsp_diag+1,(cmr_u8 *)&msg_tag,len_msg);
-		rsp_len = len_msg+1;
-		memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)&data_header,len_data_header);
+		memcpy(eng_rsp_diag + 1, (cmr_u8 *) & msg_tag, len_msg);
+		rsp_len = len_msg + 1;
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 		rsp_len = rsp_len + len_data_header;
-		memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)data_ptr,len - len_msg - len_data_header);
-		data_ptr = (cmr_u8 *)data_ptr + len - len_msg - len_data_header ;
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+		data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
 		rsp_len = len + 1;
 		eng_rsp_diag[rsp_len] = 0x7e;
-		res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 	}
 	return rtn;
 }
 
-cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_len)
+cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
 
-	cmr_u8 flicker = (sub_type >>4)& 0x0f;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
 	cmr_u8 iso = sub_type & 0x0f;
 
-	if(NULL != data_len) {
+	if (NULL != data_len) {
 		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
 		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
 		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len;
@@ -1727,30 +1712,30 @@ cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr
 	return rtn;
 }
 
-cmr_s32 get_ae_table_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_addr)
+cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
-	cmr_s32 rtn =0x00;
+	cmr_s32 rtn = 0x00;
 
 	cmr_u32 *tmp_ptr = NULL;
-	cmr_u8 flicker = (sub_type >>4) & 0x0f;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
 	cmr_u8 iso = sub_type & 0x0f;
 
-	if (NULL != data_addr ) {
-		memcpy((void *)data_addr,(void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index,sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)data_addr + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure,sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy,sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again,sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain,sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+	if (NULL != data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy, sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again, sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain, sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
 	}
 	return rtn;
 }
 
-cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_len)
+cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u16 weight = sub_type;
@@ -1758,19 +1743,19 @@ cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cm
 	return rtn;
 }
 
-cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_addr)
+cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u16 weight = sub_type;
 	if (NULL != data_addr)
-		memcpy((void *)data_addr,(void *)sensor_raw_fix->ae.weight_tab[weight].weight_table,sensor_raw_fix->ae.weight_tab[weight].len);
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, sensor_raw_fix->ae.weight_tab[weight].len);
 	return rtn;
 }
 
-cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_len)
+cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u8 scene = (sub_type>>4) & 0x0f;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
 	cmr_u8 flicker = sub_type & 0x0f;
 
 	if (NULL != data_len) {
@@ -1784,32 +1769,32 @@ cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr
 	return rtn;
 }
 
-cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_addr)
+cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
-	cmr_s32 rtn =0x00;
+	cmr_s32 rtn = 0x00;
 
 	cmr_u32 *tmp_ptr = NULL;
-	cmr_u8 scene = (sub_type>>4) & 0x0f;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
 	cmr_u8 flicker = sub_type & 0x0f;
 
 	if (NULL != data_addr && flicker < 2) {
-		memcpy(data_addr,sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info,sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)data_addr + sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
-		memcpy(tmp_ptr,sensor_raw_fix->ae.scene_tab[scene][flicker].index,sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
-		memcpy(tmp_ptr,sensor_raw_fix->ae.scene_tab[scene][flicker].exposure,sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
-		memcpy(tmp_ptr,sensor_raw_fix->ae.scene_tab[scene][flicker].dummy,sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again,sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain,sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+		memcpy(data_addr, sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info, sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].index, sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].exposure, sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].dummy, sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again, sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain, sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
 	}
 	return rtn;
 }
 
-cmr_s32 get_ae_auto_iso_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_len)
+cmr_s32 get_ae_auto_iso_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 iso = sub_type;
@@ -1817,21 +1802,21 @@ cmr_s32 get_ae_auto_iso_param_length(struct sensor_raw_fix_info *sensor_raw_fix,
 	return rtn;
 }
 
-cmr_s32 get_ae_auto_iso_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_addr)
+cmr_s32 get_ae_auto_iso_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
-	cmr_s32 rtn =0x00;
+	cmr_s32 rtn = 0x00;
 
 	cmr_u8 iso = sub_type;
 	if (NULL != data_addr)
-		memcpy((void *)data_addr,(void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab,sensor_raw_fix->ae.auto_iso_tab[iso].len);
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab, sensor_raw_fix->ae.auto_iso_tab[iso].len);
 
 	return rtn;
 }
 
-cmr_s32 get_lnc_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_len)
+cmr_s32 get_lnc_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u16 lnc_ct =sub_type;
+	cmr_u16 lnc_ct = sub_type;
 
 	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
 	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].lnc_len;
@@ -1839,26 +1824,26 @@ cmr_s32 get_lnc_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 
 	return rtn;
 }
 
-cmr_s32 get_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_addr)
+cmr_s32 get_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
-	cmr_s32 rtn =0x00;
+	cmr_s32 rtn = 0x00;
 	cmr_u32 *tmp_ptr = NULL;
 	cmr_u16 lnc_ct = sub_type;
 
-	if(NULL != data_addr) {
-		memcpy((void *)data_addr,(void *)sensor_raw_fix->lnc.map[lnc_ct].map_info,sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)data_addr + sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr,sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
-		tmp_ptr = (cmr_u32 *)((cmr_u8 *)tmp_ptr + sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
-		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info,sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
+	if (NULL != data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->lnc.map[lnc_ct].map_info, sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr, sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info, sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
 	}
 	return rtn;
 }
 
-cmr_s32 get_awb_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_len)
+cmr_s32 get_awb_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
-	switch(sub_type) {
+	switch (sub_type) {
 	case AWB_WIN_MAP:
 		*data_len = *data_len + sensor_raw_fix->awb.awb_map.len;
 		break;
@@ -1872,25 +1857,25 @@ cmr_s32 get_awb_param_length(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 
 	return rtn;
 }
 
-cmr_s32 get_awb_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u32 *data_addr)
+cmr_s32 get_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
-	cmr_s32 rtn =0x00;
+	cmr_s32 rtn = 0x00;
 
 	cmr_u32 *tmp_ptr = NULL;
 	if (NULL != data_addr) {
 		switch (sub_type) {
 		case AWB_WIN_MAP:
-		{
-			memcpy((void *)data_addr,(void *)sensor_raw_fix->awb.awb_map.addr,sensor_raw_fix->awb.awb_map.len);
-		}
-		break;
+			{
+				memcpy((void *)data_addr, (void *)sensor_raw_fix->awb.awb_map.addr, sensor_raw_fix->awb.awb_map.len);
+			}
+			break;
 		case AWB_WEIGHT:
-		{
-			memcpy((void *)data_addr,(void *)sensor_raw_fix->awb.awb_weight.addr,sensor_raw_fix->awb.awb_weight.weight_len);
-			tmp_ptr = (cmr_u32 *)((cmr_u8 *)data_addr + sensor_raw_fix->awb.awb_weight.weight_len);
-			memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->awb.awb_weight.size,sensor_raw_fix->awb.awb_weight.size_param_len);
-		}
-		break;
+			{
+				memcpy((void *)data_addr, (void *)sensor_raw_fix->awb.awb_weight.addr, sensor_raw_fix->awb.awb_weight.weight_len);
+				tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->awb.awb_weight.weight_len);
+				memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->awb.awb_weight.size, sensor_raw_fix->awb.awb_weight.size_param_len);
+			}
+			break;
 		default:
 			break;
 		}
@@ -1898,8 +1883,7 @@ cmr_s32 get_awb_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_typ
 	return rtn;
 }
 
-
-static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 *addr)
+static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
 {
 	cmr_s32 ret = 0;
 	char file_name[40];
@@ -1911,8 +1895,8 @@ static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 *addr)
 
 	ISP_LOGI("size %d", size);
 
-	memset(file_name,0,sizeof(file_name));
-	sprintf(file_name,"/data/misc/cameraserver/read_lnc_param_%d.txt", sn);
+	memset(file_name, 0, sizeof(file_name));
+	sprintf(file_name, "/data/misc/cameraserver/read_lnc_param_%d.txt", sn);
 
 	ISP_LOGI("file name %s", file_name);
 	fp = fopen(file_name, "wb");
@@ -1921,24 +1905,23 @@ static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 *addr)
 		ISP_LOGI("can not open file: %s \n", file_name);
 		return 0;
 	}
-	for (i = 0; i < size;++i) {
+	for (i = 0; i < size; ++i) {
 		count++;
 		memset(tmp_str, 0, sizeof(tmp_str));
-		sprintf(tmp_str,"0x%02x,", *addr++);
+		sprintf(tmp_str, "0x%02x,", *addr++);
 		if (16 == count) {
-			strcat(tmp_str,"\n");
+			strcat(tmp_str, "\n");
 			count = 0;
 		}
 
 		tmp_size = strlen(tmp_str);
-		fwrite((void*)tmp_str, 1, tmp_size, fp);
+		fwrite((void *)tmp_str, 1, tmp_size, fp);
 	}
 	fclose(fp);
 	return 0;
 }
 
-
-cmr_s32 send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *msg)
+cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg)
 {
 	cmr_s32 rtn = 0x00;
 
@@ -1954,14 +1937,14 @@ cmr_s32 send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag
 	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info* sensor_raw_info_ptr=(struct sensor_raw_info*)sensor_info_ptr->raw_info_ptr;
+	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
 
 	if (0xff == read_cmd->isp_mode) {
 		mode_id = 0;
-	}else {
+	} else {
 		mode_id = read_cmd->isp_mode;
 	}
-	if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id] ) {
+	if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
 		sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
 	}
 	if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
@@ -1974,162 +1957,162 @@ cmr_s32 send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag
 
 	switch (read_cmd->main_type) {
 	case MODE_ISP_ID:
-	{
-		cmr_u8 i;
-		cmr_u8 isp_mode_num = 0;
-		cmr_u8 data_mode_id[ISP_READ_MODE_ID_MAX] = {0};
+		{
+			cmr_u8 i;
+			cmr_u8 isp_mode_num = 0;
+			cmr_u8 data_mode_id[ISP_READ_MODE_ID_MAX] = { 0 };
 
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
-		for (i = 0;i < ISP_READ_MODE_ID_MAX;i++) {
-			if(NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
-				data_mode_id[isp_mode_num] = i;
-				isp_mode_num ++;
+			struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
+			for (i = 0; i < ISP_READ_MODE_ID_MAX; i++) {
+				if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
+					data_mode_id[isp_mode_num] = i;
+					isp_mode_num++;
+				}
+			}
+			data_len = isp_mode_num;
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
+				rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
 			}
 		}
-		data_len = isp_mode_num;
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			memcpy((cmr_u8 *)data_addr,data_mode_id,isp_mode_num);
-			rtn = send_isp_mode_id_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 	case MODE_TUNE_INFO:
-	{
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
-		data_len = mode_param_info.len;
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			memcpy((void *)((cmr_u8 *)data_addr),(void *)mode_param_info.addr,mode_param_info.len);
-			rtn = send_tune_info_param(read_cmd,msg,data_addr,data_len);
-			if (0x00 != rtn) {
-				DBG("ISP_TOOL : send tune_info is error");
+		{
+			struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
+			data_len = mode_param_info.len;
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				data_addr[0] = mode_param->version_id;
+				data_addr[1] = mode_id;
+				data_addr[2] = mode_param->width;
+				data_addr[3] = mode_param->height;
+				memcpy((void *)((cmr_u8 *) data_addr), (void *)mode_param_info.addr, mode_param_info.len);
+				rtn = send_tune_info_param(read_cmd, msg, data_addr, data_len);
+				if (0x00 != rtn) {
+					DBG("ISP_TOOL : send tune_info is error");
+				}
 			}
 		}
-	}
-	break;
+		break;
 	case MODE_AE_TABLE:
-	{
-		if (NULL == sensor_raw_fix) {
-			return rtn;
+		{
+			if (NULL == sensor_raw_fix) {
+				return rtn;
+			}
+			data_len = 0;
+			rtn = get_ae_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				rtn = get_ae_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-		data_len = 0;
-		rtn = get_ae_table_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			rtn = get_ae_table_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
-			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 	case MODE_AE_WEIGHT_TABLE:
-	{
-		if (NULL == sensor_raw_fix) {
-			return rtn;
+		{
+			if (NULL == sensor_raw_fix) {
+				return rtn;
+			}
+			data_len = 0;
+			rtn = get_ae_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				rtn = get_ae_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-		data_len = 0;
-		rtn = get_ae_weight_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			rtn = get_ae_weight_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
-			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 	case MODE_AE_SCENE_TABLE:
-	{
-		if (NULL == sensor_raw_fix) {
-			return rtn;
+		{
+			if (NULL == sensor_raw_fix) {
+				return rtn;
+			}
+			data_len = 0;
+			rtn = get_ae_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				rtn = get_ae_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-		data_len = 0;
-		rtn = get_ae_scene_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			rtn = get_ae_scene_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
-			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 	case MODE_AE_AUTO_ISO_TABLE:
-	{
-		if (NULL == sensor_raw_fix) {
-			return rtn;
+		{
+			if (NULL == sensor_raw_fix) {
+				return rtn;
+			}
+			data_len = 0;
+			rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-		data_len = 0;
-		rtn = get_ae_auto_iso_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			rtn = get_ae_auto_iso_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
-			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 	case MODE_LNC_DATA:
-	{
-		if (NULL == sensor_raw_fix) {
-			return rtn;
+		{
+			if (NULL == sensor_raw_fix) {
+				return rtn;
+			}
+			data_len = 0;
+			rtn = get_lnc_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				rtn = get_lnc_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-		data_len = 0;
-		rtn = get_lnc_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			rtn = get_lnc_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
-			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 #if 0
 	case MODE_AWB_DATA:
-	{
-		if (NULL == sensor_raw_fix) {
-			return rtn;
+		{
+			if (NULL == sensor_raw_fix) {
+				return rtn;
+			}
+			data_len = 0;
+			rtn = get_awb_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr && NULL != mode_param) {
+				rtn = get_awb_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-		data_len = 0;
-		rtn = get_awb_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			rtn = get_awb_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
-			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
-		}
-	}
-	break;
+		break;
 #endif
 	case MODE_NOTE_DATA:
-	{
-		data_len = sensor_note_param.node_len;
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			memcpy((cmr_u8 *)data_addr,sensor_note_param.note,data_len);
-			rtn = send_note_param(read_cmd,msg,data_addr,data_len);
+		{
+			data_len = sensor_note_param.node_len;
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				memcpy((cmr_u8 *) data_addr, sensor_note_param.note, data_len);
+				rtn = send_note_param(read_cmd, msg, data_addr, data_len);
+			}
 		}
-	}
-	break;
+		break;
 	case MODE_LIB_INFO_DATA:
-	{
-		data_len = sizeof(struct sensor_libuse_info);
-		data_addr = (cmr_u32 *)ispParserAlloc(data_len);
-		memset((cmr_u8 *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr) {
-			memcpy((cmr_u8 *)data_addr, sensor_raw_info_ptr->libuse_info, data_len);
-			rtn = send_libuse_info_param(read_cmd,msg,data_addr,data_len);
-		} else {
-			DBG("ISP_TOOL : get libuse error !");
+		{
+			data_len = sizeof(struct sensor_libuse_info);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
+				rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
+			} else {
+				DBG("ISP_TOOL : get libuse error !");
+			}
 		}
-	}
-	break;
+		break;
 	default:
 		break;
 	}
@@ -2138,10 +2121,10 @@ cmr_s32 send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag
 	return rtn;
 }
 
-cmr_s32 down_ae_table_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u8 *data_addr)
+cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u8 flicker = (sub_type>>4) & 0x0f;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
 	cmr_u8 iso = sub_type & 0x0f;
 	cmr_u32 offset_tmp = 0;
 
@@ -2150,19 +2133,19 @@ cmr_s32 down_ae_table_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 s
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
 	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
 	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
 	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
 	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].again_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
 	return rtn;
 }
 
-cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u8 *data_addr)
+cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 weight = sub_type;
@@ -2173,14 +2156,14 @@ cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.weight_tab[weight].weight_table,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.weight_tab[weight].len);
+	memcpy((void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.weight_tab[weight].len);
 	return rtn;
 }
 
-cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u8 *data_addr)
+cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u8 scene = (sub_type>>4) & 0x0f;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
 	cmr_u8 flicker = sub_type & 0x0f;
 	cmr_u32 offset_tmp = 0;
 
@@ -2189,21 +2172,21 @@ cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 s
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
+	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].index,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
+	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].index_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].exposure,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
+	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dummy,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
+	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dummy, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
+	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].again_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
 	return rtn;
 }
 
-cmr_s32 down_ae_auto_iso_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u8 *data_addr)
+cmr_s32 down_ae_auto_iso_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 iso = sub_type;
@@ -2214,13 +2197,13 @@ cmr_s32 down_ae_auto_iso_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u1
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.auto_iso_tab[iso].len);
+	memcpy((void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.auto_iso_tab[iso].len);
 	return rtn;
 }
 
-cmr_s32 down_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u8 *data_addr,cmr_u32 data_len)
+cmr_s32 down_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 data_len)
 {
-	cmr_s32 rtn =0x00;
+	cmr_s32 rtn = 0x00;
 	cmr_u32 offset_tmp = 0;
 	cmr_u16 lnc_ct = sub_type;
 
@@ -2229,24 +2212,24 @@ cmr_s32 down_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_ty
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].map_info,(void *)(data_addr + offset_tmp),sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
+	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].map_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 	offset_tmp += sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
 	sensor_raw_fix->lnc.map[lnc_ct].lnc_len = data_len - sensor_raw_fix->lnc.map[lnc_ct].map_info_len - sensor_raw_fix->lnc.map[lnc_ct].weight_info_len;
-	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr,(void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
+	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr, (void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
 	offset_tmp += sensor_raw_fix->lnc.map[lnc_ct].lnc_len;
-	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info,(void *)(data_addr + offset_tmp),sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
+	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
 	return rtn;
 }
 
-cmr_s32 down_awb_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_type,cmr_u8 *data_addr,cmr_u32 data_len)
+cmr_s32 down_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 data_len)
 {
-	cmr_s32 rtn =0x00;
-	#if 1
+	cmr_s32 rtn = 0x00;
+#if 1
 	UNUSED(sensor_raw_fix);
 	UNUSED(sub_type);
 	UNUSED(data_addr);
 	UNUSED(data_len);
-	#else
+#else
 	cmr_u32 offset_tmp = 0;
 
 	cmr_u32 len_mode_info = sizeof(struct sensor_fix_param_mode_info);
@@ -2260,34 +2243,34 @@ cmr_s32 down_awb_param(struct sensor_raw_fix_info *sensor_raw_fix,cmr_u16 sub_ty
 
 	switch (sub_type) {
 	case AWB_WIN_MAP:
-	{
-//		memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_mode_info);
-		offset_tmp +=  len_mode_info;
-//		memcpy((void *)sensor_raw_fix->awb.block.block_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_block_info);
-		offset_tmp += len_block_info;
-		sensor_raw_fix->awb.awb_map.addr = (cmr_u16 *)(data_addr + offset_tmp);
-		sensor_raw_fix->awb.awb_map.len = data_len -len_mode_info -len_block_info;
-	}
-	break;
+		{
+//              memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_mode_info);
+			offset_tmp += len_mode_info;
+//              memcpy((void *)sensor_raw_fix->awb.block.block_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_block_info);
+			offset_tmp += len_block_info;
+			sensor_raw_fix->awb.awb_map.addr = (cmr_u16 *) (data_addr + offset_tmp);
+			sensor_raw_fix->awb.awb_map.len = data_len - len_mode_info - len_block_info;
+		}
+		break;
 	case AWB_WEIGHT:
-	{
-//		memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_mode_info);
-		offset_tmp +=  len_mode_info;
-//		memcpy((void *)sensor_raw_fix->awb.block.block_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_block_info);
-		offset_tmp += len_block_info;
-		memcpy((void *)sensor_raw_fix->awb.awb_weight.addr,(void *)((cmr_u8 *)data_addr + offset_tmp),sensor_raw_fix->awb.awb_weight.weight_len);
-		offset_tmp += sensor_raw_fix->awb.awb_weight.weight_len;
-		memcpy((void *)sensor_raw_fix->awb.awb_weight.size,(void *)((cmr_u8 *)data_addr + offset_tmp),sensor_raw_fix->awb.awb_weight.size_param_len);
-	}
-	break;
+		{
+//              memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_mode_info);
+			offset_tmp += len_mode_info;
+//              memcpy((void *)sensor_raw_fix->awb.block.block_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_block_info);
+			offset_tmp += len_block_info;
+			memcpy((void *)sensor_raw_fix->awb.awb_weight.addr, (void *)((cmr_u8 *) data_addr + offset_tmp), sensor_raw_fix->awb.awb_weight.weight_len);
+			offset_tmp += sensor_raw_fix->awb.awb_weight.weight_len;
+			memcpy((void *)sensor_raw_fix->awb.awb_weight.size, (void *)((cmr_u8 *) data_addr + offset_tmp), sensor_raw_fix->awb.awb_weight.size_param_len);
+		}
+		break;
 	default:
 		break;
 	}
-	#endif
+#endif
 	return rtn;
 }
 
-cmr_s32 down_isp_param(cmr_handle isp_handler,struct isp_data_header_normal *write_cmd,struct msg_head_tag *msg,cmr_u8 *isp_data_ptr,cmr_s32 value)
+cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * write_cmd, struct msg_head_tag * msg, cmr_u8 * isp_data_ptr, cmr_s32 value)
 {
 	cmr_s32 rtn = 0x00;
 	static cmr_u8 *data_addr = NULL;
@@ -2307,8 +2290,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler,struct isp_data_header_normal *wri
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info* sensor_raw_info_ptr=(struct sensor_raw_info*)sensor_info_ptr->raw_info_ptr;
-	if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id] ) {
+	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
 		sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
 	}
 	if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
@@ -2320,15 +2303,15 @@ cmr_s32 down_isp_param(cmr_handle isp_handler,struct isp_data_header_normal *wri
 	if (!isp_data_ptr) {
 		ISP_LOGE("ISP_TOOL: isp data down is null error");
 	}
-	DBG("ISP_TOOL:down_isp_param write_cmd->main_type %d\n",write_cmd->main_type);
+	DBG("ISP_TOOL:down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
 
 	switch (write_cmd->main_type) {
-		case MODE_TUNE_INFO:
+	case MODE_TUNE_INFO:
 		{
 			if (0 == flag) {
 				data_len = mode_param_info.len;
 				ISP_LOGI("ISP_TOOL:mode tune data len = %d", data_len);
-				data_addr = (cmr_u8 *)ispParserAlloc(data_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (!data_addr) {
 					ISP_LOGE("ISP_TOOL: tune info data malloc mem error !");
 				}
@@ -2347,22 +2330,22 @@ cmr_s32 down_isp_param(cmr_handle isp_handler,struct isp_data_header_normal *wri
 				if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
 					ISP_LOGE("ISP_TOOL: sensor raw mode ptr addr is null, mode_id=%d", mode_id);
 				}
-				memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr,data_addr,sensor_raw_info_ptr->mode_ptr[mode_id].len);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-				if(NULL != data_addr) {
+				memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+				if (NULL != data_addr) {
 					free(data_addr);
 					data_addr = NULL;
 				}
-				eng_rsp_diag[value] =  0x00;
+				eng_rsp_diag[value] = 0x00;
 				value = value + 0x04;
-				msg_ret->len = value -1;
+				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
 				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
 		break;
-		case MODE_AE_TABLE:
+	case MODE_AE_TABLE:
 		{
 			if (0 == flag) {
 				if (NULL == sensor_raw_fix) {
@@ -2370,212 +2353,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler,struct isp_data_header_normal *wri
 					rtn = 0x01;
 					return rtn;
 				}
-				rtn = get_ae_table_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_addr = (cmr_u8 *)ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag ++;
-			}
-			data_len = msg->len -len_msg - len_data_header ;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_table_param(sensor_raw_fix,write_cmd->sub_type,data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
-
-				eng_rsp_diag[value] =  0x00;
-				value = value + 0x04;
-				msg_ret->len = value -1;
-				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
-			}
-		}
-		break;
-		case MODE_AE_WEIGHT_TABLE:
-		{
-			DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE0 \n");
-			if (0 == flag) {
-				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("sensor_raw_fix null pointer !");
-					rtn = 0x01;
-					return rtn;
-				}
-				rtn = get_ae_weight_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_addr = (cmr_u8 *)ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag ++;
-			}
-			data_len = msg->len -len_msg - len_data_header ;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
-			offset += data_len;
-
-			DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE1 \n");
-			if (0x01 == write_cmd->packet_status) {
-				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE2 \n");
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_weight_param(sensor_raw_fix,write_cmd->sub_type,data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
-
-				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE3 \n");
-				eng_rsp_diag[value] =  0x00;
-				value = value + 0x04;
-				msg_ret->len = value -1;
-				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE4\n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
-			}
-		}
-		break;
-		case MODE_AE_SCENE_TABLE:
-		{
-			if (0 == flag) {
-				rtn = get_ae_scene_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_addr = (cmr_u8 *)ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag ++;
-			}
-			data_len = msg->len -len_msg - len_data_header;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_scene_param(sensor_raw_fix,write_cmd->sub_type,data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
-
-				eng_rsp_diag[value] =  0x00;
-				value = value + 0x04;
-				msg_ret->len = value -1;
-				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AE_SCENE_TABLE \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
-			}
-		}
-		break;
-		case MODE_AE_AUTO_ISO_TABLE:
-		{
-			if (0 == flag) {
-				rtn = get_ae_auto_iso_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_addr = (cmr_u8 *)ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag ++;
-			}
-			data_len = msg->len -len_msg - len_data_header;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_auto_iso_param(sensor_raw_fix,write_cmd->sub_type,data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
-
-				eng_rsp_diag[value] =  0x00;
-				value = value + 0x04;
-				msg_ret->len = value -1;
-				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AE_AUTO_ISO_TABLE \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
-			}
-		}
-		break;
-		case MODE_LNC_DATA:
-		{
-			if (0 == flag) {
-				data_addr = (cmr_u8 *)ispParserAlloc(write_cmd->data_total_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag ++;
-			}
-			data_len = msg->len -len_msg - len_data_header;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_lnc_param(sensor_raw_fix,write_cmd->sub_type,data_addr,write_cmd->data_total_len);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-
-				eng_rsp_diag[value] =  0x00;
-				value = value + 0x04;
-				msg_ret->len = value -1;
-				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_LNC_DATA \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
-			}
-		}
-		break;
-		case MODE_AWB_DATA:
-		{
-			if (0 == flag) {
-				data_addr = (cmr_u8 *)ispParserAlloc(write_cmd->data_total_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag ++;
-			}
-			data_len = msg->len -len_msg - len_data_header;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_awb_param(sensor_raw_fix,write_cmd->sub_type,data_addr,write_cmd->data_total_len);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
-
-				eng_rsp_diag[value] =  0x00;
-				value = value + 0x04;
-				msg_ret->len = value -1;
-				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AWB_DATA \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
-			}
-			break;
-		}
-		case MODE_NOTE_DATA:
-		{
-			if (0 == flag) {
-				data_len = sensor_note_param.node_len;
-				data_addr = (cmr_u8 *)ispParserAlloc(data_len);
+				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("malloc mem error !");
 					rtn = 0x01;
@@ -2584,61 +2363,265 @@ cmr_s32 down_isp_param(cmr_handle isp_handler,struct isp_data_header_normal *wri
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
-				offset = 0;
 				flag = 0;
-				memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note,data_addr,sensor_raw_info_ptr->note_ptr[mode_id].node_len);
+				offset = 0;
+				rtn = down_ae_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
 					data_addr = NULL;
 				}
 
-				eng_rsp_diag[value] =  0x00;
+				eng_rsp_diag[value] = 0x00;
 				value = value + 0x04;
-				msg_ret->len = value -1;
+				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
 				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
-			break;
 		}
-		case MODE_LIB_INFO_DATA:
+		break;
+	case MODE_AE_WEIGHT_TABLE:
 		{
+			DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE0 \n");
 			if (0 == flag) {
-				data_addr = (cmr_u8 *)ispParserAlloc(write_cmd->data_total_len);
+				if (NULL == sensor_raw_fix) {
+					ISP_LOGE("sensor_raw_fix null pointer !");
+					rtn = 0x01;
+					return rtn;
+				}
+				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("malloc mem error !");
 					rtn = 0x01;
 					return rtn;
 				}
-				flag ++;
+				flag++;
 			}
-			data_len = msg->len -len_msg - len_data_header;
-			memcpy(data_addr + offset,isp_data_ptr,data_len);
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
+
+			DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE1 \n");
+			if (0x01 == write_cmd->packet_status) {
+				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE2 \n");
+				flag = 0;
+				offset = 0;
+				rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+				if (NULL != data_addr) {
+					free(data_addr);
+					data_addr = NULL;
+				}
+
+				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE3 \n");
+				eng_rsp_diag[value] = 0x00;
+				value = value + 0x04;
+				msg_ret->len = value - 1;
+				eng_rsp_diag[value] = 0x7e;
+				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE4\n");
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+			}
+		}
+		break;
+	case MODE_AE_SCENE_TABLE:
+		{
+			if (0 == flag) {
+				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				if (NULL == data_addr) {
+					ISP_LOGE("malloc mem error !");
+					rtn = 0x01;
+					return rtn;
+				}
+				flag++;
+			}
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
+			if (0x01 == write_cmd->packet_status) {
+				flag = 0;
+				offset = 0;
+				rtn = down_ae_scene_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+				if (NULL != data_addr) {
+					free(data_addr);
+					data_addr = NULL;
+				}
+
+				eng_rsp_diag[value] = 0x00;
+				value = value + 0x04;
+				msg_ret->len = value - 1;
+				eng_rsp_diag[value] = 0x7e;
+				DBG("ISP_TOOL:MODE_AE_SCENE_TABLE \n");
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+			}
+		}
+		break;
+	case MODE_AE_AUTO_ISO_TABLE:
+		{
+			if (0 == flag) {
+				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				if (NULL == data_addr) {
+					ISP_LOGE("malloc mem error !");
+					rtn = 0x01;
+					return rtn;
+				}
+				flag++;
+			}
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
+			if (0x01 == write_cmd->packet_status) {
+				flag = 0;
+				offset = 0;
+				rtn = down_ae_auto_iso_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+				if (NULL != data_addr) {
+					free(data_addr);
+					data_addr = NULL;
+				}
+
+				eng_rsp_diag[value] = 0x00;
+				value = value + 0x04;
+				msg_ret->len = value - 1;
+				eng_rsp_diag[value] = 0x7e;
+				DBG("ISP_TOOL:MODE_AE_AUTO_ISO_TABLE \n");
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+			}
+		}
+		break;
+	case MODE_LNC_DATA:
+		{
+			if (0 == flag) {
+				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+				if (NULL == data_addr) {
+					ISP_LOGE("malloc mem error !");
+					rtn = 0x01;
+					return rtn;
+				}
+				flag++;
+			}
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
+			if (0x01 == write_cmd->packet_status) {
+				flag = 0;
+				offset = 0;
+				rtn = down_lnc_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+
+				eng_rsp_diag[value] = 0x00;
+				value = value + 0x04;
+				msg_ret->len = value - 1;
+				eng_rsp_diag[value] = 0x7e;
+				DBG("ISP_TOOL:MODE_LNC_DATA \n");
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+			}
+		}
+		break;
+	case MODE_AWB_DATA:
+		{
+			if (0 == flag) {
+				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+				if (NULL == data_addr) {
+					ISP_LOGE("malloc mem error !");
+					rtn = 0x01;
+					return rtn;
+				}
+				flag++;
+			}
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
+			if (0x01 == write_cmd->packet_status) {
+				flag = 0;
+				offset = 0;
+				rtn = down_awb_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
+				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+
+				eng_rsp_diag[value] = 0x00;
+				value = value + 0x04;
+				msg_ret->len = value - 1;
+				eng_rsp_diag[value] = 0x7e;
+				DBG("ISP_TOOL:MODE_AWB_DATA \n");
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+			}
+			break;
+		}
+	case MODE_NOTE_DATA:
+		{
+			if (0 == flag) {
+				data_len = sensor_note_param.node_len;
+				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				if (NULL == data_addr) {
+					ISP_LOGE("malloc mem error !");
+					rtn = 0x01;
+					return rtn;
+				}
+				flag++;
+			}
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
+			if (0x01 == write_cmd->packet_status) {
+				offset = 0;
+				flag = 0;
+				memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note, data_addr, sensor_raw_info_ptr->note_ptr[mode_id].node_len);
+				if (NULL != data_addr) {
+					free(data_addr);
+					data_addr = NULL;
+				}
+
+				eng_rsp_diag[value] = 0x00;
+				value = value + 0x04;
+				msg_ret->len = value - 1;
+				eng_rsp_diag[value] = 0x7e;
+				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+			}
+			break;
+		}
+	case MODE_LIB_INFO_DATA:
+		{
+			if (0 == flag) {
+				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+				if (NULL == data_addr) {
+					ISP_LOGE("malloc mem error !");
+					rtn = 0x01;
+					return rtn;
+				}
+				flag++;
+			}
+			data_len = msg->len - len_msg - len_data_header;
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
 				memcpy(sensor_raw_info_ptr->libuse_info, data_addr, sizeof(struct sensor_libuse_info));
 
-				eng_rsp_diag[value] =  0x00;
+				eng_rsp_diag[value] = 0x00;
 				value = value + 0x04;
-				msg_ret->len = value -1;
+				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
 				DBG("ISP_TOOL:MODE_LIB_INFO_DATA: \n");
-				rtn = send(sockfd, eng_rsp_diag, value+1, 0);
+				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 			break;
 		}
-		default:
-			break;
+	default:
+		break;
 	}
 	return rtn;
 }
 
-cmr_s32 check_cmd_valid(struct isp_check_cmd_valid *cmd,struct msg_head_tag *msg)
+cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * msg)
 {
 	cmr_s32 rtn = 0x00;
 
@@ -2654,73 +2637,69 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid *cmd,struct msg_head_tag *msg
 
 	struct isp_check_cmd_valid *cmd_ptr = (struct isp_check_cmd_valid *)cmd;
 	cmr_u32 unvalid_flag = 0;
-	if (MODE_MAX >= cmd_ptr->main_type  ) {
-		switch( cmd_ptr->main_type) {
+	if (MODE_MAX >= cmd_ptr->main_type) {
+		switch (cmd_ptr->main_type) {
 		case MODE_NR_DATA:
-		{
-			if (ISP_NR_BLOCK_MIN > cmd_ptr->sub_type || FILE_NAME_MAX < cmd_ptr->sub_type) {
-				unvalid_flag = 1;
+			{
+				if (ISP_NR_BLOCK_MIN > cmd_ptr->sub_type || FILE_NAME_MAX < cmd_ptr->sub_type) {
+					unvalid_flag = 1;
+				}
 			}
-		}
-		break;
+			break;
 		case MODE_AE_TABLE:
-		{
-			cmr_u8 flicker = (cmd_ptr->sub_type >>4)& 0x0f;
-			cmr_u8 iso = cmd_ptr->sub_type & 0x0f;
-			if (ISP_ANTIFLICKER_MAX < flicker || ISP_ANTIFLICKER_MIN > flicker) {
-				unvalid_flag = 1;
-			} else {
-				if (ISP_ISO_NUM_MIN > iso || ISP_ISO_NUM_MAX < iso) {
+			{
+				cmr_u8 flicker = (cmd_ptr->sub_type >> 4) & 0x0f;
+				cmr_u8 iso = cmd_ptr->sub_type & 0x0f;
+				if (ISP_ANTIFLICKER_MAX < flicker || ISP_ANTIFLICKER_MIN > flicker) {
 					unvalid_flag = 1;
+				} else {
+					if (ISP_ISO_NUM_MIN > iso || ISP_ISO_NUM_MAX < iso) {
+						unvalid_flag = 1;
+					}
 				}
 			}
-		}
-		break;
+			break;
 		case MODE_AE_WEIGHT_TABLE:
-		{
-			if (ISP_AE_WEIGHT_TYPE_MAX < cmd_ptr->sub_type ||
-				ISP_AE_WEIGHT_TYPE_MIN > cmd_ptr->sub_type) {
-				unvalid_flag = 1;
-			}
-		}
-		break;
-		case MODE_AE_SCENE_TABLE:
-		{
-			cmr_u8 scene = (cmd_ptr->sub_type>>4) & 0x0f;
-			cmr_u8 flicker = cmd_ptr->sub_type & 0x0f;
-			if (ISP_ANTIFLICKER_MAX < flicker || ISP_ANTIFLICKER_MIN > flicker) {
-				unvalid_flag = 1;
-			}  else {
-				if (ISP_SCENE_NUM_MIN > scene || ISP_SCENE_NUM_MAX < scene) {
+			{
+				if (ISP_AE_WEIGHT_TYPE_MAX < cmd_ptr->sub_type || ISP_AE_WEIGHT_TYPE_MIN > cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
-		}
-		break;
+			break;
+		case MODE_AE_SCENE_TABLE:
+			{
+				cmr_u8 scene = (cmd_ptr->sub_type >> 4) & 0x0f;
+				cmr_u8 flicker = cmd_ptr->sub_type & 0x0f;
+				if (ISP_ANTIFLICKER_MAX < flicker || ISP_ANTIFLICKER_MIN > flicker) {
+					unvalid_flag = 1;
+				} else {
+					if (ISP_SCENE_NUM_MIN > scene || ISP_SCENE_NUM_MAX < scene) {
+						unvalid_flag = 1;
+					}
+				}
+			}
+			break;
 		case MODE_AE_AUTO_ISO_TABLE:
-		{
-			if (ISP_ANTIFLICKER_MAX < cmd_ptr->sub_type ||
-				ISP_ANTIFLICKER_MIN > cmd_ptr->sub_type) {
-				unvalid_flag = 1;
+			{
+				if (ISP_ANTIFLICKER_MAX < cmd_ptr->sub_type || ISP_ANTIFLICKER_MIN > cmd_ptr->sub_type) {
+					unvalid_flag = 1;
+				}
 			}
-		}
-		break;
+			break;
 		case MODE_LNC_DATA:
-		{
-			if (ISP_LNC_TAB_MAX < cmd_ptr->sub_type ||
-				ISP_LNC_TAB_MIN > cmd_ptr->sub_type) {
-				unvalid_flag = 1;
+			{
+				if (ISP_LNC_TAB_MAX < cmd_ptr->sub_type || ISP_LNC_TAB_MIN > cmd_ptr->sub_type) {
+					unvalid_flag = 1;
+				}
 			}
-		}
-		break;
+			break;
 		case MODE_AWB_DATA:
-		{
-			if (1 < cmd_ptr->sub_type ||
-				0 > cmd_ptr->sub_type) {
-				unvalid_flag = 1;
+			{
+				if (1 < cmd_ptr->sub_type || 0 > cmd_ptr->sub_type) {
+					unvalid_flag = 1;
+				}
 			}
-		}
-		break;
+			break;
 		default:
 			break;
 		}
@@ -2745,22 +2724,22 @@ CHECK_CMD_UNVALID:
 	msg_tag.seq_num = msg->seq_num;
 	msg_tag.subtype = msg->subtype;
 	msg_tag.type = msg->type;
-	msg_tag.len = len_msg + len_data_header ;
+	msg_tag.len = len_msg + len_data_header;
 	data_header.packet_status = 0x02;
 
-	memcpy(eng_rsp_diag+1,(cmr_u8 *)&msg_tag,len_msg);
-	rsp_len = len_msg+1;
-	memcpy(eng_rsp_diag + rsp_len,(cmr_u8 *)&data_header,len_data_header);
+	memcpy(eng_rsp_diag + 1, (cmr_u8 *) & msg_tag, len_msg);
+	rsp_len = len_msg + 1;
+	memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 	rsp_len = rsp_len + len_data_header + 1;
 	eng_rsp_diag[rsp_len] = 0x7e;
-	rtn = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+	rtn = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 	rtn = 0x01;
 	return rtn;
 }
 
-static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
+static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 {
-	cmr_u32 handler_id=0x00;
+	cmr_u32 handler_id = 0x00;
 	cmr_s32 rlen = 0, rsp_len = 0, extra_len = 0;
 	cmr_s32 ret = 1, res = 0;
 	cmr_s32 image_type = 0;
@@ -2770,163 +2749,162 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 	cmr_s32 preview_tmpflag = 0;
 	memset(&isp_msg, 0, sizeof(ISP_DATA_HEADER_T));
 
-	struct camera_func* fun_ptr=ispvideo_GetCameraFunc();
+	struct camera_func *fun_ptr = ispvideo_GetCameraFunc();
 	cmr_s32 is_stop_preview = 0;
 
-	if (len < sizeof(MSG_HEAD_T)+2){
+	if (len < sizeof(MSG_HEAD_T) + 2) {
 		DBG("ISP_TOOL:the formal cmd is 0x7e + diag + 0x7e,which is 10Bytes,but the cmd has less than 10 bytes\n");
 		return -1;
 	}
 
-	msg = (MSG_HEAD_T *)(buf+1);
-	if(msg->type != 0xfe)
+	msg = (MSG_HEAD_T *) (buf + 1);
+	if (msg->type != 0xfe)
 		return -1;
 
-	rsp_len = sizeof(MSG_HEAD_T)+1;
-	memset(eng_rsp_diag,0,sizeof(eng_rsp_diag));
-	memcpy(eng_rsp_diag,buf,rsp_len);
-	msg_ret = (MSG_HEAD_T *)(eng_rsp_diag+1);
+	rsp_len = sizeof(MSG_HEAD_T) + 1;
+	memset(eng_rsp_diag, 0, sizeof(eng_rsp_diag));
+	memcpy(eng_rsp_diag, buf, rsp_len);
+	msg_ret = (MSG_HEAD_T *) (eng_rsp_diag + 1);
 
-	if(CMD_GET_PREVIEW_PICTURE != msg->subtype) {
+	if (CMD_GET_PREVIEW_PICTURE != msg->subtype) {
 		msg_ret->seq_num = sequence_num++;
 	}
 
-	switch ( msg->subtype ) {
-		case CMD_SFT_READ:
+	switch (msg->subtype) {
+	case CMD_SFT_READ:
 		{
 			ISP_LOGI("Chj--get af info");
 			ret = isp_sft_read(isp_handler, &eng_rsp_diag[rsp_len], &len);
-			DBG("ISP_SFT:CMD_SFT_READ rsp_len %d len %d\n",rsp_len,len);
+			DBG("ISP_SFT:CMD_SFT_READ rsp_len %d len %d\n", rsp_len, len);
 			rsp_len += len;
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_WRITE:
+	case CMD_SFT_WRITE:
 		{
 			ISP_LOGI("Chj--set af info");
 			len = msg_ret->len - 8;
-			ret = isp_sft_write(isp_handler,buf+rsp_len, &len);
-			DBG("ISP_SFT:CMD_SFT_WRITE rsp_len %d len %d\n",rsp_len,len);
-			rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			ret = isp_sft_write(isp_handler, buf + rsp_len, &len);
+			DBG("ISP_SFT:CMD_SFT_WRITE rsp_len %d len %d\n", rsp_len, len);
+			rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_TRIG:
+	case CMD_SFT_TRIG:
 		{
 			ISP_LOGI("Chj--af trig");
-			ret = isp_ioctl(isp_handler, ISP_CTRL_AF, NULL);// set af info after auto focus
-			if(!ret){
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
-			}else{
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+			ret = isp_ioctl(isp_handler, ISP_CTRL_AF, NULL);	// set af info after auto focus
+			if (!ret) {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_SET_POS:
+	case CMD_SFT_SET_POS:
 		{
 			ISP_LOGI("Chj--set pos");
 			cmr_u32 bypass = 0;
-			g_af_pos = *(cmr_u32*)(buf+9);
-			ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, buf+9);
-			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);// open the filter
-			usleep(1000*100);
-			if(!ret){
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
-			}else{
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+			g_af_pos = *(cmr_u32 *) (buf + 9);
+			ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, buf + 9);
+			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);	// open the filter
+			usleep(1000 * 100);
+			if (!ret) {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_GET_POS:
+	case CMD_SFT_GET_POS:
 		{
 			ISP_LOGI("Chj--get pos");
 			cmr_u32 pos;
-			ret = isp_ioctl(isp_handler, ISP_CTRL_GET_AF_POS, &pos);// set af info after auto focus
-			if(!ret){
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
-			}else{
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+			ret = isp_ioctl(isp_handler, ISP_CTRL_GET_AF_POS, &pos);	// set af info after auto focus
+			if (!ret) {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
-			*(cmr_u32*)(eng_rsp_diag+rsp_len) = pos;
+			*(cmr_u32 *) (eng_rsp_diag + rsp_len) = pos;
 			rsp_len += sizeof(cmr_u32);
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_OPEN_FILTER:
+	case CMD_SFT_OPEN_FILTER:
 		{
 			ISP_LOGI("Chj--open the filter");
-			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);// open the filter
-			usleep(1000*100);
-			if(!ret){
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
-			}else{
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);	// open the filter
+			usleep(1000 * 100);
+			if (!ret) {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_GET_AF_VALUE:// value back to PC
+	case CMD_SFT_GET_AF_VALUE:	// value back to PC
 		{
-			cmr_u32 statistic[50]={0};
+			cmr_u32 statistic[50] = { 0 };
 			ISP_LOGI("Chj-- get af value 1");
-			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_GET_AF_VALUE,statistic);// set af info after auto focus
-			ISP_LOGI("Chj-- get af value 2 ret=%d,af_value=%d,af_value=%d",ret,statistic[0],statistic[25]);
+			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_GET_AF_VALUE, statistic);	// set af info after auto focus
+			ISP_LOGI("Chj-- get af value 2 ret=%d,af_value=%d,af_value=%d", ret, statistic[0], statistic[25]);
 			//ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_BYPASS, NULL);// close the filter
-			if(!ret){
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
-				memmove(eng_rsp_diag+rsp_len,statistic,sizeof(statistic));
-				rsp_len+=sizeof(statistic);
-			}else{
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+			if (!ret) {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+				memmove(eng_rsp_diag + rsp_len, statistic, sizeof(statistic));
+				rsp_len += sizeof(statistic);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_SFT_TAKE_PICTURE:// pic back to PC
+	case CMD_SFT_TAKE_PICTURE:	// pic back to PC
 		{
 			ISP_LOGI("Chj--sft take picture");
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
-			cmr_u32 width,height,interval;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
+			cmr_u32 width, height, interval;
 
 			g_command = CMD_SFT_TAKE_PICTURE;
-			if( NULL!=fun_ptr->take_picture ) {
-				capture_img_end_flag=0;
-				capture_flag=1;
-				capture_format=*(cmr_u32*)isp_ptr;// capture format
-				width = (*(cmr_u32*)(isp_ptr+4))>>16;
-				height = (*(cmr_u32*)(isp_ptr+4))&0x0000ffff;
-				interval = *(cmr_u32*)(isp_ptr+8);
-				usleep(1000*interval);
-				if(NULL!=fun_ptr->set_capture_size)
-				{
-					fun_ptr->set_capture_size(width,height);
+			if (NULL != fun_ptr->take_picture) {
+				capture_img_end_flag = 0;
+				capture_flag = 1;
+				capture_format = *(cmr_u32 *) isp_ptr;	// capture format
+				width = (*(cmr_u32 *) (isp_ptr + 4)) >> 16;
+				height = (*(cmr_u32 *) (isp_ptr + 4)) & 0x0000ffff;
+				interval = *(cmr_u32 *) (isp_ptr + 8);
+				usleep(1000 * interval);
+				if (NULL != fun_ptr->set_capture_size) {
+					fun_ptr->set_capture_size(width, height);
 				}
 				fun_ptr->take_picture(0, capture_format);
-				ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d",width,height,capture_format);
+				ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				sem_wait(&capture_sem_lock);
-				ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d",width,height,capture_format);
-				if(NULL!=fun_ptr->stop_preview){
+				ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				if (NULL != fun_ptr->stop_preview) {
 					fun_ptr->stop_preview(0, 0);
 				}
-				usleep(1000*10);
+				usleep(1000 * 10);
 
-				if(NULL!=fun_ptr->start_preview){
+				if (NULL != fun_ptr->start_preview) {
 					fun_ptr->start_preview(0, 0);
 				}
 
@@ -2935,45 +2913,44 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 			}
 			break;
 		}
-		case CMD_SFT_TAKE_PICTURE_NEW:// save pic to file system
+	case CMD_SFT_TAKE_PICTURE_NEW:	// save pic to file system
 		{
 			ISP_LOGI("Chj--sft take picture new");
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
-			cmr_u32 startpos,endpos,step,width,height,interval;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
+			cmr_u32 startpos, endpos, step, width, height, interval;
 			cmr_u32 pos;
-			cmr_u32 statistic[50]={0};
+			cmr_u32 statistic[50] = { 0 };
 			g_command = CMD_SFT_TAKE_PICTURE_NEW;
-			if( NULL!=fun_ptr->take_picture ) {
+			if (NULL != fun_ptr->take_picture) {
 				ret = isp_ioctl(isp_handler, ISP_CTRL_STOP_3A, NULL);
 				////////////////////////////
-				startpos = *(cmr_u32*)isp_ptr;
-				endpos = *(cmr_u32*)(isp_ptr+4);
-				step = *(cmr_u32*)(isp_ptr+8);
-				capture_format=*(cmr_u32*)(isp_ptr+12);// capture format
-				width = (*(cmr_u32*)(isp_ptr+16))>>16;
-				height = (*(cmr_u32*)(isp_ptr+16))&0x0000ffff;
-				interval = *(cmr_u32*)(isp_ptr+20);
-				for( pos=startpos;pos<=endpos;pos+=step ){
+				startpos = *(cmr_u32 *) isp_ptr;
+				endpos = *(cmr_u32 *) (isp_ptr + 4);
+				step = *(cmr_u32 *) (isp_ptr + 8);
+				capture_format = *(cmr_u32 *) (isp_ptr + 12);	// capture format
+				width = (*(cmr_u32 *) (isp_ptr + 16)) >> 16;
+				height = (*(cmr_u32 *) (isp_ptr + 16)) & 0x0000ffff;
+				interval = *(cmr_u32 *) (isp_ptr + 20);
+				for (pos = startpos; pos <= endpos; pos += step) {
 					g_af_pos = pos;
-					ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, &pos);// set af pos after auto focus
-					usleep(1000*10);
-					capture_img_end_flag=0;
-					capture_flag=1;
-					usleep(1000*interval);
-					if(NULL!=fun_ptr->set_capture_size)
-					{
-						fun_ptr->set_capture_size(width,height);
+					ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, &pos);	// set af pos after auto focus
+					usleep(1000 * 10);
+					capture_img_end_flag = 0;
+					capture_flag = 1;
+					usleep(1000 * interval);
+					if (NULL != fun_ptr->set_capture_size) {
+						fun_ptr->set_capture_size(width, height);
 					}
 					fun_ptr->take_picture(0, capture_format);
-					ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d",width,height,capture_format);
+					ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					sem_wait(&capture_sem_lock);
-					ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d",width,height,capture_format);
-					if(NULL!=fun_ptr->stop_preview){
+					ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
-					usleep(1000*10);
+					usleep(1000 * 10);
 
-					if(NULL!=fun_ptr->start_preview){
+					if (NULL != fun_ptr->start_preview) {
 						fun_ptr->start_preview(0, 0);
 					}
 					capture_flag = 0;
@@ -2984,81 +2961,79 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 			}
 			break;
 		}
-		case CMD_ASIC_TAKE_PICTURE:// save pic to file system
+	case CMD_ASIC_TAKE_PICTURE:	// save pic to file system
 		{
 			ISP_LOGI("Chj--asic take picture");
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
-			cmr_u32 width,height;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
+			cmr_u32 width, height;
 			g_command = CMD_ASIC_TAKE_PICTURE;
-			if( NULL!=fun_ptr->take_picture ) {
-				capture_img_end_flag=0;
-				capture_flag=1;
-				capture_format=*(cmr_u32*)isp_ptr;// capture format
-				width = (*(cmr_u32*)(isp_ptr+4))>>16;
-				height = (*(cmr_u32*)(isp_ptr+4))&0x0000ffff;
-				if(NULL!=fun_ptr->set_capture_size)
-				{
-					fun_ptr->set_capture_size(width,height);
+			if (NULL != fun_ptr->take_picture) {
+				capture_img_end_flag = 0;
+				capture_flag = 1;
+				capture_format = *(cmr_u32 *) isp_ptr;	// capture format
+				width = (*(cmr_u32 *) (isp_ptr + 4)) >> 16;
+				height = (*(cmr_u32 *) (isp_ptr + 4)) & 0x0000ffff;
+				if (NULL != fun_ptr->set_capture_size) {
+					fun_ptr->set_capture_size(width, height);
 				}
 				fun_ptr->take_picture(0, capture_format);
-				ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d",width,height,capture_format);
+				ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				sem_wait(&capture_sem_lock);
-				ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d",width,height,capture_format);
-				if(NULL!=fun_ptr->stop_preview){
+				ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				if (NULL != fun_ptr->stop_preview) {
 					fun_ptr->stop_preview(0, 0);
 				}
-				usleep(1000*10);
+				usleep(1000 * 10);
 
-				if(NULL!=fun_ptr->start_preview){
+				if (NULL != fun_ptr->start_preview) {
 					fun_ptr->start_preview(0, 0);
 				}
 
 				capture_flag = 0;
 				g_command = CMD_TAKE_PICTURE;
 
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 				eng_rsp_diag[rsp_len] = 0x7e;
-				msg_ret->len = rsp_len-1;
-				res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+				msg_ret->len = rsp_len - 1;
+				res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			}
 			break;
 		}
-		case CMD_ASIC_TAKE_PICTURE_NEW:// save pic to file system
+	case CMD_ASIC_TAKE_PICTURE_NEW:	// save pic to file system
 		{
 			ISP_LOGI("Chj--asic take picture new");
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;;
-			cmr_u32 startpos,endpos,step,width,height;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;;
+			cmr_u32 startpos, endpos, step, width, height;
 			cmr_u32 pos;
 			g_command = CMD_ASIC_TAKE_PICTURE_NEW;
-			if( NULL!=fun_ptr->take_picture ) {
+			if (NULL != fun_ptr->take_picture) {
 				////////////////////////////
-				startpos = *(cmr_u32*)isp_ptr;
-				endpos = *(cmr_u32*)(isp_ptr+4);
-				step = *(cmr_u32*)(isp_ptr+8);
-				capture_format=*(cmr_u32*)(isp_ptr+12);// capture format
-				width = (*(cmr_u32*)(isp_ptr+16))>>16;
-				height = (*(cmr_u32*)(isp_ptr+16))&0x0000ffff;
+				startpos = *(cmr_u32 *) isp_ptr;
+				endpos = *(cmr_u32 *) (isp_ptr + 4);
+				step = *(cmr_u32 *) (isp_ptr + 8);
+				capture_format = *(cmr_u32 *) (isp_ptr + 12);	// capture format
+				width = (*(cmr_u32 *) (isp_ptr + 16)) >> 16;
+				height = (*(cmr_u32 *) (isp_ptr + 16)) & 0x0000ffff;
 
-				for( pos=startpos;pos<=endpos;pos+=step ){
+				for (pos = startpos; pos <= endpos; pos += step) {
 					g_af_pos = pos;
-					ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, &pos);// set af pos after auto focus
-					usleep(1000*10);
-					capture_img_end_flag=0;
-					capture_flag=1;
-					if(NULL!=fun_ptr->set_capture_size)
-					{
-						fun_ptr->set_capture_size(width,height);
+					ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, &pos);	// set af pos after auto focus
+					usleep(1000 * 10);
+					capture_img_end_flag = 0;
+					capture_flag = 1;
+					if (NULL != fun_ptr->set_capture_size) {
+						fun_ptr->set_capture_size(width, height);
 					}
 					fun_ptr->take_picture(0, capture_format);
-					ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d",width,height,capture_format);
+					ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					sem_wait(&capture_sem_lock);
-					ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d",width,height,capture_format);
-					if(NULL!=fun_ptr->stop_preview){
+					ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
-					usleep(1000*10);
+					usleep(1000 * 10);
 
-					if(NULL!=fun_ptr->start_preview){
+					if (NULL != fun_ptr->start_preview) {
 						fun_ptr->start_preview(0, 0);
 					}
 					capture_flag = 0;
@@ -3067,42 +3042,41 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 			}
 			break;
 		}
-		case CMD_START_PREVIEW:
-		{// ok
+	case CMD_START_PREVIEW:
+		{		// ok
 			DBG("ISP_TOOL:CMD_START_PREVIEW \n");
-			if(NULL!=fun_ptr->start_preview){
+			if (NULL != fun_ptr->start_preview) {
 				ret = fun_ptr->start_preview(0, 0);
 			}
-			if(!ret){
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			if (!ret) {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 				preview_flag = 1;
-			}else{
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_STOP_PREVIEW:
-		{// ok
+	case CMD_STOP_PREVIEW:
+		{		// ok
 			DBG("ISP_TOOL:CMD_STOP_PREVIEW \n");
-			if(NULL!=fun_ptr->stop_preview){
-//				fun_ptr->stop_preview(0, 0);
+			if (NULL != fun_ptr->stop_preview) {
+//                              fun_ptr->stop_preview(0, 0);
 			}
 
 			preview_flag = 0;
-			rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_GET_PREVIEW_PICTURE:
-		{ // ok
+	case CMD_GET_PREVIEW_PICTURE:
+		{		// ok
 			//DBG("ISP_TOOL:CMD_GET_PREVIEW_PICTURE \n");
-			if(1==preview_flag)
-			{
+			if (1 == preview_flag) {
 				preview_img_end_flag = 0;
 				sem_wait(&preview_sem_lock);
 				preview_img_end_flag = 1;
@@ -3110,187 +3084,179 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 				DBG("ISP_TOOL:CMD_GET_PREVIEW_PICTURE \n");
 				rsp_len += rlen;
 				eng_rsp_diag[rsp_len] = 0x7e;
-				msg_ret->len = rsp_len-1;
-				res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+				msg_ret->len = rsp_len - 1;
+				res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			}
 			break;
 		}
-		case CMD_READ_ISP_PARAM:
+	case CMD_READ_ISP_PARAM:
 		{
 			DBG("ISP_TOOL:CMD_READ_ISP_PARAM \n");
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
-			struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
+			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
 			cmr_u32 packet_num = 0;
 			cmr_u32 send_number = 0;
-			cmr_u8* dig_ptr=buf;
+			cmr_u8 *dig_ptr = buf;
 			cmr_u32 i = 0;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
-				if(ret) {
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
+				if (ret) {
 					DBG("ISP_TOOL:ispParser failed \n");
 				}
-				ret=ispParserFree((void*)in_param.buf_addr);
-				if(ret) {
+				ret = ispParserFree((void *)in_param.buf_addr);
+				if (ret) {
 					DBG("ISP_TOOL:ispParserFree failed \n");
 				}
 
-			if(ISP_UP_PARAM==rtn_cmd.cmd)
-			{
-				ret=ispParser(isp_handler, ISP_PARSER_UP_PARAM, (void*)in_param.buf_addr, (void*)&rtn_param);
+				if (ISP_UP_PARAM == rtn_cmd.cmd) {
+					ret = ispParser(isp_handler, ISP_PARSER_UP_PARAM, (void *)in_param.buf_addr, (void *)&rtn_param);
 
-				if(0x00==ret)
-				{
+					if (0x00 == ret) {
 
-						packet_num = (rtn_param.buf_len+SEND_DATA_SIZE-1)/SEND_DATA_SIZE;
-					for (i=0; i<packet_num; i++, send_number++)
-					{
-						if (i < (packet_num-1))
+						packet_num = (rtn_param.buf_len + SEND_DATA_SIZE - 1) / SEND_DATA_SIZE;
+						for (i = 0; i < packet_num; i++, send_number++) {
+							if (i < (packet_num - 1))
 								len = SEND_DATA_SIZE;
-						else
-								len = rtn_param.buf_len -SEND_DATA_SIZE*i;
+							else
+								len = rtn_param.buf_len - SEND_DATA_SIZE * i;
 
-						rsp_len = sizeof(MSG_HEAD_T)+1;
+							rsp_len = sizeof(MSG_HEAD_T) + 1;
 
-						isp_msg.totalpacket = packet_num;
-						isp_msg.packetsn = send_number;
+							isp_msg.totalpacket = packet_num;
+							isp_msg.packetsn = send_number;
 
-						memcpy(eng_rsp_diag+rsp_len, (char *)&isp_msg, sizeof(ISP_DATA_HEADER_T));
-						rsp_len += sizeof(ISP_DATA_HEADER_T);
+							memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_DATA_HEADER_T));
+							rsp_len += sizeof(ISP_DATA_HEADER_T);
 
+							//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+							memcpy(eng_rsp_diag + rsp_len, (char *)rtn_param.buf_addr + i * SEND_DATA_SIZE, len);
 
-						//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
-							memcpy(eng_rsp_diag+rsp_len, (char *)rtn_param.buf_addr+i*SEND_DATA_SIZE, len);
+							rsp_len += len;
+							eng_rsp_diag[rsp_len] = 0x7e;
+							msg_ret->len = rsp_len - 1;
+							msg_ret->seq_num = sequence_num++;
+							res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
-
-						rsp_len += len;
-						eng_rsp_diag[rsp_len] = 0x7e;
-						msg_ret->len = rsp_len-1;
-						msg_ret->seq_num = sequence_num++;
-						res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+						}
 
 					}
-
 				}
 			}
+
+			break;
 		}
-
-
-		break;
-	}
-		case CMD_WRITE_ISP_PARAM:
+	case CMD_WRITE_ISP_PARAM:
 		{
 			DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM \n");
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
-			static struct isp_parser_buf_in packet_param = {0x00, 0x00};
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+sizeof(ISP_DATA_HEADER_T)+1;
-			cmr_u32* packet = (cmr_u32*)(buf+sizeof(MSG_HEAD_T)+1);
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
+			static struct isp_parser_buf_in packet_param = { 0x00, 0x00 };
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + sizeof(ISP_DATA_HEADER_T) + 1;
+			cmr_u32 *packet = (cmr_u32 *) (buf + sizeof(MSG_HEAD_T) + 1);
 			cmr_u32 packet_num = 0;
 			static cmr_u32 offset = 0;
 			cmr_u32 param_len = 0;
 			cmr_u32 packet_total = 0;
 			packet_total = packet[0];
 			packet_num = packet[1];
-			if(0==packet_num) {
-				packet_param.buf_addr = (cmr_uint)ispParserAlloc(packet_total*SEND_DATA_SIZE);
-				packet_param.buf_len = packet_total*SEND_DATA_SIZE;
+			if (0 == packet_num) {
+				packet_param.buf_addr = (cmr_uint) ispParserAlloc(packet_total * SEND_DATA_SIZE);
+				packet_param.buf_len = packet_total * SEND_DATA_SIZE;
 			}
 
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr)-sizeof(ISP_DATA_HEADER_T);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr) - sizeof(ISP_DATA_HEADER_T);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				if(NULL!=fun_ptr->stop_preview){
-//					fun_ptr->stop_preview(0, 0);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				if (NULL != fun_ptr->stop_preview) {
+//                                      fun_ptr->stop_preview(0, 0);
 				}
 
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
 				}
-				memcpy((char*)packet_param.buf_addr+offset,(void*)in_param.buf_addr,in_param.buf_len);
+				memcpy((char *)packet_param.buf_addr + offset, (void *)in_param.buf_addr, in_param.buf_len);
 				offset += in_param.buf_len;
 
-				if(in_param.buf_addr) {
-					ret=ispParserFree((void*)in_param.buf_addr);
+				if (in_param.buf_addr) {
+					ret = ispParserFree((void *)in_param.buf_addr);
 				}
-				if(NULL!=fun_ptr->start_preview){
-//					fun_ptr->start_preview(0, 0);
+				if (NULL != fun_ptr->start_preview) {
+//                                      fun_ptr->start_preview(0, 0);
 				}
 			}
 
-			if(packet_num==(packet_total-1)) {
+			if (packet_num == (packet_total - 1)) {
 				offset = 0;
 				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM1 \n");
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)packet_param.buf_addr, NULL);
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM2  ret  %d\n",ret);
-				ret=ispParserFree((void*)packet_param.buf_addr);
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ret);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)packet_param.buf_addr, NULL);
+				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM2  ret  %d\n", ret);
+				ret = ispParserFree((void *)packet_param.buf_addr);
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ret);
 				eng_rsp_diag[rsp_len] = 0x7e;
-				msg_ret->len = rsp_len-1;
+				msg_ret->len = rsp_len - 1;
 				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
-				res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+				res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM4 \n");
 
 			}
 
 			break;
 		}
-		case CMD_READ_ISP_PARAM_V1:
+	case CMD_READ_ISP_PARAM_V1:
 		{
 			DBG("ISP_TOOL:CMD_READ_ISP_PARAM_V1 \n");
 			struct isp_data_header_read *read_cmd = NULL;
 			cmr_u32 data_len = 0;
-			cmr_u8* dig_ptr = buf;
-			cmr_u8* isp_ptr = buf+sizeof(MSG_HEAD_T)+1;
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			struct isp_check_cmd_valid cmd;
 			memset(&cmd, 0, sizeof(struct isp_check_cmd_valid));
 
 			data_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
-			DBG("ISP_TOOL : data_len = %d",data_len);
+			DBG("ISP_TOOL : data_len = %d", data_len);
 			if (DATA_CMD_LENGTH == data_len) {
 				DBG("ISP_TOOL : data is read cmd");
 				read_cmd = (struct isp_data_header_read *)isp_ptr;
-			}else {
+			} else {
 				DBG("ISP_TOOL : cmd was error");
 				break;
 			}
 			cmd.isp_mode = read_cmd->isp_mode;
 			cmd.main_type = read_cmd->main_type;
 			cmd.sub_type = read_cmd->sub_type;
-			ret = check_cmd_valid(&cmd,msg);
+			ret = check_cmd_valid(&cmd, msg);
 			if (0 == ret) {
 				if (0x02 > read_cmd->main_type) {
 					ret = isp_nr_reg_read(isp_handler, eng_rsp_diag, DATA_BUF_SIZE, buf);
 				} else {
-					ret = send_isp_param(read_cmd,msg);
+					ret = send_isp_param(read_cmd, msg);
 				}
 				if (0x00 != ret)
 					DBG("ISP_TOOL : read param error");
 			}
 		}
 		break;
-		case CMD_WRITE_ISP_PARAM_V1:
+	case CMD_WRITE_ISP_PARAM_V1:
 		{
 			DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM_V1 \n");
 			struct isp_data_header_normal *write_cmd = NULL;
 			cmr_u8 *dig_ptr = buf;
-			cmr_u8 *isp_ptr = buf +sizeof(MSG_HEAD_T) +1;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u8 *isp_data_ptr = isp_ptr + sizeof(struct isp_data_header_normal);
 			struct isp_check_cmd_valid cmd;
 			memset(&cmd, 0, sizeof(struct isp_check_cmd_valid));
@@ -3299,7 +3265,7 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 			cmd.isp_mode = write_cmd->isp_mode;
 			cmd.main_type = write_cmd->main_type;
 			cmd.sub_type = write_cmd->sub_type;
-			ret = check_cmd_valid(&cmd,msg);
+			ret = check_cmd_valid(&cmd, msg);
 			if (0 == ret) {
 				if (0x02 > write_cmd->main_type) {
 					ret = isp_nr_write(isp_handler, eng_rsp_diag, buf);
@@ -3309,111 +3275,106 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 			}
 		}
 		break;
-		case CMD_UPLOAD_MAIN_INFO:
-		{ // ok
+	case CMD_UPLOAD_MAIN_INFO:
+		{		// ok
 			DBG("ISP_TOOL:CMD_UPLOAD_MAIN_INFO \n");
 			/* TODO:read isp param operation */
 			// rlen is the size of isp_param
 			// pass eng_rsp_diag+rsp_len
 
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
-			struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
+			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
-			cmr_u8 i=0x00;
-			cmr_u32* addr=(cmr_u32*)isp_ptr;
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
+			cmr_u8 i = 0x00;
+			cmr_u32 *addr = (cmr_u32 *) isp_ptr;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed\n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
 					DBG("ISP_TOOL:ispParser failed\n");
 				}
-				ret=ispParserFree((void*)in_param.buf_addr);
+				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
 					DBG("ISP_TOOL:ispParserFree failed\n");
 				}
 
-				if(ISP_MAIN_INFO==rtn_cmd.cmd)
-				{
-					ret=ispParser(isp_handler, ISP_PARSER_UP_MAIN_INFO, (void*)in_param.buf_addr, (void*)&rtn_param);
-					if(0x00==ret)
-					{
-						isp_ptr=eng_rsp_diag+sizeof(MSG_HEAD_T)+1;
-						rlen=ispvideo_SetIspParamToSt(isp_ptr, (struct isp_parser_buf_in*)&rtn_param);
-						ret=ispParserFree((void*)rtn_param.buf_addr);
+				if (ISP_MAIN_INFO == rtn_cmd.cmd) {
+					ret = ispParser(isp_handler, ISP_PARSER_UP_MAIN_INFO, (void *)in_param.buf_addr, (void *)&rtn_param);
+					if (0x00 == ret) {
+						isp_ptr = eng_rsp_diag + sizeof(MSG_HEAD_T) + 1;
+						rlen = ispvideo_SetIspParamToSt(isp_ptr, (struct isp_parser_buf_in *)&rtn_param);
+						ret = ispParserFree((void *)rtn_param.buf_addr);
 					}
 				}
 			}
 
 			rsp_len += rlen;
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
-			break ;
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
+			break;
 		}
-		case CMD_TAKE_PICTURE:
+	case CMD_TAKE_PICTURE:
 		{
 			DBG("ISP_TOOL:CMD_TAKE_PICTURE\n");
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
-			struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
+			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
 					DBG("ISP_TOOL:ispParser failed \n");
 				}
-				ret=ispParserFree((void*)in_param.buf_addr);
+				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
 					DBG("ISP_TOOL:ispParserFree failed \n");
 				}
 
-				if((ISP_CAPTURE==rtn_cmd.cmd)
-					&&(NULL!=fun_ptr->take_picture)) {
+				if ((ISP_CAPTURE == rtn_cmd.cmd)
+				    && (NULL != fun_ptr->take_picture)) {
 
-					capture_img_end_flag=0;
-					capture_flag=1;
+					capture_img_end_flag = 0;
+					capture_flag = 1;
 
-					capture_format=rtn_cmd.param[0];// capture format
+					capture_format = rtn_cmd.param[0];	// capture format
 
-					if(NULL!=fun_ptr->set_capture_size)
-					{
+					if (NULL != fun_ptr->set_capture_size) {
 						fun_ptr->set_capture_size(rtn_cmd.param[1], rtn_cmd.param[2]);
 					}
 
 					fun_ptr->take_picture(0, capture_format);
 					sem_wait(&capture_sem_lock);
 
-					if(NULL!=fun_ptr->stop_preview){
+					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
 
-					usleep(1000*10);
+					usleep(1000 * 10);
 
-					if(NULL!=fun_ptr->start_preview){
+					if (NULL != fun_ptr->start_preview) {
 						fun_ptr->start_preview(0, 0);
 					}
 
@@ -3423,260 +3384,248 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 			capture_flag = 0;
 			break;
 		}
-		case CMD_ISP_LEVEL:
-		{ // ok need test
+	case CMD_ISP_LEVEL:
+		{		// ok need test
 			DBG("ISP_TOOL:CMD_ISP_LEVEL \n");
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
 					DBG("ISP_TOOL:ispParser failed \n");
 				}
-				ispParserFree((void*)in_param.buf_addr);
+				ispParserFree((void *)in_param.buf_addr);
 			}
 
-			rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ret);
+			rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ret);
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
 
-		case CMD_READ_SENSOR_REG:
-		{// ok need test
+	case CMD_READ_SENSOR_REG:
+		{		// ok need test
 			DBG("ISP_TOOL:CMD_READ_SENSOR_REG \n");
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
-			struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
+			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
 					DBG("ISP_TOOL:ispParser failed \n");
 				}
-				ret=ispParserFree((void*)in_param.buf_addr);
+				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
 					DBG("ISP_TOOL:ispParserFree failed \n");
 				}
 
-				if(ISP_READ_SENSOR_REG==rtn_cmd.cmd)
-				{
-					ret=ispParser(isp_handler, ISP_READ_SENSOR_REG, (void*)&rtn_cmd, (void*)&rtn_param);
-					if(0x00==ret)
-					{
-						isp_ptr=eng_rsp_diag+sizeof(MSG_HEAD_T)+1;
-						rlen=ispvideo_SetIspParamToSt(isp_ptr, (struct isp_parser_buf_in*)&rtn_param);
-						ret=ispParserFree((void*)rtn_param.buf_addr);
+				if (ISP_READ_SENSOR_REG == rtn_cmd.cmd) {
+					ret = ispParser(isp_handler, ISP_READ_SENSOR_REG, (void *)&rtn_cmd, (void *)&rtn_param);
+					if (0x00 == ret) {
+						isp_ptr = eng_rsp_diag + sizeof(MSG_HEAD_T) + 1;
+						rlen = ispvideo_SetIspParamToSt(isp_ptr, (struct isp_parser_buf_in *)&rtn_param);
+						ret = ispParserFree((void *)rtn_param.buf_addr);
 					}
 				}
 			}
 
 			rsp_len += rlen;
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_WRITE_SENSOR_REG:
-		{ // ok need test
+	case CMD_WRITE_SENSOR_REG:
+		{		// ok need test
 			DBG("ISP_TOOL:CMD_WRITE_SENSOR_REG \n");
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
 					DBG("ISP_TOOL:ispParser failed \n");
 				}
-				ret=ispParserFree((void*)in_param.buf_addr);
+				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
 					DBG("ISP_TOOL:ispParserFree failed \n");
 				}
 			}
 
-			rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+			rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
-		case CMD_GET_INFO:
-		{ // ok
+	case CMD_GET_INFO:
+		{		// ok
 			DBG("ISP_TOOL:CMD_GET_INFO \n");
 			/* TODO:read isp param operation */
 			// rlen is the size of isp_param
 			// pass eng_rsp_diag+rsp_len
 
-			struct isp_parser_buf_in in_param = {0x00, 0x00};
-			struct isp_parser_buf_rtn rtn_param = {0x00, 0x00};
+			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
+			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
-			cmr_u8* dig_ptr=buf;
-			cmr_u8* isp_ptr=buf+sizeof(MSG_HEAD_T)+1;
-			cmr_u8 i=0x00;
-			cmr_u32* addr=(cmr_u32*)isp_ptr;
-			cmr_u32* ptr=NULL;
+			cmr_u8 *dig_ptr = buf;
+			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
+			cmr_u8 i = 0x00;
+			cmr_u32 *addr = (cmr_u32 *) isp_ptr;
+			cmr_u32 *ptr = NULL;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
-			in_param.buf_len=ispvideo_GetIspParamLenFromSt(dig_ptr);
-			in_param.buf_addr=(cmr_uint)ispParserAlloc(in_param.buf_len);
+			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
+			in_param.buf_addr = (cmr_uint) ispParserAlloc(in_param.buf_len);
 
-			if((0x00!=in_param.buf_len)
-				&&(0x00!=in_param.buf_addr))
-			{
-				ret=ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn*)&in_param);
+			if ((0x00 != in_param.buf_len)
+			    && (0x00 != in_param.buf_addr)) {
+				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
 					DBG("ISP_OTP:ispvideo_GetIspParamFromSt failed \n");
 				}
-				ret=ispParser(isp_handler, ISP_PARSER_DOWN, (void*)in_param.buf_addr, (void*)&rtn_cmd);
+				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
 					DBG("ISP_OTP:ispParser failed \n");
 				}
-				ret=ispParserFree((void*)in_param.buf_addr);
+				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
 					DBG("ISP_OTP:ispParserFree failed \n");
 				}
 
 				DBG("ISP_TOOL:CMD_GET_INFO rtn cmd:%d \n", rtn_cmd.cmd);
 
-				if(ISP_INFO==rtn_cmd.cmd)
-				{
-					ret=ispParser(isp_handler, ISP_PARSER_UP_INFO, (void*)&rtn_cmd, (void*)&rtn_param);
-					if(0x00==ret)
-					{
-						isp_ptr=eng_rsp_diag+sizeof(MSG_HEAD_T)+1;
-						rlen=ispvideo_SetIspParamToSt(isp_ptr, (struct isp_parser_buf_in*)&rtn_param);
-						ptr=(cmr_u32*)rtn_param.buf_addr;
-						for(i=0x00; i<rtn_param.buf_len; i+=0x04){
+				if (ISP_INFO == rtn_cmd.cmd) {
+					ret = ispParser(isp_handler, ISP_PARSER_UP_INFO, (void *)&rtn_cmd, (void *)&rtn_param);
+					if (0x00 == ret) {
+						isp_ptr = eng_rsp_diag + sizeof(MSG_HEAD_T) + 1;
+						rlen = ispvideo_SetIspParamToSt(isp_ptr, (struct isp_parser_buf_in *)&rtn_param);
+						ptr = (cmr_u32 *) rtn_param.buf_addr;
+						for (i = 0x00; i < rtn_param.buf_len; i += 0x04) {
 
 							DBG("ISP_TOOL:CMD_GET_INFO param:0x%08x \n", *ptr++);
 
 						}
-						ret=ispParserFree((void*)rtn_param.buf_addr);
+						ret = ispParserFree((void *)rtn_param.buf_addr);
 					}
 				}
 			}
 
 			rsp_len += rlen;
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
-			break ;
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
+			break;
 		}
-		case CMD_OTP_WRITE:
-			DBG("ISP_OTP:CMD_OTP_WRITE \n");
-			preview_tmpflag = preview_flag;
-			len -= rsp_len;
-#if 0/*Solve compile problem*/
-			is_stop_preview = isp_otp_needstopprev(&buf[rsp_len], &len);
+	case CMD_OTP_WRITE:
+		DBG("ISP_OTP:CMD_OTP_WRITE \n");
+		preview_tmpflag = preview_flag;
+		len -= rsp_len;
+#if 0				/*Solve compile problem */
+		is_stop_preview = isp_otp_needstopprev(&buf[rsp_len], &len);
 #endif
-			if(is_stop_preview && preview_tmpflag)
-			{
-				if(NULL!=fun_ptr->stop_preview){
-					fun_ptr->stop_preview(0, 0);
-				}
+		if (is_stop_preview && preview_tmpflag) {
+			if (NULL != fun_ptr->stop_preview) {
+				fun_ptr->stop_preview(0, 0);
 			}
-#if 0/*Solve compile problem*/
-			ret = isp_otp_write(isp_handler, &buf[rsp_len], &len);
+		}
+#if 0				/*Solve compile problem */
+		ret = isp_otp_write(isp_handler, &buf[rsp_len], &len);
 #endif
-			if (!ret) {
-				memset(&eng_rsp_diag[rsp_len],0,len);
-			} else {
-				memset(&eng_rsp_diag[rsp_len],0,len);
-				eng_rsp_diag[rsp_len] = 0x01;
+		if (!ret) {
+			memset(&eng_rsp_diag[rsp_len], 0, len);
+		} else {
+			memset(&eng_rsp_diag[rsp_len], 0, len);
+			eng_rsp_diag[rsp_len] = 0x01;
+		}
+		rsp_len += len;
+		eng_rsp_diag[rsp_len] = 0x7e;
+		msg_ret->len = rsp_len - 1;
+
+		if (is_stop_preview && preview_tmpflag) {
+			if (NULL != fun_ptr->start_preview) {
+				fun_ptr->start_preview(0, 0);
 			}
-			rsp_len += len;
-			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
+			preview_flag = preview_tmpflag;
+		}
 
-			if(is_stop_preview && preview_tmpflag)
-			{
-				if(NULL!=fun_ptr->start_preview){
-					fun_ptr->start_preview(0, 0);
-				}
-				preview_flag = preview_tmpflag;
-			}
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
+		DBG("ISP_OTP:CMD_OTP_WRITE done\n");
+		break;
 
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
-			DBG("ISP_OTP:CMD_OTP_WRITE done\n");
-			break;
-
-		case CMD_OTP_READ:
-			DBG("ISP_OTP:CMD_OTP_READ \n");
-			preview_tmpflag = preview_flag;
-			len -= rsp_len;
-#if 0/*Solve compile problem*/
-			is_stop_preview = isp_otp_needstopprev(&buf[rsp_len], &len);
+	case CMD_OTP_READ:
+		DBG("ISP_OTP:CMD_OTP_READ \n");
+		preview_tmpflag = preview_flag;
+		len -= rsp_len;
+#if 0				/*Solve compile problem */
+		is_stop_preview = isp_otp_needstopprev(&buf[rsp_len], &len);
 #endif
-			if(is_stop_preview && preview_tmpflag)
-			{
-				if(NULL!=fun_ptr->stop_preview){
-					fun_ptr->stop_preview(0, 0);
-				}
+		if (is_stop_preview && preview_tmpflag) {
+			if (NULL != fun_ptr->stop_preview) {
+				fun_ptr->stop_preview(0, 0);
 			}
+		}
 
-			memcpy(eng_rsp_diag,buf,(msg_ret->len+1));
+		memcpy(eng_rsp_diag, buf, (msg_ret->len + 1));
 #if 0
-			ret = isp_otp_read(isp_handler, &eng_rsp_diag[rsp_len], &len);
+		ret = isp_otp_read(isp_handler, &eng_rsp_diag[rsp_len], &len);
 #endif
-			DBG("ISP_OTP:CMD_OTP_READ rsp_len %d len %d\n",rsp_len,len);
-			rsp_len += len;
-			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
+		DBG("ISP_OTP:CMD_OTP_READ rsp_len %d len %d\n", rsp_len, len);
+		rsp_len += len;
+		eng_rsp_diag[rsp_len] = 0x7e;
+		msg_ret->len = rsp_len - 1;
 
-			if(is_stop_preview && preview_tmpflag)
-			{
-				if(NULL!=fun_ptr->start_preview){
-					fun_ptr->start_preview(0, 0);
-				}
-				preview_flag = preview_tmpflag;
+		if (is_stop_preview && preview_tmpflag) {
+			if (NULL != fun_ptr->start_preview) {
+				fun_ptr->start_preview(0, 0);
 			}
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
-			DBG("ISP_OTP:CMD_OTP_READ  done\n");
+			preview_flag = preview_tmpflag;
+		}
+		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
+		DBG("ISP_OTP:CMD_OTP_READ  done\n");
 
-			break;
+		break;
 
-		case CMD_DOWNLOAD_RAW_PIC:
+	case CMD_DOWNLOAD_RAW_PIC:
 		{
 			cmr_u32 img_len, pack_sn, total_pack, img_width, img_height, img_headlen;
-			cmr_u8* img_addr;
+			cmr_u8 *img_addr;
 			img_len = ispvideo_GetImgDataLen(buf);
 			img_addr = ispvideo_GetImgDataInfo(buf, &pack_sn, &total_pack, &img_width, &img_height, &img_headlen);
 			if (NULL != img_addr) {
@@ -3687,82 +3636,82 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 					scene_param.height = img_height;
 
 					bzero(raw_filename, sizeof(raw_filename));
-					sprintf(raw_filename+1, "/data/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
-					scene_param.width,scene_param.height,scene_param.gain, scene_param.awb_gain_r,
-					scene_param.awb_gain_g,scene_param.awb_gain_b,scene_param.smart_ct, scene_param.smart_bv);
+					sprintf(raw_filename + 1, "/data/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
+						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
+						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
-					ISP_LOGI("simulation raw filename %s", raw_filename+1);
+					ISP_LOGI("simulation raw filename %s", raw_filename + 1);
 					raw_filename[0] = 1;
-					raw_fp = fopen(raw_filename+1, "wb+");
+					raw_fp = fopen(raw_filename + 1, "wb+");
 				}
 				if (raw_fp) {
-					fwrite((void*)img_addr, 1, img_len, raw_fp);
+					fwrite((void *)img_addr, 1, img_len, raw_fp);
 				}
 
 				if (pack_sn == total_pack) {
-					if (raw_fp){
+					if (raw_fp) {
 						fclose(raw_fp);
 						raw_fp = NULL;
 					}
 					tool_fmt_pattern = (img_headlen >> 0x10) & 0xFFFF;
 					ISP_LOGI("image pattern %d", tool_fmt_pattern);
 					//send response packet
-					rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+					rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 					eng_rsp_diag[rsp_len] = 0x7e;
-					msg_ret->len = rsp_len-1;
-					res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+					msg_ret->len = rsp_len - 1;
+					res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 				}
 			}
 			break;
 		}
-		case CMD_WRTIE_SCENE_PARAM:
+	case CMD_WRTIE_SCENE_PARAM:
 		{
 			struct isptool_scene_param scene_info;
 			ret = ispvideo_GetSceneInfo(buf, &scene_info);
 
 			//send response packet
 			if (0x00 == ret) {
-				ret = isp_ioctl(isp_handler, ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_info);
+				ret = isp_ioctl(isp_handler, ISP_CTRL_TOOL_SET_SCENE_PARAM, (void *)&scene_info);
 				if (ret) {
 					CMR_LOGE("failed isp ioctl for scene parameter %d", ret);
 				}
-				memcpy(&(scene_param.gain), &(scene_info.gain), sizeof(struct isptool_scene_param)-8);
+				memcpy(&(scene_param.gain), &(scene_info.gain), sizeof(struct isptool_scene_param) - 8);
 				ISP_LOGI("width/height %d/%d, gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",
-					scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
-					scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
+					 scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
+					 scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 			} else {
-				rsp_len+=ispvideo_SetreTurnValue((cmr_u8*)&eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_FAIL);
 			}
 
 			eng_rsp_diag[rsp_len] = 0x7e;
-			msg_ret->len = rsp_len-1;
-			res = send(sockfd, eng_rsp_diag, rsp_len+1, 0);
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 			break;
 		}
 
-		case CMD_START_SIMULATION:
+	case CMD_START_SIMULATION:
 		{
 			ISP_LOGI("simulation start");
-			if((NULL!=fun_ptr->take_picture)) {
-				capture_img_end_flag=0;
-				capture_flag=1;
+			if ((NULL != fun_ptr->take_picture)) {
+				capture_img_end_flag = 0;
+				capture_flag = 1;
 
-				capture_format=0x10;// capture format:JPEG
-				if(NULL!=fun_ptr->set_capture_size) {
+				capture_format = 0x10;	// capture format:JPEG
+				if (NULL != fun_ptr->set_capture_size) {
 					fun_ptr->set_capture_size(scene_param.width, scene_param.height);
 				}
 
-				fun_ptr->take_picture(1, capture_format);  //take picture for simulation
+				fun_ptr->take_picture(1, capture_format);	//take picture for simulation
 				sem_wait(&capture_sem_lock);
 			}
 			capture_flag = 0;
 			break;
 		}
-		default:
-			break;
-	}				/* -----  end switch  ----- */
+	default:
+		break;
+	}			/* -----  end switch  ----- */
 	return EXIT_SUCCESS;
 }				/* ----------  end of function main  ---------- */
 
@@ -3776,75 +3725,74 @@ static cmr_s32 handle_isp_data(cmr_u8 *buf, cmr_u32 len)
 
 */
 
-void ispvideo_Scale(cmr_u32 format, cmr_u32 in_w, cmr_u32 in_h, char *in_imgptr, cmr_s32 in_imglen, cmr_u32* out_w, cmr_u32* out_h, char **out_imgptr, cmr_s32* out_imglen)
+void ispvideo_Scale(cmr_u32 format, cmr_u32 in_w, cmr_u32 in_h, char *in_imgptr, cmr_s32 in_imglen, cmr_u32 * out_w, cmr_u32 * out_h, char **out_imgptr, cmr_s32 * out_imglen)
 {
 	cmr_s32 ret;
-	cmr_u32 x=0x00;
-	cmr_u32 y=0x00;
-	cmr_u32 src_img_w=in_w;
-	cmr_u32 src_img_h=in_h;
-	cmr_u32 img_w=in_w;
-	cmr_u32 img_h=in_h;
-	cmr_u8* src_buf_ptr=(cmr_u8*)in_imgptr;
-	cmr_u8* dst_buf_ptr=(cmr_u8*)*out_imgptr;
-	cmr_u32 shift_num=0x01;
+	cmr_u32 x = 0x00;
+	cmr_u32 y = 0x00;
+	cmr_u32 src_img_w = in_w;
+	cmr_u32 src_img_h = in_h;
+	cmr_u32 img_w = in_w;
+	cmr_u32 img_h = in_h;
+	cmr_u8 *src_buf_ptr = (cmr_u8 *) in_imgptr;
+	cmr_u8 *dst_buf_ptr = (cmr_u8 *) * out_imgptr;
+	cmr_u32 shift_num = 0x01;
 
-	if((PREVIEW_MAX_WIDTH>=img_w)
-		&&(PREVIEW_MAX_HEIGHT>=img_h))	{
-		*out_w=img_w;
-		*out_h=img_h;
-		*out_imgptr=in_imgptr;
-		*out_imglen=in_imglen;
-		return ;
+	if ((PREVIEW_MAX_WIDTH >= img_w)
+	    && (PREVIEW_MAX_HEIGHT >= img_h)) {
+		*out_w = img_w;
+		*out_h = img_h;
+		*out_imgptr = in_imgptr;
+		*out_imglen = in_imglen;
+		return;
 	}
 
-	for(x=0x00; ; x++){
-		if((PREVIEW_MAX_WIDTH>=img_w)
-			&&(PREVIEW_MAX_HEIGHT>=img_h))	{
-			break ;
+	for (x = 0x00;; x++) {
+		if ((PREVIEW_MAX_WIDTH >= img_w)
+		    && (PREVIEW_MAX_HEIGHT >= img_h)) {
+			break;
 		}
-		img_w>>=0x01;
-		img_h>>=0x01;
-		shift_num<<=0x01;
+		img_w >>= 0x01;
+		img_h >>= 0x01;
+		shift_num <<= 0x01;
 	}
 
-	*out_w=img_w;
-	*out_h=img_h;
+	*out_w = img_w;
+	*out_h = img_h;
 
 	if ((ISP_TOOL_YUV420_2FRAME == format)
-		||(ISP_TOOL_YVU420_2FRAME == format)) {
-		*out_imglen=img_w*img_h+(img_w*img_h)/2;
-		shift_num-=0x01;
-		shift_num<<=0x01;
+	    || (ISP_TOOL_YVU420_2FRAME == format)) {
+		*out_imglen = img_w * img_h + (img_w * img_h) / 2;
+		shift_num -= 0x01;
+		shift_num <<= 0x01;
 
-		for(y=0x00; y<img_h; y+=0x02){/*y*/
-			for(x=0x00; x<img_w; x+=0x02){
-				*dst_buf_ptr++=*src_buf_ptr++;
-				*dst_buf_ptr++=*src_buf_ptr++;
-				src_buf_ptr+=shift_num;
+		for (y = 0x00; y < img_h; y += 0x02) {	/*y */
+			for (x = 0x00; x < img_w; x += 0x02) {
+				*dst_buf_ptr++ = *src_buf_ptr++;
+				*dst_buf_ptr++ = *src_buf_ptr++;
+				src_buf_ptr += shift_num;
 			}
-			for(x=0x00; x<img_w; x+=0x02){
-				*dst_buf_ptr++=*src_buf_ptr++;
-				*dst_buf_ptr++=*src_buf_ptr++;
-				src_buf_ptr+=shift_num;
+			for (x = 0x00; x < img_w; x += 0x02) {
+				*dst_buf_ptr++ = *src_buf_ptr++;
+				*dst_buf_ptr++ = *src_buf_ptr++;
+				src_buf_ptr += shift_num;
 			}
-			src_buf_ptr+=(src_img_w*shift_num);
+			src_buf_ptr += (src_img_w * shift_num);
 		}
 
-		src_buf_ptr=(cmr_u8*)in_imgptr;
-		dst_buf_ptr=(cmr_u8*)*out_imgptr;
-		src_buf_ptr=src_buf_ptr+src_img_w*src_img_h;
-		dst_buf_ptr=dst_buf_ptr+img_w*img_h;
+		src_buf_ptr = (cmr_u8 *) in_imgptr;
+		dst_buf_ptr = (cmr_u8 *) * out_imgptr;
+		src_buf_ptr = src_buf_ptr + src_img_w * src_img_h;
+		dst_buf_ptr = dst_buf_ptr + img_w * img_h;
 
-
-		img_h>>=0x01;
-		for(y=0x00; y<img_h; y++){/*uv*/
-			for(x=0x00; x<img_w; x+=0x02){
-				*dst_buf_ptr++=*src_buf_ptr++;
-				*dst_buf_ptr++=*src_buf_ptr++;
-				src_buf_ptr+=shift_num;
+		img_h >>= 0x01;
+		for (y = 0x00; y < img_h; y++) {	/*uv */
+			for (x = 0x00; x < img_w; x += 0x02) {
+				*dst_buf_ptr++ = *src_buf_ptr++;
+				*dst_buf_ptr++ = *src_buf_ptr++;
+				src_buf_ptr += shift_num;
 			}
-			src_buf_ptr+=(src_img_w*(shift_num/2));
+			src_buf_ptr += (src_img_w * (shift_num / 2));
 		}
 
 	}
@@ -3853,18 +3801,17 @@ void ispvideo_Scale(cmr_u32 format, cmr_u32 in_w, cmr_u32 in_h, char *in_imgptr,
 
 void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, cmr_s32 imagelen)
 {
-	cmr_u32 handler_id=0x00;
+	cmr_u32 handler_id = 0x00;
 	cmr_s32 ret;
 
-	if (0==preview_img_end_flag)
-	{
+	if (0 == preview_img_end_flag) {
 		pthread_mutex_lock(&ispstream_lock);
 
 		char *img_ptr = (char *)preview_buf_ptr;
 		cmr_s32 img_len;
 		cmr_u32 img_w;
 		cmr_u32 img_h;
-		/*if preview size more than vga that is subsample to less than vga for preview frame ratio*/
+		/*if preview size more than vga that is subsample to less than vga for preview frame ratio */
 		ispvideo_Scale(format, width, height, imgptr, imagelen, &img_w, &img_h, &img_ptr, &img_len);
 
 		ret = handle_img_data(format, img_w, img_h, img_ptr, img_len, 0, 0, 0, 0);
@@ -3880,37 +3827,35 @@ void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, 
 
 void send_capture_complete_msg()
 {
-	if ((capture_flag == 1) && (1 == capture_img_end_flag) )
-	{
-		usleep(1000*1000);
+	if ((capture_flag == 1) && (1 == capture_img_end_flag)) {
+		usleep(1000 * 1000);
 		sem_post(&capture_sem_lock);
 		capture_flag = 0;
 	}
 }
 
-void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len,char *ch1_ptr, cmr_s32 ch1_len,char *ch2_ptr, cmr_s32 ch2_len)
+void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
 {
-	cmr_u32 handler_id=0x00;
+	cmr_u32 handler_id = 0x00;
 	cmr_s32 ret;
 
-	if ((0 == capture_img_end_flag)&&(format == (cmr_u32)capture_format))
-	{
+	if ((0 == capture_img_end_flag) && (format == (cmr_u32) capture_format)) {
 		pthread_mutex_lock(&ispstream_lock);
 
 		DBG("ISP_TOOL: capture format: %d, width: %d, height: %d.\n", format, width, height);
-		switch( g_command ){
-			case CMD_ASIC_TAKE_PICTURE:
-			case CMD_ASIC_TAKE_PICTURE_NEW:
-				ret = handle_img_data_asic(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
-				break;
+		switch (g_command) {
+		case CMD_ASIC_TAKE_PICTURE:
+		case CMD_ASIC_TAKE_PICTURE_NEW:
+			ret = handle_img_data_asic(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
+			break;
 			//case CMD_SFT_TAKE_PICTURE_NEW:
-				//ret = handle_img_data_sft(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
-				//break;
-			default:
-				ret = handle_img_data(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
-				break;
+			//ret = handle_img_data_sft(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
+			//break;
+		default:
+			ret = handle_img_data(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
+			break;
 		}
-		capture_img_end_flag=1;
+		capture_img_end_flag = 1;
 		if (ret != 0) {
 			DBG("ISP_TOOL: handle_img_data().error  ret = %d.", ret);
 		}
@@ -3919,49 +3864,49 @@ void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_
 	}
 }
 
-cmr_s32 isp_RecDataCheck(cmr_u8* rx_buf_ptr, cmr_s32 rx_bug_len, cmr_u8* cmd_buf_ptr,  cmr_s32* cmd_len)
+cmr_s32 isp_RecDataCheck(cmr_u8 * rx_buf_ptr, cmr_s32 rx_bug_len, cmr_u8 * cmd_buf_ptr, cmr_s32 * cmd_len)
 {
 	cmr_s32 rtn;
-	cmr_u8* rx_ptr=rx_buf_ptr;
-	cmr_u8* cmd_ptr=cmd_buf_ptr;
-	cmr_u8 packet_header=rx_buf_ptr[0];
-	cmr_u16 packet_len=(rx_buf_ptr[6]<<0x08)|(rx_buf_ptr[5]);
-	cmr_u8 packet_end=rx_buf_ptr[rx_bug_len-1];
-	cmr_s32 rx_len=rx_bug_len;
-	cmr_s32 cmd_buf_offset=rx_packet_len;
+	cmr_u8 *rx_ptr = rx_buf_ptr;
+	cmr_u8 *cmd_ptr = cmd_buf_ptr;
+	cmr_u8 packet_header = rx_buf_ptr[0];
+	cmr_u16 packet_len = (rx_buf_ptr[6] << 0x08) | (rx_buf_ptr[5]);
+	cmr_u8 packet_end = rx_buf_ptr[rx_bug_len - 1];
+	cmr_s32 rx_len = rx_bug_len;
+	cmr_s32 cmd_buf_offset = rx_packet_len;
 
-	rtn=0;
-	*cmd_len=rx_bug_len;
+	rtn = 0;
+	*cmd_len = rx_bug_len;
 
 	if ((0x7e == packet_header)
-		&&(0x7e == packet_end) && (packet_len+2 == rx_bug_len)) {
-	/* one packet */
+	    && (0x7e == packet_end) && (packet_len + 2 == rx_bug_len)) {
+		/* one packet */
 
-	} else { /* mul packet */
-		rx_packet_len+=rx_bug_len;
+	} else {		/* mul packet */
+		rx_packet_len += rx_bug_len;
 
 		if ((0x7e == packet_end)
-			&&(rx_packet_len == rx_packet_total_len)) {
-			*cmd_len=rx_packet_len;
+		    && (rx_packet_len == rx_packet_total_len)) {
+			*cmd_len = rx_packet_len;
 		} else {
-			rtn=1;
+			rtn = 1;
 		}
 	}
 
-	memcpy((void*)&cmd_buf_ptr[cmd_buf_offset], rx_buf_ptr, rx_bug_len);
+	memcpy((void *)&cmd_buf_ptr[cmd_buf_offset], rx_buf_ptr, rx_bug_len);
 
 	if (0 == rtn) {
-		rx_packet_len=0x00;
-		rx_packet_total_len=0x00;
+		rx_packet_len = 0x00;
+		rx_packet_total_len = 0x00;
 	}
 
 	return rtn;
 }
 
-static void * isp_diag_handler(void *args)
+static void *isp_diag_handler(void *args)
 {
-	cmr_u32 handler_id=0x00;
-	cmr_s32 from = *((cmr_s32 *)args);
+	cmr_u32 handler_id = 0x00;
+	cmr_s32 from = *((cmr_s32 *) args);
 	cmr_s32 i, cnt, res, cmd_len, rtn, last_len;
 	static char *code = "diag channel exit";
 	fd_set rfds;
@@ -3971,8 +3916,8 @@ static void * isp_diag_handler(void *args)
 	FD_SET(from, &rfds);
 
 	sockfd = from;
-	rx_packet_len=0x00;
-	rx_packet_total_len=0x00;
+	rx_packet_len = 0x00;
+	rx_packet_total_len = 0x00;
 	bzero(nr_tool_flag, sizeof(nr_tool_flag));
 
 	/* Read client request, send sequence number back */
@@ -3983,12 +3928,12 @@ static void * isp_diag_handler(void *args)
 		tv.tv_usec = 0;
 		FD_SET(from, &rfds);
 		res = select(from + 1, &rfds, NULL, NULL, &tv);
-		if (res <= 0) { //timeout or other error
+		if (res <= 0) {	//timeout or other error
 			DBG("ISP_TOOL:No data within five seconds. res:%d\n", res);
 			continue;
 		}
 
-		cnt = recv(from, diag_rx_buf, CMD_BUF_SIZE,MSG_DONTWAIT);
+		cnt = recv(from, diag_rx_buf, CMD_BUF_SIZE, MSG_DONTWAIT);
 
 		if (cnt <= 0) {
 			DBG("ISP_TOOL:read socket error %s\n", strerror(errno));
@@ -3997,12 +3942,12 @@ static void * isp_diag_handler(void *args)
 
 		do {
 			if ((0x7e == diag_rx_buf[0])
-			&&(0x00 == rx_packet_total_len)
-			&&(0x00 == rx_packet_len)) {
-				rx_packet_total_len= ((diag_rx_buf[6] <<0x08) | diag_rx_buf[5]) + 2;
+			    && (0x00 == rx_packet_total_len)
+			    && (0x00 == rx_packet_len)) {
+				rx_packet_total_len = ((diag_rx_buf[6] << 0x08) | diag_rx_buf[5]) + 2;
 			}
 
-			if (cnt+rx_packet_len > rx_packet_total_len) {
+			if (cnt + rx_packet_len > rx_packet_total_len) {
 				last_len = rx_packet_total_len - rx_packet_len;
 				cnt = cnt - last_len;
 				memcpy(temp_rx_buf, &diag_rx_buf[last_len], cnt);
@@ -4022,11 +3967,11 @@ static void * isp_diag_handler(void *args)
 				}
 				cnt = 0;
 			}
-		} while(cnt>0);
+		} while (cnt > 0);
 	}
 
 	bzero(raw_filename, sizeof(raw_filename));
-	if (raw_fp){
+	if (raw_fp) {
 		fclose(raw_fp);
 		raw_fp = NULL;
 	}
@@ -4034,10 +3979,10 @@ static void * isp_diag_handler(void *args)
 	return code;
 }
 
-static void * ispserver_thread(void *args)
+static void *ispserver_thread(void *args)
 {
 	UNUSED(args);
-	cmr_u32 handler_id=0x00;
+	cmr_u32 handler_id = 0x00;
 	struct sockaddr claddr;
 	cmr_s32 lfd, cfd, optval;
 	cmr_s32 log_fd;
@@ -4054,31 +3999,31 @@ static void * ispserver_thread(void *args)
 
 	ISP_LOGV("ISP_TOOL:isp-video server version 1.0\n");
 
-	memset(&sock_addr, 0, sizeof (struct sockaddr_in));
-	sock_addr.sin_family = AF_INET;        /* Allows IPv4*/
-	sock_addr.sin_addr.s_addr = INADDR_ANY;/* Wildcard IP address;*/
+	memset(&sock_addr, 0, sizeof(struct sockaddr_in));
+	sock_addr.sin_family = AF_INET;	/* Allows IPv4 */
+	sock_addr.sin_addr.s_addr = INADDR_ANY;	/* Wildcard IP address; */
 	sock_addr.sin_port = htons(PORT_NUM);
 
 	lfd = socket(sock_addr.sin_family, SOCK_STREAM, 0);
 	if (lfd == -1) {
-		 ISP_LOGW("ISP_TOOL:socket is not build.\n");
-		 return NULL;
+		ISP_LOGW("ISP_TOOL:socket is not build.\n");
+		return NULL;
 	}
-	sock_fd=lfd;
+	sock_fd = lfd;
 	optval = 1;
 	if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
-		 DBG("ISP_TOOL:setsockopt error\n");
-		 return NULL;
+		DBG("ISP_TOOL:setsockopt error\n");
+		return NULL;
 	}
 
-	if (bind(lfd, (struct sockaddr *)&sock_addr, sizeof (struct sockaddr_in)) != 0) {
+	if (bind(lfd, (struct sockaddr *)&sock_addr, sizeof(struct sockaddr_in)) != 0) {
 		DBG("ISP_TOOL:bind error %s\n", strerror(errno));
-		 return NULL;
+		return NULL;
 	}
 
-	if (listen(lfd, BACKLOG) == -1){
+	if (listen(lfd, BACKLOG) == -1) {
 		DBG("ISP_TOOL:listen error\n");
-		 return NULL;
+		return NULL;
 	}
 
 	sem_init(&preview_sem_lock, 0, 0);
@@ -4086,8 +4031,8 @@ static void * ispserver_thread(void *args)
 	pthread_mutex_init(&ispstream_lock, NULL);
 
 	pthread_attr_init(&attr);
-	for (;;) {                  /* Handle clients iteratively */
-		void * res;
+	for (;;) {		/* Handle clients iteratively */
+		void *res;
 		cmr_s32 ret;
 
 		DBG("ISP_TOOL:log server waiting client dail in...\n");
@@ -4109,8 +4054,7 @@ static void * ispserver_thread(void *args)
 			DBG("ISP_TOOL:signal error\n");
 #ifdef CLIENT_DEBUG
 		addrlen = sizeof(struct sockaddr);
-		if (getnameinfo(&claddr, addrlen, host, 50, service,
-			 30, NI_NUMERICHOST) == 0)
+		if (getnameinfo(&claddr, addrlen, host, 50, service, 30, NI_NUMERICHOST) == 0)
 			snprintf(addrStr, ADDRSTRLEN, "(%s, %s)", host, service);
 		else
 			snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
@@ -4126,47 +4070,46 @@ static void * ispserver_thread(void *args)
 
 		pthread_join(tdiag, &res);
 		DBG("ISP_TOOL:diag thread exit success %s\n", (char *)res);
-		if (close(cfd) == -1)           /* Close connection */
+		if (close(cfd) == -1)	/* Close connection */
 			DBG("ISP_TOOL:close socket cfd error\n");
 	}
 	pthread_attr_destroy(&attr);
-	if (close(lfd) == -1)           /* Close connection */
+	if (close(lfd) == -1)	/* Close connection */
 		DBG("ISP_TOOL:close socket lfd error\n");
 
-	sock_fd=0x00;
+	sock_fd = 0x00;
 
 	pthread_mutex_destroy(&ispstream_lock);
 
-	 return NULL;
+	return NULL;
 }
 
-cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func)(cmr_u32, cmr_u32))
+cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32))
 {
-	struct camera_func* fun_ptr=ispvideo_GetCameraFunc();
+	struct camera_func *fun_ptr = ispvideo_GetCameraFunc();
 
-	switch(cmd)
-	{
-		case REG_START_PREVIEW:
+	switch (cmd) {
+	case REG_START_PREVIEW:
 		{
 			fun_ptr->start_preview = func;
 			break;
 		}
-		case REG_STOP_PREVIEW:
+	case REG_STOP_PREVIEW:
 		{
 			fun_ptr->stop_preview = func;
 			break;
 		}
-		case REG_TAKE_PICTURE:
+	case REG_TAKE_PICTURE:
 		{
 			fun_ptr->take_picture = func;
 			break;
 		}
-		case REG_SET_PARAM:
+	case REG_SET_PARAM:
 		{
 			fun_ptr->set_capture_size = func;
 			break;
 		}
-		default :
+	default:
 		{
 			break;
 		}
@@ -4175,53 +4118,51 @@ cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func)(cmr_u32, cmr_u32))
 	return 0x00;
 }
 
-
 void stopispserver()
 {
-	cmr_u32 handler_id=0x00;
+	cmr_u32 handler_id = 0x00;
 
 	ISP_LOGI("ISP_TOOL:stopispserver\n");
 	wire_connected = 0;
 
-	if((1 == preview_flag) && (0 == preview_img_end_flag)) {
+	if ((1 == preview_flag) && (0 == preview_img_end_flag)) {
 		sem_post(&preview_sem_lock);
 	}
 #ifndef MINICAMERA
-	if(0x00!=sock_fd)
-	{
+	if (0x00 != sock_fd) {
 		shutdown(sock_fd, 0);
 		shutdown(sock_fd, 1);
 	}
 
-	ispParserFree((void*)preview_buf_ptr);
+	ispParserFree((void *)preview_buf_ptr);
 
 	preview_flag = 0;
 	capture_flag = 0;
-	preview_img_end_flag=1;
-	capture_img_end_flag=1;
-	preview_buf_ptr=0;
+	preview_img_end_flag = 1;
+	capture_img_end_flag = 1;
+	preview_buf_ptr = 0;
 #endif
 }
 
 void startispserver()
 {
-	cmr_u32 handler_id=0x00;
+	cmr_u32 handler_id = 0x00;
 	pthread_t tdiag;
 	pthread_attr_t attr;
 #ifdef MINICAMERA
-    static cmr_s32 ret=-1;
+	static cmr_s32 ret = -1;
 #else
-    cmr_s32 ret=-1;
+	cmr_s32 ret = -1;
 #endif
 
 	ISP_LOGI("ISP_TOOL:startispserver\n");
 
 	preview_flag = 0;
 	capture_flag = 0;
-	preview_img_end_flag=1;
-	capture_img_end_flag=1;
+	preview_img_end_flag = 1;
+	capture_img_end_flag = 1;
 
-	if(ret!=0){
+	if (ret != 0) {
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		ret = pthread_create(&tdiag, &attr, ispserver_thread, NULL);
@@ -4230,15 +4171,15 @@ void startispserver()
 			DBG("ISP_TOOL:pthread_create fail\n");
 			return;
 		}
-		preview_buf_ptr=(cmr_u8*)ispParserAlloc(PREVIEW_MAX_WIDTH*PREVIEW_MAX_HEIGHT*2);
-	}else{
+		preview_buf_ptr = (cmr_u8 *) ispParserAlloc(PREVIEW_MAX_WIDTH * PREVIEW_MAX_HEIGHT * 2);
+	} else {
 		DBG("ISP_TOOL:pthread already create now!\n");
 	}
 }
 
-void setispserver(void* handle)
+void setispserver(void *handle)
 {
 	isp_handler = handle;
-	isp_ioctl(handle, ISP_CTRL_DENOISE_PARAM_READ,(void*)&nr_update_param);
+	isp_ioctl(handle, ISP_CTRL_DENOISE_PARAM_READ, (void *)&nr_update_param);
 	ISP_LOGV("ISP_TOOL:setispserver %p\n", handle);
 }

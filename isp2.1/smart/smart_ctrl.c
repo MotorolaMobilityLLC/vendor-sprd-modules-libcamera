@@ -190,7 +190,7 @@ static cmr_s32 smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 
 			if ((k < comp_cfg->section_num - 1) && (bv_range->max > comp_cfg->bv_range[k + 1].min)) {
 				ISP_LOGI("section[%d]: bv_range.max=%d, section[%d]: bv_range.min=%d, bv_range is invalid.",
-				     k, bv_range->max, k + 1, comp_cfg->bv_range[k + 1].min);
+					 k, bv_range->max, k + 1, comp_cfg->bv_range[k + 1].min);
 				rtn = ISP_ERROR;
 				return rtn;
 			}
@@ -229,7 +229,6 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 			ISP_LOGI("block[%d]: block_id is invalid.\n", i);
 		}
 
-
 		for (j = 0; j < blk_cfg->component_num; j++) {
 			cmr_u32 k = 0;
 			cmr_u32 m = 0;
@@ -261,8 +260,7 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 				func = &comp_cfg->func[k];
 				bv_range = &comp_cfg->bv_range[k];
 
-				ISP_LOGI("  section[%d], bv=[%d, %d], func num=%d",
-					 k, comp_cfg->bv_range[k].min, comp_cfg->bv_range[k].max, func->num);
+				ISP_LOGI("  section[%d], bv=[%d, %d], func num=%d", k, comp_cfg->bv_range[k].min, comp_cfg->bv_range[k].max, func->num);
 
 				if (bv_range->min > bv_range->max) {
 					ISP_LOGI("  section[%d]: bv_range is invalid.\n", k);
@@ -270,7 +268,7 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 
 				if ((k + 1 < comp_cfg->section_num) && (bv_range->max > comp_cfg->bv_range[k + 1].min)) {
 					ISP_LOGI("  section[%d]: bv_range.max=%d, section[%d]: bv_range.min=%d, bv_range is invalid.",
-					     k, bv_range->max, k + 1, comp_cfg->bv_range[k + 1].min);
+						 k, bv_range->max, k + 1, comp_cfg->bv_range[k + 1].min);
 				}
 
 			}
@@ -336,8 +334,7 @@ ERROR_EXIT:
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_piecewise_func_v1(struct isp_piecewise_func *func, cmr_s32 x,
-				  cmr_u32 weight_unit, struct isp_weight_value *result)
+static cmr_s32 smart_ctl_piecewise_func_v1(struct isp_piecewise_func *func, cmr_s32 x, cmr_u32 weight_unit, struct isp_weight_value *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 num = func->num;
@@ -369,8 +366,7 @@ static cmr_s32 smart_ctl_piecewise_func_v1(struct isp_piecewise_func *func, cmr_
 					result->value[0] = samples[i].y;
 					result->value[1] = samples[i + 1].y;
 
-					result->weight[0] =
-					    (samples[i + 1].x - x) * weight_unit / (samples[i + 1].x - samples[i].x);
+					result->weight[0] = (samples[i + 1].x - x) * weight_unit / (samples[i + 1].x - samples[i].x);
 					result->weight[1] = weight_unit - result->weight[0];
 				} else {
 					result->value[0] = samples[i].y;
@@ -425,8 +421,7 @@ static cmr_s32 smart_ctl_piecewise_func_v0(struct isp_piecewise_func *func, cmr_
 	return rtn;
 }
 
-static cmr_s32 smart_crl_calc_func(struct isp_piecewise_func *func, cmr_u32 y_type, cmr_s32 x,
-					struct isp_weight_value *result)
+static cmr_s32 smart_crl_calc_func(struct isp_piecewise_func *func, cmr_u32 y_type, cmr_s32 x, struct isp_weight_value *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_weight_value weight_value = { {0}, {0} };
@@ -451,8 +446,7 @@ static cmr_s32 smart_crl_calc_func(struct isp_piecewise_func *func, cmr_u32 y_ty
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 num, cmr_s32 bv,
-						struct isp_weight_value *result)
+static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 num, cmr_s32 bv, struct isp_weight_value *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u16 bv_distance[2] = { 0, 1 };
@@ -502,8 +496,7 @@ static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 nu
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, cmr_s32 bv, cmr_s32 bv_gain, cmr_u32 ct,
-			struct smart_component_result * result, cmr_u32 smart_id)
+static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr_s32 bv, cmr_s32 bv_gain, cmr_u32 ct, struct smart_component_result *result, cmr_u32 smart_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
@@ -597,7 +590,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, cm
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
-		if (smart_id == ISP_SMART_CMC){
+		if (smart_id == ISP_SMART_CMC) {
 			result->size = sizeof(bv_result) * 4;
 			fix_data[0].weight[0] = bv_result.weight[0];
 			fix_data[0].weight[1] = bv_result.weight[1];
@@ -614,19 +607,17 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, cm
 			fix_data[2].value[0] = tmp_result[1].value[0];
 			fix_data[2].value[1] = tmp_result[1].value[1];
 
-			if(1 == is_print_log()){
-				ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data[0].value[0],
-					 fix_data[0].value[1], fix_data[0].weight[0], fix_data[0].weight[1]);
+			if (1 == is_print_log()) {
+				ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data[0].value[0], fix_data[0].value[1], fix_data[0].weight[0], fix_data[0].weight[1]);
 			}
-		}else{
+		} else {
 			result->size = sizeof(func_result);
 			fix_data->weight[0] = func_result.weight[0];
 			fix_data->weight[1] = func_result.weight[1];
 			fix_data->value[0] = func_result.value[0];
 			fix_data->value[1] = func_result.value[1];
 			if (1 == is_print_log()) {
-				ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data->value[0],
-					 fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
+				ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
 			}
 		}
 		break;
@@ -642,7 +633,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, cm
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg * cfg, struct smart_component_result * result)
+static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cfg, struct smart_component_result *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_weight_value func_result = { {0}, {0} };
@@ -661,8 +652,7 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg * c
 		fix_data->weight[1] = 0;
 		fix_data->value[0] = cfg->flash_val;
 		fix_data->value[1] = 0;
-		ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data->value[0],
-			 fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
+		ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
 		break;
 
 	default:
@@ -677,12 +667,12 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg * c
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, cmr_s32 bv, cmr_u32 bv_gain, cmr_u32 ct,
-		    struct smart_block_result * result, enum smart_ctrl_flash_mode flash_mode)
+static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, cmr_s32 bv, cmr_u32 bv_gain, cmr_u32 ct,
+				    struct smart_block_result *result, enum smart_ctrl_flash_mode flash_mode)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
-	struct smart_component_result component_result = { 0, 0, 0,0,{0}, NULL };
+	struct smart_component_result component_result = { 0, 0, 0, 0, {0}, NULL };
 	cmr_u32 component_num = cfg->component_num;
 	cmr_u32 update_num = 0;
 
@@ -697,15 +687,13 @@ static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, cmr_s32 bv
 	component_num = component_num > ISP_SMART_MAX_VALUE_NUM ? ISP_SMART_MAX_VALUE_NUM : component_num;
 
 	if (1 == is_print_log()) {
-		ISP_LOGI("ISP_TAG: use_flash_val = %d. block_id = %x. smart_id = %x.\n",
-			 cfg->component[i].use_flash_val, cfg->block_id, cfg->smart_id);
+		ISP_LOGI("ISP_TAG: use_flash_val = %d. block_id = %x. smart_id = %x.\n", cfg->component[i].use_flash_val, cfg->block_id, cfg->smart_id);
 	}
 
 	for (i = 0; i < component_num; i++) {
 		if (SMART_CTRL_FLASH_MAIN != flash_mode || 1 != cfg->component[i].use_flash_val) {
 			if (1 == is_print_log()) {
-				ISP_LOGI("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d\n", flash_mode,
-					 cfg->component[i].use_flash_val, bv, ct);
+				ISP_LOGI("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d\n", flash_mode, cfg->component[i].use_flash_val, bv, ct);
 			}
 			rtn = smart_ctl_calc_component(&cfg->component[i], bv, bv_gain, ct, &component_result, cfg->smart_id);
 		} else {
@@ -738,8 +726,7 @@ static const char *smart_ctl_find_block_name(cmr_u32 smart_id)
 	return s_smart_block_name[smart_id];
 }
 
-static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param,
-			      struct smart_calc_result *result, char *debug_buf)
+static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param, struct smart_calc_result *result, char *debug_buf)
 {
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
@@ -781,18 +768,17 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
 
-				if(comp->x_type==ISP_SMART_X_TYPE_BV_CT){
+				if (comp->x_type == ISP_SMART_X_TYPE_BV_CT) {
 					sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) %d(%d, %d):(%d, %d) %d(%d, %d):(%d, %d)", block_name, j,
 						weight_value[0].value[0], weight_value[0].value[1],
 						weight_value[0].weight[0], weight_value[0].weight[1],
-						weight_value[0].value[0], weight_value[1].value[0],weight_value[1].value[1], weight_value[1].weight[0],weight_value[1].weight[1],
-						weight_value[0].value[1], weight_value[2].value[0],weight_value[2].value[1], weight_value[2].weight[0],weight_value[2].weight[1]
-						);
-				}else{
+						weight_value[0].value[0], weight_value[1].value[0], weight_value[1].value[1], weight_value[1].weight[0], weight_value[1].weight[1],
+						weight_value[0].value[1], weight_value[2].value[0], weight_value[2].value[1], weight_value[2].weight[0], weight_value[2].weight[1]
+					    );
+				} else {
 					sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) ", block_name, j,
-						weight_value[0].value[0], weight_value[0].value[1],
-						weight_value[0].weight[0], weight_value[0].weight[1]
-						);
+						weight_value[0].value[0], weight_value[0].value[1], weight_value[0].weight[0], weight_value[0].weight[1]
+					    );
 				}
 
 				break;
@@ -827,8 +813,7 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 		blk = &result->block_result[i];
 		block_name = smart_ctl_find_block_name(blk->smart_id);
 
-		ISP_LOGI("block[%d]: %s, block_id=0x%x, smart_id=%d, update=%d, mode=%d",
-			 i, block_name, blk->block_id, blk->smart_id, blk->update, mode);
+		ISP_LOGI("block[%d]: %s, block_id=0x%x, smart_id=%d, update=%d, mode=%d", i, block_name, blk->block_id, blk->smart_id, blk->update, mode);
 
 		if (!blk->update)
 			continue;
@@ -844,17 +829,16 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
 
-				if(comp->x_type==ISP_SMART_X_TYPE_BV_CT){
+				if (comp->x_type == ISP_SMART_X_TYPE_BV_CT) {
 					ISP_LOGI("component[%d]: value=(%d, %d), weight=(%d, %d), %d(%d, %d):(%d, %d), %d(%d, %d):(%d, %d)", j,
-						weight_value[0].value[0], weight_value[0].value[1],
-						weight_value[0].weight[0], weight_value[0].weight[1],
-						weight_value[0].value[0], weight_value[1].value[0],weight_value[1].value[1], weight_value[1].weight[0],weight_value[1].weight[1],
-						weight_value[0].value[1], weight_value[2].value[0],weight_value[2].value[1], weight_value[2].weight[0],weight_value[2].weight[1]
-						);
-				}else{
+						 weight_value[0].value[0], weight_value[0].value[1],
+						 weight_value[0].weight[0], weight_value[0].weight[1],
+						 weight_value[0].value[0], weight_value[1].value[0], weight_value[1].value[1], weight_value[1].weight[0], weight_value[1].weight[1],
+						 weight_value[0].value[1], weight_value[2].value[0], weight_value[2].value[1], weight_value[2].weight[0], weight_value[2].weight[1]
+					    );
+				} else {
 					ISP_LOGI(" component[%d]: value=(%d, %d), weight=(%d, %d)", j,
-						 weight_value->value[0], weight_value->value[1],
-						 weight_value->weight[0], weight_value->weight[1]);
+						 weight_value->value[0], weight_value->value[1], weight_value->weight[0], weight_value->weight[1]);
 				}
 				break;
 			}
@@ -963,7 +947,7 @@ param_failed:
 	return handle;
 }
 
-static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_param * param, struct smart_calc_result * result)
+static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_param *param, struct smart_calc_result *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, mod_num = 0, func_num = 0;
@@ -1004,10 +988,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	for (i = 0; i < smart_param->block_num; i++) {
 		cxt->block_result.update = 0;
-		rtn = smart_ctl_calc_block(&smart_param->block[i],
-				param->bv, param->bv_gain, param->ct,
-				&cxt->block_result,
-				flash_mode);
+		rtn = smart_ctl_calc_block(&smart_param->block[i], param->bv, param->bv_gain, param->ct, &cxt->block_result, flash_mode);
 
 		if (1 == cxt->block_result.update) {
 			cxt->calc_result[update_block_num] = cxt->block_result;
@@ -1020,87 +1001,87 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	ISP_LOGV("bv=%d, ct=%d, flash=%d", param->bv, param->ct, flash_mode);
 	smart_ctl_print_smart_result(cxt->flash_mode, result);
-	smart_ctl_print_debug_file(cxt->debug_file, param,  result, (char *)cxt->debug_buf);
+	smart_ctl_print_debug_file(cxt->debug_file, param, result, (char *)cxt->debug_buf);
 	for (i = 0; i < result->counts; i++) {
 		blk = &result->block_result[i];
-		if(blk->smart_id > 8){
-			switch(blk->smart_id){
-				case 9:
-					cxt->nr_param.ppi[0] = 1;
-					cxt->nr_param.ppi[2] = blk->component[0].fix_data[0];
-					break;
-				case 10:
-					cxt->nr_param.bayer_nr[0] = 1;
-					cxt->nr_param.bayer_nr[2] = blk->component[0].fix_data[0];
-					break;
-				case 11:
-					cxt->nr_param.rgb_dither[0] = 1;
-					cxt->nr_param.rgb_dither[2] = blk->component[0].fix_data[0];
-					break;
-				case 12:
-					cxt->nr_param.bpc[0] = 1;
-					cxt->nr_param.bpc[2] = blk->component[0].fix_data[0];
-					break;
-				case 13:
-					cxt->nr_param.grgb[0] = 1;
-					cxt->nr_param.grgb[2] = blk->component[0].fix_data[0];
-					break;
-				case 14:
-					cxt->nr_param.cfae[0] = 1;
-					cxt->nr_param.cfae[2] = blk->component[0].fix_data[0];
-					break;
-				case 15:
-					cxt->nr_param.rgb_afm[0] = 1;
-					cxt->nr_param.rgb_afm[2] = blk->component[0].fix_data[0];
-					break;
-				case 16:
-					cxt->nr_param.uvdiv[0] = 1;
-					cxt->nr_param.uvdiv[2] = blk->component[0].fix_data[0];
-					break;
-				case 17:
-					cxt->nr_param.dnr3_pre[0] = 1;
-					cxt->nr_param.dnr3_pre[2] = blk->component[0].fix_data[0];
-					break;
-				case 18:
-					cxt->nr_param.dnr3_cap[0] = 1;
-					cxt->nr_param.dnr3_cap[2] = blk->component[0].fix_data[0];
-					break;
-				case 19:
-					cxt->nr_param.edge[0] = 1;
-					cxt->nr_param.edge[2] = blk->component[0].fix_data[0];
-					break;
-				case 20:
-					cxt->nr_param.precdn[0] = 1;
-					cxt->nr_param.precdn[2] = blk->component[0].fix_data[0];
-					break;
-				case 21:
-					cxt->nr_param.ynr[0] = 1;
-					cxt->nr_param.ynr[2] = blk->component[0].fix_data[0];
-					break;
-				case 22:
-					cxt->nr_param.cdn[0] = 1;
-					cxt->nr_param.cdn[2] = blk->component[0].fix_data[0];
-					break;
-				case 23:
-					cxt->nr_param.postcdn[0] = 1;
-					cxt->nr_param.postcdn[2] = blk->component[0].fix_data[0];
-					break;
-				case 24:
-					cxt->nr_param.ccnr[0] = 1;
-					cxt->nr_param.ccnr[2] = blk->component[0].fix_data[0];
-					break;
-				case 25:
-					cxt->nr_param.iir_yrandom[0] = 1;
-					cxt->nr_param.iir_yrandom[2] = blk->component[0].fix_data[0];
-					break;
-				case 26:
-					cxt->nr_param.noisefilter[0] = 1;
-					cxt->nr_param.noisefilter[2] = blk->component[0].fix_data[0];
-					break;
-				default:
-					break;
-				}
+		if (blk->smart_id > 8) {
+			switch (blk->smart_id) {
+			case 9:
+				cxt->nr_param.ppi[0] = 1;
+				cxt->nr_param.ppi[2] = blk->component[0].fix_data[0];
+				break;
+			case 10:
+				cxt->nr_param.bayer_nr[0] = 1;
+				cxt->nr_param.bayer_nr[2] = blk->component[0].fix_data[0];
+				break;
+			case 11:
+				cxt->nr_param.rgb_dither[0] = 1;
+				cxt->nr_param.rgb_dither[2] = blk->component[0].fix_data[0];
+				break;
+			case 12:
+				cxt->nr_param.bpc[0] = 1;
+				cxt->nr_param.bpc[2] = blk->component[0].fix_data[0];
+				break;
+			case 13:
+				cxt->nr_param.grgb[0] = 1;
+				cxt->nr_param.grgb[2] = blk->component[0].fix_data[0];
+				break;
+			case 14:
+				cxt->nr_param.cfae[0] = 1;
+				cxt->nr_param.cfae[2] = blk->component[0].fix_data[0];
+				break;
+			case 15:
+				cxt->nr_param.rgb_afm[0] = 1;
+				cxt->nr_param.rgb_afm[2] = blk->component[0].fix_data[0];
+				break;
+			case 16:
+				cxt->nr_param.uvdiv[0] = 1;
+				cxt->nr_param.uvdiv[2] = blk->component[0].fix_data[0];
+				break;
+			case 17:
+				cxt->nr_param.dnr3_pre[0] = 1;
+				cxt->nr_param.dnr3_pre[2] = blk->component[0].fix_data[0];
+				break;
+			case 18:
+				cxt->nr_param.dnr3_cap[0] = 1;
+				cxt->nr_param.dnr3_cap[2] = blk->component[0].fix_data[0];
+				break;
+			case 19:
+				cxt->nr_param.edge[0] = 1;
+				cxt->nr_param.edge[2] = blk->component[0].fix_data[0];
+				break;
+			case 20:
+				cxt->nr_param.precdn[0] = 1;
+				cxt->nr_param.precdn[2] = blk->component[0].fix_data[0];
+				break;
+			case 21:
+				cxt->nr_param.ynr[0] = 1;
+				cxt->nr_param.ynr[2] = blk->component[0].fix_data[0];
+				break;
+			case 22:
+				cxt->nr_param.cdn[0] = 1;
+				cxt->nr_param.cdn[2] = blk->component[0].fix_data[0];
+				break;
+			case 23:
+				cxt->nr_param.postcdn[0] = 1;
+				cxt->nr_param.postcdn[2] = blk->component[0].fix_data[0];
+				break;
+			case 24:
+				cxt->nr_param.ccnr[0] = 1;
+				cxt->nr_param.ccnr[2] = blk->component[0].fix_data[0];
+				break;
+			case 25:
+				cxt->nr_param.iir_yrandom[0] = 1;
+				cxt->nr_param.iir_yrandom[2] = blk->component[0].fix_data[0];
+				break;
+			case 26:
+				cxt->nr_param.noisefilter[0] = 1;
+				cxt->nr_param.noisefilter[2] = blk->component[0].fix_data[0];
+				break;
+			default:
+				break;
 			}
+		}
 	}
 
 EXIT:
@@ -1109,7 +1090,7 @@ EXIT:
 	return rtn;
 }
 
-cmr_s32 smart_ctl_deinit(smart_handle_t *handle, void *param, void *result)
+cmr_s32 smart_ctl_deinit(smart_handle_t * handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
@@ -1132,7 +1113,7 @@ cmr_s32 smart_ctl_deinit(smart_handle_t *handle, void *param, void *result)
 
 ERROR_EXIT:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 		*handle = NULL;
 	}
 	ISP_LOGI(":ISP:done %d", rtn);
@@ -1217,9 +1198,7 @@ cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb)
 	}
 
 	for (i = 0; i < smart_param->block_num; i++) {
-		if (ISP_SMART_LNC == smart_param->block[i].smart_id
-		    || ISP_SMART_CMC == smart_param->block[i].smart_id
-		    || ISP_SMART_GAMMA == smart_param->block[i].smart_id) {
+		if (ISP_SMART_LNC == smart_param->block[i].smart_id || ISP_SMART_CMC == smart_param->block[i].smart_id || ISP_SMART_GAMMA == smart_param->block[i].smart_id) {
 			if (is_eb) {
 				smart_param->block[i].enable = *block_eb_ptr;
 			} else {
@@ -1328,17 +1307,17 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 	return rtn;
 }
 
-cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
+cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 {
-	cmr_int                        rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct smart_calc_param *smart_calc_param = NULL;
-	struct smart_calc_result        smart_calc_result = {NULL, 0};
-	struct isp_pm_ioctl_input       io_pm_input = {NULL, 0};
-	struct isp_pm_param_data        pm_param = {0,0,0,NULL,0,{0}};
-	struct smart_block_result       *block_result = NULL;
+	struct smart_calc_result smart_calc_result = { NULL, 0 };
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param = { 0, 0, 0, NULL, 0, {0} };
+	struct smart_block_result *block_result = NULL;
 	struct smart_context *cxt = NULL;
 	cmr_u32 alc_awb = 0;
-	cmr_u32                        i = 0;
+	cmr_u32 i = 0;
 
 	if (!handle_smart || !in_ptr) {
 		rtn = ISP_PARAM_ERROR;
@@ -1354,46 +1333,46 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	}
 
 	cxt = (struct smart_context *)handle_smart;
-	in_ptr->log = (cmr_u8 *)&(cxt->nr_param);
+	in_ptr->log = (cmr_u8 *) & (cxt->nr_param);
 	in_ptr->size = (sizeof(cxt->nr_param));
 
 	//use LSC_SPD_VERSION to control the output of smart lsc
-	if( in_ptr->LSC_SPD_VERSION >= 3 ){
-		for (i=0; i<smart_calc_result.counts; i++) {
+	if (in_ptr->LSC_SPD_VERSION >= 3) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
 			if (ISP_SMART_LNC == smart_calc_result.block_result[i].smart_id) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 		}
 	}
 
-	if( in_ptr->lock_nlm== 1){
-		for (i=0; i<smart_calc_result.counts; i++) {
+	if (in_ptr->lock_nlm == 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
 			if (ISP_SMART_NLM == smart_calc_result.block_result[i].smart_id) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 		}
 	}
 
-	/*use alc ccm, disable spreadtrum smart ccm*/
+	/*use alc ccm, disable spreadtrum smart ccm */
 	for (i = 0; i < smart_calc_result.counts; i++) {
 		switch (smart_calc_result.block_result[i].smart_id) {
 		case ISP_SMART_CMC:
-			if (alc_awb & (1<<0)) {
+			if (alc_awb & (1 << 0)) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 			break;
 		case ISP_SMART_LNC:
-			if (alc_awb & (1<<8)) {
+			if (alc_awb & (1 << 8)) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 			break;
 		case ISP_SMART_COLOR_CAST:
-			if (alc_awb & (1<<0)) {
+			if (alc_awb & (1 << 0)) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 			break;
 		case ISP_SMART_GAIN_OFFSET:
-			if (alc_awb & (1<<0)) {
+			if (alc_awb & (1 << 0)) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 			break;
@@ -1406,30 +1385,29 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	}
 
 	for (i = 0; i < smart_calc_result.counts; i++) {
-		block_result               = &smart_calc_result.block_result[i];
-		if((block_result->mode_flag != in_ptr->mode_flag) || (block_result->scene_flag != in_ptr->scene_flag)) {
-			block_result->mode_flag_changed= 1;
+		block_result = &smart_calc_result.block_result[i];
+		if ((block_result->mode_flag != in_ptr->mode_flag) || (block_result->scene_flag != in_ptr->scene_flag)) {
+			block_result->mode_flag_changed = 1;
 			block_result->mode_flag = in_ptr->mode_flag;
 			block_result->scene_flag = in_ptr->scene_flag;
 		}
 
-		pm_param.cmd               = ISP_PM_BLK_SMART_SETTING;
-		pm_param.id                = block_result->block_id;
-		pm_param.data_size         = sizeof(*block_result);
-		pm_param.data_ptr          = (void*)block_result;
+		pm_param.cmd = ISP_PM_BLK_SMART_SETTING;
+		pm_param.id = block_result->block_id;
+		pm_param.data_size = sizeof(*block_result);
+		pm_param.data_ptr = (void *)block_result;
 
 		io_pm_input.param_data_ptr = &pm_param;
-		io_pm_input.param_num      = 1;
+		io_pm_input.param_num = 1;
 
-		ISP_LOGV("ISP_SMART: set param %d, id=%x, data=%p, size=%d", i, pm_param.id, pm_param.data_ptr,
-				pm_param.data_size);
+		ISP_LOGV("ISP_SMART: set param %d, id=%x, data=%p, size=%d", i, pm_param.id, pm_param.data_ptr, pm_param.data_size);
 		rtn = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
-	#ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
+#ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
 		if (ISP_BLK_RGB_GAMC == pm_param.id) {
 			pm_param.id = ISP_BLK_Y_GAMMC;
 			rtn = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
 		}
-	#endif
+#endif
 	}
 
 exit:

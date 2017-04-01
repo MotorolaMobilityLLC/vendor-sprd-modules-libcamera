@@ -36,9 +36,9 @@
 
 extern struct adpt_ops_type ae_sprd_adpt_ops_ver0;
 //extern struct adpt_ops_type ae_sprd_adpt_ops_ver1;
-static uint32_t *ae_sprd_version_ops[]= {
-	(uint32_t*)&ae_sprd_adpt_ops_ver0,
-	NULL, //(uint32_t*)&ae_sprd_adpt_ops_ver1,
+static uint32_t *ae_sprd_version_ops[] = {
+	(uint32_t *) & ae_sprd_adpt_ops_ver0,
+	NULL,			//(uint32_t*)&ae_sprd_adpt_ops_ver1,
 };
 
 uint32_t get_sprd_ae_ops(uint32_t ae_lib_version, struct adpt_ops_type **ae_ops)
@@ -49,13 +49,10 @@ uint32_t get_sprd_ae_ops(uint32_t ae_lib_version, struct adpt_ops_type **ae_ops)
 	return rtn;
 }
 
-static uint32_t (*ae_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
-	[ADPT_SPRD_AE_LIB] = get_sprd_ae_ops,
-	[ADPT_AL_AE_LIB] = get_sprd_ae_ops,
-};
+static uint32_t(*ae_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
+[ADPT_SPRD_AE_LIB] = get_sprd_ae_ops,[ADPT_AL_AE_LIB] = get_sprd_ae_ops,};
 
-static int32_t adpt_get_ae_ops(struct third_lib_info *lib_info,
-			       struct adpt_ops_type **ops)
+static int32_t adpt_get_ae_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
 	int32_t rtn = -1;
 	uint32_t ae_producer_id = 0;
@@ -74,9 +71,9 @@ static int32_t adpt_get_ae_ops(struct third_lib_info *lib_info,
 
 //extern struct adpt_ops_type awb_sprd_adpt_ops_ver0;
 extern struct adpt_ops_type awb_sprd_adpt_ops_ver1;
-static uint32_t *awb_sprd_version_ops[]= {
-	NULL,//	(uint32_t*)&awb_sprd_adpt_ops_ver0,
-	(uint32_t*)&awb_sprd_adpt_ops_ver1,
+static uint32_t *awb_sprd_version_ops[] = {
+	NULL,			// (uint32_t*)&awb_sprd_adpt_ops_ver0,
+	(uint32_t *) & awb_sprd_adpt_ops_ver1,
 };
 
 uint32_t get_sprd_awb_ops(uint32_t awb_lib_version, struct adpt_ops_type **awb_ops)
@@ -87,13 +84,10 @@ uint32_t get_sprd_awb_ops(uint32_t awb_lib_version, struct adpt_ops_type **awb_o
 	return rtn;
 }
 
-static uint32_t (*awb_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
-	[ADPT_SPRD_AWB_LIB] = get_sprd_awb_ops,
-	[ADPT_AL_AWb_LIB] = get_sprd_awb_ops,
-};
+static uint32_t(*awb_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
+[ADPT_SPRD_AWB_LIB] = get_sprd_awb_ops,[ADPT_AL_AWb_LIB] = get_sprd_awb_ops,};
 
-static int32_t adpt_get_awb_ops(struct third_lib_info *lib_info,
-			       struct adpt_ops_type **ops)
+static int32_t adpt_get_awb_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
 	int32_t rtn = -1;
 	uint32_t awb_producer_id = 0;
@@ -111,9 +105,9 @@ static int32_t adpt_get_awb_ops(struct third_lib_info *lib_info,
 }
 
 extern struct adpt_ops_type af_sprd_adpt_ops_ver1;
-static uint32_t *af_sprd_version_ops[]= {
+static uint32_t *af_sprd_version_ops[] = {
 	NULL,
-	(uint32_t*)&af_sprd_adpt_ops_ver1,
+	(uint32_t *) & af_sprd_adpt_ops_ver1,
 };
 
 uint32_t get_sprd_af_ops(uint32_t af_lib_version, struct adpt_ops_type **af_ops)
@@ -124,14 +118,10 @@ uint32_t get_sprd_af_ops(uint32_t af_lib_version, struct adpt_ops_type **af_ops)
 	return rtn;
 }
 
-static uint32_t (*af_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
-	[ADPT_SPRD_AF_LIB] = get_sprd_af_ops,
-	[ADPT_AL_AF_LIB] = get_sprd_af_ops,
-	[ADPT_SFT_AF_LIB] = get_sprd_af_ops,
-};
+static uint32_t(*af_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
+[ADPT_SPRD_AF_LIB] = get_sprd_af_ops,[ADPT_AL_AF_LIB] = get_sprd_af_ops,[ADPT_SFT_AF_LIB] = get_sprd_af_ops,};
 
-static int32_t adpt_get_af_ops(struct third_lib_info *lib_info,
-			       struct adpt_ops_type **ops)
+static int32_t adpt_get_af_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
 	int32_t rtn = -1;
 	uint32_t af_producer_id = 0;
@@ -139,7 +129,7 @@ static int32_t adpt_get_af_ops(struct third_lib_info *lib_info,
 
 	af_producer_id = lib_info->product_id;
 	af_lib_version = lib_info->version_id;
-    ISP_LOGE("af_producer_id %d,af_lib_version %d",af_producer_id,af_lib_version);
+	ISP_LOGE("af_producer_id %d,af_lib_version %d", af_producer_id, af_lib_version);
 	if (ADPT_MAX_AF_LIB > af_producer_id) {
 		rtn = af_product_ops[af_producer_id] (af_lib_version, ops);
 	} else {
@@ -150,8 +140,8 @@ static int32_t adpt_get_af_ops(struct third_lib_info *lib_info,
 }
 
 extern struct adpt_ops_type lsc_sprd_adpt_ops_ver0;
-static uint32_t *lsc_sprd_version_ops[]= {
-	(uint32_t*)&lsc_sprd_adpt_ops_ver0,
+static uint32_t *lsc_sprd_version_ops[] = {
+	(uint32_t *) & lsc_sprd_adpt_ops_ver0,
 };
 
 uint32_t get_sprd_lsc_ops(uint32_t lsc_lib_version, struct adpt_ops_type **lsc_ops)
@@ -162,13 +152,10 @@ uint32_t get_sprd_lsc_ops(uint32_t lsc_lib_version, struct adpt_ops_type **lsc_o
 	return rtn;
 }
 
+static uint32_t(*lsc_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
+[ADPT_SPRD_LSC_LIB] = get_sprd_lsc_ops,};
 
-static uint32_t (*lsc_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
-	[ADPT_SPRD_LSC_LIB] = get_sprd_lsc_ops,
-};
-
-static int32_t adpt_get_lsc_ops(struct third_lib_info *lib_info,
-			       struct adpt_ops_type **ops)
+static int32_t adpt_get_lsc_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
 	cmr_int rtn = -1;
 	uint32_t lsc_producer_id = 0;
@@ -186,8 +173,8 @@ static int32_t adpt_get_lsc_ops(struct third_lib_info *lib_info,
 }
 
 extern struct adpt_ops_type sprd_pdaf_adpt_ops;
-static uint32_t *pdaf_sprd_version_ops[]= {
-	(uint32_t*)&sprd_pdaf_adpt_ops,
+static uint32_t *pdaf_sprd_version_ops[] = {
+	(uint32_t *) & sprd_pdaf_adpt_ops,
 };
 
 uint32_t get_sprd_pdaf_ops(uint32_t pdaf_lib_version, struct adpt_ops_type **pdaf_ops)
@@ -198,12 +185,10 @@ uint32_t get_sprd_pdaf_ops(uint32_t pdaf_lib_version, struct adpt_ops_type **pda
 	return rtn;
 }
 
-static uint32_t (*pdaf_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
-	[ADPT_SPRD_PDAF_LIB] = get_sprd_pdaf_ops,
-};
+static uint32_t(*pdaf_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
+[ADPT_SPRD_PDAF_LIB] = get_sprd_pdaf_ops,};
 
-static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info,
-			       struct adpt_ops_type **ops)
+static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
 	int32_t rtn = -1;
 	uint32_t pdaf_producer_id = 0;
@@ -211,10 +196,10 @@ static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info,
 
 	pdaf_producer_id = lib_info->product_id;
 	pdaf_lib_version = lib_info->version_id;
-//	pdaf_producer_id = 0;
-//	pdaf_lib_version = 0;
+//      pdaf_producer_id = 0;
+//      pdaf_lib_version = 0;
 
-	ISP_LOGI("pdaf_producer_id %d,pdaf_lib_version %d",pdaf_producer_id,pdaf_lib_version);
+	ISP_LOGI("pdaf_producer_id %d,pdaf_lib_version %d", pdaf_producer_id, pdaf_lib_version);
 	if (ADPT_MAX_PDAF_LIB > pdaf_producer_id) {
 		rtn = pdaf_product_ops[pdaf_producer_id] (pdaf_lib_version, ops);
 	} else {
@@ -224,23 +209,15 @@ static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info,
 	return rtn;
 }
 
+static int32_t(*modules_ops[]) (struct third_lib_info *, struct adpt_ops_type **) = {
+[ADPT_LIB_AE] = adpt_get_ae_ops,[ADPT_LIB_AWB] = adpt_get_awb_ops,[ADPT_LIB_AF] = adpt_get_af_ops,[ADPT_LIB_LSC] = adpt_get_lsc_ops,[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,};
 
-static int32_t (*modules_ops[]) (struct third_lib_info *,
-				 struct adpt_ops_type **) = {
-	[ADPT_LIB_AE] = adpt_get_ae_ops,
-	[ADPT_LIB_AWB] = adpt_get_awb_ops,
-	[ADPT_LIB_AF] = adpt_get_af_ops,
-	[ADPT_LIB_LSC] = adpt_get_lsc_ops,
-	[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,
-};
-
-int32_t adpt_get_ops(int32_t lib_type, struct third_lib_info *lib_info,
-		     struct adpt_ops_type **ops)
+int32_t adpt_get_ops(int32_t lib_type, struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
 	int32_t rtn = -1;
 
 	if (ADPT_LIB_MAX > lib_type)
-		rtn = modules_ops[lib_type](lib_info, ops);
+		rtn = modules_ops[lib_type] (lib_info, ops);
 
 	return rtn;
 }

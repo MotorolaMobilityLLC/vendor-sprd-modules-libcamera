@@ -25,8 +25,7 @@ cmr_s32 isp_u_awb_block(isp_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(cmr_uint)handle, (cmr_uint)block_info);
+		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
 		return -1;
 	}
 
@@ -41,10 +40,7 @@ cmr_s32 isp_u_awb_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_statistics(isp_handle handle,
-		cmr_u32 *r_info,
-		cmr_u32 *g_info,
-		cmr_u32 *b_info)
+cmr_s32 isp_u_awbm_statistics(isp_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -57,13 +53,12 @@ cmr_s32 isp_u_awbm_statistics(isp_handle handle,
 	}
 
 	if (!r_info || !g_info || !b_info) {
-		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx",
-			(cmr_uint)r_info, (cmr_uint)g_info, (cmr_uint)b_info);
+		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx", (cmr_uint) r_info, (cmr_uint) g_info, (cmr_uint) b_info);
 		return -1;
 	}
 
 	awbm_statistics = (struct isp_awbm_statistics *)malloc(sizeof(struct isp_awbm_statistics));
-	if(!awbm_statistics) {
+	if (!awbm_statistics) {
 		ISP_LOGE("No mem");
 		return -1;
 	}
@@ -77,14 +72,14 @@ cmr_s32 isp_u_awbm_statistics(isp_handle handle,
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 	if (0 == ret) {
-		memcpy((isp_handle)r_info, (isp_handle)(awbm_statistics->r), ISP_AWBM_ITEM * 4);
-		memcpy((isp_handle)g_info, (isp_handle)(awbm_statistics->g), ISP_AWBM_ITEM * 4);
-		memcpy((isp_handle)b_info, (isp_handle)(awbm_statistics->b), ISP_AWBM_ITEM * 4);
+		memcpy((isp_handle) r_info, (isp_handle) (awbm_statistics->r), ISP_AWBM_ITEM * 4);
+		memcpy((isp_handle) g_info, (isp_handle) (awbm_statistics->g), ISP_AWBM_ITEM * 4);
+		memcpy((isp_handle) b_info, (isp_handle) (awbm_statistics->b), ISP_AWBM_ITEM * 4);
 	} else {
 		ISP_LOGE("copy awbm info error.");
 	}
 
-	if(awbm_statistics) {
+	if (awbm_statistics) {
 		free(awbm_statistics);
 		awbm_statistics = NULL;
 	}
@@ -251,10 +246,7 @@ cmr_s32 isp_u_awbc_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_gain(isp_handle handle,
-		cmr_u32 r,
-		cmr_u32 g,
-		cmr_u32 b)
+cmr_s32 isp_u_awbc_gain(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -280,10 +272,7 @@ cmr_s32 isp_u_awbc_gain(isp_handle handle,
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_thrd(isp_handle handle,
-		cmr_u32 r,
-		cmr_u32 g,
-		cmr_u32 b)
+cmr_s32 isp_u_awbc_thrd(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -309,10 +298,7 @@ cmr_s32 isp_u_awbc_thrd(isp_handle handle,
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_gain_offset(isp_handle handle,
-		cmr_u32 r,
-		cmr_u32 g,
-		cmr_u32 b)
+cmr_s32 isp_u_awbc_gain_offset(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

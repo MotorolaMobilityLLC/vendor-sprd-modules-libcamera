@@ -25,7 +25,7 @@ struct data_info {
 	cmr_u32 size;
 };
 
-static cmr_s32 _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *target, cmr_u32 * real_size)
 {
 	struct random_map_lsc *lsc_map = target->data;
 	cmr_u32 gain_size = lsc_info->chn_gain_size * 4;
@@ -56,7 +56,7 @@ static cmr_s32 _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *tar
 	lsc_map->gain_num = lsc_info->gain_width * lsc_info->gain_height * 4;
 	lsc_map->data_length = sizeof(*lsc_map) + gain_size;
 
-	data_start = (cmr_u8 *)lsc_map + sizeof(*lsc_map);
+	data_start = (cmr_u8 *) lsc_map + sizeof(*lsc_map);
 
 	memcpy(data_start, lsc_info->chn_gain[0], lsc_info->chn_gain_size);
 	data_start += lsc_info->chn_gain_size;
@@ -68,19 +68,18 @@ static cmr_s32 _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *tar
 	data_start += lsc_info->chn_gain_size;
 
 	//CRC, 4 bytes
-	*(cmr_u32 *)data_start = 0;
+	*(cmr_u32 *) data_start = 0;
 	data_start += crc_len;
 
-	*real_size = data_start - (cmr_u8 *)lsc_map;
+	*real_size = data_start - (cmr_u8 *) lsc_map;
 
 	return RANDOM_SUCCESS;
 }
 
-
-static cmr_s32 _awb_pack(struct random_awb_info *awb_info, struct data_info *target, cmr_u32 *real_size)
+static cmr_s32 _awb_pack(struct random_awb_info *awb_info, struct data_info *target, cmr_u32 * real_size)
 {
 	struct random_map_awb *awb_map = (struct random_map_awb *)target->data;
-	cmr_u8 *data_start = (cmr_u8 *)awb_map;
+	cmr_u8 *data_start = (cmr_u8 *) awb_map;
 	cmr_u32 crc_len = 4;
 
 	if (NULL == target->data || target->size < sizeof(*awb_map) + crc_len) {
@@ -96,15 +95,15 @@ static cmr_s32 _awb_pack(struct random_awb_info *awb_info, struct data_info *tar
 	data_start += sizeof(*awb_map);
 
 	//CRC, 4 bytes
-	*(cmr_u32 *)data_start = 0;
+	*(cmr_u32 *) data_start = 0;
 	data_start += crc_len;
 
-	*real_size = data_start - (cmr_u8 *)awb_map;
+	*real_size = data_start - (cmr_u8 *) awb_map;
 
 	return RANDOM_SUCCESS;
 }
 
-cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 *size)
+cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 * size)
 {
 	cmr_u32 crc_len = 4;
 	cmr_u32 gain_size = chn_gain_size * 4;
@@ -124,11 +123,11 @@ cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 *size)
 	return RANDOM_SUCCESS;
 }
 
-cmr_s32 random_pack(struct random_pack_param *param, struct random_pack_result *result)
+cmr_s32 random_pack(struct random_pack_param * param, struct random_pack_result * result)
 {
 	cmr_s32 rtn = RANDOM_ERROR;
-	struct data_info awb = {0};
-	struct data_info lsc = {0};
+	struct data_info awb = { 0 };
+	struct data_info lsc = { 0 };
 	cmr_u8 *target_cur = NULL;
 	cmr_u8 *data_cur = NULL;
 	cmr_u8 *target_end = NULL;
@@ -145,7 +144,7 @@ cmr_s32 random_pack(struct random_pack_param *param, struct random_pack_result *
 
 	memset(param->target_buf, 0, param->target_buf_size);
 
-	target_cur = (cmr_u8 *)param->target_buf;
+	target_cur = (cmr_u8 *) param->target_buf;
 	target_end = target_cur + param->target_buf_size;
 
 	//write random header
@@ -175,7 +174,7 @@ cmr_s32 random_pack(struct random_pack_param *param, struct random_pack_result *
 
 	awb.size = real_size;
 	block_info[0].id = RANDOM_AWB_BLOCK_ID;
-	block_info[0].offset = target_cur - (cmr_u8 *)header;
+	block_info[0].offset = target_cur - (cmr_u8 *) header;
 	block_info[0].size = awb.size;
 	target_cur += awb.size;
 
@@ -188,18 +187,18 @@ cmr_s32 random_pack(struct random_pack_param *param, struct random_pack_result *
 
 	lsc.size = real_size;
 	block_info[1].id = RANDOM_LSC_BLOCK_ID;
-	block_info[1].offset = target_cur - (cmr_u8 *)header;
+	block_info[1].offset = target_cur - (cmr_u8 *) header;
 	block_info[1].size = lsc.size;
 	target_cur += lsc.size;
 
 	if (target_cur + end_len > target_end)
 		return RANDOM_ERROR;
 
-	/*write end*/
-	*(cmr_u32 *)target_cur = RANDOM_END;
+	/*write end */
+	*(cmr_u32 *) target_cur = RANDOM_END;
 	target_cur += end_len;
 
-	result->real_size = target_cur - (cmr_u8 *)header;
+	result->real_size = target_cur - (cmr_u8 *) header;
 
 	rtn = RANDOM_SUCCESS;
 

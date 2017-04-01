@@ -62,38 +62,38 @@ static cmr_s32 _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 	if (PNULL == lsc || PNULL == awb)
 		return ISP_CALI_ERROR;
 
-	/*check header*/
+	/*check header */
 	header = (struct golden_header *)golden->data_ptr;
-	if (golden->size < sizeof(*header ))
+	if (golden->size < sizeof(*header))
 		return ISP_CALI_ERROR;
 
 	if (ISP_GOLDEN_START != header->start)
 		return ISP_CALI_ERROR;
 
-	/*just support V001 now*/
+	/*just support V001 now */
 	if (ISP_GOLDEN_V001 != header->version)
 		return ISP_CALI_ERROR;
 
-	start = (cmr_u8 *)header;
+	start = (cmr_u8 *) header;
 	end = start + header->length;
 
-	block_info = (struct block_info *)((cmr_u8 *)header + sizeof(*header));
+	block_info = (struct block_info *)((cmr_u8 *) header + sizeof(*header));
 
-	for (i=0; i<header->block_num; i++) {
+	for (i = 0; i < header->block_num; i++) {
 
 		switch (block_info[i].id) {
 		case 1:
-			/*module info*/
+			/*module info */
 			module_index = i;
 			break;
 
 		case 2:
-			/*lsc info*/
+			/*lsc info */
 			lsc_index = i;
 			break;
 
 		case 3:
-			/*awb info*/
+			/*awb info */
 			awb_index = i;
 			break;
 
@@ -102,18 +102,17 @@ static cmr_s32 _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 		}
 	}
 
-	if (module_index >= header->block_num || lsc_index >= header->block_num
-			|| awb_index >= header->block_num)
-			return ISP_CALI_ERROR;
+	if (module_index >= header->block_num || lsc_index >= header->block_num || awb_index >= header->block_num)
+		return ISP_CALI_ERROR;
 
 	if (start + block_info[module_index].offset + block_info[module_index].length > end)
-			return ISP_CALI_ERROR;
+		return ISP_CALI_ERROR;
 
 	if (start + block_info[lsc_index].offset + block_info[lsc_index].length > end)
-			return ISP_CALI_ERROR;
+		return ISP_CALI_ERROR;
 
 	if (start + block_info[awb_index].offset + block_info[awb_index].length > end)
-			return ISP_CALI_ERROR;
+		return ISP_CALI_ERROR;
 
 	lsc->data_ptr = (void *)&start[block_info[lsc_index].offset];
 	lsc->size = block_info[lsc_index].length;
@@ -124,7 +123,7 @@ static cmr_s32 _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 	return ISP_CALI_SUCCESS;
 }
 
-static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_u32 image_pattern, struct isp_data_t *target_buf, cmr_u32 *size)
+static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_u32 image_pattern, struct isp_data_t *target_buf, cmr_u32 * size)
 {
 	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	struct isp_calibration_lsc_golden_info lsc_golden_info;
@@ -154,7 +153,7 @@ static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_
 	if (target_buf->size < sizeof(struct isp_cali_lsc_info))
 		return ISP_CALI_ERROR;
 
-	header_size = (cmr_u8 *)&lsc_info->data_area - (cmr_u8 *)lsc_info;
+	header_size = (cmr_u8 *) & lsc_info->data_area - (cmr_u8 *) lsc_info;
 	target_buf_size = target_buf->size - header_size;
 
 	lsc_calc_param.golden_data = golden->data_ptr;
@@ -166,21 +165,21 @@ static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_
 	lsc_calc_param.target_buf = (void *)&lsc_info->data_area;
 	lsc_calc_param.target_buf_size = target_buf_size;
 
-	/*convert image bayer pattern to lsc gain pattern*/
+	/*convert image bayer pattern to lsc gain pattern */
 	switch (image_pattern) {
-	case 0: /*gr*/
+	case 0:		/*gr */
 		lsc_calc_param.lsc_pattern = ISP_CALIBRATION_RGGB;
 		break;
 
-	case 1: /*r*/
+	case 1:		/*r */
 		lsc_calc_param.lsc_pattern = ISP_CALIBRATION_GRBG;
 		break;
 
-	case 2: /*b*/
+	case 2:		/*b */
 		lsc_calc_param.lsc_pattern = ISP_CALIBRATION_GBRG;
 		break;
 
-	case 3: /*gb*/
+	case 3:		/*gb */
 		lsc_calc_param.lsc_pattern = ISP_CALIBRATION_BGGR;
 		break;
 
@@ -188,12 +187,12 @@ static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_
 		return ISP_CALI_ERROR;
 	}
 
-	rtn = isp_calibration_lsc_calc(&lsc_calc_param,&lsc_calc_result);
+	rtn = isp_calibration_lsc_calc(&lsc_calc_param, &lsc_calc_result);
 	if (ISP_CALI_SUCCESS != rtn)
 		return rtn;
 
 	lsc_info->num = lsc_calc_result.lsc_param_num;
-	for (i=0; i<lsc_info->num; i++) {
+	for (i = 0; i < lsc_info->num; i++) {
 		lsc_info->map[i].ct = lsc_calc_result.lsc_param[i].light_ct;
 		lsc_info->map[i].width = lsc_calc_result.width;
 		lsc_info->map[i].height = lsc_calc_result.height;
@@ -209,7 +208,7 @@ static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_
 	return rtn;
 }
 
-static cmr_s32 _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, struct isp_data_t *target_buf, cmr_u32 *size)
+static cmr_s32 _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, struct isp_data_t *target_buf, cmr_u32 * size)
 {
 	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	cmr_u32 version = 0;
@@ -227,28 +226,28 @@ static cmr_s32 _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, stru
 	if (target_buf->size < sizeof(struct isp_cali_awb_info))
 		return ISP_CALI_ERROR;
 
-	start = (cmr_u8 *)golden->data_ptr;
-	version = *(cmr_u32 *)start;
+	start = (cmr_u8 *) golden->data_ptr;
+	version = *(cmr_u32 *) start;
 	start += 4;
 
 	if (ISP_GOLDEN_AWB_V001 != version)
 		return ISP_CALI_ERROR;
 
-	awb_info->golden_avg[0] = *(cmr_u16 *)start;
+	awb_info->golden_avg[0] = *(cmr_u16 *) start;
 	start += 2;
-	awb_info->golden_avg[1] = *(cmr_u16 *)start;
+	awb_info->golden_avg[1] = *(cmr_u16 *) start;
 	start += 2;
-	awb_info->golden_avg[2] = *(cmr_u16 *)start;
+	awb_info->golden_avg[2] = *(cmr_u16 *) start;
 	//start += 2;
 
-	start = (cmr_u8 *)otp->data_ptr;
-	version = *(cmr_u32 *)start;
+	start = (cmr_u8 *) otp->data_ptr;
+	version = *(cmr_u32 *) start;
 	start += 4;
-	awb_info->ramdon_avg[0] = *(cmr_u16 *)start;
+	awb_info->ramdon_avg[0] = *(cmr_u16 *) start;
 	start += 2;
-	awb_info->ramdon_avg[1] = *(cmr_u16 *)start;
+	awb_info->ramdon_avg[1] = *(cmr_u16 *) start;
 	start += 2;
-	awb_info->ramdon_avg[2] = *(cmr_u16 *)start;
+	awb_info->ramdon_avg[2] = *(cmr_u16 *) start;
 	start += 2;
 
 	*size = sizeof(*awb_info);
@@ -257,11 +256,11 @@ static cmr_s32 _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, stru
 }
 
 /*chn_gain[0]: r; chn_gain[1]: gr; chn_gain[2]: gb; chn_gain[3]: b*/
-static cmr_s32 _interlace_gain(cmr_u16 *chn_gain[4], cmr_u16 gain_num, cmr_u32 image_pattern, cmr_u16 *interlaced_gain)
+static cmr_s32 _interlace_gain(cmr_u16 * chn_gain[4], cmr_u16 gain_num, cmr_u32 image_pattern, cmr_u16 * interlaced_gain)
 {
 	cmr_u32 i = 0;
-	cmr_u32 chn_idx[4] = {0};
-	cmr_u16 *chn[4] = {NULL};
+	cmr_u32 chn_idx[4] = { 0 };
+	cmr_u16 *chn[4] = { NULL };
 
 	chn[0] = chn_gain[0];
 	chn[1] = chn_gain[1];
@@ -269,28 +268,28 @@ static cmr_s32 _interlace_gain(cmr_u16 *chn_gain[4], cmr_u16 gain_num, cmr_u32 i
 	chn[3] = chn_gain[3];
 
 	switch (image_pattern) {
-	case 0:	//gr
+	case 0:		//gr
 		chn_idx[0] = 0;
 		chn_idx[1] = 1;
 		chn_idx[2] = 2;
 		chn_idx[3] = 3;
 		break;
 
-	case 1:	//r
+	case 1:		//r
 		chn_idx[0] = 1;
 		chn_idx[1] = 0;
 		chn_idx[2] = 3;
 		chn_idx[3] = 2;
 		break;
 
-	case 2:	//b
+	case 2:		//b
 		chn_idx[0] = 2;
 		chn_idx[1] = 3;
 		chn_idx[2] = 0;
 		chn_idx[3] = 1;
 		break;
 
-	case 3: //gb
+	case 3:		//gb
 		chn_idx[0] = 3;
 		chn_idx[1] = 2;
 		chn_idx[2] = 1;
@@ -301,7 +300,7 @@ static cmr_s32 _interlace_gain(cmr_u16 *chn_gain[4], cmr_u16 gain_num, cmr_u32 i
 		return ISP_CALI_ERROR;
 	}
 
-	for (i=0; i<gain_num; i++) {
+	for (i = 0; i < gain_num; i++) {
 		*interlaced_gain++ = *chn[chn_idx[0]]++;
 		*interlaced_gain++ = *chn[chn_idx[1]]++;
 		*interlaced_gain++ = *chn[chn_idx[2]]++;
@@ -311,7 +310,7 @@ static cmr_s32 _interlace_gain(cmr_u16 *chn_gain[4], cmr_u16 gain_num, cmr_u32 i
 	return ISP_CALI_SUCCESS;
 }
 
-cmr_s32 isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info)
+cmr_s32 isp_calibration_get_info(struct isp_data_t * golden_info, struct isp_cali_info_t * cali_info)
 {
 	if (PNULL == cali_info || PNULL == golden_info)
 		return ISP_CALI_ERROR;
@@ -321,13 +320,12 @@ cmr_s32 isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali
 	return ISP_CALI_SUCCESS;
 }
 
-
-cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
+cmr_s32 isp_calibration(struct isp_cali_param * param, struct isp_data_t * result)
 {
 	cmr_s32 rtn = ISP_CALI_SUCCESS;
-	struct isp_data_t golden_lsc = {0, PNULL};
-	struct isp_data_t golden_awb = {0, PNULL};
-	struct isp_data_t tmp = {0, PNULL};
+	struct isp_data_t golden_lsc = { 0, PNULL };
+	struct isp_data_t golden_awb = { 0, PNULL };
+	struct isp_data_t tmp = { 0, PNULL };
 	struct isp_cali_data *cali_data = PNULL;
 	cmr_u8 *cur = PNULL;
 	cmr_u8 *start = PNULL;
@@ -347,14 +345,14 @@ cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 
 	memset(param->target_buf.data_ptr, 0, param->target_buf.size);
 
-	start = (cmr_u8 *)param->target_buf.data_ptr;
+	start = (cmr_u8 *) param->target_buf.data_ptr;
 	cali_data = (struct isp_cali_data *)start;
-	cur = (cmr_u8 *)&cali_data->data;
+	cur = (cmr_u8 *) & cali_data->data;
 
 	cali_data->version = 0x1;
 	cali_data->block_num = 2;
 
-	/*write AWB*/
+	/*write AWB */
 	cali_data->block[0].id = ISP_CALI_AWB_ID;
 	cali_data->block[0].offset = cur - start;
 
@@ -368,7 +366,7 @@ cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 	cali_data->block[0].length = awb_size;
 	cur += cali_data->block[0].length;
 
-	/*write LSC*/
+	/*write LSC */
 	cali_data->block[1].id = ISP_CALI_LSC_ID;
 	cali_data->block[1].offset = cur - start;
 
@@ -389,7 +387,7 @@ cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 	return ISP_CALI_SUCCESS;
 }
 
-cmr_s32 isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb)
+cmr_s32 isp_parse_calibration_data(struct isp_data_info * cali_data, struct isp_data_t * lsc, struct isp_data_t * awb)
 {
 	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	struct isp_cali_data *header = PNULL;
@@ -403,7 +401,7 @@ cmr_s32 isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_
 		return ISP_CALI_ERROR;
 
 	header = (struct isp_cali_data *)cali_data->data_ptr;
-	start = (cmr_u8 *)header;
+	start = (cmr_u8 *) header;
 
 	if (PNULL == header || cali_data->size < sizeof(*header))
 		return ISP_CALI_ERROR;
@@ -413,7 +411,7 @@ cmr_s32 isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_
 	if (2 != header->block_num)
 		return ISP_CALI_ERROR;
 
-	for (i=0; i<header->block_num; i++) {
+	for (i = 0; i < header->block_num; i++) {
 
 		switch (header->block[i].id) {
 		case ISP_CALI_AWB_ID:
@@ -448,9 +446,8 @@ cmr_s32 isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_
 	return rtn;
 }
 
-
-cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u32 lsc_buf_size, cmr_u32 image_pattern,
-					cmr_u32 gain_width, cmr_u32 gain_height, struct isp_cali_awb_gain *awb_gain)
+cmr_s32 isp_parse_flash_data(struct isp_data_t * flash_data, void *lsc_buf, cmr_u32 lsc_buf_size, cmr_u32 image_pattern,
+			     cmr_u32 gain_width, cmr_u32 gain_height, struct isp_cali_awb_gain * awb_gain)
 {
 	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	UNUSED(flash_data);
@@ -461,9 +458,9 @@ cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u
 	UNUSED(gain_height);
 	UNUSED(awb_gain);
 #if 0
-	struct random_info rdm_info = {0};
-	struct random_lsc_info lsc_info = {0};
-	struct random_awb_info awb_info = {0};
+	struct random_info rdm_info = { 0 };
+	struct random_lsc_info lsc_info = { 0 };
+	struct random_awb_info awb_info = { 0 };
 	cmr_u32 max_value = 0;
 	cmr_u32 lsc_gain_num = 0;
 
@@ -511,11 +508,11 @@ void test_print_golden(struct isp_data_t *golden)
 {
 	cmr_s32 rtn = 0;
 	cmr_u32 i = 0;
-	struct isp_calibration_lsc_golden_cali_info golden_info = {0};
-	struct isp_calibration_lsc_flags flag = {0};
-	struct isp_data_t golden_lsc = {0};
-	struct isp_data_t golden_awb = {0};
-	char file_name[64] = {0};
+	struct isp_calibration_lsc_golden_cali_info golden_info = { 0 };
+	struct isp_calibration_lsc_flags flag = { 0 };
+	struct isp_data_t golden_lsc = { 0 };
+	struct isp_data_t golden_awb = { 0 };
+	char file_name[64] = { 0 };
 	cmr_u32 envi = 0;
 	cmr_u32 ct = 0;
 
@@ -539,26 +536,24 @@ void test_print_golden(struct isp_data_t *golden)
 	PRINTF("algorithm type: %d, algorithm version: %d\n", flag.alg_type, flag.alg_version);
 	PRINTF("compress: %d\n", flag.compress_flag);
 	PRINTF("percent: %d\n", flag.percent);
-	PRINTF("image size: %d X %d, grid size: %d\n", golden_info.img_width,
-									golden_info.img_height,golden_info.grid_size);
-	PRINTF("gain size: %d X %d, center: %d X %d\n", golden_info.grid_width, golden_info.grid_height,
-									golden_info.center_x, golden_info.center_y);
+	PRINTF("image size: %d X %d, grid size: %d\n", golden_info.img_width, golden_info.img_height, golden_info.grid_size);
+	PRINTF("gain size: %d X %d, center: %d X %d\n", golden_info.grid_width, golden_info.grid_height, golden_info.center_x, golden_info.center_y);
 
 	envi = golden_info.gain[0].light_ct >> 16;
 	ct = golden_info.gain[0].light_ct & 0xffff;
 	PRINTF("std gain: envi=%d, ct=%d\n", envi, ct);
 	PRINTF("std gain: size=%d\n", golden_info.gain[0].size);
 	sprintf(file_name, "output\\golden_std_%d_[%d_%d].txt", 0, envi, ct);
-	write_data_uint16(file_name, (cmr_u16 *)golden_info.gain[0].param, golden_info.gain[0].size);
+	write_data_uint16(file_name, (cmr_u16 *) golden_info.gain[0].param, golden_info.gain[0].size);
 
 	PRINTF("diff num: %d\n", golden_info.diff_num);
-	for (i=1; i<golden_info.diff_num+1; i++) {
+	for (i = 1; i < golden_info.diff_num + 1; i++) {
 		envi = golden_info.gain[i].light_ct >> 16;
 		ct = golden_info.gain[i].light_ct & 0xffff;
 		PRINTF("diff gain: envi=%d, ct=%d\n", envi, ct);
 		PRINTF("diff gain: size=%d\n", golden_info.gain[i].size);
 		sprintf(file_name, "output\\golden_diff_%d_[%d_%d].txt", i, envi, ct);
-		write_data_uint16(file_name, (cmr_u16 *)golden_info.gain[i].param, golden_info.gain[i].size * 4);
+		write_data_uint16(file_name, (cmr_u16 *) golden_info.gain[i].param, golden_info.gain[i].size * 4);
 
 	}
 }
@@ -574,20 +569,15 @@ void test_print_random_lsc(struct isp_data_t *lsc)
 	PRINTF("compress flag: %d\n", random_info->compress_flag);
 	PRINTF("bayer pattern: %d\n", random_info->bayer_pattern);
 	PRINTF("percent: %d\n", random_info->percent);
-	PRINTF("image size: %d X %d, grid size: %d X %d\n", random_info->image_width,
-				random_info->image_height,random_info->grid_width, random_info->grid_height);
-	PRINTF("gain size: %d X %d, center: %d X %d\n", random_info->gain_width, random_info->gain_height,
-								random_info->optical_x, random_info->optical_y);
+	PRINTF("image size: %d X %d, grid size: %d X %d\n", random_info->image_width, random_info->image_height, random_info->grid_width, random_info->grid_height);
+	PRINTF("gain size: %d X %d, center: %d X %d\n", random_info->gain_width, random_info->gain_height, random_info->optical_x, random_info->optical_y);
 
 	PRINTF("gain num: %d\n", random_info->gain_num);
 
-	write_data_uint16("output\\random_lsc.txt", (cmr_u16 *)&random_info->gain, random_info->gain_width * random_info->gain_height * sizeof(cmr_u16) * 4);
+	write_data_uint16("output\\random_lsc.txt", (cmr_u16 *) & random_info->gain, random_info->gain_width * random_info->gain_height * sizeof(cmr_u16) * 4);
 }
 
-
-cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_file,
-										const char *random_lsc_file, const char *random_awb_file,
-										const char *calibration_file)
+cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_file, const char *random_lsc_file, const char *random_awb_file, const char *calibration_file)
 {
 #if 0
 #ifdef WIN32
@@ -603,13 +593,13 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 #endif
 #endif
 	cmr_s32 rtn = 0;
-	struct isp_data_t golden = {NULL};
-	struct isp_data_t target_buf = {NULL};
-	struct isp_data_t lsc_otp = {NULL};
-	struct isp_data_t awb_otp = {NULL};
-	struct isp_cali_info_t cali_info = {0};
-	struct isp_cali_param cali_param = {0};
-	struct isp_data_t cali_result = {0};
+	struct isp_data_t golden = { NULL };
+	struct isp_data_t target_buf = { NULL };
+	struct isp_data_t lsc_otp = { NULL };
+	struct isp_data_t awb_otp = { NULL };
+	struct isp_cali_info_t cali_info = { 0 };
+	struct isp_cali_param cali_param = { 0 };
+	struct isp_data_t cali_result = { 0 };
 	FILE *golden_handle = NULL;
 	FILE *lsc_otp_handle = NULL;
 	FILE *awb_otp_handle = NULL;
@@ -622,34 +612,33 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 		goto EXIT;
 	}
 
-	fseek(golden_handle,0,SEEK_END);
+	fseek(golden_handle, 0, SEEK_END);
 	golden.size = ftell(golden_handle);
-	fseek(golden_handle,0,SEEK_SET);
+	fseek(golden_handle, 0, SEEK_SET);
 	golden.data_ptr = malloc(golden.size);
-	if (NULL == golden.data_ptr){
+	if (NULL == golden.data_ptr) {
 		ISP_LOGE("malloc golden memory failed");
 		goto EXIT;
 	}
 
 	ISP_LOGI("golden file size=%d, buf=%p", golden.size, golden.data_ptr);
 
-	if (golden.size != fread(golden.data_ptr, 1, golden.size, golden_handle)){
+	if (golden.size != fread(golden.data_ptr, 1, golden.size, golden_handle)) {
 		ISP_LOGE("read golden file failed");
 		goto EXIT;
 	}
-
 	//read otp lsc data
 	lsc_otp_handle = fopen(random_lsc_file, "rb");
-	if (NULL == lsc_otp_handle){
+	if (NULL == lsc_otp_handle) {
 		ISP_LOGE("open random lsc file failed");
 		goto EXIT;
 	}
 
-	fseek(lsc_otp_handle,0,SEEK_END);
+	fseek(lsc_otp_handle, 0, SEEK_END);
 	lsc_otp.size = ftell(lsc_otp_handle);
-	fseek(lsc_otp_handle,0,SEEK_SET);
+	fseek(lsc_otp_handle, 0, SEEK_SET);
 	lsc_otp.data_ptr = malloc(lsc_otp.size);
-	if (NULL == lsc_otp.data_ptr){
+	if (NULL == lsc_otp.data_ptr) {
 		ISP_LOGE("malloc random lsc file failed");
 		goto EXIT;
 	}
@@ -660,19 +649,18 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 		ISP_LOGE("read random lsc file failed");
 		goto EXIT;
 	}
-
 	//read otp awb data
 	awb_otp_handle = fopen(random_awb_file, "rb");
-	if (NULL == awb_otp_handle){
+	if (NULL == awb_otp_handle) {
 		ISP_LOGE("open random awb file failed");
 		goto EXIT;
 	}
 
-	fseek(awb_otp_handle,0,SEEK_END);
+	fseek(awb_otp_handle, 0, SEEK_END);
 	awb_otp.size = ftell(awb_otp_handle);
-	fseek(awb_otp_handle,0,SEEK_SET);
+	fseek(awb_otp_handle, 0, SEEK_SET);
 	awb_otp.data_ptr = malloc(awb_otp.size);
-	if (NULL == awb_otp.data_ptr){
+	if (NULL == awb_otp.data_ptr) {
 		ISP_LOGE("malloc random awb file failed");
 		goto EXIT;
 	}
@@ -683,7 +671,6 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 		ISP_LOGE("read random awb file failed");
 		goto EXIT;
 	}
-
 	//get the target buffer size
 	rtn = isp_calibration_get_info(&golden, &cali_info);
 	if (0 != rtn) {
@@ -699,7 +686,6 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 		ISP_LOGE("malloc target buffer failed");
 		goto EXIT;
 	}
-
 	//get the calibration data, the real size of data will be write to cali_result.size
 	cali_param.golden = golden;
 	cali_param.awb_otp = awb_otp;
@@ -772,7 +758,7 @@ EXIT:
 	return ISP_CALI_SUCCESS;
 }
 
-cmr_s32 test_init_calibration_data(struct isp_data_t *calibration_param)
+cmr_s32 test_init_calibration_data(struct isp_data_t * calibration_param)
 {
 	const char calibration_file[] = "/data/calibration_phone.bin";
 	FILE *calibration_handle = NULL;
@@ -787,18 +773,18 @@ cmr_s32 test_init_calibration_data(struct isp_data_t *calibration_param)
 		goto EXIT;
 	}
 
-	fseek(calibration_handle,0,SEEK_END);
+	fseek(calibration_handle, 0, SEEK_END);
 	calibration_param->size = ftell(calibration_handle);
-	fseek(calibration_handle,0,SEEK_SET);
+	fseek(calibration_handle, 0, SEEK_SET);
 	calibration_param->data_ptr = malloc(calibration_param->size);
-	if (NULL == calibration_param->data_ptr){
+	if (NULL == calibration_param->data_ptr) {
 		ISP_LOGE("malloc golden memory failed");
 		goto EXIT;
 	}
 
 	ISP_LOGI("calibration file size=%d, buf=%p", calibration_param->size, calibration_param->data_ptr);
 
-	if (calibration_param->size != fread(calibration_param->data_ptr, 1, calibration_param->size, calibration_handle)){
+	if (calibration_param->size != fread(calibration_param->data_ptr, 1, calibration_param->size, calibration_handle)) {
 		ISP_LOGE("read golden file failed");
 		goto EXIT;
 	}
@@ -812,8 +798,8 @@ cmr_s32 test_init_calibration_data(struct isp_data_t *calibration_param)
 
 EXIT:
 	if (NULL != calibration_param->data_ptr) {
-		free(calibration_param->data_ptr );
-		calibration_param->data_ptr  = NULL;
+		free(calibration_param->data_ptr);
+		calibration_param->data_ptr = NULL;
 	}
 
 	if (NULL != calibration_handle) {
@@ -829,54 +815,52 @@ void test_deinit_calibration_data(struct isp_data_t *calibration_param)
 	if (NULL == calibration_param)
 		return;
 
-	if (NULL != calibration_param->data_ptr)  {
-		free(calibration_param->data_ptr );
+	if (NULL != calibration_param->data_ptr) {
+		free(calibration_param->data_ptr);
 		calibration_param->data_ptr = NULL;
 	}
 }
 #endif
 
-cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_ptr)
+cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input_ptr)
 {
-	cmr_int                         rtn = ISP_SUCCESS;
+	cmr_int rtn = ISP_SUCCESS;
 	struct isp_data_info *calibration_param = (struct isp_data_info *)&input_ptr->calibration_param;
-	struct isp_otp_info             *otp_info = NULL;
-	struct isp_data_t               lsc = {0, PNULL};
-	struct isp_data_t               awb = {0, PNULL};
-	struct isp_pm_param_data        update_param;
+	struct isp_otp_info *otp_info = NULL;
+	struct isp_data_t lsc = { 0, PNULL };
+	struct isp_data_t awb = { 0, PNULL };
+	struct isp_pm_param_data update_param;
 	memset(&update_param, 0x00, sizeof(update_param));
 
 	ISP_LOGI("--isp_otp_init-- begin");
 	if (!input_ptr || !isp_otp_handle) {
-		ISP_LOGE("init param is null,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint)input_ptr,(cmr_uint)isp_otp_handle);
+		ISP_LOGE("init param is null,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint) input_ptr, (cmr_uint) isp_otp_handle);
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
 	*isp_otp_handle = NULL;
 
 	if (NULL == calibration_param->data_ptr || 0 == calibration_param->size) {
-		ISP_LOGE("calibration param error: %p, %d!", calibration_param->data_ptr,
-							calibration_param->size);
+		ISP_LOGE("calibration param error: %p, %d!", calibration_param->data_ptr, calibration_param->size);
 		return ISP_SUCCESS;
 	}
 
-	otp_info = (struct isp_otp_info*)malloc(sizeof(struct isp_otp_info));
+	otp_info = (struct isp_otp_info *)malloc(sizeof(struct isp_otp_info));
 	if (NULL == otp_info) {
 		ISP_LOGE("No memory");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
-	memset((void*)otp_info, 0x00, sizeof(struct isp_otp_info));
+	memset((void *)otp_info, 0x00, sizeof(struct isp_otp_info));
 
 	rtn = isp_parse_calibration_data(calibration_param, &lsc, &awb);
 	if (ISP_SUCCESS != rtn) {
-		/*do not return error*/
+		/*do not return error */
 		ISP_LOGE("isp_parse_calibration_data failed!");
 		return ISP_SUCCESS;
 	}
 
-	ISP_LOGV("lsc data: (%p, %d), awb data: (%p, %d)", lsc.data_ptr, lsc.size,
-						awb.data_ptr, awb.size);
+	ISP_LOGV("lsc data: (%p, %d), awb data: (%p, %d)", lsc.data_ptr, lsc.size, awb.data_ptr, awb.size);
 
 	otp_info->awb.data_ptr = (void *)malloc(awb.size);
 	if (NULL != otp_info->awb.data_ptr) {
@@ -889,23 +873,22 @@ cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_
 		otp_info->lsc.size = lsc.size;
 		memcpy(otp_info->lsc.data_ptr, lsc.data_ptr, otp_info->lsc.size);
 	}
-
 #ifdef CONFIG_USE_ALC_AWB
 	struct isp_cali_lsc_info *cali_lsc_ptr = otp_info->lsc.data_ptr;
 	if (cali_lsc_ptr) {
 		otp_info->width = cali_lsc_ptr->map[0].width;
 		otp_info->height = cali_lsc_ptr->map[0].height;
-		otp_info->lsc_random = (cmr_u16 *)((cmr_u8 *)&cali_lsc_ptr->data_area + cali_lsc_ptr->map[0].offset);
+		otp_info->lsc_random = (cmr_u16 *) ((cmr_u8 *) & cali_lsc_ptr->data_area + cali_lsc_ptr->map[0].offset);
 		otp_info->lsc_golden = input_ptr->lsc_golden_data;
 	}
 #else
-	update_param.id        = ISP_BLK_2D_LSC;
-	update_param.cmd       = ISP_PM_CMD_UPDATE_LSC_OTP;
-	update_param.data_ptr  = lsc.data_ptr;
+	update_param.id = ISP_BLK_2D_LSC;
+	update_param.cmd = ISP_PM_CMD_UPDATE_LSC_OTP;
+	update_param.data_ptr = lsc.data_ptr;
 	update_param.data_size = lsc.size;
 	rtn = isp_pm_update(input_ptr->handle_pm, ISP_PM_CMD_UPDATE_LSC_OTP, &update_param, NULL);
 	if (ISP_SUCCESS != rtn) {
-		/*do not return error*/
+		/*do not return error */
 		ISP_LOGE("isp_parse_calibration_data failed!");
 		goto exit;
 	}
@@ -924,11 +907,11 @@ exit:
 				otp_info->lsc.data_ptr = NULL;
 				otp_info->lsc.size = 0;
 			}
-			free((void*)otp_info);
+			free((void *)otp_info);
 			otp_info = NULL;
 		}
 	} else {
-		*isp_otp_handle = (isp_handle)otp_info;
+		*isp_otp_handle = (isp_handle) otp_info;
 	}
 	ISP_LOGI("---isp_otp_init-- end, 0x%lx", rtn);
 

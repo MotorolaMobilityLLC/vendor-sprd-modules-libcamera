@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-
 #include "isp_awb_queue.h"
-/**---------------------------------------------------------------------------*
- ** 				Compiler Flag					*
- **---------------------------------------------------------------------------*/
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
 **----------------------------------------------------------------------------*/
@@ -30,7 +22,6 @@ extern "C"
 /**---------------------------------------------------------------------------*
 **				Data Structures					*
 **---------------------------------------------------------------------------*/
-
 
 /**---------------------------------------------------------------------------*
 **				extend Variables and function			*
@@ -48,14 +39,12 @@ extern "C"
 **				Constant Variables				*
 **---------------------------------------------------------------------------*/
 
-
 /**---------------------------------------------------------------------------*
 ** 				Public Function Prototypes				*
 **---------------------------------------------------------------------------*/
 cmr_s32 _initQueue(struct awbl_cyc_queue *queue, cmr_u32 size)
 {
-	if (NULL == queue || size > AWBL_MAX_QUEUE_SIZE)
-	{
+	if (NULL == queue || size > AWBL_MAX_QUEUE_SIZE) {
 		return -1;
 	}
 
@@ -77,20 +66,16 @@ void _addToCycQueue(struct awbl_cyc_queue *queue, cmr_u32 value)
 	cmr_u32 *q = queue->q;
 
 	//the queue is full, drop the first one
-	if (cur_index == queue->size)
-	{
+	if (cur_index == queue->size) {
 		cmr_u32 i = 0;
 
-		for (i=1; i<queue->size; i++)
-		{
-			q[i-1] = q[i];
+		for (i = 1; i < queue->size; i++) {
+			q[i - 1] = q[i];
 		}
 
 		cur_index = queue->size - 1;
 		q[cur_index] = value;
-	}
-	else
-	{
+	} else {
 		q[cur_index++] = value;
 		queue->cur_index = cur_index;
 	}
@@ -107,7 +92,7 @@ cmr_s32 _isQueueFull(struct awbl_cyc_queue *queue)
 		return 1;
 }
 
-cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue *queue)
+cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue * queue)
 {
 	cmr_u32 avg = 0;
 	cmr_u32 sum = 0;
@@ -121,13 +106,12 @@ cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue *queue)
 	q = queue->q;
 
 	size = (queue->cur_index < queue->size)
-		? queue->cur_index : queue->size;
+	    ? queue->cur_index : queue->size;
 
 	if (0 == size)
 		return 0;
 
-	for (i=0; i<size; i++)
-	{
+	for (i = 0; i < size; i++) {
 		sum += q[i];
 	}
 
@@ -136,61 +120,59 @@ cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue *queue)
 	return avg;
 }
 
-cmr_u32 _calcMaxValueOfQueue(struct awbl_cyc_queue *queue)
+cmr_u32 _calcMaxValueOfQueue(struct awbl_cyc_queue * queue)
 {
 	cmr_s32 size = 0;
 	cmr_s32 i = 0;
 	cmr_u32 max = 0;
 	cmr_u32 *q = NULL;
 
-
 	if (NULL == queue)
-		return 0 ;
+		return 0;
 
 	q = queue->q;
 
 	size = (queue->cur_index < queue->size) ? queue->cur_index : queue->size;
 
-	if ( 0 == size)
+	if (0 == size)
 		return 0;
 
-	for (i=0; i<size; i++)
-	{
-		if (q[i] > max){
+	for (i = 0; i < size; i++) {
+		if (q[i] > max) {
 			max = q[i];
 		}
 	}
 
 	return max;
 }
-cmr_u32 _calcMinValueOfQueue(struct awbl_cyc_queue *queue)
+
+cmr_u32 _calcMinValueOfQueue(struct awbl_cyc_queue * queue)
 {
 	cmr_s32 size = 0;
 	cmr_s32 i = 0;
 	cmr_u32 min = 0;
 	cmr_u32 *q = NULL;
 
-
 	if (NULL == queue)
-		return 0 ;
+		return 0;
 
 	q = queue->q;
 
 	size = (queue->cur_index < queue->size) ? queue->cur_index : queue->size;
 
-	if ( 0 == size)
+	if (0 == size)
 		return 0;
 
-	for (i=0; i<size; i++)
-	{
-		if (q[i] < min){
+	for (i = 0; i < size; i++) {
+		if (q[i] < min) {
 			min = q[i];
 		}
 	}
 
 	return min;
 }
-cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue *queue)
+
+cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue * queue)
 {
 	cmr_s32 i = 0;
 	cmr_u32 *q = NULL;
@@ -203,20 +185,19 @@ cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue *queue)
 	q = queue->q;
 
 	size = (queue->cur_index < queue->size)
-		? queue->cur_index : queue->size;
+	    ? queue->cur_index : queue->size;
 
 	if (size < 2)
 		return 0;
 
-	for (i=1; i<size; i++)
-	{
-		delta += (cmr_s32)q[i] - (cmr_s32)q[i-1];
+	for (i = 1; i < size; i++) {
+		delta += (cmr_s32) q[i] - (cmr_s32) q[i - 1];
 	}
 
 	return delta;
 }
 
-cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue *queue)
+cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue * queue)
 {
 	cmr_s32 size = 0;
 	cmr_u32 delta = 0;
@@ -234,13 +215,13 @@ cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue *queue)
 
 	//index = queue->cur_index;
 
-	delta = ABS((cmr_s32)q[size-1] - (cmr_s32)q[size -2]);
+	delta = ABS((cmr_s32) q[size - 1] - (cmr_s32) q[size - 2]);
 	//delta_abs = ABS(delta);
 
 	return delta;
 }
 
-cmr_u32 _calcNumOfQueue(struct awbl_cyc_queue *queue, cmr_u32 statis_value)
+cmr_u32 _calcNumOfQueue(struct awbl_cyc_queue * queue, cmr_u32 statis_value)
 {
 	cmr_s32 size = 0;
 	cmr_s32 i = 0;
@@ -255,17 +236,16 @@ cmr_u32 _calcNumOfQueue(struct awbl_cyc_queue *queue, cmr_u32 statis_value)
 	if (0 == size)
 		return 0;
 
-	for (i=0; i<size; i++)
-	{
-		if (statis_value == q[i]){
+	for (i = 0; i < size; i++) {
+		if (statis_value == q[i]) {
 			num++;
 		}
 	}
 
 	return num;
 }
-cmr_u32 _calc_weighted_average(struct awbl_cyc_queue *queue_value,
-					struct awbl_cyc_queue *queue_weight)
+
+cmr_u32 _calc_weighted_average(struct awbl_cyc_queue * queue_value, struct awbl_cyc_queue * queue_weight)
 {
 	cmr_u32 avg = 0;
 	cmr_u32 sum = 0;
@@ -283,29 +263,26 @@ cmr_u32 _calc_weighted_average(struct awbl_cyc_queue *queue_value,
 	qw = queue_weight->q;
 
 	size_v = (queue_value->cur_index < queue_value->size)
-		? queue_value->cur_index : queue_value->size;
+	    ? queue_value->cur_index : queue_value->size;
 
 	size_w = (queue_weight->cur_index < queue_weight->size)
-		? queue_weight->cur_index : queue_weight->size;
+	    ? queue_weight->cur_index : queue_weight->size;
 
 	if (size_v != size_w || 0 == size_w)
 		return 0;
 
-	for (i=0; i<size_w; i++)
-	{
+	for (i = 0; i < size_w; i++) {
 		qw[i] = 256;
 	}
 
-        if(size_w>1)
-        {
+	if (size_w > 1) {
 
-                qw[0] = qw[0] - 60;
-		qw[size_w-1] = qw[size_w -1] + 60;
+		qw[0] = qw[0] - 60;
+		qw[size_w - 1] = qw[size_w - 1] + 60;
 
-        }
+	}
 
-	for (i=0; i<size_v; i++)
-	{
+	for (i = 0; i < size_v; i++) {
 		//AWB_LOGI("gid: [%d]: value=%d, weight=%d", i, qv[i], qw[i]);
 		sum += qv[i] * qw[i];
 		weight_sum += qw[i];
@@ -313,7 +290,6 @@ cmr_u32 _calc_weighted_average(struct awbl_cyc_queue *queue_value,
 
 	if (weight_sum > 0)
 		avg = sum / weight_sum;
-
 
 	return avg;
 }
@@ -339,7 +315,7 @@ queue_handle_t queue_init(cmr_u32 size)
 
 	_initQueue(queue, size);
 
-	return (queue_handle_t)queue;
+	return (queue_handle_t) queue;
 }
 
 void queue_add(queue_handle_t queue, cmr_u32 value)
@@ -366,10 +342,10 @@ cmr_u32 queue_delta(queue_handle_t queue)
 {
 	return _calcDeltaOfQueue((struct awbl_cyc_queue *)queue);
 }
+
 cmr_u32 queue_weighted_average(queue_handle_t queue_value, queue_handle_t queue_weight)
 {
-	return _calc_weighted_average((struct awbl_cyc_queue *)queue_value,
-					(struct awbl_cyc_queue *)queue_weight);
+	return _calc_weighted_average((struct awbl_cyc_queue *)queue_value, (struct awbl_cyc_queue *)queue_weight);
 }
 
 cmr_u32 queue_statis(queue_handle_t queue, cmr_u32 statis_value)
@@ -390,11 +366,4 @@ void queue_deinit(queue_handle_t queue)
 	}
 }
 
-/**----------------------------------------------------------------------------*
-**					Compiler Flag				**
-**----------------------------------------------------------------------------*/
-#ifdef	__cplusplus
-}
-#endif
 /**---------------------------------------------------------------------------*/
-

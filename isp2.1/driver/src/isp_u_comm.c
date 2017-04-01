@@ -84,9 +84,7 @@ cmr_s32 isp_u_comm_out_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_fetch_endian(isp_handle handle,
-		cmr_u32 endian,
-		cmr_u32 bit_reorder)
+cmr_s32 isp_u_comm_fetch_endian(isp_handle handle, cmr_u32 endian, cmr_u32 bit_reorder)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -287,12 +285,7 @@ cmr_s32 isp_u_comm_shadow_all(isp_handle handle, cmr_u8 shadow)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_bayer_mode(isp_handle handle,
-		cmr_u32 nlc_bayer,
-		cmr_u32 awbc_bayer,
-		cmr_u32 wave_bayer,
-		cmr_u32 cfa_bayer,
-		cmr_u32 gain_bayer)
+cmr_s32 isp_u_comm_bayer_mode(isp_handle handle, cmr_u32 nlc_bayer, cmr_u32 awbc_bayer, cmr_u32 wave_bayer, cmr_u32 cfa_bayer, cmr_u32 gain_bayer)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -342,7 +335,7 @@ cmr_s32 isp_u_comm_int_clear(isp_handle handle, cmr_u32 int_num)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_get_int_raw(isp_handle handle, cmr_u32 *raw)
+cmr_s32 isp_u_comm_get_int_raw(isp_handle handle, cmr_u32 * raw)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -628,7 +621,7 @@ cmr_s32 isp_u_comm_set_slice_num(isp_handle handle, cmr_u8 num)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_get_slice_num(isp_handle handle, cmr_u8 *slice_num)
+cmr_s32 isp_u_comm_get_slice_num(isp_handle handle, cmr_u8 * slice_num)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -650,7 +643,7 @@ cmr_s32 isp_u_comm_get_slice_num(isp_handle handle, cmr_u8 *slice_num)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_perform_cnt_rstatus(isp_handle handle, cmr_u32 *status)
+cmr_s32 isp_u_comm_perform_cnt_rstatus(isp_handle handle, cmr_u32 * status)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -672,7 +665,7 @@ cmr_s32 isp_u_comm_perform_cnt_rstatus(isp_handle handle, cmr_u32 *status)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_preform_cnt_status(isp_handle handle, cmr_u32 *status)
+cmr_s32 isp_u_comm_preform_cnt_status(isp_handle handle, cmr_u32 * status)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

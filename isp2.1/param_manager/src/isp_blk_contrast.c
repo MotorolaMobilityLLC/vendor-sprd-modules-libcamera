@@ -16,85 +16,85 @@
 
 #include "isp_blocks_cfg.h"
 
- cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void* param1, void* param2)
+cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct sensor_contrast_param *src_ptr = (struct sensor_contrast_param*)src_contrast;
-	struct isp_contrast_param *dst_ptr = (struct isp_contrast_param*)dst_contrast;
-	struct isp_pm_block_header *contrast_header_ptr = (struct  isp_pm_block_header*)param1;
+	struct sensor_contrast_param *src_ptr = (struct sensor_contrast_param *)src_contrast;
+	struct isp_contrast_param *dst_ptr = (struct isp_contrast_param *)dst_contrast;
+	struct isp_pm_block_header *contrast_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
 	dst_ptr->cur_index = src_ptr->cur_index;
 	dst_ptr->cur.bypass = contrast_header_ptr->bypass;
 	dst_ptr->cur.factor = src_ptr->factor[src_ptr->cur_index];
-	memcpy((void*)dst_ptr->tab, (void*)src_ptr->factor, sizeof(dst_ptr->tab));
-	memcpy((void*)dst_ptr->scene_mode_tab, (void*)src_ptr->scenemode, sizeof(dst_ptr->scene_mode_tab));
+	memcpy((void *)dst_ptr->tab, (void *)src_ptr->factor, sizeof(dst_ptr->tab));
+	memcpy((void *)dst_ptr->scene_mode_tab, (void *)src_ptr->scenemode, sizeof(dst_ptr->scene_mode_tab));
 	contrast_header_ptr->is_update = ISP_ONE;
 
 	return rtn;
 }
 
- cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param*)contrast_param;
-	struct isp_pm_block_header *contrast_header_ptr = (struct isp_pm_block_header*)param_ptr1;
+	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param *)contrast_param;
+	struct isp_pm_block_header *contrast_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	contrast_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_CONTRAST_BYPASS:
-		contrast_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
-	break;
+		contrast_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
+		break;
 
 	case ISP_PM_BLK_CONTRAST:
-		contrast_ptr->cur_index = *((cmr_u32*)param_ptr0);
+		contrast_ptr->cur_index = *((cmr_u32 *) param_ptr0);
 		contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
-	break;
+		break;
 
 	case ISP_PM_BLK_SCENE_MODE:
-	{
-		cmr_u32 idx = *((cmr_u32*)param_ptr0);
-		if (0 == idx) {
-			contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
-		} else {
-			contrast_ptr->cur.factor  = contrast_ptr->scene_mode_tab[idx];
+		{
+			cmr_u32 idx = *((cmr_u32 *) param_ptr0);
+			if (0 == idx) {
+				contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
+			} else {
+				contrast_ptr->cur.factor = contrast_ptr->scene_mode_tab[idx];
+			}
 		}
-	}
-	break;
+		break;
 
 	default:
 		contrast_header_ptr->is_update = ISP_ZERO;
-	break;
+		break;
 	}
 
 	return rtn;
 }
 
- cmr_s32 _pm_contrast_get_param(void *contrast_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_contrast_get_param(void *contrast_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param*)contrast_param;
-	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
+	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param *)contrast_param;
+	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
+	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_CONTRAST;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
-		param_data_ptr->data_ptr = (void*)&contrast_ptr->cur;
+		param_data_ptr->data_ptr = (void *)&contrast_ptr->cur;
 		param_data_ptr->data_size = sizeof(contrast_ptr->cur);
 		*update_flag = 0;
-	break;
+		break;
 
 	case ISP_PM_BLK_CONTRAST_BYPASS:
-		param_data_ptr->data_ptr = (void*)&contrast_ptr->cur.bypass;
+		param_data_ptr->data_ptr = (void *)&contrast_ptr->cur.bypass;
 		param_data_ptr->data_size = sizeof(contrast_ptr->cur.bypass);
-	break;
+		break;
 
 	default:
-	break;
+		break;
 	}
 
 	return rtn;

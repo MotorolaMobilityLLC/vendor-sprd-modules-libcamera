@@ -27,8 +27,7 @@ struct isp_smart_alg_context {
 	cmr_u32 magic_flag;
 };
 
-static cmr_s32 _calc_piecewise_func0(struct isp_smart_interplate_piecewise_func *func, cmr_s32 x, cmr_s32 value[2],
-				     cmr_u32 weight[2])
+static cmr_s32 _calc_piecewise_func0(struct isp_smart_interplate_piecewise_func *func, cmr_s32 x, cmr_s32 value[2], cmr_u32 weight[2])
 {
 	cmr_u32 num = func->num;
 	struct isp_smart_interplate_sample *samples = func->samples;
@@ -62,9 +61,7 @@ static cmr_s32 _calc_piecewise_func0(struct isp_smart_interplate_piecewise_func 
 					value[0] = samples[i].y;
 					value[1] = samples[i + 1].y;
 
-					weight[0] =
-					    (samples[i + 1].x - x) * ISP_SMART_WEIGHT_UNIT / (samples[i + 1].x -
-											      samples[i].x);
+					weight[0] = (samples[i + 1].x - x) * ISP_SMART_WEIGHT_UNIT / (samples[i + 1].x - samples[i].x);
 					weight[1] = ISP_SMART_WEIGHT_UNIT - weight[0];
 				} else {
 					value[0] = samples[i].y;
@@ -166,9 +163,7 @@ _smart_init_error_exit:
 	return (isp_smart_handle_t) alg_cxt_ptr;
 }
 
-cmr_s32 isp_smart_calculation(cmr_u32 func_type,
-			      struct isp_smart_interplate_piecewise_func * cur_func,
-			      void *smart_cur_info_in, void *smart_calc_param_out)
+cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_piecewise_func * cur_func, void *smart_cur_info_in, void *smart_calc_param_out)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	enum isp_smart_interplate_func_type inter_func_type;
@@ -186,8 +181,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type,
 	if ((NULL == cur_func)
 	    || (NULL == smart_cur_info_in)
 	    || (NULL == smart_calc_param_out)) {
-		ISP_LOGE("input param pointer is NULL: func:%p, input:%p, output:%p\n", cur_func, smart_cur_info_in,
-			 smart_calc_param_out);
+		ISP_LOGE("input param pointer is NULL: func:%p, input:%p, output:%p\n", cur_func, smart_cur_info_in, smart_calc_param_out);
 
 		rtn = ISP_ERROR;
 		goto _smart_calc_error_exit;
@@ -205,50 +199,41 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type,
 	switch (inter_func_type) {
 	case ISP_SMART_INTERPLATE_FUNC0:
 		{
-			struct isp_smart_interplate_input0 *input_ptr =
-			    (struct isp_smart_interplate_input0 *)smart_cur_info_in;
-			struct isp_smart_interplate_output0 *output_ptr =
-			    (struct isp_smart_interplate_output0 *)smart_calc_param_out;
+			struct isp_smart_interplate_input0 *input_ptr = (struct isp_smart_interplate_input0 *)smart_cur_info_in;
+			struct isp_smart_interplate_output0 *output_ptr = (struct isp_smart_interplate_output0 *)smart_calc_param_out;
 
 			rtn = _calc_piecewise_func0(func, input_ptr->x, output_ptr->index, output_ptr->weight);
 
 			ISP_LOGI("ISP_SMART: func=%d, input=%d, output=(%d, %d), (%d, %d)", inter_func_type,
-				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0],
-				 output_ptr->weight[1]);
+				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
 		}
 		break;
 
 	case ISP_SMART_INTERPLATE_FUNC1:
 		{
-			struct isp_smart_interplate_input1 *input_ptr =
-			    (struct isp_smart_interplate_input1 *)smart_cur_info_in;
-			struct isp_smart_interplate_output0 *output_ptr =
-			    (struct isp_smart_interplate_output0 *)smart_calc_param_out;
+			struct isp_smart_interplate_input1 *input_ptr = (struct isp_smart_interplate_input1 *)smart_cur_info_in;
+			struct isp_smart_interplate_output0 *output_ptr = (struct isp_smart_interplate_output0 *)smart_calc_param_out;
 
 			output_ptr->index[0] = _calc_piecewise_func1(func, input_ptr->x);
 			output_ptr->index[1] = output_ptr->index[0];
 			output_ptr->weight[0] = ISP_SMART_WEIGHT_UNIT;
 			output_ptr->weight[1] = 0;
 			ISP_LOGI("ISP_SMART: func=%d, input=%d, output=(%d, %d), (%d, %d)", inter_func_type,
-				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0],
-				 output_ptr->weight[1]);
+				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
 		}
 		break;
 
 	case ISP_SMART_INTERPLATE_FUNC2:
 		{
-			struct isp_smart_interplate_input1 *input_ptr =
-			    (struct isp_smart_interplate_input1 *)smart_cur_info_in;
-			struct isp_smart_interplate_output0 *output_ptr =
-			    (struct isp_smart_interplate_output0 *)smart_calc_param_out;
+			struct isp_smart_interplate_input1 *input_ptr = (struct isp_smart_interplate_input1 *)smart_cur_info_in;
+			struct isp_smart_interplate_output0 *output_ptr = (struct isp_smart_interplate_output0 *)smart_calc_param_out;
 
 			output_ptr->index[0] = _calc_piecewise_func1(func, input_ptr->x);
 			output_ptr->index[1] = output_ptr->index[0];
 			output_ptr->weight[0] = ISP_SMART_WEIGHT_UNIT;
 			output_ptr->weight[1] = 0;
 			ISP_LOGI("ISP_SMART: func=%d, input=%d, output=(%d, %d), (%d, %d)", inter_func_type,
-				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0],
-				 output_ptr->weight[1]);
+				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
 		}
 		break;
 
