@@ -159,7 +159,7 @@ extern "C"
 		cmr_u8 wbModeNum;
 		cmr_u8 wbModeId[10];
 		struct awb_rgb_gain wbMode_gain[10];
-		struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain  
+		struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain
 
 		/* AWB parameter */
 		cmr_s32 rgb_12bit_sat_value;
@@ -175,7 +175,7 @@ extern "C"
 		cmr_s32 gmeanCali;
 		cmr_s32 bmeanCali;
 
-		cmr_s32 dct_scale_65536;	//65536=1x 
+		cmr_s32 dct_scale_65536;	//65536=1x
 
 		cmr_s16 pgBalanceBvNum;
 		cmr_s16 pgBalanceBv[5];	//1024
@@ -310,12 +310,12 @@ extern "C"
 	struct awb_lsc_info
 	{
 		/*
-		   value: 
+		   value:
 		   index of light
 		   0 dnp
 		   1 a
 		   2 tl84
-		   3 d65 
+		   3 d65
 		   4 cwf
 		 */
 		cmr_u16 value[2];

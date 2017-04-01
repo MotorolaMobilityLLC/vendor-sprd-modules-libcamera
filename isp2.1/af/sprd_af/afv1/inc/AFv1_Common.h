@@ -18,7 +18,7 @@
  *  +-----------------------------------------------------------------+
  *
  * $History$
- * 
+ *
  *******************************************************************************
  */
 
@@ -53,7 +53,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h> 
+#include <math.h>
 #ifndef WIN32
 #include <jni.h>
 #include <android/log.h>
@@ -64,13 +64,13 @@
 // Public Definition
 //=========================================================================//
 /* ============================================================================================== */
-/*1.System info*/	
+/*1.System info*/
 #define VERSION             "2.108"
 #define STRING(s) #s
 
 
 /* ============================================================================================== */
-/*2.function error code*/	
+/*2.function error code*/
 #define ERR_SUCCESS         0x0000
 #define ERR_FAIL            0x0001
 #define ERR_UNKNOW          0x0002
@@ -92,39 +92,39 @@ typedef enum _eAF_FILTER_TYPE
 {
     T_SOBEL9				= 0,
 	T_SOBEL5,
-    T_SPSMD,	    		    
-    T_FV0,					
+    T_SPSMD,
+    T_FV0,
     T_FV1,
     T_COV,
-    T_TOTAL_FILTER_TYPE	    
-        
+    T_TOTAL_FILTER_TYPE
+
 }eAF_FILTER_TYPE;
 
 typedef enum _eAF_OTP_TYPE
 {
     T_LENS_BY_DEFAULT				= 0,
 	T_LENS_BY_OTP,
-    T_LENS_BY_TUNING,	    		         
+    T_LENS_BY_TUNING,
 }eAF_OTP_TYPE;
 
 typedef enum _eAF_FV_RATIO_TYPE
 {
     T_R_Total				= 0,
 	T_R_J1,
-    T_R_J2,	    		    
-    T_R_J3,	
+    T_R_J2,
+    T_R_J3,
     T_R_Slope_Total,
-    T_R_SAMPLE_NUM	    
-        
+    T_R_SAMPLE_NUM
+
 }eAF_FV_RATIO_TYPE;
 
 
 typedef enum _eAF_MODE {
   SAF = 0,               //single zone AF
-  CAF,                   //continue AF    
+  CAF,                   //continue AF
   VAF,                   //Video CAF
   FAF,                   //Face AF
-  MAF,                   //Multi zone AF 
+  MAF,                   //Multi zone AF
   PDAF,                  //PDAF
   TMODE_1,               //Test mode 1
   Wait_Trigger           //wait for AF trigger
@@ -146,8 +146,8 @@ typedef enum _eSAF_Status {
   SAF_Status_RSearch,
   SAF_Status_FSearch,
   SAF_Status_Move_Lens,
-  SAF_Status_Stop  
-} eSAF_Status;    
+  SAF_Status_Stop
+} eSAF_Status;
 
 typedef enum _eCAF_Status {
   CAF_Status_Start = 0,
@@ -155,14 +155,14 @@ typedef enum _eCAF_Status {
   CAF_Status_RSearch,
   CAF_Status_FSearch,
   CAF_Status_Move_Lens,
-  CAF_Status_Stop  
-} eCAF_Status;    
+  CAF_Status_Stop
+} eCAF_Status;
 
 typedef enum _eSAF_Main_Process {
   SAF_Main_INIT = 0,
   SAF_Main_SEARCH,
   SAF_Main_DONE
-} eSAF_Main_Process;  
+} eSAF_Main_Process;
 
 typedef enum _eCAF_Main_Process {
   CAF_Main_INIT = 0,
@@ -171,7 +171,7 @@ typedef enum _eCAF_Main_Process {
 } eCAF_Main_Process;
 
 typedef enum _eSAF_Search_Process {
-  SAF_Search_INIT               = 0,  
+  SAF_Search_INIT               = 0,
   SAF_Search_SET_ROUGH_SEARCH,
   SAF_Search_ROUGH_SEARCH,
   SAF_Search_ROUGH_HAVE_PEAK,
@@ -182,11 +182,11 @@ typedef enum _eSAF_Search_Process {
   SAF_Search_DONE,
   SAF_Search_DONE_BY_UI,
   SAF_Search_TOTAL,
-  
-} eSAF_Search_Process;    
+
+} eSAF_Search_Process;
 
 typedef enum _eCAF_Search_Process {
-  CAF_Search_INIT               = 0,  
+  CAF_Search_INIT               = 0,
   CAF_Search_SET_ROUGH_SEARCH,
   CAF_Search_ROUGH_SEARCH,
   CAF_Search_ROUGH_HAVE_PEAK,
@@ -197,7 +197,7 @@ typedef enum _eCAF_Search_Process {
   CAF_Search_DONE,
   CAF_Search_DONE_BY_UI,
   CAF_Search_TOTAL,
-  
+
 } eCAF_Search_Process;
 
 typedef enum _eAF_Result {
@@ -209,33 +209,33 @@ typedef enum _eAF_Result {
   AF_TOO_NEAR,
   AF_REVERSE,
   AF_SKY,
-  AF_UNKNOW  
-} eAF_Result;  
+  AF_UNKNOW
+} eAF_Result;
 
 typedef enum _e_LOCK {
   LOCK      = 0,
-  UNLOCK,         
-} e_LOCK;  
+  UNLOCK,
+} e_LOCK;
 
 typedef enum _e_DIR {
   FAR2NEAR      = 0,
-  NEAR2FAR,         
-} e_DIR;  
+  NEAR2FAR,
+} e_DIR;
 
 typedef enum _e_RESULT {
   NO_PEAK      = 0,
-  HAVE_PEAK,         
-} e_RESULT;  
+  HAVE_PEAK,
+} e_RESULT;
 
 typedef enum _e_AF_TRIGGER {
   NO_TRIGGER      = 0,
-  AF_TRIGGER,         
-} e_AF_TRIGGER;  
+  AF_TRIGGER,
+} e_AF_TRIGGER;
 
 typedef enum _e_AF_BOOL {
   AF_FALSE      = 0,
-  AF_TRUE,         
-} e_AF_BOOL;  
+  AF_TRUE,
+} e_AF_BOOL;
 
 typedef enum _e_AF_AE_Gain {
   AE_1X      = 0,
@@ -245,11 +245,11 @@ typedef enum _e_AF_AE_Gain {
   AE_16X,
   AE_32X,
   AE_Gain_Total,
-} e_AF_AE_Gain; 
+} e_AF_AE_Gain;
 
 enum {
 	PD_NO_HINT,
-	PD_DIR_ONLY,		
+	PD_DIR_ONLY,
 	PD_DIR_RANGE ,
 }PDAF_HINT_INFO;
 //=========================================================================================//
@@ -263,7 +263,7 @@ typedef struct _AE_Report
     int16   AE_BV;        //brightness value
     uint16  AE_EXP;       //exposure time (ms)
     uint16  AE_Gain;      //X128: gain1x = 128
-    uint32  AE_Pixel_Sum; //AE pixel sum which needs to match AF blcok 
+    uint32  AE_Pixel_Sum; //AE pixel sum which needs to match AF blcok
     uint16  AE_Idx;       //AE exposure level
 } AE_Report;
 
@@ -274,33 +274,33 @@ typedef struct _AF_FV_DATA
 
     uint8   BPMinIdx[MAX_SAMPLE_NUM];       //index of min statistic value before peak
     uint8   APMinIdx[MAX_SAMPLE_NUM];       //index of min statistic value after peak
-    
-    uint8   ICBP[MAX_SAMPLE_NUM];           //increase count before peak 
+
+    uint8   ICBP[MAX_SAMPLE_NUM];           //increase count before peak
     uint8   DCBP[MAX_SAMPLE_NUM];           //decrease count before peak
-    uint8   EqBP[MAX_SAMPLE_NUM];           //equal count before peak  
+    uint8   EqBP[MAX_SAMPLE_NUM];           //equal count before peak
     uint8   ICAP[MAX_SAMPLE_NUM];           //increase count after peak
     uint8   DCAP[MAX_SAMPLE_NUM];           //decrease count after peak
-    uint8   EqAP[MAX_SAMPLE_NUM];           //equal count after peak    
-    int8    BPC[MAX_SAMPLE_NUM];            //ICBP - DCBP  
+    uint8   EqAP[MAX_SAMPLE_NUM];           //equal count after peak
+    int8    BPC[MAX_SAMPLE_NUM];            //ICBP - DCBP
     int8    APC[MAX_SAMPLE_NUM];            //ICAP - DCAP
-    
+
     uint64  Val[MAX_SAMPLE_NUM];            //statistic value
     uint64  Start_Val;                      //statistic value of start position
-    
-    uint16  BP_R10000[T_R_SAMPLE_NUM][MAX_SAMPLE_NUM];    //FV ratio X 10000 before peak   
+
+    uint16  BP_R10000[T_R_SAMPLE_NUM][MAX_SAMPLE_NUM];    //FV ratio X 10000 before peak
     uint16  AP_R10000[T_R_SAMPLE_NUM][MAX_SAMPLE_NUM];    //FV ratio X 10000 after peak
 
     uint8   Search_Result[MAX_SAMPLE_NUM];  //search result of focus data
     uint16  peak_pos[MAX_SAMPLE_NUM];       //peak position of focus data
     uint64  PredictPeakFV[MAX_SAMPLE_NUM];            //statistic value
-    
+
 }AF_FV_DATA;
 
 typedef struct _AF_FV
 {
-    AF_FV_DATA   Filter[T_TOTAL_FILTER_TYPE];  
+    AF_FV_DATA   Filter[T_TOTAL_FILTER_TYPE];
     AE_Report    AE_Rpt[MAX_SAMPLE_NUM];
-   
+
 
 }AF_FV;
 #pragma pack(push,1)
@@ -313,7 +313,7 @@ typedef struct _AF_FILTER_TH
 
 typedef struct _AF_TH
 {
-    AF_FILTER_TH   Filter[T_TOTAL_FILTER_TYPE];          
+    AF_FILTER_TH   Filter[T_TOTAL_FILTER_TYPE];
 
 }AF_TH;
 #pragma pack(pop)
@@ -343,35 +343,35 @@ typedef struct _SAF_SearchData
 
     AF_FV   SAF_RFV;                               //The FV data of rough search
     AF_FV   SAF_FFV;                               //The FV data of fine search
-   
+
     AF_FV   SAF_Pre_RFV;                           //The last time FV data of rough search
     AF_FV   SAF_Pre_FFV;                           //The last time FV data of fine search
 
     AF_TH   SAF_RS_TH;                             //The threshold of rough search
     AF_TH   SAF_FS_TH;                             //The threshold of fine search
 
-        
+
 }SAF_SearchData;
 
 typedef struct _CAF_SearchData
-{  
+{
     uint8  CAF_RS_TotalFrame;
     uint8  CAF_FS_TotalFrame;
 
     uint16  CAF_RSearchTable[ROUGH_SAMPLE_NUM];
     uint16  CAF_FSearchTable[FINE_SAMPLE_NUM];
-    
-    AF_FV   CAF_RFV;  
+
+    AF_FV   CAF_RFV;
     AF_FV   CAF_FFV;
-   
-    AF_FV   CAF_Pre_RFV;  
+
+    AF_FV   CAF_Pre_RFV;
     AF_FV   CAF_Pre_FFV;
-    
+
 }CAF_SearchData;
 
 #pragma pack(push,1)
 typedef struct _AF_Scan_Table
-{  
+{
     //Rough search
     uint16 POS_L1;
     uint16 POS_L2;
@@ -390,7 +390,7 @@ typedef struct _AF_Scan_Table
     uint16 Fine_Sample_Num;
     uint16 Fine_Search_Interval;
     uint16 Fine_Init_Num;
-    
+
 }AF_Scan_Table;
 
 typedef struct aftuning_coeff_s{
@@ -418,7 +418,7 @@ typedef struct aftuning_param_s{
 	cmr_u32	_lowlight_ma_count;
 	cmr_s32				_posture_diff_slop;
 	cmr_u32	_temporal_flat_slop;
-	cmr_u32	_limit_search_interval;	
+	cmr_u32	_limit_search_interval;
 	cmr_u32	_sky_scene_thr;
 	cmr_u8 	reserve[32*4];
 }aftuning_param_t;
@@ -438,9 +438,9 @@ typedef struct _AF_Tuning_Para
 typedef struct _Lens_Info
 {
     //Lens Info
-    uint16 Lens_MC_MIN;     //minimal mechenical position 
-    uint16 Lens_MC_MAX;     //maximal mechenical position 
-    uint16 Lens_INF;        //INF position 
+    uint16 Lens_MC_MIN;     //minimal mechenical position
+    uint16 Lens_MC_MAX;     //maximal mechenical position
+    uint16 Lens_INF;        //INF position
     uint16 Lens_MACRO;      //MACRO position
     uint16 Lens_Hyper;      //Hyper Focus position
     uint16 One_Frame_Max_Move;  //skip one frame if move position is bigger than TH
@@ -481,11 +481,11 @@ typedef struct _afscan_status_s {
 	cmr_s32 bv_log[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 luma[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 gain[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];	
+	cmr_u32 scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_stat2[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 scan_tbl_macrv[AFAUTO_SCAN_STOP_NMAX]; 
+	cmr_u32 scan_tbl_macrv[AFAUTO_SCAN_STOP_NMAX];
 	cmr_s32 scan_tbl_slop[AFAUTO_SCAN_STOP_NMAX];
 	cmr_s32 scan_tbl_maslop[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_luma[AFAUTO_SCAN_STOP_NMAX];
@@ -508,7 +508,7 @@ typedef struct _afscan_status_s {
 	cmr_u32 last_dir;
 	cmr_u32 init_pos;
 	cmr_u32 tbl_falling_cnt[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 tbl_flat_cnt[AFAUTO_SCAN_STOP_NMAX];	
+	cmr_u32 tbl_flat_cnt[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 turnback_cnt;
 	cmr_u32 turnback_idx;
 	cmr_u32 turnback_cond;
@@ -521,7 +521,7 @@ typedef struct _afscan_status_s {
 	cmr_u32 blcpeak_idx;
 	cmr_u32 bound_cnt;
 	cmr_u32 stat_vari_rto;
-	cmr_u32 stat_rising_rto;	
+	cmr_u32 stat_rising_rto;
 	cmr_u32 stat_falling_rto;
 	cmr_u32 vly_far_stat;
 	cmr_u32 vly_far_rto;
@@ -548,7 +548,7 @@ typedef struct _afscan_status_s {
 	cmr_u32 lock_pos;
 	//multi AF
 	cmr_u32 multi_pkstat[MULTI_STATIC_TOTAL];
-	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];	
+	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];
 
 	cmr_u32 min_stat_diff;
 	cmr_u32 min_stat_val;
@@ -556,11 +556,11 @@ typedef struct _afscan_status_s {
 	cmr_u32 fine_range;
 	cmr_u32 luma_slop;
 	cmr_u32 scan_algorithm;
-	
+
 	cmr_u32 pos_far;
 	cmr_u32 pos_near;
 	cmr_u32 far_idx;
-	cmr_u32 near_idx;	
+	cmr_u32 near_idx;
 	cmr_s32 scan_tbl_full_slop[AFAUTO_SCAN_STOP_NMAX];
 	cmr_s32 far_slop;
 	cmr_s32 near_slop;
@@ -590,7 +590,7 @@ typedef struct _af_control_status_s {
 	cmr_u32				frmid;
 	cmr_u32				scene_reg;
 	cmr_u32				scene_result;
-	cmr_u32				scene_event;	
+	cmr_u32				scene_event;
 	cmr_u32				env_ena;
 	cmr_u32				env_reconv_cnt;
 	cmr_u32 				env_reconv_limit;
@@ -614,13 +614,13 @@ typedef struct af_scan_env_info_s{
 	cmr_u32 ae_state;
 	cmr_u32 exp_boundary;
 	cmr_u32 y_avg;
-	cmr_u32 y_tgt;	
+	cmr_u32 y_tgt;
 	cmr_u32 curr_gain;
 	cmr_u32 exp_time;
 	cmr_u32 y_stdev;
 	cmr_s32 curr_bv;
 	cmr_s32 next_bv;
-	cmr_s32 diff_bv;	
+	cmr_s32 diff_bv;
 } scan_env_info_t;
 
 typedef struct af_scan_info_s{
@@ -633,7 +633,7 @@ typedef struct af_scan_info_s{
 	cmr_u32 luma_slop;
 	cmr_u32 times_result;
 	cmr_u32 position_result[AF_RESULT_DATA_SIZE];
-	cmr_u32 frmid_result[AF_RESULT_DATA_SIZE];	
+	cmr_u32 frmid_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 coast_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 ma_count;
 }afscan_info_t;
@@ -645,15 +645,15 @@ typedef struct afstat_frame_buffer_s{
 	cmr_u32 last_frm_stat[FOCUS_STAT_WIN_TOTAL];
 	//cmr_u32 last_frm_y[FOCUS_STAT_WIN_TOTAL];
 	//cmr_u32 focus_block_idx;
-	//cmr_u32 peak_block_edge;	
+	//cmr_u32 peak_block_edge;
 	//cmr_u32 peak_block_y;
-	//cmr_s32 peak_block_edge_rela;	
+	//cmr_s32 peak_block_edge_rela;
 	//cmr_s32 peak_block_y_rela;
 	//cmr_s32 peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
 	cmr_u32 stat_weight;
 	cmr_u32 stat_sum;
 	cmr_u32 luma_avg;
-	//cmr_u32 multi_grid_sum[MULTI_STATIC_TOTAL];	
+	//cmr_u32 multi_grid_sum[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
 } afstat_frmbuf_t;
 
@@ -672,7 +672,7 @@ typedef struct afdbg_ctrl_s{
 typedef struct _af_process_s
 {
 	afctrl_status_t ctrl_status;
-	afscan_status_t scan_status;	
+	afscan_status_t scan_status;
 	afscan_info_t scan_info;
 	afstat_frmbuf_t stat_data;
 	afdbg_ctrl_t dbg_ctrl;
@@ -692,7 +692,7 @@ typedef struct pd_algo_result_s{
 #pragma pack(pop)
 
 typedef struct _CAF_Tuning_Para
-{ 
+{
     cmr_s32 dummy;
 }CAF_Tuning_Para;
 
@@ -712,8 +712,8 @@ typedef struct _SAF_INFO
    uint16 SAF_Final_VCM_POS;                        //final move positon load from VCM
    uint16 SAF_RPeak_POS;                            //Peak positon of rough search
    uint16 SAF_FPeak_POS;                            //Peak positon of fine search
-   uint64 SAF_SYS_TIME_ENTER[MAX_TIME_SAMPLE_NUM];  //save each time while entering SAF search 
-   uint64 SAF_SYS_TIME_EXIT[MAX_TIME_SAMPLE_NUM];   //save each time while entering SAF search 
+   uint64 SAF_SYS_TIME_ENTER[MAX_TIME_SAMPLE_NUM];  //save each time while entering SAF search
+   uint64 SAF_SYS_TIME_EXIT[MAX_TIME_SAMPLE_NUM];   //save each time while entering SAF search
    Lens_Info Lens_Para;                             //current lens parameters
    AF_Scan_Table SAF_Scan_Table_Para;               //current scan table parameters
 }SAF_INFO;
@@ -721,15 +721,15 @@ typedef struct _SAF_INFO
 typedef struct _CAF_INFO
 {
    uint8 CAF_mode;
-   
-    
+
+
 }CAF_INFO;
 
 typedef struct _SAF_Data
 {
     SAF_INFO sAFInfo;
     SAF_SearchData sAFSearchData;
-      
+
 }SAF_Data;
 
 typedef struct _CAF_Data
@@ -737,8 +737,8 @@ typedef struct _CAF_Data
     CAF_INFO cAFInfo;
     CAF_SearchData cAFSearchData;
     CAF_Tuning_Para cAFTuningPara;
-    
-    
+
+
 }CAF_Data;
 
 
@@ -748,7 +748,7 @@ typedef struct _AF_OTP_Data
     uint8 bIsExist;
     uint16 INF;
     uint16 MACRO;
-    
+
 } AF_OTP_Data;
 
 typedef struct _af_stat_data_s
@@ -762,7 +762,7 @@ typedef struct _AF_Ctrl_Ops
 {
 	ERRCODE (*statistics_wait_cal_done)(void *cookie);
 	ERRCODE (*statistics_get_data)(uint64 fv[T_TOTAL_FILTER_TYPE],_af_stat_data_t *p_stat_data,void *cookie);
-	ERRCODE (*statistics_set_data)(cmr_u32 set_stat, void * cookie);	
+	ERRCODE (*statistics_set_data)(cmr_u32 set_stat, void * cookie);
 	ERRCODE (*phase_detection_get_data)(pd_algo_result_t *pd_result, void *cookie);
 	ERRCODE (*lens_get_pos)(uint16 *pos, void *cookie);
 	ERRCODE (*lens_move_to)(uint16 pos, void *cookie);
@@ -789,18 +789,18 @@ typedef struct _AF_Trigger_Data
     uint8 bisTrigger;
     eAF_Triger_Type AF_Trigger_Type;
     eAF_MODE  AFT_mode;
-    
+
 } AF_Trigger_Data;
 
 
 typedef struct _AF_Win
 {
     uint16  Set_Zone_Num;               //FV zone number
-    uint16  AF_Win_X[TOTAL_AF_ZONE];    
+    uint16  AF_Win_X[TOTAL_AF_ZONE];
     uint16  AF_Win_Y[TOTAL_AF_ZONE];
     uint16  AF_Win_W[TOTAL_AF_ZONE];
-    uint16  AF_Win_H[TOTAL_AF_ZONE];   
-    
+    uint16  AF_Win_H[TOTAL_AF_ZONE];
+
 }AF_Win;
 
 typedef struct _AF_Data
@@ -809,7 +809,7 @@ typedef struct _AF_Data
     eAF_MODE  Pre_AF_mode;
     AF_Trigger_Data AFT_Data;
     SAF_Data sAF_Data;
-    CAF_Data cAF_Data;   
+    CAF_Data cAF_Data;
     AE_Report   AE_Rpt[MAX_TIME_SAMPLE_NUM];
     AF_OTP_Data AF_OTP;
     AF_Win AF_Win_Data;

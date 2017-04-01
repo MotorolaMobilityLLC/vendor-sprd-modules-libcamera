@@ -734,7 +734,7 @@ extern "C" {
 		//isp_ctrl_context *isp = af->isp_ctx;
 		//isp_handle device = isp->handle_device;
 
-		// AF_LOGD("scene = %d, spsmd_max = 0x%x, spsmd_min = 0x%x, sobel_max = 0x%x, sobel_min = 0x%x", 
+		// AF_LOGD("scene = %d, spsmd_max = 0x%x, spsmd_min = 0x%x, sobel_max = 0x%x, sobel_min = 0x%x",
 		//     af->curr_scene,
 		//     af->filter_clip[af->curr_scene].spsmd_max, af->filter_clip[af->curr_scene].spsmd_min,
 		//     af->filter_clip[af->curr_scene].sobel_max, af->filter_clip[af->curr_scene].sobel_min);
@@ -1363,15 +1363,15 @@ extern "C" {
 
 	//reload tuning data by  curr_scene
 	static void get_tuning_param(af_ctrl_t * af){
-	
+
 		if (1 == af->af_tuning_data.flag) {
 			memcpy(&af->fv.AF_Tuning_Data, &af->af_tuning_data.AF_Tuning_Data[af->curr_scene],
 			       sizeof(af->fv.AF_Tuning_Data));
-		}	
-		
+		}
+
 		return ;
 	}
-	
+
 // start hardware
 	static cmr_s32 do_start_af(af_ctrl_t * af) {
 //    isp_ctrl_context *isp = af->isp_ctx;
@@ -2001,7 +2001,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		}
 */
 #if 0	//Andrew : The control layer does not interfere with the CAF mechanism
-		if( (STATE_CAF==af->state||STATE_RECORD_CAF==af->state) && 
+		if( (STATE_CAF==af->state||STATE_RECORD_CAF==af->state) &&
 			0==af->caf_first_stable && 1==af->ae.stable ){
 			af->caf_first_stable=1;
 			return 1;
@@ -2016,7 +2016,7 @@ v=v>(max)?(max):v; hist[v]++;}
 #endif
 		return af->ae.stable;
 	}
-	
+
 	static void get_isp_size(af_ctrl_t * af, cmr_u16 * widith, cmr_u16 * height) {
 
 //      *widith = isp->input_size_trim[isp->param_index].width;
@@ -2324,7 +2324,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		memcpy(pd_result,&(af->pd),sizeof(pd_algo_result_t));
 		pd_result->pd_roi_dcc = 17;
-		
+
 		return 0;
 	}
 	static ERRCODE if_lens_get_pos(uint16 * pos, void *cookie) {
@@ -2952,7 +2952,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->request_mode = AF_MODE_NORMAL;
 		af->state = STATE_NORMAL_AF;
 		af->caf_state = CAF_IDLE;
-		saf_start(af, NULL);	//SAF, win is NULL using default    
+		saf_start(af, NULL);	//SAF, win is NULL using default
 */
 		return;
 	}
@@ -3459,7 +3459,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->lsc_lock_num = 0;
 		af->nlm_lock_num = 0;
 		af->caf_first_stable=0;
-		
+
 		pthread_mutex_init(&af->af_work_lock, NULL);
 		pthread_mutex_init(&af->caf_work_lock, NULL);
 		sem_init(&af->af_wait_caf, 0, 0);

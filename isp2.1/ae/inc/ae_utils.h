@@ -12,20 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */  
+ */
 #ifndef _AE_UTILS_H_
 #define _AE_UTILS_H_
 /*----------------------------------------------------------------------------*
  **				 Dependencies				*
- **---------------------------------------------------------------------------*/ 
+ **---------------------------------------------------------------------------*/
 #include "ae_types.h"
 #include "ae_ctrl_types.h"
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
- **---------------------------------------------------------------------------*/ 
+ **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
-	
+
 #endif	/*  */
 /**---------------------------------------------------------------------------*
 **				Macro Define				*
@@ -53,7 +53,7 @@ extern "C" {
 
 	struct ae_history_info {
 		struct ae_ctrl_stats_info stats_info[AE_FRAME_INFO_NUM];	//save the latest 8 exposure time and gain;
-		//0: latest one; 
+		//0: latest one;
 		//list will be better
 		cmr_u32 cur_stat_index;
 		struct ae_ctrl_stats_info last_info;

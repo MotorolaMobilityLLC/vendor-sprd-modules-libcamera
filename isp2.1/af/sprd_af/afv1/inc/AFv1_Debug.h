@@ -18,7 +18,7 @@
  *  +-----------------------------------------------------------------+
  *
  * $History$
- * 
+ *
  *******************************************************************************
  */
 
@@ -47,11 +47,11 @@
 #include "AFv1_Common.h"
 
 
-#ifdef WIN32  
+#ifdef WIN32
 
-#define AllSetpLog 
+#define AllSetpLog
 #define FinalLog
-#define TuningLog 
+#define TuningLog
 
 
 #endif

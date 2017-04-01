@@ -12,8 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */  
-    
+ */
+
 #ifndef _AE_COM_H_
 #define _AE_COM_H_
 /*----------------------------------------------------------------------------*
@@ -48,9 +48,9 @@ enum ae_alg_io_cmd {
 	AE_ALG_CMD_SET_EXP_ANIT,
 	AE_ALG_CMD_SET_FIX_FPS,
 	AE_ALG_CMD_SET_CVGN_PARAM,
-	AE_ALG_CMD_SET_CONVERGE_SPEED, 
-	AE_ALG_CMD_SET_EV, 
-	AE_ALG_CMD_SET_FLICK_FLAG, 
+	AE_ALG_CMD_SET_CONVERGE_SPEED,
+	AE_ALG_CMD_SET_EV,
+	AE_ALG_CMD_SET_FLICK_FLAG,
 	AE_ALG_CMD_GET_EXP_BY_INDEX,
 	AE_ALG_CMD_GET_WEIGHT,
 	AE_ALG_CMD_GET_NEW_INDEX
@@ -224,7 +224,7 @@ struct ae_alg_fun_tab {
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/
 #ifdef __cplusplus
-} 
+}
 #endif	/*  */
 /**---------------------------------------------------------------------------*/
 #endif	/*  */

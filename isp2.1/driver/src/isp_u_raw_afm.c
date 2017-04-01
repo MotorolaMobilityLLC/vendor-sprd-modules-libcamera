@@ -156,7 +156,7 @@ cmr_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis)
 	param.property_param = statis;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif 
+#endif
 	return ret;
 }
 

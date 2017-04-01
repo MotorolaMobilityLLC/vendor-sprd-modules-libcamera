@@ -76,7 +76,7 @@ struct debug_ae_param{
 	int32_t reserved[1014];        /*resurve for future*/
 };
 
- 
+
 struct debug_awb_param{
 	uint8_t magic[16];
 	uint32_t version;
@@ -90,7 +90,7 @@ struct debug_awb_param{
 	uint32_t cur_work_mode;
 
 	/* awb calibration of golden sensor */
-	uint32_t golden_r; 
+	uint32_t golden_r;
 	uint32_t golden_g;
 	uint32_t golden_b;
 
@@ -106,10 +106,10 @@ struct debug_awb_param{
 	uint32_t g_stat_info[1024]; /*g channel of awb statics state data*/
 	uint32_t b_stat_info[1024]; /*b channel of awb statics state data*/
 
-	uint32_t reserved[256]; 
+	uint32_t reserved[256];
 };
 
- 
+
 struct debug_af_param{
 	// System
 	uint8_t magic[16];
@@ -283,7 +283,7 @@ struct debug_awb_display_param{
 	uint32_t cur_work_mode;
 
 	/* awb calibration of golden sensor */
-	uint32_t golden_r; 
+	uint32_t golden_r;
 	uint32_t golden_g;
 	uint32_t golden_b;
 

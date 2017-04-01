@@ -587,7 +587,7 @@ static cmr_s32 ae_write_thread_proc(struct cmr_msg *message, cmr_handle data)
 			cxt->actual_cell[cxt->sof_id % 20].expline = cxt->out_actual_cell.exp_line;
 			cxt->actual_cell[cxt->sof_id % 20].gain = cxt->out_actual_cell.gain;
 			cxt->actual_cell[cxt->sof_id % 20].dummy = cxt->out_actual_cell.dummy;
-			// maintain for matching E&G 
+			// maintain for matching E&G
 
 			expline = cxt->out_write_cell.exp_line;
 			dummy = cxt->out_write_cell.dummy;
@@ -787,7 +787,7 @@ static cmr_s32 _update_monitor_unit(struct ae_ctrl_cxt *cxt, struct ae_trim *tri
 }
 
 cmr_s32 iso_shutter_mapping[7][15] = {
-	// 50 ,64 ,80 ,100 
+	// 50 ,64 ,80 ,100
 	// ,125
 	// ,160 ,200 ,250 ,320
 	// ,400 ,500 ,640 ,800
@@ -1711,7 +1711,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		;
 	}
 	/*
-	 * parameter of common mode should not be NULL 
+	 * parameter of common mode should not be NULL
 	 */
 	if (0 == cxt->tuning_param_enable[AE_WORK_MODE_COMMON]) {
 		AE_LOGE("common param is error");
@@ -1755,13 +1755,13 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.stat_img = NULL;
 
 	if (2 == cxt->cur_status.alg_id){
-		cxt->cur_status.min_exp_line = cxt->cur_param->min_line;	// 
+		cxt->cur_status.min_exp_line = cxt->cur_param->min_line;	//
 		cxt->cur_status.max_gain = cxt->cur_param->sensor_cfg.max_gain;	// /*sensor can support the max  gain*/
 		cxt->sensor_gain_precision = cxt->cur_param->sensor_cfg.gain_precision;
 		cxt->cur_status.min_gain = cxt->cur_param->sensor_cfg.min_gain;/*sensor can support the min  gain*/
 	}else{
 		AE_LOGD("old ae params\r\n");
-		cxt->cur_status.min_exp_line = 6;	// 
+		cxt->cur_status.min_exp_line = 6;	//
 		cxt->cur_status.max_gain = 1024;	// /*sensor can support the max  gain*/
 		cxt->sensor_gain_precision = 16;
 		cxt->cur_status.min_gain = 128;/*sensor can support the min  gain*/
@@ -1798,12 +1798,12 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.settings.ver = 0;
 	cxt->cur_status.settings.lock_ae = 0;
 	/*
-	 * Be effective when 1 == lock_ae 
+	 * Be effective when 1 == lock_ae
 	 */
 	cxt->cur_status.settings.exp_line = 0;
 	cxt->cur_status.settings.gain = 0;
 	/*
-	 * Be effective when being not in the video mode 
+	 * Be effective when being not in the video mode
 	 */
 	cxt->cur_status.settings.min_fps = 5;
 	cxt->cur_status.settings.max_fps = 30;
@@ -1815,7 +1815,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cxt->cur_status.settings.sensor_max_fps = 30;
 	//}
 
-	//flash ae param 
+	//flash ae param
 	cxt->cur_status.settings.flash = 0;
 	cxt->cur_status.settings.flash_ration = cxt->cur_param->flash_param.adjust_ratio;
 	//cxt->flash_on_off_thr;
@@ -1864,15 +1864,15 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		AE_LOGD("TC_Beth-SPRD:touch tuning win info:W:%d,H:%d!", cxt->cur_param->touch_info.touch_tuning_win.w, cxt->cur_param->touch_info.touch_tuning_win.h);
 	}
 	/*
-	 * fd-ae param 
+	 * fd-ae param
 	 */
 	_fdae_init(cxt);
 	/*
-	 * lcd flash param 
+	 * lcd flash param
 	 */
 	cxt->lcd_mon_no_write = 0;
 	/*
-	 * control information for sensor update 
+	 * control information for sensor update
 	 */
 	cxt->checksum = _get_checksum();
 	cxt->end_id = AE_END_ID;
@@ -2232,10 +2232,10 @@ static cmr_s32 _fd_info_set(struct ae_ctrl_cxt *cxt)
 		return AE_SUCCESS;
 	}
 	for (i = 0; i < fd->face_num; i++) {
-		// map every face location info	
+		// map every face location info
 		f_w_shk_x = (fd->face_area[i].rect.end_x - fd->face_area[i].rect.start_x + 1)*40/200;
 		f_w_shk_y = (fd->face_area[i].rect.end_y - fd->face_area[i].rect.start_y + 1)*40/200;
-	
+
 		ae1_fd->cur_info.face_area[i].start_x = (fd->face_area[i].rect.start_x + f_w_shk_x)*win_w/width_tmp;
 		ae1_fd->cur_info.face_area[i].end_x = (fd->face_area[i].rect.end_x - f_w_shk_x)*win_w/width_tmp;
 		ae1_fd->cur_info.face_area[i].start_y = (fd->face_area[i].rect.start_y + f_w_shk_y)*win_h/height_tmp;
@@ -2262,7 +2262,7 @@ static cmr_s32 _fd_info_set(struct ae_ctrl_cxt *cxt)
         );
     }
 */
-	
+
 	return rtn;
 }
 	// add end
@@ -2426,15 +2426,15 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	param->cur_work_mode = cxt->sync_cur_status.settings.work_mode;
 	param->cur_metering_mode = (cmr_u32) cxt->sync_cur_status.settings.metering_mode;	// metering_mode
 	/* Bethany
-	   * add  some  touch  info  to  debug  info 
+	   * add  some  touch  info  to  debug  info
 	 */
 	param->TC_AE_status = cxt->sync_cur_status.settings.touch_tuning_enable;
-	/* Bethany 
+	/* Bethany
 	   *add some  touch  info  to  debug  info
 	 */
 	param->TC_cur_lum = cxt->sync_cur_result.ptc->result_touch_ae.touch_roi_lum;
-	/* Bethany 
-	   *add some touch info to debug info 
+	/* Bethany
+	   *add some touch info to debug info
 	 */
 	param->TC_target_offset = cxt->sync_cur_result.ptc->result_touch_ae.tar_offset;
 	param->mulaes_target_offset = cxt->sync_cur_result.pmulaes->result_mulaes.tar_offset;
@@ -2443,8 +2443,8 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	param->flat_target_offset = cxt->sync_cur_result.pflat->result_flat.tar_offset;
 
 	// memcpy((cmr_handle*)&param->histogram[0],
-	// (cmr_handle*)cxt->sync_cur_result.histogram, sizeof(cmr_u32) 
-	// 
+	// (cmr_handle*)cxt->sync_cur_result.histogram, sizeof(cmr_u32)
+	//
 	// * 256);
 	memcpy((cmr_handle)&param->r_stat_info[0], (cmr_handle)&cxt->sync_aem[0], sizeof(cmr_u32) * 1024);
 	memcpy((cmr_handle)&param->g_stat_info[0], (cmr_handle)&cxt->sync_aem[1024], sizeof(cmr_u32) * 1024);
@@ -2458,7 +2458,7 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	 * sizeof(*(cxt->sync_cur_result.pflat)),
 	 * sizeof(*(cxt->sync_cur_result.pmulaes)));
 	 * AE_LOGD("total_i-metering_region %d\r\n",
-	 * sizeof(cxt->sync_cur_result.pregion->in_region)); 
+	 * sizeof(cxt->sync_cur_result.pregion->in_region));
 	 */
 	if (len < sizeof(param->reserved)) {
 		memcpy((cmr_handle)&param->reserved[0], (cmr_handle)cxt->sync_cur_result.pregion, sizeof(*(cxt->sync_cur_result.pregion)));
@@ -2469,7 +2469,7 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 		len = len + (sizeof(*(cxt->sync_cur_result.pflat)) / sizeof(cmr_u32));
 		memcpy((cmr_handle)&param->reserved[len], (cmr_handle)cxt->sync_cur_result.pmulaes, sizeof(*(cxt->sync_cur_result.pmulaes)));
 	}
-	
+
 DEBUG_INFO_EXIT:
 
 #else
@@ -3852,7 +3852,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				cxt->cur_status.line_time = work_info->resolution_info.line_time/SENSOR_LINETIME_BASE;
 				cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 				cxt->cur_status.snr_min_fps = work_info->sensor_fps.min_fps;
-				
+
 				cxt->start_id = AE_START_ID;
 				cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
 				cxt->monitor_unit.cfg.skip_num = 0;
@@ -4034,7 +4034,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	}
 	//ae_seq_reset(cxt->seq_handle);
 	seq_deinit(cxt->seq_handle);
-	//destroy ISP gain queue 
+	//destroy ISP gain queue
 	isp_gain_buffer_deinit(cxt);
 
 	if (cxt->debug_enable) {
@@ -4045,7 +4045,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	}
 
 	/*
-	 * destroy thread 
+	 * destroy thread
 	 */
 	if (cxt->thread_handle) {
 		cmr_thread_destroy(cxt->thread_handle);

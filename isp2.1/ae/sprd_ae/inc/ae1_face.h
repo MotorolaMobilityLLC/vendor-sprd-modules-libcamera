@@ -29,7 +29,7 @@ extern "C" {
 #endif
 	struct face_tuning_param{
 		cmr_u8 face_tuning_enable;
-		cmr_u8 face_target; //except to get the face lum 
+		cmr_u8 face_target; //except to get the face lum
 		cmr_u8 face_tuning_lum1; // scope is [0,256]
 		cmr_u8 face_tuning_lum2;//if face lum > this value, offset will set to be 0
 		cmr_u16 cur_offset_weight;//10~100 will trans 0~1

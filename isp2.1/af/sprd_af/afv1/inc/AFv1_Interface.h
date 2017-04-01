@@ -18,7 +18,7 @@
  *  +-----------------------------------------------------------------+
  *
  * $History$
- * 
+ *
  *******************************************************************************
  */
 
@@ -30,7 +30,7 @@
  * AF_Interface.h
  *
  * \brief
- * Interface for AF 
+ * Interface for AF
  *
  * \date
  * 2016/01/03
@@ -63,8 +63,8 @@ ERRCODE AF_Process_Frame(AF_Data *pAF_Data);
 ERRCODE AF_Get_Statistic(AF_Data *pAF_Data);
 ERRCODE AF_Get_StartPosStatistic(AF_Data *pAF_Data);
 ERRCODE AF_Get_SAF_Result(AF_Data *pAF_Data, uint8* SAF_Result);
-ERRCODE AF_Search_LENS_MOVE(uint8* pLensMoveCnt, 
-                            uint8* pMaxSearchTableNum, 
+ERRCODE AF_Search_LENS_MOVE(uint8* pLensMoveCnt,
+                            uint8* pMaxSearchTableNum,
                             uint16 pos,
                             AF_Ctrl_Ops* pAF_Ops,
                             uint8* pAF_Result );

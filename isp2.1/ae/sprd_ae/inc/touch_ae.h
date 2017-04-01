@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */  
+ */
 #ifndef _TOUCH_AE_H_
 #define _TOUCH_AE_H_
 /*----------------------------------------------------------------------------*
@@ -67,7 +67,7 @@ extern "C" {
 		cmr_s8 release_flag;//for release
 		char* log;
 	} touch_rt;//result info
-	
+
 	typedef struct  {
 		cmr_u8 mlog_en;
 		cmr_u8 debug_status;

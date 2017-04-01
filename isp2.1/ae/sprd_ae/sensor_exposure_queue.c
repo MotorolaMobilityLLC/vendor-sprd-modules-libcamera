@@ -294,12 +294,12 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 			handle, in_est_ptr, out_actual_ptr, out_write_ptr);
 		goto EXIT;
 	}
-	
+
 	cxt_ptr 		= (struct seq_cxt*)handle;
 	cur_frame_id 	= in_est_ptr->cell.frame_id;
 
 	//AE_LOGD("seq_put_fid %d\r\n", cur_frame_id);
-	
+
 	if (SEQ_WORK_CAPTURE == in_est_ptr->work_mode)
 		skip_num = cxt_ptr->init_in_param.capture_skip_num;
 	else if (SEQ_WORK_PREVIEW == in_est_ptr->work_mode)
@@ -362,7 +362,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 						goto EXIT;
 				}
 			}
-#endif			
+#endif
 		} else{
 			push_write_cell.frame_id 	= cur_frame_id;
 			push_write_cell.gain 		= in_est_ptr->cell.gain;
@@ -383,7 +383,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	offset_num 				= max_valid_num + 1;
 	push_nxt_actual_cell 	= in_est_ptr->cell;
 	ret = seq_push_actual_element(cxt_ptr, 1, offset_num, &push_nxt_actual_cell);
-	
+
 	if (ret)
 		goto EXIT;
 
