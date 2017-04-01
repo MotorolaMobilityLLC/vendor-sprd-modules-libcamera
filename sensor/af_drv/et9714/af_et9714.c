@@ -35,14 +35,14 @@ static uint32_t _et9714_write_dac_code(cmr_handle sns_af_drv_handle,int32_t code
 	uint16_t cmd_len = 0;
 	uint16_t step_4bit = 0x09;
 
-	AF_LOGI("%d", code);
+	CMR_LOGI("%d", code);
 
 	cmd_val[0] = (code & 0xfff0) >> 4;
 	cmd_val[1] = ((code & 0x0f) << 4) | step_4bit;
 	cmd_len = 2;
 	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 
-	AF_LOGI("ret_value=%d", ret_value);
+	CMR_LOGI("ret_value=%d", ret_value);
 	return ret_value;
 }
 
@@ -83,7 +83,7 @@ static int et9714_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos)
 
 	int32_t target_code = pos & 0x3FF;
 	int32_t m_cur_dac_code = af_drv_cxt->current_pos;
-	AF_LOGI("%d", target_code);
+	CMR_LOGI("%d", target_code);
 
 	while((m_cur_dac_code-target_code) >= MOVE_CODE_STEP_MAX){
 		m_cur_dac_code=m_cur_dac_code - MOVE_CODE_STEP_MAX;
@@ -156,7 +156,7 @@ static int _et9714_drv_set_mode(cmr_handle sns_af_drv_handle)
 		mode = et9714_drv_entry.default_work_mode;
 	}
 
-	AF_LOGI("mode = %d\n", mode); 
+	CMR_LOGI("mode = %d\n", mode); 
 	switch (mode) {
 	case 1:
 		/* When you use direct mode after power on, you don't need register set. Because, DLC disable is default.*/

@@ -38,7 +38,7 @@ static uint32_t _dw9763_write_dac_code(cmr_handle sns_af_drv_handle, int32_t cod
     else if ((int32_t)code > 0x3FF)
         code = 0x3FF;
 
-    AF_LOGD("%d", code);
+    CMR_LOGD("%d", code);
 
     cmd_len = 2;
     cmd_val[0] = 0x03;
@@ -94,14 +94,14 @@ static int dw9763_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
         while((m_cur_dac_code - target_code) >= MOVE_CODE_STEP_MAX){
             m_cur_dac_code = m_cur_dac_code - MOVE_CODE_STEP_MAX;
             _dw9763_write_dac_code(sns_af_drv_handle, m_cur_dac_code);
-            AF_LOGI("dac_target_code = %d\n", m_cur_dac_code);
+            CMR_LOGI("dac_target_code = %d\n", m_cur_dac_code);
             usleep(WAIT_STABLE_TIME*1000);
         }
     }
     _dw9763_write_dac_code(sns_af_drv_handle, target_code);
 
     af_drv_cxt->current_pos = target_code;
-    AF_LOGI("target_code = %d\n", target_code);
+    CMR_LOGI("target_code = %d\n", target_code);
 
     return ret_value;
 }
@@ -154,7 +154,7 @@ static int _dw9763_drv_set_mode(cmr_handle sns_af_drv_handle)
         mode = dw9763_drv_entry.default_work_mode;
     }
 
-    AF_LOGI("mode = %d\n", mode);
+    CMR_LOGI("mode = %d\n", mode);
 
     switch (mode) {
     case 1:

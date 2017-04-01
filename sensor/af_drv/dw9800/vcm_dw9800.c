@@ -38,7 +38,7 @@ static uint32_t _dw9800_set_motor_bestmode(cmr_handle sns_af_drv_handle)
 	hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
 	usleep(200*1000);
 
-	AF_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d %d",ctrl,mode,freq,(pos1<<8)+pos2);
+	CMR_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d %d",ctrl,mode,freq,(pos1<<8)+pos2);
 	return 0;
 }
 
@@ -109,7 +109,7 @@ static uint32_t _dw9800_set_test_vcm_mode(cmr_handle sns_af_drv_handle, char* vc
 		p1++;
 	*p1++ = '\0';
 	freq = atoi(vcm_mode);
-	AF_LOGI("VCM ctrl mode freq pos 1nd,%d %d %d",ctrl,mode,freq);
+	CMR_LOGI("VCM ctrl mode freq pos 1nd,%d %d %d",ctrl,mode,freq);
 	//set
 	cmd_val[0] = 0x02;
 	cmd_val[1] = ctrl;
@@ -138,7 +138,7 @@ static uint32_t _dw9800_set_test_vcm_mode(cmr_handle sns_af_drv_handle, char* vc
 	cmd_val[1] = 0x07;
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
 	freq = cmd_val[0];
-	AF_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d",ctrl,mode,freq);
+	CMR_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d",ctrl,mode,freq);
 	return 0;
 }
 
@@ -154,7 +154,7 @@ static int dw9800_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns
 		if (ret != AF_SUCCESS)
 			ret = AF_FAIL;
 	}
-	AF_LOGI("af_drv_handle:0x%x",*sns_af_drv_handle);
+	CMR_LOGI("af_drv_handle:0x%x",*sns_af_drv_handle);
 	return ret;
 }
 
@@ -179,7 +179,7 @@ static int dw9800_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 	cmd_val[0] = 0x04;
 	cmd_val[1] = pos&0xff;
 	hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	AF_LOGI("set_position:0x%x",pos);
+	CMR_LOGI("set_position:0x%x",pos);
 	return AF_SUCCESS;
 }
 
@@ -189,7 +189,7 @@ static int dw9800_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos)
 	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
 	CHECK_PTR(sns_af_drv_handle);
 	// read
-	AF_LOGI("handle:0x%x",sns_af_drv_handle);
+	CMR_LOGI("handle:0x%x",sns_af_drv_handle);
 	cmd_val[0] = 0x03;
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
 	*pos = (cmd_val[0] & 0x03)<<8;
@@ -197,7 +197,7 @@ static int dw9800_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos)
 	cmd_val[0] = 0x04;
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
 	*pos += cmd_val[0];
-	AF_LOGI("get_position:0x%x",*pos);
+	CMR_LOGI("get_position:0x%x",*pos);
 
 	return AF_SUCCESS;
 }
@@ -247,7 +247,7 @@ static int _dw9800_drv_init(cmr_handle sns_af_drv_handle)
 	uint32_t ret_value = SENSOR_SUCCESS;
 
 	slave_addr = DW9800_VCM_SLAVE_ADDR;
-	AF_LOGI("E");
+	CMR_LOGI("E");
 	cmd_len = 2;
 	cmd_val[0] = 0x02;
 	cmd_val[1] = 0x02;

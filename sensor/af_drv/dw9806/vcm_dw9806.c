@@ -116,7 +116,7 @@ static int _dw9806_drv_set_mode(cmr_handle sns_af_drv_handle)
 	} else {
 		mode = dw9806_drv_entry.default_work_mode;
 	}
-	AF_LOGI("mode: %d",mode);
+	CMR_LOGI("mode: %d",mode);
 
 	switch (mode) {
 		case 1:

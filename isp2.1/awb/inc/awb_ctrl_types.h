@@ -33,22 +33,6 @@ extern "C" {
 /*------------------------------------------------------------------------------*
 *				Micro Define					*
 *-------------------------------------------------------------------------------*/
-#ifdef WIN32
-#define AWB_CTRL_LOGE
-#define AWB_CTRL_LOGW
-#define AWB_CTRL_LOGI
-#define AWB_CTRL_LOGD
-#define AWB_CTRL_LOGV
-#else
-#define AWB_CTRL_DEBUG_STR     "ISP_AWB: %d, %s: "
-#define AWB_CTRL_DEBUG_ARGS    __LINE__,__FUNCTION__
-
-#define AWB_CTRL_LOGE(format,...) ALOGE(AWB_CTRL_DEBUG_STR format, AWB_CTRL_DEBUG_ARGS, ##__VA_ARGS__)
-#define AWB_CTRL_LOGW(format,...) ALOGW(AWB_CTRL_DEBUG_STR format, AWB_CTRL_DEBUG_ARGS, ##__VA_ARGS__)
-#define AWB_CTRL_LOGI(format,...) ALOGI(AWB_CTRL_DEBUG_STR format, AWB_CTRL_DEBUG_ARGS, ##__VA_ARGS__)
-#define AWB_CTRL_LOGD(format,...) ALOGD(AWB_CTRL_DEBUG_STR format, AWB_CTRL_DEBUG_ARGS, ##__VA_ARGS__)
-#define AWB_CTRL_LOGV(format,...) ALOGV(AWB_CTRL_DEBUG_STR format, AWB_CTRL_DEBUG_ARGS, ##__VA_ARGS__)
-#endif
 
 /*------------------------------------------------------------------------------*
 *				Data Structures					*

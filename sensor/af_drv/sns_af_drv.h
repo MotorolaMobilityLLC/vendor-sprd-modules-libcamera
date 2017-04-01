@@ -28,9 +28,6 @@
 
 #define AF_SUCCESS          CMR_CAMERA_SUCCESS
 #define AF_FAIL             CMR_CAMERA_FAIL
-#define AF_LOGI   CMR_LOGI
-#define AF_LOGD   CMR_LOGD
-#define AF_LOGE   CMR_LOGE
 
 #ifndef CHECK_PTR
 #define CHECK_PTR(expr)\

@@ -24,12 +24,25 @@ cmr_int g_sensor_log_level = LEVEL_OVER_LOGD;
 
 void isp_init_log_level(void) {
     char prop[PROPERTY_VALUE_MAX];
-    int val = 0;
+    cmr_s32 val = 0;
+    cmr_s32 turn_off_flag = 0;
 
     property_get("persist.sys.camera.isp.log", prop, "0");
     val = atoi(prop);
-    if (0 < val)
-        g_isp_log_level = val;
+
+    // to turn off camera log:
+    // adb shell setprop persist.sys.camera.log off
+    property_get("persist.sys.camera.log", prop, "on");
+    if (!strcmp(prop, "off")) {
+        turn_off_flag = 1;
+    }
+    // user verson/turn off camera log dont print >= LOGD
+    property_get("ro.build.type", prop, "userdebug");
+    if (!strcmp(prop, "user") || turn_off_flag) {
+        g_isp_log_level = LEVEL_OVER_LOGI;
+    } else if (0 < val) {
+        g_isp_log_level = (cmr_u32)val;
+    }
 }
 
 void oem_init_log_level(void) {

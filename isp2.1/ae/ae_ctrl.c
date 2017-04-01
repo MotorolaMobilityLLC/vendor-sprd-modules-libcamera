@@ -591,7 +591,7 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 
 	message.data = malloc(sizeof(struct ae_calc_in));
 	if (!message.data) {
-		CMR_LOGE("fail to malloc msg");
+		ISP_LOGE("fail to malloc msg");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}

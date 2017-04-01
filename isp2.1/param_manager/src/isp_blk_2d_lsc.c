@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_2d_lsc"
 #include "isp_blocks_cfg.h"
 #include "isp_com.h"
 
@@ -374,7 +374,7 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 		{
 			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
-			ISP_LOGI("ISP_PM_BLK_LSC_INFO");
+			ISP_LOGD("ISP_PM_BLK_LSC_INFO");
 
 			{
 				cmr_u16 *ptr = NULL;
@@ -383,8 +383,8 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 #else
 				ptr = (void *)(dst_lnc_ptr->cur.buf_addr[0]);
 #endif
-				ISP_LOGI("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
-				ISP_LOGI("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
+				ISP_LOGD("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
+				ISP_LOGD("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
 			}
 		}
 		break;

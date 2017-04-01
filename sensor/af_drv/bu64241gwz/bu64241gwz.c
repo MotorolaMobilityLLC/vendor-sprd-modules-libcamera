@@ -24,7 +24,7 @@ static uint32_t _BU64241GWZ_set_motor_bestmode(cmr_handle sns_af_drv_handle)
 	cmd_val[1] = (str<<5)|stt;
 	hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,(0x18 >> 1),(uint8_t*)&cmd_val[0],2);
 
-	AF_LOGI("VCM mode set");
+	CMR_LOGI("VCM mode set");
 	return 0;
 }
 
@@ -65,7 +65,7 @@ static uint32_t  _BU64241GWZ_get_test_vcm_mode(cmr_handle sns_af_drv_handle)
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,(0x18 >> 1),(uint8_t*)&cmd_val[0],2);
 	str = cmd_val[1]>>5;
 	stt = cmd_val[1]&0x1f;
-	AF_LOGI("VCM A_code B_code rf slew_rate stt str pos,%d %d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str,C_code);
+	CMR_LOGI("VCM A_code B_code rf slew_rate stt str pos,%d %d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str,C_code);
 
 	fprintf(fp,"VCM A_code B_code rf slew_rate stt str pos,%d %d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str,C_code);
 	fflush(fp);
@@ -112,7 +112,7 @@ static uint32_t  _BU64241GWZ_set_test_vcm_mode(cmr_handle sns_af_drv_handle, cha
 		p1++;
 	*p1++ = '\0';
 	str = atoi(vcm_mode);
-	AF_LOGI("VCM A_code B_code rf slew_rate stt str 1nd,%d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str);
+	CMR_LOGI("VCM A_code B_code rf slew_rate stt str 1nd,%d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str);
 	//set
 	cmd_val[0] = 0xcc;
 	cmd_val[1] = (rf<<3)|slew_rate;
@@ -149,7 +149,7 @@ static uint32_t  _BU64241GWZ_set_test_vcm_mode(cmr_handle sns_af_drv_handle, cha
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,(0x18 >> 1),(uint8_t*)&cmd_val[0],2);
 	str = cmd_val[1]>>5;
 	stt = cmd_val[1]&0x1f;
-	AF_LOGI("VCM A_code B_code rf slew_rate stt str 2nd,%d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str);
+	CMR_LOGI("VCM A_code B_code rf slew_rate stt str 2nd,%d %d %d %d %d %d",A_code,B_code,rf,slew_rate,stt,str);
 	return 0;
 }
 
@@ -182,7 +182,7 @@ static int BU64241GWZ_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
 	CHECK_PTR(sns_af_drv_handle);
 	// set pos
-	AF_LOGI("BU64241GWZ_set_pos %d",pos);
+	CMR_LOGI("BU64241GWZ_set_pos %d",pos);
 	hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,(0x18 >> 1),(uint8_t*)&cmd_val[0],2);
 	return 0;
 }
@@ -196,7 +196,7 @@ static int BU64241GWZ_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos)
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,(0x18 >> 1),(uint8_t*)&cmd_val[0],2);
 	*pos = (cmd_val[0]&0x03)<<8;
 	*pos += cmd_val[1];
-	AF_LOGI("vcm pos %d",*pos);
+	CMR_LOGI("vcm pos %d",*pos);
 	return 0;
 }
 
@@ -246,7 +246,7 @@ static int _BU64241GWZ_drv_init(cmr_handle sns_af_drv_handle)
 	uint32_t ret_value = AF_SUCCESS;
 
 	slave_addr = BU64241GWZ_VCM_SLAVE_ADDR;
-	AF_LOGI("E");
+	CMR_LOGI("E");
 	cmd_len = 2;
 	cmd_val[0] = 0x02;
 	cmd_val[1] = 0x02;

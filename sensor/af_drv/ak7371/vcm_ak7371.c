@@ -67,7 +67,7 @@ static int vcm_ak7371_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 		pos = 0x3FF;
 	af_drv_cxt->current_pos = pos & 0x3FF;
 
-	AF_LOGI("set position %d", pos);
+	CMR_LOGI("set position %d", pos);
 	cmd_len = 2;
 	cmd_val[0] = 0x00;
 	cmd_val[1] = (pos & 0x3ff)>>2;
@@ -84,7 +84,7 @@ static int vcm_ak7371_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, 
 	uint32_t ret_value = AF_SUCCESS;
 	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
 	CHECK_PTR(sns_af_drv_handle);
-	AF_LOGI("cmd is ",cmd);
+	CMR_LOGI("cmd is ",cmd);
 	switch(cmd) {
 		case CMD_SNS_AF_SET_BEST_MODE:
 			break;
@@ -128,7 +128,7 @@ static int _vcm_ak7371_set_mode(cmr_handle sns_af_drv_handle)
 	} else {
 		mode = vcm_ak7371_drv_entry.default_work_mode;
 	}
-	AF_LOGI("mode: %d",mode);
+	CMR_LOGI("mode: %d",mode);
 
 	usleep(100);
 	switch (mode) {

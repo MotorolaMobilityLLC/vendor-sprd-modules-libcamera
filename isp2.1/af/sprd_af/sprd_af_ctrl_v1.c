@@ -109,12 +109,12 @@ static cmr_s32 _check_handle(afv1_handle_t handle)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 
 	if (NULL == af) {
-		AF_LOGE("invalid cxt pointer");
+		ISP_LOGE("invalid cxt pointer");
 		return AFV1_HANDLER_NULL;
 	}
 /*
 	if (AF_MAGIC_START != cxt->magic_start || AF_MAGIC_END != cxt->magic_end) {
-		AF_LOGE("invalid magic begin = 0x%x, magic end = 0x%x", cxt->magic_start, cxt->magic_end);
+		ISP_LOGE("invalid magic begin = 0x%x, magic end = 0x%x", cxt->magic_start, cxt->magic_end);
 		return AF_HANDLER_CXT_ERROR;
 	}
 */
@@ -133,7 +133,7 @@ static cmr_s32 _af_set_motor_pos(afv1_handle_t handle, cmr_u32 motot_pos)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -156,7 +156,7 @@ static cmr_s32 _alg_init(afv1_handle_t handle, struct afctrl_init_in *init_param
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -168,7 +168,7 @@ static cmr_s32 _alg_init(afv1_handle_t handle, struct afctrl_init_in *init_param
 	if (init_param->tuning_param_cnt > 0) {
 		alg_init_param.tuning_param = (struct af_alg_tuning_block_param *)malloc(sizeof(*alg_init_param.tuning_param) * init_param->tuning_param_cnt);
 		if (NULL == alg_init_param.tuning_param) {
-			AF_LOGE("mem alloc for tuning_param error !!!");
+			ISP_LOGE("mem alloc for tuning_param error !!!");
 			return AFV1_ERROR;
 		}
 		for (i = 0; i < init_param->tuning_param_cnt; i++) {
@@ -181,7 +181,7 @@ static cmr_s32 _alg_init(afv1_handle_t handle, struct afctrl_init_in *init_param
 	af_cxt->af_alg_handle = af_cxt->lib_ops.af_init(&alg_init_param, &alg_result);
 	free(alg_init_param.tuning_param);
 	if (NULL == af_cxt->af_alg_handle) {
-		AF_LOGE("init af_alg_handle error !!!");
+		ISP_LOGE("init af_alg_handle error !!!");
 		return AFV1_ERROR;
 	}
 	result->init_motor_pos = alg_result.init_motor_pos;
@@ -197,7 +197,7 @@ static cmr_s32 _cfg_af_calc_param(afv1_handle_t handle, struct af_calc_param *pa
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -267,7 +267,7 @@ static cmr_s32 _cfg_af_calc_param(afv1_handle_t handle, struct af_calc_param *pa
 		break;
 
 	default:
-		AF_LOGE("unsupport data type! type: %d", param->data_type);
+		ISP_LOGE("unsupport data type! type: %d", param->data_type);
 		rtn = AFV1_ERROR;
 		break;
 	}
@@ -288,7 +288,7 @@ static cmr_s32 _af_cfg_afm_win(afv1_handle_t handle, cmr_u32 type, cmr_u32 win_n
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 //      ctrl_context = (isp_ctrl_context *)af_cxt->caller;
@@ -296,8 +296,8 @@ static cmr_s32 _af_cfg_afm_win(afv1_handle_t handle, cmr_u32 type, cmr_u32 win_n
 	rtn = af_cxt->get_monitor_win_num(af_cxt->caller, &hw_max_win_num);
 	hw_max_win_num = hw_max_win_num > MAX_AF_WIN ? MAX_AF_WIN : hw_max_win_num;
 
-	AF_LOGE("max hw win num %d, cfg win num %d", hw_max_win_num, win_num);
-	AF_LOGE("isp w %d, h %d", af_cxt->src.w, af_cxt->src.h);
+	ISP_LOGE("max hw win num %d, cfg win num %d", hw_max_win_num, win_num);
+	ISP_LOGE("isp w %d, h %d", af_cxt->src.w, af_cxt->src.h);
 
 	if (0 == win_num) {
 		w = af_cxt->src.w;
@@ -324,7 +324,7 @@ static cmr_s32 _af_cfg_afm_win(afv1_handle_t handle, cmr_u32 type, cmr_u32 win_n
 		af_cxt->win_cfg.win_prio[i] = 1;
 	}
 
-	AF_LOGE("sx w %d, sy %d,ex w %d, ey %d", set_pos[0].sx, set_pos[0].sy, set_pos[0].ex, set_pos[0].ey);
+	ISP_LOGE("sx w %d, sy %d,ex w %d, ey %d", set_pos[0].sx, set_pos[0].sy, set_pos[0].ex, set_pos[0].ey);
 
 	for (i = win_num; i < hw_max_win_num; i++) {
 		set_pos[i] = set_pos[0];
@@ -344,7 +344,7 @@ static cmr_s32 _af_set_status(afv1_handle_t handle, cmr_u32 af_status)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -371,7 +371,7 @@ static cmr_s32 _af_set_status(afv1_handle_t handle, cmr_u32 af_status)
 		set_status = AF_ALG_STATUS_STOP;
 		break;
 	default:
-		AF_LOGE("AF status: %d not support !!!", af_status);
+		ISP_LOGE("AF status: %d not support !!!", af_status);
 		rtn = AF_PARAM_ERROR;
 		break;
 	}
@@ -392,7 +392,7 @@ static cmr_s32 _af_set_start(afv1_handle_t handle, struct af_trig_info *trig_inf
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 	rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_GET_AF_INIT_POS, (void *)&af_pos, NULL);
@@ -423,7 +423,7 @@ static cmr_s32 _af_end_proc(afv1_handle_t handle, struct af_result_param *result
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 	monitor_set.bypass = 1;
@@ -453,7 +453,7 @@ static cmr_s32 _af_finish(afv1_handle_t handle, struct af_result_param *result)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 	rtn = af_ioctrl(handle, AF_CMD_SET_AF_FINISH, (void *)result, NULL);
@@ -469,7 +469,7 @@ static cmr_s32 _caf_trig_af_start(afv1_handle_t handle)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -488,7 +488,7 @@ static cmr_s32 _caf_reset(afv1_handle_t handle)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -504,7 +504,7 @@ static cmr_s32 _caf_stop(afv1_handle_t handle)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -520,7 +520,7 @@ static cmr_s32 _caf_reset_after_af(afv1_handle_t handle)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -548,19 +548,19 @@ static cmr_s32 _af_set_mode(afv1_handle_t handle, void *in_param)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
 	property_get("af_mode", AF_MODE, "none");
 	if (0 == strcmp(AF_MODE, "none")) {
-		AF_LOGD("state = %s, mode = %d", STATE_STRING(af->state), af_mode);
+		ISP_LOGD("state = %s, mode = %d", STATE_STRING(af->state), af_mode);
 		/*if (STATE_INACTIVE == af->state)
 		   return 0; */
 		switch (af_mode) {
 		case AF_MODE_CONTINUE:
 		case AF_MODE_VIDEO:
-			AF_LOGD("af state = %s, caf state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
+			ISP_LOGD("af state = %s, caf state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 			//            if (STATE_IDLE == af->state)
 			if (STATE_FAF == af->state) {
 				return 0;
@@ -576,7 +576,7 @@ static cmr_s32 _af_set_mode(afv1_handle_t handle, void *in_param)
 		case AF_MODE_PICTURE:
 			if (af->need_re_trigger != 1)
 				caf_stop_monitor(af);
-			AF_LOGD("AF_mode = %d, SAF_Search_Process = %d, need_re_trigger :%d", af->fv.AF_mode, af->fv.sAF_Data.sAFInfo.SAF_Search_Process, af->need_re_trigger);
+			ISP_LOGD("AF_mode = %d, SAF_Search_Process = %d, need_re_trigger :%d", af->fv.AF_mode, af->fv.sAF_Data.sAFInfo.SAF_Search_Process, af->need_re_trigger);
 
 			af->takePicture_timeout = 0;
 			if (Wait_Trigger != af->fv.AF_mode
@@ -587,7 +587,7 @@ static cmr_s32 _af_set_mode(afv1_handle_t handle, void *in_param)
 				af->state = STATE_CAF;
 				caf_start(af);
 			};
-			AF_LOGD("dcam_timestamp-vcm_timestamp = %lld ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
+			ISP_LOGD("dcam_timestamp-vcm_timestamp = %lld ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 			get_vcm_registor_pos(af);
 			break;
 		case AF_MODE_FULLSCAN:
@@ -619,12 +619,12 @@ static cmr_s32 _af_set_mode(afv1_handle_t handle, void *in_param)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
 	if (0 == af_cxt->flash_on) {
-		AF_LOGE("mode %d", af_mode);
+		ISP_LOGE("mode %d", af_mode);
 		switch (af_mode) {
 		case AF_MODE_NORMAL:
 			set_mode = AF_ALG_MODE_NORMAL;
@@ -642,7 +642,7 @@ static cmr_s32 _af_set_mode(afv1_handle_t handle, void *in_param)
 			set_mode = AF_ALG_MODE_NORMAL;
 			break;
 		default:
-			AF_LOGE("AF mode: %d not support !!!", af_mode);
+			ISP_LOGE("AF mode: %d not support !!!", af_mode);
 			rtn = AF_PARAM_ERROR;
 			break;
 		}
@@ -728,7 +728,7 @@ static void afm_setup(af_ctrl_t * af)
 	//isp_ctrl_context *isp = af->isp_ctx;
 	//isp_handle device = isp->handle_device;
 
-	// AF_LOGD("scene = %d, spsmd_max = 0x%x, spsmd_min = 0x%x, sobel_max = 0x%x, sobel_min = 0x%x",
+	// ISP_LOGD("scene = %d, spsmd_max = 0x%x, spsmd_min = 0x%x, sobel_max = 0x%x, sobel_min = 0x%x",
 	//     af->curr_scene,
 	//     af->filter_clip[af->curr_scene].spsmd_max, af->filter_clip[af->curr_scene].spsmd_min,
 	//     af->filter_clip[af->curr_scene].sobel_max, af->filter_clip[af->curr_scene].sobel_min);
@@ -756,7 +756,7 @@ static void afm_setup(af_ctrl_t * af)
 		af->thrd.spsmd_thr_max_red = af->stat_reg.reg_param[1];
 		af->thrd.spsmd_thr_min_blue = af->thrd.spsmd_thr_min_green = af->thrd.spsmd_thr_min_red;
 		af->thrd.spsmd_thr_max_blue = af->thrd.spsmd_thr_max_green = af->thrd.spsmd_thr_max_red;
-		AF_LOGD("force write reg: %d ~ %d \n", af->stat_reg.reg_param[0]
+		ISP_LOGD("force write reg: %d ~ %d \n", af->stat_reg.reg_param[0]
 			, af->stat_reg.reg_param[1]);
 	}
 /*
@@ -844,7 +844,7 @@ static cmr_u32 afm_get_win_num(struct afctrl_init_in *input_param)
 	struct afctrl_init_in *input_ptr = input_param;
 	//isp_u_raw_afm_win_num(isp->handle_device, &num);
 	input_ptr->get_monitor_win_num(input_ptr->caller, &num);
-	AF_LOGI("win_num %d", num);
+	ISP_LOGI("win_num %d", num);
 	return num;
 }
 
@@ -936,11 +936,11 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 				num++;
 				/*
 				   for (i = 0; i < roi_num; i++) {
-				   AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+				   ISP_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
 				   }
 
 				   for (i = 0; i < roi_num; i++) {
-				   AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
+				   ISP_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
 				   }
 				 */
 				for (i = 0; i < roi_num; ++i) {
@@ -1008,11 +1008,11 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 				num++;
 
 				for (i = 0; i < 5; i++) {
-					//AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					//ISP_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
 				}
 
 				for (i = 0; i < 5; i++) {
-					//AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					//ISP_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
 				}
 
 				for (i = 0; i < roi_num; ++i) {
@@ -1045,7 +1045,7 @@ static void set_vcm_chip_ops(af_ctrl_t * af)
 // len
 static cmr_s32 lens_get_pos(af_ctrl_t * af)
 {
-	// AF_LOGD("pos = %d", af->lens.pos);
+	// ISP_LOGD("pos = %d", af->lens.pos);
 	return af->lens.pos;
 }
 
@@ -1053,7 +1053,7 @@ static void lens_move_to(af_ctrl_t * af, cmr_s32 pos)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	// AF_LOGD("pos = %d", pos);
+	// ISP_LOGD("pos = %d", pos);
 	cmr_u16 last_pos = 0;
 
 	last_pos = lens_get_pos(af);
@@ -1062,7 +1062,7 @@ static void lens_move_to(af_ctrl_t * af, cmr_s32 pos)
 		if (last_pos != pos)
 			//af->vcm_ops.set_pos(af->caller, pos); // must be provided
 			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);	// must be provided
-		AF_LOGD("af->vcm_ops.set_pos = %d", pos);
+		ISP_LOGD("af->vcm_ops.set_pos = %d", pos);
 		af->lens.pos = pos;
 	}
 }
@@ -1088,13 +1088,13 @@ static cmr_s32 compare_timestamp(af_ctrl_t * af)
 
 static void notify_start(af_ctrl_t * af)
 {
-	AF_LOGI(".");
+	ISP_LOGI(".");
 	af->start_notice(af->caller);
 }
 
 static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 {
-	AF_LOGI(". %s ", (win_num) ? "Suc" : "Fail");
+	ISP_LOGI(". %s ", (win_num) ? "Suc" : "Fail");
 	struct af_result_param af_result;
 	af_result.suc_win = win_num;
 
@@ -1114,7 +1114,7 @@ static cmr_s32 split_win(const win_coord_t * in, cmr_s32 h_num, cmr_s32 v_num, w
 	assert(v_num > 0);
 	assert(h_num > 0);
 
-	AF_LOGD("win: start_x = %d, start_y = %d, end_x = %d, end_y = %d", in->start_x, in->start_y, in->end_x, in->end_y);
+	ISP_LOGD("win: start_x = %d, start_y = %d, end_x = %d, end_y = %d", in->start_x, in->start_y, in->end_x, in->end_y);
 
 	width = (in->end_x - in->start_x + 1) / h_num;
 	height = (in->end_y - in->start_y + 1) / v_num;
@@ -1130,7 +1130,7 @@ static cmr_s32 split_win(const win_coord_t * in, cmr_s32 h_num, cmr_s32 v_num, w
 			out[num].end_x = ((startx + width - 1) >> 1) << 1;
 			out[num].start_y = (starty >> 1) << 1;
 			out[num].end_y = (endy >> 1) << 1;
-			AF_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", num, out[num].start_x, out[num].start_y, out[num].end_x, out[num].end_y);
+			ISP_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", num, out[num].start_x, out[num].start_y, out[num].end_x, out[num].end_y);
 
 			num++;
 			startx += width;
@@ -1231,7 +1231,7 @@ static void calc_default_roi(af_ctrl_t * af)
 		roi->win[0].end_y = (((h >> 1) + (h * 3 / 10)) >> 1) << 1;
 		break;
 	}
-	AF_LOGD("af_state %s win 0: start_x = %d, start_y = %d, end_x = %d, end_y = %d",
+	ISP_LOGD("af_state %s win 0: start_x = %d, start_y = %d, end_x = %d, end_y = %d",
 		STATE_STRING(af->state), roi->win[0].start_x, roi->win[0].start_y, roi->win[0].end_x, roi->win[0].end_y);
 }
 
@@ -1256,9 +1256,9 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 
 	if (1 != af->af_tuning_data.flag || 1 != af->win_config->win_strategic) {	//default window config
 		if (win)
-			AF_LOGD("valid_win = %d, mode = %d", win->win_num, win->mode);
+			ISP_LOGD("valid_win = %d, mode = %d", win->win_num, win->mode);
 		else
-			AF_LOGD("win is NULL, use default roi");
+			ISP_LOGD("win is NULL, use default roi");
 
 		if (!win || (0 == win->win_num)) {
 			af->touch = 0;
@@ -1273,7 +1273,7 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 				roi->win[i].start_y = (win->win_pos[i].sy >> 1) << 1;
 				roi->win[i].end_x = (win->win_pos[i].ex >> 1) << 1;
 				roi->win[i].end_y = (win->win_pos[i].ey >> 1) << 1;
-				AF_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i,
+				ISP_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i,
 					roi->win[i].start_x, roi->win[i].start_y, roi->win[i].end_x, roi->win[i].end_y);
 			}
 		}
@@ -1301,7 +1301,7 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 				roi->win[i].start_y = (win->win_pos[i].sy >> 1) << 1;
 				roi->win[i].end_x = (win->win_pos[i].ex >> 1) << 1;
 				roi->win[i].end_y = (win->win_pos[i].ey >> 1) << 1;
-				AF_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i,
+				ISP_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i,
 					roi->win[i].start_x, roi->win[i].start_y, roi->win[i].end_x, roi->win[i].end_y);
 			}
 
@@ -1399,7 +1399,7 @@ static void saf_stop(af_ctrl_t * af)
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(&af->fv, af->algo_mode);
 	AF_Process_Frame(&af->fv);
-	AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+	ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 	pthread_mutex_unlock(&af->af_work_lock);
 	// let it finish its job
 //    AF_Process_Frame(&af->fv);
@@ -1410,12 +1410,12 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 {
 	AF_Process_Frame(&af->fv);
 
-	// AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+	// ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 	if (Wait_Trigger == af->fv.AF_mode) {
 		cmr_u8 res;
 
 		AF_Get_SAF_Result(&af->fv, &res);
-		// AF_LOGD("Normal AF end, result = %d", res);
+		// ISP_LOGD("Normal AF end, result = %d", res);
 
 		notify_stop(af, HAVE_PEAK == res ? 1 : 0);
 		return 1;
@@ -1426,7 +1426,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 
 // trigger stuffs
 #define LOAD_SYMBOL(handle, sym, name) \
-{sym=dlsym(handle, name); if(NULL==sym) {AF_LOGE("dlsym fail: %s", name); return -1;}}
+{sym=dlsym(handle, name); if(NULL==sym) {ISP_LOGE("dlsym fail: %s", name); return -1;}}
 
 static cmr_s32 load_trigger_symbols(af_ctrl_t * af)
 {
@@ -1442,7 +1442,7 @@ static cmr_s32 load_trigger_lib(af_ctrl_t * af, const char *name)
 	af->trig_lib = dlopen(name, RTLD_NOW);
 
 	if (NULL == af->trig_lib) {
-		AF_LOGE("dlopen failed to load: %s", name);
+		ISP_LOGE("dlopen failed to load: %s", name);
 		return -1;
 	}
 
@@ -1483,11 +1483,11 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 	isp_pm_ioctl(isp_ctx->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &aft_pm_output);
 
 	if (PNULL == aft_pm_output.param_data || PNULL == aft_pm_output.param_data[0].data_ptr || 0 == aft_pm_output.param_data[0].data_size) {
-		AF_LOGI("aft tuning param error ");
+		ISP_LOGI("aft tuning param error ");
 		aft_in.data_len = 0;
 		aft_in.data = NULL;
 	} else {
-		AF_LOGI("aft tuning param ok ");
+		ISP_LOGI("aft tuning param ok ");
 		aft_in.data_len = aft_pm_output.param_data[0].data_size;
 		aft_in.data = aft_pm_output.param_data[0].data_ptr;
 #if 0
@@ -1495,7 +1495,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 		fp = fopen("/data/mlog/aft_tuning.bin", "wb");
 		fwrite(aft_in.data, 1, aft_in.data_len, fp);
 		fclose(fp);
-		AF_LOGD("aft tuning size = %d", aft_in.data_len);
+		ISP_LOGD("aft tuning size = %d", aft_in.data_len);
 #endif
 	}
 	af->trig_ops.handle.aft_ops.aft_cookie = af;
@@ -1580,7 +1580,7 @@ static void caf_stop_search(af_ctrl_t * af)
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(&af->fv, af->algo_mode);
 	AF_Process_Frame(&af->fv);
-	AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+	ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 	pthread_mutex_unlock(&af->af_work_lock);
 
 	// let it finish its job
@@ -1607,7 +1607,7 @@ static void caf_stop_monitor(af_ctrl_t * af)
 
 static void caf_start(af_ctrl_t * af)
 {
-	AF_LOGD("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
+	ISP_LOGD("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 
 	if (STATE_RECORD_CAF == af->state)
 		af->algo_mode = VAF;
@@ -1624,7 +1624,7 @@ static void caf_start(af_ctrl_t * af)
 
 static void caf_stop(af_ctrl_t * af)
 {
-	AF_LOGD("caf_state = %s", CAF_STATE_STR(af->caf_state));
+	ISP_LOGD("caf_state = %s", CAF_STATE_STR(af->caf_state));
 
 	switch (af->caf_state) {
 	case CAF_MONITORING:
@@ -1648,12 +1648,12 @@ static void caf_search_process_af(af_ctrl_t * af)
 {
 	AF_Process_Frame(&af->fv);
 
-	//AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+	//ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 	if (Wait_Trigger == af->fv.AF_mode) {
 		cmr_u8 res;
 
 		AF_Get_SAF_Result(&af->fv, &res);
-		//AF_LOGD("Normal AF end, result = %d", res);
+		//ISP_LOGD("Normal AF end, result = %d", res);
 
 		//caf_stop_search(af, HAVE_PEAK == res ? 1 : 0);
 		//do_stop_af(af);
@@ -1678,7 +1678,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	memset(&res, 0, sizeof(res));
 
 	trigger_calc(af, prm, &res);
-	//AF_LOGD("is_caf_trig = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_need_rough_search);
+	//ISP_LOGD("is_caf_trig = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_need_rough_search);
 	if (res.is_caf_trig || AFV1_TRUE == af->inited_af_req) {
 		//caf_stop_monitor(af);
 		af->caf_state = CAF_SEARCHING;
@@ -1689,7 +1689,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 		af->need_re_trigger = 1;
 		AF_STOP(&af->fv, af->algo_mode);
 		AF_Process_Frame(&af->fv);
-		AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+		ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 		af->caf_state = CAF_MONITORING;
 		pthread_mutex_unlock(&af->af_work_lock);
 		do_start_af(af);
@@ -1755,7 +1755,7 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae,
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = af->curr_scene;
 	prm->ae_info.registor_pos = lens_get_pos(af);	//if_get_motor_pos(&prm->ae_info.registor_pos, (void *)af);        //gwb 32 to 16
-	// AF_LOGD("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d",
+	// ISP_LOGD("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d",
 	//   prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable);
 
 	caf_monitor_calc(af, prm);
@@ -1780,12 +1780,12 @@ static void caf_monitor_process_af(af_ctrl_t * af)
 		sum = 0;
 		for (i=0; i<9; ++i)
 		sum += fv[i];
-		AF_LOGD("spsmd %lld, %lld, %lld, %lld, %lld, %lld, %lld, %lld, %lld: %lld",
+		ISP_LOGD("spsmd %lld, %lld, %lld, %lld, %lld, %lld, %lld, %lld, %lld: %lld",
 		fv[0], fv[1], fv[2], fv[3], fv[4], fv[5], fv[6],
 		fv[7], fv[8], sum);
 		fv[0] = sum;
 */
-		//AF_LOGD("af->roi.num %d spsmd %lld", af->roi.num, fv[af->roi.num - 1]);
+		//ISP_LOGD("af->roi.num %d spsmd %lld", af->roi.num, fv[af->roi.num - 1]);
 	} else {
 		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
 		fv[0] = fv[af->roi.num - 1];	// the fv in last window is for caf trigger
@@ -1808,7 +1808,7 @@ static void caf_process_af(af_ctrl_t * af)
 {
 	//pthread_mutex_lock(&af->caf_lock);
 
-	AF_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
+	ISP_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
 
 	switch (af->caf_state) {
 	case CAF_SEARCHING:
@@ -1833,7 +1833,7 @@ static void caf_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae, isp_awb
 {
 	//pthread_mutex_lock(&af->caf_lock);
 
-	AF_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
+	ISP_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
 
 	//if (CAF_MONITORING == af->caf_state)
 	{
@@ -1845,7 +1845,7 @@ static void caf_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae, isp_awb
 
 static void suspend_caf(af_ctrl_t * af)
 {
-	AF_LOGD("state = %s, pre_state = %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
+	ISP_LOGD("state = %s, pre_state = %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
 	assert((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state));
 
 	af->pre_state = af->state;
@@ -1855,7 +1855,7 @@ static void suspend_caf(af_ctrl_t * af)
 
 static void resume_caf(af_ctrl_t * af)
 {
-	AF_LOGD("state = %s, pre_state = %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
+	ISP_LOGD("state = %s, pre_state = %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
 	assert((STATE_CAF == af->pre_state) || (STATE_RECORD_CAF == af->pre_state));
 
 	af->state = af->pre_state;
@@ -1889,12 +1889,12 @@ static cmr_s32 faf_process_frame(af_ctrl_t * af)
 {
 	AF_Process_Frame(&af->fv);
 
-	// AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+	// ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 	if (Wait_Trigger == af->fv.AF_mode) {
 		cmr_u8 res;
 
 		AF_Get_SAF_Result(&af->fv, &res);
-		// AF_LOGD("Normal AF end, result = %d", res);
+		// ISP_LOGD("Normal AF end, result = %d", res);
 
 		//notify_stop(af, HAVE_PEAK == res ? 1 : 0);
 		return 1;
@@ -1925,7 +1925,7 @@ static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
 
 	max_index = face_info->face_num;
 	while (i < face_info->face_num) {	// pick face of maximum size
-		AF_LOGD("face_area%d (sx ex sy ey) = (%d %d %d %d) ", i, face_info->face_info[i].sx,
+		ISP_LOGD("face_area%d (sx ex sy ey) = (%d %d %d %d) ", i, face_info->face_info[i].sx,
 			face_info->face_info[i].ex, face_info->face_info[i].sy, face_info->face_info[i].ey);
 		area = (face_info->face_info[i].ex - face_info->face_info[i].sx) * (face_info->face_info[i].ey - face_info->face_info[i].sy);
 		if (max_area < area) {
@@ -1952,7 +1952,7 @@ static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
 
 	if ((face_base->ex + face_base->sx) * face_base->diff_cx_thr < 100 * diff_x &&
 	    (face_base->ey + face_base->sy) * face_base->diff_cy_thr < 100 * diff_y && face_base->area * face_base->diff_area_thr < 100 * diff_area) {
-		AF_LOGD("diff_cx diff_cy diff_area = %f %f %f", 1.0 * diff_x / (face_base->ex + face_base->sx),
+		ISP_LOGD("diff_cx diff_cy diff_area = %f %f %f", 1.0 * diff_x / (face_base->ex + face_base->sx),
 			1.0 * diff_y / (face_base->ey + face_base->sy), 1.0 * diff_area / face_base->area);
 		face_base->sx = face_info->face_info[max_index].sx;	// update base face
 		face_base->ex = face_info->face_info[max_index].ex;
@@ -2165,7 +2165,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 		af->roi_RGBY.G_sum[i] = g_sum;
 		af->roi_RGBY.B_sum[i] = b_sum;
 		af->roi_RGBY.Y_sum[af->roi.num] += y_sum;
-		//AF_LOGD("y_sum[%d] = %d",i,y_sum);
+		//ISP_LOGD("y_sum[%d] = %d",i,y_sum);
 	}
 
 	switch (af->state) {
@@ -2204,7 +2204,7 @@ static void set_ae_info(af_ctrl_t * af, const struct ae_calc_out *ae, cmr_s32 bv
 {
 	ae_info_t *p = &af->ae;
 
-	//AF_LOGD("state = %s, bv = %d", STATE_STRING(af->state), bv);
+	//ISP_LOGD("state = %s, bv = %d", STATE_STRING(af->state), bv);
 
 	p->stable = ae->is_stab;
 	p->bv = bv;
@@ -2293,21 +2293,21 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 			p_stat_data->roi_num = af->roi.num;
 			p_stat_data->stat_num = FOCUS_STAT_DATA_NUM;
 			/*
-			   AF_LOGE("Copy data struct %lld / %lld / %lld %lld / %lld / %lld "
+			   ISP_LOGE("Copy data struct %lld / %lld / %lld %lld / %lld / %lld "
 			   ,af->af_fv_val.af_fv0[0],af->af_fv_val.af_fv0[1],af->af_fv_val.af_fv0[2]
 			   ,af->af_fv_val.af_fv1[0],af->af_fv_val.af_fv1[1],af->af_fv_val.af_fv1[2]);
 
 			   for (i = 0; i < p_stat_data->roi_num; i++) {
-			   AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+			   ISP_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
 			   }
 
 			   for (i = 0; i < p_stat_data->roi_num; i++) {
-			   AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
+			   ISP_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
 			   }
 			 */
 			p_stat_data->p_stat = &(af->af_fv_val.af_fv0[0]);
 		}
-		AF_LOGD("[%d][%d]spsmd sum %lld", af->state, af->roi.num, sum);
+		ISP_LOGD("[%d][%d]spsmd sum %lld", af->state, af->roi.num, sum);
 		//_LOGD("fv[T_SPSMD] %lld", fv[T_SPSMD]);
 	} else {
 		cmr_u32 i;
@@ -2319,7 +2319,7 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 		for (i = 0; i < af->roi.num; ++i)	// for caf, the weight in last window is 0
 			sum += spsmd[i] * af->win_config->win_weight[i];
 		fv[T_SPSMD] = sum;
-		AF_LOGD("spsmd sum %lld", sum);
+		ISP_LOGD("spsmd sum %lld", sum);
 	}
 
 	return 0;
@@ -2335,7 +2335,7 @@ static ERRCODE if_statistics_set_data(cmr_u32 set_stat, void *cookie)
 	cw_mode = (set_stat & 0xff0000) >> 16;
 	iir_level = (set_stat & 0xff000000) >> 24;
 
-	AF_LOGI("[0x%x] fv0e %d, fv1e %d, nr %d, cw %d iir %d", set_stat, fv0_e, fv1_e, nr_mode, cw_mode, iir_level);
+	ISP_LOGI("[0x%x] fv0e %d, fv1e %d, nr %d, cw %d iir %d", set_stat, fv0_e, fv1_e, nr_mode, cw_mode, iir_level);
 	afm_setup(af);
 	return 0;
 }
@@ -2374,7 +2374,7 @@ static ERRCODE if_lens_wait_stop(void *cookie)
 static ERRCODE if_lock_ae(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_lock_num);
+	ISP_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_lock_num);
 
 	if (LOCK == lock) {
 		if (0 == af->ae_lock_num) {
@@ -2394,7 +2394,7 @@ static ERRCODE if_lock_ae(e_LOCK lock, void *cookie)
 static ERRCODE if_lock_awb(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->awb_lock_num);
+	ISP_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->awb_lock_num);
 
 	if (LOCK == lock) {
 		if (0 == af->awb_lock_num) {
@@ -2414,7 +2414,7 @@ static ERRCODE if_lock_awb(e_LOCK lock, void *cookie)
 static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->lsc_lock_num);
+	ISP_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->lsc_lock_num);
 
 	if (LOCK == lock) {
 		if (0 == af->lsc_lock_num) {
@@ -2434,7 +2434,7 @@ static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie)
 static ERRCODE if_lock_nlm(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->nlm_lock_num);
+	ISP_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->nlm_lock_num);
 
 	if (LOCK == lock) {
 		if (0 == af->nlm_lock_num) {
@@ -2463,7 +2463,7 @@ static ERRCODE if_sys_sleep_time(uint16 sleep_time, void *cookie)
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
 	af->vcm_timestamp = get_systemtime_ns();
-	//AF_LOGD("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
+	//ISP_LOGD("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
 }
@@ -2502,7 +2502,7 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 		//af->vcm_ops.get_otp(af->caller, &pAF_OTP->INF, &pAF_OTP->MACRO);
 		af->vcm_ops.get_otp(isp_ctx->ioctrl_ptr->caller_handler, &pAF_OTP->INF, &pAF_OTP->MACRO);
 		af->fv.AF_OTP.bIsExist = T_LENS_BY_OTP;
-		AF_LOGD("otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
+		ISP_LOGD("otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
 	}
 
 	if (isp_ctx->otp_data) {
@@ -2510,9 +2510,9 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 			af->fv.AF_OTP.bIsExist = (T_LENS_BY_OTP);
 			pAF_OTP->INF = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
 			pAF_OTP->MACRO = isp_ctx->otp_data->single_otp.af_info.macro_cali;
-			AF_LOGD("get otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
+			ISP_LOGD("get otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
 		} else {
-			AF_LOGD("skip invalid otp (infi,macro) = (%d,%d)", isp_ctx->otp_data->single_otp.af_info.infinite_cali, isp_ctx->otp_data->single_otp.af_info.macro_cali);
+			ISP_LOGD("skip invalid otp (infi,macro) = (%d,%d)", isp_ctx->otp_data->single_otp.af_info.infinite_cali, isp_ctx->otp_data->single_otp.af_info.macro_cali);
 		}
 	}
 
@@ -2530,7 +2530,7 @@ static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 	if (NULL != af->vcm_ops.get_motor_pos) {
 		//af->vcm_ops.get_motor_pos(af->caller, motor_pos);
 		af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, motor_pos);
-		AF_LOGD("motor pos in register %d", *motor_pos);
+		ISP_LOGD("motor pos in register %d", *motor_pos);
 	}
 
 	return 0;
@@ -2559,7 +2559,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 
 	char *af_tuning_path = "/data/misc/cameraserver/af_tuning.bin";
 	FILE *fp = NULL;
-	AF_LOGD("B");
+	ISP_LOGD("B");
 	if (0 == access(af_tuning_path, R_OK)) {	//read request successs
 		cmr_u32 len = 0;
 
@@ -2625,7 +2625,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 			ISP_LOGD("adb AF OPT succeed (INFI MACRO)=(%d %d)", af->fv.AF_OTP.INF, af->fv.AF_OTP.MACRO);
 		}
 	}
-	AF_LOGD("E");
+	ISP_LOGD("E");
 	return 0;
 }
 static char AFlog_buffer[2048] = { 0 };
@@ -2637,7 +2637,7 @@ static ERRCODE if_af_log(const char *format, ...)
 	va_start(arg, format);
 	vsnprintf(AFlog_buffer, 2048, format, arg);
 	va_end(arg);
-	AF_LOGI("ISP_AFv1: %s", AFlog_buffer);
+	ISP_LOGI("ISP_AFv1: %s", AFlog_buffer);
 
 	return 0;
 }
@@ -2666,7 +2666,7 @@ static ERRCODE if_aft_log(cmr_u32 log_level, const char *format, ...)
 		ALOGE("%s", AFlog_buffer);
 		break;
 	default:
-		AF_LOGD("default log level not support");
+		ISP_LOGD("default log level not support");
 		break;
 	}
 
@@ -2692,7 +2692,7 @@ static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
 		if (len != af->trig_ops.handle.tuning_param_len) {
-			AF_LOGD("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.handle.tuning_param_len);
+			ISP_LOGD("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.handle.tuning_param_len);
 			fclose(fp);
 			*is_exist = 0;
 			return 0;
@@ -2718,7 +2718,7 @@ static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 		*is_save = 1;
 	}
 #endif
-	AF_LOGD("is_save %d", *is_save);
+	ISP_LOGD("is_save %d", *is_save);
 	return 0;
 }
 
@@ -2761,14 +2761,14 @@ static void load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_outp
 	af->soft_landing_step = 0;	//20;
 
 	if (PNULL == af_pm_output->param_data) {
-		AF_LOGD("sensor tuning param null");
+		ISP_LOGD("sensor tuning param null");
 	} else if (PNULL == af_pm_output->param_data[0].data_ptr) {
-		AF_LOGD("sensor tuning param data null");
+		ISP_LOGD("sensor tuning param data null");
 	} else if (af_pm_output->param_data[0].data_size != sizeof(af->af_tuning_data)) {
-		AF_LOGD("sensor tuning param size dismatch");
+		ISP_LOGD("sensor tuning param size dismatch");
 	} else {
 		memcpy(&af->af_tuning_data, af_pm_output->param_data[0].data_ptr, sizeof(af->af_tuning_data));
-		AF_LOGD("sensor tuning param size match");
+		ISP_LOGD("sensor tuning param size match");
 		if (1 == af->af_tuning_data.flag) {
 			af->soft_landing_dly = af->af_tuning_data.soft_landing_dly;
 			af->soft_landing_step = af->af_tuning_data.soft_landing_step;
@@ -2776,9 +2776,9 @@ static void load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_outp
 			memcpy(af->bv_threshold, af->af_tuning_data.bv_threshold, sizeof(af->bv_threshold));
 			memcpy(&af->fv.AF_Tuning_Data, &af->af_tuning_data.AF_Tuning_Data[INDOOR_SCENE], sizeof(af->fv.AF_Tuning_Data));
 			af->fv.AF_OTP.bIsExist = T_LENS_BY_TUNING;
-			AF_LOGD("sensor tuning param take effect");
+			ISP_LOGD("sensor tuning param take effect");
 		} else {
-			AF_LOGD("sensor tuning param take no effect");
+			ISP_LOGD("sensor tuning param take no effect");
 		}
 	}
 	af->soft_landing_dly = 0;	//10;  //avoid vcm crash
@@ -2810,10 +2810,10 @@ static ERRCODE af_wait_caf_finish(af_ctrl_t * af)
 		rtn = sem_timedwait(&af->af_wait_caf, &ts);
 		if (rtn) {
 			af->takePicture_timeout = 1;
-			AF_LOGD("af wait caf timeout");
+			ISP_LOGD("af wait caf timeout");
 		} else {
 			af->takePicture_timeout = 2;
-			AF_LOGD("af wait caf finished");
+			ISP_LOGD("af wait caf finished");
 		}
 	}
 	return 0;
@@ -2844,7 +2844,7 @@ static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
 		//af->vcm_ops.get_motor_pos(af->caller, &pos);
 		af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, &pos);
 		af->fv.vcm_register = pos;
-		AF_LOGD("VCM registor pos :%d", af->fv.vcm_register);
+		ISP_LOGD("VCM registor pos :%d", af->fv.vcm_register);
 	}
 
 	return pos;
@@ -2994,7 +2994,7 @@ static void trigger_defocus(af_ctrl_t * af, char *test_param)
 	*p1++ = '\0';
 
 	af->defocus = atoi(test_param);
-	AF_LOGD("af->defocus : %d \n", af->defocus);
+	ISP_LOGD("af->defocus : %d \n", af->defocus);
 /*
 	af->request_mode = AF_MODE_NORMAL;
 	af->state = STATE_NORMAL_AF;
@@ -3014,7 +3014,7 @@ static void dump_focus_log(af_ctrl_t * af, char *test_param)
 
 	af->fv.dump_log = atoi(test_param);
 
-	AF_LOGD("af->fv.dump_log : %d \n", af->fv.dump_log);
+	ISP_LOGD("af->fv.dump_log : %d \n", af->fv.dump_log);
 	return;
 }
 
@@ -3035,7 +3035,7 @@ static void set_focus_stat_reg(af_ctrl_t * af, char *test_param)
 	af->stat_reg.force_write = (1 == atoi(test_param)) ? (1) : (0);
 	af->stat_reg.reg_param[0] = atoi(p1);
 	af->stat_reg.reg_param[1] = atoi(p2);
-	AF_LOGD("%s - fw:%d p0:%d p1:%d \n", __FUNCTION__, af->stat_reg.force_write, af->stat_reg.reg_param[0]
+	ISP_LOGD("%s - fw:%d p0:%d p1:%d \n", __FUNCTION__, af->stat_reg.force_write, af->stat_reg.reg_param[0]
 		, af->stat_reg.reg_param[1]);
 
 	return;
@@ -3055,7 +3055,7 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 	if (0 == access("/data/misc/cameraserver/AF_roi.bin", R_OK)) {
 		fp = fopen("/data/misc/cameraserver/AF_roi.bin", "rb");
 		if (NULL == fp) {
-			AF_LOGI("open file AF_roi.bin fails");
+			ISP_LOGI("open file AF_roi.bin fails");
 			return;
 		}
 
@@ -3063,7 +3063,7 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 		len = ftell(fp);
 		string = malloc(len);
 		if (NULL == string) {
-			AF_LOGI("malloc len of file AF_roi.bin fails");
+			ISP_LOGI("malloc len of file AF_roi.bin fails");
 			fclose(fp);
 			return;
 		}
@@ -3104,7 +3104,7 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 			*p2++ = '\0';
 			r->win[num].end_y = atoi(p1);
 			r->win[num].end_y = (r->win[num].end_y >> 1) << 1;
-			AF_LOGI("ROI %d win,(startx,starty,endx,endy) = (%d,%d,%d,%d)", num, r->win[num].start_x, r->win[num].start_y, r->win[num].end_x, r->win[num].end_y);
+			ISP_LOGI("ROI %d win,(startx,starty,endx,endy) = (%d,%d,%d,%d)", num, r->win[num].start_x, r->win[num].start_y, r->win[num].end_x, r->win[num].end_y);
 			num++;
 		}
 		//parsing argumets end
@@ -3112,7 +3112,7 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 			free(string);
 
 	} else {
-		AF_LOGI("file AF_roi.bin doesn't exist");
+		ISP_LOGI("file AF_roi.bin doesn't exist");
 		return;
 	}
 
@@ -3157,7 +3157,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 	}
 
 	if (sizeof(test_mode_set) / sizeof(test_mode_set[0]) <= i) {	// out of range in test mode,so initialize its ops
-		AF_LOGD("AF test mode Command is undefined,start af test mode initialization");
+		ISP_LOGD("AF test mode Command is undefined,start af test mode initialization");
 		i = 0;
 		while (i < sizeof(test_mode_set) / sizeof(test_mode_set[0])) {
 			p1 = test_mode_set[i].command;
@@ -3179,12 +3179,12 @@ static cmr_s32 af_test_lens(af_ctrl_t * af)
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(&af->fv, af->algo_mode);
 	AF_Process_Frame(&af->fv);
-	AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+	ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 	pthread_mutex_unlock(&af->af_work_lock);
 
-	AF_LOGD("af_pos_set3 %s", AF_POS);
+	ISP_LOGD("af_pos_set3 %s", AF_POS);
 	lens_move_to(af, atoi(AF_POS));
-	AF_LOGD("af_pos_set4 %s", AF_POS);
+	ISP_LOGD("af_pos_set4 %s", AF_POS);
 	return 0;
 }
 
@@ -3203,7 +3203,7 @@ static cmr_s32 af_dequeue_in_ringbuffer(af_ctrl_t * af)
 	if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
 		af->node_type = ISP_NODE_TYPE_RAWAFM;
 		rtn = isp_u_bq_dequeue_buf(device, &af->k_addr, &af->u_addr, af->node_type);
-		AF_LOGD("tshark3 chip dequeue Finished. rtn=%d, k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
+		ISP_LOGD("tshark3 chip dequeue Finished. rtn=%d, k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
 		if (rtn || (0 == af->u_addr) || (0 == af->k_addr)) {
 			ISP_LOGE("k_addr or u_addr is 0, %d", rtn);
 			return AF_RING_BUFFER_NO;
@@ -3215,7 +3215,7 @@ static cmr_s32 af_dequeue_in_ringbuffer(af_ctrl_t * af)
 	} else {
 		af->node_type = ISP_NODE_TYPE_RAWAFM;
 		rtn = isp_u_bq_dequeue_buf(device, &af->k_addr, &af->u_addr, af->node_type);
-		AF_LOGD("dequeue Finished. rtn=%d, k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
+		ISP_LOGD("dequeue Finished. rtn=%d, k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
 		if (rtn || (0 == af->u_addr) || (0 == af->k_addr)) {
 			ISP_LOGE("k_addr or u_addr is 0, %d", rtn);
 			return AF_RING_BUFFER_NO;
@@ -3243,13 +3243,13 @@ static cmr_s32 af_enqueue_in_ringbuffer(af_ctrl_t * af)
 
 //              isp->isp_smart_eb = 1;//gwb
 		isp_u_bq_enqueue_buf(device, af->k_addr, af->u_addr, af->node_type);
-		AF_LOGD("isp_u_af_transaddr: Enqueue! k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
+		ISP_LOGD("isp_u_af_transaddr: Enqueue! k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
 	} else {
 		af->node_type = ISP_NODE_TYPE_RAWAFM;
 
 //              isp->isp_smart_eb = 1;
 		isp_u_bq_enqueue_buf(device, af->k_addr, af->u_addr, af->node_type);
-		AF_LOGD("isp_u_af_transaddr: Enqueue! k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
+		ISP_LOGD("isp_u_af_transaddr: Enqueue! k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
 	}
 
 	return 0;
@@ -3275,7 +3275,7 @@ static cmr_s32 afsprd_unload_lib(struct af_context_t *cxt)
 	cmr_s32 rtn = AFV1_SUCCESS;
 
 	if (NULL == cxt) {
-		AF_LOGE("param is NULL");
+		ISP_LOGE("param is NULL");
 		rtn = AF_PARAM_NULL;
 		goto exit;
 	}
@@ -3295,7 +3295,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	UNUSED(result);
 #if 1
 //    isp_ctrl_context *isp = (isp_ctrl_context *)handle;
-	AF_LOGD("E");
+	ISP_LOGD("E");
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
@@ -3304,7 +3304,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 //    assert(af);
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -3334,7 +3334,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
@@ -3350,7 +3350,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	if (af_cxt->af_alg_handle) {
 		rtn = af_cxt->lib_ops.af_deinit(af_cxt->af_alg_handle);
 		if (rtn) {
-			AF_LOGE("af_alg_deinit error rtn:%ld !!!", rtn);
+			ISP_LOGE("af_alg_deinit error rtn:%ld !!!", rtn);
 		}
 	}
 	pthread_mutex_destroy(&af_cxt->status_lock);
@@ -3359,7 +3359,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	memset(af_cxt, 0, sizeof(*af_cxt));
 	free(af_cxt);
 
-	AF_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI("LiuY: done %ld", rtn);
 	return rtn;
 #endif
 }
@@ -3372,7 +3372,7 @@ static cmr_s32 afsprd_load_lib(struct af_context_t *cxt)
 	cmr_u32 v_id = 0;
 
 	if (NULL == cxt) {
-		AF_LOGE("param is NULL");
+		ISP_LOGE("param is NULL");
 		rtn = AF_PARAM_NULL;
 		goto exit;
 	}
@@ -3381,15 +3381,15 @@ static cmr_s32 afsprd_load_lib(struct af_context_t *cxt)
 	v_id = cxt->lib_info->version_id;
 
 	if (v_id >= v_count) {
-		AF_LOGE("version_id is error version_id :%d", v_id);
+		ISP_LOGE("version_id is error version_id :%d", v_id);
 		rtn = AFV1_ERROR;
 		goto exit;
 	}
-	AF_LOGI("af lib v_count:%d, v_id:%d, version_name:%s", v_count, v_id, libafv1_path[v_id]);
+	ISP_LOGI("af lib v_count:%d, v_id:%d, version_name:%s", v_count, v_id, libafv1_path[v_id]);
 
 	cxt->lib_handle = dlopen(libafv1_path[v_id], RTLD_NOW);
 	if (!cxt->lib_handle) {
-		AF_LOGE("failed to af lib dlopen");
+		ISP_LOGE("failed to af lib dlopen");
 		rtn = AFV1_ERROR;
 		goto exit;
 	}
@@ -3400,7 +3400,7 @@ static cmr_s32 afsprd_load_lib(struct af_context_t *cxt)
 	cxt->lib_ops.af_ioctrl = dlsym(cxt->lib_handle, "af_alg_ioctrl");
 
 	if (NULL == cxt->lib_ops.af_init || NULL == cxt->lib_ops.af_calculation || NULL == cxt->lib_ops.af_deinit || NULL == cxt->lib_ops.af_ioctrl) {
-		AF_LOGE("failed to af lib dlsym");
+		ISP_LOGE("failed to af lib dlsym");
 		rtn = AFV1_ERROR;
 		goto load_error;
 	}
@@ -3418,7 +3418,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
 #if 1
-	AF_LOGI("B");
+	ISP_LOGI("B");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	struct isp_alg_fw_context *isp_ctx = NULL;
@@ -3427,7 +3427,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	cmr_s32 rtn = AFV1_SUCCESS;
 
 	if (NULL == init_param) {
-		AF_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
+		ISP_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
 		goto INIT_ERROR_EXIT;
 	}
 	isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
@@ -3437,7 +3437,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	rtn = isp_pm_ioctl(isp_ctx->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
 	if (ISP_SUCCESS == rtn) {
-		AF_LOGD("load af tuning params succeed");
+		ISP_LOGD("load af tuning params succeed");
 #if 0
 		//struct af_tuning_param *af_tuning = NULL;
 
@@ -3455,13 +3455,13 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		in.tuning_param = af_tuning;
 #endif
 	} else {
-		AF_LOGD("load af tuning params failed");
+		ISP_LOGD("load af tuning params failed");
 		return NULL;
 	}
 
 	af = (af_ctrl_t *) malloc(sizeof(*af));
 	if (NULL == af) {
-		AF_LOGD("malloc fail");
+		ISP_LOGD("malloc fail");
 		return NULL;
 	}
 	//afm_disable(af);//gwb
@@ -3524,12 +3524,12 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	faf_trigger_init(af);
 	if (trigger_init(af, CAF_TRIGGER_LIB) != 0) {
-		AF_LOGE("trigger_init fail");
+		ISP_LOGE("trigger_init fail");
 		goto INIT_ERROR_EXIT;
 	}
 	//pthread_mutex_init(&af->caf_lock, NULL);
 
-	AF_LOGD("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
+	ISP_LOGD("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
 
 	isp_ctx->af_cxt.log_af = (cmr_u8 *) af;
 	isp_ctx->af_cxt.log_af_size = sizeof(*af);
@@ -3542,14 +3542,14 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	memcpy(af->af_version, "AF-", strlen("AF-"));
 	memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
 	memcpy(af->af_version + strlen("AF-") + strlen((char *)af->fv.AF_Version), AF_SYS_VERSION, strlen(AF_SYS_VERSION));
-	AF_LOGD("AFVER %s lib mem 0x%x ", af->af_version, sizeof(AF_Data));
+	ISP_LOGD("AFVER %s lib mem 0x%x ", af->af_version, sizeof(AF_Data));
 	property_set("af_mode", "none");
 	{
 		FILE *fp = NULL;
 		af_tuning_param_t tuning_data;
 		fp = fopen("/data/misc/cameraserver/af_tuning_default.bin", "wb");
 		if (fp == NULL) {
-			AF_LOGE("af init error rtn!!!\n");
+			ISP_LOGE("af init error rtn!!!\n");
 			af = NULL;
 			return (cmr_handle) af;
 		}
@@ -3567,7 +3567,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 		fwrite(&tuning_data, 1, sizeof(tuning_data), fp);
 		fclose(fp);
-		AF_LOGD("sizeof(tuning_data) = %d", sizeof(tuning_data));
+		ISP_LOGD("sizeof(tuning_data) = %d", sizeof(tuning_data));
 	}
 	iir_level = 1;
 	nr_mode = 2;
@@ -3585,11 +3585,11 @@ INIT_ERROR_EXIT:
 	if (NULL != af) {
 		rtn = sprd_afv1_deinit((cmr_handle) af, NULL, NULL);
 		if (rtn) {
-			AF_LOGE("af deinit error rtn:%d !!!", rtn);
+			ISP_LOGE("af deinit error rtn:%d !!!", rtn);
 		}
 	}
 	af = NULL;
-	AF_LOGI("E");
+	ISP_LOGI("E");
 	return (cmr_handle) af;
 #else
 //------------------------------------------------------------------------
@@ -3598,16 +3598,16 @@ INIT_ERROR_EXIT:
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	if (NULL == init_param) {
-		AF_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
+		ISP_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
 		goto INIT_ERROR_EXIT;
 	}
 
 	af_cxt = (struct af_context_t *)malloc(sizeof(struct af_context_t));
 	if (NULL == af_cxt) {
-		AF_LOGE("Malloc fail!!!");
+		ISP_LOGE("Malloc fail!!!");
 		goto INIT_ERROR_EXIT;
 	}
-	AF_LOGE("af_init start");
+	ISP_LOGE("af_init start");
 	memset(af_cxt, 0, sizeof(struct af_context_t));
 	af_cxt->magic_start = AFV1_MAGIC_START;
 	af_cxt->magic_end = AFV1_MAGIC_END;
@@ -3635,13 +3635,13 @@ INIT_ERROR_EXIT:
 
 	rtn = afsprd_load_lib(af_cxt);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("af lib load error");
+		ISP_LOGE("af lib load error");
 		goto INIT_ERROR_EXIT;
 	}
 
 	rtn = _alg_init((afv1_handle_t) af_cxt, init_param, result);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("af_alg_handle init fail!!!");
+		ISP_LOGE("af_alg_handle init fail!!!");
 		goto INIT_ERROR_EXIT;
 	}
 
@@ -3651,14 +3651,14 @@ INIT_ERROR_EXIT:
 	//_af_set_motor_pos((afv1_handle_t)af_cxt,result->init_motor_pos);
 	pthread_mutex_init(&af_cxt->status_lock, NULL);
 
-	AF_LOGE("af_init end ");
+	ISP_LOGE("af_init end ");
 	return (afv1_handle_t) af_cxt;
 
 INIT_ERROR_EXIT:
 	if (af_cxt) {
 		rtn = sprd_afv1_deinit((cmr_handle) af_cxt, NULL, NULL);
 		if (rtn) {
-			AF_LOGE("af deinit error rtn:%d !!!", rtn);
+			ISP_LOGE("af deinit error rtn:%d !!!", rtn);
 		}
 	}
 	af_cxt = NULL;
@@ -3673,7 +3673,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 
 	switch (aux_sensor_info->type) {
 	case AF_ACCELEROMETER:
-		AF_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
+		ISP_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
 			aux_sensor_info->gsensor_info.vertical_up, aux_sensor_info->gsensor_info.vertical_down, aux_sensor_info->gsensor_info.horizontal);
 		cxt->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
 		cxt->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
@@ -3681,21 +3681,21 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		cxt->gsensor_info.valid = 1;
 		break;
 	case AF_MAGNETIC_FIELD:
-		AF_LOGV("magnetic field E");
+		ISP_LOGV("magnetic field E");
 		break;
 	case AF_GYROSCOPE:
 		/*TBD trans_data_to CAF */
-		AF_LOGV("af_sprd_adpt_update_aux_sensor");
+		ISP_LOGV("af_sprd_adpt_update_aux_sensor");
 		//afaltek_adpt_trans_data_to_caf(cxt, aux_sensor_info, AFT_DATA_SENSOR);
 		break;
 	case AF_LIGHT:
-		AF_LOGV("light E");
+		ISP_LOGV("light E");
 		break;
 	case AF_PROXIMITY:
-		AF_LOGV("proximity E");
+		ISP_LOGV("proximity E");
 		break;
 	default:
-		AF_LOGI("sensor type not support");
+		ISP_LOGI("sensor type not support");
 		break;
 	}
 
@@ -3712,19 +3712,19 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 	cmr_int i = 0;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
-	AF_LOGV("B");
+	ISP_LOGV("B");
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
 	if (NULL == inparam) {
-		AF_LOGE("input param null");
+		ISP_LOGE("input param null");
 		return AFV1_ERROR;
 	} else if (NULL == inparam->data) {
-		AF_LOGE("input param error");
+		ISP_LOGE("input param error");
 		return AFV1_ERROR;
 	}
 
@@ -3736,16 +3736,16 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 		set_af_test_mode(af, AF_MODE);
 		property_set("af_mode", "ISP_DEFAULT");
 		property_get("af_set_pos", AF_POS, "none");
-		AF_LOGD("test AF_MODE %s, AF_POS %s", AF_MODE, AF_POS);
+		ISP_LOGD("test AF_MODE %s, AF_POS %s", AF_MODE, AF_POS);
 		if (0 != strcmp(AF_POS, "none")) {
 			af_test_lens(af);
 			property_set("af_set_pos", "none");
 			return 0;
 		}
 	}
-	// AF_LOGD("state = %s, pre_state = %s, cur mode = %d", STATE_STRING(af->state), STATE_STRING(af->pre_state), af->request_mode);
+	// ISP_LOGD("state = %s, pre_state = %s, cur mode = %d", STATE_STRING(af->state), STATE_STRING(af->pre_state), af->request_mode);
 	if (1 != Is_ae_stable(af)) {
-		AF_LOGD("ae not stable in non caf mode");
+		ISP_LOGD("ae not stable in non caf mode");
 		return 0;
 	}
 	//AF ring buffer
@@ -3757,7 +3757,7 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 
 	system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
-	AF_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
+	ISP_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		{
@@ -3776,7 +3776,7 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 					af->afm_skip_num = afm_skip_num;
 				else
 					af->afm_skip_num = 0;
-				AF_LOGI("af.skip_num %d", af->afm_skip_num);
+				ISP_LOGI("af.skip_num %d", af->afm_skip_num);
 			}
 
 			switch (af->state) {
@@ -3810,7 +3810,7 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 			default:
 				pthread_mutex_lock(&af->af_work_lock);
 				AF_Process_Frame(&af->fv);
-				AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+				ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 				pthread_mutex_unlock(&af->af_work_lock);
 				break;
 			}
@@ -3843,19 +3843,19 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 
 	default:
 		{
-			AF_LOGD("unsupport data type! type: %d", inparam->data_type);
+			ISP_LOGD("unsupport data type! type: %d", inparam->data_type);
 			rtn = AFV1_ERROR;
 			break;
 		}
 
 	}
 	system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
-	AF_LOGV("SYSTEM_TEST-af:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-af:%lldms", system_time1 - system_time0);
 
 #if (AF_RING_BUFFER)
 	af_enqueue_in_ringbuffer(af);
 #endif
-	AF_LOGV("E");
+	ISP_LOGV("E");
 	return rtn;
 #else
 	cmr_int rtn = AFV1_SUCCESS;
@@ -3867,12 +3867,12 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
 	if (1 == af_cxt->isp_tool_af_test) {	// isp tool af test
-		AF_LOGE("ISP_TOOL_AF_TEST");
+		ISP_LOGE("ISP_TOOL_AF_TEST");
 		return rtn;
 	}
 
@@ -3906,7 +3906,7 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 	    && af_cxt->alg_result.is_caf_trig_in_saf) {
 		af_cxt->alg_result.is_caf_trig_in_saf = AF_FALSE;
 	}
-	AF_LOGI("LiuY done %ld", rtn);
+	ISP_LOGI("LiuY done %ld", rtn);
 	return rtn;
 #endif
 }
@@ -3922,12 +3922,12 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
-		AF_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AFV1_ERROR;
 	}
 
 	pthread_mutex_lock(&af->status_lock);
-	AF_LOGD("cmd is 0x%x", cmd);
+	ISP_LOGD("cmd is 0x%x", cmd);
 	switch (cmd) {
 	case AF_CMD_SET_AF_MODE:
 		rtn = _af_set_mode(handle, param0);
@@ -3965,7 +3965,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			//win = (struct isp_af_win *)param;
 			struct af_trig_info *win = (struct af_trig_info *)param0;
 
-			//AF_LOGD("state = %s, win = %d", STATE_STRING(af->state), win->valid_win);
+			//ISP_LOGD("state = %s, win = %d", STATE_STRING(af->state), win->valid_win);
 			if (STATE_INACTIVE == af->state) {
 				rtn = 0;
 				break;
@@ -4032,7 +4032,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 
 	case AF_CMD_SET_AF_STOP:
 #if 1
-		AF_LOGD("state = %s", STATE_STRING(af->state));
+		ISP_LOGD("state = %s", STATE_STRING(af->state));
 #else
 		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_CAF_STOP, NULL, NULL);
 		rtn = _af_set_status(handle, AF_ALG_STATUS_STOP);
@@ -4120,8 +4120,8 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 		in_ptr = (struct isp_video_start *)param0;
 		af->isp_info.width = in_ptr->size.w;
 		af->isp_info.height = in_ptr->size.h;
-		AF_LOGD("isp start af width = %d, height = %d", in_ptr->size.w, in_ptr->size.h);
-		AF_LOGD("isp start af state = %s", STATE_STRING(af->state));
+		ISP_LOGD("isp start af width = %d, height = %d", in_ptr->size.w, in_ptr->size.h);
+		ISP_LOGD("isp start af state = %s", STATE_STRING(af->state));
 		//af->state = af->pre_state = STATE_IDLE;
 		property_get("af_mode", AF_MODE, "none");
 		if (0 == strcmp(AF_MODE, "none")) {
@@ -4135,7 +4135,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 //              if (af_cxt->is_running) {
 //                      rtn = _af_end_proc(handle,&af_cxt->af_result,AF_FALSE);
 //              }
-		AF_LOGD("isp stop af state = %s", STATE_STRING(af->state));
+		ISP_LOGD("isp stop af state = %s", STATE_STRING(af->state));
 		if (STATE_IDLE != af->state)
 			do_stop_af(af);
 
@@ -4195,7 +4195,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 	af_cxt->cur_awb_r_gain = awb_result->gain.r;
 	af_cxt->cur_awb_g_gain = awb_result->gain.g;
 	af_cxt->cur_awb_b_gain = awb_result->gain.b;
-	AF_LOGI("awb_is_stab %d ",af_cxt->awb_is_stab);
+	ISP_LOGI("awb_is_stab %d ",af_cxt->awb_is_stab);
 */
 			break;
 		}
@@ -4213,11 +4213,11 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 #if 0
 			struct isp_face_area *face = (struct isp_face_area *)param0;
 
-			AF_LOGD("face detect af state = %s", STATE_STRING(af->state));
+			ISP_LOGD("face detect af state = %s", STATE_STRING(af->state));
 			if (STATE_INACTIVE == af->state)
 				return 0;
 
-			AF_LOGD("type = %d, face_num = %d", face->type, face->face_num);
+			ISP_LOGD("type = %d, face_num = %d", face->type, face->face_num);
 
 			if (STATE_NORMAL_AF == af->state) {
 				return 0;
@@ -4230,12 +4230,12 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 						pthread_mutex_lock(&af->af_work_lock);
 						AF_STOP(&af->fv, af->algo_mode);
 						AF_Process_Frame(&af->fv);
-						AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+						ISP_LOGD("AF_mode = %d", af->fv.AF_mode);
 						pthread_mutex_unlock(&af->af_work_lock);
 					}
 					af->state = STATE_FAF;
 					faf_start(af, NULL);
-					AF_LOGD("FAF Trigger");
+					ISP_LOGD("FAF Trigger");
 				}
 			}
 			break;
@@ -4246,14 +4246,14 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
 			if (0 == af_ts->capture) {
 				af->dcam_timestamp = af_ts->timestamp;
-				//AF_LOGD("dcam_timestamp %lld ms", (cmr_s64) af->dcam_timestamp);
+				//ISP_LOGD("dcam_timestamp %lld ms", (cmr_s64) af->dcam_timestamp);
 				if (DCAM_AFTER_VCM_YES == compare_timestamp(af) && 1 == af->vcm_stable) {
 					sem_post(&af->af_wait_caf);
 				}
 			} else if (1 == af_ts->capture) {
 				af->takepic_timestamp = af_ts->timestamp;
-				//AF_LOGD("takepic_timestamp %lld ms", (cmr_s64) af->takepic_timestamp);
-				AF_LOGD("takepic_timestamp - vcm_timestamp =%lld ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
+				//ISP_LOGD("takepic_timestamp %lld ms", (cmr_s64) af->takepic_timestamp);
+				ISP_LOGD("takepic_timestamp - vcm_timestamp =%lld ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 			}
 			break;
 		}
@@ -4280,9 +4280,9 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			af->pd.effective_frmid = (cmr_u32) pd_calc_result->pdGetFrameID;
 			af->pd.confidence = (cmr_u32) pd_calc_result->pdConf[4];
 			af->pd.pd_value = pd_calc_result->pdPhaseDiff[4];
-			AF_LOGI("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf", pd_calc_result->pdGetFrameID,
+			ISP_LOGI("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf", pd_calc_result->pdGetFrameID,
 				pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4]);
-			AF_LOGI("pdaf set callback end");
+			ISP_LOGI("pdaf set callback end");
 		}
 		break;
 	case AF_CMD_SET_UPDATE_AUX_SENSOR:
@@ -4313,14 +4313,14 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			break;
 		}
 	default:
-		AF_LOGW("cmd not support! cmd: %d", cmd);
+		ISP_LOGW("cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
 		break;
 
 	}
 
 	pthread_mutex_unlock(&af->status_lock);
-	AF_LOGV("E %ld", rtn);
+	ISP_LOGV("E %ld", rtn);
 	return rtn;
 
 }

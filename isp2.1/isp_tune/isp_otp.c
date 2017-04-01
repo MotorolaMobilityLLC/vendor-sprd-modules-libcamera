@@ -921,17 +921,17 @@ cmr_s32 _start_camera(void **pdev)
 	hw_device_t *tmp = NULL;
 
 	if (*pdev == NULL) {
-		CMR_LOGW("pdev->common.methods->open \n");
+		ISP_LOGW("pdev->common.methods->open \n");
 
 		/* ISP can't call the function of OEM */
 		//ops_status = hw_get_module(CAMERA_HARDWARE_MODULE_ID, (const hw_module_t**)&module);
 		if (ops_status) {
-			CMR_LOGE("\n hw_get_module %d fail ", ops_status);
+			ISP_LOGE("\n hw_get_module %d fail ", ops_status);
 			return -1;
 		}
 		ops_status = module->methods->open(module, 0, (hw_device_t **) & tmp);
 		if (ops_status != 0) {
-			CMR_LOGE("\n open %d fail ", 0);
+			ISP_LOGE("\n open %d fail ", 0);
 			if (tmp)
 				tmp->close((hw_device_t *) tmp);	//avoid next time retry fail
 			*pdev = NULL;
@@ -950,7 +950,7 @@ cmr_s32 _stop_camera(void *pdev)
 	cmr_s32 ops_status = 0;
 #if (MINICAMERA != 1)
 	if (pdev) {
-		CMR_LOGW("pdev->close \n");
+		ISP_LOGW("pdev->close \n");
 		ops_status = ((hw_device_t *) pdev)->close((hw_device_t *) pdev);
 		/* ISP can't call the function of OEM */
 		//mtrace_print_alllog(TRACE_MEMSTAT);

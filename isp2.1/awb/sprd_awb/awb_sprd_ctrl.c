@@ -326,12 +326,12 @@ static cmr_u32 _check_handle(awb_ctrl_handle_t handle)
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
 
 	if (NULL == cxt) {
-		AWB_CTRL_LOGE("invalid cxt pointer");
+		ISP_LOGE("invalid cxt pointer");
 		return AWB_CTRL_ERROR;
 	}
 
 	if (AWB_CTRL_MAGIC_BEGIN != cxt->magic_begin || AWB_CTRL_MAGIC_END != cxt->magic_end) {
-		AWB_CTRL_LOGE("invalid magic begin = 0x%x, magic end = 0x%x", cxt->magic_begin, cxt->magic_end);
+		ISP_LOGE("invalid magic begin = 0x%x, magic end = 0x%x", cxt->magic_begin, cxt->magic_end);
 		return AWB_CTRL_ERROR;
 	}
 
@@ -351,15 +351,15 @@ static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
 	cmr_u32 i = 0;
 
 	if (!cxt) {
-		AWB_CTRL_LOGE("cxt is NULL");
+		ISP_LOGE("cxt is NULL");
 		return AWB_CTRL_ERROR;
 	}
 	if (work_mode > 2) {
-		AWB_CTRL_LOGE("work_mode %d is over range", work_mode);
+		ISP_LOGE("work_mode %d is over range", work_mode);
 		return AWB_CTRL_ERROR;
 	}
 
-	AWB_CTRL_LOGI("awb work mode is %d", work_mode);
+	ISP_LOGI("awb work mode is %d", work_mode);
 	switch (work_mode) {
 	case 0:
 		for (i = ISP_MODE_ID_PRV_0; i < ISP_MODE_ID_PRV_3; i++) {
@@ -388,7 +388,7 @@ static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
 	default:
 		break;
 	}
-	AWB_CTRL_LOGI("awb param index is %d", cxt->param_index);
+	ISP_LOGI("awb param index is %d", cxt->param_index);
 	return rtn;
 }
 
@@ -398,7 +398,7 @@ static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 	cmr_u32 awb_mode = *(cmr_u32 *) in_param;
 
 	cxt->wb_mode = awb_mode;
-	AWB_CTRL_LOGD("debug wbmode changed!");
+	ISP_LOGD("debug wbmode changed!");
 	return rtn;
 }
 
@@ -448,9 +448,9 @@ static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	cxt->recover_ct = cxt->cur_ct;
 
 	//cxt->flash_info.flash_mode = AWB_CTRL_FLASH_PRE;
-	AWB_CTRL_LOGD("pre flashing mode = %d", cxt->flash_info.flash_mode);
+	ISP_LOGD("pre flashing mode = %d", cxt->flash_info.flash_mode);
 
-	AWB_CTRL_LOGD("FLASH_TAG: awb flash recover gain = (%d, %d, %d), recover mode = %d", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_mode);
+	ISP_LOGD("FLASH_TAG: awb flash recover gain = (%d, %d, %d), recover mode = %d", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_mode);
 
 	return rtn;
 
@@ -466,7 +466,7 @@ static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 	awb_result->g = cxt->output_gain.g;
 	awb_result->b = cxt->output_gain.b;
 
-	AWB_CTRL_LOGD("_awb_get_gain = (%d,%d,%d)", awb_result->r, awb_result->g, awb_result->b);
+	ISP_LOGD("_awb_get_gain = (%d,%d,%d)", awb_result->r, awb_result->g, awb_result->b);
 
 	return rtn;
 
@@ -491,7 +491,7 @@ static cmr_u32 _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
 	stat_size->w = cxt->init_param.stat_img_size.w;
 	stat_size->h = cxt->init_param.stat_img_size.h;
 
-	AWB_CTRL_LOGD("_awb_get_stat_size = (%d,%d)", stat_size->w, stat_size->h);
+	ISP_LOGD("_awb_get_stat_size = (%d,%d)", stat_size->w, stat_size->h);
 
 	return rtn;
 }
@@ -509,7 +509,7 @@ static cmr_u32 _awb_get_winsize(struct awb_ctrl_cxt *cxt, void *param)
 	win_size->w = cxt->tuning_param[param_index].stat_win_size.w;
 	win_size->h = cxt->tuning_param[param_index].stat_win_size.h;
 
-	AWB_CTRL_LOGD("_awb_get_winsize = (%d,%d), param_index=%d", win_size->w, win_size->h, param_index);
+	ISP_LOGD("_awb_get_winsize = (%d,%d), param_index=%d", win_size->w, win_size->h, param_index);
 
 	return rtn;
 }
@@ -521,7 +521,7 @@ static cmr_u32 _awb_get_ct(struct awb_ctrl_cxt *cxt, void *param)
 
 	*ct = cxt->output_ct;
 
-	AWB_CTRL_LOGD("_awb_get_ct = %d", cxt->output_ct);
+	ISP_LOGD("_awb_get_ct = %d", cxt->output_ct);
 
 	return rtn;
 }
@@ -549,10 +549,10 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 
 	//cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
 
-	AWB_CTRL_LOGD("after flashing mode = %d", cxt->flash_info.flash_mode);
+	ISP_LOGD("after flashing mode = %d", cxt->flash_info.flash_mode);
 
-	//AWB_CTRL_LOGE("awb flash end  gain = (%d, %d, %d), recover mode = %d", cxt->cur_gain.r, cxt->cur_gain.g, cxt->cur_gain.b, cxt->wb_mode);
-	AWB_CTRL_LOGD("FLASH_TAG: awb flash end  gain = (%d, %d, %d), recover mode = %d", cxt->cur_gain.r, cxt->cur_gain.g, cxt->cur_gain.b, cxt->wb_mode);
+	//ISP_LOGE("awb flash end  gain = (%d, %d, %d), recover mode = %d", cxt->cur_gain.r, cxt->cur_gain.g, cxt->cur_gain.b, cxt->wb_mode);
+	ISP_LOGD("FLASH_TAG: awb flash end  gain = (%d, %d, %d), recover mode = %d", cxt->cur_gain.r, cxt->cur_gain.g, cxt->cur_gain.b, cxt->wb_mode);
 
 	return rtn;
 
@@ -569,19 +569,19 @@ static cmr_u32 _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
 	cxt->flash_info.flash_ratio.r = flash_info->flash_ratio.r;
 	cxt->flash_info.flash_ratio.g = flash_info->flash_ratio.g;
 	cxt->flash_info.flash_ratio.b = flash_info->flash_ratio.b;
-	AWB_CTRL_LOGD("FLASH_TAG: flashing mode = %d", cxt->flash_info.flash_mode);
+	ISP_LOGD("FLASH_TAG: flashing mode = %d", cxt->flash_info.flash_mode);
 	//flash change awb gain
 	if ((AWB_CTRL_WB_MODE_AUTO == cxt->wb_mode) && (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode)) {
 		if (0 == cxt->flash_info.patten) {
 			//alpha padding
-			AWB_CTRL_LOGD("FLASH_TAG:before flash rgb(%d,%d,%d)", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b);
+			ISP_LOGD("FLASH_TAG:before flash rgb(%d,%d,%d)", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b);
 			if (cxt->flash_info.flash_ratio.r > 0 && cxt->flash_info.flash_ratio.g > 0 && cxt->flash_info.flash_ratio.b > 0) {
 				cxt->output_gain.r = ((cxt->recover_gain.r * (1024 - cxt->flash_info.effect)) + cxt->flash_info.flash_ratio.r * cxt->flash_info.effect) >> 0x0a;
 				cxt->output_gain.g = ((cxt->recover_gain.g * (1024 - cxt->flash_info.effect)) + cxt->flash_info.flash_ratio.g * cxt->flash_info.effect) >> 0x0a;
 				cxt->output_gain.b = ((cxt->recover_gain.b * (1024 - cxt->flash_info.effect)) + cxt->flash_info.flash_ratio.b * cxt->flash_info.effect) >> 0x0a;
 			}
 		}
-		AWB_CTRL_LOGD("FLASH_TAG:cap flash effect= %d  rgb(%d,%d,%d)", cxt->flash_info.effect, cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
+		ISP_LOGD("FLASH_TAG:cap flash effect= %d  rgb(%d,%d,%d)", cxt->flash_info.effect, cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 	}
 
 	return rtn;
@@ -596,7 +596,7 @@ static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->lock_info.lock_num += 1;
 
-	AWB_CTRL_LOGD("AWB_TEST _awb_set_lock0: luck=%d, mode=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
+	ISP_LOGD("AWB_TEST _awb_set_lock0: luck=%d, mode=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
 
 	if (0 != cxt->lock_info.lock_num) {
 
@@ -608,7 +608,7 @@ static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 		cxt->lock_info.lock_ct = cxt->output_ct;
 	}
-	AWB_CTRL_LOGD("AWB_TEST _awb_set_lock1: luck=%d, mode:%d   rgb[%d %d %d]", cxt->lock_info.lock_num, cxt->lock_info.lock_mode, cxt->output_gain.r,
+	ISP_LOGD("AWB_TEST _awb_set_lock1: luck=%d, mode:%d   rgb[%d %d %d]", cxt->lock_info.lock_num, cxt->lock_info.lock_mode, cxt->output_gain.r,
 		      cxt->output_gain.g, cxt->output_gain.b);
 	return rtn;
 
@@ -620,7 +620,7 @@ static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->lock_info.lock_num += 1;
 
-	AWB_CTRL_LOGE("AWB_TEST _awb_set_lock0: luck=%d, unluck=%", cxt->lock_info.lock_num, cxt->lock_info.unlock_num);
+	ISP_LOGE("AWB_TEST _awb_set_lock0: luck=%d, unluck=%", cxt->lock_info.lock_num, cxt->lock_info.unlock_num);
 
 	if (0 == cxt->lock_info.lock_gain.r && 0 == cxt->lock_info.lock_gain.g && 0 == cxt->lock_info.lock_gain.b) {
 
@@ -630,7 +630,7 @@ static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 		cxt->lock_info.lock_ct = cxt->output_ct;
 	}
-	AWB_CTRL_LOGE("AWB_TEST _awb_set_lock1: luck=%d, unluck=%, mode:%d", cxt->lock_info.lock_num, cxt->lock_info.unlock_num, cxt->lock_info.lock_mode);
+	ISP_LOGE("AWB_TEST _awb_set_lock1: luck=%d, unluck=%, mode:%d", cxt->lock_info.lock_num, cxt->lock_info.unlock_num, cxt->lock_info.lock_mode);
 	return rtn;
 
 }
@@ -641,7 +641,7 @@ static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	AWB_CTRL_LOGD("AWB_TEST _awb_get_unlock0: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
+	ISP_LOGD("AWB_TEST _awb_get_unlock0: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
 	if (0 != cxt->lock_info.lock_num) {
 		cxt->lock_info.lock_num -= 1;
 	}
@@ -650,7 +650,7 @@ static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 		cxt->lock_info.lock_mode = AWB_CTRL_UNLOCKMODE;
 	}
 
-	AWB_CTRL_LOGD("AWB_TEST _awb_get_unlock1: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
+	ISP_LOGD("AWB_TEST _awb_get_unlock1: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
 
 	return rtn;
 }
@@ -662,12 +662,12 @@ static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 	if (0 == cxt->lock_info.lock_num)
 		rtn = AWB_CTRL_ERROR;
 
-	AWB_CTRL_LOGE("AWB_TEST _awb_get_unlock0: luck=%d, unluck=%d", cxt->lock_info.lock_num, cxt->lock_info.unlock_num);
+	ISP_LOGE("AWB_TEST _awb_get_unlock0: luck=%d, unluck=%d", cxt->lock_info.lock_num, cxt->lock_info.unlock_num);
 
 	if (0 != cxt->lock_info.lock_num && cxt->lock_info.lock_num != cxt->lock_info.unlock_num)
 		cxt->lock_info.lock_mode = AWB_CTRL_LOCKMODE;
 
-	AWB_CTRL_LOGE("AWB_TEST _awb_get_unlock1: luck=%d, unluck=%, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.unlock_num, cxt->lock_info.lock_mode);
+	ISP_LOGE("AWB_TEST _awb_get_unlock1: luck=%d, unluck=%, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.unlock_num, cxt->lock_info.lock_mode);
 
 	return rtn;
 
@@ -682,7 +682,7 @@ static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->flash_info.flash_status = *flash_status;
 
-	AWB_CTRL_LOGD("flashing status = %d", cxt->flash_info.flash_status);
+	ISP_LOGD("flashing status = %d", cxt->flash_info.flash_status);
 
 	return rtn;
 
@@ -694,7 +694,7 @@ static cmr_u32 _awb_set_tuning_param(struct awb_ctrl_cxt *cxt, void *param0)
 	UNUSED(cxt);
 	rtn = _check_init_param(param0);
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("_check_init_param failed");
+		ISP_LOGE("_check_init_param failed");
 		return AWB_CTRL_ERROR;
 	}
 
@@ -706,7 +706,7 @@ static cmr_u32 awbsprd_unload_lib(struct awb_ctrl_cxt *cxt)
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 
 	if (NULL == cxt) {
-		AWB_CTRL_LOGE("awb load lib param is NULL");
+		ISP_LOGE("awb load lib param is NULL");
 		rtn = AWB_CTRL_ERROR;
 		goto exit;
 	}
@@ -727,7 +727,7 @@ static cmr_u32 awbsprd_load_lib(struct awb_ctrl_cxt *cxt)
 	cmr_u32 v_id = 0;
 
 	if (NULL == cxt) {
-		AWB_CTRL_LOGE("awb load lib param is NULL");
+		ISP_LOGE("awb load lib param is NULL");
 		rtn = AWB_CTRL_ERROR;
 		goto exit;
 	}
@@ -735,43 +735,43 @@ static cmr_u32 awbsprd_load_lib(struct awb_ctrl_cxt *cxt)
 	v_id = cxt->lib_info->version_id;
 	v_count = sizeof(libawb_path) / sizeof(libawb_path[0]);
 	if (v_id >= v_count) {
-		AWB_CTRL_LOGE("awb lib version id is error version_id: %d", v_id);
+		ISP_LOGE("awb lib version id is error version_id: %d", v_id);
 		rtn = AWB_CTRL_ERROR;
 		goto exit;
 	}
-	AWB_CTRL_LOGI("awb lib v_count:%d, version_id:%d, version_name:%s", v_count, v_id, libawb_path[v_id]);
+	ISP_LOGI("awb lib v_count:%d, version_id:%d, version_name:%s", v_count, v_id, libawb_path[v_id]);
 
 	cxt->lib_handle = dlopen(libawb_path[v_id], RTLD_NOW);
 	if (!cxt->lib_handle) {
-		AWB_CTRL_LOGE("failed to dlopen awb lib");
+		ISP_LOGE("failed to dlopen awb lib");
 		rtn = AWB_CTRL_ERROR;
 		goto exit;
 	}
 
 	cxt->lib_ops.awb_init_v1 = dlsym(cxt->lib_handle, "awb_init_v1");
 	if (!cxt->lib_ops.awb_init_v1) {
-		AWB_CTRL_LOGE("failed to dlsym awb_init");
+		ISP_LOGE("failed to dlsym awb_init");
 		rtn = AWB_CTRL_ERROR;
 		goto load_error;
 	}
 
 	cxt->lib_ops.awb_calc_v1 = dlsym(cxt->lib_handle, "awb_calc_v1");
 	if (!cxt->lib_ops.awb_init_v1) {
-		AWB_CTRL_LOGE("failed to dlsym awb_calculation");
+		ISP_LOGE("failed to dlsym awb_calculation");
 		rtn = AWB_CTRL_ERROR;
 		goto load_error;
 	}
 
 	cxt->lib_ops.awb_deinit_v1 = dlsym(cxt->lib_handle, "awb_deinit_v1");
 	if (!cxt->lib_ops.awb_deinit_v1) {
-		AWB_CTRL_LOGE("failed to dlsym awb_deinit");
+		ISP_LOGE("failed to dlsym awb_deinit");
 		rtn = AWB_CTRL_ERROR;
 		goto load_error;
 	}
 
 	cxt->lib_ops.awb_ioctrl_v1 = dlsym(cxt->lib_handle, "awb_ioctrl_v1");
 	if (!cxt->lib_ops.awb_ioctrl_v1) {
-		AWB_CTRL_LOGE("failed to dlsym awb_ioctrl");
+		ISP_LOGE("failed to dlsym awb_ioctrl");
 		rtn = AWB_CTRL_ERROR;
 		goto load_error;
 	}
@@ -849,7 +849,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	struct awb_ctrl_cxt *cxt = NULL;
 
 	if (NULL == param || NULL == result) {
-		AWB_CTRL_LOGE("invalid param: param=%p, result=%p", param, result);
+		ISP_LOGE("invalid param: param=%p, result=%p", param, result);
 		goto ERROR_EXIT;
 	}
 
@@ -857,7 +857,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 
 	cxt = (struct awb_ctrl_cxt *)malloc(sizeof(struct awb_ctrl_cxt));
 	if (NULL == cxt) {
-		AWB_CTRL_LOGE("malloc awb_ctrl_cxt failed");
+		ISP_LOGE("malloc awb_ctrl_cxt failed");
 		goto ERROR_EXIT;
 	}
 	memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
@@ -865,7 +865,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 
 	rtn = awbsprd_load_lib(cxt);
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("failed to load awb lib");
+		ISP_LOGE("failed to load awb lib");
 		goto ERROR_EXIT;
 	}
 
@@ -923,7 +923,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->output_gain.b = result->gain.b;
 	cxt->output_ct = result->ct;
 
-	AWB_CTRL_LOGV("AWB init: (%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
+	ISP_LOGV("AWB init: (%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 	return (awb_ctrl_handle_t) cxt;
@@ -953,7 +953,7 @@ cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *in, void *out)
 	rtn = _check_handle(handle);
 
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		rtn = AWB_CTRL_ERROR;
 		goto EXIT;
 	}
@@ -964,24 +964,24 @@ cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *in, void *out)
 
 	rtn = cxt->lib_ops.awb_deinit_v1(cxt->alg_handle);
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("failed to deinit awb_v1 \n");
+		ISP_LOGE("failed to deinit awb_v1 \n");
 	}
 
 	rtn = awbsprd_unload_lib(cxt);
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("failed to unload awb lib");
+		ISP_LOGE("failed to unload awb lib");
 		goto EXIT;
 	}
 
 	memset(cxt, 0, sizeof(*cxt));
 	AWB_CTRL_SAFE_FREE(cxt);
 
-	AWB_CTRL_LOGD("awb_sprd_ctrl_deinit done");
+	ISP_LOGD("awb_sprd_ctrl_deinit done");
 	return rtn;
 EXIT:
 	memset(cxt, 0, sizeof(*cxt));
 	AWB_CTRL_SAFE_FREE(cxt);
-	AWB_CTRL_LOGE("awb_sprd_ctrl_deinit fail");
+	ISP_LOGE("awb_sprd_ctrl_deinit fail");
 	return rtn;
 }
 
@@ -1001,13 +1001,13 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	struct awb_ctrl_calc_result *result = (struct awb_ctrl_calc_result *)out;
 
 	if (NULL == param || NULL == result) {
-		AWB_CTRL_LOGE("invalid param: param=%p, result=%p", param, result);
+		ISP_LOGE("invalid param: param=%p, result=%p", param, result);
 		return AWB_CTRL_ERROR;
 	}
 
 	rtn = _check_handle(handle);
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AWB_CTRL_ERROR;
 	}
 
@@ -1069,7 +1069,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cmr_u64 time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
-	AWB_CTRL_LOGD("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
+	ISP_LOGD("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
 		      calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
 
 	result->gain.r = calc_result.awb_gain[0].r_gain;
@@ -1091,7 +1091,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	_gain_queue_add(&cxt->gain_queue, &cxt->cur_gain, cxt->cur_ct, 256);
 	_gain_queue_average(&cxt->gain_queue, &cxt->output_gain, &cxt->output_ct);
 
-	AWB_CTRL_LOGD("AWB output: (%d,%d,%d) %d K", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
+	ISP_LOGD("AWB output: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 
 	//scenemode & mwb change
 	if (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode) {
@@ -1189,7 +1189,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	rtn = _check_handle(handle);
 	if (AWB_CTRL_SUCCESS != rtn) {
-		AWB_CTRL_LOGE("_check_cxt failed");
+		ISP_LOGE("_check_cxt failed");
 		return AWB_CTRL_ERROR;
 	}
 
@@ -1213,24 +1213,24 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_FLASHING:
-		AWB_CTRL_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASHING");
+		ISP_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASHING");
 		rtn = _awb_set_flash_gain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
-		AWB_CTRL_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_M");
+		ISP_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_M");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_MAIN;
 		//rtn = _awb_set_recgain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_P:
-		AWB_CTRL_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_P");
+		ISP_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_P");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_PRE;
 		//rtn = _awb_set_recgain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_CLOSE:
-		AWB_CTRL_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_CLOSE");
+		ISP_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_CLOSE");
 		if ((AWB_CTRL_FLASH_PRE == cxt->flash_info.flash_mode) || (AWB_CTRL_FLASH_MAIN == cxt->flash_info.flash_mode)) {
 			rtn = _awb_get_recgain(cxt, in);
 		}
@@ -1238,7 +1238,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_FLASH_BEFORE_P:
-		AWB_CTRL_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_BEFORE_P");
+		ISP_LOGD("FLASH_TAG: AWB_CTRL_CMD_FLASH_BEFORE_P");
 		rtn = _awb_set_recgain(cxt, in);
 		break;
 
@@ -1284,7 +1284,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	default:
-		AWB_CTRL_LOGE("invalid cmd = %d", cmd);
+		ISP_LOGE("invalid cmd = %d", cmd);
 		rtn = AWB_CTRL_ERROR;
 		break;
 	}

@@ -33,20 +33,20 @@ static uint32_t _dw9718s_write_dac_code(cmr_handle sns_af_drv_handle,int32_t par
 	uint16_t slave_addr = DW9718S_VCM_SLAVE_ADDR;
 	uint16_t cmd_len = 0;
 
-	AF_LOGI("param:%d", param);
+	CMR_LOGI("param:%d", param);
 
 	cmd_val[0] = 0x02;
 	cmd_val[1] = (param>>8)&0x03;
 	cmd_len = 2;
 	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	AF_LOGI("write dac, ret = %d, cmd[0]:%x, cmd[1]:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	CMR_LOGI("write dac, ret = %d, cmd[0]:%x, cmd[1]:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	cmd_val[0] = 0x03;
 	cmd_val[1] = param&0xff;
 	cmd_len = 2;
 	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	AF_LOGI("write dac, ret = %d, cmd[0]:%x, cmd[1]:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	CMR_LOGI("write dac, ret = %d, cmd[0]:%x, cmd[1]:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 }
@@ -87,7 +87,7 @@ static int dw9718s_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 
 	int32_t target_code=pos&0x3FF;
 	int32_t m_cur_dac_code = af_drv_cxt->current_pos;
-	AF_LOGI("%d", target_code);
+	CMR_LOGI("%d", target_code);
 
 #if 0
 	while((m_cur_dac_code-target_code)>=MOVE_CODE_STEP_MAX){
@@ -165,7 +165,7 @@ static int _dw9718s_drv_set_mode(cmr_handle sns_af_drv_handle)
 	} else {
 		mode = dw9718s_drv_entry.default_work_mode;
 	}
-	AF_LOGI("mode: %d",mode);
+	CMR_LOGI("mode: %d",mode);
 
 	switch (mode) {
 	case 1:
@@ -177,13 +177,13 @@ static int _dw9718s_drv_set_mode(cmr_handle sns_af_drv_handle)
 		cmd_val[1] = 0x38;
 		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			AF_LOGE("cmd[0]:0x%x,cmd[1]:0x%x write failed",cmd_val[0],cmd_val[1]);
+			CMR_LOGE("cmd[0]:0x%x,cmd[1]:0x%x write failed",cmd_val[0],cmd_val[1]);
 		}
 		cmd_val[0] = 0x05;
 		cmd_val[1] = 0x06;
 		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			AF_LOGE("cmd[0]:0x%x,cmd[1]:0x%x write failed",cmd_val[0],cmd_val[1]);
+			CMR_LOGE("cmd[0]:0x%x,cmd[1]:0x%x write failed",cmd_val[0],cmd_val[1]);
 		}
 	}
 		break;

@@ -20,7 +20,7 @@ int af_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_han
 	cmr_int ret = AF_SUCCESS;
 	struct sns_af_drv_cxt *af_drv_cxt = NULL;
 	CHECK_PTR(input_ptr);
-	AF_LOGI("in");
+	CMR_LOGI("in");
 	*sns_af_drv_handle = NULL;
 	af_drv_cxt = (struct sns_af_drv_cxt *)malloc(sizeof(struct sns_af_drv_cxt));
 	if(!af_drv_cxt) {
@@ -30,19 +30,19 @@ int af_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_han
 		af_drv_cxt->hw_handle = input_ptr->hw_handle;
 		*sns_af_drv_handle = (cmr_handle)af_drv_cxt;
 	}
-	AF_LOGI("out");
+	CMR_LOGI("out");
 	return ret;
 }
 
 int af_drv_delete(cmr_handle sns_af_drv_handle, void* param)
 {
  	cmr_int ret = AF_SUCCESS;
-	AF_LOGI("in");
+	CMR_LOGI("in");
 	if(sns_af_drv_handle) {
 		free(sns_af_drv_handle);
 	} else {
-		AF_LOGE("af_drv_handle is NULL,no need release.");
+		CMR_LOGE("af_drv_handle is NULL,no need release.");
 	}
-	AF_LOGI("out");
+	CMR_LOGI("out");
 	return ret;
 }

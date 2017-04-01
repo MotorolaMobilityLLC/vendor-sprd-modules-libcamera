@@ -3673,7 +3673,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			if (0x00 == ret) {
 				ret = isp_ioctl(isp_handler, ISP_CTRL_TOOL_SET_SCENE_PARAM, (void *)&scene_info);
 				if (ret) {
-					CMR_LOGE("failed isp ioctl for scene parameter %d", ret);
+					ISP_LOGE("failed isp ioctl for scene parameter %d", ret);
 				}
 				memcpy(&(scene_param.gain), &(scene_info.gain), sizeof(struct isptool_scene_param) - 8);
 				ISP_LOGI("width/height %d/%d, gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",

@@ -64,7 +64,7 @@ static int bu64297gwz_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 	else if ((int32_t)pos > 0x3FF)
 		pos = 0x3FF;
 	target_code = pos& 0x3FF;
-	AF_LOGI("%d", target_code);
+	CMR_LOGI("%d", target_code);
 	cmd_val[0] = ((target_code >> 8) & 0x03) | 0xC4;
 	cmd_val[1] = target_code & 0xff;
 	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,bu64297gwz_VCM_SLAVE_ADDR, (uint8_t *) & cmd_val[0], 2);
@@ -80,7 +80,7 @@ static int bu64297gwz_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos)
 	hw_Sensor_ReadI2C(af_drv_cxt->hw_handle,(0x18 >> 1),(uint8_t*)&cmd_val[0],2);
 	*pos = (cmd_val[0]&0x03)<<8;
 	*pos += cmd_val[1];
-	AF_LOGI("vcm pos %d",*pos);
+	CMR_LOGI("vcm pos %d",*pos);
 	return 0;
 }
 static int bu64297gwz_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param)

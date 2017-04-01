@@ -136,7 +136,7 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 			break;
 		case AWB_LIB_VERSION_1:
 		default:
-			AWB_CTRL_LOGE("awb invalid lib version = 0x%x", awb_lib_version);
+			ISP_LOGE("awb invalid lib version = 0x%x", awb_lib_version);
 			rtn = AWB_CTRL_ERROR;
 		}
 		break;
@@ -152,7 +152,7 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 		break;
 
 	default:
-		AWB_CTRL_LOGE("awb invalid lib producer id = 0x%x", awb_producer_id);
+		ISP_LOGE("awb invalid lib producer id = 0x%x", awb_producer_id);
 		rtn = AWB_CTRL_ERROR;
 	}
 
@@ -166,12 +166,12 @@ uint32_t isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_f
 	uint32_t ae_producer_id = 0;
 	uint32_t ae_lib_version = 0;
 
-	AE_LOGE("E");
+	ISP_LOGE("E");
 	if (libuse_info) {
 		ae_lib_info = libuse_info->ae_lib_info;
 		ae_producer_id = ae_lib_info.product_id;
 		ae_lib_version = ae_lib_info.version_id;
-		AE_LOGE("ae_producer_id= ____0x%x", ae_producer_id);
+		ISP_LOGE("ae_producer_id= ____0x%x", ae_producer_id);
 	}
 
 	ae_lib_fun->product_id = ae_producer_id;
@@ -184,12 +184,12 @@ uint32_t isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_f
 			break;
 		case AE_LIB_VERSION_1:
 		default:
-			AE_LOGE("ae invalid lib version = 0x%x", ae_lib_version);
+			ISP_LOGE("ae invalid lib version = 0x%x", ae_lib_version);
 			rtn = AE_ERROR;
 		}
 		break;
 	default:
-		AE_LOGE("ae invalid lib producer id = 0x%x", ae_producer_id);
+		ISP_LOGE("ae invalid lib producer id = 0x%x", ae_producer_id);
 		rtn = AE_ERROR;
 	}
 
@@ -203,14 +203,14 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 	uint32_t af_producer_id = 0;
 	uint32_t af_lib_version = 0;
 
-	AF_LOGE("E");
+	ISP_LOGE("E");
 	if (libuse_info) {
 		af_lib_info = libuse_info->af_lib_info;
 		af_producer_id = af_lib_info.product_id;
 		af_lib_version = af_lib_info.version_id;
-		AF_LOGE("af_producer_id= ____0x%x", af_producer_id);
+		ISP_LOGE("af_producer_id= ____0x%x", af_producer_id);
 	}
-	AF_LOGE("af_producer_id= ____0x%x", af_producer_id);
+	ISP_LOGE("af_producer_id= ____0x%x", af_producer_id);
 	memset(af_lib_fun, 0, sizeof(struct af_lib_fun));
 	switch (af_producer_id) {
 	case SPRD_AF_LIB:
@@ -219,7 +219,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 			break;
 		case AF_LIB_VERSION_1:
 		default:
-			AF_LOGE("af invalid lib version = 0x%x", af_lib_version);
+			ISP_LOGE("af invalid lib version = 0x%x", af_lib_version);
 			rtn = AF_ERROR;
 		}
 		break;
@@ -252,7 +252,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 			break;
 		case AF_LIB_VERSION_1:
 		default:
-			AF_LOGE("af invalid lib version = 0x%x", af_lib_version);
+			ISP_LOGE("af invalid lib version = 0x%x", af_lib_version);
 			rtn = AF_ERROR;
 		}
 		break;
@@ -272,11 +272,11 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 #endif
 		case AF_LIB_VERSION_1:
 		default:
-			AF_LOGE("af invalid lib version = 0x%x", af_lib_version);
+			ISP_LOGE("af invalid lib version = 0x%x", af_lib_version);
 		}
 		break;
 	default:
-		AF_LOGE("af invalid lib producer id = 0x%x", af_producer_id);
+		ISP_LOGE("af invalid lib producer id = 0x%x", af_producer_id);
 		rtn = AF_ERROR;
 	}
 

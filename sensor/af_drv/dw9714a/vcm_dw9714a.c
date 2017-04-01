@@ -58,7 +58,7 @@ static int dw9714a_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 	cmd_len = 2;
 	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	AF_LOGI("vcm_dw9714A_set_position: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
+	CMR_LOGI("vcm_dw9714A_set_position: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 	ret_value, pos, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
@@ -115,7 +115,7 @@ static int _dw9714a_drv_set_mode(cmr_handle sns_af_drv_handle)
 		mode = dw9714a_drv_entry.default_work_mode;
 	}
 
-	AF_LOGI("vcm_dw9714A_init: _DW9714A_SRCInit: mode = %d\n", mode);
+	CMR_LOGI("vcm_dw9714A_init: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;

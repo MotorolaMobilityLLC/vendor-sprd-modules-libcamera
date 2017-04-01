@@ -43,38 +43,11 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-
-enum {
-	AE_LOG_LEVEL_OVER_LOGE = 1,
-	AE_LOG_LEVEL_OVER_LOGW = 2,
-	AE_LOG_LEVEL_OVER_LOGI = 3,
-	AE_LOG_LEVEL_OVER_LOGD = 4,
-	AE_LOG_LEVEL_OVER_LOGV = 5
-};
-
-/*android*/
-	extern cmr_u32 g_ae_log_level;
-#define AE_LOG(fmt, args...) ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#define AE_LOGE(fmt, args...)  ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#define AE_LOGW(fmt, args...) ALOGW_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGW, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#define AE_LOGI(fmt, args...) ALOGI_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGI, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#define AE_LOGD(fmt, args...) ALOGD_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGD, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#define AE_LOGV(fmt, args...) ALOGV_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGV, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#else
-#define AE_LOG printf
-#define AE_LOGI printf
-#define AE_LOGE printf
-#define AE_LOGV printf
-#define AE_LOGD printf
-#define ALOGE printf
-#define AE_LOGX printf
 #endif
 
-#define AE_TRAC(_x_) AE_LOGE _x_
+#define AE_TRAC(_x_) ISP_LOGE _x_
 #define AE_RETURN_IF_FAIL(exp,warning) do{if(exp) {AE_TRAC(warning); return exp;}}while(0)
 #define AE_TRACE_IF_FAIL(exp,warning) do{if(exp) {AE_TRAC(warning);}}while(0)
-
-void ae_init_log_level(void);
 /**---------------------------------------------------------------------------*
 **				Data Prototype				*
 **----------------------------------------------------------------------------*/

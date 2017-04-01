@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_cce"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 * cce_param, cmr_u32 hue, cmr_u32 saturation)

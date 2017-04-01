@@ -45,7 +45,7 @@ static cmr_int seq_get_cur_actual_element(struct seq_cxt *cxt_ptr, struct seq_ce
 	cmr_u32 cur_idx = 0;
 
 	if (NULL == cxt_ptr || NULL == out_ptr) {
-		AE_LOGE("cxt_ptr %p, out_ptr %p param is error!", cxt_ptr, out_ptr);
+		ISP_LOGE("cxt_ptr %p, out_ptr %p param is error!", cxt_ptr, out_ptr);
 		goto exit;
 	}
 
@@ -65,7 +65,7 @@ static cmr_int seq_push_actual_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_i
 	cmr_u32 offset_idx = 0;
 
 	if (NULL == cxt_ptr || NULL == in_ptr) {
-		AE_LOGE("cxt_ptr %p, in_ptr %p param is error!", cxt_ptr, in_ptr);
+		ISP_LOGE("cxt_ptr %p, in_ptr %p param is error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
 
@@ -101,7 +101,7 @@ static cmr_int seq_get_cur_write_element(struct seq_cxt *cxt_ptr, struct seq_cel
 	cmr_u32 cur_idx = 0;
 
 	if (NULL == cxt_ptr || NULL == out_ptr) {
-		AE_LOGE("cxt_ptr %p, out_ptr %p param is error!", cxt_ptr, out_ptr);
+		ISP_LOGE("cxt_ptr %p, out_ptr %p param is error!", cxt_ptr, out_ptr);
 		goto exit;
 	}
 
@@ -121,7 +121,7 @@ static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_id
 	cmr_u32 offset_idx = 0;
 
 	if (NULL == cxt_ptr || NULL == in_ptr) {
-		AE_LOGE("cxt_ptr %p, in_ptr %p param is error!", cxt_ptr, in_ptr);
+		ISP_LOGE("cxt_ptr %p, in_ptr %p param is error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
 
@@ -157,13 +157,13 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in * in_ptr, void **handle)
 
 	if ((queue_num < 4)
 	    || NULL == in_ptr || NULL == handle) {
-		AE_LOGE("queue_num = %d, in_ptr %p, handle %p param is error!", queue_num, in_ptr, handle);
+		ISP_LOGE("queue_num = %d, in_ptr %p, handle %p param is error!", queue_num, in_ptr, handle);
 		goto exit;
 	}
 	*handle = NULL;
 	cxt_ptr = (struct seq_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
-		AE_LOGE("malloc is error!");
+		ISP_LOGE("malloc is error!");
 		goto exit;
 	}
 	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
@@ -176,7 +176,7 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in * in_ptr, void **handle)
 	q_size = queue_num * sizeof(struct seq_cell);
 	cxt_ptr->write_q.cell_ptr = (struct seq_cell *)malloc(q_size);
 	if (NULL == cxt_ptr->write_q.cell_ptr) {
-		AE_LOGE("malloc is error!");
+		ISP_LOGE("malloc is error!");
 		goto exit;
 	}
 	memset(cxt_ptr->write_q.cell_ptr, 0, q_size);
@@ -184,7 +184,7 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in * in_ptr, void **handle)
 	cxt_ptr->actual_q.max_num = queue_num;
 	cxt_ptr->actual_q.cell_ptr = (struct seq_cell *)malloc(q_size);
 	if (NULL == cxt_ptr->actual_q.cell_ptr) {
-		AE_LOGE("malloc is error!");
+		ISP_LOGE("malloc is error!");
 		goto exit;
 	}
 	memset(cxt_ptr->actual_q.cell_ptr, 0, q_size);
@@ -216,7 +216,7 @@ cmr_int seq_deinit(void *handle)
 	struct seq_cxt *cxt_ptr = NULL;
 
 	if (NULL == handle) {
-		AE_LOGE("handle %p param is error!", handle);
+		ISP_LOGE("handle %p param is error!", handle);
 		goto exit;
 	}
 
@@ -274,14 +274,14 @@ cmr_int seq_put(void *handle, struct seq_item * in_est_ptr, struct seq_cell * ou
 	struct seq_cell push_nxt_actual_cell;
 
 	if (NULL == handle || NULL == in_est_ptr || NULL == out_actual_ptr || NULL == out_write_ptr) {
-		AE_LOGE("handle %p, in_est_ptr %p, out_actual_ptr %p, out_write_ptr %p param is error!", handle, in_est_ptr, out_actual_ptr, out_write_ptr);
+		ISP_LOGE("handle %p, in_est_ptr %p, out_actual_ptr %p, out_write_ptr %p param is error!", handle, in_est_ptr, out_actual_ptr, out_write_ptr);
 		goto EXIT;
 	}
 
 	cxt_ptr = (struct seq_cxt *)handle;
 	cur_frame_id = in_est_ptr->cell.frame_id;
 
-	//AE_LOGD("seq_put_fid %d\r\n", cur_frame_id);
+	//ISP_LOGD("seq_put_fid %d\r\n", cur_frame_id);
 
 	if (SEQ_WORK_CAPTURE == in_est_ptr->work_mode)
 		skip_num = cxt_ptr->init_in_param.capture_skip_num;
