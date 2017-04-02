@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "lib_ctrl"
 #include "isp_com.h"
 #include "awb_ctrl.h"
 #include "ae_sprd_ctrl.h"
@@ -39,7 +39,7 @@ struct af_lib_fun af_lib_fun;
 
 char *al_libversion_choice(uint32_t version_id)
 {
-	ISP_LOGE("E");
+	ISP_LOGI("E");
 	switch (version_id) {
 	case AL_AWB_LIB_VERSION_0:
 		return "/system/lib/libAl_Awb_ov13850r2a.so";
@@ -116,13 +116,13 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 	uint32_t awb_lib_version = 0;
 	uint32_t al_awb_lib_version = 0;
 
-	ISP_LOGE("E");
+	ISP_LOGI("E");
 	if (libuse_info) {
 		awb_lib_info = libuse_info->awb_lib_info;
 		awb_producer_id = awb_lib_info.product_id;
 		awb_lib_version = awb_lib_info.version_id;
-		ISP_LOGE("awb_producer_id= ____0x%x", awb_producer_id);
-		ISP_LOGE("awb_lib_version= ____0x%x", awb_lib_version);
+		ISP_LOGI("awb_producer_id= ____0x%x", awb_producer_id);
+		ISP_LOGI("awb_lib_version= ____0x%x", awb_lib_version);
 	}
 
 	switch (awb_producer_id) {
@@ -166,12 +166,12 @@ uint32_t isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_f
 	uint32_t ae_producer_id = 0;
 	uint32_t ae_lib_version = 0;
 
-	ISP_LOGE("E");
+	ISP_LOGI("E");
 	if (libuse_info) {
 		ae_lib_info = libuse_info->ae_lib_info;
 		ae_producer_id = ae_lib_info.product_id;
 		ae_lib_version = ae_lib_info.version_id;
-		ISP_LOGE("ae_producer_id= ____0x%x", ae_producer_id);
+		ISP_LOGI("ae_producer_id= ____0x%x", ae_producer_id);
 	}
 
 	ae_lib_fun->product_id = ae_producer_id;
@@ -203,14 +203,14 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 	uint32_t af_producer_id = 0;
 	uint32_t af_lib_version = 0;
 
-	ISP_LOGE("E");
+	ISP_LOGI("E");
 	if (libuse_info) {
 		af_lib_info = libuse_info->af_lib_info;
 		af_producer_id = af_lib_info.product_id;
 		af_lib_version = af_lib_info.version_id;
-		ISP_LOGE("af_producer_id= ____0x%x", af_producer_id);
+		ISP_LOGI("af_producer_id= ____0x%x", af_producer_id);
 	}
-	ISP_LOGE("af_producer_id= ____0x%x", af_producer_id);
+	ISP_LOGI("af_producer_id= ____0x%x", af_producer_id);
 	memset(af_lib_fun, 0, sizeof(struct af_lib_fun));
 	switch (af_producer_id) {
 	case SPRD_AF_LIB:

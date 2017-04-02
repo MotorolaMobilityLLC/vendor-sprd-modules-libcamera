@@ -71,11 +71,11 @@ static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void *in_param_ptr)
 	cmr_u32 data_len = packet_len - 0x10;
 	cmr_u32 mode_offset = 0;
 	SENSOR_EXP_INFO_T *sensor_info_ptr = Sensor_GetInfo();
-	ISP_LOGE(" _ispParserDownParam");
+	ISP_LOGI(" _ispParserDownParam");
 
 	while (mode_offset < data_len) {
 		struct isp_mode_param *mode_param_ptr = (struct isp_mode_param *)((char *)data_addr + mode_offset);
-		ISP_LOGE(" _ispParserDownParam mode_param_ptr->mode_id =%d", mode_param_ptr->mode_id);
+		ISP_LOGI(" _ispParserDownParam mode_param_ptr->mode_id =%d", mode_param_ptr->mode_id);
 
 		if (0 != mode_param_ptr->size) {
 			memcpy(sensor_info_ptr->raw_info_ptr->mode_ptr[mode_param_ptr->mode_id].addr, (char *)data_addr + mode_offset, mode_param_ptr->size);
@@ -112,7 +112,7 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void *in_param_ptr)
 		cmr_u16 prv_height = sensor_info_ptr->sensor_mode_info[1].height;
 		cmr_u32 i = 0x00;
 
-		ISP_LOGE("zone prv_width=%d prv_height=%d", prv_width, prv_height);
+		ISP_LOGI("zone prv_width=%d prv_height=%d", prv_width, prv_height);
 
 		af_param.valid_win = in_af_ptr->valid_win;
 		af_param.mode = in_af_ptr->mode;
