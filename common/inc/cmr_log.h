@@ -34,28 +34,26 @@ enum {
 
 #define DEBUG_STR "%d, %s: "
 #define DEBUG_ARGS __LINE__, __FUNCTION__
-#define ISP_DEBUG_STR "ISP: %d, %s: "
 
 extern cmr_int g_isp_log_level;
 extern cmr_int g_oem_log_level;
 extern cmr_int g_sensor_log_level;
 
 #ifndef WIN32
-#define ISP_LOGE(format, ...)                                                  \
-    ALOGE(ISP_DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define ISP_LOGW(format, ...)                                                  \
-    ALOGW_IF(g_isp_log_level >= LEVEL_OVER_LOGW, ISP_DEBUG_STR format,         \
-             DEBUG_ARGS, ##__VA_ARGS__)
+    ALOGW_IF(g_isp_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 #define ISP_LOGI(format, ...)                                                  \
-    ALOGI_IF(g_isp_log_level >= LEVEL_OVER_LOGI, ISP_DEBUG_STR format,         \
-             DEBUG_ARGS, ##__VA_ARGS__)
+    ALOGI_IF(g_isp_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 #define ISP_LOGD(format, ...)                                                  \
-    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGD, ISP_DEBUG_STR format,         \
-             DEBUG_ARGS, ##__VA_ARGS__)
+    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 /* ISP_LOGV uses ALOGD_IF */
 #define ISP_LOGV(format, ...)                                                  \
-    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, ISP_DEBUG_STR format,         \
-             DEBUG_ARGS, ##__VA_ARGS__)
+    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 #else
 #define ISP_LOGE printf
 #define ISP_LOGW printf
