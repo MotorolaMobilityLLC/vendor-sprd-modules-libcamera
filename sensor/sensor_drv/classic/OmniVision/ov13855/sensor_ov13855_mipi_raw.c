@@ -233,14 +233,14 @@ static uint32_t ov13855_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_SetAvddVoltage(avdd_val);
         Sensor_SetDvddVoltage(dvdd_val);
         Sensor_SetIovddVoltage(iovdd_val);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_PowerDown(!power_down);
         Sensor_SetResetLevel(!reset_level);
-        usleep(10 * 1000);
+        usleep(6 * 1000);
         Sensor_SetMCLK(EX_MCLK);
 
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
