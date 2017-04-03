@@ -652,16 +652,6 @@ int SprdCamera3HWI::configureStreams(
         }
 #endif
 
-        /* temp code; for CTS*/
-        if (stream_type == CAMERA_STREAM_TYPE_PREVIEW &&
-            channel_type == CAMERA_CHANNEL_TYPE_REGULAR &&
-            newStream->width > 1600 && newStream->height > 1200) {
-            HAL_LOGE(
-                "temp cts return for newStream->width %d newStream->height %d",
-                newStream->width, newStream->height);
-            return BAD_VALUE;
-        }
-
         char value[PROPERTY_VALUE_MAX];
         property_get("volte.incall.camera.enable", value, "false");
         if (!strcmp(value, "true") &&
