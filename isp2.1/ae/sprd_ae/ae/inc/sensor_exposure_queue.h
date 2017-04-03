@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef _AE_LOG_H_
-#define _AE_LOG_H_
+#ifndef _SENSOR_EXPOSURE_QUEUE_H_
+#define _SENSOR_EXPOSURE_QUEUE_H_
 /*----------------------------------------------------------------------------*
  **				 Dependencies				*
  **---------------------------------------------------------------------------*/
-#include "ae_types.h"
+#include "isp_type.h"
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
  **---------------------------------------------------------------------------*/
@@ -27,31 +27,37 @@
 extern "C" {
 #endif
 
-/**---------------------------------------------------------------------------*
-**				 Macro Define				*
-**----------------------------------------------------------------------------*/
-#ifndef WIN32
+enum seq_work_mode {
+	SEQ_WORK_PREVIEW,
+	SEQ_WORK_CAPTURE,
+	SEQ_WORK_MAX
+};
 
-#include <sys/types.h>
-#ifndef CONFIG_FOR_TIZEN
-#include <utils/Log.h>
-#else
-#include "osal_log.h"
-#endif
-#include <stdlib.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#endif
+struct seq_cell {
+	cmr_u32 frame_id;	//must start from 0
+	cmr_u32 exp_line;	//it is invalid value while 0
+	cmr_u32 gain;	//it is invalid value while 0
+	cmr_u32 exp_time;
+	cmr_u32 dummy;
+};
 
-#define AE_TRAC(_x_) ISP_LOGE _x_
-#define AE_RETURN_IF_FAIL(exp,warning) do{if(exp) {AE_TRAC(warning); return exp;}}while(0)
-#define AE_TRACE_IF_FAIL(exp,warning) do{if(exp) {AE_TRAC(warning);}}while(0)
-/**---------------------------------------------------------------------------*
-**				Data Prototype				*
-**----------------------------------------------------------------------------*/
+struct seq_item {
+	cmr_u32 work_mode;
+	struct seq_cell cell;
+};
 
+struct seq_init_in {
+	cmr_u32 preview_skip_num;
+	cmr_u32 capture_skip_num;
+	cmr_u32 exp_valid_num;
+	cmr_u32 gain_valid_num;
+	cmr_u32 idx_start_from;
+};
+
+cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, cmr_handle * handle);
+cmr_int seq_deinit(cmr_handle handle);
+cmr_int seq_reset(cmr_handle handle);
+cmr_int seq_put(cmr_handle handle, struct seq_item *in_est_ptr, struct seq_cell *out_actual_ptr, struct seq_cell *out_write_ptr);
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

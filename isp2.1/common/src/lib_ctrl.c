@@ -21,7 +21,6 @@
 //#include "awb_al_ctrl.h"
 #include "awb_sprd_ctrl.h"
 #include "sensor_raw.h"
-#include "ae_log.h"
 #include "af_log.h"
 #include "lib_ctrl.h"
 //#include "sp_af_ctrl.h"

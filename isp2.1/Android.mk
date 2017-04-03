@@ -48,7 +48,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
 	$(LOCAL_PATH)/ae/inc \
-	$(LOCAL_PATH)/ae/sprd_ae/inc \
+	$(LOCAL_PATH)/ae/sprd_ae/ae/inc \
+	$(LOCAL_PATH)/ae/sprd_ae/flash/inc \
 	$(LOCAL_PATH)/awb/inc \
 	$(LOCAL_PATH)/awb/alc_awb/inc \
 	$(LOCAL_PATH)/awb/sprd_awb/inc \
@@ -80,7 +81,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
 
-LOCAL_SHARED_LIBRARIES += libawb1 liblsc libcalibration libae libsprdlsc
+LOCAL_SHARED_LIBRARIES += libawb1 liblsc libcalibration libae libflash libsprdlsc
 #LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
 #LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor

@@ -16,7 +16,6 @@
 #define LOG_TAG "ae_sprd_ctrl_v2"
 #include "ae_sprd_ctrl.h"
 #include "ae_misc.h"
-#include "ae_log.h"
 #include "ae_debug.h"
 #include "ae_ctrl.h"
 #include "isp_debug.h"
@@ -388,7 +387,8 @@ static cmr_s32 _ae_write_exp_gain(struct ae_ctrl_cxt *cxt, cmr_s32 expline, cmr_
 	cmr_s32 rtn = AE_SUCCESS;
 	if (NULL == cxt) {
 		rtn = AE_PARAM_NULL;
-		AE_RETURN_IF_FAIL(rtn, ("cxt:%p", cxt));
+		ISP_LOGE("cxt:%p", cxt);
+		return rtn;
 	}
 	//ISP_LOGD("expline %d dummy %d aegain %d", expline, dummy, aegain);
 	if (0 <= expline) {
@@ -2909,7 +2909,11 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	}
 
 	rtn = _check_handle(handle);
-	AE_RETURN_IF_FAIL(rtn, ("handle = %p", handle));
+	if (AE_SUCCESS != rtn) {
+		ISP_LOGE("handle is invalidated, ret: %d\n", rtn);
+		return AE_HANDLER_NULL;
+	}
+
 	cxt = (struct ae_ctrl_cxt *)handle;
 	ISP_LOGD("is slow motion=%d", cxt->high_fps_info.is_high_fps);
 	pthread_mutex_lock(&cxt->data_sync_lock);
@@ -3066,7 +3070,10 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	}
 
 	rtn = _check_handle(handle);
-	AE_RETURN_IF_FAIL(rtn, ("handle = %p", handle));
+	if (AE_SUCCESS != rtn) {
+		ISP_LOGE("handle is invalidated, ret: %d\n", rtn);
+		return AE_HANDLER_NULL;
+	}
 	cxt = (struct ae_ctrl_cxt *)handle;
 
 	pthread_mutex_lock(&cxt->data_sync_lock);
@@ -3358,11 +3365,11 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	rtn = _check_handle(handle);
 	if (AE_SUCCESS != rtn) {
-		AE_RETURN_IF_FAIL(rtn, ("handle = %p", handle));
+		ISP_LOGE("handle = %p", handle);
+		return AE_HANDLER_NULL;
 	}
 
 	cxt = (struct ae_ctrl_cxt *)handle;
-	//ISP_LOGD("AE_IO_CMD %d", cmd);
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	switch (cmd) {
 	case AE_SET_PROC:

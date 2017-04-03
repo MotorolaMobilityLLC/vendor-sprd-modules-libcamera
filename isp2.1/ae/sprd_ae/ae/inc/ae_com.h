@@ -20,7 +20,6 @@
  **				 Dependencies				*
  **---------------------------------------------------------------------------*/
 #include "ae_types.h"
-#include "ae_log.h"
 #include "mulaes.h"
 #include "flat.h"
 #include "region.h"
