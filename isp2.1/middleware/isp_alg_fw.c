@@ -1831,6 +1831,7 @@ static uint16_t *lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_w
 	if (!lsc_handle) {
 		ISP_LOGE("failed to dlopen libsprdlsc lib");
 		rtn = ISP_ERROR;
+		return lsc_table;
 	}
 
 	struct lsc_wrapper_ops lsc_ops;
@@ -1884,10 +1885,9 @@ static uint16_t *lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_w
 	lsc_ops.lsc2d_table_postproc(tbl_chn, w, h, sx, sy, &calib_param);
 
 error_dlsym:
-	if (!lsc_handle) {
-		dlclose(lsc_handle);
-		lsc_handle = NULL;
-	}
+	dlclose(lsc_handle);
+	lsc_handle = NULL;
+
 
 	return lsc_table;
 }
@@ -1967,6 +1967,10 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 
 			lsc_table = lsc_table_wrapper(lsc_16_bits, otp_grid, lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h, &gain_w, &gain_h);	//  wrapper otp table
 			free(lsc_16_bits);
+			if (lsc_table == NULL) {
+				rtn = ISP_ERROR;
+				return rtn;
+			}
 			lsc_param.lsc_otp_table_width = gain_w;
 			lsc_param.lsc_otp_table_height = gain_h;
 			lsc_param.lsc_otp_table_addr = lsc_table;
