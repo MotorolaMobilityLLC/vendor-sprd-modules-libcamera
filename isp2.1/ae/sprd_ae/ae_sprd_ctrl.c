@@ -458,7 +458,7 @@ static cmr_s32 ae_calc_result_queue_init(struct ae_calc_result_queue *queue)
 		ISP_LOGE("ae_calc_result_queue_init, queue=%p param is error", queue);
 		return AE_ERROR;
 	}
-	ISP_LOGI("ae_calc_result_queue_init");
+	ISP_LOGD("ae_calc_result_queue_init");
 
 	memset(queue, 0, sizeof(*queue));
 	queue->write = &queue->ae_result[0];
@@ -1795,7 +1795,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.settings.flash = 0;
 	cxt->cur_status.settings.flash_ration = cxt->cur_param->flash_param.adjust_ratio;
 	//cxt->flash_on_off_thr;
-	ISP_LOGI("flash_ration_mp: %d\n", cxt->cur_status.settings.flash_ration);
+	ISP_LOGD("flash_ration_mp: %d\n", cxt->cur_status.settings.flash_ration);
 
 	cxt->cur_status.settings.iso = AE_ISO_AUTO;
 	cxt->cur_status.settings.ev_index = ev_table->default_level;
@@ -2542,7 +2542,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	struct ae_set_work_param work_param;
 	struct ae_init_in *init_param = NULL;
 
-	ISP_LOGD("V2_INIT ST\r\n");
+	ISP_LOGI("V2_INIT ST\r\n");
 	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
 
 	if (NULL == cxt) {
@@ -3982,7 +3982,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_in_out *reserve = NULL;
 	UNUSED(in_param);
-	ISP_LOGD("V2_DEINIT ST\r\n");
+	ISP_LOGI("V2_DEINIT ST\r\n");
 	rtn = _check_handle(handle);
 	if (AE_SUCCESS != rtn) {
 		return AE_ERROR;

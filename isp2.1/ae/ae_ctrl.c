@@ -333,7 +333,7 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 	pthread_mutex_unlock(&cxt_ptr->ioctrl_sync_lock);
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -346,7 +346,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGD(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case AECTRL_EVT_INIT:
@@ -367,7 +367,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -381,7 +381,7 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 		rtn = ISP_ERROR;
 	}
 
-	ISP_LOGI(":ISP:ae_ctrl thread rtn %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -614,6 +614,6 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD(":ISP:done %ld", rtn);
 	return rtn;
 }
