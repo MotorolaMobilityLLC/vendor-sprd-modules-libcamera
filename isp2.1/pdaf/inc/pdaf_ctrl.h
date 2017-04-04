@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include "isp_com.h"
 #include "af_ctrl.h"
-#include "sprd_pdaf_adpt.h"
+#include "pdaf_sprd_adpt.h"
 
 enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_RAW = 0,

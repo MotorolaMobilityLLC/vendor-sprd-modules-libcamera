@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #define LOG_TAG "ae_sprd_ctrl_v2"
-#include "ae_sprd_ctrl.h"
+#include "ae_sprd_adpt.h"
 #include "ae_misc.h"
 #include "ae_debug.h"
 #include "ae_ctrl.h"

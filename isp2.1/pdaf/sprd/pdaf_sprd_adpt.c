@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <cutils/properties.h>
 
-#include "sprd_pdaf_adpt.h"
+#include "pdaf_sprd_adpt.h"
 #include "pdaf_ctrl.h"
 #include "isp_adpt.h"
 #include "dlfcn.h"

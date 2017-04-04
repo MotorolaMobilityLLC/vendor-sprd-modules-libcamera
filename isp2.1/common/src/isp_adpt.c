@@ -17,15 +17,15 @@
 #include "isp_adpt.h"
 #include "isp_com.h"
 #include "awb_ctrl.h"
-#include "ae_sprd_ctrl.h"
+#include "ae_sprd_adpt.h"
 #include "af_ctrl.h"
 //#include "awb_al_ctrl.h"
-#include "awb_sprd_ctrl.h"
+#include "awb_sprd_adpt.h"
 #include "sensor_raw.h"
 #include "af_log.h"
 #include "sprd_af_ctrl_v1.h"
 //#include "sp_af_ctrl.h"
-#include "sprd_pdaf_adpt.h"
+#include "pdaf_sprd_adpt.h"
 #include <dlfcn.h>
 //#include "ALC_AF_Ctrl.h"
 

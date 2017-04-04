@@ -18,7 +18,7 @@
 #include "isp_pm.h"
 #include "lib_ctrl.h"
 //#include "awb_al_ctrl.h"
-#include "awb_sprd_ctrl.h"
+#include "awb_sprd_adpt.h"
 #include "ae_ctrl.h"
 #include "af_ctrl.h"
 #include "isp_app.h"

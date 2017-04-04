@@ -17,7 +17,7 @@
 #define LOG_TAG "awb_sprd_ctrl"
 
 #include "awb_ctrl.h"
-#include "awb_sprd_ctrl.h"
+#include "awb_sprd_adpt.h"
 #include "awb.h"
 #include "isp_adpt.h"
 //#include "awb_packet.h"
