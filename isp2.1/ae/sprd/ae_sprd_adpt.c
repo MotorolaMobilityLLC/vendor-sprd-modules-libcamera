@@ -3141,7 +3141,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
-		if (nx_mod != cur_mod) {
+		if (nx_mod != cur_mod || cxt->last_enable == 1) {
+			cxt->last_enable = 0;
 			ISP_LOGD("before set scene mode: \n");
 			_printf_status_log(cxt, cur_mod, &cxt->cur_status);
 			_set_scene_mode(cxt, cur_mod, nx_mod);
