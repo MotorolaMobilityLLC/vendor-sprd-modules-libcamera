@@ -48,14 +48,14 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
 	$(LOCAL_PATH)/ae/inc \
-	$(LOCAL_PATH)/ae/sprd_ae/ae/inc \
-	$(LOCAL_PATH)/ae/sprd_ae/flash/inc \
+	$(LOCAL_PATH)/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/ae/sprd/flash/inc \
 	$(LOCAL_PATH)/awb/inc \
 	$(LOCAL_PATH)/awb/alc_awb/inc \
-	$(LOCAL_PATH)/awb/sprd_awb/inc \
+	$(LOCAL_PATH)/awb/sprd/inc \
 	$(LOCAL_PATH)/af/inc \
-	$(LOCAL_PATH)/af/sprd_af/afv1/inc \
-	$(LOCAL_PATH)/af/sprd_af/aft/inc \
+	$(LOCAL_PATH)/af/sprd/afv1/inc \
+	$(LOCAL_PATH)/af/sprd/aft/inc \
 	$(LOCAL_PATH)/af/sft_af/inc \
 	$(LOCAL_PATH)/af/alc_af/inc \
 	$(LOCAL_PATH)/pdaf/inc \
