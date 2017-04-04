@@ -262,7 +262,7 @@ cmr_int ispmw_get_tuning_onebin_slv(cmr_handle isp_mw_handle, const cmr_s8 *sens
 
 	ISP_LOGI("sensor_name %s camera_id =%d", sensor_name, cxt->camera_id);
 	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_tuning.bin", sensor_name);
-	ISP_LOGI("sensor_name %s", &file_name[0]);
+	ISP_LOGV("sensor_name %s", &file_name[0]);
 	fp = fopen((void *)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open tuning bin");
@@ -462,7 +462,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	cmr_bzero(cxt, sizeof(*cxt));
 
 	ATRACE_BEGIN("isp_get_and_parse_tuning_bin");
-	ISP_LOGE("init param name %s", input_ptr->ex_info.name);
+	ISP_LOGI("init param name %s", input_ptr->ex_info.name);
 	cxt->input_param.ex_info.name = input_ptr->ex_info.name;
 	ret = ispmw_get_tuning_onebin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
 	if (ret) {
@@ -572,10 +572,10 @@ exit:
 			ispmw_put_pdaf_cbc_bin(cxt);
 			ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
 			if (ret)
-				ISP_LOGE("isp_3a_fw_deinit fail %ld", ret);
+				ISP_LOGE("failed to deinit 3a fw %ld", ret);
 			ret = isp_dev_access_deinit(cxt->isp_dev_handle);
 			if (ret)
-				ISP_LOGE("isp_dev_access_deinit fail %ld", ret);
+				ISP_LOGE("failed to deinit access %ld", ret);
 			free((void *)cxt);
 		}
 	} else {
@@ -596,10 +596,10 @@ cmr_int isp_deinit(cmr_handle isp_handle)
 
 	ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
 	if (ret)
-		ISP_LOGE("failed to isp_3a_fw_deinit %ld", ret);
+		ISP_LOGE("failed to deinit 3a fw %ld", ret);
 	ret = isp_dev_access_deinit(cxt->isp_dev_handle);
 	if (ret)
-		ISP_LOGE("failed to isp_dev_access_deinit %ld", ret);
+		ISP_LOGE("failed to deinit access %ld", ret);
 	ispmw_put_tuning_bin(cxt);
 	ispmw_put_pdaf_cbc_bin(cxt);
 	free((void *)cxt);
@@ -688,7 +688,7 @@ cmr_int isp_set_tuning_mode(cmr_handle isp_handle, struct isp_video_start *param
 	}
 	param_ptr->tuning_mode = tuning_mode;
 	cxt->idx = param_ptr->tuning_mode;
-	ISP_LOGI("converted tuning mode %d ", param_ptr->tuning_mode);
+	ISP_LOGV("converted tuning mode %d ", param_ptr->tuning_mode);
 	return ret;
 }
 
@@ -710,10 +710,9 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		ISP_LOGE("error,input is NULL");
 		goto exit;
 	}
-	ISP_LOGI("sensor %s", cxt->input_param.ex_info.name);
-	ISP_LOGI("isp size:%d,%d", param_ptr->size.w, param_ptr->size.h);
-	isp_set_tuning_mode(cxt,param_ptr);
-	ISP_LOGI("tuning mode %d", param_ptr->tuning_mode);
+	ISP_LOGI("sensor %s size w, h %d, %d", cxt->input_param.ex_info.name,
+		 param_ptr->size.w, param_ptr->size.h);
+	isp_set_tuning_mode(cxt, param_ptr);
 	ret = isp_3a_fw_start(cxt->isp_3a_handle, param_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start 3a");

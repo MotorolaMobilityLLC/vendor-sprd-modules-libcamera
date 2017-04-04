@@ -114,7 +114,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	file->fd = fd;
 	if (fd < 0) {
 		ret = -1;
-		ISP_LOGE("isp_dev_open error.");
+		ISP_LOGE("failed to open isp");
 		goto isp_free;
 	}
 
@@ -138,7 +138,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 
 	ret = pthread_mutex_init(&file->cb_mutex, NULL);
 	if (ret) {
-		ISP_LOGE("Failed to init mutex : %d", errno);
+		ISP_LOGE("failed to init mutex : %d", errno);
 		goto isp_free;
 	}
 
@@ -197,11 +197,12 @@ cmr_int isp_dev_deinit(isp_handle handle)
 	if (file->fd >= 0) {
 		sem_wait(&file->close_sem);
 		if (-1 == close(file->fd)) {
-			ISP_LOGE("close error.");
+			ISP_LOGE("failed to close isp");
 		}
 	} else {
-		ISP_LOGE("isp_dev_close error.");
+		ISP_LOGE("failed to closed isp fd error %d", file->fd);
 	}
+	ISP_LOGI("isp closed, begin to free ion");
 	pthread_mutex_lock(&_group.mutex);
 	_group.file_cnt--;
 	pthread_mutex_unlock(&_group.mutex);
@@ -443,9 +444,7 @@ cmr_int isp_dev_sel_iq_param_index(isp_handle handle , cmr_u32 tuning_idx)
 	cmr_s32                  fds[2];
 	struct isp_init_mem_param     load_input;
 
-	ISP_LOGI("E mode=%d", tuning_idx);
-	//file->idx = tuning_idx;
-
+	ISP_LOGV("E tuning idx = %d", tuning_idx);
 
 	if (!file) {
 		ret = -1;
@@ -810,7 +809,7 @@ static void* isp_dev_thread_proc(void *data)
 			break;
 		} else {
 			if (ISP_IMG_TX_STOP == irq_info.irq_flag) {
-				ISP_LOGE("isp_dev_thread_proc exit.");
+				ISP_LOGE("isp dev thread_proc exit.");
 				break;
 			} else if (ISP_IMG_SYS_BUSY == irq_info.irq_flag) {
 				cmr_usleep(100);
@@ -867,79 +866,6 @@ static void* isp_dev_thread_proc(void *data)
 	return NULL;
 }
 
-cmr_int isp_dev_open(isp_handle *handle, struct isp_dev_init_param *param)
-{
-	cmr_int ret = 0;
-	cmr_int fd = -1;
-	struct isp_file *file = NULL;
-	struct isp_dev_init_param *init_param = NULL;
-
-	file = malloc(sizeof(struct isp_file));
-	if (!file) {
-		ret = -1;
-		ISP_LOGE("alloc memory error.");
-		return ret;
-	}
-	if (NULL == param) {
-		ret = -1;
-		ISP_LOGE("init param null error.");
-		goto isp_free;
-	}
-
-	init_param = (struct isp_dev_init_param *)param;
-
-	fd = open(isp_dev_name, O_RDWR, 0);
-	if (fd < 0) {
-		ret = -1;
-		ISP_LOGE("isp_dev_open error.");
-		goto isp_free;
-	}
-
-	file->fd = fd;
-	file->camera_id = 0;
-	*handle = (isp_handle)file;
-
-	ret = ioctl(file->fd, ISP_IO_SET_INIT_PARAM, init_param);
-	if (ret) {
-		ISP_LOGE("isp initial param error.");
-	}
-
-	return ret;
-
-isp_free:
-	if (file)
-		free(file);
-	file = NULL;
-
-	return ret;
-}
-
-cmr_int isp_dev_close(isp_handle handle)
-{
-	cmr_int ret = 0;
-	struct isp_file *file = NULL;
-
-	if (!handle) {
-		ISP_LOGE("file hand is null error.");
-		ret = -1;
-		return ret;
-	}
-
-	file = (struct isp_file *)handle;
-
-	if (-1 != file->fd) {
-		if (-1 == close(file->fd)) {
-			ISP_LOGE("close error.");
-		}
-	} else {
-		ISP_LOGE("isp_dev_close error.");
-	}
-
-	free(file);
-
-	return ret;
-}
-
 cmr_int isp_dev_stop(isp_handle handle)
 {
 	cmr_int ret = 0;
@@ -956,7 +882,7 @@ cmr_int isp_dev_stop(isp_handle handle)
 
 	ret = ioctl(file->fd, ISP_IO_STOP, &camera_id);
 	if (ret) {
-		ISP_LOGE("isp_dev_stop error.");
+		ISP_LOGE("failed to stop isp");
 	}
 
 	return ret;
@@ -980,7 +906,7 @@ cmr_int isp_dev_stream_on(isp_handle handle)
 
 	ret = ioctl(file->fd, ISP_IO_STREAM_ON, &camera_id);
 	if (ret) {
-		ISP_LOGE("isp_dev_stream_on error.");
+		ISP_LOGE("failed to stream on");
 	}
 
 	ATRACE_END();
@@ -1171,7 +1097,7 @@ cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param)
 	cnt = read(file->fd, op, sizeof(struct isp_img_read_op));
 	if (cnt != sizeof(struct isp_img_read_op)) {
 		ret = cnt;
-		ISP_LOGE("isp_dev_get_img_buf error.");
+		ISP_LOGE("failed to get img buffer");
 	}
 
 	return ret;
@@ -1195,7 +1121,7 @@ cmr_int isp_dev_set_img_param(isp_handle handle, struct isp_cfg_img_param *param
 
 	ret = ioctl(file->fd, ISP_IO_SET_IMG_PARAM, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_img_param error.");
+		ISP_LOGE("failed to set img param");
 	}
 
 	return ret;
@@ -1221,7 +1147,7 @@ cmr_int isp_dev_set_rawaddr(isp_handle handle, struct isp_raw_data *param)
 
 	ret = ioctl(file->fd, ISP_IO_SET_RAW10, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_rawaddr error.");
+		ISP_LOGE("failed to set rawaddr");
 	}
 
 	return ret;
@@ -1247,7 +1173,7 @@ cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param)
 
 	ret = ioctl(file->fd, ISP_IO_SET_POST_PROC_YUV, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_post_yuv_mem error.");
+		ISP_LOGE("failed to set post yuv mem");
 	}
 
 	return ret;
@@ -1273,7 +1199,7 @@ cmr_int isp_dev_cfg_cap_buf(isp_handle handle, struct isp_img_mem *param)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_CAP_BUF, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_isp_cap error.");
+		ISP_LOGE("failed to cfg cap buf");
 	}
 
 	return ret;
@@ -1300,7 +1226,7 @@ cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param)
 
 	ret = ioctl(file->fd, ISP_IO_SET_FETCH_SRC_BUF, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_fetch_src_buf error.");
+		ISP_LOGE("failed to set fetch buf");
 	}
 
 	return ret;
@@ -1352,7 +1278,7 @@ cmr_int isp_dev_cfg_scenario_info(isp_handle handle, struct scenario_info_ap *da
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_scenario_info error.");
+		ISP_LOGE("failed to cfg scenario info");
 	}
 
 	return ret;
@@ -1379,7 +1305,7 @@ cmr_int isp_dev_cfg_iso_speed(isp_handle handle, cmr_u32 *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_iso_speed error.");
+		ISP_LOGE("failed to cfg ios speed");
 	}
 
 	return ret;
@@ -1406,7 +1332,7 @@ cmr_int isp_dev_cfg_awb_gain(isp_handle handle, struct isp_awb_gain_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_awb_gain error.");
+		ISP_LOGE("failed to cfg awb gain");
 	}
 
 	return ret;
@@ -1433,7 +1359,7 @@ cmr_int isp_dev_cfg_awb_gain_balanced(isp_handle handle, struct isp_awb_gain_inf
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_awb_gain error.");
+		ISP_LOGE("failed to cfg awb balanced");
 	}
 
 	return ret;
@@ -1460,7 +1386,7 @@ cmr_int isp_dev_cfg_dld_seq(isp_handle handle, struct dld_sequence *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_dld_seq error.");
+		ISP_LOGE("failed to cfg dld seq");
 	}
 
 	return ret;
@@ -1487,7 +1413,7 @@ cmr_int isp_dev_cfg_3a_param(isp_handle handle, struct cfg_3a_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_3a_param error.");
+		ISP_LOGE("failed to cfg 3a param");
 	}
 
 	return ret;
@@ -1514,7 +1440,7 @@ cmr_int isp_dev_cfg_ae_param(isp_handle handle, struct ae_cfg_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_ae_param error.");
+		ISP_LOGE("failed to cfg ae param");
 	}
 
 	return ret;
@@ -1541,7 +1467,7 @@ cmr_int isp_dev_cfg_af_param(isp_handle handle, struct af_cfg_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_af_param error.");
+		ISP_LOGE("failed to cfg af param");
 	}
 
 	return ret;
@@ -1568,7 +1494,7 @@ cmr_int isp_dev_cfg_awb_param(isp_handle handle, struct awb_cfg_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_awb_param error.");
+		ISP_LOGE("failed to cfg awb param");
 	}
 
 	return ret;
@@ -1595,7 +1521,7 @@ cmr_int isp_dev_cfg_yhis_param(isp_handle handle, struct yhis_cfg_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_yhis_param error.");
+		ISP_LOGE("failed to cfg yhis param");
 	}
 
 	return ret;
@@ -1622,7 +1548,7 @@ cmr_int isp_dev_cfg_sub_sample(isp_handle handle, struct subsample_cfg_info *dat
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_sub_sample error.");
+		ISP_LOGE("failed to cfg sub sample param");
 	}
 
 	return ret;
@@ -1649,7 +1575,7 @@ cmr_int isp_dev_cfg_anti_flicker(isp_handle handle, struct antiflicker_cfg_info 
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_anti_flicker error.");
+		ISP_LOGE("failed to cfg anti-flicker");
 	}
 
 	return ret;
@@ -1677,7 +1603,7 @@ cmr_int isp_dev_cfg_dld_seq_basic_prev(isp_handle handle, cmr_u32 size, cmr_u8 *
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_dld_seq_basic_prev error.");
+		ISP_LOGE("failed to cfg dld seq basic prev");
 	}
 
 	return ret;
@@ -1705,7 +1631,7 @@ cmr_int isp_dev_cfg_dld_seq_adv_prev(isp_handle handle, cmr_u32 size, cmr_u8 *da
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_dld_seq_adv_prev error.");
+		ISP_LOGE("failed to cfg dld seq adv prev");
 	}
 
 	return ret;
@@ -1733,7 +1659,7 @@ cmr_int isp_dev_cfg_dld_seq_fast_converge(isp_handle handle, cmr_u32 size, cmr_u
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_dld_seq_fast_converge error.");
+		ISP_LOGE("failed to cfg dld seq fast converge");
 	}
 
 	return ret;
@@ -1759,7 +1685,7 @@ cmr_int isp_dev_cfg_sharpness(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_sharpness error.");
+		ISP_LOGE("failed to cfg sharpness");
 	}
 
 	return ret;
@@ -1785,7 +1711,7 @@ cmr_int isp_dev_cfg_saturation(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_saturation error.");
+		ISP_LOGE("failed to cfg saturation");
 	}
 
 	return ret;
@@ -1811,7 +1737,7 @@ cmr_int isp_dev_cfg_contrast(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_contrast error.");
+		ISP_LOGE("failed to cfg contrast");
 	}
 
 	return ret;
@@ -1837,7 +1763,7 @@ cmr_int isp_dev_cfg_special_effect(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_cfg_special_effect error.");
+		ISP_LOGE("failed to cfg special effect");
 	}
 
 	return ret;
@@ -1861,7 +1787,7 @@ cmr_int isp_dev_cfg_brightness_gain(isp_handle handle, struct isp_brightness_gai
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_brightness_gain error.");
+		ISP_LOGE("failed to cfg brightness gain");
 
 	return ret;
 }
@@ -1886,7 +1812,7 @@ cmr_int isp_dev_cfg_brightness_mode(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_brightness_mode error.");
+		ISP_LOGE("failed to cfg brightness mode");
 
 	return ret;
 }
@@ -1911,7 +1837,7 @@ cmr_int isp_dev_cfg_color_temp(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_color_temp error.");
+		ISP_LOGE("failed to cfg color temp");
 
 	return ret;
 }
@@ -1934,7 +1860,7 @@ cmr_int isp_dev_cfg_ccm(isp_handle handle, struct isp_iq_ccm_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_ccm error.");
+		ISP_LOGE("failed to cfg ccm");
 
 	return ret;
 }
@@ -1959,7 +1885,7 @@ cmr_int isp_dev_cfg_valid_adgain(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_color_temp error.");
+		ISP_LOGE("failed to cfg valid adgain");
 
 	return ret;
 }
@@ -1984,7 +1910,7 @@ cmr_int isp_dev_cfg_exp_time(isp_handle handle, cmr_u32 mode)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_color_temp error.");
+		ISP_LOGE("failed to cfg exp time");
 
 	return ret;
 }
@@ -2007,7 +1933,7 @@ cmr_int isp_dev_cfg_otp_info(isp_handle handle, struct isp_iq_otp_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_otp_info error.");
+		ISP_LOGE("failed to cfg otp info");
 
 	return ret;
 }
@@ -2030,7 +1956,7 @@ cmr_int isp_dev_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_sof_info error.");
+		ISP_LOGE("failed to cfg sof info");
 
 	return ret;
 }
@@ -2053,7 +1979,7 @@ cmr_int isp_dev_cfg_d_gain(isp_handle handle, struct altek_d_gain_info *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_d_gain error.");
+		ISP_LOGE("failed to cfg d gain");
 
 	return ret;
 }
@@ -2076,7 +2002,7 @@ cmr_int isp_dev_cfg_y_offset(isp_handle handle, cmr_u32 *data)
 
 	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
 	if (ret)
-		ISP_LOGE("isp_dev_cfg_y_offset error.");
+		ISP_LOGE("failed to cfg y offset");
 
 	return ret;
 }
@@ -2102,7 +2028,7 @@ cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size)
 
 	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_capability_fw_size error.");
+		ISP_LOGE("failed to get cap fw size");
 	}
 
 	return ret;
@@ -2129,7 +2055,7 @@ cmr_int isp_dev_capability_statis_buf_size(isp_handle handle, cmr_int *size)
 
 	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_capability_statis_buf_size error.");
+		ISP_LOGE("failed to get statis buf size");
 	}
 
 	return ret;
@@ -2156,7 +2082,7 @@ cmr_int isp_dev_capability_dram_buf_size(isp_handle handle, cmr_int *size)
 
 	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_capability_dram_buf_size error.");
+		ISP_LOGE("failed to get dram buf size");
 	}
 
 	return ret;
@@ -2183,7 +2109,7 @@ cmr_int isp_dev_capability_highiso_buf_size(isp_handle handle, cmr_int *size)
 
 	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
 	if (ret) {
-		ISP_LOGE("isp_dev_capability_highiso_buf_size error.");
+		ISP_LOGE("failed to get high iso buf size");
 	}
 
 	return ret;
@@ -2210,7 +2136,7 @@ cmr_int isp_dev_capability_video_size(isp_handle handle, struct isp_img_size *si
 
 	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
 	if (ret) {
-		ISP_LOGE("error");
+		ISP_LOGE("failed to get continue size");
 	}
 
 	return ret;
@@ -2237,7 +2163,7 @@ cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *s
 
 	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
 	if (ret) {
-		ISP_LOGE("error");
+		ISP_LOGE("failed to get single size");
 	}
 
 	return ret;
@@ -2256,7 +2182,7 @@ cmr_int isp_dev_get_isp_id(isp_handle handle, cmr_u32 *isp_id)
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_GET_ISP_ID, isp_id);
 	if (ret) {
-		ISP_LOGE("isp_dev_get_isp_id error.");
+		ISP_LOGE("failed to get isp id");
 	}
 
 	return ret;
@@ -2275,7 +2201,7 @@ cmr_int isp_dev_get_user_cnt(isp_handle handle, cmr_s32 *cnt)
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_GET_USER_CNT, cnt);
 	if (ret) {
-		ISP_LOGE("isp_dev_get_user_cnt error.");
+		ISP_LOGE("failed to get user cnt");
 	}
 
 	return ret;
@@ -2294,7 +2220,7 @@ cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode)
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_SET_CAP_MODE, &capture_mode);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_capture_mode error.");
+		ISP_LOGE("failed to set cap mode");
 	}
 
 	return ret;
@@ -2313,7 +2239,7 @@ cmr_int isp_dev_set_skip_num(isp_handle handle, cmr_u32 skip_num)
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_SET_SKIP_NUM, &skip_num);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_skip_num error.");
+		ISP_LOGE("failed to set skip num");
 	}
 
 	return ret;
@@ -2332,7 +2258,7 @@ cmr_int isp_dev_set_deci_num(isp_handle handle, cmr_u32 deci_num)
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_SET_DECI_NUM, &deci_num);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_deci_num error.");
+		ISP_LOGE("failed to set deci num");
 	}
 
 	return ret;
@@ -2352,7 +2278,7 @@ cmr_int isp_dev_match_data_ctrl(isp_handle handle, struct isp_match_data_param *
 
 	ret = ioctl(file->fd, ISP_IO_MATCH_DATA_CTRL, data);
 	if (ret) {
-		ISP_LOGE("isp_dev_get_match_data error.");
+		ISP_LOGE("failed to match data");
 	}
 
 	return ret;
@@ -2469,7 +2395,7 @@ cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param)
 		 hiso_info.fd, hiso_info.phy_addr, hiso_info.virt_addr, hiso_info.size);
 	ret = ioctl(file->fd, ISP_IO_SET_HISO, &hiso_info);
 	if (ret) {
-		ISP_LOGE("ISP_IO_SET_HISO error.");
+		ISP_LOGE("failed to set hiso");
 	}
 
 	return ret;

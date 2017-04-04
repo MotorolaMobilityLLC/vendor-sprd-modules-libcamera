@@ -87,8 +87,6 @@ cmr_int isp_dev_deinit(isp_handle handle);
 cmr_int isp_dev_start(isp_handle handle);
 cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, struct isp_img_size *size);
 void isp_dev_evt_reg(isp_handle handle, isp_evt_cb isp_event_cb, void *privdata);
-cmr_int isp_dev_open(isp_handle *handle, struct isp_dev_init_param *param);
-cmr_int isp_dev_close(isp_handle handle);
 cmr_int isp_dev_stop(isp_handle handle);
 cmr_int isp_dev_stream_on(isp_handle handle);
 cmr_int isp_dev_stream_off(isp_handle handle);

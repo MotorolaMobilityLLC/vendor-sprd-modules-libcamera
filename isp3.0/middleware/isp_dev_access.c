@@ -139,7 +139,6 @@ cmr_int isp_dev_access_set_tuning_bin(cmr_handle isp_dev_handle, union isp_dev_c
 	cmr_u64                                kaddr_temp;
 	cmr_s32                                fds[2];
 
-	ISP_LOGI("E");
 	if (!input_ptr || !isp_dev_handle) {
 		ISP_LOGI("input is NULL, 0x%lx", (cmr_int)input_ptr);
 		ret = ISP_PARAM_NULL;
@@ -148,7 +147,7 @@ cmr_int isp_dev_access_set_tuning_bin(cmr_handle isp_dev_handle, union isp_dev_c
 
 	cxt = isp_dev_handle;
 	cxt->idx = input_ptr->value;
-	ISP_LOGI("idx %d value %d", cxt->idx,input_ptr->value);
+	ISP_LOGV("idx %d value %d", cxt->idx, input_ptr->value);
 	ret = isp_dev_sel_iq_param_index(cxt->isp_driver_handle,cxt->idx);
 	if (0 != ret) {
 		ISP_LOGE("failed to load binary %ld", ret);
