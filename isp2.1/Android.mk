@@ -70,8 +70,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 # don't modify this code
-#LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
-LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name 'backup' -prune -o -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
+LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
 
