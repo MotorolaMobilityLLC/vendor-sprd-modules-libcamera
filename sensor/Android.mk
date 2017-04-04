@@ -88,6 +88,7 @@ endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
+include $(LOCAL_PATH)/hw_drv/Sprdroid.mk
 include $(LOCAL_PATH)/af_drv/Sprdroid.mk
 include $(LOCAL_PATH)/otp_drv/Sprdroid.mk
 include $(LOCAL_PATH)/sensor_drv/Sprdroid.mk

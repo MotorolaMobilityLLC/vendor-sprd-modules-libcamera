@@ -66,7 +66,7 @@ struct sns_af_drv_entry
 
 struct sns_af_drv_cxt
 {
-	SENSOR_HW_HANDLE hw_handle; /*hardware handle*/
+	cmr_handle hw_handle; /*hardware handle*/
 	uint32_t af_work_mode; /*Actual working mode*/
 	uint32_t current_pos;  /*vcm steps last time*/
 	void  *private;        /*vcm private data*/
