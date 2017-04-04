@@ -834,6 +834,9 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_CONTROL_AWB_MODE:
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AWB_MODE);
             break;
+        case ANDROID_CONTROL_AWB_LOCK:
+            mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AWB_LOCK);
+            break;
         case ANDROID_CONTROL_AE_MODE:
             HAL_LOGV("ANDROID_CONTROL_AE_MODE");
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_MODE);

@@ -5347,8 +5347,10 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
-            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAeCONTROLTag(&controlInfo);
+        }
+        if (controlInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
+            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAwbCONTROLTag(&controlInfo);
         }
         HAL_LOGI("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
@@ -5810,6 +5812,28 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvAwbMode = 0;
         mSetting->androidAwbModeToDrvAwbMode(controlInfo.awb_mode, &drvAwbMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbMode);
+        if (controlInfo.awb_mode != ANDROID_CONTROL_AWB_MODE_AUTO)
+            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
+        else if (!controlInfo.awb_lock)
+            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
+    } break;
+
+    case ANDROID_CONTROL_AWB_LOCK: {
+        uint8_t awb_lock;
+        awb_lock = controlInfo.awb_lock;
+        HAL_LOGV("ANDROID_CONTROL_AWB_LOCK awb_lock=%d", awb_lock);
+        if (awb_lock && controlInfo.awb_mode == ANDROID_CONTROL_AWB_MODE_AUTO) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
+                     awb_lock);
+            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_LOCKED;
+            mSetting->setAwbCONTROLTag(&controlInfo);
+        } else if (!awb_lock &&
+                   controlInfo.awb_state == ANDROID_CONTROL_AWB_STATE_LOCKED) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
+                     awb_lock);
+            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
+            mSetting->setAwbCONTROLTag(&controlInfo);
+        }
     } break;
 
     case ANDROID_SCALER_CROP_REGION:

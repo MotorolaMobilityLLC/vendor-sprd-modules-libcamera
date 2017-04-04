@@ -6888,6 +6888,15 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&(param_ptr->size_param);
         break;
+
+    case COM_ISP_SET_AWB_LOCK_UNLOCK:
+        isp_cmd = ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK;
+        isp_param = param_ptr->cmd_value;
+        if (isp_param == ISP_AWB_UNLOCK)
+            isp_param = ISP_AWB_UNLOCK;
+        else if (isp_param == ISP_AWB_LOCK)
+            isp_param = ISP_AWB_LOCK;
+        break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -7930,6 +7939,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);

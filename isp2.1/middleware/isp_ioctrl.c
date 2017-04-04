@@ -1741,7 +1741,13 @@ static cmr_int _ispSetAeAwbLockUnlock(cmr_handle isp_alg_handle, void *param_ptr
 	memset((void *)&ae_result, 0, sizeof(struct ae_calc_out));
 
 	ae_awb_mode = *(cmr_u32 *) param_ptr;
-	if (ISP_AE_AWB_LOCK == ae_awb_mode) {	// AE & AWB Lock
+	if (ISP_AWB_LOCK == ae_awb_mode) {
+		ISP_LOGV("AWB Lock");
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
+	} else if (ISP_AWB_UNLOCK == ae_awb_mode) {
+		ISP_LOGV("AWB UnLock");
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
+	} else if (ISP_AE_AWB_LOCK == ae_awb_mode) {	// AE & AWB Lock
 		ISP_LOGI("AE & AWB Lock");
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, (void *)&ae_result);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);

@@ -72,6 +72,7 @@ enum setting_general_type {
     SETTING_GENERAL_SCENE_MODE,
     SETTING_GENERAL_SENSOR_ROTATION,
     SETTING_GENERAL_AE_LOCK_UNLOCK,
+    SETTING_GENERAL_AWB_LOCK_UNLOCK,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -170,6 +171,7 @@ struct setting_hal_param {
     cmr_uint video_snapshot_type;
     cmr_uint sprd_3dcalibration_enable;
     cmr_uint sprd_yuv_callback_enable;
+    cmr_uint is_awb_lock;
 };
 
 struct setting_camera_info {
@@ -509,6 +511,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_TYPE_MAX, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AE_LOCK_UNLOCK, &hal_param->is_ae_lock,
          COM_ISP_SET_AE_LOCK_UNLOCK, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
+         COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -541,6 +545,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         }
         break;
 
+    case SETTING_GENERAL_AWB_LOCK_UNLOCK:
     case SETTING_GENERAL_AE_LOCK_UNLOCK:
         if (setting_is_rawrgb_format(cpt, parm)) {
             ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
@@ -552,7 +557,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
     }
 
-    if (SETTING_GENERAL_AE_LOCK_UNLOCK == type) {
+    if (SETTING_GENERAL_AE_LOCK_UNLOCK == type ||
+        SETTING_GENERAL_AWB_LOCK_UNLOCK == type) {
         goto setting_out;
     }
 
@@ -1820,6 +1826,14 @@ static cmr_int setting_set_ae_lock_unlock(struct setting_component *cpt,
     cmr_int ret = 0;
 
     ret = setting_set_general(cpt, SETTING_GENERAL_AE_LOCK_UNLOCK, parm);
+
+    return ret;
+}
+static cmr_int setting_set_awb_lock_unlock(struct setting_component *cpt,
+                                           struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AWB_LOCK_UNLOCK, parm);
 
     return ret;
 }
@@ -3354,6 +3368,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
         {CAMERA_PARAM_SPRD_3DCAL_ENABLE, setting_set_3dcalibration_enable},
         {CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
          setting_set_yuv_callback_enable},
+        {CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK, setting_set_awb_lock_unlock},
         {CAMERA_PARAM_TYPE_MAX, NULL},
         {SETTING_GET_PREVIEW_ANGLE, setting_get_preview_angle},
         {SETTING_GET_CAPTURE_ANGLE, setting_get_capture_angle},
@@ -3406,8 +3421,8 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 
         CMR_LOGE("param has error cpt 0x%p, camera_id %ld, array_size %d, "
                  "cmd_type %ld,SETTING_TYPE_MAX %d",
-                 cpt, parm->camera_id, (cmr_u32)cmr_array_size(setting_list), cmd_type,
-                 SETTING_TYPE_MAX);
+                 cpt, parm->camera_id, (cmr_u32)cmr_array_size(setting_list),
+                 cmd_type, SETTING_TYPE_MAX);
         return -CMR_CAMERA_INVALID_PARAM;
     }
 

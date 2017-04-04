@@ -4053,6 +4053,13 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("awb %d", valueU8);
     }
 
+    if (frame_settings.exists(ANDROID_CONTROL_AWB_LOCK)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AWB_LOCK).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.awb_lock, valueU8,
+                         ANDROID_CONTROL_AWB_LOCK)
+        HAL_LOGV("awb_lock %d", valueU8);
+    }
+
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
         int32_t org_ae_compensat = 0;
         int32_t ae_compensat = 3;

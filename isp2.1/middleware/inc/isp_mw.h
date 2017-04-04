@@ -186,6 +186,8 @@ enum isp_flash_mode {
 };
 
 enum isp_ae_awb_lock_unlock_mode {
+	ISP_AWB_UNLOCK = 0x00,
+	ISP_AWB_LOCK,
 	ISP_AE_AWB_LOCK = 0x09,
 	ISP_AE_AWB_UNLOCK = 0x0a,
 	ISP_AE_AWB_MAX
