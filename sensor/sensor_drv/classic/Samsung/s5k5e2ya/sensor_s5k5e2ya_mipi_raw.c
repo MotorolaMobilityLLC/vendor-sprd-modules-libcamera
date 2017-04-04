@@ -27,9 +27,9 @@
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "sensor_s5k5e2ya_raw_param_main.c"
+#include "parameters/sensor_s5k5e2ya_raw_param_main.c"
 #else
-#include "sensor_s5k5e2ya_raw_param.c"
+#include "parameters/sensor_s5k5e2ya_raw_param.c"
 #endif
 #define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT

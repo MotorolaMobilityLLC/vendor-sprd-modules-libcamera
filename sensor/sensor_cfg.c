@@ -144,6 +144,7 @@ const SENSOR_MATCH_T atv_infor_tab[] = {
 *add for auto test for main and sub camera (raw yuv)
 * 2014-02-07 freed wang  begin
 */
+#if 0
 const SENSOR_MATCH_T at_main_sensor_infor_tab[] = {
 #ifndef SC_FPGA
     {"autotest_ov13850_mipi_raw",
@@ -225,7 +226,7 @@ const SENSOR_MATCH_T at_dev2_sensor_infor_tab[] = {
     {"at_sp2509_mipi_raw", &g_sp2509_mipi_raw_info, {NULL, 0}, NULL},
 #endif
     {0}};
-
+#endif
 const SENSOR_MATCH_T at_atv_infor_tab[] = {
     //{"nmi600_yuv", &g_nmi600_yuv_info},
     //{"tlg1120_yuv", &g_tlg1120_yuv_info},  bonnie
@@ -246,12 +247,15 @@ SENSOR_MATCH_T *Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt,
     if (AUTO_TEST_CAMERA == at_flag) {
         switch (sensor_id) {
         case SENSOR_MAIN:
+		  sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&main_sensor_infor_tab;
+		  break;
         case SENSOR_DEVICE2:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&at_main_sensor_infor_tab;
+            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor2_infor_tab;
             break;
         case SENSOR_SUB:
+            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sub_sensor_infor_tab;
         case SENSOR_DEVICE3:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&at_sub_sensor_infor_tab;
+            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor3_infor_tab;
             break;
         case SENSOR_ATV:
             sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&at_atv_infor_tab;
@@ -294,15 +298,21 @@ uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt,
     if (AUTO_TEST_CAMERA == at_flag) {
         switch (sensor_id) {
         case SENSOR_MAIN:
-        case SENSOR_DEVICE2:
             tab_lenght =
-                (sizeof(at_main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
+                (sizeof(main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
+		  break;
+		case SENSOR_DEVICE2:
+            tab_lenght =
+                (sizeof(sensor2_infor_tab) / sizeof(SENSOR_MATCH_T));
             break;
 
         case SENSOR_SUB:
+		    tab_lenght =
+                (sizeof(sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
+            break;
         case SENSOR_DEVICE3:
             tab_lenght =
-                (sizeof(at_sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
+                (sizeof(sensor3_infor_tab) / sizeof(SENSOR_MATCH_T));
             break;
 
         case SENSOR_ATV:
@@ -350,10 +360,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
     if (AUTO_TEST_CAMERA == at_flag) {
         if (index == SENSOR_MAIN || index == SENSOR_DEVICE2) {
             mSnNum =
-                sizeof(at_main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
+                sizeof(main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
             SENSOR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum);
             for (i = 0; i < mSnNum; i++) {
-                if (strcmp(at_main_sensor_infor_tab[i].sn_name,
+                if (strcmp(main_sensor_infor_tab[i].sn_name,
                            AT_CAMERA_SENSOR_TYPE_BACK) == 0) {
                     SENSOR_LOGI("sensor autotest sensor matched  %dth  is %s",
                                 i, AT_CAMERA_SENSOR_TYPE_BACK);
@@ -364,10 +374,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
         }
         if (index == SENSOR_SUB || index == SENSOR_DEVICE3) {
             sSnNum =
-                sizeof(at_sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
+                sizeof(sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
             SENSOR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum);
             for (i = 0; i < sSnNum; i++) {
-                if (strcmp(at_sub_sensor_infor_tab[i].sn_name,
+                if (strcmp(sub_sensor_infor_tab[i].sn_name,
                            AT_CAMERA_SENSOR_TYPE_FRONT) == 0) {
                     SENSOR_LOGI("sensor autotest matched the %dth  is %s", i,
                                 AT_CAMERA_SENSOR_TYPE_FRONT);
