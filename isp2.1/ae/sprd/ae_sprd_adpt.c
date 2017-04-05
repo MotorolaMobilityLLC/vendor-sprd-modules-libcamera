@@ -3034,7 +3034,14 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->sof_id++;
 	//ISP_LOGD("sof_handler %d", cxt->sof_id);
 
-	if (1 == cxt->debug_enable) {
+        if (calc_out && calc_out->is_stab) {
+            if (cxt->isp_ops.callback)
+                (*cxt->isp_ops.callback)(
+                    cxt->isp_ops.isp_handler,
+                    AE_CB_STAB_NOTIFY); // send STAB notify to HAL
+        }
+
+        if (1 == cxt->debug_enable) {
 		save_to_mlog_file(cxt, &misc_calc_out);
 	}
 
@@ -3330,9 +3337,15 @@ current_status->stride_config[1] = cxt->cnvg_stride_ev[current_status->settings.
 		current_result->tcRls_flag = 0;
 	}
 	ISP_LOGV("TCCTL_rls_ae_lock is %d", cxt->cur_status.settings.lock_ae);
-/***********************************************************/
-/*display the AE running status*/
-	if (1 == cxt->debug_enable) {
+	if (calc_out && calc_out->is_stab) {
+            if (cxt->isp_ops.callback)
+                (*cxt->isp_ops.callback)(
+                    cxt->isp_ops.isp_handler,
+                    AE_CB_STAB_NOTIFY); // send STAB notify to HAL
+        }
+        /***********************************************************/
+        /*display the AE running status*/
+        if (1 == cxt->debug_enable) {
 		save_to_mlog_file(cxt, &misc_calc_out);
 	}
 /***********************************************************/
