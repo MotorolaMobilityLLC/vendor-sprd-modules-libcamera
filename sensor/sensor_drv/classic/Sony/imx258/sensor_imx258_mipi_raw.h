@@ -564,8 +564,8 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[] = {
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
     {0, 0, 1280, 720, 13939, 960, 796, {0, 0, 1280, 720}},
-    {0, 0, 2096, 1552, 20650, 1296, 1644, {0, 0, 2096, 1552}},
-    {0, 0, 4208, 3120, 10325, 1296, 3224, {0, 0, 4208, 3120}},
+    {0, 0, 2096, 1552, 20300, 1296, 1644, {0, 0, 2096, 1552}},
+    {0, 0, 4208, 3120, 10215, 1296, 3224, {0, 0, 4208, 3120}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -647,7 +647,7 @@ LOCAL SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
                     .gain = 90,
                 },
             },
-        .setting_ptr = s_imx258_preview_size_video_tab,
+        .setting_ptr = (struct sensor_reg_tag **)s_imx258_preview_size_video_tab,
     },
     {
         .ae_info =
@@ -659,7 +659,7 @@ LOCAL SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
                     .gain = 1000,
                 },
             },
-        .setting_ptr = s_imx258_capture_size_video_tab,
+        .setting_ptr = (struct sensor_reg_tag **)s_imx258_capture_size_video_tab,
     }};
 
 SENSOR_INFO_T g_imx258_mipi_raw_info = {
@@ -700,7 +700,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
     .dvdd_val = SENSOR_AVDD_1200MV,
     .source_width_max = SNAPSHOT_WIDTH,   /* max width of source image */
     .source_height_max = SNAPSHOT_HEIGHT, /* max height of source image */
-    .name = SENSOR_NAME,
+    .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifndef CAMERA_SENSOR_BACK_I2C_SWITCH
@@ -742,7 +742,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
     .horizontal_view_angle =
         35, // fov=78.4/2  min_focal_length=phical_dimension/(2*tan(fov/2))
     .vertical_view_angle = 35,
-    .sensor_version_info = "imx258v1",
+    .sensor_version_info = (cmr_s8 *)"imx258v1",
     //	.pixel_size = 1120, //1.12um phical_dimension=pixel_size*max_width or
     // max_height
 };
