@@ -2200,6 +2200,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
 	cxt->binning_stats.binning_size.w = binnng_w / 2;
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
+	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 
 	rtn = isp_alg_sw_init(cxt, &isp_alg_input);
 	if (rtn) {
@@ -2590,6 +2591,15 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	rtn = isp_update_alg_param(cxt);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to isp smart param calc"));
+
+	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
+	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, cxt->pdaf_cxt.pdaf_en = %d",
+		cxt->pdaf_cxt.pdaf_support, cxt->pdaf_cxt.pdaf_en);
+	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pdaf_en) {
+		rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
+
+	}
+	ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf param"));
 
 	rtn = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to trans isp buff"));

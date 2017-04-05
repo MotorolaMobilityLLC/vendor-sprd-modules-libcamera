@@ -202,7 +202,6 @@ static cmr_int pdaf_setup(struct sprd_pdaf_context *pdaf)
 	cmr_handle device = cxt->isp_driver_handle;
 
 	rtn = isp_get_pdaf_default_param(&pdaf_param);
-	ISP_LOGE("WUYI:pdaf_setup");
 	isp_u_pdaf_block(device, (void *)&pdaf_param);
 
 	return rtn;
@@ -271,7 +270,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id; */
 	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;	/*TBD get from sensor id */
 /*TBD init sharkle isp*/
-	pdaf_setup(cxt);
+	//pdaf_setup(cxt);
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
@@ -405,6 +404,19 @@ exit:
 	return ret;
 }
 
+static cmr_s32 pdafsprd_adpt_set_param(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+	UNUSED(in);
+
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	pdaf_setup(cxt);
+	return 0;
+}
+
+
 static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -413,29 +425,16 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	ISP_LOGV("cmd = %d", cmd);
-#if 0	 /*TBD*/
-	    switch (cmd) {
-	case PDAF_CTRL_CMD_SET_OPEN:
-		ret = pdafaltek_adpt_set_open(adpt_handle, in_ptr);
-		break;
-	case PDAF_CTRL_CMD_SET_CLOSE:
-		ret = pdafaltek_adpt_set_close(adpt_handle, in_ptr);
-		break;
-	case PDAF_CTRL_CMD_SET_CONFIG:
-		ret = pdafaltek_adpt_set_config(adpt_handle, in_ptr);
-		break;
-	case PDAF_CTRL_CMD_SET_ENABLE:
-		ret = pdafaltek_adpt_set_enable(adpt_handle, in_ptr);
-		break;
-	case PDAF_CTRL_CMD_GET_BUSY:
-		ret = pdafaltek_adpt_get_busy(adpt_handle, out_ptr);
+
+	switch (cmd) {
+	case PDAF_CTRL_CMD_SET_PARAM:
+		ret = pdafsprd_adpt_set_param(adpt_handle, in_ptr);
 		break;
 	default:
-		ISP_LOGE("failed to case cmd = %ld", cmd);
+		ISP_LOGE("failed to case cmd = %d", cmd);
 		break;
 	}
-#endif
-	ret = 0;
+
 	return ret;
 }
 

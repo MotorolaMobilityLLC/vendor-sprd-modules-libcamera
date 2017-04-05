@@ -102,6 +102,7 @@ struct af_info {
 struct pdaf_info {
 	cmr_handle handle;
 	cmr_u8 pdaf_support;
+	cmr_u8 pdaf_en;
 	//struct pdaf_ctrl_process_out proc_out;
 };
 
