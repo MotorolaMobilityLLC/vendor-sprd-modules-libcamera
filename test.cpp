@@ -958,6 +958,7 @@ static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
     if (type == CAMERA_ISP_STATIS) {
         if (NULL != mIspStatisHeapReserved) {
+            mIspStatisHeapReserved->ion_heap->free_kaddr();
             freeCameraMem(mIspStatisHeapReserved);
             mIspStatisHeapReserved = NULL;
         }
@@ -1557,6 +1558,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         *phy_addr = kaddr;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
+        *fd++ = mIspStatisHeapReserved->dev_fd;
 #endif
     } else if (type == CAMERA_ISP_BINGING4AWB) {
         cmr_u64 *phy_addr_64 = (cmr_u64 *)phy_addr;
