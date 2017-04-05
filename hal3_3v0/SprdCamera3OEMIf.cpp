@@ -8430,7 +8430,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in)
 		video_stab_write_frame(mVideoInst, &frame_in);
 		do{
 			gyro_num = mGyroVideoInfo.size();
-			HAL_LOGI("gyro_num = %d",gyro_num);
+			HAL_LOGV("gyro_num = %d",gyro_num);
 			if(gyro_num){
 				gyro = (vsGyro*)malloc(gyro_num * sizeof(vsGyro));
 				if (NULL == gyro) {
@@ -8588,22 +8588,7 @@ void SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame)
 	char *eis_buff = (char *)(frame->y_vir_addr) + frame->width * frame->height * 3 / 2;
 	double *warp_buff = (double *)eis_buff;
 	HAL_LOGV("video vir address 0x%lx,warp address %p",frame->y_vir_addr, warp_buff);
-#if 0
-	//use specific warp instead eis process warp
-	frame_out.warp.dat[0][0] = frame_out.warp.dat[1][1] = frame_out.warp.dat[2][2] = 1.0;
-	frame_out.warp.dat[0][1] = frame_out.warp.dat[0][2] = frame_out.warp.dat[1][0] = 2.0;
-	frame_out.warp.dat[1][2] = frame_out.warp.dat[2][0] = frame_out.warp.dat[2][1] = 3.0;
-	//use specific test number to check eis warp correct,we will change it later
-	if (warp_buff)
-		*warp_buff++ = 16171225;
-	for (int i=0;i<3;i++){
-		for (int j=0;j<3;j++){
-			HAL_LOGV("number %d warp address is %p",3*i+j+1, warp_buff);
-			if (warp_buff)
-				*warp_buff++ = frame_out.warp.dat[i][j];
-		}
-	}
-#else
+
 	//gyro data is should be used for video frame stab
 	if(mGyroInit && !mGyroExit){
 		if(frame->zoom_ratio == 0)
@@ -8627,12 +8612,11 @@ void SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame)
 		*warp_buff++ = 16171225;
 	for (int i=0;i<3;i++){
 		for (int j=0;j<3;j++){
-			HAL_LOGI("number %d warp address is %p",3*i+j+1, warp_buff);
 			if (warp_buff)
 				*warp_buff++ = frame_out.warp.dat[i][j];
 		}
 	}
-#endif
+
 }
 #endif
 
@@ -8848,7 +8832,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
                     sensor_info.gsensor_info.vertical_up = buffer[i].data[0];
                     sensor_info.gsensor_info.vertical_down = buffer[i].data[1];
                     sensor_info.gsensor_info.horizontal = buffer[i].data[2];
-                    HAL_LOGD("gsensor timestamp %" PRId64", x: %f, y: %f, z: %f",
+                    HAL_LOGV("gsensor timestamp %" PRId64", x: %f, y: %f, z: %f",
                              buffer[i].timestamp, buffer[i].data[0],
                              buffer[i].data[1], buffer[i].data[2]);
                     if (NULL != obj->mCameraHandle && NULL != obj->mHalOem) {
