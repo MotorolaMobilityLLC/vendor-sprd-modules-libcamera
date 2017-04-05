@@ -6,7 +6,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -162,7 +162,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -318,7 +318,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -474,7 +474,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -630,7 +630,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -786,7 +786,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -942,7 +942,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1098,7 +1098,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1254,7 +1254,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1410,7 +1410,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1566,7 +1566,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1722,7 +1722,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1878,7 +1878,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2034,7 +2034,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2190,7 +2190,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2346,7 +2346,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2502,7 +2502,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2658,7 +2658,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2814,7 +2814,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2970,7 +2970,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3126,7 +3126,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3282,7 +3282,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3438,7 +3438,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3594,7 +3594,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3750,7 +3750,7 @@
 	/*cnr_iir_mode*/
 	0x0000,
 	/*cnr_uv_pg_th*/
-	0x0000,
+	0x03C0,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
