@@ -48,18 +48,4 @@
 ERRCODE CAF_main(AF_Data * pAF_Data);
 ERRCODE CAF_set_pd_info(AF_Data * pAF_Data, cmr_u32 * info_param);
 
-/*
-ERRCODE CAF_Init(AF_Data* pAF_Data);
-ERRCODE CAF_DeInit(AF_Data* pAF_Data);
-ERRCODE CAF_main(AF_Data* pAF_Data);
-ERRCODE Set_FineSearch_Para(AF_Data* pAF_Data, uint8 DIR);
-ERRCODE Set_RoughSearch_Para(AF_Data* pAF_Data, uint8 DIR);
-ERRCODE CAF_Search(AF_Data* pAF_Data);
-ERRCODE CAF_Search_main(AF_Data* pAF_Data);
-ERRCODE CAF_GetSearchRange();
-ERRCODE CAF_AnalyzeFV(AF_FV* pFV, uint16* SearchTable, uint8 FrameNum);
-ERRCODE CAF_Check_FV_Confidence(AF_FV* pFV, uint8 FrameNum, uint8* CAF_Result, AF_TH* pAF_TH, uint16* pPeak_POS);
-ERRCODE CAF_Cal_RoughScan_Table(AF_Data* pAF_Data, uint8 CurIdx, uint8 DIR);
-*/
-
 #endif

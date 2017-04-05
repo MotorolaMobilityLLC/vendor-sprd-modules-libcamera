@@ -1385,9 +1385,14 @@ static cmr_s32 faf_trigger_init(af_ctrl_t * af);
 // saf stuffs
 static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 {
+	AF_Trigger_Data aft_in;
 	af->algo_mode = SAF;
+	memset(&aft_in,0,sizeof(AF_Trigger_Data));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (1==af->defocus)? (DEFOCUS):(RF_NORMAL);
 	calc_roi(af, win, af->algo_mode);
-	AF_Trigger(&af->fv, af->algo_mode, (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
+	AF_Trigger(&af->fv,&aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
 	faf_trigger_init(af);
@@ -1557,9 +1562,14 @@ static cmr_s32 trigger_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm, str
 }
 
 // caf stuffs
-static void caf_start_search(af_ctrl_t * af, cmr_s32 fast)
+static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 {
-	AF_Trigger(&af->fv, af->algo_mode, fast ? RF_FAST : RF_NORMAL);
+	AF_Trigger_Data aft_in;
+	memset(&aft_in,0,sizeof(AF_Trigger_Data));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (p_aft_result->is_need_rough_search)?(RF_NORMAL):(RF_FAST);
+	AF_Trigger(&af->fv, &aft_in);
 	do_start_af(af);
 	if (1 == af->need_re_trigger) {
 //      af->need_re_trigger = 0;
@@ -1679,10 +1689,10 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 
 	trigger_calc(af, prm, &res);
 	//ISP_LOGD("is_caf_trig = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_need_rough_search);
-	if (res.is_caf_trig || AFV1_TRUE == af->inited_af_req) {
+	if (res.is_caf_trig || (AFV1_TRUE == af->inited_af_req && CAF_SEARCHING != af->caf_state)) {
 		//caf_stop_monitor(af);
 		af->caf_state = CAF_SEARCHING;
-		caf_start_search(af, !res.is_need_rough_search);
+		caf_start_search(af, &res);
 	} else if (res.is_cancel_caf && af->caf_state == CAF_SEARCHING) {
 		pthread_mutex_lock(&af->af_work_lock);
 		//notify_stop(af, 0);
@@ -1843,6 +1853,39 @@ static void caf_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae, isp_awb
 	//pthread_mutex_unlock(&af->caf_lock);
 }
 
+struct aft_proc_calc_param prm_sensor;
+static void caf_process_sensor(af_ctrl_t * af, struct af_aux_sensor_info_t * in) {
+    struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
+    uint32_t  sensor_type = aux_sensor_info->type;
+    struct aft_proc_calc_param *prm = &prm_sensor;
+
+    memset(prm, 0, sizeof(struct aft_proc_calc_param));
+    switch(sensor_type) {
+    case AF_ACCELEROMETER:
+            prm->sensor_info.sensor_type = AFT_POSTURE_ACCELEROMETER;
+            prm->sensor_info.x = aux_sensor_info->gsensor_info.vertical_down;
+            prm->sensor_info.y = aux_sensor_info->gsensor_info.vertical_up;
+            prm->sensor_info.z = aux_sensor_info->gsensor_info.horizontal;
+            break;
+    case AF_GYROSCOPE:
+            prm->sensor_info.sensor_type = AFT_POSTURE_GYRO;
+            prm->sensor_info.x = aux_sensor_info->gyro_info.x;
+            prm->sensor_info.y = aux_sensor_info->gyro_info.y;
+            prm->sensor_info.z = aux_sensor_info->gyro_info.z;
+            break;
+    default:
+            break;
+    }
+    prm->active_data_type = AFT_DATA_SENSOR;
+    ISP_LOGD("[%d] sensor type %d %f %f %f "
+            ,af->state
+            ,prm->sensor_info.sensor_type
+            ,prm->sensor_info.x
+            ,prm->sensor_info.y
+            ,prm->sensor_info.z);
+    caf_monitor_calc(af, prm);
+}
+
 static void suspend_caf(af_ctrl_t * af)
 {
 	ISP_LOGD("state = %s, pre_state = %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
@@ -1905,9 +1948,14 @@ static cmr_s32 faf_process_frame(af_ctrl_t * af)
 
 static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 {
+	AF_Trigger_Data aft_in;
 	af->algo_mode = CAF;
+	memset(&aft_in,0,sizeof(AF_Trigger_Data));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (RF_NORMAL);
 	calc_roi(af, win, af->algo_mode);
-	AF_Trigger(&af->fv, af->algo_mode, RF_NORMAL);
+	AF_Trigger(&af->fv, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
 }
@@ -2350,6 +2398,22 @@ static ERRCODE if_phase_detection_get_data(pd_algo_result_t * pd_result, void *c
 	return 0;
 }
 
+static ERRCODE if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+
+	if(NULL == ms_result){
+		return 1;
+	}
+
+	ms_result->g_sensor_queue[SENSOR_X_AXIS][ms_result->sensor_g_queue_cnt] = af->gsensor_info.vertical_up;
+	ms_result->g_sensor_queue[SENSOR_Y_AXIS][ms_result->sensor_g_queue_cnt] = af->gsensor_info.vertical_down;
+	ms_result->g_sensor_queue[SENSOR_Z_AXIS][ms_result->sensor_g_queue_cnt] = af->gsensor_info.horizontal;
+	ms_result->timestamp = af->gsensor_info.timestamp;
+
+	return 0;
+}
+
 static ERRCODE if_lens_get_pos(uint16 * pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
@@ -2507,7 +2571,7 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 
 	if (isp_ctx->otp_data) {
 		if (isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali) {
-			af->fv.AF_OTP.bIsExist = (T_LENS_BY_OTP);
+			pAF_OTP->bIsExist = (T_LENS_BY_OTP);
 			pAF_OTP->INF = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
 			pAF_OTP->MACRO = isp_ctx->otp_data->single_otp.af_info.macro_cali;
 			ISP_LOGD("get otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
@@ -2626,6 +2690,20 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 		}
 	}
 	ISP_LOGD("E");
+	return 0;
+}
+
+static ERRCODE if_get_vcm_param(cmr_u32 *param, void *cookie)
+{
+	// TODO
+	af_ctrl_t *af = cookie;
+
+	// get otp
+	if (NULL != af && NULL != param) {
+		param[0] = af->af_tuning_data.vcm_hysteresis;
+		ISP_LOGD("vcm_hysteresis = (%d)", af->af_tuning_data.vcm_hysteresis);
+	}
+
 	return 0;
 }
 static char AFlog_buffer[2048] = { 0 };
@@ -2939,18 +3017,43 @@ static void set_manual(af_ctrl_t * af, char *test_param)
 
 static void trigger_caf(af_ctrl_t * af, char *test_param)
 {
+	AF_Trigger_Data aft_in;
+
+	char *p1 = test_param;
+	char *p2;
+	char *p3;
+	while (*p1 != '~' && *p1 != '\0')
+        p1++;
+	*p1++ = '\0';
+	p2 = p1;
+	while (*p2 != '~' && *p2 != '\0')
+        p2++;
+	*p2++ = '\0';
+	p3 = p2;
+	while (*p3 != '~' && *p3 != '\0')
+        p3++;
+	*p3++ = '\0';
+	memset(&aft_in,0,sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;	//not need trigger to work when caf_start_monitor
 	af->state = STATE_CAF;
 	af->caf_state = CAF_SEARCHING;
 	af->algo_mode = CAF;
-	ISP_LOGD("_eAF_Triger_Type = %d", atoi(test_param));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = atoi(test_param);
+	aft_in.defocus_param.scan_from = (atoi(p1)>0 && atoi(p1)<1023)? (atoi(p1)):(0);
+	aft_in.defocus_param.scan_to = (atoi(p2)>0 && atoi(p2)<1023)? (atoi(p2)):(0);
+	aft_in.defocus_param.per_steps = (atoi(p3)>0 && atoi(p3)<200)? (atoi(p3)):(0);
+
 	trigger_stop(af);
-	AF_Trigger(&af->fv, af->algo_mode, atoi(test_param));	//test_param is in _eAF_Triger_Type,     RF_NORMAL = 0,        //noraml R/F search for AFT RF_FAST = 3,              //Fast R/F search for AFT
+	AF_Trigger(&af->fv, &aft_in);	//test_param is in _eAF_Triger_Type,     RF_NORMAL = 0,        //noraml R/F search for AFT RF_FAST = 3,              //Fast R/F search for AFT
 	do_start_af(af);
 }
 
 static void trigger_saf(af_ctrl_t * af, char *test_param)
 {
+	AF_Trigger_Data aft_in;
+	memset(&aft_in,0,sizeof(AF_Trigger_Data));
 	UNUSED(test_param);
 	af->request_mode = AF_MODE_NORMAL;
 	af->state = STATE_NORMAL_AF;
@@ -2958,8 +3061,11 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
 	//saf_start(af, NULL);  //SAF, win is NULL using default
 	af->algo_mode = SAF;
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (1==af->defocus)? DEFOCUS : RF_NORMAL;
 	do_start_af(af);
-	AF_Trigger(&af->fv, af->algo_mode, (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
+	AF_Trigger(&af->fv,&aft_in);
 	af->vcm_stable = 0;
 }
 
@@ -3505,6 +3611,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->fv.AF_Ops.af_start_notify = if_af_start_notify;
 	af->fv.AF_Ops.af_end_notify = if_af_end_notify;
 	af->fv.AF_Ops.phase_detection_get_data = if_phase_detection_get_data;
+	af->fv.AF_Ops.motion_sensor_get_data = if_motion_sensor_get_data;
+	af->fv.AF_Ops.get_vcm_param = if_get_vcm_param;
 	af->curr_scene = INDOOR_SCENE;
 
 	af->ae_lock_num = 1;
@@ -3678,6 +3786,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		cxt->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
 		cxt->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
 		cxt->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
+		cxt->gsensor_info.timestamp = aux_sensor_info->gsensor_info.timestamp;
 		cxt->gsensor_info.valid = 1;
 		break;
 	case AF_MAGNETIC_FIELD:
@@ -3919,6 +4028,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	struct isp_video_start *in_ptr = NULL;
+	AF_Trigger_Data aft_in;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -3975,7 +4085,11 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 				af->caf_state = CAF_SEARCHING;
 				af->algo_mode = CAF;
 				trigger_stop(af);
-				AF_Trigger(&af->fv, af->algo_mode, DEFOCUS);
+				memset(&aft_in,0,sizeof(AF_Trigger_Data));
+				aft_in.AFT_mode = af->algo_mode;
+				aft_in.bisTrigger = AF_TRIGGER;
+				aft_in.AF_Trigger_Type = (1==af->defocus)? DEFOCUS : RF_NORMAL;
+				AF_Trigger(&af->fv, &aft_in);
 				do_start_af(af);
 				break;
 			}

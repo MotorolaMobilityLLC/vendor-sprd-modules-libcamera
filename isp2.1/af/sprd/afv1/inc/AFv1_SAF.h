@@ -49,10 +49,10 @@
 ERRCODE SAF_Init(AF_Data * pAF_Data);
 ERRCODE SAF_DeInit(AF_Data * pAF_Data);
 ERRCODE SAF_main(AF_Data * pAF_Data);
-ERRCODE Set_FineSearch_Para(AF_Data * pAF_Data, uint8 DIR);
-ERRCODE Set_RoughSearch_Para(AF_Data * pAF_Data, uint8 DIR);
+ERRCODE Set_FineSearch_Para(AF_Data * pAF_Data, cmr_u8 DIR);
+ERRCODE Set_RoughSearch_Para(AF_Data * pAF_Data, cmr_u8 DIR);
 ERRCODE SAF_Search(AF_Data * pAF_Data);
 ERRCODE SAF_Search_main(AF_Data * pAF_Data);
-ERRCODE SAF_Cal_RoughScan_Table(AF_Data * pAF_Data, uint8 CurIdx, uint8 DIR);
+ERRCODE SAF_Cal_RoughScan_Table(AF_Data * pAF_Data, cmr_u8 CurIdx, cmr_u8 DIR);
 
 #endif

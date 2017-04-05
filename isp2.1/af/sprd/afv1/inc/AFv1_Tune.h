@@ -229,7 +229,7 @@
 ERRCODE Get_AF_tuning_Data(AF_Data * pAF_Data);
 ERRCODE Get_Defocus_RoughScan_Table(AF_Data * pAF_Data);
 ERRCODE Get_SAF_RoughScan_Table(AF_Data * pAF_Data);
-ERRCODE Get_SAF_FineScan_Table(AF_Data * pAF_Data, uint8 startIdx, uint8 dirrection);
+ERRCODE Get_SAF_FineScan_Table(AF_Data * pAF_Data, cmr_u8 startIdx, cmr_u8 dirrection);
 ERRCODE Get_SAF_Search_Threshold(AF_Data * pAF_Data);
 
 #endif

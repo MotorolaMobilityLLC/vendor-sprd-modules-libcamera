@@ -217,7 +217,8 @@ typedef struct _af_tuning_param {
 	AF_Tuning AF_Tuning_Data[SCENE_NUM];	// Algorithm related parameter
 	cmr_u8 soft_landing_dly;
 	cmr_u8 soft_landing_step;
-	cmr_u8 dummy[99];	// for 4-bytes alignment issue
+	cmr_u8 vcm_hysteresis;
+	cmr_u8 dummy[98];	// for 4-bytes alignment issue
 } af_tuning_param_t;
 
 #pragma pack(pop)
