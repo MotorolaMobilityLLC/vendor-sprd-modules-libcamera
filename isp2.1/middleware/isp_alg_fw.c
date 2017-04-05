@@ -70,6 +70,7 @@ struct isp_alg_sw_init_in {
 	struct sensor_libuse_info *lib_use_info;
 	struct isp_size size;
 	struct sensor_otp_cust_info *otp_data;
+	struct sensor_pdaf_info *pdaf_info;
 };
 
 typedef struct {
@@ -1747,7 +1748,7 @@ exit:
 	return rtn;
 }
 
-static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt)
+static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct pdaf_ctrl_init_in pdaf_input;
@@ -1761,6 +1762,7 @@ static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt)
 	pdaf_input.caller_handle = (cmr_handle) cxt;;
 
 	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
+	pdaf_input.pd_info = input_ptr->pdaf_info;
 
 	rtn = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
 
@@ -2054,7 +2056,7 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	rtn = isp_af_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
 
-	rtn = isp_pdaf_sw_init(cxt);
+	rtn = isp_pdaf_sw_init(cxt, input_ptr);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do pdaf_ctrl_init"));
 
 	rtn = isp_lsc_sw_init(cxt);
@@ -2177,6 +2179,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
+	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 
 	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));
 	if (!binning_info) {

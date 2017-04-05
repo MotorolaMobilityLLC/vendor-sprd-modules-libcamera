@@ -797,6 +797,53 @@ static uint32_t imx258_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
     return rtn;
 }
 
+static const cmr_u16 imx258_pd_is_right[] = {0,0,1,1,1,1,0,0};
+
+static const cmr_u16 imx258_pd_row[] = {5,5,8,8,21,21,24,24};
+
+static const cmr_u16 imx258_pd_col[] = {2,18,1,17,10,26,9,25};
+
+static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
+                                         uint32_t *param) {
+    uint32_t rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    cmr_u16 i = 0;
+    cmr_u16 pd_pos_row_size = 0;
+    cmr_u16 pd_pos_col_size = 0;
+    cmr_u16 pd_pos_is_right_size = 0;
+
+    /*TODO*/
+    if (param == NULL) {
+        SENSOR_PRINT_ERR("null input");
+        return -1;
+    }
+    pdaf_info = (struct sensor_pdaf_info *)param;
+    pd_pos_is_right_size = NUMBER_OF_ARRAY(imx258_pd_is_right);
+    pd_pos_row_size = NUMBER_OF_ARRAY(imx258_pd_row);
+    pd_pos_col_size = NUMBER_OF_ARRAY(imx258_pd_col);
+    if ((pd_pos_row_size != pd_pos_col_size) || (pd_pos_row_size != pd_pos_is_right_size) ||
+	(pd_pos_is_right_size != pd_pos_col_size)){
+        SENSOR_PRINT_ERR(
+            "imx258 pd_pos_row size,pd_pos_row size and pd_pos_is_right size are not match");
+        return -1;
+    }
+
+    pdaf_info->pd_offset_x = 24;
+    pdaf_info->pd_offset_y = 24;
+    pdaf_info->pd_end_x = 4184;
+    pdaf_info->pd_end_y = 3096;
+    pdaf_info->pd_block_w = 2;
+    pdaf_info->pd_block_h = 2;
+    pdaf_info->pd_block_num_x = 130;
+    pdaf_info->pd_block_num_y = 96;
+    pdaf_info->pd_pos_size = pd_pos_is_right_size;
+    pdaf_info->pd_is_right = (cmr_u16 *)imx258_pd_is_right;
+    pdaf_info->pd_pos_row = (cmr_u16 *)imx258_pd_row;
+    pdaf_info->pd_pos_col = (cmr_u16 *)imx258_pd_col;
+
+    return rtn;
+}
+
 static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle,
                                        unsigned long param) {
     uint32_t rtn = SENSOR_SUCCESS;
@@ -854,6 +901,9 @@ static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle,
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         rtn = imx258_set_sensor_close_flag(handle);
+        break;
+    case SENSOR_VAL_TYPE_GET_PDAF_INFO:
+        rtn = imx258_get_pdaf_info(handle, param_ptr->pval);
         break;
     default:
         break;

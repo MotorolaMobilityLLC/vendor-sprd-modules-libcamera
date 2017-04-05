@@ -392,6 +392,54 @@ static uint32_t ov13855_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
     return rtn;
 }
 
+static const cmr_u16 ov13855_pd_is_right[] = {1,0,0,1};
+
+static const cmr_u16 ov13855_pd_row[] = {2,6,10,14};
+
+static const cmr_u16 ov13855_pd_col[] = {14,14,6,6};
+
+static uint32_t ov13855_get_pdaf_info(SENSOR_HW_HANDLE handle,
+                                         uint32_t *param) {
+    uint32_t rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    cmr_u16 i = 0;
+    cmr_u16 pd_pos_row_size = 0;
+    cmr_u16 pd_pos_col_size = 0;
+    cmr_u16 pd_pos_is_right_size = 0;
+
+    /*TODO*/
+    if (param == NULL) {
+        SENSOR_PRINT_ERR("null input");
+        return -1;
+    }
+    pdaf_info = (struct sensor_pdaf_info *)param;
+    pd_pos_is_right_size = NUMBER_OF_ARRAY(ov13855_pd_is_right);
+    pd_pos_row_size = NUMBER_OF_ARRAY(ov13855_pd_row);
+    pd_pos_col_size = NUMBER_OF_ARRAY(ov13855_pd_col);
+    if ((pd_pos_row_size != pd_pos_col_size) || (pd_pos_row_size != pd_pos_is_right_size) ||
+	(pd_pos_is_right_size != pd_pos_col_size)){
+        SENSOR_PRINT_ERR(
+            "ov13855 pd_pos_row size,pd_pos_row size and pd_pos_is_right size are not match");
+        return -1;
+    }
+
+    pdaf_info->pd_offset_x = 0;
+    pdaf_info->pd_offset_y = 0;
+    pdaf_info->pd_end_x = 4224;
+    pdaf_info->pd_end_y = 3136;
+    pdaf_info->pd_block_w = 1;
+    pdaf_info->pd_block_h = 1;
+    pdaf_info->pd_block_num_x = 264;
+    pdaf_info->pd_block_num_y = 196;
+    pdaf_info->pd_pos_size = pd_pos_is_right_size;
+    pdaf_info->pd_is_right = (cmr_u16 *)ov13855_pd_is_right;
+    pdaf_info->pd_pos_row = (cmr_u16 *)ov13855_pd_row;
+    pdaf_info->pd_pos_col = (cmr_u16 *)ov13855_pd_col;
+
+    return rtn;
+}
+
+
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -435,6 +483,9 @@ static unsigned long ov13855_access_val(SENSOR_HW_HANDLE handle,
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         ret = ov13855_set_sensor_close_flag(handle);
+        break;
+    case SENSOR_VAL_TYPE_GET_PDAF_INFO:
+        ret = ov13855_get_pdaf_info(handle, param_ptr->pval);
         break;
     default:
         break;
