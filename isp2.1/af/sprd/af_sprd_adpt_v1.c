@@ -21,7 +21,7 @@
 #include <cutils/properties.h>
 
 #include "af_ctrl.h"
-#include "sprd_af_ctrl_v1.h"
+#include "af_sprd_adpt_v1.h"
 #include "isp_adpt.h"
 #include "dlfcn.h"
 

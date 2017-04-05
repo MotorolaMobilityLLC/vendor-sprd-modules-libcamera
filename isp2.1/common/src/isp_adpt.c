@@ -23,7 +23,7 @@
 #include "awb_sprd_adpt.h"
 #include "sensor_raw.h"
 #include "af_log.h"
-#include "sprd_af_ctrl_v1.h"
+#include "af_sprd_adpt_v1.h"
 //#include "sp_af_ctrl.h"
 #include "pdaf_sprd_adpt.h"
 #include <dlfcn.h>
