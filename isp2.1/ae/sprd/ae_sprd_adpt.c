@@ -297,6 +297,10 @@ struct ae_ctrl_cxt {
 	cmr_s16 hdr_base_ae_idx;
 	cmr_u64 hdr_timestamp;
 	/*
+	 *dual flash simulation
+	 */
+	cmr_s8	led_record[2];
+	/*
 	 * ae misc layer handle
 	 */
 	cmr_handle misc_handle;
@@ -2733,7 +2737,6 @@ static void _set_led(struct ae_ctrl_cxt *cxt)
 	float tmp = 0;
 	cmr_u32 type = ISP_FLASH_TYPE_MAIN;	//ISP_FLASH_TYPE_MAIN   ISP_FLASH_TYPE_PREFLASH
 	cmr_s8 led_ctl[2] = { 0, 0 };
-	static cmr_s8 led_record[2] = { 0, 0 };
 	struct ae_flash_cfg cfg;
 	struct ae_flash_element element;
 
@@ -2782,9 +2785,9 @@ static void _set_led(struct ae_ctrl_cxt *cxt)
 			cfg.type = type;
 			cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 
-			led_record[0] = led_ctl[0];
-			led_record[1] = led_ctl[1];
-		} else if (led_record[0] != led_ctl[0] || led_record[1] != led_ctl[1]) {
+			cxt->led_record[0] = led_ctl[0];
+			cxt->led_record[1] = led_ctl[1];
+		} else if (cxt->led_record[0] != led_ctl[0] || cxt->led_record[1] != led_ctl[1]) {
 //set led_1
 			cfg.led_idx = 1;
 			//cfg.type = ISP_FLASH_TYPE_MAIN;
@@ -2803,8 +2806,8 @@ static void _set_led(struct ae_ctrl_cxt *cxt)
 			cfg.type = type;
 			cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 
-			led_record[0] = led_ctl[0];
-			led_record[1] = led_ctl[1];
+			cxt->led_record[0] = led_ctl[0];
+			cxt->led_record[1] = led_ctl[1];
 		} else {
 			cxt->flash_cali[led_ctl[0]][led_ctl[1]].used = 1;
 			cxt->flash_cali[led_ctl[0]][led_ctl[1]].ydata = cxt->sync_cur_result.cur_lum * 4;
