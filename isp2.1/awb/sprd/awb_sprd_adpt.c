@@ -1088,8 +1088,16 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cxt->log = calc_result.log_buffer;
 	cxt->size = calc_result.log_size;
 
-	_gain_queue_add(&cxt->gain_queue, &cxt->cur_gain, cxt->cur_ct, 256);
-	_gain_queue_average(&cxt->gain_queue, &cxt->output_gain, &cxt->output_ct);
+	if (cxt->frame_count > smooth_buffer_num)
+	{
+		_gain_queue_add(&cxt->gain_queue, &cxt->cur_gain, cxt->cur_ct, 256);
+		_gain_queue_average(&cxt->gain_queue, &cxt->output_gain, &cxt->output_ct);
+	}
+	else
+	{
+		cxt->output_gain = cxt->cur_gain;
+		cxt->output_ct = cxt->cur_ct;
+	}
 
 	ISP_LOGD("AWB output: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 

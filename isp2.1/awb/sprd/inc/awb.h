@@ -294,6 +294,7 @@ struct awb_calc_result {
 
 enum {
 	AWB_IOCTRL_SET_LSCINFO = 1,
+	AWB_IOCTRL_GET_CTTABLE20 = 2,
 	AWB_IOCTRL_CMD_MAX,
 };
 
@@ -309,6 +310,12 @@ struct awb_lsc_info {
 	 */
 	cmr_u16 value[2];
 	cmr_u16 weight[2];
+};
+
+struct awb_ct_table
+{
+	float ct[20];
+	float rg[20];
 };
 
 /*------------------------------------------------------------------------------*
