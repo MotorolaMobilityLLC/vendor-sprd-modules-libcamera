@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_brightness"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_brightness_init(void *dst_brightness, void *src_brightness, void *param1, void *param2)

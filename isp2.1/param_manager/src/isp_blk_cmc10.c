@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_cmc10"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_cmc10_init(void *dst_cmc10_param, void *src_cmc10_param, void *param1, void *param_ptr2)

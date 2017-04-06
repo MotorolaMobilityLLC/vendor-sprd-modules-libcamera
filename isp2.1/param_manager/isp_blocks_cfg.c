@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "isp_blk_cfg"
 #ifdef WIN32
 #include <memory.h>
 #include <string.h>

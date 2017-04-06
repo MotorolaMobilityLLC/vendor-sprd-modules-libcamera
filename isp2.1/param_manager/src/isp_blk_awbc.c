@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "isp_blk_awbc"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_awb_init_v1(void *dst_awb_v1, void *src_awb_v1, void *param1, void *param2)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_alsc"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, void *param_ptr2)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_ae_new"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_ae_new_init(void *dst_ae_new, void *src_ae_new, void *param1, void *param2)

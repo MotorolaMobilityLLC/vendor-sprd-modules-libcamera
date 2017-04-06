@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_binning4awb"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_binning4awb_init_v1(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2)

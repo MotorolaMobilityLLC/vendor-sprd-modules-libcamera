@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "isp_com_alg"
 #include "isp_com_alg.h"
 #ifdef WIN32
 #include "memory.h"
