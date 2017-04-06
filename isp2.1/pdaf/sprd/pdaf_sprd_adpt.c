@@ -219,7 +219,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cmr_u32 pd_in_size = 0;
 
 	if (!in_p) {
-		ISP_LOGE("init param %p is null !!!", in_p);
+		ISP_LOGE("fail to check init param %p!!!", in_p);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -233,7 +233,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	isp_ctx = (struct isp_alg_fw_context *)in_p->caller_handle;
 	cxt = (struct sprd_pdaf_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
-		ISP_LOGE("failed to malloc pdaf");
+		ISP_LOGE("fail to malloc pdaf");
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -247,13 +247,13 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	cxt->pd_left = malloc(pd_in_size);
 	if (NULL == cxt->pd_left) {
-		ISP_LOGE("failed to malloc");
+		ISP_LOGE("fail to malloc");
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}
 	cxt->pd_right = malloc(pd_in_size);
 	if (NULL == cxt->pd_right) {
-		ISP_LOGE("failed to malloc");
+		ISP_LOGE("fail to malloc");
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -270,13 +270,12 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id; */
 	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;	/*TBD get from sensor id */
 /*TBD init sharkle isp*/
-	//pdaf_setup(cxt);
+	pdaf_setup(cxt);
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
-	ISP_LOGI("pdaf PD_Init end ret = %ld", ret);
 	if (ret) {
-		ISP_LOGE("failed to init lib %ld", ret);
+		ISP_LOGE("fail to init lib %ld", ret);
 		goto exit;
 	}
 
@@ -309,7 +308,6 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 
 	UNUSED(param);
 	UNUSED(result);
-	ISP_LOGI("cxt = %p", cxt);
 	if (cxt) {
 		/* deinit lib */
 		ret = (cmr_s32) PD_Uninit();
@@ -326,6 +324,7 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 		free(cxt);
 		cxt = NULL;
 	}
+	ISP_LOGI("done");
 
 	return ret;
 }
@@ -344,7 +343,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	UNUSED(out);
 	bzero(&pdroi, sizeof(pdroi));
 	if (!in) {
-		ISP_LOGE("init param %p is null !!!", in);
+		ISP_LOGE("fail to init param %p!!!", in);
 		ret = ISP_PARAM_NULL;
 		return ret;
 	}
@@ -368,7 +367,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);	//TODO
 	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + 0x25800);	//TODO
-	ISP_LOGI("pInPhaseBuf_left = %p", pInPhaseBuf_left);
+	ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 	cmr_s32 dRectX = ROI_X;
 	cmr_s32 dRectY = ROI_Y;
 	cmr_s32 dRectW = ROI_Width;
@@ -378,7 +377,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	for (cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++) {
 		ret = PD_DoType2(pInPhaseBuf_left, pInPhaseBuf_right, dRectX, dRectY, dRectW, dRectH, area_index);
 		if (ret) {
-			ISP_LOGE("failed to do pd algo.");
+			ISP_LOGE("fail to do pd algo.");
 			goto exit;
 		}
 	}
@@ -393,10 +392,10 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	/*TBD get clac result from so & send to af */
 	ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, 4);
 	if (ret) {
-		ISP_LOGE("failed to do get pd_result.");
+		ISP_LOGE("fail to do get pd_result.");
 		goto exit;
 	}
-	ISP_LOGI("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
+	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
 	cxt->af_set_pdinfo(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;	//= proc_in->pd_raw.frame_id;
 exit:
@@ -431,7 +430,7 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 		ret = pdafsprd_adpt_set_param(adpt_handle, in_ptr);
 		break;
 	default:
-		ISP_LOGE("failed to case cmd = %d", cmd);
+		ISP_LOGE("fail to case cmd = %d", cmd);
 		break;
 	}
 

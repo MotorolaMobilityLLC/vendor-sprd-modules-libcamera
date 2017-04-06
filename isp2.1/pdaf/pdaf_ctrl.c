@@ -84,11 +84,11 @@ static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *i
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in, out);
 	} else {
-		ISP_LOGI(":ISP:adpt_init fun is NULL");
+		ISP_LOGI("adpt_init fun is NULL");
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -107,11 +107,11 @@ static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
+		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -130,11 +130,11 @@ static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in, out);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 
 exit:
-	ISP_LOGI(":ISP:cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGI("cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 
 }
@@ -153,10 +153,10 @@ static cmr_int pdafctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in, out);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 
 }
@@ -198,7 +198,7 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	}
 exit:
-	ISP_LOGV(":ISP:done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -213,7 +213,7 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 		ret = ISP_ERROR;
 	}
 
-	ISP_LOGV(":ISP:done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -232,7 +232,7 @@ static cmr_int pdafctrl_destroy_thread(cmr_handle handle)
 		pdaf_thread_cxt->ctrl_thr_handle = NULL;
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -255,7 +255,7 @@ static cmr_int pdafctrl_init_adapt(struct pdafctrl_context *cxt, struct pdaf_ctr
 	}
 
 exit:
-	ISP_LOGI(":ISP:done ret = %ld", ret);
+	ISP_LOGI("done ret = %ld", ret);
 	return ret;
 }
 
@@ -286,10 +286,10 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	cxt->camera_id = in->camera_id;
 /*TBD we will get pdaf_support info form sensor*/
 	cxt->pdaf_support = 0;
-	ISP_LOGI(":ISP:cxt->pdaf_support = %d", cxt->pdaf_support);
+	ISP_LOGI("cxt->pdaf_support = %d", cxt->pdaf_support);
 	//cxt->init_in_param = *in;
 	if (!cxt->pdaf_support) {
-		ISP_LOGI(":ISP:this module isnot support pdaf");
+		ISP_LOGI("this module isnot support pdaf");
 		ret = ISP_SUCCESS;
 		goto sucess_exit;
 	}
@@ -319,7 +319,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 		goto error_adpt_init;
 	}
 sucess_exit:
-	ISP_LOGI(":ISP: done ret=%ld", ret);
+	ISP_LOGI("done ret=%ld", ret);
 	*handle = (cmr_handle) cxt;
 	return ret;
 error_adpt_init:
@@ -364,7 +364,7 @@ exit:
 		free((void *)cxt_ptr);
 		*handle = NULL;
 	}
-	ISP_LOGI(":ISP:done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -404,7 +404,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in * in, s
 	}
 	return ISP_SUCCESS;
 exit:
-	ISP_LOGI(":ISP:done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
