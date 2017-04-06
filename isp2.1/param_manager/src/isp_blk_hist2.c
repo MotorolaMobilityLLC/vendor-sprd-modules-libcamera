@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_hist2"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_hist2_init_v1(void *dst_hist2_param, void *src_hist2_param, void *param1, void *param2)

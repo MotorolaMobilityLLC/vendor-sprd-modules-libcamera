@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_flashlight"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_flashlight_init(void *dst_flash_param, void *src_flash_param, void *param1, void *param2)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_pdaf_extraction"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf_extraction_param, void *param1, void *param2)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_envi_detect"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_param, void *param1, void *param2)
