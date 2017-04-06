@@ -372,7 +372,7 @@ static cmr_s32 isp_pm_context_deinit(isp_pm_handle_t handle)
 					if (PNULL != blk_ptr) {
 						ops->deinit(blk_ptr);
 					} else {
-						ISP_LOGV("blk_addr is null erro");
+						ISP_LOGE("fail to get valid blk_addr");
 					}
 				}
 			}
