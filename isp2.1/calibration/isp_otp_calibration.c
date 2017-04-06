@@ -624,7 +624,7 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 	//read golden data
 	golden_handle = fopen(golden_file, "rb");
 	if (NULL == golden_handle) {
-		ISP_LOGE("open golden file failed");
+		ISP_LOGE("fail to open golden file");
 		goto EXIT;
 	}
 
@@ -633,20 +633,20 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 	fseek(golden_handle, 0, SEEK_SET);
 	golden.data_ptr = malloc(golden.size);
 	if (NULL == golden.data_ptr) {
-		ISP_LOGE("malloc golden memory failed");
+		ISP_LOGE("fail to malloc golden memory");
 		goto EXIT;
 	}
 
-	ISP_LOGI("golden file size=%d, buf=%p", golden.size, golden.data_ptr);
+	ISP_LOGV("golden file size=%d, buf=%p", golden.size, golden.data_ptr);
 
 	if (golden.size != fread(golden.data_ptr, 1, golden.size, golden_handle)) {
-		ISP_LOGE("read golden file failed");
+		ISP_LOGE("fail to read golden file");
 		goto EXIT;
 	}
 	//read otp lsc data
 	lsc_otp_handle = fopen(random_lsc_file, "rb");
 	if (NULL == lsc_otp_handle) {
-		ISP_LOGE("open random lsc file failed");
+		ISP_LOGE("fail to open random lsc file");
 		goto EXIT;
 	}
 
@@ -655,20 +655,20 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 	fseek(lsc_otp_handle, 0, SEEK_SET);
 	lsc_otp.data_ptr = malloc(lsc_otp.size);
 	if (NULL == lsc_otp.data_ptr) {
-		ISP_LOGE("malloc random lsc file failed");
+		ISP_LOGE("fail to malloc random lsc file");
 		goto EXIT;
 	}
 
-	ISP_LOGI("random lsc file size=%d, buf=%p", lsc_otp.size, lsc_otp.data_ptr);
+	ISP_LOGV("random lsc file size=%d, buf=%p", lsc_otp.size, lsc_otp.data_ptr);
 
 	if (lsc_otp.size != fread(lsc_otp.data_ptr, 1, lsc_otp.size, lsc_otp_handle)) {
-		ISP_LOGE("read random lsc file failed");
+		ISP_LOGE("fail to read random lsc file");
 		goto EXIT;
 	}
 	//read otp awb data
 	awb_otp_handle = fopen(random_awb_file, "rb");
 	if (NULL == awb_otp_handle) {
-		ISP_LOGE("open random awb file failed");
+		ISP_LOGE("fail to open random awb file");
 		goto EXIT;
 	}
 
@@ -677,29 +677,29 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 	fseek(awb_otp_handle, 0, SEEK_SET);
 	awb_otp.data_ptr = malloc(awb_otp.size);
 	if (NULL == awb_otp.data_ptr) {
-		ISP_LOGE("malloc random awb file failed");
+		ISP_LOGE("fail to malloc random awb file");
 		goto EXIT;
 	}
 
-	ISP_LOGI("random awb file size=%d, buf=%p", awb_otp.size, awb_otp.data_ptr);
+	ISP_LOGV("random awb file size=%d, buf=%p", awb_otp.size, awb_otp.data_ptr);
 
 	if (awb_otp.size != fread(awb_otp.data_ptr, 1, awb_otp.size, awb_otp_handle)) {
-		ISP_LOGE("read random awb file failed");
+		ISP_LOGE("fail to read random awb file");
 		goto EXIT;
 	}
 	//get the target buffer size
 	rtn = isp_calibration_get_info(&golden, &cali_info);
 	if (0 != rtn) {
-		ISP_LOGE("isp_calibration_get_info failed");
+		ISP_LOGE("fail to isp_calibration_get_info");
 		goto EXIT;
 	}
 
-	ISP_LOGI("get calibration info: %d", cali_info.size);
+	ISP_LOGV("get calibration info: %d", cali_info.size);
 
 	target_buf.size = cali_info.size;
 	target_buf.data_ptr = malloc(target_buf.size);
 	if (NULL == target_buf.data_ptr) {
-		ISP_LOGE("malloc target buffer failed");
+		ISP_LOGE("fail to malloc target buffer");
 		goto EXIT;
 	}
 	//get the calibration data, the real size of data will be write to cali_result.size
@@ -711,16 +711,16 @@ cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_f
 
 	rtn = isp_calibration(&cali_param, &cali_result);
 	if (0 != rtn) {
-		ISP_LOGE("isp_calibration failed");
+		ISP_LOGE("fail to do isp_calibration");
 		goto EXIT;
 	}
 
-	ISP_LOGI("calibration data: addr=%p, size = %d", cali_result.data_ptr, cali_result.size);
+	ISP_LOGV("calibration data: addr=%p, size = %d", cali_result.data_ptr, cali_result.size);
 
 	//TODO: save the calibration data
 	calibration_handle = fopen(calibration_file, "wb");
 	if (NULL == calibration_handle) {
-		ISP_LOGE("open calibration file failed");
+		ISP_LOGE("fail to open calibration file");
 		goto EXIT;
 	}
 
@@ -785,7 +785,7 @@ cmr_s32 test_init_calibration_data(struct isp_data_t * calibration_param)
 	//read golden data
 	calibration_handle = fopen(calibration_file, "rb");
 	if (NULL == calibration_handle) {
-		ISP_LOGE("open golden file failed");
+		ISP_LOGE("fail to open golden file");
 		goto EXIT;
 	}
 
@@ -794,14 +794,14 @@ cmr_s32 test_init_calibration_data(struct isp_data_t * calibration_param)
 	fseek(calibration_handle, 0, SEEK_SET);
 	calibration_param->data_ptr = malloc(calibration_param->size);
 	if (NULL == calibration_param->data_ptr) {
-		ISP_LOGE("malloc golden memory failed");
+		ISP_LOGE("fail to malloc golden memory");
 		goto EXIT;
 	}
 
-	ISP_LOGI("calibration file size=%d, buf=%p", calibration_param->size, calibration_param->data_ptr);
+	ISP_LOGV("calibration file size=%d, buf=%p", calibration_param->size, calibration_param->data_ptr);
 
 	if (calibration_param->size != fread(calibration_param->data_ptr, 1, calibration_param->size, calibration_handle)) {
-		ISP_LOGE("read golden file failed");
+		ISP_LOGE("fail to read golden file");
 		goto EXIT;
 	}
 
@@ -848,22 +848,22 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 	struct isp_pm_param_data update_param;
 	memset(&update_param, 0x00, sizeof(update_param));
 
-	ISP_LOGI("--isp_otp_init-- begin");
+	ISP_LOGI("E");
 	if (!input_ptr || !isp_otp_handle) {
-		ISP_LOGE("init param is null,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint) input_ptr, (cmr_uint) isp_otp_handle);
+		ISP_LOGE("fail to check init param,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint) input_ptr, (cmr_uint) isp_otp_handle);
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
 	*isp_otp_handle = NULL;
 
 	if (NULL == calibration_param->data_ptr || 0 == calibration_param->size) {
-		ISP_LOGE("calibration param error: %p, %d!", calibration_param->data_ptr, calibration_param->size);
+		ISP_LOGE("fail to check calibration_param: %p, %d!", calibration_param->data_ptr, calibration_param->size);
 		return ISP_SUCCESS;
 	}
 
 	otp_info = (struct isp_otp_info *)malloc(sizeof(struct isp_otp_info));
 	if (NULL == otp_info) {
-		ISP_LOGE("No memory");
+		ISP_LOGE("fail to check param");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
@@ -872,7 +872,7 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 	rtn = isp_parse_calibration_data(calibration_param, &lsc, &awb);
 	if (ISP_SUCCESS != rtn) {
 		/*do not return error */
-		ISP_LOGE("isp_parse_calibration_data failed!");
+		ISP_LOGE("fail to parse_calibration_data!");
 		return ISP_SUCCESS;
 	}
 
@@ -905,7 +905,7 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 	rtn = isp_pm_update(input_ptr->handle_pm, ISP_PM_CMD_UPDATE_LSC_OTP, &update_param, NULL);
 	if (ISP_SUCCESS != rtn) {
 		/*do not return error */
-		ISP_LOGE("isp_parse_calibration_data failed!");
+		ISP_LOGE("fail to parse_calibration_data!");
 		goto exit;
 	}
 #endif
@@ -929,7 +929,7 @@ exit:
 	} else {
 		*isp_otp_handle = (isp_handle) otp_info;
 	}
-	ISP_LOGI("---isp_otp_init-- end, 0x%lx", rtn);
+	ISP_LOGI("done, 0x%lx", rtn);
 
 	return ISP_SUCCESS;
 }
