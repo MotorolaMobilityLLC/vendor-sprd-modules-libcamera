@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_aft_af"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_sft_af_init(void *dst_sft_af_param, void *src_sft_af_param, void *param1, void *param_ptr2)

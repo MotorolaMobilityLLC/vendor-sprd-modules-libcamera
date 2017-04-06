@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_uv_cdn"
 #include "isp_blocks_cfg.h"
 
 cmr_u32 _pm_uv_cdn_convert_param(void *dst_cdn_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)

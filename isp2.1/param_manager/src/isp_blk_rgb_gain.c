@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_rgb_gain"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_rgb_gain_init_v1(void *dst_gbl_gain, void *src_gbl_gain, void *param1, void *param2)

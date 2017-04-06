@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_ydelay"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_ydelay_init(void *dst_ydelay, void *src_ydelay, void *param1, void *param2)

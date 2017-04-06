@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "isp_blk_saturation"
 #include "isp_blocks_cfg.h"
 
 cmr_s32 _pm_saturation_init_v1(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
