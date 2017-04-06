@@ -1104,7 +1104,9 @@ enum camera_param_type {
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     CAMERA_PARAM_UHD_RECORDING_ENABLED,
 #endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
     CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
+#endif
     CAMERA_PARAM_TYPE_MAX
 };
 
