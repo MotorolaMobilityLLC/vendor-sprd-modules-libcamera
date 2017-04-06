@@ -1658,7 +1658,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 					//                      cxt->tuning_param[i].scene_info[j].exp_tbl_mode, &(cxt->tuning_param[i].scene_info[j]));
 					exp_time2exp_line(cxt, cxt->back_scene_mode_ae_table[j],
 							  cxt->tuning_param[i].scene_info[j].ae_table,
-							  init_param->resolution_info.line_time, cxt->tuning_param[i].scene_info[j].exp_tbl_mode);
+							  init_param->resolution_info.line_time / SENSOR_LINETIME_BASE, cxt->tuning_param[i].scene_info[j].exp_tbl_mode);
 				}
 			}
 
@@ -1727,6 +1727,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.awb_gain.b = 1024;
 
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_param->flicker_index][AE_ISO_AUTO];
+	cxt->cur_status.ae_table->min_index = 0;
 	cxt->cur_status.weight_table = cxt->cur_param->weight_table[AE_WEIGHT_CENTER].weight;
 	cxt->cur_status.stat_img = NULL;
 
@@ -1831,13 +1832,13 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cxt->cur_status.touch_tuning_win.h = cxt->snr_info.frame_size.h / 10;
 		cxt->cur_status.win1_weight = 4;
 		cxt->cur_status.win2_weight = 3;
-		ISP_LOGD("TC_NO these setting at tuning file");
+		//ISP_LOGD("TC_NO these setting at tuning file");
 	} else {
 		cxt->cur_status.touch_tuning_win = cxt->cur_param->touch_info.touch_tuning_win;
 		cxt->cur_status.win1_weight = cxt->cur_param->touch_info.win1_weight;
 		cxt->cur_status.win2_weight = cxt->cur_param->touch_info.win2_weight;
-		ISP_LOGD("TC_Have these setting at tuning file");
-		ISP_LOGD("TC_Beth-SPRD:touch tuning win info:W:%d,H:%d!", cxt->cur_param->touch_info.touch_tuning_win.w, cxt->cur_param->touch_info.touch_tuning_win.h);
+		//ISP_LOGD("TC_Have these setting at tuning file");
+		//ISP_LOGD("TC_Beth-SPRD:touch tuning win info:W:%d,H:%d!", cxt->cur_param->touch_info.touch_tuning_win.w, cxt->cur_param->touch_info.touch_tuning_win.h);
 	}
 	/*
 	 * fd-ae param
@@ -1959,6 +1960,7 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 	cmr_s32 target_lum = 0;
 	cmr_u32 iso = 0;
 	cmr_u32 weight_mode = 0;
+	cmr_s32 max_index = 0;
 	prv_status = &cxt->prv_status;
 	cur_status = &cxt->cur_status;
 
@@ -1966,7 +1968,6 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 		ISP_LOGE("scene mod is invalidated, %d\n", nxt_scene_mod);
 		return AE_ERROR;
 	}
-
 	cur_param = cxt->cur_param;
 	scene_info = &cur_param->scene_info[0];
 	if ((AE_SCENE_NORMAL == cur_scene_mod) && (AE_SCENE_NORMAL == nxt_scene_mod)) {
@@ -2005,28 +2006,37 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 			cxt->prv_status = *cur_status;	/*backup the normal scene's information */
 		}
 		/*ae table */
-#if 0
-		for (cmr_s32 j = 0; j <= 327; j++) {
-			ISP_LOGD("Current_status_exp_gain is %d,%d\n", scene_info[i].ae_table[0].exposure[j], scene_info[i].ae_table[0].again[j]);
+		max_index = scene_info[i].ae_table[0].max_index;
+#if 1
+		/*
+		for (cmr_s32 j = 0; j <= max_index; j++) {
+			ISP_LOGD("Current_status_exp_gain is %d,%d\n", cur_status->ae_table->exposure[j], cur_status->ae_table->again[j]);
 		}
-
+		*/
 		ISP_LOGD("CURRENT_STATUS_EXP_GAIN : %d,%d,%d", cur_status->effect_expline, cur_status->effect_gain, cur_status->settings.iso);
 		ISP_LOGD("TABLE_ENABLE IS %d", scene_info[i].table_enable);
 		if (scene_info[i].table_enable) {
 			ISP_LOGD("mode is %d", i);
 			cur_status->ae_table = &scene_info[i].ae_table[cur_status->settings.flicker];
+		}else{
+			cur_status->ae_table = cxt->prv_status.ae_table;
 		}
-
-		for (cmr_s32 j = 0; j <= 327; j++) {
+		cur_status->ae_table->min_index = 0;
+		/*
+		for (cmr_s32 j = 0; j <= max_index; j++) {
 			ISP_LOGD("Current_status_exp_gain is %d,%d\n", cur_status->ae_table->exposure[j], cur_status->ae_table->again[j]);
 		}
+		*/
 #endif
 		cur_status->settings.iso = scene_info[i].iso_index;
 		cur_status->settings.min_fps = scene_info[i].min_fps;
 		cur_status->settings.max_fps = scene_info[i].max_fps;
-		//target_lum = _calc_target_lum(scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
-		//cur_status->target_lum_zone = (cmr_s16)(cur_param->target_lum_zone * target_lum * 1.0 / cur_param->target_lum + 0.5);
-		//cur_status->target_lum  = target_lum;
+		target_lum = _calc_target_lum(scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
+		cur_status->target_lum_zone = (cmr_s16)(cur_param->stable_zone_ev[cur_param->ev_table.default_level]*target_lum * 1.0 / cur_param->target_lum + 0.5);
+		if(2 > cur_status->target_lum_zone){
+			cur_status->target_lum_zone = 2;
+		}
+		cur_status->target_lum  = target_lum;
 		cur_status->weight_table = (cmr_u8 *) & cur_param->weight_table[scene_info[i].weight_mode];
 		cur_status->settings.metering_mode = scene_info[i].weight_mode;
 		cur_status->settings.scene_mode = nxt_scene_mod;
@@ -2043,11 +2053,12 @@ SET_SCENE_MOD_2_NOAMAL:
 		}
 		target_lum = _calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
+		cur_status->target_lum_zone = cur_param->stable_zone_ev[cur_param->ev_table.default_level];
 		//cur_status->target_lum_zone = (cmr_s16)(cur_param->target_lum_zone * (target_lum * 1.0 / cur_param->target_lum) + 0.5);
 		cur_status->settings.ev_index = prv_status->settings.ev_index;
 		cur_status->settings.iso = prv_status->settings.iso;
 		cur_status->settings.metering_mode = prv_status->settings.metering_mode;
-		cur_status->weight_table = prv_status->weight_table;
+		cur_status->weight_table = &cur_param->weight_table[prv_status->settings.metering_mode].weight[0];
 		//cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][prv_status->settings.iso];
 		cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][AE_ISO_AUTO];
 		cur_status->settings.min_fps = prv_status->settings.min_fps;
@@ -2542,7 +2553,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	struct ae_set_work_param work_param;
 	struct ae_init_in *init_param = NULL;
 
-	ISP_LOGI("V2_INIT ST\r\n");
+	//ISP_LOGI("V2_INIT ST\r\n");
 	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
 
 	if (NULL == cxt) {
@@ -3109,16 +3120,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->cur_status.effect_expline = cxt->actual_cell[cxt->cur_status.frame_id % 20].expline;
 		cxt->cur_status.effect_gain = cxt->actual_cell[cxt->cur_status.frame_id % 20].gain;
 		cxt->cur_status.effect_dummy = cxt->actual_cell[cxt->cur_status.frame_id % 20].dummy;
-		/*
-		   due to set_scene_mode just be called in ae_sprd_calculation,
-		   and the prv_status just save the normal scene status
-		 */
-		if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
-			cxt->prv_status = cxt->cur_status;
-			if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
-				cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
-			}
-		}
 	}
 	cxt->cur_result.face_lum = current_result->face_lum;	//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
@@ -3137,14 +3138,25 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	current_status->ae_table = &cxt->cur_param->scene_info[current_status->settings.scene_mode].ae_table[current_status->settings.flicker];
 #else
 	// for now video using
-	alg_status_ptr->ae_table = &cxt->cur_param->ae_table[alg_status_ptr->settings.flicker][AE_ISO_AUTO];
+	ISP_LOGD("AE_TABLE IS %p\n",alg_status_ptr->ae_table );
+	//alg_status_ptr->ae_table = &cxt->cur_param->ae_table[alg_status_ptr->settings.flicker][AE_ISO_AUTO];
 	alg_status_ptr->ae_table->min_index = 0;	//AE table start index = 0
 #endif
 	// change settings related by EV
-	alg_status_ptr->target_lum = _calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
-	alg_status_ptr->target_lum_zone = cxt->stable_zone_ev[alg_status_ptr->settings.ev_index];
-	alg_status_ptr->stride_config[0] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2];
-	alg_status_ptr->stride_config[1] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2 + 1];
+	//alg_status_ptr->target_lum = _calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+	//alg_status_ptr->target_lum_zone = cxt->stable_zone_ev[alg_status_ptr->settings.ev_index];
+	//alg_status_ptr->stride_config[0] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2];
+	//alg_status_ptr->stride_config[1] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2 + 1];
+	/*
+	   due to set_scene_mode just be called in ae_sprd_calculation,
+	   and the prv_status just save the normal scene status
+ 	*/
+	if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
+		cxt->prv_status = cxt->cur_status;
+		if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
+			cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
+		}
+	}
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
@@ -3896,7 +3908,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
 			cxt->cur_status.ae_table = &cxt->cur_param->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO];
-
+			cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 			if (1 == cxt->last_enable) {
 				if (cxt->cur_status.line_time == cxt->last_linetime) {
 					cxt->ae_result.expline = cxt->last_expline;
