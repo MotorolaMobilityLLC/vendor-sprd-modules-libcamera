@@ -51,11 +51,11 @@ static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
+		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -73,10 +73,10 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:adpt_init fun is NULL");
+		ISP_LOGI("adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -99,7 +99,7 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 
 	rtn = awbctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -132,7 +132,7 @@ exit:
 	} else {
 		*handle_awb = (cmr_handle) cxt_ptr;
 	}
-	ISP_LOGI(":ISP:isp_3a_ctrl awb_init rtn = %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
@@ -150,10 +150,10 @@ static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:process fun is NULL");
+		ISP_LOGI("process fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD("done %ld", rtn);
 	return rtn;
 }
 
@@ -165,14 +165,14 @@ cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param * par
 	ISP_CHECK_HANDLE_VALID(handle_awb);
 
 	if (!param || !result) {
-		ISP_LOGI(":ISP:input param is error 0x%lx", (cmr_uint) param);
+		ISP_LOGI("input param is error 0x%lx", (cmr_uint) param);
 		goto exit;
 	}
 
 	rtn = awbctrl_process(cxt_ptr, param, result);
 
 exit:
-	ISP_LOGI(":ISP: done %ld", rtn);
+	ISP_LOGD("done %ld", rtn);
 	return rtn;
 }
 
@@ -196,7 +196,7 @@ cmr_int awb_ctrl_deinit(cmr_handle * handle_awb)
 		*handle_awb = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -215,9 +215,9 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_p
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGD("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }

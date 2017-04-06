@@ -359,7 +359,7 @@ static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
 		return AWB_CTRL_ERROR;
 	}
 
-	ISP_LOGI("awb work mode is %d", work_mode);
+	ISP_LOGI("work mode is %d", work_mode);
 	switch (work_mode) {
 	case 0:
 		for (i = ISP_MODE_ID_PRV_0; i < ISP_MODE_ID_PRV_3; i++) {
@@ -388,7 +388,7 @@ static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
 	default:
 		break;
 	}
-	ISP_LOGI("awb param index is %d", cxt->param_index);
+	ISP_LOGI("param index is %d", cxt->param_index);
 	return rtn;
 }
 
@@ -926,12 +926,13 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	ISP_LOGV("AWB init: (%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
+	ISP_LOGI("done");
 	return (awb_ctrl_handle_t) cxt;
 
 ERROR_EXIT:
 	awbsprd_unload_lib(cxt);
 	AWB_CTRL_SAFE_FREE(cxt);
-	ISP_LOGE("done %d", rtn);
+	ISP_LOGE("init fail %d", rtn);
 	return AWB_CTRL_INVALID_HANDLE;
 }
 
@@ -976,12 +977,12 @@ cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *in, void *out)
 	memset(cxt, 0, sizeof(*cxt));
 	AWB_CTRL_SAFE_FREE(cxt);
 
-	ISP_LOGD("awb_sprd_ctrl_deinit done");
+	ISP_LOGI("done");
 	return rtn;
 EXIT:
 	memset(cxt, 0, sizeof(*cxt));
 	AWB_CTRL_SAFE_FREE(cxt);
-	ISP_LOGE("awb_sprd_ctrl_deinit fail");
+	ISP_LOGE("deinit fail");
 	return rtn;
 }
 

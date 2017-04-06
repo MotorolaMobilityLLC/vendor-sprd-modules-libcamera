@@ -1411,6 +1411,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 	}
 
 exit:
-	ISP_LOGI(":ISP: done %ld", rtn);
+	ISP_LOGD(":ISP: done %ld", rtn);
 	return rtn;
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "sprd_afv1"
+#define LOG_TAG "af_sprd_adpt_v1"
 
 //#include<time.h>
 #include <assert.h>
@@ -4037,7 +4037,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 	}
 
 	pthread_mutex_lock(&af->status_lock);
-	ISP_LOGD("cmd is 0x%x", cmd);
+	ISP_LOGV("cmd is 0x%x", cmd);
 	switch (cmd) {
 	case AF_CMD_SET_AF_MODE:
 		rtn = _af_set_mode(handle, param0);

@@ -104,7 +104,7 @@ static cmr_s32 _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_cal
 		ISP_LOGI(":ISP:process fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -117,7 +117,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to chcek param");
 		goto exit;
 	}
-	ISP_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case LSCCTRL_EVT_INIT:
@@ -135,7 +135,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -235,7 +235,7 @@ static cmr_s32 _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 		goto exit;
 	}
 
-	ISP_LOGI(":ISP:lib lsc v_count : %d, version id: %d, libae path :%s", v_count, version_id, liblsc_path[version_id]);
+	ISP_LOGI(":ISP:lib lsc v_count : %d, version id: %d, liblsc path :%s", v_count, version_id, liblsc_path[version_id]);
 
 	cxt->lib_handle = dlopen(liblsc_path[version_id], RTLD_NOW);
 	if (!cxt->lib_handle) {
@@ -568,7 +568,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGD(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -591,7 +591,7 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGD(":ISP:cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
 
