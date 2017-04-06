@@ -62,7 +62,7 @@ static cmr_s32 _isp_set_awb_gain(cmr_handle isp_alg_handle)
 	ioctl_input.param_num = 1;
 
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
-	ISP_LOGI("set AWB_TAG: isp_pm_ioctl rtn=%d, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
+	ISP_LOGV("set AWB_TAG:  rtn=%d, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
 
 	return rtn;
 }
@@ -79,10 +79,10 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("get flash cali parm failed");
+		ISP_LOGE("fail to get flash cali parm ");
 		return rtn;
 	}
-	ISP_LOGI("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d", flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
+	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d", flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EFFECT, NULL, &ae_effect);
 	ISP_TRACE_IF_FAIL(rtn, ("ae get flash effect error"));
@@ -92,7 +92,7 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	flash_awb.flash_ratio.g = flash->cur.g_ratio;
 	flash_awb.flash_ratio.b = flash->cur.b_ratio;
 
-	ISP_LOGI("FLASH_TAG get effect from ae effect = %d", ae_effect);
+	ISP_LOGV("FLASH_TAG get effect from ae effect = %d", ae_effect);
 
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("awb set flash gain error"));
@@ -120,17 +120,17 @@ static cmr_s32 _smart_param_update(cmr_handle isp_alg_handle)
 			smart_init_param.tuning_param[i].data.data_ptr = pm_output.param_data[i].data_ptr;
 		}
 	} else {
-		ISP_LOGE("get smart init param failed");
+		ISP_LOGE("fail to get smart init param");
 		return rtn;
 	}
 
 	rtn = smart_ctl_ioctl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_GET_UPDATE_PARAM, (void *)&smart_init_param, NULL);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("smart param reinit failed");
+		ISP_LOGE("fail to reinit smart param ");
 		return rtn;
 	}
 
-	ISP_LOGI("ISP_SMART: handle=%p, param=%p", cxt->smart_cxt.handle, pm_output.param_data->data_ptr);
+	ISP_LOGV("ISP_SMART: handle=%p, param=%p", cxt->smart_cxt.handle, pm_output.param_data->data_ptr);
 
 	return rtn;
 }
@@ -174,7 +174,7 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		break;
 	}
 
-	ISP_LOGI("--IOCtrl--AWB_MODE--:0x%x", awb_id);
+	ISP_LOGV("--IOCtrl--AWB_MODE--:0x%x", awb_id);
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WB_MODE, (void *)&awb_id, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("awb set wb mode error"));
 
@@ -198,7 +198,7 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	ioctl_input.param_num = 1;
 
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
-	ISP_LOGI("AWB_TAG: isp_pm_ioctl rtn=%ld, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
+	ISP_LOGV("AWB_TAG:  rtn=%ld, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
 
 	return rtn;
 }
@@ -236,7 +236,7 @@ static cmr_int _ispAeAwbBypassIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 	}
 
-	ISP_LOGI("type=%d", type);
+	ISP_LOGV("type=%d", type);
 	return rtn;
 }
 
@@ -254,7 +254,7 @@ static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	set_ev.level = *(cmr_u32 *) param_ptr;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_EV_OFFSET, &set_ev, NULL);
 
-	ISP_LOGI("ISP_AE: AE_SET_EV_OFFSET=%d, rtn=%ld", set_ev.level, rtn);
+	ISP_LOGV("ISP_AE: AE_SET_EV_OFFSET=%d, rtn=%ld", set_ev.level, rtn);
 
 	return rtn;
 }
@@ -274,7 +274,7 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	cxt->afl_cxt.afl_mode = *(cmr_u32 *) param_ptr;
 	set_flicker.mode = *(cmr_u32 *) param_ptr;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &set_flicker, NULL);
-	ISP_LOGI("ISP_AE: AE_SET_FLICKER=%d, rtn=%ld", set_flicker.mode, rtn);
+	ISP_LOGV("ISP_AE: AE_SET_FLICKER=%d, rtn=%ld", set_flicker.mode, rtn);
 
 	if (set_flicker.mode == AE_FLICKER_AUTO) {
 		bypass = 0;
@@ -293,7 +293,7 @@ static cmr_int _ispSnapshotNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	UNUSED(call_back);
 
 	if (NULL == cxt || NULL == isp_notice) {
-		ISP_LOGE("handle %p isp_notice %p is NULL error", cxt, isp_notice);
+		ISP_LOGE("fail to get valid handle %p and isp_notice %p ", cxt, isp_notice);
 		return ISP_PARAM_NULL;
 	}
 
@@ -302,7 +302,7 @@ static cmr_int _ispSnapshotNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	ae_notice.capture_line_time = isp_notice->capture_line_time;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_SNAPSHOT_NOTICE, &ae_notice, NULL);
 
-	ISP_LOGI("LiuY: %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -317,7 +317,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	UNUSED(call_back);
 
 	if (NULL == cxt || NULL == flash_notice) {
-		ISP_LOGE("handle %p,notice %p is NULL error", cxt, flash_notice);
+		ISP_LOGE("fail to get valid handle %p,notice %p ", cxt, flash_notice);
 		return ISP_PARAM_NULL;
 	}
 
@@ -336,7 +336,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		flash_mode = SMART_CTRL_FLASH_PRE;
 		rtn = smart_ctl_ioctl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 
-		ISP_LOGI("ISP_AE: rtn=%ld", rtn);
+		ISP_LOGV("ISP_AE: rtn=%ld", rtn);
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
@@ -345,7 +345,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 			struct isp_flash_param *flash_cali = NULL;
 			rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash_cali);
 			if (ISP_SUCCESS == rtn) {
-				ISP_LOGI("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
+				ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
 					 flash_cali->cur.r_ratio, flash_cali->cur.g_ratio, flash_cali->cur.b_ratio, flash_cali->cur.lum_ratio);
 				if (0 != flash_cali->cur.lum_ratio) {
 					ratio = flash_cali->cur.lum_ratio;
@@ -361,7 +361,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 			flash_mode = SMART_CTRL_FLASH_PRE;
 			rtn = smart_ctl_ioctl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 			rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
-			ISP_LOGI("ISP_AE: Flashing ratio=%d, rtn=%ld", ratio, rtn);
+			ISP_LOGV("ISP_AE: Flashing ratio=%d, rtn=%ld", ratio, rtn);
 			break;
 		}
 
@@ -451,7 +451,7 @@ static cmr_int _ispIsoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 
 	set_iso.mode = *(cmr_u32 *) param_ptr;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_ISO, &set_iso, NULL);
-	ISP_LOGI("ISP_AE: AE_SET_ISO=%d, rtn=%ld", set_iso.mode, rtn);
+	ISP_LOGV("ISP_AE: AE_SET_ISO=%d, rtn=%ld", set_iso.mode, rtn);
 
 	return rtn;
 }
@@ -544,18 +544,18 @@ static cmr_int _ispVideoModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	UNUSED(call_back);
 	memset((void *)&param_data, 0, sizeof(struct isp_pm_param_data));
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param !");
 		return ISP_ERROR;
 	}
 
-	ISP_LOGI("param val=%d", *((cmr_s32 *) param_ptr));
+	ISP_LOGV("param val=%d", *((cmr_s32 *) param_ptr));
 
 	if (0 == *((cmr_s32 *) param_ptr)) {
 		mode = ISP_MODE_ID_PRV_0;
 	} else {
 		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_FPS, param_ptr, &mode);
 		if (rtn) {
-			ISP_LOGE("isp_pm_ioctl failed");
+			ISP_LOGE("fail to get mode ID by fps");
 		}
 	}
 
@@ -601,11 +601,11 @@ static cmr_int _ispRangeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	UNUSED(call_back);
 
 	if (NULL == range_fps) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
-	ISP_LOGI("param val=%d", *((cmr_s32 *) param_ptr));
+	ISP_LOGV("param val=%d", *((cmr_s32 *) param_ptr));
 
 	fps.min_fps = range_fps->min_fps;
 	fps.max_fps = range_fps->max_fps;
@@ -636,7 +636,7 @@ static cmr_int _ispAeForceIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	memset((void *)&ae_result, 0, sizeof(struct ae_calc_out));
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -648,7 +648,7 @@ static cmr_int _ispAeForceIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_RESTORE, NULL, (void *)&ae_result);
 	}
 
-	ISP_LOGI("rtn %ld", rtn);
+	ISP_LOGV("rtn %ld", rtn);
 
 	return rtn;
 }
@@ -661,7 +661,7 @@ static cmr_int _ispGetAeStateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -673,7 +673,7 @@ static cmr_int _ispGetAeStateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 		*(cmr_u32 *) param_ptr = 1;
 	}
 
-	ISP_LOGI("rtn %ld param %d ae %d", rtn, param, *(cmr_u32 *) param_ptr);
+	ISP_LOGV("rtn %ld param %d ae %d", rtn, param, *(cmr_u32 *) param_ptr);
 
 	return rtn;
 }
@@ -686,11 +686,11 @@ static cmr_int _ispSetAeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	UNUSED(call_back);
 
 	if (NULL == fps) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
-	ISP_LOGI("LLS min_fps =%d, max_fps = %d", fps->min_fps, fps->max_fps);
+	ISP_LOGV("LLS min_fps =%d, max_fps = %d", fps->min_fps, fps->max_fps);
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FPS, fps, NULL);
 
@@ -705,7 +705,7 @@ static cmr_s32 ispGetAeDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 	struct tg_ae_ctrl_alc_log ae_log = { NULL, 0 };
 
 	if (NULL == cxt) {
-		ISP_LOGE("Get AE debug info error!");
+		ISP_LOGE("fail to get AE debug info !");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -713,7 +713,7 @@ static cmr_s32 ispGetAeDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 	if (0x00 == cxt->lib_use_info->ae_lib_info.product_id) {
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_DEBUG_INFO, NULL, (void *)&ae_log);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("Get AE debug info failed!");
+			ISP_LOGE("fail to get get AE debug info!");
 		}
 		cxt->ae_cxt.log_ae = ae_log.log;
 		cxt->ae_cxt.log_ae_size = ae_log.size;
@@ -731,7 +731,7 @@ static cmr_s32 ispGetAlscDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 	struct tg_alsc_debug_info lsc_log = { NULL, 0 };
 
 	if (NULL == cxt) {
-		ISP_LOGE("Get ALSC debug info error!");
+		ISP_LOGE("fail to get ALSC debug info error!");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -746,7 +746,7 @@ static cmr_s32 ispGetAlscDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 		if (0x00 == cxt->lib_use_info->lsc_lib_info.product_id) {
 			rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_CMD_GET_DEBUG_INFO, NULL, (void *)&lsc_log);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("Get ALSC debug info failed!");
+				ISP_LOGE("fail to get  ALSC debug info failed!");
 			}
 			cxt->lsc_cxt.log_lsc = lsc_log.log;
 			cxt->lsc_cxt.log_lsc_size = lsc_log.size;
@@ -812,7 +812,7 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	UNUSED(call_back);
 
 	if (NULL == info_ptr) {
-		ISP_LOGE("err,param is null");
+		ISP_LOGE("fail to get valid param ");
 		return ISP_PARAM_NULL;
 	}
 
@@ -857,11 +857,11 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		info_ptr->size = cxt->ae_cxt.log_alc_size;
 	} else {
 		if (ISP_SUCCESS != ispGetAeDebugInfoIOCtrl(cxt)) {
-			ISP_LOGE("isp_get_debug_info failed");
+			ISP_LOGE("fail to  get ae debug info");
 		}
 
 		if (ISP_SUCCESS != ispGetAlscDebugInfoIOCtrl(cxt)) {
-			ISP_LOGE("isp_get_ALSC_debug_info failed");
+			ISP_LOGE("fail to  get alsc debug info");
 		}
 
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
@@ -914,7 +914,7 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	//cmr_u32 len = sizeof(AF_version);
 	//rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LIB_INFO, (void*)&AF_version, (void*)&len);
 
-	ISP_LOGI("ISP INFO:addr 0x%p, size = %d", info_ptr->addr, info_ptr->size);
+	ISP_LOGV("ISP INFO:addr 0x%p, size = %d", info_ptr->addr, info_ptr->size);
 	return rtn;
 }
 
@@ -927,7 +927,7 @@ static cmr_int _ispGetAwbGainIoctrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	UNUSED(call_back);
 
 	if (NULL == awbc_cfg) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -940,7 +940,7 @@ static cmr_int _ispGetAwbGainIoctrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	awbc_cfg->g_offset = 0;
 	awbc_cfg->b_offset = 0;
 
-	ISP_LOGI("rtn %ld r %d g %d b %d", rtn, result.r, result.g, result.b);
+	ISP_LOGV("rtn %ld r %d g %d b %d", rtn, result.r, result.g, result.b);
 
 	return rtn;
 }
@@ -953,7 +953,7 @@ static cmr_int _ispAwbCtIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
@@ -971,13 +971,13 @@ static cmr_int _ispSetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_TARGET_LUM, param_ptr, (void *)&param);
 
-	ISP_LOGI("rtn %ld param %d Lum %d", rtn, param, *(cmr_u32 *) param_ptr);
+	ISP_LOGV("rtn %ld param %d Lum %d", rtn, param, *(cmr_u32 *) param_ptr);
 
 	return rtn;
 }
@@ -990,14 +990,14 @@ static cmr_int _ispGetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_LUM, NULL, (void *)&param);
 	*(cmr_u32 *) param_ptr = param;
 
-	ISP_LOGI("rtn %ld param %d Lum %d", rtn, param, *(cmr_u32 *) param_ptr);
+	ISP_LOGV("rtn %ld param %d Lum %d", rtn, param, *(cmr_u32 *) param_ptr);
 
 	return rtn;
 }
@@ -1013,7 +1013,7 @@ static cmr_int _ispHueIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1058,13 +1058,13 @@ static cmr_int _ispAeMeasureLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
 	set_weight.mode = *(cmr_u32 *) param_ptr;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_WEIGHT, &set_weight, NULL);
-	ISP_LOGI("ISP_AE: AE_SET_WEIGHT=%d, rtn=%ld", set_weight.mode, rtn);
+	ISP_LOGV("ISP_AE: AE_SET_WEIGHT=%d, rtn=%ld", set_weight.mode, rtn);
 
 	return rtn;
 }
@@ -1077,7 +1077,7 @@ static cmr_int _ispSceneModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1230,23 +1230,23 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	UNUSED(param_ptr);
 	UNUSED(call_back);
 
-	ISP_LOGI("ISP_TOOL:_ispFixParamUpdateIOCtrl");
+	ISP_LOGV("ISP_TOOL:start");
 
 	if (NULL == isp_alg_handle || NULL == cxt->sn_cxt.sn_raw_info) {
-		ISP_LOGE("update param error");
+		ISP_LOGE("fail to update param");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
 	sensor_raw_info_ptr = (struct sensor_raw_info *)cxt->sn_cxt.sn_raw_info;
 	if (sensor_raw_info_ptr == NULL) {
-		ISP_LOGI("ISP_TOOL:sensor_raw_info_ptr is  null");
+		ISP_LOGV("ISP_TOOL:sensor_raw_info_ptr is  null");
 	}
 
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
 	input.sensor_name = version_info->sensor_ver_name.sensor_name;
 
 	if (NULL == cxt->handle_pm) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to  get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1269,7 +1269,7 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 
 	rtn = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("isp param update failed");
+		ISP_LOGE("fail to update isp param");
 		return rtn;
 	}
 	param_source = 0;
@@ -1277,7 +1277,7 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 
 	rtn = _smart_param_update((cmr_handle) cxt);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("smart param update failed");
+		ISP_LOGE("fail to update smart param");
 		return rtn;
 	}
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &awb_input, &awb_output);
@@ -1349,15 +1349,15 @@ static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	struct awb_data_info awb_data_ptr = { NULL, 0 };
 	UNUSED(call_back);
 
-	ISP_LOGI("--IOCtrl--PARAM_UPDATE--");
+	ISP_LOGV("--IOCtrl--PARAM_UPDATE--");
 
 	if (NULL == mode_param_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
 	if (NULL == cxt || NULL == cxt->handle_pm) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1378,7 +1378,7 @@ static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 	rtn = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, NULL);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("isp param update failed");
+		ISP_LOGE("fail to update  isp param update ");
 		return rtn;
 	}
 	param_source = 0;
@@ -1386,7 +1386,7 @@ static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 	rtn = _smart_param_update((cmr_handle) cxt);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("smart param update failed");
+		ISP_LOGE("fail to update smart param update ");
 		return rtn;
 	}
 
@@ -1422,7 +1422,7 @@ static cmr_int _ispAeTouchIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {
-		ISP_LOGE("param is NULL error");
+		ISP_LOGE("fail to get valid param");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1649,7 +1649,7 @@ static cmr_int _ispStart3AIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&af_bypass, NULL);
 
-	ISP_LOGI("done");
+	ISP_LOGV("done");
 
 	return ISP_SUCCESS;
 }
@@ -1669,7 +1669,7 @@ static cmr_int _ispStop3AIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&af_bypass, NULL);
 
-	ISP_LOGI("done");
+	ISP_LOGV("done");
 
 	return ISP_SUCCESS;
 }
@@ -1684,7 +1684,7 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	UNUSED(call_back);
 
 	if (NULL == isp_alg_handle || NULL == param_ptr) {
-		ISP_LOGE("cxt=%p param_ptr=%p is NULL error", isp_alg_handle, param_ptr);
+		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p", isp_alg_handle, param_ptr);
 		return ISP_PARAM_NULL;
 	}
 	//add for STACK ERROR
@@ -1722,7 +1722,7 @@ static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	night_mode = *(cmr_u32 *) param_ptr;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_NIGHT_MODE, &night_mode, NULL);
 
-	ISP_LOGI("ISP_AE: AE_SET_NIGHT_MODE=%d, rtn=%ld", night_mode, rtn);
+	ISP_LOGV("ISP_AE: AE_SET_NIGHT_MODE=%d, rtn=%ld", night_mode, rtn);
 
 	return rtn;
 }
@@ -1748,15 +1748,15 @@ static cmr_int _ispSetAeAwbLockUnlock(cmr_handle isp_alg_handle, void *param_ptr
 		ISP_LOGV("AWB UnLock");
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 	} else if (ISP_AE_AWB_LOCK == ae_awb_mode) {	// AE & AWB Lock
-		ISP_LOGI("AE & AWB Lock");
+		ISP_LOGV("AE & AWB Lock");
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, (void *)&ae_result);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 	} else if (ISP_AE_AWB_UNLOCK == ae_awb_mode) {	// AE & AWB Unlock
-		ISP_LOGI("AE & AWB Un-Lock\n");
+		ISP_LOGV("AE & AWB Un-Lock\n");
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, (void *)&ae_result);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 	} else {
-		ISP_LOGI("Unsupported AE & AWB mode (%d)\n", ae_awb_mode);
+		ISP_LOGV("Unsupported AE & AWB mode (%d)\n", ae_awb_mode);
 	}
 
 	return ISP_SUCCESS;
@@ -1777,13 +1777,13 @@ static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, c
 
 	ae_mode = *(cmr_u32 *) param_ptr;
 	if (ISP_AE_LOCK == ae_mode) {	// AE & AWB Lock
-		ISP_LOGI("AE Lock\n");
+		ISP_LOGV("AE Lock\n");
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, (void *)&ae_result);
 	} else if (ISP_AE_UNLOCK == ae_mode) {	// AE  Unlock
-		ISP_LOGI("AE Un-Lock\n");
+		ISP_LOGV("AE Un-Lock\n");
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, (void *)&ae_result);
 	} else {
-		ISP_LOGI("Unsupported AE  mode (%d)\n", ae_mode);
+		ISP_LOGV("Unsupported AE  mode (%d)\n", ae_mode);
 	}
 
 	return ISP_SUCCESS;
@@ -1812,9 +1812,9 @@ static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, 
 	update_param->nr_level_number_map_ptr = nr_fix->nr_level_number_ptr;
 	update_param->nr_default_level_map_ptr = nr_fix->nr_default_level_ptr;
 	if (update_param->nr_level_number_map_ptr) {
-		ISP_LOGI("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", sizeof(update_param->nr_level_number_map_ptr));
+		ISP_LOGV("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", sizeof(update_param->nr_level_number_map_ptr));
 	} else {
-		ISP_LOGI("ISP_TOOL:_ispDenoiseParamRead nr map is null");
+		ISP_LOGV("ISP_TOOL: nr map is null");
 	}
 //      } else {
 //              update_param->multi_nr_flag = 0x0;
@@ -1999,7 +1999,7 @@ static cmr_int _ispSensorDenoiseParamUpdate(cmr_handle isp_alg_handle, void *par
 		}
 	}
 #endif
-	ISP_LOGI("_ispSensorDenoiseParamUpdate over");
+	ISP_LOGV(" done");
 	return ISP_SUCCESS;
 }
 
@@ -2048,10 +2048,10 @@ static cmr_int _ispToolSetSceneParam(cmr_handle isp_alg_handle, void *param_ptr,
 		awbc_cfg.b_gain = 1536;
 	}
 
-	ISP_LOGI("AWB_TAG: isp_pm_ioctl rtn=%d, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
+	ISP_LOGV("AWB_TAG:  rtn=%d, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("set awb gain failed");
+		ISP_LOGE("fail to set awb gain ");
 		return rtn;
 	}
 
@@ -2063,7 +2063,7 @@ static cmr_int _ispToolSetSceneParam(cmr_handle isp_alg_handle, void *param_ptr,
 	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 	rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("set smart gain failed");
+		ISP_LOGE("fail to set smart gain");
 		return rtn;
 	}
 

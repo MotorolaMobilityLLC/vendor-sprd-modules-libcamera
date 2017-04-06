@@ -63,7 +63,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 				  //&statis_mem_info->statis_mfd,
 				  fds, statis_mem_info->buffer_client_data);
 		} else {
-			ISP_LOGE("failed to malloc statis_bq buffer");
+			ISP_LOGE("fail to malloc statis_bq buffer");
 			return ISP_PARAM_NULL;
 		}
 
@@ -254,7 +254,7 @@ cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle)
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ISP_LOGI("driver handle is %p", cxt->isp_driver_handle);
+	ISP_LOGV("driver handle is %p", cxt->isp_driver_handle);
 
 	rtn = isp_u_2d_lsc_param_update(cxt->isp_driver_handle);
 
@@ -359,7 +359,7 @@ cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle * isp_dev_handle)
 
 	cxt = (struct isp_dev_access_context *)malloc(sizeof(struct isp_dev_access_context));
 	if (NULL == cxt) {
-		ISP_LOGE("No memory");
+		ISP_LOGE("fail to malloc");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
@@ -369,7 +369,7 @@ cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle * isp_dev_handle)
 	rtn = isp_dev_open(fd, &cxt->isp_driver_handle);
 
 	if (rtn) {
-		ISP_LOGE("dev_open error!");
+		ISP_LOGE("fail to open isp dev!");
 		goto exit;
 	}
 exit:
@@ -382,7 +382,7 @@ exit:
 		*isp_dev_handle = (cmr_handle) cxt;
 	}
 
-	ISP_LOGI("---isp_dev_access_init-- end, 0x%lx", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
@@ -394,8 +394,6 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
 	void *dummy;
-
-	ISP_LOGI("E");
 	ISP_CHECK_HANDLE_VALID(isp_handler);
 
 	if (statis_mem_info->isp_statis_alloc_flag == 1) {
@@ -488,7 +486,7 @@ static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 * rgb_gain
 	gain_info.g_gain = rgb_gain_offset;
 	gain_info.b_gain = rgb_gain_offset;
 
-	ISP_LOGD("d-gain--global_gain: %d\n", gain_info.global_gain);
+	ISP_LOGV("d-gain--global_gain: %d\n", gain_info.global_gain);
 
 	isp_u_rgb_gain_block(cxt->isp_driver_handle, &gain_info);
 
@@ -569,7 +567,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		break;
 	case ISP_DEV_GET_AF_MONITOR_WIN_NUM:
 		rtn = isp_u_raw_afm_win_num(cxt->isp_driver_handle, (cmr_u32 *) param0);
-		ISP_LOGI("af_win_num %d", *(cmr_u32 *) param0);
+		ISP_LOGV("af_win_num %d", *(cmr_u32 *) param0);
 		break;
 	case ISP_DEV_SET_STSTIS_BUF:
 		rtn = isp_dev_set_statis_buf(cxt->isp_driver_handle, param0);

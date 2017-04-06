@@ -98,7 +98,7 @@ cmr_int isp_init(struct isp_init_param * input_ptr, cmr_handle * isp_handler)
 	struct isp_mw_context *cxt = NULL;
 	struct isp_alg_fw_init_in ispalg_input;
 
-	ISP_LOGI(":ISP:E");
+	ISP_LOGV("E");
 
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
 	memset((void *)cxt, 0x00, sizeof(cxt));
@@ -131,7 +131,7 @@ exit:
 		*isp_handler = (isp_handle) cxt;
 	}
 
-	ISP_LOGI(":ISP:X %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
@@ -153,7 +153,7 @@ cmr_int isp_deinit(cmr_handle isp_handler)
 		cxt = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
@@ -210,7 +210,7 @@ cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start * param_p
 	rtn = isp_alg_fw_start(cxt->alg_fw_handle, param_ptr);
 
 exit:
-	ISP_LOGI(":ISP: done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
