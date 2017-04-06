@@ -389,7 +389,7 @@ cmr_u8 *ispvideo_GetImgDataInfo(cmr_u8 * dig_ptr, cmr_u32 * packet_sn, cmr_u32 *
 	ISP_IMAGE_HEADER_T img_info;
 
 	if (!dig_ptr || !packet_sn || !total_pack || !img_width || !img_height) {
-		ISP_LOGI("invalid param");
+		ISP_LOGE("fail to check param");
 		return data_ptr;
 	}
 
@@ -401,7 +401,7 @@ cmr_u8 *ispvideo_GetImgDataInfo(cmr_u8 * dig_ptr, cmr_u32 * packet_sn, cmr_u32 *
 	*total_pack = img_info.totalpacket;
 	*img_width = (img_info.img_size >> 0x10) & 0xFFFF;
 	*img_height = img_info.img_size & 0xFFFF;
-	ISP_LOGI("ImageInfo headlen %d, packetsn %d, total_packet %d, img_width %d, img_height %d", *img_headlen, *packet_sn, *total_pack, *img_width, *img_height);
+	ISP_LOGV("ImageInfo headlen %d, packetsn %d, total_packet %d, img_width %d, img_height %d", *img_headlen, *packet_sn, *total_pack, *img_width, *img_height);
 
 	data_ptr = dig_ptr + 1 + sizeof(MSG_HEAD_T) + sizeof(ISP_IMAGE_HEADER_T);
 	return data_ptr;
@@ -491,14 +491,14 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 		memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
 		rsp_len += sizeof(ISP_IMAGE_HEADER_T);
 
-		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+		//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 		memcpy(eng_rsp_diag + rsp_len, (char *)ch0_ptr + i * SEND_IMAGE_SIZE, len);
 		rsp_len += len;
 
 		eng_rsp_diag[rsp_len] = 0x7e;
 		msg_ret->len = rsp_len - 1;
 		msg_ret->seq_num = sequence_num++;
-		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+		//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
 	}
@@ -520,14 +520,14 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 		memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
 		rsp_len += sizeof(ISP_IMAGE_HEADER_T);
 
-		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+		//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 		memcpy(eng_rsp_diag + rsp_len, (char *)ch1_ptr + i * SEND_IMAGE_SIZE, len);
 		rsp_len += len;
 
 		eng_rsp_diag[rsp_len] = 0x7e;
 		msg_ret->len = rsp_len - 1;
 		msg_ret->seq_num = sequence_num++;
-		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+		//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
 	}
@@ -549,14 +549,14 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 		memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_IMAGE_HEADER_T));
 		rsp_len += sizeof(ISP_IMAGE_HEADER_T);
 
-		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+		//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 		memcpy(eng_rsp_diag + rsp_len, (char *)ch2_ptr + i * SEND_IMAGE_SIZE, len);
 		rsp_len += len;
 
 		eng_rsp_diag[rsp_len] = 0x7e;
 		msg_ret->len = rsp_len - 1;
 		msg_ret->seq_num = sequence_num++;
-		//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+		//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 
 	}
@@ -582,7 +582,7 @@ static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 heigh
 	fp = fopen(name, "wb");
 
 	if (fp == NULL) {
-		ISP_LOGI("Chj--create file fails");
+		ISP_LOGV("fail to create file");
 		return 0;
 	}
 
@@ -592,7 +592,7 @@ static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 heigh
 
 	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
-	ISP_LOGI("Chj--writing one pic succeeds");
+	ISP_LOGV("Chj--writing one pic succeeds");
 	return 0;
 }
 
@@ -614,7 +614,7 @@ static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height
 	fp = fopen(name, "wb");
 
 	if (fp == NULL) {
-		ISP_LOGI("Chj--create file fails");
+		ISP_LOGE("fail to create file fails");
 		return 0;
 	}
 
@@ -624,7 +624,7 @@ static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height
 
 	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
-	ISP_LOGI("Chj--writing one pic succeeds");
+	ISP_LOGV("Chj--writing one pic succeeds");
 	return 0;
 }
 
@@ -695,7 +695,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
 
 	if ((NULL == data_buf) || (NULL == data_size)) {
-		ISP_LOGE("param error");
+		ISP_LOGE("fail to check param");
 		return ISP_PARAM_NULL;
 	}
 	struct isp_data_header_normal *data_head = (struct isp_data_header_normal *)data_buf;
@@ -731,7 +731,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
 				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
 				if (!nr_scene_and_level_map) {
-					ISP_LOGE("ISP_TOOL:nr_scene_and_level_map malloc error !");
+					ISP_LOGE("nr_scene_and_level_map malloc error !");
 					return -1;
 				}
 				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
@@ -745,9 +745,9 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				//if (0x01 != data_head->packet_status)
 				//      cce_ptr_offset += data_actual_len;
 				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
-				ISP_LOGE("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+				ISP_LOGE("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
 			} else {
-				ISP_LOGE("ISP_TOOL:nr_scene_and_level_map is null error");
+				ISP_LOGE("nr_scene_and_level_map is null error");
 			}
 			break;
 #endif
@@ -1011,7 +1011,7 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 	cmr_s32 i, num;
 	cmr_u32 tail_len;
 	if (NULL == tx_buf || NULL == src_ptr || NULL == data_ptr || NULL == actual_len) {
-		ISP_LOGE("ISP_TOOL:param error:tx_buf:%p, src_ptr:%p, data_ptr:%p, actual_len:%p", tx_buf, src_ptr, data_ptr, actual_len);
+		ISP_LOGE("fail to check param:tx_buf:%p, src_ptr:%p, data_ptr:%p, actual_len:%p", tx_buf, src_ptr, data_ptr, actual_len);
 		return ISP_PARAM_ERROR;
 	}
 
@@ -1038,7 +1038,7 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 		*data_status = 0x01;
 		ret = send(sockfd, tx_buf, (*actual_len) + 2, 0);
 	}
-	ISP_LOGI("ISP_TOOL:denoise send over! ret = %d", ret);
+	ISP_LOGV("denoise send over! ret = %d", ret);
 	return ret;
 }
 
@@ -1059,7 +1059,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 	cmr_u32 *temp_nr_map_addr = NULL;
 
 	if (NULL == tx_buf) {
-		ISP_LOGE("param error:tx_buf:%p", tx_buf);
+		ISP_LOGE("fail to check tx_buf:%p", tx_buf);
 		return ISP_PARAM_ERROR;
 	}
 
@@ -1097,7 +1097,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
 				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
 				if (!nr_scene_and_level_map) {
-					ISP_LOGE("ISP_TOOL:nr_scene_and_level_map malloc error !");
+					ISP_LOGE("fail to do ispParserAlloc!");
 					return -1;
 				}
 				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
@@ -1108,7 +1108,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
 
 			} else {
-				ISP_LOGE("ISP_TOOL:nr_scene_and_level_map is null error");
+				ISP_LOGE("fail to check param");
 			}
 			break;
 		}
@@ -1267,7 +1267,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 	default:
 		break;
 	}
-	ISP_LOGI("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
 	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &msg_ret->len, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
@@ -1290,7 +1290,7 @@ cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len)
 	cmr_u32 tail_len;
 
 	if (NULL == tx_buf || NULL == handler) {
-		ISP_LOGE("ISP_TOOL:param error");
+		ISP_LOGE("fail to check param");
 		return ISP_PARAM_ERROR;
 	}
 
@@ -1330,7 +1330,7 @@ cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len)
 		free(src_ptr);
 		src_ptr = NULL;
 	}
-	ISP_LOGI("ISP_TOOL:dump over! ret=%d", ret);
+	ISP_LOGV("dump over! ret=%d", ret);
 	return ret;
 }
 
@@ -1340,12 +1340,12 @@ static cmr_s32 isp_nr_reg_read(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len,
 	struct isp_data_header_read *data_head = (struct isp_data_header_read *)(rx_buf + sizeof(MSG_HEAD_T) + 1);
 	if (0x01 == data_head->main_type) {
 		ret = isp_denoise_read(tx_buf, len, data_head);
-		ISP_LOGI("denoise_read over");
+		ISP_LOGV("denoise_read over");
 		return ret;
 	}
 	if (0x00 == data_head->main_type) {
 		ret = isp_dump_reg(handler, tx_buf, len);
-		ISP_LOGI("isp_dump_reg  over");
+		ISP_LOGV("isp_dump_reg  over");
 		return ret;
 	}
 	return ret;
@@ -1380,7 +1380,7 @@ static cmr_s32 isp_nr_write(cmr_handle handler, cmr_u8 * tx_buf, cmr_u8 * rx_buf
 			}
 		}
 	}
-	ISP_LOGE("NR write over! ret = %d", ret);
+	ISP_LOGE("fail to write NR! ret = %d", ret);
 	return ret;
 }
 
@@ -1893,16 +1893,16 @@ static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
 	cmr_s32 tmp_size = 0;
 	cmr_s32 count = 0;
 
-	ISP_LOGI("size %d", size);
+	ISP_LOGV("size %d", size);
 
 	memset(file_name, 0, sizeof(file_name));
 	sprintf(file_name, "/data/misc/cameraserver/read_lnc_param_%d.txt", sn);
 
-	ISP_LOGI("file name %s", file_name);
+	ISP_LOGV("file name %s", file_name);
 	fp = fopen(file_name, "wb");
 
 	if (NULL == fp) {
-		ISP_LOGI("can not open file: %s \n", file_name);
+		ISP_LOGE("fail to open file: %s \n", file_name);
 		return 0;
 	}
 	for (i = 0; i < size; ++i) {
@@ -1953,7 +1953,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
 		sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
 	}
-	ISP_LOGI("ISP_TOOL:read_cmd->main_type = %d", read_cmd->main_type);
+	ISP_LOGV("read_cmd->main_type = %d", read_cmd->main_type);
 
 	switch (read_cmd->main_type) {
 	case MODE_ISP_ID:
@@ -1992,7 +1992,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				memcpy((void *)((cmr_u8 *) data_addr), (void *)mode_param_info.addr, mode_param_info.len);
 				rtn = send_tune_info_param(read_cmd, msg, data_addr, data_len);
 				if (0x00 != rtn) {
-					DBG("ISP_TOOL : send tune_info is error");
+					ISP_LOGE("fail to send tune_info");
 				}
 			}
 		}
@@ -2109,7 +2109,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
 				rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
 			} else {
-				DBG("ISP_TOOL : get libuse error !");
+				ISP_LOGE("fail to get libuse!");
 			}
 		}
 		break;
@@ -2129,7 +2129,7 @@ cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	cmr_u32 offset_tmp = 0;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		DBG("ISP_TOOL : get ae_table param error");
+		ISP_LOGE("fail to check param");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -2152,7 +2152,7 @@ cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u1
 	cmr_u32 offset_tmp = 0;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		DBG("ISP_TOOL : get ae_weight param error");
+		ISP_LOGE("fail to check param");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -2168,7 +2168,7 @@ cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	cmr_u32 offset_tmp = 0;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		DBG("ISP_TOOL : get ae_scene param error");
+		ISP_LOGE("fail to check param");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -2193,7 +2193,7 @@ cmr_s32 down_ae_auto_iso_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_
 	cmr_u32 offset_tmp = 0;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		DBG("ISP_TOOL : get ae_table param error");
+		ISP_LOGE("fail to check param");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -2208,7 +2208,7 @@ cmr_s32 down_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_
 	cmr_u16 lnc_ct = sub_type;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		DBG("ISP_TOOL : get lnc param error");
+		ISP_LOGE("fail to check param");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -2236,7 +2236,7 @@ cmr_s32 down_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_
 	cmr_u32 len_block_info = sizeof(struct sensor_fix_param_block_info);
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		DBG("ISP_TOOL : get lnc param error");
+		ISP_LOGE("ISP_TOOL : get lnc param error");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -2301,19 +2301,19 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 		sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
 	}
 	if (!isp_data_ptr) {
-		ISP_LOGE("ISP_TOOL: isp data down is null error");
+		ISP_LOGE("fail to check param");
 	}
-	DBG("ISP_TOOL:down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
+	ISP_LOGV("down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
 
 	switch (write_cmd->main_type) {
 	case MODE_TUNE_INFO:
 		{
 			if (0 == flag) {
 				data_len = mode_param_info.len;
-				ISP_LOGI("ISP_TOOL:mode tune data len = %d", data_len);
+				ISP_LOGV("mode tune data len = %d", data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (!data_addr) {
-					ISP_LOGE("ISP_TOOL: tune info data malloc mem error !");
+					ISP_LOGE("fail to do malloc mem!");
 				}
 				data_len = msg->len - len_msg - len_data_header;
 				memcpy(data_addr + offset, isp_data_ptr, data_len);
@@ -2328,7 +2328,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				offset = 0;
 				flag = 0;
 				if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
-					ISP_LOGE("ISP_TOOL: sensor raw mode ptr addr is null, mode_id=%d", mode_id);
+					ISP_LOGV(" sensor raw mode ptr addr is , mode_id=%d", mode_id);
 				}
 				memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
@@ -2340,7 +2340,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
+				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
@@ -2349,14 +2349,14 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 		{
 			if (0 == flag) {
 				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("sensor_raw_fix null pointer !");
+					ISP_LOGE("fail to check param!");
 					rtn = 0x01;
 					return rtn;
 				}
 				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2379,24 +2379,24 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
+				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
 		break;
 	case MODE_AE_WEIGHT_TABLE:
 		{
-			DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE0 \n");
+			ISP_LOGV("MODE_AE_WEIGHT_TABLE0 \n");
 			if (0 == flag) {
 				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("sensor_raw_fix null pointer !");
+					ISP_LOGE("fail to check param!");
 					rtn = 0x01;
 					return rtn;
 				}
 				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2406,9 +2406,9 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 
-			DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE1 \n");
+			ISP_LOGV("MODE_AE_WEIGHT_TABLE1 \n");
 			if (0x01 == write_cmd->packet_status) {
-				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE2 \n");
+				ISP_LOGV("MODE_AE_WEIGHT_TABLE2 \n");
 				flag = 0;
 				offset = 0;
 				rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
@@ -2418,12 +2418,12 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					data_addr = NULL;
 				}
 
-				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE3 \n");
+				ISP_LOGV("MODE_AE_WEIGHT_TABLE3 \n");
 				eng_rsp_diag[value] = 0x00;
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AE_WEIGHT_TABLE4\n");
+				ISP_LOGV("MODE_AE_WEIGHT_TABLE4\n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
@@ -2434,7 +2434,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2457,7 +2457,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AE_SCENE_TABLE \n");
+				ISP_LOGV("MODE_AE_SCENE_TABLE \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
@@ -2468,7 +2468,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2491,7 +2491,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AE_AUTO_ISO_TABLE \n");
+				ISP_LOGV("MODE_AE_AUTO_ISO_TABLE \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
@@ -2501,7 +2501,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0 == flag) {
 				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2520,7 +2520,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_LNC_DATA \n");
+				ISP_LOGV("MODE_LNC_DATA \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 		}
@@ -2530,7 +2530,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0 == flag) {
 				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2549,7 +2549,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_AWB_DATA \n");
+				ISP_LOGV("MODE_AWB_DATA \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 			break;
@@ -2560,7 +2560,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				data_len = sensor_note_param.node_len;
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2582,7 +2582,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
+				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 			break;
@@ -2592,7 +2592,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0 == flag) {
 				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
 				if (NULL == data_addr) {
-					ISP_LOGE("malloc mem error !");
+					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
 					return rtn;
 				}
@@ -2610,7 +2610,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				value = value + 0x04;
 				msg_ret->len = value - 1;
 				eng_rsp_diag[value] = 0x7e;
-				DBG("ISP_TOOL:MODE_LIB_INFO_DATA: \n");
+				ISP_LOGV("MODE_LIB_INFO_DATA: \n");
 				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
 			}
 			break;
@@ -2704,11 +2704,11 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 			break;
 		}
 	} else {
-		DBG("main type is out of range!");
+		ISP_LOGE("fail to check flag, is out of range!");
 		unvalid_flag = 1;;
 	}
 	if (0 != unvalid_flag) {
-		DBG("ISP_TOOL:sub type out of range!");
+		ISP_LOGE("fail to check flag:sub type out of range!");
 		rtn = 0x01;
 		goto CHECK_CMD_UNVALID;
 	} else {
@@ -2753,7 +2753,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	cmr_s32 is_stop_preview = 0;
 
 	if (len < sizeof(MSG_HEAD_T) + 2) {
-		DBG("ISP_TOOL:the formal cmd is 0x7e + diag + 0x7e,which is 10Bytes,but the cmd has less than 10 bytes\n");
+		ISP_LOGE("fail to check param\n");
 		return -1;
 	}
 
@@ -2773,9 +2773,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	switch (msg->subtype) {
 	case CMD_SFT_READ:
 		{
-			ISP_LOGI("Chj--get af info");
+			ISP_LOGV("Chj--get af info");
 			ret = isp_sft_read(isp_handler, &eng_rsp_diag[rsp_len], &len);
-			DBG("ISP_SFT:CMD_SFT_READ rsp_len %d len %d\n", rsp_len, len);
+			ISP_LOGV("ISP_SFT:CMD_SFT_READ rsp_len %d len %d\n", rsp_len, len);
 			rsp_len += len;
 			eng_rsp_diag[rsp_len] = 0x7e;
 			msg_ret->len = rsp_len - 1;
@@ -2784,10 +2784,10 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_WRITE:
 		{
-			ISP_LOGI("Chj--set af info");
+			ISP_LOGV("Chj--set af info");
 			len = msg_ret->len - 8;
 			ret = isp_sft_write(isp_handler, buf + rsp_len, &len);
-			DBG("ISP_SFT:CMD_SFT_WRITE rsp_len %d len %d\n", rsp_len, len);
+			ISP_LOGV("ISP_SFT:CMD_SFT_WRITE rsp_len %d len %d\n", rsp_len, len);
 			rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 			eng_rsp_diag[rsp_len] = 0x7e;
 			msg_ret->len = rsp_len - 1;
@@ -2796,7 +2796,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_TRIG:
 		{
-			ISP_LOGI("Chj--af trig");
+			ISP_LOGV("Chj--af trig");
 			ret = isp_ioctl(isp_handler, ISP_CTRL_AF, NULL);	// set af info after auto focus
 			if (!ret) {
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
@@ -2810,7 +2810,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_SET_POS:
 		{
-			ISP_LOGI("Chj--set pos");
+			ISP_LOGV("Chj--set pos");
 			cmr_u32 bypass = 0;
 			g_af_pos = *(cmr_u32 *) (buf + 9);
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, buf + 9);
@@ -2828,7 +2828,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_GET_POS:
 		{
-			ISP_LOGI("Chj--get pos");
+			ISP_LOGV("Chj--get pos");
 			cmr_u32 pos;
 			ret = isp_ioctl(isp_handler, ISP_CTRL_GET_AF_POS, &pos);	// set af info after auto focus
 			if (!ret) {
@@ -2845,7 +2845,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_OPEN_FILTER:
 		{
-			ISP_LOGI("Chj--open the filter");
+			ISP_LOGV("Chj--open the filter");
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);	// open the filter
 			usleep(1000 * 100);
 			if (!ret) {
@@ -2861,7 +2861,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_SFT_GET_AF_VALUE:	// value back to PC
 		{
 			cmr_u32 statistic[50] = { 0 };
-			ISP_LOGI("Chj-- get af value 1");
+			ISP_LOGV("Chj-- get af value 1");
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_GET_AF_VALUE, statistic);	// set af info after auto focus
 			ISP_LOGI("Chj-- get af value 2 ret=%d,af_value=%d,af_value=%d", ret, statistic[0], statistic[25]);
 			//ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_BYPASS, NULL);// close the filter
@@ -2879,7 +2879,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_TAKE_PICTURE:	// pic back to PC
 		{
-			ISP_LOGI("Chj--sft take picture");
+			ISP_LOGV("Chj--sft take picture");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 width, height, interval;
 
@@ -2896,9 +2896,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					fun_ptr->set_capture_size(width, height);
 				}
 				fun_ptr->take_picture(0, capture_format);
-				ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				sem_wait(&capture_sem_lock);
-				ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				if (NULL != fun_ptr->stop_preview) {
 					fun_ptr->stop_preview(0, 0);
 				}
@@ -2915,7 +2915,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_TAKE_PICTURE_NEW:	// save pic to file system
 		{
-			ISP_LOGI("Chj--sft take picture new");
+			ISP_LOGV("Chj--sft take picture new");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 startpos, endpos, step, width, height, interval;
 			cmr_u32 pos;
@@ -2942,9 +2942,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						fun_ptr->set_capture_size(width, height);
 					}
 					fun_ptr->take_picture(0, capture_format);
-					ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					sem_wait(&capture_sem_lock);
-					ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
@@ -2963,7 +2963,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_ASIC_TAKE_PICTURE:	// save pic to file system
 		{
-			ISP_LOGI("Chj--asic take picture");
+			ISP_LOGV("Chj--asic take picture");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 width, height;
 			g_command = CMD_ASIC_TAKE_PICTURE;
@@ -2977,9 +2977,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					fun_ptr->set_capture_size(width, height);
 				}
 				fun_ptr->take_picture(0, capture_format);
-				ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				sem_wait(&capture_sem_lock);
-				ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				if (NULL != fun_ptr->stop_preview) {
 					fun_ptr->stop_preview(0, 0);
 				}
@@ -3001,7 +3001,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_ASIC_TAKE_PICTURE_NEW:	// save pic to file system
 		{
-			ISP_LOGI("Chj--asic take picture new");
+			ISP_LOGV("Chj--asic take picture new");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;;
 			cmr_u32 startpos, endpos, step, width, height;
 			cmr_u32 pos;
@@ -3025,9 +3025,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						fun_ptr->set_capture_size(width, height);
 					}
 					fun_ptr->take_picture(0, capture_format);
-					ISP_LOGI("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					sem_wait(&capture_sem_lock);
-					ISP_LOGI("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
@@ -3044,7 +3044,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_START_PREVIEW:
 		{		// ok
-			DBG("ISP_TOOL:CMD_START_PREVIEW \n");
+			ISP_LOGV("CMD_START_PREVIEW \n");
 			if (NULL != fun_ptr->start_preview) {
 				ret = fun_ptr->start_preview(0, 0);
 			}
@@ -3061,7 +3061,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_STOP_PREVIEW:
 		{		// ok
-			DBG("ISP_TOOL:CMD_STOP_PREVIEW \n");
+			ISP_LOGV("CMD_STOP_PREVIEW \n");
 			if (NULL != fun_ptr->stop_preview) {
 //                              fun_ptr->stop_preview(0, 0);
 			}
@@ -3075,13 +3075,13 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_GET_PREVIEW_PICTURE:
 		{		// ok
-			//DBG("ISP_TOOL:CMD_GET_PREVIEW_PICTURE \n");
+			//ISP_LOGE("CMD_GET_PREVIEW_PICTURE \n");
 			if (1 == preview_flag) {
 				preview_img_end_flag = 0;
 				sem_wait(&preview_sem_lock);
 				preview_img_end_flag = 1;
 			} else {
-				DBG("ISP_TOOL:CMD_GET_PREVIEW_PICTURE \n");
+				ISP_LOGV("CMD_GET_PREVIEW_PICTURE \n");
 				rsp_len += rlen;
 				eng_rsp_diag[rsp_len] = 0x7e;
 				msg_ret->len = rsp_len - 1;
@@ -3091,7 +3091,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_READ_ISP_PARAM:
 		{
-			DBG("ISP_TOOL:CMD_READ_ISP_PARAM \n");
+			ISP_LOGV("CMD_READ_ISP_PARAM \n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
@@ -3109,15 +3109,15 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to get param \n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_TOOL:ispParser failed \n");
+					ISP_LOGE("fail to parser param \n");
 				}
 				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
-					DBG("ISP_TOOL:ispParserFree failed \n");
+					ISP_LOGE("fail to free\n");
 				}
 
 				if (ISP_UP_PARAM == rtn_cmd.cmd) {
@@ -3140,7 +3140,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 							memcpy(eng_rsp_diag + rsp_len, (char *)&isp_msg, sizeof(ISP_DATA_HEADER_T));
 							rsp_len += sizeof(ISP_DATA_HEADER_T);
 
-							//DBG("%s:ISP_TOOL: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
+							//ISP_LOGE("%s: request rsp_len[%d]\n",__FUNCTION__, rsp_len);
 							memcpy(eng_rsp_diag + rsp_len, (char *)rtn_param.buf_addr + i * SEND_DATA_SIZE, len);
 
 							rsp_len += len;
@@ -3159,7 +3159,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_WRITE_ISP_PARAM:
 		{
-			DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM \n");
+			ISP_LOGV("CMD_WRITE_ISP_PARAM \n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			static struct isp_parser_buf_in packet_param = { 0x00, 0x00 };
 			cmr_u8 *dig_ptr = buf;
@@ -3187,7 +3187,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to get param \n");
 				}
 				memcpy((char *)packet_param.buf_addr + offset, (void *)in_param.buf_addr, in_param.buf_len);
 				offset += in_param.buf_len;
@@ -3202,16 +3202,16 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 
 			if (packet_num == (packet_total - 1)) {
 				offset = 0;
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM1 \n");
+				ISP_LOGV("CMD_WRITE_ISP_PARAM1 \n");
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)packet_param.buf_addr, NULL);
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM2  ret  %d\n", ret);
+				ISP_LOGV("CMD_WRITE_ISP_PARAM2  ret  %d\n", ret);
 				ret = ispParserFree((void *)packet_param.buf_addr);
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ret);
 				eng_rsp_diag[rsp_len] = 0x7e;
 				msg_ret->len = rsp_len - 1;
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM3 \n");
+				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
 				res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
-				DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM4 \n");
+				ISP_LOGV("CMD_WRITE_ISP_PARAM4 \n");
 
 			}
 
@@ -3219,7 +3219,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_READ_ISP_PARAM_V1:
 		{
-			DBG("ISP_TOOL:CMD_READ_ISP_PARAM_V1 \n");
+			ISP_LOGE("CMD_READ_ISP_PARAM_V1 \n");
 			struct isp_data_header_read *read_cmd = NULL;
 			cmr_u32 data_len = 0;
 			cmr_u8 *dig_ptr = buf;
@@ -3228,12 +3228,12 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			memset(&cmd, 0, sizeof(struct isp_check_cmd_valid));
 
 			data_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
-			DBG("ISP_TOOL : data_len = %d", data_len);
+			ISP_LOGV("ISP_TOOL : data_len = %d", data_len);
 			if (DATA_CMD_LENGTH == data_len) {
-				DBG("ISP_TOOL : data is read cmd");
+				ISP_LOGV("ISP_TOOL : data is read cmd");
 				read_cmd = (struct isp_data_header_read *)isp_ptr;
 			} else {
-				DBG("ISP_TOOL : cmd was error");
+				ISP_LOGE("fail to check cmd");
 				break;
 			}
 			cmd.isp_mode = read_cmd->isp_mode;
@@ -3247,13 +3247,13 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					ret = send_isp_param(read_cmd, msg);
 				}
 				if (0x00 != ret)
-					DBG("ISP_TOOL : read param error");
+					ISP_LOGE("fail to check param");
 			}
 		}
 		break;
 	case CMD_WRITE_ISP_PARAM_V1:
 		{
-			DBG("ISP_TOOL:CMD_WRITE_ISP_PARAM_V1 \n");
+			ISP_LOGV("CMD_WRITE_ISP_PARAM_V1 \n");
 			struct isp_data_header_normal *write_cmd = NULL;
 			cmr_u8 *dig_ptr = buf;
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
@@ -3277,7 +3277,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		break;
 	case CMD_UPLOAD_MAIN_INFO:
 		{		// ok
-			DBG("ISP_TOOL:CMD_UPLOAD_MAIN_INFO \n");
+			ISP_LOGV("CMD_UPLOAD_MAIN_INFO \n");
 			/* TODO:read isp param operation */
 			// rlen is the size of isp_param
 			// pass eng_rsp_diag+rsp_len
@@ -3298,15 +3298,15 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed\n");
+					ISP_LOGE("fail to get param\n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_TOOL:ispParser failed\n");
+					ISP_LOGE("fail to parser param\n");
 				}
 				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
-					DBG("ISP_TOOL:ispParserFree failed\n");
+					ISP_LOGE("fail to free\n");
 				}
 
 				if (ISP_MAIN_INFO == rtn_cmd.cmd) {
@@ -3327,7 +3327,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_TAKE_PICTURE:
 		{
-			DBG("ISP_TOOL:CMD_TAKE_PICTURE\n");
+			ISP_LOGV("CMD_TAKE_PICTURE\n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
@@ -3342,15 +3342,15 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to check param\n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_TOOL:ispParser failed \n");
+					ISP_LOGE("fail to parse param\n");
 				}
 				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
-					DBG("ISP_TOOL:ispParserFree failed \n");
+					ISP_LOGE("fail to free\n");
 				}
 
 				if ((ISP_CAPTURE == rtn_cmd.cmd)
@@ -3386,7 +3386,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_ISP_LEVEL:
 		{		// ok need test
-			DBG("ISP_TOOL:CMD_ISP_LEVEL \n");
+			ISP_LOGV("CMD_ISP_LEVEL \n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
 			cmr_u8 *dig_ptr = buf;
@@ -3400,11 +3400,11 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to get param\n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_TOOL:ispParser failed \n");
+					ISP_LOGE("fail to parser param \n");
 				}
 				ispParserFree((void *)in_param.buf_addr);
 			}
@@ -3418,7 +3418,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 
 	case CMD_READ_SENSOR_REG:
 		{		// ok need test
-			DBG("ISP_TOOL:CMD_READ_SENSOR_REG \n");
+			ISP_LOGV("CMD_READ_SENSOR_REG \n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
 			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
@@ -3433,15 +3433,15 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to get param\n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_TOOL:ispParser failed \n");
+					ISP_LOGE("fail to parser param\n");
 				}
 				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
-					DBG("ISP_TOOL:ispParserFree failed \n");
+					ISP_LOGE("fail to free\n");
 				}
 
 				if (ISP_READ_SENSOR_REG == rtn_cmd.cmd) {
@@ -3462,7 +3462,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_WRITE_SENSOR_REG:
 		{		// ok need test
-			DBG("ISP_TOOL:CMD_WRITE_SENSOR_REG \n");
+			ISP_LOGV("CMD_WRITE_SENSOR_REG \n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
 			cmr_u8 *dig_ptr = buf;
@@ -3476,15 +3476,15 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_TOOL:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to get param\n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_TOOL:ispParser failed \n");
+					ISP_LOGE("fail to parser param\n");
 				}
 				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
-					DBG("ISP_TOOL:ispParserFree failed \n");
+					ISP_LOGE("fail to free\n");
 				}
 			}
 
@@ -3496,7 +3496,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_GET_INFO:
 		{		// ok
-			DBG("ISP_TOOL:CMD_GET_INFO \n");
+			ISP_LOGV("CMD_GET_INFO \n");
 			/* TODO:read isp param operation */
 			// rlen is the size of isp_param
 			// pass eng_rsp_diag+rsp_len
@@ -3518,18 +3518,18 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			    && (0x00 != in_param.buf_addr)) {
 				ret = ispvideo_GetIspParamFromSt(isp_ptr, (struct isp_parser_buf_rtn *)&in_param);
 				if (ret) {
-					DBG("ISP_OTP:ispvideo_GetIspParamFromSt failed \n");
+					ISP_LOGE("fail to get param\n");
 				}
 				ret = ispParser(isp_handler, ISP_PARSER_DOWN, (void *)in_param.buf_addr, (void *)&rtn_cmd);
 				if (ret) {
-					DBG("ISP_OTP:ispParser failed \n");
+					ISP_LOGE("fail to parser param\n");
 				}
 				ret = ispParserFree((void *)in_param.buf_addr);
 				if (ret) {
-					DBG("ISP_OTP:ispParserFree failed \n");
+					ISP_LOGE("fail to free\n");
 				}
 
-				DBG("ISP_TOOL:CMD_GET_INFO rtn cmd:%d \n", rtn_cmd.cmd);
+				ISP_LOGV("CMD_GET_INFO rtn cmd:%d \n", rtn_cmd.cmd);
 
 				if (ISP_INFO == rtn_cmd.cmd) {
 					ret = ispParser(isp_handler, ISP_PARSER_UP_INFO, (void *)&rtn_cmd, (void *)&rtn_param);
@@ -3539,7 +3539,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						ptr = (cmr_u32 *) rtn_param.buf_addr;
 						for (i = 0x00; i < rtn_param.buf_len; i += 0x04) {
 
-							DBG("ISP_TOOL:CMD_GET_INFO param:0x%08x \n", *ptr++);
+							ISP_LOGV("CMD_GET_INFO param:0x%08x \n", *ptr++);
 
 						}
 						ret = ispParserFree((void *)rtn_param.buf_addr);
@@ -3554,7 +3554,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			break;
 		}
 	case CMD_OTP_WRITE:
-		DBG("ISP_OTP:CMD_OTP_WRITE \n");
+		ISP_LOGV("ISP_OTP:CMD_OTP_WRITE \n");
 		preview_tmpflag = preview_flag;
 		len -= rsp_len;
 #if 0				/*Solve compile problem */
@@ -3586,11 +3586,11 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
-		DBG("ISP_OTP:CMD_OTP_WRITE done\n");
+		ISP_LOGV("ISP_OTP:CMD_OTP_WRITE done\n");
 		break;
 
 	case CMD_OTP_READ:
-		DBG("ISP_OTP:CMD_OTP_READ \n");
+		ISP_LOGV("ISP_OTP:CMD_OTP_READ \n");
 		preview_tmpflag = preview_flag;
 		len -= rsp_len;
 #if 0				/*Solve compile problem */
@@ -3606,7 +3606,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 #if 0
 		ret = isp_otp_read(isp_handler, &eng_rsp_diag[rsp_len], &len);
 #endif
-		DBG("ISP_OTP:CMD_OTP_READ rsp_len %d len %d\n", rsp_len, len);
+		ISP_LOGV("ISP_OTP:CMD_OTP_READ rsp_len %d len %d\n", rsp_len, len);
 		rsp_len += len;
 		eng_rsp_diag[rsp_len] = 0x7e;
 		msg_ret->len = rsp_len - 1;
@@ -3618,7 +3618,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			preview_flag = preview_tmpflag;
 		}
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
-		DBG("ISP_OTP:CMD_OTP_READ  done\n");
+		ISP_LOGV("ISP_OTP:CMD_OTP_READ  done\n");
 
 		break;
 
@@ -3640,7 +3640,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
 						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
-					ISP_LOGI("simulation raw filename %s", raw_filename + 1);
+					ISP_LOGV("simulation raw filename %s", raw_filename + 1);
 					raw_filename[0] = 1;
 					raw_fp = fopen(raw_filename + 1, "wb+");
 				}
@@ -3654,7 +3654,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						raw_fp = NULL;
 					}
 					tool_fmt_pattern = (img_headlen >> 0x10) & 0xFFFF;
-					ISP_LOGI("image pattern %d", tool_fmt_pattern);
+					ISP_LOGV("image pattern %d", tool_fmt_pattern);
 					//send response packet
 					rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
 					eng_rsp_diag[rsp_len] = 0x7e;
@@ -3673,10 +3673,10 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			if (0x00 == ret) {
 				ret = isp_ioctl(isp_handler, ISP_CTRL_TOOL_SET_SCENE_PARAM, (void *)&scene_info);
 				if (ret) {
-					ISP_LOGE("failed isp ioctl for scene parameter %d", ret);
+					ISP_LOGE("fail to do isp ioctl ret %d", ret);
 				}
 				memcpy(&(scene_param.gain), &(scene_info.gain), sizeof(struct isptool_scene_param) - 8);
-				ISP_LOGI("width/height %d/%d, gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",
+				ISP_LOGV("width/height %d/%d, gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",
 					 scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
 					 scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
@@ -3693,7 +3693,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 
 	case CMD_START_SIMULATION:
 		{
-			ISP_LOGI("simulation start");
+			ISP_LOGV("simulation start");
 			if ((NULL != fun_ptr->take_picture)) {
 				capture_img_end_flag = 0;
 				capture_flag = 1;
@@ -3818,7 +3818,7 @@ void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, 
 
 		sem_post(&preview_sem_lock);
 		if (ret != 0) {
-			DBG("ISP_TOOL:handle_img_data().error ret = %d.", ret);
+			ISP_LOGE("fail to handle data ret = %d.", ret);
 		}
 
 		pthread_mutex_unlock(&ispstream_lock);
@@ -3842,7 +3842,7 @@ void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_
 	if ((0 == capture_img_end_flag) && (format == (cmr_u32) capture_format)) {
 		pthread_mutex_lock(&ispstream_lock);
 
-		DBG("ISP_TOOL: capture format: %d, width: %d, height: %d.\n", format, width, height);
+		ISP_LOGV(" capture format: %d, width: %d, height: %d.\n", format, width, height);
 		switch (g_command) {
 		case CMD_ASIC_TAKE_PICTURE:
 		case CMD_ASIC_TAKE_PICTURE_NEW:
@@ -3857,7 +3857,7 @@ void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_
 		}
 		capture_img_end_flag = 1;
 		if (ret != 0) {
-			DBG("ISP_TOOL: handle_img_data().error  ret = %d.", ret);
+			ISP_LOGE("fail to handle data ret = %d.", ret);
 		}
 
 		pthread_mutex_unlock(&ispstream_lock);
@@ -3929,14 +3929,14 @@ static void *isp_diag_handler(void *args)
 		FD_SET(from, &rfds);
 		res = select(from + 1, &rfds, NULL, NULL, &tv);
 		if (res <= 0) {	//timeout or other error
-			DBG("ISP_TOOL:No data within five seconds. res:%d\n", res);
+			ISP_LOGE("fail to select res:%d\n", res);
 			continue;
 		}
 
 		cnt = recv(from, diag_rx_buf, CMD_BUF_SIZE, MSG_DONTWAIT);
 
 		if (cnt <= 0) {
-			DBG("ISP_TOOL:read socket error %s\n", strerror(errno));
+			ISP_LOGE("fail to recv %s\n", strerror(errno));
 			break;
 		}
 
@@ -3955,7 +3955,7 @@ static void *isp_diag_handler(void *args)
 				if (0 == rtn) {
 					handle_isp_data(diag_cmd_buf, cmd_len);
 				} else {
-					DBG("ISP_TOOL: rx packet comboine \n");
+					ISP_LOGE("fail to recdata \n");
 				}
 				memcpy(diag_rx_buf, temp_rx_buf, cnt);
 			} else {
@@ -3963,7 +3963,7 @@ static void *isp_diag_handler(void *args)
 				if (0 == rtn) {
 					handle_isp_data(diag_cmd_buf, cmd_len);
 				} else {
-					DBG("ISP_TOOL: rx packet comboine \n");
+					ISP_LOGE("fail to recdate \n");
 				}
 				cnt = 0;
 			}
@@ -3975,7 +3975,7 @@ static void *isp_diag_handler(void *args)
 		fclose(raw_fp);
 		raw_fp = NULL;
 	}
-	DBG("exit %s\n", strerror(errno));
+	ISP_LOGV("exit %s\n", strerror(errno));
 	return code;
 }
 
@@ -3997,7 +3997,7 @@ static void *ispserver_thread(void *args)
 	pthread_t tdiag;
 	pthread_attr_t attr;
 
-	ISP_LOGV("ISP_TOOL:isp-video server version 1.0\n");
+	ISP_LOGV("isp-video server version 1.0\n");
 
 	memset(&sock_addr, 0, sizeof(struct sockaddr_in));
 	sock_addr.sin_family = AF_INET;	/* Allows IPv4 */
@@ -4006,23 +4006,23 @@ static void *ispserver_thread(void *args)
 
 	lfd = socket(sock_addr.sin_family, SOCK_STREAM, 0);
 	if (lfd == -1) {
-		ISP_LOGW("ISP_TOOL:socket is not build.\n");
+		ISP_LOGE("fail to socket.\n");
 		return NULL;
 	}
 	sock_fd = lfd;
 	optval = 1;
 	if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
-		DBG("ISP_TOOL:setsockopt error\n");
+		ISP_LOGE("fail to setsockope\n");
 		return NULL;
 	}
 
 	if (bind(lfd, (struct sockaddr *)&sock_addr, sizeof(struct sockaddr_in)) != 0) {
-		DBG("ISP_TOOL:bind error %s\n", strerror(errno));
+		ISP_LOGE("fail to bind error %s\n", strerror(errno));
 		return NULL;
 	}
 
 	if (listen(lfd, BACKLOG) == -1) {
-		DBG("ISP_TOOL:listen error\n");
+		ISP_LOGE("fail to listen\n");
 		return NULL;
 	}
 
@@ -4035,47 +4035,47 @@ static void *ispserver_thread(void *args)
 		void *res;
 		cmr_s32 ret;
 
-		DBG("ISP_TOOL:log server waiting client dail in...\n");
+		ISP_LOGV("log server waiting client dail in...\n");
 		/* Accept a client connection, obtaining client's address */
 		wire_connected = 0;
 		addrlen = sizeof(struct sockaddr);
 		cfd = accept(lfd, &claddr, &addrlen);
 		if (cfd == -1) {
-			DBG("ISP_TOOL:accept error %s\n", strerror(errno));
+			ISP_LOGE("fail to accept %s\n", strerror(errno));
 			break;
 		}
-		DBG("ISP_TOOL:log server connected with client\n");
+		ISP_LOGV("log server connected with client\n");
 		wire_connected = 1;
 		sequence_num = 0;
 		/* Ignore the SIGPIPE signal, so that we find out about broken
 		 * connection errors via a failure from write().
 		 */
 		if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
-			DBG("ISP_TOOL:signal error\n");
+			ISP_LOGE("fail to signal\n");
 #ifdef CLIENT_DEBUG
 		addrlen = sizeof(struct sockaddr);
 		if (getnameinfo(&claddr, addrlen, host, 50, service, 30, NI_NUMERICHOST) == 0)
 			snprintf(addrStr, ADDRSTRLEN, "(%s, %s)", host, service);
 		else
 			snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
-		DBG("ISP_TOOL:Connection from %s\n", addrStr);
+		ISP_LOGV("Connection from %s\n", addrStr);
 #endif
 
 		//create a thread for recv cmd
 		ret = pthread_create(&tdiag, &attr, isp_diag_handler, &cfd);
 		if (ret != 0) {
-			DBG("ISP_TOOL:diag thread create success\n");
+			ISP_LOGV("diag thread create success\n");
 			break;
 		}
 
 		pthread_join(tdiag, &res);
-		DBG("ISP_TOOL:diag thread exit success %s\n", (char *)res);
+		ISP_LOGV("diag thread exit success %s\n", (char *)res);
 		if (close(cfd) == -1)	/* Close connection */
-			DBG("ISP_TOOL:close socket cfd error\n");
+			ISP_LOGE("fail to close file\n");
 	}
 	pthread_attr_destroy(&attr);
 	if (close(lfd) == -1)	/* Close connection */
-		DBG("ISP_TOOL:close socket lfd error\n");
+		ISP_LOGE("fail to close\n");
 
 	sock_fd = 0x00;
 
@@ -4122,7 +4122,7 @@ void stopispserver()
 {
 	cmr_u32 handler_id = 0x00;
 
-	ISP_LOGI("ISP_TOOL:stopispserver\n");
+	ISP_LOGV("stopispserver\n");
 	wire_connected = 0;
 
 	if ((1 == preview_flag) && (0 == preview_img_end_flag)) {
@@ -4155,7 +4155,7 @@ void startispserver()
 	cmr_s32 ret = -1;
 #endif
 
-	ISP_LOGI("ISP_TOOL:startispserver\n");
+	ISP_LOGV("startispserver\n");
 
 	preview_flag = 0;
 	capture_flag = 0;
@@ -4168,12 +4168,12 @@ void startispserver()
 		ret = pthread_create(&tdiag, &attr, ispserver_thread, NULL);
 		pthread_attr_destroy(&attr);
 		if (ret < 0) {
-			DBG("ISP_TOOL:pthread_create fail\n");
+			ISP_LOGE("fail to creat pthread\n");
 			return;
 		}
 		preview_buf_ptr = (cmr_u8 *) ispParserAlloc(PREVIEW_MAX_WIDTH * PREVIEW_MAX_HEIGHT * 2);
 	} else {
-		DBG("ISP_TOOL:pthread already create now!\n");
+		ISP_LOGV("pthread already create now!\n");
 	}
 }
 
@@ -4181,5 +4181,5 @@ void setispserver(void *handle)
 {
 	isp_handler = handle;
 	isp_ioctl(handle, ISP_CTRL_DENOISE_PARAM_READ, (void *)&nr_update_param);
-	ISP_LOGV("ISP_TOOL:setispserver %p\n", handle);
+	ISP_LOGV("setispserver %p\n", handle);
 }

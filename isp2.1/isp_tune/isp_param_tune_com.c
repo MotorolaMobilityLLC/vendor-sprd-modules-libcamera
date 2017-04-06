@@ -71,11 +71,11 @@ static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void *in_param_ptr)
 	cmr_u32 data_len = packet_len - 0x10;
 	cmr_u32 mode_offset = 0;
 	SENSOR_EXP_INFO_T *sensor_info_ptr = Sensor_GetInfo();
-	ISP_LOGI(" _ispParserDownParam");
+	ISP_LOGV(" _ispParserDownParam");
 
 	while (mode_offset < data_len) {
 		struct isp_mode_param *mode_param_ptr = (struct isp_mode_param *)((char *)data_addr + mode_offset);
-		ISP_LOGI(" _ispParserDownParam mode_param_ptr->mode_id =%d", mode_param_ptr->mode_id);
+		ISP_LOGV(" _ispParserDownParam mode_param_ptr->mode_id =%d", mode_param_ptr->mode_id);
 
 		if (0 != mode_param_ptr->size) {
 			memcpy(sensor_info_ptr->raw_info_ptr->mode_ptr[mode_param_ptr->mode_id].addr, (char *)data_addr + mode_offset, mode_param_ptr->size);
@@ -112,7 +112,7 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void *in_param_ptr)
 		cmr_u16 prv_height = sensor_info_ptr->sensor_mode_info[1].height;
 		cmr_u32 i = 0x00;
 
-		ISP_LOGI("zone prv_width=%d prv_height=%d", prv_width, prv_height);
+		ISP_LOGV("zone prv_width=%d prv_height=%d", prv_width, prv_height);
 
 		af_param.valid_win = in_af_ptr->valid_win;
 		af_param.mode = in_af_ptr->mode;
@@ -149,14 +149,14 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 	data_len = sizeof(struct isp_main_info);
 	data_addr = ispParserAlloc(data_len);
 	if (!data_addr) {
-		ISP_LOGE("ispParserAlloc fail");
+		ISP_LOGE("fail to do ispParserAlloc");
 		return -1;
 	}
 
 	temp_param_version = (struct sensor_version_info *)ispParserAlloc(ISP_PARASER_VERSION_INFO_SIZE);
 	//ISP_LOGE("ISP_TOOL:temp_param_version size=%d", sizeof(temp_param_version));
 	if (!temp_param_version) {
-		ISP_LOGE("temp_param_version ispParserAlloc fail");
+		ISP_LOGE("fail to check temp_param_version");
 		return -1;
 	}
 
@@ -265,11 +265,11 @@ static cmr_s32 _ispParserUpParam(void *rtn_param_ptr)
 			if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
 				memcpy((char *)&data_addr[4] + data_offset, (char *)sensor_raw_info_ptr->mode_ptr[i].addr, sensor_raw_info_ptr->mode_ptr[i].len);
 				data_offset += sensor_raw_info_ptr->mode_ptr[i].len;
-				ISP_LOGI("ISP_TOOL:_sensor_raw_info_ptr->mode_ptr[i].len: %d   i=  %d\n", sensor_raw_info_ptr->mode_ptr[i].len, i);
+				ISP_LOGV("ISP_TOOL:_sensor_raw_info_ptr->mode_ptr[i].len: %d   i=  %d\n", sensor_raw_info_ptr->mode_ptr[i].len, i);
 
 			}
 		}
-		ISP_LOGI("ISP_TOOL:_ispParserUpParam data_offset: %d\n", data_offset);
+		ISP_LOGV("ISP_TOOL:_ispParserUpParam data_offset: %d\n", data_offset);
 
 	} else {
 		rtn_ptr->buf_addr = (cmr_uint) NULL;
@@ -403,7 +403,7 @@ static cmr_s32 _ispParserGetInfo(cmr_handle isp_handler, void *in_param_ptr, voi
 	rtn_ptr->buf_addr = 0;
 	rtn_ptr->buf_len = 0x00;
 
-	ISP_LOGI("ISP_TOOL:_ispParserGetInfo %d\n", (cmr_u32) cmd);
+	ISP_LOGV("ISP_TOOL:_ispParserGetInfo %d\n", (cmr_u32) cmd);
 
 	data_addr = ispParserAlloc(data_len);
 
@@ -438,7 +438,7 @@ static cmr_s32 _ispParserDownCmd(void *in_param_ptr, void *rtn_param_ptr)
 
 	rtn_ptr->cmd = cmd;
 
-	ISP_LOGI("ISP_TOOL:_ispParserDownCmd type: 0x%x, 0x%x, 0x%x\n", param_ptr[0], param_ptr[1], param_ptr[2]);
+	ISP_LOGV("ISP_TOOL:_ispParserDownCmd type: 0x%x, 0x%x, 0x%x\n", param_ptr[0], param_ptr[1], param_ptr[2]);
 
 	switch (cmd) {
 	case ISP_CAPTURE:
@@ -483,7 +483,7 @@ static cmr_s32 _ispParserDownCmd(void *in_param_ptr, void *rtn_param_ptr)
 		{
 			rtn_ptr->param[0] = param_ptr[2];	//thrd cmd
 			memcpy((void *)&rtn_ptr->param[1], (void *)&param_ptr[3], param_ptr[3] + 0x04);
-			ISP_LOGI("ISP_TOOL:_ispParserDownCmd thrd cmd: 0x%x\n", rtn_ptr->param[0]);
+			ISP_LOGV("ISP_TOOL:_ispParserDownCmd thrd cmd: 0x%x\n", rtn_ptr->param[0]);
 			break;
 		}
 	default:
@@ -503,9 +503,9 @@ static cmr_s32 _ispParserDownHandle(cmr_handle isp_handler, void *in_param_ptr, 
 
 	rtn = _ispParamVerify(in_param_ptr);
 
-	ISP_LOGI("ISP_TOOL:_ispParserDownHandle param: 0x%x, 0x%x, 0x%x\n", param_ptr[0], param_ptr[1], param_ptr[2]);
+	ISP_LOGV("ISP_TOOL:_ispParserDownHandle param: 0x%x, 0x%x, 0x%x\n", param_ptr[0], param_ptr[1], param_ptr[2]);
 
-	ISP_LOGI("ISP_TOOL:_ispParserDownHandle type: 0x%x\n", type);
+	ISP_LOGV("ISP_TOOL:_ispParserDownHandle type: 0x%x\n", type);
 
 	switch (type) {
 	case ISP_TYPE_CMD:
@@ -540,7 +540,7 @@ static cmr_s32 _ispParserUpHandle(cmr_handle isp_handler, cmr_u32 cmd, void *in_
 	cmr_u32 *data_addr = NULL;
 	cmr_u32 data_len = 0x10;
 
-	ISP_LOGI("ISP_TOOL:_ispParserUpHandle %d\n", cmd);
+	ISP_LOGV("ISP_TOOL:_ispParserUpHandle %d\n", cmd);
 
 	switch (cmd) {
 	case ISP_PARSER_UP_MAIN_INFO:
@@ -571,7 +571,7 @@ static cmr_s32 _ispParserUpHandle(cmr_handle isp_handler, cmr_u32 cmd, void *in_
 		}
 	case ISP_PARSER_UP_INFO:
 		{
-			ISP_LOGI("ISP_TOOL:ISP_PARSER_UP_INFO %d\n", cmd);
+			ISP_LOGV("ISP_TOOL:ISP_PARSER_UP_INFO %d\n", cmd);
 
 			rtn = _ispParserGetInfo(isp_handler, in_param_ptr, rtn_param_ptr);
 			break;
@@ -669,7 +669,7 @@ cmr_s32 ispParser(cmr_handle isp_handler, cmr_u32 cmd, void *in_param_ptr, void 
 {
 	cmr_s32 rtn = 0x00;
 
-	ISP_LOGI("ISP_TOOL:cmd = %d\n", cmd);
+	ISP_LOGV("ISP_TOOL:cmd = %d\n", cmd);
 
 	switch (cmd) {
 	case ISP_PARSER_UP_MAIN_INFO:
