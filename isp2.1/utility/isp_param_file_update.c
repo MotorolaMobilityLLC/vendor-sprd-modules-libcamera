@@ -358,7 +358,7 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
 	if (NULL == line_buf) {
-		ISP_LOGE("malloc mem was error!");
+		ISP_LOGE("fail to malloc mem!");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -366,7 +366,7 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 	for (i = 0; i < 5; i++) {
 		ae_tab_info[i] = (char *)malloc(50 * sizeof(char));
 		if (NULL == ae_tab_info[i]) {
-			ISP_LOGE("malloc mem was error!");
+			ISP_LOGE("fail to malloc mem!");
 			rtn = 0x01;
 			goto exit;
 		}
@@ -375,7 +375,7 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 	for (i = 0; i < 6; i++) {
 		ae_scene_info[i] = (char *)malloc(50 * sizeof(char));
 		if (NULL == ae_scene_info[i]) {
-			ISP_LOGE("malloc mem was error!");
+			ISP_LOGE("fail to malloc mem!");
 			rtn = 0x01;
 			goto exit;
 		}
@@ -981,7 +981,7 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
 	if (NULL == line_buf) {
-		ISP_LOGE("malloc mem was error!");
+		ISP_LOGE("fail to malloc mem!");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -1135,7 +1135,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 	FILE *fp = PNULL;
 
 	if (NULL == line_buf) {
-		ISP_LOGI("malloc mem was error!");
+		ISP_LOGE("fail to malloc mem!");
 		rtn = 0x01;
 		return rtn;
 	}
@@ -1143,7 +1143,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 	for (i = 0; i < 14; i++) {
 		filename[i] = (char *)malloc(128 * sizeof(char));
 		if (NULL == filename[i]) {
-			ISP_LOGI("malloc mem was error!");
+			ISP_LOGE("fail to malloc mem!");
 			rtn = 0x01;
 			goto exit;
 		}
@@ -1161,7 +1161,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 	nr_map_ptr = sensor_raw_ptr->nr_fix.nr_scene_ptr;
 	fp = fopen(filename[0], "r");
 	if (NULL == fp) {
-		ISP_LOGI("The param file %s is not exit!\n", filename[0]);
+		ISP_LOGE("fail to open file %s!\n", filename[0]);
 		rtn = 0x01;
 		goto exit;
 	}
@@ -1175,7 +1175,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 			if (nr_level_number_ptr != NULL) {
 				rtn = read_nr_level_number_info(fp, &(nr_level_number_ptr->nr_level_map[0]));
 				if (0x00 != rtn) {
-					ISP_LOGE("nr_level_number_info was error!");
+					ISP_LOGE("fail to check nr_level_number_info!");
 					fclose(fp);
 					goto exit;
 				}
@@ -1186,7 +1186,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 			if (nr_default_level_ptr != NULL) {
 				rtn = read_nr_level_number_info(fp, &(nr_default_level_ptr->nr_level_map[0]));
 				if (0x00 != rtn) {
-					ISP_LOGE("nr_default_level_info was error!");
+					ISP_LOGE("fail to check nr_default_level_info!");
 					fclose(fp);
 					goto exit;
 				}
@@ -1197,7 +1197,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 			if (nr_default_level_ptr != NULL) {
 				rtn = read_nr_scene_map_info(fp, &(nr_map_ptr->nr_scene_map[0]));
 				if (0x00 != rtn) {
-					ISP_LOGE("nr_scene_map_info was error!");
+					ISP_LOGE("fail to check nr_scene_map_info!");
 					fclose(fp);
 					goto exit;
 				}
@@ -1218,7 +1218,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 
 		fp = fopen(filename[i], "r");
 		if (NULL == fp) {
-			ISP_LOGI("The param file %s is not exit!\n", filename[i]);
+			ISP_LOGE("fail to open file %s!\n", filename[i]);
 			continue;
 		}
 
@@ -1230,7 +1230,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 			if (strstr(line_buf, libuse_info) != NULL) {
 				rtn = read_libuse_info(fp, sensor_raw_ptr);
 				if (0x00 != rtn) {
-					ISP_LOGE("libuse_info was error!");
+					ISP_LOGE("fail to check libuse_info!");
 					fclose(fp);
 					goto exit;
 				}
@@ -1240,7 +1240,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 				if (sensor_raw_ptr->fix_ptr[i]->lnc.lnc_param.lnc != NULL) {
 					rtn = read_lnc_tab_size_offset_info(fp, &sensor_raw_ptr->fix_ptr[i]->lnc);
 					if (0x00 != rtn) {
-						ISP_LOGE("read_lnc_size_offset was error!");
+						ISP_LOGE("fail to check read_lnc_size_offset!");
 						fclose(fp);
 						goto exit;
 					}
@@ -1250,7 +1250,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 			if (strstr(line_buf, tune_info) != NULL) {
 				rtn = read_tune_info(fp, sensor_raw_ptr->mode_ptr[i].addr, &sensor_raw_ptr->mode_ptr[i].len);
 				if (0x00 != rtn) {
-					ISP_LOGE("read_tune_info was error!");
+					ISP_LOGE("fail to read_tune_info!");
 					fclose(fp);
 					goto exit;
 				}
@@ -1260,7 +1260,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 				if (sensor_raw_ptr->fix_ptr[i]->ae.ae_param.ae != NULL) {
 					rtn = read_fix_ae_info(fp, &sensor_raw_ptr->fix_ptr[i]->ae);
 					if (0x00 != rtn) {
-						ISP_LOGE("read_ae_info was error!");
+						ISP_LOGE("fail to read_ae_info!");
 						fclose(fp);
 						goto exit;
 					}
@@ -1271,7 +1271,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 				if (sensor_raw_ptr->fix_ptr[i]->awb.awb_param.awb != NULL) {
 					rtn = read_fix_awb_info(fp, &sensor_raw_ptr->fix_ptr[i]->awb);
 					if (0x00 != rtn) {
-						ISP_LOGE("read_awb_info was error!");
+						ISP_LOGE("fail to read_awb_info!");
 						fclose(fp);
 						goto exit;
 					}
@@ -1282,14 +1282,14 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 				if (sensor_raw_ptr->fix_ptr[i]->lnc.lnc_param.lnc != NULL) {
 					rtn = read_fix_lnc_info(fp, &sensor_raw_ptr->fix_ptr[i]->lnc);
 					if (0x00 != rtn) {
-						ISP_LOGE("read_lnc_info was error!");
+						ISP_LOGE("fail to read_lnc_info!");
 						fclose(fp);
 						goto exit;
 					}
 				}
 			}
 			if (strstr(line_buf, note_name) != NULL) {
-				ISP_LOGI("update file _tool_ui_input");
+				ISP_LOGE("fail to update file _tool_ui_input");
 				break;
 			}
 		}
@@ -1324,13 +1324,13 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 	sprintf(filename1, "%ssensor_%s_raw_param_common.c", CAMERA_DUMP_PATH, sensor_name);
 
 	if (-1 != access(filename0, 0)) {
-		ISP_LOGI("%s is exit!\n", filename0);
+		ISP_LOGE("fail to access %s!\n", filename0);
 		filename = filename0;
 		version = 1;
 	}
 	if (NULL == filename) {
 		if (-1 != access(filename1, 0)) {
-			ISP_LOGI("%s is exit!\n", filename1);
+			ISP_LOGE("fail to access %s!\n", filename1);
 			filename = filename1;
 			version = 2;
 		}
@@ -1345,13 +1345,13 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 	if (ISP_PARAM_VERSION_V21 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
 		rtn = update_param_v21(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
-			ISP_LOGI("update param error!");
+			ISP_LOGE("fail to update param!");
 			return rtn;
 		}
 	} else {
 		rtn = update_param_v1(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
-			ISP_LOGI("update param error!");
+			ISP_LOGE("fail to update param!");
 			return rtn;
 		}
 	}
