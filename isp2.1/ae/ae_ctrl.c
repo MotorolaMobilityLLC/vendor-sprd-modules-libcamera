@@ -191,7 +191,7 @@ static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 
 	if (cxt_ptr->ae_set_cb) {
-		ISP_LOGD("led_idx=%d, led_type=%d, level=%d", cfg_ptr->led_idx, cfg_ptr->type, element_ptr->index);
+		ISP_LOGV("led_idx=%d, led_type=%d, level=%d", cfg_ptr->led_idx, cfg_ptr->type, element_ptr->index);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, cfg_ptr, element_ptr);
 	}
 
@@ -216,7 +216,7 @@ static cmr_s32 ae_flash_ctrl_enable(cmr_handle handler, struct ae_flash_cfg *cfg
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 
 	if (cxt_ptr->ae_set_cb) {
-		ISP_LOGD("led_en=%d, led_type=%d", cfg_ptr->led_idx, cfg_ptr->type);
+		ISP_LOGV("led_en=%d, led_type=%d", cfg_ptr->led_idx, cfg_ptr->type);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_FLASH_CTRL, cfg_ptr, element_ptr);
 	}
 
@@ -231,7 +231,7 @@ static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
 
 	if (cxt_ptr->ae_set_cb) {
 		final_gain = (cmr_u32) (gain * cxt_ptr->bakup_rgb_gain + 0.5);
-		ISP_LOGD("d-gain: coeff: %f-%d-%d\n", gain, cxt_ptr->bakup_rgb_gain, final_gain);
+		ISP_LOGV("d-gain: coeff: %f-%d-%d\n", gain, cxt_ptr->bakup_rgb_gain, final_gain);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN, &final_gain, NULL);
 	}
 
@@ -255,7 +255,7 @@ static cmr_s32 ae_set_shutter_gain_delay_info(cmr_handle handler, cmr_handle par
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *) handler;
 
 	if ((NULL == ctrl_context) || (NULL == param)) {
-		ISP_LOGE("input is NULL error, cxt: %p, param: %p\n", ctrl_context, param);
+		ISP_LOGE("fail to set delay info, cxt: %p, param: %p\n", ctrl_context, param);
 		return ISP_PARAM_NULL;
 	}
 
@@ -275,7 +275,7 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 	struct aectrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to deinit");
 		goto exit;
 	}
 
@@ -287,7 +287,7 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -297,7 +297,7 @@ static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_io_ctrl_cmd cmd
 	struct aectrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("fail to check param,param is NULL!");
+		ISP_LOGE("fail to check param");
 		goto exit;
 	}
 
@@ -319,7 +319,7 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 	struct aectrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("fail to to check param, param is NULL!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		goto exit;
 	}
 
@@ -328,12 +328,12 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 	pthread_mutex_unlock(&cxt_ptr->ioctrl_sync_lock);
 
 exit:
-	ISP_LOGD(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -346,7 +346,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGD(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case AECTRL_EVT_INIT:
@@ -367,7 +367,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 	}
 
 exit:
-	ISP_LOGD(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -381,7 +381,7 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 		rtn = ISP_ERROR;
 	}
 
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -390,7 +390,7 @@ static cmr_int aectrl_destroy_thread(struct aectrl_cxt *cxt_ptr)
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("fail to check input parm");
+		ISP_LOGE("fail to check input param");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
@@ -404,7 +404,7 @@ static cmr_int aectrl_destroy_thread(struct aectrl_cxt *cxt_ptr)
 		}
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -422,10 +422,10 @@ static cmr_int aectrl_init_lib(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, NULL);
 	} else {
-		ISP_LOGI(":ISP:adpt_init fun is NULL");
+		ISP_LOGI("adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -448,7 +448,7 @@ static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *i
 
 	rtn = aectrl_init_lib(cxt_ptr, in_ptr);
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -468,11 +468,11 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 	pthread_mutex_unlock(&cxt_ptr->ioctrl_sync_lock);
 exit:
-	ISP_LOGV(":ISP:cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
 
@@ -527,7 +527,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae)
 
 	*handle_ae = (cmr_handle) cxt_ptr;
 
-	ISP_LOGI(":ISP: done %d", rtn);
+	ISP_LOGI(" done %d", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -577,7 +577,7 @@ exit:
 		*handle_ae = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -614,6 +614,6 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 	}
 
 exit:
-	ISP_LOGD(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
