@@ -16,6 +16,7 @@
 /*----------------------------------------------------------------------------*
  **				Dependencies					*
  **---------------------------------------------------------------------------*/
+#define LOG_TAG "isp_para_tune_com"
 #include "isp_param_tune_com.h"
 #include "isp_param_size.h"
 #include "isp_app.h"

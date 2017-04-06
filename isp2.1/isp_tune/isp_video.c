@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <semaphore.h>
 #include <pthread.h>
-#define LOG_TAG "isp-video"
+#define LOG_TAG "isp_video"
 #include <cutils/log.h>
 #if 0				/*Solve compile problem */
 //#include <hardware/camera.h>

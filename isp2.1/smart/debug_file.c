@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define LOG_TAG "debug_file"
 #include "debug_file.h"
 #include <stdio.h>
 #include <string.h>

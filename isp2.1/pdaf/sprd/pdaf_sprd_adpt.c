@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "pdaf_sprd_adpt"
+#define LOG_TAG "pdaf_adpt"
 
 #include <assert.h>
 #include <stdlib.h>
