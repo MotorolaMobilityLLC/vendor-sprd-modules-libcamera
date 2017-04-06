@@ -37,7 +37,7 @@ cmr_s32 _pm_yiq_afl_init_v3(void *dst_afl_param, void *src_afl_param, void *para
 	dst_ptr->cur.afl_stepx = src_ptr->afl_step.x;
 	dst_ptr->cur.afl_stepy = src_ptr->afl_step.y;
 
-	ISP_LOGE("$$LHC:bypass %d", header_ptr->bypass);
+	ISP_LOGV("$$LHC:bypass %d", header_ptr->bypass);
 
 	header_ptr->is_update = ISP_ONE;
 
@@ -59,7 +59,7 @@ cmr_s32 _pm_yiq_afl_set_param_v3(void *afl_param, cmr_u32 cmd, void *param_ptr0,
 		break;
 
 	case ISP_PM_BLK_YIQ_AFL_CFG:
-		ISP_LOGE("$$LHC:skip-num %d", cfl_cfg_ptr->skip_frame_num);
+		ISP_LOGV("$$LHC:skip-num %d", cfl_cfg_ptr->skip_frame_num);
 
 		dst_ptr->cur.bypass = header_ptr->bypass;
 		dst_ptr->cur.mode = cfl_cfg_ptr->mode;

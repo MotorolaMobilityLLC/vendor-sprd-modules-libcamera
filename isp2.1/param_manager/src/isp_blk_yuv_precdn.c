@@ -88,7 +88,7 @@ cmr_s32 _pm_yuv_precdn_init(void *dst_pre_cdn_param, void *src_pre_cdn_param, vo
 	rtn = _pm_yuv_precdn_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_YUV_PRECDN_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to  convert pm yuv precdn param!");
 		return rtn;
 	}
 	header_ptr->is_update = ISP_ONE;
@@ -123,7 +123,7 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -137,7 +137,7 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 				rtn = _pm_yuv_precdn_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_YUV_PRECDN_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to  convert pm yuv precdn param!");
 					return rtn;
 				}
 			}
@@ -147,7 +147,7 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 	default:
 		break;
 	}
-	ISP_LOGI("ISP_SMART: cmd=%d, update=%d, cur_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
+	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, cur_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }

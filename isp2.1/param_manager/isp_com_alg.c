@@ -35,7 +35,7 @@ cmr_s32 isp_gamma_adjust(struct isp_gamma_curve_info * src_ptr0, struct isp_gamm
 	} else {
 		scale_coef = point_ptr->weight[0] + point_ptr->weight[1];
 		if (0 == scale_coef) {
-			ISP_LOGE("weight is error: (%d, %d)\n", point_ptr->weight[0], point_ptr->weight[1]);
+			ISP_LOGE("fail to get weight[2] (%d, %d)\n", point_ptr->weight[0], point_ptr->weight[1]);
 			return ISP_ERROR;
 		}
 		for (i = ISP_ZERO; i < ISP_GAMMA_SAMPLE_NUM; i++) {
@@ -53,12 +53,12 @@ cmr_s32 isp_cmc_adjust(cmr_u16 src0[9], cmr_u16 src1[9], struct isp_sample_point
 	cmr_u32 i, scale_coeff;
 
 	if ((NULL == src0) || (NULL == src1) || (NULL == dst)) {
-		ISP_LOGE("pointer is invalid: src0;%p, src1:%p, dst:%p\n", src0, src1, dst);
+		ISP_LOGE("fail to get vailed pointer src0;%p /src1:%p /dst:%p\n", src0, src1, dst);
 		return ISP_ERROR;
 	}
 
 	if ((0 == point_ptr->weight0) && (0 == point_ptr->weight1)) {
-		ISP_LOGE("weight are all invalidate\n");
+		ISP_LOGE("fail to get validate all weight \n");
 		return ISP_ERROR;
 	}
 
@@ -200,7 +200,7 @@ cmr_s32 isp_cce_adjust(cmr_u16 src[9], cmr_u16 coef[3], cmr_u16 dst[9], cmr_u16 
 	cmr_u32 i = 0, j = 0;
 
 	if ((NULL == src) || (NULL == dst) || (NULL == coef)) {
-		ISP_LOGE("--isp_InterplateCCE:invalid addr %p, %p, %p\n", src, dst, coef);
+		ISP_LOGE("fail to get vailed pointer src;%p /dst:%p /coef:%p\n", src, dst, coef);
 		return ISP_ERROR;
 	}
 
@@ -243,12 +243,12 @@ cmr_s32 isp_lsc_adjust(void *lnc0_ptr, void *lnc1_ptr, cmr_u32 lnc_len, struct i
 
 	if ((NULL == lnc0_ptr)
 	    || (NULL == dst_lnc_ptr)) {
-		ISP_LOGE("lnc buf null %p, %p, %p error\n", lnc0_ptr, lnc1_ptr, dst_lnc_ptr);
+		ISP_LOGE("fail to get lnc buf  %p, %p, %p \n", lnc0_ptr, lnc1_ptr, dst_lnc_ptr);
 		return ISP_ERROR;
 	}
 
 	if ((0 == point_ptr->weight[0]) && (0 == point_ptr->weight[1])) {
-		ISP_LOGE("weight is error: (%d, %d) \n", point_ptr->weight[0], point_ptr->weight[1]);
+		ISP_LOGE("fail to get weight[2]\n");
 		return ISP_ERROR;
 	}
 
@@ -263,7 +263,7 @@ cmr_s32 isp_lsc_adjust(void *lnc0_ptr, void *lnc1_ptr, cmr_u32 lnc_len, struct i
 			cmr_u32 lnc_num = lnc_len / sizeof(cmr_u16);
 			cmr_u32 scale_coeff = 0;
 
-			ISP_LOGI("lnc interpolation: index(%d, %d); weight: (%d, %d), num=%d, src0 = %p, src1 = %p",
+			ISP_LOGV("lnc interpolation: index(%d, %d); weight: (%d, %d), num=%d, src0 = %p, src1 = %p",
 				 point_ptr->value[0], point_ptr->value[1], point_ptr->weight[0], point_ptr->weight[1], lnc_num, src0_ptr, src1_ptr);
 
 			scale_coeff = point_ptr->weight[0] + point_ptr->weight[1];
@@ -440,12 +440,12 @@ cmr_s32 isp_interp_data(void *dst, void *src[2], cmr_u16 weight[2], cmr_u32 data
 	ISP_LOGV("src[0]=%p, src[1]=%p, dst=%p, weight=(%d, %d), data_num=%d, type=%d", src[0], src[1], dst, weight[0], weight[1], data_num, data_type);
 
 	if (NULL == dst || NULL == src[0] || NULL == src[1] || 0 == data_num) {
-		ISP_LOGE("invalid param: dst=%p, src=(%p, %p), data_num=%d\n", dst, src[0], src[1], data_num);
+		ISP_LOGE("fail to get valid param: dst=%p, src=(%p, %p), data_num=%d\n", dst, src[0], src[1], data_num);
 		return ISP_ERROR;
 	}
 	//for speedup
 	if (256 != weight[0] + weight[1]) {
-		ISP_LOGE("invalid weight: (%d, %d)\n", weight[0], weight[1]);
+		ISP_LOGE("fail to get valid weight[2] (%d, %d)\n", weight[0], weight[1]);
 		return ISP_ERROR;
 	}
 

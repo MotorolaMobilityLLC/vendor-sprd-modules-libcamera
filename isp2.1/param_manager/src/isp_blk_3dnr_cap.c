@@ -93,7 +93,7 @@ cmr_s32 _pm_3d_nr_cap_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 	rtn = _pm_3d_nr_cap_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.blend_bypass |= nr_3d_header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_PWD_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to convert pm 3d nr cap param  !");
 		return rtn;
 	}
 	nr_3d_header_ptr->is_update = ISP_ONE;
@@ -129,7 +129,7 @@ cmr_s32 _pm_3d_nr_cap_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -144,7 +144,7 @@ cmr_s32 _pm_3d_nr_cap_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0
 				rtn = _pm_3d_nr_cap_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.blend_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_EDGE_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to convert pm 3d nr cap param !");
 					return rtn;
 				}
 			}

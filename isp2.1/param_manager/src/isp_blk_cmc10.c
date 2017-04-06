@@ -134,7 +134,7 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !\n");
+					ISP_LOGE("fail to check pm smart param !");
 					return rtn;
 				}
 
@@ -185,7 +185,7 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 				val_range.max = 255;
 				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !\n");
+					ISP_LOGE("fail to check pm smart param !");
 					return rtn;
 				}
 

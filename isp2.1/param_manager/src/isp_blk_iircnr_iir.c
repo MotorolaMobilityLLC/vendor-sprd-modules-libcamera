@@ -102,7 +102,7 @@ cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void
 	rtn = _pm_iircnr_iir_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_IIRCNR_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to convert pm iircnr iir param !");
 		return rtn;
 	}
 
@@ -135,7 +135,7 @@ cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_pt
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -149,7 +149,7 @@ cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_pt
 				rtn = _pm_iircnr_iir_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_IIRCNR_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to convert pm iircnr iir param !");
 					return rtn;
 				}
 			}

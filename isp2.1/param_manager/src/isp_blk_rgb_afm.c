@@ -95,7 +95,7 @@ cmr_s32 _pm_rgb_afm_init(void *dst_rgb_afm, void *src_rgb_afm, void *param1, voi
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_rgb_afm_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to  convert pm rgb afm param!");
 		return rtn;
 	}
 	header_ptr->is_update = ISP_ONE;
@@ -126,7 +126,7 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -140,7 +140,7 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 				rtn = _pm_rgb_afm_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_RGB_AFM_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to  convert pm rgb afm param!");
 					return rtn;
 				}
 			}

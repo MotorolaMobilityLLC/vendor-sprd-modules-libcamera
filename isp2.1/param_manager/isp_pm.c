@@ -145,12 +145,12 @@ static cmr_s32 isp_pm_handle_check(isp_pm_handle_t handle)
 	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
 
 	if (PNULL == cxt_ptr) {
-		ISP_LOGE("isp pm handle is null error.");
+		ISP_LOGE("fail to get valid isp pm handle");
 		return ISP_ERROR;
 	}
 
 	if (ISP_PM_MAGIC_FLAG != cxt_ptr->magic_flag) {
-		ISP_LOGE("isp pm magic error.");
+		ISP_LOGE("fail to get valid isp pm magic flag");
 		return ISP_ERROR;
 	}
 
@@ -163,7 +163,7 @@ static isp_pm_handle_t isp_pm_context_create(void)
 
 	cxt_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
 	if (PNULL == cxt_ptr) {
-		ISP_LOGE("no memory for context error");
+		ISP_LOGE("fail to malloc");
 		return cxt_ptr;
 	}
 
@@ -251,14 +251,14 @@ static cmr_s32 isp_pm_context_init(isp_pm_handle_t handle)
 						param_data_ptr = (void *)blk_header_ptr->absolute_addr;
 						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)
 						    || (PNULL == blk_header_ptr)) {
-							ISP_LOGE("param is null error: blk_addr:%p, param:%p, header:%p, resolution:%p",
+							ISP_LOGE("fail to get valid param : blk_addr:%p, param:%p, header:%p, resolution:%p",
 								 blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 							rtn = ISP_ERROR;
 						} else {
 							ops->init(blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 						}
 					} else {
-						ISP_LOGI("param size is warning: size:%d, id:0x%x, i:%d\n", blk_header_ptr->size, id, i);
+						ISP_LOGW("param size is warning: size:%d, id:0x%x, i:%d\n", blk_header_ptr->size, id, i);
 					}
 				}
 			}
@@ -306,7 +306,7 @@ static cmr_s32 isp_pm_context_update(isp_pm_handle_t handle, struct isp_pm_mode_
 						param_data_ptr = (void *)blk_header_ptr->absolute_addr;
 						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)
 						    || (PNULL == blk_header_ptr)) {
-							ISP_LOGE("param is null error: blk_addr:%p, param:%p, header:%p, resolution:%p",
+							ISP_LOGE("fail to get valid param: blk_addr:%p, param:%p, header:%p, resolution:%p",
 								 blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 							rtn = ISP_ERROR;
 						} else {
@@ -324,7 +324,7 @@ static cmr_s32 isp_pm_context_update(isp_pm_handle_t handle, struct isp_pm_mode_
 							}
 						}
 					} else {
-						ISP_LOGI("param size is warning: size:%d, id:0x%x, i:%d\n", blk_header_ptr->size, id, i);
+						ISP_LOGW("param size is warning: size:%d, id:0x%x, i:%d\n", blk_header_ptr->size, id, i);
 					}
 				}
 			}
@@ -372,7 +372,7 @@ static cmr_s32 isp_pm_context_deinit(isp_pm_handle_t handle)
 					if (PNULL != blk_ptr) {
 						ops->deinit(blk_ptr);
 					} else {
-						ISP_LOGE("blk_addr is null erro");
+						ISP_LOGV("blk_addr is null erro");
 					}
 				}
 			}
@@ -401,7 +401,7 @@ static cmr_s32 isp_pm_context_deinit(isp_pm_handle_t handle)
 						if (PNULL != blk_ptr) {
 							ops->deinit(blk_ptr);
 						} else {
-							ISP_LOGE("blk_addr is null erro");
+							ISP_LOGV("blk_addr is null erro");
 						}
 					}
 				}
@@ -495,14 +495,14 @@ static cmr_s32 isp_pm_active_mode_init(isp_pm_handle_t handle, cmr_u32 mode_id)
 
 	pm_cxt_ptr->active_mode = isp_pm_get_mode(merged_mode_param, mode_id);
 	if (PNULL == pm_cxt_ptr->active_mode) {
-		ISP_LOGE("get active mode error");
+		ISP_LOGE("fail to get active mode");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
 
 	pm_cxt_ptr->active_cxt_ptr = isp_pm_get_context(pm_cxt_ptr, mode_id);
 	if (PNULL == pm_cxt_ptr->active_cxt_ptr) {
-		ISP_LOGE("get active cxt error");
+		ISP_LOGE("fail to get active cxt ");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -545,7 +545,7 @@ static cmr_u32 isp_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 * one_multi_mo
 	if (!one_multi_mode_ptr)
 		return ISP_ERROR;
 	for (i = 0; i < mode_flag; i++) {
-		//ISP_LOGI("nr_mode_flag[%d]=%x\n",i,one_multi_mode_ptr[i]);
+		ISP_LOGV("nr_mode_flag[%d]=%x\n",i,one_multi_mode_ptr[i]);
 		if (one_multi_mode_ptr[i]) {
 			for (j = 0; j < MAX_SCENEMODE_NUM; j++) {
 				basic_offset_units += (one_multi_mode_ptr[i] >> j) & 0x01;
@@ -586,7 +586,7 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 	if (nr_param_update_ptr->param_type > (ISP_BLK_TYPE_MAX - 1))
 		return ISP_ERROR;
 	if (PNULL == nr_param_update_ptr->nr_param_ptr) {
-		ISP_LOGE("nr param address is null,type(%d)!", nr_param_update_ptr->param_type);
+		ISP_LOGE("fail to get valid nr param address ,type(%d)!", nr_param_update_ptr->param_type);
 		return ISP_ERROR;
 	}
 	one_multi_mode_ptr = (cmr_u32 *) nr_param_update_ptr->multi_nr_scene_map_ptr;
@@ -608,20 +608,20 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 				sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name, nr_mode_name[sensor_mode],
 					nr_scene_name[scene_number], nr_param_name[param_type]);
 				if (0 != access(filename, R_OK)) {
-					ISP_LOGV("param access %s not exist", filename);
+					ISP_LOGE("fail to access %s ", filename);
 				} else {
 					if (NULL != (fp = fopen(filename, "rb"))) {
 						ISP_LOGV("param open %s, succeed!", filename);
 						ret = fread((void *)nr_param_ptr, 1, size_of_per_unit, fp);
 						if (ret < 0) {
-							ISP_LOGE("failed to read .");
+							ISP_LOGE("fail to read .");
 							fclose(fp);
 							rtn = ret;
 							return rtn;
 						}
 						fclose(fp);
 					} else {
-						ISP_LOGV("param open %s, not succeed!", filename);
+						ISP_LOGE("fail to open %s!", filename);
 					}
 				}
 				nr_param_ptr += size_of_per_unit;
@@ -678,7 +678,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 	if (strlen((char *)input->sensor_name)) {
 		nr_param_update_info.sensor_name = (char *)input->sensor_name;
 	} else {
-		ISP_LOGE("Tune file without sensor name!");
+		ISP_LOGE("fail to get  sensor name from Tune file!");
 	}
 	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
 	nr_level_number_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_level_number_ptr);
@@ -718,7 +718,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 		}
 		cxt_ptr->tune_mode_array[i] = (struct isp_pm_mode_param *)malloc(size);
 		if (PNULL == cxt_ptr->tune_mode_array[i]) {
-			ISP_LOGE("tune mode malloc error, i=%d", i);
+			ISP_LOGE("fail to malloc, i=%d", i);
 			rtn = ISP_ERROR;
 			goto _mode_list_init_error_exit;
 		}
@@ -939,7 +939,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 		dst_mod_ptr->resolution.h = src_mod_ptr->height;
 		dst_mod_ptr->fps = src_mod_ptr->fps;
 		memcpy((void *)dst_mod_ptr->mode_name, (void *)src_mod_ptr->mode_name, sizeof(src_mod_ptr->mode_name));
-		ISP_LOGI("mode[%d]: param modify_time :%d", i, src_mod_ptr->reserved[0]);
+		ISP_LOGV("mode[%d]: param modify_time :%d", i, src_mod_ptr->reserved[0]);
 
 		if (PNULL != cxt_ptr->merged_mode_array[i]) {
 			free(cxt_ptr->merged_mode_array[i]);
@@ -948,7 +948,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 
 		cxt_ptr->merged_mode_array[i] = (struct isp_pm_mode_param *)malloc(sizeof(struct isp_pm_mode_param));
 		if (PNULL == cxt_ptr->merged_mode_array[i]) {
-			ISP_LOGE("merged mode malloc error, i=%d", i);
+			ISP_LOGE("fail to  malloc, i=%d", i);
 			rtn = ISP_ERROR;
 			goto _mode_list_init_error_exit;
 		}
@@ -958,7 +958,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 	size = max_num * cxt_ptr->mode_num * sizeof(struct isp_pm_param_data);
 	cxt_ptr->tmp_param_data_ptr = (struct isp_pm_param_data *)malloc(size);
 	if (PNULL == cxt_ptr->tmp_param_data_ptr) {
-		ISP_LOGE("tmp param malloc error");
+		ISP_LOGE("fail to  malloc");
 		rtn = ISP_ERROR;
 		goto _mode_list_init_error_exit;
 	}
@@ -984,7 +984,7 @@ static cmr_s32 isp_pm_mode_param_convert(struct isp_pm_mode_param *next_mode_in,
 
 	if (NULL == next_mode_in || NULL == active_mode_in) {
 		rtn = ISP_ERROR;
-		ISP_LOGE("param address is null error:%p %p", next_mode_in, active_mode_in);
+		ISP_LOGE("fail to  get valid param address :%p %p", next_mode_in, active_mode_in);
 		return rtn;
 	}
 
@@ -1015,7 +1015,7 @@ static cmr_s32 isp_pm_mode_param_convert(struct isp_pm_mode_param *next_mode_in,
 	if (smart_index >= 0 && NULL != smart_absolute_addr) {
 		struct isp_smart_param *smart_param = (struct isp_smart_param *)smart_absolute_addr;
 
-		ISP_LOGI("update smart related blocks");
+		ISP_LOGV("update smart related blocks");
 
 		for (i = 0; i < smart_param->block_num; i++) {
 			cmr_u32 block_id = smart_param->block[i].block_id;
@@ -1027,7 +1027,7 @@ static cmr_s32 isp_pm_mode_param_convert(struct isp_pm_mode_param *next_mode_in,
 			mode_convert_status->pm_blk_status[count].update_flag = 1;
 			count++;
 
-			ISP_LOGI("[%d], id=0x%x update", i, block_id);
+			ISP_LOGV("[%d], id=0x%x update", i, block_id);
 		}
 	}
 
@@ -1044,7 +1044,7 @@ static cmr_s32 isp_pm_mode_common_to_other(struct isp_pm_mode_param *mode_common
 
 	if (NULL == mode_common_in || NULL == mode_other_list_out) {
 		rtn = ISP_ERROR;
-		ISP_LOGE("param is null error:%p %p", mode_common_in, mode_other_list_out);
+		ISP_LOGE("fail to  get valid param :%p %p", mode_common_in, mode_other_list_out);
 		return rtn;
 	}
 
@@ -1053,7 +1053,7 @@ static cmr_s32 isp_pm_mode_common_to_other(struct isp_pm_mode_param *mode_common
 
 	if (common_block_num < other_block_num) {
 		rtn = ISP_ERROR;
-		ISP_LOGE("block num error: %d %d", common_block_num, other_block_num);
+		ISP_LOGE("fail to  get valid block num : %d %d", common_block_num, other_block_num);
 		return rtn;
 	}
 
@@ -1084,7 +1084,7 @@ static cmr_s32 isp_pm_layout_param_and_init(isp_pm_handle_t handle)
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
 	if (NULL == pm_cxt_ptr) {
-		ISP_LOGE("cxt ptr is null error!\n");
+		ISP_LOGE("fail to  get valid cxt ptr ");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1104,7 +1104,7 @@ static cmr_s32 isp_pm_layout_param_and_init(isp_pm_handle_t handle)
 		}
 		rtn = isp_pm_mode_common_to_other(pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_COMMON], pm_cxt_ptr->merged_mode_array[i]);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("mode change error");
+			ISP_LOGE("fail to change mode");
 			rtn = ISP_ERROR;
 			break;
 		}
@@ -1138,7 +1138,7 @@ static cmr_u32 isp_pm_active_mode_param_update(struct isp_context *isp_cxt_ptr, 
 	if ((PNULL == isp_cxt_ptr)
 	    || (PNULL == mode_param)
 	    || (PNULL == mode_convert_status)) {
-		ISP_LOGE("param ptr is null error:%p %p %p", isp_cxt_ptr, mode_param, mode_convert_status);
+		ISP_LOGE("fail to  get valid param ptr :%p %p %p", isp_cxt_ptr, mode_param, mode_convert_status);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1180,7 +1180,7 @@ static struct isp_data_info *isp_pm_buffer_alloc(struct isp_pm_buffer *buff_ptr,
 		data_ptr = &buff_ptr->buf_array[idx];
 		data_ptr->data_ptr = (void *)malloc(size);
 		if (PNULL == data_ptr->data_ptr) {
-			ISP_LOGE("alloc buffer error, size: %d", size);
+			ISP_LOGE("fail to malloc , size: %d", size);
 			data_ptr = PNULL;
 			return data_ptr;
 		}
@@ -1232,13 +1232,13 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr, struct 
 			if ((PNULL == blk_ptr)
 			    || (PNULL == blk_header_ptr)) {
 				rtn = ISP_ERROR;
-				ISP_LOGE("param is null error: blk_addr:%p, param data_ptr:%p, header:%p", blk_ptr, param_data_ptr, blk_header_ptr);
+				ISP_LOGE("fail to  get valid param : blk_addr:%p, param data_ptr:%p, header:%p", blk_ptr, param_data_ptr, blk_header_ptr);
 			} else {
 				ops->set(blk_ptr, cmd, param_data_ptr->data_ptr, blk_header_ptr);
 			}
 		}
 	} else {
-		ISP_LOGE("id is invalidated, id=%d", id);
+		ISP_LOGE("fail to  get validated id , id=%d", id);
 	}
 
 	return rtn;
@@ -1253,7 +1253,7 @@ static cmr_s32 isp_pm_set_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
 	struct isp_pm_tune_merge_param merged_mode_param;
 
 	if (ISP_TUNE_MODE_MAX < mode_id) {
-		ISP_LOGE("mode id is error, id=%d\n", mode_id);
+		ISP_LOGE("fail to  get valid mode id , id=%d\n", mode_id);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1263,7 +1263,7 @@ static cmr_s32 isp_pm_set_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
 
 	next_mode_param = isp_pm_get_mode(merged_mode_param, mode_id);
 	if (PNULL == next_mode_param) {
-		ISP_LOGE("mode pointer is null error");
+		ISP_LOGE("fail to  get pm mode");
 		rtn = ISP_ERROR;
 		goto _pm_set_mode_error_exit;
 	}
@@ -1271,7 +1271,7 @@ static cmr_s32 isp_pm_set_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
 
 	isp_cxt_ptr = isp_pm_get_context(pm_cxt_ptr, mode_id);
 	if (PNULL == isp_cxt_ptr) {
-		ISP_LOGE("cxt pointer is null error");
+		ISP_LOGE("fail to  get pm cxt ");
 		rtn = ISP_ERROR;
 		goto _pm_set_mode_error_exit;
 	}
@@ -1294,7 +1294,7 @@ static cmr_s32 isp_pm_change_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
 	struct isp_pm_mode_param *org_mode_param = PNULL;
 
 	if (ISP_TUNE_MODE_MAX < mode_id) {
-		ISP_LOGE("mode id is error, id=%d\n", mode_id);
+		ISP_LOGE("fail to  get valid  mode id , id=%d\n", mode_id);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1305,7 +1305,7 @@ static cmr_s32 isp_pm_change_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
 
 	next_mode_param = isp_pm_get_mode(merged_mode_param, mode_id);
 	if (PNULL == next_mode_param) {
-		ISP_LOGV("mode pointer is null error");
+		ISP_LOGE("fail to  get pm mode");
 		rtn = ISP_ERROR;
 		goto _pm_set_mode_error_exit;
 	}
@@ -1313,7 +1313,7 @@ static cmr_s32 isp_pm_change_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
 
 	isp_cxt_ptr = isp_pm_get_context(pm_cxt_ptr, mode_id);
 	if (PNULL == isp_cxt_ptr) {
-		ISP_LOGE("cxt pointer is null error");
+		ISP_LOGE("fail to  get pm cxt ");
 		rtn = ISP_ERROR;
 		goto _pm_set_mode_error_exit;
 	}
@@ -1332,7 +1332,7 @@ static cmr_s32 isp_pm_set_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 	struct isp_pm_context *pm_cxt_ptr = PNULL;
 
 	if ((PNULL == handle) || (PNULL == param_ptr)) {
-		ISP_LOGE("param is null error: %p %p", handle, param_ptr);
+		ISP_LOGE("fail to  get valid param: %p %p", handle, param_ptr);
 		return ISP_ERROR;
 	}
 
@@ -1358,7 +1358,7 @@ static cmr_s32 isp_pm_set_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 
 			if (PNULL == param_data_ptr) {
 				rtn = ISP_ERROR;
-				ISP_LOGE("param is invalidated error");
+				ISP_LOGE("fail to  get valid  param");
 				return rtn;
 			}
 
@@ -1377,20 +1377,20 @@ static cmr_s32 isp_pm_set_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 
 			if (PNULL == param_data_ptr) {
 				rtn = ISP_ERROR;
-				ISP_LOGE("param data 1 error, cmd: 0x%x\n", cmd);
+				ISP_LOGE("fail to  get valid param data, cmd: 0x%x\n", cmd);
 				return rtn;
 			}
 			buffer_size_ptr = (struct isp_buffer_size_info *)param_data_ptr->data_ptr;
 			if (PNULL == buffer_size_ptr) {
 				rtn = ISP_ERROR;
-				ISP_LOGE("param data 2 error, cmd:0x%x\n", cmd);
+				ISP_LOGE("fail to  get valid param data, cmd:0x%x\n", cmd);
 				return rtn;
 			}
 
 			size = buffer_size_ptr->count_lines * buffer_size_ptr->pitch;
 			data_ptr = (struct isp_data_info *)isp_pm_buffer_alloc(&pm_cxt_ptr->buffer, size);
 			if (PNULL == data_ptr) {
-				ISP_LOGE("buffer memory alloc error");
+				ISP_LOGE("fail to alloc buffer memory");
 				return rtn;
 			}
 			memory_param.buffer = *data_ptr;
@@ -1430,7 +1430,7 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_mode_param *mode_para
 	struct isp_block_cfg *blk_cfg_ptr = PNULL;
 
 	if (blk_info_in->param_num > 1) {
-		ISP_LOGE("only support block num is one, num: %d\n", blk_info_in->param_num);
+		ISP_LOGE("fail to  get valid block num.only support one, num: %d\n", blk_info_in->param_num);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1474,7 +1474,7 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 	cmr_s32 *version_id = PNULL;
 
 	if (PNULL == out_ptr) {
-		ISP_LOGE("output ptr is null error");
+		ISP_LOGE("fail to  get valid output ptr");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1517,7 +1517,7 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 		cxt_ptr = (struct isp_pm_context *)handle;
 		param_ptr = in_ptr;
 		if (param_ptr->dv_mode == 0) {
-			ISP_LOGE("param is error, not dv mode\n");
+			ISP_LOGE("fail to  get valid dv mode\n");
 		} else {
 			*((cmr_s32 *) out_ptr) = ISP_MODE_ID_VIDEO_0;
 			for (i = ISP_MODE_ID_VIDEO_0; i < ISP_MODE_ID_VIDEO_3; i++) {
@@ -1571,7 +1571,7 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 					blk_ptr = (void *)(isp_cxt_start_addr + offset);
 					if (ops != NULL) {
 						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)) {
-							ISP_LOGE("param is null error: blk_addr:%p, param_ptr:%p, isp_update:%d\n",
+							ISP_LOGE("fail to  get valid param: blk_addr:%p, param_ptr:%p, isp_update:%d\n",
 								 blk_ptr, param_data_ptr, blk_header_ptr->is_update);
 						} else {
 							ops->get(blk_ptr, ISP_PM_BLK_ISP_SETTING, param_data_ptr, &blk_header_ptr->is_update);
@@ -1707,25 +1707,25 @@ static cmr_s32 isp_pm_param_init_and_update(isp_pm_handle_t handle, struct isp_p
 
 	rtn = isp_pm_mode_list_init(handle, input);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("mode list init error");
+		ISP_LOGE("fail to init mode list");
 		return rtn;
 	}
 
 	rtn = isp_pm_layout_param_and_init(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("layout and init error");
+		ISP_LOGE("fail to init layout ");
 		return rtn;
 	}
 
 	rtn = isp_pm_active_mode_init(handle, mod_id);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("active mode init error");
+		ISP_LOGE("fail to init active mode ");
 		return rtn;
 	}
 
 	rtn = isp_pm_set_mode(handle, mod_id);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("set mode error");
+		ISP_LOGE("fail to set mode");
 		return rtn;
 	}
 
@@ -1773,7 +1773,7 @@ static cmr_s32 isp_pm_lsc_otp_param_update(isp_pm_handle_t handle, struct isp_pm
 				blk_ptr = (void *)(isp_cxt_start_addr + offset);
 				blk_cfg->ops->set(blk_ptr, ISP_PM_BLK_LSC_OTP, param_data->data_ptr, blk_header_ptr);
 			} else {
-				ISP_LOGE("cfg, ops, set, header is NULL error");
+				ISP_LOGE("fail to get valid cfg, ops, set, header");
 			}
 		}
 	}
@@ -1788,20 +1788,20 @@ isp_pm_handle_t isp_pm_init(struct isp_pm_init_input * input, void *output)
 	UNUSED(output);
 
 	if (PNULL == input) {
-		ISP_LOGE("input param is null error");
+		ISP_LOGE("fail to get valid input param");
 		return PNULL;
 	}
 
 	handle = isp_pm_context_create();
 	rtn = isp_pm_handle_check(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("handle is null error");
+		ISP_LOGE("fail to get valid handle");
 		goto init_error_exit;
 	}
 
 	rtn = isp_pm_param_init_and_update(handle, input, ISP_MODE_ID_PRV_0);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("init & update error\n");
+		ISP_LOGE("fail to init & update");
 		goto init_error_exit;
 	}
 
@@ -1827,7 +1827,7 @@ cmr_s32 isp_pm_ioctl(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, v
 
 	rtn = isp_pm_handle_check(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("isp pm handel is invalidate\n");
+		ISP_LOGE("fail to get valid isp pm handel");
 		rtn = ISP_ERROR;
 		goto _ioctl_error_exit;
 	}
@@ -1861,7 +1861,7 @@ cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, 
 	rtn = isp_pm_handle_check(handle);
 	if (ISP_SUCCESS != rtn) {
 		rtn = ISP_ERROR;
-		ISP_LOGE("handle is invalidated\n");
+		ISP_LOGE("fail to get valid handle");
 		goto isp_pm_update_error_exit;
 	}
 
@@ -1898,7 +1898,7 @@ cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output)
 
 	rtn = isp_pm_handle_check(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("isp_pm_deinit: handle is invalidated, rtn: %d\n", rtn);
+		ISP_LOGE("fail to get valid handle, rtn: %d\n", rtn);
 
 		return ISP_ERROR;
 	}

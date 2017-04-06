@@ -89,7 +89,7 @@ cmr_s32 _pm_uv_div_init_v1(void *dst_uv_div_param, void *src_uv_div_param, void 
 	rtn = _pm_uv_div_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);;
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_UVDIV_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to  convert pm uv div param!");
 		return rtn;
 	}
 
@@ -121,7 +121,7 @@ cmr_s32 _pm_uv_div_set_param_v1(void *uv_div_param, cmr_u32 cmd, void *param_ptr
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -136,7 +136,7 @@ cmr_s32 _pm_uv_div_set_param_v1(void *uv_div_param, cmr_u32 cmd, void *param_ptr
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_UVDIV_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to  convert pm uv div param!");
 					return rtn;
 				}
 			}
@@ -146,7 +146,7 @@ cmr_s32 _pm_uv_div_set_param_v1(void *uv_div_param, cmr_u32 cmd, void *param_ptr
 	default:
 		break;
 	}
-	ISP_LOGI("ISP_SMART: cmd=%d, update=%d, cur_idx=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
+	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, cur_idx=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }

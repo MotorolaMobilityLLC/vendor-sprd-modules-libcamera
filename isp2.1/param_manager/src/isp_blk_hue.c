@@ -28,7 +28,7 @@ cmr_s32 _pm_hue_init_v1(void *dst_hue_param, void *src_hue_param, void *param1, 
 	if (src_hue_ptr->cur_index < 16) {
 		dst_hue_ptr->cur.theta = src_hue_ptr->hue_theta[src_hue_ptr->cur_index];
 	} else {
-		ISP_LOGE("error: the subscript is out of bounds-array");
+		ISP_LOGE("fail to make subscript not out of bounds-array");
 	}
 	hue_header_ptr->is_update = ISP_ONE;
 

@@ -65,7 +65,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		dst_ptr->final_lsc_param.data_ptr = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 		if (NULL == dst_ptr->final_lsc_param.data_ptr) {
 			rtn = ISP_ERROR;
-			ISP_LOGE("_pm_2d_lsc_init: malloc failed\n");
+			ISP_LOGE("fail to malloc\n");
 			return rtn;
 		}
 	}
@@ -74,7 +74,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		dst_ptr->final_lsc_param.param_ptr = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 		if (NULL == dst_ptr->final_lsc_param.param_ptr) {
 			rtn = ISP_ERROR;
-			ISP_LOGE("failed to malloc\n");
+			ISP_LOGE("fail to malloc\n");
 			return rtn;
 		}
 	}
@@ -83,7 +83,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		dst_ptr->tmp_ptr_a = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 		if (NULL == dst_ptr->tmp_ptr_a) {
 			rtn = ISP_ERROR;
-			ISP_LOGE("failed to malloc\n");
+			ISP_LOGE("fail to malloc\n");
 			return rtn;
 		}
 	}
@@ -92,7 +92,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		dst_ptr->tmp_ptr_b = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 		if (NULL == dst_ptr->tmp_ptr_b) {
 			rtn = ISP_ERROR;
-			ISP_LOGE("failed to malloc\n");
+			ISP_LOGE("fail to malloc\n");
 			return rtn;
 		}
 	}
@@ -148,22 +148,22 @@ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_c
 	cmr_u32 is_print_log = _is_print_log();
 
 	if (NULL == lsc_ptr || NULL == cali_lsc_ptr) {
-		ISP_LOGE("invalid parameter");
+		ISP_LOGE("fail to check valid parameter");
 		return ISP_ERROR;
 	}
 
 	if (is_print_log) {
-		ISP_LOGI("calibration lsc map num=%d", cali_lsc_ptr->num);
+		ISP_LOGV("calibration lsc map num=%d", cali_lsc_ptr->num);
 
 		for (i = 0; i < cali_lsc_ptr->num; i++) {
-			ISP_LOGI("[%d], envi=%d, ct=%d, size(%d, %d), grid=%d, offset=%d, len=%d", i,
+			ISP_LOGV("[%d], envi=%d, ct=%d, size(%d, %d), grid=%d, offset=%d, len=%d", i,
 				 cali_lsc_ptr->map[i].ct >> 16, cali_lsc_ptr->map[i].ct & 0xffff,
 				 cali_lsc_ptr->map[i].width, cali_lsc_ptr->map[i].height, cali_lsc_ptr->map[i].grid, cali_lsc_ptr->map[i].offset, cali_lsc_ptr->map[i].len);
 		}
 
-		ISP_LOGI("origin lsc map num=%d", lsc_ptr->tab_num);
+		ISP_LOGV("origin lsc map num=%d", lsc_ptr->tab_num);
 		for (i = 0; i < lsc_ptr->tab_num; i++) {
-			ISP_LOGI("[%d], envi=%d, ct=%d, grid=%d, offset=%d, len=%d", i,
+			ISP_LOGV("[%d], envi=%d, ct=%d, grid=%d, offset=%d, len=%d", i,
 				 lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.envi, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.ct,
 				 lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset,
 				 lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_len);
@@ -180,7 +180,7 @@ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_c
 		cmr_u32 min_ct_diff = 0xffff;
 
 		if (is_print_log)
-			ISP_LOGI("%d: ------------------", i);
+			ISP_LOGV("%d: ------------------", i);
 
 		for (j = 0; j < lsc_ptr->tab_num; j++) {
 			cmr_u32 dst_envi = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.envi;
@@ -191,7 +191,6 @@ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_c
 				if (ct_diff < min_ct_diff) {
 					min_ct_diff = ct_diff;
 					dst_index = j;
-					//ISP_LOGI("[%d] min ct diff=%d", j, min_ct_diff);
 				}
 			}
 		}
@@ -202,7 +201,7 @@ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_c
 			struct isp_size dst_size = { 0, 0 };
 
 			if (is_print_log)
-				ISP_LOGI("suitable lsc find! min index = %d, min ct diff=%d", dst_index, min_ct_diff);
+				ISP_LOGV("suitable lsc find! min index = %d, min ct diff=%d", dst_index, min_ct_diff);
 
 			src_size.w = cali_lsc_ptr->map[dst_index].width;
 			src_size.h = cali_lsc_ptr->map[dst_index].height;
@@ -214,12 +213,12 @@ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_c
 			if (src_size.w == dst_size.w && src_size.h == dst_size.h && src_data_size == dst_data_size) {
 				memcpy(dst_data, src_data, dst_data_size);
 				if (is_print_log)
-					ISP_LOGI("size is the same, just copy!");
+					ISP_LOGV("size is the same, just copy!");
 			} else {
 				/*need scaling */
 				//isp_scaling_lsc_gain(dst_data, src_data, &dst_size, &src_size);
 				if (is_print_log)
-					ISP_LOGI("src size=%dX%d, dst size=%dX%d, need scaling", src_size.w, src_size.h, dst_size.w, dst_size.h);
+					ISP_LOGV("src size=%dX%d, dst size=%dX%d, need scaling", src_size.w, src_size.h, dst_size.w, dst_size.h);
 			}
 		}
 
@@ -288,7 +287,7 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			val_range.max = ISP_COLOR_TEMPRATURE_NUM - 1;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !\n");
+				ISP_LOGE("fail to  check pm smart param!\n");
 				return rtn;
 			}
 
@@ -374,7 +373,7 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 		{
 			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
-			ISP_LOGD("ISP_PM_BLK_LSC_INFO");
+			ISP_LOGV("ISP_PM_BLK_LSC_INFO");
 
 			{
 				cmr_u16 *ptr = NULL;
@@ -383,8 +382,8 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 #else
 				ptr = (void *)(dst_lnc_ptr->cur.buf_addr[0]);
 #endif
-				ISP_LOGD("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
-				ISP_LOGD("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
+				ISP_LOGV("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
+				ISP_LOGV("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
 			}
 		}
 		break;
@@ -445,7 +444,6 @@ cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, voi
 	case ISP_PM_BLK_LSC_GET_LSCTAB:
 		param_data_ptr->data_ptr = (void *)lnc_ptr;
 		param_data_ptr->data_size = lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_w * lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_h * 4;
-		//ALOGE("print_lsc_tab map_tab[0~8]:address = 0x%x", lnc_ptr); //gerald merge http://review.source.spreadtrum.com/gerrit/#/c/281621
 		break;
 
 	default:

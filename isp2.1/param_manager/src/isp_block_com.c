@@ -109,10 +109,10 @@ cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 *
 	else if (one_multi_mode_ptr[ISP_MODE_ID_COMMON] & ISP_NR_AUTO_MODE_BIT) {
 		offset_units = 0;
 	} else {
-		ISP_LOGE("Non multi NR version\n");
+		ISP_LOGE("fail to find multi NR version\n");
 		offset_units = 0;
 	}
-	//ISP_LOGI("offset_units = %d)",offset_units);
+	ISP_LOGV("offset_units = %d)",offset_units);
 
 	quotient = offset_units / MAX_SCENEMODE_NUM;
 	remainder = offset_units % MAX_SCENEMODE_NUM;
@@ -127,7 +127,7 @@ cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 *
 		offset_units_remain += (one_multi_mode_ptr[quotient] >> j) & 0x01;
 	}
 	/* sensor mode and scene mode setting for multi nr function */
-	//ISP_LOGI("mode_flag,scene_flag,offset_units_remain(%d,%d,%d)",mode_flag, scene_flag, offset_units_remain);
+	ISP_LOGV("mode_flag,scene_flag,offset_units_remain(%d,%d,%d)",mode_flag, scene_flag, offset_units_remain);
 	return offset_units_remain;
 }
 
@@ -165,23 +165,23 @@ cmr_s32 _pm_check_smart_param(struct smart_block_result * block_result, struct i
 	cmr_u32 i = 0;
 
 	if (NULL == block_result) {
-		ISP_LOGE("invalid pointer\n");
+		ISP_LOGE("fail to check valid pointer\n");
 		return ISP_ERROR;
 	}
 
 	if (comp_num != block_result->component_num) {
-		ISP_LOGE("component num error: %d (%d)\n", block_result->component_num, comp_num);
+		ISP_LOGE("fail to component num : %d (%d)\n", block_result->component_num, comp_num);
 		return ISP_ERROR;
 	}
 
 	if (0 == block_result->update) {
-		ISP_LOGE("do not need update\n");
+		ISP_LOGV("do not need update\n");
 		return ISP_ERROR;
 	}
 
 	for (i = 0; i < comp_num; i++) {
 		if (type != block_result->component[0].y_type) {
-			ISP_LOGE("block type error: %d (%d)\n", block_result->component[0].y_type, type);
+			ISP_LOGE("fail to block type : %d (%d)\n", block_result->component[0].y_type, type);
 			return ISP_ERROR;
 		}
 
@@ -189,19 +189,19 @@ cmr_s32 _pm_check_smart_param(struct smart_block_result * block_result, struct i
 			cmr_s32 value = block_result->component[i].fix_data[0];
 
 			if (value < range->min || value > range->max) {
-				ISP_LOGE("value range error: %d ([%d, %d])\n", value, range->min, range->max);
+				ISP_LOGE("fail to value range: %d ([%d, %d])\n", value, range->min, range->max);
 				return ISP_ERROR;
 			}
 		} else if (ISP_SMART_Y_TYPE_WEIGHT_VALUE == type) {
 			struct isp_weight_value *weight_value = (struct isp_weight_value *)block_result->component[i].fix_data;
 
 			if ((cmr_s32) weight_value->value[0] < range->min || (cmr_s32) weight_value->value[0] > range->max) {
-				ISP_LOGE("value range error: %d ([%d, %d])\n", weight_value->value[0], range->min, range->max);
+				ISP_LOGE("fail to value range: %d ([%d, %d])\n", weight_value->value[0], range->min, range->max);
 				return ISP_ERROR;
 			}
 
 			if ((cmr_s32) weight_value->value[1] < range->min || (cmr_s32) weight_value->value[1] > range->max) {
-				ISP_LOGE("value range error: %d ([%d, %d])\n", weight_value->value[1], range->min, range->max);
+				ISP_LOGE("fail to value range: %d ([%d, %d])\n", weight_value->value[1], range->min, range->max);
 				return ISP_ERROR;
 			}
 		}
@@ -235,7 +235,7 @@ cmr_u32 _pm_get_lens_grid_mode(cmr_u32 grid)
 		break;
 
 	default:
-		ISP_LOGE("error:no lens grid");
+		ISP_LOGE("fail to get lens grid");
 		break;
 	}
 

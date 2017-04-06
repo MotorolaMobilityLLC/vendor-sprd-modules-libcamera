@@ -92,7 +92,7 @@ cmr_s32 _pm_bpc_init_v1(void *dst_bpc_param, void *src_bpc_param, void *param1, 
 	rtn = _pm_bpc_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= bpc_header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_BPC_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to convert pm bpc param !");
 		return rtn;
 	}
 
@@ -149,7 +149,7 @@ cmr_s32 _pm_bpc_set_param_v1(void *bpc_param, cmr_u32 cmd, void *param_ptr0, voi
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm  smart param!");
 				return rtn;
 			}
 
@@ -164,7 +164,7 @@ cmr_s32 _pm_bpc_set_param_v1(void *bpc_param, cmr_u32 cmd, void *param_ptr0, voi
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_BPC_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to convert pm bpc param !");
 					return rtn;
 				}
 			}

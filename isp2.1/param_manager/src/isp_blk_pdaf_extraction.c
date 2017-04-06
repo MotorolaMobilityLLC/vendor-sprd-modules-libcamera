@@ -47,7 +47,7 @@ cmr_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf
 	}
 #endif
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_ppi_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to  init pdaf param!");
 		return rtn;
 	}
 

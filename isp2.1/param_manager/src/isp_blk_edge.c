@@ -184,7 +184,7 @@ cmr_s32 _pm_edge_init_v1(void *dst_edge_param, void *src_edge_param, void *param
 	rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_EDGE_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to convert pm edge param !");
 		return rtn;
 	}
 
@@ -221,7 +221,7 @@ cmr_s32 _pm_edge_set_param_v1(void *edge_param, cmr_u32 cmd, void *param_ptr0, v
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -236,7 +236,7 @@ cmr_s32 _pm_edge_set_param_v1(void *edge_param, cmr_u32 cmd, void *param_ptr0, v
 				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_EDGE_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to convert pm edge param !");
 					return rtn;
 				}
 			}

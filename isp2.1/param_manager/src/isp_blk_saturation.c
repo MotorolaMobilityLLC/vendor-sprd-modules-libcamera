@@ -93,7 +93,7 @@ cmr_s32 _pm_saturation_set_param_v1(void *csa_param, cmr_u32 cmd, void *param_pt
 			val_range.max = 255;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 

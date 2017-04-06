@@ -84,7 +84,7 @@ cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *
 			val_range.max = SENSOR_BLC_NUM - 1;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !\n");
+				ISP_LOGE("fail to check pm  smart param!");
 				return rtn;
 			}
 
@@ -110,7 +110,6 @@ cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *
 				blc_ptr->cur_idx.weight0 = weight_value->weight[0];
 				blc_ptr->cur_idx.weight1 = weight_value->weight[1];
 				blc_header_ptr->is_update = ISP_ONE;
-				//ISP_LOGI("calc r,gr,gb,b value(%d,%d,%d,%d)",blc_ptr->cur.r,blc_ptr->cur.gr,blc_ptr->cur.gb,blc_ptr->cur.b);
 			}
 		}
 		break;

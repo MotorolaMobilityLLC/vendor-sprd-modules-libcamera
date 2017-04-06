@@ -140,7 +140,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	if (PNULL == dst_ptr->vst_map.data_ptr) {
 		dst_ptr->vst_map.data_ptr = (void *)malloc(dst_ptr->vst_map.size);
 		if (PNULL == dst_ptr->vst_map.data_ptr) {
-			ISP_LOGE("_pm_nlm_init: vst malloc failed\n");
+			ISP_LOGE("fail to malloc !");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -164,7 +164,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	if (PNULL == dst_ptr->ivst_map.data_ptr) {
 		dst_ptr->ivst_map.data_ptr = (void *)malloc(dst_ptr->ivst_map.size);
 		if (PNULL == dst_ptr->ivst_map.data_ptr) {
-			ISP_LOGE("_pm_nlm_init: ivst malloc failed\n");
+			ISP_LOGE("fail to malloc !");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -196,7 +196,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	rtn = _pm_nlm_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("ISP_PM_NLM_CONVERT_PARAM: error!");
+		ISP_LOGE("fail to  convert pm nlm param!");
 		return rtn;
 	}
 
@@ -228,7 +228,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !");
+				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 
@@ -243,7 +243,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 				rtn = _pm_nlm_convert_param(nlm_ptr, nlm_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				nlm_ptr->cur.bypass |= nlm_header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("ISP_PM_NLM_CONVERT_PARAM: error!");
+					ISP_LOGE("fail to  convert pm nlm param!");
 					return rtn;
 				}
 			}
