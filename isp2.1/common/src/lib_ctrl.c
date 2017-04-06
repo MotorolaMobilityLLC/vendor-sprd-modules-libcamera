@@ -38,7 +38,7 @@ struct af_lib_fun af_lib_fun;
 
 char *al_libversion_choice(uint32_t version_id)
 {
-	ISP_LOGI("E");
+	ISP_LOGV("E");
 	switch (version_id) {
 	case AL_AWB_LIB_VERSION_0:
 		return "/system/lib/libAl_Awb_ov13850r2a.so";
@@ -120,8 +120,8 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 		awb_lib_info = libuse_info->awb_lib_info;
 		awb_producer_id = awb_lib_info.product_id;
 		awb_lib_version = awb_lib_info.version_id;
-		ISP_LOGI("awb_producer_id= ____0x%x", awb_producer_id);
-		ISP_LOGI("awb_lib_version= ____0x%x", awb_lib_version);
+		ISP_LOGV("awb_producer_id= ____0x%x", awb_producer_id);
+		ISP_LOGV("awb_lib_version= ____0x%x", awb_lib_version);
 	}
 
 	switch (awb_producer_id) {
@@ -135,7 +135,7 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 			break;
 		case AWB_LIB_VERSION_1:
 		default:
-			ISP_LOGE("awb invalid lib version = 0x%x", awb_lib_version);
+			ISP_LOGE("fail to check param, version = 0x%x", awb_lib_version);
 			rtn = AWB_CTRL_ERROR;
 		}
 		break;
@@ -151,7 +151,7 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 		break;
 
 	default:
-		ISP_LOGE("awb invalid lib producer id = 0x%x", awb_producer_id);
+		ISP_LOGE("fail to check param, lib producer id = 0x%x", awb_producer_id);
 		rtn = AWB_CTRL_ERROR;
 	}
 
@@ -183,12 +183,12 @@ uint32_t isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_f
 			break;
 		case AE_LIB_VERSION_1:
 		default:
-			ISP_LOGE("ae invalid lib version = 0x%x", ae_lib_version);
+			ISP_LOGE("fail to check param, ae invalid lib version = 0x%x", ae_lib_version);
 			rtn = AE_ERROR;
 		}
 		break;
 	default:
-		ISP_LOGE("ae invalid lib producer id = 0x%x", ae_producer_id);
+		ISP_LOGE("fail to check param, lib producer id = 0x%x", ae_producer_id);
 		rtn = AE_ERROR;
 	}
 
@@ -209,7 +209,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 		af_lib_version = af_lib_info.version_id;
 		ISP_LOGI("af_producer_id= ____0x%x", af_producer_id);
 	}
-	ISP_LOGI("af_producer_id= ____0x%x", af_producer_id);
+	ISP_LOGV("af_producer_id= ____0x%x", af_producer_id);
 	memset(af_lib_fun, 0, sizeof(struct af_lib_fun));
 	switch (af_producer_id) {
 	case SPRD_AF_LIB:
@@ -218,7 +218,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 			break;
 		case AF_LIB_VERSION_1:
 		default:
-			ISP_LOGE("af invalid lib version = 0x%x", af_lib_version);
+			ISP_LOGE("fail to check param, lib version = 0x%x", af_lib_version);
 			rtn = AF_ERROR;
 		}
 		break;
@@ -251,7 +251,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 			break;
 		case AF_LIB_VERSION_1:
 		default:
-			ISP_LOGE("af invalid lib version = 0x%x", af_lib_version);
+			ISP_LOGE("fail to check param, lib version = 0x%x", af_lib_version);
 			rtn = AF_ERROR;
 		}
 		break;
@@ -271,11 +271,11 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 #endif
 		case AF_LIB_VERSION_1:
 		default:
-			ISP_LOGE("af invalid lib version = 0x%x", af_lib_version);
+			ISP_LOGE("fail to check param, lib version = 0x%x", af_lib_version);
 		}
 		break;
 	default:
-		ISP_LOGE("af invalid lib producer id = 0x%x", af_producer_id);
+		ISP_LOGE("fail to check param, lib producer id = 0x%x", af_producer_id);
 		rtn = AF_ERROR;
 	}
 

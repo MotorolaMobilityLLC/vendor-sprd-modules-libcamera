@@ -128,7 +128,7 @@ static int32_t adpt_get_af_ops(struct third_lib_info *lib_info, struct adpt_ops_
 
 	af_producer_id = lib_info->product_id;
 	af_lib_version = lib_info->version_id;
-	ISP_LOGE("af_producer_id %d,af_lib_version %d", af_producer_id, af_lib_version);
+	ISP_LOGV("af_producer_id %d,af_lib_version %d", af_producer_id, af_lib_version);
 	if (ADPT_MAX_AF_LIB > af_producer_id) {
 		rtn = af_product_ops[af_producer_id] (af_lib_version, ops);
 	} else {
@@ -198,7 +198,7 @@ static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info, struct adpt_op
 //      pdaf_producer_id = 0;
 //      pdaf_lib_version = 0;
 
-	ISP_LOGI("pdaf_producer_id %d,pdaf_lib_version %d", pdaf_producer_id, pdaf_lib_version);
+	ISP_LOGV("pdaf_producer_id %d,pdaf_lib_version %d", pdaf_producer_id, pdaf_lib_version);
 	if (ADPT_MAX_PDAF_LIB > pdaf_producer_id) {
 		rtn = pdaf_product_ops[pdaf_producer_id] (pdaf_lib_version, ops);
 	} else {
