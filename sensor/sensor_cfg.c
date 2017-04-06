@@ -40,6 +40,7 @@ extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
+extern SENSOR_INFO_T g_ov5675_dual_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
@@ -58,6 +59,7 @@ extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
 extern struct sns_af_drv_entry lc898214_drv_entry;
 extern struct sns_af_drv_entry dw9763_drv_entry;
+extern struct sns_af_drv_entry vcm_zc524_drv_entry;
 
 /*---------------------------------------------------------------------------*
  **                         Constant Variables                                *
@@ -69,11 +71,19 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
      &g_imx258_mipi_raw_info,
      {&dw9800_drv_entry, 0},
      &imx258_drv_entry},
+#if defined(CONFIG_DUAL_MODULE)
+    {"ov13855_mipi_raw",
+     &g_ov13855_mipi_raw_info,
+     {&vcm_zc524_drv_entry, 0},
+     //&ov13855_drv_entry}, /* for bringup */
+     NULL},
+#else
     {"ov13855_mipi_raw",
      &g_ov13855_mipi_raw_info,
      {&dw9718s_drv_entry, 0},
      &ov13855_drv_entry},
-     {"g_c2390_mipi_raw_info", &g_c2390_mipi_raw_info,{NULL,0},NULL},
+#endif
+    {"g_c2390_mipi_raw_info", &g_c2390_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
@@ -123,8 +133,8 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 #ifdef CONFIG_COVERED_SENSOR
     {"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
 #endif
-#if defined(CONFIG_DUAL_CAMERA)
-    {"ov5675_mipi_raw", &g_ov5675_mipi_raw_info, {NULL, 0}, NULL},
+#if defined(CONFIG_DUAL_MODULE)
+    {"ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #endif
     {0}};
@@ -249,8 +259,8 @@ SENSOR_MATCH_T *Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt,
     if (AUTO_TEST_CAMERA == at_flag) {
         switch (sensor_id) {
         case SENSOR_MAIN:
-		  sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&main_sensor_infor_tab;
-		  break;
+            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&main_sensor_infor_tab;
+            break;
         case SENSOR_DEVICE2:
             sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor2_infor_tab;
             break;
@@ -302,19 +312,17 @@ uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt,
         case SENSOR_MAIN:
             tab_lenght =
                 (sizeof(main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
-		  break;
-		case SENSOR_DEVICE2:
-            tab_lenght =
-                (sizeof(sensor2_infor_tab) / sizeof(SENSOR_MATCH_T));
+            break;
+        case SENSOR_DEVICE2:
+            tab_lenght = (sizeof(sensor2_infor_tab) / sizeof(SENSOR_MATCH_T));
             break;
 
         case SENSOR_SUB:
-		    tab_lenght =
+            tab_lenght =
                 (sizeof(sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
             break;
         case SENSOR_DEVICE3:
-            tab_lenght =
-                (sizeof(sensor3_infor_tab) / sizeof(SENSOR_MATCH_T));
+            tab_lenght = (sizeof(sensor3_infor_tab) / sizeof(SENSOR_MATCH_T));
             break;
 
         case SENSOR_ATV:
@@ -361,8 +369,7 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
     cmr_int at_flag = sensor_cxt->is_autotest;
     if (AUTO_TEST_CAMERA == at_flag) {
         if (index == SENSOR_MAIN || index == SENSOR_DEVICE2) {
-            mSnNum =
-                sizeof(main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
+            mSnNum = sizeof(main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
             SENSOR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum);
             for (i = 0; i < mSnNum; i++) {
                 if (strcmp(main_sensor_infor_tab[i].sn_name,
@@ -375,8 +382,7 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
             }
         }
         if (index == SENSOR_SUB || index == SENSOR_DEVICE3) {
-            sSnNum =
-                sizeof(sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
+            sSnNum = sizeof(sub_sensor_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
             SENSOR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum);
             for (i = 0; i < sSnNum; i++) {
                 if (strcmp(sub_sensor_infor_tab[i].sn_name,
