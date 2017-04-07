@@ -130,6 +130,8 @@ struct awb_ctrl_cxt {
 	/*work mode */
 	cmr_u32 work_mode;	/* 0: preview, 1:capture, 2:video */
 	cmr_u32 param_index;	/* tuning param index */
+	cmr_u32 last_enable;	/* record nonzsl video stop	*/
+	cmr_u32 snap_lock;	/* record lock awb frames after snapshot	*/
 	/*white balance mode: auto or manual */
 	enum awb_ctrl_wb_mode wb_mode;
 	/*scene mode */
@@ -647,6 +649,8 @@ static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 
 	if (0 == cxt->lock_info.lock_num) {
 		cxt->lock_info.lock_mode = AWB_CTRL_UNLOCKMODE;
+		cxt->lock_info.lock_flag= 1;
+		cxt->lock_info.lock_flash_frame= 5;
 	}
 
 	ISP_LOGV("AWB_TEST _awb_get_unlock1: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
@@ -868,6 +872,11 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		goto ERROR_EXIT;
 	}
 
+	cxt->snap_lock = 0; // recovery snapshot awb continus frames
+	cxt->last_enable = 0;
+	cxt->flash_info.flash_enable = 0;
+	cxt->lock_info.lock_flag = 0;
+	cxt->lock_info.lock_flash_frame = 0;
 	cxt->init = AWB_CTRL_TRUE;
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
@@ -1162,6 +1171,17 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		}
 	}
 
+	//lock awb after flash
+	if(cxt->lock_info.lock_flag == 1){
+		if(cxt->lock_info.lock_flash_frame != 0){
+			cxt->output_gain.r = cxt->recover_gain.r ;
+			cxt->output_gain.g = cxt->recover_gain.g;
+			cxt->output_gain.b = cxt->recover_gain.b;
+			cxt->output_ct = cxt->recover_ct;
+			cxt->lock_info.lock_flash_frame -=1;
+		}
+	}
+
 	//lock mode
 	if (AWB_CTRL_LOCKMODE == cxt->lock_info.lock_mode) {
 		cxt->output_gain.r = cxt->lock_info.lock_gain.r;
@@ -1169,6 +1189,17 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_gain.b = cxt->lock_info.lock_gain.b;
 		cxt->output_ct = cxt->lock_info.lock_ct;
 	}
+
+	//lock awb after snapshot
+	if (cxt->snap_lock != 0){
+		cxt->output_gain.r = cxt->recover_gain.r;
+		cxt->output_gain.g = cxt->recover_gain.g;
+		cxt->output_gain.b = cxt->recover_gain.b;
+		cxt->output_ct = cxt->recover_ct;
+		cxt->snap_lock-=1;
+	}
+
+//	ISP_LOGD("awb calc awb[%d %d %d %d K],lock_mode =%d cxt->snap_lock = %d ",cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b,cxt->output_ct,cxt->lock_info.lock_mode,cxt->snap_lock);
 
 	result->gain.r = cxt->output_gain.r;
 	result->gain.g = cxt->output_gain.g;
@@ -1209,6 +1240,13 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_SET_WORK_MODE:
+//		ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+		if (cxt->last_enable == 2 && cxt->flash_info.flash_enable == 0) {
+			rtn = _awb_get_recgain(cxt, in);
+			cxt->snap_lock =5;  //lock awb 5 frames after snapshot
+			cxt->last_enable = 0;
+		}
+		cxt->flash_info.flash_enable = 0;
 		rtn = _awb_set_workmode(cxt, in);
 		break;
 
@@ -1247,6 +1285,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_FLASH_BEFORE_P:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_BEFORE_P");
+		cxt->flash_info.flash_enable = 1;
 		rtn = _awb_set_recgain(cxt, in);
 		break;
 
@@ -1289,6 +1328,14 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_EM_GET_PARAM:
 		rtn = awb_get_debug_info_for_display(cxt, out);
+		break;
+
+	case AWB_CTRL_CMD_VIDEO_STOP_NOTIFY:
+//		ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+		if (cxt->lock_info.lock_mode == AWB_CTRL_UNLOCKMODE && cxt->last_enable == 0  && cxt->flash_info.flash_enable == 0){
+			rtn = _awb_set_recgain(cxt, in);
+		}
+		cxt->last_enable++;
 		break;
 
 	default:

@@ -69,6 +69,7 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_SET_FLASH_STATUS = 0x30A,
 	AWB_CTRL_CMD_GET_DEBUG_INFO = 0x30B,
 	AWB_CTRL_CMD_GET_PIX_CNT = 0x30C,
+	AWB_CTRL_CMD_VIDEO_STOP_NOTIFY = 0x30D,
 	AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
 };
 
@@ -165,6 +166,7 @@ struct awb_flash_info {
 	struct awb_ctrl_gain flash_ratio;
 	cmr_u32 effect;
 	cmr_u32 patten;
+	cmr_u32 flash_enable;
 	enum awb_ctrl_flash_status flash_status;
 };
 union awb_ctrl_stat_img {
@@ -278,6 +280,8 @@ struct awb_ctrl_lock_info {
 	cmr_u32 lock_mode;
 	cmr_u32 lock_ct;
 	cmr_u32 lock_num;
+	cmr_u32 lock_flag;
+	cmr_u32 lock_flash_frame; // recovery flash awb continus frames
 	cmr_u32 unlock_num;
 };
 

@@ -2630,6 +2630,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
+	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_VIDEO_STOP_NOTIFY, NULL, NULL);
 #if 0				/*modify for Solve compile problem */
 	cmr_u32 interrupt_mode = ISP_INT_CLEAR_MODE;
 
