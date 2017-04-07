@@ -9,10 +9,10 @@
 #include "win_dummy.h"
 #else
 #include "sensor_raw.h"
-//#include "sensor_drv_u.h"
 #include <sys/types.h>
 #include <pthread.h>
 #include <utils/Log.h>
+#include "isp_com.h"
 #endif
 
 #include "stdio.h"

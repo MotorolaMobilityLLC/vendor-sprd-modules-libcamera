@@ -16,7 +16,6 @@
 #define LOG_TAG "lsc_ctrl"
 #include "lsc_adv.h"
 #include "isp_adpt.h"
-#include "isp_dev_access.h"
 #include <dlfcn.h>
 
 #define SMART_LSC_VERSION 1
