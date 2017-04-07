@@ -897,7 +897,7 @@ int SprdCamera3OEMIf::takePicture()
 {
 	ATRACE_CALL();
 
-	bool result = true, wait_raw = true;
+	bool wait_raw = true;
 
 	HAL_LOGI("E");
 	GET_START_TIME;
@@ -905,7 +905,7 @@ int SprdCamera3OEMIf::takePicture()
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 
 	if (1 == mHDRPowerHint) {
@@ -920,13 +920,13 @@ int SprdCamera3OEMIf::takePicture()
 		usleep(50*1000);
 		if (SPRD_IDLE != mCameraState.capture_state) {
 			HAL_LOGE("take picture: action alread exist, direct return");
-			return ALREADY_EXISTS;
+			goto exit;
 		}
 	}
 
 	if (mIsCancellingCapture) {
 		HAL_LOGW("when is cancelling capture, this place can't change capture state");
-		return result;
+		goto exit;
 	} else {
 		setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
 	}
@@ -956,13 +956,13 @@ int SprdCamera3OEMIf::takePicture()
 
 		if (isPreviewing()) {
 			HAL_LOGE("takePicture: stop preview error!, preview state = %d", getPreviewState());
-			return UNKNOWN_ERROR;
+			goto exit;
 		}
 
 		if (!setCameraCaptureDimensions()) {
 			deinitCapture(mIsPreAllocCapMem);
 			HAL_LOGE("takePicture initCapture failed. Not taking picture.");
-			return UNKNOWN_ERROR;
+			goto exit;
 		}
 	}
 
@@ -1019,14 +1019,14 @@ int SprdCamera3OEMIf::takePicture()
 	setCameraPreviewFormat();
 	if (mIsCancellingCapture) {
 		HAL_LOGW("when is cancelling capture, this place can't change capture state");
-		return result;
+		goto exit;
 	} else {
 		setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 	}
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 
 	if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE) {
@@ -1035,13 +1035,16 @@ int SprdCamera3OEMIf::takePicture()
 			wait_raw = false;
 		}
 	}
-	if (wait_raw)
-		result = WaitForCaptureStart();
+
+	if (wait_raw) {
+		WaitForCaptureStart();
+	}
 
 	print_time();
+exit:
 	HAL_LOGI("X, wait_raw=%d", wait_raw);
-
-	return result ? NO_ERROR : UNKNOWN_ERROR;
+	/*must return NO_ERROR, otherwise can't flush camera normal*/
+	return NO_ERROR;
 }
 
 int SprdCamera3OEMIf::zslTakePicture()
@@ -1058,7 +1061,7 @@ int SprdCamera3OEMIf::zslTakePicture()
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 
 	if (SPRD_ERROR == mCameraState.capture_state) {
@@ -1131,7 +1134,7 @@ int SprdCamera3OEMIf::zslTakePicture()
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 
 	mFlagMultiLayerStart = true;
@@ -1147,7 +1150,7 @@ int SprdCamera3OEMIf::zslTakePicture()
 		ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle, &message);
 		if (ret) {
 			HAL_LOGE("Fail to send one msg!");
-			return NO_ERROR;
+			goto exit;
 		}
 		HAL_LOGD("mZslShotPushFlag %d",mZslShotPushFlag);
 	} else {
@@ -1155,6 +1158,8 @@ int SprdCamera3OEMIf::zslTakePicture()
 	}
 
 	print_time();
+
+exit:
 	HAL_LOGI("X");
 	return NO_ERROR;
 }
@@ -1169,7 +1174,7 @@ int SprdCamera3OEMIf::VideoTakePicture()
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 
 	if (SPRD_ERROR == mCameraState.capture_state) {
@@ -1193,6 +1198,7 @@ int SprdCamera3OEMIf::VideoTakePicture()
 	mVideoShotPushFlag = 1;
 	mVideoShotWait.signal();
 	print_time();
+exit:
 	HAL_LOGI("X");
 	return NO_ERROR;
 }
@@ -1205,7 +1211,7 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter()
 	int result = 0;
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 	if (SPRD_ERROR == mCameraState.capture_state) {
 		HAL_LOGE("in error status, deinit capture at first ");
@@ -1236,11 +1242,12 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter()
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
-		return UNKNOWN_ERROR;
+		goto exit;
 	}
 
 
 	print_time();
+exit:
 	HAL_LOGI("X");
 
 	return NO_ERROR;

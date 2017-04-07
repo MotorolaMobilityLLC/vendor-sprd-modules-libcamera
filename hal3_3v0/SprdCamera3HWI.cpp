@@ -1275,7 +1275,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 			if(channel == mPicChan || channel == mCallbackChan) {
 				ret = mPicChan->start(mFrameNum);
 				if(ret != NO_ERROR) {
-					return ret;
+					HAL_LOGE("fail to take picture");
 				}
 				mPictureRequest = false;
 				break;
