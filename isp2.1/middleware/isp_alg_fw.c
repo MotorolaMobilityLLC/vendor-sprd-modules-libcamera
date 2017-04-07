@@ -812,6 +812,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_en;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
@@ -2429,6 +2430,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}

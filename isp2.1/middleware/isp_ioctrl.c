@@ -2102,22 +2102,6 @@ static cmr_int _ispSetAeSensitivity(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispSetCaptureRawMode(cmr_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ())
-{
-	isp_ctrl_context *handle = (isp_ctrl_context *) isp_handler;
-	cmr_int rtn = ISP_SUCCESS;
-	struct isp_video_start isp_video_start;
-	struct img_size *size_param = (struct img_size *)param_ptr;
-	cmr_s32 mode = 0;
-	UNUSED(call_back);
-	memset((void *)&isp_video_start, 0, sizeof(struct isp_video_start));
-	isp_video_start.work_mode = 1;
-	isp_video_start.size.w = size_param->width;
-	isp_video_start.size.h = size_param->height;
-	//rtn = isp_pm_ioctl(handle->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, &isp_video_start, &mode);
-	handle->mode_flag = mode;
-	return rtn;
-}
 
 static cmr_int _ispSetDcamTimestamp(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
@@ -2208,7 +2192,6 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_DENOISE_PARAM_UPDATE, _ispSensorDenoiseParamUpdate},	//for tool cali
 	{ISP_CTRL_SET_AE_EXP_TIME, _ispSetAeExpTime},
 	{ISP_CTRL_SET_AE_SENSITIVITY, _ispSetAeSensitivity},
-	{ISP_CTRL_SET_CAPTURE_RAW_MODE, _ispSetCaptureRawMode},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, _ispSetDcamTimestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, _ispSetAuxSensorInfo},
 

@@ -3171,25 +3171,7 @@ setting_set_highflash_ae_measure(struct setting_component *cpt,
 
     return ret;
 }
-static cmr_int cmr_set_capture_raw_mode(struct setting_component *cpt,
-                                        struct setting_cmd_parameter *parm) {
-    cmr_int ret = 0;
 
-    if (setting_is_rawrgb_format(cpt, parm)) {
-        struct setting_init_in *init_in = &cpt->init_in;
-        struct common_isp_cmd_param isp_param;
-
-        if (init_in->setting_isp_ioctl) {
-            isp_param.camera_id = parm->camera_id;
-            isp_param.size_param.width = parm->size_param.width;
-            isp_param.size_param.height = parm->size_param.height;
-            ret = (*init_in->setting_isp_ioctl)(
-                init_in->oem_handle, COM_ISP_SET_CAPTURE_RAW_MODE, &isp_param);
-        }
-    }
-
-    return ret;
-}
 cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
                          cmr_handle *out_setting_handle) {
     cmr_int ret = 0;

@@ -5077,14 +5077,6 @@ cmr_int camera_capture_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id,
         }
     }
 
-    isp_param.camera_id = camera_id;
-    isp_param.size_param.width = snp_cxt->actual_capture_size.width;
-    isp_param.size_param.height = snp_cxt->actual_capture_size.height;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_CAPTURE_RAW_MODE,
-                           (void *)&isp_param);
-    if (ret) {
-        CMR_LOGE("failed to set capture raw mode %ld", ret);
-    }
 exit:
     CMR_LOGI("done %ld", ret);
     ATRACE_END();
@@ -6892,12 +6884,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_SET_PREV_PDAF_RAW;
         ptr_flag = 1;
         isp_param_ptr = param_ptr->cmd_ptr;
-        break;
-
-    case COM_ISP_SET_CAPTURE_RAW_MODE:
-        isp_cmd = ISP_CTRL_SET_CAPTURE_RAW_MODE;
-        ptr_flag = 1;
-        isp_param_ptr = (void *)&(param_ptr->size_param);
         break;
 
     case COM_ISP_SET_AWB_LOCK_UNLOCK:
