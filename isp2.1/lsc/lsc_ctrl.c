@@ -57,11 +57,11 @@ static cmr_s32 _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
+		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -84,7 +84,7 @@ static cmr_s32 _lscctrl_destroy_thread(struct lsc_ctrl_cxt *cxt_ptr)
 		}
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -101,10 +101,10 @@ static cmr_s32 _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_cal
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:process fun is NULL");
+		ISP_LOGI("process fun is NULL");
 	}
 exit:
-	ISP_LOGD(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -117,7 +117,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to chcek param");
 		goto exit;
 	}
-	ISP_LOGV(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case LSCCTRL_EVT_INIT:
@@ -135,7 +135,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	}
 
 exit:
-	ISP_LOGD(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -153,10 +153,10 @@ static cmr_s32 _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_in
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, NULL);
 	} else {
-		ISP_LOGI(":ISP:adpt_init fun is NULL");
+		ISP_LOGI("adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -179,7 +179,7 @@ static cmr_s32 _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_i
 
 	rtn = _lscctrl_init_lib(cxt_ptr, in_ptr);
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -193,7 +193,7 @@ static cmr_s32 _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 		rtn = LSC_ERROR;
 	}
 
-	ISP_LOGI(":ISP:lsc_ctrl thread rtn %ld", rtn);
+	ISP_LOGI("lsc_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
 
@@ -235,7 +235,7 @@ static cmr_s32 _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 		goto exit;
 	}
 
-	ISP_LOGI(":ISP:lib lsc v_count : %d, version id: %d, liblsc path :%s", v_count, version_id, liblsc_path[version_id]);
+	ISP_LOGI("lib lsc v_count : %d, version id: %d, liblsc path :%s", v_count, version_id, liblsc_path[version_id]);
 
 	cxt->lib_handle = dlopen(liblsc_path[version_id], RTLD_NOW);
 	if (!cxt->lib_handle) {
@@ -271,7 +271,7 @@ static cmr_s32 _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
-	ISP_LOGI(":ISP:load lsc lib success");
+	ISP_LOGI("load lsc lib success");
 
 	return LSC_SUCCESS;
 
@@ -319,7 +319,7 @@ static void *lsc_sprd_init(void *in, void *out)
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
-	ISP_LOGI(":ISP:isp_3a_ctrl lsc_init rtn = %d", rtn);
+	ISP_LOGI("lsc init success rtn = %d", rtn);
 	return (void *)cxt;
 
 EXIT:
@@ -335,7 +335,7 @@ EXIT:
 		cxt = NULL;
 	}
 
-	ISP_LOGI(":ISP:done rtn = %d", rtn);
+	ISP_LOGI("done rtn = %d", rtn);
 
 	return NULL;
 }
@@ -368,7 +368,7 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
-	ISP_LOGI(":ISP:done rtn = %d", rtn);
+	ISP_LOGI("done rtn = %d", rtn);
 
 	return rtn;
 }
@@ -493,7 +493,7 @@ exit:
 	} else {
 		*handle_lsc = (cmr_handle) cxt_ptr;
 	}
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
@@ -529,7 +529,7 @@ exit:
 		*handle_lsc = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 
@@ -568,7 +568,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 	}
 
 exit:
-	ISP_LOGD(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -588,10 +588,10 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGD(":ISP:cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
 
