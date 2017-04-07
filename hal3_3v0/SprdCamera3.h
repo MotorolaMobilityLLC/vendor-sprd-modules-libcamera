@@ -205,6 +205,7 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "afModeMacroFixed",               TYPE_BYTE},
     { "VcmValue",				TYPE_INT32 },
     { "OtpValue",			TYPE_BYTE },
+    { "sprdDualOtpFlag",			TYPE_BYTE },
     { "srpd3dCalibrationEnable",               TYPE_BYTE },
     { "srpd3dCalibrationSize",                 TYPE_INT32 },
     { "sprdBurstModeEnabled",           TYPE_BYTE },

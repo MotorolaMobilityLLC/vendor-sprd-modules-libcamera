@@ -181,6 +181,7 @@ static tags_info_t
         {"afModeMacroFixed", TYPE_BYTE},
         {"VcmValue", TYPE_INT32},
         {"OtpValue", TYPE_BYTE},
+        {"sprdDualOtpFlag", TYPE_BYTE},
         {"srpd3dCalibrationEnable", TYPE_BYTE},
         {"srpd3dCalibrationSize", TYPE_INT32},
         {"sprdBurstModeEnabled", TYPE_BYTE},

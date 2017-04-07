@@ -400,6 +400,7 @@ typedef struct {
 
  typedef struct {
 	uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
+	uint8_t dual_otp_flag;
 } OTP_Tag;
 
 typedef struct {
