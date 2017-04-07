@@ -4,9 +4,9 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x78,
+	0x50,
 	/*hv_edge_thr*/
-	0x28,
+	0x1A,
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
@@ -193,7 +193,7 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x78,
+	0x64,
 	/*hv_edge_thr*/
 	0x28,
 	/*hv_flat_thr*/
