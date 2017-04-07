@@ -16,11 +16,8 @@
 #define LOG_TAG "awb_ctrl"
 
 #include "awb_ctrl.h"
-#include "lib_ctrl.h"
 #include "isp_adpt.h"
-#include "isp_pm.h"
-#include "ae_ctrl.h"
-#include "isp_otp_calibration.h"
+#include "cmr_common.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 
@@ -33,7 +30,6 @@ struct awbctrl_work_lib {
 struct awbctrl_cxt {
 	cmr_handle thr_handle;
 	struct awbctrl_work_lib work_lib;
-	//void *ioctrl_out;
 };
 
 /*************************************EXTERNAL FUNCTION ***************************************/

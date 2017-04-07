@@ -213,10 +213,7 @@ cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue * queue)
 	if (size < 2)
 		return 0;
 
-	//index = queue->cur_index;
-
 	delta = ABS((cmr_s32) q[size - 1] - (cmr_s32) q[size - 2]);
-	//delta_abs = ABS(delta);
 
 	return delta;
 }
@@ -283,7 +280,6 @@ cmr_u32 _calc_weighted_average(struct awbl_cyc_queue * queue_value, struct awbl_
 	}
 
 	for (i = 0; i < size_v; i++) {
-		//AWB_LOGI("gid: [%d]: value=%d, weight=%d", i, qv[i], qw[i]);
 		sum += qv[i] * qw[i];
 		weight_sum += qw[i];
 	}

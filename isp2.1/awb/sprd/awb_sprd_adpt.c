@@ -20,9 +20,6 @@
 #include "awb_sprd_adpt.h"
 #include "awb.h"
 #include "isp_adpt.h"
-//#include "awb_packet.h"
-#include "isp_com.h"
-#include "ae_misc.h"
 #include "dlfcn.h"
 #include <cutils/properties.h>
 
@@ -40,8 +37,6 @@
 #define AWB_CTRL_MWB_NUM		20
 #define AWB_CTRL_SCENEMODE_NUM	10
 #define AWBV_WEIGHT_UNIT 256
-
-//#define     UNUSED(param)  (void)(param)
 
 #define AWB_CTRL_TRUE			1
 #define AWB_CTRL_FALSE			0
@@ -449,7 +444,6 @@ static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	cxt->recover_mode = cxt->wb_mode;
 	cxt->recover_ct = cxt->cur_ct;
 
-	//cxt->flash_info.flash_mode = AWB_CTRL_FLASH_PRE;
 	ISP_LOGV("pre flashing mode = %d", cxt->flash_info.flash_mode);
 
 	ISP_LOGV("FLASH_TAG: awb flash recover gain = (%d, %d, %d), recover mode = %d", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_mode);
@@ -548,8 +542,6 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	cxt->cur_gain.b = awb_gain.b;
 	cxt->cur_ct = cxt->recover_ct;
 	cxt->wb_mode = cxt->recover_mode;
-
-	//cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
 
 	ISP_LOGV("after flashing mode = %d", cxt->flash_info.flash_mode);
 
@@ -806,7 +798,6 @@ static cmr_u32 awb_get_debug_info(struct awb_ctrl_cxt *cxt, void *result)
 	param->random_r = cxt->otp_info.rdm_stat_info.r;
 	param->random_g = cxt->otp_info.rdm_stat_info.g;
 	param->random_b = cxt->otp_info.rdm_stat_info.b;
-	//cur_bv & cur_iso were worked out before enter this function
 	return rtn;
 }
 
@@ -829,7 +820,6 @@ static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *re
 	emParam->random_r = cxt->otp_info.rdm_stat_info.r;
 	emParam->random_g = cxt->otp_info.rdm_stat_info.g;
 	emParam->random_b = cxt->otp_info.rdm_stat_info.b;
-	//cur_bv & cur_iso were worked out before enter this function
 	return rtn;
 }
 
@@ -1266,13 +1256,11 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_M");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_MAIN;
-		//rtn = _awb_set_recgain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_P:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_P");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_PRE;
-		//rtn = _awb_set_recgain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_CLOSE:

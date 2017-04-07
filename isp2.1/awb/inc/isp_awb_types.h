@@ -45,9 +45,6 @@ extern "C" {
 #define AWB_MAX_INSTANCE_NUM			4
 #define AWB_MAX_PIECEWISE_NUM			16
 
-#define ISP_AWB_LOG
-//#define ISP_LOG
-
 #define AWB_TRUE	1
 #define AWB_FALSE	0
 /*------------------------------------------------------------------------------*
