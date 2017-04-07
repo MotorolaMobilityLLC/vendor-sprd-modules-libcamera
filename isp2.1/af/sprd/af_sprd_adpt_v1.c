@@ -1150,6 +1150,7 @@ static void calc_default_roi(af_ctrl_t * af)
 
 	cmr_u32 w = hw->width;
 	cmr_u32 h = hw->height;
+	cmr_u16 ratio = 0;
 
 	switch (af->state) {
 	case STATE_FAF:
@@ -1161,11 +1162,12 @@ static void calc_default_roi(af_ctrl_t * af)
 		break;
 	case STATE_FULLSCAN:
 		/* for bokeh center w/5*4 h/5*4 */
+		ratio = af->bokeh_param.boundary_ratio;
 		roi->num = 1;
-		roi->win[0].start_x = (((w >> 1) - (w * 4 / 10)) >> 1) << 1;	// make sure coordinations are even
-		roi->win[0].start_y = (((h >> 1) - (h * 4 / 10)) >> 1) << 1;
-		roi->win[0].end_x = (((w >> 1) + (w * 4 / 10)) >> 1) << 1;
-		roi->win[0].end_y = (((h >> 1) + (h * 4 / 10)) >> 1) << 1;
+		roi->win[0].start_x = (((w >> 1) - (w * (ratio>>1) / 10)) >> 1) << 1;	// make sure coordinations are even
+		roi->win[0].start_y = (((h >> 1) - (h * (ratio>>1) / 10)) >> 1) << 1;
+		roi->win[0].end_x = (((w >> 1) + (w * (ratio>>1) / 10)) >> 1) << 1;
+		roi->win[0].end_y = (((h >> 1) + (h * (ratio>>1) / 10)) >> 1) << 1;
 		break;
 	default:
 		roi->num = 1;
@@ -1265,8 +1267,8 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 				roi->win[i].end_x = (roi->win[i].end_x >> 1) << 1;
 				roi->win[i].end_y = (roi->win[i].end_y >> 1) << 1;
 			}
-			roi->win[0].start_x = roi->win[0].start_x;
-			roi->win[0].start_y = roi->win[0].start_y;
+			//roi->win[0].start_x = roi->win[0].start_x;
+			//roi->win[0].start_y = roi->win[0].start_y;
 			roi->win[0].end_x = 1.0 * (af->win_config->win_pos[0].end_x - af->win_config->win_pos[0].start_x) / hw->width * taf_w + roi->win[0].start_x;
 			roi->win[0].end_y = 1.0 * (af->win_config->win_pos[0].end_y - af->win_config->win_pos[0].start_y) / hw->height * taf_h + roi->win[0].start_y;
 
@@ -2604,6 +2606,50 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 			ISP_LOGV("adb AF OPT succeed (INFI MACRO)=(%d %d)", af->fv.AF_OTP.INF, af->fv.AF_OTP.MACRO);
 		}
 	}
+
+	{// for Bokeh
+		char *bokeh_tuning_path = "/data/misc/cameraserver/bokeh_tuning.bin";
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+		if (0 == access(bokeh_tuning_path, R_OK)) {     //read request successs
+			cmr_u32 len = 0;
+			fp = NULL;
+			fp = fopen(bokeh_tuning_path, "rb");
+			if (NULL == fp) {
+				goto BOKEH_DEFAULT;
+			}
+
+			fseek(fp, 0, SEEK_END);
+			len = ftell(fp);
+			if (sizeof(af->bokeh_param) != len) {
+				ISP_LOGD("bokeh_param.bin len dismatch with bokeh_param len %d", sizeof(af->bokeh_param));
+				fclose(fp);
+				goto BOKEH_DEFAULT;
+			}
+
+			fseek(fp, 0, SEEK_SET);
+			len = fread(&af->bokeh_param, 1, len, fp);
+			if (len != sizeof(af->bokeh_param)) {
+				ISP_LOGD("read bokeh_param.bin size error");
+				fclose(fp);
+				goto BOKEH_DEFAULT;
+			}
+			fclose(fp);
+		}else{
+		BOKEH_DEFAULT:
+			if (NULL!=isp_ctx->otp_data && isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali){
+				af->bokeh_param.vcm_dac_low_bound = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
+				af->bokeh_param.vcm_dac_up_bound = isp_ctx->otp_data->single_otp.af_info.macro_cali;
+			}else{
+				af->bokeh_param.vcm_dac_low_bound =af->fv.AF_OTP.INF;
+				af->bokeh_param.vcm_dac_up_bound = af->fv.AF_OTP.MACRO;
+			}
+			af->bokeh_param.boundary_ratio = BOKEH_BOUNDARY_RATIO;
+			af->bokeh_param.from_pos = BOKEH_SCAN_FROM;
+			af->bokeh_param.to_pos = BOKEH_SCAN_TO;
+			af->bokeh_param.move_step= BOKEH_SCAN_STEP;
+		}
+	}
 	ISP_LOGV("E");
 	return 0;
 }
@@ -3067,8 +3113,8 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 	char *p1 = NULL;
 	char *p2 = NULL;
 	char *string = NULL;
-	uint32_t len = 0;
-	uint8 num = 0;
+	cmr_u32 len = 0;
+	cmr_u8 num = 0;
 	roi_info_t *r = &af->roi;
 	FILE *fp = NULL;
 	UNUSED(test_param);
@@ -3999,7 +4045,10 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 				memset(&aft_in,0,sizeof(AF_Trigger_Data));
 				aft_in.AFT_mode = af->algo_mode;
 				aft_in.bisTrigger = AF_TRIGGER;
-				aft_in.AF_Trigger_Type = (1==af->defocus)? DEFOCUS : RF_NORMAL;
+				aft_in.AF_Trigger_Type = DEFOCUS;
+				aft_in.defocus_param.scan_from = af->bokeh_param.from_pos;
+				aft_in.defocus_param.scan_to = af->bokeh_param.to_pos;
+				aft_in.defocus_param.per_steps = af->bokeh_param.move_step;
 				AF_Trigger(&af->fv, &aft_in);
 				do_start_af(af);
 				break;
@@ -4326,16 +4375,11 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 				af_fullscan_info->row_num = 3;
 				af_fullscan_info->column_num = 3;
 				af_fullscan_info->win_peak_pos = af->win_peak_pos;
+				af_fullscan_info->vcm_dac_low_bound = af->bokeh_param.vcm_dac_low_bound;
+				af_fullscan_info->vcm_dac_up_bound = af->bokeh_param.vcm_dac_up_bound;
+				af_fullscan_info->boundary_ratio = af->bokeh_param.boundary_ratio;
 			}
-			if (isp_ctx->otp_data) {
-				if (isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali) {
-					af_fullscan_info->vcm_dac_low_bound = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
-					af_fullscan_info->vcm_dac_up_bound = isp_ctx->otp_data->single_otp.af_info.macro_cali;
-				}
-			} else {
-				af_fullscan_info->vcm_dac_low_bound = 0;
-				af_fullscan_info->vcm_dac_up_bound = 1023;
-			}
+
 			break;
 		}
 	default:

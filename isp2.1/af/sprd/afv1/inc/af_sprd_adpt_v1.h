@@ -53,7 +53,10 @@
 #define AF_WAIT_CAF_FINISH     0
 #define AF_RING_BUFFER         0
 #define AF_SYS_VERSION "-20170225-02"
-
+#define BOKEH_BOUNDARY_RATIO 8//based on 10
+#define BOKEH_SCAN_FROM 200//limited in [0,1023]
+#define BOKEH_SCAN_TO 900//limited in [0,1023]
+#define BOKEH_SCAN_STEP 20//at least 20
 /*------------------------------------------------------------------------------*
 *					Data Structures				*
 *-------------------------------------------------------------------------------*/
@@ -287,6 +290,15 @@ typedef struct _af_fv_info {
 	uint64 af_fv1[10];	//[10]:10 ROI, sum of FV1
 } af_fv;
 
+typedef struct _Bokeh_tuning_param{
+	cmr_u16 from_pos;
+	cmr_u16 to_pos;
+	cmr_u16 move_step;
+	cmr_u16 vcm_dac_up_bound;
+	cmr_u16 vcm_dac_low_bound;
+	cmr_u16 boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
+}Bokeh_tuning_param;
+
 typedef struct _af_ctrl {
 	char af_version[40];
 	enum af_state state;
@@ -359,6 +371,8 @@ typedef struct _af_ctrl {
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
+	//for Bokeh
+	Bokeh_tuning_param bokeh_param;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);

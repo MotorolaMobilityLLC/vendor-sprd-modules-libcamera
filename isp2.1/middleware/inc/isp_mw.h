@@ -479,7 +479,7 @@ struct isp_af_fullscan_info {
 	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
-	//cmr_u16 boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
+	cmr_u16 boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
 	/* The configuration for the af scanning */
 	//cmr_u8 valid_depth_clip; /* The up bound of valid_depth */ /* For Tuning */
 	//cmr_u8 method; /* The depth method. (Resaved) */ /* For Tuning */
