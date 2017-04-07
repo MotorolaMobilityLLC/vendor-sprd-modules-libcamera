@@ -15,9 +15,7 @@
  */
 #define LOG_TAG "af_sprd_adpt_v1"
 
-//#include<time.h>
 #include <assert.h>
-#include <stdlib.h>
 #include <cutils/properties.h>
 
 #include "af_ctrl.h"

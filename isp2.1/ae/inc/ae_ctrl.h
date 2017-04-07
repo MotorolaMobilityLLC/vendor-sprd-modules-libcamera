@@ -19,13 +19,10 @@
 /*----------------------------------------------------------------------------*
  **				 Dependencies				*
  **---------------------------------------------------------------------------*/
-#include "isp_com.h"
-#include "ae_ctrl_types.h"
+#include "3a_common.h"
 #include "isp_pm.h"
-#include "isp_drv.h"
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
-#include "awb_ctrl.h"
 #include "isp_otp_calibration.h"
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
@@ -74,27 +71,6 @@ struct ae_calc_in {
 	cmr_u32 sec;
 	cmr_u32 usec;
 	struct isp_sensor_fps_info sensor_fps;
-};
-
-struct ae_calc_out {
-	cmr_u32 cur_lum;
-	cmr_u32 cur_index;
-	cmr_u32 cur_ev;
-	cmr_u32 cur_exp_line;
-	cmr_u32 cur_dummy;
-	cmr_u32 cur_again;
-	cmr_u32 cur_dgain;
-	cmr_u32 cur_iso;
-	cmr_u32 is_stab;
-	cmr_u32 line_time;
-	cmr_u32 frame_line;
-	cmr_u32 target_lum;
-//dy
-	cmr_u32 flag;
-	float *ae_data;
-	cmr_s32 ae_data_size;
-
-	struct tg_ae_ctrl_alc_log log_ae;
 };
 
 struct ae_ctrl_param_out {

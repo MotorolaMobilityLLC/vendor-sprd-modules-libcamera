@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 #define LOG_TAG "af_ctrl"
-#include "isp_com.h"
-#include "isp_pm.h"
+
 #include "lib_ctrl.h"
-//#include "awb_al_ctrl.h"
-#include "awb_sprd_adpt.h"
-#include "ae_ctrl.h"
 #include "af_ctrl.h"
-#include "isp_app.h"
-#include "cmr_msg.h"
-#include "isp_type.h"
-#include "isp_drv.h"
-#include "isp_adpt.h"
 
 #define ISP_CALLBACK_EVT 0x00040000
 #define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\

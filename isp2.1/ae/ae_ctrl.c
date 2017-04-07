@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #define LOG_TAG "ae_ctrl"
+
 #include "ae_ctrl.h"
 
 #define AECTRL_EVT_BASE            0x2000

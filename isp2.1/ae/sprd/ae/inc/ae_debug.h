@@ -27,7 +27,6 @@
 #include "stdint.h"
 #else
 #include <utils/Log.h>
-//#include <sys/types.h>
 #include "ae_types.h"
 #endif
 #endif

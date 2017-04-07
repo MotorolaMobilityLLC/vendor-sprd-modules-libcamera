@@ -17,16 +17,8 @@
 #define _SPRD_AF_CTRL_V1_H
 
 #include <utils/Timers.h>
-#include <pthread.h>
 
-#include "ae_ctrl_types.h"
-#include "lsc_adv.h"
-#include "ae_ctrl.h"
-
-#include "isp_type.h"
-#include "isp_com.h"
-#include "isp_drv.h"
-#include "isp_pm.h"
+#include "3a_common.h"
 #include "isp_dev_access.h"
 
 #include "AFv1_Common.h"

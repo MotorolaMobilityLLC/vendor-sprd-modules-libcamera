@@ -20,6 +20,7 @@
 *-------------------------------------------------------------------------------*/
 #include "isp_awb_types.h"
 #include "isp_com.h"
+#include "3a_common.h"
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
@@ -138,12 +139,6 @@ struct awb_ctrl_pos {
 	cmr_s16 y;
 };
 
-struct awb_ctrl_gain {
-	cmr_u32 r;
-	cmr_u32 g;
-	cmr_u32 b;
-};
-
 struct awb_ctrl_range {
 	cmr_s16 min;
 	cmr_s16 max;
@@ -248,30 +243,6 @@ struct awb_ctrl_calc_param {
 	// just for simulation
 	cmr_s32 matrix[9];
 	cmr_u8 gamma[256];
-};
-
-struct tg_awb_ctrl_alc_log {
-	cmr_u8 *log;
-	cmr_u32 size;
-} log_awb, log_lsc;
-
-struct awb_ctrl_calc_result {
-	struct awb_ctrl_gain gain;
-	cmr_u32 ct;
-	cmr_u32 use_ccm;
-	cmr_u16 ccm[9];
-//ALC_S 20150519
-	cmr_u32 use_lsc;
-	cmr_u16 *lsc;
-//ALC_S 20150519
-	cmr_u32 lsc_size;
-/*ALC_S*/
-	struct tg_awb_ctrl_alc_log log_awb;
-	struct tg_awb_ctrl_alc_log log_lsc;
-/*ALC_E*/
-
-	cmr_s32 pg_flag;
-	cmr_s32 green100;
 };
 
 struct awb_ctrl_lock_info {
