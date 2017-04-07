@@ -1,17 +1,24 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ *******************************************************************************
+ * $Header$
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright (c) 2016-2025 Spreadtrum Inc. All rights reserved.
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  +-----------------------------------------------------------------+
+ *  | THIS SOFTWARE IS FURNISHED UNDER A LICENSE AND MAY ONLY BE USED |
+ *  | AND COPIED IN ACCORDANCE WITH THE TERMS AND CONDITIONS OF SUCH  |
+ *  | A LICENSE AND WITH THE INCLUSION OF THE THIS COPY RIGHT NOTICE. |
+ *  | THIS SOFTWARE OR ANY OTHER COPIES OF THIS SOFTWARE MAY NOT BE   |
+ *  | PROVIDED OR OTHERWISE MADE AVAILABLE TO ANY OTHER PERSON. THE   |
+ *  | OWNERSHIP AND TITLE OF THIS SOFTWARE IS NOT TRANSFERRED.        |
+ *  |                                                                 |
+ *  | THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT   |
+ *  | ANY PRIOR NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY |
+ *  | SPREADTRUM INC.                                                 |
+ *  +-----------------------------------------------------------------+
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *
+ *******************************************************************************
  */
 
 #ifndef _AFT_INTERFACE_H_
@@ -19,8 +26,7 @@
 /*------------------------------------------------------------------------------*
 *					Dependencies				*
 *-------------------------------------------------------------------------------*/
-//#include <sys/types.h>
-//#include "cmr_type.h"
+#include "cmr_types.h"
 
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*
@@ -35,13 +41,6 @@ extern "C" {
 #define AFT_INVALID_HANDLE NULL
 #define MAX_AF_FILTER_CNT 10
 #define MAX_AF_WIN 32
-
-#ifdef WIN32
-typedef __int64 cmr_s64;
-typedef unsigned __int64 cmr_u64;
-#else
-#include <sys/types.h>
-#endif
 
 enum aft_posture_type {
 	AFT_POSTURE_ACCELEROMETER,
@@ -146,7 +145,7 @@ struct aft_ae_info {
 	cmr_u32 bv;
 	cmr_u32 y_sum;
 	cmr_u32 cur_scene;
-	cmr_u32 registor_pos;	//gwb
+	cmr_u32 registor_pos;
 };
 
 struct aft_sensor_info {
@@ -173,7 +172,6 @@ struct aft_caf_blk_info {
 
 struct aft_proc_result {
 	cmr_u32 is_caf_trig;
-	cmr_u32 is_caf_trig_in_taf;
 	cmr_u32 is_need_rough_search;
 	cmr_u32 is_cancel_caf;
 };
