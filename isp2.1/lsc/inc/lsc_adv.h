@@ -30,7 +30,7 @@ extern "C" {
 /**---------------------------------------------------------------------------*
 **				Micro Define				**
 **----------------------------------------------------------------------------*/
-#define LSC_ADV_DEBUG_STR       "LSC_ADV: L %d, %s: "
+#define LSC_ADV_DEBUG_STR       "[ALSC]: L %d, %s: "
 #define LSC_ADV_DEBUG_ARGS    __LINE__,__FUNCTION__
 
 #define LSC_ADV_LOGE(format,...) ALOGE(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
@@ -309,10 +309,22 @@ struct lsc2_tune_param {	// if modified, please contact to TOOL team
 	cmr_s32 strength;
 
 	// alsc2_param
-	cmr_u32 lambda_r;	// need to add lambda_r , lambda_b and change type to cmr_u32
-	cmr_u32 lambda_b;	// need to add lambda_r , lambda_b and change type to cmr_u32
-	cmr_u32 weight_r;	// need to add weight_r , weight_b and change type to cmr_u32
-	cmr_u32 weight_b;	// need to add weight_r , weight_b and change type to cmr_u32
+	cmr_u32 lambda_r;
+	cmr_u32 lambda_b;
+	cmr_u32 weight_r;
+	cmr_u32 weight_b;
+
+	// post_gain
+	cmr_u32 bv2gainw_en;
+	cmr_u32 bv2gainw_p_bv[6];
+	cmr_u32 bv2gainw_b_gainw[6];
+	cmr_u32 bv2gainw_adjust_threshold;
+
+	// flash_gain
+	cmr_u32 flash_enhance_en;
+	cmr_u32 flash_enhance_max_strength;
+	cmr_u32 flash_enahnce_gain;
+
 };
 
 struct lsc2_context {
@@ -336,6 +348,7 @@ struct lsc2_context {
 	void *alsc1_param;
 	void *alsc2_param;
 	void *lsc1d_param;
+	void* post_shading_gain_param;
 
 	// tmp storage
 	cmr_u16 *color_gain_r;
