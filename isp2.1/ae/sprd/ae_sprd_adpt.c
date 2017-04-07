@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "ae_sprd_ctrl_v2"
+#define LOG_TAG "ae_sprd_adpt"
 #include "ae_sprd_adpt.h"
 #include "ae_misc.h"
 #include "ae_debug.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "awb_sprd_ctrl"
+#define LOG_TAG "awb_sprd_adpt"
 
 #include "awb_ctrl.h"
 #include "awb_sprd_adpt.h"
