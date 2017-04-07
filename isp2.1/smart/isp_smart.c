@@ -132,7 +132,7 @@ static cmr_s32 _check_handle_validate(isp_smart_handle_t handle)
 	struct isp_smart_alg_context *cxt_ptr = (struct isp_smart_alg_context *)handle;
 
 	if (ISP_SMART_ALG_MAGIC_FLAG != cxt_ptr->magic_flag) {
-		ISP_LOGE("handle is invalidated\n");
+		ISP_LOGE("fail to get valid handle\n");
 		ret = ISP_ERROR;
 	}
 
@@ -145,13 +145,13 @@ isp_smart_handle_t isp_smart_init(void *in_ptr, void *out_ptr)
 	struct isp_smart_alg_context *alg_cxt_ptr = NULL;
 
 	if (NULL == in_ptr) {
-		ISP_LOGE("isp_smart_init: input pointer is invalidated\n");
+		ISP_LOGE("fail to get valid input pointer\n");
 		goto _smart_init_error_exit;
 	}
 
 	alg_cxt_ptr = (struct isp_smart_alg_context *)malloc(sizeof(struct isp_smart_alg_context));
 	if (NULL == alg_cxt_ptr) {
-		ISP_LOGE("isp_smart_init: malloc0 failed\n");
+		ISP_LOGE("fail to malloc0\n");
 		goto _smart_init_error_exit;
 	}
 
@@ -173,7 +173,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 /*
 	rtn = _check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("isp smart deinit: check handle faild, rtn= %d\n", rtn);
+		ISP_LOGE("fail to get valid handle, rtn %d\n", rtn);
 		rtn = ISP_ERROR;
 		goto _smart_calc_error_exit;
 	}
@@ -181,7 +181,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 	if ((NULL == cur_func)
 	    || (NULL == smart_cur_info_in)
 	    || (NULL == smart_calc_param_out)) {
-		ISP_LOGE("input param pointer is NULL: func:%p, input:%p, output:%p\n", cur_func, smart_cur_info_in, smart_calc_param_out);
+		ISP_LOGE("fail to get valid input pointer, func:%p, input:%p, output:%p\n", cur_func, smart_cur_info_in, smart_calc_param_out);
 
 		rtn = ISP_ERROR;
 		goto _smart_calc_error_exit;
@@ -238,7 +238,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 		break;
 
 	default:
-		ISP_LOGE("func type is invalidated, func type: 0x%x\n", inter_func_type);
+		ISP_LOGE("fail to get func type: 0x%x\n", inter_func_type);
 		break;
 	}
 
@@ -256,7 +256,7 @@ cmr_s32 isp_smart_deinit(isp_smart_handle_t handle)
 
 	rtn = _check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("isp smart deinit: check handle faild, rtn= %d\n", rtn);
+		ISP_LOGE("fail to deinit smart, rtn %d\n", rtn);
 		return ISP_ERROR;
 	}
 

@@ -106,12 +106,12 @@ static cmr_s32 check_handle_validate(smart_handle_t handle)
 	struct smart_context *cxt_ptr = (struct smart_context *)handle;
 
 	if (NULL == handle) {
-		ISP_LOGE("handle is invalidated\n");
+		ISP_LOGE("fail to get valid handle\n");
 		return ISP_ERROR;
 	}
 
 	if (ISP_SMART_MAGIC_FLAG != cxt_ptr->magic_flag) {
-		ISP_LOGE("handle is invalidated\n");
+		ISP_LOGE("fail to get valid magic\n");
 		return ISP_ERROR;
 	}
 
@@ -138,14 +138,14 @@ static cmr_s32 smart_ctl_set_flash(struct smart_context *cxt, void *in_param)
 	enum smart_ctrl_flash_mode flash_mode = 0x0;
 
 	if (NULL == in_param) {
-		ISP_LOGE("invalid in param!");
+		ISP_LOGE("fail to get valid in param");
 		return ISP_ERROR;
 	}
 
 	flash_mode = *(enum smart_ctrl_flash_mode *)in_param;
 
 	if (flash_mode >= SMART_CTRL_FLASH_END) {
-		ISP_LOGE("invalid flash mode!");
+		ISP_LOGE("fail to get valid flash mode");
 		return ISP_ERROR;
 	}
 	cxt->flash_mode = flash_mode;
@@ -167,13 +167,13 @@ static cmr_s32 smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 		comp_cfg = &blk_cfg->component[i];
 
 		if (blk_cfg->smart_id >= ISP_SMART_MAX) {
-			ISP_LOGI("block[%d]: smart_id is invalid.\n", i);
+			ISP_LOGV("block[%d]: smart_id is invalid.\n", i);
 			rtn = ISP_ERROR;
 			return rtn;
 		}
 
 		if (blk_cfg->block_id >= ISP_BLK_ID_MAX) {
-			ISP_LOGI("block[%d]: block_id is invalid.\n", i);
+			ISP_LOGV("block[%d]: block_id is invalid.\n", i);
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -189,7 +189,7 @@ static cmr_s32 smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 			}
 
 			if ((k < comp_cfg->section_num - 1) && (bv_range->max > comp_cfg->bv_range[k + 1].min)) {
-				ISP_LOGI("section[%d]: bv_range.max=%d, section[%d]: bv_range.min=%d, bv_range is invalid.",
+				ISP_LOGV("section[%d]: bv_range.max=%d, section[%d]: bv_range.min=%d, bv_range is invalid.",
 					 k, bv_range->max, k + 1, comp_cfg->bv_range[k + 1].min);
 				rtn = ISP_ERROR;
 				return rtn;
@@ -214,19 +214,19 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 	if (0 == is_print_log())
 		return rtn;
 
-	ISP_LOGI("block_num:%d.", param->block_num);
+	ISP_LOGV("block_num:%d.", param->block_num);
 
 	for (i = 0; i < param->block_num; i++) {
 		blk_cfg = &param->block[i];
 
-		ISP_LOGI("block[%d], smart id=%x, block id=%x, enable=%d, comp num=%d", i, blk_cfg->smart_id, blk_cfg->block_id, blk_cfg->enable, blk_cfg->component_num);
+		ISP_LOGV("block[%d], smart id=%x, block id=%x, enable=%d, comp num=%d", i, blk_cfg->smart_id, blk_cfg->block_id, blk_cfg->enable, blk_cfg->component_num);
 
 		if (blk_cfg->smart_id > ISP_SMART_MAX) {
-			ISP_LOGI("block[%d]: smart_id is invalid.\n", i);
+			ISP_LOGV("block[%d]: smart_id is invalid.\n", i);
 		}
 
 		if (blk_cfg->block_id > ISP_BLK_ID_MAX) {
-			ISP_LOGI("block[%d]: block_id is invalid.\n", i);
+			ISP_LOGV("block[%d]: block_id is invalid.\n", i);
 		}
 
 		for (j = 0; j < blk_cfg->component_num; j++) {
@@ -235,39 +235,39 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 
 			comp_cfg = &blk_cfg->component[j];
 
-			ISP_LOGI(" component[%d], section num=%d", j, comp_cfg->section_num);
+			ISP_LOGV("component[%d], section num=%d", j, comp_cfg->section_num);
 
 			if (ISP_SMART_X_TYPE_BV == comp_cfg->x_type) {
-				ISP_LOGI(" x_type: bv");
+				ISP_LOGV("x_type: bv");
 			} else if (ISP_SMART_X_TYPE_BV_GAIN == comp_cfg->x_type) {
-				ISP_LOGI(" x_type: bv gain");
+				ISP_LOGV("x_type: bv gain");
 			} else if (ISP_SMART_X_TYPE_CT == comp_cfg->x_type) {
-				ISP_LOGI(" x_type: ct");
+				ISP_LOGV("x_type: ct");
 			} else if (ISP_SMART_X_TYPE_BV_CT == comp_cfg->x_type) {
-				ISP_LOGI(" x_type: bv ct");
+				ISP_LOGV("x_type: bv ct");
 			}
 
 			if (ISP_SMART_Y_TYPE_VALUE == comp_cfg->y_type) {
-				ISP_LOGI(" y_type: value");
+				ISP_LOGV("y_type: value");
 			} else if (ISP_SMART_Y_TYPE_WEIGHT_VALUE == comp_cfg->y_type) {
-				ISP_LOGI(" y_type: weight value");
+				ISP_LOGV("y_type: weight value");
 			}
 
-			ISP_LOGI(" use_flash_value = %d", comp_cfg->use_flash_val);
-			ISP_LOGI(" flash_value = %d", comp_cfg->flash_val);
+			ISP_LOGV("use_flash_value = %d", comp_cfg->use_flash_val);
+			ISP_LOGV("flash_value = %d", comp_cfg->flash_val);
 
 			for (k = 0; k < comp_cfg->section_num; k++) {
 				func = &comp_cfg->func[k];
 				bv_range = &comp_cfg->bv_range[k];
 
-				ISP_LOGI("  section[%d], bv=[%d, %d], func num=%d", k, comp_cfg->bv_range[k].min, comp_cfg->bv_range[k].max, func->num);
+				ISP_LOGV("section[%d], bv=[%d, %d], func num=%d", k, comp_cfg->bv_range[k].min, comp_cfg->bv_range[k].max, func->num);
 
 				if (bv_range->min > bv_range->max) {
-					ISP_LOGI("  section[%d]: bv_range is invalid.\n", k);
+					ISP_LOGV("section[%d]: bv_range is invalid.\n", k);
 				}
 
 				if ((k + 1 < comp_cfg->section_num) && (bv_range->max > comp_cfg->bv_range[k + 1].min)) {
-					ISP_LOGI("  section[%d]: bv_range.max=%d, section[%d]: bv_range.min=%d, bv_range is invalid.",
+					ISP_LOGV("section[%d]: bv_range.max=%d, section[%d]: bv_range.min=%d, bv_range is invalid.",
 						 k, bv_range->max, k + 1, comp_cfg->bv_range[k + 1].min);
 				}
 
@@ -275,9 +275,9 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 
 			if (0 == comp_cfg->section_num) {
 				func = &comp_cfg->func[0];
-				ISP_LOGI("func num=%d", func->num);
+				ISP_LOGV("func num=%d", func->num);
 				for (m = 0; m < func->num; m++) {
-					ISP_LOGI("    [%d]=(%4d, %4d)", m, func->samples[m].x, func->samples[m].y);
+					ISP_LOGV("[%d]=(%4d, %4d)", m, func->samples[m].x, func->samples[m].y);
 				}
 			}
 		}
@@ -315,7 +315,7 @@ static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_pa
 	struct smart_init_param *param = NULL;
 
 	if (NULL == in_param) {
-		ISP_LOGE("input param is validated, in: %p\n", param);
+		ISP_LOGE("fail to get valid input param, in: %p\n", param);
 		goto ERROR_EXIT;
 	}
 
@@ -323,7 +323,7 @@ static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_pa
 
 	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, SMART_MAX_WORK_MODE);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("parse tuning param failed: rtn = %d", rtn);
+		ISP_LOGE("fail to parse tuning param, rtn = %d", rtn);
 		goto ERROR_EXIT;
 	}
 
@@ -578,7 +578,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr
 	}
 
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("calc component faile, x type=%d", cfg->x_type);
+		ISP_LOGE("fail to calc component, x type=%d", cfg->x_type);
 		return ISP_ERROR;
 	}
 
@@ -608,7 +608,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr
 			fix_data[2].value[1] = tmp_result[1].value[1];
 
 			if (1 == is_print_log()) {
-				ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data[0].value[0], fix_data[0].value[1], fix_data[0].weight[0], fix_data[0].weight[1]);
+				ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data[0].value[0], fix_data[0].value[1], fix_data[0].weight[0], fix_data[0].weight[1]);
 			}
 		} else {
 			result->size = sizeof(func_result);
@@ -617,7 +617,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr
 			fix_data->value[0] = func_result.value[0];
 			fix_data->value[1] = func_result.value[1];
 			if (1 == is_print_log()) {
-				ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
+				ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
 			}
 		}
 		break;
@@ -643,7 +643,7 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cf
 	case ISP_SMART_Y_TYPE_VALUE:
 		result->size = sizeof(cmr_s32);
 		result->fix_data[0] = cfg->flash_val;
-		ISP_LOGI("value = %d", result->fix_data[0]);
+		ISP_LOGV("value = %d", result->fix_data[0]);
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
@@ -652,7 +652,7 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cf
 		fix_data->weight[1] = 0;
 		fix_data->value[0] = cfg->flash_val;
 		fix_data->value[1] = 0;
-		ISP_LOGI("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
+		ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
 		break;
 
 	default:
@@ -681,19 +681,19 @@ static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, cmr_s32 bv,
 
 	rtn = smart_ctl_check_block_param(cfg);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGV("ISP_TAG: block param check failed.\n");
+		ISP_LOGE("fail to check block param\n");
 		return rtn;
 	}
 	component_num = component_num > ISP_SMART_MAX_VALUE_NUM ? ISP_SMART_MAX_VALUE_NUM : component_num;
 
 	if (1 == is_print_log()) {
-		ISP_LOGI("ISP_TAG: use_flash_val = %d. block_id = %x. smart_id = %x.\n", cfg->component[i].use_flash_val, cfg->block_id, cfg->smart_id);
+		ISP_LOGV("use_flash_val = %d. block_id = %x. smart_id = %x.\n", cfg->component[i].use_flash_val, cfg->block_id, cfg->smart_id);
 	}
 
 	for (i = 0; i < component_num; i++) {
 		if (SMART_CTRL_FLASH_MAIN != flash_mode || 1 != cfg->component[i].use_flash_val) {
 			if (1 == is_print_log()) {
-				ISP_LOGI("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d\n", flash_mode, cfg->component[i].use_flash_val, bv, ct);
+				ISP_LOGV("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d\n", flash_mode, cfg->component[i].use_flash_val, bv, ct);
 			}
 			rtn = smart_ctl_calc_component(&cfg->component[i], bv, bv_gain, ct, &component_result, cfg->smart_id);
 		} else {
@@ -807,13 +807,13 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 	if (0 == is_print_log())
 		return;
 
-	ISP_LOGI("block num = %d", result->counts);
+	ISP_LOGV("block num = %d", result->counts);
 
 	for (i = 0; i < result->counts; i++) {
 		blk = &result->block_result[i];
 		block_name = smart_ctl_find_block_name(blk->smart_id);
 
-		ISP_LOGI("block[%d]: %s, block_id=0x%x, smart_id=%d, update=%d, mode=%d", i, block_name, blk->block_id, blk->smart_id, blk->update, mode);
+		ISP_LOGV("block[%d]: %s, block_id=0x%x, smart_id=%d, update=%d, mode=%d", i, block_name, blk->block_id, blk->smart_id, blk->update, mode);
 
 		if (!blk->update)
 			continue;
@@ -823,21 +823,21 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 
 			switch (comp->y_type) {
 			case ISP_SMART_Y_TYPE_VALUE:
-				ISP_LOGI(" component[%d]: value=%d", j, comp->fix_data[0]);
+				ISP_LOGV("component[%d]: value=%d", j, comp->fix_data[0]);
 				break;
 
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
 
 				if (comp->x_type == ISP_SMART_X_TYPE_BV_CT) {
-					ISP_LOGI("component[%d]: value=(%d, %d), weight=(%d, %d), %d(%d, %d):(%d, %d), %d(%d, %d):(%d, %d)", j,
+					ISP_LOGV("component[%d]: value=(%d, %d), weight=(%d, %d), %d(%d, %d):(%d, %d), %d(%d, %d):(%d, %d)", j,
 						 weight_value[0].value[0], weight_value[0].value[1],
 						 weight_value[0].weight[0], weight_value[0].weight[1],
 						 weight_value[0].value[0], weight_value[1].value[0], weight_value[1].value[1], weight_value[1].weight[0], weight_value[1].weight[1],
 						 weight_value[0].value[1], weight_value[2].value[0], weight_value[2].value[1], weight_value[2].weight[0], weight_value[2].weight[1]
 					    );
 				} else {
-					ISP_LOGI(" component[%d]: value=(%d, %d), weight=(%d, %d)", j,
+					ISP_LOGV("component[%d]: value=(%d, %d), weight=(%d, %d)", j,
 						 weight_value->value[0], weight_value->value[1], weight_value->weight[0], weight_value->weight[1]);
 				}
 				break;
@@ -854,14 +854,14 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	struct smart_context *cxt = NULL;
 
 	if (NULL == param) {
-		ISP_LOGE("fail to check param,input is validated, in: %p, out: %p\n", param, result);
+		ISP_LOGE("fail to check input param, in: %p, out: %p\n", param, result);
 		goto param_failed;
 	}
 
 	/* create isp_smart_context handle. */
 	cxt = (struct smart_context *)malloc(sizeof(struct smart_context));
 	if (NULL == cxt) {
-		ISP_LOGE("fail to  malloc, size: %d\n", sizeof(struct smart_context));
+		ISP_LOGE("fail to malloc, size: %d\n", sizeof(struct smart_context));
 		goto malloc_failed;
 	}
 
@@ -871,7 +871,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, SMART_MAX_WORK_MODE);
 	memcpy(cxt->tuning_param_org, cxt->tuning_param, sizeof(cxt->tuning_param_org));
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to parse tuning param: rtn = %d", rtn);
+		ISP_LOGE("fail to parse tuning param, rtn %d", rtn);
 		goto parse_tuning_failed;
 	}
 
@@ -936,7 +936,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->debug_file = smart_debug_file_init(DEBUG_FILE_NAME, "wt");
 	handle = (smart_handle_t) cxt;
 
-	ISP_LOGI(":ISP:done rtn =%d", rtn);
+	ISP_LOGI("done rtn %d", rtn);
 	return handle;
 
 parse_tuning_failed:
@@ -961,7 +961,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("input handle is invalidate,rtn:%d\n", rtn);
+		ISP_LOGE("fail to get valid input handle, rtn:%d\n", rtn);
 		rtn = ISP_ERROR;
 
 		return rtn;
@@ -1099,7 +1099,7 @@ cmr_s32 smart_ctl_deinit(smart_handle_t * handle, void *param, void *result)
 
 	rtn = check_handle_validate(*handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle, rtn = %d\n", rtn);
+		ISP_LOGE("fail to check handle, rtn  %d\n", rtn);
 		rtn = ISP_ERROR;
 		goto ERROR_EXIT;
 	}
@@ -1116,7 +1116,7 @@ ERROR_EXIT:
 		free((void *)cxt_ptr);
 		*handle = NULL;
 	}
-	ISP_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 
@@ -1128,7 +1128,7 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to  check handle, rtn = %d\n", rtn);
+		ISP_LOGE("fail to check handle, rtn %d\n", rtn);
 		return rtn;
 	}
 
@@ -1149,7 +1149,7 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 		break;
 
 	default:
-		ISP_LOGE("isp_smart_ctl_ioctl:invalid cmd = %d", cmd);
+		ISP_LOGE("fail to get valid cmd %d", cmd);
 		rtn = ISP_ERROR;
 		break;
 	}
@@ -1171,7 +1171,7 @@ cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb)
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGI("input handle is null");
+		ISP_LOGE("fail to get input handle");
 		return ISP_SUCCESS;
 	}
 
@@ -1186,14 +1186,14 @@ cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb)
 	cur_param = cxt->cur_param;
 
 	if (1 == cur_param->bypass) {
-		ISP_LOGI("current paramter is bypass");
+		ISP_LOGV("current paramter is bypass");
 		return ISP_SUCCESS;
 	}
 
 	smart_param = &cur_param->param;
 
 	if (ISP_SMART_MAX < smart_param->block_num) {
-		ISP_LOGI("smart block number error:%d", smart_param->block_num);
+		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
 
@@ -1223,7 +1223,7 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGI("input handle is null");
+		ISP_LOGE("fail to get input handle");
 		return ISP_SUCCESS;
 	}
 
@@ -1240,14 +1240,14 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 	cur_param = cxt->cur_param;
 
 	if (1 == cur_param->bypass) {
-		ISP_LOGI("current paramter is bypass");
+		ISP_LOGV("current paramter is bypass");
 		return ISP_SUCCESS;
 	}
 
 	smart_param = &cur_param->param;
 
 	if (ISP_SMART_MAX < smart_param->block_num) {
-		ISP_LOGI("smart block number error:%d", smart_param->block_num);
+		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
 
@@ -1271,7 +1271,7 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGI("input handle is null");
+		ISP_LOGE("fail to get input handle");
 		return ISP_SUCCESS;
 	}
 
@@ -1286,14 +1286,14 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 	cur_param = cxt->cur_param;
 
 	if (1 == cur_param->bypass) {
-		ISP_LOGI("current paramter is bypass");
+		ISP_LOGV("current paramter is bypass");
 		return ISP_SUCCESS;
 	}
 
 	smart_param = &cur_param->param;
 
 	if (ISP_SMART_MAX < smart_param->block_num) {
-		ISP_LOGI("smart block number error:%d", smart_param->block_num);
+		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
 
@@ -1328,7 +1328,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 	alc_awb = in_ptr->alc_awb;
 	rtn = smart_ctl_calculation(handle_smart, smart_calc_param, &smart_calc_result);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("smart init failed");
+		ISP_LOGE("fail to init smart");
 		return rtn;
 	}
 
@@ -1411,6 +1411,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 	}
 
 exit:
-	ISP_LOGD(":ISP: done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
