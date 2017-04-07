@@ -237,10 +237,10 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGV(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -258,12 +258,12 @@ static cmr_int afctrl_deinit_adpt(struct afctrl_cxt *cxt_ptr)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
+		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
-	ISP_LOGI(":ISP: af_deinit is OK!");
+	ISP_LOGI(" af_deinit is OK!");
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -276,7 +276,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGV(":ISP:message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case AFCTRL_EVT_INIT:
@@ -297,7 +297,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	}
 
 exit:
-	ISP_LOGV(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -311,7 +311,7 @@ static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 		rtn = ISP_ERROR;
 	}
 
-	ISP_LOGI(":ISP:af_ctrl thread rtn %ld", rtn);
+	ISP_LOGI("af_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
 
@@ -334,7 +334,7 @@ static cmr_int afctrl_destroy_thread(struct afctrl_cxt *cxt_ptr)
 		}
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -356,10 +356,10 @@ static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in
 			ret = ISP_ERROR;
 		}
 	} else {
-		ISP_LOGI(":ISP:adpt_init fun is NULL");
+		ISP_LOGI("adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -383,7 +383,7 @@ static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct afctrl_init_i
 
 	rtn = afctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -428,7 +428,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 
 	*handle_af = (cmr_handle) cxt_ptr;
 
-	ISP_LOGI(":ISP: done %ld", rtn);
+	ISP_LOGI(" done %ld", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -478,7 +478,7 @@ exit:
 		*handle_af = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -515,7 +515,7 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 	}
 
 exit:
-	ISP_LOGV(":ISP:done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -534,10 +534,10 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL");
 	}
 
 exit:
-	ISP_LOGV(":ISP:cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 }

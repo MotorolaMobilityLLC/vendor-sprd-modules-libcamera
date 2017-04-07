@@ -55,7 +55,7 @@
 #define AFV1_RETURN_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning); return exp;}}while(0)
 #define AFV1_TRACE_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning);}}while(0)
 
-//#define ISP_LOGD ISP_LOGD
+//#define ISP_LOGV ISP_LOGV
 //#define ISP_LOGE ISP_LOGE
 
 #define AF_WAIT_CAF_FINISH     0
