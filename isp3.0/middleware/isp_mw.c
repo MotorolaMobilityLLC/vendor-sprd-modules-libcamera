@@ -53,6 +53,7 @@ struct isp_mw_pdaf_info {
 
 struct isp_mw_context {
 	cmr_u32 camera_id;
+	cmr_u16 is_refocus;
 	cmr_u32 is_inited;
 	cmr_u32 idx;
 	void    *isp_onebin_addr;
@@ -209,7 +210,6 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 cmr_int ispmw_parse_tuning_onebin_slv(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -220,11 +220,12 @@ cmr_int ispmw_parse_tuning_onebin_slv(cmr_handle isp_mw_handle)
 	cmr_int                                     i = 0;
 
 	for (i = 0; i < ISP_INDEX_MAX; i++) {
-		ret =isp_separate_one_bin(( uint8 *) cxt->isp_onebin_slv_addr,cxt->isp_onebin_slv_size,
-					  i,
-					  &a_bin1_info,
-					  &a_bin2_info,
-					  &a_bin3_info);
+		ret = isp_separate_one_bin((uint8 *)cxt->isp_onebin_slv_addr,
+					   cxt->isp_onebin_slv_size,
+					   i,
+					   &a_bin1_info,
+					   &a_bin2_info,
+					   &a_bin3_info);
 		if (ret) {
 			ISP_LOGE("failed to separate one bin ret=%ld", ret);
 		}
@@ -304,7 +305,6 @@ exit:
 	}
 	return ret;
 }
-#endif
 
 cmr_int ispmw_get_pdaf_cbc_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
 {
@@ -380,13 +380,12 @@ cmr_int ispmw_put_tuning_bin(cmr_handle isp_mw_handle)
 		cxt->isp_onebin_addr = NULL;
 		cxt->isp_onebin_size = 0;
 	}
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	if (cxt->isp_onebin_slv_addr) {
 		free(cxt->isp_onebin_slv_addr);
 		cxt->isp_onebin_slv_addr = NULL;
 		cxt->isp_onebin_slv_size = 0;
 	}
-#endif
+
 	return ret;
 }
 
@@ -413,22 +412,22 @@ cmr_int isp_parse_bin_otp(cmr_handle isp_mw_handle)
 			 cxt->tuning_bin[0].iso_awb_info.gain_g,
 			 cxt->tuning_bin[0].iso_awb_info.gain_b);
 	}
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->tuning_bin_slv[0].isp_dev_bin_info.puc_shading_bin_addr
-		&& cxt->tuning_bin_slv[0].isp_dev_bin_info.uw_shading_bin_size >= (bin_otp_offset + sizeof(struct sensor_otp_iso_awb_info))) {
-		/*for bin otp data: shading addr offset +114*/
-		otp_ptr = (struct sensor_otp_iso_awb_info *)(cxt->tuning_bin_slv[0].isp_dev_bin_info.puc_shading_bin_addr + bin_otp_offset);
-		cxt->tuning_bin_slv[0].iso_awb_info.iso = otp_ptr->iso;
-		cxt->tuning_bin_slv[0].iso_awb_info.gain_r = otp_ptr->gain_r;
-		cxt->tuning_bin_slv[0].iso_awb_info.gain_g = otp_ptr->gain_g;
-		cxt->tuning_bin_slv[0].iso_awb_info.gain_b = otp_ptr->gain_b;
-		ISP_LOGI("bin slv otp data iso=%d, r=%d,g=%d,b=%d",
-			 cxt->tuning_bin_slv[0].iso_awb_info.iso,
-			 cxt->tuning_bin_slv[0].iso_awb_info.gain_r,
-			 cxt->tuning_bin_slv[0].iso_awb_info.gain_g,
-			 cxt->tuning_bin_slv[0].iso_awb_info.gain_b);
+	if (cxt->is_refocus) {
+		if (cxt->tuning_bin_slv[0].isp_dev_bin_info.puc_shading_bin_addr
+		    && cxt->tuning_bin_slv[0].isp_dev_bin_info.uw_shading_bin_size >= (bin_otp_offset + sizeof(struct sensor_otp_iso_awb_info))) {
+			/*for bin otp data: shading addr offset +114*/
+			otp_ptr = (struct sensor_otp_iso_awb_info *)(cxt->tuning_bin_slv[0].isp_dev_bin_info.puc_shading_bin_addr + bin_otp_offset);
+			cxt->tuning_bin_slv[0].iso_awb_info.iso = otp_ptr->iso;
+			cxt->tuning_bin_slv[0].iso_awb_info.gain_r = otp_ptr->gain_r;
+			cxt->tuning_bin_slv[0].iso_awb_info.gain_g = otp_ptr->gain_g;
+			cxt->tuning_bin_slv[0].iso_awb_info.gain_b = otp_ptr->gain_b;
+			ISP_LOGI("bin slv otp data iso=%d, r=%d,g=%d,b=%d",
+				 cxt->tuning_bin_slv[0].iso_awb_info.iso,
+				 cxt->tuning_bin_slv[0].iso_awb_info.gain_r,
+				 cxt->tuning_bin_slv[0].iso_awb_info.gain_g,
+				 cxt->tuning_bin_slv[0].iso_awb_info.gain_b);
+		}
 	}
-#endif
 
 	return ISP_SUCCESS;
 }
@@ -479,7 +478,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	if (ret) {
 		goto exit;
 	}
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+
 	if (input_ptr->is_refocus && (0 == input_ptr->camera_id || 1 == input_ptr->camera_id) && input_ptr->ex_info_slv.name) {
 		ret = ispmw_get_tuning_onebin_slv((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info_slv.name);
 		if (ret) {
@@ -490,11 +489,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 			goto exit;
 		}
 	}
-#endif
 
 	ATRACE_END();
 
 	cxt->camera_id = input_ptr->camera_id;
+	cxt->is_refocus = input_ptr->is_refocus;
 	cxt->caller_handle = input_ptr->oem_handle;
 	cxt->caller_callback = input_ptr->ctrl_callback;
 	cxt->alloc_cb = input_ptr->alloc_cb;
@@ -552,18 +551,19 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.dual_otp= input_ptr->dual_otp;
 	isp3a_input.pdaf_info = input_ptr->pdaf_info;
 	isp3a_input.bin_info[0].otp_data_addr = &cxt->tuning_bin[0].iso_awb_info;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	isp3a_input.is_refocus = input_ptr->is_refocus;
-	isp3a_input.otp_data_slv = input_ptr->otp_data_slv;
-	isp3a_input.bin_info_slv[0].otp_data_addr = &cxt->tuning_bin_slv[0].iso_awb_info;
-	for (i = 0; i < ISP_INDEX_MAX; i++) {
-		//isp3a_input.bin_info_slv[i].ae_addr = cxt->tuning_bin_slv[i].ae_tuning_addr;
-		isp3a_input.bin_info_slv[i].awb_addr = cxt->tuning_bin_slv[i].awb_tuning_addr;
-		//isp3a_input.bin_info_slv[i].af_addr = cxt->tuning_bin_slv[i].af_tuning_addr;
+	if (input_ptr->is_refocus) {
+		isp3a_input.is_refocus = input_ptr->is_refocus;
+		isp3a_input.otp_data_slv = input_ptr->otp_data_slv;
+		isp3a_input.bin_info_slv[0].otp_data_addr = &cxt->tuning_bin_slv[0].iso_awb_info;
+		for (i = 0; i < ISP_INDEX_MAX; i++) {
+			//isp3a_input.bin_info_slv[i].ae_addr = cxt->tuning_bin_slv[i].ae_tuning_addr;
+			isp3a_input.bin_info_slv[i].awb_addr = cxt->tuning_bin_slv[i].awb_tuning_addr;
+			//isp3a_input.bin_info_slv[i].af_addr = cxt->tuning_bin_slv[i].af_tuning_addr;
+		}
+		isp3a_input.setting_param_ptr_slv = input_ptr->setting_param_ptr_slv;
+		isp3a_input.ex_info_slv = input_ptr->ex_info_slv;
 	}
-	isp3a_input.setting_param_ptr_slv = input_ptr->setting_param_ptr_slv;
-	isp3a_input.ex_info_slv = input_ptr->ex_info_slv;
-#endif
+
 	ret = isp_3a_fw_init(&isp3a_input, &cxt->isp_3a_handle);
 exit:
 	if (ret) {

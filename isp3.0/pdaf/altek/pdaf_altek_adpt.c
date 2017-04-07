@@ -17,6 +17,7 @@
 
 #include <dlfcn.h>
 #include <math.h>
+#include <utils/Timers.h>
 #include "isp_type.h"
 #include "pdaf_ctrl.h"
 #include "isp_adpt.h"
@@ -636,6 +637,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_u16 image_width;
 	cmr_u16 image_height;
 	char value[PROPERTY_VALUE_MAX];
+	nsecs_t cal_time_start = 0;
+	nsecs_t cal_time_end = 0;
 
 	UNUSED(out);
 	cmr_bzero(&pdroi, sizeof(pdroi));
@@ -693,7 +696,7 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	#else
 		UNUSED(value);
 	#endif
-	ISP_LOGI("pd addr %p, width %d, height %d,roi %d, %d, %d, %d,",
+	ISP_LOGV("pd addr %p, width %d, height %d,roi %d, %d, %d, %d,",
 			proc_in->pd_raw.addr, image_width, image_height,
 			cxt->roi.m_wLeft, cxt->roi.m_wTop,
 			cxt->roi.m_wWidth, cxt->roi.m_wHeight);
@@ -704,7 +707,7 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGE("failed to get pd data size%ld", ret);
 		goto exit;
 	}
-	ISP_LOGI("pd size %d, %d,", pdroi.m_wWidth, pdroi.m_wHeight);
+	ISP_LOGV("pd size %d, %d,", pdroi.m_wWidth, pdroi.m_wHeight);
 
 	ret = cxt->extract_ops.extract((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, image_width, image_height,
 							(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
@@ -712,7 +715,7 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGE("failed to extract pd data %ld", ret);
 		goto exit;
 	}
-	ISP_LOGI("pd left addr %p, right addr %p", cxt->pd_left, cxt->pd_right);
+	ISP_LOGV("pd left addr %p, right addr %p", cxt->pd_left, cxt->pd_right);
 
 	#if 1 // pdaf data save
 		property_get("debug.camera.dump.pdaf.data", (char *)value, "0");
@@ -744,28 +747,31 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		break;
 	}
 
-	ISP_LOGI("bit %d, roi %d, %d, %d, %d,",
+	ISP_LOGV("bit %d, roi %d, %d, %d, %d,",
 			bit, pdroi.m_wLeft, pdroi.m_wTop, pdroi.m_wWidth, pdroi.m_wHeight);
 
-	ISP_LOGI("dBv %f, vcm current %d",
+	ISP_LOGV("dBv %f, vcm current %d",
 			cxt->pd_reg_in.dBv, cxt->pd_reg_in.dcurrentVCM);
 
-	ISP_LOGI("pd report data pd_value befor: %f, reg_out %p",
+	ISP_LOGV("pd report data pd_value befor: %f, reg_out %p",
 			cxt->report_data.pd_value, cxt->report_data.pd_reg_out);
-	ISP_LOGI("pd left addr %p, right addr %p", cxt->pd_left, cxt->pd_right);
+	ISP_LOGV("pd left addr %p, right addr %p", cxt->pd_left, cxt->pd_right);
 
-	ISP_LOGI("bit %d, roi %d, %d, %d, %d,",
+	ISP_LOGV("bit %d, roi %d, %d, %d, %d,",
 			bit, pdroi.m_wLeft, pdroi.m_wTop, pdroi.m_wWidth, pdroi.m_wHeight);
 
-	ISP_LOGI("pd_reg_in %p", &cxt->pd_reg_in);
+	ISP_LOGV("pd_reg_in %p", &cxt->pd_reg_in);
+	cal_time_start = systemTime(CLOCK_MONOTONIC);
 	ret = cxt->ops.calc(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
 					pdroi.m_wWidth, pdroi.m_wHeight, pdroi, bit, &cxt->pd_reg_in);
 	if (ret) {
 		ISP_LOGE("failed to calc pd data %ld", ret);
 		goto exit;
 	}
-	ISP_LOGI("pd report data pd_value after: %f, reg_out %p",
-			cxt->report_data.pd_value, cxt->report_data.pd_reg_out);
+	cal_time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("pd report data pd_value after: %f, cal delta %d",
+			cxt->report_data.pd_value,
+			(cmr_s32)(cal_time_end - cal_time_start) / 1000);
 
 	#if 1 // pdaf out data save
 		property_get("debug.camera.dump.pdaf.out", (char *)value, "0");

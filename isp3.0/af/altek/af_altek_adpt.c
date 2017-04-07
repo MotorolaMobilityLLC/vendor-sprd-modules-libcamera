@@ -1237,7 +1237,7 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	p.u_set_data.sof_id.sof_time.time_stamp_sec = sof_info->timestamp.sec;
 	p.u_set_data.sof_id.sof_time.time_stamp_us = sof_info->timestamp.usec;
 
-	ISP_LOGI("sof_frame_idx = %d, sec = %d, usec = %d",
+	ISP_LOGV("sof_frame_idx = %d, sec = %d, usec = %d",
 		 sof_info->sof_frame_idx,
 		 sof_info->timestamp.sec, sof_info->timestamp.usec);
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -1608,7 +1608,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	aft_in->ae_info.is_stable = (ae4af_stable || cxt->ae_info.ae_converge_st);
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
-	ISP_LOGI("is_stable %d, data_type %d caf_trig %d, cancel_caf %d cur_status %d",
+	ISP_LOGV("is_stable %d, data_type %d caf_trig %d, cancel_caf %d cur_status %d",
 		 aft_in->ae_info.is_stable,
 		 aft_in->active_data_type,
 		 aft_out.is_caf_trig,
@@ -1772,11 +1772,10 @@ static cmr_int afaltek_adpt_update_ae(cmr_handle adpt_handle, void *in)
 
 	ISP_LOGV("ae_stable_retrig_flg = %d", cxt->ae_info.ae_stable_retrig_flg);
 	afaltek_adpt_ae_converge(adpt_handle);
-	ISP_LOGI("ae_nonwt_mean = %d, ae_center_mean2x2 = %d, ae_converge_st =%d",
+	ISP_LOGI("ae_nonwt_mean %d ae_center_mean2x2 %d ae_converge_st %d ae_converged %ld ae_locked %d ae_state %d",
 			isp_ae_info->report_data.ae_nonwt_mean,
 			isp_ae_info->report_data.ae_center_mean2x2,
-			isp_ae_info->report_data.ae_converge_st);
-	ISP_LOGI("ae_converged = %ld ae_locked = %d ae_state = %d",
+			isp_ae_info->report_data.ae_converge_st,
 			cxt->ae_status_info.ae_converged,
 			cxt->ae_status_info.ae_locked,
 			isp_ae_info->report_data.ae_state);
@@ -3222,7 +3221,7 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	cxt->stats_ready = 1;
 	bzero(&caf_stat, sizeof(caf_stat));
 	if (CAF_CONFIG_ID == af_stats.af_token_id) {
-		ISP_LOGI("config in camera_id = %d", cxt->camera_id);
+		ISP_LOGV("config in camera_id = %d", cxt->camera_id);
 		cmr_bzero(&af_cfg, sizeof(af_cfg));
 		if (cxt->af_caf_cxt.inited) {
 			caf_fv = &cxt->af_caf_cxt.caf_fv_tune;

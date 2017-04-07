@@ -2312,7 +2312,7 @@ cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struc
 		memcpy((void *)&info2->irp_tuning_para_debug_info2, &param.iq_info_2.tGammaTone, sizeof(struct irp_gamma_tone));
 	}
 
-	ISP_LOGI("%d %d %d %d %d %d\n",
+	ISP_LOGV("%d %d %d %d %d %d\n",
 		param.iq_info_1.tRawInfo.uwWidth,
 		param.iq_info_1.tRawInfo.uwHeight,
 		param.iq_info_1.tRawInfo.ucFormat,

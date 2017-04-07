@@ -6711,7 +6711,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		frame_type->ae_time = ae_time;
 		CMR_LOGV("ae_time: %" PRId64", zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
 		frame_type->vcm_step  = (cmr_u32)prev_cxt->vcm_step;
-		CMR_LOGI("vcm_step: %d", frame_type->vcm_step);
+		CMR_LOGV("vcm_step: %d", frame_type->vcm_step);
 		frame_type->type = PREVIEW_FRAME;
 		CMR_LOGV("timestamp %" PRId64, frame_type->timestamp);
 		if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on) {

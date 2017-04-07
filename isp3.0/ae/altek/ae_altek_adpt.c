@@ -3813,7 +3813,6 @@ static cmr_int aealtek_handle_aec_info(struct aealtek_cxt *cxt_ptr,
 static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-	struct ae_ctrl_callback_in callback_in;
 	struct ae_ctrl_param_sensor_exposure sensor_exp;
 	struct ae_ctrl_param_sensor_gain sensor_gain;
 	struct ae_ctrl_param_sensor_exposure sensor_exp_slv;
@@ -4657,13 +4656,13 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 	char ae_property[PROPERTY_VALUE_MAX];
-	FILE  *fp = NULL;
-	cmr_s32  tem_value;
+	FILE *fp = NULL;
+	cmr_s32 tem_value;
 	char str_value[50];
 	char file_name[128];
-	cmr_s32  flag = 0;
-	cmr_s32  exp_num = 0;
-	cmr_s32  gain_num = 0;
+	cmr_s32 flag = 0;
+	cmr_s32 exp_num = 0;
+	cmr_s32 gain_num = 0;
 
 	cmr_bzero(ae_property, sizeof(ae_property));
 	property_get("persist.sys.isp.ae.manual", ae_property, "off");
@@ -4686,7 +4685,7 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_USER_DEF;
 		}
 
-		 if (TUNING_MODE_USER_DEF != cxt_ptr->tuning_info.tuning_mode) {
+		if (TUNING_MODE_USER_DEF != cxt_ptr->tuning_info.tuning_mode) {
 			if (0 == cxt_ptr->tuning_info.num) {
 				fp = fopen(file_name, "r");
 				if (NULL == fp) {
@@ -4707,8 +4706,7 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 				}
 				fclose(fp);
 			}
-		 }
-
+		}
 	} else {
 		cxt_ptr->tuning_info.manual_ae_on = 0;
 	}
