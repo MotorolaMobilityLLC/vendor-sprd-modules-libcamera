@@ -3085,21 +3085,16 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt, uint8_t 
                 sensor_cxt->otp_drv_handle, data);
             break;
         case OTP_READ_PARSE_DATA:
-            // sensor_otp_drv_read(otp_drv_handle,NULL);
+            module->otp_drv_info->otp_ops.sensor_otp_read(
+                          sensor_cxt->otp_drv_handle, NULL);
             ret = module->otp_drv_info->otp_ops.sensor_otp_parse(
-                sensor_cxt->otp_drv_handle, data);
-            if (ret != CMR_CAMERA_SUCCESS) {
-                module->otp_drv_info->otp_ops.sensor_otp_read(
-                    sensor_cxt->otp_drv_handle, NULL);
-                ret = module->otp_drv_info->otp_ops.sensor_otp_parse(
-                    sensor_cxt->otp_drv_handle, data);
-                if (ret == CMR_CAMERA_SUCCESS) {
-                    ret = module->otp_drv_info->otp_ops.sensor_otp_calibration(
+                               sensor_cxt->otp_drv_handle, data);
+            if (ret == CMR_CAMERA_SUCCESS) {
+                ret = module->otp_drv_info->otp_ops.sensor_otp_calibration(
                         sensor_cxt->otp_drv_handle);
-                } else {
-                    SENSOR_LOGE("otp prase failed");
-                    return ret;
-                }
+            } else {
+                SENSOR_LOGE("otp prase failed");
+                return ret;
             }
             break;
         case OTP_WRITE_DATA:

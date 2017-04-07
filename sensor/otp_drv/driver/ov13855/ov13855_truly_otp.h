@@ -1,5 +1,5 @@
-#ifndef _CMC637_TRULY_OTP_H_
-#define _CMC637_TRULY_OTP_H_
+#ifndef _OV13855_TRULY_OTP_H_
+#define _OV13855_TRULY_OTP_H_
 #include "otp_common.h"
 
 static awb_target_packet_t truly_awb[AWB_MAX_LIGHT] = {
@@ -17,7 +17,7 @@ static awb_target_packet_t truly_awb[AWB_MAX_LIGHT] = {
     },
 
 };
-static uint16_t truly_lsc[] = {
+static cmr_u16 truly_lsc[] = {
 0x9349, 0xe406, 0x3ce1, 0x4f32, 0x93cb, 0x98b2, 0x23b0, 0xc86c, 0xc207,
 0x647e, 0xed1f, 0x0747, 0x8742, 0x23c8, 0x4990, 0xd297, 0x28b4, 0x0932,
 0x070e, 0x2b64, 0x4379, 0x8eae, 0xe338, 0x38b7, 0x6929, 0x2a09, 0x8102,

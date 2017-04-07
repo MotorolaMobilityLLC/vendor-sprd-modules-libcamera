@@ -368,12 +368,6 @@ struct sensor_otp_af_info {
 struct sensor_otp_pdaf_info {
     cmr_u8 *pdaf_data_addr;
     cmr_u16 pdaf_data_size;
-    uint32_t pdaf_level_x;
-    uint32_t pdaf_level_y;
-    uint32_t pdaf_phase_x;
-    uint32_t pdaf_phase_y;
-    cmr_u8 *pdaf_phase_data_addr;
-    cmr_u16 pdaf_phase_data_size;
 };
 
 struct point {

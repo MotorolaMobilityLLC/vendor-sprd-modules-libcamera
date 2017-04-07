@@ -1,5 +1,5 @@
-#ifndef _C5490_GOLDEN_OTP_H_
-#define _C5490_GOLDEN_OTP_H_
+#ifndef _IMX258_GOLDEN_OTP_H_
+#define _IMX258_GOLDEN_OTP_H_
 #include "otp_common.h"
 
 static awb_target_packet_t golden_awb[AWB_MAX_LIGHT] = {
@@ -17,7 +17,7 @@ static awb_target_packet_t golden_awb[AWB_MAX_LIGHT] = {
     },
 
 };
-static uint16_t golden_lsc[] = {
+static cmr_u16 golden_lsc[] = {
     0x521b, 0x2400, 0xa0e5, 0xaa33, 0xa70b, 0x9cf2, 0x24c0, 0xc8b3, 0xc219,
     0x8082, 0x3620, 0x1a48, 0x8c42, 0x24f8, 0x89de, 0xd2ae, 0x9cbd, 0xb534,
     0x11ce, 0x2254, 0x4171, 0x0e6c, 0x2333, 0xf4b6, 0x5628, 0x2889, 0x8132,

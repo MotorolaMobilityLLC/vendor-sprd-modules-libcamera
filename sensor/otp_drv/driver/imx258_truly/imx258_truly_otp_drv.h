@@ -81,49 +81,44 @@ typedef struct {
     unsigned char af_cali_dir;
 } module_info_t;
 
-static int _imx258_truly_section_checksum(unsigned char *buf, unsigned int first,
-                                    unsigned int last, unsigned int position);
-static int _imx258_truly_buffer_init(void *otp_drv_handle);
-static int _imx258_truly_parse_awb_data(void *otp_drv_handle);
-static int _imx258_truly_parse_lsc_data(void *otp_drv_handle);
-static int _imx258_truly_parse_af_data(void *otp_drv_handle);
-static int _imx258_truly_parse_pdaf_data(void *otp_drv_handle);
+static cmr_int _imx258_truly_section_checksum(cmr_u8 *buf, cmr_uint first,
+                                              cmr_uint last, cmr_uint position);
+static cmr_int _imx258_truly_buffer_init(cmr_handle otp_drv_handle);
+static cmr_int _imx258_truly_parse_awb_data(cmr_handle otp_drv_handle);
+static cmr_int _imx258_truly_parse_lsc_data(cmr_handle otp_drv_handle);
+static cmr_int _imx258_truly_parse_af_data(cmr_handle otp_drv_handle);
+static cmr_int _imx258_truly_parse_pdaf_data(cmr_handle otp_drv_handle);
 
-static int _imx258_truly_awb_calibration(void *otp_drv_handle);
-static int _imx258_truly_lsc_calibration(void *otp_drv_handle);
-static int _imx258_truly_pdaf_calibration(void *otp_drv_handle);
+static cmr_int _imx258_truly_awb_calibration(cmr_handle otp_drv_handle);
+static cmr_int _imx258_truly_lsc_calibration(cmr_handle otp_drv_handle);
+static cmr_int _imx258_truly_pdaf_calibration(cmr_handle otp_drv_handle);
 
-static int imx258_truly_otp_create(otp_drv_init_para_t *input_para,
-                             cmr_handle* sns_af_drv_handle);
-static int imx258_truly_otp_drv_delete(void *otp_drv_handle);
-static int imx258_truly_otp_drv_read(void *otp_drv_handle, otp_params_t *p_data);
-static int imx258_truly_otp_drv_write(void *otp_drv_handle, otp_params_t *p_data);
-static int imx258_truly_otp_drv_parse(void *otp_drv_handle, void *P_params);
-static int imx258_truly_otp_drv_calibration(void *otp_drv_handle);
-static int imx258_truly_otp_drv_ioctl(otp_drv_cxt_t *otp_drv_handle, int cmd, void *params);
+static cmr_int imx258_truly_otp_drv_create(otp_drv_init_para_t *input_para,
+                                            cmr_handle* sns_af_drv_handle);
+static cmr_int imx258_truly_otp_drv_delete(cmr_handle otp_drv_handle);
+static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle, void *p_data);
+static cmr_int imx258_truly_otp_drv_write(cmr_handle otp_drv_handle, void *p_data);
+static cmr_int imx258_truly_otp_drv_parse(cmr_handle otp_drv_handle, void *P_params);
+static cmr_int imx258_truly_otp_drv_calibration(cmr_handle otp_drv_handle);
+static cmr_int imx258_truly_otp_drv_ioctl(cmr_handle otp_drv_handle,
+                                          cmr_uint cmd, void *params);
 
 otp_drv_entry_t imx258_truly_drv_entry = {
     .otp_cfg =
         {
             .cali_items =
                 {
-                    .is_self_cal = FALSE,  /*1:calibration at sensor
-                                             side,0:calibration at isp*/
-                    .is_dul_camc = FALSE, /* support dual camera calibration */
-                    .is_awbc = FALSE,   /* support write balance calibration */
-                    .is_lsc = FALSE,    /* support lens shadding calibration */
-                    .is_pdafc = FALSE, /* support pdaf calibration */
+                    .is_self_cal = FALSE,
+                    .is_dul_camc = FALSE,
+                    .is_awbc = FALSE,
+                    .is_lsc = FALSE,
+                    .is_pdafc = FALSE,
                 },
             .base_info_cfg =
                 {
-                    /*decompression on otp driver or isp*/
                     .is_lsc_drv_decompression = FALSE,
-                    /*otp data compressed format,
-                      should confirm with module fae*/
                     .compress_flag = OTP_COMPRESSED_FLAG,
-                    /*the width of the stream the sensor can output*/
                     .image_width = 4208,
-                    /*the height of the stream the sensor can output*/
                     .image_height = 3120,
                     .grid_width = 23,
                     .grid_height = 18,
@@ -133,7 +128,7 @@ otp_drv_entry_t imx258_truly_drv_entry = {
         },
     .otp_ops =
         {
-            .sensor_otp_create = imx258_truly_otp_create,
+            .sensor_otp_create = imx258_truly_otp_drv_create,
             .sensor_otp_delete = imx258_truly_otp_drv_delete,
             .sensor_otp_read = imx258_truly_otp_drv_read,
             .sensor_otp_write = imx258_truly_otp_drv_write,

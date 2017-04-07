@@ -1,10 +1,9 @@
-#ifndef _OTP_PARSE_COMMON_H_
-#define _OTP_PARSE_COMMON_H_
+#ifndef _OTP_INFO_H_
+#define _OTP_INFO_H_
 
 #include "cmr_common.h"
 #include "cmr_types.h"
 #include <cutils/properties.h>
-#include "sensor_drv_u.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -24,17 +23,17 @@
 
 #ifndef CHECK_PTR
 #define CHECK_PTR(expr)                                                        \
-  if ((expr) == NULL) {                                                        \
-    ALOGE("ERROR: NULL pointer detected " #expr);                              \
-    return FALSE;                                                              \
-  }
+    if ((expr) == NULL) {                                                      \
+        ALOGE("ERROR: NULL pointer detected " #expr);                          \
+        return FALSE;                                                          \
+    }
 #endif
 
 #define CHECK_HANDLE(handle)                                                   \
-  if (NULL == handle || NULL == handle->privatedata) {                         \
-    ALOGE("Handle is invalid " #handle);                                       \
-    return SENSOR_CTX_ERROR;                                                   \
-  }
+    if (NULL == handle || NULL == handle->privatedata) {                       \
+        ALOGE("Handle is invalid " #handle);                                   \
+        return SENSOR_CTX_ERROR;                                               \
+    }
 
 #define SENSOR_I2C_VAL_8BIT 0x00
 #define SENSOR_I2C_VAL_16BIT 0x01
@@ -48,33 +47,33 @@
 #define GAIN_MASK_14BITS (0x3fff)
 
 enum otp_main_cmd {
-  OTP_READ_RAW_DATA,
-  OTP_READ_PARSE_DATA,
-  OTP_WRITE_DATA,
-  OTP_IOCTL,
+    OTP_READ_RAW_DATA,
+    OTP_READ_PARSE_DATA,
+    OTP_WRITE_DATA,
+    OTP_IOCTL,
 };
 enum otp_sub_cmd {
-  OTP_RESERVE, /*just reserve*/
-  OTP_READ_FORMAT_FROM_BIN,
-  OTP_WRITE_FORMAT_TO_BIN,
-  OTP_DATA_COMPATIBLE_CONVERT,
-  /*expand,you can add your */
+    OTP_RESERVE, /*just reserve*/
+    OTP_READ_FORMAT_FROM_BIN,
+    OTP_WRITE_FORMAT_TO_BIN,
+    OTP_DATA_COMPATIBLE_CONVERT,
+    /*expand,you can add your */
 };
 enum otp_compress_type {
-  OTP_COMPRESSED_12BITS = 0,
-  OTP_COMPRESSED_14BITS = 1,
-  OTP_COMPRESSED_16BITS = 2,
+    OTP_COMPRESSED_12BITS = 0,
+    OTP_COMPRESSED_14BITS = 1,
+    OTP_COMPRESSED_16BITS = 2,
 };
 enum otp_calibration_lsc_pattern {
-  SENSOR_IMAGE_PATTERN_RGGB = 0,
-  SENSOR_IMAGE_PATTERN_GRBG = 1,
-  SENSOR_IMAGE_PATTERN_GBRG = 2,
-  SENSOR_IMAGE_PATTERN_BGGR = 3,
+    SENSOR_IMAGE_PATTERN_RGGB = 0,
+    SENSOR_IMAGE_PATTERN_GRBG = 1,
+    SENSOR_IMAGE_PATTERN_GBRG = 2,
+    SENSOR_IMAGE_PATTERN_BGGR = 3,
 };
 
 enum awb_light_type {
-  AWB_OUTDOOR_SUNLIGHT = 0, /* D65 */
-  AWB_OUTDOOR_CLOUDY,       /* D75 */
+    AWB_OUTDOOR_SUNLIGHT = 0, /* D65 */
+    AWB_OUTDOOR_CLOUDY,       /* D75 */
 #if 0
 	AWB_INDOOR_INCANDESCENT,    /* A */
 	AWB_INDOOR_WARM_FLO,        /* TL84 */
@@ -85,221 +84,244 @@ enum awb_light_type {
 	AWB_OUTDOOR_NOON,           /* Noon */
 	AWB_HYBRID,                 /* Daylight */
 #endif
-  AWB_MAX_LIGHT,
+    AWB_MAX_LIGHT,
 };
 
 typedef struct {
-  uint16_t reg_addr;  /* otp start address.if read ,we don't need care it*/
-  uint8_t *data;      /* format otp data saved or otp data write to sensor*/
-  uint32_t num_bytes; /* if read ,we don't need care it*/
+    cmr_u16 reg_addr;  /* otp start address.if read ,we don't need care it*/
+    cmr_u8 *data;      /* format otp data saved or otp data write to sensor*/
+    cmr_u32 num_bytes; /* if read ,we don't need care it*/
 } otp_buffer_t;
 
 /* ctrl data*/
 typedef struct {
-  uint8_t cmd;
-  uint8_t sub_cmd;
-  void *data;
+    cmr_u8 cmd;
+    cmr_u8 sub_cmd;
+    void *data;
 } otp_ctrl_cmd_t;
 
 struct wb_source_packet {
-  uint16_t R;
-  uint16_t GR;
-  uint16_t GB;
-  uint16_t B;
+    cmr_u16 R;
+    cmr_u16 GR;
+    cmr_u16 GB;
+    cmr_u16 B;
 };
 
 typedef struct {
-  cmr_u8 year;
-  cmr_u8 month;
-  cmr_u8 day;
-  cmr_u64 moule_id;
-  cmr_u8 vendor_id;
-  cmr_u8 calib_version;
-  cmr_u8 work_stat_id;
-  cmr_u8 env_record;
-  cmr_u8 vcm_id;
-  cmr_u8 drvier_ic_id;
-  cmr_u8 ir_bg_id;
-  cmr_u8 lens_id;
+    cmr_u8 year;
+    cmr_u8 month;
+    cmr_u8 day;
+    cmr_u32 moule_id;
+    cmr_u8 vcm_id;
+    cmr_u16 vendor_id;
+    cmr_u8 drvier_ic_id;
+    cmr_u8 ir_bg_id;
+    cmr_u8 lens_id;
+    /*for ov13885_sunny*/
+    cmr_u8 env_record;
+    cmr_u16 work_stat_id;
+    cmr_u16 calib_version;
 } module_data_t;
 
 typedef struct otp_data_info {
-  uint32_t size;
-  void *buffer;
+    cmr_u32 size;
+    void *buffer;
 } otp_data_info_t;
 /*
 * AWB data will transmitted to ISP
 */
 typedef struct {
-  uint16_t R;
-  uint16_t G;
-  uint16_t B;
-  /*sometime wb data is ratio */
-  uint16_t rg_ratio;
-  uint16_t bg_ratio;
+    cmr_u16 R;
+    cmr_u16 G;
+    cmr_u16 B;
+    /*sometime wb data is ratio */
+    cmr_u16 rg_ratio;
+    cmr_u16 bg_ratio;
 } awb_target_packet_t;
 
 typedef struct {
-  uint16_t R;
-  uint16_t GR;
-  uint16_t GB;
-  uint16_t B;
+    cmr_u16 R;
+    cmr_u16 GR;
+    cmr_u16 GB;
+    cmr_u16 B;
 } awb_src_packet_t;
 
 typedef struct {
-  uint32_t wb_flag;
-  awb_target_packet_t awb_gld_info[AWB_MAX_LIGHT];
-  awb_target_packet_t awb_rdm_info[AWB_MAX_LIGHT];
+    uint32_t wb_flag;
+    awb_target_packet_t awb_gld_info[AWB_MAX_LIGHT];
+    awb_target_packet_t awb_rdm_info[AWB_MAX_LIGHT];
 } awbcalib_data_t;
 
 typedef struct {
-  cmr_u16 target_lum;
-  cmr_u64 gain_1x_exp;
-  cmr_u64 gain_2x_exp;
-  cmr_u64 gain_4x_exp;
-  cmr_u64 gain_8x_exp;
-  cmr_u64 reserve;
+    cmr_u16 target_lum;
+    cmr_u64 gain_1x_exp;
+    cmr_u64 gain_2x_exp;
+    cmr_u64 gain_4x_exp;
+    cmr_u64 gain_8x_exp;
+    cmr_u64 reserve;
 } aecalib_data_t;
 
 typedef struct {
-  uint16_t infinity_dac;
-  uint16_t macro_dac;
-  uint16_t afc_direction;
-  uint16_t reserve;
+    cmr_u16 infinity_dac;
+    cmr_u16 macro_dac;
+    cmr_u16 afc_direction;
+    cmr_u16 reserve;
 } afcalib_data_t;
 
 struct section_info {
-  uint32_t offset;
-  uint32_t length;
+    cmr_u32 offset;
+    cmr_u32 length;
 };
 
 typedef struct {
-  struct section_info lsc_calib_golden;
-  struct section_info lsc_calib_random;
+    struct section_info lsc_calib_golden;
+    struct section_info lsc_calib_random;
 } lsccalib_data_t;
 
 typedef struct {
-  uint32_t pdaf_level_x;
-  uint32_t pdaf_level_y;
-  otp_data_info_t pdaf_level_cali_dat;
-  uint32_t pdaf_phase_x;
-  uint32_t pdaf_phase_y;
-  otp_data_info_t pdaf_phase_cali_dat;
-} pdafcalib_data_t;
-
-typedef struct {
-  uint16_t x;
-  uint16_t y;
+    cmr_u16 x;
+    cmr_u16 y;
 } point_t;
 
 typedef struct {
-  point_t R;
-  point_t GR;
-  point_t GB;
-  point_t B;
+    point_t R;
+    point_t GR;
+    point_t GB;
+    point_t B;
 } optical_center_t;
 typedef struct {
-  cmr_u8 program_flag;
-  cmr_u8 af_flag;
-  cmr_u8 pdaf_flag;
-  cmr_u16 checksum;
-  /*you can add some items here*/
+    cmr_u8 program_flag;
+    cmr_u8 af_flag;
+    cmr_u8 pdaf_flag;
+    cmr_u16 checksum;
+    /*you can add some items here*/
 } extended_data_t;
 /**
  * here include formate data
  * you can add some items if you need.
  **/
 typedef struct {
-  module_data_t module_dat;
-  cmr_u16 iso_dat;
-  afcalib_data_t af_cali_dat;
-  aecalib_data_t ae_cali_dat;
-  awbcalib_data_t awb_cali_dat;
-  pdafcalib_data_t dual_pdaf_cali_dat;
-  optical_center_t opt_center_dat;
-  otp_data_info_t pdaf_cali_dat;
-  /*spc:sensor pixel calibration,used by pdaf*/
-  otp_data_info_t spc_cali_dat;
-  otp_data_info_t dual_cam_cali_dat;
-  extended_data_t extend_dat;
-  lsccalib_data_t lsc_cali_dat;
+    module_data_t module_dat;
+    cmr_u16 iso_dat;
+    afcalib_data_t af_cali_dat;
+    aecalib_data_t ae_cali_dat;
+    awbcalib_data_t awb_cali_dat;
+    optical_center_t opt_center_dat;
+    otp_data_info_t pdaf_cali_dat;
+    /*spc:sensor pixel calibration,used by pdaf*/
+    otp_data_info_t spc_cali_dat;
+    otp_data_info_t dual_cam_cali_dat;
+    extended_data_t extend_dat;
+    lsccalib_data_t lsc_cali_dat;
+    cmr_u8 data[0];
 } otp_format_data_t;
 
 typedef struct {
-  uint16_t reg_addr;
-  uint8_t *buffer;
-  uint32_t num_bytes;
+    cmr_u16 reg_addr;
+    cmr_u8 *buffer;
+    cmr_u32 num_bytes;
 } otp_params_t;
 
 /*otp driver file*/
 typedef struct {
-  int is_self_cal : 1;
+    /* 1:calibration at sensor side,
+     * 0:calibration at isp
+     */
+    cmr_uint is_self_cal : 1;
 
-  int is_dul_cam_self_cal : 1;
-  int is_dul_camc : 1;
+    /* support dual camera self calibration */
+    cmr_uint is_dul_cam_self_cal : 1;
+    cmr_uint is_dul_camc : 1;
 
-  int is_awbc_self_cal : 1;
-  int is_awbc : 1;
+    /* support awb self calibration */
+    cmr_uint is_awbc_self_cal : 1;
+    /* support awb calibration */
+    cmr_uint is_awbc : 1;
 
-  int is_lsc_self_cal : 1;
-  int is_lsc : 1;
+    /* support lens shadding self calibration */
+    cmr_uint is_lsc_self_cal : 1;
+    /* support lens shadding calibration */
+    cmr_uint is_lsc : 1;
 
-  int is_pdaf_self_cal : 1;
-  int is_pdafc : 1;
+    /* support pdaf self calibration */
+    cmr_uint is_pdaf_self_cal : 1;
+    /* support pdaf calibration */
+    cmr_uint is_pdafc : 1;
 } otp_calib_items_t;
 /*
  * here include base info include
  */
 typedef struct {
-  int is_lsc_drv_decompression;
-  int compress_flag;
-  int bayer_pattern;
-  int image_width;
-  int image_height;
-  int grid_width;
-  int grid_height;
-  int gain_width;
-  int gain_height;
+    /*decompression on otp driver or isp*/
+    cmr_uint is_lsc_drv_decompression;
 
+    /*otp data compressed format,should confirm with sensor
+     *fae
+     */
+    cmr_uint compress_flag;
+
+    /*sensor bayer pattern*/
+    cmr_uint bayer_pattern;
+
+    /*the width of the stream the sensor can output*/
+    cmr_uint image_width;
+
+    /*the height of the stream the sensor can output*/
+    cmr_uint image_height;
+
+    /*the height of the stream the sensor can output*/
+    cmr_uint grid_width;
+    cmr_uint grid_height;
+    cmr_uint gain_width;
+    cmr_uint gain_height;
 } otp_base_info_cfg_t;
 
 typedef struct {
-  otp_calib_items_t cali_items;
-  otp_base_info_cfg_t base_info_cfg;
+    otp_calib_items_t cali_items;
+    otp_base_info_cfg_t base_info_cfg;
 } otp_config_t;
 
 typedef struct otp_drv_init_para {
-  SENSOR_HW_HANDLE hw_handle;
-  char *sensor_name;
-  /*you can add your param here*/
+    cmr_handle hw_handle;
+    char *sensor_name;
+    cmr_u32 sensor_id;
+    /*you can add your param here*/
 } otp_drv_init_para_t;
+
 /*
  * if not supported some feature items,please set NULL
  */
 typedef struct {
-  int (*sensor_otp_create)(otp_drv_init_para_t *input_para,
-                           cmr_handle *sns_af_drv_handle);
-  int (*sensor_otp_delete)(void *otp_drv_handle);
-  int (*sensor_otp_read)(void *otp_drv_handle, otp_params_t *p_data);
-  int (*sensor_otp_write)(void *otp_drv_handle, otp_params_t *p_data);
-  int (*sensor_otp_parse)(void *otp_drv_handle, void *p_data);
-  int (*sensor_otp_calibration)(void *otp_drv_handle);
-  int (*sensor_otp_ioctl)(void *otp_drv_handle, int cmd,
-                          void *p_params); /*expend*/
+    cmr_int (*sensor_otp_create)(otp_drv_init_para_t *input_para,
+                                 cmr_handle *sns_af_drv_handle);
+    cmr_int (*sensor_otp_delete)(cmr_handle otp_drv_handle);
+    cmr_int (*sensor_otp_read)(cmr_handle otp_drv_handle, void *param);
+    cmr_int (*sensor_otp_write)(cmr_handle otp_drv_handle, void *param);
+    cmr_int (*sensor_otp_parse)(cmr_handle otp_drv_handle, void *param);
+    cmr_int (*sensor_otp_calibration)(cmr_handle otp_drv_handle);
+    cmr_int (*sensor_otp_ioctl)(cmr_handle otp_drv_handle, cmr_uint cmd,
+                                void *p_params); /*expend*/
 } sensor_otp_ops_t;
 
 typedef struct {
-  otp_config_t otp_cfg;
-  sensor_otp_ops_t otp_ops;
+    otp_config_t otp_cfg;
+    sensor_otp_ops_t otp_ops;
 } otp_drv_entry_t;
 
 typedef struct {
-  SENSOR_HW_HANDLE hw_handle;
-  char dev_name[32];
-  otp_params_t otp_raw_data;   /*raw otp data buffer*/
-  otp_format_data_t *otp_data; /*format otp data*/
-  uint32_t otp_data_len;       /*format otp data length*/
-  void *compat_convert_data;
+    cmr_u32 sensor_id;
+    char dev_name[32];
+    cmr_handle hw_handle;
+
+    /*raw otp data buffer*/
+    otp_params_t otp_raw_data;
+
+    /*format otp data*/
+    otp_format_data_t *otp_data;
+
+    /*format otp data length*/
+    uint32_t otp_data_len;
+    void *compat_convert_data;
 } otp_drv_cxt_t;
 
 #endif

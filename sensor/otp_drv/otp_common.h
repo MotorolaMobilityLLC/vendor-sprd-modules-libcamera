@@ -6,25 +6,27 @@
 #include <cutils/properties.h>
 #include "otp_info.h"
 
-int sensor_otp_rawdata_from_file(uint8_t cmd, char *sensor_name,
-                                 uint8_t **otp_data, int format_otp_size);
-int sensor_otp_rw_data_from_file(uint8_t cmd, char *sensor_name,
-                                 otp_format_data_t **otp_data,
+cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *sensor_name,
+                                 void **otp_data,
                                  int *format_otp_size);
-int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
+cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
                               lsccalib_data_t *lsc_cal_data);
-int sensor_otp_decompress_gain(uint16_t *src, uint32_t src_bytes,
-                               uint32_t src_uncompensate_bytes, uint16_t *dst,
-                               uint32_t GAIN_COMPRESSED_BITS,
-                               uint32_t GAIN_MASK);
-void sensor_otp_change_pattern(uint32_t pattern, uint16_t *interlaced_gain,
-                               uint16_t *chn_gain[4], uint16_t gain_num);
-int sensor_otp_dump_raw_data(uint8_t *buffer, int size, char *dev_name);
+cmr_int sensor_otp_decompress_gain(cmr_u16 *src, cmr_u32 src_bytes,
+                               cmr_u32 src_uncompensate_bytes, cmr_u16 *dst,
+                               cmr_u32 GAIN_COMPRESSED_BITS,
+                               cmr_u32 GAIN_MASK);
+void sensor_otp_change_pattern(cmr_u32 pattern, cmr_u16 *interlaced_gain,
+                               cmr_u16 *chn_gain[4], cmr_u16 gain_num);
+cmr_int sensor_otp_dump_raw_data(cmr_u8 *buffer, int size, char *dev_name);
 
-int sensor_otp_dump_data2txt(uint8_t *buffer, int size, char *dev_name);
+cmr_int sensor_otp_dump_data2txt(cmr_u8 *buffer, int size, char *dev_name);
 
-int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
-                          cmr_handle *sns_af_drv_handle);
-int sensor_otp_drv_delete(void *otp_drv_handle);
+cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
+                              cmr_handle* sns_af_drv_handle);
+cmr_int sensor_otp_drv_delete(void *otp_drv_handle);
+cmr_u8* sensor_otp_get_raw_buffer(cmr_uint size,cmr_u32 sensor_id);
+cmr_u8* sensor_otp_get_formatted_buffer(cmr_uint size,cmr_u32 sensor_id);
+void sensor_otp_set_buffer_state(cmr_u32 sensor_id, cmr_u32 state);
+cmr_u32 sensor_otp_get_buffer_state(cmr_u32 sensor_id);
 
 #endif
