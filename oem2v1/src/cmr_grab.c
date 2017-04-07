@@ -212,7 +212,6 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
     /* then close fd */
     if (-1 != p_grab->fd) {
         CMR_LOGI("close fd");
-        sem_wait(&p_grab->close_sem);
         pthread_mutex_lock(&p_grab->dcam_mutex);
         if (0 != p_grab->mode_enable) {
             res.sensor_id = p_grab->init_param.sensor_id;
@@ -1117,6 +1116,8 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle) {
     cnt = write(p_grab->fd, &op, sizeof(struct sprd_img_write_op));
     if (cnt == sizeof(struct sprd_img_write_op)) {
         CMR_LOGI("write OK!");
+        sem_wait(&p_grab->close_sem);
+        CMR_LOGI("wait OK!");
         ret = pthread_join(p_grab->thread_handle, &dummy);
         p_grab->thread_handle = 0;
     } else
@@ -1168,7 +1169,6 @@ static void *cmr_grab_thread_proc(void *data) {
             CMR_LOGI("TX Stopped, exit thread");
             break;
         } else if (IMG_SYS_BUSY == op.evt) {
-            usleep(10000);
             CMR_LOGI("continue");
             continue;
         } else {
