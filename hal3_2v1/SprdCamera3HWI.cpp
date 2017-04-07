@@ -781,9 +781,9 @@ int SprdCamera3HWI::configureStreams(
     }
 
     mOEMIf->SetDimensionPreview(preview_size);
+    mOEMIf->SetDimensionCapture(capture_size);
     mOEMIf->SetDimensionVideo(video_size);
     mOEMIf->SetDimensionRaw(raw_size);
-    mOEMIf->SetDimensionCapture(capture_size);
 
     // need to update crop region each time when ConfigureStreams
     mOEMIf->setCameraConvertCropRegion();
