@@ -18,7 +18,6 @@
 /*----------------------------------------------------------------------------*
 **				Dependencies					*
 **---------------------------------------------------------------------------*/
-#include "isp_com.h"
 #include "isp_drv.h"
 
 enum isp_dev_access_ctrl_cmd {
@@ -39,7 +38,7 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_STOP,
 	ISP_DEV_ENABLE_IRQ,
 	ISP_DEV_SET_STSTIS_BUF,
-	ISP_DEV_SET_PDAF,
+	ISP_DEV_SET_PDAF_CFG_PARAM,
 	ISP_DEV_CMD_MAX
 };
 

@@ -16,7 +16,6 @@
 #define LOG_TAG "pdaf_ctrl"
 
 #include <stdlib.h>
-#include "isp_type.h"
 #include "pdaf_ctrl.h"
 #include "isp_adpt.h"
 #include "cmr_msg.h"
@@ -58,7 +57,7 @@ struct pdaf_ctrl_msg_ctrl {
 	struct pdaf_ctrl_param_out *out;
 };
 
-static cmr_u32 af_set_pdinfo(void *handle, struct pd_result *in_param)
+static cmr_u32 pdaf_set_pdinfo_to_af(void *handle, struct pd_result *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
@@ -68,6 +67,19 @@ static cmr_u32 af_set_pdinfo(void *handle, struct pd_result *in_param)
 
 	return ISP_SUCCESS;
 }
+
+static cmr_u32 pdaf_set_cfg_param (void *handle, struct isp_dev_pdaf_info *in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+
+	ISP_LOGI("pdaf_set_cfg_param");
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_CFG_PARAM, in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
 
 static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *in, struct pdaf_ctrl_init_out *out)
 {
@@ -271,7 +283,8 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 		goto exit;
 	}
 
-	in->af_set_pdinfo = af_set_pdinfo;
+	in->pdaf_set_pdinfo_to_af = pdaf_set_pdinfo_to_af;
+	in->pdaf_set_cfg_param = pdaf_set_cfg_param;
 
 	*handle = NULL;
 	cxt = (struct pdafctrl_context *)malloc(sizeof(*cxt));

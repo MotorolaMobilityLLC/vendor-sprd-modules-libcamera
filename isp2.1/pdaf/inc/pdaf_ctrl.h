@@ -120,7 +120,8 @@ struct pdaf_ctrl_init_in {
 /*add for sharkl2*/
 	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
-	 cmr_u32(*af_set_pdinfo) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info *pd_info);
 };
 
 struct pdaf_ctrl_init_out {

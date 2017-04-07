@@ -25,7 +25,6 @@
 #include "dlfcn.h"
 #include "pd_algo.h"
 #include "cmr_common.h"
-#include "isp_dev_access.h"
 
 /************************************ INTERNAK FUNCTION ***************************************/
 struct sprd_pdaf_context {
@@ -50,7 +49,8 @@ struct sprd_pdaf_context {
 	void *caller;
 	PD_GlobalSetting pd_gobal_setting;
 	struct sprd_pdaf_report_t report_data;
-	 cmr_u32(*af_set_pdinfo) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
 };
 
 //testcode
@@ -193,17 +193,15 @@ cmr_int isp_get_pdaf_default_param(struct isp_dev_pdaf_info * pdaf_param)
 	return rtn;
 }
 
-static cmr_int pdaf_setup(struct sprd_pdaf_context *pdaf)
+static cmr_int pdaf_setup(void *pdaf)
 {
 	cmr_int rtn = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)pdaf;
 	struct isp_dev_pdaf_info pdaf_param;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)pdaf->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
 
+	memset(&pdaf_param, 0x00, sizeof(pdaf_param));
 	rtn = isp_get_pdaf_default_param(&pdaf_param);
-	isp_u_pdaf_block(device, (void *)&pdaf_param);
-
+	cxt->pdaf_set_cfg_parm(cxt->caller, &pdaf_param);
 	return rtn;
 }
 
@@ -241,10 +239,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->caller = in_p->caller;
 	cxt->caller_handle = in_p->caller_handle;
-	//cxt->pdaf_set_cb = in_p->pdaf_set_cb;
-	cxt->af_set_pdinfo = in_p->af_set_pdinfo;
-	//pdaf->init_in_param = *in_p;
-
+	cxt->pdaf_set_pdinfo_to_af = in_p->pdaf_set_pdinfo_to_af;
+	cxt->pdaf_set_cfg_parm = in_p->pdaf_set_cfg_param;
 	cxt->pd_left = malloc(pd_in_size);
 	if (NULL == cxt->pd_left) {
 		ISP_LOGE("fail to malloc");
@@ -396,7 +392,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		goto exit;
 	}
 	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
-	cxt->af_set_pdinfo(cxt->caller, &pd_calc_result);
+	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;	//= proc_in->pd_raw.frame_id;
 exit:
 	cxt->is_busy = 0;

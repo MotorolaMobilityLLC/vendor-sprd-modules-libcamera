@@ -572,7 +572,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 	case ISP_DEV_SET_STSTIS_BUF:
 		rtn = isp_dev_set_statis_buf(cxt->isp_driver_handle, param0);
 		break;
-	case ISP_DEV_SET_PDAF:
+	case ISP_DEV_SET_PDAF_CFG_PARAM:
 		rtn = isp_u_pdaf_block(cxt->isp_driver_handle, param0);
 		break;
 	default:

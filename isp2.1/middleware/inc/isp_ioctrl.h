@@ -16,11 +16,6 @@
 #ifndef _ISP_IOCTRL_H_
 #define _ISP_IOCTRL_H_
 
-#include <sys/types.h>
-#include "isp_com.h"
-#include "cmr_type.h"
-#include "isp_pm.h"
-
 io_fun _ispGetIOCtrlFun(enum isp_ctrl_cmd cmd);
 
 #endif

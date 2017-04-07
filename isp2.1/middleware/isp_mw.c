@@ -17,7 +17,6 @@
 #define LOG_TAG "isp_mw"
 
 #include "isp_mw.h"
-#include "isp_com.h"
 #include "cmr_msg.h"
 
 /* new part */

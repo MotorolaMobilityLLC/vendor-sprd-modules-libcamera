@@ -300,12 +300,13 @@ static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *pa
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	ISP_LOGV("type = 0x%lx", type);
+	ISP_LOGV("isp_pdaf_set_cb type = 0x%lx", type);
 	switch (type) {
 	case ISP_AF_SET_PD_INFO:
-		//rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF, param0, param1);
-		//break;
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_PD_INFO, param0, param1);
+		break;
+	case ISP_PDAF_SET_CFG_PARAM:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, param0, param1);
 		break;
 	default:
 		break;
