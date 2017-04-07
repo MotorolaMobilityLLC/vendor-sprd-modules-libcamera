@@ -153,7 +153,7 @@ static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc
 		ISP_LOGI("process fun is NULL");
 	}
 exit:
-	ISP_LOGD("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -172,7 +172,7 @@ cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param * par
 	rtn = awbctrl_process(cxt_ptr, param, result);
 
 exit:
-	ISP_LOGD("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -218,6 +218,6 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_p
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGD("cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
