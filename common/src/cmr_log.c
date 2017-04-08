@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "cmr_log"
 
 #include <cutils/properties.h>
 #include "cmr_types.h"
@@ -42,15 +43,9 @@ void oem_init_log_level(void) {
     if (0 < val)
         g_oem_log_level = val;
 
-    // to turn off camera log:
-    // adb shell setprop persist.sys.camera.log off
-    property_get("persist.sys.camera.log", value, "on");
-    if (!strcmp(value, "off")) {
-        turn_off_flag = 1;
-    }
-    // user verson/turn off camera log dont print >= LOGD
-    property_get("ro.build.type", value, "userdebug");
-    if (!strcmp(value, "user") || turn_off_flag) {
+    // user verson camera log dont print >= LOGD
+    property_get("ro.debuggable", value, "1");
+    if (!strcmp(value, "0")) {
         g_oem_log_level = LEVEL_OVER_LOGI;
     }
 }

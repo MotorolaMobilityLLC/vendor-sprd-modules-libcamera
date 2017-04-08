@@ -715,15 +715,20 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
     num = skip_num;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SKIP_NUM, &num);
     CMR_RTN_IF_ERR(ret);
+    ATRACE_BEGIN("dcam_stream_on");
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_ON, &stream_on);
     if (0 == ret) {
         pthread_mutex_lock(&p_grab->status_mutex);
         p_grab->is_on = 1;
         pthread_mutex_unlock(&p_grab->status_mutex);
     }
+    ATRACE_END();
+
+    ATRACE_BEGIN("sensor_stream_on");
     if (p_grab->stream_on_cb) {
         (*p_grab->stream_on_cb)(1, p_grab->init_param.oem_handle);
     }
+    ATRACE_END();
 
 exit:
     CMR_LOGI("ret = %ld", ret);
