@@ -38,13 +38,13 @@ cmr_u32 _pm_rgb_dither_convert_param(void *dst_param, cmr_u32 strength_level, cm
 
 	if (rgb_dither_param != NULL) {
 		dst_ptr->cur.range = rgb_dither_param[strength_level].pseudo_random_raw_range;
-		dst_ptr->cur.yrandom_mode = rgb_dither_param[strength_level].yrandom_mode;
-		dst_ptr->cur.shift = rgb_dither_param[strength_level].yrandom_shift;
+		dst_ptr->cur.random_mode = rgb_dither_param[strength_level].yrandom_mode;
+		dst_ptr->cur.r_shift = rgb_dither_param[strength_level].yrandom_shift;
 		dst_ptr->cur.seed = rgb_dither_param[strength_level].yrandom_seed;
-		dst_ptr->cur.offset = rgb_dither_param[strength_level].yrandom_offset;
-		dst_ptr->cur.yrandom_bypass = rgb_dither_param[strength_level].pseudo_random_raw_bypass;
+		dst_ptr->cur.r_offset = rgb_dither_param[strength_level].yrandom_offset;
+		dst_ptr->cur.random_bypass = rgb_dither_param[strength_level].pseudo_random_raw_bypass;
 		for (i = 0; i < 8; i++) {
-			dst_ptr->cur.takeBit[i] = rgb_dither_param[strength_level].yrandom_takebit[i];
+			dst_ptr->cur.takebit[i] = rgb_dither_param[strength_level].yrandom_takebit[i];
 		}
 	}
 
@@ -60,7 +60,7 @@ cmr_s32 _pm_rgb_dither_init(void *dst_rgb_dither_param, void *src_rgb_dither_par
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	dst_ptr->cur.bypass = header_ptr->bypass;
+	dst_ptr->cur.random_bypass = header_ptr->bypass;
 
 	dst_ptr->cur_level = src_ptr->default_strength_level;
 	dst_ptr->level_num = src_ptr->level_number;
@@ -69,7 +69,7 @@ cmr_s32 _pm_rgb_dither_init(void *dst_rgb_dither_param, void *src_rgb_dither_par
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_rgb_dither_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	dst_ptr->cur.bypass |= header_ptr->bypass;
+	dst_ptr->cur.random_bypass |= header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to  convert pm rgb dither param!");
@@ -88,7 +88,7 @@ cmr_s32 _pm_rgb_dither_set_param(void *rgb_dither_param, cmr_u32 cmd, void *para
 
 	switch (cmd) {
 	case ISP_PM_BLK_RGB_DITHER_BYPASS:
-		dst_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
+		dst_ptr->cur.random_bypass = *((cmr_u32 *) param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 		break;
 
@@ -115,7 +115,7 @@ cmr_s32 _pm_rgb_dither_set_param(void *rgb_dither_param, cmr_u32 cmd, void *para
 				nr_tool_flag[10] = 0;
 				block_result->mode_flag_changed = 0;
 				rtn = _pm_rgb_dither_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
-				dst_ptr->cur.bypass |= header_ptr->bypass;
+				dst_ptr->cur.random_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to  convert pm rgb dither param!");
 					return rtn;

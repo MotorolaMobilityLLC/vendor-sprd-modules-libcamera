@@ -53,8 +53,8 @@ cmr_s32 isp_u_rgb_dither_block(isp_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_RGBG;
-	param.property = ISP_PRO_RGB_GAIN_RANDOM_PARAM;
+	param.sub_block = ISP_BLOCK_RGBG_DITHER;
+	param.property = ISP_PRO_RGB_EDITHER_RANDOM_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);

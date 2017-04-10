@@ -533,7 +533,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		rtn = dev_ae_set_statistics_mode(isp_dev_handle, *(cmr_int *) param0, *(cmr_u32 *) param1);
 		break;
 	case ISP_DEV_SET_RGB_GAIN:
-		//rtn = dev_ae_set_rgb_gain(isp_dev_handle, (cmr_u32*)param0);
+		rtn = dev_ae_set_rgb_gain(isp_dev_handle, (cmr_u32*)param0);
 		break;
 	case ISP_DEV_GET_AE_SYSTEM_TIME:
 		rtn = isp_u_capability_time(cxt->isp_driver_handle, (cmr_u32 *) param0, (cmr_u32 *) param1);

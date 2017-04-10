@@ -806,7 +806,7 @@ struct isp_yiq_afl_param_v3 {
 
 /********************************************************************************************/
 struct isp_rgb_dither_param {
-	struct isp_dev_rgb_gain_info cur;
+	struct isp_dev_rgb_dither_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;

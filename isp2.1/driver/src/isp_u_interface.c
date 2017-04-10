@@ -44,7 +44,7 @@ struct isp_cfg_fun {
 };
 
 	/************************************Tshark2*******************************************************/
-static struct isp_cfg_fun s_isp_cfg_fun_tab_tshark2[] = {
+static struct isp_cfg_fun s_isp_cfg_fun_tab_sharkl2[] = {
 	{ISP_BLK_PRE_GBL_GAIN, isp_u_pgg_block},
 	{ISP_BLK_BLC, isp_u_blc_block},
 //      {ISP_BLK_PDAF_EXTRACT,     isp_u_pdaf_block},
@@ -52,7 +52,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab_tshark2[] = {
 	{ISP_BLK_NLM, isp_u_nlm_block},
 	{ISP_BLK_POSTBLC, isp_u_post_blc_block},
 	{ISP_BLK_RGB_GAIN, isp_u_rgb_gain_block},
-//  {ISP_BLK_RGB_DITHERi,      isp_u_dispatch_block},
+	{ISP_BLK_RGB_DITHER,isp_u_rgb_dither_block},
 	{ISP_BLK_NLC, isp_u_nlc_block},
 	{ISP_BLK_2D_LSC, isp_u_2d_lsc_block},
 	{ISP_BLK_1D_LSC, isp_u_1d_lsc_block},
@@ -109,10 +109,10 @@ cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)
 	cmr_u32 i = 0, cnt = 0;
 	isp_cfg_fun_ptr cfg_fun_ptr = PNULL;
 
-	cnt = sizeof(s_isp_cfg_fun_tab_tshark2) / sizeof(s_isp_cfg_fun_tab_tshark2[0]);
+	cnt = sizeof(s_isp_cfg_fun_tab_sharkl2) / sizeof(s_isp_cfg_fun_tab_sharkl2[0]);
 	for (i = 0; i < cnt; i++) {
-		if (sub_block == s_isp_cfg_fun_tab_tshark2[i].sub_block) {
-			cfg_fun_ptr = s_isp_cfg_fun_tab_tshark2[i].cfg_fun;
+		if (sub_block == s_isp_cfg_fun_tab_sharkl2[i].sub_block) {
+			cfg_fun_ptr = s_isp_cfg_fun_tab_sharkl2[i].cfg_fun;
 			break;
 		}
 	}
