@@ -396,7 +396,7 @@ static cmr_s32 _ae_write_exp_gain(struct ae_ctrl_cxt *cxt, cmr_s32 expline, cmr_
 		ISP_LOGE("fail to write exp_gain, cxt:%p", cxt);
 		return rtn;
 	}
-	//ISP_LOGV("expline %d dummy %d aegain %d", expline, dummy, aegain);
+	ISP_LOGV("cam-id %d expline %d dummy %d aegain %d", cxt->camera_id, expline, dummy, aegain);
 	if (0 <= expline) {
 		struct ae_exposure exp;
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
@@ -1517,7 +1517,7 @@ static cmr_s32 exp_time2exp_line(struct ae_ctrl_cxt *cxt, struct ae_exp_gain_tab
 	float tmp_2 = 0;
 	cmr_s32 mx = src[AE_FLICKER_50HZ].max_index;
 
-	ISP_LOGV("exp2line %d %d %d\r\n", linetime, tablemode, mx);
+	ISP_LOGV("cam-id %d exp2line %d %d %d\r\n", cxt->camera_id, linetime, tablemode, mx);
 	UNUSED(cxt);
 	dst[AE_FLICKER_60HZ].max_index = src[AE_FLICKER_50HZ].max_index;
 	dst[AE_FLICKER_60HZ].min_index = src[AE_FLICKER_50HZ].min_index;
@@ -1643,7 +1643,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	struct ae_ev_table *ev_table = NULL;
 	UNUSED(work_param);
 
-	ISP_LOGV("Init param %d\r\n", init);
+	ISP_LOGV("cam-id %d, Init param %d\r\n", cxt->camera_id, init);
 
 	if (AE_PARAM_INIT == init) {
 		if (NULL == cxt || NULL == init_param) {
@@ -1795,7 +1795,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.settings.min_fps = 5;
 	cxt->cur_status.settings.max_fps = 30;
 
-	ISP_LOGV("snr setting fps: %d\n", cxt->snr_info.snr_setting_max_fps);
+	ISP_LOGV("cam-id %d, snr setting max fps: %d\n", cxt->camera_id, cxt->snr_info.snr_setting_max_fps);
 	//if (0 != cxt->snr_info.snr_setting_max_fps) {
 	//      cxt->cur_status.settings.sensor_max_fps = 30;//cxt->snr_info.snr_setting_max_fps;
 	//} else {
@@ -1806,7 +1806,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.settings.flash = 0;
 	cxt->cur_status.settings.flash_ration = cxt->cur_param->flash_param.adjust_ratio;
 	//cxt->flash_on_off_thr;
-	ISP_LOGV("flash_ration_mp: %d\n", cxt->cur_status.settings.flash_ration);
+	ISP_LOGV("cam-id %d, flash_ration_mp: %d\n", cxt->camera_id, cxt->cur_status.settings.flash_ration);
 
 	cxt->cur_status.settings.iso = AE_ISO_AUTO;
 	cxt->cur_status.settings.ev_index = ev_table->default_level;
@@ -1865,7 +1865,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->end_id = AE_END_ID;
 
 	_cfg_set_aem_mode(cxt);	/* set ae monitor work mode */
-	ISP_LOGV("ALG_id %d   %d\r\n", cxt->cur_param->alg_id, sizeof(struct ae_tuning_param));
+	ISP_LOGI("cam-id %d, ALG_id %d   %d\r\n", cxt->camera_id, cxt->cur_param->alg_id, sizeof(struct ae_tuning_param));
 	//ISP_LOGV("DP %d   lv-bv %.3f\r\n", cxt->sensor_gain_precision, cxt->cur_status.cali_lv_eight);
 	return AE_SUCCESS;
 }
@@ -1890,7 +1890,8 @@ static cmr_s32 _ae_online_ctrl_set(struct ae_ctrl_cxt *cxt, cmr_handle param)
 		return AE_PARAM_NULL;
 	}
 
-	ISP_LOGV("mode:%d, idx:%d, s:%d, g:%d\n", ae_ctrl_ptr->mode, ae_ctrl_ptr->index, ae_ctrl_ptr->shutter, ae_ctrl_ptr->again);
+	ISP_LOGV("cam-id:%d, mode:%d, idx:%d, s:%d, g:%d\n", cxt->camera_id, ae_ctrl_ptr->mode,
+		ae_ctrl_ptr->index, ae_ctrl_ptr->shutter, ae_ctrl_ptr->again);
 	cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 	if (AE_CTRL_SET_INDEX == ae_ctrl_ptr->mode) {
 		cxt->cur_status.settings.manual_mode = 1;	/*ae index */
@@ -1921,7 +1922,8 @@ static cmr_s32 _ae_online_ctrl_get(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	ae_ctrl_ptr->dgain = cxt->sync_cur_result.wts.cur_dgain;
 	ae_ctrl_ptr->skipa = 0;
 	ae_ctrl_ptr->skipd = 0;
-	ISP_LOGV("idx:%d, s:%d, g:%d\n", ae_ctrl_ptr->index, ae_ctrl_ptr->shutter, ae_ctrl_ptr->again);
+	ISP_LOGV("cam-id:%d, idx:%d, s:%d, g:%d\n", cxt->camera_id, ae_ctrl_ptr->index,
+		ae_ctrl_ptr->shutter, ae_ctrl_ptr->again);
 	return rtn;
 }
 
@@ -2023,8 +2025,8 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 			ISP_LOGV("Current_status_exp_gain is %d,%d\n", cur_status->ae_table->exposure[j], cur_status->ae_table->again[j]);
 		}
 		*/
-		ISP_LOGV("CURRENT_STATUS_EXP_GAIN : %d,%d,%d", cur_status->effect_expline, cur_status->effect_gain, cur_status->settings.iso);
-		ISP_LOGV("TABLE_ENABLE IS %d", scene_info[i].table_enable);
+		ISP_LOGV("CUR_STAT_EXP_GAIN : %d,%d,%d", cur_status->effect_expline, cur_status->effect_gain, cur_status->settings.iso);
+		ISP_LOGV("TAB_EN IS %d", scene_info[i].table_enable);
 		if (scene_info[i].table_enable) {
 			ISP_LOGV("mode is %d", i);
 			cur_status->ae_table = &scene_info[i].ae_table[cur_status->settings.flicker];
@@ -2057,7 +2059,7 @@ SET_SCENE_MOD_2_NOAMAL:
 		iso = prv_status->settings.iso;
 		weight_mode = prv_status->settings.metering_mode;
 		if (iso >= AE_ISO_MAX || weight_mode >= AE_WEIGHT_MAX) {
-			ISP_LOGI("error iso=%d, weight_mode=%d", iso, weight_mode);
+			ISP_LOGE("fail to get iso=%d, weight_mode=%d", iso, weight_mode);
 			rtn = AE_ERROR;
 			goto SET_SCENE_MOD_EXIT;
 		}
@@ -2076,7 +2078,8 @@ SET_SCENE_MOD_2_NOAMAL:
 		cur_status->settings.scene_mode = nxt_scene_mod;
 	}
 SET_SCENE_MOD_EXIT:
-	ISP_LOGI("change scene mode from %d to %d, rtn=%d", cur_scene_mod, nxt_scene_mod, rtn);
+	ISP_LOGI("cam-id %d, change scene mode from %d to %d, rtn=%d", cxt->camera_id,
+		cur_scene_mod, nxt_scene_mod, rtn);
 	return rtn;
 }
 
@@ -2172,7 +2175,7 @@ static cmr_s32 _fd_info_pre_set(struct ae_ctrl_cxt *cxt)
 	ae1_fd = &(cxt->cur_status.ae1_finfo);
 	ae1_fd->update_flag = 0;	// set updata flag
 	//ae1_fd->pre_info.face_num = ae1_fd->cur_info.face_num;
-	ISP_LOGV("face_num is %d\n", cxt->fdae.face_info.face_num);
+	ISP_LOGV("cam-id %d, face_num is %d\n", cxt->camera_id, cxt->fdae.face_info.face_num);
 	//for (i = 0; i != ae1_fd->cur_info.face_num; i++) {
 	for (i = 0; i < cxt->fdae.face_info.face_num; i++) {
 		// save pre info
@@ -2281,7 +2284,7 @@ static cmr_s32 _fd_process(struct ae_ctrl_cxt *cxt, cmr_handle param)
 		cxt->fdae.face_info.face_num = 0;
 		return rtn;
 	}
-	ISP_LOGV("fd num is %d", fd->face_num);
+	ISP_LOGV("cam-id %d, fd num is %d", cxt->camera_id, fd->face_num);
 	if (fd->face_num > 0) {
 		memcpy(&(cxt->fdae.face_info), fd, sizeof(struct ae_fd_param));
 	} else {
@@ -2292,8 +2295,8 @@ static cmr_s32 _fd_process(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	_fd_info_pre_set(cxt);
 	_fd_info_set(cxt);
 	// add end;
-	ISP_LOGV("FDAE: sx %d sy %d", fd->face_area[0].rect.start_x, fd->face_area[0].rect.start_y);
-	ISP_LOGV("FDAE: ex %d ey %d", fd->face_area[0].rect.end_x, fd->face_area[0].rect.end_y);
+	ISP_LOGV("cam-id %d, FDAE: sx %d sy %d", cxt->camera_id, fd->face_area[0].rect.start_x, fd->face_area[0].rect.start_y);
+	ISP_LOGV("cam-id %d, FDAE: ex %d ey %d", cxt->camera_id, fd->face_area[0].rect.end_x, fd->face_area[0].rect.end_y);
 	return rtn;
 }
 
@@ -2563,7 +2566,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	struct ae_set_work_param work_param;
 	struct ae_init_in *init_param = NULL;
 
-	//ISP_LOGI("V2_INIT ST\r\n");
 	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
 
 	if (NULL == cxt) {
@@ -2607,8 +2609,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	init_in.gain_valid_num = cxt->gain_skip_num;
 	init_in.preview_skip_num = cxt->preview_skip_num;	//hu
 	init_in.capture_skip_num = cxt->capture_skip_num;	//hu
-	ISP_LOGV("D-gain--exp_valid_num =%d, gain_valid_num =%d, preview_skip_num =%d, capture_skip_num =%d",
-		init_in.exp_valid_num, init_in.gain_valid_num, init_in.preview_skip_num, init_in.capture_skip_num);
+	ISP_LOGV("cam-id %d, D-gain--exp_valid_num =%d, gain_valid_num =%d, preview_skip_num =%d, capture_skip_num =%d",
+		cxt->camera_id, init_in.exp_valid_num, init_in.gain_valid_num, init_in.preview_skip_num, init_in.capture_skip_num);
 
 	seq_init(AE_WRITE_QUEUE_NUM, &init_in, &seq_handle);
 	cxt->seq_handle = seq_handle;
@@ -2663,7 +2665,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			delay_info.valid_gain_num = cxt->cur_param->sensor_cfg.gain_skip_num;
 			cxt->isp_ops.set_shutter_gain_delay_info(cxt->isp_ops.isp_handler, (cmr_handle) (&delay_info));
 		} else {
-			ISP_LOGI("set_shutter_gain_delay_info func is null\n");
+			ISP_LOGE("set_shutter_gain_delay_info func is null\n");
 		}
 	}
 	/*
@@ -2700,14 +2702,14 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	} else {
 		cxt->manual_ae_on = 0;
 	}
-
+	ISP_LOGI("done, cam-id %d", cxt->camera_id);
 	return (cmr_handle) cxt;
 ERR_EXIT:
 	if (NULL != cxt) {
 		free(cxt);
 		cxt = NULL;
 	}
-
+	ISP_LOGE("fail to init ae %d", rtn);
 	return NULL;
 }
 
@@ -2881,7 +2883,7 @@ static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	UNUSED(param);
 	cxt->hdr_up = cxt->hdr_down = 50;
 
-	ISP_LOGV("cxt->hdr_frame_cnt=%d", cxt->hdr_frame_cnt);
+	ISP_LOGV("cam-id %d, cxt->hdr_frame_cnt=%d", cxt->camera_id, cxt->hdr_frame_cnt);
 	if (cxt->hdr_frame_cnt == cxt->hdr_cb_cnt && cxt->hdr_enable == 1) {
 		cxt->hdr_frame_cnt = 0;
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START);
@@ -2930,7 +2932,7 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 	}
 	cxt->last_enable = 1;
 
-	ISP_LOGV("AE_VIDEO_STOP E %d G %d W %d H %d", cxt->last_expline,
+	ISP_LOGI("AE_VIDEO_STOP cam-id %d E %d G %d W %d H %d", cxt->camera_id ,cxt->last_expline,
 		cxt->last_aegain, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
 }
 
@@ -3065,7 +3067,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	} else {
 		;
 	}
-	ISP_LOGV("AE_VIDEO_START lt %d W %d H %d", cxt->cur_status.line_time,
+	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d", cxt->camera_id, cxt->cur_status.line_time,
 		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
 
 	return rtn;
@@ -3104,7 +3106,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	}
 
 	cxt = (struct ae_ctrl_cxt *)handle;
-	ISP_LOGV("is slow motion=%d", cxt->high_fps_info.is_high_fps);
+	ISP_LOGV("cam-id %d, is slow motion %d", cxt->camera_id, cxt->high_fps_info.is_high_fps);
 	pthread_mutex_lock(&cxt->data_sync_lock);
 
 	current_status = &cxt->sync_cur_status;
@@ -4049,7 +4051,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_in_out *reserve = NULL;
 	UNUSED(in_param);
-	ISP_LOGI("V2_DEINIT ST\r\n");
+
 	rtn = _check_handle(handle);
 	if (AE_SUCCESS != rtn) {
 		return AE_ERROR;
@@ -4091,10 +4093,11 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	}
 
 	pthread_mutex_destroy(&cxt->data_sync_lock);
-
+	ISP_LOGI("cam-id %d", cxt->camera_id);
 	//if (cxt) {
 	free(cxt);
 	//}
+	ISP_LOGI("done");
 	return rtn;
 }
 
