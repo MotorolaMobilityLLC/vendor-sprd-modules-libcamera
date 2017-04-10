@@ -351,6 +351,9 @@ typedef struct _af_ctrl {
 	cmr_u8 soft_landing_step;
 	cmr_u8 caf_first_stable;
 	cmr_u32 inited_af_req;
+	//non-zsl,easy for motor moving and capturing
+	cmr_u8 test_loop_quit;
+	pthread_t test_loop_handle;
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;

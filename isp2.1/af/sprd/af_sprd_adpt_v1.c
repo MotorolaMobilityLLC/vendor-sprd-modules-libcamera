@@ -2555,7 +2555,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 			fseek(fp, 0, SEEK_END);
 			len = ftell(fp);
 			if (sizeof(af->bokeh_param) != len) {
-				ISP_LOGD("bokeh_param.bin len dismatch with bokeh_param len %d", sizeof(af->bokeh_param));
+				ISP_LOGV("bokeh_param.bin len dismatch with bokeh_param len %d", sizeof(af->bokeh_param));
 				fclose(fp);
 				goto BOKEH_DEFAULT;
 			}
@@ -2563,7 +2563,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 			fseek(fp, 0, SEEK_SET);
 			len = fread(&af->bokeh_param, 1, len, fp);
 			if (len != sizeof(af->bokeh_param)) {
-				ISP_LOGD("read bokeh_param.bin size error");
+				ISP_LOGV("read bokeh_param.bin size error");
 				fclose(fp);
 				goto BOKEH_DEFAULT;
 			}
@@ -2916,6 +2916,8 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	char *p1 = test_param;
 	char *p2;
 	char *p3;
+	property_set("af_set_pos", "none");
+
 	while (*p1 != '~' && *p1 != '\0')
 		p1++;
 	*p1++ = '\0';
@@ -2947,19 +2949,22 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 static void trigger_saf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
-	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	UNUSED(test_param);
+	property_set("af_set_pos", "none");
+
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;
 	af->state = STATE_NORMAL_AF;
 	af->caf_state = CAF_IDLE;
 	//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
 	//saf_start(af, NULL);  //SAF, win is NULL using default
+	ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
 	af->algo_mode = SAF;
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.AF_Trigger_Type = (1 == af->defocus) ? DEFOCUS : RF_NORMAL;
-	do_start_af(af);
 	AF_Trigger(&af->fv, &aft_in);
+	do_start_af(af);
 	af->vcm_stable = 0;
 }
 
@@ -3151,6 +3156,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 	CALCULATE_KEY(p1, 0);
 
 	while (i < sizeof(test_mode_set) / sizeof(test_mode_set[0])) {
+		ISP_LOGV("command,key,target_key:%s,%lld %lld", test_mode_set[i].command, test_mode_set[i].key, key);
 		if (key == test_mode_set[i].key)
 			break;
 		i++;
@@ -3163,6 +3169,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 			p1 = test_mode_set[i].command;
 			CALCULATE_KEY(p1, 1);
 			test_mode_set[i].key = key;
+			ISP_LOGV("command,key:%s,%lld", test_mode_set[i].command, test_mode_set[i].key);
 			i++;
 		}
 		set_manual(af, NULL);
@@ -3185,6 +3192,33 @@ static cmr_s32 af_test_lens(af_ctrl_t * af)
 	ISP_LOGV("af_pos_set3 %s", AF_POS);
 	lens_move_to(af, atoi(AF_POS));
 	ISP_LOGV("af_pos_set4 %s", AF_POS);
+	return 0;
+}
+
+//non-zsl,easy for motor moving and capturing
+static void *loop_for_test_mode(void *data_client)
+{
+	af_ctrl_t *af = NULL;
+
+	af = data_client;
+
+	while (0 == af->test_loop_quit) {
+		property_get("af_mode", AF_MODE, "none");
+		ISP_LOGV("test AF_MODE %s", AF_MODE);
+		if (0 != strcmp(AF_MODE, "none") && 0 != strcmp(AF_MODE, "ISP_DEFAULT")) {
+			set_af_test_mode(af, AF_MODE);
+			property_set("af_mode", "ISP_DEFAULT");
+		}
+		property_get("af_set_pos", AF_POS, "none");
+		ISP_LOGV("test AF_POS %s", AF_POS);
+		if (0 != strcmp(AF_POS, "none")) {
+			af_test_lens(af);
+		}
+	}
+	af->test_loop_quit = 1;
+
+	ISP_LOGV("test mode loop quit");
+
 	return 0;
 }
 
@@ -3318,6 +3352,10 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	//pthread_mutex_destroy(&af->caf_lock);
 	property_set("af_mode", "none");
 	property_set("af_set_pos", "none");
+	if (0 == af->test_loop_quit) {
+		af->test_loop_quit = 1;
+		pthread_join(af->test_loop_handle, NULL);
+	}
 //    isp->handle_af = NULL;
 	memset(af, 0, sizeof(*af));
 	free(af);
@@ -3536,6 +3574,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	isp_ctx->af_cxt.log_af = (cmr_u8 *) af;
 	isp_ctx->af_cxt.log_af_size = sizeof(*af);
 	lens_move_to(af, af->fv.AF_OTP.INF);
+	af->test_loop_quit = 1;
+
 	/*
 	   AF process need to do af once when af init done.
 	 */
@@ -3734,16 +3774,19 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 	if (1 == af->bypass)
 		return 0;
 
-	property_get("af_mode", AF_MODE, "none");
-	if (0 != strcmp(AF_MODE, "none")) {
-		set_af_test_mode(af, AF_MODE);
-		property_set("af_mode", "ISP_DEFAULT");
-		property_get("af_set_pos", AF_POS, "none");
-		ISP_LOGV("test AF_MODE %s, AF_POS %s", AF_MODE, AF_POS);
-		if (0 != strcmp(AF_POS, "none")) {
-			af_test_lens(af);
-			property_set("af_set_pos", "none");
-			return 0;
+	if (1 == af->test_loop_quit) {
+		property_get("af_mode", AF_MODE, "none");
+		if (0 == strcmp(AF_MODE, "ISP_FOCUS_MANUAL")) {
+			af->test_loop_quit = 0;
+			pthread_attr_t attr;
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+			rtn = pthread_create(&af->test_loop_handle, &attr, loop_for_test_mode, af);
+			pthread_attr_destroy(&attr);
+			if (rtn) {
+				ISP_LOGE("fail to create loop manual mode");
+				return 0;
+			}
 		}
 	}
 	// ISP_LOGV("state = %s, pre_state = %s, cur mode = %d", STATE_STRING(af->state), STATE_STRING(af->pre_state), af->request_mode);
@@ -3962,6 +4005,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 #if 1
 		{
 			property_set("af_mode", "none");
+			af->test_loop_quit = 1;
 			//win = (struct isp_af_win *)param;
 			struct af_trig_info *win = (struct af_trig_info *)param0;
 
