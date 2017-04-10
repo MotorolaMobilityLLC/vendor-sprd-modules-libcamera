@@ -47,30 +47,19 @@
 #define AFV1_RETURN_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning); return exp;}}while(0)
 #define AFV1_TRACE_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning);}}while(0)
 
-//#define ISP_LOGV ISP_LOGV
-//#define ISP_LOGE ISP_LOGE
-
 #define AF_WAIT_CAF_FINISH     0
 #define AF_RING_BUFFER         0
 #define AF_SYS_VERSION "-20170225-02"
-#define BOKEH_BOUNDARY_RATIO 8//based on 10
-#define BOKEH_SCAN_FROM 200//limited in [0,1023]
-#define BOKEH_SCAN_TO 900//limited in [0,1023]
-#define BOKEH_SCAN_STEP 20//at least 20
+#define BOKEH_BOUNDARY_RATIO 8	//based on 10
+#define BOKEH_SCAN_FROM 200	//limited in [0,1023]
+#define BOKEH_SCAN_TO 900	//limited in [0,1023]
+#define BOKEH_SCAN_STEP 20	//at least 20
 /*------------------------------------------------------------------------------*
 *					Data Structures				*
 *-------------------------------------------------------------------------------*/
 enum afv1_err_type {
 	AFV1_SUCCESS = 0x00,
 	AFV1_ERROR,
-	AFV1_PARAM_ERROR,
-	AFV1_PARAM_NULL,
-	AFV1_FUN_NULL,
-	AFV1_HANDLER_NULL,
-	AFV1_HANDLER_ID_ERROR,
-	AFV1_HANDLER_CXT_ERROR,
-	AFV1_ALLOC_ERROR,
-	AFV1_FREE_ERROR,
 	AFV1_ERR_MAX
 };
 
@@ -290,14 +279,14 @@ typedef struct _af_fv_info {
 	uint64 af_fv1[10];	//[10]:10 ROI, sum of FV1
 } af_fv;
 
-typedef struct _Bokeh_tuning_param{
+typedef struct _Bokeh_tuning_param {
 	cmr_u16 from_pos;
 	cmr_u16 to_pos;
 	cmr_u16 move_step;
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
-}Bokeh_tuning_param;
+	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
+} Bokeh_tuning_param;
 
 typedef struct _af_ctrl {
 	char af_version[40];
@@ -379,8 +368,6 @@ typedef struct _af_ctrl {
 	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 	 cmr_s32(*set_monitor_win) (void *handler, struct af_monitor_win * in_param);
 	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
-	//cmr_s32(*ae_awb_lock) (void *handle);
-	//cmr_s32(*ae_awb_release) (void *handle);
 	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
 	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
 } af_ctrl_t;
