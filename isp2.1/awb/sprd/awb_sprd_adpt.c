@@ -850,6 +850,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->flash_info.flash_enable = 0;
 	cxt->lock_info.lock_flag = 0;
 	cxt->lock_info.lock_flash_frame = 0;
+	cxt->flash_info.main_flash_enable =0;
 	cxt->init = AWB_CTRL_TRUE;
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
@@ -1145,13 +1146,16 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 
 	//lock awb after flash
-	if(cxt->lock_info.lock_flag == 1){
+	if(cxt->lock_info.lock_flag == 1 && cxt->flash_info.main_flash_enable == 1){
 		if(cxt->lock_info.lock_flash_frame != 0){
 			cxt->output_gain.r = cxt->recover_gain.r ;
 			cxt->output_gain.g = cxt->recover_gain.g;
 			cxt->output_gain.b = cxt->recover_gain.b;
 			cxt->output_ct = cxt->recover_ct;
 			cxt->lock_info.lock_flash_frame -=1;
+		}else{
+			cxt->flash_info.main_flash_enable = 0;
+			cxt->lock_info.lock_flag == 0;
 		}
 	}
 
@@ -1172,7 +1176,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->snap_lock-=1;
 	}
 
-//	ISP_LOGD("awb calc awb[%d %d %d %d K],lock_mode =%d cxt->snap_lock = %d ",cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b,cxt->output_ct,cxt->lock_info.lock_mode,cxt->snap_lock);
+//	ISP_LOGD("cxt->snap_lock =%d lock_mode =%d lock_flag =%d main_flash_enable =%d lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->lock_info.lock_flag,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
 
 	result->gain.r = cxt->output_gain.r;
 	result->gain.g = cxt->output_gain.g;
@@ -1239,6 +1243,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_M");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_MAIN;
+		cxt->flash_info.main_flash_enable = 1;
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_P:

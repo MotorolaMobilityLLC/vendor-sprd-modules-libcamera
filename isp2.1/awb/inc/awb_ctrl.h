@@ -152,6 +152,7 @@ struct awb_flash_info {
 	cmr_u32 effect;
 	cmr_u32 patten;
 	cmr_u32 flash_enable;
+	cmr_u32 main_flash_enable;
 	enum awb_ctrl_flash_status flash_status;
 };
 union awb_ctrl_stat_img {
