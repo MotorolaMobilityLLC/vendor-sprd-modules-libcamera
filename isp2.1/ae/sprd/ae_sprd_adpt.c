@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 #define LOG_TAG "ae_sprd_adpt"
+
 #include "ae_sprd_adpt.h"
 #include "ae_misc.h"
 #include "ae_debug.h"
 #include "ae_ctrl.h"
 #include "isp_debug.h"
+
 #ifndef WIN32
 #include <utils/Timers.h>
 #include <cutils/properties.h>
@@ -28,14 +30,12 @@
 #include "stdio.h"
 #include "ae_porint.h"
 #endif
+
 #include "cmr_msg.h"
 #include "sensor_exposure_queue.h"
 #include "isp_adpt.h"
 #include "ae_debug_info_parser.h"
 
-/**---------------------------------------------------------------------------*
-**				Macro Define					*
-**----------------------------------------------------------------------------*/
 #define AE_TUNING_VER 1
 
 #define AE_START_ID 0x71717567
@@ -43,7 +43,7 @@
 #define AE_CONVERGED_NUM 2
 #define AE_FRAME_INFO_NUM 8
 
-#define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog" /**/
+#define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define USE_ISO_TBL 0
 #define SEGMENTED_ISO 1
@@ -72,9 +72,7 @@
 #define AE_WRITE_QUEUE_NUM		(8)
 #define AE_CALC_RESULT_QUEUE_LENGTH		8
 const char AE_MAGIC_TAG[] = "ae_debug_info";
-/**---------------------------------------------------------------------------*
-**				Data Structures					*
-**---------------------------------------------------------------------------*/
+
 struct ae_calc_result {
 	cmr_s32 expline;
 	cmr_s32 gain;

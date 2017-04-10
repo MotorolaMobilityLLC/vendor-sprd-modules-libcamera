@@ -16,25 +16,17 @@
 
 #ifndef _ISP_AF_H_
 #define _ISP_AF_H_
-/*------------------------------------------------------------------------------*
-*					Dependencies				*
-*-------------------------------------------------------------------------------*/
+
 #include "isp_alg_fw.h"
 
 #ifdef WIN32
 #include "sci_type.h"
 #endif
 
-/*------------------------------------------------------------------------------*
-*					Compiler Flag				*
-*-------------------------------------------------------------------------------*/
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-/*------------------------------------------------------------------------------*
-*					Data Prototype				*
-*-------------------------------------------------------------------------------*/
 #define MAX_AF_WINS 32
 
 enum af_err_type {
@@ -261,12 +253,9 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle * handle_af);
 cmr_int af_ctrl_deinit(cmr_handle * handle_af);
 cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result);
 cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr);
-/*------------------------------------------------------------------------------*
-*					Compiler Flag				*
-*-------------------------------------------------------------------------------*/
+
 #ifdef	 __cplusplus
 }
 #endif
-/*-----------------------------------------------------------------------------*/
+
 #endif
-// End

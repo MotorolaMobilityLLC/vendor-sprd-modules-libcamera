@@ -49,7 +49,9 @@ struct ae_debug_info_unpacket_out {
 cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);
 cmr_s32 ae_debug_info_unpacket(cmr_handle input, cmr_handle output);
 cmr_handle ae_debug_info_get_lib_version(void);
+
 #ifdef __cplusplus
 }
 #endif
-#endif				//_AE_DEBUG_INFO_PARSER_H_
+
+#endif

@@ -15,31 +15,19 @@
 */
 #ifndef _STAT_BASIC_H_
 #define _STAT_BASIC_H_
-/*----------------------------------------------------------------------------*
-**				 Dependencies				*
-**---------------------------------------------------------------------------*/
 
 #ifdef CONFIG_FOR_TIZEN
 #include "stdint.h"
 #elif WIN32
 #include "ae_porting.h"
-#else /*  */
+#else
 #include "ae_types.h"
-#endif /*  */
-/**---------------------------------------------------------------------------*
-**				 Compiler Flag				*
-**---------------------------------------------------------------------------*/
+#endif
+
 #ifdef __cplusplus
 extern "C" {
+#endif
 
-#endif				/*  */
-/**---------------------------------------------------------------------------*
-**				Macro Define				*
-**----------------------------------------------------------------------------*/
-
-/**---------------------------------------------------------------------------*
-**				Data Structures				*
-**---------------------------------------------------------------------------*/
 typedef struct {
 	cmr_s16 top_range;	//range of bigger value
 	cmr_s16 data_len;
@@ -66,18 +54,14 @@ typedef struct {
 	basic_in in_basic;
 	basic_rt result_basic;
 } basic_stat;		//statistic information of single channel
-/**---------------------------------------------------------------------------*
-** 				Function Defination			*
-**---------------------------------------------------------------------------*/
+
 cmr_s32 initbasic(basic_stat * basic, cmr_u32 debug_level);
 cmr_s32 deinitbasic(basic_stat * basic);
 cmr_s32 calcbasic(basic_stat * basic, cmr_s32 len, cmr_u8 * data);
 cmr_s32 round_ae(float iodata);
 
-/**----------------------------------------------------------------------------*
-**					Compiler Flag			*
-**----------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
-#endif				/*  */
-#endif				/*  */
+#endif
+
+#endif

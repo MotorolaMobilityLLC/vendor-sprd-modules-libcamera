@@ -17,17 +17,12 @@
 #ifndef _AE_TUNING_TYPE_H_
 #define _AE_TUNING_TYPE_H_
 
-/*----------------------------------------------------------------------------*
- **				 Dependencies					*
- **---------------------------------------------------------------------------*/
 #include "mulaes.h"
 #include "flat.h"
 #include "touch_ae.h"
 #include "ae1_face.h"
 #include "region.h"
-/**---------------------------------------------------------------------------*
- **				 Compiler Flag					*
- **---------------------------------------------------------------------------*/
+
 struct ae_param_tmp_001 {
 	cmr_u32 version;
 	cmr_u32 verify;
@@ -102,5 +97,4 @@ struct ae_tuning_param {	//total bytes must be 263480
 	cmr_u32 reserved[2046];
 };
 
-/**---------------------------------------------------------------------------*/
-#endif //_AE_TUNING_TYPE_H_
+#endif

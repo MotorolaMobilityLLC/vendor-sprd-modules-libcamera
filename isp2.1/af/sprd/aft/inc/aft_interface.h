@@ -23,21 +23,13 @@
 
 #ifndef _AFT_INTERFACE_H_
 #define _AFT_INTERFACE_H_
-/*------------------------------------------------------------------------------*
-*					Dependencies				*
-*-------------------------------------------------------------------------------*/
+
 #include "cmr_types.h"
 
-/*------------------------------------------------------------------------------*
-*					Compiler Flag				*
-*-------------------------------------------------------------------------------*/
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-/*------------------------------------------------------------------------------*
-*					Data Structures				*
-*-------------------------------------------------------------------------------*/
 #define AFT_INVALID_HANDLE NULL
 #define MAX_AF_FILTER_CNT 10
 #define MAX_AF_WIN 32
@@ -219,21 +211,13 @@ typedef struct aft_context {
 	aft_ctrl_ops_t aft_ops;
 } aft_proc_handle_t;
 
-/*------------------------------------------------------------------------------*
-*					Data Prototype				*
-*-------------------------------------------------------------------------------*/
-
 cmr_s32 caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t * handle);
 cmr_s32 caf_trigger_deinit(aft_proc_handle_t * handle);
 cmr_s32 caf_trigger_calculation(aft_proc_handle_t * handle, struct aft_proc_calc_param *aft_calc_in, struct aft_proc_result *aft_calc_result);
 cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t * handle, enum aft_cmd cmd, void *param0, void *param1);
 
-/*------------------------------------------------------------------------------*
-*					Compiler Flag				*
-*-------------------------------------------------------------------------------*/
 #ifdef	 __cplusplus
 }
 #endif
-/*-----------------------------------------------------------------------------*/
+
 #endif
-// End

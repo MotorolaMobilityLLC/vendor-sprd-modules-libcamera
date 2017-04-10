@@ -16,17 +16,14 @@
 
 #ifndef _AE_CTRL_V2_H_
 #define _AE_CTRL_V2_H_
-/*----------------------------------------------------------------------------*
- **				 Dependencies				*
- **---------------------------------------------------------------------------*/
+
 #include "ae_tuning_type.h"
 #include "ae_com.h"
-/**---------------------------------------------------------------------------*
- **				 Compiler Flag				*
- **---------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 struct ae_in_out {
 	cmr_u16 cur_exp_line;	/*current exposure line: the value is related to the resolution */
 	cmr_u16 cur_dummy;	/*dummy line: the value is related to the resolution & fps */
@@ -38,11 +35,9 @@ cmr_handle ae_sprd_init(cmr_handle in_param, cmr_handle out_param);
 cmr_s32 ae_sprd_deinit(cmr_handle handler, cmr_handle in_param, cmr_handle out_param);
 cmr_s32 ae_sprd_calculation(cmr_handle handler, cmr_handle in_param, cmr_handle out_param);
 cmr_s32 ae_sprd_io_ctrl(cmr_handle handler, cmr_s32 cmd, cmr_handle in_param, cmr_handle out_param);
-/**----------------------------------------------------------------------------*
-**					Compiler Flag				**
-**----------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 }
 #endif
-/**---------------------------------------------------------------------------*/
+
 #endif

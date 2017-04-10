@@ -18,7 +18,7 @@
 
 #include <utils/Timers.h>
 
-#include "3a_common.h"
+#include "isp_common_types.h"
 #include "isp_dev_access.h"
 
 #include "AFv1_Common.h"
@@ -26,9 +26,7 @@
 #include "AFv1_Tune.h"
 
 #include "aft_interface.h"
-/*------------------------------------------------------------------------------*
-*					Micro Define				*
-*-------------------------------------------------------------------------------*/
+
 #ifndef AFV1_TRUE
 #define AFV1_TRUE (1)
 #endif
@@ -50,13 +48,12 @@
 #define AF_WAIT_CAF_FINISH     0
 #define AF_RING_BUFFER         0
 #define AF_SYS_VERSION "-20170225-02"
+
 #define BOKEH_BOUNDARY_RATIO 8	//based on 10
 #define BOKEH_SCAN_FROM 200	//limited in [0,1023]
 #define BOKEH_SCAN_TO 900	//limited in [0,1023]
 #define BOKEH_SCAN_STEP 20	//at least 20
-/*------------------------------------------------------------------------------*
-*					Data Structures				*
-*-------------------------------------------------------------------------------*/
+
 enum afv1_err_type {
 	AFV1_SUCCESS = 0x00,
 	AFV1_ERROR,

@@ -16,40 +16,31 @@
 #ifndef _AE_PORTING_H_
 #define _AE_PORTING_H_
 
-/**---------------------------------------------------------------------------*
- **                         Compiler Flag                                     *
- **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
+#endif
 
-#endif				/*  */
-
-/* ------------------------------------------------------------------------
-** Constants
-** ------------------------------------------------------------------------ */
 #ifdef WIN32
 #ifdef TRUE
 #undef TRUE
-#endif				/*  */
+#endif
 
 #ifdef FALSE
 #undef FALSE
-#endif				/*  */
+#endif
 
 #define TRUE   1		/* Boolean true value. */
 #define FALSE  0		/* Boolean false value. */
 
 #ifndef NULL
 #define NULL  0
-#endif				/*  */
+#endif
 
 #define SCI_NULL                                 0
 #ifndef PNULL
 #define PNULL                                    0
-#endif				/*  */
-/* -----------------------------------------------------------------------
-** Standard Types
-** ----------------------------------------------------------------------- */
+#endif
+
 typedef unsigned char BOOLEAN;
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -79,7 +70,7 @@ typedef __int64 __s64;
 #ifdef WIN_UNIT_TEST
 #define LOCAL
 #define CONST
-#else				/*  */
+#else
 #define	LOCAL		static
 #define	CONST		const
 #endif				//WIN_UNIT_TEST
@@ -149,7 +140,7 @@ Bit define
 #ifndef UNUSED
 #define UNUSED
 #endif
-/*  */
+
 typedef uint32_t pthread_mutex_t;
 
 int pthread_mutex_init(pthread_mutex_t * t, uint32_t mode);
@@ -159,10 +150,9 @@ int pthread_mutex_unlock(pthread_mutex_t * t);
 int property_get(const char *key, char *value, const char *default_value);
 
 #endif
-/**---------------------------------------------------------------------------*
- **                         Compiler Flag                                     *
- **---------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 }
-#endif				/*  */
-#endif				/* SCI_TYPES_H */
+#endif
+
+#endif

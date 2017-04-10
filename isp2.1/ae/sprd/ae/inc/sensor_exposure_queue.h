@@ -16,13 +16,9 @@
 
 #ifndef _SENSOR_EXPOSURE_QUEUE_H_
 #define _SENSOR_EXPOSURE_QUEUE_H_
-/*----------------------------------------------------------------------------*
- **				 Dependencies				*
- **---------------------------------------------------------------------------*/
+
 #include "isp_type.h"
-/**---------------------------------------------------------------------------*
- **				 Compiler Flag				*
- **---------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,11 +54,9 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, cmr_handle * han
 cmr_int seq_deinit(cmr_handle handle);
 cmr_int seq_reset(cmr_handle handle);
 cmr_int seq_put(cmr_handle handle, struct seq_item *in_est_ptr, struct seq_cell *out_actual_ptr, struct seq_cell *out_write_ptr);
-/**----------------------------------------------------------------------------*
-**					Compiler Flag				**
-**----------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 }
 #endif
-/**---------------------------------------------------------------------------*/
+
 #endif

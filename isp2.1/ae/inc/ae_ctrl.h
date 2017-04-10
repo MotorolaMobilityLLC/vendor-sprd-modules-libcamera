@@ -16,17 +16,13 @@
 
 #ifndef _AE_CTRL_H_
 #define _AE_CTRL_H_
-/*----------------------------------------------------------------------------*
- **				 Dependencies				*
- **---------------------------------------------------------------------------*/
-#include "3a_common.h"
+
+#include "isp_common_types.h"
 #include "isp_pm.h"
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
 #include "isp_otp_calibration.h"
-/**---------------------------------------------------------------------------*
- **				 Compiler Flag				*
- **---------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,7 +54,7 @@ struct ae_init_out {
 };
 
 struct ae_calc_in {
-	cmr_u32 stat_fmt;	//enum ae_aem_fmt
+	cmr_u32 stat_fmt;
 	union {
 		cmr_u32 *stat_img;
 		cmr_u32 *rgb_stat_img;
@@ -96,11 +92,9 @@ cmr_int ae_ctrl_deinit(cmr_handle * handle_ae);
 cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);
 cmr_int ae_ctrl_process(cmr_handle handle, struct ae_calc_in *in_param, struct ae_calc_out *result);
 cmr_s32 _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr);
-/**----------------------------------------------------------------------------*
-**					Compiler Flag				**
-**----------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 }
 #endif
-/**---------------------------------------------------------------------------*/
+
 #endif

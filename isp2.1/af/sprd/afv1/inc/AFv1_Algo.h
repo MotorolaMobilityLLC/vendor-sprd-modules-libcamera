@@ -44,15 +44,9 @@
 #ifndef __AFV1_ALGO_H__
 #define  __AFV1_ALGO_H__
 
-//=========================================================================//
-// Include header
-//=========================================================================//
 #include "AFv1_Common.h"
 #include "AFv1_Tune.h"
 
-//=========================================================================================//
-// Public Function Instance
-//=========================================================================================//
 ERRCODE AF_Cal_IncDecCount(AF_FV_DATA* pAF_FV_Data, cmr_u8 FrameNum);
 ERRCODE AF_Find_MaxMinIdx(AF_FV_DATA* pAF_FV_Data, cmr_u16* SearchTable, cmr_u8 FrameNum);
 ERRCODE AF_CheckCurve(AF_Data* pAF_Data,AF_FV_DATA* pAF_FV_Data, cmr_u16* SearchTable, cmr_u8 FrameNum, cmr_u8 MaxTableNum, cmr_u8 DIR);

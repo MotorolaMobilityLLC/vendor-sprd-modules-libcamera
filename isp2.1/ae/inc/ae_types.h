@@ -17,9 +17,6 @@
 #ifndef _AE_TYPES_H_
 #define _AE_TYPES_H_
 
-/*----------------------------------------------------------------------------*
- **				 Dependencies					*
- **---------------------------------------------------------------------------*/
 #ifdef CONFIG_FOR_TIZEN
 #include "stdint.h"
 #elif WIN32
@@ -27,9 +24,7 @@
 #else
 #include "cmr_types.h"
 #endif
-/**---------------------------------------------------------------------------*
- **				 Compiler Flag					*
- **---------------------------------------------------------------------------*/
+
 #define AE_EXP_GAIN_TABLE_SIZE 512
 #define AE_WEIGHT_TABLE_SIZE	1024
 #define AE_ISO_NUM	6
@@ -148,9 +143,9 @@ struct ae_weight_table {
 
 struct ae_ev_table {
 	cmr_s32 lum_diff[AE_EV_LEVEL_NUM];
-	/*number of level */
+	/* number of level */
 	cmr_u32 diff_num;
-	/*index of default */
+	/* index of default */
 	cmr_u32 default_level;
 };
 
@@ -265,12 +260,11 @@ struct ae_scene_info {
 	cmr_u32 max_fps;
 	cmr_u32 min_fps;
 	cmr_u32 weight_mode;
-	//cmr_u32 default_index;
 	cmr_u8 table_enable;
 	cmr_u8 exp_tbl_mode;
 	cmr_u16 reserved0;
 	cmr_u32 reserved1;
 	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM];
 };
-/**---------------------------------------------------------------------------*/
+
 #endif

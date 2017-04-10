@@ -45,13 +45,6 @@
 #ifndef __AFV1_INTERFACE_H__
 #define  __AFV1_INTERFACE_H__
 
-/*!
- *******************************************************************************
- * UI
- *
- *******************************************************************************
-*/
-
 ERRCODE AF_Trigger(AF_Data * pAF_Data, AF_Trigger_Data *aft_in);
 ERRCODE AF_STOP(AF_Data * pAF_Data, eAF_MODE AF_mode);
 
