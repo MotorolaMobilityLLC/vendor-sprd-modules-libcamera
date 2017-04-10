@@ -1036,9 +1036,9 @@ const cam_dimension_t  largest_stream_sizes[CAMERA_ID_COUNT] =
 #elif defined(CONFIG_CAMERA_SUPPORT_5M)
 	{2592, 1944},
 #elif defined(CONFIG_CAMERA_SUPPORT_3M)
-	[2048, 1536},
+	{2048, 1536},
 #else
-	[1600, 1200},
+	{1600, 1200},
 #endif
 
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)

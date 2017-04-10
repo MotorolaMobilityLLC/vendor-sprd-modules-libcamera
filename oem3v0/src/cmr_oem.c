@@ -6903,10 +6903,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->is_refocus_mode =  setting_param.cmd_type_value;
 	CMR_LOGI("is_refocus_mode %d", cxt->is_refocus_mode);
-	if(cxt->is_refocus_mode == 2 && cxt->camera_id == 2 && is_snapshot) {
-		//cxt->isp_to_dram = 1;
-		//out_param_ptr->isp_to_dram = 1;
-	}
 
 	 /*TBD need to get refocus flag*/
 	out_param_ptr->refocus_mode = cxt->is_refocus_mode;
@@ -6966,6 +6962,34 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		out_param_ptr->zoom_setting.zoom_info.prev_aspect_ratio,
 		out_param_ptr->zoom_setting.zoom_info.video_aspect_ratio,
 		out_param_ptr->zoom_setting.zoom_info.capture_aspect_ratio);
+
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	setting_param.camera_id = cxt->camera_id;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
+
+	// init value
+	cxt->burst_mode = 0;
+	out_param_ptr->sprd_highiso_enabled = 0;
+	cxt->highiso_mode = HIGHISO_MODE_NONE;
+
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_BURSTMODE_ENABLED, &setting_param);
+	out_param_ptr->sprd_burstmode_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd_burstmode_enabled=%d", out_param_ptr->sprd_burstmode_enabled);
+
+	if (out_param_ptr->sprd_burstmode_enabled == 1 &&
+	    out_param_ptr->sprd_zsl_enabled == 1) {
+		cxt->burst_mode = 1;
+	} else if (out_param_ptr->sprd_burstmode_enabled == 1 &&
+		   out_param_ptr->sprd_zsl_enabled == 0 && out_param_ptr->preview_eb != 1) {
+		out_param_ptr->sprd_highiso_enabled = 1;
+		cxt->highiso_mode = HIGHISO_CAP_MODE;
+	}
 
 	cxt->snp_cxt.snp_mode = mode;
 	if (0 == is_cfg_snp) {
@@ -7092,16 +7116,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	//bug500099 front cam mirror end
 
-	cmr_bzero(&setting_param, sizeof(setting_param));
-	setting_param.camera_id = cxt->camera_id;
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-		goto exit;
-	}
-	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
-	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
-
 	if (1 == camera_get_hdr_flag(cxt)) {
 		struct ipm_open_in  in_param;
 		struct ipm_open_out out_param;
@@ -7182,11 +7196,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	{
 		out_param_ptr->sprd_pipviv_enabled = 1;
 		cxt->is_pipviv_mode = 1;
-		if(cxt->camera_id == 2)
-		{
-			//cxt->isp_to_dram = 1;
-			//out_param_ptr->isp_to_dram = 1;
-		}
 	}
 
 	CMR_LOGI("cxt->is_refocus_mode %d, camera id = %d, isp_to_dram  %d", cxt->is_refocus_mode, cxt->camera_id,out_param_ptr->isp_to_dram);
@@ -7223,23 +7232,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	out_param_ptr->is_uhd_recording_mode =  setting_param.cmd_type_value;
 	CMR_LOGD("is_uhd_recording_mode flag %d", out_param_ptr->is_uhd_recording_mode);
-
-	// init value
-	cxt->burst_mode = 0;
-	out_param_ptr->sprd_highiso_enabled = 0;
-	cxt->highiso_mode = HIGHISO_MODE_NONE;
-
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_BURSTMODE_ENABLED, &setting_param);
-	out_param_ptr->sprd_burstmode_enabled = setting_param.cmd_type_value;
-	CMR_LOGI("sprd_burstmode_enabled=%d", out_param_ptr->sprd_burstmode_enabled);
-	if (out_param_ptr->sprd_burstmode_enabled == 1 &&
-	    out_param_ptr->sprd_zsl_enabled == 1) {
-		cxt->burst_mode = 1;
-	} else if (out_param_ptr->sprd_burstmode_enabled == 1 &&
-		   out_param_ptr->sprd_zsl_enabled == 0) {
-		out_param_ptr->sprd_highiso_enabled = 1;
-		cxt->highiso_mode = HIGHISO_CAP_MODE;
-	}
 
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
