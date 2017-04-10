@@ -18,7 +18,6 @@
 #include "deflicker.h"
 #include <cutils/properties.h>
 #include <math.h>
-#include "isp_dev_access.h"
 
 #define ISP_AFL_BUFFER_LEN                   (3120 * 4 * 61)
 #define ISP_SET_AFL_THR                      "isp.afl.thr"
@@ -282,6 +281,8 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 	cxt_ptr->end_col = input_ptr->size.w - 1;
 	cxt_ptr->dev_handle = input_ptr->dev_handle;
 	cxt_ptr->vir_addr = (cmr_int) input_ptr->vir_addr;
+	cxt_ptr->afl_set_cb = input_ptr->afl_set_cb;
+	cxt_ptr->caller_handle = input_ptr->caller_handle;
 	rtn = aflctrl_create_thread(cxt_ptr);
 exit:
 	if (rtn) {
@@ -315,7 +316,9 @@ cmr_int afl_ctrl_cfg(isp_handle isp_afl_handle)
 	afl_info.vheight = cxt_ptr->height;
 	afl_info.img_size.height = cxt_ptr->height;
 	afl_info.img_size.width = cxt_ptr->width;
-	rtn = isp_dev_access_ioctl(cxt_ptr->dev_handle, ISP_DEV_SET_AFL_BLOCK, &afl_info, NULL);
+	if (cxt_ptr->afl_set_cb) {
+		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_CFG_PARAM, &afl_info, NULL);
+	}
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -345,7 +348,10 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 
 	afl_info_v3.img_size.width = cxt_ptr->width;
 	afl_info_v3.img_size.height = cxt_ptr->height;
-	rtn = isp_dev_access_ioctl(cxt_ptr->dev_handle, ISP_DEV_SET_AFL_NEW_BLOCK, &afl_info_v3, NULL);
+
+	if (cxt_ptr->afl_set_cb) {
+		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_CFG_PARAM, &afl_info_v3, NULL);
+	}
 
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
@@ -403,7 +409,13 @@ cmr_int afl_ctrl_deinit(cmr_handle * isp_afl_handle)
 		rtn = ISP_ERROR;
 		return rtn;
 	}
-	isp_dev_anti_flicker_bypass(cxt_ptr->dev_handle, bypass);
+	if (cxt_ptr->afl_set_cb) {
+#ifdef ANTI_FLICKER_INFO_VERSION_NEW
+		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
+#else
+		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_BYPASS, &bypass, NULL);
+#endif
+	}
 	rtn = aflctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to destroy aflctrl thread.");

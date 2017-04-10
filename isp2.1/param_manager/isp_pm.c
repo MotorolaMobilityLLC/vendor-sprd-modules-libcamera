@@ -608,7 +608,7 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 				sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name, nr_mode_name[sensor_mode],
 					nr_scene_name[scene_number], nr_param_name[param_type]);
 				if (0 != access(filename, R_OK)) {
-					ISP_LOGE("fail to access %s ", filename);
+					ISP_LOGV("param access %s not exist", filename);
 				} else {
 					if (NULL != (fp = fopen(filename, "rb"))) {
 						ISP_LOGV("param open %s, succeed!", filename);
@@ -621,7 +621,7 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 						}
 						fclose(fp);
 					} else {
-						ISP_LOGE("fail to open %s!", filename);
+						ISP_LOGV("param open %s, not succeed!",filename);
 					}
 				}
 				nr_param_ptr += size_of_per_unit;

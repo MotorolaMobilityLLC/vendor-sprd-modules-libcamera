@@ -121,6 +121,10 @@ enum isp_alg_set_cmd {
 	ISP_AF_SET_PD_INFO,
 	ISP_PDAF_SET_CFG_PARAM,
 	ISP_PDAF_BLOCK_CFG,
+	ISP_AFL_SET_CFG_PARAM,
+	ISP_AFL_SET_BYPASS,
+	ISP_AFL_NEW_SET_CFG_PARAM,
+	ISP_AFL_NEW_SET_BYPASS,
 };
 
 enum isp_callback_cmd {
@@ -775,6 +779,7 @@ typedef cmr_uint(*isp_cb_of_free) (cmr_uint type, cmr_uint * phy_addr, cmr_uint 
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
 /**---------------------------------------------------------------------------*
 **				API					*

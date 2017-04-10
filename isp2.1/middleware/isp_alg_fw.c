@@ -315,6 +315,30 @@ static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *pa
 	return rtn;
 }
 
+static cmr_int isp_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	switch (type) {
+	case ISP_AFL_SET_CFG_PARAM:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, param0, param1);
+		break;
+	case ISP_AFL_NEW_SET_CFG_PARAM:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, param0, param1);
+		break;
+	case ISP_AFL_SET_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_BYPASS, param0, param1);
+		break;
+	case ISP_AFL_NEW_SET_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, param0, param1);
+		break;
+	default:
+		break;
+	}
+
+	return rtn;
+}
+
 cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 		  cmr_u32 * ae_stat_r, cmr_u32 * ae_stat_g, cmr_u32 * ae_stat_b,
 		  struct awb_size * stat_img_size,
@@ -1652,6 +1676,8 @@ static cmr_int isp_afl_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	afl_input.size.w = input_ptr->size.w;
 	afl_input.size.h = input_ptr->size.h;
 	afl_input.vir_addr = &cxt->afl_cxt.vir_addr;
+	afl_input.caller_handle = (cmr_handle) cxt;
+	afl_input.afl_set_cb = isp_afl_set_cb;
 	rtn = afl_ctrl_init(&cxt->afl_cxt.handle, &afl_input);
 exit:
 	ISP_LOGI("done %ld", rtn);

@@ -97,10 +97,10 @@ cmr_int isp_init(struct isp_init_param * input_ptr, cmr_handle * isp_handler)
 	struct isp_mw_context *cxt = NULL;
 	struct isp_alg_fw_init_in ispalg_input;
 
+	isp_init_log_level();
 	ISP_LOGV("E");
-
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
-	memset((void *)cxt, 0x00, sizeof(cxt));
+	memset((void *)cxt, 0x00, sizeof(*cxt));
 	if (!input_ptr || !isp_handler) {
 		ISP_LOGE("fail to check init param,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint) input_ptr, (cmr_uint) isp_handler);
 		rtn = ISP_PARAM_NULL;
