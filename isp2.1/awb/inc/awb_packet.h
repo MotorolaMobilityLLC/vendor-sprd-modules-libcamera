@@ -16,9 +16,6 @@
 #ifndef _AWB_PACKET_H_
 #define _AWB_PACKET_H_
 
-/*------------------------------------------------------------------------------*
-*				Dependencies					*
-*-------------------------------------------------------------------------------*/
 #ifndef WIN32
 #include <linux/types.h>
 #include <sys/types.h>
@@ -26,25 +23,17 @@
 #include "sci_types.h"
 #endif
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*------------------------------------------------------------------------------*
-				Micro Define					*
-*-------------------------------------------------------------------------------*/
 #define AWB_PACKET_ERROR	255
 #define AWB_PACKET_SUCCESS	0
 
 #define AWB_ALG_RESOLUTION_NUM 	8
 #define AWB_ALG_MWB_NUM		20
 #define AWB_CTRL_SCENEMODE_NUM 10
-/*------------------------------------------------------------------------------*
-*				Data Structures					*
-*-------------------------------------------------------------------------------*/
+
 struct awb_alg_size {
 	cmr_u16 w;
 	cmr_u16 h;
@@ -80,19 +69,11 @@ struct awb_param_tuning {
 	/*algorithm param size */
 	cmr_u32 alg_param_size;
 };
-/*------------------------------------------------------------------------------*
-*				Functions					*
-*-------------------------------------------------------------------------------*/
 
 //cmr_s32 awb_param_pack(struct awb_param *awb_param, cmr_u32 pack_buf_size, void *pack_buf, cmr_u32 *pack_data_size);
 cmr_s32 awb_param_unpack(void *pack_data, cmr_u32 data_size, struct awb_param_tuning *tuning_param);
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
 #endif
-/*------------------------------------------------------------------------------*/
 #endif
-// End

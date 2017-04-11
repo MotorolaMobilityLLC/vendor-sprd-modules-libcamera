@@ -15,27 +15,18 @@
  */
 #ifndef _AWB_CTRL_H_
 #define _AWB_CTRL_H_
-/*------------------------------------------------------------------------------*
-*				Dependencies					*
-*-------------------------------------------------------------------------------*/
+
 #include "isp_awb_types.h"
 #include "isp_com.h"
 #include "isp_common_types.h"
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*------------------------------------------------------------------------------*
-*				Micro Define					*
-*-------------------------------------------------------------------------------*/
+
 #define AWB_CTRL_INVALID_HANDLE NULL
 #define AWB_CTRL_ENVI_NUM 8
 
-/*------------------------------------------------------------------------------*
-*				Data Structures					*
-*-------------------------------------------------------------------------------*/
 typedef void *awb_ctrl_handle_t;
 
 enum awb_ctrl_rtn {
@@ -260,21 +251,12 @@ struct awb_data_info {
 	cmr_u32 data_size;
 };
 
-/*------------------------------------------------------------------------------*
-*				Data Prototype					*
-*-------------------------------------------------------------------------------*/
-
 cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle * handle_awb);
 cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result);
 cmr_int awb_ctrl_deinit(cmr_handle * handle_awb);
 cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
 #endif
-/*------------------------------------------------------------------------------*/
 #endif
-// End

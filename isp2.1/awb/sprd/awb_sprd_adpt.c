@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "awb_sprd_adpt"
+#define LOG_TAG "awb_adpt"
 
 #include "awb_ctrl.h"
 #include "awb_sprd_adpt.h"
@@ -28,9 +28,6 @@
 
 #include <utils/Timers.h>
 
-/*------------------------------------------------------------------------------*
-*					Micro Define				*
-*-------------------------------------------------------------------------------*/
 #define AWB_CTRL_MAGIC_BEGIN		0xe5a55e5a
 #define AWB_CTRL_MAGIC_END		0x5e5ae5a5
 #define AWB_CTRL_RESOLUTION_NUM 	8
@@ -61,9 +58,6 @@ char libawb_path[][20] = {
 	"libawb_v5.so",
 };
 
-/*------------------------------------------------------------------------------*
-*					structures				*
-*-------------------------------------------------------------------------------*/
 struct awb_ctrl_tuning_param {
 	 /**/ cmr_u32 enable;
 	/*window size of statistic image */
@@ -180,18 +174,7 @@ struct awb_ctrl_cxt {
 
 };
 
-/*------------------------------------------------------------------------------*
-*					local function declaration		*
-*-------------------------------------------------------------------------------*/
-
 static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param);
-/*------------------------------------------------------------------------------*
-*					local variable				*
-*-------------------------------------------------------------------------------*/
-
-/*------------------------------------------------------------------------------*
-*					local functions				*
-*-------------------------------------------------------------------------------*/
 static cmr_u32 _awb_log_level()
 {
 	char value[PROPERTY_VALUE_MAX] = { 0 };

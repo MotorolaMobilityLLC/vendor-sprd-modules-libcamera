@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _AWB_SPRD_CTRL_H_
-#define _AWB_SPRD_CTRL_H_
-/*------------------------------------------------------------------------------*
-*				Data Prototype					*
-*-------------------------------------------------------------------------------*/
+#ifndef _AWB_SPRD_ADPT_H_
+#define _AWB_SPRD_ADPT_H_
 
 void *awb_sprd_ctrl_init(void *param, void *result);
 cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *param, void *result);

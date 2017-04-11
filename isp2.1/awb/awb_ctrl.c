@@ -19,9 +19,6 @@
 #include "isp_adpt.h"
 #include "cmr_common.h"
 
-/**************************************** MACRO DEFINE *****************************************/
-
-/************************************* INTERNAL DATA TYPE ***************************************/
 struct awbctrl_work_lib {
 	cmr_handle lib_handle;
 	struct adpt_ops_type *adpt_ops;
@@ -32,7 +29,6 @@ struct awbctrl_cxt {
 	struct awbctrl_work_lib work_lib;
 };
 
-/*************************************EXTERNAL FUNCTION ***************************************/
 static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
