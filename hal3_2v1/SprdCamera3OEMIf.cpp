@@ -6131,17 +6131,24 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
-            if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
-                mFlashMode != CAMERA_FLASH_MODE_TORCH) {
-                if (mFlashMode != drvAeMode) {
-                    mFlashMode = drvAeMode;
-                    HAL_LOGD("set flash mode capture_state:%d mFlashMode:%d",
-                             mCameraState.capture_state, mFlashMode);
-                    if (mCameraState.capture_state == SPRD_FLASH_IN_PROGRESS) {
-                        break;
-                    } else {
-                        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                                 mFlashMode);
+            if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+                if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
+                    mFlashMode != CAMERA_FLASH_MODE_TORCH) {
+                    if (mFlashMode != drvAeMode) {
+                        mFlashMode = drvAeMode;
+                        HAL_LOGD(
+                            "set flash mode capture_state:%d mFlashMode:%d",
+                            mCameraState.capture_state, mFlashMode);
+                        if (mCameraState.capture_state ==
+                            SPRD_FLASH_IN_PROGRESS) {
+                            break;
+                        } else {
+                            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
+                                     mFlashMode);
+                        }
+                        controlInfo.ae_state =
+                            ANDROID_CONTROL_AE_STATE_SEARCHING;
+                        mSetting->setAeCONTROLTag(&controlInfo);
                     }
                 }
             }
@@ -6152,13 +6159,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         uint8_t ae_lock;
         ae_lock = controlInfo.ae_lock;
         HAL_LOGD("ANDROID_CONTROL_AE_LOCK, ae_lock = %d", ae_lock);
-        // SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
-        // ae_lock);
-        if (ae_lock == 1) {
+        if (ae_lock && controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
+                     ae_lock);
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
             mSetting->setAeCONTROLTag(&controlInfo);
-        } else {
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+        } else if (!ae_lock &&
+                   controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
+                     ae_lock);
+            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
             mSetting->setAeCONTROLTag(&controlInfo);
         }
     } break;
