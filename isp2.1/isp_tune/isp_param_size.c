@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*----------------------------------------------------------------------------*
- **				Dependencies					*
- **---------------------------------------------------------------------------*/
+
 #define LOG_TAG "isp_para_size"
 #include "isp_param_size.h"
-/**---------------------------------------------------------------------------*
-**				Micro Define					*
-**----------------------------------------------------------------------------*/
+
 struct isp_size_info s_isp_size_info[] = {
 	{ISP_SIZE_480x270, 480, 270},
 	{ISP_SIZE_640x480, 640, 480},
@@ -41,14 +37,9 @@ struct isp_size_info s_isp_size_info[] = {
 	{ISP_SIZE_END, ISP_SIZE_END, ISP_SIZE_END}
 };
 
-/**---------------------------------------------------------------------------*
-*				Data Prototype					*
-**----------------------------------------------------------------------------*/
 struct isp_size_info *ISP_ParamGetSizeInfo(void)
 {
 	return s_isp_size_info;
 }
-
-/**---------------------------------------------------------------------------*/
 
 // End

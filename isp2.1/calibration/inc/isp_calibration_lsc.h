@@ -16,28 +16,16 @@
 #ifndef _ISP_CALIBRATION_LSC_H_
 #define _ISP_CALIBRATION_LSC_H_
 
-/*------------------------------------------------------------------------------*
-*				Dependencies					*
-*-------------------------------------------------------------------------------*/
 #include "isp_otp_type.h"
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*------------------------------------------------------------------------------*
-				Micro Define					*
-*-------------------------------------------------------------------------------*/
+
 #ifndef ISP_CALIBRATION_MAX_LSC_NUM
 #define ISP_CALIBRATION_MAX_LSC_NUM	10
 #endif
-///////////////////////////////////////////////////////////////////////////////////
 
-/*------------------------------------------------------------------------------*
-*				Data Structures					*
-*-------------------------------------------------------------------------------*/
 enum isp_calibration_lsc_return {
 	ISP_CALIBRATION_LSC_SUCCESS = 0,
 	ISP_CALIBRATION_LSC_ERROR = 0xff
@@ -118,20 +106,11 @@ struct isp_calibration_lsc_calc_out {
 	struct isp_calibration_lsc_param lsc_param[ISP_CALIBRATION_MAX_LSC_NUM];
 };
 
-/*------------------------------------------------------------------------------*
-*				Functions					*
-*-------------------------------------------------------------------------------*/
 cmr_s32 isp_calibration_lsc_calc(struct isp_calibration_lsc_calc_in *in_param, struct isp_calibration_lsc_calc_out *out_param);
 cmr_s32 isp_calibration_lsc_get_golden_info(void *golden_data, cmr_u32 golden_data_size, struct isp_calibration_lsc_golden_info *golden_info);
 
-///////////////////////////////////////////////////////////////////////////////////
-
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
 #endif
-/*------------------------------------------------------------------------------*/
 #endif
 // End

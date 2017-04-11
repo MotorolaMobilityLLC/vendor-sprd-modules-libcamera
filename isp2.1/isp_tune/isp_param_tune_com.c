@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*----------------------------------------------------------------------------*
- **				Dependencies					*
- **---------------------------------------------------------------------------*/
+
 #define LOG_TAG "isp_para_tune_com"
 #include "isp_param_tune_com.h"
 #include "isp_param_size.h"
 #include "isp_app.h"
 #include "isp_video.h"
-
-/**---------------------------------------------------------------------------*
-**				Micro Define					*
-**----------------------------------------------------------------------------*/
-
-/**---------------------------------------------------------------------------*
-*				Data Prototype					*
-**----------------------------------------------------------------------------*/
 
 extern void *sensor_get_dev_cxt(void);
 static cmr_s32 _ispParamVerify(void *in_param_ptr)

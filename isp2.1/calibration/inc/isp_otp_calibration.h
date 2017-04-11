@@ -13,31 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*------------------------------------------------------------------------------*
-*				Dependencies					*
-*-------------------------------------------------------------------------------*/
 #ifndef _ISP_CALIBRATION_H_
 #define _ISP_CALIBRATION_H_
 
 #include "isp_otp_type.h"
 #include "isp_type.h"
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*------------------------------------------------------------------------------*
-				Micro Define					*
-*-------------------------------------------------------------------------------*/
+
 #define ISP_CALIBRATION_MAX_LSC_NUM 10
 
-///////////////////////////////////////////////////////////////////////////////////
-
-/*------------------------------------------------------------------------------*
-*				Data Structures					*
-*-------------------------------------------------------------------------------*/
 struct isp_data_t {
 	cmr_u32 size;
 	void *data_ptr;
@@ -106,12 +93,8 @@ cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u
 cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input_ptr);
 cmr_int otp_ctrl_deinit(cmr_handle isp_handler);
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
 #endif
-/*------------------------------------------------------------------------------*/
 #endif
 // End

@@ -29,8 +29,6 @@
 #define AFLCTRL_EVT_PROCESS         (AFLCTRL_EVT_BASE + 3)
 #define AFLCTRL_EVT_EXIT            (AFLCTRL_EVT_BASE + 4)
 
-/*************This code just use for anti-flicker debug*******************/
-/***************************************************************/
 static cmr_s32 cnt = 0;
 static cmr_s32 _set_afl_thr(cmr_s32 * thr)
 {
@@ -114,9 +112,6 @@ static cmr_s32 afl_statistic_save_to_file(cmr_s32 height, cmr_s32 * addr)
 
 	return 0;
 }
-
-/*************This code just use for anti-flicker debug*******************/
-/***************************************************************/
 
 static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr)
 {

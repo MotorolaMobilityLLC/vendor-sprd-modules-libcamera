@@ -111,10 +111,6 @@ typedef cmr_s32(*isp_fun) (cmr_handle isp_handler, void *param_ptr);
 #define ISP_INT16 0x02
 #define ISP_INT32 0x04
 
-/**---------------------------------------------------------------------------*
-**				Data Prototype					*
-**----------------------------------------------------------------------------*/
-
 enum isp_parser_cmd {
 	ISP_PREVIEW = 0x00,
 	ISP_STOP_PREVIEW,
@@ -193,12 +189,8 @@ cmr_s32 ispParser(cmr_handle isp_handler, cmr_u32 cmd, void *in_param_ptr, void 
 cmr_u32 *ispParserAlloc(cmr_u32 size);
 cmr_s32 ispParserFree(void *addr);
 
-/**----------------------------------------------------------------------------*
-**				Compiler Flag					*
-**----------------------------------------------------------------------------*/
 #ifdef   __cplusplus
 }
 #endif
-/**---------------------------------------------------------------------------*/
 #endif
 // End

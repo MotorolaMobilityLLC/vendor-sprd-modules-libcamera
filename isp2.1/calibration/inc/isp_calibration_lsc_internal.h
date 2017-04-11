@@ -16,9 +16,6 @@
 #ifndef _ISP_CALIBRATION_LSC_INTERNAL_H_
 #define _ISP_CALIBRATION_LSC_INTERNAL_H_
 
-/*------------------------------------------------------------------------------*
-*				Dependencies					*
-*-------------------------------------------------------------------------------*/
 #include "isp_calibration_lsc.h"
 
 #ifdef WIN32
@@ -31,15 +28,10 @@
 #define PRINTF(format,...) ALOGE(LSC_DEBUG_STR format, LSC_DEBUG_ARGS, ##__VA_ARGS__)
 #endif
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*------------------------------------------------------------------------------*
-				Micro Define					*
-*-------------------------------------------------------------------------------*/
+
 #define CHANNAL_NUM 4
 #define LSC_GOLDEN_MIN_BLOCK 	2
 #define LSC_GOLDEN_MAX_BLOCK 	16
@@ -102,11 +94,7 @@ struct lsc_random_info {
 	cmr_u16 gain_num;
 	cmr_u16 *gain;
 };
-///////////////////////////////////////////////////////////////////////////////////
 
-/*------------------------------------------------------------------------------*
-*				Data Structures					*
-*-------------------------------------------------------------------------------*/
 enum isp_calibration_lsc_random_cali_info_table {
 	R_VERSION_ID = 0,
 	R_IMG_WIDTH = 2,
@@ -223,12 +211,8 @@ struct isp_calibration_lsc_golden_cali_info {
 
 cmr_s32 isp_calibration_lsc_golden_parse(void *golden_data, cmr_u32 golden_size, struct isp_calibration_lsc_flags *flag, struct isp_calibration_lsc_golden_cali_info *golden_info);
 
-/*------------------------------------------------------------------------------*
-*				Compiler Flag					*
-*-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
 #endif
-/*------------------------------------------------------------------------------*/
 #endif
 // End
