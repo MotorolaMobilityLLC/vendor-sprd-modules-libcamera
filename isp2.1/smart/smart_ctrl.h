@@ -142,4 +142,4 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr);
 #ifdef	 __cplusplus
 }
 #endif
-#endif				//_ISP_SMART_CTRL_H_
+#endif

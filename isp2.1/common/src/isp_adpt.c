@@ -20,15 +20,12 @@
 #include "awb_ctrl.h"
 #include "ae_sprd_adpt.h"
 #include "af_ctrl.h"
-//#include "awb_al_ctrl.h"
 #include "awb_sprd_adpt.h"
 #include "sensor_raw.h"
 #include "af_log.h"
 #include "af_sprd_adpt_v1.h"
-//#include "sp_af_ctrl.h"
 #include "pdaf_sprd_adpt.h"
 #include <dlfcn.h>
-//#include "ALC_AF_Ctrl.h"
 
 #ifdef CONFIG_USE_ALC_AE
 #include "ae_alc_ctrl.h"
@@ -50,7 +47,9 @@ cmr_u32 get_sprd_ae_ops(cmr_u32 ae_lib_version, struct adpt_ops_type **ae_ops)
 }
 
 static cmr_u32(*ae_product_ops[]) (cmr_u32, struct adpt_ops_type **) = {
-[ADPT_SPRD_AE_LIB] = get_sprd_ae_ops,[ADPT_AL_AE_LIB] = get_sprd_ae_ops,};
+	[ADPT_SPRD_AE_LIB] = get_sprd_ae_ops,
+	[ADPT_AL_AE_LIB] = get_sprd_ae_ops,
+};
 
 static cmr_s32 adpt_get_ae_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
@@ -85,7 +84,9 @@ cmr_u32 get_sprd_awb_ops(cmr_u32 awb_lib_version, struct adpt_ops_type **awb_ops
 }
 
 static cmr_u32(*awb_product_ops[]) (cmr_u32, struct adpt_ops_type **) = {
-[ADPT_SPRD_AWB_LIB] = get_sprd_awb_ops,[ADPT_AL_AWb_LIB] = get_sprd_awb_ops,};
+	[ADPT_SPRD_AWB_LIB] = get_sprd_awb_ops,
+	[ADPT_AL_AWb_LIB] = get_sprd_awb_ops,
+};
 
 static cmr_s32 adpt_get_awb_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
@@ -119,7 +120,10 @@ cmr_u32 get_sprd_af_ops(cmr_u32 af_lib_version, struct adpt_ops_type **af_ops)
 }
 
 static cmr_u32(*af_product_ops[]) (cmr_u32, struct adpt_ops_type **) = {
-[ADPT_SPRD_AF_LIB] = get_sprd_af_ops,[ADPT_AL_AF_LIB] = get_sprd_af_ops,[ADPT_SFT_AF_LIB] = get_sprd_af_ops,};
+	[ADPT_SPRD_AF_LIB] = get_sprd_af_ops,
+	[ADPT_AL_AF_LIB] = get_sprd_af_ops,
+	[ADPT_SFT_AF_LIB] = get_sprd_af_ops,
+};
 
 static cmr_s32 adpt_get_af_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
@@ -153,7 +157,8 @@ cmr_u32 get_sprd_lsc_ops(cmr_u32 lsc_lib_version, struct adpt_ops_type **lsc_ops
 }
 
 static cmr_u32(*lsc_product_ops[]) (cmr_u32, struct adpt_ops_type **) = {
-[ADPT_SPRD_LSC_LIB] = get_sprd_lsc_ops,};
+	[ADPT_SPRD_LSC_LIB] = get_sprd_lsc_ops,
+};
 
 static cmr_s32 adpt_get_lsc_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
@@ -186,7 +191,8 @@ cmr_u32 get_sprd_pdaf_ops(cmr_u32 pdaf_lib_version, struct adpt_ops_type **pdaf_
 }
 
 static cmr_u32(*pdaf_product_ops[]) (cmr_u32, struct adpt_ops_type **) = {
-[ADPT_SPRD_PDAF_LIB] = get_sprd_pdaf_ops,};
+	[ADPT_SPRD_PDAF_LIB] = get_sprd_pdaf_ops,
+};
 
 static cmr_s32 adpt_get_pdaf_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {
@@ -196,10 +202,7 @@ static cmr_s32 adpt_get_pdaf_ops(struct third_lib_info *lib_info, struct adpt_op
 
 	pdaf_producer_id = lib_info->product_id;
 	pdaf_lib_version = lib_info->version_id;
-//      pdaf_producer_id = 0;
-//      pdaf_lib_version = 0;
 
-	ISP_LOGV("pdaf_producer_id %d,pdaf_lib_version %d", pdaf_producer_id, pdaf_lib_version);
 	if (ADPT_MAX_PDAF_LIB > pdaf_producer_id) {
 		rtn = pdaf_product_ops[pdaf_producer_id] (pdaf_lib_version, ops);
 	} else {
@@ -210,7 +213,12 @@ static cmr_s32 adpt_get_pdaf_ops(struct third_lib_info *lib_info, struct adpt_op
 }
 
 static cmr_s32(*modules_ops[]) (struct third_lib_info *, struct adpt_ops_type **) = {
-[ADPT_LIB_AE] = adpt_get_ae_ops,[ADPT_LIB_AWB] = adpt_get_awb_ops,[ADPT_LIB_AF] = adpt_get_af_ops,[ADPT_LIB_LSC] = adpt_get_lsc_ops,[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,};
+	[ADPT_LIB_AE] = adpt_get_ae_ops,
+	[ADPT_LIB_AWB] = adpt_get_awb_ops,
+	[ADPT_LIB_AF] = adpt_get_af_ops,
+	[ADPT_LIB_LSC] = adpt_get_lsc_ops,
+	[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,
+};
 
 cmr_s32 adpt_get_ops(cmr_s32 lib_type, struct third_lib_info *lib_info, struct adpt_ops_type **ops)
 {

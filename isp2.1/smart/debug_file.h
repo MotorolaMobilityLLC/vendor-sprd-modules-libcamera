@@ -38,4 +38,3 @@ extern void smart_debug_file_print(debug_handle_t handle, char *str);
 #endif
 
 #endif
-// End

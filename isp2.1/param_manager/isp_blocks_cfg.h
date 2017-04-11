@@ -335,4 +335,4 @@ struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id);
 #ifdef	 __cplusplus
 }
 #endif
-#endif				//
+#endif

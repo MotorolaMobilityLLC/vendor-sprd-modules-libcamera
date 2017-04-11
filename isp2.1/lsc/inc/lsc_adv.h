@@ -1,9 +1,6 @@
 #ifndef _ISP_LSC_ADV_H_
 #define _ISP_LSC_ADV_H_
 
-/*----------------------------------------------------------------------------*
- **				Dependencies				*
- **---------------------------------------------------------------------------*/
 #ifdef WIN32
 #include "data_type.h"
 #include "win_dummy.h"
@@ -17,9 +14,6 @@
 
 #include "stdio.h"
 
-/**---------------------------------------------------------------------------*
-**				Compiler Flag				*
-**---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,9 +21,6 @@ extern "C" {
 #define max(A,B) (((A) > (B)) ? (A) : (B))
 #define min(A,B) (((A) < (B)) ? (A) : (B))
 
-/**---------------------------------------------------------------------------*
-**				Micro Define				**
-**----------------------------------------------------------------------------*/
 #define LSC_ADV_DEBUG_STR       "[ALSC]: L %d, %s: "
 #define LSC_ADV_DEBUG_ARGS    __LINE__,__FUNCTION__
 
@@ -39,9 +30,6 @@ extern "C" {
 #define LSC_ADV_LOGD(format,...) ALOGD(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGV(format,...) ALOGV(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 
-/**---------------------------------------------------------------------------*
-**				Data Structures 				*
-**---------------------------------------------------------------------------*/
 typedef void *lsc_adv_handle_t;
 
 #define ISP_1_0 	1
@@ -464,9 +452,6 @@ struct lsc_ctrl_context {
 	struct third_lib_info *lib_info;
 };
 
-/**---------------------------------------------------------------------------*
-**					Data Prototype				**
-**----------------------------------------------------------------------------*/
 typedef lsc_adv_handle_t(*fun_lsc_adv_init) (struct lsc_adv_init_param * param);
 typedef const char *(*fun_lsc_adv_get_ver_str) (lsc_adv_handle_t handle);
 typedef cmr_s32(*fun_lsc_adv_calculation) (lsc_adv_handle_t handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * result);
@@ -491,12 +476,8 @@ cmr_s32 otp_lsc_mod(cmr_u16 * otpLscTabGolden, cmr_u16 * otpLSCTabRandom,	//T1, 
 		    cmr_u16 * otpLscTabGoldenRef,	//Ts1
 		    cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
 		    cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
-/**----------------------------------------------------------------------------*
-**					Compiler Flag				**
-**----------------------------------------------------------------------------*/
+
 #ifdef __cplusplus
 }
 #endif
-/**---------------------------------------------------------------------------*/
 #endif
-// End

@@ -64,4 +64,4 @@ cmr_s32 isp_smart_deinit(isp_smart_handle_t handle);
 #ifdef	 __cplusplus
 }
 #endif
-#endif				//_ISP_SMART_ALG_H_
+#endif

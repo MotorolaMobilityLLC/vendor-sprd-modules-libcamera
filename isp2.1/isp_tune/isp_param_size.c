@@ -41,5 +41,3 @@ struct isp_size_info *ISP_ParamGetSizeInfo(void)
 {
 	return s_isp_size_info;
 }
-
-// End

@@ -15,7 +15,7 @@
  */
 #ifndef _PDAF_CTRL_H_
 #define _PDAF_CTRL_H_
-//#include "isp_common_types.h"
+
 
 #include <sys/types.h>
 #include "isp_com.h"
@@ -117,7 +117,6 @@ struct pdaf_ctrl_init_in {
 	struct pdaf_ctrl_otp_info_t pdaf_otp;
 	struct sensor_pdaf_info *pd_info;
 	struct pdaf_ctrl_cb_ops_type pdaf_ctrl_cb_ops;
-/*add for sharkl2*/
 	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);

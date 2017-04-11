@@ -109,4 +109,4 @@ cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output);
 #ifdef	 __cplusplus
 }
 #endif
-#endif				//_ISP_PM_H_
+#endif

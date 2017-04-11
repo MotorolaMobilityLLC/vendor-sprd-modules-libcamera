@@ -69,4 +69,3 @@ cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 * size);
 }
 #endif
 #endif
-// End

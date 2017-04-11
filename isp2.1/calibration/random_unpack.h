@@ -37,4 +37,3 @@ cmr_s32 random_awb_unpack(void *random_awb, cmr_u32 random_awb_size, struct rand
 }
 #endif
 #endif
-// End
