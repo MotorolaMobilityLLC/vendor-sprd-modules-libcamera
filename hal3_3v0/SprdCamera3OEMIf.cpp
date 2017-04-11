@@ -1596,18 +1596,8 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy)
 		case CAM_HIGH:
 			if(CAM_EXIT == mCameraDfsPolicyCur){
 				setDfsPolicy(CAM_HIGH);
-				if (0 > ddrDfsComplete()) {
-					HAL_LOGW("dfs failed try again");
-					setDfsPolicy(CAM_HIGH);
-					ddrDfsComplete();
-				}
 			}else if(CAM_LOW == mCameraDfsPolicyCur){
 				setDfsPolicy(CAM_HIGH);
-				if (0 > ddrDfsComplete()) {
-					HAL_LOGW("dfs failed try again");
-					setDfsPolicy(CAM_HIGH);
-					ddrDfsComplete();
-				}
 				releaseDfsPolicy(CAM_LOW);
 			}
 			mCameraDfsPolicyCur = CAM_HIGH;
@@ -1646,39 +1636,6 @@ int SprdCamera3OEMIf::setDfsPolicy(int dfs_policy)
 	fclose(fp);
 	fp = NULL;
 	return NO_ERROR;
-}
-
-int SprdCamera3OEMIf::ddrDfsComplete(void)
-{
-	const char* const ddrinfo_cur_freq = "/sys/class/devfreq/scene-frequency/sprd_governor/ddrinfo_cur_freq";
-	char str[10] = {'\0'};
-	int size = 0;
-	int ret = -1;
-	int i = 0;
-
-	FILE* fp = fopen(ddrinfo_cur_freq, "rb");
-	if (NULL == fp) {
-		HAL_LOGW("failed to open %s X", ddrinfo_cur_freq);
-		return BAD_VALUE;
-	}
-	do {
-		fseek(fp, 0, 0);
-		size = fread(str, 1, 9, fp);
-		if (0 < size) {
-			long ddr_freq = atol(str);
-			if (1200 != ddr_freq) {
-				usleep(2 * 1000);
-			} else {
-				ret = 0;
-				break;
-			}
-		} else {
-			break;
-		}
-		i++;
-	} while (i < 5);
-	fclose(fp);
-	return ret;
 }
 
 int SprdCamera3OEMIf::releaseDfsPolicy(int dfs_policy)
