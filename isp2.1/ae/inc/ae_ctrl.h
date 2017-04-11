@@ -30,6 +30,7 @@ extern "C" {
 struct ae_init_in {
 	cmr_u32 param_num;
 	struct ae_param param[AE_MAX_PARAM_NUM];
+	struct ae_param flash_tuning[AE_MAX_PARAM_NUM];
 	struct ae_size monitor_win_num;
 	struct ae_isp_ctrl_ops isp_ops;
 	struct ae_resolution_info resolution_info;

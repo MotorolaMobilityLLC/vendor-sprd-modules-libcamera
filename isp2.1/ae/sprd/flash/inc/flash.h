@@ -22,6 +22,11 @@ extern "C" {
 #include <sys/types.h>
 #include <stdbool.h>
 
+#ifdef WIN32
+typedef  unsigned char uint8;
+typedef  unsigned short uint16;
+#define uint32 unsigned int
+#else
 typedef  unsigned char uint8;
 typedef  unsigned short uint16;
 typedef  unsigned int uint32;
@@ -29,6 +34,7 @@ typedef  unsigned int uint32;
 typedef  signed char int8;
 typedef  signed short int16;
 typedef  signed int int32;
+#endif
 
 typedef void* flash_handle;
 
@@ -44,9 +50,9 @@ struct flash_tune_param {
 	uint16 brightnessTable[1024];
 	uint16 rTable[1024]; //g: 1024
 	uint16 bTable[1024];
-	uint16 brightnessTarget; //10bit 		
-	uint32 ctTabRg[20];/*fix-point*/
-	uint32 ctTab[20];/*fix-point*/
+	uint16 brightnessTarget; //10bit
+	//uint32 ctTabRg[20];/*fix-point*/
+	//uint32 ctTab[20];/*fix-point*/
 	uint8 reserved1[1024];
 };
 
@@ -55,15 +61,18 @@ struct Flash_initInput
 	uint8 debug_level;
 	uint32 statW;/*stat block num in Width dir*/
 	uint32 statH;/*stat block num in Height dir*/
-	struct flash_tune_param tune_info;/*flash algorithm tune param*/
+	float ctTabRg[20];
+	float ctTab[20];
+	struct flash_tune_param *tune_info;/*flash algorithm tune param*/
 };
 
 struct Flash_initOut
 {
+	uint8 version;
 };
 
 struct Flash_pfStartInput
-{	
+{
 	float minExposure;
 	float maxExposure;
 	uint32 minGain;  //x128
@@ -74,15 +83,15 @@ struct Flash_pfStartInput
 	uint32 maxCapGain;  //x128
 	uint32 rGain;  //x1024
 	uint32 gGain;  //x1024
-	uint32 bGain;  //x1024	
+	uint32 bGain;  //x1024
 	float aeExposure; //unit?  us
-	uint32 aeGain; //unit? x128  
+	uint32 aeGain; //unit? x128
 	bool isFlash;   //no flash, 0
 	uint16 staW;
 	uint16 staH;
-	uint16 rSta[1024]; //10bit
-	uint16 gSta[1024];
-	uint16 bSta[1024];
+	uint16 *rSta; //10bit
+	uint16 *gSta;
+	uint16 *bSta;
 };
 
 struct Flash_pfStartOutput
@@ -121,15 +130,14 @@ struct Flash_pfOneIterationOutput
 	float nextExposure;
 	uint32 nextGain;
 	bool nextFlash;
-	bool isEnd;	
-	
+	bool isEnd;
+
 	uint32 debugSize;
 	void* debugBuffer;
 };
 
-
 int flash_get_tuning_param(struct flash_tune_param* param);/*It will be removed in the future*/
-flash_handle flash_init(struct Flash_initInput* in);
+flash_handle flash_init(struct Flash_initInput* in, struct Flash_initOut *out);
 int flash_deinit(flash_handle handle);
 int flash_pfStart(flash_handle handle, struct Flash_pfStartInput* in, struct Flash_pfStartOutput* out);
 int flash_pfOneIteration(flash_handle handle, struct Flash_pfOneIterationInput* in, struct Flash_pfOneIterationOutput* out);
