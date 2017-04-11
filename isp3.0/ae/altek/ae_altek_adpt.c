@@ -2761,10 +2761,11 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	if (ret)
 		goto exit;
 	cxt_ptr->lib_data.exposure_array = ae_exposure;
-
-	ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->lib_data.exposure_array.snapshot, &cxt_ptr->lib_data.output_data);
-	if (ret)
-		goto exit;
+	if (cxt_ptr->main_flash_status == 0) {
+		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->lib_data.exposure_array.snapshot, &cxt_ptr->lib_data.output_data);
+		if (ret)
+			goto exit;
+	}
 
 	return ISP_SUCCESS;
 exit:
