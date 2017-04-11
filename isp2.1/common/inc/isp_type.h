@@ -26,31 +26,7 @@ extern "C" {
 #include "cmr_msg.h"
 #include "cmr_log.h"
 
-/**---------------------------------------------------------------------------*
-**				Micro Define					*
-**----------------------------------------------------------------------------*/
-#ifdef WIN32
-	typedef unsigned __int64 uint64_t;
-	typedef unsigned int uint32_t;
-	typedef unsigned short uint16_t;
-	typedef unsigned char uint8_t;
-	typedef signed __int64 int64_t;
-	typedef signed int int32_t;
-	typedef signed short int16_t;
-	typedef signed char int8_t;
-
-#endif
-	typedef unsigned long isp_uint;
-	typedef long isp_int;
-	typedef uint64_t isp_u64;
-	typedef int64_t isp_s64;
-	typedef unsigned int isp_u32;
-	typedef int isp_s32;
-	typedef unsigned short isp_u16;
-	typedef short isp_s16;
-	typedef unsigned char isp_u8;
-	typedef char isp_s8;
-	typedef void *isp_handle;
+typedef void *isp_handle;
 
 #ifndef PNULL
 #define PNULL ((void*)0)
@@ -94,118 +70,118 @@ typedef int intptr_t;
 #endif
 
 struct isp_sample_info {
-	isp_s32 x0;
-	isp_s32 x1;
-	isp_u32 alpha;	//x1: alpha---1024->1x
-	isp_u32 dec_ratio;
+	cmr_s32 x0;
+	cmr_s32 x1;
+	cmr_u32 alpha;	//x1: alpha---1024->1x
+	cmr_u32 dec_ratio;
 };
 
 struct isp_sample_point_info {
-	isp_s32 x0;
-	isp_s32 x1;
-	isp_u32 weight0;
-	isp_u32 weight1;
+	cmr_s32 x0;
+	cmr_s32 x1;
+	cmr_u32 weight0;
+	cmr_u32 weight1;
 };
 
 struct isp_data_info {
-	isp_u32 size;
+	cmr_u32 size;
 	void *data_ptr;
 	void *param_ptr;
 };
 struct isp_data_bin_info {
-	isp_u32 size;
-	uint32_t offset;
+	cmr_u32 size;
+	cmr_u32 offset;
 };
 
 struct isp_pos {
-	isp_s32 x;
-	isp_s32 y;
+	cmr_s32 x;
+	cmr_s32 y;
 };
 struct isp_point {
-	isp_s16 x;
-	isp_s16 y;
+	cmr_s16 x;
+	cmr_s16 y;
 };
 struct isp_size {
-	isp_u32 w;
-	isp_u32 h;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 
 struct isp_buffer_size_info {
-	isp_u32 pitch;
-	isp_u32 count_lines;
+	cmr_u32 pitch;
+	cmr_u32 count_lines;
 };
 struct isp_trim_size {
-	isp_s32 x;
-	isp_s32 y;
-	isp_u32 w;
-	isp_u32 h;
+	cmr_s32 x;
+	cmr_s32 y;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 struct isp_rect {
-	isp_s32 st_x;
-	isp_s32 st_y;
-	isp_u32 width;
-	isp_u32 height;
+	cmr_s32 st_x;
+	cmr_s32 st_y;
+	cmr_u32 width;
+	cmr_u32 height;
 };
 struct isp_pos_rect {
-	isp_s32 start_x;
-	isp_s32 start_y;
-	isp_u32 end_x;
-	isp_u32 end_y;
+	cmr_s32 start_x;
+	cmr_s32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
 };
 
 struct isp_rgb_gains {
-	isp_u32 gain_r;
-	isp_u32 gain_g;
-	isp_u32 gain_b;
-	isp_u32 reserved;
+	cmr_u32 gain_r;
+	cmr_u32 gain_g;
+	cmr_u32 gain_b;
+	cmr_u32 reserved;
 };
 
 struct isp_rgb_offset {
-	isp_s32 offset_r;
-	isp_s32 offset_g;
-	isp_s32 offset_b;
-	isp_s32 reserved;
+	cmr_s32 offset_r;
+	cmr_s32 offset_g;
+	cmr_s32 offset_b;
+	cmr_s32 reserved;
 };
 
 struct isp_range_l {
-	isp_s32 min;
-	isp_s32 max;
+	cmr_s32 min;
+	cmr_s32 max;
 };
 
 struct isp_range {
-	isp_s16 min;
-	isp_s16 max;
+	cmr_s16 min;
+	cmr_s16 max;
 };
 
 struct isp_weight_value {
-	isp_s16 value[2];
-	isp_u16 weight[2];
+	cmr_s16 value[2];
+	cmr_u16 weight[2];
 };
 
 struct isp_yuv {
-	uint16_t y;
-	uint16_t u;
-	uint16_t v;
-	uint16_t reserved;
+	cmr_u16 y;
+	cmr_u16 u;
+	cmr_u16 v;
+	cmr_u16 reserved;
 };
 struct isp_curve_coeff {
-	uint32_t p1;
-	uint32_t p2;
+	cmr_u32 p1;
+	cmr_u32 p2;
 };
 struct isp_bin_param {
-	uint16_t hx;
-	uint16_t vx;
+	cmr_u16 hx;
+	cmr_u16 vx;
 };
 
 struct isp_sample {
-	int16_t x;
-	int16_t y;
+	cmr_s16 x;
+	cmr_s16 y;
 };
 
 #define ISP_PIECEWISE_SAMPLE_NUM 0x10
 
 struct isp_piecewise_func {
-	uint32_t num;
+	cmr_u32 num;
 	struct isp_sample samples[ISP_PIECEWISE_SAMPLE_NUM];
 };
 

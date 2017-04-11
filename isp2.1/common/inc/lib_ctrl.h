@@ -71,8 +71,8 @@ struct ae_lib_fun {
 	cmr_int(*ae_deinit) (void *handle, void *in, void *out);
 	cmr_int(*ae_calculation) (void *handle, void *in, void *out);
 	cmr_int(*ae_io_ctrl) (void *handle, cmr_int cmd, void *in, void *out);
-	uint32_t product_id;
-	uint32_t version_id;
+	cmr_u32 product_id;
+	cmr_u32 version_id;
 };
 //ae end
 
@@ -93,38 +93,38 @@ enum af_lib_version_id {
 
 struct af_lib_fun {
 	void *(*af_init_interface) (isp_ctrl_context * handle);
-	 int32_t(*af_calc_interface) (isp_ctrl_context * handle);
-	 int32_t(*af_deinit_interface) (void *handle);
+	 cmr_s32(*af_calc_interface) (isp_ctrl_context * handle);
+	 cmr_s32(*af_deinit_interface) (void *handle);
 	 cmr_int(*af_ioctrl_interface) (void *handle, cmr_int cmd, void *param0, void *param1);
-	 int32_t(*af_ioctrl_set_flash_notice) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_af_info) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_get_af_info) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_get_af_value) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_burst_notice) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_af_mode) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_get_af_mode) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_ioread) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_iowrite) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_af_start) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_isp_start_info) (isp_handle isp_handler, struct isp_video_start * param_ptr);
-	 int32_t(*af_ioctrl_af_info) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_isp_stop_info) (isp_handle isp_handler);
-	 int32_t(*af_ioctrl_set_ae_awb_info) (isp_ctrl_context * handle, void *ae_result, void *awb_result, void *bv, void *rgb_statistics);
+	 cmr_s32(*af_ioctrl_set_flash_notice) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_value) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_burst_notice) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_mode) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_mode) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_ioread) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_iowrite) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_af_start) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_isp_start_info) (isp_handle isp_handler, struct isp_video_start * param_ptr);
+	 cmr_s32(*af_ioctrl_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_isp_stop_info) (isp_handle isp_handler);
+	 cmr_s32(*af_ioctrl_set_ae_awb_info) (isp_ctrl_context * handle, void *ae_result, void *awb_result, void *bv, void *rgb_statistics);
 
-	 int32_t(*af_ioctrl_thread_msg_send) (isp_ctrl_context * handle, struct ae_calc_out * ae_result, struct cmr_msg * msg);
+	 cmr_s32(*af_ioctrl_thread_msg_send) (isp_ctrl_context * handle, struct ae_calc_out * ae_result, struct cmr_msg * msg);
 
-	 int32_t(*sft_af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_image_data_update) (isp_ctrl_context * handle);
-	 int32_t(*af_ioctrl_get_af_cur_pos) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_af_pos) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_af_bypass) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_af_stop) (isp_handle isp_handler, void *param_ptr, int (*call_back) ());
-	 int32_t(*af_ioctrl_set_af_param) (isp_handle isp_handler);
+	 cmr_s32(*sft_af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_image_data_update) (isp_ctrl_context * handle);
+	 cmr_s32(*af_ioctrl_get_af_cur_pos) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_pos) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_bypass) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_stop) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_param) (isp_handle isp_handler);
 	// if af_posture_support be set ,af_posture_set_handle and af_posture_info_update must also be set
-	 int32_t(*af_posture_support) (isp_ctrl_context * handle, void *sensordevice);
-	 int32_t(*af_posture_set_handle) (isp_ctrl_context * handle, uint32_t sensor_type, int sensor_handle);
-	 int32_t(*af_posture_info_update) (isp_ctrl_context * handle, uint32_t sensor_type, void *data1, void *data2);
+	 cmr_s32(*af_posture_support) (isp_ctrl_context * handle, void *sensordevice);
+	 cmr_s32(*af_posture_set_handle) (isp_ctrl_context * handle, cmr_u32 sensor_type, cmr_s32 sensor_handle);
+	 cmr_s32(*af_posture_info_update) (isp_ctrl_context * handle, cmr_u32 sensor_type, void *data1, void *data2);
 
 };
 //af end
@@ -149,20 +149,20 @@ enum lsc_lib_id {
 };
 
 struct lsc_lib_fun {
-	int32_t(*alsc_calc) (void *handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * adv_calc_result);
+	cmr_s32(*alsc_calc) (void *handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * adv_calc_result);
 	void *(*alsc_init) (struct lsc_adv_init_param * param);
 
-	 int32_t(*alsc_deinit) (void *handle);
-	 int32_t(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
-	uint32_t product_id;
-	uint32_t version_id;
+	 cmr_s32(*alsc_deinit) (void *handle);
+	 cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+	cmr_u32 product_id;
+	cmr_u32 version_id;
 };
 
-uint32_t isp_awblib_init(struct sensor_libuse_info *libuse_info, struct awb_lib_fun *awb_lib_fun);
-uint32_t isp_aelib_init(struct sensor_libuse_info *libuse_info, struct ae_lib_fun *ae_lib_fun);
-uint32_t isp_aflib_init(struct sensor_libuse_info *libuse_info, struct af_lib_fun *af_lib_fun);
+cmr_u32 isp_awblib_init(struct sensor_libuse_info *libuse_info, struct awb_lib_fun *awb_lib_fun);
+cmr_u32 isp_aelib_init(struct sensor_libuse_info *libuse_info, struct ae_lib_fun *ae_lib_fun);
+cmr_u32 isp_aflib_init(struct sensor_libuse_info *libuse_info, struct af_lib_fun *af_lib_fun);
 
-uint32_t isp_lsclib_init(struct sensor_libuse_info *libuse_info, struct lsc_lib_fun *lsc_lib_fun);
+cmr_u32 isp_lsclib_init(struct sensor_libuse_info *libuse_info, struct lsc_lib_fun *lsc_lib_fun);
 
-uint32_t aaa_lib_init(isp_ctrl_context * handle, struct sensor_libuse_info *libuse_info);
+cmr_u32 aaa_lib_init(isp_ctrl_context * handle, struct sensor_libuse_info *libuse_info);
 #endif

@@ -36,7 +36,7 @@ struct ae_lib_fun ae_lib_fun;
 struct af_lib_fun af_lib_fun;
 //struct al_awb_thirdlib_fun al_awb_thirdlib_fun;
 
-char *al_libversion_choice(uint32_t version_id)
+char *al_libversion_choice(cmr_u32 version_id)
 {
 	ISP_LOGV("E");
 	switch (version_id) {
@@ -50,7 +50,7 @@ char *al_libversion_choice(uint32_t version_id)
 }
 
 #if 0
-uint32_t al_awb_lib_open(uint32_t version_id)
+cmr_u32 al_awb_lib_open(cmr_u32 version_id)
 {
 	void *handle;
 	char *AWB_LIB;
@@ -107,13 +107,13 @@ load_error:
 
 }
 #endif
-uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib_fun * awb_lib_fun)
+cmr_u32 isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib_fun * awb_lib_fun)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct third_lib_info awb_lib_info;
-	uint32_t awb_producer_id = 0;
-	uint32_t awb_lib_version = 0;
-	uint32_t al_awb_lib_version = 0;
+	cmr_u32 awb_producer_id = 0;
+	cmr_u32 awb_lib_version = 0;
+	cmr_u32 al_awb_lib_version = 0;
 
 	ISP_LOGI("E");
 	if (libuse_info) {
@@ -158,12 +158,12 @@ uint32_t isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib
 	return rtn;
 }
 
-uint32_t isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_fun * ae_lib_fun)
+cmr_u32 isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_fun * ae_lib_fun)
 {
-	uint32_t rtn = AE_SUCCESS;
+	cmr_u32 rtn = AE_SUCCESS;
 	struct third_lib_info ae_lib_info;
-	uint32_t ae_producer_id = 0;
-	uint32_t ae_lib_version = 0;
+	cmr_u32 ae_producer_id = 0;
+	cmr_u32 ae_lib_version = 0;
 
 	ISP_LOGI("E");
 	if (libuse_info) {
@@ -195,12 +195,12 @@ uint32_t isp_aelib_init(struct sensor_libuse_info * libuse_info, struct ae_lib_f
 	return rtn;
 }
 
-uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_fun * af_lib_fun)
+cmr_u32 isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_fun * af_lib_fun)
 {
-	uint32_t rtn = AF_SUCCESS;
+	cmr_u32 rtn = AF_SUCCESS;
 	struct third_lib_info af_lib_info;
-	uint32_t af_producer_id = 0;
-	uint32_t af_lib_version = 0;
+	cmr_u32 af_producer_id = 0;
+	cmr_u32 af_lib_version = 0;
 
 	ISP_LOGI("E");
 	if (libuse_info) {
@@ -282,7 +282,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info * libuse_info, struct af_lib_f
 	return rtn;
 }
 
-uint32_t aaa_lib_init(isp_ctrl_context * handle, struct sensor_libuse_info * libuse_info)
+cmr_u32 aaa_lib_init(isp_ctrl_context * handle, struct sensor_libuse_info * libuse_info)
 {
 	memset(&awb_lib_fun, 0x00, sizeof(awb_lib_fun));
 	memset(&ae_lib_fun, 0x00, sizeof(ae_lib_fun));

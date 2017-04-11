@@ -16,228 +16,230 @@
 #ifndef _ISP_EXIF_H_
 #define _ISP_EXIF_H_
 
+#include "cmr_types.h"
+
 #define EXIF_APP3	0XFFE3
 #define APP3_STATUS	0X1234
 struct exif_blc_param {
-	uint32_t mode;
-	uint16_t r;
-	uint16_t gr;
-	uint16_t gb;
-	uint16_t b;
+	cmr_u32 mode;
+	cmr_u16 r;
+	cmr_u16 gr;
+	cmr_u16 gb;
+	cmr_u16 b;
 };
 
 struct exif_nlc_param {
-	uint16_t r_node[29];
-	uint16_t g_node[29];
-	uint16_t b_node[29];
-	uint16_t l_node[29];
+	cmr_u16 r_node[29];
+	cmr_u16 g_node[29];
+	cmr_u16 b_node[29];
+	cmr_u16 l_node[29];
 };
 
 struct exif_lnc_param {
-	uint16_t grid;
-	uint16_t r_pec;
-	uint16_t g_pec;
-	uint16_t b_pec;
+	cmr_u16 grid;
+	cmr_u16 r_pec;
+	cmr_u16 g_pec;
+	cmr_u16 b_pec;
 };
 
 struct exif_awb_map {
-	uint16_t *addr;
-	uint32_t len;		//by bytes
+	cmr_u16 *addr;
+	cmr_u32 len;		//by bytes
 };
 
 struct exif_ae_param {
-	uint32_t iso;
-	uint32_t exposure;
-	uint32_t gain;
-	uint32_t cur_lum;
+	cmr_u32 iso;
+	cmr_u32 exposure;
+	cmr_u32 gain;
+	cmr_u32 cur_lum;
 };
 
 struct exif_awb_param {
-	uint16_t alg_id;
-	uint16_t r_gain;
-	uint16_t g_gain;
-	uint16_t b_gain;
+	cmr_u16 alg_id;
+	cmr_u16 r_gain;
+	cmr_u16 g_gain;
+	cmr_u16 b_gain;
 };
 
 struct exif_bpc_param {
-	uint16_t flat_thr;
-	uint16_t std_thr;
-	uint16_t texture_thr;
-	uint16_t reserved;
+	cmr_u16 flat_thr;
+	cmr_u16 std_thr;
+	cmr_u16 texture_thr;
+	cmr_u16 reserved;
 };
 
 struct exif_denoise_param {
-	uint32_t write_back;
-	uint16_t r_thr;
-	uint16_t g_thr;
-	uint16_t b_thr;
-	uint8_t diswei[19];
-	uint8_t ranwei[31];
-	uint8_t reserved1;
-	uint8_t reserved0;
+	cmr_u32 write_back;
+	cmr_u16 r_thr;
+	cmr_u16 g_thr;
+	cmr_u16 b_thr;
+	cmr_u8 diswei[19];
+	cmr_u8 ranwei[31];
+	cmr_u8 reserved1;
+	cmr_u8 reserved0;
 };
 
 struct exif_grgb_param {
-	uint16_t edge_thr;
-	uint16_t diff_thr;
+	cmr_u16 edge_thr;
+	cmr_u16 diff_thr;
 };
 
 struct exif_cfa_param {
-	uint16_t edge_thr;
-	uint16_t diff_thr;
+	cmr_u16 edge_thr;
+	cmr_u16 diff_thr;
 };
 
 struct exif_cmc_param {
-	uint16_t matrix[9];
-	uint16_t reserved;
+	cmr_u16 matrix[9];
+	cmr_u16 reserved;
 };
 
 struct exif_cce_parm {
-	uint16_t matrix[9];
-	uint16_t y_shift;
-	uint16_t u_shift;
-	uint16_t v_shift;
+	cmr_u16 matrix[9];
+	cmr_u16 y_shift;
+	cmr_u16 u_shift;
+	cmr_u16 v_shift;
 };
 
 struct exif_gamma_param {
-	uint16_t axis[2][26];
+	cmr_u16 axis[2][26];
 };
 
 struct exif_cce_uvdiv {
-	uint8_t thrd[7];
-	uint8_t t[2];
-	uint8_t m[3];
+	cmr_u8 thrd[7];
+	cmr_u8 t[2];
+	cmr_u8 m[3];
 };
 
 struct exif_pref_param {
-	uint8_t write_back;
-	uint8_t y_thr;
-	uint8_t u_thr;
-	uint8_t v_thr;
+	cmr_u8 write_back;
+	cmr_u8 y_thr;
+	cmr_u8 u_thr;
+	cmr_u8 v_thr;
 };
 
 struct exif_bright_param {
-	uint8_t factor;
+	cmr_u8 factor;
 };
 
 struct exif_contrast_param {
-	uint8_t factor;
+	cmr_u8 factor;
 };
 
 struct exif_hist_param {
-	uint16_t low_ratio;
-	uint16_t high_ratio;
-	uint8_t mode;
-	uint8_t reserved2;
-	uint8_t reserved1;
-	uint8_t reserved0;
+	cmr_u16 low_ratio;
+	cmr_u16 high_ratio;
+	cmr_u8 mode;
+	cmr_u8 reserved2;
+	cmr_u8 reserved1;
+	cmr_u8 reserved0;
 };
 
 struct exif_auto_contrast_param {
-	uint8_t mode;
-	uint8_t reserved2;
-	uint8_t reserved1;
-	uint8_t reserved0;
+	cmr_u8 mode;
+	cmr_u8 reserved2;
+	cmr_u8 reserved1;
+	cmr_u8 reserved0;
 };
 
 struct exif_saturation_param {
-	uint8_t factor;
+	cmr_u8 factor;
 };
 
 struct exif_af_param {
-	uint8_t magic[16];
-	uint16_t alg_id;
-	uint16_t cur_step;
-	uint16_t edge_info[32];
-	uint32_t denoise_lv;
-	uint32_t win_num;
-	uint32_t suc_win;
-	uint32_t mode;
-	uint32_t step_cnt;
-	uint16_t win[9][4];
-	uint16_t pos[32];
-	uint32_t value[9][32];
-	uint16_t time[32];
+	cmr_u8 magic[16];
+	cmr_u16 alg_id;
+	cmr_u16 cur_step;
+	cmr_u16 edge_info[32];
+	cmr_u32 denoise_lv;
+	cmr_u32 win_num;
+	cmr_u32 suc_win;
+	cmr_u32 mode;
+	cmr_u32 step_cnt;
+	cmr_u16 win[9][4];
+	cmr_u16 pos[32];
+	cmr_u32 value[9][32];
+	cmr_u16 time[32];
 };
 
 struct exif_emboss_param {
-	uint8_t step;
-	uint8_t reserved2;
-	uint8_t reserved1;
-	uint8_t reserved0;
+	cmr_u8 step;
+	cmr_u8 reserved2;
+	cmr_u8 reserved1;
+	cmr_u8 reserved0;
 };
 
 struct exif_edge_info {
-	uint8_t detail_thr;
-	uint8_t smooth_thr;
-	uint8_t strength;
-	uint8_t reserved;
+	cmr_u8 detail_thr;
+	cmr_u8 smooth_thr;
+	cmr_u8 strength;
+	cmr_u8 reserved;
 };
 
 struct exif_global_gain_param {
-	uint32_t gain;
+	cmr_u32 gain;
 };
 
 struct exif_chn_gain_param {
-	uint8_t r_gain;
-	uint8_t g_gain;
-	uint8_t b_gain;
-	uint8_t reserved0;
-	uint16_t r_offset;
-	uint16_t g_offset;
-	uint16_t b_offset;
-	uint16_t reserved1;
+	cmr_u8 r_gain;
+	cmr_u8 g_gain;
+	cmr_u8 b_gain;
+	cmr_u8 reserved0;
+	cmr_u16 r_offset;
+	cmr_u16 g_offset;
+	cmr_u16 b_offset;
+	cmr_u16 reserved1;
 };
 
 struct exif_flash_cali_param {
-	uint16_t effect;
-	uint16_t lum_ratio;
-	uint16_t r_ratio;
-	uint16_t g_ratio;
-	uint16_t b_ratio;
+	cmr_u16 effect;
+	cmr_u16 lum_ratio;
+	cmr_u16 r_ratio;
+	cmr_u16 g_ratio;
+	cmr_u16 b_ratio;
 };
 
 struct exif_css_param {
-	uint8_t low_thr[7];
-	uint8_t lum_thr;
-	uint8_t low_sum_thr[7];
-	uint8_t chr_thr;
-	uint8_t ratio[8];
+	cmr_u8 low_thr[7];
+	cmr_u8 lum_thr;
+	cmr_u8 low_sum_thr[7];
+	cmr_u8 chr_thr;
+	cmr_u8 ratio[8];
 };
 
 struct eixf_read_check {
-	uint16_t app_head;
-	uint16_t status;
+	cmr_u16 app_head;
+	cmr_u16 status;
 };
 typedef struct exif_isp_info {
-	uint32_t is_exif_validate;
-	uint32_t tool_version;
-	uint32_t version_id;
-	uint32_t info_len;
-	uint32_t blc_bypass;
-	uint32_t nlc_bypass;
-	uint32_t lnc_bypass;
-	uint32_t ae_bypass;
-	uint32_t awb_bypass;
-	uint32_t bpc_bypass;
-	uint32_t denoise_bypass;
-	uint32_t grgb_bypass;
-	uint32_t cmc_bypass;
-	uint32_t gamma_bypass;
-	uint32_t uvdiv_bypass;
-	uint32_t pref_bypass;
-	uint32_t bright_bypass;
-	uint32_t contrast_bypass;
-	uint32_t hist_bypass;
-	uint32_t auto_contrast_bypass;
-	uint32_t af_bypass;
-	uint32_t edge_bypass;
-	uint32_t fcs_bypass;
-	uint32_t css_bypass;
-	uint32_t saturation_bypass;
-	uint32_t hdr_bypass;
-	uint32_t glb_gain_bypass;
-	uint32_t chn_gain_bypass;
+	cmr_u32 is_exif_validate;
+	cmr_u32 tool_version;
+	cmr_u32 version_id;
+	cmr_u32 info_len;
+	cmr_u32 blc_bypass;
+	cmr_u32 nlc_bypass;
+	cmr_u32 lnc_bypass;
+	cmr_u32 ae_bypass;
+	cmr_u32 awb_bypass;
+	cmr_u32 bpc_bypass;
+	cmr_u32 denoise_bypass;
+	cmr_u32 grgb_bypass;
+	cmr_u32 cmc_bypass;
+	cmr_u32 gamma_bypass;
+	cmr_u32 uvdiv_bypass;
+	cmr_u32 pref_bypass;
+	cmr_u32 bright_bypass;
+	cmr_u32 contrast_bypass;
+	cmr_u32 hist_bypass;
+	cmr_u32 auto_contrast_bypass;
+	cmr_u32 af_bypass;
+	cmr_u32 edge_bypass;
+	cmr_u32 fcs_bypass;
+	cmr_u32 css_bypass;
+	cmr_u32 saturation_bypass;
+	cmr_u32 hdr_bypass;
+	cmr_u32 glb_gain_bypass;
+	cmr_u32 chn_gain_bypass;
 
 	struct exif_blc_param blc;
 	struct exif_nlc_param nlc;
@@ -271,7 +273,7 @@ typedef struct exif_isp_info {
 
 typedef struct exif_isp_debug_info {
 	void *addr;
-	int size;
+	cmr_s32 size;
 } EXIF_ISP_DEBUG_INFO_T;
 
 #endif //_ISP_EXIF_H_

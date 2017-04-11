@@ -53,7 +53,7 @@ extern "C" {
 #define ISP_CCE_COEF_COLOR_CAST 0
 #define ISP_CCE_COEF_GAIN_OFFSET 1
 #define CLIP(in, bottom, top) {if(in<bottom) in=bottom; if(in>top) in=top;}
-typedef cmr_int(*io_fun) (cmr_handle isp_alg_handle, void *param_ptr, int32_t(*call_back) ());
+typedef cmr_int(*io_fun) (cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ());
 
 /**---------------------------------------------------------------------------*
 **								 Data Prototype 							 **
@@ -133,28 +133,28 @@ enum isp_slice_pos_info {
 
 struct isp_slice_param {
 	enum isp_slice_pos_info pos_info;
-	uint32_t slice_line;
-	uint32_t complete_line;
-	uint32_t all_line;
+	cmr_u32 slice_line;
+	cmr_u32 complete_line;
+	cmr_u32 all_line;
 	struct isp_size max_size;
 	struct isp_size all_slice_num;
 	struct isp_size cur_slice_num;
 
 	struct isp_trim_size size[ISP_SLICE_WIN_NUM];
-	uint32_t edge_info;
+	cmr_u32 edge_info;
 };
 
 struct isp_slice_param_v1 {
 	enum isp_slice_pos_info pos_info;
-	uint32_t slice_line;
-	uint32_t complete_line;
-	uint32_t all_line;
+	cmr_u32 slice_line;
+	cmr_u32 complete_line;
+	cmr_u32 all_line;
 	struct isp_size max_size;
 	struct isp_size all_slice_num;
 	struct isp_size cur_slice_num;
 
 	struct isp_trim_size size[ISP_SLICE_WIN_NUM_V1];
-	uint32_t edge_info;
+	cmr_u32 edge_info;
 };
 
 struct isp_io_ctrl_fun {
@@ -163,27 +163,27 @@ struct isp_io_ctrl_fun {
 };
 
 struct isp_awbm_param {
-	uint32_t bypass;
+	cmr_u32 bypass;
 	struct isp_pos win_start;
 	struct isp_size win_size;
 };
 
 struct isp_ae_grgb_statistic_info {
-	uint32_t r_info[1024];
-	uint32_t g_info[1024];
-	uint32_t b_info[1024];
+	cmr_u32 r_info[1024];
+	cmr_u32 g_info[1024];
+	cmr_u32 b_info[1024];
 };
 
 struct isp_awb_statistic_info {
-	uint32_t r_info[1024];
-	uint32_t g_info[1024];
-	uint32_t b_info[1024];
+	cmr_u32 r_info[1024];
+	cmr_u32 g_info[1024];
+	cmr_u32 b_info[1024];
 };
 
 struct isp_binning_statistic_info {
-	uint32_t *r_info;
-	uint32_t *g_info;
-	uint32_t *b_info;
+	cmr_u32 *r_info;
+	cmr_u32 *g_info;
+	cmr_u32 *b_info;
 	struct isp_size binning_size;
 };
 
@@ -195,24 +195,24 @@ enum isp_ctrl_mode {
 
 struct isp_af_ctrl {
 	enum isp_ctrl_mode mode;
-	uint32_t step;
-	uint32_t num;
-	uint32_t stat_value[9];
+	cmr_u32 step;
+	cmr_u32 num;
+	cmr_u32 stat_value[9];
 };
 
 struct isp_data_param {
 	enum isp_work_mode work_mode;
 	enum isp_match_mode input;
 	enum isp_format input_format;
-	uint32_t format_pattern;
+	cmr_u32 format_pattern;
 	struct isp_size input_size;
 	struct isp_addr input_addr;
 	struct isp_addr input_vir;
 	enum isp_format output_format;
 	enum isp_match_mode output;
 	struct isp_addr output_addr;
-	uint16_t slice_height;
-	unsigned int input_fd;
+	cmr_u16 slice_height;
+	cmr_u32 input_fd;
 };
 
 struct isp_interface_param_v1 {
@@ -230,10 +230,10 @@ struct isp_interface_param_v1 {
 struct isp_system {
 	isp_handle caller_id;
 	proc_callback callback;
-	uint32_t isp_callback_bypass;
+	cmr_u32 isp_callback_bypass;
 	pthread_t monitor_thread;
 	isp_handle monitor_queue;
-	uint32_t monitor_status;
+	cmr_u32 monitor_status;
 
 	isp_handle thread_ctrl;
 	isp_handle thread_afl_proc;
@@ -248,32 +248,32 @@ struct isp_otp_info {
 
 	void *lsc_random;
 	void *lsc_golden;
-	isp_u32 width;
-	isp_u32 height;
+	cmr_u32 width;
+	cmr_u32 height;
 };
 
 struct isp_ae_info {
-	int32_t bv;
+	cmr_s32 bv;
 	float gain;
 	float exposure;
 	float f_value;
-	uint32_t stable;
+	cmr_u32 stable;
 };
 
 struct isp_statis_mem_info {
-	isp_uint isp_statis_mem_size;
-	isp_uint isp_statis_mem_num;
-	isp_uint isp_statis_k_addr;
-	isp_uint isp_statis_u_addr;
-	isp_uint isp_statis_alloc_flag;
-	isp_s32 statis_mfd;
-	isp_s32 statis_buf_dev_fd;
+	cmr_uint isp_statis_mem_size;
+	cmr_uint isp_statis_mem_num;
+	cmr_uint isp_statis_k_addr;
+	cmr_uint isp_statis_u_addr;
+	cmr_uint isp_statis_alloc_flag;
+	cmr_s32 statis_mfd;
+	cmr_s32 statis_buf_dev_fd;
 
-	isp_uint isp_lsc_mem_size;
-	isp_uint isp_lsc_mem_num;
-	isp_uint isp_lsc_physaddr;
-	isp_uint isp_lsc_virtaddr;
-	isp_s32 lsc_mfd;
+	cmr_uint isp_lsc_mem_size;
+	cmr_uint isp_lsc_mem_num;
+	cmr_uint isp_lsc_physaddr;
+	cmr_uint isp_lsc_virtaddr;
+	cmr_s32 lsc_mfd;
 
 	void *buffer_client_data;
 	void *cb_of_malloc;
@@ -281,13 +281,13 @@ struct isp_statis_mem_info {
 };
 
 struct isp_statis_info {
-	uint32_t irq_type;
-	uint32_t irq_property;
-	uint32_t phy_addr;
-	uint32_t vir_addr;
-	uint32_t kaddr;
-	uint32_t buf_size;
-	int mfd;
+	cmr_u32 irq_type;
+	cmr_u32 irq_property;
+	cmr_u32 phy_addr;
+	cmr_u32 vir_addr;
+	cmr_u32 kaddr;
+	cmr_u32 buf_size;
+	cmr_s32 mfd;
 };
 
 typedef struct {
@@ -295,7 +295,7 @@ typedef struct {
 #ifndef WIN32
 	struct isp_system system;
 #endif
-	uint32_t camera_id;
+	cmr_u32 camera_id;
 	uint isp_mode;
 
 	//new param
@@ -317,20 +317,20 @@ typedef struct {
 	void *handle_pm;
 
 	/* sensor param */
-	uint32_t param_index;
+	cmr_u32 param_index;
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 	struct sensor_raw_ioctrl *ioctrl_ptr;
 
-	uint32_t alc_awb;
-	int awb_pg_flag;
-	uint8_t *log_alc_awb;
-	uint32_t log_alc_awb_size;
-	uint8_t *log_alc_lsc;
-	uint32_t log_alc_lsc_size;
-	uint8_t *log_alc;
-	uint32_t log_alc_size;
-	uint8_t *log_alc_ae;
-	uint32_t log_alc_ae_size;
+	cmr_u32 alc_awb;
+	cmr_s32 awb_pg_flag;
+	cmr_u8 *log_alc_awb;
+	cmr_u32 log_alc_awb_size;
+	cmr_u8 *log_alc_lsc;
+	cmr_u32 log_alc_lsc_size;
+	cmr_u8 *log_alc;
+	cmr_u32 log_alc_size;
+	cmr_u8 *log_alc_ae;
+	cmr_u32 log_alc_ae_size;
 
 	struct awb_lib_fun *awb_lib_fun;
 	struct ae_lib_fun *ae_lib_fun;
@@ -344,13 +344,13 @@ typedef struct {
 	struct isp_data_info isp_init_data[MAX_MODE_NUM];
 	struct isp_data_info isp_update_data[MAX_MODE_NUM];	/*for isp_tool */
 
-	uint32_t gamma_sof_cnt;
-	uint32_t gamma_sof_cnt_eb;
-	uint32_t update_gamma_eb;
-	uint32_t mode_flag;
-	uint32_t scene_flag;
-	uint32_t multi_nr_flag;
-	int8_t *sensor_name;
+	cmr_u32 gamma_sof_cnt;
+	cmr_u32 gamma_sof_cnt_eb;
+	cmr_u32 update_gamma_eb;
+	cmr_u32 mode_flag;
+	cmr_u32 scene_flag;
+	cmr_u32 multi_nr_flag;
+	cmr_s8 *sensor_name;
 } isp_ctrl_context;
 
 /**---------------------------------------------------------------------------*
@@ -366,10 +366,10 @@ typedef struct {
 /******************************************************************************/
 //for blc
 struct isp_blc_offset {
-	uint16_t r;
-	uint16_t gr;
-	uint16_t gb;
-	uint16_t b;
+	cmr_u16 r;
+	cmr_u16 gr;
+	cmr_u16 gb;
+	cmr_u16 b;
 };
 
 struct isp_blc_param {
@@ -382,54 +382,54 @@ struct isp_lsc_info {
 	struct isp_sample_point_info cur_idx;
 	void *data_ptr;
 	void *param_ptr;
-	isp_u32 len;
-	isp_u32 grid;
-	isp_u32 gain_w;
-	isp_u32 gain_h;
+	cmr_u32 len;
+	cmr_u32 grid;
+	cmr_u32 gain_w;
+	cmr_u32 gain_h;
 };
 
 struct isp_lsc_ctrl_in {
-	uint32_t image_pattern;
+	cmr_u32 image_pattern;
 	struct isp_lsc_info *lsc_input;
 };
 
 struct isp_lnc_map {
-	isp_u32 ct;
-	isp_u32 grid_mode;
-	isp_u32 grid_pitch;
-	isp_u32 gain_w;
-	isp_u32 gain_h;
-	isp_u32 grid;
+	cmr_u32 ct;
+	cmr_u32 grid_mode;
+	cmr_u32 grid_pitch;
+	cmr_u32 gain_w;
+	cmr_u32 gain_h;
+	cmr_u32 grid;
 	void *param_addr;
-	isp_u32 len;
+	cmr_u32 len;
 };
 
 struct isp_lnc_param {
-	isp_u32 update_flag;
+	cmr_u32 update_flag;
 	struct isp_dev_lsc_info cur;
 	struct isp_sample_point_info cur_index_info;	/*for two lsc parameters to interplate */
 	struct isp_lnc_map map;	//current lsc map
 	struct isp_lnc_map map_tab[ISP_COLOR_TEMPRATURE_NUM];
 	struct isp_size resolution;
-	isp_u32 tab_num;
-	isp_u32 lnc_param_max_size;
+	cmr_u32 tab_num;
+	cmr_u32 lnc_param_max_size;
 };
 
 /******************************************************************************/
 //for wb
 struct isp_awbc_cfg {
-	isp_u32 r_gain;
-	isp_u32 g_gain;
-	isp_u32 b_gain;
-	isp_u32 r_offset;
-	isp_u32 g_offset;
-	isp_u32 b_offset;
+	cmr_u32 r_gain;
+	cmr_u32 g_gain;
+	cmr_u32 b_gain;
+	cmr_u32 r_offset;
+	cmr_u32 g_offset;
+	cmr_u32 b_offset;
 };
 
 /******************************************************************************/
 //for ae
 struct isp_ae_statistic_info {
-	uint32_t y[1024];
+	cmr_u32 y[1024];
 };
 
 struct isp_ae_param {
@@ -444,14 +444,14 @@ struct afl_ctrl_proc_out {
 };
 
 struct isp_anti_flicker_cfg {
-	uint32_t bypass;
-	uint32_t mode;
-	uint32_t skip_frame_num;
-	uint32_t line_step;
-	uint32_t frame_num;
-	uint32_t vheight;
-	uint32_t start_col;
-	uint32_t end_col;
+	cmr_u32 bypass;
+	cmr_u32 mode;
+	cmr_u32 skip_frame_num;
+	cmr_u32 line_step;
+	cmr_u32 frame_num;
+	cmr_u32 vheight;
+	cmr_u32 start_col;
+	cmr_u32 end_col;
 	void *addr;
 	cmr_handle thr_handle;
 	cmr_handle caller_handle;
@@ -466,8 +466,8 @@ struct isp_anti_flicker_cfg {
 /******************************************************************************/
 //for af
 struct isp_af_statistic_info {
-	uint64_t info[32];
-	uint32_t info_tshark3[105];
+	cmr_u64 info[32];
+	cmr_u32 info_tshark3[105];
 };
 
 struct isp_afm_param {
@@ -481,66 +481,66 @@ struct isp_af_param {
 /******************************************************************************/
 //for gamma
 struct isp_gamma_curve_info {
-	isp_u32 axis[2][ISP_GAMMA_SAMPLE_NUM];
+	cmr_u32 axis[2][ISP_GAMMA_SAMPLE_NUM];
 };
 
 struct isp_gamma_info {
-	uint16_t axis[2][26];
-	uint8_t index[28];
+	cmr_u16 axis[2][26];
+	cmr_u8 index[28];
 };
 
 /******************************************************************************/
 //for bright
 struct isp_bright_cfg {
-	uint32_t factor;
+	cmr_u32 factor;
 };
 
 struct isp_bright_param {
-	uint32_t cur_index;
+	cmr_u32 cur_index;
 	struct isp_dev_brightness_info cur;
-	uint8_t bright_tab[16];
-	uint8_t scene_mode_tab[MAX_SCENEMODE_NUM];
+	cmr_u8 bright_tab[16];
+	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
 };
 
 /******************************************************************************/
 //for contrast
 struct isp_contrast_cfg {
-	uint32_t factor;
+	cmr_u32 factor;
 };
 
 struct isp_contrast_param {
-	uint32_t cur_index;
+	cmr_u32 cur_index;
 	struct isp_dev_contrast_info cur;
-	uint8_t tab[16];
-	uint8_t scene_mode_tab[MAX_SCENEMODE_NUM];
+	cmr_u8 tab[16];
+	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
 };
 
 /******************************************************************************/
 //for saturation
 struct isp_saturation_cfg {
-	uint32_t factor;
+	cmr_u32 factor;
 };
 
 /******************************************************************************/
 //for hue
 struct isp_hue_cfg {
-	uint32_t factor;
+	cmr_u32 factor;
 };
 
 /******************************************************************************/
 //for edge/sharpness
 struct isp_edge_cfg {
-	uint32_t factor;
+	cmr_u32 factor;
 };
 
 /******************************************************************************/
 //for flash calibration
 
 struct isp_flash_attrib_param {
-	uint32_t r_sum;
-	uint32_t gr_sum;
-	uint32_t gb_sum;
-	uint32_t b_sum;
+	cmr_u32 r_sum;
+	cmr_u32 gr_sum;
+	cmr_u32 gb_sum;
+	cmr_u32 b_sum;
 };
 
 struct isp_flash_attrib_cali {
@@ -549,11 +549,11 @@ struct isp_flash_attrib_cali {
 };
 
 struct isp_flash_info {
-	isp_u32 lum_ratio;
-	isp_u32 r_ratio;
-	isp_u32 g_ratio;
-	isp_u32 b_ratio;
-	isp_u32 auto_flash_thr;
+	cmr_u32 lum_ratio;
+	cmr_u32 r_ratio;
+	cmr_u32 g_ratio;
+	cmr_u32 b_ratio;
+	cmr_u32 auto_flash_thr;
 };
 
 struct isp_flash_param {
@@ -564,7 +564,7 @@ struct isp_flash_param {
 /******************************************************************************/
 //for envi_detect
 struct isp_envi_detect_param {
-	uint32_t enable;
+	cmr_u32 enable;
 	struct isp_range envi_range[SENSOR_ENVI_NUM];
 };
 
@@ -584,11 +584,11 @@ struct isp_postblc_param {
 //pdaf correction
 struct isp_pdaf_correction_param {
 	struct isp_dev_pdaf_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 /********************************************************************************************/
@@ -600,11 +600,11 @@ struct isp_pdaf_extraction_param {
 //yuv noise filter
 struct isp_dev_noise_filter_param {
 	struct isp_dev_noise_filter_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 //global rgb gain.
@@ -623,11 +623,11 @@ struct isp_2d_lsc_param {
 	struct isp_dev_2d_lsc_info cur;
 	struct isp_data_info final_lsc_param;	//store the resulted lsc params
 	struct isp_lnc_map map_tab[ISP_COLOR_TEMPRATURE_NUM];
-	isp_u32 tab_num;
+	cmr_u32 tab_num;
 	struct isp_lsc_info lsc_info;
 	struct isp_size resolution;
-	isp_u32 update_flag;
-	isp_u32 is_init;
+	cmr_u32 update_flag;
+	cmr_u32 is_init;
 
 	void *tmp_ptr_a;
 	void *tmp_ptr_b;
@@ -646,7 +646,7 @@ struct isp_binning4awb_param_v1 {
 };
 
 struct isp_awb_param_v1 {
-	isp_u32 ct_value;
+	cmr_u32 ct_value;
 	struct isp_dev_awb_info_v1 cur;
 	struct isp_awb_statistic_info stat;
 	struct isp_data_info awb_statistics[4];
@@ -662,101 +662,101 @@ struct isp_rgb_aem_param {
 //afm
 struct isp_rgb_afm_param {
 	struct isp_dev_rgb_afm_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *param_ptr1;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *param_ptr1;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 /********************************************************************************************/
 //bpc
 struct isp_bpc_param_v1 {
 	struct isp_dev_bpc_info_v1 cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 /********************************************************************************************/
 //grgb
 struct isp_grgb_param {
 	struct isp_dev_grgb_info_v1 cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 //y-nr
 //sharkl2
 struct isp_ynr_param {
 	struct isp_dev_ynr_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 /********************************************************************************************/
 //3d_nr_pre
 struct isp_3d_nr_pre_param {
 	struct isp_dev_3dnr_pre_param_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 /********************************************************************************************/
 //3d_nr_cap
 struct isp_3d_nr_cap_param {
 	struct isp_dev_3dnr_cap_param_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 /********************************************************************************************/
 //nlm
 struct isp_nlm_param_v1 {
-	uint32_t cur_level;
-	isp_u32 level_num;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
 	struct isp_dev_nlm_info cur;
 	struct isp_data_info vst_map;
 	struct isp_data_info ivst_map;
-	isp_uint *nlm_ptr;
-	isp_uint *vst_ptr;
-	isp_uint *ivst_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_uint *nlm_ptr;
+	cmr_uint *vst_ptr;
+	cmr_uint *ivst_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 /********************************************************************************************/
 //cfa
 struct isp_cfa_param_v1 {
 	struct isp_dev_cfa_info_v1 cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_cmc10_param {
 	struct isp_dev_cmc10_info cur;
 	struct isp_sample_point_info cur_idx_info;
-	uint16_t matrix[SENSOR_CMC_NUM][SENSOR_CMC_POINT_NUM];
-	uint16_t result_cmc[SENSOR_CMC_POINT_NUM];
-	uint16_t reserved;
-	uint32_t reduce_percent;	//reduce saturation.
+	cmr_u16 matrix[SENSOR_CMC_NUM][SENSOR_CMC_POINT_NUM];
+	cmr_u16 result_cmc[SENSOR_CMC_POINT_NUM];
+	cmr_u16 reserved;
+	cmr_u32 reduce_percent;	//reduce saturation.
 };
 
 struct isp_frgb_gamc_param {
@@ -769,13 +769,13 @@ struct isp_frgb_gamc_param {
 struct isp_cce_param_v1 {
 	struct isp_dev_cce_info_v1 cur;
 	/*R/G/B coef to change cce */
-	isp_s32 cur_level[2];
+	cmr_s32 cur_level[2];
 	/*0: color cast, 1: gain offset */
-	isp_u16 cce_coef[2][3];
-	isp_u16 bakup_cce_coef[3];
-	isp_u32 prv_idx;
-	isp_u32 cur_idx;
-	isp_u32 is_specialeffect;
+	cmr_u16 cce_coef[2][3];
+	cmr_u16 bakup_cce_coef[3];
+	cmr_u32 prv_idx;
+	cmr_u32 cur_idx;
+	cmr_u32 is_specialeffect;
 	struct isp_dev_cce_info_v1 cce_tab[16];
 	struct isp_dev_cce_info_v1 specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
@@ -784,11 +784,11 @@ struct isp_cce_param_v1 {
 //uvdiv
 struct isp_cce_uvdiv_param_v1 {
 	struct isp_dev_uvd_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_hsv_param {
@@ -801,11 +801,11 @@ struct isp_hsv_param {
 
 struct isp_yuv_pre_cdn_param {
 	struct isp_dev_yuv_precdn_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_posterize_param {
@@ -824,11 +824,11 @@ struct isp_yiq_afl_param_v3 {
 /********************************************************************************************/
 struct isp_rgb_dither_param {
 	struct isp_dev_rgb_gain_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_hist_param_v1 {
@@ -841,48 +841,48 @@ struct isp_hist2_param_v1 {
 
 struct isp_uv_cdn_param_v1 {
 	struct isp_dev_yuv_cdn_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_edge_param_v1 {
 	struct isp_dev_edge_info_v1 cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_chrom_saturation_param {
 	struct isp_dev_csa_info_v1 cur;
-	isp_u32 cur_u_idx;
-	isp_u32 cur_v_idx;
-	isp_u8 tab[2][SENSOR_LEVEL_NUM];
-	isp_u8 scene_mode_tab[2][MAX_SCENEMODE_NUM];
+	cmr_u32 cur_u_idx;
+	cmr_u32 cur_v_idx;
+	cmr_u8 tab[2][SENSOR_LEVEL_NUM];
+	cmr_u8 scene_mode_tab[2][MAX_SCENEMODE_NUM];
 };
 
 struct isp_hue_param_v1 {
 	struct isp_dev_hue_info_v1 cur;
-	isp_u32 cur_idx;
-	isp_s16 tab[SENSOR_LEVEL_NUM];
+	cmr_u32 cur_idx;
+	cmr_s16 tab[SENSOR_LEVEL_NUM];
 };
 
 struct isp_uv_postcdn_param {
 	struct isp_dev_post_cdn_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_yuv_ygamma_param {
 	struct isp_dev_ygamma_info cur;
-	uint32_t cur_idx;
+	cmr_u32 cur_idx;
 	struct isp_sample_point_info cur_idx_weight;
 	struct sensor_gamma_curve final_curve;
 	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
@@ -895,11 +895,11 @@ struct isp_ydelay_param {
 
 struct isp_iircnr_iir_param {
 	struct isp_dev_iircnr_info cur;
-	isp_u32 cur_level;
-	isp_u32 level_num;
-	isp_uint *param_ptr;
-	isp_uint *scene_ptr;
-	isp_u32 nr_mode_setting;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_iircnr_yrandom_param {
@@ -907,8 +907,8 @@ struct isp_iircnr_yrandom_param {
 };
 
 struct isp_context {
-	uint32_t is_validate;
-	uint32_t mode_id;
+	cmr_u32 is_validate;
+	cmr_u32 mode_id;
 
 /////////////////////////////////////////////////
 // 3A owner:

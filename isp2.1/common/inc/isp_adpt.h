@@ -1,7 +1,7 @@
 #ifndef _ISP_ADPT_H_
 #define _ISP_ADPT_H_
-//#include "AlAwbInterface.h"
-#include <sys/types.h>
+
+#include "cmr_types.h"
 
 enum ae_product_lib_id {
 	ADPT_SPRD_AE_LIB,
@@ -44,16 +44,16 @@ enum adpt_lib_type {
 
 struct adpt_ops_type {
 	void *(*adpt_init) (void *in, void *out);
-	 int32_t(*adpt_deinit) (void *handle, void *in, void *out);
-	 int32_t(*adpt_process) (void *handle, void *in, void *out);
-	 int32_t(*adpt_ioctrl) (void *handle, int32_t cmd, void *in, void *out);
+	 cmr_s32(*adpt_deinit) (void *handle, void *in, void *out);
+	 cmr_s32(*adpt_process) (void *handle, void *in, void *out);
+	 cmr_s32(*adpt_ioctrl) (void *handle, cmr_s32 cmd, void *in, void *out);
 };
 
 struct adpt_register_type {
-	int32_t lib_type;
+	cmr_s32 lib_type;
 	struct third_lib_info *lib_info;
 	struct adpt_ops_type *ops;
 };
 
-int32_t adpt_get_ops(int32_t lib_type, struct third_lib_info *lib_info, struct adpt_ops_type **ops);
+cmr_s32 adpt_get_ops(cmr_s32 lib_type, struct third_lib_info *lib_info, struct adpt_ops_type **ops);
 #endif
