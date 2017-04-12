@@ -297,11 +297,11 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
 
     /*	CMR_LOGD("msg_cur 0x%lx", (cmr_uint)msg_cur);*/
     sem_post(&msg_cxt->msg_sem);
-    // if (NULL != msg_cur) {
-    if (CMR_MSG_SYNC_NONE != msg_cur->sync_f) {
-        rtn = sem_wait(&msg_cur->sem);
+    if (NULL != msg_cur) {
+        if (CMR_MSG_SYNC_NONE != msg_cur->sync_f) {
+            rtn = sem_wait(&msg_cur->sem);
+        }
     }
-    //}
     return rtn;
 }
 

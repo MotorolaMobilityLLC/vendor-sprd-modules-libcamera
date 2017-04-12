@@ -176,12 +176,10 @@ int32_t SprdCamera3Flash::reserveFlashForCamera(const int cameraId) {
     if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
         LOGE("%s: Invalid camera id: %d", __func__, cameraId);
         retVal = -EINVAL;
-        goto exit;
     }
     if (m_callbacks == NULL || m_callbacks->torch_mode_status_change == NULL) {
         LOGE("%s: Callback is not defined!", __func__);
         retVal = -EINVAL;
-        goto exit;
     }
     char cameraIdStr[STRING_LENGTH];
     snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
@@ -195,7 +193,6 @@ int32_t SprdCamera3Flash::reserveFlashForCamera(const int cameraId) {
         m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
                                               TORCH_MODE_STATUS_NOT_AVAILABLE);
     }
-exit:
     return retVal;
 }
 /*===========================================================================
@@ -215,12 +212,10 @@ int32_t SprdCamera3Flash::releaseFlashFromCamera(const int cameraId) {
     if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
         LOGE("%s: Invalid camera id: %d", __func__, cameraId);
         retVal = -EINVAL;
-        goto exit;
     }
     if (m_callbacks == NULL) {
         LOGE("%s: Callback is not defined!", __func__);
         retVal = -EINVAL;
-        goto exit;
     }
     char cameraIdStr[STRING_LENGTH];
     snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
@@ -231,7 +226,6 @@ int32_t SprdCamera3Flash::releaseFlashFromCamera(const int cameraId) {
         m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
                                               TORCH_MODE_STATUS_AVAILABLE_OFF);
     }
-exit:
     return retVal;
 }
 int32_t SprdCamera3Flash::setTorchMode(const char *cameraIdStr, bool on) {

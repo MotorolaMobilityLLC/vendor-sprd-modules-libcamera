@@ -1377,13 +1377,13 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     }
 
     auxRotate = new unsigned char[dPVImgW * dPVImgH * 3 / 2];
-    if (auxRotate == NULL) {
+    if (mainRotate == NULL) {
         rc = NO_MEMORY;
         goto MEM_AUX_FAILED;
     }
 
     disparityRotate = new unsigned short[dPVImgW * dPVImgH * 2];
-    if (disparityRotate == NULL) {
+    if (mainRotate == NULL) {
         rc = NO_MEMORY;
         goto MEM_DISPROT_FAILED;
     }
@@ -1969,7 +1969,7 @@ int SprdCamera3RangeFinder::checkOtpInfo() { return 0; }
  *==========================================================================*/
 void SprdCamera3RangeFinder::processCaptureResultMain(
     camera3_capture_result_t *result) {
-    uint64_t result_timestamp = 0;
+    uint64_t result_timestamp = 0;;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     CameraMetadata metadata;
@@ -2232,7 +2232,6 @@ void SprdCamera3RangeFinder::dumpImg(void *addr, int size, int frameId,
 
     HAL_LOGD(" E");
     char name[128];
-    int count;
     snprintf(name, sizeof(name), "/data/misc/media/%d_%d_%d.yuv", size, frameId,
              flag);
 
@@ -2240,15 +2239,13 @@ void SprdCamera3RangeFinder::dumpImg(void *addr, int size, int frameId,
 
     if (file_fd == NULL) {
         HAL_LOGE("open yuv file fail!\n");
-        goto exit;
     }
-    count = fwrite(addr, 1, size, file_fd);
+    int count = fwrite(addr, 1, size, file_fd);
     if (count != size) {
         HAL_LOGE("write dst.yuv fail\n");
     }
     fclose(file_fd);
 
-exit:
     HAL_LOGD("X");
 }
 

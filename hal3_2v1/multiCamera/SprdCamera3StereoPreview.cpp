@@ -121,17 +121,6 @@ SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
     setupPhysicalCameras();
     m_VirtualCamera.id = CAM_MAIN_ID; // hardcode left front camera id here
 
-    memset(&mAuxStreams, 0, sizeof(camera3_stream_t));
-    memset(&mMainStreams, 0, sizeof(camera3_stream_t));
-    mIommuEnabled = false;
-    mhasCallbackStream = false;
-    memset(mPreviewNativeBuffer, 0,
-           sizeof(native_handle_t *) * MAX_PREVIEW_QEQUEST_BUF);
-    mPerfectskinlevel = 0;
-    mrotation = 0;
-    memset(&mPreviewSize, 0, sizeof(stereo_preview_size));
-    mMaxPendingCount = 0;
-    mPendingRequest = 0;
     HAL_LOGD("X");
 }
 
@@ -1659,8 +1648,8 @@ void SprdCamera3StereoPreview::MuxerThread::errorCallback(
         callback_result.partial_result = 0;
         mPreviewMuxer->mCallbackOps->process_capture_result(
             mPreviewMuxer->mCallbackOps, &callback_result);
-        HAL_LOGD(":%d callback.stream=%p,buffer=%p",
-                 callback_result.frame_number, callback_result_buffers.stream,
+        HAL_LOGD(":%d callback.stream=%p,buffer=%p", callback_result.frame_number,
+                 callback_result_buffers.stream,
                  callback_result_buffers.buffer);
     }
     {
@@ -2551,13 +2540,12 @@ void SprdCamera3StereoPreview::dumpImg(void *addr, int size, int w, int h,
 
     if (file_fd == NULL) {
         HAL_LOGE("open yuv file failed!\n");
-    } else {
-        int count = fwrite(addr, 1, size, file_fd);
-        if (count != size) {
-            HAL_LOGE("write dst.yuv failed\n");
-        }
-        fclose(file_fd);
     }
+    int count = fwrite(addr, 1, size, file_fd);
+    if (count != size) {
+        HAL_LOGE("write dst.yuv failed\n");
+    }
+    fclose(file_fd);
 
     HAL_LOGD("X");
 }
