@@ -157,6 +157,7 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 			break;
 		case AE_CB_HDR_START:
 			cmd = ISP_HDR_EV_EFFECT_CALLBACK;
+			break;
 		default:
 			cmd = ISP_AE_STAB_CALLBACK;
 			break;
@@ -503,13 +504,12 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	u_addr = statis_info->vir_addr;
 
 	ae_stat_ptr = &cxt->aem_stats;
-
 	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
 		val0 = *((cmr_u32 *) u_addr + i * 2);
 		val1 = *(((cmr_u32 *) u_addr) + i * 2 + 1);
-		ae_stat_ptr->r_info[i] = (val1 >> 11) & 0x1fffff;
-		ae_stat_ptr->g_info[i] = ((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff);
-		ae_stat_ptr->b_info[i] = val0 & 0x1fffff;
+		ae_stat_ptr->r_info[i] = ((val1 >> 11) & 0x1fffff) << cxt->ae_cxt.shift;
+		ae_stat_ptr->g_info[i] = (((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff)) << cxt->ae_cxt.shift;
+		ae_stat_ptr->b_info[i] = (val0 & 0x1fffff) << cxt->ae_cxt.shift;
 	}
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.buf_size = statis_info->buf_size;
@@ -1547,12 +1547,14 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	ae_input.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[1].frame_line;
 	ae_input.resolution_info.line_time = cxt->commn_cxt.input_size_trim[1].line_time;
 	ae_input.resolution_info.sensor_size_index = 1;
-	ae_input.monitor_win_num.w = 32;
-	ae_input.monitor_win_num.h = 32;
 	ae_input.camera_id = cxt->camera_id;
 	ae_input.lib_param = cxt->lib_use_info->ae_lib_info;
 	ae_input.caller_handle = (cmr_handle) cxt;
 	ae_input.ae_set_cb = isp_ae_set_cb;
+	cxt->ae_cxt.win_num.w =32;
+	cxt->ae_cxt.win_num.h = 32;
+	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w ;
+	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
 		//AIS needs AWB infomation at Init
@@ -2353,6 +2355,7 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 	struct ae_set_work_param ae_param;
 	enum ae_work_mode ae_mode = 0;
 
+	memset(&ae_param, 0, sizeof(ae_param));
 	/*ae should known preview/capture/video work mode */
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
@@ -2396,9 +2399,20 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 	ae_param.sensor_fps.min_fps = param_ptr->sensor_fps.min_fps;
 	ae_param.sensor_fps.is_high_fps = param_ptr->sensor_fps.is_high_fps;
 	ae_param.sensor_fps.high_fps_skip_num = param_ptr->sensor_fps.high_fps_skip_num;
+	ae_param.win_num.h = cxt->ae_cxt.win_num.h;
+	ae_param.win_num.w = cxt->ae_cxt.win_num.w;
 
+	ae_param.win_size.w = ((ae_param.resolution_info.frame_size.w / ae_param.win_num.w) / 2) * 2;
+	ae_param.win_size.h = ((ae_param.resolution_info.frame_size.h / ae_param.win_num.h) / 2) * 2;
+	if (ae_param.win_size.w < 120) {
+		ae_param.shift = 0;
+	} else {
+		ae_param.shift = 1;
+	}
+	cxt->ae_cxt.shift = ae_param.shift;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_DC_DV, &param_ptr->dv_mode, NULL);
+	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &ae_param.shift, NULL);
 
 	return rtn;
 }

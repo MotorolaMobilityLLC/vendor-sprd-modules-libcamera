@@ -56,6 +56,8 @@ struct ae_info {
 	cmr_uint mfd;
 	cmr_int buf_property;
 	void *buffer_client_data;
+	struct ae_size win_num;
+	cmr_u32 shift;
 };
 
 struct awb_info {

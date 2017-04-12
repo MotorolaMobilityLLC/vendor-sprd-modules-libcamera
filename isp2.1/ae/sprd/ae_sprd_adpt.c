@@ -1280,16 +1280,8 @@ static cmr_s32 _cfg_monitor_win(struct ae_ctrl_cxt *cxt)
 		info.win_size = cxt->monitor_unit.win_size;
 		info.trim = cxt->monitor_unit.trim;
 
-		if (cxt->monitor_unit.win_size.w < 120) {
-			cxt->cur_status.monitor_shift = 0;
-			info.shift = 0;
-		} else {
-			cxt->cur_status.monitor_shift = 1;
-			info.shift = 1;
-		}
-		//ISP_LOGV("info x=%d,y=%d,w=%d,h=%d, block_size.w=%d,block_size.h=%d, shift=%d",
-		//      info.trim.x, info.trim.y, info.trim.w, info.trim.h, info.win_size.w,
-		//      info.win_size.h, info.shift);
+		/*TBD remove it */
+		cxt->cur_status.monitor_shift = 0;
 		rtn = cxt->isp_ops.set_monitor_win(cxt->isp_ops.isp_handler, &info);
 	}
 

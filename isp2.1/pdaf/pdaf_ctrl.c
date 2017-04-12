@@ -118,6 +118,7 @@ static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
+		lib_ptr->lib_handle = NULL;
 	} else {
 		ISP_LOGI("adpt_deinit fun is NULL");
 	}

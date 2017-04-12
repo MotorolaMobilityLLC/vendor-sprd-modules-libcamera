@@ -283,6 +283,7 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
+		lib_ptr->lib_handle = NULL;
 	} else {
 		ISP_LOGI("fail to do adpt_deinit");
 	}

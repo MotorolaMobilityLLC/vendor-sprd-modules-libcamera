@@ -162,7 +162,7 @@ cmr_s32 isp_u_raw_aem_skip_num(isp_handle handle, cmr_u32 skip_num)
 	return ret;
 }
 
-cmr_s32 isp_u_raw_aem_shift(isp_handle handle, cmr_u32 shift)
+cmr_s32 isp_u_raw_aem_shift(isp_handle handle, void *shift)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -172,12 +172,11 @@ cmr_s32 isp_u_raw_aem_shift(isp_handle handle, cmr_u32 shift)
 		ISP_LOGE("handle is null error.");
 		return -1;
 	}
-
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_SHIFT;
-	param.property_param = &shift;
+	param.property_param = shift;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
