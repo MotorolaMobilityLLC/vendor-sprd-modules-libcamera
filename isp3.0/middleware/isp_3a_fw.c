@@ -233,7 +233,7 @@ static cmr_int isp3a_flash_get_charge(cmr_handle handle, struct isp_flash_cfg *c
 static cmr_int isp3a_flash_get_time(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
 static cmr_int isp3a_flash_set_charge(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
 static cmr_int isp3a_flash_set_time(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
-static cmr_int isp3a_flash_set_skip(cmr_handle handle, cmr_u32 skip_num);
+static cmr_int isp3a_set_skip_frame(cmr_handle handle, cmr_u32 skip_num);
 static cmr_int isp3a_set_pos(cmr_handle handle, struct af_ctrl_motor_pos *in);
 static cmr_int isp3a_start_af_notify(cmr_handle handle, void *data);
 static cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data);
@@ -879,7 +879,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_flash_set_skip(cmr_handle handle, cmr_u32 skip_num)
+cmr_int isp3a_set_skip_frame(cmr_handle handle, cmr_u32 skip_num)
 {
         cmr_int                                     ret = ISP_SUCCESS;
         struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
@@ -1204,7 +1204,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.ops_in.flash_set_time = isp3a_flash_set_time;
 	ae_input.ops_in.set_exposure = isp3a_set_exposure;
 	ae_input.ops_in.release_stat_buffer = isp3a_release_statistics_buf;
-	ae_input.ops_in.flash_set_skip = isp3a_flash_set_skip;
+	ae_input.ops_in.flash_set_skip = isp3a_set_skip_frame;
 
 	ae_input.sensor_static_info.f_num = input_ptr->ex_info.f_num;
 	ae_input.sensor_static_info.exposure_valid_num = input_ptr->ex_info.exp_valid_frame_num;
@@ -3164,7 +3164,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	exif_info_ptr->size = sizeof(cxt->debug_data.exif_debug_info);
 	exif_info_ptr->addr = (void *)&cxt->debug_data.exif_debug_info;
 exit:
-	ISP_LOGI("exif debug info size %ld", exif_info_ptr->size);
+	ISP_LOGV("exif debug info size %ld %p", exif_info_ptr->size, exif_info_ptr->addr);
 	return ret;
 }
 

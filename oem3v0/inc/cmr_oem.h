@@ -299,7 +299,7 @@ struct camera_context {
     cmr_s32 highiso_buf_fd;
     cmr_uint highiso_buf_phys_addr;
     cmr_uint highiso_buf_virt_addr;
-
+    struct isp_info isp_exif_info;
     cmr_uint dump_cnt;
     ;
 };

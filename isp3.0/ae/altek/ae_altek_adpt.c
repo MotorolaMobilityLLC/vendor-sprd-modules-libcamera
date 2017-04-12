@@ -2765,8 +2765,8 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->lib_data.exposure_array.snapshot, &cxt_ptr->lib_data.output_data);
 		if (ret)
 			goto exit;
+		cxt_ptr->sensor_exp_data.actual_exp = cxt_ptr->lib_data.exposure_array.snapshot;
 	}
-
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -4532,7 +4532,7 @@ static cmr_int aealtek_get_ext_debug_info(struct aealtek_cxt *cxt_ptr, struct ae
 	out_ptr->debug_info.valid_ad_gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
 	out_ptr->debug_info.valid_exposure_line = cxt_ptr->sensor_exp_data.actual_exp.exp_line;
 	out_ptr->debug_info.valid_exposure_time = cxt_ptr->sensor_exp_data.actual_exp.exp_time;
-
+	ISP_LOGI("exp_line %d gain %d! exptime %d", out_ptr->debug_info.valid_exposure_line, out_ptr->debug_info.valid_ad_gain, out_ptr->debug_info.valid_exposure_time);
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);

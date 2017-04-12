@@ -4815,17 +4815,14 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
 
     property_get("ro.debuggable", value, "");
     if (strcmp(value, "1") == 0) {
-        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO,
-                               &isp_param);
-        if (ret) {
-            CMR_LOGW("isp get exif debug info failed");
+        if (NULL != cxt->isp_exif_info.addr && cxt->isp_exif_info.size != 0) {
+            enc_exif_param.exif_isp_debug_info.addr =
+                cxt->isp_exif_info.addr; // isp_param.isp_dbg_info.addr;
+            enc_exif_param.exif_isp_debug_info.size =
+                cxt->isp_exif_info.size; // isp_param.isp_dbg_info.size
+        } else {
             enc_exif_param.exif_isp_debug_info.addr = NULL;
             enc_exif_param.exif_isp_debug_info.size = 0;
-        } else {
-            enc_exif_param.exif_isp_debug_info.addr =
-                isp_param.isp_dbg_info.addr;
-            enc_exif_param.exif_isp_debug_info.size =
-                isp_param.isp_dbg_info.size;
         }
     } else {
         CMR_LOGV("user doen't report debug info");
@@ -8398,6 +8395,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     cmr_int flash_status = FLASH_CLOSE;
     cmr_s32 sm_val = 0;
+    struct common_isp_cmd_param snapshot_isp_param;
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
@@ -8613,6 +8611,13 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     if (cxt->burst_mode || cxt->highiso_mode == HIGHISO_CAP_MODE)
         camera_local_start_multi_layer(oem_handle);
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO,
+                           &snapshot_isp_param);
+    cxt->isp_exif_info = snapshot_isp_param.isp_dbg_info;
+    if (ret) {
+        CMR_LOGI("get exif info error");
+        memset(&cxt->isp_exif_info, 0, sizeof(struct isp_info));
+    }
 exit:
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
