@@ -591,10 +591,10 @@ LOCAL const SENSOR_REG_T c2580_1600_1200_setting[] = {
 LOCAL SENSOR_REG_TAB_INFO_T s_c2580_resolution_Tab_RAW[] = {
     {ADDR_AND_LEN_OF_ARRAY(c2580_common_init), 0, 0, 24,
      SENSOR_IMAGE_FORMAT_RAW},
-    //{ADDR_AND_LEN_OF_ARRAY(c2580_800_600_setting), 800, 600, 24,
-    // SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(c2580_1600_1200_setting), 1600, 1200, 24,
+    {ADDR_AND_LEN_OF_ARRAY(c2580_800_600_setting), 800, 600, 24,
      SENSOR_IMAGE_FORMAT_RAW},
+   // {ADDR_AND_LEN_OF_ARRAY(c2580_1600_1200_setting), 1600, 1200, 24,
+   //  SENSOR_IMAGE_FORMAT_RAW},
     {PNULL, 0, 0, 0, 0, 0},
     {PNULL, 0, 0, 0, 0, 0},
     {PNULL, 0, 0, 0, 0, 0},
@@ -605,9 +605,9 @@ LOCAL SENSOR_REG_TAB_INFO_T s_c2580_resolution_Tab_RAW[] = {
 
 LOCAL SENSOR_TRIM_T s_c2580_Resolution_Trim_Tab[] = {
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    //{0, 0, 800, 600, 544, 315, 616, {0, 0, 800, 600}},
-    //{0, 0, 1600, 1200, 544, 315, 1224, {0, 0, 1600, 1200}},
-    {0, 0, 1600, 1200, 544, 534, 1224, {0, 0, 1600, 1200}},
+    {0, 0, 800, 600, 54400, 315, 616, {0, 0, 800, 600}},
+    //{0, 0, 1600, 1200, 54400, 315, 1224, {0, 0, 1600, 1200}},
+    //{0, 0, 1600, 1200, 54400, 534, 1224, {0, 0, 1600, 1200}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}}, // cg
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -770,6 +770,143 @@ SENSOR_INFO_T g_c2580_mipi_raw_info = {
     (cmr_s8 *) "c2580",
 };
 
+static SENSOR_STATIC_INFO_T s_c2580_static_info = {
+	220,	//f-number,focal ratio
+	346,	//focal_length;
+	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
+	8, //max_adgain,AD-gain
+	0,	//ois_supported;
+	0,	//pdaf_supported;
+	1,	//exp_valid_frame_num;N+2-1
+	0,	//clamp_level,black level
+	1,	//adgain_valid_frame_num;N+1-1
+ };
+
+
+static SENSOR_MODE_FPS_INFO_T s_c2580_mode_fps_info = {
+	0,	//is_init;
+	{{SENSOR_MODE_COMMON_INIT,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_THIRD,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_TWO,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
+};
+/*==============================================================================
+ * Description:
+ * calculate fps for every sensor mode according to frame_line and line_time
+ * please modify this function acording your spec
+ *============================================================================*/
+static uint32_t c2580_init_mode_fps_info(SENSOR_HW_HANDLE handle)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_PRINT("c2580_init_mode_fps_info:E");
+	if(!s_c2580_mode_fps_info.is_init) {
+		uint32_t i,modn,tempfps = 0;
+		SENSOR_PRINT("c2580_init_mode_fps_info:start init");
+		for(i = 0;i < NUMBER_OF_ARRAY(s_c2580_Resolution_Trim_Tab); i++) {
+			//max fps should be multiple of 30,it calulated from line_time and frame_line
+			tempfps = s_c2580_Resolution_Trim_Tab[i].line_time*s_c2580_Resolution_Trim_Tab[i].frame_line;
+				if(0 != tempfps) {
+					tempfps = 1000000000/tempfps;
+				modn = tempfps / 30;
+				if(tempfps > modn*30)
+					modn++;
+				s_c2580_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_c2580_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_c2580_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_c2580_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_c2580_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				}
+				if(s_c2580_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_c2580_static_info.max_fps) {
+					s_c2580_static_info.max_fps =
+						s_c2580_mode_fps_info.sensor_mode_fps[i].max_fps;
+				}
+			}
+			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+					s_c2580_Resolution_Trim_Tab[i].frame_line,
+					s_c2580_Resolution_Trim_Tab[i].line_time);
+			SENSOR_PRINT("mode %d,max_fps: %d ",
+					i,s_c2580_mode_fps_info.sensor_mode_fps[i].max_fps);
+			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+					s_c2580_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_c2580_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+		}
+		s_c2580_mode_fps_info.is_init = 1;
+	}
+	SENSOR_PRINT("c2580_init_mode_fps_info:X");
+	return rtn;
+}
+
+static uint32_t c2580_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	uint32_t up = 0;
+	uint32_t down = 0;
+	//make sure we have get max fps of all settings.
+	if(!s_c2580_mode_fps_info.is_init) {
+		c2580_init_mode_fps_info(handle);
+	}
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = s_c2580_static_info.f_num;
+	ex_info->focal_length = s_c2580_static_info.focal_length;
+	ex_info->max_fps = s_c2580_static_info.max_fps;
+	ex_info->max_adgain = s_c2580_static_info.max_adgain;
+	ex_info->ois_supported = s_c2580_static_info.ois_supported;
+	ex_info->pdaf_supported = s_c2580_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_c2580_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_c2580_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_c2580_static_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_c2580_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_c2580_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_c2580_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_c2580_mipi_raw_info.sensor_version_info;
+	//vcm_ak7371_get_pose_dis(handle, &up, &down);
+	ex_info->pos_dis.up2hori = up;
+	ex_info->pos_dis.hori2down = down;
+	SENSOR_PRINT("f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("sensor version info is: %s", ex_info->sensor_version_info);
+
+	return rtn;
+}
+
+
+static uint32_t c2580_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_MODE_FPS_T *fps_info;
+	//make sure have inited fps of every sensor mode.
+	if(!s_c2580_mode_fps_info.is_init) {
+		c2580_init_mode_fps_info(handle);
+	}
+	fps_info = (SENSOR_MODE_FPS_T*)param;
+	uint32_t sensor_mode = fps_info->mode;
+	fps_info->max_fps = s_c2580_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+	fps_info->min_fps = s_c2580_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+	fps_info->is_high_fps = s_c2580_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+	fps_info->high_fps_skip_num = s_c2580_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+	SENSOR_PRINT("mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_PRINT("min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
+
 LOCAL struct sensor_raw_info *Sensor_GetContext(void) {
     return s_c2580_mipi_raw_info_ptr;
 }
@@ -846,6 +983,12 @@ static unsigned long c2580_access_val(SENSOR_HW_HANDLE handle,
     case SENSOR_VAL_TYPE_GET_BV:
         rtn = _c2580_get_brightness(handle, param_ptr->pval);
         break;
+	case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+		rtn = c2580_get_static_info(handle, param_ptr->pval);
+		break;
+	case SENSOR_VAL_TYPE_GET_FPS_INFO:
+		rtn = c2580_get_fps_info(handle, param_ptr->pval);
+		break;
     default:
         break;
     }
@@ -2098,7 +2241,7 @@ LOCAL uint32_t _c2580_PowerOn(SENSOR_HW_HANDLE handle, uint32_t power_on) {
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
         Sensor_SetResetLevel(reset_level);
-        // Sensor_PowerDown(power_down);
+         Sensor_PowerDown(power_down);
         // usleep(20*1000);
         // step 0 power up DOVDD, the AVDD
         // Sensor_SetMonitorVoltage(SENSOR_AVDD_3300MV);
@@ -2110,7 +2253,7 @@ LOCAL uint32_t _c2580_PowerOn(SENSOR_HW_HANDLE handle, uint32_t power_on) {
         //	Sensor_SetDvddVoltage(dvdd_val);
         //	usleep(6000);
         // step 2 power down pin high
-        // Sensor_PowerDown(!power_down);
+         Sensor_PowerDown(!power_down);
         usleep(2000);
         // step 3 reset pin high
         Sensor_SetResetLevel(!reset_level);
@@ -2125,7 +2268,7 @@ LOCAL uint32_t _c2580_PowerOn(SENSOR_HW_HANDLE handle, uint32_t power_on) {
         // step 1 reset and PWDN
         Sensor_SetResetLevel(reset_level);
         usleep(2000);
-        //	Sensor_PowerDown(power_down);
+	   Sensor_PowerDown(power_down);
         // usleep(2000);
         // step 2 dvdd
         // Sensor_SetDvddVoltage(SENSOR_AVDD_CLOSED);

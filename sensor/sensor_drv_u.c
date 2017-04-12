@@ -572,6 +572,14 @@ LOCAL void sensor_i2c_init(struct sensor_drv_context *sensor_cxt,
     sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
     sensor_register_info_ptr->cur_id = sensor_id;
 
+	if (hw_sensor_i2c_init(sensor_cxt->hw_drv_handle, sensor_id)) {
+								SENSOR_LOGE("SENSOR: add I2C driver error");
+								return;
+		} else {
+				SENSOR_LOGI("SENSOR: add I2C driver OK");
+				sensor_cxt->is_register_sensor = 1;
+		}
+#if 0
     if (0 == sensor_cxt->is_register_sensor) {
         if ((SENSOR_MAIN <= sensor_id) || (SENSOR_DEVICE3 >= sensor_id)) {
 
@@ -586,6 +594,7 @@ LOCAL void sensor_i2c_init(struct sensor_drv_context *sensor_cxt,
     } else {
         SENSOR_LOGI("Sensor: Init I2c %d ternimal! exits", sensor_id);
     }
+#endif
     SENSOR_LOGI("sensor_id=%d, is_register_sensor=%ld", sensor_id,
                 sensor_cxt->is_register_sensor);
 }

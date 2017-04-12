@@ -46,6 +46,7 @@ extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
 extern SENSOR_INFO_T g_c2390_mipi_raw_info;
+extern SENSOR_INFO_T g_sp8407_mipi_raw_info;
 #endif
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_entry_t imx258_drv_entry;
@@ -84,7 +85,9 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
      {&dw9718s_drv_entry, 0},
      &ov13855_drv_entry},
 #endif
-    {"g_c2390_mipi_raw_info", &g_c2390_mipi_raw_info, {NULL, 0}, NULL},
+     {"g_c2390_mipi_raw_info", &g_c2390_mipi_raw_info,{NULL,0},NULL},
+       {"gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+   //   {"g_sp8407_mipi_raw_info", &g_sp8407_mipi_raw_info,{&dw9714_drv_entry,0},NULL},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
@@ -114,9 +117,10 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
 //{"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL,0}, NULL},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {"gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
+//    {"gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
     {"ov5675_mipi_raw", &g_ov5675_mipi_raw_info, {NULL, 0}, NULL},
     {"gc2375_mipi_raw", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
+    {"g_sp8407_mipi_raw_info", &g_sp8407_mipi_raw_info,{&dw9763_drv_entry,0},NULL},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     {"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, {NULL, 0}, NULL},
@@ -132,7 +136,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 #ifdef CONFIG_COVERED_SENSOR
-    {"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
+   // {"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #if defined(CONFIG_DUAL_MODULE)
     {"ov5675_dual_mipi_raw",
@@ -146,6 +150,11 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 const SENSOR_MATCH_T sensor3_infor_tab[] = {
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     {"ov8856s_mipi_raw", &g_ov8856s_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_COVERED_SENSOR)
+    {"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
+#endif
 #endif
 #ifdef SC_FPGA
 //	{"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
