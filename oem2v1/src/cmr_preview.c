@@ -1558,7 +1558,7 @@ cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    CMR_LOGD("in");
+    CMR_LOGV("E");
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1594,7 +1594,7 @@ exit:
         }
     }
 
-    CMR_LOGV("out");
+    CMR_LOGV("X");
     return ret;
 }
 
@@ -2342,7 +2342,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d fd=0x%x",
+    CMR_LOGV("frame_id=0x%x, frame_real_id=%d, channel_id=%d fd=0x%x",
              data->frame_id, data->frame_real_id, data->channel_id, data->fd);
 
     if (0 == prev_cxt->prev_frm_cnt) {

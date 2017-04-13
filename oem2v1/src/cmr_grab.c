@@ -1110,7 +1110,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle) {
     CMR_CHECK_FD;
     memset(&op, 0, sizeof(struct sprd_img_write_op));
 
-    CMR_LOGI("Call write function to kill grab manage thread");
+    CMR_LOGI("E");
 
     op.cmd = SPRD_IMG_STOP_DCAM;
     op.sensor_id = p_grab->init_param.sensor_id;

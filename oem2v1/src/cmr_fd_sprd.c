@@ -861,7 +861,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.src_frame.size.height;
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
-        CMR_LOGD("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms",
+        CMR_LOGV("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms",
                  class_handle->frame_in.src_frame.size.width,
                  class_handle->frame_in.src_frame.size.height,
                  class_handle->frame_out.face_area.face_count, duration);

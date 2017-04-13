@@ -5463,7 +5463,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
-    HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
+    HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
 
     switch (cb) {
@@ -5476,7 +5476,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAwbCONTROLTag(&controlInfo);
         }
-        HAL_LOGI("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
+        HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
         break;
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
@@ -5495,7 +5495,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         break;
     }
 
-    HAL_LOGD("out");
+    HAL_LOGV("X");
     ATRACE_END();
 }
 
