@@ -204,8 +204,8 @@ cmr_int cmr_rot_close(cmr_handle rot_handle) {
         goto close_free;
     }
 
-    if (ret)
-        ret = -CMR_CAMERA_FAIL;
+    /*    if (ret)
+            ret = -CMR_CAMERA_FAIL;*/
     close(file->fd);
 
 close_free:

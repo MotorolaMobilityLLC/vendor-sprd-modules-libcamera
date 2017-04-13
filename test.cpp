@@ -1034,9 +1034,9 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
 
     /*  */
     if (!private_data || !vir_addr || !fd) {
-        ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx 0x%x 0x%lx\n",
-              __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, *fd,
-              (cmr_uint)private_data);
+        ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx %p 0x%lx\n",
+              __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr,
+              fd, (cmr_uint)private_data);
         return -1;
     }
 
@@ -1553,7 +1553,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
             }
             mIspStatisHeapReserved = memory;
         }
-        memory->ion_heap->get_kaddr(&kaddr, &ksize);
+        mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
         *phy_addr = kaddr;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
@@ -1808,12 +1808,13 @@ int eng_tst_camera_deinit() {
     //	gr_draw = gr_backend->flip(gr_backend);
     //	memcpy(gr_draw->data, tmpbuf1, lcd_w*lcd_h*4);
 
-    if (NULL != mHalOem->dso) {
+    if (NULL != mHalOem && NULL != mHalOem->dso) {
         dlclose(mHalOem->dso);
     }
-    free((void *)mHalOem);
-    mHalOem = NULL;
-
+    if (NULL != mHalOem) {
+        free((void *)mHalOem);
+        mHalOem = NULL;
+    }
     if (remove(af_tuning_path) != 0) {
         ALOGE(
             "Native MMI Test: %s,%d, failed: to delete af_tuning_path file \n",

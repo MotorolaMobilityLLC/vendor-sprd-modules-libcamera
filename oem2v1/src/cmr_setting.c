@@ -1472,7 +1472,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             if (exif_unit->picture_size.height == 1952 &&
                 exif_unit->picture_size.width == 2592) {
                 exif_unit->picture_size.height = 1944;
-            } else if (exif_unit->actual_picture_size.height == 1840 &&
+            } else if (exif_unit->picture_size.height == 1840 &&
                        exif_unit->picture_size.width == 3264) {
                 exif_unit->picture_size.height = 1836;
             }

@@ -1284,12 +1284,13 @@ int autotest_camera_deinit() {
     //	gr_draw = gr_backend->flip(gr_backend);
     //	memcpy(gr_draw->data, tmpbuf1, lcd_w*lcd_h*4);
 
-    if (NULL != mHalOem->dso) {
+    if (NULL != mHalOem && NULL != mHalOem->dso) {
         dlclose(mHalOem->dso);
     }
-    free((void *)mHalOem);
-    mHalOem = NULL;
-
+    if (NULL != mHalOem) {
+        free((void *)mHalOem);
+        mHalOem = NULL;
+    }
     //	free(tmpbuf);
     //	free(tmpbuf1);
     free(tmpbuf2);

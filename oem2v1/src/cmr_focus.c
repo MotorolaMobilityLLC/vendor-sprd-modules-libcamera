@@ -1226,6 +1226,12 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
 
     CMR_LOGD("camera_id %d sensor_mode %ld rect_num %d", camera_id, sensor_mode,
              rect_num);
+    if (sensor_mode >= SENSOR_MODE_MAX) { // for coverity issue 88201; normal
+                                          // sensor_mode must < SENSOR_MODE_MAX
+        CMR_LOGE("sensor mode invalid");
+        ret = CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
 
     sensor_mode_info = &sensor_info.mode_info[sensor_mode];
 

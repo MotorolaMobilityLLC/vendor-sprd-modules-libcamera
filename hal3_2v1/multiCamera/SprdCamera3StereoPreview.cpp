@@ -1660,8 +1660,8 @@ void SprdCamera3StereoPreview::MuxerThread::errorCallback(
         callback_result.partial_result = 0;
         mPreviewMuxer->mCallbackOps->process_capture_result(
             mPreviewMuxer->mCallbackOps, &callback_result);
-        HAL_LOGD(":%d callback.stream=%p,buffer=%p", callback_result.frame_number,
-                 callback_result_buffers.stream,
+        HAL_LOGD(":%d callback.stream=%p,buffer=%p",
+                 callback_result.frame_number, callback_result_buffers.stream,
                  callback_result_buffers.buffer);
     }
     {
@@ -2552,12 +2552,13 @@ void SprdCamera3StereoPreview::dumpImg(void *addr, int size, int w, int h,
 
     if (file_fd == NULL) {
         HAL_LOGE("open yuv file failed!\n");
+    } else {
+        int count = fwrite(addr, 1, size, file_fd);
+        if (count != size) {
+            HAL_LOGE("write dst.yuv failed\n");
+        }
+        fclose(file_fd);
     }
-    int count = fwrite(addr, 1, size, file_fd);
-    if (count != size) {
-        HAL_LOGE("write dst.yuv failed\n");
-    }
-    fclose(file_fd);
 
     HAL_LOGI("X");
 }

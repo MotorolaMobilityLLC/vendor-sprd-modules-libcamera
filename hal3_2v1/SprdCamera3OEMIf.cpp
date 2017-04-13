@@ -4676,7 +4676,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
         }
         /**add for 3d calibration return yuv buff end*/
 
-        if (mSprdRefocusEnabled) {
+        if (mReDisplayHeap != NULL && mSprdRefocusEnabled) {
             mReDisplayHeap->data = (void *)frame->y_vir_addr;
         }
 
@@ -7397,7 +7397,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             }
             mIspStatisHeapReserved = memory;
         }
-        memory->ion_heap->get_kaddr(&kaddr, &ksize);
+        mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
         *phy_addr = kaddr;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
@@ -7551,8 +7551,13 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
     if (!private_data || !vir_addr || !fd || !size_ptr || !sum_ptr ||
         (0 == *size_ptr) || (0 == *sum_ptr)) {
         HAL_LOGE("param error %p 0x%lx 0x%lx 0x%lx 0x%lx", fd,
-                 (cmr_uint)vir_addr, (cmr_uint)private_data,
-                 (cmr_uint)*size_ptr, (cmr_uint)*sum_ptr);
+                 (cmr_uint)vir_addr, (cmr_uint)private_data, (cmr_uint)size_ptr,
+                 (cmr_uint)sum_ptr);
+        if ((NULL != size_ptr && 0 == *size_ptr) ||
+            (NULL != sum_ptr && 0 == *sum_ptr)) {
+            HAL_LOGE("param error size 0x%lx  sum 0x%lx", (cmr_uint)*size_ptr,
+                     (cmr_uint)*sum_ptr);
+        }
         return BAD_VALUE;
     }
 
@@ -8748,8 +8753,8 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 
     if (!obj) {
         HAL_LOGE("obj null  error");
-        sem_post(&obj->mGyro_sem);
-        obj->mGyroDeinit = 1;
+        // sem_post(&obj->mGyro_sem);
+        // obj->mGyroDeinit = 1;
         return NULL;
     }
 

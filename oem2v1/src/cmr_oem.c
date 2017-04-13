@@ -1078,10 +1078,11 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGV("ISP_AE_EXP_TIME,data %lld", *(uint64_t *)data);
         prev_set_ae_time(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
         break;
-    case ISP_VCM_STEP:
-        CMR_LOGI("ISP_VCM_STEP,data %d", *(uint32_t *)data);
-        prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
-        break;
+    /*    case ISP_VCM_STEP:
+            CMR_LOGI("ISP_VCM_STEP,data %d", *(uint32_t *)data);
+            prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id,
+       data);
+            break;*/
     case ISP_HDR_EV_EFFECT_CALLBACK:
         CMR_LOGD("ISP_HDR_EV_EFFECT_CALLBACK");
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
