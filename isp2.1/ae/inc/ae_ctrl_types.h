@@ -162,6 +162,7 @@ enum ae_io_ctrl_cmd {
 	AE_VIDEO_START,
 	AE_GET_AF_INFO,
 	AE_HDR_START,
+	AE_GET_FLASH_WB_GAIN,
 	AE_IO_MAX
 };
 
@@ -494,6 +495,12 @@ struct ae_flash_notice {
 	cmr_u32 capture_skip_num;
 	cmr_u32 lcd_flash_tune_a;
 	cmr_u32 lcd_flash_tune_b;
+};
+
+struct ae_awb_gain {
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
 };
 
 #ifdef __cplusplus

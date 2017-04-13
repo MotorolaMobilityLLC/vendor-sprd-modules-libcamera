@@ -88,6 +88,7 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_flash_param *flash = NULL;
 	struct awb_flash_info flash_awb;
+	struct ae_awb_gain flash_wb_gain;
 	cmr_u32 ae_effect = 0;
 
 	memset((void *)&flash_awb, 0, sizeof(struct awb_flash_info));
@@ -99,20 +100,41 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	}
 	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d", flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
 
-	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EFFECT, NULL, &ae_effect);
-	ISP_TRACE_IF_FAIL(rtn, ("ae get flash effect error"));
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_WB_GAIN, NULL, &flash_wb_gain);
+	if (ISP_SUCCESS == rtn) {
+		struct isp_awbc_cfg awbc_cfg = { 0, 0, 0, 0, 0, 0 };
+		struct awb_gain result = { 0, 0, 0 };
+		struct isp_pm_ioctl_input ioctl_input = { NULL, 0 };
+		struct isp_pm_param_data ioctl_data = { 0, 0, 0, NULL, 0, {0} };
 
-	flash_awb.effect = ae_effect;
-	flash_awb.flash_ratio.r = flash->cur.r_ratio;
-	flash_awb.flash_ratio.g = flash->cur.g_ratio;
-	flash_awb.flash_ratio.b = flash->cur.b_ratio;
-
-	ISP_LOGV("FLASH_TAG get effect from ae effect = %d", ae_effect);
-
-	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
-	ISP_TRACE_IF_FAIL(rtn, ("awb set flash gain error"));
-	rtn = _isp_set_awb_gain(cxt);
-	ISP_TRACE_IF_FAIL(rtn, ("awb set gain error"));
+		/*set awb gain */
+		awbc_cfg.r_gain = flash_wb_gain.r;
+		awbc_cfg.g_gain = flash_wb_gain.g;
+		awbc_cfg.b_gain = flash_wb_gain.b;
+		awbc_cfg.r_offset = 0;
+		awbc_cfg.g_offset = 0;
+		awbc_cfg.b_offset = 0;
+		ioctl_data.id = ISP_BLK_AWB_NEW;
+		ioctl_data.cmd = ISP_PM_BLK_AWBC;
+		ioctl_data.data_ptr = &awbc_cfg;
+		ioctl_data.data_size = sizeof(awbc_cfg);
+		ioctl_input.param_data_ptr = &ioctl_data;
+		ioctl_input.param_num = 1;
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+		ISP_LOGV("set AWB_TAG:  rtn=%d, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
+	} else {
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EFFECT, NULL, &ae_effect);
+		ISP_TRACE_IF_FAIL(rtn, ("ae get flash effect error"));
+		flash_awb.effect = ae_effect;
+		flash_awb.flash_ratio.r = flash->cur.r_ratio;
+		flash_awb.flash_ratio.g = flash->cur.g_ratio;
+		flash_awb.flash_ratio.b = flash->cur.b_ratio;
+		ISP_LOGV("FLASH_TAG get effect from ae effect = %d", ae_effect);
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("awb set flash gain error"));
+		rtn = _isp_set_awb_gain(cxt);
+		ISP_TRACE_IF_FAIL(rtn, ("awb set gain error"));
+	}
 
 	return rtn;
 }

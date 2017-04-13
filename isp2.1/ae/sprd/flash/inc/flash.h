@@ -46,6 +46,7 @@ struct flash_tune_param {
 	uint8 flashLevelNum2;
 	uint8 preflahLevel1;
 	uint8 preflahLevel2;
+	uint16 preflashBrightness;
 	bool flashMask[1024];
 	uint16 brightnessTable[1024];
 	uint16 rTable[1024]; //g: 1024
@@ -99,6 +100,8 @@ struct Flash_pfStartOutput
 	float nextExposure;
 	uint32 nextGain;
 	bool nextFlash;
+	uint8 preflahLevel1;
+	uint8 preflahLevel2;
 };
 
 struct Flash_pfOneIterationInput
