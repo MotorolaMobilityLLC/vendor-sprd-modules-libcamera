@@ -766,9 +766,8 @@ cmr_u16 hw_sensor_grc_read_i2c(cmr_handle hw_handle, cmr_u16 slave_addr,
         HW_LOGE("failed to read i2c, slave_addr=0x%x, ptr=0x%p, count=%d\n",
                    i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
         ret = HW_FAILED;
-    }
-    if (ret)
         goto exit;
+    }
 
     switch (bits) {
         case BITS_ADDR8_REG8:
@@ -784,11 +783,10 @@ cmr_u16 hw_sensor_grc_read_i2c(cmr_handle hw_handle, cmr_u16 slave_addr,
             HW_LOGE("failed to set bits");
             break;
     }
-
-    exit:
-        return ret;
-
     return reg;
+
+exit:
+    return ret;
 }
 
 /**
