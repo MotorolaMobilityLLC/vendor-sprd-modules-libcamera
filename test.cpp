@@ -183,7 +183,7 @@ static void RGBRotate90_anticlockwise(void *pDest, int nDestWidth,
         if (m == 4) {
             for (j = 0; j < nDestHeight; j++) {
                 for (i = 0; i < nDestWidth; i++) {
-                    *(des32 + (j + d_offsetY) * nDestWidth + nDestWidth -
+                    *(des32 + (j + d_offsetY) * nDestWidth + nDestWidth - 1 -
                       (j + d_offsetX)) =
                         *(src32 + (j + s_offsetY) * nDestWidth + i + s_offsetX);
                 }
@@ -191,7 +191,7 @@ static void RGBRotate90_anticlockwise(void *pDest, int nDestWidth,
         } else {
             for (j = 0; j < nDestHeight; j++) {
                 for (i = 0; i < nDestWidth; i++) {
-                    *(des16 + (j + d_offsetY) * nDestWidth + nDestWidth -
+                    *(des16 + (j + d_offsetY) * nDestWidth + nDestWidth - 1 -
                       (j + d_offsetX)) =
                         *(src16 + (j + s_offsetY) * nDestWidth + i + s_offsetX);
                 }
@@ -207,7 +207,7 @@ static void RGBRotate90_anticlockwise(void *pDest, int nDestWidth,
         if (m == 4) {
             for (j = 0; j < nSrcHeight; j++) {
                 for (i = 0; i < nSrcWidth; i++) {
-                    *(des32 + (i + d_offsetY) * nDestWidth + nDestWidth -
+                    *(des32 + (i + d_offsetY) * nDestWidth + nDestWidth - 1 -
                       (j + d_offsetX)) =
                         *(src32 + (j + s_offsetY) * nDestHeight + i +
                           s_offsetX);
@@ -216,7 +216,7 @@ static void RGBRotate90_anticlockwise(void *pDest, int nDestWidth,
         } else {
             for (j = 0; j < nSrcHeight; j++) {
                 for (i = 0; i < nSrcWidth; i++) {
-                    *(des16 + (i + d_offsetY) * nDestWidth + nDestWidth -
+                    *(des16 + (i + d_offsetY) * nDestWidth + nDestWidth - 1 -
                       (j + d_offsetX)) =
                         *(src16 + (j + s_offsetY) * nDestHeight + i +
                           s_offsetX);
@@ -250,7 +250,7 @@ static void RGBRotate90_clockwise(void *pDest, int nDestWidth, int nDestHeight,
             for (j = 0; j < nDestHeight; j++) {
                 for (i = 0; i < nDestWidth; i++) {
                     *(des32 + (nDestHeight - i - d_offsetY) * nDestWidth +
-                      nDestWidth - (j + d_offsetX)) =
+                      nDestWidth - 1 - (j + d_offsetX)) =
                         *(src32 + (j + s_offsetY) * nDestWidth + i + s_offsetX);
                 }
             }
@@ -258,7 +258,7 @@ static void RGBRotate90_clockwise(void *pDest, int nDestWidth, int nDestHeight,
             for (j = 0; j < nDestHeight; j++) {
                 for (i = 0; i < nDestWidth; i++) {
                     *(des16 + (nDestHeight - i - d_offsetY) * nDestWidth +
-                      nDestWidth - (j + d_offsetX)) =
+                      nDestWidth - 1 - (j + d_offsetX)) =
                         *(src16 + (j + s_offsetY) * nDestWidth + i + s_offsetX);
                 }
             }
@@ -274,7 +274,7 @@ static void RGBRotate90_clockwise(void *pDest, int nDestWidth, int nDestHeight,
             for (j = 0; j < nSrcHeight; j++) {
                 for (i = 0; i < nSrcWidth; i++) {
                     *(des32 + (nDestHeight - i - d_offsetY) * nDestWidth +
-                      nDestWidth - (j + d_offsetX)) =
+                      nDestWidth - 1 - (j + d_offsetX)) =
                         *(src32 + (j + s_offsetY) * nDestHeight + i +
                           s_offsetX);
                 }
@@ -283,7 +283,7 @@ static void RGBRotate90_clockwise(void *pDest, int nDestWidth, int nDestHeight,
             for (j = 0; j < nSrcHeight; j++) {
                 for (i = 0; i < nSrcWidth; i++) {
                     *(des16 + (nDestHeight - i - d_offsetY) * nDestWidth +
-                      nDestWidth - (j + d_offsetX)) =
+                      nDestWidth - 1 - (j + d_offsetX)) =
                         *(src16 + (j + s_offsetY) * nDestHeight + i +
                           s_offsetX);
                 }
