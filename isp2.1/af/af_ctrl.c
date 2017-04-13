@@ -17,6 +17,7 @@
 
 #include "lib_ctrl.h"
 #include "af_ctrl.h"
+#include <cutils/properties.h>
 
 #define ISP_CALLBACK_EVT 0x00040000
 #define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\
@@ -52,9 +53,20 @@ struct afctrl_cxt {
 static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+	cmr_s8 value[PROPERTY_VALUE_MAX];
+	cmr_s8 pos[PROPERTY_VALUE_MAX];
+	cmr_s16 position = 0;
 
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
+		property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
+		if (1 == atoi((char *)value)) {
+			cmr_bzero(pos, sizeof(pos));
+			property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
+			in_param->motor_pos = atoi((char *)pos);
+			cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
+		} else {
+			cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
+		}
 	}
 
 	return ISP_SUCCESS;
@@ -219,11 +231,19 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
+	cmr_s8 value[PROPERTY_VALUE_MAX];
+	struct af_motor_pos pos = {0,0,0};
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param!");
 		goto exit;
 	}
+	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
+	if (1 == atoi((char *)value)) {
+		af_set_pos(cxt_ptr, &pos);
+		goto exit;
+	}
+
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
