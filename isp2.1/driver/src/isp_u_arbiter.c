@@ -31,7 +31,7 @@ cmr_s32 isp_u_arbiter_block(isp_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_ARBITER_V1;
+	param.sub_block = ISP_BLOCK_ARBITER;
 	param.property = ISP_PRO_ARBITER_BLOCK;
 	param.property_param = block_info;
 

@@ -105,7 +105,7 @@ cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)
 	return rtn;
 }
 
-cmr_u32 isp_get_cfa_default_param(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_cfa_info_v1 * cfa_param)
+cmr_u32 isp_get_cfa_default_param(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_cfa_info * cfa_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -178,7 +178,7 @@ cmr_s32 isp_set_arbiter(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
-	struct isp_dev_arbiter_info_v1 *isp_arbiter_ptr = &isp_context_ptr->arbiter;
+	struct isp_dev_arbiter_info *isp_arbiter_ptr = &isp_context_ptr->arbiter;
 
 	isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_LITTLE;
 	isp_arbiter_ptr->fetch_raw_word_change = ISP_ZERO;
@@ -193,7 +193,7 @@ cmr_s32 isp_set_dispatch(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
-	struct isp_dev_dispatch_info_v1 *isp_dispatch_ptr = &isp_context_ptr->dispatch;
+	struct isp_dev_dispatch_info *isp_dispatch_ptr = &isp_context_ptr->dispatch;
 
 	isp_dispatch_ptr->bayer_ch0 = isp_context_ptr->data.format_pattern;
 	isp_dispatch_ptr->ch0_size.width = isp_context_ptr->data.input_size.w;
@@ -285,7 +285,7 @@ static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 	return rtn;
 }
 
-cmr_s32 isp_get_fetch_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_fetch_info_v1 * fetch_ptr)
+cmr_s32 isp_get_fetch_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_fetch_info * fetch_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u16 fetch_width = fetch_ptr->size.width;	//isp_context_ptr->slice.size[ISP_FETCH].w;
@@ -318,7 +318,7 @@ cmr_s32 isp_set_fetch_param_v1(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
-	struct isp_dev_fetch_info_v1 *fetch_param_ptr = &isp_context_ptr->fetch;
+	struct isp_dev_fetch_info *fetch_param_ptr = &isp_context_ptr->fetch;
 	struct isp_dev_block_addr *fetch_addr = &fetch_param_ptr->fetch_addr;
 
 	fetch_param_ptr->bypass = ISP_ZERO;
@@ -405,53 +405,6 @@ static cmr_s32 isp_get_store_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 	return rtn;
 }
 
-cmr_s32 isp_get_store_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_store_info_v1 * store_ptr)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_size *cur_slice_ptr = &isp_context_ptr->slice.cur_slice_num;
-	cmr_u32 ch0_offset = ISP_ZERO;
-	cmr_u32 ch1_offset = ISP_ZERO;
-	cmr_u32 ch2_offset = ISP_ZERO;
-	cmr_u16 slice_width = isp_context_ptr->slice.max_size.w;
-	cmr_u16 slice_height = isp_context_ptr->slice.max_size.h;
-
-	store_ptr->bypass = isp_context_ptr->store.bypass;
-	store_ptr->color_format = isp_context_ptr->store.color_format;
-	store_ptr->pitch.chn0 = isp_context_ptr->store.pitch.chn0;
-	store_ptr->pitch.chn1 = isp_context_ptr->store.pitch.chn1;
-	store_ptr->pitch.chn2 = isp_context_ptr->store.pitch.chn2;
-	store_ptr->addr.chn0 = isp_context_ptr->store.addr.chn0;
-	store_ptr->addr.chn1 = isp_context_ptr->store.addr.chn1;
-	store_ptr->addr.chn2 = isp_context_ptr->store.addr.chn2;
-
-	switch (isp_context_ptr->com.store_color_format) {
-	case ISP_STORE_YUV422_3FRAME:
-	case ISP_STORE_YUV420_3FRAME:
-		ch0_offset = slice_width * cur_slice_ptr->w;
-		ch1_offset = (slice_width * cur_slice_ptr->w) >> 0x01;
-		ch2_offset = (slice_width * cur_slice_ptr->w) >> 0x01;
-		break;
-	case ISP_STORE_YUV422_2FRAME:
-	case ISP_STORE_YVU422_2FRAME:
-	case ISP_STORE_YUV420_2FRAME:
-	case ISP_STORE_YVU420_2FRAME:
-		ch0_offset = slice_width * cur_slice_ptr->w;
-		ch1_offset = slice_width * cur_slice_ptr->w;
-		break;
-	case ISP_STORE_UYVY:
-		ch0_offset = (slice_width * cur_slice_ptr->w) << 0x01;
-		break;
-	default:
-		break;
-	}
-
-	store_ptr->addr.chn0 += ch0_offset;
-	store_ptr->addr.chn1 += ch1_offset;
-	store_ptr->addr.chn2 += ch2_offset;
-
-	return rtn;
-}
-
 cmr_s32 isp_set_store_param_v1(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -534,7 +487,7 @@ cmr_s32 isp_set_comm_param_v1(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
-	struct isp_dev_common_info_v1 *com_param_ptr = &isp_context_ptr->com;
+	struct isp_dev_common_info *com_param_ptr = &isp_context_ptr->com;
 
 	if (ISP_EMC_MODE == isp_context_ptr->data.input) {
 		com_param_ptr->fetch_sel_0 = 0x2;
@@ -577,7 +530,7 @@ cmr_s32 isp_set_comm_param_v1(isp_handle isp_handler)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_comm_data_v1(isp_handle handle, struct isp_dev_common_info_v1 * param_ptr)
+cmr_s32 isp_cfg_comm_data_v1(isp_handle handle, struct isp_dev_common_info * param_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 

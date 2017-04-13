@@ -208,11 +208,11 @@ struct isp_data_param {
 struct isp_interface_param_v1 {
 	struct isp_data_param data;
 
-	struct isp_dev_fetch_info_v1 fetch;
+	struct isp_dev_fetch_info fetch;
 	struct isp_dev_store_info store;
-	struct isp_dev_dispatch_info_v1 dispatch;
-	struct isp_dev_arbiter_info_v1 arbiter;
-	struct isp_dev_common_info_v1 com;
+	struct isp_dev_dispatch_info dispatch;
+	struct isp_dev_arbiter_info arbiter;
+	struct isp_dev_common_info com;
 	struct isp_size src;
 	struct isp_slice_param_v1 slice;
 };
@@ -562,7 +562,7 @@ struct isp_rgb_gain_param_v1 {
 };
 
 struct isp_nlc_param_v1 {
-	struct isp_dev_nlc_info_v1 cur;
+	struct isp_dev_nlc_info cur;
 };
 
 struct isp_2d_lsc_param {
@@ -587,12 +587,12 @@ struct isp_1d_lsc_param {
 };
 
 struct isp_binning4awb_param_v1 {
-	struct isp_dev_binning4awb_info_v1 cur;
+	struct isp_dev_binning4awb_info cur;
 };
 
 struct isp_awb_param_v1 {
 	cmr_u32 ct_value;
-	struct isp_dev_awb_info_v1 cur;
+	struct isp_dev_awb_info cur;
 	struct isp_awb_statistic_info stat;
 	struct isp_data_info awb_statistics[4];
 };
@@ -613,7 +613,7 @@ struct isp_rgb_afm_param {
 };
 
 struct isp_bpc_param_v1 {
-	struct isp_dev_bpc_info_v1 cur;
+	struct isp_dev_bpc_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -622,7 +622,7 @@ struct isp_bpc_param_v1 {
 };
 
 struct isp_grgb_param {
-	struct isp_dev_grgb_info_v1 cur;
+	struct isp_dev_grgb_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -671,7 +671,7 @@ struct isp_nlm_param_v1 {
 };
 
 struct isp_cfa_param_v1 {
-	struct isp_dev_cfa_info_v1 cur;
+	struct isp_dev_cfa_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -689,14 +689,14 @@ struct isp_cmc10_param {
 };
 
 struct isp_frgb_gamc_param {
-	struct isp_dev_gamma_info_v1 cur;
+	struct isp_dev_gamma_info cur;
 	struct sensor_gamma_curve final_curve;
 	struct isp_sample_point_info cur_idx;
 	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
 };
 
 struct isp_cce_param_v1 {
-	struct isp_dev_cce_info_v1 cur;
+	struct isp_dev_cce_info cur;
 	/*R/G/B coef to change cce */
 	cmr_s32 cur_level[2];
 	/*0: color cast, 1: gain offset */
@@ -705,8 +705,8 @@ struct isp_cce_param_v1 {
 	cmr_u32 prv_idx;
 	cmr_u32 cur_idx;
 	cmr_u32 is_specialeffect;
-	struct isp_dev_cce_info_v1 cce_tab[16];
-	struct isp_dev_cce_info_v1 specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+	struct isp_dev_cce_info cce_tab[16];
+	struct isp_dev_cce_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
 
 struct isp_cce_uvdiv_param_v1 {
@@ -719,7 +719,7 @@ struct isp_cce_uvdiv_param_v1 {
 };
 
 struct isp_hsv_param {
-	struct isp_dev_hsv_info_v1 cur;
+	struct isp_dev_hsv_info cur;
 	struct isp_sample_point_info cur_idx;
 	struct isp_data_info final_map;
 	struct isp_data_info map[SENSOR_HSV_NUM];
@@ -745,7 +745,7 @@ struct isp_yiq_afl_param_v1 {
 };
 
 struct isp_yiq_afl_param_v3 {
-	struct isp_dev_anti_flicker_info_v1 cur;
+	struct isp_dev_anti_flicker_new_info cur;
 };
 
 struct isp_rgb_dither_param {
@@ -758,11 +758,11 @@ struct isp_rgb_dither_param {
 };
 
 struct isp_hist_param_v1 {
-	struct isp_dev_hist_info_v1 cur;
+	struct isp_dev_hist_info cur;
 };
 
 struct isp_hist2_param_v1 {
-	struct isp_dev_hist2_info_v1 cur;
+	struct isp_dev_hist2_info cur;
 };
 
 struct isp_uv_cdn_param_v1 {
@@ -775,7 +775,7 @@ struct isp_uv_cdn_param_v1 {
 };
 
 struct isp_edge_param_v1 {
-	struct isp_dev_edge_info_v1 cur;
+	struct isp_dev_edge_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -784,7 +784,7 @@ struct isp_edge_param_v1 {
 };
 
 struct isp_chrom_saturation_param {
-	struct isp_dev_csa_info_v1 cur;
+	struct isp_dev_csa_info cur;
 	cmr_u32 cur_u_idx;
 	cmr_u32 cur_v_idx;
 	cmr_u8 tab[2][SENSOR_LEVEL_NUM];
@@ -792,7 +792,7 @@ struct isp_chrom_saturation_param {
 };
 
 struct isp_hue_param_v1 {
-	struct isp_dev_hue_info_v1 cur;
+	struct isp_dev_hue_info cur;
 	cmr_u32 cur_idx;
 	cmr_s16 tab[SENSOR_LEVEL_NUM];
 };
@@ -829,7 +829,7 @@ struct isp_iircnr_iir_param {
 };
 
 struct isp_iircnr_yrandom_param {
-	struct isp_dev_yrandom_info_v1 cur;
+	struct isp_dev_yrandom_info cur;
 };
 
 struct isp_context {

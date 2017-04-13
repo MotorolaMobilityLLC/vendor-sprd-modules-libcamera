@@ -322,7 +322,7 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_anti_flicker_cfg *cxt_ptr = (struct isp_anti_flicker_cfg *)isp_afl_handle;
-	struct isp_dev_anti_flicker_info_v1 afl_info_v3;
+	struct isp_dev_anti_flicker_new_info afl_info_v3;
 
 	cxt_ptr->vheight = cxt_ptr->height;
 	cxt_ptr->start_col = 0;

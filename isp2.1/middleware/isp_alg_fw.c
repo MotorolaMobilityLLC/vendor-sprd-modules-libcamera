@@ -659,7 +659,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
 	if (io_pm_output.param_data != NULL) {
-		struct isp_dev_gamma_info_v1 *gamma_info = io_pm_output.param_data->data_ptr;
+		struct isp_dev_gamma_info *gamma_info = io_pm_output.param_data->data_ptr;
 
 		if (gamma_info != NULL) {
 			cmr_s32 i;
@@ -2584,12 +2584,11 @@ static cmr_int isp_update_alsc_param(cmr_handle isp_alg_handle)
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 		input.param_data_ptr = &param_data;
 		rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
-	
+
 	}
 #endif
- 
+
          return rtn;
- 
 }
 
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)

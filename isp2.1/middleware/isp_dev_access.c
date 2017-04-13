@@ -130,10 +130,9 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct isp_dev_cfa_info_v1 cfa_param;
-	struct isp_dev_cce_info_v1 cce_param;
+	struct isp_dev_cfa_info cfa_param;
+	struct isp_dev_cce_info cce_param;
 
-	/*isp fetch raw addr transfer */
 	isp_u_fetch_raw_transaddr(cxt->isp_driver_handle, &in_ptr->fetch.fetch_addr);
 
 	rtn = isp_get_fetch_addr_v1(in_ptr, &in_ptr->fetch);
@@ -242,7 +241,7 @@ cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow)
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	rtn = isp_u_comm_shadow(cxt->isp_driver_handle, shadow);
+	rtn = isp_u_comm_shadow_ctrl(cxt->isp_driver_handle, shadow);
 
 	return rtn;
 }

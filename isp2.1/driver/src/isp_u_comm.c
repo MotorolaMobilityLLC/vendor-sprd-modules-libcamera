@@ -18,9 +18,33 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_comm_start(isp_handle handle, cmr_u32 start)
+cmr_s32 isp_u_comm_block(isp_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
+#if 1
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle || !block_info) {
+		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_COMMON;
+	param.property = ISP_PRO_COMMON_BLOCK;
+	param.property_param = block_info;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+#endif
+	return ret;
+}
+
+cmr_s32 isp_u_shadow_ctrl_all(isp_handle handle, cmr_u32 auto_shadow)
+{
+	cmr_s32 ret = 0;
+#if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -32,17 +56,110 @@ cmr_s32 isp_u_comm_start(isp_handle handle, cmr_u32 start)
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_START;
-	param.property_param = &start;
+	param.property = ISP_PRO_COMMON_SHADOW_ALL_CTRL;
+	param.property_param = &auto_shadow;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+#endif
+	return ret;
+}
+
+cmr_s32 isp_u_awbm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+{
+	cmr_s32 ret = 0;
+#if 1
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_COMMON;
+	param.property = ISP_PRO_COMMON_AWBM_SHADOW;
+	param.property_param = &shadow_done;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+#endif
+	return ret;
+}
+
+cmr_s32 isp_u_ae_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+{
+	cmr_s32 ret = 0;
+#if 1
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_COMMON;
+	param.property = ISP_PRO_COMMON_AE_SHADOW;
+	param.property_param = &shadow_done;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+#endif
+	return ret;
+}
+
+cmr_s32 isp_u_af_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+{
+	cmr_s32 ret = 0;
+#if 1
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_COMMON;
+	param.property = ISP_PRO_COMMON_AF_SHADOW;
+	param.property_param = &shadow_done;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+#endif
+	return ret;
+}
+
+cmr_s32 isp_u_afl_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+{
+	cmr_s32 ret = 0;
+
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_COMMON;
+	param.property = ISP_PRO_COMMON_AFL_SHADOW;
+	param.property_param = &shadow_done;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_comm_in_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_comm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 ret = 0;
+
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -54,17 +171,18 @@ cmr_s32 isp_u_comm_in_mode(isp_handle handle, cmr_u32 mode)
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_IN_MODE;
-	param.property_param = &mode;
+	param.property = ISP_PRO_COMMON_COMM_SHADOW;
+	param.property_param = &shadow_done;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_comm_out_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_3a_ctrl(isp_handle handle, cmr_u32 enable)
 {
 	cmr_s32 ret = 0;
+
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -76,19 +194,19 @@ cmr_s32 isp_u_comm_out_mode(isp_handle handle, cmr_u32 mode)
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_OUT_MODE;
-	param.property_param = &mode;
+	param.property = ISP_PRO_COMMON_3A_SINGLE_FRAME_CTRL;
+	param.property_param = &enable;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_comm_fetch_endian(isp_handle handle, cmr_u32 endian, cmr_u32 bit_reorder)
+cmr_s32 isp_u_comm_channel0_y_aem_pos(isp_handle handle, cmr_u32 pos)
 {
 	cmr_s32 ret = 0;
+#if 1
 	struct isp_file *file = NULL;
-	struct isp_fetch_endian fetch_endian;
 	struct isp_io_param param;
 
 	if (!handle) {
@@ -99,19 +217,18 @@ cmr_s32 isp_u_comm_fetch_endian(isp_handle handle, cmr_u32 endian, cmr_u32 bit_r
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_FETCH_ENDIAN;
-	fetch_endian.endian = endian;
-	fetch_endian.bit_recorder = bit_reorder;
-	param.property_param = &fetch_endian;
+	param.property = ISP_PRO_COMMON_CH0_AEM2_POS;
+	param.property_param = &pos;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
+#endif
 	return ret;
 }
 
-cmr_s32 isp_u_comm_bpc_endian(isp_handle handle, cmr_u32 endian)
+cmr_s32 isp_u_comm_channel1_y_aem_pos(isp_handle handle, cmr_u32 pos)
 {
 	cmr_s32 ret = 0;
+#if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -123,566 +240,10 @@ cmr_s32 isp_u_comm_bpc_endian(isp_handle handle, cmr_u32 endian)
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_BPC_ENDIAN;
-	param.property_param = &endian;
+	param.property = ISP_PRO_COMMON_CH1_AEM2_POS;
+	param.property_param = &pos;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_store_endian(isp_handle handle, cmr_u32 endian)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_STORE_ENDIAN;
-	param.property_param = &endian;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_fetch_data_format(isp_handle handle, cmr_u32 format)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_FETCH_DATA_FORMAT;
-	param.property_param = &format;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_store_format(isp_handle handle, cmr_u32 format)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_STORE_FORMAT;
-	param.property_param = &format;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_burst_size(isp_handle handle, cmr_u16 burst_size)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_BURST_SIZE;
-	param.property_param = &burst_size;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_mem_switch(isp_handle handle, cmr_u8 mem_switch)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_MEM_SWITCH;
-	param.property_param = &mem_switch;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_shadow(isp_handle handle, cmr_u32 shadow)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SHADOW;
-	param.property_param = &shadow;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_shadow_all(isp_handle handle, cmr_u8 shadow)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SHADOW_ALL;
-	param.property_param = &shadow;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_bayer_mode(isp_handle handle, cmr_u32 nlc_bayer, cmr_u32 awbc_bayer, cmr_u32 wave_bayer, cmr_u32 cfa_bayer, cmr_u32 gain_bayer)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_bayer_mode mode;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_BAYER_MODE;
-	mode.nlc_bayer = nlc_bayer;
-	mode.awbc_bayer = awbc_bayer;
-	mode.wave_bayer = wave_bayer;
-	mode.cfa_bayer = cfa_bayer;
-	mode.gain_bayer = gain_bayer;
-	param.property_param = &mode;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_int_clear(isp_handle handle, cmr_u32 int_num)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_INT_CLEAR;
-	param.property_param = &int_num;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_get_int_raw(isp_handle handle, cmr_u32 * raw)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_GET_INT_RAW;
-	param.property_param = raw;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_pmu_raw_mask(isp_handle handle, cmr_u8 raw_mask)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_PMU_RAW_MASK;
-	param.property_param = &raw_mask;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_hw_mask(isp_handle handle, cmr_u32 hw_logic)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_HW_MASK;
-	param.property_param = &hw_logic;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_hw_enable(isp_handle handle, cmr_u32 hw_logic)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_HW_ENABLE;
-	param.property_param = &hw_logic;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_pmu_pmu_sel(isp_handle handle, cmr_u8 sel)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_PMU_SEL;
-	param.property_param = &sel;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_sw_enable(isp_handle handle, cmr_u32 sw_logic)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SW_ENABLE;
-	param.property_param = &sw_logic;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_preview_stop(isp_handle handle, cmr_u8 eb)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_PREVIEW_STOP;
-	param.property_param = &eb;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_set_shadow_control(isp_handle handle, cmr_u32 control)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SET_SHADOW_CONTROL;
-	param.property_param = &control;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_shadow_control_clear(isp_handle handle, cmr_u8 eb)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SHADOW_CONTROL_CLEAR;
-	param.property_param = &eb;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_axi_stop(isp_handle handle, cmr_u8 eb)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_AXI_STOP;
-	param.property_param = &eb;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_slice_cnt_enable(isp_handle handle, cmr_u8 eb)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SLICE_CNT_ENABLE;
-	param.property_param = &eb;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_preform_cnt_enable(isp_handle handle, cmr_u8 eb)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_PREFORM_CNT_ENABLE;
-	param.property_param = &eb;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_set_slice_num(isp_handle handle, cmr_u8 num)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_SET_SLICE_NUM;
-	param.property_param = &num;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_get_slice_num(isp_handle handle, cmr_u8 * slice_num)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_GET_SLICE_NUM;
-	param.property_param = slice_num;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_perform_cnt_rstatus(isp_handle handle, cmr_u32 * status)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_PERFORM_CNT_RSTATUS;
-	param.property_param = status;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_comm_preform_cnt_status(isp_handle handle, cmr_u32 * status)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_COMMON;
-	param.property = ISP_PRO_COMMON_PERFORM_CNT_STATUS;
-	param.property_param = status;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
+#endif
 	return ret;
 }
