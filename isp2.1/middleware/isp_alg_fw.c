@@ -2512,68 +2512,80 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 static cmr_int isp_update_alsc_param(cmr_handle isp_alg_handle)
 {
 #ifdef LSC_ADV_ENABLE
-    cmr_int rtn = ISP_SUCCESS;
-         struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-         cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
-         struct isp_pm_ioctl_input input = { PNULL, 0 };
-         struct isp_pm_ioctl_output output = { PNULL, 0 };
-         struct isp_pm_param_data param_data;
-         struct lsc_adv_calc_param calc_param;
-         struct lsc_adv_calc_result calc_result = { 0 };
-         cmr_u32 i = 0;
-         memset(&param_data, 0, sizeof(param_data));
-         memset(&calc_param, 0, sizeof(calc_param));
- 
-         BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-         rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-         struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
- 
-         struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
- 
-         calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
-         struct awb_size stat_img_size;
-         struct awb_size win_size;
-         struct isp_ae_grgb_statistic_info *stat_info;
-         BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-         isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-         stat_info = output.param_data->data_ptr;
- 
-         awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
-         awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
- 
-         calc_param.stat_img.r = cxt->aem_stats.r_info;
-         calc_param.stat_img.gr = cxt->aem_stats.g_info;
-         calc_param.stat_img.gb = cxt->aem_stats.g_info;
-         calc_param.stat_img.b = cxt->aem_stats.b_info;
-         calc_param.stat_size.w = stat_img_size.w;
-         calc_param.stat_size.h = stat_img_size.h;
-         calc_param.gain_width = lsc_info->gain_w;
-         calc_param.gain_height = lsc_info->gain_h;
-         calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
-         calc_param.block_size.w = win_size.w;
-         calc_param.block_size.h = win_size.h;
-         calc_param.bv = isp_cur_bv;
-         calc_param.isp_id = ISP_2_0;
- 
-         calc_param.r_gain = gAWBGainR;
-         calc_param.b_gain = gAWBGainB;
-         calc_param.img_size.w = cxt->commn_cxt.src.w;
-         calc_param.img_size.h = cxt->commn_cxt.src.h;
- 
-         if (lsc_tab_pram_ptr == 0)
-                  return 0;
-         else {
-                   for (i = 0; i < 9; i++) {
-                            calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
-                   }
-         }
- 
-         lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
- 		 BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-         input.param_data_ptr = &param_data;
- 
-         rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
- 
+     cmr_int rtn = ISP_SUCCESS;
+	 struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	 cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
+	 isp_pm_handle_t pm_handle = cxt->handle_pm;
+	 struct isp_pm_ioctl_input input = { PNULL, 0 };
+	 struct isp_pm_ioctl_output output = { PNULL, 0 };
+	 struct isp_pm_param_data param_data;
+	 struct lsc_adv_calc_param calc_param;
+	 struct lsc_adv_calc_result calc_result = { 0 };
+	 cmr_u32 i = 0;
+	 memset(&param_data, 0, sizeof(param_data));
+	 memset(&calc_param, 0, sizeof(calc_param));
+
+	 BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	 rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	 struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
+
+	 struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+
+	 calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
+	 struct awb_size stat_img_size;
+	 struct awb_size win_size;
+	 struct isp_ae_grgb_statistic_info *stat_info;
+	 BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
+	 isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	 stat_info = output.param_data->data_ptr;
+
+	 awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
+	 awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
+
+	 calc_param.stat_img.r = cxt->aem_stats.r_info;
+	 calc_param.stat_img.gr = cxt->aem_stats.g_info;
+	 calc_param.stat_img.gb = cxt->aem_stats.g_info;
+	 calc_param.stat_img.b = cxt->aem_stats.b_info;
+	 calc_param.stat_size.w = stat_img_size.w;
+	 calc_param.stat_size.h = stat_img_size.h;
+	 calc_param.gain_width = lsc_info->gain_w;
+	 calc_param.gain_height = lsc_info->gain_h;
+	 calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
+	 calc_param.block_size.w = win_size.w;
+	 calc_param.block_size.h = win_size.h;
+	 calc_param.bv = isp_cur_bv;
+	 calc_param.isp_id = ISP_2_0;
+
+	 calc_param.r_gain = gAWBGainR;
+	 calc_param.b_gain = gAWBGainB;
+	 calc_param.img_size.w = cxt->commn_cxt.src.w;
+	 calc_param.img_size.h = cxt->commn_cxt.src.h;
+
+	 if (lsc_tab_pram_ptr == 0)
+	          return 0;
+	 else {
+	           for (i = 0; i < 9; i++) {
+	                    calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+	           }
+	 }
+
+	 /*AF lock ALSC */
+
+	if (cxt->lsc_cxt.isp_smart_lsc_lock == 0) {
+		cmr_u64 time0 = systemTime(CLOCK_MONOTONIC);
+
+		rtn = lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
+		if (ISP_SUCCESS != rtn) {
+			ISP_LOGE("fail to do lsc adv gain map calc");
+			return rtn;
+		}
+		cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
+
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+		input.param_data_ptr = &param_data;
+		rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+	
+	}
 #endif
  
          return rtn;
