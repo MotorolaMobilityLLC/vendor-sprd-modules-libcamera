@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*----------------------------------------------------------------------------*
- **				Dependencies					*
- **---------------------------------------------------------------------------*/
 #define LOG_TAG "isp_para_update"
 
 #include <unistd.h>
@@ -667,7 +664,6 @@ cmr_s32 read_awb_pos_weight(FILE * fp, struct sensor_awb_weight * awb_weight_ptr
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
 		}
-//              ISP_LOGI("read_awb_width line_buff = %s", line_buff);
 
 		if (strstr(line_buff, "{") != NULL) {
 			continue;
@@ -855,7 +851,6 @@ cmr_s32 find_digit(char *dst, const char *src, cmr_s32 out_buff_size)
 	char *dst_ptr = dst;
 	num = strlen(src);
 	for (i = 0; i < num; i++) {
-		//if(isdigit(src[i])) {
 		if (src[i] >= '0' && src[i] <= '9') {
 			*dst_ptr++ = src[i];
 			cur++;
@@ -911,7 +906,6 @@ cmr_s32 read_lnc_tab_size_offset_info(FILE * fp, struct sensor_lsc_map * lsc_ptr
 				sscanf(digit_buff, "%d", &c);
 
 				lnc_map_ptr[i].lnc_addr = (cmr_u16 *) (lnc_start_addr + map_tab_offset);
-				//lnc_map_ptr[i].lnc_len = c;
 				*(lnc_map_ptr[i].lnc_map_tab_len) = c;
 				map_tab_offset += c;
 				*(lnc_map_ptr[i].lnc_map_tab_offset) = map_tab_offset;

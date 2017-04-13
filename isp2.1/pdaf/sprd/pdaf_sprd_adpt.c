@@ -26,7 +26,6 @@
 #include "pd_algo.h"
 #include "cmr_common.h"
 
-/************************************ INTERNAK FUNCTION ***************************************/
 struct sprd_pdaf_context {
 	cmr_u32 camera_id;
 	cmr_u8 pd_open;
@@ -58,6 +57,7 @@ struct sprd_pdaf_context {
 #define ROI_Y 792
 #define ROI_Width 2048
 #define ROI_Height 1536
+#define PDAF_PATTERN_COUNT	 8
 
 struct isp_dev_pdaf_info pdafTestCase[] = {
 	//bypass,  corrector_bypass      phase_map_corr_en; block_size; grid_mode;win;block;gain_upperbound;phase_txt_smooth;phase_gfilter;phase_flat_smoother;
@@ -107,7 +107,6 @@ struct isp_dev_pdaf_info *ispGetPdafTestCase(cmr_u32 index)
 	return &pdafTestCase[index];
 }
 
-#define PDAF_PATTERN_COUNT	 8
 cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -163,8 +162,6 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 	pdaf_info_ptr->mode_sel = pdafTestCase_ptr->mode_sel;
 	pdaf_info_ptr->skip_num = pdafTestCase_ptr->skip_num;
 	pdaf_info_ptr->pdaf_blc = pdafTestCase_ptr->pdaf_blc;
-	//pdaf_info_ptr->phase_cfg_rdy                  = pdafTestCase_ptr->phase_cfg_rdy;
-	//pdaf_info_ptr->phase_skip_num_clr             = pdafTestCase_ptr->phase_skip_num_clr;
 
 	for (i = 0; i < 3; i++) {
 		pdaf_info_ptr->hot_pixel_th[i] = pdafTestCase_ptr->hot_pixel_th[i];
@@ -179,9 +176,6 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 
 	memset((void *)pdaf_info_ptr->phase_left_addr, 0, 0x100);
 	memset((void *)pdaf_info_ptr->phase_right_addr, 0, 0x100);
-
-	//memset((void*)pdaf_info_ptr->data_ptr_left, 0, 128 * sizeof(cmr_u32));
-	//memset((void*)pdaf_info_ptr->data_ptr_right, 0, 128 * sizeof(cmr_u32));
 	return rtn;
 }
 
@@ -279,8 +273,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	return (cmr_handle) cxt;
 
-//error_lib_init:
-	//pdafaltek_libops_deinit(pdaf);
 exit:
 	if (cxt) {
 		if (cxt->pd_right) {

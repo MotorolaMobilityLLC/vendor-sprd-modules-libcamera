@@ -41,7 +41,6 @@ struct pdafctrl_context {
 	struct pdaf_ctrl_thread_context thread_cxt;
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	struct adpt_ops_type *pdaf_adpt_ops;
-/*add for sharkl2 pdaf*/
 	isp_pdaf_cb pdaf_set_cb;
 	struct pdafctrl_work_lib work_lib;
 };

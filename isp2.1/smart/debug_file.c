@@ -17,9 +17,7 @@
 #include "debug_file.h"
 #include <stdio.h>
 #include <string.h>
-/**---------------------------------------------------------------------------*
-**				Micro Define					*
-**----------------------------------------------------------------------------*/
+
 #define DEBUG_SUCCESS 	0
 #define DEBUG_ERROR	1
 struct awbl_debug_file {

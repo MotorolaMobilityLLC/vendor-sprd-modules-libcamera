@@ -170,14 +170,6 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 	struct isp_smart_interplate_piecewise_func *func = NULL;
 	cmr_u32 i = 0;
 
-/*
-	rtn = _check_handle_validate(handle);
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to get valid handle, rtn %d\n", rtn);
-		rtn = ISP_ERROR;
-		goto _smart_calc_error_exit;
-	}
-*/
 	if ((NULL == cur_func)
 	    || (NULL == smart_cur_info_in)
 	    || (NULL == smart_calc_param_out)) {

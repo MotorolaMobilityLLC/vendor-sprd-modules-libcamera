@@ -20,7 +20,6 @@
 
 #define SMART_LSC_VERSION 1
 
-/************************************* INTERNAL DATA TYPE ***************************************/
 struct lsc_ctrl_work_lib {
 	cmr_handle lib_handle;
 	struct adpt_ops_type *adpt_ops;
