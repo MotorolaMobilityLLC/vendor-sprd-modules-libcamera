@@ -43,12 +43,9 @@ struct isp_cfg_fun {
 	isp_cfg_fun_ptr cfg_fun;
 };
 
-	/************************************Tshark2*******************************************************/
-static struct isp_cfg_fun s_isp_cfg_fun_tab_sharkl2[] = {
+static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_PRE_GBL_GAIN, isp_u_pgg_block},
 	{ISP_BLK_BLC, isp_u_blc_block},
-//      {ISP_BLK_PDAF_EXTRACT,     isp_u_pdaf_block},
-//      {ISP_BLK_PDAF_CORRECT,     isp_u_pdaf_block},
 	{ISP_BLK_NLM, isp_u_nlm_block},
 	{ISP_BLK_POSTBLC, isp_u_post_blc_block},
 	{ISP_BLK_RGB_GAIN, isp_u_rgb_gain_block},
@@ -57,22 +54,15 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab_sharkl2[] = {
 	{ISP_BLK_2D_LSC, isp_u_2d_lsc_block},
 	{ISP_BLK_1D_LSC, isp_u_1d_lsc_block},
 	{ISP_BLK_BINNING4AWB, isp_u_binning4awb_block},
-//      {ISP_BLK_AWBC,             }
-//  {ISP_BLK_RGB_AEM,          isp_u_raw_aem_block},
 	{ISP_BLK_BPC, isp_u_bpc_block},
 	{ISP_BLK_GRGB, isp_u_grgb_block},
 	{ISP_BLK_CFA, isp_u_cfa_block},
-//  {ISP_BLK_RGB_AFM,          isp_u_raw_afm_block},
 	{ISP_BLK_CMC10, isp_u_cmc_block},
 	{ISP_BLK_RGB_GAMC, isp_u_gamma_block},
 	{ISP_BLK_HSV, isp_u_hsv_block},
 	{ISP_BLK_POSTERIZE, isp_u_posterize_block},
 	{ISP_BLK_CCE, isp_u_cce_matrix_block},
 	{ISP_BLK_UVDIV, isp_u_uvd_block},
-//      {ISP_BLK_YIQ_AFL_V1,       isp_u_anti_flicker_block},
-//      {ISP_BLK_YIQ_AFL_V3,       isp_u_anti_flicker_new_block},
-//      {ISP_BLK_3DNR_PRE,
-//      {ISP_BLK_3DNR_CAP,
 	{ISP_BLK_YUV_PRECDN, isp_u_yuv_precdn_block},
 	{ISP_BLK_YNR, isp_u_ynr_block},
 	{ISP_BLK_BRIGHT, isp_u_brightness_block},
@@ -89,18 +79,9 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab_sharkl2[] = {
 	{ISP_BLK_IIRCNR_IIR, isp_u_iircnr_block},
 	{ISP_BLK_IIRCNR_YRANDOM, isp_u_yrandom_block},
 	{ISP_BLK_YUV_NOISEFILTER, isp_u_noise_filter_block},
-
-//      {ISP_BLK_SMART,
-//      {ISP_BLK_SFT_AF,
-//      {ISP_BLK_ALSC,
-//      {ISP_BLK_AFT,
 	{ISP_BLK_AE_NEW, isp_u_raw_aem_block},
 	{ISP_BLK_AWB_NEW, isp_u_awb_block},
 	{ISP_BLK_AF_NEW, isp_u_raw_afm_block},
-
-//      ISP_BLK_FLASH_CALI,
-//      ISP_BLK_ENVI_DETECT,
-
 };
 
 cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)
@@ -109,10 +90,10 @@ cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)
 	cmr_u32 i = 0, cnt = 0;
 	isp_cfg_fun_ptr cfg_fun_ptr = PNULL;
 
-	cnt = sizeof(s_isp_cfg_fun_tab_sharkl2) / sizeof(s_isp_cfg_fun_tab_sharkl2[0]);
+	cnt = sizeof(s_isp_cfg_fun_tab) / sizeof(s_isp_cfg_fun_tab[0]);
 	for (i = 0; i < cnt; i++) {
-		if (sub_block == s_isp_cfg_fun_tab_sharkl2[i].sub_block) {
-			cfg_fun_ptr = s_isp_cfg_fun_tab_sharkl2[i].cfg_fun;
+		if (sub_block == s_isp_cfg_fun_tab[i].sub_block) {
+			cfg_fun_ptr = s_isp_cfg_fun_tab[i].cfg_fun;
 			break;
 		}
 	}
@@ -307,19 +288,6 @@ static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 cmr_s32 isp_get_fetch_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_fetch_info_v1 * fetch_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-#if 0
-	struct isp_size *cur_slice_ptr = &isp_context_ptr->slice.cur_slice_num;
-	cmr_u32 ch0_offset = ISP_ZERO;
-	cmr_u32 ch1_offset = ISP_ZERO;
-	cmr_u32 ch2_offset = ISP_ZERO;
-	cmr_u32 slice_w_offset = ISP_ZERO;
-	cmr_u32 slice_h_offset = ISP_ZERO;
-	cmr_u32 overlap_up = ISP_ZERO;
-	cmr_u32 overlap_left = ISP_ZERO;
-	cmr_u16 src_width = isp_context_ptr->src.w;
-	cmr_u16 complete_line = isp_context_ptr->slice.complete_line;
-	cmr_u16 slice_width = isp_context_ptr->slice.max_size.w;
-#endif
 	cmr_u16 fetch_width = fetch_ptr->size.width;	//isp_context_ptr->slice.size[ISP_FETCH].w;
 	cmr_u32 start_col = ISP_ZERO;
 	cmr_u32 end_col = ISP_ZERO;
@@ -337,66 +305,6 @@ cmr_s32 isp_get_fetch_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, s
 		5, 5, 5
 	};
 	UNUSED(isp_context_ptr);
-#if 0
-	fetch_ptr->bypass = isp_context_ptr->fetch.bypass;
-	fetch_ptr->subtract = isp_context_ptr->fetch.subtract;
-	fetch_ptr->color_format = isp_context_ptr->fetch.color_format;
-	fetch_ptr->addr.chn0 = isp_context_ptr->fetch.addr.chn0;
-	fetch_ptr->addr.chn1 = isp_context_ptr->fetch.addr.chn1;
-	fetch_ptr->addr.chn2 = isp_context_ptr->fetch.addr.chn2;
-	fetch_ptr->pitch.chn0 = isp_context_ptr->fetch.pitch.chn0;
-	fetch_ptr->pitch.chn1 = isp_context_ptr->fetch.pitch.chn1;
-	fetch_ptr->pitch.chn2 = isp_context_ptr->fetch.pitch.chn2;
-
-	if ((ISP_FETCH_NORMAL_RAW10 == isp_context_ptr->com.fetch_color_format)
-	    || (ISP_FETCH_CSI2_RAW10 == isp_context_ptr->com.fetch_color_format)) {
-		overlap_up = RAW_OVERLAP_UP_V1;
-		overlap_left = RAW_OVERLAP_LEFT_V1;
-	} else {
-		overlap_up = YUV_OVERLAP_UP_V1;
-		overlap_left = YUV_OVERLAP_LEFT_V1;
-	}
-
-	if (ISP_ZERO != cur_slice_ptr->w) {
-		slice_w_offset = overlap_left;
-	}
-
-	if ((ISP_SLICE_MID == isp_context_ptr->slice.pos_info)
-	    || (ISP_SLICE_LAST == isp_context_ptr->slice.pos_info)) {
-		slice_h_offset = overlap_up;
-	}
-
-	switch (isp_context_ptr->com.fetch_color_format) {
-	case ISP_FETCH_YUV422_3FRAME:
-		ch0_offset = src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset;
-		ch1_offset = (src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset) >> 0x01;
-		ch2_offset = (src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset) >> 0x01;
-		break;
-	case ISP_FETCH_YUV422_2FRAME:
-	case ISP_FETCH_YVU422_2FRAME:
-		ch0_offset = src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset;
-		ch1_offset = src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset;
-		break;
-	case ISP_FETCH_YUYV:
-	case ISP_FETCH_UYVY:
-	case ISP_FETCH_YVYU:
-	case ISP_FETCH_VYUY:
-	case ISP_FETCH_NORMAL_RAW10:
-		ch0_offset = (src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset) << 0x01;
-		break;
-	case ISP_FETCH_CSI2_RAW10:
-		ch0_offset = ((src_width * (complete_line - slice_h_offset) + slice_width * cur_slice_ptr->w - slice_w_offset) * 0x05) >> 0x02;
-		break;
-	default:
-		break;
-	}
-
-	fetch_ptr->addr.chn0 += ch0_offset;
-	fetch_ptr->addr.chn1 += ch1_offset;
-	fetch_ptr->addr.chn2 += ch2_offset;
-
-	start_col = slice_width * cur_slice_ptr->w - slice_w_offset;
-#endif
 	end_col = start_col + fetch_width - ISP_ONE;
 
 	fetch_ptr->mipi_byte_rel_pos = start_col & 0x0f;
@@ -598,29 +506,14 @@ cmr_s32 isp_cfg_slice_size_v1(isp_handle handle, struct isp_slice_param_v1 * sli
 	rtn = isp_u_1d_lsc_slice_size(handle, slice_ptr->size[ISP_LSC_V1].w, slice_ptr->size[ISP_LSC_V1].h);
 	ISP_RETURN_IF_FAIL(rtn, ("isp 1d lsc slice size error"));
 
-	/*rtn = isp_u_csc_pic_size(handle, slice_ptr->size[ISP_CSC_V1].w, slice_ptr->size[ISP_CSC_V1].h);
-	   ISP_RETURN_IF_FAIL(rtn, ("isp csc pic size error"));
-
-	   rtn = isp_u_bdn_slice_size(handle, slice_ptr->size[ISP_BDN_V1].w, slice_ptr->size[ISP_BDN_V1].h);
-	   ISP_RETURN_IF_FAIL(rtn, ("isp wdenoise slice size error"));
-
-	   rtn = isp_u_pwd_slice_size(handle, slice_ptr->size[ISP_PWD_V1].w, slice_ptr->size[ISP_PWD_V1].h);
-	   ISP_RETURN_IF_FAIL(rtn, ("isp pwd slice size error")); */
-
 	rtn = isp_u_2d_lsc_slice_size(handle, slice_ptr->size[ISP_LENS_V1].w, slice_ptr->size[ISP_LENS_V1].h);
 	ISP_RETURN_IF_FAIL(rtn, ("isp 2d lsc slice size error"));
 
 	rtn = isp_u_raw_aem_slice_size(handle, slice_ptr->size[ISP_AEM_V1].w, slice_ptr->size[ISP_AEM_V1].h);
 	ISP_RETURN_IF_FAIL(rtn, ("isp raw aem slice size error"));
 
-	/*rtn = isp_u_yiq_aem_slice_size(handle, slice_ptr->size[ISP_Y_AEM_V1].w, slice_ptr->size[ISP_Y_AEM_V1].h);
-	   ISP_RETURN_IF_FAIL(rtn, ("isp yiq aem slice size error")); */
-
 	rtn = isp_u_raw_afm_slice_size(handle, slice_ptr->size[ISP_RGB_AFM_V1].w, slice_ptr->size[ISP_RGB_AFM_V1].h);
 	ISP_RETURN_IF_FAIL(rtn, ("isp raw afm slice size error"));
-
-	/*rtn = isp_u_yiq_afm_slice_size(handle, slice_ptr->size[ISP_Y_AFM_V1].w, slice_ptr->size[ISP_Y_AFM_V1].h);
-	   ISP_RETURN_IF_FAIL(rtn, ("isp yiq afm slice size error")); */
 
 	rtn = isp_u_hist_slice_size(handle, slice_ptr->size[ISP_HISTS_V1].w, slice_ptr->size[ISP_HISTS_V1].h);
 	ISP_RETURN_IF_FAIL(rtn, ("isp hist slice size error"));

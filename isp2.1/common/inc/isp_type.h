@@ -188,4 +188,4 @@ struct isp_piecewise_func {
 #ifdef __cplusplus
 }
 #endif
-#endif				//for _ISP_COMMON_H_
+#endif

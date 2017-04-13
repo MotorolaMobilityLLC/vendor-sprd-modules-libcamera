@@ -276,4 +276,4 @@ typedef struct exif_isp_debug_info {
 	cmr_s32 size;
 } EXIF_ISP_DEBUG_INFO_T;
 
-#endif //_ISP_EXIF_H_
+#endif

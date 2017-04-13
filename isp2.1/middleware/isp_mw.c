@@ -36,9 +36,7 @@ void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_eve
 
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 {
-	//struct camera_context *cxt = (struct camera_context *)privdata;
-	//struct isp_context *isp_cxt = cxt->isp_cxt;
-	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;	//isp_cxt->isp_handle;
+	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
 
 	isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);

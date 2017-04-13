@@ -19,20 +19,6 @@
 #include "ae_ctrl_types.h"
 #include "af_ctrl.h"
 //#define ISP_DEFAULT_CFG_FOR_BRING_UP
-/**************************************** MACRO DEFINE *****************************************/
-
-/************************************* INTERNAL DATA TYPE ***************************************/
-/*
-struct isp_dev_access_context {
-	cmr_handle evt_alg_handle;
-	isp_evt_cb isp_event_cb;
-	pthread_t monitor_handle;
-	cmr_handle isp_driver_handle;
-	struct isp_buf_queue_info bq_info;
-	struct isp_ops ops;
-};
-*/
-/*************************************INTERNAK FUNCTION ***************************************/
 
 cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info * in_ptr)
 {
@@ -146,8 +132,6 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_dev_cfa_info_v1 cfa_param;
 	struct isp_dev_cce_info_v1 cce_param;
-	//struct isp_dev_fetch_info_v1 fetch_param;
-	//struct isp_dev_store_info store_param;
 
 	/*isp fetch raw addr transfer */
 	isp_u_fetch_raw_transaddr(cxt->isp_driver_handle, &in_ptr->fetch.fetch_addr);
@@ -155,21 +139,13 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 	rtn = isp_get_fetch_addr_v1(in_ptr, &in_ptr->fetch);
 	ISP_RETURN_IF_FAIL(rtn, ("isp get fetch addr error"));
 
-	//rtn = isp_get_store_addr_v1(in_ptr, &store_param);
-	//ISP_RETURN_IF_FAIL(rtn, ("isp get store addr error"));
-
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
 
 	rtn = isp_get_cfa_default_param(in_ptr, &cfa_param);
 	ISP_RETURN_IF_FAIL(rtn, ("isp get cfa default param error"));
 
-	//rtn = isp_get_cce_default_param(in_ptr, &cce_param);
-	//ISP_RETURN_IF_FAIL(rtn, ("isp get cce default param error"));
-
 	isp_u_cfa_block(cxt->isp_driver_handle, (void *)&cfa_param);
 	ISP_RETURN_IF_FAIL(rtn, ("isp cfg cfa error"));
-
-	//isp_u_cce_matrix_block(cxt->isp_driver_handle,(void*)&cce_param);
 #endif
 
 	isp_u_fetch_block(cxt->isp_driver_handle, (void *)&in_ptr->fetch);

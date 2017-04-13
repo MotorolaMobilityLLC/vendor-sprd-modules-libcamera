@@ -4006,7 +4006,7 @@ static void *ispserver_thread(void *args)
 
 	lfd = socket(sock_addr.sin_family, SOCK_STREAM, 0);
 	if (lfd == -1) {
-		ISP_LOGE("fail to socket.\n");
+		ISP_LOGW("fail to socket.\n");
 		return NULL;
 	}
 	sock_fd = lfd;

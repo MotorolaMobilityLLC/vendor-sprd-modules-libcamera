@@ -151,7 +151,6 @@ struct sensor_nr_simple_header_param {
 	cmr_uint *param_ptr;
 };
 
-/************************************************************************************/
 //flash
 struct sensor_flash_attrib_param {
 	cmr_u32 r_sum;
@@ -176,7 +175,6 @@ struct sensor_flash_cali_param {
 	cmr_u32 reserved0[19];
 };
 
-/************************************************************************************/
 //environment detec
 struct sensor_envi_detect_param {
 	cmr_u32 enable;
@@ -207,14 +205,12 @@ struct sensor_envi_detect_param {
 //#define SENSOR_SMART_LEVEL_NUM 25
 //#define SENSOR_SMART_LEVEL_DEFAULT 15
 
-/************************************************************************************/
 //Pre-global gain
 struct sensor_pre_global_gain_param {
 	cmr_u16 gain;
 	cmr_u16 reserved;
 };
 
-/************************************************************************************/
 //Black level correction, between preGain and PDAF
 struct sensor_blc_offset {
 	cmr_u16 r;
@@ -228,13 +224,12 @@ struct sensor_blc_param {
 	struct sensor_blc_offset tab[SENSOR_BLC_NUM];
 };
 
-/************************************************************************************/
 //Post Black level correction, between NLM and RGBGain
 struct sensor_postblc_param {
 	struct isp_sample_point_info cur_idx;
 	struct sensor_blc_offset tab[SENSOR_BLC_NUM];
 };
-/************************************************************************************/
+
 // ppi, phase pixel inspector,PDAF
 // definiton of phase pixel location, should define in sensor driver
 struct sensor_pdaf_pattern_map {
@@ -252,7 +247,6 @@ struct sensor_pdaf_region {
 	struct sensor_pdaf_pattern_map pdaf_pattern[64];
 };
 
-/************************************************************************************/
 // ppi, phase pixel inspector,PDAF
 // extract phase pixel to support PDAF
 struct sensor_pdaf_af_win {
@@ -270,7 +264,6 @@ struct sensor_pdaf_extraction {
 	struct sensor_pdaf_region pdaf_region;
 };
 
-/************************************************************************************/
 // ppi, phase pixel inspector,PDAF
 //correct phase pixel to get right image
 struct sensor_pdaf_rgb_upboundary {
@@ -303,7 +296,6 @@ struct sensor_pdaf_correction_level {
 	cmr_u32 corrector_bypass;
 };
 
-/************************************************************************************/
 //rgb gain
 struct sensor_rgb_gain_param {
 	cmr_u16 glb_gain;
@@ -312,7 +304,6 @@ struct sensor_rgb_gain_param {
 	cmr_u16 b_gain;
 };
 
-/************************************************************************************/
 //YUV noisefilter
 struct sensor_yuv_noisefilter_gaussian {
 	cmr_u16 random_r_shift;
@@ -338,7 +329,6 @@ struct sensor_yuv_noisefilter_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //rgb gain yrandom, as a separate module in NR
 struct sensor_rgb_dither_level {
 	cmr_u8 pseudo_random_raw_range;
@@ -351,7 +341,6 @@ struct sensor_rgb_dither_level {
 	cmr_u32 pseudo_random_raw_bypass;
 };
 
-/************************************************************************************/
 //non-linear correction
 struct sensor_nlc_param {
 	cmr_u16 r_node[29];
@@ -360,7 +349,6 @@ struct sensor_nlc_param {
 	cmr_u16 l_node[27];
 };
 
-/************************************************************************************/
 // 2D-lens shading correction
 struct sensor_lsc_2d_map_info {
 	cmr_u32 envi;
@@ -384,7 +372,7 @@ struct sensor_2d_lsc_param {
 	cmr_u32 tab_num;
 	struct sensor_lsc_2d_table_param tab_info;
 };
-/************************************************************************************/
+
 // 1D-lens shading correction, Radial lens
 struct sensor_multi_curve_discription {
 	struct isp_pos center_pos;
@@ -407,7 +395,6 @@ struct sensor_1d_lsc_param {
 	void *data_area;
 };
 
-/************************************************************************************/
 //AWB Correction
 struct sensor_awbc_thr {
 	cmr_u16 r_thr;
@@ -436,8 +423,6 @@ struct sensor_awbc_param {
 	struct sensor_awbc_offset awbc_offset;
 };
 
-/************************************************************************************/
-
 struct sensor_awbm_param {
 	cmr_u32 comp_1d_bypass;
 	cmr_u32 skip_num;
@@ -453,7 +438,6 @@ struct sensor_awb_param {
 	struct sensor_awbm_param awbm;
 };
 
-/************************************************************************************/
 //AE monitor in RGB domain
 struct sensor_rgb_aem_param {
 	cmr_u32 aem_skip_num;
@@ -462,7 +446,6 @@ struct sensor_rgb_aem_param {
 	struct isp_size win_size;
 };
 
-/************************************************************************************/
 //Bad Pixel Correction
 struct sensor_bpc_rules {
 	struct isp_range k_val;
@@ -506,7 +489,6 @@ struct sensor_bpc_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //Y-NR, reduce noise on luma channel in YUV domain
 struct sensor_ynr_texture_calc {
 	cmr_u8 ynr_lowlux_bypass;
@@ -561,7 +543,6 @@ struct sensor_ynr_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 // UVDIV
 struct sensor_cce_uvdiv_th {
 	cmr_u8 uvdiv_th_l;
@@ -607,7 +588,6 @@ struct sensor_cce_uvdiv_level {
 	cmr_u8 bypass;
 };
 
-/************************************************************************************/
 //3DNR, two sets for pre and cap at least
 struct sensor_3dnr_cfg {
 	cmr_u8 src_wgt;
@@ -655,7 +635,6 @@ struct sensor_3dnr_level {
 	struct sensor_3dnr_radialval_str sensor_3dnr_cor;
 };
 
-/************************************************************************************/
 //GrGb Correction
 struct sensor_grgb_ratio {
 	cmr_u8 gr_ratio;
@@ -696,7 +675,6 @@ struct sensor_grgb_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //rgb gain 2
 struct sensor_rgb_gain2_param {
 	cmr_u16 r_gain;
@@ -707,7 +685,6 @@ struct sensor_rgb_gain2_param {
 	cmr_u16 b_offset;
 };
 
-/************************************************************************************/
 // nlm
 struct sesor_simple_bpc {
 	cmr_u8 simple_bpc_bypass;
@@ -783,7 +760,6 @@ struct sensor_nlm_level {
 
 };
 
-/************************************************************************************/
 // CFAI, css color saturation suppression
 struct sensor_cfai_css_thr {
 	cmr_u16 css_edge_thr;
@@ -868,7 +844,6 @@ struct sensor_cfa_param_level {
 	struct sensor_cfai_css_level cfai_css_level;
 };
 
-/************************************************************************************/
 //AF monitor in rgb domain, remove YAFM in YIQ domain
 struct sensor_rgb_afm_iir_denoise {
 	cmr_u8 afm_iir_en;
@@ -919,14 +894,12 @@ struct sensor_rgb_afm_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 // CMC10
 struct sensor_cmc10_param {
 	struct isp_sample_point_info cur_idx;
 	cmr_u16 matrix[SENSOR_CMC_NUM][9];
 };
 
-/************************************************************************************/
 //Gamma Correction in full RGB domain
 #define SENSOR_GAMMA_POINT_NUM 257
 
@@ -939,7 +912,6 @@ struct sensor_frgb_gammac_param {
 
 };
 
-/************************************************************************************/
 // CCE, color conversion enhance
 struct sensor_cce_matrix_info {
 	cmr_u16 matrix[9];
@@ -954,7 +926,6 @@ struct sensor_cce_param {
 	struct sensor_cce_matrix_info specialeffect[MAX_SPECIALEFFECT_NUM];
 };
 
-/************************************************************************************/
 //HSV domain
 struct sensor_hsv_cfg {
 	cmr_u16 hsv_hrange_left;
@@ -972,43 +943,6 @@ struct sensor_hsv_param {
 	void *specialeffect_data_area;
 };
 
-/************************************************************************************/
-// radial color denoise
-#if 0
-struct sensor_radial_csc_map {
-	cmr_u32 red_thr;
-	cmr_u32 blue_thr;
-	cmr_u32 max_gain_thr;
-	struct sensor_multi_curve_discription r_curve_distcptn;
-	struct sensor_multi_curve_discription b_curve_distcptn;
-};
-
-struct sensor_radial_csc_param {
-	struct isp_sample_point_info cur_idx;
-	struct sensor_radial_csc_map map[SENSOR_LENS_NUM];
-};
-#endif
-/************************************************************************************/
-//pre-color noise remove in rgb domain
-#if 0
-struct sensor_rgb_precdn_level {
-	cmr_u16 thru0;
-	cmr_u16 thru1;
-	cmr_u16 thrv0;
-	cmr_u16 thrv1;
-	cmr_u16 median_mode;
-	cmr_u16 median_thr;
-	cmr_u32 bypass;
-};
-
-struct sensor_rgb_precdn_param {
-	cmr_uint *param_ptr;	/* if not null, read from noise/xxxx_param.h */
-	struct sensor_rgb_precdn_level rgb_precdn_level;
-	cmr_u32 strength_level;
-	cmr_u32 reserved[2];
-};
-#endif
-/************************************************************************************/
 //Posterize, is Special Effect
 struct sensor_posterize_param {
 	cmr_u8 pstrz_bot[8];
@@ -1019,39 +953,6 @@ struct sensor_posterize_param {
 	cmr_u8 specialeffect_out[MAX_SPECIALEFFECT_NUM][8];
 };
 
-/************************************************************************************/
-//AF monitor in rgb domain
-#if 0
-struct sensor_rgb_afm_sobel {
-	cmr_u32 af_sobel_type;	//sobel filter win control
-	struct isp_range sobel;	// filter thresholds
-};
-
-struct sensor_rgb_afm_filter_sel {
-	cmr_u8 af_sel_filter1;	//filter select control
-	cmr_u8 af_sel_filter2;	//filter select control
-	cmr_u8 reserved[2];
-};
-
-struct sensor_rgb_afm_spsmd {
-	cmr_u8 af_spsmd_rtgbot;	//filter data mode control
-	cmr_u8 af_spsmd_diagonal;	//filter data mode control
-	cmr_u8 af_spsmd_cal_mode;	//data output mode control
-	cmr_u8 af_spsmd_type;	//data output mode control
-	struct isp_range spsmd;	// filter thresholds
-};
-
-struct sensor_rgb_afm_param {
-	cmr_u8 skip_num;
-	struct sensor_rgb_afm_filter_sel filter_sel;
-	struct sensor_rgb_afm_spsmd spsmd_ctl;
-	struct sensor_rgb_afm_sobel sobel_ctl;
-	struct isp_rect windows[25];
-	cmr_u32 af_sobel_type;	//sobel filter win control
-	struct isp_range sobel;	// filter thresholds
-};
-#endif
-/************************************************************************************/
 //Gamma Correction in YUV domain
 struct sensor_y_gamma_param {
 	cmr_u32 cur_idx;
@@ -1059,7 +960,6 @@ struct sensor_y_gamma_param {
 	struct sensor_gamma_curve specialeffect[MAX_SPECIALEFFECT_NUM];
 };
 
-/************************************************************************************/
 //Anti-flicker, old and new
 struct sensor_y_afl_param_v1 {
 	cmr_u8 skip_num;
@@ -1083,7 +983,6 @@ struct sensor_y_afl_param_v3 {
 	struct isp_pos afl_step_region;
 };
 
-/************************************************************************************/
 // AF monitor in YUV domain
 struct sensor_y_afm_level {
 	cmr_u32 iir_bypass;
@@ -1096,7 +995,6 @@ struct sensor_y_afm_level {
 	cmr_u16 reserved1;
 };
 
-/************************************************************************************/
 //pre-color denoise in YUV domain
 struct sensor_yuv_precdn_comm {
 	cmr_u8 precdn_mode;
@@ -1126,7 +1024,6 @@ struct sensor_yuv_precdn_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //Brightness
 struct sensor_bright_param {
 	cmr_s8 factor[16];
@@ -1134,7 +1031,6 @@ struct sensor_bright_param {
 	cmr_s8 scenemode[MAX_SCENEMODE_NUM];
 };
 
-/************************************************************************************/
 //Contrast
 struct sensor_contrast_param {
 	cmr_u8 factor[16];
@@ -1142,14 +1038,12 @@ struct sensor_contrast_param {
 	cmr_u8 scenemode[MAX_SCENEMODE_NUM];
 };
 
-/************************************************************************************/
 //Hist in YUV domain
 struct sensor_yuv_hists_param {
 	cmr_u16 hist_skip_num;
 	cmr_u16 hist_mode_sel;
 };
 
-/************************************************************************************/
 //Hist 2
 struct sensor_yuv_hists2_param {
 	cmr_u16 hist2_skip_num;
@@ -1157,7 +1051,6 @@ struct sensor_yuv_hists2_param {
 	struct isp_pos_rect hist2_roi;
 };
 
-/************************************************************************************/
 //CDN, Color Denoise
 struct sensor_uv_cdn_level {
 	float sigma_u;
@@ -1176,7 +1069,6 @@ struct sensor_uv_cdn_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //Edge Enhancement
 struct sensor_ee_pn {
 	cmr_u16 negative;
@@ -1280,7 +1172,6 @@ struct sensor_ee_level {
 	cmr_u8 bypass;
 };
 
-/************************************************************************************/
 //4A, smart, AFT
 #if 0
 struct ae_new_tuning_param {	//total bytes must be 263480
@@ -1543,19 +1434,17 @@ struct tuning_param {
 };
 #endif
 
-/**************************************************************************/
 //sft af
 struct isp_sft_af_param {
 	// add for buid warning, isp owners shoud complete the struct
 	cmr_s32 dummy;
 };
 
-/*************************************************************************/
 struct isp_alsc_param {
 	// add for buid warning, isp owners shoud complete the struct
 	cmr_s32 dummy;
 };
-/************************************************************************************/
+
 //smart param begin
 #define ISP_SMART_MAX_BV_SECTION 8
 #define ISP_SMART_MAX_BLOCK_NUM 32	//28
@@ -1637,7 +1526,6 @@ struct isp_smart_param {
 };
 /*smart param end*/
 
-/************************************************************************************/
 //Color Saturation Adjustment
 struct sensor_saturation_param {
 	cmr_u8 csa_factor_u[16];
@@ -1647,14 +1535,12 @@ struct sensor_saturation_param {
 	cmr_u8 scenemode[2][MAX_SCENEMODE_NUM];
 };
 
-/************************************************************************************/
 //Hue Adjustment
 struct sensor_hue_param {
 	cmr_u16 hue_theta[16];
 	cmr_u32 cur_index;
 };
 
-/************************************************************************************/
 //post-color denoise
 struct sensor_postcdn_thr {
 	cmr_u16 thr0;		//algorithm reserved
@@ -1691,14 +1577,12 @@ struct sensor_uv_postcdn_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //Y_DELAY, should define in other
 struct sensor_y_delay_param {
 	//cmr_u16 bypass;//   can't bypass!!!
 	cmr_u16 ydelay_step;
 };
 
-/************************************************************************************/
 //IIR color noise reduction, should named CCNR in tuning tool
 struct sensor_iircnr_pre {
 	cmr_u16 iircnr_pre_uv_th;
@@ -1753,7 +1637,6 @@ struct sensor_iircnr_level {
 	cmr_u32 bypass;
 };
 
-/************************************************************************************/
 //IIR yrandom
 struct sensor_iircnr_yrandom_level {
 	cmr_u8 yrandom_shift;
@@ -1768,7 +1651,6 @@ struct sensor_iircnr_yrandom_param {
 	struct sensor_iircnr_yrandom_level iircnr_yrandom_level;
 };
 
-/************************************************************************************/
 //alsc
 struct alsc_alg0_turn_param {
 	float pa;		//threshold for seg
@@ -1783,8 +1665,7 @@ struct alsc_alg0_turn_param {
 	cmr_u32 freq;
 	float threshold_grad;
 };
-/************************************************************************************/
-/********** parameter block definition **********/
+
 enum ISP_BLK_ID {
 	ISP_BLK_ID_BASE = 0,
 	ISP_BLK_SHARKL2_BASE = 0x4000,
@@ -1985,7 +1866,7 @@ struct sensor_ae_tab {
 	struct ae_scene_exp_gain_tab scene_tab[AE_SCENE_NUM][AE_FLICKER_NUM];
 	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
 };
-/*******************************new***************/
+
 struct sensor_2d_lsc_param_v1 {
 	struct isp_sample_point_info cur_idx;
 	cmr_u32 tab_num;

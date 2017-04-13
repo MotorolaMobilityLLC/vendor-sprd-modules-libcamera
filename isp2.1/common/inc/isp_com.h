@@ -346,8 +346,6 @@ typedef struct {
 #define ISP_NLC_POINTER_NUM 29
 #define ISP_NLC_POINTER_L_NUM 27
 
-/******************************************************************************/
-//for blc
 struct isp_blc_offset {
 	cmr_u16 r;
 	cmr_u16 gr;
@@ -398,8 +396,6 @@ struct isp_lnc_param {
 	cmr_u32 lnc_param_max_size;
 };
 
-/******************************************************************************/
-//for wb
 struct isp_awbc_cfg {
 	cmr_u32 r_gain;
 	cmr_u32 g_gain;
@@ -409,8 +405,6 @@ struct isp_awbc_cfg {
 	cmr_u32 b_offset;
 };
 
-/******************************************************************************/
-//for ae
 struct isp_ae_statistic_info {
 	cmr_u32 y[1024];
 };
@@ -419,8 +413,6 @@ struct isp_ae_param {
 	struct isp_ae_statistic_info stat_info;
 };
 
-/******************************************************************************/
-//for anti flicker
 struct afl_ctrl_proc_out {
 	cmr_int flag;
 	cmr_int cur_flicker;
@@ -446,8 +438,6 @@ struct isp_anti_flicker_cfg {
 	isp_afl_cb afl_set_cb;
 };
 
-/******************************************************************************/
-//for af
 struct isp_af_statistic_info {
 	cmr_u64 info[32];
 	cmr_u32 info_tshark3[105];
@@ -461,8 +451,6 @@ struct isp_af_param {
 	struct isp_afm_param afm;
 };
 
-/******************************************************************************/
-//for gamma
 struct isp_gamma_curve_info {
 	cmr_u32 axis[2][ISP_GAMMA_SAMPLE_NUM];
 };
@@ -472,8 +460,6 @@ struct isp_gamma_info {
 	cmr_u8 index[28];
 };
 
-/******************************************************************************/
-//for bright
 struct isp_bright_cfg {
 	cmr_u32 factor;
 };
@@ -485,7 +471,6 @@ struct isp_bright_param {
 	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
 };
 
-/******************************************************************************/
 //for contrast
 struct isp_contrast_cfg {
 	cmr_u32 factor;
@@ -498,26 +483,17 @@ struct isp_contrast_param {
 	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
 };
 
-/******************************************************************************/
-//for saturation
 struct isp_saturation_cfg {
 	cmr_u32 factor;
 };
 
-/******************************************************************************/
-//for hue
 struct isp_hue_cfg {
 	cmr_u32 factor;
 };
 
-/******************************************************************************/
-//for edge/sharpness
 struct isp_edge_cfg {
 	cmr_u32 factor;
 };
-
-/******************************************************************************/
-//for flash calibration
 
 struct isp_flash_attrib_param {
 	cmr_u32 r_sum;
@@ -544,27 +520,21 @@ struct isp_flash_param {
 	struct isp_flash_attrib_cali attrib;
 };
 
-/******************************************************************************/
-//for envi_detect
 struct isp_envi_detect_param {
 	cmr_u32 enable;
 	struct isp_range envi_range[SENSOR_ENVI_NUM];
 };
 
-//pgn
 struct isp_pre_global_gain_param_v1 {
 	struct isp_dev_pre_glb_gain_info cur;
 };
 
-//post blc
 struct isp_postblc_param {
 	struct isp_dev_post_blc_info cur;
 	struct isp_sample_point_info cur_idx;
 	struct sensor_blc_offset offset[SENSOR_BLC_NUM];
 };
 
-/********************************************************************************************/
-//pdaf correction
 struct isp_pdaf_correction_param {
 	struct isp_dev_pdaf_info cur;
 	cmr_u32 cur_level;
@@ -574,13 +544,10 @@ struct isp_pdaf_correction_param {
 	cmr_u32 nr_mode_setting;
 };
 
-/********************************************************************************************/
-// pdaf extraction
 struct isp_pdaf_extraction_param {
 	struct pdaf_param cur;
 };
 
-//yuv noise filter
 struct isp_dev_noise_filter_param {
 	struct isp_dev_noise_filter_info cur;
 	cmr_u32 cur_level;
@@ -590,17 +557,14 @@ struct isp_dev_noise_filter_param {
 	cmr_u32 nr_mode_setting;
 };
 
-//global rgb gain.
 struct isp_rgb_gain_param_v1 {
 	struct isp_dev_rgb_gain_info cur;
 };
 
-//nlc
 struct isp_nlc_param_v1 {
 	struct isp_dev_nlc_info_v1 cur;
 };
 
-//lens_new lsc
 struct isp_2d_lsc_param {
 	struct isp_sample_point_info cur_index_info;
 	struct isp_dev_2d_lsc_info cur;
@@ -616,14 +580,12 @@ struct isp_2d_lsc_param {
 	void *tmp_ptr_b;
 };
 
-//radial lens(1D)
 struct isp_1d_lsc_param {
 	struct isp_sample_point_info cur_index_info;
 	struct isp_dev_1d_lsc_info cur;
 	struct sensor_1d_lsc_map map[SENSOR_LENS_NUM];
 };
 
-//binning4awb
 struct isp_binning4awb_param_v1 {
 	struct isp_dev_binning4awb_info_v1 cur;
 };
@@ -635,14 +597,11 @@ struct isp_awb_param_v1 {
 	struct isp_data_info awb_statistics[4];
 };
 
-//aem
 struct isp_rgb_aem_param {
 	struct isp_dev_raw_aem_info cur;
 	struct isp_awb_statistic_info stat;
 };
 
-/********************************************************************************************/
-//afm
 struct isp_rgb_afm_param {
 	struct isp_dev_rgb_afm_info cur;
 	cmr_u32 cur_level;
@@ -653,8 +612,6 @@ struct isp_rgb_afm_param {
 	cmr_u32 nr_mode_setting;
 };
 
-/********************************************************************************************/
-//bpc
 struct isp_bpc_param_v1 {
 	struct isp_dev_bpc_info_v1 cur;
 	cmr_u32 cur_level;
@@ -664,8 +621,6 @@ struct isp_bpc_param_v1 {
 	cmr_u32 nr_mode_setting;
 };
 
-/********************************************************************************************/
-//grgb
 struct isp_grgb_param {
 	struct isp_dev_grgb_info_v1 cur;
 	cmr_u32 cur_level;
@@ -675,8 +630,6 @@ struct isp_grgb_param {
 	cmr_u32 nr_mode_setting;
 };
 
-//y-nr
-//sharkl2
 struct isp_ynr_param {
 	struct isp_dev_ynr_info cur;
 	cmr_u32 cur_level;
@@ -685,8 +638,7 @@ struct isp_ynr_param {
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
 };
-/********************************************************************************************/
-//3d_nr_pre
+
 struct isp_3d_nr_pre_param {
 	struct isp_dev_3dnr_pre_param_info cur;
 	cmr_u32 cur_level;
@@ -696,8 +648,6 @@ struct isp_3d_nr_pre_param {
 	cmr_u32 nr_mode_setting;
 };
 
-/********************************************************************************************/
-//3d_nr_cap
 struct isp_3d_nr_cap_param {
 	struct isp_dev_3dnr_cap_param_info cur;
 	cmr_u32 cur_level;
@@ -707,8 +657,6 @@ struct isp_3d_nr_cap_param {
 	cmr_u32 nr_mode_setting;
 };
 
-/********************************************************************************************/
-//nlm
 struct isp_nlm_param_v1 {
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -722,8 +670,6 @@ struct isp_nlm_param_v1 {
 	cmr_u32 nr_mode_setting;
 };
 
-/********************************************************************************************/
-//cfa
 struct isp_cfa_param_v1 {
 	struct isp_dev_cfa_info_v1 cur;
 	cmr_u32 cur_level;
@@ -763,8 +709,6 @@ struct isp_cce_param_v1 {
 	struct isp_dev_cce_info_v1 specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
 
-/********************************************************************************************/
-//uvdiv
 struct isp_cce_uvdiv_param_v1 {
 	struct isp_dev_uvd_info cur;
 	cmr_u32 cur_level;
@@ -804,7 +748,6 @@ struct isp_yiq_afl_param_v3 {
 	struct isp_dev_anti_flicker_info_v1 cur;
 };
 
-/********************************************************************************************/
 struct isp_rgb_dither_param {
 	struct isp_dev_rgb_dither_info cur;
 	cmr_u32 cur_level;
@@ -893,7 +836,7 @@ struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
 
-/////////////////////////////////////////////////
+
 // 3A owner:
 //      struct isp_awb_param awb;
 	struct isp_ae_param ae;
@@ -903,7 +846,6 @@ struct isp_context {
 	struct isp_aft_param aft;
 	struct isp_alsc_param alsc;
 
-//////////////////////////////////////////////////
 //isp related tuning block
 	struct isp_bright_param bright;
 	struct isp_contrast_param contrast;

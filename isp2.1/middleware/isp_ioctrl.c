@@ -27,11 +27,26 @@
 #include "isp_alg_fw.h"
 #include "isp_dev_access.h"
 #include "isp_debug.h"
-//#include "sensor_isp_param_merge.h"
 
 #define ISP_REG_NUM                          20467
 #define SEPARATE_GAMMA_IN_VIDEO
 #define VIDEO_GAMMA_INDEX                    (8)
+
+#define COPY_LOG(l, L) \
+{size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, cxt->l##_cxt.log_##l##_size, L##_START, L##_END); \
+if (len) {log.l##_off = off; off += len; log.l##_len = len;} else {log.l##_off = 0;}}
+
+static const char *DEBUG_MAGIC = "SPRD_ISP";	// 8 bytes
+static const char *AE_START = "ISP_AE__";
+static const char *AE_END = "ISP_AE__";
+static const char *AF_START = "ISP_AF__";
+static const char *AF_END = "ISP_AF__";
+static const char *AWB_START = "ISP_AWB_";
+static const char *AWB_END = "ISP_AWB_";
+static const char *LSC_START = "ISP_LSC_";
+static const char *LSC_END = "ISP_LSC_";
+static const char *SMART_START = "ISP_SMART_";
+static const char *SMART_END = "ISP_SMART_";
 
 static cmr_s32 _isp_set_awb_gain(cmr_handle isp_alg_handle)
 {
@@ -135,9 +150,6 @@ static cmr_s32 _smart_param_update(cmr_handle isp_alg_handle)
 	return rtn;
 }
 
-/**---------------------------------------------------------------------------*
-**					IOCtrl Function Prototypes			*
-**---------------------------------------------------------------------------*/
 static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -757,18 +769,6 @@ static cmr_s32 ispGetAlscDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static const char *DEBUG_MAGIC = "SPRD_ISP";	// 8 bytes
-static const char *AE_START = "ISP_AE__";
-static const char *AE_END = "ISP_AE__";
-static const char *AF_START = "ISP_AF__";
-static const char *AF_END = "ISP_AF__";
-static const char *AWB_START = "ISP_AWB_";
-static const char *AWB_END = "ISP_AWB_";
-static const char *LSC_START = "ISP_LSC_";
-static const char *LSC_END = "ISP_LSC_";
-static const char *SMART_START = "ISP_SMART_";
-static const char *SMART_END = "ISP_SMART_";
-
 static size_t calc_log_size(const void *log, size_t size, const char *begin_magic, const char *end_magic)
 {
 	if (!log || !size)
@@ -793,10 +793,6 @@ static size_t copy_log(void *dst, const void *log, size_t size, const char *begi
 	COPY_MAGIC(end_magic);
 	return off;
 }
-
-#define COPY_LOG(l, L) \
-{size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, cxt->l##_cxt.log_##l##_size, L##_START, L##_END); \
-if (len) {log.l##_off = off; off += len; log.l##_len = len;} else {log.l##_off = 0;}}
 
 static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {

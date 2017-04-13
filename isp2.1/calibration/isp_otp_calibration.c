@@ -857,7 +857,7 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 	*isp_otp_handle = NULL;
 
 	if (NULL == calibration_param->data_ptr || 0 == calibration_param->size) {
-		ISP_LOGE("fail to check calibration_param: %p, %d!", calibration_param->data_ptr, calibration_param->size);
+		ISP_LOGW("fail to check calibration_param: %p, %d!", calibration_param->data_ptr, calibration_param->size);
 		return ISP_SUCCESS;
 	}
 

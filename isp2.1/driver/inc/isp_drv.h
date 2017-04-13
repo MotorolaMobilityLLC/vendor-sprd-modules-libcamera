@@ -297,12 +297,8 @@ cmr_s32 isp_u_hue_Factor(isp_handle handle, cmr_u32 factor);
 cmr_s32 isp_u_nbpc_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_nbpc_bypass(isp_handle handle, cmr_u32 bypass);
 
-/****************************************************Tshark2**********************************************************/
-//cmr_s32 isp_u_pwd_block(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_pwd_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
 cmr_s32 isp_u_1d_lsc_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_1d_lsc_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
-//cmr_s32 isp_u_raw_awbm_statistics(isp_handle handle, struct isp_raw_awbm_statistics *awb_info);
 cmr_s32 isp_u_raw_aem_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_raw_aem_bypass(isp_handle handle, void *block_info);
 cmr_s32 isp_u_raw_aem_mode(isp_handle handle, cmr_u32 mode);
@@ -312,13 +308,9 @@ cmr_s32 isp_u_raw_aem_shift(isp_handle handle, void *shift);
 cmr_s32 isp_u_raw_aem_offset(isp_handle handle, cmr_u32 x, cmr_u32 y);
 cmr_s32 isp_u_raw_aem_blk_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
 cmr_s32 isp_u_raw_aem_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
-//cmr_s32 isp_u_rgb_gain2_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_nlm_block(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_cmc8_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_ct_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_hsv_block(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_csc_block(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_csc_pic_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
 cmr_s32 isp_u_frgb_precdn_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_posterize_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_raw_afm_block(isp_handle handle, void *block_info);
@@ -343,14 +335,6 @@ cmr_s32 isp_u_raw_afm_sobel_threshold(isp_handle handle, cmr_u32 min, cmr_u32 ma
 cmr_s32 isp_u_raw_afm_spsmd_threshold(isp_handle handle, cmr_u32 min, cmr_u32 max);
 cmr_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range);
 cmr_s32 isp_u_raw_afm_win_num(isp_handle handle, cmr_u32 * win_num);
-//cmr_s32 isp_u_yiq_aem_block(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_yiq_aem_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
-//cmr_s32 isp_u_yiq_aem_ygamma_bypass(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_yiq_aem_bypass(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_yiq_aem_statistics(isp_handle handle, void *addr);
-//cmr_s32 isp_u_yiq_aem_skip_num(isp_handle handle, cmr_u32 skip_num);
-//cmr_s32 isp_u_yiq_aem_offset(isp_handle handle, cmr_u32 x, cmr_u32 y);
-//cmr_s32 isp_u_yiq_aem_blk_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
 cmr_s32 isp_u_anti_flicker_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_anti_flicker_statistic(isp_handle handle, void *addr);
 cmr_s32 isp_u_anti_flicker_bypass(isp_handle handle, void *block_info);
@@ -358,11 +342,6 @@ cmr_s32 isp_u_anti_flicker_new_bypass(isp_handle handle, void *block_info);
 cmr_s32 isp_u_anti_flicker_new_block(isp_handle handle, void *block_info);
 
 cmr_s32 isp_u_anti_flicker_transaddr(isp_handle handle, cmr_u32 phys_addr);
-//cmr_s32 isp_u_yiq_afm_block(isp_handle handle, void *block_info);
-//cmr_s32 isp_u_yiq_afm_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
-//cmr_s32 isp_u_yiq_afm_statistic(isp_handle handle, void* statis);
-//cmr_s32 isp_u_yiq_afm_win_num(isp_handle handle, cmr_u32 *win_num);
-//cmr_s32 isp_u_yiq_afm_win(isp_handle handle, void* win_range);
 cmr_s32 isp_u_yuv_precdn_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_hist_v1_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_hist_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
@@ -409,12 +388,9 @@ cmr_s32 isp_u_bq_init_bufqueue(isp_handle handle);
 cmr_s32 isp_u_bq_enqueue_buf(isp_handle handle, cmr_u64 k_addr, cmr_u64 u_addr, cmr_u32 type);
 cmr_s32 isp_u_bq_dequeue_buf(isp_handle handle, cmr_u64 * k_addr, cmr_u64 * u_addr, cmr_u32 type);
 
-/************************************pike*************************************************************/
-//cmr_s32 isp_u_wdr_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_rgb2y_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_nlm_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_nlm_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
-//cmr_s32 isp_u_uv_prefilter_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_dispatch_yuv_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_uvd_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_post_blc_block(isp_handle handle, void *block_info);

@@ -588,8 +588,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_param_data param_data;
-//      struct isp_pm_ioctl_input input = {NULL, 0};
-//      struct isp_pm_ioctl_output output = {NULL, 0};
 	struct ae_monitor_info info;
 	float gain = 0;
 	float exposure = 0;
@@ -602,13 +600,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
-#if 0
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	if (NULL != output.param_data) {
-		memcpy(output.param_data->data_ptr, (void *)in_ptr->ae_stat_ptr, sizeof(struct isp_awb_statistic_info));
-	}
-#endif
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, (void *)&iso);
@@ -877,8 +868,6 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 			alsc_info.awb_ct = result->ct;
 			alsc_info.stat_img_size.w = info.win_num.w;
 			alsc_info.stat_img_size.h = info.win_num.h;
-			//alsc_info.win_size.w = win_size.w;
-			//alsc_info.win_size.h = win_size.h;
 			alsc_info.stable = awb_calc_info->ae_result.is_stab;
 			alsc_info.image_width = cxt->commn_cxt.src.w;
 			alsc_info.image_height = cxt->commn_cxt.src.h;
@@ -976,15 +965,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 u_addr = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-#if 0
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	if (NULL == output.param_data) {
-		ISP_LOGE("fail to valid param_data pointer");
-		return ISP_PARAM_NULL;
-	}
-	ae_stat_ptr = output.param_data->data_ptr;
-#endif
 	statis_info = (struct isp_statis_info *)data;
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
@@ -1061,14 +1041,6 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	switch (data_type) {
 	case AF_DATA_AF:{
 			struct isp_statis_buf_input statis_buf;
-/*
-		struct isp_af_statistic_info afm_stat;
-		struct af_filter_info afm_param;
-		struct af_filter_data afm_data;
-		memset((void*)&afm_stat, 0, sizeof(afm_stat));
-		memset((void*)&afm_param, 0, sizeof(afm_param));
-		memset((void*)&afm_data, 0, sizeof(afm_data));
-*/
 			statis_info = (struct isp_statis_info *)in_ptr;
 			k_addr = statis_info->kaddr;
 			u_addr = statis_info->vir_addr;
@@ -1077,15 +1049,8 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			for (i = 0; i < 30; i++) {
 				af_temp[i] = *((cmr_u32 *) u_addr + i);
 			}
-/*
-		afm_data.data = (cmr_u64 *)&afm_stat;
-		afm_data.type = 1;
-		afm_param.filter_num = 1;
-		afm_param.filter_data = &afm_data;
-*/
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps = cxt->sensor_fps;
-			//calc_param.data = (void*)(&afm_param);
 			calc_param.data = (void *)(af_temp);
 			rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
 
@@ -1407,9 +1372,6 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 		rtn = _ispProcessEndHandle((cmr_handle) cxt);
 		break;
 	case ISP_CTRL_EVT_AE:{
-			//struct isp_irq *evt = (struct isp_irq *)message->data;
-			//cxt->ae_cxt.time = evt->time;
-			//rtn = ispalg_ae_awb_process((cmr_handle)cxt, message->data);
 			rtn = ispalg_aem_stat_data_parser((cmr_handle) cxt, message->data);
 			break;
 		}
@@ -1789,7 +1751,6 @@ static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	memset(&pdaf_output, 0x00, sizeof(pdaf_output));
 
 	pdaf_input.camera_id = cxt->camera_id;
-	//pdaf_input.pdaf_lib_info = cxt->lib_use_info->pdaf_lib_info;
 	pdaf_input.caller_handle = (cmr_handle) cxt;;
 
 	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
@@ -2747,14 +2708,6 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_VIDEO_STOP_NOTIFY, NULL, NULL);
-#if 0				/*modify for Solve compile problem */
-	cmr_u32 interrupt_mode = ISP_INT_CLEAR_MODE;
-
-	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
-	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ENABLE_IRQ, (void *)&interrupt_mode, NULL);
-	ISP_RETURN_IF_FAIL(rtn, ("isp_dev_enable_irq error"));
-	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
-#endif
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do isp cfg"));
 
 exit:

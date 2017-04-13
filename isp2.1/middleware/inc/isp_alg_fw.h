@@ -15,9 +15,7 @@
  */
 #ifndef _ISP_ALG_FW_H_
 #define _ISP_ALG_FW_H_
-/*----------------------------------------------------------------------------*
-**				Dependencies					*
-**---------------------------------------------------------------------------*/
+
 #include "cmr_type.h"
 #include "isp_pm.h"
 #include "sprd_isp_r6p10.h"
@@ -156,7 +154,5 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle);
 cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr);
 cmr_int isp_alg_proc_next(cmr_handle isp_alg_handle, struct ipn_in_param *in_ptr);
 cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd cmd, void *param_ptr);
-
-/**---------------------------------------------------------------------------*/
 
 #endif

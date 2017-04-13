@@ -15,9 +15,7 @@
  */
 #ifndef _ISP_DEV_ACCESS_H_
 #define _ISP_DEV_ACCESS_H_
-/*----------------------------------------------------------------------------*
-**				Dependencies					*
-**---------------------------------------------------------------------------*/
+
 #include "isp_drv.h"
 
 enum isp_dev_access_ctrl_cmd {
@@ -56,7 +54,6 @@ struct isp_dev_access_context {
 	struct isp_ops ops;
 };
 
-/**---------------------------------------------------------------------------*/
 cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, void *statics);
 cmr_int isp_dev_raw_afm_statistic_r6p9(cmr_handle isp_dev_handle, void *statics);
 cmr_u32 isp_dev_access_chip_id(cmr_handle isp_dev_handle);

@@ -18,7 +18,6 @@
 #include "ae_ctrl_types.h"
 #include "lsc_adv.h"
 #include "ae_ctrl.h"
-//#include "AlAwbInterface.h"
 
 //awb start
 enum awb_lib_product_id {
@@ -41,8 +40,6 @@ enum al_awb_lib_version_id {
 	AL_AWB_LIB_VERSION_3 = 0x3,
 	AL_AWB_LIB_VERSION_4 = 0x4,
 };
-
-//typedef void* sprd_af_handle_t;
 
 struct awb_lib_fun {
 	cmr_int(*awb_ctrl_init) (void *in, void *out);
@@ -128,16 +125,6 @@ struct af_lib_fun {
 
 };
 //af end
-#if 0
-struct al_awb_thirdlib_fun {
-	void (*AlAwbInterfaceInit) (TT_AlAwbInterface * pptInterface);
-	void (*AlAwbInterfaceDestroy) (TT_AlAwbInterface * pptInterface);
-	void (*AlAwbInterfaceReset) (TT_AlAwbInterface * pptInterface);
-	void (*AlAwbInterfaceMain) (TT_AlAwbInterface * pptInterface);
-	 UI_16(*AlAwbInterfaceSendCommand) (TT_AlAwbInterface * pptInterface, TT_AlAisCmd * pptCmd);
-	void (*AlAwbInterfaceShowVersion) (TT_AlAwbInterface * pptInterface);
-};
-#endif
 enum lsc_lib_product_id {
 	SPRD_LSC_LIB = 0x0,
 };
