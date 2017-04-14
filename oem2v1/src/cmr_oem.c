@@ -8313,24 +8313,16 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
         cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
                                            cxt->camera_id);
-        //		isp_ioctl(isp_cxt->isp_handle,
-        // ISP_CTRL_DENOISE_PARAM_UPDATE, (void*)&nr_update_param);
-        camera_isp_deinit(oem_handle);
-        camera_isp_init(oem_handle);
-
-#if 0
-		if (raw_filename[0]) {
-			//only copy the filename without the path
-			memcpy(value, raw_filename+7, PROPERTY_VALUE_MAX);
-		} else {
-			property_get("debug.camera.isptool.raw.name", value, "none");
-		}
-#endif
-
+        if (raw_filename[0]) {
+            //only copy the filename without the path
+            memcpy(value, raw_filename+25, PROPERTY_VALUE_MAX);
+        } else {
+            property_get("debug.camera.isptool.raw.name", value, "none");
+        }
         CMR_LOGI("parse file_name = %s", value);
         if (CMR_CAMERA_SUCCESS ==
             camera_parse_raw_filename(value, &scene_param)) {
-            sprintf(file_name, "/data/%s", value);
+            sprintf(file_name, "/data/misc/cameraserver/%s", value);
             //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
             CMR_LOGI(
@@ -8339,14 +8331,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 scene_param.awb_gain_r, scene_param.awb_gain_g,
                 scene_param.awb_gain_b, scene_param.smart_ct,
                 scene_param.smart_bv);
-#if 0
-			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_STOP_3A, NULL);
-			if (ret) {
-				CMR_LOGE("failed isp ioctl %ld", ret);
-			}
-#endif
-            //			ret = isp_ioctl(isp_cxt->isp_handle,
-            // ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_param);
+
+            ret = isp_ioctl(isp_cxt->isp_handle,
+                ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_param);
             if (ret) {
                 CMR_LOGE("failed isp ioctl %ld", ret);
             }

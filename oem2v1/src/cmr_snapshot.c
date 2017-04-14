@@ -29,6 +29,7 @@
 
 //#include "isp_otp.h"
 
+#define HW_SIMULATION_SLICE_WIDTH 1280
 #define SNP_MSG_QUEUE_SIZE 50
 #define SNP_INVALIDE_VALUE 0xFFFFFFFF
 #define SENSOR_DEFAULT_PIX_WIDTH 0x0a
@@ -1546,6 +1547,19 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     isp_in_param = chn_param_ptr->isp_proc_in[index];
     isp_in_param.slice_num = 1;
     chn_param_ptr->isp_process[index].slice_num = 1;
+
+    struct cmr_cap_mem *mem_ptr2 =
+        &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
+    isp_in_param.src_frame = mem_ptr2->cap_raw;
+    isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
+    isp_in_param.dst_frame = mem_ptr2->target_yuv;
+    isp_in_param.dst2_frame = mem_ptr2->cap_raw2;
+    isp_in_param.src_avail_height = mem_ptr2->cap_raw.size.height;
+    isp_in_param.src_slice_height = isp_in_param.src_avail_height;
+    isp_in_param.dst_slice_height = isp_in_param.src_avail_height;
+    isp_in_param.dst2_slice_height = isp_in_param.src_avail_height;
+    isp_in_param.slice_num = 1;
+
     if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) ||
         (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
         cmr_u32 raw_format, raw_pixel_width;
@@ -1576,19 +1590,22 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                                      mem_ptr->cap_raw.size.width,
                                      mem_ptr->cap_raw.size.height,
                                      &mem_ptr->cap_raw.addr_vir);
+        if (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode) {
+            snp_cvt_done(snp_handle);
+            if (HW_SIMULATION_SLICE_WIDTH < mem_ptr->cap_raw.size.width) {
+                ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
+                if (ret) {
+                    CMR_LOGE("failed to start isp proc %ld", ret);
+                }
+                camera_save_mipi_raw_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
+                                   mem_ptr->cap_raw.size.width,
+                                   mem_ptr->cap_raw.size.height,
+                                   &mem_ptr->cap_raw.addr_vir);
+            }
+        }
     }
 
-    struct cmr_cap_mem *mem_ptr2 =
-        &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
-    isp_in_param.src_frame = mem_ptr2->cap_raw;
-    isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
-    isp_in_param.dst_frame = mem_ptr2->target_yuv;
-    isp_in_param.dst2_frame = mem_ptr2->cap_raw2;
-    isp_in_param.src_avail_height = mem_ptr2->cap_raw.size.height;
-    isp_in_param.src_slice_height = isp_in_param.src_avail_height;
-    isp_in_param.dst_slice_height = isp_in_param.src_avail_height;
-    isp_in_param.dst2_slice_height = isp_in_param.src_avail_height;
-    isp_in_param.slice_num = 1;
+
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
     if (ret) {

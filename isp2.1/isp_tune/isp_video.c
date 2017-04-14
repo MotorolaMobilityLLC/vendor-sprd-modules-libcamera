@@ -716,41 +716,16 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 	switch (data_head->sub_type) {
 	case SCENEINFO:
 		{
+#if 0
 			memcpy((cmr_u8 *) nr_update_param.nr_scene_map_ptr, (cmr_u8 *) data_actual_ptr, sizeof(struct sensor_nr_scene_map_param));
 			memcpy((cmr_u8 *) nr_update_param.nr_level_number_map_ptr, ((cmr_u8 *) data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param),
 			       sizeof(struct sensor_nr_level_map_param));
 			memcpy((cmr_u8 *) nr_update_param.nr_default_level_map_ptr,
 			       ((cmr_u8 *) data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param) + sizeof(struct sensor_nr_level_map_param),
 			       sizeof(struct sensor_nr_level_map_param));
-#if 0
-			data_head_ptr->sub_type = SCENEINFO;	//0x14
-			src_size = sizeof(struct sensor_nr_scene_map_param)
-			    + sizeof(struct sensor_nr_level_map_param)
-			    + sizeof(struct sensor_nr_level_map_param);
-			//static cmr_u32 bpc_ptr_offset;
-			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
-				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
-				if (!nr_scene_and_level_map) {
-					ISP_LOGE("nr_scene_and_level_map malloc error !");
-					return -1;
-				}
-				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
-				//static cmr_u32 cce_ptr_offset;
-				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
-				//struct nr_param_ptr *nr_ptr = (struct nr_param_ptr*)nr_update_param.cce_uvdiv_level_ptr;
-				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
-				//memcpy(((cmr_u8*)(nr_ptr->common_param_ptr)) + cce_ptr_offset, (cmr_u8*)data_actual_ptr, data_actual_len);
-				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				//if (0x01 != data_head->packet_status)
-				//      cce_ptr_offset += data_actual_len;
-				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
-				ISP_LOGE("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-			} else {
-				ISP_LOGE("nr_scene_and_level_map is null error");
-			}
-			break;
 #endif
+			break;
+
 		}
 	case V21PPI:
 		{
@@ -3636,7 +3611,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					scene_param.height = img_height;
 
 					bzero(raw_filename, sizeof(raw_filename));
-					sprintf(raw_filename + 1, "/data/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
+					sprintf(raw_filename + 1, "/data/misc/cameraserver/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
 						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
 						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
