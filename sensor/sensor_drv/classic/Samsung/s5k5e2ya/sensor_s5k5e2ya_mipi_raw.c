@@ -1369,15 +1369,16 @@ snapshot_info:
  * please don't change this function unless it's necessary
  *============================================================================*/
 static uint32_t s5k5e2ya_write_exposure(SENSOR_HW_HANDLE handle,
-                                        uint32_t param) {
+                                         unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;
     uint16_t mode = 0x00;
+    struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
 
-    exposure_line = param & 0xffff;
-    dummy_line = (param >> 0x10) & 0xfff; /*for cits frame rate test*/
-    mode = (param >> 0x1c) & 0x0f;
+    exposure_line = ex->exposure;
+    dummy_line = ex->dummy;
+    mode = ex->size_index;
 
     SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                  exposure_line, dummy_line);
