@@ -35,6 +35,7 @@
 #include "sensor_ov5675_raw_param_cap_0.c"
 #include "sensor_ov5675_raw_param_cap_1.c"
 #include "sensor_ov5675_raw_param_video_0.c"
+#include "sensor_ov5675_raw_param_video_1.c"
 
 /* End Include */
 
@@ -163,7 +164,7 @@ static struct sensor_raw_info s_ov5675_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{s_ov5675_tune_info_video_0, sizeof(s_ov5675_tune_info_video_0)},
-		{NULL, 0},
+		{s_ov5675_tune_info_video_1, sizeof(s_ov5675_tune_info_video_1)},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -181,7 +182,7 @@ static struct sensor_raw_info s_ov5675_mipi_raw_info=
 		NULL,
 		NULL,
 		&s_ov5675_fix_info_video_0,
-		NULL,
+		&s_ov5675_fix_info_video_1,
 		NULL,
 		NULL,
 	},
@@ -196,7 +197,7 @@ static struct sensor_raw_info s_ov5675_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{s_ov5675_video_0_tool_ui_input, sizeof(s_ov5675_video_0_tool_ui_input)},
-		{NULL, 0},
+		{s_ov5675_video_1_tool_ui_input, sizeof(s_ov5675_video_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 	},
