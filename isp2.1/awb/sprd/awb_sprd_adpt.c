@@ -624,8 +624,6 @@ static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 
 	if (0 == cxt->lock_info.lock_num) {
 		cxt->lock_info.lock_mode = AWB_CTRL_UNLOCKMODE;
-		cxt->lock_info.lock_flag= 1;
-		cxt->lock_info.lock_flash_frame= 5;
 	}
 
 	ISP_LOGV("AWB_TEST _awb_get_unlock1: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
@@ -651,6 +649,17 @@ static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 #endif
+
+static cmr_u32 _awb_flash_snopshot_recovery(struct awb_ctrl_cxt *cxt, void *param)
+{
+	UNUSED(param);
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+
+	cxt->flash_info.main_flash_enable = 1;
+	cxt->lock_info.lock_flash_frame= 10;
+
+	return rtn;
+}
 
 static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 {
@@ -848,7 +857,6 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->snap_lock = 0; // recovery snapshot awb continus frames
 	cxt->last_enable = 0;
 	cxt->flash_info.flash_enable = 0;
-	cxt->lock_info.lock_flag = 0;
 	cxt->lock_info.lock_flash_frame = 0;
 	cxt->flash_info.main_flash_enable =0;
 	cxt->init = AWB_CTRL_TRUE;
@@ -1145,20 +1153,6 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		}
 	}
 
-	//lock awb after flash
-	if(cxt->lock_info.lock_flag == 1 && cxt->flash_info.main_flash_enable == 1){
-		if(cxt->lock_info.lock_flash_frame != 0){
-			cxt->output_gain.r = cxt->recover_gain.r ;
-			cxt->output_gain.g = cxt->recover_gain.g;
-			cxt->output_gain.b = cxt->recover_gain.b;
-			cxt->output_ct = cxt->recover_ct;
-			cxt->lock_info.lock_flash_frame -=1;
-		}else{
-			cxt->flash_info.main_flash_enable = 0;
-			cxt->lock_info.lock_flag == 0;
-		}
-	}
-
 	//lock mode
 	if (AWB_CTRL_LOCKMODE == cxt->lock_info.lock_mode) {
 		cxt->output_gain.r = cxt->lock_info.lock_gain.r;
@@ -1176,7 +1170,19 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->snap_lock-=1;
 	}
 
-//	ISP_LOGD("cxt->snap_lock =%d lock_mode =%d lock_flag =%d main_flash_enable =%d lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->lock_info.lock_flag,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
+	//lock awb after flash
+	if(cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0){
+		cxt->output_gain.r = cxt->recover_gain.r ;
+		cxt->output_gain.g = cxt->recover_gain.g;
+		cxt->output_gain.b = cxt->recover_gain.b;
+		cxt->output_ct = cxt->recover_ct;
+		cxt->lock_info.lock_flash_frame -=1;
+	}else{
+		cxt->flash_info.main_flash_enable = 0;
+	}
+
+//	ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
+
 
 	result->gain.r = cxt->output_gain.r;
 	result->gain.g = cxt->output_gain.g;
@@ -1243,7 +1249,6 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_M");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_MAIN;
-		cxt->flash_info.main_flash_enable = 1;
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_P:
@@ -1271,6 +1276,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_UNLOCK:
 		rtn = _awb_get_unlock(cxt, in);
+		break;
+
+	case AWB_CTRL_CMD_FLASH_SNOP:
+		rtn = _awb_flash_snopshot_recovery(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_GET_STAT_SIZE:

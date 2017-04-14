@@ -61,6 +61,7 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_GET_DEBUG_INFO = 0x30B,
 	AWB_CTRL_CMD_GET_PIX_CNT = 0x30C,
 	AWB_CTRL_CMD_VIDEO_STOP_NOTIFY = 0x30D,
+	AWB_CTRL_CMD_FLASH_SNOP = 0X30f,
 	AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
 };
 
@@ -242,7 +243,6 @@ struct awb_ctrl_lock_info {
 	cmr_u32 lock_mode;
 	cmr_u32 lock_ct;
 	cmr_u32 lock_num;
-	cmr_u32 lock_flag;
 	cmr_u32 lock_flash_frame; // recovery flash awb continus frames
 	cmr_u32 unlock_num;
 };
