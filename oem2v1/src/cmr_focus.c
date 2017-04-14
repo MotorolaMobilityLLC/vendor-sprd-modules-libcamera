@@ -18,6 +18,7 @@
 #include "cmr_msg.h"
 #include "cmr_oem.h"
 #include "cmr_focus.h"
+#include <cutils/properties.h>
 
 #define CMR_EVT_AF_START (CMR_EVT_OEM_BASE + 10)
 #define CMR_EVT_AF_EXIT (CMR_EVT_OEM_BASE + 11)
@@ -1499,6 +1500,8 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct timespec ts;
     struct af_context *af_cxt = (struct af_context *)af_handle;
+    struct camera_context *cam_cxt =
+        (struct camera_context *)(af_cxt->oem_handle);
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -1511,7 +1514,24 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
         CMR_LOGE("get time failed");
         goto exit;
     } else {
-        ts.tv_sec += ISP_PROCESS_SEC_TIMEOUT;
+        if (cam_cxt->is_multi_mode == MODE_BLUR) {
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
+            if (camera_id == 1) {
+                property_get("persist.sys.cam.fr.blur.version", prop, "0");
+            } else {
+                property_get("persist.sys.cam.ba.blur.version", prop, "0");
+            }
+            if (2 == atoi(prop)) {
+                property_get("persist.sys.cam.blur.af.timeout", prop, "3");
+                ts.tv_sec += atoi(prop);
+            } else {
+                ts.tv_sec += ISP_PROCESS_SEC_TIMEOUT;
+            }
+        } else {
+            ts.tv_sec += ISP_PROCESS_SEC_TIMEOUT;
+        }
         if (ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT >= (1000 * 1000 * 1000)) {
             ts.tv_nsec =
                 ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT - (1000 * 1000 * 1000);
