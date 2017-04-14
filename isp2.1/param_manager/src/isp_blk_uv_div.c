@@ -21,7 +21,7 @@ cmr_u32 _pm_uv_div_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u3
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
-	struct isp_cce_uvdiv_param_v1 *dst_ptr = (struct isp_cce_uvdiv_param_v1 *)dst_param;
+	struct isp_cce_uvdiv_param *dst_ptr = (struct isp_cce_uvdiv_param *)dst_param;
 	struct sensor_cce_uvdiv_level *cce_uvdiv_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -69,12 +69,12 @@ cmr_u32 _pm_uv_div_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u3
 	return rtn;
 }
 
-cmr_s32 _pm_uv_div_init_v1(void *dst_uv_div_param, void *src_uv_div_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_uv_div_param;
-	struct isp_cce_uvdiv_param_v1 *dst_ptr = (struct isp_cce_uvdiv_param_v1 *)dst_uv_div_param;
+	struct isp_cce_uvdiv_param *dst_ptr = (struct isp_cce_uvdiv_param *)dst_uv_div_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
@@ -98,10 +98,10 @@ cmr_s32 _pm_uv_div_init_v1(void *dst_uv_div_param, void *src_uv_div_param, void 
 	return rtn;
 }
 
-cmr_s32 _pm_uv_div_set_param_v1(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_uv_div_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_cce_uvdiv_param_v1 *dst_ptr = (struct isp_cce_uvdiv_param_v1 *)uv_div_param;
+	struct isp_cce_uvdiv_param *dst_ptr = (struct isp_cce_uvdiv_param *)uv_div_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
@@ -151,10 +151,10 @@ cmr_s32 _pm_uv_div_set_param_v1(void *uv_div_param, cmr_u32 cmd, void *param_ptr
 	return rtn;
 }
 
-cmr_s32 _pm_uv_div_get_param_v1(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_cce_uvdiv_param_v1 *uvdiv_ptr = (struct isp_cce_uvdiv_param_v1 *)uv_div_param;
+	struct isp_cce_uvdiv_param *uvdiv_ptr = (struct isp_cce_uvdiv_param *)uv_div_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

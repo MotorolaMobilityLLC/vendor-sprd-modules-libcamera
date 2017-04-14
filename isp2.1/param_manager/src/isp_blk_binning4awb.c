@@ -16,11 +16,11 @@
 #define LOG_TAG "isp_blk_binning4awb"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_binning4awb_init_v1(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2)
+cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
-	struct isp_binning4awb_param_v1 *dst_ptr = (struct isp_binning4awb_param_v1 *)dst_binning4awb;
+	struct isp_binning4awb_param *dst_ptr = (struct isp_binning4awb_param *)dst_binning4awb;
 	struct isp_bin_param *src_ptr = (struct isp_bin_param *)src_binning4awb;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct isp_size *img_size_ptr = (struct isp_size *)param2;
@@ -38,10 +38,10 @@ cmr_s32 _pm_binning4awb_init_v1(void *dst_binning4awb, void *src_binning4awb, vo
 	return rtn;
 }
 
-cmr_s32 _pm_binning4awb_set_param_v1(void *binning4awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_binning4awb_set_param(void *binning4awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_binning4awb_param_v1 *dst_ptr = (struct isp_binning4awb_param_v1 *)binning4awb_param;
+	struct isp_binning4awb_param *dst_ptr = (struct isp_binning4awb_param *)binning4awb_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	header_ptr->is_update = ISP_ONE;
@@ -59,10 +59,10 @@ cmr_s32 _pm_binning4awb_set_param_v1(void *binning4awb_param, cmr_u32 cmd, void 
 	return rtn;
 }
 
-cmr_s32 _pm_binning4awb_get_param_v1(void *binning4awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_binning4awb_get_param(void *binning4awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_binning4awb_param_v1 *binning4awb_ptr = (struct isp_binning4awb_param_v1 *)binning4awb_param;
+	struct isp_binning4awb_param *binning4awb_ptr = (struct isp_binning4awb_param *)binning4awb_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

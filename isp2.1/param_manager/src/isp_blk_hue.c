@@ -16,10 +16,10 @@
 #define LOG_TAG "isp_blk_hue"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_hue_init_v1(void *dst_hue_param, void *src_hue_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_hue_init(void *dst_hue_param, void *src_hue_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_hue_param_v1 *dst_hue_ptr = (struct isp_hue_param_v1 *)dst_hue_param;
+	struct isp_hue_param *dst_hue_ptr = (struct isp_hue_param *)dst_hue_param;
 	struct sensor_hue_param *src_hue_ptr = (struct sensor_hue_param *)src_hue_param;
 	struct isp_pm_block_header *hue_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
@@ -35,10 +35,10 @@ cmr_s32 _pm_hue_init_v1(void *dst_hue_param, void *src_hue_param, void *param1, 
 	return rtn;
 }
 
-cmr_s32 _pm_hue_set_param_v1(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_hue_set_param(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_hue_param_v1 *hue_ptr = (struct isp_hue_param_v1 *)hue_param;
+	struct isp_hue_param *hue_ptr = (struct isp_hue_param *)hue_param;
 	struct isp_pm_block_header *hue_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 	hue_header_ptr->is_update = ISP_ONE;
 
@@ -63,10 +63,10 @@ cmr_s32 _pm_hue_set_param_v1(void *hue_param, cmr_u32 cmd, void *param_ptr0, voi
 	return rtn;
 }
 
-cmr_s32 _pm_hue_get_param_v1(void *hue_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_hue_get_param(void *hue_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_hue_param_v1 *hue_ptr = (struct isp_hue_param_v1 *)hue_param;
+	struct isp_hue_param *hue_ptr = (struct isp_hue_param *)hue_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

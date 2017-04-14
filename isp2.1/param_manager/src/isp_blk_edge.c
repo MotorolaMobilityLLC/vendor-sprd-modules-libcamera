@@ -21,7 +21,7 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)dst_edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -164,13 +164,13 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 	return rtn;
 }
 
-cmr_s32 _pm_edge_init_v1(void *dst_edge_param, void *src_edge_param, void *param1, void *param2)
+cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_edge_param;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)dst_edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	UNUSED(param2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
@@ -193,11 +193,11 @@ cmr_s32 _pm_edge_init_v1(void *dst_edge_param, void *src_edge_param, void *param
 	return rtn;
 }
 
-cmr_s32 _pm_edge_set_param_v1(void *edge_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)edge_param;
 
 	switch (cmd) {
 	case ISP_PM_BLK_EDGE_BYPASS:
@@ -264,10 +264,10 @@ cmr_s32 _pm_edge_set_param_v1(void *edge_param, cmr_u32 cmd, void *param_ptr0, v
 	return rtn;
 }
 
-cmr_s32 _pm_edge_get_param_v1(void *edge_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_edge_get_param(void *edge_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_edge_param_v1 *edge_ptr = (struct isp_edge_param_v1 *)edge_param;
+	struct isp_edge_param *edge_ptr = (struct isp_edge_param *)edge_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

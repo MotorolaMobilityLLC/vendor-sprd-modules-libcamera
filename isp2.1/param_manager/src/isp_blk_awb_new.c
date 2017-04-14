@@ -20,14 +20,14 @@ cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void *param1, voi
 {
 
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1 *)dst_awb_new;
+	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)dst_awb_new;
 	struct sensor_awbc_param *src_ptr = (struct sensor_awbc_param *)src_awb_new;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
 	dst_ptr->ct_value = 5000;
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
-	 /*AWBC*/ dst_ptr->cur.awbc_bypass = header_ptr->bypass;
+		dst_ptr->cur.awbc_bypass = header_ptr->bypass;
 
 	dst_ptr->cur.gain.r = 0x700;	//src_ptr->awbc_gain.r_gain;
 	dst_ptr->cur.gain.gr = 0x400;	//src_ptr->awbc_gain.gr_gain;
@@ -51,7 +51,7 @@ cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0
 {
 
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1 *)awb_new_param;
+	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)awb_new_param;
 	struct isp_pm_block_header *awb_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	awb_header_ptr->is_update = ISP_ONE;
@@ -108,7 +108,7 @@ cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0
 cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *awb_param_ptr = (struct isp_awb_param_v1 *)awb_new_param;
+	struct isp_awb_param *awb_param_ptr = (struct isp_awb_param *)awb_new_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

@@ -21,7 +21,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0, j = 0;
 	cmr_u32 total_offset_units = 0;
-	struct isp_nlm_param_v1 *dst_ptr = (struct isp_nlm_param_v1 *)dst_nlm_param;
+	struct isp_nlm_param *dst_ptr = (struct isp_nlm_param *)dst_nlm_param;
 	void *addr = NULL;
 
 	struct sensor_nlm_level *nlm_param = NULL;
@@ -130,7 +130,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	void *addr = NULL;
-	struct isp_nlm_param_v1 *dst_ptr = (struct isp_nlm_param_v1 *)dst_nlm_param;
+	struct isp_nlm_param *dst_ptr = (struct isp_nlm_param *)dst_nlm_param;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_nlm_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
@@ -208,7 +208,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_nlm_param_v1 *nlm_ptr = (struct isp_nlm_param_v1 *)nlm_param;
+	struct isp_nlm_param *nlm_ptr = (struct isp_nlm_param *)nlm_param;
 	struct isp_pm_block_header *nlm_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
@@ -262,7 +262,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_nlm_param_v1 *nlm_ptr = (struct isp_nlm_param_v1 *)nlm_param;
+	struct isp_nlm_param *nlm_ptr = (struct isp_nlm_param *)nlm_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
@@ -286,7 +286,7 @@ cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *
 cmr_s32 _pm_nlm_deinit(void *nlm_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_nlm_param_v1 *nlm_ptr = (struct isp_nlm_param_v1 *)nlm_param;
+	struct isp_nlm_param *nlm_ptr = (struct isp_nlm_param *)nlm_param;
 
 	if (PNULL != nlm_ptr->vst_map.data_ptr) {
 		free(nlm_ptr->vst_map.data_ptr);

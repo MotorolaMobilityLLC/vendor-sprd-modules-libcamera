@@ -96,7 +96,7 @@ cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 
 	return rtn;
 }
 
-cmr_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void *param1, void *param2)
+cmr_s32 _pm_grgb_init(void *dst_grgb_param, void *src_grgb_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_grgb_param *dst_ptr = (struct isp_grgb_param *)dst_grgb_param;
@@ -125,7 +125,7 @@ cmr_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void *param
 	return rtn;
 }
 
-cmr_s32 _pm_grgb_set_param_v1(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_grgb_set_param(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_grgb_param *dst_ptr = (struct isp_grgb_param *)grgb_param;
@@ -177,7 +177,7 @@ cmr_s32 _pm_grgb_set_param_v1(void *grgb_param, cmr_u32 cmd, void *param_ptr0, v
 	return rtn;
 }
 
-cmr_s32 _pm_grgb_get_param_v1(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_grgb_get_param(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_grgb_param *grgb_ptr = (struct isp_grgb_param *)grgb_param;

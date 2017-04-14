@@ -16,11 +16,11 @@
 #define LOG_TAG "isp_blk_nlc"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void *param1, void *param2)
+cmr_s32 _pm_nlc_init(void *dst_nlc_param, void *src_nlc_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
-	struct isp_nlc_param_v1 *dst_ptr = (struct isp_nlc_param_v1 *)dst_nlc_param;
+	struct isp_nlc_param *dst_ptr = (struct isp_nlc_param *)dst_nlc_param;
 	struct sensor_nlc_param *src_ptr = (struct sensor_nlc_param *)src_nlc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
@@ -42,11 +42,11 @@ cmr_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void *param1, 
 	return rtn;
 }
 
-cmr_s32 _pm_nlc_set_param_v1(void *nlc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_nlc_set_param(void *nlc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_u32 i = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_nlc_param_v1 *dst_ptr = (struct isp_nlc_param_v1 *)nlc_param;
+	struct isp_nlc_param *dst_ptr = (struct isp_nlc_param *)nlc_param;
 	struct sensor_nlc_param *src_ptr = (struct sensor_nlc_param *)param_ptr0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
@@ -77,11 +77,11 @@ cmr_s32 _pm_nlc_set_param_v1(void *nlc_param, cmr_u32 cmd, void *param_ptr0, voi
 	return rtn;
 }
 
-cmr_s32 _pm_nlc_get_param_v1(void *nlc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_nlc_get_param(void *nlc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
-	struct isp_nlc_param_v1 *nlc_ptr = (struct isp_nlc_param_v1 *)nlc_param;
+	struct isp_nlc_param *nlc_ptr = (struct isp_nlc_param *)nlc_param;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_NLC;

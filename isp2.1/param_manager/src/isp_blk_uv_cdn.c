@@ -21,7 +21,7 @@ cmr_u32 _pm_uv_cdn_convert_param(void *dst_cdn_param, cmr_u32 strength_level, cm
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
-	struct isp_uv_cdn_param_v1 *dst_ptr = (struct isp_uv_cdn_param_v1 *)dst_cdn_param;
+	struct isp_uv_cdn_param *dst_ptr = (struct isp_uv_cdn_param *)dst_cdn_param;
 	struct sensor_uv_cdn_level *uv_cdn_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -55,13 +55,13 @@ cmr_u32 _pm_uv_cdn_convert_param(void *dst_cdn_param, cmr_u32 strength_level, cm
 	return rtn;
 }
 
-cmr_s32 _pm_uv_cdn_init_v1(void *dst_cdn_param, void *src_cdn_param, void *param1, void *param2)
+cmr_s32 _pm_uv_cdn_init(void *dst_cdn_param, void *src_cdn_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_cdn_param;
-	struct isp_uv_cdn_param_v1 *dst_ptr = (struct isp_uv_cdn_param_v1 *)dst_cdn_param;
+	struct isp_uv_cdn_param *dst_ptr = (struct isp_uv_cdn_param *)dst_cdn_param;
 	UNUSED(param2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
@@ -84,11 +84,11 @@ cmr_s32 _pm_uv_cdn_init_v1(void *dst_cdn_param, void *src_cdn_param, void *param
 	return rtn;
 }
 
-cmr_s32 _pm_uv_cdn_set_param_v1(void *cdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_uv_cdn_set_param(void *cdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
-	struct isp_uv_cdn_param_v1 *dst_ptr = (struct isp_uv_cdn_param_v1 *)cdn_param;
+	struct isp_uv_cdn_param *dst_ptr = (struct isp_uv_cdn_param *)cdn_param;
 
 	switch (cmd) {
 	case ISP_PM_BLK_UV_CDN_BYPASS_V1:
@@ -138,10 +138,10 @@ cmr_s32 _pm_uv_cdn_set_param_v1(void *cdn_param, cmr_u32 cmd, void *param_ptr0, 
 	return rtn;
 }
 
-cmr_s32 _pm_uv_cdn_get_param_v1(void *cdn_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_uv_cdn_get_param(void *cdn_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_uv_cdn_param_v1 *cdn_ptr = (struct isp_uv_cdn_param_v1 *)cdn_param;
+	struct isp_uv_cdn_param *cdn_ptr = (struct isp_uv_cdn_param *)cdn_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

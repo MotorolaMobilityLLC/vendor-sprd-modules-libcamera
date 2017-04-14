@@ -29,7 +29,6 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 
 	dst_ptr->tab_num = src_ptr->tab_num;
 	for (i = 0; i < ISP_COLOR_TEMPRATURE_NUM; ++i) {
-		//yongheng.lu
 		addr = (intptr_t) & (src_ptr->tab_info.lsc_2d_map) + src_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset;
 		dst_ptr->map_tab[i].param_addr = (void *)addr;
 		dst_ptr->map_tab[i].len = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_len;

@@ -66,17 +66,17 @@ cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 *
 
 /*******************************isp_pm_blocks******************************/
 
-cmr_s32 _pm_pre_gbl_gain_init_v1(void *dst_pre_gbl_gain, void *src_pre_gbl_gain, void *param1, void *param2);
-cmr_s32 _pm_pre_gbl_gain_set_param_v1(void *pre_gbl_gain_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_pre_gbl_gain_get_param_v1(void *pre_gbl_gain_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_pre_gbl_gain_init(void *dst_pre_gbl_gain, void *src_pre_gbl_gain, void *param1, void *param2);
+cmr_s32 _pm_pre_gbl_gain_set_param(void *pre_gbl_gain_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_pre_gbl_gain_get_param(void *pre_gbl_gain_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_blc_init(void *dst_blc_param, void *src_blc_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_blc_get_param(void *blc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_blc_init_v1(void *dst_blc_param, void *src_blc_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_blc_set_param_v1(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_blc_get_param_v1(void *blc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_blc_init(void *dst_blc_param, void *src_blc_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_blc_get_param(void *blc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_pdaf_correct_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
 cmr_s32 _pm_pdaf_correct_init(void *dst_pdaf_correct_param, void *src_pdaf_correct_param, void *param1, void *param2);
@@ -91,9 +91,9 @@ cmr_s32 _pm_postblc_init(void *dst_postblc_param, void *src_postblc_param, void 
 cmr_s32 _pm_postblc_set_param(void *postblc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_postblc_get_param(void *postblc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_rgb_gain_init_v1(void *dst_gbl_gain, void *src_gbl_gain, void *param1, void *param2);
-cmr_s32 _pm_rgb_gain_set_param_v1(void *gbl_gain_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_rgb_gain_get_param_v1(void *gbl_gain_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_rgb_gain_init(void *dst_gbl_gain, void *src_gbl_gain, void *param1, void *param2);
+cmr_s32 _pm_rgb_gain_set_param(void *gbl_gain_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_rgb_gain_get_param(void *gbl_gain_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_rgb_dither_init(void *dst_rgb_dither_param, void *src_rgb_dither_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_rgb_dither_set_param(void *rgb_dither_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -115,33 +115,33 @@ cmr_s32 _pm_1d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 cmr_s32 _pm_1d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_1d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_binning4awb_init_v1(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2);
-cmr_s32 _pm_binning4awb_set_param_v1(void *binning4awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_binning4awb_get_param_v1(void *binning4awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2);
+cmr_s32 _pm_binning4awb_set_param(void *binning4awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_binning4awb_get_param(void *binning4awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 //awbc
-cmr_s32 _pm_awb_init_v1(void *dst_pwd, void *src_pwd, void *param1, void *param2);
-cmr_s32 _pm_awb_set_param_v1(void *pwd_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_awb_get_param_v1(void *pwd_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_awb_init(void *dst_pwd, void *src_pwd, void *param1, void *param2);
+cmr_s32 _pm_awb_set_param(void *pwd_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_awb_get_param(void *pwd_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_frgb_gamc_init(void *dst_gamc_param, void *src_gamc_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_frgb_gamc_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_bpc_init_v1(void *dst_bpc_param, void *src_bpc_param, void *param1, void *param2);
-cmr_s32 _pm_bpc_set_param_v1(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_bpc_get_param_v1(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, void *param2);
+cmr_s32 _pm_bpc_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_bpc_get_param(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void *param1, void *param2);
-cmr_s32 _pm_grgb_set_param_v1(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_grgb_get_param_v1(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_grgb_init(void *dst_grgb_param, void *src_grgb_param, void *param1, void *param2);
+cmr_s32 _pm_grgb_set_param(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_grgb_get_param(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_cfa_convert_param(void *dst_cfae_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_cfa_init_v1(void *dst_cfae_param, void *src_cfae_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_cfa_set_param_v1(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_cfa_get_param_v1(void *cfa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_cfa_init(void *dst_cfae_param, void *src_cfae_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_cfa_set_param(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_cfa_get_param(void *cfa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_rgb_afm_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
 cmr_s32 _pm_rgb_afm_init(void *dst_rgb_afm, void *src_rgb_aef, void *param1, void *param2);
@@ -166,17 +166,17 @@ cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void *p
 cmr_s32 _pm_posterize_set_param(void *pstrz_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_posterize_get_param(void *pstrz_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 *cce_param, cmr_u32 hue, cmr_u32 saturation);
-cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param_v1 *cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain);
-cmr_s32 _pm_cce_adjust(struct isp_cce_param_v1 *cce_param);
-cmr_s32 _pm_cce_init_v1(void *dst_cce_param, void *src_cce_param, void *param1, void *param2);
-cmr_s32 _pm_cce_set_param_v1(void *cce_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_cce_get_param_v1(void *cce_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param *cce_param, cmr_u32 hue, cmr_u32 saturation);
+cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param *cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain);
+cmr_s32 _pm_cce_adjust(struct isp_cce_param *cce_param);
+cmr_s32 _pm_cce_init(void *dst_cce_param, void *src_cce_param, void *param1, void *param2);
+cmr_s32 _pm_cce_set_param(void *cce_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_cce_get_param(void *cce_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_uv_div_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_uv_div_init_v1(void *dst_uv_div_param, void *src_uv_div_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_uv_div_set_param_v1(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_uv_div_get_param_v1(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_uv_div_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_yiq_afl_init_v1(void *dst_afl_param, void *src_afl_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_yiq_afl_set_param_v1(void *afl_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -214,23 +214,23 @@ cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void *param1, 
 cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_contrast_get_param(void *contrast_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_hist_init_v1(void *dst_hist_param, void *src_hist_param, void *param1, void *param2);
-cmr_s32 _pm_hist_set_param_v1(void *hist_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_hist_get_param_v1(void *hist_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_hist_init(void *dst_hist_param, void *src_hist_param, void *param1, void *param2);
+cmr_s32 _pm_hist_set_param(void *hist_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_hist_get_param(void *hist_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_hist2_init_v1(void *dst_hist2_param, void *src_hist2_param, void *param1, void *param2);
-cmr_s32 _pm_hist2_set_param_v1(void *hist2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_hist2_get_param_v1(void *hist2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_hist2_init(void *dst_hist2_param, void *src_hist2_param, void *param1, void *param2);
+cmr_s32 _pm_hist2_set_param(void *hist2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_hist2_get_param(void *hist2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_edge_init_v1(void *dst_edge_param, void *src_edge_param, void *param1, void *param2);
-cmr_s32 _pm_edge_set_param_v1(void *edge_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_edge_get_param_v1(void *edge_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, void *param2);
+cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_edge_get_param(void *edge_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_uv_cdn_convert_param(void *dst_cdn_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_uv_cdn_init_v1(void *dst_cdn_param, void *src_cdn_param, void *param1, void *param2);
-cmr_s32 _pm_uv_cdn_set_param_v1(void *cdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_uv_cdn_get_param_v1(void *cdn_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_uv_cdn_init(void *dst_cdn_param, void *src_cdn_param, void *param1, void *param2);
+cmr_s32 _pm_uv_cdn_set_param(void *cdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_uv_cdn_get_param(void *cdn_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_uv_postcdn_convert_param(void *dst_postcdn_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
 cmr_s32 _pm_uv_postcdn_init(void *dst_postcdn_param, void *src_postcdn_param, void *param1, void *param_ptr2);
@@ -241,13 +241,13 @@ cmr_s32 _pm_ydelay_init(void *dst_ydelay, void *src_ydelay, void *param1, void *
 cmr_s32 _pm_ydelay_set_param(void *ydelay_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_ydelay_get_param(void *ydelay_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_saturation_init_v1(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_saturation_set_param_v1(void *csa_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_saturation_get_param_v1(void *csa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_saturation_set_param(void *csa_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_saturation_get_param(void *csa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_hue_init_v1(void *dst_hue_param, void *src_hue_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_hue_set_param_v1(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_hue_get_param_v1(void *hue_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_hue_init(void *dst_hue_param, void *src_hue_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_hue_set_param(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_hue_get_param(void *hue_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_u32 _pm_iircnr_iir_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
 cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2);
@@ -271,9 +271,9 @@ cmr_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_
 cmr_s32 _pm_envi_detect_set_param(void *envi_detect_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_envi_detect_get_param(void *envi_detect_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void *param1, void *param2);
-cmr_s32 _pm_nlc_set_param_v1(void *nlc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_nlc_get_param_v1(void *nlc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_nlc_init(void *dst_nlc_param, void *src_nlc_param, void *param1, void *param2);
+cmr_s32 _pm_nlc_set_param(void *nlc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_nlc_get_param(void *nlc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void *param1, void *param2);
 cmr_s32 _pm_rgb_aem_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -283,9 +283,9 @@ cmr_s32 _pm_csc_init(void *dst_csc_param, void *src_csc_param, void *param1, voi
 cmr_s32 _pm_csc_set_param(void *csc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_csc_get_param(void *csc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_rgb_afm_init_v1(void *dst_afm_param, void *src_afm_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_rgb_afm_set_param_v1(void *afm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_rgb_afm_get_param_v1(void *afm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_rgb_afm_init(void *dst_afm_param, void *src_afm_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_rgb_afm_set_param(void *afm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_rgb_afm_get_param(void *afm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_smart_init(void *dst_smart_param, void *src_smart_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_smart_set_param(void *smart_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

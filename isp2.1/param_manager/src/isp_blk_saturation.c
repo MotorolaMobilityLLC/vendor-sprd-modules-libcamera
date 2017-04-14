@@ -16,7 +16,7 @@
 #define LOG_TAG "isp_blk_saturation"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_saturation_init_v1(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0;
@@ -44,7 +44,7 @@ cmr_s32 _pm_saturation_init_v1(void *dst_csa_param, void *src_csa_param, void *p
 	return rtn;
 }
 
-cmr_s32 _pm_saturation_set_param_v1(void *csa_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_saturation_set_param(void *csa_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_chrom_saturation_param *csa_ptr = (struct isp_chrom_saturation_param *)csa_param;
@@ -113,7 +113,7 @@ cmr_s32 _pm_saturation_set_param_v1(void *csa_param, cmr_u32 cmd, void *param_pt
 	return rtn;
 }
 
-cmr_s32 _pm_saturation_get_param_v1(void *csa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_saturation_get_param(void *csa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_chrom_saturation_param *csa_ptr = (struct isp_chrom_saturation_param *)csa_param;

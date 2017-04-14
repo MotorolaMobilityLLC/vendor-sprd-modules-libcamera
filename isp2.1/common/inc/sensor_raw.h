@@ -1867,13 +1867,6 @@ struct sensor_ae_tab {
 	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
 };
 
-struct sensor_2d_lsc_param_v1 {
-	struct isp_sample_point_info cur_idx;
-	cmr_u32 tab_num;
-	//struct sensor_lens_map_addr map[SENSOR_LENS_NUM];
-	//void *data_area;
-};
-
 struct sensor_lens_map_info {
 	cmr_u32 envi;
 	cmr_u32 ct;

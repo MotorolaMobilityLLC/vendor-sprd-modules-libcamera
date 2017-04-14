@@ -21,7 +21,7 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
-	struct isp_bpc_param_v1 *dst_ptr = (struct isp_bpc_param_v1 *)dst_param;
+	struct isp_bpc_param *dst_ptr = (struct isp_bpc_param *)dst_param;
 	struct sensor_bpc_level *bpc_param;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -73,12 +73,12 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 	return rtn;
 }
 
-cmr_s32 _pm_bpc_init_v1(void *dst_bpc_param, void *src_bpc_param, void *param1, void *param2)
+cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0x00;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_bpc_param;
-	struct isp_bpc_param_v1 *dst_ptr = (struct isp_bpc_param_v1 *)dst_bpc_param;
+	struct isp_bpc_param *dst_ptr = (struct isp_bpc_param *)dst_bpc_param;
 	struct isp_pm_block_header *bpc_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
@@ -101,10 +101,10 @@ cmr_s32 _pm_bpc_init_v1(void *dst_bpc_param, void *src_bpc_param, void *param1, 
 	return rtn;
 }
 
-cmr_s32 _pm_bpc_set_param_v1(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_bpc_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_bpc_param_v1 *dst_ptr = (struct isp_bpc_param_v1 *)bpc_param;
+	struct isp_bpc_param *dst_ptr = (struct isp_bpc_param *)bpc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
@@ -181,10 +181,10 @@ cmr_s32 _pm_bpc_set_param_v1(void *bpc_param, cmr_u32 cmd, void *param_ptr0, voi
 	return rtn;
 }
 
-cmr_s32 _pm_bpc_get_param_v1(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_bpc_get_param(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_bpc_param_v1 *bpc_ptr = (struct isp_bpc_param_v1 *)bpc_param;
+	struct isp_bpc_param *bpc_ptr = (struct isp_bpc_param *)bpc_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

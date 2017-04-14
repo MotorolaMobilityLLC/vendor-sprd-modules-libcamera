@@ -16,12 +16,12 @@
 #define LOG_TAG "isp_blk_hist"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_hist_init_v1(void *dst_hist_param, void *src_hist_param, void *param1, void *param2)
+cmr_s32 _pm_hist_init(void *dst_hist_param, void *src_hist_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct sensor_yuv_hists_param *src_ptr = (struct sensor_yuv_hists_param *)src_hist_param;
-	struct isp_hist_param_v1 *dst_ptr = (struct isp_hist_param_v1 *)dst_hist_param;
+	struct isp_hist_param *dst_ptr = (struct isp_hist_param *)dst_hist_param;
 	UNUSED(param2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
@@ -34,11 +34,11 @@ cmr_s32 _pm_hist_init_v1(void *dst_hist_param, void *src_hist_param, void *param
 	return rtn;
 }
 
-cmr_s32 _pm_hist_set_param_v1(void *hist_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_hist_set_param(void *hist_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *hist_header_ptr = (struct isp_pm_block_header *)param_ptr1;
-	struct isp_hist_param_v1 *hist_ptr = (struct isp_hist_param_v1 *)hist_param;
+	struct isp_hist_param *hist_ptr = (struct isp_hist_param *)hist_param;
 	hist_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
@@ -54,10 +54,10 @@ cmr_s32 _pm_hist_set_param_v1(void *hist_param, cmr_u32 cmd, void *param_ptr0, v
 	return rtn;
 }
 
-cmr_s32 _pm_hist_get_param_v1(void *hist_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_hist_get_param(void *hist_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_hist_param_v1 *hist_ptr = (struct isp_hist_param_v1 *)hist_param;
+	struct isp_hist_param *hist_ptr = (struct isp_hist_param *)hist_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

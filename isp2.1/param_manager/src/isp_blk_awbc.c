@@ -16,17 +16,17 @@
 #define LOG_TAG "isp_blk_awbc"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_awb_init_v1(void *dst_awb_v1, void *src_awb_v1, void *param1, void *param2)
+cmr_s32 _pm_awb_init(void *dst_awb, void *src_awb, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1 *)dst_awb_v1;
-	struct sensor_awbc_param *src_ptr = (struct sensor_awbc_param *)src_awb_v1;
+	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)dst_awb;
+	struct sensor_awbc_param *src_ptr = (struct sensor_awbc_param *)src_awb;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
 	dst_ptr->ct_value = 5000;
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
-	 /*AWBC*/ dst_ptr->cur.awbc_bypass = header_ptr->bypass;
+		dst_ptr->cur.awbc_bypass = header_ptr->bypass;
 
 	dst_ptr->cur.gain.r = src_ptr->awbc_gain.r_gain;
 	dst_ptr->cur.gain.gr = src_ptr->awbc_gain.gr_gain;
@@ -45,10 +45,10 @@ cmr_s32 _pm_awb_init_v1(void *dst_awb_v1, void *src_awb_v1, void *param1, void *
 	return rtn;
 }
 
-cmr_s32 _pm_awb_set_param_v1(void *awb_v1_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_awb_set_param(void *awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1 *)awb_v1_param;
+	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)awb_param;
 	struct isp_pm_block_header *awb_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	awb_header_ptr->is_update = ISP_ONE;
@@ -101,10 +101,10 @@ cmr_s32 _pm_awb_set_param_v1(void *awb_v1_param, cmr_u32 cmd, void *param_ptr0, 
 	return rtn;
 }
 
-cmr_s32 _pm_awb_get_param_v1(void *awb_v1_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_awb_get_param(void *awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_awb_param_v1 *awb_param_ptr = (struct isp_awb_param_v1 *)awb_v1_param;
+	struct isp_awb_param *awb_param_ptr = (struct isp_awb_param *)awb_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

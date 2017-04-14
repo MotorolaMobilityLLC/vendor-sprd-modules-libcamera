@@ -16,14 +16,14 @@
 #define LOG_TAG "isp_blk_cce"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 * cce_param, cmr_u32 hue, cmr_u32 saturation)
+cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param * cce_param, cmr_u32 hue, cmr_u32 saturation)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 cce_coef_index = 0;
 	cmr_u16 cce_coef[3] = { 0 };
 	cmr_u32 cur_idx = 0;
 	struct isp_rgb_gains rgb_gain = { 0x00, 0x00, 0x00, 0x00 };
-	struct isp_cce_param_v1 *dst_cce_ptr = (struct isp_cce_param_v1 *)cce_param;
+	struct isp_cce_param *dst_cce_ptr = (struct isp_cce_param *)cce_param;
 	cmr_u32 i = 0x00;
 	cmr_u16 src_matrix[9] = { 0 };
 	cmr_u16 dst_matrix[9] = { 0 };
@@ -72,13 +72,13 @@ cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 * cce_param, cmr_u
 	return rtn;
 }
 
-cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param_v1 * cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain)
+cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param * cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 cce_coef_index = 0;
 	cmr_u16 cce_coef[3] = { 0 };
 	struct isp_rgb_gains rgb_gain = { 0x00, 0x00, 0x00, 0x00 };
-	struct isp_cce_param_v1 *dst_cce_ptr = (struct isp_cce_param_v1 *)cce_param;
+	struct isp_cce_param *dst_cce_ptr = (struct isp_cce_param *)cce_param;
 	cmr_u32 i = 0x00;
 	cmr_u32 cur_idx = 0;
 	cmr_u16 src_matrix[9] = { 0 };
@@ -123,7 +123,7 @@ cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param_v1 * cce_param, cmr_u16 
 	return rtn;
 }
 
-cmr_s32 _pm_cce_adjust(struct isp_cce_param_v1 * cce_param)
+cmr_s32 _pm_cce_adjust(struct isp_cce_param * cce_param)
 {
 	cmr_s32 rtn0 = ISP_SUCCESS;
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -155,12 +155,12 @@ cmr_s32 _pm_cce_adjust(struct isp_cce_param_v1 * cce_param)
 
 }
 
-cmr_s32 _pm_cce_init_v1(void *dst_cce_param, void *src_cce_param, void *param1, void *param2)
+cmr_s32 _pm_cce_init(void *dst_cce_param, void *src_cce_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0x00, j = 0, index = 0;
 	struct sensor_cce_param *src_ptr = (struct sensor_cce_param *)src_cce_param;
-	struct isp_cce_param_v1 *dst_ptr = (struct isp_cce_param_v1 *)dst_cce_param;
+	struct isp_cce_param *dst_ptr = (struct isp_cce_param *)dst_cce_param;
 	struct isp_pm_block_header *cce_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
@@ -214,10 +214,10 @@ cmr_s32 _pm_cce_init_v1(void *dst_cce_param, void *src_cce_param, void *param1, 
 	return rtn;
 }
 
-cmr_s32 _pm_cce_set_param_v1(void *cce_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_cce_set_param(void *cce_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_cce_param_v1 *dst_ptr = (struct isp_cce_param_v1 *)cce_param;
+	struct isp_cce_param *dst_ptr = (struct isp_cce_param *)cce_param;
 	struct isp_pm_block_header *cce_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
@@ -338,10 +338,10 @@ cmr_s32 _pm_cce_set_param_v1(void *cce_param, cmr_u32 cmd, void *param_ptr0, voi
 	return rtn;
 }
 
-cmr_s32 _pm_cce_get_param_v1(void *cce_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_cce_get_param(void *cce_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_cce_param_v1 *cce_ptr = (struct isp_cce_param_v1 *)cce_param;
+	struct isp_cce_param *cce_ptr = (struct isp_cce_param *)cce_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 

@@ -21,7 +21,7 @@ cmr_u32 _pm_cfa_convert_param(void *dst_cfae_param, cmr_u32 strength_level, cmr_
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
-	struct isp_cfa_param_v1 *dst_ptr = (struct isp_cfa_param_v1 *)dst_cfae_param;
+	struct isp_cfa_param *dst_ptr = (struct isp_cfa_param *)dst_cfae_param;
 	struct sensor_cfa_param_level *cfae_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -97,11 +97,11 @@ cmr_u32 _pm_cfa_convert_param(void *dst_cfae_param, cmr_u32 strength_level, cmr_
 	return rtn;
 }
 
-cmr_s32 _pm_cfa_init_v1(void *dst_cfae_param, void *src_cfae_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_cfa_init(void *dst_cfae_param, void *src_cfae_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
-	struct isp_cfa_param_v1 *dst_ptr = (struct isp_cfa_param_v1 *)dst_cfae_param;
+	struct isp_cfa_param *dst_ptr = (struct isp_cfa_param *)dst_cfae_param;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_cfae_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct isp_size *img_size_ptr = (struct isp_size *)param_ptr2;
@@ -125,10 +125,10 @@ cmr_s32 _pm_cfa_init_v1(void *dst_cfae_param, void *src_cfae_param, void *param1
 	return rtn;
 }
 
-cmr_s32 _pm_cfa_set_param_v1(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_cfa_set_param(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_cfa_param_v1 *cfae_ptr = (struct isp_cfa_param_v1 *)cfae_param;
+	struct isp_cfa_param *cfae_ptr = (struct isp_cfa_param *)cfae_param;
 	struct isp_pm_block_header *cfae_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
@@ -178,10 +178,10 @@ cmr_s32 _pm_cfa_set_param_v1(void *cfae_param, cmr_u32 cmd, void *param_ptr0, vo
 	return rtn;
 }
 
-cmr_s32 _pm_cfa_get_param_v1(void *cfa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_cfa_get_param(void *cfa_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_cfa_param_v1 *cfa_ptr = (struct isp_cfa_param_v1 *)cfa_param;
+	struct isp_cfa_param *cfa_ptr = (struct isp_cfa_param *)cfa_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
