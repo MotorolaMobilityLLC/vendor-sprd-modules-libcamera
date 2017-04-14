@@ -2448,6 +2448,9 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	cxt->cur_status.settings.gain = out.nextGain;
 	cxt->pre_flash_level1 = out.preflahLevel1;
 	cxt->pre_flash_level2 = out.preflahLevel2;
+	ISP_LOGV("ae_flash pre_b: (%f, %d, %d), (%d, %d)\n",\
+		in.aeExposure, current_status->effect_expline, current_status->effect_gain,\
+		out.preflahLevel1, out.preflahLevel2);
 
 	return rtn;
 }
@@ -2460,21 +2463,19 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 	cmr_u32 blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
 
-	ISP_LOGV("flash_estimation: %d, %d, is end: %d", current_status->effect_expline,
-		current_status->effect_gain, cxt->flash_esti_result.isEnd);
-
 	if (1 == cxt->flash_esti_result.isEnd) {
+		ISP_LOGV("ae_flash esti: is end\n");
 		return rtn;
 	}
 
 	if (0 < cxt->pre_flash_skip) {
 		cxt->pre_flash_skip--;
-		ISP_LOGV("flash_estimation: skip: %d\n", cxt->pre_flash_skip);
+		ISP_LOGV("ae_flash esti: skip: %d\n", cxt->pre_flash_skip);
 		return rtn;
 	}
 
 	if ((cxt->flash_last_exp_line == current_status->effect_expline) && (cxt->flash_last_gain == current_status->effect_gain)) {
-		ISP_LOGV("sensor param do not take effect, skip\n");
+		ISP_LOGV("ae_flash esti: sensor param do not take effect, skip\n");
 		return rtn;
 	}
 
@@ -2495,19 +2496,21 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		cxt->cur_status.settings.table_idx = 0;
 		cxt->cur_status.settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
 		cxt->cur_status.settings.gain = out.nextGain;
-		ISP_LOGV("dual flash: %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+		ISP_LOGV("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 	} else {
 		/*save flash debug information*/
 		memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
 		cxt->flash_buf_len  =0;
 		memcpy((cmr_handle)&cxt->flash_debug_buf[0], out.debugBuffer, out.debugSize);
 		cxt->flash_buf_len = out.debugSize;
+		ISP_LOGV("ae_flash esti: is end: %d, (%f, %d, %d), (%d, %d), (%d, %d, %d)\n",\
+			cxt->flash_esti_result.isEnd, cxt->flash_esti_result.captureExposure, cxt->cur_status.settings.exp_line,\
+			cxt->flash_esti_result.captureGain, cxt->flash_esti_result.captureFlahLevel1, cxt->flash_esti_result.captureFlahLevel2,\
+			cxt->flash_esti_result.captureRGain, cxt->flash_esti_result.captureGGain, cxt->flash_esti_result.captureBGain);
 	}
 
 	cxt->flash_last_exp_line  = current_status->effect_expline;
 	cxt->flash_last_gain =  current_status->effect_gain;
-
-	ISP_LOGV("is end: %d\n", cxt->flash_esti_result.isEnd);
 
 	return rtn;
 }
@@ -2552,9 +2555,9 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 				cxt->cur_status.settings.table_idx = 0;
 				cxt->cur_status.settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure  / cxt->cur_status.line_time + 0.5);
 				cxt->cur_status.settings.gain = cxt->flash_esti_result.captureBGain;
-				ISP_LOGI("main flash: %f, %d, %d", cxt->flash_esti_result.captureExposure, cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+				ISP_LOGV("ae_flash main_b to sensor: %f, %d, %d", cxt->flash_esti_result.captureExposure, cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 			} else {
-				ISP_LOGW("flash estimation does not work well");
+				ISP_LOGW("ae_flash estimation does not work well");
 			}
 		}
 	}
@@ -2638,7 +2641,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 				cfg.type = AE_FLASH_TYPE_PREFLASH;
 				element.index = element.index = cxt->pre_flash_level2;
 				cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
-				ISP_LOGV("dual flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
+				ISP_LOGV("ae_flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
 #endif
 				cxt->send_once[0]++;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
@@ -2686,12 +2689,12 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 				cfg.type = AE_FLASH_TYPE_MAIN;
 				element.index = cxt->flash_esti_result.captureFlahLevel2;
 				cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
-				ISP_LOGI("ae_flash1 dual flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1,
+				ISP_LOGV("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1,
 					cxt->flash_esti_result.captureFlahLevel2);
 				if (1 == cxt->send_once[2]) {
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
 					ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
-				} else if (4 == cxt->send_once[2]) {
+				} else if (5 == cxt->send_once[2]) {
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
 					cxt->cur_result.flash_status = FLASH_NONE;/*flash status reset*/
 					ISP_LOGI("ae_flash1_callback do-capture!\r\n");
