@@ -1054,12 +1054,18 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 	nr_mode = data_head->nr_mode;
 	if (nr_update_param.nr_scene_map_ptr != PNULL) {
 		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
 	}
 	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
 		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
 	}
 	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
 		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
 	}
 	switch (file_num) {
 	case SCENEINFO:
@@ -1482,11 +1488,9 @@ cmr_s32 send_tune_info_param(struct isp_data_header_read * read_cmd, struct msg_
 			msg_tag.len = len;
 			data_header.packet_status = 0x00;
 		} else {
-			if (0 != i) {
-				len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
-			} else {
-				len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
-			}
+
+			len = data_len + packet_num * (len_msg + len_data_header + 2) - DATA_BUF_SIZE * i - 2;
+
 			msg_tag.len = len;
 			data_header.packet_status = 0x01;
 		}
@@ -1494,13 +1498,10 @@ cmr_s32 send_tune_info_param(struct isp_data_header_read * read_cmd, struct msg_
 		rsp_len = len_msg + 1;
 		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 		rsp_len = rsp_len + len_data_header;
-		if (0 == i) {
-			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
-		} else {
-			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
-		}
+
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+		data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
+
 		rsp_len = len + 1;
 		eng_rsp_diag[rsp_len] = 0x7e;
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
@@ -1556,13 +1557,10 @@ cmr_s32 send_fix_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 		rsp_len = len_msg + 1;
 		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) & data_header, len_data_header);
 		rsp_len = rsp_len + len_data_header;
-		if (0 == i) {
-			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
-		} else {
-			memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
-			data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
-		}
+
+		memcpy(eng_rsp_diag + rsp_len, (cmr_u8 *) data_ptr, len - len_msg - len_data_header);
+		data_ptr = (cmr_u8 *) data_ptr + len - len_msg - len_data_header;
+
 		rsp_len = len + 1;
 		eng_rsp_diag[rsp_len] = 0x7e;
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
@@ -2268,15 +2266,22 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
 	if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
 		sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
+	} else {
+		return ISP_ERROR;
 	}
 	if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
 		mode_param_info = sensor_raw_info_ptr->mode_ptr[mode_id];
+	} else {
+		return ISP_ERROR;
 	}
 	if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
 		sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
+	} else {
+		return ISP_ERROR;
 	}
 	if (!isp_data_ptr) {
 		ISP_LOGE("fail to check param");
+		return ISP_ERROR;
 	}
 	ISP_LOGV("down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
 
@@ -2616,7 +2621,7 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 		switch (cmd_ptr->main_type) {
 		case MODE_NR_DATA:
 			{
-				if (ISP_NR_BLOCK_MIN > cmd_ptr->sub_type || FILE_NAME_MAX < cmd_ptr->sub_type) {
+				if (ISP_NR_BLOCK_MIN >= cmd_ptr->sub_type || FILE_NAME_MAX <= cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
@@ -2898,7 +2903,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			g_command = CMD_SFT_TAKE_PICTURE_NEW;
 			if (NULL != fun_ptr->take_picture) {
 				ret = isp_ioctl(isp_handler, ISP_CTRL_STOP_3A, NULL);
-				////////////////////////////
+
 				startpos = *(cmr_u32 *) isp_ptr;
 				endpos = *(cmr_u32 *) (isp_ptr + 4);
 				step = *(cmr_u32 *) (isp_ptr + 8);
@@ -2909,6 +2914,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 				for (pos = startpos; pos <= endpos; pos += step) {
 					g_af_pos = pos;
 					ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, &pos);	// set af pos after auto focus
+					if (ret) {
+						ISP_LOGE("fail to ISP_CTRL_SET_AF_POS \n");
+					}
 					usleep(1000 * 10);
 					capture_img_end_flag = 0;
 					capture_flag = 1;
@@ -3169,6 +3177,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 
 				if (in_param.buf_addr) {
 					ret = ispParserFree((void *)in_param.buf_addr);
+					if (ret) {
+						ISP_LOGE("fail to parse free\n");
+					}
 				}
 				if (NULL != fun_ptr->start_preview) {
 //                                      fun_ptr->start_preview(0, 0);

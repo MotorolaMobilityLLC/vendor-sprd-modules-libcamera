@@ -148,6 +148,7 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 	//ISP_LOGE("ISP_TOOL:temp_param_version size=%d", sizeof(temp_param_version));
 	if (!temp_param_version) {
 		ISP_LOGE("fail to check temp_param_version");
+		ispParserFree(data_addr);
 		return -1;
 	}
 
@@ -168,6 +169,7 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 		} else {
 			param_ptr->version_id = TOOL_DEFAULT_VER;
 			memset((char *)&param_ptr->sensor_id, 0, sizeof(param_ptr->sensor_id));
+			return -1;
 		}
 
 		/* get version info: version_info[0] is tune version; version_info[1] is code version */
