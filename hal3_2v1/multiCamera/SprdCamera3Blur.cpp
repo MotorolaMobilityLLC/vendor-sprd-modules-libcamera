@@ -687,10 +687,17 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
                                    struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = 0;
+    int32_t img_size = 0;
     if (blur_camera_id == MODE_BLUR_FRONT) {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
+        img_size = FRONT_SENSOR_ORIG_WIDTH * FRONT_SENSOR_ORIG_HEIGHT * 3 +
+                   (BLUR_REFOCUS_PARAM_NUM * 4) + sizeof(camera3_jpeg_blob_t) +
+                   1024;
     } else {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
+        img_size = BACK_SENSOR_ORIG_WIDTH * BACK_SENSOR_ORIG_HEIGHT * 3 +
+                   (BLUR_REFOCUS_PARAM_NUM * 4) + sizeof(camera3_jpeg_blob_t) +
+                   1024;
     }
     camera_id = m_VirtualCamera.id;
     HAL_LOGI("E, camera_id = %d", camera_id);
@@ -702,8 +709,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
         return rc;
     }
     CameraMetadata metadata = mStaticMetadata;
-    SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size =
-        BLUR_IMG_BUFFER_SIZE;
+    SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size = img_size;
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
@@ -1291,6 +1297,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     mCaptureWeightParams.circle_size =
         mCaptureInitParams.height / BLUR_CIRCLE_SIZE_SCALE / 2;
 }
+
 /*===========================================================================
  * FUNCTION   :isBlurInitParamsChanged
  *
@@ -1471,8 +1478,19 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             uint32_t y =
                 metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[1];
             if (x != 0 && y != 0) {
-                x = x * mPreviewInitParams.width / 3692;
-                y = y * mPreviewInitParams.height / 2496;
+                if (BACK_SENSOR_ORIG_WIDTH == 4160) {
+                    x = x * mPreviewInitParams.width / 3692;
+                    y = y * mPreviewInitParams.height / 2496;
+                } else if (BACK_SENSOR_ORIG_WIDTH == 3264) {
+                    x = x * mPreviewInitParams.width / 2774;
+                    y = y * mPreviewInitParams.height / 1958;
+                } else {
+                    x = x * mPreviewInitParams.width /
+                        (BACK_SENSOR_ORIG_WIDTH * 20 / 23);
+                    y = y * mPreviewInitParams.height /
+                        (BACK_SENSOR_ORIG_HEIGHT * 4 / 5);
+                }
+
                 if (x != mPreviewWeightParams.sel_x ||
                     y != mPreviewWeightParams.sel_y) {
                     mPreviewWeightParams.sel_x = x;

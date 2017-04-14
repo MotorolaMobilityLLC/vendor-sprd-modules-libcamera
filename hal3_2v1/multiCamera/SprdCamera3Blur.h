@@ -67,17 +67,6 @@ namespace sprdcamera {
 #define BLUR_SMOOTH_SIZE_SCALE (8)
 #define BLUR_CIRCLE_VALUE_MIN (20)
 
-/*
-YUV_IMG_SIZE = (3264 * 2448 * 3/2)
-offset+reserve = 28*105
-BLUR_IMG_SIZE = BLUR_JPEG_SIZE + YUV_IMG_SIZE + offset+reserve
-*/
-#define BLUR_JPEG_BUFFER_SIZE                                                  \
-    (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t))
-#define BLUR_IMG_BUFFER_SIZE                                                   \
-    (BLUR_JPEG_BUFFER_SIZE + (4160 * 3120 * 3 / 2) + (28 * 105))
-#define BLUR_MIN_JPEG_BUFFER_SIZE (256 * 1024 + sizeof(camera3_jpeg_blob));
-
 typedef struct {
     uint32_t frame_number;
     buffer_handle_t *buffer;

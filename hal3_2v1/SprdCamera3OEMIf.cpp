@@ -1226,7 +1226,7 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
         else if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO)
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
 
-        if (getMultiCameraMode() == MODE_BLUR &&
+        if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan() &&
             controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START &&
             controlInfo.af_regions[0] == 0 && controlInfo.af_regions[1] == 0 &&
             controlInfo.af_regions[2] == 0 && controlInfo.af_regions[3] == 0) {
