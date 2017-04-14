@@ -201,12 +201,17 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in * in_ptr, void **handle)
 	*handle = (void *)cxt_ptr;
 	return 0;
 exit:
-	//if (cxt_ptr->write_q.cell_ptr)
-	free(cxt_ptr->write_q.cell_ptr);
-	//if (cxt_ptr->actual_q.cell_ptr)
-	free(cxt_ptr->actual_q.cell_ptr);
-	//if (cxt_ptr)
-	free(cxt_ptr);
+	if(cxt_ptr) {
+		if (cxt_ptr->write_q.cell_ptr) {
+			free(cxt_ptr->write_q.cell_ptr);
+		}
+
+		if (cxt_ptr->actual_q.cell_ptr) {
+			free(cxt_ptr->actual_q.cell_ptr);
+		}
+		free(cxt_ptr);
+	}
+
 	return ret;
 }
 

@@ -2721,7 +2721,7 @@ static cmr_s32 ae_set_magic_tag(struct debug_ae_param *param_ptr)
 
 	cmr_u32 len = 0;
 	len = strlen(AE_MAGIC_TAG);
-	if (len > sizeof(param_ptr->magic)) {
+	if (len >= sizeof(param_ptr->magic)) {
 		ISP_LOGE("fail to set magic tag\n");
 		return AE_ERROR;
 	}
@@ -3180,7 +3180,8 @@ static void _set_led(struct ae_ctrl_cxt *cxt)
 			FILE *p = NULL;
 			p = fopen("/data/misc/cameraserver/flashcali.txt", "w+");
 			if (!p) {
-				ISP_LOGV("Write flash cali file error!!\r\n");
+				ISP_LOGW("Write flash cali file error!!\r\n");
+				goto EXIT;
 			} else {
 				fprintf(p, "shutter: %d  gain: %d\r\n", cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again);
 
@@ -3223,6 +3224,7 @@ static void _set_led(struct ae_ctrl_cxt *cxt)
 			;
 		}
 	}
+EXIT:
 	return;
 }
 
