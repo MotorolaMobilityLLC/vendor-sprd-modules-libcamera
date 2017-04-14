@@ -47,6 +47,8 @@ static const char *LSC_START = "ISP_LSC_";
 static const char *LSC_END = "ISP_LSC_";
 static const char *SMART_START = "ISP_SMART_";
 static const char *SMART_END = "ISP_SMART_";
+static const char *OTP_START = "ISP_OTP_";
+static const char *OTP_END = "ISP_OTP_";
 
 static cmr_s32 _isp_set_awb_gain(cmr_handle isp_alg_handle)
 {
@@ -890,6 +892,10 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
 		    + sizeof(cmr_u32) /*for end flag */ ;
 
+		if (cxt->otp_data != NULL){
+                  total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+		}
+
 		if (cxt->commn_cxt.log_isp_size < total_size) {
 			if (cxt->commn_cxt.log_isp != NULL) {
 				free(cxt->commn_cxt.log_isp);
@@ -922,6 +928,18 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
+
+		if (cxt->otp_data != NULL){
+                   size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+			if (len) {
+                       log.otp_off = off;
+                       off += len;
+                       log.otp_len = len;
+                   }
+                   else {
+                       log.otp_off= 0;
+                   }
+		}
 		memcpy((char *)cxt->commn_cxt.log_isp + sizeof(struct sprd_isp_debug_info), &log, sizeof(log));
 
 		info_ptr->addr = cxt->commn_cxt.log_isp;
