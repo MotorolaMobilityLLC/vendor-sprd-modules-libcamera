@@ -2664,7 +2664,7 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle)
 	struct snp_channel_param        *chn_param_ptr = &cxt->chn_param;
 	struct img_frm                  *frm_ptr;
 	cmr_uint                        i;
-	cmr_u32                         offset[CMR_CAPTURE_MEM_SUM] = {0, 0, 0, 0};
+	cmr_u32                         offset[CMR_CAPTURE_MEM_SUM] = {0};
 
 	cmr_copy(&rect[0], &req_param_ptr->post_proc_setting.scaler_src_rect[0], CMR_CAPTURE_MEM_SUM*sizeof(struct img_rect));
 
@@ -3233,7 +3233,7 @@ cmr_int snp_update_scale_param(cmr_handle snp_handle, struct img_frm chn_data)
 	struct snp_channel_param        *chn_param_ptr = &cxt->chn_param;
 	struct img_frm                  *frm_ptr;
 	cmr_uint                        i;
-	cmr_u32                         offset[CMR_CAPTURE_MEM_SUM] = {0, 0, 0, 0};
+	cmr_u32                         offset[CMR_CAPTURE_MEM_SUM] = {0};
 
 	for (i=0 ; i<CMR_CAPTURE_MEM_SUM ; i++) {
 		chn_param_ptr->scale[i].src_img.addr_phy.addr_y = chn_data.addr_phy.addr_y + offset[i];

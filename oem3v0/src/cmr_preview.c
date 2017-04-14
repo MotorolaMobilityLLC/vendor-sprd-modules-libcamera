@@ -257,6 +257,9 @@ struct prev_context {
 	cmr_uint                        cap_phys_addr_path_array[CMR_CAPTURE_MEM_SUM];
 	cmr_uint                        cap_virt_addr_path_array[CMR_CAPTURE_MEM_SUM];
 	cmr_s32                         cap_fd_path_array[CMR_CAPTURE_MEM_SUM];
+	cmr_uint                        cap_hdr_phys_addr_path_array[HDR_CAP_NUM];
+        cmr_uint                        cap_hdr_virt_addr_path_array[HDR_CAP_NUM];
+        cmr_s32                         cap_hdr_fd_path_array[HDR_CAP_NUM];
 
 	struct cmr_cap_mem              cap_mem[CMR_CAPTURE_MEM_SUM];
 	struct img_frm                  cap_frm[CMR_CAPTURE_MEM_SUM];
@@ -4939,18 +4942,18 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				handle->oem_handle,
 				&channel_buffer_size,
 				&hdr_cap_sum,
-				prev_cxt->cap_phys_addr_path_array,
-				prev_cxt->cap_virt_addr_path_array,
-				prev_cxt->cap_fd_path_array);
+				prev_cxt->cap_hdr_phys_addr_path_array,
+				prev_cxt->cap_hdr_virt_addr_path_array,
+				prev_cxt->cap_hdr_fd_path_array);
 
 			/*check memory valid*/
 			CMR_LOGI("hdr CAMERA_SNAPSHOT_PATH mem size 0x%x, mem_num %d", channel_buffer_size, hdr_cap_sum);
 			for (i = 0; i < hdr_cap_sum; i++) {
 				CMR_LOGI("%d, virt_addr 0x%lx, fd 0x%x",
 				i,
-				prev_cxt->cap_virt_addr_path_array[i],
-				prev_cxt->cap_fd_path_array[i]);
-				if ((0 == prev_cxt->cap_virt_addr_path_array[i]) || (0 == prev_cxt->cap_fd_path_array[i])) {
+				prev_cxt->cap_hdr_virt_addr_path_array[i],
+				prev_cxt->cap_hdr_fd_path_array[i]);
+				if ((0 == prev_cxt->cap_hdr_virt_addr_path_array[i]) || (0 == prev_cxt->cap_hdr_fd_path_array[i])) {
 					CMR_LOGE("CAMERA_SNAPSHOT_PATH memory is invalid");
 					return CMR_CAMERA_NO_MEM;
 				}
@@ -5171,16 +5174,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		buffer->addr_vir[i].addr_u           = prev_cxt->cap_frm[i].addr_vir.addr_u;
 		buffer->fd[i]                        = prev_cxt->cap_frm[i].fd;
 
-		if ((FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl)
-			&& (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt || IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt)
-			&& is_normal_cap && i > 0) {
-			buffer->addr[i].addr_y     = prev_cxt->cap_phys_addr_path_array[i-1];
-			buffer->addr[i].addr_u     = buffer->addr[i].addr_y + channel_size;
-			buffer->addr_vir[i].addr_y = prev_cxt->cap_virt_addr_path_array[i-1];
-			buffer->addr_vir[i].addr_u = buffer->addr_vir[i].addr_y + channel_size;
-			buffer->fd[i]              = prev_cxt->cap_fd_path_array[i-1];
-		}
-
 #ifdef CONFIG_MULTI_CAP_MEM
 	if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt || IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) && is_normal_cap/* && i > 0*/) {
 		/*prev_cxt->cap_frm[i].addr_phy.addr_y = prev_cxt->cap_phys_addr_path_array[i];
@@ -5206,7 +5199,20 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 	buffer->length = frame_size;
 	if(FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl) {
-		 buffer->count = HDR_CAP_NUM;
+		for (i = 1; i < HDR_CAP_NUM; i++) {
+			if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
+					IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
+					is_normal_cap) {
+						buffer->addr[i].addr_y = prev_cxt->cap_hdr_phys_addr_path_array[i - 1];
+						buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
+						buffer->addr_vir[i].addr_y =
+							prev_cxt->cap_hdr_virt_addr_path_array[i - 1];
+						buffer->addr_vir[i].addr_u =
+							buffer->addr_vir[i].addr_y + channel_size;
+						buffer->fd[i] = prev_cxt->cap_hdr_fd_path_array[i - 1];
+            }
+        }
+		buffer->count = HDR_CAP_NUM;
 	};
 
 	ATRACE_END();
@@ -5247,13 +5253,13 @@ cmr_int prev_free_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32
 			&& !is_restart) {
 			mem_ops->free_mem(CAMERA_SNAPSHOT_PATH,
 				handle->oem_handle,
-				prev_cxt->cap_phys_addr_path_array,
-				prev_cxt->cap_virt_addr_path_array,
-				prev_cxt->cap_fd_path_array,
+				prev_cxt->cap_hdr_phys_addr_path_array,
+				prev_cxt->cap_hdr_virt_addr_path_array,
+				prev_cxt->cap_hdr_fd_path_array,
 				hdr_cap_sum);
-			cmr_bzero(prev_cxt->cap_phys_addr_path_array, CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
-			cmr_bzero(prev_cxt->cap_virt_addr_path_array, CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
-			cmr_bzero(prev_cxt->cap_fd_path_array, CMR_CAPTURE_MEM_SUM * sizeof(cmr_s32));
+			cmr_bzero(prev_cxt->cap_hdr_phys_addr_path_array, HDR_CAP_NUM * sizeof(cmr_uint));
+			cmr_bzero(prev_cxt->cap_hdr_virt_addr_path_array, HDR_CAP_NUM * sizeof(cmr_uint));
+			cmr_bzero(prev_cxt->cap_hdr_fd_path_array, HDR_CAP_NUM * sizeof(cmr_s32));
 	}
 
 #ifdef CONFIG_MULTI_CAP_MEM
