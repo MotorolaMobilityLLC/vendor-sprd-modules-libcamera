@@ -1848,7 +1848,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
 		if (sizeof(af->af_tuning_data) != len) {
-			ISP_LOGV("af_tuning.bin len dismatch with af_alg len %d", sizeof(af->af_tuning_data));
+			ISP_LOGW("af_tuning.bin len dismatch with af_alg len %d", sizeof(af->af_tuning_data));
 			fclose(fp);
 			*bisExist = 0;
 			return 0;
@@ -1857,7 +1857,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 		fseek(fp, 0, SEEK_SET);
 		rtn = fread(&af->af_tuning_data, 1, len, fp);
 		if (rtn != sizeof(af->af_tuning_data)) {
-			ISP_LOGV("read bin size error");
+			ISP_LOGW("read bin size error");
 			fclose(fp);
 			*bisExist = 0;
 			return 0;
@@ -2067,11 +2067,11 @@ static void load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_outp
 	af->soft_landing_step = 0;	//20;
 
 	if (PNULL == af_pm_output->param_data) {
-		ISP_LOGV("sensor tuning param null");
+		ISP_LOGW("sensor tuning param null");
 	} else if (PNULL == af_pm_output->param_data[0].data_ptr) {
-		ISP_LOGV("sensor tuning param data null");
+		ISP_LOGW("sensor tuning param data null");
 	} else if (af_pm_output->param_data[0].data_size != sizeof(af->af_tuning_data)) {
-		ISP_LOGV("sensor tuning param size dismatch");
+		ISP_LOGW("sensor tuning param size dismatch");
 	} else {
 		memcpy(&af->af_tuning_data, af_pm_output->param_data[0].data_ptr, sizeof(af->af_tuning_data));
 		ISP_LOGV("sensor tuning param size match");
@@ -2152,7 +2152,7 @@ static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
 		if (len != af->trig_ops.handle.tuning_param_len) {
-			ISP_LOGV("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.handle.tuning_param_len);
+			ISP_LOGW("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.handle.tuning_param_len);
 			fclose(fp);
 			*is_exist = 0;
 			return 0;
@@ -2227,7 +2227,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 	isp_pm_ioctl(isp_ctx->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &aft_pm_output);
 
 	if (PNULL == aft_pm_output.param_data || PNULL == aft_pm_output.param_data[0].data_ptr || 0 == aft_pm_output.param_data[0].data_size) {
-		ISP_LOGI("aft tuning param error ");
+		ISP_LOGW("aft tuning param error ");
 		aft_in.data_len = 0;
 		aft_in.data = NULL;
 	} else {
@@ -3537,8 +3537,6 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 	return ISP_SUCCESS;
 }
 
-cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result);
-
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
@@ -3552,7 +3550,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	if (NULL == init_param) {
 		ISP_LOGE("fail to init param:%p, result:%p", init_param, result);
-		goto INIT_ERROR_EXIT;
+		return NULL;
 	}
 	isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
 
@@ -3562,30 +3560,14 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	rtn = isp_pm_ioctl(isp_ctx->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
 	if (ISP_SUCCESS == rtn) {
 		ISP_LOGV("load af tuning params succeed");
-#if 0
-		//struct af_tuning_param *af_tuning = NULL;
-
-		af_tuning = (struct af_tuning_param *)malloc(sizeof(struct af_tuning_param) * af_pm_output.param_num);
-		if (NULL == af_tuning) {
-			ISP_LOGE("fail to malloc");
-			return ISP_MALLOC_ERROR;
-		}
-		for (i = 0; i < af_pm_output.param_num; i++) {
-			af_tuning[i].cfg_mode = (af_pm_output.param_data->id & 0xffff0000) >> 16;
-			af_tuning[i].data = af_pm_output.param_data->data_ptr;
-			af_tuning[i].data_len = af_pm_output.param_data->data_size;
-			af_pm_output.param_data++;
-		}
-		in.tuning_param = af_tuning;
-#endif
 	} else {
-		ISP_LOGE("load af tuning params failed");
+		ISP_LOGW("load af tuning params failed");
 		return NULL;
 	}
 
 	af = (af_ctrl_t *) malloc(sizeof(*af));
 	if (NULL == af) {
-		ISP_LOGV("malloc fail");
+		ISP_LOGE("fail to malloc af_ctrl_t");
 		return NULL;
 	}
 	//afm_disable(af); // todo
@@ -3648,7 +3630,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	faf_trigger_init(af);
 	if (trigger_init(af, CAF_TRIGGER_LIB) != 0) {
 		ISP_LOGE("fail to init trigger");
-		goto INIT_ERROR_EXIT;
+		goto ERROR_TRIG_INIT;
 	}
 
 	ISP_LOGV("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
@@ -3697,23 +3679,19 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	nr_mode = 2;
 	cw_mode = 2;
 	fv0_e = fv1_e = 5;
-	return af;
-#if 0
-ISP_MALLOC_ERROR:
-	if (af_tuning) {
-		free(af_tuning);
-		af_tuning = NULL;
-	}
-#endif
-INIT_ERROR_EXIT:
-	if (NULL != af) {
-		rtn = sprd_afv1_deinit((cmr_handle) af, NULL, NULL);
-		if (rtn) {
-			ISP_LOGE("fail to deinit af, rtn %d", rtn);
-		}
-	}
-	af = NULL;
+
 	ISP_LOGI("E");
+	return (cmr_handle) af;
+
+ERROR_TRIG_INIT:
+	AF_deinit(&af->fv);
+	sem_destroy(&af->af_wait_caf);
+	pthread_mutex_destroy(&af->caf_work_lock);
+	pthread_mutex_destroy(&af->af_work_lock);
+	memset(af, 0, sizeof(*af));
+	free(af);
+	af = NULL;
+
 	return (cmr_handle) af;
 }
 
