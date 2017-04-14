@@ -217,6 +217,7 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		break;
 	case ISP_AE_SET_FLASH_TIME:
 		rtn = cxt->commn_cxt.ops.flash_set_time(cxt->commn_cxt.caller_id, param0, param1);
+		break;
 	case ISP_AE_FLASH_CTRL:
 		rtn = cxt->commn_cxt.ops.flash_ctrl(cxt->commn_cxt.caller_id, param0, param1);
 		break;

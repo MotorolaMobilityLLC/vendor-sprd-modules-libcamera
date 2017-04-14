@@ -104,17 +104,17 @@ cmr_int isp_dev_set_interface(struct isp_interface_param_v1 * in_ptr)
 		goto exit;
 	}
 
-	rtn = isp_set_comm_param_v1((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(rtn, ("isp_set_comm_param_v1 error"));
+	rtn = isp_set_comm_param((cmr_handle) in_ptr);
+	ISP_TRACE_IF_FAIL(rtn, ("isp_set_comm_param error"));
 
-	rtn = isp_set_slice_size_v1((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(rtn, ("isp_set_slice_size_v1 error"));
+	rtn = isp_set_slice_size((cmr_handle) in_ptr);
+	ISP_TRACE_IF_FAIL(rtn, ("isp_set_slice_size error"));
 
-	rtn = isp_set_fetch_param_v1((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(rtn, ("isp_set_fetch_param_v1 error"));
+	rtn = isp_set_fetch_param((cmr_handle) in_ptr);
+	ISP_TRACE_IF_FAIL(rtn, ("isp_set_fetch_param error"));
 
-	rtn = isp_set_store_param_v1((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(rtn, ("isp_set_store_param_v1 error"));
+	rtn = isp_set_store_param((cmr_handle) in_ptr);
+	ISP_TRACE_IF_FAIL(rtn, ("isp_set_store_param error"));
 
 	rtn = isp_set_dispatch((cmr_handle) in_ptr);
 	ISP_TRACE_IF_FAIL(rtn, ("isp_set_dispatch error"));
@@ -135,7 +135,7 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 
 	isp_u_fetch_raw_transaddr(cxt->isp_driver_handle, &in_ptr->fetch.fetch_addr);
 
-	rtn = isp_get_fetch_addr_v1(in_ptr, &in_ptr->fetch);
+	rtn = isp_get_fetch_addr(in_ptr, &in_ptr->fetch);
 	ISP_RETURN_IF_FAIL(rtn, ("isp get fetch addr error"));
 
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
@@ -159,9 +159,9 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 	isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&in_ptr->arbiter);
 	ISP_RETURN_IF_FAIL(rtn, ("isp cfg arbiter error"));
 
-	isp_cfg_comm_data_v1(cxt->isp_driver_handle, (void *)&in_ptr->com);
+	isp_cfg_comm_data(cxt->isp_driver_handle, (void *)&in_ptr->com);
 
-	isp_cfg_slice_size_v1(cxt->isp_driver_handle, (void *)&in_ptr->slice);
+	isp_cfg_slice_size(cxt->isp_driver_handle, (void *)&in_ptr->slice);
 
 	return rtn;
 }

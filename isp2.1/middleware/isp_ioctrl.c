@@ -207,6 +207,7 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
 		break;
 	default:
+		awb_id = AWB_CTRL_WB_MODE_AUTO;
 		break;
 	}
 

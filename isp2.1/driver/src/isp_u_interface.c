@@ -285,7 +285,7 @@ static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 	return rtn;
 }
 
-cmr_s32 isp_get_fetch_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_fetch_info * fetch_ptr)
+cmr_s32 isp_get_fetch_addr(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_fetch_info * fetch_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u16 fetch_width = fetch_ptr->size.width;	//isp_context_ptr->slice.size[ISP_FETCH].w;
@@ -314,7 +314,7 @@ cmr_s32 isp_get_fetch_addr_v1(struct isp_interface_param_v1 * isp_context_ptr, s
 	return rtn;
 }
 
-cmr_s32 isp_set_fetch_param_v1(isp_handle isp_handler)
+cmr_s32 isp_set_fetch_param(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
@@ -405,7 +405,7 @@ static cmr_s32 isp_get_store_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 	return rtn;
 }
 
-cmr_s32 isp_set_store_param_v1(isp_handle isp_handler)
+cmr_s32 isp_set_store_param(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
@@ -435,7 +435,7 @@ cmr_s32 isp_set_store_param_v1(isp_handle isp_handler)
 	return rtn;
 }
 
-cmr_s32 isp_set_slice_size_v1(isp_handle isp_handler)
+cmr_s32 isp_set_slice_size(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
@@ -452,7 +452,7 @@ cmr_s32 isp_set_slice_size_v1(isp_handle isp_handler)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_slice_size_v1(isp_handle handle, struct isp_slice_param_v1 * slice_ptr)
+cmr_s32 isp_cfg_slice_size(isp_handle handle, struct isp_slice_param_v1 * slice_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -483,7 +483,7 @@ cmr_s32 isp_cfg_slice_size_v1(isp_handle handle, struct isp_slice_param_v1 * sli
 	return rtn;
 }
 
-cmr_s32 isp_set_comm_param_v1(isp_handle isp_handler)
+cmr_s32 isp_set_comm_param(isp_handle isp_handler)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
@@ -530,7 +530,7 @@ cmr_s32 isp_set_comm_param_v1(isp_handle isp_handler)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_comm_data_v1(isp_handle handle, struct isp_dev_common_info * param_ptr)
+cmr_s32 isp_cfg_comm_data(isp_handle handle, struct isp_dev_common_info * param_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -540,7 +540,7 @@ cmr_s32 isp_cfg_comm_data_v1(isp_handle handle, struct isp_dev_common_info * par
 	return rtn;
 }
 
-cmr_s32 isp_cfg_all_shadow_v1(isp_handle handle, cmr_u32 auto_shadow)
+cmr_s32 isp_cfg_all_shadow(isp_handle handle, cmr_u32 auto_shadow)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -550,7 +550,7 @@ cmr_s32 isp_cfg_all_shadow_v1(isp_handle handle, cmr_u32 auto_shadow)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_awbm_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_cfg_awbm_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -560,7 +560,7 @@ cmr_s32 isp_cfg_awbm_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_ae_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_cfg_ae_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -570,7 +570,7 @@ cmr_s32 isp_cfg_ae_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_af_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_cfg_af_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -580,7 +580,7 @@ cmr_s32 isp_cfg_af_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_afl_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_cfg_afl_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -590,7 +590,7 @@ cmr_s32 isp_cfg_afl_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_comm_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_cfg_comm_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
@@ -600,7 +600,7 @@ cmr_s32 isp_cfg_comm_shadow_v1(isp_handle handle, cmr_u32 shadow_done)
 	return rtn;
 }
 
-cmr_s32 isp_cfg_3a_single_frame_shadow_v1(isp_handle handle, cmr_u32 enable)
+cmr_s32 isp_cfg_3a_single_frame_shadow(isp_handle handle, cmr_u32 enable)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
