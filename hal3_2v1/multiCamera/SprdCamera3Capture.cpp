@@ -122,10 +122,10 @@ SprdCamera3Capture::SprdCamera3Capture() {
     mIsCapturing = false;
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
     memset(mNativeBuffer, 0,
-           sizeof(sprd_virtual_camera_t) * MAX_CAP_QEQUEST_BUF);
+           sizeof(native_handle_t *) * MAX_CAP_QEQUEST_BUF);
     memset(mNativeCapBuffer, 0,
-           sizeof(sprd_virtual_camera_t) * LOCAL_CAPBUFF_NUM);
-    memset(mSavedReqStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_STREAMS);
+           sizeof(native_handle_t *) * LOCAL_CAPBUFF_NUM);
+    memset(mSavedReqStreams, 0, sizeof(camera3_stream_t *) * MAX_NUM_STREAMS);
     mPreviewStreamsNum = 0;
     mPreviewID = 0;
     mLastShowPreviewDeviceId = 0;
@@ -874,6 +874,11 @@ SprdCamera3Capture::CaptureThread::CaptureThread() {
     mVLastFrameCount = 0;
     mVLastFpsTime = 0;
     mVFps = 0;
+    mDevMain = NULL;
+    mSavedResultBuff = NULL;
+    memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
+    memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
+    mSavedCapReqsettings = NULL;
 }
 /*===========================================================================
  * FUNCTION   :~~CaptureThread
