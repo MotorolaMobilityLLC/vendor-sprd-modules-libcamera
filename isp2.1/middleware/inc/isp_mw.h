@@ -29,7 +29,7 @@
 //#define LSC_ADV_ENABLE
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
-#define ISP_EVT_MASK	 0x00000F00
+#define ISP_EVT_MASK	 0x0000FF00
 
 #define ISP_FLASH_MAX_CELL	40
 #define ISP_MODE_NUM_MAX 16
