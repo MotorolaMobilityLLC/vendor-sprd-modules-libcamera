@@ -1758,7 +1758,7 @@ int SprdCamera3Setting::getSensorSizeInfo(int32_t cameraId) {
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
-        return -1;
+        goto exit;
     } else {
         HAL_LOGD("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
                  cameraId,
@@ -1770,6 +1770,7 @@ int SprdCamera3Setting::getSensorSizeInfo(int32_t cameraId) {
         cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
         sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
 
+exit:
     sensor_close_common(sensor_cxt, cameraId);
 
     if (sensor_cxt != NULL)
