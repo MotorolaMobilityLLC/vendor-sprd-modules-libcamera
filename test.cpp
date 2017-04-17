@@ -1717,7 +1717,7 @@ static void eng_tst_camera_startpreview(void) {
     struct img_size preview_size;
     struct cmr_zoom_param zoom_param;
     struct img_size capture_size;
-    struct cmr_preview_fps_param fps_param;
+    struct cmr_range_fps_param fps_param;
 
     if (!oem_handle || NULL == mHalOem || NULL == mHalOem->ops)
         return;
@@ -1734,7 +1734,9 @@ static void eng_tst_camera_startpreview(void) {
     zoom_param.zoom_info.prev_aspect_ratio =
         (float)PREVIEW_WIDTH / PREVIEW_HIGHT;
 
-    fps_param.frame_rate = 25;
+    fps_param.is_recording = 0;
+    fps_param.min_fps = 5;
+    fps_param.max_fps = 30;
     fps_param.video_mode = 0;
 
     /*  */
@@ -1756,7 +1758,7 @@ static void eng_tst_camera_startpreview(void) {
     // CAMERA_DATA_FORMAT_YUV420);
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_SENSOR_ROTATION, 0);
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
-    SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_PREVIEW_FPS,
+    SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
     /* set malloc && free callback*/
