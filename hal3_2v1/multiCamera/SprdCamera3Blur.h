@@ -46,6 +46,7 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
+#include "ts_makeup_api.h"
 
 namespace sprdcamera {
 
@@ -230,6 +231,7 @@ class SprdCamera3Blur {
     int mjpegSize;
     bool mIsWaitSnapYuv;
     uint8_t mCameraId;
+    int32_t mPerfectskinlevel;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int blur_camera_id, struct camera_info *info);
@@ -294,9 +296,11 @@ class SprdCamera3Blur {
         preview_weight_params_t mPreviewWeightParams;
         capture_init_params_t mCaptureInitParams;
         capture_weight_params_t mCaptureWeightParams;
+        int32_t mFaceInfo[4];
 
       private:
         void waitMsgAvailable();
+        void doFaceMakeup(private_handle_t *private_handle);
     };
     sp<CaptureThread> mCaptureThread;
     Mutex mMergequeueFinishMutex;

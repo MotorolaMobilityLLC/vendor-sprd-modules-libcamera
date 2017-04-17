@@ -106,6 +106,7 @@ SprdCamera3Blur::SprdCamera3Blur() {
     mCameraId = CAM_BLUR_MAIN_ID;
     mFlushing = false;
     mIsWaitSnapYuv = false;
+    mPerfectskinlevel = 0;
     HAL_LOGI("X");
 }
 
@@ -776,6 +777,7 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
     memset(&mPreviewWeightParams, 0, sizeof(camera3_stream_buffer_t));
     memset(&mCaptureInitParams, 0, sizeof(preview_init_params_t));
     memset(&mCaptureWeightParams, 0, sizeof(camera3_stream_buffer_t));
+    memset(mFaceInfo, 0, sizeof(int32_t) * 4);
     mCaptureMsgList.clear();
 }
 
@@ -792,6 +794,83 @@ SprdCamera3Blur::CaptureThread::~CaptureThread() {
     HAL_LOGI(" E");
     mCaptureMsgList.clear();
 }
+
+#ifdef CONFIG_FACE_BEAUTY
+/*===========================================================================
+ * FUNCTION   :cap_3d_doFaceMakeup
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3Blur::CaptureThread::doFaceMakeup(
+    private_handle_t *private_handle) {
+    // init the parameters table. save the value until the process is restart or
+    // the device is restart.
+    int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
+    int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
+    struct camera_frame_type cap_3d_frame;
+    bzero(&cap_3d_frame, sizeof(struct camera_frame_type));
+    struct camera_frame_type *frame = &cap_3d_frame;
+    frame->y_vir_addr = (cmr_uint)private_handle->base;
+    frame->width = private_handle->width;
+    frame->height = private_handle->height;
+
+    TSRect Tsface;
+    YuvFormat yuvFormat = TSFB_FMT_NV21;
+
+    Tsface.left =
+        mFaceInfo[0] * mCaptureInitParams.width / mPreviewInitParams.width;
+    Tsface.top =
+        mFaceInfo[1] * mCaptureInitParams.width / mPreviewInitParams.width;
+    Tsface.right =
+        mFaceInfo[2] * mCaptureInitParams.width / mPreviewInitParams.width;
+    Tsface.bottom =
+        mFaceInfo[3] * mCaptureInitParams.width / mPreviewInitParams.width;
+    HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left, Tsface.top,
+             Tsface.right, Tsface.bottom);
+
+    int level = mBlur->mPerfectskinlevel;
+    int skinWhitenLevel = 0;
+    int skinCleanLevel = 0;
+    int level_num = 0;
+    // convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel
+    // according to the table saved.
+    level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
+    level_num = level / 10;
+    skinWhitenLevel = tab_skinWhitenLevel[level_num];
+    skinCleanLevel = tab_skinCleanLevel[level_num];
+    HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d "
+             "frame->height %d frame->width %d",
+             skinWhitenLevel, skinCleanLevel, frame->height, frame->width);
+
+    TSMakeupData inMakeupData;
+    unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
+    unsigned char *uvBuf =
+        (unsigned char *)(frame->y_vir_addr) + frame->width * frame->height;
+
+    inMakeupData.frameWidth = frame->width;
+    inMakeupData.frameHeight = frame->height;
+    inMakeupData.yBuf = yBuf;
+    inMakeupData.uvBuf = uvBuf;
+
+    if (frame->width > 0 && frame->height > 0) {
+        int ret_val =
+            ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
+                             skinWhitenLevel, &Tsface, 0, yuvFormat);
+        if (ret_val != TS_OK) {
+            HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
+        } else {
+            HAL_LOGD("UCAM ts_face_beautify return OK");
+        }
+    } else {
+        HAL_LOGE("No face beauty! frame size. If size is not zero, then "
+                 "outMakeupData.yBuf is null!");
+    }
+}
+#endif
 
 /*===========================================================================
  * FUNCTION   :loadBlurApi
@@ -1093,6 +1172,14 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             output_buffer = &mBlur->mLocalCapBuffer[1].native_handle;
             HAL_LOGD("mFlushing:%d, frame idx:%d", mBlur->mFlushing,
                      capture_msg.combo_buff.frame_number);
+#ifdef CONFIG_FACE_BEAUTY
+            if (mBlur->mPerfectskinlevel > 0 &&
+                mFaceInfo[2] - mFaceInfo[0] > 0 &&
+                mFaceInfo[3] - mFaceInfo[1] > 0) {
+                doFaceMakeup((struct private_handle_t *)*(
+                    capture_msg.combo_buff.buffer));
+            }
+#endif
             if (mCaptureWeightParams.version == 2) {
                 getIspAfFullscanInfo();
             }
@@ -1212,15 +1299,15 @@ void SprdCamera3Blur::CaptureThread::initBlur20Params() {
     mCaptureInitParams.vcm_dac_up_bound = 0;
     mCaptureInitParams.vcm_dac_low_bound = 0;
     mCaptureInitParams.vcm_dac_info = NULL;
-    mCaptureInitParams.vcm_dac_gain = 2;
+    mCaptureInitParams.vcm_dac_gain = 127;
     mCaptureInitParams.valid_depth_clip = 32;
     mCaptureInitParams.method = 0;
     mCaptureInitParams.row_num = 3;
     mCaptureInitParams.column_num = 3;
     mCaptureInitParams.boundary_ratio = 8;
-    mCaptureInitParams.sel_size = 0;
-    mCaptureInitParams.valid_depth = 10;
-    mCaptureInitParams.slope = 8;
+    mCaptureInitParams.sel_size = 1;
+    mCaptureInitParams.valid_depth = 8;
+    mCaptureInitParams.slope = 32;
 }
 
 /*===========================================================================
@@ -1521,7 +1608,6 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             uint32_t x1 = 0;
             uint32_t x2 = 0;
             uint32_t max = 0;
-            int32_t g_face_info[4];
             unsigned short sel_x;
             unsigned short sel_y;
             int circle;
@@ -1536,27 +1622,23 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     max = x2 - x1;
                 }
             }
-            g_face_info[0] =
-                metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[k * 4 + 0];
-            g_face_info[1] =
-                metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[k * 4 + 1];
-            g_face_info[2] =
-                metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[k * 4 + 2];
-            g_face_info[3] =
-                metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[k * 4 + 3];
+            mFaceInfo[0] = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                               .data.i32[k * 4 + 0];
+            mFaceInfo[1] = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                               .data.i32[k * 4 + 1];
+            mFaceInfo[2] = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                               .data.i32[k * 4 + 2];
+            mFaceInfo[3] = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                               .data.i32[k * 4 + 3];
 
-            circle = (g_face_info[2] - g_face_info[0]) * 4 / 5 *
+            circle = (mFaceInfo[2] - mFaceInfo[0]) * 4 / 5 *
                      mPreviewInitParams.width / FRONT_SENSOR_ORIG_WIDTH;
             if (mPreviewWeightParams.circle_size != circle) {
                 mPreviewWeightParams.circle_size = circle;
                 mPreviewWeightParams.update = true;
             }
 
-            sel_x = (g_face_info[0] + g_face_info[2]) / 2 *
+            sel_x = (mFaceInfo[0] + mFaceInfo[2]) / 2 *
                         mPreviewInitParams.width / FRONT_SENSOR_ORIG_WIDTH +
                     circle / 8;
             if (mPreviewWeightParams.sel_x != sel_x) {
@@ -1564,7 +1646,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 mPreviewWeightParams.update = true;
             }
 
-            sel_y = (g_face_info[1] + g_face_info[3]) / 2 *
+            sel_y = (mFaceInfo[1] + mFaceInfo[3]) / 2 *
                     mPreviewInitParams.height / FRONT_SENSOR_ORIG_HEIGHT;
             if (mPreviewWeightParams.sel_y != sel_y) {
                 mPreviewWeightParams.sel_y = sel_y;
@@ -2178,6 +2260,12 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                             &sprdBurstModeEnabled, 1);
         uint8_t sprdZslEnabled = 1;
         metaSettings.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
+    }
+    /* save Perfectskinlevel */
+    if (metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
+        mPerfectskinlevel =
+            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
+        HAL_LOGD("perfectskinlevel=%d", mPerfectskinlevel);
     }
 
     /*config main camera*/

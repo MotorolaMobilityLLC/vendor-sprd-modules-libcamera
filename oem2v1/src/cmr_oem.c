@@ -4620,7 +4620,6 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     if (1 != mean->is_thumb) {
 #ifdef CONFIG_FACE_BEAUTY
         if (cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
-            cxt->is_multi_mode == MODE_BLUR ||
             cxt->is_multi_mode == MODE_SELF_SHOT) {
             camera_face_makeup(oem_handle, src);
         }
@@ -8314,8 +8313,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
                                            cxt->camera_id);
         if (raw_filename[0]) {
-            //only copy the filename without the path
-            memcpy(value, raw_filename+25, PROPERTY_VALUE_MAX);
+            // only copy the filename without the path
+            memcpy(value, raw_filename + 25, PROPERTY_VALUE_MAX);
         } else {
             property_get("debug.camera.isptool.raw.name", value, "none");
         }
@@ -8332,8 +8331,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 scene_param.awb_gain_b, scene_param.smart_ct,
                 scene_param.smart_bv);
 
-            ret = isp_ioctl(isp_cxt->isp_handle,
-                ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_param);
+            ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_TOOL_SET_SCENE_PARAM,
+                            (void *)&scene_param);
             if (ret) {
                 CMR_LOGE("failed isp ioctl %ld", ret);
             }
