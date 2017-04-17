@@ -46,7 +46,6 @@
 #define AFV1_TRACE_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning);}}while(0)
 
 #define AF_WAIT_CAF_FINISH     0
-#define AF_RING_BUFFER         0
 #define AF_SYS_VERSION "-20170225-02"
 
 #define BOKEH_BOUNDARY_RATIO 8	//based on 10

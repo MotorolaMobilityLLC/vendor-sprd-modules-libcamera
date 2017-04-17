@@ -99,7 +99,7 @@ char libafv1_path[][20] = {
 static cmr_s32 _check_handle(afv1_handle_t handle)
 {
 	cmr_s32 rtn = AFV1_SUCCESS;
-//              struct af_context_t *cxt = (struct af_context_t *)handle;
+	//struct af_context_t *cxt = (struct af_context_t *)handle;
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 
 	if (NULL == af) {
@@ -114,726 +114,6 @@ static cmr_s32 _check_handle(afv1_handle_t handle)
 */
 	return rtn;
 }
-
-#if 0
-static cmr_s32 _caf_reset(afv1_handle_t handle);
-cmr_int af_ioctrl(void *handle, cmr_int cmd, void *param0, void *param1);
-
-static cmr_s32 _af_set_motor_pos(afv1_handle_t handle, cmr_u32 motot_pos)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_motor_pos set_pos;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check cxt");
-		return AFV1_ERROR;
-	}
-
-	set_pos.motor_pos = motot_pos;
-	set_pos.skip_frame = 0;
-	set_pos.wait_time = 0;
-	af_cxt->go_position(af_cxt->caller, &set_pos);
-	af_cxt->cur_af_pos = motot_pos;
-
-	return rtn;
-}
-
-static cmr_s32 _alg_init(afv1_handle_t handle, struct afctrl_init_in *init_param, struct afctrl_init_out *result)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_alg_init_param alg_init_param;
-	struct af_alg_init_result alg_result;
-	cmr_u32 i;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE(" fail to check cxt");
-		return AFV1_ERROR;
-	}
-
-	alg_init_param.tuning_param_cnt = init_param->tuning_param_cnt;
-	alg_init_param.cur_tuning_mode = init_param->cur_tuning_mode;
-	alg_init_param.init_mode = init_param->af_mode;
-	alg_init_param.plat_info.afm_filter_type_cnt = init_param->plat_info.afm_filter_type_cnt;
-	alg_init_param.plat_info.afm_win_max_cnt = init_param->plat_info.afm_win_max_cnt;
-	if (init_param->tuning_param_cnt > 0) {
-		alg_init_param.tuning_param = (struct af_alg_tuning_block_param *)malloc(sizeof(*alg_init_param.tuning_param) * init_param->tuning_param_cnt);
-		if (NULL == alg_init_param.tuning_param) {
-			ISP_LOGE("fail to malloc men for tuning_param");
-			return AFV1_ERROR;
-		}
-		for (i = 0; i < init_param->tuning_param_cnt; i++) {
-			alg_init_param.tuning_param[i].data = init_param->tuning_param[i].data;
-			alg_init_param.tuning_param[i].data_len = init_param->tuning_param[i].data_len;
-			alg_init_param.tuning_param[i].cfg_mode = init_param->tuning_param[i].cfg_mode;
-		}
-	}
-
-	af_cxt->af_alg_handle = af_cxt->lib_ops.af_init(&alg_init_param, &alg_result);
-	free(alg_init_param.tuning_param);
-	if (NULL == af_cxt->af_alg_handle) {
-		ISP_LOGE("fail to init af alg handle");
-		return AFV1_ERROR;
-	}
-	result->init_motor_pos = alg_result.init_motor_pos;
-	return rtn;
-
-}
-
-static cmr_s32 _cfg_af_calc_param(afv1_handle_t handle, struct af_calc_param *param, struct af_alg_calc_param *alg_calc_param)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	cmr_u32 i;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check cxt");
-		return AFV1_ERROR;
-	}
-
-	switch (param->data_type) {
-	case AF_DATA_AF:
-		alg_calc_param->active_data_type = AF_ALG_DATA_AF;
-		{
-			struct af_filter_info *filter_info = (struct af_filter_info *)param->data;
-			alg_calc_param->afm_info.win_cfg.win_cnt = af_cxt->win_cfg.win_cnt;
-			alg_calc_param->afm_info.win_cfg.win_sel_mode = af_cxt->win_cfg.win_sel_mode;
-			if (0 == alg_calc_param->afm_info.win_cfg.win_cnt) {
-				alg_calc_param->afm_info.win_cfg.win_cnt = 1;
-			}
-			for (i = 0; i < af_cxt->win_cfg.win_cnt; i++) {
-				alg_calc_param->afm_info.win_cfg.win_pos[i].sx = af_cxt->win_cfg.win_pos[i].sx;
-				alg_calc_param->afm_info.win_cfg.win_pos[i].sy = af_cxt->win_cfg.win_pos[i].sy;
-				alg_calc_param->afm_info.win_cfg.win_pos[i].ex = af_cxt->win_cfg.win_pos[i].ex;
-				alg_calc_param->afm_info.win_cfg.win_pos[i].ey = af_cxt->win_cfg.win_pos[i].ey;
-				alg_calc_param->afm_info.win_cfg.win_prio[i] = af_cxt->win_cfg.win_prio[i];
-			}
-			alg_calc_param->afm_info.filter_info.filter_num = filter_info->filter_num;
-			for (i = 0; i < filter_info->filter_num; i++) {
-				alg_calc_param->afm_info.filter_info.filter_data[i].type = filter_info->filter_data[i].type;
-				alg_calc_param->afm_info.filter_info.filter_data[i].data = filter_info->filter_data[i].data;
-			}
-
-		}
-		break;
-
-	case AF_DATA_IMG_BLK:
-		alg_calc_param->active_data_type = AF_ALG_DATA_IMG_BLK;
-		{
-			struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)param->data;
-			alg_calc_param->img_blk_info.block_w = img_blk_info->block_w;
-			alg_calc_param->img_blk_info.block_h = img_blk_info->block_h;
-			alg_calc_param->img_blk_info.pix_per_blk = img_blk_info->pix_per_blk;
-			alg_calc_param->img_blk_info.chn_num = img_blk_info->chn_num;
-			alg_calc_param->img_blk_info.data = img_blk_info->data;
-		}
-		break;
-
-	case AF_DATA_AE:
-		alg_calc_param->active_data_type = AF_ALG_DATA_AE;
-		{
-			struct af_ae_info *ae_info = (struct af_ae_info *)param->data;
-			alg_calc_param->ae_info.exp_time = ae_info->exp_time;
-			alg_calc_param->ae_info.gain = ae_info->gain;
-			alg_calc_param->ae_info.cur_fps = ae_info->cur_fps;
-			alg_calc_param->ae_info.cur_lum = ae_info->cur_lum;
-			alg_calc_param->ae_info.target_lum = ae_info->target_lum;
-			alg_calc_param->ae_info.is_stable = ae_info->is_stable;
-		}
-		break;
-
-	case AF_DATA_FD:
-		alg_calc_param->active_data_type = AF_ALG_DATA_FD;
-		{
-			struct af_fd_info *fd_info = (struct af_fd_info *)param->data;
-			alg_calc_param->fd_info.face_num = fd_info->face_num;
-			for (i = 0; i < fd_info->face_num; i++) {
-				alg_calc_param->fd_info.face_pose[i].sx = fd_info->face_pose[i].sx;
-				alg_calc_param->fd_info.face_pose[i].sy = fd_info->face_pose[i].sy;
-				alg_calc_param->fd_info.face_pose[i].ex = fd_info->face_pose[i].ex;
-				alg_calc_param->fd_info.face_pose[i].ey = fd_info->face_pose[i].ey;
-			}
-		}
-		break;
-
-	default:
-		ISP_LOGE("fail to get valid cmd, type: %d", param->data_type);
-		rtn = AFV1_ERROR;
-		break;
-	}
-
-	return rtn;
-}
-
-static cmr_s32 _af_cfg_afm_win(afv1_handle_t handle, cmr_u32 type, cmr_u32 win_num, struct af_win_rect *win_pos)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-//      isp_ctrl_context *ctrl_context = NULL;
-	cmr_u32 hw_max_win_num;
-	cmr_u32 i;
-	cmr_u32 w, h;
-	struct af_win_rect set_pos[MAX_AF_WIN];
-	struct af_monitor_win monitor_win;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check cxt");
-		return AFV1_ERROR;
-	}
-//      ctrl_context = (isp_ctrl_context *)af_cxt->caller;
-
-	rtn = af_cxt->get_monitor_win_num(af_cxt->caller, &hw_max_win_num);
-	hw_max_win_num = hw_max_win_num > MAX_AF_WIN ? MAX_AF_WIN : hw_max_win_num;
-
-	ISP_LOGV("max hw win num %d, cfg win num %d", hw_max_win_num, win_num);
-	ISP_LOGV("isp w %d, h %d", af_cxt->src.w, af_cxt->src.h);
-
-	if (0 == win_num) {
-		w = af_cxt->src.w;
-		h = af_cxt->src.h;
-		win_num = 1;
-		set_pos[0].sx = ((((w >> 1) - (w / 10)) >> 1) << 1);
-		set_pos[0].sy = ((((h >> 1) - (h / 10)) >> 1) << 1);
-		set_pos[0].ex = ((((w >> 1) + (w / 10)) >> 1) << 1);
-		set_pos[0].ey = ((((h >> 1) + (h / 10)) >> 1) << 1);
-
-	} else {
-		for (i = 0; i < win_num; i++) {
-			set_pos[i] = win_pos[i];
-		}
-	}
-
-	af_cxt->win_cfg.win_cnt = win_num;
-	af_cxt->win_cfg.win_sel_mode = 0;
-	for (i = 0; i < win_num; i++) {
-		af_cxt->win_cfg.win_pos[i].sx = set_pos[i].sx;
-		af_cxt->win_cfg.win_pos[i].sy = set_pos[i].sy;
-		af_cxt->win_cfg.win_pos[i].ex = set_pos[i].ex;
-		af_cxt->win_cfg.win_pos[i].ey = set_pos[i].ey;
-		af_cxt->win_cfg.win_prio[i] = 1;
-	}
-
-	ISP_LOGV("sx w %d, sy %d,ex w %d, ey %d", set_pos[0].sx, set_pos[0].sy, set_pos[0].ex, set_pos[0].ey);
-
-	for (i = win_num; i < hw_max_win_num; i++) {
-		set_pos[i] = set_pos[0];
-	}
-	monitor_win.type = type;
-	monitor_win.win_pos = set_pos;
-	rtn = af_cxt->set_monitor_win(af_cxt->caller, &monitor_win);
-	return rtn;
-
-}
-
-static cmr_s32 _af_set_status(afv1_handle_t handle, cmr_u32 af_status)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	cmr_u32 set_status;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check cxt");
-		return AFV1_ERROR;
-	}
-
-	switch (af_status) {
-	case AF_STATUS_START:
-		set_status = AF_ALG_STATUS_START;
-		break;
-	case AF_STATUS_RUNNING:
-		set_status = AF_ALG_STATUS_RUNNING;
-		break;
-	case AF_STATUS_FINISH:
-		set_status = AF_ALG_STATUS_FINISH;
-		break;
-	case AF_STATUS_PAUSE:
-		set_status = AF_ALG_STATUS_PAUSE;
-		break;
-	case AF_STATUS_RESUME:
-		set_status = AF_ALG_STATUS_RESUME;
-		break;
-	case AF_STATUS_RESTART:
-		set_status = AF_ALG_STATUS_RESTART;
-		break;
-	case AF_STATUS_STOP:
-		set_status = AF_ALG_STATUS_STOP;
-		break;
-	default:
-		ISP_LOGE("fail to get af status %d", af_status);
-		rtn = AF_PARAM_ERROR;
-		break;
-	}
-	if (AFV1_SUCCESS == rtn) {
-		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_AF_STATUS, (void *)&set_status, NULL);
-	}
-
-	return rtn;
-
-}
-
-static cmr_s32 _af_set_start(afv1_handle_t handle, struct af_trig_info *trig_info)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_monitor_set monitor_set;
-	cmr_u32 af_pos;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-	rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_GET_AF_INIT_POS, (void *)&af_pos, NULL);
-	rtn = _af_set_motor_pos(handle, af_pos);
-
-	if (0 == af_cxt->ae_awb_lock_cnt) {
-		rtn = af_cxt->ae_awb_lock(af_cxt->caller);
-		af_cxt->ae_awb_lock_cnt++;
-	}
-
-	af_cxt->is_running = AF_TRUE;
-	rtn = _af_cfg_afm_win(handle, 1, trig_info->win_num, trig_info->win_pos);
-	rtn = _af_set_status(handle, AF_ALG_STATUS_START);
-	monitor_set.bypass = 0;
-	monitor_set.int_mode = 1;
-	monitor_set.need_denoise = 0;
-	monitor_set.skip_num = 0;
-	monitor_set.type = 1;
-	rtn = af_cxt->set_monitor(af_cxt->caller, &monitor_set, af_cxt->cur_envi);
-	return rtn;
-}
-
-static cmr_s32 _af_end_proc(afv1_handle_t handle, struct af_result_param *result, cmr_u32 need_notice)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_monitor_set monitor_set;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-	monitor_set.bypass = 1;
-	monitor_set.int_mode = 1;
-	monitor_set.need_denoise = 0;
-	monitor_set.skip_num = 0;
-	monitor_set.type = 1;
-	rtn = af_cxt->set_monitor(af_cxt->caller, &monitor_set, af_cxt->cur_envi);
-	if (need_notice) {
-		af_cxt->end_notice(af_cxt->caller, result);
-	}
-	af_cxt->af_result = *result;
-	af_cxt->af_has_suc_rec = AF_TRUE;
-	if (af_cxt->ae_awb_lock_cnt) {
-		af_cxt->ae_awb_release(af_cxt->caller);
-		af_cxt->ae_awb_lock_cnt--;
-	}
-	af_cxt->is_running = AF_FALSE;
-
-	return rtn;
-}
-
-static cmr_s32 _af_finish(afv1_handle_t handle, struct af_result_param *result)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-	rtn = af_ioctrl(handle, AF_CMD_SET_AF_FINISH, (void *)result, NULL);
-
-	return rtn;
-}
-
-static cmr_s32 _caf_trig_af_start(afv1_handle_t handle)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_trig_info trig_info;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-
-	trig_info.win_num = 0;
-	trig_info.mode = af_cxt->af_mode;
-
-	rtn = af_ioctrl(handle, AF_CMD_SET_CAF_TRIG_START, (void *)&trig_info, NULL);
-
-	return rtn;
-}
-
-static cmr_s32 _caf_reset(afv1_handle_t handle)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-
-	rtn = af_ioctrl(handle, AF_CMD_SET_CAF_RESET, NULL, NULL);
-
-	return rtn;
-}
-
-static cmr_s32 _caf_stop(afv1_handle_t handle)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-
-	rtn = af_ioctrl(handle, AF_CMD_SET_CAF_STOP, NULL, NULL);
-
-	return rtn;
-}
-
-static cmr_s32 _caf_reset_after_af(afv1_handle_t handle)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-
-	if ((AF_MODE_CONTINUE == af_cxt->af_mode) || (AF_MODE_VIDEO == af_cxt->af_mode)) {
-		rtn = _caf_reset(handle);
-	}
-
-	return rtn;
-}
-
-static cmr_s32 afsprd_unload_lib(struct af_context_t *cxt)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-
-	if (NULL == cxt) {
-		ISP_LOGE("fail to get param");
-		rtn = AF_PARAM_NULL;
-		goto exit;
-	}
-
-	if (NULL != cxt->lib_handle) {
-		dlclose(cxt->lib_handle);
-		cxt->lib_handle = NULL;
-	}
-
-exit:
-	return rtn;
-}
-
-static cmr_s32 afsprd_load_lib(struct af_context_t *cxt)
-{
-	cmr_s32 rtn = AFV1_SUCCESS;
-	cmr_u32 v_count = 0;
-	cmr_u32 v_id = 0;
-
-	if (NULL == cxt) {
-		ISP_LOGE("fail to check handle");
-		rtn = AF_PARAM_NULL;
-		goto exit;
-	}
-
-	v_count = sizeof(libafv1_path) / sizeof(libafv1_path[0]);
-	v_id = cxt->lib_info->version_id;
-
-	if (v_id >= v_count) {
-		ISP_LOGE("fail to get version id :%d", v_id);
-		rtn = AFV1_ERROR;
-		goto exit;
-	}
-	ISP_LOGI("af lib v_count:%d, v_id:%d, version_name:%s", v_count, v_id, libafv1_path[v_id]);
-
-	cxt->lib_handle = dlopen(libafv1_path[v_id], RTLD_NOW);
-	if (!cxt->lib_handle) {
-		ISP_LOGE("fail to dlopen af lib");
-		rtn = AFV1_ERROR;
-		goto exit;
-	}
-
-	cxt->lib_ops.af_init = dlsym(cxt->lib_handle, "af_alg_init");
-	cxt->lib_ops.af_calculation = dlsym(cxt->lib_handle, "af_alg_calculation");
-	cxt->lib_ops.af_deinit = dlsym(cxt->lib_handle, "af_alg_deinit");
-	cxt->lib_ops.af_ioctrl = dlsym(cxt->lib_handle, "af_alg_ioctrl");
-
-	if (NULL == cxt->lib_ops.af_init || NULL == cxt->lib_ops.af_calculation || NULL == cxt->lib_ops.af_deinit || NULL == cxt->lib_ops.af_ioctrl) {
-		ISP_LOGE("fail to dlsym af lib");
-		rtn = AFV1_ERROR;
-		goto load_error;
-	}
-
-	return rtn;
-
-load_error:
-	afsprd_unload_lib(cxt);
-
-exit:
-	return rtn;
-}
-
-cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
-{
-	//------------------------------------------------------
-	UNUSED(param);
-	UNUSED(result);
-	cmr_int rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_monitor_set monitor_set;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-
-	af_cxt = (struct af_context_t *)handle;
-
-	monitor_set.bypass = 1;
-	monitor_set.int_mode = 1;
-	monitor_set.need_denoise = 0;
-	monitor_set.skip_num = 0;
-	monitor_set.type = 1;
-	rtn = af_cxt->set_monitor(af_cxt->caller, &monitor_set, af_cxt->cur_envi);
-
-	if (af_cxt->af_alg_handle) {
-		rtn = af_cxt->lib_ops.af_deinit(af_cxt->af_alg_handle);
-		if (rtn) {
-			ISP_LOGE("fail to deinit af alg, rtn %ld", rtn);
-		}
-	}
-	pthread_mutex_destroy(&af_cxt->status_lock);
-
-	afsprd_unload_lib(af_cxt);
-	memset(af_cxt, 0, sizeof(*af_cxt));
-	free(af_cxt);
-
-	ISP_LOGI("LiuY: done %ld", rtn);
-	return rtn;
-
-}
-
-cmr_handle sprd_afv1_init(void *in, void *out)
-{
-	//------------------------------------------------------------------------
-	struct af_context_t *af_cxt = NULL;
-	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
-	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
-	cmr_s32 rtn = AFV1_SUCCESS;
-	if (NULL == init_param) {
-		ISP_LOGE("fail to init param, init_param:%p , result:%p", init_param, result);
-		goto INIT_ERROR_EXIT;
-	}
-
-	af_cxt = (struct af_context_t *)malloc(sizeof(struct af_context_t));
-	if (NULL == af_cxt) {
-		ISP_LOGE("fail to malloc");
-		goto INIT_ERROR_EXIT;
-	}
-	ISP_LOGI("af_init start");
-	memset(af_cxt, 0, sizeof(struct af_context_t));
-	af_cxt->magic_start = AFV1_MAGIC_START;
-	af_cxt->magic_end = AFV1_MAGIC_END;
-	af_cxt->af_mode = init_param->af_mode;
-	af_cxt->bypass = init_param->af_bypass;
-	af_cxt->caller = init_param->caller;
-	af_cxt->go_position = init_param->go_position;
-	af_cxt->end_notice = init_param->end_notice;
-	af_cxt->start_notice = init_param->start_notice;
-	af_cxt->set_monitor = init_param->set_monitor;
-	af_cxt->set_monitor_win = init_param->set_monitor_win;
-	af_cxt->get_monitor_win_num = init_param->get_monitor_win_num;
-	af_cxt->ae_awb_lock = init_param->ae_awb_lock;
-	af_cxt->ae_awb_release = init_param->ae_awb_release;
-	af_cxt->plat_info = init_param->plat_info;
-	af_cxt->cur_envi = AF_ENVI_INDOOR;
-	af_cxt->bv_thr[0] = 60;
-	af_cxt->bv_thr[1] = 150;
-	af_cxt->rgbdiff_thr[0] = 8;
-	af_cxt->rgbdiff_thr[1] = 8;
-	af_cxt->rgbdiff_thr[2] = 8;
-	af_cxt->src.w = init_param->src.w;
-	af_cxt->src.h = init_param->src.h;
-	af_cxt->lib_info = &init_param->lib_param;
-
-	rtn = afsprd_load_lib(af_cxt);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to load af lib");
-		goto INIT_ERROR_EXIT;
-	}
-
-	rtn = _alg_init((afv1_handle_t) af_cxt, init_param, result);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to init af alg handle");
-		goto INIT_ERROR_EXIT;
-	}
-
-	af_cxt->init_flag = AF_TRUE;
-	af_cxt->af_has_suc_rec = AF_FALSE;
-	af_cxt->ae_awb_lock_cnt = 0;
-	//_af_set_motor_pos((afv1_handle_t)af_cxt,result->init_motor_pos);
-	pthread_mutex_init(&af_cxt->status_lock, NULL);
-
-	ISP_LOGI("af_init end ");
-	return (afv1_handle_t) af_cxt;
-
-INIT_ERROR_EXIT:
-	if (af_cxt) {
-		rtn = sprd_afv1_deinit((cmr_handle) af_cxt, NULL, NULL);
-		if (rtn) {
-			ISP_LOGE("fail to deinit af, rtn %d", rtn);
-		}
-	}
-	af_cxt = NULL;
-	return (cmr_handle) af_cxt;
-
-}
-
-cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
-{
-	cmr_int rtn = AFV1_SUCCESS;
-	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_calc_param *param = (struct af_calc_param *)in;
-	struct af_result_param *result = (struct af_result_param *)out;
-	struct af_alg_calc_param alg_calc_param;
-	struct af_alg_result alg_calc_result;
-
-	rtn = _check_handle(handle);
-	if (AFV1_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle");
-		return AFV1_ERROR;
-	}
-
-	if (1 == af_cxt->isp_tool_af_test) {	// isp tool af test
-		ISP_LOGV("ISP_TOOL_AF_TEST");
-		return rtn;
-	}
-
-	_cfg_af_calc_param(handle, param, &alg_calc_param);
-	alg_calc_result = af_cxt->alg_result;
-	alg_calc_result.is_caf_trig = AF_FALSE;
-	alg_calc_result.is_finish = AF_FALSE;
-	alg_calc_param.cur_motor_pos = af_cxt->cur_af_pos;
-	alg_calc_result.motor_pos = af_cxt->cur_af_pos;
-	alg_calc_param.af_has_suc_rec = af_cxt->af_has_suc_rec;
-	rtn = af_cxt->lib_ops.af_calculation(af_cxt->af_alg_handle, &alg_calc_param, &alg_calc_result);
-
-	if (af_cxt->cur_af_pos != alg_calc_result.motor_pos) {
-		_af_set_motor_pos(handle, alg_calc_result.motor_pos);
-	}
-	if ((!af_cxt->alg_result.is_finish) && alg_calc_result.is_finish) {
-		result->motor_pos = alg_calc_result.motor_pos;
-		result->suc_win = alg_calc_result.suc_win;
-		_af_finish(handle, result);
-		_caf_reset_after_af(handle);
-	} else if ((!af_cxt->alg_result.is_caf_trig) && alg_calc_result.is_caf_trig) {
-		af_cxt->start_notice(af_cxt->caller);
-		_caf_trig_af_start(handle);
-	} else if ((af_cxt->af_mode == AF_ALG_MODE_CONTINUE || af_cxt->af_mode == AF_ALG_MODE_VIDEO)
-		   && af_cxt->alg_result.is_caf_trig_in_saf) {
-		af_cxt->start_notice(af_cxt->caller);
-		_caf_trig_af_start(handle);
-	}
-	af_cxt->alg_result = alg_calc_result;
-	if ((af_cxt->af_mode == AF_ALG_MODE_CONTINUE || af_cxt->af_mode == AF_ALG_MODE_VIDEO)
-	    && af_cxt->alg_result.is_caf_trig_in_saf) {
-		af_cxt->alg_result.is_caf_trig_in_saf = AF_FALSE;
-	}
-	ISP_LOGI("LiuY done %ld", rtn);
-	return rtn;
-
-}
-
-#endif
-
-#if AF_RING_BUFFER
-static cmr_s32 af_dequeue_in_ringbuffer(af_ctrl_t * af)
-{
-
-//      isp_ctrl_context *isp = af->isp_ctx;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
-
-	cmr_s32 rtn;
-
-	if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
-		af->node_type = ISP_NODE_TYPE_RAWAFM;
-		rtn = isp_u_bq_dequeue_buf(device, &af->k_addr, &af->u_addr, af->node_type);
-		ISP_LOGV("tshark3 chip dequeue Finished. rtn=%d, k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
-		if (rtn || (0 == af->u_addr) || (0 == af->k_addr)) {
-			ISP_LOGE("fail to get k_addr or u_addr, %d", rtn);
-			return AF_RING_BUFFER_NO;
-		}
-
-		memcpy(af->af_statistics, af->u_addr, 105 * 4);
-
-		return AF_RING_BUFFER_YES;
-	} else {
-		af->node_type = ISP_NODE_TYPE_RAWAFM;
-		rtn = isp_u_bq_dequeue_buf(device, &af->k_addr, &af->u_addr, af->node_type);
-		ISP_LOGV("dequeue Finished. rtn=%d, k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
-		if (rtn || (0 == af->u_addr) || (0 == af->k_addr)) {
-			ISP_LOGE("fail to get k_addr or u_addr, %d", rtn);
-			return AF_RING_BUFFER_NO;
-		}
-
-		memcpy(af->af_statistics, af->u_addr, 25 * 4);	// will be 25*4*2,waiting for kernel compelement
-
-		return AF_RING_BUFFER_YES;
-	}
-}
-
-static cmr_s32 af_enqueue_in_ringbuffer(af_ctrl_t * af)
-{
-
-//      isp_ctrl_context *isp = af->isp_ctx;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
-
-	cmr_s32 rtn;
-
-	if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
-		af->node_type = ISP_NODE_TYPE_RAWAFM;
-
-//              isp->isp_smart_eb = 1;//todo
-		isp_u_bq_enqueue_buf(device, af->k_addr, af->u_addr, af->node_type);
-		ISP_LOGV("isp_u_af_transaddr: Enqueue! k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
-	} else {
-		af->node_type = ISP_NODE_TYPE_RAWAFM;
-
-//              isp->isp_smart_eb = 1;
-		isp_u_bq_enqueue_buf(device, af->k_addr, af->u_addr, af->node_type);
-		ISP_LOGV("isp_u_af_transaddr: Enqueue! k_addr = 0x%x, u_addr = 0x%x", rtn, af->k_addr, af->u_addr);
-	}
-
-	return 0;
-}
-#endif
 
 // afm hardware
 static void afm_enable(af_ctrl_t * af)
@@ -965,38 +245,10 @@ static void afm_setup(af_ctrl_t * af)
 	af->af_enhanced_module.fv_shift[1] = 0;
 	memcpy(&(af->af_enhanced_module.fv1_coeff), &fv1_coeff, sizeof(fv1_coeff));
 
-	if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
-		isp_u_raw_afm_skip_num_clr(device, 1);
-		isp_u_raw_afm_skip_num_clr(device, 0);
-		isp_u_raw_afm_skip_num(device, 0);
-		isp_u_raw_afm_spsmd_rtgbot_enable(device, 1);
-		isp_u_raw_afm_spsmd_diagonal_enable(device, 1);
-		isp_u_raw_afm_spsmd_square_en(device, 1);
-		isp_u_raw_afm_overflow_protect(device, 0);
-		isp_u_raw_afm_subfilter(device, 0, 1);
-		isp_u_raw_afm_spsmd_touch_mode(device, 0);
-		isp_u_raw_afm_shfit(device, 0, 0, 0);
-		isp_u_raw_afm_threshold_rgb(device, &af->thrd);
-		isp_u_raw_afm_mode(device, 1);
-	} else {
-#if 0
-		isp_u_raw_afm_skip_num_clr(device, 1);
-		isp_u_raw_afm_skip_num_clr(device, 0);
-		isp_u_raw_afm_spsmd_rtgbot_enable(device, 1);
-		isp_u_raw_afm_spsmd_diagonal_enable(device, 1);
-		isp_u_raw_afm_spsmd_cal_mode(device, 1);
-		isp_u_raw_afm_sel_filter1(device, 0);	// 0 stands for spsmd
-		isp_u_raw_afm_sel_filter2(device, 1);	// 1 stands for sobel9x9
-		isp_u_raw_afm_sobel_type(device, 0);
-		isp_u_raw_afm_spsmd_type(device, 2);
-		isp_u_raw_afm_sobel_threshold(device, af->thrd.sobel9_thr_min_green, af->thrd.sobel9_thr_max_green);
-		isp_u_raw_afm_spsmd_threshold(device, af->thrd.spsmd_thr_min_green, af->thrd.spsmd_thr_max_green);
-#endif
-		isp_u_raw_afm_skip_num(device, af->afm_skip_num);
-		isp_u_raw_afm_mode(device, 1);
-		isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
-		isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
-	}
+	isp_u_raw_afm_skip_num(device, af->afm_skip_num);
+	isp_u_raw_afm_mode(device, 1);
+	isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
+	isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
 }
 
 static cmr_u32 afm_get_win_num(struct afctrl_init_in *input_param)
@@ -1029,12 +281,12 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 	af->set_monitor_win(af->caller, &winparam);
 }
 
-//static cmr_s32 afm_get_fv(isp_ctrl_context *isp, cmr_u64 *fv, cmr_u32 filter_mask, cmr_s32 roi_num,cmr_s32 ring_buffer)
-static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr_s32 roi_num, cmr_s32 ring_buffer)
+static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr_s32 roi_num)
 {
 	cmr_s32 i, num;
 	cmr_u64 *p;
-	//af_ctrl_t *af = (af_ctrl_t *)isp->handle_af;
+	cmr_u32 data[25];
+
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
@@ -1043,146 +295,42 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	num = 0;
 	p = fv;
 
-	if (0 == ring_buffer) {
-		if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
-			cmr_u32 data[105];
+	if (filter_mask & SOBEL5_BIT) {
+		num++;
+		for (i = 0; i < roi_num; ++i)
+			*p++ = 0;
+	}
 
-			isp_u_raw_afm_statistic_r6p9(device, data);
+	if (filter_mask & SOBEL9_BIT) {
+		num++;
+		isp_u_raw_afm_type2_statistic(device, data);
+		for (i = 0; i < roi_num; ++i)
+			*p++ = data[i];
+	}
 
-			if (filter_mask & SOBEL5_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i)
-					*p++ = data[1 + i * 3];
-			}
+	if (filter_mask & SPSMD_BIT) {
+		num++;
+		isp_u_raw_afm_type1_statistic(device, data);
+		for (i = 0; i < roi_num; ++i)
+			*p++ = data[i];
+	}
 
-			if (filter_mask & SOBEL9_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i)
-					*p++ = data[31 + i * 3];
-			}
+	if (filter_mask & ENHANCED_BIT) {
+		num++;
+		/*
+		   for (i = 0; i < roi_num; i++) {
+		   ISP_LOGV("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+		   }
 
-			if (filter_mask & SPSMD_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i) {
-					cmr_u64 high = data[95 + i / 2];
-					high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
-					*p++ = data[61 + i * 3] + high;
-				}
-			}
-
-		} else {
-			cmr_u32 data[25];
-
-			if (filter_mask & SOBEL5_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i)
-					*p++ = 0;
-			}
-
-			if (filter_mask & SOBEL9_BIT) {
-				num++;
-				isp_u_raw_afm_type2_statistic(device, data);
-				for (i = 0; i < roi_num; ++i)
-					*p++ = data[i];
-			}
-
-			if (filter_mask & SPSMD_BIT) {
-				num++;
-				isp_u_raw_afm_type1_statistic(device, data);
-				for (i = 0; i < roi_num; ++i)
-					*p++ = data[i];
-			}
-
-			if (filter_mask & ENHANCED_BIT) {
-				num++;
-				/*
-				   for (i = 0; i < roi_num; i++) {
-				   ISP_LOGV("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
-				   }
-
-				   for (i = 0; i < roi_num; i++) {
-				   ISP_LOGV("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
-				   }
-				 */
-				for (i = 0; i < roi_num; ++i) {
-					*p++ = af->af_fv_val.af_fv0[i];
-				}
-			}
-
-		}
-	} else {		// ring buffer path
-		if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
-			//cmr_u32 data[105];
-
-			//isp_u_raw_afm_statistic_r6p9(isp->handle_device, data);
-
-			if (filter_mask & SOBEL5_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i)
-					//*p++ = data[1 + i * 3];
-					*p++ = af->af_statistics[1 + i * 3];
-			}
-
-			if (filter_mask & SOBEL9_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i)
-					//*p++ = data[31 + i * 3];
-					*p++ = af->af_statistics[31 + i * 3];
-			}
-
-			if (filter_mask & SPSMD_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i) {
-					//cmr_u64 high = data[95 + i / 2];
-					cmr_u64 high = af->af_statistics[95 + i / 2];
-					high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
-					//*p++ = data[61 + i * 3] + high;
-					*p++ = af->af_statistics[61 + i * 3] + high;
-				}
-			}
-		} else {
-			//cmr_u32 data[25];
-
-			if (filter_mask & SOBEL5_BIT) {
-				num++;
-				for (i = 0; i < roi_num; ++i)
-					*p++ = 0;
-			}
-
-			if (filter_mask & SOBEL9_BIT) {
-				num++;
-				//isp_u_raw_afm_type2_statistic(isp->handle_device, data);
-				for (i = 0; i < roi_num; ++i)
-					//*p++ = data[i];
-					*p++ = af->af_statistics[i];
-			}
-
-			if (filter_mask & SPSMD_BIT) {
-				num++;
-				//isp_u_raw_afm_type1_statistic(isp->handle_device, data);
-				for (i = 0; i < roi_num; ++i)
-					//*p++ = data[i];
-					*p++ = af->af_statistics[i];
-			}
-
-			if (filter_mask & ENHANCED_BIT) {
-				num++;
-
-				for (i = 0; i < 5; i++) {
-					//ISP_LOGV("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
-				}
-
-				for (i = 0; i < 5; i++) {
-					//ISP_LOGV("fv1[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
-				}
-
-				for (i = 0; i < roi_num; ++i) {
-					//*p++ = af->af_fv_val.af_fv0[i];
-				}
-			}
-
+		   for (i = 0; i < roi_num; i++) {
+		   ISP_LOGV("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
+		   }
+		 */
+		for (i = 0; i < roi_num; ++i) {
+			*p++ = af->af_fv_val.af_fv0[i];
 		}
 	}
+
 	return num;
 }
 
@@ -1554,7 +702,7 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 
 		sum = 0;
 		memset(&(spsmd[0]), 0, sizeof(cmr_u64) * MAX_ROI_NUM);
-		afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
+		afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num);
 
 		//sum = 0.2*spsmd[0]+spsmd[1]+3*spsmd[2];
 		switch (af->state) {
@@ -1595,7 +743,7 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 		cmr_u32 i;
 		cmr_u64 sum;
 
-		afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
+		afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num);
 
 		sum = 0;
 		for (i = 0; i < af->roi.num; ++i)	// for caf, the weight in last window is 0
@@ -2800,7 +1948,7 @@ static void caf_monitor_process_af(af_ctrl_t * af)
 		cmr_s32 i;
 		cmr_u64 sum;
 */
-		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
+		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
 /*
 		sum = 0;
 		for (i=0; i<9; ++i)
@@ -2812,7 +1960,7 @@ static void caf_monitor_process_af(af_ctrl_t * af)
 */
 		//ISP_LOGV("af->roi.num %d spsmd %lld", af->roi.num, fv[af->roi.num - 1]);
 	} else {
-		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
+		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
 		fv[0] = fv[af->roi.num - 1];	// the fv in last window is for caf trigger
 	}
 
@@ -3784,12 +2932,6 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 		ISP_LOGV("ae not stable in non caf mode");
 		return 0;
 	}
-	//AF ring buffer
-#if (AF_RING_BUFFER)
-	if (AF_RING_BUFFER_YES != af_dequeue_in_ringbuffer(af)) {
-		return 0;
-	}
-#endif
 
 	system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
@@ -3884,9 +3026,6 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 	system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 	ISP_LOGV("SYSTEM_TEST-af:%lldms", system_time1 - system_time0);
 
-#if (AF_RING_BUFFER)
-	af_enqueue_in_ringbuffer(af);
-#endif
 	ISP_LOGV("E");
 	return rtn;
 }

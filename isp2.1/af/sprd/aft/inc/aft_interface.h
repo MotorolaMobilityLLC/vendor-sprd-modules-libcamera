@@ -130,7 +130,7 @@ struct aft_img_blk_info {
 
 struct aft_ae_info {
 	cmr_u32 exp_time;	//us
-	cmr_u32 gain;	//256 --> 1X
+	cmr_u32 gain;		//256 --> 1X
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
