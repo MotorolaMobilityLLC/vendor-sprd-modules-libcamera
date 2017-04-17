@@ -70,11 +70,7 @@ extern "C" {
 #define GRAB_BUF_MAX 24
 #define GRAB_CHANNEL_MAX 6
 #define SESNOR_NAME_LEN 40
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 #define CMR_CAPTURE_MEM_SUM 1
-#else
-#define CMR_CAPTURE_MEM_SUM 4
-#endif
 
 #define CAMERA_PIXEL_ALIGNED 4
 #define CAMERA_SENSOR_INFO_2_ISP_NUM 3
