@@ -1007,9 +1007,11 @@ static cmr_int setting_set_range_fps(struct setting_component *cpt,
     if (setting_is_rawrgb_format(cpt, parm)) {
         hal_param->is_update_range_fps = 1;
         hal_param->range_fps = parm->range_fps;
-        // if (setting_is_active(cpt)) {
-        ret = setting_isp_ctrl(cpt, COM_ISP_SET_RANGE_FPS, parm);
-        //}
+        /*special mode have fix fps, not update fps to isp*/
+        if (hal_param->video_slow_motion_flag == 0 &&
+            hal_param->hal_common.scene_mode != CAMERA_SCENE_MODE_ACTION) {
+            ret = setting_isp_ctrl(cpt, COM_ISP_SET_RANGE_FPS, parm);
+        }
     } else {
         hal_param->is_update_range_fps = 1;
         hal_param->range_fps = parm->range_fps;
