@@ -1806,7 +1806,7 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device) {
     id = hw->mCameraId;
     delete hw;
     hw = NULL;
-    device == NULL;
+    device = NULL;
 
     if (id == SENSOR_MAIN) {
         g_cam_device[0] = NULL;
