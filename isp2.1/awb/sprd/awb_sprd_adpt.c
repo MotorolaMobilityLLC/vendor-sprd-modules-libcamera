@@ -1111,9 +1111,9 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 				cxt->output_gain.g = cxt->awb_init_param.tuning_param.wbMode_gain[index].g_gain;
 				cxt->output_gain.b = cxt->awb_init_param.tuning_param.wbMode_gain[index].b_gain;
 				cxt->output_ct = cxt->awb_init_param.tuning_param.wbMode_gain[index].ct;
-			} else	// return mwb by ct, (100K <= ct <= 10000K)
+			} else	// return mwb by ct, (100K <= ct < 10000K)
 			{
-				if (mawb_id > 10000) {
+				if (mawb_id >= 10000) {
 					cmr_s32 index = 100;
 					cxt->output_gain.r = cxt->awb_init_param.tuning_param.mwb_gain[index].r_gain;
 					cxt->output_gain.g = cxt->awb_init_param.tuning_param.mwb_gain[index].g_gain;
@@ -1226,6 +1226,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 //		ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
 		if (cxt->last_enable == 2 && cxt->flash_info.flash_enable == 0) {
 			rtn = _awb_get_recgain(cxt, in);
+			if (AWB_CTRL_SUCCESS != rtn) {
+				ISP_LOGE("fail to _awb_get_recgain");
+				return AWB_CTRL_ERROR;
+			}
 			cxt->snap_lock =5;  //lock awb 5 frames after snapshot
 			cxt->last_enable = 0;
 		}
