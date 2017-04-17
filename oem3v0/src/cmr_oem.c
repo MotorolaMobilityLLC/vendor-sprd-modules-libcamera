@@ -708,13 +708,6 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 		camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 	}
 exit:
-	if (ret) {
-		if (cxt->camera_cb) {
-			cmr_snapshot_stop((cmr_handle)cxt);
-			camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NO);
-			cxt->camera_cb(CAMERA_EXIT_CB_FAILED, cxt->client_data, CAMERA_FUNC_TAKE_PICTURE, NULL);
-		}
-	}
 	ATRACE_END();
 	return;
 }
