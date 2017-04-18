@@ -8387,6 +8387,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
+    memset(&setting_param, 0, sizeof(setting_param));
 
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
@@ -8416,6 +8418,14 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         }
 #endif
         ret = camera_close_hdr(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close hdr");
+        }
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_CLEAR_HDR, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to clear hdr sem");
+        }
     }
     cxt->snp_cxt.status = IDLE;
 

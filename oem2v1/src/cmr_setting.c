@@ -2389,7 +2389,6 @@ static cmr_int setting_get_hdr(struct setting_component *cpt,
 static cmr_int setting_ctrl_hdr(struct setting_component *cpt,
                                 struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
-    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     cmr_setting_clear_sem(cpt);
     CMR_LOGD("start wait for hdr ev effect");
@@ -2397,6 +2396,22 @@ static cmr_int setting_ctrl_hdr(struct setting_component *cpt,
     CMR_LOGD("end wait for hdr ev effect");
 
     return ret;
+}
+
+static cmr_int setting_clear_hdr(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+
+    if (!cpt) {
+        CMR_LOGE("camera_context is null.");
+        return -1;
+    }
+
+    pthread_mutex_lock(&cpt->isp_mutex);
+    cmr_sem_post(&cpt->isp_sem);
+    pthread_mutex_unlock(&cpt->isp_mutex);
+
+    CMR_LOGD("Done");
+    return 0;
 }
 static cmr_int setting_is_need_flash(struct setting_component *cpt,
                                      struct setting_cmd_parameter *parm) {
@@ -3408,6 +3423,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
         {SETTING_GET_SPRD_3DCAL_ENABLE, setting_get_3dcalibration_enable},
         {SETTING_GET_SPRD_YUV_CALLBACK_ENABLE, setting_get_yuv_callback_enable},
         {SETTING_CTRL_HDR, setting_ctrl_hdr},
+        {SETTING_CLEAR_HDR, setting_clear_hdr},
     };
     struct setting_item *item = NULL;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
