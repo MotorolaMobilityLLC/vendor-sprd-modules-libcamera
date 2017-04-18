@@ -2425,7 +2425,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range,
            ksensitivity_range, sizeof(ksensitivity_range));
     s_setting[cameraId].sensor_InfoInfo.timestamp_source =
-        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
+        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
 
     // control
     if (cameraId == 0)
