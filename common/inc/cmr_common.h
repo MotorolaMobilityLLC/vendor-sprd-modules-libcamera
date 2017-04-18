@@ -540,6 +540,7 @@ struct img_frm_cap {
     struct sprd_pdaf_control pdaf_ctrl;
     cmr_u32 sence_mode;
     cmr_u32 slowmotion;
+    cmr_u32 chn_skip_num;
 };
 
 struct buffer_cfg {

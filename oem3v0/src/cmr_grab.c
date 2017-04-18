@@ -680,7 +680,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num)
 	CMR_CHECK_FD;
 
 	num = skip_num;
-	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SKIP_NUM, &num);
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CAP_SKIP_NUM, &num);
 	CMR_RTN_IF_ERR(ret);
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_ON, &stream_on);
 	if (0 == ret) {

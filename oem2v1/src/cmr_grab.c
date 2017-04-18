@@ -462,11 +462,12 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
-    CMR_LOGI(
-        "chn_id=%d, regu_mode=%d, pdaf_ctrl=%d %d, deci_factor=%d, cfg_isp=%d",
-        channel_id, config->cfg.regular_desc.regular_mode,
-        config->cfg.pdaf_ctrl.mode, config->cfg.pdaf_ctrl.phase_data_type,
-        config->chn_deci_factor, config->buffer_cfg_isp);
+    CMR_LOGI("chn_id=%d, regu_mode=%d, pdaf_ctrl=%d %d, deci_factor=%d, "
+             "cfg_isp=%d, chn_skip_num=%d",
+             channel_id, config->cfg.regular_desc.regular_mode,
+             config->cfg.pdaf_ctrl.mode, config->cfg.pdaf_ctrl.phase_data_type,
+             config->chn_deci_factor, config->buffer_cfg_isp,
+             config->cfg.chn_skip_num);
 
     parm.channel_id = channel_id;
     parm.regular_desc = config->cfg.regular_desc;
@@ -490,6 +491,14 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_FRM_DECI, &parm);
     if (ret) {
         CMR_LOGE("SPRD_IMG_IO_PATH_FRM_DECI failed, ret=%ld", ret);
+        return ret;
+    }
+
+    parm.channel_id = channel_id;
+    parm.skip_num = config->cfg.chn_skip_num;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_PATH_SKIP_NUM, &parm);
+    if (ret) {
+        CMR_LOGE("SPRD_IMG_IO_SET_PATH_SKIP_NUM failed, ret=%ld", ret);
         return ret;
     }
 
@@ -713,7 +722,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
     CMR_CHECK_FD;
 
     num = skip_num;
-    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SKIP_NUM, &num);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CAP_SKIP_NUM, &num);
     CMR_RTN_IF_ERR(ret);
     ATRACE_BEGIN("dcam_stream_on");
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_ON, &stream_on);

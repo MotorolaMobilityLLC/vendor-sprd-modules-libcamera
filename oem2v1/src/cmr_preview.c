@@ -257,7 +257,6 @@ struct prev_context {
     cmr_uint cap_hdr_virt_addr_path_array[HDR_CAP_NUM];
     cmr_s32 cap_hdr_fd_path_array[HDR_CAP_NUM];
 
-
     struct cmr_cap_mem cap_mem[CMR_CAPTURE_MEM_SUM];
     struct img_frm cap_frm[CMR_CAPTURE_MEM_SUM];
     cmr_uint is_zsl_frm;
@@ -4749,13 +4748,14 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
                  IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
                 is_normal_cap) {
-                    buffer->addr[i].addr_y = prev_cxt->cap_hdr_phys_addr_path_array[i - 1];
-                    buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
-                    buffer->addr_vir[i].addr_y =
-                        prev_cxt->cap_hdr_virt_addr_path_array[i - 1];
-                    buffer->addr_vir[i].addr_u =
-                        buffer->addr_vir[i].addr_y + channel_size;
-                    buffer->fd[i] = prev_cxt->cap_hdr_fd_path_array[i - 1];
+                buffer->addr[i].addr_y =
+                    prev_cxt->cap_hdr_phys_addr_path_array[i - 1];
+                buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
+                buffer->addr_vir[i].addr_y =
+                    prev_cxt->cap_hdr_virt_addr_path_array[i - 1];
+                buffer->addr_vir[i].addr_u =
+                    buffer->addr_vir[i].addr_y + channel_size;
+                buffer->fd[i] = prev_cxt->cap_hdr_fd_path_array[i - 1];
             }
         }
         buffer->count = HDR_CAP_NUM;
@@ -6807,6 +6807,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
 
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
@@ -7065,6 +7066,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
 
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
@@ -7202,6 +7204,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_RECORDING;
     if (prev_cxt->prev_param.video_slowmotion_eb &&
         prev_cxt->prev_param.video_eb) {
@@ -7449,7 +7452,7 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
-
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
@@ -7607,6 +7610,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.frm_num = chn_param.frm_num;
     chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = prev_cxt->cap_skip_num;
     if (!prev_cxt->prev_param.sprd_zsl_enabled && is_capture_zsl)
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_CALLBACK;
     else
@@ -7909,7 +7913,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.cap_fmt;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
-
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = prev_cxt->cap_skip_num;
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
@@ -8016,6 +8020,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     /*config capture ability*/
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
     chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
+    chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
                            &chn_param.cap_inf_cfg.cfg);
     if (ret) {
@@ -10884,7 +10889,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
         in_param.frame_rect.start_y = 0;
         in_param.frame_rect.width = in_param.frame_size.height;
         in_param.frame_rect.height = in_param.frame_size.width;
-        in_param.otp_data.otp_size = 8192;             // otp_data->size;//TBD
+        in_param.otp_data.otp_size = 8192;              // otp_data->size;//TBD
         in_param.otp_data.otp_ptr = otp_data->data_ptr; // TBD
     } else {
         in_param.frame_size.width = prev_cxt->actual_prev_size.width;
@@ -10893,7 +10898,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
         in_param.frame_rect.start_y = 0;
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
-        in_param.otp_data.otp_size = 8192;             // otp_data->size;//TBD
+        in_param.otp_data.otp_size = 8192;              // otp_data->size;//TBD
         in_param.otp_data.otp_ptr = otp_data->data_ptr; // TBD
     }
 
