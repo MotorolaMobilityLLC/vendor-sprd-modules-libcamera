@@ -2621,7 +2621,7 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 		switch (cmd_ptr->main_type) {
 		case MODE_NR_DATA:
 			{
-				if (ISP_NR_BLOCK_MIN >= cmd_ptr->sub_type || FILE_NAME_MAX <= cmd_ptr->sub_type) {
+				if (ISP_NR_BLOCK_MIN > cmd_ptr->sub_type || FILE_NAME_MAX < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
