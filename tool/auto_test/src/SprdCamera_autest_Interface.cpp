@@ -1381,12 +1381,18 @@ int autotest_camera_init(int cameraId, minui_backend *backend,
     ret = mHalOem->ops->camera_init(cameraId, autotest_camera_cb, &client_data,
                                     0, &oem_handle, (void *)Callback_Malloc,
                                     (void *)Callback_Free);
+    if (ret) {
+        ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);
+        goto exit;
+    }
+    mHalOem->ops->camera_wait_camera_init_done(oem_handle);
     s_mem_method = autotest_IommuIsEnabled();
     ALOGI("AutoTest: %s,%s,%d， s_mem_method %d IN\n", __FILE__, __func__,
           __LINE__, s_mem_method);
 
     autotest_camera_startpreview();
 
+exit:
     return ret;
 }
 int autotest_read_cam_buf(int **pp_image_addr, int size, int *out_size) {
