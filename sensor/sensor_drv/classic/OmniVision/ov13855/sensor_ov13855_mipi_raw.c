@@ -211,6 +211,7 @@ write_sensor_shutter:
     s_sensor_ev_info.preview_shutter = shutter;
 
     ov13855_write_shutter(handle, shutter);
+    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
 
     return SENSOR_SUCCESS;
 }

@@ -1240,6 +1240,7 @@ static uint16_t ov5675_update_exposure(SENSOR_HW_HANDLE handle,
 write_sensor_shutter:
     /* write shutter to sensor registers */
     ov5675_write_shutter(handle, shutter);
+    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
 
 #ifdef GAIN_DELAY_1_FRAME
     usleep(dest_fr_len * PREVIEW_LINE_TIME / 10);
