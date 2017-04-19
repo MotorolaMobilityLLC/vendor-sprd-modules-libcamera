@@ -1219,24 +1219,37 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	cmr_u32 val = 0;
 	cmr_u32 last_val0 = 0;
 	cmr_u32 last_val1 = 0;
-	cmr_u32 binning_hx = 4;
-	cmr_u32 binning_vx = 4;
 	cmr_u32 src_w = cxt->commn_cxt.src.w;
 	cmr_u32 src_h = cxt->commn_cxt.src.h;
-	cmr_u32 binnng_w = (src_w >> binning_hx) & ~0x1;
-	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
-	cmr_u32 double_binning_num = binnng_w * binnng_h / 6 * 2;
+	cmr_u32 binnng_w = 0;
+	cmr_u32 binnng_h = 0;
+	cmr_u32 double_binning_num = 0;
 	cmr_u32 remainder = 0;
 	cmr_u16 *binning_img_data = NULL;
 	cmr_u16 *binning_img_ptr = NULL;
 	cmr_u32 bayermode = cxt->commn_cxt.image_pattern;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_dev_binning4awb_info *binning_info = NULL;
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 
-	ISP_LOGV("bayer: %d, src_size=(%d,%d)\n", bayermode, src_w, src_h);
+	memset(&param_data, 0, sizeof(param_data));
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_BINNING4AWB, NULL, 0);
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+
+	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
+	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d\n",
+		bayermode, src_w, src_h, binning_info->hx, binning_info->vx);
+
+	binnng_w = (src_w >> binning_info->hx) & ~0x1;
+	binnng_h = (src_h >> binning_info->vx) & ~0x1;
+	double_binning_num = binnng_w * binnng_h / 6 * 2;
 
 	binning_img_data = (cmr_u16 *) malloc(binnng_w * binnng_h * 2);
 	if (binning_img_data == NULL) {
