@@ -32,21 +32,16 @@
 
 #include "../SprdCamera3HWI.h"
 
-
 namespace sprdcamera {
 
-#define WAIT_FRAME_TIMEOUT    2000e6
-#define THREAD_TIMEOUT    30e6
+#define WAIT_FRAME_TIMEOUT 2000e6
+#define THREAD_TIMEOUT 30e6
 #define LIB_GPU_PATH "libimagestitcher.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
 #define TIME_DIFF (15e6)
 
-typedef enum {
-    STATE_NOT_READY,
-    STATE_IDLE,
-    STATE_BUSY
-}currentStatus;
+typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
 typedef enum {
     /* There are valid result in both of list*/
@@ -55,16 +50,9 @@ typedef enum {
     QUEUE_INVALID
 } twoQuqueStatus;
 
-typedef enum {
-    MATCH_FAILED = 0,
-    MATCH_SUCCESS
-} matchResult;
+typedef enum { MATCH_FAILED = 0, MATCH_SUCCESS } matchResult;
 
-typedef enum {
-    NOTIFY_SUCCESS = 0,
-    NOTIFY_ERROR,
-    NOTIFY_NOT_FOUND
-} notifytype;
+typedef enum { NOTIFY_SUCCESS = 0, NOTIFY_ERROR, NOTIFY_NOT_FOUND } notifytype;
 
 typedef enum {
     CAMERA_LEFT = 0,
@@ -80,18 +68,18 @@ typedef enum {
     SNAPSHOT_STREAM,
 } streamType_t;
 
-typedef struct{
+typedef struct {
     uint32_t frame_number;
     int32_t vcm_steps;
     uint8_t otp_data[8192];
-}depth_input_params_t;
+} depth_input_params_t;
 
 typedef struct {
     uint32_t x_start;
     uint32_t y_start;
     uint32_t x_end;
     uint32_t y_end;
-}coordinate_t;
+} coordinate_t;
 
 /* Struct@ sprdcamera_physical_descriptor_t
  *
@@ -106,8 +94,8 @@ typedef struct {
     // Reference to HWI
     SprdCamera3HWI *hwi;
     // Reference to camera device structure
-    camera3_device_t* dev;
-    //Camera type:main camera or aux camera
+    camera3_device_t *dev;
+    // Camera type:main camera or aux camera
 } sprdcamera_physical_descriptor_t;
 
 typedef struct {
@@ -117,14 +105,14 @@ typedef struct {
     camera_info cam_info;
     // Logical Camera Facing
     int32_t facing;
-    //Main Camera Id
+    // Main Camera Id
     uint32_t id;
 } sprd_virtual_camera_t;
 
 typedef struct {
     uint32_t frame_number;
     uint64_t timestamp;
-    buffer_handle_t* buffer;
+    buffer_handle_t *buffer;
     int status;
     int vcmSteps;
 } hwi_frame_buffer_info_t;
@@ -133,20 +121,17 @@ typedef struct {
     uint32_t frame_number;
     const camera3_stream_buffer_t *input_buffer;
     camera3_stream_t *stream;
-    buffer_handle_t *buffer1;//main sensor
+    buffer_handle_t *buffer1; // main sensor
     int status1;
-    buffer_handle_t *buffer2;//aux sensor
+    buffer_handle_t *buffer2; // aux sensor
     int status2;
     int vcmSteps;
 } frame_matched_info_t;
 
-typedef enum {
-    MUXER_MSG_DATA_PROC = 1,
-    MUXER_MSG_EXIT
-} muxerMsgType;
+typedef enum { MUXER_MSG_DATA_PROC = 1, MUXER_MSG_EXIT } muxerMsgType;
 
 typedef struct {
-    muxerMsgType  msg_type;
+    muxerMsgType msg_type;
     frame_matched_info_t combo_frame;
 } muxer_queue_msg_t;
 
@@ -156,39 +141,40 @@ typedef struct {
     bool invalid;
     int showPreviewDeviceId;
     int32_t perfectskinlevel;
-    int32_t   g_face_info[4];
-    buffer_handle_t*  buffer;
-    camera3_stream_t* stream;
-    camera3_stream_t* callback_stream;
-    buffer_handle_t* callback_buffer;
-    camera3_stream_buffer_t* input_buffer;
+    int32_t g_face_info[4];
+    buffer_handle_t *buffer;
+    camera3_stream_t *stream;
+    camera3_stream_t *callback_stream;
+    buffer_handle_t *callback_buffer;
+    camera3_stream_buffer_t *input_buffer;
     int rotation;
-}old_request;
+} old_request;
 
 typedef struct {
-    const native_handle_t* native_handle;
+    const native_handle_t *native_handle;
     MemIon *pHeapIon;
-}new_mem_t;
+} new_mem_t;
 
 typedef struct {
     struct private_handle_t *left_buf;
     struct private_handle_t *right_buf;
     struct private_handle_t *dst_buf;
     int rot_angle;
-}dcam_info_t;
+} dcam_info_t;
 
-typedef struct{
-    void* handle;
-    int (*initRenderContext)(struct stream_info_s *resolution,float *homography_matrix,int matrix_size);
+typedef struct {
+    void *handle;
+    int (*initRenderContext)(struct stream_info_s *resolution,
+                             float *homography_matrix, int matrix_size);
     void (*imageStitchingWithGPU)(dcam_info_t *dcam);
     void (*destroyRenderContext)(void);
-}GPUAPI_t;
+} GPUAPI_t;
 
 typedef enum {
     /* Main camera device id*/
-    CAM_MAIN_ID =0,
+    CAM_MAIN_ID = 0,
     /* Aux camera device id*/
-    CAM_AUX_ID =3
+    CAM_AUX_ID = 3
 } CameraID;
 
 typedef enum {
@@ -198,30 +184,21 @@ typedef enum {
     CAM_TYPE_AUX
 } CameraType;
 
-struct stream_info_s
-{
+struct stream_info_s {
     int src_width;
     int src_height;
     int dst_width;
     int dst_height;
     int rot_angle;
-};//stream_info_t;
+}; // stream_info_t;
 
-typedef struct line_buf_s
-{
-   float homography_matrix[18];
-   float warp_matrix[18];
-   int   points[32];
-}line_buf_t;
+typedef struct line_buf_s {
+    float homography_matrix[18];
+    float warp_matrix[18];
+    int points[32];
+} line_buf_t;
 
-enum rot_angle {
-    ROT_0 = 0,
-    ROT_90,
-    ROT_180,
-    ROT_270,
-    ROT_MAX
-};
-
+enum rot_angle { ROT_0 = 0, ROT_90, ROT_180, ROT_270, ROT_MAX };
 };
 
 #endif

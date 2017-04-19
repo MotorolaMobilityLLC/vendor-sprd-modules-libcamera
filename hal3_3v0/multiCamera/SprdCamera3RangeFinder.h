@@ -49,9 +49,9 @@
 #include <cmr_sensor_info.h>
 namespace sprdcamera {
 
-#define MAX_NUM_CAMERAS    3
+#define MAX_NUM_CAMERAS 3
 #ifndef MAX_NUM_STREAMS
-#define MAX_NUM_STREAMS    2
+#define MAX_NUM_STREAMS 2
 #endif
 #ifndef MAX_FINDER_QEQUEST_BUF
 #define MAX_FINDER_QEQUEST_BUF 16
@@ -71,7 +71,6 @@ namespace sprdcamera {
 #define UWINY1_MAX 240
 #define UWINY2_MAX 240
 
-
 typedef int alDE_ERR_CODE;
 
 typedef enum {
@@ -81,23 +80,19 @@ typedef enum {
     RANGE_CAM_TYPE_AUX
 } rangeCameraType;
 
-typedef enum {
-    MSG_DATA_PROC = 1,
-    MSG_EXIT
-} threadMsgType;
+typedef enum { MSG_DATA_PROC = 1, MSG_EXIT } threadMsgType;
 
 typedef enum {
     /* Main camera device id*/
-    RANGE_CAM_MAIN_ID =0,
+    RANGE_CAM_MAIN_ID = 0,
     /* Aux camera device id*/
-    RANGE_CAM_AUX_ID =2
+    RANGE_CAM_AUX_ID = 2
 } rangeCameraID;
 
 typedef struct {
-    threadMsgType  msg_type;
+    threadMsgType msg_type;
     frame_matched_info_t combo_frame;
 } frame_matched_msg_t;
-
 
 typedef struct {
     unsigned short uwInX1;
@@ -106,47 +101,54 @@ typedef struct {
     unsigned short uwInY2;
 } uw_Coordinate;
 
-typedef struct{
+typedef struct {
     void *handle;
     alDE_ERR_CODE (*alSDE2_VersionInfo_Get)(char a_acOutRetbuf[256],
-                    unsigned int a_udInSize);
-    alDE_ERR_CODE (*alSDE2_Init)(void *a_pInData, int a_dInSize,
-                    int a_dInImgW, int a_dInImgH,
-                    void *a_pInOTPBuf, int a_dInOTPSize);
+                                            unsigned int a_udInSize);
+    alDE_ERR_CODE (*alSDE2_Init)(void *a_pInData, int a_dInSize, int a_dInImgW,
+                                 int a_dInImgH, void *a_pInOTPBuf,
+                                 int a_dInOTPSize);
     alDE_ERR_CODE (*alSDE2_Run)(void *a_pOutDisparity,
-                    void* a_pInSub_YCC420NV21, void* a_pInMain_YCC420NV21,
-                    int a_dInVCMStep);
-    alDE_ERR_CODE (*alSDE2_DistanceMeasurement)(double *a_peOutDistance,
-                                 unsigned short *a_puwInDisparity,
-                            int a_dInDisparityW, int a_dInDisparityH,
-                         unsigned short a_uwInX1, unsigned short a_uwInY1,
-                            unsigned short a_uwInX2, unsigned short a_uwInY2,
-                            int a_dInVCM);
-    alDE_ERR_CODE (*alSDE2_HolelessPolish) (
-                    unsigned short *a_puwInOutDisparity,
-                   unsigned short a_uwInImageWidth,
-                   unsigned short a_uwInImageHeight);
+                                void *a_pInSub_YCC420NV21,
+                                void *a_pInMain_YCC420NV21, int a_dInVCMStep);
+    alDE_ERR_CODE (*alSDE2_DistanceMeasurement)(
+        double *a_peOutDistance, unsigned short *a_puwInDisparity,
+        int a_dInDisparityW, int a_dInDisparityH, unsigned short a_uwInX1,
+        unsigned short a_uwInY1, unsigned short a_uwInX2,
+        unsigned short a_uwInY2, int a_dInVCM);
+    alDE_ERR_CODE (*alSDE2_HolelessPolish)(unsigned short *a_puwInOutDisparity,
+                                           unsigned short a_uwInImageWidth,
+                                           unsigned short a_uwInImageHeight);
     alDE_ERR_CODE (*alSDE2_Abort)();
     void (*alSDE2_Close)();
-}depth_engine_api_t;
+} depth_engine_api_t;
 
-class SprdCamera3RangeFinder
-{
-public:
-    static void getCameraRangeFinder(SprdCamera3RangeFinder** pFinder);
-    static int camera_device_open(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device);
+class SprdCamera3RangeFinder {
+  public:
+    static void getCameraRangeFinder(SprdCamera3RangeFinder **pFinder);
+    static int camera_device_open(__unused const struct hw_module_t *module,
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
     static int close_camera_device(struct hw_device_t *device);
     static int get_camera_info(int camera_id, struct camera_info *info);
-    static int initialize(const struct camera3_device *device, const camera3_callback_ops_t *ops);
-    static int configure_streams(const struct camera3_device *device, camera3_stream_configuration_t* stream_list);
-    static const camera_metadata_t *construct_default_request_settings(const struct camera3_device *, int type);
-    static int process_capture_request(const struct camera3_device* device, camera3_capture_request_t *request);
-    static void notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg);
-    static void process_capture_result_main(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result);
-    static void process_capture_result_aux(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result);
-    static void notifyAux(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg);
+    static int initialize(const struct camera3_device *device,
+                          const camera3_callback_ops_t *ops);
+    static int configure_streams(const struct camera3_device *device,
+                                 camera3_stream_configuration_t *stream_list);
+    static const camera_metadata_t *
+    construct_default_request_settings(const struct camera3_device *, int type);
+    static int process_capture_request(const struct camera3_device *device,
+                                       camera3_capture_request_t *request);
+    static void notifyMain(const struct camera3_callback_ops *ops,
+                           const camera3_notify_msg_t *msg);
+    static void
+    process_capture_result_main(const struct camera3_callback_ops *ops,
+                                const camera3_capture_result_t *result);
+    static void
+    process_capture_result_aux(const struct camera3_callback_ops *ops,
+                               const camera3_capture_result_t *result);
+    static void notifyAux(const struct camera3_callback_ops *ops,
+                          const camera3_notify_msg_t *msg);
     static void dump(const struct camera3_device *device, int fd);
     static int flush(const struct camera3_device *device);
 
@@ -154,7 +156,7 @@ public:
     static camera3_callback_ops callback_ops_main;
     static camera3_callback_ops callback_ops_aux;
 
-private:
+  private:
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
     sprd_virtual_camera_t m_VirtualCamera;
     uint8_t m_nPhyCameras;
@@ -165,59 +167,62 @@ private:
     int mDepthWidth;
     int mDepthHeight;
     camera3_stream_t mAuxStreams[3];
-    camera3_stream_t* m_pMainDepthStream;
+    camera3_stream_t *m_pMainDepthStream;
     uint8_t mConfigStreamNum;
     uint8_t mPreviewStreamsNum;
-    //when notify callback ,push hw notify into notify_list, with lock
-    List <camera3_notify_msg_t> mNotifyListMain;
+    // when notify callback ,push hw notify into notify_list, with lock
+    List<camera3_notify_msg_t> mNotifyListMain;
     Mutex mNotifyLockMain;
-    List <camera3_notify_msg_t> mNotifyListAux;
+    List<camera3_notify_msg_t> mNotifyListAux;
     Mutex mNotifyLockAux;
     Mutex mVcmLockAux;
-    //This queue stores unmatched buffer for each hwi, accessed with lock
-    List <hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
-    List <hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
+    // This queue stores unmatched buffer for each hwi, accessed with lock
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
     Mutex mUnmatchedQueueLock;
-    Mutex      mMergequeueMutex;
-    Condition  mMergequeueSignal;
+    Mutex mMergequeueMutex;
+    Condition mMergequeueSignal;
     currentStatus mCurrentState;
-    const camera3_callback_ops_t* mCallbackOps;
+    const camera3_callback_ops_t *mCallbackOps;
     int mVcmSteps;
     int checkOtpInfo();
-    int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
+    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
-    void getDepthImageSize( int srcWidth, int srcHeight, int* camWidth, int* camHeight);
+    void getDepthImageSize(int srcWidth, int srcHeight, int *camWidth,
+                           int *camHeight);
     int validateCaptureRequest(camera3_capture_request_t *request);
     void savePreviewRequest(camera3_capture_request_t *request);
-    int  pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);
-    buffer_handle_t * popRequestList(List <buffer_handle_t*>& list);
-    bool matchTwoFrame(hwi_frame_buffer_info_t result1,List <hwi_frame_buffer_info_t> &list, hwi_frame_buffer_info_t* result2);
-    int getStreamType(camera3_stream_t *new_stream );
-    hwi_frame_buffer_info_t* pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info, List <hwi_frame_buffer_info_t> &queue);
+    int pushRequestList(buffer_handle_t *request, List<buffer_handle_t *> &);
+    buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
+    bool matchTwoFrame(hwi_frame_buffer_info_t result1,
+                       List<hwi_frame_buffer_info_t> &list,
+                       hwi_frame_buffer_info_t *result2);
+    int getStreamType(camera3_stream_t *new_stream);
+    hwi_frame_buffer_info_t *
+    pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
+                         List<hwi_frame_buffer_info_t> &queue);
 
-public:
-
+  public:
     SprdCamera3RangeFinder();
     virtual ~SprdCamera3RangeFinder();
 
-    class SyncThread: public Thread
-    {
-    public:
+    class SyncThread : public Thread {
+      public:
         SyncThread();
         ~SyncThread();
-        virtual bool  threadLoop();
+        virtual bool threadLoop();
         virtual void requestExit();
         void unLoadGpuApi();
-        void initGpuData(int w,int h,int );
+        void initGpuData(int w, int h, int);
         bool mGetNewestFrameForMeasure;
-        //This queue stores matched buffer as frame_matched_info_t
-        List <frame_matched_msg_t> mSyncMsgList;
+        // This queue stores matched buffer as frame_matched_info_t
+        List<frame_matched_msg_t> mSyncMsgList;
 
-        Mutex      mMergequeueMutex;
-        Condition  mMergequeueSignal;
+        Mutex mMergequeueMutex;
+        Condition mMergequeueSignal;
 
-    private:
+      private:
         int mVFrameCount;
         int mVLastFrameCount;
         nsecs_t mVLastFpsTime;
@@ -226,33 +231,34 @@ public:
         void waitMsgAvailable();
     };
 
-    class MeasureThread: public Thread
-    {
-    public:
-         MeasureThread();
+    class MeasureThread : public Thread {
+      public:
+        MeasureThread();
         ~MeasureThread();
-        virtual bool  threadLoop();
+        virtual bool threadLoop();
         void waitMsgAvailable();
         int loadDepthEngine();
         int depthAlgoSanityCheck();
-        void convertCoordinate(int oldWidth, int oldHeight,int newWidth,int newHeight,uw_Coordinate newCoords);
-        int calculateDepthValue(frame_matched_info_t* combDepthResult);
+        void convertCoordinate(int oldWidth, int oldHeight, int newWidth,
+                               int newHeight, uw_Coordinate newCoords);
+        int calculateDepthValue(frame_matched_info_t *combDepthResult);
         int depthEngineInit();
         virtual void requestExit();
         bool measurePointChanged(camera3_capture_request_t *request);
-        List <frame_matched_msg_t> mMeasureMsgList;
-        Mutex      mMeasureQueueMutex;
-        Condition  mMeasureQueueSignal;
-        depth_engine_api_t* mDepthEngineApi;
+        List<frame_matched_msg_t> mMeasureMsgList;
+        Mutex mMeasureQueueMutex;
+        Condition mMeasureQueueSignal;
+        depth_engine_api_t *mDepthEngineApi;
         uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
 
-        void freeLocalBuffer(new_mem_t* mLocalBuffer);
-        new_mem_t* mLocalBuffer;
+        void freeLocalBuffer(new_mem_t *mLocalBuffer);
+        new_mem_t *mLocalBuffer;
         uint8_t mMaxLocalBufferNum;
-        List<buffer_handle_t*> mLocalBufferList;
-        const native_handle_t* mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
-        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t *new_mem);
-    private:
+        List<buffer_handle_t *> mLocalBufferList;
+        const native_handle_t *mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
+        int allocateOne(int w, int h, uint32_t is_cache, new_mem_t *new_mem);
+
+      private:
         bool mIommuEnabled;
         uw_Coordinate mCurUwcoods;
         uw_Coordinate mLastPreCoods;
@@ -262,24 +268,34 @@ public:
     double mUwDepth;
     Mutex mDepthVauleLock;
     int initialize(const camera3_callback_ops_t *callback_ops);
-    int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
-    int processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request);
-    void notifyMain( const camera3_notify_msg_t* msg);
+    int configureStreams(const struct camera3_device *device,
+                         camera3_stream_configuration_t *stream_list);
+    int processCaptureRequest(const struct camera3_device *device,
+                              camera3_capture_request_t *request);
+    void notifyMain(const camera3_notify_msg_t *msg);
     void processCaptureResultMain(camera3_capture_result_t *result);
-    void notifyAux( const camera3_notify_msg_t* msg);
-    void processCaptureResultAux( const camera3_capture_result_t *result);
-    const camera_metadata_t *constructDefaultRequestSettings( const struct camera3_device *device,int type);
+    void notifyAux(const camera3_notify_msg_t *msg);
+    void processCaptureResultAux(const camera3_capture_result_t *result);
+    const camera_metadata_t *
+    constructDefaultRequestSettings(const struct camera3_device *device,
+                                    int type);
     void _dump(const struct camera3_device *device, int fd);
-    void dumpImg(void* addr,int size,int fd,int flag);
+    void dumpImg(void *addr, int size, int fd, int flag);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
-    bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf, uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight, uint32_t a_udFileSize);
-    bool DepthRotateCCW180(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf, uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight, uint32_t a_udFileSize);
-    bool NV21Rotate90(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight, uint32_t a_udFileSize);
-    bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight, uint32_t a_udFileSize);
+    bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
+                          uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                          uint32_t a_udFileSize);
+    bool DepthRotateCCW180(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
+                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                           uint32_t a_udFileSize);
+    bool NV21Rotate90(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
+                      uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                      uint32_t a_udFileSize);
+    bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
+                       uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                       uint32_t a_udFileSize);
 };
-
 };
 
 #endif /* SPRDCAMERAMU*/
-

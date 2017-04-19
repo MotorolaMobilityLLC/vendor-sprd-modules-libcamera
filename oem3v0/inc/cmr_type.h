@@ -17,8 +17,7 @@
 #define _CMR_TYPE_H_
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "cmr_types.h"
@@ -27,161 +26,154 @@ extern "C"
 //#endif
 #include "mtrace.h"
 
-
 /********************************* error type *********************************/
-#define CMR_CAMERA_SUCCESS                  0
-#define CMR_CAMERA_FAIL                     1
-#define CMR_CAMERA_INVALID_PARAM            2
-#define CMR_CAMERA_NO_MEM                   3
-#define CMR_CAMERA_NO_SENSOR                4
-#define CMR_CAMERA_NO_SUPPORT               5
-#define CMR_CAMERA_INVALID_STATE            6
-#define CMR_CAMERA_INVALID_FORMAT           7
-#define CMR_CAMERA_JPEG_SPECIFY_FAILED      8
-#define CMR_CAMERA_NORNAL_EXIT              9
-#define CMR_CAMERA_INVALID_FRAME            10
-#define CMR_CAMERA_FD_INIT                  -1
+#define CMR_CAMERA_SUCCESS 0
+#define CMR_CAMERA_FAIL 1
+#define CMR_CAMERA_INVALID_PARAM 2
+#define CMR_CAMERA_NO_MEM 3
+#define CMR_CAMERA_NO_SENSOR 4
+#define CMR_CAMERA_NO_SUPPORT 5
+#define CMR_CAMERA_INVALID_STATE 6
+#define CMR_CAMERA_INVALID_FORMAT 7
+#define CMR_CAMERA_JPEG_SPECIFY_FAILED 8
+#define CMR_CAMERA_NORNAL_EXIT 9
+#define CMR_CAMERA_INVALID_FRAME 10
+#define CMR_CAMERA_FD_INIT -1
 
 /******************************************************************************/
 
-#define FOCUS_ZONE_CNT_MAX                  6
-#define WIN_AREA_COUNT_MAX                  1
-
+#define FOCUS_ZONE_CNT_MAX 6
+#define WIN_AREA_COUNT_MAX 1
 
 enum camera_af_aux_sensor_type {
-	CAMERA_AF_ACCELEROMETER,
-	CAMERA_AF_MAGNETIC_FIELD,
-	CAMERA_AF_GYROSCOPE,
-	CAMERA_AF_LIGHT,
-	CAMERA_AF_PROXIMITY,
+    CAMERA_AF_ACCELEROMETER,
+    CAMERA_AF_MAGNETIC_FIELD,
+    CAMERA_AF_GYROSCOPE,
+    CAMERA_AF_LIGHT,
+    CAMERA_AF_PROXIMITY,
 };
 
-enum zoom_param_mode {
-	ZOOM_LEVEL = 0,
-	ZOOM_INFO,
-	ZOOM_MODE_MAX
-};
+enum zoom_param_mode { ZOOM_LEVEL = 0, ZOOM_INFO, ZOOM_MODE_MAX };
 
 struct img_rect {
-	cmr_u32                                 start_x;
-	cmr_u32                                 start_y;
-	cmr_u32                                 width;
-	cmr_u32                                 height;
+    cmr_u32 start_x;
+    cmr_u32 start_y;
+    cmr_u32 width;
+    cmr_u32 height;
 };
 
 struct img_size {
-	cmr_u32                                 width;
-	cmr_u32                                 height;
+    cmr_u32 width;
+    cmr_u32 height;
 };
 
 struct zoom_info {
-	float                                   zoom_ratio;
-	float                                   prev_aspect_ratio;
-	float                                   video_aspect_ratio;
-	float                                   capture_aspect_ratio;
+    float zoom_ratio;
+    float prev_aspect_ratio;
+    float video_aspect_ratio;
+    float capture_aspect_ratio;
 };
 
 struct cmr_zoom_param {
-	cmr_uint                                mode;
-	union {
-		cmr_uint                            zoom_level;
-		struct zoom_info                    zoom_info;
-	};
+    cmr_uint mode;
+    union {
+        cmr_uint zoom_level;
+        struct zoom_info zoom_info;
+    };
 };
 
 struct cmr_win_area {
-	cmr_uint            count;
-	struct img_rect	    rect[WIN_AREA_COUNT_MAX];
+    cmr_uint count;
+    struct img_rect rect[WIN_AREA_COUNT_MAX];
 };
 
 struct cmr_ae_param {
-	cmr_int                                 mode;
-	struct cmr_win_area                     win_area;
+    cmr_int mode;
+    struct cmr_win_area win_area;
 };
 
 struct cmr_preview_fps_param {
-	cmr_int                                 is_recording;
-	cmr_uint                                frame_rate;
-	cmr_uint                                video_mode;
+    cmr_int is_recording;
+    cmr_uint frame_rate;
+    cmr_uint video_mode;
 };
 
 struct cmr_range_fps_param {
-	cmr_int                                 is_recording;
-	cmr_uint                                video_mode;
-	cmr_uint                                min_fps;
-	cmr_uint                                max_fps;
+    cmr_int is_recording;
+    cmr_uint video_mode;
+    cmr_uint min_fps;
+    cmr_uint max_fps;
 };
 
 struct img_data_end {
-	cmr_u8                                  y_endian;
-	cmr_u8                                  uv_endian;
-	cmr_u8                                  reserved0;
-	cmr_u8                                  reserved1;
-	//cmr_u32                                 padding;
+    cmr_u8 y_endian;
+    cmr_u8 uv_endian;
+    cmr_u8 reserved0;
+    cmr_u8 reserved1;
+    // cmr_u32                                 padding;
 };
 
 struct refocus_info {
-	cmr_u32                             channel_id;
-	cmr_uint                            sec;
-	cmr_uint                            usec;
-	cmr_u32                             base;
-	cmr_u32                             yaddr;
-	cmr_u32                             yaddr_vir;
-	cmr_u32                             mfd;
+    cmr_u32 channel_id;
+    cmr_uint sec;
+    cmr_uint usec;
+    cmr_u32 base;
+    cmr_u32 yaddr;
+    cmr_u32 yaddr_vir;
+    cmr_u32 mfd;
 };
 
 struct frm_info {
-	cmr_u32                             channel_id;
-	cmr_u32                             frame_id;
-	cmr_u32                             frame_real_id;
-	cmr_u32                             height;
-	cmr_uint                            sec;
-	cmr_uint                            usec;
-	cmr_u32                             length;
-	cmr_u32                             base;
-	cmr_u32                             fmt;
-	cmr_u32                             yaddr;
-	cmr_u32                             uaddr;
-	cmr_u32                             vaddr;
-	cmr_u32                             yaddr_vir;
-	cmr_u32                             uaddr_vir;
-	cmr_u32                             vaddr_vir;
-	cmr_uint                            zsl_private;
-	cmr_u32                             fd;
-	cmr_s64                             monoboottime;
+    cmr_u32 channel_id;
+    cmr_u32 frame_id;
+    cmr_u32 frame_real_id;
+    cmr_u32 height;
+    cmr_uint sec;
+    cmr_uint usec;
+    cmr_u32 length;
+    cmr_u32 base;
+    cmr_u32 fmt;
+    cmr_u32 yaddr;
+    cmr_u32 uaddr;
+    cmr_u32 vaddr;
+    cmr_u32 yaddr_vir;
+    cmr_u32 uaddr_vir;
+    cmr_u32 vaddr_vir;
+    cmr_uint zsl_private;
+    cmr_u32 fd;
+    cmr_s64 monoboottime;
 };
 
 struct cmr_af_gyro_info {
-	cmr_s64 timestamp;
-	float x;
-	float y;
-	float z;
+    cmr_s64 timestamp;
+    float x;
+    float y;
+    float z;
 };
 
 struct cmr_af_gsensor_info {
-	cmr_s64 timestamp;
-	float vertical_up;
-	float vertical_down;
-	float horizontal;
+    cmr_s64 timestamp;
+    float vertical_up;
+    float vertical_down;
+    float horizontal;
 };
 
 struct cmr_af_aux_sensor_info {
-	enum camera_af_aux_sensor_type type;
-	union {
-		struct cmr_af_gyro_info gyro_info;
-		struct cmr_af_gsensor_info gsensor_info;
-	};
-	struct refocus_info                 refocus;
+    enum camera_af_aux_sensor_type type;
+    union {
+        struct cmr_af_gyro_info gyro_info;
+        struct cmr_af_gsensor_info gsensor_info;
+    };
+    struct refocus_info refocus;
 };
 
 struct touch_coordinate {
-	cmr_u32                                 touchX;
-	cmr_u32                                 touchY;
+    cmr_u32 touchX;
+    cmr_u32 touchY;
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //for _CMR_COMMON_H_
-
+#endif // for _CMR_COMMON_H_

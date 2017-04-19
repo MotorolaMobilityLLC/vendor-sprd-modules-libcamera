@@ -36,34 +36,33 @@
 
 namespace sprdcamera {
 
+class SprdCamera3Factory {
+  public:
+    SprdCamera3Factory();
+    virtual ~SprdCamera3Factory();
+    static int get_number_of_cameras();
+    static int setTorchMode(const char *, bool);
+    static int get_camera_info(int camera_id, struct camera_info *info);
+    static int set_callbacks(const camera_module_callbacks_t *callbacks);
+    static void get_vendor_tag_ops(vendor_tag_ops_t *ops);
 
-class SprdCamera3Factory
-{
-public:
-	SprdCamera3Factory();
-	virtual ~SprdCamera3Factory();
-	static int get_number_of_cameras();
-	static int setTorchMode(const char *,bool);
-	static int get_camera_info(int camera_id, struct camera_info *info);
-	static int set_callbacks(const camera_module_callbacks_t *callbacks);
-	static void get_vendor_tag_ops(vendor_tag_ops_t* ops);
+  private:
+    int getNumberOfCameras();
+    int getCameraInfo(int camera_id, struct camera_info *info);
+    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
+    static int camera_device_open(const struct hw_module_t *module,
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
+    static bool isSingleIdExposeOnMultiCameraMode(int cameraId);
+    static int multiCameraModeIdToPhyId(int cameraId);
+    camera_metadata_t *mStaticMetadata;
 
-private:
-	int getNumberOfCameras();
-	int getCameraInfo(int camera_id, struct camera_info *info);
-	int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
-	static int camera_device_open(const struct hw_module_t *module, const char *id,
-				struct hw_device_t **hw_device);
-	static bool isSingleIdExposeOnMultiCameraMode(int cameraId);
-	static int multiCameraModeIdToPhyId(int cameraId);
-	camera_metadata_t *mStaticMetadata;
+  public:
+    static struct hw_module_methods_t mModuleMethods;
 
-public:
-	static struct hw_module_methods_t mModuleMethods;
-
-private:
-	int mNumOfCameras;
-	Mutex mLock;
+  private:
+    int mNumOfCameras;
+    Mutex mLock;
 };
 
 }; /*namespace sprdcamera*/

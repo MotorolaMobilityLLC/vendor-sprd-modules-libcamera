@@ -45,27 +45,21 @@
 #include "SprdCamera3RangeFinder.h"
 #include "SprdCamera3Capture.h"
 
-
 namespace sprdcamera {
 
-class SprdCamera3Wrapper
-{
-public:
-	SprdCamera3Wrapper();
+class SprdCamera3Wrapper {
+  public:
+    SprdCamera3Wrapper();
     virtual ~SprdCamera3Wrapper();
-	static void getCameraWrapper(SprdCamera3Wrapper** pWrapper);
-	int cameraDeviceOpen(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device);
-	int getCameraInfo(int camera_id, struct camera_info *info);
+    static void getCameraWrapper(SprdCamera3Wrapper **pWrapper);
+    int cameraDeviceOpen(__unused const struct hw_module_t *module,
+                         const char *id, struct hw_device_t **hw_device);
+    int getCameraInfo(int camera_id, struct camera_info *info);
 
-private:
-	SprdCamera3StereoVideo      *mStereoVideo;
-	SprdCamera3RangeFinder      *mRangeFinder;
-	SprdCamera3Capture          *mCapture;
+  private:
+    SprdCamera3StereoVideo *mStereoVideo;
+    SprdCamera3RangeFinder *mRangeFinder;
+    SprdCamera3Capture *mCapture;
 };
-
-
-
 };
 #endif

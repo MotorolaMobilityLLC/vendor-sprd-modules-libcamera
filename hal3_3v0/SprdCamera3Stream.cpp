@@ -46,393 +46,379 @@ using namespace android;
 namespace sprdcamera {
 
 SprdCamera3Stream::SprdCamera3Stream(camera3_stream_t *new_stream,
-						camera_dimension_t dim, camera_stream_type_t type,
-						void *userdata)
-{
-	mCameraStream = new_stream;
-	mWidth = dim.width;
-	mHeight = dim.height;
-	mStreamType = type;
-	mUserChan = userdata;
-	mBuffNum = 0;
+                                     camera_dimension_t dim,
+                                     camera_stream_type_t type,
+                                     void *userdata) {
+    mCameraStream = new_stream;
+    mWidth = dim.width;
+    mHeight = dim.height;
+    mStreamType = type;
+    mUserChan = userdata;
+    mBuffNum = 0;
 
-	mMemory = new SprdCamera3GrallocMemory();
-	if (NULL == mMemory) {
-		HAL_LOGE("object NULL");
-	}
+    mMemory = new SprdCamera3GrallocMemory();
+    if (NULL == mMemory) {
+        HAL_LOGE("object NULL");
+    }
 }
 
-SprdCamera3Stream::~SprdCamera3Stream()
-{
-	if(mMemory){
-		delete mMemory;
-		mMemory = NULL;
-	}
+SprdCamera3Stream::~SprdCamera3Stream() {
+    if (mMemory) {
+        delete mMemory;
+        mMemory = NULL;
+    }
 }
 
-int SprdCamera3Stream::registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers)
-{
-	return NO_ERROR;
+int SprdCamera3Stream::registerBuffers(uint32_t num_buffers,
+                                       buffer_handle_t **buffers) {
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getStreamType(camera_stream_type_t* stream_type)
-{
-	*stream_type = mStreamType;
+int SprdCamera3Stream::getStreamType(camera_stream_type_t *stream_type) {
+    *stream_type = mStreamType;
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getStreamInfo(camera3_stream_t** stream)
-{
-	*stream = mCameraStream;
+int SprdCamera3Stream::getStreamInfo(camera3_stream_t **stream) {
+    *stream = mCameraStream;
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getStreamSize(int32_t* width, int32_t* height)
-{
-	*width = mWidth;
-	*height = mHeight;
+int SprdCamera3Stream::getStreamSize(int32_t *width, int32_t *height) {
+    *width = mWidth;
+    *height = mHeight;
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber, buffer_handle_t *buffer)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	hal_buff_list_t* buff_hal = new hal_buff_list_t;
+int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber,
+                                  buffer_handle_t *buffer) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    hal_buff_list_t *buff_hal = new hal_buff_list_t;
 
-	hal_mem_info_t* buf_mem_info = &(buff_hal->mem_info);
-	if(buff_hal == NULL) {
-		HAL_LOGE("ERROR: buff_hal is %p", buff_hal);
-		return BAD_VALUE;
-	}
+    hal_mem_info_t *buf_mem_info = &(buff_hal->mem_info);
+    if (buff_hal == NULL) {
+        HAL_LOGE("ERROR: buff_hal is %p", buff_hal);
+        return BAD_VALUE;
+    }
 
-	if(mMemory == NULL) {
-		HAL_LOGE("mMemory is NULL");
-		delete buff_hal;
-		return BAD_VALUE;
-	}
+    if (mMemory == NULL) {
+        HAL_LOGE("mMemory is NULL");
+        delete buff_hal;
+        return BAD_VALUE;
+    }
 
-	buff_hal->buffer_handle = buffer;
-	ret = mMemory->map2(buffer, buf_mem_info);
-	if(ret != NO_ERROR) {
-		HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
-		mBuffNum++;
-		buff_hal->buffer_handle = buffer;
-		buff_hal->frame_number = frameNumber;
-		buf_mem_info->fd = 0;
-		buf_mem_info->addr_vir = NULL;
-		buf_mem_info->addr_phy = NULL;
-		mBufferList.add(buff_hal);
-		ret = NO_ERROR;
-	} else {
-		HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %zu, mStreamType = %d", buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->size, mStreamType);
-		mBuffNum++;
-		buff_hal->buffer_handle = buffer;
-		buff_hal->frame_number = frameNumber;
-		HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
-			     buff_hal->frame_number,buffer, mStreamType);
-		mBufferList.add(buff_hal);
-	}
+    buff_hal->buffer_handle = buffer;
+    ret = mMemory->map2(buffer, buf_mem_info);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
+        mBuffNum++;
+        buff_hal->buffer_handle = buffer;
+        buff_hal->frame_number = frameNumber;
+        buf_mem_info->fd = 0;
+        buf_mem_info->addr_vir = NULL;
+        buf_mem_info->addr_phy = NULL;
+        mBufferList.add(buff_hal);
+        ret = NO_ERROR;
+    } else {
+        HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %zu, mStreamType = %d",
+                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,
+                 buf_mem_info->size, mStreamType);
+        mBuffNum++;
+        buff_hal->buffer_handle = buffer;
+        buff_hal->frame_number = frameNumber;
+        HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
+                 buff_hal->frame_number, buffer, mStreamType);
+        mBufferList.add(buff_hal);
+    }
 
-	return ret;
+    return ret;
 }
 
-int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber, buffer_handle_t *buffer)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	hal_buff_list_t* buff_hal = new hal_buff_list_t;
+int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber,
+                                 buffer_handle_t *buffer) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    hal_buff_list_t *buff_hal = new hal_buff_list_t;
 
-	hal_mem_info_t* buf_mem_info = &(buff_hal->mem_info);
-	if(buff_hal == NULL) {
-		HAL_LOGE("ERROR: buff_hal is %p", buff_hal);
-		return BAD_VALUE;
-	}
+    hal_mem_info_t *buf_mem_info = &(buff_hal->mem_info);
+    if (buff_hal == NULL) {
+        HAL_LOGE("ERROR: buff_hal is %p", buff_hal);
+        return BAD_VALUE;
+    }
 
-	if(mMemory == NULL) {
-		HAL_LOGE("mMemory is NULL");
-		delete buff_hal;
-		return BAD_VALUE;
-	}
+    if (mMemory == NULL) {
+        HAL_LOGE("mMemory is NULL");
+        delete buff_hal;
+        return BAD_VALUE;
+    }
 
-	buff_hal->buffer_handle = buffer;
-	ret = mMemory->map(buffer, buf_mem_info);
-	if(ret != NO_ERROR) {
-		HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
-		mBuffNum++;
-		buff_hal->buffer_handle = buffer;
-		buff_hal->frame_number = frameNumber;
-		buf_mem_info->fd = 0;
-		buf_mem_info->addr_vir = NULL;
-		buf_mem_info->addr_phy = NULL;
-		mBufferList.add(buff_hal);
-		ret = NO_ERROR;
-	} else {
-		HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %zu, mStreamType = %d", buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->size, mStreamType);
-		mBuffNum++;
-		buff_hal->buffer_handle = buffer;
-		buff_hal->frame_number = frameNumber;
-		HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
-		          buff_hal->frame_number,buffer, mStreamType);
-		mBufferList.add(buff_hal);
-	}
+    buff_hal->buffer_handle = buffer;
+    ret = mMemory->map(buffer, buf_mem_info);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
+        mBuffNum++;
+        buff_hal->buffer_handle = buffer;
+        buff_hal->frame_number = frameNumber;
+        buf_mem_info->fd = 0;
+        buf_mem_info->addr_vir = NULL;
+        buf_mem_info->addr_phy = NULL;
+        mBufferList.add(buff_hal);
+        ret = NO_ERROR;
+    } else {
+        HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %zu, mStreamType = %d",
+                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,
+                 buf_mem_info->size, mStreamType);
+        mBuffNum++;
+        buff_hal->buffer_handle = buffer;
+        buff_hal->frame_number = frameNumber;
+        HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
+                 buff_hal->frame_number, buffer, mStreamType);
+        mBufferList.add(buff_hal);
+    }
 
-	return ret;
+    return ret;
 }
 
-int SprdCamera3Stream::buffDoneDQ(uint32_t frameNumber, buffer_handle_t **buffer)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::buffDoneDQ(uint32_t frameNumber,
+                                  buffer_handle_t **buffer) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	if(mMemory == NULL) {
-		HAL_LOGE("mMemory is NULL");
-		return BAD_VALUE;
-	}
+    if (mMemory == NULL) {
+        HAL_LOGE("mMemory is NULL");
+        return BAD_VALUE;
+    }
 
-	for (iter=mBufferList.begin();iter!=mBufferList.end();iter++)
-	{
-		if((*iter) && (*iter)->frame_number == frameNumber)
-		{
-			*buffer = (*iter)->buffer_handle;
-			mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
-			HAL_LOGV("frame_number %d, mStreamType %d",
-			          (*iter)->frame_number, mStreamType);
-			delete *iter;
-			mBufferList.erase(iter);
+    for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
+        if ((*iter) && (*iter)->frame_number == frameNumber) {
+            *buffer = (*iter)->buffer_handle;
+            mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
+            HAL_LOGV("frame_number %d, mStreamType %d", (*iter)->frame_number,
+                     mStreamType);
+            delete *iter;
+            mBufferList.erase(iter);
 
-			return ret;
-		}
-	}
+            return ret;
+        }
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::buffFirstDoneDQ(uint32_t *frameNumber, buffer_handle_t **buffer)
-{
-	Mutex::Autolock l(mLock);
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::buffFirstDoneDQ(uint32_t *frameNumber,
+                                       buffer_handle_t **buffer) {
+    Mutex::Autolock l(mLock);
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	if(mMemory == NULL) {
-		HAL_LOGE("mMemory is NULL");
-		return BAD_VALUE;
-	}
+    if (mMemory == NULL) {
+        HAL_LOGE("mMemory is NULL");
+        return BAD_VALUE;
+    }
 
-	if(mBufferList.size()) {
-		iter = mBufferList.begin();
+    if (mBufferList.size()) {
+        iter = mBufferList.begin();
 
-		*buffer = (*iter)->buffer_handle;
-		*frameNumber = (uint32_t)((*iter)->frame_number);
-		mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
+        *buffer = (*iter)->buffer_handle;
+        *frameNumber = (uint32_t)((*iter)->frame_number);
+        mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
 
-		HAL_LOGV("buffer queue First Done DQ frame_number = %d, mStreamType = %d",
-			  (*iter)->frame_number, mStreamType);
+        HAL_LOGV(
+            "buffer queue First Done DQ frame_number = %d, mStreamType = %d",
+            (*iter)->frame_number, mStreamType);
 
-		delete *iter;
-		mBufferList.erase(iter);
+        delete *iter;
+        mBufferList.erase(iter);
 
-		return NO_ERROR;
-	}
+        return NO_ERROR;
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getHeapSize(uint32_t* mm_heap_size)
-{
-	Vector<hal_buff_list_t*>::iterator iter=mBufferList.begin();
+int SprdCamera3Stream::getHeapSize(uint32_t *mm_heap_size) {
+    Vector<hal_buff_list_t *>::iterator iter = mBufferList.begin();
 
-	if((*iter) == NULL) {
-		HAL_LOGE("stream has no buffer");
-		return BAD_VALUE;
-	}
+    if ((*iter) == NULL) {
+        HAL_LOGE("stream has no buffer");
+        return BAD_VALUE;
+    }
 #ifdef CONFIG_GPU_PLATFORM_ROGUE
-	*mm_heap_size = ADP_BUFSIZE(*((*iter)->buffer_handle));
+    *mm_heap_size = ADP_BUFSIZE(*((*iter)->buffer_handle));
 #else
-	const private_handle_t *priv_handle = NULL;
-	priv_handle = reinterpret_cast<const private_handle_t *>(*((*iter)->buffer_handle));
-	*mm_heap_size = priv_handle->size;
+    const private_handle_t *priv_handle = NULL;
+    priv_handle =
+        reinterpret_cast<const private_handle_t *>(*((*iter)->buffer_handle));
+    *mm_heap_size = priv_handle->size;
 #endif
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getHeapNum(uint32_t* mm_heap_num)
-{
-	//*mm_heap_num = mBufferTable.size();
+int SprdCamera3Stream::getHeapNum(uint32_t *mm_heap_num) {
+    //*mm_heap_num = mBufferTable.size();
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getRegisterBuffPhyAddr(cmr_uint* buff_phy)
-{
-	/*cmr_uint* buff_phy_p = buff_phy;
-	for (Vector<hal_buffer_idex_table_t*>::iterator iter=mBufferTable.begin();iter!=mBufferTable.end();iter++)
-	{
-		if(*iter){
-			*buff_phy_p = (cmr_uint)((*iter)->mem_info.addr_phy);
-			buff_phy_p++;
-		}
-	}*/
+int SprdCamera3Stream::getRegisterBuffPhyAddr(cmr_uint *buff_phy) {
+    /*cmr_uint* buff_phy_p = buff_phy;
+    for (Vector<hal_buffer_idex_table_t*>::iterator
+    iter=mBufferTable.begin();iter!=mBufferTable.end();iter++)
+    {
+            if(*iter){
+                    *buff_phy_p = (cmr_uint)((*iter)->mem_info.addr_phy);
+                    buff_phy_p++;
+            }
+    }*/
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getRegisterBuffVirAddr(cmr_uint* buff_vir)
-{
-	/*cmr_uint* buff_vir_p = buff_vir;
-	for (Vector<hal_buffer_idex_table_t*>::iterator iter=mBufferTable.begin();iter!=mBufferTable.end();iter++)
-	{
-		if(*iter){
-			*buff_vir_p = (cmr_uint)((*iter)->mem_info.addr_vir);
-			buff_vir_p++;
-		}
-	}*/
+int SprdCamera3Stream::getRegisterBuffVirAddr(cmr_uint *buff_vir) {
+    /*cmr_uint* buff_vir_p = buff_vir;
+    for (Vector<hal_buffer_idex_table_t*>::iterator
+    iter=mBufferTable.begin();iter!=mBufferTable.end();iter++)
+    {
+            if(*iter){
+                    *buff_vir_p = (cmr_uint)((*iter)->mem_info.addr_vir);
+                    buff_vir_p++;
+            }
+    }*/
 
-	return NO_ERROR;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getQBufListNum(int32_t* buff_num)
-{
-	Mutex::Autolock l(mLock);
-	*buff_num = mBufferList.size();
-	return NO_ERROR;
+int SprdCamera3Stream::getQBufListNum(int32_t *buff_num) {
+    Mutex::Autolock l(mLock);
+    *buff_num = mBufferList.size();
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getRegisterBufListNum(int32_t* buff_num)
-{
-	*buff_num = mBuffNum;
-	return NO_ERROR;
+int SprdCamera3Stream::getRegisterBufListNum(int32_t *buff_num) {
+    *buff_num = mBuffNum;
+    return NO_ERROR;
 }
 
-int SprdCamera3Stream::getQBuffFirstVir(cmr_uint* addr_vir)
-{
-	Mutex::Autolock l(mLock);
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::getQBuffFirstVir(cmr_uint *addr_vir) {
+    Mutex::Autolock l(mLock);
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	if(mBufferList.size()) {
-		iter = mBufferList.begin();
+    if (mBufferList.size()) {
+        iter = mBufferList.begin();
 
-		*addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
-		return NO_ERROR;
-	}
+        *addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
+        return NO_ERROR;
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBuffFirstPhy(cmr_uint* addr_phy)
-{
-	Mutex::Autolock l(mLock);
-	Vector<hal_buff_list_t*>::iterator iter;
-	if(mBufferList.size()) {
-		iter = mBufferList.begin();
-		*addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
-		return NO_ERROR;
-	}
-	return BAD_VALUE;
+int SprdCamera3Stream::getQBuffFirstPhy(cmr_uint *addr_phy) {
+    Mutex::Autolock l(mLock);
+    Vector<hal_buff_list_t *>::iterator iter;
+    if (mBufferList.size()) {
+        iter = mBufferList.begin();
+        *addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
+        return NO_ERROR;
+    }
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBuffFirstFd(cmr_s32* fd)
-{
-	Mutex::Autolock l(mLock);
-	Vector<hal_buff_list_t*>::iterator iter;
-	if(mBufferList.size()) {
-		iter = mBufferList.begin();
-		*fd = (cmr_s32)((*iter)->mem_info.fd);
-		return NO_ERROR;
-	}
-	return BAD_VALUE;
+int SprdCamera3Stream::getQBuffFirstFd(cmr_s32 *fd) {
+    Mutex::Autolock l(mLock);
+    Vector<hal_buff_list_t *>::iterator iter;
+    if (mBufferList.size()) {
+        iter = mBufferList.begin();
+        *fd = (cmr_s32)((*iter)->mem_info.fd);
+        return NO_ERROR;
+    }
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBuffFirstNum(uint32_t* frameNumber)
-{
-	Mutex::Autolock l(mLock);
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::getQBuffFirstNum(uint32_t *frameNumber) {
+    Mutex::Autolock l(mLock);
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	if(mBufferList.size()) {
-		iter = mBufferList.begin();
+    if (mBufferList.size()) {
+        iter = mBufferList.begin();
 
-		*frameNumber = (uint32_t)((*iter)->frame_number);
-		return NO_ERROR;
-	}
+        *frameNumber = (uint32_t)((*iter)->frame_number);
+        return NO_ERROR;
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBufAddrForNum(uint32_t frameNumber, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_s32* fd)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::getQBufAddrForNum(uint32_t frameNumber,
+                                         cmr_uint *addr_vir, cmr_uint *addr_phy,
+                                         cmr_s32 *fd) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	for (iter=mBufferList.begin();iter!=mBufferList.end();iter++)
-	{
-		if((*iter) && (*iter)->frame_number == frameNumber)
-		{
-			*addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
-			*addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
-			*fd = (cmr_s32)((*iter)->mem_info.fd);
-			return ret;
-		}
-	}
+    for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
+        if ((*iter) && (*iter)->frame_number == frameNumber) {
+            *addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
+            *addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
+            *fd = (cmr_s32)((*iter)->mem_info.fd);
+            return ret;
+        }
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBufHandleForNum(uint32_t frameNumber, buffer_handle_t** buff)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::getQBufHandleForNum(uint32_t frameNumber,
+                                           buffer_handle_t **buff) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	for (iter=mBufferList.begin();iter!=mBufferList.end();iter++)
-	{
-		if((*iter) && (*iter)->frame_number == frameNumber)
-		{
-			*buff = (*iter)->buffer_handle;
-			return ret;
-		}
-	}
-	return BAD_VALUE;
+    for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
+        if ((*iter) && (*iter)->frame_number == frameNumber) {
+            *buff = (*iter)->buffer_handle;
+            return ret;
+        }
+    }
+    return BAD_VALUE;
 }
-int SprdCamera3Stream::getQBufNumForVir(uintptr_t addr_vir, uint32_t* frameNumber)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	Vector<hal_buff_list_t*>::iterator iter;
-	for (iter=mBufferList.begin();iter!=mBufferList.end();iter++)
-	{
-		if((*iter) && (*iter)->mem_info.addr_vir == (void*)addr_vir)
-		{
-			*frameNumber = (*iter)->frame_number;
-			return ret;
-		}
-	}
+int SprdCamera3Stream::getQBufNumForVir(uintptr_t addr_vir,
+                                        uint32_t *frameNumber) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    Vector<hal_buff_list_t *>::iterator iter;
+    for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
+        if ((*iter) && (*iter)->mem_info.addr_vir == (void *)addr_vir) {
+            *frameNumber = (*iter)->frame_number;
+            return ret;
+        }
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBufForHandle(buffer_handle_t* buff, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_s32* fd)
-{
-	Mutex::Autolock l(mLock);
-	int ret = NO_ERROR;
-	Vector<hal_buff_list_t*>::iterator iter;
+int SprdCamera3Stream::getQBufForHandle(buffer_handle_t *buff,
+                                        cmr_uint *addr_vir, cmr_uint *addr_phy,
+                                        cmr_s32 *fd) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    Vector<hal_buff_list_t *>::iterator iter;
 
-	for (iter=mBufferList.begin();iter!=mBufferList.end();iter++)
-	{
-		if((*iter) && (*iter)->buffer_handle == buff)
-		{
-			*addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
-			*addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
-			*fd =  (*iter)->mem_info.fd;
-			return ret;
-		}
-	}
+    for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
+        if ((*iter) && (*iter)->buffer_handle == buff) {
+            *addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
+            *addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
+            *fd = (*iter)->mem_info.fd;
+            return ret;
+        }
+    }
 
-	return BAD_VALUE;
+    return BAD_VALUE;
 }
 
 }; // namespace sprdcamera

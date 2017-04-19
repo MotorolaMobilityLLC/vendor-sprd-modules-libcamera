@@ -4,13 +4,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef signed char     int8;
-typedef signed short	int16;
-typedef unsigned char   uint8;
-typedef unsigned short	uint16;
-typedef unsigned int	uint32;
-typedef signed   int	int32;
-#define YDENOISE_MASK_SIZE	32
+typedef signed char int8;
+typedef signed short int16;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
+typedef signed int int32;
+#define YDENOISE_MASK_SIZE 32
 
 struct mask_class {
     int8 *mask_1gain_to_lessthan_1d5gain[YDENOISE_MASK_SIZE];
@@ -20,7 +20,8 @@ struct mask_class {
     int8 *mask_morethan_16gain[YDENOISE_MASK_SIZE];
 };
 
-extern void ynoise_function(uint8 *in_ptr,uint8 *out_ptr,int8 *mask,int w,int h);
+extern void ynoise_function(uint8 *in_ptr, uint8 *out_ptr, int8 *mask, int w,
+                            int h);
 
 #ifdef __cplusplus
 }

@@ -39,65 +39,70 @@ extern "C" {
 namespace sprdcamera {
 
 typedef struct {
-	int fd;
-	size_t size;
-	// offset from fd, always set to 0
-	void *addr_phy;
-	void *addr_vir;
-}hal_mem_info_t;
+    int fd;
+    size_t size;
+    // offset from fd, always set to 0
+    void *addr_phy;
+    void *addr_vir;
+} hal_mem_info_t;
 
 // Base class for all memory types. Abstract.
 class SprdCamera3Memory {
 
-public:
-    	int cleanCache(int index) {return cacheOps(index, 0);}
-    	int invalidateCache(int index) {return cacheOps(index, 0);}
-    	int cleanInvalidateCache(int index) {return cacheOps(index, 0);}
+  public:
+    int cleanCache(int index) { return cacheOps(index, 0); }
+    int invalidateCache(int index) { return cacheOps(index, 0); }
+    int cleanInvalidateCache(int index) { return cacheOps(index, 0); }
 
-    	virtual int cacheOps(int index, unsigned int cmd) = 0;
+    virtual int cacheOps(int index, unsigned int cmd) = 0;
 
-    	SprdCamera3Memory();
-    	virtual ~SprdCamera3Memory();
+    SprdCamera3Memory();
+    virtual ~SprdCamera3Memory();
 
-	virtual int map(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info) = 0;
-	virtual int unmap(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info) = 0;
+    virtual int map(buffer_handle_t *buffer_handle,
+                    hal_mem_info_t *mem_info) = 0;
+    virtual int unmap(buffer_handle_t *buffer_handle,
+                      hal_mem_info_t *mem_info) = 0;
 
-public:
-	static int getUsage(int stream_type, cmr_uint &usage);
-protected:
+  public:
+    static int getUsage(int stream_type, cmr_uint &usage);
 
+  protected:
     int cacheOpsInternal(int index, unsigned int cmd, void *vaddr);
-
 };
 
 // Internal heap memory is used for memories used internally
 // They are allocated from /dev/ion. Examples are: capabilities,
 // parameters, metadata, and internal YUV data for jpeg encoding.
 class SprdCamera3HeapMemory : public SprdCamera3Memory {
-public:
-    	SprdCamera3HeapMemory();
-    	virtual ~SprdCamera3HeapMemory();
+  public:
+    SprdCamera3HeapMemory();
+    virtual ~SprdCamera3HeapMemory();
 
-    	virtual int cacheOps(int index, unsigned int cmd);
-	virtual int map(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info) {return 0;};
-	virtual int unmap(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info) {return 0;};
+    virtual int cacheOps(int index, unsigned int cmd);
+    virtual int map(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info) {
+        return 0;
+    };
+    virtual int unmap(buffer_handle_t *buffer_handle,
+                      hal_mem_info_t *mem_info) {
+        return 0;
+    };
 
-private:
+  private:
 };
 
 // Gralloc Memory shared with frameworks
 class SprdCamera3GrallocMemory : public SprdCamera3Memory {
-public:
-    	SprdCamera3GrallocMemory();
-    	virtual ~SprdCamera3GrallocMemory();
+  public:
+    SprdCamera3GrallocMemory();
+    virtual ~SprdCamera3GrallocMemory();
 
-	virtual int cacheOps(int index, unsigned int cmd);
-	virtual int map(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info);
-	// memory optimization, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT dont need iommu addr
-	int map2(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info);
-	virtual int unmap(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
-
+    virtual int cacheOps(int index, unsigned int cmd);
+    virtual int map(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
+    // memory optimization, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT dont need iommu
+    // addr
+    int map2(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
+    virtual int unmap(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
 };
-
 };
 #endif

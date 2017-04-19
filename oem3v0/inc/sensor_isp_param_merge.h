@@ -15,7 +15,7 @@
  */
 
 /*----------------------------------------------------------------------------*
- **				Dependencies					*
+ **				Dependencies *
  **---------------------------------------------------------------------------*/
 
 #include <sys/types.h>
@@ -30,22 +30,21 @@
 #include "sensor_drv_u.h"
 
 /**---------------------------------------------------------------------------*
- **				Compiler Flag					*
+ **				Compiler Flag *
  **---------------------------------------------------------------------------*/
-#ifdef   __cplusplus
-extern   "C"
-{
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-int  sensor_isp_param_merge(struct sensor_raw_info* sensor_info_ptr,struct isp_data_info* out_param ,int mode);
-int sensor_meger_isp_param(struct isp_init_param *init_param_ptr,struct sensor_raw_info *sensor_info_ptr);
-int sensor_merge_isp_param_free(isp_ctrl_context *isp_cxt );
-
+int sensor_isp_param_merge(struct sensor_raw_info *sensor_info_ptr,
+                           struct isp_data_info *out_param, int mode);
+int sensor_meger_isp_param(struct isp_init_param *init_param_ptr,
+                           struct sensor_raw_info *sensor_info_ptr);
+int sensor_merge_isp_param_free(isp_ctrl_context *isp_cxt);
 
 /**----------------------------------------------------------------------------*
-**				Compiler Flag					*
+**				Compiler Flag *
 **----------------------------------------------------------------------------*/
-#ifdef   __cplusplus
+#ifdef __cplusplus
 }
 #endif
-

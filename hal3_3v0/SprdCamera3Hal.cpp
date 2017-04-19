@@ -1,6 +1,7 @@
 /* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
-* Redistribution and use in source and binary forms, with or without * modification, are permitted provided that the following conditions are
+* Redistribution and use in source and binary forms, with or without *
+* modification, are permitted provided that the following conditions are
 * met:
 *     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
@@ -27,32 +28,36 @@
 
 #include "SprdCamera3Factory.h"
 
-//extern int HAL_camera_device_open_wrapper(const struct hw_module_t* module,
+// extern int HAL_camera_device_open_wrapper(const struct hw_module_t* module,
 //              const char *id, struct hw_device_t** device);
 
-//static int HAL_open_legacy(const struct hw_module_t* module, const char* id, uint32_t halVersion, struct hw_device_t** device)
+// static int HAL_open_legacy(const struct hw_module_t* module, const char* id,
+// uint32_t halVersion, struct hw_device_t** device)
 //{
 //    return HAL_camera_device_open_wrapper(module, id, device);
 //}
 
 static hw_module_t camera_common = {
-	.tag                  = HARDWARE_MODULE_TAG,
-	.module_api_version   = CAMERA_MODULE_API_VERSION_2_4,//CAMERA_MODULE_API_VERSION_2_0,
-	.hal_api_version      = HARDWARE_HAL_API_VERSION,
-	.id                   = CAMERA_HARDWARE_MODULE_ID,
-	.name                 = "Sprd Camera HAL3",
-	.author               = "Spreadtrum Corporation",
-	.methods              = &sprdcamera::SprdCamera3Factory::mModuleMethods,
-	.dso                  = NULL,
-	.reserved             = {0},
+    .tag = HARDWARE_MODULE_TAG,
+    .module_api_version =
+        CAMERA_MODULE_API_VERSION_2_4, // CAMERA_MODULE_API_VERSION_2_0,
+    .hal_api_version = HARDWARE_HAL_API_VERSION,
+    .id = CAMERA_HARDWARE_MODULE_ID,
+    .name = "Sprd Camera HAL3",
+    .author = "Spreadtrum Corporation",
+    .methods = &sprdcamera::SprdCamera3Factory::mModuleMethods,
+    .dso = NULL,
+    .reserved = {0},
 };
 
 camera_module_t HAL_MODULE_INFO_SYM = {
-	.common                   = camera_common,
-	.get_number_of_cameras    = sprdcamera::SprdCamera3Factory::get_number_of_cameras,
-	.get_camera_info          = sprdcamera::SprdCamera3Factory::get_camera_info,
-	.set_callbacks            = sprdcamera::SprdCamera3Factory::set_callbacks,/*HAL 3.2*/
-	.get_vendor_tag_ops       = sprdcamera::SprdCamera3Factory::get_vendor_tag_ops,/*HAL 3.2*/
-	.open_legacy              = NULL,
-	.set_torch_mode           = sprdcamera::SprdCamera3Factory::setTorchMode,
+    .common = camera_common,
+    .get_number_of_cameras =
+        sprdcamera::SprdCamera3Factory::get_number_of_cameras,
+    .get_camera_info = sprdcamera::SprdCamera3Factory::get_camera_info,
+    .set_callbacks = sprdcamera::SprdCamera3Factory::set_callbacks, /*HAL 3.2*/
+    .get_vendor_tag_ops =
+        sprdcamera::SprdCamera3Factory::get_vendor_tag_ops, /*HAL 3.2*/
+    .open_legacy = NULL,
+    .set_torch_mode = sprdcamera::SprdCamera3Factory::setTorchMode,
 };

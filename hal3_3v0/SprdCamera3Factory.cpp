@@ -54,8 +54,7 @@ SprdCamera3Wrapper *gSprdCamera3Wrapper = NULL;
  *
  * RETURN     : None
  *==========================================================================*/
-SprdCamera3Factory::SprdCamera3Factory()
-{
+SprdCamera3Factory::SprdCamera3Factory() {
     camera_info info;
     mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
 #ifndef CONFIG_GPU_PLATFORM_ROGUE
@@ -78,8 +77,7 @@ SprdCamera3Factory::SprdCamera3Factory()
  *
  * RETURN     : None
  *==========================================================================*/
-SprdCamera3Factory::~SprdCamera3Factory()
-{
+SprdCamera3Factory::~SprdCamera3Factory() {
     if (gSprdCamera3Wrapper) {
         delete gSprdCamera3Wrapper;
         gSprdCamera3Wrapper = NULL;
@@ -95,8 +93,7 @@ SprdCamera3Factory::~SprdCamera3Factory()
  *
  * RETURN     : number of cameras detected
  *==========================================================================*/
-int SprdCamera3Factory::get_number_of_cameras()
-{
+int SprdCamera3Factory::get_number_of_cameras() {
     return gSprdCamera3Factory.getNumberOfCameras();
 }
 
@@ -113,15 +110,17 @@ int SprdCamera3Factory::get_number_of_cameras()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
-{
+int SprdCamera3Factory::get_camera_info(int camera_id,
+                                        struct camera_info *info) {
 #ifndef CONFIG_GPU_PLATFORM_ROGUE
-    if(isSingleIdExposeOnMultiCameraMode(camera_id))
+    if (isSingleIdExposeOnMultiCameraMode(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
-        return gSprdCamera3Factory.getCameraInfo(multiCameraModeIdToPhyId(camera_id), info);
+        return gSprdCamera3Factory.getCameraInfo(
+            multiCameraModeIdToPhyId(camera_id), info);
 #else
-    return gSprdCamera3Factory.getCameraInfo(multiCameraModeIdToPhyId(camera_id), info);
+    return gSprdCamera3Factory.getCameraInfo(
+        multiCameraModeIdToPhyId(camera_id), info);
 #endif
 }
 
@@ -134,10 +133,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
  *
  * RETURN     : number of cameras detected
  *==========================================================================*/
-int SprdCamera3Factory::getNumberOfCameras()
-{
-    return mNumOfCameras;
-}
+int SprdCamera3Factory::getNumberOfCameras() { return mNumOfCameras; }
 
 /*===========================================================================
  * FUNCTION   : getCameraInfo
@@ -152,23 +148,20 @@ int SprdCamera3Factory::getNumberOfCameras()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
-{
+int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     int rc;
     Mutex::Autolock l(mLock);
 
     HAL_LOGV("E, camera_id = %d", camera_id);
-    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info || (camera_id < 0)) {
+    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
+        (camera_id < 0)) {
         return -ENODEV;
     }
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
 #ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
-    rc = SprdCamera3Setting::getSensorSizeInfo(camera_id);
-    if (rc < 0) {
-        return rc;
-    }
+    SprdCamera3Setting::getSensorSizeInfo(camera_id);
 #endif
 
     rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
@@ -178,7 +171,8 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
+    info->device_version =
+        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
 
@@ -196,19 +190,19 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 *RETURN       : 0         --success
 *               non zero  --failure
 *===================================================================*/
-int SprdCamera3Factory::setTorchMode(const char* camera_id,bool enabled){
+int SprdCamera3Factory::setTorchMode(const char *camera_id, bool enabled) {
     int retval = 0;
-    ALOGV("%s: In,camera_id:%s,enable:%d",__func__,camera_id,enabled);
+    ALOGV("%s: In,camera_id:%s,enable:%d", __func__, camera_id, enabled);
 
-    retval = SprdCamera3Flash::setTorchMode(camera_id,enabled);
-    ALOGV("retval = %d",retval);
+    retval = SprdCamera3Flash::setTorchMode(camera_id, enabled);
+    ALOGV("retval = %d", retval);
 
     return retval;
 }
 
-int SprdCamera3Factory::set_callbacks(const camera_module_callbacks_t *callbacks)
-{
-    ALOGV("%s :In",__func__);
+int SprdCamera3Factory::set_callbacks(
+    const camera_module_callbacks_t *callbacks) {
+    ALOGV("%s :In", __func__);
     int retval = 0;
 
     retval = SprdCamera3Flash::registerCallbacks(callbacks);
@@ -216,15 +210,13 @@ int SprdCamera3Factory::set_callbacks(const camera_module_callbacks_t *callbacks
     return retval;
 }
 
-
-void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t* ops)
-{
+void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
     ALOGV("%s : ops=%p", __func__, ops);
-    ops->get_tag_count      = SprdCamera3Setting::get_tag_count;
-    ops->get_all_tags       = SprdCamera3Setting::get_all_tags;
-    ops->get_section_name   = SprdCamera3Setting::get_section_name;
-    ops->get_tag_name       = SprdCamera3Setting::get_tag_name;
-    ops->get_tag_type       = SprdCamera3Setting::get_tag_type;
+    ops->get_tag_count = SprdCamera3Setting::get_tag_count;
+    ops->get_all_tags = SprdCamera3Setting::get_all_tags;
+    ops->get_section_name = SprdCamera3Setting::get_section_name;
+    ops->get_tag_name = SprdCamera3Setting::get_tag_name;
+    ops->get_tag_type = SprdCamera3Setting::get_tag_type;
 }
 /*===========================================================================
  * FUNCTION   : cameraDeviceOpen
@@ -240,14 +232,14 @@ void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t* ops)
  *              none-zero failure code
  *==========================================================================*/
 int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
-                    struct hw_device_t **hw_device)
-{
+                                         struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
     if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) >= mNumOfCameras)
         return -ENODEV;
 
-    SprdCamera3HWI *hw = new SprdCamera3HWI(multiCameraModeIdToPhyId(camera_id));
+    SprdCamera3HWI *hw =
+        new SprdCamera3HWI(multiCameraModeIdToPhyId(camera_id));
 
     if (!hw) {
         ALOGE("Allocation of hardware interface failed");
@@ -277,13 +269,12 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3Factory::camera_device_open(
-        const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device)
-{
+int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
+                                           const char *id,
+                                           struct hw_device_t **hw_device) {
     if (module != &HAL_MODULE_INFO_SYM.common) {
-        ALOGE("Invalid module. Trying to open %p, expect %p",
-                module, &HAL_MODULE_INFO_SYM.common);
+        ALOGE("Invalid module. Trying to open %p, expect %p", module,
+              &HAL_MODULE_INFO_SYM.common);
         return INVALID_OPERATION;
     }
     if (!id) {
@@ -292,7 +283,7 @@ int SprdCamera3Factory::camera_device_open(
     }
 
 #ifndef CONFIG_GPU_PLATFORM_ROGUE
-    if(isSingleIdExposeOnMultiCameraMode(atoi(id))){
+    if (isSingleIdExposeOnMultiCameraMode(atoi(id))) {
         return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);
     } else {
         return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
@@ -307,17 +298,19 @@ struct hw_module_methods_t SprdCamera3Factory::mModuleMethods = {
 };
 
 /*Camera ID Expose To Camera Apk On MultiCameraMode
-camera apk use one camera id to open camera on MODE_3D_VIDEO, MODE_RANGE_FINDER, MODE_3D_CAPTURE
+camera apk use one camera id to open camera on MODE_3D_VIDEO, MODE_RANGE_FINDER,
+MODE_3D_CAPTURE
 camera apk use two camera id MODE_REFOCUS and 2 to open Camera
 ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
 */
-bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId)
-{
+bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     /*Camera ID Expose To Camera Apk On MultiCameraMode*/
-    if ((MIN_MULTI_CAMERA_FAKE_ID > cameraId) || (cameraId > MAX_MULTI_CAMERA_FAKE_ID))
+    if ((MIN_MULTI_CAMERA_FAKE_ID > cameraId) ||
+        (cameraId > MAX_MULTI_CAMERA_FAKE_ID))
         return false;
 
-    if ((MODE_3D_VIDEO == cameraId) || (MODE_RANGE_FINDER == cameraId) || (MODE_3D_CAPTURE == cameraId)) {
+    if ((MODE_3D_VIDEO == cameraId) || (MODE_RANGE_FINDER == cameraId) ||
+        (MODE_3D_CAPTURE == cameraId)) {
         return true;
     } else if (MODE_REFOCUS == cameraId || (MODE_3D_CALIBRATION == cameraId)) {
         return false;
@@ -326,13 +319,18 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId)
     return false;
 }
 
-int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId)
-{
-    if(MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
+int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
+    if (MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
         return cameraId;
-    } else if (MODE_REFOCUS == cameraId) { //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
+    } else if (MODE_REFOCUS == cameraId) { // Camera2 apk open  camera id is
+                                           // MODE_REFOCUS and 2 ,camera hal
+                                           // transform to open physics Camera
+                                           // id is 0 and 2
         return 0;
-    } else if (MODE_3D_CALIBRATION == cameraId) { //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
+    } else if (MODE_3D_CALIBRATION ==
+               cameraId) { // ValidationTools apk open  camera id is
+                           // MODE_3D_CALIBRATION and 3 ,camera hal transform to
+                           // open physics Camera id is 1 and 3
         return 1;
     }
 
@@ -340,4 +338,3 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId)
 }
 
 }; // namespace sprdcamera
-
