@@ -96,22 +96,16 @@ char libafv1_path[][20] = {
 	"libaf_v5.so",
 };
 
-static cmr_s32 _check_handle(afv1_handle_t handle)
+static cmr_s32 _check_handle(cmr_handle handle)
 {
 	cmr_s32 rtn = AFV1_SUCCESS;
-	//struct af_context_t *cxt = (struct af_context_t *)handle;
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 
 	if (NULL == af) {
 		ISP_LOGE("fail to get valid cxt pointer");
 		return AFV1_ERROR;
 	}
-/*
-	if (AF_MAGIC_START != cxt->magic_start || AF_MAGIC_END != cxt->magic_end) {
-		ISP_LOGE("fail to get valid magic, begin = 0x%x, magic end = 0x%x", cxt->magic_start, cxt->magic_end);
-		return AF_HANDLER_CXT_ERROR;
-	}
-*/
+
 	return rtn;
 }
 
@@ -165,9 +159,6 @@ static void afm_setup(af_ctrl_t * af)
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
 	cmr_handle device = cxt->isp_driver_handle;
-
-	//isp_ctrl_context *isp = af->isp_ctx;
-	//isp_handle device = isp->handle_device;
 
 	// ISP_LOGV("scene = %d, spsmd_max = 0x%x, spsmd_min = 0x%x, sobel_max = 0x%x, sobel_min = 0x%x",
 	//     af->curr_scene,
@@ -261,7 +252,6 @@ static cmr_u32 afm_get_win_num(struct afctrl_init_in *input_param)
 	return num;
 }
 
-//static void afm_set_win(isp_ctrl_context *isp, win_coord_t *win, cmr_s32 num, cmr_s32 hw_num)
 static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 hw_num)
 {
 	cmr_s32 i;
@@ -275,7 +265,6 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		win[i].end_y = 2;
 	}
 
-	//isp_u_raw_afm_win(isp->handle_device, win);
 	winparam.win_pos = (struct af_win_rect *)win;	//todo : compare with kernel type
 
 	af->set_monitor_win(af->caller, &winparam);
@@ -691,7 +680,6 @@ static ERRCODE if_statistics_wait_cal_done(void *cookie)
 static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	//isp_ctrl_context *isp = af->isp_ctx;
 	cmr_u64 spsmd[MAX_ROI_NUM];
 	cmr_u32 i;
 	memset(fv, 0, sizeof(fv[0]) * T_TOTAL_FILTER_TYPE);
@@ -920,7 +908,6 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 {
 	// TODO
 	af_ctrl_t *af = cookie;
-	//isp_ctrl_context *isp = af->isp_ctx;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
@@ -950,7 +937,6 @@ static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
 	// TODO
 	af_ctrl_t *af = cookie;
-	//isp_ctrl_context *isp = af->isp_ctx;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	// read
@@ -969,7 +955,6 @@ static ERRCODE if_set_motor_sacmode(void *cookie)
 {
 	// TODO
 	af_ctrl_t *af = cookie;
-	//isp_ctrl_context *isp = af->isp_ctx;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
@@ -1451,12 +1436,6 @@ static cmr_s32 trigger_deinit(af_ctrl_t * af)
 }
 
 // test mode
-typedef enum _lock_block {
-	LOCK_AE = 0x01,
-	LOCK_LSC = 0x02,
-	LOCK_NLM = 0x04
-} lock_block_t;
-
 static void set_manual(af_ctrl_t * af, char *test_param)
 {
 	UNUSED(test_param);
@@ -1848,26 +1827,10 @@ static void *loop_for_test_mode(void *data_client)
 // af process functions
 static cmr_u32 Is_ae_stable(af_ctrl_t * af)
 {
-/*
-	if (af->request_mode != AF_MODE_CONTINUE && af->request_mode != AF_MODE_VIDEO) {	// non caf mode
-		return af->ae.stable;
-	} else {
-		return 1;
-	}
-*/
-#if 0				//Andrew : The control layer does not interfere with the CAF mechanism
-	if ((STATE_CAF == af->state || STATE_RECORD_CAF == af->state) && 0 == af->caf_first_stable && 1 == af->ae.stable) {
-		af->caf_first_stable = 1;
-		return 1;
-	}
-
-	if (1 == af->caf_first_stable)
-		return 1;
-#else
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
 		return 1;
 	}
-#endif
+
 	return af->ae.stable;
 }
 
@@ -1891,23 +1854,13 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 	af->vcm_stable = 0;
 }
 
-//static void caf_stop_search(af_ctrl_t *af, cmr_s32 res)
 static void caf_stop_search(af_ctrl_t * af)
 {
-//    do_stop_af(af);
-
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(&af->fv, af->algo_mode);
 	AF_Process_Frame(&af->fv);
 	ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
 	pthread_mutex_unlock(&af->af_work_lock);
-
-	// let it finish its job
-//    AF_Process_Frame(&af->fv);
-//    AF_Process_Frame(&af->fv);
-
-//    if (res >= 0)
-//        notify_stop(af, res);
 }
 
 static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
@@ -1923,7 +1876,6 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 		caf_start_search(af, &res);
 	} else if (res.is_cancel_caf && af->caf_state == CAF_SEARCHING) {
 		pthread_mutex_lock(&af->af_work_lock);
-		//notify_stop(af, 0);
 		af->need_re_trigger = 1;
 		AF_STOP(&af->fv, af->algo_mode);
 		AF_Process_Frame(&af->fv);
@@ -2209,15 +2161,11 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 
 static void saf_stop(af_ctrl_t * af)
 {
-	// do_stop_af(af);
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(&af->fv, af->algo_mode);
 	AF_Process_Frame(&af->fv);
 	ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
 	pthread_mutex_unlock(&af->af_work_lock);
-	// let it finish its job
-//    AF_Process_Frame(&af->fv);
-//    AF_Process_Frame(&af->fv);
 }
 
 static cmr_s32 saf_process_frame(af_ctrl_t * af)
@@ -2338,17 +2286,13 @@ static ERRCODE af_wait_caf_finish(af_ctrl_t * af)
 	if (clock_gettime(CLOCK_REALTIME, &ts)) {
 		rtn = -1;
 	} else {
-		ts.tv_sec += AF_WAIT_CAF_FINISH;
-		ts.tv_nsec += 200 * 1000 * 1000;	//1s == (1000 * 1000 * 1000)
+		ts.tv_sec += 0;
+		ts.tv_nsec += AF_WAIT_CAF_TIMEOUT;
+		if (ts.tv_nsec >= 1000000000) {
+			ts.tv_nsec -= 1000000000;
+			ts.tv_sec += 1;
+		}
 
-/*
-	if (ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT >= (1000 * 1000 * 1000)) {
-		ts.tv_nsec = ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT - (1000 * 1000 * 1000);
-		ts.tv_sec ++;
-	} else {
-		ts.tv_nsec += ISP_PROCESS_NSEC_TIMEOUT;
-	}
-*/
 		rtn = sem_timedwait(&af->af_wait_caf, &ts);
 		if (rtn) {
 			af->takePicture_timeout = 1;
@@ -2361,7 +2305,7 @@ static ERRCODE af_wait_caf_finish(af_ctrl_t * af)
 	return 0;
 }
 
-static cmr_s32 af_sprd_set_mode(afv1_handle_t handle, void *in_param)
+static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_u32 af_mode = *(cmr_u32 *) in_param;
@@ -2449,12 +2393,10 @@ static void ae_calc_win_size(af_ctrl_t * af, struct isp_video_start *param)
 
 static void get_isp_size(af_ctrl_t * af, cmr_u16 * widith, cmr_u16 * height)
 {
-
-//      *widith = isp->input_size_trim[isp->param_index].width;
-//      *height = isp->input_size_trim[isp->param_index].height;
+	//*widith = isp->input_size_trim[isp->param_index].width;
+	//*height = isp->input_size_trim[isp->param_index].height;
 	*widith = af->isp_info.width;
 	*height = af->isp_info.height;
-
 }
 
 static void ae_calibration(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
@@ -2884,7 +2826,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	return rtn;
 }
 
-cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
+cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
@@ -3030,7 +2972,7 @@ cmr_s32 sprd_afv1_process(afv1_handle_t handle, void *in, void *out)
 	return rtn;
 }
 
-cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
+cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
 	UNUSED(param1);
 	cmr_int rtn = AFV1_SUCCESS;
@@ -3054,32 +2996,30 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 		break;
 
 	case AF_CMD_SET_AF_POS:
-		//rtn = _af_set_motor_pos(handle, *(cmr_u32 *) param0);
 		if (NULL != af->vcm_ops.set_pos) {
 			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, *(cmr_u16 *) param0);
 		}
 		break;
 
 	case AF_CMD_SET_TUNING_MODE:
-/*
-	rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle,AF_ALG_CMD_SET_CAF_STOP,NULL,NULL);
-	rtn = _af_set_status(handle,AF_ALG_STATUS_STOP);
-	if (af_cxt->is_running) {
-		af_cxt->af_result.suc_win = 0;
-		rtn = _af_end_proc(handle,&af_cxt->af_result,AF_TRUE);
-	}
+#if 0
+		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_CAF_STOP, NULL, NULL);
+		rtn = _af_set_status(handle, AF_ALG_STATUS_STOP);
+		if (af_cxt->is_running) {
+			af_cxt->af_result.suc_win = 0;
+			rtn = _af_end_proc(handle, &af_cxt->af_result, AF_TRUE);
+		}
 
-	rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle,AF_ALG_CMD_SET_TUNING_MODE,param0,NULL);
-*/
+		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_TUNING_MODE, param0, NULL);
+#endif
 		break;
 	case AF_CMD_SET_ISP_TOOL_AF_TEST:
-//              af->isp_tool_af_test = *(cmr_u32*)param0;
+		//af->isp_tool_af_test = *(cmr_u32*)param0;
 		break;
 	case AF_CMD_SET_SCENE_MODE:
 
 		break;
 	case AF_CMD_SET_AF_START:
-#if 1
 		{
 			property_set("af_mode", "none");
 			af->test_loop_quit = 1;
@@ -3124,7 +3064,7 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			saf_start(af, win);
 			break;
 		}
-#else
+#if 0
 		{
 			cmr_u32 af_mode = af_cxt->af_mode;
 			struct af_trig_info *trig_info = (struct af_trig_info *)param0;
@@ -3150,18 +3090,12 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 #endif
 		break;
 	case AF_CMD_SET_CAF_TRIG_START:
-/*
-	af_cxt->isp_tool_af_test = 0;
-	rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle,AF_ALG_CMD_SET_CAF_STOP,NULL,NULL);
-	rtn = _af_set_status(handle,AF_ALG_STATUS_STOP);
-	rtn = _af_set_start(handle,(struct af_trig_info *)param0);
-*/
 		break;
 
 	case AF_CMD_SET_AF_STOP:
-#if 1
 		ISP_LOGV("state = %s", STATE_STRING(af->state));
-#else
+#if 0
+
 		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_CAF_STOP, NULL, NULL);
 		rtn = _af_set_status(handle, AF_ALG_STATUS_STOP);
 		af_cxt->af_result.suc_win = 0;
@@ -3170,38 +3104,22 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 		break;
 
 	case AF_CMD_SET_AF_RESTART:
-
 		break;
 
 	case AF_CMD_SET_CAF_RESET:
-//              rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle,AF_ALG_CMD_SET_CAF_RESET,NULL,NULL);
 		break;
 
 	case AF_CMD_SET_CAF_STOP:
-//              rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle,AF_ALG_CMD_SET_CAF_STOP,NULL,NULL);
 		break;
+
 	case AF_CMD_SET_AF_FINISH:
-//              if (af_cxt->is_running) {
-//                      rtn = _af_end_proc(handle,(struct af_result_param *)param0,AF_TRUE);
-//              }
 		break;
+
 	case AF_CMD_SET_AF_BYPASS:
 		af->bypass = *(cmr_u32 *) param0;
-#if 0
-		af_cxt->bypass = *(cmr_u32 *) param0;
-		if (af_cxt->bypass) {
-			rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_CAF_STOP, NULL, NULL);
-			rtn = _af_set_status(handle, AF_ALG_STATUS_STOP);
-		} else {
-			if ((af_cxt->af_mode == AF_ALG_MODE_CONTINUE) || (af_cxt->af_mode == AF_ALG_MODE_VIDEO)) {
-				rtn = af_sprd_set_mode(handle, (void *)&af_cxt->af_mode);
-			}
-		}
-#endif
 		break;
 
 	case AF_CMD_SET_DEFAULT_AF_WIN:
-		//rtn = _af_cfg_afm_win(handle, 1, 0, NULL);
 		break;
 
 	case AF_CMD_SET_FLASH_NOTICE:{
@@ -3260,9 +3178,6 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 		break;
 
 	case AF_CMD_SET_ISP_STOP_INFO:
-//              if (af_cxt->is_running) {
-//                      rtn = _af_end_proc(handle,&af_cxt->af_result,AF_FALSE);
-//              }
 		ISP_LOGV("isp stop af state = %s", STATE_STRING(af->state));
 		if (STATE_IDLE != af->state)
 			do_stop_af(af);
@@ -3275,24 +3190,6 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			struct ae_calc_out *ae_result = ae_out->ae_result;
 			set_af_RGBY(af, (void *)ae_stat_ptr);
 			set_ae_info(af, ae_result, ae_out->bv);
-/*
-	struct ae_calc_out *ae_result = (struct ae_calc_out*)param0;
-	cmr_s32 *bv = (cmr_s32 *)param1;
-	af_cxt->ae_cur_lum = ae_result->cur_lum;
-	af_cxt->ae_is_stab = ae_result->is_stab;
-
-	if (ae_result->cur_exp_line && ae_result->line_time)
-		af_cxt->cur_fps = 100000000/(ae_result->cur_exp_line*ae_result->line_time);
-	af_cxt->cur_ae_again = ae_result->cur_again;
-	af_cxt->cur_ae_bv = *bv;
-	if (*bv <= af_cxt->bv_thr[0]){
-		af_cxt->cur_envi = AF_ENVI_LOWLUX;
-	}else if (*bv < af_cxt->bv_thr[1] && *bv > af_cxt->bv_thr[0]) {
-		af_cxt->cur_envi = AF_ENVI_INDOOR;
-	}else {
-		af_cxt->cur_envi = AF_ENVI_OUTDOOR;
-	}
-*/
 			break;
 		}
 
@@ -3303,28 +3200,6 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 			gain.g = result->gain.g;
 			gain.b = result->gain.b;
 			set_awb_info(af, result, &gain);
-/*
-	struct awb_ctrl_calc_result *awb_result = (struct awb_ctrl_calc_result*)param0;
-	cmr_u32 r_diff;
-	cmr_u32 g_diff;
-	cmr_u32 b_diff;
-
-	r_diff = awb_result->gain.r > af_cxt->cur_awb_r_gain ? awb_result->gain.r - af_cxt->cur_awb_r_gain : af_cxt->cur_awb_r_gain - awb_result->gain.r;
-	g_diff = awb_result->gain.g > af_cxt->cur_awb_g_gain ? awb_result->gain.g - af_cxt->cur_awb_g_gain : af_cxt->cur_awb_g_gain - awb_result->gain.g;
-	b_diff = awb_result->gain.b > af_cxt->cur_awb_b_gain ? awb_result->gain.b - af_cxt->cur_awb_b_gain : af_cxt->cur_awb_b_gain - awb_result->gain.b;
-
-	if ((r_diff <= af_cxt->rgbdiff_thr[0])
-		&& (g_diff <= af_cxt->rgbdiff_thr[1])
-		&& (b_diff <= af_cxt->rgbdiff_thr[2])) {
-		af_cxt->awb_is_stab = 1;
-	} else {
-		af_cxt->awb_is_stab = 0;
-	}
-	af_cxt->cur_awb_r_gain = awb_result->gain.r;
-	af_cxt->cur_awb_g_gain = awb_result->gain.g;
-	af_cxt->cur_awb_b_gain = awb_result->gain.b;
-	ISP_LOGI("awb_is_stab %d ",af_cxt->awb_is_stab);
-*/
 			break;
 		}
 
@@ -3417,7 +3292,8 @@ cmr_s32 sprd_afv1_ioctrl(void *handle, cmr_s32 cmd, void *param0, void *param1)
 	case AF_CMD_SET_UPDATE_AUX_SENSOR:
 		rtn = af_sprd_adpt_update_aux_sensor(handle, param0);
 		break;
-	case AF_CMD_GET_AF_FULLSCAN_INFO:{
+	case AF_CMD_GET_AF_FULLSCAN_INFO:
+		{
 			cmr_u32 i = 0;
 			struct isp_af_fullscan_info *af_fullscan_info = (struct isp_af_fullscan_info *)param0;
 

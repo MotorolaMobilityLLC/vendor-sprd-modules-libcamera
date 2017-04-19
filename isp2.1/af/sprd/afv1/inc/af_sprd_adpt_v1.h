@@ -27,36 +27,30 @@
 
 #include "aft_interface.h"
 
-#ifndef AFV1_TRUE
-#define AFV1_TRUE (1)
-#endif
-#ifndef AFV1_FALSE
-#define AFV1_FALSE (0)
-#endif
-
-#define AF_SAVE_MLOG_STR     "persist.sys.isp.af.mlog"	/*save/no */
-
-#define ISP_AF_END_FLAG 0x80000000
-
-#define AFV1_MAGIC_START		0xe5a55e5a
-#define AFV1_MAGIC_END		0x5e5ae5a5
-
-#define AFV1_TRAC(_x_) ISP_LOGI _x_
-#define AFV1_RETURN_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning); return exp;}}while(0)
-#define AFV1_TRACE_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning);}}while(0)
-
-#define AF_WAIT_CAF_FINISH     0
 #define AF_SYS_VERSION "-20170225-02"
+#define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
+#define AF_WAIT_CAF_TIMEOUT 200000000;	//1s == (1000 * 1000 * 1000)ns
 
 #define BOKEH_BOUNDARY_RATIO 8	//based on 10
 #define BOKEH_SCAN_FROM 212	//limited in [0,1023]
 #define BOKEH_SCAN_TO 342	//limited in [0,1023]
 #define BOKEH_SCAN_STEP 7	//at least 20
 
+enum afv1_bool {
+	AFV1_FALSE = 0,
+	AFV1_TRUE,
+};
+
 enum afv1_err_type {
 	AFV1_SUCCESS = 0x00,
 	AFV1_ERROR,
 	AFV1_ERR_MAX
+};
+
+enum _lock_block {
+	LOCK_AE = 0x01,
+	LOCK_LSC = 0x02,
+	LOCK_NLM = 0x04
 };
 
 enum af_state {
@@ -148,11 +142,6 @@ typedef struct _isp_awb_statistic_hist_info {
 	cmr_u32 b_hist[256];
 	cmr_u32 y_hist[256];
 } isp_awb_statistic_hist_info_t;
-
-enum AF_RINGBUFFER {
-	AF_RING_BUFFER_NO,
-	AF_RING_BUFFER_YES,
-};
 
 enum AF_AE_GAIN {
 	GAIN_1x = 0,
@@ -376,8 +365,6 @@ typedef struct _test_mode_command {
 	uint64 key;
 	void (*command_func) (af_ctrl_t * af, char *test_param);
 } test_mode_command_t;
-
-typedef void *afv1_handle_t;
 
 cmr_handle sprd_afv1_init(void *in, void *out);
 cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result);
