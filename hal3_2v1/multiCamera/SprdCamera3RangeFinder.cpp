@@ -942,10 +942,11 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
         HAL_LOGE("mDepthEngineApi malloc failed.");
     } else {
         memset(mDepthEngineApi, 0, sizeof(depth_engine_api_t));
+        if (loadDepthEngine() < 0) {
+            HAL_LOGE("load DepthEngine API failed.");
+        }
     }
-    if (loadDepthEngine() < 0) {
-        HAL_LOGE("load DepthEngine API failed.");
-    }
+
     mLocalBuffer = NULL;
     mMaxLocalBufferNum = 0;
     memset(mNativeBuffer, 0,
