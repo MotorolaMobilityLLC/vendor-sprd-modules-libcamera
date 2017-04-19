@@ -132,6 +132,7 @@ SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
     memset(&mPreviewSize, 0, sizeof(stereo_preview_size));
     mMaxPendingCount = 0;
     mPendingRequest = 0;
+    memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
 
     HAL_LOGI("X");
 }
@@ -788,8 +789,9 @@ SprdCamera3StereoPreview::ReProcessThread::ReProcessThread() {
     HAL_LOGI(" E");
     mVFrameCount = 0;
     mVLastFpsTime = 0;
+    mVLastFrameCount = 0;
+    mVFps = 0;
     mReprocessMsgList.clear();
-
     HAL_LOGI("X");
 }
 /*===========================================================================
@@ -1109,8 +1111,8 @@ void SprdCamera3StereoPreview::ReProcessThread::CallBackResult(
 
         mPreviewMuxer->mCallbackOps->process_capture_result(
             mPreviewMuxer->mCallbackOps, &callback_result);
-        HAL_LOGD(":%d return callbackstream=%p,buffer=%p", result.frame_number,
-                 callback_result_buffers.stream,
+        HAL_LOGD(":%d return callbackstream=%p,buffer=%p",
+                 callback_result.frame_number, callback_result_buffers.stream,
                  callback_result_buffers.buffer);
     }
     {
@@ -1175,8 +1177,9 @@ SprdCamera3StereoPreview::MuxerThread::MuxerThread() {
     mGpuApi = (GPUAPI_t *)malloc(sizeof(GPUAPI_t));
     if (mGpuApi == NULL) {
         HAL_LOGE("mGpuApi malloc failed.");
+    } else {
+        memset(mGpuApi, 0, sizeof(GPUAPI_t));
     }
-    memset(mGpuApi, 0, sizeof(GPUAPI_t));
     memset(&pt_stream_info, 0, sizeof(struct stream_info_s));
 
     if (loadGpuApi() < 0) {
@@ -1891,6 +1894,7 @@ int SprdCamera3StereoPreview::configureStreams(
     camera3_stream_configuration_t *stream_list) {
     int rc = 0;
     bool is_recording = false;
+    mhasCallbackStream = false;
     camera3_stream_t *newStream = NULL;
     camera3_stream_t *callBackStream = NULL;
     camera3_stream_t *previewStream = NULL;
@@ -1981,10 +1985,12 @@ int SprdCamera3StereoPreview::configureStreams(
     if (mhasCallbackStream) {
         callBackStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
     }
-    memcpy(previewStream, &mMainStreams, sizeof(camera3_stream_t));
-    previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
-    previewStream->width = mPreviewSize.srcWidth;
-    previewStream->height = mPreviewSize.srcHeight;
+    if (NULL != previewStream) {
+        memcpy(previewStream, &mMainStreams, sizeof(camera3_stream_t));
+        previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
+        previewStream->width = mPreviewSize.srcWidth;
+        previewStream->height = mPreviewSize.srcHeight;
+    }
     mPreviewMuxerThread->mPreviewMuxerMsgList.clear();
     mPreviewMuxerThread->run(NULL);
     mPreviewMuxerThread->mReProcessThread->mReprocessMsgList.clear();
