@@ -48,6 +48,14 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/isp2.1/middleware/inc
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
+ISP_HW_VER = 2v1
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/isp2.2/isp_tune \
+	$(LOCAL_PATH)/isp2.2/common/inc \
+	$(LOCAL_PATH)/isp2.2/middleware/inc
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 ISP_HW_VER = 3v0
 LOCAL_C_INCLUDES += \

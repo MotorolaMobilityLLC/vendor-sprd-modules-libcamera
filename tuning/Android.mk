@@ -26,6 +26,11 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ISP_HW_VER = 2v1
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
+ISP_HW_VER = 2v1
+endif
+
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 ISP_HW_VER = 3v0
 endif
@@ -61,6 +66,31 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../isp2.1/smart \
 	$(LOCAL_PATH)/../isp2.1/utility \
 	$(LOCAL_PATH)/../isp2.1/calibration/inc
+
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../isp2.2/middleware/inc \
+	$(LOCAL_PATH)/../isp2.2/isp_tune \
+	$(LOCAL_PATH)/../isp2.2/calibration \
+	$(LOCAL_PATH)/../isp2.2/driver/inc \
+	$(LOCAL_PATH)/../isp2.2/param_manager \
+	$(LOCAL_PATH)/../isp2.2/ae/inc \
+	$(LOCAL_PATH)/../isp2.2/ae/sprd_ae/inc \
+	$(LOCAL_PATH)/../isp2.2/awb/inc \
+	$(LOCAL_PATH)/../isp2.2/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../isp2.2/awb/sprd_awb/inc \
+	$(LOCAL_PATH)/../isp2.2/af/inc \
+	$(LOCAL_PATH)/../isp2.2/af/sprd_af/inc \
+	$(LOCAL_PATH)/../isp2.2/af/sft_af/inc \
+	$(LOCAL_PATH)/../isp2.2/af/alc_af/inc \
+	$(LOCAL_PATH)/../isp2.2/lsc/inc \
+	$(LOCAL_PATH)/../isp2.2/common/inc/ \
+	$(LOCAL_PATH)/../isp2.2/afl/inc \
+	$(LOCAL_PATH)/../isp2.2/smart \
+	$(LOCAL_PATH)/../isp2.2/utility \
+	$(LOCAL_PATH)/../isp2.2/calibration/inc
 
 endif
 

@@ -1,0 +1,483 @@
+#ifndef _ISP_LSC_ADV_H_
+#define _ISP_LSC_ADV_H_
+
+#ifdef WIN32
+#include "data_type.h"
+#include "win_dummy.h"
+#else
+#include "sensor_raw.h"
+#include <sys/types.h>
+#include <pthread.h>
+#include <utils/Log.h>
+#include "isp_com.h"
+#endif
+
+#include "stdio.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define max(A,B) (((A) > (B)) ? (A) : (B))
+#define min(A,B) (((A) < (B)) ? (A) : (B))
+
+#define LSC_ADV_DEBUG_STR       "[ALSC]: L %d, %s: "
+#define LSC_ADV_DEBUG_ARGS    __LINE__,__FUNCTION__
+
+#define LSC_ADV_LOGE(format,...) ALOGE(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
+#define LSC_ADV_LOGW(format,...) ALOGW(LSC_ADV_DEBUG_STR, format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
+#define LSC_ADV_LOGI(format,...) ALOGI(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
+#define LSC_ADV_LOGD(format,...) ALOGD(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
+#define LSC_ADV_LOGV(format,...) ALOGV(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
+
+typedef void *lsc_adv_handle_t;
+
+#define ISP_1_0 	1
+#define ISP_2_0 	2
+
+#define ISP_ALSC_SUCCESS 0
+#define ISP_ALSC_ERROR -1
+
+#define NUM_ROWS 24
+#define NUM_COLS 32
+
+#define MAX_SEGS 8
+
+#define MAX_WIDTH   64
+#define MAX_HEIGHT  64
+
+/*RAW RGB BAYER*/
+#define SENSOR_IMAGE_PATTERN_RAWRGB_GR                0x00
+#define SENSOR_IMAGE_PATTERN_RAWRGB_R                 0x01
+#define SENSOR_IMAGE_PATTERN_RAWRGB_B                 0x02
+#define SENSOR_IMAGE_PATTERN_RAWRGB_GB                0x03
+
+#define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\
+	do {\
+		param_data.cmd = blk_cmd;\
+		param_data.id = blk_id;\
+		param_data.data_ptr = cfg_ptr;\
+		param_data.data_size = cfg_size;\
+		input.param_data_ptr = &param_data;\
+		input.param_num = 1;} while (0);
+
+enum alsc_io_ctrl_cmd {
+	SMART_LSC_ALG_UNLOCK = 0,
+	SMART_LSC_ALG_LOCK = 1,
+	ALSC_CMD_GET_DEBUG_INFO = 2,
+	LSC_INFO_TO_AWB = 3,
+	ALSC_GET_VER = 4,
+	ALSC_FLASH_ON = 5,
+	ALSC_FLASH_OFF = 6,
+};
+
+struct tg_alsc_debug_info {
+	cmr_u8 *log;
+	cmr_u32 size;
+};
+
+struct alsc_ver_info {
+	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
+};
+
+struct debug_lsc_param {
+	char LSC_version[50];
+	cmr_u16 TB_DNP[12];
+	cmr_u16 TB_A[12];
+	cmr_u16 TB_TL84[12];
+	cmr_u16 TB_D65[12];
+	cmr_u16 TB_CWF[12];
+	cmr_u32 STAT_R[5];
+	cmr_u32 STAT_GR[5];
+	cmr_u32 STAT_GB[5];
+	cmr_u32 STAT_B[5];
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 gain_pattern;
+	cmr_u32 grid;
+
+	//SLSC
+	cmr_s32 error_x10000[9];
+	cmr_s32 eratio_before_smooth_x10000[9];
+	cmr_s32 eratio_after_smooth_x10000[9];
+	cmr_s32 final_ratio_x10000;
+	cmr_s32 final_index;
+	cmr_u16 smart_lsc_table[1024 * 4];
+
+	//ALSC
+	cmr_u16 alsc_lsc_table[1024 * 4];
+
+	//ALSC_SMOOTH
+	cmr_u16 alsc_smooth_lsc_table[1024 * 4];
+
+	//OUTPUT
+	cmr_u16 last_lsc_table[1024 * 4];
+	cmr_u16 output_lsc_table[1024 * 4];
+};
+
+enum lsc_gain_pattern {
+	LSC_GAIN_PATTERN_GRBG = 0,
+	LSC_GAIN_PATTERN_RGGB = 1,
+	LSC_GAIN_PATTERN_BGGR = 2,
+	LSC_GAIN_PATTERN_GBRG = 3,
+};
+
+struct LSC_info2AWB {
+	cmr_u16 value[2];	//final_index;
+	cmr_u16 weight[2];	// final_ratio;
+};
+
+#define LSCCTRL_EVT_BASE            0x2000
+#define LSCCTRL_EVT_INIT            LSCCTRL_EVT_BASE
+#define LSCCTRL_EVT_DEINIT          (LSCCTRL_EVT_BASE + 1)
+#define LSCCTRL_EVT_IOCTRL          (LSCCTRL_EVT_BASE + 2)
+#define LSCCTRL_EVT_PROCESS         (LSCCTRL_EVT_BASE + 3)
+
+enum lsc_return_value {
+	LSC_SUCCESS = 0x00,
+	LSC_ERROR,
+	LSC_PARAM_ERROR,
+	LSC_PARAM_NULL,
+	LSC_FUN_NULL,
+	LSC_HANDLER_NULL,
+	LSC_HANDLER_ID_ERROR,
+	LSC_ALLOC_ERROR,
+	LSC_FREE_ERROR,
+	LSC_RTN_MAX
+};
+
+/*
+enum interp_table_index{
+	LSC_TAB_A = 0,
+	LSC_TAB_TL84,
+	LSC_TAB_CWF,
+	LSC_TAB_D65,
+	LSC_TAB_DNP,
+};
+
+struct LSC_Segs{
+	cmr_s32 table_pair[2];//The index to the shading table pair.
+	cmr_s32 max_CT;//The maximum CT that the pair will be used.
+	cmr_s32 min_CT;//The minimum CT that the pair will be used.
+};
+
+struct LSC_Setting{
+	struct LSC_Segs segs[MAX_SEGS];//The shading table pairs.
+	cmr_s32 seg_count;//The number of shading table pairs.
+
+	double smooth_ratio;//the smooth ratio for the output weighting
+	cmr_s32 proc_inter;//process interval of LSC(unit=frames)
+
+	cmr_s32 num_seg_queue;//The number of elements for segement voting.
+	cmr_s32 num_seg_vote_th;//The voting threshold for segmenet voting.
+};
+*/
+
+struct lsc_adv_tune_param {
+	cmr_u32 enable;
+	cmr_u32 alg_id;
+
+	cmr_u32 debug_level;
+	cmr_u32 restore_open;
+
+	/* alg 0 */
+	cmr_s32 strength_level;
+	float pa;	//threshold for seg
+	float pb;
+	cmr_u32 fft_core_id;	//fft param ID
+	cmr_u32 con_weight;	//convergence rate
+	cmr_u32 freq;
+
+	/* alg 1 */
+	//global
+	cmr_u32 alg_effective_freq;
+	double gradient_threshold_rg_coef[5];
+	double gradient_threshold_bg_coef[5];
+	cmr_u32 thres_bv;
+	double ds_sub_pixel_ratio;
+	double es_statistic_credibility;
+	cmr_u32 thres_s1_mi;
+	double es_credibility_s3_ma;
+	cmr_s32 WindowSize_rg;
+	cmr_s32 WindowSize_bg;
+	double dSigma_rg_dx;
+	double dSigma_rg_dy;
+	double dSigma_bg_dx;
+	double dSigma_bg_dy;
+	double iir_factor;
+};
+
+struct alsc_alg0_turn_para {
+	float pa;	//threshold for seg
+	float pb;
+	cmr_u32 fft_core_id;	//fft param ID
+	cmr_u32 con_weight;	//convergence rate
+	cmr_u32 bv;
+	cmr_u32 ct;
+	cmr_u32 pre_ct;
+	cmr_u32 pre_bv;
+	cmr_u32 restore_open;
+	cmr_u32 freq;
+	float threshold_grad;
+};
+
+struct lsc_weight_value {
+	cmr_s32 value[2];
+	cmr_u32 weight[2];
+};
+
+// smart1.0_log_info
+struct lsc_adv_info {
+	cmr_u32 flat_num;
+	cmr_u32 flat_status1;
+	cmr_u32 flat_status2;
+	cmr_u32 stat_r_var;
+	cmr_u32 stat_b_var;
+	cmr_u32 cali_status;
+
+	cmr_u32 alg_calc_cnt;
+	struct lsc_weight_value cur_index;
+	struct lsc_weight_value calc_index;
+	cmr_u32 cur_ct;
+
+	cmr_u32 alg2_enable;
+	cmr_u32 alg2_seg1_num;
+	cmr_u32 alg2_seg2_num;
+	cmr_u32 alg2_seg_num;
+	cmr_u32 alg2_seg_valid;
+	cmr_u32 alg2_cnt;
+	cmr_u32 center_same_num[4];
+};
+
+struct lsc_adv_context {
+	cmr_u32 LSC_SPD_VERSION;
+	cmr_u32 grid;
+	cmr_s32 gain_pattern;
+	cmr_s32 gain_width;
+	cmr_s32 gain_height;
+
+	cmr_s32 alg_locked;	// lock alsc or not from ioctrl
+	cmr_u32 alg_open;	// open front camera or not
+
+	pthread_mutex_t mutex_stat_buf;
+	cmr_u32 *stat_ptr;
+	cmr_u32 *stat_for_alsc;
+
+	void *lsc_alg;
+	cmr_u16 *lum_gain;
+	cmr_u32 pbayer_r_sums[NUM_ROWS * NUM_COLS];
+	cmr_u32 pbayer_gr_sums[NUM_ROWS * NUM_COLS];
+	cmr_u32 pbayer_gb_sums[NUM_ROWS * NUM_COLS];
+	cmr_u32 pbayer_b_sums[NUM_ROWS * NUM_COLS];
+	float color_gain[NUM_ROWS * NUM_COLS * 4];
+	float color_gain_bak[NUM_ROWS * NUM_COLS * 4];
+	struct alsc_alg0_turn_para alg0_turn_para;
+};
+
+////////////////////////////// HLSC_V2.0 structure //////////////////////////////
+
+struct lsc2_tune_param {	// if modified, please contact to TOOL team
+	// system setting
+	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
+	cmr_u32 number_table;	// number of used original shading tables
+
+	// control_param
+	cmr_u32 alg_mode;
+	cmr_u32 table_base_index;
+	cmr_u32 user_mode;
+	cmr_u32 freq;
+	cmr_u32 IIR_weight;
+
+	// slsc2_param
+	cmr_u32 num_seg_queue;
+	cmr_u32 num_seg_vote_th;
+	cmr_u32 IIR_smart2;
+
+	// alsc1_param
+	cmr_s32 strength;
+
+	// alsc2_param
+	cmr_u32 lambda_r;
+	cmr_u32 lambda_b;
+	cmr_u32 weight_r;
+	cmr_u32 weight_b;
+
+	// post_gain
+	cmr_u32 bv2gainw_en;
+	cmr_u32 bv2gainw_p_bv[6];
+	cmr_u32 bv2gainw_b_gainw[6];
+	cmr_u32 bv2gainw_adjust_threshold;
+
+	// flash_gain
+	cmr_u32 flash_enhance_en;
+	cmr_u32 flash_enhance_max_strength;
+	cmr_u32 flash_enahnce_gain;
+
+};
+
+struct lsc2_context {
+	pthread_mutex_t mutex_stat_buf;
+	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
+	cmr_u32 alg_locked;	// lock alsc or not by ioctrl
+	cmr_u32 flash_mode;
+	cmr_u32 alg_open;	// complie alg0.c or alg2.c
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 gain_pattern;
+	cmr_u32 grid;
+
+	cmr_u16 *lsc_tab_address[9];	// the copy of table in parameter file
+	cmr_u16 *lsc_table_ptr_r;	// storage to save Rfirst table
+	cmr_u16 *tabptr[9];	// address of origianl shading table will be used to interperlation in slsc2
+	cmr_u16 *tabptrPlane[9];	// address R-first shading table ( lsc_table_ptr )
+
+	void *control_param;
+	void *slsc2_param;
+	void *alsc1_param;
+	void *alsc2_param;
+	void *lsc1d_param;
+	void* post_shading_gain_param;
+
+	// tmp storage
+	cmr_u16 *color_gain_r;
+	cmr_u16 *color_gain_gr;
+	cmr_u16 *color_gain_gb;
+	cmr_u16 *color_gain_b;
+
+	// debug info output address
+	void *lsc_debug_info_ptr;
+
+	// AEM storage address
+	cmr_u32 *stat_for_lsc;
+
+	// Copy the dst_gain address
+	cmr_u16 *dst_gain;
+};
+
+////////////////////////////// calculation dependent //////////////////////////////
+struct lsc_size {
+	cmr_u32 w;
+	cmr_u32 h;
+};
+
+struct lsc_adv_init_param {
+	cmr_u32 alg_open;	// complie alg0.c or alg2.c
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 gain_pattern;
+	cmr_u32 grid;
+
+	// isp2.1 added , need to modify to match old version
+	struct third_lib_info lib_param;
+
+	/* added parameters */
+	void *tune_param_ptr;
+	cmr_u16 *lsc_tab_address[9];	// the copy of table in parameter file
+	struct lsc2_tune_param lsc2_tune_param;	// HLSC_V2.0 tuning structure
+
+	/* no use in lsc_adv2 */
+	cmr_u32 param_level;
+	cmr_u16 *lum_gain;	// space to save pre_table from smart1.0
+	struct lsc_adv_tune_param tune_param;
+
+	//otp data
+	cmr_u32 lsc_otp_table_en;
+	cmr_u32 lsc_otp_table_width;
+	cmr_u32 lsc_otp_table_height;
+	cmr_u16 *lsc_otp_table_addr;
+
+	cmr_u32 lsc_otp_oc_en;
+	cmr_u32 lsc_otp_oc_r_x;
+	cmr_u32 lsc_otp_oc_r_y;
+	cmr_u32 lsc_otp_oc_gr_x;
+	cmr_u32 lsc_otp_oc_gr_y;
+	cmr_u32 lsc_otp_oc_gb_x;
+	cmr_u32 lsc_otp_oc_gb_y;
+	cmr_u32 lsc_otp_oc_b_x;
+	cmr_u32 lsc_otp_oc_b_y;
+};
+
+struct statistic_raw_t {
+	cmr_u32 *r;
+	cmr_u32 *gr;
+	cmr_u32 *gb;
+	cmr_u32 *b;
+};
+
+struct lsc_adv_calc_param {
+	struct statistic_raw_t stat_img;	// statistic value of 4 channels
+	struct lsc_size stat_size;	// size of statistic value matrix
+	cmr_s32 gain_width;	// width  of shading table
+	cmr_s32 gain_height;	// height of shading table
+	cmr_u32 ct;	// ct from AWB calc
+	cmr_s32 r_gain;	// r_gain from AWB calc
+	cmr_s32 b_gain;	// b_gain from AWB calc
+	cmr_u32 bv;	// bv from AE calc
+	cmr_u32 isp_mode;	// about the mode of interperlation of shading table
+	cmr_u32 isp_id;	// 0. alg0.c ,  2. alg2.c
+	cmr_u32 camera_id;	// 0. back camera  ,  1. front camera
+	struct lsc_size img_size;	// raw size
+	cmr_s32 grid;	// grid size
+
+	// no use in HLSC_V2.0
+	struct lsc_size block_size;
+	cmr_u16 *lum_gain;	// pre_table from smart1.0
+	cmr_u32 ae_stable;	// ae stable info from AE calc
+	cmr_s32 awb_pg_flag;
+
+	cmr_u16 *lsc_tab_address[9];	// lsc_tab_address
+	cmr_u32 lsc_tab_size;
+
+	// not fount in isp_app.c
+	cmr_u32 pre_bv;
+	cmr_u32 pre_ct;
+};
+
+struct lsc_adv_calc_result {
+	cmr_u16 *dst_gain;
+};
+
+struct lsc_lib_ops {
+	cmr_s32(*alsc_calc) (void *handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * adv_calc_result);
+	void *(*alsc_init) (struct lsc_adv_init_param * param);
+	 cmr_s32(*alsc_deinit) (void *handle);
+	 cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+};
+
+struct lsc_ctrl_context {
+	pthread_mutex_t status_lock;
+	void *alsc_handle;	// alsc handler
+	void *lib_handle;
+	struct lsc_lib_ops lib_ops;
+	struct third_lib_info *lib_info;
+};
+
+typedef lsc_adv_handle_t(*fun_lsc_adv_init) (struct lsc_adv_init_param * param);
+typedef const char *(*fun_lsc_adv_get_ver_str) (lsc_adv_handle_t handle);
+typedef cmr_s32(*fun_lsc_adv_calculation) (lsc_adv_handle_t handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * result);
+typedef cmr_s32(*fun_lsc_adv_ioctrl) (lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+typedef cmr_s32(*fun_lsc_adv_deinit) (lsc_adv_handle_t handle);
+
+//lsc.so API
+lsc_adv_handle_t lsc_adv_init(struct lsc_adv_init_param *param);
+const char *lsc_adv_get_ver_str(lsc_adv_handle_t handle);
+cmr_s32 lsc_adv_calculation(lsc_adv_handle_t handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *result);
+cmr_s32 lsc_adv_ioctrl(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+cmr_s32 lsc_adv_deinit(lsc_adv_handle_t handle);
+cmr_s32 is_print_lsc_log(void);
+
+// extern used API
+cmr_int lsc_ctrl_init(struct lsc_adv_init_param *input_ptr, cmr_handle * handle_lsc);
+cmr_int lsc_ctrl_deinit(cmr_handle * handle_lsc);
+cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
+cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
+
+cmr_s32 otp_lsc_mod(cmr_u16 * otpLscTabGolden, cmr_u16 * otpLSCTabRandom,	//T1, T2
+		    cmr_u16 * otpLscTabGoldenRef,	//Ts1
+		    cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
+		    cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
