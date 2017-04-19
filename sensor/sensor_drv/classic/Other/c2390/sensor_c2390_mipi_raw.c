@@ -1545,7 +1545,7 @@ static uint32_t c2390_write_exposure(SENSOR_HW_HANDLE handle,uint32_t param)
 	return ret_value;
 }
 
-static uint32_t c2390_write_exposure_ex(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t c2390_write_exposure_ex(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
