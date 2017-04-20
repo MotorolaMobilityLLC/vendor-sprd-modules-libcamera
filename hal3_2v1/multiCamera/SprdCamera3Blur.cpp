@@ -107,6 +107,8 @@ SprdCamera3Blur::SprdCamera3Blur() {
     mFlushing = false;
     mIsWaitSnapYuv = false;
     mPerfectskinlevel = 0;
+    m_pPhyCamera = NULL;
+    m_nPhyCameras = 0;
     HAL_LOGI("X");
 }
 
@@ -616,7 +618,6 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     uint32_t phyId = 0;
 
     HAL_LOGI(" E");
-    hw_device_t *hw_dev[m_nPhyCameras];
     if (camera_id == MODE_BLUR_FRONT) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
@@ -630,6 +631,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
         m_nPhyCameras = 1;
 #endif
     }
+    hw_device_t *hw_dev[m_nPhyCameras];
     setupPhysicalCameras();
 
     // Open all physical cameras
@@ -774,10 +776,13 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
     memset(mBlurApi, 0, sizeof(BlurAPI_t *) * BLUR_LIB_BOKEH_NUM);
     memset(mWinPeakPos, 0, sizeof(short) * BLUR_AF_WINDOW_NUM);
     memset(&mPreviewInitParams, 0, sizeof(camera3_stream_buffer_t));
-    memset(&mPreviewWeightParams, 0, sizeof(camera3_stream_buffer_t));
+    memset(&mPreviewWeightParams, 0, sizeof(preview_weight_params_t));
     memset(&mCaptureInitParams, 0, sizeof(preview_init_params_t));
     memset(&mCaptureWeightParams, 0, sizeof(camera3_stream_buffer_t));
     memset(mFaceInfo, 0, sizeof(int32_t) * 4);
+    mDevMain = NULL;
+    mSavedResultBuff = NULL;
+    memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     mCaptureMsgList.clear();
 }
 
@@ -1560,24 +1565,20 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             }
         }
         if (metaSettings.exists(ANDROID_CONTROL_AF_REGIONS)) {
-            uint32_t x =
+            uint32_t left =
                 metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[0];
-            uint32_t y =
+            uint32_t top =
                 metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[1];
-            if (x != 0 && y != 0) {
-                if (BACK_SENSOR_ORIG_WIDTH == 4160) {
-                    x = x * mPreviewInitParams.width / 3692;
-                    y = y * mPreviewInitParams.height / 2496;
-                } else if (BACK_SENSOR_ORIG_WIDTH == 3264) {
-                    x = x * mPreviewInitParams.width / 2774;
-                    y = y * mPreviewInitParams.height / 1958;
-                } else {
-                    x = x * mPreviewInitParams.width /
-                        (BACK_SENSOR_ORIG_WIDTH * 20 / 23);
-                    y = y * mPreviewInitParams.height /
-                        (BACK_SENSOR_ORIG_HEIGHT * 4 / 5);
-                }
-
+            uint32_t right =
+                metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[2];
+            uint32_t bottom =
+                metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[3];
+            uint32_t x = left, y = top;
+            if (left != 0 && top != 0 && right != 0 && bottom != 0) {
+                x = left + (right - left) / 2;
+                y = top + (bottom - top) / 2;
+                x = x * mPreviewInitParams.width / BACK_SENSOR_ORIG_WIDTH;
+                y = y * mPreviewInitParams.height / BACK_SENSOR_ORIG_HEIGHT;
                 if (x != mPreviewWeightParams.sel_x ||
                     y != mPreviewWeightParams.sel_y) {
                     mPreviewWeightParams.sel_x = x;
@@ -2010,9 +2011,12 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     mCaptureThread->mVFrameCount = 0;
     mCaptureThread->mVLastFpsTime = 0;
     mCaptureThread->mVLastFrameCount = 0;
+    mCaptureThread->mSavedResultBuff = NULL;
+    mCaptureThread->mSavedCapReqsettings = NULL;
     mjpegSize = 0;
     mFlushing = false;
     mIsWaitSnapYuv = false;
+    mIsCapturing = false;
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -2035,10 +2039,8 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
             return rc;
         }
     }
-    // init buffer_handle_t
     memset(mLocalCapBuffer, 0,
            sizeof(new_ion_mem_blur_t) * BLUR_LOCAL_CAPBUFF_NUM);
-
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
     HAL_LOGI("X");
@@ -2245,6 +2247,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     camera3_capture_request_t req_main;
     camera3_stream_buffer_t *out_streams_main = NULL;
     uint32_t tagCnt = 0;
+    int snap_stream_num = 2;
 
     rc = validateCaptureRequest(req);
     if (rc != NO_ERROR) {
@@ -2307,25 +2310,20 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
             mCaptureThread->mSavedCapReqsettings =
                 clone_camera_metadata(req_main.settings);
             req_main.settings = mCaptureThread->mSavedCapReqsettings;
-
-            if (mFlushing) {
-                rc = hwiMain->process_capture_request(
-                    m_pPhyCamera[CAM_TYPE_MAIN].dev, request);
-
-                HAL_LOGD("mFlushing rc, d%d", rc);
-                return rc;
-            }
-
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
+            if (!mFlushing) {
+                snap_stream_num = 2;
+                out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
+                mIsWaitSnapYuv = true;
+            } else {
+                snap_stream_num = 1;
+                out_streams_main[i].buffer = (req->output_buffers[i]).buffer;
+            }
             out_streams_main[i].stream =
-                &mCaptureThread
-                     ->mMainStreams[mCaptureThread->mCaptureStreamsNum];
-            out_streams_main[i].stream->width = mCaptureWidth;
-            out_streams_main[i].stream->height = mCaptureHeight;
-            out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
+                &mCaptureThread->mMainStreams[snap_stream_num];
+
             mIsCapturing = true;
-            mIsWaitSnapYuv = true;
         } else {
             mSavedReqStreams[mPreviewStreamsNum] =
                 req->output_buffers[i].stream;
@@ -2336,14 +2334,9 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     }
     req_main.output_buffers = out_streams_main;
     req_main.settings = metaSettings.release();
-    if (req_main.output_buffers[0].stream->format == HAL_PIXEL_FORMAT_BLOB) {
-        HAL_LOGD("capture request, idx:%d", req_main.frame_number);
-        req_main.output_buffers[0].stream->format =
-            HAL_PIXEL_FORMAT_YCbCr_420_888;
-    }
+
     HAL_LOGD("mIsCapturing:%d, framenumber=%d", mIsCapturing,
              request->frame_number);
-    HAL_LOGV("start main, idx:%d", req_main.frame_number);
     rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,
                                           &req_main);
     if (rc < 0) {
@@ -2670,7 +2663,6 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
             mCaptureThread->requestExit();
         }
     }
-    mFlushing = false;
     HAL_LOGI("X");
 
     return rc;
