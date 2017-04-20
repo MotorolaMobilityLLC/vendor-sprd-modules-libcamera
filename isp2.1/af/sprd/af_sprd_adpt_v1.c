@@ -1089,7 +1089,6 @@ BOKEH_DEFAULT:
 
 static ERRCODE if_af_log(const char *format, ...)
 {
-//      char buffer[2048]={0};
 	va_list arg;
 	va_start(arg, format);
 	vsnprintf(AFlog_buffer, 2048, format, arg);
@@ -1307,7 +1306,6 @@ static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
 static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 {
 	UNUSED(cookie);
-#ifndef WIN32
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 
 	property_get(AF_SAVE_MLOG_STR, value, "no");
@@ -1315,14 +1313,12 @@ static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 	if (!strcmp(value, "save")) {
 		*is_save = 1;
 	}
-#endif
 	ISP_LOGV("is_save %d", *is_save);
 	return 0;
 }
 
 static ERRCODE if_aft_log(cmr_u32 log_level, const char *format, ...)
 {
-//      char buffer[2048]={0};
 	va_list arg;
 	va_start(arg, format);
 	vsnprintf(AFlog_buffer, 2048, format, arg);
@@ -1356,6 +1352,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 	struct aft_tuning_block_param aft_in;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
 
 	if (0 != load_trigger_lib(af, lib_name))
 		return -1;
@@ -1372,13 +1369,15 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 		ISP_LOGI("aft tuning param ok ");
 		aft_in.data_len = aft_pm_output.param_data[0].data_size;
 		aft_in.data = aft_pm_output.param_data[0].data_ptr;
-#if 0
-		FILE *fp = NULL;
-		fp = fopen("/data/mlog/aft_tuning.bin", "wb");
-		fwrite(aft_in.data, 1, aft_in.data_len, fp);
-		fclose(fp);
-		ISP_LOGV("aft tuning size = %d", aft_in.data_len);
-#endif
+
+		property_get(AF_SAVE_MLOG_STR, value, "no");
+		if (!strcmp(value, "save")) {
+			FILE *fp = NULL;
+			fp = fopen("/data/misc/cameraserver/aft_tuning_params.bin", "wb");
+			fwrite(aft_in.data, 1, aft_in.data_len, fp);
+			fclose(fp);
+			ISP_LOGV("aft tuning size = %d", aft_in.data_len);
+		}
 	}
 	af->trig_ops.handle.aft_ops.aft_cookie = af;
 	af->trig_ops.handle.aft_ops.get_sys_time = if_get_sys_time;
@@ -2320,12 +2319,11 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 	property_get("af_mode", AF_MODE, "none");
 	if (0 != strcmp(AF_MODE, "none")) {
 		ISP_LOGV("AF_MODE %s is not null, af test mode", AF_MODE);
-		//set_af_test_mode(af,AF_MODE);// only one thread could call it
 		get_vcm_registor_pos(af);	// get final vcm pos when in test mode
 		return rtn;
 	}
 
-	ISP_LOGV("state = %s, mode = %d", STATE_STRING(af->state), af_mode);
+	ISP_LOGV("af state = %s, caf state = %s, set af_mode = %d", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state), af_mode);
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
 		af->request_mode = af_mode;
@@ -2335,7 +2333,6 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 		break;
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
-		ISP_LOGV("af state = %s, caf state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 		//face af is not worked for now
 		//if (STATE_FAF == af->state) {
 		//      return 0;
@@ -2900,39 +2897,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			}
 			//transfer fv data to trigger
 			caf_monitor_process_af(af);
-
-			switch (af->state) {
-			case STATE_NORMAL_AF:
-				pthread_mutex_lock(&af->af_work_lock);
-				if (saf_process_frame(af)) {
-					af->state = STATE_IDLE;
-					//saf_stop(af);
-					//do_stop_af(af);
-					trigger_start(af);	//reset trigger after saf
-				}
-				pthread_mutex_unlock(&af->af_work_lock);
-				break;
-			case STATE_FULLSCAN:
-			case STATE_CAF:
-			case STATE_RECORD_CAF:
-				//do caf when af is triggered.
-				caf_process_frame(af);
-				break;
-			case STATE_FAF:
-				pthread_mutex_lock(&af->af_work_lock);
-				if (faf_process_frame(af)) {
-					af->state = STATE_CAF;
-					caf_start(af);
-				}
-				pthread_mutex_unlock(&af->af_work_lock);
-				break;
-			default:
-				pthread_mutex_lock(&af->af_work_lock);
-				AF_Process_Frame(&af->fv);
-				ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
-				pthread_mutex_unlock(&af->af_work_lock);
-				break;
-			}
 			break;
 		}
 
@@ -2965,6 +2929,38 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 
 	}
+
+	switch (af->state) {
+	case STATE_NORMAL_AF:
+		pthread_mutex_lock(&af->af_work_lock);
+		if (saf_process_frame(af)) {
+			af->state = STATE_IDLE;
+			trigger_start(af);	//reset trigger after saf
+		}
+		pthread_mutex_unlock(&af->af_work_lock);
+		break;
+	case STATE_FULLSCAN:
+	case STATE_CAF:
+	case STATE_RECORD_CAF:
+		//do caf when af is triggered, caf state becomes to CAF_SEARCHING.
+		caf_process_frame(af);
+		break;
+	case STATE_FAF:
+		pthread_mutex_lock(&af->af_work_lock);
+		if (faf_process_frame(af)) {
+			af->state = STATE_CAF;
+			caf_start(af);
+		}
+		pthread_mutex_unlock(&af->af_work_lock);
+		break;
+	default:
+		pthread_mutex_lock(&af->af_work_lock);
+		AF_Process_Frame(&af->fv);
+		ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
+		pthread_mutex_unlock(&af->af_work_lock);
+		break;
+	}
+
 	system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 	ISP_LOGV("SYSTEM_TEST-af:%lldms", system_time1 - system_time0);
 
