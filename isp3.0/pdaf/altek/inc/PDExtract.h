@@ -25,14 +25,14 @@ extern "C" {
 #endif /* __cplusplus */
 extern int alPDExtract_VersionInfo_Get(void *VersionBuffer, int BufferSize);
 extern int alPDExtract_GetSize(struct altek_pdaf_info *PDSensorInfo,
-                               alPD_RECT *InputROI,
+                               alGE_RECT *InputROI,
                                unsigned short RawFileWidth,
                                unsigned short RawFileHeight,
                                unsigned short *PDDataWidth,
                                unsigned short *PDDataHeight);
 
 extern int alPDExtract_Run(unsigned char *RawFile,
-                           alPD_RECT *InputROI,
+                           alGE_RECT *InputROI,
                            unsigned short RawFileWidth,
                            unsigned short RawFileHeight,
                            unsigned short *PDOutLeft,

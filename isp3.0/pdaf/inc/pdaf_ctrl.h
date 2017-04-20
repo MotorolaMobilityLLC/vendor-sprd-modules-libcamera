@@ -99,6 +99,7 @@ struct pdaf_ctrl_init_in {
 	cmr_handle caller_handle;
 	cmr_u8 pdaf_support;
 	cmr_s8 *name;
+	void *tuning_param[ISP_INDEX_MAX];
 	struct isp_lib_config pdaf_lib_info;
 	struct pdaf_ctrl_otp_info_t af_otp;
 	struct pdaf_ctrl_otp_info_t pdaf_otp;
