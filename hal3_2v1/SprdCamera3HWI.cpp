@@ -181,8 +181,11 @@ SprdCamera3HWI::~SprdCamera3HWI() {
         Mutex::Autolock l(mLock);
     }
 
-    if (mOEMIf)
+    if (mOEMIf) {
         mOEMIf->enablePowerHint();
+        // for performance tuning: close camera
+        mOEMIf->setSensorCloseFlag();
+    }
 
     if (mMetadataChannel) {
         mMetadataChannel->stop(mFrameNum);
