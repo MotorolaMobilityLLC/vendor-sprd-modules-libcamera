@@ -71,6 +71,7 @@ struct isp_alg_sw_init_in {
 	struct isp_size size;
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_pdaf_info *pdaf_info;
+	struct isp_size	sensor_max_size;
 };
 
 typedef struct {
@@ -310,6 +311,25 @@ static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *pa
 	case ISP_PDAF_SET_CFG_PARAM:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, param0, param1);
 		break;
+	case ISP_PDAF_SET_PPI_INFO:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, param0, param1);
+		break;
+	case ISP_PDAF_SET_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, param0, param1);
+		break;
+	case ISP_PDAF_SET_WORK_MODE:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, param0, param1);
+		break;
+	case ISP_PDAF_SET_EXTRACTOR_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, param0, param1);
+		break;
+	case ISP_PDAF_SET_ROI:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, param0, param1);
+		break;
+	case ISP_PDAF_SET_SKIP_NUM:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, param0, param1);
+		break;
+
 	default:
 		break;
 	}
@@ -1766,9 +1786,10 @@ static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 
 	pdaf_input.camera_id = cxt->camera_id;
 	pdaf_input.caller_handle = (cmr_handle) cxt;;
-
+	pdaf_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
 	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
 	pdaf_input.pd_info = input_ptr->pdaf_info;
+	pdaf_input.sensor_max_size = input_ptr->sensor_max_size;
 
 	rtn = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
 
@@ -2186,6 +2207,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
+	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
 	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));
 	if (!binning_info) {

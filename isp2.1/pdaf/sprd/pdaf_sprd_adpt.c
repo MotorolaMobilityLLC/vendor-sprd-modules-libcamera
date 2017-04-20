@@ -44,12 +44,19 @@ struct sprd_pdaf_context {
 	PDInReg pd_reg_in;
 	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
 	cmr_u8 pdotp_pack_data[PD_OTP_PACK_SIZE];
-	/*add for sharkl2 pdaf function */
 	void *caller;
 	PD_GlobalSetting pd_gobal_setting;
+	struct pdaf_ppi_info ppi_info;
+	struct pdaf_roi_info roi_info;
 	struct sprd_pdaf_report_t report_data;
-	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
-	 cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
+	cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
+	cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
+	cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
+	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 };
 
 //testcode
@@ -187,15 +194,36 @@ cmr_int isp_get_pdaf_default_param(struct isp_dev_pdaf_info * pdaf_param)
 	return rtn;
 }
 
-static cmr_int pdaf_setup(void *pdaf)
+static cmr_int pdaf_setup(cmr_handle pdaf)
 {
 	cmr_int rtn = ISP_SUCCESS;
+
+	ISP_CHECK_HANDLE_VALID(pdaf);
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)pdaf;
-	struct isp_dev_pdaf_info pdaf_param;
+	/* user for debug*/
+	/*struct isp_dev_pdaf_info pdaf_param;
 
 	memset(&pdaf_param, 0x00, sizeof(pdaf_param));
 	rtn = isp_get_pdaf_default_param(&pdaf_param);
-	cxt->pdaf_set_cfg_parm(cxt->caller, &pdaf_param);
+	cxt->pdaf_set_cfg_parm(cxt->caller, &pdaf_param);*/
+	if (cxt->pdaf_set_bypass) {
+		cxt->pdaf_set_bypass(cxt->caller, 0);
+	}
+	if (cxt->pdaf_set_work_mode) {
+		cxt->pdaf_set_work_mode(cxt->caller, 1);
+	}
+	if (cxt->pdaf_set_skip_num) {
+		cxt->pdaf_set_skip_num(cxt->caller, 0);
+	}
+	if (cxt->pdaf_set_ppi_info) {
+		cxt->pdaf_set_ppi_info(cxt->caller, &(cxt->ppi_info));
+	}
+	if (cxt->pdaf_set_roi) {
+		cxt->pdaf_set_roi(cxt->caller, &(cxt->roi_info));
+	}
+	if (cxt->pdaf_set_extractor_bypass) {
+		cxt->pdaf_set_extractor_bypass(cxt->caller, 0);
+	}
 	return rtn;
 }
 
@@ -207,7 +235,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct sprd_pdaf_context *cxt = NULL;
 	struct sensor_otp_af_info *otp_af_info = NULL;
 	struct isp_alg_fw_context *isp_ctx = NULL;
-
 	cmr_u32 pd_in_size = 0;
 
 	if (!in_p) {
@@ -215,13 +242,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
-#if 0				/*TBD get pd_info from sensor & set to isp */
-	if (NULL == in_p->pd_info) {
-		ISP_LOGE("failed to get pd data");
-		ret = ISP_PARAM_NULL;
-		goto exit;
-	}
-#endif
+
 	isp_ctx = (struct isp_alg_fw_context *)in_p->caller_handle;
 	cxt = (struct sprd_pdaf_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
@@ -235,6 +256,34 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->pdaf_set_pdinfo_to_af = in_p->pdaf_set_pdinfo_to_af;
 	cxt->pdaf_set_cfg_parm = in_p->pdaf_set_cfg_param;
+	cxt->pdaf_set_bypass = in_p->pdaf_set_bypass;
+	cxt->pdaf_set_work_mode= in_p->pdaf_set_work_mode;
+	cxt->pdaf_set_skip_num = in_p->pdaf_set_skip_num;
+	cxt->pdaf_set_ppi_info = in_p->pdaf_set_ppi_info;
+	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
+	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
+
+	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
+	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;
+	cxt->ppi_info.block.start_y = in_p->pd_info->pd_offset_y;
+	cxt->ppi_info.block.end_y = in_p->pd_info->pd_end_y;
+	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
+	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
+	for (cmr_u16 i=0; i< in_p->pd_info->pd_pos_size; i++) {
+		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
+		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
+		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
+	}
+
+	cxt->roi_info.win.start_x = 1048;
+	cxt->roi_info.win.start_y = 792;
+	cxt->roi_info.win.end_x = 1048+2048 ;
+	cxt->roi_info.win.end_y = 792+1536;
+	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x)/(8 << cxt->ppi_info.block_size.width);
+	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y)/(8 << cxt->ppi_info.block_size.height);
+	cmr_u32 phasepixel_total_num = block_num_x*block_num_y * in_p->pd_info->pd_pos_size / 2;
+	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
+
 	cxt->pd_left = malloc(pd_in_size);
 	if (NULL == cxt->pd_left) {
 		ISP_LOGE("fail to malloc");
@@ -251,10 +300,10 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cmr_bzero(cxt->pd_left, pd_in_size);
 	cmr_bzero(cxt->pd_right, pd_in_size);
 
-	cxt->pd_gobal_setting.dImageW = IMAGE_WIDTH;	/*TBD get from sensor */
-	cxt->pd_gobal_setting.dImageH = IMAGE_HEIGHT;	/*TBD get from sensor */
-	cxt->pd_gobal_setting.dBeginX = BEGIN_X;	/*TBD get from sensor */
-	cxt->pd_gobal_setting.dBeginY = BEGIN_Y;	/*TBD get from sensor */
+	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
+	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
+	cxt->pd_gobal_setting.dBeginX = in_p->pd_info->pd_offset_x;
+	cxt->pd_gobal_setting.dBeginY = in_p->pd_info->pd_offset_y;
 
 	/*TBD dSensorID 0:for imx258 1: for OV13850 */
 	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id; */

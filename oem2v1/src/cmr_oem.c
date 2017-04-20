@@ -3135,7 +3135,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.size.h =
             sensor_info_ptr->mode_info[SENSOR_MODE_PREVIEW_ONE].height;
     }
-
+    isp_param.sensor_max_size.h = sensor_info_ptr->source_height_max;
+    isp_param.sensor_max_size.w = sensor_info_ptr->source_width_max;
     isp_param.ops.flash_get_charge = camera_isp_flash_get_charge;
     isp_param.ops.flash_set_charge = camera_isp_flash_set_charge;
     isp_param.ops.flash_ctrl = camera_isp_flash_ctrl;
@@ -7153,7 +7154,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         1 == out_param_ptr->is_dv || cxt->is_multi_mode)
         out_param_ptr->pdaf_eb = 0;
     else if (1 == out_param_ptr->preview_eb)
-        out_param_ptr->pdaf_eb = 1;
+        out_param_ptr->pdaf_eb = 0;
 
     property_get("persist.sys.camera.pdaf.off", value, "0");
     if (atoi(value)) {

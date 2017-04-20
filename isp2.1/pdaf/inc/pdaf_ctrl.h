@@ -112,6 +112,7 @@ struct pdaf_ctrl_init_in {
 	cmr_handle caller_handle;
 	cmr_u8 pdaf_support;
 	cmr_s8 *name;
+	struct isp_size sensor_max_size;
 	struct isp_lib_config pdaf_lib_info;
 	struct pdaf_ctrl_otp_info_t af_otp;
 	struct pdaf_ctrl_otp_info_t pdaf_otp;
@@ -119,8 +120,14 @@ struct pdaf_ctrl_init_in {
 	struct pdaf_ctrl_cb_ops_type pdaf_ctrl_cb_ops;
 	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
-	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
-	 cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info *pd_info);
+	cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info *pd_info);
+	cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
+	cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
+	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 };
 
 struct pdaf_ctrl_init_out {

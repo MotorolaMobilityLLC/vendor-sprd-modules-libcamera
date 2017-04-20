@@ -119,6 +119,12 @@ enum isp_alg_set_cmd {
 	ISP_AF_SET_PD_INFO,
 	ISP_PDAF_SET_CFG_PARAM,
 	ISP_PDAF_BLOCK_CFG,
+	ISP_PDAF_SET_BYPASS,
+	ISP_PDAF_SET_WORK_MODE,
+	ISP_PDAF_SET_SKIP_NUM,
+	ISP_PDAF_SET_PPI_INFO,
+	ISP_PDAF_SET_ROI,
+	ISP_PDAF_SET_EXTRACTOR_BYPASS,
 	ISP_AFL_SET_CFG_PARAM,
 	ISP_AFL_SET_BYPASS,
 	ISP_AFL_NEW_SET_CFG_PARAM,
@@ -763,6 +769,7 @@ struct isp_init_param {
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
+	struct isp_size sensor_max_size;
 #ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct isp_sensor_ex_info ex_info_slv;
 	void *setting_param_ptr_slv;	// slave sensor

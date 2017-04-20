@@ -397,5 +397,11 @@ cmr_s32 isp_u_ynr_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_noise_filter_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_rarius_lsc_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_pdaf_block(isp_handle handle, void *block_info);
+cmr_s32 isp_u_pdaf_bypass(isp_handle handle, cmr_u32 *bypass);
+cmr_s32 isp_u_pdaf_skip_num(isp_handle handle, cmr_u32 *skip_num);
+cmr_s32 isp_u_pdaf_work_mode(isp_handle handle, cmr_u32 *work_mode);
+cmr_s32 isp_u_pdaf_ppi_info(isp_handle handle, void *ppi_info);
+cmr_s32 isp_u_pdaf_extractor_bypass(isp_handle handle, cmr_u32 *bypass);
+cmr_s32 isp_u_pdaf_roi(isp_handle handle, void *roi);
 
 #endif
