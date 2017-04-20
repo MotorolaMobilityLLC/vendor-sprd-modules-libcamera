@@ -50,6 +50,8 @@ extern SENSOR_INFO_T g_c2390_mipi_raw_info;
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
+extern otp_drv_entry_t ov13855_sunny_drv_entry;
+extern otp_drv_entry_t ov5675_sunny_drv_entry;
 extern otp_drv_entry_t imx258_truly_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
@@ -75,8 +77,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
     {"ov13855_mipi_raw",
      &g_ov13855_mipi_raw_info,
      {&vcm_zc524_drv_entry, 0},
-     //&ov13855_drv_entry}, /* for bringup */
-     NULL},
+     &ov13855_sunny_drv_entry}, /* for bringup */
 #else
     {"ov13855_mipi_raw",
      &g_ov13855_mipi_raw_info,
@@ -134,7 +135,10 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
     {"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #if defined(CONFIG_DUAL_MODULE)
-    {"ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, NULL},
+    {"ov5675_dual_mipi_raw",
+     &g_ov5675_dual_mipi_raw_info,
+     {NULL, 0},
+     &ov5675_sunny_drv_entry},
 #endif
 #endif
     {0}};
