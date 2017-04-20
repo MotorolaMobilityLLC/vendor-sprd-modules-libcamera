@@ -2132,7 +2132,7 @@ static cmr_s32 faf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == af->fv.AF_mode) {
 		cmr_u8 res;
 
-		AF_Get_SAF_Result(&af->fv, &res);
+		AF_Get_Result(&af->fv, &res);
 		// ISP_LOGV("Normal AF end, result = %d", res);
 
 		//notify_stop(af, HAVE_PEAK == res ? 1 : 0);
@@ -2175,7 +2175,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == af->fv.AF_mode) {
 		cmr_u8 res;
 
-		AF_Get_SAF_Result(&af->fv, &res);
+		AF_Get_Result(&af->fv, &res);
 		// ISP_LOGV("Normal AF end, result = %d", res);
 
 		ISP_LOGV("notify_stop");
@@ -2230,7 +2230,7 @@ static void caf_search_process_af(af_ctrl_t * af)
 	if (Wait_Trigger == af->fv.AF_mode) {
 		cmr_u8 res;
 
-		AF_Get_SAF_Result(&af->fv, &res);
+		AF_Get_Result(&af->fv, &res);
 		ISP_LOGV("Normal AF end, result = %d", res);
 
 		//caf_stop_search(af, HAVE_PEAK == res ? 1 : 0);
