@@ -1435,7 +1435,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     char tmp_str[20] = {0};
     FILE *fp = NULL;
     uint32_t gain = 0;
-    uint32_t exp = 0;
+    uint32_t shutter = 0;
     int32_t bv = 0;
     struct isp_awbc_cfg_test awbc_cfg;
     void *isp_handle = ispvideo_GetIspHandle();
@@ -1445,7 +1445,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
 
     gain = adgain_exp_info.adgain;
-    exp = adgain_exp_info.exp_time;
+    shutter = adgain_exp_info.exp_time;
     bv = adgain_exp_info.bv;
 
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
@@ -1456,11 +1456,6 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
              height);
 
     strcpy(file_name, CAMERA_DUMP_PATH);
-
-    sprintf(tmp_str, "%s", name);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "_");
-
     sprintf(tmp_str, "%d", width);
     strcat(file_name, tmp_str);
     strcat(file_name, "X");
@@ -1468,19 +1463,18 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     strcat(file_name, tmp_str);
 
     strcat(file_name, "_");
+    sprintf(tmp_str, "%s", name);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+
     strcat(file_name, "gain");
     strcat(file_name, "_");
     sprintf(tmp_str, "%d", gain);
     strcat(file_name, tmp_str);
     strcat(file_name, "_");
-    strcat(file_name, "exp");
+    strcat(file_name, "shutter");
     strcat(file_name, "_");
-    sprintf(tmp_str, "%d", exp);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "_");
-    strcat(file_name, "bv");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", bv);
+    sprintf(tmp_str, "%d", shutter);
     strcat(file_name, tmp_str);
 
     strcat(file_name, "_");
@@ -1500,19 +1494,24 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     strcat(file_name, "_");
     sprintf(tmp_str, "%d", awbc_cfg.b_gain);
     strcat(file_name, tmp_str);
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "afpos");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%ld", pos);
+    strcat(file_name, tmp_str);
 
     memset(tmp_str, 0, sizeof(tmp_str));
     strcat(file_name, "_");
     strcat(file_name, "ct");
     strcat(file_name, "_");
-    sprintf(tmp_str, "%d", isp_cur_ct);
+    sprintf(tmp_str, "%ld", isp_cur_ct);
     strcat(file_name, tmp_str);
-
     memset(tmp_str, 0, sizeof(tmp_str));
     strcat(file_name, "_");
-    strcat(file_name, "afpos");
+    strcat(file_name, "bv");
     strcat(file_name, "_");
-    sprintf(tmp_str, "%d", pos);
+    sprintf(tmp_str, "%ld", isp_cur_bv);
     strcat(file_name, tmp_str);
 
     strcat(file_name, ".mipi_raw");
@@ -1524,7 +1523,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
         return -1;
     }
 
-    fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 10 / 8, fp);
+    fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 5 / 4, fp);
     fclose(fp);
 
     return 0;
