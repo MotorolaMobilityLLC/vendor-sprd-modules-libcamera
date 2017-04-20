@@ -2572,8 +2572,10 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if (FLASH_PRE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE == current_status->settings.flash) {
-			ISP_LOGI("ae_flash0_status shake_2 %d %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum, cxt->cur_result.flash_effect);
-			if (cxt->cur_result.wts.stable) {
+			ISP_LOGI("ae_flash0_status shake_2 %d %d %d %d", cxt->cur_result.wts.stable,
+				cxt->cur_result.cur_lum, cxt->cur_result.flash_effect, cxt->send_once[3]);
+			cxt->send_once[3]++;
+			if (cxt->cur_result.wts.stable || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
 				if (0 == cxt->send_once[1]) {
 					cxt->send_once[1]++;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
@@ -2587,6 +2589,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash0_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;
+			cxt->send_once[3] = 0;
 			cxt->send_once[1] = 0;
 		}
 
@@ -2609,7 +2612,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash0_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;
-			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = 0;
+			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
 		}
 	}else {
 	/* for new flash algorithm (flash algorithm1, dual flash) */
