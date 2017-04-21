@@ -1849,7 +1849,7 @@ static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, 
 	update_param->nr_level_number_map_ptr = nr_fix->nr_level_number_ptr;
 	update_param->nr_default_level_map_ptr = nr_fix->nr_default_level_ptr;
 	if (update_param->nr_level_number_map_ptr) {
-		ISP_LOGV("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", sizeof(update_param->nr_level_number_map_ptr));
+		ISP_LOGV("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", (int)sizeof(update_param->nr_level_number_map_ptr));
 	} else {
 		ISP_LOGV("ISP_TOOL: nr map is null");
 	}

@@ -174,8 +174,8 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 		pdaf_info_ptr->pattern_pixel_col[i] = pdafTestCase_ptr->pattern_pixel_col[i];
 	}
 
-	memset((void *)pdaf_info_ptr->phase_left_addr, 0, 0x100);
-	memset((void *)pdaf_info_ptr->phase_right_addr, 0, 0x100);
+	memset((void *)(unsigned long)pdaf_info_ptr->phase_left_addr, 0, 0x100);
+	memset((void *)(unsigned long)pdaf_info_ptr->phase_right_addr, 0, 0x100);
 	return rtn;
 }
 
@@ -353,8 +353,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	pdroi.m_wLeft = 0;
 	pdroi.m_wTop = 0;
 
-	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);	//TODO
-	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + 0x25800);	//TODO
+	void *pInPhaseBuf_left = (cmr_s32 *) (unsigned long)(proc_in->u_addr);	//TODO
+	void *pInPhaseBuf_right = (cmr_s32 *)(unsigned long) (proc_in->u_addr + 0x25800);	//TODO
 	ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 	cmr_s32 dRectX = ROI_X;
 	cmr_s32 dRectY = ROI_Y;

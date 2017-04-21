@@ -60,11 +60,11 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 		}
 #if 1				//only WORDSIZE 32
 		if (vst_param != NULL) {
-			addr = (void *)(dst_ptr->cur.vst_addr);
+			addr = (void *)(unsigned long)(dst_ptr->cur.vst_addr);
 			memcpy(addr, (void *)vst_param[strength_level].vst_param, dst_ptr->cur.vst_len);
 		}
 		if (ivst_param != NULL) {
-			addr = (void *)(dst_ptr->cur.ivst_addr);
+			addr = (void *)(unsigned long)(dst_ptr->cur.ivst_addr);
 			memcpy(addr, (void *)ivst_param[strength_level].ivst_param, dst_ptr->cur.ivst_len);
 		}
 #endif

@@ -568,7 +568,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	rtn = ae_ctrl_process(cxt->ae_cxt.handle, &in_param, &ae_result);
 	cxt->smart_cxt.isp_smart_eb = 1;
 	system_time1 = isp_get_timestamp();
-	ISP_LOGV("SYSTEM_TEST-ae:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-ae:%ldms", (unsigned long)(system_time1 - system_time0));
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
 		cxt->ae_cxt.log_alc_ae = ae_result.log_ae.log;
@@ -773,7 +773,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle, struct isp_awb_calc_
 	system_time0 = isp_get_timestamp();
 	rtn = awb_ctrl_process(cxt->awb_cxt.handle, &param, awb_result);
 	system_time1 = isp_get_timestamp();
-	ISP_LOGV("SYSTEM_TEST-awb:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-awb:%lums", (unsigned long)(system_time1 - system_time0));
 
 	rtn = ispalg_awb_post_process((cmr_handle) cxt, awb_result);
 
@@ -880,7 +880,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		}
 	}
 	system_time1 = isp_get_timestamp();
-	ISP_LOGV("SYSTEM_TEST-smart:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-smart:%ldms", (unsigned long)(system_time1 - system_time0));
 
 	isp_cur_bv = bv;
 	isp_cur_ct = result->ct;
@@ -1048,7 +1048,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 
 			cmr_u32 af_temp[30];
 			for (i = 0; i < 30; i++) {
-				af_temp[i] = *((cmr_u32 *) u_addr + i);
+				af_temp[i] = *((cmr_u32 *)(unsigned long) (u_addr + i));
 			}
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps = cxt->sensor_fps;
@@ -1138,7 +1138,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 
 	cmr_u32 pdaf_temp[30];
 	for (i = 0; i < 30; i++) {
-		pdaf_temp[i] = *((cmr_u32 *) u_addr + i);
+		pdaf_temp[i] = *((cmr_u32 *)(unsigned long)(u_addr + i));
 	}
 
 	pdaf_param_in.dBv = pdaf_temp[0];
