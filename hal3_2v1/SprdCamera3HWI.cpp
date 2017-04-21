@@ -50,11 +50,9 @@
 #include "SprdCamera3Setting.h"
 #include <sprd_ion.h>
 
-#ifdef CONFIG_CAMERA_ISP
 extern "C" {
 #include "isp_video.h"
 }
-#endif
 
 using namespace android;
 
@@ -337,14 +335,6 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
     if (ret == 0) {
         *hw_device = &mCameraDevice.common;
         mCameraSessionActive++;
-#ifdef CONFIG_CAMERA_ISP
-        startispserver();
-        ispvideo_RegCameraFunc(1, ispVideoStartPreview);
-        ispvideo_RegCameraFunc(2, ispVideoStopPreview);
-        ispvideo_RegCameraFunc(3, ispVideoTakePicture);
-        ispvideo_RegCameraFunc(4, ispVideoSetParam);
-//		ispvideo_RegCameraFunc(REG_CTRL_FLASH, ispCtrlFlash);
-#endif
     } else
         *hw_device = NULL;
 
@@ -393,8 +383,17 @@ int SprdCamera3HWI::openCamera() {
         }
         return ret;
     }
-
     mCameraOpened = true;
+
+    if (mOEMIf->isIspToolMode()) {
+        mOEMIf->ispToolModeInit();
+        startispserver();
+        ispvideo_RegCameraFunc(1, ispVideoStartPreview);
+        ispvideo_RegCameraFunc(2, ispVideoStopPreview);
+        ispvideo_RegCameraFunc(3, ispVideoTakePicture);
+        ispvideo_RegCameraFunc(4, ispVideoSetParam);
+    }
+
     HAL_LOGI(":hal3: X");
     return NO_ERROR;
 }
@@ -406,6 +405,13 @@ int SprdCamera3HWI::closeCamera() {
     int ret = NO_ERROR;
 
     if (mOEMIf) {
+        if (mOEMIf->isIspToolMode()) {
+            stopispserver();
+            ispvideo_RegCameraFunc(1, NULL);
+            ispvideo_RegCameraFunc(2, NULL);
+            ispvideo_RegCameraFunc(3, NULL);
+            ispvideo_RegCameraFunc(4, NULL);
+        }
         if (mCameraSessionActive == 0) {
             mMultiCameraMode = MODE_SINGLE_CAMERA;
             mOEMIf->setMultiCameraMode(mMultiCameraMode);
@@ -1802,14 +1808,6 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device) {
     hw = NULL;
     device == NULL;
 
-#ifdef CONFIG_CAMERA_ISP
-    stopispserver();
-    ispvideo_RegCameraFunc(1, NULL);
-    ispvideo_RegCameraFunc(2, NULL);
-    ispvideo_RegCameraFunc(3, NULL);
-    ispvideo_RegCameraFunc(4, NULL);
-//	ispvideo_RegCameraFunc(REG_CTRL_FLASH, NULL);
-#endif
     if (id == SENSOR_MAIN) {
         g_cam_device[0] = NULL;
     } else if (id == SENSOR_SUB) {

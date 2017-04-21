@@ -205,6 +205,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int IommuIsEnabled(void);
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
+    bool isIspToolMode();
+    void ispToolModeInit();
     uint64_t getZslBufferTimestamp(); /**add for 3dcapture, get zsl buffer's
                                          timestamp in zsl query*/
     void setZslBufferTimestamp(
@@ -763,6 +765,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mSprdCameraLowpower;
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
+    bool mIsIspToolMode;
 };
 
 }; // namespace sprdcamera

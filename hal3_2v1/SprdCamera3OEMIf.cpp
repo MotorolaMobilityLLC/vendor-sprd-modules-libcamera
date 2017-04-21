@@ -44,11 +44,9 @@
 #include "SprdCamera3Flash.h"
 #include <dlfcn.h>
 
-#ifdef CONFIG_CAMERA_ISP
 extern "C" {
 #include "isp_video.h"
 }
-#endif
 
 using namespace android;
 
@@ -264,7 +262,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
       mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
-      mFlagOffLineZslStart(0), mZslSnapshotTime(0)
+      mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0)
 
 {
     ATRACE_CALL();
@@ -2446,12 +2444,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         } else {
             setCameraState(SPRD_IDLE);
         }
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-        cmr_handle isp_handle = 0;
-        mHalOem->ops->camera_get_isp_handle(mCameraHandle, &isp_handle);
-        setispserver(isp_handle);
-#endif
+
         mHalOem->ops->camera_get_zsl_capability(mCameraHandle, &is_support_zsl,
                                                 &max_width, &max_height);
 
@@ -3814,11 +3807,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-#ifdef CONFIG_CAMERA_ISP
-    send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
-                  (char *)frame->y_vir_addr,
-                  frame->width * frame->height * 3 / 2);
-#endif
+    if (mIsIspToolMode) {
+        send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
+                      (char *)frame->y_vir_addr,
+                      frame->width * frame->height * 3 / 2);
+    }
 
 #if 1 // for cts
     int64_t buffer_timestamp_fps = 0;
@@ -5634,6 +5627,7 @@ int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e type, int index,
 int SprdCamera3OEMIf::openCamera() {
     ATRACE_CALL();
 
+    char value[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
 
     HAL_LOGI(":hal3: E");
@@ -5661,6 +5655,11 @@ int SprdCamera3OEMIf::openCamera() {
 #ifdef CONFIG_FACE_BEAUTY
     ts_printVersionInfo();
 #endif
+
+    property_get("persist.sys.isptool.mode.enable", value, "false");
+    if (!strcmp(value, "true")) {
+        mIsIspToolMode = 1;
+    }
 
 exit:
     HAL_LOGI(":hal3: X");
@@ -8600,6 +8599,14 @@ void SprdCamera3OEMIf::setSensorCloseFlag() {
     }
 
     mHalOem->ops->camera_set_sensor_close_flag(mCameraHandle);
+}
+
+bool SprdCamera3OEMIf::isIspToolMode() { return mIsIspToolMode; }
+
+void SprdCamera3OEMIf::ispToolModeInit() {
+    cmr_handle isp_handle = 0;
+    mHalOem->ops->camera_get_isp_handle(mCameraHandle, &isp_handle);
+    setispserver(isp_handle);
 }
 
 #ifdef CONFIG_CAMERA_EIS
