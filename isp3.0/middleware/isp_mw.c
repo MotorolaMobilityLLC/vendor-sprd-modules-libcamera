@@ -467,11 +467,14 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	if (ret) {
 		goto exit;
 	}
-	if (input_ptr->ex_info.af_supported && input_ptr->ex_info.pdaf_supported) {
-		ret = ispmw_get_pdaf_cbc_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
-		if (ret) {
-			ISP_LOGE("failed to get pdaf cbc bin");
-			goto exit;
+	if (input_ptr->ex_info.af_supported) {
+		if (SENSOR_PDAF_TYPE3_ENABLE == input_ptr->ex_info.pdaf_supported) {
+			ret = ispmw_get_pdaf_cbc_bin((cmr_handle)cxt,
+						     (const cmr_s8 *)input_ptr->ex_info.name);
+			if (ret) {
+				ISP_LOGE("failed to get pdaf cbc bin");
+				goto exit;
+			}
 		}
 	}
 	ret = ispmw_parse_tuning_onebin((cmr_handle)cxt);

@@ -260,6 +260,13 @@ struct sensor_ae_tab {
 };
 
 /*******************************new***************/
+enum sensor_pdaf_type {
+    SENSOR_PDAF_DISABLED = 0,
+    SENSOR_PDAF_TYPE1_ENABLE,
+    SENSOR_PDAF_TYPE2_ENABLE,
+    SENSOR_PDAF_TYPE3_ENABLE,
+    SENSOR_PDAF_MAX
+};
 
 struct sensor_lens_map_info {
     uint32_t envi;

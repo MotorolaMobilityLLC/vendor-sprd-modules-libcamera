@@ -417,7 +417,7 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 		(void *)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
 	memcpy((void *)(irp),
 			(void *)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
-	if (file->pdaf_supported)
+	if (SENSOR_PDAF_TYPE3_ENABLE == file->pdaf_supported)
 		isp_dev_load_cbc(handle);
 
 	ISP_LOGI("isp_id %d shading offset 0x%lx, irp 0x%lx", isp_id,

@@ -766,7 +766,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	}
 	tSecnarioInfo.tIqParamIdxInfo.iq_param_idx_still = 0;
 
-	if (cxt->pdaf_supported)
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_supported)
 		tSecnarioInfo.tSensorInfo.cbc_enabled = 1;
 
 	ISP_LOGI("size %dx%d, line time %d frameRate %d clamp %d image_pattern %d sensor_mode %d",
@@ -783,10 +783,12 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
 		return -1;
 	}
-	ret = isp_dev_load_cbc(cxt->isp_driver_handle);
-	if (0 != ret) {
-		ISP_LOGE("failed to load cbc");
-		return -1;
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_supported) {
+		ret = isp_dev_load_cbc(cxt->isp_driver_handle);
+		if (0 != ret) {
+			ISP_LOGE("failed to load cbc");
+			return -1;
+		}
 	}
 	/*set still image buffer format*/
 

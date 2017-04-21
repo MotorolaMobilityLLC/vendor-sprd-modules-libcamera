@@ -220,14 +220,6 @@ enum sensor_data_type {
     SENSOR_DATATYPE_MAX
 };
 
-enum sensor_pdaf_type {
-    SENSOR_PDAF_DISABLED = 0,
-    SENSOR_PDAF_TYPE1_ENABLE,
-    SENSOR_PDAF_TYPE2_ENABLE,
-    SENSOR_PDAF_TYPE3_ENABLE,
-    SENSOR_PDAF_MAX
-};
-
 enum img_data_type {
     IMG_DATA_TYPE_YUV422 = 0,
     IMG_DATA_TYPE_YUV420,
