@@ -706,22 +706,33 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle) {
     for (i = 0; i < CHN_MAX; i++) {
         pthread_mutex_lock(&p_grab->path_mutex[i]);
     }
+
+    CMR_LOGI("stream on cb.");
     if (p_grab->stream_on_cb) {
         (*p_grab->stream_on_cb)(0, p_grab->init_param.oem_handle);
     }
 
+    CMR_LOGI("stream off begin.");
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_OFF, &stream_on);
+    CMR_LOGI("stream off end.");
+
     for (i = 0; i < CHN_MAX; i++) {
         p_grab->chn_status[i] = CHN_IDLE;
         pthread_mutex_unlock(&p_grab->path_mutex[i]);
     }
 
+    CMR_LOGI("wait for dcam_mutex begin.");
     pthread_mutex_lock(&p_grab->dcam_mutex);
+    CMR_LOGI("wait for dcam_mutex end.");
+
     if (0 != p_grab->mode_enable) {
         res.sensor_id = p_grab->init_param.sensor_id;
         res.flag = p_grab->res;
+
+        CMR_LOGI("SPRD_IMG_IO_PUT_DCAM_RES begin.");
         ret = ioctl(p_grab->fd, SPRD_IMG_IO_PUT_DCAM_RES, &res);
         if (ret) {
+            CMR_LOGE("SPRD_IMG_IO_PUT_DCAM_RES failed!");
             pthread_mutex_unlock(&p_grab->dcam_mutex);
             goto exit;
         }
@@ -731,6 +742,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle) {
             return -1;
         }
         p_grab->mode_enable = 0;
+        CMR_LOGI("SPRD_IMG_IO_PUT_DCAM_RES end.");
     }
     pthread_mutex_unlock(&p_grab->dcam_mutex);
 
