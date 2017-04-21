@@ -12458,7 +12458,8 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id) {
               sprd_zsl_enabled)) && // video snapshot takepicture
             ((height == 1944 && width == 2592) ||
              (height == 1836 && width == 3264) ||
-             (height == 1080 && width == 1920))) {
+             (height == 1080 && width == 1920) ||
+             (height == 360 && width == 640))) {
             aligned_type = CAMERA_MEM_ALIGNED;
         }
     }
