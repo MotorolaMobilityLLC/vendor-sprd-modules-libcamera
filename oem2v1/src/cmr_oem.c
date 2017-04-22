@@ -4639,6 +4639,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src) {
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
     setting_param.camera_id = cxt->camera_id;
+    cmr_uint rotation = 0;
 
     cmr_int PerfectSkinLevel = 0;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -4651,6 +4652,14 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src) {
         PerfectSkinLevel = setting_param.cmd_type_value;
         CMR_LOGV("kinlin perfectskinlevel is %ld", PerfectSkinLevel);
     }
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_ENCODE_ROTATION, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get enc rotation %ld", ret);
+    }
+    rotation = setting_param.cmd_type_value;
+
     // init the parameters table. save the value until the process is restart or
     // the device is restart.
     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
@@ -4677,30 +4686,47 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src) {
         YuvFormat yuvFormat = TSFB_FMT_NV21;
         memset(&SkinWhitenTsface, 0, sizeof(TSRect));
         if (cxt->fd_face_area.face_num > 0) {
-            SkinWhitenTsface.left =
-                (cxt->fd_face_area.face_info[0].sx * pic_width) /
-                (cxt->fd_face_area.frame_width);
-            SkinWhitenTsface.top =
-                (cxt->fd_face_area.face_info[0].sy * pic_height) /
-                (cxt->fd_face_area.frame_height);
-            SkinWhitenTsface.right =
-                (cxt->fd_face_area.face_info[0].ex * pic_width) /
-                (cxt->fd_face_area.frame_width);
-            SkinWhitenTsface.bottom =
-                (cxt->fd_face_area.face_info[0].ey * pic_height) /
-                (cxt->fd_face_area.frame_height);
-            CMR_LOGD("UCAM update rect:%ld-%ld-%ld-%ld", SkinWhitenTsface.left,
-                     SkinWhitenTsface.top, SkinWhitenTsface.right,
-                     SkinWhitenTsface.bottom);
+            if (rotation == 0 || 180 == rotation) {
+                SkinWhitenTsface.left =
+                    (cxt->fd_face_area.face_info[0].sx * pic_width) /
+                    (cxt->fd_face_area.frame_width);
+                SkinWhitenTsface.top =
+                    (cxt->fd_face_area.face_info[0].sy * pic_height) /
+                    (cxt->fd_face_area.frame_height);
+                SkinWhitenTsface.right =
+                    (cxt->fd_face_area.face_info[0].ex * pic_width) /
+                    (cxt->fd_face_area.frame_width);
+                SkinWhitenTsface.bottom =
+                    (cxt->fd_face_area.face_info[0].ey * pic_height) /
+                    (cxt->fd_face_area.frame_height);
+                CMR_LOGD("UCAM update rect:%ld-%ld-%ld-%ld",
+                         SkinWhitenTsface.left, SkinWhitenTsface.top,
+                         SkinWhitenTsface.right, SkinWhitenTsface.bottom);
+            } else {
+                SkinWhitenTsface.left = cxt->fd_face_area.face_info[0].sy *
+                                        pic_height /
+                                        cxt->fd_face_area.frame_width;
+                SkinWhitenTsface.top = pic_height -
+                                       cxt->fd_face_area.face_info[0].ex *
+                                           pic_height /
+                                           cxt->fd_face_area.frame_width;
+                SkinWhitenTsface.right = cxt->fd_face_area.face_info[0].ey *
+                                         pic_height /
+                                         cxt->fd_face_area.frame_width;
+                SkinWhitenTsface.bottom = pic_height -
+                                          cxt->fd_face_area.face_info[0].sx *
+                                              pic_height /
+                                              cxt->fd_face_area.frame_width;
+                CMR_LOGD("UCAM update rect:%ld-%ld-%ld-%ld",
+                         SkinWhitenTsface.left, SkinWhitenTsface.top,
+                         SkinWhitenTsface.right, SkinWhitenTsface.bottom);
+            }
 
             TSMakeupData inMakeupData, outMakeupData;
             unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
             unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u);
             unsigned char *tmpBuf =
                 (unsigned char *)malloc(pic_width * pic_height * 3 / 2);
-            if (cxt->is_multi_mode == MODE_SINGLE_CAMERA) {
-                yuvFormat = TSFB_FMT_NV12;
-            }
 
             inMakeupData.frameWidth = pic_width;
             inMakeupData.frameHeight = pic_height;
