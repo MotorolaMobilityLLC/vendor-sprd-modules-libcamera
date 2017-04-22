@@ -1070,12 +1070,6 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     return ret;
 }
 
-cmr_int camera_wait_camera_init_done(cmr_handle camera_handle) {
-    CMR_LOGD("enter camera_wait_camera_init_done");
-    camera_local_wait_camera_init_done(camera_handle);
-    return 0;
-}
-
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1103,7 +1097,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_otp_info, camera_get_sensor_vcm_step,
     camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
     camera_start_capture, camera_stop_capture,
-    camera_pre_capture_set_buffer_size, camera_ioctrl, camera_wait_camera_init_done,
+    camera_pre_capture_set_buffer_size, camera_ioctrl,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

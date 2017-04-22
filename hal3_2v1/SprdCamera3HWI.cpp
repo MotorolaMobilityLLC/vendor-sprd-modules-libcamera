@@ -808,9 +808,6 @@ int SprdCamera3HWI::configureStreams(
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
 
-    if (mOEMIf)
-        mOEMIf->waitCameraInitDone();
-
     return ret;
 }
 
@@ -1691,7 +1688,6 @@ int SprdCamera3HWI::configure_streams(
         return -ENODEV;
     }
     int ret = hw->configureStreams(stream_list);
-
     HAL_LOGD("camera3_device_ops X");
     return ret;
 }

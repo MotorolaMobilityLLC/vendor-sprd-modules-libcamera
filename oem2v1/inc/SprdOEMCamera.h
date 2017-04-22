@@ -185,7 +185,6 @@ cmr_int camera_stop_capture(cmr_handle camera_handle);
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
 
-cmr_int camera_wait_camera_init_done(cmr_handle camera_handle);
 #ifdef __cplusplus
 }
 #endif

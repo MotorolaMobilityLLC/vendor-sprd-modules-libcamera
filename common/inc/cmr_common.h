@@ -1446,7 +1446,6 @@ typedef struct oem_ops {
                                                   cmr_u16 width,
                                                   cmr_u16 height);
     cmr_int (*camera_ioctrl)(cmr_handle handle, int cmd, void *param);
-    cmr_int (*camera_wait_camera_init_done)(cmr_handle camera_handle);
 } oem_ops_t;
 
 typedef struct oem_module {

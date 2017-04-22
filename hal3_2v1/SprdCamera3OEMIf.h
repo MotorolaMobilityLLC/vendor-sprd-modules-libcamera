@@ -195,7 +195,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-    void waitCameraInitDone();
 
     void initPowerHint();
     void enablePowerHint();

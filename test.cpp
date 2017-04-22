@@ -1912,7 +1912,6 @@ int eng_tst_camera_init(int cameraId, minui_backend *backend, GRSurface *draw) {
         ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);
         goto exit;
     }
-    mHalOem->ops->camera_wait_camera_init_done(oem_handle);
     s_mem_method = IommuIsEnabled();
     ALOGI("Native MMI Test: %s,%s,%d, s_mem_method %d IN\n", __FILE__, __func__,
           __LINE__, s_mem_method);

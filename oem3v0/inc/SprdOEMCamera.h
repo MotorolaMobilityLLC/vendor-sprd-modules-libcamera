@@ -181,8 +181,6 @@ cmr_int camera_pre_capture_set_buffer_size(cmr_u32 camera_id, cmr_u16 width,
                                            cmr_u16 height);
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
-
-cmr_int camera_wait_camera_init_done(cmr_handle camera_handle);
 #ifdef __cplusplus
 }
 #endif

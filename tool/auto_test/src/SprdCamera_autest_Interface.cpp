@@ -1385,7 +1385,6 @@ int autotest_camera_init(int cameraId, minui_backend *backend,
         ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);
         goto exit;
     }
-    mHalOem->ops->camera_wait_camera_init_done(oem_handle);
     s_mem_method = autotest_IommuIsEnabled();
     ALOGI("AutoTest: %s,%s,%d， s_mem_method %d IN\n", __FILE__, __func__,
           __LINE__, s_mem_method);
