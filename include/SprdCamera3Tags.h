@@ -54,6 +54,7 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_BLUR_COVERED,
     ANDROID_SPRD_AVAILABLE_SENSOR_SELF_SHOT,
     ANDROID_SPRD_BLUR_CIRCLE_SIZE,
+    ANDROID_SPRD_MAX_PREVIEW_SIZE,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

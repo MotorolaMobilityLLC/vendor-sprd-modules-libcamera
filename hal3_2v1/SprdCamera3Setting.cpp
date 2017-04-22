@@ -2598,6 +2598,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.is_support_refocus = 0;
 #endif
 
+    // max preview size supported for hardware limitation
+    s_setting[cameraId].sprddefInfo.max_preview_size[0] =
+        MAX_PREVIEW_SIZE_WIDTH;
+    s_setting[cameraId].sprddefInfo.max_preview_size[1] =
+        MAX_PREVIEW_SIZE_HEIGHT;
+
     return ret;
 }
 
@@ -2915,13 +2921,15 @@ int SprdCamera3Setting::initStaticMetadata(
         &(s_setting[cameraId].sprddefInfo.big_pre_rec_size_support), 1);
     staticInfo.update(ANDROID_SPRD_IS_SUPPORT_REFOCUS,
                       &(s_setting[cameraId].sprddefInfo.is_support_refocus), 1);
-    /**add for 3d calibration update metadata begin*/
     staticInfo.update(
         ANDROID_SPRD_3DCALIBRATION_CAPTURE_SIZE,
         (int32_t *)s_setting[cameraId].sprddefInfo.sprd_3dcalibration_cap_size,
         ARRAY_SIZE(
             s_setting[cameraId].sprddefInfo.sprd_3dcalibration_cap_size));
-    /**add for 3d calibration update metadata end*/
+    // max preview size supported for hardware limitation
+    staticInfo.update(ANDROID_SPRD_MAX_PREVIEW_SIZE,
+                      s_setting[cameraId].sprddefInfo.max_preview_size, 2);
+
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
 #undef FILL_CAM_INFO_ARRAY

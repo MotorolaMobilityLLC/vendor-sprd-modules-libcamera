@@ -141,6 +141,9 @@ typedef int64_t nsecs_t;
 
 #define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE 2
 
+#define MAX_PREVIEW_SIZE_WIDTH 1280
+#define MAX_PREVIEW_SIZE_HEIGHT 720
+
 typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;
@@ -379,12 +382,11 @@ typedef struct {
     uint8_t refocus_enable;
     uint32_t touchxy[2];
     uint8_t is_macro_fixed;
-    uint8_t sprd_3dcalibration_enabled; /**add for 3d calibration enable flag*/
-    uint32_t sprd_3dcalibration_cap_size
-        [SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE]; /**add for 3d calibration
-                                                   capture size*/
+    uint8_t sprd_3dcalibration_enabled;
+    uint32_t sprd_3dcalibration_cap_size[SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE];
     uint8_t sprd_burstmode_enable;
-    uint8_t sprd_3dcapture_enabled; /**add for 3d capture enable flag*/
+    uint8_t sprd_3dcapture_enabled;
+    int32_t max_preview_size[2];
 } SPRD_DEF_Tag;
 
 typedef struct {
