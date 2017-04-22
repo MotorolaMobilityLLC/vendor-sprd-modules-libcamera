@@ -42,8 +42,6 @@ struct pdafctrl_context {
 	struct pdaf_ctrl_thread_context thread_cxt;
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	struct adpt_ops_type *pdaf_adpt_ops;
-	//struct pdaf_ctrl_process_out proc_out;
-	//struct pdaf_ctrl_init_in init_in_param;
 };
 
 struct pdaf_init_msg_ctrl {
@@ -207,7 +205,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	/* create handle */
 	struct pdafctrl_context *cxt = NULL;
 
-	if (!in ||  !handle) {
+	if (!in || !handle) {
 		ISP_LOGE("init param is null, input_ptr is %p", in);
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -225,7 +223,6 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->camera_id = in->camera_id;
 	cxt->pdaf_support = in->pdaf_support;
-	//cxt->init_in_param = *in;
 	if (!cxt->pdaf_support) {
 		ISP_LOGI("this module isnot support pdaf");
 		ret = ISP_SUCCESS;
