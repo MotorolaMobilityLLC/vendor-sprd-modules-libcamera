@@ -4529,6 +4529,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             enc_in_param.out_size.height = 1944;
         } else if (dst->size.height == 1840 && dst->size.width == 3264) {
             enc_in_param.out_size.height = 1836;
+        } else if (dst->size.height == 368 && dst->size.width == 640) {
+            enc_in_param.out_size.height = 360;
         }
     }
 
