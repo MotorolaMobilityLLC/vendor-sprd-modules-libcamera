@@ -18,7 +18,6 @@
 
 #include <utils/Timers.h>
 
-#include "isp_common_types.h"
 #include "isp_dev_access.h"
 
 #include "AFv1_Common.h"

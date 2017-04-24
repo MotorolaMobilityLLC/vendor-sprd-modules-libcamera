@@ -15,8 +15,8 @@
  */
 #define LOG_TAG "af_ctrl"
 
-#include "lib_ctrl.h"
 #include "af_ctrl.h"
+#include "isp_adpt.h"
 #include <cutils/properties.h>
 
 #define ISP_CALLBACK_EVT 0x00040000
@@ -60,7 +60,7 @@ static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 	if (cxt_ptr->af_set_cb) {
 		property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 		if (1 == atoi((char *)value)) {
-			cmr_bzero(pos, sizeof(pos));
+			memset(pos, 0, sizeof(pos));
 			property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
 			in_param->motor_pos = atoi((char *)pos);
 			cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);

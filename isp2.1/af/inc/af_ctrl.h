@@ -17,6 +17,7 @@
 #ifndef _ISP_AF_H_
 #define _ISP_AF_H_
 
+#include "isp_common_types.h"
 #include "isp_alg_fw.h"
 
 #ifdef WIN32
