@@ -169,6 +169,7 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 		} else {
 			param_ptr->version_id = TOOL_DEFAULT_VER;
 			memset((char *)&param_ptr->sensor_id, 0, sizeof(param_ptr->sensor_id));
+			ispParserFree(temp_param_version);
 			return -1;
 		}
 
