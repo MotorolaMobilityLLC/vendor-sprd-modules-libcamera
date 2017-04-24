@@ -5629,6 +5629,7 @@ int SprdCamera3OEMIf::openCamera() {
 
     char value[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
+    int is_raw_capture = 0;
 
     HAL_LOGI(":hal3: E");
 
@@ -5656,8 +5657,13 @@ int SprdCamera3OEMIf::openCamera() {
     ts_printVersionInfo();
 #endif
 
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+
     property_get("persist.sys.isptool.mode.enable", value, "false");
-    if (!strcmp(value, "true")) {
+    if (!strcmp(value, "true") || is_raw_capture) {
         mIsIspToolMode = 1;
     }
 
