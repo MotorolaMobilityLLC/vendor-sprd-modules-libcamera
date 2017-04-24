@@ -1048,7 +1048,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 
 			cmr_u32 af_temp[30];
 			for (i = 0; i < 30; i++) {
-				af_temp[i] = *((cmr_u32 *)(unsigned long) (u_addr + i));
+				af_temp[i] = *((cmr_u32 *)(unsigned long)u_addr + i);
 			}
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps = cxt->sensor_fps;
@@ -1138,7 +1138,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 
 	cmr_u32 pdaf_temp[30];
 	for (i = 0; i < 30; i++) {
-		pdaf_temp[i] = *((cmr_u32 *)(unsigned long)(u_addr + i));
+		pdaf_temp[i] = *((cmr_u32 *)(unsigned long)u_addr + i);
 	}
 
 	pdaf_param_in.dBv = pdaf_temp[0];
