@@ -802,6 +802,13 @@ static const cmr_u16 imx258_pd_is_right[] = {0,0,1,1,1,1,0,0};
 static const cmr_u16 imx258_pd_row[] = {5,5,8,8,21,21,24,24};
 
 static const cmr_u16 imx258_pd_col[] = {2,18,1,17,10,26,9,25};
+static const struct pd_pos_info _imx258_pd_pos_l[] = {
+    {2, 5}, {18, 5}, {9, 24}, {25, 24},
+};
+
+static const struct pd_pos_info _imx258_pd_pos_r[] = {
+	{1, 8}, {17, 8}, {10, 21}, {26, 21},
+};
 
 static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
                                          uint32_t *param) {
@@ -811,6 +818,7 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     cmr_u16 pd_pos_row_size = 0;
     cmr_u16 pd_pos_col_size = 0;
     cmr_u16 pd_pos_is_right_size = 0;
+
 
     /*TODO*/
     if (param == NULL) {
@@ -840,6 +848,24 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_is_right = (cmr_u16 *)imx258_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)imx258_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)imx258_pd_col;
+
+    cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_imx258_pd_pos_r);
+    cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_imx258_pd_pos_l);
+
+    if (pd_pos_r_size != pd_pos_l_size) {
+        SENSOR_PRINT_ERR(
+            "imx258_pd_pos_r size not match imx258_pd_pos_l");
+        return -1;
+    }
+    pdaf_info->pd_pitch_x = 96;
+    pdaf_info->pd_pitch_y = 130;
+	pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 32;
+    pdaf_info->pd_block_num_x = 130;
+    pdaf_info->pd_block_num_y = 96;
+    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx258_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx258_pd_pos_l;
 
     return rtn;
 }

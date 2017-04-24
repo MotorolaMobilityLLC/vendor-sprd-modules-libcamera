@@ -302,6 +302,8 @@ static const SENSOR_REG_T s5k5e2ya_init_setting[] = {
     {0x3300, 0x0C}, // BPC bypass  //0x0d->0x0c
     {0x0204, 0x00}, // Analog gain x1
     {0x0205, 0x20},
+	{0x3931, 0x02},//vod  427-->470mv
+	{0x3932, 0x60},//slew step down
 
     // streaming ON
     //{0x0100,0x01},

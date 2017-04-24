@@ -129,7 +129,7 @@ static const SENSOR_REG_T ov13855_init_setting[] = {
     {0x450a, 0x04}, {0x4809, 0x04}, {0x480c, 0x12}, {0x481f, 0x30},
     {0x4833, 0x10}, {0x4837, 0x0e}, {0x4902, 0x01}, {0x4d00, 0x03},
     {0x4d01, 0xc9}, {0x4d02, 0xbc}, {0x4d03, 0xd7}, {0x4d04, 0xf0},
-#if defined(CONFIG_CAMERA_PDAF)
+#ifndef CONFIG_CAMERA_PDAF
     {0x4d05, 0xa2}, {0x5000, 0xfd}, {0x5001, 0x05}, {0x5040, 0x39},
 #else
     {0x4d05, 0xa2}, {0x5000, 0xff}, {0x5001, 0x07}, {0x5040, 0x39},
@@ -151,8 +151,9 @@ static const SENSOR_REG_T ov13855_init_setting[] = {
 
 static const SENSOR_REG_T ov13855_2112x1568_setting[] = {
     /*4Lane
-       binning (4:3) 59.86fps
+       binning (4:3) 29.96fps
            line time 10.38
+		   bps 540Mbps/lan
        H: 2112
        V: 1568
        Output format Setting
@@ -180,6 +181,7 @@ static const SENSOR_REG_T ov13855_4224x3136_30fps_setting[] = {
     /*4Lane
     Full (4:3) 29.95fps
         line time 10.38
+		bps 1080Mbps/lan
     H: 4224
     V: 3136
     Output format Setting
@@ -235,6 +237,8 @@ static const SENSOR_REG_T ov13855_4224x3136_15fps_setting[] = {
 static const SENSOR_REG_T ov13855_1024x768_setting[] = {
     /*4Lane
     HV1/4 (4:3) 119.72fps
+		line time 10.38us
+        bps 270Mbps/lan
     H: 1024
     V: 768
     Output format Setting
@@ -365,7 +369,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
 
 LOCAL SENSOR_TRIM_T s_ov13855_resolution_trim_tab[] = {
                 {0,0, 0, 0, 0,0, 0, {0, 0, 0, 0 }},
-                {0, 0,1280,720,10394,540,1069, {0, 0, 1280,720 }},
+                {0, 0,1280,720,10380,540,1069, {0, 0, 1280,720 }},
                 /*{0,0,1024, 768,10380, 270,804,{ 0, 0, 1024, 768 }}, */
                 { 0, 0, 2112,1568,10380,540,3216, { 0,0, 2112, 1568}},
                 { 0, 0, 4224,3136,10380,1080,3214, { 0,0,4224,3136}},

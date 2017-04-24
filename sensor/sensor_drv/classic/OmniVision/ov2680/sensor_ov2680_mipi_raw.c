@@ -45,7 +45,7 @@ static int s_capture_shutter = 0;
 
 #define ov2680_RAW_PARAM_Truly 0x02
 #define ov2680_RAW_PARAM_Sunny 0x01
-
+#define CONFIG_CAMERA_DUAL_SYNC
 static uint16_t RG_Ratio_Typical = 0x17d;
 static uint16_t BG_Ratio_Typical = 0x164;
 
@@ -109,7 +109,7 @@ LOCAL const struct raw_param_info_tab s_ov2680_raw_param_tab[] = {
     //_ov2680_Sunny_Identify_otp, update_otp},
     //{ov2680_RAW_PARAM_Truly, &s_ov2680_mipi_raw_info,
     //_ov2680_Truly_Identify_otp, update_otp},
-    {ov2680_RAW_PARAM_COM, &s_ov2680_mipi_raw_info, _ov2680_com_Identify_otp,
+    {ov2680_RAW_PARAM_COM, &s_ov2680_mipi_raw_info, PNULL,
      PNULL},
     {RAW_INFO_END_ID, PNULL, PNULL, PNULL}};
 
@@ -371,7 +371,7 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_altek_mipi_raw[] = {
     {0x3814, 0x11},
     {0x3815, 0x11},
     {0x3819, 0x04},
-#if 1//ndef CAMERA_IMAGE_180
+#if 0//ndef CAMERA_IMAGE_180
     {0x3820, 0xc0},
     {0x3821, 0x00},
 #else
@@ -663,7 +663,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
     PNULL, //_ov2680_set_image_effect,
 
     _ov2680_BeforeSnapshot,
-    _ov2680_after_snapshot,
+    PNULL, // _ov2680_after_snapshot,
     PNULL, //_ov2680_flash,
     PNULL,
     PNULL, //_ov2680_write_exposure,
@@ -699,7 +699,7 @@ static SENSOR_STATIC_INFO_T s_ov2680_static_info = {
     200, // focal_length;
     0,   // max_fps,max fps of sensor's all settings,it will be calculated from
          // sensor mode fps
-    8,   // max_adgain,AD-gain
+    8*4,   // max_adgain,AD-gain
     0,   // ois_supported;
     0,   // pdaf_supported;
     1,   // exp_valid_frame_num;N+2-1
@@ -1489,15 +1489,21 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle,
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t value = 0x00;
     uint32_t real_gain = 0;
+	uint32_t gain = param>>3;
+    float gain_a = gain;
+    float gain_d = 0x400;
 
-    // real_gain =
+    if (0x7ff < (uint16_t)gain_a) {
+        gain_a = 0x7ff;
+        gain_d = gain * 0x400 / gain_a;
+        if ((uint16_t)gain_d > 0x4 * 0x400 - 1)
+            gain_d = 0x4 * 0x400 - 1;
+    }
+
+    real_gain = gain_a;
     // ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
     // real_gain =
     // real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
-    real_gain = param >> 3;
-    if (real_gain > 0x7ff) {
-        real_gain = 0x7ff;
-    }
 
     SENSOR_LOGI("SENSOR_ov2680: real_gain:0x%x, param: %lu", real_gain, param);
 
@@ -1505,6 +1511,12 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle,
     ret_value = Sensor_WriteReg(0x350b, value); /*0-7*/
     value = (real_gain >> 0x08) & 0x07;
     ret_value = Sensor_WriteReg(0x350a, value); /*8*/
+    Sensor_WriteReg(0x5004, ((uint16_t)gain_d >> 8) & 0x0f);
+    Sensor_WriteReg(0x5005, (uint16_t)gain_d & 0xff);
+    Sensor_WriteReg(0x5006, ((uint16_t)gain_d >> 8) & 0x0f);
+    Sensor_WriteReg(0x5007, (uint16_t)gain_d & 0xff);
+    Sensor_WriteReg(0x5008, ((uint16_t)gain_d >> 8) & 0x0f);
+    Sensor_WriteReg(0x5009, (uint16_t)gain_d & 0xff);
 
     return ret_value;
 }
@@ -1895,7 +1907,27 @@ LOCAL unsigned long _ov2680_after_snapshot(SENSOR_HW_HANDLE handle,
 
 LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle,
                                      unsigned long param) {
-    SENSOR_LOGI("SENSOR_ov2680: StreamOn");
+#if 1
+    char value1[PROPERTY_VALUE_MAX];
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("debug.camera.test.mode", value1, "0");
+    if (!strcmp(value1, "1")) {
+		SENSOR_LOGI("SENSOR_ov2680: enable test mode");
+		Sensor_WriteReg(0x5080, 0x80);
+}
+	property_get("persist.camera.test.ae", value1, "0");
+    if (!strcmp(value1, "1")) {
+		SENSOR_LOGI("SENSOR_ov2680:  test ae mode");
+		property_get("persist.camera.test.expo", value1, "100");
+		property_get("persist.camera.test.sns_mode", value2, "1");
+		_ov2680_write_exp_dummy(handle,atoi(value1)*s_ov2680_Resolution_Trim_Tab[atoi(value2)].line_time,0,atoi(value2));
+		property_get("persist.camera.test.shutter", value1, "100");
+		_ov2680_set_shutter(handle,atoi(value1));
+		property_get("persist.camera.test.gain", value1, "100");
+		_ov2680_write_gain(handle,atoi(value1));
+}
+#endif
+SENSOR_LOGI("SENSOR_ov2680: StreamOn");
 
 #ifdef CONFIG_CAMERA_RT_REFOCUS
     al3200_mini_ctrl(param);
@@ -1904,14 +1936,12 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle,
     usleep(100 * 1000);
     Sensor_WriteReg(0x0100, 0x01);
 #if 1
-    char value1[PROPERTY_VALUE_MAX];
-    property_get("debug.camera.test.mode", value1, "0");
+	property_get("debug.camera.test.ae", value1, "0");
     if (!strcmp(value1, "1")) {
-        SENSOR_LOGI("SENSOR_ov2680: enable test mode");
-        Sensor_WriteReg(0x5080, 0x80);
-    }
+			SENSOR_LOGI("SENSOR_ov2680: 0x3086 0x%02x exp 0x3500 0x%02x 0x%02x 0x%02x",    Sensor_ReadReg(0x3086),Sensor_ReadReg(0x3500),Sensor_ReadReg(0x3501),Sensor_ReadReg(0x3502));
+			SENSOR_LOGI("SENSOR_ov2680: 0x380e 0x%02x 0x380f 0x%02x 0x4837 0x%02x 0x0010 0x%02x",    Sensor_ReadReg(0x380e),Sensor_ReadReg(0x380f),Sensor_ReadReg(0x4837),Sensor_ReadReg(0x0100));
+		}
 #endif
-
     return 0;
 }
 
