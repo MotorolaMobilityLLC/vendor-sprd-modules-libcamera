@@ -180,7 +180,11 @@ cmr_s32 isp_set_arbiter(isp_handle isp_handler)
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_arbiter_info *isp_arbiter_ptr = &isp_context_ptr->arbiter;
 
-	isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_LITTLE;
+	if (ISP_SIMULATION_MODE == isp_context_ptr->data.input) {
+		isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_BIG;
+	} else {
+		isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_LITTLE;
+	}
 	isp_arbiter_ptr->fetch_raw_word_change = ISP_ZERO;
 	isp_arbiter_ptr->fetch_bit_reorder = ISP_ZERO;
 	isp_arbiter_ptr->fetch_yuv_endian = ISP_ENDIAN_LITTLE;
@@ -490,6 +494,11 @@ cmr_s32 isp_set_comm_param(isp_handle isp_handler)
 	struct isp_dev_common_info *com_param_ptr = &isp_context_ptr->com;
 
 	if (ISP_EMC_MODE == isp_context_ptr->data.input) {
+		com_param_ptr->fetch_sel_0 = 0x2;
+		com_param_ptr->store_sel_0 = 0x2;
+		com_param_ptr->fetch_sel_1 = 0x3;
+		com_param_ptr->store_sel_1 = 0x3;
+	} else if (ISP_SIMULATION_MODE == isp_context_ptr->data.input) {
 		com_param_ptr->fetch_sel_0 = 0x2;
 		com_param_ptr->store_sel_0 = 0x2;
 		com_param_ptr->fetch_sel_1 = 0x3;

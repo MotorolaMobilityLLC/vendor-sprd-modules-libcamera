@@ -2816,6 +2816,8 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 
 	interface_ptr_v1->data.work_mode = ISP_SINGLE_MODE;
 	interface_ptr_v1->data.input = ISP_EMC_MODE;
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE)
+		interface_ptr_v1->data.input = ISP_SIMULATION_MODE;
 	interface_ptr_v1->data.input_format = in_ptr->src_frame.img_fmt;
 
 	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern) {
@@ -2836,6 +2838,8 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 
 	interface_ptr_v1->data.output_format = in_ptr->dst_frame.img_fmt;
 	interface_ptr_v1->data.output = ISP_EMC_MODE;
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE)
+		interface_ptr_v1->data.output = ISP_SIMULATION_MODE;
 	interface_ptr_v1->data.output_addr.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
 	interface_ptr_v1->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	interface_ptr_v1->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;

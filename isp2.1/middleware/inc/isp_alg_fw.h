@@ -139,6 +139,7 @@ struct isp_alg_fw_context {
 	cmr_u32 update_gamma_eb;
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
+	cmr_u32 takepicture_mode;
 };
 
 struct isp_alg_fw_init_in {

@@ -2062,6 +2062,8 @@ static cmr_int _ispToolSetSceneParam(cmr_handle isp_alg_handle, void *param_ptr,
 	UNUSED(call_back);
 	memset((void *)&smart_proc_in, 0, sizeof(struct smart_proc_input));
 
+	cxt->takepicture_mode = CAMERA_ISP_SIMULATION_MODE;
+
 	scene_parm = (struct isptool_scene_param *)param_ptr;
 	/*set awb gain */
 	awbc_cfg.r_gain = scene_parm->awb_gain_r;

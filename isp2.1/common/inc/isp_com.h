@@ -81,6 +81,7 @@ enum isp_match_mode {
 	ISP_CAP_MODE = 0x00,
 	ISP_EMC_MODE,
 	ISP_DCAM_MODE,
+	ISP_SIMULATION_MODE,
 };
 
 enum isp_endian {
