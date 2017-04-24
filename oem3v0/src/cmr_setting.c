@@ -1516,7 +1516,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         if (CMR_MIRROR_JPG == mirror_type) {
             /* raw capture not support mirror/flip/rotation*/
             if (is_raw_capture == 0) {
-                p_exif_info->primary.data_struct_ptr->valid.Orientation = 0;
+                p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
                 p_exif_info->primary.data_struct_ptr->Orientation =
                     ORIENTATION_NORMAL;
             } else {

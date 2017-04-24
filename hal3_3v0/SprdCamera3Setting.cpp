@@ -172,7 +172,7 @@ const int32_t ksupported_preview_formats[4] = {
 const int32_t kavailable_fps_ranges_back[] = {
     5,  15, 5,  20, 5,  24, 5, 30,
     24, 24, 25, 25, 30, 30}; //{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10,
-                             //30};
+// 30};
 const int32_t kavailable_fps_ranges_front[] = {
     5,  15, 5,  30, 15,
     30, 25, 25, 30, 30}; //{5, 15, 5, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
@@ -1067,6 +1067,7 @@ const cam_stream_info_t stream_info[] = {{{5312, 3984}, 41666666L, 41666666L},
                                          {{1280, 960}, 33331760L, 33331760L},
                                          {{1280, 720}, 33331760L, 33331760L},
                                          {{864, 480}, 33331760L, 33331760L},
+                                         {{800, 600}, 33331760L, 33331760L},
                                          {{720, 544}, 33331760L, 33331760L},
                                          {{720, 480}, 33331760L, 33331760L},
                                          {{640, 480}, 33331760L, 33331760L},
@@ -4641,7 +4642,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // HAL_LOGD("timestamp = %lld, request_id = %d, frame_count = %d, mCameraId
     // = %d",s_setting[mCameraId].sensorInfo.timestamp,
     //			s_setting[mCameraId].requestInfo.id,
-    //s_setting[mCameraId].requestInfo.frame_count, mCameraId);
+    // s_setting[mCameraId].requestInfo.frame_count, mCameraId);
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP,
                        &(s_setting[mCameraId].sensorInfo.timestamp), 1);
     camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_MODE,
@@ -4659,7 +4660,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
     //			s_setting[mCameraId].controlInfo.af_mode,
-    //s_setting[mCameraId].controlInfo.af_trigger_Id, mCameraId);
+    // s_setting[mCameraId].controlInfo.af_trigger_Id, mCameraId);
     camMetadata.update(ANDROID_CONTROL_AF_STATE,
                        &(s_setting[mCameraId].controlInfo.af_state), 1);
     camMetadata.update(ANDROID_CONTROL_AF_MODE,
