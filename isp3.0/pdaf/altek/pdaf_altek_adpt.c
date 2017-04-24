@@ -58,6 +58,7 @@ struct pdaf_altek_lib_api {
 
 struct pdaf_altek_context {
 	cmr_u32 camera_id;
+	cmr_u8 pdaf_support;
 	cmr_u8 pd_open;
 	cmr_u8 is_busy;
 	cmr_u32 frame_id;
@@ -430,6 +431,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->camera_id = in_p->camera_id;
+	cxt->pdaf_support = in_p->pdaf_support;
 	cxt->cb_ops = in_p->pdaf_ctrl_cb_ops;
 	if (SENSOR_PDAF_TYPE3_ENABLE == in_p->pdaf_support)
 		cxt->extract_enable = 1;
@@ -712,7 +714,7 @@ exit:
 	return ret;
 }
 
-static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
+static cmr_int pdafaltek_adpt_type3_process(cmr_handle adpt_handle, void *in, void *out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
@@ -819,31 +821,56 @@ exit:
 	return ret;
 }
 
+static cmr_int pdafaltek_adpt_type2_process(cmr_handle adpt_handle, void *in, void *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
+	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
+	UNUSED(out);
+
+	return ret;
+}
+
+static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
+
+	switch (cxt->pdaf_support) {
+	case SENSOR_PDAF_TYPE2_ENABLE:
+		ret = pdafaltek_adpt_type2_process(cxt, in, out);
+		break;
+	case SENSOR_PDAF_TYPE3_ENABLE:
+		ret = pdafaltek_adpt_type3_process(cxt, in, out);
+		break;
+	}
+
+	return ret;
+}
+
 static cmr_int pdafaltek_adpt_ioctrl(cmr_handle adpt_handle, cmr_int cmd,
 				   void *in, void *out)
 {
 	cmr_int ret = -ISP_ERROR;
-	struct pdaf_ctrl_param_in *in_ptr = (struct pdaf_ctrl_param_in *)in;
-	struct pdaf_ctrl_param_out *out_ptr = (struct pdaf_ctrl_param_out *)out;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	ISP_LOGV("cmd = %ld", cmd);
 
 	switch (cmd) {
 	case PDAF_CTRL_CMD_SET_OPEN:
-		ret = pdafaltek_adpt_set_open(adpt_handle, in_ptr);
+		ret = pdafaltek_adpt_set_open(adpt_handle, in);
 		break;
 	case PDAF_CTRL_CMD_SET_CLOSE:
-		ret = pdafaltek_adpt_set_close(adpt_handle, in_ptr);
+		ret = pdafaltek_adpt_set_close(adpt_handle, in);
 		break;
 	case PDAF_CTRL_CMD_SET_CONFIG:
-		ret = pdafaltek_adpt_set_config(adpt_handle, in_ptr);
+		ret = pdafaltek_adpt_set_config(adpt_handle, in);
 		break;
 	case PDAF_CTRL_CMD_SET_ENABLE:
-		ret = pdafaltek_adpt_set_enable(adpt_handle, in_ptr);
+		ret = pdafaltek_adpt_set_enable(adpt_handle, in);
 		break;
 	case PDAF_CTRL_CMD_GET_BUSY:
-		ret = pdafaltek_adpt_get_busy(adpt_handle, out_ptr);
+		ret = pdafaltek_adpt_get_busy(adpt_handle, out);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
