@@ -1636,7 +1636,7 @@ void SprdCamera3OEMIf::adjustFpsByTemp() {
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
 
-    int temp = 0, tempStates = 0;
+    int temp = 0, tempStates = -1;
     temp = getCameraTemp();
     if (temp < 65) {
         if (mTempStates != CAMERA_NORMAL_TEMP) {
@@ -7460,11 +7460,6 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
         HAL_LOGE("param error %p 0x%lx 0x%lx 0x%lx 0x%lx", fd,
                  (cmr_uint)vir_addr, (cmr_uint)private_data, (cmr_uint)size_ptr,
                  (cmr_uint)sum_ptr);
-        if ((NULL != size_ptr && 0 == *size_ptr) ||
-            (NULL != sum_ptr && 0 == *sum_ptr)) {
-            HAL_LOGE("param error size 0x%lx  sum 0x%lx", (cmr_uint)*size_ptr,
-                     (cmr_uint)*sum_ptr);
-        }
         return BAD_VALUE;
     }
 
@@ -8036,7 +8031,7 @@ int SprdCamera3OEMIf::getZSLQueueFrameNum() {
     return ret;
 }
 
-void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame) {
+void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue *frame) {
     List<ZslBufferQueue>::iterator itor1, itor2;
     List<ZslBufferQueue> *match_ZSLQueue = NULL;
     ZslBufferQueue *frame1 = NULL;
@@ -8054,7 +8049,7 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame) {
     } else {
         itor1 = match_ZSLQueue->begin();
         while (itor1 != match_ZSLQueue->end()) {
-            int diff = (int64_t)frame.frame.timestamp -
+            int diff = (int64_t)frame->frame.timestamp -
                        (int64_t)itor1->frame.timestamp;
             if (abs(diff) < DUALCAM_TIME_DIFF) {
                 itor2 = mMultiCameraMatchZsl->cam1_ZSLQueue->begin();
@@ -8075,17 +8070,17 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame) {
                     }
                     itor2++;
                 }
-                frame.frame.isMatchFlag = 1;
+                frame->frame.isMatchFlag = 1;
                 itor1->frame.isMatchFlag = 1;
                 if (mCameraId == 1) {
-                    mMultiCameraMatchZsl->match_frame1 = frame;
+                    mMultiCameraMatchZsl->match_frame1 = *frame;
                     mMultiCameraMatchZsl->match_frame3 =
                         static_cast<ZslBufferQueue>(*itor1);
                 }
                 if (mCameraId == 3) {
                     mMultiCameraMatchZsl->match_frame1 =
                         static_cast<ZslBufferQueue>(*itor1);
-                    mMultiCameraMatchZsl->match_frame3 = frame;
+                    mMultiCameraMatchZsl->match_frame3 = *frame;
                 }
                 break;
             }
@@ -8094,15 +8089,15 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame) {
     }
 }
 
-void SprdCamera3OEMIf::pushZSLQueue(ZslBufferQueue frame) {
+void SprdCamera3OEMIf::pushZSLQueue(ZslBufferQueue *frame) {
     Mutex::Autolock l(&mZslLock);
     if (getMultiCameraMode() == MODE_3D_CAPTURE) {
-        frame.frame.isMatchFlag = 0;
+        frame->frame.isMatchFlag = 0;
         if (!mSprdMultiYuvCallBack) {
             matchZSLQueue(frame);
         }
     }
-    mZSLQueue.push_back(frame);
+    mZSLQueue.push_back(*frame);
 }
 
 void SprdCamera3OEMIf::releaseZSLQueue() {
@@ -8150,7 +8145,7 @@ int SprdCamera3OEMIf::pushZslFrame(struct camera_frame_type *frame) {
     memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
     zsl_buffer_q.frame = *frame;
     zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
-    pushZSLQueue(zsl_buffer_q);
+    pushZSLQueue(&zsl_buffer_q);
     return ret;
 }
 

@@ -232,7 +232,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                                void *p_data);
 
     void setIspFlashMode(uint32_t mode);
-    void matchZSLQueue(ZslBufferQueue frame);
+    void matchZSLQueue(ZslBufferQueue *frame);
     void setMultiCameraMode(multiCameraMode mode);
 #ifdef CONFIG_CAMERA_EIS
     virtual void EIS_init();
@@ -481,7 +481,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int getZSLQueueFrameNum();
     ZslBufferQueue popZSLQueue(uint64_t need_timestamp);
     ZslBufferQueue popZSLQueue();
-    void pushZSLQueue(ZslBufferQueue frame);
+    void pushZSLQueue(ZslBufferQueue *frame);
     void releaseZSLQueue();
     void setZslBuffers();
     void snapshotZsl(void *p_data);
