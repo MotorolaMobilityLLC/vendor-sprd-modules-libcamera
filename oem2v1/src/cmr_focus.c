@@ -1500,8 +1500,6 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct timespec ts;
     struct af_context *af_cxt = (struct af_context *)af_handle;
-    struct camera_context *cam_cxt =
-        (struct camera_context *)(af_cxt->oem_handle);
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -1509,6 +1507,8 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
         goto exit;
     }
 
+    struct camera_context *cam_cxt =
+        (struct camera_context *)(af_cxt->oem_handle);
     if (clock_gettime(CLOCK_REALTIME, &ts)) {
         ret = -1;
         CMR_LOGE("get time failed");

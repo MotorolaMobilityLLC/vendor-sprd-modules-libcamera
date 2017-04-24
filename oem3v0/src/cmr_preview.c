@@ -5147,12 +5147,13 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                            &sum, prev_cxt->cap_phys_addr_array,
                            prev_cxt->cap_virt_addr_array,
                            prev_cxt->cap_fd_array);
+	#if 0 //for coverity 181595
         for (i = 1; i < CMR_CAPTURE_MEM_SUM; i++) {
             prev_cxt->cap_phys_addr_array[i] = prev_cxt->cap_phys_addr_array[0];
             prev_cxt->cap_virt_addr_array[i] = prev_cxt->cap_virt_addr_array[0];
             prev_cxt->cap_fd_array[i] = prev_cxt->cap_fd_array[0];
         }
-
+        #endif
         CMR_LOGI("virt_addr 0x%lx, fd 0x%x", prev_cxt->cap_virt_addr_array[0],
                  prev_cxt->cap_fd_array[0]);
 

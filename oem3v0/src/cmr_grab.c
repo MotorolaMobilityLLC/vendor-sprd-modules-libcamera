@@ -1077,7 +1077,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle) {
 }
 
 static void *cmr_grab_thread_proc(void *data) {
-    cmr_s32 evt_id;
+    cmr_s32 evt_id = -1;
     struct frm_info frame;
     cmr_u32 on_flag = 0;
     cmr_s32 frm_num = -1;

@@ -3051,7 +3051,7 @@ PUBLIC JPEG_RET_E Jpeg_WriteAPP3(uint8 *target_buf,
 		JPEG_PRINT_LOW("[WriteAPP3] write IFD0 failed");
 		return ret;
 	}
-
+#if 0
 	if (is_ifd1_exist) {
 		BOOLEAN is_next_ifd_exist = FALSE;
 		begin_offset = end_offset;
@@ -3061,7 +3061,7 @@ PUBLIC JPEG_RET_E Jpeg_WriteAPP3(uint8 *target_buf,
 			return ret;
 		}
 	}
-
+#endif
 	app3_length = (uint16)end_offset ;   //without app3 marker
 	*app3_size_ptr = app3_length ;
 	if (app3_length > 2) {
