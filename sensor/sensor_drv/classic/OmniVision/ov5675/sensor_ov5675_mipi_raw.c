@@ -39,7 +39,7 @@
 
 #define CAMERA_IMAGE_180
 
-#define SENSOR_NAME "ov5675"
+#define SENSOR_NAME "ov5675_mipi_raw"
 #define I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
 
 #define ov5675_PID_ADDR 0x300B
