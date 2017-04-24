@@ -805,9 +805,8 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
 
     /*  */
     if (!private_data || !vir_addr || !fd) {
-        ALOGE("AutoTest: %s,%d, error param 0x%lx 0x%lx 0x%x 0x%lx\n", __func__,
-              __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, *fd,
-              (cmr_uint)private_data);
+        ALOGE("AutoTest: %s,%d, error param 0x%lx 0x%lx 0x%lx\n", __func__,
+              __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)private_data);
         return -1;
     }
 
@@ -1038,7 +1037,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
             }
             mIspStatisHeapReserved = memory;
         }
-        memory->ion_heap->get_kaddr(&kaddr, &ksize);
+        mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
         *phy_addr = kaddr;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
