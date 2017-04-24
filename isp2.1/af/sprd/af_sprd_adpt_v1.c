@@ -2930,35 +2930,37 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 
 	}
 
-	switch (af->state) {
-	case STATE_NORMAL_AF:
-		pthread_mutex_lock(&af->af_work_lock);
-		if (saf_process_frame(af)) {
-			af->state = STATE_IDLE;
-			trigger_start(af);	//reset trigger after saf
+	if (AF_DATA_AF == inparam->data_type) {
+		switch (af->state) {
+		case STATE_NORMAL_AF:
+			pthread_mutex_lock(&af->af_work_lock);
+			if (saf_process_frame(af)) {
+				af->state = STATE_IDLE;
+				trigger_start(af);	//reset trigger after saf
+			}
+			pthread_mutex_unlock(&af->af_work_lock);
+			break;
+		case STATE_FULLSCAN:
+		case STATE_CAF:
+		case STATE_RECORD_CAF:
+			//do caf when af is triggered, caf state becomes to CAF_SEARCHING.
+			caf_process_frame(af);
+			break;
+		case STATE_FAF:
+			pthread_mutex_lock(&af->af_work_lock);
+			if (faf_process_frame(af)) {
+				af->state = STATE_CAF;
+				caf_start(af);
+			}
+			pthread_mutex_unlock(&af->af_work_lock);
+			break;
+		default:
+			pthread_mutex_lock(&af->af_work_lock);
+			AF_Process_Frame(&af->fv);
+			ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
+			pthread_mutex_unlock(&af->af_work_lock);
+			break;
 		}
-		pthread_mutex_unlock(&af->af_work_lock);
-		break;
-	case STATE_FULLSCAN:
-	case STATE_CAF:
-	case STATE_RECORD_CAF:
-		//do caf when af is triggered, caf state becomes to CAF_SEARCHING.
-		caf_process_frame(af);
-		break;
-	case STATE_FAF:
-		pthread_mutex_lock(&af->af_work_lock);
-		if (faf_process_frame(af)) {
-			af->state = STATE_CAF;
-			caf_start(af);
-		}
-		pthread_mutex_unlock(&af->af_work_lock);
-		break;
-	default:
-		pthread_mutex_lock(&af->af_work_lock);
-		AF_Process_Frame(&af->fv);
-		ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
-		pthread_mutex_unlock(&af->af_work_lock);
-		break;
 	}
 
 	system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
