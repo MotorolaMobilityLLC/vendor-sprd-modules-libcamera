@@ -3882,6 +3882,37 @@ exit:
 	return ret;
 }
 
+cmr_int isp3a_handle_debuginfo(cmr_handle isp_3a_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
+	char                                        value[PROPERTY_VALUE_MAX];
+	cmr_u16                                     get_info = 0;
+
+	property_get("ro.debuggable", (char *)value, "0");
+	if (!atoi(value))
+		goto exit;
+
+	property_get(SHADING_SAVE_MLOG_STR, value, "no");
+	if (!strcmp(value, "save"))
+		get_info |= 1<<0;
+	property_get(IRP_SAVE_MLOG_STR, value, "no");
+	if (!strcmp(value, "save"))
+		get_info |= 1<<1;
+
+	if (get_info & 0x3) {
+		ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
+		isp_mlog(SHADING_FILE, "RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
+		isp_mlog(IRP_FILE, "contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
+			 cxt->irp_cxt.contrast, cxt->irp_cxt.saturation, cxt->irp_cxt.sharpness, cxt->irp_cxt.effect,
+			 cxt->irp_cxt.mode, cxt->irp_cxt.quality, cxt->irp_cxt.sensor_id, cxt->irp_cxt.s_width, cxt->irp_cxt.s_height);
+	}
+
+exit:
+	return ret;
+}
+
 cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -3891,10 +3922,6 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	struct ae_ctrl_param_in                     ae_in;
 	struct ae_ctrl_param_out                    ae_out;
 	struct isp_irq_node                         *sof_info = (struct isp_irq_node *)data;
-	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
-	nsecs_t                                     time_start = 0;
-	nsecs_t                                     time_end = 0;
-	char                                        value[PROPERTY_VALUE_MAX];
 
 	if (NULL == cxt) {
 		ISP_LOGE("error cxt NULL");
@@ -3919,17 +3946,10 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to set ae sof");
 	}
-	time_start = systemTime(CLOCK_MONOTONIC);
-	property_get("ro.debuggable", (char *)value, "0");
-	if (atoi(value)) {
-		ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
+	ret = isp3a_handle_debuginfo(cxt);
+	if (ret) {
+		ISP_LOGE("failed to get debug info");
 	}
-	isp_mlog(SHADING_FILE, "RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
-	isp_mlog(IRP_FILE, "contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
-			cxt->irp_cxt.contrast, cxt->irp_cxt.saturation, cxt->irp_cxt.sharpness, cxt->irp_cxt.effect,
-			cxt->irp_cxt.mode, cxt->irp_cxt.quality, cxt->irp_cxt.sensor_id, cxt->irp_cxt.s_width, cxt->irp_cxt.s_height);
-	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test sof msg exif time_delta = %d us camera id %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id);
 	return ret;
 }
 
