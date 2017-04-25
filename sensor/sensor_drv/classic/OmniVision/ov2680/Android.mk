@@ -18,6 +18,10 @@ LOCAL_PATH := $(call my-dir)
 TUNING_PATH := $(TARGET_OUT)/lib/tuning
 LOCAL_TUNING_PATH := parameters/tuning_bin
 
+ifeq ($(strip $(TARGET_PRODUCT)),sp9861e_2h10_vmm)
+LOCAL_TUNING_PATH := parameters/tuning_bin/truly
+endif
+
 include $(CLEAR_VARS)
 LOCAL_MODULE := ov2680_mipi_raw_tuning.bin
 LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
