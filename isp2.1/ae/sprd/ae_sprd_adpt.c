@@ -3318,6 +3318,17 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		ISP_LOGE("fail to set work mode");
 		work_info->mode = AE_WORK_MODE_COMMON;
 	}
+
+	if (0 == work_info->is_snapshot) {
+		cxt->sof_id = 0;
+		cxt->cur_status.frame_id = 0;
+		memset(&cxt->cur_result.wts, 0, sizeof(struct ae1_senseor_out));
+		memset(&cxt->sync_cur_result.wts, 0, sizeof(struct ae1_senseor_out));
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
+	} else {
+		;
+	}
+
 	cxt->snr_info = work_info->resolution_info;
 	cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
 	cxt->cur_status.line_time = work_info->resolution_info.line_time / SENSOR_LINETIME_BASE;
@@ -3352,25 +3363,21 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
+
 	if (1 == cxt->tuning_param_enable[work_info->mode])
 		mode = work_info->mode;
 	else
 		mode = AE_WORK_MODE_COMMON;
+
 	exposure_time2line(&(cxt->tuning_param[mode]), cxt->cur_status.line_time,
 		cxt->tuning_param[work_info->mode].ae_tbl_exp_mode);
-	//exp_time2exp_line(cxt,cxt->cur_status.settings.scene_mode,cxt->cur_status.line_time,
-	//cxt->tuning_param[work_info->mode].scene_info[cxt->cur_status.settings.scene_mode].exp_tbl_mode,
-	//		&(cxt->tuning_param[work_info->mode].scene_info[cxt->cur_status.settings.scene_mode]));
+
 	for (cmr_s32 j = 0; j < AE_SCENE_MAX; ++j) {
 		exp_time2exp_line(cxt, cxt->back_scene_mode_ae_table[j],
 				  cxt->tuning_param[work_info->mode].scene_info[j].ae_table,
 				  cxt->cur_status.line_time,
 				  cxt->tuning_param[work_info->mode].scene_info[j].exp_tbl_mode);
 	}
-	if (1 == cxt->tuning_param_enable[work_info->mode])
-		cxt->cur_param = &cxt->tuning_param[work_info->mode];
-	else
-		cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
@@ -3387,6 +3394,9 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			cxt->ae_result.gain = cxt->last_aegain;
 			cxt->ae_result.dummy = cxt->last_dummy;
 		}
+		cxt->sync_cur_result.wts.cur_exp_line = cxt->ae_result.expline;
+		cxt->sync_cur_result.wts.cur_again = cxt->ae_result.gain;
+		cxt->sync_cur_result.wts.cur_dummy = cxt->ae_result.dummy;
 	} else {
 		cxt->ae_result.expline = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 		cxt->ae_result.gain = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
@@ -3402,8 +3412,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		//ISP_LOGV("AE_VIDEO_START E %d G %d\r\n", cxt->actual_cell[i].expline, cxt->actual_cell[i].gain);
 	}
 
-	//ISP_LOGV("D-gain--setting--- %d %d %d\n", cxt->sensor_gain_precision,
-	//cxt->exp_skip_num, cxt->gain_skip_num);
+	ISP_LOGV("D-gain--setting--- %d %d %d\n", cxt->sensor_gain_precision, cxt->exp_skip_num, cxt->gain_skip_num);
 
 	if (cxt->ae_result.gain <= cxt->cur_status.max_gain) {
 		if (0 == cxt->ae_result.gain % cxt->sensor_gain_precision) {
@@ -3425,17 +3434,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->No_sof_aegain = 0;
 	rtn = _ae_write_exp_gain(cxt, cxt->ae_result.expline, cxt->sensor_calc_item.cell.dummy, again);
 
-	if (0 == work_info->is_snapshot) {
-		cxt->sof_id = 0;
-		cxt->cur_status.frame_id = 0;
-		memset(&cxt->cur_result.wts, 0, sizeof(struct ae1_senseor_out));
-		memset(&cxt->sync_cur_result.wts, 0, sizeof(struct ae1_senseor_out));
-		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
-	} else {
-		;
-	}
-	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d", cxt->camera_id, cxt->cur_status.line_time,
-		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
+	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d CAP %d", cxt->camera_id, cxt->cur_status.line_time,
+		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, work_info->is_snapshot);
 
 	return rtn;
 }
