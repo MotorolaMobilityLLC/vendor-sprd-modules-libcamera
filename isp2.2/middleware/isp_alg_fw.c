@@ -2034,6 +2034,9 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 {
 	cmr_int rtn = ISP_SUCCESS;
 
+	CMR_LOGE("just return");    // for bringup
+	return rtn;
+
 	rtn = isp_afl_sw_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do anti_flicker param update"));
 
@@ -2295,13 +2298,17 @@ static cmr_s32 isp_alg_cfg(cmr_handle isp_alg_handle)
 		param_data++;
 	}
 
+	#if 0 // for bringup
 	((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.src.w;
 	((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.src.h;
-#ifdef ANTI_FLICKER_INFO_VERSION_NEW
-	rtn = aflnew_ctrl_cfg(cxt->afl_cxt.handle);
-#else
-	rtn = afl_ctrl_cfg(cxt->afl_cxt.handle);
-#endif
+	#endif
+	if (cxt->afl_cxt.handle) { //bringup
+	#ifdef ANTI_FLICKER_INFO_VERSION_NEW
+		rtn = aflnew_ctrl_cfg(cxt->afl_cxt.handle);
+	#else
+		rtn = afl_ctrl_cfg(cxt->afl_cxt.handle);
+	#endif
+	}
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to do anti_flicker param update");
 		return rtn;
@@ -2682,11 +2689,13 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
 	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, cxt->pdaf_cxt.pdaf_en = %d",
 		cxt->pdaf_cxt.pdaf_support, cxt->pdaf_cxt.pdaf_en);
+#if 0 //for bringup
 	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pdaf_en) {
 		rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
 
 	}
 	ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf param"));
+#endif
 
 	rtn = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to trans isp buff"));
@@ -2694,20 +2703,26 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	rtn = isp_alg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do isp cfg"));
 	rtn = isp_update_alsc_param(cxt);
+#if 0 //for bringup
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to set_awb_work_mode"));
+#endif
 
+#if 0 //for bringup
 	rtn = ae_set_work_mode(cxt, mode, 1, in_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do ae cfg"));
+#endif
 
 	rtn = isp_dev_start(cxt->dev_access_handle, interface_ptr_v1);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do video isp start"));
 	cxt->gamma_sof_cnt_eb = 1;
 
+#if 0 //for bringup
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, in_ptr, NULL);
 	}
+#endif
 exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;

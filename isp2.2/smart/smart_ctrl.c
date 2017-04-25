@@ -1126,6 +1126,9 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct smart_context *cxt_ptr = NULL;
 
+	ISP_LOGE("smart_ctl_ioctrl return bringup, rtn %d\n", rtn);
+	return rtn;
+	
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle, rtn %d\n", rtn);

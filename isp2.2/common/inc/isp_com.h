@@ -544,6 +544,53 @@ struct isp_pdaf_correction_param {
 	cmr_u32 nr_mode_setting;
 };
 
+//add for bringup
+struct pdaf_param {
+	unsigned int ppi_block_start_col;
+	unsigned int ppi_block_start_row;
+	unsigned int ppi_block_end_col;
+	unsigned int ppi_block_end_row;
+	unsigned int ppi_block_width;
+	unsigned int ppi_block_height;
+	unsigned int PPI_GRID;
+	unsigned int ppi_extractor_bypass;
+	unsigned int ppi_skip_num;
+	unsigned int skip_mode;
+	unsigned int phase_data_write_num;
+	unsigned int pattern_row[64];
+	unsigned int pattern_col[64];
+	unsigned int pattern_pos[64];
+	unsigned int l_gain[2];
+	unsigned int r_gain[2];
+	unsigned int ppi_af_win_sy0;
+	unsigned int ppi_af_win_sx0;
+	unsigned int ppi_af_win_ey0;
+	unsigned int ppi_af_win_ex0;
+	unsigned int ppi_corrector_bypass;
+	unsigned int ppi_phase_map_corr_en;
+	unsigned int ppi_upperbound_gr;
+	unsigned int ppi_upperbound_gb;
+	unsigned int ppi_upperbound_r;
+	unsigned int ppi_upperbound_b;
+	unsigned int ppi_blacklevel_gr;
+	unsigned int ppi_blacklevel_r;
+	unsigned int ppi_blacklevel_b;
+	unsigned int ppi_blacklevel_gb;
+	unsigned int ppi_phase_gfilter;
+	unsigned int ppi_phase_flat_smoother;
+	unsigned int ppi_phase_txt_smoother;
+	unsigned int ppi_hot_1pixel_th;
+	unsigned int ppi_hot_2pixel_th;
+	unsigned int ppi_hot_3pixel_th;
+	unsigned int ppi_dead_1pixel_th;
+	unsigned int ppi_dead_2pixel_th;
+	unsigned int ppi_dead_3pixel_th;
+	unsigned int ppi_flat_th;
+	unsigned int ppi_edgeRatio_hv_rd;
+	unsigned int ppi_edgeRatio_hv;
+	unsigned int ppi_edgeRatio_rd;
+};
+
 struct isp_pdaf_extraction_param {
 	struct pdaf_param cur;
 };
