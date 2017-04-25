@@ -1719,7 +1719,6 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.awb_gain.r = 1024;
 	cxt->cur_status.awb_gain.g = 1024;
 	cxt->cur_status.awb_gain.b = 1024;
-
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_param->flicker_index][AE_ISO_AUTO];
 	cxt->cur_status.ae_table->min_index = 0;
 	cxt->cur_status.weight_table = cxt->cur_param->weight_table[AE_WEIGHT_CENTER].weight;
@@ -3373,7 +3372,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	else
 		cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
-	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO];
+	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_linetime) {
@@ -3901,9 +3900,9 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 	case AE_SET_FLICKER:
 		if (param) {
 			struct ae_set_flicker *flicker = param;
-
 			if (flicker->mode < AE_FLICKER_OFF) {
 				cxt->cur_status.settings.flicker = flicker->mode;
+				cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
 			}
 		ISP_LOGI("AE_SET_FLICKER %d\n", cxt->cur_status.settings.flicker);
 		}
