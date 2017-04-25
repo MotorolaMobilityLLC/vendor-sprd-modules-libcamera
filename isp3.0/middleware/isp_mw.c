@@ -42,8 +42,6 @@ struct isp_mw_tunng_file_info {
 	struct bin2_sep_info isp_dev_bin_info;
 	void *isp_caf_addr;
 	cmr_u32 isp_caf_size;
-	void *isp_pdaf_addr;
-	cmr_u32 isp_pdaf_size;
 	struct sensor_otp_iso_awb_info iso_awb_info;
 };
 
@@ -138,21 +136,18 @@ cmr_int ispmw_parse_tuning_onebin(cmr_handle isp_mw_handle)
 		cxt->tuning_bin[i].af_tuning_addr = a_bin1_info.puc_af_bin_addr;
 		cxt->tuning_bin[i].isp_caf_addr = a_bin3_info.puc_caf_bin_addr;
 		cxt->tuning_bin[i].isp_caf_size = a_bin3_info.uw_caf_bin_size;
-		cxt->tuning_bin[i].isp_pdaf_addr = a_bin3_info.puc_pdaf_bin_addr;
-		cxt->tuning_bin[i].isp_pdaf_size = a_bin3_info.uw_pdaf_bin_size;
 		cxt->tuning_bin[i].isp_dev_bin_info.puc_shading_bin_addr = a_bin2_info.puc_shading_bin_addr;
 		cxt->tuning_bin[i].isp_dev_bin_info.uw_shading_bin_size = a_bin2_info.uw_shading_bin_size;
 		cxt->tuning_bin[i].isp_dev_bin_info.puc_irp_bin_addr = a_bin2_info.puc_irp_bin_addr;
 		cxt->tuning_bin[i].isp_dev_bin_info.uw_irp_bin_size = a_bin2_info.uw_irp_bin_size;
 		cxt->tuning_bin[i].scene_bin_addr = a_bin3_info.puc_scene_bin_addr;
 		cxt->tuning_bin[i].scene_bin_size = a_bin3_info.uw_scene_bin_size;
-		ISP_LOGI("onebin i=%ld ae_addr %p awb_addr %p af_addr %p caf_addr %p pdaf_addr %p scene_addr %p shading_addr %p shading_size %d irp_addr %p irp_size %d",
+		ISP_LOGI("onebin i=%ld ae_addr %p awb_addr %p af_addr %p caf_addr %p scene_addr %p shading_addr %p shading_size %d irp_addr %p irp_size %d",
 			 i,
 			 cxt->tuning_bin[i].ae_tuning_addr,
 			 cxt->tuning_bin[i].awb_tuning_addr,
 			 cxt->tuning_bin[i].af_tuning_addr,
 			 cxt->tuning_bin[i].isp_caf_addr,
-			 cxt->tuning_bin[i].isp_pdaf_addr,
 			 cxt->tuning_bin[i].scene_bin_addr,
 			 cxt->tuning_bin[i].isp_dev_bin_info.puc_shading_bin_addr,
 			 cxt->tuning_bin[i].isp_dev_bin_info.uw_shading_bin_size,
@@ -239,21 +234,18 @@ cmr_int ispmw_parse_tuning_onebin_slv(cmr_handle isp_mw_handle)
 		cxt->tuning_bin_slv[i].af_tuning_addr = a_bin1_info.puc_af_bin_addr;
 		cxt->tuning_bin_slv[i].isp_caf_addr = a_bin3_info.puc_caf_bin_addr;
 		cxt->tuning_bin_slv[i].isp_caf_size = a_bin3_info.uw_caf_bin_size;
-		cxt->tuning_bin_slv[i].isp_pdaf_addr = a_bin3_info.puc_pdaf_bin_addr;
-		cxt->tuning_bin_slv[i].isp_pdaf_size = a_bin3_info.uw_pdaf_bin_size;
 		cxt->tuning_bin_slv[i].isp_dev_bin_info.puc_shading_bin_addr = a_bin2_info.puc_shading_bin_addr;
 		cxt->tuning_bin_slv[i].isp_dev_bin_info.uw_shading_bin_size = a_bin2_info.uw_shading_bin_size;
 		cxt->tuning_bin_slv[i].isp_dev_bin_info.puc_irp_bin_addr = a_bin2_info.puc_irp_bin_addr;
 		cxt->tuning_bin_slv[i].isp_dev_bin_info.uw_irp_bin_size = a_bin2_info.uw_irp_bin_size;
 		cxt->tuning_bin_slv[i].scene_bin_addr = a_bin3_info.puc_scene_bin_addr;
 		cxt->tuning_bin_slv[i].scene_bin_size = a_bin3_info.uw_scene_bin_size;
-		ISP_LOGV("onebin i=%ld ae_addr %p awb_addr=%p af_addr=%p caf_addr=%p pdaf_addr=%p shading_addr=%p shading_size=0x%x irp_addr=%p irp_size=0x%x",
+		ISP_LOGV("onebin i=%ld ae_addr %p awb_addr=%p af_addr=%p caf_addr=%p shading_addr=%p shading_size=0x%x irp_addr=%p irp_size=0x%x",
 			 i,
 			 cxt->tuning_bin_slv[i].ae_tuning_addr,
 			 cxt->tuning_bin_slv[i].awb_tuning_addr,
 			 cxt->tuning_bin_slv[i].af_tuning_addr,
 			 cxt->tuning_bin_slv[i].isp_caf_addr,
-			 cxt->tuning_bin_slv[i].isp_pdaf_addr,
 			 cxt->tuning_bin_slv[i].isp_dev_bin_info.puc_shading_bin_addr,
 			 cxt->tuning_bin_slv[i].isp_dev_bin_info.uw_shading_bin_size,
 			 cxt->tuning_bin_slv[i].isp_dev_bin_info.puc_irp_bin_addr,
@@ -544,13 +536,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 		isp3a_input.bin_info[i].awb_addr = cxt->tuning_bin[i].awb_tuning_addr;
 		isp3a_input.bin_info[i].af_addr = cxt->tuning_bin[i].af_tuning_addr;
 		isp3a_input.bin_info[i].scene_addr = cxt->tuning_bin[i].scene_bin_addr;
-		isp3a_input.bin_info[i].isp_pdaf_addr = cxt->tuning_bin[i].isp_pdaf_addr;
-		ISP_LOGV("i=%ld ae_addr %p awb=%p af_addr=%p pdaf_addr=%p scene=%p",
+		ISP_LOGV("i=%ld ae_addr %p awb=%p  af_addr=%p scene=%p",
 			i,
 			isp3a_input.bin_info[i].ae_addr,
 			isp3a_input.bin_info[i].awb_addr,
-			isp3a_input.bin_info[i].af_addr,
-			isp3a_input.bin_info[i].isp_pdaf_addr,
+			isp3a_input.bin_info[i].ae_addr,
 			isp3a_input.bin_info[i].scene_addr
 			);
 	}

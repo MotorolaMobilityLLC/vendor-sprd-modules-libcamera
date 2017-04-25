@@ -347,8 +347,6 @@ struct isp_bin_info {
 	struct sensor_otp_iso_awb_info *otp_data_addr;
 	void *isp_caf_addr;
 	cmr_u32 isp_caf_size;
-	void *isp_pdaf_addr;
-	cmr_u32 isp_pdaf_size;
 };
 /**********************************FUNCTION***********************************/
 typedef cmr_int (*isp3a_callback) (cmr_handle handle, cmr_u32 cb_type,
