@@ -82,6 +82,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_AE_NEW, isp_u_raw_aem_block},
 	{ISP_BLK_AWB_NEW, isp_u_awb_block},
 	{ISP_BLK_AF_NEW, isp_u_raw_afm_block},
+	{ISP_BLK_PDAF_CORRECT, isp_u_pdaf_correction},
 };
 
 cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)

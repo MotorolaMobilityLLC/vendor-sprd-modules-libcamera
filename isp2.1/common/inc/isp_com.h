@@ -537,7 +537,7 @@ struct isp_postblc_param {
 };
 
 struct isp_pdaf_correction_param {
-	struct isp_dev_pdaf_info cur;
+	struct pdaf_correction_param cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -546,7 +546,7 @@ struct isp_pdaf_correction_param {
 };
 
 struct isp_pdaf_extraction_param {
-	struct pdaf_param cur;
+	struct pdaf_correction_param cur;
 };
 
 struct isp_dev_noise_filter_param {
