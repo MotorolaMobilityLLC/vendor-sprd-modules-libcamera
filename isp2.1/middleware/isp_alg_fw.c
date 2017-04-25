@@ -1267,6 +1267,11 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_BINNING4AWB, NULL, 0);
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 
+	if (ISP_SUCCESS != rtn || NULL == output.param_data) {
+		ISP_LOGE("fail to check output.param_data\n");
+		return rtn;
+	}
+
 	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
 	if (NULL == binning_info) {
 		ISP_LOGE("Get param failed\n");
