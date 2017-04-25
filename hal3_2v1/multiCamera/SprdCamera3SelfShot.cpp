@@ -832,14 +832,19 @@ void SprdCamera3SelfShot::processCaptureResultMain(
     camera3_capture_result_t *result) {
     uint32_t cur_frame_number = result->frame_number;
 
-    if (result->output_buffers == NULL) {
+    if (result->output_buffers == NULL && result->result != NULL) {
         if (mOpenSubsensor && ns2ms(systemTime() - mStartPreviewTime) > 1000) {
             CameraMetadata metadata;
             metadata = result->result;
             mCoveredValue = getCoveredValue(metadata);
             metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
-            result->result = metadata.release();
+            camera3_capture_result_t new_result = *result;
+            new_result.result = metadata.release();
             HAL_LOGD("mCoveredValue=%d,", mCoveredValue);
+            mCallbackOps->process_capture_result(mCallbackOps, &new_result);
+            free_camera_metadata(
+                const_cast<camera_metadata_t *>(new_result.result));
+            return;
         }
         mCallbackOps->process_capture_result(mCallbackOps, result);
         return;

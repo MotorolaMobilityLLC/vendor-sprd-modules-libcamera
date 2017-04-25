@@ -1973,13 +1973,14 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
     uint64_t result_timestamp = 0;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
-    CameraMetadata metadata;
-    metadata = result->result;
+
     int rc = NO_ERROR;
     int test = 0;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
 
     if (result_buffer == NULL) {
+        CameraMetadata metadata;
+        metadata = result->result;
         {
             Mutex::Autolock l(mVcmLockAux);
             HAL_LOGD("step:%d",
@@ -1988,16 +1989,21 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
         }
 
         if (mUwDepth != 0) {
+
             metadata.update(ANDROID_SPRD_3D_RANGEFINDER_DISTANCE, &mUwDepth, 1);
-            result->result = metadata.release();
+            camera3_capture_result_t new_result = *result;
+            new_result.result = metadata.release();
+            mCallbackOps->process_capture_result(mCallbackOps, &new_result);
             {
                 Mutex::Autolock l(mDepthVauleLock);
                 mUwDepth = 0;
             }
+            free_camera_metadata(
+                const_cast<camera_metadata_t *>(new_result.result));
+            return;
         }
 
         mCallbackOps->process_capture_result(mCallbackOps, result);
-
         return;
     }
 

@@ -1266,6 +1266,10 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                                                            &request)) {
                 HAL_LOGE("failed. process capture request!");
             }
+            if (NULL != mSavedCapReqsettings) {
+                free_camera_metadata(mSavedCapReqsettings);
+                mSavedCapReqsettings = NULL;
+            }
             mBlur->mIsWaitSnapYuv = false;
             HAL_LOGD("jpeg request ok");
             if (input_buffer != NULL) {
@@ -2249,6 +2253,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     uint32_t tagCnt = 0;
     int snap_stream_num = 2;
 
+    memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
     rc = validateCaptureRequest(req);
     if (rc != NO_ERROR) {
         return rc;
@@ -2302,14 +2307,12 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                    sizeof(camera3_capture_request_t));
             memcpy(&mCaptureThread->mSavedCapReqstreambuff,
                    &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
-
             if (NULL != mCaptureThread->mSavedCapReqsettings) {
                 free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
                 mCaptureThread->mSavedCapReqsettings = NULL;
             }
             mCaptureThread->mSavedCapReqsettings =
                 clone_camera_metadata(req_main.settings);
-            req_main.settings = mCaptureThread->mSavedCapReqsettings;
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
             if (!mFlushing) {
@@ -2334,7 +2337,6 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     }
     req_main.output_buffers = out_streams_main;
     req_main.settings = metaSettings.release();
-
     HAL_LOGD("mIsCapturing:%d, framenumber=%d", mIsCapturing,
              request->frame_number);
     rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,
@@ -2346,7 +2348,11 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
 
 req_fail:
     HAL_LOGD("rc, d%d", rc);
-
+    if (req_main.settings != NULL) {
+        free_camera_metadata(
+            const_cast<camera_metadata_t *>(req_main.settings));
+        req_main.settings = NULL;
+    }
     if (req_main.output_buffers != NULL) {
         free((void *)req_main.output_buffers);
         req_main.output_buffers = NULL;
@@ -2397,17 +2403,13 @@ void SprdCamera3Blur::processCaptureResultMain(
 
     mCaptureThread->updateBlurWeightParams(metadata, 1);
     /* Direclty pass preview buffer and meta result for Main camera */
-    if (result_buffer == NULL) {
+    if (result_buffer == NULL && result->result != NULL) {
         if (result->frame_number ==
                 mCaptureThread->mSavedCapRequest.frame_number &&
             0 != result->frame_number) {
             if (mCaptureThread->mReprocessing) {
                 HAL_LOGD("hold yuv picture call back, framenumber:%d",
                          result->frame_number);
-                if (NULL != mCaptureThread->mSavedCapReqsettings) {
-                    free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
-                    mCaptureThread->mSavedCapReqsettings = NULL;
-                }
                 return;
             } else {
                 mCaptureThread->mCallbackOps->process_capture_result(
@@ -2419,7 +2421,13 @@ void SprdCamera3Blur::processCaptureResultMain(
             int mCoveredValue = getCoveredValue(metadata);
             if (cur_frame_number > 100) {
                 metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
-                result->result = metadata.release();
+                camera3_capture_result_t new_result = *result;
+                new_result.result = metadata.release();
+                mCaptureThread->mCallbackOps->process_capture_result(
+                    mCaptureThread->mCallbackOps, &new_result);
+                free_camera_metadata(
+                    const_cast<camera_metadata_t *>(new_result.result));
+                return;
             }
         }
         mCaptureThread->mCallbackOps->process_capture_result(
