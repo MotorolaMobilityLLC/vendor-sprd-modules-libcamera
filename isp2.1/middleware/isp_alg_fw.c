@@ -398,6 +398,10 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 		rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
 		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+		if (NULL == lsc_tab_param_ptr || NULL == lsc_info) {
+			ISP_LOGE("Get param failed\n");
+			return ISP_ERROR;
+		}
 
 		struct lsc_adv_calc_param calc_param;
 		struct lsc_adv_calc_result calc_result = { 0 };
@@ -1264,6 +1268,11 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 
 	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
+	if (NULL == binning_info) {
+		ISP_LOGE("Get param failed\n");
+		return ISP_ERROR;
+	}
+
 	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d\n",
 		bayermode, src_w, src_h, binning_info->hx, binning_info->vx);
 
@@ -2815,9 +2824,11 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	cxt->commn_cxt.src.h = in_ptr->src_frame.img_size.h;
 
 	interface_ptr_v1->data.work_mode = ISP_SINGLE_MODE;
-	interface_ptr_v1->data.input = ISP_EMC_MODE;
-	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE)
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
 		interface_ptr_v1->data.input = ISP_SIMULATION_MODE;
+	} else {
+		interface_ptr_v1->data.input = ISP_EMC_MODE;
+	}
 	interface_ptr_v1->data.input_format = in_ptr->src_frame.img_fmt;
 
 	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern) {
@@ -2837,9 +2848,11 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	interface_ptr_v1->data.slice_height = in_ptr->src_frame.img_size.h;
 
 	interface_ptr_v1->data.output_format = in_ptr->dst_frame.img_fmt;
-	interface_ptr_v1->data.output = ISP_EMC_MODE;
-	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE)
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
 		interface_ptr_v1->data.output = ISP_SIMULATION_MODE;
+	} else {
+		interface_ptr_v1->data.output = ISP_EMC_MODE;
+	}
 	interface_ptr_v1->data.output_addr.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
 	interface_ptr_v1->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	interface_ptr_v1->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;

@@ -2264,20 +2264,22 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
-	if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
-		sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
-	} else {
-		return ISP_ERROR;
-	}
-	if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
-		mode_param_info = sensor_raw_info_ptr->mode_ptr[mode_id];
-	} else {
-		return ISP_ERROR;
-	}
-	if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
-		sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
-	} else {
-		return ISP_ERROR;
+	if (MAX_MODE_NUM > mode_id) {
+		if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
+			sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
+		} else {
+			return ISP_ERROR;
+		}
+		if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
+			mode_param_info = sensor_raw_info_ptr->mode_ptr[mode_id];
+		} else {
+			return ISP_ERROR;
+		}
+		if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
+			sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
+		} else {
+			return ISP_ERROR;
+		}
 	}
 	if (!isp_data_ptr) {
 		ISP_LOGE("fail to check param");
