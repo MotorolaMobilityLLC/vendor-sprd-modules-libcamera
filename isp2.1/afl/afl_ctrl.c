@@ -149,7 +149,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[0] = 200;
 				thr[1] = 20;
 				thr[2] = 160;
-				thr[3] = (ae_exp_flag == 1) ? 100 : 160;
+				thr[3] = (ae_exp_flag == 1) ? 100 : 140;//160
 				thr[4] = 100;
 				thr[5] = 4;
 				thr[6] = 30;

@@ -1004,7 +1004,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 
 	//exposure 1/33 s  -- 302921 (+/-10)
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, &ae_exp);
-	if (fabs(ae_exp - 0.06) < 0.000001 || ae_exp > 0.06) {
+	if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {//0.06
 		ae_exp_flag = 1;
 	}
 	ISP_LOGV("ae_exp %f; ae_exp_flag %d", ae_exp, ae_exp_flag);
