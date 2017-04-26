@@ -358,7 +358,6 @@ typedef struct {
     uint8_t flash_mode_support;
     uint8_t prev_rec_size_diff_support;
     uint8_t rec_snap_support;
-    uint8_t big_pre_rec_size_support;
     uint8_t burst_cap_cnt;
     uint8_t capture_mode;
     uint8_t brightness;

@@ -156,7 +156,6 @@ static tags_info_t
         {"meteringMode", TYPE_BYTE},
         {"meteringArea", TYPE_INT32},
         {"videoSnapshotSupport", TYPE_BYTE},
-        {"bigPrevRecSizeSupport", TYPE_BYTE},
         {"availableBrightness", TYPE_BYTE},
         {"availableContrast", TYPE_BYTE},
         {"availableSaturation", TYPE_BYTE},

@@ -1210,9 +1210,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_FLASH_MODE_SUPPORT,
     ANDROID_SPRD_PRV_REC_DIFFERENT_SIZE_SUPPORT,
     ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT,
-    ANDROID_SPRD_SUPPORT_BIG_PRE_REC_SIZE,
     ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
-
     ANDROID_SENSOR_AVAILABLE_TEST_PATTERN_MODES,
     ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES,
     ANDROID_EDGE_AVAILABLE_EDGE_MODES,
@@ -2316,12 +2314,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
-#ifdef CONFIG_CAMERA_BIG_PREVIEW_RECORD_SIZE
-    s_setting[cameraId].sprddefInfo.big_pre_rec_size_support = 1;
-#else
-    s_setting[cameraId].sprddefInfo.big_pre_rec_size_support = 0;
-#endif
-
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
 
 #ifdef CONFIG_CAMERA_AFL_AUTO_DETECTION
@@ -2651,9 +2643,6 @@ int SprdCamera3Setting::initStaticMetadata(
         ARRAY_SIZE(s_setting[cameraId].sprddefInfo.availabe_slow_motion));
     staticInfo.update(ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT,
                       &(s_setting[cameraId].sprddefInfo.rec_snap_support), 1);
-    staticInfo.update(
-        ANDROID_SPRD_SUPPORT_BIG_PRE_REC_SIZE,
-        &(s_setting[cameraId].sprddefInfo.big_pre_rec_size_support), 1);
     staticInfo.update(ANDROID_SPRD_IS_SUPPORT_REFOCUS,
                       &(s_setting[cameraId].sprddefInfo.is_support_refocus), 1);
     /**add for 3d calibration update metadata begin*/
