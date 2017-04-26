@@ -50,6 +50,13 @@
         }                                                                      \
     } while (0)
 
+#if defined(CONFIG_CAMERA_POWER_OPTIMIZATION)
+#define CAMERA_POWER_OPT_FLAG 1
+#else
+#define CAMERA_POWER_OPT_FLAG 0
+#endif
+
+
 static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle);
 static void *cmr_grab_thread_proc(void *data);
@@ -353,7 +360,14 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
         sensor_if.if_spec.mipi.bits_per_pxl = sn_if->if_spec.mipi.bits_per_pxl;
         sensor_if.if_spec.mipi.is_loose = sn_if->if_spec.mipi.is_loose;
         sensor_if.if_spec.mipi.lane_num = sn_if->if_spec.mipi.lane_num;
-        sensor_if.if_spec.mipi.pclk = sn_if->if_spec.mipi.pclk;
+
+        if (CAMERA_POWER_OPT_FLAG){
+            CMR_LOGI("support power opt\n");
+            sensor_if.if_spec.mipi.pclk = sn_if->if_spec.mipi.pclk;
+        } else {
+            CMR_LOGI("not support power opt\n");
+            sensor_if.if_spec.mipi.pclk = 0xffff;
+       }
     }
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_IF, &sensor_if);

@@ -5821,6 +5821,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 
     param_ptr->sn_if.sensor_width = sensor_mode_info->width;
     param_ptr->sn_if.sensor_height = sensor_mode_info->height;
+    param_ptr->sn_if.if_spec.mipi.pclk = sensor_mode_info->bps_per_lane;
     if (cxt->isp_to_dram)
         param_ptr->sn_if.res[0] = 1;
     else
