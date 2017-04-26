@@ -2924,7 +2924,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cmr_handle seq_handle = NULL;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_in_out *reserve = NULL;
-	struct ae_misc_init_in misc_init_in = { 0, 0, NULL, 0 };
+	struct ae_misc_init_in misc_init_in = { 0, 0, 0, NULL, 0 };
 	struct ae_misc_init_out misc_init_out = { 0, {0} };
 	struct seq_init_in init_in = { 0, 0, 0, 0, 0 };
 	struct ae_set_work_param work_param;
@@ -2979,6 +2979,16 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	seq_init(AE_WRITE_QUEUE_NUM, &init_in, &seq_handle);
 	cxt->seq_handle = seq_handle;
 
+	/* HJW_S: dual flash algorithm init */
+	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
+	flash_in.tune_info = NULL;/*it will be removed in the future, and get it from dual flash tuning parameters*/
+	flash_in.statH  = cxt->monitor_unit.win_num.h;
+	flash_in.statW = cxt->monitor_unit.win_num.w;
+	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
+	cxt->flash_ver  = flash_out.version;
+	cxt->flash_ver = 1;//temp code for dual flash, remove later, 1 for new dualflash, 0 for old flash
+	/*HJW_E*/
+
 	/* create AE calc E&G queue */
 	rtn = ae_calc_result_queue_init(&cxt->ae_result_queue);
 	if (rtn) {
@@ -2997,21 +3007,13 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->debug_enable = _is_ae_mlog(cxt);
 	cxt->cur_status.mlog_en = cxt->debug_enable;
 	misc_init_in.alg_id = cxt->cur_status.alg_id;
+	misc_init_in.flash_version = cxt->flash_ver;
 	misc_init_in.start_index = cxt->cur_status.start_index;
 	misc_init_in.param_ptr = &cxt->cur_status;
 	misc_init_in.size = sizeof(cxt->cur_status);
 	cxt->misc_handle = ae_misc_init(&misc_init_in, &misc_init_out);
 	memcpy(cxt->alg_id, misc_init_out.alg_id, sizeof(cxt->alg_id));
 
-	/* HJW_S: dual flash algorithm init */
-	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
-	flash_in.tune_info = NULL;/*it will be removed in the future, and get it from dual flash tuning parameters*/
-	flash_in.statH  = cxt->monitor_unit.win_num.h;
-	flash_in.statW = cxt->monitor_unit.win_num.w;
-	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
-	cxt->flash_ver  =flash_out.version;
-	cxt->flash_ver = 0;//temp code for dual flash, remove later
-	/*HJW_E*/
 	pthread_mutex_init(&cxt->data_sync_lock, NULL);
 
 	/* update the sensor related information to cur_result structure */

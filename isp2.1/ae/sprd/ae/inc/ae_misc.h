@@ -25,6 +25,7 @@ extern "C" {
 
 struct ae_misc_init_in {
 	cmr_u32 alg_id;
+	cmr_u32 flash_version;
 	cmr_u32 start_index;
 	cmr_handle param_ptr;
 	cmr_u32 size;
