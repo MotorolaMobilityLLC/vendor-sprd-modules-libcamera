@@ -27,6 +27,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
 	cmr_s32 fds[2];
+	cmr_uint kaddr[2];
 
 	statis_mem_info->isp_lsc_mem_size = in_ptr->isp_lsc_mem_size;
 	statis_mem_info->isp_lsc_mem_num = in_ptr->isp_lsc_mem_num;
@@ -45,14 +46,18 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 			isp_cb_of_malloc cb_malloc = in_ptr->cb_of_malloc;
 			cb_malloc(CAMERA_ISP_STATIS,
 				  &statis_mem_info->isp_statis_mem_size,
-				  &statis_mem_info->isp_statis_mem_num, &statis_mem_info->isp_statis_k_addr, &statis_mem_info->isp_statis_u_addr,
+				  &statis_mem_info->isp_statis_mem_num,
+				  kaddr,
+				  &statis_mem_info->isp_statis_u_addr,
 				  //&statis_mem_info->statis_mfd,
-				  fds, statis_mem_info->buffer_client_data);
+				  fds,
+				  statis_mem_info->buffer_client_data);
 		} else {
 			ISP_LOGE("fail to malloc statis_bq buffer");
 			return ISP_PARAM_NULL;
 		}
 
+		statis_mem_info->isp_statis_k_addr = kaddr[0];
 		statis_mem_info->statis_mfd = fds[0];
 		statis_mem_info->statis_buf_dev_fd = fds[1];
 		statis_mem_info->isp_statis_alloc_flag = 1;

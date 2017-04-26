@@ -7300,7 +7300,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             HAL_LOGE("get kaddr error");
             goto mem_fail;
         }
-        *phy_addr = kaddr;
+        *phy_addr++ = kaddr;
+        *phy_addr = kaddr >> 32;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
         *fd++ = mIspStatisHeapReserved->dev_fd;
