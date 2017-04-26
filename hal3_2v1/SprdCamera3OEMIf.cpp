@@ -7404,6 +7404,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     } else if (type == CAMERA_ISP_STATIS) {
         cmr_u64 kaddr = 0;
         size_t ksize = 0;
+        cmr_s32 rtn = 0;
         if (mIspStatisHeapReserved == NULL) {
             memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
@@ -7412,7 +7413,11 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             }
             mIspStatisHeapReserved = memory;
         }
-        mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+        rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+        if (rtn) {
+                HAL_LOGE("get kaddr error");
+                goto mem_fail;
+        }
         *phy_addr = kaddr;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
@@ -7422,6 +7427,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         cmr_u64 *vir_addr_64 = (cmr_u64 *)vir_addr;
         cmr_u64 kaddr = 0;
         size_t ksize = 0;
+        cmr_s32 rtn = 0;
 
         for (i = 0; i < sum; i++) {
             memory = allocCameraMem(size, 1, false);
@@ -7432,7 +7438,11 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             mIspB4awbHeapReserved[i] = memory;
             *phy_addr_64++ = (cmr_u64)memory->phys_addr;
             *vir_addr_64++ = (cmr_u64)memory->data;
-            memory->ion_heap->get_kaddr(&kaddr, &ksize);
+            rtn = memory->ion_heap->get_kaddr(&kaddr, &ksize);
+            if (rtn) {
+                HAL_LOGE("get kaddr error");
+                goto mem_fail;
+            }
             *phy_addr++ = kaddr;
             *phy_addr = kaddr >> 32;
             *fd++ = memory->fd;
