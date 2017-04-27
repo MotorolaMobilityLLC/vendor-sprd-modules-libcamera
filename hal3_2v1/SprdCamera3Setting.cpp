@@ -208,9 +208,10 @@ int32_t jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 int32_t jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #elif defined(CONFIG_CAMERA_SUPPORT_3M)
 int32_t jpeg_stream_size = (2048 * 1536 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+#elif defined(CONFIG_CAMERA_SUPPORT_2M)
+int32_t jpeg_stream_size = (1600 * 1200 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #else
-int32_t jpeg_stream_size =
-    (1920 * HEIGHT_2M * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+int32_t jpeg_stream_size = (1600 * 1200 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #endif
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {
@@ -1223,8 +1224,10 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_CAMERA_SUPPORT_3M)
     {2048, 1536},
+#elif defined(CONFIG_CAMERA_SUPPORT_2M)
+    {1600, 1200},
 #else
-    {1920, HEIGHT_2M},
+    {1600, 1200},
 #endif
 
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)
@@ -1239,8 +1242,10 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
     {2048, 1536},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M)
+    {1600, 1200},
 #else
-    {1920, HEIGHT_2M},
+    {1600, 1200},
 #endif
 
 #if defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_21M)
@@ -1255,8 +1260,10 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_3M)
     {2048, 1536},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M)
+    {1600, 1200},
 #else
-    {1920, HEIGHT_2M},
+    {1600, 1200},
 #endif
 
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)
@@ -1271,8 +1278,10 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
     {2048, 1536},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M)
+    {1600, 1200},
 #else
-    {1920, HEIGHT_2M},
+    {1600, 1200},
 #endif
 };
 
@@ -1289,7 +1298,7 @@ const cam_stream_info_t stream_info[] = {
     {{2048, 1536}, 33331760L, 33331760L},
     //{{1920, 1920}, 33331760L, 33331760L},
     {{1920, HEIGHT_2M}, 33331760L, 33331760L},
-    {{1600, 1200},33331760L,33331760L},
+    {{1600, 1200}, 33331760L, 33331760L},
     //{{1440, 1080},33331760L,33331760L},
     {{1280, 960}, 33331760L, 33331760L},
     {{1280, 720}, 33331760L, 33331760L},
@@ -1687,26 +1696,29 @@ void SprdCamera3Setting::SprdCamera3Setting::parseStringfloat(
 int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
                                           cmr_u16 height) {
 
-    if ((width * height <= 5312 * 3984) &&
-        (width * height > 4608 * 3456)) { // 21M
-        jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    } else if ((width * height <= 4608 * 3456) &&
-               (width * height > 4160 * 3120)) { // 16M
-        jpeg_stream_size = (4608 * 3456 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    } else if ((width * height <= 4160 * 3120) &&
-               (width * height > 3264 * 2448)) { // 13M
-        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    } else if ((width * height <= 3264 * 2448) &&
-               (width * height > 2592 * 1944)) { // 8M
-        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    } else if ((width * height <= 2592 * 1944) &&
-               (width * height > 1920 * HEIGHT_2M)) { // 5M
+    if (width * height <= 1600 * 1200) {
+        // 2M
+        jpeg_stream_size = (1600 * 1200 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 2048 * 1536) {
+        // 3M
         jpeg_stream_size = (2048 * 1536 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    } else if (width * height <= 1920 * HEIGHT_2M) { // 2M
-        jpeg_stream_size =
-            (1920 * HEIGHT_2M * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 2592 * 1944) {
+        // 5M
+        jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 3264 * 2448) {
+        // 8M
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 4160 * 3120) {
+        // 13M
+        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 4608 * 3456) {
+        // 16M
+        jpeg_stream_size = (4608 * 3456 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 5312 * 3984) {
+        // 21M
+        jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else {
-        CMR_LOGI("unsupport jpeg_stream_size = %d", jpeg_stream_size);
+        jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     }
 
     CMR_LOGI("jpeg_stream_size = %d", jpeg_stream_size);

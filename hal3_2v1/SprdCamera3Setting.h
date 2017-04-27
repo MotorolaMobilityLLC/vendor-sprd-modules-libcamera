@@ -85,6 +85,9 @@ namespace sprdcamera {
 #elif CONFIG_CAMERA_SUPPORT_8M
 #define BACK_SENSOR_ORIG_WIDTH 3264
 #define BACK_SENSOR_ORIG_HEIGHT 2448
+#elif CONFIG_CAMERA_SUPPORT_5M
+#define BACK_SENSOR_ORIG_WIDTH 2592
+#define BACK_SENSOR_ORIG_HEIGHT 1944
 #else
 #define BACK_SENSOR_ORIG_WIDTH 2592
 #define BACK_SENSOR_ORIG_HEIGHT 1944
@@ -99,23 +102,16 @@ namespace sprdcamera {
 #elif CONFIG_FRONT_CAMERA_SUPPORT_3M
 #define FRONT_SENSOR_ORIG_WIDTH 2048 // select according to max jpg resolution
 #define FRONT_SENSOR_ORIG_HEIGHT 1536
-#else
-
-#ifndef CONFIG_FRONT_CAMERA_SUPPORT_720P
+#elif CONFIG_FRONT_CAMERA_SUPPORT_2M
 #define FRONT_SENSOR_ORIG_WIDTH 1600 // select according to max jpg resolution
 #define FRONT_SENSOR_ORIG_HEIGHT 1200
 #else
-#define FRONT_SENSOR_ORIG_WIDTH 720 // select according to max jpg resolution
-#define FRONT_SENSOR_ORIG_HEIGHT 480
+#define FRONT_SENSOR_ORIG_WIDTH 1600 // select according to max jpg resolution
+#define FRONT_SENSOR_ORIG_HEIGHT 1200
 #endif
 
-#endif
-
-//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
 #define BACK_EXT_SENSOR_ORIG_WIDTH 1600 // select according to max jpg
-                                        // resolution
 #define BACK_EXT_SENSOR_ORIG_HEIGHT 1200
-//#endif
 
 /* Time related macros */
 typedef int64_t nsecs_t;
