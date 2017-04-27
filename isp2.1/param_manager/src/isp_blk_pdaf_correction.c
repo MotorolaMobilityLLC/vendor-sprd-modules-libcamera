@@ -23,6 +23,8 @@ cmr_u32 _pm_pdaf_correct_convert_param(void *dst_param, cmr_u32 strength_level, 
 	cmr_u32 total_offset_units = 0;
 	struct isp_pdaf_correction_param *dst_ptr = (struct isp_pdaf_correction_param *)dst_param;
 	struct sensor_pdaf_correction_level *pdaf_correct_param = PNULL;
+	void *pdaf_left_ptr = PNULL;
+	void *pdaf_right_ptr = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		pdaf_correct_param = (struct sensor_pdaf_correction_level *)(dst_ptr->param_ptr);
@@ -53,23 +55,17 @@ cmr_u32 _pm_pdaf_correct_convert_param(void *dst_param, cmr_u32 strength_level, 
 		dst_ptr->cur.ppi_edgeRatio_hv = pdaf_correct_param[strength_level].pdaf_edgeRatio.ee_ratio_hv;
 		dst_ptr->cur.ppi_edgeRatio_rd = pdaf_correct_param[strength_level].pdaf_edgeRatio.ee_ratio_rd;
 		dst_ptr->cur.ppi_phase_map_corr_en = pdaf_correct_param[strength_level].phase_map_corr_eb;
-		dst_ptr->cur.PPI_GRID = pdaf_correct_param[strength_level].pdaf_grid;
+		dst_ptr->cur.ppi_grid = pdaf_correct_param[strength_level].pdaf_grid;
 		dst_ptr->cur.ppi_phase_gfilter = pdaf_correct_param[strength_level].gfilter_flag;
-#if __WORDSIZE == 64
-		dst_ptr->cur.data_ptr_left[0] = (cmr_s32) (&(pdaf_correct_param[strength_level].phase_l_gain_map[2])) & 0xffffffff;
-		dst_ptr->cur.data_ptr_left[1] = (cmr_s32) (&(pdaf_correct_param[strength_level].phase_l_gain_map[2])) >> 32;
-#else
-		dst_ptr->cur.data_ptr_left[0] = (cmr_s32) (&(pdaf_correct_param[strength_level].phase_l_gain_map[2]));
-		dst_ptr->cur.data_ptr_left[1] = 0;
-#endif
+		pdaf_left_ptr = (void *)&(pdaf_correct_param[strength_level].phase_l_gain_map[2]);
+		pdaf_right_ptr = (void *)&(pdaf_correct_param[strength_level].phase_r_gain_map[2]);
+		memcpy(dst_ptr->cur.data_ptr_left, pdaf_left_ptr, (PDAF_CORRECT_GAIN_NUM-2)*sizeof(cmr_u16));
+		memcpy(dst_ptr->cur.data_ptr_right, pdaf_right_ptr, (PDAF_CORRECT_GAIN_NUM-2)*sizeof(cmr_u16));
 
-#if __WORDSIZE == 64
-		dst_ptr->cur.data_ptr_right[0] = (cmr_s32) (&(pdaf_correct_param[strength_level].phase_r_gain_map[2])) & 0xffffffff;
-		dst_ptr->cur.data_ptr_right[1] = (cmr_s32) (&(pdaf_correct_param[strength_level].phase_r_gain_map[2])) >> 32;
-#else
-		dst_ptr->cur.data_ptr_right[0] = (cmr_s32) (&(pdaf_correct_param[strength_level].phase_r_gain_map[2]));
-		dst_ptr->cur.data_ptr_right[1] = 0;
-#endif
+		dst_ptr->cur.data_ptr_left[PDAF_CORRECT_GAIN_NUM-2] = dst_ptr->cur.data_ptr_left[PDAF_CORRECT_GAIN_NUM-3];
+		dst_ptr->cur.data_ptr_left[PDAF_CORRECT_GAIN_NUM-1] = dst_ptr->cur.data_ptr_left[PDAF_CORRECT_GAIN_NUM-3];
+		dst_ptr->cur.data_ptr_right[PDAF_CORRECT_GAIN_NUM-2] = dst_ptr->cur.data_ptr_right[PDAF_CORRECT_GAIN_NUM-3];
+		dst_ptr->cur.data_ptr_right[PDAF_CORRECT_GAIN_NUM-1] = dst_ptr->cur.data_ptr_right[PDAF_CORRECT_GAIN_NUM-3];
 
 		dst_ptr->cur.ppi_upperbound_r = pdaf_correct_param[strength_level].pdaf_upperbound.r;
 		dst_ptr->cur.ppi_upperbound_gr = pdaf_correct_param[strength_level].pdaf_upperbound.gr;

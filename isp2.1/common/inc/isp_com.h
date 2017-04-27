@@ -546,7 +546,7 @@ struct isp_pdaf_correction_param {
 };
 
 struct isp_pdaf_extraction_param {
-	struct pdaf_correction_param cur;
+	struct pdaf_extraction_param cur;
 };
 
 struct isp_dev_noise_filter_param {
