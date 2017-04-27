@@ -259,7 +259,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 		break;
 	}
 
-	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, cur_idx=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
+	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ee_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }

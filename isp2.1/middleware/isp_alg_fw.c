@@ -277,10 +277,10 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
 		break;
 	case ISP_AF_NLM_LOCK:
-		cxt->smart_cxt.lock_en = 1;
+		cxt->smart_cxt.lock_nlm_en = 1;
 		break;
 	case ISP_AF_NLM_UNLOCK:
-		cxt->smart_cxt.lock_en = 0;
+		cxt->smart_cxt.lock_nlm_en = 0;
 		break;
 	case ISP_AF_SET_MONITOR:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, param0, param1);
@@ -854,7 +854,13 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
-		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_en;
+		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
+		smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
+		smart_proc_in.lock_precdn= cxt->smart_cxt.lock_precdn_en;
+		smart_proc_in.lock_cdn= cxt->smart_cxt.lock_cdn_en;
+		smart_proc_in.lock_postcdn= cxt->smart_cxt.lock_postcdn_en;
+		smart_proc_in.lock_ccnr= cxt->smart_cxt.lock_ccnr_en;
+		smart_proc_in.lock_ynr= cxt->smart_cxt.lock_ynr_en;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 		ISP_TRACE_IF_FAIL(rtn, ("_smart_calc fail "));
 		cxt->smart_cxt.log_smart = smart_proc_in.log;

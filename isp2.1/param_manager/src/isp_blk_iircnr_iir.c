@@ -160,7 +160,7 @@ cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_pt
 		break;
 	}
 
-	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, cur_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
+	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ccnr_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 

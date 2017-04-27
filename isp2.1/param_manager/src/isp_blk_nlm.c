@@ -254,7 +254,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 		break;
 	}
 
-	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, nlm_level=%d", cmd, nlm_header_ptr->is_update, nlm_ptr->cur_level);
+	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, nlm_level=%d", cmd, nlm_header_ptr->is_update, nlm_ptr->cur_level);
 
 	return rtn;
 }

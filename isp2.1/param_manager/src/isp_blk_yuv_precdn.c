@@ -147,7 +147,7 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 	default:
 		break;
 	}
-	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, cur_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
+	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, precdn_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }

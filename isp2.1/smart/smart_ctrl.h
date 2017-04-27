@@ -101,6 +101,12 @@ struct smart_proc_input {
 	cmr_u8 *log;
 	cmr_u32 size;
 	cmr_u8 lock_nlm;
+	cmr_u8 lock_ee;
+	cmr_u8 lock_precdn;
+	cmr_u8 lock_cdn;
+	cmr_u8 lock_postcdn;
+	cmr_u8 lock_ccnr;
+	cmr_u8 lock_ynr;
 };
 
 struct smart_calc_result {

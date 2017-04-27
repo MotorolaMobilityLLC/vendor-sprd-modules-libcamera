@@ -1353,6 +1353,54 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 		}
 	}
 
+	if (in_ptr->lock_ee == 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+			if (ISP_SMART_EDGE== smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+
+	if (in_ptr->lock_precdn == 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+			if (ISP_SMART_YUV_PRECDN== smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+
+	if (in_ptr->lock_cdn == 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+			if (ISP_SMART_UVCDN== smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+
+	if (in_ptr->lock_postcdn == 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+			if (ISP_SMART_UV_POSTCDN== smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+
+	if (in_ptr->lock_ccnr== 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+			if (ISP_SMART_IIRCNR_IIR== smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+
+	if (in_ptr->lock_ynr== 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+			if (ISP_SMART_YNR== smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+	
 	/*use alc ccm, disable spreadtrum smart ccm */
 	for (i = 0; i < smart_calc_result.counts; i++) {
 		switch (smart_calc_result.block_result[i].smart_id) {
