@@ -6412,7 +6412,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
         mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
-        mPicCaptureCnt = 1;
+        mPicCaptureCnt = 100;
         mZslPreviewMode = false;
         break;
     case CAMERA_CAPTURE_MODE_ISP_SIMULATION_TOOL:
@@ -6421,7 +6421,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
         mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
-        mPicCaptureCnt = 1;
+        mPicCaptureCnt = 100;
         mZslPreviewMode = false;
         break;
     case CAMERA_CAPTURE_MODE_PREVIEW_SNAPSHOT:

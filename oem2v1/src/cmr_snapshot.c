@@ -1592,19 +1592,18 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         if (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode) {
             snp_cvt_done(snp_handle);
             if (HW_SIMULATION_SLICE_WIDTH < mem_ptr->cap_raw.size.width) {
-                ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
+                ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle,
+                                            &isp_in_param);
                 if (ret) {
                     CMR_LOGE("failed to start isp proc %ld", ret);
                 }
-                camera_save_mipi_raw_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
-                                   mem_ptr->cap_raw.size.width,
-                                   mem_ptr->cap_raw.size.height,
-                                   &mem_ptr->cap_raw.addr_vir);
+                camera_save_mipi_raw_to_file(
+                    snp_handle, datetime, IMG_DATA_TYPE_RAW,
+                    mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                    &mem_ptr->cap_raw.addr_vir);
             }
         }
     }
-
-
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
     if (ret) {
@@ -2623,8 +2622,7 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle) {
                 } else {
                     cmr_copy((void *)&cxt->chn_param.chn_frm[0],
                              (void *)chn_out_frm_ptr,
-                             CMR_CAPTURE_MEM_SUM *
-                                 sizeof(struct img_frm));
+                             CMR_CAPTURE_MEM_SUM * sizeof(struct img_frm));
                 }
             }
         } else {
@@ -3948,7 +3946,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
         if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
             (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
             send_capture_data(
-                0x02, /* yuv420 */
+                0x40, /* yuv420 */
                 cxt->req_param.post_proc_setting.actual_snp_size.width,
                 cxt->req_param.post_proc_setting.actual_snp_size.height,
                 (char *)mem_ptr->target_yuv.addr_vir.addr_y, size,
