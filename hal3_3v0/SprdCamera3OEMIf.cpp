@@ -766,9 +766,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
-        changeDfsPolicy(CAM_HIGH);
-        HAL_LOGI("take picture: set dfs CAM_HIGH");
-
         if (mSprdBurstModeEnabled == 1 && mSprdZslEnabled == 1) {
             ret = zslTakePicture();
         } else {
@@ -1857,7 +1854,7 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
         if (mVideoWidth != 0 && mVideoHeight != 0 && mRecordingMode == true &&
             ((mCaptureMode != CAMERA_ISP_TUNING_MODE) &&
              (mCaptureMode != CAMERA_ISP_SIMULATION_MODE))) {
-            capture_size.width = (cmr_u32)mPreviewWidth; // mVideoWidth;
+            capture_size.width = (cmr_u32)mPreviewWidth;   // mVideoWidth;
             capture_size.height = (cmr_u32)mPreviewHeight; // mVideoHeight;
         } else {
             capture_size.width = (cmr_u32)mCaptureWidth;
@@ -2866,11 +2863,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
-        changeDfsPolicy(CAM_HIGH);
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
-        changeDfsPolicy(CAM_HIGH);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -2878,7 +2873,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
-        changeDfsPolicy(CAM_HIGH);
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
@@ -3710,10 +3704,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         miSPreviewFirstFrame = 0;
 
         disablePowerHint();
-        if (mSprdZslEnabled == 0) {
-            changeDfsPolicy(CAM_LOW);
-            HAL_LOGI("after first non-zsl preview: set dfs CAM_LOW");
-        }
     }
 
     SPRD_DEF_Tag sprddefInfo;
@@ -4663,12 +4653,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     if (1 == mHDRPowerHint) {
         disablePowerHint();
         mHDRPowerHintFlag = 0;
-    }
-
-    if ((mSprdZslEnabled == 0) ||
-        (mSprdZslEnabled == 1 && mRecordingMode == true)) {
-        changeDfsPolicy(CAM_LOW);
-        HAL_LOGI("after take picture,enter non-zsl preview: set dfs CAM_LOW");
     }
 
     HAL_LOGD("X");
@@ -8518,7 +8502,7 @@ void SprdCamera3OEMIf::EisPreview_init() {
     for (i = 0; i < num; i++) {
         if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
             0) {
-            mPreviewParam.f = eis_init_info_tab[i].f; // 1230;
+            mPreviewParam.f = eis_init_info_tab[i].f;   // 1230;
             mPreviewParam.td = eis_init_info_tab[i].td; // 0.004;
             mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
@@ -8552,7 +8536,7 @@ void SprdCamera3OEMIf::EisVideo_init() {
     for (i = 0; i < num; i++) {
         if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
             0) {
-            mVideoParam.f = eis_init_info_tab[i].f; // 1230;
+            mVideoParam.f = eis_init_info_tab[i].f;   // 1230;
             mVideoParam.td = eis_init_info_tab[i].td; // 0.004;
             mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
