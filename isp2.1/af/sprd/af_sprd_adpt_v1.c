@@ -524,12 +524,10 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 			ISP_LOGV("win is NULL, use default roi");
 
 		if (!win || (0 == win->win_num)) {
-			af->touch = 0;
 			calc_default_roi(af);
 		} else {
 			cmr_u32 i;
 
-			af->touch = 1;
 			roi->num = win->win_num;
 			for (i = 0; i < win->win_num; ++i) {
 				roi->win[i].start_x = (win->win_pos[i].sx >> 1) << 1;	// make sure coordinations are even
@@ -545,7 +543,6 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 		if (!win || (0 == win->win_num)) {
 			cmr_u32 i = 0;
 
-			af->touch = 0;
 			roi->num = af->win_config->valid_win_num;
 			for (i = 0; i < roi->num; i++) {	// the last window is for caf trigger
 				roi->win[i].start_x = (af->win_config->win_pos[i].start_x >> 1) << 1;	// make sure coordinations are even
@@ -557,7 +554,6 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 			cmr_u32 i, taf_w, taf_h;
 			isp_info_t *hw = &af->isp_info;
 
-			af->touch = 1;
 			roi->num = win->win_num;
 			for (i = 0; i < win->win_num; ++i) {
 				roi->win[i].start_x = (win->win_pos[i].sx >> 1) << 1;	// make sure coordinations are even
@@ -2247,7 +2243,6 @@ static void caf_search_process_af(af_ctrl_t * af)
 			}
 			do_start_af(af);
 		}
-		af->caf_first_stable = 0;
 	}
 }
 
@@ -2584,12 +2579,11 @@ static void set_ae_info(af_ctrl_t * af, const struct ae_calc_out *ae, cmr_s32 bv
 
 }
 
-static void set_awb_info(af_ctrl_t * af, const struct awb_ctrl_calc_result *awb, const struct awb_gain *gain)
+static void set_awb_info(af_ctrl_t * af, const struct awb_ctrl_calc_result *awb)
 {
-	UNUSED(awb);
-	af->awb.r_gain = gain->r;
-	af->awb.g_gain = gain->g;
-	af->awb.b_gain = gain->b;
+	af->awb.r_gain = awb->gain.r;
+	af->awb.g_gain = awb->gain.g;
+	af->awb.b_gain = awb->gain.b;
 }
 
 static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
@@ -2708,7 +2702,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->awb_lock_num = 0;
 	af->lsc_lock_num = 0;
 	af->nlm_lock_num = 0;
-	af->caf_first_stable = 0;
 
 	pthread_mutex_init(&af->af_work_lock, NULL);
 	pthread_mutex_init(&af->caf_work_lock, NULL);
@@ -3193,11 +3186,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 
 	case AF_CMD_SET_AWB_INFO:{
 			struct awb_ctrl_calc_result *result = (struct awb_ctrl_calc_result *)param0;
-			struct awb_gain gain;	// = result->gain
-			gain.r = result->gain.r;
-			gain.g = result->gain.g;
-			gain.b = result->gain.b;
-			set_awb_info(af, result, &gain);
+			set_awb_info(af, result);
 			break;
 		}
 

@@ -3,7 +3,6 @@
 #define _3A_COMMON_H
 
 #include "ae_ctrl_types.h"
-#include "isp_awb_types.h"
 
 struct ae_calc_out {
 	cmr_u32 cur_lum;

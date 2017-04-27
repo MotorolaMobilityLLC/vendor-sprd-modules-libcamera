@@ -286,7 +286,6 @@ typedef struct _af_ctrl {
 	cmr_u64 dcam_timestamp;
 	cmr_u64 takepic_timestamp;
 	AF_Data fv;
-	//Andrew : close address begin for easy parsing
 	af_fv af_fv_val;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
@@ -297,7 +296,7 @@ typedef struct _af_ctrl {
 	uint64 fv_combine[T_TOTAL_FILTER_TYPE];
 	struct af_gsensor_info gsensor_info;
 	prime_face_base_info_t face_base;
-//    isp_ctrl_context    *isp_ctx;
+	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
 	sem_t af_wait_caf;
@@ -305,7 +304,6 @@ typedef struct _af_ctrl {
 	AF_Window_Config *win_config;
 	isp_info_t isp_info;
 	lens_info_t lens;
-	cmr_s32 touch;
 	cmr_s32 flash_on;
 	roi_info_t roi;
 	roi_rgb_y_t roi_RGBY;
@@ -321,33 +319,23 @@ typedef struct _af_ctrl {
 	cmr_s32 nlm_lock_num;
 	void *trig_lib;
 	caf_trigger_ops_t trig_ops;
-	//pthread_mutex_t     caf_lock;
-	cmr_handle af_task;
-	cmr_u64 last_frame_ts;	// timestamp of last frame
 	ae_cali_t ae_cali_data;
 	vcm_ops_t vcm_ops;
 	cmr_u32 vcm_stable;
-	cmr_u32 af_statistics[105];	// for maximum size in all chip to accomodate af statistics
-	cmr_s32 node_type;
-	cmr_u64 k_addr;
-	cmr_u64 u_addr;
 	focus_stat_reg_t stat_reg;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
 	cmr_u8 soft_landing_dly;
 	cmr_u8 soft_landing_step;
-	cmr_u8 caf_first_stable;
 	cmr_u32 inited_af_req;
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
-	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
-	//for Bokeh
 	Bokeh_tuning_param bokeh_param;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);

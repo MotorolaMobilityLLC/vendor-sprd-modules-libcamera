@@ -100,32 +100,6 @@ static cmr_s32 af_start_notice(void *handle_af)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_ae_awb_lock(void *handle_af)
-{
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct ae_calc_out ae_result;
-
-	memset(&ae_result, 0x00, sizeof(ae_result));
-	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_AWB_LOCK, NULL, (void *)&ae_result);
-	}
-
-	return ISP_SUCCESS;
-}
-
-static cmr_s32 af_ae_awb_release(void *handle_af)
-{
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct ae_calc_out ae_result;
-
-	memset(&ae_result, 0x00, sizeof(ae_result));
-	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_AWB_RELEASE, NULL, (void *)&ae_result);
-	}
-
-	return ISP_SUCCESS;
-}
-
 static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
@@ -412,8 +386,6 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->set_monitor = af_set_monitor;
 	input_ptr->set_monitor_win = af_set_monitor_win;
 	input_ptr->get_monitor_win_num = af_get_monitor_win_num;
-	//input_ptr->ae_awb_lock = af_ae_awb_lock;
-	//input_ptr->ae_awb_release = af_ae_awb_release;
 	input_ptr->lock_module = af_lock_module;
 	input_ptr->unlock_module = af_unlock_module;
 

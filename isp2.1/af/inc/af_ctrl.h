@@ -190,8 +190,6 @@ struct afctrl_init_in {
 	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 	 cmr_s32(*set_monitor_win) (void *handle, struct af_monitor_win * in_param);
 	 cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
-//      cmr_s32(*ae_awb_lock) (void* handle);
-//      cmr_s32(*ae_awb_release) (void* handle);
 	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
 	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
 };
