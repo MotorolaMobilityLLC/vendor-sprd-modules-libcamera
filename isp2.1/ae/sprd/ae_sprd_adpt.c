@@ -279,6 +279,7 @@ struct ae_ctrl_cxt {
 	cmr_s32 last_expline;
 	cmr_s32 last_dummy;
 	cmr_s32 last_aegain;
+	cmr_s32 last_index;
 	cmr_s32 last_enable;
 	/*
 	 * just for debug information
@@ -3265,21 +3266,21 @@ static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_up;
 		cxt->hdr_flag--;
 		cxt->hdr_frame_cnt++;
-		ISP_LOGV("_isp_hdr_3: %d\n", cxt->cur_status.settings.table_idx);
+		ISP_LOGI("_isp_hdr_3: %d\n", cxt->cur_status.settings.table_idx);
 	} else if (2 == cxt->hdr_flag) {
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_down;
 		cxt->hdr_flag--;
 		cxt->hdr_frame_cnt++;
-		ISP_LOGV("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
+		ISP_LOGI("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
 	} else if (1 == cxt->hdr_flag) {
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx;
 		cxt->hdr_flag--;
 		cxt->hdr_frame_cnt++;
-		ISP_LOGV("_isp_hdr_1: %d\n", cxt->cur_status.settings.table_idx);
+		ISP_LOGI("_isp_hdr_1: %d\n", cxt->cur_status.settings.table_idx);
 	} else {
 		;
 	}
@@ -3293,11 +3294,13 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_dummy = 0;
 		cxt->last_aegain = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
 		cxt->last_linetime = cxt->cur_status.line_time;
+		cxt->last_index = cxt->cur_status.start_index;
 	} else {
 		cxt->last_expline = cxt->sync_cur_result.wts.cur_exp_line;
 		cxt->last_dummy = cxt->sync_cur_result.wts.cur_dummy;
 		cxt->last_aegain = cxt->sync_cur_result.wts.cur_again;
 		cxt->last_linetime = cxt->cur_status.line_time;
+		cxt->last_index = cxt->sync_cur_result.wts.cur_index;
 	}
 	cxt->last_enable = 1;
 
@@ -3399,6 +3402,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		cxt->sync_cur_result.wts.cur_exp_line = cxt->ae_result.expline;
 		cxt->sync_cur_result.wts.cur_again = cxt->ae_result.gain;
 		cxt->sync_cur_result.wts.cur_dummy = cxt->ae_result.dummy;
+		cxt->sync_cur_result.wts.cur_index = cxt->last_index;
 	} else {
 		cxt->ae_result.expline = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 		cxt->ae_result.gain = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
@@ -4323,7 +4327,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 			}else{
 				cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 			}
-		ISP_LOGI("AE_SET_HDR: hdr_enable %d", cxt->hdr_enable);
+		ISP_LOGI("AE_SET_HDR: hdr_enable %d, base_ae_idx %d", cxt->hdr_enable, cxt->hdr_base_ae_idx);
 		}
 		break;
 	case AE_GET_FLASH_WB_GAIN:
