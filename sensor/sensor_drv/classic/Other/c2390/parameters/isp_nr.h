@@ -10,6 +10,7 @@ static struct sensor_nr_level_map_param s_c2390_default_nr_level_map_param = {{
 }};
 
 static struct sensor_nr_scene_map_param s_c2390_nr_scene_map_param = {{
+	
 	0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
 	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 }};

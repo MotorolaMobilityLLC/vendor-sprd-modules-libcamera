@@ -22,6 +22,7 @@
 
 #include "sensor_raw.h"
 
+
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
@@ -39,7 +40,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.1301 */
+/* IspToolVersion=R1.17.0501 */
 
 
 /* Capture Sizes:
@@ -73,19 +74,6 @@ static struct sensor_raw_resolution_info_tab s_c2390_trim_info=
 
 static struct sensor_raw_ioctrl s_c2390_ioctrl=
 {
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
 	0,
 	0,
 	0
