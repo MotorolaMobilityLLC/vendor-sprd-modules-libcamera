@@ -33,9 +33,15 @@ using namespace android;
 namespace sprdcamera {
 
 SprdCamera3Wrapper::SprdCamera3Wrapper() {
+#ifdef CONFIG_RANGEFINDER_SUPPORT
     SprdCamera3RangeFinder::getCameraRangeFinder(&mRangeFinder);
+#endif
+#ifdef CONFIG_STEREOVIDEO_SUPPORT
     SprdCamera3StereoVideo::getCameraMuxer(&mStereoVideo);
+#endif
+#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
     SprdCamera3Capture::getCameraCapture(&mCapture);
+#endif
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper() {}
@@ -56,15 +62,21 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
     HAL_LOGD("id= %d", atoi(id));
 
     switch (atoi(id)) {
+#ifdef CONFIG_STEREOVIDEO_SUPPORT
     case MODE_3D_VIDEO:
         rc = mStereoVideo->camera_device_open(module, id, hw_device);
         return rc;
+#endif
+#ifdef CONFIG_RANGEFINDER_SUPPORT
     case MODE_RANGE_FINDER:
         rc = mRangeFinder->camera_device_open(module, id, hw_device);
         return rc;
+#endif
+#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
     case MODE_3D_CAPTURE:
         rc = mCapture->camera_device_open(module, id, hw_device);
         return rc;
+#endif
     default:
 
         HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
@@ -82,15 +94,21 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
     HAL_LOGD("id= %d", camera_id);
 
     switch (camera_id) {
+#ifdef CONFIG_STEREOVIDEO_SUPPORT
     case MODE_3D_VIDEO:
         rc = mStereoVideo->get_camera_info(camera_id, info);
         return rc;
+#endif
+#ifdef CONFIG_RANGEFINDER_SUPPORT
     case MODE_RANGE_FINDER:
         rc = mRangeFinder->get_camera_info(camera_id, info);
         return rc;
+#endif
+#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
     case MODE_3D_CAPTURE:
         rc = mCapture->get_camera_info(camera_id, info);
         return rc;
+#endif
     default:
 
         HAL_LOGE("cameraId:%d not supported yet!", camera_id);

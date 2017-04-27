@@ -114,7 +114,7 @@ camera3_callback_ops SprdCamera3RangeFinder::callback_ops_aux = {
  *
  *==========================================================================*/
 SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera mode
 
     mStaticMetadata = NULL;
@@ -126,7 +126,17 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
     mLastWidth = 0;
     mLastHeight = 0;
     m_VirtualCamera.id = 0; // hardcode main camera id here
-    HAL_LOGD("X");
+    memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
+    mDepthWidth = 0;
+    mDepthHeight = 0;
+    memset(mAuxStreams, 0, sizeof(camera3_stream_t) * 3);
+    m_pMainDepthStream = NULL;
+    mConfigStreamNum = 0;
+    mPreviewStreamsNum = 0;
+    mCurrentState = STATE_IDLE;
+    mVcmSteps = 0;
+    mUwDepth = 0;
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -136,7 +146,7 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
  *
  *==========================================================================*/
 SprdCamera3RangeFinder::~SprdCamera3RangeFinder() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mSyncThread = NULL;
     mNotifyListAux.clear();
     mNotifyListMain.clear();
@@ -149,7 +159,7 @@ SprdCamera3RangeFinder::~SprdCamera3RangeFinder() {
         m_pPhyCamera = NULL;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -193,11 +203,11 @@ int SprdCamera3RangeFinder::get_camera_info(__unused int camera_id,
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (info) {
         rc = gRangeFinder->getCameraInfo(info);
     }
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -232,8 +242,8 @@ void SprdCamera3RangeFinder::getDepthImageSize(int inputWidth, int inputHeight,
         *outHeight = 180;
     }
     // TODO:Remove this after depth engine support 16:9
-    *outWidth = 320;
-    *outHeight = 240;
+    *outWidth = 240;
+    *outHeight = 320;
     HAL_LOGD("iw:%d,ih:%d,ow:%d,oh:%d", inputWidth, inputHeight, *outWidth,
              *outHeight);
 }
@@ -324,7 +334,7 @@ int SprdCamera3RangeFinder::closeCameraDevice() {
         sprdCam->dev = NULL;
     }
 
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -343,11 +353,11 @@ int SprdCamera3RangeFinder::initialize(
     const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_RANGEFINDER_ERR();
     rc = gRangeFinder->initialize(callback_ops);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -365,14 +375,14 @@ SprdCamera3RangeFinder::construct_default_request_settings(
     const struct camera3_device *device, int type) {
     const camera_metadata_t *rc;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (!gRangeFinder) {
         HAL_LOGE("Error getting finder");
         return NULL;
     }
     rc = gRangeFinder->constructDefaultRequestSettings(device, type);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -390,12 +400,12 @@ int SprdCamera3RangeFinder::configure_streams(
     camera3_stream_configuration_t *stream_list) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_RANGEFINDER_ERR();
 
     rc = gRangeFinder->configureStreams(device, stream_list);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
@@ -482,100 +492,6 @@ void SprdCamera3RangeFinder::notifyAux(const struct camera3_callback_ops *ops,
 }
 
 /*===========================================================================
- * FUNCTION   :popRequestList
- *
- * DESCRIPTION: popRequestList
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-buffer_handle_t *
-SprdCamera3RangeFinder::popRequestList(List<buffer_handle_t *> &list) {
-    buffer_handle_t *ret = NULL;
-
-    if (list.empty()) {
-        return NULL;
-    }
-    List<buffer_handle_t *>::iterator j = list.begin();
-    ret = *j;
-    list.erase(j);
-
-    return ret;
-}
-/*===========================================================================
- * FUNCTION   :validateCaptureRequest
- *
- * DESCRIPTION: validate request received from framework
- *
- * PARAMETERS :
- *  @request:   request received from framework
- *
- * RETURN     :
- *  NO_ERROR if the request is normal
- *  BAD_VALUE if the request if improper
- *==========================================================================*/
-int SprdCamera3RangeFinder::validateCaptureRequest(
-    camera3_capture_request_t *request) {
-    size_t idx = 0;
-    const camera3_stream_buffer_t *b = NULL;
-
-    /* Sanity check the request */
-    if (request == NULL) {
-        HAL_LOGE("NULL capture request");
-        return BAD_VALUE;
-    }
-
-    uint32_t frameNumber = request->frame_number;
-    if (request->num_output_buffers < 1 || request->output_buffers == NULL) {
-        HAL_LOGE("Request %d: No output buffers provided!", frameNumber);
-        return BAD_VALUE;
-    }
-
-    if (request->input_buffer != NULL) {
-        b = request->input_buffer;
-        if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            HAL_LOGE("Request %d: Buffer %zu: Status not OK!", frameNumber,
-                     idx);
-            return BAD_VALUE;
-        }
-        if (b->release_fence != -1) {
-            HAL_LOGE("Request %d: Buffer %zu: Has a release fence!",
-                     frameNumber, idx);
-            return BAD_VALUE;
-        }
-        if (b->buffer == NULL) {
-            HAL_LOGE("Request %d: Buffer %zu: NULL buffer handle!", frameNumber,
-                     idx);
-            return BAD_VALUE;
-        }
-    }
-
-    // Validate all output buffers
-    b = request->output_buffers;
-    do {
-        if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            HAL_LOGE("Request %d: Buffer %zu: Status not OK!", frameNumber,
-                     idx);
-            return BAD_VALUE;
-        }
-        if (b->release_fence != -1) {
-            HAL_LOGE("Request %d: Buffer %zu: Has a release fence!",
-                     frameNumber, idx);
-            return BAD_VALUE;
-        }
-        if (b->buffer == NULL) {
-            HAL_LOGE("Request %d: Buffer %zu: NULL buffer handle!", frameNumber,
-                     idx);
-            return BAD_VALUE;
-        }
-        idx++;
-        b = request->output_buffers + idx;
-    } while (idx < (size_t)request->num_output_buffers);
-
-    return NO_ERROR;
-}
-/*===========================================================================
  * FUNCTION   : cameraDeviceOpen
  *
  * DESCRIPTION: open a camera device with its ID
@@ -632,7 +548,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================
@@ -651,7 +567,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
 int SprdCamera3RangeFinder::getCameraInfo(struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
-    HAL_LOGD("E, camera_id = %d", camera_id);
+    HAL_LOGI("E, camera_id = %d", camera_id);
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -665,7 +581,7 @@ int SprdCamera3RangeFinder::getCameraInfo(struct camera_info *info) {
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================
@@ -690,89 +606,6 @@ int SprdCamera3RangeFinder::setupPhysicalCameras() {
 
     return NO_ERROR;
 }
-/*===========================================================================
- * FUNCTION   :getStreamType
- *
- * DESCRIPTION: return stream type
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int SprdCamera3RangeFinder::getStreamType(camera3_stream_t *new_stream) {
-    int stream_type = 0;
-    int format = new_stream->format;
-    if (new_stream->stream_type == CAMERA3_STREAM_OUTPUT) {
-        if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
-            format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-
-        switch (format) {
-        case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-            if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
-                stream_type = VIDEO_STREAM;
-            } else if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
-                stream_type = CALLBACK_STREAM;
-            } else {
-                stream_type = PREVIEW_STREAM;
-            }
-            break;
-        case HAL_PIXEL_FORMAT_YV12:
-        case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
-                stream_type = DEFAULT_STREAM;
-            }
-            break;
-        case HAL_PIXEL_FORMAT_BLOB:
-            stream_type = SNAPSHOT_STREAM;
-            break;
-        default:
-            stream_type = DEFAULT_STREAM;
-            break;
-        }
-    } else if (new_stream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
-        stream_type = CALLBACK_STREAM;
-    }
-
-    return stream_type;
-}
-
-/*===========================================================================
- * FUNCTION   :matchTwoFrame
- *
- * DESCRIPTION: matchTwoFrame
- *
- * PARAMETERS : result1: success match  result.
-              list_type: main camera or aux camera list
- *              result2: output data,match  result with result1.
- *
- * RETURN     : MATCH_FAILED
- *              MATCH_SUCCESS
- *==========================================================================*/
-
-bool SprdCamera3RangeFinder::matchTwoFrame(hwi_frame_buffer_info_t result1,
-                                           List<hwi_frame_buffer_info_t> &list,
-                                           hwi_frame_buffer_info_t *result2) {
-    List<hwi_frame_buffer_info_t>::iterator itor2;
-    if (list.empty()) {
-        HAL_LOGV("match failed for idx:%d, unmatched queue is empty",
-                 result1.frame_number);
-        return MATCH_FAILED;
-    } else {
-        itor2 = list.begin();
-        while (itor2 != list.end()) {
-            int64_t tmp = result1.timestamp - itor2->timestamp;
-            if (abs((cmr_s32)tmp) <= FINDER_TIME_DIFF) {
-                *result2 = *itor2;
-                list.erase(itor2);
-                return MATCH_SUCCESS;
-            }
-            itor2++;
-        }
-        HAL_LOGV("match failed for idx:%d, could not find matched frame",
-                 result1.frame_number);
-        return MATCH_FAILED;
-    }
-}
 
 /*===========================================================================
  * FUNCTION   :SyncThread
@@ -784,12 +617,12 @@ bool SprdCamera3RangeFinder::matchTwoFrame(hwi_frame_buffer_info_t result1,
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::SyncThread::SyncThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mSyncMsgList.clear();
     mGetNewestFrameForMeasure = false;
-
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
+
 /*===========================================================================
  * FUNCTION   :~~SyncThread
  *
@@ -800,9 +633,9 @@ SprdCamera3RangeFinder::SyncThread::SyncThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::SyncThread::~SyncThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mSyncMsgList.clear();
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -852,6 +685,7 @@ bool SprdCamera3RangeFinder::SyncThread::threadLoop() {
 
     return true;
 }
+
 /*===========================================================================
  * FUNCTION   :requestExit
  *
@@ -867,6 +701,7 @@ void SprdCamera3RangeFinder::SyncThread::requestExit() {
     mSyncMsgList.push_back(sync_msg);
     mMergequeueSignal.signal();
 }
+
 /*===========================================================================
  * FUNCTION   :waitMsgAvailable
  *
@@ -885,30 +720,6 @@ void SprdCamera3RangeFinder::SyncThread::waitMsgAvailable() {
 }
 
 /*===========================================================================
- * FUNCTION   :dumpFps
- *
- * DESCRIPTION: dump frame rate
- *
- * PARAMETERS : none
- *
- * RETURN     : None
- *==========================================================================*/
-void SprdCamera3RangeFinder::SyncThread::dumpFps() {
-    mVFrameCount++;
-    int64_t now = systemTime();
-    int64_t diff = now - mVLastFpsTime;
-    if (diff > ms2ns(250)) {
-        mVFps =
-            (((double)(mVFrameCount - mVLastFrameCount)) * (double)(s2ns(1))) /
-            (double)diff;
-        HAL_LOGD("[KPI Perf]: PROFILE_3D_VIDEO_FRAMES_PER_SECOND: %.4f ",
-                 mVFps);
-        mVLastFpsTime = now;
-        mVLastFrameCount = mVFrameCount;
-    }
-}
-
-/*===========================================================================
  * FUNCTION   :MeasureThread
  *
  * DESCRIPTION: MeasureThread
@@ -918,24 +729,31 @@ void SprdCamera3RangeFinder::SyncThread::dumpFps() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mCurUwcoods.uwInX1 = 0;
     mCurUwcoods.uwInY1 = 0;
     mCurUwcoods.uwInX2 = 0;
     mCurUwcoods.uwInY2 = 0;
-    mIommuEnabled = 0;
     mMeasureMsgList.clear();
     mLocalBufferList.clear();
     mDepthEngineApi = (depth_engine_api_t *)malloc(sizeof(depth_engine_api_t));
     if (mDepthEngineApi == NULL) {
         HAL_LOGE("mDepthEngineApi malloc failed.");
+    } else {
+        memset(mDepthEngineApi, 0, sizeof(depth_engine_api_t));
+        if (loadDepthEngine() < 0) {
+            HAL_LOGE("load DepthEngine API failed.");
+        }
     }
-    memset(mDepthEngineApi, 0, sizeof(depth_engine_api_t));
-    if (loadDepthEngine() < 0) {
-        HAL_LOGE("load DepthEngine API failed.");
-    }
-    HAL_LOGD("X");
+
+    mLocalBuffer = NULL;
+    mMaxLocalBufferNum = 0;
+    memset(mNativeBuffer, 0,
+           sizeof(native_handle_t *) * MAX_FINDER_QEQUEST_BUF);
+    memset(&mLastPreCoods, 0, sizeof(uw_Coordinate));
+    HAL_LOGI("X");
 }
+
 /*===========================================================================
  * FUNCTION   :~MeasureThread
  *
@@ -946,88 +764,16 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::MeasureThread::~MeasureThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mMeasureMsgList.clear();
     mLocalBufferList.clear();
-    HAL_LOGD("X");
+    if (mDepthEngineApi != NULL) {
+        free(mDepthEngineApi);
+        mDepthEngineApi = NULL;
+    }
+    HAL_LOGI("X");
 }
 
-/*===========================================================================
- * FUNCTION   :allocateOne
- *
- * DESCRIPTION: deconstructor of allocateOne
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int SprdCamera3RangeFinder::MeasureThread::allocateOne(int w, int h,
-                                                       uint32_t is_cache,
-                                                       new_mem_t *new_mem) {
-
-    int result = 0;
-    size_t mem_size = 0;
-    MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
-
-    mem_size = w * h * 3 / 2;
-    // to make it page size aligned
-    //  mem_size = (mem_size + 4095U) & (~4095U);
-
-    if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_MM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM);
-        }
-    } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM);
-        }
-    }
-
-    if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
-        HAL_LOGE("pHeapIon is null or getHeapID failed");
-        goto getpmem_fail;
-    }
-
-    if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
-        HAL_LOGE("error getBase is null.");
-        goto getpmem_fail;
-    }
-
-    buffer =
-        new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION, 0x130,
-                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
-
-    buffer->share_fd = pHeapIon->getHeapID();
-    buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->byte_stride = w;
-    buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->width = w;
-    buffer->height = h;
-    buffer->stride = w;
-    buffer->internalWidth = w;
-    buffer->internalHeight = h;
-
-    new_mem->native_handle = buffer;
-    new_mem->pHeapIon = pHeapIon;
-
-    HAL_LOGD("X");
-
-    return result;
-
-getpmem_fail:
-    delete pHeapIon;
-
-    return -1;
-}
 /*===========================================================================
  * FUNCTION   :requestExit
  *
@@ -1057,18 +803,13 @@ void SprdCamera3RangeFinder::MeasureThread::requestExit() {
  *
  * RETURN             :  NONE
  *==========================================================================*/
-void SprdCamera3RangeFinder::MeasureThread::freeLocalBuffer(
-    new_mem_t *mLocalBuffer) {
+void SprdCamera3RangeFinder::freeLocalBuffer() {
 
-    mLocalBufferList.clear();
-    for (size_t i = 0; i < mMaxLocalBufferNum; i++) {
-        if (mLocalBuffer[i].native_handle != NULL) {
-            delete ((private_handle_t *)*(&(mLocalBuffer[i].native_handle)));
-            delete mLocalBuffer[i].pHeapIon;
-            mLocalBuffer[i].native_handle = NULL;
-        }
+    mMeasureThread->mLocalBufferList.clear();
+    for (size_t i = 0; i < mMeasureThread->mMaxLocalBufferNum; i++) {
+        freeOneBuffer(&(mMeasureThread->mLocalBuffer[i]));
     }
-    free(mLocalBuffer);
+    mMeasureThread->mLocalBuffer = NULL;
 }
 
 /*===========================================================================
@@ -1090,7 +831,7 @@ bool SprdCamera3RangeFinder::MeasureThread::threadLoop() {
         sync_msg = *itor1;
         mMeasureMsgList.erase(itor1);
         if (sync_msg.msg_type == MSG_EXIT) {
-            freeLocalBuffer(mLocalBuffer);
+            gRangeFinder->freeLocalBuffer();
             mMeasureMsgList.clear();
             return false;
         }
@@ -1138,7 +879,7 @@ void SprdCamera3RangeFinder::MeasureThread::waitMsgAvailable() {
  *==========================================================================*/
 int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     mDepthEngineApi->handle = dlopen(DEPTH_ENGINE_PATH, RTLD_NOW);
     if (mDepthEngineApi->handle == NULL) {
         HAL_LOGE("open depth engine API failed.error");
@@ -1170,7 +911,7 @@ int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
                            unsigned short a_uwInImageHeight))
             dlsym(mDepthEngineApi->handle, "alSDE2_HolelessPolish");
 
-    HAL_LOGD("load depth engine Api succuss.");
+    HAL_LOGI("load depth engine Api succuss.");
 
     return 0;
 }
@@ -1211,11 +952,14 @@ int SprdCamera3RangeFinder::MeasureThread::depthAlgoSanityCheck() {
 int SprdCamera3RangeFinder::MeasureThread::depthEngineInit() {
     int rc = NO_ERROR;
     gRangeFinder->mCurrentState = STATE_IDLE;
-    gRangeFinder->mMeasureThread->run(NULL);
-    gRangeFinder->mSyncThread->run(NULL);
+    gRangeFinder->mMeasureThread->run(
+        String8::format("RangeFinder-Measure").string());
+    gRangeFinder->mSyncThread->run(
+        String8::format("RangeFinder-Sync").string());
 
     return rc;
 }
+
 /*===========================================================================
  * FUNCTION   :measurePointChanged
  *
@@ -1333,16 +1077,19 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     }
     HAL_LOGD("calculate depth value for frame number:%d",
              combDepthResult->frame_number);
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+    int dPVImgW = ADP_WIDTH(*input_buf1);
+    int dPVImgH = ADP_HEIGHT(*input_buf1);
 
+#else
     int dPVImgW = ((private_handle_t *)*(input_buf1))->width;
     int dPVImgH = ((private_handle_t *)*(input_buf1))->height;
+#endif
+
+    void *pucBufMain_YCC420NV21 = gRangeFinder->getBufferAddr(input_buf1);
+    void *pucBufSub_YCC420NV21 = gRangeFinder->getBufferAddr(input_buf2);
 
     vcmSteps = combDepthResult->vcmSteps;
-    void *pucBufMain_YCC420NV21 =
-        (void *)((private_handle_t *)*(input_buf1))->base;
-    void *pucBufSub_YCC420NV21 =
-        (void *)((private_handle_t *)*(input_buf2))->base;
-
     puwDisparityBuf = new unsigned short[dPVImgW * dPVImgH * 2];
     if (puwDisparityBuf == NULL) {
         rc = NO_MEMORY;
@@ -1356,13 +1103,13 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     }
 
     auxRotate = new unsigned char[dPVImgW * dPVImgH * 3 / 2];
-    if (mainRotate == NULL) {
+    if (auxRotate == NULL) {
         rc = NO_MEMORY;
         goto MEM_AUX_FAILED;
     }
 
     disparityRotate = new unsigned short[dPVImgW * dPVImgH * 2];
-    if (mainRotate == NULL) {
+    if (disparityRotate == NULL) {
         rc = NO_MEMORY;
         goto MEM_DISPROT_FAILED;
     }
@@ -1488,23 +1235,22 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     }
 
 #if IMG_DUMP_DEBUG
-    addr =
-        (void *)((struct private_handle_t *)*(combDepthResult->buffer1))->base;
+    addr = getBufferAddr(combDepthResult->buffer1);
 
-    size = ((struct private_handle_t *)*(combDepthResult->buffer1))->size;
+    size = getBufferSize(combDepthResult->buffer1);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 1);
 
-    addr =
-        (void *)((struct private_handle_t *)*(combDepthResult->buffer2))->base;
-    size = ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+    addr = getBufferAddr(combDepthResult->buffer2);
+
+    size = getBufferSize(combDepthResult->buffer2);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 2);
 
     addr = (void *)mainRotate;
-    size = ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+    size = getBufferSize(combDepthResult->buffer2);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 3);
 
     addr = (void *)auxRotate;
-    size = ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+    size = getBufferSize(combDepthResult->buffer2);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 4);
 #endif
 
@@ -1531,13 +1277,14 @@ getpmem_fail:
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3RangeFinder::dump(const struct camera3_device *device, int fd) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_FINDER();
 
     gRangeFinder->_dump(device, fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
+
 /*===========================================================================
  * FUNCTION   :flush
  *
@@ -1550,15 +1297,16 @@ void SprdCamera3RangeFinder::dump(const struct camera3_device *device, int fd) {
 int SprdCamera3RangeFinder::flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_RANGEFINDER_ERR();
 
     rc = gRangeFinder->_flush(device);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
+
 /*===========================================================================
  * FUNCTION   :initialize
  *
@@ -1575,7 +1323,7 @@ int SprdCamera3RangeFinder::initialize(
         m_pPhyCamera[RANGE_CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
     mNotifyListAux.clear();
@@ -1589,6 +1337,7 @@ int SprdCamera3RangeFinder::initialize(
     mPreviewStreamsNum = 0;
     mConfigStreamNum = 0;
     mVcmSteps = 0;
+    SprdCamera3MultiBase::initialize(callback_ops);
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
         HAL_LOGE("Error main camera while initialize !! ");
@@ -1616,7 +1365,7 @@ int SprdCamera3RangeFinder::initialize(
 
     mCallbackOps = callback_ops;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -1632,7 +1381,7 @@ int SprdCamera3RangeFinder::initialize(
 int SprdCamera3RangeFinder::configureStreams(
     const struct camera3_device *device,
     camera3_stream_configuration_t *stream_list) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     int rc = NO_ERROR;
     camera3_stream_t *newStream = NULL;
@@ -1659,13 +1408,12 @@ int SprdCamera3RangeFinder::configureStreams(
             if ((mLastWidth != w || mLastHeight != h) &&
                 (mLastWidth != 0 || mLastHeight != 0)) {
                 HAL_LOGE("free Local Buffer");
-                mMeasureThread->freeLocalBuffer(mMeasureThread->mLocalBuffer);
+                freeLocalBuffer();
             }
             getDepthImageSize(w, h, &mDepthWidth, &mDepthHeight);
             for (size_t j = 0; j < mMeasureThread->mMaxLocalBufferNum;) {
-                int tmp = mMeasureThread->allocateOne(
-                    mDepthWidth, mDepthHeight, 1,
-                    &(mMeasureThread->mLocalBuffer[j]));
+                int tmp = allocateOne(mDepthWidth, mDepthHeight, 1,
+                                      &(mMeasureThread->mLocalBuffer[j]));
                 if (tmp < 0) {
                     HAL_LOGE("request one buf failed.");
                     continue;
@@ -1736,6 +1484,7 @@ int SprdCamera3RangeFinder::configureStreams(
 
     return rc;
 }
+
 /*===========================================================================
  * FUNCTION   :constructDefaultRequestSettings
  *
@@ -1748,7 +1497,7 @@ int SprdCamera3RangeFinder::configureStreams(
 const camera_metadata_t *
 SprdCamera3RangeFinder::constructDefaultRequestSettings(
     const struct camera3_device *device, int type) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     const camera_metadata_t *fwk_metadata = NULL;
 
     SprdCamera3HWI *hw = m_pPhyCamera[RANGE_CAM_TYPE_MAIN].hwi;
@@ -1773,7 +1522,7 @@ SprdCamera3RangeFinder::constructDefaultRequestSettings(
                SPRD_DUAL_OTP_SIZE);
         checkOtpInfo();
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return fwk_metadata;
 }
 
@@ -1813,7 +1562,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
         sizeof(camera3_stream_buffer_t) * (req_main.num_output_buffers));
     if (!out_streams_main) {
         HAL_LOGE("failed");
-        return -1;
+        goto mem_fail;
     }
     memset(out_streams_main, 0x00,
            (sizeof(camera3_stream_buffer_t)) * (req_main.num_output_buffers));
@@ -1829,7 +1578,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
     out_streams_main[1].release_fence = -1;
     if (NULL == out_streams_main[1].buffer) {
         HAL_LOGE("failed, LocalBufferList is empty!");
-        return NO_MEMORY;
+        goto mem_fail;
     }
 
     req_main.output_buffers = out_streams_main;
@@ -1843,7 +1592,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
         (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t));
     if (!out_streams_aux) {
         HAL_LOGE("failed");
-        return NO_MEMORY;
+        goto mem_fail;
     }
     memset(out_streams_aux, 0x00,
            (sizeof(camera3_stream_buffer_t)) * (req_aux.num_output_buffers));
@@ -1855,7 +1604,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
     out_streams_aux[0].acquire_fence = -1;
     if (NULL == out_streams_aux[0].buffer) {
         HAL_LOGE("failed, LocalBufferList is empty!");
-        return NO_MEMORY;
+        goto mem_fail;
     }
 
     req_aux.output_buffers = out_streams_aux;
@@ -1894,7 +1643,20 @@ req_fail:
     }
 
     return rc;
+
+mem_fail:
+    if (NULL != out_streams_main) {
+        free((void *)out_streams_main);
+        out_streams_main = NULL;
+    }
+
+    if (NULL != out_streams_aux) {
+        free((void *)out_streams_aux);
+        out_streams_aux = NULL;
+    }
+    return NO_MEMORY;
 }
+
 /*===========================================================================
  * FUNCTION   :notifyMain
  *
@@ -1936,16 +1698,17 @@ int SprdCamera3RangeFinder::checkOtpInfo() { return 0; }
  *==========================================================================*/
 void SprdCamera3RangeFinder::processCaptureResultMain(
     camera3_capture_result_t *result) {
-    uint64_t result_timestamp;
+    uint64_t result_timestamp = 0;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
-    CameraMetadata metadata;
-    metadata = result->result;
+
     int rc = NO_ERROR;
     int test = 0;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
 
     if (result_buffer == NULL) {
+        CameraMetadata metadata;
+        metadata = result->result;
         {
             Mutex::Autolock l(mVcmLockAux);
             HAL_LOGD("step:%d",
@@ -1954,16 +1717,21 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
         }
 
         if (mUwDepth != 0) {
+
             metadata.update(ANDROID_SPRD_3D_RANGEFINDER_DISTANCE, &mUwDepth, 1);
-            result->result = metadata.release();
+            camera3_capture_result_t new_result = *result;
+            new_result.result = metadata.release();
+            mCallbackOps->process_capture_result(mCallbackOps, &new_result);
             {
                 Mutex::Autolock l(mDepthVauleLock);
                 mUwDepth = 0;
             }
+            free_camera_metadata(
+                const_cast<camera_metadata_t *>(new_result.result));
+            return;
         }
 
         mCallbackOps->process_capture_result(mCallbackOps, result);
-
         return;
     }
 
@@ -2056,6 +1824,7 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
 
     return;
 }
+
 /*===========================================================================
  * FUNCTION   :notifyAux
  *
@@ -2069,6 +1838,7 @@ void SprdCamera3RangeFinder::notifyAux(const camera3_notify_msg_t *msg) {
     Mutex::Autolock l(mNotifyLockAux);
     mNotifyListAux.push_back(*msg);
 }
+
 /*===========================================================================
  * FUNCTION   :processCaptureResultAux
  *
@@ -2080,7 +1850,7 @@ void SprdCamera3RangeFinder::notifyAux(const camera3_notify_msg_t *msg) {
  *==========================================================================*/
 void SprdCamera3RangeFinder::processCaptureResultAux(
     const camera3_capture_result_t *result) {
-    uint64_t result_timestamp;
+    uint64_t result_timestamp = 0;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
 
@@ -2180,40 +1950,9 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
 void SprdCamera3RangeFinder::_dump(const struct camera3_device *device,
                                    int fd) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
-    HAL_LOGD("X");
-}
-/*===========================================================================
- * FUNCTION   :dump
- *
- * DESCRIPTION: dump image data
- *
- * PARAMETERS : void*
- *                        int
- *                        int
- * RETURN     : None
- *==========================================================================*/
-void SprdCamera3RangeFinder::dumpImg(void *addr, int size, int frameId,
-                                     int flag) {
-
-    HAL_LOGD(" E");
-    char name[128];
-    snprintf(name, sizeof(name), "/data/misc/media/%d_%d_%d.yuv", size, frameId,
-             flag);
-
-    FILE *file_fd = fopen(name, "w");
-
-    if (file_fd == NULL) {
-        HAL_LOGE("open yuv file fail!\n");
-    }
-    int count = fwrite(addr, 1, size, file_fd);
-    if (count != size) {
-        HAL_LOGE("write dst.yuv fail\n");
-    }
-    fclose(file_fd);
-
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -2245,135 +1984,5 @@ int SprdCamera3RangeFinder::_flush(const struct camera3_device *device) {
         }
     }
     return rc;
-}
-/*===========================================================================
- * FUNCTION   :pushToUnmatchedQueue
- *
- * DESCRIPTION:
- *
- * PARAMETERS : none
- *
- * RETURN     : None
- *==========================================================================*/
-hwi_frame_buffer_info_t *SprdCamera3RangeFinder::pushToUnmatchedQueue(
-    hwi_frame_buffer_info_t new_buffer_info,
-    List<hwi_frame_buffer_info_t> &queue) {
-    hwi_frame_buffer_info_t *pushout = NULL;
-    HAL_LOGD("pushToUnmatchedQueue list size=%zu", queue.size());
-    if (queue.size() == MAX_UNMATCHED_QUEUE_SIZE) {
-        pushout = new hwi_frame_buffer_info_t;
-        List<hwi_frame_buffer_info_t>::iterator i = queue.begin();
-        *pushout = *i;
-        queue.erase(i);
-    }
-    queue.push_back(new_buffer_info);
-
-    return pushout;
-}
-
-bool SprdCamera3RangeFinder::DepthRotateCCW90(uint16_t *a_uwDstBuf,
-                                              uint16_t *a_uwSrcBuf,
-                                              uint16_t a_uwSrcWidth,
-                                              uint16_t a_uwSrcHeight,
-                                              uint32_t a_udFileSize) {
-    int x, y, nw, nh;
-    uint16_t *dst;
-    if (!a_uwSrcBuf || !a_uwDstBuf || a_uwSrcWidth <= 0 || a_uwSrcHeight <= 0)
-        return false;
-
-    nw = a_uwSrcHeight;
-    nh = a_uwSrcWidth;
-    for (x = 0; x < nw; x++) {
-        dst = a_uwDstBuf + (nh - 1) * nw + x;
-        for (y = 0; y < nh; y++, dst -= nw) {
-            *dst = *a_uwSrcBuf++;
-        }
-    }
-    return true;
-}
-
-bool SprdCamera3RangeFinder::DepthRotateCCW180(uint16_t *a_uwDstBuf,
-                                               uint16_t *a_uwSrcBuf,
-                                               uint16_t a_uwSrcWidth,
-                                               uint16_t a_uwSrcHeight,
-                                               uint32_t a_udFileSize) {
-    int x, y, nw, nh;
-    uint16_t *dst;
-    int n = 0;
-    if (!a_uwSrcBuf || !a_uwDstBuf || a_uwSrcWidth <= 0 || a_uwSrcHeight <= 0)
-        return false;
-
-    for (int j = a_uwSrcHeight - 1; j >= 0; j--) {
-        for (int i = a_uwSrcWidth - 1; i >= 0; i--) {
-            a_uwDstBuf[n++] = a_uwSrcBuf[a_uwSrcWidth * j + i];
-        }
-    }
-
-    return true;
-}
-
-bool SprdCamera3RangeFinder::NV21Rotate90(uint8_t *a_ucDstBuf,
-                                          uint8_t *a_ucSrcBuf,
-                                          uint16_t a_uwSrcWidth,
-                                          uint16_t a_uwSrcHeight,
-                                          uint32_t a_udFileSize) {
-    int k, x, y, nw, nh;
-    uint8_t *dst;
-
-    nw = a_uwSrcHeight;
-    nh = a_uwSrcWidth;
-    // rotate Y
-    k = 0;
-    for (x = nw - 1; x >= 0; x--) {
-        dst = a_ucDstBuf + x;
-        for (y = 0; y < nh; y++, dst += nw) {
-            *dst = a_ucSrcBuf[k++];
-        }
-    }
-
-    // rotate cbcr
-    k = nw * nh * 3 / 2 - 1;
-    for (x = a_uwSrcWidth - 1; x > 0; x = x - 2) {
-        for (y = 0; y < a_uwSrcHeight / 2; y++) {
-            a_ucDstBuf[k] = a_ucSrcBuf[(a_uwSrcWidth * a_uwSrcHeight) +
-                                       (y * a_uwSrcWidth) + x];
-            k--;
-            a_ucDstBuf[k] = a_ucSrcBuf[(a_uwSrcWidth * a_uwSrcHeight) +
-                                       (y * a_uwSrcWidth) + (x - 1)];
-            k--;
-        }
-    }
-
-    return true;
-}
-
-bool SprdCamera3RangeFinder::NV21Rotate180(uint8_t *a_ucDstBuf,
-                                           uint8_t *a_ucSrcBuf,
-                                           uint16_t a_uwSrcWidth,
-                                           uint16_t a_uwSrcHeight,
-                                           uint32_t a_udFileSize) {
-    int n = 0;
-    int hw = a_uwSrcWidth / 2;
-    int hh = a_uwSrcHeight / 2;
-    // copy y
-    for (int j = a_uwSrcHeight - 1; j >= 0; j--) {
-        for (int i = a_uwSrcWidth - 1; i >= 0; i--) {
-            a_ucDstBuf[n++] = a_ucSrcBuf[a_uwSrcWidth * j + i];
-        }
-    }
-
-    // copy uv
-    unsigned char *ptemp = a_ucSrcBuf + a_uwSrcWidth * a_uwSrcHeight;
-    for (int j = hh - 1; j >= 0; j--) {
-        for (int i = a_uwSrcWidth - 1; i >= 0; i--) {
-            if (i & 0x01) {
-                a_ucDstBuf[n + 1] = ptemp[a_uwSrcWidth * j + i];
-            } else {
-                a_ucDstBuf[n] = ptemp[a_uwSrcWidth * j + i];
-                n += 2;
-            }
-        }
-    }
-    return true;
 }
 };

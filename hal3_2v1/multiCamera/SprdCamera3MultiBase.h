@@ -26,8 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef SPRDCAMERAWRAPPER_H_HEADER
-#define SPRDCAMERAWRAPPER_H_HEADER
+#ifndef SPRDCAMERAMULTIBASE_H_HEADER
+#define SPRDCAMERAMULTIBASE_H_HEADER
 
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -41,58 +41,54 @@
 #include <hardware/camera.h>
 #include <system/camera.h>
 #include <sys/mman.h>
+#include <sprd_ion.h>
+#include <gralloc_priv.h>
+#include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
-#ifdef CONFIG_STEREOVIDEO_SUPPORT
-#include "SprdCamera3StereoVideo.h"
-#endif
-#ifdef CONFIG_STEREOPREVIEW_SUPPORT
-#include "SprdCamera3StereoPreview.h"
-#endif
-#ifdef CONFIG_RANGEFINDER_SUPPORT
-#include "SprdCamera3RangeFinder.h"
-#endif
-#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
-#include "SprdCamera3Capture.h"
-#endif
-#ifdef CONFIG_BLUR_SUPPORT
-#include "SprdCamera3Blur.h"
-#endif
-#ifdef CONFIG_COVERED_SENSOR
-#include "SprdCamera3SelfShot.h"
-#include "SprdCamera3PageTurn.h"
-#endif
+#include "ts_makeup_api.h"
+#include "SprdMultiCam3Common.h"
 
 namespace sprdcamera {
 
-class SprdCamera3Wrapper {
+class SprdCamera3MultiBase {
   public:
-    SprdCamera3Wrapper();
-    virtual ~SprdCamera3Wrapper();
-    static void getCameraWrapper(SprdCamera3Wrapper **pWrapper);
-    int cameraDeviceOpen(__unused const struct hw_module_t *module,
-                         const char *id, struct hw_device_t **hw_device);
-    int getCameraInfo(int camera_id, struct camera_info *info);
+    SprdCamera3MultiBase();
+    virtual ~SprdCamera3MultiBase();
+
+    virtual int allocateOne(int w, int h, uint32_t is_cache,
+                            new_mem_t *new_mem);
+    virtual void freeOneBuffer(new_mem_t *buffer);
+    virtual int validateCaptureRequest(camera3_capture_request_t *request);
+    virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
+    virtual uint8_t getCoveredValue(CameraMetadata &frame_settings,
+                                    SprdCamera3HWI *hwiSub);
+
+    virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
+
+    virtual int getStreamType(camera3_stream_t *new_stream);
+    virtual void dumpFps();
+    virtual void dumpData(unsigned char *addr, int type, int size, int param1,
+                          int param2);
+    virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
+                               List<hwi_frame_buffer_info_t> &list,
+                               hwi_frame_buffer_info_t *result2);
+    virtual hwi_frame_buffer_info_t *
+    pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
+                         List<hwi_frame_buffer_info_t> &queue);
+
+#ifdef CONFIG_FACE_BEAUTY
+    virtual void doFaceMakeup(struct camera_frame_type *frame,
+                              int perfect_level, int *face_info);
+
+    virtual void convert_face_info(int *ptr_cam_face_inf, int width,
+                                   int height);
+#endif
 
   private:
-#ifdef CONFIG_STEREOVIDEO_SUPPORT
-    SprdCamera3StereoVideo *mStereoVideo;
-#endif
-#ifdef CONFIG_STEREOPREVIEW_SUPPORT
-    SprdCamera3StereoPreview *mStereoPreview;
-#endif
-#ifdef CONFIG_RANGEFINDER_SUPPORT
-    SprdCamera3RangeFinder *mRangeFinder;
-#endif
-#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
-    SprdCamera3Capture *mCapture;
-#endif
-#ifdef CONFIG_BLUR_SUPPORT
-    SprdCamera3Blur *mBlur;
-#endif
-#ifdef CONFIG_COVERED_SENSOR
-    SprdCamera3SelfShot *mSelfShot;
-    SprdCamera3PageTurn *mPageturn;
-#endif
+    bool mIommuEnabled;
+    int mVFrameCount;
+    int mVLastFrameCount;
+    nsecs_t mVLastFpsTime;
 };
-};
+}
 #endif

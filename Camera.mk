@@ -110,14 +110,28 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/SprdCamera3Setting.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp \
-
-ifneq ($(TARGET_BOARD_PLATFORM), $(filter $(TARGET_BOARD_PLATFORM), sp9861e sp9861g))
-LOCAL_SRC_FILES+= \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoVideo.cpp \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoPreview.cpp \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp
+
+ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp
+endif
+
+ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoVideo.cpp
+endif
+
+ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoPreview.cpp
+endif
+
+ifeq ($(strip $(TARGET_BOARD_STEREOCAPTURE_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp
+endif
 #	hal1.0/src/SprdCameraHardwareInterface.cpp \
 #	hal1.0/src/SprdCameraFlash.cpp
 
@@ -132,7 +146,6 @@ LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3SelfShot.cpp
 endif
 
-endif
 endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format

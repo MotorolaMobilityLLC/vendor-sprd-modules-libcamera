@@ -155,6 +155,7 @@ typedef struct {
     MemIon *pHeapIon;
 } new_mem_t;
 
+#ifdef CONFIG_STEREOVIDEO_SUPPORT
 typedef struct {
     struct private_handle_t *left_buf;
     struct private_handle_t *right_buf;
@@ -169,6 +170,7 @@ typedef struct {
     void (*imageStitchingWithGPU)(dcam_info_t *dcam);
     void (*destroyRenderContext)(void);
 } GPUAPI_t;
+#endif
 
 typedef enum {
     /* Main camera device id*/

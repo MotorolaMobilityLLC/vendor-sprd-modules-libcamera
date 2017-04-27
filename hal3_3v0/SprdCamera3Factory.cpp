@@ -57,14 +57,12 @@ SprdCamera3Wrapper *gSprdCamera3Wrapper = NULL;
 SprdCamera3Factory::SprdCamera3Factory() {
     camera_info info;
     mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
-#ifndef CONFIG_GPU_PLATFORM_ROGUE
     if (!gSprdCamera3Wrapper) {
         SprdCamera3Wrapper::getCameraWrapper(&gSprdCamera3Wrapper);
         if (!gSprdCamera3Wrapper) {
             LOGE("Error !! Failed to get SprdCamera3Wrapper");
         }
     }
-#endif
     mStaticMetadata = NULL;
 }
 
@@ -112,16 +110,11 @@ int SprdCamera3Factory::get_number_of_cameras() {
  *==========================================================================*/
 int SprdCamera3Factory::get_camera_info(int camera_id,
                                         struct camera_info *info) {
-#ifndef CONFIG_GPU_PLATFORM_ROGUE
     if (isSingleIdExposeOnMultiCameraMode(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
         return gSprdCamera3Factory.getCameraInfo(
             multiCameraModeIdToPhyId(camera_id), info);
-#else
-    return gSprdCamera3Factory.getCameraInfo(
-        multiCameraModeIdToPhyId(camera_id), info);
-#endif
 }
 
 /*===========================================================================
@@ -282,15 +275,11 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
         return BAD_VALUE;
     }
 
-#ifndef CONFIG_GPU_PLATFORM_ROGUE
     if (isSingleIdExposeOnMultiCameraMode(atoi(id))) {
         return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);
     } else {
         return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
     }
-#else
-    return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
-#endif
 }
 
 struct hw_module_methods_t SprdCamera3Factory::mModuleMethods = {

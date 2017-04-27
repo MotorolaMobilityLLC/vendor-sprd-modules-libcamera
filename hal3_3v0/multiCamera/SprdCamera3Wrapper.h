@@ -41,9 +41,16 @@
 #include <hardware/camera.h>
 #include <system/camera.h>
 #include <sys/mman.h>
+#include "../SprdCamera3HWI.h"
+#ifdef CONFIG_STEREOVIDEO_SUPPORT
 #include "SprdCamera3StereoVideo.h"
+#endif
+#ifdef CONFIG_RANGEFINDER_SUPPORT
 #include "SprdCamera3RangeFinder.h"
+#endif
+#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
 #include "SprdCamera3Capture.h"
+#endif
 
 namespace sprdcamera {
 
@@ -57,9 +64,15 @@ class SprdCamera3Wrapper {
     int getCameraInfo(int camera_id, struct camera_info *info);
 
   private:
+#ifdef CONFIG_STEREOVIDEO_SUPPORT
     SprdCamera3StereoVideo *mStereoVideo;
+#endif
+#ifdef CONFIG_RANGEFINDER_SUPPORT
     SprdCamera3RangeFinder *mRangeFinder;
+#endif
+#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
     SprdCamera3Capture *mCapture;
+#endif
 };
 };
 #endif
