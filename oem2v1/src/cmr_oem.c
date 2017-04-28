@@ -7172,6 +7172,9 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     if (atoi(value)) {
         out_param_ptr->pdaf_eb = 0;
     }
+#if defined(CONFIG_ISP_PDAF_EXTRACTOR)
+    out_param_ptr->pdaf_eb = 0;
+#endif
     haf_enable = out_param_ptr->pdaf_eb;
     CMR_LOGD("haf_enable %d", haf_enable);
 
