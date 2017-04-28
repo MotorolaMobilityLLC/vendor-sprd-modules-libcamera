@@ -13,8 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_PATH := $(call my-dir)
+
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := x86_lib
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdepthengine
@@ -23,7 +28,6 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
-LOCAL_SRC_FILES_32 := lib/libalSDE2.so
-LOCAL_SRC_FILES_64 := lib64/libalSDE2.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libalSDE2.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libalSDE2.so
 include $(BUILD_PREBUILT)
-endif

@@ -16,14 +16,20 @@
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := x86_lib
+endif
+
 include $(CLEAR_VARS)
 LOCAL_MODULE := libalRnBLV
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libalRnBLV.so
-LOCAL_MODULE_STEM_64 := libalRnBLV.so
-LOCAL_SRC_FILES_32 := libalRnBLV.so
-LOCAL_SRC_FILES_64 := libalRnBLV_v8a.so
+LOCAL_MODULE_STEM_32 := $(LIB_PATH)/libalRnBLV.so
+LOCAL_MODULE_STEM_64 := $(LIB_PATH)/libalRnBLV.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libalRnBLV.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)/libalRnBLV_v8a.so
 include $(BUILD_PREBUILT)
 endif
