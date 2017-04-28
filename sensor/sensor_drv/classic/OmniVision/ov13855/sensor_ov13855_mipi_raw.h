@@ -21,8 +21,11 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 //#include "af_dw9718s.h"
-
+#if defined(CONFIG_DUAL_MODULE)
+#include "parameters_dual/sensor_ov13855_raw_param_main.c"
+#else
 #include "parameters/sensor_ov13855_raw_param_main.c"
+#endif
 
 #define SENSOR_NAME "ov13855_mipi_raw"
 #if defined(CONFIG_DUAL_MODULE)
