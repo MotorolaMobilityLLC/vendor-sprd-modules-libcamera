@@ -17,6 +17,8 @@
 #include "lsc_adv.h"
 #include "isp_adpt.h"
 #include <dlfcn.h>
+#include "isp_mw.h"
+
 
 #define SMART_LSC_VERSION 1
 

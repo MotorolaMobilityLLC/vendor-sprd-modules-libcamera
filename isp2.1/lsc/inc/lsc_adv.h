@@ -1,6 +1,9 @@
 #ifndef _ISP_LSC_ADV_H_
 #define _ISP_LSC_ADV_H_
 
+/*----------------------------------------------------------------------------*
+ **				Dependencies				*
+ **---------------------------------------------------------------------------*/
 #ifdef WIN32
 #include "data_type.h"
 #include "win_dummy.h"
@@ -9,11 +12,14 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include <utils/Log.h>
-#include "isp_com.h"
+//#include "isp_com.h"
 #endif
 
 #include "stdio.h"
 
+/**---------------------------------------------------------------------------*
+**				Compiler Flag				*
+**---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,6 +27,9 @@ extern "C" {
 #define max(A,B) (((A) > (B)) ? (A) : (B))
 #define min(A,B) (((A) < (B)) ? (A) : (B))
 
+/**---------------------------------------------------------------------------*
+**				Micro Define				**
+**----------------------------------------------------------------------------*/
 #define LSC_ADV_DEBUG_STR       "[ALSC]: L %d, %s: "
 #define LSC_ADV_DEBUG_ARGS    __LINE__,__FUNCTION__
 
@@ -30,6 +39,9 @@ extern "C" {
 #define LSC_ADV_LOGD(format,...) ALOGD(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGV(format,...) ALOGV(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 
+/**---------------------------------------------------------------------------*
+**				Data Structures 				*
+**---------------------------------------------------------------------------*/
 typedef void *lsc_adv_handle_t;
 
 #define ISP_1_0 	1
@@ -326,9 +338,13 @@ struct lsc2_context {
 	cmr_u32 gain_pattern;
 	cmr_u32 grid;
 
-	cmr_u16 *lsc_tab_address[9];	// the copy of table in parameter file
+	
+	cmr_u16 *lsc_tab_address[9];	  // log the using table address
+	cmr_u16 *lsc_OTP_tab_storage[8];  // the storage to save OTP tab
+	cmr_u16 *lsc_pm0;	              // log the tab0 from pm
+	cmr_u16 *lsc_pm0_with_OTP;	      // log the tab0 from pm used to OTP
 	cmr_u16 *lsc_table_ptr_r;	// storage to save Rfirst table
-	cmr_u16 *tabptr[9];	// address of origianl shading table will be used to interperlation in slsc2
+	cmr_u16 *tabptr[9];	        // address of origianl shading table will be used to interperlation in slsc2
 	cmr_u16 *tabptrPlane[9];	// address R-first shading table ( lsc_table_ptr )
 
 	void *control_param;
@@ -337,6 +353,7 @@ struct lsc2_context {
 	void *alsc2_param;
 	void *lsc1d_param;
 	void* post_shading_gain_param;
+	void* lsc_flash_proc_param;
 
 	// tmp storage
 	cmr_u16 *color_gain_r;
@@ -352,6 +369,18 @@ struct lsc2_context {
 
 	// Copy the dst_gain address
 	cmr_u16 *dst_gain;
+	
+	// otp
+	cmr_u32 lsc_otp_table_flag; // 0 non-OTP, 1 OTP table
+	cmr_u32 lsc_otp_oc_flag;    // 0 no OTP data, 1 OTP data
+	cmr_u32 lsc_otp_oc_r_x;
+	cmr_u32 lsc_otp_oc_r_y;
+	cmr_u32 lsc_otp_oc_gr_x;
+	cmr_u32 lsc_otp_oc_gr_y;
+	cmr_u32 lsc_otp_oc_gb_x;
+	cmr_u32 lsc_otp_oc_gb_y;
+	cmr_u32 lsc_otp_oc_b_x;
+	cmr_u32 lsc_otp_oc_b_y;
 };
 
 ////////////////////////////// calculation dependent //////////////////////////////
@@ -380,7 +409,7 @@ struct lsc_adv_init_param {
 	cmr_u16 *lum_gain;	// space to save pre_table from smart1.0
 	struct lsc_adv_tune_param tune_param;
 
-	//otp data
+	//otp data	
 	cmr_u32 lsc_otp_table_en;
 	cmr_u32 lsc_otp_table_width;
 	cmr_u32 lsc_otp_table_height;
@@ -452,6 +481,9 @@ struct lsc_ctrl_context {
 	struct third_lib_info *lib_info;
 };
 
+/**---------------------------------------------------------------------------*
+**					Data Prototype				**
+**----------------------------------------------------------------------------*/
 typedef lsc_adv_handle_t(*fun_lsc_adv_init) (struct lsc_adv_init_param * param);
 typedef const char *(*fun_lsc_adv_get_ver_str) (lsc_adv_handle_t handle);
 typedef cmr_s32(*fun_lsc_adv_calculation) (lsc_adv_handle_t handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * result);
@@ -476,8 +508,12 @@ cmr_s32 otp_lsc_mod(cmr_u16 * otpLscTabGolden, cmr_u16 * otpLSCTabRandom,	//T1, 
 		    cmr_u16 * otpLscTabGoldenRef,	//Ts1
 		    cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
 		    cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
-
+/**----------------------------------------------------------------------------*
+**					Compiler Flag				**
+**----------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
 #endif
+/**---------------------------------------------------------------------------*/
 #endif
+// End
