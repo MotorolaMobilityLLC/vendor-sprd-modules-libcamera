@@ -27,7 +27,7 @@
 #define MODULE_INFO    s_ov5675_module_info_tab
 #define RES_TAB_RAW    s_ov5675_resolution_tab_raw
 #define RES_TRIM_TAB   s_ov5675_resolution_trim_tab
-#define MIPI_RAW_INFO  g_ov5675_mipi_raw_info
+#define MIPI_RAW_INFO  g_ov5675_dual_mipi_raw_info
 
 static EXIF_SPEC_PIC_TAKING_COND_T s_ov5675_exif_info;
 
@@ -386,10 +386,17 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(1 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-#if defined(CONFIG_DUAL_MODULE)
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
+#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+        hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle,SENSOR_AVDD_2800MV);
+        usleep(5 * 1000);
+#else
+        hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle,SENSOR_AVDD_CLOSED);
 #endif
     } else {
+#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+        hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+#endif
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -397,10 +404,7 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         usleep(1 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-#if defined(CONFIG_DUAL_MODULE)
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
-#endif
-
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
     }
     SENSOR_LOGI("(1:on, 0:off): %d", power_on);
     return SENSOR_SUCCESS;
@@ -767,8 +771,9 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E:module_id=%d",sns_drv_cxt->module_id);
-    if(sns_drv_cxt->module_id == MODULE_SUNNY)
-        ov5675_drv_set_frame_sync(handle, 0);
+#if defined(CONFIG_DUAL_MODULE)
+    ov5675_drv_set_frame_sync(handle, 0);
+#endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     return 0;

@@ -14,13 +14,15 @@
  * limitations under the License.
  * V2.0
  */
+#ifndef _SENSOR_OV13855_MIPI_RAW_H_
+#define _SENSOR_OV13855_MIPI_RAW_H_
 
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-//#include "af_dw9718s.h"
+
 #if defined(CONFIG_DUAL_MODULE)
 #include "parameters_dual/sensor_ov13855_raw_param_main.c"
 #else
@@ -34,6 +36,7 @@
 #define I2C_SLAVE_ADDR 0x6c /* 16bit slave address*/
 #endif
 
+#define VENDOR_NUM 1
 #define BINNING_FACTOR 1
 #define ov13855_PID_ADDR 0x300A
 #define ov13855_PID_VALUE 0x00
@@ -48,6 +51,10 @@
 #define SNAPSHOT_HEIGHT 3136 // 4016
 #define PREVIEW_WIDTH 2112   // 2672
 #define PREVIEW_HEIGHT 1568
+
+/* frame length*/
+#define SNAPSHOT_FRAME_LENGTH 3214
+#define PREVIEW_FRAME_LENGTH 3216
 
 /*Mipi output*/
 #define LANE_NUM 4
@@ -72,6 +79,7 @@
 
 /* please don't change it */
 #define EX_MCLK 24
+#define IMAGE_NORMAL_MIRROR
 
 /*==============================================================================
  * Description:
@@ -81,8 +89,7 @@
 // static uint32_t s_current_default_frame_length;
 // struct sensor_ev_info_t s_sensor_ev_info;
 
-static SENSOR_IOCTL_FUNC_TAB_T s_ov13855_ioctl_func_tab;
-struct sensor_raw_info *s_ov13855_mipi_raw_info_ptr = &s_ov13855_mipi_raw_info;
+
 
 static const SENSOR_REG_T ov13855_init_setting[] = {
     /*mipi 1080Mbps,4224,3136*/
@@ -290,174 +297,185 @@ static const SENSOR_REG_T ov13855_1280x720_setting[] = {
     //    {0x0100,0x01},
 };
 
-/*==============================================================================
- * Description:
- * sensor static info need by isp
- * please modify this variable acording your spec
- *============================================================================*/
-static SENSOR_STATIC_INFO_T s_ov13855_static_info = {
-    .f_num = 200,         // f-number,focal ratio
-    .focal_length = 354,  // focal_length;
-    .max_fps = 0,         // max_fps,max fps of sensor's all settings,it will be
-                          // calculated from sensor mode fps
-    .max_adgain = 15 * 2, // max_adgain,AD-gain
-    .ois_supported = 0,   // ois_supported;
+static SENSOR_STATIC_INFO_T s_ov13855_static_info[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     .static_info = {
+        .f_num = 200,
+        .focal_length = 354,
+        .max_fps = 0,
+        .max_adgain = 15 * 2,
+        .ois_supported = 0,
+        .pdaf_supported = 0,
+
 #ifdef CONFIG_CAMERA_PDAF_TYPE
-	.pdaf_supported = CONFIG_CAMERA_PDAF_TYPE, 				// pdaf_supported;
+        .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
 #else
-		.pdaf_supported = 0,
+        .pdaf_supported = 0,
 #endif
-    .exp_valid_frame_num = 1,    // exp_valid_frame_num;N+2-1
-    .clamp_level = 64,           // clamp_level,black level
-    .adgain_valid_frame_num = 1, // adgain_valid_frame_num;N+1-1
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.614f, 3.444f}, 4.222f}}
+    }
+    /*If there are multiple modules,please add here*/
 };
 
-/*==============================================================================
- * Description:
- * sensor fps info related to sensor mode need by isp
- * please modify this variable acording your spec
- *============================================================================*/
-static SENSOR_MODE_FPS_INFO_T s_ov13855_mode_fps_info = {
-    0, // is_init;
-    {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}};
-
-/*==============================================================================
- * Description:
- * sensor all info
- * please modify this variable acording your spec
- *============================================================================*/
-LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting),0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting),1280,720, 24, SENSOR_IMAGE_FORMAT_RAW},
-    /*{ADDR_AND_LEN_OF_ARRAY(ov13855_1024x768_setting),1024,768,24,SENSOR_IMAGE_FORMAT_RAW},*/
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting),2112,1568,24,SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting),4224,3136,24,SENSOR_IMAGE_FORMAT_RAW },
-    {PNULL,0, 0,0,0,0 },
-    {PNULL,0, 0, 0, 0, 0},
-    {PNULL, 0,0,0, 0, 0},
-    {PNULL,0,0,0, 0, 0},
-    {PNULL,0,0,0,0,0 },
-    {PNULL,0, 0, 0, 0, 0},
-    {PNULL, 0,0,0, 0, 0},
-    {PNULL,0,0,0, 0, 0},
-    {PNULL,0,0,0,0,0 },
+static SENSOR_MODE_FPS_INFO_T s_ov13855_mode_fps_info[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+       {.is_init = 0,
+         {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+         {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+         {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+         {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+         {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+         {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+         {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+         {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+         {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
+    }
+    /*If there are multiple modules,please add here*/
 };
 
-LOCAL SENSOR_TRIM_T s_ov13855_resolution_trim_tab[] = {
-                {0,0, 0, 0, 0,0, 0, {0, 0, 0, 0 }},
-                {0, 0,1280,720,10380,540,1069, {0, 0, 1280,720 }},
-                /*{0,0,1024, 768,10380, 270,804,{ 0, 0, 1024, 768 }}, */
-                { 0, 0, 2112,1568,10380,540,3216, { 0,0, 2112, 1568}},
-                { 0, 0, 4224,3136,10380,1080,3214, { 0,0,4224,3136}},
-                {0,0,0, 0, 0, 0,0,{ 0, 0,  0, 0}},
-                {0, 0,0, 0, 0, 0,0,{ 0, 0, 0, 0 }},
-                {0,0,0,0, 0, 0, 0, { 0, 0, 0,  0}},
-                {0, 0, 0,0,0, 0,0, { 0, 0, 0,  0}},
-                {0, 0, 0, 0,0, 0, 0,{0, 0, 0,  0}},
-                {0,0,0, 0, 0, 0,0,{ 0, 0,  0, 0}},
-                {0, 0,0, 0, 0, 0,0,{ 0, 0, 0, 0 }},
-                {0,0,0,0, 0, 0, 0, { 0, 0, 0,  0}},
-                {0, 0, 0,0,0, 0,0, { 0, 0, 0,  0}},
+static struct sensor_res_tab_info s_ov13855_resolution_tab_raw[VENDOR_NUM] = {
+    {
+      .module_id = MODULE_SUNNY,
+      .reg_tab = {
+        {ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting), PNULL, 0,
+        .width = 0, .height = 0,
+        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+
+        {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting), PNULL, 0,
+        .width = 1280, .height = 720,
+        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+
+        /*{ADDR_AND_LEN_OF_ARRAY(ov13855_1024x768_setting), PNULL, 0,
+        .width = 1024, .height = 768,
+        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}*/
+
+        {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting), PNULL, 0,
+        .width = 2112, .height = 1568,
+        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+
+        {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting), PNULL, 0,
+        .width = 4224, .height = 3136,
+        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
+    }
+/*If there are multiple modules,please add here*/
 };
 
-LOCAL const SENSOR_REG_T
+static SENSOR_TRIM_T s_ov13855_resolution_trim_tab[VENDOR_NUM] = {
+    {
+     .module_id = MODULE_SUNNY,
+     .trim_info = {
+       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+       {.trim_start_x = 0, .trim_start_y = 0,
+        .trim_width = 1280,   .trim_height = 720,
+        .line_time = 10380, .bps_per_lane = 540,
+        .frame_line = 1069,
+        .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
+       /*{
+        .trim_start_x = 0, .trim_start_y = 0,
+        .trim_width = 1024,   .trim_height = 768,
+        .line_time = 10380, .bps_per_lane = 270,
+        .frame_line = 804,
+        .scaler_trim = {.x = 0, .y = 0, .w = 1024, .h = 768}},*/
+       {
+        .trim_start_x = 0,.trim_start_y = 0,
+        .trim_width = 2112,.trim_height = 1568,
+        .line_time = 10380,.bps_per_lane = 540,
+        .frame_line = 3216,
+        .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+       {
+        .trim_start_x = 0, .trim_start_y = 0,
+        .trim_width = 4224,   .trim_height = 3136,
+        .line_time = 10380, .bps_per_lane = 1080,
+        .frame_line = 3214,
+        .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
+      }}
+
+    /*If there are multiple modules,please add here*/
+};
+
+
+static const SENSOR_REG_T
     s_ov13855_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        {/*video mode 0: ?fps */
-         {
-             .reg_addr = 0xffff, .reg_value = 0xff,
-         }},
-        {
-            /* video mode 1:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 2:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 3:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
+    /*video mode 0: ?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+    /* video mode 1:?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+    /* video mode 2:?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+    /* video mode 3:?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
 };
-LOCAL const SENSOR_REG_T
-    s_ov13855_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        {
-            /*video mode 0: ?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 1:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 2:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {/* video mode 3:?fps */
-         {
-             .reg_addr = 0xffff, .reg_value = 0xff,
-         }}};
 
-LOCAL SENSOR_VIDEO_INFO_T s_ov13855_video_info[] = {
-    {
-        .ae_info =
-            {
-                {
-                    .min_frate = 0, .max_frate = 0, .line_time = 0, .gain = 0,
-                },
-            },
-        .setting_ptr = NULL,
-    },
-    {
-        .ae_info =
-            {
-                {
-                    .min_frate = 30,
-                    .max_frate = 30,
-                    .line_time = 270,
-                    .gain = 90,
-                },
-            },
-        .setting_ptr = s_ov13855_preview_size_video_tab,
-    },
-    {
-        .ae_info =
-            {
-                {
-                    .min_frate = 2,
-                    .max_frate = 5,
-                    .line_time = 338,
-                    .gain = 1000,
-                },
-            },
-        .setting_ptr = s_ov13855_capture_size_video_tab,
-    }};
+static const SENSOR_REG_T
+    s_ov13855_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
+    /*video mode 0: ?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+    /* video mode 1:?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+    /* video mode 2:?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+    /* video mode 3:?fps*/
+    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+};
+
+static SENSOR_VIDEO_INFO_T s_ov13855_video_info[SENSOR_MODE_MAX] = {
+    {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
+    {{{30, 30, 270, 90}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+     (SENSOR_REG_T **)s_ov13855_preview_size_video_tab},
+    {{{2, 5, 338, 1000}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+     (SENSOR_REG_T **)s_ov13855_capture_size_video_tab},
+};
+
+
+static struct sensor_module_info s_ov13855_module_info_tab[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     .module_info = {
+         .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
+         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+
+         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                                SENSOR_I2C_FREQ_400,
+
+         .avdd_val = SENSOR_AVDD_2800MV,
+         .iovdd_val = SENSOR_AVDD_1800MV,
+         .dvdd_val = SENSOR_AVDD_1200MV,
+
+         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+
+         .preview_skip_num = 1,
+         .capture_skip_num = 1,
+         .flash_capture_skip_num = 6,
+         .mipi_cap_skip_num = 0,
+         .preview_deci_num = 0,
+         .video_preview_deci_num = 0,
+
+         .threshold_eb = 0,
+         .threshold_mode = 0,
+         .threshold_start = 0,
+         .threshold_end = 0,
+
+         .sensor_interface = {
+              .type = SENSOR_INTERFACE_TYPE_CSI2,
+              .bus_width = 4,
+              .pixel_width = 10,
+              .is_loose = 0,
+          },
+         .change_setting_skip_num = 1,
+         .horizontal_view_angle = 35,
+         .vertical_view_angle = 35
+      }
+    }
+
+/*If there are multiple modules,please add here*/
+};
+
+static struct sensor_ic_ops s_ov13855_ops_tab;
+struct sensor_raw_info *s_ov13855_mipi_raw_info_ptr = &s_ov13855_mipi_raw_info;
 
 SENSOR_INFO_T g_ov13855_mipi_raw_info = {
-    .salve_i2c_addr_w = I2C_SLAVE_ADDR >> 1,
-    .salve_i2c_addr_r = I2C_SLAVE_ADDR >> 1,
-    .reg_addr_value_bits =
-        SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT | SENSOR_I2C_FREQ_400,
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |
                           SENSOR_HW_SIGNAL_HSYNC_P,
     .environment_mode = SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
@@ -467,66 +485,30 @@ SENSOR_INFO_T g_ov13855_mipi_raw_info = {
                     SENSOR_IMAGE_EFFECT_YELLOW | SENSOR_IMAGE_EFFECT_NEGATIVE |
                     SENSOR_IMAGE_EFFECT_CANVAS,
 
-    /* bit[0:7]: count of step in brightness, contrast, sharpness, saturation
-    * bit[8:31] reseved
-    */
     .wb_mode = 0,
     .step_count = 7,
-    .reset_pulse_level =
-        SENSOR_LOW_PULSE_RESET, /*here should be care when bring up*/
+    .reset_pulse_level = SENSOR_LOW_PULSE_RESET,
     .reset_pulse_width = 50,
-    .power_down_level =
-        SENSOR_LOW_LEVEL_PWDN, /*here should be care when bring up*/
+    .power_down_level = SENSOR_LOW_LEVEL_PWDN,
     .identify_count = 1,
     .identify_code =
-        {{
-             .reg_addr = ov13855_PID_ADDR, .reg_value = ov13855_PID_VALUE,
-         },
-         {
-             .reg_addr = ov13855_VER_ADDR, .reg_value = ov13855_VER_VALUE,
-         },
-         {
-             .reg_addr = ov13855_VER_1_ADDR, .reg_value = ov13855_VER_1_VALUE,
-         }
+        {{ .reg_addr = ov13855_PID_ADDR, .reg_value = ov13855_PID_VALUE},
+         { .reg_addr = ov13855_VER_ADDR, .reg_value = ov13855_VER_VALUE},
+         { .reg_addr = ov13855_VER_1_ADDR, .reg_value = ov13855_VER_1_VALUE}},
 
-        },
-    .avdd_val = SENSOR_AVDD_2800MV,
-    .iovdd_val = SENSOR_AVDD_1800MV,
-    .dvdd_val = SENSOR_AVDD_1200MV,
-    .source_width_max = SNAPSHOT_WIDTH,   /* max width of source image */
-    .source_height_max = SNAPSHOT_HEIGHT, /* max height of source image */
+    .source_width_max = SNAPSHOT_WIDTH,
+    .source_height_max = SNAPSHOT_HEIGHT,
     .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+
+    .module_info_tab = s_ov13855_module_info_tab,
+    .module_info_tab_size = ARRAY_SIZE(s_ov13855_module_info_tab),
 
     .resolution_tab_info_ptr = s_ov13855_resolution_tab_raw,
-    .ioctl_func_tab_ptr = &s_ov13855_ioctl_func_tab,
+    .sns_ops = &s_ov13855_ops_tab,
     .raw_info_ptr = &s_ov13855_mipi_raw_info_ptr,
-    .ext_info_ptr = NULL,
-
-    .preview_skip_num = 1,
-    .capture_skip_num = 1,
-    .flash_capture_skip_num = 6,
-    .mipi_cap_skip_num = 0,
-    .preview_deci_num = 0,
-    .video_preview_deci_num = 0,
-
-    .threshold_eb = 0,
-    .threshold_mode = 0,
-    .threshold_start = 0,
-    .threshold_end = 0,
-    .i2c_dev_handler = 0,
-    .sensor_interface =
-        {
-            .type = SENSOR_INTERFACE_TYPE_CSI2,
-            .bus_width = 4,    /*lane number or bit-width*/
-            .pixel_width = 10, /*bits per pixel*/
-            .is_loose = 0,     /*0 packet, 1 half word per pixel*/
-        },
 
     .video_tab_info_ptr = NULL,
-    .change_setting_skip_num = 1,
-    .horizontal_view_angle = 35,
-    .vertical_view_angle = 35,
     .sensor_version_info = (cmr_s8 *)"ov13855v1",
 };
+#endif

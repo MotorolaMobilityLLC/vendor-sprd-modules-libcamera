@@ -18,395 +18,59 @@
 *Date                  Modification                                 Reason
 *
 */
+#include "sensor_s5k5e2ya_mipi_raw.h"
 
-#include <utils/Log.h>
-#include "sensor.h"
-#include "jpeg_exif_header.h"
-#include "sensor_drv_u.h"
-#include "sensor_raw.h"
+#define LOG_TAG "s5k5e2ya_mipi_raw"
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "parameters/sensor_s5k5e2ya_raw_param_main.c"
-#else
-#include "parameters/sensor_s5k5e2ya_raw_param.c"
-#endif
-#define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#include "../af_dw9714.h"
-#endif
-
-#define CAMERA_IMAGE_180
-
-#define SENSOR_NAME "s5k5e2ya_mipi_raw"
-#define I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
-
-#define s5k5e2ya_PID_ADDR 0x00
-#define s5k5e2ya_PID_VALUE 0x5E
-#define s5k5e2ya_VER_ADDR 0x01
-#define s5k5e2ya_VER_VALUE 0x20
-
-/* sensor parameters begin */
-/* effective sensor output image size */
-#define SNAPSHOT_WIDTH 2560
-#define SNAPSHOT_HEIGHT 1920
-#define PREVIEW_WIDTH 2560
-#define PREVIEW_HEIGHT 1920
-
-/*Raw Trim parameters*/
-#define SNAPSHOT_TRIM_X 0
-#define SNAPSHOT_TRIM_Y 0
-#define SNAPSHOT_TRIM_W 2560
-#define SNAPSHOT_TRIM_H 1920
-#define PREVIEW_TRIM_X 0
-#define PREVIEW_TRIM_Y 0
-#define PREVIEW_TRIM_W 2560
-#define PREVIEW_TRIM_H 1920
-
-/*Mipi output*/
-#define LANE_NUM 2
-#define RAW_BITS 10
-
-#define SNAPSHOT_MIPI_PER_LANE_BPS 860 /* 2*Mipi clk */
-#define PREVIEW_MIPI_PER_LANE_BPS 860  /* 2*Mipi clk */
-
-/*line time unit: 0.1us*/
-#define SNAPSHOT_LINE_TIME 16200
-#define PREVIEW_LINE_TIME 16200
-
-/* frame length*/
-#define SNAPSHOT_FRAME_LENGTH 0x80B
-#define PREVIEW_FRAME_LENGTH 0x80B
-
-/* please ref your spec */
-#define FRAME_OFFSET 8
-#define SENSOR_MAX_GAIN 0x200
-#define SENSOR_BASE_GAIN 0x20
-#define SENSOR_MIN_SHUTTER 4
-
-/* please ref your spec
- * 1 : average binning
- * 2 : sum-average binning
- * 4 : sum binning
- */
-#define BINNING_FACTOR 1
-
-/* please ref spec
- * 1: sensor auto caculate
- * 0: driver caculate
- */
-#define SUPPORT_AUTO_FRAME_LENGTH 0
-
-/*delay 1 frame to write sensor gain*/
-//#define GAIN_DELAY_1_FRAME
-
-/* sensor parameters end */
-
-/* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
-/* please don't change it */
-#define EX_MCLK 24
-/*
-struct hdr_info_t {
-        uint32_t capture_max_shutter;
-        uint32_t capture_shutter;
-        uint32_t capture_gain;
-};
-
-struct sensor_ev_info_t {
-        uint16_t preview_shutter;
-        uint16_t preview_gain;
-};
-*/
-/*==============================================================================
- * Description:
- * global variable
- *============================================================================*/
-static struct hdr_info_t s_hdr_info = {
-    2000000 / SNAPSHOT_LINE_TIME, /*min 5fps*/
-    SNAPSHOT_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN};
-static uint32_t s_current_default_frame_length = PREVIEW_FRAME_LENGTH;
-static struct sensor_ev_info_t s_sensor_ev_info = {
-    PREVIEW_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN,PREVIEW_FRAME_LENGTH};
-
-//#define FEATURE_OTP    /*OTP function switch*/
-
-#ifdef FEATURE_OTP
-#include "sensor_s5k5e2ya_liteon_otp.c"
-static struct otp_info_t *s_s5k5e2ya_otp_info_ptr = &s_s5k5e2ya_liteon_otp_info;
-static struct raw_param_info_tab *s_s5k5e2ya_raw_param_tab_ptr =
-    &s_s5k5e2ya_liteon_raw_param_tab; /*otp function interface*/
-#endif
-
-static SENSOR_IOCTL_FUNC_TAB_T s_s5k5e2ya_ioctl_func_tab;
-static struct sensor_raw_info *s_s5k5e2ya_mipi_raw_info_ptr =
-    &s_s5k5e2ya_mipi_raw_info;
-static EXIF_SPEC_PIC_TAKING_COND_T s_s5k5e2ya_exif_info;
-
-/*//delay 200ms
-{SENSOR_WRITE_DELAY, 200},
-*/
-
-static const SENSOR_REG_T s5k5e2ya_init_setting[] = {
-    // Reset for operation
-    {0x0100, 0x00}, // stream off
-
-    {0x0101, 0x00}, //[1:0] mirror and vertical flip
-    // Clock Setting
-    {0x0305, 0x06}, // 05 //PLLP (def:5)
-    {0x0306, 0x00},
-    {0x0307, 0xe0}, // B3 //PLLM (def:CCh 204d --> B3h 179d)
-    {0x3C1F, 0x00}, // PLLS
-    {0x30CC, 0x30}, //[7:4] dphy_band_ctrl
-
-    {0x0820,
-     0x03}, // requested link bit rate mbps : (def:3D3h 979d --> 35Bh 859d)
-    {0x0821, 0x80},
-    {0x3C1C, 0x58}, // dbr_div
-
-    // Size Setting
-    {0x0340,
-     0x08}, // frame_length_lines : def. 990d (--> 3C8 Mimnimum 22 lines)
-    {0x0341, 0x0b},
-    {0x0342, 0x0B}, // line_length_pck : def. 2900d
-    {0x0343, 0x54},
-
-    {0x0344, 0x00}, // x_addr_start
-    {0x0345, 0x08},
-    {0x0346, 0x00}, // y_addr_start
-    {0x0347, 0x08},
-    {0x0348, 0x0A}, // x_addr_end : def. 2575d
-    {0x0349, 0x07},
-    {0x034A, 0x07}, // y_addr_end : def. 1936d
-    {0x034B, 0x8F},
-    {0x034C, 0x0a}, // x_output size : def. 1288d
-    {0x034D, 0x00},
-    {0x034E, 0x07}, // y_output size : def. 968d
-    {0x034F, 0x80},
-
-    // Digital Binning
-    {0x0900, 0x00}, // 2x2 Binning
-    {0x0901, 0x20},
-    {0x0387, 0x01},
-
-    // Integration time
-    {0x0202, 0x02}, // coarse integration
-    {0x0203, 0x00},
-    {0x0200, 0x0A}, // fine integration (AA8h --> AC4h)
-    {0x0201, 0xC4},
-
-    // Analog Timing Tuning (0923)
-    {0x3000, 0x04}, // ct_ld_start
-    {0x3002, 0x03}, // ct_sl_start
-    {0x3003, 0x04}, // ct_sl_margin
-    {0x3004, 0x02}, // ct_rx_start
-    {0x3005, 0x00}, // ct_rx_margin (MSB)
-    {0x3006, 0x10}, // ct_rx_margin (LSB)
-    {0x3007, 0x03}, // ct_tx_start
-    {0x3008, 0x55}, // ct_tx_width
-    {0x3039, 0x00}, // cintc1_margin
-    {0x303A, 0x00}, // cintc2_margin
-    {0x303B, 0x00}, // offs_sh
-    {0x3009, 0x05}, // ct_srx_margin
-    {0x300A, 0x55}, // ct_stx_width
-    {0x300B, 0x38}, // ct_dstx_width
-    {0x300C, 0x10}, // ct_stx2dstx
-    {0x3012, 0x05}, // ct_cds_start
-    {0x3013, 0x00}, // ct_s1s_start
-    {0x3014, 0x22}, // ct_s1s_end
-    {0x300E, 0x79}, // ct_s3_width
-    {0x3010, 0x68}, // ct_s4_width
-    {0x3019, 0x03}, // ct_s4d_start
-    {0x301A, 0x00}, // ct_pbr_start
-    {0x301B, 0x06}, // ct_pbr_width
-    {0x301C, 0x00}, // ct_pbs_start
-    {0x301D, 0x22}, // ct_pbs_width
-    {0x301E, 0x00}, // ct_pbr_ob_start
-    {0x301F, 0x10}, // ct_pbr_ob_width
-    {0x3020, 0x00}, // ct_pbs_ob_start
-    {0x3021, 0x00}, // ct_pbs_ob_width
-    {0x3022, 0x0A}, // ct_cds_lim_start
-    {0x3023, 0x1E}, // ct_crs_start
-    {0x3024, 0x00}, // ct_lp_hblk_cds_start (MSB)
-    {0x3025, 0x00}, // ct_lp_hblk_cds_start (LSB)
-    {0x3026, 0x00}, // ct_lp_hblk_cds_end (MSB)
-    {0x3027, 0x00}, // ct_lp_hblk_cds_end (LSB)
-    {0x3028, 0x1A}, // ct_rmp_off_start
-    {0x3015, 0x00}, // ct_rmp_rst_start (MSB)
-    {0x3016, 0x84}, // ct_rmp_rst_start (LSB)
-    {0x3017, 0x00}, // ct_rmp_sig_start (MSB)
-    {0x3018, 0xA0}, // ct_rmp_sig_start (LSB)
-    {0x302B, 0x10}, // ct_cnt_margin
-    {0x302C, 0x0A}, // ct_rmp_per
-    {0x302D, 0x06}, // ct_cnt_ms_margin1
-    {0x302E, 0x05}, // ct_cnt_ms_margin2
-    {0x302F, 0x0E}, // rst_mx
-    {0x3030, 0x2F}, // sig_mx
-    {0x3031, 0x08}, // ct_latch_start
-    {0x3032, 0x05}, // ct_latch_width
-    {0x3033, 0x09}, // ct_hold_start
-    {0x3034, 0x05}, // ct_hold_width
-    {0x3035, 0x00}, // ct_lp_hblk_dbs_start (MSB)
-    {0x3036, 0x00}, // ct_lp_hblk_dbs_start (LSB)
-    {0x3037, 0x00}, // ct_lp_hblk_dbs_end (MSB)
-    {0x3038, 0x00}, // ct_lp_hblk_dbs_end (LSB)
-    {0x3088, 0x06}, // ct_lat_lsb_offset_start1
-    {0x308A, 0x08}, // ct_lat_lsb_offset_end1
-    {0x308C, 0x05}, // ct_lat_lsb_offset_start2
-    {0x308E, 0x07}, // ct_lat_lsb_offset_end2
-    {0x3090, 0x06}, // ct_conv_en_offset_start1
-    {0x3092, 0x08}, // ct_conv_en_offset_end1
-    {0x3094, 0x05}, // ct_conv_en_offset_start2
-    {0x3096, 0x21}, // ct_conv_en_offset_end2
-
-    // CDS
-    {0x3099, 0x0E}, // cds_option ([3]:crs switch disable, s3,s4 strengthx16)
-    {0x3070, 0x10}, // comp1_bias (default:77)
-    {0x3085, 0x11}, // comp1_bias (gain1~4)
-    {0x3086, 0x01}, // comp1_bias (gain4~8)
-
-    // RMP
-    {0x3064, 0x00}, // Multiple sampling(gainx8,x16)
-    {0x3062, 0x08}, // off_rst
-
-    // DBR
-    {0x3061, 0x11}, // dbr_tune_rd (default :08, 0E 3.02V)  3.1V
-    {0x307B, 0x20}, // dbr_tune_rgsl (default :08)
-
-    // Bias sampling
-    {0x3068, 0x00}, // RMP BP bias sampling [0]: Disable
-    {0x3074, 0x00}, // Pixel bias sampling [2]:Default L
-    {0x307D, 0x00}, // VREF sampling [0] : Disable
-    {0x3045, 0x01}, // ct_opt_l1_start
-    {0x3046, 0x05}, // ct_opt_l1_width
-    {0x3047, 0x78},
-
-    // Smart PLA
-    {0x307F, 0xB1}, // RDV_OPTION[5:4], RG default high
-    {0x3098, 0x01}, // CDS_OPTION[16] SPLA-II enable
-    {0x305C, 0xF6}, // lob_extension[6]
-
-    {0x306B, 0x10}, // [3]bls_stx_en disable
-    {0x3063, 0x27}, // ADC_SAT 490mV(19h) --> 610mV(2Fh) --> 570mV
-    {0x320C, 0x07}, // ADC_MAX (def:076Ch --> 0700h)
-    {0x320D, 0x00},
-    {0x3400, 0x01}, // GAS bypass 0x01->0x00
-    {0x3235, 0x49}, // L/F-ADLC on
-    {0x3233, 0x00}, // D-pedestal L/F ADLC off (1FC0h)
-    {0x3234, 0x00},
-    {0x3300, 0x0C}, // BPC bypass  //0x0d->0x0c
-    {0x0204, 0x00}, // Analog gain x1
-    {0x0205, 0x20},
-	{0x3931, 0x02},//vod  427-->470mv
-	{0x3932, 0x60},//slew step down
-
-    // streaming ON
-    //{0x0100,0x01},
-};
-
-static const SENSOR_REG_T s5k5e2ya_preview_setting[] = {};
-
-static const SENSOR_REG_T s5k5e2ya_snapshot_setting[] = {};
-
-static SENSOR_REG_TAB_INFO_T s_s5k5e2ya_resolution_tab_raw[SENSOR_MODE_MAX] = {
-    {ADDR_AND_LEN_OF_ARRAY(s5k5e2ya_init_setting), 0, 0, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(s5k5e2ya_preview_setting), PREVIEW_WIDTH,
-     PREVIEW_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(s5k5e2ya_snapshot_setting), SNAPSHOT_WIDTH,
-     SNAPSHOT_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-};
-
-static SENSOR_TRIM_T s_s5k5e2ya_resolution_trim_tab[SENSOR_MODE_MAX] = {
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {PREVIEW_TRIM_X,
-     PREVIEW_TRIM_Y,
-     PREVIEW_TRIM_W,
-     PREVIEW_TRIM_H,
-     PREVIEW_LINE_TIME,
-     PREVIEW_MIPI_PER_LANE_BPS,
-     PREVIEW_FRAME_LENGTH,
-     {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},
-    {SNAPSHOT_TRIM_X,
-     SNAPSHOT_TRIM_Y,
-     SNAPSHOT_TRIM_W,
-     SNAPSHOT_TRIM_H,
-     SNAPSHOT_LINE_TIME,
-     SNAPSHOT_MIPI_PER_LANE_BPS,
-     SNAPSHOT_FRAME_LENGTH,
-     {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},
-};
-
-static const SENSOR_REG_T
-    s_s5k5e2ya_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        /*video mode 0: ?fps */
-        {{0xffff, 0xff}},
-        /* video mode 1:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 2:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 3:?fps */
-        {{0xffff, 0xff}}};
-
-static const SENSOR_REG_T
-    s_s5k5e2ya_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        /*video mode 0: ?fps */
-        {{0xffff, 0xff}},
-        /* video mode 1:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 2:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 3:?fps */
-        {{0xffff, 0xff}}};
-
-static SENSOR_VIDEO_INFO_T s_s5k5e2ya_video_info[SENSOR_MODE_MAX] = {
-    {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
-    {{{30, 30, 270, 90}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-     (SENSOR_REG_T **)s_s5k5e2ya_preview_size_video_tab},
-    {{{2, 5, 338, 1000}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-     (SENSOR_REG_T **)s_s5k5e2ya_capture_size_video_tab},
-};
+#define MIPI_RAW_INFO  g_s5k5e2ya_mipi_raw_info
+#define RES_TRIM_TAB   s_s5k5e2ya_resolution_trim_tab
+#define FPS_INFO       s_s5k5e2ya_mode_fps_info
+#define STATIC_INFO    s_s5k5e2ya_static_info
+#define VIDEO_INFO     s_s5k5e2ya_video_info
+#define MODULE_INFO    s_s5k5e2ya_module_info_tab
+#define RES_TAB_RAW    s_s5k5e2ya_resolution_tab_raw
 
 /*==============================================================================
  * Description:
  * set video mode
  *
  *============================================================================*/
-static uint32_t s5k5e2ya_set_video_mode(SENSOR_HW_HANDLE handle,
-                                        uint32_t param) {
+static cmr_int s5k5e2ya_drv_set_video_mode(cmr_handle handle,
+                                        cmr_u32 param) {
+    cmr_int ret = SENSOR_FAIL;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_REG_T_PTR sensor_reg_ptr;
-    uint16_t i = 0x00;
-    uint32_t mode;
+    cmr_u16 i = 0x00;
+    cmr_u32 mode;
 
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;
 
-    if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-        SENSOR_PRINT("fail.");
-        return SENSOR_FAIL;
+    if(sns_drv_cxt->ops_cb.get_mode) {
+        ret = sns_drv_cxt->ops_cb.get_mode(handle, &mode);
+        if (SENSOR_SUCCESS != ret) {
+            SENSOR_LOGI("fail.");
+            return SENSOR_FAIL;
+        }
     }
 
-    if (PNULL == s_s5k5e2ya_video_info[mode].setting_ptr) {
-        SENSOR_PRINT("fail.");
+    if (PNULL == VIDEO_INFO[mode].setting_ptr) {
+        SENSOR_LOGE("fail.");
         return SENSOR_FAIL;
     }
 
     sensor_reg_ptr =
-        (SENSOR_REG_T_PTR)&s_s5k5e2ya_video_info[mode].setting_ptr[param];
+        (SENSOR_REG_T_PTR)&VIDEO_INFO[mode].setting_ptr[param];
     if (PNULL == sensor_reg_ptr) {
-        SENSOR_PRINT("fail.");
+        SENSOR_LOGI("fail.");
         return SENSOR_FAIL;
     }
 
     for (i = 0x00; (0xffff != sensor_reg_ptr[i].reg_addr) ||
                    (0xff != sensor_reg_ptr[i].reg_value);
          i++) {
-        Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, sensor_reg_ptr[i].reg_addr,
                         sensor_reg_ptr[i].reg_value);
     }
 
@@ -415,546 +79,120 @@ static uint32_t s5k5e2ya_set_video_mode(SENSOR_HW_HANDLE handle,
 
 /*==============================================================================
  * Description:
- * sensor all info
- * please modify this variable acording your spec
- *============================================================================*/
-SENSOR_INFO_T g_s5k5e2ya_mipi_raw_info = {
-    /* salve i2c write address */
-    (I2C_SLAVE_ADDR >> 1),
-    /* salve i2c read address */
-    (I2C_SLAVE_ADDR >> 1),
-    /*bit0: 0: i2c register value is 8 bit, 1: i2c register value is 16 bit */
-    SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT | SENSOR_I2C_FREQ_400,
-    /* bit2: 0:negative; 1:positive -> polarily of horizontal synchronization
-     * signal
-     * bit4: 0:negative; 1:positive -> polarily of vertical synchronization
-     * signal
-     * other bit: reseved
-     */
-    SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |
-        SENSOR_HW_SIGNAL_HSYNC_P,
-    /* preview mode */
-    SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
-    /* image effect */
-    SENSOR_IMAGE_EFFECT_NORMAL | SENSOR_IMAGE_EFFECT_BLACKWHITE |
-        SENSOR_IMAGE_EFFECT_RED | SENSOR_IMAGE_EFFECT_GREEN |
-        SENSOR_IMAGE_EFFECT_BLUE | SENSOR_IMAGE_EFFECT_YELLOW |
-        SENSOR_IMAGE_EFFECT_NEGATIVE | SENSOR_IMAGE_EFFECT_CANVAS,
-
-    /* while balance mode */
-    0,
-    /* bit[0:7]: count of step in brightness, contrast, sharpness, saturation
-     * bit[8:31] reseved
-     */
-    7,
-    /* reset pulse level */
-    SENSOR_HIGH_PULSE_RESET,
-    /* reset pulse width(ms) */
-    50,
-    /* 1: high level valid; 0: low level valid */
-    SENSOR_LOW_LEVEL_PWDN,
-    /* count of identify code */
-    1,
-    /* supply two code to identify sensor.
-     * for Example: index = 0-> Device id, index = 1 -> version id
-     * customer could ignore it.
-     */
-    {{s5k5e2ya_PID_ADDR, s5k5e2ya_PID_VALUE},
-     {s5k5e2ya_VER_ADDR, s5k5e2ya_VER_VALUE}},
-    /* voltage of avdd */
-    SENSOR_AVDD_2800MV,
-    /* max width of source image */
-    SNAPSHOT_WIDTH,
-    /* max height of source image */
-    SNAPSHOT_HEIGHT,
-    /* name of sensor */
-    (cmr_s8 *)SENSOR_NAME,
-    /* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
-     * if set to SENSOR_IMAGE_FORMAT_MAX here,
-     * image format depent on SENSOR_REG_TAB_INFO_T
-     */
-    SENSOR_IMAGE_FORMAT_RAW,
-    /*  pattern of input image form sensor */
-    SENSOR_IMAGE_PATTERN_RAWRGB_GR,
-    /* point to resolution table information structure */
-    s_s5k5e2ya_resolution_tab_raw,
-    /* point to ioctl function table */
-    &s_s5k5e2ya_ioctl_func_tab,
-    /* information and table about Rawrgb sensor */
-    &s_s5k5e2ya_mipi_raw_info_ptr,
-    /* extend information about sensor
-     * like &g_s5k5e2ya_ext_info
-     */
-    NULL,
-    /* voltage of iovdd */
-    SENSOR_AVDD_1800MV,
-    /* voltage of dvdd */
-    SENSOR_AVDD_1200MV,
-    /* skip frame num before preview */
-    1,
-    /* skip frame num before capture */
-    1,
-    /* skip frame num for flash capture */
-    6,
-    /* skip frame num on mipi cap */
-    0,
-    /* deci frame num during preview */
-    0,
-    /* deci frame num during video preview */
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    {SENSOR_INTERFACE_TYPE_CSI2, LANE_NUM, RAW_BITS, 0},
-    0,
-    /* skip frame num while change setting */
-    1,
-    /* horizontal  view angle*/
-    65,
-    /* vertical view angle*/
-    60,
-    (cmr_s8 *) "s5k5e2ya_v1",
-};
-
-static SENSOR_STATIC_INFO_T s_s5k5e2ya_static_info = {
-    280, // f-number,focal ratio
-    346, // focal_length;
-    0,   // max_fps,max fps of sensor's all settings,it will be calculated from
-         // sensor mode fps
-    16,   // max_adgain,AD-gain
-    0,   // ois_supported;
-    0,   // pdaf_supported;
-    1,   // exp_valid_frame_num;N+2-1
-    64,   // clamp_level,black level
-    1,   // adgain_valid_frame_num;N+1-1
-};
-
-static SENSOR_MODE_FPS_INFO_T s_s5k5e2ya_mode_fps_info = {
-    0, // is_init;
-    {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}};
-/*==============================================================================
- * Description:
  * calculate fps for every sensor mode according to frame_line and line_time
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
-    uint32_t rtn = SENSOR_SUCCESS;
-    SENSOR_PRINT("s5k5e2ya_init_mode_fps_info:E");
-    if (!s_s5k5e2ya_mode_fps_info.is_init) {
-        uint32_t i, modn, tempfps = 0;
-        SENSOR_PRINT("s5k5e2ya_init_mode_fps_info:start init");
-        for (i = 0; i < NUMBER_OF_ARRAY(s_s5k5e2ya_resolution_trim_tab); i++) {
-            // max fps should be multiple of 30,it calulated from line_time and
-            // frame_line
-            tempfps = s_s5k5e2ya_resolution_trim_tab[i].line_time *
-                      s_s5k5e2ya_resolution_trim_tab[i].frame_line;
+static cmr_u32 s5k5e2ya_drv_init_fps_info(cmr_handle handle) {
+    cmr_u32 rtn = SENSOR_SUCCESS;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
+    struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
+    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
+
+    SENSOR_LOGI("E");
+    if (!fps_info->is_init) {
+        cmr_u32 i, modn, tempfps = 0;
+        SENSOR_LOGI("start init");
+        for (i = 0; i < SENSOR_MODE_MAX; i++) {
+            tempfps = trim_info[i].line_time * trim_info[i].frame_line;
             if (0 != tempfps) {
                 tempfps = 1000000000 / tempfps;
                 modn = tempfps / 30;
                 if (tempfps > modn * 30)
                     modn++;
-                s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].max_fps = modn * 30;
-                if (s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-                    s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-                    s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i]
-                        .high_fps_skip_num =
-                        s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].max_fps /
-                        30;
+                fps_info->sensor_mode_fps[i].max_fps = modn * 30;
+                if (fps_info->sensor_mode_fps[i].max_fps > 30) {
+                    fps_info->sensor_mode_fps[i].is_high_fps = 1;
+                    fps_info->sensor_mode_fps[i].high_fps_skip_num =
+                        fps_info->sensor_mode_fps[i].max_fps / 30;
                 }
-                if (s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].max_fps >
-                    s_s5k5e2ya_static_info.max_fps) {
-                    s_s5k5e2ya_static_info.max_fps =
-                        s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].max_fps;
+                if (fps_info->sensor_mode_fps[i].max_fps >
+                    static_info->max_fps) {
+                    static_info->max_fps = fps_info->sensor_mode_fps[i].max_fps;
                 }
             }
-            SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                         tempfps, s_s5k5e2ya_resolution_trim_tab[i].frame_line,
-                         s_s5k5e2ya_resolution_trim_tab[i].line_time);
-            SENSOR_PRINT("mode %d,max_fps: %d ", i,
-                         s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].max_fps);
-            SENSOR_PRINT(
-                "is_high_fps: %d,highfps_skip_num %d",
-                s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].is_high_fps,
-                s_s5k5e2ya_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+            SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
+                         tempfps, trim_info[i].frame_line,
+                         trim_info[i].line_time);
+            SENSOR_LOGI("mode %d,max_fps: %d ", i,
+                         fps_info->sensor_mode_fps[i].max_fps);
+            SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
+                fps_info->sensor_mode_fps[i].is_high_fps,
+                fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
-        s_s5k5e2ya_mode_fps_info.is_init = 1;
+        fps_info->is_init = 1;
     }
-    SENSOR_PRINT("s5k5e2ya_init_mode_fps_info:X");
+    SENSOR_LOGI("X");
     return rtn;
 }
 
-static uint32_t s5k5e2ya_get_static_info(SENSOR_HW_HANDLE handle,
-                                         uint32_t *param) {
-    uint32_t rtn = SENSOR_SUCCESS;
-    struct sensor_ex_info *ex_info;
-    uint32_t up = 0;
-    uint32_t down = 0;
+static cmr_u32 s5k5e2ya_drv_get_static_info(cmr_handle handle,
+                                         cmr_u32 *param) {
+    cmr_u32 rtn = SENSOR_SUCCESS;
+    struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
+    cmr_u32 up = 0;
+    cmr_u32 down = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(ex_info);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
+    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
+    struct module_cfg_info *module_info = sns_drv_cxt->module_info;
+
     // make sure we have get max fps of all settings.
-    if (!s_s5k5e2ya_mode_fps_info.is_init) {
-        s5k5e2ya_init_mode_fps_info(handle);
+    if (!fps_info->is_init) {
+        s5k5e2ya_drv_init_fps_info(handle);
     }
-    ex_info = (struct sensor_ex_info *)param;
-    ex_info->f_num = s_s5k5e2ya_static_info.f_num;
-    ex_info->focal_length = s_s5k5e2ya_static_info.focal_length;
-    ex_info->max_fps = s_s5k5e2ya_static_info.max_fps;
-    ex_info->max_adgain = s_s5k5e2ya_static_info.max_adgain;
-    ex_info->ois_supported = s_s5k5e2ya_static_info.ois_supported;
-    ex_info->pdaf_supported = s_s5k5e2ya_static_info.pdaf_supported;
-    ex_info->exp_valid_frame_num = s_s5k5e2ya_static_info.exp_valid_frame_num;
-    ex_info->clamp_level = s_s5k5e2ya_static_info.clamp_level;
-    ex_info->adgain_valid_frame_num =
-        s_s5k5e2ya_static_info.adgain_valid_frame_num;
-    ex_info->preview_skip_num = g_s5k5e2ya_mipi_raw_info.preview_skip_num;
-    ex_info->capture_skip_num = g_s5k5e2ya_mipi_raw_info.capture_skip_num;
-    ex_info->name = (cmr_s8 *)g_s5k5e2ya_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_s5k5e2ya_mipi_raw_info.sensor_version_info;
-    // vcm_ak7371_get_pose_dis(handle, &up, &down);
+
+    ex_info->f_num = static_info->f_num;
+    ex_info->focal_length = static_info->focal_length;
+    ex_info->max_fps = static_info->max_fps;
+    ex_info->max_adgain = static_info->max_adgain;
+    ex_info->ois_supported = static_info->ois_supported;
+    ex_info->pdaf_supported = static_info->pdaf_supported;
+    ex_info->exp_valid_frame_num = static_info->exp_valid_frame_num;
+    ex_info->clamp_level = static_info->clamp_level;
+    ex_info->adgain_valid_frame_num = static_info->adgain_valid_frame_num;
+    ex_info->preview_skip_num = module_info->preview_skip_num;
+    ex_info->capture_skip_num = module_info->capture_skip_num;
+    ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
+    ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
+
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    SENSOR_PRINT("f_num: %d", ex_info->f_num);
-    SENSOR_PRINT("max_fps: %d", ex_info->max_fps);
-    SENSOR_PRINT("max_adgain: %d", ex_info->max_adgain);
-    SENSOR_PRINT("ois_supported: %d", ex_info->ois_supported);
-    SENSOR_PRINT("pdaf_supported: %d", ex_info->pdaf_supported);
-    SENSOR_PRINT("exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-    SENSOR_PRINT("clam_level: %d", ex_info->clamp_level);
-    SENSOR_PRINT("adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-    SENSOR_PRINT("sensor name is: %s", ex_info->name);
-    SENSOR_PRINT("sensor version info is: %s", ex_info->sensor_version_info);
+    sensor_ic_print_static_info(SENSOR_NAME, ex_info);
 
     return rtn;
 }
 
-static uint32_t s5k5e2ya_get_fps_info(SENSOR_HW_HANDLE handle,
-                                      uint32_t *param) {
-    uint32_t rtn = SENSOR_SUCCESS;
-    SENSOR_MODE_FPS_T *fps_info;
+static cmr_u32 s5k5e2ya_drv_get_fps_info(cmr_handle handle,
+                                      cmr_u32 *param) {
+    cmr_u32 rtn = SENSOR_SUCCESS;
+    SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(fps_info);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
+
     // make sure have inited fps of every sensor mode.
-    if (!s_s5k5e2ya_mode_fps_info.is_init) {
-        s5k5e2ya_init_mode_fps_info(handle);
+    if (!fps_data->is_init) {
+        s5k5e2ya_drv_init_fps_info(handle);
     }
-    fps_info = (SENSOR_MODE_FPS_T *)param;
-    uint32_t sensor_mode = fps_info->mode;
-    fps_info->max_fps =
-        s_s5k5e2ya_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
-    fps_info->min_fps =
-        s_s5k5e2ya_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
-    fps_info->is_high_fps =
-        s_s5k5e2ya_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
-    fps_info->high_fps_skip_num =
-        s_s5k5e2ya_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-    SENSOR_PRINT("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
-    SENSOR_PRINT("min_fps: %d", fps_info->min_fps);
-    SENSOR_PRINT("is_high_fps: %d", fps_info->is_high_fps);
-    SENSOR_PRINT("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+    cmr_u32 sensor_mode = fps_info->mode;
+    fps_info->max_fps = fps_data->sensor_mode_fps[sensor_mode].max_fps;
+    fps_info->min_fps = fps_data->sensor_mode_fps[sensor_mode].min_fps;
+    fps_info->is_high_fps = fps_data->sensor_mode_fps[sensor_mode].is_high_fps;
+    fps_info->high_fps_skip_num = fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
+    SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
+    SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
+    SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
+    SENSOR_LOGI("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
     return rtn;
-}
-
-#if 0 // defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
-      // defined(CONFIG_CAMERA_ISP_VERSION_V4)
-
-#define param_update(x1, x2)                                                   \
-    sprintf(name, "/data/misc/media/s5k5e2ya_%s.bin", x1);                     \
-    if (0 == access(name, R_OK)) {                                             \
-        FILE *fp = NULL;                                                       \
-        SENSOR_PRINT("param file %s exists", name);                            \
-        if (NULL != (fp = fopen(name, "rb"))) {                                \
-            fread((void *)x2, 1, sizeof(x2), fp);                              \
-            fclose(fp);                                                        \
-        } else {                                                               \
-            SENSOR_PRINT("param open %s failure", name);                       \
-        }                                                                      \
-    } else {                                                                   \
-        SENSOR_PRINT("access %s failure", name);                               \
-    }                                                                          \
-    memset(name, 0, sizeof(name))
-
-static uint32_t s5k5e2ya_InitRawTuneInfo(void)
-{
-	uint32_t rtn=0x00;
-
-	isp_raw_para_update_from_file(&g_s5k5e2ya_mipi_raw_info,0);
-
-	struct sensor_raw_info* raw_sensor_ptr=s_s5k5e2ya_mipi_raw_info_ptr;
-	struct isp_mode_param* mode_common_ptr = raw_sensor_ptr->mode_ptr[0].addr;
-	int i;
-	char name[100] = {'\0'};
-
-	for (i=0; i<mode_common_ptr->block_num; i++) {
-		struct isp_block_header* header = &(mode_common_ptr->block_header[i]);
-		uint8_t* data = (uint8_t*)mode_common_ptr + header->offset;
-		switch (header->block_id)
-		{
-		case	ISP_BLK_PRE_WAVELET_V1: {
-				/* modify block data */
-				struct sensor_pwd_param* block = (struct sensor_pwd_param*)data;
-
-				static struct sensor_pwd_level pwd_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/pwd_param.h"
-				};
-
-				param_update("pwd_param",pwd_param);
-
-				block->param_ptr = pwd_param;
-			}
-			break;
-
-		case	ISP_BLK_BPC_V1: {
-				/* modify block data */
-				struct sensor_bpc_param_v1* block = (struct sensor_bpc_param_v1*)data;
-
-				static struct sensor_bpc_level bpc_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/bpc_param.h"
-				};
-
-				param_update("bpc_param",bpc_param);
-
-				block->param_ptr = bpc_param;
-			}
-			break;
-
-		case	ISP_BLK_BL_NR_V1: {
-				/* modify block data */
-				struct sensor_bdn_param* block = (struct sensor_bdn_param*)data;
-
-				static struct sensor_bdn_level bdn_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/bdn_param.h"
-				};
-
-				param_update("bdn_param",bdn_param);
-
-				block->param_ptr = bdn_param;
-			}
-			break;
-
-		case	ISP_BLK_GRGB_V1: {
-				/* modify block data */
-				struct sensor_grgb_v1_param* block = (struct sensor_grgb_v1_param*)data;
-				static struct sensor_grgb_v1_level grgb_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/grgb_param.h"
-				};
-
-				param_update("grgb_param",grgb_param);
-
-				block->param_ptr = grgb_param;
-
-			}
-			break;
-
-		case	ISP_BLK_NLM: {
-				/* modify block data */
-				struct sensor_nlm_param* block = (struct sensor_nlm_param*)data;
-
-				static struct sensor_nlm_level nlm_param[32] = {
-#include "NR/nlm_param.h"
-				};
-
-				param_update("nlm_param",nlm_param);
-
-				static struct sensor_vst_level vst_param[32] = {
-#include "NR/vst_param.h"
-				};
-
-				param_update("vst_param",vst_param);
-
-				static struct sensor_ivst_level ivst_param[32] = {
-#include "NR/ivst_param.h"
-				};
-
-				param_update("ivst_param",ivst_param);
-
-				static struct sensor_flat_offset_level flat_offset_param[32] = {
-#include "NR/flat_offset_param.h"
-				};
-
-				param_update("flat_offset_param",flat_offset_param);
-
-				block->param_nlm_ptr = nlm_param;
-				block->param_vst_ptr = vst_param;
-				block->param_ivst_ptr = ivst_param;
-				block->param_flat_offset_ptr = flat_offset_param;
-			}
-			break;
-
-		case	ISP_BLK_CFA_V1: {
-				/* modify block data */
-				struct sensor_cfa_param_v1* block = (struct sensor_cfa_param_v1*)data;
-				static struct sensor_cfae_level cfae_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/cfae_param.h"
-				};
-
-				param_update("cfae_param",cfae_param);
-
-				block->param_ptr = cfae_param;
-			}
-			break;
-
-		case	ISP_BLK_RGB_PRECDN: {
-				/* modify block data */
-				struct sensor_rgb_precdn_param* block = (struct sensor_rgb_precdn_param*)data;
-
-				static struct sensor_rgb_precdn_level precdn_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/rgb_precdn_param.h"
-				};
-
-				param_update("rgb_precdn_param",precdn_param);
-
-				block->param_ptr = precdn_param;
-			}
-			break;
-
-		case	ISP_BLK_YUV_PRECDN: {
-				/* modify block data */
-				struct sensor_yuv_precdn_param* block = (struct sensor_yuv_precdn_param*)data;
-
-				static struct sensor_yuv_precdn_level yuv_precdn_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/yuv_precdn_param.h"
-				};
-
-				param_update("yuv_precdn_param",yuv_precdn_param);
-
-				block->param_ptr = yuv_precdn_param;
-			}
-			break;
-
-		case	ISP_BLK_PREF_V1: {
-				/* modify block data */
-				struct sensor_prfy_param* block = (struct sensor_prfy_param*)data;
-
-				static struct sensor_prfy_level prfy_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/prfy_param.h"
-				};
-
-				param_update("prfy_param",prfy_param);
-
-				block->param_ptr = prfy_param;
-			}
-			break;
-
-		case	ISP_BLK_UV_CDN: {
-				/* modify block data */
-				struct sensor_uv_cdn_param* block = (struct sensor_uv_cdn_param*)data;
-
-				static struct sensor_uv_cdn_level uv_cdn_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/yuv_cdn_param.h"
-				};
-
-				param_update("yuv_cdn_param",uv_cdn_param);
-
-				block->param_ptr = uv_cdn_param;
-			}
-			break;
-
-		case	ISP_BLK_EDGE_V1: {
-				/* modify block data */
-				struct sensor_ee_param* block = (struct sensor_ee_param*)data;
-
-				static struct sensor_ee_level edge_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/edge_param.h"
-				};
-
-				param_update("edge_param",edge_param);
-
-				block->param_ptr = edge_param;
-			}
-			break;
-
-		case	ISP_BLK_UV_POSTCDN: {
-				/* modify block data */
-				struct sensor_uv_postcdn_param* block = (struct sensor_uv_postcdn_param*)data;
-
-				static struct sensor_uv_postcdn_level uv_postcdn_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/yuv_postcdn_param.h"
-				};
-
-				param_update("yuv_postcdn_param",uv_postcdn_param);
-
-				block->param_ptr = uv_postcdn_param;
-			}
-			break;
-
-		case	ISP_BLK_IIRCNR_IIR: {
-				/* modify block data */
-				struct sensor_iircnr_param* block = (struct sensor_iircnr_param*)data;
-
-				static struct sensor_iircnr_level iir_cnr_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/iircnr_param.h"
-				};
-
-				param_update("iircnr_param",iir_cnr_param);
-
-				block->param_ptr = iir_cnr_param;
-			}
-			break;
-
-		case	ISP_BLK_IIRCNR_YRANDOM: {
-				/* modify block data */
-				struct sensor_iircnr_yrandom_param* block = (struct sensor_iircnr_yrandom_param*)data;
-				static struct sensor_iircnr_yrandom_level iir_yrandom_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/iir_yrandom_param.h"
-				};
-
-				param_update("iir_yrandom_param",iir_yrandom_param);
-
-				block->param_ptr = iir_yrandom_param;
-			}
-			break;
-
-		case  ISP_BLK_UVDIV_V1: {
-				/* modify block data */
-				struct sensor_cce_uvdiv_param_v1* block = (struct sensor_cce_uvdiv_param_v1*)data;
-
-				static struct sensor_cce_uvdiv_level cce_uvdiv_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/cce_uv_param.h"
-				};
-
-				param_update("cce_uv_param",cce_uvdiv_param);
-
-				block->param_ptr = cce_uvdiv_param;
-			}
-			break;
-		case ISP_BLK_YIQ_AFM:{
-			/* modify block data */
-			struct sensor_y_afm_param *block = (struct sensor_y_afm_param*)data;
-
-			static struct sensor_y_afm_level y_afm_param[SENSOR_SMART_LEVEL_NUM] = {
-#include "NR/y_afm_param.h"
-				};
-
-				param_update("y_afm_param",y_afm_param);
-
-				block->param_ptr = y_afm_param;
-			}
-			break;
-
-		default:
-			break;
-		}
-	}
-
-
-	return rtn;
-}
-#endif
-
-/*==============================================================================
- * Description:
- * get default frame length
- *
- *============================================================================*/
-static uint32_t s5k5e2ya_get_default_frame_length(uint32_t mode) {
-    return s_s5k5e2ya_resolution_trim_tab[mode].frame_line;
 }
 
 /*==============================================================================
@@ -962,10 +200,10 @@ static uint32_t s5k5e2ya_get_default_frame_length(uint32_t mode) {
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void s5k5e2ya_group_hold_on(SENSOR_HW_HANDLE handle) {
-    SENSOR_PRINT("E");
+static void s5k5e2ya_drv_group_hold_on(cmr_handle handle) {
+    SENSOR_LOGI("E");
 
-    // Sensor_WriteReg(0x104, 0x01);
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x104, 0x01);
 }
 
 /*==============================================================================
@@ -973,10 +211,10 @@ static void s5k5e2ya_group_hold_on(SENSOR_HW_HANDLE handle) {
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void s5k5e2ya_group_hold_off(SENSOR_HW_HANDLE handle) {
-    SENSOR_PRINT("E");
+static void s5k5e2ya_drv_group_hold_off(cmr_handle handle) {
+    SENSOR_LOGI("E");
 
-    // Sensor_WriteReg(0x104, 0x00);
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x104, 0x00);
 }
 
 /*==============================================================================
@@ -984,8 +222,11 @@ static void s5k5e2ya_group_hold_off(SENSOR_HW_HANDLE handle) {
  * read gain from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t s5k5e2ya_read_gain(void) {
-    return s_sensor_ev_info.preview_gain;
+static cmr_u16 s5k5e2ya_drv_read_gain(cmr_handle handle) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    return sns_drv_cxt->sensor_ev_info.preview_gain;
 }
 
 /*==============================================================================
@@ -993,14 +234,17 @@ static uint16_t s5k5e2ya_read_gain(void) {
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void s5k5e2ya_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain) {
+static void s5k5e2ya_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
     if (SENSOR_MAX_GAIN < gain)
         gain = SENSOR_MAX_GAIN;
 
-    Sensor_WriteReg(0x204, (gain >> 8 & 0xff));
-    Sensor_WriteReg(0x205, (gain & 0xff));
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x204, (gain >> 8 & 0xff));
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x205, (gain & 0xff));
 
-    // s5k5e2ya_group_hold_off();
+    // s5k5e2ya_drv_group_hold_off();
 }
 
 /*==============================================================================
@@ -1008,12 +252,14 @@ static void s5k5e2ya_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain) {
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t s5k5e2ya_read_frame_length(SENSOR_HW_HANDLE handle) {
-    uint16_t frame_len_h = 0;
-    uint16_t frame_len_l = 0;
+static cmr_u16 s5k5e2ya_drv_read_frame_length(cmr_handle handle) {
+    cmr_u16 frame_len_h = 0;
+    cmr_u16 frame_len_l = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    frame_len_h = Sensor_ReadReg(0x0340) & 0xff;
-    frame_len_l = Sensor_ReadReg(0x0341) & 0xff;
+    frame_len_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0340) & 0xff;
+    frame_len_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0341) & 0xff;
 
     return ((frame_len_h << 8) | frame_len_l);
 }
@@ -1023,10 +269,13 @@ static uint16_t s5k5e2ya_read_frame_length(SENSOR_HW_HANDLE handle) {
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void s5k5e2ya_write_frame_length(SENSOR_HW_HANDLE handle,
-                                        uint32_t frame_len) {
-    Sensor_WriteReg(0x0340, (frame_len >> 8) & 0xff);
-    Sensor_WriteReg(0x0341, frame_len & 0xff);
+static void s5k5e2ya_drv_write_frame_length(cmr_handle handle,
+                                        cmr_u32 frame_len) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, (frame_len >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0341, frame_len & 0xff);
 }
 
 /*==============================================================================
@@ -1034,8 +283,11 @@ static void s5k5e2ya_write_frame_length(SENSOR_HW_HANDLE handle,
  * read shutter from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_read_shutter(void) {
-    return s_sensor_ev_info.preview_shutter;
+static cmr_u32 s5k5e2ya_drv_read_shutter(cmr_handle handle) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    return sns_drv_cxt->sensor_ev_info.preview_shutter;
 }
 
 /*==============================================================================
@@ -1044,9 +296,12 @@ static uint32_t s5k5e2ya_read_shutter(void) {
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void s5k5e2ya_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter) {
-    Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
-    Sensor_WriteReg(0x0203, shutter & 0xff);
+static void s5k5e2ya_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (shutter >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, shutter & 0xff);
 }
 
 /*==============================================================================
@@ -1055,14 +310,17 @@ static void s5k5e2ya_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter) {
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static uint16_t s5k5e2ya_update_exposure(SENSOR_HW_HANDLE handle,
-                                         uint32_t shutter,
-                                         uint32_t dummy_line) {
-    uint32_t dest_fr_len = 0;
-    uint32_t cur_fr_len = 0;
-    uint32_t fr_len = s_current_default_frame_length;
+static cmr_u16 s5k5e2ya_drv_update_exposure(cmr_handle handle,
+                                         cmr_u32 shutter,
+                                         cmr_u32 dummy_line) {
+    cmr_u32 dest_fr_len = 0;
+    cmr_u32 cur_fr_len = 0;
+    cmr_u32 fr_len = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    fr_len = sns_drv_cxt->frame_length_def;
 
-    // s5k5e2ya_group_hold_on();
+    // s5k5e2ya_drv_group_hold_on();
 
     if (1 == SUPPORT_AUTO_FRAME_LENGTH)
         goto write_sensor_shutter;
@@ -1071,16 +329,16 @@ static uint16_t s5k5e2ya_update_exposure(SENSOR_HW_HANDLE handle,
                       ? (shutter + dummy_line + FRAME_OFFSET)
                       : fr_len;
 
-    cur_fr_len = s5k5e2ya_read_frame_length(handle);
+    cur_fr_len = s5k5e2ya_drv_read_frame_length(handle);
 
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
 
     if (dest_fr_len != cur_fr_len)
-        s5k5e2ya_write_frame_length(handle, dest_fr_len);
+        s5k5e2ya_drv_write_frame_length(handle, dest_fr_len);
 write_sensor_shutter:
     /* write shutter to sensor registers */
-    s5k5e2ya_write_shutter(handle, shutter);
+    s5k5e2ya_drv_write_shutter(handle, shutter);
 
 #ifdef GAIN_DELAY_1_FRAME
     usleep(dest_fr_len * PREVIEW_LINE_TIME / 10);
@@ -1094,48 +352,38 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
-    SENSOR_AVDD_VAL_E dvdd_val = g_s5k5e2ya_mipi_raw_info.dvdd_val;
-    SENSOR_AVDD_VAL_E avdd_val = g_s5k5e2ya_mipi_raw_info.avdd_val;
-    SENSOR_AVDD_VAL_E iovdd_val = g_s5k5e2ya_mipi_raw_info.iovdd_val;
-    BOOLEAN power_down = g_s5k5e2ya_mipi_raw_info.power_down_level;
-    BOOLEAN reset_level = g_s5k5e2ya_mipi_raw_info.reset_pulse_level;
+static cmr_int s5k5e2ya_drv_power_on(cmr_handle handle, cmr_uint power_on) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct module_cfg_info *module_info = sns_drv_cxt->module_info;
+
+    SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
+    SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
+    SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
+    BOOLEAN power_down = MIPI_RAW_INFO.power_down_level;
+    BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        Sensor_PowerDown(power_down);
-        Sensor_SetResetLevel(reset_level);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         usleep(10 * 1000);
-        Sensor_SetAvddVoltage(avdd_val);
-        Sensor_SetDvddVoltage(dvdd_val);
-        Sensor_SetIovddVoltage(iovdd_val);
-        Sensor_PowerDown(!power_down);
-        Sensor_SetResetLevel(!reset_level);
+        hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
+        hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
+        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
+
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle,!reset_level);
         usleep(10 * 1000);
-        Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-        usleep(5 * 1000);
-        dw9714_init(2);
-#else
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-#endif
-
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DEFALUT_MCLK);
     } else {
-
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        dw9714_deinit(2);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-#endif
-
-        Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-        Sensor_SetResetLevel(reset_level);
-        Sensor_PowerDown(power_down);
-        Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
-        Sensor_SetDvddVoltage(SENSOR_AVDD_CLOSED);
-        Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle,power_down);
+        hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -1144,41 +392,28 @@ static uint32_t s5k5e2ya_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
  * cfg otp setting
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long s5k5e2ya_access_val(SENSOR_HW_HANDLE handle,
+static cmr_int s5k5e2ya_drv_access_val(cmr_handle handle,
                                          unsigned long param) {
-    uint32_t ret = SENSOR_FAIL;
+    cmr_int ret = SENSOR_FAIL;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param_ptr);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    if (!param_ptr) {
-#ifdef FEATURE_OTP
-        if (PNULL != s_s5k5e2ya_raw_param_tab_ptr->cfg_otp) {
-            ret =
-                s_s5k5e2ya_raw_param_tab_ptr->cfg_otp(s_s5k5e2ya_otp_info_ptr);
-            // checking OTP apply result
-            if (SENSOR_SUCCESS != ret) {
-                SENSOR_PRINT("apply otp failed");
-            }
-        } else {
-            SENSOR_PRINT("no update otp function!");
-        }
-#endif
-        return ret;
-    }
-
-    SENSOR_PRINT("sensor s5k5e2ya: param_ptr->type=%x", param_ptr->type);
+    SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
 
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_SHUTTER:
-        *((uint32_t *)param_ptr->pval) = s5k5e2ya_read_shutter();
+        *((cmr_u32 *)param_ptr->pval) = s5k5e2ya_drv_read_shutter(handle);
         break;
     case SENSOR_VAL_TYPE_READ_OTP_GAIN:
-        *((uint32_t *)param_ptr->pval) = s5k5e2ya_read_gain();
+        *((cmr_u32 *)param_ptr->pval) = s5k5e2ya_drv_read_gain(handle);
         break;
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-        ret = s5k5e2ya_get_static_info(handle, param_ptr->pval);
+        ret = s5k5e2ya_drv_get_static_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
-        ret = s5k5e2ya_get_fps_info(handle, param_ptr->pval);
+        ret = s5k5e2ya_drv_get_fps_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -1193,13 +428,18 @@ static unsigned long s5k5e2ya_access_val(SENSOR_HW_HANDLE handle,
  * Initialize Exif Info
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_InitExifInfo(void) {
-    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_s5k5e2ya_exif_info;
+static cmr_int s5k5e2ya_drv_init_exif_info(cmr_handle handle, void**exif_info_in/*in*/) {
+    cmr_int ret = SENSOR_FAIL;
+    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
+    *exif_info_in = NULL;
+    SENSOR_IC_CHECK_HANDLE(handle);
 
-    memset(&s_s5k5e2ya_exif_info, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
+    SENSOR_IC_CHECK_PTR(exif_ptr);
+    *exif_info_in = exif_ptr;
 
-    SENSOR_PRINT("Start");
-
+    SENSOR_LOGI("Start");
     /*aperture = numerator/denominator */
     /*fnumber = numerator/denominator */
     exif_ptr->valid.FNumber = 1;
@@ -1216,11 +456,7 @@ static uint32_t s5k5e2ya_InitExifInfo(void) {
     exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
 
-    return SENSOR_SUCCESS;
-}
-
-static unsigned long s5k5e2ya_get_exif_info(unsigned long param) {
-    return (unsigned long)&s_s5k5e2ya_exif_info;
+    return ret;
 }
 
 /*==============================================================================
@@ -1228,62 +464,27 @@ static unsigned long s5k5e2ya_get_exif_info(unsigned long param) {
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
-    uint16_t pid_value = 0x00;
-    uint16_t ver_value = 0x00;
-    uint32_t ret_value = SENSOR_FAIL;
+static cmr_int s5k5e2ya_drv_identify(cmr_handle handle, cmr_uint param) {
+    cmr_u16 pid_value = 0x00;
+    cmr_u16 ver_value = 0x00;
+    cmr_u32 ret_value = SENSOR_FAIL;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_PRINT("mipi raw identify");
-
-    pid_value = Sensor_ReadReg(s5k5e2ya_PID_ADDR);
-
+    SENSOR_LOGI("mipi raw identify");
+    pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, s5k5e2ya_PID_ADDR);
     if (s5k5e2ya_PID_VALUE == pid_value) {
-        ver_value = Sensor_ReadReg(s5k5e2ya_VER_ADDR);
-        SENSOR_PRINT("Identify: PID = %x, VER = %x", pid_value, ver_value);
+        ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, s5k5e2ya_VER_ADDR);
+        SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
         if (s5k5e2ya_VER_VALUE == ver_value) {
-            SENSOR_PRINT_HIGH("this is s5k5e2ya sensor");
-
-#ifdef FEATURE_OTP
-            /*if read otp info failed or module id mismatched ,identify failed
-             * ,return SENSOR_FAIL ,exit identify*/
-            if (PNULL != s_s5k5e2ya_raw_param_tab_ptr->identify_otp) {
-                SENSOR_PRINT("identify module_id=0x%x",
-                             s_s5k5e2ya_raw_param_tab_ptr->param_id);
-                // set default value
-                memset(s_s5k5e2ya_otp_info_ptr, 0x00,
-                       sizeof(struct otp_info_t));
-                ret_value = s_s5k5e2ya_raw_param_tab_ptr->identify_otp(
-                    s_s5k5e2ya_otp_info_ptr);
-
-                if (SENSOR_SUCCESS == ret_value) {
-                    SENSOR_PRINT(
-                        "identify otp sucess! module_id=0x%x, module_name=%s",
-                        s_s5k5e2ya_raw_param_tab_ptr->param_id, MODULE_NAME);
-                } else {
-                    SENSOR_PRINT("identify otp fail! exit identify");
-                    return ret_value;
-                }
-            } else {
-                SENSOR_PRINT("no identify_otp function!");
-            }
-
-#endif
-
-            s5k5e2ya_InitExifInfo();
-
-#if 0 // defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
-      // defined(CONFIG_CAMERA_ISP_VERSION_V4)
-			s5k5e2ya_InitRawTuneInfo();
-#endif
-
+            SENSOR_LOGI("this is s5k5e2ya sensor");
+            //s5k5e2ya_drv_init_exif_info();
             ret_value = SENSOR_SUCCESS;
-
         } else {
-            SENSOR_PRINT_HIGH("Identify this is %x%x sensor", pid_value,
-                              ver_value);
+            SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
         }
     } else {
-        SENSOR_PRINT_HIGH("sensor identify fail, pid_value = %x", pid_value);
+        SENSOR_LOGE("sensor identify fail, pid_value = %x", pid_value);
     }
 
     return ret_value;
@@ -1291,76 +492,59 @@ static uint32_t s5k5e2ya_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
 
 /*==============================================================================
  * Description:
- * get resolution trim
- *
- *============================================================================*/
-static unsigned long s5k5e2ya_get_resolution_trim_tab(uint32_t param) {
-    return (unsigned long)s_s5k5e2ya_resolution_trim_tab;
-}
-
-/*==============================================================================
- * Description:
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t s5k5e2ya_before_snapshot(SENSOR_HW_HANDLE handle,
-                                         uint32_t param) {
-    uint32_t cap_shutter = 0;
-    uint32_t prv_shutter = 0;
-    uint32_t gain = 0;
-    uint32_t cap_gain = 0;
-    uint32_t capture_mode = param & 0xffff;
-    uint32_t preview_mode = (param >> 0x10) & 0xffff;
+static cmr_u32 s5k5e2ya_drv_before_snapshot(cmr_handle handle,
+                                         cmr_uint param) {
+    cmr_u32 cap_shutter = 0;
+    cmr_u32 prv_shutter = 0;
+    cmr_u32 gain = 0;
+    cmr_u32 cap_gain = 0;
+    cmr_u32 capture_mode = param & 0xffff;
+    cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
-    uint32_t prv_linetime =
-        s_s5k5e2ya_resolution_trim_tab[preview_mode].line_time;
-    uint32_t cap_linetime =
-        s_s5k5e2ya_resolution_trim_tab[capture_mode].line_time;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    s_current_default_frame_length =
-        s5k5e2ya_get_default_frame_length(capture_mode);
-    SENSOR_PRINT("capture_mode = %d", capture_mode);
+    cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
+    cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
+
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
+    SENSOR_LOGI("capture_mode = %d", capture_mode);
 
     if (preview_mode == capture_mode) {
-        cap_shutter = s_sensor_ev_info.preview_shutter;
-        cap_gain = s_sensor_ev_info.preview_gain;
+        cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
+        cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
 
-    prv_shutter = s_sensor_ev_info.preview_shutter; // s5k5e2ya_read_shutter();
-    gain = s_sensor_ev_info.preview_gain;           // s5k5e2ya_read_gain();
+    prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
+    gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    Sensor_SetMode(capture_mode);
-    Sensor_SetMode_WaitDone();
+    if(sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if(sns_drv_cxt->ops_cb.set_mode_wait_done) 
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
-    cap_shutter =
-        prv_shutter * prv_linetime / cap_linetime; // * BINNING_FACTOR;
-                                                   /*
-                                                           while (gain >= (2 * SENSOR_BASE_GAIN)) {
-                                                                   if (cap_shutter * 2 > s_current_default_frame_length)
-                                                                           break;
-                                                                   cap_shutter = cap_shutter * 2;
-                                                                   gain = gain / 2;
-                                                           }
-                                                   */
-    cap_shutter = s5k5e2ya_update_exposure(handle, cap_shutter, 0);
+
+    cap_shutter = prv_shutter * prv_linetime / cap_linetime;
+    cap_shutter = s5k5e2ya_drv_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
-    s5k5e2ya_write_gain(handle, cap_gain);
-    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
-                 s_sensor_ev_info.preview_shutter,
-                 s_sensor_ev_info.preview_gain);
+    s5k5e2ya_drv_write_gain(handle, cap_gain);
+    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = 0x%x",
+                 sns_drv_cxt->sensor_ev_info.preview_shutter,
+                 sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    SENSOR_PRINT("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
+    SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
                  cap_gain);
 snapshot_info:
-    s_hdr_info.capture_shutter = cap_shutter; // s5k5e2ya_read_shutter();
-    s_hdr_info.capture_gain = cap_gain;       // s5k5e2ya_read_gain();
-    /* limit HDR capture min fps to 10;
-     * MaxFrameTime = 1000000*0.1us;
-     */
-    // s_hdr_info.capture_max_shutter = 1000000/ cap_linetime;
+    sns_drv_cxt->hdr_info.capture_shutter = cap_shutter;
+    sns_drv_cxt->hdr_info.capture_gain = cap_gain;
 
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+    if(sns_drv_cxt->ops_cb.set_exif_info) 
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
 
     return SENSOR_SUCCESS;
 }
@@ -1370,24 +554,27 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t s5k5e2ya_write_exposure(SENSOR_HW_HANDLE handle,
-                                         unsigned long param) {
-    uint32_t ret_value = SENSOR_SUCCESS;
-    uint16_t exposure_line = 0x00;
-    uint16_t dummy_line = 0x00;
-    uint16_t mode = 0x00;
+static cmr_int s5k5e2ya_drv_write_exposure(cmr_handle handle,
+                                                        cmr_uint param) {
+    cmr_int ret_value = SENSOR_SUCCESS;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 mode = 0x00;
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(ex);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     mode = ex->size_index;
 
-    SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                  exposure_line, dummy_line);
-    s_current_default_frame_length = s5k5e2ya_get_default_frame_length(mode);
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
-    s_sensor_ev_info.preview_shutter =
-        s5k5e2ya_update_exposure(handle, exposure_line, dummy_line);
+    sns_drv_cxt->sensor_ev_info.preview_shutter =
+        s5k5e2ya_drv_update_exposure(handle, exposure_line, dummy_line);
 
     return ret_value;
 }
@@ -1397,8 +584,8 @@ static uint32_t s5k5e2ya_write_exposure(SENSOR_HW_HANDLE handle,
  * get the parameter from isp to real gain
  * you mustn't change the funcion !
  *============================================================================*/
-static uint32_t isp_to_real_gain(uint32_t param) {
-    uint32_t real_gain = 0;
+static cmr_u32 isp_to_real_gain(cmr_u32 param) {
+    cmr_u32 real_gain = 0;
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -1422,57 +609,51 @@ static uint32_t isp_to_real_gain(uint32_t param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t s5k5e2ya_write_gain_value(SENSOR_HW_HANDLE handle,
-                                          uint32_t param) {
-    uint32_t ret_value = SENSOR_SUCCESS;
-    uint32_t real_gain = 0;
+static cmr_int s5k5e2ya_drv_write_gain_value(cmr_handle handle,
+                                          cmr_u32 param) {
+    cmr_int ret_value = SENSOR_SUCCESS;
+    cmr_u32 real_gain = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     real_gain = isp_to_real_gain(param);
 
     real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_PRINT("real_gain = 0x%x", real_gain);
+    SENSOR_LOGI("real_gain = 0x%x", real_gain);
 
-    s_sensor_ev_info.preview_gain = real_gain;
-    s5k5e2ya_write_gain(handle,real_gain);
+    sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
+    s5k5e2ya_drv_write_gain(handle,real_gain);
 
     return ret_value;
 }
-
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-/*==============================================================================
- * Description:
- * write parameter to vcm
- * please add your VCM function to this function
- *============================================================================*/
-static uint32_t s5k5e2ya_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
-    return dw9714_write_af(handle, param);
-}
-#endif
 
 /*==============================================================================
  * Description:
  * increase gain or shutter for hdr
  *
  *============================================================================*/
-static void s5k5e2ya_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
-                                           uint8_t ev_multiplier) {
-    uint32_t shutter_multiply =
-        s_hdr_info.capture_max_shutter / s_hdr_info.capture_shutter;
-    uint32_t gain = 0;
+static void s5k5e2ya_drv_increase_hdr_exposure(cmr_handle handle,
+                                           cmr_u8 ev_multiplier) {
+    struct hdr_info_t *hdr_info = NULL;
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hdr_info = &sns_drv_cxt->hdr_info;
+
+    cmr_u32 shutter_multiply = hdr_info->capture_max_shutter / hdr_info->capture_shutter;
+    cmr_u32 gain = 0;
 
     if (0 == shutter_multiply)
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
-        s5k5e2ya_update_exposure(handle,
-                                 s_hdr_info.capture_shutter * ev_multiplier, 0);
-        s5k5e2ya_write_gain(handle, s_hdr_info.capture_gain);
+        s5k5e2ya_drv_update_exposure(handle, hdr_info->capture_shutter * ev_multiplier, 0);
+        s5k5e2ya_drv_write_gain(handle, hdr_info->capture_gain);
     } else {
-        gain = s_hdr_info.capture_gain * ev_multiplier / shutter_multiply;
-        s5k5e2ya_update_exposure(
-            handle, s_hdr_info.capture_shutter * shutter_multiply, 0);
-        s5k5e2ya_write_gain(handle, gain);
+        gain = hdr_info->capture_gain * ev_multiplier / shutter_multiply;
+        s5k5e2ya_drv_update_exposure(
+            handle, hdr_info->capture_shutter * shutter_multiply, 0);
+        s5k5e2ya_drv_write_gain(handle, gain);
     }
 }
 
@@ -1481,20 +662,26 @@ static void s5k5e2ya_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
  * decrease gain or shutter for hdr
  *
  *============================================================================*/
-static void s5k5e2ya_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,
-                                           uint8_t ev_divisor) {
-    uint16_t gain_multiply = 0;
-    uint32_t shutter = 0;
-    gain_multiply = s_hdr_info.capture_gain / SENSOR_BASE_GAIN;
+static void s5k5e2ya_drv_decrease_hdr_exposure(cmr_handle handle,
+                                           cmr_u8 ev_divisor) {
+    cmr_u16 gain_multiply = 0;
+    cmr_u32 shutter = 0;
+    struct hdr_info_t *hdr_info = NULL;
+
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hdr_info = &sns_drv_cxt->hdr_info;
+
+    gain_multiply = hdr_info->capture_gain / SENSOR_BASE_GAIN;
 
     if (gain_multiply >= ev_divisor) {
-        s5k5e2ya_update_exposure(handle, s_hdr_info.capture_shutter, 0);
-        s5k5e2ya_write_gain(handle, s_hdr_info.capture_gain / ev_divisor);
+        s5k5e2ya_drv_update_exposure(handle, hdr_info->capture_shutter, 0);
+        s5k5e2ya_drv_write_gain(handle, hdr_info->capture_gain / ev_divisor);
 
     } else {
-        shutter = s_hdr_info.capture_shutter * gain_multiply / ev_divisor;
-        s5k5e2ya_update_exposure(handle, shutter, 0);
-        s5k5e2ya_write_gain(handle, s_hdr_info.capture_gain / gain_multiply);
+        shutter = hdr_info->capture_shutter * gain_multiply / ev_divisor;
+        s5k5e2ya_drv_update_exposure(handle, shutter, 0);
+        s5k5e2ya_drv_write_gain(handle, hdr_info->capture_gain / gain_multiply);
     }
 }
 
@@ -1503,26 +690,29 @@ static void s5k5e2ya_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,
  * set hdr ev
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t s5k5e2ya_set_hdr_ev(SENSOR_HW_HANDLE handle,
-                                    unsigned long param) {
-    uint32_t ret = SENSOR_SUCCESS;
+static cmr_int s5k5e2ya_drv_set_hdr_ev(cmr_handle handle,
+                                    cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(ext_ptr);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    uint32_t ev = ext_ptr->param;
-    uint8_t ev_divisor, ev_multiplier;
+    cmr_u32 ev = ext_ptr->param;
+    cmr_u8 ev_divisor, ev_multiplier;
 
     switch (ev) {
     case SENSOR_HDR_EV_LEVE_0:
         ev_divisor = 2;
-        s5k5e2ya_decrease_hdr_exposure(handle, ev_divisor);
+        s5k5e2ya_drv_decrease_hdr_exposure(handle, ev_divisor);
         break;
     case SENSOR_HDR_EV_LEVE_1:
         ev_multiplier = 1;
-        s5k5e2ya_increase_hdr_exposure(handle, ev_multiplier);
+        s5k5e2ya_drv_increase_hdr_exposure(handle, ev_multiplier);
         break;
     case SENSOR_HDR_EV_LEVE_2:
         ev_multiplier = 2;
-        s5k5e2ya_increase_hdr_exposure(handle, ev_multiplier);
+        s5k5e2ya_drv_increase_hdr_exposure(handle, ev_multiplier);
         break;
     default:
         break;
@@ -1536,15 +726,18 @@ static uint32_t s5k5e2ya_set_hdr_ev(SENSOR_HW_HANDLE handle,
  * you can add functions reference SENSOR_EXT_FUNC_CMD_E which from
  *sensor_drv_u.h
  *============================================================================*/
-static uint32_t s5k5e2ya_ext_func(SENSOR_HW_HANDLE handle,
-                                  unsigned long param) {
-    uint32_t rtn = SENSOR_SUCCESS;
+static cmr_int s5k5e2ya_drv_ext_func(cmr_handle handle,
+                                  cmr_uint param) {
+    cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(ext_ptr);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_PRINT("ext_ptr->cmd: %d", ext_ptr->cmd);
+    SENSOR_LOGI("ext_ptr->cmd: %d", ext_ptr->cmd);
     switch (ext_ptr->cmd) {
     case SENSOR_EXT_EV:
-        rtn = s5k5e2ya_set_hdr_ev(handle, param);
+        rtn = s5k5e2ya_drv_set_hdr_ev(handle, param);
         break;
     default:
         break;
@@ -1558,10 +751,12 @@ static uint32_t s5k5e2ya_ext_func(SENSOR_HW_HANDLE handle,
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
-    SENSOR_PRINT("E");
+static cmr_int s5k5e2ya_drv_stream_on(cmr_handle handle, cmr_u32 param) {
+    SENSOR_LOGI("E");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    Sensor_WriteReg(0x0100, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     /*delay*/
     // usleep(30 * 1000);
 
@@ -1573,14 +768,65 @@ static uint32_t s5k5e2ya_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t s5k5e2ya_stream_off(SENSOR_HW_HANDLE handle, uint32_t param) {
-    SENSOR_PRINT("E");
+static cmr_int s5k5e2ya_stream_off(cmr_handle handle, cmr_u32 param) {
+    SENSOR_LOGI("E");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    Sensor_WriteReg(0x0100, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     /*delay*/
     usleep(50 * 1000);
 
     return 0;
+}
+
+static cmr_int s5k5e2ya_drv_handle_create(
+          struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL;
+    void *pri_data = NULL;
+
+    ret = sensor_ic_drv_create(init_param,sns_ic_drv_handle);
+    sns_drv_cxt = *sns_ic_drv_handle;
+
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
+
+    s5k5e2ya_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
+
+    sns_drv_cxt->hdr_info.capture_max_shutter = 2000000 / SNAPSHOT_LINE_TIME;
+    sns_drv_cxt->hdr_info.capture_shutter = SNAPSHOT_FRAME_LENGTH - FRAME_OFFSET;
+    sns_drv_cxt->hdr_info.capture_gain = SENSOR_BASE_GAIN;
+
+    sns_drv_cxt->sensor_ev_info.preview_shutter = PREVIEW_FRAME_LENGTH - FRAME_OFFSET;
+    sns_drv_cxt->sensor_ev_info.preview_gain = SENSOR_BASE_GAIN;
+    sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
+
+    /*add private here*/
+    return ret;
+}
+
+static cmr_int s5k5e2ya_drv_handle_delete(cmr_handle handle, cmr_int *param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    /*if has private data,you must release it here*/
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    ret = sensor_ic_drv_delete(handle,param);
+    return ret;
+}
+
+static cmr_int s5k5e2ya_drv_get_private_data(cmr_handle handle,
+                                                     cmr_uint cmd, void**param){
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+
+    ret = sensor_ic_get_private_data(handle,cmd, param);
+    return ret;
 }
 
 /*==============================================================================
@@ -1589,25 +835,24 @@ static uint32_t s5k5e2ya_stream_off(SENSOR_HW_HANDLE handle, uint32_t param) {
  * you can add functions reference SENSOR_IOCTL_FUNC_TAB_T from sensor_drv_u.h
  *
  * add ioctl functions like this:
- * .power = s5k5e2ya_power_on,
+ * .power = s5k5e2ya_drv_power_on,
  *============================================================================*/
-static SENSOR_IOCTL_FUNC_TAB_T s_s5k5e2ya_ioctl_func_tab = {
-    .power = s5k5e2ya_power_on,
-    .identify = s5k5e2ya_identify,
-    .get_trim = s5k5e2ya_get_resolution_trim_tab,
-    .before_snapshort = s5k5e2ya_before_snapshot,
-    .ex_write_exp = s5k5e2ya_write_exposure,
-    .write_gain_value = s5k5e2ya_write_gain_value,
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    .af_enable = s5k5e2ya_write_af,
-#endif
-    .get_exif = s5k5e2ya_get_exif_info,
-    .set_focus = s5k5e2ya_ext_func,
-    //.set_video_mode = s5k5e2ya_set_video_mode,
-    .stream_on = s5k5e2ya_stream_on,
-    .stream_off = s5k5e2ya_stream_off,
-    .cfg_otp = s5k5e2ya_access_val,
+static struct sensor_ic_ops s5k5e2ya_ops_tab = {
+    .create_handle = s5k5e2ya_drv_handle_create,
+    .delete_handle = s5k5e2ya_drv_handle_delete,
+    .get_data = s5k5e2ya_drv_get_private_data,
 
-    //.group_hold_on = s5k5e2ya_group_hold_on,
-    //.group_hold_of = s5k5e2ya_group_hold_off,
+    .power = s5k5e2ya_drv_power_on,
+    .identify = s5k5e2ya_drv_identify,
+    .ex_write_exp = s5k5e2ya_drv_write_exposure,
+    .write_gain_value = s5k5e2ya_drv_write_gain_value,
+
+    .ext_ops = {
+        [SENSOR_IOCTL_EXT_FUNC].ops = s5k5e2ya_drv_ext_func,
+        [SENSOR_IOCTL_VIDEO_MODE].ops = s5k5e2ya_drv_set_video_mode, 
+        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = s5k5e2ya_drv_before_snapshot,
+        [SENSOR_IOCTL_STREAM_ON].ops = s5k5e2ya_drv_stream_on,
+        [SENSOR_IOCTL_STREAM_OFF].ops = s5k5e2ya_stream_off,
+        [SENSOR_IOCTL_ACCESS_VAL].ops = s5k5e2ya_drv_access_val,
+    }
 };

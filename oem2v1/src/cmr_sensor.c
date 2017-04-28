@@ -772,7 +772,7 @@ cmr_int cmr_sensor_get_flash_info(cmr_handle sensor_handle, cmr_u32 sensor_id,
         goto exit;
     }
 
-    ret = sns_dev_get_flash_level(&handle->sensor_cxt[sensor_id], level);
+    ret = sensor_get_flash_level(&handle->sensor_cxt[sensor_id], level);
     if (ret) {
         CMR_LOGE("get falsh level failed!");
         ret = CMR_CAMERA_FAIL;
@@ -880,7 +880,7 @@ cmr_int cmr_sns_thread_proc(struct cmr_msg *message, void *p_data) {
     case CMR_SENSOR_EVT_SETMODONE:
         CMR_LOGI("SENSOR_EVT_SET_MODE_DONE_OK");
         camera_id = (cmr_u32)message->sub_msg_type;
-        sensor_set_modone_common(&handle->sensor_cxt[camera_id]); // for debug
+        sensor_set_mode_done_common(&handle->sensor_cxt[camera_id]); // for debug
         break;
 
     case CMR_SENSOR_EVT_STREAM:
@@ -1242,13 +1242,13 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt,
 
 cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
                       cmr_uint arg) {
-    SENSOR_IOCTL_FUNC_PTR func_ptr;
-    SENSOR_IOCTL_FUNC_TAB_T *func_tab_ptr;
+    SENSOR_IOCTL_FUNC_PTR func_ptr = PNULL;
+    struct sensor_ic_ops *sns_ops = PNULL;
     cmr_uint temp;
     cmr_u32 ret = CMR_CAMERA_SUCCESS;
     cmr_u32 sns_cmd = SENSOR_IOCTL_GET_STATUS;
     cmr_u8 read_flag = 0;
-    SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
     ret = cmr_sns_get_ioctl_cmd(&sns_cmd, cmd);
     if (ret) {
@@ -1277,10 +1277,9 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
         return -1;
     }
 
-    func_tab_ptr = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr;
-    temp = *((cmr_uint *)func_tab_ptr + sns_cmd);
-    func_ptr = (SENSOR_IOCTL_FUNC_PTR)temp;
-
+#if 1
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    //func_ptr = sns_ops->ext_ops[sns_cmd].ops;
     if (!module->otp_drv_info) {
         ret =
             cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr, &read_flag);
@@ -1297,9 +1296,10 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
         }
     }
 
-    if (PNULL != func_ptr) {
-        ret = func_ptr(sensor_cxt->sensor_hw_handler, arg);
+    if (PNULL != sns_ops->ext_ops[sns_cmd].ops) {
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle, arg);
     }
+#endif
     return ret;
 }
 

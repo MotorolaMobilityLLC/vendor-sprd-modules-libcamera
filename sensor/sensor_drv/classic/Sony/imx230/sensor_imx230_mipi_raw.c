@@ -14,671 +14,46 @@
  * limitations under the License.
  * V2.0
  */
-#include "cutils/properties.h"
-#include <utils/Log.h>
-#include "sensor.h"
-#include "jpeg_exif_header.h"
-#include "sensor_drv_u.h"
-#include "sensor_raw.h"
-#include "vcm_dw9800.h"
+#include "sensor_imx230_mipi_raw.h"
 
-#include "parameters/sensor_imx230_raw_param_v3.c"
-#include "parameters/sensor_imx230_otp_truly.h"
-
-//#define DW9800_VCM_SLAVE_ADDR (0x0c)
-
-#define SENSOR_NAME "imx230_mipi_raw"
-#define I2C_SLAVE_ADDR 0x20 /* 16bit slave address*/
-
-#define BINNING_FACTOR 2
-#define imx230_PID_ADDR 0x0016
-#define imx230_PID_VALUE 0x02
-#define imx230_VER_ADDR 0x0017
-#define imx230_VER_VALUE 0x30
-
-/* sensor parameters begin */
-/* effective sensor output image size */
-#define SNAPSHOT_WIDTH 4272  // 4160 //5344
-#define SNAPSHOT_HEIGHT 3212 // 3120 //4016
-#define PREVIEW_WIDTH 2672
-#define PREVIEW_HEIGHT 2008
-
-/*Mipi output*/
-#define LANE_NUM 4
-#define RAW_BITS 10
-
-#define SNAPSHOT_MIPI_PER_LANE_BPS 1419
-#define PREVIEW_MIPI_PER_LANE_BPS 800
-
-/* please ref your spec */
-#define FRAME_OFFSET 10
-#define SENSOR_MAX_GAIN 0xF0
-#define SENSOR_BASE_GAIN 0x20
-#define SENSOR_MIN_SHUTTER 4
-
-/* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
-
-/* please don't change it */
-#define EX_MCLK 24
-
-static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle,
-                                       unsigned long param);
-static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle);
-
-/*==============================================================================
- * Description:
- * global variable
- *============================================================================*/
-static struct hdr_info_t s_hdr_info;
-static uint32_t s_current_default_frame_length;
-static uint32_t s_current_frame_length = 0;
-static uint32_t s_current_default_line_time = 0;
-struct sensor_ev_info_t s_sensor_ev_info;
-
-static uint32_t s_imx230_sensor_close_flag = 0;
-
-static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab;
-struct sensor_raw_info *s_imx230_mipi_raw_info_ptr = &s_imx230_mipi_raw_info;
-
-static const SENSOR_REG_T imx230_init_setting[] = {
-    {0x0136, 0x18}, {0x0137, 0x00}, {0x4800, 0x0E}, {0x4890, 0x01},
-    {0x4D1E, 0x01}, {0x4D1F, 0xFF}, {0x4FA0, 0x00}, {0x4FA1, 0x00},
-    {0x4FA2, 0x00}, {0x4FA3, 0x83}, {0x6153, 0x01}, {0x6156, 0x01},
-    {0x69BB, 0x01}, {0x69BC, 0x05}, {0x69BD, 0x05}, {0x69C1, 0x00},
-    {0x69C4, 0x01}, {0x69C6, 0x01}, {0x7300, 0x00}, {0x9009, 0x1A},
-    {0xB040, 0x90}, {0xB041, 0x14}, {0xB042, 0x6B}, {0xB043, 0x43},
-    {0xB044, 0x63}, {0xB045, 0x2A}, {0xB046, 0x68}, {0xB047, 0x06},
-    {0xB048, 0x68}, {0xB049, 0x07}, {0xB04A, 0x68}, {0xB04B, 0x04},
-    {0xB04C, 0x68}, {0xB04D, 0x05}, {0xB04E, 0x68}, {0xB04F, 0x16},
-    {0xB050, 0x68}, {0xB051, 0x17}, {0xB052, 0x68}, {0xB053, 0x74},
-    {0xB054, 0x68}, {0xB055, 0x75}, {0xB056, 0x68}, {0xB057, 0x76},
-    {0xB058, 0x68}, {0xB059, 0x77}, {0xB05A, 0x68}, {0xB05B, 0x7A},
-    {0xB05C, 0x68}, {0xB05D, 0x7B}, {0xB05E, 0x68}, {0xB05F, 0x0A},
-    {0xB060, 0x68}, {0xB061, 0x0B}, {0xB062, 0x68}, {0xB063, 0x08},
-    {0xB064, 0x68}, {0xB065, 0x09}, {0xB066, 0x68}, {0xB067, 0x0E},
-    {0xB068, 0x68}, {0xB069, 0x0F}, {0xB06A, 0x68}, {0xB06B, 0x0C},
-    {0xB06C, 0x68}, {0xB06D, 0x0D}, {0xB06E, 0x68}, {0xB06F, 0x13},
-    {0xB070, 0x68}, {0xB071, 0x12}, {0xB072, 0x90}, {0xB073, 0x0E},
-    {0xD000, 0xDA}, {0xD001, 0xDA}, {0xD002, 0xAF}, {0xD003, 0xE1},
-    {0xD004, 0x55}, {0xD005, 0x34}, {0xD006, 0x21}, {0xD007, 0x00},
-    {0xD008, 0x1C}, {0xD009, 0x80}, {0xD00A, 0xFE}, {0xD00B, 0xC5},
-    {0xD00C, 0x55}, {0xD00D, 0xDC}, {0xD00E, 0xB6}, {0xD00F, 0x00},
-    {0xD010, 0x31}, {0xD011, 0x02}, {0xD012, 0x4A}, {0xD013, 0x0E},
-    {0xD014, 0x55}, {0xD015, 0xF0}, {0xD016, 0x1B}, {0xD017, 0x00},
-    {0xD018, 0xFA}, {0xD019, 0x2C}, {0xD01A, 0xF1}, {0xD01B, 0x7E},
-    {0xD01C, 0x55}, {0xD01D, 0x1C}, {0xD01E, 0xD8}, {0xD01F, 0x00},
-    {0xD020, 0x76}, {0xD021, 0xC1}, {0xD022, 0xBF}, {0xD044, 0x40},
-    {0xD045, 0xBA}, {0xD046, 0x70}, {0xD047, 0x47}, {0xD048, 0xC0},
-    {0xD049, 0xBA}, {0xD04A, 0x70}, {0xD04B, 0x47}, {0xD04C, 0x82},
-    {0xD04D, 0xF6}, {0xD04E, 0xDA}, {0xD04F, 0xFA}, {0xD050, 0x00},
-    {0xD051, 0xF0}, {0xD052, 0x02}, {0xD053, 0xF8}, {0xD054, 0x81},
-    {0xD055, 0xF6}, {0xD056, 0xCE}, {0xD057, 0xFD}, {0xD058, 0x10},
-    {0xD059, 0xB5}, {0xD05A, 0x0D}, {0xD05B, 0x48}, {0xD05C, 0x40},
-    {0xD05D, 0x7A}, {0xD05E, 0x01}, {0xD05F, 0x28}, {0xD060, 0x15},
-    {0xD061, 0xD1}, {0xD062, 0x0C}, {0xD063, 0x49}, {0xD064, 0x0C},
-    {0xD065, 0x46}, {0xD066, 0x40}, {0xD067, 0x3C}, {0xD068, 0x48},
-    {0xD069, 0x8A}, {0xD06A, 0x62}, {0xD06B, 0x8A}, {0xD06C, 0x80},
-    {0xD06D, 0x1A}, {0xD06E, 0x8A}, {0xD06F, 0x89}, {0xD070, 0x00},
-    {0xD071, 0xB2}, {0xD072, 0x10}, {0xD073, 0x18}, {0xD074, 0x0A},
-    {0xD075, 0x46}, {0xD076, 0x20}, {0xD077, 0x32}, {0xD078, 0x12},
-    {0xD079, 0x88}, {0xD07A, 0x90}, {0xD07B, 0x42}, {0xD07C, 0x00},
-    {0xD07D, 0xDA}, {0xD07E, 0x10}, {0xD07F, 0x46}, {0xD080, 0x80},
-    {0xD081, 0xB2}, {0xD082, 0x88}, {0xD083, 0x81}, {0xD084, 0x84},
-    {0xD085, 0xF6}, {0xD086, 0x06}, {0xD087, 0xF8}, {0xD088, 0xE0},
-    {0xD089, 0x67}, {0xD08A, 0x85}, {0xD08B, 0xF6}, {0xD08C, 0x4B},
-    {0xD08D, 0xFC}, {0xD08E, 0x10}, {0xD08F, 0xBD}, {0xD090, 0x00},
-    {0xD091, 0x18}, {0xD092, 0x1E}, {0xD093, 0x78}, {0xD094, 0x00},
-    {0xD095, 0x18}, {0xD096, 0x17}, {0xD097, 0x98}, {0x5869, 0x01},
-
-    {0x68A9, 0x00}, {0x68C5, 0x00}, {0x68DF, 0x00}, {0x6953, 0x01},
-    {0x6962, 0x3A}, {0x69CD, 0x3A}, {0x9258, 0x00}, {0x933A, 0x02},
-    {0x933B, 0x02}, {0x934B, 0x1B}, {0x934C, 0x0A}, {0x9356, 0x8C},
-    {0x9357, 0x50}, {0x9358, 0x1B}, {0x9359, 0x8C}, {0x935A, 0x1B},
-    {0x935B, 0x0A}, {0x940D, 0x07}, {0x940E, 0x07}, {0x9414, 0x06},
-    {0x945B, 0x07}, {0x945D, 0x07}, {0x9901, 0x35}, {0x9903, 0x23},
-    {0x9905, 0x23}, {0x9906, 0x00}, {0x9907, 0x31}, {0x9908, 0x00},
-    {0x9909, 0x1B}, {0x990A, 0x00}, {0x990B, 0x15}, {0x990D, 0x3F},
-    {0x990F, 0x3F}, {0x9911, 0x3F}, {0x9913, 0x64}, {0x9915, 0x64},
-    {0x9917, 0x64}, {0x9919, 0x50}, {0x991B, 0x60}, {0x991D, 0x65},
-    {0x991F, 0x01}, {0x9921, 0x01}, {0x9923, 0x01}, {0x9925, 0x23},
-    {0x9927, 0x23}, {0x9929, 0x23}, {0x992B, 0x2F}, {0x992D, 0x1A},
-    {0x992F, 0x14}, {0x9931, 0x3F}, {0x9933, 0x3F}, {0x9935, 0x3F},
-    {0x9937, 0x6B}, {0x9939, 0x7C}, {0x993B, 0x81}, {0x9943, 0x0F},
-    {0x9945, 0x0F}, {0x9947, 0x0F}, {0x9949, 0x0F}, {0x994B, 0x0F},
-    {0x994D, 0x0F}, {0x994F, 0x42}, {0x9951, 0x0F}, {0x9953, 0x0B},
-    {0x9955, 0x5A}, {0x9957, 0x13}, {0x9959, 0x0C}, {0x995A, 0x00},
-    {0x995B, 0x00}, {0x995C, 0x00}, {0x996B, 0x00}, {0x996D, 0x10},
-    {0x996F, 0x10}, {0x9971, 0xC8}, {0x9973, 0x32}, {0x9975, 0x04},
-    {0x9976, 0x0A}, {0x99B0, 0x20}, {0x99B1, 0x20}, {0x99B2, 0x20},
-    {0x99C6, 0x6E}, {0x99C7, 0x6E}, {0x99C8, 0x6E}, {0x9A1F, 0x0A},
-    {0x9AB0, 0x20}, {0x9AB1, 0x20}, {0x9AB2, 0x20}, {0x9AC6, 0x6E},
-    {0x9AC7, 0x6E}, {0x9AC8, 0x6E}, {0x9B01, 0x35}, {0x9B03, 0x14},
-    {0x9B05, 0x14}, {0x9B07, 0x31}, {0x9B08, 0x01}, {0x9B09, 0x1B},
-    {0x9B0A, 0x01}, {0x9B0B, 0x15}, {0x9B0D, 0x1E}, {0x9B0F, 0x1E},
-    {0x9B11, 0x1E}, {0x9B13, 0x64}, {0x9B15, 0x64}, {0x9B17, 0x64},
-    {0x9B19, 0x50}, {0x9B1B, 0x60}, {0x9B1D, 0x65}, {0x9B1F, 0x01},
-    {0x9B21, 0x01}, {0x9B23, 0x01}, {0x9B25, 0x14}, {0x9B27, 0x14},
-    {0x9B29, 0x14}, {0x9B2B, 0x2F}, {0x9B2D, 0x1A}, {0x9B2F, 0x14},
-    {0x9B31, 0x1E}, {0x9B33, 0x1E}, {0x9B35, 0x1E}, {0x9B37, 0x6B},
-    {0x9B39, 0x7C}, {0x9B3B, 0x81}, {0x9B43, 0x0F}, {0x9B45, 0x0F},
-    {0x9B47, 0x0F}, {0x9B49, 0x0F}, {0x9B4B, 0x0F}, {0x9B4D, 0x0F},
-    {0x9B4F, 0x2D}, {0x9B51, 0x0B}, {0x9B53, 0x08}, {0x9B55, 0x40},
-    {0x9B57, 0x0D}, {0x9B59, 0x08}, {0x9B5A, 0x00}, {0x9B5B, 0x00},
-    {0x9B5C, 0x00}, {0x9B5D, 0x08}, {0x9B5E, 0x0E}, {0x9B60, 0x08},
-    {0x9B61, 0x0E}, {0x9B6B, 0x00}, {0x9B6D, 0x10}, {0x9B6F, 0x10},
-    {0x9B71, 0xC8}, {0x9B73, 0x32}, {0x9B75, 0x04}, {0x9B76, 0x0A},
-    {0x9BB0, 0x20}, {0x9BB1, 0x20}, {0x9BB2, 0x20}, {0x9BC6, 0x6E},
-    {0x9BC7, 0x6E}, {0x9BC8, 0x6E}, {0x9BCC, 0x20}, {0x9BCD, 0x20},
-    {0x9BCE, 0x20}, {0x9C01, 0x10}, {0x9C03, 0x1D}, {0x9C05, 0x20},
-    {0x9C13, 0x10}, {0x9C15, 0x10}, {0x9C17, 0x10}, {0x9C19, 0x04},
-    {0x9C1B, 0x67}, {0x9C1D, 0x80}, {0x9C1F, 0x0A}, {0x9C21, 0x29},
-    {0x9C23, 0x32}, {0x9C27, 0x56}, {0x9C29, 0x60}, {0x9C39, 0x67},
-    {0x9C3B, 0x80}, {0x9C3D, 0x80}, {0x9C3F, 0x80}, {0x9C41, 0x80},
-    {0x9C55, 0xC8}, {0x9C57, 0xC8}, {0x9C59, 0xC8}, {0x9C87, 0x48},
-    {0x9C89, 0x48}, {0x9C8B, 0x48}, {0x9CB0, 0x20}, {0x9CB1, 0x20},
-    {0x9CB2, 0x20}, {0x9CC6, 0x6E}, {0x9CC7, 0x6E}, {0x9CC8, 0x6E},
-    {0x9D13, 0x10}, {0x9D15, 0x10}, {0x9D17, 0x10}, {0x9D19, 0x04},
-    {0x9D1B, 0x67}, {0x9D1F, 0x0A}, {0x9D21, 0x29}, {0x9D23, 0x32},
-    {0x9D55, 0xC8}, {0x9D57, 0xC8}, {0x9D59, 0xC8}, {0x9D91, 0x20},
-    {0x9D93, 0x20}, {0x9D95, 0x20}, {0x9E01, 0x10}, {0x9E03, 0x1D},
-    {0x9E13, 0x10}, {0x9E15, 0x10}, {0x9E17, 0x10}, {0x9E19, 0x04},
-    {0x9E1B, 0x67}, {0x9E1D, 0x80}, {0x9E1F, 0x0A}, {0x9E21, 0x29},
-    {0x9E23, 0x32}, {0x9E25, 0x30}, {0x9E27, 0x56}, {0x9E29, 0x60},
-    {0x9E39, 0x67}, {0x9E3B, 0x80}, {0x9E3D, 0x80}, {0x9E3F, 0x80},
-    {0x9E41, 0x80}, {0x9E55, 0xC8}, {0x9E57, 0xC8}, {0x9E59, 0xC8},
-    {0x9E91, 0x20}, {0x9E93, 0x20}, {0x9E95, 0x20}, {0x9F8F, 0xA0},
-    {0xA027, 0x67}, {0xA029, 0x80}, {0xA02D, 0x67}, {0xA02F, 0x80},
-    {0xA031, 0x80}, {0xA033, 0x80}, {0xA035, 0x80}, {0xA037, 0x80},
-    {0xA039, 0x80}, {0xA03B, 0x80}, {0xA067, 0x20}, {0xA068, 0x20},
-    {0xA069, 0x20}, {0xA071, 0x48}, {0xA073, 0x48}, {0xA075, 0x48},
-    {0xA08F, 0xA0}, {0xA091, 0x3A}, {0xA093, 0x3A}, {0xA095, 0x0A},
-    {0xA097, 0x0A}, {0xA099, 0x0A}, {0x9012, 0x03}, {0x9098, 0x1A},
-    {0x9099, 0x04}, {0x909A, 0x20}, {0x909B, 0x20}, {0x909C, 0x13},
-    {0x909D, 0x13}, {0xA716, 0x13}, {0xA801, 0x08}, {0xA803, 0x0C},
-    {0xA805, 0x10}, {0xA806, 0x00}, {0xA807, 0x18}, {0xA808, 0x00},
-    {0xA809, 0x20}, {0xA80A, 0x00}, {0xA80B, 0x30}, {0xA80C, 0x00},
-    {0xA80D, 0x40}, {0xA80E, 0x00}, {0xA80F, 0x60}, {0xA810, 0x00},
-    {0xA811, 0x80}, {0xA812, 0x00}, {0xA813, 0xC0}, {0xA814, 0x01},
-    {0xA815, 0x00}, {0xA816, 0x01}, {0xA817, 0x80}, {0xA818, 0x02},
-    {0xA819, 0x00}, {0xA81A, 0x03}, {0xA81B, 0x00}, {0xA81C, 0x03},
-    {0xA81D, 0xAC}, {0xA838, 0x03}, {0xA83C, 0x28}, {0xA83D, 0x5F},
-    {0xA881, 0x08}, {0xA883, 0x0C}, {0xA885, 0x10}, {0xA886, 0x00},
-    {0xA887, 0x18}, {0xA888, 0x00}, {0xA889, 0x20}, {0xA88A, 0x00},
-    {0xA88B, 0x30}, {0xA88C, 0x00}, {0xA88D, 0x40}, {0xA88E, 0x00},
-    {0xA88F, 0x60}, {0xA890, 0x00}, {0xA891, 0x80}, {0xA892, 0x00},
-    {0xA893, 0xC0}, {0xA894, 0x01}, {0xA895, 0x00}, {0xA896, 0x01},
-    {0xA897, 0x80}, {0xA898, 0x02}, {0xA899, 0x00}, {0xA89A, 0x03},
-    {0xA89B, 0x00}, {0xA89C, 0x03}, {0xA89D, 0xAC}, {0xA8B8, 0x03},
-    {0xA8BB, 0x13}, {0xA8BC, 0x28}, {0xA8BD, 0x25}, {0xA8BE, 0x1D},
-    {0xA8C0, 0x3A}, {0xA8C1, 0xE0}, {0xB24F, 0x80}, {0x3198, 0x0F},
-    {0x31A0, 0x04}, {0x31A1, 0x03}, {0x31A2, 0x02}, {0x31A3, 0x01},
-    {0x31A8, 0x18}, {0x822C, 0x01}, {0x8239, 0x01}, {0x9503, 0x07},
-    {0x9504, 0x07}, {0x9505, 0x07}, {0x9506, 0x00}, {0x9507, 0x00},
-    {0x9508, 0x00}, {0x9526, 0x18}, {0x9527, 0x18}, {0x9528, 0x18},
-    {0x8858, 0x00}, {0x6B42, 0x40}, {0x6B46, 0x00}, {0x6B47, 0x4B},
-    {0x6B4A, 0x00}, {0x6B4B, 0x4B}, {0x6B4E, 0x00}, {0x6B4F, 0x4B},
-    {0x6B44, 0x00}, {0x6B45, 0x8C}, {0x6B48, 0x00}, {0x6B49, 0x8C},
-    {0x6B4C, 0x00}, {0x6B4D, 0x8C}, {0x5041, 0x00},
-};
-
-static const SENSOR_REG_T imx230_5344x4016_setting[] = {
-    {0x0114, 0x03}, {0x0220, 0x00}, {0x0221, 0x11}, {0x0222, 0x01},
-    {0x0340, 0x10}, {0x0341, 0x2C}, {0x0342, 0x17}, {0x0343, 0x88},
-    {0x0344, 0x00}, {0x0345, 0x00}, {0x0346, 0x00}, {0x0347, 0x00},
-    {0x0348, 0x14}, {0x0349, 0xDF}, {0x034A, 0x0F}, {0x034B, 0xAF},
-    {0x0381, 0x01}, {0x0383, 0x01}, {0x0385, 0x01}, {0x0387, 0x01},
-    {0x0900, 0x00}, {0x0901, 0x11}, {0x0902, 0x00}, {0x3000, 0x74},
-    {0x3001, 0x00}, {0x305C, 0x11}, {0x0112, 0x0A}, {0x0113, 0x0A},
-    {0x034C, 0x14}, {0x034D, 0xE0}, {0x034E, 0x0F}, {0x034F, 0xB0},
-    {0x0401, 0x00}, {0x0404, 0x00}, {0x0405, 0x10}, {0x0408, 0x00},
-    {0x0409, 0x00}, {0x040A, 0x00}, {0x040B, 0x00}, {0x040C, 0x14},
-    {0x040D, 0xE0}, {0x040E, 0x0F}, {0x040F, 0xB0}, {0x0301, 0x04},
-    {0x0303, 0x02}, {0x0305, 0x04}, {0x0306, 0x00}, {0x0307, 0xC8},
-    {0x0309, 0x0A}, {0x030B, 0x01}, {0x030D, 0x0F}, {0x030E, 0x03},
-    {0x030F, 0x77}, {0x0310, 0x01}, {0x0820, 0x16}, {0x0821, 0x2C},
-    {0x0822, 0xCC}, {0x0823, 0xCC}, {0x0202, 0x10}, {0x0203, 0x22},
-    {0x0224, 0x01}, {0x0225, 0xF4}, {0x0204, 0x00}, {0x0205, 0x00},
-    {0x0216, 0x00}, {0x0217, 0x00}, {0x020E, 0x01}, {0x020F, 0x00},
-    {0x0210, 0x01}, {0x0211, 0x00}, {0x0212, 0x01}, {0x0213, 0x00},
-    {0x0214, 0x01}, {0x0215, 0x00}, {0x3006, 0x01}, {0x3007, 0x02},
-    {0x31E0, 0x03}, {0x31E1, 0xFF}, {0x31E4, 0x02}, {0x3A22, 0x20},
-    {0x3A23, 0x14}, {0x3A24, 0xE0}, {0x3A25, 0x0F}, {0x3A26, 0xB0},
-    {0x3A2F, 0x00}, {0x3A30, 0x00}, {0x3A31, 0x00}, {0x3A32, 0x00},
-    {0x3A33, 0x14}, {0x3A34, 0xDF}, {0x3A35, 0x0F}, {0x3A36, 0xAF},
-    {0x3A37, 0x00}, {0x3A38, 0x00}, {0x3A39, 0x00}, {0x3A21, 0x00},
-    {0x3011, 0x00}, {0x3013, 0x01},
-};
-static const SENSOR_REG_T imx230_4272x3212_setting[] = {
-    /*4Lane
-    reg_A4
-    4272x3212 (4:3)
-    H: 4272
-    V: 3212
-    Mode Setting
-            Address value*/
-    {0x0114, 0x03}, {0x0220, 0x00}, {0x0221, 0x11},
-    {0x0222, 0x01}, {0x0340, 0x10}, {0x0341, 0x0A},
-    {0x0342, 0x17}, {0x0343, 0x88}, {0x0344, 0x00},
-    {0x0345, 0x00}, {0x0346, 0x00}, {0x0347, 0x00},
-    {0x0348, 0x14}, {0x0349, 0xDF}, {0x034A, 0x0F},
-    {0x034B, 0xAF}, {0x0381, 0x01}, {0x0383, 0x01},
-    {0x0385, 0x01}, {0x0387, 0x01}, {0x0900, 0x00},
-    {0x0901, 0x11}, {0x0902, 0x00}, {0x3000, 0x74},
-    {0x3001, 0x00}, {0x305C, 0x11}, // Output Size Setting
-    {0x0112, 0x0A}, {0x0113, 0x0A}, {0x034C, 0x10},
-    {0x034D, 0xB0}, {0x034E, 0x0C}, {0x034F, 0x8C},
-    {0x0401, 0x02}, {0x0404, 0x00}, {0x0405, 0x14},
-    {0x0408, 0x00}, {0x0409, 0x02}, {0x040A, 0x00},
-    {0x040B, 0x00}, {0x040C, 0x14}, {0x040D, 0xDE},
-    {0x040E, 0x0F}, {0x040F, 0xB0}, // Clock Setting
-    {0x0301, 0x04}, {0x0303, 0x02}, {0x0305, 0x04},
-    {0x0306, 0x00}, {0x0307, 0xC6}, {0x0309, 0x0A},
-    {0x030B, 0x01}, {0x030D, 0x0F}, {0x030E, 0x02},
-    {0x030F, 0xC3}, {0x0310, 0x01}, // Data Rate Setting
-    {0x0820, 0x11}, {0x0821, 0xAC}, {0x0822, 0xCC},
-    {0x0823, 0xCC}, // Integration Time Setting
-    {0x0202, 0x10}, {0x0203, 0x00}, {0x0224, 0x01},
-    {0x0225, 0xF4}, // Gain Setting
-    {0x0204, 0x00}, {0x0205, 0x00}, {0x0216, 0x00},
-    {0x0217, 0x00}, {0x020E, 0x01}, {0x020F, 0x00},
-    {0x0210, 0x01}, {0x0211, 0x00}, {0x0212, 0x01},
-    {0x0213, 0x00}, {0x0214, 0x01}, {0x0215, 0x00}, // HDR Setting
-    {0x3006, 0x01}, {0x3007, 0x02}, {0x31E0, 0x03},
-    {0x31E1, 0xFF}, {0x31E4, 0x02}, // DPC2D Setting
-    {0x3A22, 0x20}, {0x3A23, 0x14}, {0x3A24, 0xE0},
-    {0x3A25, 0x0F}, {0x3A26, 0xB0}, {0x3A2F, 0x00},
-    {0x3A30, 0x00}, {0x3A31, 0x00}, {0x3A32, 0x00},
-    {0x3A33, 0x14}, {0x3A34, 0xDF}, {0x3A35, 0x0F},
-    {0x3A36, 0xAF}, {0x3A37, 0x00}, {0x3A38, 0x00},
-    {0x3A39, 0x00}, // LSC Setting
-    {0x3A21, 0x00}, // Stats Setting
-    {0x3011, 0x00}, {0x3013, 0x01},
-
-};
-
-static const SENSOR_REG_T imx230_4160x3120_setting[] = {
-    /*4Lane
-    reg_A4
-    4160x3120 (4:3)
-    H: 4160
-    V: 3120
-    Mode Setting
-            Address	value*/
-    {0x0114, 0x03}, {0x0220, 0x00}, {0x0221, 0x11},
-    {0x0222, 0x01}, {0x0340, 0x10}, {0x0341, 0x0C},
-    {0x0342, 0x17}, {0x0343, 0x88}, {0x0344, 0x00},
-    {0x0345, 0x00}, {0x0346, 0x00}, {0x0347, 0x00},
-    {0x0348, 0x14}, {0x0349, 0xDF}, {0x034A, 0x0F},
-    {0x034B, 0xAF}, {0x0381, 0x01}, {0x0383, 0x01},
-    {0x0385, 0x01}, {0x0387, 0x01}, {0x0900, 0x00},
-    {0x0901, 0x11}, {0x0902, 0x00}, {0x3000, 0x74},
-    {0x3001, 0x00}, {0x305C, 0x11}, // Output Size Setting
-    {0x0112, 0x0A}, {0x0113, 0x0A}, {0x034C, 0x10},
-    {0x034D, 0x40}, {0x034E, 0x0C}, {0x034F, 0x30},
-    {0x0401, 0x02}, {0x0404, 0x00}, {0x0405, 0x14},
-    {0x0408, 0x00}, {0x0409, 0x48}, {0x040A, 0x00},
-    {0x040B, 0x3A}, {0x040C, 0x14}, {0x040D, 0x52},
-    {0x040E, 0x0F}, {0x040F, 0x3E}, // Clock Setting
-    {0x0301, 0x04}, {0x0303, 0x02}, {0x0305, 0x04},
-    {0x0306, 0x00}, {0x0307, 0xC6}, {0x0309, 0x0A},
-    {0x030B, 0x01}, {0x030D, 0x0F}, {0x030E, 0x02},
-    {0x030F, 0xB1}, {0x0310, 0x01}, // Data Rate Setting
-    {0x0820, 0x11}, {0x0821, 0x39}, {0x0822, 0x99},
-    {0x0823, 0x99}, // Integration Time Setting
-    {0x0202, 0x10}, {0x0203, 0x02}, {0x0224, 0x01},
-    {0x0225, 0xF4}, // Gain Setting
-    {0x0204, 0x00}, {0x0205, 0x00}, {0x0216, 0x00},
-    {0x0217, 0x00}, {0x020E, 0x01}, {0x020F, 0x00},
-    {0x0210, 0x01}, {0x0211, 0x00}, {0x0212, 0x01},
-    {0x0213, 0x00}, {0x0214, 0x01}, {0x0215, 0x00}, // HDR Setting
-    {0x3006, 0x01}, {0x3007, 0x02}, {0x31E0, 0x03},
-    {0x31E1, 0xFF}, {0x31E4, 0x02}, // DPC2D Setting
-    {0x3A22, 0x20}, {0x3A23, 0x14}, {0x3A24, 0xE0},
-    {0x3A25, 0x0F}, {0x3A26, 0xB0}, {0x3A2F, 0x00},
-    {0x3A30, 0x00}, {0x3A31, 0x00}, {0x3A32, 0x00},
-    {0x3A33, 0x14}, {0x3A34, 0xDF}, {0x3A35, 0x0F},
-    {0x3A36, 0xAF}, {0x3A37, 0x00}, {0x3A38, 0x00},
-    {0x3A39, 0x00}, // LSC Setting
-    {0x3A21, 0x00}, // Stats Setting
-    {0x3011, 0x00}, {0x3013, 0x01},
-
-};
-
-static const SENSOR_REG_T imx230_4272x2404_setting[] = {
-    /*4Lane
-    reg_A4
-    4K2K 30fps
-    H: 4272
-    V: 2404
-    Mode Setting*/
-    {0x0114, 0x03}, {0x0220, 0x00}, {0x0221, 0x11},
-    {0x0222, 0x01}, {0x0340, 0x0C}, {0x0341, 0x20},
-    {0x0342, 0x17}, {0x0343, 0x88}, {0x0344, 0x00},
-    {0x0345, 0x00}, {0x0346, 0x01}, {0x0347, 0xF8},
-    {0x0348, 0x14}, {0x0349, 0xDF}, {0x034A, 0x0D},
-    {0x034B, 0xB7}, {0x0381, 0x01}, {0x0383, 0x01},
-    {0x0385, 0x01}, {0x0387, 0x01}, {0x0900, 0x00},
-    {0x0901, 0x11}, {0x0902, 0x00}, {0x3000, 0x74},
-    {0x3001, 0x00}, {0x305C, 0x11}, // Output Size Setting
-    {0x0112, 0x0A}, {0x0113, 0x0A}, {0x034C, 0x10},
-    {0x034D, 0xB0}, {0x034E, 0x09}, {0x034F, 0x64},
-    {0x0401, 0x02}, {0x0404, 0x00}, {0x0405, 0x14},
-    {0x0408, 0x00}, {0x0409, 0x02}, {0x040A, 0x00},
-    {0x040B, 0x02}, {0x040C, 0x14}, {0x040D, 0xDE},
-    {0x040E, 0x0B}, {0x040F, 0xBE}, // Clock Setting
-    {0x0301, 0x04}, {0x0303, 0x02}, {0x0305, 0x04},
-    {0x0306, 0x00}, {0x0307, 0xBB}, {0x0309, 0x0A},
-    {0x030B, 0x01}, {0x030D, 0x0F}, {0x030E, 0x02},
-    {0x030F, 0xAF}, {0x0310, 0x01}, // Data Rate Setting
-    {0x0820, 0x11}, {0x0821, 0x2C}, {0x0822, 0xCC},
-    {0x0823, 0xCC}, // Integration Time Setting
-    {0x0202, 0x0C}, {0x0203, 0x16}, {0x0224, 0x01},
-    {0x0225, 0xF4}, // Gain Setting
-    {0x0204, 0x00}, {0x0205, 0x00}, {0x0216, 0x00},
-    {0x0217, 0x00}, {0x020E, 0x01}, {0x020F, 0x00},
-    {0x0210, 0x01}, {0x0211, 0x00}, {0x0212, 0x01},
-    {0x0213, 0x00}, {0x0214, 0x01}, {0x0215, 0x00}, // HDR Setting
-    {0x3006, 0x01}, {0x3007, 0x02}, {0x31E0, 0x03},
-    {0x31E1, 0xFF}, {0x31E4, 0x02}, // DPC2D Setting
-    {0x3A22, 0x20}, {0x3A23, 0x14}, {0x3A24, 0xE0},
-    {0x3A25, 0x0B}, {0x3A26, 0xC0}, {0x3A2F, 0x00},
-    {0x3A30, 0x00}, {0x3A31, 0x01}, {0x3A32, 0xF8},
-    {0x3A33, 0x14}, {0x3A34, 0xDF}, {0x3A35, 0x0D},
-    {0x3A36, 0xB7}, {0x3A37, 0x00}, {0x3A38, 0x00},
-    {0x3A39, 0x00}, // LSC Setting
-    {0x3A21, 0x00}, // Stats Setting
-    {0x3011, 0x00}, {0x3013, 0x01},
-
-};
-
-static const SENSOR_REG_T imx230_2672x2008_setting_new[] = {
-    /*4Lane
-    reg_B4
-    2672x2008 (4:3)
-    H: 2672
-    V: 2008
-    Mode Setting
-            Address value*/
-    {0x0114, 0x03}, {0x0220, 0x00}, {0x0221, 0x11},
-    {0x0222, 0x01}, {0x0340, 0x0B}, {0x0341, 0x7A},
-    {0x0342, 0x17}, {0x0343, 0x88}, {0x0344, 0x00},
-    {0x0345, 0x00}, {0x0346, 0x00}, {0x0347, 0x00},
-    {0x0348, 0x14}, {0x0349, 0xDF}, {0x034A, 0x0F},
-    {0x034B, 0xAF}, {0x0381, 0x01}, {0x0383, 0x01},
-    {0x0385, 0x01}, {0x0387, 0x01}, {0x0900, 0x01},
-    {0x0901, 0x22}, {0x0902, 0x02}, {0x3000, 0x74},
-    {0x3001, 0x00}, {0x305C, 0x11}, // Output Size Setting
-    {0x0112, 0x0A}, {0x0113, 0x0A}, {0x034C, 0x0A},
-    {0x034D, 0x70}, {0x034E, 0x07}, {0x034F, 0xD8},
-    {0x0401, 0x00}, {0x0404, 0x00}, {0x0405, 0x10},
-    {0x0408, 0x00}, {0x0409, 0x00}, {0x040A, 0x00},
-    {0x040B, 0x00}, {0x040C, 0x0A}, {0x040D, 0x70},
-    {0x040E, 0x07}, {0x040F, 0xD8}, // Clock Setting
-    {0x0301, 0x04}, {0x0303, 0x02}, {0x0305, 0x04},
-    {0x0306, 0x00}, {0x0307, 0xB1}, {0x0309, 0x0A},
-    {0x030B, 0x01}, {0x030D, 0x0F}, {0x030E, 0x03},
-    {0x030F, 0xA9}, {0x0310, 0x01}, // Data Rate Setting
-    {0x0820, 0x17}, {0x0821, 0x6C}, {0x0822, 0xCC},
-    {0x0823, 0xCC}, // Integration Time Setting
-    {0x0202, 0x0B}, {0x0203, 0x70}, {0x0224, 0x01},
-    {0x0225, 0xF4}, // Gain Setting
-    {0x0204, 0x00}, {0x0205, 0x00}, {0x0216, 0x00},
-    {0x0217, 0x00}, {0x020E, 0x01}, {0x020F, 0x00},
-    {0x0210, 0x01}, {0x0211, 0x00}, {0x0212, 0x01},
-    {0x0213, 0x00}, {0x0214, 0x01}, {0x0215, 0x00}, // HDR Setting
-    {0x3006, 0x01}, {0x3007, 0x02}, {0x31E0, 0x03},
-    {0x31E1, 0xFF}, {0x31E4, 0x02}, // DPC2D Setting
-    {0x3A22, 0x20}, {0x3A23, 0x14}, {0x3A24, 0xE0},
-    {0x3A25, 0x07}, {0x3A26, 0xD8}, {0x3A2F, 0x00},
-    {0x3A30, 0x00}, {0x3A31, 0x00}, {0x3A32, 0x00},
-    {0x3A33, 0x14}, {0x3A34, 0xDF}, {0x3A35, 0x0F},
-    {0x3A36, 0xAF}, {0x3A37, 0x00}, {0x3A38, 0x01},
-    {0x3A39, 0x00}, // LSC Setting
-    {0x3A21, 0x00}, {0x3011, 0x00}, {0x3013, 0x01},
-};
-
-static const SENSOR_REG_T imx230_2672x2008_setting[] = {
-    {0x0114, 0x03},
-    {0x0220, 0x00},
-    {0x0221, 0x11},
-    {0x0222, 0x01},
-    {0x0340, 0x09},
-    {0x0341, 0x10},
-    {0x0342, 0x17},
-    {0x0343, 0x88},
-    {0x0344, 0x00},
-    {0x0345, 0x00},
-    {0x0346, 0x00},
-    {0x0347, 0x00},
-    {0x0348, 0x14},
-    {0x0349, 0xDF},
-    {0x034A, 0x0F},
-    {0x034B, 0xAF},
-    {0x0381, 0x01},
-    {0x0383, 0x01},
-    {0x0385, 0x01},
-    {0x0387, 0x01},
-    {0x0900, 0x01},
-    {0x0901, 0x22},
-    {0x0902, 0x02},
-    {0x3000, 0x74},
-    {0x3001, 0x00},
-    {0x305C, 0x11},
-    {0x0112, 0x0A},
-    {0x0113, 0x0A},
-    {0x034C, 0x0A},
-    {0x034D, 0x70},
-    {0x034E, 0x07},
-    {0x034F, 0xD8},
-    {0x0401, 0x00},
-    {0x0404, 0x00},
-    {0x0405, 0x10},
-    {0x0408, 0x00},
-    {0x0409, 0x00},
-    {0x040A, 0x00},
-    {0x040B, 0x00},
-    {0x040C, 0x0A},
-    {0x040D, 0x70},
-    {0x040E, 0x07},
-    {0x040F, 0xD8},
-    {0x0301, 0x04},
-    {0x0303, 0x02},
-    {0x0305, 0x04},
-    {0x0306, 0x00},
-    {0x0307, 0x8C},
-    {0x0309, 0x0A},
-    {0x030B, 0x01},
-    {0x030D, 0x0F},
-    {0x030E, 0x01},
-    {0x030F, 0xF4},
-    {0x0310, 0x01},
-    {0x0820, 0x0C},
-    {0x0821, 0x80},
-    {0x0822, 0x00},
-    {0x0823, 0x00},
-    {0x0202, 0x09},
-    {0x0203, 0x06},
-    {0x0224, 0x01},
-    {0x0225, 0xF4},
-    {0x0204, 0x00},
-    {0x0205, 0x00},
-    {0x0216, 0x00},
-    {0x0217, 0x00},
-    {0x020E, 0x01},
-    {0x020F, 0x00},
-    {0x0210, 0x01},
-    {0x0211, 0x00},
-    {0x0212, 0x01},
-    {0x0213, 0x00},
-    {0x0214, 0x01},
-    {0x0215, 0x00},
-    {0x3006, 0x01},
-    {0x3007, 0x02},
-    {0x31E0, 0x03},
-    {0x31E1, 0xFF},
-    {0x31E4, 0x02},
-    {0x3A22, 0x20},
-    {0x3A23, 0x14},
-    {0x3A24, 0xE0},
-    {0x3A25, 0x07},
-    {0x3A26, 0xD8},
-    {0x3A2F, 0x00},
-    {0x3A30, 0x00},
-    {0x3A31, 0x00},
-    {0x3A32, 0x00},
-    {0x3A33, 0x14},
-    {0x3A34, 0xDF},
-    {0x3A35, 0x0F},
-    {0x3A36, 0xAF},
-    {0x3A37, 0x00},
-    {0x3A38, 0x01},
-    {0x3A39, 0x00},
-    {0x3A21, 0x00},
-    {0x3011, 0x00},
-    {0x3013, 0x01},
-#if 1
-    /*for sensor sync start*/
-    {0x440C, 0x00}, // Lo-Activate
-    {0x440D, 0x07}, // pulse width(2000cycle)
-    // V-sync output pin settings: FSTROBE setting
-    {0x4073, 0xFF},
-    {0x5ED0, 0x00},
-    {0x5E69, 0xFF},
-    {0x5E6A, 0x00},
-    {0x5E6B, 0x00},
-    {0x5E70, 0x02},
-/*for sensor sync end*/
-#endif
-};
-
-/**
- line time: 10us
- MipiData Rate= 400Mbps/Lane
- Frame length lines = 828 line
- */
-static const SENSOR_REG_T imx230_1280x720_setting[] = {
-    {0x0114, 0x03}, {0x0220, 0x00}, {0x0221, 0x11}, {0x0222, 0x01},
-    {0x0340, 0x03}, {0x0341, 0x3C}, {0x0342, 0x17}, {0x0343, 0x88},
-    {0x0344, 0x00}, {0x0345, 0x00}, {0x0346, 0x02}, {0x0347, 0x38},
-    {0x0348, 0x14}, {0x0349, 0xDF}, {0x034A, 0x0D}, {0x034B, 0x77},
-    {0x0381, 0x01}, {0x0383, 0x01}, {0x0385, 0x01}, {0x0387, 0x01},
-    {0x0900, 0x01}, {0x0901, 0x44}, {0x0902, 0x02}, {0x3000, 0x74},
-    {0x3001, 0x00}, {0x305C, 0x11}, {0x0112, 0x0A}, {0x0113, 0x0A},
-    {0x034C, 0x05}, {0x034D, 0x00}, {0x034E, 0x02}, {0x034F, 0xD0},
-    {0x0401, 0x02}, {0x0404, 0x00}, {0x0405, 0x10}, {0x0408, 0x00},
-    {0x0409, 0x1C}, {0x040A, 0x00}, {0x040B, 0x00}, {0x040C, 0x05},
-    {0x040D, 0x00}, {0x040E, 0x02}, {0x040F, 0xD0}, {0x0301, 0x04},
-    {0x0303, 0x02}, {0x0305, 0x04}, {0x0306, 0x00}, {0x0307, 0xC8},
-    {0x0309, 0x0A}, {0x030B, 0x01}, {0x030D, 0x0F}, {0x030E, 0x00},
-    {0x030F, 0xFA}, {0x0310, 0x01}, {0x0820, 0x06}, {0x0821, 0x40},
-    {0x0822, 0x00}, {0x0823, 0x00}, {0x0202, 0x03}, {0x0203, 0x32},
-    {0x0224, 0x01}, {0x0225, 0xF4}, {0x0204, 0x00}, {0x0205, 0x00},
-    {0x0216, 0x00}, {0x0217, 0x00}, {0x020E, 0x01}, {0x020F, 0x00},
-    {0x0210, 0x01}, {0x0211, 0x00}, {0x0212, 0x01}, {0x0213, 0x00},
-    {0x0214, 0x01}, {0x0215, 0x00}, {0x3006, 0x01}, {0x3007, 0x02},
-    {0x31E0, 0x03}, {0x31E1, 0xFF}, {0x31E4, 0x02}, {0x3A22, 0x20},
-    {0x3A23, 0x14}, {0x3A24, 0xE0}, {0x3A25, 0x02}, {0x3A26, 0xD0},
-    {0x3A2F, 0x00}, {0x3A30, 0x00}, {0x3A31, 0x02}, {0x3A32, 0x38},
-    {0x3A33, 0x14}, {0x3A34, 0xDF}, {0x3A35, 0x0D}, {0x3A36, 0x77},
-    {0x3A37, 0x00}, {0x3A38, 0x02}, {0x3A39, 0x00}, {0x3A21, 0x00},
-    {0x3011, 0x00}, {0x3013, 0x01}};
-
-static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
-    {ADDR_AND_LEN_OF_ARRAY(imx230_init_setting), 0, 0, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx230_1280x720_setting), 1280, 720, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting), 2672, 2008, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    //	{ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting_new), 2672, 2008,
-    // EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx230_4272x2404_setting), 4272, 2404, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx230_4272x3212_setting), 4272, 3212, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    //	{ADDR_AND_LEN_OF_ARRAY(imx230_5344x4016_setting), 5344, 4016, EX_MCLK,
-    // SENSOR_IMAGE_FORMAT_RAW},
-};
-
-static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 1280, 720, 10188, PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
-    {0,
-     0,
-     2672,
-     2008,
-     14343,
-     PREVIEW_MIPI_PER_LANE_BPS,
-     2320,
-     {0, 0, 2672, 2008}},
-    //	{0, 0, 2672, 2008, 11346, 1500, 2938, {0, 0, 2672, 2008}},
-    {0, 0, 4272, 2404, 10739, 1099, 3104, {0, 0, 4272, 2404}},
-    {0, 0, 4272, 3212, 10144, 1131, 4106, {0, 0, 4272, 3212}},
-    //	{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344,
-    // 4016}},
-};
-
-static const SENSOR_REG_T
-    s_imx230_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        /*video mode 0: ?fps */
-        {{0xffff, 0xff}},
-        /* video mode 1:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 2:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 3:?fps */
-        {{0xffff, 0xff}}};
-
-static const SENSOR_REG_T
-    s_imx230_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        /*video mode 0: ?fps */
-        {{0xffff, 0xff}},
-        /* video mode 1:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 2:?fps */
-        {{0xffff, 0xff}},
-        /* video mode 3:?fps */
-        {{0xffff, 0xff}}};
-
-static SENSOR_VIDEO_INFO_T s_imx230_video_info[SENSOR_MODE_MAX] = {
-    {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
-    {{{30, 30, 270, 90}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-     (SENSOR_REG_T **)s_imx230_preview_size_video_tab},
-    {{{2, 5, 338, 1000}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-     (SENSOR_REG_T **)s_imx230_capture_size_video_tab},
-};
+#define RES_TAB_RAW   s_imx230_resolution_tab_raw
+#define RES_TRIM_TAB  s_imx230_resolution_trim_tab
+#define STATIC_INFO   s_imx230_static_info
+#define FPS_INFO      s_imx230_mode_fps_info
+#define MIPI_RAW_INFO g_imx230_mipi_raw_info
+#define VIDEO_INFO    s_imx230_video_info
+#define MODULE_INFO   s_imx230_module_info_tab
 
 /*==============================================================================
  * Description:
  * set video mode
  *
  *============================================================================*/
-static uint32_t imx230_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param) {
+static cmr_int imx230_drv_set_video_mode(cmr_handle handle, cmr_u32 param) {
     SENSOR_REG_T_PTR sensor_reg_ptr;
-    uint16_t i = 0x00;
-    uint32_t mode;
+    cmr_u16 i = 0x00;
+    cmr_u32 mode;
+    cmr_int ret;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;
+    if(sns_drv_cxt->ops_cb.get_mode) {
+        ret = sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle,&mode);
+        if (SENSOR_SUCCESS != ret) {
+            SENSOR_LOGI("fail.");
+            return SENSOR_FAIL;
+        }
+    }
 
-    if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
+    if (PNULL == VIDEO_INFO[mode].setting_ptr) {
         SENSOR_LOGI("fail.");
         return SENSOR_FAIL;
     }
 
-    if (PNULL == s_imx230_video_info[mode].setting_ptr) {
-        SENSOR_LOGI("fail.");
-        return SENSOR_FAIL;
-    }
-
-    sensor_reg_ptr =
-        (SENSOR_REG_T_PTR)&s_imx230_video_info[mode].setting_ptr[param];
+    sensor_reg_ptr = (SENSOR_REG_T_PTR)&VIDEO_INFO[mode].setting_ptr[param];
     if (PNULL == sensor_reg_ptr) {
         SENSOR_LOGI("fail.");
         return SENSOR_FAIL;
@@ -687,169 +62,11 @@ static uint32_t imx230_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param) {
     for (i = 0x00; (0xffff != sensor_reg_ptr[i].reg_addr) ||
                    (0xff != sensor_reg_ptr[i].reg_value);
          i++) {
-        Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle ,sensor_reg_ptr[i].reg_addr,
                         sensor_reg_ptr[i].reg_value);
     }
 
-    return 0;
-}
-
-/*==============================================================================
- * Description:
- * sensor static info need by isp
- * please modify this variable acording your spec
- *============================================================================*/
-static SENSOR_STATIC_INFO_T s_imx230_static_info = {
-    220, // f-number,focal ratio
-    462, // focal_length;
-    0,   // max_fps,max fps of sensor's all settings,it will be calculated from
-         // sensor mode fps
-    8 * 16, // 32,	//max_adgain,AD-gain
-    0,      // ois_supported;
-    0,      // pdaf_supported;
-    1,      // exp_valid_frame_num;N+2-1
-    64,     // clamp_level,black level
-    1,      // adgain_valid_frame_num;N+1-1
-};
-
-/*==============================================================================
- * Description:
- * sensor fps info related to sensor mode need by isp
- * please modify this variable acording your spec
- *============================================================================*/
-static SENSOR_MODE_FPS_INFO_T s_imx230_mode_fps_info = {
-    0, // is_init;
-    {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}};
-
-/*==============================================================================
- * Description:
- * sensor all info
- * please modify this variable acording your spec
- *============================================================================*/
-SENSOR_INFO_T g_imx230_mipi_raw_info = {
-    /* salve i2c write address */
-    (I2C_SLAVE_ADDR >> 1),
-    /* salve i2c read address */
-    (I2C_SLAVE_ADDR >> 1),
-    /*bit0: 0: i2c register value is 8 bit, 1: i2c register value is 16 bit */
-    SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT | SENSOR_I2C_FREQ_400,
-    /* bit2: 0:negative; 1:positive -> polarily of horizontal synchronization
-     * signal
-     * bit4: 0:negative; 1:positive -> polarily of vertical synchronization
-     * signal
-     * other bit: reseved
-     */
-    SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |
-        SENSOR_HW_SIGNAL_HSYNC_P,
-    /* preview mode */
-    SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
-    /* image effect */
-    SENSOR_IMAGE_EFFECT_NORMAL | SENSOR_IMAGE_EFFECT_BLACKWHITE |
-        SENSOR_IMAGE_EFFECT_RED | SENSOR_IMAGE_EFFECT_GREEN |
-        SENSOR_IMAGE_EFFECT_BLUE | SENSOR_IMAGE_EFFECT_YELLOW |
-        SENSOR_IMAGE_EFFECT_NEGATIVE | SENSOR_IMAGE_EFFECT_CANVAS,
-
-    /* while balance mode */
-    0,
-    /* bit[0:7]: count of step in brightness, contrast, sharpness, saturation
-     * bit[8:31] reseved
-     */
-    7,
-    /* reset pulse level */
-    SENSOR_LOW_PULSE_RESET,
-    /* reset pulse width(ms) */
-    50,
-    /* 1: high level valid; 0: low level valid */
-    SENSOR_LOW_LEVEL_PWDN,
-    /* count of identify code */
-    1,
-    /* supply two code to identify sensor.
-     * for Example: index = 0-> Device id, index = 1 -> version id
-     * customer could ignore it.
-     */
-    {{imx230_PID_ADDR, imx230_PID_VALUE}, {imx230_VER_ADDR, imx230_VER_VALUE}},
-    /* voltage of avdd */
-    SENSOR_AVDD_2500MV,
-    /* max width of source image */
-    SNAPSHOT_WIDTH,
-    /* max height of source image */
-    SNAPSHOT_HEIGHT,
-    /* name of sensor */
-   (cmr_s8 *) SENSOR_NAME,
-    /* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
-     * if set to SENSOR_IMAGE_FORMAT_MAX here,
-     * image format depent on SENSOR_REG_TAB_INFO_T
-     */
-    SENSOR_IMAGE_FORMAT_RAW,
-    /*  pattern of input image form sensor */
-    SENSOR_IMAGE_PATTERN_RAWRGB_R,
-    /* point to resolution table information structure */
-    s_imx230_resolution_tab_raw,
-    /* point to ioctl function table */
-    &s_imx230_ioctl_func_tab,
-    /* information and table about Rawrgb sensor */
-    &s_imx230_mipi_raw_info_ptr,
-    /* extend information about sensor
-     * like &g_imx132_ext_info
-     */
-    NULL,
-    /* voltage of iovdd */
-    SENSOR_AVDD_1800MV,
-    /* voltage of dvdd */
-    SENSOR_AVDD_1200MV,
-    /* skip frame num before preview */
-    1,
-    /* skip frame num before capture */
-    1,
-    /* skip frame num for flash capture */
-    6,
-    /* skip frame num on mipi cap */
-    0,
-    /* deci frame num during preview */
-    0,
-    /* deci frame num during video preview */
-    0,
-    0,                                                   // threshold_eb
-    0,                                                   // threshold_mode
-    0,                                                   // threshold_start
-    0,                                                   // threshold_end
-    0,                                                   // i2c_dev_handler
-    {SENSOR_INTERFACE_TYPE_CSI2, LANE_NUM, RAW_BITS, 0}, // sensor_interface
-    0,                                                   // video_tab_info_ptr
-    /* skip frame num while change setting */
-    1,
-    /* horizontal  view angle*/
-    35,
-    /* vertical view angle*/
-    35,
-    (cmr_s8 *)"imx230v1" // sensor version info
-};
-
-/*==============================================================================
- * Description:
- * get default frame length
- *
- *============================================================================*/
-static uint32_t imx230_get_default_frame_length(SENSOR_HW_HANDLE handle,
-                                                uint32_t mode) {
-    return s_imx230_resolution_trim_tab[mode].frame_line;
-}
-/*==============================================================================
- * Description:
- * get default line time
- *
- *============================================================================*/
-static uint32_t imx230_get_default_line_ime(SENSOR_HW_HANDLE handle,
-                                            uint32_t mode) {
-    return s_imx230_resolution_trim_tab[mode].line_time;
+    return ret;
 }
 
 /*==============================================================================
@@ -857,7 +74,7 @@ static uint32_t imx230_get_default_line_ime(SENSOR_HW_HANDLE handle,
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_group_hold_on(SENSOR_HW_HANDLE handle) {
+static void imx230_drv_group_hold_on(cmr_handle handle) {
     // Sensor_WriteReg(0x0104, 0x01);
 }
 
@@ -866,7 +83,7 @@ static void imx230_group_hold_on(SENSOR_HW_HANDLE handle) {
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_group_hold_off(SENSOR_HW_HANDLE handle) {
+static void imx230_drv_group_hold_off(cmr_handle handle) {
     // Sensor_WriteReg(0x0104, 0x00);
 }
 
@@ -875,12 +92,14 @@ static void imx230_group_hold_off(SENSOR_HW_HANDLE handle) {
  * read gain from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t imx230_read_gain(SENSOR_HW_HANDLE handle) {
-    uint16_t gain_a = 0;
-    uint16_t gain_d = 0;
+static cmr_u16 imx230_drv_read_gain(cmr_handle handle) {
+    cmr_u16 gain_a = 0;
+    cmr_u16 gain_d = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    gain_a = Sensor_ReadReg(0x0205);
-    gain_d = Sensor_ReadReg(0x0210);
+    gain_a = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0205);
+    gain_d = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0210);
 
     return gain_a * gain_d;
 }
@@ -890,10 +109,13 @@ static uint16_t imx230_read_gain(SENSOR_HW_HANDLE handle) {
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_gain(SENSOR_HW_HANDLE handle, float gain) {
-    uint32_t sensor_again = 0;
-    uint32_t sensor_dgain = 0;
+static void imx230_drv_write_gain(cmr_handle handle, float gain) {
+    cmr_u32 sensor_again = 0;
+    cmr_u32 sensor_dgain = 0;
     float temp_gain;
+
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     gain = gain / 32.0;
 
@@ -902,28 +124,27 @@ static void imx230_write_gain(SENSOR_HW_HANDLE handle, float gain) {
         temp_gain = 1.0;
     else if (temp_gain > 8.0)
         temp_gain = 8.0;
-    sensor_again = (uint16_t)(512.0 - 512.0 / temp_gain);
-    Sensor_WriteReg(0x0204, (sensor_again >> 8) & 0xFF);
-    Sensor_WriteReg(0x0205, sensor_again & 0xFF);
+    sensor_again = (cmr_u16)(512.0 - 512.0 / temp_gain);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0204, (sensor_again >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, sensor_again & 0xFF);
 
     temp_gain = gain / 8;
     if (temp_gain > 16.0)
         temp_gain = 16.0;
     else if (temp_gain < 1.0)
         temp_gain = 1.0;
-    sensor_dgain = (uint16_t)(256 * temp_gain);
-    Sensor_WriteReg(0x020e, (sensor_dgain >> 8) & 0xFF);
-    Sensor_WriteReg(0x020f, sensor_dgain & 0xFF);
-    Sensor_WriteReg(0x0210, (sensor_dgain >> 8) & 0xFF);
-    Sensor_WriteReg(0x0211, sensor_dgain & 0xFF);
-    Sensor_WriteReg(0x0212, (sensor_dgain >> 8) & 0xFF);
-    Sensor_WriteReg(0x0213, sensor_dgain & 0xFF);
-    Sensor_WriteReg(0x0214, (sensor_dgain >> 8) & 0xFF);
-    Sensor_WriteReg(0x0215, sensor_dgain & 0xFF);
+    sensor_dgain = (cmr_u16)(256 * temp_gain);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020e, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020f, sensor_dgain & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0210, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0211, sensor_dgain & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0212, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0213, sensor_dgain & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0214, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0215, sensor_dgain & 0xFF);
 
     SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
 
-    // imx230_group_hold_off(handle);
 }
 
 /*==============================================================================
@@ -931,12 +152,14 @@ static void imx230_write_gain(SENSOR_HW_HANDLE handle, float gain) {
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t imx230_read_frame_length(SENSOR_HW_HANDLE handle) {
-    uint16_t frame_len_h = 0;
-    uint16_t frame_len_l = 0;
+static cmr_u16 imx230_drv_read_frame_length(cmr_handle handle) {
+    cmr_u16 frame_len_h = 0;
+    cmr_u16 frame_len_l = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    frame_len_h = Sensor_ReadReg(0x0340) & 0xff;
-    frame_len_l = Sensor_ReadReg(0x0341) & 0xff;
+    frame_len_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0340) & 0xff;
+    frame_len_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0341) & 0xff;
 
     return ((frame_len_h << 8) | frame_len_l);
 }
@@ -946,10 +169,13 @@ static uint16_t imx230_read_frame_length(SENSOR_HW_HANDLE handle) {
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_frame_length(SENSOR_HW_HANDLE handle,
-                                      uint32_t frame_len) {
-    Sensor_WriteReg(0x0340, (frame_len >> 8) & 0xff);
-    Sensor_WriteReg(0x0341, frame_len & 0xff);
+static void imx230_drv_write_frame_length(cmr_handle handle,
+                                                cmr_u32 frame_len) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, (frame_len >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0341, frame_len & 0xff);
 }
 
 /*==============================================================================
@@ -957,12 +183,14 @@ static void imx230_write_frame_length(SENSOR_HW_HANDLE handle,
  * read shutter from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx230_read_shutter(SENSOR_HW_HANDLE handle) {
-    uint16_t shutter_h = 0;
-    uint16_t shutter_l = 0;
+static cmr_u32 imx230_drv_read_shutter(cmr_handle handle) {
+    cmr_u16 shutter_h = 0;
+    cmr_u16 shutter_l = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    shutter_h = Sensor_ReadReg(0x0202) & 0xff;
-    shutter_l = Sensor_ReadReg(0x0203) & 0xff;
+    shutter_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0202) & 0xff;
+    shutter_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0203) & 0xff;
 
     return (shutter_h << 8) | shutter_l;
 }
@@ -973,9 +201,12 @@ static uint32_t imx230_read_shutter(SENSOR_HW_HANDLE handle) {
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter) {
-    Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
-    Sensor_WriteReg(0x0203, shutter & 0xff);
+static void imx230_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (shutter >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x0203, shutter & 0xff);
 }
 
 /*==============================================================================
@@ -984,14 +215,16 @@ static void imx230_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter) {
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static uint16_t imx230_update_exposure(SENSOR_HW_HANDLE handle,
-                                       uint32_t shutter, uint32_t dummy_line) {
-    uint32_t dest_fr_len = 0;
-    uint32_t cur_fr_len = 0;
-    uint32_t fr_len = s_current_default_frame_length;
-    int32_t offset = 0;
+static cmr_u16 imx230_drv_update_exposure(cmr_handle handle,
+                                       cmr_u32 shutter, cmr_u32 dummy_line) {
+    cmr_u32 dest_fr_len = 0;
+    cmr_u32 cur_fr_len = 0;
+    cmr_u32 fr_len = 0;
+    cmr_int offset = 0;
 
-    //	imx230_group_hold_on(handle);
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    fr_len = sns_drv_cxt->frame_length_def;
 
     if (dummy_line > FRAME_OFFSET)
         offset = dummy_line;
@@ -999,17 +232,17 @@ static uint16_t imx230_update_exposure(SENSOR_HW_HANDLE handle,
         offset = FRAME_OFFSET;
     dest_fr_len = ((shutter + offset) > fr_len) ? (shutter + offset) : fr_len;
 
-    cur_fr_len = imx230_read_frame_length(handle);
-    s_current_frame_length = dest_fr_len;
+    cur_fr_len = imx230_drv_read_frame_length(handle);
+    sns_drv_cxt->frame_length = dest_fr_len;
 
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
 
     if (dest_fr_len != cur_fr_len)
-        imx230_write_frame_length(handle, dest_fr_len);
+        imx230_drv_write_frame_length(handle, dest_fr_len);
 write_sensor_shutter:
     /* write shutter to sensor registers */
-    imx230_write_shutter(handle, shutter);
+    imx230_drv_write_shutter(handle, shutter);
     return shutter;
 }
 
@@ -1018,34 +251,38 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle,
-                                     unsigned long power_on) {
-    SENSOR_AVDD_VAL_E dvdd_val = g_imx230_mipi_raw_info.dvdd_val;
-    SENSOR_AVDD_VAL_E avdd_val = g_imx230_mipi_raw_info.avdd_val;
-    SENSOR_AVDD_VAL_E iovdd_val = g_imx230_mipi_raw_info.iovdd_val;
-    BOOLEAN power_down = g_imx230_mipi_raw_info.power_down_level;
-    BOOLEAN reset_level = g_imx230_mipi_raw_info.reset_pulse_level;
+static cmr_int imx230_drv_power_on(cmr_handle handle, cmr_uint power_on) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct module_cfg_info *module_info = sns_drv_cxt->module_info;
+    SENSOR_IC_CHECK_PTR(module_info);
+
+    SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
+    SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
+    SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
+    BOOLEAN power_down = MIPI_RAW_INFO.power_down_level;
+    BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        Sensor_PowerDown(power_down);
-        Sensor_SetResetLevel(reset_level);
-        Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-        Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
-                          SENSOR_AVDD_CLOSED);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
+                               SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
         usleep(1000);
-        Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val, iovdd_val);
         usleep(1000);
-        Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DEFALUT_MCLK);
         usleep(1000);
-        Sensor_PowerDown(!power_down);
-        Sensor_SetResetLevel(!reset_level);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle,!reset_level);
     } else {
-        Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-        Sensor_SetResetLevel(reset_level);
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle,reset_level);
         usleep(15);
-        Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
-                          SENSOR_AVDD_CLOSED);
-        Sensor_PowerDown(power_down);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle,SENSOR_AVDD_CLOSED,
+                              SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
     }
     SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
@@ -1056,48 +293,51 @@ static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle,
  * calculate fps for every sensor mode according to frame_line and line_time
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
-    uint32_t rtn = SENSOR_SUCCESS;
-    SENSOR_LOGI("imx230_init_mode_fps_info:E");
-    if (!s_imx230_mode_fps_info.is_init) {
-        uint32_t i, modn, tempfps = 0;
-        SENSOR_LOGI("imx230_init_mode_fps_info:start init");
-        for (i = 0; i < NUMBER_OF_ARRAY(s_imx230_resolution_trim_tab); i++) {
+static cmr_int imx230_drv_init_fps_info(cmr_handle handle) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    SENSOR_LOGI("E");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
+    struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
+    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
+
+    if (!fps_info->is_init) {
+        cmr_u32 i, modn, tempfps = 0;
+        SENSOR_LOGI("start init");
+        for (i = 0; i < SENSOR_MODE_MAX; i++) {
             // max fps should be multiple of 30,it calulated from line_time and
             // frame_line
-            tempfps = s_imx230_resolution_trim_tab[i].line_time *
-                      s_imx230_resolution_trim_tab[i].frame_line;
+            tempfps = trim_info[i].line_time * trim_info[i].frame_line;
             if (0 != tempfps) {
                 tempfps = 1000000000 / tempfps;
                 modn = tempfps / 30;
                 if (tempfps > modn * 30)
                     modn++;
-                s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps = modn * 30;
-                if (s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-                    s_imx230_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-                    s_imx230_mode_fps_info.sensor_mode_fps[i]
-                        .high_fps_skip_num =
-                        s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps / 30;
+                fps_info->sensor_mode_fps[i].max_fps = modn * 30;
+                if (fps_info->sensor_mode_fps[i].max_fps > 30) {
+                    fps_info->sensor_mode_fps[i].is_high_fps = 1;
+                    fps_info->sensor_mode_fps[i].high_fps_skip_num =
+                        fps_info->sensor_mode_fps[i].max_fps / 30;
                 }
-                if (s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps >
-                    s_imx230_static_info.max_fps) {
-                    s_imx230_static_info.max_fps =
-                        s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps;
+                if (fps_info->sensor_mode_fps[i].max_fps >
+                    static_info->max_fps) {
+                    static_info->max_fps = fps_info->sensor_mode_fps[i].max_fps;
                 }
             }
             SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                        tempfps, s_imx230_resolution_trim_tab[i].frame_line,
-                        s_imx230_resolution_trim_tab[i].line_time);
+                        tempfps, trim_info[i].frame_line,
+                        trim_info[i].line_time);
             SENSOR_LOGI("mode %d,max_fps: %d ", i,
-                        s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps);
+                        fps_info->sensor_mode_fps[i].max_fps);
             SENSOR_LOGI(
                 "is_high_fps: %d,highfps_skip_num %d",
-                s_imx230_mode_fps_info.sensor_mode_fps[i].is_high_fps,
-                s_imx230_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+                fps_info->sensor_mode_fps[i].is_high_fps,
+                fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
-        s_imx230_mode_fps_info.is_init = 1;
+        fps_info->is_init = 1;
     }
-    SENSOR_LOGI("imx230_init_mode_fps_info:X");
+    SENSOR_LOGI("X");
     return rtn;
 }
 
@@ -1106,25 +346,25 @@ static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_identify(SENSOR_HW_HANDLE handle,
-                                     unsigned long param) {
-    uint8_t pid_value = 0x00;
-    uint8_t ver_value = 0x00;
-    uint32_t ret_value = SENSOR_FAIL;
+static cmr_int imx230_drv_identify(cmr_handle handle, cmr_uint param) {
+    cmr_u8 pid_value = 0x00;
+    cmr_u8 ver_value = 0x00;
+    cmr_int ret_value = SENSOR_FAIL;
     UNUSED(param);
 
     SENSOR_LOGI("mipi raw identify");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    pid_value = Sensor_ReadReg(imx230_PID_ADDR);
-
+    pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, imx230_PID_ADDR);
     if (imx230_PID_VALUE == pid_value) {
-        ver_value = Sensor_ReadReg(imx230_VER_ADDR);
+        ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, imx230_VER_ADDR);
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
         if (imx230_VER_VALUE == ver_value) {
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is imx230 sensor");
-            //dw9800_init(handle);
-            imx230_init_mode_fps_info(handle);
+            imx230_drv_init_fps_info(handle);
         } else {
             SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
         }
@@ -1137,85 +377,75 @@ static unsigned long imx230_identify(SENSOR_HW_HANDLE handle,
 
 /*==============================================================================
  * Description:
- * get resolution trim
- *
- *============================================================================*/
-static unsigned long imx230_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
-                                                    unsigned long param) {
-    UNUSED(param);
-    return (unsigned long)s_imx230_resolution_trim_tab;
-}
-
-/*==============================================================================
- * Description:
  * before snapshot * you can change this function if it's necessary
  *============================================================================*/
-static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle,
-                                            unsigned long param) {
-    uint32_t cap_shutter = 0;
-    uint32_t prv_shutter = 0;
+static cmr_uint imx230_drv_before_snapshot(cmr_handle handle, cmr_uint param){
+    cmr_u32 cap_shutter = 0;
+    cmr_u32 prv_shutter = 0;
     float gain = 0;
     float cap_gain = 0;
-    uint32_t capture_mode = param & 0xffff;
-    uint32_t preview_mode = (param >> 0x10) & 0xffff;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    uint32_t prv_linetime =
-        s_imx230_resolution_trim_tab[preview_mode].line_time;
-    uint32_t cap_linetime =
-        s_imx230_resolution_trim_tab[capture_mode].line_time;
+    cmr_u32 capture_mode = param & 0xffff;
+    cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
-    s_current_default_frame_length =
-        imx230_get_default_frame_length(handle, capture_mode);
-    SENSOR_LOGI("capture_mode = %d,preview_mode=%d\n", capture_mode,
-                preview_mode);
+    cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
+    cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
+
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
+    SENSOR_LOGI("capture_mode = %d,preview_mode=%d\n", capture_mode, preview_mode);
 
     if (preview_mode == capture_mode) {
-        cap_shutter = s_sensor_ev_info.preview_shutter;
-        cap_gain = s_sensor_ev_info.preview_gain;
+        cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
+        cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
 
-    prv_shutter = s_sensor_ev_info.preview_shutter; // imx132_read_shutter();
-    gain = s_sensor_ev_info.preview_gain;           // imx132_read_gain();
+    prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
+    gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    Sensor_SetMode(capture_mode);
-    Sensor_SetMode_WaitDone();
+    if(sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if(sns_drv_cxt->ops_cb.set_mode_wait_done) 
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
-    cap_shutter =
-        prv_shutter * prv_linetime / cap_linetime; // * BINNING_FACTOR;
 
-    /*	while (gain >= (2 * SENSOR_BASE_GAIN)) {
-                    if (cap_shutter * 2 > s_current_default_frame_length)
-                            break;
-                    cap_shutter = cap_shutter * 2;
-                    gain = gain / 2;
-            }
-    */
-    cap_shutter = imx230_update_exposure(handle, cap_shutter, 0);
+    cap_shutter = prv_shutter * prv_linetime / cap_linetime;
+
+    cap_shutter = imx230_drv_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
-    imx230_write_gain(handle, cap_gain);
+    imx230_drv_write_gain(handle, cap_gain);
     SENSOR_LOGI("preview_shutter = %d, preview_gain = %f",
-                s_sensor_ev_info.preview_shutter,
-                s_sensor_ev_info.preview_gain);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 22);
-
+                sns_drv_cxt->sensor_ev_info.preview_shutter,
+                sns_drv_cxt->sensor_ev_info.preview_gain);
+    if(sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_FNUMBER, 22);
+    }
     SENSOR_LOGI("capture_shutter = %d, capture_gain = %f", cap_shutter,
                 cap_gain);
 snapshot_info:
-    s_hdr_info.capture_shutter = cap_shutter; // imx132_read_shutter();
-    s_hdr_info.capture_gain = cap_gain;       // imx132_read_gain();
-    /* limit HDR capture min fps to 10;
-     * MaxFrameTime = 1000000*0.1us;
-     */
-    s_hdr_info.capture_max_shutter = 1000000 / cap_linetime;
+    sns_drv_cxt->hdr_info.capture_shutter = cap_shutter;
+    sns_drv_cxt->hdr_info.capture_gain = cap_gain;
 
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 22);
+    sns_drv_cxt->hdr_info.capture_max_shutter = 1000000 / cap_linetime;
+
+    sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+    sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
+    sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
+    sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                  SENSOR_EXIF_CTRL_FNUMBER, 22);
 
     return SENSOR_SUCCESS;
 }
@@ -1225,12 +455,14 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static unsigned long imx230_write_exposure(SENSOR_HW_HANDLE handle,
-                                           unsigned long param) {
-    uint32_t ret_value = SENSOR_SUCCESS;
-    uint16_t exposure_line = 0x00;
-    uint16_t dummy_line = 0x00;
-    uint16_t mode = 0x00;
+static cmr_int imx230_drv_write_exposure(cmr_handle handle, cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 mode = 0x00;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = param & 0xffff;
     dummy_line = (param >> 0x10) & 0xfff; /*for cits frame rate test*/
@@ -1238,47 +470,42 @@ static unsigned long imx230_write_exposure(SENSOR_HW_HANDLE handle,
 
     SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line= %d", mode,
                 exposure_line, dummy_line);
-    s_current_default_frame_length =
-        imx230_get_default_frame_length(handle, mode);
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+    sns_drv_cxt->sensor_ev_info.preview_shutter =
+        imx230_drv_update_exposure(handle, exposure_line, dummy_line);
 
-    s_sensor_ev_info.preview_shutter =
-        imx230_update_exposure(handle, exposure_line, dummy_line);
-
-    return ret_value;
+    return ret;
 }
 
-static unsigned long imx230_ex_write_exposure(SENSOR_HW_HANDLE handle,
-                                              unsigned long param) {
-    uint32_t ret_value = SENSOR_SUCCESS;
-    uint16_t exposure_line = 0x00;
-    uint16_t dummy_line = 0x00;
-    uint16_t mode = 0x00;
-    uint16_t frame_interval = 0x00;
+static cmr_int imx230_drv_ex_write_exposure(cmr_handle handle,
+                                                   cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 mode = 0x00;
+    cmr_u16 frame_interval = 0x00;
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
 
-    if (!param) {
-        SENSOR_LOGI("param is NULL !!!");
-        return ret_value;
-    }
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_trim_tag *trim_tab = sns_drv_cxt->trim_tab_info;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     mode = ex->size_index;
 
-    frame_interval = (uint16_t)(((exposure_line + dummy_line) *
-                                 imx230_get_default_line_ime(handle, mode)) /
-                                1000000);
+    frame_interval = (cmr_u16)(((exposure_line + dummy_line) *
+                       trim_tab[mode].line_time) / 1000000);
     SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line = %d, "
                 "frame_interval= %d ms",
                 mode, exposure_line, dummy_line, frame_interval);
-    s_current_default_frame_length =
-        imx230_get_default_frame_length(handle, mode);
-    s_current_default_line_time = imx230_get_default_line_ime(handle, mode);
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+    sns_drv_cxt->line_time_def = trim_tab[mode].line_time;
+    sns_drv_cxt->sensor_ev_info.preview_shutter = 
+        imx230_drv_update_exposure(handle, exposure_line, dummy_line);
 
-    s_sensor_ev_info.preview_shutter =
-        imx230_update_exposure(handle, exposure_line, dummy_line);
-
-    return ret_value;
+    return ret;
 }
 
 /*==============================================================================
@@ -1286,8 +513,8 @@ static unsigned long imx230_ex_write_exposure(SENSOR_HW_HANDLE handle,
  * get the parameter from isp to real gain
  * you mustn't change the funcion !
  *============================================================================*/
-static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param) {
-    uint32_t real_gain = 0;
+static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
+    cmr_u32 real_gain = 0;
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
     real_gain = param;
@@ -1310,19 +537,21 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static unsigned long imx230_write_gain_value(SENSOR_HW_HANDLE handle,
-                                             unsigned long param) {
-    unsigned long ret_value = SENSOR_SUCCESS;
+static cmr_int imx230_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
     float real_gain = 0;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     real_gain = (float)param * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
 
     SENSOR_LOGI("real_gain = %f", real_gain);
 
-    s_sensor_ev_info.preview_gain = real_gain;
-    imx230_write_gain(handle, real_gain);
+    sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
+    imx230_drv_write_gain(handle, real_gain);
 
-    return ret_value;
+    return ret;
 }
 
 static struct sensor_reg_tag imx230_shutter_reg[] = {
@@ -1330,7 +559,8 @@ static struct sensor_reg_tag imx230_shutter_reg[] = {
 };
 
 static struct sensor_i2c_reg_tab imx230_shutter_tab = {
-    .settings = imx230_shutter_reg, .size = ARRAY_SIZE(imx230_shutter_reg),
+    .settings = imx230_shutter_reg,
+     .size = ARRAY_SIZE(imx230_shutter_reg),
 };
 
 static struct sensor_reg_tag imx230_again_reg[] = {
@@ -1338,7 +568,8 @@ static struct sensor_reg_tag imx230_again_reg[] = {
 };
 
 static struct sensor_i2c_reg_tab imx230_again_tab = {
-    .settings = imx230_again_reg, .size = ARRAY_SIZE(imx230_again_reg),
+    .settings = imx230_again_reg,
+    .size = ARRAY_SIZE(imx230_again_reg),
 };
 
 static struct sensor_reg_tag imx230_dgain_reg[] = {
@@ -1347,7 +578,8 @@ static struct sensor_reg_tag imx230_dgain_reg[] = {
 };
 
 struct sensor_i2c_reg_tab imx230_dgain_tab = {
-    .settings = imx230_dgain_reg, .size = ARRAY_SIZE(imx230_dgain_reg),
+    .settings = imx230_dgain_reg,
+    .size = ARRAY_SIZE(imx230_dgain_reg),
 };
 
 static struct sensor_reg_tag imx230_frame_length_reg[] = {
@@ -1369,13 +601,18 @@ static struct sensor_aec_i2c_tag imx230_aec_info = {
     .frame_length = &imx230_frame_length_tab,
 };
 
-static uint16_t imx230_calc_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter,
-                                     uint32_t dummy_line,
+static cmr_u16 imx230_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
+                                     cmr_u32 dummy_line,
                                      struct sensor_aec_i2c_tag *aec_info) {
-    uint32_t dest_fr_len = 0;
-    uint32_t cur_fr_len = 0;
-    uint32_t fr_len = s_current_default_frame_length;
-    int32_t offset = 0;
+    cmr_u32 dest_fr_len = 0;
+    cmr_u32 cur_fr_len = 0;
+    cmr_u32 fr_len = 0;
+    cmr_int offset = 0;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(aec_info);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    fr_len = sns_drv_cxt->frame_length_def;
 
     if (dummy_line > FRAME_OFFSET)
         offset = dummy_line;
@@ -1383,8 +620,8 @@ static uint16_t imx230_calc_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter,
         offset = FRAME_OFFSET;
     dest_fr_len = ((shutter + offset) > fr_len) ? (shutter + offset) : fr_len;
 
-    cur_fr_len = imx230_read_frame_length(handle);
-    s_current_frame_length = dest_fr_len;
+    cur_fr_len = imx230_drv_read_frame_length(handle);
+    sns_drv_cxt->frame_length = dest_fr_len;
 
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
@@ -1396,10 +633,10 @@ static uint16_t imx230_calc_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter,
     return shutter;
 }
 
-static void imx230_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
-    uint8_t i = 0;
-    uint32_t sensor_again = 0;
-    uint32_t sensor_dgain = 0;
+static void imx230_drv_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
+    cmr_u8 i = 0;
+    cmr_u32 sensor_again = 0;
+    cmr_u32 sensor_dgain = 0;
     float temp_gain;
 
     gain = gain / 32.0;
@@ -1409,7 +646,7 @@ static void imx230_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
         temp_gain = 1.0;
     else if (temp_gain > 8.0)
         temp_gain = 8.0;
-    sensor_again = (uint16_t)(512.0 - 512.0 / temp_gain);
+    sensor_again = (cmr_u16)(512.0 - 512.0 / temp_gain);
 
     aec_info->again->settings[0].reg_value = (sensor_again >> 8) & 0xFF;
     aec_info->again->settings[1].reg_value = sensor_again & 0xFF;
@@ -1419,7 +656,7 @@ static void imx230_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
         temp_gain = 16.0;
     else if (temp_gain < 1.0)
         temp_gain = 1.0;
-    sensor_dgain = (uint16_t)(256 * temp_gain);
+    sensor_dgain = (cmr_u16)(256 * temp_gain);
     aec_info->dgain->settings[0].reg_value = (sensor_dgain >> 8) & 0xFF;
     aec_info->dgain->settings[1].reg_value = sensor_dgain & 0xFF;
     aec_info->dgain->settings[2].reg_value = (sensor_dgain >> 8) & 0xFF;
@@ -1430,15 +667,18 @@ static void imx230_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
     aec_info->dgain->settings[7].reg_value = sensor_dgain & 0xFF;
 }
 
-static unsigned long imx230_read_aec_info(SENSOR_HW_HANDLE handle,
-                                          unsigned long param) {
-    unsigned long ret_value = SENSOR_SUCCESS;
+static cmr_int imx230_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
-    uint16_t exposure_line = 0x00;
-    uint16_t dummy_line = 0x00;
-    uint16_t mode = 0x00;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 mode = 0x00;
     float real_gain = 0;
-    uint32_t gain = 0;
+    cmr_u32 gain = 0;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(info);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     info->aec_i2c_info_out = &imx230_aec_info;
 
@@ -1446,18 +686,17 @@ static unsigned long imx230_read_aec_info(SENSOR_HW_HANDLE handle,
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
 
-    s_current_default_frame_length =
-        imx230_get_default_frame_length(NULL, mode);
-    s_current_default_line_time = imx230_get_default_line_ime(NULL, mode);
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+    sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 
-    s_sensor_ev_info.preview_shutter = imx230_calc_exposure(
-        handle, exposure_line, dummy_line, &imx230_aec_info);
+    sns_drv_cxt->sensor_ev_info.preview_shutter =
+      imx230_drv_calc_exposure(handle, exposure_line, dummy_line, &imx230_aec_info);
 
     gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
     real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
-    imx230_calc_gain(real_gain, &imx230_aec_info);
+    imx230_drv_calc_gain(real_gain, &imx230_aec_info);
 
-    return ret_value;
+    return ret;
 }
 
 /*==============================================================================
@@ -1465,24 +704,27 @@ static unsigned long imx230_read_aec_info(SENSOR_HW_HANDLE handle,
  * increase gain or shutter for hdr
  *
  *============================================================================*/
-static void imx230_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
-                                         uint8_t ev_multiplier) {
-    uint32_t shutter_multiply =
-        s_hdr_info.capture_max_shutter / s_hdr_info.capture_shutter;
-    uint32_t gain = 0;
+static void imx230_drv_increase_hdr_exposure(cmr_handle handle,
+                                         cmr_u8 ev_multiplier) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    cmr_u32 shutter_multiply = sns_drv_cxt->hdr_info.capture_max_shutter /
+                                sns_drv_cxt->hdr_info.capture_shutter;
+    cmr_u32 gain = 0;
 
     if (0 == shutter_multiply)
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
-        imx230_update_exposure(handle,
-                               s_hdr_info.capture_shutter * ev_multiplier, 0);
-        imx230_write_gain(handle, s_hdr_info.capture_gain);
+        imx230_drv_update_exposure(handle, sns_drv_cxt->hdr_info.capture_shutter *
+                               ev_multiplier, 0);
+        imx230_drv_write_gain(handle, sns_drv_cxt->hdr_info.capture_gain);
     } else {
-        gain = s_hdr_info.capture_gain * ev_multiplier / shutter_multiply;
-        imx230_update_exposure(
-            handle, s_hdr_info.capture_shutter * shutter_multiply, 0);
-        imx230_write_gain(handle, gain);
+        gain = sns_drv_cxt->hdr_info.capture_gain * ev_multiplier / shutter_multiply;
+        imx230_drv_update_exposure(handle, sns_drv_cxt->hdr_info.capture_shutter *
+                               shutter_multiply, 0);
+        imx230_drv_write_gain(handle, gain);
     }
 }
 
@@ -1491,20 +733,23 @@ static void imx230_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
  * decrease gain or shutter for hdr
  *
  *============================================================================*/
-static void imx230_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,
-                                         uint8_t ev_divisor) {
-    uint16_t gain_multiply = 0;
-    uint32_t shutter = 0;
-    gain_multiply = s_hdr_info.capture_gain / SENSOR_BASE_GAIN;
+static void imx230_drv_decrease_hdr_exposure(cmr_handle handle,
+                                         cmr_u8 ev_divisor) {
+    cmr_u16 gain_multiply = 0;
+    cmr_u32 shutter = 0;
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    gain_multiply = sns_drv_cxt->hdr_info.capture_gain / SENSOR_BASE_GAIN;
 
     if (gain_multiply >= ev_divisor) {
-        imx230_update_exposure(handle, s_hdr_info.capture_shutter, 0);
-        imx230_write_gain(handle, s_hdr_info.capture_gain / ev_divisor);
+        imx230_drv_update_exposure(handle, sns_drv_cxt->hdr_info.capture_shutter, 0);
+        imx230_drv_write_gain(handle, sns_drv_cxt->hdr_info.capture_gain / ev_divisor);
 
     } else {
-        shutter = s_hdr_info.capture_shutter * gain_multiply / ev_divisor;
-        imx230_update_exposure(handle, shutter, 0);
-        imx230_write_gain(handle, s_hdr_info.capture_gain / gain_multiply);
+        shutter = sns_drv_cxt->hdr_info.capture_shutter * gain_multiply / ev_divisor;
+        imx230_drv_update_exposure(handle, shutter, 0);
+        imx230_drv_write_gain(handle, sns_drv_cxt->hdr_info.capture_gain / gain_multiply);
     }
 }
 
@@ -1513,26 +758,26 @@ static void imx230_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,
  * set hdr ev
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t imx230_set_hdr_ev(SENSOR_HW_HANDLE handle,
-                                  unsigned long param) {
-    uint32_t ret = SENSOR_SUCCESS;
+static cmr_int imx230_drv_set_hdr_ev(cmr_handle handle, cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
+    SENSOR_IC_CHECK_PTR(ext_ptr);
 
-    uint32_t ev = ext_ptr->param;
+    cmr_u32 ev = ext_ptr->param;
     uint8_t ev_divisor, ev_multiplier;
 
     switch (ev) {
     case SENSOR_HDR_EV_LEVE_0:
         ev_divisor = 2;
-        imx230_decrease_hdr_exposure(handle, ev_divisor);
+        imx230_drv_decrease_hdr_exposure(handle, ev_divisor);
         break;
     case SENSOR_HDR_EV_LEVE_1:
         ev_multiplier = 2;
-        imx230_increase_hdr_exposure(handle, ev_multiplier);
+        imx230_drv_increase_hdr_exposure(handle, ev_multiplier);
         break;
     case SENSOR_HDR_EV_LEVE_2:
         ev_multiplier = 1;
-        imx230_increase_hdr_exposure(handle, ev_multiplier);
+        imx230_drv_increase_hdr_exposure(handle, ev_multiplier);
         break;
     default:
         break;
@@ -1546,21 +791,21 @@ static uint32_t imx230_set_hdr_ev(SENSOR_HW_HANDLE handle,
  * you can add functions reference SENSOR_EXT_FUNC_CMD_E which from
  *sensor_drv_u.h
  *============================================================================*/
-static unsigned long imx230_ext_func(SENSOR_HW_HANDLE handle,
-                                     unsigned long param) {
-    unsigned long rtn = SENSOR_SUCCESS;
+static cmr_int imx230_drv_ext_func(cmr_handle handle, cmr_uint param) {
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
+    SENSOR_IC_CHECK_PTR(param);
 
     SENSOR_LOGI("ext_ptr->cmd: %d", ext_ptr->cmd);
     switch (ext_ptr->cmd) {
     case SENSOR_EXT_EV:
-        rtn = imx230_set_hdr_ev(handle, param);
+        ret = imx230_drv_set_hdr_ev(handle, param);
         break;
     default:
         break;
     }
 
-    return rtn;
+    return ret;
 }
 
 /*==============================================================================
@@ -1568,18 +813,20 @@ static unsigned long imx230_ext_func(SENSOR_HW_HANDLE handle,
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_stream_on(SENSOR_HW_HANDLE handle,
-                                      unsigned long param) {
+static cmr_int imx230_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     UNUSED(param);
-    Sensor_WriteReg(0x0100, 0x01);
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x0100, 0x01);
 #if 1
     cmr_s8 value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("SENSOR_imx230: enable test mode");
-        Sensor_WriteReg(0x0600, 0x00);
-        Sensor_WriteReg(0x0601, 0x02);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x0600, 0x00);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x0601, 0x02);
     }
 #endif
 
@@ -1591,179 +838,179 @@ static unsigned long imx230_stream_on(SENSOR_HW_HANDLE handle,
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle,
-                                       unsigned long param) {
+static cmr_int imx230_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     UNUSED(param);
     unsigned char value;
     unsigned int sleep_time = 0, frame_time;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    value = Sensor_ReadReg(0x0100);
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value == 0x01) {
-        Sensor_WriteReg(0x0100, 0x00);
-        if (!s_imx230_sensor_close_flag) {
-            frame_time =
-                s_current_default_line_time * s_current_frame_length / 1000 +
-                1000;
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+        if (!sns_drv_cxt->is_sensor_close) {
+            frame_time = sns_drv_cxt->line_time_def * 
+                         sns_drv_cxt->frame_length / 1000 + 1000;
+                //s_current_default_line_time * s_current_frame_length / 1000 +
             sleep_time = frame_time > 50 * 1000 ? frame_time : 50 * 1000;
             usleep(sleep_time);
         }
     } else {
-        Sensor_WriteReg(0x0100, 0x00);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
 
-    s_imx230_sensor_close_flag = 0;
+    sns_drv_cxt->is_sensor_close = 0;
 
     SENSOR_LOGI("X sleep_time=%dus", sleep_time);
 
     return 0;
 }
 
-static uint32_t imx230_get_static_info(SENSOR_HW_HANDLE handle,
-                                       uint32_t *param) {
-    uint32_t rtn = SENSOR_SUCCESS;
-    struct sensor_ex_info *ex_info;
-    uint32_t up = 0;
-    uint32_t down = 0;
-    // make sure we have get max fps of all settings.
-    if (!s_imx230_mode_fps_info.is_init) {
-        imx230_init_mode_fps_info(handle);
+static cmr_int imx230_drv_get_static_info(cmr_handle handle,
+                                       cmr_u32 *param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;;
+    cmr_u32 up = 0;
+    cmr_u32 down = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(ex_info);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
+    struct module_cfg_info *module_info = sns_drv_cxt->module_info;
+    struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
+
+    if(!static_info && !module_info) {
+        SENSOR_LOGI("error:static_info:0x%x,module_info:0x%x",static_info, module_info);
+        return SENSOR_FAIL;
     }
-    ex_info = (struct sensor_ex_info *)param;
-    ex_info->f_num = s_imx230_static_info.f_num;
-    ex_info->focal_length = s_imx230_static_info.focal_length;
-    ex_info->max_fps = s_imx230_static_info.max_fps;
-    ex_info->max_adgain = s_imx230_static_info.max_adgain;
-    ex_info->ois_supported = s_imx230_static_info.ois_supported;
-    ex_info->pdaf_supported = s_imx230_static_info.pdaf_supported;
-    ex_info->exp_valid_frame_num = s_imx230_static_info.exp_valid_frame_num;
-    ex_info->clamp_level = s_imx230_static_info.clamp_level;
+
+    // make sure we have get max fps of all settings.
+    if (!fps_info->is_init) {
+        imx230_drv_init_fps_info(handle);
+    }
+    ex_info->f_num = static_info->f_num;
+    ex_info->focal_length = static_info->focal_length;
+    ex_info->max_fps = static_info->max_fps;
+    ex_info->max_adgain = static_info->max_adgain;
+    ex_info->ois_supported = static_info->ois_supported;
+    ex_info->pdaf_supported = static_info->pdaf_supported;
+    ex_info->exp_valid_frame_num = static_info->exp_valid_frame_num;
+    ex_info->clamp_level = static_info->clamp_level;
     ex_info->adgain_valid_frame_num =
-        s_imx230_static_info.adgain_valid_frame_num;
-    ex_info->preview_skip_num = g_imx230_mipi_raw_info.preview_skip_num;
-    ex_info->capture_skip_num = g_imx230_mipi_raw_info.capture_skip_num;
-    ex_info->name = (cmr_s8 *)g_imx230_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_imx230_mipi_raw_info.sensor_version_info;
-    // vcm_dw9800_get_pose_dis(handle, &up, &down);
+        static_info->adgain_valid_frame_num;
+    ex_info->preview_skip_num = module_info->preview_skip_num;
+    ex_info->capture_skip_num = module_info->capture_skip_num;
+    ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
+    ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    SENSOR_LOGI("SENSOR_IMX230: f_num: %d", ex_info->f_num);
-    SENSOR_LOGI("SENSOR_IMX230: max_fps: %d", ex_info->max_fps);
-    SENSOR_LOGI("SENSOR_IMX230: max_adgain: %d", ex_info->max_adgain);
-    SENSOR_LOGI("SENSOR_IMX230: ois_supported: %d", ex_info->ois_supported);
-    SENSOR_LOGI("SENSOR_IMX230: pdaf_supported: %d", ex_info->pdaf_supported);
-    SENSOR_LOGI("SENSOR_IMX230: exp_valid_frame_num: %d",
-                ex_info->exp_valid_frame_num);
-    SENSOR_LOGI("SENSOR_IMX230: clam_level: %d", ex_info->clamp_level);
-    SENSOR_LOGI("SENSOR_IMX230: adgain_valid_frame_num: %d",
-                ex_info->adgain_valid_frame_num);
-    SENSOR_LOGI("SENSOR_IMX230: sensor name is: %s", ex_info->name);
-    SENSOR_LOGI("SENSOR_IMX230: sensor version info is: %s",
-                ex_info->sensor_version_info);
 
-    return rtn;
+    sensor_ic_print_static_info("SENSOR_IMX230",ex_info);
+
+    return ret;
 }
 
-static uint32_t imx230_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param) {
-    uint32_t rtn = SENSOR_SUCCESS;
-    SENSOR_MODE_FPS_T *fps_info;
+static cmr_int imx230_drv_get_fps_info(cmr_handle handle, cmr_uint *param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;;
+    SENSOR_MODE_FPS_T *fps_info_src;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(fps_info);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
+
     // make sure have inited fps of every sensor mode.
-    if (!s_imx230_mode_fps_info.is_init) {
-        imx230_init_mode_fps_info(handle);
+    if (!fps_data->is_init) {
+        imx230_drv_init_fps_info(handle);
     }
-    fps_info = (SENSOR_MODE_FPS_T *)param;
-    uint32_t sensor_mode = fps_info->mode;
-    fps_info->max_fps =
-        s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
-    fps_info->min_fps =
-        s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
-    fps_info->is_high_fps =
-        s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
-    fps_info->high_fps_skip_num =
-        s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-    SENSOR_LOGI("SENSOR_IMX230: mode %d, max_fps: %d", fps_info->mode,
+    cmr_u32 sensor_mode = fps_info->mode;
+    fps_info_src = &fps_data->sensor_mode_fps[sensor_mode];
+
+    fps_info->max_fps = fps_info_src->max_fps;
+    fps_info->min_fps = fps_info_src->min_fps;
+    fps_info->is_high_fps = fps_info_src->is_high_fps;
+    fps_info->high_fps_skip_num = fps_info_src->high_fps_skip_num;
+
+    SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode,
                 fps_info->max_fps);
-    SENSOR_LOGI("SENSOR_IMX230: min_fps: %d", fps_info->min_fps);
-    SENSOR_LOGI("SENSOR_IMX230: is_high_fps: %d", fps_info->is_high_fps);
-    SENSOR_LOGI("SENSOR_IMX230: high_fps_skip_num: %d",
+    SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
+    SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
+    SENSOR_LOGI("high_fps_skip_num: %d",
                 fps_info->high_fps_skip_num);
 
-    return rtn;
+    return ret;
 }
 
-static uint32_t imx230_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
-    uint32_t rtn = SENSOR_SUCCESS;
-
-    s_imx230_sensor_close_flag = 1;
-
-    return rtn;
-}
-
-static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle,
-                                       unsigned long param) {
-    uint32_t rtn = SENSOR_SUCCESS;
+static cmr_int imx230_drv_access_val(cmr_handle handle, cmr_uint param) {
+    cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
-    uint16_t tmp;
+    cmr_u16 tmp;
 
-    SENSOR_LOGI("SENSOR_IMX230: _imx230_access_val E param_ptr = %p",
-                param_ptr);
-    if (!param_ptr) {
-        return rtn;
-    }
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param_ptr);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("SENSOR_IMX230: param_ptr->type=%x", param_ptr->type);
+    SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
     switch (param_ptr->type) {
-    case SENSOR_VAL_TYPE_INIT_OTP:
-        rtn = imx230_otp_init(handle);
-        break;
-    case SENSOR_VAL_TYPE_SHUTTER:
-        //*((uint32_t*)param_ptr->pval) = imx230_get_shutter();
-        break;
-    case SENSOR_VAL_TYPE_READ_VCM:
-        // rtn = imx230_read_vcm(handle, param_ptr->pval);
-        break;
-    case SENSOR_VAL_TYPE_WRITE_VCM:
-        // rtn = imx230_write_vcm(handle, param_ptr->pval);
-        break;
-    case SENSOR_VAL_TYPE_READ_OTP:
-        rtn = imx230_otp_read(handle, param_ptr);
-        break;
-    case SENSOR_VAL_TYPE_PARSE_OTP:
-        rtn = imx230_parse_otp(handle, param_ptr);
-        break;
-    case SENSOR_VAL_TYPE_WRITE_OTP:
-        // rtn = _hi544_write_otp(handle, (uint32_t)param_ptr->pval);
-        break;
-    case SENSOR_VAL_TYPE_GET_RELOADINFO: {
-        //				struct isp_calibration_info **p= (struct
-        // isp_calibration_info **)param_ptr->pval;
-        //				*p=&calibration_info;
-    } break;
-    case SENSOR_VAL_TYPE_GET_AFPOSITION:
-        //*(uint32_t*)param_ptr->pval = 0;//cur_af_pos;
-        break;
-    case SENSOR_VAL_TYPE_WRITE_OTP_GAIN:
-        // rtn = imx230_write_otp_gain(handle, param_ptr->pval);
-        break;
-    case SENSOR_VAL_TYPE_READ_OTP_GAIN:
-        // rtn = imx230_read_otp_gain(handle, param_ptr->pval);
-        break;
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-        rtn = imx230_get_static_info(handle, param_ptr->pval);
+        rtn = imx230_drv_get_static_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
-        rtn = imx230_get_fps_info(handle, param_ptr->pval);
+        rtn = imx230_drv_get_fps_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
-        rtn = imx230_set_sensor_close_flag(handle);
+        sns_drv_cxt->is_sensor_close = 1;
         break;
     default:
         break;
     }
 
-    SENSOR_LOGI("SENSOR_IMX230: _imx230_access_val X");
+    SENSOR_LOGI("X");
 
     return rtn;
+}
+
+static cmr_int imx230_drv_handle_create(
+    struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL;
+
+    ret = sensor_ic_drv_create(init_param,sns_ic_drv_handle);
+    if(ret != SENSOR_SUCCESS)
+        return SENSOR_FAIL;
+
+    sns_drv_cxt = (struct sensor_ic_drv_cxt *)*sns_ic_drv_handle;
+
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
+
+    /*add private here*/
+
+    return ret;
+}
+
+static cmr_int imx230_drv_handle_delete(cmr_handle handle, cmr_u32 *param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    /*if has private data,you must release it here*/
+
+    ret = sensor_ic_drv_delete(handle,param);
+    return ret;
+}
+
+static cmr_int imx230_drv_get_private_data(cmr_handle handle,
+                                                     cmr_uint cmd, void**param){
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+
+    ret = sensor_ic_get_private_data(handle,cmd, param);
+    return ret;
 }
 
 /*==============================================================================
@@ -1774,20 +1021,20 @@ static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle,
  * add ioctl functions like this:
  * .power = imx132_power_on,
  *============================================================================*/
-static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab = {
-    .power = imx230_power_on,
-    .identify = imx230_identify,
-    .get_trim = imx230_get_resolution_trim_tab,
-    .before_snapshort = imx230_before_snapshot,
-    .ex_write_exp = imx230_ex_write_exposure,
-    .write_gain_value = imx230_write_gain_value,
-    //.set_focus = imx230_ext_func,
-    //.set_video_mode = imx132_set_video_mode,
-    .stream_on = imx230_stream_on,
-    .stream_off = imx230_stream_off,
-    //.af_enable = imx230_write_af,
-    //.group_hold_on = imx132_group_hold_on,
-    //.group_hold_of = imx132_group_hold_off,
-    .cfg_otp = imx230_access_val,
-    .read_aec_info = imx230_read_aec_info,
+static struct sensor_ic_ops s_imx230_ops_tab = {
+    .create_handle = imx230_drv_handle_create,
+    .delete_handle = imx230_drv_handle_delete,
+    .get_data = imx230_drv_get_private_data,
+    .power  = imx230_drv_power_on,
+    .identify = imx230_drv_identify,
+
+    .write_gain_value = imx230_drv_write_gain_value,
+    .ex_write_exp = imx230_drv_ex_write_exposure,
+    .read_aec_info = imx230_drv_read_aec_info,
+    .ext_ops = {
+        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = imx230_drv_before_snapshot,
+        [SENSOR_IOCTL_STREAM_ON].ops = imx230_drv_stream_on,
+        [SENSOR_IOCTL_STREAM_OFF].ops = imx230_drv_stream_off,
+        [SENSOR_IOCTL_ACCESS_VAL].ops = imx230_drv_access_val,
+    }
 };

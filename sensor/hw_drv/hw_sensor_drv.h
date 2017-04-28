@@ -111,8 +111,13 @@ typedef enum {
 } SENSOR_INF_TYPE_E;
 
 typedef struct sensor_reg_tab_info_tag {
+    /*sensor common setting register tab*/
     SENSOR_REG_T_PTR sensor_reg_tab_ptr;
     cmr_u32 reg_count;
+    /*module extend setting register tab*/
+    SENSOR_REG_T_PTR sensor_ext_reg_tab_ptr;
+    cmr_u32 ext_reg_count;
+
     cmr_u16 width;
     cmr_u16 height;
     cmr_u32 xclk_to_sensor;

@@ -16,30 +16,24 @@
 #ifndef _SENSOR_CFG_H_
 #define _SENSOR_CFG_H_
 
-//#include "sensor_drv_u.h"
 #include "otp_info.h"
 #include "sns_af_drv.h"
 
-#if 0
-struct sensor_drv_cfg {
-	struct list_head list;
-	uint32_t sensor_pos;
-	const char *sensor_name;
-	SENSOR_INFO_T *driver_info;
-};
-int dcam_register_sensor_drv(struct sensor_drv_cfg *cfg);
-struct list_head *Sensor_GetList(SENSOR_ID_E sensor_id);
-
-#endif
 typedef struct sensor_match_tab {
+    /**
+     * In order to avoid user input errors and uniform format sensor
+     * vendor name,we use enumeration to get sensor vendor name.So when you
+     * config module_name,you should select a module_index between MODULE_SUNNY
+     * and MODULE_MAX at enumeration group{@camera_vendor_name_type} 
+     **/
+    cmr_u16 module_id;
     char sn_name[36];
     SENSOR_INFO_T *sensor_info;
     struct sns_af_drv_cfg af_dev_info;
     otp_drv_entry_t *otp_drv_info;
 } SENSOR_MATCH_T;
-SENSOR_MATCH_T *Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt,
-                                   SENSOR_ID_E sensor_id);
-uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt,
-                                  SENSOR_ID_E sensor_id);
-cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index);
+
+SENSOR_MATCH_T *sensor_get_module_tab(cmr_int at_flag, cmr_u32 sensor_id);
+cmr_u32 sensor_get_tab_length(cmr_int at_flag, cmr_u32 sensor_id);
+cmr_u32 sensor_get_match_index(cmr_int at_flag, cmr_u32 index);
 #endif

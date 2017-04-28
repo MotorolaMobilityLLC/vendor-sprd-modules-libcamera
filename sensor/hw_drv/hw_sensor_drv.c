@@ -1018,7 +1018,14 @@ cmr_int hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
     regTab.sensor_reg_tab_ptr = sensor_reg_tab_info_ptr->sensor_reg_tab_ptr;
 
     ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
-
+    if((0 != sensor_reg_tab_info_ptr->ext_reg_count) && (0 == ret)
+       && (NULL != sensor_reg_tab_info_ptr->sensor_ext_reg_tab_ptr)) {
+        HW_LOGI("write expend register tab value: count=%d",
+                                  sensor_reg_tab_info_ptr->ext_reg_count);
+        regTab.reg_count = sensor_reg_tab_info_ptr->ext_reg_count;
+        regTab.sensor_reg_tab_ptr = sensor_reg_tab_info_ptr->sensor_ext_reg_tab_ptr;
+        ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
+    }
     HW_LOGI("reg_count %d, senosr_id: %ld",
                 sensor_reg_tab_info_ptr->reg_count, hw_drv_cxt->sensor_id);
 

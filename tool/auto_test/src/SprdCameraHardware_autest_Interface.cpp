@@ -602,13 +602,15 @@ auto_test_dcam_find_param_index(struct auto_test_cmr_context *cmr_cxt_ptr) {
     uint32_t i = 0, index = 0;
     uint32_t height1 = 0;
     uint32_t height2 = 0;
-    SENSOR_TRIM_T *trim_ptr = 0;
+    //SENSOR_TRIM_T *trim_ptr = 0;
+	SENSOR_MODE_INFO_T * trim_ptr = 0;
     struct sensor_raw_fix_info *raw_fix_info_ptr = 0;
     SENSOR_EXP_INFO_T *sensor_info_ptr = Sensor_GetInfo();
 
     height2 = cmr_cxt_ptr->capture_height;
 
-    trim_ptr = (SENSOR_TRIM_T *)(sensor_info_ptr->ioctl_func_ptr->get_trim(0));
+    //trim_ptr = (SENSOR_TRIM_T *)(sensor_info_ptr->ioctl_func_ptr->get_trim(0));
+	trim_ptr = sensor_info_ptr->sensor_mode_info;
     INFO("debug %s %d E \n", __func__, __LINE__);
 
     i = 1;

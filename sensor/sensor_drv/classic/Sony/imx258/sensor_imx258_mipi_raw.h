@@ -14,6 +14,10 @@
  * limitations under the License.
  * V2.0
  */
+#ifndef _SENSOR_IMX258_MIPI_RAW_H_
+#define _SENSOR_IMX258_MIPI_RAW_H_
+
+#define VENDOR_NUM 3
 
 #include <utils/Log.h>
 #include "sensor.h"
@@ -23,18 +27,16 @@
 
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #include "parameters/sensor_imx258_raw_param_v3.c"
-#include "vcm_lc898214.h"
 #else
 #include "parameters/sensor_imx258_raw_param_main.c"
 #endif
 #include "parameters/sensor_imx258_otp_truly.h"
 
-//#define PDAF_TYPE2
 #define SENSOR_NAME "imx258_mipi_raw"
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
-#define I2C_SLAVE_ADDR 0x20 // 0x34 // 0x20    /* 16bit slave address*/
+#define I2C_SLAVE_ADDR 0x20
 #else
-#define I2C_SLAVE_ADDR 0x34 // 0x20    /* 16bit slave address*/
+#define I2C_SLAVE_ADDR 0x34
 #endif
 
 #define BINNING_FACTOR 2
@@ -82,11 +84,11 @@
 // static uint32_t s_current_default_frame_length;
 // struct sensor_ev_info_t s_sensor_ev_info;
 
-static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab;
+static struct sensor_ic_ops s_imx258_ops_tab;
 struct sensor_raw_info *s_imx258_mipi_raw_info_ptr = &s_imx258_mipi_raw_info;
 
 static const SENSOR_REG_T imx258_init_setting[] = {
-    // Address   value
+   /*Module common default setting*/
     {0x0136, 0x18}, {0x0137, 0x00}, {0x3051, 0x00}, {0x6B11, 0xCF},
     {0x7FF0, 0x08}, {0x7FF1, 0x0F}, {0x7FF2, 0x08}, {0x7FF3, 0x1B},
     {0x7FF4, 0x23}, {0x7FF5, 0x60}, {0x7FF6, 0x00}, {0x7FF7, 0x01},
@@ -97,8 +99,7 @@ static const SENSOR_REG_T imx258_init_setting[] = {
     {0x653D, 0x04}, {0x6B05, 0x8C}, {0x6B06, 0xF9}, {0x6B08, 0x65},
     {0x6B09, 0xFC}, {0x6B0A, 0xCF}, {0x6B0B, 0xD2}, {0x6700, 0x0E},
     {0x6707, 0x0E}, {0x9104, 0x00}, {0x7421, 0x1C}, {0x7423, 0xD7},
-    {0x5F04, 0x00}, {0x5F05, 0xED},
-
+    {0x5F04, 0x00}, {0x5F05, 0xED}
 };
 
 static const SENSOR_REG_T imx258_2096x1552_setting[] = {
@@ -313,7 +314,7 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
     {0x3052, 0x00}, // 1},
     {0x7BCB, 0x00},
     {0x7BC8, 0x00},
-    {0x7BC9, 0x00},
+    {0x7BC9, 0x00}
 #endif
 };
 
@@ -415,7 +416,7 @@ static const SENSOR_REG_T imx258_1040x768_setting[] = {
     {0x3030, 0x00},
     {0x3032, 0x00},
     {0x0220, 0x00},
-    {0x4041, 0x00},
+    {0x4041, 0x00}
 };
 
 static const SENSOR_REG_T imx258_1280x720_setting[] = {
@@ -562,26 +563,45 @@ static struct sensor_aec_i2c_tag imx258_aec_info = {
     .frame_length = &imx258_frame_length_tab,
 };
 
-/*==============================================================================
- * Description:
- * sensor static info need by isp
- * please modify this variable acording your spec
- *============================================================================*/
-static SENSOR_STATIC_INFO_T s_imx258_static_info = {
-    .f_num = 220,        // f-number,focal ratio
-    .focal_length = 462, // focal_length;
-    .max_fps = 0,        // max_fps,max fps of sensor's all settings,it will be
-                         // calculated from sensor mode fps
-    .max_adgain = 16 * 16, // max_adgain,AD-gain
-    .ois_supported = 0,    // ois_supported;
-#ifdef PDAF_TYPE2
-    .pdaf_supported = SENSOR_PDAF_TYPE2_ENABLE, // pdaf_supported;
-#else
-    .pdaf_supported = 0, // pdaf_supported;
-#endif
-    .exp_valid_frame_num = 1,    // exp_valid_frame_num;N+2-1
-    .clamp_level = 64,           // clamp_level,black level
-    .adgain_valid_frame_num = 1, // adgain_valid_frame_num;N+1-1
+static SENSOR_STATIC_INFO_T s_imx258_static_info[VENDOR_NUM] = {
+    {.module_id = MODULE_TRULY,
+     .static_info = {
+        .f_num = 220,
+        .focal_length = 462,
+        .max_fps = 0,
+        .max_adgain = 16 * 16,
+        .ois_supported = 0,
+        .pdaf_supported = 0,
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.614f, 3.444f}, 4.222f}}},
+
+    {.module_id = MODULE_SUNNY,
+     .static_info = {
+        .f_num = 220,
+        .focal_length = 462,
+        .max_fps = 0,
+        .max_adgain = 16 * 16,
+        .ois_supported = 0,
+        .pdaf_supported = 0,
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.614f, 3.444f}, 4.222f}}},
+
+    {.module_id = MODULE_DARLING,
+     .static_info = {
+        .f_num = 220,
+        .focal_length = 462,
+        .max_fps = 0,
+        .max_adgain = 16 * 16,
+        .ois_supported = 0,
+        .pdaf_supported = 0,
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.614f, 3.444f}, 4.222f}}}
 };
 
 /*==============================================================================
@@ -589,155 +609,248 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info = {
  * sensor fps info related to sensor mode need by isp
  * please modify this variable acording your spec
  *============================================================================*/
-static SENSOR_MODE_FPS_INFO_T s_imx258_mode_fps_info = {
-    0, // is_init;
-    {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-     {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-     {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}};
+static SENSOR_MODE_FPS_INFO_T s_imx258_mode_fps_info[VENDOR_NUM] = {
+    {.module_id = MODULE_TRULY,
+        {.is_init = 0,
+          {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+           {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+           {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}},
+
+    {.module_id = MODULE_SUNNY,
+        {.is_init = 0,
+          {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+           {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+           {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}},
+
+    {.module_id = MODULE_DARLING,
+        {.is_init = 0,
+          {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+           {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+           {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+           {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}},
+};
 
 /*==============================================================================
  * Description:
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
-LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] = {
-    {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    /*	{
-       ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW
-       },*/
-    {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), 1280, 720, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
-    {PNULL, 0, 0, 0, 0, 0},
+static struct sensor_res_tab_info s_imx258_resolution_tab_raw[VENDOR_NUM] = {
+    { .module_id = MODULE_TRULY,
+      .reg_tab = {
+      {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), PNULL, 0,
+       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      /*{ ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW },*/
+      {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), PNULL, 0,
+       .width = 1280, .height = 720, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), PNULL, 0,
+       .width = 2096, .height = 1552, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), PNULL, 0,
+       .width = 4208, .height = 3120, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
+    },
+    { .module_id = MODULE_SUNNY,
+      .reg_tab = {
+      {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), PNULL, 0,
+       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      /*{ ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW },*/
+      {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), PNULL, 0,
+       .width = 1280, .height = 720, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), PNULL, 0,
+       .width = 2096, .height = 1552, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting),  PNULL, 0,
+       .width = 4208, .height = 3120, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
+    },
+    { .module_id = MODULE_DARLING,
+      .reg_tab = {
+      {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), PNULL, 0,
+       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      /*{ ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW },*/
+      {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), PNULL, 0,
+       .width = 1280, .height = 720, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), PNULL, 0,
+       .width = 2096, .height = 1552, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+      {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), PNULL, 0,
+       .width = 4208, .height = 3120, .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
+    }
 };
 
-LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[] = {
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
-    {0, 0, 1280, 720, 13939, 960, 796, {0, 0, 1280, 720}},
-    {0, 0, 2096, 1552, 20300, 1296, 1644, {0, 0, 2096, 1552}},
-    {0, 0, 4208, 3120, 10215, 1296, 3224, {0, 0, 4208, 3120}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+static SENSOR_TRIM_T s_imx258_resolution_trim_tab[VENDOR_NUM] = {
+    {.module_id = MODULE_TRULY,
+     .trim_info = {
+      {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+      /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
+      {0, 0, 1280, 720, 13939, 960, 796, {0, 0, 1280, 720}},
+      {0, 0, 2096, 1552, 20300, 1296, 1644, {0, 0, 2096, 1552}},
+      {0, 0, 4208, 3120, 10215, 1296, 3224, {0, 0, 4208, 3120}}}
+    },
+    {.module_id = MODULE_SUNNY,
+     .trim_info = {
+      {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+      /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
+      {0, 0, 1280, 720, 13939, 960, 796, {0, 0, 1280, 720}},
+      {0, 0, 2096, 1552, 20300, 1296, 1644, {0, 0, 2096, 1552}},
+      {0, 0, 4208, 3120, 10215, 1296, 3224, {0, 0, 4208, 3120}}}
+    },
+    {.module_id = MODULE_DARLING,
+     .trim_info = {
+      {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+      /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
+      {0, 0, 1280, 720, 13939, 960, 796, {0, 0, 1280, 720}},
+      {0, 0, 2096, 1552, 20300, 1296, 1644, {0, 0, 2096, 1552}},
+      {0, 0, 4208, 3120, 10215, 1296, 3224, {0, 0, 4208, 3120}}}
+    },
 };
 
-LOCAL const SENSOR_REG_T
+static const SENSOR_REG_T
     s_imx258_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        {/*video mode 0: ?fps */
-         {
-             .reg_addr = 0xffff, .reg_value = 0xff,
-         }},
-        {
-            /* video mode 1:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 2:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 3:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-};
-LOCAL const SENSOR_REG_T
-    s_imx258_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        {
-            /*video mode 0: ?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 1:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {
-            /* video mode 2:?fps */
-            {
-                .reg_addr = 0xffff, .reg_value = 0xff,
-            },
-        },
-        {/* video mode 3:?fps */
-         {
-             .reg_addr = 0xffff, .reg_value = 0xff,
-         }}};
+    /*video mode 0: ?fps */
+    {{0xffff, 0xff}},
+    /* video mode 1:?fps */
+    {{0xffff, 0xff}},
+        /* video mode 2:?fps */
+    {{0xffff, 0xff}},
+        /* video mode 3:?fps */
+    {{0xffff, 0xff}}};
 
-LOCAL SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
-    {
-        .ae_info =
-            {
-                {
-                    .min_frate = 0, .max_frate = 0, .line_time = 0, .gain = 0,
-                },
-            },
-        .setting_ptr = NULL,
-    },
-    {
-        .ae_info =
-            {
-                {
-                    .min_frate = 30,
-                    .max_frate = 30,
-                    .line_time = 270,
-                    .gain = 90,
-                },
-            },
-        .setting_ptr =
-            (struct sensor_reg_tag **)s_imx258_preview_size_video_tab,
-    },
-    {
-        .ae_info =
-            {
-                {
-                    .min_frate = 2,
-                    .max_frate = 5,
-                    .line_time = 338,
-                    .gain = 1000,
-                },
-            },
-        .setting_ptr =
-            (struct sensor_reg_tag **)s_imx258_capture_size_video_tab,
-    }};
+static const SENSOR_REG_T
+    s_imx258_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
+    /*video mode 0: ?fps */
+    {{0xffff, 0xff}},
+    /* video mode 1:?fps */
+    {{0xffff, 0xff}},
+        /* video mode 2:?fps */
+    {{0xffff, 0xff}},
+        /* video mode 3:?fps */
+    {{0xffff, 0xff}}};
+
+static SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
+    {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
+
+    {.ae_info = {{.min_frate = 30, .max_frate = 30, .line_time = 270, .gain = 90},
+      {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+      .setting_ptr = (struct sensor_reg_tag **)s_imx258_preview_size_video_tab},
+
+    {.ae_info = {{.min_frate = 2, .max_frate = 5, .line_time = 338, .gain = 1000},
+      {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+      .setting_ptr = (struct sensor_reg_tag **)s_imx258_capture_size_video_tab},
+};
+
+static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] = {
+    {.module_id = MODULE_TRULY,
+     .module_info = {
+        .major_i2c_addr = 0x34 >> 1,
+        .minor_i2c_addr = 0x10 >> 1,
+
+        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                               SENSOR_I2C_FREQ_400,
+
+        .avdd_val = SENSOR_AVDD_2800MV,
+        .iovdd_val = SENSOR_AVDD_1800MV,
+        .dvdd_val = SENSOR_AVDD_1200MV,
+
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+
+        .preview_skip_num = 1,
+        .capture_skip_num = 1,
+        .flash_capture_skip_num = 6,
+        .mipi_cap_skip_num = 0,
+        .preview_deci_num = 0,
+        .video_preview_deci_num = 0,
+
+        .sensor_interface = {
+            .type = SENSOR_INTERFACE_TYPE_CSI2,
+            .bus_width = 4,
+            .pixel_width = 10,
+            /*0:mipi_raw,1:normal_raw*/
+            .is_loose = 0,
+        },
+
+        .change_setting_skip_num = 1,
+        .horizontal_view_angle = 35,
+        .vertical_view_angle = 35
+    }},
+    {.module_id = MODULE_SUNNY,
+     .module_info = {
+        .major_i2c_addr = 0x34 >> 1,
+        .minor_i2c_addr = 0x10 >> 1,
+        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                               SENSOR_I2C_FREQ_400,
+
+        .avdd_val = SENSOR_AVDD_2800MV,
+        .iovdd_val = SENSOR_AVDD_1800MV,
+        .dvdd_val = SENSOR_AVDD_1200MV,
+
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+
+        .preview_skip_num = 1,
+        .capture_skip_num = 1,
+        .flash_capture_skip_num = 6,
+        .mipi_cap_skip_num = 0,
+        .preview_deci_num = 0,
+        .video_preview_deci_num = 0,
+
+        .sensor_interface = {
+            .type = SENSOR_INTERFACE_TYPE_CSI2,
+            .bus_width = 4,
+            .pixel_width = 10,
+            .is_loose = 0,
+        },
+
+        .change_setting_skip_num = 1,
+        .horizontal_view_angle = 35,
+        .vertical_view_angle = 35
+    }},
+    {.module_id = MODULE_DARLING,
+     .module_info = {
+        .major_i2c_addr = 0x20 >> 1,
+        .minor_i2c_addr = 0x20 >> 1,
+
+        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                               SENSOR_I2C_FREQ_400,
+
+        .avdd_val = SENSOR_AVDD_2800MV,
+        .iovdd_val = SENSOR_AVDD_1800MV,
+        .dvdd_val = SENSOR_AVDD_1200MV,
+
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+
+        .preview_skip_num = 1,
+        .capture_skip_num = 1,
+        .flash_capture_skip_num = 6,
+        .mipi_cap_skip_num = 0,
+        .preview_deci_num = 0,
+        .video_preview_deci_num = 0,
+
+        .sensor_interface = {
+            .type = SENSOR_INTERFACE_TYPE_CSI2,
+            .bus_width = 4,
+            .pixel_width = 10,
+            .is_loose = 0,
+        },
+        .change_setting_skip_num = 1,
+        .horizontal_view_angle = 35,
+        .vertical_view_angle = 35
+    }},
+};
 
 SENSOR_INFO_T g_imx258_mipi_raw_info = {
-    .salve_i2c_addr_w = I2C_SLAVE_ADDR >> 1,
-    .salve_i2c_addr_r = I2C_SLAVE_ADDR >> 1,
-    .reg_addr_value_bits =
-        SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT | SENSOR_I2C_FREQ_400,
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |
                           SENSOR_HW_SIGNAL_HSYNC_P,
     .environment_mode = SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
@@ -747,73 +860,29 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
                     SENSOR_IMAGE_EFFECT_YELLOW | SENSOR_IMAGE_EFFECT_NEGATIVE |
                     SENSOR_IMAGE_EFFECT_CANVAS,
 
-    /* bit[0:7]: count of step in brightness, contrast, sharpness, saturation
-    * bit[8:31] reseved
-    */
     .wb_mode = 0,
     .step_count = 7,
-    .reset_pulse_level =
-        SENSOR_LOW_PULSE_RESET, /*here should be care when bring up*/
+    .reset_pulse_level = SENSOR_LOW_PULSE_RESET,
     .reset_pulse_width = 50,
-    .power_down_level =
-        SENSOR_LOW_LEVEL_PWDN, /*here should be care when bring up*/
+    .power_down_level = SENSOR_LOW_LEVEL_PWDN,
     .identify_count = 1,
-    .identify_code = {{
-                          .reg_addr = imx258_PID_ADDR,
-                          .reg_value = imx258_PID_VALUE,
-                      },
-                      {
-                          .reg_addr = imx258_VER_ADDR,
-                          .reg_value = imx258_VER_VALUE,
-                      }},
-    .avdd_val = SENSOR_AVDD_2800MV,
-    .iovdd_val = SENSOR_AVDD_1800MV,
-    .dvdd_val = SENSOR_AVDD_1200MV,
-    .source_width_max = SNAPSHOT_WIDTH,   /* max width of source image */
-    .source_height_max = SNAPSHOT_HEIGHT, /* max height of source image */
+    .identify_code = {{.reg_addr = imx258_PID_ADDR, .reg_value = imx258_PID_VALUE},
+                      {.reg_addr = imx258_VER_ADDR, .reg_value = imx258_VER_VALUE}},
+
+    .source_width_max = SNAPSHOT_WIDTH,
+    .source_height_max = SNAPSHOT_HEIGHT,
     .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-#ifndef CAMERA_SENSOR_BACK_I2C_SWITCH
-    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
-#else
-    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
-#endif
-#else
-    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
-#endif
+
     .resolution_tab_info_ptr = s_imx258_resolution_tab_raw,
-    .ioctl_func_tab_ptr = &s_imx258_ioctl_func_tab,
+    .sns_ops = &s_imx258_ops_tab,
     .raw_info_ptr = &s_imx258_mipi_raw_info_ptr,
+    .module_info_tab = s_imx258_module_info_tab,
+    .module_info_tab_size = ARRAY_SIZE(s_imx258_module_info_tab),
+    .video_tab_info_ptr = s_imx258_video_info,
     .ext_info_ptr = NULL,
 
-    .preview_skip_num = 1,
-    .capture_skip_num = 1,
-    .flash_capture_skip_num = 6,
-    .mipi_cap_skip_num = 0,
-    .preview_deci_num = 0,
-    .video_preview_deci_num = 0,
-
-    .threshold_eb = 0,
-    .threshold_mode = 0,
-    .threshold_start = 0,
-    .threshold_end = 0,
-    .i2c_dev_handler = 0,
-
-    .sensor_interface =
-        {
-            .type = SENSOR_INTERFACE_TYPE_CSI2,
-            .bus_width = 4,    /*lane number or bit-width*/
-            .pixel_width = 10, /*bits per pixel*/
-            .is_loose = 0,     /*0 packet, 1 half word per pixel*/
-        },
-
-    .video_tab_info_ptr = NULL,
-    .change_setting_skip_num = 1,
-    .horizontal_view_angle =
-        35, // fov=78.4/2  min_focal_length=phical_dimension/(2*tan(fov/2))
-    .vertical_view_angle = 35,
-    .sensor_version_info = (cmr_s8 *)"imx258v1",
-    //	.pixel_size = 1120, //1.12um phical_dimension=pixel_size*max_width or
-    // max_height
+    .sensor_version_info = (cmr_s8 *)"imx258v1"
 };
+
+#endif
