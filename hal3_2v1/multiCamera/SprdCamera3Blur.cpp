@@ -693,14 +693,8 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     int32_t img_size = 0;
     if (blur_camera_id == MODE_BLUR_FRONT) {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
-        img_size = FRONT_SENSOR_ORIG_WIDTH * FRONT_SENSOR_ORIG_HEIGHT * 3 +
-                   (BLUR_REFOCUS_PARAM_NUM * 4) + sizeof(camera3_jpeg_blob_t) +
-                   1024;
     } else {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
-        img_size = BACK_SENSOR_ORIG_WIDTH * BACK_SENSOR_ORIG_HEIGHT * 3 +
-                   (BLUR_REFOCUS_PARAM_NUM * 4) + sizeof(camera3_jpeg_blob_t) +
-                   1024;
     }
     camera_id = m_VirtualCamera.id;
     HAL_LOGI("E, camera_id = %d", camera_id);
@@ -712,6 +706,8 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
         return rc;
     }
     CameraMetadata metadata = mStaticMetadata;
+    img_size = SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
+               (BLUR_REFOCUS_PARAM_NUM * 4) + 1024;
     SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size = img_size;
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
@@ -1534,6 +1530,10 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
  *==========================================================================*/
 void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
     CameraMetadata metaSettings, int type) {
+    int32_t origW = SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                        .sensor_InfoInfo.pixer_array_size[0];
+    int32_t origH = SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                        .sensor_InfoInfo.pixer_array_size[1];
     // always get f_num in request
     if (type == 0) {
         if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
@@ -1581,8 +1581,8 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             if (left != 0 && top != 0 && right != 0 && bottom != 0) {
                 x = left + (right - left) / 2;
                 y = top + (bottom - top) / 2;
-                x = x * mPreviewInitParams.width / BACK_SENSOR_ORIG_WIDTH;
-                y = y * mPreviewInitParams.height / BACK_SENSOR_ORIG_HEIGHT;
+                x = x * mPreviewInitParams.width / origW;
+                y = y * mPreviewInitParams.height / origH;
                 if (x != mPreviewWeightParams.sel_x ||
                     y != mPreviewWeightParams.sel_y) {
                     mPreviewWeightParams.sel_x = x;
@@ -1637,14 +1637,14 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                                .data.i32[k * 4 + 3];
 
             circle = (mFaceInfo[2] - mFaceInfo[0]) * 4 / 5 *
-                     mPreviewInitParams.width / FRONT_SENSOR_ORIG_WIDTH;
+                     mPreviewInitParams.width / origW;
             if (mPreviewWeightParams.circle_size != circle) {
                 mPreviewWeightParams.circle_size = circle;
                 mPreviewWeightParams.update = true;
             }
 
             sel_x = (mFaceInfo[0] + mFaceInfo[2]) / 2 *
-                        mPreviewInitParams.width / FRONT_SENSOR_ORIG_WIDTH +
+                        mPreviewInitParams.width / origW +
                     circle / 8;
             if (mPreviewWeightParams.sel_x != sel_x) {
                 mPreviewWeightParams.sel_x = sel_x;
@@ -1652,7 +1652,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             }
 
             sel_y = (mFaceInfo[1] + mFaceInfo[3]) / 2 *
-                    mPreviewInitParams.height / FRONT_SENSOR_ORIG_HEIGHT;
+                    mPreviewInitParams.height / origH;
             if (mPreviewWeightParams.sel_y != sel_y) {
                 mPreviewWeightParams.sel_y = sel_y;
                 mPreviewWeightParams.update = true;
