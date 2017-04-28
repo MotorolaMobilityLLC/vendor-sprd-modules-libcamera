@@ -830,6 +830,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_int ret = -ISP_ERROR;
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+
 	switch (cxt->pdaf_support) {
 	case SENSOR_PDAF_TYPE2_ENABLE:
 		ret = pdafaltek_adpt_type2_process(cxt, in, out);

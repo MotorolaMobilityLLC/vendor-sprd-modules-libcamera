@@ -1092,8 +1092,9 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	}
 	ret = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
 	if (ret) {
-		ISP_LOGE("failed to pdaf initialize");
-		goto exit;
+		cxt->pdaf_cxt.pdaf_support = 0;
+		ISP_LOGE("failed to pdaf init set to non-support");
+		//goto exit;
 	}
 
 	memset(&af_input, 0x00, sizeof(af_input));
