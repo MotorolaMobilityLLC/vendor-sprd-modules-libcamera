@@ -183,7 +183,13 @@ typedef struct _af_tuning_param {
 	cmr_u8 soft_landing_dly;
 	cmr_u8 soft_landing_step;
 	cmr_u8 vcm_hysteresis;
-	cmr_u8 dummy[98];	// for 4-bytes alignment issue
+	cmr_u32 area_thr;
+	cmr_u32 diff_area_thr;
+	cmr_u32 diff_cx_thr;
+	cmr_u32 diff_cy_thr;
+	cmr_u16 converge_cnt_thr;
+	cmr_u8 face_is_enable;
+	cmr_u8 dummy[79];	// for 4-bytes alignment issue,101-22
 } af_tuning_param_t;
 
 #pragma pack(pop)
@@ -242,12 +248,14 @@ typedef struct _prime_face_base_info {
 	cmr_u32 ex;
 	cmr_u32 ey;
 	cmr_u32 area;
+	cmr_u32 area_thr;
 	cmr_u32 diff_area_thr;
 	cmr_u32 diff_cx_thr;
 	cmr_u32 diff_cy_thr;
 	cmr_u16 converge_cnt_thr;
 	cmr_u16 converge_cnt;
 	cmr_u16 diff_trigger;
+	cmr_u8 face_is_enable;
 } prime_face_base_info_t;
 
 typedef struct _focus_stat {
