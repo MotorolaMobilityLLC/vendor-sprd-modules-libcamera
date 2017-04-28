@@ -22,7 +22,7 @@
 #include <utils/Log.h>
 #endif
 
-#include "sprd_isp_r6p10.h"
+#include "sprd_isp_r6p10v2.h"
 #include "isp_type.h"
 #include "isp_app.h"
 #include "sensor_raw.h"

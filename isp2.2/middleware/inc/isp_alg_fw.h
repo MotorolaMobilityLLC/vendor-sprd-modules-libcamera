@@ -18,7 +18,7 @@
 
 #include "cmr_type.h"
 #include "isp_pm.h"
-#include "sprd_isp_r6p10.h"
+#include "sprd_isp_r6p10v2.h"
 
 struct commn_info {
 	cmr_s32 isp_mode;
