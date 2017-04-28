@@ -3566,6 +3566,8 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 		goto exit;
 	}
 
+	memset(&master_dat, 0x00, sizeof(struct ae_match_runtime_data_t));
+	memset(&slave_dat, 0x00, sizeof(struct ae_match_runtime_data_t));
 	exp_gain->dummy = 0;
 	line_time = cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 	line_time_slv = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.line_time;
