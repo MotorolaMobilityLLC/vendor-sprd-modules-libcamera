@@ -34,16 +34,8 @@ struct sprd_pdaf_context {
 	cmr_u32 token_id;
 	cmr_u8 pd_enable;
 	cmr_handle caller_handle;
-	cmr_handle altek_lib_handle;
-	cmr_handle extract_lib_handle;
 	isp_pdaf_cb pdaf_set_cb;
 	 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
-	void *pd_left;
-	void *pd_right;
-	alPD_RECT roi;
-	PDInReg pd_reg_in;
-	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
-	cmr_u8 pdotp_pack_data[PD_OTP_PACK_SIZE];
 	void *caller;
 	PD_GlobalSetting pd_gobal_setting;
 	struct pdaf_ppi_info ppi_info;
@@ -59,11 +51,7 @@ struct sprd_pdaf_context {
 	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 };
 
-//testcode
-#define ROI_X 1048
-#define ROI_Y 792
-#define ROI_Width 2048
-#define ROI_Height 1536
+
 #define PDAF_PATTERN_COUNT	 8
 
 struct isp_dev_pdaf_info pdafTestCase[] = {
@@ -125,11 +113,6 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 	cmr_u32 data_left[128] = { 0 }, data_right[128] = {
 	0};
 
-#if 0
-	//store_info_ptr->bypass          = ISP_ZERO;
-	if (pdaf_info_ptr->bypass)
-		return rtn;
-#else
 	pdaf_info_ptr->bypass = 0;
 	pdafTestCase_ptr->phase_left_addr = (cmr_u32) & phase_left[0];
 	pdafTestCase_ptr->phase_right_addr = (cmr_u32) & phase_right[0];
@@ -137,7 +120,6 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 	pdafTestCase_ptr->data_ptr_left[1] = 0;
 	pdafTestCase_ptr->data_ptr_right[0] = (cmr_u32) & data_right[0];
 	pdafTestCase_ptr->data_ptr_right[1] = 0;
-#endif
 
 	pdaf_info_ptr->corrector_bypass = pdafTestCase_ptr->corrector_bypass;
 	pdaf_info_ptr->phase_map_corr_en = pdafTestCase_ptr->phase_map_corr_en;
@@ -262,6 +244,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pdaf_set_ppi_info = in_p->pdaf_set_ppi_info;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
+	/*TBD dSensorID 0:for imx258 1: for OV13850 */
+	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;	/*TBD get from sensor id */
 
 	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
 	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;
@@ -275,41 +259,33 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
 	}
 
-	cxt->roi_info.win.start_x = 1048;
-	cxt->roi_info.win.start_y = 792;
-	cxt->roi_info.win.end_x = 1048+2048 ;
-	cxt->roi_info.win.end_y = 792+1536;
+	if (cxt->pd_gobal_setting.dSensorMode) {
+		cxt->roi_info.win.start_x = ROI_X_1;
+		cxt->roi_info.win.start_y = ROI_Y_1;
+		cxt->roi_info.win.end_x = ROI_X_1 + ROI_Width ;
+		cxt->roi_info.win.end_y = ROI_Y_1 + ROI_Height;
+
+	} else {
+		cxt->roi_info.win.start_x = ROI_X_0;
+		cxt->roi_info.win.start_y = ROI_Y_0;
+		cxt->roi_info.win.end_x = ROI_X_0 + ROI_Width ;
+		cxt->roi_info.win.end_y = ROI_Y_0 + ROI_Height;
+	}
 	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x)/(8 << cxt->ppi_info.block_size.width);
 	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y)/(8 << cxt->ppi_info.block_size.height);
 	cmr_u32 phasepixel_total_num = block_num_x*block_num_y * in_p->pd_info->pd_pos_size / 2;
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
-
-	cxt->pd_left = malloc(pd_in_size);
-	if (NULL == cxt->pd_left) {
-		ISP_LOGE("fail to malloc");
-		ret = -ISP_ALLOC_ERROR;
-		goto exit;
-	}
-	cxt->pd_right = malloc(pd_in_size);
-	if (NULL == cxt->pd_right) {
-		ISP_LOGE("fail to malloc");
-		ret = -ISP_ALLOC_ERROR;
-		goto exit;
-	}
-
-	cmr_bzero(cxt->pd_left, pd_in_size);
-	cmr_bzero(cxt->pd_right, pd_in_size);
 
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
 	cxt->pd_gobal_setting.dBeginX = in_p->pd_info->pd_offset_x;
 	cxt->pd_gobal_setting.dBeginY = in_p->pd_info->pd_offset_y;
 
-	/*TBD dSensorID 0:for imx258 1: for OV13850 */
-	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id; */
-	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;	/*TBD get from sensor id */
-/*TBD init sharkle isp*/
-	pdaf_setup(cxt);
+	ret = pdaf_setup(cxt);
+	if (ret) {
+		ISP_LOGE("fail to do pdaf_setup %ld", ret);
+		goto exit;
+	}
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
@@ -324,14 +300,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 exit:
 	if (cxt) {
-		if (cxt->pd_right) {
-			free(cxt->pd_right);
-			cxt->pd_right = NULL;
-		}
-		if (cxt->pd_left) {
-			free(cxt->pd_left);
-			cxt->pd_left = NULL;
-		}
 		free(cxt);
 		cxt = NULL;
 	}
@@ -348,20 +316,11 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 	if (cxt) {
 		/* deinit lib */
 		ret = (cmr_s32) PD_Uninit();
-
-		if (cxt->pd_right) {
-			free(cxt->pd_right);
-			cxt->pd_right = NULL;
-		}
-		if (cxt->pd_left) {
-			free(cxt->pd_left);
-			cxt->pd_left = NULL;
-		}
 		cmr_bzero(cxt, sizeof(*cxt));
 		free(cxt);
 		cxt = NULL;
 	}
-	ISP_LOGI("done");
+	ISP_LOGI("done,ret = %d", ret);
 
 	return ret;
 }
@@ -372,13 +331,15 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	struct pdaf_ctrl_callback_in callback_in;
-	alGE_RECT pdroi;
-	cmr_u16 image_width;
-	cmr_u16 image_height;
-	char value[PROPERTY_VALUE_MAX];
+	struct pd_result pd_calc_result;
+	cmr_u16 image_width = 0;
+	cmr_u16 image_height = 0;
+	cmr_s32 dRectX = 0;
+	cmr_s32 dRectY = 0;
+	cmr_s32 dRectW = 0;
+	cmr_s32 dRectH = 0;
 
 	UNUSED(out);
-	bzero(&pdroi, sizeof(pdroi));
 	if (!in) {
 		ISP_LOGE("fail to init param %p!!!", in);
 		ret = ISP_PARAM_NULL;
@@ -387,29 +348,23 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	cmr_bzero(&callback_in, sizeof(callback_in));
-
-#if 0
-	if (!cxt->pd_enable || !cxt->pd_open) {
-		ISP_LOGI("pd enable %d, open %d", cxt->pd_enable, cxt->pd_open);
-		ret = ISP_SUCCESS;
-		goto exit;
-	}
-#endif
+	cmr_bzero(&pd_calc_result, sizeof(pd_calc_result));
 	cxt->is_busy = 1;
-
-	cxt->pd_reg_in.dcurrentVCM = proc_in->dcurrentVCM;
-	cxt->pd_reg_in.dBv = (float)proc_in->dBv / 1000.0;
-	pdroi.m_wLeft = 0;
-	pdroi.m_wTop = 0;
-
-	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);	//TODO
-	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + 0x25800);	//TODO
+	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);
+	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
 	ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
-	cmr_s32 dRectX = ROI_X;
-	cmr_s32 dRectY = ROI_Y;
-	cmr_s32 dRectW = ROI_Width;
-	cmr_s32 dRectH = ROI_Height;
-	struct pd_result pd_calc_result;
+
+	if (cxt->pd_gobal_setting.dSensorMode) {
+		dRectX = ROI_X_1;
+		dRectY = ROI_Y_1;
+		dRectW = ROI_Width;
+		dRectH = ROI_Height;
+	} else {
+		dRectX = ROI_X_0;
+		dRectY = ROI_Y_0;
+		dRectW = ROI_Width;
+		dRectH = ROI_Height;
+	}
 
 	for (cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++) {
 		ret = PD_DoType2(pInPhaseBuf_left, pInPhaseBuf_right, dRectX, dRectY, dRectW, dRectH, area_index);
@@ -418,15 +373,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			goto exit;
 		}
 	}
-
-	cxt->report_data.token_id = cxt->token_id;
-	cxt->report_data.frame_id = cxt->frame_id;
-	cxt->report_data.enable = cxt->pd_enable;
-
-	callback_in.proc_out.pd_report_data = cxt->report_data;
-	/*call back to haf lib */
-
-	/*TBD get clac result from so & send to af */
 	ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, 4);
 	if (ret) {
 		ISP_LOGE("fail to do get pd_result.");
@@ -434,7 +380,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
-	cxt->frame_id++;	//= proc_in->pd_raw.frame_id;
+	cxt->frame_id++;
 exit:
 	cxt->is_busy = 0;
 	return ret;
@@ -452,6 +398,16 @@ static cmr_s32 pdafsprd_adpt_set_param(cmr_handle adpt_handle, struct pdaf_ctrl_
 	return 0;
 }
 
+static cmr_int pdafsprd_adpt_get_busy(cmr_handle adpt_handle, struct pdaf_ctrl_param_out *out)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+
+	out->is_busy = cxt->is_busy;
+	return 0;
+}
 
 static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
@@ -465,6 +421,9 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 	switch (cmd) {
 	case PDAF_CTRL_CMD_SET_PARAM:
 		ret = pdafsprd_adpt_set_param(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_GET_BUSY:
+		ret = pdafsprd_adpt_get_busy(adpt_handle, out);
 		break;
 	default:
 		ISP_LOGE("fail to case cmd = %d", cmd);
