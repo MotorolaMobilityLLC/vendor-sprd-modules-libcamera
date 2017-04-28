@@ -233,7 +233,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		goto exit;
 	}
 
-	cmr_bzero(cxt, sizeof(*cxt));
+	memset(cxt, 0, sizeof(*cxt));
 	cxt->caller = in_p->caller;
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->pdaf_set_pdinfo_to_af = in_p->pdaf_set_pdinfo_to_af;
@@ -316,7 +316,7 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 	if (cxt) {
 		/* deinit lib */
 		ret = (cmr_s32) PD_Uninit();
-		cmr_bzero(cxt, sizeof(*cxt));
+		memset(cxt, 0x00, sizeof(*cxt));
 		free(cxt);
 		cxt = NULL;
 	}
@@ -347,8 +347,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	cmr_bzero(&callback_in, sizeof(callback_in));
-	cmr_bzero(&pd_calc_result, sizeof(pd_calc_result));
+	memset(&callback_in, 0, sizeof(callback_in));
+	memset(&pd_calc_result, 0, sizeof(pd_calc_result));
 	cxt->is_busy = 1;
 	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);
 	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);

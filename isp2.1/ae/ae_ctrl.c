@@ -507,7 +507,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae)
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	cmr_bzero(cxt_ptr, sizeof(*cxt_ptr));
+	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
 
 	input_ptr->isp_ops.isp_handler = (cmr_handle) cxt_ptr;
 	cxt_ptr->caller_handle = input_ptr->caller_handle;

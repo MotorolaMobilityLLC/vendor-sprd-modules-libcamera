@@ -110,7 +110,7 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handl
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	cmr_bzero(cxt_ptr, sizeof(*cxt_ptr));
+	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
 
 	rtn = awbctrl_init_adpt(cxt_ptr, input_ptr, &result);
 	if (rtn) {

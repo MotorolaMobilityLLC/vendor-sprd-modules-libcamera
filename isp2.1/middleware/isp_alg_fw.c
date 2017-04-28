@@ -2214,7 +2214,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	cmr_bzero(cxt, sizeof(*cxt));
+	memset(cxt, 0, sizeof(*cxt));
 
 	rtn = isp_pm_sw_init(cxt, input_ptr->init_param);
 
@@ -2235,7 +2235,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	cmr_bzero(binning_info, max_binning_num * 3 * sizeof(cmr_u32));
+	memset(binning_info, 0, max_binning_num * 3 * sizeof(cmr_u32));
 	cxt->binning_stats.r_info = binning_info;
 	cxt->binning_stats.g_info = binning_info + max_binning_num;
 	cxt->binning_stats.b_info = cxt->binning_stats.g_info + max_binning_num;
