@@ -2331,7 +2331,9 @@ static cmr_s32 _set_sensor_sensitivity(struct ae_ctrl_cxt *cxt, cmr_handle param
 static cmr_s32 _set_pause(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 ret = AE_SUCCESS;
-
+	if (0 == cxt->cur_status.settings.pause_cnt) {
+			cxt->bakup_ae_lock_status = cxt->cur_status.settings.lock_ae;
+	}
 	cxt->cur_status.settings.lock_ae = AE_STATE_PAUSE;
 	cxt->cur_status.settings.pause_cnt++;
 	return ret;
@@ -3368,12 +3370,10 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
-
 	if (1 == cxt->tuning_param_enable[work_info->mode])
 		mode = work_info->mode;
 	else
 		mode = AE_WORK_MODE_COMMON;
-
 	exposure_time2line(&(cxt->tuning_param[mode]), cxt->cur_status.line_time,
 		cxt->tuning_param[work_info->mode].ae_tbl_exp_mode);
 
@@ -3754,9 +3754,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		// current_result->pflat->result_flat.degree,
 		// current_result->pflat->result_flat.tar_offset);
 		// wait-pause function
-		if (AE_STATE_WAIT_PAUSE == cxt->cur_status.settings.lock_ae && 1 == cxt->cur_result.wts.stable) {
-			cxt->cur_status.settings.lock_ae = AE_STATE_PAUSE;
-		}
 		rtn = _ae_post_process(cxt);
 
 		rt.expline = cxt->cur_result.wts.cur_exp_line;
@@ -3790,24 +3787,22 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 /***********************************************************/
 /******bethany lock ae*******
 *****touch have 3 states,0:touch before/release;1:touch doing; 2: toch done and AE stable*****/
-	ISP_LOGV("TCCTL_tcAE_status and ae_stable is %d,%d", current_result->tcAE_status, current_result->wts.stable);
+	ISP_LOGV("TCAECTL_status and ae_stable is %d,%d", current_result->tcAE_status, current_result->wts.stable);
 	if (1 == current_result->tcAE_status && 1 == current_result->wts.stable) {
-		ISP_LOGV("TC_start lock ae");
-		//ISP_LOGV("TC_pause num is %d",cxt->cur_status.settings.pause_cnt);
+		ISP_LOGV("TCAE_start lock ae and pause cnt is %d\n",cxt->cur_status.settings.pause_cnt);
 		rtn = _set_pause(cxt);
-		ISP_LOGV("touch ae stable cb");
+		//ISP_LOGV("touch ae stable cb");
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);
 		current_result->tcAE_status = 2;
 	}
 	cxt->cur_status.to_ae_state = current_result->tcAE_status;
-	ISP_LOGV("TCCTL_to_AE_state is %d", cxt->cur_status.to_ae_state);
-	ISP_LOGV("TCCTL_rls_cond is %d,%d", current_result->tcAE_status, current_result->tcRls_flag);
+	ISP_LOGV("TCAECTL_unlock is (%d,%d)\n", current_result->tcAE_status, current_result->tcRls_flag);
 	if (0 == current_result->tcAE_status && 1 == current_result->tcRls_flag) {
 		rtn = _set_restore_cnt(cxt);
-		ISP_LOGV("TC_start release lock ae");
+		ISP_LOGV("TCAE_start release lock ae");
 		current_result->tcRls_flag = 0;
 	}
-	ISP_LOGV("TCCTL_rls_ae_lock is %d", cxt->cur_status.settings.lock_ae);
+	ISP_LOGV("TCAECTL_rls_ae_lock is %d", cxt->cur_status.settings.lock_ae);
 
 /***********************************************************/
 /* send STAB notify to HAL */
@@ -3969,20 +3964,8 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		}
 		break;
 
-	case AE_SET_WAIT_PAUSE:
-		if (0 == cxt->cur_status.settings.pause_cnt) {
-			cxt->bakup_ae_lock_status = cxt->cur_status.settings.lock_ae;
-		}
-		cxt->cur_status.settings.lock_ae = AE_STATE_WAIT_PAUSE;
-		cxt->cur_status.settings.pause_cnt++;
-		break;
-
 	case AE_SET_PAUSE:
 		rtn = _set_pause(cxt);
-		break;
-
-	case AE_SET_RESTORE_CNT:
-		rtn = _set_restore_cnt(cxt);
 		break;
 
 	case AE_SET_RESTORE:
