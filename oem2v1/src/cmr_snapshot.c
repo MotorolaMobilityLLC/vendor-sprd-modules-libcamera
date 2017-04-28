@@ -1498,20 +1498,20 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     strcat(file_name, "_");
     strcat(file_name, "afpos");
     strcat(file_name, "_");
-    sprintf(tmp_str, "%ld", pos);
+    sprintf(tmp_str, "%d", pos);
     strcat(file_name, tmp_str);
 
     memset(tmp_str, 0, sizeof(tmp_str));
     strcat(file_name, "_");
     strcat(file_name, "ct");
     strcat(file_name, "_");
-    sprintf(tmp_str, "%ld", isp_cur_ct);
+    sprintf(tmp_str, "%d", isp_cur_ct);
     strcat(file_name, tmp_str);
     memset(tmp_str, 0, sizeof(tmp_str));
     strcat(file_name, "_");
     strcat(file_name, "bv");
     strcat(file_name, "_");
-    sprintf(tmp_str, "%ld", isp_cur_bv);
+    sprintf(tmp_str, "%d", isp_cur_bv);
     strcat(file_name, tmp_str);
 
     strcat(file_name, ".mipi_raw");
