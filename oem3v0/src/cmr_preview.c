@@ -3545,6 +3545,14 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
+    if (0 /*prev_cxt->cap_zsl_frm_cnt < 50 && (prev_cxt->cap_zsl_frm_cnt%5) == 0*/) {
+        camera_save_yuv_to_file(
+            FORM_DUMPINDEX(ZSL_OUT_DATA, prev_cxt->cap_zsl_frm_cnt, 0),
+            IMG_DATA_TYPE_YUV420, prev_cxt->actual_pic_size.width,
+            prev_cxt->actual_pic_size.height,
+            (struct img_addr *)&data->yaddr_vir);
+    }
+
     if (IMG_ANGLE_0 == prev_cxt->prev_param.cap_rot) {
         ret = prev_construct_zsl_frame(handle, camera_id, data, &frame_type);
         if (ret) {
@@ -12772,6 +12780,10 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id) {
              (height == 360 && width == 640))) {
             aligned_type = CAMERA_MEM_ALIGNED;
         }
+    }
+
+    if (prev_cxt->prev_param.refocus_mode != 0) {
+        aligned_type = CAMERA_MEM_NO_ALIGNED;
     }
 
     CMR_LOGI("aligned_type %d", aligned_type);

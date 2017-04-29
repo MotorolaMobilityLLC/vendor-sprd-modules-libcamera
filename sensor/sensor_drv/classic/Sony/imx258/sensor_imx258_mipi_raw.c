@@ -23,6 +23,8 @@
  *============================================================================*/
 static struct hdr_info_t s_hdr_info;
 static uint32_t s_current_default_frame_length;
+static uint32_t s_current_frame_length = 0;
+static uint32_t s_current_default_line_time = 0;
 struct sensor_ev_info_t s_sensor_ev_info;
 
 static uint32_t s_imx258_sensor_close_flag = 0;
@@ -75,6 +77,15 @@ static uint32_t imx258_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param) {
 static uint32_t imx258_get_default_frame_length(SENSOR_HW_HANDLE handle,
                                                 uint32_t mode) {
     return s_imx258_resolution_trim_tab[mode].frame_line;
+}
+/*==============================================================================
+ * Description:
+ * get default line time
+ *
+ *============================================================================*/
+static uint32_t imx258_get_default_line_ime(SENSOR_HW_HANDLE handle,
+                                            uint32_t mode) {
+    return s_imx258_resolution_trim_tab[mode].line_time;
 }
 
 /*==============================================================================
@@ -242,8 +253,7 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx258_power_on(SENSOR_HW_HANDLE handle,
-                                     uint32_t power_on) {
+static uint32_t imx258_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
     SENSOR_AVDD_VAL_E dvdd_val = g_imx258_mipi_raw_info.dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = g_imx258_mipi_raw_info.avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = g_imx258_mipi_raw_info.iovdd_val;
@@ -261,13 +271,13 @@ static uint32_t imx258_power_on(SENSOR_HW_HANDLE handle,
         Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
         usleep(1 * 1000);
         Sensor_SetResetLevel(!reset_level);
-        //Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
+        // Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
     } else {
         Sensor_SetResetLevel(reset_level);
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
-        //Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
+        // Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
     }
     SENSOR_LOGI("(1:on, 0:off): %d", power_on);
     return SENSOR_SUCCESS;
@@ -328,8 +338,7 @@ static uint32_t imx258_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx258_identify(SENSOR_HW_HANDLE handle,
-                                     uint32_t param) {
+static uint32_t imx258_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
     uint8_t pid_value = 0x00;
     uint8_t ver_value = 0x00;
     uint32_t ret_value = SENSOR_FAIL;
@@ -346,7 +355,7 @@ static uint32_t imx258_identify(SENSOR_HW_HANDLE handle,
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is imx258 sensor");
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
-            //vcm_LC898214_init(handle);
+// vcm_LC898214_init(handle);
 //#else
 //			bu64297gwz_init(handle);
 #endif
@@ -378,7 +387,7 @@ static unsigned long imx258_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
  * you can change this function if it's necessary
  *============================================================================*/
 static uint32_t imx258_before_snapshot(SENSOR_HW_HANDLE handle,
-                                            uint32_t param) {
+                                       uint32_t param) {
     uint32_t cap_shutter = 0;
     uint32_t prv_shutter = 0;
     float gain = 0;
@@ -468,7 +477,7 @@ static unsigned long imx258_write_exposure(SENSOR_HW_HANDLE handle,
 }
 
 static uint32_t imx258_ex_write_exposure(SENSOR_HW_HANDLE handle,
-                                              unsigned long param) {
+                                         unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;
@@ -525,7 +534,7 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param) {
  * you can change this function if it's necessary
  *============================================================================*/
 static uint32_t imx258_write_gain_value(SENSOR_HW_HANDLE handle,
-                                             uint32_t param) {
+                                        uint32_t param) {
     unsigned long ret_value = SENSOR_SUCCESS;
     float real_gain = 0;
 
@@ -642,24 +651,50 @@ static unsigned long imx258_ext_func(SENSOR_HW_HANDLE handle,
     return rtn;
 }
 
+unsigned long imx258_SetMaster_FrameSync(SENSOR_HW_HANDLE handle,
+                                         unsigned long param) {
+    Sensor_WriteReg(0x5c0c, 0x01); // hi-active 0: low-active
+    Sensor_WriteReg(0x5c0d, 0x03); // puls width 2000 cycle
+
+    Sensor_WriteReg(0x5a5c, 0x01); // puls width 2000 cycle
+    Sensor_WriteReg(0x5a5d, 0x01); // puls width 2000 cycle
+
+    //  Sensor_WriteReg(0x5a90, 0x04);//puls width 2000 cycle
+    //  Sensor_WriteReg(0x5a92, 0x04);//puls width 2000 cycle
+    //  Sensor_WriteReg(0x5a93, 0x40);//puls width 2000 cycle
+
+    // pin settings: FSTPOBE v-sync output
+    Sensor_WriteReg(0x4635, 0x00); // XVS IO Control
+    Sensor_WriteReg(
+        0x463b,
+        0xff); // FFh: XVS(48pin)’s signal is selected by TEST_FSTRB[7:0]
+    Sensor_WriteReg(0x5a5b, 0x0f); // TEST_FSTRB
+
+    Sensor_WriteReg(0x4636, 0x00); // XVS IO Control
+    Sensor_WriteReg(
+        0x463a,
+        0xff); // FFh: XVS(48pin)’s signal is selected by TEST_FSTRB[7:0]
+    Sensor_WriteReg(0x5a5b, 0x0f); // TEST_FSTRB
+    return 0;
+}
 /*==============================================================================
  * Description:
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx258_stream_on(SENSOR_HW_HANDLE handle,
-                                      uint32_t param) {
+static uint32_t imx258_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
 #if 1
     char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
-        SENSOR_LOGI("SENSOR_imx230: enable test mode");
+        SENSOR_LOGI("SENSOR_imx258: enable test mode");
         Sensor_WriteReg(0x0600, 0x00);
         Sensor_WriteReg(0x0601, 0x02);
     }
 #endif
     SENSOR_LOGI("E");
     UNUSED(param);
+    imx258_SetMaster_FrameSync(handle, param);
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifndef CAMERA_SENSOR_BACK_I2C_SWITCH
     Sensor_WriteReg(0x0101, 0x03);
@@ -677,8 +712,7 @@ static uint32_t imx258_stream_on(SENSOR_HW_HANDLE handle,
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx258_stream_off(SENSOR_HW_HANDLE handle,
-                                       uint32_t param) {
+static uint32_t imx258_stream_off(SENSOR_HW_HANDLE handle, uint32_t param) {
     SENSOR_LOGI("E");
     UNUSED(param);
     unsigned char value;
@@ -700,11 +734,10 @@ static uint32_t imx258_stream_off(SENSOR_HW_HANDLE handle,
     return 0;
 }
 
-static uint32_t imx258_write_af(SENSOR_HW_HANDLE handle,
-                                     uint32_t param) {
+static uint32_t imx258_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
-    //return vcm_LC898214_set_position(handle, param);
-	return 0;
+    // return vcm_LC898214_set_position(handle, param);
+    return 0;
 #else
     return 0; // bu64297gwz_write_af(handle, param);
 #endif
@@ -734,10 +767,11 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->preview_skip_num = g_imx258_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_imx258_mipi_raw_info.capture_skip_num;
     ex_info->name = (cmr_s8 *)g_imx258_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_imx258_mipi_raw_info.sensor_version_info;
+    ex_info->sensor_version_info =
+        (cmr_s8 *)g_imx258_mipi_raw_info.sensor_version_info;
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #if 1 // def CONFIG_AF_VCM_DW9800W
-    //vcm_LC898214_get_pose_dis(handle, &up, &down);
+// vcm_LC898214_get_pose_dis(handle, &up, &down);
 //	vcm_dw9800_get_pose_dis(handle, &up, &down);
 #else
     bu64297gwz_get_pose_dis(handle, &up, &down);
@@ -797,28 +831,26 @@ static uint32_t imx258_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
     return rtn;
 }
 
-static const cmr_u16 imx258_pd_is_right[] = {0,0,1,1,1,1,0,0};
+static const cmr_u16 imx258_pd_is_right[] = {0, 0, 1, 1, 1, 1, 0, 0};
 
-static const cmr_u16 imx258_pd_row[] = {5,5,8,8,21,21,24,24};
+static const cmr_u16 imx258_pd_row[] = {5, 5, 8, 8, 21, 21, 24, 24};
 
-static const cmr_u16 imx258_pd_col[] = {2,18,1,17,10,26,9,25};
+static const cmr_u16 imx258_pd_col[] = {2, 18, 1, 17, 10, 26, 9, 25};
 static const struct pd_pos_info _imx258_pd_pos_l[] = {
     {2, 5}, {18, 5}, {9, 24}, {25, 24},
 };
 
 static const struct pd_pos_info _imx258_pd_pos_r[] = {
-	{1, 8}, {17, 8}, {10, 21}, {26, 21},
+    {1, 8}, {17, 8}, {10, 21}, {26, 21},
 };
 
-static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
-                                         uint32_t *param) {
+static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle, uint32_t *param) {
     uint32_t rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
     cmr_u16 i = 0;
     cmr_u16 pd_pos_row_size = 0;
     cmr_u16 pd_pos_col_size = 0;
     cmr_u16 pd_pos_is_right_size = 0;
-
 
     /*TODO*/
     if (param == NULL) {
@@ -829,10 +861,11 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pd_pos_is_right_size = NUMBER_OF_ARRAY(imx258_pd_is_right);
     pd_pos_row_size = NUMBER_OF_ARRAY(imx258_pd_row);
     pd_pos_col_size = NUMBER_OF_ARRAY(imx258_pd_col);
-    if ((pd_pos_row_size != pd_pos_col_size) || (pd_pos_row_size != pd_pos_is_right_size) ||
-	(pd_pos_is_right_size != pd_pos_col_size)){
-        SENSOR_PRINT_ERR(
-            "imx258 pd_pos_row size,pd_pos_row size and pd_pos_is_right size are not match");
+    if ((pd_pos_row_size != pd_pos_col_size) ||
+        (pd_pos_row_size != pd_pos_is_right_size) ||
+        (pd_pos_is_right_size != pd_pos_col_size)) {
+        SENSOR_PRINT_ERR("imx258 pd_pos_row size,pd_pos_row size and "
+                         "pd_pos_is_right size are not match");
         return -1;
     }
 
@@ -852,8 +885,7 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_imx258_pd_pos_l);
 
     if (pd_pos_r_size != pd_pos_l_size) {
-        SENSOR_PRINT_ERR(
-            "imx258_pd_pos_r size not match imx258_pd_pos_l");
+        SENSOR_PRINT_ERR("imx258_pd_pos_r size not match imx258_pd_pos_l");
         return -1;
     }
     pdaf_info->pd_pitch_x = 96;
@@ -871,11 +903,13 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     if (DATA_BYTE2 == pdaf_info->type2_info.data_format) {
         pdaf_info->type2_info.width = 260 + 60;
         pdaf_info->type2_info.height = 96;
-        pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 2;
+        pdaf_info->type2_info.pd_size =
+            pdaf_info->type2_info.width * pdaf_info->type2_info.height * 2;
     } else if (DATA_RAW10 == pdaf_info->type2_info.data_format) {
         pdaf_info->type2_info.width = 260 + 4;
         pdaf_info->type2_info.height = 96;
-        pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
+        pdaf_info->type2_info.pd_size =
+            pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
     }
 
     return rtn;
@@ -951,6 +985,98 @@ static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle,
     return rtn;
 }
 
+static uint16_t imx258_calc_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter,
+                                     uint32_t dummy_line,
+                                     struct sensor_aec_i2c_tag *aec_info) {
+    uint32_t dest_fr_len = 0;
+    uint32_t cur_fr_len = 0;
+    uint32_t fr_len = s_current_default_frame_length;
+    int32_t offset = 0;
+
+    if (dummy_line > FRAME_OFFSET)
+        offset = dummy_line;
+    else
+        offset = FRAME_OFFSET;
+    dest_fr_len = ((shutter + offset) > fr_len) ? (shutter + offset) : fr_len;
+
+    cur_fr_len = imx258_read_frame_length(handle);
+    s_current_frame_length = dest_fr_len;
+
+    if (shutter < SENSOR_MIN_SHUTTER)
+        shutter = SENSOR_MIN_SHUTTER;
+
+    aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
+    aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
+    aec_info->shutter->settings[0].reg_value = (shutter >> 8) & 0xff;
+    aec_info->shutter->settings[1].reg_value = shutter & 0xff;
+    return shutter;
+}
+
+static void imx258_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
+    uint8_t i = 0;
+    uint32_t sensor_again = 0;
+    uint32_t sensor_dgain = 0;
+    float temp_gain;
+
+    gain = gain / 32.0;
+
+    temp_gain = gain;
+    if (temp_gain < 1.0)
+        temp_gain = 1.0;
+    else if (temp_gain > 8.0)
+        temp_gain = 8.0;
+    sensor_again = (uint16_t)(512.0 - 512.0 / temp_gain);
+
+    aec_info->again->settings[0].reg_value = (sensor_again >> 8) & 0xFF;
+    aec_info->again->settings[1].reg_value = sensor_again & 0xFF;
+
+    temp_gain = gain / 8;
+    if (temp_gain > 16.0)
+        temp_gain = 16.0;
+    else if (temp_gain < 1.0)
+        temp_gain = 1.0;
+    sensor_dgain = (uint16_t)(256 * temp_gain);
+    aec_info->dgain->settings[0].reg_value = (sensor_dgain >> 8) & 0xFF;
+    aec_info->dgain->settings[1].reg_value = sensor_dgain & 0xFF;
+    aec_info->dgain->settings[2].reg_value = (sensor_dgain >> 8) & 0xFF;
+    aec_info->dgain->settings[3].reg_value = sensor_dgain & 0xFF;
+    aec_info->dgain->settings[4].reg_value = (sensor_dgain >> 8) & 0xFF;
+    aec_info->dgain->settings[5].reg_value = sensor_dgain & 0xFF;
+    aec_info->dgain->settings[6].reg_value = (sensor_dgain >> 8) & 0xFF;
+    aec_info->dgain->settings[7].reg_value = sensor_dgain & 0xFF;
+}
+
+static unsigned long imx258_read_aec_info(SENSOR_HW_HANDLE handle,
+                                          unsigned long param) {
+    unsigned long ret_value = SENSOR_SUCCESS;
+    struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+    uint16_t exposure_line = 0x00;
+    uint16_t dummy_line = 0x00;
+    uint16_t mode = 0x00;
+    float real_gain = 0;
+    uint32_t gain = 0;
+
+    info->aec_i2c_info_out = &imx258_aec_info;
+
+    exposure_line = info->exp.exposure;
+    dummy_line = info->exp.dummy;
+    mode = info->exp.size_index;
+
+    s_current_default_frame_length =
+        imx258_get_default_frame_length(NULL, mode);
+#if 1
+    s_current_default_line_time = imx258_get_default_line_ime(NULL, mode);
+
+    s_sensor_ev_info.preview_shutter = imx258_calc_exposure(
+        handle, exposure_line, dummy_line, &imx258_aec_info);
+
+    gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+    real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
+    imx258_calc_gain(real_gain, &imx258_aec_info);
+#endif
+    return ret_value;
+}
+
 /*==============================================================================
  * Description:
  * all ioctl functoins
@@ -971,12 +1097,12 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab = {
     .stream_on = imx258_stream_on,
     .stream_off = imx258_stream_off,
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
-    //.af_enable = imx258_write_af,
+//.af_enable = imx258_write_af,
 #endif
     //.group_hold_on = imx132_group_hold_on,
     //.group_hold_of = imx132_group_hold_off,
     .cfg_otp = imx258_access_val,
     //	.set_motor_bestmode = dw9800_set_motor_bestmode,// set vcm best mode and
+    .read_aec_info = imx258_read_aec_info,
     // avoid damping
 };
-

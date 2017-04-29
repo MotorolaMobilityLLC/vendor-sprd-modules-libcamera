@@ -112,7 +112,7 @@ LOCAL const struct raw_param_info_tab s_ov2680_raw_param_tab[] = {
      PNULL},
     {RAW_INFO_END_ID, PNULL, PNULL, PNULL}};
 
-struct sensor_raw_info *s_ov2680_mipi_raw_info_ptr = NULL;
+struct sensor_raw_info *s_ov2680_mipi_raw_info_ptr = &s_ov2680_mipi_raw_info;
 
 // 800x600
 LOCAL const SENSOR_REG_T ov2680_com_mipi_raw[] = {

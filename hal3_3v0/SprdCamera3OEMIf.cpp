@@ -1009,7 +1009,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    HAL_LOGI("E");
+    HAL_LOGI("E mCameraId %d", mCameraId);
     GET_START_TIME;
     print_time();
 
@@ -2543,14 +2543,14 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs otp begin*/
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
-            char *psPath_OtpData = "data/misc/cameraserver/otp.bin";
+            const char *psPath_OtpData = "data/misc/cameraserver/otp.bin";
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
-            OTP_Tag otpInfo = {0};
+            OTP_Tag otpInfo;
             mSetting->getOTPTag(&otpInfo);
             int otp_ret =
                 read_file(psPath_OtpData, dual_otp_data, SPRD_DUAL_OTP_SIZE);
             if (otp_ret == 0) {
-                struct sensor_otp_cust_info otp_info = {0};
+                struct sensor_otp_cust_info otp_info;
                 mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle,
                                                          &otp_info);
                 if (otp_info.total_otp.data_ptr != NULL &&
@@ -2915,9 +2915,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
+        changeDfsPolicy(CAM_HIGH);
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
+        changeDfsPolicy(CAM_HIGH);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -2925,6 +2927,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
+        changeDfsPolicy(CAM_HIGH);
+        mZslNum = 3;
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
@@ -7854,7 +7858,6 @@ ZslBufferQueue SprdCamera3OEMIf::popZSLQueue() {
 
 ZslBufferQueue SprdCamera3OEMIf::popZSLQueue(uint64_t need_timestamp) {
     Mutex::Autolock l(&mZslLock);
-
     List<ZslBufferQueue>::iterator frame;
     ZslBufferQueue zsl_frame;
     bzero(&zsl_frame, sizeof(ZslBufferQueue));
@@ -8098,7 +8101,8 @@ struct camera_frame_type SprdCamera3OEMIf::popZslFrame() {
 
     bzero(&zslFrame, sizeof(zslFrame));
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
-    if (getMultiCameraMode() == MODE_3D_CAPTURE) {
+    if (getMultiCameraMode() == MODE_REFOCUS ||
+        getMultiCameraMode() == MODE_3D_CAPTURE) {
         zslFrame = popZSLQueue(mNeededTimestamp);
     } else {
         zslFrame = popZSLQueue();
@@ -8395,6 +8399,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         break;
 
     case CMR_EVT_ZSL_MON_PUSH:
+        HAL_LOGV("obj->getPreviewState() %d", obj->getPreviewState());
         if (obj->getPreviewState() != SPRD_INTERNAL_PREVIEW_STOPPING) {
             obj->processZslFrame(p_data);
         }
@@ -8417,6 +8422,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
     if (exit_flag) {
         HAL_LOGD("zsl monitor thread exit ");
     }
+
     return 0;
 }
 

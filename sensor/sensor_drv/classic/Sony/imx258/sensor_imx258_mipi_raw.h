@@ -196,6 +196,20 @@ static const SENSOR_REG_T imx258_2096x1552_setting[] = {
     {0x3032, 0x00}, // 0},//1},
     {0x0220, 0x00},
     {0x4041, 0x00},
+
+#if 1 // CONFIG_CAMERA_DUAL_SYNC
+    /*for sensor sync start*/
+    {0x440C, 0x00}, // Lo-Activate
+    {0x440D, 0x07}, // pulse width(2000cycle)
+    // V-sync output pin settings: FSTROBE setting
+    {0x4073, 0xFF},
+    {0x5ED0, 0x00},
+    {0x5E69, 0xFF},
+    {0x5E6A, 0x00},
+    {0x5E6B, 0x00},
+    {0x5E70, 0x02},
+/*for sensor sync end*/
+#endif
 };
 
 static const SENSOR_REG_T imx258_4208x3120_setting[] = {
@@ -290,7 +304,7 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
 #ifdef PDAF_TYPE2
     {0x3030, 0x01},
 #else
-    {0x3030, 0x00}, // 1},
+    {0x3030, 0x00},      // 1},
 #endif
     {0x3032, 0x01}, // 0},//1},
     {0x0220, 0x00},
@@ -504,6 +518,50 @@ static const SENSOR_REG_T imx258_1280x720_setting[] = {
     {0x4041, 0x00},
 };
 
+static struct sensor_reg_tag imx258_shutter_reg[] = {
+    {0x0202, 0}, {0x0203, 0},
+};
+
+static struct sensor_i2c_reg_tab imx258_shutter_tab = {
+    .settings = imx258_shutter_reg, .size = ARRAY_SIZE(imx258_shutter_reg),
+};
+
+static struct sensor_reg_tag imx258_again_reg[] = {
+    {0x0204, 0}, {0x0205, 0},
+};
+
+static struct sensor_i2c_reg_tab imx258_again_tab = {
+    .settings = imx258_again_reg, .size = ARRAY_SIZE(imx258_again_reg),
+};
+
+static struct sensor_reg_tag imx258_dgain_reg[] = {
+    {0x020e, 0x00}, {0x020f, 0x00}, {0x0210, 0x00}, {0x0211, 0x00},
+    {0x0212, 0x00}, {0x0213, 0x00}, {0x0214, 0x00}, {0x0215, 0x00},
+};
+
+struct sensor_i2c_reg_tab imx258_dgain_tab = {
+    .settings = imx258_dgain_reg, .size = ARRAY_SIZE(imx258_dgain_reg),
+};
+
+static struct sensor_reg_tag imx258_frame_length_reg[] = {
+    {0x0340, 0}, {0x0341, 0},
+};
+
+static struct sensor_i2c_reg_tab imx258_frame_length_tab = {
+    .settings = imx258_frame_length_reg,
+    .size = ARRAY_SIZE(imx258_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag imx258_aec_info = {
+    .slave_addr = (I2C_SLAVE_ADDR >> 1),
+    .addr_bits_type = SENSOR_I2C_REG_16BIT,
+    .data_bits_type = SENSOR_I2C_VAL_8BIT,
+    .shutter = &imx258_shutter_tab,
+    .again = &imx258_again_tab,
+    .dgain = &imx258_dgain_tab,
+    .frame_length = &imx258_frame_length_tab,
+};
+
 /*==============================================================================
  * Description:
  * sensor static info need by isp
@@ -514,12 +572,12 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info = {
     .focal_length = 462, // focal_length;
     .max_fps = 0,        // max_fps,max fps of sensor's all settings,it will be
                          // calculated from sensor mode fps
-    .max_adgain = 16 * 16,       // max_adgain,AD-gain
-    .ois_supported = 0,          // ois_supported;
+    .max_adgain = 16 * 16, // max_adgain,AD-gain
+    .ois_supported = 0,    // ois_supported;
 #ifdef PDAF_TYPE2
-    .pdaf_supported = SENSOR_PDAF_TYPE2_ENABLE,         // pdaf_supported;
+    .pdaf_supported = SENSOR_PDAF_TYPE2_ENABLE, // pdaf_supported;
 #else
-    .pdaf_supported = 0,         // pdaf_supported;
+    .pdaf_supported = 0, // pdaf_supported;
 #endif
     .exp_valid_frame_num = 1,    // exp_valid_frame_num;N+2-1
     .clamp_level = 64,           // clamp_level,black level
@@ -549,11 +607,17 @@ static SENSOR_MODE_FPS_INFO_T s_imx258_mode_fps_info = {
  * please modify this variable acording your spec
  *============================================================================*/
 LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] = {
-    {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-    /*	{ ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW },*/
-    {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), 1280, 720, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK,SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK,SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK,
+     SENSOR_IMAGE_FORMAT_RAW},
+    /*	{
+       ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW
+       },*/
+    {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), 1280, 720, EX_MCLK,
+     SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK,
+     SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK,
+     SENSOR_IMAGE_FORMAT_RAW},
     {PNULL, 0, 0, 0, 0, 0},
     {PNULL, 0, 0, 0, 0, 0},
     {PNULL, 0, 0, 0, 0, 0},
@@ -652,7 +716,8 @@ LOCAL SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
                     .gain = 90,
                 },
             },
-        .setting_ptr = (struct sensor_reg_tag **)s_imx258_preview_size_video_tab,
+        .setting_ptr =
+            (struct sensor_reg_tag **)s_imx258_preview_size_video_tab,
     },
     {
         .ae_info =
@@ -664,7 +729,8 @@ LOCAL SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
                     .gain = 1000,
                 },
             },
-        .setting_ptr = (struct sensor_reg_tag **)s_imx258_capture_size_video_tab,
+        .setting_ptr =
+            (struct sensor_reg_tag **)s_imx258_capture_size_video_tab,
     }};
 
 SENSOR_INFO_T g_imx258_mipi_raw_info = {

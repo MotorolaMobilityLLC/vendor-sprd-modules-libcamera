@@ -299,7 +299,6 @@ static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle,
             OTP_LOGE("malloc otp raw buffer failed\n");
             ret = OTP_CAMERA_FAIL;
         } else {
-            memset(buffer, 0, OTP_LEN);
             otp_raw_data->buffer = buffer;
             otp_raw_data->num_bytes = OTP_LEN;
             _imx258_truly_buffer_init(otp_drv_handle);
@@ -314,6 +313,7 @@ static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle,
         }
         return ret;
     } else {
+        memset(buffer, 0, OTP_LEN);
         for (i = 0; i < OTP_LEN; i++) {
             cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
             cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
@@ -341,7 +341,7 @@ static cmr_int imx258_truly_otp_drv_write(cmr_handle otp_drv_handle,
         int i;
         for (i = 0; i < otp_write_data->num_bytes; i++) {
             hw_sensor_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               &otp_write_data->buffer[i], 2);
+                                &otp_write_data->buffer[i], 2);
         }
         OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
@@ -508,6 +508,7 @@ static cmr_int _imx258_truly_compatible_convert(cmr_handle otp_drv_handle,
     /*other*/
     single_otp->program_flag = format_data->extend_dat.program_flag;
     single_otp->checksum = format_data->extend_dat.checksum;
+    convert_data->dual_otp.dual_flag = 1;
 
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;

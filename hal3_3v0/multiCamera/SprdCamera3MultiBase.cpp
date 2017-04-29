@@ -341,8 +341,8 @@ void SprdCamera3MultiBase::dumpImg(void *addr, int size, int frameId,
     HAL_LOGI(" E");
     char name[128];
     int count;
-    snprintf(name, sizeof(name), "/data/misc/media/%d_%d_%d.yuv", size, frameId,
-             flag);
+    snprintf(name, sizeof(name), "/data/misc/cameraserver/%d_%d_%d.yuv", size,
+             frameId, flag);
 
     FILE *file_fd = fopen(name, "w");
 

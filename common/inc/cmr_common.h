@@ -94,6 +94,7 @@ extern "C" {
 #endif
 
 #define PREV_OUT_DATA 0xF000    /*debug.camera.save.snpfile 16*/
+#define ZSL_OUT_DATA 0xE000     /*debug.camera.save.snpfile 16*/
 #define SNP_CHN_OUT_DATA 0x8000 /*debug.camera.save.snpfile 1*/
 #define SNP_ROT_DATA 0x8001     /*debug.camera.save.snpfile 2*/
 #define SNP_SCALE_DATA 0x8002

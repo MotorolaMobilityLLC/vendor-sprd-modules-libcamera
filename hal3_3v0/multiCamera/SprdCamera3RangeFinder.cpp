@@ -1235,22 +1235,22 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     }
 
 #if IMG_DUMP_DEBUG
-    addr = getBufferAddr(combDepthResult->buffer1);
+    addr = gRangeFinder->getBufferAddr(combDepthResult->buffer1);
 
-    size = getBufferSize(combDepthResult->buffer1);
+    size = gRangeFinder->getBufferSize(combDepthResult->buffer1);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 1);
 
-    addr = getBufferAddr(combDepthResult->buffer2);
+    addr = gRangeFinder->getBufferAddr(combDepthResult->buffer2);
 
-    size = getBufferSize(combDepthResult->buffer2);
+    size = gRangeFinder->getBufferSize(combDepthResult->buffer2);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 2);
 
     addr = (void *)mainRotate;
-    size = getBufferSize(combDepthResult->buffer2);
+    size = gRangeFinder->getBufferSize(combDepthResult->buffer2);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 3);
 
     addr = (void *)auxRotate;
-    size = getBufferSize(combDepthResult->buffer2);
+    size = gRangeFinder->getBufferSize(combDepthResult->buffer2);
     gRangeFinder->dumpImg(addr, size, combDepthResult->frame_number, 4);
 #endif
 
