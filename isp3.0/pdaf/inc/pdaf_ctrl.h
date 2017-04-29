@@ -109,6 +109,7 @@ struct pdaf_ctrl_init_in {
 struct pdaf_ctrl_init_out {
 	union {
 		cmr_u8 enable;
+		cmr_u8 init_success;
 	};
 };
 

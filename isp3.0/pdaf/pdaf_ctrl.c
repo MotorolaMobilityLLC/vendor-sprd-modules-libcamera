@@ -114,6 +114,9 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 	case PDAFCTRL_EVT_INIT:
 		msg_init = (struct pdaf_init_msg_ctrl *)message->data;
 		ret = pdafctrl_init_adpt(handle, msg_init->in, msg_init->out);
+		if (ret) {
+			ISP_LOGE("failed to init pdaf");
+		}
 		break;
 	case PDAFCTRL_EVT_DEINIT:
 		ret = pdafctrl_deinit_adpt(handle);
@@ -248,10 +251,12 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 
 	/* adpter init */
 	ret = pdafctrl_init_adapt(cxt, in, out);
-	if (ret) {
-		ISP_LOGE("failed to init adapter layer ret = %ld", ret);
+	if (ret || !out->init_success) {
+		ISP_LOGE("failed to init adapter layer ret = %ld %d", ret, out->init_success);
+		ret = -ISP_ERROR;
 		goto error_adpt_init;
 	}
+
 sucess_exit:
 	*handle = (cmr_handle) cxt;
 	return ret;

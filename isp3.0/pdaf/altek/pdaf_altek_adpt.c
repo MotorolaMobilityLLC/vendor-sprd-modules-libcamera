@@ -490,6 +490,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
 	if (ret) {
 		ISP_LOGE("failed to init lib %ld", ret);
+		out_p->init_success = 0;
 		goto error_lib_init;
 	}
 
@@ -497,6 +498,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cxt->is_busy = 0;
 	cxt->report_data.pd_reg_out = (void *)cxt->pd_reg_out;
 	cxt->report_data.pd_reg_size = PD_REG_OUT_SIZE;
+	out_p->init_success = 1;
 	return ret;
 
 error_lib_init:

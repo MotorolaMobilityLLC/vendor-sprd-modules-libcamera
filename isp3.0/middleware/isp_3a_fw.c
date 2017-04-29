@@ -4906,6 +4906,9 @@ static cmr_int isp3a_handle_haf_enable(cmr_handle isp_3a_handle, void *param_ptr
 		goto exit;
 	}
 
+	if (!cxt->pdaf_cxt.pdaf_support)
+		goto exit;
+
 	ISP_LOGV("E");
 	bzero(&af_in, sizeof(af_in));
 	af_in.haf_enable = *((cmr_u8 *)param_ptr);
