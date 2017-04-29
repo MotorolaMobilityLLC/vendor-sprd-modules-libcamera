@@ -2034,7 +2034,7 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	CMR_LOGE("just return");    // for bringup
+	ISP_LOGI("just return");    // for bringup
 	return rtn;
 
 	rtn = isp_afl_sw_init(cxt, input_ptr);

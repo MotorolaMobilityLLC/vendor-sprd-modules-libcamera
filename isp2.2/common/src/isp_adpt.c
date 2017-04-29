@@ -31,10 +31,10 @@
 #include "ae_alc_ctrl.h"
 #endif
 
-extern struct adpt_ops_type ae_sprd_adpt_ops_ver0;
+extern struct adpt_ops_type ae_sprd_adpt_ops_ver1;
 static cmr_u32 *ae_sprd_version_ops[] = {
-	(cmr_u32 *) & ae_sprd_adpt_ops_ver0,
-	NULL,			//(cmr_u32*)&ae_sprd_adpt_ops_ver1,
+	(cmr_u32*)&ae_sprd_adpt_ops_ver1,
+	(cmr_u32*)&ae_sprd_adpt_ops_ver1,
 };
 
 cmr_u32 get_sprd_ae_ops(cmr_u32 ae_lib_version, struct adpt_ops_type **ae_ops)
