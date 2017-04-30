@@ -353,7 +353,10 @@ typedef struct { int32_t max_latency; } SYNC_Tag;
 
 typedef struct { int32_t crop[4]; } EIS_CROP_Tag;
 
-typedef struct { uint8_t otp_data[SPRD_DUAL_OTP_SIZE]; } OTP_Tag;
+typedef struct {
+    uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
+    uint8_t dual_otp_flag;
+} OTP_Tag;
 
 typedef struct { int32_t vcm_step; } VCM_Tag;
 

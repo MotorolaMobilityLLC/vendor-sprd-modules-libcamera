@@ -2960,6 +2960,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         requestInfo.update(ANDROID_SPRD_OTP_DATA,
                            s_setting[mCameraId].otpInfo.otp_data,
                            SPRD_DUAL_OTP_SIZE);
+        requestInfo.update(ANDROID_SPRD_DUAL_OTP_FLAG,
+                           &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
 
     mDefaultMetadata[type] = requestInfo.release();
@@ -4216,6 +4218,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         camMetadata.update(ANDROID_SPRD_OTP_DATA,
                            s_setting[mCameraId].otpInfo.otp_data,
                            SPRD_DUAL_OTP_SIZE);
+        camMetadata.update(ANDROID_SPRD_DUAL_OTP_FLAG,
+                           &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
     if (mCameraId == 0) {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,

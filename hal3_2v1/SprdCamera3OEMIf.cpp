@@ -2488,11 +2488,19 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                         otp_info.total_otp.size);
                     memcpy(otpInfo.otp_data, otp_info.total_otp.data_ptr,
                            otp_info.total_otp.size);
+                    otpInfo.dual_otp_flag = 1;
+                } else {
+                    otpInfo.dual_otp_flag = 0;
+                    HAL_LOGD("camera_id: %d, dual_otp_flag %d", mCameraId,
+                             otpInfo.dual_otp_flag);
                 }
             } else {
                 HAL_LOGD("camera_id: %d,dual_otp_data %p", mCameraId,
                          dual_otp_data);
                 memcpy(otpInfo.otp_data, dual_otp_data, SPRD_DUAL_OTP_SIZE);
+                otpInfo.dual_otp_flag = 1;
+                HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d",
+                         mCameraId, dual_otp_data, otpInfo.dual_otp_flag);
             }
             mSetting->setOTPTag(&otpInfo);
 
@@ -2516,6 +2524,11 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                     otp_info.total_otp.size);
                 memcpy(otpInfo.otp_data, otp_info.total_otp.data_ptr,
                        otp_info.total_otp.size);
+                otpInfo.dual_otp_flag = 1;
+            } else {
+                otpInfo.dual_otp_flag = 0;
+                HAL_LOGD("camera_id: %d, dual_otp_flag %d", mCameraId,
+                         otpInfo.dual_otp_flag);
             }
             mSetting->setOTPTag(&otpInfo);
 #endif
