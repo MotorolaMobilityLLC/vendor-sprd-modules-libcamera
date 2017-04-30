@@ -33,7 +33,7 @@
 
 #define FD_MAX_FACE_NUM 10
 #define FD_RUN_FAR_INTERVAL                                                    \
-    6 /* The frame interval to run FAR. For reducing computation cost */
+    8 /* The frame interval to run FAR. For reducing computation cost */
 
 struct class_faceattr {
     FA_SHAPE shape;
@@ -721,10 +721,10 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     opt.scoreThreshold = 0;
     opt.initFrames = 2;
     opt.detectFrames = 1;
-    opt.detectInterval = 3;
+    opt.detectInterval = 6;
     opt.trackDensity = 5;
-    opt.lostRetryCount = 4;
-    opt.lostHoldCount = 3;
+    opt.lostRetryCount = 1;
+    opt.lostHoldCount = 1;
     opt.holdPositionRate = 10;
     opt.holdSizeRate = 6;
     opt.swapFaceRate = 200;
