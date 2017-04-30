@@ -31,7 +31,6 @@
 
 static char AFlog_buffer[2048] = { 0 };
 
-static cmr_u32 iir_level, nr_mode, cw_mode, fv0_e, fv1_e;
 static struct af_iir_nr_info af_iir_nr[3] = {
 	{			//weak
 	 .iir_nr_en = 1,
@@ -191,41 +190,13 @@ static void afm_setup(af_ctrl_t * af)
 		ISP_LOGV("force write reg: %d ~ %d \n", af->stat_reg.reg_param[0]
 			 , af->stat_reg.reg_param[1]);
 	}
-/*
-	struct af_enhanced_module_info {
-		cmr_u8 chl_sel;
-		cmr_u8 nr_mode;
-		cmr_u8 center_weight;
-		cmr_u8 fv_enhanced_mode[2];
-		cmr_u8 clip_en[2];
-		cmr_u32 max_th[2];
-		cmr_u32 min_th[2];
-		cmr_u8 fv_shift[2];
-		char fv1_coeff[36];
-	};
 
-	struct af_iir_nr_info {
-		cmr_u8 iir_nr_en;
-		cmr_s16 iir_g0;
-		cmr_s16 iir_c1;
-		cmr_s16 iir_c2;
-		cmr_s16 iir_c3;
-		cmr_s16 iir_c4;
-		cmr_s16 iir_c5;
-		cmr_s16 iir_g1;
-		cmr_s16 iir_c6;
-		cmr_s16 iir_c7;
-		cmr_s16 iir_c8;
-		cmr_s16 iir_c9;
-		cmr_s16 iir_c10;
-	};
-*/
-	memcpy(&(af->af_iir_nr), &(af_iir_nr[iir_level]), sizeof(struct af_iir_nr_info));
+	memcpy(&(af->af_iir_nr), &(af_iir_nr[af->afm_tuning.iir_level]), sizeof(struct af_iir_nr_info));
 	af->af_enhanced_module.chl_sel = 0;
-	af->af_enhanced_module.nr_mode = (cmr_u8) nr_mode;
-	af->af_enhanced_module.center_weight = (cmr_u8) cw_mode;
-	af->af_enhanced_module.fv_enhanced_mode[0] = (cmr_u8) fv0_e;
-	af->af_enhanced_module.fv_enhanced_mode[1] = (cmr_u8) fv1_e;
+	af->af_enhanced_module.nr_mode = af->afm_tuning.nr_mode;
+	af->af_enhanced_module.center_weight = af->afm_tuning.cw_mode;
+	af->af_enhanced_module.fv_enhanced_mode[0] = af->afm_tuning.fv0_e;
+	af->af_enhanced_module.fv_enhanced_mode[1] = af->afm_tuning.fv1_e;
 	af->af_enhanced_module.clip_en[0] = 0;
 	af->af_enhanced_module.clip_en[1] = 0;
 	af->af_enhanced_module.max_th[0] = 131071;
@@ -743,13 +714,14 @@ static ERRCODE if_statistics_set_data(cmr_u32 set_stat, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
-	fv0_e = (set_stat & 0x0f);
-	fv1_e = (set_stat & 0xf0) >> 4;
-	nr_mode = (set_stat & 0xff00) >> 8;
-	cw_mode = (set_stat & 0xff0000) >> 16;
-	iir_level = (set_stat & 0xff000000) >> 24;
+	af->afm_tuning.fv0_e = (set_stat & 0x0f);
+	af->afm_tuning.fv1_e = (set_stat & 0xf0) >> 4;
+	af->afm_tuning.nr_mode = (set_stat & 0xff00) >> 8;
+	af->afm_tuning.cw_mode = (set_stat & 0xff0000) >> 16;
+	af->afm_tuning.iir_level = (set_stat & 0xff000000) >> 24;
 
-	ISP_LOGI("[0x%x] fv0e %d, fv1e %d, nr %d, cw %d iir %d", set_stat, fv0_e, fv1_e, nr_mode, cw_mode, iir_level);
+	ISP_LOGI("[0x%x] fv0e %d, fv1e %d, nr %d, cw %d iir %d", set_stat, af->afm_tuning.fv0_e, af->afm_tuning.fv1_e, af->afm_tuning.nr_mode, af->afm_tuning.cw_mode,
+		 af->afm_tuning.iir_level);
 	afm_setup(af);
 	return 0;
 }
@@ -2328,10 +2300,6 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 		break;
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
-		//face af is not worked for now
-		//if (STATE_FAF == af->state) {
-		//      return 0;
-		//}
 		af->request_mode = af_mode;
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		caf_start(af);
@@ -2760,10 +2728,11 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		fclose(fp);
 		ISP_LOGV("sizeof(tuning_data) = %d", sizeof(tuning_data));
 	}
-	iir_level = 1;
-	nr_mode = 2;
-	cw_mode = 2;
-	fv0_e = fv1_e = 5;
+	af->afm_tuning.iir_level = 1;
+	af->afm_tuning.nr_mode = 2;
+	af->afm_tuning.cw_mode = 2;
+	af->afm_tuning.fv0_e = 5;
+	af->afm_tuning.fv1_e = 5;
 
 	ISP_LOGI("E");
 	return (cmr_handle) af;

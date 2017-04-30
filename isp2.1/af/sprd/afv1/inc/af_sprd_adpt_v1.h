@@ -272,6 +272,15 @@ typedef struct _Bokeh_tuning_param {
 	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
 } Bokeh_tuning_param;
 
+typedef struct _afm_tuning_param_sharkl2 {
+	cmr_u8 iir_level;
+	cmr_u8 nr_mode;
+	cmr_u8 cw_mode;
+	cmr_u8 fv0_e;
+	cmr_u8 fv1_e;
+	cmr_u8 dummy[3];	// 4 bytes align
+} afm_tuning_sharkl2;
+
 typedef struct _af_ctrl {
 	char af_version[40];
 	enum af_state state;
@@ -337,6 +346,7 @@ typedef struct _af_ctrl {
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
 	Bokeh_tuning_param bokeh_param;
+	afm_tuning_sharkl2 afm_tuning;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);
