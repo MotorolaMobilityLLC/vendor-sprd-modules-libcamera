@@ -4255,11 +4255,12 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width, uint32_t height) {
         mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
     }
 
-    if (NULL == mReDisplayHeap)
+    if (NULL == mReDisplayHeap) {
+        HAL_LOGE("get redisplay ion mem failed");
         return 0;
+    }
 
     HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
-
     return mReDisplayHeap->fd;
 }
 
@@ -4432,7 +4433,6 @@ void SprdCamera3OEMIf::yuvNv12ConvertToYv12(struct camera_frame_type *frame,
     }
 }
 
-/**add for 3d calibration save debug img begin*/
 cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                          cmr_u32 height, struct img_addr *addr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -4527,148 +4527,100 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     return 0;
 }
 
-/**add for 3d calibration save debug img end*/
 void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     ATRACE_CALL();
 
-    HAL_LOGD("E, mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,
-             frame->y_vir_addr);
     Mutex::Autolock cbLock(&mCaptureCbLock);
-    bool display_flag, callback_flag;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    }; /**add for 3d calibration return yuv buff begin*/
 
-    if (NULL == frame) {
-        HAL_LOGE("invalid frame pointer");
-        return;
-    }
+    bool display_flag, callback_flag;
+    int ret;
+    int dst_fd = 0;
+    cmr_uint dst_paddr = 0;
+    uint32_t dst_width = 0;
+    uint32_t dst_height = 0;
+    cmr_uint dst_vaddr = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
-        return;
+        goto exit;
     }
 
     if (SPRD_INTERNAL_CAPTURE_STOPPING == getCaptureState()) {
-        HAL_LOGW(
-            "warning: capture state = SPRD_INTERNAL_CAPTURE_STOPPING, return");
-        return;
+        HAL_LOGW("warning: capture state = SPRD_INTERNAL_CAPTURE_STOPPING");
+        goto exit;
     }
+
+    if (NULL == frame) {
+        HAL_LOGE("invalid frame pointer");
+        goto exit;
+    }
+
+    HAL_LOGD("mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,
+             frame->y_vir_addr);
 
     display_flag = iSDisplayCaptureFrame();
     callback_flag = iSCallbackCaptureFrame();
 
     if (display_flag) {
-        int dst_fd = 0;
-        cmr_uint dst_paddr = 0;
-        uint32_t dst_width = mPreviewWidth;
-        uint32_t dst_height = mPreviewHeight;
-        cmr_uint dst_vaddr = 0;
+        dst_width = mPreviewWidth;
+        dst_height = mPreviewHeight;
         dst_fd = getRedisplayMem(dst_width, dst_height);
         if (0 == dst_fd) {
-            HAL_LOGE("get review memory failed");
-            return;
+            HAL_LOGE("get redisplay memory failed");
+            goto exit;
         }
-        if (mReDisplayHeap != NULL)
-            dst_vaddr = (cmr_uint)mReDisplayHeap->data;
+        dst_vaddr = (cmr_uint)mReDisplayHeap->data;
 
-        if (0 !=
-            mHalOem->ops->camera_get_redisplay_data(
-                mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width,
-                dst_height, frame->fd, frame->y_phy_addr, frame->uv_phy_addr,
-                frame->y_vir_addr, frame->width, frame->height)) {
-            HAL_LOGE("Fail to camera_get_data_redisplay.");
+        ret = mHalOem->ops->camera_get_redisplay_data(
+            mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
+            frame->fd, frame->y_phy_addr, frame->uv_phy_addr, frame->y_vir_addr,
+            frame->width, frame->height);
+        if (ret) {
+            HAL_LOGE("camera_get_data_redisplay failed");
             FreeReDisplayMem();
-            return;
+            goto exit;
         }
 
-        if (mReDisplayHeap)
-            displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr,
-                                      (char *)mReDisplayHeap->data);
+        displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr,
+                                  (char *)mReDisplayHeap->data);
         FreeReDisplayMem();
     }
+
     if (callback_flag) {
-        int dst_fd = 0;
-        cmr_uint dst_paddr = 0;
-        uint32_t dst_width = mRawWidth;
-        uint32_t dst_height = mRawHeight;
-        cmr_uint dst_vaddr = 0;
-        if ((dst_width != frame->width) || (dst_height != frame->height)) {
-            dst_fd = getRedisplayMem(dst_width, dst_height);
-            if (0 == dst_fd) {
-                HAL_LOGE("get review memory failed");
-                return;
-            }
-            if (mReDisplayHeap != NULL)
-                dst_vaddr = (cmr_uint)mReDisplayHeap->data;
+        dst_paddr = 0;
+        dst_width = mRawWidth;
+        dst_height = mRawHeight;
 
-            if (0 !=
-                mHalOem->ops->camera_get_redisplay_data(
-                    mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width,
-                    dst_height, frame->fd, frame->y_phy_addr,
-                    frame->uv_phy_addr, frame->y_vir_addr, frame->width,
-                    frame->height)) {
-                HAL_LOGE("Fail to camera_get_data_redisplay.");
-                FreeReDisplayMem();
-                return;
-            }
-        }
-        /**add for 3d calibration return yuv buff begin*/
-        HAL_LOGD("is callback_flag:%d", callback_flag);
-        property_get("debug.camera.save.3dcalfile", prop, "0");
-        if (atoi(prop) == 1) {
-            struct img_addr imgadd = {0, 0, 0};
-            HAL_LOGD("3dcalibration yuv picture: width:%d, height:%d, fd:%d,"
-                     "yaddp:0x%lx, uaddp:0x%lx, vaddp:0x%lx, yaddv:0x%lx, "
-                     "uaddv:0x%lx, vaddv:0x%lx",
-                     frame->width, frame->height, frame->fd, frame->y_phy_addr,
-                     frame->uv_phy_addr,
-                     frame->uv_phy_addr + frame->width * frame->height / 2,
-                     frame->y_vir_addr, frame->uv_vir_addr,
-                     frame->uv_vir_addr + frame->width * frame->height / 2);
-            imgadd.addr_y = frame->y_vir_addr;
-            imgadd.addr_u = frame->uv_vir_addr;
-            imgadd.addr_v =
-                frame->uv_vir_addr + frame->width * frame->height / 2;
-            save_yuv_to_file(mCameraId, IMG_DATA_TYPE_YUV420, frame->width,
-                             frame->height, &imgadd);
-        }
-        /**add for 3d calibration return yuv buff end*/
-
-        if (mReDisplayHeap != NULL && mSprdRefocusEnabled) {
-            mReDisplayHeap->data = (void *)frame->y_vir_addr;
-        }
-
-        if ((dst_width == frame->width) && (dst_height == frame->height)) {
-            HAL_LOGI("dst_width = %d, dst_height = %d, frame->y_vir_addr 0x%lx",
-                     dst_width, dst_height, frame->y_vir_addr);
+        if (dst_width == frame->width && dst_height == frame->height) {
             receiveCallbackPicture(frame->width, frame->height, frame->fd,
                                    frame->y_phy_addr,
                                    (char *)frame->y_vir_addr);
-            FreeReDisplayMem();
-            return;
-        }
+        } else {
+            dst_fd = getRedisplayMem(dst_width, dst_height);
+            if (0 == dst_fd) {
+                HAL_LOGE("get redisplay memory failed");
+                goto exit;
+            }
+            dst_vaddr = (cmr_uint)mReDisplayHeap->data;
 
-        if (mReDisplayHeap) {
-            if (mSprd3dCalibrationEnabled || mSprdYuvCallBack)
-                mReDisplayHeap->data = (void *)frame->y_vir_addr;
+            ret = mHalOem->ops->camera_get_redisplay_data(
+                mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width,
+                dst_height, frame->fd, frame->y_phy_addr, frame->uv_phy_addr,
+                frame->y_vir_addr, frame->width, frame->height);
+            if (ret) {
+                HAL_LOGE("camera_get_data_redisplay failed");
+                FreeReDisplayMem();
+                goto exit;
+            }
+
             receiveCallbackPicture(dst_width, dst_height, dst_fd, dst_paddr,
                                    (char *)mReDisplayHeap->data);
-        } else {
-            if (mSprd3dCalibrationEnabled || mSprdYuvCallBack) {
-                HAL_LOGD("3dcalibration call back picture: width:%d, "
-                         "height:%d, fd:%d, phyadd:%ld, viradd:%ld",
-                         frame->width, frame->height, frame->fd,
-                         frame->y_phy_addr, frame->y_vir_addr);
-                receiveCallbackPicture(frame->width, frame->height, frame->fd,
-                                       frame->y_phy_addr,
-                                       (char *)&frame->y_vir_addr);
-            }
+            FreeReDisplayMem();
         }
-        FreeReDisplayMem();
     }
 
-    HAL_LOGD("X, mReDisplayHeap = %p", mReDisplayHeap);
+exit:
+    HAL_LOGD("X");
 }
 
 void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
