@@ -45,6 +45,7 @@ static struct sensor_raw_info *s_s5k3p8sm_mipi_raw_info_ptr =
     &s_s5k3p8sm_mipi_raw_info;
 static int s_capture_shutter = 0;
 static int s_exposure_time = 0;
+static uint32_t s_s5k3p8sm_sensor_close_flag = 0;
 
 struct sensor_ev_info_t s_sensor_ev_info;
 
@@ -324,7 +325,6 @@ static const SENSOR_REG_T s5k3p8sm_4640x3488_4lane_setting[] = {
     //{ 0x0100, 0x0100 },//streaming on
 };
 
-
 // 2320x1744 30FPS Mclk24 v560M mipi732Mbps/lane 4lane
 // frame length	0x3643
 // 1H time	91.4
@@ -420,7 +420,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p8sm_resolution_Tab_RAW[9] = {
     {ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1280x720_4lane_setting), 1280, 720, 24,
      SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2320x1744_4lane_setting), 2320, 1744, 24,
-    SENSOR_IMAGE_FORMAT_RAW},
+     SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_4640x3488_4lane_setting), 4640, 3488, 24,
      SENSOR_IMAGE_FORMAT_RAW},
     //{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1920x1080_4lane_30fps_setting), 1920,
@@ -491,9 +491,9 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p8sm_ioctl_func_tab = {
     _s5k3p8sm_write_exposure,
     PNULL, // read_gain_value
     _s5k3p8sm_write_gain,
-    PNULL,             // read_gain_scale
-    PNULL,             // set_frame_rate
-    PNULL,//s5k3p8sm_write_af, // s5k3p8sm_write_af,
+    PNULL, // read_gain_scale
+    PNULL, // set_frame_rate
+    PNULL, // s5k3p8sm_write_af, // s5k3p8sm_write_af,
     PNULL,
     PNULL, //_s5k3p8sm_set_awb,
     PNULL, PNULL,
@@ -507,7 +507,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p8sm_ioctl_func_tab = {
     PNULL, // get_status
     _s5k3p8sm_StreamOn, _s5k3p8sm_StreamOff,
     _s5k3p8sm_access_val, // s5k3p8sm_cfg_otp,
-    _s5k3p8sm_ex_write_exposure,PNULL};
+    _s5k3p8sm_ex_write_exposure, PNULL};
 
 static SENSOR_STATIC_INFO_T s_s5k3p8sm_static_info = {
     200, // f-number,focal ratio
@@ -753,7 +753,7 @@ static unsigned long _s5k3p8sm_Identify(SENSOR_HW_HANDLE handle,
             if (ret == 0)
                 OpenOIS(handle);
 #else
-            //bu64297gwz_init(handle);
+// bu64297gwz_init(handle);
 #endif
             _s5k3p8sm_init_mode_fps_info(handle);
         } else {
@@ -1153,7 +1153,7 @@ static unsigned long s5k3p8sm_write_af(SENSOR_HW_HANDLE handle,
 #if defined(CONFIG_CAMERA_OIS_FUNC)
     OIS_write_af(handle, param);
 #else
-    //bu64297gwz_write_af(handle, param);
+    // bu64297gwz_write_af(handle, param);
     return 0;
 #endif
     return 0;
@@ -1298,11 +1298,19 @@ static unsigned long _s5k3p8sm_StreamOn(SENSOR_HW_HANDLE handle,
 
 static unsigned long _s5k3p8sm_StreamOff(SENSOR_HW_HANDLE handle,
                                          unsigned long param) {
-    SENSOR_PRINT_ERR("SENSOR_S5K3P8SM: StreamOff");
+    uint16_t value;
+    unsigned int sleep_time = 0, frame_time;
+
+    SENSOR_LOGI("E");
 
     Sensor_WriteReg(0x0100, 0x0000);
-    usleep(120 * 1000);
+    if (!s_s5k3p8sm_sensor_close_flag) {
+        sleep_time = 50 * 1000;
+        usleep(sleep_time);
+    }
+    s_s5k3p8sm_sensor_close_flag = 0;
 
+    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
 }
 
@@ -1449,11 +1457,12 @@ static uint32_t _s5k3p8sm_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->preview_skip_num = g_s5k3p8sm_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_s5k3p8sm_mipi_raw_info.capture_skip_num;
     ex_info->name = (cmr_s8 *)g_s5k3p8sm_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_s5k3p8sm_mipi_raw_info.sensor_version_info;
+    ex_info->sensor_version_info =
+        (cmr_s8 *)g_s5k3p8sm_mipi_raw_info.sensor_version_info;
 #if defined(CONFIG_CAMERA_OIS_FUNC)
     Ois_get_pose_dis(handle, &up, &down);
 #else
-    //bu64297gwz_get_pose_dis(handle, &up, &down);
+// bu64297gwz_get_pose_dis(handle, &up, &down);
 #endif
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -1553,6 +1562,14 @@ static uint32_t _s5k3p8sm_get_pdaf_info(SENSOR_HW_HANDLE handle,
     return rtn;
 }
 
+static uint32_t _s5k3p8sm_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
+    uint32_t rtn = SENSOR_SUCCESS;
+
+    s_s5k3p8sm_sensor_close_flag = 1;
+
+    return rtn;
+}
+
 static unsigned long _s5k3p8sm_access_val(SENSOR_HW_HANDLE handle,
                                           unsigned long param) {
     uint32_t rtn = SENSOR_SUCCESS;
@@ -1610,6 +1627,9 @@ static unsigned long _s5k3p8sm_access_val(SENSOR_HW_HANDLE handle,
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = _s5k3p8sm_get_pdaf_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+        rtn = _s5k3p8sm_set_sensor_close_flag(handle);
         break;
     default:
         break;

@@ -606,7 +606,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k4h8yx_ioctl_func_tab = {
     PNULL, // meter_mode
     PNULL, // get_status
     _s5k4h8yx_StreamOn, _s5k4h8yx_StreamOff, _s5k4h8yx_access_val,
-    _s5k4h8yx_ex_write_exposure,PNULL};
+    _s5k4h8yx_ex_write_exposure, PNULL};
 
 static SENSOR_STATIC_INFO_T s_s5k4h8yx_static_info = {
     200,      // f-number,focal ratio
@@ -1663,8 +1663,13 @@ static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle,
     SENSOR_LOGI("E");
 
     Sensor_WriteReg(0x0100, 0x0003);
-    usleep(50*1000);
+    if (!s_s5k4h8yx_sensor_close_flag) {
+        sleep_time = 50 * 1000;
+        usleep(sleep_time);
+    }
+    s_s5k4h8yx_sensor_close_flag = 0;
 
+    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
 }
 
@@ -2224,7 +2229,8 @@ static uint32_t _s5k4h8yx_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->preview_skip_num = g_s5k4h8yx_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_s5k4h8yx_mipi_raw_info.capture_skip_num;
     ex_info->name = (cmr_s8 *)g_s5k4h8yx_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_s5k4h8yx_mipi_raw_info.sensor_version_info;
+    ex_info->sensor_version_info =
+        (cmr_s8 *)g_s5k4h8yx_mipi_raw_info.sensor_version_info;
     SENSOR_LOGI("SENSOR_s5k4h8yx: f_num: %d", ex_info->f_num);
     SENSOR_LOGI("SENSOR_s5k4h8yx: focal_length: %d", ex_info->focal_length);
     SENSOR_LOGI("SENSOR_s5k4h8yx: max_fps: %d", ex_info->max_fps);
