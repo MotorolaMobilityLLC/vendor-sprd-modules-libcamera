@@ -2491,7 +2491,9 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}
-#ifdef LSC_ADV_ENABLE
+
+#if 0
+//#ifdef LSC_ADV_ENABLE
 	cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
