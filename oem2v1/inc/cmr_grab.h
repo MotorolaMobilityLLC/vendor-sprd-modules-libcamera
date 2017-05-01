@@ -66,8 +66,9 @@ struct sn_cfg {
 };
 
 struct grab_flash_opt {
-    cmr_u32 led0_status;
-    cmr_u32 led1_status;
+    cmr_u32 led0_enable;
+    cmr_u32 led1_enable;
+    cmr_u32 flash_mode;
     cmr_u32 flash_index;
 };
 

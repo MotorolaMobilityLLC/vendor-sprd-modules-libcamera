@@ -2953,33 +2953,29 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
 
     int32_t ret = 0;
     struct camera_context *cxt = (struct camera_context *)handler;
-    cmr_u8 led0_status = 0;
-    cmr_u8 led1_status = 0;
+    cmr_u8 real_type;
     struct grab_flash_opt flash_opt;
-
+    bzero(&flash_opt, sizeof(struct grab_flash_opt));
     if (!cxt || !cfg_ptr) {
         CMR_LOGE("err param, %p %p", cxt, cfg_ptr);
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto out;
     }
-    CMR_LOGD("led_en%d, led1_type=%d", cfg_ptr->led_idx, cfg_ptr->type);
+    CMR_LOGD("led0_enable=%d,led1_enable=%d, led_type=%d", cfg_ptr->led0_enable,
+             cfg_ptr->led1_enable, cfg_ptr->type);
     switch (cfg_ptr->type) {
     case ISP_FLASH_TYPE_PREFLASH:
-        if (cfg_ptr->led_idx) {
-            led0_status = FLASH_OPEN;
-            led1_status = FLASH_OPEN;
+        if (cfg_ptr->led0_enable || cfg_ptr->led1_enable) {
+            real_type = FLASH_OPEN;
         } else {
-            led0_status = FLASH_CLOSE_AFTER_OPEN;
-            led1_status = FLASH_CLOSE_AFTER_OPEN;
+            real_type = FLASH_CLOSE_AFTER_OPEN;
         }
         break;
     case ISP_FLASH_TYPE_MAIN:
-        if (cfg_ptr->led_idx) {
-            led0_status = FLASH_HIGH_LIGHT;
-            led1_status = FLASH_HIGH_LIGHT;
+        if (cfg_ptr->led0_enable || cfg_ptr->led1_enable) {
+            real_type = FLASH_HIGH_LIGHT;
         } else {
-            led0_status = FLASH_CLOSE_AFTER_OPEN;
-            led1_status = FLASH_CLOSE_AFTER_OPEN;
+            real_type = FLASH_CLOSE_AFTER_OPEN;
         }
         break;
     default:
@@ -2988,8 +2984,9 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
         break;
     }
 
-    flash_opt.led0_status = led0_status;
-    flash_opt.led1_status = led1_status;
+    flash_opt.led0_enable = cfg_ptr->led0_enable;
+    flash_opt.led1_enable = cfg_ptr->led1_enable;
+    flash_opt.flash_mode = real_type;
     flash_opt.flash_index = cxt->camera_id;
     ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
@@ -6277,8 +6274,9 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             // cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
             // SENSOR_EXIF_CTRL_FLASH, 0);
         }
-        flash_opt.led0_status = param_ptr->cmd_value;
-        flash_opt.led1_status = param_ptr->cmd_value;
+        flash_opt.led0_enable = 1;
+        flash_opt.led1_enable = 1;
+        flash_opt.flash_mode = param_ptr->cmd_value;
         flash_opt.flash_index = cxt->camera_id;
         cmr_grab_flash_cb(grab_handle, &flash_opt);
     } break;
