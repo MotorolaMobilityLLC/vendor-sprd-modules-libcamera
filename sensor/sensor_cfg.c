@@ -344,7 +344,7 @@ uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt,
             break;
         case SENSOR_DEVICE2:
             tab_lenght =
-                (sizeof(main_sensor_infor_tab) / sizeof(SENSOR_MATCH_T));
+                (sizeof(sensor2_infor_tab) / sizeof(SENSOR_MATCH_T));
             break;
         case SENSOR_DEVICE3:
             tab_lenght = (sizeof(sensor3_infor_tab) / sizeof(SENSOR_MATCH_T));
