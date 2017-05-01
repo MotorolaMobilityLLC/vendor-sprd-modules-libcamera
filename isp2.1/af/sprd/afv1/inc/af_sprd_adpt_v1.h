@@ -86,15 +86,12 @@ static const char *caf_state_str[] = {
 	"caf searching"
 };
 
+#define CAF_STATE_STR(state)    caf_state_str[state]
+
 enum dcam_after_vcm {
 	DCAM_AFTER_VCM_NO = 0,
 	DCAM_AFTER_VCM_YES
 };
-
-#define CAF_STATE_STR(state)    caf_state_str[state]
-
-static char AF_MODE[300] = { '\0' };
-static char AF_POS[100] = { '\0' };
 
 typedef struct _isp_info {
 	cmr_u32 width;
@@ -289,7 +286,7 @@ typedef struct _af_ctrl {
 	enum scene curr_scene;
 	eAF_MODE algo_mode;
 	cmr_u32 takePicture_timeout;
-	cmr_u32 request_mode;	// enum isp_focus_mode af_mode
+	cmr_u32 request_mode;
 	cmr_u32 need_re_trigger;
 	cmr_u64 vcm_timestamp;
 	cmr_u64 dcam_timestamp;
@@ -347,6 +344,9 @@ typedef struct _af_ctrl {
 	cmr_u32 afm_skip_num;
 	Bokeh_tuning_param bokeh_param;
 	afm_tuning_sharkl2 afm_tuning;
+	struct aft_proc_calc_param prm_ae;
+	struct aft_proc_calc_param prm_af;
+	struct aft_proc_calc_param prm_sensor;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);

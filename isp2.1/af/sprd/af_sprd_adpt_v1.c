@@ -27,7 +27,7 @@
 #define     UNUSED(param)  (void)(param)
 #endif
 
-#define FOCUS_STAT_DATA_NUM	2
+#define FOCUS_STAT_DATA_NUM 2
 
 static char AFlog_buffer[2048] = { 0 };
 
@@ -320,7 +320,7 @@ static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
 	return pos;
 }
 
-static void lens_move_to(af_ctrl_t * af, cmr_s32 pos)
+static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
@@ -648,18 +648,13 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 {
 	af_ctrl_t *af = cookie;
 	cmr_u64 spsmd[MAX_ROI_NUM];
+	cmr_u64 sum = 0;
 	cmr_u32 i;
 	memset(fv, 0, sizeof(fv[0]) * T_TOTAL_FILTER_TYPE);
+	memset(&(spsmd[0]), 0, sizeof(cmr_u64) * MAX_ROI_NUM);
+	afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num);
 
 	if (1 != af->af_tuning_data.flag || 1 != af->win_config->win_strategic) {	//default window config
-		//cmr_s32 i;
-		cmr_u64 sum;
-
-		sum = 0;
-		memset(&(spsmd[0]), 0, sizeof(cmr_u64) * MAX_ROI_NUM);
-		afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num);
-
-		//sum = 0.2*spsmd[0]+spsmd[1]+3*spsmd[2];
 		switch (af->state) {
 		case STATE_FAF:
 			sum = spsmd[0] + spsmd[1] + spsmd[2] + spsmd[3] + 8 * spsmd[4] + spsmd[5] + spsmd[6] + spsmd[7] + spsmd[8];
@@ -667,9 +662,7 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 			break;
 		default:
 			sum = spsmd[9];	//3///3x3 windows,the 9th window is biggest covering all the other window
-#if 0
-			sum = spsmd[1] + 8 * spsmd[2];	/// the 0th window cover 1st and 2nd window,1st window cover 2nd window
-#endif
+			//sum = spsmd[1] + 8 * spsmd[2];        /// the 0th window cover 1st and 2nd window,1st window cover 2nd window
 			fv[T_SPSMD] = sum;
 			break;
 		}
@@ -677,30 +670,11 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 		if (p_stat_data) {	//for caf calc
 			p_stat_data->roi_num = af->roi.num;
 			p_stat_data->stat_num = FOCUS_STAT_DATA_NUM;
-			/*
-			   ISP_LOGV("Copy data struct %lld / %lld / %lld %lld / %lld / %lld "
-			   ,af->af_fv_val.af_fv0[0],af->af_fv_val.af_fv0[1],af->af_fv_val.af_fv0[2]
-			   ,af->af_fv_val.af_fv1[0],af->af_fv_val.af_fv1[1],af->af_fv_val.af_fv1[2]);
-
-			   for (i = 0; i < p_stat_data->roi_num; i++) {
-			   ISP_LOGV("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
-			   }
-
-			   for (i = 0; i < p_stat_data->roi_num; i++) {
-			   ISP_LOGV("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
-			   }
-			 */
 			p_stat_data->p_stat = &(af->af_fv_val.af_fv0[0]);
 		}
 		ISP_LOGV("[%d][%d]spsmd sum %lld", af->state, af->roi.num, sum);
-		//_LOGD("fv[T_SPSMD] %lld", fv[T_SPSMD]);
 	} else {
-		cmr_u32 i;
-		cmr_u64 sum;
-
-		afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num);
-
-		sum = 0;
+		//todo : p_stat_data
 		for (i = 0; i < af->roi.num; ++i)	// for caf, the weight in last window is 0
 			sum += spsmd[i] * af->win_config->win_weight[i];
 		fv[T_SPSMD] = sum;
@@ -1750,7 +1724,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 }
 
 /* called each frame */
-static cmr_s32 af_test_lens(af_ctrl_t * af)
+static cmr_s32 af_test_lens(af_ctrl_t * af, cmr_u16 pos)
 {
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(&af->fv, af->algo_mode);
@@ -1758,9 +1732,9 @@ static cmr_s32 af_test_lens(af_ctrl_t * af)
 	ISP_LOGV("AF_mode = %d", af->fv.AF_mode);
 	pthread_mutex_unlock(&af->af_work_lock);
 
-	ISP_LOGV("af_pos_set3 %s", AF_POS);
-	lens_move_to(af, atoi(AF_POS));
-	ISP_LOGV("af_pos_set4 %s", AF_POS);
+	ISP_LOGV("af_pos_set3 %d", pos);
+	lens_move_to(af, pos);
+	ISP_LOGV("af_pos_set4 %d", pos);
 	return 0;
 }
 
@@ -1768,7 +1742,8 @@ static cmr_s32 af_test_lens(af_ctrl_t * af)
 static void *loop_for_test_mode(void *data_client)
 {
 	af_ctrl_t *af = NULL;
-
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
+	char AF_POS[PROPERTY_VALUE_MAX] = { '\0' };
 	af = data_client;
 
 	while (0 == af->test_loop_quit) {
@@ -1781,7 +1756,7 @@ static void *loop_for_test_mode(void *data_client)
 		property_get("af_set_pos", AF_POS, "none");
 		ISP_LOGV("test AF_POS %s", AF_POS);
 		if (0 != strcmp(AF_POS, "none")) {
-			af_test_lens(af);
+			af_test_lens(af, (cmr_u16) atoi(AF_POS));
 		}
 	}
 	af->test_loop_quit = 1;
@@ -1853,22 +1828,19 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	}
 }
 
-static struct aft_proc_calc_param prm_af;
 static void caf_monitor_process_af(af_ctrl_t * af)
 {
 	cmr_u64 fv[10];
-	struct aft_proc_calc_param *prm = &prm_af;
+	struct aft_proc_calc_param *prm = &(af->prm_af);
 
 	memset(fv, 0, sizeof(fv));
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
+	afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
 
 	if (1 != af->af_tuning_data.flag || 1 != af->win_config->win_strategic) {	//default window config
 /*
 		cmr_s32 i;
 		cmr_u64 sum;
-*/
-		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
-/*
 		sum = 0;
 		for (i=0; i<9; ++i)
 		sum += fv[i];
@@ -1879,7 +1851,6 @@ static void caf_monitor_process_af(af_ctrl_t * af)
 */
 		//ISP_LOGV("af->roi.num %d spsmd %lld", af->roi.num, fv[af->roi.num - 1]);
 	} else {
-		afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
 		fv[0] = fv[af->roi.num - 1];	// the fv in last window is for caf trigger
 	}
 
@@ -1931,10 +1902,9 @@ static void calc_histogram(af_ctrl_t * af, isp_awb_statistic_hist_info_t * stat)
 	}
 }
 
-static struct aft_proc_calc_param prm_ae;
 static void caf_monitor_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae, isp_awb_statistic_hist_info_t * stat)
 {
-	struct aft_proc_calc_param *prm = &prm_ae;
+	struct aft_proc_calc_param *prm = &(af->prm_ae);
 	ISP_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
 
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
@@ -1961,12 +1931,11 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae,
 	caf_monitor_calc(af, prm);
 }
 
-struct aft_proc_calc_param prm_sensor;
 static void caf_monitor_process_sensor(af_ctrl_t * af, struct af_aux_sensor_info_t *in)
 {
 	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
 	uint32_t sensor_type = aux_sensor_info->type;
-	struct aft_proc_calc_param *prm = &prm_sensor;
+	struct aft_proc_calc_param *prm = &(af->prm_sensor);
 
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
 	switch (sensor_type) {
@@ -2274,6 +2243,7 @@ static ERRCODE af_wait_caf_finish(af_ctrl_t * af)
 static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 af_mode = *(cmr_u32 *) in_param;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
@@ -2442,6 +2412,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 #define AE_BLOCK_W 32
 #define AE_BLOCK_H 32
 
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 Y_sx = 0, Y_ex = 0, Y_sy = 0, Y_ey = 0, r_sum = 0, g_sum = 0, b_sum = 0, y_sum = 0;
 	float af_area, ae_area;
 	cmr_u16 width, height, i = 0, blockw, blockh, index;
@@ -2790,10 +2761,11 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
 	struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
-	cmr_int rtn = AFV1_SUCCESS;
-	cmr_int i = 0;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
+	cmr_int rtn = AFV1_SUCCESS;
+	cmr_int i = 0;
 	ISP_LOGV("B");
 
 	rtn = _check_handle(handle);
@@ -2935,12 +2907,13 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
 	UNUSED(param1);
-	cmr_int rtn = AFV1_SUCCESS;
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	struct isp_video_start *in_ptr = NULL;
 	AF_Trigger_Data aft_in;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
+	cmr_int rtn = AFV1_SUCCESS;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
