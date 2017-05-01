@@ -340,6 +340,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AE_LOCK_UNLOCK,
     COM_ISP_SET_ROI_CONVERGENCE_REQ,
     COM_ISP_SET_SNAPSHOT_FINISHED,
+    COM_ISP_SET_EXIF_DEBUG_INFO,
     COM_ISP_GET_EXIF_DEBUG_INFO,
     COM_ISP_GET_CUR_ADGAIN_EXP,
     COM_ISP_SET_FLASH_MODE,
@@ -720,12 +721,8 @@ struct common_isp_cmd_param {
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
         struct cmr_win_area win_area;
         struct isp_flash_notice flash_notice;
-        //#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
-        // defined(CONFIG_CAMERA_ISP_VERSION_V4)
         struct isp_face_area fd_param;
         struct isp_ae_fps fps_param;
-
-        //#endif
         struct cmr_range_fps_param range_fps;
         struct isp_info isp_dbg_info;
         struct isp_adgain_exp_info isp_adgain;

@@ -300,6 +300,7 @@ static cmr_int isp3a_set_ae_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_dzoom(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_flash_mode(cmr_handle isp_3a_handle, void *param_ptr);
@@ -423,6 +424,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_DZOOM_FACTOR,        isp3a_set_dzoom},
 	{ISP_CTRL_SET_CONVERGENCE_REQ,     isp3a_set_convergence_req},
 	{ISP_CTRL_SET_SNAPSHOT_FINISHED,   isp3a_set_snapshot_finished},
+	{ISP_CTRL_SET_EXIF_DEBUG_INFO,     isp3a_set_exif_debug_info},
 	{ISP_CTRL_GET_EXIF_DEBUG_INFO,     isp3a_get_exif_debug_info},
 	{ISP_CTRL_GET_CUR_ADGAIN_EXP,      isp3a_get_adgain_exp_info},
 	{ISP_CTRL_SET_FLASH_MODE,          isp3a_set_flash_mode},
@@ -3038,16 +3040,89 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
+cmr_int isp3a_set_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct isp_info                             *exif_info_ptr = (struct isp_info *)param_ptr;
+	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
 	union awb_ctrl_cmd_out                      awb_out;
 	struct ae_ctrl_param_out                    ae_out;
 	struct afl_ctrl_param_out                   afl_out;
 	struct af_ctrl_param_out                    af_out;
 	cmr_u32                                     size = 0;
+
+	memset(&awb_out, 0, sizeof(awb_out));
+	memset(&ae_out, 0, sizeof(ae_out));
+	memset(&afl_out, 0, sizeof(afl_out));
+	memset(&af_out, 0, sizeof(af_out));
+
+	if (exif_info_ptr->update_exif) {
+		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
+		if (ret) {
+			ISP_LOGE("failed to get ae ext info 0x%lx", ret);
+		}
+		exif_ptr->other_debug_info1.flash_flag = ae_out.debug_info.flash_flag;
+		exif_ptr->other_debug_info1.fn_value = ae_out.debug_info.fn_value;
+		exif_ptr->other_debug_info1.valid_ad_gain = ae_out.debug_info.valid_ad_gain;
+		exif_ptr->other_debug_info1.valid_exposure_line = ae_out.debug_info.valid_exposure_line;
+		exif_ptr->other_debug_info1.valid_exposure_time = ae_out.debug_info.valid_exposure_time;
+		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
+		if (ret) {
+			ISP_LOGE("failed to get ae exif info 0x%lx", ret);
+		}
+		if (ae_out.exif_param.data) {
+			size = MIN(ae_out.exif_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
+			memcpy((void *)&exif_ptr->ae_fe_debug_info1[0], (void *)ae_out.exif_param.data, size);
+			ISP_LOGV("ae exif debug size is %d", size);
+		}
+
+		ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_GET_EXIF_DATA, NULL, &afl_out);
+		if (ret) {
+			ISP_LOGE("failed to get afl exif info 0x%lx", ret);
+		}
+		if (afl_out.exif_param.data) {
+			size = MIN(afl_out.exif_param.size, MAX_FLICKER_DEBUG_SIZE_STRUCT1);
+			memcpy((void *)&exif_ptr->flicker_debug_info1[0], (void *)afl_out.exif_param.data, size);
+			ISP_LOGV("afl exif debug size is %d", size);
+		}
+
+		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
+		if (ret) {
+			ISP_LOGE("failed to get awb exif info 0x%lx", ret);
+		}
+		if (awb_out.debug_info.addr) {
+			size = MIN(awb_out.debug_info.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
+			memcpy((void *)&exif_ptr->awb_debug_info1[0], awb_out.debug_info.addr, size);
+			ISP_LOGV("awb exif debug size is %d", size);
+		}
+
+		if (cxt->af_cxt.af_support) {
+			ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+					     AF_CTRL_CMD_GET_EXIF_DEBUG_INFO,
+					     NULL, (void *)&af_out.exif_info);
+			if (ret) {
+				ISP_LOGE("failed to get af exif info 0x%lx", ret);
+			}
+			if (af_out.exif_info.addr) {
+				size = MIN(MAX_AF_DEBUG_SIZE_STRUCT1, af_out.exif_info.size);
+				memcpy((void *)&exif_ptr->af_debug_info1[0], af_out.exif_info.addr, size);
+				ISP_LOGV("af exif debug size is %d", size);
+			}
+		}
+	} else {
+		//exif_ptr->other_debug_info1.mirror = exif_info_ptr->ex_jpg_exif.mirror;
+		//exif_ptr->other_debug_info1.orientation = exif_info_ptr->ex_jpg_exif.orientation / 90 - 1;
+	}
+
+	return ret;
+}
+
+cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct isp_info                             *exif_info_ptr = (struct isp_info *)param_ptr;
 	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
 	float                                       libVersion;
 
@@ -3057,11 +3132,6 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	exif_info_ptr->size = 0;
 	exif_info_ptr->addr = NULL;
-
-	memset(&awb_out, 0, sizeof(awb_out));
-	memset(&ae_out, 0, sizeof(ae_out));
-	memset(&afl_out, 0, sizeof(afl_out));
-	memset(&af_out, 0, sizeof(af_out));
 
 	strcpy((char *)&exif_ptr->string1[0], "exif_str_g2v1");
 	strcpy((char *)&exif_ptr->end_string[0], "end_exif_str_g2v1");
@@ -3104,58 +3174,9 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_b;
 	}
 
-	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
-	if (ret) {
-		ISP_LOGE("failed to get ae ext info 0x%lx", ret);
-	}
-	exif_ptr->other_debug_info1.flash_flag = ae_out.debug_info.flash_flag;
-	exif_ptr->other_debug_info1.fn_value = ae_out.debug_info.fn_value;
-	exif_ptr->other_debug_info1.valid_ad_gain = ae_out.debug_info.valid_ad_gain;
-	exif_ptr->other_debug_info1.valid_exposure_line = ae_out.debug_info.valid_exposure_line;
-	exif_ptr->other_debug_info1.valid_exposure_time = ae_out.debug_info.valid_exposure_time;
 	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
-	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
 	if (ret) {
-		ISP_LOGE("failed to get ae exif info 0x%lx", ret);
-	}
-	if (ae_out.exif_param.data) {
-		size = MIN(ae_out.exif_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
-		memcpy((void *)&exif_ptr->ae_fe_debug_info1[0], (void *)ae_out.exif_param.data, size);
-		ISP_LOGV("ae exif debug size is %d", size);
-	}
-
-	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_GET_EXIF_DATA, NULL, &afl_out);
-	if (ret) {
-		ISP_LOGE("failed to get afl exif info 0x%lx", ret);
-	}
-	if (afl_out.exif_param.data) {
-		size = MIN(afl_out.exif_param.size, MAX_FLICKER_DEBUG_SIZE_STRUCT1);
-		memcpy((void *)&exif_ptr->flicker_debug_info1[0], (void *)afl_out.exif_param.data, size);
-		ISP_LOGV("afl exif debug size is %d", size);
-	}
-
-	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
-	if (ret) {
-		ISP_LOGE("failed to get awb exif info 0x%lx", ret);
-	}
-	if (awb_out.debug_info.addr) {
-		size = MIN(awb_out.debug_info.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
-		memcpy((void *)&exif_ptr->awb_debug_info1[0], awb_out.debug_info.addr, size);
-		ISP_LOGV("awb exif debug size is %d", size);
-	}
-
-	if (cxt->af_cxt.af_support) {
-		ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
-				    AF_CTRL_CMD_GET_EXIF_DEBUG_INFO,
-				    NULL, (void *)&af_out.exif_info);
-		if (ret) {
-			ISP_LOGE("failed to get af exif info 0x%lx", ret);
-		}
-		if (af_out.exif_info.addr) {
-			size = MIN(MAX_AF_DEBUG_SIZE_STRUCT1, af_out.exif_info.size);
-			memcpy((void *)&exif_ptr->af_debug_info1[0], af_out.exif_info.addr, size);
-			ISP_LOGV("af exif debug size is %d", size);
-		}
+		ISP_LOGE("failed to driver exif 0x%lx", ret);
 	}
 	cxt->debug_data.exif_debug_info.structure_size1 = sizeof(cxt->debug_data.exif_debug_info);
 	exif_info_ptr->size = sizeof(cxt->debug_data.exif_debug_info);

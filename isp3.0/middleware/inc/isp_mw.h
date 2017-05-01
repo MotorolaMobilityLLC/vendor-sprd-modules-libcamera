@@ -274,6 +274,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_DZOOM_FACTOR,
 	ISP_CTRL_SET_CONVERGENCE_REQ,
 	ISP_CTRL_SET_SNAPSHOT_FINISHED,
+	ISP_CTRL_SET_EXIF_DEBUG_INFO,
 	ISP_CTRL_GET_EXIF_DEBUG_INFO,
 	ISP_CTRL_GET_CUR_ADGAIN_EXP,
 	ISP_CTRL_SET_FLASH_MODE,
@@ -466,7 +467,12 @@ struct isp_ops {
 	cmr_s32 (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 };
 
-struct  isp_sensor_ex_info {
+struct isp_ex_jpg_info {
+	cmr_u8 mirror;   /*  0: off, 1: turn on */
+	cmr_uint orientation;
+};
+
+struct isp_sensor_ex_info {
 	cmr_u32 f_num;
 	cmr_u32 focal_length;
 	cmr_u32 max_fps;
@@ -482,6 +488,7 @@ struct  isp_sensor_ex_info {
 	cmr_s8 *sensor_version_info;
 	struct af_pose_dis pos_dis;
 	cmr_u32 af_supported;
+	struct isp_ex_jpg_info ex_jpg_info;
 };
 
 struct isp_sensor_fps_info {
@@ -597,6 +604,8 @@ struct isp_ae_fps {
 struct isp_info {
 	void *addr;
 	cmr_int size;
+	cmr_u8 update_exif;
+	struct isp_ex_jpg_info ex_jpg_exif;
 };
 
 struct isp_hdr_ev_param {
