@@ -115,6 +115,7 @@ struct isp_pm_context {
 	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];	/*bakup isp tuning parameter, come frome sensor tuning file */
 	cmr_u32 param_source;
 	isp_ctrl_context *isp_ctrl_cxt_handle;
+	cmr_u32 cur_mode_id;
 };
 
 struct isp_pm_set_param {
@@ -1498,6 +1499,7 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 				if (cxt_ptr->tune_mode_array[i] != NULL) {
 					if (cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
 						*((cmr_s32 *) out_ptr) = cxt_ptr->tune_mode_array[i]->mode_id;
+						cxt_ptr->cur_mode_id = cxt_ptr->tune_mode_array[i]->mode_id;
 						break;
 					}
 				}
@@ -1524,6 +1526,7 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 				if (cxt_ptr->tune_mode_array[i] != NULL) {
 					if (cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
 						*((cmr_s32 *) out_ptr) = cxt_ptr->tune_mode_array[i]->mode_id;
+						cxt_ptr->cur_mode_id = cxt_ptr->tune_mode_array[i]->mode_id;
 						break;
 					}
 				}
@@ -1865,11 +1868,13 @@ cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, 
 		goto isp_pm_update_error_exit;
 	}
 
+	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
+
 	switch (cmd) {
 	case ISP_PM_CMD_UPDATE_ALL_PARAMS:
 		{
 			struct isp_pm_update_input *update_input_ptr = (struct isp_pm_update_input *)input;
-			rtn = isp_pm_param_init_and_update(handle, (struct isp_pm_init_input *)update_input_ptr, ISP_MODE_ID_PRV_0);
+			rtn = isp_pm_param_init_and_update(handle, (struct isp_pm_init_input *)update_input_ptr, cxt_ptr->cur_mode_id);
 		}
 		break;
 
