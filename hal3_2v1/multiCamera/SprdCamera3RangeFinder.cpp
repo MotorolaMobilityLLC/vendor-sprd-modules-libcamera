@@ -27,7 +27,7 @@
  *
  */
 
-#define LOG_TAG "SprdCamera3RangeFinder"
+#define LOG_TAG "Cam3RangeFinder"
 #include "SprdCamera3RangeFinder.h"
 
 using namespace android;

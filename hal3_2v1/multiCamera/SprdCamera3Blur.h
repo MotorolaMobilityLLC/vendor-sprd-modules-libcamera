@@ -47,6 +47,7 @@
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
 #include "ts_makeup_api.h"
+#include "SprdCamera3MultiBase.h"
 
 namespace sprdcamera {
 
@@ -56,13 +57,15 @@ namespace sprdcamera {
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
 #define BLUR_LIB_BOKEH_NUM (2)
-#define BLUR_USE_DUAL_CAMERA (1)
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (15)
-#define BLUR_REFOCUS_2_PARAM_NUM (14)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (18)
+#define BLUR_REFOCUS_2_PARAM_NUM (17)
 #define BLUR_AF_WINDOW_NUM (9)
+#define BLUR_MAX_ROI (10)
+#define BLUR_CALI_SEQ_LEN (20)
+#define BLUR_GET_SEQ_FROM_AF (0)
 #define BLUR_REFOCUS_PARAM_NUM                                                 \
     (BLUR_AF_WINDOW_NUM + BLUR_REFOCUS_2_PARAM_NUM +                           \
-     BLUR_REFOCUS_COMMON_PARAM_NUM)
+     BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_MAX_ROI * 4 + BLUR_CALI_SEQ_LEN)
 
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
@@ -81,17 +84,6 @@ typedef enum {
     BLUR_MSG_EXIT
 } blurMsgType;
 
-typedef enum {
-    /* Main camera device id*/
-    CAM_BLUR_MAIN_ID = 0,
-    /* Main front camera device id*/
-    CAM_BLUR_MAIN_ID_2 = 1,
-    /* Aux camera device id*/
-    CAM_BLUR_AUX_ID = 2,
-    /* Aux front camera device id*/
-    CAM_BLUR_AUX_ID_2 = 3,
-} CameraBlurID;
-
 typedef struct {
     uint32_t frame_number;
     const camera3_stream_buffer_t *input_buffer;
@@ -104,24 +96,24 @@ typedef struct {
 } blur_queue_msg_t;
 
 typedef struct {
-    const native_handle_t *native_handle;
-    MemIon *pHeapIon;
-} new_ion_mem_blur_t;
-
-typedef struct {
     int width;                       // image width
     int height;                      // image height
     float min_slope;                 // 0.001~0.01, default is 0.005
     float max_slope;                 // 0.01~0.1, default is 0.05
     float findex2gamma_adjust_ratio; // 2~11, default is 6.0
+    int box_filter_size;
 } preview_init_params_t;
 
 typedef struct {
+    int roi_type;         // 0: circle 1:rectangle
     int f_number;         // 1 ~ 20
     unsigned short sel_x; /* The point which be touched */
     unsigned short sel_y; /* The point which be touched */
     int circle_size;      // for version 1.0 only
-    bool update;
+    // for rectangle
+    int valid_roi;
+    int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
+    int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
 } preview_weight_params_t;
 
 typedef struct {
@@ -132,6 +124,7 @@ typedef struct {
     float findex2gamma_adjust_ratio; // 2~11, default is 6.0
     int Scalingratio;                // only support 2,4,6,8
     int SmoothWinSize;               // odd number
+    int box_filter_size; // odd number, default: the same as SmoothWinSize
     // below for 2.0 only
     /* Register Parameters : depend on sensor module */
     unsigned short vcm_dac_up_bound;  /* Default value : 0 */
@@ -153,26 +146,37 @@ typedef struct {
     /* For Tuning Range : [0, 32], Default value : 4 */
     unsigned char valid_depth;
     unsigned short slope; /* For Tuning : Range : [0, 16] default is 8 */
+    unsigned char valid_depth_up_bound;  /* For Tuning */
+    unsigned char valid_depth_low_bound; /* For Tuning */
+    unsigned short *cali_dist_seq;       /* Pointer */
+    unsigned short *cali_dac_seq;        /* Pointer */
+    unsigned short cali_seq_len;
 } capture_init_params_t;
 
 typedef struct {
     int version;                  // 1~2, 1: 1.0 bokeh; 2: 2.0 bokeh with AF
+    int roi_type;                 // 0: circle 1:rectangle
     int f_number;                 // 1 ~ 20
     unsigned short sel_x;         /* The point which be touched */
     unsigned short sel_y;         /* The point which be touched */
     unsigned short *win_peak_pos; /* The seqence of peak position which be
                                      provided via struct isp_af_fullscan_info */
     int circle_size;              // for version 1.0 only
+    // for rectangle
+    int valid_roi;
+    int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
+    int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
 } capture_weight_params_t;
 
 typedef struct {
     void *handle;
     int (*iSmoothInit)(void **handle, int width, int height, float min_slope,
-                       float max_slope, float findex2gamma_adjust_ratio);
+                       float max_slope, float findex2gamma_adjust_ratio,
+                       int box_filter_size);
     int (*iSmoothCapInit)(void **handle, capture_init_params_t *params);
     int (*iSmoothDeinit)(void *handle);
-    int (*iSmoothCreateWeightMap)(void *handle, int sel_x, int sel_y,
-                                  int f_number, int circle_size);
+    int (*iSmoothCreateWeightMap)(void *handle,
+                                  preview_weight_params_t *params);
     int (*iSmoothCapCreateWeightMap)(void *handle,
                                      capture_weight_params_t *params);
     int (*iSmoothBlurImage)(void *handle, unsigned char *Src_YUV,
@@ -180,7 +184,7 @@ typedef struct {
     void *mHandle;
 } BlurAPI_t;
 
-class SprdCamera3Blur {
+class SprdCamera3Blur : SprdCamera3MultiBase {
   public:
     static void getCameraBlur(SprdCamera3Blur **pBlur);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -220,8 +224,7 @@ class SprdCamera3Blur {
     camera_metadata_t *mStaticMetadata;
     int mCaptureWidth;
     int mCaptureHeight;
-    bool mIommuEnabled;
-    new_ion_mem_blur_t mLocalCapBuffer[BLUR_LOCAL_CAPBUFF_NUM];
+    new_mem_t mLocalCapBuffer[BLUR_LOCAL_CAPBUFF_NUM];
     bool mFlushing;
     List<request_saved_blur_t> mSavedRequestList;
     camera3_stream_t *mSavedReqStreams[BLUR_MAX_NUM_STREAMS];
@@ -235,14 +238,8 @@ class SprdCamera3Blur {
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int blur_camera_id, struct camera_info *info);
-    int getStreamType(camera3_stream_t *new_stream);
     void freeLocalCapBuffer();
-    int allocateOne(int w, int h, uint32_t is_cache,
-                    new_ion_mem_blur_t *new_mem);
-    int validateCaptureRequest(camera3_capture_request_t *request);
     void saveRequest(camera3_capture_request_t *request);
-    void convertToRegions(int32_t *rect, int32_t *region, int weight);
-    uint8_t getCoveredValue(CameraMetadata &frame_settings);
 
   public:
     SprdCamera3Blur();
@@ -266,7 +263,6 @@ class SprdCamera3Blur {
         uint8_t getIspAfFullscanInfo();
         int blurHandle(struct private_handle_t *input,
                        struct private_handle_t *output);
-        void dumpFps();
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -287,20 +283,23 @@ class SprdCamera3Blur {
         bool mFirstCapture;
         bool mFirstPreview;
         bool mUpdateCaptureWeightParams;
+        bool mUpdatePreviewWeightParams;
         uint8_t mLastFaceNum;
-        int mVFrameCount;
-        int mVLastFrameCount;
-        nsecs_t mVLastFpsTime;
         unsigned short mWinPeakPos[BLUR_AF_WINDOW_NUM];
         preview_init_params_t mPreviewInitParams;
         preview_weight_params_t mPreviewWeightParams;
         capture_init_params_t mCaptureInitParams;
         capture_weight_params_t mCaptureWeightParams;
         int32_t mFaceInfo[4];
+        uint32_t mRotation;
+        int32_t mLastTouchX;
+        int32_t mLastTouchY;
+        bool mBlurBody;
+        bool mUpdataTouch;
 
       private:
         void waitMsgAvailable();
-        void doFaceMakeup(private_handle_t *private_handle);
+        void BlurFaceMakeup(private_handle_t *private_handle);
     };
     sp<CaptureThread> mCaptureThread;
     Mutex mMergequeueFinishMutex;
@@ -317,8 +316,7 @@ class SprdCamera3Blur {
     constructDefaultRequestSettings(const struct camera3_device *device,
                                     int type);
     void _dump(const struct camera3_device *device, int fd);
-    void dumpData(unsigned char *addr, int type, int size, int param1,
-                  int param2);
+
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
 };

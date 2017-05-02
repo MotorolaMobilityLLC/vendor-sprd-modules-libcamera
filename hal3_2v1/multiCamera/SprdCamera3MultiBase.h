@@ -55,8 +55,7 @@ class SprdCamera3MultiBase {
     SprdCamera3MultiBase();
     virtual ~SprdCamera3MultiBase();
 
-    virtual int allocateOne(int w, int h, uint32_t is_cache,
-                            new_mem_t *new_mem);
+    virtual int allocateOne(int w, int h, new_mem_t *new_mem);
     virtual void freeOneBuffer(new_mem_t *buffer);
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);

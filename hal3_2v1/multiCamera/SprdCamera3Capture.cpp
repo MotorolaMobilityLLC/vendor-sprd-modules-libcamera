@@ -26,7 +26,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#define LOG_TAG "SprdCamera3Capture"
+#define LOG_TAG "Cam3Capture"
 //#define LOG_NDEBUG 0
 #include "SprdCamera3Capture.h"
 

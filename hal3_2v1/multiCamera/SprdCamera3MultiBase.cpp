@@ -34,18 +34,18 @@ namespace sprdcamera {
 #define MAX_UNMATCHED_QUEUE_BASE_SIZE 3
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
-    : mIommuEnabled(false), mVFrameCount(0), mVLastFrameCount(0),
+    : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0) {}
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
 
-int SprdCamera3MultiBase::allocateOne(int w, int h, uint32_t is_cache,
-                                      new_mem_t *new_mem) {
+int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem) {
 
     int result = 0;
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
     private_handle_t *buffer;
+    uint32_t is_cache = 1;
 
     HAL_LOGI("E");
     mem_size = w * h * 3 / 2;
@@ -223,8 +223,8 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     HAL_LOGD("get cover_value %u", couvered_value);
     // update face[10].score info to mean convered value when api1 is used
     {
-        FACE_Tag *faceDetectionInfo =
-            (FACE_Tag *)&(hwiSub->mSetting->s_setting[CAM_AUX_ID].faceInfo);
+        FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(
+            hwiSub->mSetting->s_setting[CAM_BLUR_AUX_ID].faceInfo);
         uint8_t numFaces = faceDetectionInfo->face_num;
         uint8_t faceScores[CAMERA3MAXFACE];
         uint8_t dataSize = CAMERA3MAXFACE;

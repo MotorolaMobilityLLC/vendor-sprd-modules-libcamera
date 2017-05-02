@@ -26,7 +26,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#define LOG_TAG "SprdCamera3PageTurn"
+#define LOG_TAG "Cam3PageTurn"
 //#define LOG_NDEBUG 0
 #include "SprdCamera3PageTurn.h"
 #include <ui/Fence.h>

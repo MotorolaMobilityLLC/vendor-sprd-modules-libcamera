@@ -26,7 +26,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#define LOG_TAG "SprdCamera3StereoVideo"
+#define LOG_TAG "Cam3StereoVideo"
 //#define LOG_NDEBUG 0
 #include "SprdCamera3StereoVideo.h"
 
