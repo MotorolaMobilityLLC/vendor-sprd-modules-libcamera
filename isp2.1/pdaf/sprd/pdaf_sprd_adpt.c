@@ -275,12 +275,15 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y)/(8 << cxt->ppi_info.block_size.height);
 	cmr_u32 phasepixel_total_num = block_num_x*block_num_y * in_p->pd_info->pd_pos_size / 2;
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
-
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
-	cxt->pd_gobal_setting.dBeginX = in_p->pd_info->pd_offset_x;
-	cxt->pd_gobal_setting.dBeginY = in_p->pd_info->pd_offset_y;
-
+	if (cxt->pd_gobal_setting.dSensorMode) {
+		cxt->pd_gobal_setting.dBeginX = 64;
+		cxt->pd_gobal_setting.dBeginY = 32;
+	} else {
+		cxt->pd_gobal_setting.dBeginX = 24;
+		cxt->pd_gobal_setting.dBeginY = 24;
+	}
 	ret = pdaf_setup(cxt);
 	if (ret) {
 		ISP_LOGE("fail to do pdaf_setup %ld", ret);
