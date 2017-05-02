@@ -44,6 +44,11 @@ struct ae_init_in {
 	cmr_handle lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_u8 ae_role;  //1:master 0: slave
+	cmr_u8 sensor_role;
+	cmr_u32 is_multi_mode;
+#endif
 };
 
 struct ae_init_out {
@@ -67,6 +72,9 @@ struct ae_calc_in {
 	struct ae_stat_img_info info;
 	cmr_u32 sec;
 	cmr_u32 usec;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_s64 monoboottime;
+#endif
 	struct isp_sensor_fps_info sensor_fps;
 };
 

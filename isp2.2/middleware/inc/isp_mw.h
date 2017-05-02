@@ -100,6 +100,11 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_FLASH_TIME,
 	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	ISP_AE_DUAL_SYNC_WRITE_SET,
+	ISP_AE_DUAL_SYNC_READ_AEINFO,
+	ISP_AE_DUAL_SYNC_READ_AEINFO_SLV,
+#endif
 	 /*AF*/ ISP_AF_SET_POS,
 	ISP_AF_END_NOTICE,
 	ISP_AF_START_NOTICE,
@@ -145,6 +150,9 @@ enum isp_callback_cmd {
 	ISP_AE_EXP_TIME = 0x00001000,
 	ISP_VCM_STEP = 0x00002000,
 	ISP_HDR_EV_EFFECT_CALLBACK = 0x00003000,
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	ISP_AE_CALCOUT_NOTIFY = 0x00004000,
+#endif
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -771,6 +779,14 @@ struct isp_init_param {
 	struct isp_sensor_ex_info ex_info_slv;
 	void *setting_param_ptr_slv;	// slave sensor
 	struct sensor_otp_cust_info *otp_data_slv;
+#endif
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	void *setting_param_ptr_slv; // slave sensor
+	struct isp_sensor_ex_info ex_info_slv;
+	struct sensor_otp_cust_info *otp_data_slv;
+	cmr_u32 is_multi_mode;
+	cmr_u8 is_master;
 #endif
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;

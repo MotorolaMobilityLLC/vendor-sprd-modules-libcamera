@@ -30,7 +30,9 @@
 #include "isp_ioctrl.h"
 #include "isp_param_file_update.h"
 #include "pdaf_ctrl.h"
-
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+#include "isp_match.h"
+#endif
 #include <dlfcn.h>
 
 cmr_u32 isp_cur_bv;
@@ -126,7 +128,7 @@ static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 * param)
 	return rtn;
 
 }
-
+#ifndef CONFIG_CAMERA_DUAL_SYNC
 static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -170,6 +172,58 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 
 	return rtn;
 }
+#else
+static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, cmr_handle param0)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
+	enum isp_callback_cmd      cmd = 0;
+	cmr_handle param1=NULL;
+
+	if (NULL != cxt) {
+		switch (cb_type) {
+		case AE_CB_FLASHING_CONVERGED:
+		case AE_CB_CONVERGED:
+		case AE_CB_CLOSE_PREFLASH:
+		case AE_CB_PREFLASH_PERIOD_END:
+		case AE_CB_CLOSE_MAIN_FLASH:
+			cmd = ISP_AE_STAB_CALLBACK;
+			break;
+		case AE_CB_QUICKMODE_DOWN:
+			cmd = ISP_QUICK_MODE_DOWN;
+			break;
+		case AE_CB_TOUCH_AE_NOTIFY:
+		case AE_CB_STAB_NOTIFY:
+			cmd = ISP_AE_STAB_NOTIFY;
+			break;
+		case AE_CB_AE_LOCK_NOTIFY:
+			cmd = ISP_AE_LOCK_NOTIFY;
+			break;
+		case AE_CB_AE_UNLOCK_NOTIFY:
+			cmd = ISP_AE_UNLOCK_NOTIFY;
+			break;
+		case AE_CB_HDR_START:
+			cmd = ISP_HDR_EV_EFFECT_CALLBACK;
+			break;
+		case AE_CB_AE_CALCOUT_NOTIFY:
+			cmd = ISP_AE_CALCOUT_NOTIFY;
+			param1=param0;
+			break;
+
+		default:
+			cmd = ISP_AE_STAB_CALLBACK;
+			break;
+		}
+
+		if (cxt->commn_cxt.callback) {
+			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT|cmd, param1, 0);
+		}
+	}
+
+	return rtn;
+}
+
+#endif
 
 static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
@@ -177,8 +231,33 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	switch (type) {
 	case ISP_AE_SET_GAIN:
-		rtn = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
+		rtn = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *)param0);
 		break;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	case ISP_AE_DUAL_SYNC_WRITE_SET:
+		rtn = cxt->ioctrl_ptr->write_aec_info(cxt->ioctrl_ptr->caller_handler, param0);
+		break;
+	case ISP_AE_DUAL_SYNC_READ_AEINFO:
+		rtn = cxt->ioctrl_ptr->read_aec_info(cxt->ioctrl_ptr->caller_handler, param0);
+		break;
+	case ISP_AE_DUAL_SYNC_READ_AEINFO_SLV:
+		if (cxt->is_multi_mode && cxt->is_master) {
+			cmr_handle isp_3a_handle_slv;
+			struct isp_alg_fw_context *cxt_slv = NULL;
+
+			isp_3a_handle_slv = isp_br_get_3a_handle(!cxt->is_master); //get slave 3a fw handle
+			cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
+			if (cxt_slv != NULL) {
+				cxt->ioctrl_ptr_slv = cxt_slv->ioctrl_ptr;
+				rtn = cxt->ioctrl_ptr_slv->read_aec_info(cxt->ioctrl_ptr_slv->caller_handler, param0);
+			}
+			else
+			{
+				ISP_LOGE("failed to get slave sensor handle , it is not ready");
+			}
+		}
+		break;
+#endif
 	case ISP_AE_SET_EXPOSURE:
 		rtn = cxt->ioctrl_ptr->set_exposure(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		break;
@@ -198,7 +277,11 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_STATISTICS_MODE, param0, param1);
 		break;
 	case ISP_AE_SET_AE_CALLBACK:
-		rtn = isp_alg_ae_callback(cxt, *(cmr_int *) param0);
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+		rtn = isp_alg_ae_callback(cxt, *(cmr_int *)param0, param1);
+#else
+		rtn = isp_alg_ae_callback(cxt, *(cmr_int *)param0);
+#endif
 		break;
 	case ISP_AE_GET_SYSTEM_TIME:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AE_SYSTEM_TIME, param0, param1);
@@ -501,6 +584,11 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cxt->ae_cxt.time.sec = statis_info->sec;
+	cxt->ae_cxt.time.usec = statis_info->usec;
+	cxt->ae_cxt.monoboottime = statis_info->monoboottime;
+#endif
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 
@@ -1375,9 +1463,8 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 		rtn = _ispProcessEndHandle((cmr_handle) cxt);
 		break;
 	case ISP_CTRL_EVT_AE:
-			rtn = ispalg_aem_stat_data_parser((cmr_handle) cxt, message->data);
-			break;
-
+		rtn = ispalg_aem_stat_data_parser((cmr_handle) cxt, message->data);
+		break;
 	case ISP_CTRL_EVT_SOF:
 		if (cxt->gamma_sof_cnt_eb) {
 			cxt->gamma_sof_cnt++;
@@ -1402,14 +1489,12 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 	case ISP_CTRL_EVT_AF:
 		rtn = ispalg_af_process((cmr_handle) cxt, message->sub_msg_type, message->data);
 		break;
-
 	case ISP_CTRL_EVT_BINNING:
 		rtn = ispalg_binning_stat_data_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_PDAF:
 		rtn = ispalg_pdaf_process((cmr_handle) cxt, message->sub_msg_type, message->data);
 		break;
-
 	default:
 		ISP_LOGV("don't support msg");
 		break;
@@ -1541,6 +1626,45 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if(cxt->is_multi_mode)
+	{
+		ae_input.ae_role = cxt->is_master;  //set ae role , can be changed
+	}
+
+	ae_input.sensor_role = cxt->is_master;	//set sesnor role
+	ae_input.is_multi_mode = cxt->is_multi_mode;	//set ae module
+	ISP_LOGI("sensor_role = %d, is_multi_mode=%d, ae_role=%d",
+		cxt->is_master, cxt->is_multi_mode , ae_input.ae_role);
+
+	//dualcam_aesync.module_info.module_otp_info.slave_ae_otp =input_ptr->otp_data->dual_otp;
+	if(cxt->is_multi_mode && !cxt->is_master)
+	{
+		struct match_data_param dualcam_aesync;
+		struct sensor_otp_ae_info *info = &cxt->otp_data->dual_otp.master_ae_info;
+		ISP_LOGV("lum=%zd, 1x=%zd, 2x=%zd, 4x=%zd, 8x=%zd, reserved=%zd",
+			info->ae_target_lum,
+			info->gain_1x_exp,
+			info->gain_2x_exp,
+			info->gain_4x_exp,
+			info->gain_8x_exp,
+			info->reserve);
+		dualcam_aesync.module_info.module_otp_info.slave_ae_otp.otp_info = cxt->otp_data->dual_otp.master_ae_info;
+		rtn = isp_br_ioctrl(cxt->camera_id,
+						SET_SLAVE_OTP_AE,
+						&dualcam_aesync.module_info.module_otp_info.slave_ae_otp.otp_info,
+						NULL);
+	}
+	else if(cxt->is_multi_mode)
+	{
+		struct match_data_param  dualcam_aesync;
+		dualcam_aesync.module_info.module_otp_info.slave_ae_otp.otp_info=cxt->otp_data->dual_otp.slave_ae_info;
+		rtn = isp_br_ioctrl(cxt->camera_id,
+						SET_MASTER_OTP_AE,
+						&dualcam_aesync.module_info.module_otp_info.master_ae_otp.otp_info,
+						NULL);
+	}
+#endif
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
 	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
@@ -2180,6 +2304,10 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cxt->is_master = input_ptr->init_param->is_master;
+	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
+#endif
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 
 	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));
@@ -2203,6 +2331,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	isp_br_init(cxt->is_master, cxt);
+#endif
 	rtn = isp_alg_sw_init(cxt, &isp_alg_input);
 	if (rtn) {
 		goto exit;
@@ -2263,6 +2394,9 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->commn_cxt.log_isp = NULL;
 	}
 
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	 isp_br_deinit(cxt->is_master);
+#endif
 	if (cxt->binning_stats.r_info) {
 		free((void *)cxt->binning_stats.r_info);
 	}

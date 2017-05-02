@@ -35,6 +35,12 @@ struct seq_cell {
 	cmr_u32 gain;	//it is invalid value while 0
 	cmr_u32 exp_time;
 	cmr_u32 dummy;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_u32 slave_exp_line;	//it is invalid value while 0
+	cmr_u32 slave_gain;	//it is invalid value while 0
+	cmr_u32 slave_exp_time;
+	cmr_u32 slave_dummy;
+#endif
 };
 
 struct seq_item {

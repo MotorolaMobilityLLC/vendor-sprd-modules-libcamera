@@ -163,6 +163,9 @@ enum ae_io_ctrl_cmd {
 	AE_GET_AF_INFO,
 	AE_HDR_START,
 	AE_GET_FLASH_WB_GAIN,
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	AE_CTRL_SET_ROLE,
+#endif
 	AE_IO_MAX
 };
 
@@ -198,6 +201,9 @@ enum ae_cb_type {
 	AE_CB_PREFLASH_PERIOD_END,
 	AE_CB_CLOSE_MAIN_FLASH,
 	AE_CB_HDR_START,
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	AE_CB_AE_CALCOUT_NOTIFY,	//for Binding frame and calc ae dt
+#endif
 	AE_CB_MAX
 };
 
@@ -397,25 +403,34 @@ struct ae_flash_cfg {
 
 struct ae_isp_ctrl_ops {
 	cmr_handle isp_handler;
-	 cmr_s32(*set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
-	 cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
-	 cmr_s32(*set_monitor) (cmr_handle handler, struct ae_monitor_cfg * in_param);
-	 cmr_s32(*set_monitor_win) (cmr_handle handler, struct ae_monitor_info * in_param);
-	 cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type);
-	 cmr_s32(*set_monitor_bypass) (cmr_handle handler, cmr_u32 is_bypass);
-	 cmr_s32(*get_system_time) (cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec);
-	 cmr_s32(*set_statistics_mode) (cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number);
+#ifdef CONFIG_CAMERA_SINGLE_WRITE
+	cmr_s32(*read_aec_info) (cmr_handle handler, cmr_handle aec_info); /* TBD master & slave will merge by bridge */
+	cmr_s32(*read_aec_info_slv) (cmr_handle handler, cmr_handle aec_info);
+	cmr_s32(*write_aec_info) (cmr_handle handler, cmr_handle aec_i2c_info);
+#endif
+	cmr_s32(*set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
+	cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
+	cmr_s32(*set_monitor) (cmr_handle handler, struct ae_monitor_cfg * in_param);
+	cmr_s32(*set_monitor_win) (cmr_handle handler, struct ae_monitor_info * in_param);
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type, cmr_handle param);
+#else
+	cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type);
+#endif
+	cmr_s32(*set_monitor_bypass) (cmr_handle handler, cmr_u32 is_bypass);
+	cmr_s32(*get_system_time) (cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec);
+	cmr_s32(*set_statistics_mode) (cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number);
 
-	 cmr_s32(*flash_get_charge) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_cell * cell_ptr);
-	 cmr_s32(*flash_get_time) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_cell * cell_ptr);
-	 cmr_s32(*flash_set_charge) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
-	 cmr_s32(*flash_set_time) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
-	 cmr_s32(*flash_ctrl) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
+	cmr_s32(*flash_get_charge) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_cell * cell_ptr);
+	cmr_s32(*flash_get_time) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_cell * cell_ptr);
+	cmr_s32(*flash_set_charge) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
+	cmr_s32(*flash_set_time) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
+	cmr_s32(*flash_ctrl) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
 
-	 cmr_s32(*ex_set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
-	 cmr_s32(*lcd_set_awb) (cmr_handle handler, cmr_u32 effect);
-	 cmr_s32(*set_rgb_gain) (cmr_handle handler, double rgb_gain_coeff);
-	 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
+	cmr_s32(*ex_set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
+	cmr_s32(*lcd_set_awb) (cmr_handle handler, cmr_u32 effect);
+	cmr_s32(*set_rgb_gain) (cmr_handle handler, double rgb_gain_coeff);
+	cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
 };
 
 struct ae_stat_img_info {

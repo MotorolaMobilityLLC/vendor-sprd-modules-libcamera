@@ -19,6 +19,9 @@
 
 #include "flat.h"
 #include "fae.h"
+#include "mulaes.h"
+#include "region.h"
+#include "touch_ae.h"
 
 #ifdef __cplusplus
 extern "C" {

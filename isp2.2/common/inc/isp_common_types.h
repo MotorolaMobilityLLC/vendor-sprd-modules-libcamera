@@ -21,7 +21,11 @@ struct ae_calc_out {
 	cmr_u32 flag;
 	float *ae_data;
 	cmr_s32 ae_data_size;
-
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_u32 sec;
+	cmr_u32 usec;
+	cmr_s64 monoboottime;
+#endif
 	struct tg_ae_ctrl_alc_log log_ae;
 };
 

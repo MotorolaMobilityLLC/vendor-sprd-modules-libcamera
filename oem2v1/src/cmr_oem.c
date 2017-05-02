@@ -3235,8 +3235,16 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.ex_info.af_supported = 0;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
+    isp_param.is_multi_mode = cxt->is_multi_mode;
 
-    isp_param.is_refocus = cxt->is_multi_mode;
+    if ((0 == cxt->camera_id) || (1 == cxt->camera_id)) // need modify,
+                                                        // initialized by app,
+                                                        // Similar to multi_mode
+        isp_param.is_master = 1;
+
+    CMR_LOGI("is_multi_mode %d: %d", cxt->is_multi_mode,
+             isp_param.is_multi_mode);
+#if 0
     if ((CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_1 == cxt->camera_id) &&
         cxt->is_multi_mode) {
         if (CAMERA_ID_0 == cxt->camera_id) {
@@ -3380,6 +3388,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
                  isp_param.ex_info_slv.capture_skip_num);
         CMR_LOGD("w %d h %d", isp_param.size.w, isp_param.size.h);
     }
+#endif
 #endif
 
     CMR_PRINT_TIME;
@@ -5677,8 +5686,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
                  isp_param.resolution_info.crop.st_y,
                  isp_param.resolution_info.crop.width,
                  isp_param.resolution_info.crop.height);
-        if (isp_param.resolution_info.sensor_max_size.w == isp_param.resolution_info.sensor_output_size.w)
-		isp_param.pdaf_enable = 1;
+        if (isp_param.resolution_info.sensor_max_size.w ==
+            isp_param.resolution_info.sensor_output_size.w)
+            isp_param.pdaf_enable = 1;
 
         SENSOR_MODE_FPS_T fps_info;
         ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle, cxt->camera_id,

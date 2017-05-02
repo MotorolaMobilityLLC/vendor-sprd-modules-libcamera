@@ -278,6 +278,11 @@ struct isp_statis_info {
 	cmr_u32 kaddr[2];
 	cmr_u32 buf_size;
 	cmr_s32 mfd;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_u32 sec;
+	cmr_u32	usec;
+	cmr_s64 monoboottime;
+#endif
 };
 
 typedef struct {

@@ -326,6 +326,12 @@ cmr_int seq_put(void *handle, struct seq_item * in_est_ptr, struct seq_cell * ou
 		push_write_cell.exp_time = in_est_ptr->cell.exp_time;
 		push_write_cell.exp_line = in_est_ptr->cell.exp_line;
 		push_write_cell.gain = in_est_ptr->cell.gain;
+#ifdef   CONFIG_CAMERA_DUAL_SYNC
+		push_write_cell.slave_dummy = in_est_ptr->cell.slave_dummy;
+		push_write_cell.slave_exp_time = in_est_ptr->cell.slave_exp_time;
+		push_write_cell.slave_exp_line = in_est_ptr->cell.slave_exp_line;
+		push_write_cell.slave_gain = in_est_ptr->cell.slave_gain;
+#endif
 	} else {
 		/*different valid frame */
 		if (cxt_ptr->is_first_exp) {
@@ -336,6 +342,15 @@ cmr_int seq_put(void *handle, struct seq_item * in_est_ptr, struct seq_cell * ou
 			push_write_cell.gain = cur_write_cell.gain;
 
 			push_nxt_write_cell.gain = in_est_ptr->cell.gain;
+#ifdef   CONFIG_CAMERA_DUAL_SYNC
+			push_write_cell.slave_dummy = in_est_ptr->cell.slave_dummy;
+			push_write_cell.slave_exp_time = in_est_ptr->cell.slave_exp_time;
+			push_write_cell.slave_exp_line = in_est_ptr->cell.slave_exp_line;
+			push_write_cell.slave_gain = cur_write_cell.slave_gain;
+
+			push_nxt_write_cell.slave_gain = in_est_ptr->cell.slave_gain;
+
+#endif
 #if 0				//speed up by same exp_line
 			if (cxt_ptr->pre_cell.exp_line == in_est_ptr->cell.exp_line) {
 				push_write_cell.gain = push_nxt_write_cell.gain;
@@ -361,6 +376,16 @@ cmr_int seq_put(void *handle, struct seq_item * in_est_ptr, struct seq_cell * ou
 			push_nxt_write_cell.exp_line = in_est_ptr->cell.exp_line;
 			push_nxt_write_cell.exp_time = in_est_ptr->cell.exp_time;
 			push_nxt_write_cell.dummy = in_est_ptr->cell.dummy;
+#ifdef   CONFIG_CAMERA_DUAL_SYNC
+			push_write_cell.slave_gain = in_est_ptr->cell.slave_gain;
+			push_write_cell.slave_exp_line	= cur_write_cell.slave_exp_line;
+			push_write_cell.slave_exp_time	= cur_write_cell.slave_exp_time;
+			push_write_cell.slave_dummy = cur_write_cell.slave_dummy;
+
+			push_nxt_write_cell.slave_exp_line	= in_est_ptr->cell.slave_exp_line;
+			push_nxt_write_cell.slave_exp_time	= in_est_ptr->cell.slave_exp_time;
+			push_nxt_write_cell.slave_dummy = in_est_ptr->cell.slave_dummy;
+#endif
 		}
 	}
 

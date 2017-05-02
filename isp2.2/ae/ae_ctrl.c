@@ -84,7 +84,39 @@ static cmr_s32 ae_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 
 	return 0;
 }
+#ifdef CONFIG_CAMERA_SINGLE_WRITE
 
+static cmr_s32  isp3a_write_aec_info(cmr_handle handler, cmr_handle dualsnyc_ptr)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_DUAL_SYNC_WRITE_SET, dualsnyc_ptr, NULL);
+	}
+	ISP_LOGD("AE set dual camear sync gain");
+	return 0;
+}
+static cmr_s32  isp3a_read_aec_info(cmr_handle handler, cmr_handle dualsnyc_ptr)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_DUAL_SYNC_READ_AEINFO, dualsnyc_ptr, NULL);
+	}
+	ISP_LOGD("AE set dual camear sync gain");
+	return 0;
+}
+static cmr_s32  isp3a_read_aec_info_slv(cmr_handle handler, cmr_handle dualsnyc_ptr)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_DUAL_SYNC_READ_AEINFO_SLV, dualsnyc_ptr, NULL);
+	}
+	ISP_LOGD("AE set dual camear sync gain");
+	return 0;
+}
+#endif
 static cmr_s32 ae_set_again(cmr_handle handler, struct ae_gain *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -140,6 +172,7 @@ static cmr_s32 ae_set_statistics_mode(cmr_handle handler, enum ae_statistics_mod
 	return 0;
 }
 
+#ifndef CONFIG_CAMERA_DUAL_SYNC
 static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -150,7 +183,19 @@ static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type)
 
 	return 0;
 }
+#else
+static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type, cmr_handle param)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_AE_CALLBACK, &cb_type, param);
+	}
+
+	return 0;
+}
+
+#endif
 static cmr_s32 ae_get_system_time(cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -500,6 +545,11 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae)
 	input_ptr->isp_ops.ex_set_exposure = ae_ex_set_exposure;
 	input_ptr->isp_ops.set_rgb_gain = ae_set_rgb_gain;
 	input_ptr->isp_ops.set_shutter_gain_delay_info = ae_set_shutter_gain_delay_info;
+#ifdef  CONFIG_CAMERA_SINGLE_WRITE
+	input_ptr->isp_ops.write_aec_info = isp3a_write_aec_info;
+	input_ptr->isp_ops.read_aec_info = isp3a_read_aec_info;
+	input_ptr->isp_ops.read_aec_info_slv= isp3a_read_aec_info_slv;
+#endif
 
 	cxt_ptr = (struct aectrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
