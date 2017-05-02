@@ -4550,10 +4550,11 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             enc_in_param.out_size.width = enc_in_param.out_size.height;
             enc_in_param.out_size.height = temp;
         }
-	memset(&isp_param, 0x00, sizeof(isp_param));
+        memset(&isp_param, 0x00, sizeof(isp_param));
         isp_param.isp_dbg_info.ex_jpg_exif.mirror = flip_on;
         isp_param.isp_dbg_info.ex_jpg_exif.orientation = rotation;
-        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_EXIF_DEBUG_INFO, &isp_param);
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_EXIF_DEBUG_INFO,
+                               &isp_param);
         if (ret) {
             CMR_LOGE("failed to set debug exif %ld", ret);
         }
@@ -6936,7 +6937,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_EXIF_DEBUG_INFO:
         isp_cmd = ISP_CTRL_SET_EXIF_DEBUG_INFO;
         ptr_flag = 1;
-        isp_param_ptr = (void*)&param_ptr->isp_dbg_info;
+        isp_param_ptr = (void *)&param_ptr->isp_dbg_info;
         break;
     case COM_ISP_GET_EXIF_DEBUG_INFO:
         isp_cmd = ISP_CTRL_GET_EXIF_DEBUG_INFO;
