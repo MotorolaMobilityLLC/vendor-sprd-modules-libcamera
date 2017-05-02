@@ -1073,7 +1073,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	case AF_DATA_AF:{
 			struct isp_statis_buf_input statis_buf;
 			statis_info = (struct isp_statis_info *)in_ptr;
-			k_addr = statis_info->kaddr;
+			k_addr = statis_info->kaddr[0];
 			u_addr = statis_info->vir_addr;
 
 			cmr_u32 af_temp[30];
@@ -1089,7 +1089,8 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			statis_buf.buf_size = statis_info->buf_size;
 			statis_buf.phy_addr = statis_info->phy_addr;
 			statis_buf.vir_addr = statis_info->vir_addr;
-			statis_buf.kaddr = statis_info->kaddr;
+			statis_buf.kaddr[0] = statis_info->kaddr[0];
+			statis_buf.kaddr[1] = statis_info->kaddr[1];
 			statis_buf.buf_property = ISP_AFM_BLOCK;
 			statis_buf.buf_flag = 1;
 			rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
@@ -1180,7 +1181,8 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
-	statis_buf.kaddr = statis_info->kaddr;
+	statis_buf.kaddr[0] = statis_info->kaddr[0];
+	statis_buf.kaddr[1] = statis_info->kaddr[1];
 	statis_buf.buf_property = ISP_PDAF_BLOCK;
 	statis_buf.buf_flag = 1;
 	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);

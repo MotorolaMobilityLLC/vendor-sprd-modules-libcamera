@@ -1250,7 +1250,8 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.buf_size = op.parm.frame.buf_size;
                 statis_info.phy_addr = op.parm.frame.phy_addr;
                 statis_info.vir_addr = op.parm.frame.vir_addr;
-                statis_info.kaddr = op.parm.frame.kaddr;
+                statis_info.kaddr[0] = op.parm.frame.kaddr[0];
+                statis_info.kaddr[1] = op.parm.frame.kaddr[1];
                 statis_info.irq_property = op.parm.frame.irq_property;
                 statis_info.mfd = op.parm.frame.mfd;
                 CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
