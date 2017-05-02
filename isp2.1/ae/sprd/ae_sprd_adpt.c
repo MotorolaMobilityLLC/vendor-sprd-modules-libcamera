@@ -3955,12 +3955,13 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_SET_FPS:
 		if (param) {
+			if (!cxt->high_fps_info.is_high_fps) {
 			struct ae_set_fps *fps = param;
-
 			cxt->cur_status.settings.min_fps = fps->min_fps;
 			cxt->cur_status.settings.max_fps = fps->max_fps;
 		ISP_LOGI("AE_SET_FPS (%d, %d)", cxt->cur_status.settings.min_fps,
 			cxt->cur_status.settings.max_fps);
+			}
 		}
 		break;
 
