@@ -460,6 +460,9 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle;
 	struct aectrl_work_lib *lib_ptr = NULL;
 
+	ISP_LOGI("just return");    // for bringup
+	return rtn;
+
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param ,param is NULL!");
 		goto exit;

@@ -199,6 +199,9 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_p
 	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handle_awb;
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
+	ISP_LOGE("awb_ctrl_ioctl return for bringup\n");
+	return rtn;
+
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param,param is NULL!");
 		goto exit;
