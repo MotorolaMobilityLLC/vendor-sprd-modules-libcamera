@@ -330,25 +330,6 @@ static SENSOR_MODE_FPS_INFO_T s_ov13855_mode_fps_info = {
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
-
-#if defined(CONFIG_DUAL_MODULE)
-LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting),0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting),1280,720, 24, SENSOR_IMAGE_FORMAT_RAW},
-    /*{ADDR_AND_LEN_OF_ARRAY(ov13855_1024x768_setting),1024,768,24,SENSOR_IMAGE_FORMAT_RAW},*/
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting),2112,1568,24,SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting),4224,3136,12,SENSOR_IMAGE_FORMAT_RAW },
-    {PNULL,0, 0,0,0,0 },
-    {PNULL,0, 0, 0, 0, 0},
-    {PNULL, 0,0,0, 0, 0},
-    {PNULL,0,0,0, 0, 0},
-    {PNULL,0,0,0,0,0 },
-    {PNULL,0, 0, 0, 0, 0},
-    {PNULL, 0,0,0, 0, 0},
-    {PNULL,0,0,0, 0, 0},
-    {PNULL,0,0,0,0,0 },
-};
-#else
 LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
     {ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting),0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting),1280,720, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -365,7 +346,6 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
     {PNULL,0,0,0, 0, 0},
     {PNULL,0,0,0,0,0 },
 };
-#endif
 
 LOCAL SENSOR_TRIM_T s_ov13855_resolution_trim_tab[] = {
                 {0,0, 0, 0, 0,0, 0, {0, 0, 0, 0 }},
