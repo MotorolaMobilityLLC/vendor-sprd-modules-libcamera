@@ -1391,18 +1391,20 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
          i != mPendingRequestsList.end();) {
         camera3_capture_result_t result;
         camera3_notify_msg_t notify_msg;
-        HAL_LOGD("i->frame_number = %d, frame_number = %d, i->request_id = %d",
-                 i->frame_number, frame_number, i->request_id);
 
         if (i->frame_number < frame_number) {
+            HAL_LOGD("i->frame_number = %d, frame_number = %d, i->request_id = %d",
+                     i->frame_number, frame_number, i->request_id);
+
             /**add for 3d capture reprocessing begin   */
-            HAL_LOGD("result stream format =%d", result_info->stream->format);
+            HAL_LOGV("result stream format =%d", result_info->stream->format);
             if (NULL != i->input_buffer) {
                 HAL_LOGI("reprocess capture request, continue search");
                 i++;
                 continue;
             }
             /**add for 3d capture reprocessing end   */
+
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
                 notify_msg.message.shutter.frame_number = i->frame_number;
@@ -1440,8 +1442,10 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     const_cast<camera_metadata_t *>(result.result));
             }
             i++;
-
         } else if (i->frame_number == frame_number) {
+            HAL_LOGD("i->frame_number = %d, frame_number = %d, i->request_id = %d",
+             i->frame_number, frame_number, i->request_id);
+
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
                 notify_msg.message.shutter.frame_number = i->frame_number;
@@ -1528,7 +1532,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
         } else if (i->frame_number > frame_number) {
             /**add for 3d capture reprocessing begin   */
-            HAL_LOGD("result stream format =%d", result_info->stream->format);
+            HAL_LOGV("result stream format =%d", result_info->stream->format);
             if (HAL_PIXEL_FORMAT_BLOB == result_info->stream->format) {
                 HAL_LOGI("capture result, continue search");
                 i++;
