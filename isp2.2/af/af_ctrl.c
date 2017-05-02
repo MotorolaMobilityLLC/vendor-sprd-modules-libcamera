@@ -15,8 +15,8 @@
  */
 #define LOG_TAG "af_ctrl"
 
-#include "lib_ctrl.h"
 #include "af_ctrl.h"
+#include "isp_adpt.h"
 #include <cutils/properties.h>
 
 #define ISP_CALLBACK_EVT 0x00040000
@@ -60,7 +60,7 @@ static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 	if (cxt_ptr->af_set_cb) {
 		property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 		if (1 == atoi((char *)value)) {
-			cmr_bzero(pos, sizeof(pos));
+			memset(pos, 0, sizeof(pos));
 			property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
 			in_param->motor_pos = atoi((char *)pos);
 			cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
@@ -95,32 +95,6 @@ static cmr_s32 af_start_notice(void *handle_af)
 	af_notice.valid_win = 0x00;
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_START_NOTICE, (void *)&af_notice, NULL);
-	}
-
-	return ISP_SUCCESS;
-}
-
-static cmr_s32 af_ae_awb_lock(void *handle_af)
-{
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct ae_calc_out ae_result;
-
-	memset(&ae_result, 0x00, sizeof(ae_result));
-	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_AWB_LOCK, NULL, (void *)&ae_result);
-	}
-
-	return ISP_SUCCESS;
-}
-
-static cmr_s32 af_ae_awb_release(void *handle_af)
-{
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct ae_calc_out ae_result;
-
-	memset(&ae_result, 0x00, sizeof(ae_result));
-	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_AWB_RELEASE, NULL, (void *)&ae_result);
 	}
 
 	return ISP_SUCCESS;
@@ -412,8 +386,6 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->set_monitor = af_set_monitor;
 	input_ptr->set_monitor_win = af_set_monitor_win;
 	input_ptr->get_monitor_win_num = af_get_monitor_win_num;
-	//input_ptr->ae_awb_lock = af_ae_awb_lock;
-	//input_ptr->ae_awb_release = af_ae_awb_release;
 	input_ptr->lock_module = af_lock_module;
 	input_ptr->unlock_module = af_unlock_module;
 

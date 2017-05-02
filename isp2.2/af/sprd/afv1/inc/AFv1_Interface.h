@@ -54,7 +54,7 @@ ERRCODE AF_deinit(AF_Data * pAF_Data);
 ERRCODE AF_Process_Frame(AF_Data * pAF_Data);
 ERRCODE AF_Get_Statistic(AF_Data * pAF_Data);
 ERRCODE AF_Get_StartPosStatistic(AF_Data * pAF_Data);
-ERRCODE AF_Get_SAF_Result(AF_Data * pAF_Data, cmr_u8 * SAF_Result);
+ERRCODE AF_Get_Result(AF_Data * pAF_Data, cmr_u8 * AF_Result);
 ERRCODE AF_Search_LENS_MOVE(cmr_u8 * pLensMoveCnt, cmr_u8 * pMaxSearchTableNum, cmr_u16 pos, AF_Ctrl_Ops * pAF_Ops, cmr_u8 * pAF_Result);
 
 #endif

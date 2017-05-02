@@ -18,7 +18,6 @@
 
 #include <utils/Timers.h>
 
-#include "isp_common_types.h"
 #include "isp_dev_access.h"
 
 #include "AFv1_Common.h"
@@ -27,36 +26,30 @@
 
 #include "aft_interface.h"
 
-#ifndef AFV1_TRUE
-#define AFV1_TRUE (1)
-#endif
-#ifndef AFV1_FALSE
-#define AFV1_FALSE (0)
-#endif
-
-#define AF_SAVE_MLOG_STR     "persist.sys.isp.af.mlog"	/*save/no */
-
-#define ISP_AF_END_FLAG 0x80000000
-
-#define AFV1_MAGIC_START		0xe5a55e5a
-#define AFV1_MAGIC_END		0x5e5ae5a5
-
-#define AFV1_TRAC(_x_) ISP_LOGI _x_
-#define AFV1_RETURN_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning); return exp;}}while(0)
-#define AFV1_TRACE_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning);}}while(0)
-
-#define AF_WAIT_CAF_FINISH     0
 #define AF_SYS_VERSION "-20170225-02"
+#define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
+#define AF_WAIT_CAF_TIMEOUT 200000000;	//1s == (1000 * 1000 * 1000)ns
 
 #define BOKEH_BOUNDARY_RATIO 8	//based on 10
-#define BOKEH_SCAN_FROM 200	//limited in [0,1023]
-#define BOKEH_SCAN_TO 900	//limited in [0,1023]
-#define BOKEH_SCAN_STEP 20	//at least 20
+#define BOKEH_SCAN_FROM 212	//limited in [0,1023]
+#define BOKEH_SCAN_TO 342	//limited in [0,1023]
+#define BOKEH_SCAN_STEP 7	//at least 20
+
+enum afv1_bool {
+	AFV1_FALSE = 0,
+	AFV1_TRUE,
+};
 
 enum afv1_err_type {
 	AFV1_SUCCESS = 0x00,
 	AFV1_ERROR,
 	AFV1_ERR_MAX
+};
+
+enum _lock_block {
+	LOCK_AE = 0x01,
+	LOCK_LSC = 0x02,
+	LOCK_NLM = 0x04
 };
 
 enum af_state {
@@ -93,15 +86,12 @@ static const char *caf_state_str[] = {
 	"caf searching"
 };
 
+#define CAF_STATE_STR(state)    caf_state_str[state]
+
 enum dcam_after_vcm {
 	DCAM_AFTER_VCM_NO = 0,
 	DCAM_AFTER_VCM_YES
 };
-
-#define CAF_STATE_STR(state)    caf_state_str[state]
-
-static char AF_MODE[300] = { '\0' };
-static char AF_POS[100] = { '\0' };
 
 typedef struct _isp_info {
 	cmr_u32 width;
@@ -148,11 +138,6 @@ typedef struct _isp_awb_statistic_hist_info {
 	cmr_u32 b_hist[256];
 	cmr_u32 y_hist[256];
 } isp_awb_statistic_hist_info_t;
-
-enum AF_RINGBUFFER {
-	AF_RING_BUFFER_NO,
-	AF_RING_BUFFER_YES,
-};
 
 enum AF_AE_GAIN {
 	GAIN_1x = 0,
@@ -284,6 +269,15 @@ typedef struct _Bokeh_tuning_param {
 	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
 } Bokeh_tuning_param;
 
+typedef struct _afm_tuning_param_sharkl2 {
+	cmr_u8 iir_level;
+	cmr_u8 nr_mode;
+	cmr_u8 cw_mode;
+	cmr_u8 fv0_e;
+	cmr_u8 fv1_e;
+	cmr_u8 dummy[3];	// 4 bytes align
+} afm_tuning_sharkl2;
+
 typedef struct _af_ctrl {
 	char af_version[40];
 	enum af_state state;
@@ -292,13 +286,12 @@ typedef struct _af_ctrl {
 	enum scene curr_scene;
 	eAF_MODE algo_mode;
 	cmr_u32 takePicture_timeout;
-	cmr_u32 request_mode;	// enum isp_focus_mode af_mode
+	cmr_u32 request_mode;
 	cmr_u32 need_re_trigger;
 	cmr_u64 vcm_timestamp;
 	cmr_u64 dcam_timestamp;
 	cmr_u64 takepic_timestamp;
 	AF_Data fv;
-	//Andrew : close address begin for easy parsing
 	af_fv af_fv_val;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
@@ -309,7 +302,7 @@ typedef struct _af_ctrl {
 	uint64 fv_combine[T_TOTAL_FILTER_TYPE];
 	struct af_gsensor_info gsensor_info;
 	prime_face_base_info_t face_base;
-//    isp_ctrl_context    *isp_ctx;
+	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
 	sem_t af_wait_caf;
@@ -317,7 +310,6 @@ typedef struct _af_ctrl {
 	AF_Window_Config *win_config;
 	isp_info_t isp_info;
 	lens_info_t lens;
-	cmr_s32 touch;
 	cmr_s32 flash_on;
 	roi_info_t roi;
 	roi_rgb_y_t roi_RGBY;
@@ -333,34 +325,28 @@ typedef struct _af_ctrl {
 	cmr_s32 nlm_lock_num;
 	void *trig_lib;
 	caf_trigger_ops_t trig_ops;
-	//pthread_mutex_t     caf_lock;
-	cmr_handle af_task;
-	cmr_u64 last_frame_ts;	// timestamp of last frame
 	ae_cali_t ae_cali_data;
 	vcm_ops_t vcm_ops;
 	cmr_u32 vcm_stable;
-	cmr_u32 af_statistics[105];	// for maximum size in all chip to accomodate af statistics
-	cmr_s32 node_type;
-	cmr_u64 k_addr;
-	cmr_u64 u_addr;
 	focus_stat_reg_t stat_reg;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
 	cmr_u8 soft_landing_dly;
 	cmr_u8 soft_landing_step;
-	cmr_u8 caf_first_stable;
 	cmr_u32 inited_af_req;
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
-	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
-	//for Bokeh
 	Bokeh_tuning_param bokeh_param;
+	afm_tuning_sharkl2 afm_tuning;
+	struct aft_proc_calc_param prm_ae;
+	struct aft_proc_calc_param prm_af;
+	struct aft_proc_calc_param prm_sensor;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);
@@ -376,8 +362,6 @@ typedef struct _test_mode_command {
 	uint64 key;
 	void (*command_func) (af_ctrl_t * af, char *test_param);
 } test_mode_command_t;
-
-typedef void *afv1_handle_t;
 
 cmr_handle sprd_afv1_init(void *in, void *out);
 cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result);
