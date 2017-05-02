@@ -253,7 +253,7 @@ struct isp_ae_info {
 struct isp_statis_mem_info {
 	cmr_uint isp_statis_mem_size;
 	cmr_uint isp_statis_mem_num;
-	cmr_uint isp_statis_k_addr;
+	cmr_uint isp_statis_k_addr[2];
 	cmr_uint isp_statis_u_addr;
 	cmr_uint isp_statis_alloc_flag;
 	cmr_s32 statis_mfd;
@@ -275,7 +275,7 @@ struct isp_statis_info {
 	cmr_u32 irq_property;
 	cmr_u32 phy_addr;
 	cmr_u32 vir_addr;
-	cmr_u32 kaddr;
+	cmr_u32 kaddr[2];
 	cmr_u32 buf_size;
 	cmr_s32 mfd;
 };

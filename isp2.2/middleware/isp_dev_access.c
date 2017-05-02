@@ -27,6 +27,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
 	cmr_s32 fds[2];
+	cmr_uint kaddr[2];
 
 	statis_mem_info->isp_lsc_mem_size = in_ptr->isp_lsc_mem_size;
 	statis_mem_info->isp_lsc_mem_num = in_ptr->isp_lsc_mem_num;
@@ -45,14 +46,18 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 			isp_cb_of_malloc cb_malloc = in_ptr->cb_of_malloc;
 			cb_malloc(CAMERA_ISP_STATIS,
 				  &statis_mem_info->isp_statis_mem_size,
-				  &statis_mem_info->isp_statis_mem_num, &statis_mem_info->isp_statis_k_addr, &statis_mem_info->isp_statis_u_addr,
+				  &statis_mem_info->isp_statis_mem_num,
+				  kaddr,
+				  &statis_mem_info->isp_statis_u_addr,
 				  //&statis_mem_info->statis_mfd,
-				  fds, statis_mem_info->buffer_client_data);
+				  fds,
+				  statis_mem_info->buffer_client_data);
 		} else {
 			ISP_LOGE("fail to malloc statis_bq buffer");
 			return ISP_PARAM_NULL;
 		}
-
+		statis_mem_info->isp_statis_k_addr[0] = kaddr[0];
+		statis_mem_info->isp_statis_k_addr[1] = kaddr[1];
 		statis_mem_info->statis_mfd = fds[0];
 		statis_mem_info->statis_buf_dev_fd = fds[1];
 		statis_mem_info->isp_statis_alloc_flag = 1;
@@ -83,7 +88,8 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 
 	isp_statis_buf.buf_size = statis_mem_info->isp_statis_mem_size;
 	isp_statis_buf.buf_num = statis_mem_info->isp_statis_mem_num;
-	isp_statis_buf.phy_addr = statis_mem_info->isp_statis_k_addr;
+	isp_statis_buf.kaddr[0] = statis_mem_info->isp_statis_k_addr[0];
+	isp_statis_buf.kaddr[1] = statis_mem_info->isp_statis_k_addr[1];
 	isp_statis_buf.vir_addr = statis_mem_info->isp_statis_u_addr;
 	isp_statis_buf.buf_flag = 0;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
@@ -266,7 +272,8 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 
 	statis_info->phy_addr = irq_info->phy_addr;
 	statis_info->vir_addr = irq_info->vir_addr;
-	statis_info->kaddr = irq_info->kaddr;
+	statis_info->kaddr[0] = irq_info->kaddr[0];
+	statis_info->kaddr[1] = irq_info->kaddr[1];
 	statis_info->irq_property = irq_info->irq_property;
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
@@ -376,7 +383,8 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 
 		if (statis_mem_info->cb_of_free) {
 			isp_cb_of_free cb_free = statis_mem_info->cb_of_free;
-			cb_free(type, &statis_mem_info->isp_statis_k_addr, &statis_mem_info->isp_statis_u_addr, &statis_mem_info->statis_mfd,
+			/* warning: isp_statis_k_addr only half malloced addr here */
+			cb_free(type, (cmr_uint *)statis_mem_info->isp_statis_k_addr, &statis_mem_info->isp_statis_u_addr, &statis_mem_info->statis_mfd,
 				statis_mem_info->isp_statis_mem_num, statis_mem_info->buffer_client_data);
 		}
 
