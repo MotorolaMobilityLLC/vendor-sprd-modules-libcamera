@@ -227,6 +227,12 @@ cmr_s32 _pm_cmc10_get_param(void *cmc10_param, cmr_u32 cmd, void *rtn_param0, vo
 		*update_flag = 0;
 		break;
 
+      case ISP_PM_BLK_CMC10:
+		param_data_ptr->data_ptr = cmc10_ptr->cur.matrix.val;
+		param_data_ptr->data_size = 9*sizeof(uint16_t);
+		*update_flag = 0;
+	break;
+
 	default:
 		break;
 	}
