@@ -1657,19 +1657,12 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle,
 
 static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle,
                                          unsigned long param) {
-    uint16_t value;
-    unsigned int sleep_time = 0, frame_time;
 
     SENSOR_LOGI("E");
 
     Sensor_WriteReg(0x0100, 0x0003);
-    if (!s_s5k4h8yx_sensor_close_flag) {
-        sleep_time = 50 * 1000;
-        usleep(sleep_time);
-    }
-    s_s5k4h8yx_sensor_close_flag = 0;
+    usleep(50 * 1000);
 
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
 }
 

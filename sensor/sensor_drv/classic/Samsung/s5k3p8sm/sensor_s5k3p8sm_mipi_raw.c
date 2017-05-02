@@ -1298,19 +1298,11 @@ static unsigned long _s5k3p8sm_StreamOn(SENSOR_HW_HANDLE handle,
 
 static unsigned long _s5k3p8sm_StreamOff(SENSOR_HW_HANDLE handle,
                                          unsigned long param) {
-    uint16_t value;
-    unsigned int sleep_time = 0, frame_time;
-
     SENSOR_LOGI("E");
 
     Sensor_WriteReg(0x0100, 0x0000);
-    if (!s_s5k3p8sm_sensor_close_flag) {
-        sleep_time = 50 * 1000;
-        usleep(sleep_time);
-    }
-    s_s5k3p8sm_sensor_close_flag = 0;
+    usleep(50 * 1000);
 
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
 }
 
@@ -1521,9 +1513,9 @@ static const struct pd_pos_info _s5k3p8sm_pd_pos_l[] = {
 };
 
 static const struct pd_pos_info _s5k3p8sm_pd_pos_r[] = {
-	{20, 27}, {36, 31}, {56, 31}, {72, 27}, {24, 39}, {40, 43},
-	{52, 43}, {68, 39}, {24, 63}, {40, 59}, {52, 59}, {68, 63},
-	{20, 75}, {36, 71}, {56, 71}, {72, 75},
+    {20, 27}, {36, 31}, {56, 31}, {72, 27}, {24, 39}, {40, 43},
+    {52, 43}, {68, 39}, {24, 63}, {40, 59}, {52, 59}, {68, 63},
+    {20, 75}, {36, 71}, {56, 71}, {72, 75},
 
 };
 
