@@ -45,7 +45,6 @@ static int s_capture_shutter = 0;
 
 #define ov2680_RAW_PARAM_Truly 0x02
 #define ov2680_RAW_PARAM_Sunny 0x01
-#define CONFIG_CAMERA_DUAL_SYNC
 static uint16_t RG_Ratio_Typical = 0x17d;
 static uint16_t BG_Ratio_Typical = 0x164;
 
@@ -489,7 +488,7 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_altek_mipi_raw[] = {
     {0x5793, 0x00},
     {0x5794, 0x03},
 #endif
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#if 1
     /*dual cam sync begin*/
     {0x3002, 0x00},
     {0x3823, 0x30},
@@ -536,7 +535,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov2680_resolution_Tab_RAW[] = {
      SENSOR_IMAGE_FORMAT_RAW},
 //{ADDR_AND_LEN_OF_ARRAY(ov2680_800X600_mipi_raw), 800, 600, 24,
 // SENSOR_IMAGE_FORMAT_RAW},
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#if 1
     {ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_altek_mipi_raw), 1600, 1200, 24,
      SENSOR_IMAGE_FORMAT_RAW},
 #else
