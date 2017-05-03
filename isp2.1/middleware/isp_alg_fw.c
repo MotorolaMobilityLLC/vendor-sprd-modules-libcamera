@@ -1545,9 +1545,11 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output output;
 	struct isp_pm_param_data *param_data = NULL;
 	struct isp_flash_param *flash = NULL;
+	struct ae_init_out result;
 	cmr_u32 num = 0;
 	cmr_u32 i = 0;
 
+	memset((void *)&result, 0, sizeof(result));
 	memset(&output, 0, sizeof(output));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
@@ -1607,8 +1609,9 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	}
 
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
-	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle);
+	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle)&result);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
+	cxt->ae_cxt.flash_version = result.flash_ver;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL);
 
 	return rtn;

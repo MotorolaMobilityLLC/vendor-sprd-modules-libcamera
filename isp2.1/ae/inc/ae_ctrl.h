@@ -52,6 +52,7 @@ struct ae_init_out {
 	cmr_u32 cur_again;
 	cmr_u32 cur_dgain;
 	cmr_u32 cur_dummy;
+	cmr_u32 flash_ver;
 };
 
 struct ae_calc_in {
@@ -88,7 +89,7 @@ struct ae_ctrl_param_out {
 	};
 };
 
-cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle * handle_ae);
+cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle * handle_ae, cmr_handle result);
 cmr_int ae_ctrl_deinit(cmr_handle * handle_ae);
 cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);
 cmr_int ae_ctrl_process(cmr_handle handle, struct ae_calc_in *in_param, struct ae_calc_out *result);

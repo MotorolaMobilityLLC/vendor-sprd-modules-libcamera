@@ -24,13 +24,6 @@
 extern "C" {
 #endif
 
-struct ae_in_out {
-	cmr_u16 cur_exp_line;	/*current exposure line: the value is related to the resolution */
-	cmr_u16 cur_dummy;	/*dummy line: the value is related to the resolution & fps */
-	cmr_s16 cur_gain;	/*current analog gain */
-	cmr_s16 enable;
-};
-
 cmr_handle ae_sprd_init(cmr_handle in_param, cmr_handle out_param);
 cmr_s32 ae_sprd_deinit(cmr_handle handler, cmr_handle in_param, cmr_handle out_param);
 cmr_s32 ae_sprd_calculation(cmr_handle handler, cmr_handle in_param, cmr_handle out_param);

@@ -410,7 +410,7 @@ exit:
 	return rtn;
 }
 
-static cmr_int aectrl_init_lib(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in_ptr)
+static cmr_int aectrl_init_lib(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in_ptr, struct ae_init_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct aectrl_work_lib *lib_ptr = NULL;
@@ -422,7 +422,7 @@ static cmr_int aectrl_init_lib(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in
 
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_init) {
-		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, NULL);
+		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}
@@ -431,7 +431,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in_ptr)
+static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in_ptr, struct ae_init_out *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_work_lib *lib_ptr = NULL;
@@ -448,7 +448,7 @@ static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *i
 		goto exit;
 	}
 
-	rtn = aectrl_init_lib(cxt_ptr, in_ptr);
+	rtn = aectrl_init_lib(cxt_ptr, in_ptr, out_ptr);
 exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
@@ -478,11 +478,10 @@ exit:
 	return rtn;
 }
 
-cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae)
+cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_handle result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = NULL;
-	struct aectrl_work_lib *lib_ptr = NULL;
 
 	input_ptr->isp_ops.set_again = ae_set_again;
 	input_ptr->isp_ops.set_exposure = ae_set_exposure;
@@ -520,7 +519,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae)
 		goto exit;
 	}
 
-	rtn = aectrl_init_adpt(cxt_ptr, input_ptr);
+	rtn = aectrl_init_adpt(cxt_ptr, input_ptr, result);
 	if (rtn) {
 		goto error_adpt_init;
 	}
@@ -529,7 +528,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae)
 
 	*handle_ae = (cmr_handle) cxt_ptr;
 
-	ISP_LOGI(" done %d", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 
 error_adpt_init:

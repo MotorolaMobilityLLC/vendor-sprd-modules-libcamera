@@ -56,6 +56,7 @@ struct ae_info {
 	void *buffer_client_data;
 	struct ae_size win_num;
 	cmr_u32 shift;
+	cmr_u32 flash_version;
 };
 
 struct awb_info {
