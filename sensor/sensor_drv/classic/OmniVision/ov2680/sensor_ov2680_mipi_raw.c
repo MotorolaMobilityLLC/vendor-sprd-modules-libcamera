@@ -108,7 +108,7 @@ LOCAL const struct raw_param_info_tab s_ov2680_raw_param_tab[] = {
     //_ov2680_Sunny_Identify_otp, update_otp},
     //{ov2680_RAW_PARAM_Truly, &s_ov2680_mipi_raw_info,
     //_ov2680_Truly_Identify_otp, update_otp},
-    {ov2680_RAW_PARAM_COM, &s_ov2680_mipi_raw_info, PNULL,
+    {ov2680_RAW_PARAM_COM, &s_ov2680_mipi_raw_info, _ov2680_com_Identify_otp,
      PNULL},
     {RAW_INFO_END_ID, PNULL, PNULL, PNULL}};
 
@@ -535,7 +535,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov2680_resolution_Tab_RAW[] = {
      SENSOR_IMAGE_FORMAT_RAW},
 //{ADDR_AND_LEN_OF_ARRAY(ov2680_800X600_mipi_raw), 800, 600, 24,
 // SENSOR_IMAGE_FORMAT_RAW},
-#if 1
+#if 1//def CONFIG_CAMERA_DUAL_SYNC
     {ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_altek_mipi_raw), 1600, 1200, 24,
      SENSOR_IMAGE_FORMAT_RAW},
 #else
@@ -662,7 +662,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
     PNULL, //_ov2680_set_image_effect,
 
     _ov2680_BeforeSnapshot,
-    PNULL, // _ov2680_after_snapshot,
+    _ov2680_after_snapshot,
     PNULL, //_ov2680_flash,
     PNULL,
     PNULL, //_ov2680_write_exposure,
@@ -1316,7 +1316,7 @@ LOCAL uint32_t _ov2680_GetRawInof(SENSOR_HW_HANDLE handle) {
         g_module_id = i;
         if (RAW_INFO_END_ID == tab_ptr[i].param_id) {
             if (NULL == s_ov2680_mipi_raw_info_ptr) {
-                SENSOR_LOGI("SENSOR_ov2680: ov5647_GetRawInof no param error");
+                SENSOR_LOGI("SENSOR_ov2680: ov2680_GetRawInof no param error");
                 rtn = SENSOR_FAIL;
             }
             SENSOR_LOGI("SENSOR_ov2680: ov2680_GetRawInof end");
