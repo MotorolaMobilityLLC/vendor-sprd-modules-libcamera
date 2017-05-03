@@ -284,6 +284,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->pd_gobal_setting.dBeginX = 24;
 		cxt->pd_gobal_setting.dBeginY = 24;
 	}
+	cxt->pd_gobal_setting.OTPBuffer = (void *)in_p->pdaf_otp;
 	ret = pdaf_setup(cxt);
 	if (ret) {
 		ISP_LOGE("fail to do pdaf_setup %ld", ret);
