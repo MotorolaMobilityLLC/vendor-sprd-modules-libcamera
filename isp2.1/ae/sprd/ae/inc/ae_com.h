@@ -195,6 +195,7 @@ struct ae_alg_calc_result {
 	fae_stat *pface_ae;
 	struct ae1_senseor_out wts;
 	cmr_handle log;
+	cmr_u32 flag4idx;
 	cmr_u32 *reserved;	/*resurve for future */
 };
 

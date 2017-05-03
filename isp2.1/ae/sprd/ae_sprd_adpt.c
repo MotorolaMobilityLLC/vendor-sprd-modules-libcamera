@@ -2916,6 +2916,9 @@ static cmr_s32 make_isp_result(struct ae_alg_calc_result *alg_rt, struct ae_calc
 	result->cur_exp_line = alg_rt->wts.cur_exp_line;
 	result->line_time = alg_rt->wts.exposure_time / alg_rt->wts.cur_exp_line;
 	result->is_stab = alg_rt->wts.stable;
+	result->target_lum = alg_rt->target_lum;
+	result->target_lum_ori = alg_rt->target_lum_ori;
+	result->flag4idx = alg_rt->flag4idx;
 	return rtn;
 }
 
@@ -3744,6 +3747,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 		//ISP_LOGI("fps: %d, %d, %d", cxt->cur_result.wts.cur_exp_line, cxt->cur_result.wts.cur_again, cxt->cur_result.wts.cur_dummy);
 		make_isp_result(current_result, calc_out);
+		ISP_LOGV("idx4mx_flag:%d,tarLF:%d,tarLO:%d\n",calc_out->flag4idx,calc_out->target_lum,calc_out->target_lum_ori);
 		{
 			/*just for debug: reset the status */
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
