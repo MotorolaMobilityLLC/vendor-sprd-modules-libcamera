@@ -1261,6 +1261,74 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 	return rtn;
 }
 
+cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	struct smart_context *cxt = NULL;
+	struct tuning_param *cur_param = NULL;
+	struct isp_smart_param *smart_param = NULL;
+	struct tuning_param *org_param = NULL;
+
+
+	rtn = check_handle_validate(handle);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to get input handle");
+		return ISP_SUCCESS;
+	}
+
+	cxt = (struct smart_context *)handle;
+
+	if (ISP_MODE_ID_PRV_0 == cxt->work_mode) {
+		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
+		org_param = &cxt->tuning_param_org[ISP_MODE_ID_COMMON];
+	} else {
+		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
+		org_param = &cxt->tuning_param_org[cxt->work_mode];
+	}
+
+	cur_param = cxt->cur_param;
+
+	if (1 == cur_param->bypass) {
+		ISP_LOGV("current paramter is bypass");
+		return ISP_SUCCESS;
+	}
+
+	smart_param = &cur_param->param;
+
+	if (ISP_SMART_MAX < smart_param->block_num) {
+		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
+		return ISP_SUCCESS;
+	}
+
+	for (i = 0; i < smart_param->block_num; i++) {
+			if (ISP_SMART_PDAF_CORRECT == smart_param->block[i].smart_id ||
+				ISP_SMART_NLM == smart_param->block[i].smart_id ||
+				ISP_SMART_RGB_DITHER == smart_param->block[i].smart_id ||
+				ISP_SMART_BPC == smart_param->block[i].smart_id ||
+				ISP_SMART_GRGB == smart_param->block[i].smart_id ||
+				ISP_SMART_RGB_AFM == smart_param->block[i].smart_id ||
+				ISP_SMART_UVDIV == smart_param->block[i].smart_id ||
+				ISP_SMART_3DNR_PRE == smart_param->block[i].smart_id ||
+				ISP_SMART_3DNR_CAP == smart_param->block[i].smart_id ||
+				ISP_SMART_EDGE == smart_param->block[i].smart_id ||
+				ISP_SMART_YUV_PRECDN == smart_param->block[i].smart_id ||
+				ISP_SMART_YNR == smart_param->block[i].smart_id ||
+				ISP_SMART_UVCDN == smart_param->block[i].smart_id ||
+				ISP_SMART_UV_POSTCDN == smart_param->block[i].smart_id ||
+				ISP_SMART_IIRCNR_IIR == smart_param->block[i].smart_id ||
+				ISP_SMART_IIR_YRANDOM == smart_param->block[i].smart_id ||
+				ISP_SMART_YUV_NOISEFILTER == smart_param->block[i].smart_id) {
+				if (is_diseb){
+					smart_param->block[i].enable = 0;
+					} else {
+					smart_param->block[i].enable = org_param->param.block[i].enable;
+					}
+				}
+			}
+	return rtn;
+}
+
 cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;

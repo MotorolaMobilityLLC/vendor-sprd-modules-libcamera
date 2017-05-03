@@ -1735,25 +1735,19 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_HDR_START, &ae_hdr, NULL);
 	if (ae_hdr.hdr_enable) {
-		cxt->smart_cxt.lock_nlm_en = 1;
-		cxt->smart_cxt.lock_ee_en = 1;
-		cxt->smart_cxt.lock_precdn_en = 1;
-		cxt->smart_cxt.lock_cdn_en = 1;
-		cxt->smart_cxt.lock_postcdn_en = 1;
-		cxt->smart_cxt.lock_ccnr_en = 1;
-		cxt->smart_cxt.lock_ynr_en = 1;
-		smart_ctl_block_eb(cxt->smart_cxt.handle, &smart_block_eb, 0);
+		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_LNC);
+		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_CMC);
+		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 1);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 	}else {
-		cxt->smart_cxt.lock_nlm_en = 0;
-		cxt->smart_cxt.lock_ee_en = 0;
-		cxt->smart_cxt.lock_precdn_en = 0;
-		cxt->smart_cxt.lock_cdn_en = 0;
-		cxt->smart_cxt.lock_postcdn_en = 0;
-		cxt->smart_cxt.lock_ccnr_en = 0;
-		cxt->smart_cxt.lock_ynr_en = 0;
-		smart_ctl_block_eb(cxt->smart_cxt.handle, &smart_block_eb, 1);
+		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_LNC);
+		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_CMC);
+		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 0);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
 	}
 
 	return ISP_SUCCESS;

@@ -139,6 +139,7 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb);
 cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id);
 cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id);
+cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb);
 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result);
 cmr_s32 smart_ctl_deinit(smart_handle_t * handle, void *param, void *result);
