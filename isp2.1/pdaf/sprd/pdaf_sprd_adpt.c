@@ -262,14 +262,18 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	if (cxt->pd_gobal_setting.dSensorMode) {
 		cxt->roi_info.win.start_x = ROI_X_1;
 		cxt->roi_info.win.start_y = ROI_Y_1;
-		cxt->roi_info.win.end_x = ROI_X_1 + ROI_Width ;
+		cxt->roi_info.win.end_x = ROI_X_1 + ROI_Width;
 		cxt->roi_info.win.end_y = ROI_Y_1 + ROI_Height;
+		cxt->pd_gobal_setting.dBeginX = BEGIN_X_1;
+		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_1;
 
 	} else {
 		cxt->roi_info.win.start_x = ROI_X_0;
 		cxt->roi_info.win.start_y = ROI_Y_0;
-		cxt->roi_info.win.end_x = ROI_X_0 + ROI_Width ;
+		cxt->roi_info.win.end_x = ROI_X_0 + ROI_Width;
 		cxt->roi_info.win.end_y = ROI_Y_0 + ROI_Height;
+		cxt->pd_gobal_setting.dBeginX = BEGIN_X_0;
+		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_0;
 	}
 	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x)/(8 << cxt->ppi_info.block_size.width);
 	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y)/(8 << cxt->ppi_info.block_size.height);
@@ -277,19 +281,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
-	if (cxt->pd_gobal_setting.dSensorMode) {
-		cxt->pd_gobal_setting.dBeginX = 64;
-		cxt->pd_gobal_setting.dBeginY = 32;
-	} else {
-		cxt->pd_gobal_setting.dBeginX = 24;
-		cxt->pd_gobal_setting.dBeginY = 24;
-	}
 	cxt->pd_gobal_setting.OTPBuffer = (void *)in_p->pdaf_otp;
-	ret = pdaf_setup(cxt);
-	if (ret) {
-		ISP_LOGE("fail to do pdaf_setup %ld", ret);
-		goto exit;
-	}
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
@@ -413,6 +405,19 @@ static cmr_int pdafsprd_adpt_get_busy(cmr_handle adpt_handle, struct pdaf_ctrl_p
 	return 0;
 }
 
+static cmr_s32 pdafsprd_adpt_disable_pdaf(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+	UNUSED(in);
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	if (cxt->pdaf_set_bypass) {
+		cxt->pdaf_set_bypass(cxt->caller, 1);
+	}
+	return 0;
+}
+
 static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -428,6 +433,9 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 		break;
 	case PDAF_CTRL_CMD_GET_BUSY:
 		ret = pdafsprd_adpt_get_busy(adpt_handle, out);
+		break;
+	case PDAF_CTRL_CMD_DISABLE_PDAF:
+		ret = pdafsprd_adpt_disable_pdaf(adpt_handle, in_ptr);
 		break;
 	default:
 		ISP_LOGE("fail to case cmd = %d", cmd);

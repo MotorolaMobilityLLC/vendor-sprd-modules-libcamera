@@ -2740,12 +2740,17 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_RETURN_IF_FAIL(rtn, ("fail to isp smart param calc"));
 
 	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
-	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, cxt->pdaf_cxt.pdaf_en = %d",
-		cxt->pdaf_cxt.pdaf_support, cxt->pdaf_cxt.pdaf_en);
-	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pdaf_en) {
+	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d",
+		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
+	if (cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
 		rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
+		ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf"));
 
+	} else {
+		rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_DISABLE_PDAF, NULL, NULL);
+		ISP_RETURN_IF_FAIL(rtn, ("fail to disable pdaf"));
 	}
+
 	ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf param"));
 
 	rtn = isp_dev_trans_addr(cxt->dev_access_handle);

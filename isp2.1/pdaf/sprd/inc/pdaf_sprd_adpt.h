@@ -22,8 +22,10 @@
 
 #define IMAGE_WIDTH 4160
 #define IMAGE_HEIGHT 3072
-#define BEGIN_X 24
-#define BEGIN_Y 24
+#define BEGIN_X_0 24
+#define BEGIN_Y_0 24
+#define BEGIN_X_1 64
+#define BEGIN_Y_1 32
 #define ROI_X_0 1048
 #define ROI_Y_0 792
 #define ROI_X_1 1088

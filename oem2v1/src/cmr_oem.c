@@ -5542,6 +5542,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    memset(&isp_param, 0x00, sizeof(isp_param));
     isp_param.size.w = param_ptr->size.width;
     isp_param.size.h = param_ptr->size.height;
     isp_param.format = ISP_DATA_NORMAL_RAW10;
@@ -5676,6 +5677,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
                  isp_param.resolution_info.crop.st_y,
                  isp_param.resolution_info.crop.width,
                  isp_param.resolution_info.crop.height);
+        if (isp_param.resolution_info.sensor_max_size.w == isp_param.resolution_info.sensor_output_size.w)
+		isp_param.pdaf_enable = 1;
+
         SENSOR_MODE_FPS_T fps_info;
         ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                       sn_mode, &fps_info);
