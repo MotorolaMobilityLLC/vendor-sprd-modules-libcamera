@@ -255,14 +255,6 @@ struct sensor_ae_tab {
 };
 
 /*******************************new***************/
-enum sensor_pdaf_type {
-    SENSOR_PDAF_DISABLED = 0,
-    SENSOR_PDAF_TYPE1_ENABLE,
-    SENSOR_PDAF_TYPE2_ENABLE,
-    SENSOR_PDAF_TYPE3_ENABLE,
-    SENSOR_PDAF_MAX
-};
-
 struct sensor_lens_map_info {
   uint32_t envi;
   uint32_t ct;
@@ -354,6 +346,7 @@ struct sensor_otp_lsc_info {
   cmr_u8 *lsc_data_addr;
   cmr_u16 lsc_data_size;
 };
+
 struct sensor_otp_ae_info {
   cmr_u16 ae_target_lum;
   cmr_u64 gain_1x_exp;
@@ -368,6 +361,7 @@ struct sensor_otp_af_info {
   cmr_u16 infinite_cali;
   cmr_u16 macro_cali;
 };
+
 struct sensor_otp_pdaf_info {
   cmr_u8 *pdaf_data_addr;
   cmr_u16 pdaf_data_size;
@@ -378,6 +372,7 @@ struct sensor_otp_pdaf_info {
   cmr_u8 *pdaf_phase_data_addr;
   cmr_u16 pdaf_phase_data_size;
 };
+
 struct point {
   uint16_t x;
   uint16_t y;
@@ -428,6 +423,28 @@ struct sensor_otp_cust_info {
   struct sensor_dual_otp_info dual_otp;
 };
 
+enum sensor_pdaf_type {
+  SENSOR_PDAF_DISABLED = 0,
+  SENSOR_PDAF_TYPE1_ENABLE,
+  SENSOR_PDAF_TYPE2_ENABLE,
+  SENSOR_PDAF_TYPE3_ENABLE,
+  SENSOR_PDAF_MAX
+};
+
+enum sensor_vendor_type {
+  SENSOR_VENDOR_SS_BEGIN,
+  SENSOR_VENDOR_S5K3L8XXM3,
+  SENSOR_VENDOR_S5K3P8SM,
+  SENSOR_VENDOR_SS_END,
+
+  SENSOR_VENDOR_IMX_BEGIN,
+  SENSOR_VENDOR_IMX258,
+  SENSOR_VENDOR_IMX_END,
+
+  SENSOR_VENDOR_OV_BEGIN,
+  SENSOR_VENDOR_OV_END,
+};
+
 struct pd_pos_info {
   cmr_u16 pd_pos_x;
   cmr_u16 pd_pos_y;
@@ -452,7 +469,7 @@ struct sensor_pdaf_info {
     cmr_u16 *pd_is_right;
     cmr_u16 *pd_pos_row;
     cmr_u16 *pd_pos_col;
-
+    enum sensor_vendor_type vendor_type;
 };
 
 struct sensor_ex_exposure {

@@ -81,6 +81,7 @@ struct pdaf_altek_context {
 	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
 	struct isp3a_pdaf_altek_report_t report_data;
 	cmr_u8 pdotp_pack_data[PD_OTP_PACK_SIZE];
+	cmr_u8 vendor;
 	//struct pdaf_ctrl_init_in init_in_param;
 };
 
@@ -163,7 +164,7 @@ static cmr_int load_pdaltek_extract_library(cmr_handle adpt_handle)
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-#ifdef FEATURE_DL_OPEN
+#if 1//def FEATURE_DL_OPEN
 	cxt->extract_lib_handle = dlopen(PDEXTRACT_LIBPATH, RTLD_NOW);
 	if (!cxt->extract_lib_handle) {
 		ISP_LOGE("failed to dlopen");
@@ -406,6 +407,8 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	struct sensor_otp_af_info *otp_af_info = NULL;
 	cmr_u32 pd_in_size = 0;
 
+	out_p->init_success = 0;
+
 	if (!in_p || !adpt_handle) {
 		ISP_LOGE("init param %p is null !!!", in_p);
 		ret = ISP_PARAM_NULL;
@@ -473,8 +476,20 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	ISP_LOGI("infinite = %lf, macro = %lf",
 			 cxt->pd_reg_in.tSensorInfo.uwInfVCM,
 			 cxt->pd_reg_in.tSensorInfo.uwMacroVCM);
-	/*TBD dSensorID 0:for SamSung 1: for Sony*/
-	cxt->pd_reg_in.tSensorInfo.dSensorID = 0;// for samsung sensor
+
+	if ((SENSOR_VENDOR_SS_BEGIN < in_p->pd_info->vendor_type) &&
+	    (SENSOR_VENDOR_SS_END > in_p->pd_info->vendor_type)) {
+		cxt->pd_reg_in.tSensorInfo.dSensorID = 0;
+		cxt->vendor = 0;
+	} else if ((SENSOR_VENDOR_IMX_BEGIN < in_p->pd_info->vendor_type) &&
+		   (SENSOR_VENDOR_IMX_END > in_p->pd_info->vendor_type)) {
+		cxt->pd_reg_in.tSensorInfo.dSensorID = 1;
+		cxt->vendor = 1;
+	} else {
+		ISP_LOGE("failed to match pdaf support lib");
+		goto exit;
+	}
+
 	ret = pdafaltek_libops_init(cxt);
 	if (ret) {
 		ISP_LOGE("failed to init library and ops");
@@ -490,7 +505,6 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
 	if (ret) {
 		ISP_LOGE("failed to init lib %ld", ret);
-		out_p->init_success = 0;
 		goto error_lib_init;
 	}
 

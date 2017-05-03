@@ -959,6 +959,7 @@ static uint32_t s5k3l8xxm3_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)s5k3l8xxm3_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)s5k3l8xxm3_pd_pos_l;
+    pdaf_info->vendor_type = SENSOR_VENDOR_S5K3L8XXM3;
 
     return rtn;
 }

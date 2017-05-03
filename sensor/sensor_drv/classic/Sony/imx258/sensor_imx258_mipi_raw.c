@@ -866,6 +866,7 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx258_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx258_pd_pos_l;
+    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258;
 
     return rtn;
 }
