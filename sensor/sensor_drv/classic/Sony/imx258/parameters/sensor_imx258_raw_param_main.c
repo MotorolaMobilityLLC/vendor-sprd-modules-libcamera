@@ -120,7 +120,6 @@ static struct sensor_version_info s_imx258_version_info=
 	0x00000000,
 	0x00000000,
 	0x00000000,
-
 	0x00000000,
 	0x00000000,
 	0x00000000,
