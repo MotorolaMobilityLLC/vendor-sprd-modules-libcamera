@@ -1374,10 +1374,10 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 	case ISP_CTRL_EVT_TX:
 		rtn = _ispProcessEndHandle((cmr_handle) cxt);
 		break;
-	case ISP_CTRL_EVT_AE:{
+	case ISP_CTRL_EVT_AE:
 			rtn = ispalg_aem_stat_data_parser((cmr_handle) cxt, message->data);
 			break;
-		}
+		
 	case ISP_CTRL_EVT_SOF:
 		if (cxt->gamma_sof_cnt_eb) {
 			cxt->gamma_sof_cnt++;
@@ -2033,11 +2033,8 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 }
 
 static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
-{
+{	
 	cmr_int rtn = ISP_SUCCESS;
-
-	ISP_LOGI("just return");    // for bringup
-	return rtn;
 
 	rtn = isp_afl_sw_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do anti_flicker param update"));
@@ -2711,7 +2708,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_RETURN_IF_FAIL(rtn, ("fail to set_awb_work_mode"));
 #endif
 
-#if 0 //for bringup
+#if 1 //for bringup
 	rtn = ae_set_work_mode(cxt, mode, 1, in_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do ae cfg"));
 #endif
