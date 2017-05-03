@@ -771,6 +771,12 @@ int SprdCamera3HWI::configureStreams(
              preview_size.height, video_size.width, video_size.height);
     HAL_LOGI(":hal3: callback: w=%d, h=%d, cap: w=%d, h=%d", raw_size.width,
              raw_size.height, capture_size.width, capture_size.height);
+#ifdef CONFIG_CAMERA_EIS
+    if (sprddefInfo.sprd_eis_enabled) {
+        // leave two*height*1.5 bytes space for eis parameters
+        video_size.width = (video_size.width >> 4) << 4;
+    }
+#endif
 
     // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
     // we will remove these code

@@ -155,11 +155,12 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 
 #ifdef CONFIG_CAMERA_EIS
     // stream reserved[0] used for save eis crop rect.
-    EIS_CROP_Tag eiscrop_Info = {0};
+    EIS_CROP_Tag eiscrop_Info;
     SPRD_DEF_Tag sprddefInfo;
     CONTROL_Tag controlInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
     mSetting->getCONTROLTag(&controlInfo);
+    memset(&eiscrop_Info, 0x00, sizeof(EIS_CROP_Tag));
     // before used,set reserved[0] to null
     stream->reserved[0] = NULL;
     if (ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ==
