@@ -355,6 +355,8 @@ typedef struct _af_ctrl {
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
 	struct aft_proc_calc_param prm_sensor;
+	isp_awb_statistic_hist_info_t rgb_stat;
+	cmr_u32 trigger_source_type;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);

@@ -23,7 +23,7 @@
 #include "af_sprd_adpt_v1.h"
 #include "isp_adpt.h"
 #include "dlfcn.h"
-
+#include <inttypes.h>
 #ifndef UNUSED
 #define     UNUSED(param)  (void)(param)
 #endif
@@ -1958,6 +1958,33 @@ static void caf_monitor_process_sensor(af_ctrl_t * af, struct af_aux_sensor_info
 	caf_monitor_calc(af, prm);
 }
 
+static void caf_monitor_process(af_ctrl_t * af)
+{
+	if (af->trigger_source_type & AF_DATA_AF) {
+		af->trigger_source_type &= (~AF_DATA_AF);
+		caf_monitor_process_af(af);
+	}
+
+	if (af->trigger_source_type & AF_DATA_AE) {
+		af->trigger_source_type &= (~AF_DATA_AE);
+		caf_monitor_process_ae(af, &(af->ae.ae), &(af->rgb_stat));
+	}
+
+	if (af->trigger_source_type & AF_DATA_FD) {
+		af->trigger_source_type &= (~AF_DATA_FD);
+	}
+
+	if (af->trigger_source_type & AF_DATA_PD) {
+		af->trigger_source_type &= (~AF_DATA_PD);
+	}
+
+	if (af->trigger_source_type & AF_DATA_G) {
+		af->trigger_source_type &= (~AF_DATA_G);
+	}
+
+	return;
+}
+
 // faf stuffs
 static cmr_s32 faf_trigger_init(af_ctrl_t * af)
 {
@@ -2455,6 +2482,11 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 	cmr_u16 width, height, i = 0, blockw, blockh, index;
 
 	get_isp_size(af, &width, &height);
+
+	memcpy(&(af->rgb_stat.r_info[0]), rgb->r_info, sizeof(af->rgb_stat.r_info));
+	memcpy(&(af->rgb_stat.g_info[0]), rgb->g_info, sizeof(af->rgb_stat.g_info));
+	memcpy(&(af->rgb_stat.b_info[0]), rgb->b_info, sizeof(af->rgb_stat.b_info));
+
 	af->roi_RGBY.num = af->roi.num;
 
 	af->roi_RGBY.Y_sum[af->roi.num] = 0;
@@ -2553,6 +2585,9 @@ static void set_ae_info(af_ctrl_t * af, const struct ae_calc_out *ae, cmr_s32 bv
 		memcpy(&af->fv.AF_Tuning_Data, &af->af_tuning_data.AF_Tuning_Data[af->curr_scene], sizeof(af->fv.AF_Tuning_Data));
 	}
 
+	af->trigger_source_type |= AF_DATA_AE;
+
+	return;
 }
 
 static void set_awb_info(af_ctrl_t * af, const struct awb_ctrl_calc_result *awb)
@@ -2560,6 +2595,23 @@ static void set_awb_info(af_ctrl_t * af, const struct awb_ctrl_calc_result *awb)
 	af->awb.r_gain = awb->gain.r;
 	af->awb.g_gain = awb->gain.g;
 	af->awb.b_gain = awb->gain.b;
+	//af->trigger_source_type |= AF_DATA_AWB;
+
+	return;
+}
+
+static void set_pd_info(af_ctrl_t * af, struct pd_result *pd_calc_result)
+{
+	af->pd.pd_enable = (af->pd.effective_frmid) ? 1 : 0;
+	af->pd.effective_frmid = (cmr_u32) pd_calc_result->pdGetFrameID;
+	af->pd.confidence = (cmr_u32) pd_calc_result->pdConf[4];
+	af->pd.pd_value = pd_calc_result->pdPhaseDiff[4];
+	af->trigger_source_type |= AF_DATA_PD;
+
+	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf", pd_calc_result->pdGetFrameID,
+		 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4]);
+
+	return;
 }
 
 static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
@@ -2576,6 +2628,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		cxt->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
 		cxt->gsensor_info.timestamp = aux_sensor_info->gsensor_info.timestamp;
 		cxt->gsensor_info.valid = 1;
+		cxt->trigger_source_type |= AF_DATA_G;
 		break;
 	case AF_MAGNETIC_FIELD:
 		ISP_LOGV("magnetic field E");
@@ -2693,6 +2746,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		ISP_LOGE("fail to init trigger");
 		goto ERROR_TRIG_INIT;
 	}
+	af->trigger_source_type = 0;
 
 	ISP_LOGV("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
 
@@ -2801,6 +2855,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
+	nsecs_t system_time_trigger = 0;
 	cmr_int rtn = AFV1_SUCCESS;
 	cmr_int i = 0;
 	ISP_LOGV("B");
@@ -2867,39 +2922,28 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				ISP_LOGI("af.skip_num %d", af->afm_skip_num);
 			}
 			//transfer fv data to trigger
-			caf_monitor_process_af(af);
+			//caf_monitor_process_af(af);
+			af->trigger_source_type |= AF_DATA_AF;
 			break;
 		}
 
 	case AF_DATA_IMG_BLK:
 		{
 			struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)inparam->data;
-			isp_awb_statistic_hist_info_t af_tmp;
 			if (NULL != img_blk_info->data) {
-				struct isp_awb_statistic_info *ae_stat = (struct isp_awb_statistic_info *)img_blk_info->data;
-				memcpy(af_tmp.r_info, ae_stat->r_info, sizeof(af_tmp.r_info));
-				memcpy(af_tmp.g_info, ae_stat->g_info, sizeof(af_tmp.g_info));
-				memcpy(af_tmp.b_info, ae_stat->b_info, sizeof(af_tmp.b_info));
-
-				isp_awb_statistic_hist_info_t *stat = &af_tmp;
-				caf_monitor_process_ae(af, &af->ae.ae, stat);
+				caf_monitor_process(af);
 			}
 			break;
 		}
-
-	case AF_DATA_AE:
-		{
-			break;
-		}
-
 	default:
 		{
 			ISP_LOGV("unsupport data type! type: %d", inparam->data_type);
 			rtn = AFV1_ERROR;
 			break;
 		}
-
 	}
+	system_time_trigger = systemTime(CLOCK_MONOTONIC) / 1000000LL;
+	ISP_LOGV("SYSTEM_TEST-trigger:%" PRIu64 "", system_time_trigger - system_time0);
 
 	if (AF_DATA_AF == inparam->data_type) {
 		switch (af->state) {
@@ -3155,9 +3199,11 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_AE_INFO:{
-			struct isp_awb_statistic_info *ae_stat_ptr = param0;
+			struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)param0;
+			struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)img_blk_info->data;
 			struct ae_out_bv *ae_out = (struct ae_out_bv *)param1;
 			struct ae_calc_out *ae_result = ae_out->ae_result;
+			//ISP_LOGI("isp aem stat= R%d G%d B%d \n", (int)ae_stat_ptr->r_info[495],(int)ae_stat_ptr->g_info[495],(int)ae_stat_ptr->b_info[495]);
 			set_af_RGBY(af, (void *)ae_stat_ptr);
 			set_ae_info(af, ae_result, ae_out->bv);
 			break;
@@ -3189,6 +3235,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 			if (STATE_NORMAL_AF == af->state) {
 				break;
 			} else if (STATE_IDLE != af->state) {
+				af->trigger_source_type |= AF_DATA_FD;
 				memcpy(&af->face_info, face, sizeof(struct isp_face_area));
 				if (face_dectect_trigger(af)) {
 					if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
@@ -3243,12 +3290,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 	case AF_CMD_SET_PD_INFO:
 		{
 			struct pd_result *pd_calc_result = (struct pd_result *)param0;
-			af->pd.pd_enable = (af->pd.effective_frmid) ? 1 : 0;
-			af->pd.effective_frmid = (cmr_u32) pd_calc_result->pdGetFrameID;
-			af->pd.confidence = (cmr_u32) pd_calc_result->pdConf[4];
-			af->pd.pd_value = pd_calc_result->pdPhaseDiff[4];
-			ISP_LOGI("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf", pd_calc_result->pdGetFrameID,
-				 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4]);
+			set_pd_info(af, pd_calc_result);
 			ISP_LOGI("pdaf set callback end");
 		}
 		break;

@@ -90,10 +90,13 @@ enum af_cmd {
 };
 
 enum af_calc_data_type {
-	AF_DATA_AF,
-	AF_DATA_IMG_BLK,
-	AF_DATA_AE,
-	AF_DATA_FD,
+	AF_DATA_AFM_STAT = 0,
+	AF_DATA_AF = (1 << 0),		//0x1
+	AF_DATA_IMG_BLK = (1 << 1),	//0x2
+	AF_DATA_AE = (1 << 2),		//0x4
+	AF_DATA_FD = (1 << 3),		//0x8
+	AF_DATA_PD = (1 << 4),		//0x10
+	AF_DATA_G = (1 << 5),		//0x20
 	AF_DATA_MAX
 };
 
