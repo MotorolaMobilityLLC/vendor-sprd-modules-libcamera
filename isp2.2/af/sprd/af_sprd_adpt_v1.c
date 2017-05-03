@@ -278,16 +278,8 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 
 	if (filter_mask & ENHANCED_BIT) {
 		num++;
-		/*
-		   for (i = 0; i < roi_num; i++) {
-		   ISP_LOGV("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
-		   }
-
-		   for (i = 0; i < roi_num; i++) {
-		   ISP_LOGV("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
-		   }
-		 */
 		for (i = 0; i < roi_num; ++i) {
+			//ISP_LOGV("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
 			*p++ = af->af_fv_val.af_fv0[i];
 		}
 	}
