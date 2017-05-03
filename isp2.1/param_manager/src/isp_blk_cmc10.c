@@ -231,7 +231,7 @@ cmr_s32 _pm_cmc10_get_param(void *cmc10_param, cmr_u32 cmd, void *rtn_param0, vo
 		param_data_ptr->data_ptr = cmc10_ptr->cur.matrix.val;
 		param_data_ptr->data_size = 9*sizeof(uint16_t);
 		*update_flag = 0;
-	break;
+		break;
 
 	default:
 		break;

@@ -160,6 +160,12 @@ cmr_s32 _pm_frgb_gamc_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0,
 		*update_flag = 0;
 		break;
 
+	case ISP_PM_BLK_GAMMA:
+		param_data_ptr->data_ptr = &gamc_ptr->cur.nodes;
+		param_data_ptr->data_size = sizeof(gamc_ptr->cur.nodes);
+		*update_flag = 0;
+		break;
+
 	default:
 		break;
 	}
