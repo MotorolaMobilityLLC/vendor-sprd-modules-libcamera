@@ -27,7 +27,7 @@
 *
 */
 
-#define LOG_TAG "SprdCamera3Channel"
+#define LOG_TAG "Cam3Channel"
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 

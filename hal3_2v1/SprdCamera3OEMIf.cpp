@@ -15,7 +15,7 @@
  */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "SprdCamera3OEMIf"
+#define LOG_TAG "Cam3OEMIf"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <camera/Camera.h>
@@ -3626,7 +3626,7 @@ void SprdCamera3OEMIf::calculateTimestampForSlowmotion(int64_t frm_timestamp) {
 
     diff_timestamp = frm_timestamp - mSlowPara.last_frm_timestamp;
     mSetting->getSPRDDEFTag(&sprddefInfo);
-    HAL_LOGD("diff time=%lld slow=%d", diff_timestamp, sprddefInfo.slowmotion);
+    HAL_LOGV("diff time=%lld slow=%d", diff_timestamp, sprddefInfo.slowmotion);
     tmp_slow_mot = sprddefInfo.slowmotion;
     if (tmp_slow_mot == 0)
         tmp_slow_mot = 1;
@@ -3932,9 +3932,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         ATRACE_BEGIN("video_frame");
-        HAL_LOGD("record, fd=%d, vir = 0x%lx, frame_num = %d, timestamp = "
-                 "%lld, frame->type = %ld rec=%lld",
-                 frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type,
+        HAL_LOGD("record:fd=%d, vir=0x%lx, num=%d, timestamp=%lld, rec=%lld",
+                 frame->fd, buff_vir, frame_num, buffer_timestamp,
                  mSlowPara.rec_timestamp);
         if (frame->type == PREVIEW_VIDEO_FRAME &&
             frame_num >= mRecordFrameNum &&
@@ -4020,10 +4019,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("preview_frame");
 
-        HAL_LOGD("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time %lld, "
-                 "frame type = %ld rec=%lld, ",
-                 frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
-                 frame->type, mSlowPara.rec_timestamp);
+        HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%lld", frame->fd,
+                 buff_vir, frame_num, buffer_timestamp);
         if (frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum &&
             (frame_num > mPictureFrameNum || frame_num == 0)) {
             if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {

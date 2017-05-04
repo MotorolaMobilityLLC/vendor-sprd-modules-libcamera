@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "cmr_preview"
+#define LOG_TAG "cmr_prev"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
@@ -2852,7 +2852,7 @@ cmr_int prev_video_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGD("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d",
+    CMR_LOGV("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d",
              data->frame_id, data->frame_real_id, data->channel_id);
 
     if (0 == prev_cxt->video_frm_cnt) {
@@ -2977,7 +2977,7 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x",
+    CMR_LOGV("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x",
              data->frame_id, data->frame_real_id, data->channel_id, data->fd);
     CMR_LOGV("cap_zsl_frm_cnt %ld", prev_cxt->cap_zsl_frm_cnt);
     if (0 == prev_cxt->cap_zsl_frm_cnt) {
@@ -4470,13 +4470,13 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                            &sum, prev_cxt->cap_phys_addr_array,
                            prev_cxt->cap_virt_addr_array,
                            prev_cxt->cap_fd_array);
-	#if 0 //for coverity 181595
+#if 0 // for coverity 181595
         for (i = 1; i < CMR_CAPTURE_MEM_SUM; i++) {
             prev_cxt->cap_phys_addr_array[i] = prev_cxt->cap_phys_addr_array[0];
             prev_cxt->cap_virt_addr_array[i] = prev_cxt->cap_virt_addr_array[0];
             prev_cxt->cap_fd_array[i] = prev_cxt->cap_fd_array[0];
         }
-        #endif
+#endif
         CMR_LOGD("virt_addr 0x%lx, fd 0x%x", prev_cxt->cap_virt_addr_array[0],
                  prev_cxt->cap_fd_array[0]);
 
@@ -6475,7 +6475,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
         frame_type->ae_time = ae_time;
-        CMR_LOGD("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time,
+        CMR_LOGV("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time,
                  frame_type->zoom_ratio);
         frame_type->type = PREVIEW_VIDEO_FRAME;
 

@@ -27,7 +27,7 @@
 *
 */
 
-#define LOG_TAG "SprdCamera3HWI"
+#define LOG_TAG "Cam3HWI"
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
@@ -1120,11 +1120,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     else
         mOldRequesId = capturePara.cap_request_id;
 
-    HAL_LOGD("num_output_buffers=%d, frame_num=%d, mPictureRequest=%d, "
-             "captureIntent=%d, mFirstRegularRequest=%d mVideoSnapshotHint =%d",
+    HAL_LOGD("bufs_num=%d, frame_num=%d, cap_intent=%d, pic_req=%d, "
+             "first_regular_req=%d",
              request->num_output_buffers, request->frame_number,
-             mPictureRequest, capturePara.cap_intent, mFirstRegularRequest,
-             mVideoSnapshotHint);
+             mPictureRequest, mFirstRegularRequest);
 
     // fix BUG618304, reset crop ratio when request have both jpeg stream and
     // callback stream
@@ -1393,8 +1392,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         camera3_notify_msg_t notify_msg;
 
         if (i->frame_number < frame_number) {
-            HAL_LOGD("i->frame_number = %d, frame_number = %d, i->request_id = %d",
-                     i->frame_number, frame_number, i->request_id);
+            HAL_LOGD(
+                "i->frame_number = %d, frame_number = %d, i->request_id = %d",
+                i->frame_number, frame_number, i->request_id);
 
             /**add for 3d capture reprocessing begin   */
             HAL_LOGV("result stream format =%d", result_info->stream->format);
@@ -1443,8 +1443,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
             i++;
         } else if (i->frame_number == frame_number) {
-            HAL_LOGD("i->frame_number = %d, frame_number = %d, i->request_id = %d",
-             i->frame_number, frame_number, i->request_id);
+            HAL_LOGD(
+                "i->frame_number = %d, frame_number = %d, i->request_id = %d",
+                i->frame_number, frame_number, i->request_id);
 
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;

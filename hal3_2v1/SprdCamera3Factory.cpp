@@ -27,7 +27,7 @@
 *
 */
 
-#define LOG_TAG "SprdCamera3Factory"
+#define LOG_TAG "Cam3Factory"
 //#define LOG_NDEBUG 0
 
 #include <stdlib.h>
@@ -239,7 +239,8 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
         ALOGE("Allocation of hardware interface failed");
         return NO_MEMORY;
     }
-    HAL_LOGD("camera_id %d", camera_id);
+    HAL_LOGD("SPRD Camera Hal");
+    HAL_LOGD("camera_id=%d", camera_id);
     if (hw->isMultiCameraMode(camera_id)) {
         hw->setMultiCameraMode((multiCameraMode)camera_id);
     }
