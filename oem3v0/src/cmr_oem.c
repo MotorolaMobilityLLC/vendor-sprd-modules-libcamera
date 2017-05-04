@@ -3103,7 +3103,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(isp_cxt);
     sn_cxt = &(cxt->sn_cxt);
     CHECK_HANDLE_VALID(sn_cxt);
-
+    sem_init(&isp_cxt->is_closed, 0, 1);
     if (1 == isp_cxt->inited) {
         CMR_LOGD("isp has been intialized");
         goto exit;
@@ -3487,6 +3487,7 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
         CMR_LOGD("isp has been de-intialized");
         goto exit;
     }
+    sem_destroy(&isp_cxt->is_closed);
 
     ret = isp_deinit(isp_cxt->isp_handle);
     if (ret) {
@@ -5931,6 +5932,7 @@ cmr_int camera_isp_stop_video(cmr_handle oem_handle) {
         } else {
             cxt->isp_cxt.is_work = 0;
         }
+        sem_post(&cxt->isp_cxt.is_closed);
     }
 exit:
     CMR_LOGI("done %ld", ret);
@@ -8422,6 +8424,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     struct common_isp_cmd_param isp_param;
     cmr_int flash_status = FLASH_CLOSE;
     cmr_s32 sm_val = 0;
+    struct timespec ts;
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += ISP_CLOSE_TIMEOUT;
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
@@ -8436,7 +8442,13 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         sem_init(&cxt->share_path_sm, 0, 0);
         CMR_LOGI("re-initialize share_path_sm");
     }
-
+    if (mode == CAMERA_NORMAL_MODE) {
+        if (cmr_sem_timedwait((&cxt->isp_cxt.is_closed), &ts)) {
+            CMR_LOGI("wait isp close out 2s");
+        } else {
+            CMR_LOGI("wait isp close in 2s");
+        }
+    }
     if (CAMERA_ZSL_MODE != mode) {
         ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
         if (ret) {

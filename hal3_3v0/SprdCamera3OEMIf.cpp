@@ -5427,7 +5427,9 @@ int SprdCamera3OEMIf::openCamera() {
     int ret = NO_ERROR;
 
     GET_START_TIME;
-
+    mSetting->getLargestPictureSize(mCameraId, &mLargestSensorWidth, &mLargestSensorHeight);
+    mHalOem->ops->camera_pre_capture_set_buffer_size(mCameraId,
+                                                 mLargestSensorWidth, mLargestSensorHeight);
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;
         HAL_LOGE("start failed");

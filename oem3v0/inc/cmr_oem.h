@@ -45,7 +45,7 @@ extern "C" {
 
 #define ISP_B4AWB_BUF_CNT 2
 #define ISP_B4AWB_BUF_SIZE 640 * 480 * 2
-
+#define ISP_CLOSE_TIMEOUT 2    /*sec*/
 struct grab_context {
     cmr_handle grab_handle;
     /*	struct process_status    proc_status;*/
@@ -72,6 +72,7 @@ struct isp_context {
     cmr_u32 inited;
     cmr_u32 width_limit;
     cmr_u32 is_work;
+    sem_t is_closed;
 };
 
 struct jpeg_context {
