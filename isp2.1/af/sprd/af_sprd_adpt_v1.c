@@ -1979,6 +1979,13 @@ static void caf_monitor_process(af_ctrl_t * af)
 	}
 
 	if (af->trigger_source_type & AF_DATA_G) {
+		struct af_aux_sensor_info_t aux_sensor_info;
+		aux_sensor_info.type = AF_ACCELEROMETER;
+		aux_sensor_info.gsensor_info.vertical_up = af->gsensor_info.vertical_up;
+		aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
+		aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
+		aux_sensor_info.gsensor_info.timestamp = af->gsensor_info.timestamp;
+		caf_monitor_process_sensor(af, &aux_sensor_info);
 		af->trigger_source_type &= (~AF_DATA_G);
 	}
 
