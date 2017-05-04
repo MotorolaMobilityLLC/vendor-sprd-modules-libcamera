@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <cutils/properties.h>
+#include <inttypes.h>
 
 #include "af_ctrl.h"
 #include "af_sprd_adpt_v1.h"
@@ -278,7 +279,7 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	if (filter_mask & ENHANCED_BIT) {
 		num++;
 		for (i = 0; i < roi_num; ++i) {
-			//ISP_LOGV("fv0[%d]:%15lld, fv1[%d]:%15lld.", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
+			//ISP_LOGV("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
 			*p++ = af->af_fv_val.af_fv0[i];
 		}
 	}
@@ -663,13 +664,13 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 			p_stat_data->stat_num = FOCUS_STAT_DATA_NUM;
 			p_stat_data->p_stat = &(af->af_fv_val.af_fv0[0]);
 		}
-		ISP_LOGV("[%d][%d]spsmd sum %lld", af->state, af->roi.num, sum);
+		ISP_LOGV("[%d][%d]spsmd sum %" PRIu64 "", af->state, af->roi.num, sum);
 	} else {
 		//todo : p_stat_data
 		for (i = 0; i < af->roi.num; ++i)	// for caf, the weight in last window is 0
 			sum += spsmd[i] * af->win_config->win_weight[i];
 		fv[T_SPSMD] = sum;
-		ISP_LOGV("spsmd sum %lld", sum);
+		ISP_LOGV("spsmd sum %" PRIu64 "", sum);
 	}
 
 	return 0;
@@ -919,7 +920,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
 		if (sizeof(af->af_tuning_data) != len) {
-			ISP_LOGW("af_tuning.bin len dismatch with af_alg len %d", sizeof(af->af_tuning_data));
+			ISP_LOGW("af_tuning.bin len dismatch with af_alg len %d", (cmr_u32) sizeof(af->af_tuning_data));
 			fclose(fp);
 			*bisExist = 0;
 			return 0;
@@ -988,7 +989,7 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 			fseek(fp, 0, SEEK_END);
 			len = ftell(fp);
 			if (sizeof(af->bokeh_param) != len) {
-				ISP_LOGV("bokeh_param.bin len dismatch with bokeh_param len %d", sizeof(af->bokeh_param));
+				ISP_LOGV("bokeh_param.bin len dismatch with bokeh_param len %d", (cmr_u32) sizeof(af->bokeh_param));
 				fclose(fp);
 				goto BOKEH_DEFAULT;
 			}
@@ -1450,11 +1451,11 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 	if_statistics_get_data(af->fv_combine, NULL, af);
 	for (i = 0; i < 9; i++) {
 		ISP_LOGV
-		    ("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %lld\n",
+		    ("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n",
 		     get_vcm_registor_pos(af), i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
 		     af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
 		fprintf(fp,
-			"pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %lld\n",
+			"pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n",
 			get_vcm_registor_pos(af), i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
 			af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
 	}
@@ -1691,7 +1692,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 	CALCULATE_KEY(p1, 0);
 
 	while (i < sizeof(test_mode_set) / sizeof(test_mode_set[0])) {
-		ISP_LOGV("command,key,target_key:%s,%lld %lld", test_mode_set[i].command, test_mode_set[i].key, key);
+		ISP_LOGV("command,key,target_key:%s,%" PRIu64 " %" PRIu64 "", test_mode_set[i].command, test_mode_set[i].key, key);
 		if (key == test_mode_set[i].key)
 			break;
 		i++;
@@ -1704,7 +1705,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 			p1 = test_mode_set[i].command;
 			CALCULATE_KEY(p1, 1);
 			test_mode_set[i].key = key;
-			ISP_LOGV("command,key:%s,%lld", test_mode_set[i].command, test_mode_set[i].key);
+			ISP_LOGV("command,key:%s,%" PRIu64 "", test_mode_set[i].command, test_mode_set[i].key);
 			i++;
 		}
 		set_manual(af, NULL);
@@ -2323,7 +2324,7 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 			af->state = STATE_CAF;	// todo : af state should be STATE_NORMAL_AF
 			caf_start(af);	// todo : caf could not be started actually
 		};
-		ISP_LOGV("dcam_timestamp-vcm_timestamp = %lld ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
+		ISP_LOGV("dcam_timestamp-vcm_timestamp = %" PRIu64 " ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 		get_vcm_registor_pos(af);
 		break;
 	case AF_MODE_FULLSCAN:
@@ -2708,7 +2709,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	memcpy(af->af_version, "AF-", strlen("AF-"));
 	memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
 	memcpy(af->af_version + strlen("AF-") + strlen((char *)af->fv.AF_Version), AF_SYS_VERSION, strlen(AF_SYS_VERSION));
-	ISP_LOGV("AFVER %s lib mem 0x%x ", af->af_version, sizeof(AF_Data));
+	ISP_LOGV("AFVER %s lib mem 0x%x ", af->af_version, (cmr_u32) sizeof(AF_Data));
 	property_set("af_mode", "none");
 	{
 		FILE *fp = NULL;
@@ -2733,7 +2734,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 		fwrite(&tuning_data, 1, sizeof(tuning_data), fp);
 		fclose(fp);
-		ISP_LOGV("sizeof(tuning_data) = %d", sizeof(tuning_data));
+		ISP_LOGV("sizeof(tuning_data) = %d", (cmr_u32) sizeof(tuning_data));
 	}
 	af->afm_tuning.iir_level = 1;
 	af->afm_tuning.nr_mode = 2;
@@ -2934,7 +2935,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 
 	system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
-	ISP_LOGV("SYSTEM_TEST-af:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-af:%" PRId64 " ms", system_time1 - system_time0);
 
 	ISP_LOGV("E");
 	return rtn;
@@ -3220,7 +3221,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 			} else if (1 == af_ts->capture) {
 				af->takepic_timestamp = af_ts->timestamp;
 				//ISP_LOGV("takepic_timestamp %lld ms", (cmr_s64) af->takepic_timestamp);
-				ISP_LOGV("takepic_timestamp - vcm_timestamp =%lld ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
+				ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 			}
 			break;
 		}

@@ -586,7 +586,6 @@ static void get_tuning_param(af_ctrl_t * af)
 // start hardware
 static cmr_s32 do_start_af(af_ctrl_t * af)
 {
-	log_roi(af);
 	afm_set_win(af, af->roi.win, af->roi.num, af->isp_info.win_num);
 	afm_setup(af);
 	afm_enable(af);
@@ -1035,8 +1034,9 @@ static ERRCODE if_af_log(const char *format, ...)
 
 static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 {
+	af_ctrl_t *af = cookie;
 	UNUSED(AF_mode);
-	UNUSED(cookie);
+	log_roi(af);
 	return 0;
 }
 
@@ -1771,7 +1771,13 @@ static cmr_u32 Is_ae_stable(af_ctrl_t * af)
 
 static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 {
+	char value[2] = { '\0' };
 	AF_Trigger_Data aft_in;
+
+	property_get("persist.sys.caf.enable", value, "1");
+	if (atoi(value) != 1)
+		return;
+
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1954,12 +1960,37 @@ static void caf_monitor_process_sensor(af_ctrl_t * af, struct af_aux_sensor_info
 
 // faf stuffs
 static cmr_s32 faf_trigger_init(af_ctrl_t * af)
-{				// all thrs are in percentage unit
-	af->face_base.diff_area_thr = 40;
-	af->face_base.diff_cx_thr = 80;
-	af->face_base.diff_cy_thr = 80;
-	af->face_base.converge_cnt_thr = 15;
+{
+	char value[10] = { '\0' };
+	// all thrs are in percentage unit
+	af->face_base.area_thr = af->af_tuning_data.area_thr;
+	af->face_base.diff_area_thr = af->af_tuning_data.diff_area_thr;
+	af->face_base.diff_cx_thr = af->af_tuning_data.diff_cx_thr;
+	af->face_base.diff_cy_thr = af->af_tuning_data.diff_cy_thr;
+	af->face_base.converge_cnt_thr = af->af_tuning_data.converge_cnt_thr;
+	af->face_base.face_is_enable = af->af_tuning_data.face_is_enable;
 
+	property_get("persist.sys.area_thr", value, "0");
+	if (atoi(value) != 0)
+		af->face_base.area_thr = atoi(value);
+	property_get("persist.sys.diff_area_thr", value, "0");
+	if (atoi(value) != 0)
+		af->face_base.diff_area_thr = atoi(value);
+	property_get("persist.sys.diff_cx_thr", value, "0");
+	if (atoi(value) != 0)
+		af->face_base.diff_cx_thr = atoi(value);
+	property_get("persist.sys.diff_cy_thr", value, "0");
+	if (atoi(value) != 0)
+		af->face_base.diff_cy_thr = atoi(value);
+	property_get("persist.sys.converge_cnt_thr", value, "0");
+	if (atoi(value) != 0)
+		af->face_base.converge_cnt_thr = atoi(value);
+	property_get("persist.sys.face_is_enable", value, "0");
+	if (atoi(value) != 0)
+		af->face_base.face_is_enable = atoi(value);
+
+	ISP_LOGV("(area diff_area cy cx converge is_enable) %d %d %d %d %d %d", af->face_base.area_thr, af->face_base.diff_area_thr, af->face_base.diff_cx_thr,
+		 af->face_base.diff_cx_thr, af->face_base.converge_cnt_thr, af->face_base.face_is_enable);
 	af->face_base.sx = 0;	// update base face
 	af->face_base.ex = 0;
 	af->face_base.sy = 0;
@@ -1974,7 +2005,7 @@ static cmr_s32 faf_trigger_init(af_ctrl_t * af)
 
 static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
 {
-
+#define PERCENTAGE_BASE 10000
 	cmr_u16 i = 0, max_index = 0, trigger = 0;
 	cmr_u32 diff_x = 0, diff_y = 0, diff_area = 0;
 	cmr_u32 max_area = 0, area = 0;
@@ -1982,6 +2013,9 @@ static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
 	struct isp_face_area *face_info = &af->face_info;
 	prime_face_base_info_t *face_base = &af->face_base;
 	roi_info_t *roi = &af->roi;
+
+	if (0 == af->face_base.face_is_enable)
+		return 0;
 
 	max_index = face_info->face_num;
 	while (i < face_info->face_num) {	// pick face of maximum size
@@ -1999,26 +2033,35 @@ static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
 		return 0;
 
 	diff_x =
-	    face_base->ex + face_base->sx >
-	    face_info->face_info[max_index].ex + face_info->face_info[max_index].sx ? face_base->ex +
-	    face_base->sx - face_info->face_info[max_index].ex -
-	    face_info->face_info[max_index].sx : face_info->face_info[max_index].ex + face_info->face_info[max_index].sx - face_base->ex - face_base->sx;
+	    (face_base->ex + face_base->sx >
+	     face_info->face_info[max_index].ex + face_info->face_info[max_index].sx ? face_base->ex +
+	     face_base->sx - face_info->face_info[max_index].ex -
+	     face_info->face_info[max_index].sx : face_info->face_info[max_index].ex + face_info->face_info[max_index].sx - face_base->ex - face_base->sx) >> 1;
 	diff_y =
-	    face_base->ey + face_base->sy >
-	    face_info->face_info[max_index].ey + face_info->face_info[max_index].sy ? face_base->ey +
-	    face_base->sy - face_info->face_info[max_index].ey -
-	    face_info->face_info[max_index].sy : face_info->face_info[max_index].ey + face_info->face_info[max_index].sy - face_base->ey - face_base->sy;
+	    (face_base->ey + face_base->sy >
+	     face_info->face_info[max_index].ey + face_info->face_info[max_index].sy ? face_base->ey +
+	     face_base->sy - face_info->face_info[max_index].ey -
+	     face_info->face_info[max_index].sy : face_info->face_info[max_index].ey + face_info->face_info[max_index].sy - face_base->ey - face_base->sy) >> 1;
 	diff_area = face_base->area > max_area ? face_base->area - max_area : max_area - face_base->area;
 
-	if ((face_base->ex + face_base->sx) * face_base->diff_cx_thr < 100 * diff_x &&
-	    (face_base->ey + face_base->sy) * face_base->diff_cy_thr < 100 * diff_y && face_base->area * face_base->diff_area_thr < 100 * diff_area) {
-		ISP_LOGV("diff_cx diff_cy diff_area = %f %f %f", 1.0 * diff_x / (face_base->ex + face_base->sx),
-			 1.0 * diff_y / (face_base->ey + face_base->sy), 1.0 * diff_area / face_base->area);
-		face_base->sx = face_info->face_info[max_index].sx;	// update base face
-		face_base->ex = face_info->face_info[max_index].ex;
-		face_base->sy = face_info->face_info[max_index].sy;
-		face_base->ey = face_info->face_info[max_index].ey;
+	if (1.0 * face_base->diff_cx_thr / PERCENTAGE_BASE < 1.0 * diff_x / (af->isp_info.width + 1) &&
+	    1.0 * face_base->diff_cy_thr / PERCENTAGE_BASE < 1.0 * diff_y / (af->isp_info.height + 1) &&
+	    1.0 * face_base->diff_area_thr / PERCENTAGE_BASE < 1.0 * diff_area / (face_base->area + 1)) {
+		ISP_LOGV("diff_cx diff_cy diff_area = %f %f %f", 1.0 * diff_x / (af->isp_info.width + 1),
+			 1.0 * diff_y / (af->isp_info.height + 1), 1.0 * diff_area / (face_base->area + 1));
 		face_base->area = max_area;
+		max_area = af->isp_info.height * af->isp_info.width;
+		if (1.0 * af->face_base.area_thr / PERCENTAGE_BASE < 1.0 * face_base->area / max_area) {	//area compared with total isp area
+			face_base->sx = face_info->face_info[max_index].sx;	// update base face
+			face_base->ex = face_info->face_info[max_index].ex;
+			face_base->sy = face_info->face_info[max_index].sy;
+			face_base->ey = face_info->face_info[max_index].ey;
+		} else {
+			face_base->sx = (((af->isp_info.width >> 1) - (af->isp_info.width * 3 / 10)) >> 1) << 1;	// make sure coordinations are even
+			face_base->ex = (((af->isp_info.width >> 1) + (af->isp_info.width * 3 / 10)) >> 1) << 1;
+			face_base->sy = (((af->isp_info.height >> 1) - (af->isp_info.height * 3 / 10)) >> 1) << 1;
+			face_base->ey = (((af->isp_info.height >> 1) + (af->isp_info.height * 3 / 10)) >> 1) << 1;
+		}
 
 		face_base->diff_trigger = 1;
 		face_base->converge_cnt = 0;
@@ -2029,9 +2072,10 @@ static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
 			face_base->converge_cnt++;
 		else
 			face_base->converge_cnt = 0;
+		ISP_LOGV("(converge_cnt,converge_cnt_thr) = (%d %d)", face_base->converge_cnt, face_base->converge_cnt_thr);
 	}
 
-	if (1 == face_base->diff_trigger && face_base->converge_cnt > face_base->converge_cnt_thr) {
+	if (1 == face_base->diff_trigger && face_base->converge_cnt > face_base->converge_cnt_thr) {	// it's an absolute threshold
 		face_base->diff_trigger = 0;
 		face_base->converge_cnt = 0;
 		trigger = 1;
@@ -3134,18 +3178,16 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 	case AF_CMD_SET_FACE_DETECT:
 		{
-			break;
-#if 0
 			struct isp_face_area *face = (struct isp_face_area *)param0;
 
 			ISP_LOGV("face detect af state = %s", STATE_STRING(af->state));
 			if (STATE_INACTIVE == af->state)
-				return 0;
+				break;
 
 			ISP_LOGV("type = %d, face_num = %d", face->type, face->face_num);
 
 			if (STATE_NORMAL_AF == af->state) {
-				return 0;
+				break;
 			} else if (STATE_IDLE != af->state) {
 				memcpy(&af->face_info, face, sizeof(struct isp_face_area));
 				if (face_dectect_trigger(af)) {
@@ -3166,7 +3208,6 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 				}
 			}
 			break;
-#endif
 		}
 	case AF_CMD_SET_DCAM_TIMESTAMP:
 		{
