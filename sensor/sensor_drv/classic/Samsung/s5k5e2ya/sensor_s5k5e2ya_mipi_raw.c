@@ -523,7 +523,7 @@ static SENSOR_STATIC_INFO_T s_s5k5e2ya_static_info = {
     346, // focal_length;
     0,   // max_fps,max fps of sensor's all settings,it will be calculated from
          // sensor mode fps
-    8,   // max_adgain,AD-gain
+    16,   // max_adgain,AD-gain
     0,   // ois_supported;
     0,   // pdaf_supported;
     1,   // exp_valid_frame_num;N+2-1
@@ -997,7 +997,7 @@ static void s5k5e2ya_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain) {
     if (SENSOR_MAX_GAIN < gain)
         gain = SENSOR_MAX_GAIN;
 
-    Sensor_WriteReg(0x204, (gain >> 8 & 0x03));
+    Sensor_WriteReg(0x204, (gain >> 8 & 0xff));
     Sensor_WriteReg(0x205, (gain & 0xff));
 
     // s5k5e2ya_group_hold_off();
