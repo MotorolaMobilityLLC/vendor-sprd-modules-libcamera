@@ -2631,6 +2631,7 @@ if (lsc_ver.LSC_SPD_VERSION >= 2) {
 	calc_param.stat_size.h = stat_img_size.h;
 	calc_param.gain_width = lsc_info->gain_w;
 	calc_param.gain_height = lsc_info->gain_h;
+        calc_param.grid = lsc_info->grid;
 	calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
 	calc_param.block_size.w = win_size.w;
 	calc_param.block_size.h = win_size.h;
