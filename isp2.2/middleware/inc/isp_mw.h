@@ -720,6 +720,7 @@ struct isp_video_start {
 	cmr_uint highiso_buf_virt_addr;
 	cmr_uint highiso_buf_size;
 	struct isp_size live_view_sz;
+	cmr_u8 pdaf_enable;
 };
 
 struct isp_img_param {
