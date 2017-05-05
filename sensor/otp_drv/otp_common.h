@@ -6,6 +6,8 @@
 #include <cutils/properties.h>
 #include "otp_info.h"
 
+int sensor_otp_rawdata_from_file(uint8_t cmd, char *sensor_name,
+                                 uint8_t **otp_data, int format_otp_size);
 int sensor_otp_rw_data_from_file(uint8_t cmd, char *sensor_name,
                                  otp_format_data_t **otp_data,
                                  int *format_otp_size);
@@ -22,7 +24,7 @@ int sensor_otp_dump_raw_data(uint8_t *buffer, int size, char *dev_name);
 int sensor_otp_dump_data2txt(uint8_t *buffer, int size, char *dev_name);
 
 int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
-                              cmr_handle* sns_af_drv_handle);
+                          cmr_handle *sns_af_drv_handle);
 int sensor_otp_drv_delete(void *otp_drv_handle);
 
 #endif

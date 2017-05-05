@@ -18,8 +18,8 @@
 #define OTP_END_ADDR 0x0FFF
 
 #define OTP_LEN 8192
-#define GAIN_WIDTH 23
-#define GAIN_HEIGHT 18
+#define GAIN_WIDTH 22
+#define GAIN_HEIGHT 17
 
 #define WB_DATA_SIZE 8 * 2 /*Don't forget golden wb data*/
 #define AF_DATA_SIZE 6
@@ -33,6 +33,7 @@
 /*module base info*/
 #define MODULE_INFO_OFFSET 0x0000
 #define MODULE_INFO_END_OFFSET 0x000F
+#define MODULE_INFO_CHECKSUM 0x000F
 /*AWB*/
 #define AWB_INFO_OFFSET 0x0016
 #define AWB_INFO_END_OFFSET 0x0022
@@ -64,7 +65,7 @@
 /**/
 #define TOTAL_CHECKSUM_OFFSET 0x0FFF
 
-#define LSC_GRID_SIZE 726
+#define LSC_GRID_SIZE 64//726
 #define LSC_FORMAT_SIZE                                                        \
   GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include golden and random data*/
 #define OTP_COMPRESSED_FLAG OTP_COMPRESSED_14BITS
@@ -130,11 +131,11 @@ otp_drv_entry_t ov5675_sunny_drv_entry = {
                       should confirm with module fae*/
                     .compress_flag = OTP_COMPRESSED_FLAG,
                     /*the width of the stream the sensor can output*/
-                    .image_width = 4208,
+                    .image_width = 2592,
                     /*the height of the stream the sensor can output*/
-                    .image_height = 3120,
-                    .grid_width = 23,
-                    .grid_height = 18,
+                    .image_height = 1944,
+                    .grid_width = 22,
+                    .grid_height = 17,
                     .gain_width = GAIN_WIDTH,
                     .gain_height = GAIN_HEIGHT,
                 },

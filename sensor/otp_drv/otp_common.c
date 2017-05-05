@@ -9,6 +9,79 @@ static char *otp_lib_path = "/system/lib/libcamotp.so";
 
 static char *otp_bin_path = "/data/misc/cameraserver/";
 
+int sensor_otp_rawdata_from_file(uint8_t cmd, char *sensor_name,
+                                 uint8_t **otp_data, int format_otp_size) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    OTP_LOGI("in");
+    CHECK_PTR((void *)otp_data);
+
+    char otp_bin_ext_path[255];
+    FILE *fp = NULL;
+
+    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path), "%s%s_parsed_otp.bin",
+             otp_bin_path, sensor_name);
+
+    switch (cmd) {
+    case OTP_WRITE_FORMAT_TO_BIN:
+        OTP_LOGI("write parsed data:%s", otp_bin_ext_path);
+        fp = fopen(otp_bin_ext_path, "wb");
+        if (fp != NULL) {
+            fwrite(*otp_data, 1, format_otp_size, fp);
+            fclose(fp);
+        } else {
+            OTP_LOGE("fp is null!!,write otp bin failed");
+            ret = OTP_CAMERA_FAIL;
+        }
+        break;
+    case OTP_READ_FORMAT_FROM_BIN: {
+        OTP_LOGI("read parsed data:%s", otp_bin_ext_path);
+        uint32_t try_time = 3, mRead = 0;
+        if (-1 != access(otp_bin_ext_path, 0)) {
+            fp = fopen(otp_bin_ext_path, "rb");
+            if (fp != NULL) {
+                fseek(fp, 0L, SEEK_END);
+                format_otp_size = ftell(fp); // get bin size
+                *otp_data = malloc(format_otp_size);
+                if (*otp_data) {
+                    while (try_time--) {
+                        fseek(fp, 0, SEEK_SET);
+                        mRead = fread(*otp_data, 1, format_otp_size, fp);
+                        if (mRead == format_otp_size)
+                            break;
+                        else
+                            OTP_LOGE("error:otp lenght doesn't "
+                                     "match,Read:0x%x,otp_data_len:0x%x",
+                                     mRead, format_otp_size);
+                    }
+                    fclose(fp);
+                    if ((!try_time) && (mRead != format_otp_size)) {
+                        free(*otp_data);
+                        *otp_data = NULL;
+                        ret = OTP_CAMERA_FAIL;
+                    }
+                } else {
+                    OTP_LOGE("malloc otp data buffer failed");
+                    fclose(fp);
+                    ret = OTP_CAMERA_FAIL;
+                }
+            } else {
+                OTP_LOGE("fp is null!!,read otp bin failed");
+                ret = OTP_CAMERA_FAIL;
+            }
+        } else {
+            OTP_LOGE("file don't exist");
+            ret = OTP_CAMERA_FAIL;
+        }
+    } break;
+    default:
+        OTP_LOGE("your cmd is wrong,please check you cmd");
+        ret = OTP_CAMERA_FAIL;
+        break;
+    }
+
+    OTP_LOGI("Exit");
+    return ret;
+}
 /** sensor_otp_rw_data_from_file:
  *  @otp_drv_handle: sensor driver instance.
  *  @cmd: the command of read or write otp
@@ -336,19 +409,19 @@ int sensor_otp_dump_raw_data(uint8_t *buffer, int size, char *dev_name) {
 }
 
 int sensor_otp_dump_data2txt(uint8_t *buffer, int size, char *dev_name) {
-    cmr_int ret = OTP_CAMERA_SUCCESS,i = 0;
+    cmr_int ret = OTP_CAMERA_SUCCESS, i = 0;
     char value[255];
     char otp_bin_ext_path[255];
 
-    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path),
-                 "%s%s_otp_dump.txt", otp_bin_path, dev_name);
+    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path), "%s%s_otp_dump.txt",
+             otp_bin_path, dev_name);
 
-    FILE* fp_txt = fopen(otp_bin_ext_path, "w");
+    FILE *fp_txt = fopen(otp_bin_ext_path, "w");
     if (fp_txt != NULL) {
-        unsigned short* pbuffer = (unsigned short*)buffer;
-        for (i=0; i< (size/2); i++){
-            fprintf(fp_txt,"0x%04x,", *pbuffer++);
-            if (i%16 == 15) {
+        unsigned short *pbuffer = (unsigned short *)buffer;
+        for (i = 0; i < (size / 2); i++) {
+            fprintf(fp_txt, "0x%04x,", *pbuffer++);
+            if (i % 16 == 15) {
                 fprintf(fp_txt, "\n");
             }
         }
@@ -369,27 +442,28 @@ int sensor_otp_dump_data2txt(uint8_t *buffer, int size, char *dev_name) {
  * CMR_CAMERA_SUCCESS : read or write success.
  * CMR_CAMERA_FAILURE : read or write failed
  **/
-int sensor_otp_drv_create(otp_drv_init_para_t *input_para, cmr_handle* sns_otp_drv_handle) {
-	cmr_int ret = OTP_CAMERA_SUCCESS;
-	CHECK_PTR(input_para);
-	CHECK_PTR((void*)sns_otp_drv_handle);
-	OTP_LOGI("In");
+int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
+                          cmr_handle *sns_otp_drv_handle) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    CHECK_PTR(input_para);
+    CHECK_PTR((void *)sns_otp_drv_handle);
+    OTP_LOGI("In");
 
-	otp_drv_cxt_t *otp_cxt = malloc(sizeof(otp_drv_cxt_t));
-	if(!otp_cxt) {
-		OTP_LOGD("otp handle create failed!");
-		return OTP_CAMERA_FAIL;
-	}
-	memset(otp_cxt,0,sizeof(otp_drv_cxt_t));
-	if(input_para->sensor_name)
-		memcpy(otp_cxt->dev_name,input_para->sensor_name,32);
-	otp_cxt->otp_raw_data.buffer = NULL;
-	otp_cxt->otp_data = NULL;
-	otp_cxt->hw_handle= input_para->hw_handle;
-	OTP_LOGI("out");
-	*sns_otp_drv_handle = otp_cxt;
+    otp_drv_cxt_t *otp_cxt = malloc(sizeof(otp_drv_cxt_t));
+    if (!otp_cxt) {
+        OTP_LOGD("otp handle create failed!");
+        return OTP_CAMERA_FAIL;
+    }
+    memset(otp_cxt, 0, sizeof(otp_drv_cxt_t));
+    if (input_para->sensor_name)
+        memcpy(otp_cxt->dev_name, input_para->sensor_name, 32);
+    otp_cxt->otp_raw_data.buffer = NULL;
+    otp_cxt->otp_data = NULL;
+    otp_cxt->hw_handle = input_para->hw_handle;
+    OTP_LOGI("out");
+    *sns_otp_drv_handle = otp_cxt;
 
-	return ret;
+    return ret;
 }
 
 /** sensor_otp_drv_delete:
