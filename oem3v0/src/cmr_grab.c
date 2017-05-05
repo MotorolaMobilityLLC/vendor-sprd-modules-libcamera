@@ -398,6 +398,28 @@ exit:
     return ret;
 }
 
+cmr_int cmr_grab_pdaf_cfg(cmr_handle grab_handle, struct img_frm_cap *cfg,
+                          cmr_u32 channel_id) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    struct sprd_img_parm parm;
+
+    if (NULL == cfg)
+        return -1;
+    p_grab = (struct cmr_grab *)grab_handle;
+
+    parm.channel_id = channel_id;
+    parm.pdaf_ctrl.isp_tool_mode = cfg->pdaf_ctrl.isp_tool_mode;
+    parm.pdaf_ctrl.mode = cfg->pdaf_ctrl.mode;
+    parm.pdaf_ctrl.phase_data_type = cfg->pdaf_ctrl.phase_data_type;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
+    if (ret) {
+        CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%ld", ret);
+        return ret;
+    }
+    return ret;
+}
+
 static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
                                        struct cap_cfg *config,
                                        cmr_u32 channel_id,
@@ -438,6 +460,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
     parm.channel_id = channel_id;
     parm.pdaf_ctrl.mode = config->cfg.pdaf_ctrl.mode;
     parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
+    parm.pdaf_ctrl.isp_tool_mode = config->cfg.need_isp_tool;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
     if (ret) {
         CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%ld", ret);

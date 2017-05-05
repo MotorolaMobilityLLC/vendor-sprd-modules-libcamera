@@ -78,6 +78,8 @@ void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb v4l2_event_cb);
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_if_decfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config);
+cmr_int cmr_grab_pdaf_cfg(cmr_handle grab_handle, struct img_frm_cap *cfg,
+                          cmr_u32 channel_id);
 cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
                          cmr_u32 *channel_id, struct img_data_end *endian);
 cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,

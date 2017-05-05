@@ -589,6 +589,10 @@ static cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
                                       cmr_u32 camera_id, cmr_u32 is_restart,
                                       struct preview_out_param *out_param_ptr);
 
+static cmr_int prev_set_pdaf_param(struct prev_handle *handle,
+                                   cmr_u32 camera_id,
+                                   struct preview_out_param *out_param_ptr);
+
 static cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
                                 struct img_size *cap_size,
                                 struct img_frm_cap *img_cap);
@@ -7603,6 +7607,18 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
+    if (handle->prev_cxt[camera_id].prev_param.pdaf_mode ==
+        SENSOR_PDAF_TYPE2_ENABLE) {
+        char value[PROPERTY_VALUE_MAX];
+        property_get("persist.sys.camera.raw.mode", value, "jpeg");
+        if (!strcmp(value, "raw")) {
+            ret = prev_set_pdaf_param(handle, camera_id, out_param_ptr);
+            if (ret) {
+                CMR_LOGE("set sensosr_datatype param failed");
+                goto exit;
+            }
+        }
+    }
     if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
         if (handle->prev_cxt[camera_id].prev_param.tool_eb) {
             // raw capture
@@ -9265,6 +9281,13 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     /*config capture ability*/
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
     chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
+
+    if (SENSOR_PDAF_TYPE2_ENABLE == prev_cxt->prev_param.pdaf_mode) {
+        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.mode = 1;
+        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type =
+            prev_cxt->prev_param.datatype;
+        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.isp_tool_mode = 1;
+    }
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
                            &chn_param.cap_inf_cfg.cfg);
     if (ret) {
@@ -9393,6 +9416,24 @@ exit:
     return ret;
 }
 
+cmr_int prev_set_pdaf_param(struct prev_handle *handle, cmr_u32 camera_id,
+                            struct preview_out_param *out_param_ptr) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 channel_id = 0;
+    struct prev_context *prev_cxt = NULL;
+    struct img_frm_cap cfg;
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    memset(&cfg, 0x00, sizeof(cfg));
+    cfg.pdaf_ctrl.mode = 1;
+    cfg.pdaf_ctrl.phase_data_type = prev_cxt->prev_param.datatype;
+    cfg.pdaf_ctrl.isp_tool_mode = 1;
+    ret = handle->ops.channel_pdaf_cfg(handle->oem_handle, camera_id, &cfg,
+                                       channel_id);
+
+    return ret;
+}
+
 cmr_int
 prev_set_sensor_datatype_param(struct prev_handle *handle, cmr_u32 camera_id,
                                cmr_u32 is_restart,
@@ -9439,6 +9480,7 @@ prev_set_sensor_datatype_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.flip_on = 0;
 
     chn_param.cap_inf_cfg.cfg.pdaf_ctrl.mode = 1;
+    chn_param.cap_inf_cfg.cfg.pdaf_ctrl.isp_tool_mode = 0;
 
     switch (prev_cxt->prev_param.sensor_datatype) {
     case SENSOR_REAL_DEPTH_ENABLE:

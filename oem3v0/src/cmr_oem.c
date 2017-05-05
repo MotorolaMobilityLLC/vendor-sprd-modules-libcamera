@@ -220,6 +220,9 @@ static cmr_int
 camera_channel_cap_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
                        cmr_u32 camera_id, struct cap_cfg *cap_cfg,
                        cmr_u32 *channel_id, struct img_data_end *endian);
+static cmr_int camera_channel_pdaf_cfg(cmr_handle oem_handle, cmr_u32 camera_id,
+                                       struct img_frm_cap *param_ptr,
+                                       cmr_u32 channel_id);
 static cmr_int camera_isp_buff_cfg(cmr_handle oem_handle,
                                    struct buffer_cfg *buf_cfg);
 static cmr_int camera_hdr_set_ev(cmr_handle oem_handle);
@@ -3548,6 +3551,7 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.channel_stop = camera_channel_stop;
     init_param.ops.channel_buff_cfg = camera_channel_buff_cfg;
     init_param.ops.channel_cap_cfg = camera_channel_cap_cfg;
+    init_param.ops.channel_pdaf_cfg = camera_channel_pdaf_cfg;
     init_param.ops.isp_start_video = camera_isp_start_video;
     init_param.ops.isp_stop_video = camera_isp_stop_video;
     init_param.ops.start_rot = camera_start_rot;
@@ -5935,6 +5939,27 @@ cmr_int camera_isp_stop_video(cmr_handle oem_handle) {
 exit:
     CMR_LOGI("done %ld", ret);
     ATRACE_END();
+    return ret;
+}
+
+cmr_int camera_channel_pdaf_cfg(cmr_handle oem_handle, cmr_u32 camera_id,
+                                struct img_frm_cap *param_ptr,
+                                cmr_u32 channel_id) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!oem_handle || !param_ptr) {
+        CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx", (cmr_uint)oem_handle,
+                 (cmr_uint)param_ptr, (cmr_uint)channel_id);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = cmr_grab_pdaf_cfg(cxt->grab_cxt.grab_handle, param_ptr, channel_id);
+    if (ret) {
+        CMR_LOGE("failed to pdaf cfg %ld", ret);
+        goto exit;
+    }
+exit:
     return ret;
 }
 
