@@ -79,6 +79,69 @@ static cmr_u32 pdaf_set_cfg_param (void *handle, struct isp_dev_pdaf_info *in_pa
 	return ISP_SUCCESS;
 }
 
+static cmr_u32 pdaf_set_bypass(void *handle, cmr_u32 in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_BYPASS, &in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_u32 pdaf_set_work_mode(void *handle, cmr_u32 in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_WORK_MODE, &in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_SKIP_NUM, &in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+static cmr_u32 pdaf_set_ppi_info(void *handle, struct pdaf_ppi_info *in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+	struct pdaf_ppi_info *pdinfo = in_param;
+
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_PPI_INFO, in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+static cmr_u32 pdaf_set_roi(void *handle, struct pdaf_roi_info *in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_ROI, in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_u32 pdaf_set_extractor_bypass(void *handle, cmr_u32 in_param)
+{
+	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
+
+	if (cxt_ptr->pdaf_set_cb) {
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_EXTRACTOR_BYPASS, &in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
 
 static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *in, struct pdaf_ctrl_init_out *out)
 {
@@ -284,7 +347,13 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	}
 
 	in->pdaf_set_pdinfo_to_af = pdaf_set_pdinfo_to_af;
-	in->pdaf_set_cfg_param = pdaf_set_cfg_param;
+	in->pdaf_set_cfg_param  = pdaf_set_cfg_param;
+	in->pdaf_set_bypass = pdaf_set_bypass;
+	in->pdaf_set_work_mode = pdaf_set_work_mode;
+	in->pdaf_set_skip_num = pdaf_set_skip_num;
+	in->pdaf_set_ppi_info = pdaf_set_ppi_info;
+	in->pdaf_set_roi = pdaf_set_roi;
+	in->pdaf_set_extractor_bypass = pdaf_set_extractor_bypass;
 
 	*handle = NULL;
 	cxt = (struct pdafctrl_context *)malloc(sizeof(*cxt));
@@ -297,8 +366,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	/* init param */
 	memset((void *)cxt, 0x00, sizeof(*cxt));
 	cxt->camera_id = in->camera_id;
-/*TBD we will get pdaf_support info form sensor*/
-	cxt->pdaf_support = 0;
+	cxt->pdaf_support = in->pdaf_support;
 	ISP_LOGI("cxt->pdaf_support = %d", cxt->pdaf_support);
 	//cxt->init_in_param = *in;
 	if (!cxt->pdaf_support) {

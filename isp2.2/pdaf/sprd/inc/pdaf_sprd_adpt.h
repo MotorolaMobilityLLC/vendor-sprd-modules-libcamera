@@ -22,13 +22,18 @@
 
 #define IMAGE_WIDTH 4160
 #define IMAGE_HEIGHT 3072
-#define BEGIN_X 24
-#define BEGIN_Y 24
-#define ROI_X 1048
-#define ROI_Y 792
+#define BEGIN_X_0 24
+#define BEGIN_Y_0 24
+#define BEGIN_X_1 64
+#define BEGIN_Y_1 32
+#define ROI_X_0 1048
+#define ROI_Y_0 792
+#define ROI_X_1 1088
+#define ROI_Y_1 800
 #define ROI_Width 2048
 #define ROI_Height 1536
-#define SENSOR_ID 0
+#define SENSOR_ID_0 0
+#define SENSOR_ID_1 1
 #define PD_REG_OUT_SIZE	352
 #define PD_OTP_PACK_SIZE	550
 
@@ -76,7 +81,6 @@ struct sprd_pdaf_report_t {
 	char enable;
 	struct pdaf_timestamp time_stamp;
 	float pd_value;
-	void *pd_reg_out;
 	cmr_u32 pd_reg_size;
 };
 

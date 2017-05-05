@@ -564,6 +564,24 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 	case ISP_DEV_SET_PDAF_CFG_PARAM:
 		rtn = isp_u_pdaf_block(cxt->isp_driver_handle, param0);
 		break;
+	case ISP_DEV_SET_PDAF_BYPASS:
+		rtn = isp_u_pdaf_bypass(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_WORK_MODE:
+		rtn = isp_u_pdaf_work_mode(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_SKIP_NUM:
+		rtn = isp_u_pdaf_skip_num(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS:
+		rtn = isp_u_pdaf_extractor_bypass(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_ROI:
+		rtn = isp_u_pdaf_roi(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_PPI_INFO:
+		rtn = isp_u_pdaf_ppi_info(cxt->isp_driver_handle, param0);
+		break;
 	case ISP_DEV_SET_AFL_CFG_PARAM:
 		rtn = isp_u_anti_flicker_block(cxt->isp_driver_handle, param0);
 		break;

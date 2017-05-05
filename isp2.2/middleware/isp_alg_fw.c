@@ -73,6 +73,7 @@ struct isp_alg_sw_init_in {
 	struct isp_size size;
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_pdaf_info *pdaf_info;
+	struct isp_size	sensor_max_size;
 };
 
 typedef struct {
@@ -393,6 +394,25 @@ static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *pa
 	case ISP_PDAF_SET_CFG_PARAM:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, param0, param1);
 		break;
+	case ISP_PDAF_SET_PPI_INFO:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, param0, param1);
+		break;
+	case ISP_PDAF_SET_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, param0, param1);
+		break;
+	case ISP_PDAF_SET_WORK_MODE:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, param0, param1);
+		break;
+	case ISP_PDAF_SET_EXTRACTOR_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, param0, param1);
+		break;
+	case ISP_PDAF_SET_ROI:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, param0, param1);
+		break;
+	case ISP_PDAF_SET_SKIP_NUM:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, param0, param1);
+		break;
+
 	default:
 		break;
 	}
@@ -1227,6 +1247,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_u32 u_addr = 0;
 	cmr_s32 i = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
+	struct pdaf_ctrl_param_out pdaf_param_out;
 	struct isp_statis_buf_input statis_buf;
 	UNUSED(data_type);
 
@@ -1246,7 +1267,11 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 
 	pdaf_param_in.u_addr = u_addr;
-	rtn = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+
+	pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
+	ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
+	if (!pdaf_param_out.is_busy)
+		rtn = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
@@ -1878,6 +1903,12 @@ static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 
 	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
 	pdaf_input.pd_info = input_ptr->pdaf_info;
+	pdaf_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
+	pdaf_input.sensor_max_size = input_ptr->sensor_max_size;
+	if (1 == cxt->pdaf_cxt.pdaf_support) {
+		pdaf_input.pdaf_otp.otp_data= (void *)input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_addr;
+		pdaf_input.pdaf_otp.size= input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_size;
+	}
 
 	rtn = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
 
@@ -2239,6 +2270,8 @@ static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
+	pdaf_ctrl_deinit(&cxt->pdaf_cxt.handle);
+
 	af_ctrl_deinit(&cxt->af_cxt.handle);
 
 	lsc_ctrl_deinit(&cxt->lsc_cxt.handle);
@@ -2250,8 +2283,6 @@ static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 	ae_ctrl_deinit(&cxt->ae_cxt.handle);
 
 	afl_ctrl_deinit(&cxt->afl_cxt.handle);
-
-	pdaf_ctrl_deinit(&cxt->pdaf_cxt.handle);
 
 	ISP_LOGI("done");
 	return ISP_SUCCESS;
@@ -2299,6 +2330,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
 #endif
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
+	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
 	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));
 	if (!binning_info) {
@@ -2817,17 +2849,17 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	rtn = isp_update_alg_param(cxt);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to isp smart param calc"));
 
-	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
-	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, cxt->pdaf_cxt.pdaf_en = %d",
-		cxt->pdaf_cxt.pdaf_support, cxt->pdaf_cxt.pdaf_en);
+	/*pdaf_support will get form sensor,pdaf_enable will get from oem*/
+	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d",
+                cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
+        if (cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
+                rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
+                ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf"));
+        } else {
+                rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_DISABLE_PDAF, NULL, NULL);
+                ISP_RETURN_IF_FAIL(rtn, ("fail to disable pdaf"));
+        }
 
-#if 0 //for bringup
-	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pdaf_en) {
-		rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
-
-	}
-	ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf param"));
-#endif
 	rtn = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to trans isp buff"));
 

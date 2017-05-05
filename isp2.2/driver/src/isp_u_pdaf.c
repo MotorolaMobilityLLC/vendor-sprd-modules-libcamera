@@ -18,6 +18,132 @@
 
 #include "isp_drv.h"
 
+cmr_s32 isp_u_pdaf_bypass(isp_handle handle, cmr_u32 *bypass)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_PDAF;
+	param.property = ISP_PRO_PDAF_BYPASS;
+	param.property_param = bypass;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	return ret;
+}
+
+cmr_s32 isp_u_pdaf_work_mode(isp_handle handle, cmr_u32 *work_mode)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_PDAF;
+	param.property = ISP_PRO_PDAF_SET_MODE;
+	param.property_param = work_mode;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	return ret;
+}
+
+cmr_s32 isp_u_pdaf_extractor_bypass(isp_handle handle, cmr_u32 *bypass)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_PDAF;
+	param.property = ISP_PRO_PDAF_SET_EXTRACTOR_BYPASS;
+	param.property_param = bypass;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	return ret;
+}
+
+cmr_s32 isp_u_pdaf_skip_num(isp_handle handle, cmr_u32 *skip_num)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_PDAF;
+	param.property = ISP_PRO_PDAF_SET_SKIP_NUM;
+	param.property_param = skip_num;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	return ret;
+}
+
+cmr_s32 isp_u_pdaf_roi(isp_handle handle, void *roi_info)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_PDAF;
+	param.property = ISP_PRO_PDAF_SET_ROI;
+	param.property_param = roi_info;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	return ret;
+}
+
+cmr_s32 isp_u_pdaf_ppi_info(isp_handle handle, void *ppi_info)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_PDAF;
+	param.property = ISP_PRO_PDAF_SET_PPI_INFO;
+	param.property_param = ppi_info;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	return ret;
+}
+
 cmr_s32 isp_u_pdaf_block(isp_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
