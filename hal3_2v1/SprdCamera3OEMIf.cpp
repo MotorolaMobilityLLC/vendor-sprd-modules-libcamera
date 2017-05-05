@@ -4712,9 +4712,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
     HAL_LOGV("pic_addr_vir = 0x%lx", pic_addr_vir);
     memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
-    if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
-        (!strcmp(debug_value, "debug")) || is_raw_capture) {
-        // add isp debug info
+
+    // add isp debug info for userdebug version
+    property_get("ro.debuggable", value, "0");
+    if (!strcmp(value, "1")) {
         ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &isp_info_addr,
                                                 &isp_info_size);
         if (ret == 0 && isp_info_size > 0) {
@@ -4722,8 +4723,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             memcpy(((char *)pic_addr_vir + mJpegSize), (char *)isp_info_addr,
                    isp_info_size);
         }
+    }
 
-        // dump jpeg file
+    // dump jpeg file
+    if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
+        (!strcmp(debug_value, "debug")) || is_raw_capture) {
         mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir,
                                      encInfo->size + isp_info_size,
                                      mCaptureWidth, mCaptureHeight);

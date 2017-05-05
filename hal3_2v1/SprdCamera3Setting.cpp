@@ -761,7 +761,7 @@ void SprdCamera3Setting::SprdCamera3Setting::parseStringfloat(
 
 int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
                                           cmr_u16 height) {
-
+    char value[PROPERTY_VALUE_MAX];
     int32_t jpeg_stream_size = 0;
 
     if (width * height <= 1600 * 1200) {
@@ -787,6 +787,12 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
         jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else {
         jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    }
+
+    // enlarge buffer size for isp debug info for userdebug version
+    property_get("ro.debuggable", value, "0");
+    if (!strcmp(value, "1")) {
+        jpeg_stream_size += 1024 * 1024;
     }
 
     CMR_LOGI("jpeg_stream_size = %d", jpeg_stream_size);
