@@ -573,11 +573,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mRecordingMode;
     bool mIsSetCaptureMode;
     nsecs_t mRecordingFirstFrameTime;
-    /* mJpegSize keeps track of the size of the accumulated JPEG.  We clear it
-    when we are about to take a picture, so at any time it contains either
-    zero, or the size of the last JPEG picture taken.
-    */
-    uint32_t mJpegSize;
     void *mUser;
     preview_stream_ops *mPreviewWindow;
     static gralloc_module_t const *mGrallocHal;

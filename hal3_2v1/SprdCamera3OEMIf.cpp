@@ -231,10 +231,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreviewFormat(CAMERA_DATA_FORMAT_YUV422), mPictureFormat(1),
       mPreviewStartFlag(0), mIsDvPreview(0), mIsStoppingPreview(0),
       mRecordingMode(0), mIsSetCaptureMode(false), mRecordingFirstFrameTime(0),
-      mJpegSize(0), mUser(0), mPreviewWindow(NULL), mHalOem(NULL),
-      mIsStoreMetaData(false), mIsFreqChanged(false), mCameraId(cameraId),
-      miSPreviewFirstFrame(1), mCaptureMode(CAMERA_NORMAL_MODE),
-      mCaptureRawMode(0),
+      mUser(0), mPreviewWindow(NULL), mHalOem(NULL), mIsStoreMetaData(false),
+      mIsFreqChanged(false), mCameraId(cameraId), miSPreviewFirstFrame(1),
+      mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0),
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
       mIsRotCapture(1),
 #else
@@ -4634,8 +4633,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     char value[PROPERTY_VALUE_MAX];
     char debug_value[PROPERTY_VALUE_MAX];
     unsigned char is_raw_capture = 0;
-    void *isp_info_addr = NULL;
-    int isp_info_size = 0;
+    void *ispInfoAddr = NULL;
+    int ispInfoSize = 0;
 
     HAL_LOGD("E encInfo->size = %d, enc->buffer = %p, encInfo->need_free = %d "
              "time=%lld",
@@ -4685,22 +4684,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
     HAL_LOGV("pic_addr_vir = 0x%lx", pic_addr_vir);
     memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
-    if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
-        (!strcmp(debug_value, "debug")) || is_raw_capture) {
-        // add isp debug info
-        ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &isp_info_addr,
-                                                &isp_info_size);
-        if (ret == 0 && isp_info_size > 0) {
-            mJpegSize = encInfo->size;
-            memcpy(((char *)pic_addr_vir + mJpegSize), (char *)isp_info_addr,
-                   isp_info_size);
-        }
-
-        // dump jpeg file
-        mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir,
-                                     encInfo->size + isp_info_size,
-                                     mCaptureWidth, mCaptureHeight);
-    }
 
     pic_stream->getQBuffFirstNum(&frame_num);
     pic_stream->getHeapSize(&heap_size);
@@ -4709,14 +4692,43 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         HAL_LOGE("failed to get jpeg buffer handle");
         goto exit;
     }
+
     maxJpegSize = ((private_handle_t *)(*jpeg_buff_handle))->width;
     if ((uint32_t)maxJpegSize > heap_size) {
         maxJpegSize = heap_size;
     }
+
+    property_get("ro.debuggable", value, "0");
+    if (!strcmp(value, "1")) {
+        // add isp debug info for userdebug version
+        ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInfoAddr,
+                                                &ispInfoSize);
+        if (ret == 0 && ispInfoSize > 0) {
+            HAL_LOGV("ispInfoSize=%d, encInfo->size=%d, maxJpegSize=%d",
+                     ispInfoSize, encInfo->size, maxJpegSize);
+            if (encInfo->size + ispInfoSize + sizeof(camera3_jpeg_blob) <
+                (uint32_t)maxJpegSize) {
+                memcpy(((char *)pic_addr_vir + encInfo->size),
+                       (char *)ispInfoAddr, ispInfoSize);
+            } else {
+                ispInfoSize = 0;
+            }
+        }
+
+        // dump jpeg file
+        if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
+            (!strcmp(debug_value, "debug")) || is_raw_capture) {
+            mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir,
+                                         encInfo->size + ispInfoSize,
+                                         mCaptureWidth, mCaptureHeight);
+        }
+    }
+
     jpegBlob = (camera3_jpeg_blob *)((char *)pic_addr_vir +
                                      (maxJpegSize - sizeof(camera3_jpeg_blob)));
-    jpegBlob->jpeg_size = encInfo->size + isp_info_size;
+    jpegBlob->jpeg_size = encInfo->size + ispInfoSize;
     jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
+
     picChannel->channelCbRoutine(frame_num, timestamp,
                                  CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
 
