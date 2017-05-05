@@ -5916,7 +5916,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_height = target_size->height;
     }
 
-    if (is_raw_capture == 1) {
+    if (is_raw_capture == 1 || handle->prev_cxt[camera_id].prev_param.tool_eb) {
         CMR_LOGD("search_height = %d", search_height);
         for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
             if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {

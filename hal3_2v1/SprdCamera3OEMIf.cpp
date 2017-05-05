@@ -3787,9 +3787,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
     if (mIsIspToolMode) {
-        send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
-                      (char *)frame->y_vir_addr,
-                      frame->width * frame->height * 3 / 2);
+        if (PREVIEW_FRAME == frame->type) {
+                       send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
+                                     (char *)frame->y_vir_addr,
+                                     frame->width * frame->height * 3 / 2);
+        }
     }
 
 #if 1 // for cts
