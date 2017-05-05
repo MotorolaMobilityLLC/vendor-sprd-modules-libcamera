@@ -2468,10 +2468,12 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs otp begin*/
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
-            char *psPath_OtpData = "data/misc/cameraserver/otp.bin";
+            char *psPath_OtpData =
+                "data/misc/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
             OTP_Tag otpInfo = {0};
             mSetting->getOTPTag(&otpInfo);
+            fseek(psPath_OtpData, 0xD26, 0);
             int otp_ret =
                 read_file(psPath_OtpData, dual_otp_data, SPRD_DUAL_OTP_SIZE);
             if (otp_ret == 0) {
@@ -2486,8 +2488,9 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                         "camera_id: %d,otp_info %p, data_ptr %p, size 0x%x",
                         mCameraId, &otp_info, otp_info.total_otp.data_ptr,
                         otp_info.total_otp.size);
-                    memcpy(otpInfo.otp_data, otp_info.total_otp.data_ptr,
-                           otp_info.total_otp.size);
+                    memcpy(otpInfo.otp_data,
+                           (char *)otp_info.total_otp.data_ptr + 0xD26,
+                           SPRD_DUAL_OTP_SIZE);
                     otpInfo.dual_otp_flag = 1;
                 } else {
                     otpInfo.dual_otp_flag = 0;
@@ -2502,6 +2505,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d",
                          mCameraId, dual_otp_data, otpInfo.dual_otp_flag);
             }
+            save_file("data/misc/cameraserver/dualcamera.bin", dual_otp_data,
+                      SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 
             if (dual_otp_data != NULL) {
@@ -2522,14 +2527,19 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                     "camera_id: %d,dual_otp_info %p, data_ptr %p, size 0x%x",
                     mCameraId, &otp_info, otp_info.total_otp.data_ptr,
                     otp_info.total_otp.size);
-                memcpy(otpInfo.otp_data, otp_info.total_otp.data_ptr,
-                       otp_info.total_otp.size);
+                memcpy(otpInfo.otp_data,
+                       (char *)otp_info.total_otp.data_ptr + 0xD26,
+                       SPRD_DUAL_OTP_SIZE);
                 otpInfo.dual_otp_flag = 1;
             } else {
                 otpInfo.dual_otp_flag = 0;
                 HAL_LOGD("camera_id: %d, dual_otp_flag %d", mCameraId,
                          otpInfo.dual_otp_flag);
             }
+            HAL_LOGD("save otp file");
+
+            save_file("data/misc/cameraserver/dualcamera.bin", otpInfo.otp_data,
+                      SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 #endif
         }
