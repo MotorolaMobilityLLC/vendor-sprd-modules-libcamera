@@ -56,7 +56,6 @@
 #define CAMERA_POWER_OPT_FLAG 0
 #endif
 
-
 static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle);
 static void *cmr_grab_thread_proc(void *data);
@@ -361,13 +360,13 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
         sensor_if.if_spec.mipi.is_loose = sn_if->if_spec.mipi.is_loose;
         sensor_if.if_spec.mipi.lane_num = sn_if->if_spec.mipi.lane_num;
 
-        if (CAMERA_POWER_OPT_FLAG){
+        if (CAMERA_POWER_OPT_FLAG) {
             CMR_LOGI("support power opt\n");
             sensor_if.if_spec.mipi.pclk = sn_if->if_spec.mipi.pclk;
         } else {
             CMR_LOGI("not support power opt\n");
             sensor_if.if_spec.mipi.pclk = 0xffff;
-       }
+        }
     }
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_IF, &sensor_if);
@@ -678,7 +677,7 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
-    CMR_LOGV("channel_id=%d, count=%d, base_id=0x%x ", buf_cfg->channel_id,
+    CMR_LOGV("chn_id=%d, cnt=%d, base_id=0x%x ", buf_cfg->channel_id,
              buf_cfg->count, buf_cfg->base_id);
 
     /* firstly , set the base index for each channel */
@@ -703,11 +702,10 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
         parm.frame_addr_vir_array[i].v = buf_cfg->addr_vir[i].addr_v;
         parm.fd_array[i] = buf_cfg->fd[i];
         parm.index = buf_cfg->index[i];
-        CMR_LOGD("chn_id=%d, i=%d, fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, "
-                 "is_reserved_buf=%d\n",
+        CMR_LOGD("chn_id=%d, i=%d, fd=0x%x, y=0x%lx, u=0x%lx, reserved=%d",
                  buf_cfg->channel_id, i, buf_cfg->fd[i],
                  buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
-                 buf_cfg->addr[i].addr_v, buf_cfg->is_reserved_buf);
+                 buf_cfg->is_reserved_buf);
     }
 
     if (buf_cfg->count > 0) {

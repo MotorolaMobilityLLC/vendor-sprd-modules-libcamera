@@ -9089,7 +9089,7 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("fd=0x%x, channel_id=0x%lx, valid_num=%ld camera_id = %ld",
+    CMR_LOGD("fd=0x%x, chn_id=0x%lx, valid_num=%ld cam_id=%ld",
              prev_cxt->prev_frm[valid_num].fd, prev_cxt->prev_channel_id,
              prev_cxt->prev_mem_valid_num, prev_cxt->camera_id);
     ATRACE_END();
@@ -9161,8 +9161,8 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
-             data->fd, data->channel_id, prev_cxt->prev_mem_valid_num,
+    CMR_LOGD("fd=0x%x, chn_id=0x%x, valid_num=%ld, cam_id=%ld", data->fd,
+             data->channel_id, prev_cxt->prev_mem_valid_num,
              prev_cxt->camera_id);
     ATRACE_END();
     return ret;
@@ -9503,7 +9503,7 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         buf_cfg.count = CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE;
         buf_cfg.length = frame_size;
         buf_cfg.flag = BUF_FLAG_RUNNING;
-        CMR_LOGD(" buffer_cont=%ld, valid_num=%ld, camera_id = %ld",
+        CMR_LOGD("buffer_cont=%ld, valid_num=%ld, camera_id = %ld",
                  prev_cxt->cache_buffer_cont, prev_cxt->video_mem_valid_num,
                  prev_cxt->camera_id);
         for (i = 0; i < CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE; i++) {
@@ -9585,11 +9585,9 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("fd=0x%x, channel_id=%ld, valid_num=%ld, camera_id = "
-             "%ld,cache_buffer_cont =%ld",
+    CMR_LOGD("fd=0x%x, chn_id=%ld, valid_num=%ld, cam_id=%ld",
              prev_cxt->video_frm[valid_num].fd, prev_cxt->video_channel_id,
-             prev_cxt->video_mem_valid_num, prev_cxt->camera_id,
-             prev_cxt->cache_buffer_cont);
+             prev_cxt->video_mem_valid_num, prev_cxt->camera_id);
     ATRACE_END();
     return ret;
 }
@@ -9657,8 +9655,8 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
-             data->fd, data->channel_id, prev_cxt->video_mem_valid_num,
+    CMR_LOGD("fd=0x%x, chn_id=0x%x, valid_num=%ld, cam_id=%ld", data->fd,
+             data->channel_id, prev_cxt->video_mem_valid_num,
              prev_cxt->camera_id);
     ATRACE_END();
     return ret;
@@ -9784,7 +9782,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("fd=0x%x, channel_id=0x%lx, valid_num=%ld, camera_id = %ld",
+    CMR_LOGD("fd=0x%x, chn_id=0x%lx, valid_num=%ld, cam_id = %ld",
              prev_cxt->cap_zsl_frm[valid_num].fd, prev_cxt->cap_channel_id,
              prev_cxt->cap_zsl_mem_valid_num, prev_cxt->camera_id);
     ATRACE_END();
@@ -9855,8 +9853,8 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
-             data->fd, data->channel_id, prev_cxt->cap_zsl_mem_valid_num,
+    CMR_LOGD("fd=0x%x, chn_id=0x%x, valid_num=%ld, cam_id = %ld", data->fd,
+             data->channel_id, prev_cxt->cap_zsl_mem_valid_num,
              prev_cxt->camera_id);
     ATRACE_END();
     return ret;

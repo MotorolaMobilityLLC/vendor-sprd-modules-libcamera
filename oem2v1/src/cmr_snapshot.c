@@ -1882,7 +1882,8 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
              enc_param.need_free, enc_param.size, cxt->cap_cnt,
              cxt->req_param.total_num);
     camera_take_snapshot_step(CMR_STEP_CALL_BACK);
-    camera_snapshot_step_statisic(&image_size);
+    // just for perf tuning
+    // camera_snapshot_step_statisic(&image_size);
     frame_type.timestamp = frame->sec * 1000000000LL + frame->usec * 1000;
     frame_type.monoboottime = frame->monoboottime;
     memcpy((void *)&frame_type.jpeg_param, (void *)&enc_param,

@@ -3788,9 +3788,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
     if (mIsIspToolMode) {
         if (PREVIEW_FRAME == frame->type) {
-                       send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
-                                     (char *)frame->y_vir_addr,
-                                     frame->width * frame->height * 3 / 2);
+            send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
+                          (char *)frame->y_vir_addr,
+                          frame->width * frame->height * 3 / 2);
         }
     }
 
@@ -3932,7 +3932,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         ATRACE_BEGIN("video_frame");
-        HAL_LOGD("record:fd=%d, vir=0x%lx, num=%d, timestamp=%lld, rec=%lld",
+        HAL_LOGD("record:fd=%d, vir=0x%lx, num=%d, time=%lld, rec=%lld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp,
                  mSlowPara.rec_timestamp);
         if (frame->type == PREVIEW_VIDEO_FRAME &&

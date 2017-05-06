@@ -778,10 +778,9 @@ int SprdCamera3HWI::configureStreams(
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
 
-    HAL_LOGI(":hal3: preview: w=%d, h=%d, video: w=%d, h=%d",
-             preview_size.width, preview_size.height, video_size.width,
-             video_size.height);
-    HAL_LOGI(":hal3: raw: w=%d, h=%d, capture: w=%d, h=%d", raw_size.width,
+    HAL_LOGI(":hal3: prev: w=%d, h=%d, video: w=%d, h=%d", preview_size.width,
+             preview_size.height, video_size.width, video_size.height);
+    HAL_LOGI(":hal3: callback: w=%d, h=%d, cap: w=%d, h=%d", raw_size.width,
              raw_size.height, capture_size.width, capture_size.height);
 
     // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
@@ -1392,9 +1391,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         camera3_notify_msg_t notify_msg;
 
         if (i->frame_number < frame_number) {
-            HAL_LOGD(
-                "i->frame_number = %d, frame_number = %d, i->request_id = %d",
-                i->frame_number, frame_number, i->request_id);
+            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
+                     i->frame_number, frame_number, i->request_id);
 
             /**add for 3d capture reprocessing begin   */
             HAL_LOGV("result stream format =%d", result_info->stream->format);
@@ -1443,9 +1441,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
             i++;
         } else if (i->frame_number == frame_number) {
-            HAL_LOGD(
-                "i->frame_number = %d, frame_number = %d, i->request_id = %d",
-                i->frame_number, frame_number, i->request_id);
+            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
+                     i->frame_number, frame_number, i->request_id);
 
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
@@ -1520,7 +1517,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 }
             }
 
-            HAL_LOGD("num_buffers =%d, mPendingRequest =%d", i->num_buffers,
+            HAL_LOGD("num_bufs=%d, mPendingReq=%d", i->num_buffers,
                      mPendingRequest);
 
             if (0 == i->num_buffers) {
