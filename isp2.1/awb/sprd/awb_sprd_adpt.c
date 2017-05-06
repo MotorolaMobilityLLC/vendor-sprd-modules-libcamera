@@ -1092,6 +1092,15 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 
 	ISP_LOGV("AWB output: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 
+	//lock awb after snapshot
+	if (cxt->snap_lock != 0){
+		cxt->output_gain.r = cxt->recover_gain.r;
+		cxt->output_gain.g = cxt->recover_gain.g;
+		cxt->output_gain.b = cxt->recover_gain.b;
+		cxt->output_ct = cxt->recover_ct;
+		cxt->snap_lock-=1;
+	}
+
 	//scenemode & mwb change
 	if (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode) {
 		cmr_u32 mawb_id = cxt->wb_mode;
@@ -1161,15 +1170,6 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_ct = cxt->lock_info.lock_ct;
 	}
 
-	//lock awb after snapshot
-	if (cxt->snap_lock != 0){
-		cxt->output_gain.r = cxt->recover_gain.r;
-		cxt->output_gain.g = cxt->recover_gain.g;
-		cxt->output_gain.b = cxt->recover_gain.b;
-		cxt->output_ct = cxt->recover_ct;
-		cxt->snap_lock-=1;
-	}
-
 	//lock awb after flash
 	if(cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0){
 		cxt->output_gain.r = cxt->recover_gain.r ;
@@ -1230,7 +1230,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				ISP_LOGE("fail to _awb_get_recgain");
 				return AWB_CTRL_ERROR;
 			}
-			cxt->snap_lock =5;  //lock awb 5 frames after snapshot
+			cxt->snap_lock =0;  //lock awb N frames after snapshot
 			cxt->last_enable = 0;
 		}
 		cxt->flash_info.flash_enable = 0;

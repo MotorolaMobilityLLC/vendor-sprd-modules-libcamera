@@ -215,28 +215,6 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WB_MODE, (void *)&awb_id, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("awb set wb mode error"));
 
-	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
-	ISP_TRACE_IF_FAIL(rtn, ("awb get gain error"));
-
-	/*set awb gain */
-	awbc_cfg.r_gain = result.r;
-	awbc_cfg.g_gain = result.g;
-	awbc_cfg.b_gain = result.b;
-	awbc_cfg.r_offset = 0;
-	awbc_cfg.g_offset = 0;
-	awbc_cfg.b_offset = 0;
-
-	ioctl_data.id = ISP_BLK_AWB_NEW;
-	ioctl_data.cmd = ISP_PM_BLK_AWBC;
-	ioctl_data.data_ptr = &awbc_cfg;
-	ioctl_data.data_size = sizeof(awbc_cfg);
-
-	ioctl_input.param_data_ptr = &ioctl_data;
-	ioctl_input.param_num = 1;
-
-	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
-	ISP_LOGV("AWB_TAG:  rtn=%ld, gain=(%d, %d, %d)", rtn, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
-
 	return rtn;
 }
 
