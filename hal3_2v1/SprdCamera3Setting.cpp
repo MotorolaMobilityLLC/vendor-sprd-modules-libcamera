@@ -2920,6 +2920,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdFixedFpsEnabled = 0;
     requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
 
+    uint8_t sprd3dnrEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_3DNR_ENABLED, &sprd3dnrEnabled, 1);
+
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
@@ -3693,9 +3696,16 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
         s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
             frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-        HAL_LOGV("sprd fixed fps enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+       pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
+       HAL_LOGV("sprd fixed fps enabled is %d",
+            s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
+            frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
+        HAL_LOGV("sprd 3dnr enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
     }
 
     HAL_LOGD("perfectskinlevel=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
@@ -3703,7 +3713,7 @@ int SprdCamera3Setting::updateWorkParameters(
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
              "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
-             "%d, sprd_hdr_plus_enable:%d",
+             "%d, sprd_hdr_plus_enable:%d,sprd 3dnr enabled is %d",
              s_setting[mCameraId].sprddefInfo.perfect_skin_level,
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
              s_setting[mCameraId].flashInfo.mode,
@@ -3733,7 +3743,8 @@ int SprdCamera3Setting::updateWorkParameters(
              s_setting[mCameraId].controlInfo.af_regions[2],
              s_setting[mCameraId].controlInfo.af_regions[3],
              s_setting[mCameraId].controlInfo.af_regions[4],
-             s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable);
+             s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
+             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
 
 #undef GET_VALUE_IF_DIF
     return rc;

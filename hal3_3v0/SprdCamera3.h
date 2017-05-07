@@ -195,6 +195,7 @@ static tags_info_t
         {"sprd3BlurSensorRotation", TYPE_INT32},
         {"sprdHdrPlusEnabled", TYPE_BYTE},
         {"sprdFixedFpsEnabled", TYPE_BYTE},
+        {"sprd3dnrEnabled", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

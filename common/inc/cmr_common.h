@@ -82,6 +82,8 @@ extern "C" {
 #define CAMERA_EMBEDDED_INFO_TYPE 0x12
 
 #define HDR_CAP_NUM 3
+#define PRE_3DNR_NUM 2
+#define CAP_3DNR_NUM 5
 #define FACE_DETECT_NUM 10
 #define FRAME_NUM_MAX 0xFFFFFFFF
 #define FRAME_FLASH_MAX 0x0000FFFF
@@ -351,6 +353,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_PREVIEW_PDAF_OPEN,
     COM_ISP_SET_AWB_LOCK_UNLOCK,
     COM_ISP_GET_LEDS_CTRL,
+    COM_ISP_SET_3DNR,
     COM_ISP_TYPE_MAX
 };
 
@@ -402,7 +405,12 @@ enum highiso_mode_type {
     HIGHISO_MODE_MAX
 };
 
-enum frame_contrl_type { FRAME_STOP = 0, FRAME_CONTINUE, FRAME_HDR_PROC };
+enum frame_contrl_type {
+    FRAME_STOP = 0,
+    FRAME_CONTINUE,
+    FRAME_HDR_PROC,
+    FRAME_3DNR_PROC
+};
 
 struct img_addr {
     cmr_uint addr_y;
@@ -782,6 +790,8 @@ enum ipm_class_type {
     IPM_TYPE_UVDE = 0x00000004,
     IPM_TYPE_YDE = 0x00000008,
     IPM_TYPE_REFOCUS = 0x00000010,
+    IPM_TYPE_3DNR = 0x00000020,
+    IPM_TYPE_3DNR_PRE = 0x00000040,
 };
 
 enum img_fmt {
@@ -1101,6 +1111,7 @@ enum camera_param_type {
     CAMERA_PARAM_AE_REGION,
     CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
     CAMERA_PARAM_EXIF_MIME_TYPE,
+    CAMERA_PARAM_SPRD_3DNR_ENABLED,
     CAMERA_PARAM_TYPE_MAX
 };
 

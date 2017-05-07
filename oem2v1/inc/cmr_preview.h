@@ -136,6 +136,7 @@ struct preview_md_ops {
                               struct sensor_otp_cust_info *dual_otp_data);
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
+    cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
 };
 
 struct preview_init_param {
@@ -165,6 +166,7 @@ struct preview_param {
     cmr_u32 is_dv;
     cmr_u32 is_hdr;
     cmr_u32 sprd_hdr_plus_enable;
+    cmr_u32 is_3dnr;
     cmr_u32 frame_ctrl;  // 0:stop,1:continue
     cmr_u32 frame_count; // 0xffffffff for zsl
     cmr_u32 isp_width_limit;
@@ -293,6 +295,10 @@ cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
 
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
                                struct frm_info *in, cmr_uint *vir_addr_y);
+cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
+                               struct frm_info *in, cmr_uint *vir_addr_y);
+
+cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 
 #ifdef __cplusplus
 }

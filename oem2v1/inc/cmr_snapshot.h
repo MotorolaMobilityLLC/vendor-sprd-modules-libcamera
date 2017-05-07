@@ -74,6 +74,7 @@ enum snapshot_receive_evt_type {
     SNAPSHOT_EVT_RAW_PROC,
     SNAPSHOT_EVT_SC_DONE,
     SNAPSHOT_EVT_HDR_DONE,
+    SNAPSHOT_EVT_3DNR_DONE,
     SNAPSHOT_EVT_CVT_RAW_DATA,
     SNAPSHOT_EVT_JPEG_ENC_DONE,
     SNAPSHOT_EVT_JPEG_DEC_DONE,
@@ -183,6 +184,7 @@ struct snapshot_param {
     cmr_u32 mode;
     cmr_u32 is_hdr;
     cmr_u32 sprd_hdr_plus_enable; // in hdr plus mode
+    cmr_u32 is_3dnr;
     cmr_u32 is_video_snapshot;
     cmr_u32 is_zsl_snapshot;
     cmr_u32 total_num;
@@ -193,6 +195,8 @@ struct snapshot_param {
     cmr_u32 sn_mode;
     cmr_u32 hdr_need_frm_num;
     cmr_handle hdr_handle;
+    cmr_u32 threednr_need_frm_num;
+    cmr_handle threednr_handle;
     struct img_size req_size;
     struct cmr_zoom_param zoom_param;
     struct jpeg_param jpeg_setting;

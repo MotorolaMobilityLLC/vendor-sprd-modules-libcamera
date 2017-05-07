@@ -54,12 +54,13 @@
 #define SNP_EVT_ANDROID_ZSL_DATA                                               \
     (SNP_EVT_BASE + 39) /*SNAPSHOT_EVT_ANDROID_ZSL_DATA*/
 #define SNP_EVT_HDR_SRC_DONE (SNP_EVT_BASE + 40)
-#define SNP_EVT_HDR_POST_PROC (SNP_EVT_BASE + 41)
+#define SNP_EVT_IPM_POST_PROC (SNP_EVT_BASE + 41)
 #define SNP_EVT_FREE_FRM (SNP_EVT_BASE + 42)
 #define SNP_EVT_WRITE_EXIF (SNP_EVT_BASE + 43)
 #define SNP_EVT_REDISPLAY (SNP_EVT_BASE + 44)
 #define SNP_EVT_THUMB (SNP_EVT_BASE + 45)
 #define SNP_EVT_CHANNEL_VIDEO_DONE (SNP_EVT_BASE + 46)
+#define SNP_EVT_3DNR_DONE (SNP_EVT_BASE + 47) /*SNAPSHOT_EVT_3DNR_DONE*/
 
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
@@ -503,7 +504,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
         snp_proc_copy_frame((cmr_handle)p_data, message->data);
         ret = snp_post_proc((cmr_handle)p_data, message->data);
         break;
-    case SNP_EVT_HDR_POST_PROC: {
+    case SNP_EVT_IPM_POST_PROC: {
         // struct frm_info frame;
         /*		frame = cxt->cur_frame_info;
                         ret = snp_post_proc((cmr_handle)p_data,
@@ -583,7 +584,7 @@ cmr_int snp_ipm_cb_handle(cmr_handle snp_handle, void *data) {
     }
     cmr_copy(message.data, data, sizeof(struct frm_info));
     message.alloc_flag = 1;
-    message.msg_type = SNP_EVT_HDR_POST_PROC;
+    message.msg_type = SNP_EVT_IPM_POST_PROC;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     ret = cmr_thread_msg_send(cxt->thread_cxt.post_proc_thr_handle, &message);
     if (ret) {
@@ -893,6 +894,10 @@ cmr_int snp_proc_cb_thread_proc(struct cmr_msg *message, void *p_data) {
         sem_post(&cxt->hdr_sync_sm);
         snp_ipm_cb_handle((cmr_handle)cxt, message->data);
         break;
+    case SNP_EVT_3DNR_DONE:
+        snp_ipm_cb_handle((cmr_handle)cxt, message->data);
+        break;
+
     default:
         CMR_LOGD("don't support this evt 0x%x", message->msg_type);
         break;
@@ -5189,6 +5194,11 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
         break;
     case SNAPSHOT_EVT_HDR_DONE:
         snp_evt = SNP_EVT_HDR_DONE;
+        malloc_len = sizeof(struct frm_info);
+        send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
+        break;
+    case SNAPSHOT_EVT_3DNR_DONE:
+        snp_evt = SNP_EVT_3DNR_DONE;
         malloc_len = sizeof(struct frm_info);
         send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
         break;

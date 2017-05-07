@@ -158,6 +158,7 @@ struct setting_hal_param {
 
     struct camera_position_type position_info;
     cmr_uint is_hdr;
+    cmr_uint is_3dnr;
     cmr_uint is_android_zsl;
     struct cmr_range_fps_param range_fps;
     cmr_uint is_update_range_fps;
@@ -1978,6 +1979,17 @@ static cmr_int setting_set_refocus_enable(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_3dnr_enable(struct setting_component *cpt,
+                                       struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->is_3dnr = parm->cmd_type_value;
+    CMR_LOGD("sprd_3dnr_enable=%ld", hal_param->is_3dnr);
+
+    return ret;
+}
+
 static cmr_int setting_set_touch_xy(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
 
@@ -2429,6 +2441,17 @@ static cmr_int setting_get_hdr(struct setting_component *cpt,
 
     parm->cmd_type_value = hal_param->is_hdr;
     CMR_LOGD("get hdr %ld", parm->cmd_type_value);
+
+    return ret;
+}
+
+static cmr_int setting_get_3dnr(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->is_3dnr;
+    CMR_LOGD("get 3dhdr %ld", parm->cmd_type_value);
 
     return ret;
 }
@@ -3345,6 +3368,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_REGION, setting_set_ae_region);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
                              setting_set_sprd_hdr_plus_enable);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_ENABLED,
+                             setting_set_3dnr_enable);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_TYPE_MAX, NULL);
     cmr_add_cmd_fun_to_table(SETTING_GET_PREVIEW_ANGLE,
                              setting_get_preview_angle);
@@ -3425,6 +3450,7 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_sprd_hdr_plus_enable);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
                              setting_set_exif_mime_type);
+    cmr_add_cmd_fun_to_table(SETTING_GET_3DNR, setting_get_3dnr);
     setting_parms_inited = 1;
     return 0;
 }

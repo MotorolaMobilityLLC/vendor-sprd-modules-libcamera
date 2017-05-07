@@ -104,6 +104,11 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/inc
+	LOCAL_SRC_FILES+= src/cmr_3dnr.c
+	LOCAL_SHARED_LIBRARIES += libsprd3dnr
+endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
@@ -255,6 +260,11 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/inc
+	LOCAL_SRC_FILES+= src/cmr_3dnr.c
+	LOCAL_SHARED_LIBRARIES += libsprd3dnr
+endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 

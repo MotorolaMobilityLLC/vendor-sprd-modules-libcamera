@@ -45,6 +45,7 @@ extern "C" {
 #define ISP_B4AWB_BUF_CNT 2
 #define ISP_B4AWB_BUF_SIZE 640 * 480 * 2
 
+#define ISP_CLOSE_3DNR_TIMEOUT 2 /*sec*/
 /* should only define just one of the following two */
 #define MIRROR_FLIP_ROTATION_BY_JPEG 1
 //#define MIRROR_FLIP_BY_ISP                         1
@@ -107,9 +108,11 @@ struct ipm_context {
     cmr_handle uvde_handle;
     cmr_handle yde_handle;
     cmr_handle refocus_handle;
+    cmr_handle threednr_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
     cmr_u32 hdr_num;
+    cmr_u32 threednr_num;
     cmr_u32 padding;
 };
 
@@ -141,6 +144,7 @@ struct snapshot_context {
     cmr_u32 channel_bits;
     cmr_u32 is_hdr;
     cmr_u32 sprd_hdr_plus_enable; //  hdr+nor mode 1, other mode 0
+    cmr_u32 is_3dnr;
     cmr_u32 total_num;
     cmr_u32 snp_mode;
     cmr_u32 is_cfg_rot_cap;
@@ -244,6 +248,8 @@ struct camera_context {
     cmr_uint is_discard_frm;
     sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
+    sem_t threednr_flag_sm;
+    sem_t threednr_proc_sm;
     sem_t share_path_sm;
     sem_t access_sm;
     cmr_uint share_path_sm_flag;

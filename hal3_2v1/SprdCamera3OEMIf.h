@@ -562,6 +562,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+
     sprd_camera_memory_t *mReDisplayHeap;
     // TODO: put the picture dimensions in the CameraParameters object;
     SprdCameraParameters mParameters;
@@ -648,6 +649,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;
+
     uint32_t mPreviewDcamAllocBufferCnt;
     sprd_camera_memory_t
         *mPreviewHeapArray[kPreviewBufferCount + kPreviewRotBufferCount + 1];
@@ -684,6 +686,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     sprd_camera_memory_t *mIspAntiFlickerHeapReserved;
     sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
+    sprd_camera_memory_t *m3DNRPrevHeapReserverd[PRE_3DNR_NUM];
+    sprd_camera_memory_t *m3DNRHeapReserverd;
+    sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
 
     uint32_t mPreviewHeapBakUseFlag;
     uint32_t mPreviewHeapArray_size[kPreviewBufferCount +

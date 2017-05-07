@@ -177,6 +177,8 @@ static cmr_int hdr_close(cmr_handle class_handle) {
     cmr_int i;
     CHECK_HANDLE_VALID(hdr_handle);
 
+    CMR_LOGD("E");
+
 #ifdef CONFIG_SPRD_HDR_LIB
     sprd_hdr_set_stop_flag(HDR_STOP);
 #endif
@@ -193,6 +195,7 @@ static cmr_int hdr_close(cmr_handle class_handle) {
     sprd_hdr_pool_destroy();
 #endif
 
+    CMR_LOGD("X");
     return ret;
 }
 
@@ -689,14 +692,16 @@ static cmr_int hdr_thread_destroy(struct class_hdr *class_handle) {
 
     CHECK_HANDLE_VALID(class_handle);
 
-    if (class_handle->is_inited) {
+    CMR_LOGD("E");
 
+    if (class_handle->is_inited) {
         ret = cmr_thread_destroy(class_handle->hdr_thread);
         class_handle->hdr_thread = 0;
 
         class_handle->is_inited = 0;
     }
 
+    CMR_LOGD("X");
     return ret;
 }
 
