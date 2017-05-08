@@ -1352,6 +1352,22 @@ static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_syn
 		sensor_exp.size_index = cxt_ptr->sensor_exp_data.lib_exp.size_index;
 		sensor_gain.gain = cxt_ptr->sensor_exp_data.lib_exp.gain * SENSOR_GAIN_BASE / LIB_GAIN_BASE;
 	}
+
+	if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
+		char ae_exp[PROPERTY_VALUE_MAX];
+		char ae_gain[PROPERTY_VALUE_MAX];
+		cmr_u32 exp_time = 0;
+
+		cmr_bzero(ae_exp, sizeof(ae_exp));
+		cmr_bzero(ae_gain, sizeof(ae_gain));
+		property_get("persist.sys.isp.ae.exp_time", ae_exp, "100");
+		property_get("persist.sys.isp.ae.gain", ae_gain, "100");
+		exp_time = atoi(ae_exp);
+		sensor_exp.exp_line = SENSOR_EXP_BASE*exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+		sensor_exp.dummy = 0;
+		sensor_gain.gain = atoi(ae_gain);
+	}
+
 	ret = aealtek_write_to_sensor(cxt_ptr, &sensor_exp, &sensor_gain, force_write_sensor);
 	if (ret)
 		goto exit;
@@ -3872,7 +3888,6 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	struct seq_cell out_actual;
 	struct seq_cell out_write;
 	char ae_exp[PROPERTY_VALUE_MAX];
-	char ae_gain[PROPERTY_VALUE_MAX];
 	struct ae_ctrl_callback_in callback_in;
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
@@ -3935,21 +3950,10 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 
 	in_est.work_mode = SEQ_WORK_PREVIEW;
 	in_est.cell.frame_id = in_ptr->sof_param.frame_index;
-	if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
-		cmr_bzero(ae_exp, sizeof(ae_exp));
-		cmr_bzero(ae_gain, sizeof(ae_gain));
-		property_get("persist.sys.isp.ae.exp_time", ae_exp, "100");
-		property_get("persist.sys.isp.ae.gain", ae_gain, "100");
-		in_est.cell.exp_time = atoi(ae_exp);
-		in_est.cell.exp_line = SENSOR_EXP_BASE*in_est.cell.exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
-		in_est.cell.gain = atoi(ae_gain);
-		in_est.cell.dummy = 0;
-	} else {
-		in_est.cell.exp_line = cxt_ptr->sensor_exp_data.lib_exp.exp_line;
-		in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
-		in_est.cell.gain = cxt_ptr->sensor_exp_data.lib_exp.gain;
-		in_est.cell.dummy = cxt_ptr->sensor_exp_data.lib_exp.dummy;
-	}
+	in_est.cell.exp_line = cxt_ptr->sensor_exp_data.lib_exp.exp_line;
+	in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
+	in_est.cell.gain = cxt_ptr->sensor_exp_data.lib_exp.gain;
+	in_est.cell.dummy = cxt_ptr->sensor_exp_data.lib_exp.dummy;
 
 	if (cxt_ptr->script_info.is_script_mode) {
 		cmr_bzero(ae_exp, sizeof(ae_exp));
