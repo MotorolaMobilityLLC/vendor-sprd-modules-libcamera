@@ -2719,8 +2719,8 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			FLASH_PRE == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_2 %d %d %d", cxt->cur_result.wts.stable,
 				cxt->cur_result.cur_lum, cxt->cur_result.flash_effect);
-			//cxt->send_once[3]++;//prevent flash_pfOneIteration time out
-			if (cxt->flash_esti_result.isEnd) {
+			cxt->send_once[3]++;//prevent flash_pfOneIteration time out
+			if (cxt->flash_esti_result.isEnd || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
 				if (0 == cxt->send_once[1]) {
 					cxt->send_once[1]++;
 					cxt->send_once[3] = 0;
@@ -2728,7 +2728,6 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 					ISP_LOGI("ae_flash1_callback do-pre-close!\r\n");
 					cxt->cur_result.flash_status = FLASH_NONE;/*flash status reset*/
 				}
-
 			}
 			cxt->send_once[0] = 0;
 		}
