@@ -185,6 +185,10 @@ cmr_int camera_stop_capture(cmr_handle camera_handle);
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
 
+cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
+                                      enum takepicture_mode cap_mode,
+                                      struct frm_info *frm_data);
+
 #ifdef __cplusplus
 }
 #endif

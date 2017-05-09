@@ -4159,10 +4159,12 @@ cmr_int snp_take_picture_done(cmr_handle snp_handle, struct frm_info *data) {
     CMR_PRINT_TIME;
     ret = camera_set_frame_type(snp_handle, &frame_type, data);
     if (CMR_CAMERA_SUCCESS == ret) {
-        snp_notify_redisplay_proc(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
-                                  SNAPSHOT_EVT_CB_SNAPSHOT_DONE,
-                                  (void *)&frame_type);
-        CMR_LOGD("SNAPSHOT_EVT_CB_SNAPSHOT_DONE.");
+        if (!cxt->req_param.sprd_hdr_plus_enable) {
+            snp_notify_redisplay_proc(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                      SNAPSHOT_EVT_CB_SNAPSHOT_DONE,
+                                      (void *)&frame_type);
+            CMR_LOGD("SNAPSHOT_EVT_CB_SNAPSHOT_DONE.");
+        }
         snp_notify_redisplay_proc(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                   SNAPSHOT_EXIT_CB_DONE, (void *)&frame_type);
         CMR_LOGD("SNAPSHOT_EXIT_CB_DONE.");

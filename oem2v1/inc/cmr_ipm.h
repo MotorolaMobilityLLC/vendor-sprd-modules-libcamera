@@ -43,6 +43,7 @@ struct ipm_frame_out {
     struct img_face_area face_area;
     cmr_handle caller_handle;
     void *private_data;
+    cmr_uint is_plus;
 };
 
 typedef cmr_int (*ipm_callback)(cmr_u32 class_type,
@@ -66,6 +67,7 @@ struct ipm_open_in {
     cmr_uint frame_cnt;
     struct img_otp_data otp_data;
     cmr_u32 adgain_valid_frame_num;
+    cmr_uint is_plus;
 };
 
 struct ipm_open_out {

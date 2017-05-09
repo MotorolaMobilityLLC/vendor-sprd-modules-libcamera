@@ -1339,16 +1339,23 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         CMR_LOGE("error param");
         return -CMR_CAMERA_INVALID_PARAM;
     }
+
     cxt = (struct camera_context *)cb_param->private_data;
+    if (cb_param->is_plus ==
+        1) { // normal pic need backup first. and wait until next req received
+        frame = cxt->snp_cxt.cur_frm_info;
+        camera_snapshot_cb_to_hal(cxt, SNAPSHOT_EVT_HDR_PLUS,
+                                  SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
+    } else {
 #ifdef OEM_HANDLE_HDR
-    frame = cxt->snp_cxt.cur_frm_info;
-    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
-    camera_post_share_path_available((cmr_handle)cxt);
-    cxt->ipm_cxt.frm_num = 0;
-    CMR_LOGI("fmt = %d", frame.fmt);
+        frame = cxt->snp_cxt.cur_frm_info;
+        cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
+        camera_post_share_path_available((cmr_handle)cxt);
+        cxt->ipm_cxt.frm_num = 0;
 #endif
-    ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                    SNAPSHOT_EVT_HDR_DONE, &frame);
+        ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
+                                        SNAPSHOT_EVT_HDR_DONE, &frame);
+    }
     if (ret) {
         CMR_LOGE("fail to send frame to snp %ld", ret);
     }
@@ -1423,6 +1430,9 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
     case SNAPSHOT_EXIT_CB_PREPARE:
         oem_cb_type = CAMERA_EXIT_CB_PREPARE;
         break;
+    case SNAPSHOT_EVT_HDR_PLUS:
+        oem_cb_type = CAMERA_EVT_HDR_PLUS;
+        break;
     default:
         oem_cb_type = cb;
         break;
@@ -1480,10 +1490,25 @@ cmr_u32 camera_get_hdr_flag(struct camera_context *cxt) {
     return hdr_flag;
 }
 
+void camera_set_hdr_plus(struct camera_context *cxt, cmr_u32 req_hdr_plus) {
+    CMR_LOGI("flag %d", req_hdr_plus);
+    sem_wait(&cxt->hdr_flag_sm);
+    cxt->snp_cxt.sprd_hdr_plus_enable = req_hdr_plus;
+    sem_post(&cxt->hdr_flag_sm);
+}
+
+cmr_u32 camera_get_hdr_plus(struct camera_context *cxt) {
+    cmr_u32 req_hdr_plus_state = 0;
+    sem_wait(&cxt->hdr_flag_sm);
+    req_hdr_plus_state = cxt->snp_cxt.sprd_hdr_plus_enable;
+    sem_post(&cxt->hdr_flag_sm);
+    CMR_LOGI("%d", req_hdr_plus_state);
+    return req_hdr_plus_state;
+}
+
 cmr_int camera_open_hdr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                         struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-
     CMR_LOGI("start");
     sem_wait(&cxt->hdr_flag_sm);
     ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_HDR, in_ptr, out_ptr,
@@ -7264,6 +7289,18 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     }
     camera_set_hdr_flag(cxt, setting_param.cmd_type_value);
     out_param_ptr->is_hdr = setting_param.cmd_type_value;
+
+    /*get hdr flag*/
+    ret =
+        cmr_setting_ioctl(setting_cxt->setting_handle,
+                          SETTING_GET_SPRD_HDR_NORMAL_ENABLED, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get envir %ld", ret);
+        goto exit;
+    }
+    camera_set_hdr_plus(cxt, setting_param.cmd_type_value);
+    out_param_ptr->sprd_hdr_plus_enable = setting_param.cmd_type_value;
+
     /*get android zsl flag*/
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_ANDROID_ZSL_FLAG, &setting_param);
@@ -7374,6 +7411,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         in_param.reg_cb = camera_ipm_cb;
         in_param.adgain_valid_frame_num =
             cxt->sn_cxt.cur_sns_ex_info.adgain_valid_frame_num;
+        in_param.is_plus = camera_get_hdr_plus(cxt);
         ret = camera_open_hdr(cxt, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to open hdr %ld", ret);
@@ -7658,6 +7696,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     }
     out_ptr->camera_id = cxt->camera_id;
     out_ptr->is_hdr = camera_get_hdr_flag(cxt);
+    out_ptr->sprd_hdr_plus_enable = camera_get_hdr_plus(cxt);
     out_ptr->is_android_zsl = cxt->is_android_zsl;
     out_ptr->mode = cxt->snp_cxt.snp_mode;
     out_ptr->is_cfg_rot_cap = cxt->snp_cxt.is_cfg_rot_cap;
@@ -7998,6 +8037,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     default:
         CMR_LOGI("don't support %d", id);
     }
@@ -8226,7 +8270,6 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         sem_init(&cxt->share_path_sm, 0, 0);
         CMR_LOGI("re-initialize share_path_sm");
     }
-
     if (CAMERA_ZSL_MODE != mode) {
         ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
         if (ret) {
@@ -9850,5 +9893,80 @@ cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value) {
         ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
                         (void *)&value);
     }
+
+    return ret;
+}
+
+cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
+                                            enum takepicture_mode cap_mode,
+                                            struct frm_info *frm_data) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt;
+    struct snapshot_param snp_param;
+    struct common_sn_cmd_param param;
+    struct setting_cmd_parameter setting_param;
+    cmr_int flash_status = FLASH_CLOSE;
+    cmr_s32 sm_val = 0;
+
+    if (!oem_handle) {
+        CMR_LOGE("error handle");
+        goto exit;
+    }
+    camera_take_snapshot_step(CMR_STEP_TAKE_PIC);
+    prev_cxt = &cxt->prev_cxt;
+
+    sem_getvalue(&cxt->share_path_sm, &sm_val);
+    if (0 != sm_val) {
+        sem_destroy(&cxt->share_path_sm);
+        sem_init(&cxt->share_path_sm, 0, 0);
+        CMR_LOGI("re-initialize share_path_sm");
+    }
+
+    ret = camera_get_snapshot_param(oem_handle, &snp_param);
+
+    snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_y =
+        frm_data->yaddr_vir;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_u =
+        frm_data->uaddr_vir;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_v =
+        frm_data->vaddr_vir;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y =
+        frm_data->yaddr;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u =
+        frm_data->uaddr;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_v =
+        frm_data->vaddr;
+    snp_param.post_proc_setting.chn_out_frm[0].fd = frm_data->fd;
+    snp_param.post_proc_setting.chn_out_frm[0].fmt = frm_data->fmt;
+
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_y =
+        frm_data->yaddr_vir;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_u =
+        frm_data->uaddr_vir;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_v =
+        frm_data->vaddr_vir;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_y =
+        frm_data->yaddr;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_u =
+        frm_data->uaddr;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_v =
+        frm_data->vaddr;
+    snp_param.post_proc_setting.mem[0].target_yuv.fd = frm_data->fd;
+    snp_param.post_proc_setting.mem[0].target_yuv.fmt = frm_data->fmt;
+
+    ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
+
+    // because of only hdr plus(normal pic) need to backup the normal pic.
+    // so directly use HDR post-snapshot.
+    ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
+                                    SNAPSHOT_EVT_HDR_DONE, frm_data);
+    camera_post_share_path_available(oem_handle);
+
+exit:
+    CMR_LOGV("done %ld", ret);
+    ATRACE_END();
     return ret;
 }

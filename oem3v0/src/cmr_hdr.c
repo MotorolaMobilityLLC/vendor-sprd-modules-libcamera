@@ -647,17 +647,17 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
     FILE *fp1 = NULL;
     FILE *fp2 = NULL;
 
-    char file_name[100];
-    char file_name1[100];
-    char file_name2[100];
-    char tmp_str[10];
+    char file_name[140];
+    char file_name1[140];
+    char file_name2[140];
+    char tmp_str[40];
     char datetime[15] = {0};
     time_t timep;
     struct tm *p;
 
-    cmr_bzero(file_name, 40);
-    cmr_bzero(file_name1, 40);
-    cmr_bzero(file_name2, 40);
+    cmr_bzero(file_name, 140);
+    cmr_bzero(file_name1, 140);
+    cmr_bzero(file_name2, 140);
 
     time(&timep);
     p = localtime(&timep);

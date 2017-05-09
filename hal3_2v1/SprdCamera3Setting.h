@@ -347,6 +347,7 @@ typedef struct {
     uint8_t sprd_burstmode_enable;
     uint8_t sprd_3dcapture_enabled;
     int32_t max_preview_size[2];
+    uint8_t sprd_hdr_plus_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

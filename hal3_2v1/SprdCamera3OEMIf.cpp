@@ -247,7 +247,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
       mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
       mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
-      mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
+      mHDRPlusFillState(false), mPreviewFrameNum(0), mRecordFrameNum(0),
+      mIsRecording(false),
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
       mIsPreAllocCapMem(1),
 #else
@@ -314,6 +315,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(&mSlowPara, 0, sizeof(slow_motion_para));
     memset(mPdafRawHeapArray, 0, sizeof(mPdafRawHeapArray));
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
+    memset(&mHDRPlusBackupFrm_info, 0, sizeof(frm_info));
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -616,7 +618,14 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
 
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
             mTakePictureMode == SNAPSHOT_ONLY_MODE)
-            ret = takePicture();
+            if (mHDRPlusFillState) {
+                HAL_LOGI("mHDRPlusFillState = true ");
+                ret = reprocessYuvForJpeg(&mHDRPlusBackupFrm_info);
+                mHDRPlusFillState = false;
+            } else {
+                HAL_LOGI("mHDRPlusFillState = false ");
+                ret = takePicture();
+            }
         else if (mTakePictureMode == SNAPSHOT_ZSL_MODE) {
             mVideoSnapshotFrameNum = frame_number;
             if (mSprdReprocessing) {
@@ -964,6 +973,113 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
 
     PushZslSnapShotbuff();
     print_time();
+
+exit:
+    HAL_LOGI("X");
+    return NO_ERROR;
+}
+
+int SprdCamera3OEMIf::reprocessYuvForJpeg(frm_info *frm_data) {
+    ATRACE_CALL();
+
+    HAL_LOGI("E");
+    GET_START_TIME;
+    print_time();
+
+    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        goto exit;
+    }
+
+    if (1 == mHDRPowerHint) {
+        enablePowerHint();
+        mHDRPowerHintFlag = 1;
+    }
+    if (SPRD_ERROR == mCameraState.capture_state) {
+        HAL_LOGE("take picture in error status, deinit capture at first");
+        deinitCapture(mIsPreAllocCapMem);
+    } else if (SPRD_IDLE != mCameraState.capture_state) {
+        usleep(50 * 1000);
+        if (SPRD_IDLE != mCameraState.capture_state) {
+            HAL_LOGE("take picture: action alread exist, direct return");
+            goto exit;
+        }
+    }
+
+    setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
+
+    if (isPreviewStart()) {
+        HAL_LOGV("Preview not start! wait preview start");
+        WaitForPreviewStart();
+        usleep(20 * 1000);
+    }
+    if (isPreviewing()) {
+        HAL_LOGD("call stopPreviewInternal in takePicture().");
+        stopPreviewInternal();
+    }
+    HAL_LOGI("finish stopPreviewInternal in takePicture. preview state = %d",
+             getPreviewState());
+
+    if (isPreviewing()) {
+        HAL_LOGE("takePicture: stop preview error!, preview state = %d",
+                 getPreviewState());
+        goto exit;
+    }
+
+    if (!setCameraCaptureDimensions()) {
+        deinitCapture(mIsPreAllocCapMem);
+        HAL_LOGE("takePicture initCapture failed. Not taking picture.");
+        goto exit;
+    }
+
+    if (isCapturing()) {
+        WaitForCaptureDone();
+    }
+
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
+
+    JPEG_Tag jpgInfo;
+    struct img_size jpeg_thumb_size;
+    struct img_size capture_size;
+    mSetting->getJPEGTag(&jpgInfo);
+    HAL_LOGV("JPEG quality = %d", jpgInfo.quality);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
+             jpgInfo.quality);
+    HAL_LOGV("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
+             jpgInfo.thumbnail_quality);
+    jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+    jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+    if (mCaptureWidth != 0 && mCaptureHeight != 0) {
+        capture_size.width = (cmr_u32)mCaptureWidth;
+        capture_size.height = (cmr_u32)mCaptureHeight;
+    } else {
+        capture_size.width = (cmr_u32)mRawWidth;
+        capture_size.height = (cmr_u32)mRawHeight;
+    }
+    if (jpeg_thumb_size.width > capture_size.width &&
+        jpeg_thumb_size.height > capture_size.height) {
+        jpeg_thumb_size.width = 0;
+        jpeg_thumb_size.height = 0;
+    }
+    HAL_LOGI("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width,
+             jpeg_thumb_size.height);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
+             (cmr_uint)&jpeg_thumb_size);
+
+    HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+             (cmr_uint)mSprdZslEnabled);
+
+    setCameraPreviewFormat();
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+    if (CMR_CAMERA_SUCCESS !=
+        mHalOem->ops->camera_reprocess_yuv_for_jpeg(mCameraHandle, mCaptureMode,
+                                                    frm_data)) {
+        setCameraState(SPRD_ERROR, STATE_CAPTURE);
+        HAL_LOGE("fail to camera_take_picture");
+        goto exit;
+    }
 
 exit:
     HAL_LOGI("X");
@@ -4740,7 +4856,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
     if (encInfo->need_free) {
-        if (!iSZslMode()) {
+        if (!iSZslMode() && !mHDRPlusFillState) {
             deinitCapture(mIsPreAllocCapMem);
         }
     }
@@ -5157,6 +5273,15 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                     mZslHeapArray[buf_id]->fd);
             }
         }
+        break;
+    }
+    case CAMERA_EVT_HDR_PLUS: {
+        memcpy(&mHDRPlusBackupFrm_info, parm4, sizeof(frm_info));
+        mHDRPlusBackupFrm_info.frame_id++;
+        mHDRPlusBackupFrm_info.frame_real_id++;
+        mHDRPlusBackupFrm_info.base++;
+        mHDRPlusFillState = true;
+        HAL_LOGI("CAMERA_EVT_HDR_PLUS mHDRPlusFillState sets true ");
         break;
     }
     default: {
@@ -6206,6 +6331,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.sprd_3dcalibration_enabled,
                  mSprd3dCalibrationEnabled);
     } break; /**add for 3d calibration get max sensor size end*/
+    case ANDROID_SPRD_HDR_PLUS_ENABLED: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD("sprd_hdr_plus_enable=%d", sprddefInfo.sprd_hdr_plus_enable);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
+                 sprddefInfo.sprd_hdr_plus_enable);
+    } break;
+
     default:
         ret = BAD_VALUE;
         break;
@@ -6230,6 +6363,8 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
     char value2[PROPERTY_VALUE_MAX];
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
     HAL_LOGD("cap_mode = %d", cap_mode);
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
 
     switch (cap_mode) {
     case CAMERA_CAPTURE_MODE_PREVIEW:
@@ -6308,6 +6443,9 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             } else if (!strcmp(value, "sim")) {
                 HAL_LOGE("enter isp simulation mode ");
                 mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
+            }
+            if (sprddefInfo.sprd_hdr_plus_enable) {
+                mPicCaptureCnt = 1;
             }
         }
 

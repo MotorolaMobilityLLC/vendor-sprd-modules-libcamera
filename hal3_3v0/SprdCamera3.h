@@ -193,6 +193,7 @@ static tags_info_t
         {"sprd3BlurCircleSize", TYPE_INT32},
         {"maxPreviewSize", TYPE_INT32},
         {"sprd3BlurSensorRotation", TYPE_INT32},
+        {"sprdHdrPlusEnabled", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

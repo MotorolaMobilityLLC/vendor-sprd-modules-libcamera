@@ -932,6 +932,9 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_3DCALIBRATION_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
             break; /**add for 3d calibration update params end*/
+        case ANDROID_SPRD_HDR_PLUS_ENABLED:
+            HAL_LOGV("ANDROID_SPRD_HDR_PLUS_ENABLED");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_HDR_PLUS_ENABLED);
         default:
             HAL_LOGV("other tag");
             break;
@@ -1032,6 +1035,16 @@ int SprdCamera3MetadataChannel::getCapRequestPara(
         }
     }
     /**add for 3d calibration force set sprd zsl enable begin*/
+    if (metadata.exists(ANDROID_SPRD_HDR_PLUS_ENABLED)) {
+        request_para->sprd_hdr_plus_enable =
+            metadata.find(ANDROID_SPRD_HDR_PLUS_ENABLED).data.u8[0];
+        HAL_LOGD("sprd_hdr_plus_enable exist, set sprd_hdr_plus_enable %d",
+                 request_para->sprd_hdr_plus_enable);
+    } else {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        request_para->sprd_hdr_plus_enable = sprddefInfo.sprd_hdr_plus_enable;
+    }
 
     return NO_ERROR;
 }

@@ -434,6 +434,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int handleCbData(hal3_trans_info_t &result_info, void *userdata);
     int zslTakePicture();
     int reprocessYuvForJpeg();
+    int reprocessYuvForJpeg(frm_info *frm_data);
     int VideoTakePicture();
     int setVideoSnapshotParameter();
     int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);
@@ -670,6 +671,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mVideoHeapReserved;
     sprd_camera_memory_t *mZslHeapReserved;
 #endif
+    frm_info mHDRPlusBackupFrm_info;
+    bool mHDRPlusFillState;
     sprd_camera_memory_t *mDepthHeapReserved;
     sprd_camera_memory_t *mPdafRawHeapReserved;
     sprd_camera_memory_t *mIspLscHeapReserved;

@@ -1058,7 +1058,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
         break;
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
-        if (mOldCapIntent != capturePara.cap_intent) {
+        if (mOldCapIntent != capturePara.cap_intent ||
+            (capturePara.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR &&
+             capturePara.sprd_hdr_plus_enable == 1)) {
             mOEMIf->setCapturePara(
                 CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, mFrameNum);
             mPictureRequest = true;

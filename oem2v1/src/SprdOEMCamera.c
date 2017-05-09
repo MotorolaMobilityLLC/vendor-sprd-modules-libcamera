@@ -1078,6 +1078,26 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     return ret;
 }
 
+cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
+                                      enum takepicture_mode cap_mode,
+                                      struct frm_info *frm_data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret =
+        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode, frm_data);
+    if (ret) {
+        CMR_LOGE("failed to start snapshot %ld", ret);
+    }
+
+exit:
+    CMR_LOGI("done");
+    return ret;
+}
+
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1106,6 +1126,7 @@ static oem_ops_t oem_module_ops = {
     camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
     camera_start_capture, camera_stop_capture,
     camera_pre_capture_set_buffer_size, camera_ioctrl,
+    camera_reprocess_yuv_for_jpeg,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

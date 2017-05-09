@@ -33,6 +33,7 @@
 struct class_hdr {
     struct ipm_common common;
     cmr_u8 *alloc_addr[HDR_CAP_NUM];
+    cmr_uint is_plus;
     cmr_uint mem_size;
     cmr_uint width;
     cmr_uint height;
@@ -62,6 +63,7 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 #define CMR_EVT_HDR_EXIT (CMR_EVT_HDR_BASE + 2)
 #define CMR_EVT_HDR_SAVE_FRAME (CMR_EVT_HDR_BASE + 3)
 #define CMR_EVT_HDR_PRE_PROC (CMR_EVT_HDR_BASE + 4)
+#define CMR_EVT_HDR_SEND_NORMAL (CMR_EVT_HDR_BASE + 5)
 
 typedef cmr_int (*ipm_get_sensor_info)(cmr_handle oem_handle,
                                        cmr_uint sensor_id,
@@ -93,6 +95,8 @@ static cmr_int req_hdr_save_frame(cmr_handle class_handle,
 static cmr_int hdr_frame_proc(cmr_handle class_handle);
 static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
                             cmr_u32 height);
+static cmr_int req_hdr_send_normal_frame(cmr_handle class_handle,
+                                         struct ipm_frame_in *in);
 
 static struct class_ops hdr_ops_tab_info = {
     hdr_open, hdr_close, hdr_transfer_frame, hdr_pre_proc, hdr_post_proc,
@@ -138,6 +142,7 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     hdr_handle->common.receive_frame_count = 0;
     hdr_handle->common.save_frame_count = 0;
     hdr_handle->common.ops = &hdr_ops_tab_info;
+    hdr_handle->is_plus = in->is_plus;
 
     hdr_handle->mem_size = size;
 
@@ -266,6 +271,14 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
         return CMR_CAMERA_FAIL;
     }
 
+    // save normal pic start
+    if (hdr_handle->is_plus &&
+        hdr_handle->common.save_frame_count ==
+            (HDR_CAP_NUM + hdr_handle->ev_effect_frame_interval)) {
+        // will send normal cap via callback to save
+        req_hdr_send_normal_frame(hdr_handle, in);
+    }
+
     if (hdr_handle->common.save_frame_count ==
         (HDR_CAP_NUM + hdr_handle->ev_effect_frame_interval)) {
         CMR_LOGD("HDR enable = %d", hdr_enable);
@@ -304,6 +317,38 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
         }
     }
 
+    return ret;
+}
+
+static cmr_int req_hdr_send_normal_frame(cmr_handle class_handle,
+                                         struct ipm_frame_in *in) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct class_hdr *hdr_handle = (struct class_hdr *)class_handle;
+
+    CMR_MSG_INIT(message);
+
+    if (!class_handle || !in) {
+        CMR_LOGE("Invalid Param!");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    message.data = (struct ipm_frame_in *)malloc(sizeof(struct ipm_frame_in));
+    if (!message.data) {
+        CMR_LOGE("No mem!");
+        ret = CMR_CAMERA_NO_MEM;
+        return ret;
+    }
+    memcpy(message.data, in, sizeof(struct ipm_frame_in));
+    message.msg_type = CMR_EVT_HDR_SEND_NORMAL;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    message.alloc_flag = 1;
+    ret = cmr_thread_msg_send(hdr_handle->hdr_thread, &message);
+    if (ret) {
+        CMR_LOGE("Failed to send one msg to hdr thread.");
+        if (message.data) {
+            free(message.data);
+        }
+    }
     return ret;
 }
 
@@ -481,6 +526,7 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
         CMR_LOGE("can't handle hdr.");
         ret = CMR_CAMERA_FAIL;
     }
+
     if (NULL != temp_addr0) {
         memcpy((void *)dst_addr->addr_y, (void *)temp_addr0, size);
         memcpy((void *)dst_addr->addr_u, (void *)(temp_addr0 + size), size / 2);
@@ -567,6 +613,7 @@ static cmr_int hdr_thread_proc(struct cmr_msg *message, void *private_data) {
         class_handle->common.save_frame_count = 0;
         out.dst_frame = class_handle->frame_in.dst_frame;
         out.private_data = class_handle->frame_in.private_data;
+        out.is_plus = 0;
         CMR_LOGI("out private_data 0x%lx", (cmr_int)out.private_data);
         CMR_LOGI("CMR_EVT_HDR_START addr 0x%lx %ld %ld",
                  class_handle->dst_addr.addr_y, class_handle->width,
@@ -585,6 +632,19 @@ static cmr_int hdr_thread_proc(struct cmr_msg *message, void *private_data) {
             (class_handle->reg_cb)(IPM_TYPE_HDR, &out);
         }
 
+        break;
+    case CMR_EVT_HDR_SEND_NORMAL:
+        CMR_LOGI("HDR thread send normal pic");
+        in = (struct ipm_frame_in *)message->data;
+        out.dst_frame = in->dst_frame;
+        out.private_data = in->private_data;
+        out.is_plus = 1;
+        if (out.private_data == NULL) {
+            CMR_LOGI("HDR thread send normal pic private_data = NULL");
+        }
+        if (class_handle->reg_cb) {
+            (class_handle->reg_cb)(IPM_TYPE_HDR, &out);
+        }
         break;
     case CMR_EVT_HDR_EXIT:
         CMR_LOGD("HDR thread exit.");

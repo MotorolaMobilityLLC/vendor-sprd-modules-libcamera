@@ -1001,6 +1001,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_AE_UNLOCK_NOTIFY,
     CAMERA_EVT_CB_RETURN_ZSL_BUF,
     CAMERA_EVT_SENSOR_DATATYPE,
+    CAMERA_EVT_HDR_PLUS,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1099,6 +1100,7 @@ enum camera_param_type {
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
     CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
 #endif
+    CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1431,6 +1433,11 @@ typedef struct oem_ops {
                                                   cmr_u16 width,
                                                   cmr_u16 height);
     cmr_int (*camera_ioctrl)(cmr_handle handle, int cmd, void *param);
+
+    cmr_int (*camera_reprocess_yuv_for_jpeg)(cmr_handle camera_handle,
+                                             enum takepicture_mode cap_mode,
+                                             struct frm_info *frm_data);
+
 } oem_ops_t;
 
 typedef struct oem_module {

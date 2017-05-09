@@ -55,6 +55,7 @@ enum snapshot_cb_type {
     SNAPSHOT_EVT_STATE,
     SNAPSHOT_EVT_RETURN_ZSL_BUF,
     SNAPSHOT_EXIT_CB_PREPARE,
+    SNAPSHOT_EVT_HDR_PLUS,
     SNAPSHOT_CB_MAX
 };
 
@@ -64,6 +65,7 @@ enum snapshot_func_type {
     SNAPSHOT_FUNC_ENCODE_PICTURE,
     SNAPSHOT_FUNC_STATE,
     SNAPSHOT_FUNC_RECOVERY,
+    SNAPSHOT_FUNC_BACKUP,
     SNAPSHOT_FUNC_MAX
 };
 
@@ -181,6 +183,7 @@ struct snapshot_param {
     cmr_u32 camera_id;
     cmr_u32 mode;
     cmr_u32 is_hdr;
+    cmr_u32 sprd_hdr_plus_enable; // in hdr plus mode
     cmr_u32 is_video_snapshot;
     cmr_u32 is_zsl_snapshot;
     cmr_u32 total_num;

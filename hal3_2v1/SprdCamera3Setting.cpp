@@ -2972,6 +2972,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdEisEnabled = 0;
     requestInfo.update(ANDROID_SPRD_EIS_ENABLED, &sprdEisEnabled, 1);
 
+    uint8_t sprdHdrPlusEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_HDR_PLUS_ENABLED, &sprdHdrPlusEnabled, 1);
+
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
@@ -3459,6 +3462,14 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
     }
 
+    if (frame_settings.exists(ANDROID_SPRD_HDR_PLUS_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable =
+            frame_settings.find(ANDROID_SPRD_HDR_PLUS_ENABLED).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_HDR_PLUS_ENABLED);
+        HAL_LOGV("sprd_hdr_plus_enable %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable);
+    }
+
     if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
         s_setting[mCameraId].sprddefInfo.am_mode =
             frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
@@ -3849,7 +3860,7 @@ area[i];
              "orien=%d, zsl=%d, 3dcali=%d, am_mode=%d crop %d %d %d %d "
              "cropRegionUpdate=%d, af_trigger=%d, af_mode=%d, af_state=%d, "
              "am_regions: %d %d %d %d %d, ae_region: %d %d %d %d %d, "
-             "af_region: %d %d %d %d %d",
+             "af_region: %d %d %d %d %d,sprd_hdr_plus_enable:%d",
              s_setting[mCameraId].controlInfo.capture_intent,
              s_setting[mCameraId].sprddefInfo.perfect_skin_level,
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
@@ -3884,7 +3895,8 @@ area[i];
              s_setting[mCameraId].controlInfo.af_regions[1],
              s_setting[mCameraId].controlInfo.af_regions[2],
              s_setting[mCameraId].controlInfo.af_regions[3],
-             s_setting[mCameraId].controlInfo.af_regions[4]);
+             s_setting[mCameraId].controlInfo.af_regions[4],
+             s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable);
 
 #undef GET_VALUE_IF_DIF
     return rc;
