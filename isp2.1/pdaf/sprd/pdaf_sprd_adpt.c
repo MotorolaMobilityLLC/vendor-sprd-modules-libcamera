@@ -244,8 +244,15 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pdaf_set_ppi_info = in_p->pdaf_set_ppi_info;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
-	/*TBD dSensorID 0:for imx258 1: for OV13850 */
-	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;	/*TBD get from sensor id */
+	/*TBD dSensorID 0:for imx258 1: for OV13855 */
+	if (SENSOR_VENDOR_IMX258 == in_p->pd_info->vendor_type) {
+		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_0;
+	} else if (SENSOR_VENDOR_OV13855 == in_p->pd_info->vendor_type) {
+		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_1;
+	} else {
+		ISP_LOGE("fail to support the sensor:%d\n", in_p->pd_info->vendor_type);
+		goto exit;
+	}
 
 	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
 	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;

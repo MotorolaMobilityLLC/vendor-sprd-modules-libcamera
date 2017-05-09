@@ -462,6 +462,7 @@ static uint32_t ov13855_get_pdaf_info(SENSOR_HW_HANDLE handle,
 	pdaf_info->pd_pos_size = pd_pos_r_size;
 	pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov13855_pd_pos_r;
 	pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov13855_pd_pos_l;
+	pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
 
     return rtn;
 }

@@ -32,7 +32,8 @@
 #define ROI_Y_1 800
 #define ROI_Width 2048
 #define ROI_Height 1536
-#define SENSOR_ID 0
+#define SENSOR_ID_0 0
+#define SENSOR_ID_1 1
 #define PD_REG_OUT_SIZE	352
 #define PD_OTP_PACK_SIZE	550
 
