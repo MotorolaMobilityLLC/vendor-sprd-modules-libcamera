@@ -833,10 +833,14 @@ exit:
 
 static cmr_int pdafaltek_adpt_type2_process(cmr_handle adpt_handle, void *in, void *out)
 {
-	cmr_int ret = -ISP_ERROR;
+	cmr_int ret = ISP_SUCCESS;
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	UNUSED(out);
+
+	if (cxt->pd_set_buffer) {
+		ret = (cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
+	}
 
 	return ret;
 }

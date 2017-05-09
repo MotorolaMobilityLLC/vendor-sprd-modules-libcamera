@@ -74,6 +74,7 @@
 #define PREV_EVT_CB_EXIT (PREV_EVT_BASE + 0x12)
 #define PREV_EVT_ASSIST_START (PREV_EVT_BASE + 0x13)
 #define PREV_EVT_ASSIST_STOP (PREV_EVT_BASE + 0x14)
+#define PREV_EVT_SET_PDAF_DATATYPE_BUFFER (PREV_EVT_BASE + 0x15)
 
 #define ALIGN_16_PIXEL(x) (((x) + 15) & (~15))
 
@@ -409,6 +410,14 @@ static cmr_int prev_preview_frame_handle(struct prev_handle *handle,
                                          cmr_u32 camera_id,
                                          struct frm_info *data);
 
+static cmr_int prev_pdaf_datatype_cb(struct pd_frame_in *cb_param);
+
+static cmr_int prev_pdaf_datatype_frame_handle(struct prev_handle *handle,
+                                               cmr_u32 camera_id,
+                                               struct frm_info *data);
+
+static cmr_int prev_pdaf_raw_cb(struct pd_frame_in *cb_param);
+
 static cmr_int prev_sensor_datatype_frame_handle(struct prev_handle *handle,
                                                  cmr_u32 camera_id,
                                                  struct frm_info *data);
@@ -486,6 +495,10 @@ static cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
 static cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                  cmr_u32 is_restart);
+
+static cmr_int prev_free_sensor_datatype_buf(struct prev_handle *handle,
+                                             cmr_u32 camera_id,
+                                             cmr_u32 is_restart);
 
 static cmr_int prev_free_cap_reserve_buf(struct prev_handle *handle,
                                          cmr_u32 camera_id, cmr_u32 is_restart);
@@ -693,7 +706,7 @@ static cmr_int cmr_preview_set_pdaf_raw_buffer(cmr_handle preview_handle,
                                                cmr_u32 camera_id,
                                                cmr_uint src_phy_addr,
                                                cmr_uint src_vir_addr,
-                                               cmr_s32 fd);
+                                               cmr_s32 fd, cmr_u32 msg_type);
 
 static cmr_int prev_set_video_buffer(struct prev_handle *handle,
                                      cmr_u32 camera_id, cmr_uint src_phy_addr,
@@ -1671,7 +1684,8 @@ exit:
 cmr_int cmr_preview_set_pdaf_raw_buffer(cmr_handle preview_handle,
                                         cmr_u32 camera_id,
                                         cmr_uint src_phy_addr,
-                                        cmr_uint src_vir_addr, cmr_s32 fd) {
+                                        cmr_uint src_vir_addr, cmr_s32 fd,
+                                        cmr_u32 msg_type) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
@@ -1697,7 +1711,7 @@ cmr_int cmr_preview_set_pdaf_raw_buffer(cmr_handle preview_handle,
     inter_param->param3 = (void *)src_vir_addr;
     inter_param->param4 = (void *)(unsigned long)fd;
 
-    message.msg_type = PREV_EVT_SET_PDAF_BUFFER;
+    message.msg_type = msg_type;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     message.data = (void *)inter_param;
     message.alloc_flag = 1;
@@ -2024,6 +2038,16 @@ cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data) {
 
         ret = prev_set_pdaf_raw_buffer(handle, camera_id, src_phy_addr,
                                        src_vir_addr, fd);
+        break;
+    case PREV_EVT_SET_PDAF_DATATYPE_BUFFER:
+        inter_param = (struct internal_param *)message->data;
+        camera_id = (cmr_u32)((cmr_uint)inter_param->param1);
+        src_phy_addr = (cmr_uint)inter_param->param2;
+        src_vir_addr = (cmr_uint)inter_param->param3;
+        fd = (cmr_s32)(unsigned long)inter_param->param4;
+
+        ret = prev_set_sensor_datatype_buffer(handle, camera_id, src_phy_addr,
+                                              src_vir_addr, fd);
         break;
 
     default:
@@ -2743,6 +2767,107 @@ exit:
     return ret;
 }
 
+cmr_int prev_pdaf_datatype_cb(struct pd_frame_in *cb_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    struct prev_handle *handle = NULL;
+    cmr_u32 camera_id = CAMERA_ID_MAX;
+
+    if (!cb_param || !cb_param->caller_handle) {
+        CMR_LOGE("error param");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    handle = (struct prev_handle *)cb_param->caller_handle;
+    camera_id = cb_param->camera_id;
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    if (cb_param->src_vir_addr)
+        ret = prev_set_sensor_datatype_buffer(
+            handle, camera_id, cb_param->src_phy_addr, cb_param->src_vir_addr,
+            cb_param->fd);
+
+    return ret;
+}
+
+cmr_int prev_pdaf_datatype_frame_handle(struct prev_handle *handle,
+                                        cmr_u32 camera_id,
+                                        struct frm_info *data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    cmr_s64 timestamp = 0;
+    cmr_uint rot_index = 0;
+    struct img_addr addr_vir;
+    struct img_frm *frm_ptr = NULL;
+    struct pd_raw_info pd_raw;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+    if (!data) {
+        CMR_LOGE("frm data is null");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    cmr_bzero(&pd_raw, sizeof(struct pd_raw_info));
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    prev_cxt->pdaf_timestamp = data->sec * 1000000000LL + data->usec * 1000;
+
+    if (!IS_PREVIEW(handle, camera_id)) {
+        CMR_LOGE("preview stopped, skip this frame,prev_status %ld ",
+                 prev_cxt->prev_status);
+        return ret;
+    }
+
+    if (!handle->oem_cb || !handle->ops.channel_free_frame) {
+        CMR_LOGE("ops oem_cb or channel_free_frame is null");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    CMR_LOGV("got one frame, data->yaddr_vir 0x%x, frame_id 0x%x, "
+             "frame_real_id %d, channel_id %d pdaf_timestamp %" PRId64,
+             data->yaddr_vir, data->frame_id, data->frame_real_id,
+             data->channel_id, prev_cxt->pdaf_timestamp);
+
+    /*skip pdaf data when not preview*/
+    if (0 == prev_cxt->pdaf_frm_cnt) {
+        CMR_LOGI("skip pdaf data when not preview");
+        ret = prev_pop_sensor_datatype_buffer(handle, camera_id, data, 0);
+        ret = prev_set_sensor_datatype_buffer(handle, camera_id, data->yaddr,
+                                              data->yaddr_vir, data->fd);
+    } else {
+        CMR_LOGV("send pdaf frame to isp");
+        addr_vir.addr_y = data->yaddr_vir;
+        pd_raw.frame_id = prev_cxt->pdaf_frm_cnt;
+        pd_raw.addr = (void *)addr_vir.addr_y;
+        pd_raw.len = prev_cxt->pdaf_mem_size;
+        pd_raw.sec = data->sec;
+        pd_raw.usec = data->usec;
+        pd_raw.format = prev_cxt->sensor_info.image_format;
+        pd_raw.pattern = prev_cxt->sensor_info.image_pattern;
+        pd_raw.roi.image_width = prev_cxt->sensor_info.source_width_max;
+        pd_raw.roi.image_height = prev_cxt->sensor_info.source_height_max;
+        pd_raw.pd_in.caller_handle = (cmr_handle)handle;
+        pd_raw.pd_in.camera_id = camera_id;
+        pd_raw.pd_in.src_phy_addr = data->yaddr;
+        pd_raw.pd_in.src_vir_addr = data->yaddr_vir;
+        pd_raw.pd_in.fd = data->fd;
+        pd_raw.pd_callback = prev_pdaf_datatype_cb;
+        CMR_LOGV("addr=%p, len=%d, format=%d, pattern=%d, roi max_w=%d, "
+                 "max_h=%d,start_x=%d, start_y=%d, w=%d, h=%d ",
+                 pd_raw.addr, pd_raw.len, pd_raw.format, pd_raw.pattern,
+                 pd_raw.roi.image_width, pd_raw.roi.image_height,
+                 pd_raw.roi.trim_start_x, pd_raw.roi.trim_start_y,
+                 pd_raw.roi.trim_width, pd_raw.roi.trim_height);
+        ret = prev_pop_sensor_datatype_buffer(handle, camera_id, data, 0);
+        handle->ops.set_preview_pd_raw(handle->oem_handle, &pd_raw);
+    }
+exit:
+
+    return ret;
+}
+
 cmr_int prev_sensor_datatype_frame_handle(struct prev_handle *handle,
                                           cmr_u32 camera_id,
                                           struct frm_info *data) {
@@ -2905,6 +3030,7 @@ cmr_int prev_sensor_datatype_frame_handle(struct prev_handle *handle,
 
         break;
     case SENSOR_DATATYPE_PDAF_ENABLE:
+        prev_pdaf_datatype_frame_handle(handle, camera_id, data);
         break;
     default:
         break;
@@ -2917,6 +3043,32 @@ exit:
         cb_data_info.frame_data = NULL;
         prev_cb_start(handle, &cb_data_info);
     }
+
+    return ret;
+}
+
+cmr_int prev_pdaf_datatype_thread_cb(struct pd_frame_in *cb_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    struct prev_handle *handle = NULL;
+    cmr_u32 camera_id = CAMERA_ID_MAX;
+
+    if (!cb_param || !cb_param->caller_handle) {
+        CMR_LOGE("error param");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    handle = (struct prev_handle *)cb_param->caller_handle;
+    camera_id = cb_param->camera_id;
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    if (cb_param->src_vir_addr)
+        ret = cmr_preview_set_pdaf_raw_buffer(
+            (cmr_handle)handle, camera_id, cb_param->src_phy_addr,
+            cb_param->src_vir_addr, cb_param->fd,
+            PREV_EVT_SET_PDAF_DATATYPE_BUFFER);
 
     return ret;
 }
@@ -2941,7 +3093,7 @@ cmr_int prev_pdaf_raw_thread_cb(struct pd_frame_in *cb_param) {
     if (cb_param->src_vir_addr)
         ret = cmr_preview_set_pdaf_raw_buffer(
             (cmr_handle)handle, camera_id, cb_param->src_phy_addr,
-            cb_param->src_vir_addr, cb_param->fd);
+            cb_param->src_vir_addr, cb_param->fd, PREV_EVT_SET_PDAF_BUFFER);
 
     return ret;
 }
@@ -2975,9 +3127,7 @@ cmr_int prev_pdaf_raw_frame_handle(struct prev_handle *handle,
                                    cmr_u32 camera_id, struct frm_info *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
-    struct camera_frame_type frame_type;
     cmr_s64 timestamp = 0;
-    struct prev_cb_info cb_data_info;
     cmr_uint rot_index = 0;
     struct img_addr addr_vir;
     struct img_frm *frm_ptr = NULL;
@@ -2989,8 +3139,6 @@ cmr_int prev_pdaf_raw_frame_handle(struct prev_handle *handle,
         CMR_LOGE("frm data is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
-    cmr_bzero(&cb_data_info, sizeof(struct prev_cb_info));
     cmr_bzero(&pd_raw, sizeof(struct pd_raw_info));
 
     prev_cxt = &handle->prev_cxt[camera_id];
@@ -4042,8 +4190,13 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             break;
         case SENSOR_EMBEDDED_INFO_ENABLE:
             break;
-        case SENSOR_DATATYPE_PDAF_ENABLE:
-            break;
+        case SENSOR_DATATYPE_PDAF_ENABLE: {
+            struct pd_raw_open pd_open;
+
+            pd_open.open = 1;
+            pd_open.pd_set_buffer = prev_pdaf_datatype_thread_cb;
+            handle->ops.set_preview_pd_open(handle->oem_handle, &pd_open);
+        } break;
         default:
             break;
         }
@@ -4193,7 +4346,10 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cb_start(handle, &cb_data_info);
         }
     }
-
+    if (handle->prev_cxt[camera_id].prev_param.sensor_datatype >
+        SENSOR_DATATYPE_DISABLED) {
+        prev_free_sensor_datatype_buf(handle, camera_id, 0);
+    }
     if (pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) {
         struct pd_raw_open pd_open;
 
@@ -5147,13 +5303,13 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                            &sum, prev_cxt->cap_phys_addr_array,
                            prev_cxt->cap_virt_addr_array,
                            prev_cxt->cap_fd_array);
-	#if 0 //for coverity 181595
+#if 0 // for coverity 181595
         for (i = 1; i < CMR_CAPTURE_MEM_SUM; i++) {
             prev_cxt->cap_phys_addr_array[i] = prev_cxt->cap_phys_addr_array[0];
             prev_cxt->cap_virt_addr_array[i] = prev_cxt->cap_virt_addr_array[0];
             prev_cxt->cap_fd_array[i] = prev_cxt->cap_fd_array[0];
         }
-        #endif
+#endif
         CMR_LOGI("virt_addr 0x%lx, fd 0x%x", prev_cxt->cap_virt_addr_array[0],
                  prev_cxt->cap_fd_array[0]);
 
@@ -5963,7 +6119,7 @@ cmr_int prev_alloc_sensor_datatype_buf(struct prev_handle *handle,
     case SENSOR_DATATYPE_PDAF_ENABLE:
         /*for pdaf param*/
         prev_cxt->sensor_datatype_mem_size = CAMERA_PDAF_META_SIZE;
-        prev_cxt->sensor_datatype_mem_num = PREV_DATATYPE_CNT;
+        prev_cxt->sensor_datatype_mem_num = PDAF_FRM_CNT; // PREV_DATATYPE_CNT;
         break;
     default:
         return CMR_CAMERA_INVALID_PARAM;
@@ -7879,7 +8035,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
     //	cmr_bzero(prev_cxt->prev_rot_frm_is_lock, PREV_ROT_FRM_CNT *
-    //sizeof(cmr_uint));
+    // sizeof(cmr_uint));
     prev_cxt->prev_rot_index = 0;
     prev_cxt->skip_mode = IMG_SKIP_HW;
 
@@ -9214,8 +9370,7 @@ prev_set_sensor_datatype_param(struct prev_handle *handle, cmr_u32 camera_id,
             CAMERA_EMBEDDED_INFO_TYPE;
         break;
     case SENSOR_DATATYPE_PDAF_ENABLE:
-        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type =
-            CAMERA_DATATYPE_PDAF_TYPE;
+        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type = 0x30;
         break;
     default:
         return CMR_CAMERA_INVALID_PARAM;
@@ -12118,7 +12273,7 @@ cmr_int prev_sensor_datatype_send_data(struct prev_handle *handle,
         ipm_in_param.dst_frame = *frm;
         ipm_in_param.touch_x = prev_cxt->touch_info.touchX;
         ipm_in_param.touch_y = prev_cxt->touch_info.touchY;
-        ipm_in_param.depth_map.width = 480; // TBD
+        ipm_in_param.depth_map.width = 480;  // TBD
         ipm_in_param.depth_map.height = 360; // TBD
         ipm_in_param.depth_map.depth_map_ptr =
             (void *)((unsigned long)sensor_datatype_frm->yaddr_vir); // TBD

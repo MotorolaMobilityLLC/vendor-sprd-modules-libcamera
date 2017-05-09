@@ -1552,6 +1552,7 @@ static uint32_t _s5k3p8sm_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_s5k3p8sm_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_s5k3p8sm_pd_pos_l;
     pdaf_info->vendor_type = SENSOR_VENDOR_S5K3P8SM;
+    pdaf_info->data_type = 0x30;
 
     return rtn;
 }

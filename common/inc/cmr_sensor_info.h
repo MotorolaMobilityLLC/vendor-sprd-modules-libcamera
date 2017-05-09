@@ -471,6 +471,7 @@ struct sensor_pdaf_info {
     cmr_u16 *pd_pos_row;
     cmr_u16 *pd_pos_col;
     enum sensor_vendor_type vendor_type;
+    cmr_u32 data_type;
 };
 
 struct sensor_ex_exposure {
