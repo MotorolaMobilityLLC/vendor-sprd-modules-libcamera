@@ -844,7 +844,6 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_block_h = 2;
     pdaf_info->pd_block_num_x = 130;
     pdaf_info->pd_block_num_y = 96;
-    pdaf_info->pd_pos_size = pd_pos_is_right_size;
     pdaf_info->pd_is_right = (cmr_u16 *)imx258_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)imx258_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)imx258_pd_col;

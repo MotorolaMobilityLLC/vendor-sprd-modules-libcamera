@@ -439,7 +439,6 @@ static uint32_t ov13855_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_block_h = 1;
     pdaf_info->pd_block_num_x = 264;
     pdaf_info->pd_block_num_y = 196;
-    pdaf_info->pd_pos_size = pd_pos_is_right_size;
     pdaf_info->pd_is_right = (cmr_u16 *)ov13855_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)ov13855_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)ov13855_pd_col;

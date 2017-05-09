@@ -260,7 +260,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->ppi_info.block.end_y = in_p->pd_info->pd_end_y;
 	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
 	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
-	for (cmr_u16 i=0; i< in_p->pd_info->pd_pos_size; i++) {
+	for (cmr_u16 i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {
 		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
 		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
 		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
@@ -284,7 +284,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	}
 	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x)/(8 << cxt->ppi_info.block_size.width);
 	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y)/(8 << cxt->ppi_info.block_size.height);
-	cmr_u32 phasepixel_total_num = block_num_x*block_num_y * in_p->pd_info->pd_pos_size / 2;
+	cmr_u32 phasepixel_total_num = block_num_x*block_num_y * in_p->pd_info->pd_pos_size;
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
