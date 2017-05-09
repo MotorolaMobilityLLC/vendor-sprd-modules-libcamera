@@ -23,6 +23,9 @@
 
 #define WB_DATA_SIZE 8 * 2 /*Don't forget golden wb data*/
 #define AF_DATA_SIZE 6
+#define PFAD_DATA_SIZE 126 *2 + 128
+#define DUAL_DATA_SIZE 228
+#define RESERVE_DATA_SIZE 499
 #define LSC_SRC_CHANNEL_SIZE 656
 #define LSC_CHANNEL_SIZE 876
 
@@ -79,8 +82,8 @@
 #define TOTAL_CHECKSUM_OFFSET 0x0FFF
 
 #define LSC_GRID_SIZE 96//726
-#define LSC_FORMAT_SIZE                                                        \
-  GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include golden and random data*/
+#define LSC_FORMAT_SIZE                            \
+	GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include golden and random data*/
 #define OTP_COMPRESSED_FLAG OTP_COMPRESSED_14BITS
 
 typedef struct {
@@ -147,7 +150,7 @@ otp_drv_entry_t ov13855_sunny_drv_entry = {
                     /*the width of the stream the sensor can output*/
                     .image_width = 4224,
                     /*the height of the stream the sensor can output*/
-                    .image_height = 3236,
+                    .image_height = 3136,
                     .grid_width = 23,
                     .grid_height = 18,
                     .gain_width = GAIN_WIDTH,

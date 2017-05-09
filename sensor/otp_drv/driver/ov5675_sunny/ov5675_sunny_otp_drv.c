@@ -68,7 +68,7 @@ static int _ov5675_sunny_buffer_init(void *otp_drv_handle) {
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     /*include random and golden lsc otp data,add reserve*/
-    otp_len = sizeof(otp_format_data_t) + LSC_FORMAT_SIZE + OTP_RESERVE_BUFFER;
+    otp_len = sizeof(otp_format_data_t) + LSC_FORMAT_SIZE + RESERVE_DATA_SIZE;
     otp_format_data_t *otp_data = malloc(otp_len);
     if (NULL == otp_data) {
         OTP_LOGE("malloc otp data buffer failed.\n");
@@ -106,15 +106,15 @@ static int _ov5675_sunny_parse_ae_data(void *otp_drv_handle) {
         return ret;
     }
     // for ae calibration
-    ae_cali_dat->target_lum = (ae_src_dat[0] << 8) | ae_src_dat[1];
-    ae_cali_dat->gain_1x_exp = (ae_src_dat[2] << 24) | (ae_src_dat[3] << 16) |
-                               (ae_src_dat[4] << 8) | ae_src_dat[5];
-    ae_cali_dat->gain_2x_exp = (ae_src_dat[6] << 24) | (ae_src_dat[7] << 16) |
-                               (ae_src_dat[8] << 8) | ae_src_dat[9];
-    ae_cali_dat->gain_4x_exp = (ae_src_dat[10] << 24) | (ae_src_dat[11] << 16) |
-                               (ae_src_dat[12] << 8) | ae_src_dat[13];
-    ae_cali_dat->gain_8x_exp = (ae_src_dat[14] << 24) | (ae_src_dat[15] << 16) |
-                               (ae_src_dat[16] << 8) | ae_src_dat[17];
+    ae_cali_dat->target_lum = (ae_src_dat[1] << 8) | ae_src_dat[0];
+    ae_cali_dat->gain_1x_exp = (ae_src_dat[5] << 24) | (ae_src_dat[4] << 16) |
+                               (ae_src_dat[3] << 8) | ae_src_dat[2];
+    ae_cali_dat->gain_2x_exp = (ae_src_dat[9] << 24) | (ae_src_dat[8] << 16) |
+                               (ae_src_dat[7] << 8) | ae_src_dat[6];
+    ae_cali_dat->gain_4x_exp = (ae_src_dat[13] << 24) | (ae_src_dat[12] << 16) |
+                               (ae_src_dat[11] << 8) | ae_src_dat[10];
+    ae_cali_dat->gain_8x_exp = (ae_src_dat[17] << 24) | (ae_src_dat[16] << 16) |
+                               (ae_src_dat[15] << 8) | ae_src_dat[14];
 
     OTP_LOGI("out");
     return ret;
@@ -199,12 +199,22 @@ static int _ov5675_sunny_parse_lsc_data(void *otp_drv_handle) {
     opt_dst->B.y = (opt_src[15] << 8) | opt_src[14];
 
     /*R channel raw data*/
-    memcpy(rdm_dst, otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET,
-           LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
+    rdm_dst = otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET;
     lsc_dst->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
     /*gold data*/
-    memcpy(gld_dst, golden_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
+    uint8_t *buffer = malloc(LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
+    if (NULL == buffer) {
+        OTP_LOGE("malloc otp data buffer failed.\n");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    } else {
+        lsc_dst->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        memset(buffer, 0, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
+    }
+    memcpy(buffer, golden_lsc,
+           sizeof(golden_lsc)); // LSC_INFO_CHECKSUM - LSC_INFO_OFFSET
     lsc_dst->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+    gld_dst = buffer;
 
     OTP_LOGD("optical_center:\nR=(0x%x,0x%x)\n GR=(0x%x,0x%x)\n "
              "GB=(0x%x,0x%x)\n B=(0x%x,0x%x)",
@@ -447,7 +457,7 @@ static int ov5675_sunny_otp_drv_parse(void *otp_drv_handle, void *params) {
 
     module_data_t *module_dat = &(otp_cxt->otp_data->module_dat);
     uint8_t *otp_data = NULL;
-    uint8_t otp_len = 0;
+    cmr_int otp_len;
 
     ret = sensor_otp_rawdata_from_file(OTP_READ_FORMAT_FROM_BIN,
                                        otp_cxt->dev_name, &otp_data, OTP_LEN);
@@ -470,8 +480,8 @@ static int ov5675_sunny_otp_drv_parse(void *otp_drv_handle, void *params) {
         }
 
         if (!otp_cxt->otp_data) {
-            otp_len = sizeof(otp_format_data_t) + LSC_FORMAT_SIZE +
-                      OTP_RESERVE_BUFFER;
+            otp_len =
+                sizeof(otp_format_data_t) + LSC_FORMAT_SIZE + RESERVE_DATA_SIZE;
             otp_cxt->otp_data = (otp_format_data_t *)malloc(otp_len);
             if (NULL == otp_cxt->otp_data) {
                 OTP_LOGE("malloc otp data buffer failed.\n");
@@ -550,8 +560,8 @@ static int _ov5675_sunny_compatible_convert(otp_drv_cxt_t *otp_drv_handle,
         malloc(sizeof(struct sensor_otp_cust_info));
     cmr_bzero(convert_data, sizeof(*convert_data));
     /*otp raw data*/
-    convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
-    convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
+    convert_data->total_otp.sub_data_ptr = otp_cxt->otp_raw_data.buffer;
+    convert_data->total_otp.sub_size = otp_cxt->otp_raw_data.num_bytes;
     /*module data*/
     convert_data->dual_otp.slave_module_info.year =
         format_data->module_dat.year;
@@ -583,6 +593,20 @@ static int _ov5675_sunny_compatible_convert(otp_drv_cxt_t *otp_drv_handle,
         format_data->awb_cali_dat.awb_rdm_info[0].G;
     convert_data->dual_otp.slave_iso_awb_info.gain_b =
         format_data->awb_cali_dat.awb_rdm_info[0].B;
+    /*awb golden data*/
+    convert_data->dual_otp.slave_awb_golden_info.gain_r =
+        format_data->awb_cali_dat.awb_gld_info[0].R;
+    convert_data->dual_otp.slave_awb_golden_info.gain_g =
+        format_data->awb_cali_dat.awb_gld_info[0].G;
+    convert_data->dual_otp.slave_awb_golden_info.gain_b =
+        format_data->awb_cali_dat.awb_gld_info[0].B;
+
+    convert_data->dual_otp.slave_lsc_golden_info.lsc_data_addr =
+        (uint8_t *)&format_data->lsc_cali_dat +
+        format_data->lsc_cali_dat.lsc_calib_golden.offset;
+    convert_data->dual_otp.slave_lsc_golden_info.lsc_data_size =
+        format_data->lsc_cali_dat.lsc_calib_golden.length;
+
     /*optical center*/
     memcpy((void *)&convert_data->dual_otp.slave_optical_center_info,
            (void *)&format_data->opt_center_dat, sizeof(optical_center_t));

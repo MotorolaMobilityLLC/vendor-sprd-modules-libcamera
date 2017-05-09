@@ -23,6 +23,7 @@
 
 #define WB_DATA_SIZE 8 * 2 /*Don't forget golden wb data*/
 #define AF_DATA_SIZE 6
+#define RESERVE_DATA_SIZE 1393
 #define LSC_SRC_CHANNEL_SIZE 656
 #define LSC_CHANNEL_SIZE 876
 
@@ -66,8 +67,8 @@
 #define TOTAL_CHECKSUM_OFFSET 0x0FFF
 
 #define LSC_GRID_SIZE 64//726
-#define LSC_FORMAT_SIZE                                                        \
-  GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include golden and random data*/
+#define LSC_FORMAT_SIZE    \
+	GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include golden and random data*/
 #define OTP_COMPRESSED_FLAG OTP_COMPRESSED_14BITS
 
 typedef struct {
