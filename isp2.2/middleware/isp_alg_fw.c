@@ -836,48 +836,48 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		cxt->smart_cxt.log_smart = smart_proc_in.log;
 		cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
-		gCntSendMsgLsc++;
-		if (0 == gCntSendMsgLsc % 3) {
+		//gCntSendMsgLsc++;
+		//if (0 == gCntSendMsgLsc % 3) {
 
-			rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
 
-			struct isp_pm_param_data param_data_alsc;
-			struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
-			struct isp_pm_ioctl_output param_data_alsc_output = { NULL, 0 };
-			memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+		struct isp_pm_param_data param_data_alsc;
+		struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
+		struct isp_pm_ioctl_output param_data_alsc_output = { NULL, 0 };
+		memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 
-			BLOCK_PARAM_CFG(param_data_alsc_input, param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
-			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&param_data_alsc_input, (void *)&param_data_alsc_output);
-			ISP_TRACE_IF_FAIL(rtn, ("ISP_PM_CMD_GET_SINGLE_SETTING fail "));
-			cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
-			cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
+		BLOCK_PARAM_CFG(param_data_alsc_input, param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&param_data_alsc_input, (void *)&param_data_alsc_output);
+		ISP_TRACE_IF_FAIL(rtn, ("ISP_PM_CMD_GET_SINGLE_SETTING fail "));
+		cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
+		cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
 
-			/*send message to alsc process */
-			struct isp_alsc_calc_info alsc_info;
+		/*send message to alsc process */
+		struct isp_alsc_calc_info alsc_info;
 
-			cmr_u32 *buf_stat_lsc = aeStatistic;
-			cmr_u32 *ptr_r_stat = buf_stat_lsc;
-			cmr_u32 *ptr_g_stat = buf_stat_lsc + 1024;
-			cmr_u32 *ptr_b_stat = buf_stat_lsc + 1024 * 2;
-			memcpy(ptr_r_stat, ae_stat_ptr->r_info, 1024 * sizeof(cmr_u32));
-			memcpy(ptr_g_stat, ae_stat_ptr->g_info, 1024 * sizeof(cmr_u32));
-			memcpy(ptr_b_stat, ae_stat_ptr->b_info, 1024 * sizeof(cmr_u32));
+		cmr_u32 *buf_stat_lsc = aeStatistic;
+		cmr_u32 *ptr_r_stat = buf_stat_lsc;
+		cmr_u32 *ptr_g_stat = buf_stat_lsc + 1024;
+		cmr_u32 *ptr_b_stat = buf_stat_lsc + 1024 * 2;
+		memcpy(ptr_r_stat, ae_stat_ptr->r_info, 1024 * sizeof(cmr_u32));
+		memcpy(ptr_g_stat, ae_stat_ptr->g_info, 1024 * sizeof(cmr_u32));
+		memcpy(ptr_b_stat, ae_stat_ptr->b_info, 1024 * sizeof(cmr_u32));
 
-			alsc_info.stat_ptr = buf_stat_lsc;
-			alsc_info.awb_b_gain = result->gain.b;
-			alsc_info.awb_r_gain = result->gain.r;
-			alsc_info.awb_ct = result->ct;
-			alsc_info.stat_img_size.w = info.win_num.w;
-			alsc_info.stat_img_size.h = info.win_num.h;
-			alsc_info.stable = awb_calc_info->ae_result.is_stab;
-			alsc_info.image_width = cxt->commn_cxt.src.w;
-			alsc_info.image_height = cxt->commn_cxt.src.h;
+		alsc_info.stat_ptr = buf_stat_lsc;
+		alsc_info.awb_b_gain = result->gain.b;
+		alsc_info.awb_r_gain = result->gain.r;
+		alsc_info.awb_ct = result->ct;
+		alsc_info.stat_img_size.w = info.win_num.w;
+		alsc_info.stat_img_size.h = info.win_num.h;
+		alsc_info.stable = awb_calc_info->ae_result.is_stab;
+		alsc_info.image_width = cxt->commn_cxt.src.w;
+		alsc_info.image_height = cxt->commn_cxt.src.h;
 
-			rtn =
-			    alsc_calc(isp_alg_handle, ptr_r_stat, ptr_g_stat, ptr_b_stat, &alsc_info.stat_img_size, &alsc_info.win_size, alsc_info.image_width,
-				      alsc_info.image_height, alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain, alsc_info.stable);
-			ISP_TRACE_IF_FAIL(rtn, ("alsc_calc fail "));
-		}
+		rtn =
+		    alsc_calc(isp_alg_handle, ptr_r_stat, ptr_g_stat, ptr_b_stat, &alsc_info.stat_img_size, &alsc_info.win_size, alsc_info.image_width,
+			      alsc_info.image_height, alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain, alsc_info.stable);
+		ISP_TRACE_IF_FAIL(rtn, ("alsc_calc fail "));
+		//}
 	}
 	system_time1 = isp_get_timestamp();
 	ISP_LOGV("SYSTEM_TEST-smart:%ldms", (unsigned long)(system_time1 - system_time0));
@@ -2447,8 +2447,9 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}
+
+#if 0
 //#ifdef LSC_ADV_ENABLE
-#if  0
 	cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
@@ -2476,7 +2477,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
 	awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
 
-	ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
+	//ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
 //      calc_param.stat_img.r  = stat_info->r_info;
 //      calc_param.stat_img.gr = stat_info->g_info;
 //      calc_param.stat_img.gb = stat_info->g_info;
@@ -2523,84 +2524,86 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 
 static cmr_int isp_update_alsc_param(cmr_handle isp_alg_handle)
 {
+    cmr_int rtn = ISP_SUCCESS;
+	
 #ifdef LSC_ADV_ENABLE
-     cmr_int rtn = ISP_SUCCESS;
-	 struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	 cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
-	 isp_pm_handle_t pm_handle = cxt->handle_pm;
-	 struct isp_pm_ioctl_input input = { PNULL, 0 };
-	 struct isp_pm_ioctl_output output = { PNULL, 0 };
-	 struct isp_pm_param_data param_data;
-	 struct lsc_adv_calc_param calc_param;
-	 struct lsc_adv_calc_result calc_result = { 0 };
-	 cmr_u32 i = 0;
-	 memset(&param_data, 0, sizeof(param_data));
-	 memset(&calc_param, 0, sizeof(calc_param));
-
-	 BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-	 rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	 struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
-
-	 struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-
-	 calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
-	 struct awb_size stat_img_size;
-	 struct awb_size win_size;
-	 struct isp_ae_grgb_statistic_info *stat_info;
-	 BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-	 isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	 stat_info = output.param_data->data_ptr;
-
-	 awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
-	 awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
-
-	 calc_param.stat_img.r = cxt->aem_stats.r_info;
-	 calc_param.stat_img.gr = cxt->aem_stats.g_info;
-	 calc_param.stat_img.gb = cxt->aem_stats.g_info;
-	 calc_param.stat_img.b = cxt->aem_stats.b_info;
-	 calc_param.stat_size.w = stat_img_size.w;
-	 calc_param.stat_size.h = stat_img_size.h;
-	 calc_param.gain_width = lsc_info->gain_w;
-	 calc_param.gain_height = lsc_info->gain_h;
-	 calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
-	 calc_param.block_size.w = win_size.w;
-	 calc_param.block_size.h = win_size.h;
-	 calc_param.bv = isp_cur_bv;
-	 calc_param.isp_id = ISP_2_0;
-
-	 calc_param.r_gain = gAWBGainR;
-	 calc_param.b_gain = gAWBGainB;
-	 calc_param.img_size.w = cxt->commn_cxt.src.w;
-	 calc_param.img_size.h = cxt->commn_cxt.src.h;
-
-	 if (lsc_tab_pram_ptr == 0)
-	          return 0;
-	 else {
-	           for (i = 0; i < 9; i++) {
-	                    calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
-	           }
-	 }
-
-	 /*AF lock ALSC */
-
-	if (cxt->lsc_cxt.isp_smart_lsc_lock == 0) {
-		cmr_u64 time0 = systemTime(CLOCK_MONOTONIC);
-
-		rtn = lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
-		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do lsc adv gain map calc");
-			return rtn;
-		}
-		cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
-
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-		input.param_data_ptr = &param_data;
-		rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
-
+    struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+    cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
+    struct alsc_ver_info lsc_ver = { 0 };
+	rtn = lsc_ctrl_ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("isp_update_alsc_param fail to Get ALSC ver info!");
 	}
+
+if (lsc_ver.LSC_SPD_VERSION >= 2) {	
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
+	struct isp_pm_param_data param_data;
+	struct lsc_adv_calc_param calc_param;
+	struct lsc_adv_calc_result calc_result = { 0 };
+	cmr_u32 i = 0;
+	memset(&param_data, 0, sizeof(param_data));
+	memset(&calc_param, 0, sizeof(calc_param));
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
+
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+
+	calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
+	struct awb_size stat_img_size;
+	struct awb_size win_size;
+	struct isp_ae_grgb_statistic_info *stat_info;
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
+	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	stat_info = output.param_data->data_ptr;
+
+	awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
+	awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
+
+	//ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
+
+	calc_param.stat_img.r = cxt->aem_stats.r_info;
+	calc_param.stat_img.gr = cxt->aem_stats.g_info;
+	calc_param.stat_img.gb = cxt->aem_stats.g_info;
+	calc_param.stat_img.b = cxt->aem_stats.b_info;
+	calc_param.stat_size.w = stat_img_size.w;
+	calc_param.stat_size.h = stat_img_size.h;
+	calc_param.gain_width = lsc_info->gain_w;
+	calc_param.gain_height = lsc_info->gain_h;
+        calc_param.grid = lsc_info->grid;
+	calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
+	calc_param.block_size.w = win_size.w;
+	calc_param.block_size.h = win_size.h;
+	//calc_param.ct = ct;
+	calc_param.bv = isp_cur_bv;
+	calc_param.isp_id = ISP_2_0;
+
+	calc_param.r_gain = gAWBGainR;
+	calc_param.b_gain = gAWBGainB;
+	calc_param.img_size.w = cxt->commn_cxt.src.w;
+	calc_param.img_size.h = cxt->commn_cxt.src.h;
+
+	if (lsc_tab_pram_ptr == 0)
+		return 0;
+	else {
+		for (i = 0; i < 9; i++) {
+			calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+		}
+	}
+
+	lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	input.param_data_ptr = &param_data;
+
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+	
+}
 #endif
 
-         return rtn;
+	return rtn;
 }
 
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)

@@ -416,7 +416,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_AFTER:
-		//  rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
+	    rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
@@ -431,7 +431,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
-		//   rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
+		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
