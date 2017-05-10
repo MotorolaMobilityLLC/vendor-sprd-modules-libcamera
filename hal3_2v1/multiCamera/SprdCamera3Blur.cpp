@@ -1237,6 +1237,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     memset(mPreviewWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mPreviewWeightParams.x2, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mPreviewWeightParams.y2, 0x00, sizeof(int) * BLUR_MAX_ROI);
+    memset(mPreviewWeightParams.flag, 0x00, sizeof(int) * BLUR_MAX_ROI);
     mUpdatePreviewWeightParams = true;
 
     // capture weight params
@@ -1251,6 +1252,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     memset(mCaptureWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mCaptureWeightParams.x2, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mCaptureWeightParams.y2, 0x00, sizeof(int) * BLUR_MAX_ROI);
+    memset(mCaptureWeightParams.flag, 0x00, sizeof(int) * BLUR_MAX_ROI);
 }
 
 /*===========================================================================
@@ -1587,23 +1589,25 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 property_get("persist.sys.cam.blur.face.prop1", prop1, "50");
 
                 // The face width increase by x%
-                property_get("persist.sys.cam.blur.face.prop2", prop2, "20");
+                property_get("persist.sys.cam.blur.face.prop2", prop2, "30");
 
                 // The face height increase by x% on top
-                property_get("persist.sys.cam.blur.face.prop3", prop3, "50");
+                property_get("persist.sys.cam.blur.face.prop3", prop3, "60");
 
                 // The width of the body is the width of the face increased by
                 // x%
-                property_get("persist.sys.cam.blur.face.prop4", prop4, "200");
+                property_get("persist.sys.cam.blur.face.prop4", prop4, "130");
 
                 // The upper side of the body is at x% of the face position
-                property_get("persist.sys.cam.blur.face.prop5", prop5, "5");
+                property_get("persist.sys.cam.blur.face.prop5", prop5, "0");
 
                 // The face height increase by x% on bottom
-                property_get("persist.sys.cam.blur.face.prop6", prop6, "10");
+                property_get("persist.sys.cam.blur.face.prop6", prop6, "20");
 
                 memset(bodyInfo, 0x00, sizeof(int32_t) * 4);
                 memset(faceInfo, 0x00, sizeof(int32_t) * 4);
+                memset(mPreviewWeightParams.flag, 0x00,
+                       sizeof(int) * BLUR_MAX_ROI);
 
                 for (i = 0; i < face_num; i++) {
                     x1 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
@@ -1876,6 +1880,8 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         bodyInfo[2] * mPreviewInitParams.width / origW;
                     mPreviewWeightParams.y2[2 * (i - k) + 1] =
                         bodyInfo[3] * mPreviewInitParams.height / origH;
+                    mPreviewWeightParams.flag[2 * (i - k)] = 0;
+                    mPreviewWeightParams.flag[2 * (i - k) + 1] = 1;
                 }
                 mPreviewWeightParams.valid_roi = (face_num - k) * 2;
                 if (mBlurBody == true) {
@@ -1912,6 +1918,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             memset(mCaptureWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
             memset(mCaptureWeightParams.x2, 0x00, sizeof(int) * BLUR_MAX_ROI);
             memset(mCaptureWeightParams.y2, 0x00, sizeof(int) * BLUR_MAX_ROI);
+            memset(mCaptureWeightParams.flag, 0x00, sizeof(int) * BLUR_MAX_ROI);
+            memcpy(mCaptureWeightParams.flag, mPreviewWeightParams.flag,
+                   sizeof(int) * BLUR_MAX_ROI);
             for (i = 0; i < mCaptureWeightParams.valid_roi / 2; i++) {
                 mCaptureWeightParams.x1[2 * i] =
                     mPreviewWeightParams.x1[2 * i] * mCaptureInitParams.width /
@@ -2053,7 +2062,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         memcpy(buffer_base + i * 4, mCaptureWeightParams.win_peak_pos + i, 2);
     }
 
-    buffer_base -= BLUR_MAX_ROI * 4 * 4;
+    buffer_base -= BLUR_MAX_ROI * 4 * 5;
     for (i = 0; i < BLUR_MAX_ROI; i++) {
         memcpy(buffer_base + i * 4, mCaptureWeightParams.x1 + i, 4);
     }
@@ -2069,6 +2078,11 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         memcpy((buffer_base + BLUR_MAX_ROI * 12) + i * 4,
                mCaptureWeightParams.y2 + i, 4);
     }
+    for (i = 0; i < BLUR_MAX_ROI; i++) {
+        memcpy((buffer_base + BLUR_MAX_ROI * 16) + i * 4,
+               mCaptureWeightParams.flag + i, 4);
+    }
+
     buffer_base -= cali_seq_len * 4;
     for (i = 0; i < cali_seq_len; i++) {
         memcpy(buffer_base + i * 4, mCaptureInitParams.cali_dac_seq + i, 2);

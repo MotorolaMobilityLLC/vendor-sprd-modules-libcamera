@@ -65,7 +65,7 @@ namespace sprdcamera {
 #define BLUR_GET_SEQ_FROM_AF (0)
 #define BLUR_REFOCUS_PARAM_NUM                                                 \
     (BLUR_AF_WINDOW_NUM + BLUR_REFOCUS_2_PARAM_NUM +                           \
-     BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_MAX_ROI * 4 + BLUR_CALI_SEQ_LEN)
+     BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_MAX_ROI * 5 + BLUR_CALI_SEQ_LEN)
 
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
@@ -114,6 +114,7 @@ typedef struct {
     int valid_roi;
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
+    int flag[BLUR_MAX_ROI]; // 0:face 1:body
 } preview_weight_params_t;
 
 typedef struct {
@@ -166,6 +167,7 @@ typedef struct {
     int valid_roi;
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
+    int flag[BLUR_MAX_ROI]; // 0:face 1:body
 } capture_weight_params_t;
 
 typedef struct {
