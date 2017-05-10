@@ -198,6 +198,7 @@ struct ae_ctrl_cxt {
 						 */
 	struct ae_alg_calc_param cur_status;
 	struct ae_alg_calc_param sync_cur_status;
+	cmr_s32 target_lum_zone_bak;
 	cmr_u32 sync_aem[3 * 1024 + 4];	/*0: frame id;1: exposure time, 2: dummy line, 3: gain; */
 	/*
 	* bakup ae lock status
@@ -4374,6 +4375,23 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		} else {
 			rtn  =AE_ERROR;
 		}
+		break;
+
+	case AE_CAF_LOCKAE_START:
+		cxt->target_lum_zone_bak = cxt->cur_status.target_lum_zone;
+
+		if (cxt->cur_result.wts.stable)
+		{
+			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[15];
+			if (cxt->cur_status.target_lum_zone < cxt->target_lum_zone_bak)
+			{
+				cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
+			}
+		}
+		break;
+
+	case AE_CAF_LOCKAE_STOP:
+		cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
 		break;
 
 	default:
