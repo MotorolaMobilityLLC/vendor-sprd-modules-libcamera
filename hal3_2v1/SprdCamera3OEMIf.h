@@ -377,7 +377,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     inline bool isCapturing();
     bool WaitForPreviewStart();
     bool WaitForPreviewStop();
-    bool WaitForCaptureStart();
     bool WaitForCaptureDone();
     bool WaitForCameraStart();
     bool WaitForCameraStop();

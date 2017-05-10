@@ -656,8 +656,6 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 int SprdCamera3OEMIf::takePicture() {
     ATRACE_CALL();
 
-    bool wait_raw = true;
-
     HAL_LOGI("E");
     GET_START_TIME;
     print_time();
@@ -784,24 +782,12 @@ int SprdCamera3OEMIf::takePicture() {
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
-        HAL_LOGE("fail to camera_take_picture.");
+        HAL_LOGE("fail to camera_take_picture");
         goto exit;
     }
 
-    if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE) {
-        if ((mCaptureMode == CAMERA_ISP_TUNING_MODE ||
-             mCaptureMode == CAMERA_ISP_SIMULATION_MODE) &&
-            mIspToolStart) {
-            wait_raw = false;
-        }
-    }
-    if (wait_raw) {
-        WaitForCaptureStart();
-    }
-
-    print_time();
 exit:
-    HAL_LOGI("X, wait_raw=%d", wait_raw);
+    HAL_LOGI("X");
     /*must return NO_ERROR, otherwise can't flush camera normal*/
     return NO_ERROR;
 }
@@ -2253,36 +2239,6 @@ bool SprdCamera3OEMIf::WaitForPreviewStop() {
     }
 
     return SPRD_IDLE == mCameraState.preview_state;
-}
-
-bool SprdCamera3OEMIf::WaitForCaptureStart() {
-    ATRACE_CALL();
-
-    HAL_LOGD("E");
-    Mutex::Autolock stateLock(&mStateLock);
-
-    /* It's possible for the YUV callback as well as the JPEG callbacks*/
-    /*to be invoked before we even make it here, so we check for all*/
-    /*possible result states from takePicture.*/
-    while (SPRD_WAITING_RAW != mCameraState.capture_state &&
-           SPRD_WAITING_JPEG != mCameraState.capture_state &&
-           SPRD_IDLE != mCameraState.capture_state &&
-           SPRD_ERROR != mCameraState.capture_state &&
-           SPRD_ERROR != mCameraState.camera_state) {
-        HAL_LOGD("waiting for SPRD_WAITING_RAW or SPRD_WAITING_JPEG");
-        if (mStateWait.waitRelative(mStateLock, CAP_START_TIMEOUT)) {
-            HAL_LOGE("timeout");
-            break;
-        }
-
-        HAL_LOGD("woke up, state is %s",
-                 getCameraStateStr(mCameraState.capture_state));
-    }
-
-    HAL_LOGD("X");
-    return (SPRD_WAITING_RAW == mCameraState.capture_state ||
-            SPRD_WAITING_JPEG == mCameraState.capture_state ||
-            SPRD_IDLE == mCameraState.capture_state);
 }
 
 bool SprdCamera3OEMIf::WaitForCaptureDone() {
