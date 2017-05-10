@@ -2801,6 +2801,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_VIDEO_STOP_NOTIFY, NULL, NULL);
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do isp cfg"));
 
 exit:
