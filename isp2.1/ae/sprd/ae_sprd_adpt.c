@@ -21,6 +21,7 @@
 #include "ae_ctrl.h"
 #include "flash.h"
 #include "isp_debug.h"
+#include "awb.h"
 
 #ifndef WIN32
 #include <utils/Timers.h>
@@ -3019,6 +3020,11 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->seq_handle = seq_handle;
 
 	/* HJW_S: dual flash algorithm init */
+      for(i=0 ; i< 20; i++){
+          flash_in.ctTab[i] = init_param->ct_table.ct[i];
+          flash_in.ctTabRg[i] = init_param->ct_table.rg[i];
+        }
+
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
 	flash_in.tune_info = NULL;/*it will be removed in the future, and get it from dual flash tuning parameters*/
 	flash_in.statH  = cxt->monitor_unit.win_num.h;

@@ -19,6 +19,7 @@
 #include "cmr_type.h"
 #include "isp_pm.h"
 #include "sprd_isp_r6p10.h"
+#include "awb.h"
 
 struct commn_info {
 	cmr_s32 isp_mode;
@@ -147,6 +148,7 @@ struct isp_alg_fw_context {
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
 	cmr_u32 takepicture_mode;
+	struct awb_ct_table ct_table;
 };
 
 struct isp_alg_fw_init_in {
