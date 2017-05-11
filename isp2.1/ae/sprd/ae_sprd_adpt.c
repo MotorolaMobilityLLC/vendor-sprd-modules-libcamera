@@ -221,6 +221,7 @@ struct ae_ctrl_cxt {
 	 /*ST: for dual flash algorithm*/
 	cmr_u8 flash_ver;
 	cmr_s32 pre_flash_skip;
+	cmr_s32 aem_effect_delay;
 	cmr_handle flash_alg_handle;
 	cmr_u16 aem_stat_rgb[3 * 1024];/*save the average data of AEM Stats data*/
 	cmr_u8 bakup_ae_status_for_flash;/* 0:unlock 1:lock 2:pause 3:wait-lock */
@@ -1422,6 +1423,7 @@ static cmr_s32 _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 			//cxt->bakup_ae_status_for_flash = cxt->cur_status.settings.lock_ae;
 			cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 			cxt->pre_flash_skip = 2;
+			cxt->aem_effect_delay = 0;
 		}
 		break;
 
@@ -2469,14 +2471,14 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	memset((void*)&out, 0, sizeof(out));
 
 	if (1 == cxt->flash_esti_result.isEnd) {
-		ISP_LOGV("ae_flash esti: is end\n");
-		return rtn;
+		//ISP_LOGV("ae_flash esti: is end\n");
+		goto EXIT;
 	}
 
 	if (0 < cxt->pre_flash_skip) {
 		cxt->pre_flash_skip--;
 		ISP_LOGI("ae_flash esti: skip: %d\n", cxt->pre_flash_skip);
-		return rtn;
+		goto EXIT;
 	}
 #if 0
 	orig_ev = ((cmr_s64)cxt->flash_last_exp_line) * cxt->flash_last_gain;
@@ -2495,45 +2497,50 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		ISP_LOGV("ae_flash esti: sensor param do not take effect, (%d, %d)-(%d, %d)skip\n",\
 					cxt->flash_last_exp_line, cxt->flash_last_gain,
 					current_status->effect_expline, current_status->effect_gain);
-		return rtn;
+		goto EXIT;
 	}
 #endif
-	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
-	in = &cxt->flash_esti_input;
-	in->aeExposure = current_status->effect_expline * current_status->line_time;
-	in->aeGain = current_status->effect_gain;
-	in->staW = cxt->monitor_unit.win_num.w;
-	in->staH = cxt->monitor_unit.win_num.h;
-	in->isFlash = 1;/*need to check the meaning*/
-	memcpy((cmr_handle*)&in->rSta[0], (cmr_u16*)&cxt->aem_stat_rgb[0], sizeof(in->rSta));
-	memcpy((cmr_handle*)&in->gSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num), sizeof(in->gSta));
-	memcpy((cmr_handle*)&in->bSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(in->bSta));
+	cxt->aem_effect_delay++;
+	if (cxt->aem_effect_delay == 3) {
+		cxt->aem_effect_delay = 0;
+		blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
+		in = &cxt->flash_esti_input;
+		in->aeExposure = current_status->effect_expline * current_status->line_time;
+		in->aeGain = current_status->effect_gain;
+		in->staW = cxt->monitor_unit.win_num.w;
+		in->staH = cxt->monitor_unit.win_num.h;
+		in->isFlash = 1;/*need to check the meaning*/
+		memcpy((cmr_handle*)&in->rSta[0], (cmr_u16*)&cxt->aem_stat_rgb[0], sizeof(in->rSta));
+		memcpy((cmr_handle*)&in->gSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num), sizeof(in->gSta));
+		memcpy((cmr_handle*)&in->bSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(in->bSta));
 
-	flash_pfOneIteration(cxt->flash_alg_handle, in, &out);
-	if (1 != out.isEnd) {
-		cxt->cur_status.settings.manual_mode = 0;
-		cxt->cur_status.settings.table_idx = 0;
-		cxt->cur_status.settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
-		cxt->cur_status.settings.gain = out.nextGain;
-		cxt->flash_esti_result.isEnd = 0;
-		ISP_LOGV("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
-	} else {
-		/*save flash debug information*/
-		memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
-		cxt->flash_buf_len  =0;
-		memcpy((cmr_handle)&cxt->flash_debug_buf[0], out.debugBuffer, out.debugSize);
-		cxt->flash_buf_len = out.debugSize;
-		ISP_LOGV("ae_flash esti: is end: %d, (%.f, %d, %d), (%d, %d), (%d, %d, %d)\n",\
-					out.isEnd, out.captureExposure, cxt->cur_status.settings.exp_line,\
-					out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2,\
-					out.captureRGain, out.captureGGain, out.captureBGain);
+		flash_pfOneIteration(cxt->flash_alg_handle, in, &out);
+		if (1 != out.isEnd) {
+			cxt->cur_status.settings.manual_mode = 0;
+			cxt->cur_status.settings.table_idx = 0;
+			cxt->cur_status.settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
+			cxt->cur_status.settings.gain = out.nextGain;
+			cxt->flash_esti_result.isEnd = 0;
+			ISP_LOGV("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+		} else {
+			/*save flash debug information*/
+			memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
+			cxt->flash_buf_len  =0;
+			memcpy((cmr_handle)&cxt->flash_debug_buf[0], out.debugBuffer, out.debugSize);
+			cxt->flash_buf_len = out.debugSize;
+			ISP_LOGV("ae_flash esti: is end: %d, (%.f, %d, %d), (%d, %d), (%d, %d, %d)\n",\
+						out.isEnd, out.captureExposure, cxt->cur_status.settings.exp_line,\
+						out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2,\
+						out.captureRGain, out.captureGGain, out.captureBGain);
 
-		cxt->flash_esti_result = out;/*save the flash estimation results*/
+			cxt->flash_esti_result = out;/*save the flash estimation results*/
+		}
+
+		cxt->flash_last_exp_line  = cxt->cur_status.settings.exp_line;
+		cxt->flash_last_gain =  cxt->cur_status.settings.gain;
 	}
 
-	cxt->flash_last_exp_line  = cxt->cur_status.settings.exp_line;
-	cxt->flash_last_gain =  cxt->cur_status.settings.gain;
-
+EXIT:
 	return rtn;
 }
 
@@ -2545,12 +2552,13 @@ static cmr_s32 flash_finish(struct ae_ctrl_cxt *cxt)
 
 	/*reset flash control status*/
 	cxt->pre_flash_skip = 0;
+	cxt->aem_effect_delay = 0;
 	cxt->flash_last_exp_line = 0;
 	cxt->flash_last_gain = 0;
 	memset(&cxt->flash_esti_input, 0, sizeof(cxt->flash_esti_input));
 	memset(&cxt->flash_esti_result, 0, sizeof(cxt->flash_esti_result));
 	//memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
-	//cxt->flash_buf_len  =0;
+	//cxt->flash_buf_len = 0;
 
 	return rtn;
 }
