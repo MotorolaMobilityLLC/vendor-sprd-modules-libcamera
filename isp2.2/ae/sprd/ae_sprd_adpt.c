@@ -786,6 +786,8 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	unsigned int exp_slave_2x = 0;
 	unsigned int exp_slave_4x = 0;
 	unsigned int exp_slave_8x = 0;
+	cmr_s16 slv_line_time = 0;
+	uint32_t exp_line_slave = 0;
 
 	if (!cxt_ptr || !multicam_aesync) {
 		ISP_LOGE("param is NULL error!");
@@ -811,21 +813,29 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	if (exp_master_1x && exp_master_2x && exp_master_4x && exp_master_8x
 		&& exp_slave_1x && exp_slave_2x && exp_slave_4x && exp_slave_8x) {
 		if (gain_master >= 8*128) {
-			gain_slave = gain_master * exp_master_8x / exp_slave_8x;
+			gain_slave = gain_master * exp_slave_8x / exp_master_8x;
 		} else if (gain_master >= 4*128) {
-			gain_slave = gain_master * (exp_master_4x + exp_master_8x) / (exp_slave_4x + exp_slave_8x);
+			gain_slave = gain_master * (exp_slave_4x + exp_slave_8x) / (exp_master_4x + exp_master_8x);
 		} else if (gain_master >= 2*128) {
-			gain_slave = gain_master * (exp_master_2x + exp_master_4x) / (exp_slave_2x + exp_slave_4x);
+			gain_slave = gain_master * (exp_slave_2x + exp_slave_4x) / (exp_master_2x + exp_master_4x);
 		} else {
-			gain_slave = gain_master * (exp_master_1x + exp_master_2x) / (exp_slave_1x + exp_slave_2x);
+			gain_slave = gain_master * (exp_slave_1x + exp_slave_2x) / (exp_master_1x + exp_master_2x);
 		}
 	}
 
+	/* calculate exposure line */
+	slv_line_time = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.line_time;
+	// TODO: set slave exposure line when slave line time is invalid
+	if (slv_line_time > 0)
+		exp_line_slave = ae_master_calc_out->wts.exposure_time / slv_line_time;
+	else
+		exp_line_slave = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.min_exp_line;
+
 	/*fulfill slave sync result */
-	slv_sync_result->sensor_ad_gain = gain_slave;
-	// TODO: calculate these four values
+	slv_sync_result->sensor_ad_gain = gain_master;//gain_slave;
 	slv_sync_result->exposure_time = ae_master_calc_out->wts.exposure_time;
-	slv_sync_result->exposure_line = ae_master_calc_out->wts.cur_exp_line;
+	slv_sync_result->exposure_line = exp_line_slave;
+	// TODO: calculate these two values
 	slv_sync_result->isp_d_gain = ae_master_calc_out->wts.cur_dgain;
 	slv_sync_result->exposure_dummy = ae_master_calc_out->wts.cur_dummy;
 	/* set flag to 1 if need update, otherwise  set to 0 */
@@ -875,7 +885,7 @@ static cmr_s32 dualcamera_aesync_calc(struct ae_ctrl_cxt *cxt,  struct match_dat
 		cxt->sensor_role);
 
 	//get slave sensor aeinfo
-	if(cxt->sensor_role)
+	if (cxt->sensor_role)
 	{
 		ret = isp_br_ioctrl(cxt->camera_id,
 			GET_SLAVE_AECALC_RESULT,
@@ -887,6 +897,12 @@ static cmr_s32 dualcamera_aesync_calc(struct ae_ctrl_cxt *cxt,  struct match_dat
 			GET_SLAVE_OTP_AE,
 			NULL,
 			&dualcam_aesync->module_info.module_otp_info.slave_ae_otp);
+
+		/* get slave sensor info */
+		ret = isp_br_ioctrl(cxt->camera_id,
+			GET_SLAVE_MODULE_INFO,
+			NULL,
+			&dualcam_aesync->module_info.module_sensor_info.slave_sensor_info);
 	}
 	else
 	{
@@ -921,7 +937,7 @@ static cmr_s32 dualcamera_aesync_calc(struct ae_ctrl_cxt *cxt,  struct match_dat
 		dualcam_aesync->slave_ae_info.ae_sync_result.exposure_dummy,
 		dualcam_aesync->slave_ae_info.ae_sync_result.isp_d_gain);
 
-        if(cxt->sensor_role)
+	if (cxt->sensor_role)
 	{
 		//save ae sync setting to slave sensor
 		ret = isp_br_ioctrl(cxt->camera_id,
@@ -2218,33 +2234,26 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cxt->cur_status.min_gain = 128;	/*sensor can support the min  gain */
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	//save	slave sensor module info
-
-	if (cxt->is_multi_mode && !cxt->sensor_role) // need save Master&Slave sensor info
-	{
-		struct  sensor_info sensor_info;
-		sensor_info.max_again=cxt->cur_status.max_gain;
-		sensor_info.min_again=cxt->cur_status.min_gain;
-		sensor_info.sensor_gain_precision=cxt->sensor_gain_precision;
-		sensor_info.min_exp_line=cxt->cur_status.min_exp_line;
-
-		rtn = isp_br_ioctrl(cxt->camera_id,
-						SET_SLAVE_MODULE_INFO,
-						&sensor_info,
-						NULL);
-	}
-	else if (cxt->is_multi_mode && cxt->sensor_role) // need save Master&Slave sensor info
-	{
-		struct  sensor_info sensor_info;
-		sensor_info.max_again=cxt->cur_status.max_gain;
-		sensor_info.min_again=cxt->cur_status.min_gain;
-		sensor_info.sensor_gain_precision=cxt->sensor_gain_precision;
-		sensor_info.min_exp_line=cxt->cur_status.min_exp_line;
+	if (init_param->is_multi_mode) {
+		/* save master & slave sensor info */
+		struct sensor_info sensor_info;
+		sensor_info.max_again = cxt->cur_status.max_gain;
+		sensor_info.min_again = cxt->cur_status.min_gain;
+		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
+		sensor_info.min_exp_line = cxt->cur_status.min_exp_line;
+		sensor_info.line_time = cxt->cur_status.line_time;
 
 		rtn = isp_br_ioctrl(cxt->camera_id,
-						SET_MASTER_MODULE_INFO,
-						&sensor_info,
-						NULL);
+			init_param->sensor_role ? SET_MASTER_MODULE_INFO : SET_SLAVE_MODULE_INFO,
+			&sensor_info,
+			NULL);
+		ISP_LOGI("sensor info: role=%d, max_gain=%d, min_gain=%d, precision=%d, min_exp_line=%d, line_time=%d",
+			init_param->sensor_role,
+			sensor_info.max_again,
+			sensor_info.min_again,
+			sensor_info.sensor_gain_precision,
+			sensor_info.min_exp_line,
+			sensor_info.line_time);
 	}
 #endif
 	cxt->cur_status.start_index = cxt->cur_param->start_index;

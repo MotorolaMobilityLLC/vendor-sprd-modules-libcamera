@@ -1627,42 +1627,36 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
+	// TODO: change ae_role here
 	if(cxt->is_multi_mode)
-	{
-		ae_input.ae_role = cxt->is_master;  //set ae role , can be changed
-	}
-
-	ae_input.sensor_role = cxt->is_master;	//set sesnor role
-	ae_input.is_multi_mode = cxt->is_multi_mode;	//set ae module
-	ISP_LOGI("sensor_role = %d, is_multi_mode=%d, ae_role=%d",
+		ae_input.ae_role = cxt->is_master;
+	ae_input.sensor_role = cxt->is_master;
+	ae_input.is_multi_mode = cxt->is_multi_mode;
+	ISP_LOGI("sensor_role=%d, is_multi_mode=%d, ae_role=%d",
 		cxt->is_master, cxt->is_multi_mode , ae_input.ae_role);
 
-	//dualcam_aesync.module_info.module_otp_info.slave_ae_otp =input_ptr->otp_data->dual_otp;
-	if(cxt->is_multi_mode && !cxt->is_master)
-	{
-		struct match_data_param dualcam_aesync;
-		struct sensor_otp_ae_info *info = &cxt->otp_data->dual_otp.master_ae_info;
-		ISP_LOGV("lum=%zd, 1x=%zd, 2x=%zd, 4x=%zd, 8x=%zd, reserved=%zd",
-			info->ae_target_lum,
-			info->gain_1x_exp,
-			info->gain_2x_exp,
-			info->gain_4x_exp,
-			info->gain_8x_exp,
-			info->reserve);
-		dualcam_aesync.module_info.module_otp_info.slave_ae_otp.otp_info = cxt->otp_data->dual_otp.master_ae_info;
-		rtn = isp_br_ioctrl(cxt->camera_id,
-						SET_SLAVE_OTP_AE,
-						&dualcam_aesync.module_info.module_otp_info.slave_ae_otp.otp_info,
-						NULL);
-	}
-	else if(cxt->is_multi_mode)
-	{
-		struct match_data_param  dualcam_aesync;
-		dualcam_aesync.module_info.module_otp_info.slave_ae_otp.otp_info=cxt->otp_data->dual_otp.slave_ae_info;
-		rtn = isp_br_ioctrl(cxt->camera_id,
-						SET_MASTER_OTP_AE,
-						&dualcam_aesync.module_info.module_otp_info.master_ae_otp.otp_info,
-						NULL);
+	/* save otp info */
+	if (cxt->is_multi_mode) {
+		struct sensor_otp_ae_info info;
+		if (cxt->is_master) {
+			info = cxt->otp_data->dual_otp.master_ae_info;
+			rtn = isp_br_ioctrl(cxt->camera_id,
+				SET_MASTER_OTP_AE,
+				&info,
+				NULL);
+		} else {
+			info = cxt->otp_data->dual_otp.slave_ae_info;
+			rtn = isp_br_ioctrl(cxt->camera_id,
+				SET_SLAVE_OTP_AE,
+				&info,
+				NULL);
+		}
+		ISP_LOGI("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64,
+			info.ae_target_lum,
+			info.gain_1x_exp,
+			info.gain_2x_exp,
+			info.gain_4x_exp,
+			info.gain_8x_exp);
 	}
 #endif
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);

@@ -84,10 +84,11 @@ struct ae_sync_out {
 };
 
 struct sensor_info {
-	uint32_t min_exp_line;
-	uint32_t max_again ;
-	uint32_t min_again ;
-	uint32_t sensor_gain_precision ;
+	cmr_s16 min_exp_line;
+	cmr_s16 max_again;
+	cmr_s16 min_again;
+	cmr_s16 sensor_gain_precision;
+	cmr_s16 line_time;
 };
 
 struct module_sensor_info {
