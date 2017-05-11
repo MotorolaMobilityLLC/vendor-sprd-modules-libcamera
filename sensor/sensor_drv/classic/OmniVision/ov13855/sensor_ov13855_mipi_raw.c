@@ -393,21 +393,21 @@ static uint32_t ov13855_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
     return rtn;
 }
 
-static const cmr_u16 ov13855_pd_is_right[] = {1,0,0,1};
+static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
 
-static const cmr_u16 ov13855_pd_row[] = {2,6,10,14};
+static const cmr_u16 ov13855_pd_row[] = {2, 6, 10, 14};
 
-static const cmr_u16 ov13855_pd_col[] = {14,14,6,6};
+static const cmr_u16 ov13855_pd_col[] = {14, 14, 6, 6};
 static const struct pd_pos_info _ov13855_pd_pos_l[] = {
     {14, 6}, {6, 10},
 };
 
 static const struct pd_pos_info _ov13855_pd_pos_r[] = {
-	{14, 2}, {6, 14},
+    {14, 2}, {6, 14},
 };
 
 static uint32_t ov13855_get_pdaf_info(SENSOR_HW_HANDLE handle,
-                                         uint32_t *param) {
+                                      uint32_t *param) {
     uint32_t rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
     cmr_u16 i = 0;
@@ -424,10 +424,11 @@ static uint32_t ov13855_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pd_pos_is_right_size = NUMBER_OF_ARRAY(ov13855_pd_is_right);
     pd_pos_row_size = NUMBER_OF_ARRAY(ov13855_pd_row);
     pd_pos_col_size = NUMBER_OF_ARRAY(ov13855_pd_col);
-    if ((pd_pos_row_size != pd_pos_col_size) || (pd_pos_row_size != pd_pos_is_right_size) ||
-	(pd_pos_is_right_size != pd_pos_col_size)){
-        SENSOR_PRINT_ERR(
-            "ov13855 pd_pos_row size,pd_pos_row size and pd_pos_is_right size are not match");
+    if ((pd_pos_row_size != pd_pos_col_size) ||
+        (pd_pos_row_size != pd_pos_is_right_size) ||
+        (pd_pos_is_right_size != pd_pos_col_size)) {
+        SENSOR_PRINT_ERR("ov13855 pd_pos_row size,pd_pos_row size and "
+                         "pd_pos_is_right size are not match");
         return -1;
     }
 
@@ -443,29 +444,26 @@ static uint32_t ov13855_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_pos_row = (cmr_u16 *)ov13855_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)ov13855_pd_col;
 
+    cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_ov13855_pd_pos_r);
+    cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_ov13855_pd_pos_l);
 
-	cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_ov13855_pd_pos_r);
-	cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_ov13855_pd_pos_l);
-
-	if (pd_pos_r_size != pd_pos_l_size) {
-			SENSOR_PRINT_ERR(
-					"ov13855_pd_pos_r size not match ov13855_pd_pos_l");
-			return -1;
-	}
-	pdaf_info->pd_pitch_x = 16;
-	pdaf_info->pd_pitch_y = 16;
-	pdaf_info->pd_density_x = 16;
-	pdaf_info->pd_density_y = 8;
-	pdaf_info->pd_block_num_x = 264;
-	pdaf_info->pd_block_num_y = 196;
-	pdaf_info->pd_pos_size = pd_pos_r_size;
-	pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov13855_pd_pos_r;
-	pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov13855_pd_pos_l;
-	pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
+    if (pd_pos_r_size != pd_pos_l_size) {
+        SENSOR_PRINT_ERR("ov13855_pd_pos_r size not match ov13855_pd_pos_l");
+        return -1;
+    }
+    pdaf_info->pd_pitch_x = 16;
+    pdaf_info->pd_pitch_y = 16;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 8;
+    pdaf_info->pd_block_num_x = 264;
+    pdaf_info->pd_block_num_y = 196;
+    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov13855_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov13855_pd_pos_l;
+    pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
 
     return rtn;
 }
-
 
 /*==============================================================================
  * Description:
@@ -884,12 +882,15 @@ static uint32_t ov13855_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
 }
 #endif
 
-unsigned long _ov13855_SetMaster_FrameSync(SENSOR_HW_HANDLE handle,
-                                           unsigned long param) {
-    // Sensor_WriteReg(0x3028, 0x20);
+#if defined(CONFIG_DUAL_MODULE)
+static uint32_t _ov13855_SetMaster_FrameSync(SENSOR_HW_HANDLE handle,
+                                             unsigned long param) {
+    SENSOR_PRINT("E");
+
+    Sensor_WriteReg(0x3002, 0x40);
     return 0;
 }
-
+#endif
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -906,8 +907,10 @@ static uint32_t ov13855_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
 #endif
 
     SENSOR_PRINT("E");
-    //_ov13855_SetMaster_FrameSync(handle,param);
+#if defined(CONFIG_DUAL_MODULE)
+    _ov13855_SetMaster_FrameSync(handle, param);
 
+#endif
     Sensor_WriteReg(0x0100, 0x01);
     /*delay*/
     usleep(10 * 1000);

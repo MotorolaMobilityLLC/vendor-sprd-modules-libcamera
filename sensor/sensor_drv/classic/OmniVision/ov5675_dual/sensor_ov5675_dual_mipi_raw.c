@@ -129,13 +129,15 @@ static struct sensor_ev_info_t s_sensor_ev_info = {
 
 #ifdef FEATURE_OTP
 #include "sensor_ov5675_dual_darling_otp.c"
-static struct otp_info_t *s_ov5675_dual_otp_info_ptr = &s_ov5675_dual_darling_otp_info;
+static struct otp_info_t *s_ov5675_dual_otp_info_ptr =
+    &s_ov5675_dual_darling_otp_info;
 static struct raw_param_info_tab *s_ov5675_dual_raw_param_tab_ptr =
     &s_ov5675_dual_darling_raw_param_tab; /*otp function interface*/
 #endif
 
 static SENSOR_IOCTL_FUNC_TAB_T s_ov5675_dual_ioctl_func_tab;
-struct sensor_raw_info *s_ov5675_dual_mipi_raw_info_ptr = &s_ov5675_dual_mipi_raw_info;
+struct sensor_raw_info *s_ov5675_dual_mipi_raw_info_ptr =
+    &s_ov5675_dual_mipi_raw_info;
 static EXIF_SPEC_PIC_TAKING_COND_T s_ov5675_dual_exif_info;
 
 static uint32_t s_ov5675_dual_sensor_close_flag = 0;
@@ -495,7 +497,8 @@ static SENSOR_VIDEO_INFO_T s_ov5675_dual_video_info[SENSOR_MODE_MAX] = {
  * set video mode
  *
  *============================================================================*/
-static uint32_t ov5675_dual_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param) {
+static uint32_t ov5675_dual_set_video_mode(SENSOR_HW_HANDLE handle,
+                                           uint32_t param) {
     SENSOR_REG_T_PTR sensor_reg_ptr;
     uint16_t i = 0x00;
     uint32_t mode;
@@ -575,7 +578,8 @@ SENSOR_INFO_T g_ov5675_dual_mipi_raw_info = {
      * for Example: index = 0-> Device id, index = 1 -> version id
      * customer could ignore it.
      */
-    {{ov5675_dual_PID_ADDR, ov5675_dual_PID_VALUE}, {ov5675_dual_VER_ADDR, ov5675_dual_VER_VALUE}},
+    {{ov5675_dual_PID_ADDR, ov5675_dual_PID_VALUE},
+     {ov5675_dual_VER_ADDR, ov5675_dual_VER_VALUE}},
     /* voltage of avdd */
     SENSOR_AVDD_2800MV,
     /* max width of source image */
@@ -668,7 +672,8 @@ static uint32_t ov5675_dual_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
     if (!s_ov5675_dual_mode_fps_info.is_init) {
         uint32_t i, modn, tempfps = 0;
         SENSOR_PRINT("ov5675_dual_init_mode_fps_info:start init");
-        for (i = 0; i < NUMBER_OF_ARRAY(s_ov5675_dual_resolution_trim_tab); i++) {
+        for (i = 0; i < NUMBER_OF_ARRAY(s_ov5675_dual_resolution_trim_tab);
+             i++) {
             // max fps should be multiple of 30,it calulated from line_time and
             // frame_line
             tempfps = s_ov5675_dual_resolution_trim_tab[i].line_time *
@@ -678,12 +683,16 @@ static uint32_t ov5675_dual_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
                 modn = tempfps / 30;
                 if (tempfps > modn * 30)
                     modn++;
-                s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps = modn * 30;
-                if (s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-                    s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+                s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps =
+                    modn * 30;
+                if (s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps >
+                    30) {
+                    s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].is_high_fps =
+                        1;
                     s_ov5675_dual_mode_fps_info.sensor_mode_fps[i]
                         .high_fps_skip_num =
-                        s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps / 30;
+                        s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps /
+                        30;
                 }
                 if (s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps >
                     s_ov5675_dual_static_info.max_fps) {
@@ -692,14 +701,17 @@ static uint32_t ov5675_dual_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
                 }
             }
             SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                         tempfps, s_ov5675_dual_resolution_trim_tab[i].frame_line,
+                         tempfps,
+                         s_ov5675_dual_resolution_trim_tab[i].frame_line,
                          s_ov5675_dual_resolution_trim_tab[i].line_time);
-            SENSOR_PRINT("mode %d,max_fps: %d ", i,
-                         s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps);
+            SENSOR_PRINT(
+                "mode %d,max_fps: %d ", i,
+                s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].max_fps);
             SENSOR_PRINT(
                 "is_high_fps: %d,highfps_skip_num %d",
                 s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].is_high_fps,
-                s_ov5675_dual_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+                s_ov5675_dual_mode_fps_info.sensor_mode_fps[i]
+                    .high_fps_skip_num);
         }
         s_ov5675_dual_mode_fps_info.is_init = 1;
     }
@@ -708,7 +720,7 @@ static uint32_t ov5675_dual_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
 }
 
 static uint32_t ov5675_dual_get_static_info(SENSOR_HW_HANDLE handle,
-                                       uint32_t *param) {
+                                            uint32_t *param) {
     uint32_t rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info;
     uint32_t up = 0;
@@ -724,7 +736,8 @@ static uint32_t ov5675_dual_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->max_adgain = s_ov5675_dual_static_info.max_adgain;
     ex_info->ois_supported = s_ov5675_dual_static_info.ois_supported;
     ex_info->pdaf_supported = s_ov5675_dual_static_info.pdaf_supported;
-    ex_info->exp_valid_frame_num = s_ov5675_dual_static_info.exp_valid_frame_num;
+    ex_info->exp_valid_frame_num =
+        s_ov5675_dual_static_info.exp_valid_frame_num;
     ex_info->clamp_level = s_ov5675_dual_static_info.clamp_level;
     ex_info->adgain_valid_frame_num =
         s_ov5675_dual_static_info.adgain_valid_frame_num;
@@ -750,7 +763,8 @@ static uint32_t ov5675_dual_get_static_info(SENSOR_HW_HANDLE handle,
     return rtn;
 }
 
-static uint32_t ov5675_dual_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param) {
+static uint32_t ov5675_dual_get_fps_info(SENSOR_HW_HANDLE handle,
+                                         uint32_t *param) {
     uint32_t rtn = SENSOR_SUCCESS;
     SENSOR_MODE_FPS_T *fps_info;
     // make sure have inited fps of every sensor mode.
@@ -766,7 +780,8 @@ static uint32_t ov5675_dual_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *para
     fps_info->is_high_fps =
         s_ov5675_dual_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
     fps_info->high_fps_skip_num =
-        s_ov5675_dual_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+        s_ov5675_dual_mode_fps_info.sensor_mode_fps[sensor_mode]
+            .high_fps_skip_num;
     SENSOR_PRINT("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
     SENSOR_PRINT("min_fps: %d", fps_info->min_fps);
     SENSOR_PRINT("is_high_fps: %d", fps_info->is_high_fps);
@@ -780,7 +795,7 @@ static uint32_t ov5675_dual_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *para
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
 
 #define param_update(x1, x2)                                                   \
-    sprintf(name, "/data/misc/cameraserver/ov5675_dual_%s.bin", x1);                \
+    sprintf(name, "/data/misc/cameraserver/ov5675_dual_%s.bin", x1);           \
     if (0 == access(name, R_OK)) {                                             \
         FILE *fp = NULL;                                                       \
         SENSOR_PRINT("param file %s exists", name);                            \
@@ -1069,7 +1084,7 @@ static uint32_t ov5675_dual_InitRawTuneInfo(void)
  *
  *============================================================================*/
 static uint32_t ov5675_dual_get_default_frame_length(SENSOR_HW_HANDLE handle,
-                                                uint32_t mode) {
+                                                     uint32_t mode) {
     return s_ov5675_dual_resolution_trim_tab[mode].frame_line;
 }
 
@@ -1160,7 +1175,7 @@ static uint16_t ov5675_dual_read_frame_length(SENSOR_HW_HANDLE handle) {
  * please modify this function acording your spec
  *============================================================================*/
 static void ov5675_dual_write_frame_length(SENSOR_HW_HANDLE handle,
-                                      uint32_t frame_len) {
+                                           uint32_t frame_len) {
     Sensor_WriteReg(0x380E, (frame_len >> 8) & 0xff);
     Sensor_WriteReg(0x380F, frame_len & 0xff);
 }
@@ -1180,7 +1195,8 @@ static uint32_t ov5675_dual_read_shutter(SENSOR_HW_HANDLE handle) {
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void ov5675_dual_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter) {
+static void ov5675_dual_write_shutter(SENSOR_HW_HANDLE handle,
+                                      uint32_t shutter) {
     uint16_t value = 0x00;
     uint16_t ov_shutter = (shutter >> 1);
     value = (ov_shutter << 0x04) & 0xff;
@@ -1206,7 +1222,8 @@ static void ov5675_dual_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter)
  * please don't change this function if it's necessary
  *============================================================================*/
 static uint16_t ov5675_dual_update_exposure(SENSOR_HW_HANDLE handle,
-                                       uint32_t shutter, uint32_t dummy_line) {
+                                            uint32_t shutter,
+                                            uint32_t dummy_line) {
     uint32_t dest_fr_len = 0;
     uint32_t cur_fr_len = 0;
     uint32_t fr_len = s_current_default_frame_length;
@@ -1243,7 +1260,8 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov5675_dual_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
+static uint32_t ov5675_dual_power_on(SENSOR_HW_HANDLE handle,
+                                     uint32_t power_on) {
     SENSOR_AVDD_VAL_E dvdd_val = g_ov5675_dual_mipi_raw_info.dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = g_ov5675_dual_mipi_raw_info.avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = g_ov5675_dual_mipi_raw_info.iovdd_val;
@@ -1259,7 +1277,7 @@ static uint32_t ov5675_dual_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on)
         Sensor_SetResetLevel(!reset_level);
         usleep(1 * 1000);
         Sensor_SetMCLK(EX_MCLK);
-        Sensor_SetMIPILevel(1);     // for bringup
+        Sensor_SetMIPILevel(1); // for bringup
 
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
         Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
@@ -1286,7 +1304,7 @@ static uint32_t ov5675_dual_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on)
         Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
         usleep(1 * 1000);
         Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
-        Sensor_SetMIPILevel(0);     // for bringup
+        Sensor_SetMIPILevel(0); // for bringup
     }
     SENSOR_PRINT("(1:on, 0:off): %d", power_on);
     return SENSOR_SUCCESS;
@@ -1421,7 +1439,7 @@ static uint32_t ov5675_dual_InitExifInfo(void) {
 }
 
 static unsigned long ov5675_dual_get_exif_info(SENSOR_HW_HANDLE handle,
-                                          unsigned long param) {
+                                               unsigned long param) {
     return (unsigned long)&s_ov5675_dual_exif_info;
 }
 
@@ -1451,7 +1469,8 @@ static uint32_t ov5675_dual_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
                 SENSOR_PRINT("identify module_id=0x%x",
                              s_ov5675_dual_raw_param_tab_ptr->param_id);
                 // set default value
-                memset(s_ov5675_dual_otp_info_ptr, 0x00, sizeof(struct otp_info_t));
+                memset(s_ov5675_dual_otp_info_ptr, 0x00,
+                       sizeof(struct otp_info_t));
                 ret_value = s_ov5675_dual_raw_param_tab_ptr->identify_otp(
                     s_ov5675_dual_otp_info_ptr);
 
@@ -1494,8 +1513,8 @@ static uint32_t ov5675_dual_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long ov5675_dual_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
-                                                    uint32_t param) {
+static unsigned long
+ov5675_dual_get_resolution_trim_tab(SENSOR_HW_HANDLE handle, uint32_t param) {
     return (unsigned long)s_ov5675_dual_resolution_trim_tab;
 }
 
@@ -1505,7 +1524,7 @@ static unsigned long ov5675_dual_get_resolution_trim_tab(SENSOR_HW_HANDLE handle
  * you can change this function if it's necessary
  *============================================================================*/
 static uint32_t ov5675_dual_before_snapshot(SENSOR_HW_HANDLE handle,
-                                       uint32_t param) {
+                                            uint32_t param) {
     uint32_t cap_shutter = 0;
     uint32_t prv_shutter = 0;
     uint32_t gain = 0;
@@ -1528,8 +1547,9 @@ static uint32_t ov5675_dual_before_snapshot(SENSOR_HW_HANDLE handle,
         goto snapshot_info;
     }
 
-    prv_shutter = s_sensor_ev_info.preview_shutter; // ov5675_dual_read_shutter();
-    gain = s_sensor_ev_info.preview_gain;           // ov5675_dual_read_gain();
+    prv_shutter =
+        s_sensor_ev_info.preview_shutter; // ov5675_dual_read_shutter();
+    gain = s_sensor_ev_info.preview_gain; // ov5675_dual_read_gain();
 
     Sensor_SetMode(capture_mode);
     Sensor_SetMode_WaitDone();
@@ -1572,7 +1592,7 @@ snapshot_info:
  * please don't change this function unless it's necessary
  *============================================================================*/
 static uint32_t ov5675_dual_write_exposure(SENSOR_HW_HANDLE handle,
-                                      unsigned long param) {
+                                           unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;
@@ -1625,7 +1645,7 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param) {
  * you can change this function if it's necessary
  *============================================================================*/
 static uint32_t ov5675_dual_write_gain_value(SENSOR_HW_HANDLE handle,
-                                        uint32_t param) {
+                                             uint32_t param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint32_t real_gain = 0;
 
@@ -1661,7 +1681,7 @@ static uint32_t ov5675_dual_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
  *
  *============================================================================*/
 static void ov5675_dual_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
-                                         uint8_t ev_multiplier) {
+                                              uint8_t ev_multiplier) {
     uint32_t shutter_multiply =
         s_hdr_info.capture_max_shutter / s_hdr_info.capture_shutter;
     uint32_t gain = 0;
@@ -1670,8 +1690,8 @@ static void ov5675_dual_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
-        ov5675_dual_update_exposure(handle,
-                               s_hdr_info.capture_shutter * ev_multiplier, 0);
+        ov5675_dual_update_exposure(
+            handle, s_hdr_info.capture_shutter * ev_multiplier, 0);
         ov5675_dual_write_gain(handle, s_hdr_info.capture_gain);
     } else {
         gain = s_hdr_info.capture_gain * ev_multiplier / shutter_multiply;
@@ -1687,7 +1707,7 @@ static void ov5675_dual_increase_hdr_exposure(SENSOR_HW_HANDLE handle,
  *
  *============================================================================*/
 static void ov5675_dual_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,
-                                         uint8_t ev_divisor) {
+                                              uint8_t ev_divisor) {
     uint16_t gain_multiply = 0;
     uint32_t shutter = 0;
     gain_multiply = s_hdr_info.capture_gain / SENSOR_BASE_GAIN;
@@ -1709,7 +1729,7 @@ static void ov5675_dual_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,
  * you can change this function if it's necessary
  *============================================================================*/
 static uint32_t ov5675_dual_set_hdr_ev(SENSOR_HW_HANDLE handle,
-                                  unsigned long param) {
+                                       unsigned long param) {
     uint32_t ret = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
 
@@ -1741,7 +1761,8 @@ static uint32_t ov5675_dual_set_hdr_ev(SENSOR_HW_HANDLE handle,
  * you can add functions reference SENSOR_EXT_FUNC_CMD_E which from
  *sensor_drv_u.h
  *============================================================================*/
-static uint32_t ov5675_dual_ext_func(SENSOR_HW_HANDLE handle, unsigned long param) {
+static uint32_t ov5675_dual_ext_func(SENSOR_HW_HANDLE handle,
+                                     unsigned long param) {
     uint32_t rtn = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
 
@@ -1757,6 +1778,22 @@ static uint32_t ov5675_dual_ext_func(SENSOR_HW_HANDLE handle, unsigned long para
     return rtn;
 }
 
+#if defined(CONFIG_DUAL_MODULE)
+static uint32_t ov5675_SetSlave_FrameSync(SENSOR_HW_HANDLE handle,
+                                          unsigned long param) {
+    SENSOR_PRINT("E");
+    /* setting from ov5675 */
+    Sensor_WriteReg(0x3663, 0x20);
+    Sensor_WriteReg(0x3002, 0x21);
+    Sensor_WriteReg(0x3823, 0x70);
+    Sensor_WriteReg(0x3824, 0x00);
+    Sensor_WriteReg(0x3825, 0xbb);
+    Sensor_WriteReg(0x3826, 0x0f);
+    Sensor_WriteReg(0x3827, 0x90);
+    return 0;
+}
+#endif
+
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -1764,6 +1801,10 @@ static uint32_t ov5675_dual_ext_func(SENSOR_HW_HANDLE handle, unsigned long para
  *============================================================================*/
 static uint32_t ov5675_dual_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
     SENSOR_PRINT("E");
+#if defined(CONFIG_DUAL_MODULE)
+    ov5675_SetSlave_FrameSync(handle, param);
+#endif
+    usleep(10 * 1000);
     Sensor_WriteReg(0x0100, 0x01);
     /*delay*/
     //	usleep(10 * 1000);
@@ -1775,7 +1816,8 @@ static uint32_t ov5675_dual_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov5675_dual_stream_off(SENSOR_HW_HANDLE handle, uint32_t param) {
+static uint32_t ov5675_dual_stream_off(SENSOR_HW_HANDLE handle,
+                                       uint32_t param) {
     SENSOR_PRINT("E");
     unsigned char value;
     unsigned int sleep_time = 0;
@@ -1805,7 +1847,7 @@ static uint32_t ov5675_dual_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
 }
 
 static unsigned long ov5675_dual_access_val(SENSOR_HW_HANDLE handle,
-                                       unsigned long param) {
+                                            unsigned long param) {
     uint32_t rtn = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     uint16_t tmp;
