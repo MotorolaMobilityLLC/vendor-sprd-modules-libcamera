@@ -107,8 +107,8 @@ static struct sensor_version_info s_ov5675_dual_version_info=
 	{
 		{
 			0x3635766F,
-			0x00003537,
-			0x00000000,
+			0x645F3537,
+			0x006C6175,
 			0x00000000,
 			0x00000000,
 			0x00000000,
