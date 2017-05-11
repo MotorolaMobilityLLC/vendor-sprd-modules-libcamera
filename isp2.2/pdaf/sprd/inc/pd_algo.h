@@ -11,7 +11,7 @@
 #include <string.h>
 #include <isp_type.h>
 
-#define PD_VERSION "PDAF_Algo_Ver: v1.02"
+#define PD_VERSION "PDAF_Algo_Ver: v1.07"
 #define PD_AREA_NUMBER (4)
 #define PD_PIXEL_ALIGN_X (16)
 #define PD_PIXEL_ALIGN_Y (32)
@@ -24,7 +24,7 @@
 #define PD_SLIDE_RANGE (33)	/* number of 33 means -16 to +16 */
 #ifdef __cplusplus
 extern "C" {
-#endif				//__cplusplus
+#endif //__cplusplus
 
 typedef struct {
 	cmr_s32 dX;
@@ -41,13 +41,15 @@ typedef struct {
 	cmr_s32 dAreaW;
 	cmr_s32 dAreaH;
 	cmr_s32 dDTCTEdgeTh;
-	cmr_s32 dUnitLine;
-	//PD Sensor Mode
-	//0: Sony IMX258, 1:OV13855
+	//PD Sensor Mode (0: Sony IMX258, 1:OV13855)
 	cmr_s32 dSensorMode;
+	//0:No need calibration data, 1:Calibrated by module house (OTP), 2: Calibrated by SPRD
+	cmr_s32 dCalibration;
+	//Only dCalibration = 1 to be effective
+	void *OTPBuffer;
 } PD_GlobalSetting;
 
-typedef void (*PDCALLBACK) (cmr_u8 *);
+typedef void (*PDCALLBACK) (unsigned char *);
 
 cmr_s32 PD_Init(PD_GlobalSetting * a_pdGSetting);
 cmr_s32 PD_Do(cmr_u8 * raw, cmr_u8 * y, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
@@ -60,5 +62,5 @@ void FreeBuffer(cmr_u8 * raw);
 
 #ifdef __cplusplus
 }
-#endif				//__cplusplus
-#endif				/* _PD_ALGO_ */
+#endif //__cplusplus
+#endif /* _PD_ALGO_ */
