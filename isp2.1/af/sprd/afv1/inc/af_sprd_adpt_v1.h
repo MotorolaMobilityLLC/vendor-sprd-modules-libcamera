@@ -346,7 +346,7 @@ typedef struct _af_ctrl {
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
 	pthread_mutex_t status_lock;
-	void *caller;
+	cmr_handle caller;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
@@ -357,6 +357,7 @@ typedef struct _af_ctrl {
 	struct aft_proc_calc_param prm_sensor;
 	isp_awb_statistic_hist_info_t rgb_stat;
 	cmr_u32 trigger_source_type;
+	struct af_ctrl_otp_info otp_info;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);

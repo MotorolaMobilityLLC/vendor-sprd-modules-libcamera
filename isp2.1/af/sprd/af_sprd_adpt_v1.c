@@ -17,12 +17,12 @@
 
 #include <assert.h>
 #include <cutils/properties.h>
+#include <dlfcn.h>
 #include <inttypes.h>
 
 #include "af_ctrl.h"
 #include "af_sprd_adpt_v1.h"
 #include "isp_adpt.h"
-#include "dlfcn.h"
 
 #ifndef UNUSED
 #define     UNUSED(param)  (void)(param)
@@ -832,7 +832,6 @@ static ERRCODE if_get_ae_report(AE_Report * rpt, void *cookie)
 
 static ERRCODE if_set_af_exif(const void *data, void *cookie)
 {
-	// TODO
 	UNUSED(data);
 	UNUSED(cookie);
 	return 0;
@@ -840,7 +839,6 @@ static ERRCODE if_set_af_exif(const void *data, void *cookie)
 
 static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 {
-	// TODO
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
@@ -853,15 +851,13 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 		ISP_LOGV("otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
 	}
 
-	if (isp_ctx->otp_data) {
-		if (isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali) {
-			pAF_OTP->bIsExist = (T_LENS_BY_OTP);
-			pAF_OTP->INF = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
-			pAF_OTP->MACRO = isp_ctx->otp_data->single_otp.af_info.macro_cali;
-			ISP_LOGV("get otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
-		} else {
-			ISP_LOGV("skip invalid otp (infi,macro) = (%d,%d)", isp_ctx->otp_data->single_otp.af_info.infinite_cali, isp_ctx->otp_data->single_otp.af_info.macro_cali);
-		}
+	if (af->otp_info.rdm_data.macro_cali > af->otp_info.rdm_data.infinite_cali) {
+		pAF_OTP->bIsExist = (T_LENS_BY_OTP);
+		pAF_OTP->INF = af->otp_info.rdm_data.infinite_cali;
+		pAF_OTP->MACRO = af->otp_info.rdm_data.macro_cali;
+		ISP_LOGI("get otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
+	} else {
+		ISP_LOGW("skip invalid otp (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali);
 	}
 
 	return 0;
@@ -869,7 +865,6 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 
 static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
-	// TODO
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
@@ -887,7 +882,6 @@ static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 
 static ERRCODE if_set_motor_sacmode(void *cookie)
 {
-	// TODO
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
@@ -901,7 +895,6 @@ static ERRCODE if_set_motor_sacmode(void *cookie)
 
 static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 {
-	// TODO
 	af_ctrl_t *af = cookie;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
@@ -977,7 +970,6 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 	{			// for Bokeh
 		char *bokeh_tuning_path = "/data/misc/cameraserver/bokeh_tuning.bin";
 		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		if (0 == access(bokeh_tuning_path, R_OK)) {	//read request successs
 			cmr_u32 len = 0;
 			fp = NULL;
@@ -1004,9 +996,9 @@ static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
 			fclose(fp);
 		} else {
 BOKEH_DEFAULT:
-			if (NULL != isp_ctx->otp_data && isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali) {
-				af->bokeh_param.vcm_dac_low_bound = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
-				af->bokeh_param.vcm_dac_up_bound = isp_ctx->otp_data->single_otp.af_info.macro_cali;
+			if (af->otp_info.rdm_data.macro_cali > af->otp_info.rdm_data.infinite_cali) {
+				af->bokeh_param.vcm_dac_low_bound = af->otp_info.rdm_data.infinite_cali;
+				af->bokeh_param.vcm_dac_up_bound = af->otp_info.rdm_data.macro_cali;
 			} else {
 				af->bokeh_param.vcm_dac_low_bound = af->fv.AF_OTP.INF;
 				af->bokeh_param.vcm_dac_up_bound = af->fv.AF_OTP.MACRO;
@@ -1075,7 +1067,6 @@ static ERRCODE if_motion_sensor_get_data(motion_sensor_result_t * ms_result, voi
 
 static ERRCODE if_get_vcm_param(cmr_u32 * param, void *cookie)
 {
-	// TODO
 	af_ctrl_t *af = cookie;
 
 	// get otp
@@ -2674,6 +2665,10 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->isp_info.height = init_param->src.h;
 	af->isp_info.win_num = afm_get_win_num(init_param);
 	af->caller = init_param->caller;
+	af->otp_info.gldn_data.infinite_cali = init_param->otp_info.gldn_data.infinite_cali;
+	af->otp_info.gldn_data.macro_cali = init_param->otp_info.gldn_data.macro_cali;
+	af->otp_info.rdm_data.infinite_cali = init_param->otp_info.rdm_data.infinite_cali;
+	af->otp_info.rdm_data.macro_cali = init_param->otp_info.rdm_data.macro_cali;
 	af->end_notice = init_param->end_notice;
 	af->start_notice = init_param->start_notice;
 	af->set_monitor = init_param->set_monitor;
@@ -2729,7 +2724,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	}
 	af->trigger_source_type = 0;
 
-	ISP_LOGV("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
+	ISP_LOGI("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
+	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,
+		 af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
 
 	isp_ctx->af_cxt.log_af = (cmr_u8 *) af;
 	isp_ctx->af_cxt.log_af_size = sizeof(*af);

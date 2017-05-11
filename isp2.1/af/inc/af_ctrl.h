@@ -38,8 +38,8 @@ enum af_err_type {
 
 enum scene {
 	OUT_SCENE = 0,
-	INDOOR_SCENE,	//INDOOR_SCENE,
-	DARK_SCENE,	//DARK_SCENE,
+	INDOOR_SCENE,		//INDOOR_SCENE,
+	DARK_SCENE,		//DARK_SCENE,
 	SCENE_NUM,
 };
 
@@ -91,12 +91,12 @@ enum af_cmd {
 
 enum af_calc_data_type {
 	AF_DATA_AFM_STAT = 0,
-	AF_DATA_AF = (1 << 0),		//0x1
+	AF_DATA_AF = (1 << 0),	//0x1
 	AF_DATA_IMG_BLK = (1 << 1),	//0x2
-	AF_DATA_AE = (1 << 2),		//0x4
-	AF_DATA_FD = (1 << 3),		//0x8
-	AF_DATA_PD = (1 << 4),		//0x10
-	AF_DATA_G = (1 << 5),		//0x20
+	AF_DATA_AE = (1 << 2),	//0x4
+	AF_DATA_FD = (1 << 3),	//0x8
+	AF_DATA_PD = (1 << 4),	//0x10
+	AF_DATA_G = (1 << 5),	//0x20
 	AF_DATA_MAX
 };
 
@@ -107,31 +107,7 @@ enum af_locker_type {
 	AF_LOCKER_NLM,
 	AF_LOCKER_MAX
 };
-/* used for af1.0 */
-/*
-struct af_plat_info {
-	cmr_u32 afm_filter_type_cnt;
-	cmr_u32 afm_win_max_cnt;
-	cmr_u32 isp_w;
-	cmr_u32 isp_h;
-};
 
-struct af_tuning_param {
-	cmr_u8 *data;
-	cmr_u32 data_len;
-	cmr_u32 cfg_mode;
-};
-
-struct af_filter_data {
-	cmr_u32 type;
-	cmr_u64 *data;
-};
-
-struct af_filter_info {
-	cmr_u32 filter_num;
-	struct af_filter_data *filter_data;
-};
-*/
 struct ae_out_bv {
 	struct ae_calc_out *ae_result;
 	cmr_s32 bv;
@@ -174,19 +150,24 @@ struct af_trig_info {
 	struct af_win_rect win_pos[MAX_AF_WINS];
 };
 
+struct af_otp_data {
+	cmr_u16 infinite_cali;
+	cmr_u16 macro_cali;
+};
+
+struct af_ctrl_otp_info {
+	struct af_otp_data gldn_data;
+	struct af_otp_data rdm_data;
+};
+
 struct afctrl_init_in {
-//      cmr_u32 af_bypass;
-	void *caller;
-//      cmr_u32 af_mode;
-//      cmr_u32 tuning_param_cnt;
-//      cmr_u32 cur_tuning_mode;
-	cmr_u32 camera_id;
+	cmr_handle caller_handle;	//struct isp_alg_fw_context *cxt
 	isp_af_cb af_set_cb;
-	cmr_handle caller_handle;
+	cmr_u32 camera_id;
 	struct third_lib_info lib_param;
-//      struct af_plat_info plat_info;
-//      struct af_tuning_param *tuning_param;
 	struct isp_size src;
+	cmr_handle caller;	//struct afctrl_cxt *cxt_ptr
+	struct af_ctrl_otp_info otp_info;
 	 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*start_notice) (void *handle);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
@@ -211,7 +192,7 @@ struct af_img_blk_info {
 
 struct af_ae_info {
 	cmr_u32 exp_time;	//us
-	cmr_u32 gain;	//256 --> 1X
+	cmr_u32 gain;		//256 --> 1X
 	cmr_u32 cur_fps;
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
@@ -259,5 +240,4 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 #ifdef	 __cplusplus
 }
 #endif
-
 #endif
