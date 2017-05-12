@@ -1169,6 +1169,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_u32 u_addr = 0;
 	cmr_s32 i = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
+	struct pdaf_ctrl_param_out pdaf_param_out;
 	struct isp_statis_buf_input statis_buf;
 	UNUSED(data_type);
 
@@ -1179,16 +1180,14 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 
-	cmr_u32 pdaf_temp[30];
-	for (i = 0; i < 30; i++) {
-		pdaf_temp[i] = *((cmr_u32 *) u_addr + i);
-	}
-
-	pdaf_param_in.dBv = pdaf_temp[0];
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 
 	pdaf_param_in.u_addr = u_addr;
-	rtn = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+
+	pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
+	ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
+	if (!pdaf_param_out.is_busy)
+		rtn = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
