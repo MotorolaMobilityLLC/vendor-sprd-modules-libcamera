@@ -45,16 +45,22 @@
 #ifndef __AFV1_INTERFACE_H__
 #define  __AFV1_INTERFACE_H__
 
-ERRCODE AF_Trigger(AF_Data * pAF_Data, AF_Trigger_Data *aft_in);
-ERRCODE AF_STOP(AF_Data * pAF_Data, eAF_MODE AF_mode);
+ERRCODE AF_Trigger(void *handle, AF_Trigger_Data * aft_in);
+ERRCODE AF_STOP(void *handle, eAF_MODE AF_mode);
 
-ERRCODE AF_init(AF_Data * pAF_Data);
-ERRCODE AF_deinit(AF_Data * pAF_Data);
+void *AF_init(AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, cmr_u32 * dump_info_len, char *sys_version);
+ERRCODE AF_deinit(void *handle);
 
-ERRCODE AF_Process_Frame(AF_Data * pAF_Data);
+ERRCODE AF_Process_Frame(void *handle);
 ERRCODE AF_Get_Statistic(AF_Data * pAF_Data);
 ERRCODE AF_Get_StartPosStatistic(AF_Data * pAF_Data);
-ERRCODE AF_Get_Result(AF_Data * pAF_Data, cmr_u8 * AF_Result);
+ERRCODE AF_Get_Result(void *handle, cmr_u8 * AF_Result);
 ERRCODE AF_Search_LENS_MOVE(cmr_u8 * pLensMoveCnt, cmr_u8 * pMaxSearchTableNum, cmr_u16 pos, AF_Ctrl_Ops * pAF_Ops, cmr_u8 * pAF_Result);
+ERRCODE AF_record_vcm_pos(void *handle, cmr_u32 vcm_pos);
+ERRCODE AF_record_wins(void *handle, cmr_u8 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y);
+cmr_u32 AF_Get_alg_mode(void *handle);
+cmr_u8 AF_is_finished(void *handle);
+cmr_u32 AF_Get_peak_pos(void *handle, cmr_u32 win_index);
+cmr_u32 AF_Get_cur_scene(void *handle);
 
 #endif

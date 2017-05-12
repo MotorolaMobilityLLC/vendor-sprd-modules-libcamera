@@ -71,7 +71,7 @@ struct isp_alg_sw_init_in {
 	struct isp_size size;
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_pdaf_info *pdaf_info;
-	struct isp_size	sensor_max_size;
+	struct isp_size sensor_max_size;
 };
 
 typedef struct {
@@ -1020,7 +1020,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 
 	//exposure 1/33 s  -- 302921 (+/-10)
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, &ae_exp);
-	if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {//0.06
+	if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {	//0.06
 		ae_exp_flag = 1;
 	}
 	ISP_LOGV("ae_exp %f; ae_exp_flag %d", ae_exp, ae_exp_flag);
@@ -1118,7 +1118,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			img_blk_info.chn_num = 3;
 			img_blk_info.pix_per_blk = 1;
 			img_blk_info.data = (cmr_u32 *) in_ptr;
-			memcpy((void *)&img_blk_info,in_ptr,sizeof(struct af_img_blk_info));
+			memcpy((void *)&img_blk_info, in_ptr, sizeof(struct af_img_blk_info));
 			calc_param.data_type = AF_DATA_IMG_BLK;
 			calc_param.data = (void *)(&img_blk_info);
 			rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
@@ -1297,8 +1297,7 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 		return ISP_ERROR;
 	}
 
-	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d\n",
-		bayermode, src_w, src_h, binning_info->hx, binning_info->vx);
+	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d\n", bayermode, src_w, src_h, binning_info->hx, binning_info->vx);
 
 	binnng_w = (src_w >> binning_info->hx) & ~0x1;
 	binnng_h = (src_h >> binning_info->vx) & ~0x1;
@@ -1582,9 +1581,9 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	ae_input.lib_param = cxt->lib_use_info->ae_lib_info;
 	ae_input.caller_handle = (cmr_handle) cxt;
 	ae_input.ae_set_cb = isp_ae_set_cb;
-	cxt->ae_cxt.win_num.w =32;
+	cxt->ae_cxt.win_num.w = 32;
 	cxt->ae_cxt.win_num.h = 32;
-	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w ;
+	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
@@ -1607,13 +1606,13 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
-	for(i=0 ; i< 20; i++){
+	for (i = 0; i < 20; i++) {
 		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
 		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
 	}
 
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
-	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle)&result);
+	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle) & result);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
 	cxt->ae_cxt.flash_version = result.flash_ver;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL);
@@ -1764,6 +1763,9 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
+
+	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
+		return rtn;
 
 	memset((void *)&af_input, 0, sizeof(af_input));
 	memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
@@ -1939,7 +1941,6 @@ static uint16_t *lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_w
 error_dlsym:
 	dlclose(lsc_handle);
 	lsc_handle = NULL;
-
 
 	return lsc_table;
 }
@@ -2494,7 +2495,6 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}
-
 #if 0
 //#ifdef LSC_ADV_ENABLE
 	cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
@@ -2571,83 +2571,83 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 
 static cmr_int isp_update_alsc_param(cmr_handle isp_alg_handle)
 {
-    cmr_int rtn = ISP_SUCCESS;
-	
+	cmr_int rtn = ISP_SUCCESS;
+
 #ifdef LSC_ADV_ENABLE
-    struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-    cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
-    struct alsc_ver_info lsc_ver = { 0 };
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
+	struct alsc_ver_info lsc_ver = { 0 };
 	rtn = lsc_ctrl_ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("isp_update_alsc_param fail to Get ALSC ver info!");
 	}
 
-if (lsc_ver.LSC_SPD_VERSION >= 2) {	
-	struct isp_pm_ioctl_input input = { PNULL, 0 };
-	struct isp_pm_ioctl_output output = { PNULL, 0 };
-	struct isp_pm_param_data param_data;
-	struct lsc_adv_calc_param calc_param;
-	struct lsc_adv_calc_result calc_result = { 0 };
-	cmr_u32 i = 0;
-	memset(&param_data, 0, sizeof(param_data));
-	memset(&calc_param, 0, sizeof(calc_param));
+	if (lsc_ver.LSC_SPD_VERSION >= 2) {
+		struct isp_pm_ioctl_input input = { PNULL, 0 };
+		struct isp_pm_ioctl_output output = { PNULL, 0 };
+		struct isp_pm_param_data param_data;
+		struct lsc_adv_calc_param calc_param;
+		struct lsc_adv_calc_result calc_result = { 0 };
+		cmr_u32 i = 0;
+		memset(&param_data, 0, sizeof(param_data));
+		memset(&calc_param, 0, sizeof(calc_param));
 
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
 
-	struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+		struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 
-	calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
-	struct awb_size stat_img_size;
-	struct awb_size win_size;
-	struct isp_ae_grgb_statistic_info *stat_info;
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	stat_info = output.param_data->data_ptr;
+		calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
+		struct awb_size stat_img_size;
+		struct awb_size win_size;
+		struct isp_ae_grgb_statistic_info *stat_info;
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+		stat_info = output.param_data->data_ptr;
 
-	awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
-	awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
+		awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
+		awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
 
-	//ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
+		//ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
 
-	calc_param.stat_img.r = cxt->aem_stats.r_info;
-	calc_param.stat_img.gr = cxt->aem_stats.g_info;
-	calc_param.stat_img.gb = cxt->aem_stats.g_info;
-	calc_param.stat_img.b = cxt->aem_stats.b_info;
-	calc_param.stat_size.w = stat_img_size.w;
-	calc_param.stat_size.h = stat_img_size.h;
-	calc_param.gain_width = lsc_info->gain_w;
-	calc_param.gain_height = lsc_info->gain_h;
-        calc_param.grid = lsc_info->grid;
-	calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
-	calc_param.block_size.w = win_size.w;
-	calc_param.block_size.h = win_size.h;
-	//calc_param.ct = ct;
-	calc_param.bv = isp_cur_bv;
-	calc_param.isp_id = ISP_2_0;
+		calc_param.stat_img.r = cxt->aem_stats.r_info;
+		calc_param.stat_img.gr = cxt->aem_stats.g_info;
+		calc_param.stat_img.gb = cxt->aem_stats.g_info;
+		calc_param.stat_img.b = cxt->aem_stats.b_info;
+		calc_param.stat_size.w = stat_img_size.w;
+		calc_param.stat_size.h = stat_img_size.h;
+		calc_param.gain_width = lsc_info->gain_w;
+		calc_param.gain_height = lsc_info->gain_h;
+		calc_param.grid = lsc_info->grid;
+		calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
+		calc_param.block_size.w = win_size.w;
+		calc_param.block_size.h = win_size.h;
+		//calc_param.ct = ct;
+		calc_param.bv = isp_cur_bv;
+		calc_param.isp_id = ISP_2_0;
 
-	calc_param.r_gain = gAWBGainR;
-	calc_param.b_gain = gAWBGainB;
-	calc_param.img_size.w = cxt->commn_cxt.src.w;
-	calc_param.img_size.h = cxt->commn_cxt.src.h;
+		calc_param.r_gain = gAWBGainR;
+		calc_param.b_gain = gAWBGainB;
+		calc_param.img_size.w = cxt->commn_cxt.src.w;
+		calc_param.img_size.h = cxt->commn_cxt.src.h;
 
-	if (lsc_tab_pram_ptr == 0)
-		return 0;
-	else {
-		for (i = 0; i < 9; i++) {
-			calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+		if (lsc_tab_pram_ptr == 0)
+			return 0;
+		else {
+			for (i = 0; i < 9; i++) {
+				calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+			}
 		}
+
+		lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
+
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+		input.param_data_ptr = &param_data;
+
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+
 	}
-
-	lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
-
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-	input.param_data_ptr = &param_data;
-
-	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
-	
-}
 #endif
 
 	return rtn;
@@ -2740,9 +2740,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	rtn = isp_update_alg_param(cxt);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to isp smart param calc"));
 
-	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
-	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d",
-		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
+	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem */
+	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d", cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
 	if (cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
 		rtn = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
 		ISP_RETURN_IF_FAIL(rtn, ("fail to cfg pdaf"));

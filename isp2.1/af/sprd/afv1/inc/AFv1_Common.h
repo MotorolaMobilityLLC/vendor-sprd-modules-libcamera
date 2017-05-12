@@ -59,7 +59,7 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.110"
+#define VERSION             "2.111"
 #define SUB_VERSION             "-formal"
 #define STRING(s) #s
 
@@ -79,6 +79,33 @@
 #define MAX_TIME_SAMPLE_NUM	100
 #define G_SENSOR_Q_TOTAL (3)
 
+#define AFAUTO_SCAN_STOP_NMAX (256)
+#define FOCUS_STAT_WIN_TOTAL	(10)
+#define MULTI_STATIC_TOTAL (9)
+#define AF_RESULT_DATA_SIZE	(32)
+#define AF_CHECK_SCENE_HISTORY	(15)
+#define AF_SCENE_CAL_STDEV_TOTAL	(32)
+
+#define ALG_OUT_SCENE 0
+#define ALG_INDOOR_SCENE 1
+#define ALG_DARK_SCENE 2
+#define ALG_SCENE_NUM 3
+
+#define AF_NOT_FINISHED 0
+#define AF_FINISHED 1
+
+#define AE_GAIN_1x 0
+#define AE_GAIN_2x 1
+#define AE_GAIN_4x 2
+#define AE_GAIN_8x 3
+#define AE_GAIN_16x 4
+#define AE_GAIN_32x 5
+#define AE_GAIN_TOTAL 6
+
+typedef struct _af_tuning_block_param {
+	cmr_u8 *data;
+	cmr_u32 data_len;
+} af_tuning_block_param;
 typedef enum _eAF_FILTER_TYPE {
 	T_SOBEL9 = 0,
 	T_SOBEL5,
@@ -241,19 +268,19 @@ enum {
 enum {
 	SENSOR_X_AXIS,
 	SENSOR_Y_AXIS,
-	SENSOR_Z_AXIS,	
-	SENSOR_AXIS_TOTAL,	
+	SENSOR_Z_AXIS,
+	SENSOR_AXIS_TOTAL,
 };
 //=========================================================================================//
 // Public Structure Instance
 //=========================================================================================//
 //#pragma pack(push, 1)
-
+#pragma pack(push,4)
 typedef struct _AE_Report {
 	cmr_u8 bAEisConverge;	//flag: check AE is converged or not
 	cmr_s16 AE_BV;		//brightness value
 	cmr_u16 AE_EXP;		//exposure time (ms)
-	cmr_u16 AE_Gain;		//X128: gain1x = 128
+	cmr_u16 AE_Gain;	//X128: gain1x = 128
 	cmr_u32 AE_Pixel_Sum;	//AE pixel sum which needs to match AF blcok
 	cmr_u16 AE_Idx;		//AE exposure level
 } AE_Report;
@@ -291,6 +318,8 @@ typedef struct _AF_FV {
 	AE_Report AE_Rpt[MAX_SAMPLE_NUM];
 
 } AF_FV;
+#pragma pack(pop)
+
 #pragma pack(push,1)
 typedef struct _AF_FILTER_TH {
 	cmr_u16 UB_Ratio_TH[T_R_SAMPLE_NUM];	//The Up bound threshold of FV ratio, [0]:total, [1]:3 sample, [2]:5 sample, [3]:7 sample
@@ -304,6 +333,7 @@ typedef struct _AF_TH {
 } AF_TH;
 #pragma pack(pop)
 
+#pragma pack(push,4)
 typedef struct _SAF_SearchData {
 	cmr_u8 SAF_RS_TotalFrame;	//total work frames during rough search
 	cmr_u8 SAF_FS_TotalFrame;	//total work frames during fine search
@@ -351,6 +381,7 @@ typedef struct _CAF_SearchData {
 	AF_FV CAF_Pre_FFV;
 
 } CAF_SearchData;
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _AF_Scan_Table {
@@ -401,8 +432,8 @@ typedef struct aftuning_param_s {
 	cmr_u32 _temporal_flat_slop;
 	cmr_u32 _limit_search_interval;
 	cmr_u32 _sky_scene_thr;
-	cmr_u8 	reserve[128-1];
-	cmr_u8	_min_fine_idx;
+	cmr_u8 reserve[128 - 1];
+	cmr_u8 _min_fine_idx;
 } aftuning_param_t;
 
 typedef struct _AF_Tuning_Para {
@@ -439,13 +470,6 @@ typedef struct _AF_Tuning {
 	aftuning_param_t adapt_af_param;	//adapt AF parameter
 	cmr_u8 dummy[400];
 } AF_Tuning;
-
-#define AFAUTO_SCAN_STOP_NMAX (256)
-#define FOCUS_STAT_WIN_TOTAL	(10)
-#define MULTI_STATIC_TOTAL (9)
-#define AF_RESULT_DATA_SIZE	(32)
-#define AF_CHECK_SCENE_HISTORY	(15)
-#define AF_SCENE_CAL_STDEV_TOTAL	(32)
 
 typedef struct _afscan_status_s {
 	cmr_u32 n_stops;
@@ -528,6 +552,12 @@ typedef struct _afscan_status_s {
 	//multi AF
 	cmr_u32 multi_pkstat[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];
+	cmr_u32 multi_pkidx[MULTI_STATIC_TOTAL];
+	cmr_u32 multi_pkfrm[MULTI_STATIC_TOTAL];
+	cmr_u32 multi_pkscr[MULTI_STATIC_TOTAL];
+	cmr_u32 multi_pk_far;
+	cmr_u32 multi_pk_near;
+	cmr_u32 multi_same_focal;
 
 	cmr_u32 min_stat_diff;
 	cmr_u32 min_stat_val;
@@ -656,7 +686,7 @@ typedef struct _af_process_s {
 	afstat_frmbuf_t stat_data;
 	afdbg_ctrl_t dbg_ctrl;
 	aftuning_param_t adapt_af_param;	//adapt AF parameter
-	cmr_u8 	reserve[128*4];	//for temp debug
+	cmr_u8 reserve[128 * 4];	//for temp debug
 } _af_process_t;
 
 typedef struct motion_sensor_result_s {
@@ -665,7 +695,7 @@ typedef struct motion_sensor_result_s {
 	uint32_t sensor_g_queue_cnt;
 	float g_sensor_queue[SENSOR_AXIS_TOTAL][G_SENSOR_Q_TOTAL];
 	cmr_u32 reserved[12];
-} motion_sensor_result_t;	
+} motion_sensor_result_t;
 
 typedef struct pd_algo_result_s {
 	cmr_u32 pd_enable;
@@ -682,17 +712,66 @@ typedef struct motion_sensor_data_s {
 	float x;
 	float y;
 	float z;
-	cmr_u32 reserved[12];	
+	cmr_u32 reserved[12];
 } motion_sensor_data_t;
 
+typedef struct lens_distance_map_s {
+	cmr_u32 valid_code;
+	cmr_u32 steps_table[12];	//vcm step
+	cmr_u32 distance_table[12];	//distance by mm, 100/200/300/500/700/1000/1500/Inf
+	cmr_u32 reserved[12];
+} lens_distance_map_t;
+
+typedef struct _filter_clip {
+	cmr_u32 spsmd_max;
+	cmr_u32 spsmd_min;
+	cmr_u32 sobel_max;
+	cmr_u32 sobel_min;
+} filter_clip_t;
+
+typedef struct _win_coord_alg {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+} win_coord;
+
+typedef struct _AF_Window_Config {
+	cmr_u8 valid_win_num;
+	cmr_u8 win_strategic;
+	win_coord win_pos[25];
+	cmr_u32 win_weight[25];
+} AF_Window_Config;
+
+typedef struct _af_tuning_param {
+	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
+	filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];	// AF filter threshold
+	cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];	//BV threshold
+	AF_Window_Config SAF_win;	// SAF window config
+	AF_Window_Config CAF_win;	// CAF window config
+	AF_Window_Config VAF_win;	// VAF window config
+	// default param for indoor/outdoor/dark
+	AF_Tuning AF_Tuning_Data[ALG_SCENE_NUM];	// Algorithm related parameter
+	cmr_u8 soft_landing_dly;
+	cmr_u8 soft_landing_step;
+	cmr_u8 vcm_hysteresis;
+	cmr_u32 area_thr;
+	cmr_u32 diff_area_thr;
+	cmr_u32 diff_cx_thr;
+	cmr_u32 diff_cy_thr;
+	cmr_u16 converge_cnt_thr;
+	cmr_u8 face_is_enable;
+	cmr_u8 dummy[79];	// for 4-bytes alignment issue,101-22
+} af_tuning_param_t;
 #pragma pack(pop)
 
+#pragma pack(push,4)
 typedef struct _CAF_Tuning_Para {
 	cmr_s32 dummy;
 } CAF_Tuning_Para;
 
 typedef struct _SAF_INFO {
-	eAF_Triger_Type Cur_AFT_Type;	//the search method
+	cmr_u32 Cur_AFT_Type;	//the search method
 	cmr_u8 SAF_Main_Process;	//the process state of SAF main
 	cmr_u8 SAF_Search_Process;	//the process state of SAF search
 	cmr_u8 SAF_Status;
@@ -708,6 +787,7 @@ typedef struct _SAF_INFO {
 	cmr_u16 SAF_FPeak_POS;	//Peak positon of fine search
 	cmr_u64 SAF_SYS_TIME_ENTER[MAX_TIME_SAMPLE_NUM];	//save each time while entering SAF search
 	cmr_u64 SAF_SYS_TIME_EXIT[MAX_TIME_SAMPLE_NUM];	//save each time while entering SAF search
+	cmr_u32 env_converge_frm;
 	Lens_Info Lens_Para;	//current lens parameters
 	AF_Scan_Table SAF_Scan_Table_Para;	//current scan table parameters
 } SAF_INFO;
@@ -748,7 +828,7 @@ typedef struct _AF_Ctrl_Ops {
 	ERRCODE(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
 	ERRCODE(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
 	ERRCODE(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
-	ERRCODE(*motion_sensor_get_data)(motion_sensor_result_t * ms_result, void *cookie);
+	ERRCODE(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
 	ERRCODE(*lens_get_pos) (cmr_u16 * pos, void *cookie);
 	ERRCODE(*lens_move_to) (cmr_u16 pos, void *cookie);
 	ERRCODE(*lens_wait_stop) (void *cookie);
@@ -763,7 +843,7 @@ typedef struct _AF_Ctrl_Ops {
 	ERRCODE(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
 	ERRCODE(*set_motor_sacmode) (void *cookie);
 	ERRCODE(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
-	ERRCODE(*get_vcm_param) (cmr_u32 *param, void *cookie);	
+	ERRCODE(*get_vcm_param) (cmr_u32 * param, void *cookie);
 	ERRCODE(*af_log) (const char *format, ...);
 	 ERRCODE(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
 	 ERRCODE(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
@@ -772,8 +852,8 @@ typedef struct _AF_Ctrl_Ops {
 
 typedef struct _AF_Trigger_Data {
 	cmr_u8 bisTrigger;
-	eAF_Triger_Type AF_Trigger_Type;
-	eAF_MODE AFT_mode;
+	cmr_u32 AF_Trigger_Type;
+	cmr_u32 AFT_mode;
 	defocus_param_t defocus_param;
 	cmr_u32 reserved[8];
 } AF_Trigger_Data;
@@ -788,8 +868,9 @@ typedef struct _AF_Win {
 } AF_Win;
 
 typedef struct _AF_Data {
-	eAF_MODE AF_mode;
-	eAF_MODE Pre_AF_mode;
+	cmr_s8 AF_Version[40];
+	cmr_u32 AF_mode;
+	cmr_u32 Pre_AF_mode;
 	AF_Trigger_Data AFT_Data;
 	SAF_Data sAF_Data;
 	CAF_Data cAF_Data;
@@ -797,14 +878,18 @@ typedef struct _AF_Data {
 	AF_OTP_Data AF_OTP;
 	AF_Win AF_Win_Data;
 	cmr_u32 vcm_register;
-	cmr_s8 AF_Version[10];
 	AF_Tuning AF_Tuning_Data;
 	_af_process_t af_proc_data;
 	motion_sensor_result_t sensor_result;
+	lens_distance_map_t dis_map;
 	cmr_u32 dump_log;
+	cmr_u32 hysteresis_step;
+	cmr_u32 cur_scene;
+	cmr_u32 pre_scene;
+	cmr_u32 bv_threshold[ALG_INDOOR_SCENE][ALG_INDOOR_SCENE];
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 
-//#pragma pack(pop)
+#pragma pack(pop)
 
 #endif

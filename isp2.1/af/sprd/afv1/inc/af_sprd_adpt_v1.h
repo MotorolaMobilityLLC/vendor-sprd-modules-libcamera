@@ -26,7 +26,7 @@
 
 #include "aft_interface.h"
 
-#define AF_SYS_VERSION "-20170225-02"
+#define AF_SYS_VERSION "-20170511-01"
 #define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
 #define AF_WAIT_CAF_TIMEOUT 200000000;	//1s == (1000 * 1000 * 1000)ns
 
@@ -149,50 +149,12 @@ enum AF_AE_GAIN {
 	GAIN_TOTAL
 };
 
-#pragma pack(push,1)
-typedef struct _filter_clip {
-	cmr_u32 spsmd_max;
-	cmr_u32 spsmd_min;
-	cmr_u32 sobel_max;
-	cmr_u32 sobel_min;
-} filter_clip_t;
-
 typedef struct _win_coord {
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
 	cmr_u32 end_y;
 } win_coord_t;
-
-typedef struct _AF_Window_Config {
-	cmr_u8 valid_win_num;
-	cmr_u8 win_strategic;
-	win_coord_t win_pos[25];
-	cmr_u32 win_weight[25];
-} AF_Window_Config;
-
-typedef struct _af_tuning_param {
-	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
-	filter_clip_t filter_clip[SCENE_NUM][GAIN_TOTAL];	// AF filter threshold
-	cmr_s32 bv_threshold[SCENE_NUM][SCENE_NUM];	//BV threshold
-	AF_Window_Config SAF_win;	// SAF window config
-	AF_Window_Config CAF_win;	// CAF window config
-	AF_Window_Config VAF_win;	// VAF window config
-	// default param for indoor/outdoor/dark
-	AF_Tuning AF_Tuning_Data[SCENE_NUM];	// Algorithm related parameter
-	cmr_u8 soft_landing_dly;
-	cmr_u8 soft_landing_step;
-	cmr_u8 vcm_hysteresis;
-	cmr_u32 area_thr;
-	cmr_u32 diff_area_thr;
-	cmr_u32 diff_cx_thr;
-	cmr_u32 diff_cy_thr;
-	cmr_u16 converge_cnt_thr;
-	cmr_u8 face_is_enable;
-	cmr_u8 dummy[79];	// for 4-bytes alignment issue,101-22
-} af_tuning_param_t;
-
-#pragma pack(pop)
 
 typedef struct _roi_info {
 	cmr_u32 num;
@@ -287,35 +249,32 @@ typedef struct _afm_tuning_param_sharkl2 {
 } afm_tuning_sharkl2;
 
 typedef struct _af_ctrl {
-	char af_version[40];
-	enum af_state state;
-	enum af_state pre_state;
-	enum caf_state caf_state;
-	enum scene curr_scene;
-	eAF_MODE algo_mode;
+	void *af_alg_cxt;	//AF_Data fv;
+	cmr_u32 af_dump_info_len;
+	cmr_u32 state;		//enum af_state state;
+	cmr_u32 pre_state;	//enum af_state pre_state;
+	cmr_u32 caf_state;	//enum caf_state caf_state;
+	cmr_u32 algo_mode;	//eAF_MODE algo_mode;
 	cmr_u32 takePicture_timeout;
 	cmr_u32 request_mode;
 	cmr_u32 need_re_trigger;
 	cmr_u64 vcm_timestamp;
 	cmr_u64 dcam_timestamp;
 	cmr_u64 takepic_timestamp;
-	AF_Data fv;
-	af_fv af_fv_val;
-	struct af_iir_nr_info af_iir_nr;
-	struct af_enhanced_module_info af_enhanced_module;
-	struct afm_thrd_rgb thrd;
-	struct isp_face_area face_info;
 	cmr_u32 Y_sum_trigger;
 	cmr_u32 Y_sum_normalize;
 	uint64 fv_combine[T_TOTAL_FILTER_TYPE];
+	af_fv af_fv_val;
+	struct isp_face_area face_info;
+	struct af_iir_nr_info af_iir_nr;
+	struct af_enhanced_module_info af_enhanced_module;
+	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
 	prime_face_base_info_t face_base;
 	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
 	sem_t af_wait_caf;
-	af_tuning_param_t af_tuning_data;
-	AF_Window_Config *win_config;
 	isp_info_t isp_info;
 	lens_info_t lens;
 	cmr_s32 flash_on;
@@ -324,9 +283,6 @@ typedef struct _af_ctrl {
 	ae_info_t ae;
 	awb_info_t awb;
 	pd_algo_result_t pd;
-	filter_clip_t filter_clip[SCENE_NUM][GAIN_TOTAL];
-	cmr_s32 bv_threshold[SCENE_NUM][SCENE_NUM];
-	cmr_u8 pre_scene;
 	cmr_s32 ae_lock_num;
 	cmr_s32 awb_lock_num;
 	cmr_s32 lsc_lock_num;
@@ -339,8 +295,6 @@ typedef struct _af_ctrl {
 	focus_stat_reg_t stat_reg;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
-	cmr_u8 soft_landing_dly;
-	cmr_u8 soft_landing_step;
 	cmr_u32 inited_af_req;
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
