@@ -129,7 +129,7 @@ static const SENSOR_REG_T ov13855_init_setting[] = {
     {0x450a, 0x04}, {0x4809, 0x04}, {0x480c, 0x12}, {0x481f, 0x30},
     {0x4833, 0x10}, {0x4837, 0x0e}, {0x4902, 0x01}, {0x4d00, 0x03},
     {0x4d01, 0xc9}, {0x4d02, 0xbc}, {0x4d03, 0xd7}, {0x4d04, 0xf0},
-#ifndef CONFIG_CAMERA_PDAF
+#ifndef CONFIG_CAMERA_PDAF_TYPE
     {0x4d05, 0xa2}, {0x5000, 0xfd}, {0x5001, 0x05}, {0x5040, 0x39},
 #else
     {0x4d05, 0xa2}, {0x5000, 0xff}, {0x5001, 0x07}, {0x5040, 0x39},
@@ -302,7 +302,11 @@ static SENSOR_STATIC_INFO_T s_ov13855_static_info = {
                           // calculated from sensor mode fps
     .max_adgain = 15 * 2, // max_adgain,AD-gain
     .ois_supported = 0,   // ois_supported;
-    .pdaf_supported = 0,  // pdaf_supported;
+#ifdef CONFIG_CAMERA_PDAF_TYPE
+	.pdaf_supported = CONFIG_CAMERA_PDAF_TYPE, 				// pdaf_supported;
+#else
+		.pdaf_supported = 0,
+#endif
     .exp_valid_frame_num = 1,    // exp_valid_frame_num;N+2-1
     .clamp_level = 64,           // clamp_level,black level
     .adgain_valid_frame_num = 1, // adgain_valid_frame_num;N+1-1
