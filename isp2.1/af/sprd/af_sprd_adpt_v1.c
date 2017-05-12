@@ -2586,18 +2586,20 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 {
 	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_video_start *in_ptr = NULL;
-	AF_Trigger_Data aft_in;
-	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_int rtn = AFV1_SUCCESS;
+	struct isp_video_start *in_ptr = NULL;
+	struct afctrl_cxt *cxt_ptr = NULL;
+	struct isp_alg_fw_context *isp_ctx = NULL;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check cxt");
 		return AFV1_ERROR;
 	}
+	cxt_ptr = (struct afctrl_cxt *)af->caller;
+	isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+	AF_Trigger_Data aft_in;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 
 	pthread_mutex_lock(&af->status_lock);
 	ISP_LOGV("cmd is 0x%x", cmd);

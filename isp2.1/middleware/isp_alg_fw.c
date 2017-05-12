@@ -2178,6 +2178,8 @@ static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
+	pdaf_ctrl_deinit(&cxt->pdaf_cxt.handle);
+
 	af_ctrl_deinit(&cxt->af_cxt.handle);
 
 	lsc_ctrl_deinit(&cxt->lsc_cxt.handle);
@@ -2189,8 +2191,6 @@ static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 	ae_ctrl_deinit(&cxt->ae_cxt.handle);
 
 	afl_ctrl_deinit(&cxt->afl_cxt.handle);
-
-	pdaf_ctrl_deinit(&cxt->pdaf_cxt.handle);
 
 	ISP_LOGI("done");
 	return ISP_SUCCESS;
