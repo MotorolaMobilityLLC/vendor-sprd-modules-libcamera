@@ -18,7 +18,6 @@
 #include <math.h>
 #include "isp_alg_fw.h"
 #include "lib_ctrl.h"
-#include "isp_adpt.h"
 #include "cmr_msg.h"
 #include "ae_ctrl.h"
 #include "awb_ctrl.h"
@@ -884,11 +883,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 		smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
-		smart_proc_in.lock_precdn= cxt->smart_cxt.lock_precdn_en;
-		smart_proc_in.lock_cdn= cxt->smart_cxt.lock_cdn_en;
-		smart_proc_in.lock_postcdn= cxt->smart_cxt.lock_postcdn_en;
-		smart_proc_in.lock_ccnr= cxt->smart_cxt.lock_ccnr_en;
-		smart_proc_in.lock_ynr= cxt->smart_cxt.lock_ynr_en;
+		smart_proc_in.lock_precdn = cxt->smart_cxt.lock_precdn_en;
+		smart_proc_in.lock_cdn = cxt->smart_cxt.lock_cdn_en;
+		smart_proc_in.lock_postcdn = cxt->smart_cxt.lock_postcdn_en;
+		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
+		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
 		if (!cxt->ops.smart_ops.calc)
 			rtn = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 		ISP_TRACE_IF_FAIL(rtn, ("_smart_calc fail "));
@@ -1586,9 +1585,11 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output output;
 	struct isp_pm_param_data *param_data = NULL;
 	struct isp_flash_param *flash = NULL;
+	struct ae_init_out result;
 	cmr_u32 num = 0;
 	cmr_u32 i = 0;
 
+	memset((void *)&result, 0, sizeof(result));
 	memset(&output, 0, sizeof(output));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
@@ -1647,14 +1648,19 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
+	for(i=0 ; i< 20; i++){
+		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
+		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
+	}
+
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
 	if (!cxt->ops.ae_ops.init) {
-		rtn = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle)
+		rtn = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle,(cmr_handle)&result)
 		ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
 	}
+	cxt->ae_cxt.flash_version = result.flash_ver;
 	if (!cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL)
-
 	return rtn;
 }
 
@@ -1736,7 +1742,8 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 		if (!cxt->ops.awb_ops.init)
 			rtn = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
-
+		if (!cxt->ops.awb_ops.init)
+			rtn = cxt->ops.awb_ops.init(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&cxt->ct_table);
 	} else {
 		ISP_LOGE("fail to get awb init param!");
 	}
@@ -1808,8 +1815,6 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
-	//struct af_tuning_param *af_tuning = NULL;
-	cmr_u32 i;
 
 	memset((void *)&af_input, 0, sizeof(af_input));
 	memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
@@ -1822,42 +1827,24 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
 
-#if 0				//used for af1.0
-	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &af_pm_input, &af_pm_output);
-	if (ISP_SUCCESS == rtn) {
-		af_input.af_bypass = 0;
-		af_input.af_mode = 0;
-		af_input.tuning_param_cnt = af_pm_output.param_num;
-		af_input.cur_tuning_mode = 0;
-		af_tuning = (struct af_tuning_param *)malloc(sizeof(struct af_tuning_param) * af_pm_output.param_num);
-		if (NULL == af_tuning) {
-			ISP_LOGE("fail to malloc af_tuning buf!");
-			return ISP_ERROR;
-		}
-		for (i = 0; i < af_pm_output.param_num; i++) {
-			af_tuning[i].cfg_mode = (af_pm_output.param_data->id & 0xffff0000) >> 16;
-			af_tuning[i].data = af_pm_output.param_data->data_ptr;
-			af_tuning[i].data_len = af_pm_output.param_data->data_size;
-			af_pm_output.param_data++;
-		}
-
-		af_input.tuning_param = af_tuning;
-		af_input.plat_info.afm_filter_type_cnt = 1;
-		af_input.plat_info.afm_win_max_cnt = 9;
-		af_input.plat_info.isp_w = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].width;
-		af_input.plat_info.isp_h = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].height;
+	if (NULL != cxt->otp_data) {
+		af_input.otp_info.gldn_data.infinite_cali = 0;
+		af_input.otp_info.gldn_data.macro_cali = 0;
+		af_input.otp_info.rdm_data.infinite_cali = cxt->otp_data->single_otp.af_info.infinite_cali;
+		af_input.otp_info.rdm_data.macro_cali = cxt->otp_data->single_otp.af_info.macro_cali;
+		ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", af_input.otp_info.gldn_data.infinite_cali, af_input.otp_info.gldn_data.macro_cali,
+			 af_input.otp_info.rdm_data.infinite_cali, af_input.otp_info.rdm_data.macro_cali);
+	} else {
+		ISP_LOGV("af otp is not used");
+		af_input.otp_info.gldn_data.infinite_cali = 0;
+		af_input.otp_info.gldn_data.macro_cali = 0;
+		af_input.otp_info.rdm_data.infinite_cali = 0;
+		af_input.otp_info.rdm_data.macro_cali = 0;
 	}
-#endif
 	if(!cxt->ops.af_ops.init)
 		rtn = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
-#if 0
-exit:
-	if (af_tuning) {
-		free(af_tuning);
-		af_tuning = NULL;
-	}
-#endif
+
 	return rtn;
 }
 
@@ -2160,11 +2147,11 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	rtn = isp_afl_sw_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do anti_flicker param update"));
 
-	rtn = isp_ae_sw_init(cxt);
-	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
-
 	rtn = isp_awb_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
+
+	rtn = isp_ae_sw_init(cxt);
+	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
 
 	rtn = isp_smart_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do _smart_init"));
@@ -3076,8 +3063,11 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
 	if (!cxt->ops.awb_ops.ioctrl) {
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_VIDEO_STOP_NOTIFY, NULL, NULL);
-		ISP_RETURN_IF_FAIL(rtn, ("fail to do isp cfg"));
 	}
+	if(!cxt->ops.af_ops.ioctrl){
+		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
+	}
+	ISP_RETURN_IF_FAIL(rtn, ("fail to do isp cfg"));
 
 exit:
 	ISP_LOGV("done %ld", rtn);

@@ -19,6 +19,8 @@
 #include "cmr_type.h"
 #include "isp_pm.h"
 #include "sprd_isp_r6p10.h"
+#include "awb.h"
+
 
 struct commn_info {
 	cmr_s32 isp_mode;
@@ -56,6 +58,7 @@ struct ae_info {
 	void *buffer_client_data;
 	struct ae_size win_num;
 	cmr_u32 shift;
+	cmr_u32 flash_version;
 };
 
 struct awb_info {
@@ -209,6 +212,7 @@ struct isp_alg_fw_context {
 	cmr_u32 takepicture_mode;
 	cmr_handle ispalg_lib_handle;
 	struct ispalg_lib_ops ops;
+	struct awb_ct_table ct_table;
 };
 
 struct isp_alg_fw_init_in {
