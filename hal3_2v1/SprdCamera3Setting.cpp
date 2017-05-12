@@ -73,7 +73,7 @@ typedef struct {
     int64_t raw_min_duration[1];
     int32_t supported_preview_formats[4];
     int64_t processed_min_durations[1];
-    int32_t available_fps_ranges[14];
+    int32_t available_fps_ranges[16];
     camera_metadata_rational exposureCompensationStep;
     int32_t exposureCompensationRange[2];
     int32_t available_processed_sizes[16];
@@ -178,7 +178,7 @@ const int32_t ksupported_preview_formats[4] = {
 const int32_t kavailable_fps_ranges_back[] = {
     5,  15, 5,  20, 5,  24, 5, 30, 15,
     15, 24, 24, 25, 25, 30, 30}; //{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30,
-                                 //10,
+// 10,
 // 30};
 const int32_t kavailable_fps_ranges_front[] = {
     5,  15, 5,  30, 15, 15, 15,
@@ -1778,7 +1778,7 @@ int SprdCamera3Setting::initStaticMetadata(
                     ARRAY_SIZE(s_setting[cameraId].controlInfo.ae_available_fps_ranges)
        );*/
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.ae_available_fps_ranges, 2,
-                  14, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                  16, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &(s_setting[cameraId].controlInfo.ae_compensation_step),
                       1);
