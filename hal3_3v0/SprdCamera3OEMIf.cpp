@@ -5427,9 +5427,10 @@ int SprdCamera3OEMIf::openCamera() {
     int ret = NO_ERROR;
 
     GET_START_TIME;
-    mSetting->getLargestPictureSize(mCameraId, &mLargestSensorWidth, &mLargestSensorHeight);
-    mHalOem->ops->camera_pre_capture_set_buffer_size(mCameraId,
-                                                 mLargestSensorWidth, mLargestSensorHeight);
+    mSetting->getLargestPictureSize(mCameraId, &mLargestSensorWidth,
+                                    &mLargestSensorHeight);
+    mHalOem->ops->camera_pre_capture_set_buffer_size(
+        mCameraId, mLargestSensorWidth, mLargestSensorHeight);
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;
         HAL_LOGE("start failed");
@@ -7371,6 +7372,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
     } else if (CAMERA_PREVIEW_RESERVED == type ||
                CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
                CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
+               CAMERA_SENSOR_DATATYPE_MAP_RESERVED == type ||
                CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
                CAMERA_ISP_BINGING4AWB == type ||
                CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||
