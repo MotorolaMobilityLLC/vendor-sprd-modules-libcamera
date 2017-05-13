@@ -116,7 +116,7 @@ struct pdaf_ctrl_init_in {
 	struct isp_size sensor_max_size;
 	struct isp_lib_config pdaf_lib_info;
 	struct pdaf_ctrl_otp_info_t af_otp;
-	struct pdaf_ctrl_otp_info_t pdaf_otp;
+	struct sensor_otp_pdaf_info *pdaf_otp;
 	struct sensor_pdaf_info *pd_info;
 	struct pdaf_ctrl_cb_ops_type pdaf_ctrl_cb_ops;
 	isp_pdaf_cb pdaf_set_cb;
