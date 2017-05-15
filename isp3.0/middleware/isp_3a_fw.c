@@ -217,6 +217,7 @@ struct isp3a_fw_context {
 	struct sensor_single_otp_info *single_otp_data;
 	struct sensor_otp_iso_awb_info slave_iso_awb_info;
 	struct sensor_dual_otp_info *dual_otp;
+	struct isp_face_area prv_face_info;
 };
 /*************************************INTERNAK DECLARATION***************************************/
 static cmr_int isp3a_get_dev_time(cmr_handle handle, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -284,6 +285,7 @@ static cmr_int isp3a_set_awb_flash_gain(cmr_handle isp_3a_handle);
 static cmr_int isp3a_set_awb_flash_off_gain(cmr_handle isp_3a_handle);
 static cmr_int isp3a_set_awb_capture_gain(cmr_handle isp_3a_handle);
 static cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_update_face_area(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_face_area(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_start_3a(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_stop_3a(cmr_handle isp_3a_handle, void *param_ptr);
@@ -2437,12 +2439,50 @@ cmr_int isp3a_set_face_area(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
+	cxt->prv_face_info= *(struct isp_face_area *)param_ptr;
 	ae_in.face_area = *(struct isp_face_area *)param_ptr;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FD_PARAM, &ae_in, NULL);
 	awb_in.face_info = *(struct isp_face_area *)param_ptr;
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FACE_INFO, &awb_in, NULL);
 	af_in.face_info = *(struct isp_face_area *)param_ptr;
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_ROI, &af_in, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_update_face_area(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct isp_face_area update_face_info;
+	cmr_int i=0;
+	cmr_u32 sensor_width;
+	cmr_u32 sensor_height;
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	struct isp_video_start *input_ptr = (struct isp_video_start *)param_ptr;
+	sensor_width = input_ptr->resolution_info.crop.width;
+	sensor_height = input_ptr->resolution_info.crop.height;
+	if(cxt->prv_face_info.face_num !=0 && (cxt->prv_face_info.frame_width != sensor_width
+		|| cxt->prv_face_info.frame_height != sensor_height)) {
+		for(i=0; i< cxt->prv_face_info.face_num; i++) {
+			update_face_info.face_info[i].sx = 1.0 * cxt->prv_face_info.face_info[i].sx * (float)sensor_width /
+				(float)cxt->prv_face_info.frame_width;
+			update_face_info.face_info[i].sy = 1.0 * cxt->prv_face_info.face_info[i].sy * (float)sensor_height /
+				(float)cxt->prv_face_info.frame_height;
+			update_face_info.face_info[i].ex = 1.0 * cxt->prv_face_info.face_info[i].ex * (float)sensor_width /
+				(float)cxt->prv_face_info.frame_width;
+			update_face_info.face_info[i].ey = 1.0 * cxt->prv_face_info.face_info[i].ey * (float)sensor_height /
+				(float)cxt->prv_face_info.frame_height;
+		}
+		update_face_info.frame_width = sensor_width;
+		update_face_info.frame_height = sensor_height;
+		update_face_info.face_num = cxt->prv_face_info.face_num;
+		update_face_info.type = cxt->prv_face_info.type;
+		isp3a_set_face_area(cxt, &update_face_info);
+	}
 exit:
 	return ret;
 }
@@ -4165,6 +4205,8 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 
 	cxt->sof_idx = 0;
 	ISP_LOGI("idx =%d", input_ptr->tuning_mode);
+	isp3a_update_face_area(cxt, input_ptr);
+
 	if (cxt->is_refocus && cxt->is_master) {
 		cmr_handle isp_3a_handle_slv;
 		struct isp3a_fw_context *cxt_slv = NULL;
