@@ -85,7 +85,7 @@ camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
     .reserved = {0},
 };
 
-static camera3_device_t *g_cam_device[4] = {0, 0, 0, 0};
+static camera3_device_t *g_cam_device = NULL;
 
 // SprdCamera3Setting *SprdCamera3HWI::mSetting = NULL;
 
@@ -119,15 +119,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mCameraDevice.common.close = close_camera_device;
     mCameraDevice.ops = &mCameraOps;
     mCameraDevice.priv = this;
-    if (SENSOR_MAIN == cameraId) {
-        g_cam_device[0] = &mCameraDevice;
-    } else if (SENSOR_SUB == cameraId) {
-        g_cam_device[1] = &mCameraDevice;
-    } else if (SENSOR_DEVICE2 == cameraId) {
-        g_cam_device[2] = &mCameraDevice;
-    } else if (SENSOR_DEVICE3 == cameraId) {
-        g_cam_device[3] = &mCameraDevice;
-    }
+    g_cam_device = &mCameraDevice;
+
     mPendingRequest = 0;
     mCurrentRequestId = -1;
     mCurrentCapIntent = 0;
@@ -236,37 +229,34 @@ SprdCamera3PicChannel *SprdCamera3HWI::getPicChan() { return mPicChan; }
 SprdCamera3OEMIf *SprdCamera3HWI::getOEMif() { return mOEMIf; }
 
 static int ispVideoStartPreview(uint32_t param1, uint32_t param2) {
-    SprdCamera3HWI *dev =
-        reinterpret_cast<SprdCamera3HWI *>(g_cam_device[0]->priv);
-    SprdCamera3RegularChannel *regularChannel = dev->getRegularChan();
     int rtn = 0x00;
+    SprdCamera3HWI *dev =
+        reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
+    SprdCamera3RegularChannel *regularChannel = dev->getRegularChan();
 
     if (regularChannel != NULL) {
         regularChannel->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW);
         rtn = regularChannel->start(dev->mFrameNum);
     }
-
     return rtn;
 }
 
 static int ispVideoStopPreview(uint32_t param1, uint32_t param2) {
-
-    SprdCamera3HWI *dev =
-        reinterpret_cast<SprdCamera3HWI *>(g_cam_device[0]->priv);
-    SprdCamera3RegularChannel *regularChannel = dev->getRegularChan();
     int rtn = 0x00;
+    SprdCamera3HWI *dev =
+        reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
+    SprdCamera3RegularChannel *regularChannel = dev->getRegularChan();
 
     if (regularChannel != NULL) {
         rtn = regularChannel->stop(dev->mFrameNum);
     }
-
     return rtn;
 }
 
 static int ispVideoTakePicture(uint32_t param1, uint32_t param2) {
     int rtn = 0x00;
     SprdCamera3HWI *dev =
-        reinterpret_cast<SprdCamera3HWI *>(g_cam_device[0]->priv);
+        reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3PicChannel *picChannel = dev->getPicChan();
 
     if (NULL != picChannel) {
@@ -285,7 +275,7 @@ static int ispVideoTakePicture(uint32_t param1, uint32_t param2) {
 static int ispVideoSetParam(uint32_t width, uint32_t height) {
     int rtn = 0x00;
     SprdCamera3HWI *dev =
-        reinterpret_cast<SprdCamera3HWI *>(g_cam_device[0]->priv);
+        reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3PicChannel *picChannel = dev->getPicChan();
     SprdCamera3OEMIf *oemIf = dev->getOEMif();
     cam_dimension_t capture_size;
@@ -303,10 +293,9 @@ static int ispVideoSetParam(uint32_t width, uint32_t height) {
 
 static int ispCtrlFlash(uint32_t param, uint32_t status) {
     SprdCamera3HWI *dev =
-        reinterpret_cast<SprdCamera3HWI *>(g_cam_device[0]->priv);
+        reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3OEMIf *oemIf = dev->getOEMif();
     oemIf->setIspFlashMode(status);
-
     return 0;
 }
 
@@ -1810,15 +1799,7 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device) {
     hw = NULL;
     device = NULL;
 
-    if (id == SENSOR_MAIN) {
-        g_cam_device[0] = NULL;
-    } else if (id == SENSOR_SUB) {
-        g_cam_device[1] = NULL;
-    } else if (id == SENSOR_DEVICE2) {
-        g_cam_device[2] = NULL;
-    } else if (id == SENSOR_DEVICE3) {
-        g_cam_device[3] = NULL;
-    }
+    g_cam_device = NULL;
 
     if (mCameraSessionActive > 0)
         mCameraSessionActive--;
