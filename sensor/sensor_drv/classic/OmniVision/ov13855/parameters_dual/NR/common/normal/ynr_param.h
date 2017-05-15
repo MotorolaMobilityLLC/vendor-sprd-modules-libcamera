@@ -559,7 +559,7 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x02,
+			0x04,
 			/*eurodist*/
 			{
 				0x0F,0x08,0x04/*0-2*/
