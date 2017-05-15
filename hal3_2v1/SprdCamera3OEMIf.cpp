@@ -678,8 +678,6 @@ int SprdCamera3OEMIf::takePicture() {
     ATRACE_CALL();
 
     HAL_LOGI("E");
-    GET_START_TIME;
-    print_time();
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -821,8 +819,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
     HAL_LOGI("E");
-    GET_START_TIME;
-    print_time();
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -844,31 +840,26 @@ int SprdCamera3OEMIf::zslTakePicture() {
         mHalOem->ops->camera_start_preflash(mCameraHandle);
         mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId,
                                                     &mFlashCaptureFlag);
-        HAL_LOGD("mFlashCaptureFlag=%d", mFlashCaptureFlag);
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
+
     LENS_Tag lensInfo;
     mSetting->getLENSTag(&lensInfo);
     if (lensInfo.focal_length) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,
                  (int32_t)(lensInfo.focal_length * 1000));
-        HAL_LOGD("lensInfo.focal_length = %f", lensInfo.focal_length);
     }
 
     JPEG_Tag jpgInfo;
     struct img_size jpeg_thumb_size;
     mSetting->getJPEGTag(&jpgInfo);
-    HAL_LOGV("JPEG quality = %d", jpgInfo.quality);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
              jpgInfo.quality);
-    HAL_LOGV("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
              jpgInfo.thumbnail_quality);
     jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
     jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
-    HAL_LOGI("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0],
-             jpgInfo.thumbnail_size[1]);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
@@ -891,7 +882,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
-        HAL_LOGE("fail to camera_take_picture.");
+        HAL_LOGE("fail to camera_take_picture");
         goto exit;
     }
 
@@ -899,6 +890,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
         mFlagOffLineZslStart = 1;
     }
+
     if (mSprdZslEnabled == true) {
         CMR_MSG_INIT(message);
         mZslShotPushFlag = 1;
@@ -911,12 +903,16 @@ int SprdCamera3OEMIf::zslTakePicture() {
             HAL_LOGE("Fail to send one msg!");
             goto exit;
         }
-        HAL_LOGD("mZslShotPushFlag %d", mZslShotPushFlag);
     }
 
-    print_time();
-
 exit:
+    HAL_LOGD("mFlashCaptureFlag=%d, focal_length=%f, JPEG thumbnail "
+             "size=%dx%d, mZslShotPushFlag=%d",
+             mFlashCaptureFlag, lensInfo.focal_length,
+             jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1],
+             mZslShotPushFlag);
+    HAL_LOGV("jpgInfo.quality=%d, jpgInfo.thumbnail_quality=%d",
+             jpgInfo.quality, jpgInfo.thumbnail_quality);
     HAL_LOGI("X");
     return NO_ERROR;
 }
@@ -1868,7 +1864,7 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
 
 void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
     struct cmr_range_fps_param fps_param;
-    char   value[PROPERTY_VALUE_MAX];
+    char value[PROPERTY_VALUE_MAX];
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
 
@@ -1883,7 +1879,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 1;
 
-        //9850ka set fps range (16,25) for normal DV preview and recording.
+// 9850ka set fps range (16,25) for normal DV preview and recording.
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
         property_get("volte.incall.camera.enable", value, "false");
         if (!strcmp(value, "false")) {
@@ -4658,6 +4654,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                 memcpy(((char *)pic_addr_vir + encInfo->size),
                        (char *)ispInfoAddr, ispInfoSize);
             } else {
+                HAL_LOGW("jpeg size is not big enough for ispdebug info");
                 ispInfoSize = 0;
             }
         }
