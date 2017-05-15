@@ -1814,7 +1814,10 @@ static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
 	pdaf_input.pd_info = input_ptr->pdaf_info;
 	pdaf_input.sensor_max_size = input_ptr->sensor_max_size;
-	pdaf_input.pdaf_otp = &(input_ptr->otp_data->single_otp.pdaf_info);
+	if (1 == cxt->pdaf_cxt.pdaf_support) {
+		pdaf_input.pdaf_otp.otp_data= (void *)input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_addr;
+		pdaf_input.pdaf_otp.size= input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_size;
+	}
 
 	rtn = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
 
