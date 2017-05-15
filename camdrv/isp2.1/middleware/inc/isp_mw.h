@@ -18,7 +18,6 @@
 
 #ifndef WIN32
 #include <sys/types.h>
-#include "isp_exif.h"
 #endif
 
 #include "isp_type.h"

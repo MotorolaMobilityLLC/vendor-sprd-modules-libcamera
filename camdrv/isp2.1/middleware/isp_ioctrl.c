@@ -95,8 +95,8 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	cmr_u32 ae_effect = 0;
 
 	memset((void *)&flash_awb, 0, sizeof(struct awb_flash_info));
-
-	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
+	if (!cxt->ops.ae_ops.get_flash_param)
+		rtn = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to get flash cali parm ");
 		return rtn;
@@ -365,7 +365,8 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
-		rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash_cali);
+		if (!cxt->ops.ae_ops.get_flash_param)
+			rtn = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash_cali);
 		if (ISP_SUCCESS == rtn)
 			ratio = flash_cali->cur.lum_ratio;
 
@@ -654,8 +655,8 @@ static cmr_int _ispVideoModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 #ifdef SEPARATE_GAMMA_IN_VIDEO
 	if (*((cmr_u32 *) param_ptr) != 0) {
 		cmr_u32 idx = VIDEO_GAMMA_INDEX;
-
-		smart_ctl_block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		if (!cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, &idx, sizeof(idx));
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, (void *)&input, (void *)&output);
 #ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
@@ -663,7 +664,8 @@ static cmr_int _ispVideoModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, (void *)&input, (void *)&output);
 #endif
 	} else {
-		smart_ctl_block_enable_recover(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		if (!cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 	}
 #endif
 	return rtn;
@@ -1403,7 +1405,8 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 			}
 		}
 
-		rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash_param_ptr);
+		if (!cxt->ops.ae_ops.get_flash_param)
+			rtn = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash_param_ptr);
 		if (ISP_SUCCESS == rtn) {
 			if (!cxt->ops.ae_ops.ioctrl)
 				cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash_param_ptr->cur.auto_flash_thr, NULL);
@@ -1642,7 +1645,7 @@ static cmr_int _ispAfInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_POS, (void *)&af_ctrl_ptr->step, NULL);
 		}
 	} else if (ISP_CTRL_GET == af_ctrl_ptr->mode) {
-		cmr_u32 cur_pos;
+		cmr_u32 cur_pos = 0;
 		struct isp_af_statistic_info afm_stat;
 		cmr_u32 i;
 		memset((void *)&afm_stat, 0, sizeof(afm_stat));
@@ -1820,19 +1823,27 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	if (!cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_HDR_START, &ae_hdr, NULL);
 	if (ae_hdr.hdr_enable) {
-		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_LNC);
-		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_CMC);
-		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
-		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 1);
+		if (!cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->awb_cxt.handle, ISP_SMART_LNC);
+		if (!cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->awb_cxt.handle, ISP_SMART_CMC);
+		if (!cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+		if (!cxt->ops.smart_ops.NR_disable)
+			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 1);
 		if (!cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		if (!cxt->ops.lsc_ops.ioctrl)
 			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 	}else {
-		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_LNC);
-		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_CMC);
-		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
-		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 0);
+		if (!cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->awb_cxt.handle, ISP_SMART_LNC);
+		if (!cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->awb_cxt.handle, ISP_SMART_CMC);
+		if (!cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+		if (!cxt->ops.smart_ops.NR_disable)
+		cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 0);
 		if (!cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 		if (!cxt->ops.lsc_ops.ioctrl)
@@ -2206,7 +2217,8 @@ static cmr_int _ispToolSetSceneParam(cmr_handle isp_alg_handle, void *param_ptr,
 	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 	smart_proc_in.handle_pm = cxt->handle_pm;
 	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
-	rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
+	if (!cxt->ops.smart_ops.calc)
+		rtn = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to set smart gain");
 		return rtn;

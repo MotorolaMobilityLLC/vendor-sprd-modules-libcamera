@@ -1652,15 +1652,15 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
 		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
 	}
-
-	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
+	if(!cxt->ops.ae_ops.get_flash_param)
+		rtn = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash);
 	if (!cxt->ops.ae_ops.init) {
-		rtn = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle,(cmr_handle)&result)
+		rtn = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle,(cmr_handle)&result);
 		ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
 	}
 	cxt->ae_cxt.flash_version = result.flash_ver;
 	if (!cxt->ops.ae_ops.ioctrl)
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL);
 	return rtn;
 }
 
@@ -1742,8 +1742,8 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 		if (!cxt->ops.awb_ops.init)
 			rtn = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
-		if (!cxt->ops.awb_ops.init)
-			rtn = cxt->ops.awb_ops.init(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&cxt->ct_table);
+		if (!cxt->ops.awb_ops.ioctrl)
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&cxt->ct_table);
 	} else {
 		ISP_LOGE("fail to get awb init param!");
 	}
@@ -2330,6 +2330,11 @@ static cmr_int load_ispalg_library(cmr_handle adpt_handle)
 		ISP_LOGE("failed to dlsym ae_ops.ioctrl");
 		goto error_dlsym;
 	}
+	cxt->ops.ae_ops.get_flash_param= dlsym(cxt->ispalg_lib_handle, "_isp_get_flash_cali_param");
+	if (!cxt->ops.ae_ops.get_flash_param) {
+		ISP_LOGE("failed to dlsym ae_ops.get_flash_param");
+		goto error_dlsym;
+	}
 	/*init awb_ctrl_ops*/
 	cxt->ops.awb_ops.init = dlsym(cxt->ispalg_lib_handle, "awb_ctrl_init");
 	if (!cxt->ops.awb_ops.init) {
@@ -2390,7 +2395,22 @@ static cmr_int load_ispalg_library(cmr_handle adpt_handle)
 	}
 	cxt->ops.smart_ops.calc= dlsym(cxt->ispalg_lib_handle, "_smart_calc");
 	if (!cxt->ops.smart_ops.calc) {
-		ISP_LOGE("failed to dlsym smart_ops.ioctrl");
+		ISP_LOGE("failed to dlsym smart_ops.calc");
+		goto error_dlsym;
+	}
+	cxt->ops.smart_ops.block_disable= dlsym(cxt->ispalg_lib_handle, "smart_ctl_block_disable");
+	if (!cxt->ops.smart_ops.block_disable) {
+		ISP_LOGE("failed to dlsym smart_ops.block_disable");
+		goto error_dlsym;
+	}
+	cxt->ops.smart_ops.block_enable= dlsym(cxt->ispalg_lib_handle, "smart_ctl_block_enable_recover");
+	if (!cxt->ops.smart_ops.block_enable) {
+		ISP_LOGE("failed to dlsym smart_ops.block_enable");
+		goto error_dlsym;
+	}
+	cxt->ops.smart_ops.NR_disable= dlsym(cxt->ispalg_lib_handle, "smart_ctl_NR_block_disable");
+	if (!cxt->ops.smart_ops.NR_disable) {
+		ISP_LOGE("failed to dlsym smart_ops.NR_disable");
 		goto error_dlsym;
 	}
 	/*init lsc_ctrl_ops*/

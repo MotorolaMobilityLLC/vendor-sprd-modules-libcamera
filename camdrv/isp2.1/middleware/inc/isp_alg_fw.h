@@ -20,6 +20,18 @@
 #include "isp_pm.h"
 #include "sprd_isp_r6p10.h"
 #include "awb.h"
+#include "af_ctrl.h"
+#include "ae_ctrl.h"
+#include "afl_ctrl.h"
+#include "awb_ctrl.h"
+#include "smart_ctrl.h"
+#include "lsc_adv.h"
+#include "pdaf_ctrl.h"
+#include "pdaf_sprd_adpt.h"
+#include "pd_algo.h"
+#include "isp_awb_types.h"
+#include "ae_types.h"
+#include "ae_ctrl_types.h"
 
 
 struct commn_info {
@@ -127,8 +139,8 @@ struct ispalg_ae_ctrl_ops {
 	cmr_int (*deinit)(cmr_handle * isp_afl_handle);
 	cmr_int (*process)(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct ae_calc_out * result);
 	cmr_int (*ioctrl)(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);
+	cmr_s32 (*get_flash_param)(cmr_handle pm_handle,struct isp_flash_param **out_param_ptr);
 };
-
 
 struct ispalg_af_ctrl_ops {
 	cmr_int (*init)(struct afctrl_init_in * input_ptr, cmr_handle * handle_af);
@@ -157,6 +169,9 @@ struct ispalg_smart_ctrl_ops {
 	cmr_s32 (*deinit)(smart_handle_t * handle, void *param, void *result);
 	cmr_s32 (*ioctrl)(smart_handle_t handle, cmr_u32 cmd, void *param, void *result);
 	cmr_s32 (*calc)(cmr_handle handle_smart, struct smart_proc_input * in_ptr);
+	cmr_s32 (*block_disable)(cmr_handle handle,cmr_u32 smart_id);
+	cmr_s32 (*block_enable)(cmr_handle handle,cmr_u32 smart_id);
+	cmr_s32 (*NR_disable)(cmr_handle handle,cmr_u32 is_diseb);
 };
 
 struct ispalg_pdaf_ctrl_ops {
@@ -172,6 +187,7 @@ struct ispalg_lsc_ctrl_ops {
 	cmr_int (*process)(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_ptr, struct lsc_adv_calc_result * result);
 	cmr_int (*ioctrl)(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
 };
+
 
 struct ispalg_lib_ops {
 	struct ispalg_ae_ctrl_ops ae_ops;
