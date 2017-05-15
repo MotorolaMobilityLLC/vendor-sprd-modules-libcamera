@@ -501,13 +501,13 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 }
 
 // i/f to AF model
-static ERRCODE if_statistics_wait_cal_done(void *cookie)
+static cmr_u8 if_statistics_wait_cal_done(void *cookie)
 {
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie)
+static cmr_u8 if_statistics_get_data(cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	cmr_u64 spsmd[MAX_ROI_NUM];
@@ -539,7 +539,7 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 	return 0;
 }
 
-static ERRCODE if_statistics_set_data(cmr_u32 set_stat, void *cookie)
+static cmr_u8 if_statistics_set_data(cmr_u32 set_stat, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -555,14 +555,14 @@ static ERRCODE if_statistics_set_data(cmr_u32 set_stat, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lens_get_pos(uint16 * pos, void *cookie)
+static cmr_u8 if_lens_get_pos(cmr_u16 * pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	*pos = lens_get_pos(af);
 	return 0;
 }
 
-static ERRCODE if_lens_move_to(uint16 pos, void *cookie)
+static cmr_u8 if_lens_move_to(cmr_u16 pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -570,13 +570,13 @@ static ERRCODE if_lens_move_to(uint16 pos, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lens_wait_stop(void *cookie)
+static cmr_u8 if_lens_wait_stop(void *cookie)
 {
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_lock_ae(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_ae(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_lock_num);
@@ -596,7 +596,7 @@ static ERRCODE if_lock_ae(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lock_awb(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_awb(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->awb_lock_num);
@@ -616,7 +616,7 @@ static ERRCODE if_lock_awb(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_lsc(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->lsc_lock_num);
@@ -636,7 +636,7 @@ static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lock_nlm(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_nlm(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->nlm_lock_num);
@@ -663,14 +663,14 @@ static cmr_u64 get_systemtime_ns()
 	return timestamp;
 }
 
-static ERRCODE if_get_sys_time(uint64 * time, void *cookie)
+static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 {
 	UNUSED(cookie);
 	*time = get_systemtime_ns();
 	return 0;
 }
 
-static ERRCODE if_sys_sleep_time(uint16 sleep_time, void *cookie)
+static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 {
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
@@ -680,7 +680,7 @@ static ERRCODE if_sys_sleep_time(uint16 sleep_time, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_get_ae_report(AE_Report * rpt, void *cookie)
+static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 {
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 	ae_info_t *ae = &af->ae;
@@ -693,14 +693,14 @@ static ERRCODE if_get_ae_report(AE_Report * rpt, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_set_af_exif(const void *data, void *cookie)
+static cmr_u8 if_set_af_exif(const void *data, void *cookie)
 {
 	UNUSED(data);
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
+static cmr_u8 if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
@@ -718,7 +718,7 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
+static cmr_u8 if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
@@ -735,7 +735,7 @@ static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_set_motor_sacmode(void *cookie)
+static cmr_u8 if_set_motor_sacmode(void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
@@ -748,7 +748,7 @@ static ERRCODE if_set_motor_sacmode(void *cookie)
 	return 0;
 }
 
-static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
+static cmr_u8 if_binfile_is_exist(cmr_u8 * bisExist, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	cmr_s32 rtn = AFV1_SUCCESS;
@@ -800,7 +800,7 @@ BOKEH_DEFAULT:
 	return 0;
 }
 
-static ERRCODE if_af_log(const char *format, ...)
+static cmr_u8 if_af_log(const char *format, ...)
 {
 	va_list arg;
 	va_start(arg, format);
@@ -811,7 +811,7 @@ static ERRCODE if_af_log(const char *format, ...)
 	return 0;
 }
 
-static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie)
+static cmr_u8 if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	roi_info_t *r = &af->roi;
@@ -825,14 +825,14 @@ static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_af_end_notify(eAF_MODE AF_mode, void *cookie)
+static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, void *cookie)
 {
 	UNUSED(AF_mode);
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_phase_detection_get_data(pd_algo_result_t * pd_result, void *cookie)
+static cmr_u8 if_phase_detection_get_data(pd_algo_result_t * pd_result, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -842,7 +842,7 @@ static ERRCODE if_phase_detection_get_data(pd_algo_result_t * pd_result, void *c
 	return 0;
 }
 
-static ERRCODE if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void *cookie)
+static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -962,7 +962,7 @@ static cmr_s32 unload_trigger_lib(af_ctrl_t * af)
 	return 0;
 }
 
-static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
+static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 {
 
 	af_ctrl_t *af = cookie;
@@ -995,7 +995,7 @@ static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
+static cmr_u8 if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 {
 	UNUSED(cookie);
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
@@ -1009,7 +1009,7 @@ static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_aft_log(cmr_u32 log_level, const char *format, ...)
+static cmr_u8 if_aft_log(cmr_u32 log_level, const char *format, ...)
 {
 	va_list arg;
 	va_start(arg, format);
@@ -1400,7 +1400,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 		*string = '\0';
 
 	char *p1 = af_mode;
-	uint64 key = 0, i = 0;
+	cmr_u64 key = 0, i = 0;
 
 	CALCULATE_KEY(p1, 0);
 
@@ -1937,7 +1937,7 @@ static void caf_process_frame(af_ctrl_t * af)
 }
 
 // af ioctrl functions
-static ERRCODE af_clear_sem(af_ctrl_t * af)
+static cmr_u8 af_clear_sem(af_ctrl_t * af)
 {
 	cmr_s32 tmpVal = 0;
 
@@ -1952,7 +1952,7 @@ static ERRCODE af_clear_sem(af_ctrl_t * af)
 	return 0;
 }
 
-static ERRCODE af_wait_caf_finish(af_ctrl_t * af)
+static cmr_u8 af_wait_caf_finish(af_ctrl_t * af)
 {
 	cmr_s32 rtn;
 	struct timespec ts;
