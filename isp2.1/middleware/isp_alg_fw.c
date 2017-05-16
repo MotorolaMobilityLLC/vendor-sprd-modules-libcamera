@@ -2663,6 +2663,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size org_size;
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
@@ -2719,6 +2721,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 	if (SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
 		if ((mode != cxt->commn_cxt.isp_mode) && (org_size.w != cxt->commn_cxt.src.w)) {
+			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+			io_pm_input.param_data_ptr = &pm_param;
+			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			cxt->commn_cxt.isp_mode = mode;
 			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
@@ -2731,6 +2737,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			cxt->commn_cxt.mode_flag = mode;
 		}
 		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
+			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+			io_pm_input.param_data_ptr = &pm_param;
+			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
 			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
@@ -2839,6 +2849,8 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_size org_size;
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");
@@ -2889,6 +2901,10 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	ISP_RETURN_IF_FAIL(rtn, ("fail to get isp_mode"));
 
 	if (org_size.w != cxt->commn_cxt.src.w) {
+		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+		pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+		io_pm_input.param_data_ptr = &pm_param;
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		cxt->commn_cxt.isp_mode = mode;
 		cxt->commn_cxt.mode_flag = mode;
 		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
