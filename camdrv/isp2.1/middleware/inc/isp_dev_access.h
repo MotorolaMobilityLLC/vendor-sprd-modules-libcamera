@@ -53,6 +53,7 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_AFL_BYPASS,
 	ISP_DEV_SET_AFL_NEW_CFG_PARAM,
 	ISP_DEV_SET_AFL_NEW_BYPASS,
+	ISP_DEV_POST_3DNR, //for post 3dnr
 	ISP_DEV_CMD_MAX
 };
 

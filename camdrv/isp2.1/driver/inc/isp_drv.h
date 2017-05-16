@@ -51,6 +51,8 @@ cmr_s32 isp_dev_reg_read(isp_handle handle, cmr_u32 num, void *param_ptr);
 cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 * buf, cmr_u32 len);
 cmr_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input *param);
 
+/*ISP 3DNR proc*/
+cmr_s32 isp_dev_3dnr(isp_handle handle, struct isp_3dnr_info *param);
 /*ISP Capability*/
 cmr_s32 isp_u_capability_chip_id(isp_handle handle, cmr_u32 * chip_id);
 cmr_s32 isp_u_capability_continue_size(isp_handle handle, cmr_u16 * width, cmr_u16 * height);
