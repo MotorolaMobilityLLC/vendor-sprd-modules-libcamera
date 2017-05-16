@@ -309,6 +309,8 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_CAMERA_SUPPORT_3M)
     {2048, 1536},
+#elif defined(CONFIG_CAMERA_SUPPORT_2M_1080P)
+    {1920, HEIGHT_2M},
 #elif defined(CONFIG_CAMERA_SUPPORT_2M)
     {1600, 1200},
 #else
@@ -327,6 +329,8 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
     {2048, 1536},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M_1080P)
+    {1920, HEIGHT_2M},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M)
     {1600, 1200},
 #else
@@ -345,6 +349,8 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_3M)
     {2048, 1536},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M_1080P)
+    {1920, HEIGHT_2M},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M)
     {1600, 1200},
 #else
@@ -363,6 +369,8 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {2592, 1944},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
     {2048, 1536},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M_1080P)
+    {1920, HEIGHT_2M},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M)
     {1600, 1200},
 #else
