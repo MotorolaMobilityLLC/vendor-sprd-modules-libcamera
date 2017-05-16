@@ -16,6 +16,8 @@
 #ifndef _FLAT_H_
 #define _FLAT_H_
 
+#include "basic_stat.h"
+#include "ae_utils.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

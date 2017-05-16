@@ -147,7 +147,7 @@ int pthread_mutex_init(pthread_mutex_t * t, uint32_t mode);
 int pthread_mutex_destroy(pthread_mutex_t * t);
 int pthread_mutex_lock(pthread_mutex_t * t);
 int pthread_mutex_unlock(pthread_mutex_t * t);
-int property_get(const char *key, char *value, const char *default_value);
+int ae_property_get(const char *key, char *value, const char *default_value);
 
 #endif
 

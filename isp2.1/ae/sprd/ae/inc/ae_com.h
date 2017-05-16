@@ -17,7 +17,11 @@
 #ifndef _AE_COM_H_
 #define _AE_COM_H_
 
+#include "mulaes.h"
 #include "flat.h"
+#include "region.h"
+#include "ae1_face.h"
+#include "touch_ae.h"
 #include "fae.h"
 
 #ifdef __cplusplus
@@ -45,6 +49,7 @@ enum ae_alg_io_cmd {
 };
 
 struct ae_alg_init_in {
+	cmr_u32 flash_version;
 	cmr_u32 start_index;
 	cmr_handle param_ptr;
 	cmr_u32 size;

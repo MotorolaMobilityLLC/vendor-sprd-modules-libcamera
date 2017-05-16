@@ -52,6 +52,8 @@ typedef struct {
 	cmr_s16 tar_offset;
 	float ratio;
 	float touch_roi_lum;
+	float delt_trl;
+	float prv_trl;
 	cmr_s8 tcAE_state;	//for release
 	cmr_s8 release_flag;	//for release
 	char *log;

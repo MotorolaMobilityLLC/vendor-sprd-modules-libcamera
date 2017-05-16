@@ -16,6 +16,8 @@
 #ifndef _FAE_H_
 #define _FAE_H_
 
+#include "basic_stat.h"
+#include "ae1_face.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
