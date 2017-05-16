@@ -885,6 +885,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	struct smart_proc_input smart_proc_in;
 	struct ae_monitor_info info;
 	struct awb_size win_size = { 0, 0 };
+	struct af_img_blk_info img_blk_info;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	cmr_s32 bv = 0;
@@ -975,10 +976,19 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 
 	ae_out_bv.ae_result = ae_result;
 	ae_out_bv.bv = bv;
-	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void *)ae_stat_ptr, (void *)&ae_out_bv);
+
+	memset((void *)&img_blk_info, 0, sizeof(img_blk_info));
+	img_blk_info.block_w = 32;
+	img_blk_info.block_h = 32;
+	img_blk_info.chn_num = 3;
+	img_blk_info.pix_per_blk = 1;
+	img_blk_info.data = (cmr_u32 *) ae_stat_ptr;
+
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void *)(&img_blk_info), (void *)&ae_out_bv);
 	ISP_TRACE_IF_FAIL(rtn, ("AF_CMD_SET_AE_INFO fail "));
 	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void *)result, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("AF_CMD_SET_AWB_INFO fail "));
+/*
 	message.msg_type = ISP_CTRL_EVT_AF;
 	message.sub_msg_type = AF_DATA_AE;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
@@ -986,12 +996,12 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	message.data = (void *)ae_result;
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
 	ISP_LOGV("done message_data %p rtn %ld", message.data, rtn);
-
+*/
 	message.msg_type = ISP_CTRL_EVT_AF;
 	message.sub_msg_type = AF_DATA_IMG_BLK;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
 	message.alloc_flag = 0;
-	message.data = (void *)ae_stat_ptr;
+	message.data = (void *)(&img_blk_info);
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
 	ISP_TRACE_IF_FAIL(rtn, ("cmr_thread_msg_send fail "));
 
@@ -1128,6 +1138,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	memset((void *)&calc_result, 0, sizeof(calc_result));
 	ISP_LOGV("begin data_type %d", data_type);
 	switch (data_type) {
+	case AF_DATA_AFM_STAT:
 	case AF_DATA_AF:{
 			struct isp_statis_buf_input statis_buf;
 			statis_info = (struct isp_statis_info *)in_ptr;
@@ -1165,6 +1176,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			img_blk_info.chn_num = 3;
 			img_blk_info.pix_per_blk = 1;
 			img_blk_info.data = (cmr_u32 *) in_ptr;
+			memcpy((void *)&img_blk_info, in_ptr, sizeof(struct af_img_blk_info));
 			calc_param.data_type = AF_DATA_IMG_BLK;
 			calc_param.data = (void *)(&img_blk_info);
 			rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
@@ -1816,8 +1828,9 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
-	//struct af_tuning_param *af_tuning = NULL;
-	cmr_u32 i;
+
+	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
+		return rtn;
 
 	memset((void *)&af_input, 0, sizeof(af_input));
 	memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
@@ -1830,41 +1843,24 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
 
-#if 0				//used for af1.0
-	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &af_pm_input, &af_pm_output);
-	if (ISP_SUCCESS == rtn) {
-		af_input.af_bypass = 0;
-		af_input.af_mode = 0;
-		af_input.tuning_param_cnt = af_pm_output.param_num;
-		af_input.cur_tuning_mode = 0;
-		af_tuning = (struct af_tuning_param *)malloc(sizeof(struct af_tuning_param) * af_pm_output.param_num);
-		if (NULL == af_tuning) {
-			ISP_LOGE("fail to malloc af_tuning buf!");
-			return ISP_ERROR;
-		}
-		for (i = 0; i < af_pm_output.param_num; i++) {
-			af_tuning[i].cfg_mode = (af_pm_output.param_data->id & 0xffff0000) >> 16;
-			af_tuning[i].data = af_pm_output.param_data->data_ptr;
-			af_tuning[i].data_len = af_pm_output.param_data->data_size;
-			af_pm_output.param_data++;
-		}
-
-		af_input.tuning_param = af_tuning;
-		af_input.plat_info.afm_filter_type_cnt = 1;
-		af_input.plat_info.afm_win_max_cnt = 9;
-		af_input.plat_info.isp_w = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].width;
-		af_input.plat_info.isp_h = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].height;
+	if (NULL != cxt->otp_data) {
+		af_input.otp_info.gldn_data.infinite_cali = 0;
+		af_input.otp_info.gldn_data.macro_cali = 0;
+		af_input.otp_info.rdm_data.infinite_cali = cxt->otp_data->single_otp.af_info.infinite_cali;
+		af_input.otp_info.rdm_data.macro_cali = cxt->otp_data->single_otp.af_info.macro_cali;
+		ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", af_input.otp_info.gldn_data.infinite_cali, af_input.otp_info.gldn_data.macro_cali,
+			 af_input.otp_info.rdm_data.infinite_cali, af_input.otp_info.rdm_data.macro_cali);
+	} else {
+		ISP_LOGV("af otp is not used");
+		af_input.otp_info.gldn_data.infinite_cali = 0;
+		af_input.otp_info.gldn_data.macro_cali = 0;
+		af_input.otp_info.rdm_data.infinite_cali = 0;
+		af_input.otp_info.rdm_data.macro_cali = 0;
 	}
-#endif
+
 	rtn = af_ctrl_init(&af_input, &cxt->af_cxt.handle);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
-#if 0
-exit:
-	if (af_tuning) {
-		free(af_tuning);
-		af_tuning = NULL;
-	}
-#endif
+
 	return rtn;
 }
 

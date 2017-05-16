@@ -18,7 +18,7 @@
  *  +-----------------------------------------------------------------+
  *
  * $History$
- *
+ * 
  *******************************************************************************
  */
 
@@ -47,16 +47,16 @@
 #include "AFv1_Common.h"
 #include "AFv1_Tune.h"
 
-ERRCODE AF_Cal_IncDecCount(AF_FV_DATA* pAF_FV_Data, cmr_u8 FrameNum);
-ERRCODE AF_Find_MaxMinIdx(AF_FV_DATA* pAF_FV_Data, cmr_u16* SearchTable, cmr_u8 FrameNum);
-ERRCODE AF_CheckCurve(AF_Data* pAF_Data,AF_FV_DATA* pAF_FV_Data, cmr_u16* SearchTable, cmr_u8 FrameNum, cmr_u8 MaxTableNum, cmr_u8 DIR);
-ERRCODE AF_Quad_Fit(double* pPos, double* pFV, cmr_u8 length, cmr_u16* pPeak, cmr_u64* pPredictFV);
-ERRCODE AF_Cal_FV_Confidence(AF_Data* pAF_Data,AF_FV_DATA* pAF_FV_DATA, cmr_u8 FrameNum, AF_FILTER_TH* pAF_FILTER_TH, cmr_u8 Search_Process);
-ERRCODE AF_RvereseArray16(cmr_u16* arr, cmr_u8 start, cmr_u8 end);
-ERRCODE AF_RvereseArray32(cmr_u32* arr, cmr_u8 start, cmr_u8 end);
-ERRCODE AF_RvereseArray64(cmr_u64* arr, cmr_u8 start, cmr_u8 end);
-ERRCODE AF_RvereseAE_Rpt(AE_Report* arr, cmr_u8 start, cmr_u8 end);
-ERRCODE AF_AnalyzeFV(AF_Data* pAF_Data,AF_FV* pFV, cmr_u16* SearchTable, cmr_u8 FrameNum, cmr_u8 MaxTableNum, cmr_u8 DIR);
-ERRCODE AF_Check_FV_Confidence(AF_Data* pAF_Data,AF_FV* pFV, cmr_u8 FrameNum, cmr_u8* SAF_Result, AF_TH* pAF_TH, cmr_u16* pPeak_POS, cmr_u8 Search_Process);
+ERRCODE AF_Cal_IncDecCount(AF_FV_DATA * pAF_FV_Data, cmr_u8 FrameNum);
+ERRCODE AF_Find_MaxMinIdx(AF_FV_DATA * pAF_FV_Data, cmr_u16 * SearchTable, cmr_u8 FrameNum);
+ERRCODE AF_CheckCurve(AF_Data * pAF_Data, AF_FV_DATA * pAF_FV_Data, cmr_u16 * SearchTable, cmr_u8 FrameNum, cmr_u8 MaxTableNum, cmr_u8 DIR);
+ERRCODE AF_Quad_Fit(double *pPos, double *pFV, cmr_u8 length, cmr_u16 * pPeak, cmr_u64 * pPredictFV);
+ERRCODE AF_Cal_FV_Confidence(AF_Data * pAF_Data, AF_FV_DATA * pAF_FV_DATA, cmr_u8 FrameNum, AF_FILTER_TH * pAF_FILTER_TH, cmr_u8 Search_Process);
+ERRCODE AF_RvereseArray16(cmr_u16 * arr, cmr_u8 start, cmr_u8 end);
+ERRCODE AF_RvereseArray32(cmr_u32 * arr, cmr_u8 start, cmr_u8 end);
+ERRCODE AF_RvereseArray64(cmr_u64 * arr, cmr_u8 start, cmr_u8 end);
+ERRCODE AF_RvereseAE_Rpt(AE_Report * arr, cmr_u8 start, cmr_u8 end);
+ERRCODE AF_AnalyzeFV(AF_Data * pAF_Data, AF_FV * pFV, cmr_u16 * SearchTable, cmr_u8 FrameNum, cmr_u8 MaxTableNum, cmr_u8 DIR);
+ERRCODE AF_Check_FV_Confidence(AF_Data * pAF_Data, AF_FV * pFV, cmr_u8 FrameNum, cmr_u8 * SAF_Result, AF_TH * pAF_TH, cmr_u16 * pPeak_POS, cmr_u8 Search_Process);
 
 #endif

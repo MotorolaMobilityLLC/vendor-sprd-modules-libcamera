@@ -2526,10 +2526,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 
 	case AF_DATA_IMG_BLK:{
-			struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)inparam->data;
-			if (NULL != img_blk_info->data) {
 				caf_monitor_process(af);
-			}
 			break;
 		}
 	default:{
