@@ -769,25 +769,28 @@ exit:
 	return ret;
 }
 
-//add james.patch
+/* by james.xiong */
 static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *multicam_aesync)
 {
 	struct sensor_otp_ae_info* ae_otp_master = NULL;
 	struct sensor_otp_ae_info* ae_otp_slave = NULL;
 	struct ae_alg_calc_result* ae_master_calc_out = NULL;
 	struct ae_sync_out *slv_sync_result = NULL;
-	unsigned int gain_master = 0;
-	unsigned int gain_slave = 0;
-	unsigned int exp_master_1x = 0;
-	unsigned int exp_master_2x = 0;
-	unsigned int exp_master_4x = 0;
-	unsigned int exp_master_8x = 0;
-	unsigned int exp_slave_1x = 0;
-	unsigned int exp_slave_2x = 0;
-	unsigned int exp_slave_4x = 0;
-	unsigned int exp_slave_8x = 0;
+	cmr_u32 gain_master = 0;
+	cmr_u32 gain_slave = 0;
+	cmr_u32 exp_master_1x = 0;
+	cmr_u32 exp_master_2x = 0;
+	cmr_u32 exp_master_4x = 0;
+	cmr_u32 exp_master_8x = 0;
+	cmr_u32 exp_slave_1x = 0;
+	cmr_u32 exp_slave_2x = 0;
+	cmr_u32 exp_slave_4x = 0;
+	cmr_u32 exp_slave_8x = 0;
+	cmr_s16 master_line_time = 0;
 	cmr_s16 slv_line_time = 0;
-	uint32_t exp_line_slave = 0;
+	cmr_u32 exp_line_slave = 0;
+	cmr_u32 slave_dummy = 0;
+	cmr_u32 tmp = 0;
 
 	if (!cxt_ptr || !multicam_aesync) {
 		ISP_LOGE("param is NULL error!");
@@ -799,9 +802,9 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	ae_otp_master = &(multicam_aesync->module_info.module_otp_info.master_ae_otp.otp_info);
 	ae_otp_slave = &(multicam_aesync->module_info.module_otp_info.slave_ae_otp.otp_info);
 
+	/* calculate gain */
 	gain_master = ae_master_calc_out->wts.cur_again;
 	gain_slave = gain_master;
-
 	exp_master_1x = ae_otp_master->gain_1x_exp;
 	exp_master_2x = ae_otp_master->gain_2x_exp;
 	exp_master_4x = ae_otp_master->gain_4x_exp;
@@ -824,20 +827,26 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	}
 
 	/* calculate exposure line */
+	master_line_time = multicam_aesync->module_info.module_sensor_info.master_sensor_info.line_time;
 	slv_line_time = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.line_time;
-	// TODO: set slave exposure line when slave line time is invalid
 	if (slv_line_time > 0)
 		exp_line_slave = ae_master_calc_out->wts.exposure_time / slv_line_time;
 	else
 		exp_line_slave = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.min_exp_line;
 
+	/* calculate dummy line */
+	tmp = master_line_time * (ae_master_calc_out->wts.cur_exp_line + ae_master_calc_out->wts.cur_dummy);
+	slave_dummy = tmp / slv_line_time - exp_line_slave;
+
 	/*fulfill slave sync result */
-	slv_sync_result->sensor_ad_gain = gain_master;//gain_slave;
+	slv_sync_result->sensor_ad_gain = gain_slave * 2;
 	slv_sync_result->exposure_time = ae_master_calc_out->wts.exposure_time;
 	slv_sync_result->exposure_line = exp_line_slave;
-	// TODO: calculate these two values
+	slv_sync_result->exposure_dummy = slave_dummy;
+
+	// TODO: calculate this value, or remove it!
 	slv_sync_result->isp_d_gain = ae_master_calc_out->wts.cur_dgain;
-	slv_sync_result->exposure_dummy = ae_master_calc_out->wts.cur_dummy;
+
 	/* set flag to 1 if need update, otherwise  set to 0 */
 	slv_sync_result->updata_flag = 1;
 }
@@ -892,50 +901,19 @@ static cmr_s32 dualcamera_aesync_calc(struct ae_ctrl_cxt *cxt,  struct match_dat
 			NULL,
 			&dualcam_aesync->slave_ae_info.ae_calc_result);
 
-		//get slave sensor otp
-		ret = isp_br_ioctrl(cxt->camera_id,
-			GET_SLAVE_OTP_AE,
-			NULL,
-			&dualcam_aesync->module_info.module_otp_info.slave_ae_otp);
-
-		/* get slave sensor info */
-		ret = isp_br_ioctrl(cxt->camera_id,
-			GET_SLAVE_MODULE_INFO,
-			NULL,
-			&dualcam_aesync->module_info.module_sensor_info.slave_sensor_info);
-	}
-	else
-	{
 		ret = isp_br_ioctrl(cxt->camera_id,
 			GET_MASTER_AECALC_RESULT,
 			NULL,
-			&dualcam_aesync->slave_ae_info.ae_calc_result);
+			&dualcam_aesync->master_ae_info.ae_calc_result);
 
-		ret = isp_br_ioctrl(cxt->camera_id,
-			GET_MASTER_OTP_AE,
+		ret= isp_br_ioctrl(cxt->camera_id,
+			GET_ALL_MODULE_AND_OTP,
 			NULL,
-			&dualcam_aesync->module_info.module_otp_info.slave_ae_otp);
-
+			&dualcam_aesync->module_info);
 	}
-
-	ISP_LOGI("master ae: cur_bv=%d, cur_lum=%d, exp_lin=%d, again=%d, dgain=%d, dummy=%d, line_time=%d",
-		dualcam_aesync->master_ae_info.ae_calc_result.cur_bv,
-		dualcam_aesync->master_ae_info.ae_calc_result.cur_lum,
-		dualcam_aesync->master_ae_info.ae_calc_result.wts.cur_exp_line,
-		dualcam_aesync->master_ae_info.ae_calc_result.wts.cur_again,
-		dualcam_aesync->master_ae_info.ae_calc_result.wts.cur_dgain,
-		dualcam_aesync->master_ae_info.ae_calc_result.wts.cur_dummy,
-		dualcam_aesync->master_ae_info.ae_calc_result.wts.exposure_time);
 
 	//need check ret
 	ret = sprd_get_sync_info_from_lib(cxt, dualcam_aesync);
-
-	ISP_LOGI("slave ae: update=%u, gain=%u, exp=%u, dummy=%u, dgain=%u",
-		dualcam_aesync->slave_ae_info.ae_sync_result.updata_flag,
-		dualcam_aesync->slave_ae_info.ae_sync_result.sensor_ad_gain,
-		dualcam_aesync->slave_ae_info.ae_sync_result.exposure_line,
-		dualcam_aesync->slave_ae_info.ae_sync_result.exposure_dummy,
-		dualcam_aesync->slave_ae_info.ae_sync_result.isp_d_gain);
 
 	if (cxt->sensor_role)
 	{
@@ -943,13 +921,6 @@ static cmr_s32 dualcamera_aesync_calc(struct ae_ctrl_cxt *cxt,  struct match_dat
 		ret = isp_br_ioctrl(cxt->camera_id,
 			SET_SLAVE_AESYNC_SETTING,
 			&dualcam_aesync->slave_ae_info.ae_sync_result,
-			NULL);
-	}
-	else
-	{
-		ret = isp_br_ioctrl(cxt->camera_id,
-			SET_MASTER_AESYNC_SETTING,
-			&dualcam_aesync->master_ae_info.ae_sync_result,
 			NULL);
 	}
 
@@ -4306,7 +4277,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		memset((cmr_handle) & cxt->cur_status.ae1_finfo.cur_info, 0, sizeof(cxt->cur_status.ae1_finfo.cur_info));
 
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
-		ISP_LOGI("fps: %d, %d, %d", cxt->cur_result.wts.cur_exp_line, cxt->cur_result.wts.cur_again, cxt->cur_result.wts.cur_dummy);
+		ISP_LOGI("%d, %d, %d", cxt->cur_result.wts.cur_exp_line, cxt->cur_result.wts.cur_again, cxt->cur_result.wts.cur_dummy);
 		make_isp_result(current_result, calc_out);
 		{
 			/*just for debug: reset the status */
@@ -4333,7 +4304,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		{
 			memcpy(&dualcam_aesync.master_ae_info.ae_calc_result,
 				current_result, sizeof(dualcam_aesync.master_ae_info.ae_calc_result));
-			ISP_LOGI("[master] gain=%u, expline=%u, exptime=%u, dummy=%u",
+			ISP_LOGI("[master] cur_fps=%f, gain=%u, expline=%u, exptime=%u, dummy=%u",
+				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_fps,
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_again,
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_exp_line,
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.exposure_time,
@@ -4354,7 +4326,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			/* use slave's ae_sync_result as final ae value */
 			rtn = isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AESYNC_SETTING,
 				NULL, &dualcam_aesync.slave_ae_info.ae_sync_result);
-			ISP_LOGI("[slave ] gain=%u, expline=%u, exptime=%u, dummy=%u",
+			ISP_LOGI("[slave ] cur_fps=%f, gain=%u, expline=%u, exptime=%u, dummy=%u",
+				cxt->cur_result.wts.cur_fps,
 				dualcam_aesync.slave_ae_info.ae_sync_result.sensor_ad_gain,
 				dualcam_aesync.slave_ae_info.ae_sync_result.exposure_line,
 				dualcam_aesync.slave_ae_info.ae_sync_result.exposure_time,

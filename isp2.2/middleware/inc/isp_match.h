@@ -28,36 +28,40 @@
 extern "C" {
 #endif
 
-enum isp_br_ctrl_cmd_type {
-	GET_MATCH_AWB_DATA,
-	SET_MATCH_AWB_DATA,
+/* all set ioctl should be even number, while get should be odd */
+enum isp_br_ioctl_cmd {
+	SET_MATCH_AWB_DATA = 0,
+	GET_MATCH_AWB_DATA = 1,
 
-	//module info(vcm/f.no/view angle/efl)
-	SET_SLAVE_MODULE_INFO,
-	GET_SLAVE_MODULE_INFO,
-	SET_MASTER_MODULE_INFO,
-	GET_MASTER_MODULE_INFO,
-	//turnning info
+	/* module info (vcm/frame number/view angle/efl) */
+	SET_SLAVE_MODULE_INFO = 2,
+	GET_SLAVE_MODULE_INFO = 3,
+	SET_MASTER_MODULE_INFO = 4,
+	GET_MASTER_MODULE_INFO = 5,
 
-	//otp match
-	SET_SLAVE_OTP_AE,  //slave ae otp from sensor;
-	GET_SLAVE_OTP_AE,  //slave ae otp from sensor;
+	/* sensor otp info */
+	SET_SLAVE_OTP_AE = 6,
+	GET_SLAVE_OTP_AE = 7,
+	SET_MASTER_OTP_AE = 8,
+	GET_MASTER_OTP_AE = 9,
 
-	SET_MASTER_OTP_AE,  //slave ae otp from sensor;
-	GET_MASTER_OTP_AE,  //slave ae otp from sensor;
+	/* slave ae match */
+	SET_SLAVE_AESYNC_SETTING = 10,
+	GET_SLAVE_AESYNC_SETTING = 11,
+	SET_SLAVE_AECALC_RESULT = 12,
+	GET_SLAVE_AECALC_RESULT = 13,
 
-	//ae match
-	SET_SLAVE_AESYNC_SETTING,  //slave ae setting   obtained by the master   //10
-	GET_SLAVE_AESYNC_SETTING,  //slave ae setting from master
+	/* master ae match */
+	SET_MASTER_AESYNC_SETTING = 14,
+	GET_MASTER_AESYNC_SETTING = 15,
+	SET_MASTER_AECALC_RESULT = 16,
+	GET_MASTER_AECALC_RESULT = 17,
 
-	SET_SLAVE_AECALC_RESULT, //slave ae calc result
-	GET_SLAVE_AECALC_RESULT,//slave ae output from master
+	/* all module and otp */
+	SET_ALL_MODULE_AND_OTP = 18,
+	GET_ALL_MODULE_AND_OTP = 19,
 
-	SET_MASTER_AECALC_RESULT, //master ae calc result                      //14
-	GET_MASTER_AECALC_RESULT,  //master ae output from master
-
-	SET_MASTER_AESYNC_SETTING,  //master ae setting   obtained by the slave
-	GET_MASTER_AESYNC_SETTING, //master ae setting from slave
+	// TODO: turnning info
 };
 
 struct awb_match_data {
@@ -122,7 +126,7 @@ struct match_data_param {
 cmr_handle isp_br_get_3a_handle(uint8_t is_master);
 int32_t isp_br_init(uint8_t is_master, void* isp_3a_handle);
 int32_t isp_br_deinit(uint8_t is_master);
-int32_t isp_br_ioctrl(uint32_t is_master, int32_t cmd, void *in, void *out);
+int32_t isp_br_ioctrl(uint32_t is_master, enum isp_br_ioctl_cmd cmd, void *in, void *out);
 int32_t isp_br_save_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info *dual_otp);
 int32_t isp_br_get_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info **dual_otp);
 

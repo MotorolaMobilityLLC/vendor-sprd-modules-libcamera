@@ -53,28 +53,33 @@ cmr_handle isp_br_get_3a_handle(uint8_t is_master)
 	}
 	return rtn;
 }
-int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
+int32_t isp_br_ioctrl(uint32_t camera_id, enum isp_br_ioctl_cmd cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
 
 	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("fail camera_id %d", camera_id);
+		ISP_LOGE("invalid camera_id %u", camera_id);
 		return -ISP_PARAM_ERROR;
 	}
-	ISP_LOGV("Enter camera_id=%d, cmd=%d", camera_id, cmd);
+
+	if (((cmd & 1) && !out) || ((!(cmd & 1)) && !in)) {
+		ISP_LOGE("invalid param: cmd=%u, in=%p, out=%p", cmd, in, out);
+		return -ISP_PARAM_ERROR;
+	}
+
+	ISP_LOGV("E camera_id=%u, cmd=%u", camera_id, cmd);
 
 	switch (cmd) {
-	case GET_MATCH_AWB_DATA:
-		sem_wait(&cxt->awb_sm);
-		memcpy(out, &cxt->match_param.master_awb_info, sizeof(cxt->match_param.master_awb_info));
-		sem_post(&cxt->awb_sm);
-		break;
 	case SET_MATCH_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
 		memcpy(&cxt->match_param.master_awb_info, in, sizeof(cxt->match_param.master_awb_info));
 		sem_post(&cxt->awb_sm);
 		break;
-//module  info
+	case GET_MATCH_AWB_DATA:
+		sem_wait(&cxt->awb_sm);
+		memcpy(out, &cxt->match_param.master_awb_info, sizeof(cxt->match_param.master_awb_info));
+		sem_post(&cxt->awb_sm);
+		break;
 	case SET_SLAVE_MODULE_INFO:
 		sem_wait(&cxt->module_sm);
 		memcpy(&cxt->match_param.module_info.module_sensor_info.slave_sensor_info, in,
@@ -87,7 +92,18 @@ int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
 			sizeof(cxt->match_param.module_info.module_sensor_info.slave_sensor_info));
 		sem_post(&cxt->module_sm);
 		break;
-//otp info
+	case SET_MASTER_MODULE_INFO:
+		sem_wait(&cxt->module_sm);
+		memcpy(&cxt->match_param.module_info.module_sensor_info.master_sensor_info, in,
+			sizeof(cxt->match_param.module_info.module_sensor_info.master_sensor_info));
+		sem_post(&cxt->module_sm);
+		break;
+	case GET_MASTER_MODULE_INFO:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->match_param.module_info.module_sensor_info.master_sensor_info,
+			sizeof(cxt->match_param.module_info.module_sensor_info.master_sensor_info));
+		sem_post(&cxt->module_sm);
+		break;
 	case SET_SLAVE_OTP_AE:
 		sem_wait(&cxt->module_sm);
 		memcpy(&cxt->match_param.module_info.module_otp_info.slave_ae_otp, in,
@@ -113,23 +129,36 @@ int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
 		sem_post(&cxt->module_sm);
 		break;
 	case SET_SLAVE_AESYNC_SETTING:
-		ISP_LOGI("master wait sm2");
 		sem_wait(&cxt->ae_update_sm2);
 		int post = cxt->match_param.slave_ae_info.ae_sync_result.updata_flag;
 		ISP_LOGI("master write, flag=%u", cxt->match_param.slave_ae_info.ae_sync_result.updata_flag);
 		memcpy(&cxt->match_param.slave_ae_info.ae_sync_result, in,
 			sizeof(cxt->match_param.slave_ae_info.ae_sync_result));
-		ISP_LOGI("master write, flag=%u", cxt->match_param.slave_ae_info.ae_sync_result.updata_flag);
 		sem_post(&cxt->ae_update_sm2);
-		ISP_LOGI("master post sm2");
 		if (!post) {
 			sem_post(&cxt->ae_updata_sm);
 			ISP_LOGI("master post sm");
 		}
 		break;
+	case GET_SLAVE_AESYNC_SETTING:
+		ISP_LOGI("slave wait sm");
+		sem_wait(&cxt->ae_updata_sm);
+		sem_wait(&cxt->ae_update_sm2);
+		ISP_LOGI("slave read, flag=%u", cxt->match_param.slave_ae_info.ae_sync_result.updata_flag);
+		memcpy(out, &cxt->match_param.slave_ae_info.ae_sync_result,
+			sizeof(cxt->match_param.slave_ae_info.ae_sync_result));
+		cxt->match_param.slave_ae_info.ae_sync_result.updata_flag = 0;
+		sem_post(&cxt->ae_update_sm2);
+		break;
 	case SET_SLAVE_AECALC_RESULT:
 		sem_wait(&cxt->ae_sm);
 		memcpy(&cxt->match_param.slave_ae_info.ae_calc_result, in,
+			sizeof(cxt->match_param.slave_ae_info.ae_calc_result));
+		sem_post(&cxt->ae_sm);
+		break;
+	case GET_SLAVE_AECALC_RESULT:
+		sem_wait(&cxt->ae_sm);
+		memcpy(out, &cxt->match_param.slave_ae_info.ae_calc_result,
 			sizeof(cxt->match_param.slave_ae_info.ae_calc_result));
 		sem_post(&cxt->ae_sm);
 		break;
@@ -139,35 +168,16 @@ int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
 			sizeof(cxt->match_param.master_ae_info.ae_sync_result));
 		sem_post(&cxt->ae_sm);
 		break;
-	case SET_MASTER_AECALC_RESULT:
-		sem_wait(&cxt->ae_sm);
-		memcpy(&cxt->match_param.master_ae_info.ae_calc_result, in,
-			sizeof(cxt->match_param.master_ae_info.ae_calc_result));
-		sem_post(&cxt->ae_sm);
-		break;
-	case GET_SLAVE_AESYNC_SETTING:
-		ISP_LOGI("slave wait sm");
-		sem_wait(&cxt->ae_updata_sm);
-		ISP_LOGI("slave wait sm2");
-		sem_wait(&cxt->ae_update_sm2);
-		ISP_LOGI("slave read, flag=%u", cxt->match_param.slave_ae_info.ae_sync_result.updata_flag);
-		memcpy(out, &cxt->match_param.slave_ae_info.ae_sync_result,
-			sizeof(cxt->match_param.slave_ae_info.ae_sync_result));
-		cxt->match_param.slave_ae_info.ae_sync_result.updata_flag = 0;
-		ISP_LOGI("slave read, flag=%u", cxt->match_param.slave_ae_info.ae_sync_result.updata_flag);
-		sem_post(&cxt->ae_update_sm2);
-		ISP_LOGI("slave post sm2");
-		break;
-	case GET_SLAVE_AECALC_RESULT:
-		sem_wait(&cxt->ae_sm);
-		memcpy(out, &cxt->match_param.slave_ae_info.ae_calc_result,
-			sizeof(cxt->match_param.slave_ae_info.ae_calc_result));
-		sem_post(&cxt->ae_sm);
-		break;
 	case GET_MASTER_AESYNC_SETTING:
 		sem_wait(&cxt->ae_sm);
 		memcpy(out, &cxt->match_param.master_ae_info.ae_sync_result,
 			sizeof(cxt->match_param.master_ae_info.ae_sync_result));
+		sem_post(&cxt->ae_sm);
+		break;
+	case SET_MASTER_AECALC_RESULT:
+		sem_wait(&cxt->ae_sm);
+		memcpy(&cxt->match_param.master_ae_info.ae_calc_result, in,
+			sizeof(cxt->match_param.master_ae_info.ae_calc_result));
 		sem_post(&cxt->ae_sm);
 		break;
 	case GET_MASTER_AECALC_RESULT:
@@ -176,8 +186,16 @@ int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
 			sizeof(cxt->match_param.master_ae_info.ae_calc_result));
 		sem_post(&cxt->ae_sm);
 		break;
+	case SET_ALL_MODULE_AND_OTP:
+		ISP_LOGW("not implemented");
+		break;
+	case GET_ALL_MODULE_AND_OTP:
+		sem_wait(&cxt->ae_sm);
+		memcpy(out, &cxt->match_param.module_info, sizeof(cxt->match_param.module_info));
+		sem_post(&cxt->ae_sm);
+		break;
 	}
-	ISP_LOGV(" Out  camera_id %d, cmd=%d", camera_id, cmd);
+	ISP_LOGV("X");
 
 	return 0;
 }
