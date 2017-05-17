@@ -90,7 +90,7 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_flash_param *flash = NULL;
 	struct awb_flash_info flash_awb;
-	struct ae_awb_gain flash_wb_gain = {0, 0, 0};
+	struct ae_awb_gain flash_wb_gain = { 0, 0, 0 };
 	cmr_u32 ae_effect = 0;
 
 	memset((void *)&flash_awb, 0, sizeof(struct awb_flash_info));
@@ -100,8 +100,7 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 		ISP_LOGE("fail to get flash cali parm ");
 		return rtn;
 	}
-	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d", flash->cur.r_ratio,
-		flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
+	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d", flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_WB_GAIN, NULL, &flash_wb_gain);
 	ISP_TRACE_IF_FAIL(rtn, ("awb get gain error"));
@@ -115,11 +114,11 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	flash_awb.flash_ratio.b = flash->cur.b_ratio;
 
 	if (cxt->ae_cxt.flash_version) {
-	/* dual flash */
-	flash_awb.effect = 1024;
-	flash_awb.flash_ratio.r = flash_wb_gain.r;
-	flash_awb.flash_ratio.g = flash_wb_gain.g;
-	flash_awb.flash_ratio.b = flash_wb_gain.b;
+		/* dual flash */
+		flash_awb.effect = 1024;
+		flash_awb.flash_ratio.r = flash_wb_gain.r;
+		flash_awb.flash_ratio.g = flash_wb_gain.g;
+		flash_awb.flash_ratio.b = flash_wb_gain.b;
 	}
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("awb set flash gain error"));
@@ -378,7 +377,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
-		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
@@ -416,7 +415,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_AFTER:
-		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 		awb_flash_status = AWB_FLASH_MAIN_AFTER;
@@ -864,8 +863,8 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
 		    + sizeof(cmr_u32) /*for end flag */ ;
 
-		if (cxt->otp_data != NULL){
-                  total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+		if (cxt->otp_data != NULL) {
+			total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
 		}
 
 		if (cxt->commn_cxt.log_isp_size < total_size) {
@@ -901,16 +900,15 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
 
-		if (cxt->otp_data != NULL){
-                   size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+		if (cxt->otp_data != NULL) {
+			size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
 			if (len) {
-                       log.otp_off = off;
-                       off += len;
-                       log.otp_len = len;
-                   }
-                   else {
-                       log.otp_off= 0;
-                   }
+				log.otp_off = off;
+				off += len;
+				log.otp_len = len;
+			} else {
+				log.otp_off = 0;
+			}
 		}
 		memcpy((char *)cxt->commn_cxt.log_isp + sizeof(struct sprd_isp_debug_info), &log, sizeof(log));
 
@@ -1150,6 +1148,18 @@ static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_pt
 	UNUSED(call_back);
 
 	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_FULLSCAN_INFO, (void *)af_fullscan_info, NULL);
+
+	return rtn;
+}
+
+static cmr_int _ispAfIOBypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 *bypass = (cmr_u32 *) param_ptr;
+	UNUSED(call_back);
+
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)bypass, NULL);
 
 	return rtn;
 }
@@ -1689,9 +1699,9 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_hdr_param	*isp_hdr = (struct isp_hdr_param *)param_ptr;
-	struct ae_hdr_param		ae_hdr = {0x00, 0x00};
-	cmr_s16                smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	struct isp_hdr_param *isp_hdr = (struct isp_hdr_param *)param_ptr;
+	struct ae_hdr_param ae_hdr = { 0x00, 0x00 };
+	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
 	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
 	UNUSED(call_back);
 
@@ -1711,7 +1721,7 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 1);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
-	}else {
+	} else {
 		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_LNC);
 		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_CMC);
 		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
@@ -2120,7 +2130,6 @@ static cmr_int _ispSetAeSensitivity(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-
 static cmr_int _ispSetDcamTimestamp(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2161,6 +2170,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 
 	{ISP_CTRL_AF, _ispAfIOCtrl},
 	{ISP_CTRL_GET_FULLSCAN_INFO, _ispAfIOGetFullScanInfo},
+	{ISP_CTRL_SET_AF_BYPASS, _ispAfIOBypass},
 	{ISP_CTRL_BURST_NOTICE, _ispBurstIONotice},
 	{ISP_CTRL_SFT_READ, _ispSFTIORead},
 	{ISP_CTRL_SFT_WRITE, _ispSFTIOWrite},

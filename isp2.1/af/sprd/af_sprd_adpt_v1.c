@@ -1256,6 +1256,8 @@ static void lock_block(af_ctrl_t * af, char *block)
 		if_lock_lsc(LOCK, af);
 	if (lock & LOCK_NLM)
 		if_lock_nlm(LOCK, af);
+	if (lock & LOCK_AWB)
+		if_lock_awb(LOCK, af);
 
 	return;
 }
@@ -1433,7 +1435,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 static cmr_s32 af_test_lens(af_ctrl_t * af, cmr_u16 pos)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt, af->algo_mode);
+	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 
@@ -1504,7 +1506,7 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 static void caf_stop_search(af_ctrl_t * af)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt, af->algo_mode);
+	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 }
@@ -1523,7 +1525,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	} else if (res.is_cancel_caf && af->caf_state == CAF_SEARCHING) {
 		pthread_mutex_lock(&af->af_work_lock);
 		af->need_re_trigger = 1;
-		AF_STOP(af->af_alg_cxt, af->algo_mode);
+		AF_STOP(af->af_alg_cxt);
 		AF_Process_Frame(af->af_alg_cxt);
 		pthread_mutex_unlock(&af->af_work_lock);
 		do_start_af(af);
@@ -1855,7 +1857,7 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 static void saf_stop(af_ctrl_t * af)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt, af->algo_mode);
+	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 }
@@ -2526,7 +2528,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 
 	case AF_DATA_IMG_BLK:{
-				caf_monitor_process(af);
+			caf_monitor_process(af);
 			break;
 		}
 	default:{
@@ -2707,7 +2709,8 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_AF_BYPASS:
-		af->bypass = *(cmr_u32 *) param0;
+		if (NULL != param0)
+			af->bypass = *(cmr_u32 *) param0;
 		break;
 
 	case AF_CMD_SET_DEFAULT_AF_WIN:
@@ -2817,7 +2820,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 						caf_stop(af);	//maybe we need reset trigger
 					} else if (STATE_FAF == af->state) {
 						pthread_mutex_lock(&af->af_work_lock);
-						AF_STOP(af->af_alg_cxt, af->algo_mode);
+						AF_STOP(af->af_alg_cxt);
 						AF_Process_Frame(af->af_alg_cxt);
 						pthread_mutex_unlock(&af->af_work_lock);
 					}
@@ -2855,11 +2858,10 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 	case AF_CMD_GET_AF_FULLSCAN_INFO:{
 			cmr_u32 i = 0;
 			struct isp_af_fullscan_info *af_fullscan_info = (struct isp_af_fullscan_info *)param0;
-
-			while (i < sizeof(af->win_peak_pos) / sizeof(af->win_peak_pos[0])) {
-				af->win_peak_pos[i] = AF_Get_peak_pos(af->af_alg_cxt, i);
-				i++;
-			}
+			Bokeh_Result result;
+			result.win_peak_pos_num = sizeof(af->win_peak_pos) / sizeof(af->win_peak_pos[0]);
+			result.win_peak_pos = af->win_peak_pos;
+			AF_Get_Bokeh_result(af->af_alg_cxt, &result);
 			if (NULL != af_fullscan_info) {
 				af_fullscan_info->row_num = 3;
 				af_fullscan_info->column_num = 3;
@@ -2867,6 +2869,11 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 				af_fullscan_info->vcm_dac_low_bound = af->bokeh_param.vcm_dac_low_bound;
 				af_fullscan_info->vcm_dac_up_bound = af->bokeh_param.vcm_dac_up_bound;
 				af_fullscan_info->boundary_ratio = af->bokeh_param.boundary_ratio;
+
+				af_fullscan_info->af_peak_pos = result.af_peak_pos;
+				af_fullscan_info->near_peak_pos = result.near_peak_pos;
+				af_fullscan_info->far_peak_pos = result.far_peak_pos;
+				af_fullscan_info->distance_reminder = result.distance_reminder;
 			}
 
 			break;

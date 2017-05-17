@@ -49,7 +49,8 @@ enum afv1_err_type {
 enum _lock_block {
 	LOCK_AE = 0x01,
 	LOCK_LSC = 0x02,
-	LOCK_NLM = 0x04
+	LOCK_NLM = 0x04,
+	LOCK_AWB = 0x08,
 };
 
 enum af_state {
