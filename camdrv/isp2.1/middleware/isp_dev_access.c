@@ -587,6 +587,18 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 	case ISP_DEV_SET_AE_SHIFT:
 		rtn = isp_u_raw_aem_shift(cxt->isp_driver_handle, param0);
 		break;
+	case ISP_DEV_SET_AF_WORK_MODE:
+		rtn = isp_u_raw_afm_mode(cxt->isp_driver_handle, *(cmr_u32 *)param0);
+		break;
+	case ISP_DEV_SET_AF_SKIP_NUM:
+		rtn = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)param0);
+		break;
+	case ISP_DEV_SET_AF_IIR_CFG:
+		rtn = isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_AF_MODULES_CFG:
+		rtn = isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, param0);
+		break;
 	default:
 		break;
 	}

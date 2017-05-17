@@ -97,6 +97,7 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_CFA_BASE = 0x0900,
 	ISP_PM_BLK_CFA,
 	ISP_PM_BLK_CFA_BYPASS,
+	ISP_PM_BLK_CFA_CFG,
 
 	//for cmc
 	ISP_PM_BLK_CMC_BASE = 0x0A00,

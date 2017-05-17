@@ -29,7 +29,7 @@
 #include "isp_ioctrl.h"
 #include "isp_param_file_update.h"
 #include "pdaf_ctrl.h"
-
+#include "af_sprd_adpt_v1.h"
 #include <dlfcn.h>
 
 cmr_u32 isp_cur_bv;
@@ -300,6 +300,21 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		break;
 	case ISP_AF_GET_MONITOR_WIN_NUM:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, param0, param1);
+		break;
+	case AFM_OP_BYPASS:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, param0, param1);
+		break;
+	case AFM_OP_SKIP_NUM:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, param0, param1);
+		break;
+	case AFM_OP_MODE:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, param0, param1);
+		break;
+	case AFM_OP_IIR_NR_CFG:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, param0, param1);
+		break;
+	case AFM_OP_MODULES_CFG:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, param0, param1);
 		break;
 	default:
 		break;
@@ -1208,6 +1223,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_u32 u_addr = 0;
 	cmr_s32 i = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
+	struct pdaf_ctrl_param_out pdaf_param_out;
 	struct isp_statis_buf_input statis_buf;
 	UNUSED(data_type);
 
@@ -1218,17 +1234,18 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 
-	cmr_u32 pdaf_temp[30];
-	for (i = 0; i < 30; i++) {
-		pdaf_temp[i] = *((cmr_u32 *) u_addr + i);
-	}
-
-	pdaf_param_in.dBv = pdaf_temp[0];
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 
 	pdaf_param_in.u_addr = u_addr;
-	if (cxt->ops.pdaf_ops.process)
-		rtn = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+
+	if (cxt->ops.pdaf_ops.ioctrl)
+		cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
+
+	ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
+	if (!pdaf_param_out.is_busy) {
+		if (cxt->ops.pdaf_ops.process)
+			rtn = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+	}
 
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
@@ -1818,6 +1835,9 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
 
+	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
+		return rtn;
+
 	memset((void *)&af_input, 0, sizeof(af_input));
 	memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
 	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
@@ -1865,7 +1885,10 @@ static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
 	pdaf_input.pd_info = input_ptr->pdaf_info;
 	pdaf_input.sensor_max_size = input_ptr->sensor_max_size;
-	pdaf_input.pdaf_otp = &(input_ptr->otp_data->single_otp.pdaf_info);
+	if (1 == cxt->pdaf_cxt.pdaf_support) {
+		pdaf_input.pdaf_otp.otp_data= (void *)input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_addr;
+		pdaf_input.pdaf_otp.size= input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_size;
+	}
 
 	if (cxt->ops.pdaf_ops.init)
 		rtn = cxt->ops.pdaf_ops.init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
@@ -2229,6 +2252,10 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.pdaf_ops.deinit)
+		cxt->ops.pdaf_ops.deinit(&cxt->pdaf_cxt.handle);
+
 	if (cxt->ops.af_ops.deinit)
 		cxt->ops.af_ops.deinit(&cxt->af_cxt.handle);
 
@@ -2246,9 +2273,6 @@ static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.afl_ops.deinit)
 		cxt->ops.afl_ops.deinit(&cxt->afl_cxt.handle);
-
-	if (cxt->ops.pdaf_ops.deinit)
-		cxt->ops.pdaf_ops.deinit(&cxt->pdaf_cxt.handle);
 
 	ISP_LOGI("done");
 	return ISP_SUCCESS;
@@ -2868,7 +2892,7 @@ static cmr_int isp_update_alsc_param(cmr_handle isp_alg_handle)
     cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
     struct alsc_ver_info lsc_ver = { 0 };
     	if (cxt->ops.lsc_ops.ioctrl)
-		rtn = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
+			rtn = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("isp_update_alsc_param fail to Get ALSC ver info!");
 	}
@@ -2954,6 +2978,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size org_size;
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
@@ -3010,6 +3036,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 	if (SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
 		if ((mode != cxt->commn_cxt.isp_mode) && (org_size.w != cxt->commn_cxt.src.w)) {
+			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+			io_pm_input.param_data_ptr = &pm_param;
+			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			cxt->commn_cxt.isp_mode = mode;
 			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
@@ -3022,6 +3052,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			cxt->commn_cxt.mode_flag = mode;
 		}
 		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
+			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+			io_pm_input.param_data_ptr = &pm_param;
+			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
 			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
@@ -3143,6 +3177,8 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_size org_size;
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");
@@ -3193,6 +3229,10 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	ISP_RETURN_IF_FAIL(rtn, ("fail to get isp_mode"));
 
 	if (org_size.w != cxt->commn_cxt.src.w) {
+		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+		pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+		io_pm_input.param_data_ptr = &pm_param;
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		cxt->commn_cxt.isp_mode = mode;
 		cxt->commn_cxt.mode_flag = mode;
 		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
