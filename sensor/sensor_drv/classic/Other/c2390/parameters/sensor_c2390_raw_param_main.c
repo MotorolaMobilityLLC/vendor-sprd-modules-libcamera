@@ -89,8 +89,8 @@ static struct sensor_version_info s_c2390_version_info=
 	{
 		{
 			0x39333263,
-			0x00000030,
-			0x00000000,
+			0x64353530,
+			0x006C6175,
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -102,7 +102,6 @@ static struct sensor_version_info s_c2390_version_info=
 	0x00000000,
 	0x00000000,
 	0x00000000,
-
 	0x00000000,
 	0x00000000,
 	0x00000000,

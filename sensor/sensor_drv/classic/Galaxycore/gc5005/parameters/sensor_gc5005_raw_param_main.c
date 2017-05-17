@@ -103,8 +103,8 @@ static struct sensor_version_info s_gc5005_version_info=
 	0x00070005,
 	{
 		{
-			0x32786D69,
-			0x00003835,
+			0x30356367,
+			0x00003530,
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -117,7 +117,6 @@ static struct sensor_version_info s_gc5005_version_info=
 	0x00000000,
 	0x00000000,
 	0x00000000,
-
 	0x00000000,
 	0x00000000,
 	0x00000000,
