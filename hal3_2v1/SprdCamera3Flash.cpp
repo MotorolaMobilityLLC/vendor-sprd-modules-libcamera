@@ -121,6 +121,7 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     }
     if (mode) {
         m_flashOn[0] = SPRD_FLASH_STATUS_ON;
+        wr_ret = write(fd, SPRD_FLASH_CFG_CURRENT, 6);
         wr_ret = write(fd, SPRD_FLASH_CMD_ON, 4);
     } else {
         m_flashOn[0] = SPRD_FLASH_STATUS_OFF;

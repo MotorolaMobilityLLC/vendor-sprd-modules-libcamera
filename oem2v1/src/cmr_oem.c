@@ -6288,6 +6288,19 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             // cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
             // SENSOR_EXIF_CTRL_FLASH, 0);
         }
+        /*cfg torch value*/
+        if(param_ptr->cmd_value == FLASH_TORCH) {
+            struct sprd_flash_cfg_param cfg;
+            cfg.real_cell.type = FLASH_TYPE_TORCH;
+            cfg.real_cell.count = 1;
+            cfg.real_cell.led_idx = 0x01;/*main*/
+            cfg.real_cell.element[0].index = 0x06;
+            cfg.real_cell.element[0].val = 0;
+            cfg.io_id = FLASH_IOID_SET_CHARGE;
+            cfg.flash_idx = cxt->camera_id;
+            ret = cmr_grab_cfg_flash(grab_handle, &cfg);
+        }
+        /*open torch*/
         flash_opt.led0_enable = 1;
         flash_opt.led1_enable = 1;
         flash_opt.flash_mode = param_ptr->cmd_value;
