@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+
 /************************************************************************/
+
 
 //#ifdef WIN32
 
@@ -23,6 +25,8 @@
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
+
+
 
 /* Begin Include */
 #include "sensor_s5k5e8yx_raw_param_common.c"
@@ -34,115 +38,168 @@
 
 //#endif
 
+
 /************************************************************************/
+
 
 /* IspToolVersion=1.15.46.2 */
 
+
 /* Capture Sizes:
-        2592x1944
+	2592x1944
 */
 
-/************************************************************************/
-
-static struct sensor_raw_resolution_info_tab s_s5k5e8yx_trim_info = {
-    0x00,
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}};
 
 /************************************************************************/
 
-static struct sensor_raw_ioctrl s_s5k5e8yx_ioctrl = {0, 0, 0, 0, 0, 0, 0, 0,
-                                                     0, 0, 0, 0, 0, 0, 0, 0};
+
+static struct sensor_raw_resolution_info_tab s_s5k5e8yx_trim_info=
+{
+	0x00,
+	{
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+	}
+};
+
 
 /************************************************************************/
 
-static struct sensor_version_info s_s5k5e8yx_version_info = {
-    0x00070005,
-    {{0x356B3573, 0x78793865, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-      0x00000000, 0x00000000}},
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000};
+
+static struct sensor_raw_ioctrl s_s5k5e8yx_ioctrl=
+{
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
 
 /************************************************************************/
 
-static uint32_t s_s5k5e8yx_libuse_info[] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000};
+
+static struct sensor_version_info s_s5k5e8yx_version_info=
+{
+	0x00070005,
+	{
+		{
+			0x356B3573,
+			0x78793865,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000
+		}
+	},
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000
+};
+
 
 /************************************************************************/
 
-static struct sensor_raw_info s_s5k5e8yx_mipi_raw_info = {
-    &s_s5k5e8yx_version_info,
-    {
-        {s_s5k5e8yx_tune_info_common, sizeof(s_s5k5e8yx_tune_info_common)},
-        {s_s5k5e8yx_tune_info_prv_0, sizeof(s_s5k5e8yx_tune_info_prv_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_s5k5e8yx_tune_info_cap_0, sizeof(s_s5k5e8yx_tune_info_cap_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_s5k5e8yx_tune_info_video_0, sizeof(s_s5k5e8yx_tune_info_video_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-    },
-    &s_s5k5e8yx_trim_info,
-    &s_s5k5e8yx_ioctrl,
-    (struct sensor_libuse_info *)s_s5k5e8yx_libuse_info,
-    {
-        &s_s5k5e8yx_fix_info_common, &s_s5k5e8yx_fix_info_prv_0, NULL, NULL,
-        NULL, &s_s5k5e8yx_fix_info_cap_0, NULL, NULL, NULL,
-        &s_s5k5e8yx_fix_info_video_0, NULL, NULL, NULL,
-    },
-    {
-        {s_s5k5e8yx_common_tool_ui_input,
-         sizeof(s_s5k5e8yx_common_tool_ui_input)},
-        {s_s5k5e8yx_prv_0_tool_ui_input,
-         sizeof(s_s5k5e8yx_prv_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_s5k5e8yx_cap_0_tool_ui_input,
-         sizeof(s_s5k5e8yx_cap_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_s5k5e8yx_video_0_tool_ui_input,
-         sizeof(s_s5k5e8yx_video_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-    },
-    {
-        &s_s5k5e8yx_nr_scene_map_param, &s_s5k5e8yx_nr_level_number_map_param,
-        &s_s5k5e8yx_default_nr_level_map_param,
-    },
+
+static uint32_t s_s5k5e8yx_libuse_info[]=
+{
+    0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
+};
+
+
+/************************************************************************/
+
+
+static struct sensor_raw_info s_s5k5e8yx_mipi_raw_info=
+{
+	&s_s5k5e8yx_version_info,
+	{
+		{s_s5k5e8yx_tune_info_common, sizeof(s_s5k5e8yx_tune_info_common)},
+		{s_s5k5e8yx_tune_info_prv_0, sizeof(s_s5k5e8yx_tune_info_prv_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_s5k5e8yx_tune_info_cap_0, sizeof(s_s5k5e8yx_tune_info_cap_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_s5k5e8yx_tune_info_video_0, sizeof(s_s5k5e8yx_tune_info_video_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+	},
+	&s_s5k5e8yx_trim_info,
+	&s_s5k5e8yx_ioctrl,
+	(struct sensor_libuse_info *)s_s5k5e8yx_libuse_info,
+	{
+		&s_s5k5e8yx_fix_info_common,
+		&s_s5k5e8yx_fix_info_prv_0,
+		NULL,
+		NULL,
+		NULL,
+		&s_s5k5e8yx_fix_info_cap_0,
+		NULL,
+		NULL,
+		NULL,
+		&s_s5k5e8yx_fix_info_video_0,
+		NULL,
+		NULL,
+		NULL,
+	},
+	{
+		{s_s5k5e8yx_common_tool_ui_input, sizeof(s_s5k5e8yx_common_tool_ui_input)},
+		{s_s5k5e8yx_prv_0_tool_ui_input, sizeof(s_s5k5e8yx_prv_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_s5k5e8yx_cap_0_tool_ui_input, sizeof(s_s5k5e8yx_cap_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_s5k5e8yx_video_0_tool_ui_input, sizeof(s_s5k5e8yx_video_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+	},
+	{
+		&s_s5k5e8yx_nr_scene_map_param,
+		&s_s5k5e8yx_nr_level_number_map_param,
+		&s_s5k5e8yx_default_nr_level_map_param,
+	},
 };
