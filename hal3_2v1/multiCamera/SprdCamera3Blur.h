@@ -56,6 +56,7 @@ namespace sprdcamera {
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
+#define BLUR_LIB_BOKEH_CAPTURE2 "libBokeh2Frames.so"
 #define BLUR_LIB_BOKEH_NUM (2)
 #define BLUR_REFOCUS_COMMON_PARAM_NUM (18)
 #define BLUR_REFOCUS_2_PARAM_NUM (17)
@@ -66,10 +67,18 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM_NUM                                                 \
     (BLUR_AF_WINDOW_NUM + BLUR_REFOCUS_2_PARAM_NUM +                           \
      BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_MAX_ROI * 5 + BLUR_CALI_SEQ_LEN)
+#define BLUR_REFOCUS_PARAM2_NUM (8)
 
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
 #define BLUR_CIRCLE_VALUE_MIN (20)
+
+typedef struct {
+    unsigned int af_peak_pos;
+    unsigned int near_peak_pos;
+    unsigned int far_peak_pos;
+    unsigned int distance_reminder;
+} blur_isp_info_t;
 
 typedef struct {
     uint32_t frame_number;
@@ -114,7 +123,7 @@ typedef struct {
     int valid_roi;
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
-    int flag[BLUR_MAX_ROI]; // 0:face 1:body
+    int flag[BLUR_MAX_ROI];                 // 0:face 1:body
 } preview_weight_params_t;
 
 typedef struct {
@@ -167,7 +176,7 @@ typedef struct {
     int valid_roi;
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
-    int flag[BLUR_MAX_ROI]; // 0:face 1:body
+    int flag[BLUR_MAX_ROI];                 // 0:face 1:body
 } capture_weight_params_t;
 
 typedef struct {
@@ -185,6 +194,42 @@ typedef struct {
                             unsigned char *Output_YUV);
     void *mHandle;
 } BlurAPI_t;
+
+typedef struct {
+    uint8_t fir_mode;
+    int8_t *hfir_coeff;
+    int8_t *vfir_coeff;
+    uint8_t fir_len;
+    uint8_t fir_channel;
+    uint8_t fir_cal_mode;
+    uint8_t smooth_thr;
+    int8_t fir_edge_factor;
+    uint8_t depth_mode;
+    uint8_t scale_factor;
+    uint8_t touch_factor;
+    uint8_t refer_len;
+    uint8_t merge_factor;
+} capture2_init_params_t;
+
+typedef struct {
+    int f_number;         // 1 ~ 20
+    unsigned short sel_x; /* The point which be touched */
+    unsigned short sel_y; /* The point which be touched */
+} capture2_weight_params_t;
+
+typedef struct {
+    void *handle;
+    int (*BokehFrames_VersionInfo_Get)(char a_acOutRetbuf[256],
+                                       unsigned int a_udInSize);
+    int (*BokehFrames_Init)(void **handle, int width, int height,
+                            capture2_init_params_t *params);
+    int (*BokehFrames_WeightMap)(void *img0_src, void *img1_src, void *dis_map,
+                                 void *handle);
+    int (*Bokeh2Frames_Process)(void *img0_src, void *img_rslt, void *dis_map,
+                                void *handle, capture2_weight_params_t *params);
+    int (*BokehFrames_Deinit)(void *handle);
+    void *mHandle;
+} BlurAPI2_t;
 
 class SprdCamera3Blur : SprdCamera3MultiBase {
   public:
@@ -232,9 +277,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
     camera3_stream_t *mSavedReqStreams[BLUR_MAX_NUM_STREAMS];
     int mPreviewStreamsNum;
     Mutex mRequestLock;
-    bool mIsCapturing;
     int mjpegSize;
-    bool mIsWaitSnapYuv;
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
@@ -263,7 +306,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
         void saveCaptureBlurParams(buffer_handle_t *mSavedResultBuff,
                                    buffer_handle_t *buffer);
         uint8_t getIspAfFullscanInfo();
-        int blurHandle(struct private_handle_t *input,
+        int blurHandle(struct private_handle_t *input1, void *input2,
                        struct private_handle_t *output);
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
@@ -277,8 +320,8 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
         camera_metadata_t *mSavedCapReqsettings;
         camera3_stream_t mMainStreams[BLUR_MAX_NUM_STREAMS];
         uint8_t mCaptureStreamsNum;
-        bool mReprocessing;
         BlurAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
+        BlurAPI2_t *mBlurApi2;
         int mLastMinScope;
         int mLastMaxScope;
         int mLastAdjustRati;
@@ -292,12 +335,17 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
         preview_weight_params_t mPreviewWeightParams;
         capture_init_params_t mCaptureInitParams;
         capture_weight_params_t mCaptureWeightParams;
+        capture2_init_params_t mCapture2InitParams;
+        capture2_weight_params_t mCapture2WeightParams;
         int32_t mFaceInfo[4];
         uint32_t mRotation;
         int32_t mLastTouchX;
         int32_t mLastTouchY;
         bool mBlurBody;
         bool mUpdataTouch;
+        int mVersion;
+        blur_isp_info_t mIspInfo;
+        void *srcYuv1;
 
       private:
         void waitMsgAvailable();

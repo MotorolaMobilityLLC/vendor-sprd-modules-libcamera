@@ -227,7 +227,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0),
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
-      mParameters(), mPreviewHeight_trimy(0), mPreviewWidth_trimx(0),
+      mIsUnpopped(false), mIsBlur2Zsl(false), mParameters(),
+      mPreviewHeight_trimy(0), mPreviewWidth_trimx(0),
       mPreviewFormat(CAMERA_DATA_FORMAT_YUV422), mPictureFormat(1),
       mPreviewStartFlag(0), mIsDvPreview(0), mIsStoppingPreview(0),
       mRecordingMode(0), mIsSetCaptureMode(false), mRecordingFirstFrameTime(0),
@@ -255,11 +256,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
       m_pPowerModule(NULL), mHDRPowerHint(0), mHDRPowerHintFlag(0),
-      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
-      mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
-      mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
-      mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
-      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
+      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
+      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
+      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
+      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
+      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
       mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0)
 
@@ -1372,6 +1373,26 @@ int SprdCamera3OEMIf::getCoveredValue(uint32_t *value) {
     return ret;
 }
 
+int SprdCamera3OEMIf::setAfPos(uint32_t value) {
+    int32_t ret = 0;
+
+    HAL_LOGD("E");
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_POS,
+                                      &value);
+
+    return ret;
+}
+
+int SprdCamera3OEMIf::set3AbyPass(uint32_t value) {
+    int32_t ret = 0;
+
+    HAL_LOGD("E");
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                      CAMERA_IOCTRL_SET_3A_BYPASS, &value);
+
+    return ret;
+}
+
 bool SprdCamera3OEMIf::isNeedAfFullscan() {
     bool ret = false;
     char prop[PROPERTY_VALUE_MAX] = {
@@ -1385,20 +1406,25 @@ bool SprdCamera3OEMIf::isNeedAfFullscan() {
     } else {
         property_get("persist.sys.cam.ba.blur.version", prop, "0");
     }
-    if (2 == atoi(prop)) {
+    if (2 <= atoi(prop)) {
         ret = true;
     }
     return ret;
 }
 
 int SprdCamera3OEMIf::getIspAfFullscanInfo(
-    struct isp_af_fullscan_info *af_fullscan_info) {
+    struct isp_af_fullscan_info *af_fullscan_info, int version) {
     int32_t ret = 0;
 
-    HAL_LOGI("E");
     ret = mHalOem->ops->camera_ioctrl(
         mCameraHandle, CAMERA_IOCTRL_GET_FULLSCAN_INFO, af_fullscan_info);
 
+    if (version == 3 && af_fullscan_info->distance_reminder != 1) {
+        mIsBlur2Zsl = true;
+    } else {
+        mIsBlur2Zsl = false;
+    }
+    HAL_LOGI("E mIsBlur2Zsl:%d", mIsBlur2Zsl);
     return ret;
 }
 
@@ -3947,10 +3973,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
 
 #ifdef CONFIG_CAMERA_EIS
-                    HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
-                    if (sprddefInfo.sprd_eis_enabled) {
-                        EisVideoFrameStab(frame);
-                    }
+            HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+            if (sprddefInfo.sprd_eis_enabled) {
+                EisVideoFrameStab(frame);
+            }
 #endif
             if (mMultiCameraMode == MODE_3D_VIDEO) {
                 mSlowPara.rec_timestamp = buffer_timestamp;
@@ -4000,10 +4026,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
 
 #ifdef CONFIG_CAMERA_EIS
-                    HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
-                    if (mRecordingMode && sprddefInfo.sprd_eis_enabled) {
-                        EisPreviewFrameStab(frame);
-                    }
+            HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+            if (mRecordingMode && sprddefInfo.sprd_eis_enabled) {
+                EisPreviewFrameStab(frame);
+            }
 #endif
 
 #ifdef CONFIG_VIDEO_COPY_PREVIEW
@@ -8212,8 +8238,16 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             usleep(20 * 1000);
             continue;
         }
-
-        if (mZslSnapshotTime > zsl_frame.timestamp) {
+        if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
+            if (mZslSnapshotTime > zsl_frame.timestamp ||
+                ((mZslSnapshotTime < zsl_frame.timestamp) &&
+                 (((zsl_frame.timestamp - mZslSnapshotTime) / 1000000) < 40))) {
+                mHalOem->ops->camera_set_zsl_buffer(
+                    obj->mCameraHandle, zsl_frame.y_phy_addr,
+                    zsl_frame.y_vir_addr, zsl_frame.fd);
+                continue;
+            }
+        } else if (mZslSnapshotTime > zsl_frame.timestamp) {
             diff_ms = (mZslSnapshotTime - zsl_frame.timestamp) / 1000000;
             HAL_LOGD("diff_ms=%lld", diff_ms);
             if (diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
@@ -8843,7 +8877,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 
     if (!obj) {
         HAL_LOGE("obj null  error");
-        //sem_post(&obj->mGyro_sem);
+        // sem_post(&obj->mGyro_sem);
         return NULL;
     }
 
@@ -8872,7 +8906,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     if (q == NULL) {
         HAL_LOGE("createEventQueue error");
         sem_post(&obj->mGyro_sem);
-         obj->mGyroExit = 1;
+        obj->mGyroExit = 1;
         return NULL;
     }
     const int fd = q->getFd();

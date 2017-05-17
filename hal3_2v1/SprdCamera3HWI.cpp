@@ -1064,7 +1064,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mPictureRequest = true;
         }
 
-        if (capturePara.sprd_zsl_enabled == true) {
+        if (capturePara.sprd_zsl_enabled == true ||
+            mMultiCameraMode == MODE_BLUR) {
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT,
                                    mFrameNum);
             mPictureRequest = true;
@@ -1528,7 +1529,10 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         } else if (i->frame_number > frame_number) {
             /**add for 3d capture reprocessing begin   */
             HAL_LOGV("result stream format =%d", result_info->stream->format);
-            if (HAL_PIXEL_FORMAT_BLOB == result_info->stream->format) {
+            if (HAL_PIXEL_FORMAT_BLOB == result_info->stream->format ||
+                (HAL_PIXEL_FORMAT_YCbCr_420_888 ==
+                     result_info->stream->format &&
+                 mMultiCameraMode == MODE_BLUR)) {
                 HAL_LOGI("capture result, continue search");
                 i++;
                 continue;
@@ -1918,12 +1922,25 @@ int SprdCamera3HWI::getCoveredValue(uint32_t *value) {
 
     return rc;
 }
+int SprdCamera3HWI::setAfPos(uint32_t value) {
+    int rc = 0;
+    rc = mOEMIf->setAfPos(value);
+
+    return rc;
+}
+
+int SprdCamera3HWI::set3AbyPass(uint32_t value) {
+    int rc = 0;
+    rc = mOEMIf->set3AbyPass(value);
+
+    return rc;
+}
 
 int SprdCamera3HWI::getIspAfFullscanInfo(
-    struct isp_af_fullscan_info *af_fullscan_info) {
+    struct isp_af_fullscan_info *af_fullscan_info, int version) {
     int rc = 0;
 
-    rc = mOEMIf->getIspAfFullscanInfo(af_fullscan_info);
+    rc = mOEMIf->getIspAfFullscanInfo(af_fullscan_info, version);
 
     return rc;
 }

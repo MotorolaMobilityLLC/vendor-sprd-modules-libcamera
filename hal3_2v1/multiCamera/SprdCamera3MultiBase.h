@@ -50,8 +50,16 @@
 
 namespace sprdcamera {
 
+typedef enum {
+    PREVIEW_REQUEST_STATE = 0,
+    WAIT_FIRST_YUV_STATE,  // wait first yuv frame
+    WAIT_SECOND_YUV_STATE, // wait second yuv frame
+    REPROCESS_STATE,       // encode yuv to jpeg
+} request_state;
+
 class SprdCamera3MultiBase {
   public:
+    request_state mReqState;
     SprdCamera3MultiBase();
     virtual ~SprdCamera3MultiBase();
 
@@ -68,7 +76,7 @@ class SprdCamera3MultiBase {
     virtual int getStreamType(camera3_stream_t *new_stream);
     virtual void dumpFps();
     virtual void dumpData(unsigned char *addr, int type, int size, int param1,
-                          int param2);
+                          int param2, int param3, int param4);
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
                                hwi_frame_buffer_info_t *result2);
@@ -83,6 +91,10 @@ class SprdCamera3MultiBase {
     virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                    int height);
 #endif
+    bool ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
+                   uint16_t a_uwDstHeight, uint8_t *a_ucSrcBuf,
+                   uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                   uint32_t a_udFileSize);
 
   private:
     bool mIommuEnabled;

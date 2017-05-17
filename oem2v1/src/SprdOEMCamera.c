@@ -1063,6 +1063,14 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                       (struct isp_af_fullscan_info *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_AF_POS: {
+        ret = cmr_set_af_pos(handle, *(uint32_t *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_SET_3A_BYPASS: {
+        ret = cmr_set_3a_bypass(handle, *(uint32_t *)param);
+        break;
+    }
     default:
         break;
     }

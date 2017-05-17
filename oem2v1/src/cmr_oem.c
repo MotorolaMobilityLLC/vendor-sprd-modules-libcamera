@@ -6292,11 +6292,11 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             // SENSOR_EXIF_CTRL_FLASH, 0);
         }
         /*cfg torch value*/
-        if(param_ptr->cmd_value == FLASH_TORCH) {
+        if (param_ptr->cmd_value == FLASH_TORCH) {
             struct sprd_flash_cfg_param cfg;
             cfg.real_cell.type = FLASH_TYPE_TORCH;
             cfg.real_cell.count = 1;
-            cfg.real_cell.led_idx = 0x01;/*main*/
+            cfg.real_cell.led_idx = 0x01; /*main*/
             cfg.real_cell.element[0].index = 0x06;
             cfg.real_cell.element[0].val = 0;
             cfg.io_id = FLASH_IOID_SET_CHARGE;
@@ -9817,5 +9817,38 @@ cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
     ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_FULLSCAN_INFO,
                     isp_param_ptr);
 
+    return ret;
+}
+
+cmr_int cmr_set_af_pos(cmr_handle oem_handle, cmr_u32 af_pos) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CMR_LOGI("E af_pos =%d", af_pos);
+
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AF_POS,
+                    (void *)&af_pos);
+
+    return ret;
+}
+
+cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CMR_LOGI("E af_pos =%d", value);
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AF_BYPASS,
+                    (void *)&value);
+    if (value == 1) {
+        cmr_u32 ae = 2;
+        cmr_u32 awb = 3;
+        ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
+                        (void *)&ae);
+        ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
+                        (void *)&awb);
+    } else {
+        ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
+                        (void *)&value);
+    }
     return ret;
 }

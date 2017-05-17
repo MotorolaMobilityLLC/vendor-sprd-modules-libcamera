@@ -218,7 +218,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int setSensorStream(uint32_t on_off);
     int autoFocusToFaceFocus();
     bool isNeedAfFullscan();
-    int getIspAfFullscanInfo(struct isp_af_fullscan_info *af_fullscan_info);
+    int getIspAfFullscanInfo(struct isp_af_fullscan_info *af_fullscan_info,
+                             int version);
+    int setAfPos(uint32_t value);
+    int set3AbyPass(uint32_t value);
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);
@@ -519,6 +522,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSprdReprocessing;         /**add for 3d capture */
     uint64_t mNeededTimestamp;      /**add for 3d capture */
     bool mIsUnpopped; /**add for 3dcapture, record unpoped zsl buffer*/
+    bool mIsBlur2Zsl; /**add for blur2 capture */
 
     void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char *tmpbuf);
 

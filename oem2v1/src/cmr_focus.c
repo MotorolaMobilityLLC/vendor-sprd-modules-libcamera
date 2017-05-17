@@ -1523,7 +1523,7 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
             } else {
                 property_get("persist.sys.cam.ba.blur.version", prop, "0");
             }
-            if (2 == atoi(prop)) {
+            if (2 <= atoi(prop)) {
                 property_get("persist.sys.cam.blur.af.timeout", prop, "3");
                 ts.tv_sec += atoi(prop);
             } else {

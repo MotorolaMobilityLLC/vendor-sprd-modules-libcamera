@@ -429,6 +429,8 @@ cmr_int camera_local_get_cover(cmr_handle cmr_handle, cmr_u32 *cover_value);
 cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
 cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
                                 struct isp_af_fullscan_info *af_fullscan_info);
+cmr_int cmr_set_af_pos(cmr_handle oem_handle, cmr_u32 af_pos);
+cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value);
 
 #ifdef __cplusplus
 }

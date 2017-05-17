@@ -318,15 +318,15 @@ void SprdCamera3MultiBase::dumpFps() {
 }
 
 void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
-                                    int param1, int param2) {
+                                    int param1, int param2, int param3,
+                                    int param4) {
     HAL_LOGD(" E %p %d %d %d %d", addr, type, size, param1, param2);
     char name[128];
     FILE *fp = NULL;
     switch (type) {
-    case 1:
-    case 2: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%d_%d_%d.yuv",
-                 param1, param2, type);
+    case 1: {
+        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%d.yuv",
+                 param1, param2, param3, param4);
         fp = fopen(name, "w");
         if (fp == NULL) {
             HAL_LOGE("open yuv file fail!\n");
@@ -335,9 +335,9 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fwrite((void *)addr, 1, size, fp);
         fclose(fp);
     } break;
-    case 3: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%d_%d_%d.jpg",
-                 param1, param2, type);
+    case 2: {
+        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%d.jpg",
+                 param1, param2, param3, param4);
         fp = fopen(name, "wb");
         if (fp == NULL) {
             HAL_LOGE("can not open file: %s \n", name);
@@ -346,11 +346,12 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fwrite((void *)addr, 1, size, fp);
         fclose(fp);
     } break;
-    case 4: {
+    case 3: {
         int i = 0;
         int j = 0;
         snprintf(name, sizeof(name),
-                 "/data/misc/cameraserver/refocus_%d_params.txt", size);
+                 "/data/misc/cameraserver/refocus_%d_params_%d.txt", size,
+                 param4);
         fp = fopen(name, "w+");
         if (fp == NULL) {
             HAL_LOGE("open txt file fail!\n");
@@ -486,4 +487,61 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
     }
 }
 #endif
+bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
+                                     uint16_t a_uwDstHeight,
+                                     uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth,
+                                     uint16_t a_uwSrcHeight,
+                                     uint32_t a_udFileSize) {
+    int i, j, x;
+    uint16_t *uwHPos, *uwVPos;
+    float fStep;
+    if (!a_ucSrcBuf || !a_ucDstBuf)
+        return false;
+    if ((a_uwSrcWidth * a_uwSrcHeight * 1.5) > a_udFileSize)
+        return false;
+
+    uwHPos = new uint16_t[a_uwDstWidth];
+    uwVPos = new uint16_t[a_uwDstHeight];
+    if (!uwHPos || !uwVPos) {
+        delete uwHPos;
+        delete uwVPos;
+        return false;
+    }
+    // build sampling array
+    fStep = (float)a_uwSrcWidth / a_uwDstWidth;
+    for (i = 0; i < a_uwDstWidth; i++) {
+        uwHPos[i] = i * fStep;
+    }
+    fStep = (float)a_uwSrcHeight / a_uwDstHeight;
+    for (i = 0; i < a_uwDstHeight; i++) {
+        uwVPos[i] = i * fStep;
+    }
+    // Y resize
+    for (j = 0; j < a_uwDstHeight; j++) {
+        for (i = 0; i < a_uwDstWidth; i++) {
+            x = (uwHPos[i]) + uwVPos[j] * a_uwSrcWidth;
+            if (x >= 0 && x < (a_uwSrcWidth * a_uwSrcHeight)) {
+                // y
+                a_ucDstBuf[j * a_uwDstWidth + i] = a_ucSrcBuf[x];
+            }
+        }
+    }
+    // Cb/Cr Resize
+    a_ucDstBuf = a_ucDstBuf + a_uwDstWidth * a_uwDstHeight;
+    a_ucSrcBuf = a_ucSrcBuf + a_uwSrcWidth * a_uwSrcHeight;
+    for (j = 0; j < a_uwDstHeight / 2; j++) {
+        for (i = 0; i < a_uwDstWidth / 2; i++) {
+            x = (uwHPos[i]) + (uwVPos[j] / 2) * a_uwSrcWidth;
+            if (x >= 0 && x < (a_uwSrcWidth * a_uwSrcHeight / 2 - 1)) { // cbcr
+                a_ucDstBuf[j * a_uwDstWidth + (i * 2) + 0] =
+                    a_ucSrcBuf[x * 2 + 0];
+                a_ucDstBuf[j * a_uwDstWidth + (i * 2) + 1] =
+                    a_ucSrcBuf[x * 2 + 1];
+            }
+        }
+    }
+    delete uwHPos;
+    delete uwVPos;
+    return true;
+}
 };
