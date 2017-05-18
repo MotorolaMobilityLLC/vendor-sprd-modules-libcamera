@@ -124,6 +124,9 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_expline;
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
+	//for quick ae
+	//cmr_s16 qae_low_thr;
+	//cmr_s16 qae_high_thr;
 
 //caliberation for bv match with lv
 	float lv_cali_lv;
