@@ -492,7 +492,6 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 	struct af_result_param af_result;
 	af_result.suc_win = win_num;
 
-	af->inited_af_req = (AFV1_FALSE);
 	af->vcm_stable = 1;
 	if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {
 		sem_post(&af->af_wait_caf);	// should be protected by af_work_lock mutex exclusives
@@ -755,7 +754,7 @@ static cmr_u8 if_binfile_is_exist(cmr_u8 * bisExist, void *cookie)
 
 	char *af_tuning_path = "/data/misc/cameraserver/af_tuning.bin";
 	FILE *fp = NULL;
-	ISP_LOGV("B");
+	ISP_LOGI("Enter");
 	*bisExist = 0;
 	{			// for Bokeh
 		char *bokeh_tuning_path = "/data/misc/cameraserver/bokeh_tuning.bin";
@@ -796,7 +795,7 @@ BOKEH_DEFAULT:
 			af->bokeh_param.move_step = BOKEH_SCAN_STEP;
 		}
 	}
-	ISP_LOGV("E");
+	ISP_LOGI("Exit");
 	return 0;
 }
 
@@ -876,7 +875,6 @@ static void set_vcm_chip_ops(af_ctrl_t * af)
 /* initialization */
 static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_output)
 {
-	// TODO: load from tuning parameters
 	//tuning data from common_mode
 	void *alg_cxt = NULL;
 	af_tuning_block_param af_tuning_data;
@@ -1519,10 +1517,14 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
-	if (res.is_caf_trig || (AFV1_TRUE == af->inited_af_req && CAF_SEARCHING != af->caf_state)) {
+	if ((res.is_caf_trig || AFV1_TRUE == af->force_trigger) && CAF_SEARCHING != af->caf_state) {
+		pthread_mutex_lock(&af->af_work_lock);
 		af->caf_state = CAF_SEARCHING;
 		caf_start_search(af, &res);
-	} else if (res.is_cancel_caf && af->caf_state == CAF_SEARCHING) {
+		af->force_trigger = (AFV1_FALSE);
+		pthread_mutex_unlock(&af->af_work_lock);
+	} else if ((res.is_cancel_caf || (res.is_caf_trig || AFV1_TRUE == af->force_trigger)) && af->caf_state == CAF_SEARCHING) {
+		ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
 		pthread_mutex_lock(&af->af_work_lock);
 		af->need_re_trigger = 1;
 		AF_STOP(af->af_alg_cxt);
@@ -1870,7 +1872,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 
 		AF_Get_Result(af->af_alg_cxt, &res);
 
-		ISP_LOGV("notify_stop");
+		ISP_LOGI("notify_stop");
 		notify_stop(af, HAVE_PEAK == res ? 1 : 0);
 		return 1;
 	} else {
@@ -1881,7 +1883,6 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 // caf stuffs
 static void caf_start(af_ctrl_t * af)
 {
-	enum aft_mode mode;
 	ISP_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 
 	if (STATE_RECORD_CAF == af->state)
@@ -1893,6 +1894,7 @@ static void caf_start(af_ctrl_t * af)
 
 	af->caf_state = CAF_MONITORING;
 
+	enum aft_mode mode;
 	mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
 	trigger_set_mode(af, mode);
 	if (af->request_mode == AF_MODE_CONTINUE || af->request_mode == AF_MODE_VIDEO) {
@@ -1927,12 +1929,10 @@ static void caf_process_frame(af_ctrl_t * af)
 			af->need_re_trigger = 0;
 		}
 		if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
-			ISP_LOGV("notify_stop");
+			ISP_LOGI("notify_stop");
 			notify_stop(af, res);
 			af->caf_state = CAF_MONITORING;
-			if (af->request_mode == AF_MODE_CONTINUE || af->request_mode == AF_MODE_VIDEO) {
-				trigger_start(af);	//trigger reset after caf done
-			}
+			trigger_start(af);	//trigger reset after caf done
 			do_start_af(af);
 		}
 	}
@@ -2001,7 +2001,7 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 		return rtn;
 	}
 
-	ISP_LOGV("af state = %s, caf state = %s, set af_mode = %d", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state), af_mode);
+	ISP_LOGI("af state = %s, caf state = %s, set af_mode = %d", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state), af_mode);
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
 		af->request_mode = af_mode;
@@ -2014,17 +2014,19 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 		af->request_mode = af_mode;
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		caf_start(af);
+		af->force_trigger = AFV1_TRUE;
 		break;
 
 	case AF_MODE_PICTURE:
 		af->takePicture_timeout = 0;
-		if (AF_NOT_FINISHED == AF_is_finished(af->af_alg_cxt)
-		    || af->need_re_trigger || DCAM_AFTER_VCM_NO == compare_timestamp(af)) {
-			af_clear_sem(af);
-			af_wait_caf_finish(af);
-			af->state = STATE_CAF;	// todo : af state should be STATE_NORMAL_AF
-			caf_start(af);	// todo : caf could not be started actually
-		};
+		if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
+			if (AF_NOT_FINISHED == AF_is_finished(af->af_alg_cxt) || af->need_re_trigger || DCAM_AFTER_VCM_NO == compare_timestamp(af)) {
+				af_clear_sem(af);
+				af_wait_caf_finish(af);
+				af->state = STATE_CAF;	// todo : af state should be STATE_NORMAL_AF
+				caf_start(af);	// todo : caf could not be started actually
+			};
+		}
 		ISP_LOGV("dcam_timestamp-vcm_timestamp = %" PRIu64 " ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 		get_vcm_registor_pos(af);
 		break;
@@ -2311,7 +2313,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
-	ISP_LOGI("B");
+	ISP_LOGI("Enter");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	struct isp_alg_fw_context *isp_ctx = NULL;
@@ -2386,12 +2388,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	isp_ctx->af_cxt.log_af = (cmr_u8 *) af->af_alg_cxt;
 	isp_ctx->af_cxt.log_af_size = af->af_dump_info_len;
-	af->test_loop_quit = 1;
 
-	/*
-	   AF process need to do af once when af init done.
-	 */
-	af->inited_af_req = AFV1_TRUE;
+	af->test_loop_quit = 1;
+	af->force_trigger = AFV1_TRUE;	// force do af once after af init done.
 	property_set("af_mode", "none");
 
 	af->afm_tuning.iir_level = 1;
@@ -2400,7 +2399,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->afm_tuning.fv0_e = 5;
 	af->afm_tuning.fv1_e = 5;
 
-	ISP_LOGI("E");
+	ISP_LOGI("Exit");
 	return (cmr_handle) af;
 
 ERROR_INIT:
@@ -2419,7 +2418,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
-	ISP_LOGV("E");
+	ISP_LOGI("Enter");
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
@@ -2446,7 +2445,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	memset(af, 0, sizeof(*af));
 	free(af);
 	af = NULL;
-
+	ISP_LOGI("Exit");
 	return rtn;
 }
 
@@ -2459,8 +2458,10 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
-	cmr_int rtn = AFV1_SUCCESS;
-	cmr_int i = 0;
+	cmr_u32 *af_fv_val = NULL;
+	cmr_u32 afm_skip_num = 0;
+	cmr_s32 rtn = AFV1_SUCCESS;
+	cmr_u8 i = 0;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -2468,10 +2469,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		return AFV1_ERROR;
 	}
 
-	if (NULL == inparam) {
-		ISP_LOGE("fail to get input param");
-		return AFV1_ERROR;
-	} else if (NULL == inparam->data) {
+	if (NULL == inparam || NULL == inparam->data) {
 		ISP_LOGE("fail to get input param data");
 		return AFV1_ERROR;
 	}
@@ -2494,49 +2492,39 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			}
 		}
 	}
-	// ISP_LOGV("state = %s, pre_state = %s, cur mode = %d", STATE_STRING(af->state), STATE_STRING(af->pre_state), af->request_mode);
-/*
-	if (1 != Is_ae_stable(af)) {
-		ISP_LOGV("ae not stable in non caf mode");
-		return 0;
-	}
-*/
 	system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
 	ISP_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 	switch (inparam->data_type) {
-	case AF_DATA_AF:{
-			cmr_u32 *af_fv_val = NULL;
-			cmr_s32 afm_skip_num = 0;
-			af_fv_val = (cmr_u32 *) (inparam->data);
+	case AF_DATA_AF:
+		af_fv_val = (cmr_u32 *) (inparam->data);
 
-			for (i = 0; i < 10; i++) {
-				af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
-				af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
-			}
-			af->afm_skip_num = 0;
-			if (inparam->sensor_fps.is_high_fps) {
-				afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
-				if (afm_skip_num > 0)
-					af->afm_skip_num = afm_skip_num;
-				else
-					af->afm_skip_num = 0;
-				ISP_LOGI("af.skip_num %d", af->afm_skip_num);
-			}
-			af->trigger_source_type |= AF_DATA_AF;
-			break;
+		for (i = 0; i < 10; i++) {
+			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
+			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
 		}
+		af->afm_skip_num = 0;
+		if (inparam->sensor_fps.is_high_fps) {
+			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
+			if (afm_skip_num > 0)
+				af->afm_skip_num = afm_skip_num;
+			else
+				af->afm_skip_num = 0;
+			ISP_LOGI("af.skip_num %d", af->afm_skip_num);
+		}
+		af->trigger_source_type |= AF_DATA_AF;
+		break;
 
-	case AF_DATA_IMG_BLK:{
-			caf_monitor_process(af);
-			break;
-		}
-	default:{
-			ISP_LOGV("unsupport data type! type: %d", inparam->data_type);
-			rtn = AFV1_ERROR;
-			break;
-		}
+	case AF_DATA_IMG_BLK:
+		caf_monitor_process(af);
+		break;
+
+	default:
+		ISP_LOGV("unsupport data type! type: %d", inparam->data_type);
+		rtn = AFV1_ERROR;
+		break;
 	}
+
 	system_time_trigger = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 	ISP_LOGV("SYSTEM_TEST-trigger:%" PRIu64 "", system_time_trigger - system_time0);
 
@@ -2546,7 +2534,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			pthread_mutex_lock(&af->af_work_lock);
 			if (saf_process_frame(af)) {
 				af->state = STATE_IDLE;
-				trigger_start(af);	//reset trigger after saf
+				trigger_start(af);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
 			break;
@@ -2585,10 +2573,12 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 {
 	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	cmr_int rtn = AFV1_SUCCESS;
 	struct isp_video_start *in_ptr = NULL;
 	struct afctrl_cxt *cxt_ptr = NULL;
 	struct isp_alg_fw_context *isp_ctx = NULL;
+	AF_Trigger_Data aft_in;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
+	cmr_int rtn = AFV1_SUCCESS;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -2597,8 +2587,6 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 	}
 	cxt_ptr = (struct afctrl_cxt *)af->caller;
 	isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	AF_Trigger_Data aft_in;
-	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 
 	pthread_mutex_lock(&af->status_lock);
 	ISP_LOGV("cmd is 0x%x", cmd);
@@ -2632,7 +2620,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 
 		break;
 	case AF_CMD_SET_AF_START:{
-			ISP_LOGV("af start state = %s", STATE_STRING(af->state));
+			ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
 			property_set("af_mode", "none");
 			af->test_loop_quit = 1;
 			//win = (struct isp_af_win *)param;
@@ -2690,10 +2678,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_AF_STOP:
-		ISP_LOGV("state = %s", STATE_STRING(af->state));
-		if (((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state))) {
-			af->inited_af_req = AFV1_TRUE;
-		}
+		ISP_LOGI("cancel af state = %s", STATE_STRING(af->state));
 		break;
 
 	case AF_CMD_SET_AF_RESTART:
@@ -2757,8 +2742,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		in_ptr = (struct isp_video_start *)param0;
 		af->isp_info.width = in_ptr->size.w;
 		af->isp_info.height = in_ptr->size.h;
-		ISP_LOGV("isp start af width = %d, height = %d", in_ptr->size.w, in_ptr->size.h);
-		ISP_LOGV("isp start af state = %s", STATE_STRING(af->state));
+		ISP_LOGI("video start af state = %s, width = %d, height = %d", STATE_STRING(af->state), in_ptr->size.w, in_ptr->size.h);
 		//af->state = af->pre_state = STATE_IDLE;
 		property_get("af_mode", AF_MODE, "none");
 		if (0 == strcmp(AF_MODE, "none")) {
@@ -2769,7 +2753,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_ISP_STOP_INFO:
-		ISP_LOGV("isp stop af state = %s", STATE_STRING(af->state));
+		ISP_LOGI("video stop af state = %s", STATE_STRING(af->state));
 		if (STATE_IDLE != af->state)
 			do_stop_af(af);
 
@@ -2777,8 +2761,8 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 
 	case AF_CMD_SET_AE_INFO:{
 			struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)param0;
-			struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)img_blk_info->data;
 			struct ae_out_bv *ae_out = (struct ae_out_bv *)param1;
+			struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)img_blk_info->data;
 			struct ae_calc_out *ae_result = ae_out->ae_result;
 			//ISP_LOGI("isp aem stat= R%d G%d B%d \n", (int)ae_stat_ptr->r_info[495],(int)ae_stat_ptr->g_info[495],(int)ae_stat_ptr->b_info[495]);
 			set_af_RGBY(af, (void *)ae_stat_ptr);
@@ -2835,13 +2819,13 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 			struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
 			if (0 == af_ts->capture) {
 				af->dcam_timestamp = af_ts->timestamp;
-				//ISP_LOGV("dcam_timestamp %lld ms", (cmr_s64) af->dcam_timestamp);
+				//ISP_LOGV("dcam_timestamp %" PRIu64 " ms", (cmr_s64) af->dcam_timestamp);
 				if (DCAM_AFTER_VCM_YES == compare_timestamp(af) && 1 == af->vcm_stable) {
 					sem_post(&af->af_wait_caf);
 				}
 			} else if (1 == af_ts->capture) {
 				af->takepic_timestamp = af_ts->timestamp;
-				//ISP_LOGV("takepic_timestamp %lld ms", (cmr_s64) af->takepic_timestamp);
+				//ISP_LOGV("takepic_timestamp %" PRIu64 " ms", (cmr_s64) af->takepic_timestamp);
 				ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 			}
 			break;
