@@ -3179,6 +3179,7 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	struct isp_size org_size;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
+	struct isp_video_start param;
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");
@@ -3225,7 +3226,9 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	rtn = isp_dev_set_interface(interface_ptr_v1);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to set param"));
 
-	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, in_ptr, &mode);
+	param.work_mode = 1;
+	param.size.w = cxt->commn_cxt.src.w;
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, &param, &mode);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to get isp_mode"));
 
 	if (org_size.w != cxt->commn_cxt.src.w) {
