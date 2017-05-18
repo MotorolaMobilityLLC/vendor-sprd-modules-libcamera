@@ -2444,11 +2444,12 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
          (parm->ctrl_flash.flash_type == FLASH_HIGH_LIGHT &&
           pre_flash_status))) {
         if (CAMERA_NORMAL_MODE == capture_mode ||
-            CAMERA_ISP_TUNING_MODE == capture_mode ||
             CAMERA_ISP_SIMULATION_MODE == capture_mode ||
             CAMERA_ZSL_MODE == capture_mode || shot_num > 1) {
             is_need = 1;
         }
+        if (CAMERA_ISP_TUNING_MODE == capture_mode)
+            is_need = 0;
     }
 
     return is_need;
