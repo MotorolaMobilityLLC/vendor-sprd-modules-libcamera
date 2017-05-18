@@ -530,7 +530,16 @@ int SprdCamera3SelfShot::setupPhysicalCameras() {
     memset(m_pPhyCamera, 0x00,
            (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
     m_pPhyCamera[CAM_TYPE_MAIN].id = SELF_SHOT_CAM_MAIN_ID;
-    m_pPhyCamera[CAM_TYPE_AUX].id = SELF_SHOT_CAM_AUX_ID;
+
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("persist.sys.cam.blur.cov.id", prop, "3");
+    if (atoi(prop) == 0) {
+        m_pPhyCamera[CAM_TYPE_AUX].id = CAM_BLUR_AUX_ID;
+    } else {
+        m_pPhyCamera[CAM_TYPE_AUX].id = CAM_BLUR_AUX_ID_2;
+    }
 
     return NO_ERROR;
 }
@@ -757,69 +766,6 @@ void SprdCamera3SelfShot::convertToRegions(int32_t *rect, int32_t *region,
 }
 
 /*===========================================================================
- * FUNCTION   :getCoveredValue
- *
- * DESCRIPTION: get sub sensor covered value
- *
- * PARAMETERS :
- *
- * RETURN     : covered value
- *==========================================================================*/
-int SprdCamera3SelfShot::getCoveredValue(CameraMetadata &frame_settings) {
-    int rc = 0;
-    uint32_t couvered_value = 0;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    property_get("debug.camera.covered", prop, "0");
-
-    SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-    rc = hwiSub->getCoveredValue(&couvered_value);
-    if (rc < 0) {
-        HAL_LOGD("read sub sensor failed");
-    }
-    if (0 != atoi(prop)) {
-        couvered_value = atoi(prop);
-    }
-    if (couvered_value < MAX_CONVERED_VALURE && couvered_value) {
-        couvered_value = BLUR_SELFSHOT_CONVERED;
-    } else {
-        couvered_value = BLUR_SELFSHOT_NO_CONVERED;
-    }
-    HAL_LOGD("get cover_value %u", couvered_value);
-
-    // update face[10].score info to mean convered value when api1 is used
-    {
-        FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(
-            hwiSub->mSetting->s_setting[SELF_SHOT_CAM_AUX_ID].faceInfo);
-        uint8_t numFaces = faceDetectionInfo->face_num;
-        uint8_t faceScores[CAMERA3MAXFACE];
-        uint8_t dataSize = CAMERA3MAXFACE;
-        int32_t faceRectangles[CAMERA3MAXFACE * 4];
-        int j = 0;
-
-        numFaces = CAMERA3MAXFACE;
-        for (int i = 0; i < numFaces; i++) {
-            faceScores[i] = faceDetectionInfo->face[i].score;
-            if (faceScores[i] == 0) {
-
-                faceScores[i] = 1;
-            }
-            convertToRegions(faceDetectionInfo->face[i].rect,
-                             faceRectangles + j, -1);
-            j += 4;
-        }
-        faceScores[10] = couvered_value;
-
-        frame_settings.update(ANDROID_STATISTICS_FACE_SCORES, faceScores,
-                              dataSize);
-        frame_settings.update(ANDROID_STATISTICS_FACE_RECTANGLES,
-                              faceRectangles, dataSize * 4);
-    }
-    return couvered_value;
-}
-
-/*===========================================================================
  * FUNCTION   :processCaptureResultMain
  *
  * DESCRIPTION: process Capture Result from the main hwi
@@ -836,7 +782,9 @@ void SprdCamera3SelfShot::processCaptureResultMain(
         if (mOpenSubsensor && ns2ms(systemTime() - mStartPreviewTime) > 1000) {
             CameraMetadata metadata;
             metadata = result->result;
-            mCoveredValue = getCoveredValue(metadata);
+            SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
+            mCoveredValue = getCoveredValue(metadata, hwiSub,
+                                            m_pPhyCamera[CAM_TYPE_AUX].id);
             metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
             camera3_capture_result_t new_result = *result;
             new_result.result = metadata.release();

@@ -1234,11 +1234,6 @@ typedef enum {
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 
-typedef enum {
-    /* covered camera device id*/
-    CAM_COVERED_ID = 2,
-} covered_camera_id;
-
 typedef void (*camera_cb_of_type)(enum camera_cb_type cb,
                                   const void *client_data,
                                   enum camera_func_type func, void *parm4);

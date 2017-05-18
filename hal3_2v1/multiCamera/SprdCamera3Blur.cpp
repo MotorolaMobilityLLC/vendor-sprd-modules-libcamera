@@ -460,29 +460,34 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     uint32_t phyId = 0;
 
     HAL_LOGI(" E");
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("persist.sys.cam.blur.cov.id", prop, "3");
+
     if (camera_id == MODE_BLUR_FRONT) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
-        m_nPhyCameras = 1;
+        if (atoi(prop) == 1) {
+            m_nPhyCameras = 2;
+        } else {
+            m_nPhyCameras = 1;
+        }
     } else {
         mCameraId = CAM_BLUR_MAIN_ID;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
-#if CONFIG_COVERED_SENSOR
-        m_nPhyCameras = 2;
-#else
-        m_nPhyCameras = 1;
-#endif
+        if (atoi(prop) == 0) {
+            m_nPhyCameras = 2;
+        } else {
+            m_nPhyCameras = 1;
+        }
     }
     hw_device_t *hw_dev[m_nPhyCameras];
     setupPhysicalCameras();
-
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
-        if (mCameraId == CAM_BLUR_MAIN_ID_2) {
-            phyId = m_pPhyCamera[i].id + 1;
-        } else {
-            phyId = m_pPhyCamera[i].id;
-        }
+        phyId = m_pPhyCamera[i].id;
+        HAL_LOGI("open %d", phyId);
         SprdCamera3HWI *hw = new SprdCamera3HWI((uint32_t)phyId);
         if (!hw) {
             HAL_LOGE("Allocation of hardware interface failed");
@@ -584,9 +589,16 @@ int SprdCamera3Blur::setupPhysicalCameras() {
     }
     memset(m_pPhyCamera, 0x00,
            (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
-    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_MAIN_ID;
-    if (2 == m_nPhyCameras) {
-        m_pPhyCamera[CAM_TYPE_AUX].id = CAM_BLUR_AUX_ID;
+    if (mCameraId == 0) {
+        m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_MAIN_ID;
+        if (2 == m_nPhyCameras) {
+            m_pPhyCamera[CAM_TYPE_AUX].id = CAM_BLUR_AUX_ID;
+        }
+    } else {
+        m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_MAIN_ID_2;
+        if (2 == m_nPhyCameras) {
+            m_pPhyCamera[CAM_TYPE_AUX].id = CAM_BLUR_AUX_ID_2;
+        }
     }
 
     return NO_ERROR;
@@ -2685,9 +2697,9 @@ void SprdCamera3Blur::processCaptureResultMain(
             }
         }
         if (2 == m_nPhyCameras) {
-
             SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-            int mCoveredValue = getCoveredValue(metadata, hwiSub);
+            int mCoveredValue = getCoveredValue(metadata, hwiSub,
+                                                m_pPhyCamera[CAM_TYPE_AUX].id);
             if (cur_frame_number > 100) {
                 metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
                 camera3_capture_result_t new_result = *result;

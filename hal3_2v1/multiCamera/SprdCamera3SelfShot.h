@@ -46,6 +46,7 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
+#include "SprdCamera3MultiBase.h"
 
 namespace sprdcamera {
 
@@ -56,7 +57,7 @@ typedef enum {
     SELF_SHOT_CAM_AUX_ID = 2
 } SelfShotCameraID;
 
-class SprdCamera3SelfShot {
+class SprdCamera3SelfShot : SprdCamera3MultiBase {
   public:
     static void getCameraMuxer(SprdCamera3SelfShot **pMuxer);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -114,7 +115,6 @@ class SprdCamera3SelfShot {
     int processCaptureRequest(const struct camera3_device *device,
                               camera3_capture_request_t *request);
     void notifyMain(const camera3_notify_msg_t *msg);
-    int getCoveredValue(CameraMetadata &frame_settings);
     void processCaptureResultMain(camera3_capture_result_t *result);
     const camera_metadata_t *
     constructDefaultRequestSettings(const struct camera3_device *device,

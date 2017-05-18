@@ -200,7 +200,8 @@ void SprdCamera3MultiBase::convertToRegions(int32_t *rect, int32_t *region,
 }
 
 uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
-                                              SprdCamera3HWI *hwiSub) {
+                                              SprdCamera3HWI *hwiSub,
+                                              int convered_camera_id) {
     int rc = 0;
     uint32_t couvered_value = 0;
     char prop[PROPERTY_VALUE_MAX] = {
@@ -224,7 +225,7 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     // update face[10].score info to mean convered value when api1 is used
     {
         FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(
-            hwiSub->mSetting->s_setting[CAM_BLUR_AUX_ID].faceInfo);
+            hwiSub->mSetting->s_setting[convered_camera_id].faceInfo);
         uint8_t numFaces = faceDetectionInfo->face_num;
         uint8_t faceScores[CAMERA3MAXFACE];
         uint8_t dataSize = CAMERA3MAXFACE;

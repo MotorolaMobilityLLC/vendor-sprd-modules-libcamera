@@ -106,7 +106,6 @@ SprdCamera3PageTurn::SprdCamera3PageTurn() {
 
     mStaticMetadata = NULL;
     setupPhysicalCameras();
-    m_VirtualCamera.id = PAGE_TURN_CAM_MAIN_ID;
     HAL_LOGI("X");
 }
 
@@ -489,7 +488,16 @@ int SprdCamera3PageTurn::setupPhysicalCameras() {
     }
     memset(m_pPhyCamera, 0x00,
            (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
-    m_pPhyCamera[CAM_TYPE_MAIN].id = PAGE_TURN_CAM_MAIN_ID;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("persist.sys.cam.blur.cov.id", prop, "3");
+    if (atoi(prop) == 0) {
+        m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_AUX_ID;
+    } else {
+        m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_AUX_ID_2;
+    }
+    m_VirtualCamera.id = m_pPhyCamera[CAM_TYPE_MAIN].id;
 
     return NO_ERROR;
 }
@@ -660,8 +668,7 @@ int SprdCamera3PageTurn::processCaptureRequest(
         mOldRequestId = metadata.find(ANDROID_REQUEST_ID).data.i32[0];
     }
     newRequest.request_id = mOldRequestId;
-    HAL_LOGD("mOldRequestId=%d", mOldRequestId);
-    HAL_LOGD("frame_number=%u,newRequest.buffer =%p,newRequest.stream=%p",
+    HAL_LOGV("frame_number=%u,newRequest.buffer =%p,newRequest.stream=%p",
              newRequest.frame_number, newRequest.buffer, newRequest.stream);
     if (request->num_output_buffers > 1) {
         HAL_LOGD("failed .pageturn feature num_output_buffers should be > "
@@ -669,8 +676,6 @@ int SprdCamera3PageTurn::processCaptureRequest(
     }
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
-
-        HAL_LOGD("acquire_fence = %d", output.acquire_fence);
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
@@ -701,7 +706,6 @@ int SprdCamera3PageTurn::processCaptureRequest(
     status = timer_settime(mPageTurnPrvTimerID, 0, &ts, NULL);
     {
         Mutex::Autolock l(mWaitFrameMutex);
-        HAL_LOGD("wait frame");
         mWaitFrameSignal.waitRelative(mWaitFrameMutex, 1000e6);
     }
     return rc;
@@ -725,69 +729,6 @@ void SprdCamera3PageTurn::convertToRegions(int32_t *rect, int32_t *region,
     if (weight > -1) {
         region[4] = weight;
     }
-}
-
-/*===========================================================================
- * FUNCTION   :getCoveredValue
- *
- * DESCRIPTION: get sub sensor covered value
- *
- * PARAMETERS :
- *
- * RETURN     : covered value
- *==========================================================================*/
-int SprdCamera3PageTurn::getCoveredValue(CameraMetadata &frame_settings) {
-    int rc = 0;
-    uint32_t couvered_value = 0;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    property_get("debug.camera.covered", prop, "0");
-
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
-    rc = hwiMain->getCoveredValue(&couvered_value);
-    if (rc < 0) {
-        HAL_LOGD("read sub sensor failed");
-    }
-    if (0 != atoi(prop)) {
-        couvered_value = atoi(prop);
-    }
-    if (couvered_value < MAX_CONVERED_VALURE && couvered_value) {
-        couvered_value = BLUR_SELFSHOT_CONVERED;
-    } else {
-        couvered_value = BLUR_SELFSHOT_NO_CONVERED;
-    }
-    HAL_LOGD("get cover_value %u", couvered_value);
-
-    // update face[10].score info to mean convered value when api1 is used
-    {
-        FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(
-            hwiMain->mSetting->s_setting[PAGE_TURN_CAM_MAIN_ID].faceInfo);
-        uint8_t numFaces = faceDetectionInfo->face_num;
-        uint8_t faceScores[CAMERA3MAXFACE];
-        uint8_t dataSize = CAMERA3MAXFACE;
-        int32_t faceRectangles[CAMERA3MAXFACE * 4];
-        int j = 0;
-
-        numFaces = CAMERA3MAXFACE;
-        for (int i = 0; i < numFaces; i++) {
-            faceScores[i] = faceDetectionInfo->face[i].score;
-            if (faceScores[i] == 0) {
-
-                faceScores[i] = 1;
-            }
-            convertToRegions(faceDetectionInfo->face[i].rect,
-                             faceRectangles + j, -1);
-            j += 4;
-        }
-        faceScores[10] = couvered_value;
-
-        frame_settings.update(ANDROID_STATISTICS_FACE_SCORES, faceScores,
-                              dataSize);
-        frame_settings.update(ANDROID_STATISTICS_FACE_RECTANGLES,
-                              faceRectangles, dataSize * 4);
-    }
-    return couvered_value;
 }
 
 /*===========================================================================
@@ -834,7 +775,8 @@ void SprdCamera3PageTurn::processCaptureResultMain() {
     mCallbackOps->notify(mCallbackOps, &notify_msg);
     // send meta
     CameraMetadata metadata;
-    mCoveredValue = getCoveredValue(metadata);
+    mCoveredValue = getCoveredValue(metadata, m_pPhyCamera[CAM_TYPE_MAIN].hwi,
+                                    m_pPhyCamera[CAM_TYPE_MAIN].id);
     if (ns2ms(systemTime() - mStartPreviewTime) > 1000) {
         metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
     }

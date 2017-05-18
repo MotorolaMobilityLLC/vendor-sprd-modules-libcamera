@@ -47,6 +47,7 @@
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
 #include "ts_makeup_api.h"
+#include "SprdCamera3MultiBase.h"
 
 namespace sprdcamera {
 
@@ -55,7 +56,7 @@ typedef enum {
     PAGE_TURN_CAM_MAIN_ID = 2,
 } PageTurnCameraID;
 
-class SprdCamera3PageTurn {
+class SprdCamera3PageTurn : SprdCamera3MultiBase {
   public:
     static void getCameraMuxer(SprdCamera3PageTurn **pMuxer);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -120,7 +121,6 @@ class SprdCamera3PageTurn {
     void _dump(const struct camera3_device *device, int fd);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
-    int getCoveredValue(CameraMetadata &frame_settings);
 };
 };
 

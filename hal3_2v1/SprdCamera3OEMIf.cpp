@@ -2558,7 +2558,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
     } else {
         HAL_LOGD("camera hardware has been started already");
     }
-    if (!(mCameraId == CAM_COVERED_ID &&
+    if (!(mCameraId >= 2 &&
           (getMultiCameraMode() == MODE_BLUR ||
            getMultiCameraMode() == MODE_SELF_SHOT ||
            getMultiCameraMode() == MODE_PAGE_TURN)))

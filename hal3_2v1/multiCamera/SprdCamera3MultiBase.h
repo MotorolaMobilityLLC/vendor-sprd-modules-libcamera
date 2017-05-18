@@ -60,7 +60,8 @@ class SprdCamera3MultiBase {
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
     virtual uint8_t getCoveredValue(CameraMetadata &frame_settings,
-                                    SprdCamera3HWI *hwiSub);
+                                    SprdCamera3HWI *hwiSub,
+                                    int convered_camera_id);
 
     virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
 

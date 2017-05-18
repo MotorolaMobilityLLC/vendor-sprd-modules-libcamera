@@ -69,10 +69,9 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
     } while (0)
 
 #define CONVERED_CAMERA_INIT                                                   \
-    ((cxt->camera_id == CAM_COVERED_ID &&                                      \
-      (is_multi_camera_mode_oem == MODE_BLUR ||                                \
-       is_multi_camera_mode_oem == MODE_SELF_SHOT ||                           \
-       is_multi_camera_mode_oem == MODE_PAGE_TURN)))
+    ((cxt->camera_id >= 2 && (is_multi_camera_mode_oem == MODE_BLUR ||         \
+                              is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
+                              is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 /**********************************************************************************************/
 
 static uint32_t is_support_reload = 0;
