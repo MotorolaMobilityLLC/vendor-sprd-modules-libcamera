@@ -1658,10 +1658,14 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle,
 static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle,
                                          unsigned long param) {
 
+    uint16_t value;
+
     SENSOR_LOGI("E");
 
+    value = Sensor_ReadReg(0x0100);
     Sensor_WriteReg(0x0100, 0x0003);
-    usleep(50 * 1000);
+    if (value == 0x0103)
+            usleep(50 * 1000);
 
     return 0;
 }

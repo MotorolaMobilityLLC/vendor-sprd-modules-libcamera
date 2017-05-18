@@ -1301,10 +1301,14 @@ static unsigned long _s5k3p8sm_StreamOn(SENSOR_HW_HANDLE handle,
 
 static unsigned long _s5k3p8sm_StreamOff(SENSOR_HW_HANDLE handle,
                                          unsigned long param) {
+    uint16_t value;
+
     SENSOR_LOGI("E");
 
+    value = Sensor_ReadReg(0x0100);
     Sensor_WriteReg(0x0100, 0x0000);
-    usleep(50 * 1000);
+    if (value == 0x0100)
+            usleep(50 * 1000);
 
     return 0;
 }
