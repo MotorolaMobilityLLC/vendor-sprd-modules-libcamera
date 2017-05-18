@@ -374,6 +374,8 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
+	float captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
+	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
 
 	struct alsc_ver_info lsc_ver = { 0 };
 	rtn = lsc_ctrl_ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
@@ -393,6 +395,16 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 		}
 
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv0);
+
+
+		//flash info
+		if(	cxt->lsc_flash_onoff==1){
+			rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
+			ISP_TRACE_IF_FAIL(rtn, ("AE_GET_FLASH_ENV_RATIO fail "));
+			rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
+			ISP_TRACE_IF_FAIL(rtn, ("AE_GET_FLASH_ONE_OF_ALL_RATIO fail "));
+			ISP_LOGD("[ALSC] alsc_calc, captureFlashEnvRatio=%f, captureFlash1ofALLRatio=%f\n", captureFlashEnvRatio,  captureFlash1ofALLRatio);
+		}
 
 		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 		rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
@@ -423,6 +435,8 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.r_gain = awb_r_gain;
 		calc_param.b_gain = awb_b_gain;
 		calc_param.grid = lsc_info->grid;
+		calc_param.captureFlashEnvRatio = captureFlashEnvRatio;
+		calc_param.captureFlash1ofALLRatio = captureFlash1ofALLRatio;
 
 		gAWBGainR = awb_r_gain;
 		gAWBGainB = awb_b_gain;

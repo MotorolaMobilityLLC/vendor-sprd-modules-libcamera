@@ -149,6 +149,7 @@ struct isp_alg_fw_context {
 	struct sensor_otp_cust_info *otp_data;
 	cmr_u32 takepicture_mode;
 	struct awb_ct_table ct_table;
+	cmr_u32 lsc_flash_onoff;
 };
 
 struct isp_alg_fw_init_in {
