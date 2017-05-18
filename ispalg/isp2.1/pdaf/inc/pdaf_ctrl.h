@@ -107,6 +107,8 @@ struct isp_lib_config {
 	cmr_s8 product_name_high[ISP_PRODUCT_NAME_LEN];
 };
 
+struct pd_result;
+
 struct pdaf_ctrl_init_in {
 	cmr_u32 camera_id;
 	void *caller;

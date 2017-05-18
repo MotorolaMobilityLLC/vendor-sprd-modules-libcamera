@@ -22,7 +22,7 @@
 
 #include "AFv1_Common.h"
 #include "AFv1_Interface.h"
-#include "AFv1_Tune.h"
+//#include "AFv1_Tune.h"
 
 #include "aft_interface.h"
 
@@ -49,7 +49,8 @@ enum afv1_err_type {
 enum _lock_block {
 	LOCK_AE = 0x01,
 	LOCK_LSC = 0x02,
-	LOCK_NLM = 0x04
+	LOCK_NLM = 0x04,
+	LOCK_AWB = 0x08,
 };
 
 enum af_state {
@@ -226,8 +227,8 @@ typedef struct _focus_stat {
 } focus_stat_reg_t;
 
 typedef struct _af_fv_info {
-	uint64 af_fv0[10];	//[10]:10 ROI, sum of FV0
-	uint64 af_fv1[10];	//[10]:10 ROI, sum of FV1
+	cmr_u64 af_fv0[10];	//[10]:10 ROI, sum of FV0
+	cmr_u64 af_fv1[10];	//[10]:10 ROI, sum of FV1
 } af_fv;
 
 typedef struct _Bokeh_tuning_param {
@@ -248,16 +249,6 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 dummy[3];	// 4 bytes align
 } afm_tuning_sharkl2;
 
-typedef enum {
-    AFM_OP_BYPASS,
-    AFM_OP_SKIP_NUM,
-    AFM_OP_MODE,
-    AFM_OP_IIR_NR_CFG,
-    AFM_OP_MODULES_CFG,
-    AFM_OP_TYPE2_STS,
-    AFM_OP_TYPE1_STS,
-    AFM_OP_END
-} AFM_OP_CODE_t;
 
 typedef struct _af_ctrl {
 	void *af_alg_cxt;	//AF_Data fv;
@@ -274,7 +265,7 @@ typedef struct _af_ctrl {
 	cmr_u64 takepic_timestamp;
 	cmr_u32 Y_sum_trigger;
 	cmr_u32 Y_sum_normalize;
-	uint64 fv_combine[T_TOTAL_FILTER_TYPE];
+	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
 	struct isp_face_area face_info;
 	struct af_iir_nr_info af_iir_nr;
@@ -335,7 +326,7 @@ typedef struct _af_ctrl {
 
 typedef struct _test_mode_command {
 	char *command;
-	uint64 key;
+	cmr_u64 key;
 	void (*command_func) (af_ctrl_t * af, char *test_param);
 } test_mode_command_t;
 

@@ -301,19 +301,19 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 	case ISP_AF_GET_MONITOR_WIN_NUM:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, param0, param1);
 		break;
-	case AFM_OP_BYPASS:
+	case ISP_AFM_BYPASS:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, param0, param1);
 		break;
-	case AFM_OP_SKIP_NUM:
+	case ISP_AFM_SKIP_NUM:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, param0, param1);
 		break;
-	case AFM_OP_MODE:
+	case ISP_AFM_MODE:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, param0, param1);
 		break;
-	case AFM_OP_IIR_NR_CFG:
+	case ISP_AFM_IIR_NR_CFG:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, param0, param1);
 		break;
-	case AFM_OP_MODULES_CFG:
+	case ISP_AFM_MODULES_CFG:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, param0, param1);
 		break;
 	default:

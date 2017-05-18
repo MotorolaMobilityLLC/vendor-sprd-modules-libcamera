@@ -122,7 +122,7 @@ static void afm_enable(af_ctrl_t * af)
 
 #if CAMALGO_MOD
 	//af->afm_func->afm_bypass(device, 0);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_BYPASS, device, 0);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, device, 0);
 #else
 	isp_u_raw_afm_bypass(device, 0);
 #endif
@@ -150,7 +150,7 @@ static void afm_disable(af_ctrl_t * af)
 
 #if CAMALGO_MOD
 	//af->afm_func->afm_bypass(device, 1);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_BYPASS, device, 1);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, device, (void*)1);
 #else
 	isp_u_raw_afm_bypass(device, 1);
 #endif
@@ -192,10 +192,10 @@ static void afm_setup(af_ctrl_t * af)
 	memcpy(&(af->af_enhanced_module.fv1_coeff), &fv1_coeff, sizeof(fv1_coeff));
 
 #if CAMALGO_MOD
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_SKIP_NUM, device, af->afm_skip_num);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_MODE, device, 1);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_IIR_NR_CFG, cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_MODULES_CFG, cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, (void*)af->afm_skip_num);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODE, device, (void*)1);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_IIR_NR_CFG, cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODULES_CFG, cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
 #else
 	isp_u_raw_afm_skip_num(device, af->afm_skip_num);
 	isp_u_raw_afm_mode(device, 1);
@@ -255,7 +255,7 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	if (filter_mask & SOBEL9_BIT) {
 		num++;
 #if CAMALGO_MOD
-	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_SKIP_NUM, device, data);
+	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, data);
 #else
 		isp_u_raw_afm_type2_statistic(device, data);
 #endif
@@ -266,7 +266,7 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	if (filter_mask & SPSMD_BIT) {
 		num++;
 #if CAMALGO_MOD
-	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AFM_OP_SKIP_NUM, device, data);
+	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, data);
 #else
 		isp_u_raw_afm_type1_statistic(device, data);
 #endif
@@ -531,13 +531,13 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 }
 
 // i/f to AF model
-static ERRCODE if_statistics_wait_cal_done(void *cookie)
+static cmr_u8 if_statistics_wait_cal_done(void *cookie)
 {
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie)
+static cmr_u8 if_statistics_get_data(cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	cmr_u64 spsmd[MAX_ROI_NUM];
@@ -569,7 +569,7 @@ static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 	return 0;
 }
 
-static ERRCODE if_statistics_set_data(cmr_u32 set_stat, void *cookie)
+static cmr_u8 if_statistics_set_data(cmr_u32 set_stat, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -585,14 +585,14 @@ static ERRCODE if_statistics_set_data(cmr_u32 set_stat, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lens_get_pos(uint16 * pos, void *cookie)
+static cmr_u8 if_lens_get_pos(cmr_u16 * pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	*pos = lens_get_pos(af);
 	return 0;
 }
 
-static ERRCODE if_lens_move_to(uint16 pos, void *cookie)
+static cmr_u8 if_lens_move_to(cmr_u16 pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -600,13 +600,13 @@ static ERRCODE if_lens_move_to(uint16 pos, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lens_wait_stop(void *cookie)
+static cmr_u8 if_lens_wait_stop(void *cookie)
 {
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_lock_ae(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_ae(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_lock_num);
@@ -626,7 +626,7 @@ static ERRCODE if_lock_ae(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lock_awb(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_awb(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->awb_lock_num);
@@ -646,7 +646,7 @@ static ERRCODE if_lock_awb(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_lsc(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->lsc_lock_num);
@@ -666,7 +666,7 @@ static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_lock_nlm(e_LOCK lock, void *cookie)
+static cmr_u8 if_lock_nlm(e_LOCK lock, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->nlm_lock_num);
@@ -693,14 +693,14 @@ static cmr_u64 get_systemtime_ns()
 	return timestamp;
 }
 
-static ERRCODE if_get_sys_time(uint64 * time, void *cookie)
+static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 {
 	UNUSED(cookie);
 	*time = get_systemtime_ns();
 	return 0;
 }
 
-static ERRCODE if_sys_sleep_time(uint16 sleep_time, void *cookie)
+static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 {
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
@@ -710,7 +710,7 @@ static ERRCODE if_sys_sleep_time(uint16 sleep_time, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_get_ae_report(AE_Report * rpt, void *cookie)
+static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 {
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 	ae_info_t *ae = &af->ae;
@@ -723,14 +723,14 @@ static ERRCODE if_get_ae_report(AE_Report * rpt, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_set_af_exif(const void *data, void *cookie)
+static cmr_u8 if_set_af_exif(const void *data, void *cookie)
 {
 	UNUSED(data);
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
+static cmr_u8 if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
@@ -748,7 +748,7 @@ static ERRCODE if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
+static cmr_u8 if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
@@ -765,7 +765,7 @@ static ERRCODE if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_set_motor_sacmode(void *cookie)
+static cmr_u8 if_set_motor_sacmode(void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
@@ -778,7 +778,7 @@ static ERRCODE if_set_motor_sacmode(void *cookie)
 	return 0;
 }
 
-static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie)
+static cmr_u8 if_binfile_is_exist(cmr_u8 * bisExist, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	cmr_s32 rtn = AFV1_SUCCESS;
@@ -830,7 +830,7 @@ BOKEH_DEFAULT:
 	return 0;
 }
 
-static ERRCODE if_af_log(const char *format, ...)
+static cmr_u8 if_af_log(const char *format, ...)
 {
 	va_list arg;
 	va_start(arg, format);
@@ -841,7 +841,7 @@ static ERRCODE if_af_log(const char *format, ...)
 	return 0;
 }
 
-static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie)
+static cmr_u8 if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	roi_info_t *r = &af->roi;
@@ -855,14 +855,14 @@ static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_af_end_notify(eAF_MODE AF_mode, void *cookie)
+static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, void *cookie)
 {
 	UNUSED(AF_mode);
 	UNUSED(cookie);
 	return 0;
 }
 
-static ERRCODE if_phase_detection_get_data(pd_algo_result_t * pd_result, void *cookie)
+static cmr_u8 if_phase_detection_get_data(pd_algo_result_t * pd_result, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -872,7 +872,7 @@ static ERRCODE if_phase_detection_get_data(pd_algo_result_t * pd_result, void *c
 	return 0;
 }
 
-static ERRCODE if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void *cookie)
+static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
@@ -992,7 +992,7 @@ static cmr_s32 unload_trigger_lib(af_ctrl_t * af)
 	return 0;
 }
 
-static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
+static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 {
 
 	af_ctrl_t *af = cookie;
@@ -1025,7 +1025,7 @@ static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
+static cmr_u8 if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 {
 	UNUSED(cookie);
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
@@ -1039,7 +1039,7 @@ static ERRCODE if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 	return 0;
 }
 
-static ERRCODE if_aft_log(cmr_u32 log_level, const char *format, ...)
+static cmr_u8 if_aft_log(cmr_u32 log_level, const char *format, ...)
 {
 	va_list arg;
 	va_start(arg, format);
@@ -1286,6 +1286,8 @@ static void lock_block(af_ctrl_t * af, char *block)
 		if_lock_lsc(LOCK, af);
 	if (lock & LOCK_NLM)
 		if_lock_nlm(LOCK, af);
+	if (lock & LOCK_AWB)
+		if_lock_awb(LOCK, af);
 
 	return;
 }
@@ -1430,7 +1432,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 		*string = '\0';
 
 	char *p1 = af_mode;
-	uint64 key = 0, i = 0;
+	cmr_u64 key = 0, i = 0;
 
 	CALCULATE_KEY(p1, 0);
 
@@ -1463,7 +1465,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 static cmr_s32 af_test_lens(af_ctrl_t * af, cmr_u16 pos)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt, af->algo_mode);
+	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 
@@ -1534,7 +1536,7 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 static void caf_stop_search(af_ctrl_t * af)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt, af->algo_mode);
+	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 }
@@ -1553,7 +1555,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	} else if (res.is_cancel_caf && af->caf_state == CAF_SEARCHING) {
 		pthread_mutex_lock(&af->af_work_lock);
 		af->need_re_trigger = 1;
-		AF_STOP(af->af_alg_cxt, af->algo_mode);
+		AF_STOP(af->af_alg_cxt);
 		AF_Process_Frame(af->af_alg_cxt);
 		pthread_mutex_unlock(&af->af_work_lock);
 		do_start_af(af);
@@ -1885,7 +1887,7 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 static void saf_stop(af_ctrl_t * af)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt, af->algo_mode);
+	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 }
@@ -1967,7 +1969,7 @@ static void caf_process_frame(af_ctrl_t * af)
 }
 
 // af ioctrl functions
-static ERRCODE af_clear_sem(af_ctrl_t * af)
+static cmr_u8 af_clear_sem(af_ctrl_t * af)
 {
 	cmr_s32 tmpVal = 0;
 
@@ -1982,7 +1984,7 @@ static ERRCODE af_clear_sem(af_ctrl_t * af)
 	return 0;
 }
 
-static ERRCODE af_wait_caf_finish(af_ctrl_t * af)
+static cmr_u8 af_wait_caf_finish(af_ctrl_t * af)
 {
 	cmr_s32 rtn;
 	struct timespec ts;
@@ -2556,10 +2558,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 
 	case AF_DATA_IMG_BLK:{
-			struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)inparam->data;
-			if (NULL != img_blk_info->data) {
-				caf_monitor_process(af);
-			}
+			caf_monitor_process(af);
 			break;
 		}
 	default:{
@@ -2616,18 +2615,20 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 {
 	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_video_start *in_ptr = NULL;
-	AF_Trigger_Data aft_in;
-	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_int rtn = AFV1_SUCCESS;
+	struct isp_video_start *in_ptr = NULL;
+	struct afctrl_cxt *cxt_ptr = NULL;
+	struct isp_alg_fw_context *isp_ctx = NULL;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check cxt");
 		return AFV1_ERROR;
 	}
+	cxt_ptr = (struct afctrl_cxt *)af->caller;
+	isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+	AF_Trigger_Data aft_in;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 
 	pthread_mutex_lock(&af->status_lock);
 	ISP_LOGV("cmd is 0x%x", cmd);
@@ -2738,7 +2739,8 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_AF_BYPASS:
-		af->bypass = *(cmr_u32 *) param0;
+		if (NULL != param0)
+			af->bypass = *(cmr_u32 *) param0;
 		break;
 
 	case AF_CMD_SET_DEFAULT_AF_WIN:
@@ -2848,7 +2850,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 						caf_stop(af);	//maybe we need reset trigger
 					} else if (STATE_FAF == af->state) {
 						pthread_mutex_lock(&af->af_work_lock);
-						AF_STOP(af->af_alg_cxt, af->algo_mode);
+						AF_STOP(af->af_alg_cxt);
 						AF_Process_Frame(af->af_alg_cxt);
 						pthread_mutex_unlock(&af->af_work_lock);
 					}
@@ -2886,11 +2888,10 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 	case AF_CMD_GET_AF_FULLSCAN_INFO:{
 			cmr_u32 i = 0;
 			struct isp_af_fullscan_info *af_fullscan_info = (struct isp_af_fullscan_info *)param0;
-
-			while (i < sizeof(af->win_peak_pos) / sizeof(af->win_peak_pos[0])) {
-				af->win_peak_pos[i] = AF_Get_peak_pos(af->af_alg_cxt, i);
-				i++;
-			}
+			Bokeh_Result result;
+			result.win_peak_pos_num = sizeof(af->win_peak_pos) / sizeof(af->win_peak_pos[0]);
+			result.win_peak_pos = af->win_peak_pos;
+			AF_Get_Bokeh_result(af->af_alg_cxt, &result);
 			if (NULL != af_fullscan_info) {
 				af_fullscan_info->row_num = 3;
 				af_fullscan_info->column_num = 3;
@@ -2898,6 +2899,11 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 				af_fullscan_info->vcm_dac_low_bound = af->bokeh_param.vcm_dac_low_bound;
 				af_fullscan_info->vcm_dac_up_bound = af->bokeh_param.vcm_dac_up_bound;
 				af_fullscan_info->boundary_ratio = af->bokeh_param.boundary_ratio;
+
+				af_fullscan_info->af_peak_pos = result.af_peak_pos;
+				af_fullscan_info->near_peak_pos = result.near_peak_pos;
+				af_fullscan_info->far_peak_pos = result.far_peak_pos;
+				af_fullscan_info->distance_reminder = result.distance_reminder;
 			}
 
 			break;

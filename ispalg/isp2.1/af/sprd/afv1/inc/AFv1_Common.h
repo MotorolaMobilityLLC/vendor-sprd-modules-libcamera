@@ -51,16 +51,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#ifndef WIN32
+#ifdef ANDROID
 #include <jni.h>
 #include <android/log.h>
 #endif
-#include "AFv1_Type.h"
+//#include "AFv1_Type.h"
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.111"
-#define SUB_VERSION             "-formal"
+#define VERSION             "2.113"
+#define SUB_VERSION             "-F-02"
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -275,6 +275,15 @@ enum {
 // Public Structure Instance
 //=========================================================================================//
 //#pragma pack(push, 1)
+typedef struct _Bokeh_Result {
+	cmr_u32 af_peak_pos;
+	cmr_u32 near_peak_pos;
+	cmr_u32 far_peak_pos;
+	cmr_u32 distance_reminder;
+	cmr_u32 win_peak_pos_num;
+	cmr_u32 *win_peak_pos;
+} Bokeh_Result;
+
 #pragma pack(push,4)
 typedef struct _AE_Report {
 	cmr_u8 bAEisConverge;	//flag: check AE is converged or not
@@ -582,6 +591,8 @@ typedef struct _afscan_status_s {
 	cmr_u32 focus_macro;
 	cmr_u32 peak_inverse;
 	cmr_u32 peak_quad;
+	cmr_s32 phase_diff_tbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 pd_conf_tbl[AFAUTO_SCAN_STOP_NMAX];
 } afscan_status_t;
 
 typedef struct af_ctrl_pd_info_s {
@@ -630,6 +641,8 @@ typedef struct af_scan_env_info_s {
 	cmr_s32 curr_bv;
 	cmr_s32 next_bv;
 	cmr_s32 diff_bv;
+	cmr_s32 phase_diff;
+	cmr_u32 pd_conf;
 } scan_env_info_t;
 
 typedef struct af_scan_info_s {
@@ -824,29 +837,29 @@ typedef struct _af_stat_data_s {
 } _af_stat_data_t;
 
 typedef struct _AF_Ctrl_Ops {
-	ERRCODE(*statistics_wait_cal_done) (void *cookie);
-	ERRCODE(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
-	ERRCODE(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
-	ERRCODE(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
-	ERRCODE(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
-	ERRCODE(*lens_get_pos) (cmr_u16 * pos, void *cookie);
-	ERRCODE(*lens_move_to) (cmr_u16 pos, void *cookie);
-	ERRCODE(*lens_wait_stop) (void *cookie);
-	ERRCODE(*lock_ae) (e_LOCK bisLock, void *cookie);
-	ERRCODE(*lock_awb) (e_LOCK bisLock, void *cookie);
-	ERRCODE(*lock_lsc) (e_LOCK bisLock, void *cookie);
-	ERRCODE(*get_sys_time) (cmr_u64 * pTime, void *cookie);
-	ERRCODE(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
-	ERRCODE(*set_af_exif) (const void *pAF_data, void *cookie);
-	ERRCODE(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
-	ERRCODE(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
-	ERRCODE(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
-	ERRCODE(*set_motor_sacmode) (void *cookie);
-	ERRCODE(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
-	ERRCODE(*get_vcm_param) (cmr_u32 * param, void *cookie);
-	ERRCODE(*af_log) (const char *format, ...);
-	 ERRCODE(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
-	 ERRCODE(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
+	cmr_u8(*statistics_wait_cal_done) (void *cookie);
+	cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
+	cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
+	cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
+	cmr_u8(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
+	cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
+	cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
+	cmr_u8(*lens_wait_stop) (void *cookie);
+	cmr_u8(*lock_ae) (e_LOCK bisLock, void *cookie);
+	cmr_u8(*lock_awb) (e_LOCK bisLock, void *cookie);
+	cmr_u8(*lock_lsc) (e_LOCK bisLock, void *cookie);
+	cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
+	cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
+	cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
+	cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
+	cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
+	cmr_u8(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
+	cmr_u8(*set_motor_sacmode) (void *cookie);
+	cmr_u8(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
+	cmr_u8(*get_vcm_param) (cmr_u32 * param, void *cookie);
+	cmr_u8(*af_log) (const char *format, ...);
+	 cmr_u8(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
+	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
 	void *cookie;
 } AF_Ctrl_Ops;
 
@@ -886,7 +899,7 @@ typedef struct _AF_Data {
 	cmr_u32 hysteresis_step;
 	cmr_u32 cur_scene;
 	cmr_u32 pre_scene;
-	cmr_u32 bv_threshold[ALG_INDOOR_SCENE][ALG_INDOOR_SCENE];
+	cmr_u32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 

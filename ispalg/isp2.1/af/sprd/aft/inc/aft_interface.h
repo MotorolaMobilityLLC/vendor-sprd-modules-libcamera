@@ -63,6 +63,7 @@ enum aft_calc_data_type {
 	AFT_DATA_AE,
 	AFT_DATA_SENSOR,
 	AFT_DATA_CAF,
+	AFT_DATA_PD,
 	AFT_DATA_MAX
 };
 
@@ -148,6 +149,21 @@ struct aft_sensor_info {
 	float z;
 };
 
+struct aft_phase_diff_info {
+	cmr_u32 pd_enable;
+	cmr_u32 effective_pos;
+	cmr_u32 effective_frmid;
+	cmr_u32 confidence;
+	double pd_value;
+	cmr_u32 pd_roi_dcc;
+	cmr_u32 reserved[16];
+};
+struct aft_common_info {
+	cmr_u32 registor_pos;
+	cmr_u32 otp_inf_pos;
+	cmr_u32 otp_macro_pos;
+	cmr_u32 reserved[16];
+};
 struct caf_time_stamp {
 	cmr_u32 time_stamp_sec;
 	cmr_u32 time_stamp_us;
@@ -176,6 +192,8 @@ struct aft_proc_calc_param {
 	struct aft_ae_info ae_info;
 	struct aft_sensor_info sensor_info;
 	struct aft_caf_blk_info caf_blk_info;
+	struct aft_phase_diff_info pd_info;
+	struct aft_common_info comm_info;
 };
 
 struct aft_caf_stats_cfg {
