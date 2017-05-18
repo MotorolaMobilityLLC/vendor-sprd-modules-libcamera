@@ -19,6 +19,7 @@
 #include "cmr_type.h"
 #include "isp_pm.h"
 #include "sprd_isp_r6p10v2.h"
+#include "awb.h"
 
 struct commn_info {
 	cmr_s32 isp_mode;
@@ -56,6 +57,7 @@ struct ae_info {
 	void *buffer_client_data;
 	struct ae_size win_num;
 	cmr_u32 shift;
+	cmr_u32 flash_version;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_s64 monoboottime;
 #endif
@@ -143,6 +145,7 @@ struct isp_alg_fw_context {
 	cmr_u32 flash_ver;
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
+	struct awb_ct_table ct_table;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;

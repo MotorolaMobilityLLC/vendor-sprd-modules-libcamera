@@ -793,6 +793,14 @@ static cmr_u32 awb_get_debug_info(struct awb_ctrl_cxt *cxt, void *result)
 	return rtn;
 }
 
+static cmr_u32 _awb_get_flash_ct_table(struct awb_ctrl_cxt *cxt, void *result)
+{
+	cmr_u32 rtn = AWB_SUCCESS;
+	struct awb_ct_table * param = (struct awb_ct_table *) result;
+	rtn = cxt->lib_ops.awb_ioctrl_v1(cxt->alg_handle, AWB_IOCTRL_GET_CTTABLE20, param);
+	return rtn;
+}
+
 static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *result)
 {
 	cmr_u32 rtn = AWB_SUCCESS;
@@ -1326,6 +1334,11 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		}
 		cxt->last_enable++;
 		break;
+
+	case AWB_CTRL_CMD_GET_CT_TABLE20:
+		rtn = _awb_get_flash_ct_table(cxt, out);
+		break;
+
 
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);

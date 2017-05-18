@@ -63,6 +63,7 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_VIDEO_STOP_NOTIFY = 0x30D,
 	AWB_CTRL_CMD_FLASH_SNOP = 0X30f,
 	AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
+	AWB_CTRL_CMD_GET_CT_TABLE20 = 0x500
 };
 
 enum awb_ctrl_wb_mode {

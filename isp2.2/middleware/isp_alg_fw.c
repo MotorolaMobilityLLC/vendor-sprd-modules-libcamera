@@ -1602,9 +1602,11 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output output;
 	struct isp_pm_param_data *param_data = NULL;
 	struct isp_flash_param *flash = NULL;
+	struct ae_init_out result;
 	cmr_u32 num = 0;
 	cmr_u32 i = 0;
 
+	memset((void *)&result, 0, sizeof(result));
 	memset(&output, 0, sizeof(output));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
@@ -1638,9 +1640,9 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	ae_input.lib_param = cxt->lib_use_info->ae_lib_info;
 	ae_input.caller_handle = (cmr_handle) cxt;
 	ae_input.ae_set_cb = isp_ae_set_cb;
-	cxt->ae_cxt.win_num.w =32;
+	cxt->ae_cxt.win_num.w = 32;
 	cxt->ae_cxt.win_num.h = 32;
-	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w ;
+	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
@@ -1661,6 +1663,11 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 				ae_input.otp_info.rdm_stat_info.b = awb_cali_info->ramdon_avg[2];
 			}
 		}
+	}
+
+	for (i = 0; i < 20; i++) {
+		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
+		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
@@ -1696,8 +1703,9 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	}
 #endif
 	rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash);
-	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle);
+	rtn = ae_ctrl_init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle)&result);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
+	cxt->ae_cxt.flash_version = result.flash_ver;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL);
 
 	return rtn;
@@ -1782,7 +1790,7 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 
 		rtn = awb_ctrl_init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
-
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&cxt->ct_table);
 	} else {
 		ISP_LOGE("fail to get awb init param!");
 	}
@@ -2189,11 +2197,11 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	rtn = isp_afl_sw_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do anti_flicker param update"));
 
-	rtn = isp_ae_sw_init(cxt);
-	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
-
 	rtn = isp_awb_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
+
+	rtn = isp_ae_sw_init(cxt);
+	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
 
 	rtn = isp_smart_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do _smart_init"));
