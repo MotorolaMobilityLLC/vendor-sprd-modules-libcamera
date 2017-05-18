@@ -3457,13 +3457,9 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
     }
 
-    bool updateAE = false;
     if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
-        if (s_setting[mCameraId].sprddefInfo.am_mode != valueU8) {
-            s_setting[mCameraId].sprddefInfo.am_mode = valueU8;
-            updateAE = true;
-        }
+        s_setting[mCameraId].sprddefInfo.am_mode =
+            frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
 
         int area[5 + 1] = {0};
         if (frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count == 5) {
@@ -3474,21 +3470,15 @@ int SprdCamera3Setting::updateWorkParameters(
                     frame_settings.find(ANDROID_CONTROL_AE_REGIONS).data.i32[i];
             }
         }
-        if (s_setting[mCameraId].controlInfo.ae_regions[0] != area[0] ||
-            s_setting[mCameraId].controlInfo.ae_regions[1] != area[1] ||
-            s_setting[mCameraId].controlInfo.ae_regions[2] != area[2] ||
-            s_setting[mCameraId].controlInfo.ae_regions[3] != area[3]) {
-            updateAE = true;
-        }
 
         area[2] = area[2] - area[0];
         area[3] = area[3] - area[1];
-        if (updateAE == true) {
-            for (size_t i = 0;
-                 i < frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
-                s_setting[mCameraId].sprddefInfo.am_regions[i] = area[i];
-            pushAndroidParaTag(ANDROID_SPRD_METERING_MODE);
-        }
+
+        for (size_t i = 0;
+             i < frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
+            s_setting[mCameraId].sprddefInfo.am_regions[i] = area[i];
+
+        pushAndroidParaTag(ANDROID_SPRD_METERING_MODE);
     }
 
     /*if (frame_settings.exists(ANDROID_SPRD_METERING_AREA)) {
@@ -3850,10 +3840,10 @@ frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count; i++)
 
     HAL_LOGD("cap_intent=%d, perfectskinlevel=%d, eis=%d, flash_mode=%d, "
              "ae_lock=%d, scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg "
-             "orien=%d, zsl=%d, 3dcali=%d, am_mode=%d updateAe=%d, crop %d %d "
-             "%d %d cropRegionUpdate=%d, af_trigger=%d, af_trigger_Id=%d, "
-             "af_mode=%d, af_state=%d, am_regions: %d %d %d %d %d, ae_region: "
-             "%d %d %d %d %d, af_region: %d %d %d %d %d",
+             "orien=%d, zsl=%d, 3dcali=%d, am_mode=%d crop %d %d %d %d "
+             "cropRegionUpdate=%d, af_trigger=%d, af_mode=%d, af_state=%d, "
+             "am_regions: %d %d %d %d %d, ae_region: %d %d %d %d %d, "
+             "af_region: %d %d %d %d %d",
              s_setting[mCameraId].controlInfo.capture_intent,
              s_setting[mCameraId].sprddefInfo.perfect_skin_level,
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
@@ -3866,13 +3856,12 @@ frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count; i++)
              s_setting[mCameraId].jpgInfo.orientation_original,
              s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
              s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
-             s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
+             s_setting[mCameraId].sprddefInfo.am_mode,
              s_setting[mCameraId].scalerInfo.crop_region[0],
              s_setting[mCameraId].scalerInfo.crop_region[1],
              s_setting[mCameraId].scalerInfo.crop_region[2],
              s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
              s_setting[mCameraId].controlInfo.af_trigger,
-             s_setting[mCameraId].controlInfo.af_trigger_Id,
              s_setting[mCameraId].controlInfo.af_mode,
              s_setting[mCameraId].controlInfo.af_state,
              s_setting[mCameraId].sprddefInfo.am_regions[0],
