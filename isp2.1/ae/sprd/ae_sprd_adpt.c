@@ -367,7 +367,7 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 		s_q_put(cxt->seq_handle, &input_item, write_item, actual_item);
 	}	
 
-	ISP_LOGE("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
+	ISP_LOGV("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
 		is_force, exp_data->lib_data.exp_line, exp_data->lib_data.dummy, exp_data->lib_data.sensor_gain, exp_data->lib_data.isp_gain,\
 		write_item->exp_line, write_item->dumy_line, write_item->sensor_gain, write_item->isp_gain,\
 		actual_item->exp_line, actual_item->dumy_line, actual_item->sensor_gain, actual_item->isp_gain);
@@ -376,9 +376,77 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 
 }
 
-static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, cmr_u32 is_force)
+static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
+{
+	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
+
+	if (0 !=  write_param->exp_line) {
+		struct ae_exposure exp;
+		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
+		if (cxt->isp_ops.ex_set_exposure) {
+			memset(&exp, 0, sizeof(exp));
+			exp.exposure = write_param->exp_line;
+			exp.dummy = write_param->dummy;
+			exp.size_index = size_index;
+
+			(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
+			if ((write_param->exp_line != prv_param->exp_line) 
+				|| (write_param->dummy != prv_param->dummy)) {
+				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
+			} else {
+				ISP_LOGV("no_need_write exp");
+				;
+			}
+		} else if (cxt->isp_ops.set_exposure) {
+			cmr_u32 ae_expline = write_param->exp_line;
+			memset(&exp, 0, sizeof(exp));
+			ae_expline = ae_expline & 0x0000ffff;
+			ae_expline |= (write_param->dummy < 0x10) & 0x0fff0000;
+			ae_expline |= (size_index << 0x1c) & 0xf0000000;
+			exp.exposure = ae_expline;
+			if ((write_param->exp_line != prv_param->exp_line) 
+				|| (write_param->dummy != prv_param->dummy)) {
+				(*cxt->isp_ops.set_exposure) (cxt->isp_ops.isp_handler, &exp);
+			} else {
+				ISP_LOGV("no_need_write exp");
+				;
+			}
+		}
+	} else {
+		ISP_LOGE("fail to write exp %d", write_param->exp_line);
+	}
+
+	if (0 != write_param->sensor_gain) {
+		struct ae_gain gain;
+
+		if (cxt->isp_ops.set_again) {
+			memset(&gain, 0, sizeof(gain));
+			gain.gain = write_param->sensor_gain & 0xffff;
+			if (prv_param->sensor_gain != write_param->sensor_gain) {
+				(*cxt->isp_ops.set_again) (cxt->isp_ops.isp_handler, &gain);
+			} else {
+				ISP_LOGV("no_need_write gain");
+				;
+			}
+		}
+	} else {
+		ISP_LOGE("fail to write aegain %d", write_param->sensor_gain);
+	}
+
+	if (0 != write_param->isp_gain) {
+		double rgb_coeff = write_param->isp_gain * 1.0 / 4096;
+		if (cxt->isp_ops.set_rgb_gain) {
+			cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
+		}
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 ae_result_update_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, cmr_u32 is_force)
 {
 	cmr_s32 ret = ISP_SUCCESS;
+	struct ae_exposure_param write_param;
 	struct q_item write_item;
 	struct q_item actual_item;
 
@@ -389,66 +457,13 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 	}
 
 	ae_exp_data_update(cxt, exp_data, &write_item, &actual_item, is_force);
-	
-	if (0 !=  write_item.exp_line) {
-		struct ae_exposure exp;
-		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
-		if (cxt->isp_ops.ex_set_exposure) {
-			memset(&exp, 0, sizeof(exp));
-			exp.exposure = write_item.exp_line;
-			exp.dummy = write_item.dumy_line;
-			exp.size_index = size_index;
+	write_param.exp_line = write_item.exp_line;
+	write_param.exp_time = write_item.exp_time;
+	write_param.dummy = write_item.dumy_line;
+	write_param.isp_gain = write_item.isp_gain;
+	write_param.sensor_gain  =write_item.sensor_gain;
+	ae_write_to_sensor(cxt, &write_param);
 
-			if ((exp_data->write_data.exp_line != write_item.exp_line) 
-				|| (exp_data->write_data.dummy != write_item.dumy_line)) {
-				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
-			} else {
-				//ISP_LOGV("no_need_write exp");
-				;
-			}
-		} else if (cxt->isp_ops.set_exposure) {
-			cmr_u32 ae_expline = write_item.exp_line;
-			memset(&exp, 0, sizeof(exp));
-			ae_expline = ae_expline & 0x0000ffff;
-			ae_expline |= (write_item.dumy_line << 0x10) & 0x0fff0000;
-			ae_expline |= (size_index << 0x1c) & 0xf0000000;
-			exp.exposure = ae_expline;
-			if ((exp_data->write_data.exp_line != write_item.exp_line) 
-				|| (exp_data->write_data.dummy != write_item.dumy_line)) {
-				(*cxt->isp_ops.set_exposure) (cxt->isp_ops.isp_handler, &exp);
-			} else {
-				//ISP_LOGV("no_need_write exp");
-				;
-			}
-		}
-	} else {
-		ISP_LOGE("fail to write exp %d", write_item.exp_line);
-	}
-
-	if (0 != write_item.sensor_gain) {
-		struct ae_gain gain;
-
-		if (cxt->isp_ops.set_again) {
-			memset(&gain, 0, sizeof(gain));
-			gain.gain = write_item.sensor_gain & 0xffff;
-
-			if (exp_data->write_data.sensor_gain != write_item.sensor_gain) {
-				(*cxt->isp_ops.set_again) (cxt->isp_ops.isp_handler, &gain);
-			} else {
-				//ISP_LOGV("no_need_write gain");
-				;
-			}
-		}
-	} else {
-		ISP_LOGE("fail to write aegain %d", write_item.sensor_gain);
-	}
-
-	if (0 != write_item.isp_gain) {
-		double rgb_coeff = write_item.isp_gain * 1.0 / 4096;
-		if (cxt->isp_ops.set_rgb_gain) {
-			cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
-		}
-	}
 	//exp_data->write_data = write_item;
 	//exp_data->actual_data = actual_item;
 	exp_data->write_data.exp_line = write_item.exp_line;
@@ -2902,7 +2917,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->exp_data.lib_data.dummy = cxt->cur_result.wts.cur_dummy;
 	cxt->exp_data.lib_data.gain = cxt->cur_result.wts.cur_again;
 	cxt->exp_data.lib_data.line_time  =  cxt->snr_info.line_time;
-	ae_write_to_sensor(cxt, &cxt->exp_data, 1);
+	ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
 
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
 	property_get("persist.sys.isp.ae.manual", ae_property, "off");
@@ -3253,12 +3268,13 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	}
 	
 	/*update parameters to sensor*/
+	memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
 	cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
 	cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
 	cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
 	cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
-	rtn = ae_write_to_sensor(cxt, &cxt->exp_data, 1);		
+	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);		
 
 	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d CAP %d", cxt->camera_id, cxt->cur_status.line_time,
 		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, work_info->is_snapshot);
@@ -3369,7 +3385,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	// current_status.effect_expline,
 	// current_status.effect_gain);
 	// skip the first aem data (error data)
-	if (current_status->ae_start_delay <= current_status->frame_id) {
+	if (current_status->ae_start_delay + 1 <= current_status->frame_id) {
 		misc_calc_in.sync_settings = current_status;
 		misc_calc_out.ae_output = &cxt->cur_result;
 		// ISP_LOGV("ae_flash_status calc %d",
@@ -3394,9 +3410,10 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		cxt->exp_data.lib_data.exp_line = current_result->wts.cur_exp_line;
 		cxt->exp_data.lib_data.gain = current_result->wts.cur_again;
 		cxt->exp_data.lib_data.dummy = current_result->wts.cur_dummy;
-		cxt->exp_data.lib_data.exp_line = current_status->line_time;
+		cxt->exp_data.lib_data.line_time = current_status->line_time;
 		cxt->exp_data.lib_data.exp_time = current_result->wts.exposure_time;
-		ae_write_to_sensor(cxt, &cxt->exp_data, 1);
+		ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
+
 	} else {
 		;
 	}
@@ -3571,7 +3588,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->exp_data.lib_data.gain = current_result->wts.cur_again;
 	cxt->exp_data.lib_data.dummy = current_result->wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = current_status->line_time;
-	rtn = ae_write_to_sensor(cxt, &cxt->exp_data, 0);
+	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 0);
 
 	rtn = _touch_ae_process(cxt, current_result);
 /* send STAB notify to HAL */
