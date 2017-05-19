@@ -33,7 +33,7 @@
 #define BOKEH_BOUNDARY_RATIO 8	//based on 10
 #define BOKEH_SCAN_FROM 212	//limited in [0,1023]
 #define BOKEH_SCAN_TO 342	//limited in [0,1023]
-#define BOKEH_SCAN_STEP 7	//at least 20
+#define BOKEH_SCAN_STEP 12	//at least 20
 
 enum afv1_bool {
 	AFV1_FALSE = 0,

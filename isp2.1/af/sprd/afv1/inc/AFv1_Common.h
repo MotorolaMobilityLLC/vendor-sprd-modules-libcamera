@@ -59,8 +59,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.113"
-#define SUB_VERSION             "-F-02"
+#define VERSION             "2.114"
+#define SUB_VERSION             "-B-01"
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -150,6 +150,7 @@ typedef enum _eAF_Triger_Type {
 	R_FAST,			//Fast Rough search for AFT
 	F_FAST,			//Fast Fine search for AFT
 	DEFOCUS,
+	BOKEH,
 } eAF_Triger_Type;
 
 typedef enum _eSAF_Status {
@@ -270,6 +271,22 @@ enum {
 	SENSOR_Y_AXIS,
 	SENSOR_Z_AXIS,
 	SENSOR_AXIS_TOTAL,
+};
+
+enum {
+	DISTANCE_10CM,
+	DISTANCE_20CM,
+	DISTANCE_30CM,
+	DISTANCE_40CM,
+	DISTANCE_50CM,
+	DISTANCE_60CM,
+	DISTANCE_70CM,
+	DISTANCE_80CM,
+	DISTANCE_90CM,	
+	DISTANCE_120CM,		
+	DISTANCE_200CM,	
+	DISTANCE_500CM,	
+	DISTANCE_MAP_TOTAL,
 };
 //=========================================================================================//
 // Public Structure Instance
@@ -563,7 +580,7 @@ typedef struct _afscan_status_s {
 	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkidx[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkfrm[MULTI_STATIC_TOTAL];
-	cmr_u32 multi_pkscr[MULTI_STATIC_TOTAL];
+	cmr_s32 multi_pkscr[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pk_far;
 	cmr_u32 multi_pk_near;
 	cmr_u32 multi_same_focal;
@@ -730,9 +747,9 @@ typedef struct motion_sensor_data_s {
 
 typedef struct lens_distance_map_s {
 	cmr_u32 valid_code;
-	cmr_u32 steps_table[12];	//vcm step
-	cmr_u32 distance_table[12];	//distance by mm, 100/200/300/500/700/1000/1500/Inf
-	cmr_u32 reserved[12];
+	cmr_u32 steps_table[DISTANCE_MAP_TOTAL];	//vcm step
+	cmr_u32 distance_table[DISTANCE_MAP_TOTAL];	//distance by mm, 10/20/30/40/50/60/70/80/90/120/200/Inf
+	cmr_u32 reserved[DISTANCE_MAP_TOTAL];
 } lens_distance_map_t;
 
 typedef struct _filter_clip {

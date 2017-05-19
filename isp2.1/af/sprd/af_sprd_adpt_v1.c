@@ -2638,7 +2638,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 				memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 				aft_in.AFT_mode = af->algo_mode;
 				aft_in.bisTrigger = AF_TRIGGER;
-				aft_in.AF_Trigger_Type = DEFOCUS;
+				aft_in.AF_Trigger_Type = BOKEH;
 				aft_in.defocus_param.scan_from = af->bokeh_param.from_pos;
 				aft_in.defocus_param.scan_to = af->bokeh_param.to_pos;
 				aft_in.defocus_param.per_steps = af->bokeh_param.move_step;
