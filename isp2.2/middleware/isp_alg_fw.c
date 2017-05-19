@@ -2102,45 +2102,92 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 
 	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
+		cmr_u8 lsc_dual_flag = cxt->otp_data->dual_otp.dual_flag;
 		int original_lens_bits = 16;
 		int compressed_lens_bits = 14;
 		int otp_grid = 96;
-		int lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
-		int lsc_otp_len_chn = lsc_otp_len / 4;
-		int lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
-		int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
-		int gain_w, gain_h;
-		uint8_t *lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
+		ISP_LOGE("Mcy lsc_dual_flag [%d]\n",lsc_dual_flag);
+		switch(lsc_dual_flag){
+			case 1:
+			{
+			int lsc_otp_len = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_size;
+			int lsc_otp_len_chn = lsc_otp_len / 4;
+			int lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
+			int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
+			int gain_w, gain_h;
+			uint8_t *lsc_otp_addr = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_addr;
+			ISP_LOGE("Mcy master data [%d,%d,%d,%d]\n",lsc_otp_addr[0],lsc_otp_addr[10],lsc_otp_addr[20],lsc_otp_addr[30]);
+			if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
-		if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
+				uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
 
-			uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
-
-			lsc_table = lsc_table_wrapper(lsc_16_bits, otp_grid, lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h, &gain_w, &gain_h);	//  wrapper otp table
-			free(lsc_16_bits);
-			if (lsc_table == NULL) {
-				rtn = ISP_ERROR;
-				return rtn;
+				lsc_table = lsc_table_wrapper(lsc_16_bits, otp_grid, lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h, &gain_w, &gain_h);	//  wrapper otp table
+				free(lsc_16_bits);
+				if (lsc_table == NULL) {
+					rtn = ISP_ERROR;
+					return rtn;
+				}
+				lsc_param.lsc_otp_table_width = gain_w;
+				lsc_param.lsc_otp_table_height = gain_h;
+				lsc_param.lsc_otp_table_addr = lsc_table;
+				lsc_param.lsc_otp_table_en = 1;
 			}
-			lsc_param.lsc_otp_table_width = gain_w;
-			lsc_param.lsc_otp_table_height = gain_h;
-			lsc_param.lsc_otp_table_addr = lsc_table;
-			lsc_param.lsc_otp_table_en = 1;
-		}
 
-		lsc_param.lsc_otp_oc_r_x = cxt->otp_data->single_otp.optical_center_info.R.x;
-		lsc_param.lsc_otp_oc_r_y = cxt->otp_data->single_otp.optical_center_info.R.y;
-		lsc_param.lsc_otp_oc_gr_x = cxt->otp_data->single_otp.optical_center_info.GR.x;
-		lsc_param.lsc_otp_oc_gr_y = cxt->otp_data->single_otp.optical_center_info.GR.y;
-		lsc_param.lsc_otp_oc_gb_x = cxt->otp_data->single_otp.optical_center_info.GB.x;
-		lsc_param.lsc_otp_oc_gb_y = cxt->otp_data->single_otp.optical_center_info.GB.y;
-		lsc_param.lsc_otp_oc_b_x = cxt->otp_data->single_otp.optical_center_info.B.x;
-		lsc_param.lsc_otp_oc_b_y = cxt->otp_data->single_otp.optical_center_info.B.y;
-		lsc_param.lsc_otp_oc_en = 1;
+			lsc_param.lsc_otp_oc_r_x = cxt->otp_data->dual_otp.master_optical_center_info.R.x;
+			lsc_param.lsc_otp_oc_r_y = cxt->otp_data->dual_otp.master_optical_center_info.R.y;
+			lsc_param.lsc_otp_oc_gr_x = cxt->otp_data->dual_otp.master_optical_center_info.GR.x;
+			lsc_param.lsc_otp_oc_gr_y = cxt->otp_data->dual_otp.master_optical_center_info.GR.y;
+			lsc_param.lsc_otp_oc_gb_x = cxt->otp_data->dual_otp.master_optical_center_info.GB.x;
+			lsc_param.lsc_otp_oc_gb_y = cxt->otp_data->dual_otp.master_optical_center_info.GB.y;
+			lsc_param.lsc_otp_oc_b_x = cxt->otp_data->dual_otp.master_optical_center_info.B.x;
+			lsc_param.lsc_otp_oc_b_y = cxt->otp_data->dual_otp.master_optical_center_info.B.y;
+			lsc_param.lsc_otp_oc_en = 1;
+			} break;
+			case 0:
+				{
+			int lsc_otp_len = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_size;
+			int lsc_otp_len_chn = lsc_otp_len / 4;
+			int lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
+			int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
+			int gain_w, gain_h;
+			uint8_t *lsc_otp_addr = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_addr;
+			ISP_LOGE("Mcy slave data [%d,%d,%d,%d]\n",lsc_otp_addr[0],lsc_otp_addr[10],lsc_otp_addr[20],lsc_otp_addr[30]);
+			if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
+
+				uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
+				lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
+
+				lsc_table = lsc_table_wrapper(lsc_16_bits, otp_grid, lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h, &gain_w, &gain_h);	//  wrapper otp table
+				free(lsc_16_bits);
+				if (lsc_table == NULL) {
+					rtn = ISP_ERROR;
+					return rtn;
+				}
+				lsc_param.lsc_otp_table_width = gain_w;
+				lsc_param.lsc_otp_table_height = gain_h;
+				lsc_param.lsc_otp_table_addr = lsc_table;
+				lsc_param.lsc_otp_table_en = 1;
+			}
+
+			lsc_param.lsc_otp_oc_r_x = cxt->otp_data->dual_otp.slave_optical_center_info.R.x;
+			lsc_param.lsc_otp_oc_r_y = cxt->otp_data->dual_otp.slave_optical_center_info.R.y;
+			lsc_param.lsc_otp_oc_gr_x = cxt->otp_data->dual_otp.slave_optical_center_info.GR.x;
+			lsc_param.lsc_otp_oc_gr_y = cxt->otp_data->dual_otp.slave_optical_center_info.GR.y;
+			lsc_param.lsc_otp_oc_gb_x = cxt->otp_data->dual_otp.slave_optical_center_info.GB.x;
+			lsc_param.lsc_otp_oc_gb_y = cxt->otp_data->dual_otp.slave_optical_center_info.GB.y;
+			lsc_param.lsc_otp_oc_b_x = cxt->otp_data->dual_otp.slave_optical_center_info.B.x;
+			lsc_param.lsc_otp_oc_b_y = cxt->otp_data->dual_otp.slave_optical_center_info.B.y;
+			lsc_param.lsc_otp_oc_en = 1;
+			} break;
+			break;
+			}
 	}
 
 	for (i = 0; i < 9; i++) {
