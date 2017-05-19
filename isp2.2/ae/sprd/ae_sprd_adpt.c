@@ -841,7 +841,7 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	slave_dummy = tmp / slv_line_time - exp_line_slave;
 
 	/*fulfill slave sync result */
-	slv_sync_result->sensor_ad_gain = gain_slave * 2;
+	slv_sync_result->sensor_ad_gain = gain_slave;
 	slv_sync_result->exposure_time = ae_master_calc_out->wts.exposure_time;
 	slv_sync_result->exposure_line = exp_line_slave;
 	slv_sync_result->exposure_dummy = slave_dummy;
