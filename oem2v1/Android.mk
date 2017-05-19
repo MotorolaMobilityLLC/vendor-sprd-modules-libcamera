@@ -305,8 +305,8 @@ LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
 LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal_nv12
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal_nv21
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv21)
+LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
 endif
 endif
 endif

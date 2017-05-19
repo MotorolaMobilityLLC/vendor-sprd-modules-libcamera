@@ -26,7 +26,7 @@ LIB_PATH := x86_lib
 ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
 LOCAL_MODULE := libts_face_beautify_hal_nv12
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv21)
-LOCAL_MODULE := libts_face_beautify_hal_nv21
+LOCAL_MODULE := libts_face_beautify_hal
 else
 LOCAL_MODULE := libts_face_beautify_hal
 endif
