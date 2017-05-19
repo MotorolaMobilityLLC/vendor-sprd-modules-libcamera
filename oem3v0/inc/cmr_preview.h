@@ -171,7 +171,7 @@ struct preview_param {
     cmr_u32 is_cfg_rot_cap;
     cmr_u32 is_dv;
     cmr_u32 is_hdr;
-    cmr_u32 frame_ctrl; // 0:stop,1:continue
+    cmr_u32 frame_ctrl;  // 0:stop,1:continue
     cmr_u32 frame_count; // 0xffffffff for zsl
     cmr_u32 isp_width_limit;
     cmr_u32 encode_angle;
@@ -182,6 +182,8 @@ struct preview_param {
     cmr_u32 flip_on;
     cmr_u32 tool_eb;
     enum sensor_data_type sensor_datatype; // refocus_eb;
+    cmr_u32 datatype;
+    cmr_u32 datatype_size;
     enum sensor_pdaf_type pdaf_mode; // pdaf_eb;
     cmr_u32 refocus_mode;
     struct cmr_zoom_param zoom_setting;

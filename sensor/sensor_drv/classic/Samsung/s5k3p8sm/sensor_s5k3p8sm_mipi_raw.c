@@ -320,7 +320,9 @@ static const SENSOR_REG_T s5k3p8sm_4640x3488_4lane_setting[] = {
     {0x0342, 0x1400}, {0x0340, 0x0E3B}, {0x0B0E, 0x0000}, {0x0216, 0x0000},
     {0x3604, 0x0002}, {0x3664, 0x0019}, {0x3004, 0x0003}, {0x3000, 0x0001},
     {0x317A, 0x0130}, {0x1006, 0x0002}, {0x6028, 0x2000}, {0x602A, 0x19E0},
-    {0x6F12, 0x0001}, {0x602A, 0x18F6}, {0x6F12, 0x002F}, {0x6F12, 0x002F},
+    {0x6F12, 0x0001}, //type3
+    //{0x6F12, 0x0000}, //type2
+    {0x602A, 0x18F6}, {0x6F12, 0x002F}, {0x6F12, 0x002F},
     {0x31A4, 0x0102}, {0x0100, 0x0000}, // steam off
     //{ 0x0100, 0x0100 },//streaming on
 };
@@ -517,6 +519,7 @@ static SENSOR_STATIC_INFO_T s_s5k3p8sm_static_info = {
     16 * 256,                 // max_adgain,AD-gain
     0,                        // ois_supported;
     SENSOR_PDAF_TYPE3_ENABLE, // pdaf_supported;
+    //SENSOR_PDAF_TYPE2_ENABLE, // pdaf_supported;
     1,                        // exp_valid_frame_num;N+2-1
     64,                       // clamp_level,black level
     1,                        // adgain_valid_frame_num;N+1-1
@@ -1552,7 +1555,11 @@ static uint32_t _s5k3p8sm_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_s5k3p8sm_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_s5k3p8sm_pd_pos_l;
     pdaf_info->vendor_type = SENSOR_VENDOR_S5K3P8SM;
-    pdaf_info->data_type = 0x30;
+    pdaf_info->type2_info.data_type = 0x30;
+    pdaf_info->type2_info.data_format = DATA_RAW10;
+    pdaf_info->type2_info.width = 72 * 2;
+    pdaf_info->type2_info.height = 54 * 16;
+    pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
 
     return rtn;
 }

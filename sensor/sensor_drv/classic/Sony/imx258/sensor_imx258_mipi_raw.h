@@ -29,6 +29,7 @@
 #endif
 #include "parameters/sensor_imx258_otp_truly.h"
 
+//#define PDAF_TYPE2
 #define SENSOR_NAME "imx258_mipi_raw"
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
 #define I2C_SLAVE_ADDR 0x20 // 0x34 // 0x20    /* 16bit slave address*/
@@ -515,7 +516,11 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info = {
                          // calculated from sensor mode fps
     .max_adgain = 16 * 16,       // max_adgain,AD-gain
     .ois_supported = 0,          // ois_supported;
+#ifdef PDAF_TYPE2
+    .pdaf_supported = SENSOR_PDAF_TYPE2_ENABLE,         // pdaf_supported;
+#else
     .pdaf_supported = 0,         // pdaf_supported;
+#endif
     .exp_valid_frame_num = 1,    // exp_valid_frame_num;N+2-1
     .clamp_level = 64,           // clamp_level,black level
     .adgain_valid_frame_num = 1, // adgain_valid_frame_num;N+1-1

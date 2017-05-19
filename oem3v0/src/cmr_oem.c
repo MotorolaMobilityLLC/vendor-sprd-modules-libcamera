@@ -3084,7 +3084,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     struct isp_init_param isp_param;
     struct isp_video_limit isp_limit;
     SENSOR_VAL_T val;
-    struct sensor_pdaf_info pdaf_info;
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -3096,7 +3095,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 #endif
 
     cmr_bzero(&isp_param, sizeof(isp_param));
-    cmr_bzero(&pdaf_info, sizeof(pdaf_info));
     CMR_PRINT_TIME;
     CHECK_HANDLE_VALID(oem_handle);
     isp_cxt = &(cxt->isp_cxt);
@@ -3242,14 +3240,14 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     if ((SENSOR_PDAF_TYPE3_ENABLE == isp_param.ex_info.pdaf_supported) ||
         (SENSOR_PDAF_TYPE2_ENABLE == isp_param.ex_info.pdaf_supported)) {
         val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
-        val.pval = &pdaf_info;
+        val.pval = &sn_cxt->pdaf_info;
         ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                SENSOR_ACCESS_VAL, (cmr_uint)&val);
         if (ret) {
             CMR_LOGE("get sensor pdaf info failed %ld", ret);
             goto exit;
         }
-        isp_param.pdaf_info = &pdaf_info;
+        isp_param.pdaf_info = &sn_cxt->pdaf_info;
     }
 
     val.type = SENSOR_VAL_TYPE_READ_OTP;
@@ -7341,6 +7339,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
                out_param_ptr->preview_eb == 1) {
         out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE2_ENABLE;
         out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
+        out_param_ptr->datatype = sn_cxt->pdaf_info.type2_info.data_type;
+        out_param_ptr->datatype_size = sn_cxt->pdaf_info.type2_info.pd_size;
     } else if (SENSOR_PDAF_TYPE3_ENABLE ==
                    sn_cxt->cur_sns_ex_info.pdaf_supported &&
                out_param_ptr->preview_eb == 1) {

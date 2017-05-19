@@ -458,6 +458,19 @@ struct pd_pos_info {
     cmr_u16 pd_pos_y;
 };
 
+enum {
+    DATA_RAW10,
+    DATA_BYTE2,
+};
+
+struct sensor_pdaf_type2_info {
+    cmr_u32 data_type;
+    cmr_u32 data_format;
+    cmr_u32 width;
+    cmr_u32 height;
+    cmr_u32 pd_size;
+};
+
 struct sensor_pdaf_info {
     cmr_u16 pd_offset_x;
     cmr_u16 pd_offset_y;
@@ -478,7 +491,7 @@ struct sensor_pdaf_info {
     cmr_u16 *pd_pos_row;
     cmr_u16 *pd_pos_col;
     enum sensor_vendor_type vendor_type;
-    cmr_u32 data_type;
+    struct sensor_pdaf_type2_info type2_info;
 };
 
 struct sensor_ex_exposure {

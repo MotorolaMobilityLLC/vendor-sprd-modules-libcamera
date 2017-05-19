@@ -45,7 +45,7 @@ extern "C" {
 
 #define ISP_B4AWB_BUF_CNT 2
 #define ISP_B4AWB_BUF_SIZE 640 * 480 * 2
-#define ISP_CLOSE_TIMEOUT 2    /*sec*/
+#define ISP_CLOSE_TIMEOUT 2 /*sec*/
 struct grab_context {
     cmr_handle grab_handle;
     /*	struct process_status    proc_status;*/
@@ -63,6 +63,7 @@ struct sensor_context {
     struct sensor_exp_info sensor_info_slv;
     EXIF_SPEC_PIC_TAKING_COND_T exif_info;
     struct sensor_ex_info cur_sns_ex_info;
+    struct sensor_pdaf_info pdaf_info;
 };
 
 struct isp_context {

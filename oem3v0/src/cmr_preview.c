@@ -6187,7 +6187,7 @@ cmr_int prev_alloc_sensor_datatype_buf(struct prev_handle *handle,
         break;
     case SENSOR_DATATYPE_PDAF_ENABLE:
         /*for pdaf param*/
-        prev_cxt->sensor_datatype_mem_size = CAMERA_PDAF_META_SIZE;
+        prev_cxt->sensor_datatype_mem_size = prev_cxt->prev_param.datatype_size;
         prev_cxt->sensor_datatype_mem_num = PDAF_FRM_CNT; // PREV_DATATYPE_CNT;
         break;
     default:
@@ -9449,7 +9449,8 @@ prev_set_sensor_datatype_param(struct prev_handle *handle, cmr_u32 camera_id,
             CAMERA_EMBEDDED_INFO_TYPE;
         break;
     case SENSOR_DATATYPE_PDAF_ENABLE:
-        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type = 0x30;
+        chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type =
+            prev_cxt->prev_param.datatype;
         break;
     default:
         return CMR_CAMERA_INVALID_PARAM;
@@ -10514,8 +10515,8 @@ cmr_int prev_set_sensor_datatype_buffer(struct prev_handle *handle,
         break;
     case SENSOR_DATATYPE_PDAF_ENABLE:
         prev_cxt->sensor_datatype_frm[valid_num].buf_size =
-            CAMERA_PDAF_META_SIZE;
-        buf_cfg.length = CAMERA_PDAF_META_SIZE;
+            prev_cxt->prev_param.datatype_size;
+        buf_cfg.length = prev_cxt->prev_param.datatype_size;
         break;
     default:
         return CMR_CAMERA_INVALID_PARAM;

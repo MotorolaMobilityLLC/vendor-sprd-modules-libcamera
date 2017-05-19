@@ -858,7 +858,7 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     }
     pdaf_info->pd_pitch_x = 96;
     pdaf_info->pd_pitch_y = 130;
-	pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_x = 32;
     pdaf_info->pd_density_y = 32;
     pdaf_info->pd_block_num_x = 130;
     pdaf_info->pd_block_num_y = 96;
@@ -866,7 +866,17 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx258_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx258_pd_pos_l;
     pdaf_info->vendor_type = SENSOR_VENDOR_IMX258;
-    pdaf_info->data_type = 0x2f;
+    pdaf_info->type2_info.data_type = 0x2f;
+    pdaf_info->type2_info.data_format = DATA_BYTE2;
+    if (DATA_BYTE2 == pdaf_info->type2_info.data_format) {
+        pdaf_info->type2_info.width = 260 + 60;
+        pdaf_info->type2_info.height = 96;
+        pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 2;
+    } else if (DATA_RAW10 == pdaf_info->type2_info.data_format) {
+        pdaf_info->type2_info.width = 260 + 4;
+        pdaf_info->type2_info.height = 96;
+        pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
+    }
 
     return rtn;
 }
