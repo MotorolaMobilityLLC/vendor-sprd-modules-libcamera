@@ -493,7 +493,7 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 	af_result.suc_win = win_num;
 
 	af->vcm_stable = 1;
-	if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {
+	if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {	// todo: should add SNAPSHOT status
 		sem_post(&af->af_wait_caf);	// should be protected by af_work_lock mutex exclusives
 	}
 	af->end_notice(af->caller, &af_result);
@@ -1472,15 +1472,6 @@ static void *loop_for_test_mode(void *data_client)
 }
 
 // af process functions
-static cmr_u32 Is_ae_stable(af_ctrl_t * af)
-{
-	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
-		return 1;
-	}
-
-	return af->ae.stable;
-}
-
 static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 {
 	char value[2] = { '\0' };
@@ -1884,6 +1875,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 static void caf_start(af_ctrl_t * af)
 {
 	ISP_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
+	af->caf_state = CAF_MONITORING;
 
 	if (STATE_RECORD_CAF == af->state)
 		af->algo_mode = VAF;
@@ -1891,16 +1883,6 @@ static void caf_start(af_ctrl_t * af)
 		af->algo_mode = CAF;
 
 	calc_roi(af, NULL, af->algo_mode);
-
-	af->caf_state = CAF_MONITORING;
-
-	enum aft_mode mode;
-	mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
-	trigger_set_mode(af, mode);
-	if (af->request_mode == AF_MODE_CONTINUE || af->request_mode == AF_MODE_VIDEO) {
-		trigger_start(af);
-	}
-
 	do_start_af(af);
 }
 
@@ -1928,13 +1910,11 @@ static void caf_process_frame(af_ctrl_t * af)
 		if (1 == af->need_re_trigger) {
 			af->need_re_trigger = 0;
 		}
-		if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
-			ISP_LOGI("notify_stop");
-			notify_stop(af, res);
-			af->caf_state = CAF_MONITORING;
-			trigger_start(af);	//trigger reset after caf done
-			do_start_af(af);
-		}
+		ISP_LOGI("notify_stop");
+		notify_stop(af, res);
+		af->caf_state = CAF_MONITORING;
+		trigger_start(af);	//trigger reset after caf done
+		do_start_af(af);
 	}
 }
 
@@ -1987,6 +1967,7 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 af_mode = *(cmr_u32 *) in_param;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	enum aft_mode mode;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -2012,9 +1993,15 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
 		af->request_mode = af_mode;
+		af->pre_state = af->state;
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		caf_start(af);
-		af->force_trigger = AFV1_TRUE;
+		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
+		trigger_set_mode(af, mode);
+		trigger_start(af);
+		if (STATE_PICTURE != af->pre_state) {
+			af->force_trigger = AFV1_TRUE;
+		}
 		break;
 
 	case AF_MODE_PICTURE:
@@ -2023,10 +2010,9 @@ static cmr_s32 af_sprd_set_mode(cmr_handle handle, void *in_param)
 			if (AF_NOT_FINISHED == AF_is_finished(af->af_alg_cxt) || af->need_re_trigger || DCAM_AFTER_VCM_NO == compare_timestamp(af)) {
 				af_clear_sem(af);
 				af_wait_caf_finish(af);
-				af->state = STATE_CAF;	// todo : af state should be STATE_NORMAL_AF
-				caf_start(af);	// todo : caf could not be started actually
 			};
 		}
+		af->state = STATE_PICTURE;
 		ISP_LOGV("dcam_timestamp-vcm_timestamp = %" PRIu64 " ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 		get_vcm_registor_pos(af);
 		break;
@@ -2550,8 +2536,9 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		case STATE_FAF:
 			pthread_mutex_lock(&af->af_work_lock);
 			if (faf_process_frame(af)) {
-				af->state = STATE_CAF;
+				af->state = STATE_CAF;	// todo: consider af->pre_state
 				caf_start(af);
+				trigger_start(af);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
 			break;
@@ -2602,23 +2589,12 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_TUNING_MODE:
-#if 0
-		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_CAF_STOP, NULL, NULL);
-		rtn = _af_set_status(handle, AF_ALG_STATUS_STOP);
-		if (af_cxt->is_running) {
-			af_cxt->af_result.suc_win = 0;
-			rtn = _af_end_proc(handle, &af_cxt->af_result, AF_TRUE);
-		}
-
-		rtn = af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_TUNING_MODE, param0, NULL);
-#endif
 		break;
 	case AF_CMD_SET_ISP_TOOL_AF_TEST:
-		//af->isp_tool_af_test = *(cmr_u32*)param0;
 		break;
 	case AF_CMD_SET_SCENE_MODE:
-
 		break;
+
 	case AF_CMD_SET_AF_START:{
 			ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
 			property_set("af_mode", "none");
@@ -2801,7 +2777,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 					if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
 						af->pre_state = af->state;
 						af->state = STATE_IDLE;
-						caf_stop(af);	//maybe we need reset trigger
+						caf_stop(af);	// todo : maybe we need wait caf done when caf is searching; or report caf failed msg
 					} else if (STATE_FAF == af->state) {
 						pthread_mutex_lock(&af->af_work_lock);
 						AF_STOP(af->af_alg_cxt);

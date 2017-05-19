@@ -60,7 +60,8 @@ enum af_state {
 	STATE_CAF,
 	STATE_RECORD_CAF,
 	STATE_FAF,
-	STATE_FULLSCAN
+	STATE_FULLSCAN,
+	STATE_PICTURE,
 };
 
 static const char *state_string[] = {
@@ -70,7 +71,8 @@ static const char *state_string[] = {
 	"caf",
 	"record caf",
 	"faf",
-	"fullscan"
+	"fullscan",
+	"picture",
 };
 
 #define STATE_STRING(state)    state_string[state]
