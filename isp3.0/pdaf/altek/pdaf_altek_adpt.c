@@ -26,12 +26,14 @@
 #include "isp_mlog.h"
 #include "alPDAF_err.h"
 #include "alPDAF.h"
-#include "PDExtract.h"
+#include "PDExtract.h" /* for typ3 */
+#include "PDExtract2.h" /* for type2 */
 
 #undef FEATURE_DL_OPEN
 
 #define PDLIB_PATH "libalPDAF.so"
 #define PDEXTRACT_LIBPATH "libalPDExtract.so"
+#define PDEXTRACT_TYPE2_LIBPATH "libalpdextract2.so"
 #define PD_REG_OUT_SIZE 352
 #define PD_OTP_PACK_SIZE 550
 
@@ -44,7 +46,7 @@ struct pdaf_altek_lib_ops {
 	cmr_s32 (*reset)(void);
 };
 
-struct pdaf_extract_ops {
+struct pdaf_type3_extract_ops {
 	cmr_s32 (*getsize)(struct altek_pdaf_info *PDSensorInfo, alPD_RECT *InputROI,
 					unsigned short RawFileWidth, unsigned short RawFileHeight,
 					unsigned short *PDDataWidth, unsigned short *PDDataHeight);
@@ -52,8 +54,22 @@ struct pdaf_extract_ops {
 					cmr_u16 RawFileHeight, cmr_u16 *PDOutLeft, cmr_u16 *PDOutRight);
 };
 
+struct pdaf_type2_extract_ops {
+	cmr_s32 (*get_version)(void *version, int size);
+	cmr_s32 (*extract)(unsigned char *tail_data, struct altek_pd_size pd_size,
+			   enum vendor sensor_module,
+			   unsigned short *pd_left, unsigned short *pd_right);
+};
+
 struct pdaf_altek_lib_api {
 	cmr_s32 (*pdaf_altek_version)(void *a_pOutBuf, int a_dInBufMaxSize);
+};
+
+struct pdaf_type2_info {
+	cmr_u32 data_format;
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_u32 pd_size;
 };
 
 struct pdaf_altek_context {
@@ -70,10 +86,12 @@ struct pdaf_altek_context {
 	cmr_handle extract_lib_handle;
 	struct pdaf_altek_lib_api lib_api;
 	struct pdaf_altek_lib_ops ops;
-	struct pdaf_extract_ops extract_ops;
+	struct pdaf_type3_extract_ops extract3_ops;
+	struct pdaf_type2_extract_ops extract2_ops;
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
 	struct altek_pdaf_info pd_info;
+	struct pdaf_type2_info type2_info;
 	void *pd_left;
 	void *pd_right;
 	alPD_RECT roi;
@@ -164,21 +182,43 @@ static cmr_int load_pdaltek_extract_library(cmr_handle adpt_handle)
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-#if 1//def FEATURE_DL_OPEN
-	cxt->extract_lib_handle = dlopen(PDEXTRACT_LIBPATH, RTLD_NOW);
-	if (!cxt->extract_lib_handle) {
-		ISP_LOGE("failed to dlopen");
-		goto error_dlopen;
-	}
-	cxt->extract_ops.extract = dlsym(cxt->extract_lib_handle, "alPDExtract_Run");
-	if (!cxt->extract_ops.extract) {
-		ISP_LOGE("failed to dlsym extract");
-		goto error_dlsym;
-	}
-	cxt->extract_ops.getsize = dlsym(cxt->extract_lib_handle, "alPDExtract_GetSize");
-	if (!cxt->extract_ops.getsize) {
-		ISP_LOGE("failed to dlsym getsize");
-		goto error_dlsym;
+	switch (cxt->pdaf_support) {
+	case SENSOR_PDAF_TYPE2_ENABLE:
+		cxt->extract_lib_handle = dlopen(PDEXTRACT_TYPE2_LIBPATH, RTLD_NOW);
+		if (!cxt->extract_lib_handle) {
+			ISP_LOGE("failed to dlopen");
+			goto error_dlopen;
+		}
+		cxt->extract2_ops.get_version = dlsym(cxt->extract_lib_handle, "altek_extract_getversion");
+		if (!cxt->extract2_ops.get_version) {
+			ISP_LOGE("failed to dlsym get version");
+			goto error_dlsym;
+		}
+		cxt->extract2_ops.extract = dlsym(cxt->extract_lib_handle, "altek_extract_type2");
+		if (!cxt->extract2_ops.extract) {
+			ISP_LOGE("failed to dlsym extract");
+			goto error_dlsym;
+		}
+		break;
+	case SENSOR_PDAF_TYPE3_ENABLE:
+		cxt->extract_lib_handle = dlopen(PDEXTRACT_LIBPATH, RTLD_NOW);
+		if (!cxt->extract_lib_handle) {
+			ISP_LOGE("failed to dlopen");
+			goto error_dlopen;
+		}
+		cxt->extract3_ops.extract = dlsym(cxt->extract_lib_handle, "alPDExtract_Run");
+		if (!cxt->extract3_ops.extract) {
+			ISP_LOGE("failed to dlsym extract");
+			goto error_dlsym;
+		}
+		cxt->extract3_ops.getsize = dlsym(cxt->extract_lib_handle, "alPDExtract_GetSize");
+		if (!cxt->extract3_ops.getsize) {
+			ISP_LOGE("failed to dlsym getsize");
+			goto error_dlsym;
+		}
+		break;
+	default:
+		break;
 	}
 
 	return 0;
@@ -187,11 +227,6 @@ error_dlsym:
 	cxt->extract_lib_handle = NULL;
 error_dlopen:
 	return ret;
-#else
-	cxt->extract_ops.extract = alPDExtract_Run;
-	cxt->extract_ops.getsize = alPDExtract_GetSize;
-	return ISP_SUCCESS;
-#endif
 }
 
 static cmr_int unload_pdaltek_extract_library(cmr_handle adpt_handle)
@@ -211,13 +246,16 @@ static cmr_int pdafaltek_adpt_get_version(cmr_handle adpt_handle)
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 	cmr_int ret = -ISP_ERROR;
 	cmr_u8 version[256] = { 0 };
+	char extract_version[256] = { 0 };
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	ret = cxt->lib_api.pdaf_altek_version(&version, sizeof(version));
-	ISP_LOGI("version %s", version);
+	if (SENSOR_PDAF_TYPE2_ENABLE == cxt->pdaf_support)
+		cxt->extract2_ops.get_version(extract_version, sizeof(extract_version));
+
+	ISP_LOGI("cal version %s extract ver:%s", version, extract_version);
 	return ret;
 }
-
 
 static cmr_int pdafaltek_adpt_set_pd_info(cmr_handle adpt_handle, struct sensor_pdaf_info *pd_info)
 {
@@ -241,8 +279,13 @@ static cmr_int pdafaltek_adpt_set_pd_info(cmr_handle adpt_handle, struct sensor_
 	cxt->pd_info.pd_pos_size = pd_info->pd_pos_size;
 	cxt->pd_info.pd_pos_r = (struct altek_pos_info *)pd_info->pd_pos_r;
 	cxt->pd_info.pd_pos_l = (struct altek_pos_info *)pd_info->pd_pos_l;
-	ISP_LOGI("pd_density_x = %d, pd_block_num_x = %d, pd_block_num_y = %d", cxt->pd_info.pd_density_x,
-			cxt->pd_info.pd_block_num_x, cxt->pd_info.pd_block_num_y);
+
+	cxt->type2_info.data_format = pd_info->type2_info.data_format;
+	cxt->type2_info.width = pd_info->type2_info.width;
+	cxt->type2_info.height = pd_info->type2_info.height;
+	ISP_LOGI("pd_density_x %d, pd_block_num_x %d, pd_block_num_y %d type2: df %d w %d h %d",
+		 cxt->pd_info.pd_density_x, cxt->pd_info.pd_block_num_x, cxt->pd_info.pd_block_num_y,
+		 cxt->type2_info.data_format, cxt->type2_info.width, cxt->type2_info.height);
 
 	return 0;
 }
@@ -646,7 +689,7 @@ cmr_int pdafaltek_dump_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u
 	return 0;
 }
 
-static cmr_int pdafaltek_adpt_extract(cmr_handle adpt_handle, struct pd_raw_info *pd_raw, alGE_RECT *pdroi)
+static cmr_int pdafaltek_adpt_extract_type3(cmr_handle adpt_handle, struct pd_raw_info *pd_raw, alGE_RECT *pdroi)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
@@ -692,7 +735,7 @@ static cmr_int pdafaltek_adpt_extract(cmr_handle adpt_handle, struct pd_raw_info
 		 cxt->roi.m_wLeft, cxt->roi.m_wTop,
 		 cxt->roi.m_wWidth, cxt->roi.m_wHeight);
 
-	ret = cxt->extract_ops.getsize(&cxt->pd_info, &cxt->roi, image_width, image_height,
+	ret = cxt->extract3_ops.getsize(&cxt->pd_info, &cxt->roi, image_width, image_height,
 				       (cmr_u16 *)&pdroi->m_wWidth, (cmr_u16 *)&pdroi->m_wHeight);
 	if (ret) {
 		ISP_LOGE("failed to get pd data size%ld", ret);
@@ -700,7 +743,7 @@ static cmr_int pdafaltek_adpt_extract(cmr_handle adpt_handle, struct pd_raw_info
 	}
 	ISP_LOGV("pd size %d, %d,", pdroi->m_wWidth, pdroi->m_wHeight);
 
-	ret = cxt->extract_ops.extract((cmr_u8 *)pd_raw->addr, &cxt->roi, image_width, image_height,
+	ret = cxt->extract3_ops.extract((cmr_u8 *)pd_raw->addr, &cxt->roi, image_width, image_height,
 				       (cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
 	if (ret) {
 		ISP_LOGE("failed to extract pd data %ld", ret);
@@ -732,7 +775,7 @@ static cmr_int pdafaltek_adpt_type3_process(cmr_handle adpt_handle, void *in, vo
 	struct pdaf_ctrl_callback_in callback_in;
 	alGE_RECT pdroi;
 	DataBit bit;
-	nsecs_t cal_time_start = 0;
+	nsecs_t cal_time_begin = 0;
 	nsecs_t cal_time_end = 0;
 	char value[PROPERTY_VALUE_MAX];
 
@@ -758,7 +801,7 @@ static cmr_int pdafaltek_adpt_type3_process(cmr_handle adpt_handle, void *in, vo
 	cxt->pd_reg_in.dBv = (float)proc_in->dBv / 1000.0;
 
 	if (cxt->extract_enable)
-		pdafaltek_adpt_extract(cxt, &proc_in->pd_raw, &pdroi);
+		pdafaltek_adpt_extract_type3(cxt, &proc_in->pd_raw, &pdroi);
 
 	switch (proc_in->bit) {
 	case PD_DATA_BIT_8:
@@ -789,7 +832,7 @@ static cmr_int pdafaltek_adpt_type3_process(cmr_handle adpt_handle, void *in, vo
 			bit, pdroi.m_wLeft, pdroi.m_wTop, pdroi.m_wWidth, pdroi.m_wHeight);
 
 	ISP_LOGV("pd_reg_in %p", &cxt->pd_reg_in);
-	cal_time_start = systemTime(CLOCK_MONOTONIC);
+	cal_time_begin = systemTime(CLOCK_MONOTONIC);
 	ret = cxt->ops.calc(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
 					pdroi.m_wWidth, pdroi.m_wHeight, pdroi, bit, &cxt->pd_reg_in);
 	if (ret) {
@@ -797,19 +840,18 @@ static cmr_int pdafaltek_adpt_type3_process(cmr_handle adpt_handle, void *in, vo
 		goto exit;
 	}
 	cal_time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("pd report data pd_value after: %f, cal delta %d",
+	ISP_LOGI("pd report data pd_value after: %f, cal delta %ld",
 			cxt->report_data.pd_value,
-			(cmr_s32)(cal_time_end - cal_time_start) / 1000);
+			(cmr_uint)(cal_time_end - cal_time_begin) / 1000);
 
-	#if 1 // pdaf out data save
-		property_get("debug.camera.dump.pdaf.out", (char *)value, "0");
-		if (atoi(value)) {
-			pdafaltek_dump_file(cxt->frame_id, PDAF_DATA_TYPE_OUT,
-							pdroi.m_wWidth,
-							pdroi.m_wHeight,
-							cxt->report_data.pd_reg_out, cxt->pd_reg_in.dcurrentVCM);
-		}
-	#endif
+	property_get("debug.camera.dump.pdaf.out", (char *)value, "0");
+	if (atoi(value)) {
+		pdafaltek_dump_file(cxt->frame_id, PDAF_DATA_TYPE_OUT,
+				    pdroi.m_wWidth,
+				    pdroi.m_wHeight,
+				    cxt->report_data.pd_reg_out,
+				    cxt->pd_reg_in.dcurrentVCM);
+	}
 	cxt->report_data.token_id = cxt->token_id;
 	cxt->report_data.frame_id = cxt->frame_id;
 	cxt->report_data.enable = cxt->pd_enable;
@@ -818,16 +860,42 @@ static cmr_int pdafaltek_adpt_type3_process(cmr_handle adpt_handle, void *in, vo
 
 	callback_in.proc_out.pd_report_data = cxt->report_data;
 	/*call back to haf lib*/
-	if (cxt->cb_ops.call_back) {
+	if (cxt->cb_ops.call_back)
 		ret = (cxt->cb_ops.call_back)(cxt->caller_handle, &callback_in);
-	}
+
 	cxt->frame_id++; //= proc_in->pd_raw.frame_id;
 
 exit:
-	if (cxt->pd_set_buffer) {
+	if (cxt->pd_set_buffer)
 		ret = (cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
-	}
+
 	cxt->is_busy = 0;
+	return ret;
+}
+
+static cmr_int pdafaltek_adpt_extract_type2(cmr_handle adpt_handle, cmr_u8 *addr)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
+	struct altek_pd_size pd_size_info;
+
+	pd_size_info.total_width = cxt->type2_info.width;
+	pd_size_info.total_height = cxt->type2_info.height;
+	pd_size_info.left_width = cxt->type2_info.width;
+	pd_size_info.left_height = cxt->type2_info.height / 2;
+	pd_size_info.right_width = cxt->type2_info.width;
+	pd_size_info.right_height = cxt->type2_info.height / 2;
+
+	ret = cxt->extract2_ops.extract(addr, pd_size_info,
+					cxt->vendor,
+					(cmr_u16 *)cxt->pd_left,
+					(cmr_u16 *)cxt->pd_right);
+
+	if (ret) {
+		ISP_LOGE("failed to extract pd data %ld", ret);
+		goto exit;
+	}
+exit:
 	return ret;
 }
 
@@ -837,11 +905,65 @@ static cmr_int pdafaltek_adpt_type2_process(cmr_handle adpt_handle, void *in, vo
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	UNUSED(out);
+	alGE_RECT pdroi;
+	nsecs_t cal_time_begin = 0;
+	nsecs_t cal_time_end = 0;
+	struct pdaf_ctrl_callback_in callback_in;
+	cmr_u32 pd_width = cxt->type2_info.width;
+	cmr_u32 pd_heigh = cxt->type2_info.height;
 
-	if (cxt->pd_set_buffer) {
-		ret = (cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
+	memset(&pdroi, 0x00, sizeof(pdroi));
+	memset(&callback_in, 0x00, sizeof(callback_in));
+
+	if (!cxt->pd_enable || !cxt->pd_open) {
+		ISP_LOGI("pd enable %d, open %d", cxt->pd_enable, cxt->pd_open);
+		ret = ISP_SUCCESS;
+		goto exit;
 	}
+	cxt->is_busy = 1;
 
+	cxt->pd_reg_in.dcurrentVCM = proc_in->dcurrentVCM;
+	cxt->pd_reg_in.dBv = (float)proc_in->dBv / 1000.0;
+
+	cal_time_begin = systemTime(CLOCK_MONOTONIC);
+	pdafaltek_adpt_extract_type2(cxt, proc_in->pd_raw.addr);
+	cal_time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("extract delta %ld", (cmr_uint)(cal_time_end - cal_time_begin) / 1000);
+
+	pdroi.m_wWidth = pd_width;
+	pdroi.m_wHeight = pd_heigh;
+
+	cal_time_begin = systemTime(CLOCK_MONOTONIC);
+
+	ret = cxt->ops.calc(&cxt->report_data.pd_value,
+			    cxt->report_data.pd_reg_out,
+			    cxt->pd_left, cxt->pd_right,
+			    pdroi.m_wWidth, pdroi.m_wHeight,
+			    pdroi,
+			    SRCIMG_10,
+			    &cxt->pd_reg_in);
+
+	cal_time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("cal delta %lu", (cmr_uint)(cal_time_end - cal_time_begin) / 1000);
+
+	cxt->report_data.token_id = cxt->token_id;
+	cxt->report_data.frame_id = cxt->frame_id;
+	cxt->report_data.enable = cxt->pd_enable;
+	cxt->report_data.time_stamp.sec = proc_in->pd_raw.sec;
+	cxt->report_data.time_stamp.usec = proc_in->pd_raw.usec;
+
+	callback_in.proc_out.pd_report_data = cxt->report_data;
+	/*call back to haf lib*/
+	if (cxt->cb_ops.call_back)
+		ret = (cxt->cb_ops.call_back)(cxt->caller_handle, &callback_in);
+
+	cxt->frame_id++; //= proc_in->pd_raw.frame_id;
+
+exit:
+	if (cxt->pd_set_buffer)
+		ret = (cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
+
+	cxt->is_busy = 0;
 	return ret;
 }
 
