@@ -52,28 +52,29 @@ LOCAL_C_INCLUDES := \
 
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+ISPALG_DIR := ispalg/isp2.1
+ISPDRV_DIR := camdrv/isp2.1
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../isp2.1/middleware/inc \
-	$(LOCAL_PATH)/../isp2.1/isp_tune \
-	$(LOCAL_PATH)/../isp2.1/calibration \
-	$(LOCAL_PATH)/../isp2.1/driver/inc \
-	$(LOCAL_PATH)/../isp2.1/param_manager \
-	$(LOCAL_PATH)/../isp2.1/ae/inc \
-	$(LOCAL_PATH)/../isp2.1/ae/sprd_ae/inc \
-	$(LOCAL_PATH)/../isp2.1/awb/inc \
-	$(LOCAL_PATH)/../isp2.1/awb/alc_awb/inc \
-	$(LOCAL_PATH)/../isp2.1/awb/sprd_awb/inc \
-	$(LOCAL_PATH)/../isp2.1/af/inc \
-	$(LOCAL_PATH)/../isp2.1/af/sprd_af/inc \
-	$(LOCAL_PATH)/../isp2.1/af/sft_af/inc \
-	$(LOCAL_PATH)/../isp2.1/af/alc_af/inc \
-	$(LOCAL_PATH)/../isp2.1/lsc/inc \
-	$(LOCAL_PATH)/../isp2.1/common/inc/ \
-	$(LOCAL_PATH)/../isp2.1/afl/inc \
-	$(LOCAL_PATH)/../isp2.1/smart \
-	$(LOCAL_PATH)/../isp2.1/utility \
-	$(LOCAL_PATH)/../isp2.1/calibration/inc
-
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/param_manager \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/ae/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd_ae/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/sprd_awb/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/sprd_af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/sft_af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/alc_af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/lsc/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc/ \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/afl/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/smart \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/utility \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration/inc
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)

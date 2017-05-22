@@ -2,7 +2,7 @@ LOCAL_SHARED_LIBRARIES := libutils libmemion libcamera_client libcutils libhardw
 LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor libcamoem
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamisp
+LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)

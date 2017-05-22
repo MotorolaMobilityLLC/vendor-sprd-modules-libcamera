@@ -7,7 +7,8 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=fo
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-
+ISPALG_DIR = ispalg/isp2.1
+ISPDRV_DIR = camdrv/isp2.1
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/inc \
@@ -22,9 +23,9 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../sensor/otp_drv
 
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../isp2.1/isp_tune \
-	$(LOCAL_PATH)/../isp2.1/common/inc \
-	$(LOCAL_PATH)/../isp2.1/middleware/inc
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc
 
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
@@ -112,7 +113,7 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamisp
+LOCAL_SHARED_LIBRARIES += libcamdrv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
@@ -266,7 +267,7 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamisp
+LOCAL_SHARED_LIBRARIES += libcamdrv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
@@ -420,7 +421,7 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamisp
+LOCAL_SHARED_LIBRARIES += libcamdrv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar

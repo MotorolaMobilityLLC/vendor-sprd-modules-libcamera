@@ -38,7 +38,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../oem2v1/isp_calibration/inc \
 	$(LOCAL_PATH)/../../jpeg/inc \
 	$(LOCAL_PATH)/../../vsp/inc \
-	$(LOCAL_PATH)/../../tool/mtrace \
+	$(LOCAL_PATH)/../../tool/mtrace
 
 # ************************************************
 # internal header file
@@ -69,9 +69,9 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/afl/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/smart \
 	$(LOCAL_PATH)/$(ISP_DIR)/utility \
-	$(LOCAL_PATH)/$(ISP_DIR)/calibration/inc \
+	$(LOCAL_PATH)/$(ISP_DIR)/calibration/inc
 
-#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 # don't modify this code
 LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
