@@ -67,8 +67,7 @@ static cmr_int _ov5675_sunny_parse_module_data(cmr_handle otp_drv_handle) {
     cmr_u8 *module_info = NULL;
 
     /*begain read raw data, save module info */
-    module_info =
-        (cmr_u8 *)(otp_cxt->otp_raw_data.buffer + MODULE_INFO_OFFSET);
+    module_info = (cmr_u8 *)(otp_cxt->otp_raw_data.buffer + MODULE_INFO_OFFSET);
     module_dat->vendor_id = module_info[0];
     module_dat->moule_id =
         (module_info[1] << 16) | (module_info[2] << 8) | module_info[3];
@@ -303,13 +302,10 @@ static cmr_int ov5675_sunny_otp_drv_read(cmr_handle otp_drv_handle,
         }
         return ret;
     } else {
-        for (i = 0; i < OTP_LEN; i++) {
-            cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-            cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-            hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               (cmr_u8 *)&cmd_val[0], 2);
-            buffer[i] = cmd_val[0];
-        }
+        /*in burst mode,otp data read from kernel one time*/
+        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                           (cmr_u8 *)buffer,
+                           SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
     }
     sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_LEN,
                              otp_cxt->dev_name);
@@ -331,7 +327,7 @@ static cmr_int ov5675_sunny_otp_drv_write(cmr_handle otp_drv_handle,
         int i;
         for (i = 0; i < otp_write_data->num_bytes; i++) {
             hw_sensor_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               &otp_write_data->buffer[i], 2);
+                                &otp_write_data->buffer[i], 2);
         }
         OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
