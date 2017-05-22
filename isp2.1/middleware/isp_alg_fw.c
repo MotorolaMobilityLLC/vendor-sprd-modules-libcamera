@@ -264,6 +264,12 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 	case ISP_AF_AE_UNLOCK:
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
 		break;
+	case ISP_AF_AE_CAF_LOCK:
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CAF_LOCKAE_START, NULL, param1);
+		break;
+	case ISP_AF_AE_CAF_UNLOCK:
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CAF_LOCKAE_STOP, NULL, param1);
+		break;
 	case ISP_AF_AWB_LOCK:
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		break;
@@ -1157,6 +1163,17 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			ae_info.cur_lum = ae_result->cur_lum;
 			ae_info.target_lum = 128;
 			ae_info.is_stable = ae_result->is_stab;
+			ae_info.cur_index = ae_result->cur_index;
+			ae_info.cur_ev = ae_result->cur_ev;
+			ae_info.cur_dgain = ae_result->cur_dgain;
+			ae_info.cur_iso = ae_result->cur_iso;
+			ae_info.flag = ae_result->flag;
+			ae_info.ae_data = ae_result->ae_data;
+			ae_info.ae_data_size = ae_result->ae_data_size;
+			ae_info.target_lum_ori = ae_result->target_lum_ori;
+			ae_info.flag4idx = ae_result->flag4idx;
+			ae_info.log_ae.log = ae_result->log_ae.log;
+			ae_info.log_ae.size = ae_result->log_ae.size;
 			calc_param.data_type = AF_DATA_AE;
 			calc_param.data = (void *)(&ae_info);
 			rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
