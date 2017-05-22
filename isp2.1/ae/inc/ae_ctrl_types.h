@@ -17,7 +17,7 @@
 #ifndef _AE_CTRL_TYPES_H_
 #define _AE_CTRL_TYPES_H_
 
-#include "ae_types.h"
+#include "ae_common.h"
 
 #ifdef __cplusplus
 extern "C" {

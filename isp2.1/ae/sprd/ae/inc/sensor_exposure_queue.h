@@ -17,7 +17,7 @@
 #ifndef _SENSOR_EXPOSURE_QUEUE_H_
 #define _SENSOR_EXPOSURE_QUEUE_H_
 
-#include "isp_type.h"
+#include "cmr_types.h"
 
 #ifdef __cplusplus
 extern "C" {

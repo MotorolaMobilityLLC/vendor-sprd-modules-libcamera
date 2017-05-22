@@ -17,7 +17,7 @@
 #ifndef _AE_MISC_H_
 #define _AE_MISC_H_
 
-#include "ae_types.h"
+#include "cmr_types.h"
 
 #ifdef __cplusplus
 extern "C" {

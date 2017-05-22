@@ -19,7 +19,6 @@
 
 #include "ae_tuning_type.h"
 #include "ae_ctrl_types.h"
-#include "ae_com.h"
 
 #ifdef __cplusplus
 extern "C" {

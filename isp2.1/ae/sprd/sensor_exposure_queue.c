@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "sensor_exposure_queue.h"
+#include "cmr_log.h"
 
 #ifndef UNUSED
 #define     UNUSED(param)  (void)(param)
