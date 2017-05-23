@@ -247,6 +247,36 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 			rtn = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK, param0, sizeof(struct isp_af_notice));
 		}
 		break;
+	case ISP_AF_LENS_SET_POS:
+		if (cxt->ioctrl_ptr->set_pos) {
+			rtn = cxt->ioctrl_ptr->set_pos(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
+		}
+		break;
+	case ISP_AF_LENS_GET_OTP:
+		if (cxt->ioctrl_ptr->get_otp) {
+			rtn = cxt->ioctrl_ptr->get_otp(cxt->ioctrl_ptr->caller_handler, (uint16_t *) param0, (uint16_t *) param1);
+		}
+		break;
+	 case ISP_AF_SET_MOTOR_BESTMODE://ISP_AF_SET_MOTOR_BESTMODE
+		if (cxt->ioctrl_ptr->set_motor_bestmode) {
+			rtn = cxt->ioctrl_ptr->set_motor_bestmode(cxt->ioctrl_ptr->caller_handler);
+		}
+	 	break;
+	 case ISP_AF_GET_MOTOR_POS:
+		if (cxt->ioctrl_ptr->get_motor_pos) {
+			rtn = cxt->ioctrl_ptr->get_motor_pos(cxt->ioctrl_ptr->caller_handler,  (uint16_t *)param0);
+		}
+	 	break;
+	 case ISP_AF_SET_VCM_TEST_MODE:
+		if (cxt->ioctrl_ptr->set_test_vcm_mode) {
+			rtn = cxt->ioctrl_ptr->set_test_vcm_mode(cxt->ioctrl_ptr->caller_handler, (char *)param0);
+		}
+	 	break;
+	 case ISP_AF_GET_VCM_TEST_MODE:
+		if (cxt->ioctrl_ptr->get_test_vcm_mode) {
+			rtn = cxt->ioctrl_ptr->get_test_vcm_mode(cxt->ioctrl_ptr->caller_handler);
+		}
+	 	break;
 	case ISP_AF_START_NOTICE:
 		rtn = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK, param0, sizeof(struct isp_af_notice));
 		break;
@@ -1848,6 +1878,7 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	af_input.af_set_cb = isp_af_set_cb;
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
+	af_input.handle_pm = cxt->handle_pm;
 
 	if (NULL != cxt->otp_data) {
 		af_input.otp_info.gldn_data.infinite_cali = 0;
@@ -1865,6 +1896,8 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	}
 	if(cxt->ops.af_ops.init)
 		rtn = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
+	cxt->af_cxt.log_af = af_input.af_alg_cxt;
+	cxt->af_cxt.log_af_size = af_input.af_dump_info_len;
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
 
 	return rtn;

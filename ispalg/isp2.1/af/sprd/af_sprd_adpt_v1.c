@@ -116,14 +116,15 @@ static void afm_enable(af_ctrl_t * af)
 #if 1
 	cmr_s32 rtn = AFV1_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
 
 #if CAMALGO_MOD
 	//af->afm_func->afm_bypass(device, 0);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, device, 0);
+	int bypass = 0;
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, (void*)&bypass, NULL);
 #else
+	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
+	cmr_handle device = cxt->isp_driver_handle;
 	isp_u_raw_afm_bypass(device, 0);
 #endif
 
@@ -144,14 +145,15 @@ static void afm_disable(af_ctrl_t * af)
 {
 #if 1
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
 
 #if CAMALGO_MOD
 	//af->afm_func->afm_bypass(device, 1);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, device, (void*)1);
+	int bypass = 1;
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, (void*)&bypass, NULL);
 #else
+	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
+	cmr_handle device = cxt->isp_driver_handle;
 	isp_u_raw_afm_bypass(device, 1);
 #endif
 
@@ -171,9 +173,6 @@ static void afm_disable(af_ctrl_t * af)
 static void afm_setup(af_ctrl_t * af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
 
 	memcpy(&(af->af_iir_nr), &(af_iir_nr[af->afm_tuning.iir_level]), sizeof(struct af_iir_nr_info));
 	af->af_enhanced_module.chl_sel = 0;
@@ -192,11 +191,15 @@ static void afm_setup(af_ctrl_t * af)
 	memcpy(&(af->af_enhanced_module.fv1_coeff), &fv1_coeff, sizeof(fv1_coeff));
 
 #if CAMALGO_MOD
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, (void*)af->afm_skip_num);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODE, device, (void*)1);
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_IIR_NR_CFG, cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
-	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODULES_CFG, cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
+	int mode = 1;
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, (void*)&af->afm_skip_num, NULL);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODE, (void*)&mode, NULL);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_IIR_NR_CFG, (void *)&(af->af_iir_nr), NULL);
+	cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODULES_CFG, (void *)&(af->af_enhanced_module), NULL);
 #else
+	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
+	cmr_handle device = cxt->isp_driver_handle;
 	isp_u_raw_afm_skip_num(device, af->afm_skip_num);
 	isp_u_raw_afm_mode(device, 1);
 	isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
@@ -239,9 +242,6 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	cmr_u32 data[25];
 
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
-	cmr_handle device = cxt->isp_driver_handle;
 
 	num = 0;
 	p = fv;
@@ -255,8 +255,11 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	if (filter_mask & SOBEL9_BIT) {
 		num++;
 #if CAMALGO_MOD
-	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, data);
+//	    cxt_ptr->af_set_cb(af->caller, ISP_AFM_SKIP_NUM, device, data);
 #else
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+		struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
+		cmr_handle device = cxt->isp_driver_handle;
 		isp_u_raw_afm_type2_statistic(device, data);
 #endif
 		for (i = 0; i < roi_num; ++i)
@@ -266,8 +269,11 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	if (filter_mask & SPSMD_BIT) {
 		num++;
 #if CAMALGO_MOD
-	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, data);
+//	    cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, device, data);
 #else
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+		struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
+		cmr_handle device = cxt->isp_driver_handle;
 		isp_u_raw_afm_type1_statistic(device, data);
 #endif
 		for (i = 0; i < roi_num; ++i)
@@ -295,12 +301,11 @@ static cmr_s32 lens_get_pos(af_ctrl_t * af)
 static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	cmr_u16 pos = 0;
 
-	if (NULL != af->vcm_ops.get_motor_pos) {
+	if (NULL != af->af_get_motor_pos) {
 		//af->vcm_ops.get_motor_pos(af->caller, &pos);
-		af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, &pos);
+		af->af_get_motor_pos(af->caller, &pos);
 	} else {
 		pos = (cmr_u16) lens_get_pos(af);
 	}
@@ -312,16 +317,14 @@ static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
 static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	// ISP_LOGV("pos = %d", pos);
 	cmr_u16 last_pos = 0;
 
 	last_pos = lens_get_pos(af);
 
-	if (NULL != af->vcm_ops.set_pos) {
+	if (NULL != af->af_lens_move) {
 		if (last_pos != pos)
-			//af->vcm_ops.set_pos(af->caller, pos); // must be provided
-			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);	// must be provided
+		af->af_lens_move(af->caller, pos);
 		ISP_LOGV("af->vcm_ops.set_pos = %d", pos);
 		af->lens.pos = pos;
 	}
@@ -734,7 +737,7 @@ static cmr_u8 if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+
 
 	if (af->otp_info.rdm_data.macro_cali > af->otp_info.rdm_data.infinite_cali) {
 		pAF_OTP->bIsExist = (T_LENS_BY_OTP);
@@ -752,11 +755,9 @@ static cmr_u8 if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	// read
-	if (NULL != af->vcm_ops.get_motor_pos) {
-		//af->vcm_ops.get_motor_pos(af->caller, motor_pos);
-		af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, motor_pos);
+	if (NULL != af->af_get_motor_pos) {
+		af->af_get_motor_pos(af->caller, motor_pos);
 		ISP_LOGV("motor pos in register %d", *motor_pos);
 	} else {
 		*motor_pos = (cmr_u16) lens_get_pos(af);
@@ -769,11 +770,9 @@ static cmr_u8 if_set_motor_sacmode(void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
-	if (NULL != af->vcm_ops.set_motor_bestmode)
-		//af->vcm_ops.set_motor_bestmode(af->caller);
-		af->vcm_ops.set_motor_bestmode(isp_ctx->ioctrl_ptr->caller_handler);
+	if (NULL != af->af_set_motor_bestmode)
+		af->af_set_motor_bestmode(af->caller);
 
 	return 0;
 }
@@ -892,15 +891,8 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 static void set_vcm_chip_ops(af_ctrl_t * af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
 	memset(&af->vcm_ops, 0, sizeof(af->vcm_ops));
-	af->vcm_ops.set_pos = isp_ctx->ioctrl_ptr->set_pos;
-	af->vcm_ops.get_otp = isp_ctx->ioctrl_ptr->get_otp;
-	af->vcm_ops.set_motor_bestmode = isp_ctx->ioctrl_ptr->set_motor_bestmode;
-	af->vcm_ops.set_test_vcm_mode = isp_ctx->ioctrl_ptr->set_test_vcm_mode;
-	af->vcm_ops.get_test_vcm_mode = isp_ctx->ioctrl_ptr->get_test_vcm_mode;
-	af->vcm_ops.get_motor_pos = isp_ctx->ioctrl_ptr->get_motor_pos;
 }
 
 /* initialization */
@@ -1073,7 +1065,6 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 {
 	struct aft_tuning_block_param aft_in;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 
 	if (0 != load_trigger_lib(af, lib_name))
@@ -1081,7 +1072,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 
 	struct isp_pm_ioctl_output aft_pm_output;
 	memset((void *)&aft_pm_output, 0, sizeof(aft_pm_output));
-	isp_pm_ioctl(isp_ctx->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &aft_pm_output);
+	isp_pm_ioctl(af->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &aft_pm_output);
 
 	if (PNULL == aft_pm_output.param_data || PNULL == aft_pm_output.param_data[0].data_ptr || 0 == aft_pm_output.param_data[0].data_size) {
 		ISP_LOGW("aft tuning param error ");
@@ -1253,11 +1244,9 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 static void set_vcm_mode(af_ctrl_t * af, char *vcm_mode)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
-	if (NULL != af->vcm_ops.set_test_vcm_mode)
-		//af->vcm_ops.set_test_vcm_mode(af->caller, vcm_mode);
-		af->vcm_ops.set_test_vcm_mode(isp_ctx->ioctrl_ptr->caller_handler, vcm_mode);
+	if (NULL != af->af_set_test_vcm_mode)
+		af->af_set_test_vcm_mode(af->caller, vcm_mode);
 
 	return;
 }
@@ -1265,11 +1254,9 @@ static void set_vcm_mode(af_ctrl_t * af, char *vcm_mode)
 static void get_vcm_mode(af_ctrl_t * af, char *vcm_mode)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	UNUSED(vcm_mode);
-	if (NULL != af->vcm_ops.get_test_vcm_mode)
-		//af->vcm_ops.get_test_vcm_mode(af->caller);
-		af->vcm_ops.get_test_vcm_mode(isp_ctx->ioctrl_ptr->caller_handler);
+	if (NULL != af->af_get_test_vcm_mode)
+		af->af_get_test_vcm_mode(af->caller);
 
 	return;
 }
@@ -2344,7 +2331,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGI("B");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
-	struct isp_alg_fw_context *isp_ctx = NULL;
 	struct isp_pm_ioctl_output af_pm_output;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
@@ -2352,18 +2338,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		ISP_LOGE("fail to init param:%p, result:%p", init_param, result);
 		return NULL;
 	}
-	isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
-
-	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
-
-	rtn = isp_pm_ioctl(isp_ctx->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
-	if (ISP_SUCCESS == rtn) {
-		ISP_LOGV("load af tuning params succeed");
-	} else {
-		ISP_LOGW("load af tuning params failed");
-		return NULL;
-	}
-
 	af = (af_ctrl_t *) malloc(sizeof(*af));
 	if (NULL == af) {
 		ISP_LOGE("fail to malloc af_ctrl_t");
@@ -2371,6 +2345,17 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	}
 
 	memset(af, 0, sizeof(*af));
+	af->handle_pm = init_param->handle_pm;
+	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
+
+	rtn = isp_pm_ioctl(af->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
+	if (ISP_SUCCESS == rtn) {
+		ISP_LOGV("load af tuning params succeed");
+	} else {
+		ISP_LOGW("load af tuning params failed");
+		return NULL;
+	}
+
 	af->isp_info.width = init_param->src.w;
 	af->isp_info.height = init_param->src.h;
 	af->isp_info.win_num = afm_get_win_num(init_param);
@@ -2386,6 +2371,12 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->get_monitor_win_num = init_param->get_monitor_win_num;
 	af->lock_module = init_param->lock_module;
 	af->unlock_module = init_param->unlock_module;
+	af->af_lens_move = init_param->af_lens_move;
+	af->af_get_motor_pos = init_param->af_get_motor_pos;
+	af->af_get_otp= init_param->af_get_otp;
+	af->af_set_motor_bestmode = init_param->af_set_motor_bestmode;
+	af->af_set_test_vcm_mode = init_param->af_set_test_vcm_mode;
+	af->af_get_test_vcm_mode = init_param->af_get_test_vcm_mode;
 
 	af->ae_lock_num = 1;
 	af->awb_lock_num = 0;
@@ -2414,8 +2405,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,
 		 af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
 
-	isp_ctx->af_cxt.log_af = (cmr_u8 *) af->af_alg_cxt;
-	isp_ctx->af_cxt.log_af_size = af->af_dump_info_len;
+	init_param->af_alg_cxt = (cmr_u8 *) af->af_alg_cxt;
+	init_param->af_dump_info_len = af->af_dump_info_len;
 	af->test_loop_quit = 1;
 
 	/*
@@ -2618,7 +2609,6 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 	cmr_int rtn = AFV1_SUCCESS;
 	struct isp_video_start *in_ptr = NULL;
 	struct afctrl_cxt *cxt_ptr = NULL;
-	struct isp_alg_fw_context *isp_ctx = NULL;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -2626,7 +2616,6 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		return AFV1_ERROR;
 	}
 	cxt_ptr = (struct afctrl_cxt *)af->caller;
-	isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 	AF_Trigger_Data aft_in;
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 
@@ -2638,8 +2627,8 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 
 	case AF_CMD_SET_AF_POS:
-		if (NULL != af->vcm_ops.set_pos) {
-			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, *(cmr_u16 *) param0);
+		if (NULL != af->af_lens_move) {
+			af->af_lens_move(af->caller, *(cmr_u16 *) param0);
 		}
 		break;
 

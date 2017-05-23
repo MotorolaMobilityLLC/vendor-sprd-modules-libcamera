@@ -72,6 +72,72 @@ static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 	return ISP_SUCCESS;
 }
 
+static uint32_t af_lens_move(void *handle_af, cmr_u16 in_param)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LENS_SET_POS, (void *)&in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static uint32_t af_get_otp(void *handle_af, uint16_t *inf, uint16_t *macro)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LENS_GET_OTP, inf, macro);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static uint32_t af_get_motor_pos(void *handle_af, cmr_u16* in_param)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_GET_MOTOR_POS, (void *)in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static uint32_t af_set_motor_bestmode(void *handle_af)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_MOTOR_BESTMODE,  NULL,  NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static uint32_t af_set_vcm_test_mode(void *handle_af, char *vcm_mode)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_VCM_TEST_MODE,  vcm_mode,  NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static uint32_t af_get_vcm_test_mode(void *handle_af)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_GET_VCM_TEST_MODE,  NULL,  NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
 static cmr_s32 af_end_notice(void *handle_af, struct af_result_param *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
@@ -388,6 +454,12 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->get_monitor_win_num = af_get_monitor_win_num;
 	input_ptr->lock_module = af_lock_module;
 	input_ptr->unlock_module = af_unlock_module;
+	input_ptr->af_lens_move = af_lens_move;
+	input_ptr->af_get_otp = af_get_otp;
+	input_ptr->af_get_motor_pos = af_get_motor_pos;
+	input_ptr->af_set_motor_bestmode = af_set_motor_bestmode;
+	input_ptr->af_set_test_vcm_mode = af_set_vcm_test_mode;
+	input_ptr->af_get_test_vcm_mode = af_get_vcm_test_mode;
 
 	cxt_ptr = (struct afctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {

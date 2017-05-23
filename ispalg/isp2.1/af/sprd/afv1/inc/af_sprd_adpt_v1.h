@@ -18,7 +18,6 @@
 
 #include <utils/Timers.h>
 
-#include "isp_dev_access.h"
 
 #include "AFv1_Common.h"
 #include "AFv1_Interface.h"
@@ -251,6 +250,7 @@ typedef struct _afm_tuning_param_sharkl2 {
 
 
 typedef struct _af_ctrl {
+	cmr_handle handle_pm;
 	void *af_alg_cxt;	//AF_Data fv;
 	cmr_u32 af_dump_info_len;
 	cmr_u32 state;		//enum af_state state;
@@ -322,6 +322,13 @@ typedef struct _af_ctrl {
 	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
 	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
 	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
+	 uint32_t(*af_lens_move)(void *handle, cmr_u16 pos);
+	 uint32_t(*af_get_motor_pos)(void *handle, cmr_u16 * motor_pos);
+	 uint32_t(*af_get_otp)(void *handle, uint16_t *inf, uint16_t *macro);
+        uint32_t(*af_set_motor_bestmode)(void *handle);
+	 uint32_t(*af_get_test_vcm_mode)(void *handle);
+	 uint32_t(*af_set_test_vcm_mode)(void *handle, char *vcm_mode);
+
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

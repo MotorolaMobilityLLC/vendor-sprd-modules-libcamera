@@ -18,7 +18,8 @@
 #define _ISP_AF_H_
 
 #include "isp_common_types.h"
-//#include "isp_alg_fw.h"
+#include "isp_pm.h"
+
 
 #ifdef WIN32
 #include "sci_type.h"
@@ -161,12 +162,15 @@ extern "C" {
 
 	struct afctrl_init_in {
 		cmr_handle caller_handle;	//struct isp_alg_fw_context *cxt
+		cmr_handle handle_pm;
 		isp_af_cb af_set_cb;
 		cmr_u32 camera_id;
 		struct third_lib_info lib_param;
 		struct isp_size src;
 		cmr_handle caller;	//struct afctrl_cxt *cxt_ptr
 		struct af_ctrl_otp_info otp_info;
+		void *af_alg_cxt;	//AF_Data fv;
+		cmr_u32 af_dump_info_len;
 		 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 		 cmr_s32(*start_notice) (void *handle);
 		 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
@@ -175,6 +179,12 @@ extern "C" {
 		 cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
 		 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
 		 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
+		 uint32_t(*af_lens_move)(void *handle, cmr_u16 pos);
+		 uint32_t(*af_get_otp)(void *handle, uint16_t *inf, uint16_t *macro);
+ 		 uint32_t(*af_get_motor_pos)(void *handle, cmr_u16 * motor_pos);
+ 		 uint32_t(*af_set_motor_bestmode)(void *handle);
+ 		 uint32_t(*af_get_test_vcm_mode)(void *handle);
+ 		 uint32_t(*af_set_test_vcm_mode)(void *handle, char *vcm_mode);
 	};
 
 	struct afctrl_init_out {
