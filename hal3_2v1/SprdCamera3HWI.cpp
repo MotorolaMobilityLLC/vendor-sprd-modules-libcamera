@@ -786,6 +786,8 @@ int SprdCamera3HWI::configureStreams(
         capture_size.height = 1840;
     } else if (capture_size.height == 360 && capture_size.width == 640) {
         capture_size.height = 368;
+    } else if  (capture_size.height == 1080 && capture_size.width == 1920) {
+        capture_size.height = 1088;
     }
 
     mOEMIf->SetDimensionPreview(preview_size);

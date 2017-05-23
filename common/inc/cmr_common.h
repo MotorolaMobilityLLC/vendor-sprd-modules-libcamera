@@ -90,7 +90,7 @@ extern "C" {
 
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 // some vsp and jpeg need height 16 alignment
-#define HEIGHT_2M 1088
+#define HEIGHT_2M 1080
 #endif
 
 #define PREV_OUT_DATA 0xF000    /*debug.camera.save.snpfile 16*/

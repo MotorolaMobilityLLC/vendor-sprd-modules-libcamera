@@ -1480,6 +1480,9 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             } else if (exif_unit->picture_size.height == 368 &&
                        exif_unit->picture_size.width == 640) {
                 exif_unit->picture_size.height = 360;
+            } else if (exif_unit->picture_size.height == 1088 &&
+                        exif_unit->picture_size.width == 1920) {
+                exif_unit->picture_size.height = 1080;
             }
 
             if (exif_unit->actual_picture_size.height == 1952 &&
@@ -1491,6 +1494,9 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             } else if (exif_unit->actual_picture_size.height == 368 &&
                        exif_unit->actual_picture_size.width == 640) {
                 exif_unit->actual_picture_size.height = 360;
+            } else  if (exif_unit->actual_picture_size.height == 1088 &&
+                       exif_unit->actual_picture_size.width == 1920) {
+                exif_unit->actual_picture_size.height = 1080;
             }
         }
     }
