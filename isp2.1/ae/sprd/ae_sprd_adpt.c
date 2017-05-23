@@ -3251,7 +3251,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		cxt->sync_cur_result.wts.cur_dummy = 0;
 		cxt->sync_cur_result.wts.cur_index  =cxt->cur_status.start_index;
 	}
-	
+
 	/*update parameters to sensor*/
 	memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
 	cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
@@ -3259,11 +3259,12 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
 	cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
-	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);		
+	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
 
 	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d CAP %d", cxt->camera_id, cxt->cur_status.line_time,
 		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, work_info->is_snapshot);
 
+	cxt->last_enable = 0;
 	return rtn;
 }
 
@@ -3510,8 +3511,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
-		if (nx_mod != cur_mod || cxt->last_enable == 1) {
-			cxt->last_enable = 0;
+		if (nx_mod != cur_mod) {
 			ISP_LOGV("before set scene mode: \n");
 			_printf_status_log(cxt, cur_mod, &cxt->cur_status);
 			_set_scene_mode(cxt, cur_mod, nx_mod);
@@ -3602,6 +3602,11 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 {
 	cmr_s32 rtn = AE_ERROR;
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
+
+	if (cxt->last_enable) {
+		ISP_LOGI("video_stop to video_start, ae calc skip\n");
+		return AE_SUCCESS;
+	}
 
 	if (cxt->high_fps_info.is_high_fps)
 		rtn = ae_calculation_slow_motion(handle, param, result);
