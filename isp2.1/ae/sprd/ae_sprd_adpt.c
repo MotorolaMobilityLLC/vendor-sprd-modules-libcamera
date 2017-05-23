@@ -2155,6 +2155,7 @@ static cmr_s32 _set_pause(struct ae_ctrl_cxt *cxt)
 
 	cxt->cur_status.settings.lock_ae = AE_STATE_PAUSE;
 	cxt->cur_status.settings.pause_cnt++;
+	ISP_LOGV("PAUSE COUNT IS %d", cxt->cur_status.settings.pause_cnt);
 	return ret;
 }
 
@@ -2162,6 +2163,7 @@ static cmr_s32 _set_restore_cnt(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 ret = AE_SUCCESS;
 	if (2 > cxt->cur_status.settings.pause_cnt) {
+		cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 		cxt->cur_status.settings.pause_cnt = 0;
 	} else {
 		cxt->cur_status.settings.pause_cnt--;
