@@ -31,8 +31,8 @@ cmr_s32 isp_u_1d_lsc_block(isp_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_1D_LSC;
-	param.property = ISP_PRO_1D_LSC_BLOCK;
+	param.sub_block = ISP_BLOCK_RLSC;
+	param.property = ISP_PRO_RLSC_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -54,8 +54,8 @@ cmr_s32 isp_u_1d_lsc_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_1D_LSC;
-	param.property = ISP_PRO_1D_LSC_SLICE_SIZE;
+	param.sub_block = ISP_BLOCK_RLSC;
+	param.property = ISP_PRO_RLSC_SLICE_SIZE;
 	slice_size.width = width;
 	slice_size.height = height;
 	param.property_param = &slice_size;
@@ -78,8 +78,8 @@ cmr_s32 isp_u_1d_lsc_pos(isp_handle handle, struct img_offset pos)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_1D_LSC;
-	param.property = ISP_PRO_1D_LSC_POS;
+	param.sub_block = ISP_BLOCK_RLSC;
+	param.property = ISP_PRO_RLSC_POS;
 	param.property_param = &pos;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "isp_u_iircnr"
+#define LOG_TAG "isp_u_yrandom"
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_iircnr_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_yrandom_block(isp_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -30,10 +30,9 @@ cmr_s32 isp_u_iircnr_block(isp_handle handle, void *block_info)
 	}
 
 	file = (struct isp_file *)(handle);
-
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_IIRCNR;
-	param.property = ISP_PRO_IIRCNR_BLOCK;
+	param.property = ISP_PRO_YRANDOM_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
