@@ -1562,8 +1562,18 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
     case CAM_HIGH:
         if (CAM_EXIT == mCameraDfsPolicyCur) {
             setDfsPolicy(CAM_HIGH);
+            if (ddrDfsComplete() < 0) {
+                HAL_LOGW("dfs failed try again");
+                setDfsPolicy(CAM_HIGH);
+                ddrDfsComplete();
+            }
         } else if (CAM_LOW == mCameraDfsPolicyCur) {
             setDfsPolicy(CAM_HIGH);
+            if (ddrDfsComplete() < 0) {
+                HAL_LOGW("dfs failed try again");
+                setDfsPolicy(CAM_HIGH);
+                ddrDfsComplete();
+            }
             releaseDfsPolicy(CAM_LOW);
         }
         mCameraDfsPolicyCur = CAM_HIGH;
@@ -1631,6 +1641,39 @@ int SprdCamera3OEMIf::releaseDfsPolicy(int dfs_policy) {
     fclose(fp);
     fp = NULL;
     return NO_ERROR;
+}
+
+int SprdCamera3OEMIf::ddrDfsComplete(void) {
+    const char *const ddrinfo_cur_freq =
+        "/sys/class/devfreq/scene-frequency/sprd_governor/ddrinfo_cur_freq";
+    char str[10] = {'\0'};
+    int size = 0;
+    int ret = -1;
+    int i = 0;
+
+    FILE *fp = fopen(ddrinfo_cur_freq, "rb");
+    if (NULL == fp) {
+        HAL_LOGW("failed to open %s X", ddrinfo_cur_freq);
+        return BAD_VALUE;
+    }
+    do {
+        fseek(fp, 0, 0);
+        size = fread(str, 1, 9, fp);
+        if (size > 0) {
+            long ddr_freq = atol(str);
+            if (ddr_freq <= 900) {
+                usleep(2 * 1000);
+            } else {
+                ret = 0;
+                break;
+            }
+        } else {
+            break;
+        }
+        i++;
+    } while (i < 5);
+    fclose(fp);
+    return ret;
 }
 
 int SprdCamera3OEMIf::getCameraTemp() {
@@ -1874,7 +1917,7 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
 
 void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
     struct cmr_range_fps_param fps_param;
-    char   value[PROPERTY_VALUE_MAX];
+    char value[PROPERTY_VALUE_MAX];
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
 
