@@ -159,6 +159,11 @@ LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3SelfShot.cpp
 endif
 
+ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp
+endif
+
 endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format

@@ -43,6 +43,12 @@ namespace sprdcamera {
 #define TIME_DIFF (15e6)
 #define MAX_CONVERED_VALURE 10
 #define CAMERA3MAXFACE 11
+#define SFACTOR 100
+#define AR4_3 133
+#define AR16_9 177
+#ifndef MAX_UNMATCHED_QUEUE_SIZE
+#define MAX_UNMATCHED_QUEUE_SIZE 3
+#endif
 
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
@@ -56,6 +62,15 @@ typedef enum {
 typedef enum { MATCH_FAILED = 0, MATCH_SUCCESS } matchResult;
 
 typedef enum { NOTIFY_SUCCESS = 0, NOTIFY_ERROR, NOTIFY_NOT_FOUND } notifytype;
+
+typedef enum {
+    PREVIEW_MAIN_BUFFER = 0,
+    PREVIEW_DEPTH_BUFFER,
+    SNAPSHOT_MAIN_BUFFER,
+    SNAPSHOT_DEPTH_BUFFER,
+    DEPTH_OUT_BUFFER,
+    YUV420
+} camera_buffer_type_t;
 
 typedef enum {
     CAMERA_LEFT = 0,
@@ -161,6 +176,7 @@ typedef struct {
 typedef struct {
     const native_handle_t *native_handle;
     MemIon *pHeapIon;
+    camera_buffer_type_t type;
 } new_mem_t;
 
 typedef struct {

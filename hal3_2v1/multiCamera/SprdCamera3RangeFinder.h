@@ -63,9 +63,6 @@ namespace sprdcamera {
 #define MAX_NOTIFY_QUEUE_SIZE 100
 #endif
 #define CLEAR_NOTIFY_QUEUE 50
-#define SFACTOR 100
-#define AR4_3 133
-#define AR16_9 177
 #define UWINY1_MAX 240
 #define UWINY2_MAX 240
 

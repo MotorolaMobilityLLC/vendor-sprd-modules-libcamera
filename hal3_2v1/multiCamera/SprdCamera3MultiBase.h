@@ -63,7 +63,7 @@ class SprdCamera3MultiBase {
     SprdCamera3MultiBase();
     virtual ~SprdCamera3MultiBase();
 
-    virtual int allocateOne(int w, int h, new_mem_t *new_mem);
+    virtual int allocateOne(int w, int h, new_mem_t *new_mem, int type);
     virtual void freeOneBuffer(new_mem_t *buffer);
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
@@ -72,6 +72,11 @@ class SprdCamera3MultiBase {
                                     int convered_camera_id);
 
     virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
+    virtual buffer_handle_t *popBufferList(List<new_mem_t *> &list,
+                                           camera_buffer_type_t type);
+    virtual void pushBufferList(new_mem_t *localbuffer,
+                                buffer_handle_t *backbuf, int localbuffer_num,
+                                List<new_mem_t *> &list);
 
     virtual int getStreamType(camera3_stream_t *new_stream);
     virtual void dumpFps();
@@ -97,6 +102,7 @@ class SprdCamera3MultiBase {
                    uint32_t a_udFileSize);
 
   private:
+    Mutex mBufferListLock;
     bool mIommuEnabled;
     int mVFrameCount;
     int mVLastFrameCount;

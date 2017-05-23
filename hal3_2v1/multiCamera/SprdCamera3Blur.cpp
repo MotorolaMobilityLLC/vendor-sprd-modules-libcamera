@@ -2586,7 +2586,7 @@ int SprdCamera3Blur::configureStreams(
             if (mCaptureWidth != w && mCaptureHeight != h) {
                 freeLocalCapBuffer();
                 for (size_t j = 0; j < BLUR_LOCAL_CAPBUFF_NUM; j++) {
-                    if (0 > allocateOne(w, h, &(mLocalCapBuffer[j]))) {
+                    if (0 > allocateOne(w, h, &(mLocalCapBuffer[j]), YUV420)) {
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }

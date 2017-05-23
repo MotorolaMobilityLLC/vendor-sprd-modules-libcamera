@@ -1,0 +1,404 @@
+/* Copyright (c) 2017, The Linux Foundataion. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *     * Neither the name of The Linux Foundation nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+#ifndef SPRDCAMERAREEALBOKEH_H_HEADER
+#define SPRDCAMERAREEALBOKEH_H_HEADER
+
+#include <stdlib.h>
+#include <dlfcn.h>
+#include <utils/Log.h>
+#include <utils/Errors.h>
+#include <utils/List.h>
+#include <utils/Mutex.h>
+#include <utils/Thread.h>
+#include <cutils/properties.h>
+#include <hardware/camera3.h>
+#include <hardware/camera.h>
+#include <system/camera.h>
+#include <sys/mman.h>
+#include <sprd_ion.h>
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
+#include <gralloc_priv.h>
+#endif
+#include <ui/GraphicBuffer.h>
+#include "../SprdCamera3HWI.h"
+#include "SprdMultiCam3Common.h"
+#include <ui/GraphicBufferAllocator.h>
+#include "SprdCamera3MultiBase.h"
+
+namespace sprdcamera {
+#define LOCAL_CAPBUFF_NUM (4)
+#define LOCAL_PREVIEW_NUM (16)
+#define LOCAL_DEPTH_OUTBUFF_NUM 2
+#define LOCAL_BUFFER_NUM                                                       \
+    (LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + LOCAL_DEPTH_OUTBUFF_NUM)
+
+#define REAL_BOKEH_MAX_NUM_STREAMS 3
+#define BOKEH_THREAD_TIMEOUT 50e6
+#define LIB_BOKEH_PATH "libsprdbokeh.so"
+#define LIB_DEPTH_PATH "libsprddepth.so"
+#define LIB_BOKEH_PREVIEW_PATH "libbokeh_depth.so"
+#define BOKEH_REFOCUS_COMMON_PARAM_NUM (12)
+#define DEPTH_OUTPUT_WIDTH (324)
+#define DEPTH_OUTPUT_HEIGHT (243)
+#define DEPTH_DATA_SIZE (68)
+
+#define BOKEH_CIRCLE_SIZE_SCALE (3)
+#define BOKEH_SMOOTH_SIZE_SCALE (8)
+#define BOKEH_CIRCLE_VALUE_MIN (20)
+#define BOKEH_DEPTH_PREVIEW_ENABLE (0)
+
+/* refocus api error code */
+#define ALRNB_ERR_SUCCESS 0x00
+
+#define BOKEH_TIME_DIFF (100e6)
+
+typedef struct {
+    uint32_t frame_number;
+    buffer_handle_t *buffer;
+    camera3_stream_t *preview_stream;
+    camera3_stream_buffer_t *input_buffer;
+} request_saved_bokeh_t;
+
+typedef enum {
+    BOKEH_MSG_DATA_PROC = 1,
+    BOKEH_MSG_COMBAIN_PROC,
+    BOKEH_MSG_EXIT
+} captureMsgType_bokeh;
+
+typedef enum { CAM_TYPE_BOKEH_MAIN = 0, CAM_TYPE_DEPTH } BokehCameraDeviceType;
+typedef enum { PREVIEW_MODE = 0, CAPTURE_MODE } CameraMode;
+
+typedef enum {
+    /* Main camera device id*/
+    CAM_BOKEH_MAIN_ID = 0,
+    /* Aux camera device id*/
+    CAM_DEPTH_ID = 2
+} CameraBokehID;
+
+typedef struct {
+    uint32_t frame_number;
+    const camera3_stream_buffer_t *input_buffer;
+    buffer_handle_t *buffer1;
+    buffer_handle_t *buffer2;
+} buffer_combination_t_bokeh;
+
+typedef struct {
+    captureMsgType_bokeh msg_type;
+    buffer_combination_t_bokeh combo_buff;
+} capture_queue_msg_t_bokeh;
+
+typedef struct {
+    int sel_x;       /* The point which be touched */
+    int sel_y;       /* The point which be touched */
+    int bokeh_level; // The strength of bokeh region 0~255
+    char *config_param;
+} bokeh_cap_params_t;
+
+typedef struct {
+    int width;                  // image width
+    int height;                 // image height
+    int SmoothWinSize;          // odd number
+    int ClipRatio;              // RANGE 1:64
+    int Scalingratio;           // 2,4,6,8
+    int DisparitySmoothWinSize; // odd number
+} InitParams;
+
+typedef struct {
+    int F_number; // 1 ~ 20
+    int sel_x;    /* The point which be touched */
+    int sel_y;    /* The point which be touched */
+    unsigned char *DisparityImage;
+} WeightParams;
+
+typedef struct {
+    InitParams init_params;
+    WeightParams weight_params;
+} bokeh_prev_params_t;
+
+typedef enum { YUV420_NV12 = 0, YUV422_YUYV } ImageYUVFormat;
+
+typedef struct {
+    int input_width;
+    int input_height;
+    int output_depthwidth;
+    int output_depthheight;
+    ImageYUVFormat imageFormat_main;
+    ImageYUVFormat imageFormat_sub;
+    void *potpbuf;
+    int otpsize;
+    char *config_param;
+} depth_init_inputparam;
+
+typedef struct {
+    int outputsize;
+    int calibration_width;
+    int calibration_height;
+} depth_init_outputparam;
+
+typedef struct {
+    depth_init_inputparam inputparam;
+    depth_init_outputparam outputinfo;
+} depth_init_param;
+
+typedef struct {
+    void *handle;
+    int (*sprd_bokeh_Init)(int a_dInImgW, int a_dInImgH, char *param);
+    int (*sprd_bokeh_Close)();
+    int (*sprd_bokeh_VersionInfo_Get)(void *a_pOutBuf, int a_dInBufMaxSize);
+    int (*sprd_bokeh_ReFocusPreProcess)(void *a_pInBokehBufYCC420NV21,
+                                        void *a_pInDisparityBuf16);
+    int (*sprd_bokeh_ReFocusGen)(void *a_pOutBlurYCC420NV21,
+                                 int a_dInBlurStrength, int a_dInPositionX,
+                                 int a_dInPositionY);
+} BokehAPI_t;
+
+typedef struct {
+    void *handle;
+    int (*sprd_depth_VersionInfo_Get)(char a_acOutRetbuf[256],
+                                      unsigned int a_udInSize);
+    int (*sprd_depth_Init)(depth_init_inputparam *inparam,
+                           depth_init_outputparam *outputinfo);
+
+    int (*sprd_depth_Run)(void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
+                          void *a_pInMain_YCC420NV21);
+
+    void (*sprd_depth_Close)();
+} DepthAPI_t;
+
+typedef struct {
+    void *handle;
+    int (*iBokehInit)(void **handle, InitParams *params);
+    int (*iBokehDeinit)(void *handle);
+    int (*iBokehCreateWeightMap)(void *handle, WeightParams *params);
+    int (*iBokehBlurImage)(void *handle, unsigned char *Src_YUV,
+                           unsigned char *Output_YUV);
+    void *mHandle;
+} BokehPreviewAPI_t;
+
+class SprdCamera3RealBokeh : SprdCamera3MultiBase {
+  public:
+    static void getCameraBokeh(SprdCamera3RealBokeh **pCapture);
+    static int camera_device_open(__unused const struct hw_module_t *module,
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
+    static int close_camera_device(struct hw_device_t *device);
+    static int get_camera_info(int camera_id, struct camera_info *info);
+    static int initialize(const struct camera3_device *device,
+                          const camera3_callback_ops_t *ops);
+    static int configure_streams(const struct camera3_device *device,
+                                 camera3_stream_configuration_t *stream_list);
+    static const camera_metadata_t *
+    construct_default_request_settings(const struct camera3_device *, int type);
+    static int process_capture_request(const struct camera3_device *device,
+                                       camera3_capture_request_t *request);
+    static void notifyMain(const struct camera3_callback_ops *ops,
+                           const camera3_notify_msg_t *msg);
+    static void
+    process_capture_result_main(const struct camera3_callback_ops *ops,
+                                const camera3_capture_result_t *result);
+    static void
+    process_capture_result_aux(const struct camera3_callback_ops *ops,
+                               const camera3_capture_result_t *result);
+    static void notifyAux(const struct camera3_callback_ops *ops,
+                          const camera3_notify_msg_t *msg);
+    static void dump(const struct camera3_device *device, int fd);
+    static int flush(const struct camera3_device *device);
+
+    static camera3_device_ops_t mCameraCaptureOps;
+    static camera3_callback_ops callback_ops_main;
+    static camera3_callback_ops callback_ops_aux;
+
+  private:
+    sprdcamera_physical_descriptor_t *m_pPhyCamera;
+    sprd_virtual_camera_t m_VirtualCamera;
+    uint8_t m_nPhyCameras;
+    Mutex mLock;
+    camera_metadata_t *mStaticMetadata;
+
+    new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
+
+    Mutex mRequestLock;
+    List<new_mem_t *> mLocalBufferList;
+    List<camera3_notify_msg_t> mNotifyListMain;
+    Mutex mNotifyLockMain;
+    List<camera3_notify_msg_t> mNotifyListAux;
+    Mutex mNotifyLockAux;
+    // This queue stores unmatched buffer for each hwi, accessed with lock
+    Mutex mUnmatchedQueueLock;
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
+    bool mIsCapturing;
+    int mjpegSize;
+    uint8_t mCameraId;
+    int32_t mPerfectskinlevel;
+    uint32_t mRotation;
+    bool mFlushing;
+    bool mIsSupportPBokeh;
+    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
+    int setupPhysicalCameras();
+    int getCameraInfo(struct camera_info *info);
+    void getDepthImageSize(int inputWidth, int inputHeight, int *outWidth,
+                           int *outHeight, int type);
+    void freeLocalBuffer();
+    void saveRequest(camera3_capture_request_t *request);
+
+    int allocateBuff();
+    void clearFrameNeverMatched(uint32_t main_frame_number,
+                                uint32_t sub_frame_number);
+
+  public:
+    SprdCamera3RealBokeh();
+    virtual ~SprdCamera3RealBokeh();
+
+    class BokehCaptureThread : public Thread {
+      public:
+        BokehCaptureThread();
+        ~BokehCaptureThread();
+        virtual bool threadLoop();
+        virtual void requestExit();
+        void videoErrorCallback(uint32_t frame_number);
+        void saveCaptureBokehParams(buffer_handle_t *mSavedResultBuff,
+                                    buffer_handle_t *buffer,
+                                    buffer_handle_t *disparity_bufer);
+        int bokehCaptureHandle(buffer_handle_t *output_buf,
+                               buffer_handle_t *input_buf1,
+                               buffer_handle_t *disparity_bufer);
+        int depthCaptureHandle(buffer_handle_t *disparity_bufer,
+                               buffer_handle_t *scaled_buffer,
+                               buffer_handle_t *input_buf1,
+                               buffer_handle_t *input_buf2);
+        // This queue stores matched buffer as frame_matched_info_t
+        List<capture_queue_msg_t_bokeh> mCaptureMsgList;
+        Mutex mMergequeueMutex;
+        Condition mMergequeueSignal;
+        const camera3_callback_ops_t *mCallbackOps;
+        sprdcamera_physical_descriptor_t *mDevmain;
+        buffer_handle_t *mSavedOneResultBuff;
+        buffer_handle_t *mSavedResultBuff;
+        camera3_capture_request_t mSavedCapRequest;
+        camera3_stream_buffer_t mSavedCapReqStreamBuff;
+        camera_metadata_t *mSavedCapReqsettings;
+        bool mReprocessing;
+        bool mBokehConfigParamState;
+        bokeh_cap_params_t mCapbokehParam;
+        depth_init_param mCapDepthParam;
+
+      private:
+        void waitMsgAvailable();
+    };
+
+    sp<BokehCaptureThread> mCaptureThread;
+    class PreviewMuxerThread : public Thread {
+      public:
+        PreviewMuxerThread();
+        ~PreviewMuxerThread();
+        virtual bool threadLoop();
+        virtual void requestExit();
+        int bokehPreviewHandle(buffer_handle_t *output_buf,
+                               buffer_handle_t *input_buf1,
+                               buffer_handle_t *disparity_bufer);
+        int depthPreviewHandle(buffer_handle_t *disparity_bufer,
+                               buffer_handle_t *scaled_buffer,
+                               buffer_handle_t *input_buf1,
+                               buffer_handle_t *input_buf2);
+
+        List<muxer_queue_msg_t> mPreviewMuxerMsgList;
+        Mutex mMergequeueMutex;
+        Condition mMergequeueSignal;
+        bokeh_prev_params_t mPreviewbokehParam;
+        depth_init_param mPreviewDepthParam;
+
+      private:
+        Mutex mLock;
+        void waitMsgAvailable();
+    };
+
+    sp<PreviewMuxerThread> mPreviewMuxerThread;
+    camera3_stream_t mMainStreams[REAL_BOKEH_MAX_NUM_STREAMS];
+    camera3_stream_t mAuxStreams[REAL_BOKEH_MAX_NUM_STREAMS];
+    int32_t mFaceInfo[4];
+    int mCaptureWidth;
+    int mCaptureHeight;
+    int mPreviewWidth;
+    int mPreviewHeight;
+    int mCallbackWidth;
+    int mCallbackHeight;
+    int mDepthOutWidth;
+    int mDepthOutHeight;
+    int mDepthPrevImageWidth;
+    int mDepthPrevImageHeight;
+    int mDepthSnapImageWidth;
+    int mDepthSnapImageHeight;
+    uint8_t mCaptureStreamsNum;
+    uint8_t mCallbackStreamsNum;
+    uint8_t mPreviewStreamsNum;
+    List<request_saved_bokeh_t> mSavedRequestList;
+    camera3_stream_t *mSavedCapStreams;
+    uint32_t mCapFrameNumber;
+    const camera3_callback_ops_t *mCallbackOps;
+    BokehAPI_t *mBokehApi;
+    DepthAPI_t *mDepthApi;
+    BokehPreviewAPI_t *mBokehPrevApi;
+    uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
+    int initialize(const camera3_callback_ops_t *callback_ops);
+    int configureStreams(const struct camera3_device *device,
+                         camera3_stream_configuration_t *stream_list);
+    int processCaptureRequest(const struct camera3_device *device,
+                              camera3_capture_request_t *request);
+    void notifyMain(const camera3_notify_msg_t *msg);
+    void processCaptureResultMain(const camera3_capture_result_t *result);
+    void notifyAux(const camera3_notify_msg_t *msg);
+    void processCaptureResultAux(const camera3_capture_result_t *result);
+    const camera_metadata_t *
+    constructDefaultRequestSettings(const struct camera3_device *device,
+                                    int type);
+    void CallBackResult(uint32_t frame_number,
+                        camera3_buffer_status_t buffer_status);
+    int loadBokehApi();
+    void unLoadBokehApi();
+    int loadDepthApi();
+    void unLoadDepthApi();
+    int loadBokehPreviewApi();
+    void unLoadBokehPreviewApi();
+    void initBokehApiParams();
+    void initDepthApiParams();
+    int checkOtpInfo();
+    void bokehFaceMakeup(private_handle_t *private_handle);
+    void updateApiParams(CameraMetadata metaSettings, int type);
+    int bokehHandle(buffer_handle_t *output_buf, buffer_handle_t *inputbuff1,
+                    buffer_handle_t *inputbuff2, CameraMode camera_mode);
+    void _dump(const struct camera3_device *device, int fd);
+    int _flush(const struct camera3_device *device);
+    int closeCameraDevice();
+};
+};
+
+#endif /* SPRDCAMERAMU*/

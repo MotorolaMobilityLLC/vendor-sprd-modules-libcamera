@@ -353,9 +353,16 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     }
 
     mCameraId = cameraId;
-    if (mCameraId == 1) {
+#if defined(CONFIG_STEREOCAPUTRE_SUPPORT)
+    mMultiCameraMatchZsl->cam1_id = 1;
+    mMultiCameraMatchZsl->cam3_id = 3;
+#else
+    mMultiCameraMatchZsl->cam1_id = 0;
+    mMultiCameraMatchZsl->cam3_id = 2;
+#endif
+    if (mCameraId == mMultiCameraMatchZsl->cam1_id) {
         mMultiCameraMatchZsl->cam1_ZSLQueue = &mZSLQueue;
-    } else if (mCameraId == 3) {
+    } else if (mCameraId == mMultiCameraMatchZsl->cam3_id) {
         mMultiCameraMatchZsl->cam3_ZSLQueue = &mZSLQueue;
     }
     mCbInfoList.clear();
@@ -940,7 +947,8 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE,
                  sprddefInfo.sprd_3dcalibration_enabled);
     }
-    if (getMultiCameraMode() == MODE_BLUR) {
+    if (getMultiCameraMode() == MODE_BLUR ||
+        getMultiCameraMode() == MODE_BOKEH) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                  mSprdYuvCallBack);
         HAL_LOGD("reprocess mode, force enable reprocess");
@@ -1323,7 +1331,8 @@ void SprdCamera3OEMIf::setCallBackYuvMode(bool mode) {
             HAL_LOGD("yuv call back mode, force enable 3d cal");
         }
 
-        if (getMultiCameraMode() == MODE_BLUR) {
+        if (getMultiCameraMode() == MODE_BLUR ||
+            getMultiCameraMode() == MODE_BOKEH) {
             SET_PARM(mHalOem, mCameraHandle,
                      CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
             HAL_LOGD("yuv call back mode");
@@ -2468,14 +2477,14 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs mode begin*/
         if (MODE_SINGLE_CAMERA != mMultiCameraMode &&
             MODE_3D_CAPTURE != mMultiCameraMode &&
-            MODE_BLUR != mMultiCameraMode) {
+            MODE_BLUR != mMultiCameraMode && MODE_BOKEH != mMultiCameraMode) {
             mSprdRefocusEnabled = true;
             CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
         }
         /*read refoucs mode end*/
 
         /*read refoucs otp begin*/
-        if (mSprdRefocusEnabled == true && mCameraId == 0) {
+        if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true) && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
             char *psPath_OtpData =
                 "data/misc/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
@@ -3041,7 +3050,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
-    } else if (getMultiCameraMode() == MODE_BLUR) {
+    } else if (getMultiCameraMode() == MODE_BLUR ||
+               getMultiCameraMode() == MODE_BOKEH) {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
@@ -5127,7 +5137,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_RETURN_ZSL_BUF: {
         if (isPreviewing() && iSZslMode() &&
             (mSprd3dCalibrationEnabled || mSprdYuvCallBack ||
-             mMultiCameraMode == MODE_BLUR)) {
+             mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH)) {
             cmr_u32 buf_id = 0;
             struct camera_frame_type *zsl_frame = NULL;
             zsl_frame = (struct camera_frame_type *)parm4;
@@ -6121,7 +6131,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         HAL_LOGD("sprd_zsl_enabled=%d", sprddefInfo.sprd_zsl_enabled);
         if (sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false &&
-            mSprdRefocusEnabled == false && getMultiCameraMode() != MODE_BLUR) {
+            mSprdRefocusEnabled == false && getMultiCameraMode() != MODE_BLUR &&
+            getMultiCameraMode() != MODE_BOKEH) {
             mSprdZslEnabled = false;
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
         }
@@ -7920,7 +7931,7 @@ ZslBufferQueue SprdCamera3OEMIf::popZSLQueue(uint64_t need_timestamp) {
         return zsl_frame;
     }
 
-    if (mCameraId == 1) {
+    if (mCameraId == mMultiCameraMatchZsl->cam1_id) {
         if (ns2ms(abs((int)((int64_t)mMultiCameraMatchZsl->match_frame1.frame
                                 .timestamp -
                             (int64_t)need_timestamp))) > 1500) {
@@ -7947,9 +7958,10 @@ ZslBufferQueue SprdCamera3OEMIf::popZSLQueue(uint64_t need_timestamp) {
         }
         mIsUnpopped = true;
         zsl_frame = mMultiCameraMatchZsl->match_frame1;
+        HAL_LOGD("match succeed");
         bzero(&mMultiCameraMatchZsl->match_frame1, sizeof(ZslBufferQueue));
     }
-    if (mCameraId == 3) {
+    if (mCameraId == mMultiCameraMatchZsl->cam3_id) {
         if (ns2ms(abs((int)((int64_t)mMultiCameraMatchZsl->match_frame3.frame
                                 .timestamp -
                             (int64_t)need_timestamp))) > 1500) {
@@ -7976,6 +7988,7 @@ ZslBufferQueue SprdCamera3OEMIf::popZSLQueue(uint64_t need_timestamp) {
         }
         mIsUnpopped = true;
         zsl_frame = mMultiCameraMatchZsl->match_frame3;
+        HAL_LOGD("match succeed");
         bzero(&mMultiCameraMatchZsl->match_frame3, sizeof(ZslBufferQueue));
     }
     frame = mZSLQueue.begin();
@@ -8011,10 +8024,10 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue *frame) {
     ZslBufferQueue *frame1 = NULL;
     ZslBufferQueue frame_queue;
     HAL_LOGV("E");
-    if (mCameraId == 1) {
+    if (mCameraId == mMultiCameraMatchZsl->cam1_id) {
         match_ZSLQueue = mMultiCameraMatchZsl->cam3_ZSLQueue;
     }
-    if (mCameraId == 3) {
+    if (mCameraId == mMultiCameraMatchZsl->cam3_id) {
         match_ZSLQueue = mMultiCameraMatchZsl->cam1_ZSLQueue;
     }
     if (NULL == match_ZSLQueue || match_ZSLQueue->empty()) {
@@ -8026,6 +8039,7 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue *frame) {
             int diff = (int64_t)frame->frame.timestamp -
                        (int64_t)itor1->frame.timestamp;
             if (abs(diff) < DUALCAM_TIME_DIFF) {
+                // clear has existed match frame
                 itor2 = mMultiCameraMatchZsl->cam1_ZSLQueue->begin();
                 while (itor2 != mMultiCameraMatchZsl->cam1_ZSLQueue->end()) {
                     if (itor2->frame.timestamp ==
@@ -8046,12 +8060,13 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue *frame) {
                 }
                 frame->frame.isMatchFlag = 1;
                 itor1->frame.isMatchFlag = 1;
-                if (mCameraId == 1) {
+                HAL_LOGV("match one frame");
+                if (mCameraId == mMultiCameraMatchZsl->cam1_id) {
                     mMultiCameraMatchZsl->match_frame1 = *frame;
                     mMultiCameraMatchZsl->match_frame3 =
                         static_cast<ZslBufferQueue>(*itor1);
                 }
-                if (mCameraId == 3) {
+                if (mCameraId == mMultiCameraMatchZsl->cam3_id) {
                     mMultiCameraMatchZsl->match_frame1 =
                         static_cast<ZslBufferQueue>(*itor1);
                     mMultiCameraMatchZsl->match_frame3 = *frame;
@@ -8154,7 +8169,7 @@ uint64_t SprdCamera3OEMIf::getZslBufferTimestamp() {
         timestamp = frame->frame.timestamp;
     }
 
-    return frame->frame.timestamp;
+    return timestamp;
 }
 
 void SprdCamera3OEMIf::setZslBufferTimestamp(uint64_t timestamp) {

@@ -57,6 +57,9 @@
 #ifdef CONFIG_BLUR_SUPPORT
 #include "SprdCamera3Blur.h"
 #endif
+#ifdef CONFIG_BOKEH_SUPPORT
+#include "SprdCamera3RealBokeh.h"
+#endif
 #ifdef CONFIG_COVERED_SENSOR
 #include "SprdCamera3SelfShot.h"
 #include "SprdCamera3PageTurn.h"
@@ -88,6 +91,9 @@ class SprdCamera3Wrapper {
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     SprdCamera3Blur *mBlur;
+#endif
+#ifdef CONFIG_BOKEH_SUPPORT
+    SprdCamera3RealBokeh *mRealBokeh;
 #endif
 #ifdef CONFIG_COVERED_SENSOR
     SprdCamera3SelfShot *mSelfShot;

@@ -110,6 +110,8 @@ typedef struct {
     List<ZslBufferQueue> *cam3_ZSLQueue;
     ZslBufferQueue match_frame1;
     ZslBufferQueue match_frame3;
+    int cam1_id;
+    int cam3_id;
 } multi_camera_zsl_match_frame;
 
 typedef struct {

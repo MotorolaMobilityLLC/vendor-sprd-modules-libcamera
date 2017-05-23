@@ -48,6 +48,9 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
 #ifdef CONFIG_BLUR_SUPPORT
     SprdCamera3Blur::getCameraBlur(&mBlur);
 #endif
+#ifdef CONFIG_BOKEH_SUPPORT
+    SprdCamera3RealBokeh::getCameraBokeh(&mRealBokeh);
+#endif
 #ifdef CONFIG_COVERED_SENSOR
     SprdCamera3SelfShot::getCameraMuxer(&mSelfShot);
     SprdCamera3PageTurn::getCameraMuxer(&mPageturn);
@@ -68,6 +71,9 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
     struct hw_device_t **hw_device) {
 
     int rc = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
 
     HAL_LOGI("id= %d", atoi(id));
 
@@ -91,6 +97,14 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
     case MODE_3D_PREVIEW:
         rc = mStereoPreview->camera_device_open(module, id, hw_device);
         return rc;
+#endif
+#ifdef CONFIG_BOKEH_SUPPORT
+    case MODE_BLUR:
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        if (6 == atoi(prop)) {
+            rc = mRealBokeh->camera_device_open(module, id, hw_device);
+            return rc;
+        }
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:
@@ -119,6 +133,9 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
                                       struct camera_info *info) {
 
     int rc = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
 
     HAL_LOGI("id= %d", camera_id);
 
@@ -142,6 +159,14 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
     case MODE_3D_PREVIEW:
         rc = mStereoPreview->get_camera_info(camera_id, info);
         return rc;
+#endif
+#ifdef CONFIG_BOKEH_SUPPORT
+    case MODE_BLUR:
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        if (6 == atoi(prop)) {
+            rc = mRealBokeh->get_camera_info(camera_id, info);
+            return rc;
+        }
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:

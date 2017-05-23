@@ -1223,6 +1223,7 @@ typedef enum {
     MODE_PAGE_TURN = 14, // Camera2 apk open  camera id is MODE_PAGE_TURN,camera
                          // hal transform to open physics Camera id is 2
     MODE_BLUR_FRONT = 15,
+    MODE_BOKEH = 16,
     MODE_CAMERA_MAX
 } multiCameraMode;
 

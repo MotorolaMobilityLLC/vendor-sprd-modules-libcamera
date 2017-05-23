@@ -32,6 +32,7 @@
 using namespace android;
 namespace sprdcamera {
 #define MAX_UNMATCHED_QUEUE_BASE_SIZE 3
+#define MATCH_FRAME_TIME_DIFF (9000)
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
@@ -39,16 +40,21 @@ SprdCamera3MultiBase::SprdCamera3MultiBase()
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
 
-int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem) {
+int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
+                                      int type) {
 
     int result = 0;
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
+    private_handle_t *buffer = NULL;
     uint32_t is_cache = 1;
 
     HAL_LOGI("E");
-    mem_size = w * h * 3 / 2;
+    if (type == DEPTH_OUT_BUFFER) {
+        mem_size = w * h + 68;
+    } else {
+        mem_size = w * h * 3 / 2;
+    }
     // to make it page size aligned
     //  mem_size = (mem_size + 4095U) & (~4095U);
 
@@ -266,6 +272,52 @@ SprdCamera3MultiBase::popRequestList(List<buffer_handle_t *> &list) {
     return ret;
 }
 
+buffer_handle_t *
+SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
+                                    camera_buffer_type_t type) {
+    buffer_handle_t *ret = NULL;
+    if (list.empty()) {
+        HAL_LOGE("list is NULL");
+        return NULL;
+    }
+    Mutex::Autolock l(mBufferListLock);
+    List<new_mem_t *>::iterator j = list.begin();
+    for (; j != list.end(); j++) {
+        if ((*j)->type == type) {
+            ret = &((*j)->native_handle);
+            break;
+        }
+    }
+    if (ret == NULL) {
+        HAL_LOGE("popBufferList failed!");
+        return ret;
+    }
+    list.erase(j);
+    return ret;
+}
+void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
+                                          buffer_handle_t *backbuf,
+                                          int localbuffer_num,
+                                          List<new_mem_t *> &list) {
+    int i;
+
+    if (backbuf == NULL) {
+        HAL_LOGE("backbuf is NULL");
+        return;
+    }
+    Mutex::Autolock l(mBufferListLock);
+    for (i = 0; i < localbuffer_num; i++) {
+        if ((&(localbuffer[i].native_handle)) == backbuf) {
+            list.push_back(&(localbuffer[i]));
+            break;
+        }
+    }
+    if (i >= localbuffer_num) {
+        HAL_LOGE("find backbuf failed");
+    }
+    return;
+}
+
 int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
     int stream_type = 0;
     int format = new_stream->format;
@@ -392,7 +444,7 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
         while (itor2 != list.end()) {
             int64_t diff =
                 (int64_t)result1.timestamp - (int64_t)itor2->timestamp;
-            if (abs((cmr_s32)diff) < (15e6)) {
+            if (ns2ms(abs((cmr_s32)diff)) < MATCH_FRAME_TIME_DIFF) {
                 *result2 = *itor2;
                 list.erase(itor2);
                 HAL_LOGV("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
@@ -488,6 +540,7 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
     }
 }
 #endif
+
 bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
                                      uint16_t a_uwDstHeight,
                                      uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth,
