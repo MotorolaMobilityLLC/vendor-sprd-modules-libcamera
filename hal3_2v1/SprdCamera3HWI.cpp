@@ -1117,7 +1117,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     HAL_LOGD("bufs_num=%d, frame_num=%d, cap_intent=%d, pic_req=%d, "
              "first_regular_req=%d",
              request->num_output_buffers, request->frame_number,
-             mPictureRequest, mFirstRegularRequest);
+             capturePara.cap_intent, mPictureRequest, mFirstRegularRequest);
 
     // fix BUG618304, reset crop ratio when request have both jpeg stream and
     // callback stream
