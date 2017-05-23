@@ -217,9 +217,10 @@ struct ae_ctrl_cxt {
 	cmr_handle seq_handle;
 	cmr_s8 exp_skip_num;
 	cmr_s8 gain_skip_num;
-	cmr_u32 preview_skip_num;
-	cmr_u32 capture_skip_num;
 	cmr_s16 sensor_gain_precision;
+	cmr_u16 sensor_max_gain;/*the max gain that sensor can be used*/
+	cmr_u16 sensor_min_gain;/*the mini gain that sensor can be used*/
+	cmr_u16 min_exp_line;/*the mini exposure line that sensor can be used*/
 	struct ae_sensor_exp_data exp_data;
 	/*
 	 * recording when video stop
@@ -310,10 +311,13 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 {
 	float sensor_gain = 0.0;
 	float isp_gain = 0.0;
-	cmr_u32 max_gain = cxt->cur_status.max_gain;	
-	//static uint32_t hait_conts_flag = 0;
-		
-	if (exp_data->lib_data.gain < max_gain) {
+	cmr_u32 max_gain = cxt->sensor_max_gain;
+	cmr_u32 min_gain = cxt->sensor_min_gain;
+
+	if (exp_data->lib_data.gain > max_gain) {/*gain : (sensor max gain, ~)*/
+		sensor_gain = max_gain;
+		isp_gain = (double)exp_data->lib_data.gain / (double)max_gain;
+	} else if (exp_data->lib_data.gain > min_gain) {/*gain : (sensor_min_gain, sensor_max_gain)*/
 		if (0 == exp_data->lib_data.gain % cxt->sensor_gain_precision) {
 			sensor_gain = exp_data->lib_data.gain;
 			isp_gain = 1.0;
@@ -321,9 +325,9 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 			sensor_gain = (exp_data->lib_data.gain * 1.0 / cxt->sensor_gain_precision) * cxt->sensor_gain_precision;
 			isp_gain = exp_data->lib_data.gain * 1.0 / sensor_gain;
 		}
-	} else {
-		sensor_gain = max_gain;
-		isp_gain = (double)exp_data->lib_data.gain / (double)max_gain;
+	} else {/*gain : (~, sensor_min_gain)*/
+		sensor_gain = min_gain;
+		isp_gain = (double)exp_data->lib_data.gain / (double)min_gain;
 	}
 
 	exp_data->lib_data.sensor_gain = sensor_gain;
@@ -1561,6 +1565,24 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cnvg_stride_ev_num = cxt->cur_param->cnvg_stride_ev_num;
 	cxt->exp_skip_num = cxt->cur_param->sensor_cfg.exp_skip_num;
 	cxt->gain_skip_num = cxt->cur_param->sensor_cfg.gain_skip_num;
+	cxt->sensor_gain_precision = cxt->cur_param->sensor_cfg.gain_precision;
+	if (0 == cxt->cur_param->sensor_cfg.max_gain) {
+		cxt->sensor_max_gain = 16 * 128;
+	} else {
+		cxt->sensor_max_gain = cxt->cur_param->sensor_cfg.max_gain;
+	}
+
+	if (0 == cxt->cur_param->sensor_cfg.min_gain) {
+		cxt->sensor_min_gain = 1 * 128;
+	} else {
+		cxt->sensor_min_gain = cxt->cur_param->sensor_cfg.min_gain;
+	}
+
+	if (0 == cxt->cur_param->sensor_cfg.min_exp_line) {
+		cxt->min_exp_line = 4;
+	} else {
+		cxt->min_exp_line = cxt->cur_param->sensor_cfg.min_exp_line;
+	}
 
 	cxt->cur_status.log_level = g_isp_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
@@ -1573,19 +1595,6 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.ae_table->min_index = 0;
 	cxt->cur_status.weight_table = cxt->cur_param->weight_table[AE_WEIGHT_CENTER].weight;
 	cxt->cur_status.stat_img = NULL;
-
-	if (2 == cxt->cur_status.alg_id) {
-		cxt->cur_status.min_exp_line = cxt->cur_param->min_line;	//
-		cxt->cur_status.max_gain = cxt->cur_param->sensor_cfg.max_gain;	// /*sensor can support the max  gain*/
-		cxt->sensor_gain_precision = cxt->cur_param->sensor_cfg.gain_precision;
-		cxt->cur_status.min_gain = cxt->cur_param->sensor_cfg.min_gain;	/*sensor can support the min  gain */
-	} else {
-		ISP_LOGV("old ae params\r\n");
-		cxt->cur_status.min_exp_line = 6;	//
-		cxt->cur_status.max_gain = 1024;	// /*sensor can support the max  gain*/
-		cxt->sensor_gain_precision = 16;
-		cxt->cur_status.min_gain = 128;	/*sensor can support the min  gain */
-	}
 
 	cxt->cur_status.start_index = cxt->cur_param->start_index;
 	ev_table = &cxt->cur_param->ev_table;
@@ -3166,9 +3175,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		memset(&cxt->cur_result.wts, 0, sizeof(struct ae1_senseor_out));
 		memset(&cxt->sync_cur_result.wts, 0, sizeof(struct ae1_senseor_out));
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
-	} else {
-		;
-	}
+	} 
 
 	cxt->snr_info = work_info->resolution_info;
 	cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
@@ -3208,6 +3215,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		mode = work_info->mode;
 	else
 		mode = AE_WORK_MODE_COMMON;
+
 	exposure_time2line(&(cxt->tuning_param[mode]), cxt->cur_status.line_time,
 		cxt->tuning_param[work_info->mode].ae_tbl_exp_mode);
 
@@ -3227,8 +3235,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			cxt->cur_result.wts.cur_dummy = cxt->last_exp_param.dummy;
 		} else {
 			cxt->cur_result.wts.cur_exp_line = cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / (float)cxt->cur_status.line_time;
-			if (cxt->cur_status.min_exp_line > cxt->cur_result.wts.cur_exp_line)
-				cxt->cur_result.wts.cur_exp_line = cxt->cur_status.min_exp_line;
+			if (cxt->min_exp_line > cxt->cur_result.wts.cur_exp_line)
+				cxt->cur_result.wts.cur_exp_line = cxt->min_exp_line;
 
 			cxt->cur_result.wts.cur_again = cxt->last_exp_param.gain;
 			cxt->cur_result.wts.cur_dummy = cxt->last_exp_param.dummy;

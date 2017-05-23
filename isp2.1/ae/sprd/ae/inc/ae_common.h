@@ -235,7 +235,7 @@ struct ae_sensor_cfg {
 	cmr_u8 gain_precision;
 	cmr_u8 exp_skip_num;
 	cmr_u8 gain_skip_num;
-	cmr_u8 reserved;
+	cmr_u8 min_exp_line;
 };
 
 struct ae_lv_calibration {
@@ -321,9 +321,9 @@ struct ae_alg_calc_param {
 	cmr_u8 win1_weight;	//for touch ae
 	cmr_u8 win2_weight;	//for touch ae
 	//cmr_u8 touch_tuning_enable;//for touch ae
-	cmr_s16 min_exp_line;
-	cmr_s16 max_gain;
-	cmr_s16 min_gain;
+	//cmr_s16 min_exp_line;
+	//cmr_s16 max_gain;
+	//cmr_s16 min_gain;
 	cmr_s16 start_index;
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;
