@@ -377,8 +377,8 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
-		cxt->lsc_flash_onoff=1;
-		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
+		cxt->lsc_flash_onoff = 1;
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
@@ -416,8 +416,8 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_AFTER:
-		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
-		cxt->lsc_flash_onoff=0;
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
+		cxt->lsc_flash_onoff = 0;
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 		awb_flash_status = AWB_FLASH_MAIN_AFTER;
@@ -1328,6 +1328,13 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 		rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash_param_ptr);
 		if (ISP_SUCCESS == rtn) {
 			ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash_param_ptr->cur.auto_flash_thr, NULL);
+		}
+
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &input, &output);
+		if (ISP_SUCCESS == rtn && output.param_num) {
+			cmr_s32 bypass = 0;
+			bypass = output.param_data->user_data[0];
+			af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&bypass, NULL);
 		}
 	}
 	return rtn;
