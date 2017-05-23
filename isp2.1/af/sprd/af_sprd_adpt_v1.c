@@ -297,162 +297,23 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 	}
 }
 
-static cmr_s32 split_win(const win_coord_t * in, cmr_s32 h_num, cmr_s32 v_num, win_coord_t * out)
-{
-	cmr_s32 h, v, num;
-	cmr_u32 width, height, starty;
-
-	assert(v_num > 0);
-	assert(h_num > 0);
-
-	ISP_LOGV("win: start_x = %d, start_y = %d, end_x = %d, end_y = %d", in->start_x, in->start_y, in->end_x, in->end_y);
-
-	width = (in->end_x - in->start_x + 1) / h_num;
-	height = (in->end_y - in->start_y + 1) / v_num;
-	starty = in->start_y;
-	num = 0;
-
-	for (v = 0; v < v_num; ++v) {
-		cmr_u32 startx = in->start_x;
-		cmr_u32 endy = starty + height - 1;
-
-		for (h = 0; h < h_num; ++h) {
-			out[num].start_x = (startx >> 1) << 1;	// make sure coordinations are even
-			out[num].end_x = ((startx + width - 1) >> 1) << 1;
-			out[num].start_y = (starty >> 1) << 1;
-			out[num].end_y = (endy >> 1) << 1;
-			ISP_LOGV("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", num, out[num].start_x, out[num].start_y, out[num].end_x, out[num].end_y);
-
-			num++;
-			startx += width;
-		}
-
-		starty += height;
-	}
-
-	return num;
-}
-
-static cmr_s32 split_roi(af_ctrl_t * af)
-{
-	roi_info_t *r = &af->roi;
-	win_coord_t win_info;
-
-	if (1 != r->num)
-		return 0;
-
-	switch (af->state) {
-	case STATE_FAF:
-		win_info = r->win[0];
-		r->num = split_win(&win_info, 3, 3, r->win);
-		break;
-	case STATE_FULLSCAN:	// 3x3 windows
-		win_info = r->win[0];
-		r->num = split_win(&win_info, 3, 3, r->win);
-		break;
-	default:
-		/* 0   1   2
-		   3   4   5
-		   6   7   8 */
-		r->win[9].start_x = r->win[0].start_x;
-		r->win[9].end_x = r->win[0].end_x;
-		r->win[9].start_y = r->win[0].start_y;
-		r->win[9].end_y = r->win[0].end_y;
-		win_info = r->win[0];
-		r->num = split_win(&win_info, 3, 3, r->win);
-		r->num = r->num + 1;
-#if 0
-		r->win[1].start_x = r->win[0].start_x + 1.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
-		r->win[1].end_x = r->win[0].end_x - 1.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
-		r->win[1].start_y = r->win[0].start_y + 1.0 * (r->win[0].end_y - r->win[0].start_y) / 5;
-		r->win[1].end_y = r->win[0].end_y - 1.0 * (r->win[0].end_y - r->win[0].start_y) / 5;
-
-		r->win[1].start_x = r->win[1].start_x & 0xfffffffe;	// make sure coordinations are even
-		r->win[1].end_x = r->win[1].end_x & 0xfffffffe;
-		r->win[1].start_y = r->win[1].start_y & 0xfffffffe;
-		r->win[1].end_y = r->win[1].end_y & 0xfffffffe;
-
-		r->win[2].start_x = r->win[0].start_x + 2.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
-		r->win[2].end_x = r->win[0].end_x - 2.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
-		r->win[2].start_y = r->win[0].start_y + 2.0 * (r->win[0].end_y - r->win[0].start_y) / 5;
-		r->win[2].end_y = r->win[0].end_y - 2.0 * (r->win[0].end_y - r->win[0].start_y) / 5;
-
-		r->win[2].start_x = r->win[2].start_x & 0xfffffffe;	// make sure coordinations are even
-		r->win[2].end_x = r->win[2].end_x & 0xfffffffe;
-		r->win[2].start_y = r->win[2].start_y & 0xfffffffe;
-		r->win[2].end_y = r->win[2].end_y & 0xfffffffe;
-
-		r->num = 3;
-#endif
-		break;
-	}
-	return r->num;
-}
-
-static void calc_default_roi(af_ctrl_t * af)
-{
-	isp_info_t *hw = &af->isp_info;
-	roi_info_t *roi = &af->roi;
-
-	cmr_u32 w = hw->width;
-	cmr_u32 h = hw->height;
-	cmr_u16 ratio = 0;
-
-	switch (af->state) {
-	case STATE_FAF:
-		roi->num = 1;
-		roi->win[0].start_x = (af->face_base.sx >> 1) << 1;	// make sure coordinations are even
-		roi->win[0].start_y = (af->face_base.sy >> 1) << 1;
-		roi->win[0].end_x = (af->face_base.ex >> 1) << 1;
-		roi->win[0].end_y = (af->face_base.ey >> 1) << 1;
-		break;
-	case STATE_FULLSCAN:
-		/* for bokeh center w/5*4 h/5*4 */
-		ratio = af->bokeh_param.boundary_ratio;
-		roi->num = 1;
-		roi->win[0].start_x = (((w >> 1) - (w * (ratio >> 1) / 10)) >> 1) << 1;	// make sure coordinations are even
-		roi->win[0].start_y = (((h >> 1) - (h * (ratio >> 1) / 10)) >> 1) << 1;
-		roi->win[0].end_x = (((w >> 1) + (w * (ratio >> 1) / 10)) >> 1) << 1;
-		roi->win[0].end_y = (((h >> 1) + (h * (ratio >> 1) / 10)) >> 1) << 1;
-		break;
-	default:
-		roi->num = 1;
-		/* center w/5*3 * h/5*3 */
-		roi->win[0].start_x = (((w >> 1) - (w * 3 / 10)) >> 1) << 1;	// make sure coordinations are even
-		roi->win[0].start_y = (((h >> 1) - (h * 3 / 10)) >> 1) << 1;
-		roi->win[0].end_x = (((w >> 1) + (w * 3 / 10)) >> 1) << 1;
-		roi->win[0].end_y = (((h >> 1) + (h * 3 / 10)) >> 1) << 1;
-		break;
-	}
-	ISP_LOGV("af_state %s win 0: start_x = %d, start_y = %d, end_x = %d, end_y = %d",
-		 STATE_STRING(af->state), roi->win[0].start_x, roi->win[0].start_y, roi->win[0].end_x, roi->win[0].end_y);
-}
-
 static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE alg_mode)
 {
 	roi_info_t *roi = &af->roi;
-	UNUSED(alg_mode);
 
 	if (win)
 		ISP_LOGV("valid_win = %d, mode = %d", win->win_num, win->mode);
 	else
 		ISP_LOGV("win is NULL, use default roi");
 
-	if (!win || (0 == win->win_num)) {
-		calc_default_roi(af);
-	} else {
+	if (NULL != win && 0 != win->win_num) {
 		cmr_u32 i;
-
-		roi->num = win->win_num;
 		for (i = 0; i < win->win_num; ++i) {
-			roi->win[i].start_x = (win->win_pos[i].sx >> 1) << 1;	// make sure coordinations are even
-			roi->win[i].start_y = (win->win_pos[i].sy >> 1) << 1;
-			roi->win[i].end_x = (win->win_pos[i].ex >> 1) << 1;
-			roi->win[i].end_y = (win->win_pos[i].ey >> 1) << 1;
-			ISP_LOGV("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i, roi->win[i].start_x, roi->win[i].start_y, roi->win[i].end_x, roi->win[i].end_y);
+			AF_record_wins(af->af_alg_cxt, i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
+			ISP_LOGV("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
 		}
 	}
-	split_roi(af);
+	AF_set_hw_wins(af->af_alg_cxt, (void *)win, alg_mode);
 }
 
 // start hardware
@@ -500,6 +361,38 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 }
 
 // i/f to AF model
+static cmr_u8 if_set_wins(cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+	roi_info_t *roi = &af->roi;
+
+	if (0 == index)
+		roi->num = 1;
+	else
+		roi->num = roi->num + 1;
+
+	if (roi->num <= sizeof(roi->win) / sizeof(roi->win[0])) {
+		roi->win[roi->num - 1].start_x = start_x;
+		roi->win[roi->num - 1].start_y = start_y;
+		roi->win[roi->num - 1].end_x = end_x;
+		roi->win[roi->num - 1].end_y = end_y;
+		ISP_LOGI("if_set_wins %d %d %d %d %d", roi->num - 1, roi->win[roi->num - 1].start_x, roi->win[roi->num - 1].start_y,
+			 roi->win[roi->num - 1].end_x, roi->win[roi->num - 1].end_y);
+	}
+
+	return 0;
+}
+
+static cmr_u8 if_get_win_info(cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+
+	*isp_w = af->isp_info.width;
+	*isp_h = af->isp_info.height;
+	*hw_num = af->isp_info.win_num;
+	return 0;
+}
+
 static cmr_u8 if_statistics_wait_cal_done(void *cookie)
 {
 	UNUSED(cookie);
@@ -749,52 +642,10 @@ static cmr_u8 if_set_motor_sacmode(void *cookie)
 
 static cmr_u8 if_binfile_is_exist(cmr_u8 * bisExist, void *cookie)
 {
-	af_ctrl_t *af = cookie;
-	cmr_s32 rtn = AFV1_SUCCESS;
+	UNUSED(cookie);
 
-	char *af_tuning_path = "/data/misc/cameraserver/af_tuning.bin";
-	FILE *fp = NULL;
 	ISP_LOGI("Enter");
 	*bisExist = 0;
-	{			// for Bokeh
-		char *bokeh_tuning_path = "/data/misc/cameraserver/bokeh_tuning.bin";
-		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-		if (0 == access(bokeh_tuning_path, R_OK)) {	//read request successs
-			cmr_u32 len = 0;
-			fp = NULL;
-			fp = fopen(bokeh_tuning_path, "rb");
-			if (NULL == fp) {
-				goto BOKEH_DEFAULT;
-			}
-
-			fseek(fp, 0, SEEK_END);
-			len = ftell(fp);
-			if (sizeof(af->bokeh_param) != len) {
-				ISP_LOGV("bokeh_param.bin len dismatch with bokeh_param len %d", (cmr_u32) sizeof(af->bokeh_param));
-				fclose(fp);
-				goto BOKEH_DEFAULT;
-			}
-
-			fseek(fp, 0, SEEK_SET);
-			len = fread(&af->bokeh_param, 1, len, fp);
-			if (len != sizeof(af->bokeh_param)) {
-				ISP_LOGV("read bokeh_param.bin size error");
-				fclose(fp);
-				goto BOKEH_DEFAULT;
-			}
-			fclose(fp);
-		} else {
-BOKEH_DEFAULT:
-			if (af->otp_info.rdm_data.macro_cali > af->otp_info.rdm_data.infinite_cali) {
-				af->bokeh_param.vcm_dac_low_bound = af->otp_info.rdm_data.infinite_cali;
-				af->bokeh_param.vcm_dac_up_bound = af->otp_info.rdm_data.macro_cali;
-			}
-			af->bokeh_param.boundary_ratio = BOKEH_BOUNDARY_RATIO;
-			af->bokeh_param.from_pos = BOKEH_SCAN_FROM;
-			af->bokeh_param.to_pos = BOKEH_SCAN_TO;
-			af->bokeh_param.move_step = BOKEH_SCAN_STEP;
-		}
-	}
 	ISP_LOGI("Exit");
 	return 0;
 }
@@ -903,6 +754,8 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	AF_Ops.af_end_notify = if_af_end_notify;
 	AF_Ops.phase_detection_get_data = if_phase_detection_get_data;
 	AF_Ops.motion_sensor_get_data = if_motion_sensor_get_data;
+	AF_Ops.set_wins = if_set_wins;
+	AF_Ops.get_win_info = if_get_win_info;
 
 	if (PNULL != af_pm_output->param_data && PNULL != af_pm_output->param_data[0].data_ptr) {
 		af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
@@ -1642,6 +1495,35 @@ static void caf_monitor_process_sensor(af_ctrl_t * af, struct af_aux_sensor_info
 	caf_monitor_calc(af, prm);
 }
 
+static void caf_stop(af_ctrl_t * af);
+static void faf_start(af_ctrl_t * af, struct af_trig_info *win);
+static void caf_monitor_process_fd(af_ctrl_t * af)
+{
+	ISP_LOGV("face detect af state = %s", STATE_STRING(af->state));
+	if (STATE_INACTIVE == af->state)
+		return;
+
+	if (STATE_NORMAL_AF == af->state) {
+		return;
+	} else if (STATE_IDLE != af->state) {
+		if (face_dectect_trigger(af->af_alg_cxt)) {
+			if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+				af->pre_state = af->state;
+				af->state = STATE_IDLE;
+				caf_stop(af);	//maybe we need reset trigger
+			} else if (STATE_FAF == af->state) {
+				pthread_mutex_lock(&af->af_work_lock);
+				AF_STOP(af->af_alg_cxt);
+				AF_Process_Frame(af->af_alg_cxt);
+				pthread_mutex_unlock(&af->af_work_lock);
+			}
+			af->state = STATE_FAF;
+			faf_start(af, NULL);
+			ISP_LOGV("FAF Trigger");
+		}
+	}
+}
+
 static void caf_monitor_process(af_ctrl_t * af)
 {
 	if (af->trigger_source_type & AF_DATA_AF) {
@@ -1656,6 +1538,7 @@ static void caf_monitor_process(af_ctrl_t * af)
 
 	if (af->trigger_source_type & AF_DATA_FD) {
 		af->trigger_source_type &= (~AF_DATA_FD);
+		caf_monitor_process_fd(af);
 	}
 
 	if (af->trigger_source_type & AF_DATA_PD) {
@@ -1676,137 +1559,10 @@ static void caf_monitor_process(af_ctrl_t * af)
 	return;
 }
 
-// faf stuffs
-static cmr_s32 faf_trigger_init(af_ctrl_t * af)
-{
-	char value[10] = { '\0' };
-	// all thrs are in percentage unit
-/*
-	af->face_base.area_thr = af->af_tuning_data.area_thr;
-	af->face_base.diff_area_thr = af->af_tuning_data.diff_area_thr;
-	af->face_base.diff_cx_thr = af->af_tuning_data.diff_cx_thr;
-	af->face_base.diff_cy_thr = af->af_tuning_data.diff_cy_thr;
-	af->face_base.converge_cnt_thr = af->af_tuning_data.converge_cnt_thr;
-	af->face_base.face_is_enable = af->af_tuning_data.face_is_enable;*/
-
-	property_get("persist.sys.area_thr", value, "0");
-	if (atoi(value) != 0)
-		af->face_base.area_thr = atoi(value);
-	property_get("persist.sys.diff_area_thr", value, "0");
-	if (atoi(value) != 0)
-		af->face_base.diff_area_thr = atoi(value);
-	property_get("persist.sys.diff_cx_thr", value, "0");
-	if (atoi(value) != 0)
-		af->face_base.diff_cx_thr = atoi(value);
-	property_get("persist.sys.diff_cy_thr", value, "0");
-	if (atoi(value) != 0)
-		af->face_base.diff_cy_thr = atoi(value);
-	property_get("persist.sys.converge_cnt_thr", value, "0");
-	if (atoi(value) != 0)
-		af->face_base.converge_cnt_thr = atoi(value);
-	property_get("persist.sys.face_is_enable", value, "0");
-	if (atoi(value) != 0)
-		af->face_base.face_is_enable = atoi(value);
-
-	ISP_LOGV("(area diff_area cy cx converge is_enable) %d %d %d %d %d %d", af->face_base.area_thr, af->face_base.diff_area_thr, af->face_base.diff_cx_thr,
-		 af->face_base.diff_cx_thr, af->face_base.converge_cnt_thr, af->face_base.face_is_enable);
-	af->face_base.sx = 0;	// update base face
-	af->face_base.ex = 0;
-	af->face_base.sy = 0;
-	af->face_base.ey = 0;
-	af->face_base.area = 0;
-
-	af->face_base.diff_trigger = 0;
-	af->face_base.converge_cnt = 0;
-
-	return 0;
-}
-
-static cmr_s32 face_dectect_trigger(af_ctrl_t * af)
-{
-#define PERCENTAGE_BASE 10000
-	cmr_u16 i = 0, max_index = 0, trigger = 0;
-	cmr_u32 diff_x = 0, diff_y = 0, diff_area = 0;
-	cmr_u32 max_area = 0, area = 0;
-	isp_info_t *isp_size = &af->isp_info;
-	struct isp_face_area *face_info = &af->face_info;
-	prime_face_base_info_t *face_base = &af->face_base;
-	roi_info_t *roi = &af->roi;
-
-	if (0 == af->face_base.face_is_enable)
-		return 0;
-
-	max_index = face_info->face_num;
-	while (i < face_info->face_num) {	// pick face of maximum size
-		ISP_LOGV("face_area%d (sx ex sy ey) = (%d %d %d %d) ", i, face_info->face_info[i].sx,
-			 face_info->face_info[i].ex, face_info->face_info[i].sy, face_info->face_info[i].ey);
-		area = (face_info->face_info[i].ex - face_info->face_info[i].sx) * (face_info->face_info[i].ey - face_info->face_info[i].sy);
-		if (max_area < area) {
-			max_index = i;
-			max_area = area;
-		}
-		i++;
-	}
-
-	if (max_index == face_info->face_num)
-		return 0;
-
-	diff_x =
-	    (face_base->ex + face_base->sx >
-	     face_info->face_info[max_index].ex + face_info->face_info[max_index].sx ? face_base->ex +
-	     face_base->sx - face_info->face_info[max_index].ex -
-	     face_info->face_info[max_index].sx : face_info->face_info[max_index].ex + face_info->face_info[max_index].sx - face_base->ex - face_base->sx) >> 1;
-	diff_y =
-	    (face_base->ey + face_base->sy >
-	     face_info->face_info[max_index].ey + face_info->face_info[max_index].sy ? face_base->ey +
-	     face_base->sy - face_info->face_info[max_index].ey -
-	     face_info->face_info[max_index].sy : face_info->face_info[max_index].ey + face_info->face_info[max_index].sy - face_base->ey - face_base->sy) >> 1;
-	diff_area = face_base->area > max_area ? face_base->area - max_area : max_area - face_base->area;
-
-	if (1.0 * face_base->diff_cx_thr / PERCENTAGE_BASE < 1.0 * diff_x / (af->isp_info.width + 1) &&
-	    1.0 * face_base->diff_cy_thr / PERCENTAGE_BASE < 1.0 * diff_y / (af->isp_info.height + 1) &&
-	    1.0 * face_base->diff_area_thr / PERCENTAGE_BASE < 1.0 * diff_area / (face_base->area + 1)) {
-		ISP_LOGV("diff_cx diff_cy diff_area = %f %f %f", 1.0 * diff_x / (af->isp_info.width + 1),
-			 1.0 * diff_y / (af->isp_info.height + 1), 1.0 * diff_area / (face_base->area + 1));
-		face_base->area = max_area;
-		max_area = af->isp_info.height * af->isp_info.width;
-		if (1.0 * af->face_base.area_thr / PERCENTAGE_BASE < 1.0 * face_base->area / max_area) {	//area compared with total isp area
-			face_base->sx = face_info->face_info[max_index].sx;	// update base face
-			face_base->ex = face_info->face_info[max_index].ex;
-			face_base->sy = face_info->face_info[max_index].sy;
-			face_base->ey = face_info->face_info[max_index].ey;
-		} else {
-			face_base->sx = (((af->isp_info.width >> 1) - (af->isp_info.width * 3 / 10)) >> 1) << 1;	// make sure coordinations are even
-			face_base->ex = (((af->isp_info.width >> 1) + (af->isp_info.width * 3 / 10)) >> 1) << 1;
-			face_base->sy = (((af->isp_info.height >> 1) - (af->isp_info.height * 3 / 10)) >> 1) << 1;
-			face_base->ey = (((af->isp_info.height >> 1) + (af->isp_info.height * 3 / 10)) >> 1) << 1;
-		}
-
-		face_base->diff_trigger = 1;
-		face_base->converge_cnt = 0;
-		if (0 == face_base->area)
-			face_base->converge_cnt = face_base->converge_cnt_thr + 1;
-	} else {
-		if (1 == face_base->diff_trigger)
-			face_base->converge_cnt++;
-		else
-			face_base->converge_cnt = 0;
-		ISP_LOGV("(converge_cnt,converge_cnt_thr) = (%d %d)", face_base->converge_cnt, face_base->converge_cnt_thr);
-	}
-
-	if (1 == face_base->diff_trigger && face_base->converge_cnt > face_base->converge_cnt_thr) {	// it's an absolute threshold
-		face_base->diff_trigger = 0;
-		face_base->converge_cnt = 0;
-		trigger = 1;
-	}
-
-	return trigger;
-}
-
 static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 {
 	AF_Trigger_Data aft_in;
-	af->algo_mode = CAF;
+	af->algo_mode = FAF;
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1844,7 +1600,7 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 	AF_Trigger(af->af_alg_cxt, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
-	faf_trigger_init(af);
+	faf_trigger_init(af->af_alg_cxt);
 }
 
 static void saf_stop(af_ctrl_t * af)
@@ -2361,7 +2117,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	if (NULL == af->af_alg_cxt)
 		goto ERROR_INIT;
 
-	faf_trigger_init(af);
+	faf_trigger_init(af->af_alg_cxt);
 	if (trigger_init(af, CAF_TRIGGER_LIB) != 0) {
 		ISP_LOGE("fail to init trigger");
 		goto ERROR_INIT;
@@ -2615,9 +2371,6 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 				aft_in.AFT_mode = af->algo_mode;
 				aft_in.bisTrigger = AF_TRIGGER;
 				aft_in.AF_Trigger_Type = BOKEH;
-				aft_in.defocus_param.scan_from = af->bokeh_param.from_pos;
-				aft_in.defocus_param.scan_to = af->bokeh_param.to_pos;
-				aft_in.defocus_param.per_steps = af->bokeh_param.move_step;
 				AF_Trigger(af->af_alg_cxt, &aft_in);
 				do_start_af(af);
 				break;
@@ -2761,33 +2514,14 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		break;
 	case AF_CMD_SET_FACE_DETECT:{
 			struct isp_face_area *face = (struct isp_face_area *)param0;
-
-			ISP_LOGV("face detect af state = %s", STATE_STRING(af->state));
-			if (STATE_INACTIVE == af->state)
-				break;
-
-			ISP_LOGV("type = %d, face_num = %d", face->type, face->face_num);
-
-			if (STATE_NORMAL_AF == af->state) {
-				break;
-			} else if (STATE_IDLE != af->state) {
-				af->trigger_source_type |= AF_DATA_FD;
-				memcpy(&af->face_info, face, sizeof(struct isp_face_area));
-				if (face_dectect_trigger(af)) {
-					if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
-						af->pre_state = af->state;
-						af->state = STATE_IDLE;
-						caf_stop(af);	// todo : maybe we need wait caf done when caf is searching; or report caf failed msg
-					} else if (STATE_FAF == af->state) {
-						pthread_mutex_lock(&af->af_work_lock);
-						AF_STOP(af->af_alg_cxt);
-						AF_Process_Frame(af->af_alg_cxt);
-						pthread_mutex_unlock(&af->af_work_lock);
-					}
-					af->state = STATE_FAF;
-					faf_start(af, NULL);
-					ISP_LOGV("FAF Trigger");
+			if (NULL != face && 0 != face->face_num) {
+				cmr_u32 index = 0;
+				while (index < face->face_num) {
+					AF_record_faces(af->af_alg_cxt, index, face->face_info[index].sx, face->face_info[index].sy, face->face_info[index].ex,
+							face->face_info[index].ey);
+					index = index + 1;
 				}
+				af->trigger_source_type |= AF_DATA_FD;
 			}
 			break;
 		}
@@ -2823,12 +2557,12 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 			result.win_peak_pos = af->win_peak_pos;
 			AF_Get_Bokeh_result(af->af_alg_cxt, &result);
 			if (NULL != af_fullscan_info) {
-				af_fullscan_info->row_num = 3;
-				af_fullscan_info->column_num = 3;
-				af_fullscan_info->win_peak_pos = af->win_peak_pos;
-				af_fullscan_info->vcm_dac_low_bound = af->bokeh_param.vcm_dac_low_bound;
-				af_fullscan_info->vcm_dac_up_bound = af->bokeh_param.vcm_dac_up_bound;
-				af_fullscan_info->boundary_ratio = af->bokeh_param.boundary_ratio;
+				af_fullscan_info->row_num = result.row_num;
+				af_fullscan_info->column_num = result.column_num;
+				af_fullscan_info->win_peak_pos = result.win_peak_pos;
+				af_fullscan_info->vcm_dac_low_bound = result.vcm_dac_low_bound;
+				af_fullscan_info->vcm_dac_up_bound = result.vcm_dac_up_bound;
+				af_fullscan_info->boundary_ratio = result.boundary_ratio;
 
 				af_fullscan_info->af_peak_pos = result.af_peak_pos;
 				af_fullscan_info->near_peak_pos = result.near_peak_pos;

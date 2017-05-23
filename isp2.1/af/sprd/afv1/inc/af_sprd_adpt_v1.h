@@ -30,11 +30,6 @@
 #define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
 #define AF_WAIT_CAF_TIMEOUT 200000000;	//1s == (1000 * 1000 * 1000)ns
 
-#define BOKEH_BOUNDARY_RATIO 8	//based on 10
-#define BOKEH_SCAN_FROM 212	//limited in [0,1023]
-#define BOKEH_SCAN_TO 342	//limited in [0,1023]
-#define BOKEH_SCAN_STEP 12	//at least 20
-
 enum afv1_bool {
 	AFV1_FALSE = 0,
 	AFV1_TRUE,
@@ -207,22 +202,6 @@ typedef struct _vcm_ops {
 	cmr_u32(*get_motor_pos) (void *handle, cmr_u16 * pos);
 } vcm_ops_t;
 
-typedef struct _prime_face_base_info {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-	cmr_u32 area;
-	cmr_u32 area_thr;
-	cmr_u32 diff_area_thr;
-	cmr_u32 diff_cx_thr;
-	cmr_u32 diff_cy_thr;
-	cmr_u16 converge_cnt_thr;
-	cmr_u16 converge_cnt;
-	cmr_u16 diff_trigger;
-	cmr_u8 face_is_enable;
-} prime_face_base_info_t;
-
 typedef struct _focus_stat {
 	cmr_u32 force_write;
 	cmr_u32 reg_param[10];
@@ -232,15 +211,6 @@ typedef struct _af_fv_info {
 	cmr_u64 af_fv0[10];	//[10]:10 ROI, sum of FV0
 	cmr_u64 af_fv1[10];	//[10]:10 ROI, sum of FV1
 } af_fv;
-
-typedef struct _Bokeh_tuning_param {
-	cmr_u16 from_pos;
-	cmr_u16 to_pos;
-	cmr_u16 move_step;
-	cmr_u16 vcm_dac_up_bound;
-	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
-} Bokeh_tuning_param;
 
 typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 iir_level;
@@ -268,12 +238,10 @@ typedef struct _af_ctrl {
 	cmr_u32 Y_sum_normalize;
 	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
-	struct isp_face_area face_info;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
-	prime_face_base_info_t face_base;
 	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
@@ -307,7 +275,6 @@ typedef struct _af_ctrl {
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
-	Bokeh_tuning_param bokeh_param;
 	afm_tuning_sharkl2 afm_tuning;
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
