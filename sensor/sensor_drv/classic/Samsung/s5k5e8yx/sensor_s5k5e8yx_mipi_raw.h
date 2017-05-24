@@ -545,7 +545,7 @@ SENSOR_INFO_T g_s5k5e8yx_mipi_raw_info = {
     .source_height_max = SNAPSHOT_HEIGHT, /* max height of source image */
     .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
 
     .resolution_tab_info_ptr = s_s5k5e8yx_resolution_tab_raw,
     .ioctl_func_tab_ptr = &s_s5k5e8yx_ioctl_func_tab,
