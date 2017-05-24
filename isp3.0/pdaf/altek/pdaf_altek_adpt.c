@@ -272,8 +272,8 @@ static cmr_int pdafaltek_adpt_set_pd_info(cmr_handle adpt_handle, struct sensor_
 	cxt->pd_info.pd_offset_y = pd_info->pd_offset_y;
 	cxt->pd_info.pd_pitch_x = pd_info->pd_pitch_x;
 	cxt->pd_info.pd_pitch_y = pd_info->pd_pitch_y;
-	cxt->pd_info.pd_density_x = pd_info->pd_density_x; /* this mean left total PDs in one block */
-	cxt->pd_info.pd_density_y = pd_info->pd_density_y; /* this mean right total PDs in one block */
+	cxt->pd_info.pd_density_x = pd_info->pd_density_x;
+	cxt->pd_info.pd_density_y = pd_info->pd_density_y;
 	cxt->pd_info.pd_block_num_x = pd_info->pd_block_num_x;
 	cxt->pd_info.pd_block_num_y = pd_info->pd_block_num_y;
 	cxt->pd_info.pd_pos_size = pd_info->pd_pos_size;
@@ -283,7 +283,7 @@ static cmr_int pdafaltek_adpt_set_pd_info(cmr_handle adpt_handle, struct sensor_
 	cxt->type2_info.data_format = pd_info->type2_info.data_format;
 	cxt->type2_info.width = pd_info->type2_info.width;
 	cxt->type2_info.height = pd_info->type2_info.height;
-	ISP_LOGI("pd_density_left_num %d, pd_block_num_x %d, pd_block_num_y %d type2: df %d w %d h %d",
+	ISP_LOGI("pd_density_x %d, pd_block_num_x %d, pd_block_num_y %d type2: df %d w %d h %d",
 		 cxt->pd_info.pd_density_x, cxt->pd_info.pd_block_num_x, cxt->pd_info.pd_block_num_y,
 		 cxt->type2_info.data_format, cxt->type2_info.width, cxt->type2_info.height);
 
@@ -484,8 +484,9 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 		ISP_LOGE("failed to set pd info");
 		goto exit;
 	}
-	pd_in_size = in_p->pd_info->pd_block_num_x * in_p->pd_info->pd_block_num_y
-				* in_p->pd_info->pd_density_x * sizeof(cmr_u16);
+	pd_in_size = in_p->pd_info->pd_block_num_x * in_p->pd_info->pd_block_num_y *
+			in_p->pd_info->pd_density_x * in_p->pd_info->pd_density_y * sizeof(cmr_u16);
+
 	ISP_LOGI("pd_in_size = %d", pd_in_size);
 	if (0 == pd_in_size) {
 		ISP_LOGE("failed to get pd size");
@@ -914,8 +915,8 @@ static cmr_int pdafaltek_adpt_type2_process(cmr_handle adpt_handle, void *in, vo
 	nsecs_t cal_time_begin = 0;
 	nsecs_t cal_time_end = 0;
 	struct pdaf_ctrl_callback_in callback_in;
-	cmr_u32 pd_width = cxt->type2_info.width;
-	cmr_u32 pd_heigh = cxt->type2_info.height;
+	cmr_u32 pd_width = 0;
+	cmr_u32 pd_height = 0;
 
 	memset(&pdroi, 0x00, sizeof(pdroi));
 	memset(&callback_in, 0x00, sizeof(callback_in));
@@ -935,23 +936,26 @@ static cmr_int pdafaltek_adpt_type2_process(cmr_handle adpt_handle, void *in, vo
 	cal_time_end = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGI("extract delta %ld", (cmr_uint)(cal_time_end - cal_time_begin) / 1000);
 
-	pd_width = cxt->pd_info.pd_block_num_x * 4; // TBD
-	pd_heigh = cxt->pd_info.pd_block_num_y * 4;
-	pdroi.m_wWidth = pd_width;
-	pdroi.m_wHeight = pd_heigh;
+	pd_width = cxt->pd_info.pd_block_num_x * cxt->pd_info.pd_density_x;
+	pd_height = cxt->pd_info.pd_block_num_y * cxt->pd_info.pd_density_y;
+	pdroi.m_wLeft = pd_width / 4;
+	pdroi.m_wTop =  pd_height / 4;
+	pdroi.m_wWidth = pd_width / 2;
+	pdroi.m_wHeight = pd_height / 2;
 
 	cal_time_begin = systemTime(CLOCK_MONOTONIC);
 
 	ret = cxt->ops.calc(&cxt->report_data.pd_value,
 			    cxt->report_data.pd_reg_out,
 			    cxt->pd_left, cxt->pd_right,
-			    pdroi.m_wWidth, pdroi.m_wHeight,
+			    pd_width, pd_height,
 			    pdroi,
 			    SRCIMG_10,
 			    &cxt->pd_reg_in);
 
 	cal_time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("cal delta %lu", (cmr_uint)(cal_time_end - cal_time_begin) / 1000);
+	ISP_LOGI("cal delta %lu roi %d %d %d %d", (cmr_uint)(cal_time_end - cal_time_begin) / 1000,
+		 pdroi.m_wLeft, pdroi.m_wTop, pdroi.m_wWidth, pdroi.m_wHeight);
 
 	cxt->report_data.token_id = cxt->token_id;
 	cxt->report_data.frame_id = cxt->frame_id;

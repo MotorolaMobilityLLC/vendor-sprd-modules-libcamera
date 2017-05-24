@@ -7354,7 +7354,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
     }
 
-    if (out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) {
+    if ((out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) ||
+        (out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE2_ENABLE)) {
         haf_enable = out_param_ptr->pdaf_mode;
         CMR_LOGI("haf_enable %d", haf_enable);
         ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE,

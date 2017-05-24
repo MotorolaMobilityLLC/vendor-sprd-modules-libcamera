@@ -1551,8 +1551,8 @@ static uint32_t _s5k3p8sm_get_pdaf_info(SENSOR_HW_HANDLE handle,
     pdaf_info->pd_offset_y = 16;
     pdaf_info->pd_pitch_x = 64;
     pdaf_info->pd_pitch_y = 64;
-    pdaf_info->pd_density_x = 16;
-    pdaf_info->pd_density_y = 16;
+    pdaf_info->pd_density_x = 4;
+    pdaf_info->pd_density_y = 4;
     pdaf_info->pd_block_num_x = 72;
     pdaf_info->pd_block_num_y = 54;
     pdaf_info->pd_pos_size = pd_pos_r_size;
