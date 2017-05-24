@@ -24,8 +24,8 @@
 #include "osal_log.h"
 #include "stdint.h"
 #else
-#include <utils/Log.h>
-#include "ae_types.h"
+//#include <utils/Log.h>
+#include "cmr_types.h"
 #endif
 #endif
 #include <stdio.h>

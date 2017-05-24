@@ -16,7 +16,7 @@
 #ifndef _AE_DEBUG_INFO_PARSER_H_
 #define _AE_DEBUG_INFO_PARSER_H_
 
-#include "ae_types.h"
+#include "cmr_types.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -17,43 +17,43 @@
 #ifndef _SENSOR_EXPOSURE_QUEUE_H_
 #define _SENSOR_EXPOSURE_QUEUE_H_
 
-#include "isp_type.h"
+#include "cmr_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum seq_work_mode {
-	SEQ_WORK_PREVIEW,
-	SEQ_WORK_CAPTURE,
-	SEQ_WORK_MAX
-};
-
-struct seq_cell {
-	cmr_u32 frame_id;	//must start from 0
-	cmr_u32 exp_line;	//it is invalid value while 0
-	cmr_u32 gain;	//it is invalid value while 0
+struct q_item {
 	cmr_u32 exp_time;
-	cmr_u32 dummy;
+	cmr_u32 exp_line;
+	cmr_u32 dumy_line;
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
 };
 
-struct seq_item {
-	cmr_u32 work_mode;
-	struct seq_cell cell;
+struct s_q_open_param {
+	cmr_s32 exp_valid_num;
+	cmr_s32 sensor_gain_valid_num;
+	cmr_s32 isp_gain_valid_num;
 };
 
-struct seq_init_in {
-	cmr_u32 preview_skip_num;
-	cmr_u32 capture_skip_num;
-	cmr_u32 exp_valid_num;
-	cmr_u32 gain_valid_num;
-	cmr_u32 idx_start_from;
+struct s_q_init_in {
+	cmr_u32 exp_line;
+	cmr_u32 exp_time;
+	cmr_u32 dmy_line;
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
 };
 
-cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, cmr_handle * handle);
-cmr_int seq_deinit(cmr_handle handle);
-cmr_int seq_reset(cmr_handle handle);
-cmr_int seq_put(cmr_handle handle, struct seq_item *in_est_ptr, struct seq_cell *out_actual_ptr, struct seq_cell *out_write_ptr);
+struct s_q_init_out {
+	struct q_item actual_item;
+	struct q_item write_item;
+};
+
+cmr_handle s_q_open(struct s_q_open_param *param);
+cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_out *out);
+cmr_s32 s_q_put(cmr_handle q_handle, struct q_item *input_item, struct q_item *write_2_sensor, struct q_item *actual_item);
+cmr_s32 s_q_close(cmr_handle q_handle);
 
 #ifdef __cplusplus
 }
