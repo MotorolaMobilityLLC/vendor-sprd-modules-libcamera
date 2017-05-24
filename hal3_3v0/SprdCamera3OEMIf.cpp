@@ -8231,7 +8231,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         zsl_frame = obj->popZslFrame();
         // for burst mode
         if (obj->mSprdBurstModeEnabled == 1 && obj->mSprdZslEnabled == 1 &&
-            sprddefInfo.capture_mode == 1) {
+            (sprddefInfo.capture_mode == 1 || sprddefInfo.capture_mode == 99)) {
             if (zsl_frame.y_vir_addr != 0) {
                 // set last time buffer to kernel for right scene
                 mHalOem->ops->camera_set_zsl_buffer(
