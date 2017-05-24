@@ -1159,7 +1159,19 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 					cxt->output_ct = mawb_id;
 				}
 			}
-		}
+		      if((cxt->otp_info.gldn_stat_info.r != 0 ) && (cxt->otp_info.gldn_stat_info.g != 0) && (cxt->otp_info.gldn_stat_info.b != 0)){
+                          double otp_g_coef = (double)cxt->otp_info.rdm_stat_info.g / cxt->otp_info.gldn_stat_info.g;
+                          double otp_r_coef = (double)cxt->otp_info.rdm_stat_info.r / cxt->otp_info.gldn_stat_info.r;
+                          double otp_b_coef = (double)cxt->otp_info.rdm_stat_info.b / cxt->otp_info.gldn_stat_info.b;
+
+				if(otp_g_coef != 0){
+					otp_r_coef = otp_r_coef / otp_g_coef;
+					otp_b_coef = otp_b_coef / otp_g_coef;
+					cxt->output_gain.r = cxt->output_gain.r * otp_r_coef ;
+					cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
+				 }
+                    }
+              }
 	} else {
 		cmr_u32 scene_mode = cxt->scene_mode;
 		if (AWB_CTRL_SCENEMODE_USER_0 == scene_mode) {
