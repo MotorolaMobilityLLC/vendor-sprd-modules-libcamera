@@ -46,6 +46,8 @@ struct awb_altek_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
 	cmr_u8 is_master;
+	cmr_u32 wb_mode;
+	cmr_u32 scene_mode;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_u32 is_lock;
@@ -120,8 +122,11 @@ static cmr_int awbaltek_set_wb_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_i
 	struct allib_awb_set_parameter_t            input;
 
 	UNUSED(output_ptr);
+	cxt->wb_mode = input_ptr->wb_mode.wb_mode;
+	if (cxt->wb_mode == 0 && cxt->scene_mode != 0)
+		return ISP_SUCCESS;
 	input.type = alawb_set_param_awb_mode_setting;
-	input.para.awb_mode_setting.wbmode_type = awbaltek_convert_wb_mode(input_ptr->wb_mode.wb_mode);
+	input.para.awb_mode_setting.wbmode_type = awbaltek_convert_wb_mode(cxt->wb_mode);
 	input.para.awb_mode_setting.manual_ct = input_ptr->wb_mode.manual_ct;
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
 	if (ret) {
@@ -973,6 +978,9 @@ static cmr_int awbaltek_set_scene_mode(cmr_handle adpt_handle, union awb_ctrl_cm
 	}
 
 	ISP_LOGI("awb_addr %p mode %d ", input_ptr->scene_info.puc_addr, input_ptr->scene_info.uw_mode);
+	cxt->scene_mode = input_ptr->scene_info.uw_mode;
+	if (cxt->scene_mode == 0 && cxt->wb_mode != 0)
+		return ISP_SUCCESS;
 	ret = al3awrapperawb_setscenesetting(&input_ptr->scene_info,  &cxt->lib_func);
 	ISP_LOGI("ret %ld ", ret);
 	return ret;
