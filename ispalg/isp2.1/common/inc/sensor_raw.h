@@ -23,7 +23,7 @@
 #endif
 #include "isp_type.h"
 #include "cmr_sensor_info.h"
-#include "../../ae/inc/ae_types.h"
+#include "../../ae/sprd/ae/inc/ae_tuning_type.h"
 
 #define AWB_POS_WEIGHT_LEN 64
 #define AWB_POS_WEIGHT_WIDTH_HEIGHT 4

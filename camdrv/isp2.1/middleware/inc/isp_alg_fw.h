@@ -30,7 +30,6 @@
 #include "pdaf_sprd_adpt.h"
 #include "pd_algo.h"
 #include "isp_awb_types.h"
-#include "ae_types.h"
 #include "ae_ctrl_types.h"
 
 

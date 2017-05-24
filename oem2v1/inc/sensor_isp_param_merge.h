@@ -19,7 +19,6 @@
  **---------------------------------------------------------------------------*/
 
 #include <sys/types.h>
-#include "ae_types.h"
 #include "sensor_isp_param_awb_pac.h"
 #include "awb_packet.h"
 #include "awb_alg_param.h"
