@@ -300,6 +300,14 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
 		break;
+	case ISP_AF_AE_CAF_LOCK:
+		if (cxt->ops.ae_ops.ioctrl)
+			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CAF_LOCKAE_START, NULL, param1);
+		break;
+	case ISP_AF_AE_CAF_UNLOCK:
+		if (cxt->ops.ae_ops.ioctrl)
+			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CAF_LOCKAE_STOP, NULL, param1);
+		break;
 	case ISP_AF_AWB_LOCK:
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
@@ -430,6 +438,8 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
+	float captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
+	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
 
 	struct alsc_ver_info lsc_ver = { 0 };
 	if (cxt->ops.lsc_ops.ioctrl)
@@ -451,6 +461,15 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv0);
+
+		//flash info
+		if(cxt->lsc_flash_onoff==1 && cxt->ops.ae_ops.ioctrl){
+			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
+			ISP_TRACE_IF_FAIL(rtn, ("AE_GET_FLASH_ENV_RATIO fail "));
+			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
+			ISP_TRACE_IF_FAIL(rtn, ("AE_GET_FLASH_ONE_OF_ALL_RATIO fail "));
+			ISP_LOGD("[ALSC] alsc_calc, captureFlashEnvRatio=%f, captureFlash1ofALLRatio=%f\n", captureFlashEnvRatio,  captureFlash1ofALLRatio);
+		}
 
 		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 		rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
@@ -481,6 +500,8 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.r_gain = awb_r_gain;
 		calc_param.b_gain = awb_b_gain;
 		calc_param.grid = lsc_info->grid;
+		calc_param.captureFlashEnvRatio = captureFlashEnvRatio;
+		calc_param.captureFlash1ofALLRatio = captureFlash1ofALLRatio;
 
 		gAWBGainR = awb_r_gain;
 		gAWBGainB = awb_b_gain;
@@ -1226,6 +1247,17 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			ae_info.cur_lum = ae_result->cur_lum;
 			ae_info.target_lum = 128;
 			ae_info.is_stable = ae_result->is_stab;
+			ae_info.cur_index = ae_result->cur_index;
+			ae_info.cur_ev = ae_result->cur_ev;
+			ae_info.cur_dgain = ae_result->cur_dgain;
+			ae_info.cur_iso = ae_result->cur_iso;
+			ae_info.flag = ae_result->flag;
+			ae_info.ae_data = ae_result->ae_data;
+			ae_info.ae_data_size = ae_result->ae_data_size;
+			ae_info.target_lum_ori = ae_result->target_lum_ori;
+			ae_info.flag4idx = ae_result->flag4idx;
+			ae_info.log_ae.log = ae_result->log_ae.log;
+			ae_info.log_ae.size = ae_result->log_ae.size;
 			calc_param.data_type = AF_DATA_AE;
 			calc_param.data = (void *)(&ae_info);
 			if (cxt->ops.af_ops.process)
@@ -1896,8 +1928,6 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	}
 	if(cxt->ops.af_ops.init)
 		rtn = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
-	cxt->af_cxt.log_af = af_input.af_alg_cxt;
-	cxt->af_cxt.log_af_size = af_input.af_dump_info_len;
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
 
 	return rtn;

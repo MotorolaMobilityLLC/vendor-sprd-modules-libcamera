@@ -228,6 +228,7 @@ struct isp_alg_fw_context {
 	cmr_handle ispalg_lib_handle;
 	struct ispalg_lib_ops ops;
 	struct awb_ct_table ct_table;
+	cmr_u32 lsc_flash_onoff;
 };
 
 struct isp_alg_fw_init_in {

@@ -351,11 +351,11 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 
-			if (cxt->ops.awb_ops.ioctrl){
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_BEFORE_P, NULL, NULL);
-				awb_flash_status = AWB_FLASH_PRE_BEFORE;
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
-			}
+		if (cxt->ops.awb_ops.ioctrl){
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_BEFORE_P, NULL, NULL);
+			awb_flash_status = AWB_FLASH_PRE_BEFORE;
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+		}
 
 		flash_mode = SMART_CTRL_FLASH_PRE;
 		if (cxt->ops.smart_ops.ioctrl)
@@ -372,14 +372,12 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		ae_notice.flash_ratio = ratio;
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
-
-		if (!cxt->ae_cxt.flash_version) {
-			if (cxt->ops.awb_ops.ioctrl){
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_P, NULL, NULL);
-				awb_flash_status = AWB_FLASH_PRE_LIGHTING;
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
-			}
+		awb_flash_status = AWB_FLASH_PRE_LIGHTING;
+		if (cxt->ops.awb_ops.ioctrl){
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_P, NULL, NULL);
 		}
+
 
 		flash_mode = SMART_CTRL_FLASH_PRE;
 		if (cxt->ops.smart_ops.ioctrl)
@@ -393,15 +391,14 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		ae_notice.will_capture = flash_notice->will_capture;
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
-
-		if (!cxt->ae_cxt.flash_version) {
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
-			rtn = _isp_set_awb_gain((cmr_handle) cxt);
 			awb_flash_status = AWB_FLASH_PRE_AFTER;
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
-		}
+		if (cxt->ops.awb_ops.ioctrl)
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+
+		if (cxt->ops.awb_ops.ioctrl)
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
+			rtn = _isp_set_awb_gain((cmr_handle) cxt);
+
 		flash_mode = SMART_CTRL_FLASH_CLOSE;
 		if (cxt->ops.smart_ops.ioctrl)
 			rtn = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
@@ -410,8 +407,9 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
+		cxt->lsc_flash_onoff = 1;
 		if (cxt->ops.lsc_ops.ioctrl)
-			rtn  = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
@@ -432,13 +430,12 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 
-		if (!cxt->ae_cxt.flash_version) {
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_M, NULL, NULL);
-			awb_flash_status = AWB_FLASH_MAIN_LIGHTING;
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+		awb_flash_status = AWB_FLASH_MAIN_LIGHTING;
+		if (cxt->ops.awb_ops.ioctrl) {
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_M, NULL, NULL);
 		}
+
 		flash_mode = SMART_CTRL_FLASH_MAIN;
 		if (cxt->ops.smart_ops.ioctrl)
 			rtn = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
@@ -463,28 +460,21 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	case ISP_FLASH_MAIN_AFTER:
 		if (cxt->ops.lsc_ops.ioctrl)
 			rtn  = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
+		cxt->lsc_flash_onoff = 0;
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 
-		if (!cxt->ae_cxt.flash_version) {
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
-			rtn = _isp_set_awb_gain((cmr_handle) cxt);
-			if (cxt->ops.awb_ops.ioctrl){
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_SNOP, NULL, NULL);
-			}
 			awb_flash_status = AWB_FLASH_MAIN_AFTER;
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
-		} else {
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
-			rtn = _isp_set_awb_gain((cmr_handle) cxt);
-			if (cxt->ops.awb_ops.ioctrl)
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
-				rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_SNOP, NULL, NULL);
+		if (cxt->ops.awb_ops.ioctrl)
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+
+		if (cxt->ops.awb_ops.ioctrl)
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
+		rtn = _isp_set_awb_gain((cmr_handle) cxt);
+		if (cxt->ops.awb_ops.ioctrl) {
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
+			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_SNOP, NULL, NULL);
 		}
 
 		flash_mode = SMART_CTRL_FLASH_CLOSE;
@@ -1241,6 +1231,19 @@ static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_pt
 	return rtn;
 }
 
+static cmr_int _ispAfIOBypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 *bypass = (cmr_u32 *) param_ptr;
+	UNUSED(call_back);
+
+	if (cxt->ops.af_ops.ioctrl)
+		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)bypass, NULL);
+
+	return rtn;
+}
+
 static cmr_int _ispAfIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -1409,6 +1412,13 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 		if (ISP_SUCCESS == rtn) {
 			if (cxt->ops.ae_ops.ioctrl)
 				cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash_param_ptr->cur.auto_flash_thr, NULL);
+		}
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &input, &output);
+		if (ISP_SUCCESS == rtn && output.param_num) {
+			cmr_s32 bypass = 0;
+			bypass = output.param_data->user_data[0];
+			if (cxt->ops.af_ops.ioctrl)
+				cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&bypass, NULL);
 		}
 	}
 	return rtn;
@@ -1823,11 +1833,11 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_HDR_START, &ae_hdr, NULL);
 	if (ae_hdr.hdr_enable) {
 		if (cxt->ops.smart_ops.block_disable)
-			cxt->ops.smart_ops.block_disable(cxt->awb_cxt.handle, ISP_SMART_LNC);
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_LNC);
 		if (cxt->ops.smart_ops.block_disable)
-			cxt->ops.smart_ops.block_disable(cxt->awb_cxt.handle, ISP_SMART_CMC);
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_CMC);
 		if (cxt->ops.smart_ops.block_disable)
-			cxt->ops.smart_ops.block_disable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 		if (cxt->ops.smart_ops.NR_disable)
 			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 1);
 		if (cxt->ops.awb_ops.ioctrl)
@@ -1836,11 +1846,11 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 	}else {
 		if (cxt->ops.smart_ops.block_enable)
-			cxt->ops.smart_ops.block_enable(cxt->awb_cxt.handle, ISP_SMART_LNC);
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_LNC);
 		if (cxt->ops.smart_ops.block_enable)
-			cxt->ops.smart_ops.block_enable(cxt->awb_cxt.handle, ISP_SMART_CMC);
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_CMC);
 		if (cxt->ops.smart_ops.block_enable)
-			cxt->ops.smart_ops.block_enable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 		if (cxt->ops.smart_ops.NR_disable)
 			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 0);
 		if (cxt->ops.awb_ops.ioctrl)
@@ -2305,6 +2315,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 
 	{ISP_CTRL_AF, _ispAfIOCtrl},
 	{ISP_CTRL_GET_FULLSCAN_INFO, _ispAfIOGetFullScanInfo},
+	{ISP_CTRL_SET_AF_BYPASS, _ispAfIOBypass},
 	{ISP_CTRL_BURST_NOTICE, _ispBurstIONotice},
 	{ISP_CTRL_SFT_READ, _ispSFTIORead},
 	{ISP_CTRL_SFT_WRITE, _ispSFTIOWrite},
