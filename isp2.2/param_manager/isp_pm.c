@@ -1452,6 +1452,12 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_mode_param *mode_para
 				counts++;
 			}
 		}
+		else {
+			ISP_LOGE("Fail to get valid block for id:%x (%d),  header: %p,  cfg:  %p\n",
+				id,  tm_idx, blk_header_ptr, blk_cfg_ptr);
+			rtn = ISP_PARAM_ERROR;
+			return rtn;
+		}
 		*rtn_idx = tm_idx;
 	}
 	*param_count = counts;
@@ -1595,15 +1601,15 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 
 		pm_cxt_ptr = (struct isp_pm_context *)handle;
 		single_data_ptr = pm_cxt_ptr->temp_param_data;
+		result_ptr = (struct isp_pm_ioctl_output *)out_ptr;
+		result_ptr->param_num = 0;
+		result_ptr->param_data = PNULL;
 		rtn = isp_pm_get_single_block_param(pm_cxt_ptr->active_mode,
 						    pm_cxt_ptr->active_cxt_ptr, (struct isp_pm_ioctl_input *)in_ptr, &single_param_counts, single_data_ptr, &blk_idx);
 		if (ISP_SUCCESS != rtn) {
 			rtn = ISP_ERROR;
 			return rtn;
 		}
-		result_ptr = (struct isp_pm_ioctl_output *)out_ptr;
-		result_ptr->param_num = 0;
-		result_ptr->param_data = PNULL;
 		result_ptr->param_data = &pm_cxt_ptr->temp_param_data[blk_idx];
 		result_ptr->param_num = single_param_counts;	//always is one
 	} else if (ISP_PM_CMD_GET_AE_VERSION_ID == cmd) {
@@ -1736,6 +1742,10 @@ static void isp_pm_free(isp_pm_handle_t handle)
 {
 	if (PNULL != handle) {
 		struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
+
+		cxt_ptr->magic_flag = ~cxt_ptr->magic_flag;
+		pthread_mutex_destroy(&cxt_ptr->pm_mutex);
+
 		isp_pm_context_deinit(handle);
 		isp_pm_mode_list_deinit(handle);
 		isp_pm_buffer_free(&cxt_ptr->buffer);
@@ -1785,6 +1795,7 @@ isp_pm_handle_t isp_pm_init(struct isp_pm_init_input * input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	isp_pm_handle_t handle = PNULL;
+	struct isp_pm_context *cxt_ptr;
 	UNUSED(output);
 
 	if (PNULL == input) {
@@ -1799,7 +1810,11 @@ isp_pm_handle_t isp_pm_init(struct isp_pm_init_input * input, void *output)
 		goto init_error_exit;
 	}
 
+	cxt_ptr = (struct isp_pm_context *)handle;
+	pthread_mutex_lock(&cxt_ptr->pm_mutex);
 	rtn = isp_pm_param_init_and_update(handle, input, ISP_MODE_ID_PRV_0);
+	pthread_mutex_unlock(&cxt_ptr->pm_mutex);
+
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to init & update");
 		goto init_error_exit;
@@ -1811,7 +1826,6 @@ init_error_exit:
 
 	if (handle) {
 		struct isp_pm_context *cxt_ptr = handle;
-		pthread_mutex_destroy(&cxt_ptr->pm_mutex);
 
 		isp_pm_free(handle);
 		handle = PNULL;
@@ -1835,13 +1849,13 @@ cmr_s32 isp_pm_ioctl(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, v
 	switch ((cmd & isp_pm_cmd_mask)) {
 	case ISP_PM_CMD_SET_BASE:
 		pthread_mutex_lock(&cxt_ptr->pm_mutex);
-		isp_pm_set_param(handle, cmd, input);
+		rtn = isp_pm_set_param(handle, cmd, input);
 		pthread_mutex_unlock(&cxt_ptr->pm_mutex);
 		break;
 	case ISP_PM_CMD_GET_BASE:
 	case ISP_PM_CMD_GET_THIRD_PART_BASE:
 		pthread_mutex_lock(&cxt_ptr->pm_mutex);
-		isp_pm_get_param(handle, cmd, input, output);
+		rtn = isp_pm_get_param(handle, cmd, input, output);
 		pthread_mutex_unlock(&cxt_ptr->pm_mutex);
 		break;
 	default:
@@ -1865,18 +1879,24 @@ cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, 
 		goto isp_pm_update_error_exit;
 	}
 
+	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
+
 	switch (cmd) {
 	case ISP_PM_CMD_UPDATE_ALL_PARAMS:
 		{
 			struct isp_pm_update_input *update_input_ptr = (struct isp_pm_update_input *)input;
+			pthread_mutex_lock(&cxt_ptr->pm_mutex);
 			rtn = isp_pm_param_init_and_update(handle, (struct isp_pm_init_input *)update_input_ptr, ISP_MODE_ID_PRV_0);
+			pthread_mutex_unlock(&cxt_ptr->pm_mutex);
 		}
 		break;
 
 	case ISP_PM_CMD_UPDATE_LSC_OTP:
 		{
 			struct isp_pm_param_data *param_data = (struct isp_pm_param_data *)input;
+			pthread_mutex_lock(&cxt_ptr->pm_mutex);
 			rtn = isp_pm_lsc_otp_param_update(handle, param_data);
+			pthread_mutex_unlock(&cxt_ptr->pm_mutex);
 		}
 		break;
 	default:
@@ -1903,10 +1923,7 @@ cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output)
 		return ISP_ERROR;
 	}
 
-	pthread_mutex_destroy(&cxt_ptr->pm_mutex);
-
 	isp_pm_free(handle);
-
 	handle = PNULL;
 
 	return rtn;
