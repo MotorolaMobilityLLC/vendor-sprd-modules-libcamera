@@ -226,6 +226,7 @@ typedef struct {
 typedef struct {
     module_data_t module_dat;
     cmr_u16 iso_dat;
+    enum otp_vendor_type otp_vendor;
     afcalib_data_t af_cali_dat;
     aecalib_data_t ae_cali_dat;
     awbcalib_data_t awb_cali_dat;

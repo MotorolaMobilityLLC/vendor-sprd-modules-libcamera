@@ -382,6 +382,16 @@ struct sensor_otp_optCenter_info {
     struct point B;
 };
 
+enum otp_vendor_type {
+    OTP_VENDOR_NONE = 0,        /*CAMERA NOT SOPPROT OTP*/
+    OTP_VENDOR_SINGLE,          /*ONE CAMERA SENSOR ONE OTP*/
+    OTP_VENDOR_SINGLE_CAM_DUAL, /*TWO CAMERA SENSOR AND ONE OTP,JUST FOR DUAL
+                                   CAMERA*/
+    OTP_VENDOR_DUAL_CAM_DUAL,   /*TWO CAMERA SENSOR AND TWO OTP,JUST FOR DUAL
+                                   CAMERA*/
+    OTP_VENDOR_MAX
+};
+
 struct sensor_single_otp_info {
     cmr_u8 program_flag;
     struct sensor_otp_module_info module_info;
@@ -400,7 +410,7 @@ struct sensor_single_otp_info {
 };
 
 struct sensor_dual_otp_info {
-    cmr_u8 dual_flag;
+    cmr_u8 dual_flag;/*for 3ddata calibration flag*/
     struct sensor_data_info data_3d;
     struct sensor_otp_iso_awb_info master_iso_awb_info;
     struct sensor_otp_lsc_info master_lsc_info;
@@ -420,6 +430,7 @@ struct sensor_dual_otp_info {
 
 struct sensor_otp_cust_info {
     struct sensor_data_info total_otp;
+    enum otp_vendor_type otp_vendor;
     struct sensor_single_otp_info single_otp;
     struct sensor_dual_otp_info dual_otp;
 };
