@@ -783,7 +783,7 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
     SENSOR_AVDD_1800MV, // iovdd
     SENSOR_AVDD_1500MV, // dvdd
     1,                  // skip frame num before preview
-    0,                  // skip frame num before capture
+    2,                  // skip frame num before capture
     6,                  // skip frame num for flash capture
     0,                  // skip frame num on mipi cap
     0,                  // deci frame num during preview
