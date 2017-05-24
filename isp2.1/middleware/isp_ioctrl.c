@@ -1717,16 +1717,16 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_HDR_START, &ae_hdr, NULL);
 	if (ae_hdr.hdr_enable) {
-		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_LNC);
-		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_CMC);
-		smart_ctl_block_disable(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+		smart_ctl_block_disable(cxt->smart_cxt.handle, ISP_SMART_LNC);
+		smart_ctl_block_disable(cxt->smart_cxt.handle, ISP_SMART_CMC);
+		smart_ctl_block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 1);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 	} else {
-		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_LNC);
-		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_CMC);
-		smart_ctl_block_enable_recover(cxt->awb_cxt.handle, ISP_SMART_GAMMA);
+		smart_ctl_block_enable_recover(cxt->smart_cxt.handle, ISP_SMART_LNC);
+		smart_ctl_block_enable_recover(cxt->smart_cxt.handle, ISP_SMART_CMC);
+		smart_ctl_block_enable_recover(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 		smart_ctl_NR_block_disable(cxt->smart_cxt.handle, 0);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
