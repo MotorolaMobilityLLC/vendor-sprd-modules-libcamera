@@ -85,13 +85,6 @@ enum initialization {
 	AE_PARAM_INIT
 };
 
-enum ae_flash_state {
-	AE_FLASH_STATE_BEFORE,
-	AE_FLASH_STATE_ACTIVE,
-	AE_FLASH_STATE_AFTER,
-	AE_FLASH_STATE_MAX,
-};
-
 struct flash_cali_data {
 	cmr_u16 ydata;		//1024
 	cmr_u16 rdata;		// base on gdata1024
@@ -2163,7 +2156,12 @@ static cmr_s32 _set_pause(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 ret = AE_SUCCESS;
 
-	cxt->cur_status.settings.lock_ae = AE_STATE_PAUSE;
+	cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+	if (0 == cxt->cur_status.settings.pause_cnt) {
+		cxt->cur_status.settings.exp_line = 0;
+		cxt->cur_status.settings.gain = 0;
+		cxt->cur_status.settings.manual_mode = -1;
+	}
 	cxt->cur_status.settings.pause_cnt++;
 	ISP_LOGV("PAUSE COUNT IS %d", cxt->cur_status.settings.pause_cnt);
 	return ret;
@@ -2175,6 +2173,8 @@ static cmr_s32 _set_restore_cnt(struct ae_ctrl_cxt *cxt)
 	if (2 > cxt->cur_status.settings.pause_cnt) {
 		cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 		cxt->cur_status.settings.pause_cnt = 0;
+		cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+		cxt->cur_status.settings.manual_mode = 0;
 	} else {
 		cxt->cur_status.settings.pause_cnt--;
 	}
@@ -2234,7 +2234,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	cmr_s32 rtn = AE_SUCCESS;
 	struct Flash_pfStartInput in;
 	struct Flash_pfStartOutput out;
-	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 	uint32_t blk_num = 0;
 
 	/*reset flash debug information*/
@@ -2264,18 +2264,18 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.bSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num;
 	rtn = flash_pfStart(cxt->flash_alg_handle, &in, &out);
 
-	cxt->cur_status.settings.manual_mode = 0;
-	cxt->cur_status.settings.table_idx = 0;
-	cxt->cur_status.settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
-	cxt->cur_status.settings.gain = out.nextGain;
+	current_status->settings.manual_mode = 0;
+	current_status->settings.table_idx = 0;
+	current_status->settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
+	current_status->settings.gain = out.nextGain;
 	cxt->pre_flash_level1 = out.preflahLevel1;
 	cxt->pre_flash_level2 = out.preflahLevel2;
 	ISP_LOGV("ae_flash pre_b: effect:exp_gain (%d, %d), preled_level(%d, %d), man(%d, %d)\n",\
 		current_status->effect_expline, current_status->effect_gain,\
-		out.preflahLevel1, out.preflahLevel2, cxt->cur_status.settings.exp_line, out.nextGain);
+		out.preflahLevel1, out.preflahLevel2, current_status->settings.exp_line, out.nextGain);
 
-	cxt->flash_last_exp_line = cxt->cur_status.settings.exp_line;
-	cxt->flash_last_gain = cxt->cur_status.settings.gain;
+	cxt->flash_last_exp_line = current_status->settings.exp_line;
+	cxt->flash_last_gain = current_status->settings.gain;
 
 	return rtn;
 }
@@ -2290,7 +2290,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	cmr_u32 blk_num = 0;
 	struct Flash_pfOneIterationInput *in = NULL;
 	struct Flash_pfOneIterationOutput out;
-	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 	memset((void*)&out, 0, sizeof(out));
 
 	if (1 == cxt->flash_esti_result.isEnd) {
@@ -2337,10 +2337,10 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 
 	flash_pfOneIteration(cxt->flash_alg_handle, in, &out);
 
-	cxt->cur_status.settings.manual_mode = 0;
-	cxt->cur_status.settings.table_idx = 0;
-	cxt->cur_status.settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
-	cxt->cur_status.settings.gain = out.nextGain;
+	current_status->settings.manual_mode = 0;
+	current_status->settings.table_idx = 0;
+	current_status->settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
+	current_status->settings.gain = out.nextGain;
 	cxt->flash_esti_result.isEnd = 0;
 	ISP_LOGV("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 
@@ -2352,7 +2352,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		cxt->flash_buf_len = out.debugSize;
 
 		ISP_LOGV("ae_flash esti: is end: %d, (%.f, %d, %d), (%d, %d), (%d, %d, %d)\n",\
-					out.isEnd, out.captureExposure, cxt->cur_status.settings.exp_line,\
+					out.isEnd, out.captureExposure, current_status->settings.exp_line,\
 					out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2,\
 					out.captureRGain, out.captureGGain, out.captureBGain);
 
@@ -2360,15 +2360,15 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		cxt->flash_esti_result = out;
 	}
 
-	cxt->flash_last_exp_line  = cxt->cur_status.settings.exp_line;
-	cxt->flash_last_gain =  cxt->cur_status.settings.gain;
+	cxt->flash_last_exp_line  = current_status->settings.exp_line;
+	cxt->flash_last_gain =  current_status->settings.gain;
 
 EXIT:
+	current_status->settings.manual_mode = 0;
+	current_status->settings.table_idx = 0;
+	current_status->settings.exp_line = cxt->flash_last_exp_line;
+	current_status->settings.gain = cxt->flash_last_gain;
 
-	cxt->cur_status.settings.manual_mode = 0;
-	cxt->cur_status.settings.table_idx = 0;
-	cxt->cur_status.settings.exp_line = cxt->flash_last_exp_line;
-	cxt->cur_status.settings.gain = cxt->flash_last_gain;
 	return rtn;
 }
 
@@ -2429,7 +2429,7 @@ out:
 static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
 	if (0 != cxt->flash_ver) {
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) ||
@@ -3429,8 +3429,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	char ae_exp[PROPERTY_VALUE_MAX];
 	char ae_gain[PROPERTY_VALUE_MAX];
 	struct ae_ctrl_cxt *cxt = NULL;
-	struct ae_alg_calc_param *current_status;
-	struct ae_alg_calc_result *current_result;
+	struct ae_alg_calc_param *current_status = NULL;
+	struct ae_alg_calc_result *current_result = NULL;
 	struct ae_alg_calc_param *alg_status_ptr = NULL;	//DEBUG
 	struct ae_misc_calc_in misc_calc_in = { 0 };
 	struct ae_misc_calc_out misc_calc_out = { 0 };
@@ -3454,9 +3454,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		_set_pause(cxt);
 	}
 
-	current_status = &cxt->sync_cur_status;
-	current_result = &cxt->sync_cur_result;
-
 	calc_in = (struct ae_calc_in *)param;
 	calc_out = (struct ae_calc_out *)result;
 
@@ -3472,7 +3469,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.effect_dummy  =cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.effect_gain = cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
 	
-	cxt->cur_result.face_lum = current_result->face_lum;	//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
 	cxt->sync_aem[3 * 1024 + 2] = cxt->cur_status.effect_dummy;
@@ -3493,11 +3489,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	//alg_status_ptr->ae_table = &cxt->cur_param->ae_table[alg_status_ptr->settings.flicker][AE_ISO_AUTO];
 	alg_status_ptr->ae_table->min_index = 0;	//AE table start index = 0
 #endif
-	// change settings related by EV
-	//alg_status_ptr->target_lum = _calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
-	//alg_status_ptr->target_lum_zone = cxt->stable_zone_ev[alg_status_ptr->settings.ev_index];
-	//alg_status_ptr->stride_config[0] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2];
-	//alg_status_ptr->stride_config[1] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2 + 1];
 	/*
 	   due to set_scene_mode just be called in ae_sprd_calculation,
 	   and the prv_status just save the normal scene status
@@ -3519,42 +3510,29 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			_printf_status_log(cxt, nx_mod, &cxt->cur_status);
 		}
 	}
-	memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
-	memcpy(&cxt->cur_result, current_result, sizeof(struct ae_alg_calc_result));
 	// END
 
 	rtn = _ae_pre_process(cxt);
+	_set_led(cxt);
+	ae_hdr_ctrl(cxt, param);
 
-	// ISP_LOGD("e_expline %d e_gain %d\r\n", current_status.effect_expline,
-	// current_status.effect_gain);
-	/* skip the first aem data (error data) */
+	current_status = &cxt->sync_cur_status;
+	current_result = &cxt->sync_cur_result;
+	memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
+	memcpy(&cxt->cur_result, current_result, sizeof(struct ae_alg_calc_result));	
+
 	if (current_status->ae_start_delay <= current_status->frame_id) {
 		misc_calc_in.sync_settings = current_status;
 		misc_calc_out.ae_output = &cxt->cur_result;
-		// ISP_LOGV("ae_flash_status calc %d",
-		// current_status.settings.flash);
-		// ISP_LOGV("fd_ae: updata_flag:%d ef %d",
-		// current_status->ae1_finfo.update_flag,
-		// current_status->ae1_finfo.enable_flag);
-
-		//4test
-		_set_led(cxt);
-		ae_hdr_ctrl(cxt, param);
-		//4test
-
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 		if (rtn) {
 			ISP_LOGE("fail to calc ae misc");
 			rtn = AE_ERROR;
 			goto ERROR_EXIT;
 		}
-
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
 		memset((cmr_handle) & cxt->cur_status.ae1_finfo.cur_info, 0, sizeof(cxt->cur_status.ae1_finfo.cur_info));
 
-		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
-		//ISP_LOGI("fps: %d, %d, %d", cxt->cur_result.wts.cur_exp_line, cxt->cur_result.wts.cur_again, cxt->cur_result.wts.cur_dummy);
-		make_isp_result(current_result, calc_out);
 		ISP_LOGV("idx4mx_flag:%d,tarLF:%d,tarLO:%d\n",calc_out->flag4idx,calc_out->target_lum,calc_out->target_lum_ori);
 		{
 			/*just for debug: reset the status */
@@ -3564,6 +3542,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		}
 		// wait-pause function
 		rtn = _ae_post_process(cxt);
+		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
+		make_isp_result(current_result, calc_out);
 
 	}
 
@@ -3586,7 +3566,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 /*display the AE running status*/
     if (1 == cxt->debug_enable) {
 	save_to_mlog_file(cxt, &misc_calc_out);
-	}
+    }
 /***********************************************************/
 	cxt->cur_status.frame_id++;
 	//ISP_LOGV("AE_V2_frame id = %d\r\n", cxt->cur_status.frame_id);
