@@ -50,6 +50,7 @@ ALTEK_LIB := libalAWBLib \
 ALTEK_FW := TBM_G2v1DDR.bin
 
 SPRD_LIB := libcamoem
+SPRD_LIB += libCamAlgo
 
 PRODUCT_PACKAGES += $(ALTEK_LIB)
 PRODUCT_PACKAGES += $(ALTEK_FW)
