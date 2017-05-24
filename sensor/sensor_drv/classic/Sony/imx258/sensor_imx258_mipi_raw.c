@@ -858,8 +858,8 @@ static uint32_t imx258_get_pdaf_info(SENSOR_HW_HANDLE handle,
     }
     pdaf_info->pd_pitch_x = 96;
     pdaf_info->pd_pitch_y = 130;
-    pdaf_info->pd_density_x = 32;
-    pdaf_info->pd_density_y = 32;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 16;
     pdaf_info->pd_block_num_x = 130;
     pdaf_info->pd_block_num_y = 96;
     pdaf_info->pd_pos_size = pd_pos_r_size;
