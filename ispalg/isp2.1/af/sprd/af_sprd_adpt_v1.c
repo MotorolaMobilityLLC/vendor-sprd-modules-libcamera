@@ -145,7 +145,7 @@ static void afm_setup(af_ctrl_t * af)
 	int mode = 1;
 	af->af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 	af->af_monitor_mode(af->caller, (void *)&mode);
-	af->af_monitor_iir_nr_mode(af->caller, (void *)&(af->af_iir_nr));
+	af->af_monitor_iir_nr_cfg(af->caller, (void *)&(af->af_iir_nr));
 	af->af_monitor_module_cfg(af->caller, (void *)&(af->af_enhanced_module));
 }
 
