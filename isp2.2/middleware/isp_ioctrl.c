@@ -1175,6 +1175,18 @@ static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_pt
 	return rtn;
 }
 
+static cmr_int _ispAfIOBypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 *bypass = (cmr_u32 *) param_ptr;
+	UNUSED(call_back);
+
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)bypass, NULL);
+
+	return rtn;
+}
+
 static cmr_int _ispAfIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -1337,6 +1349,13 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 		rtn = _isp_get_flash_cali_param(cxt->handle_pm, &flash_param_ptr);
 		if (ISP_SUCCESS == rtn) {
 			ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash_param_ptr->cur.auto_flash_thr, NULL);
+		}
+
+		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &input, &output);
+		if (ISP_SUCCESS == rtn && output.param_num) {
+			cmr_s32 bypass = 0;
+			bypass = output.param_data->user_data[0];
+			af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&bypass, NULL);
 		}
 	}
 	return rtn;
@@ -2172,6 +2191,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 
 	{ISP_CTRL_AF, _ispAfIOCtrl},
 	{ISP_CTRL_GET_FULLSCAN_INFO, _ispAfIOGetFullScanInfo},
+	{ISP_CTRL_SET_AF_BYPASS, _ispAfIOBypass},
 	{ISP_CTRL_BURST_NOTICE, _ispBurstIONotice},
 	{ISP_CTRL_SFT_READ, _ispSFTIORead},
 	{ISP_CTRL_SFT_WRITE, _ispSFTIOWrite},

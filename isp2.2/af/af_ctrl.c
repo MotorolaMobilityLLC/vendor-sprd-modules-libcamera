@@ -117,6 +117,9 @@ static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 	case AF_LOCKER_AE:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_LOCK, NULL, (void *)&ae_result);
 		break;
+	case AF_LOCKER_AE_CAF:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_CAF_LOCK, NULL, (void *)&ae_result);
+		break;
 	case AF_LOCKER_AWB:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AWB_LOCK, NULL, NULL);
 		break;
@@ -150,6 +153,9 @@ static cmr_s32 af_unlock_module(void *handle_af, cmr_int af_locker_type)
 	switch (af_locker_type) {
 	case AF_LOCKER_AE:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_UNLOCK, NULL, (void *)&ae_result);
+		break;
+	case AF_LOCKER_AE_CAF:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_CAF_UNLOCK, NULL, (void *)&ae_result);
 		break;
 	case AF_LOCKER_AWB:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AWB_UNLOCK, NULL, NULL);

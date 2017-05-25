@@ -101,6 +101,7 @@ extern "C" {
 
 	enum af_locker_type {
 		AF_LOCKER_AE,
+		AF_LOCKER_AE_CAF,
 		AF_LOCKER_AWB,
 		AF_LOCKER_LSC,
 		AF_LOCKER_NLM,
@@ -196,6 +197,17 @@ extern "C" {
 		cmr_u32 cur_lum;
 		cmr_u32 target_lum;
 		cmr_u32 is_stable;
+		cmr_u32 cur_index;
+		cmr_u32 cur_ev;
+		cmr_u32 cur_dummy;
+		cmr_u32 cur_dgain;
+		cmr_u32 cur_iso;
+		cmr_u32 flag;
+		float *ae_data;
+		cmr_s32 ae_data_size;
+		cmr_u32 target_lum_ori;
+		cmr_u32 flag4idx;
+		struct tg_ae_ctrl_alc_log log_ae;
 	};
 
 	struct afctrl_calc_in {

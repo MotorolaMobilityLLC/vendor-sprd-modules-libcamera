@@ -22,18 +22,13 @@
 
 #include "AFv1_Common.h"
 #include "AFv1_Interface.h"
-#include "AFv1_Tune.h"
+//#include "AFv1_Tune.h"
 
 #include "aft_interface.h"
 
 #define AF_SYS_VERSION "-20170511-01"
 #define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
 #define AF_WAIT_CAF_TIMEOUT 200000000;	//1s == (1000 * 1000 * 1000)ns
-
-#define BOKEH_BOUNDARY_RATIO 8	//based on 10
-#define BOKEH_SCAN_FROM 212	//limited in [0,1023]
-#define BOKEH_SCAN_TO 342	//limited in [0,1023]
-#define BOKEH_SCAN_STEP 7	//at least 20
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -49,7 +44,8 @@ enum afv1_err_type {
 enum _lock_block {
 	LOCK_AE = 0x01,
 	LOCK_LSC = 0x02,
-	LOCK_NLM = 0x04
+	LOCK_NLM = 0x04,
+	LOCK_AWB = 0x08,
 };
 
 enum af_state {
@@ -59,7 +55,8 @@ enum af_state {
 	STATE_CAF,
 	STATE_RECORD_CAF,
 	STATE_FAF,
-	STATE_FULLSCAN
+	STATE_FULLSCAN,
+	STATE_PICTURE,
 };
 
 static const char *state_string[] = {
@@ -69,7 +66,8 @@ static const char *state_string[] = {
 	"caf",
 	"record caf",
 	"faf",
-	"fullscan"
+	"fullscan",
+	"picture",
 };
 
 #define STATE_STRING(state)    state_string[state]
@@ -204,40 +202,15 @@ typedef struct _vcm_ops {
 	cmr_u32(*get_motor_pos) (void *handle, cmr_u16 * pos);
 } vcm_ops_t;
 
-typedef struct _prime_face_base_info {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-	cmr_u32 area;
-	cmr_u32 area_thr;
-	cmr_u32 diff_area_thr;
-	cmr_u32 diff_cx_thr;
-	cmr_u32 diff_cy_thr;
-	cmr_u16 converge_cnt_thr;
-	cmr_u16 converge_cnt;
-	cmr_u16 diff_trigger;
-	cmr_u8 face_is_enable;
-} prime_face_base_info_t;
-
 typedef struct _focus_stat {
 	cmr_u32 force_write;
 	cmr_u32 reg_param[10];
 } focus_stat_reg_t;
 
 typedef struct _af_fv_info {
-	uint64 af_fv0[10];	//[10]:10 ROI, sum of FV0
-	uint64 af_fv1[10];	//[10]:10 ROI, sum of FV1
+	cmr_u64 af_fv0[10];	//[10]:10 ROI, sum of FV0
+	cmr_u64 af_fv1[10];	//[10]:10 ROI, sum of FV1
 } af_fv;
-
-typedef struct _Bokeh_tuning_param {
-	cmr_u16 from_pos;
-	cmr_u16 to_pos;
-	cmr_u16 move_step;
-	cmr_u16 vcm_dac_up_bound;
-	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
-} Bokeh_tuning_param;
 
 typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 iir_level;
@@ -263,14 +236,12 @@ typedef struct _af_ctrl {
 	cmr_u64 takepic_timestamp;
 	cmr_u32 Y_sum_trigger;
 	cmr_u32 Y_sum_normalize;
-	uint64 fv_combine[T_TOTAL_FILTER_TYPE];
+	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
-	struct isp_face_area face_info;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
-	prime_face_base_info_t face_base;
 	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
@@ -295,7 +266,7 @@ typedef struct _af_ctrl {
 	focus_stat_reg_t stat_reg;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
-	cmr_u32 inited_af_req;
+	cmr_u32 force_trigger;
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
@@ -304,7 +275,6 @@ typedef struct _af_ctrl {
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
-	Bokeh_tuning_param bokeh_param;
 	afm_tuning_sharkl2 afm_tuning;
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
@@ -324,7 +294,7 @@ typedef struct _af_ctrl {
 
 typedef struct _test_mode_command {
 	char *command;
-	uint64 key;
+	cmr_u64 key;
 	void (*command_func) (af_ctrl_t * af, char *test_param);
 } test_mode_command_t;
 
