@@ -174,7 +174,7 @@ static int _dw9718s_drv_set_mode(cmr_handle sns_af_drv_handle)
 	{
 		cmd_len = 2;
 		cmd_val[0] = 0x01;
-		cmd_val[1] = 0x38;
+		cmd_val[1] = 0x39;
 		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			CMR_LOGE("cmd[0]:0x%x,cmd[1]:0x%x write failed",cmd_val[0],cmd_val[1]);
