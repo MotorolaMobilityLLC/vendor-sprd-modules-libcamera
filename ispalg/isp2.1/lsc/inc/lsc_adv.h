@@ -11,7 +11,9 @@
 #include "sensor_raw.h"
 #include <sys/types.h>
 #include <pthread.h>
-#include <utils/Log.h>
+#include <android/log.h>
+//#include <utils/Log.h>
+
 //#include "isp_com.h"
 #endif
 
@@ -32,6 +34,14 @@ extern "C" {
 **----------------------------------------------------------------------------*/
 #define LSC_ADV_DEBUG_STR       "[ALSC]: L %d, %s: "
 #define LSC_ADV_DEBUG_ARGS    __LINE__,__FUNCTION__
+/*
+#define LOG_TAG "[ALSC]"
+#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
+*/
 
 #define LSC_ADV_LOGE(format,...) ALOGE(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGW(format,...) ALOGW(LSC_ADV_DEBUG_STR, format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
@@ -337,6 +347,7 @@ struct lsc2_context {
 	cmr_u32 gain_height;
 	cmr_u32 gain_pattern;
 	cmr_u32 grid;
+	cmr_u32 dual_cam_id;
 
 	
 	cmr_u16 *lsc_tab_address[9];	  // log the using table address
@@ -369,7 +380,11 @@ struct lsc2_context {
 
 	// Copy the dst_gain address
 	cmr_u16 *dst_gain;
-	
+
+	// flag in ALSC LIB
+    cmr_u32 frame_count;
+    cmr_u32 alg_count;
+    cmr_u32 alg_quick_in;
 	// otp
 	cmr_u32 lsc_otp_table_flag; // 0 non-OTP, 1 OTP table
 	cmr_u32 lsc_otp_oc_flag;    // 0 no OTP data, 1 OTP data
@@ -460,6 +475,10 @@ struct lsc_adv_calc_param {
 	// not fount in isp_app.c
 	cmr_u32 pre_bv;
 	cmr_u32 pre_ct;
+
+	//for single and dual flash.
+	float captureFlashEnvRatio; //0-1, flash/ (flash+environment)
+	float captureFlash1ofALLRatio; //0-1,  flash1 / (flash1+flash2)
 };
 
 struct lsc_adv_calc_result {
