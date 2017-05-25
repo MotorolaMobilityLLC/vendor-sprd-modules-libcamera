@@ -60,8 +60,3 @@ PRODUCT_PACKAGES += $(SPRD_LIB)
 # AL3200_FW
 PRODUCT_PACKAGES += miniBoot.bin \
 	TBM_D2.bin
-PRODUCT_PACKAGES += libimagestitcher
-PRODUCT_PACKAGES += libdepthengine
-PRODUCT_PACKAGES += libbokeh_gaussian
-PRODUCT_PACKAGES += libbokeh_gaussian_cap
-PRODUCT_PACKAGES += libBokeh2Frames
