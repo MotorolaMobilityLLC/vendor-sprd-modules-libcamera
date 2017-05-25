@@ -46,12 +46,12 @@ static cmr_int _ov13855_buffer_init(cmr_handle otp_drv_handle) {
         otp_cxt->otp_data_len = otp_len;
         lsccalib_data_t *lsc_data =
             &((otp_format_data_t *)otp_data)->lsc_cali_dat;
-        lsc_data->lsc_calib_golden.length = LSC_FORMAT_SIZE / 2;
+        lsc_data->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
         lsc_data->lsc_calib_golden.offset = sizeof(lsccalib_data_t);
 
-        lsc_data->lsc_calib_random.length = LSC_FORMAT_SIZE / 2;
+        lsc_data->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
         lsc_data->lsc_calib_random.offset =
-            sizeof(lsccalib_data_t) + LSC_FORMAT_SIZE / 2;
+            sizeof(lsccalib_data_t) + lsc_data->lsc_calib_random.length;
     }
     otp_cxt->otp_data = (otp_format_data_t *)otp_data;
     OTP_LOGI("out");
@@ -334,7 +334,7 @@ static cmr_int ov13855_otp_drv_write(cmr_handle otp_drv_handle, void *p_data) {
         int i;
         for (i = 0; i < otp_write_data->num_bytes; i++) {
             hw_sensor_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               &otp_write_data->buffer[i], 2);
+                                &otp_write_data->buffer[i], 2);
         }
         OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);

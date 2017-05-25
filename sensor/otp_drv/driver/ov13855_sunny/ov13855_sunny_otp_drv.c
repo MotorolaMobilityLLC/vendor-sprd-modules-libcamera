@@ -46,12 +46,12 @@ static cmr_int _ov13855_sunny_buffer_init(cmr_handle otp_drv_handle) {
         otp_cxt->otp_data_len = otp_len;
         lsccalib_data_t *lsc_data =
             &((otp_format_data_t *)otp_data)->lsc_cali_dat;
-        lsc_data->lsc_calib_golden.length = LSC_FORMAT_SIZE / 2;
+        lsc_data->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
         lsc_data->lsc_calib_golden.offset = sizeof(lsccalib_data_t);
 
-        lsc_data->lsc_calib_random.length = LSC_FORMAT_SIZE / 2;
+        lsc_data->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
         lsc_data->lsc_calib_random.offset =
-            sizeof(lsccalib_data_t) + LSC_FORMAT_SIZE / 2;
+            sizeof(lsccalib_data_t) + lsc_data->lsc_calib_random.length;
     }
     otp_cxt->otp_data = (otp_format_data_t *)otp_data;
     OTP_LOGI("out");
@@ -189,6 +189,7 @@ static cmr_int _ov13855_sunny_parse_lsc_data(cmr_handle otp_drv_handle) {
         memcpy(rdm_dst, otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET,
                LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
         lsc_dst->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+
         /*gold data*/
         memcpy(gld_dst, golden_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
         lsc_dst->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
