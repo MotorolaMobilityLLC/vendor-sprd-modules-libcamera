@@ -18,8 +18,8 @@
 #define _ISP_AF_H_
 
 #include "isp_common_types.h"
-#include "isp_pm.h"
 
+#include "isp_pm.h"
 
 #ifdef WIN32
 #include "sci_type.h"
@@ -102,6 +102,7 @@ extern "C" {
 
 	enum af_locker_type {
 		AF_LOCKER_AE,
+		AF_LOCKER_AE_CAF,
 		AF_LOCKER_AWB,
 		AF_LOCKER_LSC,
 		AF_LOCKER_NLM,
@@ -179,12 +180,17 @@ extern "C" {
 		 cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
 		 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
 		 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
-		 uint32_t(*af_lens_move)(void *handle, cmr_u16 pos);
-		 uint32_t(*af_get_otp)(void *handle, uint16_t *inf, uint16_t *macro);
- 		 uint32_t(*af_get_motor_pos)(void *handle, cmr_u16 * motor_pos);
- 		 uint32_t(*af_set_motor_bestmode)(void *handle);
- 		 uint32_t(*af_get_test_vcm_mode)(void *handle);
- 		 uint32_t(*af_set_test_vcm_mode)(void *handle, char *vcm_mode);
+		 uint32_t(*af_lens_move) (void *handle, cmr_u16 pos);
+		 uint32_t(*af_get_otp) (void *handle, uint16_t * inf, uint16_t * macro);
+		 uint32_t(*af_get_motor_pos) (void *handle, cmr_u16 * motor_pos);
+		 uint32_t(*af_set_motor_bestmode) (void *handle);
+		 uint32_t(*af_get_test_vcm_mode) (void *handle);
+		 uint32_t(*af_set_test_vcm_mode) (void *handle, char *vcm_mode);
+		 cmr_s32(*af_monitor_bypass) (void *handle, cmr_u32 * bypass);
+		 cmr_s32(*af_monitor_skip_num) (void *handle, cmr_u32 * afm_skip_num);
+		 cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
+		 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
+		 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
 	};
 
 	struct afctrl_init_out {
@@ -206,6 +212,17 @@ extern "C" {
 		cmr_u32 cur_lum;
 		cmr_u32 target_lum;
 		cmr_u32 is_stable;
+		cmr_u32 cur_index;
+		cmr_u32 cur_ev;
+		cmr_u32 cur_dummy;
+		cmr_u32 cur_dgain;
+		cmr_u32 cur_iso;
+		cmr_u32 flag;
+		float *ae_data;
+		cmr_s32 ae_data_size;
+		cmr_u32 target_lum_ori;
+		cmr_u32 flag4idx;
+		struct tg_ae_ctrl_alc_log log_ae;
 	};
 
 	struct afctrl_calc_in {

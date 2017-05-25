@@ -54,13 +54,14 @@
 #ifdef ANDROID
 #include <jni.h>
 #include <android/log.h>
+#include <sys/system_properties.h>
 #endif
 //#include "AFv1_Type.h"
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.113"
-#define SUB_VERSION             "-F-02"
+#define VERSION             "2.115"
+#define SUB_VERSION             "-B-01"
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -102,10 +103,31 @@
 #define AE_GAIN_32x 5
 #define AE_GAIN_TOTAL 6
 
+#define BOKEH_BOUNDARY_RATIO 8	//based on 10
+#define BOKEH_SCAN_FROM 212	//limited in [0,1023]
+#define BOKEH_SCAN_TO 342	//limited in [0,1023]
+#define BOKEH_SCAN_STEP 12	//at least 20
+
 typedef struct _af_tuning_block_param {
 	cmr_u8 *data;
 	cmr_u32 data_len;
 } af_tuning_block_param;
+
+typedef struct _Bokeh_Result {
+	cmr_u8 row_num;		/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
+	cmr_u8 column_num;	/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
+	cmr_u32 win_peak_pos_num;
+	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
+	cmr_u16 vcm_dac_up_bound;
+	cmr_u16 vcm_dac_low_bound;
+	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
+	cmr_u32 af_peak_pos;
+	cmr_u32 near_peak_pos;
+	cmr_u32 far_peak_pos;
+	cmr_u32 distance_reminder;
+	cmr_u32 reserved[16];
+} Bokeh_Result;
+
 typedef enum _eAF_FILTER_TYPE {
 	T_SOBEL9 = 0,
 	T_SOBEL5,
@@ -150,6 +172,7 @@ typedef enum _eAF_Triger_Type {
 	R_FAST,			//Fast Rough search for AFT
 	F_FAST,			//Fast Fine search for AFT
 	DEFOCUS,
+	BOKEH,
 } eAF_Triger_Type;
 
 typedef enum _eSAF_Status {
@@ -271,18 +294,26 @@ enum {
 	SENSOR_Z_AXIS,
 	SENSOR_AXIS_TOTAL,
 };
+
+enum {
+	DISTANCE_10CM,
+	DISTANCE_20CM,
+	DISTANCE_30CM,
+	DISTANCE_40CM,
+	DISTANCE_50CM,
+	DISTANCE_60CM,
+	DISTANCE_70CM,
+	DISTANCE_80CM,
+	DISTANCE_90CM,
+	DISTANCE_120CM,
+	DISTANCE_200CM,
+	DISTANCE_500CM,
+	DISTANCE_MAP_TOTAL,
+};
 //=========================================================================================//
 // Public Structure Instance
 //=========================================================================================//
 //#pragma pack(push, 1)
-typedef struct _Bokeh_Result {
-	cmr_u32 af_peak_pos;
-	cmr_u32 near_peak_pos;
-	cmr_u32 far_peak_pos;
-	cmr_u32 distance_reminder;
-	cmr_u32 win_peak_pos_num;
-	cmr_u32 *win_peak_pos;
-} Bokeh_Result;
 
 #pragma pack(push,4)
 typedef struct _AE_Report {
@@ -563,7 +594,7 @@ typedef struct _afscan_status_s {
 	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkidx[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkfrm[MULTI_STATIC_TOTAL];
-	cmr_u32 multi_pkscr[MULTI_STATIC_TOTAL];
+	cmr_s32 multi_pkscr[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pk_far;
 	cmr_u32 multi_pk_near;
 	cmr_u32 multi_same_focal;
@@ -730,9 +761,9 @@ typedef struct motion_sensor_data_s {
 
 typedef struct lens_distance_map_s {
 	cmr_u32 valid_code;
-	cmr_u32 steps_table[12];	//vcm step
-	cmr_u32 distance_table[12];	//distance by mm, 100/200/300/500/700/1000/1500/Inf
-	cmr_u32 reserved[12];
+	cmr_u32 steps_table[DISTANCE_MAP_TOTAL];	//vcm step
+	cmr_u32 distance_table[DISTANCE_MAP_TOTAL];	//distance by mm, 10/20/30/40/50/60/70/80/90/120/200/Inf
+	cmr_u32 reserved[DISTANCE_MAP_TOTAL];
 } lens_distance_map_t;
 
 typedef struct _filter_clip {
@@ -860,6 +891,8 @@ typedef struct _AF_Ctrl_Ops {
 	cmr_u8(*af_log) (const char *format, ...);
 	 cmr_u8(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
 	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
+	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
+	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	void *cookie;
 } AF_Ctrl_Ops;
 
@@ -880,6 +913,46 @@ typedef struct _AF_Win {
 
 } AF_Win;
 
+typedef struct _AF_face_info {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+	cmr_u32 reserved[4];
+} AF_face_info;
+
+typedef struct _AF_face_area {
+	cmr_u32 face_num;
+	AF_face_info face_info[10];
+	cmr_u32 reserved[4];
+} AF_face_area;
+
+typedef struct _prime_face_base_info {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+	cmr_u32 area;
+	cmr_u32 area_thr;
+	cmr_u32 diff_area_thr;
+	cmr_u32 diff_cx_thr;
+	cmr_u32 diff_cy_thr;
+	cmr_u32 converge_cnt_thr;
+	cmr_u32 percentage_base;
+	cmr_u32 converge_cnt;
+	cmr_u32 diff_trigger;
+	cmr_u32 face_is_enable;
+} prime_face_base_info_t;
+
+typedef struct _Bokeh_tuning_param {
+	cmr_u16 from_pos;
+	cmr_u16 to_pos;
+	cmr_u16 move_step;
+	cmr_u16 vcm_dac_up_bound;
+	cmr_u16 vcm_dac_low_bound;
+	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
+} Bokeh_tuning_param;
+
 typedef struct _AF_Data {
 	cmr_s8 AF_Version[40];
 	cmr_u32 AF_mode;
@@ -895,6 +968,12 @@ typedef struct _AF_Data {
 	_af_process_t af_proc_data;
 	motion_sensor_result_t sensor_result;
 	lens_distance_map_t dis_map;
+	Bokeh_tuning_param bokeh_param;
+	AF_face_area face_info;
+	prime_face_base_info_t face_base;
+	cmr_u32 hw_num;
+	cmr_u32 isp_w;
+	cmr_u32 isp_h;
 	cmr_u32 dump_log;
 	cmr_u32 hysteresis_step;
 	cmr_u32 cur_scene;

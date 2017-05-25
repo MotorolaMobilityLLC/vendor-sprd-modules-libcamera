@@ -18,7 +18,6 @@
 
 #include <utils/Timers.h>
 
-
 #include "AFv1_Common.h"
 #include "AFv1_Interface.h"
 //#include "AFv1_Tune.h"
@@ -28,11 +27,6 @@
 #define AF_SYS_VERSION "-20170511-01"
 #define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
 #define AF_WAIT_CAF_TIMEOUT 200000000;	//1s == (1000 * 1000 * 1000)ns
-
-#define BOKEH_BOUNDARY_RATIO 8	//based on 10
-#define BOKEH_SCAN_FROM 212	//limited in [0,1023]
-#define BOKEH_SCAN_TO 342	//limited in [0,1023]
-#define BOKEH_SCAN_STEP 7	//at least 20
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -59,7 +53,8 @@ enum af_state {
 	STATE_CAF,
 	STATE_RECORD_CAF,
 	STATE_FAF,
-	STATE_FULLSCAN
+	STATE_FULLSCAN,
+	STATE_PICTURE,
 };
 
 static const char *state_string[] = {
@@ -69,7 +64,8 @@ static const char *state_string[] = {
 	"caf",
 	"record caf",
 	"faf",
-	"fullscan"
+	"fullscan",
+	"picture",
 };
 
 #define STATE_STRING(state)    state_string[state]
@@ -195,31 +191,6 @@ typedef struct _ae_cali {
 	cmr_u32 b_avg_all;
 } ae_cali_t;
 
-typedef struct _vcm_ops {
-	cmr_u32(*set_pos) (void *handle, cmr_u16 pos);
-	cmr_u32(*get_otp) (void *handle, cmr_u16 * inf, cmr_u16 * macro);
-	cmr_u32(*set_motor_bestmode) (void *handle);
-	cmr_u32(*set_test_vcm_mode) (void *handle, char *vcm_mode);
-	cmr_u32(*get_test_vcm_mode) (void *handle);
-	cmr_u32(*get_motor_pos) (void *handle, cmr_u16 * pos);
-} vcm_ops_t;
-
-typedef struct _prime_face_base_info {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-	cmr_u32 area;
-	cmr_u32 area_thr;
-	cmr_u32 diff_area_thr;
-	cmr_u32 diff_cx_thr;
-	cmr_u32 diff_cy_thr;
-	cmr_u16 converge_cnt_thr;
-	cmr_u16 converge_cnt;
-	cmr_u16 diff_trigger;
-	cmr_u8 face_is_enable;
-} prime_face_base_info_t;
-
 typedef struct _focus_stat {
 	cmr_u32 force_write;
 	cmr_u32 reg_param[10];
@@ -230,15 +201,6 @@ typedef struct _af_fv_info {
 	cmr_u64 af_fv1[10];	//[10]:10 ROI, sum of FV1
 } af_fv;
 
-typedef struct _Bokeh_tuning_param {
-	cmr_u16 from_pos;
-	cmr_u16 to_pos;
-	cmr_u16 move_step;
-	cmr_u16 vcm_dac_up_bound;
-	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
-} Bokeh_tuning_param;
-
 typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 iir_level;
 	cmr_u8 nr_mode;
@@ -248,9 +210,7 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 dummy[3];	// 4 bytes align
 } afm_tuning_sharkl2;
 
-
 typedef struct _af_ctrl {
-	cmr_handle handle_pm;
 	void *af_alg_cxt;	//AF_Data fv;
 	cmr_u32 af_dump_info_len;
 	cmr_u32 state;		//enum af_state state;
@@ -267,12 +227,10 @@ typedef struct _af_ctrl {
 	cmr_u32 Y_sum_normalize;
 	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
-	struct isp_face_area face_info;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
-	prime_face_base_info_t face_base;
 	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
@@ -292,21 +250,20 @@ typedef struct _af_ctrl {
 	void *trig_lib;
 	caf_trigger_ops_t trig_ops;
 	ae_cali_t ae_cali_data;
-	vcm_ops_t vcm_ops;
 	cmr_u32 vcm_stable;
 	focus_stat_reg_t stat_reg;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
-	cmr_u32 inited_af_req;
+	cmr_u32 force_trigger;
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
 	pthread_mutex_t status_lock;
 	cmr_handle caller;
+	cmr_handle handle_pm;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
-	Bokeh_tuning_param bokeh_param;
 	afm_tuning_sharkl2 afm_tuning;
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
@@ -322,13 +279,17 @@ typedef struct _af_ctrl {
 	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
 	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
 	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
-	 uint32_t(*af_lens_move)(void *handle, cmr_u16 pos);
-	 uint32_t(*af_get_motor_pos)(void *handle, cmr_u16 * motor_pos);
-	 uint32_t(*af_get_otp)(void *handle, uint16_t *inf, uint16_t *macro);
-        uint32_t(*af_set_motor_bestmode)(void *handle);
-	 uint32_t(*af_get_test_vcm_mode)(void *handle);
-	 uint32_t(*af_set_test_vcm_mode)(void *handle, char *vcm_mode);
-
+	 cmr_u32(*af_lens_move) (void *handle, cmr_u16 pos);
+	 cmr_u32(*af_get_motor_pos) (void *handle, cmr_u16 * motor_pos);
+	 cmr_u32(*af_get_otp) (void *handle, uint16_t * inf, uint16_t * macro);
+	 cmr_u32(*af_set_motor_bestmode) (void *handle);
+	 cmr_u32(*af_get_test_vcm_mode) (void *handle);
+	 cmr_u32(*af_set_test_vcm_mode) (void *handle, char *vcm_mode);
+	 cmr_s32(*af_monitor_bypass) (void *handle, cmr_u32 * bypass);
+	 cmr_s32(*af_monitor_skip_num) (void *handle, cmr_u32 * afm_skip_num);
+	 cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
+	 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
+	 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

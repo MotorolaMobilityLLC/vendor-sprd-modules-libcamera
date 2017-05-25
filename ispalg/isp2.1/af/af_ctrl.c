@@ -83,7 +83,7 @@ static uint32_t af_lens_move(void *handle_af, cmr_u16 in_param)
 	return ISP_SUCCESS;
 }
 
-static uint32_t af_get_otp(void *handle_af, uint16_t *inf, uint16_t *macro)
+static uint32_t af_get_otp(void *handle_af, uint16_t * inf, uint16_t * macro)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
@@ -94,7 +94,7 @@ static uint32_t af_get_otp(void *handle_af, uint16_t *inf, uint16_t *macro)
 	return ISP_SUCCESS;
 }
 
-static uint32_t af_get_motor_pos(void *handle_af, cmr_u16* in_param)
+static uint32_t af_get_motor_pos(void *handle_af, cmr_u16 * in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
@@ -110,7 +110,7 @@ static uint32_t af_set_motor_bestmode(void *handle_af)
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_MOTOR_BESTMODE,  NULL,  NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_MOTOR_BESTMODE, NULL, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -121,7 +121,7 @@ static uint32_t af_set_vcm_test_mode(void *handle_af, char *vcm_mode)
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_VCM_TEST_MODE,  vcm_mode,  NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_VCM_TEST_MODE, vcm_mode, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -132,7 +132,7 @@ static uint32_t af_get_vcm_test_mode(void *handle_af)
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_GET_VCM_TEST_MODE,  NULL,  NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_GET_VCM_TEST_MODE, NULL, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -183,6 +183,9 @@ static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 	case AF_LOCKER_AE:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_LOCK, NULL, (void *)&ae_result);
 		break;
+	case AF_LOCKER_AE_CAF:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_CAF_LOCK, NULL, (void *)&ae_result);
+		break;
 	case AF_LOCKER_AWB:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AWB_LOCK, NULL, NULL);
 		break;
@@ -216,6 +219,9 @@ static cmr_s32 af_unlock_module(void *handle_af, cmr_int af_locker_type)
 	switch (af_locker_type) {
 	case AF_LOCKER_AE:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_UNLOCK, NULL, (void *)&ae_result);
+		break;
+	case AF_LOCKER_AE_CAF:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_CAF_UNLOCK, NULL, (void *)&ae_result);
 		break;
 	case AF_LOCKER_AWB:
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AWB_UNLOCK, NULL, NULL);
@@ -267,12 +273,67 @@ static cmr_s32 af_get_monitor_win_num(void *handle_af, cmr_u32 * win_num)
 	return ISP_SUCCESS;
 }
 
+static cmr_s32 af_monitor_bypass(void *handle_af, cmr_u32 * bypass)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_BYPASS, (void *)bypass, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_skip_num(void *handle_af, cmr_u32 * afm_skip_num)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_SKIP_NUM, (void *)afm_skip_num, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_mode(void *handle_af, cmr_u32 * afm_mode)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODE, (void *)afm_mode, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_iir_nr_cfg(void *handle_af, struct af_iir_nr_info *af_iir_nr)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_IIR_NR_CFG, (void *)af_iir_nr, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_module_cfg(void *handle_af, struct af_enhanced_module_info *af_enhanced_module)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AFM_MODULES_CFG, (void *)af_enhanced_module, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
 static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in *in_ptr, struct af_result_param *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
 	cmr_s8 value[PROPERTY_VALUE_MAX];
-	struct af_motor_pos pos = {0,0,0};
+	struct af_motor_pos pos = { 0, 0, 0 };
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param!");
@@ -460,6 +521,11 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->af_set_motor_bestmode = af_set_motor_bestmode;
 	input_ptr->af_set_test_vcm_mode = af_set_vcm_test_mode;
 	input_ptr->af_get_test_vcm_mode = af_get_vcm_test_mode;
+	input_ptr->af_monitor_bypass = af_monitor_bypass;
+	input_ptr->af_monitor_skip_num = af_monitor_skip_num;
+	input_ptr->af_monitor_mode = af_monitor_mode;
+	input_ptr->af_monitor_iir_nr_cfg = af_monitor_iir_nr_cfg;
+	input_ptr->af_monitor_module_cfg = af_monitor_module_cfg;
 
 	cxt_ptr = (struct afctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
