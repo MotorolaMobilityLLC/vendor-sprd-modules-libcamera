@@ -1285,9 +1285,10 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
 status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
     ATRACE_CALL();
 
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    return NO_ERROR;
-#endif
+    if (!SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
+        return NO_ERROR;
+    }
+
     HAL_LOGD("E");
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
@@ -1343,9 +1344,10 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
 status_t SprdCamera3OEMIf::cancelAutoFocus() {
     ATRACE_CALL();
 
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    return NO_ERROR;
-#endif
+    if (!SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
+        return NO_ERROR;
+    }
+
     bool ret = 0;
     HAL_LOGD("E");
 

@@ -2822,6 +2822,11 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle)
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sns_module_handle;
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
+    sensor_cxt->sensor_info_ptr->focus_eb = (module->af_dev_info.af_drv_entry != NULL);
+    SENSOR_LOGI("sensor %s is focus enable %d",
+             sensor_cxt->sensor_info_ptr->name,
+             sensor_cxt->sensor_info_ptr->focus_eb);
+
     if (module && module->af_dev_info.af_drv_entry && (!sensor_cxt->af_drv_handle)) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
         hw_sensor_set_monitor_val(sensor_cxt->hw_drv_handle,

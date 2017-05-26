@@ -554,6 +554,8 @@ typedef struct sensor_info_tag {
     /*sensor version info that will be used in isp module.*/
     const cmr_s8 *sensor_version_info;
 
+    /*sensor foucus enable info*/
+    cmr_u8 focus_eb;
 } SENSOR_INFO_T;
 
 struct sensor_ic_ad_gain{

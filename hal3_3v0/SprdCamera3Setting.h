@@ -448,7 +448,7 @@ class SprdCamera3Setting {
     SprdCamera3Setting(int cameraId);
     virtual ~SprdCamera3Setting();
 
-    static int getSensorSizeInfo(int32_t cameraId);
+    static int getSensorStaticInfo(int32_t cameraId);
     static int getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                     cmr_u16 *height);
     static int setLargestSensorSize(int32_t cameraId, cmr_u16 width,
@@ -607,6 +607,7 @@ class SprdCamera3Setting {
     camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
     static sprd_setting_info_t s_setting[CAMERA_ID_COUNT];
     static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];
+    static uint8_t mSensorFocusEnable[CAMERA_ID_COUNT];
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

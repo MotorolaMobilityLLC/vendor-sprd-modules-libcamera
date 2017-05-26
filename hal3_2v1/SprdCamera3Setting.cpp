@@ -42,6 +42,8 @@ using namespace android;
 
 namespace sprdcamera {
 
+uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0};
+
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
 #ifdef CONFIG_COVERED_SENSOR
@@ -237,14 +239,9 @@ const uint8_t avail_antibanding_modes[] = {
     ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO};
 
 const uint8_t availableAfModes[] = {
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    ANDROID_CONTROL_AF_MODE_OFF
-#else
     ANDROID_CONTROL_AF_MODE_OFF, ANDROID_CONTROL_AF_MODE_AUTO,
     ANDROID_CONTROL_AF_MODE_MACRO, ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE,
-    ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO
-#endif
-};
+    ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO};
 
 const uint8_t availableAfModesOfFront[] = {ANDROID_CONTROL_AF_MODE_OFF};
 
@@ -415,15 +412,10 @@ const int64_t kavailable_min_durations[1] = {
     33331760L,
 };
 
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-const int32_t kmax_regions[3] = {
-    1, 0, 0,
-};
-#else
 const int32_t kmax_regions[3] = {
     1, 0, 1,
 };
-#endif
+
 const int32_t kmax_front_regions[3] = {
     1, 0, 0,
 };
@@ -542,9 +534,7 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
     ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AF_MODE,
     ANDROID_CONTROL_AF_TRIGGER,
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    ANDROID_CONTROL_AF_REGIONS,
-#endif
+    //ANDROID_CONTROL_AF_REGIONS,
     ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_AWB_MODE,
     // ANDROID_CONTROL_AWB_REGIONS,
     ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE,
@@ -842,7 +832,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
     return 0;
 }
 
-int SprdCamera3Setting::getSensorSizeInfo(int32_t cameraId) {
+int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     struct sensor_drv_context *sensor_cxt =
         (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
     int ret = 0;
@@ -858,6 +848,12 @@ int SprdCamera3Setting::getSensorSizeInfo(int32_t cameraId) {
     HAL_LOGD("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
              cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_height_max,
              sensor_cxt->sensor_list_ptr[cameraId]->source_width_max);
+
+    mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
+    HAL_LOGD("camera id = %d, sensor name: %s, sensorFocusEnable = %d",
+             cameraId,
+             sensor_cxt->sensor_info_ptr->name,
+             mSensorFocusEnable[cameraId]);
 
     setLargestSensorSize(
         cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
@@ -1138,18 +1134,15 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     memcpy(camera3_default_info.common.availAntibandingModes,
            avail_antibanding_modes, sizeof(avail_antibanding_modes));
     memset(camera3_default_info.common.availableAfModes, 0, 6);
-    if (cameraId == 0) {
+
+    if (mSensorFocusEnable[cameraId]) {
         memcpy(camera3_default_info.common.availableAfModes, availableAfModes,
                sizeof(availableAfModes));
     } else {
-#ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
-        memcpy(camera3_default_info.common.availableAfModes, availableAfModes,
-               sizeof(availableAfModes));
-#else
         memcpy(camera3_default_info.common.availableAfModes,
                availableAfModesOfFront, sizeof(availableAfModesOfFront));
-#endif
     }
+
     memcpy(camera3_default_info.common.availableSlowMotion, availableSlowMotion,
            sizeof(availableSlowMotion));
     memcpy(camera3_default_info.common.avail_awb_modes, avail_awb_modes,
@@ -1227,13 +1220,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].edgeInfo.available_edge_modes,
            kavailable_edge_modes, sizeof(kavailable_edge_modes));
 
-// lens_info
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 0.0f;
-#else
-    s_setting[cameraId].lens_InfoInfo.mini_focus_distance =
-        cameraId ? 0.0f : 2.0f;
-#endif
+    // lens_info
+    if (!mSensorFocusEnable[cameraId]) {
+        s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 0.0f;
+    } else {
+        s_setting[cameraId].lens_InfoInfo.mini_focus_distance =
+            cameraId ? 0.0f : 2.0f;
+    }
+
     s_setting[cameraId].lens_InfoInfo.hyperfocal_distance = 2.0f;
     if (cameraId == 0) {
         s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
@@ -1452,17 +1446,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].controlInfo.available_video_stab_modes,
            camera3_default_info.common.availableVideoStabModes,
            sizeof(camera3_default_info.common.availableVideoStabModes));
-    if (cameraId == 0)
+    if (mSensorFocusEnable[cameraId]) {
         memcpy(s_setting[cameraId].controlInfo.max_regions, kmax_regions,
                sizeof(kmax_regions));
-    else {
-#ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
-        memcpy(s_setting[cameraId].controlInfo.max_regions, kmax_regions,
-               sizeof(kmax_regions));
-#else
+    } else {
         memcpy(s_setting[cameraId].controlInfo.max_regions, kmax_front_regions,
                sizeof(kmax_regions));
-#endif
     }
 
     {
@@ -1559,13 +1548,34 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].requestInfo.available_characteristics_keys,
            kavailable_characteristics_keys,
            sizeof(kavailable_characteristics_keys));
-    if (!cameraId)
+    if (!cameraId) {
         memcpy(s_setting[cameraId].requestInfo.available_request_keys,
                kavailable_request_keys, sizeof(kavailable_request_keys));
-    else
+        if (mSensorFocusEnable[cameraId]) {
+            int length = ARRAY_SIZE(kavailable_request_keys);
+            int maxIndex = ARRAY_SIZE(s_setting[cameraId].requestInfo.available_request_keys);
+            if (length < maxIndex) {
+                s_setting[cameraId].requestInfo.available_request_keys[length] =
+                    ANDROID_CONTROL_AF_REGIONS;
+            } else {
+                HAL_LOGE("camera id %d available_request_keys out of size", cameraId);
+            }
+        }
+    } else {
         memcpy(s_setting[cameraId].requestInfo.available_request_keys,
                front_kavailable_request_keys,
                sizeof(front_kavailable_request_keys));
+        if (mSensorFocusEnable[cameraId]) {
+            int length = ARRAY_SIZE(front_kavailable_request_keys);
+            int maxIndex = ARRAY_SIZE(s_setting[cameraId].requestInfo.available_request_keys);
+            if (length < maxIndex) {
+                s_setting[cameraId].requestInfo.available_request_keys[length] =
+                    ANDROID_CONTROL_AF_REGIONS;
+            } else {
+                HAL_LOGE("camera id %d available_request_keys out of size", cameraId);
+            }
+        }
+    }
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
     memcpy(s_setting[cameraId].requestInfo.available_capabilites,
@@ -3651,57 +3661,57 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
     }
 
-// Before start af, need set af region
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
-        int32_t crop_area[5] = {0};
-        int32_t af_area[5] = {0};
-        size_t i = 0, cnt = 0;
-        uint8_t af_triger = 0;
-        int ret = 0;
+    // Before start af, need set af region
+    if (mSensorFocusEnable[mCameraId]) {
+        if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
+            int32_t crop_area[5] = {0};
+            int32_t af_area[5] = {0};
+            size_t i = 0, cnt = 0;
+            uint8_t af_triger = 0;
+            int ret = 0;
 
-        if (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count == 5) {
-            for (i = 0; i < 5; i++)
-                af_area[i] =
-                    frame_settings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[i];
+            if (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count == 5) {
+                for (i = 0; i < 5; i++)
+                    af_area[i] =
+                        frame_settings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[i];
 
-            if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
-                cnt = frame_settings.find(ANDROID_SCALER_CROP_REGION).count;
-                if (cnt > 5) {
-                    cnt = 5;
-                }
-                for (i = 0; i < cnt; i++)
-                    crop_area[i] =
-                        frame_settings.find(ANDROID_SCALER_CROP_REGION)
-                            .data.i32[i];
+                if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
+                    cnt = frame_settings.find(ANDROID_SCALER_CROP_REGION).count;
+                    if (cnt > 5) {
+                        cnt = 5;
+                    }
+                    for (i = 0; i < cnt; i++)
+                        crop_area[i] =
+                            frame_settings.find(ANDROID_SCALER_CROP_REGION)
+                                .data.i32[i];
 
-                crop_area[2] = crop_area[2] + crop_area[0];
-                crop_area[3] = crop_area[3] + crop_area[1];
-            }
-
-            ret = checkROIValid(af_area, crop_area);
-            if (ret) {
-                HAL_LOGE("ae region invalid");
-            } else {
-                af_area[2] = af_area[2] - af_area[0];
-                af_area[3] = af_area[3] - af_area[1];
-
-                if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
-                    af_triger = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER)
-                                    .data.u8[0];
+                    crop_area[2] = crop_area[2] + crop_area[0];
+                    crop_area[3] = crop_area[3] + crop_area[1];
                 }
 
-                if (af_triger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
-                    HAL_LOGD("cancel auto focus dont set af region");
+                ret = checkROIValid(af_area, crop_area);
+                if (ret) {
+                    HAL_LOGE("ae region invalid");
                 } else {
-                    for (i = 0; i < 5; i++)
-                        s_setting[mCameraId].controlInfo.af_regions[i] =
-                            af_area[i];
+                    af_area[2] = af_area[2] - af_area[0];
+                    af_area[3] = af_area[3] - af_area[1];
+
+                    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                        af_triger = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER)
+                                        .data.u8[0];
+                    }
+
+                    if (af_triger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
+                        HAL_LOGD("cancel auto focus dont set af region");
+                    } else {
+                        for (i = 0; i < 5; i++)
+                            s_setting[mCameraId].controlInfo.af_regions[i] =
+                                af_area[i];
+                    }
                 }
             }
         }
     }
-#endif
 
     // AF_CONTROL
     if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
@@ -3922,22 +3932,23 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     //			s_setting[mCameraId].scalerInfo.crop_region[2],s_setting[mCameraId].scalerInfo.crop_region[3]);
 
     {
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        if (maxRegionsAf > 0) {
-            area[0] = s_setting[mCameraId]
-                          .metaInfo.af_regions[0]; // for cts testAfRegions
-            area[1] = s_setting[mCameraId].metaInfo.af_regions[1];
-            area[2] = s_setting[mCameraId].metaInfo.af_regions[2];
-            area[3] = s_setting[mCameraId].metaInfo.af_regions[3];
-            area[4] = s_setting[mCameraId].metaInfo.af_regions[4];
-            area[2] += area[0];
-            area[3] += area[1];
-            HAL_LOGV("AF_REGIONS, area %d %d %d %d %d", area[0], area[1],
-                     area[2], area[3], area[4]);
-            if (mCameraId == 0)
-                camMetadata.update(ANDROID_CONTROL_AF_REGIONS, area, 5);
+        if (mSensorFocusEnable[mCameraId]) {
+            if (maxRegionsAf > 0) {
+                area[0] = s_setting[mCameraId]
+                              .metaInfo.af_regions[0]; // for cts testAfRegions
+                area[1] = s_setting[mCameraId].metaInfo.af_regions[1];
+                area[2] = s_setting[mCameraId].metaInfo.af_regions[2];
+                area[3] = s_setting[mCameraId].metaInfo.af_regions[3];
+                area[4] = s_setting[mCameraId].metaInfo.af_regions[4];
+                area[2] += area[0];
+                area[3] += area[1];
+                HAL_LOGV("AF_REGIONS, area %d %d %d %d %d", area[0], area[1],
+                         area[2], area[3], area[4]);
+                if (mCameraId == 0)
+                    camMetadata.update(ANDROID_CONTROL_AF_REGIONS, area, 5);
+            }
         }
-#endif
+
         /* AeRegions */
         if (maxRegionsAe > 0) {
             area[0] = s_setting[mCameraId]
@@ -4575,9 +4586,10 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
         break;
     }
 
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    *convertDrvMode = CAMERA_FOCUS_MODE_INFINITY;
-#endif
+    if (!mSensorFocusEnable[mCameraId]) {
+        *convertDrvMode = CAMERA_FOCUS_MODE_INFINITY;
+    }
+
     return ret;
 }
 

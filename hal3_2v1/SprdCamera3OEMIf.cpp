@@ -884,20 +884,20 @@ int SprdCamera3OEMIf::zslTakePicture() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    if (sprddefInfo.capture_mode == 1) {
-        HAL_LOGV("set focus af mode %d", CAMERA_FOCUS_MODE_PICTURE);
-        if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan()) {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
-                     CAMERA_FOCUS_MODE_FULLSCAN);
-        } else {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
-                     CAMERA_FOCUS_MODE_PICTURE);
+    if (SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
+        if (sprddefInfo.capture_mode == 1) {
+            HAL_LOGV("set focus af mode %d", CAMERA_FOCUS_MODE_PICTURE);
+            if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan()) {
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                         CAMERA_FOCUS_MODE_FULLSCAN);
+            } else {
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                         CAMERA_FOCUS_MODE_PICTURE);
+            }
+            /*after caf picture, set af mode again to isp*/
+            SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
         }
-        /*after caf picture, set af mode again to isp*/
-        SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
     }
-#endif
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (CMR_CAMERA_SUCCESS !=
@@ -1313,9 +1313,10 @@ int SprdCamera3OEMIf::autoFocusToFaceFocus() {
 status_t SprdCamera3OEMIf::autoFocus() {
     ATRACE_CALL();
 
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    return NO_ERROR;
-#endif
+    if (!SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
+        return NO_ERROR;
+    }
+
     HAL_LOGD("E");
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
@@ -1383,9 +1384,10 @@ status_t SprdCamera3OEMIf::autoFocus() {
 status_t SprdCamera3OEMIf::cancelAutoFocus() {
     ATRACE_CALL();
 
-#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    return NO_ERROR;
-#endif
+    if (!SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
+        return NO_ERROR;
+    }
+
     bool ret = 0;
     HAL_LOGD("E");
 

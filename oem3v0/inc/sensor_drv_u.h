@@ -608,6 +608,7 @@ typedef struct sensor_info_tag {
     cmr_u16 horizontal_view_angle;
     cmr_u16 vertical_view_angle;
     const cmr_s8 *sensor_version_info;
+    cmr_u8 focus_eb;
 } SENSOR_INFO_T;
 #endif
 
