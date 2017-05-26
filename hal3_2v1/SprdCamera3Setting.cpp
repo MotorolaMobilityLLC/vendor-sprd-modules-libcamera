@@ -3664,60 +3664,40 @@ int SprdCamera3Setting::updateWorkParameters(
             }
         }
     }
-    /*if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
-            int area[5 + 1] = {0};
-            if (frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count == 5)
-            {
-                    for (size_t i=0 ; i <
-    frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
-                            area[i] =
-    frame_settings.find(ANDROID_CONTROL_AE_REGIONS).data.i32[i];
-            }
-            for (size_t i=0; i <
-    frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
-                    s_setting[mCameraId].controlInfo.ae_regions[i] = area[i];
-            pushAndroidParaTag(ANDROID_CONTROL_AE_REGIONS);
-            HAL_LOGV("ANDROID_CONTROL_AE_REGIONS (%d %d %d %d %d
-    cnt=%d)",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
-    }*/
-    /*if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
-            int area[5 + 1] = {0};
-            if (frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).count == 5)
-            {
-                    for (size_t i=0 ; i <
-    frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).count; i++)
-                            area[i] =
-    frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).data.i32[i];
-            }
-            for (size_t i=0; i <
-    frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).count; i++)
-                    s_setting[mCameraId].controlInfo.awb_regions[i] = area[i];
-            pushAndroidParaTag(ANDROID_CONTROL_AWB_REGIONS);
-            HAL_LOGD("ANDROID_CONTROL_AWB_REGIONS (%d %d %d %d %d
-    cnt=%d)",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
-    }*/
+/*if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
+        int area[5 + 1] = {0};
+        if (frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count == 5)
+        {
+                for (size_t i=0 ; i <
+frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
+                        area[i] =
+frame_settings.find(ANDROID_CONTROL_AE_REGIONS).data.i32[i];
+        }
+        for (size_t i=0; i <
+frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
+                s_setting[mCameraId].controlInfo.ae_regions[i] = area[i];
+        pushAndroidParaTag(ANDROID_CONTROL_AE_REGIONS);
+        HAL_LOGV("ANDROID_CONTROL_AE_REGIONS (%d %d %d %d %d
+cnt=%d)",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
+}*/
+/*if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
+        int area[5 + 1] = {0};
+        if (frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).count == 5)
+        {
+                for (size_t i=0 ; i <
+frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).count; i++)
+                        area[i] =
+frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).data.i32[i];
+        }
+        for (size_t i=0; i <
+frame_settings.find(ANDROID_CONTROL_AWB_REGIONS).count; i++)
+                s_setting[mCameraId].controlInfo.awb_regions[i] = area[i];
+        pushAndroidParaTag(ANDROID_CONTROL_AWB_REGIONS);
+        HAL_LOGD("ANDROID_CONTROL_AWB_REGIONS (%d %d %d %d %d
+cnt=%d)",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
+}*/
 
-    // AF_CONTROL
-    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
-        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
-        s_setting[mCameraId].controlInfo.af_trigger = valueU8;
-        pushAndroidParaTag(ANDROID_CONTROL_AF_TRIGGER);
-    }
-    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER_ID)) {
-        s_setting[mCameraId].controlInfo.af_trigger_Id =
-            frame_settings.find(ANDROID_CONTROL_AF_TRIGGER_ID).data.i32[0];
-        pushAndroidParaTag(ANDROID_CONTROL_AF_TRIGGER_ID);
-    }
-    if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8,
-                         ANDROID_CONTROL_AF_MODE)
-    }
-    if (frame_settings.exists(ANDROID_CONTROL_AF_STATE)) {
-        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_STATE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_state, valueU8,
-                         ANDROID_CONTROL_AF_STATE)
-    }
+// Before start af, need set af region.
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
     if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS) &&
         frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
@@ -3786,28 +3766,52 @@ int SprdCamera3Setting::updateWorkParameters(
         }
     }
 /*if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
-        int area[5 + 1] = {0};
-        if (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count == 5)
-        {
-                //area[4] = 1;
-                for (size_t i=0 ; i <
+                int area[5 + 1] = {0};
+                if (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count == 5)
+                {
+                                //area[4] = 1;
+                                for (size_t i=0 ; i <
 (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count); i++)
-                        {
-                                area[i] =
+                                                {
+                                                                area[i] =
 frame_settings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[i];
-                        }
-        }
-        area[2] = area[2] - area[0];
-        area[3] = area[3] - area[1];
-        //if(area[0] || area[1] ||area[2] ||area[3])
-        for (size_t i=0; i <
+                                                }
+                }
+                area[2] = area[2] - area[0];
+                area[3] = area[3] - area[1];
+                //if(area[0] || area[1] ||area[2] ||area[3])
+                for (size_t i=0; i <
 frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count; i++)
-                s_setting[mCameraId].controlInfo.af_regions[i] = area[i];
-        pushAndroidParaTag(ANDROID_CONTROL_AF_REGIONS);
-        HAL_LOGD("AF region %d %d %d %d %d cnt
+                                s_setting[mCameraId].controlInfo.af_regions[i] =
+area[i];
+                pushAndroidParaTag(ANDROID_CONTROL_AF_REGIONS);
+                HAL_LOGD("AF region %d %d %d %d %d cnt
 %d",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
 }*/
 #endif
+
+    // AF_CONTROL
+    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
+        s_setting[mCameraId].controlInfo.af_trigger = valueU8;
+        pushAndroidParaTag(ANDROID_CONTROL_AF_TRIGGER);
+    }
+    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER_ID)) {
+        s_setting[mCameraId].controlInfo.af_trigger_Id =
+            frame_settings.find(ANDROID_CONTROL_AF_TRIGGER_ID).data.i32[0];
+        pushAndroidParaTag(ANDROID_CONTROL_AF_TRIGGER_ID);
+    }
+    if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8,
+                         ANDROID_CONTROL_AF_MODE)
+    }
+    if (frame_settings.exists(ANDROID_CONTROL_AF_STATE)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_STATE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_state, valueU8,
+                         ANDROID_CONTROL_AF_STATE)
+    }
+
     if (frame_settings.exists(ANDROID_STATISTICS_FACE_DETECT_MODE)) {
         valueU8 =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
