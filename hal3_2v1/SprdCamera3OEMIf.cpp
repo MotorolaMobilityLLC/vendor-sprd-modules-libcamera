@@ -2580,13 +2580,16 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
     } else {
         HAL_LOGD("camera hardware has been started already");
     }
-    if (!(mCameraId >= 2 &&
-          (getMultiCameraMode() == MODE_BLUR ||
-           getMultiCameraMode() == MODE_SELF_SHOT ||
-           getMultiCameraMode() == MODE_PAGE_TURN)))
+
+    if ((getMultiCameraMode() == MODE_BLUR ||
+         getMultiCameraMode() == MODE_SELF_SHOT ||
+         getMultiCameraMode() == MODE_PAGE_TURN) &&
+        mCameraId >= 2) {
+        HAL_LOGD("dont need ion memory for blur");
+    } else {
         mIommuEnabled = IommuIsEnabled();
-    HAL_LOGI("mIommuEnabled=%d mSprdRefocusEnabled %d", mIommuEnabled,
-             mSprdRefocusEnabled);
+    }
+    HAL_LOGI("mIommuEnabled=%d", mIommuEnabled);
 
     return true;
 }
