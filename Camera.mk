@@ -166,6 +166,11 @@ LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
+LOCAL_SRC_FILES+= \
+    hal3_$(ISP_HW_VER)/SprdCamera3AutotestMem.cpp
+endif
+
 endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format
