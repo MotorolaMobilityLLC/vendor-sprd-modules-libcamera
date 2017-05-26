@@ -780,7 +780,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 		if (gamma_info != NULL) {
 			cmr_s32 i;
 			for (i = 0; i < 256; i++) {
-				out_ptr->gamma[i] = (gamma_info->nodes[i].node_y + gamma_info->nodes[i + 1].node_y) / 2;
+				out_ptr->gamma[i] = (gamma_info->gamc_nodes.nodes_r[i].node_y + gamma_info->gamc_nodes.nodes_r[i + 1].node_y) / 2;
 			}
 		}
 	}

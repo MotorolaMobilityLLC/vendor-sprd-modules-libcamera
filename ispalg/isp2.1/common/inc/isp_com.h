@@ -712,9 +712,9 @@ struct isp_cmc10_param {
 
 struct isp_frgb_gamc_param {
 	struct isp_dev_gamma_info cur;
-	struct sensor_gamma_curve final_curve;
+	struct sensor_rgbgamma_curve final_curve;
 	struct isp_sample_point_info cur_idx;
-	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
+	struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];
 };
 
 struct isp_cce_param {

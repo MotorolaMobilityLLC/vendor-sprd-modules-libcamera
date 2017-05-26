@@ -930,9 +930,16 @@ struct sensor_cmc10_param {
 struct sensor_gamma_curve {
 	struct isp_point points[SENSOR_GAMMA_POINT_NUM];
 };
+
+struct sensor_rgbgamma_curve {
+	struct isp_point points_r[SENSOR_GAMMA_POINT_NUM];
+	struct isp_point points_g[SENSOR_GAMMA_POINT_NUM];
+	struct isp_point points_b[SENSOR_GAMMA_POINT_NUM];
+};
+
 struct sensor_frgb_gammac_param {
 	struct isp_sample_point_info cur_idx_info;
-	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
+	struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];
 
 };
 
