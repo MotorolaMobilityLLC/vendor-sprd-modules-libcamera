@@ -32,7 +32,8 @@
 #undef FEATURE_DL_OPEN
 
 #define PDLIB_PATH "libalPDAF.so"
-#define PDEXTRACT_LIBPATH "libalPDExtract.so"
+//#define PDEXTRACT_LIBPATH "libalPDExtract.so"
+#define PDEXTRACT_LIBPATH "libPDExtract.so"
 #define PDEXTRACT_TYPE2_LIBPATH "libalpdextract2.so"
 #define PD_REG_OUT_SIZE 352
 #define PD_OTP_PACK_SIZE 550
