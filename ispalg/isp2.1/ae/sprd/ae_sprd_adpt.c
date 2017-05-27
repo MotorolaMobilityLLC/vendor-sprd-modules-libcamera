@@ -1490,7 +1490,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cur_work_mode = AE_WORK_MODE_COMMON;
 		for (i = 0; i < init_param->param_num && i < AE_MAX_PARAM_NUM; ++i) {
 			rtn = _unpack_tunning_param(init_param->param[i].param, init_param->param[i].size, &cxt->tuning_param[i]);
-			memcpy(cxt->tuning_param[i].backup_ae_table, cxt->tuning_param[i].ae_table, sizeof(struct ae_exp_gain_table));
+			memcpy(&cxt->tuning_param[i].backup_ae_table[0][0], &cxt->tuning_param[i].ae_table[0][0], AE_FLICKER_NUM * AE_ISO_NUM *sizeof(struct ae_exp_gain_table));
 			//exposure_time2line(&(cxt->tuning_param[i]), init_param->resolution_info.line_time / SENSOR_LINETIME_BASE, cxt->tuning_param[i].ae_tbl_exp_mode);
 
 			for (j = 0; j < AE_SCENE_MAX; ++j) {
@@ -3243,7 +3243,10 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	else
 		mode = AE_WORK_MODE_COMMON;
 	
-	memcpy(cxt->tuning_param[mode].ae_table,cxt->tuning_param[mode].backup_ae_table, sizeof(struct ae_exp_gain_table));
+	memcpy(&cxt->tuning_param[mode].ae_table[0][0],\
+		&cxt->tuning_param[mode].backup_ae_table[0][0],\
+		AE_FLICKER_NUM * AE_ISO_NUM * sizeof(struct ae_exp_gain_table));
+
 	exposure_time2line(&(cxt->tuning_param[mode]), cxt->cur_status.line_time,	cxt->tuning_param[mode].ae_tbl_exp_mode);
 
 	for (cmr_s32 j = 0; j < AE_SCENE_MAX; ++j) {
