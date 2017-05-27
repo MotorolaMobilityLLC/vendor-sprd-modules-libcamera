@@ -1213,7 +1213,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		ISP_LOGI("bayer scaler wxh %dx%d\n", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight);
 	}
 
-	if (cxt->pdaf_supported)
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_supported)
 		scenario_in.tSensorInfo.cbc_enabled = 1;
 
 	ISP_LOGI("size %dx%d, line time %d frameRate %d", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight,
@@ -1223,11 +1223,14 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
 		return -1;
 	}
-	ret = isp_dev_load_cbc(cxt->isp_driver_handle);
-	if (0 != ret) {
-		ISP_LOGE("failed to load cbc");
-		return -1;
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_supported) {
+		ret = isp_dev_load_cbc(cxt->isp_driver_handle);
+		if (ret) {
+			ISP_LOGE("failed to load cbc");
+			return ret;
+		}
 	}
+
 	/*set still image buffer format*/
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
 
