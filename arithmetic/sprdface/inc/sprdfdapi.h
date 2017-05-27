@@ -67,6 +67,7 @@ typedef struct {
 typedef struct {
     unsigned int
         workMode; /* Work mode: FD_WORKMODE_STILL or FD_WORKMODE_MOVIE */
+    unsigned int threadNum; /* Number of CPU threads. (In [1, 4], default: 1) */
 
     /* options for both still mode and movie mode */
     unsigned int maxFaceNum; /* Maximum face number to detect. (In [1, 1024]) */
@@ -82,7 +83,7 @@ typedef struct {
                                       direction. (default: FD_ANGLE_RANGE_90) */
     unsigned int angleFullProfile; /* Full profile face: angle range for each
                                       direction. (default: FD_ANGLE_RANGE_90) */
-    unsigned int detectDensity;    /* Face detection density.(In [3, 10]); */
+    unsigned int detectDensity; /* Face detection density.(In [3, 10]); */
     unsigned int
         scoreThreshold; /* The threshold for confidence score. (In [0, 1000],
                            default:0)  */

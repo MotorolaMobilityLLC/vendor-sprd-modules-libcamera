@@ -718,7 +718,7 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     opt.angleHalfProfile = FD_ANGLE_RANGE_30;
     opt.angleFullProfile = FD_ANGLE_RANGE_30; // FD_ANGLE_NONE; for Bug 636739;
     opt.detectDensity = 5;
-    opt.scoreThreshold = 30;
+    opt.scoreThreshold = 0;
     opt.initFrames = 2;
     opt.detectFrames = 1;
     opt.detectInterval = 6;
