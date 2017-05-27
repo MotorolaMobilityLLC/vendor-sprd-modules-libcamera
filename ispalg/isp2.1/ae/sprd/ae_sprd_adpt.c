@@ -59,6 +59,7 @@
 const char AE_MAGIC_TAG[] = "ae_debug_info";
 
 struct ae_exposure_param {
+	cmr_u32 cur_index;
 	cmr_u32 line_time;
 	cmr_u32 exp_line;
 	cmr_u32 exp_time;
@@ -2925,14 +2926,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_result.wts.cur_exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 	cxt->cur_result.wts.exposure_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
 
-	memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
-	cxt->exp_data.lib_data.exp_line = cxt->cur_result.wts.cur_exp_line;
-	cxt->exp_data.lib_data.exp_time  = cxt->cur_result.wts.exposure_time;
-	cxt->exp_data.lib_data.dummy = cxt->cur_result.wts.cur_dummy;
-	cxt->exp_data.lib_data.gain = cxt->cur_result.wts.cur_again;
-	cxt->exp_data.lib_data.line_time  =  cxt->snr_info.line_time;
-	ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
-
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
 	property_get("persist.sys.isp.ae.manual", ae_property, "off");
 	//ISP_LOGV("persist.sys.isp.ae.manual: %s", ae_property);
@@ -3157,7 +3150,7 @@ static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	}
 	return;
 }
-
+struct ae_exposure_param s_bakup_exp_param[2] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
 static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 {
 	if (0 == cxt->sync_cur_result.wts.cur_exp_line && 0 == cxt->sync_cur_result.wts.cur_again) {
@@ -3166,6 +3159,7 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_exp_param.dummy = 0;
 		cxt->last_exp_param.gain = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
 		cxt->last_exp_param.line_time = cxt->cur_status.line_time;
+		cxt->last_exp_param.cur_index = cxt->cur_status.start_index;
 		cxt->last_index = cxt->cur_status.start_index;
 	} else {
 		cxt->last_exp_param.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
@@ -3173,9 +3167,11 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_exp_param.dummy = cxt->sync_cur_result.wts.cur_dummy;
 		cxt->last_exp_param.gain = cxt->sync_cur_result.wts.cur_again;
 		cxt->last_exp_param.line_time = cxt->cur_status.line_time;
+		cxt->last_exp_param.cur_index = cxt->sync_cur_result.wts.cur_index;
 		cxt->last_index = cxt->sync_cur_result.wts.cur_index;
 	}
 	cxt->last_enable = 1;
+	s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
 	ISP_LOGI("AE_VIDEO_STOP cam-id %d E %d G %d lt %d W %d H %d", cxt->camera_id , cxt->last_exp_param.exp_line,
 				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
@@ -3271,16 +3267,36 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			cxt->cur_result.wts.cur_again = cxt->last_exp_param.gain;
 			cxt->cur_result.wts.cur_dummy = cxt->last_exp_param.dummy;
 		}
-		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
-		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
-		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
-		cxt->sync_cur_result.wts.cur_index = cxt->last_index;
+		cxt->cur_result.wts.cur_index = cxt->last_index;
 	} else {
-		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
-		cxt->sync_cur_result.wts.cur_again = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
-		cxt->sync_cur_result.wts.cur_dummy = 0;
-		cxt->sync_cur_result.wts.cur_index  =cxt->cur_status.start_index;
+		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)\
+			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)\
+			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)) {
+			cxt->cur_result.wts.cur_exp_line = s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.line_time;
+			cxt->cur_result.wts.exposure_time = s_bakup_exp_param[cxt->camera_id].exp_time;
+			cxt->cur_result.wts.cur_again = s_bakup_exp_param[cxt->camera_id].gain;
+			cxt->cur_result.wts.cur_dgain = 0;
+			cxt->cur_result.wts.cur_dummy = 0;
+			cxt->cur_result.wts.cur_index  = s_bakup_exp_param[cxt->camera_id].cur_index;
+			cxt->cur_result.wts.stable = 0;	
+		} else {
+			cxt->cur_result.wts.cur_exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
+			cxt->cur_result.wts.exposure_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
+			cxt->cur_result.wts.cur_again = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
+			cxt->cur_result.wts.cur_dgain = 0;
+			cxt->cur_result.wts.cur_dummy = 0;
+			cxt->cur_result.wts.cur_index  =cxt->cur_status.start_index;
+			cxt->cur_result.wts.stable = 0;	
+		}
 	}
+
+	cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
+	cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
+	cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
+	cxt->sync_cur_result.wts.cur_dgain = cxt->cur_result.wts.cur_dgain;
+	cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
+	cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
+	cxt->sync_cur_result.wts.stable = cxt->cur_result.wts.stable;
 
 	/*update parameters to sensor*/
 	memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
