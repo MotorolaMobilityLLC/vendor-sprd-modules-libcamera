@@ -2028,15 +2028,6 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 1;
 
-// 9850ka set fps range (16,25) for normal DV preview and recording.
-#ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
-        property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false")) {
-            fps_param.min_fps = 16;
-            fps_param.max_fps = 25;
-        }
-#endif
-
         // when 3D video recording with face beautify, fix frame rate at 25fps.
         if (mSprdCameraLowpower) {
             fps_param.min_fps = fps_param.max_fps = 20;
