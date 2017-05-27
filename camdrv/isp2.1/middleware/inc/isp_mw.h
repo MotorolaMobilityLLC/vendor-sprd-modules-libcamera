@@ -804,8 +804,8 @@ struct isp_init_param {
 	cmr_s32 dcam_fd;
 };
 
-typedef cmr_uint(*isp_cb_of_malloc) (cmr_uint type, cmr_uint * size_ptr, cmr_uint * sum_ptr, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * mfd, void *private_data);
-typedef cmr_uint(*isp_cb_of_free) (cmr_uint type, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * fd, cmr_uint sum, void *private_data);
+typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint * size_ptr, cmr_uint * sum_ptr, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * mfd, void *private_data);
+typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * fd, cmr_uint sum, void *private_data);
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);

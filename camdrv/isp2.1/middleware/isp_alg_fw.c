@@ -3070,6 +3070,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	statis_mem_input.lsc_mfd = in_ptr->lsc_mfd;
 
 	rtn = isp_dev_statis_buf_malloc(cxt->dev_access_handle, &statis_mem_input);
+	ISP_RETURN_IF_FAIL(rtn, ("fail to malloc buf"));
 	interface_ptr_v1->data.work_mode = ISP_CONTINUE_MODE;
 	interface_ptr_v1->data.input = ISP_CAP_MODE;
 	interface_ptr_v1->data.input_format = in_ptr->format;
