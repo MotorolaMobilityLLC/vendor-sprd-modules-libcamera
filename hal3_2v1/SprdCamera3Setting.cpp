@@ -124,6 +124,7 @@ static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
 
 const sensor_fov_tab_t back_sensor_fov_tab[] = {
+    {"ov13855_mipi_raw", {4.815f, 3.6783f}, 3.95f},
     {"ov8825_mipi_raw", {4.614f, 3.444f}, 4.222f},
     {"ov5648_mipi_raw", {3.50f, 2.625f}, 3.75f},
     {"ov2680_mipi_raw", {3.50f, 2.625f}, 3.75f},
@@ -151,11 +152,12 @@ const sensor_fov_tab_t front_sensor_fov_tab[] = {
     {"sr030pc50_yuv", {3.50f, 2.625f}, 3.75f},
     {"ov5648_mipi_raw", {3.6736f, 2.7384f}, 2.481f},
     {"s5k4h8yx_mipi_raw", {3.656f, 2.742f}, 3.01f},
-    {"ov5675_mipi_raw", {2.903f, 2.177f}, 3.043},
+    {"ov5675_mipi_raw", {2.9457f, 2.214f}, 3.061f},
     {"", {3.50f, 2.625f}, 3.75f},
 };
 
 const sensor_fov_tab_t third_sensor_fov_tab[] = {
+    {"ov5675_dual_mipi_raw", {2.9457f, 2.214f}, 2.1011f},
     {"imx132_mipi_raw", {3.629f, 2.722f}, 3.486f},
     {"ov2680_mipi_raw", {2.84f, 2.15f}, 2.15f},
     {"", {3.50f, 2.625f}, 3.75f},
