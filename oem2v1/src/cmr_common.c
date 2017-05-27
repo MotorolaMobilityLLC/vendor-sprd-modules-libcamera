@@ -109,19 +109,25 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
                  src_trim_rect, dst_aspect_ratio, zoom_ratio);
         return -CMR_CAMERA_INVALID_PARAM;
     }
+
     if (src_trim_rect->width == 0 || src_trim_rect->height == 0) {
         CMR_LOGE("w %d h %d", src_trim_rect->width, src_trim_rect->height);
         return -CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGD("src_trim_rect %d %d %d %d, sn w/h %d %d, zoom_ratio %f, "
-             "dst_aspect_ratio %f",
-             src_trim_rect->start_x, src_trim_rect->start_y,
-             src_trim_rect->width, src_trim_rect->height, sensor_w, sensor_h,
-             zoom_ratio, dst_aspect_ratio);
-
     output_aspect_ratio = dst_aspect_ratio;
     sensor_aspect_ratio = (float)sensor_w / (float)sensor_h;
+
+    CMR_LOGD("src_trim_rect %d %d %d %d, sn w/h %d %d, zoom_ratio %f, "
+             "dst_aspect_ratio %f,sensor_aspect_ratio =%f",
+             src_trim_rect->start_x, src_trim_rect->start_y,
+             src_trim_rect->width, src_trim_rect->height, sensor_w, sensor_h,
+             zoom_ratio, dst_aspect_ratio,sensor_aspect_ratio);
+
+    sensor_w = CAMERA_ALIGNED_16(sensor_w);
+    sensor_h = CAMERA_ALIGNED_16(sensor_h);
+
+   CMR_LOGD("align sensor w,h  %d %d", sensor_w,sensor_h);
 
     if (rot != IMG_ANGLE_0 && rot != IMG_ANGLE_180) {
         output_aspect_ratio = 1 / output_aspect_ratio;
@@ -133,15 +139,22 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
         zoom_height = (float)sensor_h / zoom_ratio;
         zoom_width = zoom_height * output_aspect_ratio;
     }
+
     trim_width = (cmr_u32)zoom_width;
     trim_height = (cmr_u32)zoom_height;
+
+    if(trim_width  > src_trim_rect->width)
+        trim_width = src_trim_rect->width;
+
+   if(trim_height > src_trim_rect->height )
+        trim_height = src_trim_rect->height;
 
     src_trim_rect->start_x += (src_trim_rect->width - trim_width) >> 1;
     src_trim_rect->start_y += (src_trim_rect->height - trim_height) >> 1;
     src_trim_rect->start_x = CAMERA_START(src_trim_rect->start_x);
     src_trim_rect->start_y = CAMERA_START(src_trim_rect->start_y);
-    src_trim_rect->width = CAMERA_WIDTH(trim_width);
-    src_trim_rect->height = CAMERA_HEIGHT(trim_height);
+    src_trim_rect->width = CAMERA_START(trim_width);
+    src_trim_rect->height = CAMERA_START(trim_height);
 
     CMR_LOGD("output trim rect %d %d %d %d", src_trim_rect->start_x,
              src_trim_rect->start_y, src_trim_rect->width,
