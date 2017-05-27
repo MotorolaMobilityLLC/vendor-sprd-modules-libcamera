@@ -267,7 +267,7 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamdrv
+LOCAL_SHARED_LIBRARIES += libcamisp
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
@@ -421,7 +421,7 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamdrv
+LOCAL_SHARED_LIBRARIES += libcamisp
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
