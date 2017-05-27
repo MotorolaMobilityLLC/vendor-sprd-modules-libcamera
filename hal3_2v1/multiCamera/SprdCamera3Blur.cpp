@@ -91,6 +91,7 @@ SprdCamera3Blur::SprdCamera3Blur() {
     memset(&mLocalCapBuffer, 0, sizeof(new_mem_t) * BLUR_LOCAL_CAPBUFF_NUM);
     memset(&mSavedReqStreams, 0,
            sizeof(camera3_stream_t *) * BLUR_MAX_NUM_STREAMS);
+    memset(&fbLevels, 0, sizeof(face_beauty_levels));
 
     m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
     mStaticMetadata = NULL;
@@ -694,6 +695,7 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
     struct camera_frame_type cap_3d_frame;
     struct camera_frame_type *frame = NULL;
     int faceInfo[4];
+    FACE_Tag newFace;
     bzero(&cap_3d_frame, sizeof(struct camera_frame_type));
     frame = &cap_3d_frame;
     frame->y_vir_addr = (cmr_uint)private_handle->base;
@@ -708,7 +710,13 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
         mFaceInfo[2] * mCaptureInitParams.width / mPreviewInitParams.width;
     faceInfo[3] =
         mFaceInfo[3] * mCaptureInitParams.height / mPreviewInitParams.height;
-    mBlur->doFaceMakeup(frame, mBlur->mPerfectskinlevel, faceInfo);
+
+    newFace.face_num = SprdCamera3Setting::s_setting[mBlur->mCameraId].faceInfo.face_num;
+    newFace.face[0].rect[0] = faceInfo[0];
+    newFace.face[0].rect[1] = faceInfo[1];
+    newFace.face[0].rect[2] = faceInfo[2];
+    newFace.face[0].rect[3] = faceInfo[3];
+    mBlur->doFaceMakeup2(frame, mBlur->fbLevels, newFace, 0);//work mode 1 for preview, 0 for picture
 }
 #endif
 
@@ -1133,7 +1141,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             HAL_LOGD("mFlushing:%d, frame idx:%d", mBlur->mFlushing,
                      capture_msg.combo_buff.frame_number);
 #ifdef CONFIG_FACE_BEAUTY
-            if (mBlur->mPerfectskinlevel > 0 &&
+            if (mBlur->fbLevels.smoothLevel> 0 &&
                 mFaceInfo[2] - mFaceInfo[0] > 0 &&
                 mFaceInfo[3] - mFaceInfo[1] > 0) {
                 BlurFaceMakeup((struct private_handle_t *)*(
@@ -2893,9 +2901,9 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     }
     /* save Perfectskinlevel */
     if (metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
-        mPerfectskinlevel =
+        mBlur->fbLevels.smoothLevel =
             metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
-        HAL_LOGD("perfectskinlevel=%d", mPerfectskinlevel);
+        HAL_LOGD("smoothLevel=%d", mBlur->fbLevels.smoothLevel);
     }
     if (metaSettings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
         int32_t aeTargetFpsRange[2] = {25, 30};

@@ -598,14 +598,13 @@ hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
 
     return pushout;
 }
-
+/*
 #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int width,
                                              int height) {}
 
 void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
                                         int perfect_level, int *face_info) {
-
     // init the parameters table. save the value until the process is restart or
     // the device is restart.
     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
@@ -665,7 +664,7 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
     }
 }
 #endif
-
+*/
 bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
                                      uint16_t a_uwDstHeight,
                                      uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth,

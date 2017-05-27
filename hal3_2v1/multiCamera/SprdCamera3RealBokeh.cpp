@@ -1716,7 +1716,7 @@ void SprdCamera3RealBokeh::bokehFaceMakeup(private_handle_t *private_handle) {
     faceInfo[1] = mFaceInfo[1] * mCaptureWidth / mPreviewWidth;
     faceInfo[2] = mFaceInfo[2] * mCaptureWidth / mPreviewWidth;
     faceInfo[3] = mFaceInfo[3] * mCaptureWidth / mPreviewWidth;
-    mRealBokeh->doFaceMakeup(frame, mRealBokeh->mPerfectskinlevel, faceInfo);
+    //mRealBokeh->doFaceMakeup(frame, mRealBokeh->mPerfectskinlevel, faceInfo);
 }
 #endif
 

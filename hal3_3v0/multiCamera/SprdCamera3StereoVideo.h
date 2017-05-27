@@ -46,7 +46,7 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
-#include "ts_makeup_api.h"
+//#include "ts_makeup_api.h"
 
 namespace sprdcamera {
 

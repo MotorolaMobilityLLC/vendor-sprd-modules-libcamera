@@ -114,6 +114,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamisp
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
+       LOCAL_SHARED_LIBRARIES += libcamfb
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
 endif
@@ -144,18 +148,6 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
-else
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
-else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
-ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal_nv12
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal_nv21
-endif
-endif
-endif
 include $(BUILD_SHARED_LIBRARY)
 
 endif

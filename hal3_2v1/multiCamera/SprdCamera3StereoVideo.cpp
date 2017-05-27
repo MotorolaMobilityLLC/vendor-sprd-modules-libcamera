@@ -957,6 +957,7 @@ void SprdCamera3StereoVideo::ReProcessThread::
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
+/*
     private_handle_t *private_handle, int perfect_level, int *face_info) {
 
     // init the parameters table. save the value until the process is restart or
@@ -1010,7 +1011,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
         if (frame->width > 0 && frame->height > 0) {
             int ret_val =
                 ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
-                                 skinWhitenLevel, &Tsface, 0, yuvFormat);
+                                skinWhitenLevel, &Tsface, 0, yuvFormat);
             if (ret_val != TS_OK) {
                 HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
             } else {
@@ -1023,6 +1024,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
     } else {
         HAL_LOGD("Not detect face!");
     }
+    */
 }
 
 /*===========================================================================
@@ -1061,8 +1063,8 @@ int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(
     }
     private_handle_t *private_handle =
         (struct private_handle_t *)(*frame_buffer);
-    if (perfectskinlevel > 0)
-        video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+    //if (perfectskinlevel > 0)
+      //  video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
 
     return rc;
 }

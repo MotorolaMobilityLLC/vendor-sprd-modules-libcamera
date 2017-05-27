@@ -418,7 +418,7 @@ hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
 
     return pushout;
 }
-
+/*
 #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int width,
                                              int height) {}
@@ -485,7 +485,7 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
     }
 }
 #endif
-
+*/
 bool SprdCamera3MultiBase::DepthRotateCCW90(uint16_t *a_uwDstBuf,
                                             uint16_t *a_uwSrcBuf,
                                             uint16_t a_uwSrcWidth,

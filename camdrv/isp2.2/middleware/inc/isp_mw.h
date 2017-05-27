@@ -576,6 +576,7 @@ struct isp_face_info {
 	cmr_u32 ey;
 	cmr_u32 brightness;
 	cmr_s32 pose;
+	cmr_s32 angle;
 };
 
 struct isp_face_area {

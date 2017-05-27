@@ -56,9 +56,8 @@ extern "C" {
 #ifdef CONFIG_CAMERA_EIS
 #include "sprd_eis.h"
 #endif
-
 #ifdef CONFIG_FACE_BEAUTY
-#include "ts_makeup_api.h"
+#include "camera_face_beauty.h"
 #endif
 
 using namespace android;
@@ -771,17 +770,16 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFlashCaptureSkipNum;
     bool mFixedFpsEnabled;
 
-#ifdef CONFIG_FACE_BEAUTY
-    uint32_t mSkinWhitenNotDetectFDNum;
-    bool isNeedBeautify;
-    TSRect mSkinWhitenTsface;
-#endif
     int mTempStates;
     int mIsTempChanged;
     int mSprdCameraLowpower;
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
+#ifdef CONFIG_FACE_BEAUTY
+    struct class_fb face_beauty;
+#endif
+
 };
 
 }; // namespace sprdcamera

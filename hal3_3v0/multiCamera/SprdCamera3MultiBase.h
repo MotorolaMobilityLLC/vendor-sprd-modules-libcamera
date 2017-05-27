@@ -51,7 +51,7 @@
 #include <ui/GraphicBuffer.h>
 #include <ui/GraphicBufferAllocator.h>
 #include "../SprdCamera3HWI.h"
-#include "ts_makeup_api.h"
+//#include "ts_makeup_api.h"
 #include "SprdMultiCam3Common.h"
 
 namespace sprdcamera {
@@ -79,13 +79,13 @@ class SprdCamera3MultiBase {
     virtual void dumpImg(void *addr, int size, int frameId, int flag);
     virtual void dumpFps();
     virtual int initialize(const camera3_callback_ops_t *callback_ops);
-#ifdef CONFIG_FACE_BEAUTY
+/*#ifdef CONFIG_FACE_BEAUTY
     virtual void doFaceMakeup(struct camera_frame_type *frame,
                               int perfect_level, int *face_info);
     virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                    int height);
 
-#endif
+#endif */
     bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                           uint32_t a_udFileSize);

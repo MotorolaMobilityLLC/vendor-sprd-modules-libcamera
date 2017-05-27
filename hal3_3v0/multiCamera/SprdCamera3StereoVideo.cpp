@@ -962,6 +962,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
 
     // init the parameters table. save the value until the process is restart or
     // the device is restart.
+    /*
     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
     int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
     struct camera_frame_type video_3d_frame;
@@ -1024,6 +1025,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
     } else {
         HAL_LOGD("Not detect face!");
     }
+	*/
 }
 
 /*===========================================================================
@@ -1062,8 +1064,8 @@ int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(
     }
     private_handle_t *private_handle =
         (struct private_handle_t *)(*frame_buffer);
-    if (perfectskinlevel > 0)
-        video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+    //if (perfectskinlevel > 0)
+        //video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
 
     return rc;
 }

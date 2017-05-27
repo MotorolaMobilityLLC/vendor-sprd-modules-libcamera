@@ -46,8 +46,10 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
-#include "ts_makeup_api.h"
+//#include "ts_makeup_api.h"
 #include "SprdCamera3MultiBase.h"
+#include "../SprdCamera3Setting.h"
+#include "SprdCamera3FaceBeautyBase.h"
 
 namespace sprdcamera {
 
@@ -231,7 +233,7 @@ typedef struct {
     void *mHandle;
 } BlurAPI2_t;
 
-class SprdCamera3Blur : SprdCamera3MultiBase {
+class SprdCamera3Blur : SprdCamera3MultiBase , SprdCamera3FaceBeautyBase{
   public:
     static void getCameraBlur(SprdCamera3Blur **pBlur);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -281,6 +283,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
     int mCoverValue;
+    face_beauty_levels fbLevels;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int blur_camera_id, struct camera_info *info);

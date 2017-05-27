@@ -918,6 +918,7 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup(
     private_handle_t *private_handle, int perfect_level, int *face_info) {
     // init the parameters table. save the value until the process is restart or
     // the device is restart.
+    /*
     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
     int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
     struct camera_frame_type cap_3d_frame;
@@ -980,6 +981,7 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup(
     } else {
         HAL_LOGD("Not detect face!");
     }
+    */
 }
 
 /*===========================================================================

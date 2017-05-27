@@ -10962,6 +10962,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         frame_type.face_info[i].brightness =
             cb_param->face_area.range[i].brightness;
         frame_type.face_info[i].angle = cb_param->face_area.range[i].angle;
+        frame_type.face_info[i].pose       = cb_param->face_area.range[i].pose;
         frame_type.face_info[i].smile_level =
             cb_param->face_area.range[i].smile_level;
         frame_type.face_info[i].blink_level =

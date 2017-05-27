@@ -165,7 +165,6 @@ struct snapshot_md_ops {
                                struct sensor_exp_info *exp_info_ptr);
     cmr_int (*get_tuning_info)(cmr_handle oem_handle,
                                struct isp_adgain_exp_info *adgain_exp_info_ptr);
-    void (*face_makeup)(cmr_handle oem_handle, struct img_frm *src);
     cmr_int (*get_jpeg_param_info)(cmr_handle oem_handle,
                                    struct jpeg_param *param);
 };

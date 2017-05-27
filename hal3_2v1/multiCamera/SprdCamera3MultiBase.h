@@ -45,7 +45,7 @@
 #include <gralloc_priv.h>
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
-#include "ts_makeup_api.h"
+//#include "ts_makeup_api.h"
 #include "SprdMultiCam3Common.h"
 
 namespace sprdcamera {
@@ -89,6 +89,7 @@ class SprdCamera3MultiBase {
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
+	/*
 #ifdef CONFIG_FACE_BEAUTY
     virtual void doFaceMakeup(struct camera_frame_type *frame,
                               int perfect_level, int *face_info);
@@ -96,6 +97,7 @@ class SprdCamera3MultiBase {
     virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                    int height);
 #endif
+*/
     bool ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
                    uint16_t a_uwDstHeight, uint8_t *a_ucSrcBuf,
                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,

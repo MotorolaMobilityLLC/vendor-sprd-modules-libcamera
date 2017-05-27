@@ -1,0 +1,380 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#if defined(CONFIG_FACE_BEAUTY)
+
+#define LOG_TAG "camera_fb"
+
+#include <cutils/properties.h>
+#include <stdlib.h>
+#include <utils/Log.h>
+#include "camera_face_beauty.h"
+#include "arcsoft_beautyshot_wrapper.h"
+
+#define NUM_LEVELS 10
+void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
+    property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
+                 "0");
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        if (faceBeauty->hSprdFB == 0) {
+            ALOGD("init_fb_handle to FB_CreateBeautyHandle");
+            if (FB_OK != FB_CreateBeautyHandle(&(faceBeauty->hSprdFB), workMode,
+                                               threadNum)) {
+                ALOGE("FB_CreateBeautyHandle() Error");
+                return;
+            }
+        }
+    } else {
+        MRESULT retint;
+        if (workMode == 1) {
+            faceBeauty->fb_mode = 1;
+            if (faceBeauty->hArcSoftFB == 0) {
+                ALOGD("init_fb_handle to arcsoft_bsv_create");
+                if (arcsoft_bsv_create(&(faceBeauty->hArcSoftFB)) != MOK ||
+                    faceBeauty->hArcSoftFB == NULL) {
+                    ALOGE("arcsoft_bsv_create  fail");
+                    return;
+                }
+                /* Get arcsoft algorithm version
+                const MPBASE_Version* info =
+                arcsoft_bsv_get_version(faceBeauty->hArcSoftFB);
+                MChar *version = info->Version;
+                ALOGD("arcsoft_bsv_get_version : %s",version); */
+                retint = arcsoft_bsv_init(faceBeauty->hArcSoftFB);
+                if (MOK != retint) {
+                    ALOGE("arcsoft_bsv_init() new Error");
+                    return;
+                }
+            }
+        } else {
+            faceBeauty->fb_mode = 0;
+            if (faceBeauty->hArcSoftFB == 0) {
+                ALOGD("init_fb_handle to arcsoft_bsi_create");
+                if (arcsoft_bsi_create(&(faceBeauty->hArcSoftFB)) != MOK ||
+                    faceBeauty->hArcSoftFB == NULL) {
+                    ALOGE("arcsoft_bsi_create  fail");
+                    return;
+                }
+                if (MOK != arcsoft_bsi_init(faceBeauty->hArcSoftFB)) {
+                    ALOGE("arcsoft_bsi_init() Error");
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void deinit_fb_handle(struct class_fb *faceBeauty) {
+    property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
+                 "0");
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        if (faceBeauty->hSprdFB != 0) {
+            FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
+            faceBeauty->hSprdFB = NULL;
+        }
+    } else {
+        if (faceBeauty->fb_mode == 1) {
+            if (faceBeauty->hArcSoftFB != 0) {
+                ALOGD("deinit_fb_handle arcsoft_bsv_fini");
+                if (MOK != arcsoft_bsv_fini(faceBeauty->hArcSoftFB)) {
+                    ALOGE("arcsoft_bsv_fini() Error");
+                    return;
+                }
+                if (MOK != arcsoft_bsv_destroy(faceBeauty->hArcSoftFB)) {
+                    ALOGE("arcsoft_bsv_destroy() Error");
+                    return;
+                }
+                faceBeauty->hArcSoftFB = NULL;
+            }
+        } else {
+            if (faceBeauty->hArcSoftFB != 0) {
+                ALOGD("deinit_fb_handle arcsoft_bsi_fini");
+                if (MOK != arcsoft_bsi_fini(faceBeauty->hArcSoftFB)) {
+                    ALOGE("arcsoft_bsi_fini() Error");
+                    return;
+                }
+                if (MOK != arcsoft_bsi_destroy(faceBeauty->hArcSoftFB)) {
+                    ALOGE("arcsoft_bsi_destroy() Error");
+                    return;
+                }
+                faceBeauty->hArcSoftFB = NULL;
+            }
+        }
+    }
+}
+
+void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
+                       int ex, int ey, int angle, int pose) {
+    if (!faceBeauty) {
+        ALOGE("construct_fb_face faceBeauty is null");
+        return;
+    }
+
+    property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
+                 "0");
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        faceBeauty->fb_face[j].x = sx;
+        faceBeauty->fb_face[j].y = sy;
+        faceBeauty->fb_face[j].width = ex - sx;
+        faceBeauty->fb_face[j].height = ey - sy;
+        faceBeauty->fb_face[j].rollAngle = angle;
+        faceBeauty->fb_face[j].yawAngle = pose;
+        ALOGD("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
+              j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
+              faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
+              angle, pose);
+    } else {
+        faceBeauty->arc_fb_face.prtFaces[j].left = sx;
+        faceBeauty->arc_fb_face.prtFaces[j].top = sy;
+        faceBeauty->arc_fb_face.prtFaces[j].right = ex;
+        faceBeauty->arc_fb_face.prtFaces[j].bottom = ey;
+        if (angle > 0) {
+            angle = -angle;
+            angle += 360;
+        } else {
+            angle = -angle;
+        }
+        faceBeauty->arc_fb_face.plFaceRolls[j] = angle;
+        ALOGD("acr_fb_face[%d]  angle: %d. rect: %d %d   %d %d.", j,
+              (int)faceBeauty->arc_fb_face.plFaceRolls[j], sx, sy, ex, ey);
+    }
+}
+
+void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
+                        int picHeight, unsigned char *addrY,
+                        unsigned char *addrU, int format) {
+    if (!faceBeauty) {
+        ALOGE("construct_fb_image faceBeauty is null");
+        return;
+    }
+    property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
+                 "0");
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        faceBeauty->fb_image.width = picWidth;
+        faceBeauty->fb_image.height = picHeight;
+        faceBeauty->fb_image.yData = addrY;
+        faceBeauty->fb_image.uvData = addrU;
+        faceBeauty->fb_image.format = YUV420_FORMAT_CBCR;
+    } else {
+        faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV21;
+        if (format == 1) {
+             faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV12;
+        }
+        faceBeauty->arc_fb_image.i32Width = picWidth;
+        faceBeauty->arc_fb_image.i32Height = picHeight;
+        faceBeauty->arc_fb_image.pi32Pitch[0] = picWidth;
+        faceBeauty->arc_fb_image.pi32Pitch[1] = picWidth;
+        faceBeauty->arc_fb_image.ppu8Plane[0] = addrY;
+        faceBeauty->arc_fb_image.ppu8Plane[1] = addrU;
+    }
+}
+
+void construct_fb_level(struct class_fb *faceBeauty,
+                        struct face_beauty_levels beautyLevels) {
+    if (!faceBeauty) {
+        ALOGE("construct_fb_level faceBeauty is null");
+        return;
+    }
+    int level_num = 0;
+    // init the static parameters table. save the value until the process is
+    // restart or the device is restart.
+    unsigned char preview_whitenLevel[NUM_LEVELS] = {0,  15, 20, 25, 30,
+                                                     40, 45, 50, 55, 60};
+    unsigned char preview_cleanLevel[NUM_LEVELS] = {0,  15, 20, 25, 30,
+                                                     40, 45, 50, 55, 60};
+    unsigned char picture_whitenLevel[NUM_LEVELS] = {0,  10, 15, 20, 25,
+                                                     30, 35, 40, 45, 50};
+    unsigned char picture_cleanLevel[NUM_LEVELS] = {0,  10, 15, 20, 25,
+                                                    30, 35, 40, 45, 50};
+    unsigned char tab_skinWhitenLevel[NUM_LEVELS];
+    unsigned char tab_skinCleanLevel[NUM_LEVELS];
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        memcpy(tab_skinWhitenLevel, preview_whitenLevel,
+               sizeof(unsigned char) * NUM_LEVELS);
+        memcpy(tab_skinCleanLevel, preview_cleanLevel,
+               sizeof(unsigned char) * NUM_LEVELS);
+    } else {
+        if (faceBeauty->fb_mode == 1) {
+            memcpy(tab_skinWhitenLevel, preview_whitenLevel,
+                   sizeof(unsigned char) * NUM_LEVELS);
+            memcpy(tab_skinCleanLevel, preview_cleanLevel,
+                   sizeof(unsigned char) * NUM_LEVELS);
+        } else {
+            memcpy(tab_skinWhitenLevel, picture_whitenLevel,
+                   sizeof(unsigned char) * NUM_LEVELS);
+            memcpy(tab_skinCleanLevel, picture_cleanLevel,
+                   sizeof(unsigned char) * NUM_LEVELS);
+        }
+    }
+    // get the property level and parameters value and save in the parameters
+    // table.
+    // one time only adjust one level's parameters. In order to adjust all the
+    // values, six time should be done.
+    {
+        char str_adb_level[PROPERTY_VALUE_MAX];
+        char str_adb_white[PROPERTY_VALUE_MAX];
+        char str_adb_clean[PROPERTY_VALUE_MAX];
+        int adb_level_val = 0;
+        int adb_white_val = 0;
+        int adb_clean_val = 0;
+        if ((property_get("persist.sys.camera.beauty.level", str_adb_level,
+                          "0")) &&
+            (property_get("persist.sys.camera.beauty.white", str_adb_white,
+                          "0")) &&
+            (property_get("persist.sys.camera.beauty.clean", str_adb_clean,
+                          "0"))) {
+            adb_level_val = atoi(str_adb_level);
+            adb_level_val = (adb_level_val < 0)
+                                ? 0
+                                : ((adb_level_val > 9) ? 9 : adb_level_val);
+            adb_white_val = atoi(str_adb_white);
+            adb_white_val = (adb_white_val < 0)
+                                ? 0
+                                : ((adb_white_val > 100) ? 100 : adb_white_val);
+            adb_clean_val = atoi(str_adb_clean);
+            adb_clean_val = (adb_clean_val < 0)
+                                ? 0
+                                : ((adb_clean_val > 100) ? 100 : adb_clean_val);
+
+            // replace the static value.
+            tab_skinWhitenLevel[adb_level_val] = adb_white_val;
+            tab_skinCleanLevel[adb_level_val] = adb_clean_val;
+        }
+    }
+
+    // convert the skin_level set by APP to skinLevel & smoothLevel according to
+    // the table saved.
+    {
+        beautyLevels.smoothLevel =
+            (beautyLevels.smoothLevel < 0)
+                ? 0
+                : ((beautyLevels.smoothLevel > 90) ? 90
+                                                   : beautyLevels.smoothLevel);
+        level_num = beautyLevels.smoothLevel / 10;
+
+        beautyLevels.brightLevel = tab_skinWhitenLevel[level_num];
+        beautyLevels.smoothLevel = tab_skinCleanLevel[level_num];
+    }
+
+    char isDebug[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.camera.beauty.debug", isDebug, "0");
+    property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
+                 "0");
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
+        faceBeauty->fb_option.skinSmoothLevel = beautyLevels.smoothLevel / 10;
+        faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
+        faceBeauty->fb_option.skinColorLevel = beautyLevels.skinLevel;
+        faceBeauty->fb_option.skinBrightLevel = beautyLevels.brightLevel / 10;
+        faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
+        faceBeauty->fb_option.lipColorLevel = beautyLevels.lipLevel;
+        faceBeauty->fb_option.slimFaceLevel = beautyLevels.slimLevel;
+        faceBeauty->fb_option.largeEyeLevel = beautyLevels.largeLevel;
+        if (!strcmp(isDebug, "1")) {
+            faceBeauty->fb_option.debugMode = 1;
+            faceBeauty->fb_option.removeBlemishFlag = 1;
+            faceBeauty->fb_option.skinColorType = 1;
+            faceBeauty->fb_option.skinColorLevel = 7;
+            faceBeauty->fb_option.lipColorType = 2;
+            faceBeauty->fb_option.lipColorLevel = 5;
+            faceBeauty->fb_option.slimFaceLevel = 7;
+            faceBeauty->fb_option.largeEyeLevel = 7;
+        } else {
+            faceBeauty->fb_option.debugMode = 0;
+        }
+    } else {
+        faceBeauty->faceSoften = (MInt32)beautyLevels.smoothLevel;
+        faceBeauty->faceWhiten = (MInt32)beautyLevels.brightLevel;
+        faceBeauty->eyeEnlargement = (MInt32)beautyLevels.largeLevel * 10;
+        faceBeauty->faceSlender = (MInt32)beautyLevels.slimLevel * 10;
+        if (!strcmp(isDebug, "1")) {
+            faceBeauty->eyeEnlargement = 50;
+            faceBeauty->faceSlender = 50;
+        }
+        // ALOGV("arc_levels: %d %d %d
+        // %d.",faceBeauty->faceSoften,faceBeauty->faceWhiten,faceBeauty->eyeEnlargement,faceBeauty->faceSlender);
+    }
+}
+
+void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
+
+    int retVal = 0;
+    clock_t start_time, end_time;
+    int duration = 0;
+    if (!faceBeauty) {
+        ALOGE("do_face_beauty faceBeauty is null");
+        return;
+    }
+    property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
+                 "0");
+    if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
+        start_time = clock();
+        retVal = FB_FaceBeauty_YUV420SP(
+            faceBeauty->hSprdFB, &(faceBeauty->fb_image),
+            &(faceBeauty->fb_option), faceBeauty->fb_face, faceCount);
+        end_time = clock();
+        duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
+        ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
+    } else {
+        faceBeauty->arc_fb_face.lFaceNum = faceCount;
+        if (faceBeauty->fb_mode == 1) {
+            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_FACE_SOFTEN_KEY,
+                                          faceBeauty->faceSoften);
+            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_FACE_WHITEN_KEY,
+                                          faceBeauty->faceWhiten);
+            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_EYE_ENLARGEMENT_KEY,
+                                          faceBeauty->eyeEnlargement);
+            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_FACE_SLENDER_KEY,
+                                          faceBeauty->faceSlender);
+            start_time = clock();
+            retVal = arcsoft_bsv_process(
+                faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
+                &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
+            end_time = clock();
+            duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
+            ALOGV("arcsoft_bsv_process duration is %d ms", duration);
+        } else {
+            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_FACE_SOFTEN_KEY,
+                                          faceBeauty->faceSoften);
+            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_FACE_WHITEN_KEY,
+                                          faceBeauty->faceWhiten);
+            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_EYE_ENLARGEMENT_KEY,
+                                          faceBeauty->eyeEnlargement);
+            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
+                                          FEATURE_FACE_SLENDER_KEY,
+                                          faceBeauty->faceSlender);
+            start_time = clock();
+            retVal = arcsoft_bsi_process(
+                faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
+                &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
+            end_time = clock();
+            duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
+            ALOGD("arcsoft_bsi_process duration is %d ms", duration);
+        }
+    }
+    if (retVal != 0) {
+        ALOGE("FACE_BEAUTY ERROR!, ret is %d", retVal);
+    }
+}
+
+#endif

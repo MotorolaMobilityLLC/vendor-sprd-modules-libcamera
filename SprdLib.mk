@@ -18,6 +18,10 @@ LOCAL_SHARED_LIBRARIES += libcamcommon libcamisp
 LOCAL_CFLAGS += -DCONFIG_ISP_3
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
+LOCAL_SHARED_LIBRARIES += libcamfb
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
 endif
@@ -48,17 +52,6 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
-else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
-ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal_nv12
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv21)
-LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
-endif
-endif
-endif
 
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libBokeh2Frames

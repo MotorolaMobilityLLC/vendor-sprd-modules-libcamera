@@ -1132,6 +1132,7 @@ struct camera_face_info {
     cmr_u32 ely;
     cmr_u32 brightness;
     cmr_u32 angle;
+    cmr_u32 pose;
     cmr_u32 smile_level;
     cmr_u32 blink_level;
     cmr_u32 padding;

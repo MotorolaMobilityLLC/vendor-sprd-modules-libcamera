@@ -52,6 +52,9 @@
 extern "C" {
 #include "isp_video.h"
 }
+#ifdef CONFIG_FACE_BEAUTY
+#include "camera_face_beauty.h"
+#endif
 #endif
 
 using namespace android;
@@ -274,15 +277,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsTempChanged(0) {
     int i = 0;
     ATRACE_CALL();
-
+#ifdef CONFIG_FACE_BEAUTY
+    memset(&face_beauty, 0, sizeof(face_beauty));
+#endif
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI("openCameraHardware: E cameraId: %d.", cameraId);
 
-#ifdef CONFIG_FACE_BEAUTY
-    mSkinWhitenNotDetectFDNum = 0;
-    isNeedBeautify = false;
-    memset(&mSkinWhitenTsface, 0, sizeof(TSRect));
-#endif
 
     initPowerHint();
     enablePowerHint();
@@ -3137,7 +3137,9 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     deinitPreview();
     end_timestamp = systemTime();
-
+   #ifdef CONFIG_FACE_BEAUTY
+     deinit_fb_handle(&face_beauty);
+    #endif
     HAL_LOGD("X Time:%" PRId64 "(ms). camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
 }
@@ -3431,23 +3433,16 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                      frame->face_info[k].srx, frame->face_info[k].sry,
                      frame->face_info[k].ex, frame->face_info[k].ey,
                      frame->face_info[k].elx, frame->face_info[k].ely);
-            // faceInfo.face[k].rect[0] =
-            // (frame->face_info[k].sx*2000/mPreviewWidth)-1000;
-            // faceInfo.face[k].rect[1] =
-            // (frame->face_info[k].sy*2000/mPreviewHeight)-1000;
-            // faceInfo.face[k].rect[2] =
-            // (frame->face_info[k].ex*2000/mPreviewWidth)-1000;
-            // faceInfo.face[k].rect[3] =
-            // (frame->face_info[k].ey*2000/mPreviewHeight)-1000;
             faceInfo.face[k].rect[0] = sx;
             faceInfo.face[k].rect[1] = sy;
             faceInfo.face[k].rect[2] = ex;
             faceInfo.face[k].rect[3] = ey;
-
-            HAL_LOGD("smile level %d. face:%d  %d  %d  %d \n",
+            faceInfo.angle[k] = frame->face_info[k].angle;
+            faceInfo.pose[k] = frame->face_info[k].pose;
+            HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d\n",
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
-                     faceInfo.face[k].rect[3]);
+                     faceInfo.face[k].rect[3],faceInfo.angle[k]);
             CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
             /*When the half of face at the edge of the screen,the smile level
             returned by face detection library  can often more than 30.
@@ -3666,121 +3661,6 @@ void SprdCamera3OEMIf::calculateTimestampForSlowmotion(int64_t frm_timestamp) {
     mSlowPara.last_frm_timestamp = frm_timestamp;
 }
 
-#ifdef CONFIG_FACE_BEAUTY
-void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame) {
-    SPRD_DEF_Tag sprddefInfo;
-    // init the parameters table. save the value until the process is restart or
-    // the device is restart.
-    int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
-    int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    HAL_LOGV("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
-
-    int level = sprddefInfo.perfect_skin_level;
-    int skinWhitenLevel = 0;
-    int skinCleanLevel = 0;
-    int level_num = 0;
-
-    // get the property level and parameters value and save in the parameters
-    // table.
-    // one time only adjust one level's parameters. In order to adjust all the
-    // values, six time should be done.
-    {
-        char str_adb_level[PROPERTY_VALUE_MAX];
-        char str_adb_white[PROPERTY_VALUE_MAX];
-        char str_adb_clean[PROPERTY_VALUE_MAX];
-        int adb_level_val = 0;
-        int adb_white_val = 0;
-        int adb_clean_val = 0;
-
-        if ((property_get("persist.sys.camera.beauty.level", str_adb_level,
-                          "0")) &&
-            (property_get("persist.sys.camera.beauty.white", str_adb_white,
-                          "0")) &&
-            (property_get("persist.sys.camera.beauty.clean", str_adb_clean,
-                          "0"))) {
-            adb_level_val = atoi(str_adb_level);
-            adb_level_val = (adb_level_val < 0)
-                                ? 0
-                                : ((adb_level_val > 9) ? 9 : adb_level_val);
-            adb_white_val = atoi(str_adb_white);
-            // TODO: clip the adb_white_val.
-            adb_clean_val = atoi(str_adb_clean);
-            // TODO: clip the adb_clean_val.
-
-            // replace the static value.
-            tab_skinWhitenLevel[adb_level_val] = adb_white_val;
-            tab_skinCleanLevel[adb_level_val] = adb_clean_val;
-        }
-    }
-
-    // convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel
-    // according to the table saved.
-    level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
-    level_num = level / 10;
-    skinWhitenLevel = tab_skinWhitenLevel[level_num];
-    skinCleanLevel = tab_skinCleanLevel[level_num];
-    HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d",
-             skinWhitenLevel, skinCleanLevel);
-
-    FACE_Tag faceInfo;
-#ifdef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
-    YuvFormat yuvFormat = TSFB_FMT_NV12;
-#else
-    YuvFormat yuvFormat = TSFB_FMT_NV21;
-#endif
-    mSetting->getFACETag(&faceInfo);
-    if (faceInfo.face_num > 0) {
-        mSkinWhitenNotDetectFDNum = 0;
-        isNeedBeautify = true;
-        CameraConvertCoordinateFromFramework(faceInfo.face[0].rect);
-        mSkinWhitenTsface.left = faceInfo.face[0].rect[0];
-        mSkinWhitenTsface.top = faceInfo.face[0].rect[1];
-        mSkinWhitenTsface.right = faceInfo.face[0].rect[2];
-        mSkinWhitenTsface.bottom = faceInfo.face[0].rect[3];
-        HAL_LOGV("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", mSkinWhitenTsface.left,
-                 mSkinWhitenTsface.top, mSkinWhitenTsface.right,
-                 mSkinWhitenTsface.bottom);
-    } else {
-        HAL_LOGE("Not detect face!");
-    }
-    mSkinWhitenNotDetectFDNum++;
-#define SHINWHITED_NOT_DETECTFD_MAXNUM 10
-    if (mSkinWhitenNotDetectFDNum > SHINWHITED_NOT_DETECTFD_MAXNUM) {
-        HAL_LOGD("UCAM:can not find fd in %d frame.reset mSkinWhitenTsface",
-                 SHINWHITED_NOT_DETECTFD_MAXNUM);
-        mSkinWhitenNotDetectFDNum = 0;
-        isNeedBeautify = false;
-        memset(&mSkinWhitenTsface, 0, sizeof(TSRect));
-    }
-
-    TSMakeupData inMakeupData;
-    unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
-    unsigned char *uvBuf =
-        (unsigned char *)(frame->y_vir_addr) + frame->width * frame->height;
-
-    inMakeupData.frameWidth = frame->width;
-    inMakeupData.frameHeight = frame->height;
-    inMakeupData.yBuf = yBuf;
-    inMakeupData.uvBuf = uvBuf;
-
-    if (frame->width > 0 && frame->height > 0 && isNeedBeautify) {
-        int mu_retVal =
-            ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
-                             skinWhitenLevel, &mSkinWhitenTsface, 0, yuvFormat);
-        if (mu_retVal != TS_OK) {
-            HAL_LOGE("UCAM ts_face_beautify ret is %d", mu_retVal);
-        } else {
-            HAL_LOGD("UCAM ts_face_beautify return OK");
-        }
-    } else {
-        HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then "
-                 "outMakeupData.yBuf is null!",
-                 frame->width, frame->height);
-    }
-}
-#endif
-
 void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     ATRACE_CALL();
 
@@ -3916,6 +3796,21 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_uint prebuf_vir = 0;
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
+#ifdef CONFIG_FACE_BEAUTY
+    unsigned char skinWhiten = (unsigned char)sprddefInfo.perfect_skin_level;
+    skinWhiten = (skinWhiten<0)?0:((skinWhiten>90)?90:skinWhiten);
+    int sx,sy,ex,ey,angle,pose;
+    struct face_beauty_levels beautyLevels;
+    beautyLevels.blemishLevel = 1;
+    beautyLevels.smoothLevel= skinWhiten;
+    beautyLevels.skinColor = 0;
+    beautyLevels.skinLevel = 3;
+    beautyLevels.brightLevel = skinWhiten;
+    beautyLevels.lipColor =1;
+    beautyLevels.lipLevel = 5;
+    beautyLevels.slimLevel = 0;
+    beautyLevels.largeLevel = 0;
+#endif
     SENSOR_Tag sensorInfo;
 
     mSetting->getSENSORTag(&sensorInfo);
@@ -3930,16 +3825,34 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                  rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-        if (PREVIEW_ZSL_FRAME != frame->type &&
-            sprddefInfo.perfect_skin_level > 0) {
-            faceDectect(1);
-            if (isPreviewing() && frame->type == PREVIEW_FRAME) {
-                if (MODE_3D_VIDEO != mMultiCameraMode &&
-                    MODE_3D_PREVIEW != mMultiCameraMode) {
-                    doFaceMakeup(frame);
+    if (PREVIEW_ZSL_FRAME != frame->type && skinWhiten > 0) {
+        faceDectect(1);
+        if (isPreviewing() && frame->type == PREVIEW_FRAME) {
+            if (MODE_3D_VIDEO != mMultiCameraMode &&
+                MODE_3D_PREVIEW != mMultiCameraMode) {
+                FACE_Tag faceInfo;
+                mSetting->getFACETag(&faceInfo);
+                if (faceInfo.face_num>0) {
+                    for (int i = 0 ; i < faceInfo.face_num; i++) {
+                        CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
+                        sx = faceInfo.face[i].rect[0];
+                        sy = faceInfo.face[i].rect[1];
+                        ex = faceInfo.face[i].rect[2];
+                        ey = faceInfo.face[i].rect[3];
+                        angle = faceInfo.angle[i];
+                        pose = faceInfo.pose[i];
+                        construct_fb_face(&face_beauty, i, sx, sy, ex, ey,angle,pose);
+                    }
                 }
+                init_fb_handle(&face_beauty,1,2);
+                construct_fb_image(&face_beauty, frame->width, frame->height, (unsigned char *)(frame->y_vir_addr), (unsigned char *)(frame->y_vir_addr + frame->width * frame->height), 1);
+                construct_fb_level(&face_beauty, beautyLevels);
+                do_face_beauty(&face_beauty,faceInfo.face_num);
             }
         }
+    }else if (PREVIEW_ZSL_FRAME != frame->type){
+         deinit_fb_handle(&face_beauty);
+    }
 #endif
 
         // recording stream
@@ -5569,9 +5482,6 @@ int SprdCamera3OEMIf::openCamera() {
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_init((void *)this);
-#endif
-#ifdef CONFIG_FACE_BEAUTY
-    ts_printVersionInfo();
 #endif
     return ret;
 }
