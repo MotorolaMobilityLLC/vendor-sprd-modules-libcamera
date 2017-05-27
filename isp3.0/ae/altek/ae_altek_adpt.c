@@ -203,6 +203,7 @@ struct aealtek_script_info {
 /*ae altek context*/
 struct aealtek_cxt {
 	cmr_u32 is_inited;
+	cmr_u32 is_processed;
 	cmr_u32 work_cnt; //work number by called
 	cmr_u32 camera_id;
 	cmr_handle caller_handle;
@@ -785,7 +786,7 @@ static cmr_int aealtek_convert_ui2initlib(struct aealtek_cxt *cxt_ptr, struct ae
 	resolution_ptr = &from_ptr->ui_param.work_info.resolution;
 
 	/*  tuning parameter setting  */
-	to_ptr->ae_setting_data = cxt_ptr->init_in_param.tuning_param;
+	to_ptr->ae_setting_data = cxt_ptr->init_in_param.tuning_param[0];
 
 	/* initial UI setting */
 	aealtek_flicker_ui2lib(cxt_ptr->nxt_status.ui_param.flicker, &to_ptr->ae_set_antibaning_mode);
@@ -1389,15 +1390,11 @@ static cmr_int aealtek_set_boost(struct aealtek_cxt *cxt_ptr, cmr_u32 is_speed)
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	/*the converge mode of front camera is too slow, set the converge mode AE_CONVERGE_FAST*/
-	if (1 == cxt_ptr->camera_id || 3 == cxt_ptr->camera_id) {
+	if (is_speed)
 		param_ct_ptr->converge_speedlv = AE_CONVERGE_FAST;
-	} else {
-		if (is_speed)
-			param_ct_ptr->converge_speedlv = AE_CONVERGE_FAST;
-		else
-			param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;
-	}
+	else
+		param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;
+
 	type = AE_SET_PARAM_CONVERGE_SPD;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -2509,22 +2506,21 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 
-	ret = aealtek_get_lib_expousre(cxt_ptr, AEALTEK_PREVIEW, &ae_exposure);
-	if (ret)
-		goto exit;
-	ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &ae_exposure.preview, &cxt_ptr->lib_data.output_data);
-	if (ret)
-		goto exit;
-
-	ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-	if (ret)
-		goto exit;
-
-	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
-	if (ret)
-		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
-
-	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
+	if (cxt_ptr->is_processed == 1) {
+		ret = aealtek_get_lib_expousre(cxt_ptr, AEALTEK_PREVIEW, &ae_exposure);
+		if (ret)
+			goto exit;
+		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &ae_exposure.preview, &cxt_ptr->lib_data.output_data);
+		if (ret)
+			goto exit;
+		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			goto exit;
+		ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+		cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
+	}
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -5392,6 +5388,11 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 			}
 		}
 	}
+
+	if (cxt_ptr->is_processed == 0) {
+		cxt_ptr->is_processed = 1;
+	}
+
 	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, camera_id:%d",
 		out_data_ptr->rpt_3a_update.ae_update.curmean,
 		out_data_ptr->rpt_3a_update.ae_update.bv_val,
