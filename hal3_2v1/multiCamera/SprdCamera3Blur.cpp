@@ -632,9 +632,9 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
     : mSavedCapReqsettings(NULL), mCaptureStreamsNum(0), mLastMinScope(0),
       mLastMaxScope(0), mLastAdjustRati(0), mFirstCapture(false),
       mFirstPreview(false), mUpdateCaptureWeightParams(false),
-      mUpdatePreviewWeightParams(false), mLastFaceNum(0), mRotation(0),
-      mLastTouchX(0), mLastTouchY(0), mBlurBody(true), mUpdataTouch(false),
-      mVersion(0), srcYuv1(NULL) {
+      mUpdatePreviewWeightParams(false), mLastFaceNum(0), mSkipFaceNum(0),
+      mRotation(0), mLastTouchX(0), mLastTouchY(0), mBlurBody(true),
+      mUpdataTouch(false), mVersion(0), srcYuv1(NULL) {
     HAL_LOGI(" E");
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
@@ -1151,7 +1151,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                                       capture_msg.combo_buff.buffer);
             } else if (mVersion == 3) {
                 if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
-                    hwiMain->setAfPos(mIspInfo.near_peak_pos);
+                    hwiMain->setAfPos(mIspInfo.far_peak_pos);
                     saveCaptureBlurParams(mSavedResultBuff,
                                           capture_msg.combo_buff.buffer);
                 } else {
@@ -1404,6 +1404,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
         }
     }
     mLastFaceNum = 0;
+    mSkipFaceNum = 0;
     mRotation = 0;
     mLastTouchX = 0;
     mLastTouchY = 0;
@@ -1693,9 +1694,16 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
         face_num =
             SprdCamera3Setting::s_setting[mBlur->mCameraId].faceInfo.face_num;
         if (mLastFaceNum <= 0 && face_num <= 0) {
+            if (mSkipFaceNum < 30) {
+                HAL_LOGD("mSkipFaceNum:%d", mSkipFaceNum);
+                mSkipFaceNum++;
+            }
             return;
         }
+
         mLastFaceNum = face_num;
+        mSkipFaceNum = 0;
+
         if (face_num <= 0) {
             mPreviewWeightParams.sel_x = mPreviewInitParams.width / 2;
             mPreviewWeightParams.sel_y = mPreviewInitParams.height / 2;
@@ -2798,7 +2806,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                   1 == mCaptureThread->mIspInfo.distance_reminder)) {
                 if (mCaptureThread->mVersion == 3) {
                     hwiMain->set3AbyPass(1);
-                    hwiMain->setAfPos(mCaptureThread->mIspInfo.far_peak_pos);
+                    hwiMain->setAfPos(mCaptureThread->mIspInfo.near_peak_pos);
                 }
                 snap_stream_num = 2;
                 out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
@@ -2907,7 +2915,7 @@ void SprdCamera3Blur::processCaptureResultMain(
                 coverValue = 6;
             }
         } else {
-            if (2 == m_nPhyCameras && cur_frame_number > 100) {
+            if (2 == m_nPhyCameras && cur_frame_number > 2) {
                 SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
                 coverValue = getCoveredValue(metadata, hwiSub,
                                              m_pPhyCamera[CAM_TYPE_AUX].id);
@@ -2938,7 +2946,7 @@ void SprdCamera3Blur::processCaptureResultMain(
     int currStreamType = getStreamType(result_buffer->stream);
     if (mReqState != PREVIEW_REQUEST_STATE &&
         currStreamType == DEFAULT_STREAM) {
-        HAL_LOGD("framenumber:%d, mReqState:%d", cur_frame_number, mReqState);
+        HAL_LOGD("framenumber:%d, receive yuv:%d", cur_frame_number, mReqState);
         blur_queue_msg_t capture_msg;
         capture_msg.msg_type = BLUR_MSG_DATA_PROC;
         capture_msg.combo_buff.frame_number = result->frame_number;
@@ -3030,7 +3038,8 @@ void SprdCamera3Blur::processCaptureResultMain(
                             CAMERA3_BUFFER_STATUS_ERROR &&
                         mReqState == PREVIEW_REQUEST_STATE) {
                         if (!(mCameraId == CAM_BLUR_MAIN_ID_2 &&
-                              mCaptureThread->mLastFaceNum <= 0)) {
+                              mCaptureThread->mLastFaceNum <= 0 &&
+                              mCaptureThread->mSkipFaceNum >= 30)) {
                             mCaptureThread->blurHandle(
                                 (struct private_handle_t *)*(
                                     result->output_buffers->buffer),

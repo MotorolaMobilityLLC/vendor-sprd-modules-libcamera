@@ -1376,7 +1376,7 @@ int SprdCamera3OEMIf::getCoveredValue(uint32_t *value) {
 int SprdCamera3OEMIf::setAfPos(uint32_t value) {
     int32_t ret = 0;
 
-    HAL_LOGD("E");
+    HAL_LOGD("E  pos:%d",value);
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_POS,
                                       &value);
 
@@ -8242,9 +8242,14 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
         if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
+            property_get("persist.sys.cam.blur3.zsl.time", prop, "200");
             if (mZslSnapshotTime > zsl_frame.timestamp ||
                 ((mZslSnapshotTime < zsl_frame.timestamp) &&
-                 (((zsl_frame.timestamp - mZslSnapshotTime) / 1000000) < 40))) {
+                 (((zsl_frame.timestamp - mZslSnapshotTime) / 1000000) <
+                  atoi(prop)))) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame.y_phy_addr,
                     zsl_frame.y_vir_addr, zsl_frame.fd);

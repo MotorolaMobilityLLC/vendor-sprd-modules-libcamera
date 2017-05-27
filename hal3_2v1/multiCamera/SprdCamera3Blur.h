@@ -330,6 +330,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
         bool mUpdateCaptureWeightParams;
         bool mUpdatePreviewWeightParams;
         uint8_t mLastFaceNum;
+        uint8_t mSkipFaceNum;
         unsigned short mWinPeakPos[BLUR_AF_WINDOW_NUM];
         preview_init_params_t mPreviewInitParams;
         preview_weight_params_t mPreviewWeightParams;

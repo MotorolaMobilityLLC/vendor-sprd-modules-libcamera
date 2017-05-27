@@ -204,24 +204,25 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
                                               int convered_camera_id) {
     int rc = 0;
     uint32_t couvered_value = 0;
+    uint32_t value = 0;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
     property_get("debug.camera.covered", prop, "0");
 
-    rc = hwiSub->getCoveredValue(&couvered_value);
+    rc = hwiSub->getCoveredValue(&value);
     if (rc < 0) {
         HAL_LOGD("read sub sensor failed");
     }
     if (0 != atoi(prop)) {
-        couvered_value = atoi(prop);
+        value = atoi(prop);
     }
-    if (couvered_value < MAX_CONVERED_VALURE && couvered_value) {
+    if (value < MAX_CONVERED_VALURE && value) {
         couvered_value = BLUR_SELFSHOT_CONVERED;
     } else {
         couvered_value = BLUR_SELFSHOT_NO_CONVERED;
     }
-    HAL_LOGD("get cover_value %u", couvered_value);
+    HAL_LOGD("get cover_value %u ,ori value=%u", couvered_value,value);
     // update face[10].score info to mean convered value when api1 is used
     {
         FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(
