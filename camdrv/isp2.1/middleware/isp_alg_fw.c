@@ -1896,6 +1896,7 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
+	struct af_log_info af_param = {NULL, 0};
 
 	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
 		return rtn;
@@ -1928,6 +1929,12 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	}
 	if(cxt->ops.af_ops.init)
 		rtn = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
+
+	if (cxt->ops.af_ops.ioctrl) {
+		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LOG_INFO, (void *)&af_param, NULL);
+		cxt->af_cxt.log_af = af_param.log_cxt;
+		cxt->af_cxt.log_af_size = af_param.log_len;
+	}
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
 
 	return rtn;

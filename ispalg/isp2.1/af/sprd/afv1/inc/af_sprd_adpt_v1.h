@@ -210,6 +210,11 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 dummy[3];	// 4 bytes align
 } afm_tuning_sharkl2;
 
+struct af_log_info{
+	void *log_cxt;
+	cmr_u32 log_len;
+};
+
 typedef struct _af_ctrl {
 	void *af_alg_cxt;	//AF_Data fv;
 	cmr_u32 af_dump_info_len;

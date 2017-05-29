@@ -2270,6 +2270,14 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 		rtn = af_sprd_get_fullscan_info(handle, param0);
 		break;
 
+	case AF_CMD_GET_AF_LOG_INFO:{
+			struct af_log_info log_info ={NULL, 0};
+			log_info.log_cxt= af->af_alg_cxt;
+			log_info.log_len = af->af_dump_info_len;
+			param0 = (void *)&log_info;
+			break;
+		}
+
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
