@@ -1275,7 +1275,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         mFirstRegularRequest = false;
         mPictureRequest = false;
         timer_set(this, 1);
-        usleep(200 * 1000);
+        usleep(100 * 1000);
         return NO_ERROR;
     }
 
