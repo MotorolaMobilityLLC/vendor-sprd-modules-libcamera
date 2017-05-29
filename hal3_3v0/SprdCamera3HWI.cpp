@@ -716,6 +716,8 @@ int SprdCamera3HWI::configureStreams(
                 SprdCamera3RegularChannel::kMaxBuffers = 2;
             else if (sprddefInfo.slowmotion > 1)
                 SprdCamera3RegularChannel::kMaxBuffers = 8;
+            else if (sprddefInfo.sprd_eis_enabled)
+                SprdCamera3RegularChannel::kMaxBuffers = 16;
             else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
 

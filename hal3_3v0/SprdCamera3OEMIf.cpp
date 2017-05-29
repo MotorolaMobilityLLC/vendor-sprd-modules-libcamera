@@ -3817,6 +3817,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #endif
 
 #ifdef CONFIG_CAMERA_EIS
+    vsOutFrame frame_out;
+    frame_out.frame_data = NULL;
     int64_t buffer_timestamp;
     if (sprddefInfo.sprd_eis_enabled) {
         buffer_timestamp = buffer_timestamp_fps - frame->ae_time / 2;
@@ -3923,8 +3925,14 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #ifdef CONFIG_CAMERA_EIS
                     HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
                     if (sprddefInfo.sprd_eis_enabled) {
-                        EisVideoFrameStab(frame);
+                        frame_out = EisVideoFrameStab(frame,frame_num);
                     }
+
+                    if(frame_out.frame_data) {
+                         channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000, CAMERA_STREAM_TYPE_VIDEO);
+                         frame_out.frame_data = NULL;
+                    }
+                    goto bypass_rec;
 #endif
                     if (mMultiCameraMode == MODE_3D_VIDEO) {
                         mSlowPara.rec_timestamp = buffer_timestamp;
@@ -3952,6 +3960,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 mZslPopFlag = 1;
                 mZslShotWait.signal();
             }
+
+            bypass_rec:
+            HAL_LOGV("rec_stream X");
         }
 
         // preview stream
@@ -8550,8 +8561,8 @@ void SprdCamera3OEMIf::EisPreview_init() {
     video_stab_param_default(&mPreviewParam);
     mPreviewParam.src_w = (uint16_t)mPreviewWidth;
     mPreviewParam.src_h = (uint16_t)mPreviewHeight;
-    mPreviewParam.dst_w = (uint16_t)mPreviewWidth * 5 / 6;
-    mPreviewParam.dst_h = (uint16_t)mPreviewHeight * 5 / 6;
+    mPreviewParam.dst_w = (uint16_t)mPreviewWidth;
+    mPreviewParam.dst_h = (uint16_t)mPreviewHeight;
     mPreviewParam.method = 0;
     mPreviewParam.wdx = 0;
     mPreviewParam.wdy = 0;
@@ -8584,8 +8595,8 @@ void SprdCamera3OEMIf::EisVideo_init() {
     video_stab_param_default(&mVideoParam);
     mVideoParam.src_w = (uint16_t)mVideoWidth;
     mVideoParam.src_h = (uint16_t)mVideoHeight;
-    mVideoParam.dst_w = (uint16_t)mVideoWidth * 5 / 6;
-    mVideoParam.dst_h = (uint16_t)mVideoHeight * 5 / 6;
+    mVideoParam.dst_w = (uint16_t)mVideoWidth;
+    mVideoParam.dst_h = (uint16_t)mVideoHeight;
     mVideoParam.method = 1;
     mVideoParam.wdx = 0;
     mVideoParam.wdy = 0;
@@ -8622,12 +8633,11 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
     frame_out_preview.frame_data = NULL;
 
     if (mGyromaxtimestamp) {
-        HAL_LOGI("frame timestamp: %lf, mGyromaxtimestamp %lf",
+        HAL_LOGD("in frame timestamp: %lf, mGyromaxtimestamp %lf",
                  frame_in.timestamp, mGyromaxtimestamp);
         video_stab_write_frame(mPreviewInst, &frame_in);
         do {
             gyro_num = mGyroPreviewInfo.size();
-            HAL_LOGI("gyro_num = %d", gyro_num);
             if (gyro_num) {
                 gyro = (vsGyro *)malloc(gyro_num * sizeof(vsGyro));
                 if (NULL == gyro) {
@@ -8644,7 +8654,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             }
             ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
             if (ret_eis == 0) {
-                HAL_LOGI("frame_in %p, frame_out %p", frame_in.frame_data,
+                HAL_LOGD("frame_in %p, frame_out %p", frame_in.frame_data,
                          frame_out_preview.frame_data);
                 if (frame_in.frame_data == frame_out_preview.frame_data)
                     return frame_out_preview;
@@ -8657,7 +8667,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
                                      mReadGyroPreviewLock, 30000000))) {
-                HAL_LOGW("gyro data is too slow for eis process");
+                HAL_LOGD("gyro data is too slow for eis process");
                 goto eis_process_fail;
             }
         } while (ret_eis == 1);
@@ -8685,7 +8695,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
     frame_out_video.frame_data = NULL;
 
     if (mGyromaxtimestamp) {
-        HAL_LOGI("frame timestamp: %lf, mGyromaxtimestamp %lf",
+        HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",frame_in.frame_num,
                  frame_in.timestamp, mGyromaxtimestamp);
         video_stab_write_frame(mVideoInst, &frame_in);
         do {
@@ -8707,14 +8717,12 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             }
             ret_eis = video_stab_read(mVideoInst, &frame_out_video);
             if (ret_eis == 0) {
-                HAL_LOGI("frame_in %p, frame_out %p", frame_in.frame_data,
-                         frame_out_video.frame_data);
-                if (frame_in.frame_data == frame_out_video.frame_data)
+                HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p", frame_out_video.frame_num,
+                         frame_out_video.timestamp,frame_out_video.frame_data);
                     return frame_out_video;
-                else
-                    ret_eis = 1;
-            } else if (ret_eis != 1) {
-                HAL_LOGE("fail to read matrix");
+            } else {
+                 ret_eis = -1;
+                HAL_LOGE("no frame out,exit directly");
                 goto eis_process_fail;
             }
             if (++count >= 4 || (NO_ERROR !=
@@ -8811,6 +8819,7 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         frame_in.timestamp = (double)(boot_time - ae_time / 2);
         frame_in.timestamp = frame_in.timestamp / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
+        frame_in.frame_num = 0;
         frame_out = processPreviewEIS(frame_in);
         HAL_LOGD(
             "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
@@ -8839,7 +8848,7 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
     }
 }
 
-void SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame) {
+vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,uint32_t frame_num) {
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
@@ -8849,42 +8858,47 @@ void SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame) {
     int64_t boot_time = frame->monoboottime;
     int64_t ae_time = frame->ae_time;
     uintptr_t buff_vir = (uintptr_t)(frame->y_vir_addr);
-    char *eis_buff =
-        (char *)(frame->y_vir_addr) + frame->width * frame->height * 3 / 2;
-    double *warp_buff = (double *)eis_buff;
-    HAL_LOGV("video vir address 0x%lx,warp address %p", frame->y_vir_addr,
-             warp_buff);
 
     // gyro data is should be used for video frame stab
     if (mGyroInit && !mGyroExit) {
         if (frame->zoom_ratio == 0)
             frame->zoom_ratio = 1.0f;
         float zoom_ratio = frame->zoom_ratio;
-        HAL_LOGV("boot_time = %" PRId64, boot_time);
-        HAL_LOGV("ae_time = %" PRId64 ", zoom_ratio = %f", ae_time, zoom_ratio);
+        HAL_LOGV("boot_time = %" PRId64 ",ae_time =%" PRId64 ",zoom_ratio = %f" , boot_time,ae_time,zoom_ratio);
         frame_in.frame_data = (uint8_t *)buff_vir;
         frame_in.timestamp = (double)(boot_time - ae_time / 2);
         frame_in.timestamp = frame_in.timestamp / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
+        frame_in.frame_num = frame_num;
         frame_out = processVideoEIS(frame_in);
-        HAL_LOGD(
-            "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
-            frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
-            frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
-            frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
-            frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
-            frame_out.warp.dat[2][2]);
+        if(frame_out.frame_data)
+            HAL_LOGV(
+                "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+                frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
+                frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
+                frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
+                frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
+                frame_out.warp.dat[2][2]);
     } else {
-        HAL_LOGW("gyro is not enable, eis process is not work");
+        HAL_LOGD("gyro is not enable, eis process is not work");
     }
-    if (warp_buff)
-        *warp_buff++ = 16171225;
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (warp_buff)
-                *warp_buff++ = frame_out.warp.dat[i][j];
+
+    if (frame_out.frame_data) {
+        char *eis_buff =(char *)(frame_out.frame_data) + frame->width * frame->height * 3 / 2;
+        double *warp_buff = (double *)eis_buff;
+        HAL_LOGV("video vir address 0x%lx,warp address %p",frame_out.frame_data, warp_buff);
+        if(warp_buff ) {
+            *warp_buff++ = 16171225;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (warp_buff)
+                        *warp_buff++ = frame_out.warp.dat[i][j];
+                }
+            }
         }
     }
+
+    return  frame_out;
 }
 #endif
 

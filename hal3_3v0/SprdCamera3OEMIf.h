@@ -241,7 +241,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void pushEISVideoQueue(vsGyro *mGyrodata);
     void popEISVideoQueue(vsGyro *gyro, int gyro_num);
     void EisPreviewFrameStab(struct camera_frame_type *frame);
-    void EisVideoFrameStab(struct camera_frame_type *frame);
+    vsOutFrame EisVideoFrameStab(struct camera_frame_type *frame,uint32_t frame_num);
 #endif
 
 #ifdef CONFIG_CAMERA_GYRO

@@ -708,6 +708,9 @@ int SprdCamera3HWI::configureStreams(
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
+             }
+             else if (sprddefInfo.sprd_eis_enabled) {
+                SprdCamera3RegularChannel::kMaxBuffers = 16;
             } else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
             HAL_LOGD("slowmotion=%d, kMaxBuffers=%d", sprddefInfo.slowmotion,
@@ -774,7 +777,7 @@ int SprdCamera3HWI::configureStreams(
 #ifdef CONFIG_CAMERA_EIS
     if (sprddefInfo.sprd_eis_enabled) {
         // leave two*height*1.5 bytes space for eis parameters
-        video_size.width = (video_size.width >> 4) << 4;
+        video_size.width = video_size.width - 2;
     }
 #endif
 

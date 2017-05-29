@@ -11,11 +11,14 @@ typedef struct frame_in {
     uint8_t *frame_data;
     double timestamp;
     double zoom;
+    uint32_t frame_num;
 } vsInFrame;
 
 typedef struct frame_out {
     uint8_t *frame_data;
     mat33 warp;
+    uint32_t frame_num;
+    double timestamp;
 } vsOutFrame;
 
 typedef struct vs_param {
