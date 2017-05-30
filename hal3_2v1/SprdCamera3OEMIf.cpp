@@ -3223,6 +3223,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
     }
 
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_MODE,
+             (uint32_t)mCaptureMode);
+
     HAL_LOGD("mCaptureMode=%d", mCaptureMode);
     ret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
     if (ret != CMR_CAMERA_SUCCESS) {
