@@ -116,7 +116,7 @@ typedef struct _ae_info {
 	cmr_u32 gain;
 	cmr_u32 gain_index;
 	cmr_u32 win_size;
-	struct ae_calc_out ae;
+	struct ae_calc_out ae_report;
 } ae_info_t;
 
 typedef struct _awb_info {
@@ -236,6 +236,7 @@ typedef struct _af_ctrl {
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
+	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
 	sem_t af_wait_caf;
@@ -251,6 +252,7 @@ typedef struct _af_ctrl {
 	cmr_s32 awb_lock_num;
 	cmr_s32 lsc_lock_num;
 	cmr_s32 nlm_lock_num;
+	cmr_s32 ae_partial_lock_num;
 	void *trig_lib;
 	caf_trigger_ops_t trig_ops;
 	ae_cali_t ae_cali_data;
@@ -272,6 +274,7 @@ typedef struct _af_ctrl {
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
 	struct aft_proc_calc_param prm_sensor;
+	struct aft_proc_calc_param prm_pd;
 	isp_awb_statistic_hist_info_t rgb_stat;
 	cmr_u32 trigger_source_type;
 	struct af_ctrl_otp_info otp_info;

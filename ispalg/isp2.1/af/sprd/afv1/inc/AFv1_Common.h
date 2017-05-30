@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.115"
-#define SUB_VERSION             "-B-01"
+#define VERSION             "2.116"
+#define SUB_VERSION             "-Flash-03"
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -103,7 +103,7 @@
 #define AE_GAIN_32x 5
 #define AE_GAIN_TOTAL 6
 
-#define BOKEH_BOUNDARY_RATIO 8	//based on 10
+#define BOKEH_BOUNDARY_RATIO 8000	//based on 10000
 #define BOKEH_SCAN_FROM 212	//limited in [0,1023]
 #define BOKEH_SCAN_TO 342	//limited in [0,1023]
 #define BOKEH_SCAN_STEP 12	//at least 20
@@ -173,6 +173,7 @@ typedef enum _eAF_Triger_Type {
 	F_FAST,			//Fast Fine search for AFT
 	DEFOCUS,
 	BOKEH,
+	RE_TRIGGER,
 } eAF_Triger_Type;
 
 typedef enum _eSAF_Status {
@@ -323,6 +324,14 @@ typedef struct _AE_Report {
 	cmr_u16 AE_Gain;	//X128: gain1x = 128
 	cmr_u32 AE_Pixel_Sum;	//AE pixel sum which needs to match AF blcok
 	cmr_u16 AE_Idx;		//AE exposure level
+	cmr_u32 cur_fps;
+	cmr_u32 cur_lum;
+	cmr_u32 cur_index;
+	cmr_u32 cur_ev;
+	cmr_u32 cur_iso;
+	cmr_u32 target_lum;
+	cmr_u32 target_lum_ori;
+	cmr_u32 flag4idx;
 } AE_Report;
 
 typedef struct _AF_FV_DATA {
@@ -524,6 +533,8 @@ typedef struct _afscan_status_s {
 	cmr_s32 bv_log[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 luma[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 gain[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 ae_state[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 exp[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
@@ -531,7 +542,8 @@ typedef struct _afscan_status_s {
 	cmr_u32 scan_tbl_macrv[AFAUTO_SCAN_STOP_NMAX];
 	cmr_s32 scan_tbl_slop[AFAUTO_SCAN_STOP_NMAX];
 	cmr_s32 scan_tbl_maslop[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 scan_tbl_luma[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_aeluma[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_afluma[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_jump[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_pkidx[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_start;
@@ -621,7 +633,8 @@ typedef struct _afscan_status_s {
 	cmr_u32 focus_inf;
 	cmr_u32 focus_macro;
 	cmr_u32 peak_inverse;
-	cmr_u32 peak_quad;
+	cmr_u32 peak_calculate;
+	cmr_u32 peak_calc_cond;
 	cmr_s32 phase_diff_tbl[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 pd_conf_tbl[AFAUTO_SCAN_STOP_NMAX];
 } afscan_status_t;
@@ -664,8 +677,8 @@ typedef struct af_scan_env_info_s {
 	cmr_u32 fps;
 	cmr_u32 ae_state;
 	cmr_u32 exp_boundary;
-	cmr_u32 y_avg;
-	cmr_u32 y_tgt;
+	cmr_u32 ae_y_avg;
+	cmr_u32 ae_y_tgt;
 	cmr_u32 curr_gain;
 	cmr_u32 exp_time;
 	cmr_u32 y_stdev;
@@ -674,6 +687,7 @@ typedef struct af_scan_env_info_s {
 	cmr_s32 diff_bv;
 	cmr_s32 phase_diff;
 	cmr_u32 pd_conf;
+	cmr_u32 af_y_avg;
 } scan_env_info_t;
 
 typedef struct af_scan_info_s {
@@ -893,6 +907,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
+	cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
 	void *cookie;
 } AF_Ctrl_Ops;
 
