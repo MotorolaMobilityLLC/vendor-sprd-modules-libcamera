@@ -426,6 +426,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
         config->cfg.pdaf_ctrl.mode, config->cfg.pdaf_ctrl.phase_data_type,
         config->chn_deci_factor, config->buffer_cfg_isp);
 
+    memset(&parm, 0x00, sizeof(parm));
     parm.channel_id = channel_id;
     parm.regular_desc = config->cfg.regular_desc;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SHRINK, &parm);

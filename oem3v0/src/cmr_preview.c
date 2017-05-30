@@ -6202,6 +6202,7 @@ cmr_int prev_alloc_sensor_datatype_buf(struct prev_handle *handle,
     }
 
     if (!is_restart && (1 != prev_cxt->sensor_datatype_mem_alloc_flag)) {
+        prev_cxt->sensor_datatype_mem_valid_num = 0;
         mem_ops->alloc_mem(CAMERA_SENSOR_DATATYPE_MAP, handle->oem_handle,
                            (cmr_u32 *)&prev_cxt->sensor_datatype_mem_size,
                            (cmr_u32 *)&prev_cxt->sensor_datatype_mem_num,

@@ -15,6 +15,11 @@
 #
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := x86_lib
+endif
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 include $(CLEAR_VARS)
 LOCAL_MODULE := libPDExtract

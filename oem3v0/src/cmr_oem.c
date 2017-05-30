@@ -7185,6 +7185,52 @@ exit:
     return ret;
 }
 
+static cmr_int camera_get_pdaf_flag(cmr_handle oem_handle,
+                                    enum takepicture_mode mode,
+                                    struct preview_param *out_param_ptr,
+                                    cmr_u32 is_raw_capture) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_context *sn_cxt = &cxt->sn_cxt;
+
+    if (1 == is_raw_capture) {
+        if (SENSOR_PDAF_TYPE2_ENABLE ==
+            sn_cxt->cur_sns_ex_info.pdaf_supported) {
+            out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE2_ENABLE;
+            out_param_ptr->datatype = sn_cxt->pdaf_info.type2_info.data_type;
+        } else {
+            out_param_ptr->pdaf_mode = SENSOR_PDAF_DISABLED;
+        }
+    } else if (1 == out_param_ptr->video_slowmotion_eb ||
+               SENSOR_PDAF_DISABLED == sn_cxt->cur_sns_ex_info.pdaf_supported ||
+               CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode ||
+               CAMERA_AUTOTEST_MODE == mode ||
+               CAMERA_ISP_SIMULATION_MODE == mode ||
+               1 == out_param_ptr->video_eb || 1 == out_param_ptr->is_dv ||
+               cxt->is_multi_mode) {
+        out_param_ptr->pdaf_mode = SENSOR_PDAF_DISABLED;
+    } else if (SENSOR_PDAF_TYPE1_ENABLE ==
+                   sn_cxt->cur_sns_ex_info.pdaf_supported &&
+               out_param_ptr->preview_eb == 1) {
+        out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE1_ENABLE;
+        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
+    } else if (SENSOR_PDAF_TYPE2_ENABLE ==
+                   sn_cxt->cur_sns_ex_info.pdaf_supported &&
+               out_param_ptr->preview_eb == 1) {
+        out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE2_ENABLE;
+        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
+        out_param_ptr->datatype = sn_cxt->pdaf_info.type2_info.data_type;
+        out_param_ptr->datatype_size = sn_cxt->pdaf_info.type2_info.pd_size;
+    } else if (SENSOR_PDAF_TYPE3_ENABLE ==
+                   sn_cxt->cur_sns_ex_info.pdaf_supported &&
+               out_param_ptr->preview_eb == 1) {
+        out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE3_ENABLE;
+        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
+    }
+
+    return ret;
+}
+
 cmr_int camera_get_preview_param(cmr_handle oem_handle,
                                  enum takepicture_mode mode,
                                  cmr_uint is_snapshot,
@@ -7322,31 +7368,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     /*get pdaf enable flag*/
-    if (1 == out_param_ptr->video_slowmotion_eb ||
-        SENSOR_PDAF_DISABLED == sn_cxt->cur_sns_ex_info.pdaf_supported ||
-        CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode ||
-        CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode ||
-        1 == out_param_ptr->video_eb || 1 == is_raw_capture ||
-        1 == out_param_ptr->is_dv || cxt->is_multi_mode)
-        out_param_ptr->pdaf_mode = SENSOR_PDAF_DISABLED;
-    else if (SENSOR_PDAF_TYPE1_ENABLE ==
-                 sn_cxt->cur_sns_ex_info.pdaf_supported &&
-             out_param_ptr->preview_eb == 1) {
-        out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE1_ENABLE;
-        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
-    } else if (SENSOR_PDAF_TYPE2_ENABLE ==
-                   sn_cxt->cur_sns_ex_info.pdaf_supported &&
-               out_param_ptr->preview_eb == 1) {
-        out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE2_ENABLE;
-        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
-        out_param_ptr->datatype = sn_cxt->pdaf_info.type2_info.data_type;
-        out_param_ptr->datatype_size = sn_cxt->pdaf_info.type2_info.pd_size;
-    } else if (SENSOR_PDAF_TYPE3_ENABLE ==
-                   sn_cxt->cur_sns_ex_info.pdaf_supported &&
-               out_param_ptr->preview_eb == 1) {
-        out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE3_ENABLE;
-        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
-    }
+    ret = camera_get_pdaf_flag(cxt, mode, out_param_ptr, is_raw_capture);
 
     property_get("persist.sys.camera.pdaf.off", value, "0");
     if (atoi(value)) {
