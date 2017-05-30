@@ -697,7 +697,7 @@ SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
     // sensor
     SENSOR_AVDD_1800MV, // iovdd
     SENSOR_AVDD_1200MV, // dvdd
-    1,                  // skip frame num before preview
+    0,                  // skip frame num before preview
     3,                  // skip frame num before capture
     6,                  // skip frame num for flash capture
     0,                  // skip frame num on mipi cap
