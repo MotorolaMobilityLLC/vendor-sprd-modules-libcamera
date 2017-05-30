@@ -421,7 +421,7 @@ static cmr_u8 if_lock_partial_ae(cmr_u32 lock, void *cookie)
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_partial_lock_num);
 
-	if (LOCK == !!lock) {
+	if (LOCK == ! !lock) {
 		if (0 == af->ae_partial_lock_num) {
 			af->lock_module(af->caller, AF_LOCKER_AE_CAF);
 			af->ae_partial_lock_num++;
@@ -560,7 +560,7 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	frame_time = frame_len * line_time / 10;
 	frame_time = frame_time > 0 ? frame_time : 1;
 
-	rpt->cur_fps = 1000000/frame_time;
+	rpt->cur_fps = 1000000 / frame_time;
 	rpt->cur_lum = ae->ae_report.cur_lum;
 	rpt->cur_index = ae->ae_report.cur_index;
 	rpt->cur_ev = ae->ae_report.cur_ev;
@@ -1536,7 +1536,7 @@ static void calc_histogram(af_ctrl_t * af, isp_awb_statistic_hist_info_t * stat)
 	}
 }
 
-static void caf_monitor_process_ae(af_ctrl_t * af, const struct ae_calc_out *ae, isp_awb_statistic_hist_info_t * stat)
+static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_awb_statistic_hist_info_t * stat)
 {
 	struct aft_proc_calc_param *prm = &(af->prm_ae);
 	ISP_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
@@ -1604,10 +1604,10 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 	prm->pd_info.confidence = af->pd.confidence;
 	prm->pd_info.pd_value = af->pd.pd_value;
 
-	ISP_LOGV("[%d] pd %d %f ",prm->pd_info.effective_frmid,prm->pd_info.confidence, prm->pd_info.pd_value);
+	ISP_LOGV("[%d] pd %d %f ", prm->pd_info.effective_frmid, prm->pd_info.confidence, prm->pd_info.pd_value);
 	caf_monitor_calc(af, prm);
 
-	return ;
+	return;
 }
 
 static void caf_monitor_process_fd(af_ctrl_t * af)
@@ -1825,8 +1825,7 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 		AF_Trigger(af->af_alg_cxt, &aft_in);
 		do_start_af(af);
 		return rtn;
-	}
-	else{
+	} else {
 		saf_start(af, win);
 		af->state = STATE_NORMAL_AF;
 	}
@@ -2066,45 +2065,41 @@ static cmr_u32 calc_gain_index(cmr_u32 cur_gain)
 	return i;
 }
 
-static void set_ae_info(af_ctrl_t * af, const struct ae_calc_out *ae, cmr_s32 bv)
+static void set_ae_info(af_ctrl_t * af, const struct af_ae_calc_out *ae)
 {
 	ae_info_t *p = &af->ae;
-
 	//ISP_LOGV("state = %s, bv = %d", STATE_STRING(af->state), bv);
-
 	p->stable = ae->is_stab;
-	p->bv = bv;
 	p->exp = ae->cur_exp_line * ae->line_time;
 	p->gain = ae->cur_again;
 	p->gain_index = calc_gain_index(ae->cur_again);
+	p->bv = ae->bv;
 	p->ae_report = *ae;
 
 	af->trigger_source_type |= AF_DATA_AE;
-
 	return;
 }
 
-static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0, void *param1)
+static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)param0;
-	struct ae_out_bv *ae_out = (struct ae_out_bv *)param1;
-	struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)img_blk_info->data;
-	struct ae_calc_out *ae_result = ae_out->ae_result;
+	struct afctrl_ae_info *ae_info = (struct afctrl_ae_info *)param0;
+	struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)ae_info->img_blk_info.data;
 	cmr_s32 rtn = AFV1_SUCCESS;
+
 	//ISP_LOGI("isp aem stat= R%d G%d B%d \n", (int)ae_stat_ptr->r_info[495],(int)ae_stat_ptr->g_info[495],(int)ae_stat_ptr->b_info[495]);
 	set_af_RGBY(af, (void *)ae_stat_ptr);
-	set_ae_info(af, ae_result, ae_out->bv);
+	set_ae_info(af, &(ae_info->ae_rlt_info));
 	return rtn;
 }
 
 static cmr_s32 af_sprd_set_awb_info(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct awb_ctrl_calc_result *result = (struct awb_ctrl_calc_result *)param0;
-	af->awb.r_gain = result->gain.r;
-	af->awb.g_gain = result->gain.g;
-	af->awb.b_gain = result->gain.b;
+	struct afctrl_awb_info *awb = (struct afctrl_awb_info *)param0;
+	af->awb.r_gain = awb->r_gain;
+	af->awb.g_gain = awb->g_gain;
+	af->awb.b_gain = awb->b_gain;
 	//af->trigger_source_type |= AF_DATA_AWB;
 	return AFV1_SUCCESS;
 }
@@ -2221,6 +2216,7 @@ static cmr_s32 af_sprd_get_fullscan_info(cmr_handle handle, void *param0)
 
 cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
+	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_int rtn = AFV1_SUCCESS;
 
@@ -2287,7 +2283,7 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		break;
 
 	case AF_CMD_SET_AE_INFO:
-		rtn = af_sprd_set_ae_info(handle, param0, param1);
+		rtn = af_sprd_set_ae_info(handle, param0);
 		break;
 
 	case AF_CMD_SET_AWB_INFO:
@@ -2339,13 +2335,11 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 		break;
 
 	case AF_CMD_GET_AF_LOG_INFO:{
-			struct af_log_info *log_info = (struct af_log_info  *)param0;
-			log_info->log_cxt= af->af_alg_cxt;
-			log_info->log_len = af->af_dump_info_len;
-			//param0 = (void *)&log_info;
-			ISP_LOGI("Get AF Log info 0x%x ",log_info->log_len);
-			break;
-		}
+		struct af_log_info *log_info = (struct af_log_info *)param0;
+		log_info->log_cxt = af->af_alg_cxt;
+		log_info->log_len = af->af_dump_info_len;
+		ISP_LOGI("Get AF Log info 0x%x ", log_info->log_len);
+		break;}
 
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);

@@ -17,8 +17,6 @@
 #ifndef _ISP_AF_H_
 #define _ISP_AF_H_
 
-#include "isp_common_types.h"
-
 #include "isp_pm.h"
 
 #ifdef WIN32
@@ -112,9 +110,41 @@ extern "C" {
 		AF_LOCKER_MAX
 	};
 
-	struct ae_out_bv {
-		struct ae_calc_out *ae_result;
+	struct af_img_blk_info {
+		cmr_u32 block_w;
+		cmr_u32 block_h;
+		cmr_u32 pix_per_blk;
+		cmr_u32 chn_num;
+		cmr_u32 *data;
+	};
+
+	struct af_ae_calc_out {
 		cmr_s32 bv;
+		cmr_u32 is_stab;
+		cmr_u32 cur_exp_line;
+		cmr_u32 cur_dummy;
+		cmr_u32 frame_line;
+		cmr_u32 line_time;
+		cmr_u32 cur_again;
+		cmr_u32 cur_dgain;
+		cmr_u32 cur_lum;
+		cmr_u32 target_lum;
+		cmr_u32 target_lum_ori;
+		cmr_u32 flag4idx;
+		cmr_u32 cur_ev;
+		cmr_u32 cur_index;
+		cmr_u32 cur_iso;
+	};
+
+	struct afctrl_ae_info {
+		struct af_img_blk_info img_blk_info;
+		struct af_ae_calc_out ae_rlt_info;
+	};
+
+	struct afctrl_awb_info {
+		cmr_u32 r_gain;
+		cmr_u32 g_gain;
+		cmr_u32 b_gain;
 	};
 
 	struct af_motor_pos {
@@ -200,34 +230,6 @@ extern "C" {
 		cmr_u32 init_motor_pos;
 	};
 
-	struct af_img_blk_info {
-		cmr_u32 block_w;
-		cmr_u32 block_h;
-		cmr_u32 pix_per_blk;
-		cmr_u32 chn_num;
-		cmr_u32 *data;
-	};
-
-	struct af_ae_info {
-		cmr_u32 exp_time;	//us
-		cmr_u32 gain;	//256 --> 1X
-		cmr_u32 cur_fps;
-		cmr_u32 cur_lum;
-		cmr_u32 target_lum;
-		cmr_u32 is_stable;
-		cmr_u32 cur_index;
-		cmr_u32 cur_ev;
-		cmr_u32 cur_dummy;
-		cmr_u32 cur_dgain;
-		cmr_u32 cur_iso;
-		cmr_u32 flag;
-		float *ae_data;
-		cmr_s32 ae_data_size;
-		cmr_u32 target_lum_ori;
-		cmr_u32 flag4idx;
-		struct tg_ae_ctrl_alc_log log_ae;
-	};
-
 	struct afctrl_calc_in {
 		cmr_u32 data_type;
 		void *data;
@@ -237,19 +239,6 @@ extern "C" {
 	struct afctrl_calc_out {
 		cmr_u32 motor_pos;
 		cmr_u32 suc_win;
-	};
-
-	struct afctrl_work_lib {
-		cmr_handle lib_handle;
-		struct adpt_ops_type *adpt_ops;
-	};
-
-	struct afctrl_cxt {
-		cmr_handle thr_handle;
-		cmr_handle caller_handle;
-		struct afctrl_work_lib work_lib;
-		struct afctrl_calc_out proc_out;
-		isp_af_cb af_set_cb;
 	};
 
 #define AREA_LOOP 4

@@ -116,7 +116,7 @@ typedef struct _ae_info {
 	cmr_u32 gain;
 	cmr_u32 gain_index;
 	cmr_u32 win_size;
-	struct ae_calc_out ae_report;
+	struct af_ae_calc_out ae_report;
 } ae_info_t;
 
 typedef struct _awb_info {
@@ -210,7 +210,7 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 dummy[3];	// 4 bytes align
 } afm_tuning_sharkl2;
 
-struct af_log_info{
+struct af_log_info {
 	void *log_cxt;
 	cmr_u32 log_len;
 };
@@ -236,7 +236,6 @@ typedef struct _af_ctrl {
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
-	//close address begin for easy parsing
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
 	sem_t af_wait_caf;

@@ -910,15 +910,14 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	struct smart_proc_input smart_proc_in;
 	struct ae_monitor_info info;
 	struct awb_size win_size = { 0, 0 };
-	struct af_img_blk_info img_blk_info;
+	struct afctrl_ae_info ae_info;
+	struct afctrl_awb_info awb_info;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	cmr_s32 bv = 0;
 	cmr_s32 bv_gain = 0;
-	struct ae_out_bv ae_out_bv;
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
-	memset(&ae_out_bv, 0, sizeof(ae_out_bv));
 
 	CMR_MSG_INIT(message);
 
@@ -1010,20 +1009,37 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	isp_cur_bv = bv;
 	isp_cur_ct = result->ct;
 
-	ae_out_bv.ae_result = ae_result;
-	ae_out_bv.bv = bv;
+	memset((void *)&ae_info, 0, sizeof(struct afctrl_ae_info));
+	ae_info.img_blk_info.block_w = 32;
+	ae_info.img_blk_info.block_h = 32;
+	ae_info.img_blk_info.chn_num = 3;
+	ae_info.img_blk_info.pix_per_blk = 1;
+	ae_info.img_blk_info.data = (cmr_u32 *) ae_stat_ptr;
+	ae_info.ae_rlt_info.bv = bv;
+	ae_info.ae_rlt_info.is_stab = ae_result->is_stab;
+	ae_info.ae_rlt_info.cur_exp_line = ae_result->cur_exp_line;
+	ae_info.ae_rlt_info.cur_dummy = ae_result->cur_dummy;
+	ae_info.ae_rlt_info.frame_line = ae_result->frame_line;
+	ae_info.ae_rlt_info.line_time = ae_result->line_time;
+	ae_info.ae_rlt_info.cur_again = ae_result->cur_again;
+	ae_info.ae_rlt_info.cur_dgain = ae_result->cur_dgain;
+	ae_info.ae_rlt_info.cur_lum = ae_result->cur_lum;
+	ae_info.ae_rlt_info.target_lum = ae_result->target_lum;
+	ae_info.ae_rlt_info.target_lum_ori = ae_result->target_lum_ori;
+	ae_info.ae_rlt_info.flag4idx = ae_result->flag4idx;
+	ae_info.ae_rlt_info.cur_ev = ae_result->cur_ev;
+	ae_info.ae_rlt_info.cur_index = ae_result->cur_index;
+	ae_info.ae_rlt_info.cur_iso = ae_result->cur_iso;
 
-	memset((void *)&img_blk_info, 0, sizeof(img_blk_info));
-	img_blk_info.block_w = 32;
-	img_blk_info.block_h = 32;
-	img_blk_info.chn_num = 3;
-	img_blk_info.pix_per_blk = 1;
-	img_blk_info.data = (cmr_u32 *) ae_stat_ptr;
+	memset((void *)&awb_info, 0, sizeof(struct afctrl_awb_info));
+	awb_info.r_gain = result->gain.r;
+	awb_info.g_gain = result->gain.g;
+	awb_info.b_gain = result->gain.b;
 
 	if (cxt->ops.af_ops.ioctrl) {
-		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void *)(&img_blk_info), (void *)&ae_out_bv);
+		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void *)(&ae_info), NULL);
 		ISP_TRACE_IF_FAIL(rtn, ("AF_CMD_SET_AE_INFO fail "));
-		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void *)result, NULL);
+		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void *)(&awb_info), NULL);
 		ISP_TRACE_IF_FAIL(rtn, ("AF_CMD_SET_AWB_INFO fail "));
 	}
 /*
@@ -1039,7 +1055,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	message.sub_msg_type = AF_DATA_IMG_BLK;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
 	message.alloc_flag = 0;
-	message.data = (void *)(&img_blk_info);
+	message.data = (void *)(&ae_info.img_blk_info);
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
 	ISP_TRACE_IF_FAIL(rtn, ("cmr_thread_msg_send fail "));
 
@@ -1221,7 +1237,8 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			img_blk_info.chn_num = 3;
 			img_blk_info.pix_per_blk = 1;
 			img_blk_info.data = (cmr_u32 *) in_ptr;
-			memcpy((void *)&img_blk_info,in_ptr,sizeof(struct af_img_blk_info));
+			if(NULL != in_ptr)
+				memcpy((void *)&img_blk_info,in_ptr,sizeof(struct af_img_blk_info));
 			calc_param.data_type = AF_DATA_IMG_BLK;
 			calc_param.data = (void *)(&img_blk_info);
 			if (cxt->ops.af_ops.process)
@@ -1229,7 +1246,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			break;
 		}
 	case AF_DATA_AE:{
-			struct af_ae_info ae_info;
+			/*struct af_ae_info ae_info;
 			struct ae_calc_out *ae_result = (struct ae_calc_out *)in_ptr;
 			cmr_u32 line_time = ae_result->line_time;
 			cmr_u32 frame_len = ae_result->frame_line;
@@ -1261,7 +1278,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			calc_param.data_type = AF_DATA_AE;
 			calc_param.data = (void *)(&ae_info);
 			if (cxt->ops.af_ops.process)
-				rtn = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
+				rtn = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);*/
 			break;
 		}
 	case AF_DATA_FD:{
