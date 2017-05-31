@@ -141,7 +141,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     virtual int setTakePictureSize(uint32_t width, uint32_t height);
     virtual status_t faceDectect(bool enable);
     virtual status_t faceDectect_enable(bool enable);
-    virtual status_t autoFocus(void *user_data);
+    virtual status_t autoFocus();
     virtual status_t cancelAutoFocus();
     virtual status_t setAePrecaptureSta(uint8_t state);
     virtual int openCamera();
@@ -618,7 +618,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     SprdCamera3Setting *mSetting;
     hal_stream_info_t *mZslStreamInfo;
     List<hal3_trans_info_t> mCbInfoList;
-    void *mMetaData;
     Condition mBurstCapWait;
     uint8_t BurstCapCnt;
     uint8_t mCapIntent;

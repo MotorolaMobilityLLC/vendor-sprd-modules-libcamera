@@ -384,7 +384,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mRawHeight = 0;
     mRegularChan = NULL;
 
-    mMetaData = NULL;
     jpeg_gps_location = false;
     mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
     mPreviewHeapBakUseFlag = 0;
@@ -1306,7 +1305,7 @@ int SprdCamera3OEMIf::autoFocusToFaceFocus() {
     return NO_ERROR;
 }
 
-status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
+status_t SprdCamera3OEMIf::autoFocus() {
     ATRACE_CALL();
 
 #ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
@@ -1316,10 +1315,9 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
 
-    mMetaData = user_data;
-
-    if (mCameraId == 1 || mCameraId == 3)
+    if (mCameraId == 3) {
         return NO_ERROR;
+    }
 
     mSetting->getCONTROLTag(&controlInfo);
     if (isPreviewStart()) {
@@ -1393,15 +1391,13 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
 
     Mutex::Autolock l(&mLock);
 
-    if (mCameraId == 1 || mCameraId == 3)
+    if (mCameraId == 3)
         return NO_ERROR;
 
     ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
 
     WaitForFocusCancelDone();
     {
-        SprdCamera3MetadataChannel *mChannel =
-            (SprdCamera3MetadataChannel *)mMetaData;
         int64_t timeStamp = 0;
         timeStamp = systemTime();
 
@@ -5407,8 +5403,6 @@ handle_encode_exit:
 void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    SprdCamera3MetadataChannel *channel =
-        (SprdCamera3MetadataChannel *)mMetaData;
     int64_t timeStamp = 0;
     timeStamp = systemTime();
 
@@ -5989,32 +5983,42 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
                  controlInfo.ae_exposure_compensation);
         break;
-    case ANDROID_CONTROL_AF_REGIONS: {
-        struct img_rect zoom1 = {0, 0, 0, 0};
-        struct img_rect zoom = {0, 0, 0, 0};
-        struct cmr_focus_param focus_para;
-        if (mCameraState.preview_state == SPRD_PREVIEW_IN_PROGRESS) {
-            zoom.start_x = controlInfo.af_regions[0];
-            zoom.start_y = controlInfo.af_regions[1];
-            zoom.width = controlInfo.af_regions[2];
-            zoom.height = controlInfo.af_regions[3];
-            mHalOem->ops->camera_get_sensor_trim(mCameraHandle, &zoom1);
-            if ((0 == zoom.start_x && 0 == zoom.start_y && 0 == zoom.width &&
-                 0 == zoom.height) ||
-                !CameraConvertCropRegion(zoom1.width, zoom1.height, &zoom)) {
-                focus_para.zone[0].start_x = zoom.start_x;
-                focus_para.zone[0].start_y = zoom.start_y;
-                focus_para.zone[0].width = zoom.width;
-                focus_para.zone[0].height = zoom.height;
-                focus_para.zone_cnt = 1;
-                HAL_LOGI("after crop AF region is %d %d %d %d",
-                         focus_para.zone[0].start_x, focus_para.zone[0].start_y,
-                         focus_para.zone[0].width, focus_para.zone[0].height);
-                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCUS_RECT,
-                         (cmr_uint)&focus_para);
+    case ANDROID_CONTROL_AF_TRIGGER:
+        HAL_LOGV("AF_TRIGGER %d", controlInfo.af_trigger);
+        if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
+            struct img_rect zoom1 = {0, 0, 0, 0};
+            struct img_rect zoom = {0, 0, 0, 0};
+            struct cmr_focus_param focus_para;
+            if (mCameraState.preview_state == SPRD_PREVIEW_IN_PROGRESS) {
+                zoom.start_x = controlInfo.af_regions[0];
+                zoom.start_y = controlInfo.af_regions[1];
+                zoom.width = controlInfo.af_regions[2];
+                zoom.height = controlInfo.af_regions[3];
+                mHalOem->ops->camera_get_sensor_trim(mCameraHandle, &zoom1);
+                if ((0 == zoom.start_x && 0 == zoom.start_y &&
+                     0 == zoom.width && 0 == zoom.height) ||
+                    !CameraConvertCropRegion(zoom1.width, zoom1.height,
+                                             &zoom)) {
+                    focus_para.zone[0].start_x = zoom.start_x;
+                    focus_para.zone[0].start_y = zoom.start_y;
+                    focus_para.zone[0].width = zoom.width;
+                    focus_para.zone[0].height = zoom.height;
+                    focus_para.zone_cnt = 1;
+                    HAL_LOGI(
+                        "after crop AF region is %d %d %d %d",
+                        focus_para.zone[0].start_x, focus_para.zone[0].start_y,
+                        focus_para.zone[0].width, focus_para.zone[0].height);
+                    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCUS_RECT,
+                             (cmr_uint)&focus_para);
+                }
             }
+
+            autoFocus();
+        } else if (controlInfo.af_trigger ==
+                   ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
+            cancelAutoFocus();
         }
-    } break;
+        break;
     case ANDROID_SPRD_SENSOR_ORIENTATION: {
         SPRD_DEF_Tag sprddefInfo;
 
@@ -6167,6 +6171,40 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
     } break;
 
+    case ANDROID_CONTROL_AE_REGIONS: {
+        struct cmr_ae_param ae_param;
+        struct img_rect sensor_trim = {0, 0, 0, 0};
+        struct img_rect ae_aera = {0, 0, 0, 0};
+
+        ae_aera.start_x = controlInfo.ae_regions[0];
+        ae_aera.start_y = controlInfo.ae_regions[1];
+        ae_aera.width = controlInfo.ae_regions[2] - controlInfo.ae_regions[0];
+        ae_aera.height = controlInfo.ae_regions[3] - controlInfo.ae_regions[1];
+
+        mHalOem->ops->camera_get_sensor_trim(mCameraHandle, &sensor_trim);
+        ret = CameraConvertCropRegion(sensor_trim.width, sensor_trim.height,
+                                      &ae_aera);
+        if (ret) {
+            HAL_LOGE("CameraConvertCropRegion failed");
+        }
+
+        ae_param.win_area.count = 1;
+        ae_param.win_area.rect[0].start_x = ae_aera.start_x;
+        ae_param.win_area.rect[0].start_y = ae_aera.start_y;
+        ae_param.win_area.rect[0].width = ae_aera.width;
+        ae_param.win_area.rect[0].height = ae_aera.height;
+
+        HAL_LOGI("after crop ae region is %d %d %d %d",
+                 ae_param.win_area.rect[0].start_x,
+                 ae_param.win_area.rect[0].start_y,
+                 ae_param.win_area.rect[0].width,
+                 ae_param.win_area.rect[0].height);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_REGION,
+                 (cmr_uint)&ae_param);
+
+    } break;
+
+
     case ANDROID_FLASH_MODE:
         if (mCameraId == 0 || mCameraId == 1) {
             int8_t flashMode;
@@ -6218,32 +6256,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_SPRD_METERING_MODE: {
         SPRD_DEF_Tag sprddefInfo;
-        struct cmr_ae_param ae_param;
-        struct img_rect zoom1 = {0, 0, 0, 0};
-        struct img_rect zoom = {0, 0, 0, 0};
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        zoom.start_x = sprddefInfo.am_regions[0];
-        zoom.start_y = sprddefInfo.am_regions[1];
-        zoom.width = sprddefInfo.am_regions[2];
-        zoom.height = sprddefInfo.am_regions[3];
-        mHalOem->ops->camera_get_sensor_trim(mCameraHandle, &zoom1);
-        if (!CameraConvertCropRegion(zoom1.width, zoom1.height, &zoom)) {
-            sprddefInfo.am_regions[0] = zoom.start_x;
-            sprddefInfo.am_regions[1] = zoom.start_y;
-            sprddefInfo.am_regions[2] = zoom.width;
-            sprddefInfo.am_regions[3] = zoom.height;
-            mSetting->setSPRDDEFTag(sprddefInfo);
-        }
-
-        mSetting->androidAmModeToDrvAwbMode(sprddefInfo.am_mode, &ae_param);
-        HAL_LOGI("after crop AM region is %d %d %d %d",
-                 ae_param.win_area.rect[0].start_x,
-                 ae_param.win_area.rect[0].start_y,
-                 ae_param.win_area.rect[0].width,
-                 ae_param.win_area.rect[0].height);
+        struct cmr_ae_param ae_param;
+        memset(&ae_param, 0, sizeof(ae_param));
+        ae_param.mode = sprddefInfo.am_mode;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE,
                  (cmr_uint)&ae_param);
-
     } break;
 
     case ANDROID_SPRD_ISO: {

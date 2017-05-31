@@ -838,33 +838,24 @@ static cmr_int
 setting_set_auto_exposure_mode(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
+
+    CMR_LOGD("parm->ae_param.mode:%ld", parm->ae_param.mode);
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_EXPOSURE_MODE, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_ae_region(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
     struct setting_init_in *init_in = &cpt->init_in;
     struct common_isp_cmd_param isp_param;
-    struct isp_pos_rect trim;
 
-    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_EXPOSURE_MODE, parm);
-    CMR_LOGD("parm->ae_param.mode:%ld", parm->ae_param.mode);
-    // delete this if because app change metering condition
+    // some isp only support touch ae on spot metering
     // if (CAMERA_AE_SPOT_METERING == parm->ae_param.mode)
     {
         if (setting_is_rawrgb_format(cpt, parm)) {
             isp_param.win_area = parm->ae_param.win_area;
-            trim.start_x = isp_param.win_area.rect[0].start_x;
-            trim.start_y = isp_param.win_area.rect[0].start_y;
-            trim.end_x = isp_param.win_area.rect[0].start_x +
-                         isp_param.win_area.rect[0].width;
-            trim.end_y = isp_param.win_area.rect[0].start_y +
-                         isp_param.win_area.rect[0].height;
-
-            CMR_LOGD("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y,
-                     trim.end_x, trim.end_y);
-            cpt->is_touch_focus = 1;
-            if (trim.end_x <= (uint32_t)trim.start_x ||
-                trim.end_y <= (uint32_t)trim.start_y ||
-                (cmr_s32)trim.end_x <= 0 || (cmr_s32)trim.end_y <= 0) {
-                cpt->is_touch_focus = 0;
-            }
-
             if (init_in->setting_isp_ioctl) {
                 isp_param.camera_id = parm->camera_id;
                 ret = (*init_in->setting_isp_ioctl)(
@@ -3420,6 +3411,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
          setting_set_yuv_callback_enable},
         {CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK, setting_set_awb_lock_unlock},
         {CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED, setting_set_sprd_hdr_plus_enable},
+        {CAMERA_PARAM_AE_REGION, setting_set_ae_region},
         {CAMERA_PARAM_TYPE_MAX, NULL},
         {SETTING_GET_PREVIEW_ANGLE, setting_get_preview_angle},
         {SETTING_GET_CAPTURE_ANGLE, setting_get_capture_angle},

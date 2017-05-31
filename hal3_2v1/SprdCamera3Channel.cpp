@@ -760,14 +760,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
     while ((tag = mSetting->popAndroidParaTag()) != -1) {
         switch (tag) {
         case ANDROID_CONTROL_AF_TRIGGER:
-            mSetting->getCONTROLTag(&controlInfo);
-            HAL_LOGV("AF_TRIGGER %d", controlInfo.af_trigger);
-            if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
-                mOEMIf->autoFocus(this);
-            } else if (controlInfo.af_trigger ==
-                       ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
-                mOEMIf->cancelAutoFocus();
-            }
+            mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
             break;
 
         case ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER:
@@ -836,9 +829,6 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_CONTROL_AF_MODE:
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
             break;
-        case ANDROID_CONTROL_AF_REGIONS:
-            mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AF_REGIONS);
-            break;
         case ANDROID_STATISTICS_FACE_DETECT_MODE:
             HAL_LOGV("FACE DECTION");
 #if defined(CONFIG_CAMERA_FACE_DETECT)
@@ -859,6 +849,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_CONTROL_AE_LOCK:
             HAL_LOGV("ANDROID_CONTROL_AE_LOCK");
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);
+            break;
+        case ANDROID_CONTROL_AE_REGIONS:
+            HAL_LOGV("ANDROID_CONTROL_AE_REGIONS");
+            mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_REGIONS);
             break;
         default:
             HAL_LOGV("other tag");
