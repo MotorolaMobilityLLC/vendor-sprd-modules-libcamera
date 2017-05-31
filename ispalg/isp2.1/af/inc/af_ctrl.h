@@ -194,6 +194,11 @@ extern "C" {
 		struct af_otp_data rdm_data;
 	};
 
+	struct af_log_info {
+		void *log_cxt;
+		cmr_u32 log_len;
+	};
+
 	struct afctrl_init_in {
 		cmr_handle caller_handle;	//struct isp_alg_fw_context *cxt
 		cmr_handle handle_pm;
@@ -203,8 +208,6 @@ extern "C" {
 		struct isp_size src;
 		cmr_handle caller;	//struct afctrl_cxt *cxt_ptr
 		struct af_ctrl_otp_info otp_info;
-		void *af_alg_cxt;	//AF_Data fv;
-		cmr_u32 af_dump_info_len;
 		 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 		 cmr_s32(*start_notice) (void *handle);
 		 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
@@ -227,6 +230,7 @@ extern "C" {
 	};
 
 	struct afctrl_init_out {
+		struct af_log_info log_info;
 		cmr_u32 init_motor_pos;
 	};
 

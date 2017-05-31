@@ -29,7 +29,6 @@
 #include "isp_ioctrl.h"
 #include "isp_param_file_update.h"
 #include "pdaf_ctrl.h"
-#include "af_sprd_adpt_v1.h"
 #include <dlfcn.h>
 
 cmr_u32 isp_cur_bv;
