@@ -786,7 +786,7 @@ int SprdCamera3HWI::configureStreams(
         capture_size.height = 1840;
     } else if (capture_size.height == 360 && capture_size.width == 640) {
         capture_size.height = 368;
-    } else if  (capture_size.height == 1080 && capture_size.width == 1920) {
+    } else if (capture_size.height == 1080 && capture_size.width == 1920) {
         capture_size.height = 1088;
     }
 
@@ -1392,9 +1392,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         camera3_notify_msg_t notify_msg;
 
         if (i->frame_number < frame_number) {
-            HAL_LOGD(
-                "i->frame_number = %d, frame_number = %d, i->request_id = %d",
-                i->frame_number, frame_number, i->request_id);
+            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
+                     i->frame_number, frame_number, i->request_id);
 
             /**add for 3d capture reprocessing begin   */
             HAL_LOGV("result stream format =%d", result_info->stream->format);
@@ -1443,9 +1442,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
             i++;
         } else if (i->frame_number == frame_number) {
-            HAL_LOGD(
-                "i->frame_number = %d, frame_number = %d, i->request_id = %d",
-                i->frame_number, frame_number, i->request_id);
+            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
+                     i->frame_number, frame_number, i->request_id);
 
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;

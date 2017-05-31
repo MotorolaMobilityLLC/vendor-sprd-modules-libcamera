@@ -127,6 +127,13 @@ enum DFS_POLICY {
 #define CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH 0x805
 
 #define UPDATE_RANGE_FPS_COUNT 0x04
+#ifdef CONFIG_STEREOCAPUTRE_SUPPORT
+#define MULTI_CAMERA_MAIN_ID (1)
+#define MULTI_CAMERA_SUB_ID (3)
+#else
+#define MULTI_CAMERA_MAIN_ID (0)
+#define MULTI_CAMERA_SUB_ID (2)
+#endif
 
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
@@ -355,13 +362,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     }
 
     mCameraId = cameraId;
-#if defined(CONFIG_STEREOCAPUTRE_SUPPORT)
-    mMultiCameraMatchZsl->cam1_id = 1;
-    mMultiCameraMatchZsl->cam3_id = 3;
-#else
-    mMultiCameraMatchZsl->cam1_id = 0;
-    mMultiCameraMatchZsl->cam3_id = 2;
-#endif
+    mMultiCameraMatchZsl->cam1_id = MULTI_CAMERA_MAIN_ID;
+    mMultiCameraMatchZsl->cam3_id = MULTI_CAMERA_SUB_ID;
     if (mCameraId == mMultiCameraMatchZsl->cam1_id) {
         mMultiCameraMatchZsl->cam1_ZSLQueue = &mZSLQueue;
     } else if (mCameraId == mMultiCameraMatchZsl->cam3_id) {
@@ -1501,7 +1503,7 @@ int SprdCamera3OEMIf::getCoveredValue(uint32_t *value) {
 int SprdCamera3OEMIf::setAfPos(uint32_t value) {
     int32_t ret = 0;
 
-    HAL_LOGD("E  pos:%d",value);
+    HAL_LOGD("E  pos:%d", value);
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_POS,
                                       &value);
 
@@ -2600,7 +2602,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs mode end*/
 
         /*read refoucs otp begin*/
-        if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true) && mCameraId == 0) {
+        if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true) &&
+            mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
             char *psPath_OtpData =
                 "data/misc/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
