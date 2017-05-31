@@ -175,6 +175,30 @@ struct sensor_flash_cali_param {
 	cmr_u32 reserved0[19];
 };
 
+struct dual_flash_tune_param {
+	cmr_u8 version;/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1*/
+	cmr_u8 alg_id;
+	cmr_u8 flashLevelNum1;
+	cmr_u8 flashLevelNum2;/*1 * 4bytes*/
+	cmr_u8 preflahLevel1;
+	cmr_u8 preflahLevel2;
+	cmr_u16 preflashBrightness;/*1 * 4bytes*/
+
+	cmr_u16 brightnessTarget; //10bit
+	cmr_u16 brightnessTargetMax; //10bit
+	/*1 * 4bytes*/
+
+	cmr_u32 foregroundRatioHigh;/*fix data: 1x-->100*/
+	cmr_u32 foregroundRatioLow;/*fix data: 1x-->100*/
+	/*2 * 4bytes*/
+	cmr_u8 flashMask[1024];/*256 * 4bytes*/
+	cmr_u16 brightnessTable[1024];/*512 * 4bytes*/
+	cmr_u16 rTable[1024]; //g: 1024 /*512 * 4bytes*/
+	cmr_u16 bTable[1024];/*512 * 4bytes*/
+
+	cmr_u8 reserved1[1024];/*256 * 4bytes*/
+};/*2053 * 4 bypes*/
+
 //environment detec
 struct sensor_envi_detect_param {
 	cmr_u32 enable;
@@ -1724,6 +1748,7 @@ enum ISP_BLK_ID {
 //Flash and envi
 	ISP_BLK_FLASH_CALI = 0x4034,
 	ISP_BLK_ENVI_DETECT = 0x4035,
+	ISP_BLK_DUAL_FLASH = 0x4036,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };
