@@ -58,7 +58,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 		for (i = 0; i < 72; i++) {
 			dst_ptr->cur.lut_w[i] = nlm_param[strength_level].lut_w.lut_w[i];
 		}
-#if 1				//only WORDSIZE 32
+#if 0				//only WORDSIZE 32
 		if (vst_param != NULL) {
 			addr = (void *)(dst_ptr->cur.vst_addr);
 			memcpy(addr, (void *)vst_param[strength_level].vst_param, dst_ptr->cur.vst_len);
@@ -68,12 +68,12 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 			memcpy(addr, (void *)ivst_param[strength_level].ivst_param, dst_ptr->cur.ivst_len);
 		}
 #endif
-#if 0				//wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
+#if 1				//wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 		if (vst_param != NULL) {
 #if __WORDSIZE == 64
 			addr = (void *)((cmr_uint) dst_ptr->cur.vst_addr[1] << 32 | dst_ptr->cur.vst_addr[0]);
 #else
-			//addr = (void*)(dst_ptr->cur.vst_addr[0]);
+			addr = (void*)(dst_ptr->cur.vst_addr[0]);
 #endif
 			memcpy(addr, (void *)vst_param[strength_level].vst_param, dst_ptr->cur.vst_len);
 		}
@@ -82,7 +82,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 #if __WORDSIZE == 64
 			addr = (void *)((cmr_uint) dst_ptr->cur.ivst_addr[1] << 32 | dst_ptr->cur.ivst_addr[0]);
 #else
-			//addr = (void*)(dst_ptr->cur.ivst_addr[0]);
+			addr = (void*)(dst_ptr->cur.ivst_addr[0]);
 #endif
 			memcpy(addr, (void *)ivst_param[strength_level].ivst_param, dst_ptr->cur.ivst_len);
 		}
@@ -146,16 +146,16 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 		}
 	}
 	memset((void *)dst_ptr->vst_map.data_ptr, 0x00, dst_ptr->vst_map.size);
-#if 1				//only WORDSIZE 32
+#if 0				//only WORDSIZE 32
 	dst_ptr->cur.vst_addr = (cmr_uint) (dst_ptr->vst_map.data_ptr);
 #endif
-#if 0				//wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
+#if 1				//wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
 	dst_ptr->cur.vst_addr[0] = (cmr_uint) (dst_ptr->vst_map.data_ptr) & 0xffffffff;
 	dst_ptr->cur.vst_addr[1] = (cmr_uint) (dst_ptr->vst_map.data_ptr) >> 32;
 #else
-	//dst_ptr->cur.vst_addr[0] = (cmr_uint)(dst_ptr->vst_map.data_ptr);
-	//dst_ptr->cur.vst_addr[1] = 0;
+	dst_ptr->cur.vst_addr[0] = (cmr_uint)(dst_ptr->vst_map.data_ptr);
+	dst_ptr->cur.vst_addr[1] = 0;
 #endif
 #endif
 	dst_ptr->cur.vst_len = dst_ptr->vst_map.size;
@@ -170,16 +170,16 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 		}
 	}
 	memset((void *)dst_ptr->ivst_map.data_ptr, 0x00, dst_ptr->ivst_map.size);
-#if 1				//only WORDSIZE 32
+#if 0				//only WORDSIZE 32
 	dst_ptr->cur.ivst_addr = (cmr_uint) (dst_ptr->ivst_map.data_ptr);
 #endif
-#if 0				//wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
+#if 1				//wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
 	dst_ptr->cur.ivst_addr[0] = (cmr_uint) (dst_ptr->ivst_map.data_ptr) & 0xffffffff;
 	dst_ptr->cur.ivst_addr[1] = (cmr_uint) (dst_ptr->ivst_map.data_ptr) >> 32;
 #else
-	//dst_ptr->cur.ivst_addr[0] = (cmr_uint)(dst_ptr->ivst_map.data_ptr);
-	//dst_ptr->cur.ivst_addr[1] = 0;
+	dst_ptr->cur.ivst_addr[0] = (cmr_uint)(dst_ptr->ivst_map.data_ptr);
+	dst_ptr->cur.ivst_addr[1] = 0;
 #endif
 #endif
 	dst_ptr->cur.ivst_len = dst_ptr->ivst_map.size;

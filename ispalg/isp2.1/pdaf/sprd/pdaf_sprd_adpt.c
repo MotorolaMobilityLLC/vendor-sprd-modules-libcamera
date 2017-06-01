@@ -163,8 +163,8 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 		pdaf_info_ptr->pattern_pixel_col[i] = pdafTestCase_ptr->pattern_pixel_col[i];
 	}
 
-	memset((void *)pdaf_info_ptr->phase_left_addr, 0, 0x100);
-	memset((void *)pdaf_info_ptr->phase_right_addr, 0, 0x100);
+	memset((void *)(uintptr_t)pdaf_info_ptr->phase_left_addr, 0, 0x100);
+	memset((void *)(uintptr_t)pdaf_info_ptr->phase_right_addr, 0, 0x100);
 	return rtn;
 }
 
@@ -353,8 +353,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	memset(&callback_in, 0, sizeof(callback_in));
 	memset(&pd_calc_result, 0, sizeof(pd_calc_result));
 	cxt->is_busy = 1;
-	void *pInPhaseBuf_left = (cmr_s32 *) (proc_in->u_addr);
-	void *pInPhaseBuf_right = (cmr_s32 *) (proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
+	void *pInPhaseBuf_left = (cmr_s32 *) (cmr_uint)(proc_in->u_addr);
+	void *pInPhaseBuf_right = (cmr_s32 *) (cmr_uint)(proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
 	ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 
 	if (cxt->pd_gobal_setting.dSensorMode) {
