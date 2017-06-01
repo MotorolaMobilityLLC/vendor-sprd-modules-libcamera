@@ -271,6 +271,9 @@ static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
 	if (NULL != af->vcm_ops.get_motor_pos) {
 		//af->vcm_ops.get_motor_pos(af->caller, &pos);
 		af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, &pos);
+		if (0 == pos || pos > 1023) {
+			pos = (cmr_u16) lens_get_pos(af);
+		}
 	} else {
 		pos = (cmr_u16) lens_get_pos(af);
 	}
@@ -620,6 +623,9 @@ static cmr_u8 if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 		//af->vcm_ops.get_motor_pos(af->caller, motor_pos);
 		af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, motor_pos);
 		ISP_LOGV("motor pos in register %d", *motor_pos);
+		if (0 == *motor_pos || *motor_pos > 1023) {
+			*motor_pos = (cmr_u16) lens_get_pos(af);
+		}
 	} else {
 		*motor_pos = (cmr_u16) lens_get_pos(af);
 	}
