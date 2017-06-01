@@ -124,6 +124,8 @@ enum ae_io_ctrl_cmd {
 	AE_GET_BV_BY_GAIN,
 	AE_GET_BV_BY_LUM_NEW,
 	AE_GET_BV_BY_GAIN_NEW,
+	AE_GET_FLASH_ENV_RATIO,
+	AE_GET_FLASH_ONE_OF_ALL_RATIO,
 	AE_SET_G_STAT,
 	AE_SET_FORCE_PAUSE,	//for mp tool, not change by af or other
 	AE_SET_FORCE_RESTORE,	//for mp tool, not change by af or other

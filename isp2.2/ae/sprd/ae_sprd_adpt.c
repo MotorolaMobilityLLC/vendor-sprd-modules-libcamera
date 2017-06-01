@@ -4711,6 +4711,22 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 			*bv = cxt->cur_result.wts.cur_again;
 		}
 		break;
+		
+	case AE_GET_FLASH_ENV_RATIO:
+		if (result) {
+			float *captureFlashEnvRatio = (float *) result;
+
+			*captureFlashEnvRatio = cxt->flash_esti_result.captureFlashRatio;
+		}
+		break;
+
+	case AE_GET_FLASH_ONE_OF_ALL_RATIO:
+		if (result) {
+			float *captureFlash1ofALLRatio = (float *) result;
+
+			*captureFlash1ofALLRatio = cxt->flash_esti_result.captureFlash1Ratio;
+		}
+		break;
 
 	case AE_GET_EV:
 		if (result) {
