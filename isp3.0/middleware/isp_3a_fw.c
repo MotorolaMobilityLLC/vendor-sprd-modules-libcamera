@@ -3152,7 +3152,8 @@ cmr_int isp3a_set_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		}
 	} else {
 		exif_ptr->other_debug_info1.mirror = exif_info_ptr->ex_jpg_exif.mirror;
-		exif_ptr->other_debug_info1.orientation = (exif_info_ptr->ex_jpg_exif.orientation / 90 + 3) % 4;
+		exif_ptr->other_debug_info1.orientation = exif_info_ptr->ex_jpg_exif.orientation / 90;
+		ISP_LOGV("m %d, o %d", exif_ptr->other_debug_info1.mirror, exif_ptr->other_debug_info1.orientation);
 	}
 
 	return ret;
