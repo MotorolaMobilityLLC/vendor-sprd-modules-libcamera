@@ -59,6 +59,81 @@
 #define AE_THREAD_QUEUE_NUM		(50)
 const char AE_MAGIC_TAG[] = "ae_debug_info";
 
+/*
+ * for flash calibration
+*/
+struct flash_calibration_data
+{
+	uint32 version;
+	int32 error;
+	uint8 flashLevelNum1;
+	uint8 flashLevelNum2;
+	bool flashMask[1024];
+	uint16 brightnessTable[1024];
+	uint16 rTable[1024]; //g: 1024
+	uint16 bTable[1024];
+	uint16 preflashBrightness[1024];
+	uint16 preflashCt[1024];
+};
+
+enum FlashCaliError
+{
+	FlashCali_too_close = -10000,
+	FlashCali_too_far,
+};
+
+enum FlashCaliState
+{
+	FlashCali_start,
+	FlashCali_ae,
+	FlashCali_cali,
+	FlashCali_end,
+	FlashCali_none,
+};
+
+struct FCData
+{
+	float rBuf[1024];
+	float gBuf[1024];
+	float bBuf[1024];
+	float expTime;
+	int gain;
+	float expTimeBase;
+	int gainBase;
+
+	int isDual;
+	int maxCurrent1;
+	int maxCurrent2;
+	int maxCurrentAll;
+
+	int testIndAll;
+	int testInd;
+	int isMainTab[128];
+	int ind1Tab[128];
+	int ind2Tab[128];
+	int testMinFrm[128];
+	int expReset[128];
+
+	float expTab[128];
+	int gainTab[128];
+
+	float rData[128];
+	float gData[128];
+	float bData[128];
+
+	int stateAeFrameCntSt;
+	int stateCaliFrameCntSt2;
+	int stateCaliFrameCntStSub;
+
+	float rFrame[128][15];
+	float gFrame[128][15];
+	float bFrame[128][15];
+	int frame;
+
+	struct flash_calibration_data out;
+
+};
+
 struct ae_exposure_param {
 	cmr_u32 cur_index;
 	cmr_u32 line_time;
@@ -201,6 +276,8 @@ struct ae_ctrl_cxt {
 	struct Flash_pfOneIterationOutput flash_esti_result;
 	cmr_s32 flash_last_exp_line;
 	cmr_s32 flash_last_gain;
+	float ctTabRg[20];
+	float ctTab[20];
 	/*ED: for dual flash algorithm*/
 	cmr_s16 flash_on_off_thr;
 	cmr_u32 flash_effect;
@@ -2873,8 +2950,10 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	/* HJW_S: dual flash algorithm init */
       for(i=0 ; i< 20; i++){
-          flash_in.ctTab[i] = init_param->ct_table.ct[i];
-          flash_in.ctTabRg[i] = init_param->ct_table.rg[i];
+		flash_in.ctTab[i] = init_param->ct_table.ct[i];
+		flash_in.ctTabRg[i] = init_param->ct_table.rg[i];
+		cxt->ctTab[i] = init_param->ct_table.ct[i];
+		cxt->ctTabRg[i] = init_param->ct_table.rg[i];
         }
 
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
@@ -2969,6 +3048,1216 @@ static cmr_s32 _get_flicker_switch_flag(struct ae_ctrl_cxt *cxt, cmr_handle in_p
 
 	ISP_LOGV("ANTI_FLAG: %d, %d, %d", cur_exp, cxt->snr_info.line_time, *flag);
 	return rtn;
+}
+
+//============================================================
+//input and output
+//name: property name
+//n: contains n int in property values string
+//data: property values string to int data
+//return: number of valid data, max: 10
+static int get_prop_multi(const char* name, int n, int* data)
+{
+#define MAX_PROP_DATA_NUM 10
+	int i;
+	char str[300] = "";
+	char strTemp[300]="";
+	for (i = 0; i < n; i++)
+		data[i] = 0;
+
+	property_get(name, str, "");
+
+	int ret = -1;
+	if (strlen(str) == 0)
+		return 0;
+
+#define FIND_NUM 1
+#define FIND_ZERO 0
+	int state = FIND_NUM;
+	int charCnt = 0;
+	int dataCnt = 0;
+	ret = 0;
+	int len;
+	len = strlen(str);
+	for (i = 0; i < len; i++)
+	{
+		if (state == FIND_NUM)
+		{
+			if (str[i] == ' ' || str[i] == '\t')
+			{
+
+			}
+			else
+			{
+				strTemp[charCnt] = str[i];
+				charCnt++;
+				state = FIND_ZERO;
+			}
+		}
+		else
+		{
+			if (str[i] == ' ' || str[i] == '\t')
+			{
+				state = FIND_NUM;
+				if (dataCnt < MAX_PROP_DATA_NUM)
+				{
+					strTemp[charCnt] = 0;
+					data[dataCnt] = atoi(strTemp);
+					dataCnt++;
+					charCnt = 0;
+				}
+			}
+			else
+			{
+				strTemp[charCnt] = str[i];
+				charCnt++;
+			}
+		}
+	}
+	if (charCnt!=0)
+	{
+		if (dataCnt < MAX_PROP_DATA_NUM)
+		{
+			strTemp[charCnt] = 0;
+			data[dataCnt] = atoi(strTemp);
+			dataCnt++;
+		}
+	}
+	ret = dataCnt;
+	return ret;
+}
+
+
+static int _aem_stat_preprocess2(cmr_u32 *src_aem_stat,
+                                 float *dst_r,
+                                 float *dst_g,
+                                 float *dst_b,
+                                 struct ae_size aem_blk_size,
+                                 struct ae_size aem_blk_num,
+                                 cmr_u8 aem_shift)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
+	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
+	cmr_u32 *src_r_stat = (cmr_u32*)src_aem_stat;
+	cmr_u32 *src_g_stat = (cmr_u32*)src_aem_stat + stat_blocks;
+	cmr_u32 *src_b_stat = (cmr_u32*)src_aem_stat + 2 * stat_blocks;
+	//cmr_u16 *dst_r = (float*)dst_aem_stat;
+	//cmr_u16 *dst_g = (float*)dst_aem_stat + stat_blocks;
+	//cmr_u16 *dst_b = (float*)dst_aem_stat + stat_blocks * 2;
+	double max_value = 1023;
+	double sum = 0;
+	double avg = 0;
+	uint32_t i = 0;
+	double r = 0, g = 0, b = 0;
+
+	double mul_shift=1;
+	for (i = 0; i < aem_shift; i++)
+		mul_shift = mul_shift * 2;
+
+	if (bayer_pixels < 1)
+		return AE_ERROR;
+
+	for (i = 0; i < stat_blocks; i++)
+	{
+/*for r channel */
+		sum = *src_r_stat++;
+		sum = sum * mul_shift;
+		avg = sum / bayer_pixels;
+		r = avg > max_value ? max_value : avg;
+
+/*for g channel */
+		sum = *src_g_stat++;
+		sum = sum * mul_shift;
+		avg = sum / bayer_pixels;
+		g = avg > max_value ? max_value : avg;
+
+/*for b channel */
+		sum = *src_b_stat++;
+		sum = sum * mul_shift;
+		avg = sum / bayer_pixels;
+		b = avg > max_value ? max_value : avg;
+
+		dst_r[i] = r;
+		dst_g[i] = g;
+		dst_b[i] = b;
+	}
+
+	return rtn;
+}
+static int getCenterMean(cmr_u32 *src_aem_stat,
+                          float *dst_r,
+                          float *dst_g,
+                          float *dst_b,
+                          struct ae_size aem_blk_size,
+                          struct ae_size aem_blk_num,
+                          cmr_u8 aem_shift,
+                          float* rmean,
+                          float* gmean,
+                          float* bmean
+                          )
+{
+    int ret;
+    ret = _aem_stat_preprocess2(src_aem_stat,
+                                dst_r,
+                                dst_g,
+                                dst_b,
+                                aem_blk_size,
+                                aem_blk_num,
+                                aem_shift);
+    int i;
+    int j;
+    float rsum=0;
+    float gsum=0;
+    float bsum=0;
+    for(i=13;i<19;i++)
+        for(j=13;j<19;j++)
+        {
+            int ind;
+            ind = j*32+i;
+            rsum+=dst_r[ind];
+            gsum+=dst_g[ind];
+            bsum+=dst_b[ind];
+        }
+    *rmean =  rsum/36;
+    *gmean =  gsum/36;
+    *bmean =  bsum/36;
+    return ret;
+}
+
+static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int led1, int led2) //0~31
+{
+	UNUSED(cxt);
+	UNUSED(onoff);
+	UNUSED(isMainflash);
+	UNUSED(led1);
+	UNUSED(led2);
+
+	ISP_LOGE("control_led %d %d %d %d",onoff, isMainflash, led1, led2);
+	int type;
+	struct ae_flash_cfg cfg;
+	struct ae_flash_element element;
+	if(isMainflash==0)
+		type = ISP_FLASH_TYPE_PREFLASH;
+	else
+		type = ISP_FLASH_TYPE_MAIN;
+
+
+	if(onoff==0)
+	{
+		cfg.led_idx = 0;
+		cfg.type = type;
+		cfg.led0_enable = 0;
+		cfg.led1_enable = 0;
+		cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
+	}
+	else
+	{
+		int led1_driver_ind=led1-1;
+		int led2_driver_ind=led2-1;
+		if(led1_driver_ind<0)
+			led1_driver_ind=0;
+		if(led2_driver_ind<0)
+			led2_driver_ind=0;
+
+		cfg.led_idx = 1;
+		cfg.type = type;
+		element.index = led1_driver_ind;
+		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+
+		cfg.led_idx = 2;
+		cfg.type = type;
+		element.index = led2_driver_ind;
+		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+
+		if(led1==0)
+			cfg.led0_enable = 0;
+		else
+			cfg.led0_enable = 1;
+
+		if(led2==0)
+			cfg.led1_enable = 0;
+		else
+			cfg.led1_enable = 1;
+
+		cfg.type = type;
+		cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
+	}
+
+}
+
+static int _round(float a)
+{
+	if (a > 0)
+		return (int)(a + 0.5);
+	else
+		return (int)(a - 0.5);
+}
+
+
+void calRgbFrameData(int isMainFlash, float* rRaw, float* gRaw, float* bRaw, float* r, float* g, float* b)
+{
+	float rs=0;
+	float gs=0;
+	float bs=0;
+	int i;
+	if (isMainFlash == 0)
+	{
+		for (i = 5; i < 15; i++)
+		{
+			rs += rRaw[i];
+			gs += gRaw[i];
+			bs += bRaw[i];
+		}
+		rs /= 10;
+		gs /= 10;
+		bs /= 10;
+	}
+	else
+	{
+		rs = (rRaw[7] + rRaw[8]) / 2;
+		gs = (gRaw[7] + gRaw[8]) / 2;
+		bs = (bRaw[7] + bRaw[8]) / 2;
+	}
+	*r = rs;
+	*g = gs;
+	*b = bs;
+}
+
+float calLedmA(int isMain, int led1, int led2)
+{
+	float i1;
+	float i2;
+	if (isMain)
+	{
+		i1 = 1500.0 * led1 / 32;
+		i2 = 1500.0 * led2 / 32;
+	}
+	else
+	{
+		i1 = 188.0 * led1 / 32;
+		i2 = 188.0 * led2 / 32;
+	}
+	return i1 + i2;
+}
+int calSleepFrame(int isMain, int led1, int led2, float maxA1, float maxA2)
+{
+	float i1;
+	float i2;
+	i1 = calLedmA(isMain, led1, 0);
+	i2 = calLedmA(isMain, 0, led2);
+	double t1;
+	double t2;
+	t1 = 4000.0 * (i1 - 200) / (maxA1 - 200);
+	t2 = 4000.0 * (i2 - 200) / (maxA2 - 200);
+	double t;
+	t = t1;
+	if (t2 > t1)
+		t = t2;
+	if (t < 0)
+		t = 0;
+	if (t > 5000)
+		t = 5000;
+	int frm;
+	frm = t / 30;
+	return frm;
+}
+
+static double interp(double x1, double y1, double x2, double y2, double x)
+{
+	double y;
+	if (x1 == x2)
+		return (y2 + y1) / 2;
+	y = y1 + (y2 - y1) / (x2 - x1)*(x - x1);
+	return y;
+}
+
+
+//rgTab increasing
+float interpCt(float* rgTab, float* ctTab, int numTab, float rg)
+{	
+	int i;
+	if (rg < rgTab[0])
+	{
+		return ctTab[0];
+	}
+	else if (rg > rgTab[numTab-1])
+	{
+		return ctTab[numTab - 1];
+	}
+
+	for (i = 1; i < numTab; i++)
+	{
+		if (rgTab[i] > rg)
+		{
+			return interp(rgTab[i - 1], ctTab[i - 1], rgTab[i], ctTab[i], rg);
+		}
+	}
+	
+	return 10000.0;
+}
+
+static void flashCalibration(struct ae_ctrl_cxt *cxt)
+{
+#define FC_INIT_SHUTTER 100000
+#define FC_INIT_GAIN 128
+	struct ae_alg_calc_param *cur_status = &cxt->sync_cur_status;
+	static int frameCount = 0;
+	static int caliState = FlashCali_start;
+	static struct FCData* caliData = 0;
+	int propValue[10];
+	int propRet;
+	propRet = get_prop_multi("persist.sys.isp.ae.flash_cali", 5, propValue);
+
+	if (propRet <= 0)
+		return;
+
+	if (propValue[0] == 0)
+	{
+		control_led(cxt, 0, 0, 0, 0);
+		caliState = FlashCali_start;
+	}
+	if (propValue[0] == 1)
+	{
+
+
+		ISP_LOGD("qqfc state=%d", caliState);
+		if (caliState == FlashCali_start)
+		{
+			ISP_LOGD("qqfc FlashCali_start");
+			caliData = (struct FCData*)malloc(sizeof(struct FCData));
+			caliData->out.error = 0;
+			//0
+			//1: flash led number
+			//2: led max current 1
+			//3: led max current 2
+			int isDual = 1;
+			int maxCurrent1 = 1500;
+			int maxCurrent2 = 1500;
+			int maxCurrentAll = 1500;
+
+			if (propRet >= 2)
+			{
+				if (propValue[1] == 1)
+					isDual = 0;
+				else
+					isDual = 1;
+			}
+			if (propRet >= 5)
+			{
+				maxCurrent1 = propValue[2];
+				maxCurrent2 = propValue[3];
+				maxCurrentAll = propValue[4];
+			}
+
+			caliData->isDual = isDual;
+			caliData->maxCurrent1 = maxCurrent1;
+			caliData->maxCurrent2 = maxCurrent2;
+			caliData->maxCurrentAll = maxCurrentAll;
+
+
+			frameCount = 0;
+			cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED; //lock ae
+			control_led(cxt, 1, 0, 1, 0);
+			int expInit = FC_INIT_SHUTTER;
+			int gainInit = FC_INIT_GAIN;
+
+			int lineTime = cxt->cur_status.line_time;
+			caliData->expTime = expInit;
+			caliData->gain = gainInit;
+
+			//gen test
+			caliData->testInd = 0;
+			int i;
+			int id = 0;
+			for (i = 0; i<32; i++)
+			{
+				caliData->expReset[id] = 0;
+				if (i == 0)
+					caliData->expReset[id] = 1;
+				caliData->ind1Tab[id] = i;
+				caliData->ind2Tab[id] = 0;
+				caliData->testMinFrm[id] = 0;
+				caliData->isMainTab[id] = 0;
+				id++;
+			}
+
+			for (i = 0; i<32; i++)
+			{
+				caliData->expReset[id] = 0;
+				if(i==0)
+					caliData->expReset[id] = 1;
+				caliData->ind1Tab[id] = 0;
+				caliData->ind2Tab[id] = i;
+				caliData->testMinFrm[id] = 0;
+				caliData->isMainTab[id] = 0;
+				id++;
+			}
+			for (i = 0; i<32; i++)
+			{
+				caliData->expReset[id] = 0;
+				if (i == 0)
+					caliData->expReset[id] = 1;
+				caliData->ind1Tab[id] = i;
+				caliData->ind2Tab[id] = 0;
+				if (calLedmA(1,i,0) < caliData->maxCurrent1)
+				{
+					int frm = calSleepFrame(1, i, 0, caliData->maxCurrent1, caliData->maxCurrent2);
+					caliData->testMinFrm[id] = frm;
+					caliData->isMainTab[id] = 1;
+					id++;
+				}
+			}
+			for (i = 0; i<32; i++)
+			{
+				caliData->expReset[id] = 0;
+				if (i == 0)
+					caliData->expReset[id] = 1;
+				caliData->ind1Tab[id] = 0;
+				caliData->ind2Tab[id] = i;
+				if (calLedmA(1, 0, i) < caliData->maxCurrent2)
+				{
+					int frm = calSleepFrame(1, 0, i, caliData->maxCurrent1, caliData->maxCurrent2);
+					caliData->testMinFrm[id] = frm;
+					caliData->isMainTab[id] = 1;
+					id++;
+				}
+			}
+			caliData->testIndAll = id;
+
+			//
+			caliData->stateAeFrameCntSt = 1;
+			//caliData->stateCaliFrameCntSt = 0;
+
+			caliState = FlashCali_ae;
+
+
+
+		}
+		else if (caliState == FlashCali_ae)
+		{
+			int frm = frameCount - caliData->stateAeFrameCntSt;
+			if ( (frm % 3 == 0 ) && (frm!=0))
+			{
+				float rmean;
+				float gmean;
+				float bmean;
+				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+				getCenterMean((cmr_u32*)&cxt->sync_aem[0],
+					caliData->rBuf,
+					caliData->gBuf,
+					caliData->bBuf,
+					cxt->monitor_unit.win_size,
+					cxt->monitor_unit.win_num,
+					current_status->monitor_shift,
+					&rmean,
+					&gmean,
+					&bmean);
+				ISP_LOGD("qqfc frmCnt=%d exp=%d %d, g=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
+
+				if ( (gmean>200 && gmean<400) ||
+					 (caliData->expTime==500000 && caliData->gain == 8 * 128))
+				{
+					caliData->stateCaliFrameCntSt2 = frameCount+1;
+					caliData->expTimeBase = caliData->expTime;
+					caliData->gainBase = caliData->gain;
+					caliState = FlashCali_cali;
+				}
+				else
+				{
+					if (gmean<10)
+					{
+						caliData->expTime *= 25;
+						caliData->gain = caliData->gain;
+					}
+					else
+					{
+						caliData->expTime *= 300 / gmean;
+						caliData->gain = caliData->gain;
+					}
+					if (caliData->expTime>500000)
+					{
+						float ratio = caliData->expTime / 500000.0f;
+						caliData->expTime = 500000;
+						caliData->gain *= ratio;
+					}
+					else if (caliData->expTime<10000)
+					{
+						float ratio = caliData->expTime / 10000.0f;
+						caliData->expTime = 10000;
+						caliData->gain *= ratio;
+					}
+					if (caliData->gain<128)
+						caliData->gain = 128;
+					else if (caliData->gain>8 * 128)
+						caliData->gain = 8 * 128;
+				}
+			}
+
+		}
+		else if (caliState == FlashCali_cali)
+		{
+			int frmCntState;
+			int frmCnt;
+			frmCntState = frameCount - caliData->stateCaliFrameCntSt2;
+			if (frmCntState == 0)
+			{
+				caliData->testInd = 0;
+				caliData->stateCaliFrameCntStSub = caliData->stateCaliFrameCntSt2;
+			}
+
+			frmCnt = frameCount - caliData->stateCaliFrameCntStSub;
+			ISP_LOGD("qqfc caliData->testInd=%d",caliData->testInd);
+			if (frmCnt == 0)
+			{
+				int id;
+				id = caliData->testInd;
+				int led1;
+				int led2;
+				led1 = caliData->ind1Tab[id];
+				led2 = caliData->ind2Tab[id];
+				if (caliData->expReset[id] == 1)
+				{
+					caliData->expTime = caliData->expTimeBase;
+					caliData->gain = caliData->gainBase;
+				}
+				caliData->expTab[id] = caliData->expTime;
+				caliData->gainTab[id] = caliData->gain;
+				if(led1==0 && led2 == 0)
+					control_led(cxt, 0,0,0,0);
+				else
+					control_led(cxt, 1, caliData->isMainTab[id], led1, led2);
+			}
+			else if (frmCnt == 3)
+			{
+				float rmean;
+				float gmean;
+				float bmean;
+				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+				getCenterMean((cmr_u32*)&cxt->sync_aem[0],
+					caliData->rBuf,
+					caliData->gBuf,
+					caliData->bBuf,
+					cxt->monitor_unit.win_size,
+					cxt->monitor_unit.win_num,
+					current_status->monitor_shift,
+					&rmean,
+					&gmean,
+					&bmean);
+				if (gmean > 600)
+				{
+
+					double rat=2;
+					rat = gmean / 300.0;
+					double rat1;
+					double rat2;
+					double rat3;
+
+					if (caliData->expTime > 300000)
+					{
+						rat1 = rat;
+						int expTest;
+						expTest = caliData->expTime / rat1;
+						if (expTest < 300000)
+							expTest = 300000;
+						rat1 = (double)caliData->expTime / expTest;
+						caliData->expTime = expTest;
+					}
+					else
+						rat1 = 1;
+
+					if (caliData->gain > 128)
+					{
+						rat2 = rat / rat1;
+						int gainTest= caliData->gain;
+						gainTest /= rat2;
+						if (gainTest < 128)
+							gainTest = 128;
+						rat2 = (double)caliData->gain / gainTest;
+						caliData->gain = gainTest;
+					}
+					else
+					{
+						rat2 = 1;
+					}
+					{
+						rat3 = rat / rat1 / rat2;
+						int expTest;
+						expTest = caliData->expTime / rat3;
+						if (expTest < 10000)
+							expTest = 10000;
+						rat3 = (double)caliData->expTime / expTest;
+						caliData->expTime = expTest;
+
+						if (expTest == 10000 && caliData->gain == 128)
+						{
+							char err[] = "error: the exposure is min\n";
+#ifdef WIN32
+							printf(err);
+#endif
+							ISP_LOGE("%s",err);
+							caliData->out.error = FlashCali_too_close;
+
+						}
+						else
+						{
+							caliData->stateCaliFrameCntStSub = frameCount + 1;
+						}
+					}
+				}
+				else
+				{
+					caliData->rFrame[caliData->testInd][frmCnt] = rmean;
+					caliData->gFrame[caliData->testInd][frmCnt] = gmean;
+					caliData->bFrame[caliData->testInd][frmCnt] = bmean;
+				}
+			}
+			else if (frmCnt < 15)
+			{
+				float rmean;
+				float gmean;
+				float bmean;
+				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+				getCenterMean((cmr_u32*)&cxt->sync_aem[0],
+					caliData->rBuf,
+					caliData->gBuf,
+					caliData->bBuf,
+					cxt->monitor_unit.win_size,
+					cxt->monitor_unit.win_num,
+					current_status->monitor_shift,
+					&rmean,
+					&gmean,
+					&bmean);
+				caliData->rFrame[caliData->testInd][frmCnt] = rmean;
+				caliData->gFrame[caliData->testInd][frmCnt] = gmean;
+				caliData->bFrame[caliData->testInd][frmCnt] = bmean;
+
+
+			}
+			else if(frmCnt > caliData->testMinFrm[caliData->testInd])
+			{
+				float r;
+				float g;
+				float b;
+				calRgbFrameData(caliData->isMainTab[caliData->testInd], caliData->rFrame[caliData->testInd], caliData->gFrame[caliData->testInd], caliData->bFrame[caliData->testInd], &r, &g, &b);
+				caliData->rData[caliData->testInd] = r;
+				caliData->gData[caliData->testInd] = g;
+				caliData->bData[caliData->testInd] = b;
+				caliData->testInd++;
+				caliData->stateCaliFrameCntStSub = frameCount+1;
+				if(caliData->testInd==caliData->testIndAll)
+					caliState = FlashCali_end;
+			}
+
+		}
+		else if (caliState == FlashCali_end)
+		{
+
+			int i;
+			float rTab1[32];
+			float gTab1[32];
+			float bTab1[32];
+			float rTab2[32];
+			float gTab2[32];
+			float bTab2[32];
+			float rTab1Main[32];
+			float gTab1Main[32];
+			float bTab1Main[32];
+			float rTab2Main[32];
+			float gTab2Main[32];
+			float bTab2Main[32];
+
+			double rbase;
+			double gbase;
+			double bbase;
+			rbase = caliData->rData[0];
+			gbase = caliData->gData[0];
+			bbase = caliData->bData[0];
+			for (i = 0; i < 32; i++)
+			{
+				gTab1[i] = -1;
+				gTab2[i] = -1;
+				gTab1Main[i] = -1;
+				gTab2Main[i] = -1;
+			}
+			rTab1[0] = 0;
+			gTab1[0] = 0;
+			bTab1[0] = 0;
+			rTab2[0] = 0;
+			gTab2[0] = 0;
+			bTab2[0] = 0;
+			rTab1Main[0] = 0;
+			gTab1Main[0] = 0;
+			bTab1Main[0] = 0;
+			rTab2Main[0] = 0;
+			gTab2Main[0] = 0;
+			bTab2Main[0] = 0;
+			double maxV = 0;
+			for (i = 0; i < caliData->testIndAll; i++)
+			{
+				double rat;
+				rat = (double)caliData->expTimeBase* caliData->gainBase
+					/ caliData->gainTab[i] / caliData->expTab[i];
+
+				int id1;
+				int id2;
+				id1 = caliData->ind1Tab[i];
+				id2 = caliData->ind2Tab[i];
+
+				float r;
+				float g;
+				float b;
+
+				r = caliData->rData[i] * rat - rbase;
+				g = caliData->gData[i] * rat - gbase;
+				b = caliData->bData[i] * rat - bbase;
+				if (maxV < g)
+					maxV = g;
+				if (caliData->ind1Tab[i] != 0 && caliData->isMainTab[i])
+				{
+					rTab1Main[id1] = r;
+					gTab1Main[id1] = g;
+					bTab1Main[id1] = b;
+				}
+				else if (caliData->ind1Tab[i] != 0 && caliData->isMainTab[i]==0)
+				{
+					rTab1[id1] = r;
+					gTab1[id1] = g;
+					bTab1[id1] = b;
+				}
+				else if (caliData->ind2Tab[i] != 0 && caliData->isMainTab[i])
+				{
+					rTab2Main[id2] = r;
+					gTab2Main[id2] = g;
+					bTab2Main[id2] = b;
+				}
+				else if (caliData->ind2Tab[i] != 0 && caliData->isMainTab[i] == 0)
+				{
+					rTab2[id2] = r;
+					gTab2[id2] = g;
+					bTab2[id2] = b;
+				}
+			}
+			double sc = 0;
+			sc = 65536.0 / maxV/2;
+			for (i = 0; i < 32; i++)
+			{
+				rTab1[i] *= sc;
+				gTab1[i] *= sc;
+				bTab1[i] *= sc;
+				rTab2[i] *= sc;
+				gTab2[i] *= sc;
+				bTab2[i] *= sc;
+				rTab1Main[i] *= sc;
+				gTab1Main[i] *= sc;
+				bTab1Main[i] *= sc;
+				rTab2Main[i] *= sc;
+				gTab2Main[i] *= sc;
+				bTab2Main[i] *= sc;
+			}
+
+			caliData->out.version = 1;
+			caliData->out.flashLevelNum1 = 32;
+			if (caliData->isDual)
+				caliData->out.flashLevelNum2 = 32;
+			else
+				caliData->out.flashLevelNum2 = 1;
+
+
+			//--------------------------
+			//--------------------------
+			//@@
+
+			float rgtab[20];
+			float cttab[20];
+			for (i = 0; i < 20; i++)
+			{
+				rgtab[i] = cxt->ctTabRg[i];
+				cttab[i] = cxt->ctTab[i];	
+			}
+
+			//--------------------------
+			//--------------------------
+
+			for (i = 0; i < 1024; i++)
+			{
+				int id1;
+				int id2;
+				id1 = i % 32;
+				id2 = i / 32;
+
+				caliData->out.brightnessTable[i] = -1;
+				if (gTab1Main[id1] != -1 && gTab2Main[id2] != -1)
+				{
+					caliData->out.brightnessTable[i] = _round(gTab1Main[id1] + gTab2Main[id2]);
+					double r;
+					double g;
+					double b;
+					r = rTab1Main[id1] + rTab2Main[id2];
+					g = gTab1Main[id1] + gTab2Main[id2];
+					b = bTab1Main[id1] + bTab2Main[id2];
+					caliData->out.rTable[i] = _round(1024 * g/r);
+					caliData->out.bTable[i] = _round(1024 * g/b);
+				}
+				caliData->out.preflashBrightness[i] = _round(gTab1[id1] + gTab2[id2]);
+
+				double rg;
+				caliData->out.preflashCt[i] = 0;
+				if (gTab1[id1] + gTab2[id2] != 0)
+				{
+					rg = (rTab1[id1] + rTab2[id2]) / (gTab1[id1] + gTab2[id2]);
+					caliData->out.preflashCt[i] = interpCt(rgtab, cttab, 20, rg);
+				}
+
+			}
+
+			for (i = 0; i < 1024; i++)
+			{
+				int id1;
+				int id2;
+				id1 = i % 32;
+				id2 = i / 32;
+				int ma1;
+				int ma2;
+				int maAll;
+
+				ma1 = calLedmA(1, id1, 0);
+				ma2 = calLedmA(1, 0, id2);
+				maAll = ma1 + ma2;
+
+
+				caliData->out.flashMask[i] = 0;
+				if (ma1 > caliData->maxCurrent1)
+					;
+				else if (ma2 > caliData->maxCurrent2)
+					;
+				else if ((ma1 + ma2) > caliData->maxCurrentAll)
+					;
+				else if ((int)caliData->out.brightnessTable[i] == -1)
+					;
+				else
+				{
+					caliData->out.flashMask[i] = 1;
+				}
+			}
+			caliData->out.flashMask[0] = 0;
+
+			FILE* fp;
+
+
+			int propValue[10];
+			int propRet;
+			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug", 1, propValue);
+
+			if (propValue[0] == 1)
+			{
+#ifdef WIN32
+				fp = fopen("d:\\temp\\fc_debug.txt", "wt");
+#else
+				fp = fopen("/data/misc/cameraserver/fc_debug.txt", "wt");
+#endif
+				fprintf(fp, "\nmask\n");
+				for (i = 0; i < 1024; i++)
+				{
+					fprintf(fp, "%d\t", (int)caliData->out.flashMask[i]);
+					if (i % 32 == 31)
+						fprintf(fp, "\n");
+				}
+				fprintf(fp, "\nbrightness\n");
+				for (i = 0; i < 1024; i++)
+				{
+					fprintf(fp, "%d\t", (int)caliData->out.brightnessTable[i]);
+					if (i % 32 == 31)
+						fprintf(fp, "\n");
+				}
+				fprintf(fp, "\nr tab\n");
+				for (i = 0; i < 1024; i++)
+				{
+					fprintf(fp, "%d\t", (int)caliData->out.rTable[i]);
+					if (i % 32 == 31)
+						fprintf(fp, "\n");
+				}
+				fprintf(fp, "\nb tab\n");
+				for (i = 0; i < 1024; i++)
+				{
+					fprintf(fp, "%d\t", (int)caliData->out.bTable[i]);
+					if (i % 32 == 31)
+						fprintf(fp, "\n");
+				}
+				fprintf(fp, "\npre bright\n");
+				for (i = 0; i < 1024; i++)
+				{
+					fprintf(fp, "%d\t", (int)caliData->out.preflashBrightness[i]);
+					if (i % 32 == 31)
+						fprintf(fp, "\n");
+				}
+				fprintf(fp, "\npre ct\n");
+				for (i = 0; i < 1024; i++)
+				{
+					fprintf(fp, "%d\t", (int)caliData->out.preflashCt[i]);
+					if (i % 32 == 31)
+						fprintf(fp, "\n");
+				}
+				fclose(fp);
+
+#ifdef WIN32
+				fp = fopen("d:\\temp\\fc_debug.bin", "wb");
+#else
+				fp = fopen("/data/misc/cameraserver/fc_debug.bin", "wb");
+#endif
+				fwrite(caliData, 1, sizeof(struct FCData), fp);
+				fclose(fp);
+
+			}
+
+
+			if (caliData->out.error != 0)
+			{
+#ifdef WIN32
+				fp = fopen("d:\\temp\\fc_error.txt", "wt");
+#else
+				fp = fopen("/data/misc/cameraserver/fc_error.txt", "wt");
+#endif
+				if (caliData->out.error == FlashCali_too_close)
+				{
+					fprintf(fp, "error: chart to camera is to close!\n");
+				}
+
+				fclose(fp);
+			}
+			else
+			{
+#ifdef WIN32
+				fp = fopen("d:\\temp\\flashcalibration.bin", "wb");
+#else
+				fp = fopen("/data/misc/cameraserver/flashcalibration.bin", "wb");
+#endif
+				fwrite(&caliData->out, 1, sizeof(struct flash_calibration_data), fp);
+				fclose(fp);
+			}
+
+
+			free(caliData);
+			caliState = FlashCali_none;
+
+
+		}
+		else
+		{
+			//none
+#ifdef WIN32
+			printf("state=none\n");
+#endif
+			ISP_LOGD("flash calibration done!!\n");
+		}
+
+		if (caliState < FlashCali_end)
+		{
+			ISP_LOGD("qqfc exp=%d %d", (int)caliData->expTime, (int)caliData->gain);
+			int lineTime = cxt->cur_status.line_time;
+			cur_status->settings.manual_mode = 0;
+			cur_status->settings.table_idx = 0;
+			cur_status->settings.exp_line = caliData->expTime / lineTime;
+			cur_status->settings.gain = caliData->gain;
+		}
+	}
+	frameCount++;
+}
+
+
+static void _set_led2(struct ae_ctrl_cxt *cxt)
+{
+	struct ae_alg_calc_param *cur_status = &cxt->cur_status;
+	int propValue[10];
+	int ret;
+
+	static int led_onOff=0;
+	static int led_isMain=0;
+	static int led_led1=0;
+	static int led_led2=0;
+
+	/*to check whether is in flash calibration mode*/
+/*
+	memset(str, 0, sizeof(str));
+	property_get("persist.sys.isp.ae.flashcali", str, "");
+	if (!strcmp(str, "on")) {
+		ret = -1;
+		return ret;
+	}
+
+*/
+	ret = get_prop_multi("persist.sys.isp.ae.fc_led", 4, propValue);
+	if(ret>0)
+	{
+		if(led_onOff==propValue[0] && led_isMain==propValue[1] && led_led1==propValue[2] && led_led2==propValue[3])
+		{
+		}
+		else
+		{
+			led_onOff=propValue[0];
+			led_isMain=propValue[1];
+			led_led1=propValue[2];
+			led_led2=propValue[3];
+			control_led(cxt, led_onOff, led_isMain, led_led1, led_led2);
+			//frame_cnt=0;
+			//sta_case=0;
+			ISP_LOGD("qqfc led control %d %d %d %d", led_onOff, led_isMain, led_led1, led_led2);
+		}
+	}
+
+	static int exp_exp_line=0;
+	static int exp_exp_time=0;
+	static int exp_dummy=0;
+	static int exp_isp_gain=0;
+	static int exp_sensor_gain=0;
+	ret = get_prop_multi("persist.sys.isp.ae.fc_exp", 5, propValue);
+	if(ret>0)
+	{
+		if(exp_exp_line==propValue[0] &&
+		    exp_exp_time==propValue[1] &&
+		    exp_dummy==propValue[2] &&
+		    exp_isp_gain==propValue[3] &&
+		    exp_sensor_gain==propValue[4])
+		{
+		}
+		else
+		{
+			exp_exp_line=propValue[0];
+			exp_exp_time=propValue[1];
+			exp_dummy=propValue[2];
+			exp_isp_gain=propValue[3];
+			exp_sensor_gain=propValue[4];
+		/*
+			struct ae_exposure_param write_param;
+			write_param.exp_line = exp_exp_line;
+			write_param.exp_time = exp_exp_time;
+			write_param.dummy = exp_dummy;
+			write_param.isp_gain = exp_isp_gain;
+			write_param.sensor_gain  =exp_sensor_gain;
+			ae_write_to_sensor(cxt, &write_param);
+		*/
+			cur_status->settings.manual_mode = 0;
+			cur_status->settings.table_idx = 0;
+			cur_status->settings.exp_line = exp_exp_line;
+			cur_status->settings.gain = exp_isp_gain * exp_sensor_gain / 4096;
+			ISP_LOGD("qqfc set exp %d %d %d %d %d", exp_exp_line, exp_exp_time, exp_dummy, exp_isp_gain, exp_sensor_gain);
+		}
+	}
+
+	static int lock_lock=0;
+	ret = get_prop_multi("persist.sys.isp.ae.fc_lock", 1, propValue);
+	//ISP_LOGI("hjw: lock ae: %d\n", propValue[0]);
+	if(ret>0)
+	{
+		if(lock_lock==propValue[0])
+		{
+		}
+		else
+		{
+			lock_lock=propValue[0];
+			if(lock_lock==1)
+			{
+				//_set_pause(cxt);
+				cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+				ISP_LOGD("qqfc lock");
+			}
+
+		}
+	}
+
+	static int lock_unlock=0;
+	ret = get_prop_multi("persist.sys.isp.ae.fc_unlock", 1, propValue);
+	if(ret>0)
+	{
+		if(lock_unlock==propValue[0])
+		{
+		}
+		else
+		{
+			lock_unlock=propValue[0];
+			if(lock_unlock==1)
+			{
+			   // _set_restore_cnt(cxt);
+			   cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+			    ISP_LOGD("qqfc unlock");
+			}
+		}
+	}
+
+	static int exp2=0;
+	ret = get_prop_multi("persist.sys.isp.ae.fc_exp2", 1, propValue);
+	//ISP_LOGI("hjw: exp: %d\n", propValue[0]);
+	if(ret>0)
+	{
+		if(exp2==propValue[0])
+		{
+		}
+		else
+		{
+			exp2=propValue[0];
+			if(exp2==1)
+			{
+			/*
+				struct ae_exposure_param write_param;
+				write_param.exp_line = 800;
+				write_param.dummy = 0;
+				write_param.isp_gain = 4096;
+				write_param.sensor_gain  =256;
+				ae_write_to_sensor(cxt, &write_param);
+			*/
+				cur_status->settings.manual_mode = 0;
+				cur_status->settings.table_idx = 0;
+				cur_status->settings.exp_line = 800;
+				cur_status->settings.gain = 256;
+				ISP_LOGI("hjw exp2: %d, %d", cur_status->settings.exp_line, cur_status->settings.gain);
+			}
+		}
+//for test by hjw
+/*
+		cur_status->settings.manual_mode = 0;
+		cur_status->settings.table_idx = 0;
+		cur_status->settings.exp_line = 800;
+		cur_status->settings.gain = 256;
+		ISP_LOGI("hjw exp2: %d, %d", cur_status->settings.exp_line, cur_status->settings.gain);
+*/
+	}
+
+	static int exp1=0;
+	ret = get_prop_multi("persist.sys.isp.ae.fc_exp1", 1, propValue);
+	if(ret>0)
+	{
+		if(exp1==propValue[0])
+		{
+		}
+		else
+		{
+			exp1=propValue[0];
+			if(exp1==1)
+			{
+		/*
+			struct ae_exposure_param write_param;
+    			write_param.exp_line = 100;
+    			write_param.dummy = 0;
+    			write_param.isp_gain = 4096;
+    			write_param.sensor_gain  =256;
+    			ae_write_to_sensor(cxt, &write_param);
+		*/
+			cur_status->settings.manual_mode = 0;
+			cur_status->settings.table_idx = 0;
+			cur_status->settings.exp_line = 100;
+			cur_status->settings.gain = 256;
+    			ISP_LOGD("qqfc exp1 set");
+			}
+		}
+	}
+
+
+}
+
+static void _set_flash_calibration_script(struct ae_ctrl_cxt *cxt)
+{	
+	flashCalibration(cxt);
+	_set_led2(cxt);
 }
 
 static void _set_led(struct ae_ctrl_cxt *cxt)
@@ -3575,6 +4864,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	// END
 
 	rtn = _ae_pre_process(cxt);
+	_set_flash_calibration_script(cxt);/*for flash calibration*/
 	_set_led(cxt);
 	ae_hdr_ctrl(cxt, param);
 

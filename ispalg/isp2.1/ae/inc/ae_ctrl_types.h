@@ -394,6 +394,8 @@ struct ae_flash_cell {
 struct ae_flash_cfg {
 	cmr_u32 type;	// enum isp_flash_type
 	cmr_u32 led_idx;	//enum isp_flash_led
+	cmr_u32 led0_enable;
+	cmr_u32 led1_enable;
 };
 
 struct ae_isp_ctrl_ops {

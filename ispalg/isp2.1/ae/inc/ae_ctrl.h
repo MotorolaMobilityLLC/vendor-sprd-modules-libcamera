@@ -22,7 +22,6 @@
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
 #include "isp_otp_calibration.h"
-#include "awb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +44,7 @@ struct ae_init_in {
 	cmr_handle lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
-       struct awb_ct_table ct_table;
+       struct ae_ct_table ct_table;
 };
 
 struct ae_init_out {

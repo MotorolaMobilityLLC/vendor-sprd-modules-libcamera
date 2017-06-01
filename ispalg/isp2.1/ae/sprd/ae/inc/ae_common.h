@@ -74,6 +74,13 @@ enum ae_calc_func_y_type {
 };
 
 typedef cmr_handle ae_handle_t;
+
+struct ae_ct_table
+{
+	float ct[20];
+	float rg[20];
+};
+
 struct ae_weight_value {
 	cmr_s16 value[2];
 	cmr_s16 weight[2];
