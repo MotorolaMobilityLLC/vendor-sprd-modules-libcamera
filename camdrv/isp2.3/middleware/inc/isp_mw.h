@@ -23,7 +23,7 @@
 
 #include "isp_type.h"
 
-#include "sprd_isp_r6p10.h"
+#include "sprd_isp_k.h"
 #include "cmr_sensor_info.h"
 
 //#define LSC_ADV_ENABLE
