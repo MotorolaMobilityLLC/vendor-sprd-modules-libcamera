@@ -216,17 +216,15 @@ cmr_handle s_q_open(struct s_q_open_param *param)
 
 	return (cmr_handle)q_cxt;
 
-q_init_error_exit:	
-	if (q_cxt->q_pool.queue_ptr) {
-		free(q_cxt->q_pool.queue_ptr);
-		q_cxt->q_pool.queue_ptr = NULL;
-	}
-
+q_init_error_exit:
 	if (q_cxt) {
+		if (q_cxt->q_pool.queue_ptr) {
+			free(q_cxt->q_pool.queue_ptr);
+			q_cxt->q_pool.queue_ptr = NULL;
+		}
 		free(q_cxt);
 		q_cxt = NULL;
 	}
-
 	return q_cxt;
 }
 

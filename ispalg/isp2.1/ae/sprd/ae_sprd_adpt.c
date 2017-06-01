@@ -50,6 +50,7 @@
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_EXP_NS_BASE     1000000000	/*unit:ns */
 #define SENSOR_LINETIME_BASE   100	/*uint:0.1us */
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 100 /*lower than LV1, if it is 0, disable this feature*/
 /*
  * should be read from driver later
  */
@@ -143,6 +144,14 @@ struct ae_ctrl_cxt {
 	 * ae slow motion info
 	 */
 	struct isp_sensor_fps_info high_fps_info;
+ 	/*
+	* ae fps range
+	*/
+	struct ae_range fps_range;
+	/*
+	* current flicker flag
+	*/
+	cmr_u32 cur_flicker;
 	/*
 	 * for ae tuning parameters
 	 */
@@ -1257,6 +1266,9 @@ static cmr_s32 _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 	case AE_FLASH_PRE_BEFORE:
 		ISP_LOGI("ae_flash_status FLASH_PRE_BEFORE");
 		cxt->cur_status.settings.flash = FLASH_PRE_BEFORE;
+		cxt->cur_flicker = cxt->sync_cur_status.settings.flicker;/*backup the flicker flag before flash
+														* and will lock flicker result
+														*/
 		if (0 != cxt->flash_ver)
 			rtn = _set_pause(cxt);
 		break;
@@ -1289,6 +1301,7 @@ static cmr_s32 _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 	case AE_FLASH_MAIN_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_AFTER");
 		cxt->cur_status.settings.flash = FLASH_MAIN_AFTER;
+		cxt->cur_status.settings.flicker = cxt->cur_flicker;
 		if (cxt->camera_id && cxt->fdae.pause)
 			cxt->fdae.pause = 0;
 
@@ -2429,6 +2442,23 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
+	if ((AE_WORK_MODE_VIDEO == current_status->settings.work_mode)
+		&& (AE_VIDEO_DECR_FPS_DARK_ENV_THRD > cxt->sync_cur_result.cur_bv)) {
+			/*only adjust the fps to [15, 15] in dark environment during video mode*/
+			current_status->settings.max_fps  =15;
+			current_status->settings.min_fps  =15;
+			ISP_LOGV("fps: %d, %d just fix to 15fps in dark during video, bv%d\n",
+				cxt->fps_range.min, cxt->fps_range.max, cxt->sync_cur_result.cur_bv);
+	} else {
+		current_status->settings.max_fps = cxt->fps_range.max;
+		current_status->settings.min_fps = cxt->fps_range.min;
+	}
+
+	if (0 < cxt->cur_status.settings.flash) {
+		ISP_LOGI("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->settings.flash);
+		current_status->settings.flicker = cxt->cur_flicker;
+	}
+
 	if (0 != cxt->flash_ver) {
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) ||
 			(FLASH_PRE == current_status->settings.flash)) {
@@ -3403,7 +3433,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	// current_status.effect_expline,
 	// current_status.effect_gain);
 	// skip the first aem data (error data)
-	if (current_status->ae_start_delay + 1 <= current_status->frame_id) {
+	if (current_status->ae_start_delay <= current_status->frame_id) {
 		misc_calc_in.sync_settings = current_status;
 		misc_calc_out.ae_output = &cxt->cur_result;
 		// ISP_LOGV("ae_flash_status calc %d",
@@ -3411,8 +3441,8 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		// ISP_LOGV("fd_ae: updata_flag:%d ef %d",
 		// current_status->ae1_finfo.update_flag,
 		// current_status->ae1_finfo.enable_flag);
-		cxt->cur_status.settings.min_fps = cxt->high_fps_info.min_fps;
-		cxt->cur_status.settings.max_fps = cxt->high_fps_info.max_fps;
+		cxt->sync_cur_status.settings.min_fps = cxt->high_fps_info.min_fps;
+		cxt->sync_cur_status.settings.max_fps = cxt->high_fps_info.max_fps;
 		//ISP_LOGV("slow motion fps=(%d, %d)", cxt->cur_status.settings.min_fps, cxt->cur_status.settings.max_fps);
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
@@ -3420,9 +3450,8 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 		make_isp_result(current_result, calc_out);
 
-			/*just for debug: reset the status */
-
-			if (1 == cxt->cur_status.settings.touch_scrn_status) {
+		/*just for debug: reset the status */
+		if (1 == cxt->cur_status.settings.touch_scrn_status) {
 			cxt->cur_status.settings.touch_scrn_status = 0;
 		}
 
@@ -3747,11 +3776,10 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 	case AE_SET_FPS:
 		if (param) {
 			if (!cxt->high_fps_info.is_high_fps) {
-			struct ae_set_fps *fps = param;
-			cxt->cur_status.settings.min_fps = fps->min_fps;
-			cxt->cur_status.settings.max_fps = fps->max_fps;
-		ISP_LOGI("AE_SET_FPS (%d, %d)", cxt->cur_status.settings.min_fps,
-			cxt->cur_status.settings.max_fps);
+				struct ae_set_fps *fps = param;
+				cxt->fps_range.min = fps->min_fps;
+				cxt->fps_range.max = fps->max_fps;
+				ISP_LOGI("AE_SET_FPS (%d, %d)", fps->min_fps, fps->max_fps);
 			}
 		}
 		break;
