@@ -4414,21 +4414,18 @@ static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	}
 
 	if (3 == cxt->hdr_flag) {
-		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_up;
 		cxt->hdr_flag--;
 		cxt->hdr_frame_cnt++;
 		ISP_LOGI("_isp_hdr_3: %d\n", cxt->cur_status.settings.table_idx);
 	} else if (2 == cxt->hdr_flag) {
-		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_down;
 		cxt->hdr_flag--;
 		cxt->hdr_frame_cnt++;
 		ISP_LOGI("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
 	} else if (1 == cxt->hdr_flag) {
-		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx;
 		cxt->hdr_flag--;
@@ -4604,7 +4601,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
 
 	/*it is normal capture, not in flash mode*/
-	if ((1 == cxt->is_snapshot) && (0 == cxt->cur_status.settings.flash)) {
+	if ((1 == work_info->is_snapshot) && (0 == cxt->cur_status.settings.flash)) {
+		ISP_LOGV("nozsl cap will lock ae");
 		_set_pause(cxt);
 		cxt->cur_status.settings.manual_mode = 0;
 		cxt->cur_status.settings.table_idx = 0;
@@ -5424,7 +5422,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		if (param) {
 			struct ae_hdr_param	*hdr_param = (struct ae_hdr_param *)param;
 			cxt->hdr_enable = hdr_param->hdr_enable;
-			cxt->hdr_cb_cnt = hdr_param->ev_effect_valid_num;
+			cxt->hdr_cb_cnt = hdr_param->ev_effect_valid_num - 1;
 			cxt->hdr_frame_cnt = 0;
 			if(cxt->hdr_enable){
 				cxt->hdr_flag = 3;
