@@ -2893,6 +2893,7 @@ static cmr_s32 make_isp_result(struct ae_alg_calc_result *alg_rt, struct ae_calc
 	result->target_lum = alg_rt->target_lum;
 	result->target_lum_ori = alg_rt->target_lum_ori;
 	result->flag4idx = alg_rt->flag4idx;
+
 	return rtn;
 }
 
@@ -4894,7 +4895,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		rtn = _ae_post_process(cxt);
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 		make_isp_result(current_result, calc_out);
-
 	}
 
 /***********************************************************/
@@ -5448,6 +5448,17 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				rtn  =AE_ERROR;
 			}
 		} else {
+			rtn  =AE_ERROR;
+		}
+		break;
+
+	case AE_GET_FPS:
+		if (result) {
+			cmr_u32 *fps = (cmr_u32*)result;
+			*fps = (cmr_u32)(cxt->sync_cur_result.wts.cur_fps + 0.5);
+			ISP_LOGI("fps: %f\n", cxt->sync_cur_result.wts.cur_fps);
+		} else {
+			ISP_LOGE("result pointer is NULL");
 			rtn  =AE_ERROR;
 		}
 		break;
