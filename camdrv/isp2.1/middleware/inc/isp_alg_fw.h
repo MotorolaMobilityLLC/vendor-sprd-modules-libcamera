@@ -18,7 +18,7 @@
 
 #include "cmr_type.h"
 #include "isp_pm.h"
-#include "sprd_isp_r6p10.h"
+#include "sprd_isp_k.h"
 #include "awb.h"
 #include "af_ctrl.h"
 #include "ae_ctrl.h"

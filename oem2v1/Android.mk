@@ -25,7 +25,8 @@ LOCAL_C_INCLUDES := \
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
 
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
@@ -334,7 +335,8 @@ LOCAL_C_INCLUDES := \
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 

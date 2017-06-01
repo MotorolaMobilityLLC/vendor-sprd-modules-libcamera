@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#include "sprd_isp_r6p10.h"
+#include "sprd_isp_k.h"
 #include "sprd_img.h"
 #include "isp_com.h"
 #endif

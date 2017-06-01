@@ -48,7 +48,8 @@ ISPDRV_DIR := camdrv/isp2.1
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
 	$(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
-	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
@@ -66,7 +67,8 @@ ISPDRV_DIR := camdrv/isp2.3
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
 	$(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
-	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
