@@ -34,6 +34,7 @@
 #endif
 
 #define SENSOR_CTRL_MSG_QUEUE_SIZE 10
+#define SPRD_DUAL_OTP_SIZE 230
 
 #define SENSOR_CTRL_EVT_BASE (CMR_EVT_SENSOR_BASE + 0x800)
 #define SENSOR_CTRL_EVT_INIT (SENSOR_CTRL_EVT_BASE + 0x0)
@@ -1812,7 +1813,6 @@ init_exit:
     return ret_val;
 }
 
-//cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt) {
 cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt) {
     ATRACE_BEGIN(__FUNCTION__);
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
@@ -1820,6 +1820,64 @@ cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt) {
     ATRACE_END();
     return sensor_cxt->sensor_isInit;
 }
+
+cmr_int read_txt_file(const char *file_name, void *data) {
+    FILE *pf = fopen(file_name, "r");
+    uint32_t read_byte = 0;
+    cmr_u8 *otp_data = (cmr_u8 *) data;
+    if(NULL == data){
+        SENSOR_LOGI("dualotp data malloc failed!");
+        return 0;
+    }
+
+    if (NULL == pf) {
+        SENSOR_LOGI("dualotp read failed!");
+        return 0;
+    }
+
+    while (!feof(pf)) {
+        fscanf(pf, "%d\n", otp_data);
+        otp_data += 4;
+        read_byte += 4;
+    }
+
+    fclose(pf);
+
+    SENSOR_LOGI("dualotp read_bytes=%d ", read_byte);
+    return read_byte;
+}
+
+LOCAL cmr_int sensor_write_dualcam_otpdata(
+    struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id) {
+
+    cmr_u32 ret_val = SENSOR_FAIL;
+    cmr_u16 num_byte = SPRD_DUAL_OTP_SIZE;
+    char value[PROPERTY_VALUE_MAX];
+
+    SENSOR_LOGI("write dualotp ");
+    property_get("debug.dualcamera.write.otp", value, "false");
+    if (!strcmp(value, "true") && (sensor_id == 0)) {
+        const char *psPath_OtpData = "data/misc/cameraserver/otp.txt";
+
+        otp_params_t pdata;
+        char *dual_data = (char *)malloc(num_byte);
+        int otp_ret = read_txt_file(psPath_OtpData, dual_data);
+        pdata.buffer = dual_data;
+        pdata.num_bytes = num_byte;
+        int i = 0;
+        SENSOR_LOGI("read dualotp bin,len = %d", otp_ret);
+        if (otp_ret > 0) {
+            int ret = sensor_otp_rw_ctrl(sensor_cxt, OTP_WRITE_DATA, 0,
+                                         (void *)&pdata);
+        }
+        free(dual_data);
+        SENSOR_LOGI("free dualotp file");
+    }
+
+    return ret_val;
+}
+
+
 
 static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -1872,6 +1930,8 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor
         module = sensor_cxt->current_module;
         if ((SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) &&
             module && module->otp_drv_info) {
+          /*if property debug.dualcamera.write.otp is false do nothing*/
+            sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
             sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
         } else {
             SENSOR_LOGE("don't support otp:mod:0x%x,otp_drv:0x%x",
@@ -2652,7 +2712,7 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt, uint8_t 
             break;
         case OTP_WRITE_DATA:
             ret = module->otp_drv_info->otp_ops.sensor_otp_write(
-                sensor_cxt->otp_drv_handle, NULL);
+                sensor_cxt->otp_drv_handle, data);
             if (ret != CMR_CAMERA_SUCCESS)
                 return ret;
             break;

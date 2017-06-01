@@ -14,6 +14,8 @@
 #include "cmr_sensor_info.h"
 
 #define GT24C64A_I2C_ADDR 0xA0 >> 1
+#define GT24C64A_I2C_WR_ADDR 0x80 >> 1
+#define GT24C64A_I2C_RD_ADDR 0xF0 >> 1
 #define OTP_START_ADDR 0x0000
 #define OTP_END_ADDR 0x0FFF
 
@@ -59,19 +61,20 @@
 
 /*dualcamera data calibration*/
 #define DUAL_INFO_OFFSET 0x0D26
-#define DUAL_INFO_END_OFFSET 0xE0A
-#define DUAL_INFO_CHECKSUM 0xE0A
-#define DUAL_DATA_SIZE 228
+#define VCM_INFO_OFFSET 0x0E0A
+#define DUAL_INFO_CHECKSUM 0xE0C
+#define DUAL_DATA_SIZE 230
+#define VCM_DATA_SIZE 2
 
 /*PDAF*/
 #define PDAF_INFO_OFFSET 0x0B8C
 #define PDAF_INFO_END_OFFSET 0x0D0C
 #define PDAF_INFO_CHECKSUM 0x0D0C
 /*reserve*/
-#define RES_INFO_OFFSET 0x0E0B
+#define RES_INFO_OFFSET 0x0E0D
 #define RES_INFO_END_OFFSET 0x0FFF
 #define RES_INFO_CHECKSUM 0x0FFE
-#define RES_DATA_SIZE 499
+#define RES_DATA_SIZE 497
 /**/
 #define TOTAL_CHECKSUM_OFFSET 0x0FFF
 

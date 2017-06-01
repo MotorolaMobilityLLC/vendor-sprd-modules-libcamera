@@ -2653,8 +2653,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                     mCameraId, &otp_info, otp_info.total_otp.data_ptr,
                     otp_info.total_otp.size);
                 memcpy(otpInfo.otp_data,
-                       (char *)otp_info.total_otp.data_ptr + 0xD26,
-                       SPRD_DUAL_OTP_SIZE);
+                       (char *)otp_info.dual_otp.data_3d.data_ptr,
+                       otp_info.dual_otp.data_3d.size);
                 otpInfo.dual_otp_flag = 1;
             } else {
                 otpInfo.dual_otp_flag = 0;

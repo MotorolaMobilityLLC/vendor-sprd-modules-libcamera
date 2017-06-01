@@ -363,6 +363,10 @@ struct sensor_otp_af_info {
     cmr_u8 flag;
     cmr_u16 infinite_cali;
     cmr_u16 macro_cali;
+    /*for dual camera*/
+    cmr_s32 vcm_step;
+    cmr_u16 vcm_step_min;
+    cmr_u16 vcm_step_max;
 };
 
 struct sensor_otp_pdaf_info {

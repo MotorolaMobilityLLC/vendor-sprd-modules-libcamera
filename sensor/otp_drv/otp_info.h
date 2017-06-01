@@ -165,6 +165,9 @@ typedef struct {
     cmr_u16 infinity_dac;
     cmr_u16 macro_dac;
     cmr_u16 afc_direction;
+    cmr_s32 vcm_step;
+    cmr_u16 vcm_step_min;
+    cmr_u16 vcm_step_max;
     cmr_u16 reserve;
 } afcalib_data_t;
 
@@ -237,7 +240,7 @@ typedef struct {
     otp_data_info_t dual_cam_cali_dat;
     extended_data_t extend_dat;
     lsccalib_data_t lsc_cali_dat;
-    cmr_u8 data[4];/*must be last*/
+    cmr_u8 data[4]; /*must be last*/
 } otp_format_data_t;
 
 typedef struct {

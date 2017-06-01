@@ -1,4 +1,5 @@
 #include "ov13855_sunny_otp_drv.h"
+#include <cutils/properties.h>
 
 /** ov13855_sunny_section_checksum:
  *    @buff: address of otp buffer
@@ -46,7 +47,7 @@ static cmr_int _ov13855_sunny_buffer_init(cmr_handle otp_drv_handle) {
         otp_cxt->otp_data_len = otp_len;
         lsccalib_data_t *lsc_data =
             &((otp_format_data_t *)otp_data)->lsc_cali_dat;
-        lsc_data->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        lsc_data->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
         lsc_data->lsc_calib_golden.offset = sizeof(lsccalib_data_t);
 
         lsc_data->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
@@ -257,11 +258,40 @@ static cmr_int _ov13855_sunny_parse_dualcam_data(cmr_handle otp_drv_handle) {
     OTP_LOGI("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
+
     /*dualcam data*/
     cmr_u8 *dualcam_src_dat = otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
-    otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
-    otp_cxt->otp_data->dual_cam_cali_dat.size =
-        DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET;
+    cmr_u8 *vcm_src_dat = otp_cxt->otp_raw_data.buffer + VCM_INFO_OFFSET;
+    ret = _ov13855_sunny_section_checksum(
+        otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
+        DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET, DUAL_INFO_CHECKSUM);
+
+    switch (ret) {
+    case OTP_CAMERA_SUCCESS:
+        af_cali_dat->vcm_step = 0;
+        af_cali_dat->vcm_step_min = vcm_src_dat[0];
+        af_cali_dat->vcm_step_max = vcm_src_dat[1];
+        otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
+        otp_cxt->otp_data->dual_cam_cali_dat.size =
+            DUAL_DATA_SIZE - VCM_DATA_SIZE;
+        break;
+    default:
+        ret = _ov13855_sunny_section_checksum(
+            otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
+            DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET - VCM_DATA_SIZE,
+            DUAL_INFO_CHECKSUM - VCM_DATA_SIZE);
+        if (OTP_CAMERA_SUCCESS != ret) {
+            OTP_LOGI("dualcamera otp data checksum error,parse failed.\n");
+            return ret;
+        } else {
+            OTP_LOGI("vcm data is not in otp data.\n");
+            af_cali_dat->vcm_step = -1;
+            otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
+            otp_cxt->otp_data->dual_cam_cali_dat.size =
+                DUAL_DATA_SIZE - VCM_DATA_SIZE;
+        }
+    }
 
     OTP_LOGI("out");
     return ret;
@@ -397,23 +427,65 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
     CHECK_PTR(p_data);
-    OTP_LOGI("in");
-
+    OTP_LOGI(" dualotp write in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    otp_params_t *otp_write_data = p_data;
+    otp_params_t *otp_write_data = (otp_params_t *)p_data;
+
+    char value[PROPERTY_VALUE_MAX];
+    property_get("debug.dualcamera.write.otp", value, "false");
+
+    if (!strcmp(value, "false")) {
+        OTP_LOGI("do not set dual camera otp write property,directly return.");
+        return ret;
+    }
+    /*for before write*/
+    cmr_int bSum = 0;
+    /*for after  write*/
+    cmr_int aSum = 0;
+    /*open write permission*/
+    ret = hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_WR_ADDR,
+                                  0x0000, 0x00, BITS_ADDR16_REG8);
+    sensor_otp_dump_raw_data(otp_write_data->buffer, DUAL_DATA_SIZE, "write");
 
     if (NULL != otp_write_data->buffer) {
+        unsigned char *buffer = (unsigned char *)malloc(DUAL_DATA_SIZE);
+        otp_write_data->reg_addr = DUAL_INFO_OFFSET;
         int i;
+
         for (i = 0; i < otp_write_data->num_bytes; i++) {
-            hw_sensor_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                                &otp_write_data->buffer[i], 2);
+            bSum += otp_write_data->buffer[i];
+            hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                                    otp_write_data->reg_addr + i,
+                                    otp_write_data->buffer[i],
+                                    BITS_ADDR16_REG8);
+            buffer[i] = hw_sensor_grc_read_i2c(
+                otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                otp_write_data->reg_addr + i, BITS_ADDR16_REG8);
+
+            aSum += buffer[i];
+        }
+
+        /*for check reg write successful*/
+        if (bSum == aSum) {
+            hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                                    DUAL_INFO_CHECKSUM, (aSum % 255 + 1),
+                                    BITS_ADDR16_REG8);
+
+        } else {
+            ret = OTP_CAMERA_FAIL;
+            OTP_LOGI("crc failed bSum = 0x%x,aSum=0x%x", bSum, aSum);
         }
         OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
+        free(buffer);
     } else {
         OTP_LOGE("ERROR:buffer pointer is null");
         ret = OTP_CAMERA_FAIL;
     }
+
+    /*close write permission*/
+    ret = hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_RD_ADDR,
+                                  0x0000, 0x00, BITS_ADDR16_REG8);
     OTP_LOGI("out");
     return ret;
 }
@@ -569,6 +641,9 @@ static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
     /*af convert*/
     single_otp->af_info.infinite_cali = format_data->af_cali_dat.infinity_dac;
     single_otp->af_info.macro_cali = format_data->af_cali_dat.macro_dac;
+    single_otp->af_info.vcm_step = format_data->af_cali_dat.vcm_step;
+    single_otp->af_info.vcm_step_min = format_data->af_cali_dat.vcm_step_min;
+    single_otp->af_info.vcm_step_max = format_data->af_cali_dat.vcm_step_max;
 
     /*pdaf convert*/
     single_otp->pdaf_info.pdaf_data_addr = format_data->pdaf_cali_dat.buffer;
