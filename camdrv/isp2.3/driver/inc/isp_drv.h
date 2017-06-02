@@ -72,7 +72,7 @@ cmr_s32 isp_u_blc_slice_info(isp_handle handle, cmr_u32 info);
 /*ISP Sub Block: lens shading calibration*/
 cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info);
 cmr_s32 isp_u_2d_lsc_bypass(isp_handle handle, cmr_u32 bypass);
-cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle);
+cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle, cmr_u32 flag);
 cmr_s32 isp_u_2d_lsc_pos(isp_handle handle, cmr_u32 x, cmr_u32 y);
 cmr_s32 isp_u_2d_lsc_grid_size(isp_handle handle, cmr_u32 w, cmr_u32 h);
 cmr_s32 isp_u_2d_lsc_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h);

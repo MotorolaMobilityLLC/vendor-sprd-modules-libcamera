@@ -362,10 +362,9 @@ cmr_s32 isp_u_2d_lsc_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle)
+cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle, cmr_u32 flag)
 {
 	cmr_s32 ret = 0;
-	cmr_u32 upsdate_param = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -378,7 +377,7 @@ cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle)
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_PARAM_UPDATE;
-	param.property_param = &upsdate_param;
+	param.property_param = &flag;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

@@ -233,14 +233,14 @@ cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int dat
 	return rtn;
 }
 
-cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle)
+cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, cmr_int flag)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	ISP_LOGV("driver handle is %p", cxt->isp_driver_handle);
 
-	rtn = isp_u_2d_lsc_param_update(cxt->isp_driver_handle);
+	rtn = isp_u_2d_lsc_param_update(cxt->isp_driver_handle, flag);
 
 	return rtn;
 }
