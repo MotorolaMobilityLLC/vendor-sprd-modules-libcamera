@@ -30,6 +30,7 @@
 #include "isp_param_file_update.h"
 #include "pdaf_ctrl.h"
 #include <dlfcn.h>
+#include <inttypes.h>
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
@@ -671,7 +672,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 		rtn = cxt->ops.ae_ops.process(cxt->ae_cxt.handle, &in_param, &ae_result);
 	cxt->smart_cxt.isp_smart_eb = 1;
 	system_time1 = isp_get_timestamp();
-	ISP_LOGV("SYSTEM_TEST-ae:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-ae:%" PRId64"ms", system_time1 - system_time0);
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
 		cxt->ae_cxt.log_alc_ae = ae_result.log_ae.log;
@@ -880,7 +881,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle, struct isp_awb_calc_
 	if (cxt->ops.awb_ops.process)
 		rtn = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &param, awb_result);
 	system_time1 = isp_get_timestamp();
-	ISP_LOGV("SYSTEM_TEST-awb:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-awb:%" PRId64"ms", system_time1 - system_time0);
 
 	rtn = ispalg_awb_post_process((cmr_handle) cxt, awb_result);
 
@@ -998,7 +999,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		//}
 	}
 	system_time1 = isp_get_timestamp();
-	ISP_LOGV("SYSTEM_TEST-smart:%lldms", system_time1 - system_time0);
+	ISP_LOGV("SYSTEM_TEST-smart:%" PRId64"ms", system_time1 - system_time0);
 
 	isp_cur_bv = bv;
 	isp_cur_ct = result->ct;
@@ -1184,7 +1185,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct afctrl_calc_out calc_result;
 	struct isp_statis_info *statis_info = NULL;
 	cmr_u32 k_addr = 0;
-	cmr_u32 u_addr = 0;
+	cmr_uint u_addr = 0;
 	cmr_s32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);

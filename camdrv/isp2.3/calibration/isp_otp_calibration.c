@@ -158,10 +158,11 @@ static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_
 	if (PNULL == golden || PNULL == otp || PNULL == target_buf || PNULL == size)
 		return ISP_CALI_ERROR;
 
+#if 0// OTP must be removed by Qin.wang
 	rtn = isp_calibration_lsc_get_golden_info(golden->data_ptr, golden->size, &lsc_golden_info);
 	if (ISP_CALI_SUCCESS != rtn)
 		return rtn;
-
+#endif
 	lsc_info = (struct isp_cali_lsc_info *)target_buf->data_ptr;
 	if (PNULL == lsc_info)
 		return ISP_CALI_ERROR;
@@ -203,10 +204,11 @@ static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_
 		return ISP_CALI_ERROR;
 	}
 
+#if 0// OTP must be removed by Qin.wang
 	rtn = isp_calibration_lsc_calc(&lsc_calc_param, &lsc_calc_result);
 	if (ISP_CALI_SUCCESS != rtn)
 		return rtn;
-
+#endif
 	lsc_info->num = lsc_calc_result.lsc_param_num;
 	for (i = 0; i < lsc_info->num; i++) {
 		lsc_info->map[i].ct = lsc_calc_result.lsc_param[i].light_ct;

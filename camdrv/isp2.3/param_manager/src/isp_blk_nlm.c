@@ -58,6 +58,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 		for (i = 0; i < 72; i++) {
 			dst_ptr->cur.lut_w[i] = nlm_param[strength_level].lut_w.lut_w[i];
 		}
+#if 0// there is 64bits issue to use addr, need modified later --signed by Qin.wang
 		if (vst_param != NULL) {
 #if __WORDSIZE == 64
 			addr = (void *)((cmr_uint) dst_ptr->cur.vst_addr[1] << 32 | dst_ptr->cur.vst_addr[0]);
@@ -75,6 +76,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 #endif
 			memcpy(addr, (void *)ivst_param[strength_level].ivst_param, dst_ptr->cur.ivst_len);
 		}
+#endif
 		dst_ptr->cur.flat_opt_bypass = nlm_param[strength_level].first_lum.nlm_flat_opt_bypass;
 		dst_ptr->cur.flat_opt_mode = nlm_param[strength_level].first_lum.flat_opt_mode;
 		dst_ptr->cur.first_lum_byapss = nlm_param[strength_level].first_lum.first_lum_bypass;
@@ -134,12 +136,14 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 		}
 	}
 	memset((void *)dst_ptr->vst_map.data_ptr, 0x00, dst_ptr->vst_map.size);
+#if 0// there is 64bits issue to use addr, need modified later --signed by Qin.wang
 #if __WORDSIZE == 64
 	dst_ptr->cur.vst_addr[0] = (cmr_uint) (dst_ptr->vst_map.data_ptr) & 0xffffffff;
 	dst_ptr->cur.vst_addr[1] = (cmr_uint) (dst_ptr->vst_map.data_ptr) >> 32;
 #else
 	dst_ptr->cur.vst_addr[0] = (cmr_uint)(dst_ptr->vst_map.data_ptr);
 	dst_ptr->cur.vst_addr[1] = 0;
+#endif
 #endif
 	dst_ptr->cur.vst_len = dst_ptr->vst_map.size;
 
@@ -153,12 +157,14 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 		}
 	}
 	memset((void *)dst_ptr->ivst_map.data_ptr, 0x00, dst_ptr->ivst_map.size);
+#if 0// there is 64bits issue to use addr, need modified later --signed by Qin.wang
 #if __WORDSIZE == 64
 	dst_ptr->cur.ivst_addr[0] = (cmr_uint) (dst_ptr->ivst_map.data_ptr) & 0xffffffff;
 	dst_ptr->cur.ivst_addr[1] = (cmr_uint) (dst_ptr->ivst_map.data_ptr) >> 32;
 #else
 	dst_ptr->cur.ivst_addr[0] = (cmr_uint)(dst_ptr->ivst_map.data_ptr);
 	dst_ptr->cur.ivst_addr[1] = 0;
+#endif
 #endif
 	dst_ptr->cur.ivst_len = dst_ptr->ivst_map.size;
 
