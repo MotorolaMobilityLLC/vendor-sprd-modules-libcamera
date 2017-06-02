@@ -10,7 +10,7 @@
 		/*grid_gain_new*/
 		0x01,
 		/*str_edge_tr*/
-		0x3C,
+		0x7F,
 		/*cdcr_adj_factor*/
 		0x08,
 		/*reserved*/
@@ -18,11 +18,11 @@
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*grid_tr*/
-		0x0090,
+		0x01F4,
 		/*smooth_tr*/
-		0x00000050,
+		0x00000000,
 		/*uni_dir_intplt_tr*/
-		0x0064,
+		0x0014,
 		/*rb_high_sat_thr*/
 		0x0118,
 		/*gref_thr*/
