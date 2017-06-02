@@ -391,13 +391,13 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		ae_notice.will_capture = flash_notice->will_capture;
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
-			awb_flash_status = AWB_FLASH_PRE_AFTER;
+		awb_flash_status = AWB_FLASH_PRE_AFTER;
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
 
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
-			rtn = _isp_set_awb_gain((cmr_handle) cxt);
+		rtn = _isp_set_awb_gain((cmr_handle) cxt);
 
 		flash_mode = SMART_CTRL_FLASH_CLOSE;
 		if (cxt->ops.smart_ops.ioctrl)

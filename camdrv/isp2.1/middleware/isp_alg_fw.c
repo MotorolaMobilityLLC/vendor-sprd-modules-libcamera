@@ -458,8 +458,10 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 			return ISP_ERROR;
 		}
 
-		if (cxt->ops.ae_ops.ioctrl)
+		if (cxt->ops.ae_ops.ioctrl) {
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv0);
+			ISP_TRACE_IF_FAIL(rtn, ("AE_GET_BV_BY_LUM_NEW fail "));
+		}
 
 		//flash info
 		if(cxt->lsc_flash_onoff==1 && cxt->ops.ae_ops.ioctrl){
@@ -637,8 +639,10 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 
-	if (cxt->ops.awb_ops.ioctrl)
+	if (cxt->ops.awb_ops.ioctrl) {
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&gain, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AWB_CTRL_CMD_GET_GAIN fail"));
+	}
 
 	memset((void *)&ae_result, 0, sizeof(ae_result));
 	memset((void *)&in_param, 0, sizeof(in_param));
@@ -667,8 +671,10 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
 	system_time0 = isp_get_timestamp();
-	if (cxt->ops.ae_ops.process)
+	if (cxt->ops.ae_ops.process) {
 		rtn = cxt->ops.ae_ops.process(cxt->ae_cxt.handle, &in_param, &ae_result);
+		ISP_TRACE_IF_FAIL(rtn, ("ae process fail"));
+	}
 	cxt->smart_cxt.isp_smart_eb = 1;
 	system_time1 = isp_get_timestamp();
 	ISP_LOGV("SYSTEM_TEST-ae:%lldms", system_time1 - system_time0);
@@ -706,11 +712,11 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, (void *)&iso);
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, (void *)&exposure);
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EV, NULL, (void *)&ae_ev);
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, (void *)&iso);
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, (void *)&exposure);
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EV, NULL, (void *)&ae_ev);
 	}
 
 	out_ptr->quick_mode = 0;
@@ -735,8 +741,10 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	out_ptr->ae_info.ev_index = ae_ev.ev_index;
 	memcpy(out_ptr->ae_info.ev_table, ae_ev.ev_tab, 16 * sizeof(cmr_s32));
 //ALC_E
-	if (cxt->ops.ae_ops.ioctrl)
+	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_GET_MONITOR_INFO fail "));
+	}
 	out_ptr->scalar_factor = (info.win_size.h / 2) * (info.win_size.w / 2);
 
 // simulation info
@@ -877,8 +885,10 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle, struct isp_awb_calc_
 	rtn = ispalg_awb_pre_process((cmr_handle) cxt, awb_calc_info, &param);
 
 	system_time0 = isp_get_timestamp();
-	if (cxt->ops.awb_ops.process)
+	if (cxt->ops.awb_ops.process) {
 		rtn = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &param, awb_result);
+		ISP_TRACE_IF_FAIL(rtn, ("awb process fail "));
+	}
 	system_time1 = isp_get_timestamp();
 	ISP_LOGV("SYSTEM_TEST-awb:%lldms", system_time1 - system_time0);
 
@@ -956,8 +966,10 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		//gCntSendMsgLsc++;
 		//if (0 == gCntSendMsgLsc % 3) {
 
-		if (cxt->ops.ae_ops.ioctrl)
+		if (cxt->ops.ae_ops.ioctrl) {
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
+			ISP_TRACE_IF_FAIL(rtn, ("AE_GET_MONITOR_INFO fail "));
+		}
 
 		struct isp_pm_param_data param_data_alsc;
 		struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
@@ -1123,10 +1135,12 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_GET_FLICKER_MODE fail "));
 		ISP_LOGV("cur flicker mode %d", cur_flicker);
 
 		//exposure 1/33 s  -- 302921 (+/-10)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, &ae_exp);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_GET_EXP fail "));
 	}
 	if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {//0.06
 		ae_exp_flag = 1;
@@ -1135,6 +1149,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_SWITCH_FLAG, &cur_exp_flag, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_GET_FLICKER_SWITCH_FLAG fail "));
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
 
@@ -1144,8 +1159,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.cur_flicker = cur_flicker;
 	afl_input.vir_addr = u_addr;
 
-	if (cxt->ops.afl_ops.process)
+	if (cxt->ops.afl_ops.process) {
 		rtn = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
+		ISP_TRACE_IF_FAIL(rtn, ("afl process fail "));
+	}
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.buf_size = statis_info->buf_size;
@@ -1206,8 +1223,10 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps = cxt->sensor_fps;
 			calc_param.data = (void *)(af_temp);
-			if (cxt->ops.af_ops.process)
+			if (cxt->ops.af_ops.process) {
 				rtn = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
+				ISP_TRACE_IF_FAIL(rtn, ("af process fail "));
+			}
 
 			memset((void *)&statis_buf, 0, sizeof(statis_buf));
 			statis_buf.buf_size = statis_info->buf_size;
@@ -2849,9 +2868,12 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 	cxt->ae_cxt.shift = ae_param.shift;
 	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_VIDEO_START fail"));
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_DC_DV, &param_ptr->dv_mode, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_SET_DC_DV fail"));
 	}
 	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &ae_param.shift, NULL);
+	ISP_TRACE_IF_FAIL(rtn, ("ISP_DEV_SET_AE_SHIFT fail"));
 
 	return rtn;
 }
@@ -2874,8 +2896,10 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 //      memset((void*)&cxt->aem_stats, 0, sizeof(cxt->aem_stats));
 
 	/*update awb gain */
-	if (cxt->ops.awb_ops.ioctrl)
+	if (cxt->ops.awb_ops.ioctrl) {
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AWB_CTRL_CMD_GET_GAIN fail"));
+	}
 	awbc_cfg.r_gain = result.r;
 	awbc_cfg.g_gain = result.g;
 	awbc_cfg.b_gain = result.b;
@@ -2891,14 +2915,20 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 
 	/*update smart param */
-	if (cxt->ops.awb_ops.ioctrl)
+	if (cxt->ops.awb_ops.ioctrl) {
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AWB_CTRL_CMD_GET_CT fail"));
+	}
 	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_GET_BV_BY_LUM_NEW fail"));
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_GET_BV_BY_GAIN fail"));
 	}
-	if (cxt->ops.smart_ops.ioctrl)
+	if (cxt->ops.smart_ops.ioctrl) {
 		rtn = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_WORK_MODE, (void *)&cxt->commn_cxt.isp_mode, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("ISP_SMART_IOCTL_SET_WORK_MODE fail"));
+	}
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
 
@@ -3024,6 +3054,7 @@ if (lsc_ver.LSC_SPD_VERSION >= 2) {
 
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(rtn, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
 	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
 
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
@@ -3033,7 +3064,8 @@ if (lsc_ver.LSC_SPD_VERSION >= 2) {
 	struct awb_size win_size;
 	struct isp_ae_grgb_statistic_info *stat_info;
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(rtn, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
 	stat_info = output.param_data->data_ptr;
 
 	if (cxt->ops.awb_ops.ioctrl) {
@@ -3211,8 +3243,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	rtn = isp_update_alsc_param(cxt);
 	if (cxt->ops.awb_ops.ioctrl) {
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
-		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
 		ISP_RETURN_IF_FAIL(rtn, ("fail to set_awb_work_mode"));
+		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
+		ISP_RETURN_IF_FAIL(rtn, ("fail to AWB_CTRL_CMD_GET_PIX_CNT"));
 	}
 
 	rtn = ae_set_work_mode(cxt, mode, 1, in_ptr);
@@ -3236,10 +3269,13 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	cmr_int rtn = ISP_SUCCESS;
 
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	if (cxt->ops.ae_ops.ioctrl)
+	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AE_VIDEO_STOP fail"));
+	}
 	if (cxt->ops.awb_ops.ioctrl) {
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_VIDEO_STOP_NOTIFY, NULL, NULL);
+		ISP_TRACE_IF_FAIL(rtn, ("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY fail"));
 	}
 	if(cxt->ops.af_ops.ioctrl){
 		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
