@@ -1680,8 +1680,34 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	cmr_u32 i = 0;
 
 	memset((void *)&result, 0, sizeof(result));
-	memset(&output, 0, sizeof(output));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
+	
+#if 0
+	/*get dual flash tuning parameters*/
+	memset(&output, 0, sizeof(output));
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_DUAL_FLASH, NULL, &output);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to get dual flash param");
+		return rtn;
+	}
+
+	if (0 == output.param_num) {
+		ISP_LOGE("fail to check param: dual flash param num=%d", output.param_num);
+		return ISP_ERROR;
+	}
+
+	param_data = output.param_data;
+	for (i = 0; i < output.param_num; ++i) {
+		if (NULL != param_data->data_ptr) {
+			ae_input.flash_tuning[num].param = param_data->data_ptr;
+			ae_input.flash_tuning[num].size = param_data->data_size;
+			++num;
+		}
+		++param_data;
+	}	
+#endif
+
+	memset(&output, 0, sizeof(output));	
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to get ae init param");
