@@ -2179,6 +2179,26 @@ static cmr_int _ispSetAuxSensorInfo(cmr_handle isp_alg_handle, void *param_ptr, 
 	return ret;
 }
 
+static cmr_int _ispGetFPS(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 param = 0;
+	UNUSED(call_back);
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to  get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	//if (cxt->ops.ae_ops.ioctrl)
+	//rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, (void *)&param);
+	//*(cmr_u32 *) param_ptr = param;
+
+	//ISP_LOGV("rtn %ld param %d fps %d", rtn, param, *(cmr_u32 *) param_ptr);
+
+	return rtn;
+}
+
 static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, _ispSnapshotNoticeIOCtrl},
 	{ISP_CTRL_AE_MEASURE_LUM, _ispAeMeasureLumIOCtrl},
@@ -2249,6 +2269,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AE_SENSITIVITY, _ispSetAeSensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, _ispSetDcamTimestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, _ispSetAuxSensorInfo},
+	{ISP_CTRL_GET_FPS, _ispGetFPS},
 
 	{ISP_CTRL_MAX, NULL}
 };
