@@ -360,7 +360,7 @@ struct ae_ctrl_cxt {
 #endif
 
 static float _get_real_gain(cmr_u32 gain);
-static cmr_s32 _fdae_init(struct ae_ctrl_cxt *cxt);
+//static cmr_s32 _fdae_init(struct ae_ctrl_cxt *cxt);
 static cmr_s32 _set_pause(struct ae_ctrl_cxt *cxt);
 static cmr_s32 _set_restore_cnt(struct ae_ctrl_cxt *cxt);
 
@@ -1765,7 +1765,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		//ISP_LOGV("TC_Beth-SPRD:touch tuning win info:W:%d,H:%d!", cxt->cur_param->touch_info.touch_tuning_win.w, cxt->cur_param->touch_info.touch_tuning_win.h);
 	}
 	/* fd-ae param */
-	_fdae_init(cxt);
+	//_fdae_init(cxt);
 
 	/* control information for sensor update */
 	cxt->checksum = _get_checksum();
@@ -1991,7 +1991,7 @@ SET_SCENE_MOD_EXIT:
 		cur_scene_mod, nxt_scene_mod, rtn);
 	return rtn;
 }
-
+#if 0
 /**************************************************************************/
 /* *Begin: FDAE related functions */
 static cmr_s32 _fdae_init(struct ae_ctrl_cxt *cxt)
@@ -2184,7 +2184,7 @@ static cmr_s32 _fd_process(struct ae_ctrl_cxt *cxt, cmr_handle param)
 
 /*  END: FDAE related functions  */
 /**************************************************************************/
-
+#endif
 static cmr_s32 _get_skip_frame_num(struct ae_ctrl_cxt *cxt, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -2942,7 +2942,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_status.ae_initial = AE_PARAM_INIT;
 	rtn = _set_ae_param(cxt, init_param, &work_param, AE_PARAM_INIT);
 	/* init fd_info add by matchbox for fd_ae */
-	rtn = _fd_info_init(cxt);
+	//rtn = _fd_info_init(cxt);
 
 	s_q_param.exp_valid_num = cxt->exp_skip_num + 1 + AE_UPDAET_BASE_OFFSET;
 	s_q_param.sensor_gain_valid_num = cxt->gain_skip_num +  1 + AE_UPDAET_BASE_OFFSET;
@@ -5282,7 +5282,40 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_SET_FD_PARAM:
 		if (param) {
-			rtn = _fd_process(cxt, param);
+			struct ae_fd_param *fd = (struct ae_fd_param *)param;
+			cmr_s32 i = 0;
+			cxt->cur_status.ae1_finfo.update_flag = 1;
+			if(fd->face_num > 0){
+				cxt->cur_status.ae1_finfo.img_width = fd->width;
+				cxt->cur_status.ae1_finfo.img_height =fd->height;
+				cxt->cur_status.ae1_finfo.cur_info.face_num = fd->face_num;
+				ISP_LOGE("FD_CTRL_NUM:%d,flag is %d\n",cxt->cur_status.ae1_finfo.cur_info.face_num,cxt->cur_status.ae1_finfo.update_flag);
+				for(i = 0; i < fd->face_num; i++){
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_x = fd->face_area[i].rect.start_x;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_y = fd->face_area[i].rect.start_y;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_x = fd->face_area[i].rect.end_x;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_y = fd->face_area[i].rect.end_y;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].pose = fd->face_area[i].pose;
+					ISP_LOGE("FD_CTRL_LTN:start(x,y):(%d,%d),end(x,y):(%d,%d),pose:%d\n",
+						cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_x,
+						cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_y,
+						cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_x,
+						cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_y,
+						cxt->cur_status.ae1_finfo.cur_info.face_area[i].pose);
+				}
+			}else{
+				cxt->cur_status.ae1_finfo.cur_info.face_num = 0;
+				for(i = 0; i < fd->face_num; i++){
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_x = 0;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_y = 0;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_x = 0;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_y = 0;
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].pose = -1;
+				}
+			}
+		}else{
+			ISP_LOGE("fail to fd, param %p", param);
+			return AE_ERROR;
 		}
 		break;
 

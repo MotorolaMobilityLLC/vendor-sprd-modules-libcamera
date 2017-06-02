@@ -24,7 +24,7 @@
 #else
 #include "cmr_types.h"
 #endif
-#include "ae1_face.h"
+//#include "ae1_face.h"
 
 #define AE_EXP_GAIN_TABLE_SIZE 512
 #define AE_WEIGHT_TABLE_SIZE	1024
@@ -44,6 +44,7 @@
 #define AE_FIX_PCT 1024
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
 #define AE_CFG_NUM 8
+#define AE_FD_NUM 20
 
 enum ae_environ_mod {
 	ae_environ_night,
@@ -119,6 +120,29 @@ struct ae_rect {
 	cmr_u32 end_x;
 	cmr_u32 end_y;
 };
+
+struct ae1_face {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;	/*1 x 4bytes */
+	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */
+};
+
+struct ae1_face_info {
+	cmr_u16 face_num;	/*1 x 4bytes */
+	cmr_u16 reserved;	/*1 x 4bytes */
+	cmr_u32 rect[1024];	/*256 x 4bytes */
+	struct ae1_face face_area[20];	/*20 x 5bytes */
+};			/*297 x 4bytes */
+
+struct ae1_fd_param {
+	struct ae1_face_info cur_info;	/*297 x 4bytes */
+	cmr_u8 update_flag;
+	cmr_u8 enable_flag;
+	cmr_u16 img_width;
+	cmr_u16 img_height;
+};	/*595 x 4bytes */
 
 struct ae_param {
 	cmr_handle param;
@@ -237,8 +261,8 @@ struct ae_flash_tuning_param {
 };
 
 struct ae_sensor_cfg {
-	cmr_u16 max_gain;
-	cmr_u16 min_gain;
+	cmr_u16 max_gain;/*sensor max gain*/
+	cmr_u16 min_gain;/*sensor min gain*/
 	cmr_u8 gain_precision;
 	cmr_u8 exp_skip_num;
 	cmr_u8 gain_skip_num;
@@ -361,9 +385,9 @@ struct ae_alg_calc_param {
 	cmr_s16 ae_satur;
 	//for touch AE
 	cmr_s8 to_ae_state;
-
-//adv_alg module init
+	//for face AE
 	struct ae1_fd_param ae1_finfo;
+//adv_alg module init
 	cmr_handle adv[8];
 	/*
 	   0:region
