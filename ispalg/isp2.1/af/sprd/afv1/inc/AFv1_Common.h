@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.116"
-#define SUB_VERSION             "-Flash-03"
+#define VERSION             "2.117"
+#define SUB_VERSION             "-Blur-02"
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -310,6 +310,13 @@ enum {
 	DISTANCE_200CM,
 	DISTANCE_500CM,
 	DISTANCE_MAP_TOTAL,
+};
+
+enum {
+	AF_TIME_DCAM,
+	AF_TIME_VCM,
+	AF_TIME_CAPTURE,
+	AF_TIME_TYPE_TOTAL,
 };
 //=========================================================================================//
 // Public Structure Instance
@@ -916,7 +923,9 @@ typedef struct _AF_Trigger_Data {
 	cmr_u32 AF_Trigger_Type;
 	cmr_u32 AFT_mode;
 	defocus_param_t defocus_param;
-	cmr_u32 reserved[8];
+	cmr_u32 re_trigger;
+	cmr_u32 trigger_source;
+	cmr_u32 reserved[6];
 } AF_Trigger_Data;
 
 typedef struct _AF_Win {
@@ -968,6 +977,13 @@ typedef struct _Bokeh_tuning_param {
 	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
 } Bokeh_tuning_param;
 
+typedef struct _af_time_info_s {
+	cmr_u64 vcm_timestamp;
+	cmr_u64 dcam_timestamp;
+	cmr_u64 takepic_timestamp;
+	cmr_u64 reserved[16];
+} _af_time_info_t;
+
 typedef struct _AF_Data {
 	cmr_s8 AF_Version[40];
 	cmr_u32 AF_mode;
@@ -994,6 +1010,10 @@ typedef struct _AF_Data {
 	cmr_u32 cur_scene;
 	cmr_u32 pre_scene;
 	cmr_u32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];
+	_af_time_info_t time_info;
+	cmr_u32 distance_reminder;
+	cmr_u32 near_dist;
+	cmr_u32 far_dist;
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 

@@ -538,6 +538,7 @@ static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
 	af->vcm_timestamp = get_systemtime_ns();
+	AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_VCM,af->vcm_timestamp);
 	//ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
@@ -2136,12 +2137,14 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 	struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
 	if (0 == af_ts->capture) {
 		af->dcam_timestamp = af_ts->timestamp;
+		AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_DCAM,af->dcam_timestamp);
 		//ISP_LOGV("dcam_timestamp %" PRIu64 " ms", (cmr_s64) af->dcam_timestamp);
 		if (DCAM_AFTER_VCM_YES == compare_timestamp(af) && 1 == af->vcm_stable) {
 			sem_post(&af->af_wait_caf);
 		}
 	} else if (1 == af_ts->capture) {
 		af->takepic_timestamp = af_ts->timestamp;
+		AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_CAPTURE,af->takepic_timestamp);
 		//ISP_LOGV("takepic_timestamp %" PRIu64 " ms", (cmr_s64) af->takepic_timestamp);
 		ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 	}
