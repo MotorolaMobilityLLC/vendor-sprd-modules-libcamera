@@ -6,7 +6,7 @@ LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamisp
+LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)

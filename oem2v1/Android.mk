@@ -164,6 +164,8 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 
+ISPALG_DIR = ispalg/isp2.2
+ISPDRV_DIR = camdrv/isp2.2
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/inc \
@@ -178,9 +180,9 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../sensor/otp_drv
 
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../isp2.2/isp_tune \
-	$(LOCAL_PATH)/../isp2.2/common/inc \
-	$(LOCAL_PATH)/../isp2.2/middleware/inc
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc
 
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
@@ -268,7 +270,7 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamisp
+LOCAL_SHARED_LIBRARIES += libcamdrv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar

@@ -53,11 +53,14 @@ LOCAL_C_INCLUDES += \
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
+TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ISP_HW_VER = 2v1
+ISPALG_DIR := ispalg/isp2.2
+ISPDRV_DIR := camdrv/isp2.2
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/isp2.2/isp_tune \
-	$(LOCAL_PATH)/isp2.2/common/inc \
-	$(LOCAL_PATH)/isp2.2/middleware/inc
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)

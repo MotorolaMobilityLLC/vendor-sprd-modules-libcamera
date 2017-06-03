@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -29,7 +29,7 @@ LOCAL_CFLAGS += -DAE_WORK_MOD_V0
 # ************************************************
 # external header file
 # ************************************************
-ISP_DIR := ../../camdrv/isp2.1
+ISP_DIR := ../../camdrv/isp2.2
 
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
@@ -104,6 +104,7 @@ LOCAL_CFLAGS += -DCONFIG_USE_ALC_AWB
 LOCAL_SHARED_LIBRARIES += libAl_Ais libAl_Ais_Sp
 else
 #LOCAL_CFLAGS += -DCONFIG_USE_ALC_AWB
+
 
 
 include $(BUILD_SHARED_LIBRARY)
