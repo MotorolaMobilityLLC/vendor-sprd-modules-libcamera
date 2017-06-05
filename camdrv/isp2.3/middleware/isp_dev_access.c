@@ -20,7 +20,7 @@
 #include "af_ctrl.h"
 //#define ISP_DEFAULT_CFG_FOR_BRING_UP
 
-cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info * in_ptr)
+cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info *in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -39,11 +39,15 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		statis_mem_info->buffer_client_data = in_ptr->buffer_client_data;
 		statis_mem_info->cb_of_malloc = in_ptr->cb_of_malloc;
 		statis_mem_info->cb_of_free = in_ptr->cb_of_free;
-		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE
-							+ ISP_AFM_STATIS_BUF_SIZE + ISP_AFL_STATIS_BUF_SIZE + ISP_PDAF_STATIS_BUF_SIZE + ISP_BINNING_STATIS_BUF_SIZE) * 5;
+		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE +
+							ISP_AFM_STATIS_BUF_SIZE +
+							ISP_AFL_STATIS_BUF_SIZE +
+							ISP_PDAF_STATIS_BUF_SIZE +
+							ISP_BINNING_STATIS_BUF_SIZE) * 5;
 		statis_mem_info->isp_statis_mem_num = 1;
 		if (statis_mem_info->cb_of_malloc) {
 			isp_cb_of_malloc cb_malloc = in_ptr->cb_of_malloc;
+
 			if (-EINVAL == cb_malloc(CAMERA_ISP_STATIS,
 				  &statis_mem_info->isp_statis_mem_size,
 				  &statis_mem_info->isp_statis_mem_num,
@@ -93,8 +97,8 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 
 	isp_statis_buf.buf_size = statis_mem_info->isp_statis_mem_size;
 	isp_statis_buf.buf_num = statis_mem_info->isp_statis_mem_num;
-	isp_statis_buf.kaddr[0]= statis_mem_info->isp_statis_k_addr[0];
-	isp_statis_buf.kaddr[1]= statis_mem_info->isp_statis_k_addr[1];
+	isp_statis_buf.kaddr[0] = statis_mem_info->isp_statis_k_addr[0];
+	isp_statis_buf.kaddr[1] = statis_mem_info->isp_statis_k_addr[1];
 	isp_statis_buf.vir_addr = statis_mem_info->isp_statis_u_addr;
 	isp_statis_buf.buf_flag = 0;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
@@ -107,9 +111,10 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	return rtn;
 }
 
-cmr_int isp_dev_set_interface(struct isp_interface_param_v1 * in_ptr)
+cmr_int isp_dev_set_interface(struct isp_interface_param_v1 *in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
+
 	if (!in_ptr) {
 		rtn = ISP_PARAM_ERROR;
 		goto exit;
@@ -137,7 +142,7 @@ exit:
 	return rtn;
 }
 
-cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 * in_ptr)
+cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -150,7 +155,6 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 	ISP_RETURN_IF_FAIL(rtn, ("isp get fetch addr error"));
 
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
-
 	rtn = isp_get_cfa_default_param(in_ptr, &cfa_param);
 	ISP_RETURN_IF_FAIL(rtn, ("isp get cfa default param error"));
 
@@ -270,7 +274,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	struct sprd_img_statis_info *irq_info;
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct isp_alg_fw_context *isp_alg_fw_cxt = (struct isp_alg_fw_context *)(cxt->evt_alg_handle);
+
 	irq_info = (struct sprd_img_statis_info *)param_ptr;
 
 	statis_info = malloc(sizeof(*statis_info));
@@ -283,7 +287,8 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
 
-	ISP_LOGV("got one frame statis paddr 0x%x vaddr 0x%x property 0x%d", statis_info->phy_addr, statis_info->vir_addr, statis_info->irq_property);
+	ISP_LOGV("got one frame statis paddr 0x%x vaddr 0x%x property %d",
+		 statis_info->phy_addr, statis_info->vir_addr, statis_info->irq_property);
 	if (irq_info->irq_property == IRQ_AEM_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
@@ -315,10 +320,10 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 {
 	struct sprd_irq_info *irq_info;
 	struct isp_statis_info *statis_info = NULL;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	statis_info = malloc(sizeof(*statis_info));
 
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	irq_info = (struct sprd_irq_info *)param_ptr;
 
 	statis_info->irq_property = irq_info->irq_property;
@@ -338,7 +343,7 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 
 }
 
-cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle * isp_dev_handle)
+cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = NULL;
@@ -381,6 +386,7 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
 	void *dummy;
+
 	ISP_CHECK_HANDLE_VALID(isp_handler);
 
 	if (statis_mem_info->isp_statis_alloc_flag == 1) {
@@ -388,6 +394,7 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 
 		if (statis_mem_info->cb_of_free) {
 			isp_cb_of_free cb_free = statis_mem_info->cb_of_free;
+
 			cb_free(type, &statis_mem_info->isp_statis_k_addr[0], &statis_mem_info->isp_statis_u_addr, &statis_mem_info->statis_mfd,
 				statis_mem_info->isp_statis_mem_num, statis_mem_info->buffer_client_data);
 		}
@@ -418,11 +425,13 @@ cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_
 	switch (cmd) {
 	case ISP_VIDEO_SIZE:{
 			struct isp_video_limit *size_ptr = param_ptr;
+
 			rtn = isp_u_capability_continue_size(cxt->isp_driver_handle, &size_ptr->width, &size_ptr->height);
 			break;
 		}
 	case ISP_CAPTURE_SIZE:{
 			struct isp_video_limit *size_ptr = param_ptr;
+
 			rtn = isp_u_capability_single_size(cxt->isp_driver_handle, &size_ptr->width, &size_ptr->height);
 			break;
 		}
@@ -460,7 +469,7 @@ static cmr_int dev_ae_set_statistics_mode(cmr_handle isp_dev_handle, cmr_int mod
 	return 0;
 }
 
-static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 * rgb_gain_coeff)
+static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_coeff)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -508,6 +517,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		break;
 	case ISP_DEV_SET_AE_MONITOR_WIN:{
 			struct ae_monitor_info *in_param = (struct ae_monitor_info *)param0;
+
 			rtn = isp_u_raw_aem_offset(cxt->isp_driver_handle, in_param->trim.x, in_param->trim.y);
 			rtn = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, in_param->win_size.w, in_param->win_size.h);
 			break;
@@ -519,7 +529,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		rtn = dev_ae_set_statistics_mode(isp_dev_handle, *(cmr_int *) param0, *(cmr_u32 *) param1);
 		break;
 	case ISP_DEV_SET_RGB_GAIN:
-		rtn = dev_ae_set_rgb_gain(isp_dev_handle, (cmr_u32*)param0);
+		rtn = dev_ae_set_rgb_gain(isp_dev_handle, (cmr_u32 *)param0);
 		break;
 	case ISP_DEV_GET_AE_SYSTEM_TIME:
 		rtn = isp_u_capability_time(cxt->isp_driver_handle, (cmr_u32 *) param0, (cmr_u32 *) param1);

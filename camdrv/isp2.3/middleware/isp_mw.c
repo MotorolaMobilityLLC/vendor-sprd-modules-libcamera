@@ -89,7 +89,7 @@ static cmr_s32 _isp_check_proc_next_param(struct ipn_in_param *in_param_ptr)
 }
 
 /* Public Function Prototypes */
-cmr_int isp_init(struct isp_init_param * input_ptr, cmr_handle * isp_handler)
+cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = NULL;
@@ -195,10 +195,11 @@ cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr
 	return rtn;
 }
 
-cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start * param_ptr)
+cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start *param_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+
 	if (!isp_handler || !param_ptr) {
 		rtn = ISP_PARAM_ERROR;
 		goto exit;
@@ -227,7 +228,7 @@ exit:
 	return rtn;
 }
 
-cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param * in_ptr, struct ips_out_param * out_ptr)
+cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_ptr, struct ips_out_param *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
@@ -246,7 +247,7 @@ cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param * in_ptr, str
 	return rtn;
 }
 
-cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param * in_ptr, struct ips_out_param * out_ptr)
+cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
@@ -265,7 +266,7 @@ cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param * in_ptr, stru
 	return rtn;
 }
 
-cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param * buf_cfg)
+cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 {
 	cmr_int ret = ISP_SUCCESS;
 	UNUSED(isp_handle);
