@@ -1473,7 +1473,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                        exif_unit->picture_size.width == 640) {
                 exif_unit->picture_size.height = 360;
             } else if (exif_unit->picture_size.height == 1088 &&
-                        exif_unit->picture_size.width == 1920) {
+                       exif_unit->picture_size.width == 1920) {
                 exif_unit->picture_size.height = 1080;
             }
 
@@ -1486,7 +1486,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             } else if (exif_unit->actual_picture_size.height == 368 &&
                        exif_unit->actual_picture_size.width == 640) {
                 exif_unit->actual_picture_size.height = 360;
-            } else  if (exif_unit->actual_picture_size.height == 1088 &&
+            } else if (exif_unit->actual_picture_size.height == 1088 &&
                        exif_unit->actual_picture_size.width == 1920) {
                 exif_unit->actual_picture_size.height = 1080;
             }
@@ -3410,8 +3410,8 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
         {CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
          setting_set_yuv_callback_enable},
         {CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK, setting_set_awb_lock_unlock},
-        {CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED, setting_set_sprd_hdr_plus_enable},
         {CAMERA_PARAM_AE_REGION, setting_set_ae_region},
+        {CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED, setting_set_sprd_hdr_plus_enable},
         {CAMERA_PARAM_TYPE_MAX, NULL},
         {SETTING_GET_PREVIEW_ANGLE, setting_get_preview_angle},
         {SETTING_GET_CAPTURE_ANGLE, setting_get_capture_angle},
