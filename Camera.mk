@@ -61,6 +61,7 @@ LOCAL_C_INCLUDES += \
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
+TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ISP_HW_VER = 2v1
 ISPALG_DIR := ispalg/isp2.1
 ISPDRV_DIR := camdrv/isp2.3

@@ -32,7 +32,6 @@
 #include "isp_awb_types.h"
 #include "ae_ctrl_types.h"
 
-
 struct commn_info {
 	cmr_s32 isp_mode;
 	cmr_u32 mode_flag;
@@ -135,58 +134,57 @@ struct lsc_info {
 
 struct ispalg_ae_ctrl_ops {
 	cmr_s32 (*init)(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_handle result);
-	cmr_int (*deinit)(cmr_handle * isp_afl_handle);
-	cmr_int (*process)(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct ae_calc_out * result);
+	cmr_int (*deinit)(cmr_handle *isp_afl_handle);
+	cmr_int (*process)(cmr_handle handle_ae, struct ae_calc_in *in_ptr, struct ae_calc_out *result);
 	cmr_int (*ioctrl)(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);
-	cmr_s32 (*get_flash_param)(cmr_handle pm_handle,struct isp_flash_param **out_param_ptr);
+	cmr_s32 (*get_flash_param)(cmr_handle pm_handle, struct isp_flash_param **out_param_ptr);
 };
 
 struct ispalg_af_ctrl_ops {
-	cmr_int (*init)(struct afctrl_init_in * input_ptr, cmr_handle * handle_af);
+	cmr_int (*init)(struct afctrl_init_in *input_ptr, cmr_handle *handle_af);
 	cmr_int (*deinit)(cmr_handle handle);
-	cmr_int (*process)(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out * result);
+	cmr_int (*process)(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result);
 	cmr_int (*ioctrl)(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr);
 };
 
 struct ispalg_afl_ctrl_ops {
-	cmr_int (*init)(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * input_ptr);
-	cmr_int (*deinit)(cmr_handle * isp_afl_handle);
-	cmr_int (*process)(cmr_handle isp_afl_handle, struct afl_proc_in * in_ptr, struct afl_ctrl_proc_out * out_ptr);
+	cmr_int (*init)(cmr_handle *isp_afl_handle, struct afl_ctrl_init_in *input_ptr);
+	cmr_int (*deinit)(cmr_handle *isp_afl_handle);
+	cmr_int (*process)(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr);
 	cmr_int (*config)(isp_handle isp_afl_handle);
 	cmr_int (*config_new)(isp_handle isp_afl_handle);
 };
 
 struct ispalg_awb_ctrl_ops {
-	cmr_int (*init)(struct awb_ctrl_init_param * input_ptr, cmr_handle * handle_awb);
-	cmr_int (*deinit)(cmr_handle * handle_awb);
-	cmr_int (*process)(cmr_handle handle_awb, struct awb_ctrl_calc_param * param, struct awb_ctrl_calc_result * result);
+	cmr_int (*init)(struct awb_ctrl_init_param *input_ptr, cmr_handle *handle_awb);
+	cmr_int (*deinit)(cmr_handle *handle_awb);
+	cmr_int (*process)(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result);
 	cmr_int (*ioctrl)(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 };
 
 struct ispalg_smart_ctrl_ops {
 	smart_handle_t (*init)(struct smart_init_param *param, void *result);
-	cmr_s32 (*deinit)(smart_handle_t * handle, void *param, void *result);
+	cmr_s32 (*deinit)(smart_handle_t *handle, void *param, void *result);
 	cmr_s32 (*ioctrl)(smart_handle_t handle, cmr_u32 cmd, void *param, void *result);
-	cmr_s32 (*calc)(cmr_handle handle_smart, struct smart_proc_input * in_ptr);
-	cmr_s32 (*block_disable)(cmr_handle handle,cmr_u32 smart_id);
-	cmr_s32 (*block_enable)(cmr_handle handle,cmr_u32 smart_id);
-	cmr_s32 (*NR_disable)(cmr_handle handle,cmr_u32 is_diseb);
+	cmr_s32 (*calc)(cmr_handle handle_smart, struct smart_proc_input *in_ptr);
+	cmr_s32 (*block_disable)(cmr_handle handle, cmr_u32 smart_id);
+	cmr_s32 (*block_enable)(cmr_handle handle, cmr_u32 smart_id);
+	cmr_s32 (*NR_disable)(cmr_handle handle, cmr_u32 is_diseb);
 };
 
 struct ispalg_pdaf_ctrl_ops {
-	cmr_int (*init)(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out * out, cmr_handle * handle);
-	cmr_int (*deinit)(cmr_handle * handle);
-	cmr_int (*process)(cmr_handle handle, struct pdaf_ctrl_process_in * in, struct pdaf_ctrl_process_out * out);
-	cmr_int (*ioctrl)(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_in * in, struct pdaf_ctrl_param_out * out);
+	cmr_int (*init)(struct pdaf_ctrl_init_in *in, struct pdaf_ctrl_init_out *out, cmr_handle *handle);
+	cmr_int (*deinit)(cmr_handle *handle);
+	cmr_int (*process)(cmr_handle handle, struct pdaf_ctrl_process_in *in, struct pdaf_ctrl_process_out *out);
+	cmr_int (*ioctrl)(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_in *in, struct pdaf_ctrl_param_out *out);
 };
 
 struct ispalg_lsc_ctrl_ops {
-	cmr_int (*init)(struct lsc_adv_init_param * input_ptr, cmr_handle * handle_lsc);
-	cmr_int (*deinit)(cmr_handle * handle_lsc);
-	cmr_int (*process)(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_ptr, struct lsc_adv_calc_result * result);
+	cmr_int (*init)(struct lsc_adv_init_param *input_ptr, cmr_handle *handle_lsc);
+	cmr_int (*deinit)(cmr_handle *handle_lsc);
+	cmr_int (*process)(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
 	cmr_int (*ioctrl)(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
 };
-
 
 struct ispalg_lib_ops {
 	struct ispalg_ae_ctrl_ops ae_ops;
@@ -237,7 +235,7 @@ struct isp_alg_fw_init_in {
 	struct isp_init_param *init_param;
 };
 
-cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle * isp_alg_handle);
+cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_alg_handle);
 cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle);
 cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, cmr_s32(*call_back) ());
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr);
