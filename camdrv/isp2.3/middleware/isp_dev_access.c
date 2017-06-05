@@ -20,6 +20,14 @@
 #include "af_ctrl.h"
 //#define ISP_DEFAULT_CFG_FOR_BRING_UP
 
+struct isp_dev_access_context {
+	cmr_handle evt_alg_handle;
+	isp_evt_cb isp_event_cb;
+	cmr_handle isp_driver_handle;
+	struct isp_statis_mem_info statis_mem_info;
+	struct isp_ops ops;
+};
+
 cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info *in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -347,7 +355,6 @@ cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = NULL;
-	pthread_attr_t attr;
 
 	cxt = (struct isp_dev_access_context *)malloc(sizeof(struct isp_dev_access_context));
 	if (NULL == cxt) {
@@ -506,6 +513,19 @@ static cmr_int dev_set_af_monitor(cmr_handle isp_dev_handle, void *param0, cmr_u
 	return rtn;
 }
 
+cmr_int isp_dev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp_raw_proc_info *info)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	rtn = isp_dev_set_slice_raw_info(cxt->isp_driver_handle, info);
+	ISP_TRACE_IF_FAIL(rtn, ("failed to slice raw info"));
+	rtn = isp_u_fetch_start_isp(cxt->isp_driver_handle, ISP_ONE);
+	ISP_TRACE_IF_FAIL(rtn, ("failed to fetch start isp"));
+
+	return rtn;
+}
+
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param0, void *param1)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -615,6 +635,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		break;
 	case ISP_DEV_SET_AF_MODULES_CFG:
 		rtn = isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_RAW_SLICE:
+		rtn = isp_dev_access_set_slice_raw(cxt, param0);
 		break;
 	default:
 		break;

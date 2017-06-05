@@ -50,6 +50,7 @@ cmr_s32 isp_dev_reg_write(isp_handle handle, cmr_u32 num, void *param_ptr);
 cmr_s32 isp_dev_reg_read(isp_handle handle, cmr_u32 num, void *param_ptr);
 cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 * buf, cmr_u32 len);
 cmr_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input *param);
+cmr_s32 isp_dev_set_slice_raw_info(isp_handle handle, struct isp_raw_proc_info *param);
 
 /*ISP Capability*/
 cmr_s32 isp_u_capability_chip_id(isp_handle handle, cmr_u32 * chip_id);
