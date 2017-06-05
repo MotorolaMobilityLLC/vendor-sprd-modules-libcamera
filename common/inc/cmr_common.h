@@ -350,6 +350,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_PREVIEW_PDAF_RAW,
     COM_ISP_SET_PREVIEW_PDAF_OPEN,
     COM_ISP_SET_AWB_LOCK_UNLOCK,
+    COM_ISP_GET_LEDS_CTRL,
     COM_ISP_TYPE_MAX
 };
 
@@ -484,6 +485,11 @@ struct isptool_scene_param {
     cmr_u32 awb_gain_b;
     cmr_u32 smart_ct;
     cmr_u32 smart_bv;
+};
+
+struct leds_ctrl {
+    cmr_u32 led0_ctrl;
+    cmr_u32 led1_ctrl;
 };
 
 /********************************* v4l2 start *********************************/
@@ -727,6 +733,7 @@ struct common_isp_cmd_param {
         struct isp_adgain_exp_info isp_adgain;
         struct isp_yimg_info isp_yimg;
         struct img_size size_param;
+        struct leds_ctrl leds_ctrl;
     };
 };
 

@@ -6281,6 +6281,26 @@ exit:
     return ret;
 }
 
+cmr_int cmr_get_leds_ctrl(cmr_handle oem_handle, cmr_u32 *led0_enable,
+                          cmr_u32 *led1_enable) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
+    struct common_isp_cmd_param isp_param;
+
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_LEDS_CTRL, &isp_param);
+    if (ret) {
+        CMR_LOGE("failed to get leds_ctrl %ld", ret);
+        goto exit;
+    }
+
+    *led0_enable = isp_param.leds_ctrl.led0_ctrl;
+    *led1_enable = isp_param.leds_ctrl.led1_ctrl;
+
+exit:
+    return ret;
+}
+
 cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                                  struct setting_io_parameter *param_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -6312,10 +6332,8 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             FLASH_TORCH == param_ptr->cmd_value) {
             cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                 SENSOR_EXIF_CTRL_FLASH, 1);
-        } else {
-            // cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-            // SENSOR_EXIF_CTRL_FLASH, 0);
         }
+
         /*cfg torch value*/
         if (param_ptr->cmd_value == FLASH_TORCH) {
             struct sprd_flash_cfg_param cfg;
@@ -6328,11 +6346,20 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             cfg.flash_idx = cxt->camera_id;
             ret = cmr_grab_cfg_flash(grab_handle, &cfg);
         }
-        /*open torch*/
-        flash_opt.led0_enable = 1;
-        flash_opt.led1_enable = 1;
+
+        if (param_ptr->cmd_value == FLASH_OPEN ||
+            param_ptr->cmd_value == FLASH_HIGH_LIGHT) {
+            cmr_get_leds_ctrl(oem_handle, &flash_opt.led0_enable,
+                              &flash_opt.led1_enable);
+        } else {
+            flash_opt.led0_enable = 1;
+            flash_opt.led1_enable = 1;
+        }
+
         flash_opt.flash_mode = param_ptr->cmd_value;
         flash_opt.flash_index = cxt->camera_id;
+        CMR_LOGV("led0_enable=%d, led1_enable=%d", flash_opt.led0_enable,
+                 flash_opt.led1_enable);
         cmr_grab_flash_cb(grab_handle, &flash_opt);
     } break;
     case SETTING_IO_GET_PREVIEW_MODE:
@@ -6969,6 +6996,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         else if (isp_param == ISP_AWB_LOCK)
             isp_param = ISP_AWB_LOCK;
         break;
+
+    case COM_ISP_GET_LEDS_CTRL:
+        ptr_flag = 1;
+        isp_cmd = ISP_CTRL_GET_LEDS_CTRL;
+        isp_param_ptr = (void *)&param_ptr->leds_ctrl;
+        break;
+
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
