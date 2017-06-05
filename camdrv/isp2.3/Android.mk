@@ -59,7 +59,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/calibration \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
-	$(LOCAL_PATH)/utility \
+	$(LOCAL_PATH)/param_parse \
 	$(LOCAL_PATH)/calibration/inc
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
