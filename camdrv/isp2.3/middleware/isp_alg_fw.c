@@ -3432,7 +3432,7 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	io_fun io_ctrl = NULL;
 
 	cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
-	io_ctrl = _ispGetIOCtrlFun(cmd);
+	io_ctrl = isp_ioctl_get_fun(cmd);
 	if (NULL != io_ctrl) {
 		rtn = io_ctrl(cxt, param_ptr, call_back);
 	} else {

@@ -50,7 +50,7 @@ static const char *SMART_END = "ISP_SMART_";
 static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
 
-static cmr_s32 _isp_set_awb_gain(cmr_handle isp_alg_handle)
+static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -85,7 +85,7 @@ static cmr_s32 _isp_set_awb_gain(cmr_handle isp_alg_handle)
 	return rtn;
 }
 
-static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
+static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -129,13 +129,13 @@ static cmr_s32 _isp_set_awb_flash_gain(cmr_handle isp_alg_handle)
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("awb set flash gain error"));
 
-	rtn = _isp_set_awb_gain(cxt);
+	rtn = ispctl_set_awb_gain(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("awb set gain error"));
 
 	return rtn;
 }
 
-static cmr_s32 _smart_param_update(cmr_handle isp_alg_handle)
+static cmr_s32 ispctl_smart_param_update(cmr_handle isp_alg_handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -169,7 +169,7 @@ static cmr_s32 _smart_param_update(cmr_handle isp_alg_handle)
 	return rtn;
 }
 
-static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -215,7 +215,7 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return rtn;
 }
 
-static cmr_int _ispAeAwbBypassIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_ae_awb_bypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -254,7 +254,7 @@ static cmr_int _ispAeAwbBypassIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	return rtn;
 }
 
-static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_ev(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -274,7 +274,7 @@ static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	return rtn;
 }
 
-static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -300,7 +300,7 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return rtn;
 }
 
-static cmr_int _ispSnapshotNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_snapshot_notice(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -323,7 +323,7 @@ static cmr_int _ispSnapshotNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	return rtn;
 }
 
-static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_u32 ratio = 0;
@@ -397,7 +397,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
-		rtn = _isp_set_awb_gain((cmr_handle) cxt);
+		rtn = ispctl_set_awb_gain((cmr_handle) cxt);
 
 		flash_mode = SMART_CTRL_FLASH_CLOSE;
 		if (cxt->ops.smart_ops.ioctrl)
@@ -417,7 +417,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		awb_flash_status = AWB_FLASH_MAIN_BEFORE;
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
-		rtn = _isp_set_awb_flash_gain((cmr_handle) cxt);
+		rtn = ispctl_set_awb_flash_gain((cmr_handle) cxt);
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 
@@ -472,7 +472,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
-		rtn = _isp_set_awb_gain((cmr_handle) cxt);
+		rtn = ispctl_set_awb_gain((cmr_handle) cxt);
 		if (cxt->ops.awb_ops.ioctrl) {
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_SNOP, NULL, NULL);
@@ -500,7 +500,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	return rtn;
 }
 
-static cmr_int _ispIsoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -518,7 +518,7 @@ static cmr_int _ispIsoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	return rtn;
 }
 
-static cmr_int _ispBrightnessIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -537,7 +537,7 @@ static cmr_int _ispBrightnessIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispContrastIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -556,7 +556,7 @@ static cmr_int _ispContrastIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_int _ispSaturationIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -575,7 +575,7 @@ static cmr_int _ispSaturationIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispSharpnessIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sharpness(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -594,7 +594,7 @@ static cmr_int _ispSharpnessIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	return rtn;
 }
 
-static cmr_int _ispVideoModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_video_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -661,7 +661,7 @@ static cmr_int _ispVideoModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	return rtn;
 }
 
-static cmr_int _ispRangeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_range_fps(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -684,7 +684,7 @@ static cmr_int _ispRangeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_int _ispAeOnlineIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_ae_online(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -696,7 +696,7 @@ static cmr_int _ispAeOnlineIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_int _ispAeForceIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_ae_force(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -726,7 +726,7 @@ static cmr_int _ispAeForceIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return rtn;
 }
 
-static cmr_int _ispGetAeStateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_ae_state(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -752,7 +752,7 @@ static cmr_int _ispGetAeStateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispSetAeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_ae_fps(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -772,7 +772,7 @@ static cmr_int _ispSetAeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_s32 ispGetAeDebugInfoIOCtrl(cmr_handle isp_alg_handle)
+static cmr_s32 ispctl_get_ae_debug_info(cmr_handle isp_alg_handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 ret = ISP_SUCCESS;
@@ -800,7 +800,7 @@ static cmr_s32 ispGetAeDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static cmr_s32 ispGetAlscDebugInfoIOCtrl(cmr_handle isp_alg_handle)
+static cmr_s32 ispctl_get_alsc_debug_info(cmr_handle isp_alg_handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 ret = ISP_SUCCESS;
@@ -861,7 +861,7 @@ static size_t copy_log(void *dst, const void *log, size_t size, const char *begi
 	return off;
 }
 
-static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -919,11 +919,11 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		info_ptr->addr = cxt->ae_cxt.log_alc;
 		info_ptr->size = cxt->ae_cxt.log_alc_size;
 	} else {
-		if (ISP_SUCCESS != ispGetAeDebugInfoIOCtrl(cxt)) {
+		if (ISP_SUCCESS != ispctl_get_ae_debug_info(cxt)) {
 			ISP_LOGE("fail to  get ae debug info");
 		}
 
-		if (ISP_SUCCESS != ispGetAlscDebugInfoIOCtrl(cxt)) {
+		if (ISP_SUCCESS != ispctl_get_alsc_debug_info(cxt)) {
 			ISP_LOGE("fail to  get alsc debug info");
 		}
 
@@ -997,7 +997,7 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return rtn;
 }
 
-static cmr_int _ispGetAwbGainIoctrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_awb_gain(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct awb_gain result;
@@ -1025,7 +1025,7 @@ static cmr_int _ispGetAwbGainIoctrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispAwbCtIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_awb_ct(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1044,7 +1044,7 @@ static cmr_int _ispAwbCtIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 	return rtn;
 }
 
-static cmr_int _ispSetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_lum(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1064,7 +1064,7 @@ static cmr_int _ispSetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return rtn;
 }
 
-static cmr_int _ispGetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_lum(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1085,7 +1085,7 @@ static cmr_int _ispGetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return rtn;
 }
 
-static cmr_int _ispHueIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_hue(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1109,7 +1109,7 @@ static cmr_int _ispHueIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	return rtn;
 }
 
-static cmr_int _ispAfStopIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_af_stop(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1121,7 +1121,7 @@ static cmr_int _ispAfStopIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return rtn;
 }
 
-static cmr_int _ispOnlineFlashIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_online_flash(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1133,7 +1133,7 @@ static cmr_int _ispOnlineFlashIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	return rtn;
 }
 
-static cmr_int _ispAeMeasureLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_ae_measure_lum(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1153,7 +1153,7 @@ static cmr_int _ispAeMeasureLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr
 	return rtn;
 }
 
-static cmr_int _ispSceneModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1173,7 +1173,7 @@ static cmr_int _ispSceneModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	return rtn;
 }
 
-static cmr_int _ispSFTIORead(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sfti_read(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	UNUSED(isp_alg_handle);
@@ -1182,7 +1182,7 @@ static cmr_int _ispSFTIORead(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	return rtn;
 }
 
-static cmr_int _ispSFTIOWrite(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sfti_write(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	UNUSED(isp_alg_handle);
@@ -1192,7 +1192,7 @@ static cmr_int _ispSFTIOWrite(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 	return rtn;
 }
 
-static cmr_int _ispSFTIOSetPass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sfti_set_pass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	UNUSED(isp_alg_handle);
 	UNUSED(param_ptr);
@@ -1201,7 +1201,7 @@ static cmr_int _ispSFTIOSetPass(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispSFTIOSetBypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sfti_set_bypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	UNUSED(isp_alg_handle);
 	UNUSED(param_ptr);
@@ -1210,7 +1210,7 @@ static cmr_int _ispSFTIOSetBypass(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispSFTIOGetAfValue(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sfti_get_af_value(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	UNUSED(isp_alg_handle);
@@ -1219,7 +1219,7 @@ static cmr_int _ispSFTIOGetAfValue(cmr_handle isp_alg_handle, void *param_ptr, c
 	return rtn;
 }
 
-static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_af_get_full_scan_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1232,7 +1232,7 @@ static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_pt
 	return rtn;
 }
 
-static cmr_int _ispAfIOBypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_af_bypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1245,7 +1245,7 @@ static cmr_int _ispAfIOBypass(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 	return rtn;
 }
 
-static cmr_int _ispAfIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_af(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1288,7 +1288,7 @@ static cmr_int _ispAfIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	return rtn;
 }
 
-static cmr_int _ispBurstIONotice(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_burst_notice(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	UNUSED(isp_alg_handle);
@@ -1298,7 +1298,7 @@ static cmr_int _ispBurstIONotice(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return rtn;
 }
 
-static cmr_int _ispSpecialEffectIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_special_effect(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1315,7 +1315,7 @@ static cmr_int _ispSpecialEffectIOCtrl(cmr_handle isp_alg_handle, void *param_pt
 	return rtn;
 }
 
-static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1375,7 +1375,7 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	param_source = 0;
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_PARAM_SOURCE, (void *)&param_source, NULL);
 
-	rtn = _smart_param_update((cmr_handle) cxt);
+	rtn = ispctl_smart_param_update((cmr_handle) cxt);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to update smart param");
 		return rtn;
@@ -1425,7 +1425,7 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	return rtn;
 }
 
-static cmr_int _ispGetAdgainExpInfo(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1450,7 +1450,7 @@ static cmr_int _ispGetAdgainExpInfo(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_param_update(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1498,7 +1498,7 @@ static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	param_source = 0;
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_PARAM_SOURCE, (void *)&param_source, NULL);
 
-	rtn = _smart_param_update((cmr_handle) cxt);
+	rtn = ispctl_smart_param_update((cmr_handle) cxt);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to update smart param update ");
 		return rtn;
@@ -1528,7 +1528,7 @@ static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	return rtn;
 }
 
-static cmr_int _ispAeTouchIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_ae_touch(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1556,7 +1556,7 @@ static cmr_int _ispAeTouchIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return rtn;
 }
 
-static cmr_int _ispAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_af_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1596,7 +1596,7 @@ static cmr_int _ispAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return rtn;
 }
 
-static cmr_int _ispGetAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_af_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1630,7 +1630,7 @@ static cmr_int _ispGetAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	return rtn;
 }
 
-static cmr_int _ispAfInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1678,7 +1678,7 @@ static cmr_int _ispAfInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return rtn;
 }
 
-static cmr_int _ispGetAfPosIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_af_pos(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1690,7 +1690,7 @@ static cmr_int _ispGetAfPosIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_int _ispSetAfPosIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_af_pos(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1702,7 +1702,7 @@ static cmr_int _ispSetAfPosIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_int _ispRegIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_reg(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	UNUSED(isp_alg_handle);
@@ -1711,7 +1711,7 @@ static cmr_int _ispRegIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	return rtn;
 }
 
-static cmr_int _ispScalerTrimIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_scaler_trim(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1733,7 +1733,7 @@ static cmr_int _ispScalerTrimIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispFaceAreaIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1766,7 +1766,7 @@ static cmr_int _ispFaceAreaIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	return rtn;
 }
 
-static cmr_int _ispStart3AIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_start_3a(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1789,7 +1789,7 @@ static cmr_int _ispStart3AIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispStop3AIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_stop_3a(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1812,20 +1812,21 @@ static cmr_int _ispStop3AIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_hdr(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_hdr_param	*isp_hdr = (struct isp_hdr_param *)param_ptr;
 	struct ae_hdr_param		ae_hdr = {0x00, 0x00};
 	cmr_s16                smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
-	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
 	UNUSED(call_back);
 
 	if (NULL == isp_alg_handle || NULL == param_ptr) {
 		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p", isp_alg_handle, param_ptr);
 		return ISP_PARAM_NULL;
 	}
+
+	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
 
 	ae_hdr.hdr_enable = isp_hdr->hdr_enable;
 	ae_hdr.ev_effect_valid_num = isp_hdr->ev_effect_valid_num;
@@ -1863,7 +1864,7 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_ae_night_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1883,7 +1884,7 @@ static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	return rtn;
 }
 
-static cmr_int _ispSetAeAwbLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_ae_awb_lock_unlock(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1924,7 +1925,7 @@ static cmr_int _ispSetAeAwbLockUnlock(cmr_handle isp_alg_handle, void *param_ptr
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_ae_lock_unlock(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1953,7 +1954,7 @@ static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, c
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
@@ -2071,7 +2072,7 @@ static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, 
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispSensorDenoiseParamUpdate(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_sensor_denoise_param_update(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
@@ -2167,7 +2168,7 @@ static cmr_int _ispSensorDenoiseParamUpdate(cmr_handle isp_alg_handle, void *par
 	return ISP_SUCCESS;
 }
 
-static cmr_int _ispDumpReg(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_dump_reg(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int ret = ISP_SUCCESS;
 	UNUSED(param_ptr);
@@ -2177,7 +2178,7 @@ static cmr_int _ispDumpReg(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*
 	return ret;
 }
 
-static cmr_int _ispToolSetSceneParam(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
@@ -2237,7 +2238,7 @@ static cmr_int _ispToolSetSceneParam(cmr_handle isp_alg_handle, void *param_ptr,
 	return rtn;
 }
 
-static cmr_int _ispForceAeQuickMode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_force_ae_quick_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_int rtn = ISP_SUCCESS;
@@ -2249,7 +2250,7 @@ static cmr_int _ispForceAeQuickMode(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispSetAeExpTime(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_ae_exp_time(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_int rtn = ISP_SUCCESS;
@@ -2261,7 +2262,7 @@ static cmr_int _ispSetAeExpTime(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 	return rtn;
 }
 
-static cmr_int _ispSetAeSensitivity(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_ae_sensitivity(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_int rtn = ISP_SUCCESS;
@@ -2274,7 +2275,7 @@ static cmr_int _ispSetAeSensitivity(cmr_handle isp_alg_handle, void *param_ptr, 
 }
 
 
-static cmr_int _ispSetDcamTimestamp(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_dcam_timestamp(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_int rtn = ISP_SUCCESS;
@@ -2286,7 +2287,7 @@ static cmr_int _ispSetDcamTimestamp(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
-static cmr_int _ispSetAuxSensorInfo(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_set_aux_sensor_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2298,7 +2299,7 @@ static cmr_int _ispSetAuxSensorInfo(cmr_handle isp_alg_handle, void *param_ptr, 
 	return ret;
 }
 
-static cmr_int _ispGetFPS(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+static cmr_int ispctl_get_fps(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2318,91 +2319,91 @@ static cmr_int _ispGetFPS(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*c
 	return rtn;
 }
 
-static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
-	{IST_CTRL_SNAPSHOT_NOTICE, _ispSnapshotNoticeIOCtrl},
-	{ISP_CTRL_AE_MEASURE_LUM, _ispAeMeasureLumIOCtrl},
-	{ISP_CTRL_EV, _ispEVIOCtrl},
-	{ISP_CTRL_FLICKER, _ispFlickerIOCtrl},
-	{ISP_CTRL_ISO, _ispIsoIOCtrl},
-	{ISP_CTRL_AE_TOUCH, _ispAeTouchIOCtrl},
-	{ISP_CTRL_FLASH_NOTICE, _ispFlashNoticeIOCtrl},
-	{ISP_CTRL_VIDEO_MODE, _ispVideoModeIOCtrl},
-	{ISP_CTRL_SCALER_TRIM, _ispScalerTrimIOCtrl},
-	{ISP_CTRL_RANGE_FPS, _ispRangeFpsIOCtrl},
-	{ISP_CTRL_FACE_AREA, _ispFaceAreaIOCtrl},
+static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
+	{IST_CTRL_SNAPSHOT_NOTICE, ispctl_snapshot_notice},
+	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
+	{ISP_CTRL_EV, ispctl_ev},
+	{ISP_CTRL_FLICKER, ispctl_flicker},
+	{ISP_CTRL_ISO, ispctl_iso},
+	{ISP_CTRL_AE_TOUCH, ispctl_ae_touch},
+	{ISP_CTRL_FLASH_NOTICE, ispctl_flash_notice},
+	{ISP_CTRL_VIDEO_MODE, ispctl_video_mode},
+	{ISP_CTRL_SCALER_TRIM, ispctl_scaler_trim},
+	{ISP_CTRL_RANGE_FPS, ispctl_range_fps},
+	{ISP_CTRL_FACE_AREA, ispctl_face_area},
 
-	{ISP_CTRL_AEAWB_BYPASS, _ispAeAwbBypassIOCtrl},
-	{ISP_CTRL_AWB_MODE, _ispAwbModeIOCtrl},
+	{ISP_CTRL_AEAWB_BYPASS, ispctl_ae_awb_bypass},
+	{ISP_CTRL_AWB_MODE, ispctl_awb_mode},
 
-	{ISP_CTRL_AF, _ispAfIOCtrl},
-	{ISP_CTRL_GET_FULLSCAN_INFO, _ispAfIOGetFullScanInfo},
-	{ISP_CTRL_SET_AF_BYPASS, _ispAfIOBypass},
-	{ISP_CTRL_BURST_NOTICE, _ispBurstIONotice},
-	{ISP_CTRL_SFT_READ, _ispSFTIORead},
-	{ISP_CTRL_SFT_WRITE, _ispSFTIOWrite},
-	{ISP_CTRL_SFT_SET_PASS, _ispSFTIOSetPass},	// added for sft
-	{ISP_CTRL_SFT_SET_BYPASS, _ispSFTIOSetBypass},	// added for sft
-	{ISP_CTRL_SFT_GET_AF_VALUE, _ispSFTIOGetAfValue},	// added for sft
-	{ISP_CTRL_AF_MODE, _ispAfModeIOCtrl},
-	{ISP_CTRL_AF_STOP, _ispAfStopIOCtrl},
-	{ISP_CTRL_FLASH_CTRL, _ispOnlineFlashIOCtrl},
+	{ISP_CTRL_AF, ispctl_af},
+	{ISP_CTRL_GET_FULLSCAN_INFO, ispctl_af_get_full_scan_info},
+	{ISP_CTRL_SET_AF_BYPASS, ispctl_af_bypass},
+	{ISP_CTRL_BURST_NOTICE, ispctl_burst_notice},
+	{ISP_CTRL_SFT_READ, ispctl_sfti_read},
+	{ISP_CTRL_SFT_WRITE, ispctl_sfti_write},
+	{ISP_CTRL_SFT_SET_PASS, ispctl_sfti_set_pass},	// added for sft
+	{ISP_CTRL_SFT_SET_BYPASS, ispctl_sfti_set_bypass},	// added for sft
+	{ISP_CTRL_SFT_GET_AF_VALUE, ispctl_sfti_get_af_value},	// added for sft
+	{ISP_CTRL_AF_MODE, ispctl_af_mode},
+	{ISP_CTRL_AF_STOP, ispctl_af_stop},
+	{ISP_CTRL_FLASH_CTRL, ispctl_online_flash},
 
-	{ISP_CTRL_SCENE_MODE, _ispSceneModeIOCtrl},
-	{ISP_CTRL_SPECIAL_EFFECT, _ispSpecialEffectIOCtrl},
-	{ISP_CTRL_BRIGHTNESS, _ispBrightnessIOCtrl},
-	{ISP_CTRL_CONTRAST, _ispContrastIOCtrl},
-	{ISP_CTRL_SATURATION, _ispSaturationIOCtrl},
-	{ISP_CTRL_SHARPNESS, _ispSharpnessIOCtrl},
-	{ISP_CTRL_HDR, _ispHdrIOCtrl},
+	{ISP_CTRL_SCENE_MODE, ispctl_scene_mode},
+	{ISP_CTRL_SPECIAL_EFFECT, ispctl_special_effect},
+	{ISP_CTRL_BRIGHTNESS, ispctl_brightness},
+	{ISP_CTRL_CONTRAST, ispctl_contrast},
+	{ISP_CTRL_SATURATION, ispctl_saturation},
+	{ISP_CTRL_SHARPNESS, ispctl_sharpness},
+	{ISP_CTRL_HDR, ispctl_hdr},
 
-	{ISP_CTRL_PARAM_UPDATE, _ispParamUpdateIOCtrl},
-	{ISP_CTRL_IFX_PARAM_UPDATE, _ispFixParamUpdateIOCtrl},
-	{ISP_CTRL_GET_CUR_ADGAIN_EXP, _ispGetAdgainExpInfo},
-	{ISP_CTRL_AE_CTRL, _ispAeOnlineIOCtrl},	// for isp tool cali
-	{ISP_CTRL_SET_LUM, _ispSetLumIOCtrl},	// for tool cali
-	{ISP_CTRL_GET_LUM, _ispGetLumIOCtrl},	// for tool cali
-	{ISP_CTRL_AF_CTRL, _ispAfInfoIOCtrl},	// for tool cali
-	{ISP_CTRL_SET_AF_POS, _ispSetAfPosIOCtrl},	// for tool cali
-	{ISP_CTRL_GET_AF_POS, _ispGetAfPosIOCtrl},	// for tool cali
-	{ISP_CTRL_GET_AF_MODE, _ispGetAfModeIOCtrl},	// for tool cali
-	{ISP_CTRL_REG_CTRL, _ispRegIOCtrl},	// for tool cali
-	{ISP_CTRL_AF_END_INFO, _ispRegIOCtrl},	// for tool cali
-	{ISP_CTRL_DENOISE_PARAM_READ, _ispDenoiseParamRead},	//for tool cali
-	{ISP_CTRL_DUMP_REG, _ispDumpReg},	//for tool cali
-	{ISP_CTRL_START_3A, _ispStart3AIOCtrl},
-	{ISP_CTRL_STOP_3A, _ispStop3AIOCtrl},
+	{ISP_CTRL_PARAM_UPDATE, ispctl_param_update},
+	{ISP_CTRL_IFX_PARAM_UPDATE, ispctl_fix_param_update},
+	{ISP_CTRL_GET_CUR_ADGAIN_EXP, ispctl_get_ad_gain_exp_info},
+	{ISP_CTRL_AE_CTRL, ispctl_ae_online},	// for isp tool cali
+	{ISP_CTRL_SET_LUM, ispctl_set_lum},	// for tool cali
+	{ISP_CTRL_GET_LUM, ispctl_get_lum},	// for tool cali
+	{ISP_CTRL_AF_CTRL, ispctl_af_info},	// for tool cali
+	{ISP_CTRL_SET_AF_POS, ispctl_set_af_pos},	// for tool cali
+	{ISP_CTRL_GET_AF_POS, ispctl_get_af_pos},	// for tool cali
+	{ISP_CTRL_GET_AF_MODE, ispctl_get_af_mode},	// for tool cali
+	{ISP_CTRL_REG_CTRL, ispctl_reg},	// for tool cali
+	{ISP_CTRL_AF_END_INFO, ispctl_reg},	// for tool cali
+	{ISP_CTRL_DENOISE_PARAM_READ, ispctl_denoise_param_read},	//for tool cali
+	{ISP_CTRL_DUMP_REG, ispctl_dump_reg},	//for tool cali
+	{ISP_CTRL_START_3A, ispctl_start_3a},
+	{ISP_CTRL_STOP_3A, ispctl_stop_3a},
 
-	{ISP_CTRL_AE_FORCE_CTRL, _ispAeForceIOCtrl},	// for mp tool cali
-	{ISP_CTRL_GET_AE_STATE, _ispGetAeStateIOCtrl},	// for mp tool cali
-	{ISP_CTRL_GET_AWB_GAIN, _ispGetAwbGainIoctrl},	// for mp tool cali
-	{ISP_CTRL_GET_AWB_CT, _ispAwbCtIOCtrl},
-	{ISP_CTRL_SET_AE_FPS, _ispSetAeFpsIOCtrl},	//for LLS feature
-	{ISP_CTRL_GET_INFO, _ispGetInfoIOCtrl},
-	{ISP_CTRL_SET_AE_NIGHT_MODE, _ispSetAeNightModeIOCtrl},
-	{ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK, _ispSetAeAwbLockUnlock},	// AE & AWB Lock or Unlock
-	{ISP_CTRL_SET_AE_LOCK_UNLOCK, _ispSetAeLockUnlock},	//AE Lock or Unlock
-	{ISP_CTRL_TOOL_SET_SCENE_PARAM, _ispToolSetSceneParam},	// for tool scene param setting
-	{ISP_CTRL_FORCE_AE_QUICK_MODE, _ispForceAeQuickMode},
-	{ISP_CTRL_DENOISE_PARAM_UPDATE, _ispSensorDenoiseParamUpdate},	//for tool cali
-	{ISP_CTRL_SET_AE_EXP_TIME, _ispSetAeExpTime},
-	{ISP_CTRL_SET_AE_SENSITIVITY, _ispSetAeSensitivity},
-	{ISP_CTRL_SET_DCAM_TIMESTAMP, _ispSetDcamTimestamp},
-	{ISP_CTRL_SET_AUX_SENSOR_INFO, _ispSetAuxSensorInfo},
-	{ISP_CTRL_GET_FPS, _ispGetFPS},
+	{ISP_CTRL_AE_FORCE_CTRL, ispctl_ae_force},	 // for mp tool cali
+	{ISP_CTRL_GET_AE_STATE, ispctl_get_ae_state},	 // for mp tool cali
+	{ISP_CTRL_GET_AWB_GAIN, ispctl_get_awb_gain}, // for mp tool cali
+	{ISP_CTRL_GET_AWB_CT, ispctl_awb_ct},
+	{ISP_CTRL_SET_AE_FPS, ispctl_set_ae_fps},	//for LLS feature
+	{ISP_CTRL_GET_INFO, ispctl_get_info},
+	{ISP_CTRL_SET_AE_NIGHT_MODE, ispctl_set_ae_night_mode},
+	{ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK, ispctl_set_ae_awb_lock_unlock},	// AE & AWB Lock or Unlock
+	{ISP_CTRL_SET_AE_LOCK_UNLOCK, ispctl_set_ae_lock_unlock},	//AE Lock or Unlock
+	{ISP_CTRL_TOOL_SET_SCENE_PARAM, ispctl_tool_set_scene_param},	// for tool scene param setting
+	{ISP_CTRL_FORCE_AE_QUICK_MODE, ispctl_force_ae_quick_mode},
+	{ISP_CTRL_DENOISE_PARAM_UPDATE, ispctl_sensor_denoise_param_update},	//for tool cali
+	{ISP_CTRL_SET_AE_EXP_TIME, ispctl_set_ae_exp_time},
+	{ISP_CTRL_SET_AE_SENSITIVITY, ispctl_set_ae_sensitivity},
+	{ISP_CTRL_SET_DCAM_TIMESTAMP, ispctl_set_dcam_timestamp},
+	{ISP_CTRL_SET_AUX_SENSOR_INFO, ispctl_set_aux_sensor_info},
+	{ISP_CTRL_GET_FPS, ispctl_get_fps},
 
 	{ISP_CTRL_MAX, NULL}
 };
 
-io_fun _ispGetIOCtrlFun(enum isp_ctrl_cmd cmd)
+io_fun isp_ioctl_get_fun(enum isp_ctrl_cmd cmd)
 {
 	io_fun io_ctrl = NULL;
 	cmr_u32 total_num;
 	cmr_u32 i;
 
-	total_num = sizeof(_s_isp_io_ctrl_fun_tab) / sizeof(struct isp_io_ctrl_fun);
+	total_num = sizeof(s_isp_io_ctrl_fun_tab) / sizeof(struct isp_io_ctrl_fun);
 	for (i = 0; i < total_num; i++) {
-		if (cmd == _s_isp_io_ctrl_fun_tab[i].cmd) {
-			io_ctrl = _s_isp_io_ctrl_fun_tab[i].io_ctrl;
+		if (cmd == s_isp_io_ctrl_fun_tab[i].cmd) {
+			io_ctrl = s_isp_io_ctrl_fun_tab[i].io_ctrl;
 			break;
 		}
 	}
