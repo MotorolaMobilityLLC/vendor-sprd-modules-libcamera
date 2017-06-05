@@ -1701,7 +1701,7 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 
 	memset((void *)&result, 0, sizeof(result));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
-	
+
 #if 0
 	/*get dual flash tuning parameters*/
 	memset(&output, 0, sizeof(output));
@@ -1724,10 +1724,10 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 			++num;
 		}
 		++param_data;
-	}	
+	}
 #endif
 
-	memset(&output, 0, sizeof(output));	
+	memset(&output, 0, sizeof(output));
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to get ae init param");
@@ -1890,7 +1890,7 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 static cmr_int isp_afl_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	
+
 	struct afl_ctrl_init_in afl_input;
 	if (!cxt || !input_ptr) {
 		rtn = ISP_PARAM_ERROR;

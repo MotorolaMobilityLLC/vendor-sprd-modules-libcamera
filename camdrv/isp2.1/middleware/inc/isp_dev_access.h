@@ -79,7 +79,7 @@ cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow);
 cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, cmr_int flag);
 cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id);
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata);
-cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle * isp_dev_handle);
+cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle);
 cmr_int isp_dev_access_deinit(cmr_handle isp_handler);
 cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void *param_ptr);
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param0, void *param1);

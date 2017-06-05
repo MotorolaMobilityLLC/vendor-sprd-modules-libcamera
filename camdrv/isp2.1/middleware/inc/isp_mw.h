@@ -374,11 +374,13 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_FPS,
 	ISP_CTRL_GET_LEDS_CTRL,
 	/* warning if you wanna send async msg
-	 * please add msg id below here */
+	 * please add msg id below here
+	 */
 	ISP_CTRL_SYNC_NONE_MSG_BEGIN,
 	ISP_CTRL_SYNC_NONE_MSG_END,
 	/* warning if you wanna set ioctrl directly
-	 * please add msg id below here */
+	 * please add msg id below here
+	 */
 	ISP_CTRL_DIRECT_MSG_BEGIN,
 	ISP_CTRL_SET_AUX_SENSOR_INFO,
 	ISP_CTRL_DIRECT_MSG_END,
@@ -796,11 +798,11 @@ struct isp_3dnr_info
 };
 
 struct isp_ops {
-	cmr_s32(*flash_get_charge) (void *handler, struct isp_flash_cfg * cfg_ptr, struct isp_flash_cell * cell);
-	cmr_s32(*flash_get_time) (void *handler, struct isp_flash_cfg * cfg_ptr, struct isp_flash_cell * cell);
-	cmr_s32(*flash_set_charge) (void *handler, struct isp_flash_cfg * cfg_ptr, struct isp_flash_element * element);
-	cmr_s32(*flash_set_time) (void *handler, struct isp_flash_cfg * cfg_ptr, struct isp_flash_element * element);
-	cmr_s32(*flash_ctrl) (void *handler, struct isp_flash_cfg * cfg_ptr, struct isp_flash_element * element);
+	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
+	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
+	cmr_s32 (*flash_set_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_ctrl)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 };
 
 struct isp_init_param {
@@ -830,18 +832,18 @@ struct isp_init_param {
 	cmr_s32 dcam_fd;
 };
 
-typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint * size_ptr, cmr_uint * sum_ptr, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * mfd, void *private_data);
-typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * fd, cmr_uint sum, void *private_data);
+typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,
+				    cmr_uint *sum_ptr, cmr_uint *phy_addr,
+				    cmr_uint *vir_addr, cmr_s32 *mfd, void *private_data);
+typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint *phy_addr,
+				  cmr_uint *vir_addr, cmr_s32 *fd,
+				  cmr_uint sum, void *private_data);
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
-/**---------------------------------------------------------------------------*
-**				API					*
-**----------------------------------------------------------------------------*/
-
-cmr_int isp_init(struct isp_init_param *ptr, cmr_handle * isp_handler);
+cmr_int isp_init(struct isp_init_param *ptr, cmr_handle *isp_handler);
 cmr_int isp_deinit(cmr_handle isp_handler);
 cmr_int isp_capability(cmr_handle isp_handler, enum isp_capbility_cmd cmd, void *param_ptr);
 cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr);
@@ -853,6 +855,5 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
-/**---------------------------------------------------------------------------*/
 
 #endif
