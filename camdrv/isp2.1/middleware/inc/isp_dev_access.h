@@ -54,16 +54,8 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_AFL_NEW_CFG_PARAM,
 	ISP_DEV_SET_AFL_NEW_BYPASS,
 	ISP_DEV_POST_3DNR, //for post 3dnr
+	ISP_DEV_SET_RAW_SLICE,
 	ISP_DEV_CMD_MAX
-};
-
-struct isp_dev_access_context {
-	cmr_handle evt_alg_handle;
-	isp_evt_cb isp_event_cb;
-	pthread_t monitor_handle;
-	cmr_handle isp_driver_handle;
-	struct isp_statis_mem_info statis_mem_info;
-	struct isp_ops ops;
 };
 
 cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, void *statics);

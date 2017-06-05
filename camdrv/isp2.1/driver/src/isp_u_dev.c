@@ -411,3 +411,27 @@ cmr_s32 isp_dev_3dnr(isp_handle handle, struct isp_3dnr_info *param)
 
 	return ret;
 }
+
+cmr_s32 isp_dev_set_slice_raw_info(isp_handle handle, struct isp_raw_proc_info *param)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!param) {
+		ISP_LOGE("Param is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_RAW_CAP, param);
+	if (ret) {
+		ISP_LOGE("failed to set raw slice info 0x%x", ret);
+	}
+
+	return ret;
+}

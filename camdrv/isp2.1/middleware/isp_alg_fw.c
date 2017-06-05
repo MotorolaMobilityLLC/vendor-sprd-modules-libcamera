@@ -3288,22 +3288,17 @@ exit:
 	return rtn;
 }
 
-cmr_int isp_slice_raw_proc(struct isp_alg_fw_context * cxt, struct ips_in_param * in_ptr)
+cmr_int isp_slice_raw_proc(struct isp_alg_fw_context *cxt, struct ips_in_param *in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct isp_raw_proc_info slice_raw_info;;
-	struct isp_dev_access_context *isp_dev = NULL;
-	struct isp_file *file = NULL;
+	struct isp_raw_proc_info slice_raw_info;
 
 	if (!cxt || !in_ptr) {
 		rtn = ISP_PARAM_ERROR;
 		goto exit;
 	}
 
-	isp_dev = (struct isp_dev_access_context *)cxt->dev_access_handle;
-	file = (struct isp_file *)(isp_dev->isp_driver_handle);
 	memset((void *)&slice_raw_info, 0x0, sizeof(struct isp_raw_proc_info));
-
 	slice_raw_info.in_size.width = in_ptr->src_frame.img_size.w;
 	slice_raw_info.in_size.height = in_ptr->src_frame.img_size.h;
 	slice_raw_info.out_size.width = in_ptr->dst_frame.img_size.w;
@@ -3316,10 +3311,8 @@ cmr_int isp_slice_raw_proc(struct isp_alg_fw_context * cxt, struct ips_in_param 
 	slice_raw_info.img_offset.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	slice_raw_info.img_offset.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
 
-	rtn = ioctl(file->fd, SPRD_ISP_IO_RAW_CAP, &slice_raw_info);
-	ISP_RETURN_IF_FAIL(rtn, ("fail to do isp raw cap ioctl"));
-
-	isp_u_fetch_start_isp(isp_dev->isp_driver_handle, ISP_ONE);
+	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RAW_SLICE, &slice_raw_info, NULL);
+	ISP_TRACE_IF_FAIL(rtn, ("ISP_DEV_SET_RAW_SLICE fail"));
 
 exit:
 	return rtn;
