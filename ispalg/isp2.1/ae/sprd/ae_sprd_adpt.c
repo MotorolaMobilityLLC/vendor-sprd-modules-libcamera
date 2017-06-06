@@ -4430,7 +4430,8 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d E %d G %d lt %d W %d H %d", cxt->camera_id , cxt->last_exp_param.exp_line,
 				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
 	}else {
-		if ((1 == cxt->is_snapshot) && (0 == cxt->cur_status.settings.flash)) {
+		if ((1 == cxt->is_snapshot) &&
+			((FLASH_NONE == cxt->cur_status.settings.flash) || FLASH_MAIN_BEFORE <= cxt->cur_status.settings.flash)) {
 			_set_restore_cnt(cxt);
 		}
 		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d E %d G %d lt %d W %d H %d", cxt->camera_id , cxt->last_exp_param.exp_line,
