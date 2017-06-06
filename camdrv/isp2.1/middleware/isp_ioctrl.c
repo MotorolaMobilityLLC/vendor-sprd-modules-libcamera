@@ -2318,10 +2318,29 @@ static cmr_int _ispGetFPS(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*c
 		return ISP_PARAM_NULL;
 	}
 	if (cxt->ops.ae_ops.ioctrl)
-	rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, (void *)&param);
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, (void *)&param);
 	*(cmr_u32 *) param_ptr = param;
 
 	ISP_LOGV("rtn %ld param %d fps %d", rtn, param, *(cmr_u32 *) param_ptr);
+
+	return rtn;
+}
+
+static cmr_int _ispGetLedsCtrl(cmr_handle isp_alg_handle,void * param_ptr,cmr_s32(* call_back)())
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct ae_leds_ctrl *leds_ctrl = (struct ae_leds_ctrl *)param_ptr;;
+	UNUSED(call_back);
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to  get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LEDS_CTRL, NULL, (void *)leds_ctrl);
+
+	ISP_LOGV("rtn %ld led0_en=%d led1_en=%d", rtn, leds_ctrl->led0_ctrl, leds_ctrl->led1_ctrl);
 
 	return rtn;
 }
@@ -2397,7 +2416,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, _ispSetDcamTimestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, _ispSetAuxSensorInfo},
 	{ISP_CTRL_GET_FPS, _ispGetFPS},
-
+	{ISP_CTRL_GET_LEDS_CTRL, _ispGetLedsCtrl},
 	{ISP_CTRL_MAX, NULL}
 };
 

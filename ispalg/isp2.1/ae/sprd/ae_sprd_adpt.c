@@ -267,6 +267,7 @@ struct ae_ctrl_cxt {
 	cmr_u8 flash_ver;
 	cmr_s32 pre_flash_skip;
 	cmr_s32 aem_effect_delay;
+	struct ae_leds_ctrl ae_leds_ctrl;
 	cmr_handle flash_alg_handle;
 	cmr_u16 aem_stat_rgb[3 * 1024];/*save the average data of AEM Stats data*/
 	cmr_u8 bakup_ae_status_for_flash;/* 0:unlock 1:lock 2:pause 3:wait-lock */
@@ -2490,25 +2491,35 @@ static cmr_s32 ae_set_flash_charge(struct ae_ctrl_cxt *cxt, enum ae_flash_type f
 	case AE_FLASH_TYPE_PREFLASH:
 		flash_level1 = cxt->pre_flash_level1;
 		flash_level2 = cxt->pre_flash_level2;
+		cfg.type = AE_FLASH_TYPE_PREFLASH;
 		break;
 	case AE_FLASH_TYPE_MAIN:
 		flash_level1 = cxt->flash_esti_result.captureFlahLevel1;
 		flash_level2 = cxt->flash_esti_result.captureFlahLevel2;
+		cfg.type = AE_FLASH_TYPE_MAIN;
 		break;
 	default:
 		goto out;
 		break;
 	}
 
-	cfg.led_idx = 1;
-	cfg.type = flash_type;
-	element.index = flash_level1;
-	cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+	if (!flash_level1) {
+		cxt->ae_leds_ctrl.led0_ctrl = 0;//flash lib level 0: flashoff,
+	} else {
+		cxt->ae_leds_ctrl.led0_ctrl = 1;
+		cfg.led_idx = 1;
+		element.index = flash_level1 - 1;//flash lib level 1~32 corresponding flash drv level 0~127
+		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+	}
 
-	cfg.led_idx = 2;
-	cfg.type = flash_type;
-	element.index = flash_level2;
-	cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+	if (!flash_level2) {
+		cxt->ae_leds_ctrl.led1_ctrl = 0;
+	} else {
+		cxt->ae_leds_ctrl.led1_ctrl = 1;
+		cfg.led_idx = 2;
+		element.index = flash_level2 - 1;
+		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+	}
 
 out:
 	return rtn;
@@ -5511,6 +5522,17 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_CAF_LOCKAE_STOP:
 		cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
+		break;
+
+	case AE_GET_LEDS_CTRL:
+		if (result) {
+			struct ae_leds_ctrl *ae_leds_ctrl = (struct ae_leds_ctrl *)result;
+
+			ae_leds_ctrl->led0_ctrl = cxt->ae_leds_ctrl.led0_ctrl;
+			ae_leds_ctrl->led1_ctrl = cxt->ae_leds_ctrl.led1_ctrl;
+			ISP_LOGI("AE_SET_LED led0_enable=%d, led1_enable=%d", ae_leds_ctrl->led0_ctrl,
+			ae_leds_ctrl->led1_ctrl);
+		}
 		break;
 
 	default:

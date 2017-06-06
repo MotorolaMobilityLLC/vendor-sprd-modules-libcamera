@@ -165,6 +165,7 @@ enum ae_io_ctrl_cmd {
 	AE_GET_FLASH_WB_GAIN,
 	AE_CAF_LOCKAE_START,
 	AE_CAF_LOCKAE_STOP,
+	AE_GET_LEDS_CTRL,
 	AE_IO_MAX
 };
 
@@ -504,6 +505,11 @@ struct ae_awb_gain {
 	cmr_u32 r;
 	cmr_u32 g;
 	cmr_u32 b;
+};
+
+struct ae_leds_ctrl {
+    cmr_u32 led0_ctrl;
+    cmr_u32 led1_ctrl;
 };
 
 #ifdef __cplusplus
