@@ -1191,7 +1191,8 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
             mIspStatisHeapReserved = memory;
         }
         mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
-        *phy_addr = kaddr;
+        *phy_addr++ = kaddr;
+        *phy_addr = kaddr >> 32;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
         *fd++ = mIspStatisHeapReserved->fd;
 #endif
