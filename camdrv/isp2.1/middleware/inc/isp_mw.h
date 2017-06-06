@@ -22,11 +22,9 @@
 #endif
 
 #include "isp_type.h"
-
 #include "sprd_isp_k.h"
 #include "cmr_sensor_info.h"
 
-//#define LSC_ADV_ENABLE
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
 #define ISP_EVT_MASK	 0x0000FF00
@@ -54,19 +52,9 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CTRL_EVT_PDAF		     (1 << 17)
 #define ISP_CTRL_EVT_BINNING                     (1 << 18)
 
-#define ISP_CTRL_EVT_MONITOR_STOP            (1 << 31)
-#define ISP_CTRL_EVT_MASK                    (cmr_u32)(ISP_CTRL_EVT_INIT \
-					|ISP_CTRL_EVT_CONTINUE_STOP|ISP_CTRL_EVT_DEINIT|ISP_CTRL_EVT_CONTINUE \
-					|ISP_CTRL_EVT_SIGNAL|ISP_CTRL_EVT_SIGNAL_NEXT|ISP_CTRL_EVT_IOCTRL \
-					|ISP_CTRL_EVT_TX|ISP_CTRL_EVT_SOF|ISP_CTRL_EVT_EOF|ISP_CTRL_EVT_AWB \
-					|ISP_CTRL_EVT_AE|ISP_CTRL_EVT_AF|ISP_CTRL_EVT_CTRL_SYNC|ISP_CTRL_EVT_CONTINUE_AF \
-					|ISP_CTRL_EVT_BINNING|ISP_CTRL_EVT_PDAF|ISP_CTRL_EVT_MONITOR_STOP)
-
 #define ISP_THREAD_QUEUE_NUM                 (100)
 
 #define ISP_PROC_AFL_DONE                    (1 << 2)
-#define ISP_PROC_AFL_STOP                    (1 << 3)
-#define ISP_AFL_EVT_MASK                     (cmr_u32)(ISP_PROC_AFL_DONE | ISP_PROC_AFL_STOP)
 
 #define ISP_CALLBACK_EVT                     0x00040000
 
@@ -144,7 +132,6 @@ enum isp_alg_set_cmd {
 	ISP_AFM_MODULES_CFG,
 	ISP_AFM_TYPE2_STS,
 	ISP_AFM_TYPE1_STS,
-
 };
 
 enum isp_callback_cmd {
@@ -781,20 +768,18 @@ struct isp_img_param {
 };
 
 //add two struct defination for the 3DNR capture.
-struct isp_buffer
-{
-        cmr_u8 *buffer;
+struct isp_buffer {
+	cmr_u8 *buffer;
 	cmr_s32 fd;
 };
 
-struct isp_3dnr_info
-{
-        struct isp_buffer image[3];
-        cmr_u32 width;
-        cmr_u32 height;
-        cmr_s8 mv_x;
-        cmr_s8 mv_y;
-        cmr_u8 blending_no;
+struct isp_3dnr_info {
+	struct isp_buffer image[3];
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_s8 mv_x;
+	cmr_s8 mv_y;
+	cmr_u8 blending_no;
 };
 
 struct isp_ops {
@@ -851,7 +836,6 @@ cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start *param_pt
 cmr_int isp_video_stop(cmr_handle isp_handler);
 cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
-cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);

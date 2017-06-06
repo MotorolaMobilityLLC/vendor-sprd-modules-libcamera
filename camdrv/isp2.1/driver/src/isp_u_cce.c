@@ -187,7 +187,6 @@ cmr_s32 isp_u_cce_uvd(isp_handle handle, cmr_u8 * div_ptr)
 cmr_s32 isp_u_cce_uvc(isp_handle handle, cmr_u8 * t_ptr, cmr_u8 * m_ptr)
 {
 	cmr_s32 ret = 0;
-	cmr_u32 val = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_cce_uvc cce_uvc;

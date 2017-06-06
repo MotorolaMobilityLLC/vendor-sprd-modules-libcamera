@@ -20,7 +20,7 @@
 
 cmr_s32 isp_u_gamma_block(isp_handle handle, void *block_info)
 {
-	cmr_s32 ret = 0, i = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -64,7 +64,7 @@ cmr_s32 isp_u_gamma_bypass(isp_handle handle, cmr_u32 bypass)
 
 cmr_s32 isp_u_gamma_node(isp_handle handle, cmr_u16 * node_ptr)
 {
-	cmr_s32 ret = 0, i = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 

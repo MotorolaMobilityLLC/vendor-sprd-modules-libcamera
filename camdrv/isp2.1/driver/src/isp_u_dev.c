@@ -20,10 +20,10 @@
 
 #define ISP_REGISTER_MAX_NUM 20
 
-cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle * handle)
+cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle *handle)
 {
 	cmr_s32 ret = 0;
-	cmr_u32 chip_id = 0;
+	//cmr_u32 chip_id = 0;
 	struct isp_file *file = NULL;
 
 	file = malloc(sizeof(struct isp_file));
@@ -165,7 +165,7 @@ cmr_s32 isp_dev_enable_irq(isp_handle handle, cmr_u32 irq_mode)
 	return ret;
 }
 
-cmr_s32 isp_dev_get_irq(isp_handle handle, cmr_u32 * evt_ptr)
+cmr_s32 isp_dev_get_irq(isp_handle handle, cmr_u32 *evt_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -196,7 +196,7 @@ cmr_s32 isp_dev_get_irq(isp_handle handle, cmr_u32 * evt_ptr)
 	return ret;
 }
 
-static cmr_s32 isp_register_write(isp_handle handle, cmr_u32 * param)
+static cmr_s32 isp_register_write(isp_handle handle, cmr_u32 *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -216,7 +216,7 @@ static cmr_s32 isp_register_write(isp_handle handle, cmr_u32 * param)
 	return ret;
 }
 
-static cmr_s32 isp_register_read(isp_handle handle, cmr_u32 * param)
+static cmr_s32 isp_register_read(isp_handle handle, cmr_u32 *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -260,10 +260,10 @@ cmr_s32 isp_dev_reg_write(isp_handle handle, cmr_u32 num, void *param_ptr)
 		reg_config[i].reg_value = *reg_ptr++;
 	}
 
-	write_param.reg_param = (cmr_uint) & reg_config[0];
+	write_param.reg_param = (cmr_uint)&reg_config[0];
 	write_param.counts = reg_num;
 
-	ret = isp_register_write(handle, (cmr_u32 *) & write_param);
+	ret = isp_register_write(handle, (cmr_u32 *)&write_param);
 	if (ret) {
 		ISP_LOGE("dev reg write error.");
 	}
@@ -298,7 +298,7 @@ cmr_s32 isp_dev_reg_read(isp_handle handle, cmr_u32 num, void *param_ptr)
 	read_param.reg_param = (cmr_uint) & reg_config[0];
 	read_param.counts = reg_num;
 
-	ret = isp_register_read(handle, (cmr_u32 *) & read_param);
+	ret = isp_register_read(handle, (cmr_u32 *)&read_param);
 	if (0 == ret) {
 		reg_addr = reg_ptr[0];
 		for (i = 0; i < reg_num; i++) {
@@ -312,7 +312,7 @@ cmr_s32 isp_dev_reg_read(isp_handle handle, cmr_u32 num, void *param_ptr)
 	return ret;
 }
 
-cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 * buf, cmr_u32 len)
+cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 *buf, cmr_u32 len)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 offset_addr = base_offset, i = 0;
@@ -332,7 +332,7 @@ cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 * buf,
 	read_param.reg_param = (cmr_uint) reg_config;
 	read_param.counts = len;
 
-	ret = isp_register_read(handle, (cmr_u32 *) & read_param);
+	ret = isp_register_read(handle, (cmr_u32 *)&read_param);
 	if (ret) {
 		ISP_LOGE("dev reg fetch error.");
 	}
@@ -340,7 +340,7 @@ cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 * buf,
 	return ret;
 }
 
-cmr_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input * param)
+cmr_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

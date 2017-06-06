@@ -16,6 +16,6 @@
 #ifndef _ISP_IOCTRL_H_
 #define _ISP_IOCTRL_H_
 
-io_fun _ispGetIOCtrlFun(enum isp_ctrl_cmd cmd);
+io_fun isp_ioctl_get_fun(enum isp_ctrl_cmd cmd);
 
 #endif
