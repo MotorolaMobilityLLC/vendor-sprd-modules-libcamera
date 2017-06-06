@@ -263,6 +263,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
+      mPowermanageInited(0), mPowerManager(NULL), mPrfmLock(NULL),
       m_pPowerModule(NULL), mHDRPowerHint(0), mHDRPowerHintFlag(0),
       mGyroInit(0), mGyroExit(0), mGyroNum(0), mSprdEisEnabled(false),
       mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
@@ -473,6 +474,11 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
     changeDfsPolicy(CAM_EXIT);
     disablePowerHint();
+    mPowermanageInited = 0;
+    if (mPowerManager != NULL)
+        mPowerManager.clear();
+    if (mPrfmLock != NULL)
+        mPrfmLock.clear();
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
@@ -1515,31 +1521,61 @@ void SprdCamera3OEMIf::print_time() {
 
 void SprdCamera3OEMIf::initPowerHint() {
 #ifdef HAS_CAMERA_HINTS
-    if (hw_get_module(POWER_HARDWARE_MODULE_ID,
-                      (const hw_module_t **)&m_pPowerModule)) {
-        HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
+    Mutex::Autolock l(&mPowermanageLock);
+    if (mPowerManager == NULL) {
+        // use checkService() to avoid blocking if power service is not up yet
+        sp<IBinder> binder =
+            defaultServiceManager()->checkService(String16("power"));
+        if (binder == NULL) {
+            ALOGE("Thread cannot connect to the power manager service");
+        } else {
+            mPowerManager = interface_cast<IPowerManager>(binder);
+        }
     }
+
+    if (!mPowermanageInited)
+        mPowermanageInited = 1;
 #endif
 }
 
 void SprdCamera3OEMIf::enablePowerHint() {
 #ifdef HAS_CAMERA_HINTS
-    if (m_pPowerModule && m_pPowerModule->powerHint) {
-        m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-                                  (void *)"state=1");
+    Mutex::Autolock l(&mPowermanageLock);
+    HAL_LOGD("IN ");
+    if (mPrfmLock != NULL) {
+        if (mPowerManager != 0) {
+            ALOGI("releaseWakeLock_l() - Prfmlock ");
+            mPowerManager->releasePrfmLock(mPrfmLock);
+        }
+        mPrfmLock.clear();
     }
+
+    if (mPowerManager != NULL) {
+        sp<IBinder> binder = new BBinder();
+        mPowerManager->acquirePrfmLock(binder, String16("Camera"),
+                                       String16("CameraServer"),
+                                       POWER_HINT_VENDOR_CAMERA_PERFORMANCE);
+        mPrfmLock = binder;
+    }
+    HAL_LOGD("OUT");
 #endif
 }
 
 void SprdCamera3OEMIf::disablePowerHint() {
 #ifdef HAS_CAMERA_HINTS
-    if (m_pPowerModule && m_pPowerModule->powerHint) {
-        m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-                                  (void *)"state=0");
+    HAL_LOGD("IN");
+    Mutex::Autolock l(&mPowermanageLock);
+    if (mPrfmLock != 0) {
+        if (mPowerManager != 0) {
+            ALOGI("releaseWakeLock_l() - Prfmlock ");
+            mPowerManager->releasePrfmLock(mPrfmLock);
+        }
+        mPrfmLock.clear();
     }
+
+    HAL_LOGD("OUT");
 #endif
 }
-
 int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
     switch (dfs_policy) {
     case CAM_EXIT:
@@ -2876,7 +2912,7 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
 
 int SprdCamera3OEMIf::startPreviewInternal() {
     ATRACE_CALL();
-
+    int ret = NO_ERROR;
     bool is_push_zsl = false;
     bool is_volte = false;
     char value[PROPERTY_VALUE_MAX];
@@ -3039,6 +3075,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 void SprdCamera3OEMIf::stopPreviewInternal() {
     ATRACE_CALL();
 
+    int ret = NO_ERROR;
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
     mUpdateRangeFpsCount = 0;
@@ -3925,10 +3962,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #ifdef CONFIG_CAMERA_EIS
                     HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
                     if (sprddefInfo.sprd_eis_enabled) {
-                        frame_out = EisVideoFrameStab(frame,frame_num);
-                        if(frame_out.frame_data) {
-                             channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000, CAMERA_STREAM_TYPE_VIDEO);
-                             frame_out.frame_data = NULL;
+                        frame_out = EisVideoFrameStab(frame, frame_num);
+                        if (frame_out.frame_data) {
+                            channel->channelCbRoutine(frame_out.frame_num,
+                                                      frame_out.timestamp *
+                                                          1000000000,
+                                                      CAMERA_STREAM_TYPE_VIDEO);
+                            frame_out.frame_data = NULL;
                         }
                         goto bypass_rec;
                     }
@@ -3960,7 +4000,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 mZslShotWait.signal();
             }
 
-            bypass_rec:
+        bypass_rec:
             HAL_LOGV("rec_stream X");
         }
 
@@ -5497,6 +5537,7 @@ int SprdCamera3OEMIf::openCamera() {
                                     &mLargestSensorHeight);
     mHalOem->ops->camera_pre_capture_set_buffer_size(
         mCameraId, mLargestSensorWidth, mLargestSensorHeight);
+
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;
         HAL_LOGE("start failed");
@@ -8694,8 +8735,8 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
     frame_out_video.frame_data = NULL;
 
     if (mGyromaxtimestamp) {
-        HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",frame_in.frame_num,
-                 frame_in.timestamp, mGyromaxtimestamp);
+        HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",
+                 frame_in.frame_num, frame_in.timestamp, mGyromaxtimestamp);
         video_stab_write_frame(mVideoInst, &frame_in);
         do {
             gyro_num = mGyroVideoInfo.size();
@@ -8716,11 +8757,12 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             }
             ret_eis = video_stab_read(mVideoInst, &frame_out_video);
             if (ret_eis == 0) {
-                HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p", frame_out_video.frame_num,
-                         frame_out_video.timestamp,frame_out_video.frame_data);
-                    return frame_out_video;
+                HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+                         frame_out_video.frame_num, frame_out_video.timestamp,
+                         frame_out_video.frame_data);
+                return frame_out_video;
             } else {
-                 ret_eis = -1;
+                ret_eis = -1;
                 HAL_LOGE("no frame out,exit directly");
                 goto eis_process_fail;
             }
@@ -8847,7 +8889,8 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
     }
 }
 
-vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,uint32_t frame_num) {
+vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
+                                               uint32_t frame_num) {
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
@@ -8863,30 +8906,33 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,u
         if (frame->zoom_ratio == 0)
             frame->zoom_ratio = 1.0f;
         float zoom_ratio = frame->zoom_ratio;
-        HAL_LOGV("boot_time = %" PRId64 ",ae_time =%" PRId64 ",zoom_ratio = %f" , boot_time,ae_time,zoom_ratio);
+        HAL_LOGV("boot_time = %" PRId64 ",ae_time =%" PRId64 ",zoom_ratio = %f",
+                 boot_time, ae_time, zoom_ratio);
         frame_in.frame_data = (uint8_t *)buff_vir;
         frame_in.timestamp = (double)(boot_time - ae_time / 2);
         frame_in.timestamp = frame_in.timestamp / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_in.frame_num = frame_num;
         frame_out = processVideoEIS(frame_in);
-        if(frame_out.frame_data)
-            HAL_LOGV(
-                "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
-                frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
-                frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
-                frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
-                frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
-                frame_out.warp.dat[2][2]);
+        if (frame_out.frame_data)
+            HAL_LOGV("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
+                     "%lf, %lf",
+                     frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
+                     frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
+                     frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
+                     frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
+                     frame_out.warp.dat[2][2]);
     } else {
         HAL_LOGD("gyro is not enable, eis process is not work");
     }
 
     if (frame_out.frame_data) {
-        char *eis_buff =(char *)(frame_out.frame_data) + frame->width * frame->height * 3 / 2;
+        char *eis_buff = (char *)(frame_out.frame_data) +
+                         frame->width * frame->height * 3 / 2;
         double *warp_buff = (double *)eis_buff;
-        HAL_LOGV("video vir address 0x%lx,warp address %p",frame_out.frame_data, warp_buff);
-        if(warp_buff ) {
+        HAL_LOGV("video vir address 0x%lx,warp address %p",
+                 frame_out.frame_data, warp_buff);
+        if (warp_buff) {
             *warp_buff++ = 16171225;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -8897,7 +8943,7 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,u
         }
     }
 
-    return  frame_out;
+    return frame_out;
 }
 #endif
 

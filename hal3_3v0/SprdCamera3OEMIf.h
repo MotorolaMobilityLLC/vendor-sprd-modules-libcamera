@@ -27,6 +27,11 @@ extern "C" {
 
 #include <utils/threads.h>
 #include <utils/RefBase.h>
+#include <binder/IInterface.h>
+#include <binder/BinderService.h>
+#include <powermanager/IPowerManager.h>
+#include <powermanager/PowerManager.h>
+
 #ifndef MINICAMERA
 #include <binder/MemoryBase.h>
 #endif
@@ -227,7 +232,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static int ZSLMode_monitor_thread_deinit(void *p_data);
     static cmr_int ZSLMode_monitor_thread_proc(struct cmr_msg *message,
                                                void *p_data);
-
     void setIspFlashMode(uint32_t mode);
     void matchZSLQueue(ZslBufferQueue *frame);
     void setMultiCameraMode(multiCameraMode mode);
@@ -241,7 +245,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void pushEISVideoQueue(vsGyro *mGyrodata);
     void popEISVideoQueue(vsGyro *gyro, int gyro_num);
     void EisPreviewFrameStab(struct camera_frame_type *frame);
-    vsOutFrame EisVideoFrameStab(struct camera_frame_type *frame,uint32_t frame_num);
+    vsOutFrame EisVideoFrameStab(struct camera_frame_type *frame,
+                                 uint32_t frame_num);
 #endif
 
 #ifdef CONFIG_CAMERA_GYRO
@@ -574,7 +579,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_u16 mLargestPictureWidth;
     cmr_u16 mLargestPictureHeight;
     camera_data_format_type_t mPreviewFormat; // 0:YUV422;1:YUV420;2:RGB
-    int mPictureFormat; // 0:YUV422;1:YUV420;2:RGB;3:JPEG
+    int mPictureFormat;                       // 0:YUV422;1:YUV420;2:RGB;3:JPEG
     int mPreviewStartFlag;
     uint32_t mIsCancellingCapture;
     uint32_t mIsDvPreview;
@@ -722,6 +727,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /*ZSL Monitor Thread*/
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
+
+    uint32_t mPowermanageInited;
+    sp<IPowerManager> mPowerManager;
+    sp<IBinder> mPrfmLock;
+    Mutex mPowermanageLock;
 
     power_module_t *m_pPowerModule;
     /* enable/disable powerhint for hdr */
