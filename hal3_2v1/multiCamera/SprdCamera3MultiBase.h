@@ -54,6 +54,7 @@ typedef enum {
     PREVIEW_REQUEST_STATE = 0,
     WAIT_FIRST_YUV_STATE,  // wait first yuv frame
     WAIT_SECOND_YUV_STATE, // wait second yuv frame
+    WAIT_THIRD_YUV_STATE,  // wait third yuv frame
     REPROCESS_STATE,       // encode yuv to jpeg
 } request_state;
 

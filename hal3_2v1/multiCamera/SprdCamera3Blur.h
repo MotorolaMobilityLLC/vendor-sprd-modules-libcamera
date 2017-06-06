@@ -67,7 +67,7 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM_NUM                                                 \
     (BLUR_AF_WINDOW_NUM + BLUR_REFOCUS_2_PARAM_NUM +                           \
      BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_MAX_ROI * 5 + BLUR_CALI_SEQ_LEN)
-#define BLUR_REFOCUS_PARAM2_NUM (8)
+#define BLUR_REFOCUS_PARAM2_NUM (9)
 
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
@@ -345,8 +345,9 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
         bool mBlurBody;
         bool mUpdataTouch;
         int mVersion;
+        bool mIsGalleryBlur;
         blur_isp_info_t mIspInfo;
-        void *srcYuv1;
+        void *nearYuv;
 
       private:
         void waitMsgAvailable();
