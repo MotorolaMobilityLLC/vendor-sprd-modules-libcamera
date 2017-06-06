@@ -4082,22 +4082,11 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 	struct ae_alg_calc_param *cur_status = &cxt->cur_status;
 	int propValue[10];
 	int ret;
-
 	static int led_onOff=0;
 	static int led_isMain=0;
 	static int led_led1=0;
 	static int led_led2=0;
 
-	/*to check whether is in flash calibration mode*/
-/*
-	memset(str, 0, sizeof(str));
-	property_get("persist.sys.isp.ae.flashcali", str, "");
-	if (!strcmp(str, "on")) {
-		ret = -1;
-		return ret;
-	}
-
-*/
 	ret = get_prop_multi("persist.sys.isp.ae.fc_led", 4, propValue);
 	if(ret>0)
 	{
@@ -4111,8 +4100,6 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			led_led1=propValue[2];
 			led_led2=propValue[3];
 			control_led(cxt, led_onOff, led_isMain, led_led1, led_led2);
-			//frame_cnt=0;
-			//sta_case=0;
 			ISP_LOGD("qqfc led control %d %d %d %d", led_onOff, led_isMain, led_led1, led_led2);
 		}
 	}
@@ -4139,15 +4126,6 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			exp_dummy=propValue[2];
 			exp_isp_gain=propValue[3];
 			exp_sensor_gain=propValue[4];
-		/*
-			struct ae_exposure_param write_param;
-			write_param.exp_line = exp_exp_line;
-			write_param.exp_time = exp_exp_time;
-			write_param.dummy = exp_dummy;
-			write_param.isp_gain = exp_isp_gain;
-			write_param.sensor_gain  =exp_sensor_gain;
-			ae_write_to_sensor(cxt, &write_param);
-		*/
 			cur_status->settings.manual_mode = 0;
 			cur_status->settings.table_idx = 0;
 			cur_status->settings.exp_line = exp_exp_line;
@@ -4158,7 +4136,6 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 
 	static int lock_lock=0;
 	ret = get_prop_multi("persist.sys.isp.ae.fc_lock", 1, propValue);
-	//ISP_LOGI("hjw: lock ae: %d\n", propValue[0]);
 	if(ret>0)
 	{
 		if(lock_lock==propValue[0])
@@ -4198,7 +4175,6 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 
 	static int exp2=0;
 	ret = get_prop_multi("persist.sys.isp.ae.fc_exp2", 1, propValue);
-	//ISP_LOGI("hjw: exp: %d\n", propValue[0]);
 	if(ret>0)
 	{
 		if(exp2==propValue[0])
@@ -4208,30 +4184,13 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		{
 			exp2=propValue[0];
 			if(exp2==1)
-			{
-			/*
-				struct ae_exposure_param write_param;
-				write_param.exp_line = 800;
-				write_param.dummy = 0;
-				write_param.isp_gain = 4096;
-				write_param.sensor_gain  =256;
-				ae_write_to_sensor(cxt, &write_param);
-			*/
+			{			
 				cur_status->settings.manual_mode = 0;
 				cur_status->settings.table_idx = 0;
 				cur_status->settings.exp_line = 800;
-				cur_status->settings.gain = 256;
-				ISP_LOGI("hjw exp2: %d, %d", cur_status->settings.exp_line, cur_status->settings.gain);
+				cur_status->settings.gain = 256;				
 			}
 		}
-//for test by hjw
-/*
-		cur_status->settings.manual_mode = 0;
-		cur_status->settings.table_idx = 0;
-		cur_status->settings.exp_line = 800;
-		cur_status->settings.gain = 256;
-		ISP_LOGI("hjw exp2: %d, %d", cur_status->settings.exp_line, cur_status->settings.gain);
-*/
 	}
 
 	static int exp1=0;
@@ -4246,19 +4205,11 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			exp1=propValue[0];
 			if(exp1==1)
 			{
-		/*
-			struct ae_exposure_param write_param;
-    			write_param.exp_line = 100;
-    			write_param.dummy = 0;
-    			write_param.isp_gain = 4096;
-    			write_param.sensor_gain  =256;
-    			ae_write_to_sensor(cxt, &write_param);
-		*/
-			cur_status->settings.manual_mode = 0;
-			cur_status->settings.table_idx = 0;
-			cur_status->settings.exp_line = 100;
-			cur_status->settings.gain = 256;
-    			ISP_LOGD("qqfc exp1 set");
+				cur_status->settings.manual_mode = 0;
+				cur_status->settings.table_idx = 0;
+				cur_status->settings.exp_line = 100;
+				cur_status->settings.gain = 256;
+	    			ISP_LOGD("qqfc exp1 set");
 			}
 		}
 	}
@@ -4268,8 +4219,13 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 
 static void _set_flash_calibration_script(struct ae_ctrl_cxt *cxt)
 {	
-	flashCalibration(cxt);
-	_set_led2(cxt);
+	char str[50];
+	memset((void*)&str[0], 0, sizeof(str));
+	property_get("persist.sys.isp.ae.fc_stript", str, "");
+	if (!strcmp(str, "on")) {
+		flashCalibration(cxt);
+		_set_led2(cxt);
+	}
 }
 
 static void _set_led(struct ae_ctrl_cxt *cxt)
