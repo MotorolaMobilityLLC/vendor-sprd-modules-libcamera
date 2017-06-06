@@ -245,7 +245,7 @@ cmr_s32 isp_u_binning4awb_transaddr(isp_handle handle, cmr_u32 phys0, cmr_u32 ph
 cmr_s32 isp_u_binning4awb_initbuf(isp_handle handle);
 
 /*ISP Sub Block: Pre Glb Gain*/
-cmr_s32 isp_u_pgg_block(isp_handle handle, void *block_info);;
+cmr_s32 isp_u_pgg_block(isp_handle handle, void *block_info);
 
 /*ISP Sub Block: COMMON*/
 cmr_s32 isp_u_comm_start(isp_handle handle, cmr_u32 start);
