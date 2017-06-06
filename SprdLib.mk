@@ -70,7 +70,3 @@ LOCAL_SHARED_LIBRARIES += libimagestitcher
 else ifeq ($(strip $(TARGET_BOARD_STEREOCAPTURE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
 endif
-
-ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libdepthengine
-endif
