@@ -4485,11 +4485,11 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
+    camera_grab_deinit(oem_handle);
     camera_isp_deinit_notice(oem_handle);
     camera_isp_deinit(oem_handle);
     camera_res_deinit(oem_handle);
     camera_sensor_deinit(oem_handle);
-    camera_grab_deinit(oem_handle);
     pthread_mutex_lock(&close_mutex);
     closing--;
     if (closing == 0) {
