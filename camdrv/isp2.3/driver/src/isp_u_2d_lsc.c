@@ -296,7 +296,7 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 
 cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 {
-	cmr_s32 ret = 0, i = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 

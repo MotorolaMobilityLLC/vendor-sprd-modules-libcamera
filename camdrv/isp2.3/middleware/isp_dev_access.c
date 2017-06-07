@@ -32,7 +32,6 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
-	cmr_uint type = 0;
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
 
@@ -69,7 +68,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 				  }
 		} else {
 			ISP_LOGE("fail to malloc statis_bq buffer");
-			return ISP_PARAM_NULL;
+			return -ISP_PARAM_NULL;
 		}
 
 		statis_mem_info->isp_statis_k_addr[0] = kaddr[0];
@@ -153,8 +152,9 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+#ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
 	struct isp_dev_cfa_info cfa_param;
-	struct isp_dev_cce_info cce_param;
+#endif
 
 	isp_u_fetch_raw_transaddr(cxt->isp_driver_handle, &in_ptr->fetch.fetch_addr);
 
@@ -251,8 +251,6 @@ cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, cmr_int flag)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ISP_LOGV("driver handle is %p", cxt->isp_driver_handle);
-
 	ret = isp_u_2d_lsc_param_update(cxt->isp_driver_handle, flag);
 
 	return ret;
@@ -320,7 +318,6 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		free((void *)statis_info);
 		statis_info = NULL;
 	}
-
 }
 
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
@@ -391,7 +388,6 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_handler;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
-	void *dummy;
 
 	ISP_CHECK_HANDLE_VALID(isp_handler);
 
@@ -472,7 +468,7 @@ static cmr_int dev_ae_set_statistics_mode(cmr_handle isp_dev_handle, cmr_int mod
 		break;
 	}
 
-	return 0;
+	return ret;
 }
 
 static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_coeff)
@@ -492,7 +488,7 @@ static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_
 
 	isp_u_rgb_gain_block(cxt->isp_driver_handle, &gain_info);
 
-	return 0;
+	return ret;
 }
 
 static cmr_int dev_set_af_monitor(cmr_handle isp_dev_handle, void *param0, cmr_u32 cur_envi)
@@ -582,7 +578,6 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		break;
 	case ISP_DEV_GET_AF_MONITOR_WIN_NUM:
 		ret = isp_u_raw_afm_win_num(cxt->isp_driver_handle, (cmr_u32 *) param0);
-		ISP_LOGV("af_win_num %d", *(cmr_u32 *) param0);
 		break;
 	case ISP_DEV_SET_STSTIS_BUF:
 		ret = isp_dev_set_statis_buf(cxt->isp_driver_handle, param0);

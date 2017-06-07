@@ -64,7 +64,7 @@ cmr_s32 isp_u_cmc_bypass(isp_handle handle, cmr_u32 bypass)
 
 cmr_s32 isp_u_cmc_matrix(isp_handle handle, cmr_u16 * matrix_ptr)
 {
-	cmr_s32 ret = 0, i = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 

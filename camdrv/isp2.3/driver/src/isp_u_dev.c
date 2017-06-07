@@ -23,7 +23,7 @@
 cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle *handle)
 {
 	cmr_s32 ret = 0;
-	cmr_u32 chip_id = 0;
+	//cmr_u32 chip_id = 0;
 	struct isp_file *file = NULL;
 
 	file = malloc(sizeof(struct isp_file));

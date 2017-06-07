@@ -173,7 +173,6 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_pm_ioctl_input ioctl_input = { NULL, 0 };
 	struct isp_pm_param_data ioctl_data;
 	struct isp_awbc_cfg awbc_cfg;
 	struct awb_gain result;
@@ -871,7 +870,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 	cmr_u32 log_ae_size = 0;
 	struct sprd_isp_debug_info *p;
 	struct _isp_log_info log;
-	size_t total, off;
+	size_t off;
 	UNUSED(call_back);
 
 	if (NULL == info_ptr) {
@@ -1962,7 +1961,6 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 	struct denoise_param_update *update_param = (struct denoise_param_update *)param_ptr;
 	cmr_u32 i;
 	struct sensor_raw_fix_info *fix_data_ptr = PNULL;
-	struct sensor_nr_param *nr_param_ptr = PNULL;
 	struct sensor_nr_fix_info *nr_fix = PNULL;
 	fix_data_ptr = raw_sensor_ptr->fix_ptr[0];
 	nr_fix = &raw_sensor_ptr->nr_fix;
@@ -1991,7 +1989,6 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 //      update_param->nr_level_map_ptr = fix_data_ptr->nr.nr_map_group.nr_level_map_ptr;
 	for (i = 0; i < mode_common_ptr->block_num; i++) {
 		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
-		cmr_u8 *data = (cmr_u8 *) mode_common_ptr + header->offset;
 
 		switch (header->block_id) {
 		case ISP_BLK_PDAF_CORRECT:{
@@ -2074,11 +2071,12 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 
 static cmr_int ispctl_sensor_denoise_param_update(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
-	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
-	struct denoise_param_update *update_param = (struct denoise_param_update *)param_ptr;
-	cmr_u32 i;
+	//struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	//struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
+	//struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
+	//struct denoise_param_update *update_param = (struct denoise_param_update *)param_ptr;
+	//cmr_u32 i;
+	UNUSED(isp_alg_handle);
 	UNUSED(call_back);
 
 	if (NULL == param_ptr) {

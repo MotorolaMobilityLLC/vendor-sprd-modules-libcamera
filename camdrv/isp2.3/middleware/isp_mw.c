@@ -55,9 +55,12 @@ static cmr_s32 ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 
-	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w & ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_frame.img_size.h & ISP_ONE))) {
-		ret = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(ret, ("ifail to check start param input size: w:%d, h:%d error", in_param_ptr->src_frame.img_size.w, in_param_ptr->src_frame.img_size.h));
+	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w & ISP_ONE)) ||
+	    (ISP_ZERO != (in_param_ptr->src_frame.img_size.h & ISP_ONE))) {
+		ret = -ISP_PARAM_ERROR;
+		ISP_RETURN_IF_FAIL(ret, ("fail to check start param input size: w:%d, h:%d",
+					 in_param_ptr->src_frame.img_size.w,
+					 in_param_ptr->src_frame.img_size.h));
 	}
 
 	return ret;
@@ -70,7 +73,7 @@ static cmr_s32 ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
 	if ((ISP_ZERO != (in_param_ptr->src_slice_height & ISP_ONE)) ||
 	    (ISP_ZERO != (in_param_ptr->src_avail_height & ISP_ONE))) {
 		ret = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(ret, ("fail to check param,input size:src_slice_h:%d,src_avail_h:%d error",
+		ISP_RETURN_IF_FAIL(ret, ("fail to check param,input size:src_slice_h:%d,src_avail_h:%d",
 					 in_param_ptr->src_slice_height, in_param_ptr->src_avail_height));
 	}
 
