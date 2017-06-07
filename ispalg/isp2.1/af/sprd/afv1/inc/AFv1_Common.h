@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.117"
-#define SUB_VERSION             "-Blur-04"
+#define SUB_VERSION             "-Blur-05"
 #define STRING(s) #s
 
 /*2.function error code*/
