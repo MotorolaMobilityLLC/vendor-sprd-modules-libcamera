@@ -45,11 +45,7 @@ struct ae_otp_param {
 
 struct ae_sync_out {
 	uint32_t updata_flag;
-	uint32_t exposure_time;
-	uint32_t exposure_line;
-	uint32_t sensor_ad_gain;
-	uint32_t exposure_dummy;
-	uint32_t isp_d_gain;
+	struct ae_alg_calc_result slave_ae;
 };
 
 struct sensor_info {
