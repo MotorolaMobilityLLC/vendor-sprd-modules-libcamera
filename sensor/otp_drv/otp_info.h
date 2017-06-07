@@ -196,9 +196,32 @@ typedef struct {
     cmr_u16 checksum;
     /*you can add some items here*/
 } extended_data_t;
+
 /**
  * here include formate data
  * you can add some items if you need.
+ * |------------------------------------|
+ * |    module_data_t module_dat;       |
+ * |                - - -               |
+ * |                - - -               |
+ * |                - - -               |
+ * | optical_center_t opt_center_dat;   |
+ * | otp_data_info_t pdaf_cali_dat;     |
+ * |                - - -               |
+ * |                - - -               |
+ * |                - - -               |
+ * |   lsccalib_data_t lsc_cali_dat;    |
+ * |------------------------------------|
+ * | ^         cmr_u8 data[4];          |
+ * | |                                  |
+ * | | the buffer maybe include otp lsc |
+ * | | ,3D_cal data buffer etc,if need. |
+ * | | You can get buffer address       |
+ * | | by data[4] pointer.              |
+ * | |                                  |
+ * | | NOTE: the buffer size depends on |
+ * | V your otp driver.                 |
+ * |------------------------------------|
  **/
 typedef struct {
     module_data_t module_dat;
@@ -213,7 +236,7 @@ typedef struct {
     otp_data_info_t dual_cam_cali_dat;
     extended_data_t extend_dat;
     lsccalib_data_t lsc_cali_dat;
-    cmr_u8 data[0];
+    cmr_u8 data[4];/*must be last*/
 } otp_format_data_t;
 
 typedef struct {
