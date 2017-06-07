@@ -6071,7 +6071,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AF_MODE: {
         int8_t AfMode = 0;
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
-        if (mCameraId == 0 && !mIsAutoFocus) {
+        if (!mIsAutoFocus) {
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==
                     AfMode) { /*dv mode but recording not start*/
