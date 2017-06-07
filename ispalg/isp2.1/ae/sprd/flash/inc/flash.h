@@ -41,24 +41,30 @@ typedef  signed int int32;
 typedef void* flash_handle;
 
 struct flash_tune_param {
-	uint16 version;/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1*/
+	uint8 version;/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1*/
 	uint8 alg_id;
-	uint8 reserved0;
 	uint8 flashLevelNum1;
-	uint8 flashLevelNum2;
+	uint8 flashLevelNum2;/*1 * 4bytes*/
+
 	uint8 preflahLevel1;
 	uint8 preflahLevel2;
-	uint16 preflashBrightness;
-	bool flashMask[1024];
-	uint16 brightnessTable[1024];
-	uint16 rTable[1024]; //g: 1024
-	uint16 bTable[1024];
+	uint16 preflashBrightness;/*1 * 4bytes*/
+
 	uint16 brightnessTarget; //10bit
 	uint16 brightnessTargetMax; //10bit
-	float foregroundRatioHigh;
-	float foregroundRatioLow;
-	uint8 reserved1[1024];
-};
+								/*1 * 4bytes*/
+
+	uint32 foregroundRatioHigh;/*fix data: 1x-->100*/
+	uint32 foregroundRatioLow;/*fix data: 1x-->100*/
+							/*2 * 4bytes*/
+	uint32 preflash_ct;/*4bytes*/
+
+	bool flashMask[1024];/*256 * 4bytes*/
+	uint16 brightnessTable[1024];/*512 * 4bytes*/
+	uint16 rTable[1024]; //g: 1024/*512 * 4bytes*/
+	uint16 bTable[1024];/*512 * 4bytes*/
+	uint8 reserved1[1020];/*255 * 4bytes*/
+};/*2053 * 4 bypes*/
 
 struct Flash_initInput
 {
@@ -88,9 +94,10 @@ struct Flash_pfStartInput
 	uint32 rGain;  //x1024
 	uint32 gGain;  //x1024
 	uint32 bGain;  //x1024
-	float aeExposure; //unit?  us
+	float aeExposure; //unit  0.1us
 	uint32 aeGain; //unit? x128
 	bool isFlash;   //no flash, 0
+	uint8 flickerMode; //50hz:0, 60hz:1
 	uint16 staW;
 	uint16 staH;
 	uint16 *rSta; //10bit
@@ -124,7 +131,7 @@ struct Flash_pfOneIterationOutput
 	//for capture parameters
 	float captureExposure;
 	uint32 captureGain;
-	float captureFlashRatio; //0-1  
+	float captureFlashRatio; //0-1
 	float captureFlash1Ratio; //0-1
 	uint16 captureRGain;
 	uint16 captureGGain;
@@ -137,10 +144,10 @@ struct Flash_pfOneIterationOutput
 	uint32 nextGain;
 	bool nextFlash;
 	bool isEnd;
+
 	uint32 debugSize;
 	void* debugBuffer;
 };
-
 
 int flash_get_tuning_param(struct flash_tune_param* param);/*It will be removed in the future*/
 flash_handle flash_init(struct Flash_initInput* in, struct Flash_initOut *out);

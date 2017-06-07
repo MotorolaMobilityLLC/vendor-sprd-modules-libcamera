@@ -2344,6 +2344,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.gGain = current_status->awb_gain.g;
 	in.bGain = current_status->awb_gain.b;
 	in.isFlash = 0;/*need to check the meaning*/
+	in.flickerMode = current_status->settings.flicker;
 	in.staW = cxt->monitor_unit.win_num.w;
 	in.staH = cxt->monitor_unit.win_num.h;
 	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
@@ -2358,9 +2359,10 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	current_status->settings.gain = out.nextGain;
 	cxt->pre_flash_level1 = out.preflahLevel1;
 	cxt->pre_flash_level2 = out.preflahLevel2;
-	ISP_LOGV("ae_flash pre_b: flashbefore(%d, %d), preled_level(%d, %d), preflash(%d, %d)\n",\
+	ISP_LOGV("ae_flash pre_b: flashbefore(%d, %d), preled_level(%d, %d), preflash(%d, %d), flicker:%s\n",\
 		current_status->effect_expline, current_status->effect_gain,\
-		out.preflahLevel1, out.preflahLevel2, current_status->settings.exp_line, out.nextGain);
+		out.preflahLevel1, out.preflahLevel2, current_status->settings.exp_line, out.nextGain,
+		in.flickerMode == 0 ? "50Hz" : "60Hz");
 
 	cxt->flash_last_exp_line = current_status->settings.exp_line;
 	cxt->flash_last_gain = current_status->settings.gain;
@@ -3328,13 +3330,14 @@ void calRgbFrameData(int isMainFlash, float* rRaw, float* gRaw, float* bRaw, flo
 	}
 	else
 	{
-		rs = (rRaw[7] + rRaw[8]) / 2;
-		gs = (gRaw[7] + gRaw[8]) / 2;
-		bs = (bRaw[7] + bRaw[8]) / 2;
+		rs = (rRaw[5] + rRaw[6]) / 2;
+		gs = (gRaw[5] + gRaw[6]) / 2;
+		bs = (bRaw[5] + bRaw[6]) / 2;
 	}
 	*r = rs;
 	*g = gs;
 	*b = bs;
+
 }
 
 float calLedmA(int isMain, int led1, int led2)
@@ -3406,7 +3409,7 @@ float interpCt(float* rgTab, float* ctTab, int numTab, float rg)
 			return interp(rgTab[i - 1], ctTab[i - 1], rgTab[i], ctTab[i], rg);
 		}
 	}
-	
+
 	return 10000.0;
 }
 
@@ -3414,7 +3417,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 {
 #define FC_INIT_SHUTTER 100000
 #define FC_INIT_GAIN 128
-	struct ae_alg_calc_param *cur_status = &cxt->sync_cur_status;
+	struct ae_alg_calc_param *cur_status = &cxt->cur_status;
 	static int frameCount = 0;
 	static int caliState = FlashCali_start;
 	static struct FCData* caliData = 0;
@@ -4105,6 +4108,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		}
 	}
 
+	static int lock_lock=0;
 	static int exp_exp_line=0;
 	static int exp_exp_time=0;
 	static int exp_dummy=0;
@@ -4127,6 +4131,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			exp_dummy=propValue[2];
 			exp_isp_gain=propValue[3];
 			exp_sensor_gain=propValue[4];
+			cur_status->settings.lock_ae = lock_lock;
 			cur_status->settings.manual_mode = 0;
 			cur_status->settings.table_idx = 0;
 			cur_status->settings.exp_line = exp_exp_line;
@@ -4135,7 +4140,6 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		}
 	}
 
-	static int lock_lock=0;
 	ret = get_prop_multi("persist.sys.isp.ae.fc_lock", 1, propValue);
 	if(ret>0)
 	{
