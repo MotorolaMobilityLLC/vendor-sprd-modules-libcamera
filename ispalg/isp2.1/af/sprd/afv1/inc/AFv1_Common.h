@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.117"
-#define SUB_VERSION             "-Blur-02"
+#define SUB_VERSION             "-Blur-04"
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -914,7 +914,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
-	cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
+	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
 	void *cookie;
 } AF_Ctrl_Ops;
 
