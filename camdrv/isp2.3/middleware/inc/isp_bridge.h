@@ -19,7 +19,8 @@
 **				Dependencies					*
 **---------------------------------------------------------------------------*/
 
-#include "isp_common_types.h"
+#include "isp_type.h"
+#include "cmr_sensor_info.h"
 
 enum isp_br_ctrl_cmd_type {
 	GET_MATCH_AE_DATA,
@@ -29,10 +30,12 @@ enum isp_br_ctrl_cmd_type {
 };
 
 struct awb_match_data {
+#if 0
 	struct isp_awb_gain gain;
 	struct isp_awb_gain gain_balanced;
 	struct isp_awb_gain gain_flash_off;
 	struct isp_awb_gain gain_capture;
+#endif
 	cmr_u32 ct;
 	cmr_u32 ct_flash_off;
 	cmr_u32 ct_capture;
