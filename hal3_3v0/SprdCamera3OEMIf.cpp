@@ -823,6 +823,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         if (mEisVideoInit) {
             video_stab_close(mVideoInst);
             mEisVideoInit = false;
+            mIsRecording = false;
             HAL_LOGI("video stab close");
         }
 #endif
@@ -8614,8 +8615,8 @@ void SprdCamera3OEMIf::EisPreview_init() {
     video_stab_param_default(&mPreviewParam);
     mPreviewParam.src_w = (uint16_t)mPreviewWidth;
     mPreviewParam.src_h = (uint16_t)mPreviewHeight;
-    mPreviewParam.dst_w = (uint16_t)mPreviewWidth;
-    mPreviewParam.dst_h = (uint16_t)mPreviewHeight;
+    mPreviewParam.dst_w = (uint16_t)mPreviewWidth * 5 / 6;
+    mPreviewParam.dst_h = (uint16_t)mPreviewHeight * 5 / 6;
     mPreviewParam.method = 0;
     mPreviewParam.wdx = 0;
     mPreviewParam.wdy = 0;
@@ -8633,6 +8634,8 @@ void SprdCamera3OEMIf::EisPreview_init() {
             mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
+    //clear preview  gyro
+    mGyroPreviewInfo.clear();
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mPreviewParam.f, mPreviewParam.td,
              mPreviewParam.ts);
     video_stab_open(&mPreviewInst, &mPreviewParam);
@@ -8667,6 +8670,9 @@ void SprdCamera3OEMIf::EisVideo_init() {
             mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
+    //clear video  gyro
+    mGyroVideoInfo.clear();
+    mIsRecording = true;
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mVideoParam.f, mVideoParam.td,
              mVideoParam.ts);
     video_stab_open(&mVideoInst, &mVideoParam);
@@ -9144,8 +9150,9 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
                         obj->pushEISPreviewQueue(
                             &obj->mGyrodata[obj->mGyroNum]);
                         obj->mReadGyroPreviewCond.signal();
-                        obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
-                        obj->mReadGyroVideoCond.signal();
+                        if(obj->mIsRecording) {
+                                obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
+                                obj->mReadGyroVideoCond.signal();
                         if (++obj->mGyroNum >= obj->kGyrocount)
                             obj->mGyroNum = 0;
                         HAL_LOGV("gyro timestamp %" PRId64
