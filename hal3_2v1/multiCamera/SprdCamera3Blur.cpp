@@ -1832,7 +1832,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 property_get("persist.sys.cam.blur.face.prop2", prop2, "30");
 
                 // The face height increase by x% on top
-                property_get("persist.sys.cam.blur.face.prop3", prop3, "60");
+                property_get("persist.sys.cam.blur.face.prop3", prop3, "70");
 
                 // The width of the body is the width of the face increased by
                 // x%
