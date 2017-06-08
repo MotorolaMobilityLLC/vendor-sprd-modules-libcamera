@@ -4100,13 +4100,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
             if (sprddefInfo.sprd_eis_enabled) {
                 frame_out = EisVideoFrameStab(frame,frame_num);
-            }
 
-            if(frame_out.frame_data) {
-                 channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000, CAMERA_STREAM_TYPE_VIDEO);
-                 frame_out.frame_data = NULL;
+                if(frame_out.frame_data) {
+                    channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000, CAMERA_STREAM_TYPE_VIDEO);
+                    frame_out.frame_data = NULL;
+                }
+                goto bypass_rec;
             }
-            goto bypass_rec;
 #endif
             if (mMultiCameraMode == MODE_3D_VIDEO) {
                 mSlowPara.rec_timestamp = buffer_timestamp;
