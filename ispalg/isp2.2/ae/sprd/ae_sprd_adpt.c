@@ -1603,6 +1603,29 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.weight_table = cxt->cur_param->weight_table[AE_WEIGHT_CENTER].weight;
 	cxt->cur_status.stat_img = NULL;
 
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (init_param->is_multi_mode) {
+		/* save master & slave sensor info */
+		struct sensor_info sensor_info;
+//		sensor_info.max_again = cxt->cur_status.max_gain;
+//		sensor_info.min_again = cxt->cur_status.min_gain;
+		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
+//		sensor_info.min_exp_line = cxt->cur_status.min_exp_line;
+		sensor_info.line_time = cxt->cur_status.line_time;
+
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,
+			init_param->sensor_role ? SET_MASTER_MODULE_INFO : SET_SLAVE_MODULE_INFO,
+			&sensor_info,
+			NULL);
+		ISP_LOGI("sensor info: role=%d, max_gain=%d, min_gain=%d, precision=%d, min_exp_line=%d, line_time=%d",
+			init_param->sensor_role,
+			sensor_info.max_again,
+			sensor_info.min_again,
+			sensor_info.sensor_gain_precision,
+			sensor_info.min_exp_line,
+			sensor_info.line_time);
+	}
+#endif
 	cxt->cur_status.start_index = cxt->cur_param->start_index;
 	ev_table = &cxt->cur_param->ev_table;
 	cxt->cur_status.target_lum = _calc_target_lum(cxt->cur_param->target_lum, ev_table->default_level, ev_table);
@@ -2874,6 +2897,15 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	}
 	init_param = (struct ae_init_in *)param;
 	ae_init_out = (struct ae_init_out *)in_param;
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cxt->ae_role = init_param->ae_role;
+	cxt->sensor_role = init_param->sensor_role;
+	cxt->is_multi_mode = init_param->is_multi_mode;
+	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
+	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
+#endif
+
 	work_param.mode = AE_WORK_MODE_COMMON;
 	work_param.fly_eb = 1;
 	work_param.resolution_info = init_param->resolution_info;
@@ -2957,13 +2989,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 		cxt->manual_ae_on = 0;
 	}
 	ISP_LOGI("done, cam-id %d", cxt->camera_id);
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	cxt->ae_role = init_param->ae_role;
-	cxt->sensor_role = init_param->sensor_role;
-	cxt->is_multi_mode = init_param->is_multi_mode;
-	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
-	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
-#endif
+
 	return (cmr_handle) cxt;
 ERR_EXIT:
 	if (NULL != cxt) {
