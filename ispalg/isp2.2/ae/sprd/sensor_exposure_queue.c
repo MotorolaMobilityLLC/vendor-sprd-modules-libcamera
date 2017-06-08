@@ -44,10 +44,10 @@ struct q_item_index {
  *So exp_valid_num >= sensor_gain_valid_num >= isp_gain_valid_num;
  */
 struct queue_context {
-	cmr_u32 exp_valid_num;
-	cmr_u32 sensor_gain_valid_num;
-	cmr_u32 isp_gain_valid_num;
-	cmr_u32 max_valid_num;
+	cmr_s32 exp_valid_num;
+	cmr_s32 sensor_gain_valid_num;
+	cmr_s32 isp_gain_valid_num;
+	cmr_s32 max_valid_num;
 	
 	cmr_s32 exp_valid_offset;/*according to max validata num*/
 	cmr_s32 sensor_gain_valid_offset;/*according to max validata num*/
@@ -216,17 +216,15 @@ cmr_handle s_q_open(struct s_q_open_param *param)
 
 	return (cmr_handle)q_cxt;
 
-q_init_error_exit:	
-	if (q_cxt->q_pool.queue_ptr) {
-		free(q_cxt->q_pool.queue_ptr);
-		q_cxt->q_pool.queue_ptr = NULL;
-	}
-
+q_init_error_exit:
 	if (q_cxt) {
+		if (q_cxt->q_pool.queue_ptr) {
+			free(q_cxt->q_pool.queue_ptr);
+			q_cxt->q_pool.queue_ptr = NULL;
+		}
 		free(q_cxt);
 		q_cxt = NULL;
 	}
-
 	return q_cxt;
 }
 

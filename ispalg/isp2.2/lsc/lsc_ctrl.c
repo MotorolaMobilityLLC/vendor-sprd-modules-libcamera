@@ -248,28 +248,24 @@ static cmr_s32 _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 	cxt->lib_ops.alsc_init = dlsym(cxt->lib_handle, "lsc_adv_init");
 	if (!cxt->lib_ops.alsc_init) {
 		ISP_LOGE("fail to dlsym lsc_sprd_init");
-		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
 	cxt->lib_ops.alsc_calc = dlsym(cxt->lib_handle, "lsc_adv_calculation");
 	if (!cxt->lib_ops.alsc_calc) {
 		ISP_LOGE("fail to dlsym lsc_sprd_calculation");
-		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
 	cxt->lib_ops.alsc_io_ctrl = dlsym(cxt->lib_handle, "lsc_adv_ioctrl");
 	if (!cxt->lib_ops.alsc_io_ctrl) {
 		ISP_LOGE("fail to dlsym lsc_sprd_io_ctrl");
-		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
 	cxt->lib_ops.alsc_deinit = dlsym(cxt->lib_handle, "lsc_adv_deinit");
 	if (!cxt->lib_ops.alsc_deinit) {
 		ISP_LOGE("fail to dlsym lsc_sprd_deinit");
-		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 	ISP_LOGI("load lsc lib success");
@@ -324,11 +320,6 @@ static void *lsc_sprd_init(void *in, void *out)
 	return (void *)cxt;
 
 EXIT:
-
-	if (NULL != alsc_handle) {
-		rtn = cxt->lib_ops.alsc_deinit(alsc_handle);
-		alsc_handle = NULL;
-	}
 
 	if (NULL != cxt) {
 		rtn = _lscsprd_unload_lib(cxt);

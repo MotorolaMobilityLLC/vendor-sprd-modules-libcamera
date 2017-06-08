@@ -167,6 +167,7 @@ enum ae_io_ctrl_cmd {
 	AE_GET_FLASH_WB_GAIN,
 	AE_CAF_LOCKAE_START,
 	AE_CAF_LOCKAE_STOP,
+	AE_GET_LEDS_CTRL,
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	AE_CTRL_SET_ROLE,
 #endif
@@ -403,6 +404,8 @@ struct ae_flash_cell {
 struct ae_flash_cfg {
 	cmr_u32 type;	// enum isp_flash_type
 	cmr_u32 led_idx;	//enum isp_flash_led
+	cmr_u32 led0_enable;
+	cmr_u32 led1_enable;
 };
 
 struct ae_isp_ctrl_ops {
@@ -520,6 +523,11 @@ struct ae_awb_gain {
 	cmr_u32 r;
 	cmr_u32 g;
 	cmr_u32 b;
+};
+
+struct ae_leds_ctrl {
+    cmr_u32 led0_ctrl;
+    cmr_u32 led1_ctrl;
 };
 
 #ifdef __cplusplus

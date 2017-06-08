@@ -222,6 +222,9 @@ static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
 
 	if (NULL != af->af_get_motor_pos) {
 		af->af_get_motor_pos(af->caller, &pos);
+		if (0 == pos || pos > 1023) {
+			pos = (cmr_u16) lens_get_pos(af);
+		}
 	} else {
 		pos = (cmr_u16) lens_get_pos(af);
 	}
@@ -240,7 +243,7 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 	if (NULL != af->af_lens_move) {
 		if (last_pos != pos)
 			af->af_lens_move(af->caller, pos);
-		ISP_LOGV("set_pos = %d", pos);
+		ISP_LOGV("lens_move_to = %d", pos);
 		af->lens.pos = pos;
 	}
 }
@@ -535,6 +538,7 @@ static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
 	af->vcm_timestamp = get_systemtime_ns();
+	AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_VCM,af->vcm_timestamp);
 	//ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
@@ -598,12 +602,19 @@ static cmr_u8 if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 static cmr_u8 if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	// read
+	cmr_u16 pos = 0;
+
 	if (NULL != af->af_get_motor_pos) {
-		af->af_get_motor_pos(af->caller, motor_pos);
-		ISP_LOGV("motor pos in register %d", *motor_pos);
+		af->af_get_motor_pos(af->caller, &pos);
+		ISP_LOGV("motor pos in register %d", pos);
+		if (0 == pos || pos > 1023) {
+			pos = (cmr_u16) lens_get_pos(af);
+		}
 	} else {
-		*motor_pos = (cmr_u16) lens_get_pos(af);
+		pos = (cmr_u16) lens_get_pos(af);
+	}
+	if (NULL != motor_pos) {
+		*motor_pos = pos;
 	}
 
 	return 0;
@@ -2126,12 +2137,14 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 	struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
 	if (0 == af_ts->capture) {
 		af->dcam_timestamp = af_ts->timestamp;
+		AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_DCAM,af->dcam_timestamp);
 		//ISP_LOGV("dcam_timestamp %" PRIu64 " ms", (cmr_s64) af->dcam_timestamp);
 		if (DCAM_AFTER_VCM_YES == compare_timestamp(af) && 1 == af->vcm_stable) {
 			sem_post(&af->af_wait_caf);
 		}
 	} else if (1 == af_ts->capture) {
 		af->takepic_timestamp = af_ts->timestamp;
+		AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_CAPTURE,af->takepic_timestamp);
 		//ISP_LOGV("takepic_timestamp %" PRIu64 " ms", (cmr_s64) af->takepic_timestamp);
 		ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 	}
@@ -2335,11 +2348,12 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 		break;
 
 	case AF_CMD_GET_AF_LOG_INFO:{
-		struct af_log_info *log_info = (struct af_log_info *)param0;
-		log_info->log_cxt = af->af_alg_cxt;
-		log_info->log_len = af->af_dump_info_len;
-		ISP_LOGI("Get AF Log info 0x%x ", log_info->log_len);
-		break;}
+			struct af_log_info *log_info = (struct af_log_info *)param0;
+			log_info->log_cxt = af->af_alg_cxt;
+			log_info->log_len = af->af_dump_info_len;
+			ISP_LOGI("Get AF Log info 0x%x ", log_info->log_len);
+			break;
+		}
 
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);
@@ -2416,8 +2430,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		af = NULL;
 		return NULL;
 	}
-	init_param->af_alg_cxt = (cmr_u8 *) af->af_alg_cxt;
-	init_param->af_dump_info_len = af->af_dump_info_len;
 
 	pthread_mutex_init(&af->af_work_lock, NULL);
 	pthread_mutex_init(&af->caf_work_lock, NULL);
@@ -2447,6 +2459,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->test_loop_quit = 1;
 	property_set("af_mode", "none");
 
+	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
+	result->log_info.log_len = af->af_dump_info_len;
 	ISP_LOGI("Exit");
 	return (cmr_handle) af;
 

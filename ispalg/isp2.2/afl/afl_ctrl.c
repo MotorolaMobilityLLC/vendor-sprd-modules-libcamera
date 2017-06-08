@@ -137,7 +137,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cur_flicker = in_ptr->cur_flicker;
 	cur_exp_flag = in_ptr->cur_exp_flag;
 	ae_exp_flag = in_ptr->ae_exp_flag;
-	addr = (cmr_s32 *)(cmr_uint) in_ptr->vir_addr;
+	addr = (cmr_s32 *)(cmr_uint)in_ptr->vir_addr;
 
 	if (cur_exp_flag) {
 		if (cur_flicker) {

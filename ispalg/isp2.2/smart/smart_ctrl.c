@@ -861,7 +861,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	/* create isp_smart_context handle. */
 	cxt = (struct smart_context *)malloc(sizeof(struct smart_context));
 	if (NULL == cxt) {
-		ISP_LOGE("fail to malloc, size: %ld\n",(unsigned long) sizeof(struct smart_context));
+		ISP_LOGE("fail to malloc, size: %zd\n", sizeof(struct smart_context));
 		goto malloc_failed;
 	}
 

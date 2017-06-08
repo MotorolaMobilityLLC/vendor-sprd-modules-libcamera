@@ -353,8 +353,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	memset(&callback_in, 0, sizeof(callback_in));
 	memset(&pd_calc_result, 0, sizeof(pd_calc_result));
 	cxt->is_busy = 1;
-	void *pInPhaseBuf_left = (cmr_s32 *)(cmr_uint)(unsigned long) (proc_in->u_addr);
-	void *pInPhaseBuf_right = (cmr_s32 *)(cmr_uint)(unsigned long) (proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
+	void *pInPhaseBuf_left = (cmr_s32 *) (cmr_uint)(proc_in->u_addr);
+	void *pInPhaseBuf_right = (cmr_s32 *) (cmr_uint)(proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
 	ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 
 	if (cxt->pd_gobal_setting.dSensorMode) {

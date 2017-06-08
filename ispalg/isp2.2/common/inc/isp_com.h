@@ -525,6 +525,27 @@ struct isp_flash_param {
 	struct isp_flash_info cur;
 	struct isp_flash_attrib_cali attrib;
 };
+struct isp_dualflash_param {
+	cmr_u8 version;
+	cmr_u8 alg_id;
+	cmr_u8 flashLevelNum1;
+	cmr_u8 flashLevelNum2;
+	cmr_u8 preflahLevel1;
+	cmr_u8 preflahLevel2;
+	cmr_u16 preflashBrightness;
+	cmr_u16 brightnessTarget;
+	cmr_u16 brightnessTargetMax;
+	cmr_u16 foregroundRatioHigh;
+	cmr_u16 foregroundRatioLow;
+	cmr_u8 flashMask[1024];
+	cmr_u16 brightnessTable[1024];
+	cmr_u16 rTable[1024];
+	cmr_u16 bTable[1024];
+};
+
+struct isp_dual_flash_param {
+	struct isp_dualflash_param cur;
+};
 
 struct isp_envi_detect_param {
 	cmr_u32 enable;
@@ -856,6 +877,7 @@ struct isp_context {
 	struct isp_bright_param bright;
 	struct isp_contrast_param contrast;
 	struct isp_flash_param flash;
+	struct isp_dualflash_param dual_flash;
 	struct isp_envi_detect_param envi_detect;
 
 	struct isp_pre_global_gain_param pre_gbl_gain;
