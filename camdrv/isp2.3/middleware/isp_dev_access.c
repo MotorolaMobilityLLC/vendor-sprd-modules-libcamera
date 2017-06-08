@@ -630,6 +630,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 	case ISP_DEV_SET_AF_MODULES_CFG:
 		ret = isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, param0);
 		break;
+	case ISP_DEV_POST_3DNR:
+		ret = isp_dev_3dnr(cxt->isp_driver_handle, param0);
+		break;
 	case ISP_DEV_SET_RAW_SLICE:
 		ret = isp_dev_access_set_slice_raw(cxt, param0);
 		break;

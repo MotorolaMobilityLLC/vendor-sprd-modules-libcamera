@@ -359,6 +359,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_PREV_PDAF_RAW,
 	ISP_CTRL_GET_VCM_INFO,
 	ISP_CTRL_GET_FPS,
+	ISP_CTRL_GET_LEDS_CTRL,
 	/* warning if you wanna send async msg
 	 * please add msg id below here
 	 */
@@ -373,6 +374,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_DCAM_TIMESTAMP,
 	ISP_CTRL_GET_FULLSCAN_INFO,
 	ISP_CTRL_SET_AF_BYPASS,
+	ISP_CTRL_POST_3DNR, //for post 3dnr
+	ISP_CTRL_3DNR,
 	ISP_CTRL_MAX
 };
 
@@ -404,6 +407,11 @@ struct isp_flash_cfg {
 	cmr_u32 led_idx;	//enum isp_flash_led
 	cmr_u32 led0_enable;
 	cmr_u32 led1_enable;
+};
+
+struct isp_3dnr_ctrl_param {
+	cmr_u32 enable;
+	cmr_u32 count;
 };
 
 struct isp_adgain_exp_info {
@@ -757,6 +765,21 @@ struct isp_img_param {
 	struct isp_addr addr;
 	struct isp_addr addr_vir;
 	cmr_uint zsl_private;
+};
+
+//add two struct defination for the 3DNR capture.
+struct isp_buffer {
+	cmr_u8 *buffer;
+	cmr_s32 fd;
+};
+
+struct isp_3dnr_info {
+	struct isp_buffer image[3];
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_s8 mv_x;
+	cmr_s8 mv_y;
+	cmr_u8 blending_no;
 };
 
 struct isp_ops {
