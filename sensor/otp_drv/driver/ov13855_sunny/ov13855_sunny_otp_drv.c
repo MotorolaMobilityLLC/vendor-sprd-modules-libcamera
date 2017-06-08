@@ -555,11 +555,16 @@ static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
         format_data->lsc_cali_dat.lsc_calib_golden.length;
 
     /*ae convert*/
-    convert_data->single_otp.af_info.flag = format_data->extend_dat.af_flag;
-    convert_data->single_otp.af_info.infinite_cali =
-        format_data->af_cali_dat.infinity_dac;
-    convert_data->single_otp.af_info.macro_cali =
-        format_data->af_cali_dat.macro_dac;
+    convert_data->dual_otp.master_ae_info.ae_target_lum =
+        format_data->ae_cali_dat.target_lum;
+    convert_data->dual_otp.master_ae_info.gain_1x_exp =
+        format_data->ae_cali_dat.gain_1x_exp;
+    convert_data->dual_otp.master_ae_info.gain_2x_exp =
+        format_data->ae_cali_dat.gain_2x_exp;
+    convert_data->dual_otp.master_ae_info.gain_4x_exp =
+        format_data->ae_cali_dat.gain_4x_exp;
+    convert_data->dual_otp.master_ae_info.gain_8x_exp =
+        format_data->ae_cali_dat.gain_8x_exp;
 
     /*af convert*/
     single_otp->af_info.infinite_cali = format_data->af_cali_dat.infinity_dac;
