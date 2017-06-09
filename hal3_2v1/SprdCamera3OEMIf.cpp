@@ -4099,10 +4099,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #ifdef CONFIG_CAMERA_EIS
             HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
             if (sprddefInfo.sprd_eis_enabled) {
-                frame_out = EisVideoFrameStab(frame,frame_num);
+                frame_out = EisVideoFrameStab(frame, frame_num);
 
-                if(frame_out.frame_data) {
-                    channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000, CAMERA_STREAM_TYPE_VIDEO);
+                if (frame_out.frame_data) {
+                    channel->channelCbRoutine(frame_out.frame_num,
+                                              frame_out.timestamp * 1000000000,
+                                              CAMERA_STREAM_TYPE_VIDEO);
                     frame_out.frame_data = NULL;
                 }
                 goto bypass_rec;
@@ -6202,7 +6204,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&ae_param);
 
     } break;
-
 
     case ANDROID_FLASH_MODE:
         if (mCameraId == 0 || mCameraId == 1) {
@@ -8421,11 +8422,20 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             char prop[PROPERTY_VALUE_MAX] = {
                 0,
             };
-            property_get("persist.sys.cam.blur3.zsl.time", prop, "200");
+            uint32_t ae_fps = 30;
+            uint32_t delay_time = 40;
+            mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_AE_FPS,
+                                        &ae_fps);
+            delay_time = 1000 / ae_fps;
+            property_get("persist.sys.cam.blur3.zsl.time", prop, "0");
+            if (atoi(prop) != 0) {
+                delay_time = atoi(prop);
+            }
+            HAL_LOGV("delay_time=%d,ae_fps=%d", delay_time, ae_fps);
             if (mZslSnapshotTime > zsl_frame.timestamp ||
                 ((mZslSnapshotTime < zsl_frame.timestamp) &&
                  (((zsl_frame.timestamp - mZslSnapshotTime) / 1000000) <
-                  atoi(prop)))) {
+                  delay_time))) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame.y_phy_addr,
                     zsl_frame.y_vir_addr, zsl_frame.fd);
@@ -8806,8 +8816,8 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
     frame_out_video.frame_data = NULL;
 
     if (mGyromaxtimestamp) {
-        HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",frame_in.frame_num,
-                 frame_in.timestamp, mGyromaxtimestamp);
+        HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",
+                 frame_in.frame_num, frame_in.timestamp, mGyromaxtimestamp);
         video_stab_write_frame(mVideoInst, &frame_in);
         do {
             gyro_num = mGyroVideoInfo.size();
@@ -8828,11 +8838,12 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             }
             ret_eis = video_stab_read(mVideoInst, &frame_out_video);
             if (ret_eis == 0) {
-                HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p", frame_out_video.frame_num,
-                         frame_out_video.timestamp,frame_out_video.frame_data);
-                    return frame_out_video;
+                HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+                         frame_out_video.frame_num, frame_out_video.timestamp,
+                         frame_out_video.frame_data);
+                return frame_out_video;
             } else {
-                 ret_eis = -1;
+                ret_eis = -1;
                 HAL_LOGE("no frame out,exit directly");
                 goto eis_process_fail;
             }
@@ -8959,7 +8970,8 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
     }
 }
 
-vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,uint32_t frame_num) {
+vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
+                                               uint32_t frame_num) {
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
@@ -8975,30 +8987,33 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,u
         if (frame->zoom_ratio == 0)
             frame->zoom_ratio = 1.0f;
         float zoom_ratio = frame->zoom_ratio;
-        HAL_LOGV("boot_time = %lld,ae_time =%lld,zoom_ratio = %f" , boot_time,ae_time,zoom_ratio);
+        HAL_LOGV("boot_time = %lld,ae_time =%lld,zoom_ratio = %f", boot_time,
+                 ae_time, zoom_ratio);
         frame_in.frame_data = (uint8_t *)buff_vir;
         frame_in.timestamp = (double)(boot_time - ae_time / 2);
         frame_in.timestamp = frame_in.timestamp / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_in.frame_num = frame_num;
         frame_out = processVideoEIS(frame_in);
-        if(frame_out.frame_data)
-            HAL_LOGV(
-                "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
-                frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
-                frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
-                frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
-                frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
-                frame_out.warp.dat[2][2]);
+        if (frame_out.frame_data)
+            HAL_LOGV("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
+                     "%lf, %lf",
+                     frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
+                     frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
+                     frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
+                     frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
+                     frame_out.warp.dat[2][2]);
     } else {
         HAL_LOGD("gyro is not enable, eis process is not work");
     }
 
     if (frame_out.frame_data) {
-        char *eis_buff =(char *)(frame_out.frame_data) + frame->width * frame->height * 3 / 2;
+        char *eis_buff = (char *)(frame_out.frame_data) +
+                         frame->width * frame->height * 3 / 2;
         double *warp_buff = (double *)eis_buff;
-        HAL_LOGV("video vir address 0x%lx,warp address %p",frame_out.frame_data, warp_buff);
-        if(warp_buff ) {
+        HAL_LOGV("video vir address 0x%lx,warp address %p",
+                 frame_out.frame_data, warp_buff);
+        if (warp_buff) {
             *warp_buff++ = 16171225;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -9009,7 +9024,7 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,u
         }
     }
 
-    return  frame_out;
+    return frame_out;
 }
 #endif
 
