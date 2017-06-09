@@ -17,7 +17,6 @@
 
 #include "isp_dev_access.h"
 #include "ae_ctrl_types.h"
-#include "af_ctrl.h"
 //#define ISP_DEFAULT_CFG_FOR_BRING_UP
 
 struct isp_dev_access_context {
@@ -344,7 +343,6 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		free((void *)statis_info);
 		statis_info = NULL;
 	}
-
 }
 
 cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle)
@@ -397,8 +395,11 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 		if (statis_mem_info->cb_of_free) {
 			isp_cb_of_free cb_free = statis_mem_info->cb_of_free;
 
-			cb_free(type, &statis_mem_info->isp_statis_k_addr[0], &statis_mem_info->isp_statis_u_addr, &statis_mem_info->statis_mfd,
-				statis_mem_info->isp_statis_mem_num, statis_mem_info->buffer_client_data);
+			cb_free(type, &statis_mem_info->isp_statis_k_addr[0],
+				&statis_mem_info->isp_statis_u_addr,
+				&statis_mem_info->statis_mfd,
+				statis_mem_info->isp_statis_mem_num,
+				statis_mem_info->buffer_client_data);
 		}
 
 		statis_mem_info->isp_statis_alloc_flag = 0;
@@ -448,9 +449,8 @@ exit:
 	return ret;
 }
 
-static cmr_int dev_ae_set_statistics_mode(cmr_handle isp_dev_handle, cmr_int mode, cmr_u32 skip_number)
+static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, cmr_int mode, cmr_u32 skip_number)
 {
-
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
@@ -471,7 +471,7 @@ static cmr_int dev_ae_set_statistics_mode(cmr_handle isp_dev_handle, cmr_int mod
 	return ret;
 }
 
-static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_coeff)
+static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_coeff)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -491,24 +491,23 @@ static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_
 	return ret;
 }
 
-static cmr_int dev_set_af_monitor(cmr_handle isp_dev_handle, void *param0, cmr_u32 cur_envi)
+static cmr_int ispdev_access_set_af_monitor(cmr_handle isp_dev_handle, void *param0, cmr_u32 cur_envi)
 {
 	cmr_int ret = ISP_SUCCESS;
-
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct af_monitor_set *in_param = (struct af_monitor_set *)param0;
+	struct isp_dev_access_afm_info *afm_info = (struct isp_dev_access_afm_info *)param0;
 
 	UNUSED(cur_envi);
 	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0);
-	isp_u_raw_afm_skip_num(cxt->isp_driver_handle, in_param->skip_num);
-	isp_u_raw_afm_bypass(cxt->isp_driver_handle, in_param->bypass);
+	isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num);
+	isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass);
 
 	return ret;
 }
 
-cmr_int isp_dev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp_raw_proc_info *info)
+static cmr_int ispdev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp_raw_proc_info *info)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -538,13 +537,13 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 			break;
 		}
 	case ISP_DEV_SET_AE_MONITOR_BYPASS:
-		isp_u_raw_aem_bypass(cxt->isp_driver_handle, param0);
+		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, param0);
 		break;
 	case ISP_DEV_SET_AE_STATISTICS_MODE:
-		ret = dev_ae_set_statistics_mode(isp_dev_handle, *(cmr_int *) param0, *(cmr_u32 *) param1);
+		ret = ispdev_access_ae_set_stats_mode(isp_dev_handle, *(cmr_int *) param0, *(cmr_u32 *) param1);
 		break;
 	case ISP_DEV_SET_RGB_GAIN:
-		ret = dev_ae_set_rgb_gain(isp_dev_handle, (cmr_u32 *)param0);
+		ret = ispdev_access_ae_set_rgb_gain(isp_dev_handle, (cmr_u32 *)param0);
 		break;
 	case ISP_DEV_GET_AE_SYSTEM_TIME:
 		ret = isp_u_capability_time(cxt->isp_driver_handle, (cmr_u32 *) param0, (cmr_u32 *) param1);
@@ -571,7 +570,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) param0);
 		break;
 	case ISP_DEV_SET_AF_MONITOR:
-		ret = dev_set_af_monitor(cxt, param0, *(cmr_u32 *) param1);
+		ret = ispdev_access_set_af_monitor(cxt, param0, *(cmr_u32 *) param1);
 		break;
 	case ISP_DEV_SET_AF_MONITOR_WIN:
 		ret = isp_u_raw_afm_win(cxt->isp_driver_handle, param0);
@@ -634,7 +633,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		ret = isp_dev_3dnr(cxt->isp_driver_handle, param0);
 		break;
 	case ISP_DEV_SET_RAW_SLICE:
-		ret = isp_dev_access_set_slice_raw(cxt, param0);
+		ret = ispdev_access_set_slice_raw(cxt, param0);
 		break;
 	default:
 		break;

@@ -16,26 +16,6 @@
 
 #include "isp_drv.h"
 
-#define YUV_OVERLAP_UP         3
-#define YUV_OVERLAP_DOWN       2
-#define YUV_OVERLAP_LEFT       6
-#define YUV_OVERLAP_RIGHT      4
-#define RAW_OVERLAP_UP         11
-#define RAW_OVERLAP_DOWN       10
-#define RAW_OVERLAP_LEFT       14
-#define RAW_OVERLAP_RIGHT      12
-
-#define YUV_OVERLAP_UP_V1      3
-#define YUV_OVERLAP_DOWN_V1    2
-#define YUV_OVERLAP_LEFT_V1    6
-#define YUV_OVERLAP_RIGHT_V1   4
-#define RAW_OVERLAP_UP_V1      27
-#define RAW_OVERLAP_DOWN_V1    28
-#define RAW_OVERLAP_LEFT_V1    56
-#define RAW_OVERLAP_RIGHT_V1   56
-
-#define ISP_MIN(x,y) (((x) > (y)) ? (y) : (x))
-
 typedef cmr_s32(*isp_cfg_fun_ptr) (isp_handle handle, void *param_ptr);
 
 struct isp_cfg_fun {
@@ -87,7 +67,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 
 cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 i = 0, cnt = 0;
 	isp_cfg_fun_ptr cfg_fun_ptr = PNULL;
 
@@ -100,15 +80,15 @@ cmr_s32 isp_cfg_block(isp_handle handle, void *param_ptr, cmr_u32 sub_block)
 	}
 
 	if (PNULL != cfg_fun_ptr) {
-		rtn = cfg_fun_ptr(handle, param_ptr);
+		ret = cfg_fun_ptr(handle, param_ptr);
 	}
 
-	return rtn;
+	return ret;
 }
 
 cmr_u32 isp_get_cfa_default_param(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_cfa_info * cfa_param)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
 	cfa_param->bypass = 0;
 
@@ -172,12 +152,12 @@ cmr_u32 isp_get_cfa_default_param(struct isp_interface_param_v1 * isp_context_pt
 
 	cfa_param->gbuf_addr_max = (isp_context_ptr->store.size.width >> 1) + 1;
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_set_arbiter(isp_handle isp_handler)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_arbiter_info *isp_arbiter_ptr = &isp_context_ptr->arbiter;
 
@@ -191,12 +171,12 @@ cmr_s32 isp_set_arbiter(isp_handle isp_handler)
 	isp_arbiter_ptr->fetch_yuv_endian = ISP_ENDIAN_LITTLE;
 	isp_arbiter_ptr->fetch_yuv_word_change = ISP_ZERO;
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_set_dispatch(isp_handle isp_handler)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_dispatch_info *isp_dispatch_ptr = &isp_context_ptr->dispatch;
 
@@ -210,7 +190,7 @@ cmr_s32 isp_set_dispatch(isp_handle isp_handler)
 	isp_dispatch_ptr->width_dly_num_ch0 = 0x3C;
 	isp_dispatch_ptr->pipe_dly_num = 0x8;
 
-	return rtn;
+	return ret;
 }
 
 static enum isp_fetch_format isp_get_fetch_format(enum isp_format in_format)
@@ -254,7 +234,7 @@ static enum isp_fetch_format isp_get_fetch_format(enum isp_format in_format)
 
 static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, enum isp_format format)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
 	pitch_ptr->chn0 = ISP_ZERO;
 	pitch_ptr->chn1 = ISP_ZERO;
@@ -287,12 +267,12 @@ static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 		break;
 	}
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_get_fetch_addr(struct isp_interface_param_v1 * isp_context_ptr, struct isp_dev_fetch_info * fetch_ptr)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u16 fetch_width = fetch_ptr->size.width;	//isp_context_ptr->slice.size[ISP_FETCH].w;
 	cmr_u32 start_col = ISP_ZERO;
 	cmr_u32 end_col = ISP_ZERO;
@@ -316,12 +296,12 @@ cmr_s32 isp_get_fetch_addr(struct isp_interface_param_v1 * isp_context_ptr, stru
 	fetch_ptr->mipi_word_num = (((end_col + 1) >> 4) * 5 + mipi_word_num_end[(end_col + 1) & 0x0f]) -
 	    (((start_col + 1) >> 4) * 5 + mipi_word_num_start[(start_col + 1) & 0x0f]) + 1;
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_set_fetch_param(isp_handle isp_handler)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_fetch_info *fetch_param_ptr = &isp_context_ptr->fetch;
 	struct isp_dev_block_addr *fetch_addr = &fetch_param_ptr->fetch_addr;
@@ -342,7 +322,7 @@ cmr_s32 isp_set_fetch_param(isp_handle isp_handler)
 
 	ISP_LOGI("fetch format %d\n", fetch_param_ptr->color_format);
 
-	return rtn;
+	return ret;
 }
 
 static enum isp_store_format isp_get_store_format(enum isp_format in_format)
@@ -380,7 +360,7 @@ static enum isp_store_format isp_get_store_format(enum isp_format in_format)
 
 static cmr_s32 isp_get_store_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, enum isp_format format)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
 	pitch_ptr->chn0 = ISP_ZERO;
 	pitch_ptr->chn1 = ISP_ZERO;
@@ -407,12 +387,12 @@ static cmr_s32 isp_get_store_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 		break;
 	}
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_set_store_param(isp_handle isp_handler)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_store_info *store_param_ptr = &isp_context_ptr->store;
 
@@ -437,12 +417,12 @@ cmr_s32 isp_set_store_param(isp_handle isp_handler)
 	store_param_ptr->shadow_clr_sel = 1;
 	store_param_ptr->store_res = 1;
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_set_slice_size(isp_handle isp_handler)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_slice_param_v1 *isp_slice_ptr = &isp_context_ptr->slice;
 	cmr_s32 i = 0;
@@ -454,43 +434,43 @@ cmr_s32 isp_set_slice_size(isp_handle isp_handler)
 		isp_slice_ptr->size[i].h = isp_context_ptr->data.input_size.h;
 	}
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_slice_size(isp_handle handle, struct isp_slice_param_v1 * slice_ptr)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_1d_lsc_slice_size(handle, slice_ptr->size[ISP_LSC_V1].w, slice_ptr->size[ISP_LSC_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp 1d lsc slice size error"));
+	ret = isp_u_1d_lsc_slice_size(handle, slice_ptr->size[ISP_LSC_V1].w, slice_ptr->size[ISP_LSC_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp 1d lsc slice size error"));
 
-	rtn = isp_u_2d_lsc_slice_size(handle, slice_ptr->size[ISP_LENS_V1].w, slice_ptr->size[ISP_LENS_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp 2d lsc slice size error"));
+	ret = isp_u_2d_lsc_slice_size(handle, slice_ptr->size[ISP_LENS_V1].w, slice_ptr->size[ISP_LENS_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp 2d lsc slice size error"));
 
-	rtn = isp_u_raw_aem_slice_size(handle, slice_ptr->size[ISP_AEM_V1].w, slice_ptr->size[ISP_AEM_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp raw aem slice size error"));
+	ret = isp_u_raw_aem_slice_size(handle, slice_ptr->size[ISP_AEM_V1].w, slice_ptr->size[ISP_AEM_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp raw aem slice size error"));
 
-	rtn = isp_u_raw_afm_slice_size(handle, slice_ptr->size[ISP_RGB_AFM_V1].w, slice_ptr->size[ISP_RGB_AFM_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp raw afm slice size error"));
+	ret = isp_u_raw_afm_slice_size(handle, slice_ptr->size[ISP_RGB_AFM_V1].w, slice_ptr->size[ISP_RGB_AFM_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp raw afm slice size error"));
 
-	rtn = isp_u_hist_slice_size(handle, slice_ptr->size[ISP_HISTS_V1].w, slice_ptr->size[ISP_HISTS_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp hist slice size error"));
+	ret = isp_u_hist_slice_size(handle, slice_ptr->size[ISP_HISTS_V1].w, slice_ptr->size[ISP_HISTS_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp hist slice size error"));
 
-	rtn = isp_u_dispatch_ch0_size(handle, slice_ptr->size[ISP_DISPATCH_V1].w, slice_ptr->size[ISP_DISPATCH_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp dispatch ch0 size error"));
+	ret = isp_u_dispatch_ch0_size(handle, slice_ptr->size[ISP_DISPATCH_V1].w, slice_ptr->size[ISP_DISPATCH_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp dispatch ch0 size error"));
 
-	rtn = isp_u_fetch_slice_size(handle, slice_ptr->size[ISP_FETCH_V1].w, slice_ptr->size[ISP_FETCH_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp fetch slice size error"));
+	ret = isp_u_fetch_slice_size(handle, slice_ptr->size[ISP_FETCH_V1].w, slice_ptr->size[ISP_FETCH_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp fetch slice size error"));
 
-	rtn = isp_u_store_slice_size(handle, slice_ptr->size[ISP_STORE_V1].w, slice_ptr->size[ISP_STORE_V1].h);
-	ISP_RETURN_IF_FAIL(rtn, ("isp store slice size error"));
+	ret = isp_u_store_slice_size(handle, slice_ptr->size[ISP_STORE_V1].w, slice_ptr->size[ISP_STORE_V1].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp store slice size error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_set_comm_param(isp_handle isp_handler)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_common_info *com_param_ptr = &isp_context_ptr->com;
 
@@ -537,85 +517,85 @@ cmr_s32 isp_set_comm_param(isp_handle isp_handler)
 	com_param_ptr->gclk_ctrl_yuv = 0xffffffff;
 	com_param_ptr->gclk_ctrl_scaler_3dnr = 0xffff;
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_comm_data(isp_handle handle, struct isp_dev_common_info * param_ptr)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_comm_block(handle, (void *)param_ptr);
-	ISP_RETURN_IF_FAIL(rtn, ("store block cfg error"));
+	ret = isp_u_comm_block(handle, (void *)param_ptr);
+	ISP_RETURN_IF_FAIL(ret, ("store block cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_all_shadow(isp_handle handle, cmr_u32 auto_shadow)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_shadow_ctrl_all(handle, auto_shadow);
-	ISP_RETURN_IF_FAIL(rtn, ("all shadow cfg error"));
+	ret = isp_u_shadow_ctrl_all(handle, auto_shadow);
+	ISP_RETURN_IF_FAIL(ret, ("all shadow cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_awbm_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_awbm_shadow_ctrl(handle, shadow_done);
-	ISP_RETURN_IF_FAIL(rtn, ("awbm shadow cfg error"));
+	ret = isp_u_awbm_shadow_ctrl(handle, shadow_done);
+	ISP_RETURN_IF_FAIL(ret, ("awbm shadow cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_ae_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_ae_shadow_ctrl(handle, shadow_done);
-	ISP_RETURN_IF_FAIL(rtn, ("ae shadow cfg error"));
+	ret = isp_u_ae_shadow_ctrl(handle, shadow_done);
+	ISP_RETURN_IF_FAIL(ret, ("ae shadow cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_af_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_af_shadow_ctrl(handle, shadow_done);
-	ISP_RETURN_IF_FAIL(rtn, ("af shadow cfg error"));
+	ret = isp_u_af_shadow_ctrl(handle, shadow_done);
+	ISP_RETURN_IF_FAIL(ret, ("af shadow cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_afl_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_afl_shadow_ctrl(handle, shadow_done);
-	ISP_RETURN_IF_FAIL(rtn, ("afl shadow cfg error"));
+	ret = isp_u_afl_shadow_ctrl(handle, shadow_done);
+	ISP_RETURN_IF_FAIL(ret, ("afl shadow cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_comm_shadow(isp_handle handle, cmr_u32 shadow_done)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_comm_shadow_ctrl(handle, shadow_done);
-	ISP_RETURN_IF_FAIL(rtn, ("comm shadow cfg error"));
+	ret = isp_u_comm_shadow_ctrl(handle, shadow_done);
+	ISP_RETURN_IF_FAIL(ret, ("comm shadow cfg error"));
 
-	return rtn;
+	return ret;
 }
 
 cmr_s32 isp_cfg_3a_single_frame_shadow(isp_handle handle, cmr_u32 enable)
 {
-	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
-	rtn = isp_u_3a_ctrl(handle, enable);
-	ISP_RETURN_IF_FAIL(rtn, ("3a shadow cfg error"));
+	ret = isp_u_3a_ctrl(handle, enable);
+	ISP_RETURN_IF_FAIL(ret, ("3a shadow cfg error"));
 
-	return rtn;
+	return ret;
 }

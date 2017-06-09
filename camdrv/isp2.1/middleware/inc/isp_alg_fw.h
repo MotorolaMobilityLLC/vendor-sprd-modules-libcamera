@@ -18,7 +18,6 @@
 
 #include "cmr_type.h"
 #include "isp_pm.h"
-#include "sprd_isp_k.h"
 #include "awb.h"
 #include "af_ctrl.h"
 #include "ae_ctrl.h"
@@ -27,10 +26,6 @@
 #include "smart_ctrl.h"
 #include "lsc_adv.h"
 #include "pdaf_ctrl.h"
-#include "pdaf_sprd_adpt.h"
-#include "pd_algo.h"
-#include "isp_awb_types.h"
-#include "ae_ctrl_types.h"
 
 struct commn_info {
 	cmr_s32 isp_mode;
