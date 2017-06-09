@@ -1820,6 +1820,7 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	case STATE_FAF:
 		break;
 	case STATE_FULLSCAN:
+		caf_stop(af);
 		break;
 	default:
 		ISP_LOGW("unexpected af state");
