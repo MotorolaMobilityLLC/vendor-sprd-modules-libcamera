@@ -346,6 +346,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
         bool mUpdataTouch;
         int mVersion;
         bool mIsGalleryBlur;
+        bool mIsBlurAlways;
         blur_isp_info_t mIspInfo;
         void *nearYuv;
 

@@ -8423,11 +8423,12 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 0,
             };
             uint32_t ae_fps = 30;
-            uint32_t delay_time = 40;
-            mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_AE_FPS,
-                                        &ae_fps);
-            delay_time = 1000 / ae_fps;
-            property_get("persist.sys.cam.blur3.zsl.time", prop, "0");
+            uint32_t delay_time = 200;
+            // mHalOem->ops->camera_ioctrl(mCameraHandle,
+            // CAMERA_IOCTRL_GET_AE_FPS,
+            //                            &ae_fps);
+            // delay_time = 1000 / ae_fps;
+            property_get("persist.sys.cam.blur3.zsl.time", prop, "200");
             if (atoi(prop) != 0) {
                 delay_time = atoi(prop);
             }
