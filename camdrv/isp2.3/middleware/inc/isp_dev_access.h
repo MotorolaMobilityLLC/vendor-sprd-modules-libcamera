@@ -58,6 +58,13 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_CMD_MAX
 };
 
+struct isp_dev_access_afm_info {
+	cmr_u32 bypass;
+	cmr_u32 skip_num;
+};
+
+typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
+
 cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, void *statics);
 cmr_int isp_dev_raw_afm_statistic_r6p9(cmr_handle isp_dev_handle, void *statics);
 cmr_u32 isp_dev_access_chip_id(cmr_handle isp_dev_handle);

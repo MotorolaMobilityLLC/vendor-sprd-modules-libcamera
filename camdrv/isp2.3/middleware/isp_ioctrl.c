@@ -1680,7 +1680,7 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_af_ctrl *af_ctrl_ptr = (struct isp_af_ctrl *)param_ptr;
-	struct af_monitor_set monitor_set;
+	struct isp_dev_access_afm_info afm_info;
 	cmr_u32 isp_tool_af_test;
 	UNUSED(call_back);
 
@@ -1688,13 +1688,10 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 		isp_tool_af_test = 1;
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_TOOL_AF_TEST, &isp_tool_af_test, NULL);
-		monitor_set.bypass = 0;
-		monitor_set.int_mode = 1;
-		monitor_set.need_denoise = 0;
-		monitor_set.skip_num = 0;
-		monitor_set.type = 1;
+		afm_info.bypass = 0;
+		afm_info.skip_num = 0;
 		cmr_u32 af_envi_type = INDOOR_SCENE;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&monitor_set, (void *)&af_envi_type);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&afm_info, (void *)&af_envi_type);
 		if (cxt->ops.af_ops.ioctrl) {
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DEFAULT_AF_WIN, NULL, NULL);
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_POS, (void *)&af_ctrl_ptr->step, NULL);

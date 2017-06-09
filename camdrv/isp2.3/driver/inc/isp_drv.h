@@ -15,21 +15,11 @@
  */
 #ifndef _ISP_DRV_H_
 #define _ISP_DRV_H_
-#ifndef WIN32
-#include <sys/types.h>
-#include <utils/Log.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <errno.h>
 #include "sprd_isp_k.h"
 #include "sprd_img.h"
 #include "isp_com.h"
-#endif
-#include "isp_type.h"
-
-typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
 
 struct isp_file {
 	cmr_s32 fd;

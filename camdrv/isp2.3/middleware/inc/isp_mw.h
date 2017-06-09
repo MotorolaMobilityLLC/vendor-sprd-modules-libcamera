@@ -16,10 +16,7 @@
 #ifndef _ISP_MW_H_
 #define _ISP_MW_H_
 
-#ifndef WIN32
-#include <sys/types.h>
 #include "isp_exif.h"
-#endif
 
 #include "isp_type.h"
 #include "sprd_isp_k.h"
@@ -67,10 +64,6 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 		input.param_data_ptr = &param_data;\
 		input.param_num = 1;} while (0);
 
-#define CAMERA_ISP_RAWAEM_FLAG 11	// buffer queue flag, sync with hal
-#define Y_GAMMA_SMART_WITH_RGB_GAMMA
-#define ISP_PARAM_VERSION                    (0x00030002)
-
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
 	ISP_AE_SET_MONITOR,
@@ -88,7 +81,8 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_FLASH_TIME,
 	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
-	 /*AF*/ ISP_AF_SET_POS,
+	/*AF*/
+	ISP_AF_SET_POS,
 	ISP_AF_END_NOTICE,
 	ISP_AF_START_NOTICE,
 	ISP_AF_AE_AWB_LOCK,
