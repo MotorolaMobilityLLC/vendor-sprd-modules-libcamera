@@ -3292,6 +3292,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	interface_ptr->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	interface_ptr->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
 
+	interface_ptr->sbs_info.sbs_mode = in_ptr->sbs_info.sbs_mode;
+	interface_ptr->sbs_info.img_size.w = in_ptr->sbs_info.img_size.w;
+	interface_ptr->sbs_info.img_size.h = in_ptr->sbs_info.img_size.h;
+
 	ret = isp_dev_set_interface(interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
 

@@ -58,6 +58,7 @@ struct grab_init_param {
 };
 
 struct sn_cfg {
+    cmr_u32 sbs_mode;
     struct img_size sn_size;
     struct img_rect sn_trim;
     cmr_u32 frm_num;

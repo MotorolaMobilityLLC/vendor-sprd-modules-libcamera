@@ -5751,6 +5751,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         goto exit;
     }
 
+    cmr_bzero(&sensor_cfg, sizeof(struct sn_cfg));
     param_ptr->cap_inf_cfg.buffer_cfg_isp = 0;
     CMR_LOGV("param_ptr->cap_inf_cfg.buffer_cfg_isp %d",
              param_ptr->cap_inf_cfg.buffer_cfg_isp);

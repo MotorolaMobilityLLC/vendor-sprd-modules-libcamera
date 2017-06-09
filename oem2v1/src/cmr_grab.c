@@ -409,6 +409,7 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     cmr_u32 mode;
     struct sprd_img_size size, sn_max_size;
     struct sprd_img_rect rect;
+    struct sprd_img_sbs_info sbs_info;
 
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
@@ -448,6 +449,11 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     if (ret) {
         CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_MAX_SIZE failed");
     }
+
+    sbs_info.sbs_mode = config->sbs_mode;
+    CMR_LOGI("sbs_mode %d", sbs_info.sbs_mode);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SBS_MODE, &sbs_info);
+    CMR_RTN_IF_ERR(ret);
 
 exit:
     ATRACE_END();
@@ -1269,8 +1275,8 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.kaddr[1] = op.parm.frame.kaddr[1];
                 statis_info.irq_property = op.parm.frame.irq_property;
                 statis_info.mfd = op.parm.frame.mfd;
-                CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%lx "
-                         "vir_addr 0x%lx irq_property 0x%x, op.parm.frame.vir_addr = 0x%lx, op.parm.frame.addr_offset = 0x%x",
+                CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
+                         "vir_addr 0x%x irq_property 0x%x, op.parm.frame.vir_addr = 0xlx, op.parm.frame.addr_offset = 0x%x",
                          statis_info.buf_size, statis_info.phy_addr,
                          statis_info.vir_addr, statis_info.irq_property, op.parm.frame.vir_addr, op.parm.frame.addr_offset);
 

@@ -674,6 +674,11 @@ struct isp_sensor_resolution_info {
 	struct isp_size sensor_output_size;
 };
 
+struct isp_sbs_info {
+	cmr_u32 sbs_mode;
+	struct isp_size img_size;
+};
+
 struct ips_in_param {
 	struct isp_img_frm src_frame;
 	cmr_u32 src_avail_height;
@@ -686,6 +691,7 @@ struct ips_in_param {
 	struct isp_sensor_resolution_info resolution_info;
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 cap_mode;
+	struct isp_sbs_info sbs_info;
 };
 
 struct ips_out_param {
