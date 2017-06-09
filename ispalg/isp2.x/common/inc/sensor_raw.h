@@ -938,7 +938,7 @@ struct sensor_rgbgamma_curve {
 };
 struct sensor_frgb_gammac_param {
 	struct isp_sample_point_info cur_idx_info;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#if defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3)
 	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
 #else
 	struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];

@@ -31,11 +31,11 @@ LOCAL_C_INCLUDES := \
 # internal header file
 # ************************************************
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../../ispalg/isp2.1/smart \
-	$(LOCAL_PATH)/../../../ispalg/isp2.1/awb/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.1/ae/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.1/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.1/common/inc/ \
+	$(LOCAL_PATH)/../../../ispalg/isp2.x/smart \
+	$(LOCAL_PATH)/../../../ispalg/isp2.x/awb/inc \
+	$(LOCAL_PATH)/../../../ispalg/isp2.x/ae/inc \
+	$(LOCAL_PATH)/../../../ispalg/isp2.x/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../../ispalg/isp2.x/common/inc/ \
 	$(LOCAL_PATH)/../middleware/inc \
 	$(LOCAL_PATH)/../calibration/inc \
 	$(LOCAL_PATH)/../isp_tune \
@@ -46,7 +46,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 # don't modify this code
 LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
 
-#include $(LOCAL_PATH)/../SprdCtrl.mk
+include $(LOCAL_PATH)/../../../SprdCtrl.mk
 
 LOCAL_MODULE := libcampm
 

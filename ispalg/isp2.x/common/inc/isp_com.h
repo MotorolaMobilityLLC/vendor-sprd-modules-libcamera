@@ -22,10 +22,14 @@
 #include <utils/Log.h>
 #endif
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#if defined(CONFIG_ISP_2_2)
 #include "sprd_isp_r6p10v2.h"
 #else
+#if defined(CONFIG_ISP_2_3)
+#include "sprd_isp_r6p11.h"
+#else
 #include "sprd_isp_r6p10.h"
+#endif
 #endif
 
 #include "isp_type.h"
@@ -722,13 +726,13 @@ struct isp_cmc10_param {
 
 struct isp_frgb_gamc_param {
 	struct isp_dev_gamma_info cur;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#if defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3)
 	struct sensor_gamma_curve final_curve;
 #else
 	struct sensor_rgbgamma_curve final_curve;
 #endif
 	struct isp_sample_point_info cur_idx;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#if defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3)
 	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
 #else
 	struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];
