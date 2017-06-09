@@ -7,7 +7,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=fo
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-ISPALG_DIR = ispalg/isp2.1
+ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.1
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
@@ -164,7 +164,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 
-ISPALG_DIR = ispalg/isp2.2
+ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.2
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
@@ -319,7 +319,7 @@ include $(BUILD_SHARED_LIBRARY)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
-ISPALG_DIR = ispalg/isp2.1
+ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.3
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \

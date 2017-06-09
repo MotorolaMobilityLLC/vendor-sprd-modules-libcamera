@@ -43,7 +43,7 @@ ISP_HW_VER = 3v0
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ISP_HW_VER = 2v1
-ISPALG_DIR := ispalg/isp2.1
+ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.1
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
@@ -55,7 +55,7 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ISP_HW_VER = 2v1
-ISPALG_DIR := ispalg/isp2.2
+ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.2
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
@@ -66,7 +66,7 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ISP_HW_VER = 2v1
-ISPALG_DIR := ispalg/isp2.1
+ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.3
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \

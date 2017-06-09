@@ -52,7 +52,7 @@ LOCAL_C_INCLUDES := \
 
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-ISPALG_DIR := ispalg/isp2.1
+ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.1
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
@@ -78,7 +78,7 @@ LOCAL_C_INCLUDES += \
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
-ISPALG_DIR := ispalg/isp2.2
+ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.2
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
@@ -104,7 +104,7 @@ LOCAL_C_INCLUDES += \
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
-ISPALG_DIR := ispalg/isp2.1
+ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.3
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \

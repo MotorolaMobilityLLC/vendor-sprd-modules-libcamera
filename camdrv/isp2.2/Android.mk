@@ -32,23 +32,23 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../jpeg/inc \
 	$(LOCAL_PATH)/../../vsp/inc \
 	$(LOCAL_PATH)/../../tool/mtrace \
-	$(LOCAL_PATH)/../../ispalg/isp2.2/ae/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/ae/sprd/ae/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/ae/flash/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/awb/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/awb/alc_awb/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/awb/sprd/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/af/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/af/sprd/afv1/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/af/sprd/aft/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/af/sft_af/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/af/alc_af/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/lsc/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/common/inc/ \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/afl/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/smart \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/pdaf/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.2/pdaf/sprd/inc
+	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/awb/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/awb/alc_awb/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/awb/sprd/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/af/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/afv1/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/aft/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/af/sft_af/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/af/alc_af/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/lsc/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/common/inc/ \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/afl/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/smart \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
+        $(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc
 
 # ************************************************
 # internal header file
