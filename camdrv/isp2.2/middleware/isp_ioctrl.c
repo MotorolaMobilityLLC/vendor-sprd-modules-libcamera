@@ -2297,6 +2297,44 @@ static cmr_int _ispSetAuxSensorInfo(cmr_handle isp_alg_handle, void *param_ptr, 
 	return ret;
 }
 
+static cmr_int ispctl_get_fps(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 param = 0;
+	UNUSED(call_back);
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to  get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, (void *)&param);
+	*(cmr_u32 *) param_ptr = param;
+
+	ISP_LOGV("ret %ld param %d fps %d", ret, param, *(cmr_u32 *) param_ptr);
+
+	return ret;
+}
+
+static cmr_int ispctl_get_leds_ctrl(cmr_handle isp_alg_handle,void * param_ptr,cmr_s32(* call_back)())
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct ae_leds_ctrl *leds_ctrl = (struct ae_leds_ctrl *)param_ptr;;
+	UNUSED(call_back);
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to  get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LEDS_CTRL, NULL, (void *)leds_ctrl);
+
+	ISP_LOGV("ret %ld led0_en=%d led1_en=%d", ret, leds_ctrl->led0_ctrl, leds_ctrl->led1_ctrl);
+	return ret;
+}
+
 static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, _ispSnapshotNoticeIOCtrl},
 	{ISP_CTRL_AE_MEASURE_LUM, _ispAeMeasureLumIOCtrl},
@@ -2367,6 +2405,8 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AE_SENSITIVITY, _ispSetAeSensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, _ispSetDcamTimestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, _ispSetAuxSensorInfo},
+	{ISP_CTRL_GET_FPS, ispctl_get_fps},
+	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
 
 	{ISP_CTRL_MAX, NULL}
 };

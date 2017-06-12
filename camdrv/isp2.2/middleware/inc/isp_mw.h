@@ -379,6 +379,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_PREV_YUV,
 	ISP_CTRL_SET_PREV_PDAF_RAW,
 	ISP_CTRL_GET_VCM_INFO,
+	ISP_CTRL_GET_FPS,
+	ISP_CTRL_GET_LEDS_CTRL,
 	/* warning if you wanna send async msg
 	 * please add msg id below here */
 	ISP_CTRL_SYNC_NONE_MSG_BEGIN,
