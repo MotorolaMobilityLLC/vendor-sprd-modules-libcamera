@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "isp_ioctrl"
-
-#include "lib_ctrl.h"
-#include "isp_ioctrl.h"
-#include "smart_ctrl.h"
-#include "isp_drv.h"
-#include "lsc_adv.h"
-#include "ae_ctrl.h"
-#include "awb_ctrl.h"
-#include "af_ctrl.h"
-#include "isp_alg_fw.h"
-#include "isp_dev_access.h"
-#include "isp_debug.h"
-
+#ifdef FEATRUE_ISP_FW_IOCTRL
 #define ISP_REG_NUM                          20467
 #define SEPARATE_GAMMA_IN_VIDEO
 #define VIDEO_GAMMA_INDEX                    (8)
@@ -91,7 +78,7 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_flash_param *flash = NULL;
 	struct awb_flash_info flash_awb;
-	struct ae_awb_gain flash_wb_gain = {0, 0, 0};
+	struct ae_awb_gain flash_wb_gain = { 0, 0, 0 };
 	cmr_u32 ae_effect = 0;
 
 	memset((void *)&flash_awb, 0, sizeof(struct awb_flash_info));
@@ -101,8 +88,8 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 		ISP_LOGE("fail to get flash cali parm ");
 		return ret;
 	}
-	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d", flash->cur.r_ratio,
-		flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
+	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
+		 flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_WB_GAIN, NULL, &flash_wb_gain);
@@ -350,7 +337,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr, c
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 
-		if (cxt->ops.awb_ops.ioctrl){
+		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_BEFORE_P, NULL, NULL);
 			awb_flash_status = AWB_FLASH_PRE_BEFORE;
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
@@ -372,11 +359,10 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr, c
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 		awb_flash_status = AWB_FLASH_PRE_LIGHTING;
-		if (cxt->ops.awb_ops.ioctrl){
+		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_P, NULL, NULL);
 		}
-
 
 		flash_mode = SMART_CTRL_FLASH_PRE;
 		if (cxt->ops.smart_ops.ioctrl)
@@ -459,13 +445,13 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr, c
 
 	case ISP_FLASH_MAIN_AFTER:
 		if (cxt->ops.lsc_ops.ioctrl)
-			ret  = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
+			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
 		cxt->lsc_flash_onoff = 0;
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 
-			awb_flash_status = AWB_FLASH_MAIN_AFTER;
+		awb_flash_status = AWB_FLASH_MAIN_AFTER;
 		if (cxt->ops.awb_ops.ioctrl)
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
 
@@ -930,8 +916,8 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
 		    + sizeof(cmr_u32) /*for end flag */ ;
 
-		if (cxt->otp_data != NULL){
-                  total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+		if (cxt->otp_data != NULL) {
+			total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
 		}
 
 		if (cxt->commn_cxt.log_isp_size < total_size) {
@@ -967,16 +953,15 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
 
-		if (cxt->otp_data != NULL){
-                   size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+		if (cxt->otp_data != NULL) {
+			size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
 			if (len) {
-                       log.otp_off = off;
-                       off += len;
-                       log.otp_len = len;
-                   }
-                   else {
-                       log.otp_off= 0;
-                   }
+				log.otp_off = off;
+				off += len;
+				log.otp_len = len;
+			} else {
+				log.otp_off = 0;
+			}
 		}
 		memcpy((char *)cxt->commn_cxt.log_isp + sizeof(struct sprd_isp_debug_info), &log, sizeof(log));
 
@@ -1475,7 +1460,7 @@ static cmr_int ispctl_3ndr_ioctrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
-	}else {
+	} else {
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, (void *)&ae_result);
 		if (cxt->ops.smart_ops.block_enable)
@@ -1858,9 +1843,9 @@ static cmr_int ispctl_hdr(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*c
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_hdr_param	*isp_hdr = (struct isp_hdr_param *)param_ptr;
-	struct ae_hdr_param		ae_hdr = {0x00, 0x00};
-	cmr_s16                smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	struct isp_hdr_param *isp_hdr = (struct isp_hdr_param *)param_ptr;
+	struct ae_hdr_param ae_hdr = { 0x00, 0x00 };
+	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
 	UNUSED(call_back);
 
 	if (NULL == isp_alg_handle || NULL == param_ptr) {
@@ -1888,7 +1873,7 @@ static cmr_int ispctl_hdr(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*c
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
-	}else {
+	} else {
 		if (cxt->ops.smart_ops.block_enable)
 			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_LNC);
 		if (cxt->ops.smart_ops.block_enable)
@@ -2315,7 +2300,6 @@ static cmr_int ispctl_set_ae_sensitivity(cmr_handle isp_alg_handle, void *param_
 	return ret;
 }
 
-
 static cmr_int ispctl_set_dcam_timestamp(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2352,7 +2336,7 @@ static cmr_int ispctl_get_fps(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 		return ISP_PARAM_NULL;
 	}
 	if (cxt->ops.ae_ops.ioctrl)
-	ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, (void *)&param);
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, (void *)&param);
 	*(cmr_u32 *) param_ptr = param;
 
 	ISP_LOGV("ret %ld param %d fps %d", ret, param, *(cmr_u32 *) param_ptr);
@@ -2360,7 +2344,7 @@ static cmr_int ispctl_get_fps(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 	return ret;
 }
 
-static cmr_int ispctl_get_leds_ctrl(cmr_handle isp_alg_handle,void * param_ptr,cmr_s32(* call_back)())
+static cmr_int ispctl_get_leds_ctrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2443,9 +2427,9 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_START_3A, ispctl_start_3a},
 	{ISP_CTRL_STOP_3A, ispctl_stop_3a},
 
-	{ISP_CTRL_AE_FORCE_CTRL, ispctl_ae_force},	 // for mp tool cali
-	{ISP_CTRL_GET_AE_STATE, ispctl_get_ae_state},	 // for mp tool cali
-	{ISP_CTRL_GET_AWB_GAIN, ispctl_get_awb_gain}, // for mp tool cali
+	{ISP_CTRL_AE_FORCE_CTRL, ispctl_ae_force},	// for mp tool cali
+	{ISP_CTRL_GET_AE_STATE, ispctl_get_ae_state},	// for mp tool cali
+	{ISP_CTRL_GET_AWB_GAIN, ispctl_get_awb_gain},	// for mp tool cali
 	{ISP_CTRL_GET_AWB_CT, ispctl_awb_ct},
 	{ISP_CTRL_SET_AE_FPS, ispctl_set_ae_fps},	//for LLS feature
 	{ISP_CTRL_GET_INFO, ispctl_get_info},
@@ -2461,12 +2445,12 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, ispctl_set_aux_sensor_info},
 	{ISP_CTRL_GET_FPS, ispctl_get_fps},
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
-	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr}, //for 3dnr module
+	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},	//for 3dnr module
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_MAX, NULL}
 };
 
-io_fun isp_ioctl_get_fun(enum isp_ctrl_cmd cmd)
+static io_fun isp_ioctl_get_fun(enum isp_ctrl_cmd cmd)
 {
 	io_fun io_ctrl = NULL;
 	cmr_u32 total_num;
@@ -2482,3 +2466,4 @@ io_fun isp_ioctl_get_fun(enum isp_ctrl_cmd cmd)
 
 	return io_ctrl;
 }
+#endif
