@@ -110,13 +110,8 @@ typedef struct _lens_info {
 } lens_info_t;
 
 typedef struct _ae_info {
-	cmr_u32 stable;
-	cmr_u32 bv;
-	cmr_u32 exp;		// 0.1us
-	cmr_u32 gain;
-	cmr_u32 gain_index;
-	cmr_u32 win_size;
 	struct af_ae_calc_out ae_report;
+	cmr_u32 win_size;
 } ae_info_t;
 
 typedef struct _awb_info {

@@ -546,7 +546,7 @@ static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
 	af->vcm_timestamp = get_systemtime_ns();
-	AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_VCM,af->vcm_timestamp);
+	AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_VCM, af->vcm_timestamp);
 	//ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
@@ -562,10 +562,10 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	cmr_u32 exp_line = ae->ae_report.cur_exp_line;
 	cmr_u32 frame_time;
 
-	rpt->bAEisConverge = ae->stable;
-	rpt->AE_BV = ae->bv;
-	rpt->AE_EXP = ae->exp / 10000;	// 0.1us -> ms
-	rpt->AE_Gain = ae->gain;
+	rpt->bAEisConverge = ae->ae_report.is_stab;
+	rpt->AE_BV = ae->ae_report.bv;
+	rpt->AE_EXP = (exp_line * line_time) / 10000;	// 0.1us -> ms
+	rpt->AE_Gain = ae->ae_report.cur_again;
 	rpt->AE_Pixel_Sum = af->Y_sum_normalize;
 
 	frame_len = (frame_len > (exp_line + dummy_line)) ? frame_len : (exp_line + dummy_line);
@@ -1474,12 +1474,13 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 	if ((res.is_caf_trig || AFV1_TRUE == af->force_trigger) && CAF_SEARCHING != af->caf_state) {
+		ISP_LOGI("caf trigger af %d, force trigger %d", res.is_caf_trig, af->force_trigger);
 		pthread_mutex_lock(&af->af_work_lock);
 		af->caf_state = CAF_SEARCHING;
 		caf_start_search(af, &res);
 		af->force_trigger = (AFV1_FALSE);
 		pthread_mutex_unlock(&af->af_work_lock);
-	} else if ((res.is_cancel_caf || ( /*res.is_caf_trig || */ AFV1_TRUE == af->force_trigger)) && af->caf_state == CAF_SEARCHING) {
+	} else if ((res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) && af->caf_state == CAF_SEARCHING) {
 		ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
 		pthread_mutex_lock(&af->af_work_lock);
 		af->need_re_trigger = 1;
@@ -1579,9 +1580,9 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *
 	prm->ae_info.exp_time = ae->cur_exp_line * ae->line_time / 10;
 	prm->ae_info.gain = ae->cur_again;
 	prm->ae_info.cur_lum = ae->cur_lum;
-	prm->ae_info.target_lum = 128;
+	prm->ae_info.target_lum = ae->target_lum;
 	prm->ae_info.is_stable = ae->is_stab;
-	prm->ae_info.bv = af->ae.bv;
+	prm->ae_info.bv = ae->bv;
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = OUT_SCENE;	// need to check
 	prm->ae_info.registor_pos = lens_get_pos(af);
@@ -1921,14 +1922,6 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
-static void get_isp_size(af_ctrl_t * af, cmr_u16 * widith, cmr_u16 * height)
-{
-	//*widith = isp->input_size_trim[isp->param_index].width;
-	//*height = isp->input_size_trim[isp->param_index].height;
-	*widith = af->isp_info.width;
-	*height = af->isp_info.height;
-}
-
 static void ae_calibration(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 {
 	cmr_u32 i, j, r_sum[9], g_sum[9], b_sum[9];
@@ -2017,7 +2010,8 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 	float af_area, ae_area;
 	cmr_u16 width, height, i = 0, blockw, blockh, index;
 
-	get_isp_size(af, &width, &height);
+	width = af->isp_info.width;
+	height = af->isp_info.height;
 
 	memcpy(&(af->rgb_stat.r_info[0]), rgb->r_info, sizeof(af->rgb_stat.r_info));
 	memcpy(&(af->rgb_stat.g_info[0]), rgb->g_info, sizeof(af->rgb_stat.g_info));
@@ -2043,7 +2037,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 		b_sum = 0;
 		for (blockw = Y_sx; blockw < Y_ex; blockw++) {
 			for (blockh = Y_sy; blockh < Y_ey; blockh++) {
-				index = blockw * AE_BLOCK_W + blockh;
+				index = blockh * AE_BLOCK_W + blockw;
 				r_sum = r_sum + rgb->r_info[index];
 				g_sum = g_sum + rgb->g_info[index];
 				b_sum = b_sum + rgb->b_info[index];
@@ -2074,39 +2068,10 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 	}
 
 	property_get("af_mode", AF_MODE, "none");
-	if (0 != strcmp(AF_MODE, "none")) {
+	if (0 != strcmp(AF_MODE, "none")) {	// test mode only
 		ae_calibration(af, rgb);
 	}
 
-}
-
-static cmr_u32 calc_gain_index(cmr_u32 cur_gain)
-{
-	cmr_u32 gain = cur_gain >> 7, i = 0;	// 128 is 1 ae gain unit
-
-	if (gain > (1 << GAIN_32x))
-		gain = (1 << GAIN_32x);
-
-	i = 0;
-	while ((gain = (gain >> 1))) {
-		i++;
-	}
-	return i;
-}
-
-static void set_ae_info(af_ctrl_t * af, const struct af_ae_calc_out *ae)
-{
-	ae_info_t *p = &af->ae;
-	//ISP_LOGV("state = %s, bv = %d", STATE_STRING(af->state), bv);
-	p->stable = ae->is_stab;
-	p->exp = ae->cur_exp_line * ae->line_time;
-	p->gain = ae->cur_again;
-	p->gain_index = calc_gain_index(ae->cur_again);
-	p->bv = ae->bv;
-	p->ae_report = *ae;
-
-	af->trigger_source_type |= AF_DATA_AE;
-	return;
 }
 
 static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
@@ -2116,9 +2081,9 @@ static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 	struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)ae_info->img_blk_info.data;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
-	//ISP_LOGI("isp aem stat= R%d G%d B%d \n", (int)ae_stat_ptr->r_info[495],(int)ae_stat_ptr->g_info[495],(int)ae_stat_ptr->b_info[495]);
 	set_af_RGBY(af, (void *)ae_stat_ptr);
-	set_ae_info(af, &(ae_info->ae_rlt_info));
+	memcpy(&(af->ae.ae_report), &(ae_info->ae_rlt_info), sizeof(struct af_ae_calc_out));
+	af->trigger_source_type |= AF_DATA_AE;
 	return rtn;
 }
 
@@ -2155,14 +2120,14 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 	struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
 	if (0 == af_ts->capture) {
 		af->dcam_timestamp = af_ts->timestamp;
-		AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_DCAM,af->dcam_timestamp);
+		AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_DCAM, af->dcam_timestamp);
 		//ISP_LOGV("dcam_timestamp %" PRIu64 " ms", (cmr_s64) af->dcam_timestamp);
 		if (DCAM_AFTER_VCM_YES == compare_timestamp(af) && 1 == af->vcm_stable) {
 			sem_post(&af->af_wait_caf);
 		}
 	} else if (1 == af_ts->capture) {
 		af->takepic_timestamp = af_ts->timestamp;
-		AF_Set_time_stamp(af->af_alg_cxt,AF_TIME_CAPTURE,af->takepic_timestamp);
+		AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_CAPTURE, af->takepic_timestamp);
 		//ISP_LOGV("takepic_timestamp %" PRIu64 " ms", (cmr_s64) af->takepic_timestamp);
 		ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 	}
@@ -2555,7 +2520,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		return AFV1_ERROR;
 	}
 
-	if (NULL == inparam || NULL == inparam->data) {
+	if (NULL == inparam || (AF_DATA_AF == inparam->data_type && NULL == inparam->data)) {
 		ISP_LOGE("fail to get input param data");
 		return AFV1_ERROR;
 	}
