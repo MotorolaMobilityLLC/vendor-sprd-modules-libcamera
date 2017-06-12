@@ -421,13 +421,22 @@ static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 
 		for (i = 0; i < data_num; i++) {
 
-			cmr_u32 dst_val = 0;
-			cmr_u32 src0_val = (cmr_u32) (*src[0] << 12);
-			cmr_u32 src1_val = (cmr_u32) (*src[1] << 12);
+			// just for hsv@smart
 
-			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
+			cmr_u32 src0_val = (cmr_u32) (*src[0]);
+			cmr_u32 src1_val = (cmr_u32) (*src[1]);
 
-			*dst++ = (cmr_u32) ((dst_val >> 12) & 0xfffff);
+			cmr_u32 src0_val_h = src0_val & 0x1FF;
+			cmr_u32 src0_val_s = (src0_val >> 9) & 0x7FF;
+			cmr_u32 src1_val_h = src1_val & 0x1FF;
+			cmr_u32 src1_val_s = (src1_val >> 9) & 0x7FF;
+
+			cmr_u32 dst_val_h = (src0_val_h * weight[0] + src1_val_h * weight[1]) / INTERP_WEIGHT_UNIT;
+			cmr_u32 dst_val_s = (src0_val_s * weight[0] + src1_val_s * weight[1]) / INTERP_WEIGHT_UNIT;
+
+			cmr_u32 dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
+
+			*dst++ = (cmr_u32) (dst_val);
 			src[0]++;
 			src[1]++;
 		}
