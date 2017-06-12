@@ -252,6 +252,8 @@ extern "C" {
 		cmr_s32 pdConf[AREA_LOOP + 1];
 		double pdPhaseDiff[AREA_LOOP + 1];
 		cmr_s32 pdGetFrameID;
+		cmr_s32 pdDCCGain[AREA_LOOP + 1];
+		cmr_u32 pd_roi_num;
 	};
 
 	cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle * handle_af);

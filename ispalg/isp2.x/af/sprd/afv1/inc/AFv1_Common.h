@@ -60,8 +60,9 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.117"
-#define SUB_VERSION             "-Blur-05"
+#define VERSION             "2.118"
+#define SUB_VERSION             "-Blur-07-SL"
+
 #define STRING(s) #s
 
 /*2.function error code*/
@@ -70,7 +71,7 @@
 #define ERR_UNKNOW          0x0002
 
 #define TOTAL_POS 1024
-
+#define SOFT_LANDING_ENABLE 0
 //Data num for AF
 #define TOTAL_AF_ZONE 10
 #define MAX_SAMPLE_NUM	    25
@@ -107,6 +108,8 @@
 #define BOKEH_SCAN_FROM 212	//limited in [0,1023]
 #define BOKEH_SCAN_TO 342	//limited in [0,1023]
 #define BOKEH_SCAN_STEP 12	//at least 20
+
+#define PD_MAX_AREA 16
 
 typedef struct _af_tuning_block_param {
 	cmr_u8 *data;
@@ -492,6 +495,13 @@ typedef struct aftuning_param_s {
 	cmr_u8 _min_fine_idx;
 } aftuning_param_t;
 
+typedef struct pdaftuning_param_s{
+    cmr_u32 min_pd_vcm_steps;
+    cmr_u32 max_pd_vcm_steps;
+	cmr_u32 coc_range;
+	cmr_u32 reserved[64];
+}pdaftuning_param_t;
+
 typedef struct _AF_Tuning_Para {
 	//AF Scan Table
 	AF_Scan_Table Scan_Table_Para[AE_Gain_Total];
@@ -766,11 +776,44 @@ typedef struct pd_algo_result_s {
 	cmr_u32 pd_enable;
 	cmr_u32 effective_pos;
 	cmr_u32 effective_frmid;
-	cmr_u32 confidence;
-	double pd_value;
-	cmr_u16 pd_roi_dcc;
-	cmr_u8 reserved[10];	//aligment to 4 byte
+	cmr_u32 confidence[PD_MAX_AREA];
+	double pd_value[PD_MAX_AREA];
+	cmr_u32 pd_roi_dcc[PD_MAX_AREA];
+	cmr_u32 pd_roi_num;
+	cmr_u32 reserved[16];
 } pd_algo_result_t;
+
+typedef struct _pdaf_process_s
+{
+	pd_algo_result_t pd_result;
+	cmr_u32 proc_status;
+	cmr_u32 curr_pd_frmid;
+	cmr_u32 pre_pd_frmid;
+	cmr_u32 confidence_level;
+	cmr_u32 pd_active;
+	cmr_u32 cd_active;
+	cmr_u32 procedure;
+	cmr_s32 predict_dir;
+	cmr_u32 predict_far;
+	cmr_u32 predict_near;
+	cmr_u32 roi_dcc;
+	cmr_s32 delta_vcm_pos;
+	cmr_u32 tc_en;
+	cmr_s32 tc_stat_th;
+	cmr_u32 tc_vcm_pos;
+	float tc_err_vcm_sum;
+	cmr_u32 tc_calc_idx;
+	cmr_u32 prv_vcm_pos;
+	cmr_u32 cur_vcm_pos;
+	cmr_u32 last_vcm_pos;
+	cmr_u32 vcm_moving_flag;
+	cmr_u32 vcm_move_count;
+	cmr_s32 vcm_delta_pos;
+	cmr_u32 pd_focus_times;
+	cmr_u32 period_a;
+	cmr_u32 period_b;
+	cmr_u32 reserved[64];
+}_pdaf_process_t;
 
 typedef struct motion_sensor_data_s {
 	cmr_u32 sensor_type;
@@ -801,20 +844,26 @@ typedef struct _win_coord_alg {
 	cmr_u32 end_y;
 } win_coord;
 
-typedef struct _AF_Window_Config {
-	cmr_u8 valid_win_num;
-	cmr_u8 win_strategic;
-	win_coord win_pos[25];
-	cmr_u32 win_weight[25];
-} AF_Window_Config;
+typedef struct _AF_Softlanding_Config{
+	cmr_u32 anti_noise_pos;//the point to which could jump directly
+	cmr_u32 SAF_max_jump_len;//if cur_pos > anti_noise_pos, the max move step in one frame
+	cmr_u32 SAF_loop_oneframe[ALG_SCENE_NUM];//in one frame the times could jump
+	cmr_u32 SAF_loop_step[ALG_SCENE_NUM];//in one frame the step could jump in each time
+	cmr_u32 SAF_loop_sleep;//in one frame the sleeptime after each little jump
+	cmr_u32 QUIT_max_step;
+	cmr_u32 QUIT_step;
+	cmr_u32 QUIT_sleep;
+} AF_Softlanding_Config;
 
 typedef struct _af_tuning_param {
 	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
 	filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];	// AF filter threshold
 	cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];	//BV threshold
-	AF_Window_Config SAF_win;	// SAF window config
-	AF_Window_Config CAF_win;	// CAF window config
-	AF_Window_Config VAF_win;	// VAF window config
+	AF_Softlanding_Config Soft_landing_param;// 48bytes
+	cmr_u8 dummy1[1506-48];// 
+					       //AF_Window_Config SAF_win;       // SAF window config ,502bytes
+					       //AF_Window_Config CAF_win;       // CAF window config ,502bytes
+					       //AF_Window_Config VAF_win;       // VAF window config ,502bytes
 	// default param for indoor/outdoor/dark
 	AF_Tuning AF_Tuning_Data[ALG_SCENE_NUM];	// Algorithm related parameter
 	cmr_u8 soft_landing_dly;
@@ -1011,9 +1060,25 @@ typedef struct _AF_Data {
 	cmr_u32 pre_scene;
 	cmr_u32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];
 	_af_time_info_t time_info;
+	_pdaf_process_t pdaf_proc_data;
+	pdaftuning_param_t PDAF_Tuning_Data;
+	AF_Softlanding_Config Soft_landing_param;
 	cmr_u32 distance_reminder;
 	cmr_u32 near_dist;
 	cmr_u32 far_dist;
+//distance independant
+	cmr_u32 category[9];
+	cmr_u32 near_thr_low;
+	cmr_u32 near_thr_up;
+	cmr_u32 far_thr_low;
+	cmr_u32 far_thr_up;
+	cmr_u32 max_fv_near;
+	cmr_u32 max_fv_far;
+	cmr_u32 near_little_fv;
+	cmr_u32 far_little_fv;
+	cmr_u32 near_maxfv_index;
+	cmr_u32 far_maxfv_index;
+	cmr_s32 far_shift;
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 

@@ -289,6 +289,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
 	cxt->pd_gobal_setting.OTPBuffer = (void *)&(in_p->pdaf_otp);
+	cxt->pd_gobal_setting.dCalibration = 1;
+	cxt->pd_gobal_setting.dOVSpeedup = 1;
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
@@ -341,6 +343,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 dRectY = 0;
 	cmr_s32 dRectW = 0;
 	cmr_s32 dRectH = 0;
+	cmr_s32 *pPD_left = NULL;
+	cmr_s32 *pPD_right = NULL;
 
 	UNUSED(out);
 	if (!in) {
@@ -369,23 +373,41 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		dRectH = ROI_Height;
 	}
 
+	pPD_left  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+	pPD_right = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+
+	ISP_LOGI("PDALGO Converter");
+	ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
+
 	for (cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++) {
-		ret = PD_DoType2(pInPhaseBuf_left, pInPhaseBuf_right, dRectX, dRectY, dRectW, dRectH, area_index);
+		//ret = PD_DoType2(pInPhaseBuf_left, pInPhaseBuf_right, dRectX, dRectY, dRectW, dRectH, area_index);
+		ret = PD_DoType2((void *)pPD_left, (void *)pPD_right, dRectX, dRectY, dRectW, dRectH, area_index);
 		if (ret) {
 			ISP_LOGE("fail to do pd algo.");
 			goto exit;
 		}
 	}
-	ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, 4);
+	for(cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++){
+		ret = PD_GetResult(&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
+		if (ret) {
+			ISP_LOGE("fail to do get pd_result.");
+			goto exit;
+		}
+	}
+	ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 4);
 	if (ret) {
 		ISP_LOGE("fail to do get pd_result.");
 		goto exit;
 	}
-	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4]);
+	pd_calc_result.pd_roi_num = AREA_LOOP;
+	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4]);
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;
 exit:
 	cxt->is_busy = 0;
+
+	free(pPD_left);
+	free(pPD_right);
 	return ret;
 }
 
