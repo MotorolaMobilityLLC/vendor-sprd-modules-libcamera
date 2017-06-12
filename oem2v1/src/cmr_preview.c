@@ -8503,6 +8503,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 tmp_width = 0;
+    cmr_u32 tmp_height = 0;
     struct img_size *sensor_size = NULL;
     struct img_rect *sn_trim_rect = NULL;
     struct sensor_mode_info *sn_mode_info = NULL;
@@ -8679,11 +8680,10 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         tmp_width = (cmr_u32)(sc_factor * img_cap->src_img_rect.width);
+        tmp_height = (cmr_u32)(sc_factor * img_cap->src_img_rect.height);
         CMR_LOGD("%d, %d, %d, %d, %d", tmp_width, img_cap->src_img_rect.width,
                  cap_size->width, cap_size->height, sc_threshold);
-        if ((img_cap->src_img_rect.width >= cap_size->width ||
-             cap_size->width <= sc_threshold) &&
-            ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
+        if (ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
             /*if the out size is smaller than the in size, try to use scaler on
              * the fly*/
             if (cap_size->width > tmp_width) {
@@ -8693,18 +8693,22 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
                     img_cap->dst_img_size.width = tmp_width;
                 }
                 img_cap->dst_img_size.height =
-                    (cmr_u32)(img_cap->src_img_rect.height * sc_factor);
+                    (img_cap->dst_img_size.width * cap_size->height) / cap_size->width;
+            } else if (cap_size->height > tmp_height) {
+                img_cap->dst_img_size.height = tmp_height;
+                img_cap->dst_img_size.width = (tmp_height * cap_size->width) / cap_size->height;
             } else {
                 /*just use scaler on the fly*/
                 img_cap->dst_img_size.width = cap_size->width;
                 img_cap->dst_img_size.height = cap_size->height;
             }
         } else {
-            img_cap->dst_img_size.width = cap_size->width;
-            img_cap->dst_img_size.height = cap_size->height;
+                img_cap->dst_img_size.width = cap_size->width;
+                img_cap->dst_img_size.height = cap_size->height;
         }
     }
-
+    img_cap->dst_img_size.width = CAMERA_START(img_cap->dst_img_size.width);
+    img_cap->dst_img_size.height = CAMERA_START(img_cap->dst_img_size.height);
     /*save original cap size*/
     if (prev_cxt->prev_param.video_snapshot_type == VIDEO_SNAPSHOT_VIDEO) {
         prev_cxt->cap_org_size.width = prev_cxt->actual_video_size.width;
