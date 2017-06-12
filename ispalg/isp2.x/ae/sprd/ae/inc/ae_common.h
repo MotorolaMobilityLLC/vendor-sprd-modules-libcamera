@@ -20,7 +20,7 @@
 #ifdef CONFIG_FOR_TIZEN
 #include "stdint.h"
 #elif WIN32
-#include "ae_porting.h"
+#include "cmr_types.h"
 #else
 #include "cmr_types.h"
 #endif
@@ -351,10 +351,6 @@ struct ae_alg_calc_param {
 	cmr_u8 monitor_shift;	//for ae monitor data overflow
 	cmr_u8 win1_weight;	//for touch ae
 	cmr_u8 win2_weight;	//for touch ae
-	//cmr_u8 touch_tuning_enable;//for touch ae
-	//cmr_s16 min_exp_line;
-	//cmr_s16 max_gain;
-	//cmr_s16 min_gain;
 	cmr_s16 start_index;
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;

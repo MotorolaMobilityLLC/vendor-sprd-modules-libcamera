@@ -1792,7 +1792,6 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 		fd_param.width = face_area->frame_width;
 		fd_param.height = face_area->frame_height;
 		fd_param.face_num = face_area->face_num;
-		ISP_LOGE("FD_IOCTL_IFO:num:%d,w:%d,h:%d\n",fd_param.face_num,fd_param.width,fd_param.height);
 		for (i = 0; i < fd_param.face_num; ++i) {
 			fd_param.face_area[i].rect.start_x = face_area->face_info[i].sx;
 			fd_param.face_area[i].rect.start_y = face_area->face_info[i].sy;
@@ -1800,15 +1799,7 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 			fd_param.face_area[i].rect.end_y = face_area->face_info[i].ey;
 			fd_param.face_area[i].face_lum = face_area->face_info[i].brightness;
 			fd_param.face_area[i].pose = face_area->face_info[i].pose;
-			ISP_LOGE("FD_IOCTL_LTN:start(x,y):(%d,%d),end(x,y):(%d,%d),lum:%d,pose:%d\n",
-				fd_param.face_area[i].rect.start_x,
-				fd_param.face_area[i].rect.start_y,
-				fd_param.face_area[i].rect.end_x,
-				fd_param.face_area[i].rect.end_y,
-				fd_param.face_area[i].face_lum,
-				fd_param.face_area[i].pose);
 		}
-
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &fd_param, NULL);
 

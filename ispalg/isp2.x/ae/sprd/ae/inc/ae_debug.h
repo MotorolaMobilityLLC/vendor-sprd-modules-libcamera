@@ -19,6 +19,7 @@
 #ifdef WIN32
 #include <stdlib.h>
 #include "ae_porting.h"
+#include "cmr_types.h"
 #else
 #ifdef CONFIG_FOR_TIZEN
 #include "osal_log.h"

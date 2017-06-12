@@ -5532,21 +5532,14 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				cxt->cur_status.ae1_finfo.img_width = fd->width;
 				cxt->cur_status.ae1_finfo.img_height =fd->height;
 				cxt->cur_status.ae1_finfo.cur_info.face_num = fd->face_num;
-				ISP_LOGI("FD_CTRL_NUM:%d,flag is %d\n", cxt->cur_status.ae1_finfo.cur_info.face_num,
+				ISP_LOGV("FD_CTRL_NUM:%d,flag is %d\n", cxt->cur_status.ae1_finfo.cur_info.face_num,
 					cxt->cur_status.ae1_finfo.update_flag);
 				for(i = 0; i < fd->face_num; i++){
 					cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_x = fd->face_area[i].rect.start_x;
 					cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_y = fd->face_area[i].rect.start_y;
 					cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_x = fd->face_area[i].rect.end_x;
 					cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_y = fd->face_area[i].rect.end_y;
-					cxt->cur_status.ae1_finfo.cur_info.face_area[i].pose = fd->face_area[i].pose;
-					ISP_LOGI("FD_CTRL_LTN:start(x,y):(%d,%d),end(x,y):(%d,%d),pose:%d\n",
-						cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_x,
-						cxt->cur_status.ae1_finfo.cur_info.face_area[i].start_y,
-						cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_x,
-						cxt->cur_status.ae1_finfo.cur_info.face_area[i].end_y,
-						cxt->cur_status.ae1_finfo.cur_info.face_area[i].pose);
-				}
+					cxt->cur_status.ae1_finfo.cur_info.face_area[i].pose = fd->face_area[i].pose; } 
 			}else{
 				cxt->cur_status.ae1_finfo.cur_info.face_num = 0;
 				for(i = 0; i < fd->face_num; i++){
