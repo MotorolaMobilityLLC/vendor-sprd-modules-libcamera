@@ -474,11 +474,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
     changeDfsPolicy(CAM_EXIT);
     disablePowerHint();
-    mPowermanageInited = 0;
-    if (mPowerManager != NULL)
-        mPowerManager.clear();
-    if (mPrfmLock != NULL)
-        mPrfmLock.clear();
+    deinitPowerHint();
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
@@ -1535,6 +1531,16 @@ void SprdCamera3OEMIf::initPowerHint() {
 
     if (!mPowermanageInited)
         mPowermanageInited = 1;
+#endif
+}
+
+void SprdCamera3OEMIf::deinitPowerHint() {
+#ifdef HAS_CAMERA_HINTS
+    mPowermanageInited = 0;
+    if (mPowerManager != NULL)
+        mPowerManager.clear();
+    if (mPrfmLock != NULL)
+        mPrfmLock.clear();
 #endif
 }
 
@@ -8989,7 +8995,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 
     int events;
     int32_t result = 0;
-    uint32_t Timeout = 100; // ms
+    uint32_t Timeout = 60; // ms
     uint32_t Gyro_flag = 0;
     uint32_t Gsensor_flag = 0;
 

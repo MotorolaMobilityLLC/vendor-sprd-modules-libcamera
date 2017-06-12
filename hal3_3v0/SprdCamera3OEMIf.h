@@ -205,6 +205,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     camera_status_t GetCameraStatus(camera_status_type_t state);
 
     void initPowerHint();
+    void deinitPowerHint();
     void enablePowerHint();
     void disablePowerHint();
     int changeDfsPolicy(int dfs_policy);
