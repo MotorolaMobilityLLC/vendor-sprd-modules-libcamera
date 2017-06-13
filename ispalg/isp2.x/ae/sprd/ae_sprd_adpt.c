@@ -1752,7 +1752,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	/* set ae monitor work mode */
 	_cfg_set_aem_mode(cxt);
 
-	ISP_LOGI("cam-id %d, ALG_id %d   %zd\r\n", cxt->camera_id, cxt->cur_param->alg_id, sizeof(struct ae_tuning_param));
+	//ISP_LOGI("cam-id %d, ALG_id %d   %d\r\n", cxt->camera_id, cxt->cur_param->alg_id, sizeof(struct ae_tuning_param));
 	//ISP_LOGV("DP %d   lv-bv %.3f\r\n", cxt->sensor_gain_precision, cxt->cur_status.cali_lv_eight);
 	return AE_SUCCESS;
 }
@@ -5092,12 +5092,15 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 		struct match_data_param dualcam_aesync;
+		float cur_fps=0;
+
 		if(cxt->is_multi_mode && cxt->ae_role)
 		{
 			memcpy(&dualcam_aesync.master_ae_info.ae_calc_result,
 				current_result, sizeof(dualcam_aesync.master_ae_info.ae_calc_result));
-			ISP_LOGI("[master] cur_fps=%f, gain=%u, expline=%u, exptime=%u, dummy=%u",
+			ISP_LOGD("[master] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_fps,
+				dualcam_aesync.master_ae_info.ae_calc_result.cur_lum,
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_again,
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_exp_line,
 				dualcam_aesync.master_ae_info.ae_calc_result.wts.exposure_time,
@@ -5107,26 +5110,29 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 			/* use stored master's ae value to calculate slave's ae value */
 			rtn = dualcamera_aesync_calc(cxt, &dualcam_aesync);
-		
+
 		}
 		else  if(cxt->is_multi_mode && !cxt->ae_role)
 		{
 			/* use slave's ae_sync_result as final ae value */
 			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AESYNC_SETTING,
-				NULL, &dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae);
-			ISP_LOGI("[slave ] cur_fps=%f, gain=%u, expline=%u, exptime=%u, dummy=%u",
-				cxt->cur_result.wts.cur_fps,
+				NULL, &dualcam_aesync.slave_ae_info.ae_sync_result);
+
+			current_result->wts.cur_exp_line= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line;
+			current_result->wts.exposure_time=  dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time;
+			current_result->wts.cur_again= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
+			current_result->wts.cur_dummy = dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;
+
+			cur_fps = (float)(10000000.0 / ((current_result->wts.cur_exp_line +current_result->wts.cur_dummy) * current_status->line_time));
+
+			ISP_LOGD("[slave ] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
+				cur_fps,
+				current_result->cur_lum,
 				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again,
 				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line,
 				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time,
 				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy);
 
-			current_result->wts.cur_exp_line= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line;
-			current_result->wts.exposure_time=  dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time;
-			current_result->wts.cur_again= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
-			current_result->wts.cur_dummy = dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;			
-
-			
 		}
 #endif
 
