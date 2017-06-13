@@ -187,25 +187,6 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 	return ret;
 }
 
-cmr_u32 isp_dev_access_chip_id(cmr_handle isp_dev_handle)
-{
-	cmr_u32 ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_dev_get_chip_id(cxt->isp_driver_handle);
-
-	return ret;
-}
-
-cmr_int isp_dev_raw_afm_statistic_r6p9(cmr_handle isp_dev_handle, void *statics)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_u_raw_afm_statistic_r6p9(cxt->isp_driver_handle, statics);
-	return ret;
-}
-
 cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, void *statics)
 {
 	cmr_int ret = ISP_SUCCESS;

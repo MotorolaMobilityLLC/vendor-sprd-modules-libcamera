@@ -84,20 +84,6 @@ cmr_s32 isp_dev_close(isp_handle handle)
 	return ret;
 }
 
-cmr_u32 isp_dev_get_chip_id(isp_handle handle)
-{
-	struct isp_file *file = NULL;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return ISP_CHIP_ID_INVALID;
-	}
-
-	file = (struct isp_file *)(handle);
-
-	return file->chip_id;
-}
-
 cmr_s32 isp_dev_reset(isp_handle handle)
 {
 	cmr_s32 ret = 0;
