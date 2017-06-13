@@ -1579,6 +1579,8 @@ int SprdCamera3HWI::flush() {
     int64_t timestamp = 0;
     // Mutex::Autolock l(mLock);
 
+    if (mOEMIf)
+        mOEMIf->enablePowerHint();
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
         if (mPicChan) {
@@ -1613,6 +1615,8 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = false;
+    if (mOEMIf)
+        mOEMIf->disablePowerHint();
 
     return 0;
 }

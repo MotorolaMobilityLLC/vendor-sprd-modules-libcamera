@@ -740,6 +740,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /* 1- start acceleration, 0 - finish acceleration*/
     bool mHDRPowerHintFlag;
 
+    /* enable/disable powerhint for multilayer */
+    uint32_t mMultiLayerPowerHint;
+    /* 1- start acceleration, 0 - finish acceleration*/
+    bool mMultiLayerPowerHintFlag;
+
     /* for eis*/
     bool mGyroInit;
     bool mGyroExit;

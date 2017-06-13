@@ -265,7 +265,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
       mPowermanageInited(0), mPowerManager(NULL), mPrfmLock(NULL),
       m_pPowerModule(NULL), mHDRPowerHint(0), mHDRPowerHintFlag(0),
-      mGyroInit(0), mGyroExit(0), mGyroNum(0), mSprdEisEnabled(false),
+      mMultiLayerPowerHint(0), mMultiLayerPowerHintFlag(0), mGyroInit(0),
+      mGyroExit(0), mGyroNum(0), mSprdEisEnabled(false),
       mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
       mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
@@ -769,6 +770,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
         if (mSprdBurstModeEnabled == 1 && mSprdZslEnabled == 1) {
+            mMultiLayerPowerHint = 1;
             ret = zslTakePicture();
         } else {
             if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
@@ -1020,6 +1022,10 @@ int SprdCamera3OEMIf::zslTakePicture() {
         goto exit;
     }
 
+    if (mMultiLayerPowerHint == 1) {
+        enablePowerHint();
+        mMultiLayerPowerHintFlag = 1;
+    }
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
@@ -4762,9 +4768,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         }
     }
 
-    if (1 == mHDRPowerHint) {
+    if (mHDRPowerHint == 1 || mMultiLayerPowerHint == 1) {
         disablePowerHint();
         mHDRPowerHintFlag = 0;
+        mMultiLayerPowerHintFlag = 0;
     }
 
     HAL_LOGD("X");
