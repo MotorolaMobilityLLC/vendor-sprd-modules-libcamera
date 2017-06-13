@@ -137,7 +137,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x28,
+				0x14,
 				/*ee_r3_cfg*/
 				0x32,
 				/*reserved*/
@@ -176,7 +176,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x28,
+				0x14,
 				/*ee_r3_cfg*/
 				0x32,
 				/*reserved*/
@@ -2182,7 +2182,7 @@
 	/*edge_smooth_mode*/
 	0x01,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param5.&BasePoint=1&*/
