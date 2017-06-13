@@ -74,9 +74,9 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x40,
+		0x00,
 		/*ratio_1*/
-		0x40,
+		0x00,
 		/*ratio*/
 		0x00,
 		/*ratio_uv_min*/

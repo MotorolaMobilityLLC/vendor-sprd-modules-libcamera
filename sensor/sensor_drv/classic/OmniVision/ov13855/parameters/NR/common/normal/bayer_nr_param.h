@@ -4866,7 +4866,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0016,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -4884,7 +4884,7 @@
 						/*addback0*/
 						0x0032,
 						/*addback1*/
-						0x0032,
+						0x0014,
 						/*addback_clip_max*/
 						0x0004,
 						/*addback_clip_min*/
@@ -4902,7 +4902,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0020,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -4942,7 +4942,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0016,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -4960,7 +4960,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0016,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -4978,7 +4978,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0020,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -5018,7 +5018,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0016,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -5036,7 +5036,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0016,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -5054,7 +5054,7 @@
 						/*addback0*/
 						0x003E,
 						/*addback1*/
-						0x003E,
+						0x0020,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/

@@ -573,7 +573,7 @@
 	/*sigma_d*/
 	20.00,
 	/*sigma_u*/
-	25.00,
+	35.00,
 	/*sigma_v*/
 	25.00,
 	/*adpt_med_thr*/
