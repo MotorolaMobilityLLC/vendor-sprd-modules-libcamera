@@ -1444,7 +1444,6 @@ static cmr_s32 _cfg_monitor(struct ae_ctrl_cxt *cxt)
 
 	return rtn;
 }
-
 static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 								struct ae_exp_gain_table* dst[AE_FLICKER_NUM],
 								float linetime, cmr_s16 tablemode)
@@ -1453,13 +1452,13 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 	cmr_s32 i = 0;
 	cmr_u32 exp_counts = 0;
 	cmr_u32 thrd = 0;
-	float product = 0.0;
-	float tmp_1 = 0;
-	float tmp_2 = 0;
+	double product = 0.0;
+	double tmp_1 = 0;
+	double tmp_2 = 0;
 
 	cmr_s32 mx = src[AE_FLICKER_50HZ]->max_index;
 
-	ISP_LOGI("exp2line %0.2f %d %d\r\n", linetime, tablemode, mx);
+	ISP_LOGI("exp2line %.2f %d %d\r\n", linetime, tablemode, mx);
 	dst[AE_FLICKER_50HZ]->max_index = src[AE_FLICKER_50HZ]->max_index;
 	dst[AE_FLICKER_50HZ]->min_index = src[AE_FLICKER_50HZ]->min_index;
 
@@ -1468,7 +1467,7 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 
 	if (0 == tablemode) {
 		for (i = 0; i <= mx; i++) {
-			product =  src[AE_FLICKER_50HZ]->exposure[i] *  src[AE_FLICKER_50HZ]->again[i];
+			product =  1.0 * src[AE_FLICKER_50HZ]->exposure[i] *  src[AE_FLICKER_50HZ]->again[i];
 			tmp_1 = 1.0 * src[AE_FLICKER_50HZ]->exposure[i] / linetime;
 			dst[AE_FLICKER_50HZ]->exposure[i] = (cmr_s32) (tmp_1 + 0.5);
 			if (0 == dst[AE_FLICKER_50HZ]->exposure[i]) {
@@ -1482,7 +1481,7 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 		for (i = 0; i <= mx; i++) {
 			/*the exposure time is more than 1/120, so it should be the times of 1/120*/
 			if (thrd <= src[AE_FLICKER_50HZ]->exposure[i]) {
-				product = src[AE_FLICKER_50HZ]->exposure[i] * src[AE_FLICKER_50HZ]->again[i];
+				product = 1.0 * src[AE_FLICKER_50HZ]->exposure[i] * src[AE_FLICKER_50HZ]->again[i];
 				exp_counts = (cmr_u32)(1.0 * src[AE_FLICKER_50HZ]->exposure[i] / thrd + 0.5);
 				if (exp_counts < 1) {
 					exp_counts = 1;
@@ -1501,15 +1500,15 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 		thrd = (cmr_u32)(1.0 / 120 * 10000000 + 0.5);
 		for (i = 0; i <= mx; i++) {
 			if (thrd <= src[AE_FLICKER_50HZ]->exposure[i] * linetime) {
-				product = src[AE_FLICKER_50HZ]->exposure[i] * src[AE_FLICKER_50HZ]->again[i];
+				product = 1.0 * src[AE_FLICKER_50HZ]->exposure[i] * src[AE_FLICKER_50HZ]->again[i];
 				exp_counts = 1.0 * src[AE_FLICKER_50HZ]->exposure[i] * linetime / thrd;
 				tmp_1 = (cmr_s32) (1.0 * exp_counts * thrd / linetime + 0.5);
-				if (0 == (cmr_s32) tmp_1) {
+				if (0 == (cmr_s32) tmp_1) {				
 					tmp_1 = 1;
-					ISP_LOGW("[%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32)(tmp_1 * linetime + 0.5));
+					ISP_LOGW("[%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32)(tmp_1 * linetime + 0.5));	
 				}
-				dst[AE_FLICKER_60HZ]->exposure[i] = tmp_1;
-				dst[AE_FLICKER_60HZ]->again[i] = (cmr_u32)(1.0 *product / tmp_1 + 0.5);
+				dst[AE_FLICKER_60HZ]->exposure[i] = (cmr_u32)(tmp_1 + 0.5);
+				dst[AE_FLICKER_60HZ]->again[i] = (cmr_u32)(1.0 * product / tmp_1 + 0.5);
 			} else {
 				dst[AE_FLICKER_60HZ]->exposure[i] = dst[AE_FLICKER_50HZ]->exposure[i];
 				dst[AE_FLICKER_60HZ]->again[i] = dst[AE_FLICKER_50HZ]->again[i];
@@ -1518,7 +1517,6 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 	}
 	return rtn;
 }
-
 // set default parameters when initialization or DC-DV convertion
 static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_param, struct ae_set_work_param *work_param, cmr_s8 init)
 {
