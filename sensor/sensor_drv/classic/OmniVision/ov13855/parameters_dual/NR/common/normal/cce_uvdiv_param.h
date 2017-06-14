@@ -18,13 +18,13 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x3C,
+		0x7F,
 		/*chroma_min_l*/
-		0x03,
+		0x7F,
 		/*chroma_max_h*/
-		0x3C,
+		0x7F,
 		/*chroma_max_l*/
-		0x05,
+		0x7F,
 
 	},
 	/*u_th_1*/
@@ -41,9 +41,9 @@
 	/*u_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xD5,
+		0x00,
 		/*uvdiv_th_h*/
-		0x02,
+		0x00,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -63,9 +63,9 @@
 	/*v_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0x02,
+		0x00,
 		/*uvdiv_th_h*/
-		0x2F,
+		0x00,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -118,13 +118,13 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x12,
+		0x05,
 		/*chroma_min_l*/
-		0x08,
+		0x05,
 		/*chroma_max_h*/
-		0x12,
+		0x0C,
 		/*chroma_max_l*/
-		0x08,
+		0x0C,
 
 	},
 	/*u_th_1*/
@@ -178,13 +178,13 @@
 		/*ratio_1*/
 		0x40,
 		/*ratio*/
-		0x3C,
+		0x40,
 		/*ratio_uv_min*/
-		0x00,
+		0x20,
 		/*ratio_y_min0*/
-		0x00,
+		0x28,
 		/*ratio_y_min1*/
-		0x00,
+		0x40,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
