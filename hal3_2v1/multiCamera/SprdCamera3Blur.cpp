@@ -1710,7 +1710,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             uint32_t bottom =
                 metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[3];
             int32_t x = left, y = top;
-            if (left != 0 && top != 0 && right != 0 && bottom != 0) {
+            HAL_LOGV("ANDROID_CONTROL_AF_REGIONS (%d,%d,%d,%d)", left, top,
+                     right, bottom);
+            if (!(left == 0 && top == 0 && right == 0 && bottom == 0)) {
                 x = left + (right - left) / 2;
                 y = top + (bottom - top) / 2;
                 if (mBlur->mCameraId == CAM_BLUR_MAIN_ID) {
@@ -1787,6 +1789,8 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 mPreviewWeightParams.roi_type = 1;
                 mCaptureWeightParams.roi_type = 1;
             }
+            HAL_LOGV("roi_type:%d,face_num:%d mUpdataTouch:%d",
+                     mPreviewWeightParams.roi_type, face_num, mUpdataTouch);
 
             if (mPreviewWeightParams.roi_type == 0) {
                 unsigned short sel_x;
@@ -2166,6 +2170,37 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                                                   mPreviewWeightParams.y1[1]) /
                                                  2;
                 } else {
+                    mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
+                    mPreviewWeightParams.sel_y = mPreviewInitParams.height - 1;
+                }
+                mUpdataTouch = false;
+            }
+        } else {
+            if (mUpdataTouch) {
+                int i = 0;
+                int32_t x = mLastTouchX * mPreviewInitParams.width / origW;
+                int32_t y = mLastTouchY * mPreviewInitParams.height / origH;
+                for (i = 0; i < mPreviewWeightParams.valid_roi; i++) {
+                    if (x > mPreviewWeightParams.x1[i] &&
+                        x < mPreviewWeightParams.x2[i] &&
+                        y > mPreviewWeightParams.y1[i] &&
+                        y < mPreviewWeightParams.y2[i]) {
+                        mBlurBody = true;
+                        break;
+                    } else {
+                        mBlurBody = false;
+                    }
+                }
+                if (mBlurBody == true) {
+                    HAL_LOGD("in body");
+                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[1] +
+                                                  mPreviewWeightParams.x1[1]) /
+                                                 2;
+                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[1] +
+                                                  mPreviewWeightParams.y1[1]) /
+                                                 2;
+                } else {
+                    HAL_LOGD("out body");
                     mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
                     mPreviewWeightParams.sel_y = mPreviewInitParams.height - 1;
                 }
