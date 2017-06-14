@@ -210,7 +210,6 @@ static cmr_int s5k4h8yx_drv_identify(cmr_handle handle,
     ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, S5K4H8YX_VER_ADDR);
     SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value,
                 ver_value);
-    usleep(50 * 1000);
 
     if (S5K4H8YX_PID_VALUE == pid_value) {
         if (S5K4H8YX_VER_VALUE == ver_value) {
