@@ -1030,6 +1030,7 @@ static struct sensor_ic_ops s5k3p8sm_ops_tab  = {
     .power  = s5k3p8sm_drv_power_on,
     .identify = s5k3p8sm_drv_identify,
 
+    .write_exp = s5k3p8sm_drv_write_exposure,
     .write_gain_value = s5k3p8sm_drv_write_gain,
     .ex_write_exp = s5k3p8sm_drv_ex_write_exposure,
     .read_aec_info = NULL,
