@@ -490,13 +490,16 @@ static cmr_int s5k4h8yx_drv_stream_on(cmr_handle handle,
 static cmr_int s5k4h8yx_drv_stream_off(cmr_handle handle,
                                                cmr_uint param) {
     UNUSED(param);
+    uint16_t value;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
 
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0003);
-    usleep(50*1000);
+    if (value == 0x0103)
+        usleep(50 * 1000);
 
     return 0;
 }

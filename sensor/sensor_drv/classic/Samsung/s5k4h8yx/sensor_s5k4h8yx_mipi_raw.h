@@ -535,7 +535,7 @@ static struct sensor_module_info s_s5k4h8yx_module_info_tab[VENDOR_NUM] = {
 
          .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
 
-         .preview_skip_num = 1,
+         .preview_skip_num = 0,
          .capture_skip_num = 3,
          .flash_capture_skip_num = 6,
          .mipi_cap_skip_num = 0,

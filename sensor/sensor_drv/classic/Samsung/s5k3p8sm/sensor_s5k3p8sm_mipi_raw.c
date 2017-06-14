@@ -689,13 +689,16 @@ static cmr_int s5k3p8sm_drv_stream_on(cmr_handle handle, cmr_s32 param) {
 static cmr_int s5k3p8sm_drv_stream_off(cmr_handle handle, cmr_int param) {
     UNUSED(param);
     cmr_s32 ret = SENSOR_SUCCESS;
+    uint16_t value;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("StreamOff:E");
 
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     ret = hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
-    usleep(120 * 1000);
+    if (value == 0x0100)
+        usleep(50 * 1000);
 
     return ret;
 }
