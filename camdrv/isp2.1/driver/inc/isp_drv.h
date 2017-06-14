@@ -61,6 +61,7 @@ struct isp_statis_info {
 	cmr_u32 irq_property;
 	cmr_u32 phy_addr;
 	cmr_u32 vir_addr;
+	cmr_u32 addr_offset;
 	cmr_u32 kaddr[2];
 	cmr_u32 buf_size;
 	cmr_s32 mfd;

@@ -853,16 +853,14 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_buf_input statis_buf;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
-	cmr_u64 k_addr = 0;
-	cmr_u64 u_addr = 0;
+	cmr_uint u_addr = 0;
 	cmr_u32 val0 = 0;
 	cmr_u32 val1 = 0;
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-	k_addr = statis_info->phy_addr;
-	u_addr = statis_info->vir_addr;
-
+	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
+	ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
 	ae_stat_ptr = &cxt->aem_stats;
 	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
 		val0 = *((cmr_u32 *) u_addr + i * 2);
@@ -875,6 +873,7 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.addr_offset = statis_info->addr_offset;
 	statis_buf.buf_property = ISP_AEM_BLOCK;
 	statis_buf.buf_flag = 1;
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
@@ -1377,13 +1376,12 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_statis_buf_input statis_buf;
-	cmr_u32 k_addr = 0;
-	cmr_u32 u_addr = 0;
+	cmr_uint u_addr = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
-	k_addr = statis_info->phy_addr;
-	u_addr = statis_info->vir_addr;
+	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
+	ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
 	//memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
 	ae_stat_ptr = cxt->aem_stats;
 
@@ -1425,6 +1423,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.addr_offset= statis_info->addr_offset;
 	statis_buf.buf_property = ISP_AFL_BLOCK;
 	statis_buf.buf_flag = 1;
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
@@ -1457,7 +1456,6 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct afctrl_calc_in calc_param;
 	struct afctrl_calc_out calc_result;
 	struct isp_statis_info *statis_info = NULL;
-	cmr_u32 k_addr = 0;
 	cmr_uint u_addr = 0;
 	cmr_s32 i = 0;
 
@@ -1470,12 +1468,11 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	case AF_DATA_AF:{
 			struct isp_statis_buf_input statis_buf;
 			statis_info = (struct isp_statis_info *)in_ptr;
-			k_addr = statis_info->kaddr[0];
-			u_addr = statis_info->vir_addr;
-
+			ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
+			ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
 			cmr_u32 af_temp[30];
 			for (i = 0; i < 30; i++) {
-				af_temp[i] = *((cmr_u32 *) u_addr + i);
+				af_temp[i] = (cmr_u32)*((cmr_uint *) u_addr + i);
 			}
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps = cxt->sensor_fps;
@@ -1489,6 +1486,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			statis_buf.buf_size = statis_info->buf_size;
 			statis_buf.phy_addr = statis_info->phy_addr;
 			statis_buf.vir_addr = statis_info->vir_addr;
+			statis_buf.addr_offset = statis_info->addr_offset;
 			statis_buf.kaddr[0] = statis_info->kaddr[0];
 			statis_buf.kaddr[1] = statis_info->kaddr[1];
 			statis_buf.buf_property = ISP_AFM_BLOCK;
@@ -1537,8 +1535,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = NULL;
-	cmr_u32 k_addr = 0;
-	cmr_u32 u_addr = 0;
+	cmr_uint u_addr = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct pdaf_ctrl_param_out pdaf_param_out;
 	struct isp_statis_buf_input statis_buf;
@@ -1548,10 +1545,10 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
 	statis_info = (struct isp_statis_info *)in_ptr;
-	k_addr = statis_info->phy_addr;
-	u_addr = statis_info->vir_addr;
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
+	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
+	ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
 
 	pdaf_param_in.u_addr = u_addr;
 
@@ -1567,6 +1564,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.addr_offset= statis_info->addr_offset;
 	statis_buf.kaddr[0] = statis_info->kaddr[0];
 	statis_buf.kaddr[1] = statis_info->kaddr[1];
 	statis_buf.buf_property = ISP_PDAF_BLOCK;
@@ -1632,8 +1630,7 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_buf_input statis_buf;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
-	cmr_u64 k_addr = 0;
-	cmr_u64 u_addr = 0;
+	cmr_uint u_addr = 0;
 	cmr_u32 val = 0;
 	cmr_u32 last_val0 = 0;
 	cmr_u32 last_val1 = 0;
@@ -1653,8 +1650,6 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-	k_addr = statis_info->phy_addr;
-	u_addr = statis_info->vir_addr;
 
 	memset(&param_data, 0, sizeof(param_data));
 
@@ -1684,6 +1679,8 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 		ISP_LOGE("fail to malloc binning img data\n");
 		return -1;
 	}
+	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
+	ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
 	memset(binning_img_data, 0, binnng_w * binnng_h * 2);
 	binning_img_ptr = binning_img_data;
 
@@ -1740,6 +1737,7 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.addr_offset = statis_info->addr_offset;
 	statis_buf.buf_property = ISP_BINNING_BLOCK, statis_buf.buf_flag = 1;
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
 	if (ret) {
