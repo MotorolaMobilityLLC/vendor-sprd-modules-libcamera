@@ -31,7 +31,6 @@ struct isp_file {
 /*ISP Hardware Device*/
 cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle * handle);
 cmr_s32 isp_dev_close(isp_handle handle);
-cmr_u32 isp_dev_get_chip_id(isp_handle handle);
 cmr_s32 isp_dev_reset(isp_handle handle);
 cmr_s32 isp_dev_stop(isp_handle handle);
 cmr_s32 isp_dev_enable_irq(isp_handle handle, cmr_u32 irq_mode);
