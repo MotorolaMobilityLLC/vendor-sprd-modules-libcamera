@@ -2635,6 +2635,7 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     mjpegSize = 0;
     mFlushing = false;
     mReqState = PREVIEW_REQUEST_STATE;
+    SprdCamera3MultiBase::initialize(MODE_BLUR);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {

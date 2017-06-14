@@ -601,6 +601,8 @@ int SprdCamera3SelfShot::initialize(
 
     HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
+
+    SprdCamera3MultiBase::initialize(MODE_SELF_SHOT);
     mAvailableSensorSelfSot = 1;
     mCallbackOps = callback_ops;
     mStartPreviewTime = systemTime();

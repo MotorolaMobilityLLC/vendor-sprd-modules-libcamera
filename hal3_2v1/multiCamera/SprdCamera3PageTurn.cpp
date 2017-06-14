@@ -559,6 +559,8 @@ int SprdCamera3PageTurn::initialize(
 
     HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
+
+    SprdCamera3MultiBase::initialize(MODE_PAGE_TURN);
     hwiMain->setSensorStream(STREAM_ON);
     mCoveredValue = 0;
     mCallbackOps = callback_ops;

@@ -33,12 +33,23 @@ using namespace android;
 namespace sprdcamera {
 #define MAX_UNMATCHED_QUEUE_BASE_SIZE 3
 #define MATCH_FRAME_TIME_DIFF (9000)
+#define LUMA_SOOMTH_COEFF 3
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
-      mVLastFpsTime(0) {}
+      mVLastFpsTime(0) {
+    mLumaList.clear();
+    mCameraMode = MODE_SINGLE_CAMERA;
+}
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
+int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
+    int rc = 0;
+
+    mLumaList.clear();
+    mCameraMode = mode;
+    return rc;
+}
 
 int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                                       int type) {
@@ -210,10 +221,14 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
                                               int convered_camera_id) {
     int rc = 0;
     uint32_t couvered_value = 0;
+    uint32_t average_value = 0;
     uint32_t value = 0;
+    uint32_t max_convered_value = 8;
+    uint32_t luma_soomth_coeff = LUMA_SOOMTH_COEFF;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
+
     property_get("debug.camera.covered", prop, "0");
 
     rc = hwiSub->getCoveredValue(&value);
@@ -223,12 +238,45 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     if (0 != atoi(prop)) {
         value = atoi(prop);
     }
-    if (value < MAX_CONVERED_VALURE && value) {
+    property_get("debug.camera.covered_s_th", prop, "0");
+    if (0 != atoi(prop)) {
+        luma_soomth_coeff = atoi(prop);
+    }
+    if (mLumaList.size() >= luma_soomth_coeff) {
+        List<uint32_t>::iterator itor = mLumaList.begin();
+        mLumaList.erase(itor);
+    }
+    mLumaList.push_back(value);
+    for (List<uint32_t>::iterator i = mLumaList.begin(); i != mLumaList.end();
+         i++) {
+        average_value += *i;
+    }
+    if (average_value)
+        average_value /= mLumaList.size();
+    switch (mCameraMode) {
+    case MODE_BLUR:
+        max_convered_value = MAX_CONVERED_VALURE;
+        break;
+    case MODE_SELF_SHOT:
+        max_convered_value = MAX_CONVERED_VALURE;
+        break;
+    case MODE_PAGE_TURN:
+        max_convered_value = MAX_CONVERED_VALURE;
+        break;
+    default:
+        max_convered_value = MAX_CONVERED_VALURE;
+    }
+    property_get("debug.camera.covered_max_th", prop, "0");
+    if (0 != atoi(prop)) {
+        max_convered_value = atoi(prop);
+    }
+    if (average_value < max_convered_value && average_value) {
         couvered_value = BLUR_SELFSHOT_CONVERED;
     } else {
         couvered_value = BLUR_SELFSHOT_NO_CONVERED;
     }
-    HAL_LOGD("get cover_value %u ,ori value=%u", couvered_value,value);
+    HAL_LOGD("update_value %u ,ori value=%u ,average_value=%u", couvered_value,
+             value, average_value);
     // update face[10].score info to mean convered value when api1 is used
     {
         FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(

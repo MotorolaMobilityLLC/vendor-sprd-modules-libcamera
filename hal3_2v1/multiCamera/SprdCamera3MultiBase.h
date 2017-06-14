@@ -65,20 +65,19 @@ class SprdCamera3MultiBase {
     virtual ~SprdCamera3MultiBase();
 
     virtual int allocateOne(int w, int h, new_mem_t *new_mem, int type);
+    int initialize(multiCameraMode mode);
     virtual void freeOneBuffer(new_mem_t *buffer);
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
     virtual uint8_t getCoveredValue(CameraMetadata &frame_settings,
                                     SprdCamera3HWI *hwiSub,
                                     int convered_camera_id);
-
     virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
     virtual buffer_handle_t *popBufferList(List<new_mem_t *> &list,
                                            camera_buffer_type_t type);
     virtual void pushBufferList(new_mem_t *localbuffer,
                                 buffer_handle_t *backbuf, int localbuffer_num,
                                 List<new_mem_t *> &list);
-
     virtual int getStreamType(camera3_stream_t *new_stream);
     virtual void dumpFps();
     virtual void dumpData(unsigned char *addr, int type, int size, int param1,
@@ -89,7 +88,6 @@ class SprdCamera3MultiBase {
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
-
 #ifdef CONFIG_FACE_BEAUTY
     virtual void doFaceMakeup(struct camera_frame_type *frame,
                               int perfect_level, int *face_info);
@@ -108,6 +106,8 @@ class SprdCamera3MultiBase {
     int mVFrameCount;
     int mVLastFrameCount;
     nsecs_t mVLastFpsTime;
+    List<uint32_t> mLumaList;
+    multiCameraMode mCameraMode;
 };
 }
 #endif
