@@ -38,6 +38,125 @@ struct isp_file {
 	void *reserved;
 };
 
+struct isp_statis_mem_info {
+	cmr_uint isp_statis_mem_size;
+	cmr_uint isp_statis_mem_num;
+	cmr_uint isp_statis_k_addr[2];
+	cmr_uint isp_statis_u_addr;
+	cmr_uint isp_statis_alloc_flag;
+	cmr_s32 statis_mfd;
+	cmr_s32 statis_buf_dev_fd;
+
+	cmr_uint isp_lsc_mem_size;
+	cmr_uint isp_lsc_mem_num;
+	cmr_uint isp_lsc_physaddr;
+	cmr_uint isp_lsc_virtaddr;
+	cmr_s32 lsc_mfd;
+
+	void *buffer_client_data;
+	void *cb_of_malloc;
+	void *cb_of_free;
+};
+
+struct isp_statis_info {
+	cmr_u32 irq_type;
+	cmr_u32 irq_property;
+	cmr_u32 phy_addr;
+	cmr_u32 vir_addr;
+	cmr_u32 kaddr[2];
+	cmr_u32 buf_size;
+	cmr_s32 mfd;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_u32 sec;
+	cmr_u32	usec;
+	cmr_s64 monoboottime;
+#endif
+};
+
+enum isp_fetch_format {
+	ISP_FETCH_YUV422_3FRAME = 0x00,
+	ISP_FETCH_YUYV,
+	ISP_FETCH_UYVY,
+	ISP_FETCH_YVYU,
+	ISP_FETCH_VYUY,
+	ISP_FETCH_YUV422_2FRAME,
+	ISP_FETCH_YVU422_2FRAME,
+	ISP_FETCH_NORMAL_RAW10,
+	ISP_FETCH_CSI2_RAW10,
+	ISP_FETCH_FORMAT_MAX
+};
+
+enum isp_store_format {
+	ISP_STORE_UYVY = 0x00,
+	ISP_STORE_YUV422_2FRAME,
+	ISP_STORE_YVU422_2FRAME,
+	ISP_STORE_YUV422_3FRAME,
+	ISP_STORE_YUV420_2FRAME,
+	ISP_STORE_YVU420_2FRAME,
+	ISP_STORE_YUV420_3FRAME,
+	ISP_STORE_FORMAT_MAX
+};
+
+enum isp_work_mode {
+	ISP_SINGLE_MODE = 0x00,
+	ISP_CONTINUE_MODE,
+};
+
+enum isp_match_mode {
+	ISP_CAP_MODE = 0x00,
+	ISP_EMC_MODE,
+	ISP_DCAM_MODE,
+	ISP_SIMULATION_MODE,
+};
+
+enum isp_endian {
+	ISP_ENDIAN_LITTLE = 0x00,
+	ISP_ENDIAN_BIG,
+	ISP_ENDIAN_HALFBIG,
+	ISP_ENDIAN_HALFLITTLE,
+	ISP_ENDIAN_MAX
+};
+
+struct isp_data_param {
+	enum isp_work_mode work_mode;
+	enum isp_match_mode input;
+	enum isp_format input_format;
+	cmr_u32 format_pattern;
+	struct isp_size input_size;
+	struct isp_addr input_addr;
+	struct isp_addr input_vir;
+	enum isp_format output_format;
+	enum isp_match_mode output;
+	struct isp_addr output_addr;
+	cmr_u16 slice_height;
+	cmr_u32 input_fd;
+};
+
+struct isp_slice_param_v1 {
+	enum isp_slice_pos_info pos_info;
+	cmr_u32 slice_line;
+	cmr_u32 complete_line;
+	cmr_u32 all_line;
+	struct isp_size max_size;
+	struct isp_size all_slice_num;
+	struct isp_size cur_slice_num;
+
+	struct isp_trim_size size[ISP_SLICE_WIN_NUM_V1];
+	cmr_u32 edge_info;
+};
+
+struct isp_interface_param_v1 {
+	struct isp_data_param data;
+
+	struct isp_dev_fetch_info fetch;
+	struct isp_dev_store_info store;
+	struct isp_dev_dispatch_info dispatch;
+	struct isp_dev_arbiter_info arbiter;
+	struct isp_dev_common_info com;
+	struct isp_size src;
+	struct isp_slice_param_v1 slice;
+};
+
 /*ISP Hardware Device*/
 cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle * handle);
 cmr_s32 isp_dev_close(isp_handle handle);

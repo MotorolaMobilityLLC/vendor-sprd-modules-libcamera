@@ -36,6 +36,24 @@
 {size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, cxt->l##_cxt.log_##l##_size, L##_START, L##_END); \
 if (len) {log.l##_off = off; off += len; log.l##_len = len;} else {log.l##_off = 0;}}
 
+struct isp_io_ctrl_fun {
+	enum isp_ctrl_cmd cmd;
+	io_fun io_ctrl;
+};
+
+enum isp_ctrl_mode {
+	ISP_CTRL_SET = 0x00,
+	ISP_CTRL_GET,
+	ISP_CTRL_MODE_MAX
+};
+
+struct isp_af_ctrl {
+	enum isp_ctrl_mode mode;
+	cmr_u32 step;
+	cmr_u32 num;
+	cmr_u32 stat_value[9];
+};
+
 static const char *DEBUG_MAGIC = "SPRD_ISP";	// 8 bytes
 static const char *AE_START = "ISP_AE__";
 static const char *AE_END = "ISP_AE__";

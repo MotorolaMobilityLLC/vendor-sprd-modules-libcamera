@@ -31,6 +31,7 @@
 #include "pd_algo.h"
 #include "isp_awb_types.h"
 #include "ae_ctrl_types.h"
+#include "isp_dev_access.h"
 
 
 struct commn_info {
