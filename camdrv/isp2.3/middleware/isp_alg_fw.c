@@ -2154,7 +2154,7 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	pdaf_input.pdaf_set_cb = ispalg_pdaf_set_cb;
 	pdaf_input.pd_info = input_ptr->pdaf_info;
 	pdaf_input.sensor_max_size = input_ptr->sensor_max_size;
-	if (1 == cxt->pdaf_cxt.pdaf_support) {
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support) {
 		pdaf_input.pdaf_otp.otp_data = (void *)input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_addr;
 		pdaf_input.pdaf_otp.size = input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_size;
 	}
@@ -2990,7 +2990,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
 	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d",
 		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
-	if (cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
 		if (cxt->ops.pdaf_ops.ioctrl) {
 			ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
 			ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
