@@ -238,7 +238,7 @@ struct ae_ctrl_cxt {
 	struct ae_tuning_param tuning_param[AE_MAX_PARAM_NUM];
 	cmr_s8 tuning_param_enable[AE_MAX_PARAM_NUM];
 	struct ae_tuning_param *cur_param;
-	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_MAX][AE_FLICKER_NUM];
+	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_NUM][AE_FLICKER_NUM];
 	/*
 	 * sensor related information
 	 */
@@ -321,7 +321,7 @@ struct ae_ctrl_cxt {
 	 */
 	cmr_u8 debug_enable;
 	char debug_file_name[256];
-	cmr_uint debug_info_handle;
+	cmr_handle debug_info_handle;
 	cmr_u32 debug_str[512];
 	cmr_u8 debug_info_buf[512 * 1024];
 	//struct debug_ae_param debug_buf;
@@ -351,7 +351,6 @@ struct ae_ctrl_cxt {
 	 * ae misc layer handle
 	 */
 	cmr_handle misc_handle;
-	cmr_u32 end_id;
 	/*
 	 * for dual camera sync
 	 */
@@ -367,6 +366,7 @@ struct ae_ctrl_cxt {
 	struct ae_exposure_param pre_write_exp_data;
 	struct match_data_param dualcam_aesync_param;
 #endif
+	cmr_u32 end_id;
 };
 
 #define AE_PRINT_TIME \
@@ -597,7 +597,7 @@ static cmr_s32 _is_ae_mlog(struct ae_ctrl_cxt *cxt)
 	len = property_get(AE_SAVE_MLOG, value, AE_SAVE_MLOG_DEFAULT);
 	if (len) {
 		memcpy((cmr_handle) & cxt->debug_file_name[0], &value[0], len);
-		cxt->debug_info_handle = (cmr_u32) debug_file_init(cxt->debug_file_name, "w+t");
+		cxt->debug_info_handle = (cmr_handle) debug_file_init(cxt->debug_file_name, "w+t");
 		if (cxt->debug_info_handle) {
 			ret = debug_file_open((debug_handle_t) cxt->debug_info_handle, 1, 0);
 			if (0 == ret) {
@@ -1548,7 +1548,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 				cxt->tuning_param_enable[i] = 0;
 		}
 
-		for (j = 0; j < AE_SCENE_MAX; ++j) {
+		for (j = 0; j < AE_SCENE_NUM; ++j) {
 				memcpy(&cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ], &cxt->tuning_param[0].scene_info[j].ae_table[AE_FLICKER_50HZ],
 				       	AE_FLICKER_NUM * sizeof(struct ae_exp_gain_table));
 		}
@@ -1601,6 +1601,10 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cxt->sensor_max_gain = 16 * 128;
 	} else {
 		cxt->sensor_max_gain = cxt->cur_param->sensor_cfg.max_gain;
+	}
+
+	if (0 == cxt->sensor_gain_precision) {
+		cxt->sensor_gain_precision = 1;
 	}
 
 	if (0 == cxt->cur_param->sensor_cfg.min_gain) {
@@ -1863,7 +1867,7 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 	prv_status = &cxt->prv_status;
 	cur_status = &cxt->cur_status;
 
-	if (nxt_scene_mod >= AE_SCENE_MAX) {
+	if (nxt_scene_mod >= AE_SCENE_MX_NUM) {
 		ISP_LOGE("fail to set scene mod, %d\n", nxt_scene_mod);
 		return AE_ERROR;
 	}
@@ -1875,14 +1879,14 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 	}
 
 	if (AE_SCENE_NORMAL != nxt_scene_mod) {
-		for (i = 0; i < AE_SCENE_MAX; ++i) {
+		for (i = 0; i < AE_SCENE_NUM; ++i) {
 			ISP_LOGI("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
 			if ((1 == scene_info[i].enable) && (nxt_scene_mod == scene_info[i].scene_mode)) {
 				break;
 			}
 		}
 
-		if ((i >= AE_SCENE_MAX) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
+		if ((i >= AE_SCENE_NUM) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
 			ISP_LOGI("Not has special scene setting, just using the normal setting\n");
 			goto SET_SCENE_MOD_EXIT;
 		}
@@ -4543,7 +4547,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		} 
 	}
 
-	for (cmr_s32 j = 0; j < AE_SCENE_MAX; ++j) {
+	for (cmr_s32 j = 0; j < AE_SCENE_NUM; ++j) {
 		struct ae_exp_gain_table* src[AE_FLICKER_NUM];
 		struct ae_exp_gain_table* dst[AE_FLICKER_NUM];
 		src[AE_FLICKER_50HZ] = &cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ];
@@ -5228,7 +5232,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		if (param) {
 			struct ae_set_scene *scene_mode = param;
 
-			if (scene_mode->mode < AE_SCENE_MAX) {
+			if (scene_mode->mode < AE_SCENE_MX_NUM) {
 				cxt->cur_status.settings.scene_mode = (cmr_s8) scene_mode->mode;
 			}
 		ISP_LOGI("AE_SET_SCENE %d\n", cxt->cur_status.settings.scene_mode);
@@ -5818,7 +5822,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	if (cxt->debug_enable) {
 		if (cxt->debug_info_handle) {
 			debug_file_deinit((debug_handle_t) cxt->debug_info_handle);
-			cxt->debug_info_handle = (cmr_u32) NULL;
+			cxt->debug_info_handle = (cmr_handle) NULL;
 		}
 	}
 

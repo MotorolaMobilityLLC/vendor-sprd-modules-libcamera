@@ -117,10 +117,10 @@ struct ae_calc_in {
 	struct ae_stat_img_info info;
 	cmr_u32 sec;
 	cmr_u32 usec;
+	struct isp_sensor_fps_info sensor_fps;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_s64 monoboottime;
 #endif
-	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ae_ctrl_param_out {

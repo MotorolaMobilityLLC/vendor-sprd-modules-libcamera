@@ -81,6 +81,14 @@ struct Flash_initOut
 	uint8 version;
 };
 
+
+enum Flash_flickerMode
+{
+	
+	flash_flicker_50hz=0,
+	flash_flicker_60hz,
+
+};
 struct Flash_pfStartInput
 {
 	float minExposure;
