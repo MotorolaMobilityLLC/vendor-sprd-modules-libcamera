@@ -1339,13 +1339,10 @@ static unsigned long _s5k4h8yx_Identify(SENSOR_HW_HANDLE handle,
 
     SENSOR_LOGI("SENSOR_S5K4H8YX: mipi raw identify\n");
 
-    //	while(1) {
     pid_value = Sensor_ReadReg(S5K4H8YX_PID_ADDR);
     ver_value = Sensor_ReadReg(S5K4H8YX_VER_ADDR);
     SENSOR_LOGI("SENSOR_S5K4H8YX: Identify: PID = %x, VER = %x", pid_value,
                 ver_value);
-    usleep(50 * 1000);
-    //	}
 
     if (S5K4H8YX_PID_VALUE == pid_value) {
         if (S5K4H8YX_VER_VALUE == ver_value) {
