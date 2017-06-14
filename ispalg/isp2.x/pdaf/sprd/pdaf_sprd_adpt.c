@@ -288,7 +288,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
-	cxt->pd_gobal_setting.OTPBuffer = (void *)&(in_p->pdaf_otp);
+	//cxt->pd_gobal_setting.OTPBuffer = (void *)&(in_p->pdaf_otp);
+	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;	
 	cxt->pd_gobal_setting.dCalibration = 1;
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
 
