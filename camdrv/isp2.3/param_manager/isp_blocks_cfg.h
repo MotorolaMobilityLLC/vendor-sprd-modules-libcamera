@@ -319,6 +319,19 @@ cmr_s32 _pm_dualflash_init(void *dst_flash_param, void *src_flash_param, void *p
 cmr_s32 _pm_dualflash_set_param(void *flash_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_dualflash_get_param(void *flash_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+cmr_s32 _pm_dcam_blc_init(void *dst_blc_param, void *src_blc_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_dcam_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_dcam_blc_get_param(void *blc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_dcam_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void *param1, void *param2);
+cmr_s32 _pm_dcam_aem_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_dcam_aem_get_param(void *rgb_aem_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, void *param2);
+cmr_s32 _pm_dcam_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_dcam_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_dcam_lsc_deinit(void *lnc_param);
+
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);
 	cmr_s32(*set) (void *blk_ptr, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

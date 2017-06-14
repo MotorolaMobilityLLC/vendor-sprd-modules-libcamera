@@ -86,6 +86,10 @@ struct isp_block_operations s_3d_nr_pre_ops = { _pm_3d_nr_pre_init, _pm_3d_nr_pr
 struct isp_block_operations s_3d_nr_cap_ops = { _pm_3d_nr_cap_init, _pm_3d_nr_cap_set_param, _pm_3d_nr_cap_get_param, PNULL, PNULL };
 struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, _pm_yuv_noisefilter_set_param, _pm_yuv_noisefilter_get_param, PNULL, PNULL };
 
+struct isp_block_operations s_dcam_blc_ops = { _pm_dcam_blc_init, _pm_dcam_blc_set_param, _pm_dcam_blc_get_param, PNULL, PNULL };
+struct isp_block_operations s_dcam_lsc_ops = { _pm_dcam_lsc_init, _pm_dcam_lsc_set_param, _pm_dcam_lsc_get_param, PNULL, _pm_dcam_lsc_deinit };
+struct isp_block_operations s_dcam_aem_ops = { _pm_dcam_aem_init, _pm_dcam_aem_set_param, _pm_dcam_aem_get_param, PNULL, PNULL };
+
 struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_FLASH_CALI, array_offset(struct isp_context, flash), sizeof(struct isp_flash_param), &s_flash_ops},
 	{ISP_BLK_DUAL_FLASH, array_offset(struct isp_context, dual_flash), sizeof(struct isp_dual_flash_param), &s_dual_flash_ops},
@@ -142,6 +146,9 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_YUV_NOISEFILTER, array_offset(struct isp_context, yuv_noisefilter), sizeof(struct isp_dev_noise_filter_param), &s_yuv_noisefilter_ops},
 	{ISP_BLK_YUV_PRECDN, array_offset(struct isp_context, yuv_pre_cdn), sizeof(struct isp_yuv_pre_cdn_param), &s_yuv_precdn_ops},
 	{ISP_BLK_AFT, array_offset(struct isp_context, aft), sizeof(struct isp_aft_param), &s_aft_ops},
+	{DCAM_BLK_BLC, array_offset(struct isp_context, dcam_blc), sizeof(struct dcam_blc_param), &s_dcam_blc_ops},
+	{DCAM_BLK_RAW_AEM, array_offset(struct isp_context, dcam_aem), sizeof(struct dcam_rgb_aem_param), &s_dcam_aem_ops},
+	{DCAM_BLK_2D_LSC, array_offset(struct isp_context, dcam_2d_lsc), sizeof(struct dcam_2d_lsc_param), &s_dcam_lsc_ops},
 };
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)

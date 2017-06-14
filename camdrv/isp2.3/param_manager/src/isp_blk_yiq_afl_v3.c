@@ -67,6 +67,9 @@ cmr_s32 _pm_yiq_afl_set_param_v3(void *afl_param, cmr_u32 cmd, void *param_ptr0,
 		dst_ptr->cur.frame_num = cfl_cfg_ptr->frame_num;
 		dst_ptr->cur.start_col = cfl_cfg_ptr->start_col;
 		dst_ptr->cur.end_col = cfl_cfg_ptr->end_col;
+		dst_ptr->cur.skip_num_clr = cfl_cfg_ptr->skip_num_clr;
+		dst_ptr->cur.afl_glb_total_num = cfl_cfg_ptr->afl_glb_total_num;
+		dst_ptr->cur.afl_region_total_num = cfl_cfg_ptr->afl_region_total_num;
 		break;
 
 	default:
