@@ -3794,6 +3794,8 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	cmr_u32                                     is_set_stats_buf = 0;
 	cmr_int                                     isp_stats = 0;
 	nsecs_t                                     time_end = 0;
+	cmr_u32                                     curr_frame = 0;
+	cmr_u8                                      *paddr;
 
 	if (!cxt->stream_on) {
 		ISP_LOGI("skip stats when stream off");
@@ -3832,6 +3834,17 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	awb_stats_buf_ptr->timestamp.sec = statis_info->statis_frame.time_stamp.sec;
 	awb_stats_buf_ptr->timestamp.usec = statis_info->statis_frame.time_stamp.usec;
 	isp_stats = (cmr_int)statis_info->statis_frame.vir_addr;
+
+	/*parse the hw3a frame id from the vir addr*/
+	paddr = (cmr_u8 *)isp_stats;
+	curr_frame = paddr[6] + (paddr[7] << 8);
+	ISP_LOGV("get current frame is:%d, statis_info->statis_cnt:%ld",
+			curr_frame, statis_info->statis_cnt);
+	if (curr_frame != statis_info->statis_cnt) {
+		isp3a_put_3a_stats_buf(isp_3a_handle);
+		ISP_LOGI("skip current frame is:%d", curr_frame);
+		goto exit;
+	}
 #ifdef CONFIG_ISP_SUPPORT_AF_STATS
 	ret = isp_dispatch_stats((void *)isp_stats, ae_stats_buf_ptr->addr,
 				 awb_stats_buf_ptr->addr, NULL,
@@ -3850,9 +3863,9 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	}
 	time_end = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGI("test stats thr time_delta = %d us stats_cnt = %ld camera id = %d",
-		 (cmr_s32)(time_end - statis_info->timestamp) / 1000,
-		 statis_info->statis_cnt,
-		 cxt->camera_id);
+			(cmr_s32)(time_end - statis_info->timestamp) / 1000,
+			statis_info->statis_cnt,
+			cxt->camera_id);
 
 	/* free stats buf to isp drv */
 	statis_buf.buf_size = statis_info->statis_frame.buf_size;

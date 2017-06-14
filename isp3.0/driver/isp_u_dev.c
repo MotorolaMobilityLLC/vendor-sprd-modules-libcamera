@@ -673,10 +673,11 @@ static cmr_int isp_dev_handle_statis(isp_handle handle, struct isp_irq_info *irq
 	statis_info.statis_frame.time_stamp.sec = irq_info->time_stamp.sec;
 	statis_info.statis_frame.time_stamp.usec = irq_info->time_stamp.usec;
 	statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
-	statis_info.statis_cnt = irq_info->frm_index;
-	ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt %ld",
+	statis_info.statis_cnt = irq_info->statis_cnt;
+	statis_info.irq_statis_cnt = irq_info->frm_index;
+	ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx statis_cnt %ld, irq_statis_cnt %ld",
 		 file->camera_id, irq_info->yaddr_vir, irq_info->yaddr,
-		 irq_info->length, statis_info.statis_cnt);
+		 irq_info->length, statis_info.statis_cnt, statis_info.irq_statis_cnt);
 	pthread_mutex_lock(&file->cb_mutex);
 	if (file->isp_event_cb) {
 		(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_info, sizeof(struct isp_statis_info), (void *)file->evt_3a_handle);

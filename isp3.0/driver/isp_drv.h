@@ -72,6 +72,7 @@ struct isp_statis_info {
 	struct isp_statis_frame_output  statis_frame;
 	nsecs_t                         timestamp;
 	cmr_uint                        statis_cnt;
+	cmr_uint                        irq_statis_cnt;
 };
 
 struct isp_irq_node {
