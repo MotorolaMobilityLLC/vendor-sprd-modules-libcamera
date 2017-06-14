@@ -708,8 +708,7 @@ int SprdCamera3HWI::configureStreams(
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
-             }
-             else if (sprddefInfo.sprd_eis_enabled) {
+            } else if (sprddefInfo.sprd_eis_enabled) {
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
             } else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
@@ -1019,6 +1018,15 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
     mFrameNum = request->frame_number;
     meta = request->settings;
+    /*fix 30fps for blur mode**/
+    if (mMultiCameraMode == MODE_REFOCUS &&
+        meta.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
+        int32_t aeTargetFpsRange[2] = {30, 30};
+        meta.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE, aeTargetFpsRange,
+                    ARRAY_SIZE(aeTargetFpsRange));
+    }
+    /* end fix 30fps for blur mode**/
+
     mMetadataChannel->request(meta);
     mMetadataChannel->getCapRequestPara(meta, &capturePara);
 
