@@ -2995,6 +2995,8 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
             real_type = FLASH_OPEN;
         } else {
             real_type = FLASH_CLOSE_AFTER_OPEN;
+            cfg_ptr->led0_enable = 1;
+            cfg_ptr->led1_enable = 1;
         }
         break;
     case ISP_FLASH_TYPE_MAIN:
@@ -3002,6 +3004,8 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
             real_type = FLASH_HIGH_LIGHT;
         } else {
             real_type = FLASH_CLOSE_AFTER_OPEN;
+            cfg_ptr->led0_enable = 1;
+            cfg_ptr->led1_enable = 1;
         }
         break;
     default:
