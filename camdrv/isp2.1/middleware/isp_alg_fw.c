@@ -216,6 +216,7 @@ struct isp_alg_fw_context {
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
 	cmr_handle thr_handle;
+	cmr_handle thr_afhandle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
 	cmr_handle handle_otp;
@@ -1245,7 +1246,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	message.sub_msg_type = AF_DATA_IMG_BLK;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
 	message.alloc_flag = 1;
-	ret = cmr_thread_msg_send(cxt->thr_handle, &message);
+	ret = cmr_thread_msg_send(cxt->thr_afhandle, &message);
 	if (ret) {
 		ISP_LOGE("fail to send evt af, ret %ld", ret);
 		free(message.data);
@@ -1716,11 +1717,39 @@ void ispalg_dev_evt_msg(cmr_int evt, void *data, void *privdata)
 	message.sync_flag = CMR_MSG_SYNC_NONE;
 	message.alloc_flag = 1;
 	message.data = data;
-	ret = cmr_thread_msg_send(cxt->thr_handle, &message);
+	if (ISP_CTRL_EVT_AF == message.msg_type)
+		ret = cmr_thread_msg_send(cxt->thr_afhandle, &message);
+	else
+		ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("fail to send a message, evt is %ld", evt);
 		free(message.data);
 	}
+}
+
+cmr_int ispalg_afthread_proc(struct cmr_msg *message, void *p_data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+
+	if (!message || !p_data) {
+		ISP_LOGE("fail to check input param ");
+		goto exit;
+	}
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+
+	switch (message->msg_type) {
+	case ISP_CTRL_EVT_AF:
+		ret = ispalg_af_process((cmr_handle) cxt, message->sub_msg_type, message->data);
+		break;
+	default:
+		ISP_LOGV("don't support msg");
+		break;
+	}
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+
 }
 
 cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
@@ -1762,9 +1791,6 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 			ret = ispalg_afl_process((cmr_handle) cxt, message->data);
 		}
 		break;
-	case ISP_CTRL_EVT_AF:
-		ret = ispalg_af_process((cmr_handle) cxt, message->sub_msg_type, message->data);
-		break;
 	case ISP_CTRL_EVT_BINNING:
 		ret = ispalg_binning_stat_data_parser((cmr_handle) cxt, message->data);
 		break;
@@ -1786,6 +1812,13 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM, ispalg_thread_proc, (void *)cxt);
+
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to create process thread");
+		ret = ISP_ERROR;
+	}
+
+	ret = cmr_thread_create(&cxt->thr_afhandle, ISP_THREAD_QUEUE_NUM, ispalg_afthread_proc, (void *)cxt);
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create process thread");
@@ -1814,6 +1847,16 @@ cmr_int ispalg_destroy_thread_proc(cmr_handle isp_alg_handle)
 			ISP_LOGE("fail to destroy process thread");
 		}
 	}
+
+	if (cxt->thr_afhandle) {
+		ret = cmr_thread_destroy(cxt->thr_afhandle);
+		if (!ret) {
+			cxt->thr_afhandle = (cmr_handle) NULL;
+		} else {
+			ISP_LOGE("fail to destroy process thread");
+		}
+	}
+
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
