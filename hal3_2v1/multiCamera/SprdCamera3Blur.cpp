@@ -639,12 +639,12 @@ int SprdCamera3Blur::setupPhysicalCameras() {
  *==========================================================================*/
 SprdCamera3Blur::CaptureThread::CaptureThread()
     : mSavedCapReqsettings(NULL), mCaptureStreamsNum(0), mLastMinScope(0),
-      mLastMaxScope(0), mLastAdjustRati(0), mFirstCapture(false),
-      mFirstPreview(false), mUpdateCaptureWeightParams(false),
-      mUpdatePreviewWeightParams(false), mLastFaceNum(0), mSkipFaceNum(0),
-      mRotation(0), mLastTouchX(0), mLastTouchY(0), mBlurBody(true),
-      mUpdataTouch(false), mVersion(0), mIsGalleryBlur(false),
-      mIsBlurAlways(false), nearYuv(NULL) {
+      mLastMaxScope(0), mLastAdjustRati(0), mCircleSizeScale(0),
+      mFirstCapture(false), mFirstPreview(false),
+      mUpdateCaptureWeightParams(false), mUpdatePreviewWeightParams(false),
+      mLastFaceNum(0), mSkipFaceNum(0), mRotation(0), mLastTouchX(0),
+      mLastTouchY(0), mBlurBody(true), mUpdataTouch(false), mVersion(0),
+      mIsGalleryBlur(false), mIsBlurAlways(false), nearYuv(NULL) {
     HAL_LOGI(" E");
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
@@ -1380,22 +1380,22 @@ void SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mFirstCapture = true;
     mFirstPreview = true;
     mUpdateCaptureWeightParams = true;
-    mLastMinScope = 5;
+    mLastMinScope = 1;
     mLastMaxScope = 50;
-    mLastAdjustRati = 6000;
+    mLastAdjustRati = 20000;
 
     // preview params, width and height was inited in configureStreams
-    mPreviewInitParams.min_slope = (float)(mLastMinScope) / 1000;
-    mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 1000;
+    mPreviewInitParams.min_slope = (float)(mLastMinScope) / 10000;
+    mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mPreviewInitParams.findex2gamma_adjust_ratio =
-        (float)(mLastAdjustRati) / 1000;
+        (float)(mLastAdjustRati) / 10000;
     mPreviewInitParams.box_filter_size = 7;
 
     // capture params, width and height was inited in configureStreams
-    mCaptureInitParams.min_slope = (float)(mLastMinScope) / 1000;
-    mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 1000;
+    mCaptureInitParams.min_slope = (float)(mLastMinScope) / 10000;
+    mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mCaptureInitParams.findex2gamma_adjust_ratio =
-        (float)(mLastAdjustRati) / 1000;
+        (float)(mLastAdjustRati) / 10000;
     mCaptureInitParams.box_filter_size = 7;
 
     initBlur20Params();
@@ -1460,6 +1460,11 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
 
     HAL_LOGD("roi_type:%d, mIsGalleryBlur:%d, mIsBlurAlways:%d",
              mCaptureWeightParams.roi_type, mIsGalleryBlur, mIsBlurAlways);
+
+    property_get("persist.sys.cam.blur.cirlscal", prop, "50");
+    if (atoi(prop) != 0) {
+        mCircleSizeScale = atoi(prop);
+    }
     mLastFaceNum = 0;
     mSkipFaceNum = 0;
     mRotation = 0;
@@ -1472,7 +1477,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     mPreviewWeightParams.sel_x = mPreviewInitParams.width / 2;
     mPreviewWeightParams.sel_y = mPreviewInitParams.height / 2;
     mPreviewWeightParams.circle_size =
-        mPreviewInitParams.height / BLUR_CIRCLE_SIZE_SCALE / 2;
+        mPreviewInitParams.height * mCircleSizeScale / 100 / 2;
     mPreviewWeightParams.valid_roi = 0;
     memset(mPreviewWeightParams.x1, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mPreviewWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
@@ -1487,7 +1492,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     mCaptureWeightParams.sel_y = mCaptureInitParams.height / 2;
     mCaptureWeightParams.win_peak_pos = mWinPeakPos;
     mCaptureWeightParams.circle_size =
-        mCaptureInitParams.height / BLUR_CIRCLE_SIZE_SCALE / 2;
+        mCaptureInitParams.height * mCircleSizeScale / 100 / 2;
     mCaptureWeightParams.valid_roi = 0;
     memset(mCaptureWeightParams.x1, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mCaptureWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
@@ -1525,16 +1530,16 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
     property_get("persist.sys.camera.blur.min", prop, "0");
     if (0 != atoi(prop) && mLastMinScope != atoi(prop)) {
         mLastMinScope = atoi(prop);
-        mPreviewInitParams.min_slope = (float)(mLastMinScope) / 1000;
-        mCaptureInitParams.min_slope = (float)(mLastMinScope) / 1000;
+        mPreviewInitParams.min_slope = (float)(mLastMinScope) / 10000;
+        mCaptureInitParams.min_slope = (float)(mLastMinScope) / 10000;
         ret = true;
     }
 
     property_get("persist.sys.camera.blur.max", prop, "0");
     if (0 != atoi(prop) && mLastMaxScope != atoi(prop)) {
         mLastMaxScope = atoi(prop);
-        mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 1000;
-        mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 1000;
+        mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 10000;
+        mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
         ret = true;
     }
 
@@ -1542,9 +1547,9 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
     if (0 != atoi(prop) && mLastAdjustRati != atoi(prop)) {
         mLastAdjustRati = atoi(prop);
         mPreviewInitParams.findex2gamma_adjust_ratio =
-            (float)(mLastAdjustRati) / 1000;
+            (float)(mLastAdjustRati) / 10000;
         mCaptureInitParams.findex2gamma_adjust_ratio =
-            (float)(mLastAdjustRati) / 1000;
+            (float)(mLastAdjustRati) / 10000;
         ret = true;
     }
 
@@ -1744,9 +1749,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             int circle =
                 metaSettings.find(ANDROID_SPRD_BLUR_CIRCLE_SIZE).data.i32[0];
             if (circle != 0) {
-                int max = mPreviewInitParams.height / BLUR_CIRCLE_SIZE_SCALE;
+                int max = mPreviewInitParams.height * mCircleSizeScale / 100;
                 if (mPreviewInitParams.width < mPreviewInitParams.height) {
-                    max = mPreviewInitParams.width / BLUR_CIRCLE_SIZE_SCALE;
+                    max = mPreviewInitParams.width * mCircleSizeScale / 100;
                 }
                 circle = max - (max - BLUR_CIRCLE_VALUE_MIN) * circle / 255;
                 if (mPreviewWeightParams.circle_size != circle) {
@@ -1780,7 +1785,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             mPreviewWeightParams.sel_x = mPreviewInitParams.width / 2;
             mPreviewWeightParams.sel_y = mPreviewInitParams.height / 2;
             mPreviewWeightParams.circle_size =
-                mPreviewInitParams.height / BLUR_CIRCLE_SIZE_SCALE / 2;
+                mPreviewInitParams.height * mCircleSizeScale / 100 / 2;
             mUpdatePreviewWeightParams = true;
             mPreviewWeightParams.valid_roi = 0;
 
@@ -2659,6 +2664,10 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
         }
     }
     memset(mLocalCapBuffer, 0, sizeof(new_mem_t) * BLUR_LOCAL_CAPBUFF_NUM);
+    memset(&mCaptureThread->mSavedCapRequest, 0,
+           sizeof(camera3_capture_request_t));
+    memset(&mCaptureThread->mSavedCapReqstreambuff, 0,
+           sizeof(camera3_stream_buffer_t));
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
     HAL_LOGI("X");
