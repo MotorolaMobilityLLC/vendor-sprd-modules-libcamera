@@ -2290,7 +2290,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 	}
 
 	//_alsc_set_param(&lsc_param);   // for LSC2.X neet to reopen
-
+	#if 0
 	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
 		int original_lens_bits = 16;
@@ -2333,7 +2333,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 		lsc_param.lsc_otp_oc_b_y = cxt->otp_data->single_otp.optical_center_info.B.y;
 		lsc_param.lsc_otp_oc_en = 1;
 	}
-
+	#endif
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
 	}
