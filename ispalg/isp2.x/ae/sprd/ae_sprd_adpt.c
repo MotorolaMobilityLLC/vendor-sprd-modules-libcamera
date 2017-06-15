@@ -41,7 +41,7 @@
 #include "ae_debug_info_parser.h"
 
 #define AE_UPDATE_BASE_EOF 0
-#define AE_UPDATE_BASE_SOF 1
+#define AE_UPDATE_BASE_SOF 0
 #define AE_UPDAET_BASE_OFFSET AE_UPDATE_BASE_SOF
 #define AE_TUNING_VER 1
 
