@@ -187,17 +187,10 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 
 static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr_s32 roi_num)
 {
-	cmr_s32 i, num;
-	cmr_u64 *p;
-	cmr_u32 data[25];
+	cmr_s32 i = 0;
+	cmr_u64 *p = fv;
 
-	num = 0;
-	p = fv;
-
-	if (filter_mask & SOBEL5_BIT) {
-		num++;
-		for (i = 0; i < roi_num; ++i)
-			*p++ = 0;
+	if (filter_mask & SOBEL5_BIT) {	//not impelmented in this AFM
 	}
 
 	if (filter_mask & SOBEL9_BIT) {	//not impelmented in this AFM
@@ -207,14 +200,13 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	}
 
 	if (filter_mask & ENHANCED_BIT) {
-		num++;
 		for (i = 0; i < roi_num; ++i) {
 			//ISP_LOGV("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
 			*p++ = af->af_fv_val.af_fv0[i];
 		}
 	}
 
-	return num;
+	return 0;
 }
 
 // len
@@ -258,9 +250,7 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 
 static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE alg_mode)
 {
-	roi_info_t *roi = &af->roi;
-
-	if (win)
+	if (NULL != win)
 		ISP_LOGV("valid_win = %d, mode = %d", win->win_num, win->mode);
 	else
 		ISP_LOGV("win is NULL, use default roi");
@@ -959,8 +949,8 @@ static cmr_s32 trigger_deinit(af_ctrl_t * af)
 static void set_manual(af_ctrl_t * af, char *test_param)
 {
 	UNUSED(test_param);
-	af->state = STATE_IDLE;
-	af->caf_state = CAF_IDLE;
+	af->state = STATE_MANUAL;
+	af->focus_state = AF_IDLE;
 	//property_set("af_set_pos","0");// to fix lens to position 0
 	trigger_stop(af);
 
@@ -991,7 +981,7 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;	//not need trigger to work when caf_start_monitor
 	af->state = STATE_CAF;
-	af->caf_state = CAF_SEARCHING;
+	af->focus_state = AF_SEARCHING;
 	af->algo_mode = CAF;
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1014,7 +1004,7 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;
 	af->state = STATE_NORMAL_AF;
-	af->caf_state = CAF_IDLE;
+	af->focus_state = AF_IDLE;
 	//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
 	//saf_start(af, NULL);  //SAF, win is NULL using default
 	ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
@@ -1340,14 +1330,6 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 	faf_trigger_init(af->af_alg_cxt);
 }
 
-static void saf_stop(af_ctrl_t * af)
-{
-	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt);
-	AF_Process_Frame(af->af_alg_cxt);
-	pthread_mutex_unlock(&af->af_work_lock);
-}
-
 static cmr_s32 saf_process_frame(af_ctrl_t * af)
 {
 	cmr_u8 res;
@@ -1364,8 +1346,8 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 
 static void caf_start(af_ctrl_t * af)
 {
-	ISP_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
-	af->caf_state = CAF_MONITORING;
+	ISP_LOGV("state = %s, focus_state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
+	af->focus_state = AF_IDLE;
 
 	if (STATE_RECORD_CAF == af->state)
 		af->algo_mode = VAF;
@@ -1374,21 +1356,6 @@ static void caf_start(af_ctrl_t * af)
 
 	calc_roi(af, NULL, af->algo_mode);
 	do_start_af(af);
-}
-
-static void caf_stop(af_ctrl_t * af)
-{
-	ISP_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
-
-	if (CAF_SEARCHING == af->caf_state) {
-		pthread_mutex_lock(&af->af_work_lock);
-		AF_STOP(af->af_alg_cxt);
-		AF_Process_Frame(af->af_alg_cxt);
-		pthread_mutex_unlock(&af->af_work_lock);
-	}
-
-	af->caf_state = CAF_IDLE;
-	return;
 }
 
 static void caf_process_frame(af_ctrl_t * af)
@@ -1405,7 +1372,7 @@ static void caf_process_frame(af_ctrl_t * af)
 		}
 		ISP_LOGI("notify_stop");
 		notify_stop(af, res);
-		af->caf_state = CAF_MONITORING;
+		af->focus_state = AF_IDLE;
 		trigger_start(af);	//trigger reset after caf done
 		do_start_af(af);
 	}
@@ -1424,6 +1391,7 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 	if (atoi(value) != 1)
 		return;
 
+	af->focus_state = AF_SEARCHING;
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1459,10 +1427,14 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 	af->vcm_stable = 0;
 }
 
-static void caf_stop_search(af_ctrl_t * af)
+static void af_stop_search(af_ctrl_t * af)
 {
+	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
+	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
+	pthread_mutex_unlock(&af->af_work_lock);
+	af->focus_state = AF_IDLE;
 }
 
 static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
@@ -1473,18 +1445,17 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
-	if ((res.is_caf_trig || AFV1_TRUE == af->force_trigger) && CAF_SEARCHING != af->caf_state) {
+	if ((res.is_caf_trig || AFV1_TRUE == af->force_trigger) && AF_SEARCHING != af->focus_state) {
 		ISP_LOGI("caf trigger af %d, force trigger %d", res.is_caf_trig, af->force_trigger);
 		pthread_mutex_lock(&af->af_work_lock);
-		af->caf_state = CAF_SEARCHING;
 		caf_start_search(af, &res);
 		af->force_trigger = (AFV1_FALSE);
 		pthread_mutex_unlock(&af->af_work_lock);
-	} else if ((res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) && af->caf_state == CAF_SEARCHING) {
+	} else if ((res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) && af->focus_state == AF_SEARCHING) {
 		ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
 		af->need_re_trigger = 1;
 		pthread_mutex_lock(&af->af_work_lock);
-		if(AFV1_SUCCESS == AF_STOP(af->af_alg_cxt)){
+		if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt)) {
 			AF_Process_Frame(af->af_alg_cxt);
 			memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 			aft_in.AFT_mode = af->algo_mode;
@@ -1494,12 +1465,11 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 			AF_Trigger(af->af_alg_cxt, &aft_in);
 			do_start_af(af);
 			ISP_LOGI("AF retrigger start \n");
-		}
-		else{
-			ISP_LOGI("AF retrigger no support @%d \n",AF_Get_alg_mode(af->af_alg_cxt));
+		} else {
+			ISP_LOGI("AF retrigger no support @%d \n", AF_Get_alg_mode(af->af_alg_cxt));
 		}
 		pthread_mutex_unlock(&af->af_work_lock);
-	} else if (res.is_cancel_caf && af->caf_state != CAF_SEARCHING) {
+	} else if (res.is_cancel_caf && af->focus_state != AF_SEARCHING) {
 		ISP_LOGI("cancel af while not searching AF_mode = %d", AF_Get_alg_mode(af->af_alg_cxt));
 	}
 
@@ -1565,7 +1535,7 @@ static void calc_histogram(af_ctrl_t * af, isp_awb_statistic_hist_info_t * stat)
 static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_awb_statistic_hist_info_t * stat)
 {
 	struct aft_proc_calc_param *prm = &(af->prm_ae);
-	ISP_LOGV("caf_state = %s", CAF_STATE_STR(af->caf_state));
+	ISP_LOGV("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
 
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
 
@@ -1628,9 +1598,9 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 	prm->pd_info.pd_enable = af->pd.pd_enable;
 	prm->pd_info.effective_frmid = af->pd.effective_frmid;
 	prm->pd_info.pd_roi_num = af->pd.pd_roi_num;
-	memcpy(&(prm->pd_info.confidence[0]),&(af->pd.confidence[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
-	memcpy(&(prm->pd_info.pd_value[0]),&(af->pd.pd_value[0]),sizeof(double)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
-	memcpy(&(prm->pd_info.pd_roi_dcc[0]),&(af->pd.pd_roi_dcc[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
+	memcpy(&(prm->pd_info.confidence[0]), &(af->pd.confidence[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+	memcpy(&(prm->pd_info.pd_value[0]), &(af->pd.pd_value[0]), sizeof(double) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+	memcpy(&(prm->pd_info.pd_roi_dcc[0]), &(af->pd.pd_roi_dcc[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
 	prm->comm_info.otp_inf_pos = af->otp_info.rdm_data.infinite_cali;
 	prm->comm_info.otp_macro_pos = af->otp_info.rdm_data.macro_cali;
 	prm->comm_info.registor_pos = lens_get_pos(af);
@@ -1643,27 +1613,24 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 static void caf_monitor_process_fd(af_ctrl_t * af)
 {
 	ISP_LOGV("face detect af state = %s", STATE_STRING(af->state));
-	if (STATE_INACTIVE == af->state)
-		return;
 
 	if (STATE_NORMAL_AF == af->state) {
 		return;
-	} else if (STATE_IDLE != af->state) {
-		if (face_dectect_trigger(af->af_alg_cxt)) {
-			if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
-				af->pre_state = af->state;
-				af->state = STATE_IDLE;
-				caf_stop(af);	// todo : maybe we need wait caf done when caf is searching; or report caf failed
-			} else if (STATE_FAF == af->state) {
-				pthread_mutex_lock(&af->af_work_lock);
-				AF_STOP(af->af_alg_cxt);
-				AF_Process_Frame(af->af_alg_cxt);
-				pthread_mutex_unlock(&af->af_work_lock);
+	} else if (face_dectect_trigger(af->af_alg_cxt)) {
+		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+			if (AF_SEARCHING == af->focus_state) {	// todo : maybe we need wait caf done when caf is searching; or report caf failed
+				af_stop_search(af);
 			}
-			af->state = STATE_FAF;
-			faf_start(af, NULL);
-			ISP_LOGV("FAF Trigger");
+		} else if (STATE_FAF == af->state) {
+			pthread_mutex_lock(&af->af_work_lock);
+			AF_STOP(af->af_alg_cxt);
+			AF_Process_Frame(af->af_alg_cxt);
+			pthread_mutex_unlock(&af->af_work_lock);
 		}
+		af->pre_state = af->state;
+		af->state = STATE_FAF;
+		faf_start(af, NULL);
+		ISP_LOGV("FAF Trigger");
 	}
 }
 
@@ -1761,18 +1728,19 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		return rtn;
 	}
 
-	ISP_LOGI("af state = %s, caf state = %s, set af_mode = %d", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state), af_mode);
+	ISP_LOGI("af state = %s, focus state = %s, set af_mode = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), af_mode);
+	af->pre_state = af->state;
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
 		af->request_mode = af_mode;
-		//af->state = STATE_NORMAL_AF;
+		af->state = STATE_NORMAL_AF;
+		af->focus_state = AF_IDLE;
 		trigger_set_mode(af, AFT_MODE_NORMAL);
 		trigger_stop(af);
 		break;
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
 		af->request_mode = af_mode;
-		af->pre_state = af->state;
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		caf_start(af);
 		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
@@ -1782,15 +1750,13 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 			af->force_trigger = AFV1_TRUE;
 		}
 		break;
-
 	case AF_MODE_PICTURE:
+		af->request_mode = af_mode;
 		af->takePicture_timeout = 0;
-		if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
-			if (AF_NOT_FINISHED == AF_is_finished(af->af_alg_cxt) || af->need_re_trigger || DCAM_AFTER_VCM_NO == compare_timestamp(af)) {
-				af_clear_sem(af);
-				af_wait_caf_finish(af);
-			};
-		}
+		if (AF_NOT_FINISHED == AF_is_finished(af->af_alg_cxt) || af->need_re_trigger || DCAM_AFTER_VCM_NO == compare_timestamp(af)) {
+			af_clear_sem(af);
+			af_wait_caf_finish(af);
+		};
 		af->state = STATE_PICTURE;
 		ISP_LOGV("dcam_timestamp-vcm_timestamp = %" PRIu64 " ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 		get_vcm_registor_pos(af);
@@ -1819,35 +1785,13 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 
 	property_set("af_mode", "none");
 	af->test_loop_quit = 1;
-	if (STATE_INACTIVE == af->state) {
-		return rtn;
-	}
 
-	switch (af->state) {
-	case STATE_IDLE:
-		break;
-	case STATE_NORMAL_AF:
-		ISP_LOGI("notify_stop, for the first saf");
-		notify_stop(af, 0);	//in case of the first saf timeout in state = normal_af
-		break;
-	case STATE_CAF:
-	case STATE_RECORD_CAF:
-		af->pre_state = af->state;
-		af->state = STATE_IDLE;
-		caf_stop(af);	// todo : maybe we need wait caf done when caf is searching; or report caf failed
-		break;
-	case STATE_FAF:
-		break;
-	case STATE_FULLSCAN:
-		caf_stop(af);
-		break;
-	default:
-		ISP_LOGW("unexpected af state");
-		break;
+	if (AF_SEARCHING == af->focus_state) {
+		ISP_LOGI("last af was not done, af state %s", STATE_STRING(af->state));
+		af_stop_search(af);
 	}
 
 	if (STATE_FULLSCAN == af->state) {
-		af->caf_state = CAF_SEARCHING;
 		af->algo_mode = CAF;
 		memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 		aft_in.AFT_mode = af->algo_mode;
@@ -1855,11 +1799,10 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 		aft_in.AF_Trigger_Type = BOKEH;
 		AF_Trigger(af->af_alg_cxt, &aft_in);
 		do_start_af(af);
-		return rtn;
 	} else {
 		saf_start(af, win);
-		af->state = STATE_NORMAL_AF;
 	}
+	af->focus_state = AF_SEARCHING;
 	ISP_LOGI("saf start done \n");
 	return rtn;
 }
@@ -1913,7 +1856,6 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	af->isp_info.width = in_ptr->size.w;
 	af->isp_info.height = in_ptr->size.h;
 	ISP_LOGI("video start af state = %s, width = %d, height = %d", STATE_STRING(af->state), in_ptr->size.w, in_ptr->size.h);
-	//af->state = af->pre_state = STATE_IDLE;
 	property_get("af_mode", AF_MODE, "none");
 	if (0 == strcmp(AF_MODE, "none")) {
 		af->state = af->pre_state = STATE_CAF;
@@ -2140,17 +2082,18 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct pd_result *pd_calc_result = (struct pd_result *)param0;
 
-	memset(&(af->pd),0,sizeof(pd_algo_result_t));
+	memset(&(af->pd), 0, sizeof(pd_algo_result_t));
 	af->pd.effective_frmid = (cmr_u32) pd_calc_result->pdGetFrameID;
 	af->pd.pd_enable = (af->pd.effective_frmid) ? 1 : 0;
 	af->pd.pd_roi_num = pd_calc_result->pd_roi_num;
 	//transfer full phase diff data value to algorithm
-	memcpy(&(af->pd.confidence[0]),&(pd_calc_result->pdConf[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
-	memcpy(&(af->pd.pd_value[0]),&(pd_calc_result->pdPhaseDiff[0]),sizeof(double)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
-	memcpy(&(af->pd.pd_roi_dcc[0]),&(pd_calc_result->pdDCCGain[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
+	memcpy(&(af->pd.confidence[0]), &(pd_calc_result->pdConf[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+	memcpy(&(af->pd.pd_value[0]), &(pd_calc_result->pdPhaseDiff[0]), sizeof(double) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+	memcpy(&(af->pd.pd_roi_dcc[0]), &(pd_calc_result->pdDCCGain[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
 	af->trigger_source_type |= AF_DATA_PD;
-	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n",pd_calc_result->pdPhaseDiff[0],pd_calc_result->pdPhaseDiff[1],pd_calc_result->pdPhaseDiff[2],pd_calc_result->pdPhaseDiff[3]);
-	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n",pd_calc_result->pdConf[0],pd_calc_result->pdConf[1],pd_calc_result->pdConf[2],pd_calc_result->pdConf[3],af->pd.pd_roi_num);
+	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n", pd_calc_result->pdPhaseDiff[0], pd_calc_result->pdPhaseDiff[1], pd_calc_result->pdPhaseDiff[2], pd_calc_result->pdPhaseDiff[3]);
+	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n", pd_calc_result->pdConf[0], pd_calc_result->pdConf[1], pd_calc_result->pdConf[2], pd_calc_result->pdConf[3],
+		 af->pd.pd_roi_num);
 	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d", pd_calc_result->pdGetFrameID,
 		 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
 
@@ -2276,8 +2219,7 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 
 	case AF_CMD_SET_ISP_STOP_INFO:
 		ISP_LOGI("video stop af state = %s", STATE_STRING(af->state));
-		if (STATE_IDLE != af->state)
-			do_stop_af(af);
+		do_stop_af(af);
 		break;
 
 	case AF_CMD_SET_ISP_TOOL_AF_TEST:
@@ -2552,7 +2494,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 	system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
-	ISP_LOGV("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
+	ISP_LOGV("state = %s, focus_state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
@@ -2574,7 +2516,9 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 
 	case AF_DATA_IMG_BLK:
-		caf_monitor_process(af);
+		if (AF_MODE_CONTINUE == af->request_mode || AF_MODE_VIDEO == af->request_mode) {
+			caf_monitor_process(af);
+		}
 		break;
 
 	default:
@@ -2590,16 +2534,18 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		switch (af->state) {
 		case STATE_NORMAL_AF:
 			pthread_mutex_lock(&af->af_work_lock);
-			if (saf_process_frame(af)) {
-				af->state = STATE_IDLE;
-				trigger_start(af);
+			if (AF_SEARCHING == af->focus_state) {
+				if (saf_process_frame(af)) {
+					af->focus_state = AF_IDLE;
+					trigger_start(af);
+				}
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
 			break;
 		case STATE_FULLSCAN:
 		case STATE_CAF:
 		case STATE_RECORD_CAF:
-			if (CAF_SEARCHING == af->caf_state) {
+			if (AF_SEARCHING == af->focus_state) {
 				pthread_mutex_lock(&af->af_work_lock);
 				caf_process_frame(af);
 				pthread_mutex_unlock(&af->af_work_lock);

@@ -47,8 +47,7 @@ enum _lock_block {
 };
 
 enum af_state {
-	STATE_INACTIVE = 0,
-	STATE_IDLE,		// isp is ready, waiting for cmd
+	STATE_MANUAL = 0,
 	STATE_NORMAL_AF,	// single af or touch af
 	STATE_CAF,
 	STATE_RECORD_CAF,
@@ -58,8 +57,7 @@ enum af_state {
 };
 
 static const char *state_string[] = {
-	"inactive",
-	"idle",
+	"manual",
 	"normal_af",
 	"caf",
 	"record caf",
@@ -70,19 +68,17 @@ static const char *state_string[] = {
 
 #define STATE_STRING(state)    state_string[state]
 
-enum caf_state {
-	CAF_IDLE,
-	CAF_MONITORING,
-	CAF_SEARCHING
+enum focus_state {
+	AF_IDLE,
+	AF_SEARCHING,
 };
 
-static const char *caf_state_str[] = {
-	"caf idle",
-	"caf monitoring",
-	"caf searching"
+static const char *focus_state_str[] = {
+	"af idle",
+	"af searching",
 };
 
-#define CAF_STATE_STR(state)    caf_state_str[state]
+#define FOCUS_STATE_STR(state)    focus_state_str[state]
 
 enum dcam_after_vcm {
 	DCAM_AFTER_VCM_NO = 0,
@@ -129,16 +125,6 @@ typedef struct _isp_awb_statistic_hist_info {
 	cmr_u32 b_hist[256];
 	cmr_u32 y_hist[256];
 } isp_awb_statistic_hist_info_t;
-
-enum AF_AE_GAIN {
-	GAIN_1x = 0,
-	GAIN_2x,
-	GAIN_4x,
-	GAIN_8x,
-	GAIN_16x,
-	GAIN_32x,
-	GAIN_TOTAL
-};
 
 typedef struct _win_coord {
 	cmr_u32 start_x;
@@ -210,7 +196,7 @@ typedef struct _af_ctrl {
 	cmr_u32 af_dump_info_len;
 	cmr_u32 state;		//enum af_state state;
 	cmr_u32 pre_state;	//enum af_state pre_state;
-	cmr_u32 caf_state;	//enum caf_state caf_state;
+	cmr_u32 focus_state;	//enum caf_state caf_state;
 	cmr_u32 algo_mode;	//eAF_MODE algo_mode;
 	cmr_u32 takePicture_timeout;
 	cmr_u32 request_mode;
