@@ -307,7 +307,7 @@ static const SENSOR_REG_T ov2680_1600X1200_altek_mipi_raw[] = {
     {0x3814, 0x11},
     {0x3815, 0x11},
     {0x3819, 0x04},
-#if 1//ndef CAMERA_IMAGE_180
+#if 0//ndef CAMERA_IMAGE_180
     {0x3820, 0xc0},
     {0x3821, 0x00},
 #else

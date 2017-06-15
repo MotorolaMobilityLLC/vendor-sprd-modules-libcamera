@@ -48,6 +48,14 @@
 #define LSC_INFO_END_OFFSET 0x0699
 #define LSC_DATA_SIZE       1658
 
+/*Dual camera iso,lsc calibration offset*/
+#define MASTER_ISO_INFO_OFFSET 0x1065
+#define MASTER_LSC_INFO_OFFSET 0x106d
+#define MASTER_LSC_INFO_SIZE  1658
+#define SLAVE_ISO_INFO_OFFSET 0x16e7
+#define SLAVE_LSC_INFO_OFFSET 0x16ef
+#define SLAVE_LSC_INFO_SIZE 400
+
 #define LSC_INFO_CHANNEL_SIZE 726
 #define LSC_INFO_CHECKSUM 0x0b8b
 /*PDAF*/
