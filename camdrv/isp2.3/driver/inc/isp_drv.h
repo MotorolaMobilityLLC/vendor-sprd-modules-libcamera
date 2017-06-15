@@ -519,4 +519,15 @@ cmr_s32 isp_u_pdaf_extractor_bypass(isp_handle handle, cmr_u32 *bypass);
 cmr_s32 isp_u_pdaf_roi(isp_handle handle, void *roi);
 cmr_s32 isp_u_pdaf_correction(isp_handle handle, void *correction_param);
 
+/* DCAM sub-blocks */
+cmr_s32 dcam_u_2d_lsc_block(isp_handle handle, void *block_info);
+cmr_s32 dcam_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input * buf);
+cmr_s32 dcam_u_blc_block(isp_handle handle, void *block_info);
+cmr_s32 dcam_u_raw_aem_block(isp_handle handle, void *block_info);
+cmr_s32 dcam_u_raw_aem_mode(isp_handle handle, cmr_u32 mode);
+cmr_s32 dcam_u_raw_aem_skip_num(isp_handle handle, cmr_u32 skip_num);
+cmr_s32 dcam_u_raw_aem_shift(isp_handle handle, void *shift);
+cmr_s32 dcam_u_raw_aem_offset(isp_handle handle, cmr_u32 x, cmr_u32 y);
+cmr_s32 dcam_u_raw_aem_blk_size(isp_handle handle, cmr_u32 width, cmr_u32 height);
+
 #endif
