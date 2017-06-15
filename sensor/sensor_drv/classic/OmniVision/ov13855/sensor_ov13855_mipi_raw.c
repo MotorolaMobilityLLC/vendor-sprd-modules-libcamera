@@ -22,31 +22,27 @@
 #include "sensor_ov13855_mipi_raw.h"
 #define LOG_TAG "ov13855_mipi_raw"
 
-#define FPS_INFO       s_ov13855_mode_fps_info
-#define STATIC_INFO    s_ov13855_static_info
-#define VIDEO_INFO     s_ov13855_video_info
-#define MODULE_INFO    s_ov13855_module_info_tab
-#define RES_TAB_RAW    s_ov13855_resolution_tab_raw
-#define RES_TRIM_TAB   s_ov13855_resolution_trim_tab
-#define MIPI_RAW_INFO  g_ov13855_mipi_raw_info
+#define FPS_INFO s_ov13855_mode_fps_info
+#define STATIC_INFO s_ov13855_static_info
+#define VIDEO_INFO s_ov13855_video_info
+#define MODULE_INFO s_ov13855_module_info_tab
+#define RES_TAB_RAW s_ov13855_resolution_tab_raw
+#define RES_TRIM_TAB s_ov13855_resolution_trim_tab
+#define MIPI_RAW_INFO g_ov13855_mipi_raw_info
 
 /*==============================================================================
  * Description:
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov13855_drv_group_hold_on(cmr_handle handle) {
-    SENSOR_LOGI("E");
-}
+static void ov13855_drv_group_hold_on(cmr_handle handle) { SENSOR_LOGI("E"); }
 
 /*==============================================================================
  * Description:
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov13855_drv_group_hold_off(cmr_handle handle) {
-    SENSOR_LOGI("E");
-}
+static void ov13855_drv_group_hold_off(cmr_handle handle) { SENSOR_LOGI("E"); }
 
 /*==============================================================================
  * Description:
@@ -57,7 +53,7 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
     float gain_a = gain;
     float gain_d = 0x400; // spec p70, X1 = 15bit
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if (SENSOR_MAX_GAIN < (cmr_u16)gain_a) {
         gain_a = SENSOR_MAX_GAIN;
@@ -68,13 +64,17 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x320a, 0x01);
     // group 1:all other registers( gain)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x01);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3508, ((cmr_u16)gain_a >> 8) & 0x1f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3508,
+                        ((cmr_u16)gain_a >> 8) & 0x1f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3509, (cmr_u16)gain_a & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5100, ((cmr_u16)gain_d >> 8) & 0x7f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5100,
+                        ((cmr_u16)gain_d >> 8) & 0x7f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5101, (cmr_u16)gain_d & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5102, ((cmr_u16)gain_d >> 8) & 0x7f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5102,
+                        ((cmr_u16)gain_d >> 8) & 0x7f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5103, (cmr_u16)gain_d & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5104, ((cmr_u16)gain_d >> 8) & 0x7f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5104,
+                        ((cmr_u16)gain_d >> 8) & 0x7f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5105, (cmr_u16)gain_d & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x11);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0xA1);
@@ -88,10 +88,11 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
 static cmr_u16 ov13855_drv_read_frame_length(cmr_handle handle) {
     cmr_u32 frame_len;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     frame_len = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380e) & 0xff;
-    frame_len = frame_len << 8 | (hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380f) & 0xff);
+    frame_len = frame_len << 8 |
+                (hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380f) & 0xff);
     sns_drv_cxt->sensor_ev_info.preview_framelength = frame_len;
 
     return frame_len;
@@ -103,10 +104,11 @@ static cmr_u16 ov13855_drv_read_frame_length(cmr_handle handle) {
  * please modify this function acording your spec
  *============================================================================*/
 static void ov13855_drv_write_frame_length(cmr_handle handle,
-                                       cmr_u32 frame_len) {
+                                           cmr_u32 frame_len) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380e, (frame_len >> 8) & 0xff);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380e,
+                        (frame_len >> 8) & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380f, frame_len & 0xff);
     sns_drv_cxt->sensor_ev_info.preview_framelength = frame_len;
 }
@@ -122,7 +124,7 @@ static cmr_u32 ov13855_drv_read_shutter(cmr_handle handle) {
     cmr_u8 shutter_m = 0x00;
     cmr_u8 shutter_h = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     shutter_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3502);
     // value=(shutter>>0x04)&0x0f;
@@ -146,7 +148,7 @@ static cmr_u32 ov13855_drv_read_shutter(cmr_handle handle) {
 static void ov13855_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
     cmr_u16 value = 0x00;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     value = (shutter << 0x04) & 0xff;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3502, value);
@@ -164,14 +166,14 @@ static void ov13855_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
  * please don't change this function if it's necessary
  *============================================================================*/
 static cmr_int ov13855_drv_write_exposure_dummy(cmr_handle handle,
-                                             cmr_u32 shutter,
-                                             cmr_u32 dummy_line,
-                                             cmr_u16 size_index) {
+                                                cmr_u32 shutter,
+                                                cmr_u32 dummy_line,
+                                                cmr_u16 size_index) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     fr_len = sns_drv_cxt->frame_length_def;
     // ov13855_group_hold_on(handle);
 
@@ -193,9 +195,9 @@ write_sensor_shutter:
 
     ov13855_drv_write_shutter(handle, shutter);
 
-    if(sns_drv_cxt->ops_cb.set_exif_info) {
-        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                          SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(
+            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
     }
 
     return SENSOR_SUCCESS;
@@ -208,7 +210,7 @@ write_sensor_shutter:
  *============================================================================*/
 static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
 
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
@@ -255,7 +257,7 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
 static cmr_int ov13855_drv_init_fps_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
@@ -286,13 +288,13 @@ static cmr_int ov13855_drv_init_fps_info(cmr_handle handle) {
                 }
             }
             SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                         tempfps, trim_info[i].frame_line,
-                         trim_info[i].line_time);
+                        tempfps, trim_info[i].frame_line,
+                        trim_info[i].line_time);
             SENSOR_LOGI("mode %d,max_fps: %d ", i,
-                         fps_info->sensor_mode_fps[i].max_fps);
+                        fps_info->sensor_mode_fps[i].max_fps);
             SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
-                fps_info->sensor_mode_fps[i].is_high_fps,
-                fps_info->sensor_mode_fps[i].high_fps_skip_num);
+                        fps_info->sensor_mode_fps[i].is_high_fps,
+                        fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
         fps_info->is_init = 1;
     }
@@ -300,8 +302,7 @@ static cmr_int ov13855_drv_init_fps_info(cmr_handle handle) {
     return rtn;
 }
 
-static cmr_int ov13855_drv_get_static_info(cmr_handle handle,
-                                        cmr_u32 *param) {
+static cmr_int ov13855_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     cmr_u32 up = 0;
@@ -309,7 +310,7 @@ static cmr_int ov13855_drv_get_static_info(cmr_handle handle,
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(ex_info);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
@@ -346,7 +347,7 @@ static cmr_int ov13855_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(fps_info);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
 
     // make sure have inited fps of every sensor mode.
@@ -367,7 +368,6 @@ static cmr_int ov13855_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-
 static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
 
 static const cmr_u16 ov13855_pd_row[] = {2, 6, 10, 14};
@@ -381,8 +381,7 @@ static const struct pd_pos_info _ov13855_pd_pos_r[] = {
     {14, 2}, {6, 14},
 };
 
-static cmr_int ov13855_drv_get_pdaf_info(cmr_handle handle,
-                                         cmr_u32 *param) {
+static cmr_int ov13855_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
     cmr_u16 i = 0;
@@ -440,13 +439,12 @@ static cmr_int ov13855_drv_get_pdaf_info(cmr_handle handle,
  * cfg otp setting
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int ov13855_drv_access_val(cmr_handle handle,
-                                        cmr_uint param) {
+static cmr_int ov13855_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param_ptr);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
     switch (param_ptr->type) {
@@ -480,22 +478,22 @@ static cmr_int ov13855_drv_identify(cmr_handle handle, cmr_uint param) {
     cmr_u16 ver_value = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("mipi raw identify");
 
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov13855_PID_ADDR);
 
     if (ov13855_PID_VALUE == pid_value) {
-        ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov13855_VER_ADDR);
+        ver_value =
+            hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov13855_VER_ADDR);
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
         if (ov13855_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is ov13855 sensor");
-//            ov13855_drv_init_fps_info(handle);
+            //            ov13855_drv_init_fps_info(handle);
             ret_value = SENSOR_SUCCESS;
         } else {
-            SENSOR_LOGI("Identify this is %x%x sensor", pid_value,
-                              ver_value);
+            SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
         }
     } else {
         SENSOR_LOGE("sensor identify fail, pid_value = %x", pid_value);
@@ -509,8 +507,7 @@ static cmr_int ov13855_drv_identify(cmr_handle handle, cmr_uint param) {
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int ov13855_drv_before_snapshot(cmr_handle handle,
-                                        cmr_uint param) {
+static cmr_int ov13855_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
     cmr_u32 gain = 0;
@@ -519,11 +516,12 @@ static cmr_int ov13855_drv_before_snapshot(cmr_handle handle,
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
 
-    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
+    sns_drv_cxt->frame_length_def =
+        sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
 
     SENSOR_LOGI("capture_mode = %d", capture_mode);
 
@@ -536,11 +534,10 @@ static cmr_int ov13855_drv_before_snapshot(cmr_handle handle,
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    if(sns_drv_cxt->ops_cb.set_mode)
+    if (sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if(sns_drv_cxt->ops_cb.set_mode_wait_done)
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
-
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
@@ -548,16 +545,17 @@ static cmr_int ov13855_drv_before_snapshot(cmr_handle handle,
     cap_gain = gain;
     ov13855_drv_write_gain(handle, cap_gain);
     SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = %f",
-                 sns_drv_cxt->sensor_ev_info.preview_shutter,
-                 sns_drv_cxt->sensor_ev_info.preview_gain);
+                sns_drv_cxt->sensor_ev_info.preview_shutter,
+                sns_drv_cxt->sensor_ev_info.preview_gain);
 
     SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
-                 cap_gain);
+                cap_gain);
 snapshot_info:
 
-    if(sns_drv_cxt->ops_cb.set_exif_info) {
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                          SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          cap_shutter);
     } else {
         sns_drv_cxt->exif_info.exposure_line = cap_shutter;
     }
@@ -569,8 +567,7 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static cmr_int ov13855_drv_write_exposure(cmr_handle handle,
-                                       cmr_uint param) {
+static cmr_int ov13855_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -579,22 +576,26 @@ static cmr_int ov13855_drv_write_exposure(cmr_handle handle,
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_HANDLE(ex);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     size_index = ex->size_index;
 
-    frame_interval = (cmr_u16)(((exposure_line + dummy_line) *
-               (sns_drv_cxt->trim_tab_info[size_index].line_time)) / 1000000);
+    frame_interval =
+        (cmr_u16)(((exposure_line + dummy_line) *
+                   (sns_drv_cxt->trim_tab_info[size_index].line_time)) /
+                  1000000);
     SENSOR_LOGI(
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         size_index, exposure_line, dummy_line, frame_interval);
-    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[size_index].frame_line;
-    sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[size_index].line_time;
+    sns_drv_cxt->frame_length_def =
+        sns_drv_cxt->trim_tab_info[size_index].frame_line;
+    sns_drv_cxt->line_time_def =
+        sns_drv_cxt->trim_tab_info[size_index].line_time;
 
-    ret_value = ov13855_drv_write_exposure_dummy(handle, exposure_line, dummy_line,
-                                             size_index);
+    ret_value = ov13855_drv_write_exposure_dummy(handle, exposure_line,
+                                                 dummy_line, size_index);
 
     return ret_value;
 }
@@ -617,12 +618,11 @@ static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int ov13855_drv_write_gain_value(cmr_handle handle,
-                                         cmr_uint param) {
+static cmr_int ov13855_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     float real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     // real_gain = isp_to_real_gain(handle,param);
     // SENSOR_LOGI("param = %d", param);
@@ -683,8 +683,8 @@ static struct sensor_aec_i2c_tag ov13855_aec_info = {
 };
 
 static cmr_u16 ov13855_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
-                                      cmr_u32 dummy_line, cmr_u16 mode,
-                                      struct sensor_aec_i2c_tag *aec_info) {
+                                         cmr_u32 dummy_line, cmr_u16 mode,
+                                         struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
@@ -693,7 +693,7 @@ static cmr_u16 ov13855_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     float fps = 0.0;
     float line_time = 0.0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     fr_len = sns_drv_cxt->frame_length_def;
 
     dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
@@ -724,7 +724,8 @@ static cmr_u16 ov13855_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     return shutter;
 }
 
-static void ov13855_drv_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
+static void ov13855_drv_calc_gain(float gain,
+                                  struct sensor_aec_i2c_tag *aec_info) {
     float gain_a = gain;
     float gain_d = 0x400;
 
@@ -749,8 +750,7 @@ static void ov13855_drv_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_inf
     aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;
 }
 
-static cmr_int ov13855_drv_read_aec_info(cmr_handle handle,
-                                           cmr_uint param) {
+static cmr_int ov13855_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     cmr_u16 exposure_line = 0x00;
@@ -761,7 +761,7 @@ static cmr_int ov13855_drv_read_aec_info(cmr_handle handle,
     cmr_u16 frame_interval = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     info->aec_i2c_info_out = &ov13855_aec_info;
 
@@ -769,16 +769,16 @@ static cmr_int ov13855_drv_read_aec_info(cmr_handle handle,
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
 
-    frame_interval =
-        (cmr_u16)(((exposure_line + dummy_line) *
-                    (sns_drv_cxt->trim_tab_info[mode].line_time)) /
-                   1000000);
+    frame_interval = (cmr_u16)(((exposure_line + dummy_line) *
+                                (sns_drv_cxt->trim_tab_info[mode].line_time)) /
+                               1000000);
     SENSOR_LOGI(
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         mode, exposure_line, dummy_line, frame_interval);
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
-//        ov13855_drv_get_default_frame_length(handle, mode);
-//    s_current_default_line_time = s_ov13855_resolution_trim_tab[mode].line_time;
+    //        ov13855_drv_get_default_frame_length(handle, mode);
+    //    s_current_default_line_time =
+    //    s_ov13855_resolution_trim_tab[mode].line_time;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = ov13855_drv_calc_exposure(
@@ -791,11 +791,11 @@ static cmr_int ov13855_drv_read_aec_info(cmr_handle handle,
 }
 
 #if defined(CONFIG_DUAL_MODULE)
-cmr_int ov13855_drv_set_master_FrameSync(cmr_handle handle,
-                                           cmr_uint param) {
+cmr_int ov13855_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3832, 0x80);
     return 0;
 }
 #endif
@@ -806,7 +806,7 @@ cmr_int ov13855_drv_set_master_FrameSync(cmr_handle handle,
  *============================================================================*/
 static cmr_int ov13855_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
 #if 1
     char value1[PROPERTY_VALUE_MAX];
@@ -818,7 +818,7 @@ static cmr_int ov13855_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 #if defined(CONFIG_DUAL_MODULE)
-    ov13855_drv_set_master_FrameSync(handle,param);
+    ov13855_drv_set_master_FrameSync(handle, param);
 #endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     /*delay*/
@@ -837,7 +837,7 @@ static cmr_int ov13855_drv_stream_off(cmr_handle handle, cmr_uint param) {
     cmr_u8 value;
     cmr_u32 sleep_time = 0, frame_time;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value != 0x00) {
@@ -855,25 +855,31 @@ static cmr_int ov13855_drv_stream_off(cmr_handle handle, cmr_uint param) {
     return 0;
 }
 
-static cmr_int ov13855_drv_handle_create(
-          struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
+static cmr_int
+ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
+                          cmr_handle *sns_ic_drv_handle) {
     cmr_int ret = SENSOR_SUCCESS;
-    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
     void *pri_data = NULL;
 
-    ret = sensor_ic_drv_create(init_param,sns_ic_drv_handle);
+    ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
     sns_drv_cxt = *sns_ic_drv_handle;
 
-    sns_drv_cxt->sensor_ev_info.preview_shutter = PREVIEW_FRAME_LENGTH - FRAME_OFFSET;
+    sns_drv_cxt->sensor_ev_info.preview_shutter =
+        PREVIEW_FRAME_LENGTH - FRAME_OFFSET;
     sns_drv_cxt->sensor_ev_info.preview_gain = SENSOR_BASE_GAIN;
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
-    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
-    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
-    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
-    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
+                                    MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW),
+                                        RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
+                                  RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO),
+                                    STATIC_INFO);
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
 
     /*init exif info,this will be deleted in the future*/
@@ -883,24 +889,23 @@ static cmr_int ov13855_drv_handle_create(
     return ret;
 }
 
-static cmr_int ov13855_drv_handle_delete(cmr_handle handle,
-                                                  cmr_uint *param) {
+static cmr_int ov13855_drv_handle_delete(cmr_handle handle, cmr_uint *param) {
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    ret = sensor_ic_drv_delete(handle,param);
+    ret = sensor_ic_drv_delete(handle, param);
     return ret;
 }
 
-static cmr_int ov13855_drv_get_private_data(cmr_handle handle,
-                                                     cmr_uint cmd, void**param){
+static cmr_int ov13855_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
+                                            void **param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
 
-    ret = sensor_ic_get_private_data(handle,cmd, param);
+    ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
 }
 
@@ -916,20 +921,18 @@ static struct sensor_ic_ops s_ov13855_ops_tab = {
     .create_handle = ov13855_drv_handle_create,
     .delete_handle = ov13855_drv_handle_delete,
     .get_data = ov13855_drv_get_private_data,
-/*---------------------------------------*/
+    /*---------------------------------------*/
     .power = ov13855_drv_power_on,
     .identify = ov13855_drv_identify,
     .ex_write_exp = ov13855_drv_write_exposure,
     .write_gain_value = ov13855_drv_write_gain_value,
 
     .ext_ops = {
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov13855_drv_before_snapshot,
-        [SENSOR_IOCTL_STREAM_ON].ops = ov13855_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = ov13855_drv_stream_off,
-        /** expand interface,if you want to add your sub cmd ,
-         *  you can add it in enum {@SENSOR_IOCTL_VAL_TYPE}
-         */
-        [SENSOR_IOCTL_ACCESS_VAL].ops = ov13855_drv_access_val,
-    }
-};
-
+            [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov13855_drv_before_snapshot,
+            [SENSOR_IOCTL_STREAM_ON].ops = ov13855_drv_stream_on,
+            [SENSOR_IOCTL_STREAM_OFF].ops = ov13855_drv_stream_off,
+            /** expand interface,if you want to add your sub cmd ,
+             *  you can add it in enum {@SENSOR_IOCTL_VAL_TYPE}
+             */
+            [SENSOR_IOCTL_ACCESS_VAL].ops = ov13855_drv_access_val,
+    }};
