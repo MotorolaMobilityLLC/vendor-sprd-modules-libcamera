@@ -562,37 +562,21 @@ static cmr_int gc8024_drv_access_val(cmr_handle handle,
  * Initialize Exif Info
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int gc8024_drv_init_exif_info(void) {
-    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_gc8024_exif_info;
+static cmr_int gc8024_drv_init_exif_info(cmr_handle handle,
+                                                      void **param) {
+    cmr_int ret = SENSOR_FAIL;
+    EXIF_SPEC_PIC_TAKING_COND_T *sexif = NULL;
 
-    memset(&s_gc8024_exif_info, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
-
-    SENSOR_LOGI("Start");
-
-    /*aperture = numerator/denominator */
-    /*fnumber = numerator/denominator */
-    exif_ptr->valid.FNumber = 1;
-    exif_ptr->FNumber.numerator = 14;
-    exif_ptr->FNumber.denominator = 5;
-
-    exif_ptr->valid.ApertureValue = 1;
-    exif_ptr->ApertureValue.numerator = 14;
-    exif_ptr->ApertureValue.denominator = 5;
-    exif_ptr->valid.MaxApertureValue = 1;
-    exif_ptr->MaxApertureValue.numerator = 14;
-    exif_ptr->MaxApertureValue.denominator = 5;
-    exif_ptr->valid.FocalLength = 1;
-    exif_ptr->FocalLength.numerator = 289;
-    exif_ptr->FocalLength.denominator = 100;
-
-    return SENSOR_SUCCESS;
+    SENSOR_IC_CHECK_PTR(param);
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &sexif);
+    SENSOR_IC_CHECK_PTR(sexif);
+    *param = sexif;
+    /*you can add other init data,here*/
+    return ret;
 }
 
-#if 0
-static cmr_uint gc8024_get_exif_info(cmr_handle handle, cmr_uint param) {
-    return (cmr_uint)&s_gc8024_exif_info;
-}
-#endif
 /*==============================================================================
  * Description:
  * identify sensor id
@@ -985,7 +969,6 @@ static cmr_int gc8024_drv_handle_create(
             SENSOR_LOGE("malloc private data failed: private_data_size:%d",
                         pri_data_size);
     }
-    sns_drv_cxt->exif_ptr = (void*)&s_gc8024_exif_info;
     /*init hdr infomation*/
     sns_drv_cxt->hdr_info.capture_max_shutter = 2000000000 / SNAPSHOT_LINE_TIME;
     sns_drv_cxt->hdr_info.capture_shutter = SNAPSHOT_FRAME_LENGTH - FRAME_OFFSET;
@@ -1003,7 +986,7 @@ static cmr_int gc8024_drv_handle_create(
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
 
     /*init static variables*/
-    gc8024_drv_init_exif_info();
+    gc8024_drv_init_exif_info(sns_drv_cxt, &(sns_drv_cxt->exif_ptr));
 
     /*add private here*/
     return ret;
