@@ -48,6 +48,7 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
 
     mLumaList.clear();
     mCameraMode = mode;
+    mMinLumaConut = 0;
     return rc;
 }
 
@@ -230,7 +231,6 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     };
 
     property_get("debug.camera.covered", prop, "0");
-
     rc = hwiSub->getCoveredValue(&value);
     if (rc < 0) {
         HAL_LOGD("read sub sensor failed");
@@ -253,6 +253,7 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     }
     if (average_value)
         average_value /= mLumaList.size();
+
     switch (mCameraMode) {
     case MODE_BLUR:
         max_convered_value = MAX_CONVERED_VALURE;
@@ -270,13 +271,21 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     if (0 != atoi(prop)) {
         max_convered_value = atoi(prop);
     }
-    if (average_value < max_convered_value && average_value) {
+    if (average_value < max_convered_value) {
+        mMinLumaConut++;
+    } else {
+        mMinLumaConut = 0;
+    }
+    if (mMinLumaConut >= luma_soomth_coeff) {
         couvered_value = BLUR_SELFSHOT_CONVERED;
     } else {
         couvered_value = BLUR_SELFSHOT_NO_CONVERED;
     }
-    HAL_LOGD("update_value %u ,ori value=%u ,average_value=%u", couvered_value,
-             value, average_value);
+    HAL_LOGD("update_value %u ,ori value=%u ,average_value=%u,mMinLumaConut=%u",
+             couvered_value, value, average_value, mMinLumaConut);
+    if (mMinLumaConut >= luma_soomth_coeff) {
+        mMinLumaConut--;
+    }
     // update face[10].score info to mean convered value when api1 is used
     {
         FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(

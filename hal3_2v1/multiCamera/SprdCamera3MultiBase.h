@@ -108,6 +108,7 @@ class SprdCamera3MultiBase {
     nsecs_t mVLastFpsTime;
     List<uint32_t> mLumaList;
     multiCameraMode mCameraMode;
+    uint32_t mMinLumaConut;
 };
 }
 #endif
