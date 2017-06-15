@@ -2889,7 +2889,270 @@ static cmr_int ispalg_update_alsc_param(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr)
+
+cmr_u16* get_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u32* gain_width, cmr_u32* gain_height, cmr_u32* gain_pattern)
+{
+    cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
+	struct isp_pm_param_data param_data_my;
+	memset(&param_data_my, 0, sizeof(param_data_my));
+
+	BLOCK_PARAM_CFG(input, param_data_my, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(rtn, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
+
+	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
+	cmr_u16* lsc_result_address = (cmr_u16 *) lsc_info->data_ptr;
+
+	*gain_width = lsc_info->gain_w;
+	*gain_height = lsc_info->gain_h;
+
+	switch (cxt->commn_cxt.image_pattern) {
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+		*gain_pattern = LSC_GAIN_PATTERN_RGGB;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+		*gain_pattern = LSC_GAIN_PATTERN_GRBG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_B:
+		*gain_pattern = LSC_GAIN_PATTERN_GBRG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+		*gain_pattern = LSC_GAIN_PATTERN_BGGR;
+		break;
+
+	default:
+		break;
+	}
+
+	cmr_u16* lsc_reslut_table = (cmr_u16*) malloc(lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
+
+	//memcpy(lsc_reslut_table, lsc_result_address, lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(unsigned int));
+	for(cmr_u32 i=0;i<lsc_info->gain_w * lsc_info->gain_h * 4;i++)
+		lsc_reslut_table[i]=lsc_result_address[i];
+
+	// log
+	ISP_LOGV("gain_width=%d, gain_height=%d", *gain_width, *gain_height);
+	ISP_LOGV("gain_pattern=%d", *gain_pattern);
+
+	return lsc_reslut_table;
+}
+
+static void scale_bilinear_short(cmr_u16* src_buf, cmr_s32 src_width, cmr_s32 src_height, cmr_u16* dst_buf, cmr_s32 dst_width, cmr_s32 dst_height)
+{
+    cmr_s32 i, j, x, y;
+    float xx, yy;
+    cmr_s32 a, b, c, d, tmp;
+
+    for (j=0; j<dst_height; j++)
+    {
+        float sy = (float)(j * src_height) / dst_height;
+        if (sy > src_height-2) sy = (float)(src_height-2);
+        y = (cmr_s16)sy;
+        yy = sy - y;
+
+        for (i=0; i<dst_width; i++)
+        {
+            float sx = (float)(i * src_width) / dst_width;
+            if (sx > src_width-2) sx = (float)(src_width-2);
+            x = (cmr_s16)sx;
+            xx = sx - x;
+
+            a = src_buf[src_width * y + x];
+            b = src_buf[src_width * (y+1) + x];
+            c = src_buf[src_width * y + x+1];
+            d = src_buf[src_width * (y+1) + x+1];
+
+            tmp = (cmr_s16)(a * (1-xx) * (1-yy) + b * (1-xx) * yy + c * xx * (1-yy) + d * xx * yy + 0.5f);
+
+            dst_buf[dst_width * j + i] = tmp;
+        }
+    }
+}
+
+cmr_int update_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u16* lsc_reslut_table, cmr_u32 gain_width, cmr_u32 gain_height,
+								cmr_u32 gain_pattern)
+{
+    cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
+	struct isp_pm_param_data param_data_my;
+	memset(&param_data_my, 0, sizeof(param_data_my));
+
+	BLOCK_PARAM_CFG(input, param_data_my, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(rtn, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
+
+	struct isp_lsc_info *lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	cmr_u16 * lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
+
+	cmr_u32 new_gain_width = lsc_info_new->gain_w;
+	cmr_u32 new_gain_height = lsc_info_new->gain_h;
+	cmr_u32 new_gain_pattern = 5;
+
+	switch (cxt->commn_cxt.image_pattern) {
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+		new_gain_pattern = LSC_GAIN_PATTERN_RGGB;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+		new_gain_pattern = LSC_GAIN_PATTERN_GRBG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_B:
+		new_gain_pattern = LSC_GAIN_PATTERN_GBRG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+		new_gain_pattern = LSC_GAIN_PATTERN_BGGR;
+		break;
+
+	default:
+		break;
+	}
+
+	cmr_u32 pre_gain_width = gain_width;
+	cmr_u32 pre_gain_height = gain_height;
+	cmr_u32 pre_gain_pattern = gain_pattern;
+	ISP_LOGI("pre_gain_width=%d, pre_gain_height=%d, pre_gain_pattern=%d",pre_gain_width,pre_gain_height,pre_gain_pattern);
+	ISP_LOGI("new_gain_width=%d, new_gain_height=%d, new_gain_pattern=%d",new_gain_width,new_gain_height,new_gain_pattern);
+
+	// scale start
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	    cmr_u16 pre_contain_r [ 32 * 32 ];
+        cmr_u16 pre_contain_gr[ 32 * 32 ];
+		cmr_u16 pre_contain_gb[ 32 * 32 ];
+		cmr_u16 pre_contain_b [ 32 * 32 ];
+		cmr_u16 new_contain_r [ 32 * 32 ];
+        cmr_u16 new_contain_gr[ 32 * 32 ];
+		cmr_u16 new_contain_gb[ 32 * 32 ];
+		cmr_u16 new_contain_b [ 32 * 32 ];
+		cmr_u16 output_r [ 32 * 32 ];
+        cmr_u16 output_gr[ 32 * 32 ];
+		cmr_u16 output_gb[ 32 * 32 ];
+		cmr_u16 output_b [ 32 * 32 ];
+
+		//save_tab_to_channel
+		//ISP_LOGI("lsc change mode: save_tab_to_channel");
+		for(cmr_u32 i=0; i< pre_gain_width*pre_gain_height ;i++)
+		{
+			switch (pre_gain_pattern){
+				case LSC_GAIN_PATTERN_GRBG:
+					output_gr[i] = lsc_reslut_table[4*i + 0];
+					output_r [i] = lsc_reslut_table[4*i + 1];
+					output_b [i] = lsc_reslut_table[4*i + 2];
+					output_gb[i] = lsc_reslut_table[4*i + 3];
+					break;
+				case LSC_GAIN_PATTERN_RGGB:
+					output_r [i] = lsc_reslut_table[4*i + 0];
+					output_gr[i] = lsc_reslut_table[4*i + 1];
+					output_gb[i] = lsc_reslut_table[4*i + 2];
+					output_b [i] = lsc_reslut_table[4*i + 3];
+					break;
+				case LSC_GAIN_PATTERN_BGGR:
+					output_b [i] = lsc_reslut_table[4*i + 0];
+					output_gb[i] = lsc_reslut_table[4*i + 1];
+					output_gr[i] = lsc_reslut_table[4*i + 2];
+					output_r [i] = lsc_reslut_table[4*i + 3];
+					break;
+				case LSC_GAIN_PATTERN_GBRG:
+					output_gb[i] = lsc_reslut_table[4*i + 0];
+					output_b [i] = lsc_reslut_table[4*i + 1];
+					output_r [i] = lsc_reslut_table[4*i + 2];
+					output_gr[i] = lsc_reslut_table[4*i + 3];
+					break;
+				default:
+					break;
+			}
+		}
+
+		// get contain from pre_tab
+		//ISP_LOGE("lsc change mode: get contain from pre_tab");
+		for(cmr_u16 j=0; j<pre_gain_height-2; j++){
+		    for(cmr_u16 i=0; i<pre_gain_width-2; i++){
+			    pre_contain_r [ j*(pre_gain_width-2) + i ] = output_r [ (j+1)*pre_gain_width + (i+1)];
+				pre_contain_gr[ j*(pre_gain_width-2) + i ] = output_gr[ (j+1)*pre_gain_width + (i+1)];
+				pre_contain_gb[ j*(pre_gain_width-2) + i ] = output_gb[ (j+1)*pre_gain_width + (i+1)];
+				pre_contain_b [ j*(pre_gain_width-2) + i ] = output_b [ (j+1)*pre_gain_width + (i+1)];
+			}
+		}
+
+		// scale pre_contain to new_contain
+		//ISP_LOGE("lsc change mode: scale pre_contain to new_contain");
+		scale_bilinear_short(pre_contain_r , pre_gain_width-2, pre_gain_height-2, new_contain_r , new_gain_width-2, new_gain_height-2);
+		scale_bilinear_short(pre_contain_gr, pre_gain_width-2, pre_gain_height-2, new_contain_gr, new_gain_width-2, new_gain_height-2);
+		scale_bilinear_short(pre_contain_gb, pre_gain_width-2, pre_gain_height-2, new_contain_gb, new_gain_width-2, new_gain_height-2);
+		scale_bilinear_short(pre_contain_b , pre_gain_width-2, pre_gain_height-2, new_contain_b , new_gain_width-2, new_gain_height-2);
+
+		// reset output channel to 1024
+		//ISP_LOGE("lsc change mode: reset output channel to 1024");
+		for(cmr_u16 i=0; i<new_gain_width*new_gain_height; i++){
+		    output_r [i] = 1024;
+			output_gr[i] = 1024;
+			output_gb[i] = 1024;
+			output_b [i] = 1024;
+		}
+
+		// set contain to output tab
+		//ISP_LOGE("lsc change mode: set contain to output tab");
+		for(cmr_u16 j=0; j<new_gain_height-2; j++){
+		    for(cmr_u16 i=0; i<new_gain_width-2; i++){
+			    output_r [ (j+1)*new_gain_width + (i+1)] = new_contain_r[ j*(new_gain_width-2) + i];
+				output_gr[ (j+1)*new_gain_width + (i+1)] = new_contain_gr[ j*(new_gain_width-2) + i];
+				output_gb[ (j+1)*new_gain_width + (i+1)] = new_contain_gb[ j*(new_gain_width-2) + i];
+				output_b [ (j+1)*new_gain_width + (i+1)] = new_contain_b[ j*(new_gain_width-2) + i];
+			}
+		}
+
+		// send output to lsc_result_address_new
+		//ISP_LOGE("lsc change mode: send output to lsc_result_address_new");
+		for(cmr_u16 i=0; i<new_gain_width*new_gain_height; i++)
+		{
+			switch (new_gain_pattern){
+				case LSC_GAIN_PATTERN_GRBG:
+					lsc_result_address_new[4*i + 0] = output_gr[i];
+					lsc_result_address_new[4*i + 1] = output_r [i];
+					lsc_result_address_new[4*i + 2] = output_b [i];
+					lsc_result_address_new[4*i + 3] = output_gb[i];
+					break;
+				case LSC_GAIN_PATTERN_RGGB:
+					lsc_result_address_new[4*i + 0] = output_r [i];
+					lsc_result_address_new[4*i + 1] = output_gr[i];
+					lsc_result_address_new[4*i + 2] = output_gb[i];
+					lsc_result_address_new[4*i + 3] = output_b [i];
+					break;
+				case LSC_GAIN_PATTERN_BGGR:
+					lsc_result_address_new[4*i + 0] = output_b [i];
+					lsc_result_address_new[4*i + 1] = output_gb[i];
+					lsc_result_address_new[4*i + 2] = output_gr[i];
+					lsc_result_address_new[4*i + 3] = output_r [i];
+					break;
+				case LSC_GAIN_PATTERN_GBRG:
+					lsc_result_address_new[4*i + 0] = output_gb[i];
+					lsc_result_address_new[4*i + 1] = output_b [i];
+					lsc_result_address_new[4*i + 2] = output_r [i];
+					lsc_result_address_new[4*i + 3] = output_gr[i];
+					break;
+				default:
+					break;
+			}
+		}
+
+        ISP_LOGV("lsc change mode: done");
+
+	return rtn;
+}
+
+cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2900,10 +3163,18 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
 
+	cmr_u16* lsc_reslut_table =NULL;
+	cmr_u32 gain_width = 0;
+	cmr_u32 gain_height = 0;
+	cmr_u32 gain_pattern = 0;
+
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
+
+	// get lsc reslut tab
+	lsc_reslut_table = get_lsc_reslut_table(cxt, &gain_width, &gain_height, &gain_pattern);
 
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -3008,9 +3279,18 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
+
+	// update lsc reslut
+	ret = update_lsc_reslut_table(cxt, lsc_reslut_table, gain_width, gain_height, gain_pattern);
+	if ( lsc_reslut_table != NULL)
+    {
+        free(lsc_reslut_table);
+        lsc_reslut_table = NULL;
+    }
+
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
-	ret = ispalg_update_alsc_param(cxt);
+	//ret = ispalg_update_alsc_param(cxt);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_work_mode"));
@@ -3036,6 +3316,7 @@ exit:
 
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 {
+
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
