@@ -3806,15 +3806,14 @@ cmr_int snp_send_msg_notify_thr(cmr_handle snp_handle, cmr_int func_type,
     CMR_MSG_INIT(message);
 
     CMR_LOGI("evt %ld", evt);
-    if (SNAPSHOT_FUNC_STATE == func_type ||
-        (SNAPSHOT_FUNC_TAKE_PICTURE == func_type &&
-         SNAPSHOT_EXIT_CB_DONE == evt) ||
-        (SNAPSHOT_FUNC_ENCODE_PICTURE == func_type &&
-         SNAPSHOT_EXIT_CB_DONE == evt)) {
+    if (SNAPSHOT_FUNC_STATE == func_type) {
         sync_flag = CMR_MSG_SYNC_NONE;
-    } else {
+    } else if (SNAPSHOT_FUNC_TAKE_PICTURE == func_type ||
+               SNAPSHOT_FUNC_ENCODE_PICTURE == func_type) {
         switch (evt) {
+        case SNAPSHOT_EXIT_CB_DONE:
         case SNAPSHOT_EVT_CB_SNAPSHOT_DONE:
+        case SNAPSHOT_EVT_CB_CAPTURE_FRAME_DONE:
             sync_flag = CMR_MSG_SYNC_NONE;
             break;
         default:

@@ -770,7 +770,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
         if (mSprdBurstModeEnabled == 1 && mSprdZslEnabled == 1) {
-            mMultiLayerPowerHint = 1;
             ret = zslTakePicture();
         } else {
             if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
@@ -1023,10 +1022,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
         goto exit;
     }
 
-    if (mMultiLayerPowerHint == 1) {
-        enablePowerHint();
-        mMultiLayerPowerHintFlag = 1;
-    }
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
@@ -6392,6 +6387,10 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mZslPreviewMode = false;
         break;
     case CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT:
+        enablePowerHint();
+        mMultiLayerPowerHint = 1;
+        mMultiLayerPowerHintFlag = 1;
+
         mTakePictureMode = SNAPSHOT_ZSL_MODE;
         mCaptureMode = CAMERA_ZSL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
@@ -8634,7 +8633,7 @@ void SprdCamera3OEMIf::EisPreview_init() {
             mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
-    //clear preview  gyro
+    // clear preview  gyro
     mGyroPreviewInfo.clear();
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mPreviewParam.f, mPreviewParam.td,
              mPreviewParam.ts);
@@ -8670,7 +8669,7 @@ void SprdCamera3OEMIf::EisVideo_init() {
             mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
-    //clear video  gyro
+    // clear video  gyro
     mGyroVideoInfo.clear();
     mIsRecording = true;
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mVideoParam.f, mVideoParam.td,
@@ -9150,31 +9149,32 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
                         obj->pushEISPreviewQueue(
                             &obj->mGyrodata[obj->mGyroNum]);
                         obj->mReadGyroPreviewCond.signal();
-                        if(obj->mIsRecording) {
-                                obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
-                                obj->mReadGyroVideoCond.signal();
-                        if (++obj->mGyroNum >= obj->kGyrocount)
-                            obj->mGyroNum = 0;
-                        HAL_LOGV("gyro timestamp %" PRId64
-                                 ", x: %f, y: %f, z: %f",
-                                 buffer[i].timestamp, buffer[i].data[0],
-                                 buffer[i].data[1], buffer[i].data[2]);
-                    }
+                        if (obj->mIsRecording) {
+                            obj->pushEISVideoQueue(
+                                &obj->mGyrodata[obj->mGyroNum]);
+                            obj->mReadGyroVideoCond.signal();
+                            if (++obj->mGyroNum >= obj->kGyrocount)
+                                obj->mGyroNum = 0;
+                            HAL_LOGV("gyro timestamp %" PRId64
+                                     ", x: %f, y: %f, z: %f",
+                                     buffer[i].timestamp, buffer[i].data[0],
+                                     buffer[i].data[1], buffer[i].data[2]);
+                        }
 #endif
 
-                    sensor_info.type = CAMERA_AF_GYROSCOPE;
-                    sensor_info.gyro_info.timestamp = buffer[i].timestamp;
-                    sensor_info.gyro_info.x = buffer[i].data[0];
-                    sensor_info.gyro_info.y = buffer[i].data[1];
-                    sensor_info.gyro_info.z = buffer[i].data[2];
-                    if (NULL != obj->mCameraHandle &&
-                        SPRD_IDLE == obj->mCameraState.capture_state &&
-                        NULL != obj->mHalOem) {
-                        obj->mHalOem->ops->camera_set_sensor_info_to_af(
-                            obj->mCameraHandle, &sensor_info);
+                        sensor_info.type = CAMERA_AF_GYROSCOPE;
+                        sensor_info.gyro_info.timestamp = buffer[i].timestamp;
+                        sensor_info.gyro_info.x = buffer[i].data[0];
+                        sensor_info.gyro_info.y = buffer[i].data[1];
+                        sensor_info.gyro_info.z = buffer[i].data[2];
+                        if (NULL != obj->mCameraHandle &&
+                            SPRD_IDLE == obj->mCameraState.capture_state &&
+                            NULL != obj->mHalOem) {
+                            obj->mHalOem->ops->camera_set_sensor_info_to_af(
+                                obj->mCameraHandle, &sensor_info);
+                        }
+                        break;
                     }
-                    break;
-                }
 
                 case Sensor::TYPE_ACCELEROMETER: {
                     sensor_info.type = CAMERA_AF_ACCELEROMETER;
