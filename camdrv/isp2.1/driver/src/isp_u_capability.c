@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_capability_chip_id(isp_handle handle, cmr_u32 * chip_id)
+cmr_s32 isp_u_capability_chip_id(cmr_handle handle, cmr_u32 * chip_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -43,7 +43,7 @@ cmr_s32 isp_u_capability_chip_id(isp_handle handle, cmr_u32 * chip_id)
 	return ret;
 }
 
-cmr_s32 isp_u_capability_single_size(isp_handle handle, cmr_u16 * width, cmr_u16 * height)
+cmr_s32 isp_u_capability_single_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -73,7 +73,7 @@ cmr_s32 isp_u_capability_single_size(isp_handle handle, cmr_u16 * width, cmr_u16
 	return ret;
 }
 
-cmr_s32 isp_u_capability_continue_size(isp_handle handle, cmr_u16 * width, cmr_u16 * height)
+cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -103,7 +103,7 @@ cmr_s32 isp_u_capability_continue_size(isp_handle handle, cmr_u16 * width, cmr_u
 	return ret;
 }
 
-cmr_s32 isp_u_capability_awb_win(isp_handle handle, cmr_u16 * width, cmr_u16 * height)
+cmr_s32 isp_u_capability_awb_win(cmr_handle handle, cmr_u16 * width, cmr_u16 * height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -133,7 +133,7 @@ cmr_s32 isp_u_capability_awb_win(isp_handle handle, cmr_u16 * width, cmr_u16 * h
 	return ret;
 }
 
-cmr_u32 isp_u_capability_awb_default_gain(isp_handle handle)
+cmr_u32 isp_u_capability_awb_default_gain(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 gain = 0;
@@ -158,7 +158,7 @@ cmr_u32 isp_u_capability_awb_default_gain(isp_handle handle)
 	return gain;
 }
 
-cmr_u32 isp_u_capability_af_max_win_num(isp_handle handle)
+cmr_u32 isp_u_capability_af_max_win_num(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 win_num = 0;
@@ -183,7 +183,7 @@ cmr_u32 isp_u_capability_af_max_win_num(isp_handle handle)
 	return win_num;
 }
 
-cmr_s32 isp_u_capability_time(isp_handle handle, cmr_u32 * sec, cmr_u32 * usec)
+cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

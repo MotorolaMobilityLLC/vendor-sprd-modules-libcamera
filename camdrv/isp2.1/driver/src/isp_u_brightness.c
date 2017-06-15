@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_brightness_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_brightness_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_brightness_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_brightness_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_brightness_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -65,7 +65,7 @@ cmr_s32 isp_u_brightness_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_brightness_slice_info(isp_handle handle, cmr_u32 info)
+cmr_s32 isp_u_brightness_slice_info(cmr_handle handle, cmr_u32 info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

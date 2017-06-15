@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_pdaf_bypass(isp_handle handle, cmr_u32 *bypass)
+cmr_s32 isp_u_pdaf_bypass(cmr_handle handle, cmr_u32 *bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -39,7 +39,7 @@ cmr_s32 isp_u_pdaf_bypass(isp_handle handle, cmr_u32 *bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_work_mode(isp_handle handle, cmr_u32 *work_mode)
+cmr_s32 isp_u_pdaf_work_mode(cmr_handle handle, cmr_u32 *work_mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -60,7 +60,7 @@ cmr_s32 isp_u_pdaf_work_mode(isp_handle handle, cmr_u32 *work_mode)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_extractor_bypass(isp_handle handle, cmr_u32 *bypass)
+cmr_s32 isp_u_pdaf_extractor_bypass(cmr_handle handle, cmr_u32 *bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -81,7 +81,7 @@ cmr_s32 isp_u_pdaf_extractor_bypass(isp_handle handle, cmr_u32 *bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_skip_num(isp_handle handle, cmr_u32 *skip_num)
+cmr_s32 isp_u_pdaf_skip_num(cmr_handle handle, cmr_u32 *skip_num)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -102,7 +102,7 @@ cmr_s32 isp_u_pdaf_skip_num(isp_handle handle, cmr_u32 *skip_num)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_roi(isp_handle handle, void *roi_info)
+cmr_s32 isp_u_pdaf_roi(cmr_handle handle, void *roi_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -123,7 +123,7 @@ cmr_s32 isp_u_pdaf_roi(isp_handle handle, void *roi_info)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_ppi_info(isp_handle handle, void *ppi_info)
+cmr_s32 isp_u_pdaf_ppi_info(cmr_handle handle, void *ppi_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -144,7 +144,7 @@ cmr_s32 isp_u_pdaf_ppi_info(isp_handle handle, void *ppi_info)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_pdaf_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

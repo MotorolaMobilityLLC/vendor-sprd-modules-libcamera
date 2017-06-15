@@ -16,10 +16,7 @@
 
 #define LOG_TAG "isp_mw"
 
-#include "isp_mw.h"
 #include "cmr_msg.h"
-
-/* new part */
 #include "isp_dev_access.h"
 #include "isp_alg_fw.h"
 
@@ -28,9 +25,9 @@ struct isp_mw_context {
 	cmr_handle dev_access_handle;
 };
 
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb)
+void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
 {
-	UNUSED(isp_handle);
+	UNUSED(handle);
 	UNUSED(grab_event_cb);
 }
 
@@ -80,7 +77,7 @@ static cmr_s32 ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
 	return ret;
 }
 
-cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
+cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_mw_context *cxt = NULL;
@@ -88,13 +85,13 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 
 	isp_init_log_level();
 	ISP_LOGV("E");
-	if (!input_ptr || !isp_handler) {
-		ISP_LOGE("fail to check init param, input_ptr %p handler %p", input_ptr, isp_handler);
+	if (!input_ptr || !handle) {
+		ISP_LOGE("fail to check init param, input_ptr %p handler %p", input_ptr, handle);
 		ret = -ISP_PARAM_NULL;
 		goto exit;
 	}
 
-	*isp_handler = NULL;
+	*handle = NULL;
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
 	if (NULL == cxt) {
 		ISP_LOGE("fail to malloc");
@@ -121,7 +118,7 @@ exit:
 			cxt = NULL;
 		}
 	} else {
-		*isp_handler = (isp_handle) cxt;
+		*handle = (cmr_handle) cxt;
 	}
 
 	ISP_LOGI("done %ld", ret);
@@ -129,12 +126,12 @@ exit:
 	return ret;
 }
 
-cmr_int isp_deinit(cmr_handle isp_handler)
+cmr_int isp_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 
-	ISP_CHECK_HANDLE_VALID(isp_handler);
+	ISP_CHECK_HANDLE_VALID(handle);
 
 	ret = isp_alg_fw_deinit(cxt->alg_fw_handle);
 	if (ret)
@@ -153,10 +150,10 @@ cmr_int isp_deinit(cmr_handle isp_handler)
 	return ret;
 }
 
-cmr_int isp_capability(cmr_handle isp_handler, enum isp_capbility_cmd cmd, void *param_ptr)
+cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 
 	switch (cmd) {
 	case ISP_VIDEO_SIZE:
@@ -176,10 +173,10 @@ cmr_int isp_capability(cmr_handle isp_handler, enum isp_capbility_cmd cmd, void 
 	return ret;
 }
 
-cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr)
+cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to check isp handler");
@@ -193,12 +190,12 @@ cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr
 	return ret;
 }
 
-cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start *param_ptr)
+cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 
-	if (!isp_handler || !param_ptr) {
+	if (!handle || !param_ptr) {
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
 	}
@@ -210,12 +207,12 @@ exit:
 	return ret;
 }
 
-cmr_int isp_video_stop(cmr_handle isp_handler)
+cmr_int isp_video_stop(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 
-	if (!isp_handler) {
+	if (!handle) {
 		ret = -ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -226,10 +223,10 @@ exit:
 	return ret;
 }
 
-cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_ptr, struct ips_out_param *out_ptr)
+cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_ptr, struct ips_out_param *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 	UNUSED(out_ptr);
 
 	if (NULL == cxt) {
@@ -245,10 +242,10 @@ cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_ptr, stru
 	return ret;
 }
 
-cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
+cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 	UNUSED(out_ptr);
 
 	if (NULL == cxt) {

@@ -927,7 +927,7 @@ exit:
 			otp_info = NULL;
 		}
 	} else {
-		*isp_otp_handle = (isp_handle) otp_info;
+		*isp_otp_handle = (cmr_handle) otp_info;
 	}
 	ISP_LOGI("done, 0x%lx", rtn);
 

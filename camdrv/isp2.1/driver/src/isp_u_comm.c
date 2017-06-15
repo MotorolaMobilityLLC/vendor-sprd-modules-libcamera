@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_comm_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 #if 1
@@ -41,7 +41,7 @@ cmr_s32 isp_u_comm_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_shadow_ctrl_all(isp_handle handle, cmr_u32 auto_shadow)
+cmr_s32 isp_u_shadow_ctrl_all(cmr_handle handle, cmr_u32 auto_shadow)
 {
 	cmr_s32 ret = 0;
 #if 1
@@ -64,7 +64,7 @@ cmr_s32 isp_u_shadow_ctrl_all(isp_handle handle, cmr_u32 auto_shadow)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_u_awbm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 ret = 0;
 #if 1
@@ -87,7 +87,7 @@ cmr_s32 isp_u_awbm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 	return ret;
 }
 
-cmr_s32 isp_u_ae_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_u_ae_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 ret = 0;
 #if 1
@@ -110,7 +110,7 @@ cmr_s32 isp_u_ae_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 	return ret;
 }
 
-cmr_s32 isp_u_af_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_u_af_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 ret = 0;
 #if 1
@@ -133,7 +133,7 @@ cmr_s32 isp_u_af_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 	return ret;
 }
 
-cmr_s32 isp_u_afl_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_u_afl_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 ret = 0;
 
@@ -156,7 +156,7 @@ cmr_s32 isp_u_afl_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 {
 	cmr_s32 ret = 0;
 
@@ -179,7 +179,7 @@ cmr_s32 isp_u_comm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 	return ret;
 }
 
-cmr_s32 isp_u_3a_ctrl(isp_handle handle, cmr_u32 enable)
+cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable)
 {
 	cmr_s32 ret = 0;
 
@@ -202,7 +202,7 @@ cmr_s32 isp_u_3a_ctrl(isp_handle handle, cmr_u32 enable)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_channel0_y_aem_pos(isp_handle handle, cmr_u32 pos)
+cmr_s32 isp_u_comm_channel0_y_aem_pos(cmr_handle handle, cmr_u32 pos)
 {
 	cmr_s32 ret = 0;
 #if 1
@@ -225,7 +225,7 @@ cmr_s32 isp_u_comm_channel0_y_aem_pos(isp_handle handle, cmr_u32 pos)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_channel1_y_aem_pos(isp_handle handle, cmr_u32 pos)
+cmr_s32 isp_u_comm_channel1_y_aem_pos(cmr_handle handle, cmr_u32 pos)
 {
 	cmr_s32 ret = 0;
 #if 1

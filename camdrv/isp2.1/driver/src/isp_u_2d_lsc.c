@@ -294,7 +294,7 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 
 /*end cal Q value*/
 
-cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -340,7 +340,7 @@ cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_2d_lsc_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -362,7 +362,7 @@ cmr_s32 isp_u_2d_lsc_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle, cmr_u32 flag)
+cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, cmr_u32 flag)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -384,7 +384,7 @@ cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle, cmr_u32 flag)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_pos(isp_handle handle, cmr_u32 x, cmr_u32 y)
+cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -409,7 +409,7 @@ cmr_s32 isp_u_2d_lsc_pos(isp_handle handle, cmr_u32 x, cmr_u32 y)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_grid_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -434,7 +434,7 @@ cmr_s32 isp_u_2d_lsc_grid_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -459,7 +459,7 @@ cmr_s32 isp_u_2d_lsc_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input * buf)
+cmr_s32 isp_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input * buf)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

@@ -20,7 +20,7 @@
 
 #define ISP_REGISTER_MAX_NUM 20
 
-cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle *handle)
+cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 {
 	cmr_s32 ret = 0;
 	//cmr_u32 chip_id = 0;
@@ -41,7 +41,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle *handle)
 
 	file->fd = fd;
 	file->isp_id = 0;
-	*handle = (isp_handle) file;
+	*handle = (cmr_handle) file;
 #if 0
 	ret = isp_u_capability_chip_id(*handle, &chip_id);
 	if (ret) {
@@ -50,7 +50,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, isp_handle *handle)
 		goto isp_free;
 	} else {
 		file->chip_id = chip_id;
-		*handle = (isp_handle) file;
+		*handle = (cmr_handle) file;
 	}
 #endif
 	return ret;
@@ -63,7 +63,7 @@ isp_free:
 	return ret;
 }
 
-cmr_s32 isp_dev_close(isp_handle handle)
+cmr_s32 isp_dev_close(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -84,7 +84,7 @@ cmr_s32 isp_dev_close(isp_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_dev_reset(isp_handle handle)
+cmr_s32 isp_dev_reset(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 isp_id = 0;
@@ -106,7 +106,7 @@ cmr_s32 isp_dev_reset(isp_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_dev_stop(isp_handle handle)
+cmr_s32 isp_dev_stop(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 isp_id = 0;
@@ -128,7 +128,7 @@ cmr_s32 isp_dev_stop(isp_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_dev_enable_irq(isp_handle handle, cmr_u32 irq_mode)
+cmr_s32 isp_dev_enable_irq(cmr_handle handle, cmr_u32 irq_mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -151,7 +151,7 @@ cmr_s32 isp_dev_enable_irq(isp_handle handle, cmr_u32 irq_mode)
 	return ret;
 }
 
-cmr_s32 isp_dev_get_irq(isp_handle handle, cmr_u32 *evt_ptr)
+cmr_s32 isp_dev_get_irq(cmr_handle handle, cmr_u32 *evt_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -182,7 +182,7 @@ cmr_s32 isp_dev_get_irq(isp_handle handle, cmr_u32 *evt_ptr)
 	return ret;
 }
 
-static cmr_s32 isp_register_write(isp_handle handle, cmr_u32 *param)
+static cmr_s32 isp_register_write(cmr_handle handle, cmr_u32 *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -202,7 +202,7 @@ static cmr_s32 isp_register_write(isp_handle handle, cmr_u32 *param)
 	return ret;
 }
 
-static cmr_s32 isp_register_read(isp_handle handle, cmr_u32 *param)
+static cmr_s32 isp_register_read(cmr_handle handle, cmr_u32 *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -222,7 +222,7 @@ static cmr_s32 isp_register_read(isp_handle handle, cmr_u32 *param)
 	return ret;
 }
 
-cmr_s32 isp_dev_reg_write(isp_handle handle, cmr_u32 num, void *param_ptr)
+cmr_s32 isp_dev_reg_write(cmr_handle handle, cmr_u32 num, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 reg_num = num, i = 0;
@@ -257,7 +257,7 @@ cmr_s32 isp_dev_reg_write(isp_handle handle, cmr_u32 num, void *param_ptr)
 	return ret;
 }
 
-cmr_s32 isp_dev_reg_read(isp_handle handle, cmr_u32 num, void *param_ptr)
+cmr_s32 isp_dev_reg_read(cmr_handle handle, cmr_u32 num, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 reg_num = num, i = 0;
@@ -298,7 +298,7 @@ cmr_s32 isp_dev_reg_read(isp_handle handle, cmr_u32 num, void *param_ptr)
 	return ret;
 }
 
-cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 *buf, cmr_u32 len)
+cmr_s32 isp_dev_reg_fetch(cmr_handle handle, cmr_u32 base_offset, cmr_u32 *buf, cmr_u32 len)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 offset_addr = base_offset, i = 0;
@@ -326,7 +326,7 @@ cmr_s32 isp_dev_reg_fetch(isp_handle handle, cmr_u32 base_offset, cmr_u32 *buf, 
 	return ret;
 }
 
-cmr_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input *param)
+cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -350,7 +350,7 @@ cmr_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input *p
 	return ret;
 }
 
-cmr_s32 isp_dev_3dnr(isp_handle handle, struct isp_3dnr_info *param)
+cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -398,7 +398,7 @@ cmr_s32 isp_dev_3dnr(isp_handle handle, struct isp_3dnr_info *param)
 	return ret;
 }
 
-cmr_s32 isp_dev_set_slice_raw_info(isp_handle handle, struct isp_raw_proc_info *param)
+cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

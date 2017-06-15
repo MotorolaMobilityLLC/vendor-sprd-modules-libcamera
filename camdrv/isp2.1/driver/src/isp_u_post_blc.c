@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_post_blc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_post_blc_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

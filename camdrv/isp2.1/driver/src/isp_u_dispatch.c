@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_dispatch_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_dispatch_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_dispatch_ch0_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
+cmr_s32 isp_u_dispatch_ch0_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

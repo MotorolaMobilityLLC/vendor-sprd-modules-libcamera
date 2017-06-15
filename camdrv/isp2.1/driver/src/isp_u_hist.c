@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_hist_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_hist_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_hist_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_hist_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
+cmr_s32 isp_u_hist_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 {
 	cmr_s32 ret = 0;
 	UNUSED(handle);
@@ -69,7 +69,7 @@ cmr_s32 isp_u_hist_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
 	return ret;
 }
 
-cmr_s32 isp_u_hist_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_hist_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -91,7 +91,7 @@ cmr_s32 isp_u_hist_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_hist_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_hist_mode(cmr_handle handle, cmr_u32 mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
