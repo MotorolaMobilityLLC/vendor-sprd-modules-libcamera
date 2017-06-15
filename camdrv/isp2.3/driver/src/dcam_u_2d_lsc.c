@@ -21,7 +21,7 @@
 #define ISP_LSC_BUF_SIZE  (32 * 1024)
 
 
-cmr_s32 dcam_u_2d_lsc_block(isp_handle handle, void *block_info)
+cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0, i = 0;
 	struct isp_file *file = NULL;
@@ -60,7 +60,7 @@ cmr_s32 dcam_u_2d_lsc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 dcam_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input * buf)
+cmr_s32 dcam_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input * buf)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

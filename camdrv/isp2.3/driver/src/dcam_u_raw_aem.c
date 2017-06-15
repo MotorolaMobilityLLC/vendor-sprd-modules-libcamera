@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 dcam_u_raw_aem_block(isp_handle handle, void *block_info)
+cmr_s32 dcam_u_raw_aem_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -45,7 +45,7 @@ cmr_s32 dcam_u_raw_aem_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 dcam_u_raw_aem_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 dcam_u_raw_aem_mode(cmr_handle handle, cmr_u32 mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -67,7 +67,7 @@ cmr_s32 dcam_u_raw_aem_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 dcam_u_raw_aem_skip_num(isp_handle handle, cmr_u32 skip_num)
+cmr_s32 dcam_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -89,7 +89,7 @@ cmr_s32 dcam_u_raw_aem_skip_num(isp_handle handle, cmr_u32 skip_num)
 	return ret;
 }
 
-cmr_s32 dcam_u_raw_aem_shift(isp_handle handle, void *shift)
+cmr_s32 dcam_u_raw_aem_shift(cmr_handle handle, void *shift)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -110,7 +110,7 @@ cmr_s32 dcam_u_raw_aem_shift(isp_handle handle, void *shift)
 	return ret;
 }
 
-cmr_s32 dcam_u_raw_aem_offset(isp_handle handle, cmr_u32 x, cmr_u32 y)
+cmr_s32 dcam_u_raw_aem_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -135,7 +135,7 @@ cmr_s32 dcam_u_raw_aem_offset(isp_handle handle, cmr_u32 x, cmr_u32 y)
 	return ret;
 }
 
-cmr_s32 dcam_u_raw_aem_blk_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
+cmr_s32 dcam_u_raw_aem_blk_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

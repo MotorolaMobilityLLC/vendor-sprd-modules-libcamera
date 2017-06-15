@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_ynr_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_ynr_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -41,7 +41,7 @@ cmr_s32 isp_u_ynr_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_ynr_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_ynr_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

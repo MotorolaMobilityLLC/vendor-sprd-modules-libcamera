@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_grgb_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_grgb_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_grgb_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_grgb_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_grgb_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -62,7 +62,7 @@ cmr_s32 isp_u_grgb_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_grgb_thrd(isp_handle handle, cmr_u32 edge, cmr_u32 diff)
+cmr_s32 isp_u_grgb_thrd(cmr_handle handle, cmr_u32 edge, cmr_u32 diff)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

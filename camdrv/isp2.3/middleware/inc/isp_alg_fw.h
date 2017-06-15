@@ -16,8 +16,11 @@
 #ifndef _ISP_ALG_FW_H_
 #define _ISP_ALG_FW_H_
 
-#include "isp_mw.h"
+#ifndef LOCAL_INCLUDE_ONLY
+#error "Hi, This is only for camdrv."
+#endif
 
+#include "isp_mw.h"
 struct isp_alg_fw_init_in {
 	cmr_handle dev_access_handle;
 	struct isp_init_param *init_param;

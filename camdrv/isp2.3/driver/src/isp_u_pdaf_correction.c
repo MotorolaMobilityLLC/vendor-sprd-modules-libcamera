@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_pdaf_correct_bypass(isp_handle handle, cmr_u32 *bypass)
+cmr_s32 isp_u_pdaf_correct_bypass(cmr_handle handle, cmr_u32 *bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -39,7 +39,7 @@ cmr_s32 isp_u_pdaf_correct_bypass(isp_handle handle, cmr_u32 *bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_correction(isp_handle handle, void *correction_param)
+cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *correction_param)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

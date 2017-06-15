@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_raw_transaddr(isp_handle handle, struct isp_dev_block_addr * addr)
+cmr_s32 isp_u_fetch_raw_transaddr(cmr_handle handle, struct isp_dev_block_addr * addr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -62,7 +62,7 @@ cmr_s32 isp_u_fetch_raw_transaddr(isp_handle handle, struct isp_dev_block_addr *
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_fetch_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -87,7 +87,7 @@ cmr_s32 isp_u_fetch_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_start_isp(isp_handle handle, cmr_u32 fetch_start)
+cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, cmr_u32 fetch_start)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -109,7 +109,7 @@ cmr_s32 isp_u_fetch_start_isp(isp_handle handle, cmr_u32 fetch_start)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_yuv_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_fetch_yuv_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -131,7 +131,7 @@ cmr_s32 isp_u_fetch_yuv_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_yuv_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_fetch_yuv_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -156,7 +156,7 @@ cmr_s32 isp_u_fetch_yuv_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_yuv_start_isp(isp_handle handle, cmr_u32 fetch_start)
+cmr_s32 isp_u_fetch_yuv_start_isp(cmr_handle handle, cmr_u32 fetch_start)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_binning4awb_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_binning4awb_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_binning4awb_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -62,7 +62,7 @@ cmr_s32 isp_u_binning4awb_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_endian(isp_handle handle, cmr_u32 endian)
+cmr_s32 isp_u_binning4awb_endian(cmr_handle handle, cmr_u32 endian)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -84,7 +84,7 @@ cmr_s32 isp_u_binning4awb_endian(isp_handle handle, cmr_u32 endian)
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_scaling_ratio(isp_handle handle, cmr_u32 vertical, cmr_u32 horizontal)
+cmr_s32 isp_u_binning4awb_scaling_ratio(cmr_handle handle, cmr_u32 vertical, cmr_u32 horizontal)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -109,7 +109,7 @@ cmr_s32 isp_u_binning4awb_scaling_ratio(isp_handle handle, cmr_u32 vertical, cmr
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, cmr_u32 * vertical, cmr_u32 * horizontal)
+cmr_s32 isp_u_binning4awb_get_scaling_ratio(cmr_handle handle, cmr_u32 * vertical, cmr_u32 * horizontal)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -135,7 +135,7 @@ cmr_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, cmr_u32 * vertica
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_mem_addr(isp_handle handle, cmr_u32 phy_addr)
+cmr_s32 isp_u_binning4awb_mem_addr(cmr_handle handle, cmr_u32 phy_addr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -157,7 +157,7 @@ cmr_s32 isp_u_binning4awb_mem_addr(isp_handle handle, cmr_u32 phy_addr)
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, cmr_u32 * buf_id)
+cmr_s32 isp_u_binning4awb_statistics_buf(cmr_handle handle, cmr_u32 * buf_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -181,7 +181,7 @@ cmr_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, cmr_u32 * buf_id)
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_transaddr(isp_handle handle, cmr_u32 phys0, cmr_u32 phys1)
+cmr_s32 isp_u_binning4awb_transaddr(cmr_handle handle, cmr_u32 phys0, cmr_u32 phys1)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -206,7 +206,7 @@ cmr_s32 isp_u_binning4awb_transaddr(isp_handle handle, cmr_u32 phys0, cmr_u32 ph
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_initbuf(isp_handle handle)
+cmr_s32 isp_u_binning4awb_initbuf(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

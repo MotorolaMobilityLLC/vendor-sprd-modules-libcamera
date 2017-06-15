@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_bpc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_bpc_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -41,7 +41,7 @@ cmr_s32 isp_u_bpc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_bpc_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -63,7 +63,7 @@ cmr_s32 isp_u_bpc_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_bpc_mode(cmr_handle handle, cmr_u32 mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -85,7 +85,7 @@ cmr_s32 isp_u_bpc_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_param_common(isp_handle handle, cmr_u32 pattern_type, cmr_u32 detect_thrd, cmr_u32 super_bad_thrd)
+cmr_s32 isp_u_bpc_param_common(cmr_handle handle, cmr_u32 pattern_type, cmr_u32 detect_thrd, cmr_u32 super_bad_thrd)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -111,7 +111,7 @@ cmr_s32 isp_u_bpc_param_common(isp_handle handle, cmr_u32 pattern_type, cmr_u32 
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_thrd(isp_handle handle, cmr_u32 flat, cmr_u32 std, cmr_u32 texture)
+cmr_s32 isp_u_bpc_thrd(cmr_handle handle, cmr_u32 flat, cmr_u32 std, cmr_u32 texture)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -137,7 +137,7 @@ cmr_s32 isp_u_bpc_thrd(isp_handle handle, cmr_u32 flat, cmr_u32 std, cmr_u32 tex
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_map_addr(isp_handle handle, cmr_u32 addr)
+cmr_s32 isp_u_bpc_map_addr(cmr_handle handle, cmr_u32 addr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -159,7 +159,7 @@ cmr_s32 isp_u_bpc_map_addr(isp_handle handle, cmr_u32 addr)
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_pixel_num(isp_handle handle, cmr_u32 pixel_num)
+cmr_s32 isp_u_bpc_pixel_num(cmr_handle handle, cmr_u32 pixel_num)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

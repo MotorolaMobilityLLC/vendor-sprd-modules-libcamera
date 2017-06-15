@@ -39,7 +39,7 @@ cmr_s32 isp_u_hist2_block(void *handle, void *block_info)
 
 	return ret;
 }
-cmr_s32 isp_u_hist2_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_hist2_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -61,7 +61,7 @@ cmr_s32 isp_u_hist2_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_hist2_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_hist2_mode(cmr_handle handle, cmr_u32 mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -83,7 +83,7 @@ cmr_s32 isp_u_hist2_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_hist2_roi(isp_handle handle, void *hist2_roi)
+cmr_s32 isp_u_hist2_roi(cmr_handle handle, void *hist2_roi)
 {
         cmr_s32 ret = 0;
         struct isp_file *file = NULL;

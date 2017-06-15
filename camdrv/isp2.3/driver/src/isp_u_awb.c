@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_awb_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_awb_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_awb_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_statistics(isp_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info)
+cmr_s32 isp_u_awbm_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -72,9 +72,9 @@ cmr_s32 isp_u_awbm_statistics(isp_handle handle, cmr_u32 * r_info, cmr_u32 * g_i
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 	if (0 == ret) {
-		memcpy((isp_handle) r_info, (isp_handle) (awbm_statistics->r), ISP_AWBM_ITEM * 4);
-		memcpy((isp_handle) g_info, (isp_handle) (awbm_statistics->g), ISP_AWBM_ITEM * 4);
-		memcpy((isp_handle) b_info, (isp_handle) (awbm_statistics->b), ISP_AWBM_ITEM * 4);
+		memcpy((cmr_handle) r_info, (cmr_handle) (awbm_statistics->r), ISP_AWBM_ITEM * 4);
+		memcpy((cmr_handle) g_info, (cmr_handle) (awbm_statistics->g), ISP_AWBM_ITEM * 4);
+		memcpy((cmr_handle) b_info, (cmr_handle) (awbm_statistics->b), ISP_AWBM_ITEM * 4);
 	} else {
 		ISP_LOGE("copy awbm info error.");
 	}
@@ -86,7 +86,7 @@ cmr_s32 isp_u_awbm_statistics(isp_handle handle, cmr_u32 * r_info, cmr_u32 * g_i
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_awbm_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -108,7 +108,7 @@ cmr_s32 isp_u_awbm_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_awbm_mode(cmr_handle handle, cmr_u32 mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -130,7 +130,7 @@ cmr_s32 isp_u_awbm_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_skip_num(isp_handle handle, cmr_u32 num)
+cmr_s32 isp_u_awbm_skip_num(cmr_handle handle, cmr_u32 num)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -152,7 +152,7 @@ cmr_s32 isp_u_awbm_skip_num(isp_handle handle, cmr_u32 num)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_block_offset(isp_handle handle, cmr_u32 x, cmr_u32 y)
+cmr_s32 isp_u_awbm_block_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -177,7 +177,7 @@ cmr_s32 isp_u_awbm_block_offset(isp_handle handle, cmr_u32 x, cmr_u32 y)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_block_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_awbm_block_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -202,7 +202,7 @@ cmr_s32 isp_u_awbm_block_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_shift(isp_handle handle, cmr_u32 shift)
+cmr_s32 isp_u_awbm_shift(cmr_handle handle, cmr_u32 shift)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -224,7 +224,7 @@ cmr_s32 isp_u_awbm_shift(isp_handle handle, cmr_u32 shift)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_awbc_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -246,7 +246,7 @@ cmr_s32 isp_u_awbc_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_gain(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_s32 isp_u_awbc_gain(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -272,7 +272,7 @@ cmr_s32 isp_u_awbc_gain(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_thrd(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_s32 isp_u_awbc_thrd(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -298,7 +298,7 @@ cmr_s32 isp_u_awbc_thrd(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_gain_offset(isp_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_s32 isp_u_awbc_gain_offset(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

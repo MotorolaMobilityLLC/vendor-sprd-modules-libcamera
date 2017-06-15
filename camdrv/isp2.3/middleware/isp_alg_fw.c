@@ -47,7 +47,7 @@ struct commn_info {
 	cmr_u32 log_isp_size;
 	struct isp_size src;
 	struct isp_ops ops;
-	struct isp_interface_param_v1 interface_param_v1;
+	struct isp_drv_interface_param interface_param;
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 };
 
@@ -154,8 +154,8 @@ struct ispalg_afl_ctrl_ops {
 	cmr_int (*init)(cmr_handle *isp_afl_handle, struct afl_ctrl_init_in *input_ptr);
 	cmr_int (*deinit)(cmr_handle *isp_afl_handle);
 	cmr_int (*process)(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr);
-	cmr_int (*config)(isp_handle isp_afl_handle);
-	cmr_int (*config_new)(isp_handle isp_afl_handle);
+	cmr_int (*config)(cmr_handle isp_afl_handle);
+	cmr_int (*config_new)(cmr_handle isp_afl_handle);
 };
 
 struct ispalg_awb_ctrl_ops {
@@ -1684,11 +1684,11 @@ static cmr_int ispalg_evt_process_cb(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ips_out_param callback_param = { 0x00 };
-	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
+	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 
 	ISP_LOGV("isp start raw proc callback\n");
 	if (NULL != cxt->commn_cxt.callback) {
-		callback_param.output_height = interface_ptr_v1->data.input_size.h;
+		callback_param.output_height = interface_ptr->data.input_size.h;
 		ISP_LOGV("callback ISP_PROC_CALLBACK");
 		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
 					ISP_CALLBACK_EVT | ISP_PROC_CALLBACK,
@@ -2892,7 +2892,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
+	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size org_size;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
@@ -2926,17 +2926,17 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 
 	ret = isp_dev_statis_buf_malloc(cxt->dev_access_handle, &statis_mem_input);
 	ISP_RETURN_IF_FAIL(ret, ("fail to malloc buf"));
-	interface_ptr_v1->data.work_mode = ISP_CONTINUE_MODE;
-	interface_ptr_v1->data.input = ISP_CAP_MODE;
-	interface_ptr_v1->data.input_format = in_ptr->format;
-	interface_ptr_v1->data.format_pattern = cxt->commn_cxt.image_pattern;
-	interface_ptr_v1->data.input_size.w = in_ptr->size.w;
-	interface_ptr_v1->data.input_size.h = in_ptr->size.h;
-	interface_ptr_v1->data.output_format = ISP_DATA_UYVY;
-	interface_ptr_v1->data.output = ISP_DCAM_MODE;
-	interface_ptr_v1->data.slice_height = in_ptr->size.h;
+	interface_ptr->data.work_mode = ISP_CONTINUE_MODE;
+	interface_ptr->data.input = ISP_CAP_MODE;
+	interface_ptr->data.input_format = in_ptr->format;
+	interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
+	interface_ptr->data.input_size.w = in_ptr->size.w;
+	interface_ptr->data.input_size.h = in_ptr->size.h;
+	interface_ptr->data.output_format = ISP_DATA_UYVY;
+	interface_ptr->data.output = ISP_DCAM_MODE;
+	interface_ptr->data.slice_height = in_ptr->size.h;
 
-	ret = isp_dev_set_interface(interface_ptr_v1);
+	ret = isp_dev_set_interface(interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
 
 	switch (in_ptr->work_mode) {
@@ -3020,7 +3020,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
 
-	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr_v1);
+	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
 	cxt->gamma_sof_cnt_eb = 1;
 
@@ -3090,7 +3090,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
+	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_size org_size;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -3104,41 +3104,41 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	cxt->commn_cxt.src.w = in_ptr->src_frame.img_size.w;
 	cxt->commn_cxt.src.h = in_ptr->src_frame.img_size.h;
 
-	interface_ptr_v1->data.work_mode = ISP_SINGLE_MODE;
+	interface_ptr->data.work_mode = ISP_SINGLE_MODE;
 	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
-		interface_ptr_v1->data.input = ISP_SIMULATION_MODE;
+		interface_ptr->data.input = ISP_SIMULATION_MODE;
 	} else {
-		interface_ptr_v1->data.input = ISP_EMC_MODE;
+		interface_ptr->data.input = ISP_EMC_MODE;
 	}
-	interface_ptr_v1->data.input_format = in_ptr->src_frame.img_fmt;
+	interface_ptr->data.input_format = in_ptr->src_frame.img_fmt;
 
 	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern) {
-		interface_ptr_v1->data.format_pattern = cxt->commn_cxt.image_pattern;
+		interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
 	} else {
-		interface_ptr_v1->data.format_pattern = cxt->commn_cxt.image_pattern;
+		interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
 	}
-	interface_ptr_v1->data.input_size.w = in_ptr->src_frame.img_size.w;
-	interface_ptr_v1->data.input_size.h = in_ptr->src_frame.img_size.h;
-	interface_ptr_v1->data.input_addr.chn0 = in_ptr->src_frame.img_addr_phy.chn0;
-	interface_ptr_v1->data.input_addr.chn1 = in_ptr->src_frame.img_addr_phy.chn1;
-	interface_ptr_v1->data.input_addr.chn2 = in_ptr->src_frame.img_addr_phy.chn2;
-	interface_ptr_v1->data.input_vir.chn0 = in_ptr->src_frame.img_addr_vir.chn0;
-	interface_ptr_v1->data.input_vir.chn1 = in_ptr->src_frame.img_addr_vir.chn1;
-	interface_ptr_v1->data.input_vir.chn2 = in_ptr->src_frame.img_addr_vir.chn2;
-	interface_ptr_v1->data.input_fd = in_ptr->src_frame.img_fd.y;
-	interface_ptr_v1->data.slice_height = in_ptr->src_frame.img_size.h;
+	interface_ptr->data.input_size.w = in_ptr->src_frame.img_size.w;
+	interface_ptr->data.input_size.h = in_ptr->src_frame.img_size.h;
+	interface_ptr->data.input_addr.chn0 = in_ptr->src_frame.img_addr_phy.chn0;
+	interface_ptr->data.input_addr.chn1 = in_ptr->src_frame.img_addr_phy.chn1;
+	interface_ptr->data.input_addr.chn2 = in_ptr->src_frame.img_addr_phy.chn2;
+	interface_ptr->data.input_vir.chn0 = in_ptr->src_frame.img_addr_vir.chn0;
+	interface_ptr->data.input_vir.chn1 = in_ptr->src_frame.img_addr_vir.chn1;
+	interface_ptr->data.input_vir.chn2 = in_ptr->src_frame.img_addr_vir.chn2;
+	interface_ptr->data.input_fd = in_ptr->src_frame.img_fd.y;
+	interface_ptr->data.slice_height = in_ptr->src_frame.img_size.h;
 
-	interface_ptr_v1->data.output_format = in_ptr->dst_frame.img_fmt;
+	interface_ptr->data.output_format = in_ptr->dst_frame.img_fmt;
 	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
-		interface_ptr_v1->data.output = ISP_SIMULATION_MODE;
+		interface_ptr->data.output = ISP_SIMULATION_MODE;
 	} else {
-		interface_ptr_v1->data.output = ISP_EMC_MODE;
+		interface_ptr->data.output = ISP_EMC_MODE;
 	}
-	interface_ptr_v1->data.output_addr.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
-	interface_ptr_v1->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
-	interface_ptr_v1->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
+	interface_ptr->data.output_addr.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
+	interface_ptr->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
+	interface_ptr->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
 
-	ret = isp_dev_set_interface(interface_ptr_v1);
+	ret = isp_dev_set_interface(interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
 
 	param.work_mode = 1;
@@ -3167,7 +3167,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
-	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr_v1);
+	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
 	cxt->gamma_sof_cnt_eb = 1;
 

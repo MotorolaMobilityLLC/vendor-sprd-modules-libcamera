@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_cce_matrix_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_cce_matrix_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_cce_matrix_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_cce_uv_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_cce_uv_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -63,7 +63,7 @@ cmr_s32 isp_u_cce_uv_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_cce_uvdivision_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_cce_uvdivision_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -85,7 +85,7 @@ cmr_s32 isp_u_cce_uvdivision_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_cce_mode(isp_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_cce_mode(cmr_handle handle, cmr_u32 mode)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -107,7 +107,7 @@ cmr_s32 isp_u_cce_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_cce_matrix(isp_handle handle, cmr_u16 * matrix_ptr)
+cmr_s32 isp_u_cce_matrix(cmr_handle handle, cmr_u16 * matrix_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -132,7 +132,7 @@ cmr_s32 isp_u_cce_matrix(isp_handle handle, cmr_u16 * matrix_ptr)
 	return ret;
 }
 
-cmr_s32 isp_u_cce_shift(isp_handle handle, cmr_u32 y_shift, cmr_u32 u_shift, cmr_u32 v_shift)
+cmr_s32 isp_u_cce_shift(cmr_handle handle, cmr_u32 y_shift, cmr_u32 u_shift, cmr_u32 v_shift)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -159,7 +159,7 @@ cmr_s32 isp_u_cce_shift(isp_handle handle, cmr_u32 y_shift, cmr_u32 u_shift, cmr
 	return ret;
 }
 
-cmr_s32 isp_u_cce_uvd(isp_handle handle, cmr_u8 * div_ptr)
+cmr_s32 isp_u_cce_uvd(cmr_handle handle, cmr_u8 * div_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -184,7 +184,7 @@ cmr_s32 isp_u_cce_uvd(isp_handle handle, cmr_u8 * div_ptr)
 	return ret;
 }
 
-cmr_s32 isp_u_cce_uvc(isp_handle handle, cmr_u8 * t_ptr, cmr_u8 * m_ptr)
+cmr_s32 isp_u_cce_uvc(cmr_handle handle, cmr_u8 * t_ptr, cmr_u8 * m_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

@@ -17,7 +17,6 @@
 #define _ISP_MW_H_
 
 #include "isp_exif.h"
-
 #include "isp_type.h"
 #include "sprd_isp_k.h"
 #include "cmr_sensor_info.h"
@@ -761,21 +760,6 @@ struct isp_img_param {
 	cmr_uint zsl_private;
 };
 
-//add two struct defination for the 3DNR capture.
-struct isp_buffer {
-	cmr_u8 *buffer;
-	cmr_s32 fd;
-};
-
-struct isp_3dnr_info {
-	struct isp_buffer image[3];
-	cmr_u32 width;
-	cmr_u32 height;
-	cmr_s8 mv_x;
-	cmr_s8 mv_y;
-	cmr_u8 blending_no;
-};
-
 struct isp_ops {
 	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
 	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
@@ -822,15 +806,15 @@ typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
-cmr_int isp_init(struct isp_init_param *ptr, cmr_handle *isp_handler);
-cmr_int isp_deinit(cmr_handle isp_handler);
-cmr_int isp_capability(cmr_handle isp_handler, enum isp_capbility_cmd cmd, void *param_ptr);
-cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr);
-cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start *param_ptr);
-cmr_int isp_video_stop(cmr_handle isp_handler);
-cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
-cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
+cmr_int isp_init(struct isp_init_param *ptr, cmr_handle *handle);
+cmr_int isp_deinit(cmr_handle handle);
+cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *param_ptr);
+cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr);
+cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
+cmr_int isp_video_stop(cmr_handle handle);
+cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
+cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
+void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
 

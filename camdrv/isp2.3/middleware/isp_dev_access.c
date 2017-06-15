@@ -116,7 +116,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	return ret;
 }
 
-cmr_int isp_dev_set_interface(struct isp_interface_param_v1 *in_ptr)
+cmr_int isp_dev_set_interface(struct isp_drv_interface_param *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 
@@ -147,7 +147,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *in_ptr)
+cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -361,14 +361,14 @@ exit:
 	return ret;
 }
 
-cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
+cmr_int isp_dev_access_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_handler;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
 
-	ISP_CHECK_HANDLE_VALID(isp_handler);
+	ISP_CHECK_HANDLE_VALID(handle);
 
 	if (statis_mem_info->isp_statis_alloc_flag == 1) {
 		type = CAMERA_ISP_STATIS;

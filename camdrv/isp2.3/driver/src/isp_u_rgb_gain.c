@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_rgb_gain_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_rgb_gain_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_rgb_dither_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_rgb_dither_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

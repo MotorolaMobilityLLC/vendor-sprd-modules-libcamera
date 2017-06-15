@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_nlc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_nlc_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -40,7 +40,7 @@ cmr_s32 isp_u_nlc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_nlc_bypass(isp_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_nlc_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -62,7 +62,7 @@ cmr_s32 isp_u_nlc_bypass(isp_handle handle, cmr_u32 bypass)
 	return ret;
 }
 
-cmr_s32 isp_u_nlc_r_node(isp_handle handle, cmr_u16 * r_node_ptr)
+cmr_s32 isp_u_nlc_r_node(cmr_handle handle, cmr_u16 * r_node_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -84,7 +84,7 @@ cmr_s32 isp_u_nlc_r_node(isp_handle handle, cmr_u16 * r_node_ptr)
 	return ret;
 }
 
-cmr_s32 isp_u_nlc_g_node(isp_handle handle, cmr_u16 * g_node_ptr)
+cmr_s32 isp_u_nlc_g_node(cmr_handle handle, cmr_u16 * g_node_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -106,7 +106,7 @@ cmr_s32 isp_u_nlc_g_node(isp_handle handle, cmr_u16 * g_node_ptr)
 	return ret;
 }
 
-cmr_s32 isp_u_nlc_b_node(isp_handle handle, cmr_u16 * b_node_ptr)
+cmr_s32 isp_u_nlc_b_node(cmr_handle handle, cmr_u16 * b_node_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -128,7 +128,7 @@ cmr_s32 isp_u_nlc_b_node(isp_handle handle, cmr_u16 * b_node_ptr)
 	return ret;
 }
 
-cmr_s32 isp_u_nlc_l_node(isp_handle handle, cmr_u16 * l_node_ptr)
+cmr_s32 isp_u_nlc_l_node(cmr_handle handle, cmr_u16 * l_node_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
