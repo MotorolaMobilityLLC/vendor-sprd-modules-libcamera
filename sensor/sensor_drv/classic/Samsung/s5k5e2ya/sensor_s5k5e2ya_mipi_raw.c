@@ -238,11 +238,38 @@ static void s5k5e2ya_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    cmr_u16 value = 0x00;
+    float real_gain = gain;
+
+    float a_gain = 0;
+    float d_gain = 0;
+
     if (SENSOR_MAX_GAIN < gain)
         gain = SENSOR_MAX_GAIN;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x204, (gain >> 8 & 0xff));
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x205, (gain & 0xff));
+    if ((cmr_u32)real_gain <= 16 * 32) {
+        a_gain = real_gain;
+        d_gain = 256;
+        // ret_value =
+        // Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+    } else {
+        a_gain = 16 * 32;
+        d_gain = 256.0 * real_gain / a_gain;
+        SENSOR_LOGI("real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x",
+            (cmr_u32)real_gain, (cmr_u32)a_gain, (cmr_u32)d_gain);
+        if ((cmr_u32)d_gain > 256 * 256)
+            d_gain = 256 * 256; // d_gain < 256x
+    }
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x204, (int)a_gain >> 8 & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x205, (int)a_gain & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20e, (int)d_gain >> 8 & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20f, (int)d_gain & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x210, (int)d_gain >> 8 & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x211, (int)d_gain & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x212, (int)d_gain >> 8 & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x213, (int)d_gain & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x214, (int)d_gain >> 8 & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x215, (int)d_gain & 0xff);
 
     // s5k5e2ya_drv_group_hold_off();
 }

@@ -1879,7 +1879,7 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor
         }
         sensor_af_init(sensor_cxt);
         sensor_cxt->stream_on = 1;
-        sensor_stream_ctrl(sensor_cxt, 0);
+        sensor_stream_off(sensor_cxt);
         SENSOR_LOGI("4 open success");
     } else {
         SENSOR_LOGE("Sensor not register, open failed, sensor_id = %d",
