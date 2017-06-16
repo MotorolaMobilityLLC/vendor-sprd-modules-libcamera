@@ -1086,6 +1086,9 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	pdaf_input.pd_info = input_ptr->pdaf_info;
 	pdaf_input.name = input_ptr->ex_info.name;
 	pdaf_input.pdaf_ctrl_cb_ops.call_back = isp3a_handle_pdaf_callback;
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		pdaf_input.tuning_param[i] = input_ptr->bin_info[i].isp_pdaf_addr;
+	}
 	if (cxt->single_otp_data && input_ptr->otp_data) {
 		pdaf_input.af_otp.otp_data = &cxt->single_otp_data->af_info;
 		pdaf_input.af_otp.size = sizeof(cxt->single_otp_data->af_info);

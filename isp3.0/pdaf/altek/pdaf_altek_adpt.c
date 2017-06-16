@@ -39,7 +39,7 @@
 #define PD_OTP_PACK_SIZE 550
 
 struct pdaf_altek_lib_ops {
-	cmr_s32 (*init)(void *a_pInPDPackData, void *a_pInOTPData, int a_dInOTPSize);
+	cmr_s32 (*init)(void *a_pInPDPackData, void *a_pInOTPData, int a_dInOTPSize, void *a_pInTuningPara);
 	cmr_s32 (*calc)(float *a_pfInPDValue, void *a_pOutPDReg, void *a_pInImageBuf_left,
 				void *a_pInImageBuf_right, unsigned short a_uwInWidth, unsigned short a_uwInHeight,
 				alGE_RECT a_tInWOI, DataBit a_tInbit, PDInReg *a_tInPDReg);
@@ -92,6 +92,7 @@ struct pdaf_altek_context {
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
 	struct altek_pdaf_info pd_info;
+	void *tuning_param[ISP_INDEX_MAX];
 	struct pdaf_type2_info type2_info;
 	void *pd_left;
 	void *pd_right;
@@ -450,6 +451,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	struct pdaf_altek_context *cxt = NULL;
 	struct sensor_otp_af_info *otp_af_info = NULL;
 	cmr_u32 pd_in_size = 0;
+	cmr_u32 i = 0;
 
 	out_p->init_success = 0;
 
@@ -546,8 +548,11 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 
 	pdafaltek_get_pd_pack_bin(cxt, (const cmr_s8 *)in_p->name);
 	/* init lib */
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		cxt->tuning_param[i] = in_p->tuning_param[i];
+	}
 	ISP_LOGI("otp ptr %p size %ld", in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
-	ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
+	ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size, in_p->tuning_param[0]);
 	if (ret) {
 		ISP_LOGE("failed to init lib %ld", ret);
 		goto error_lib_init;
