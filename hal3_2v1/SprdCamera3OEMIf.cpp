@@ -4076,7 +4076,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         ATRACE_BEGIN("video_frame");
-        HAL_LOGD("record:fd=%d, vir=0x%lx, num=%d, time=%lld, rec=%lld",
+        HAL_LOGD("record:fd=0x%x, vir=0x%lx, num=%d, time=%lld, rec=%lld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp,
                  mSlowPara.rec_timestamp);
         if (frame->type == PREVIEW_VIDEO_FRAME &&
@@ -4148,7 +4148,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("preview_frame");
 
-        HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%lld", frame->fd,
+        HAL_LOGD("prev:fd=0x%x, vir=0x%lx, num=%d, time=%lld", frame->fd,
                  buff_vir, frame_num, buffer_timestamp);
         if (frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum &&
             (frame_num > mPictureFrameNum || frame_num == 0)) {
@@ -4251,7 +4251,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("callback_frame");
 
-        HAL_LOGD("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time %lld, "
+        HAL_LOGD("callback buff fd=0x%x, vir=0x%lx, num %d, ret %d, time %lld, "
                  "frame type = %ld",
                  frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
                  frame->type);
