@@ -37,8 +37,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_COVERED_SENSOR_SUPPORT)),true)
 	LOCAL_SRC_FILES += \
-	sensor_drv/classic/Galaxycore/gc0310/sensor_gc0310_mipi.c \
-	sensor_drv/classic/Cista/c2580/sensor_c2580_mipi_raw.c
+	sensor_drv/classic/Galaxycore/gc0310/sensor_gc0310_mipi.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)

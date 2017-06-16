@@ -22,15 +22,15 @@
 #define RES_TAB_YUV    s_gc0310_resolution_tab_yuv
 
 static cmr_int gc0310_drv_power_on(cmr_handle handle, cmr_uint power_on) {
-    SENSOR_AVDD_VAL_E dvdd_val = YUV_INFO.dvdd_val;
-    SENSOR_AVDD_VAL_E avdd_val = YUV_INFO.avdd_val;
-    SENSOR_AVDD_VAL_E iovdd_val = YUV_INFO.iovdd_val;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct module_cfg_info *module_info = sns_drv_cxt->module_info;
+
+    SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
+    SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
+    SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
     BOOLEAN power_down = YUV_INFO.power_down_level;
     BOOLEAN reset_level = YUV_INFO.reset_pulse_level;
-
-    SENSOR_IC_CHECK_HANDLE(handle);
-    SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if (SENSOR_TRUE == power_on) {
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
@@ -133,7 +133,7 @@ static cmr_int gc0310_drv_set_brightness(cmr_handle handle,
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    reg_tab = brightness_tab[sns_drv_cxt->module_id]) + 2 * level;
+    reg_tab = brightness_tab[sns_drv_cxt->module_id] + 2 * level;
 
     if (level > 6)
         return 0;
@@ -426,7 +426,7 @@ static cmr_int gc0310_drv_before_snapshot(cmr_handle handle,
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if(sns_drv_cxt->ops_cb.set_mode)
-        ret = sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, param);
+        ret = sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, sensor_snapshot_mode);
     if(sns_drv_cxt->ops_cb.set_mode_wait_done)
         ret = sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
@@ -447,7 +447,6 @@ static cmr_int gc0310_drv_before_snapshot(cmr_handle handle,
 
 static cmr_int gc0310_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("Start");
-    UNUSED(param)
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -460,7 +459,6 @@ static cmr_int gc0310_drv_stream_on(cmr_handle handle, cmr_uint param) {
 }
 
 static cmr_int gc0310_drv_stream_off(cmr_handle handle, cmr_uint param) {
-    UNUSED(param)
     SENSOR_LOGI("gx Stop 1");
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -497,8 +495,8 @@ static cmr_int gc0310_drv_handle_delete(cmr_handle handle, cmr_u32 *param) {
     /*if has private data,you must release it here*/
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    if(sns_drv_cxt->privata_data)
-        free(sns_drv_cxt->privata_data);
+    if(sns_drv_cxt->privata_data.buffer)
+        free(sns_drv_cxt->privata_data.buffer);
 
     ret = sensor_ic_drv_delete(handle,param);
     return ret;
@@ -515,13 +513,12 @@ static cmr_int gc0310_drv_get_private_data(cmr_handle handle,
 }
 
 static struct sensor_ic_ops s_gc0310_ops_tab = {
-    .create = gc0310_drv_handle_create,
-    .delete = gc0310_drv_handle_delete,
+    .create_handle = gc0310_drv_handle_create,
+    .delete_handle = gc0310_drv_handle_delete,
     .get_data = gc0310_drv_get_private_data,
 
     .power  = gc0310_drv_power_on,
     .identify = gc0310_drv_identify,
-    .read_aec_info = gc0310_drv_access_val,
 
     .ext_ops = {
         [SENSOR_IOCTL_BRIGHTNESS].ops = gc0310_drv_set_brightness,

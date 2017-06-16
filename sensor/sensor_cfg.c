@@ -29,16 +29,13 @@ extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
 #endif
-extern SENSOR_INFO_T g_autotest_ov13850_mipi_raw_info;
-extern SENSOR_INFO_T g_at_ov5648_mipi_raw_info;
-extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
 extern SENSOR_INFO_T g_imx258_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
 extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 
 #ifdef CONFIG_COVERED_SENSOR
 extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
-extern SENSOR_INFO_T g_c2580_mipi_raw_info;
+//extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
@@ -48,7 +45,7 @@ extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
 extern SENSOR_INFO_T g_c2390_mipi_raw_info;
-extern SENSOR_INFO_T g_c2580_mipi_raw_info;
+//extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 extern SENSOR_INFO_T g_sp8407_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k5e8yx_mipi_raw_info;
 #endif

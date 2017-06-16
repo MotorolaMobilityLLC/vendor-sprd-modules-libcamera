@@ -777,8 +777,8 @@ SENSOR_REG_T GC0310_MIPI_brightness_tab[][2] = {
     {{0xd5, 0x40}, {0xff, 0xff}},
 };
 SENSOR_REG_T * brightness_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = GC0310_MIPI_brightness_tab;
-}
+    [MODULE_SUNNY] = GC0310_MIPI_brightness_tab,
+};
 
 LOCAL const SENSOR_REG_T gc0310_video_mode_tab[][18] = {
     /* normal preview mode*/
@@ -804,8 +804,8 @@ LOCAL const SENSOR_REG_T gc0310_video_mode_tab[][18] = {
      {0xff, 0xff}}};
 
 static SENSOR_REG_T * video_mode_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = gc0310_video_mode_tab;
-}
+    [MODULE_SUNNY] = gc0310_video_mode_tab,
+};
 
 
 SENSOR_REG_T GC0310_MIPI_ev_tab[][4] = {
@@ -818,8 +818,8 @@ SENSOR_REG_T GC0310_MIPI_ev_tab[][4] = {
     {{0xfe, 0x01}, {0x13, 0x50}, {0xfe, 0x00}, {0xff, 0xff}},
 };
 static SENSOR_REG_T * ev_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = GC0310_MIPI_ev_tab;
-}
+    [MODULE_SUNNY] = GC0310_MIPI_ev_tab,
+};
 
 SENSOR_REG_T GC0310_MIPI_awb_tab[][6] = {
     // Auto
@@ -866,8 +866,8 @@ SENSOR_REG_T GC0310_MIPI_awb_tab[][6] = {
      {0xff, 0xff}},
 };
 static SENSOR_REG_T * awb_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = GC0310_MIPI_awb_tab;
-}
+    [MODULE_SUNNY] = GC0310_MIPI_awb_tab,
+};
 
 SENSOR_REG_T GC0310_MIPI_contrast_tab[][2] = {
     {
@@ -899,8 +899,8 @@ SENSOR_REG_T GC0310_MIPI_contrast_tab[][2] = {
     },
 };
 static SENSOR_REG_T * contrast_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = GC0310_MIPI_contrast_tab;
-}
+    [MODULE_SUNNY] = GC0310_MIPI_contrast_tab,
+};
 
 SENSOR_REG_T GC0310_MIPI_saturation_tab[][3] = {
     {
@@ -932,8 +932,8 @@ SENSOR_REG_T GC0310_MIPI_saturation_tab[][3] = {
     },
 };
 static SENSOR_REG_T * saturation_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = GC0310_MIPI_saturation_tab;
-}
+    [MODULE_SUNNY] = GC0310_MIPI_saturation_tab,
+};
 
 SENSOR_REG_T GC0310_MIPI_image_effect_tab[][4] = {
     // effect normal
@@ -958,8 +958,8 @@ SENSOR_REG_T GC0310_MIPI_image_effect_tab[][4] = {
     {{0x43, 0x02}, {0xda, 0xd2}, {0xdb, 0x28}, {0xff, 0xff}},
 };
 static SENSOR_REG_T * image_effect_tab[MODULE_MAX] = {
-    [MODULE_SUNNY] = GC0310_MIPI_image_effect_tab;
-}
+    [MODULE_SUNNY] = GC0310_MIPI_image_effect_tab,
+};
 
 static struct sensor_module_info s_GC0310_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
