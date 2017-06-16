@@ -64,7 +64,7 @@ ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libBokeh2Frames
 endif
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth
 endif
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher

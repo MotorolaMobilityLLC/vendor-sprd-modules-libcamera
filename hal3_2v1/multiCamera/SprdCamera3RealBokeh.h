@@ -55,7 +55,7 @@
 
 namespace sprdcamera {
 #define LOCAL_CAPBUFF_NUM (4)
-#define LOCAL_PREVIEW_NUM (16)
+#define LOCAL_PREVIEW_NUM (18)
 #define LOCAL_DEPTH_OUTBUFF_NUM 2
 #define LOCAL_BUFFER_NUM                                                       \
     (LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + LOCAL_DEPTH_OUTBUFF_NUM)
@@ -73,7 +73,6 @@ namespace sprdcamera {
 #define BOKEH_CIRCLE_SIZE_SCALE (3)
 #define BOKEH_SMOOTH_SIZE_SCALE (8)
 #define BOKEH_CIRCLE_VALUE_MIN (20)
-#define BOKEH_DEPTH_PREVIEW_ENABLE (0)
 
 /* refocus api error code */
 #define ALRNB_ERR_SUCCESS 0x00
@@ -143,31 +142,6 @@ typedef struct {
     WeightParams weight_params;
 } bokeh_prev_params_t;
 
-typedef enum { YUV420_NV12 = 0, YUV422_YUYV } ImageYUVFormat;
-
-typedef struct {
-    int input_width;
-    int input_height;
-    int output_depthwidth;
-    int output_depthheight;
-    ImageYUVFormat imageFormat_main;
-    ImageYUVFormat imageFormat_sub;
-    void *potpbuf;
-    int otpsize;
-    char *config_param;
-} depth_init_inputparam;
-
-typedef struct {
-    int outputsize;
-    int calibration_width;
-    int calibration_height;
-} depth_init_outputparam;
-
-typedef struct {
-    depth_init_inputparam inputparam;
-    depth_init_outputparam outputinfo;
-} depth_init_param;
-
 typedef struct {
     void *handle;
     int (*sprd_bokeh_Init)(int a_dInImgW, int a_dInImgH, char *param);
@@ -178,28 +152,16 @@ typedef struct {
     int (*sprd_bokeh_ReFocusGen)(void *a_pOutBlurYCC420NV21,
                                  int a_dInBlurStrength, int a_dInPositionX,
                                  int a_dInPositionY);
+    bool mInitState;
 } BokehAPI_t;
-
-typedef struct {
-    void *handle;
-    int (*sprd_depth_VersionInfo_Get)(char a_acOutRetbuf[256],
-                                      unsigned int a_udInSize);
-    int (*sprd_depth_Init)(depth_init_inputparam *inparam,
-                           depth_init_outputparam *outputinfo);
-
-    int (*sprd_depth_Run)(void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
-                          void *a_pInMain_YCC420NV21);
-
-    void (*sprd_depth_Close)();
-} DepthAPI_t;
 
 typedef struct {
     void *handle;
     int (*iBokehInit)(void **handle, InitParams *params);
     int (*iBokehDeinit)(void *handle);
     int (*iBokehCreateWeightMap)(void *handle, WeightParams *params);
-    int (*iBokehBlurImage)(void *handle, unsigned char *Src_YUV,
-                           unsigned char *Output_YUV);
+    int (*iBokehBlurImage)(void *handle, private_handle_t *Src_YUV,
+                           private_handle_t *Output_YUV);
     void *mHandle;
 } BokehPreviewAPI_t;
 
@@ -309,7 +271,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
         bool mReprocessing;
         bool mBokehConfigParamState;
         bokeh_cap_params_t mCapbokehParam;
-        depth_init_param mCapDepthParam;
+        void *mCapDepthhandle;
 
       private:
         void waitMsgAvailable();
@@ -334,7 +296,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
         Mutex mMergequeueMutex;
         Condition mMergequeueSignal;
         bokeh_prev_params_t mPreviewbokehParam;
-        depth_init_param mPreviewDepthParam;
+        void *mPrevDepthhandle;
 
       private:
         Mutex mLock;
@@ -363,9 +325,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
     List<request_saved_bokeh_t> mSavedRequestList;
     camera3_stream_t *mSavedCapStreams;
     uint32_t mCapFrameNumber;
+    uint32_t mPrevFrameNumber;
     const camera3_callback_ops_t *mCallbackOps;
     BokehAPI_t *mBokehApi;
-    DepthAPI_t *mDepthApi;
+    depth_api_t *mDepthApi;
     BokehPreviewAPI_t *mBokehPrevApi;
     uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
     int initialize(const camera3_callback_ops_t *callback_ops);

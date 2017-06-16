@@ -91,6 +91,52 @@ enum sensor_stream_ctrl {
     STREAM_ON = 1,
 };
 
+typedef enum { YUV420_NV12 = 0, YUV422_YUYV } ImageYUVFormat;
+typedef enum { MODE_PREVIEW, MODE_CAPTURE } depth_mode;
+
+typedef struct {
+    int input_width;
+    int input_height;
+    int output_depthwidth;
+    int output_depthheight;
+    ImageYUVFormat imageFormat_main;
+    ImageYUVFormat imageFormat_sub;
+    void *potpbuf;
+    int otpsize;
+    char *config_param;
+} depth_init_inputparam;
+
+typedef struct {
+    int outputsize;
+    int calibration_width;
+    int calibration_height;
+} depth_init_outputparam;
+typedef struct {
+    int x1_pos;
+    int y1_pos;
+    int x2_pos;
+    int y2_pos;
+} distance_Two_point_info;
+
+typedef struct {
+    void *handle;
+    int (*sprd_depth_VersionInfo_Get)(char a_acOutRetbuf[256],
+                                      unsigned int a_udInSize);
+    void *(*sprd_depth_Init)(depth_init_inputparam *inparam,
+                             depth_init_outputparam *outputinfo,
+                             depth_mode mode);
+
+    int (*sprd_depth_Run)(void *handle, void *a_pOutDisparity,
+                          void *a_pInSub_YCC420NV21,
+                          void *a_pInMain_YCC420NV21);
+    int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
+                             int angle);
+    int (*sprd_depth_distancemeasurement)(int *distance, void *disparity,
+                                          distance_Two_point_info *points_info);
+
+    int (*sprd_depth_Close)(void *handle);
+} depth_api_t;
+
 typedef struct {
     uint32_t frame_number;
     int32_t vcm_steps;
