@@ -227,7 +227,8 @@ typedef void *aft_sub_handle_t;
 
 typedef struct aft_context {
 	aft_sub_handle_t aft_sub_handle;
-	cmr_u16 tuning_param_len;
+	cmr_u32 aft_dump_info_len;
+	cmr_u32 tuning_param_len;
 	cmr_u32 af_mode;
 	struct aft_ae_info ae_info;
 	aft_ctrl_ops_t aft_ops;

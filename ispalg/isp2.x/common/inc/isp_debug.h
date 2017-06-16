@@ -431,6 +431,8 @@ typedef struct _isp_log_info {
 	cmr_u32 ae_len;
 	cmr_s32 af_off;
 	cmr_u32 af_len;
+	cmr_s32 aft_off;
+	cmr_u32 aft_len;
 	cmr_s32 awb_off;
 	cmr_u32 awb_len;
 	cmr_s32 lsc_off;

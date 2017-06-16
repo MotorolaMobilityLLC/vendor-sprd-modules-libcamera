@@ -1482,23 +1482,23 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 		pthread_mutex_unlock(&af->af_work_lock);
 	} else if ((res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) && af->caf_state == CAF_SEARCHING) {
 		ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
-		pthread_mutex_lock(&af->af_work_lock);
 		af->need_re_trigger = 1;
+		pthread_mutex_lock(&af->af_work_lock);
 		if(AFV1_SUCCESS == AF_STOP(af->af_alg_cxt)){
-			AF_STOP(af->af_alg_cxt);
 			AF_Process_Frame(af->af_alg_cxt);
 			memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 			aft_in.AFT_mode = af->algo_mode;
 			aft_in.bisTrigger = AF_TRIGGER;
 			aft_in.AF_Trigger_Type = (RE_TRIGGER);
+			aft_in.trigger_source = res.is_caf_trig;
 			AF_Trigger(af->af_alg_cxt, &aft_in);
+			do_start_af(af);
 			ISP_LOGI("AF retrigger start \n");
 		}
 		else{
-			ISP_LOGI("AF retrigger no support \n");
+			ISP_LOGI("AF retrigger no support @%d \n",AF_Get_alg_mode(af->af_alg_cxt));
 		}
 		pthread_mutex_unlock(&af->af_work_lock);
-		do_start_af(af);
 	} else if (res.is_cancel_caf && af->caf_state != CAF_SEARCHING) {
 		ISP_LOGI("cancel af while not searching AF_mode = %d", AF_Get_alg_mode(af->af_alg_cxt));
 	}
@@ -1627,6 +1627,7 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 	prm->active_data_type = AFT_DATA_PD;
 	prm->pd_info.pd_enable = af->pd.pd_enable;
 	prm->pd_info.effective_frmid = af->pd.effective_frmid;
+	prm->pd_info.pd_roi_num = af->pd.pd_roi_num;
 	memcpy(&(prm->pd_info.confidence[0]),&(af->pd.confidence[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
 	memcpy(&(prm->pd_info.pd_value[0]),&(af->pd.pd_value[0]),sizeof(double)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
 	memcpy(&(prm->pd_info.pd_roi_dcc[0]),&(af->pd.pd_roi_dcc[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
@@ -2149,7 +2150,7 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	memcpy(&(af->pd.pd_roi_dcc[0]),&(pd_calc_result->pdDCCGain[0]),sizeof(cmr_u32)*(MIN(af->pd.pd_roi_num,PD_MAX_AREA)));
 	af->trigger_source_type |= AF_DATA_PD;
 	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n",pd_calc_result->pdPhaseDiff[0],pd_calc_result->pdPhaseDiff[1],pd_calc_result->pdPhaseDiff[2],pd_calc_result->pdPhaseDiff[3]);
-	ISP_LOGV("Conf\t%d\t%d\t%d\t%d\n",pd_calc_result->pdConf[0],pd_calc_result->pdConf[1],pd_calc_result->pdConf[2],pd_calc_result->pdConf[3]);
+	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n",pd_calc_result->pdConf[0],pd_calc_result->pdConf[1],pd_calc_result->pdConf[2],pd_calc_result->pdConf[3],af->pd.pd_roi_num);
 	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d", pd_calc_result->pdGetFrameID,
 		 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
 
@@ -2343,7 +2344,13 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 			ISP_LOGI("Get AF Log info 0x%x ", log_info->log_len);
 			break;
 		}
-
+	case AF_CMD_GET_AFT_LOG_INFO:{
+			struct af_log_info *log_info = (struct af_log_info *)param0;
+			log_info->log_cxt = af->trig_ops.handle.aft_sub_handle;
+			log_info->log_len = af->trig_ops.handle.aft_dump_info_len;
+			ISP_LOGI("Get AFT Log info 0x%x ", log_info->log_len);
+			break;
+		}
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
