@@ -9980,6 +9980,32 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
 
     ret = camera_get_snapshot_param(oem_handle, &snp_param);
 
+    // check snp size
+    if (snp_param.post_proc_setting.snp_size.height == 0 ||
+        snp_param.post_proc_setting.snp_size.width == 0 ||
+        snp_param.post_proc_setting.actual_snp_size.height == 0 ||
+        snp_param.post_proc_setting.actual_snp_size.width == 0) {
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        CMR_LOGI("camera id: %d", setting_param.camera_id);
+
+        /*get snapshot size*/
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_GET_CAPTURE_SIZE, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get capture size %ld", ret);
+            goto exit;
+        }
+        snp_param.post_proc_setting.actual_snp_size = setting_param.size_param;
+        snp_param.post_proc_setting.snp_size = setting_param.size_param;
+    }
+    if (snp_param.channel_id == 0 || snp_param.channel_id >= GRAB_CHANNEL_MAX) {
+        snp_param.channel_id = frm_data->channel_id;
+    }
+    CMR_LOGI("chn id: %d ,picture: width:%d, height:%d", snp_param.channel_id,
+             cxt->snp_cxt.post_proc_setting.actual_snp_size.width,
+             cxt->snp_cxt.post_proc_setting.actual_snp_size.height);
+
     snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_y =
         frm_data->yaddr_vir;
     snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_u =
@@ -10009,6 +10035,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         frm_data->vaddr;
     snp_param.post_proc_setting.mem[0].target_yuv.fd = frm_data->fd;
     snp_param.post_proc_setting.mem[0].target_yuv.fmt = frm_data->fmt;
+    camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
 
     ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
 
