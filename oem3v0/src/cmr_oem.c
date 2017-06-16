@@ -749,24 +749,26 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
     cmr_u32 frm_id;
     struct buffer_cfg buf_cfg;
 
-    if ((camera_get_is_discard_frame((cmr_handle)cxt, frame) ||
-         camera_check_cap_time((cmr_handle)cxt, frame)) &&
-        CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) {
-        memset(&buf_cfg, 0, sizeof(buf_cfg));
-        buf_cfg.channel_id = frame->channel_id;
-        buf_cfg.base_id = CMR_BASE_ID(frame->frame_id);
-        buf_cfg.count = 1;
-        buf_cfg.flag = BUF_FLAG_RUNNING;
-        buf_cfg.addr[0].addr_y = frame->yaddr;
-        buf_cfg.addr[0].addr_u = frame->uaddr;
-        buf_cfg.addr[0].addr_v = frame->vaddr;
-        buf_cfg.addr_vir[0].addr_y = frame->yaddr_vir;
-        buf_cfg.addr_vir[0].addr_u = frame->uaddr_vir;
-        buf_cfg.addr_vir[0].addr_v = frame->vaddr_vir;
-        buf_cfg.fd[0] = frame->fd;
-        camera_channel_buff_cfg(cxt, &buf_cfg);
-        return;
+    if (cxt->snp_cxt.snp_mode != CAMERA_ZSL_MODE) {
+        if (camera_get_is_discard_frame((cmr_handle)cxt, frame) ||
+            camera_check_cap_time((cmr_handle)cxt, frame)) {
+            memset(&buf_cfg, 0, sizeof(buf_cfg));
+            buf_cfg.channel_id = frame->channel_id;
+            buf_cfg.base_id = CMR_BASE_ID(frame->frame_id);
+            buf_cfg.count = 1;
+            buf_cfg.flag = BUF_FLAG_RUNNING;
+            buf_cfg.addr[0].addr_y = frame->yaddr;
+            buf_cfg.addr[0].addr_u = frame->uaddr;
+            buf_cfg.addr[0].addr_v = frame->vaddr;
+            buf_cfg.addr_vir[0].addr_y = frame->yaddr_vir;
+            buf_cfg.addr_vir[0].addr_u = frame->uaddr_vir;
+            buf_cfg.addr_vir[0].addr_v = frame->vaddr_vir;
+            buf_cfg.fd[0] = frame->fd;
+            camera_channel_buff_cfg(cxt, &buf_cfg);
+            return;
+        }
     }
+
     receiver_handle = cxt->grab_cxt.caller_handle[frame->channel_id];
     if ((0 != cxt->snp_cxt.channel_bits) &&
         (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) &&
