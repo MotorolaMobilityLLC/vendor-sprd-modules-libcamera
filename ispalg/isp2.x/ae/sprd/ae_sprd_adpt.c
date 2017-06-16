@@ -50,7 +50,7 @@
 
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
-#define SENSOR_LINETIME_BASE   100	/*uint:0.1us */
+#define SENSOR_LINETIME_BASE   100     /*uint:0.1us */
 #define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 100 /*lower than LV1, if it is 0, disable this feature*/
 /*
  * should be read from driver later
@@ -663,13 +663,13 @@ static void _print_ae_debug_info(char *log_str, struct ae_ctrl_cxt *cxt_ptr)
 	sync_cur_status_ptr = &(cxt_ptr->sync_cur_status);
 	result_ptr = &cxt_ptr->sync_cur_result;
 
-	fps = 10000000 * 1.0 / (cxt_ptr->snr_info.line_time * (result_ptr->wts.cur_dummy + result_ptr->wts.cur_exp_line));
+	fps = AEC_LINETIME_PRECESION / (cxt_ptr->snr_info.line_time * (result_ptr->wts.cur_dummy + result_ptr->wts.cur_exp_line));
 	if (fps > cxt_ptr->sync_cur_status.settings.max_fps) {
 		fps = cxt_ptr->sync_cur_status.settings.max_fps;
 	}
 
 	pos =
-	    sprintf(log_str, "cam-id:%d frm-id:%d,flicker: %d\nidx(%d-%d):%d,cur-l:%d, tar-l:%d, lv:%d, bv: %d,expl(%d*0.1us):%d, expt: %d, gain:%d, dmy:%d, FR(%d-%d):%.2f\n",
+		sprintf(log_str, "cam-id:%d frm-id:%d,flicker: %d\nidx(%d-%d):%d,cur-l:%d, tar-l:%d, lv:%d, bv: %d,expl(%d):%d, expt: %d, gain:%d, dmy:%d, FR(%d-%d):%.2f\n",
 		    cxt_ptr->camera_id, sync_cur_status_ptr->frame_id, sync_cur_status_ptr->settings.flicker, sync_cur_status_ptr->ae_table->min_index,
 		    sync_cur_status_ptr->ae_table->max_index, result_ptr->wts.cur_index, cxt_ptr->sync_cur_result.cur_lum, cxt_ptr->sync_cur_result.target_lum,
 		    cxt_ptr->cur_result.cur_bv, cxt_ptr->cur_result.cur_bv_nonmatch, cxt_ptr->snr_info.line_time, result_ptr->wts.cur_exp_line,
@@ -837,7 +837,7 @@ static cmr_s32 _get_iso(struct ae_ctrl_cxt *cxt, cmr_s32 * real_iso)
 
 	iso = cxt->cur_status.settings.iso;
 	real_gain = cxt->cur_result.wts.cur_again;
-	f_tmp = 10000000.0 / cxt->cur_result.wts.exposure_time;
+	f_tmp = AEC_LINETIME_PRECESION / cxt->cur_result.wts.exposure_time;
 
 	if (0.5 <= (f_tmp - (cmr_s32) f_tmp))
 		iso_shutter = (cmr_s32) f_tmp + 1;
@@ -1206,22 +1206,8 @@ static cmr_s32 _get_bv_by_lum_new(struct ae_ctrl_cxt *cxt, cmr_s32 * bv)
 		ISP_LOGE("fail to get bv by lum, cxt %p bv %p", cxt, bv);
 		return AE_ERROR;
 	}
-
-	if (0 == cxt->cur_param->alg_id) {
-		cmr_u32 cur_lum = 0;
-		float real_gain = 0;
-		cmr_u32 cur_exp = 0;
-		*bv = 0;
-		cur_lum = cxt->cur_result.cur_lum;
-		cur_exp = cxt->cur_result.wts.exposure_time;
-		real_gain = _get_real_gain(cxt->cur_result.wts.cur_again);
-		if (0 == cur_lum) {
-			cur_lum = 1;
-		}
-		*bv = (cmr_s32) (log2(((double)100000000 * cur_lum) / ((double)cur_exp * real_gain * 5)) * 16.0 + 0.5);
-	} else if (2 == cxt->cur_param->alg_id) {
-		*bv = cxt->sync_cur_result.cur_bv;
-	}
+	
+	*bv = cxt->sync_cur_result.cur_bv;
 	ISP_LOGV("real bv %d", *bv);
 	return rtn;
 }
@@ -1520,7 +1506,7 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 			dst[AE_FLICKER_50HZ]->again[i] = (cmr_s32) (0.5 + 1.0 * product / (dst[AE_FLICKER_50HZ]->exposure[i] * linetime));
 		}
 
-		thrd = (cmr_u32)(1.0 / 120 * 10000000 + 0.5);
+		thrd = (cmr_u32)(1.0 / 120 * AEC_LINETIME_PRECESION + 0.5);
 		for (i = 0; i <= mx; i++) {
 			/*the exposure time is more than 1/120, so it should be the times of 1/120*/
 			if (thrd <= src[AE_FLICKER_50HZ]->exposure[i]) {
@@ -1540,7 +1526,7 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 	} else {
 		memcpy((void*)dst[AE_FLICKER_50HZ], (void*)src[AE_FLICKER_50HZ], sizeof(struct ae_exp_gain_table));
 
-		thrd = (cmr_u32)(1.0 / 120 * 10000000 + 0.5);
+		thrd = (cmr_u32)(1.0 / 120 * AEC_LINETIME_PRECESION + 0.5);
 		for (i = 0; i <= mx; i++) {
 			if (thrd <= src[AE_FLICKER_50HZ]->exposure[i] * linetime) {
 				product = 1.0 * src[AE_FLICKER_50HZ]->exposure[i] * src[AE_FLICKER_50HZ]->again[i];
@@ -3004,7 +2990,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	ae_init_out = (struct ae_init_out *)in_param;
 	/* e.g. line time: sensor 10380ns, ae 104*0.1us*/
 	init_param->resolution_info.line_time =
-		_round((float)init_param->resolution_info.line_time / SENSOR_LINETIME_BASE);
+		_round((float)init_param->resolution_info.line_time  /SENSOR_LINETIME_BASE);
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->ae_role = init_param->ae_role;
 	cxt->sensor_role = init_param->sensor_role;
@@ -5902,7 +5888,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_GET_EXP:
 		if (result) {
-			*(float *)result = cxt->cur_result.wts.exposure_time / 10000000.0;
+			*(float *)result = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 			// ISP_LOGV("wts.exposure_time %1.f
 			// %d\r\n", *(float *)result,
 			// cxt->cur_result.wts.exposure_time);
