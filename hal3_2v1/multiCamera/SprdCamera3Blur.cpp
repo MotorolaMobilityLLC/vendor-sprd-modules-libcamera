@@ -638,25 +638,26 @@ int SprdCamera3Blur::setupPhysicalCameras() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3Blur::CaptureThread::CaptureThread()
-    : mSavedCapReqsettings(NULL), mCaptureStreamsNum(0), mLastMinScope(0),
-      mLastMaxScope(0), mLastAdjustRati(0), mCircleSizeScale(0),
-      mFirstCapture(false), mFirstPreview(false),
+    : mCallbackOps(NULL), mDevMain(NULL), mSavedResultBuff(NULL),
+      mSavedCapReqsettings(NULL), mCaptureStreamsNum(0), mBlurApi2(NULL),
+      mLastMinScope(0), mLastMaxScope(0), mLastAdjustRati(0),
+      mCircleSizeScale(0), mFirstCapture(false), mFirstPreview(false),
       mUpdateCaptureWeightParams(false), mUpdatePreviewWeightParams(false),
       mLastFaceNum(0), mSkipFaceNum(0), mRotation(0), mLastTouchX(0),
       mLastTouchY(0), mBlurBody(true), mUpdataTouch(false), mVersion(0),
-      mIsGalleryBlur(false), mIsBlurAlways(false), nearYuv(NULL) {
+      mIsGalleryBlur(false), mIsBlurAlways(false), mNearYuv(NULL) {
     HAL_LOGI(" E");
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
-    memset(mBlurApi, 0, sizeof(BlurAPI_t *) * BLUR_LIB_BOKEH_NUM);
+    memset(mBlurApi, 0, sizeof(BlurAPI_t) * BLUR_LIB_BOKEH_NUM);
     memset(mWinPeakPos, 0, sizeof(short) * BLUR_AF_WINDOW_NUM);
     memset(&mPreviewInitParams, 0, sizeof(preview_init_params_t));
     memset(&mPreviewWeightParams, 0, sizeof(preview_weight_params_t));
     memset(&mCaptureInitParams, 0, sizeof(capture_init_params_t));
     memset(&mCaptureWeightParams, 0, sizeof(capture_weight_params_t));
+    memset(&mCapture2InitParams, 0, sizeof(capture2_init_params_t));
+    memset(&mCapture2WeightParams, 0, sizeof(capture2_weight_params_t));
     memset(mFaceInfo, 0, sizeof(int32_t) * 4);
-    mDevMain = NULL;
-    mSavedResultBuff = NULL;
     memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     memset(&mIspInfo, 0, sizeof(blur_isp_info_t));
     mCaptureMsgList.clear();
@@ -1178,7 +1179,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                                  capture_msg.combo_buff.buffer))
                                 ->size;
                         unsigned char *saveInJpegAddr =
-                            (unsigned char *)nearYuv - farYuvSize;
+                            (unsigned char *)mNearYuv - farYuvSize;
                         memcpy(saveInJpegAddr, farYuvBase, farYuvSize);
                     }
                 }
@@ -1190,7 +1191,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                   !mIsGalleryBlur))) {
                 blurHandle(
                     (struct private_handle_t *)*(capture_msg.combo_buff.buffer),
-                    nearYuv, (struct private_handle_t *)*output_buffer);
+                    mNearYuv, (struct private_handle_t *)*output_buffer);
 
                 char prop2[PROPERTY_VALUE_MAX] = {
                     0,
@@ -1208,7 +1209,14 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                                     3, capture_msg.combo_buff.frame_number);
                 }
             }
-
+#ifndef BLUR_V3_TAKE_3_YUV
+            if (mVersion == 3 && mBlur->mReqState == WAIT_SECOND_YUV_STATE &&
+                mIsGalleryBlur) {
+                memcpy(((struct private_handle_t *)*output_buffer)->base,
+                       mNearYuv,
+                       mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
+            }
+#endif
             camera3_capture_request_t request;
             camera3_stream_buffer_t *output_buffers = NULL;
             camera3_stream_buffer_t *input_buffer = NULL;
@@ -1258,6 +1266,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                     &mBlur->mLocalCapBuffer[0].native_handle;
                 request.input_buffer = NULL;
                 mBlur->mReqState = WAIT_SECOND_YUV_STATE;
+#ifdef BLUR_V3_TAKE_3_YUV
             } else if (mIsGalleryBlur &&
                        mBlur->mReqState == WAIT_SECOND_YUV_STATE &&
                        !mBlur->mFlushing) {
@@ -1270,6 +1279,9 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 if (mBlur->mReqState == WAIT_THIRD_YUV_STATE) {
                     input_buffer->buffer = capture_msg.combo_buff.buffer;
                 }
+#else
+            } else {
+#endif
                 output_buffers[0].stream =
                     &mMainStreams[mCaptureStreamsNum - 1];
                 request.input_buffer = input_buffer;
@@ -1330,8 +1342,7 @@ void SprdCamera3Blur::CaptureThread::initBlur20Params() {
                                           80, 90, 100, 110, 120};
     unsigned short cali_dac_seq_13M[] = {355, 340, 325, 300, 310,
                                          305, 302, 298, 295, 262};
-    mCaptureInitParams.Scalingratio = 8;
-    mCaptureInitParams.SmoothWinSize = mCaptureInitParams.box_filter_size;
+
     mCaptureInitParams.vcm_dac_up_bound = 0;
     mCaptureInitParams.vcm_dac_low_bound = 0;
     mCaptureInitParams.vcm_dac_info = NULL;
@@ -1380,23 +1391,30 @@ void SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mFirstCapture = true;
     mFirstPreview = true;
     mUpdateCaptureWeightParams = true;
-    mLastMinScope = 1;
-    mLastMaxScope = 50;
-    mLastAdjustRati = 20000;
 
-    // preview params, width and height was inited in configureStreams
+    // preview 720P v1.0 v1.1
+    mLastMinScope = 10;      // min_slope*1000
+    mLastMaxScope = 50;      // max_slope*1000
+    mLastAdjustRati = 20000; // findex2gamma_adjust_ratio*1000
+    // mPreviewInitParams.SmoothWinSize = 11;
+    // mPreviewInitParams.Scalingratio = 2;
+    mPreviewInitParams.box_filter_size = 13;
     mPreviewInitParams.min_slope = (float)(mLastMinScope) / 10000;
     mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mPreviewInitParams.findex2gamma_adjust_ratio =
         (float)(mLastAdjustRati) / 10000;
-    mPreviewInitParams.box_filter_size = 7;
 
-    // capture params, width and height was inited in configureStreams
+    // capture 5M v1.0 v1.1
+    mLastMinScope = 4;       // min_slope*1000
+    mLastMaxScope = 19;      // max_slope*1000
+    mLastAdjustRati = 20000; // findex2gamma_adjust_ratio*1000
+    mCaptureInitParams.SmoothWinSize = 5;
+    mCaptureInitParams.Scalingratio = 8;
+    mCaptureInitParams.box_filter_size = 7;
     mCaptureInitParams.min_slope = (float)(mLastMinScope) / 10000;
     mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mCaptureInitParams.findex2gamma_adjust_ratio =
         (float)(mLastAdjustRati) / 10000;
-    mCaptureInitParams.box_filter_size = 7;
 
     initBlur20Params();
 }
@@ -2452,7 +2470,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
     buffer_base -= yuv_size;
     HAL_LOGD("yuv base=%p, ", buffer_base);
     memcpy(buffer_base, src_yuv, yuv_size);
-    nearYuv = (void *)buffer_base;
+    mNearYuv = (void *)buffer_base;
 }
 
 /*===========================================================================
