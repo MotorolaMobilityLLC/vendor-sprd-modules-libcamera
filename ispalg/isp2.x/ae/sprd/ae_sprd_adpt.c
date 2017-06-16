@@ -1866,8 +1866,7 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 	cmr_s32 max_index = 0;
 	prv_status = &cxt->prv_status;
 	cur_status = &cxt->cur_status;
-
-	if (nxt_scene_mod >= AE_SCENE_MX_NUM) {
+	if (nxt_scene_mod >= AE_SCENE_MOD_MAX) {
 		ISP_LOGE("fail to set scene mod, %d\n", nxt_scene_mod);
 		return AE_ERROR;
 	}
@@ -5232,7 +5231,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		if (param) {
 			struct ae_set_scene *scene_mode = param;
 
-			if (scene_mode->mode < AE_SCENE_MX_NUM) {
+			if (scene_mode->mode < AE_SCENE_MOD_MAX) { 
 				cxt->cur_status.settings.scene_mode = (cmr_s8) scene_mode->mode;
 			}
 		ISP_LOGI("AE_SET_SCENE %d\n", cxt->cur_status.settings.scene_mode);

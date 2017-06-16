@@ -24,8 +24,8 @@
 #else
 #include "cmr_types.h"
 #endif
-//#include "ae1_face.h"
 
+#define AEC_LINETIME_PRECESION 10000000.0
 #define AE_EXP_GAIN_TABLE_SIZE 512
 #define AE_WEIGHT_TABLE_SIZE	1024
 #define AE_ISO_NUM	6
@@ -65,6 +65,7 @@ enum ae_state {
 	AE_STATE_INACTIVE,
 	AE_STATE_MAX
 };
+
 enum ae_return_value {
 	AE_SUCCESS = 0x00,
 	AE_ERROR,
@@ -95,6 +96,15 @@ enum ae_iso_mode {
 	AE_ISO_MAX
 };
 
+enum ae_scene_mode {
+	AE_SCENE_NORMAL = 0x00,
+	AE_SCENE_NIGHT,
+	AE_SCENE_SPORT,
+	AE_SCENE_PORTRAIT,
+	AE_SCENE_LANDSPACE,
+	AE_SCENE_PANORAMA,
+	AE_SCENE_MOD_MAX
+};
 enum alg_flash_type {
 	FLASH_NONE,
 	FLASH_PRE_BEFORE,
@@ -110,16 +120,6 @@ enum alg_flash_type {
 	FLASH_MAIN_AFTER,
 	FLASH_MAIN_AFTER_RECEIVE,
 	FLASH_MAX
-};
-
-enum ae_scene_mode {
-	AE_SCENE_NORMAL = 0x00,
-	AE_SCENE_NIGHT,
-	AE_SCENE_SPORT,
-	AE_SCENE_PORTRAIT,
-	AE_SCENE_LANDSPACE,
-	AE_SCENE_PANORAMA,
-	AE_SCENE_MX_NUM
 };
 
 enum ae_flicker_mode {

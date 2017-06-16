@@ -28,7 +28,6 @@ extern "C" {
 #define AE_FD_NUM 20
 #define AE_FLASH_MAX_CELL	40
 
-
 enum ae_level {
 	AE_LEVEL0 = 0x00,
 	AE_LEVEL1,
