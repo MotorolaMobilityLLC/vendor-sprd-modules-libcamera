@@ -492,6 +492,19 @@ cmr_int cmr_thread_msg_send(cmr_handle thread_handle, struct cmr_msg *message) {
     return ret;
 }
 
+cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name) {
+    cmr_int ret = CMR_MSG_SUCCESS;
+    struct cmr_thread *thread = NULL;
+
+    if (!thread_handle || !name) {
+        return CMR_MSG_PARAM_ERR;
+    }
+
+    thread = (struct cmr_thread *)thread_handle;
+    ret = pthread_setname_np(thread->thread_handle, name);
+    return ret;
+}
+
 cmr_int cmr_sem_init(sem_t *sem, cmr_int pshared, cmr_uint value) {
     return sem_init(sem, pshared, value);
 }
