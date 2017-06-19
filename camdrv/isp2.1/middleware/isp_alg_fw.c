@@ -118,6 +118,12 @@ struct af_info {
 	cmr_u32 log_af_size;
 };
 
+struct aft_info {
+	cmr_handle handle;
+	cmr_u8 *log_aft;
+	cmr_u32 log_aft_size;
+};
+
 struct pdaf_info {
 	cmr_handle handle;
 	cmr_u8 pdaf_support;
@@ -210,6 +216,7 @@ struct isp_alg_fw_context {
 	struct awb_info awb_cxt;
 	struct smart_info smart_cxt;
 	struct af_info af_cxt;
+	struct aft_info aft_cxt;
 	struct lsc_info lsc_cxt;
 	struct afl_info afl_cxt;
 	struct pdaf_info pdaf_cxt;
@@ -2141,6 +2148,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	cmr_int ret = ISP_SUCCESS;
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
+	struct af_log_info aft_param = {NULL, 0};
 
 	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
 		return ret;
@@ -2176,6 +2184,9 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LOG_INFO, (void *)&af_param, NULL);
 		cxt->af_cxt.log_af = af_param.log_cxt;
 		cxt->af_cxt.log_af_size = af_param.log_len;
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AFT_LOG_INFO, (void *)&aft_param, NULL);
+		cxt->aft_cxt.log_aft = aft_param.log_cxt;
+		cxt->aft_cxt.log_aft_size = aft_param.log_len;
 	}
 	ISP_TRACE_IF_FAIL(ret, ("fail to do af_ctrl_init"));
 
