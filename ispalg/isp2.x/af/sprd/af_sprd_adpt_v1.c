@@ -1344,41 +1344,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 	}
 }
 
-static void caf_start(af_ctrl_t * af)
-{
-	ISP_LOGV("state = %s, focus_state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
-	af->focus_state = AF_IDLE;
-
-	if (STATE_RECORD_CAF == af->state)
-		af->algo_mode = VAF;
-	else
-		af->algo_mode = CAF;
-
-	calc_roi(af, NULL, af->algo_mode);
-	do_start_af(af);
-}
-
-static void caf_process_frame(af_ctrl_t * af)
-{
-	cmr_u8 res;
-	AF_Process_Frame(af->af_alg_cxt);
-
-	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
-		AF_Get_Result(af->af_alg_cxt, &res);
-		ISP_LOGV("Normal AF end, result = %d", res);
-
-		if (1 == af->need_re_trigger) {
-			af->need_re_trigger = 0;
-		}
-		ISP_LOGI("notify_stop");
-		notify_stop(af, res);
-		af->focus_state = AF_IDLE;
-		trigger_start(af);	//trigger reset after caf done
-		do_start_af(af);
-	}
-}
-
-static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
+static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	AF_Trigger_Data aft_in;
@@ -1391,7 +1357,6 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 	if (atoi(value) != 1)
 		return;
 
-	af->focus_state = AF_SEARCHING;
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1427,6 +1392,28 @@ static void caf_start_search(af_ctrl_t * af, struct aft_proc_result *p_aft_resul
 	af->vcm_stable = 0;
 }
 
+static cmr_s32 caf_process_frame(af_ctrl_t * af)
+{
+	cmr_u8 res;
+	AF_Process_Frame(af->af_alg_cxt);
+
+	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
+		AF_Get_Result(af->af_alg_cxt, &res);
+		ISP_LOGV("Normal AF end, result = %d", res);
+
+		if (1 == af->need_re_trigger) {
+			af->need_re_trigger = 0;
+		}
+		ISP_LOGI("notify_stop");
+		notify_stop(af, res);
+
+		do_start_af(af);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 static void af_stop_search(af_ctrl_t * af)
 {
 	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
@@ -1448,7 +1435,8 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	if ((res.is_caf_trig || AFV1_TRUE == af->force_trigger) && AF_SEARCHING != af->focus_state) {
 		ISP_LOGI("caf trigger af %d, force trigger %d", res.is_caf_trig, af->force_trigger);
 		pthread_mutex_lock(&af->af_work_lock);
-		caf_start_search(af, &res);
+		caf_start(af, &res);
+		af->focus_state = AF_SEARCHING;
 		af->force_trigger = (AFV1_FALSE);
 		pthread_mutex_unlock(&af->af_work_lock);
 	} else if ((res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) && af->focus_state == AF_SEARCHING) {
@@ -1734,7 +1722,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	case AF_MODE_NORMAL:
 		af->request_mode = af_mode;
 		af->state = STATE_NORMAL_AF;
-		af->focus_state = AF_IDLE;
 		trigger_set_mode(af, AFT_MODE_NORMAL);
 		trigger_stop(af);
 		break;
@@ -1742,7 +1729,10 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	case AF_MODE_VIDEO:
 		af->request_mode = af_mode;
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
-		caf_start(af);
+		af->focus_state = AF_IDLE;
+		af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
+		calc_roi(af, NULL, af->algo_mode);
+		do_start_af(af);
 		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
 		trigger_set_mode(af, mode);
 		trigger_start(af);
@@ -1859,7 +1849,10 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	property_get("af_mode", AF_MODE, "none");
 	if (0 == strcmp(AF_MODE, "none")) {
 		af->state = af->pre_state = STATE_CAF;
-		caf_start(af);
+		af->focus_state = AF_IDLE;
+		af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
+		calc_roi(af, NULL, af->algo_mode);
+		do_start_af(af);
 		ae_calc_win_size(af, in_ptr);
 	}
 	return AFV1_SUCCESS;
@@ -2535,7 +2528,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		case STATE_NORMAL_AF:
 			pthread_mutex_lock(&af->af_work_lock);
 			if (AF_SEARCHING == af->focus_state) {
-				if (saf_process_frame(af)) {
+				rtn = saf_process_frame(af);
+				if (1 == rtn) {
 					af->focus_state = AF_IDLE;
 					trigger_start(af);
 				}
@@ -2545,17 +2539,25 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		case STATE_FULLSCAN:
 		case STATE_CAF:
 		case STATE_RECORD_CAF:
+			pthread_mutex_lock(&af->af_work_lock);
 			if (AF_SEARCHING == af->focus_state) {
-				pthread_mutex_lock(&af->af_work_lock);
-				caf_process_frame(af);
-				pthread_mutex_unlock(&af->af_work_lock);
+				rtn = caf_process_frame(af);
+				if (1 == rtn) {
+					af->focus_state = AF_IDLE;
+					trigger_start(af);
+				}
 			}
+			pthread_mutex_unlock(&af->af_work_lock);
 			break;
 		case STATE_FAF:
 			pthread_mutex_lock(&af->af_work_lock);
-			if (faf_process_frame(af)) {
+			rtn = faf_process_frame(af);
+			if (1 == rtn) {
 				af->state = STATE_CAF;	// todo: consider af->pre_state
-				caf_start(af);
+				af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
+				calc_roi(af, NULL, af->algo_mode);
+				do_start_af(af);
+				af->focus_state = AF_IDLE;
 				trigger_start(af);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
