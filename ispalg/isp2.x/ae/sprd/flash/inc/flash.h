@@ -56,14 +56,15 @@ struct flash_tune_param {
 
 	uint32 foregroundRatioHigh;/*fix data: 1x-->100*/
 	uint32 foregroundRatioLow;/*fix data: 1x-->100*/
-							/*2 * 4bytes*/
-	uint32 preflash_ct;/*4bytes*/
 
 	bool flashMask[1024];/*256 * 4bytes*/
 	uint16 brightnessTable[1024];/*512 * 4bytes*/
 	uint16 rTable[1024]; //g: 1024/*512 * 4bytes*/
 	uint16 bTable[1024];/*512 * 4bytes*/
-	uint8 reserved1[1020];/*255 * 4bytes*/
+	uint32 preflash_ct;/*4bytes*/
+	int16 driverId1[32];
+	int16 driverId2[32];
+	uint8 reserved1[896];/*255 * 4bytes*/
 };/*2053 * 4 bypes*/
 
 struct Flash_initInput
@@ -118,8 +119,8 @@ struct Flash_pfStartOutput
 	float nextExposure;
 	uint32 nextGain;
 	bool nextFlash;
-	uint8 preflahLevel1;
-	uint8 preflahLevel2;
+	int16 preflahLevel1;
+	int16 preflahLevel2;
 };
 
 struct Flash_pfOneIterationInput
@@ -144,8 +145,8 @@ struct Flash_pfOneIterationOutput
 	uint16 captureRGain;
 	uint16 captureGGain;
 	uint16 captureBGain;
-	uint16 captureFlahLevel1;
-	uint16 captureFlahLevel2;
+	int16 captureFlahLevel1;
+	int16 captureFlahLevel2;
 
 	//next exposure
 	float nextExposure;

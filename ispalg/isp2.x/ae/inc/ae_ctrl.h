@@ -71,6 +71,7 @@ typedef int32_t(*func_isp_br_ioctrl) (uint32_t is_master, enum isp_br_ioctl_cmd 
 
 struct ae_init_in {
 	cmr_u32 param_num;
+	cmr_u32 dflash_num;
 	struct ae_param param[AE_MAX_PARAM_NUM];
 	struct ae_param flash_tuning[AE_MAX_PARAM_NUM];
 	struct ae_size monitor_win_num;
@@ -86,7 +87,7 @@ struct ae_init_in {
 	cmr_handle lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
-       struct ae_ct_table ct_table;
+	struct ae_ct_table ct_table;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u8 ae_role;  //1:master 0: slave
 	cmr_u8 sensor_role;

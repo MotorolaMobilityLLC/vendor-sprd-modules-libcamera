@@ -67,6 +67,8 @@ struct flash_calibration_data
 {
 	uint32 version;
 	int32 error;
+	uint8 preflashLevelNum1;
+	uint8 preflashLevelNum2;
 	uint8 flashLevelNum1;
 	uint8 flashLevelNum2;
 	bool flashMask[1024];
@@ -75,6 +77,10 @@ struct flash_calibration_data
 	uint16 bTable[1024];
 	uint16 preflashBrightness[1024];
 	uint16 preflashCt[1024];
+	int32 driverIndexP1[32];
+	int32 driverIndexP2[32];
+	int32 driverIndexM1[32];
+	int32 driverIndexM2[32];
 };
 
 enum FlashCaliError
@@ -94,42 +100,78 @@ enum FlashCaliState
 
 struct FCData
 {
-	float rBuf[1024];
-	float gBuf[1024];
-	float bBuf[1024];
+	int numP1_hw;
+	int numP2_hw;
+	int numM1_hw;
+	int numM2_hw;
+
+	int numP1_hwSample;
+	int indP1_hwSample[256];
+	float maP1_hwSample[256];
+	int numP2_hwSample;
+	int indP2_hwSample[256];
+	float maP2_hwSample[256];
+	int numM1_hwSample;
+	int indM1_hwSample[256];
+	float maM1_hwSample[256];
+	int numM2_hwSample;
+	int indM2_hwSample[256];
+	float maM2_hwSample[256];
+
+	float mAMaxP1;
+	float mAMaxP2;
+	float mAMaxP12;
+	float mAMaxM1;
+	float mAMaxM2;
+	float mAMaxM12;
+
+	int numP1_alg;
+	int numP2_alg;
+	int numM1_alg;
+	int numM2_alg;
+	int indHwP1_alg[32];
+	int indHwP2_alg[32];
+	int indHwM1_alg[32];
+	int indHwM2_alg[32];
+	float maHwP1_alg[32];
+	float maHwP2_alg[32];
+	float maHwM1_alg[32];
+	float maHwM2_alg[32];
+
+
+	int mask[1024];
+
+	float rBuf[1024];//for sta
+	float gBuf[1024];//for sta
+	float bBuf[1024];//for sta
 	float expTime;
 	int gain;
 	float expTimeBase;
 	int gainBase;
 
-	int isDual;
-	int maxCurrent1;
-	int maxCurrent2;
-	int maxCurrentAll;
 
 	int testIndAll;
 	int testInd;
-	int isMainTab[128];
-	int ind1Tab[128];
-	int ind2Tab[128];
-	int testMinFrm[128];
-	int expReset[128];
+	int isMainTab[200];
+	int ind1Tab[200];
+	int ind2Tab[200];
+	int testMinFrm[200];
+	int expReset[200];
 
-	float expTab[128];
-	int gainTab[128];
+	float expTab[200];
+	int gainTab[200];
 
-	float rData[128];
-	float gData[128];
-	float bData[128];
+	float rData[200];
+	float gData[200];
+	float bData[200];
 
 	int stateAeFrameCntSt;
-	int stateCaliFrameCntSt2;
+	int stateCaliFrameCntSt;
 	int stateCaliFrameCntStSub;
 
-	float rFrame[128][15];
-	float gFrame[128][15];
-	float bFrame[128][15];
-	int frame;
+	float rFrame[200][15];
+	float gFrame[200][15];
+	float bFrame[200][15];
 
 	struct flash_calibration_data out;
 
@@ -239,6 +281,7 @@ struct ae_ctrl_cxt {
 	cmr_s8 tuning_param_enable[AE_MAX_PARAM_NUM];
 	struct ae_tuning_param *cur_param;
 	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_NUM][AE_FLICKER_NUM];
+	struct flash_tune_param dflash_param[AE_MAX_PARAM_NUM];
 	/*
 	 * sensor related information
 	 */
@@ -276,8 +319,8 @@ struct ae_ctrl_cxt {
 	cmr_handle flash_alg_handle;
 	cmr_u16 aem_stat_rgb[3 * 1024];/*save the average data of AEM Stats data*/
 	cmr_u8 bakup_ae_status_for_flash;/* 0:unlock 1:lock 2:pause 3:wait-lock */
-	cmr_u8 pre_flash_level1;
-	cmr_u8 pre_flash_level2;
+	cmr_s16 pre_flash_level1;
+	cmr_s16 pre_flash_level2;
 	struct Flash_pfOneIterationInput flash_esti_input;
 	struct Flash_pfOneIterationOutput flash_esti_result;
 	cmr_s32 flash_last_exp_line;
@@ -1552,6 +1595,11 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 				memcpy(&cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ], &cxt->tuning_param[0].scene_info[j].ae_table[AE_FLICKER_50HZ],
 				       	AE_FLICKER_NUM * sizeof(struct ae_exp_gain_table));
 		}
+
+		for (i = 0; i < init_param->dflash_num && i < AE_MAX_PARAM_NUM; ++i) {
+			memcpy(&cxt->dflash_param[i], init_param->flash_tuning[i].param, sizeof(struct flash_tune_param));
+		}
+
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
 		cxt->monitor_unit.win_num = init_param->monitor_win_num;
@@ -2464,8 +2512,8 @@ static cmr_s32 flash_finish(struct ae_ctrl_cxt *cxt)
 static cmr_s32 ae_set_flash_charge(struct ae_ctrl_cxt *cxt, enum ae_flash_type flash_type)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 flash_level1 = 0;
-	cmr_u32 flash_level2 = 0;
+	cmr_s16 flash_level1 = 0;
+	cmr_s16 flash_level2 = 0;
 	struct ae_flash_cfg cfg;
 	struct ae_flash_element element;
 
@@ -2485,21 +2533,21 @@ static cmr_s32 ae_set_flash_charge(struct ae_ctrl_cxt *cxt, enum ae_flash_type f
 		break;
 	}
 
-	if (!flash_level1) {
-		cxt->ae_leds_ctrl.led0_ctrl = 0;//flash lib level 0: flashoff,
+	if (flash_level1 == -1) {
+		cxt->ae_leds_ctrl.led0_ctrl = 0;
 	} else {
 		cxt->ae_leds_ctrl.led0_ctrl = 1;
 		cfg.led_idx = 1;
-		element.index = flash_level1 - 1;//flash lib level 1~32 corresponding flash drv level 0~127
+		element.index = flash_level1;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 	}
 
-	if (!flash_level2) {
+	if (flash_level2 == -1) {
 		cxt->ae_leds_ctrl.led1_ctrl = 0;
 	} else {
 		cxt->ae_leds_ctrl.led1_ctrl = 1;
 		cfg.led_idx = 2;
-		element.index = flash_level2 - 1;
+		element.index = flash_level2;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 	}
 
@@ -2968,11 +3016,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	work_param.fly_eb = 1;
 	work_param.resolution_info = init_param->resolution_info;
 
-	/*ISP_LOGV("resol w %d h %d lt %d",
-	   work_param.resolution_info.frame_size.w,
-	   work_param.resolution_info.frame_size.h,
-	   work_param.resolution_info.line_time); */
-
 	rtn = _set_ae_param(cxt, init_param, &work_param, AE_PARAM_INIT);
 
 	s_q_param.exp_valid_num = cxt->exp_skip_num + 1 + AE_UPDAET_BASE_OFFSET;
@@ -2981,20 +3024,20 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->seq_handle = s_q_open(&s_q_param);
 
 	/* HJW_S: dual flash algorithm init */
-      for(i=0 ; i< 20; i++){
+	for (i=0 ; i< 20; i++) {
 		flash_in.ctTab[i] = init_param->ct_table.ct[i];
 		flash_in.ctTabRg[i] = init_param->ct_table.rg[i];
 		cxt->ctTab[i] = init_param->ct_table.ct[i];
 		cxt->ctTabRg[i] = init_param->ct_table.rg[i];
-        }
+	}
 
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
-	flash_in.tune_info = NULL;/*it will be removed in the future, and get it from dual flash tuning parameters*/
+	flash_in.tune_info = &cxt->dflash_param[0];
 	flash_in.statH  = cxt->monitor_unit.win_num.h;
 	flash_in.statW = cxt->monitor_unit.win_num.w;
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
+	flash_out.version = 1;//remove later
 	cxt->flash_ver  = flash_out.version;
-	cxt->flash_ver = 1;//temp code for dual flash, remove later, 1 for new dualflash, 0 for old flash
 	ae_init_out->flash_ver = cxt->flash_ver;
 	/*HJW_E*/
 
@@ -3046,7 +3089,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	} else {
 		cxt->manual_ae_on = 0;
 	}
-	ISP_LOGI("done, cam-id %d", cxt->camera_id);
+	ISP_LOGI("done, cam-id %d, flash ver %d", cxt->camera_id, cxt->flash_ver);
 	return (cmr_handle) cxt;
 ERR_EXIT:
 	if (NULL != cxt) {
@@ -3286,12 +3329,12 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 	}
 	else
 	{
-		int led1_driver_ind=led1-1;
-		int led2_driver_ind=led2-1;
-		if(led1_driver_ind<0)
-			led1_driver_ind=0;
-		if(led2_driver_ind<0)
-			led2_driver_ind=0;
+		int led1_driver_ind=led1;
+		int led2_driver_ind=led2;
+		if(led1_driver_ind<-1)
+			led1_driver_ind=-1;
+		if(led2_driver_ind<-1)
+			led2_driver_ind=-1;
 
 		cfg.led_idx = 1;
 		cfg.type = type;
@@ -3303,12 +3346,12 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 		element.index = led2_driver_ind;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 
-		if(led1==0)
+		if(led1==-1)
 			cfg.led0_enable = 0;
 		else
 			cfg.led0_enable = 1;
 
-		if(led2==0)
+		if(led2==-1)
 			cfg.led1_enable = 0;
 		else
 			cfg.led1_enable = 1;
@@ -3358,44 +3401,6 @@ void calRgbFrameData(int isMainFlash, float* rRaw, float* gRaw, float* bRaw, flo
 
 }
 
-float calLedmA(int isMain, int led1, int led2)
-{
-	float i1;
-	float i2;
-	if (isMain)
-	{
-		i1 = 1500.0 * led1 / 32;
-		i2 = 1500.0 * led2 / 32;
-	}
-	else
-	{
-		i1 = 188.0 * led1 / 32;
-		i2 = 188.0 * led2 / 32;
-	}
-	return i1 + i2;
-}
-int calSleepFrame(int isMain, int led1, int led2, float maxA1, float maxA2)
-{
-	float i1;
-	float i2;
-	i1 = calLedmA(isMain, led1, 0);
-	i2 = calLedmA(isMain, 0, led2);
-	double t1;
-	double t2;
-	t1 = 4000.0 * (i1 - 200) / (maxA1 - 200);
-	t2 = 4000.0 * (i2 - 200) / (maxA2 - 200);
-	double t;
-	t = t1;
-	if (t2 > t1)
-		t = t2;
-	if (t < 0)
-		t = 0;
-	if (t > 5000)
-		t = 5000;
-	int frm;
-	frm = t / 30;
-	return frm;
-}
 
 static double interp(double x1, double y1, double x2, double y2, double x)
 {
@@ -3431,18 +3436,198 @@ float interpCt(float* rgTab, float* ctTab, int numTab, float rg)
 	return 10000.0;
 }
 
+void ShellSortFloatIncEx(float* data, int* data_dep, int len)
+{
+	int i, j;
+	double tmp;
+	int tmp2;
+	int gap = len / 2;
+	for (; gap > 0; gap = gap / 2) {
+		for (i = gap; i < len; i++) {
+			tmp = data[i];
+			tmp2 = data_dep[i];
+			for (j = i; j >= gap && tmp < data[j - gap]; j -= gap) {
+				data[j] = data[j - gap];
+				data_dep[j] = data_dep[j - gap];
+			}
+			data[j] = tmp;
+			data_dep[j] = tmp2;
+		}
+	}
+};
+void removeIntArrayElementByInd(int n, int* arr, int ind)
+{
+	int i;
+	for (i = ind; i < n - 1; i++)
+	{
+		arr[i] = arr[i + 1];
+	}
+}
+void removeFloatArrayElementByInd(int n, float* arr, int ind)
+{
+	int i;
+	for (i = ind; i < n - 1; i++)
+	{
+		arr[i] = arr[i + 1];
+	}
+}
+void reduceFlashIndexTab(int n, int* indTab, float* maTab, float maMax, int nMax, int* outIndTab, float* outMaTab, int* outIndTabLen)
+{
+	nMax -= 1;
+	int tempIndTab[256];
+	float tempmADifTab[256];
+	float tempmATab[256];
+	int i;
+	int nCur = 0;
+	for (i = 0; i < n; i++)
+	{
+		if (maTab[i] <= maMax)
+		{
+			tempIndTab[i] = indTab[i];
+			tempmATab[i] = maTab[i];
+			nCur = i + 1;
+		}
+	}
+	while (nCur > nMax)
+	{
+		int indSort[256];
+		for (i = 0; i<nCur - 2; i++)
+		{
+			int ind_1;
+			int ind_p1;
+			ind_1 = tempIndTab[i];
+			ind_p1 = tempIndTab[i + 2];
+			tempmADifTab[i] = -maTab[ind_1] + maTab[ind_p1];
+			indSort[i] = i + 1;
+		}
+		ShellSortFloatIncEx(tempmADifTab, indSort, nCur - 2);
+		removeIntArrayElementByInd(nCur, tempIndTab, indSort[0]);
+		removeFloatArrayElementByInd(nCur, tempmATab, indSort[0]);
+		nCur -= 1;
+	}
+	outIndTab[0] = -1;
+	outMaTab[0] = 0;
+	for (i = 0; i < nCur; i++)
+	{
+		outIndTab[i+1] = tempIndTab[i];
+		outMaTab[i+1] = tempmATab[i];
+	}
+	*outIndTabLen = nCur+1;
+}
+
+void readDebugBin2(const char* f, struct FCData* d)
+{
+	FILE* fp;
+	fp = fopen(f, "rb");
+	fread(d, 1, sizeof(struct FCData), fp);
+	fclose(fp);
+}
+
+
+void readFCConfig(char* f, struct FCData* d, char* fout)
+{
+	int i;
+	FILE* fp;
+	fp = fopen(f, "rt");
+	fscanf(fp, "%d", &d->numP1_hw);
+	fscanf(fp, "%d", &d->numP2_hw);
+	fscanf(fp, "%d", &d->numM1_hw);
+	fscanf(fp, "%d", &d->numM2_hw);
+
+	fscanf(fp, "%d", &d->numP1_hwSample);
+	for (i = 0; i < d->numP1_hwSample; i++)
+		fscanf(fp, "%d", &d->indP1_hwSample[i]);
+	for (i = 0; i < d->numP1_hwSample; i++)
+		fscanf(fp, "%f", &d->maP1_hwSample[i]);
+
+	fscanf(fp, "%d", &d->numP2_hwSample);
+	for (i = 0; i < d->numP2_hwSample; i++)
+		fscanf(fp, "%d", &d->indP2_hwSample[i]);
+	for (i = 0; i < d->numP2_hwSample; i++)
+		fscanf(fp, "%f", &d->maP2_hwSample[i]);
+
+
+	fscanf(fp, "%d", &d->numM1_hwSample);
+	for (i = 0; i < d->numM1_hwSample; i++)
+		fscanf(fp, "%d", &d->indM1_hwSample[i]);
+	for (i = 0; i < d->numM1_hwSample; i++)
+		fscanf(fp, "%f", &d->maM1_hwSample[i]);
+
+	fscanf(fp, "%d", &d->numM2_hwSample);
+	for (i = 0; i < d->numM2_hwSample; i++)
+		fscanf(fp, "%d", &d->indM2_hwSample[i]);
+	for (i = 0; i < d->numM2_hwSample; i++)
+		fscanf(fp, "%f", &d->maM2_hwSample[i]);
+
+	fscanf(fp, "%f", &d->mAMaxP1);
+	fscanf(fp, "%f", &d->mAMaxP2);
+	fscanf(fp, "%f", &d->mAMaxP12);
+	fscanf(fp, "%f", &d->mAMaxM1);
+	fscanf(fp, "%f", &d->mAMaxM2);
+	fscanf(fp, "%f", &d->mAMaxM12);
+	fclose(fp);
+
+	if (fout != 0)
+	{
+		fp = fopen(fout, "wt");
+		fprintf(fp, "%d\n", d->numP1_hw);
+		fprintf(fp, "%d\n", d->numP2_hw);
+		fprintf(fp, "%d\n", d->numM1_hw);
+		fprintf(fp, "%d\n", d->numM2_hw);
+
+		fprintf(fp, "%d\n", d->numP1_hwSample);
+		for (i = 0; i < d->numP1_hwSample; i++)
+			fprintf(fp, "%d\t", d->indP1_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < d->numP1_hwSample; i++)
+			fprintf(fp, "%f\t", d->maP1_hwSample[i]);
+		fprintf(fp, "\n");
+
+		fprintf(fp, "%d\n", d->numP2_hwSample);
+		for (i = 0; i < d->numP2_hwSample; i++)
+			fprintf(fp, "%d\t", d->indP2_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < d->numP2_hwSample; i++)
+			fprintf(fp, "%f\t", d->maP2_hwSample[i]);
+		fprintf(fp, "\n");
+
+		fprintf(fp, "%d\n", d->numM1_hwSample);
+		for (i = 0; i < d->numM1_hwSample; i++)
+			fprintf(fp, "%d\t", d->indM1_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < d->numM1_hwSample; i++)
+			fprintf(fp, "%f\t", d->maM1_hwSample[i]);
+		fprintf(fp, "\n");
+
+		fprintf(fp, "%d\n", d->numM2_hwSample);
+		for (i = 0; i < d->numM2_hwSample; i++)
+			fprintf(fp, "%d\t", d->indM2_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < d->numM2_hwSample; i++)
+			fprintf(fp, "%f\t", d->maM2_hwSample[i]);
+		fprintf(fp, "\n");
+
+		fprintf(fp, "%f\n", d->mAMaxP1);
+		fprintf(fp, "%f\n", d->mAMaxP2);
+		fprintf(fp, "%f\n", d->mAMaxP12);
+		fprintf(fp, "%f\n", d->mAMaxM1);
+		fprintf(fp, "%f\n", d->mAMaxM2);
+		fprintf(fp, "%f\n", d->mAMaxM12);
+		fclose(fp);
+	}
+
+}
+
+
 static void flashCalibration(struct ae_ctrl_cxt *cxt)
 {
-#define FC_INIT_SHUTTER 100000
-#define FC_INIT_GAIN 128
 	struct ae_alg_calc_param *cur_status = &cxt->cur_status;
 	static int frameCount = 0;
 	static int caliState = FlashCali_start;
 	static struct FCData* caliData = 0;
 	int propValue[10];
 	int propRet;
-	propRet = get_prop_multi("persist.sys.isp.ae.flash_cali", 5, propValue);
-
+	propRet = get_prop_multi("persist.sys.isp.ae.flash_cali", 1, propValue);
 	if (propRet <= 0)
 		return;
 
@@ -3461,108 +3646,134 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			ISP_LOGD("qqfc FlashCali_start");
 			caliData = (struct FCData*)malloc(sizeof(struct FCData));
 			caliData->out.error = 0;
-			//0
-			//1: flash led number
-			//2: led max current 1
-			//3: led max current 2
-			int isDual = 1;
-			int maxCurrent1 = 1500;
-			int maxCurrent2 = 1500;
-			int maxCurrentAll = 1500;
 
-			if (propRet >= 2)
-			{
-				if (propValue[1] == 1)
-					isDual = 0;
-				else
-					isDual = 1;
-			}
-			if (propRet >= 5)
-			{
-				maxCurrent1 = propValue[2];
-				maxCurrent2 = propValue[3];
-				maxCurrentAll = propValue[4];
-			}
-
-			caliData->isDual = isDual;
-			caliData->maxCurrent1 = maxCurrent1;
-			caliData->maxCurrent2 = maxCurrent2;
-			caliData->maxCurrentAll = maxCurrentAll;
-
-
+#ifdef WIN32
+			readFCConfig("fc_config.txt", caliData, "fc_config_check.txt");
+#else
+			readFCConfig("/data/misc/cameraserver/fc_config.txt", caliData, "/data/misc/cameraserver/fc_config_check.txt");
+#endif
 			frameCount = 0;
 			cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED; //lock ae
-			control_led(cxt, 1, 0, 1, 0);
-			int expInit = FC_INIT_SHUTTER;
-			int gainInit = FC_INIT_GAIN;
 
-			int lineTime = cxt->cur_status.line_time;
-			caliData->expTime = expInit;
-			caliData->gain = gainInit;
+			reduceFlashIndexTab(
+				caliData->numP1_hwSample,
+				caliData->indP1_hwSample,
+				caliData->maP1_hwSample,
+				caliData->mAMaxP1,
+				32,
+				caliData->indHwP1_alg,
+				caliData->maHwP1_alg,
+				&caliData->numP1_alg
+			);
+			reduceFlashIndexTab(
+				caliData->numP2_hwSample,
+				caliData->indP2_hwSample,
+				caliData->maP2_hwSample,
+				caliData->mAMaxP2,
+				32,
+				caliData->indHwP2_alg,
+				caliData->maHwP2_alg,
+				&caliData->numP2_alg
+			);
+			reduceFlashIndexTab(
+				caliData->numM1_hwSample,
+				caliData->indM1_hwSample,
+				caliData->maM1_hwSample,
+				caliData->mAMaxM1,
+				32,
+				caliData->indHwM1_alg,
+				caliData->maHwM1_alg,
+				&caliData->numM1_alg
+			);
+			reduceFlashIndexTab(
+				caliData->numM2_hwSample,
+				caliData->indM2_hwSample,
+				caliData->maM2_hwSample,
+				caliData->mAMaxM2,
+				32,
+				caliData->indHwM2_alg,
+				caliData->maHwM2_alg,
+				&caliData->numM2_alg
+			);
 
 			//gen test
-			caliData->testInd = 0;
 			int i;
 			int id = 0;
-			for (i = 0; i<32; i++)
+			//preflash1
+			caliData->expReset[id] = 1;
+			caliData->ind1Tab[id] = 0;
+			caliData->ind2Tab[id] = 0;
+			caliData->testMinFrm[id] = 0;
+			caliData->isMainTab[id] = 0;
+			id++;
+			for (i = 1; i<caliData->numP1_alg; i++)
 			{
 				caliData->expReset[id] = 0;
-				if (i == 0)
-					caliData->expReset[id] = 1;
 				caliData->ind1Tab[id] = i;
 				caliData->ind2Tab[id] = 0;
 				caliData->testMinFrm[id] = 0;
 				caliData->isMainTab[id] = 0;
 				id++;
 			}
-
-			for (i = 0; i<32; i++)
+			//preflash2
+			caliData->expReset[id] = 1;
+			caliData->ind1Tab[id] = 0;
+			caliData->ind2Tab[id] = 0;
+			caliData->testMinFrm[id] = 0;
+			caliData->isMainTab[id] = 0;
+			id++;
+			for (i = 1; i<caliData->numP2_alg; i++)
 			{
 				caliData->expReset[id] = 0;
-				if(i==0)
-					caliData->expReset[id] = 1;
 				caliData->ind1Tab[id] = 0;
 				caliData->ind2Tab[id] = i;
 				caliData->testMinFrm[id] = 0;
 				caliData->isMainTab[id] = 0;
 				id++;
 			}
-			for (i = 0; i<32; i++)
+			//m1
+			caliData->expReset[id] = 1;
+			caliData->ind1Tab[id] = 0;
+			caliData->ind2Tab[id] = 0;
+			caliData->testMinFrm[id] = 0;
+			caliData->isMainTab[id] = 0;
+			id++;
+			for (i = 1; i<caliData->numM1_alg; i++)
 			{
 				caliData->expReset[id] = 0;
-				if (i == 0)
-					caliData->expReset[id] = 1;
 				caliData->ind1Tab[id] = i;
 				caliData->ind2Tab[id] = 0;
-				if (calLedmA(1,i,0) < caliData->maxCurrent1)
-				{
-					int frm = calSleepFrame(1, i, 0, caliData->maxCurrent1, caliData->maxCurrent2);
-					caliData->testMinFrm[id] = frm;
+				caliData->testMinFrm[id] = 120;
 					caliData->isMainTab[id] = 1;
 					id++;
 				}
-			}
-			for (i = 0; i<32; i++)
+			//m2
+			caliData->expReset[id] = 1;
+			caliData->ind1Tab[id] = 0;
+			caliData->ind2Tab[id] = 0;
+			caliData->testMinFrm[id] = 0;
+			caliData->isMainTab[id] = 0;
+			id++;
+			for (i = 1; i<caliData->numM2_alg; i++)
 			{
 				caliData->expReset[id] = 0;
-				if (i == 0)
-					caliData->expReset[id] = 1;
 				caliData->ind1Tab[id] = 0;
 				caliData->ind2Tab[id] = i;
-				if (calLedmA(1, 0, i) < caliData->maxCurrent2)
-				{
-					int frm = calSleepFrame(1, 0, i, caliData->maxCurrent1, caliData->maxCurrent2);
-					caliData->testMinFrm[id] = frm;
+				caliData->testMinFrm[id] = 120;
 					caliData->isMainTab[id] = 1;
 					id++;
 				}
-			}
 			caliData->testIndAll = id;
 
-			//
-			caliData->stateAeFrameCntSt = 1;
-			//caliData->stateCaliFrameCntSt = 0;
+			caliData->expTimeBase = 500000;
+			caliData->expTime = 500000;
+			caliData->gainBase = 8*128;
+			caliData->gain = 8 * 128;
 
+			//caliData->stateCaliFrameCntSt = frameCount + 1;
+			//caliState = FlashCali_cali;
+
+			caliData->stateAeFrameCntSt = 1;
 			caliState = FlashCali_ae;
 
 
@@ -3587,12 +3798,11 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					&rmean,
 					&gmean,
 					&bmean);
-				ISP_LOGD("qqfc frmCnt=%d exp=%d %d, g=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
-
+				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
 				if ( (gmean>200 && gmean<400) ||
 					 (caliData->expTime==500000 && caliData->gain == 8 * 128))
 				{
-					caliData->stateCaliFrameCntSt2 = frameCount+1;
+					caliData->stateCaliFrameCntSt = frameCount+1;
 					caliData->expTimeBase = caliData->expTime;
 					caliData->gainBase = caliData->gain;
 					caliState = FlashCali_cali;
@@ -3633,11 +3843,11 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 		{
 			int frmCntState;
 			int frmCnt;
-			frmCntState = frameCount - caliData->stateCaliFrameCntSt2;
+			frmCntState = frameCount - caliData->stateCaliFrameCntSt;
 			if (frmCntState == 0)
 			{
 				caliData->testInd = 0;
-				caliData->stateCaliFrameCntStSub = caliData->stateCaliFrameCntSt2;
+				caliData->stateCaliFrameCntStSub = caliData->stateCaliFrameCntSt;
 			}
 
 			frmCnt = frameCount - caliData->stateCaliFrameCntStSub;
@@ -3648,8 +3858,20 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				id = caliData->testInd;
 				int led1;
 				int led2;
+				int led1_hw;
+				int led2_hw;
 				led1 = caliData->ind1Tab[id];
 				led2 = caliData->ind2Tab[id];
+				if (caliData->isMainTab[id] == 0)
+				{
+					led1_hw = caliData->indHwP1_alg[led1];
+					led2_hw = caliData->indHwP2_alg[led2];
+				}
+				else
+				{
+					led1_hw = caliData->indHwM1_alg[led1];
+					led2_hw = caliData->indHwM1_alg[led2];
+				}
 				if (caliData->expReset[id] == 1)
 				{
 					caliData->expTime = caliData->expTimeBase;
@@ -3660,7 +3882,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				if(led1==0 && led2 == 0)
 					control_led(cxt, 0,0,0,0);
 				else
-					control_led(cxt, 1, caliData->isMainTab[id], led1, led2);
+					control_led(cxt, 1, caliData->isMainTab[id], led1_hw, led2_hw);
 			}
 			else if (frmCnt == 3)
 			{
@@ -3770,6 +3992,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			}
 			else if(frmCnt > caliData->testMinFrm[caliData->testInd])
 			{
+				control_led(cxt, 0,0,0,0);
 				float r;
 				float g;
 				float b;
@@ -3786,8 +4009,9 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 		}
 		else if (caliState == FlashCali_end)
 		{
-
+			//readDebugBin2("d:\\temp\\fc_debug.bin", caliData);
 			int i;
+			int j;
 			float rTab1[32];
 			float gTab1[32];
 			float bTab1[32];
@@ -3891,12 +4115,19 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			}
 
 			caliData->out.version = 1;
-			caliData->out.flashLevelNum1 = 32;
-			if (caliData->isDual)
-				caliData->out.flashLevelNum2 = 32;
-			else
-				caliData->out.flashLevelNum2 = 1;
+			caliData->out.preflashLevelNum1 = caliData->numP1_alg;
+			caliData->out.preflashLevelNum2 = caliData->numP2_alg;
+			caliData->out.flashLevelNum1 = caliData->numM1_alg;
+			caliData->out.flashLevelNum2 = caliData->numM2_alg;
 
+			for (i = 0; i < caliData->numP1_alg; i++)
+				caliData->out.driverIndexP1[i] = caliData->indHwP1_alg[i];
+			for (i = 0; i < caliData->numP2_alg; i++)
+				caliData->out.driverIndexP2[i] = caliData->indHwP2_alg[i];
+			for (i = 0; i < caliData->numM1_alg; i++)
+				caliData->out.driverIndexM1[i] = caliData->indHwM1_alg[i];
+			for (i = 0; i < caliData->numM2_alg; i++)
+				caliData->out.driverIndexM2[i] = caliData->indHwM2_alg[i];
 
 			//--------------------------
 			//--------------------------
@@ -3907,74 +4138,96 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			for (i = 0; i < 20; i++)
 			{
 				rgtab[i] = cxt->ctTabRg[i];
-				cttab[i] = cxt->ctTab[i];	
+				cttab[i] = cxt->ctTab[i];
 			}
 
 			//--------------------------
 			//--------------------------
-
+			//Preflash ct
+			//preflash brightness
 			for (i = 0; i < 1024; i++)
 			{
-				int id1;
-				int id2;
-				id1 = i % 32;
-				id2 = i / 32;
-
-				caliData->out.brightnessTable[i] = -1;
-				if (gTab1Main[id1] != -1 && gTab2Main[id2] != -1)
+				caliData->out.preflashCt[i] = 0;
+				caliData->out.preflashBrightness[i] = 0;
+			}
+			for (j = 0; j < caliData->numP2_alg; j++)
+				for (i = 0; i<caliData->numP1_alg; i++)
 				{
-					caliData->out.brightnessTable[i] = _round(gTab1Main[id1] + gTab2Main[id2]);
+					int ind;
+					ind = j*32 + i;
+					float ma1;
+					float ma2;
+					ma1 = caliData->maHwP1_alg[i];
+					ma2 = caliData->maHwP1_alg[j];
+					if (ma1 + ma2 <= caliData->mAMaxP12)
+					{
+						double rg;
+						caliData->out.preflashCt[ind] = 0;
+						if (gTab1[i] + gTab2[j] != 0)
+						{
+							rg = (rTab1[i] + rTab2[j]) / (gTab1[i] + gTab2[j]);
+							caliData->out.preflashCt[ind] = interpCt(rgtab, cttab, 20, rg);
+						}
+						caliData->out.preflashBrightness[ind] = _round(gTab1[i] + gTab2[j]);
+					}
+					else
+					{
+						caliData->out.preflashCt[ind] = 0;
+						caliData->out.preflashBrightness[ind] = 0;
+					}
+				}
+			for (i = 0; i < 1024; i++)
+			{
+				caliData->out.brightnessTable[i] = 0;
+				caliData->out.rTable[i] = 0;
+				caliData->out.bTable[i] = 0;
+			}
+			//mainflash brightness
+			//mainflash r/b table
+			for (i = 0; i<caliData->numM1_alg; i++)
+				for (j = 0; j < caliData->numM2_alg; j++)
+				{
+					int ind;
+					ind = j*32 + i;
+					caliData->out.brightnessTable[ind] = 0;
+					if (gTab1Main[i] != -1 && gTab2Main[j] != -1)
+				{
+						caliData->out.brightnessTable[ind] = _round(gTab1Main[i] + gTab2Main[j]);
 					double r;
 					double g;
 					double b;
-					r = rTab1Main[id1] + rTab2Main[id2];
-					g = gTab1Main[id1] + gTab2Main[id2];
-					b = bTab1Main[id1] + bTab2Main[id2];
-					caliData->out.rTable[i] = _round(1024 * g/r);
-					caliData->out.bTable[i] = _round(1024 * g/b);
+						r = rTab1Main[i] + rTab2Main[j];
+						g = gTab1Main[i] + gTab2Main[j];
+						b = bTab1Main[i] + bTab2Main[j];
+						caliData->out.rTable[ind] = _round(1024 * g/r);
+						caliData->out.bTable[ind] = _round(1024 * g/b);
 				}
-				caliData->out.preflashBrightness[i] = _round(gTab1[id1] + gTab2[id2]);
-
-				double rg;
-				caliData->out.preflashCt[i] = 0;
-				if (gTab1[id1] + gTab2[id2] != 0)
-				{
-					rg = (rTab1[id1] + rTab2[id2]) / (gTab1[id1] + gTab2[id2]);
-					caliData->out.preflashCt[i] = interpCt(rgtab, cttab, 20, rg);
-				}
-
 			}
-
+			//flash mask
 			for (i = 0; i < 1024; i++)
 			{
-				int id1;
-				int id2;
-				id1 = i % 32;
-				id2 = i / 32;
-				int ma1;
-				int ma2;
-				int maAll;
-
-				ma1 = calLedmA(1, id1, 0);
-				ma2 = calLedmA(1, 0, id2);
-				maAll = ma1 + ma2;
-
-
 				caliData->out.flashMask[i] = 0;
-				if (ma1 > caliData->maxCurrent1)
-					;
-				else if (ma2 > caliData->maxCurrent2)
-					;
-				else if ((ma1 + ma2) > caliData->maxCurrentAll)
-					;
-				else if ((int)caliData->out.brightnessTable[i] == -1)
-					;
-				else
+			}
+			for (j = 0; j < caliData->numM2_alg; j++)
+				for (i = 0; i<caliData->numM1_alg; i++)
 				{
-					caliData->out.flashMask[i] = 1;
-				}
+					int ind;
+					ind = j*32 + i;
+					float ma1;
+					float ma2;
+					ma1 = caliData->maHwM1_alg[i];
+					ma2 = caliData->maHwM2_alg[j];
+					if(ma1+ma2<caliData->mAMaxM12)
+						caliData->out.flashMask[ind] = 1;
+				else
+						caliData->out.flashMask[ind] = 0;
 			}
 			caliData->out.flashMask[0] = 0;
+
+			caliData->numM1_alg = 32;
+			caliData->numM2_alg = 32;
+			caliData->numP1_alg = 32;
+			caliData->numP2_alg = 32;
 
 			FILE* fp;
 
@@ -3986,50 +4239,115 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			if (propValue[0] == 1)
 			{
 #ifdef WIN32
+				fp = fopen("d:\\temp\\fc_raw.txt", "wt");
+#else
+				fp = fopen("/data/misc/cameraserver/fc_raw.txt", "wt");
+#endif
+				for (i = 0; i < caliData->testIndAll; i++)
+				{
+					fprintf(fp, "ind1,ind2: %d\t%d\n",
+						(int)caliData->ind1Tab[i],
+						(int)caliData->ind2Tab[i]);
+
+
+					fprintf(fp, "expBase,gainBase,exp,gain: %d\t%d\t%d\t%d\n",
+						(int)caliData->expTimeBase, (int)caliData->gainBase,
+						(int)caliData->expTab[i], (int)caliData->gainTab[i]);
+					int j;
+					for (j = 0; j<15; j++)
+						fprintf(fp, "%lf\t%lf\t%lf\t\n",
+						(double)caliData->rFrame[i][j], (double)caliData->gFrame[i][j], (double)caliData->bFrame[i][j]);
+					fprintf(fp, "============\n\n");
+
+				}
+				fclose(fp);
+#ifdef WIN32
 				fp = fopen("d:\\temp\\fc_debug.txt", "wt");
 #else
 				fp = fopen("/data/misc/cameraserver/fc_debug.txt", "wt");
 #endif
+				fprintf(fp, "\ndriver_ind\n");
+				for (i = 0; i < caliData->numP1_alg; i++)
+					fprintf(fp, "%d\t", caliData->out.driverIndexP1[i]);
+				fprintf(fp, "\n");
+
+				for (i = 0; i < caliData->numP2_alg; i++)
+					fprintf(fp, "%d\t", caliData->out.driverIndexP2[i]);
+				fprintf(fp, "\n");
+
+				for (i = 0; i < caliData->numM1_alg; i++)
+					fprintf(fp, "%d\t", caliData->out.driverIndexM1[i]);
+				fprintf(fp, "\n");
+
+				for (i = 0; i < caliData->numM2_alg; i++)
+					fprintf(fp, "%d\t", caliData->out.driverIndexM2[i]);
+				fprintf(fp, "\n");
+
+
 				fprintf(fp, "\nmask\n");
-				for (i = 0; i < 1024; i++)
+				for (j = 0; j < caliData->numM2_alg; j++)
 				{
-					fprintf(fp, "%d\t", (int)caliData->out.flashMask[i]);
-					if (i % 32 == 31)
+					for (i = 0; i < caliData->numM1_alg; i++)
+				{
+						int ind;
+						ind = j*caliData->numM1_alg + i;
+						fprintf(fp, "%d\t", (int)caliData->out.flashMask[ind]);
+					}
 						fprintf(fp, "\n");
 				}
 				fprintf(fp, "\nbrightness\n");
-				for (i = 0; i < 1024; i++)
+				for (j = 0; j < caliData->numM2_alg; j++)
 				{
-					fprintf(fp, "%d\t", (int)caliData->out.brightnessTable[i]);
-					if (i % 32 == 31)
+					for (i = 0; i < caliData->numM1_alg; i++)
+				{
+						int ind;
+						ind = j*caliData->numM1_alg + i;
+						fprintf(fp, "%d\t", (int)caliData->out.brightnessTable[ind]);
+					}
 						fprintf(fp, "\n");
 				}
 				fprintf(fp, "\nr tab\n");
-				for (i = 0; i < 1024; i++)
+				for (j = 0; j < caliData->numM2_alg; j++)
 				{
-					fprintf(fp, "%d\t", (int)caliData->out.rTable[i]);
-					if (i % 32 == 31)
+					for (i = 0; i < caliData->numM1_alg; i++)
+				{
+						int ind;
+						ind = j*caliData->numM1_alg + i;
+						fprintf(fp, "%d\t", (int)caliData->out.rTable[ind]);
+					}
 						fprintf(fp, "\n");
 				}
 				fprintf(fp, "\nb tab\n");
-				for (i = 0; i < 1024; i++)
+				for (j = 0; j < caliData->numM2_alg; j++)
 				{
-					fprintf(fp, "%d\t", (int)caliData->out.bTable[i]);
-					if (i % 32 == 31)
+					for (i = 0; i < caliData->numM1_alg; i++)
+				{
+						int ind;
+						ind = j*caliData->numM1_alg + i;
+						fprintf(fp, "%d\t", (int)caliData->out.bTable[ind]);
+					}
 						fprintf(fp, "\n");
 				}
 				fprintf(fp, "\npre bright\n");
-				for (i = 0; i < 1024; i++)
+				for (j = 0; j < caliData->numP2_alg; j++)
 				{
-					fprintf(fp, "%d\t", (int)caliData->out.preflashBrightness[i]);
-					if (i % 32 == 31)
+					for (i = 0; i < caliData->numP1_alg; i++)
+				{
+						int ind;
+						ind = j*caliData->numP1_alg + i;
+						fprintf(fp, "%d\t", (int)caliData->out.preflashBrightness[ind]);
+					}
 						fprintf(fp, "\n");
 				}
 				fprintf(fp, "\npre ct\n");
-				for (i = 0; i < 1024; i++)
+				for (j = 0; j < caliData->numP2_alg; j++)
 				{
-					fprintf(fp, "%d\t", (int)caliData->out.preflashCt[i]);
-					if (i % 32 == 31)
+					for (i = 0; i < caliData->numP1_alg; i++)
+				{
+						int ind;
+						ind = j*caliData->numP1_alg + i;
+						fprintf(fp, "%d\t", (int)caliData->out.preflashCt[ind]);
+					}
 						fprintf(fp, "\n");
 				}
 				fclose(fp);
@@ -5231,7 +5549,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		if (param) {
 			struct ae_set_scene *scene_mode = param;
 
-			if (scene_mode->mode < AE_SCENE_MOD_MAX) { 
+			if (scene_mode->mode < AE_SCENE_MOD_MAX) {
 				cxt->cur_status.settings.scene_mode = (cmr_s8) scene_mode->mode;
 			}
 		ISP_LOGI("AE_SET_SCENE %d\n", cxt->cur_status.settings.scene_mode);
