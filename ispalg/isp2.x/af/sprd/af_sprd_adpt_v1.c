@@ -1604,57 +1604,65 @@ static void caf_monitor_process_fd(af_ctrl_t * af)
 
 	if (STATE_NORMAL_AF == af->state) {
 		return;
-	} else if (face_dectect_trigger(af->af_alg_cxt)) {
-		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
-			if (AF_SEARCHING == af->focus_state) {	// todo : maybe we need wait caf done when caf is searching; or report caf failed
+	} else {
+		cmr_u8 trigger = face_dectect_trigger(af->af_alg_cxt);
+		if (trigger) {
+			if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
 				af_stop_search(af);
+				trigger_set_mode(af, AFT_MODE_NORMAL);
+				trigger_stop(af);
+			} else if (STATE_FAF == af->state) {
+				pthread_mutex_lock(&af->af_work_lock);
+				AF_STOP(af->af_alg_cxt);
+				AF_Process_Frame(af->af_alg_cxt);
+				pthread_mutex_unlock(&af->af_work_lock);
 			}
-		} else if (STATE_FAF == af->state) {
-			pthread_mutex_lock(&af->af_work_lock);
-			AF_STOP(af->af_alg_cxt);
-			AF_Process_Frame(af->af_alg_cxt);
-			pthread_mutex_unlock(&af->af_work_lock);
+			af->pre_state = af->state;
+			af->state = STATE_FAF;
+			faf_start(af, NULL);
+			ISP_LOGV("FAF Trigger");
 		}
-		af->pre_state = af->state;
-		af->state = STATE_FAF;
-		faf_start(af, NULL);
-		ISP_LOGV("FAF Trigger");
 	}
 }
 
 static void caf_monitor_process(af_ctrl_t * af)
 {
-	if (af->trigger_source_type & AF_DATA_AF) {
-		af->trigger_source_type &= (~AF_DATA_AF);
-		caf_monitor_process_af(af);
-	}
-
-	if (af->trigger_source_type & AF_DATA_AE) {
-		af->trigger_source_type &= (~AF_DATA_AE);
-		caf_monitor_process_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
-	}
-
 	if (af->trigger_source_type & AF_DATA_FD) {
+		af->face_cnt = 0;
 		af->trigger_source_type &= (~AF_DATA_FD);
 		caf_monitor_process_fd(af);
-	}
+	} else {
+		if (20 > af->face_cnt) {
+			af->face_cnt++;
+			return;
+		}
 
-	if (af->trigger_source_type & AF_DATA_PD) {
-		af->trigger_source_type &= (~AF_DATA_PD);
-		caf_monitor_process_phase_diff(af);
-	}
+		if (af->trigger_source_type & AF_DATA_AF) {
+			af->trigger_source_type &= (~AF_DATA_AF);
+			caf_monitor_process_af(af);
+		}
 
-	if (af->trigger_source_type & AF_DATA_G) {
-		struct af_aux_sensor_info_t aux_sensor_info;
-		aux_sensor_info.type = AF_ACCELEROMETER;
-		aux_sensor_info.gsensor_info.vertical_up = af->gsensor_info.vertical_up;
-		aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
-		aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
-		aux_sensor_info.gsensor_info.timestamp = af->gsensor_info.timestamp;
-		caf_monitor_process_sensor(af, &aux_sensor_info);
-		af->trigger_source_type &= (~AF_DATA_G);
-	}
+		if (af->trigger_source_type & AF_DATA_AE) {
+			af->trigger_source_type &= (~AF_DATA_AE);
+			caf_monitor_process_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
+		}
 
+		if (af->trigger_source_type & AF_DATA_PD) {
+			af->trigger_source_type &= (~AF_DATA_PD);
+			caf_monitor_process_phase_diff(af);
+		}
+
+		if (af->trigger_source_type & AF_DATA_G) {
+			struct af_aux_sensor_info_t aux_sensor_info;
+			aux_sensor_info.type = AF_ACCELEROMETER;
+			aux_sensor_info.gsensor_info.vertical_up = af->gsensor_info.vertical_up;
+			aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
+			aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
+			aux_sensor_info.gsensor_info.timestamp = af->gsensor_info.timestamp;
+			caf_monitor_process_sensor(af, &aux_sensor_info);
+			af->trigger_source_type &= (~AF_DATA_G);
+		}
+	}
 	return;
 }
 
@@ -2039,7 +2047,7 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct isp_face_area *face = (struct isp_face_area *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
-	if (NULL != face && 0 != face->face_num) {
+	if (NULL != face && 0 != face->face_num && STATE_FAF != af->state) {
 		cmr_u32 index = 0;
 		while (index < face->face_num) {
 			AF_record_faces(af->af_alg_cxt, index, face->face_info[index].sx, face->face_info[index].sy, face->face_info[index].ex, face->face_info[index].ey);
@@ -2554,10 +2562,12 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			rtn = faf_process_frame(af);
 			if (1 == rtn) {
 				af->state = STATE_CAF;	// todo: consider af->pre_state
-				af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
-				calc_roi(af, NULL, af->algo_mode);
-				do_start_af(af);
+				af->vcm_stable = 1;
+				if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {	// todo: should add SNAPSHOT status
+					sem_post(&af->af_wait_caf);	// should be protected by af_work_lock mutex exclusives
+				}
 				af->focus_state = AF_IDLE;
+				trigger_set_mode(af, AFT_MODE_CONTINUE);
 				trigger_start(af);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);

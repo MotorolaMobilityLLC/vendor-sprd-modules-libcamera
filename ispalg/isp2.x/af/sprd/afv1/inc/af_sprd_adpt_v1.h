@@ -246,6 +246,7 @@ typedef struct _af_ctrl {
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
 	afm_tuning_sharkl2 afm_tuning;
+	cmr_u32 face_cnt;
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
 	struct aft_proc_calc_param prm_sensor;
