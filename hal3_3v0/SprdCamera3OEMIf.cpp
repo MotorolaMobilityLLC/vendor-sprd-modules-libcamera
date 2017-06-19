@@ -8478,6 +8478,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
 
     case CMR_EVT_ZSL_STOP_MULTI_LAYER:
         obj->processStopMultiLayer(p_data);
+	break;
     default:
         HAL_LOGE("unsupported zsl message");
         break;
