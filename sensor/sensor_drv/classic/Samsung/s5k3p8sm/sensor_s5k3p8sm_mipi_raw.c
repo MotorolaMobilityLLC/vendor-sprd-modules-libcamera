@@ -880,16 +880,16 @@ static cmr_int s5k3p8sm_drv_get_fps_info(cmr_handle handle,
     return ret;
 }
 
-static const struct pd_pos_info s5k3p8sm_drv_pd_pos_r[] = {
-    {28, 35}, {44, 39}, {64, 39}, {80, 35}, {32, 47}, {48, 51},
-    {60, 51}, {76, 47}, {32, 71}, {48, 67}, {60, 67}, {76, 71},
-    {28, 83}, {44, 79}, {64, 79}, {80, 83},
+static const struct pd_pos_info s5k3p8sm_drv_pd_pos_l[] = {
+    {20, 23}, {36, 27}, {56, 27}, {72, 23}, {24, 43}, {40, 47},
+    {52, 47}, {68, 43}, {24, 59}, {40, 55}, {52, 55}, {68, 59},
+    {20, 79}, {36, 75}, {56, 75}, {72, 79},
 };
 
-static const struct pd_pos_info s5k3p8sm_drv_pd_pos_l[] = {
-    {28, 31}, {44, 35}, {64, 35}, {80, 31}, {32, 51}, {48, 55},
-    {60, 55}, {76, 51}, {32, 67}, {48, 63}, {60, 63}, {76, 67},
-    {28, 87}, {44, 83}, {64, 83}, {80, 87},
+static const struct pd_pos_info s5k3p8sm_drv_pd_pos_r[] = {
+    {20, 27}, {36, 31}, {56, 31}, {72, 27}, {24, 39}, {40, 43},
+    {52, 43}, {68, 39}, {24, 63}, {40, 59}, {52, 59}, {68, 63},
+    {20, 75}, {36, 71}, {56, 71}, {72, 75},
 };
 
 static cmr_int s5k3p8sm_drv_get_pdaf_info(cmr_handle handle,
@@ -913,13 +913,19 @@ static cmr_int s5k3p8sm_drv_get_pdaf_info(cmr_handle handle,
     pdaf_info->pd_offset_y = 16;
     pdaf_info->pd_pitch_x = 64;
     pdaf_info->pd_pitch_y = 64;
-    pdaf_info->pd_density_x = 16;
-    pdaf_info->pd_density_y = 16;
-    pdaf_info->pd_block_num_x = 65;
-    pdaf_info->pd_block_num_y = 48;
+    pdaf_info->pd_density_x = 4;
+    pdaf_info->pd_density_y = 4;
+    pdaf_info->pd_block_num_x = 72;
+    pdaf_info->pd_block_num_y = 54;
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)s5k3p8sm_drv_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)s5k3p8sm_drv_pd_pos_l;
+    pdaf_info->vendor_type = SENSOR_VENDOR_S5K3P8SM;
+    pdaf_info->type2_info.data_type = 0x30;
+    pdaf_info->type2_info.data_format = DATA_RAW10;
+    pdaf_info->type2_info.width = 72 * 2;
+    pdaf_info->type2_info.height = 54 * 16;
+    pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
 
     return ret;
 }
