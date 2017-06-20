@@ -117,7 +117,7 @@ enum ae_io_ctrl_cmd {
 	AE_SET_FORCE_QUICK_MODE,
 	AE_SET_EXP_TIME,
 	AE_SET_SENSITIVITY,
-	AE_GET_EXP_TIME,
+	AE_GET_EXP_TIME,	//only for raw picture filename:0.1us
 	AE_GET_SENSITIVITY,
 	AE_GET_EM_PARAM,
 	AE_GET_DEBUG_INFO,

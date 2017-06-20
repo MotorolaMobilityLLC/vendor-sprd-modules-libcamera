@@ -50,7 +50,7 @@
 
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
-#define SENSOR_LINETIME_BASE   100     /*uint:0.1us */
+#define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
 #define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 100 /*lower than LV1, if it is 0, disable this feature*/
 /*
  * should be read from driver later
@@ -2344,15 +2344,15 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	cxt->flash_buf_len = 0;
 	memset(&cxt->flash_esti_result, 0, sizeof(cxt->flash_esti_result));/*reset result*/
 
-	in.minExposure  = current_status->ae_table->exposure[current_status->ae_table->min_index] * current_status->line_time;
-	in.maxExposure  = current_status->ae_table->exposure[current_status->ae_table->max_index] * current_status->line_time;
+	in.minExposure  = current_status->ae_table->exposure[current_status->ae_table->min_index] * current_status->line_time / SENSOR_LINETIME_BASE;
+	in.maxExposure  = current_status->ae_table->exposure[current_status->ae_table->max_index] * current_status->line_time / SENSOR_LINETIME_BASE;
 	in.minGain = current_status->ae_table->again[current_status->ae_table->min_index];
 	in.maxGain = current_status->ae_table->again[current_status->ae_table->max_index];
 	in.minCapGain = current_status->ae_table->again[current_status->ae_table->min_index];
 	in.maxCapGain  = current_status->ae_table->again[current_status->ae_table->max_index];
-	in.minCapExposure  = current_status->ae_table->exposure[current_status->ae_table->min_index] * current_status->line_time;
-	in.maxCapExposure  = current_status->ae_table->exposure[current_status->ae_table->max_index] * current_status->line_time;
-	in.aeExposure = current_status->effect_expline * current_status->line_time;
+	in.minCapExposure  = current_status->ae_table->exposure[current_status->ae_table->min_index] * current_status->line_time / SENSOR_LINETIME_BASE;
+	in.maxCapExposure  = current_status->ae_table->exposure[current_status->ae_table->max_index] * current_status->line_time / SENSOR_LINETIME_BASE;
+	in.aeExposure = current_status->effect_expline * current_status->line_time / SENSOR_LINETIME_BASE;
 	in.aeGain = current_status->effect_gain;
 	in.rGain = current_status->awb_gain.r;
 	in.gGain = current_status->awb_gain.g;
@@ -2367,6 +2367,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.bSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num;
 	rtn = flash_pfStart(cxt->flash_alg_handle, &in, &out);
 
+	out.nextExposure *=  SENSOR_LINETIME_BASE;//Andy.lin temp code!!!
 	current_status->settings.manual_mode = 0;
 	current_status->settings.table_idx = 0;
 	current_status->settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
@@ -2431,7 +2432,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 
 	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
 	in = &cxt->flash_esti_input;
-	in->aeExposure = current_status->effect_expline * current_status->line_time;
+	in->aeExposure = current_status->effect_expline * current_status->line_time / SENSOR_LINETIME_BASE;
 	in->aeGain = current_status->effect_gain;
 	in->staW = cxt->monitor_unit.win_num.w;
 	in->staH = cxt->monitor_unit.win_num.h;
@@ -2442,6 +2443,8 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 
 	flash_pfOneIteration(cxt->flash_alg_handle, in, &out);
 
+	out.nextExposure *=  SENSOR_LINETIME_BASE;//Andy.lin temp code!!!
+	out.captureExposure *= SENSOR_LINETIME_BASE;//Andy.lin temp code!!!
 	current_status->settings.manual_mode = 0;
 	current_status->settings.table_idx = 0;
 	current_status->settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
@@ -2457,7 +2460,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		cxt->flash_buf_len = out.debugSize;
 
 		ISP_LOGV("ae_flash esti: isEnd:%d, cap(%d, %d), led(%d, %d), rgb(%d, %d, %d)\n",\
-					out.isEnd, (cmr_u32) (out.captureExposure / cxt->cur_status.line_time + 0.5),\
+					out.isEnd, current_status->settings.exp_line,\
 					out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2,\
 					out.captureRGain, out.captureGGain, out.captureBGain);
 
@@ -2473,7 +2476,6 @@ EXIT:
 	current_status->settings.table_idx = 0;
 	current_status->settings.exp_line = cxt->flash_last_exp_line;
 	current_status->settings.gain = cxt->flash_last_gain;
-
 	return rtn;
 }
 
@@ -2988,9 +2990,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	}
 	init_param = (struct ae_init_in *)param;
 	ae_init_out = (struct ae_init_out *)in_param;
-	/* e.g. line time: sensor 10380ns, ae 104*0.1us*/
-	init_param->resolution_info.line_time =
-		_round((float)init_param->resolution_info.line_time  /SENSOR_LINETIME_BASE);
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->ae_role = init_param->ae_role;
 	cxt->sensor_role = init_param->sensor_role;
@@ -4791,9 +4790,6 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		memset(&cxt->sync_cur_result.wts, 0, sizeof(struct ae1_senseor_out));
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
 	}
-	/* e.g. line time: sensor 10380ns, AE 104*0.1us*/
-	work_info->resolution_info.line_time =
-		_round((float)work_info->resolution_info.line_time / SENSOR_LINETIME_BASE);
 
 	cxt->snr_info = work_info->resolution_info;
 	cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
@@ -5964,7 +5960,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_GET_EXP_TIME:
 		if (result) {
-			*(cmr_u32 *) result = cxt->cur_result.wts.exposure_time;
+			*(cmr_u32 *) result = cxt->cur_result.wts.exposure_time /100;
 		}
 		break;
 
