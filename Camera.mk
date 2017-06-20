@@ -135,6 +135,9 @@ LOCAL_SRC_FILES+= \
 ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp
+else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp
 endif
 
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)

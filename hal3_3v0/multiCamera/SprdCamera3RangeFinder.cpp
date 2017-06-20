@@ -319,16 +319,16 @@ int SprdCamera3RangeFinder::closeCameraDevice() {
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
 
     // Attempt to close all cameras regardless of unbundle results
-    for (uint32_t i = 0; i < m_nPhyCameras; i++) {
-        sprdCam = &m_pPhyCamera[i];
+    for (uint32_t i = m_nPhyCameras; i > 0; i--) {
+        sprdCam = &m_pPhyCamera[i - 1];
         hw_device_t *dev = (hw_device_t *)(sprdCam->dev);
         if (dev == NULL)
             continue;
 
-        HAL_LOGD("camera id:%d, dev addr %p", i, dev);
+        HAL_LOGD("camera id:%d, dev addr %p", sprdCam->id, dev);
         rc = SprdCamera3HWI::close_camera_device(dev);
         if (rc != NO_ERROR) {
-            HAL_LOGE("Error, camera id:%d", i);
+            HAL_LOGE("Error, camera id:%d", sprdCam->id);
         }
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
@@ -670,6 +670,8 @@ bool SprdCamera3RangeFinder::SyncThread::threadLoop() {
                 gRangeFinder->mMeasureThread->mMeasureQueueSignal.signal();
                 mGetNewestFrameForMeasure = false;
             } else {
+                Mutex::Autolock l(
+                    gRangeFinder->mMeasureThread->mLocalBufferLock);
                 gRangeFinder->mMeasureThread->mLocalBufferList.push_back(
                     sync_msg.combo_frame.buffer1);
                 gRangeFinder->mMeasureThread->mLocalBufferList.push_back(
@@ -840,6 +842,8 @@ bool SprdCamera3RangeFinder::MeasureThread::threadLoop() {
         if (rc != NO_ERROR) {
             HAL_LOGE("calculateDepthValue failed, rc=%d", rc);
         }
+
+        Mutex::Autolock l(mLocalBufferLock);
         gRangeFinder->mMeasureThread->mLocalBufferList.push_back(
             sync_msg.combo_frame.buffer1);
         gRangeFinder->mMeasureThread->mLocalBufferList.push_back(
@@ -1571,8 +1575,11 @@ int SprdCamera3RangeFinder::processCaptureRequest(
     out_streams_main[1].stream = m_pMainDepthStream;
     out_streams_main[1].stream->width = mDepthWidth;
     out_streams_main[1].stream->height = mDepthHeight;
-    out_streams_main[1].buffer =
-        popRequestList(mMeasureThread->mLocalBufferList);
+    {
+        Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
+        out_streams_main[1].buffer =
+            popRequestList(mMeasureThread->mLocalBufferList);
+    }
     out_streams_main[1].status = CAMERA3_BUFFER_STATUS_OK;
     out_streams_main[1].acquire_fence = -1;
     out_streams_main[1].release_fence = -1;
@@ -1598,8 +1605,11 @@ int SprdCamera3RangeFinder::processCaptureRequest(
            (sizeof(camera3_stream_buffer_t)) * (req_aux.num_output_buffers));
 
     out_streams_aux[0] = req->output_buffers[0];
-    out_streams_aux[0].buffer =
-        popRequestList(mMeasureThread->mLocalBufferList);
+    {
+        Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
+        out_streams_aux[0].buffer =
+            popRequestList(mMeasureThread->mLocalBufferList);
+    }
     out_streams_aux[0].stream = &mAuxStreams[mPreviewStreamsNum];
     out_streams_aux[0].acquire_fence = -1;
     if (NULL == out_streams_aux[0].buffer) {
@@ -1753,6 +1763,7 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
                     mNotifyListMain.erase(i);
                 } else if (i->type == CAMERA3_MSG_ERROR) {
                     searchnotifyresult = NOTIFY_ERROR;
+                    Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
                     mMeasureThread->mLocalBufferList.push_back(
                         result->output_buffers->buffer);
                     mNotifyListMain.erase(i);
@@ -1776,6 +1787,7 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
     if (result_buffer->status == CAMERA3_BUFFER_STATUS_ERROR) {
         HAL_LOGE("Return error buffer:%d caused by error Buffer status",
                  result->frame_number);
+        Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
         mMeasureThread->mLocalBufferList.push_back(
             result->output_buffers->buffer);
         return;
@@ -1802,6 +1814,7 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
             sync_msg.combo_frame.vcmSteps = cur_frame.vcmSteps;
             {
                 Mutex::Autolock l(mSyncThread->mMergequeueMutex);
+                clearFrameNeverMatched(CAM_TYPE_MAIN);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                          sync_msg.combo_frame.frame_number);
                 mSyncThread->mSyncMsgList.push_back(sync_msg);
@@ -1813,6 +1826,7 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
             hwi_frame_buffer_info_t *discard_frame =
                 pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListMain);
             if (discard_frame != NULL) {
+                Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
                 HAL_LOGE("Discard oldest unmatched frame:%d for Main camera",
                          cur_frame_number);
                 mMeasureThread->mLocalBufferList.push_back(
@@ -1873,6 +1887,7 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
                         "Return local buffer:%d caused by error Notify status",
                         result->frame_number);
                     searchnotifyresult = NOTIFY_ERROR;
+                    Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
                     mMeasureThread->mLocalBufferList.push_back(
                         result->output_buffers->buffer);
                     mNotifyListAux.erase(i);
@@ -1893,6 +1908,7 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
     if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
         HAL_LOGE("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
+        Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
         mMeasureThread->mLocalBufferList.push_back(
             result->output_buffers->buffer);
         return;
@@ -1915,6 +1931,7 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
             sync_msg.combo_frame.vcmSteps = matched_frame.vcmSteps;
             {
                 Mutex::Autolock l(mSyncThread->mMergequeueMutex);
+                clearFrameNeverMatched(CAM_TYPE_AUX);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                          sync_msg.combo_frame.frame_number);
                 mSyncThread->mSyncMsgList.push_back(sync_msg);
@@ -1928,6 +1945,7 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
             if (discard_frame != NULL) {
                 HAL_LOGE("Discard oldest unmatched frame:%d for Aux camera",
                          discard_frame->frame_number);
+                Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
                 mMeasureThread->mLocalBufferList.push_back(
                     discard_frame->buffer);
                 delete discard_frame;
@@ -1936,6 +1954,34 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
     }
 
     return;
+}
+/*===========================================================================
+ * FUNCTION   :clearFrameNeverMatched
+ *
+ * DESCRIPTION: clear earlier frame which will never be matched any more
+ *
+ * PARAMETERS : which camera queue to be clear
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3RangeFinder::clearFrameNeverMatched(int whichCamera) {
+    List<hwi_frame_buffer_info_t>::iterator itor;
+    Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
+    if (whichCamera == CAM_TYPE_MAIN) {
+        itor = mUnmatchedFrameListMain.begin();
+        while (itor != mUnmatchedFrameListMain.end()) {
+            mMeasureThread->mLocalBufferList.push_back(itor->buffer);
+            HAL_LOGD("clear frame main idx:%d", itor->frame_number);
+            itor = mUnmatchedFrameListMain.erase(itor);
+        }
+    } else {
+        itor = mUnmatchedFrameListAux.begin();
+        while (itor != mUnmatchedFrameListAux.end()) {
+            mMeasureThread->mLocalBufferList.push_back(itor->buffer);
+            HAL_LOGD("clear frame aux idx:%d", itor->frame_number);
+            itor = mUnmatchedFrameListAux.erase(itor);
+        }
+    }
 }
 
 /*===========================================================================
@@ -1967,11 +2013,11 @@ void SprdCamera3RangeFinder::_dump(const struct camera3_device *device,
 int SprdCamera3RangeFinder::_flush(const struct camera3_device *device) {
     int rc = 0;
 
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[RANGE_CAM_TYPE_MAIN].hwi;
-    rc = hwiMain->flush(m_pPhyCamera[RANGE_CAM_TYPE_MAIN].dev);
-
     SprdCamera3HWI *hwiAux = m_pPhyCamera[RANGE_CAM_TYPE_AUX].hwi;
     rc = hwiAux->flush(m_pPhyCamera[RANGE_CAM_TYPE_AUX].dev);
+
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[RANGE_CAM_TYPE_MAIN].hwi;
+    rc = hwiMain->flush(m_pPhyCamera[RANGE_CAM_TYPE_MAIN].dev);
 
     if (mSyncThread != NULL) {
         if (mSyncThread->isRunning()) {

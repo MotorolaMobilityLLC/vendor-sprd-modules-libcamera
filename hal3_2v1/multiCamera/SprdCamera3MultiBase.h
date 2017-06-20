@@ -99,6 +99,18 @@ class SprdCamera3MultiBase {
                    uint16_t a_uwDstHeight, uint8_t *a_ucSrcBuf,
                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                    uint32_t a_udFileSize);
+    bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
+                          uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                          uint32_t a_udFileSize);
+    bool DepthRotateCCW180(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
+                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                           uint32_t a_udFileSize);
+    bool NV21Rotate90(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
+                      uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                      uint32_t a_udFileSize);
+    bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
+                       uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                       uint32_t a_udFileSize);
 
   private:
     Mutex mBufferListLock;

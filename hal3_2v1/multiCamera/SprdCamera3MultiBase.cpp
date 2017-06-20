@@ -32,7 +32,7 @@
 using namespace android;
 namespace sprdcamera {
 #define MAX_UNMATCHED_QUEUE_BASE_SIZE 3
-#define MATCH_FRAME_TIME_DIFF (9000)
+#define MATCH_FRAME_TIME_DIFF (15)
 #define LUMA_SOOMTH_COEFF 3
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
@@ -511,7 +511,7 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
             }
             itor2++;
         }
-        HAL_LOGV("match failed for idx:%d, could not find matched frame",
+        HAL_LOGV("no match for idx:%d, could not find matched frame",
                  result1.frame_number);
         return MATCH_FAILED;
     }
@@ -653,6 +653,112 @@ bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
     }
     delete uwHPos;
     delete uwVPos;
+    return true;
+}
+
+bool SprdCamera3MultiBase::DepthRotateCCW90(uint16_t *a_uwDstBuf,
+                                            uint16_t *a_uwSrcBuf,
+                                            uint16_t a_uwSrcWidth,
+                                            uint16_t a_uwSrcHeight,
+                                            uint32_t a_udFileSize) {
+    int x, y, nw, nh;
+    uint16_t *dst;
+    if (!a_uwSrcBuf || !a_uwDstBuf || a_uwSrcWidth <= 0 || a_uwSrcHeight <= 0)
+        return false;
+
+    nw = a_uwSrcHeight;
+    nh = a_uwSrcWidth;
+    for (x = 0; x < nw; x++) {
+        dst = a_uwDstBuf + (nh - 1) * nw + x;
+        for (y = 0; y < nh; y++, dst -= nw) {
+            *dst = *a_uwSrcBuf++;
+        }
+    }
+    return true;
+}
+
+bool SprdCamera3MultiBase::DepthRotateCCW180(uint16_t *a_uwDstBuf,
+                                             uint16_t *a_uwSrcBuf,
+                                             uint16_t a_uwSrcWidth,
+                                             uint16_t a_uwSrcHeight,
+                                             uint32_t a_udFileSize) {
+    int x, y, nw, nh;
+    uint16_t *dst;
+    int n = 0;
+    if (!a_uwSrcBuf || !a_uwDstBuf || a_uwSrcWidth <= 0 || a_uwSrcHeight <= 0)
+        return false;
+
+    for (int j = a_uwSrcHeight - 1; j >= 0; j--) {
+        for (int i = a_uwSrcWidth - 1; i >= 0; i--) {
+            a_uwDstBuf[n++] = a_uwSrcBuf[a_uwSrcWidth * j + i];
+        }
+    }
+
+    return true;
+}
+
+bool SprdCamera3MultiBase::NV21Rotate90(uint8_t *a_ucDstBuf,
+                                        uint8_t *a_ucSrcBuf,
+                                        uint16_t a_uwSrcWidth,
+                                        uint16_t a_uwSrcHeight,
+                                        uint32_t a_udFileSize) {
+    int k, x, y, nw, nh;
+    uint8_t *dst;
+
+    nw = a_uwSrcHeight;
+    nh = a_uwSrcWidth;
+    // rotate Y
+    k = 0;
+    for (x = nw - 1; x >= 0; x--) {
+        dst = a_ucDstBuf + x;
+        for (y = 0; y < nh; y++, dst += nw) {
+            *dst = a_ucSrcBuf[k++];
+        }
+    }
+
+    // rotate cbcr
+    k = nw * nh * 3 / 2 - 1;
+    for (x = a_uwSrcWidth - 1; x > 0; x = x - 2) {
+        for (y = 0; y < a_uwSrcHeight / 2; y++) {
+            a_ucDstBuf[k] = a_ucSrcBuf[(a_uwSrcWidth * a_uwSrcHeight) +
+                                       (y * a_uwSrcWidth) + x];
+            k--;
+            a_ucDstBuf[k] = a_ucSrcBuf[(a_uwSrcWidth * a_uwSrcHeight) +
+                                       (y * a_uwSrcWidth) + (x - 1)];
+            k--;
+        }
+    }
+
+    return true;
+}
+
+bool SprdCamera3MultiBase::NV21Rotate180(uint8_t *a_ucDstBuf,
+                                         uint8_t *a_ucSrcBuf,
+                                         uint16_t a_uwSrcWidth,
+                                         uint16_t a_uwSrcHeight,
+                                         uint32_t a_udFileSize) {
+    int n = 0;
+    int hw = a_uwSrcWidth / 2;
+    int hh = a_uwSrcHeight / 2;
+    // copy y
+    for (int j = a_uwSrcHeight - 1; j >= 0; j--) {
+        for (int i = a_uwSrcWidth - 1; i >= 0; i--) {
+            a_ucDstBuf[n++] = a_ucSrcBuf[a_uwSrcWidth * j + i];
+        }
+    }
+
+    // copy uv
+    unsigned char *ptemp = a_ucSrcBuf + a_uwSrcWidth * a_uwSrcHeight;
+    for (int j = hh - 1; j >= 0; j--) {
+        for (int i = a_uwSrcWidth - 1; i >= 0; i--) {
+            if (i & 0x01) {
+                a_ucDstBuf[n + 1] = ptemp[a_uwSrcWidth * j + i];
+            } else {
+                a_ucDstBuf[n] = ptemp[a_uwSrcWidth * j + i];
+                n += 2;
+            }
+        }
+    }
     return true;
 }
 };

@@ -47,6 +47,8 @@
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
 #include <cmr_sensor_info.h>
+#include "SprdCamera3MultiBase.h"
+
 namespace sprdcamera {
 
 #define MAX_NUM_CAMERAS 3
@@ -65,6 +67,7 @@ namespace sprdcamera {
 #define CLEAR_NOTIFY_QUEUE 50
 #define UWINY1_MAX 240
 #define UWINY2_MAX 240
+#define LIB_SPRD_DEPTH_PATH "libsprddepth.so"
 
 typedef int alDE_ERR_CODE;
 
@@ -118,7 +121,7 @@ typedef struct {
     void (*alSDE2_Close)();
 } depth_engine_api_t;
 
-class SprdCamera3RangeFinder {
+class SprdCamera3RangeFinder : SprdCamera3MultiBase {
   public:
     static void getCameraRangeFinder(SprdCamera3RangeFinder **pFinder);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -180,23 +183,15 @@ class SprdCamera3RangeFinder {
     currentStatus mCurrentState;
     const camera3_callback_ops_t *mCallbackOps;
     int mVcmSteps;
+
     int checkOtpInfo();
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
     void getDepthImageSize(int srcWidth, int srcHeight, int *camWidth,
                            int *camHeight);
-    int validateCaptureRequest(camera3_capture_request_t *request);
     void savePreviewRequest(camera3_capture_request_t *request);
-    int pushRequestList(buffer_handle_t *request, List<buffer_handle_t *> &);
-    buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
-    bool matchTwoFrame(hwi_frame_buffer_info_t result1,
-                       List<hwi_frame_buffer_info_t> &list,
-                       hwi_frame_buffer_info_t *result2);
-    int getStreamType(camera3_stream_t *new_stream);
-    hwi_frame_buffer_info_t *
-    pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
-                         List<hwi_frame_buffer_info_t> &queue);
+    void clearFrameNeverMatched(int whichCamera);
 
   public:
     SprdCamera3RangeFinder();
@@ -218,11 +213,6 @@ class SprdCamera3RangeFinder {
         Condition mMergequeueSignal;
 
       private:
-        int mVFrameCount;
-        int mVLastFrameCount;
-        nsecs_t mVLastFpsTime;
-        double mVFps;
-        void dumpFps();
         void waitMsgAvailable();
     };
 
@@ -233,6 +223,7 @@ class SprdCamera3RangeFinder {
         virtual bool threadLoop();
         void waitMsgAvailable();
         int loadDepthEngine();
+        void unLoadDepth();
         int depthAlgoSanityCheck();
         void convertCoordinate(int oldWidth, int oldHeight, int newWidth,
                                int newHeight, uw_Coordinate newCoords);
@@ -244,17 +235,17 @@ class SprdCamera3RangeFinder {
         Mutex mMeasureQueueMutex;
         Condition mMeasureQueueSignal;
         depth_engine_api_t *mDepthEngineApi;
+        depth_api_t *mDepthApi;
+        depth_init_param_t mDepthInitParam;
         uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
 
-        void freeLocalBuffer(new_mem_t *mLocalBuffer);
         new_mem_t *mLocalBuffer;
         uint8_t mMaxLocalBufferNum;
+        Mutex mLocalBufferLock;
         List<buffer_handle_t *> mLocalBufferList;
         const native_handle_t *mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
-        int allocateOne(int w, int h, uint32_t is_cache, new_mem_t *new_mem);
 
       private:
-        bool mIommuEnabled;
         uw_Coordinate mCurUwcoods;
         uw_Coordinate mLastPreCoods;
     };
@@ -262,6 +253,8 @@ class SprdCamera3RangeFinder {
     sp<SyncThread> mSyncThread;
     double mUwDepth;
     Mutex mDepthVauleLock;
+    int mApiLibVersion;
+    bool mApiLibinit;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
@@ -275,21 +268,9 @@ class SprdCamera3RangeFinder {
     constructDefaultRequestSettings(const struct camera3_device *device,
                                     int type);
     void _dump(const struct camera3_device *device, int fd);
-    void dumpImg(void *addr, int size, int fd, int flag);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
-    bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
-                          uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
-                          uint32_t a_udFileSize);
-    bool DepthRotateCCW180(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
-                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
-                           uint32_t a_udFileSize);
-    bool NV21Rotate90(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
-                      uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
-                      uint32_t a_udFileSize);
-    bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
-                       uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
-                       uint32_t a_udFileSize);
+    void freeLocalBuffer();
 };
 };
 

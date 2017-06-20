@@ -189,6 +189,7 @@ class SprdCamera3RangeFinder : SprdCamera3MultiBase {
     void getDepthImageSize(int srcWidth, int srcHeight, int *camWidth,
                            int *camHeight);
     void savePreviewRequest(camera3_capture_request_t *request);
+    void clearFrameNeverMatched(int whichCamera);
 
   public:
     SprdCamera3RangeFinder();
@@ -231,10 +232,12 @@ class SprdCamera3RangeFinder : SprdCamera3MultiBase {
         Mutex mMeasureQueueMutex;
         Condition mMeasureQueueSignal;
         depth_engine_api_t *mDepthEngineApi;
+
         uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
 
         new_mem_t *mLocalBuffer;
         uint8_t mMaxLocalBufferNum;
+        Mutex mLocalBufferLock;
         List<buffer_handle_t *> mLocalBufferList;
         const native_handle_t *mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
 
