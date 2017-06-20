@@ -1697,8 +1697,8 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s3
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_TOOL_AF_TEST, &isp_tool_af_test, NULL);
 		afm_info.bypass = 0;
 		afm_info.skip_num = 0;
-		cmr_u32 af_envi_type = INDOOR_SCENE;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&afm_info, (void *)&af_envi_type);
+		afm_info.cur_envi = INDOOR_SCENE;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&afm_info, NULL);
 		if (cxt->ops.af_ops.ioctrl) {
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DEFAULT_AF_WIN, NULL, NULL);
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_POS, (void *)&af_ctrl_ptr->step, NULL);

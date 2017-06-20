@@ -760,6 +760,21 @@ struct isp_img_param {
 	cmr_uint zsl_private;
 };
 
+//add two struct defination for the 3DNR capture.
+struct isp_buffer {
+	cmr_u8 *buffer;
+	cmr_s32 fd;
+};
+
+struct isp_3dnr_info {
+	struct isp_buffer image[3];
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_s8 mv_x;
+	cmr_s8 mv_y;
+	cmr_u8 blending_no;
+};
+
 struct isp_ops {
 	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
 	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);

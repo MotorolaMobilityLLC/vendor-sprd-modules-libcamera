@@ -280,7 +280,7 @@ struct isp_alg_sw_init_in {
 	struct isp_size	sensor_max_size;
 };
 
-static nsecs_t ispalg_get_timestamp(void)
+static nsecs_t ispalg_get_sys_timestamp(void)
 {
 	nsecs_t timestamp = 0;
 
@@ -359,10 +359,64 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 	return ret;
 }
 
+static cmr_int ispalg_set_ae_stats_mode(cmr_handle isp_alg_handle, cmr_u32 mode, cmr_u32 skip_number)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_dev_access_ae_stats_info ae_info;
+
+	switch (mode) {
+	case AE_STATISTICS_MODE_SINGLE:
+		ae_info.mode = ISP_DEV_AE_STATS_MODE_SINGLE;
+		ae_info.skip_num = skip_number;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+					   ISP_DEV_SET_AE_STATISTICS_MODE,
+					   &ae_info,
+					   NULL);
+		break;
+	case AE_STATISTICS_MODE_CONTINUE:
+		ae_info.mode = ISP_DEV_AE_STATS_MODE_CONTINUE;
+		ae_info.skip_num = skip_number;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+					   ISP_DEV_SET_AE_STATISTICS_MODE,
+					   &ae_info,
+					   NULL);
+		break;
+	}
+	return ret;
+}
+
+static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_info *aem_info)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_dev_access_aem_win_info aem_win_info;
+
+	aem_win_info.offset.x = aem_info->trim.x;
+	aem_win_info.offset.y = aem_info->trim.y;
+	aem_win_info.blk_size.width = aem_info->win_size.w;
+	aem_win_info.blk_size.height = aem_info->win_size.h;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_win_info, NULL);
+	return ret;
+}
+
+static cmr_int ispalg_get_k_timestamp(cmr_handle isp_alg_handle, cmr_u32 * sec, cmr_u32 * usec)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_time time;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AE_SYSTEM_TIME, NULL, &time);
+	*sec = time.sec;
+	*usec = time.usec;
+	return ret;
+}
+
 static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
 	switch (type) {
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
@@ -374,22 +428,27 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_u32) param0);
 		break;
 	case ISP_AE_SET_MONITOR:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, param0, param1);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, param0, NULL);
 		break;
 	case ISP_AE_SET_MONITOR_WIN:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, param0, param1);
+		ret = ispalg_set_aem_win(cxt, param0);
 		break;
 	case ISP_AE_SET_MONITOR_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, param0, param1);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, param0, NULL);
 		break;
 	case ISP_AE_SET_STATISTICS_MODE:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_STATISTICS_MODE, param0, param1);
+		ret = ispalg_set_ae_stats_mode(cxt, *(cmr_u32 *)param0, *(cmr_u32 *)param1);
 		break;
 	case ISP_AE_SET_AE_CALLBACK:
 		ret = ispalg_ae_callback(cxt, *(cmr_int *) param0);
 		break;
-	case ISP_AE_GET_SYSTEM_TIME:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AE_SYSTEM_TIME, param0, param1);
+	case ISP_AE_GET_SYSTEM_TIME: {
+		cmr_u32 sec = 0;
+		cmr_u32 usec = 0;
+		ret = ispalg_get_k_timestamp(cxt, &sec, &usec);
+		*(cmr_u32 *)param0 = sec;
+		*(cmr_u32 *)param1 = usec;
+		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, param0, param1);
@@ -524,14 +583,15 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 
 		afm_info.bypass = monitor_set->bypass;
 		afm_info.skip_num = monitor_set->skip_num;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_info, param1);
+		afm_info.cur_envi = *(cmr_u32 *)param1;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_info, NULL);
 		}
 		break;
 	case ISP_AF_SET_MONITOR_WIN:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR_WIN, param0, param1);
 		break;
 	case ISP_AF_GET_MONITOR_WIN_NUM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, param0, param1);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, NULL, param0);
 		break;
 	case ISP_AFM_BYPASS:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, param0, param1);
@@ -866,13 +926,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
-	time_start = ispalg_get_timestamp();
+	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.ae_ops.process) {
 		ret = cxt->ops.ae_ops.process(cxt->ae_cxt.handle, &in_param, &ae_result);
 		ISP_TRACE_IF_FAIL(ret, ("ae process fail"));
 	}
 	cxt->smart_cxt.isp_smart_eb = 1;
-	time_end = ispalg_get_timestamp();
+	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", time_end - time_start);
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
@@ -1080,12 +1140,12 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle, struct isp_awb_calc_
 
 	ret = ispalg_awb_pre_process((cmr_handle) cxt, awb_calc_info, &param);
 
-	time_start = ispalg_get_timestamp();
+	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.awb_ops.process) {
 		ret = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &param, awb_result);
 		ISP_TRACE_IF_FAIL(ret, ("awb process fail "));
 	}
-	time_end = ispalg_get_timestamp();
+	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
 
 	ret = ispalg_awb_post_process((cmr_handle) cxt, awb_result);
@@ -1120,7 +1180,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 
 	CMR_MSG_INIT(message);
 
-	time_start = ispalg_get_timestamp();
+	time_start = ispalg_get_sys_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
 		struct alsc_ver_info lsc_ver = { 0 };
 		if (cxt->ops.lsc_ops.ioctrl)
@@ -1202,7 +1262,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 				       alsc_info.stable);
 		ISP_TRACE_IF_FAIL(ret, ("alsc_calc fail "));
 	}
-	time_end = ispalg_get_timestamp();
+	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-smart:%zd ms", time_end - time_start);
 
 	isp_cur_bv = bv;

@@ -46,6 +46,8 @@ static const char *AE_START = "ISP_AE__";
 static const char *AE_END = "ISP_AE__";
 static const char *AF_START = "ISP_AF__";
 static const char *AF_END = "ISP_AF__";
+static const char *AFT_START = "ISP_AFT_";
+static const char *AFT_END = "ISP_AFT_";
 static const char *AWB_START = "ISP_AWB_";
 static const char *AWB_END = "ISP_AWB_";
 static const char *LSC_START = "ISP_LSC_";
@@ -929,6 +931,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 		    + calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)
 		    + calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
+		    + calc_log_size(cxt->aft_cxt.log_aft, cxt->aft_cxt.log_aft_size, AFT_START, AFT_END)
 		    + calc_log_size(cxt->awb_cxt.log_awb, cxt->awb_cxt.log_awb_size, AWB_START, AWB_END)
 		    + calc_log_size(cxt->lsc_cxt.log_lsc, cxt->lsc_cxt.log_lsc_size, LSC_START, LSC_END)
 		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
@@ -967,6 +970,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 		off = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t);
 		COPY_LOG(ae, AE);
 		COPY_LOG(af, AF);
+		COPY_LOG(aft, AFT);
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);

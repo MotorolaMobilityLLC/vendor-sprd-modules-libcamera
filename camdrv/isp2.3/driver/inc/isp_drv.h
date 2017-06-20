@@ -171,21 +171,6 @@ struct isp_drv_interface_param {
 	struct isp_drv_slice_param slice;
 };
 
-//add two struct defination for the 3DNR capture.
-struct isp_buffer {
-	cmr_u8 *buffer;
-	cmr_s32 fd;
-};
-
-struct isp_3dnr_info {
-	struct isp_buffer image[3];
-	cmr_u32 width;
-	cmr_u32 height;
-	cmr_s8 mv_x;
-	cmr_s8 mv_y;
-	cmr_u8 blending_no;
-};
-
 /*ISP Hardware Device*/
 cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle * handle);
 cmr_s32 isp_dev_close(cmr_handle handle);

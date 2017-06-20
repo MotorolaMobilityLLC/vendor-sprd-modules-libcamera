@@ -63,9 +63,26 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_CMD_MAX
 };
 
+enum isp_dev_access_ae_stats_mode {
+	ISP_DEV_AE_STATS_MODE_SINGLE,
+	ISP_DEV_AE_STATS_MODE_CONTINUE,
+	ISP_DEV_AE_STATS_MODE_MAX
+};
+
+struct isp_dev_access_ae_stats_info {
+	enum isp_dev_access_ae_stats_mode mode;
+	cmr_u32 skip_num;
+};
+
 struct isp_dev_access_afm_info {
 	cmr_u32 bypass;
 	cmr_u32 skip_num;
+	cmr_u32 cur_envi;
+};
+
+struct isp_dev_access_aem_win_info {
+	struct img_offset offset;
+	struct isp_img_size blk_size;
 };
 
 typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
@@ -84,7 +101,7 @@ void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, 
 cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle);
 cmr_int isp_dev_access_deinit(cmr_handle handle);
 cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void *param_ptr);
-cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param0, void *param1);
+cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, void *out);
 void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr);
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr);
 
