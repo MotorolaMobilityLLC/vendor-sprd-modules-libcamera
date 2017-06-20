@@ -17,11 +17,6 @@
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
 
-#define array_offset(type, member) (intptr_t)(&((type*)0)->member)
-
-#define ISP_PM_LEVEL_DEFAULT 3
-#define ISP_PM_CCE_DEFAULT 0
-
 #define ISP_NR_AUTO_MODE_BIT (0x01 << ISP_SCENEMODE_AUTO)
 #define ISP_NR_NIGHT_MODE_BIT (0x01 << ISP_SCENEMODE_NIGHT)
 #define ISP_NR_SPORT_MODE_BIT (0x01 << ISP_SCENEMODE_SPORT)

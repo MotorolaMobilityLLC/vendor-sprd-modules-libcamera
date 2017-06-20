@@ -880,10 +880,6 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr, cmr_s
 		return ISP_PARAM_NULL;
 	}
 
-	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
-		log_ae_size = cxt->ae_cxt.log_alc_ae_size;
-	}
-
 	if (cxt->awb_cxt.alc_awb || log_ae_size) {
 		total_size = cxt->awb_cxt.log_alc_awb_size + cxt->awb_cxt.log_alc_lsc_size;
 		if (cxt->lib_use_info->ae_lib_info.product_id) {
