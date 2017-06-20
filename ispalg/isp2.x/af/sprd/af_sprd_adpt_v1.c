@@ -1390,6 +1390,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 
 	notify_start(af);
 	af->vcm_stable = 0;
+	faf_trigger_init(af->af_alg_cxt);
 }
 
 static cmr_s32 caf_process_frame(af_ctrl_t * af)
