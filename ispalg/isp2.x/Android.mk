@@ -35,7 +35,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 ISP_DIR := ../../camdrv/isp2.2
 endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
-ISP_DIR := ../../camdrv/isp2.1
+ISP_DIR := ../../camdrv/isp2.3
 endif
 
 
