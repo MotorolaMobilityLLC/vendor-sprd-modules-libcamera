@@ -702,11 +702,11 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
     faceInfo[0] =
         mFaceInfo[0] * mCaptureInitParams.width / mPreviewInitParams.width;
     faceInfo[1] =
-        mFaceInfo[1] * mCaptureInitParams.width / mPreviewInitParams.width;
+        mFaceInfo[1] * mCaptureInitParams.height / mPreviewInitParams.height;
     faceInfo[2] =
         mFaceInfo[2] * mCaptureInitParams.width / mPreviewInitParams.width;
     faceInfo[3] =
-        mFaceInfo[3] * mCaptureInitParams.width / mPreviewInitParams.width;
+        mFaceInfo[3] * mCaptureInitParams.height / mPreviewInitParams.height;
     mBlur->doFaceMakeup(frame, mBlur->mPerfectskinlevel, faceInfo);
 }
 #endif
@@ -1806,6 +1806,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 mPreviewInitParams.height * mCircleSizeScale / 100 / 2;
             mUpdatePreviewWeightParams = true;
             mPreviewWeightParams.valid_roi = 0;
+            memset(mFaceInfo, 0, sizeof(int32_t) * 4);
 
         } else if (metaSettings.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
             if (mIsBlurAlways) {
@@ -1815,49 +1816,54 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             HAL_LOGV("roi_type:%d,face_num:%d mUpdataTouch:%d",
                      mPreviewWeightParams.roi_type, face_num, mUpdataTouch);
 
+            for (i = 0; i < face_num; i++) {
+                x1 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                         .data.i32[i * 4 + 0];
+                x2 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                         .data.i32[i * 4 + 2];
+                if (x2 - x1 > max) {
+                    k = i;
+                    max = x2 - x1;
+                }
+            }
+            mFaceInfo[0] =
+                (metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                     .data.i32[k * 4 + 0]) *
+                mPreviewInitParams.width / origW;
+            mFaceInfo[1] =
+                (metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                     .data.i32[k * 4 + 1]) *
+                mPreviewInitParams.height / origH;
+            mFaceInfo[2] =
+                (metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                     .data.i32[k * 4 + 2]) *
+                mPreviewInitParams.width / origW;
+            mFaceInfo[3] =
+                (metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
+                     .data.i32[k * 4 + 3]) *
+                mPreviewInitParams.height / origH;
+
+            if (k >= BLUR_MAX_ROI / 2 && mPreviewWeightParams.roi_type == 1) {
+                metaSettings.update(ANDROID_STATISTICS_FACE_RECTANGLES,
+                                    mFaceInfo, 4);
+            }
             if (mPreviewWeightParams.roi_type == 0) {
                 unsigned short sel_x;
                 unsigned short sel_y;
                 int circle;
-                for (i = 0; i < face_num; i++) {
-                    x1 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                             .data.i32[i * 4 + 0];
-                    x2 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                             .data.i32[i * 4 + 2];
-                    if (x2 - x1 > max) {
-                        k = i;
-                        max = x2 - x1;
-                    }
-                }
-                mFaceInfo[0] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 0];
-                mFaceInfo[1] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 1];
-                mFaceInfo[2] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 2];
-                mFaceInfo[3] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 3];
 
-                circle = (mFaceInfo[2] - mFaceInfo[0]) * 4 / 5 *
-                         mPreviewInitParams.width / origW;
+                circle = (mFaceInfo[2] - mFaceInfo[0]) * 4 / 5;
                 if (mPreviewWeightParams.circle_size != circle) {
                     mPreviewWeightParams.circle_size = circle;
                     mUpdatePreviewWeightParams = true;
                 }
-                sel_x = (mFaceInfo[0] + mFaceInfo[2]) / 2 *
-                            mPreviewInitParams.width / origW +
-                        circle / 8;
+                sel_x = (mFaceInfo[0] + mFaceInfo[2]) / 2 + circle / 8;
                 if (mPreviewWeightParams.sel_x != sel_x) {
                     mPreviewWeightParams.sel_x = sel_x;
                     mUpdatePreviewWeightParams = true;
                 }
 
-                sel_y = (mFaceInfo[1] + mFaceInfo[3]) / 2 *
-                        mPreviewInitParams.height / origH;
+                sel_y = (mFaceInfo[1] + mFaceInfo[3]) / 2;
                 if (mPreviewWeightParams.sel_y != sel_y) {
                     mPreviewWeightParams.sel_y = sel_y;
                     mUpdatePreviewWeightParams = true;
@@ -1909,32 +1915,6 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 memset(mPreviewWeightParams.flag, 0x00,
                        sizeof(int) * BLUR_MAX_ROI);
 
-                for (i = 0; i < face_num; i++) {
-                    x1 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                             .data.i32[i * 4 + 0];
-                    x2 = metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                             .data.i32[i * 4 + 2];
-                    if (x2 - x1 > max) {
-                        max = x2 - x1;
-                        k = i;
-                    }
-                }
-                mFaceInfo[0] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 0];
-                mFaceInfo[1] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 1];
-                mFaceInfo[2] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 2];
-                mFaceInfo[3] =
-                    metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[k * 4 + 3];
-                if (k >= BLUR_MAX_ROI / 2) {
-                    metaSettings.update(ANDROID_STATISTICS_FACE_RECTANGLES,
-                                        mFaceInfo, 4);
-                }
                 if (face_num > BLUR_MAX_ROI / 2) {
                     face_num = BLUR_MAX_ROI / 2;
                 }
@@ -3054,9 +3034,9 @@ void SprdCamera3Blur::processCaptureResultMain(
     metadata = result->result;
     int coverValue = 1;
 
-    mCaptureThread->updateBlurWeightParams(metadata, 1);
     /* Direclty pass preview buffer and meta result for Main camera */
     if (result_buffer == NULL && result->result != NULL) {
+        mCaptureThread->updateBlurWeightParams(metadata, 1);
         if (result->frame_number ==
                 mCaptureThread->mSavedCapRequest.frame_number &&
             0 != result->frame_number) {
