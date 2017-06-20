@@ -496,10 +496,13 @@ static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 nu
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr_s32 bv, cmr_s32 bv_gain, cmr_u32 ct, struct smart_component_result *result, cmr_u32 smart_id)
+static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, struct smart_calc_param *param, struct smart_component_result *result, cmr_u32 smart_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
+	cmr_s32 bv = param->bv;
+	cmr_s32 bv_gain = param->bv_gain;
+	cmr_u32 ct = param->ct;
 	cmr_u32 section_num = cfg->section_num;
 	struct isp_range *bv_range = cfg->bv_range;
 	struct isp_weight_value func_result = { {0}, {0} };
@@ -591,7 +594,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 		if (smart_id == ISP_SMART_CMC) {
-			result->size = sizeof(bv_result) * 4;
+			result->size = sizeof(bv_result) * 3;
 			fix_data[0].weight[0] = bv_result.weight[0];
 			fix_data[0].weight[1] = bv_result.weight[1];
 			fix_data[0].value[0] = bv_result.value[0];
@@ -633,10 +636,9 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, cmr
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cfg, struct smart_component_result *result)
+static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cfg, struct smart_calc_param *param, struct smart_component_result *result, cmr_u32 smart_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_weight_value func_result = { {0}, {0} };
 	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
 
 	switch (cfg->y_type) {
@@ -647,12 +649,22 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cf
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
-		result->size = sizeof(func_result);
-		fix_data->weight[0] = 256;
-		fix_data->weight[1] = 0;
-		fix_data->value[0] = cfg->flash_val;
-		fix_data->value[1] = 0;
-		ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
+		if (smart_id == ISP_SMART_CMC) {
+			result->size = sizeof(struct isp_weight_value) * 5;
+			result->flash = 1;
+
+			fix_data[3].weight[0] = param->flash_ratio1;
+			fix_data[3].weight[1] = 256 - param->flash_ratio1;
+			fix_data[3].value[0] = 7;
+			fix_data[3].value[1] = 8;
+
+			fix_data[4].weight[0] = param->flash_ratio;
+			fix_data[4].weight[1] = 256-param->flash_ratio;
+			fix_data[4].value[0] = 0;
+			fix_data[4].value[1] = 0;
+
+			ISP_LOGV("flash_weight=(%d, %d)", param->flash_ratio, param->flash_ratio1);
+		}
 		break;
 
 	default:
@@ -667,12 +679,12 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cf
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, cmr_s32 bv, cmr_u32 bv_gain, cmr_u32 ct,
+static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, struct smart_calc_param *param,
 				    struct smart_block_result *result, enum smart_ctrl_flash_mode flash_mode)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
-	struct smart_component_result component_result = { 0, 0, 0, 0, {0}, NULL };
+	struct smart_component_result component_result = { 0, 0, 0, 0, 0, {0}, NULL };
 	cmr_u32 component_num = cfg->component_num;
 	cmr_u32 update_num = 0;
 
@@ -691,13 +703,13 @@ static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, cmr_s32 bv,
 	}
 
 	for (i = 0; i < component_num; i++) {
-		if (SMART_CTRL_FLASH_MAIN != flash_mode || 1 != cfg->component[i].use_flash_val) {
-			if (1 == is_print_log()) {
-				ISP_LOGV("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d\n", flash_mode, cfg->component[i].use_flash_val, bv, ct);
-			}
-			rtn = smart_ctl_calc_component(&cfg->component[i], bv, bv_gain, ct, &component_result, cfg->smart_id);
-		} else {
-			rtn = smart_ctl_calc_component_flash(&cfg->component[i], &component_result);
+		if (1 == is_print_log()) {
+			ISP_LOGV("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d\n", flash_mode, cfg->component[i].use_flash_val, param->bv, param->ct);
+		}
+		rtn = smart_ctl_calc_component(&cfg->component[i], param, &component_result, cfg->smart_id);
+
+		if (SMART_CTRL_FLASH_MAIN == flash_mode && 1 == cfg->component[i].use_flash_val) {
+			rtn = smart_ctl_calc_component_flash(&cfg->component[i], param, &component_result, cfg->smart_id);
 		}
 
 		if (ISP_SUCCESS == rtn) {
@@ -988,7 +1000,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	for (i = 0; i < smart_param->block_num; i++) {
 		cxt->block_result.update = 0;
-		rtn = smart_ctl_calc_block(&smart_param->block[i], param->bv, param->bv_gain, param->ct, &cxt->block_result, flash_mode);
+		rtn = smart_ctl_calc_block(&smart_param->block[i], param, &cxt->block_result, flash_mode);
 
 		if (1 == cxt->block_result.update) {
 			cxt->calc_result[update_block_num] = cxt->block_result;

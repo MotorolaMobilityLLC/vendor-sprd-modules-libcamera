@@ -55,9 +55,10 @@ struct smart_component_result {
 	cmr_u32 y_type;	//0: normal data(directly to driver); 1: index (few block support);
 	// 2: index and weight (few block support); 3 gain: gain (new lens shading support)
 	cmr_u32 x_type;
+	cmr_u32 flash;
 	cmr_u32 offset;
 	cmr_u32 size;	//if data is not NULL, use the data as the output buffer
-	cmr_s32 fix_data[12];
+	cmr_s32 fix_data[20];
 	void *data;
 };
 
@@ -89,6 +90,8 @@ struct smart_calc_param {
 	cmr_u32 ct;
 	cmr_u32 alc_awb;
 	cmr_handle handle_pm;
+	cmr_s32 flash_ratio;
+	cmr_s32 flash_ratio1;
 };
 
 struct smart_proc_input {

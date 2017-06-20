@@ -172,6 +172,29 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 
 				isp_interp_data(bv_result, src_matrix, weight, 9, ISP_INTERP_INT14);
 
+				if (block_result->component[0].flash == 1) {
+					cmr_u16 flash_result[SENSOR_CMC_POINT_NUM] = { 0 };
+
+					src_matrix[0] = cmc10_ptr->matrix[weight_value[3].value[0]];
+					src_matrix[1] = cmc10_ptr->matrix[weight_value[3].value[1]];
+					weight[0] = weight_value[3].weight[0];
+					weight[1] = weight_value[3].weight[1];
+					weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
+					weight[1] = SMART_WEIGHT_UNIT - weight[0];
+					isp_interp_data(flash_result, src_matrix, weight, 9, ISP_INTERP_INT14);
+
+					cmr_u16 tmp_result[SENSOR_CMC_POINT_NUM] = { 0 };
+					memcpy(tmp_result, bv_result, sizeof(cmc10_ptr->result_cmc));
+
+					src_matrix[0] = &flash_result[0];
+					src_matrix[1] = &tmp_result[0];
+					weight[0] = weight_value[4].weight[0];
+					weight[1] = weight_value[4].weight[1];
+					weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
+					weight[1] = SMART_WEIGHT_UNIT - weight[0];
+					isp_interp_data(bv_result, src_matrix, weight, 9, ISP_INTERP_INT14);
+				}
+
 				memcpy(cmc10_ptr->result_cmc, bv_result, sizeof(cmc10_ptr->result_cmc));
 				for (i = 0; i < SENSOR_CMC_POINT_NUM; i++) {
 					cmc10_ptr->cur.matrix.val[i] = cmc10_ptr->result_cmc[i];

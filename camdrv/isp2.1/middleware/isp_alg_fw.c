@@ -1175,6 +1175,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	nsecs_t time_end = 0;
 	cmr_s32 bv = 0;
 	cmr_s32 bv_gain = 0;
+	float captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
+	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 
@@ -1195,10 +1197,16 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 			ISP_TRACE_IF_FAIL(ret, ("AE_GET_BV_BY_LUM_NEW fail "));
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
 			ISP_TRACE_IF_FAIL(ret, ("AE_GET_BV_BY_GAIN fail "));
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
+			ISP_TRACE_IF_FAIL(ret, ("AE_GET_BV_BY_LUM_NEW fail"));
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
+			ISP_TRACE_IF_FAIL(ret, ("AE_GET_BV_BY_GAIN fail"));
 		}
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = result->ct;
+		smart_proc_in.cal_para.flash_ratio = captureFlashEnvRatio * 256;
+		smart_proc_in.cal_para.flash_ratio1 = captureFlash1ofALLRatio * 256;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
