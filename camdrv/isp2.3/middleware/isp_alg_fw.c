@@ -1954,11 +1954,11 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	struct ae_init_out result;
 	cmr_u32 num = 0;
 	cmr_u32 i = 0;
+	cmr_u32 dflash_num = 0;
 
 	memset((void *)&result, 0, sizeof(result));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
 
-#if 0
 	/*get dual flash tuning parameters*/
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_DUAL_FLASH, NULL, &output);
@@ -1975,13 +1975,12 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; ++i) {
 		if (NULL != param_data->data_ptr) {
-			ae_input.flash_tuning[num].param = param_data->data_ptr;
-			ae_input.flash_tuning[num].size = param_data->data_size;
-			++num;
+			ae_input.flash_tuning[dflash_num].param = param_data->data_ptr;
+			ae_input.flash_tuning[dflash_num].size = param_data->data_size;
+			++dflash_num;
 		}
 		++param_data;
 	}
-#endif
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
@@ -2006,6 +2005,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		++param_data;
 	}
 	ae_input.param_num = num;
+	ae_input.dflash_num = dflash_num;
 	ae_input.resolution_info.frame_size.w = cxt->commn_cxt.src.w;
 	ae_input.resolution_info.frame_size.h = cxt->commn_cxt.src.h;
 	ae_input.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[1].frame_line;
