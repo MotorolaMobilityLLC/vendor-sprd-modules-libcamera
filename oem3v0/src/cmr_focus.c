@@ -139,6 +139,10 @@ cmr_int cmr_focus_init(struct af_init_param *parm_ptr, cmr_u32 camera_id,
         goto af_init_end;
     }
     cmr_bzero(af_cxt, sizeof(*af_cxt));
+
+    // 0 is use for af mode, so init value set 0xff
+    af_cxt->af_mode = 0xff;
+
     pthread_mutex_init(&af_cxt->af_isp_caf_mutex, NULL);
     pthread_mutex_init(&af_cxt->set_af_cancel_mutex, NULL);
     sem_init(&af_cxt->isp_af_sem, 0, 0);
