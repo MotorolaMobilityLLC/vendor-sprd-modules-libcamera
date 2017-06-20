@@ -3004,7 +3004,8 @@ static cmr_int ispalg_update_alsc_param(cmr_handle isp_alg_handle)
 }
 
 
-cmr_u16* get_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u32* gain_width, cmr_u32* gain_height, cmr_u32* gain_pattern)
+cmr_u16* get_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u32* gain_width, cmr_u32* gain_height,
+								cmr_u32* gain_pattern,cmr_u32* tab_address_mean)
 {
     cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -3020,6 +3021,20 @@ cmr_u16* get_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u32* gain_width, cm
 
 	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
 	cmr_u16* lsc_result_address = (cmr_u16 *) lsc_info->data_ptr;
+
+
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	cmr_u16 *lsc_tab_address[9];
+	for (int i = 0; i < 9; i++) {
+		lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+	}
+	//get the mean of 5 tab address[0]
+	float temp_sum=0;
+	for(int i=0;i<5;i++)
+    {
+        temp_sum = temp_sum + lsc_tab_address[i][0];
+    }
+    *tab_address_mean= (cmr_u32)(temp_sum/5);
 
 	*gain_width = lsc_info->gain_w;
 	*gain_height = lsc_info->gain_h;
@@ -3052,8 +3067,10 @@ cmr_u16* get_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u32* gain_width, cm
 		lsc_reslut_table[i]=lsc_result_address[i];
 
 	// log
-	ISP_LOGV("gain_width=%d, gain_height=%d", *gain_width, *gain_height);
-	ISP_LOGV("gain_pattern=%d", *gain_pattern);
+	ISP_LOGI("gain_width=%d, gain_height=%d", *gain_width, *gain_height);
+	ISP_LOGI("gain_pattern=%d", *gain_pattern);
+
+
 
 	return lsc_reslut_table;
 }
@@ -3091,7 +3108,7 @@ static void scale_bilinear_short(cmr_u16* src_buf, cmr_s32 src_width, cmr_s32 sr
 }
 
 cmr_int update_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u16* lsc_reslut_table, cmr_u32 gain_width, cmr_u32 gain_height,
-								cmr_u32 gain_pattern)
+								cmr_u32 gain_pattern,cmr_u32 tab_address_mean)
 {
     cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -3107,6 +3124,32 @@ cmr_int update_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u16* lsc_reslut_t
 
 	struct isp_lsc_info *lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	cmr_u16 * lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
+
+
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	//cmr_u16 * lsc_tab_pram_ptr = (cmr_u16 *)(cxt->lsc_cxt.lsc_tab_address);
+	cmr_u16 * lsc_tab_address[9];
+	for (int i = 0; i < 9; i++) {
+		lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+	}
+	float temp_sum_new=0;
+	cmr_u32 tab_address_mean_new=0;
+	for(int i=0;i<5;i++)
+    {
+        temp_sum_new = temp_sum_new + lsc_tab_address[i][0];
+    }
+    tab_address_mean_new= (cmr_u32)(temp_sum_new/5);
+
+	float tabratio=0.0;
+	if(tab_address_mean ==0)
+		tabratio=1;
+	else
+		tabratio=(float)tab_address_mean_new/(float)tab_address_mean;
+
+	ISP_LOGI(" tab_address_mean =%d\n",tab_address_mean);
+	ISP_LOGI(" tab_address_mean_new =%d\n",tab_address_mean_new);
+	ISP_LOGI(" tabratio =%.4f\n",tabratio);
+
 
 	cmr_u32 new_gain_width = lsc_info_new->gain_w;
 	cmr_u32 new_gain_height = lsc_info_new->gain_h;
@@ -3161,28 +3204,28 @@ cmr_int update_lsc_reslut_table(cmr_handle isp_alg_handle, cmr_u16* lsc_reslut_t
 		{
 			switch (pre_gain_pattern){
 				case LSC_GAIN_PATTERN_GRBG:
-					output_gr[i] = lsc_reslut_table[4*i + 0];
-					output_r [i] = lsc_reslut_table[4*i + 1];
-					output_b [i] = lsc_reslut_table[4*i + 2];
-					output_gb[i] = lsc_reslut_table[4*i + 3];
+					output_gr[i] = lsc_reslut_table[4*i + 0]*tabratio;
+					output_r [i] = lsc_reslut_table[4*i + 1]*tabratio;
+					output_b [i] = lsc_reslut_table[4*i + 2]*tabratio;
+					output_gb[i] = lsc_reslut_table[4*i + 3]*tabratio;
 					break;
 				case LSC_GAIN_PATTERN_RGGB:
-					output_r [i] = lsc_reslut_table[4*i + 0];
-					output_gr[i] = lsc_reslut_table[4*i + 1];
-					output_gb[i] = lsc_reslut_table[4*i + 2];
-					output_b [i] = lsc_reslut_table[4*i + 3];
+					output_r [i] = lsc_reslut_table[4*i + 0]*tabratio;
+					output_gr[i] = lsc_reslut_table[4*i + 1]*tabratio;
+					output_gb[i] = lsc_reslut_table[4*i + 2]*tabratio;
+					output_b [i] = lsc_reslut_table[4*i + 3]*tabratio;
 					break;
 				case LSC_GAIN_PATTERN_BGGR:
-					output_b [i] = lsc_reslut_table[4*i + 0];
-					output_gb[i] = lsc_reslut_table[4*i + 1];
-					output_gr[i] = lsc_reslut_table[4*i + 2];
-					output_r [i] = lsc_reslut_table[4*i + 3];
+					output_b [i] = lsc_reslut_table[4*i + 0]*tabratio;
+					output_gb[i] = lsc_reslut_table[4*i + 1]*tabratio;
+					output_gr[i] = lsc_reslut_table[4*i + 2]*tabratio;
+					output_r [i] = lsc_reslut_table[4*i + 3]*tabratio;
 					break;
 				case LSC_GAIN_PATTERN_GBRG:
-					output_gb[i] = lsc_reslut_table[4*i + 0];
-					output_b [i] = lsc_reslut_table[4*i + 1];
-					output_r [i] = lsc_reslut_table[4*i + 2];
-					output_gr[i] = lsc_reslut_table[4*i + 3];
+					output_gb[i] = lsc_reslut_table[4*i + 0]*tabratio;
+					output_b [i] = lsc_reslut_table[4*i + 1]*tabratio;
+					output_r [i] = lsc_reslut_table[4*i + 2]*tabratio;
+					output_gr[i] = lsc_reslut_table[4*i + 3]*tabratio;
 					break;
 				default:
 					break;
@@ -3281,6 +3324,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cmr_u32 gain_width = 0;
 	cmr_u32 gain_height = 0;
 	cmr_u32 gain_pattern = 0;
+	cmr_u32 tab_address_mean = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -3288,7 +3332,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 
 	// get lsc reslut tab
-	lsc_reslut_table = get_lsc_reslut_table(cxt, &gain_width, &gain_height, &gain_pattern);
+	lsc_reslut_table = get_lsc_reslut_table(cxt, &gain_width, &gain_height, &gain_pattern,&tab_address_mean);
 
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -3395,7 +3439,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 
 	// update lsc reslut
-	ret = update_lsc_reslut_table(cxt, lsc_reslut_table, gain_width, gain_height, gain_pattern);
+	ret = update_lsc_reslut_table(cxt, lsc_reslut_table, gain_width, gain_height, gain_pattern,tab_address_mean);
 	if ( lsc_reslut_table != NULL)
     {
         free(lsc_reslut_table);
