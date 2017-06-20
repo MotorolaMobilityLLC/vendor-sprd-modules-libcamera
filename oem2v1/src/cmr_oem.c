@@ -1761,7 +1761,7 @@ void camera_snapshot_cb(cmr_handle oem_handle, enum snapshot_cb_type cb,
             camera_snapshot_channel_handle(oem_handle, param);
         }
 
-        if (cxt->lls_shot_mode || cxt->is_vendor_hdr || cxt->is_pipviv_mode) {
+        if (cxt->lls_shot_mode || cxt->is_vendor_hdr) {
             if ((SNAPSHOT_FUNC_TAKE_PICTURE == func) &&
                 (SNAPSHOT_EVT_CB_SNAPSHOT_JPEG_DONE == cb) && param) {
                 struct camera_frame_type *frame_type =
