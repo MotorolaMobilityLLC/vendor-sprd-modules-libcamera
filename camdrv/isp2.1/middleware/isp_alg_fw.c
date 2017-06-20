@@ -3748,6 +3748,12 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
 
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do isp uncfg"));
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_STOP, NULL, NULL);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_stop"));
+
 	otp_ctrl_deinit(cxt->handle_otp);
 
 	if (cxt->ae_cxt.log_alc) {
