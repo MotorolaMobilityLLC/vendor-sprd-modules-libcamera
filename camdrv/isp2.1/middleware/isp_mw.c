@@ -44,7 +44,7 @@ void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
 	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
 
-	ISP_LOGV("SOF:isp_irq_proc_evt_cb");
+	ISP_LOGV("E");
 	isp_dev_irq_info_proc(mw_cxt->dev_access_handle, data);
 }
 
