@@ -201,7 +201,7 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 
 	if (filter_mask & ENHANCED_BIT) {
 		for (i = 0; i < roi_num; ++i) {
-			//ISP_LOGV("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
+			//ISP_LOGI("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
 			*p++ = af->af_fv_val.af_fv0[i];
 		}
 	}
@@ -1700,7 +1700,7 @@ static cmr_u8 af_wait_caf_finish(af_ctrl_t * af)
 		rtn = sem_timedwait(&af->af_wait_caf, &ts);
 		if (rtn) {
 			af->takePicture_timeout = 1;
-			ISP_LOGV("af wait caf timeout");
+			ISP_LOGI("af wait caf timeout");
 		} else {
 			af->takePicture_timeout = 2;
 			ISP_LOGV("af wait caf finished");
@@ -1719,7 +1719,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 
 	property_get("af_mode", AF_MODE, "none");
 	if (0 != strcmp(AF_MODE, "none")) {
-		ISP_LOGV("AF_MODE %s is not null, af test mode", AF_MODE);
+		ISP_LOGI("AF_MODE %s is not null, af test mode", AF_MODE);
 		get_vcm_registor_pos(af);	// get final vcm pos when in test mode
 		return rtn;
 	}
@@ -1850,19 +1850,25 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct isp_video_start *in_ptr = (struct isp_video_start *)param0;
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
+	enum aft_mode mode;
 
 	af->isp_info.width = in_ptr->size.w;
 	af->isp_info.height = in_ptr->size.h;
-	ISP_LOGI("video start af state = %s, width = %d, height = %d", STATE_STRING(af->state), in_ptr->size.w, in_ptr->size.h);
+	ISP_LOGI("video start image width = %d, height = %d", in_ptr->size.w, in_ptr->size.h);
+	ae_calc_win_size(af, in_ptr);
+
 	property_get("af_mode", AF_MODE, "none");
-	if (0 == strcmp(AF_MODE, "none")) {
-		af->state = af->pre_state = STATE_CAF;
-		af->focus_state = AF_IDLE;
-		af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
-		calc_roi(af, NULL, af->algo_mode);
-		do_start_af(af);
-		ae_calc_win_size(af, in_ptr);
+	if (0 != strcmp(AF_MODE, "none")) {
+		ISP_LOGI("AF_MODE %s is not null, af test mode", AF_MODE);
+		return AFV1_SUCCESS;
 	}
+
+	calc_roi(af, NULL, af->algo_mode);
+	do_start_af(af);
+	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+		trigger_start(af);	// for hdr capture no af mode update at whole procedure
+	}
+
 	return AFV1_SUCCESS;
 }
 
@@ -2382,6 +2388,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->trigger_source_type = 0;
 	af->force_trigger = AFV1_TRUE;	// force do af once after af init done.
 
+	af->pre_state = af->state = STATE_CAF;
+	af->focus_state = AF_IDLE;
+
 	af->ae_lock_num = 1;
 	af->awb_lock_num = 0;
 	af->lsc_lock_num = 0;
@@ -2517,7 +2526,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 
 	case AF_DATA_IMG_BLK:
-		if (AF_MODE_CONTINUE == af->request_mode || AF_MODE_VIDEO == af->request_mode) {
+		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
 			caf_monitor_process(af);
 		}
 		break;
