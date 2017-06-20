@@ -3903,7 +3903,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 			goto exit;
 		}
 	}
-	ISP_LOGI("pre_cnt=%d main_flash_status=%d", cxt_ptr->pre_cnt, cxt_ptr->main_flash_status);
+	ISP_LOGV("pre_cnt=%d main_flash_status=%d", cxt_ptr->pre_cnt, cxt_ptr->main_flash_status);
 	if (cxt_ptr->main_flash_status == 0) {
 		cxt_ptr->pre_cnt = 0;
 	}
@@ -5393,12 +5393,13 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 		cxt_ptr->is_processed = 1;
 	}
 
-	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, camera_id:%d",
+	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, sof_index %d camera_id:%d",
 		out_data_ptr->rpt_3a_update.ae_update.curmean,
 		out_data_ptr->rpt_3a_update.ae_update.bv_val,
 		out_data_ptr->rpt_3a_update.ae_update.exposure_line,
 		out_data_ptr->rpt_3a_update.ae_update.sensor_ad_gain,
 		out_data_ptr->rpt_3a_update.ae_update.ae_LibStates,
+		out_data_ptr->rpt_3a_update.ae_update.sys_sof_index,
 		cxt_ptr->camera_id);
 
 	aealtek_print_lib_log(cxt_ptr, &cxt_ptr->lib_data.output_data);

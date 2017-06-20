@@ -289,7 +289,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	else if (SEQ_WORK_PREVIEW == in_est_ptr->work_mode)
 		skip_num = cxt_ptr->init_in_param.preview_skip_num;
 
-	skip_offset_num = (skip_num > cxt_ptr->max_valid_num)?0:(cxt_ptr->max_valid_num - skip_num);
+	skip_offset_num = (skip_num > cxt_ptr->max_valid_num)?0:(cxt_ptr->max_valid_num - skip_num - 1);
 	exp_valid_num = cxt_ptr->init_in_param.exp_valid_num;
 	gain_valid_num = cxt_ptr->init_in_param.gain_valid_num;
 	max_valid_num = cxt_ptr->max_valid_num;

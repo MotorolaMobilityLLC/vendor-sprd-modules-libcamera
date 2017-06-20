@@ -448,13 +448,13 @@ static SENSOR_TRIM_T s_s5k3p8sm_Resolution_Trim_Tab[VENDOR_NUM] = {
         .trim_start_x = 0,.trim_start_y = 0,
         .trim_width = 2320,.trim_height = 1744,
         .line_time = 9140,.bps_per_lane = 1320,
-        .frame_line = 3643,
+        .frame_line = 3693,
         .scaler_trim = {.x = 0, .y = 0, .w = 2320, .h = 1744}},
        {
         .trim_start_x = 0, .trim_start_y = 0,
         .trim_width = 4640,   .trim_height = 3488,
         .line_time = 9140, .bps_per_lane = 2784,
-        .frame_line = 3643,
+        .frame_line = 3693,
         .scaler_trim = {.x = 0, .y = 0, .w = 4640, .h = 3488}},
       }}
 

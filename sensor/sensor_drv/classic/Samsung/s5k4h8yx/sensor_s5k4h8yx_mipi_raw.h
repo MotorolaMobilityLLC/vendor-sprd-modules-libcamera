@@ -428,11 +428,11 @@ static SENSOR_TRIM_T s_s5k4h8yx_resolution_trim_tab[VENDOR_NUM] = {
         .scaler_trim = {.x = 0, .y = 0, .w = 3264, .h = 2448}},
 #else
        {.trim_start_x = 0,.trim_start_y = 0,.trim_width = 1632,.trim_height = 1224,
-        .line_time = 13371,.bps_per_lane = 700, .frame_line = 2560,
+        .line_time = 13371,.bps_per_lane = 700, .frame_line = 2580,
         .scaler_trim = {.x = 0, .y = 0, .w = 1632, .h = 1224}},
 
        {.trim_start_x = 0,.trim_start_y = 0,.trim_width = 3264,.trim_height = 2448,
-        .line_time = 13371,.bps_per_lane = 700, .frame_line = 2560,
+        .line_time = 13371,.bps_per_lane = 700, .frame_line = 2580,
         .scaler_trim = {.x = 0, .y = 0, .w = 3264, .h = 2448}},
 #endif
       }}
