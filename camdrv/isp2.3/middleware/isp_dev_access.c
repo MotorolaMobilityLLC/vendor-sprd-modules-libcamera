@@ -255,11 +255,9 @@ void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, 
 
 void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 {
-	struct sprd_img_statis_info *irq_info;
+	struct sprd_img_statis_info *irq_info = (struct sprd_img_statis_info *)param_ptr;
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	irq_info = (struct sprd_img_statis_info *)param_ptr;
 
 	statis_info = malloc(sizeof(*statis_info));
 
@@ -301,27 +299,19 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 {
-	struct sprd_irq_info *irq_info;
-	struct isp_statis_info *statis_info = NULL;
+	struct sprd_irq_info *irq_info = (struct sprd_irq_info *)param_ptr;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	statis_info = malloc(sizeof(*statis_info));
-
-	irq_info = (struct sprd_irq_info *)param_ptr;
-
-	statis_info->irq_property = irq_info->irq_property;
 
 	if (irq_info->irq_property == IRQ_DCAM_SOF) {
 		if (cxt->isp_event_cb) {
-			(cxt->isp_event_cb) (ISP_CTRL_EVT_SOF, statis_info, (void *)cxt->evt_alg_handle);
+			(cxt->isp_event_cb) (ISP_CTRL_EVT_SOF, NULL, (void *)cxt->evt_alg_handle);
 		}
 	} else if (irq_info->irq_property == IRQ_RAW_CAP_DONE) {
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb) (ISP_CTRL_EVT_TX, NULL, (void *)cxt->evt_alg_handle);
 		}
 	} else {
-		free((void *)statis_info);
-		statis_info = NULL;
+		ISP_LOGW("there is no irq_property");
 	}
 }
 
@@ -546,7 +536,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_SET_RGB_GAIN:
 		ret = ispdev_access_ae_set_rgb_gain(cxt, in);
 		break;
-	case ISP_DEV_GET_AE_SYSTEM_TIME:
+	case ISP_DEV_GET_SYSTEM_TIME:
 		ret = ispdev_access_get_timestamp(cxt, out);
 		break;
 	case ISP_DEV_RESET:

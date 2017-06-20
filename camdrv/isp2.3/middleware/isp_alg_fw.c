@@ -406,7 +406,7 @@ static cmr_int ispalg_get_k_timestamp(cmr_handle isp_alg_handle, cmr_u32 * sec, 
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_time time;
 
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AE_SYSTEM_TIME, NULL, &time);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_SYSTEM_TIME, NULL, &time);
 	*sec = time.sec;
 	*usec = time.usec;
 	return ret;
@@ -504,7 +504,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = cxt->ioctrl_ptr->get_otp(cxt->ioctrl_ptr->caller_handler, (uint16_t *) param0, (uint16_t *) param1);
 		}
 		break;
-	case ISP_AF_SET_MOTOR_BESTMODE://ISP_AF_SET_MOTOR_BESTMODE
+	case ISP_AF_SET_MOTOR_BESTMODE:
 		if (cxt->ioctrl_ptr->set_motor_bestmode) {
 			ret = cxt->ioctrl_ptr->set_motor_bestmode(cxt->ioctrl_ptr->caller_handler);
 		}
@@ -659,6 +659,7 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
 	switch (type) {
 	case ISP_AFL_SET_CFG_PARAM:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, param0, param1);
@@ -846,7 +847,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data)
+static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1618,7 +1619,7 @@ static cmr_u32 ispalg_binning_data_cvt(cmr_u32 bayermode, cmr_u32 width, cmr_u32
 	return ret;
 }
 
-static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *data)
+static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1835,7 +1836,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_evt_process_cb((cmr_handle) cxt);
 		break;
 	case ISP_CTRL_EVT_AE:
-		ret = ispalg_aem_stat_data_parser((cmr_handle) cxt, message->data);
+		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_SOF:
 		if (cxt->gamma_sof_cnt_eb) {
@@ -1859,7 +1860,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		}
 		break;
 	case ISP_CTRL_EVT_BINNING:
-		ret = ispalg_binning_stat_data_parser((cmr_handle) cxt, message->data);
+		ret = ispalg_binning_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_PDAF:
 		ret = ispalg_pdaf_process((cmr_handle) cxt, message->sub_msg_type, message->data);
@@ -3361,6 +3362,11 @@ cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd 
 cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = NULL;
+	struct isp_alg_sw_init_in isp_alg_input;
+	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
+	cmr_u32 *binning_info = NULL;
+	cmr_u32 max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
 
 	if (!input_ptr || !isp_alg_handle) {
 		ISP_LOGE("fail to check input param, 0x%lx", (cmr_uint) input_ptr);
@@ -3368,13 +3374,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 		goto exit;
 	}
 
-	struct isp_alg_fw_context *cxt = NULL;
-	struct isp_alg_sw_init_in isp_alg_input;
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->init_param->setting_param_ptr;
-	cmr_u32 *binning_info = NULL;
-	cmr_u32 max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
-
 	*isp_alg_handle = NULL;
+	sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->init_param->setting_param_ptr;
 
 	cxt = (struct isp_alg_fw_context *)malloc(sizeof(struct isp_alg_fw_context));
 	if (!cxt) {
