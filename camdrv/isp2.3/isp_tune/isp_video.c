@@ -4042,6 +4042,7 @@ static void *ispserver_thread(void *args)
 			ISP_LOGV("diag thread create success\n");
 			break;
 		}
+		pthread_setname_np(tdiag, "diag");
 
 		pthread_join(tdiag, &res);
 		ISP_LOGV("diag thread exit success %s\n", (char *)res);
@@ -4141,6 +4142,7 @@ void startispserver()
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		ret = pthread_create(&tdiag, &attr, ispserver_thread, NULL);
+		pthread_setname_np(tdiag, "ispserver");
 		pthread_attr_destroy(&attr);
 		if (ret < 0) {
 			ISP_LOGE("fail to creat pthread\n");
