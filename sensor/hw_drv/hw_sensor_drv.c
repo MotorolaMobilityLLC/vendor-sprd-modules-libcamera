@@ -1014,7 +1014,7 @@ cmr_int hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
     SENSOR_REG_TAB_T regTab;
     regTab.reg_count = sensor_reg_tab_info_ptr->reg_count;
     regTab.reg_bits = hw_drv_cxt->i2c_bus_config;
-    regTab.burst_mode = 0;
+    regTab.burst_mode = 7;
     regTab.sensor_reg_tab_ptr = sensor_reg_tab_info_ptr->sensor_reg_tab_ptr;
 
     ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
