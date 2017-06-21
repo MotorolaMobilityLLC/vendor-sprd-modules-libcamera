@@ -3187,7 +3187,7 @@ setting_set_highflash_ae_measure(struct setting_component *cpt,
 }
 
 cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
-    if (cmd > 0 && cmd < SETTING_TYPE_MAX) {
+    if (cmd >= CAMERA_PARAM_ZOOM && cmd < SETTING_TYPE_MAX) {
         CMR_LOGD(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
         setting_list[cmd] = (setting_ioctl_fun_ptr)fun_ptr;
     } else {
@@ -3197,7 +3197,7 @@ cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
 }
 
 setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {
-    if (cmd > 0 && cmd < SETTING_TYPE_MAX) {
+    if (cmd>= CAMERA_PARAM_ZOOM && cmd < SETTING_TYPE_MAX) {
         return setting_list[cmd];
     } else {
         return NULL;
