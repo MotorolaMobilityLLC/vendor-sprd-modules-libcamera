@@ -106,8 +106,8 @@ static struct sensor_version_info s_sp8407_version_info=
 	{
 		{
 			0x34387073,
-			0x00003730,
-			0x00000000,
+			0x78793730,
+			0x006C6175,
 			0x00000000,
 			0x00000000,
 			0x00000000,

@@ -105,7 +105,7 @@ static struct sensor_version_info s_s5k5e8yx_version_info=
 		{
 			0x356B3573,
 			0x78793865,
-			0x00000000,
+			0x006C6175,
 			0x00000000,
 			0x00000000,
 			0x00000000,
