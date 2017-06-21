@@ -4211,6 +4211,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     if (FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl) {
         skip_num = 0;
     }
+    if (prev_cxt->skip_mode != IMG_SKIP_HW)
+		skip_num = 0;
 
     ret = handle->ops.channel_start(handle->oem_handle, channel_bits, skip_num);
     if (ret) {
