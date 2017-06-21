@@ -24,9 +24,6 @@
 #include "ae_tuning_type.h"
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"
-#include "isp_pm_com_type.h"
-#include "isp_otp_calibration.h"
-#include "isp_drv.h"
 #include "cmr_types.h"
 
 #define ISP_PM_BUF_NUM     10
@@ -114,7 +111,6 @@ struct isp_pm_context {
 	struct isp_pm_mode_param *merged_mode_array[ISP_TUNE_MODE_MAX];	/*new preview/capture/video mode param */
 	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];	/*bakup isp tuning parameter, come frome sensor tuning file */
 	cmr_u32 param_source;
-	isp_ctrl_context *isp_ctrl_cxt_handle;
 	cmr_u32 cur_mode_id;
 };
 
@@ -632,7 +628,9 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 	return rtn;
 }
 
-static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_input *input)
+static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle,
+				     struct isp_pm_init_input *input,
+				     struct isp_pm_init_output *output)
 {
 	cmr_u32 rtn = ISP_SUCCESS;
 
@@ -655,7 +653,6 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 	struct isp_block_header *src_header = PNULL;
 	struct isp_pm_block_header *dst_header = PNULL;
 	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
-	isp_ctrl_context *isp_handle;
 	struct isp_nr_param_update_info nr_param_update_info;
 	cmr_u32 isp_blk_nr_type = ISP_BLK_TYPE_MAX;
 	intptr_t nr_set_addr = 0;
@@ -663,20 +660,19 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 	struct nr_set_group_unit *nr_ptr = PNULL;
 	struct isp_pm_nr_simple_header_param *dst_blk_data = NULL;
 	struct isp_pm_nr_header_param *dst_nlm_data = NULL;
+	cmr_u32 multi_nr_flag = 0;
 
-	if (PNULL == cxt_ptr->isp_ctrl_cxt_handle)
-		cxt_ptr->isp_ctrl_cxt_handle = input->isp_ctrl_cxt_handle;
-	isp_handle = cxt_ptr->isp_ctrl_cxt_handle;
 	cxt_ptr->mode_num = input->num;
-
-	isp_handle->sensor_name = input->sensor_name;
 
 	nr_fix_ptr = input->nr_fix_info;
 	if (PNULL != nr_fix_ptr) {
-		isp_handle->multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
+		multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
 	} else {
-		isp_handle->multi_nr_flag = SENSOR_DEFAULT_MODE_FLAG;
+		multi_nr_flag = SENSOR_DEFAULT_MODE_FLAG;
 	}
+
+	if (output)
+		output->multi_nr_flag = multi_nr_flag;
 
 	if (strlen((char *)input->sensor_name)) {
 		nr_param_update_info.sensor_name = (char *)input->sensor_name;
@@ -780,7 +776,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 					memset(dst_nlm_data, 0, sizeof(*dst_nlm_data));
 					dst_nlm_data->level_number = nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
 					dst_nlm_data->default_strength_level = nr_default_level_ptr->nr_level_map[ISP_BLK_NLM_T];
-					dst_nlm_data->nr_mode_setting = isp_handle->multi_nr_flag;
+					dst_nlm_data->nr_mode_setting = multi_nr_flag;
 					dst_nlm_data->multi_nr_map_ptr = (cmr_uint *)&(nr_scene_map_ptr->nr_scene_map[0]);
 					dst_nlm_data->param_ptr = (cmr_uint *)fix_data_ptr->nr.nr_set_group.nlm;
 
@@ -916,7 +912,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 				memset(dst_blk_data, 0, sizeof (*dst_blk_data));
 				dst_blk_data->level_number = nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
 				dst_blk_data->default_strength_level = nr_default_level_ptr->nr_level_map[isp_blk_nr_type];
-				dst_blk_data->nr_mode_setting = isp_handle->multi_nr_flag;
+				dst_blk_data->nr_mode_setting = multi_nr_flag;
 				dst_blk_data->multi_nr_map_ptr = (cmr_uint *)&(nr_scene_map_ptr->nr_scene_map[0]);
 				dst_blk_data->param_ptr = (cmr_uint *)nr_set_addr;
 
@@ -1701,11 +1697,14 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 	return rtn;
 }
 
-static cmr_s32 isp_pm_param_init_and_update(isp_pm_handle_t handle, struct isp_pm_init_input *input, cmr_u32 mod_id)
+static cmr_s32 isp_pm_param_init_and_update(isp_pm_handle_t handle,
+					    struct isp_pm_init_input *input,
+					    struct isp_pm_init_output *output,
+					    cmr_u32 mod_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
-	rtn = isp_pm_mode_list_init(handle, input);
+	rtn = isp_pm_mode_list_init(handle, input, output);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to init mode list");
 		return rtn;
@@ -1799,7 +1798,7 @@ isp_pm_handle_t isp_pm_init(struct isp_pm_init_input * input, void *output)
 		goto init_error_exit;
 	}
 
-	rtn = isp_pm_param_init_and_update(handle, input, ISP_MODE_ID_PRV_0);
+	rtn = isp_pm_param_init_and_update(handle, input, output, ISP_MODE_ID_PRV_0);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to init & update");
 		goto init_error_exit;
@@ -1869,17 +1868,11 @@ cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, 
 
 	switch (cmd) {
 	case ISP_PM_CMD_UPDATE_ALL_PARAMS:
-		{
-			struct isp_pm_update_input *update_input_ptr = (struct isp_pm_update_input *)input;
-			rtn = isp_pm_param_init_and_update(handle, (struct isp_pm_init_input *)update_input_ptr, cxt_ptr->cur_mode_id);
-		}
+		rtn = isp_pm_param_init_and_update(handle, input, NULL, cxt_ptr->cur_mode_id);
 		break;
 
 	case ISP_PM_CMD_UPDATE_LSC_OTP:
-		{
-			struct isp_pm_param_data *param_data = (struct isp_pm_param_data *)input;
-			rtn = isp_pm_lsc_otp_param_update(handle, param_data);
-		}
+		rtn = isp_pm_lsc_otp_param_update(handle, input);
 		break;
 	default:
 		break;

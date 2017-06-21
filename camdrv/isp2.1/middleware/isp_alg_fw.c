@@ -18,7 +18,6 @@
 #include <math.h>
 #include <dlfcn.h>
 #include "isp_alg_fw.h"
-#include "lib_ctrl.h"
 #include "cmr_msg.h"
 #include "isp_dev_access.h"
 #include "isp_param_file_update.h"
@@ -933,11 +932,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	cxt->smart_cxt.isp_smart_eb = 1;
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", time_end - time_start);
-
-	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
-		cxt->ae_cxt.log_alc_ae = ae_result.log_ae.log;
-		cxt->ae_cxt.log_alc_ae_size = ae_result.log_ae.size;
-	}
 
 	awb_calc_info->ae_result = ae_result;
 	awb_calc_info->ae_stat_ptr = &cxt->aem_stats;
@@ -2002,26 +1996,6 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
-	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
-		//AIS needs AWB infomation at Init
-		struct isp_otp_info *otp_info = (struct isp_otp_info *)cxt->handle_otp;
-		if (NULL != otp_info) {
-			struct isp_cali_awb_info *awb_cali_info = otp_info->awb.data_ptr;
-			ae_input.lsc_otp_golden = otp_info->lsc_golden;
-			ae_input.lsc_otp_random = otp_info->lsc_random;
-			ae_input.lsc_otp_width = otp_info->width;
-			ae_input.lsc_otp_height = otp_info->height;
-			if (NULL != awb_cali_info) {
-				ae_input.otp_info.gldn_stat_info.r = awb_cali_info->golden_avg[0];
-				ae_input.otp_info.gldn_stat_info.g = awb_cali_info->golden_avg[1];
-				ae_input.otp_info.gldn_stat_info.b = awb_cali_info->golden_avg[2];
-				ae_input.otp_info.rdm_stat_info.r = awb_cali_info->ramdon_avg[0];
-				ae_input.otp_info.rdm_stat_info.g = awb_cali_info->ramdon_avg[1];
-				ae_input.otp_info.rdm_stat_info.b = awb_cali_info->ramdon_avg[2];
-			}
-		}
-	}
-
 	for (i = 0; i < 20; i++) {
 		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
 		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
@@ -2060,60 +2034,51 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
 		ISP_TRACE_IF_FAIL(ret, ("fail to get ae monitor info"));
 	}
-	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
-		void *ais_handle = NULL;
-		if (cxt->ops.ae_ops.ioctrl) {
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_AIS_HANDLE, NULL, (void *)&ais_handle);
-			ISP_TRACE_IF_FAIL(ret, ("fail to get ae ais handle"));
-		}
-		param.priv_handle = ais_handle;
-		param.awb_enable = 1;
+
+	//if use AIS, AWB this does not  need for awb_ctrl
+	param.camera_id = cxt->camera_id;
+	param.base_gain = 1024;
+	param.awb_enable = 1;
+	param.wb_mode = 0;
+	param.stat_img_format = AWB_CTRL_STAT_IMG_CHN;
+	param.stat_img_size.w = info.win_num.w;
+	param.stat_img_size.h = info.win_num.h;
+	param.stat_win_size.w = info.win_size.w;
+	param.stat_win_size.h = info.win_size.h;
+
+	param.stat_img_size.w = cxt->binning_stats.binning_size.w;
+	param.stat_img_size.h = cxt->binning_stats.binning_size.h;
+
+	param.tuning_param = output.param_data->data_ptr;
+	param.param_size = output.param_data->data_size;
+	param.lib_param = cxt->lib_use_info->awb_lib_info;
+	ISP_LOGV(" param addr is %p size %d", param.tuning_param, param.param_size);
+	struct isp_otp_info *otp_info = (struct isp_otp_info *)cxt->handle_otp;
+	if (NULL != otp_info) {
+		param.lsc_otp_golden = otp_info->lsc_golden;
+		param.lsc_otp_random = otp_info->lsc_random;
+		param.lsc_otp_width = otp_info->width;
+		param.lsc_otp_height = otp_info->height;
+	}
+	if (NULL != cxt->otp_data) {
+		param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
+		param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
+		param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_b;
+		param.otp_info.rdm_stat_info.r = cxt->otp_data->single_otp.iso_awb_info.gain_r;
+		param.otp_info.rdm_stat_info.g = cxt->otp_data->single_otp.iso_awb_info.gain_g;
+		param.otp_info.rdm_stat_info.b = cxt->otp_data->single_otp.iso_awb_info.gain_b;
+		ISP_LOGV("otp golden [%d %d %d]  rdn [%d %d %d ]",
+			 param.otp_info.gldn_stat_info.r, param.otp_info.gldn_stat_info.g,
+			 param.otp_info.gldn_stat_info.b, param.otp_info.rdm_stat_info.r,
+			 param.otp_info.rdm_stat_info.g, param.otp_info.rdm_stat_info.b);
 	} else {
-		//if use AIS, AWB this does not  need for awb_ctrl
-		param.camera_id = cxt->camera_id;
-		param.base_gain = 1024;
-		param.awb_enable = 1;
-		param.wb_mode = 0;
-		param.stat_img_format = AWB_CTRL_STAT_IMG_CHN;
-		param.stat_img_size.w = info.win_num.w;
-		param.stat_img_size.h = info.win_num.h;
-		param.stat_win_size.w = info.win_size.w;
-		param.stat_win_size.h = info.win_size.h;
-
-		param.stat_img_size.w = cxt->binning_stats.binning_size.w;
-		param.stat_img_size.h = cxt->binning_stats.binning_size.h;
-
-		param.tuning_param = output.param_data->data_ptr;
-		param.param_size = output.param_data->data_size;
-		param.lib_param = cxt->lib_use_info->awb_lib_info;
-		ISP_LOGV(" param addr is %p size %d", param.tuning_param, param.param_size);
-		struct isp_otp_info *otp_info = (struct isp_otp_info *)cxt->handle_otp;
-		if (NULL != otp_info) {
-			param.lsc_otp_golden = otp_info->lsc_golden;
-			param.lsc_otp_random = otp_info->lsc_random;
-			param.lsc_otp_width = otp_info->width;
-			param.lsc_otp_height = otp_info->height;
-		}
-		if (NULL != cxt->otp_data) {
-			param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
-			param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
-			param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_b;
-			param.otp_info.rdm_stat_info.r = cxt->otp_data->single_otp.iso_awb_info.gain_r;
-			param.otp_info.rdm_stat_info.g = cxt->otp_data->single_otp.iso_awb_info.gain_g;
-			param.otp_info.rdm_stat_info.b = cxt->otp_data->single_otp.iso_awb_info.gain_b;
-			ISP_LOGV("otp golden [%d %d %d]  rdn [%d %d %d ]",
-				 param.otp_info.gldn_stat_info.r, param.otp_info.gldn_stat_info.g,
-				 param.otp_info.gldn_stat_info.b, param.otp_info.rdm_stat_info.r,
-				 param.otp_info.rdm_stat_info.g, param.otp_info.rdm_stat_info.b);
-		} else {
-			ISP_LOGV("otp is not used");
-			param.otp_info.gldn_stat_info.r = 0;
-			param.otp_info.gldn_stat_info.g = 0;
-			param.otp_info.gldn_stat_info.b = 0;
-			param.otp_info.rdm_stat_info.r = 0;
-			param.otp_info.rdm_stat_info.g = 0;
-			param.otp_info.rdm_stat_info.b = 0;
-		}
+		ISP_LOGV("otp is not used");
+		param.otp_info.gldn_stat_info.r = 0;
+		param.otp_info.gldn_stat_info.g = 0;
+		param.otp_info.gldn_stat_info.b = 0;
+		param.otp_info.rdm_stat_info.r = 0;
+		param.otp_info.rdm_stat_info.g = 0;
+		param.otp_info.rdm_stat_info.b = 0;
 	}
 
 	if (cxt->ops.awb_ops.init)
@@ -2412,17 +2377,18 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->setting_param_ptr;
 	struct sensor_version_info *version_info = PNULL;
 	struct isp_pm_init_input input;
+	struct isp_pm_init_output output;
 	struct isp_otp_init_in otp_input;
-	isp_ctrl_context isp_ctrl_cxt;
 	cmr_u32 i = 0;
 
-	memset(&isp_ctrl_cxt, 0, sizeof(isp_ctrl_cxt));
+	memset(&input, 0, sizeof(input));
+	memset(&output, 0, sizeof(output));
+	memset(&otp_input, 0, sizeof(otp_input));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
 	memcpy((void *)cxt->sn_cxt.isp_init_data, (void *)input_ptr->mode_ptr, ISP_MODE_NUM_MAX * sizeof(struct isp_data_info));
 
 	input.num = MAX_MODE_NUM;
-	input.isp_ctrl_cxt_handle = &isp_ctrl_cxt;
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
 	input.sensor_name = version_info->sensor_ver_name.sensor_name;
 
@@ -2433,8 +2399,8 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
 
-	cxt->handle_pm = isp_pm_init(&input, NULL);
-	cxt->commn_cxt.multi_nr_flag = isp_ctrl_cxt.multi_nr_flag;
+	cxt->handle_pm = isp_pm_init(&input, &output);
+	cxt->commn_cxt.multi_nr_flag = output.multi_nr_flag;
 	cxt->commn_cxt.src.w = input_ptr->size.w;
 	cxt->commn_cxt.src.h = input_ptr->size.h;
 	cxt->camera_id = input_ptr->camera_id;

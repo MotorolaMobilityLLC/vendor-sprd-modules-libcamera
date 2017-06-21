@@ -15,8 +15,8 @@
  */
 #ifndef _ISP_PM_H_
 #define _ISP_PM_H_
-#include "isp_com.h"
 #include "cmr_types.h"
+#include "isp_com.h"
 #include "isp_pm_com_type.h"
 
 #ifdef	 __cplusplus
@@ -74,13 +74,11 @@ struct isp_pm_init_input {
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
-	isp_ctrl_context *isp_ctrl_cxt_handle;
 	cmr_s8 *sensor_name;
 };
 
 struct isp_pm_init_output {
-	void *param_ptr;
-	cmr_u32 param_size;
+	cmr_u32 multi_nr_flag;
 };
 
 struct isp_pm_ioctl_input {

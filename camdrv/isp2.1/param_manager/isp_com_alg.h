@@ -17,7 +17,6 @@
 #define _ISP_COM_ALG_H_
 
 #include "cmr_types.h"
-#include "isp_type.h"
 #include "isp_com.h"
 
 enum isp_interp_type {
