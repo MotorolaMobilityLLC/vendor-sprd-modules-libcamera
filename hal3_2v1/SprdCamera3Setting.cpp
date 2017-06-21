@@ -2984,6 +2984,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdHdrPlusEnabled = 0;
     requestInfo.update(ANDROID_SPRD_HDR_PLUS_ENABLED, &sprdHdrPlusEnabled, 1);
 
+    uint8_t sprdFixedFpsEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
+
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
@@ -3752,6 +3755,13 @@ int SprdCamera3Setting::updateWorkParameters(
         pushAndroidParaTag(ANDROID_SPRD_PIPVIV_ENABLED);
         HAL_LOGD("sprd pipviv enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)){
+       s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
+            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
+       pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
+       HAL_LOGD("sprd fixed fps enabled is %d",
+            s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
     }
 
     HAL_LOGD("cap_intent=%d, perfectskinlevel=%d, eis=%d, flash_mode=%d, "

@@ -1990,7 +1990,10 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
             fps_param.max_fps = 25;
         }
 #endif
-
+        if(mFixedFpsEnabled){
+            fps_param.min_fps = 30;
+            fps_param.max_fps = 30;
+        }
         // when 3D video recording with face beautify, fix frame rate at 25fps.
         if (mSprdCameraLowpower) {
             fps_param.min_fps = fps_param.max_fps = 20;
@@ -6229,6 +6232,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
 
         HAL_LOGD("mSprdBurstModeEnabled=%d", mSprdBurstModeEnabled);
+    } break;
+    case ANDROID_SPRD_FIXED_FPS_ENABLED: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        mFixedFpsEnabled = sprddefInfo.sprd_fixedfps_enabled;
     } break;
     default:
         ret = BAD_VALUE;

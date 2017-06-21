@@ -769,6 +769,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mZslPopFlag;
     uint32_t mVideoSnapshotFrameNum;
     uint32_t mFlashCaptureSkipNum;
+    bool mFixedFpsEnabled;
 
 #ifdef CONFIG_FACE_BEAUTY
     uint32_t mSkinWhitenNotDetectFDNum;

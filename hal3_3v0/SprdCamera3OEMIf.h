@@ -789,6 +789,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSprdBurstModeEnabled;
     bool mUhdRecodingEnabled;
     bool mUhdVideoSnapshotSupport;
+    bool mFixedFpsEnabled;
 #ifdef CONFIG_FACE_BEAUTY
     uint32_t mSkinWhitenNotDetectFDNum;
     bool isNeedBeautify;
