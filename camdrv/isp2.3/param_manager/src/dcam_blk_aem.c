@@ -45,7 +45,7 @@ cmr_s32 _pm_dcam_aem_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr
 
 	switch (cmd) {
 	case ISP_PM_BLK_AEM_MODE:
-		dst_ptr->cur.mode = *(uint32_t *)param_ptr0;
+		dst_ptr->cur.mode = *(cmr_u32 *)param_ptr0;
 		break;
 
 	case ISP_PM_BLK_AEM_STRENGTH_LEVEL:
