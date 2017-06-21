@@ -98,7 +98,7 @@ cmr_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void *param1, voi
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	struct isp_ynr_param *dst_ptr = (struct isp_ynr_param *)dst_ynr_param;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_ynr_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_ynr_param;
 	struct isp_pm_block_header *ynr_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 

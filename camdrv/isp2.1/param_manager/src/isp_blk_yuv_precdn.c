@@ -72,7 +72,7 @@ cmr_s32 _pm_yuv_precdn_init(void *dst_pre_cdn_param, void *src_pre_cdn_param, vo
 	cmr_u32 index = 0x00;
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_pre_cdn_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_pre_cdn_param;
 	struct isp_yuv_pre_cdn_param *dst_ptr = (struct isp_yuv_pre_cdn_param *)dst_pre_cdn_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);

@@ -79,7 +79,7 @@ cmr_s32 _pm_rgb_afm_init(void *dst_rgb_afm, void *src_rgb_afm, void *param1, voi
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_afm_param *dst_ptr = (struct isp_rgb_afm_param *)dst_rgb_afm;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_rgb_afm;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_rgb_afm;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 

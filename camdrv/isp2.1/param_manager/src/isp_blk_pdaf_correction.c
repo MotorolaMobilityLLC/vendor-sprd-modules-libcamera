@@ -88,7 +88,7 @@ cmr_s32 _pm_pdaf_correct_init(void *dst_pdaf_correct_param, void *src_pdaf_corre
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pdaf_correction_param *dst_ptr = (struct isp_pdaf_correction_param *)dst_pdaf_correct_param;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_pdaf_correct_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_pdaf_correct_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 
 	struct isp_size *img_size_ptr = (struct isp_size *)param2;

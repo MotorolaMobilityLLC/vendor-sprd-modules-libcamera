@@ -77,7 +77,7 @@ cmr_s32 _pm_3d_nr_pre_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_3d_nr_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_3d_nr_param;
 	struct isp_3d_nr_pre_param *dst_ptr = (struct isp_3d_nr_pre_param *)dst_3d_nr_param;
 	struct isp_pm_block_header *nr_3d_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
