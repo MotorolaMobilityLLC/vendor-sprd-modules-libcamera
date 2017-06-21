@@ -52,6 +52,17 @@
 #include "SprdMultiCam3Common.h"
 #include <ui/GraphicBufferAllocator.h>
 #include "SprdCamera3MultiBase.h"
+#include "SprdCamera3FaceBeautyBase.h"
+
+#include "./arcsoft/AISFCommonDef.h"
+#include "./arcsoft/AISFReferenceInter.h"
+#include "./arcsoft/arcsoft_dualcam_common_refocus.h"
+#include "./arcsoft/amcomdef.h"
+#include "./arcsoft/ammem.h"
+#include "./arcsoft/asvloffscreen.h"
+#include "./arcsoft/merror.h"
+#include "./arcsoft/arcsoft_dualcam_video_refocus.h"
+#include "./arcsoft/arcsoft_dualcam_image_refocus.h"
 
 namespace sprdcamera {
 #define LOCAL_CAPBUFF_NUM (4)
@@ -65,10 +76,14 @@ namespace sprdcamera {
 #define LIB_BOKEH_PATH "libsprdbokeh.so"
 #define LIB_DEPTH_PATH "libsprddepth.so"
 #define LIB_BOKEH_PREVIEW_PATH "libbokeh_depth.so"
+#define LIB_ARCSOFT_BOKEH_PATH "libarcsoft_dualcam_refocus.so"
 #define BOKEH_REFOCUS_COMMON_PARAM_NUM (12)
+#define ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM (9)
 #define DEPTH_OUTPUT_WIDTH (324)
 #define DEPTH_OUTPUT_HEIGHT (243)
 #define DEPTH_DATA_SIZE (68)
+#define ARCSOFT_DEPTH_DATA_SIZE (561616)
+#define ARCSOFT_CALIB_DATA_SIZE (2048)
 
 #define BOKEH_CIRCLE_SIZE_SCALE (3)
 #define BOKEH_SMOOTH_SIZE_SCALE (8)
@@ -94,6 +109,7 @@ typedef enum {
 
 typedef enum { CAM_TYPE_BOKEH_MAIN = 0, CAM_TYPE_DEPTH } BokehCameraDeviceType;
 typedef enum { PREVIEW_MODE = 0, CAPTURE_MODE } CameraMode;
+typedef enum { SPRD_API_MODE = 0, ARCSOFT_API_MODE } ApiMode;
 
 typedef enum {
     /* Main camera device id*/
@@ -152,7 +168,6 @@ typedef struct {
     int (*sprd_bokeh_ReFocusGen)(void *a_pOutBlurYCC420NV21,
                                  int a_dInBlurStrength, int a_dInPositionX,
                                  int a_dInPositionY);
-    bool mInitState;
 } BokehAPI_t;
 
 typedef struct {
@@ -160,12 +175,51 @@ typedef struct {
     int (*iBokehInit)(void **handle, InitParams *params);
     int (*iBokehDeinit)(void *handle);
     int (*iBokehCreateWeightMap)(void *handle, WeightParams *params);
-    int (*iBokehBlurImage)(void *handle, private_handle_t *Src_YUV,
-                           private_handle_t *Output_YUV);
+    int (*iBokehBlurImage)(void *handle, GraphicBuffer *Src_YUV,
+                           GraphicBuffer *Output_YUV);
     void *mHandle;
 } BokehPreviewAPI_t;
 
-class SprdCamera3RealBokeh : SprdCamera3MultiBase {
+typedef struct {
+    void *handle;
+    ARC_DCVR_API const MPBASE_Version *(*ARC_DCVR_GetVersion)();
+    ARC_DCVR_API
+    MRESULT (*ARC_DCVR_GetDefaultPrevParam)(LPARC_DCVR_PARAM pParam);
+    ARCDCIR_API
+    MRESULT (*ARC_DCIR_GetDefaultCapParam)(LPARC_DCIR_PARAM pParam);
+    ARC_DCVR_API MRESULT (*ARC_DCVR_PrevInit)(MHandle *phHandle);
+    ARCDCIR_API MRESULT (*ARC_DCIR_CapInit)(MHandle *phHandle, MInt32 i32Mode);
+    ARC_DCVR_API MRESULT (*ARC_DCVR_Uninit)(MHandle *phHandle);
+    ARCDCIR_API MRESULT (*ARC_DCIR_Uninit)(MHandle *phHandle);
+    ARCDCIR_API MRESULT (*ARC_DCIR_SetCameraImageInfo)(
+        MHandle hHandle, LPARC_REFOCUSCAMERAIMAGE_PARAM pParam);
+    ARC_DCVR_API MRESULT (*ARC_DCVR_SetCameraImageInfo)(
+        MHandle hHandle, LPARC_REFOCUSCAMERAIMAGE_PARAM pParam);
+    ARC_DCVR_API MRESULT (*ARC_DCVR_SetImageDegree)(MHandle hHandle,
+                                                    MInt32 i32ImgDegree);
+    ARC_DCVR_API MRESULT (*ARC_DCVR_SetCaliData)(MHandle hHandle,
+                                                 LPARC_DC_CALDATA pCaliData);
+    ARCDCIR_API MRESULT (*ARC_DCIR_SetCaliData)(MHandle hHandle,
+                                                LPARC_DC_CALDATA pCaliData);
+    ARCDCIR_API MRESULT (*ARC_DCIR_CalcDisparityData)(
+        MHandle hHandle, LPASVLOFFSCREEN pMainImg, LPASVLOFFSCREEN pAuxImg,
+        LPARC_DCIR_PARAM pDCIRParam);
+    ARCDCIR_API MRESULT (*ARC_DCIR_GetDisparityDataSize)(MHandle hHandle,
+                                                         MInt32 *pi32Size);
+    ARCDCIR_API MRESULT (*ARC_DCIR_GetDisparityData)(MHandle hHandle,
+                                                     MVoid *pDisparityData);
+    ARC_DCVR_API MRESULT (*ARC_DCIR_CapProcess)(
+        MHandle hHandle, MVoid *pDisparityData, MInt32 i32DisparityDataSize,
+        LPASVLOFFSCREEN pMainImg, LPARC_DCIR_REFOCUS_PARAM pRFParam,
+        LPASVLOFFSCREEN pDstImg);
+    ARC_DCVR_API MRESULT (*ARC_DCVR_PrevProcess)(MHandle hHandle,
+                                                 LPASVLOFFSCREEN pMainImg,
+                                                 LPASVLOFFSCREEN pAuxImg,
+                                                 LPASVLOFFSCREEN pDstImg,
+                                                 LPARC_DCVR_PARAM pParam);
+} ArcSoftBokehAPI_t;
+
+class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
     static void getCameraBokeh(SprdCamera3RealBokeh **pCapture);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -220,10 +274,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
     bool mIsCapturing;
     int mjpegSize;
     uint8_t mCameraId;
-    int32_t mPerfectskinlevel;
-    uint32_t mRotation;
+    face_beauty_levels mPerfectskinlevel;
     bool mFlushing;
     bool mIsSupportPBokeh;
+    int mApiVersion;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -247,16 +301,17 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
         virtual bool threadLoop();
         virtual void requestExit();
         void videoErrorCallback(uint32_t frame_number);
-        void saveCaptureBokehParams(buffer_handle_t *mSavedResultBuff,
+        void saveCaptureBokehParams(buffer_handle_t *saved_result_buff,
                                     buffer_handle_t *buffer,
-                                    buffer_handle_t *disparity_bufer);
+                                    buffer_handle_t *depth_bufer);
         int bokehCaptureHandle(buffer_handle_t *output_buf,
                                buffer_handle_t *input_buf1,
-                               buffer_handle_t *disparity_bufer);
-        int depthCaptureHandle(buffer_handle_t *disparity_bufer,
+                               buffer_handle_t *depth_bufer);
+        int depthCaptureHandle(buffer_handle_t *output_bufer,
                                buffer_handle_t *scaled_buffer,
                                buffer_handle_t *input_buf1,
                                buffer_handle_t *input_buf2);
+
         // This queue stores matched buffer as frame_matched_info_t
         List<capture_queue_msg_t_bokeh> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -272,6 +327,12 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
         bool mBokehConfigParamState;
         bokeh_cap_params_t mCapbokehParam;
         void *mCapDepthhandle;
+        MHandle mArcSoftCapHandle;
+        ARC_DCIR_REFOCUS_PARAM mArcSoftCapParam;
+        ARC_DCIR_FACE_PARAM mArcSoftCapFace;
+        MVoid *mArcSoftDepthMap;
+        MInt32 mArcSoftDepthSize;
+        ARC_DCIR_PARAM mArcSoftDcrParam;
 
       private:
         void waitMsgAvailable();
@@ -286,8 +347,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
         virtual void requestExit();
         int bokehPreviewHandle(buffer_handle_t *output_buf,
                                buffer_handle_t *input_buf1,
-                               buffer_handle_t *disparity_bufer);
-        int depthPreviewHandle(buffer_handle_t *disparity_bufer,
+                               buffer_handle_t *depth_bufer);
+        int depthPreviewHandle(buffer_handle_t *output_bufer,
                                buffer_handle_t *scaled_buffer,
                                buffer_handle_t *input_buf1,
                                buffer_handle_t *input_buf2);
@@ -297,6 +358,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
         Condition mMergequeueSignal;
         bokeh_prev_params_t mPreviewbokehParam;
         void *mPrevDepthhandle;
+        MHandle mArcSoftPrevHandle;
+        ARC_DCVR_PARAM mArcSoftPrevParam;
+        bool misInit;
 
       private:
         Mutex mLock;
@@ -326,11 +390,16 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase {
     camera3_stream_t *mSavedCapStreams;
     uint32_t mCapFrameNumber;
     uint32_t mPrevFrameNumber;
+    int mLocalBufferNumber;
     const camera3_callback_ops_t *mCallbackOps;
-    BokehAPI_t *mBokehApi;
+    BokehAPI_t *mBokehCapApi;
     depth_api_t *mDepthApi;
     BokehPreviewAPI_t *mBokehPrevApi;
+    ArcSoftBokehAPI_t *mArcSoftBokehApi;
+    ARC_REFOCUSCAMERAIMAGE_PARAM mArcSoftInfo;
+    ARC_DC_CALDATA mCaliData;
     uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
+    char mArcSoftCalibData[ARCSOFT_CALIB_DATA_SIZE];
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);

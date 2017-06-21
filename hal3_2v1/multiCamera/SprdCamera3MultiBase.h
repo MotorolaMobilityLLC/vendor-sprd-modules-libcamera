@@ -43,6 +43,7 @@
 #include <sys/mman.h>
 #include <sprd_ion.h>
 #include <gralloc_priv.h>
+#include <ui/GraphicBufferAllocator.h>
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 //#include "ts_makeup_api.h"
@@ -89,13 +90,13 @@ class SprdCamera3MultiBase {
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
-	/*
+    /*
 #ifdef CONFIG_FACE_BEAUTY
-    virtual void doFaceMakeup(struct camera_frame_type *frame,
-                              int perfect_level, int *face_info);
+virtual void doFaceMakeup(struct camera_frame_type *frame,
+                          int perfect_level, int *face_info);
 
-    virtual void convert_face_info(int *ptr_cam_face_inf, int width,
-                                   int height);
+virtual void convert_face_info(int *ptr_cam_face_inf, int width,
+                               int height);
 #endif
 */
     bool ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
@@ -114,6 +115,7 @@ class SprdCamera3MultiBase {
     bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
                        uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                        uint32_t a_udFileSize);
+    int flush_ion_buffer(int buffer_fd, void *v_addr, size_t size);
 
   private:
     Mutex mBufferListLock;

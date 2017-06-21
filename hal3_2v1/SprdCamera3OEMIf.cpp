@@ -961,10 +961,11 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
         getMultiCameraMode() == MODE_BOKEH) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                  mSprdYuvCallBack);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 (int)MODE_BLUR);
         HAL_LOGD("reprocess mode, force enable reprocess");
     }
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
-             mMultiCameraMode);
+
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 
     if (CMR_CAMERA_SUCCESS !=
@@ -3984,8 +3985,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                                           angle, pose);
                     }
                 }
-                init_fb_handle(&face_beauty,1,2);
-                construct_fb_image(&face_beauty, frame->width, frame->height, (unsigned char *)(frame->y_vir_addr), (unsigned char *)(frame->y_vir_addr + frame->width * frame->height), 0);
+                init_fb_handle(&face_beauty, 1, 2);
+                construct_fb_image(
+                    &face_beauty, frame->width, frame->height,
+                    (unsigned char *)(frame->y_vir_addr),
+                    (unsigned char *)(frame->y_vir_addr +
+                                      frame->width * frame->height),
+                    0);
                 construct_fb_level(&face_beauty, beautyLevels);
                 do_face_beauty(&face_beauty, faceInfo.face_num);
             }

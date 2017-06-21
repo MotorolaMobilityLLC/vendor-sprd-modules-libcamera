@@ -170,6 +170,9 @@ endif
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp
+else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)

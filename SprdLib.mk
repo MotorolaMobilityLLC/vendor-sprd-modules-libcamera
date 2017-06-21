@@ -61,6 +61,9 @@ LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth
 else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libsprddepth
 endif
+ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
+LOCAL_SHARED_LIBRARIES += libarcsoft_dualcam_refocus
+endif
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
 else ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)
