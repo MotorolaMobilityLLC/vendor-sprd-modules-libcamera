@@ -1297,17 +1297,9 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		ISP_TRACE_IF_FAIL(ret, ("AF_CMD_SET_AWB_INFO fail "));
 	}
 
-	message.data = malloc(sizeof(struct af_img_blk_info));
-	if (!message.data) {
-		ISP_LOGE("fail to malloc msg");
-		ret = ISP_ALLOC_ERROR;
-		goto exit;
-	}
-	memcpy(message.data, &ae_info.img_blk_info, sizeof(struct af_img_blk_info));
 	message.msg_type = ISP_CTRL_EVT_AF;
 	message.sub_msg_type = AF_DATA_IMG_BLK;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
-	message.alloc_flag = 1;
 	ret = cmr_thread_msg_send(cxt->thr_afhandle, &message);
 	if (ret) {
 		ISP_LOGE("fail to send evt af, ret %ld", ret);
@@ -1486,33 +1478,17 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			}
 			break;
 		}
-	case AF_DATA_IMG_BLK:{
-			struct af_img_blk_info img_blk_info;
-			memset((void *)&img_blk_info, 0, sizeof(img_blk_info));
-			if (NULL != in_ptr) {
-				memcpy((void *)&img_blk_info, in_ptr, sizeof(struct af_img_blk_info));
-			} else {
-				img_blk_info.block_w = 32;
-				img_blk_info.block_h = 32;
-				img_blk_info.chn_num = 3;
-				img_blk_info.pix_per_blk = 1;
-				img_blk_info.data = NULL;
-			}
-			calc_param.data_type = AF_DATA_IMG_BLK;
-			calc_param.data = (void *)(&img_blk_info);
-			if (cxt->ops.af_ops.process)
-				ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
-			break;
-		}
-	case AF_DATA_AE:{
-			break;
-		}
-	case AF_DATA_FD:{
-			break;
-		}
-	default:{
-			break;
-		}
+	case AF_DATA_IMG_BLK:
+		calc_param.data_type = AF_DATA_IMG_BLK;
+		if (cxt->ops.af_ops.process)
+			ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
+		break;
+	case AF_DATA_AE:
+		break;
+	case AF_DATA_FD:
+		break;
+	default:
+		break;
 	}
 
 	ISP_LOGV("done %ld", ret);
