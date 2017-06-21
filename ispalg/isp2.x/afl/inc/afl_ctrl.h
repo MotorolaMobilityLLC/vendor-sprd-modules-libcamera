@@ -34,7 +34,7 @@ struct afl_proc_in {
 	cmr_u32 cur_flicker;
 	cmr_u32 cur_exp_flag;
 	cmr_s32 ae_exp_flag;
-	cmr_u32 vir_addr;
+	cmr_uint vir_addr;
 	struct isp_awb_statistic_info *ae_stat_ptr;
 };
 

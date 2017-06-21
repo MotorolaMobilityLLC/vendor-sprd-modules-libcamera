@@ -167,7 +167,7 @@ struct sensor_raw_ioctrl {
                          cmr_u8 *cmd, cmr_u16 cmd_length);
     cmr_int (*read_i2c)(cmr_handle caller_handler, cmr_u16 slave_addr,
                         cmr_u8 *cmd, cmr_u16 cmd_length);
-    uint32_t (*ex_set_exposure)(cmr_handle caller_handler, uint32_t param);
+    uint32_t (*ex_set_exposure)(cmr_handle caller_handler, cmr_uint param);
     cmr_int (*read_aec_info)(cmr_handle caller_handler, void *param);
     cmr_int (*write_aec_info)(cmr_handle caller_handler, void *param);
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
