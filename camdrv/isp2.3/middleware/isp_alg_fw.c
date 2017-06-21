@@ -3293,17 +3293,17 @@ exit:
 	return ret;
 }
 
-cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, cmr_s32(*call_back) ())
+cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_ctrl_cmd cmd = io_cmd & 0x7fffffff;
-	io_fun io_ctrl = NULL;
+	isp_io_fun io_ctrl = NULL;
 
 	cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
 	io_ctrl = isp_ioctl_get_fun(cmd);
 	if (NULL != io_ctrl) {
-		ret = io_ctrl(cxt, param_ptr, call_back);
+		ret = io_ctrl(cxt, param_ptr);
 	} else {
 		ISP_LOGV("io_ctrl fun is null, cmd %d", cmd);
 	}

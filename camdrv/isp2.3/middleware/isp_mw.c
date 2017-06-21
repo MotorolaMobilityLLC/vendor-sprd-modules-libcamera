@@ -183,7 +183,7 @@ cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 		return ISP_PARAM_NULL;
 	}
 
-	ret = isp_alg_fw_ioctl(cxt->alg_fw_handle, cmd, param_ptr, NULL);
+	ret = isp_alg_fw_ioctl(cxt->alg_fw_handle, cmd, param_ptr);
 
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_ioctl"));
 
