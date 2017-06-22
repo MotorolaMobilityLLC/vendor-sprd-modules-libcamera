@@ -2166,11 +2166,11 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 mPreviewWeightParams.valid_roi = (face_num - k) * 2;
 
                 if (mBlurBody == true) {
-                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[1] +
-                                                  mPreviewWeightParams.x1[1]) /
+                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
+                                                  mPreviewWeightParams.x1[0]) /
                                                  2;
-                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[1] +
-                                                  mPreviewWeightParams.y1[1]) /
+                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[0] +
+                                                  mPreviewWeightParams.y1[0]) /
                                                  2;
                 } else {
                     mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
@@ -2196,11 +2196,11 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 }
                 if (mBlurBody == true) {
                     HAL_LOGD("in body");
-                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[1] +
-                                                  mPreviewWeightParams.x1[1]) /
+                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
+                                                  mPreviewWeightParams.x1[0]) /
                                                  2;
-                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[1] +
-                                                  mPreviewWeightParams.y1[1]) /
+                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[0] +
+                                                  mPreviewWeightParams.y1[0]) /
                                                  2;
                 } else {
                     HAL_LOGD("out body");
