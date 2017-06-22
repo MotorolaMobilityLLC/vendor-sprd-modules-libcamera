@@ -691,7 +691,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
-	isp_pm_handle_t pm_handle = cxt->handle_pm;
+	cmr_handle pm_handle = cxt->handle_pm;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -2233,7 +2233,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	cmr_s32 i = 0;
 	lsc_adv_handle_t lsc_adv_handle = NULL;
 	struct lsc_adv_init_param lsc_param;
-	isp_pm_handle_t pm_handle = cxt->handle_pm;
+	cmr_handle pm_handle = cxt->handle_pm;
 	uint16_t *lsc_table = NULL;
 
 	struct isp_pm_ioctl_input io_pm_input;

@@ -137,7 +137,7 @@ struct isp_pm_write_param {
 	cmr_u32 size;
 };
 
-static cmr_s32 isp_pm_handle_check(isp_pm_handle_t handle)
+static cmr_s32 isp_pm_handle_check(cmr_handle handle)
 {
 	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
 
@@ -154,7 +154,7 @@ static cmr_s32 isp_pm_handle_check(isp_pm_handle_t handle)
 	return ISP_SUCCESS;
 }
 
-static isp_pm_handle_t isp_pm_context_create(void)
+static cmr_handle isp_pm_context_create(void)
 {
 	struct isp_pm_context *cxt_ptr = PNULL;
 
@@ -170,7 +170,7 @@ static isp_pm_handle_t isp_pm_context_create(void)
 
 	pthread_mutex_init(&cxt_ptr->pm_mutex, NULL);
 
-	return (isp_pm_handle_t) cxt_ptr;
+	return (cmr_handle) cxt_ptr;
 }
 
 static void isp_pm_check_param(cmr_u32 id, cmr_u32 * update_flag)
@@ -204,7 +204,7 @@ static void isp_pm_check_param(cmr_u32 id, cmr_u32 * update_flag)
 	}
 }
 
-static cmr_s32 isp_pm_context_init(isp_pm_handle_t handle)
+static cmr_s32 isp_pm_context_init(cmr_handle handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, blk_num = 0, id = 0, offset = 0;
@@ -267,7 +267,7 @@ static cmr_s32 isp_pm_context_init(isp_pm_handle_t handle)
 	return rtn;
 }
 
-static cmr_s32 isp_pm_context_update(isp_pm_handle_t handle, struct isp_pm_mode_param *org_mode_param)
+static cmr_s32 isp_pm_context_update(cmr_handle handle, struct isp_pm_mode_param *org_mode_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0, blk_num = 0, id = 0, offset = 0;
@@ -333,7 +333,7 @@ static cmr_s32 isp_pm_context_update(isp_pm_handle_t handle, struct isp_pm_mode_
 	return rtn;
 }
 
-static cmr_s32 isp_pm_context_deinit(isp_pm_handle_t handle)
+static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	void *blk_ptr = PNULL;
@@ -480,7 +480,7 @@ static struct isp_context *isp_pm_get_context(struct isp_pm_context *pm_cxt_ptr,
 	return isp_cxt_ptr;
 }
 
-static cmr_s32 isp_pm_active_mode_init(isp_pm_handle_t handle, cmr_u32 mode_id)
+static cmr_s32 isp_pm_active_mode_init(cmr_handle handle, cmr_u32 mode_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
@@ -507,7 +507,7 @@ static cmr_s32 isp_pm_active_mode_init(isp_pm_handle_t handle, cmr_u32 mode_id)
 	return rtn;
 }
 
-static void isp_pm_mode_list_deinit(isp_pm_handle_t handle)
+static void isp_pm_mode_list_deinit(cmr_handle handle)
 {
 	cmr_u32 i = 0;
 	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
@@ -628,7 +628,7 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 	return rtn;
 }
 
-static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle,
+static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				     struct isp_pm_init_input *input,
 				     struct isp_pm_init_output *output)
 {
@@ -1068,7 +1068,7 @@ static cmr_s32 isp_pm_mode_common_to_other(struct isp_pm_mode_param *mode_common
 	return rtn;
 }
 
-static cmr_s32 isp_pm_layout_param_and_init(isp_pm_handle_t handle)
+static cmr_s32 isp_pm_layout_param_and_init(cmr_handle handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, counts = 0, mode_count = 0;
@@ -1235,7 +1235,7 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr, struct 
 	return rtn;
 }
 
-static cmr_s32 isp_pm_set_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
+static cmr_s32 isp_pm_set_mode(cmr_handle handle, cmr_u32 mode_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_context *isp_cxt_ptr = PNULL;
@@ -1275,7 +1275,7 @@ _pm_set_mode_error_exit:
 	return rtn;
 }
 
-static cmr_s32 isp_pm_change_mode(isp_pm_handle_t handle, cmr_u32 mode_id)
+static cmr_s32 isp_pm_change_mode(cmr_handle handle, cmr_u32 mode_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_context *isp_cxt_ptr = PNULL;
@@ -1317,7 +1317,7 @@ _pm_set_mode_error_exit:
 	return rtn;
 }
 
-static cmr_s32 isp_pm_set_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *param_ptr)
+static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *param_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *pm_cxt_ptr = PNULL;
@@ -1450,7 +1450,7 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_mode_param *mode_para
 	return rtn;
 }
 
-static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *in_ptr, void *out_ptr)
+static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 blk_num = 0, id = 0, i = 0, j = 0;
@@ -1697,7 +1697,7 @@ static cmr_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 	return rtn;
 }
 
-static cmr_s32 isp_pm_param_init_and_update(isp_pm_handle_t handle,
+static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 					    struct isp_pm_init_input *input,
 					    struct isp_pm_init_output *output,
 					    cmr_u32 mod_id)
@@ -1731,7 +1731,7 @@ static cmr_s32 isp_pm_param_init_and_update(isp_pm_handle_t handle,
 	return rtn;
 }
 
-static void isp_pm_free(isp_pm_handle_t handle)
+static void isp_pm_free(cmr_handle handle)
 {
 	if (PNULL != handle) {
 		struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
@@ -1743,7 +1743,7 @@ static void isp_pm_free(isp_pm_handle_t handle)
 	}
 }
 
-static cmr_s32 isp_pm_lsc_otp_param_update(isp_pm_handle_t handle, struct isp_pm_param_data *param_data)
+static cmr_s32 isp_pm_lsc_otp_param_update(cmr_handle handle, struct isp_pm_param_data *param_data)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	void *blk_ptr = PNULL;
@@ -1780,10 +1780,10 @@ static cmr_s32 isp_pm_lsc_otp_param_update(isp_pm_handle_t handle, struct isp_pm
 	return rtn;
 }
 
-isp_pm_handle_t isp_pm_init(struct isp_pm_init_input * input, void *output)
+cmr_handle isp_pm_init(struct isp_pm_init_input * input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	isp_pm_handle_t handle = PNULL;
+	cmr_handle handle = PNULL;
 	UNUSED(output);
 
 	if (PNULL == input) {
@@ -1819,7 +1819,7 @@ init_error_exit:
 	return handle;
 }
 
-cmr_s32 isp_pm_ioctl(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output)
+cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *cxt_ptr = handle;
@@ -1852,7 +1852,7 @@ _ioctl_error_exit:
 	return rtn;
 }
 
-cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output)
+cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(output);
@@ -1884,7 +1884,7 @@ isp_pm_update_error_exit:
 	return rtn;
 }
 
-cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output)
+cmr_s32 isp_pm_deinit(cmr_handle handle, void *input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *cxt_ptr = handle;

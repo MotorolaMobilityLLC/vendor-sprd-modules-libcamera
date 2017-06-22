@@ -40,7 +40,7 @@ struct aectrl_cxt {
 	pthread_mutex_t ioctrl_sync_lock;
 };
 
-cmr_s32 _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr)
+cmr_s32 _isp_get_flash_cali_param(cmr_handle pm_handle, struct isp_flash_param **out_param_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data param_data;
