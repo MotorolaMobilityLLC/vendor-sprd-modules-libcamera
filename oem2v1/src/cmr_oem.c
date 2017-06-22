@@ -3458,7 +3458,7 @@ cmr_int camera_isp_deinit_notice(cmr_handle oem_handle) {
 
     ret = cmr_setting_deinit_notice(cxt->setting_cxt.setting_handle);
     ret = cmr_focus_deinit_notice(cxt->focus_cxt.focus_handle);
-
+    ret = cmr_grab_deinit_notice(cxt->grab_cxt.grab_handle);
     CMR_LOGI("done %ld", ret);
     return ret;
 }
@@ -4489,11 +4489,11 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
-    camera_grab_deinit(oem_handle);
     camera_isp_deinit_notice(oem_handle);
     camera_isp_deinit(oem_handle);
     camera_res_deinit(oem_handle);
     camera_sensor_deinit(oem_handle);
+    camera_grab_deinit(oem_handle);
     pthread_mutex_lock(&close_mutex);
     closing--;
     if (closing == 0) {

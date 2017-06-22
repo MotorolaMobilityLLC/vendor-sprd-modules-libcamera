@@ -186,6 +186,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     p_grab->is_prev_trace = 0;
     p_grab->is_cap_trace = 0;
     p_grab->is_rt_refocus = 0;
+    p_grab->isp_cb_enable = 1;
     memset(p_grab->chn_status, 0, sizeof(p_grab->chn_status));
     *grab_handle = (cmr_handle)p_grab;
 
@@ -860,6 +861,21 @@ cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus) {
     return ret;
 }
 
+cmr_int cmr_grab_deinit_notice(cmr_handle grab_handle) {
+    struct cmr_grab *p_grab;
+    cmr_int ret = 0;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    p_grab->isp_cb_enable = 0;
+
+    CMR_LOGD("isp_cb_enable %d", p_grab->isp_cb_enable);
+
+    return ret;
+}
+
 cmr_int cmr_grab_cap_resume(cmr_handle grab_handle, cmr_u32 channel_id,
                             cmr_u32 skip_number, cmr_u32 deci_factor,
                             cmr_s32 frm_num) {
@@ -1258,7 +1274,7 @@ static void *cmr_grab_thread_proc(void *data) {
                          statis_info.vir_addr, statis_info.irq_property);
 
                 pthread_mutex_lock(&p_grab->cb_mutex);
-                if (p_grab->isp_statis_evt_cb) {
+                if (p_grab->isp_statis_evt_cb && p_grab->isp_cb_enable) {
                     (*p_grab->isp_statis_evt_cb)(
                         evt_id, &statis_info, (void *)cxt->isp_cxt.isp_handle);
                 }
@@ -1267,7 +1283,7 @@ static void *cmr_grab_thread_proc(void *data) {
                 irq_info.irq_property = op.parm.frame.irq_property;
 
                 pthread_mutex_lock(&p_grab->cb_mutex);
-                if (p_grab->isp_irq_proc_evt_cb) {
+                if (p_grab->isp_irq_proc_evt_cb && p_grab->isp_cb_enable) {
                     (p_grab->isp_irq_proc_evt_cb)(
                         evt_id, &irq_info, (void *)cxt->isp_cxt.isp_handle);
                 }

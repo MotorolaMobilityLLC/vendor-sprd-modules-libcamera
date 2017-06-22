@@ -78,6 +78,7 @@ struct cmr_grab {
     cmr_s32 fd;
     cmr_evt_cb grab_evt_cb;
     cmr_evt_cb isp_statis_evt_cb;
+    cmr_u32 isp_cb_enable;
     cmr_evt_cb isp_irq_proc_evt_cb;
     sem_t close_sem;
     pthread_mutex_t cb_mutex;
@@ -140,6 +141,8 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
                            struct sprd_flash_cfg_param *cfg);
 cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus);
+cmr_int cmr_grab_deinit_notice(cmr_handle grab_handle);
+
 // for sharkl2-like capture path
 cmr_int cmr_grab_start_capture(cmr_handle grab_handle, cmr_uint capture_status);
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
