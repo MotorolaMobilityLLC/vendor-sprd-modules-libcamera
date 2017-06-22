@@ -385,7 +385,7 @@ typedef struct sensor_otp_data {
 
 
 typedef struct { void *privatedata; } * SENSOR_HW_HANDLE;
-typedef cmr_uint (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle,
+typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle,
                                           cmr_uint param);
 #if 0
 struct hdr_info_t {

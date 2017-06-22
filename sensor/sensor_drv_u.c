@@ -3169,11 +3169,12 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd,void* param)
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
     SENSOR_LOGI("E:cmd:0x%x",cmd);
     module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+    SENSOR_DRV_CHECK_PTR(module);
 
     switch (cmd >> 8)
     {
         case CMD_SNS_OTP_START:
-            if (module && (module->otp_drv_info) && sensor_cxt->otp_drv_handle) {
+            if (module->otp_drv_info && sensor_cxt->otp_drv_handle) {
                 otp_ops = &module->otp_drv_info->otp_ops;
                 if(otp_ops && otp_ops->sensor_otp_ioctl) {
                     ret = otp_ops->sensor_otp_ioctl(sensor_cxt->otp_drv_handle,cmd,param);
@@ -3189,7 +3190,7 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd,void* param)
 
             break;
         case CMD_SNS_AF_START:
-            if (module && module->af_dev_info.af_drv_entry && sensor_cxt->af_drv_handle) {
+            if (module->af_dev_info.af_drv_entry && sensor_cxt->af_drv_handle) {
                 af_ops = &module->af_dev_info.af_drv_entry->af_ops;
                 if(af_ops && af_ops->ioctl) {
                     ret = af_ops->ioctl(sensor_cxt->af_drv_handle,cmd,param);

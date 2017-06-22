@@ -1277,9 +1277,9 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
         return -1;
     }
 
-#if 1
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-    //func_ptr = sns_ops->ext_ops[sns_cmd].ops;
+    func_ptr = sns_ops->ext_ops[sns_cmd].ops;
+
     if (!module->otp_drv_info) {
         ret =
             cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr, &read_flag);
@@ -1299,7 +1299,6 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     if (PNULL != sns_ops->ext_ops[sns_cmd].ops) {
         ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle, arg);
     }
-#endif
     return ret;
 }
 

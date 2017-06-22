@@ -341,7 +341,7 @@ struct sensor_ev_info_t {
 #endif
 
 typedef struct { void *privatedata; } * SENSOR_HW_HANDLE;
-typedef cmr_uint (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle,
+typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle,
                                           cmr_uint param);
 
 typedef struct sensor_ioctl_func_tab_tag {
