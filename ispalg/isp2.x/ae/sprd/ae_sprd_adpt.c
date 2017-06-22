@@ -527,6 +527,7 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
 {
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
+	cmr_u64 exp_time = 0;
 
 	if (0 !=  write_param->exp_line) {
 		struct ae_exposure exp;
@@ -539,6 +540,10 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			if ((write_param->exp_line != prv_param->exp_line)
 				|| (write_param->dummy != prv_param->dummy)) {
 				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+				exp_time = (cmr_u64)write_param->exp_time;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_EXPTIME_NOTIFY, &exp_time);
+#endif
 			} else {
 				ISP_LOGV("no_need_write exp");
 				;
@@ -5453,7 +5458,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	if(cxt->is_multi_mode )
 	{
-		ISP_LOGD("notify ae info, camear id=%d",cxt->camera_id);
+		ISP_LOGD("notify ae info, camera id=%d",cxt->camera_id);
 
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_AE_CALCOUT_NOTIFY, calc_out);
 

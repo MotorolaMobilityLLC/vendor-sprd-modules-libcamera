@@ -209,9 +209,12 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, c
 			break;
 		case AE_CB_AE_CALCOUT_NOTIFY:
 			cmd = ISP_AE_CALCOUT_NOTIFY;
-			param1=param0;
+			param1 = param0;
 			break;
-
+		case AE_CB_EXPTIME_NOTIFY:
+			cmd = ISP_AE_EXP_TIME;
+			param1 = param0;
+			break;
 		default:
 			cmd = ISP_AE_STAB_CALLBACK;
 			break;

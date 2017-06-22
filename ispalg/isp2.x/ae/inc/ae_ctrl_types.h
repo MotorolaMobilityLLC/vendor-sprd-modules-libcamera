@@ -159,6 +159,7 @@ enum ae_cb_type {
 	AE_CB_HDR_START,
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	AE_CB_AE_CALCOUT_NOTIFY,	//for Binding frame and calc ae dt
+	AE_CB_EXPTIME_NOTIFY,
 #endif
 	AE_CB_MAX
 };
