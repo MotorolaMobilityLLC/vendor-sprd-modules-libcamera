@@ -84,7 +84,7 @@ static const struct raw_param_info_tab s_s5k3p8sm_raw_param_tab[] = {
 static const SENSOR_REG_T s5k3p8sm_common_init[] = {
     {0x6028, 0x4000},
     {0x6010, 0x0001}, // Reset
-    {0xffff, 0x0005}, // must add delay >3ms
+    {0xffff, 0x000a}, // must add delay >3ms
     {0x6214, 0x7971},
     {0x6218, 0x7150},
     {0x6028, 0x2000}, // TP
