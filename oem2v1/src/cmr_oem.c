@@ -1076,7 +1076,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         // TBD write info to al3200
     }
     case ISP_AE_EXP_TIME:
-        CMR_LOGV("ISP_AE_EXP_TIME,data %lld", *(uint64_t *)data);
+        CMR_LOGD("ISP_AE_EXP_TIME,data %lld", *(uint64_t *)data);
         prev_set_ae_time(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
         break;
     /*    case ISP_VCM_STEP:
