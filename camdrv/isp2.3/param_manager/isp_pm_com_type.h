@@ -425,6 +425,25 @@ struct isp_pm_memory_init_param {
 	struct isp_buffer_size_info size_info;
 };
 
+struct isp_pm_nr_header_param {
+	cmr_u32 level_number;
+	cmr_u32 default_strength_level;
+	cmr_u32 nr_mode_setting;
+	cmr_uint *multi_nr_map_ptr;
+	cmr_uint *param_ptr;
+	cmr_uint *param1_ptr;
+	cmr_uint *param2_ptr;
+	cmr_uint *param3_ptr;
+};
+
+struct isp_pm_nr_simple_header_param {
+	cmr_u32 level_number;
+	cmr_u32 default_strength_level;
+	cmr_u32 nr_mode_setting;
+	cmr_uint *multi_nr_map_ptr;
+	cmr_uint *param_ptr;
+};
+
 #ifdef	 __cplusplus
 }
 #endif

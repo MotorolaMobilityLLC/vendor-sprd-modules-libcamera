@@ -169,7 +169,7 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_edge_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_edge_param;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	UNUSED(param2);
 

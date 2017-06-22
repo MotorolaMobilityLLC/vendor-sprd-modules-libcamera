@@ -87,7 +87,7 @@ cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 i = 0;
 	struct isp_iircnr_iir_param *dst_ptr = (struct isp_iircnr_iir_param *)dst_iircnr_param;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_iircnr_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_iircnr_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 

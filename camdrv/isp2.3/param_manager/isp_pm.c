@@ -658,6 +658,8 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle,
 	intptr_t nr_set_addr = 0;
 	cmr_u32 nr_set_size = 0;
 	struct nr_set_group_unit *nr_ptr = PNULL;
+	struct isp_pm_nr_simple_header_param *dst_blk_data = NULL;
+	struct isp_pm_nr_header_param *dst_nlm_data = NULL;
 	cmr_u32 multi_nr_flag = 0;
 
 	cxt_ptr->mode_num = input->num;
@@ -705,7 +707,7 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle,
 		size += add_ae_len + add_lnc_len + add_awb_len;
 		for (k = 0; k < sizeof(struct sensor_nr_set_group_param) / sizeof(struct nr_set_group_unit); k++) {
 			if (PNULL != nr_ptr[k].nr_ptr) {
-				size += sizeof(struct sensor_nr_simple_header_param);
+				size += sizeof(struct isp_pm_nr_simple_header_param);
 			}
 		}
 
@@ -770,34 +772,28 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle,
 					nr_param_update_info.nr_param_ptr = (cmr_uint *) (fix_data_ptr->nr.nr_set_group.nlm);
 					nr_param_update_info.size_of_per_unit = sizeof(struct sensor_nlm_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
 					isp_nr_param_update(&nr_param_update_info);
-
-					*((cmr_u32 *) dst_data_ptr) = (cmr_u32) nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
-					dst_data_ptr += sizeof(cmr_u32);
-					*((cmr_u32 *) dst_data_ptr) = (cmr_u32) nr_default_level_ptr->nr_level_map[ISP_BLK_NLM_T];
-					dst_data_ptr += sizeof(cmr_u32);
-					*((cmr_u32 *) dst_data_ptr) = (cmr_u32) multi_nr_flag;
-					dst_data_ptr += sizeof(cmr_u32);
-					*((intptr_t *) dst_data_ptr) = (intptr_t) (&(nr_scene_map_ptr->nr_scene_map[0]));
-					dst_data_ptr += sizeof(cmr_u32);
-					*((intptr_t *) dst_data_ptr) = (intptr_t) fix_data_ptr->nr.nr_set_group.nlm;
-					dst_data_ptr += sizeof(intptr_t);
+					dst_nlm_data = (struct isp_pm_nr_header_param *)dst_data_ptr;
+					memset(dst_nlm_data, 0, sizeof(*dst_nlm_data));
+					dst_nlm_data->level_number = nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
+					dst_nlm_data->default_strength_level = nr_default_level_ptr->nr_level_map[ISP_BLK_NLM_T];
+					dst_nlm_data->nr_mode_setting = multi_nr_flag;
+					dst_nlm_data->multi_nr_map_ptr = (cmr_uint *)&(nr_scene_map_ptr->nr_scene_map[0]);
+					dst_nlm_data->param_ptr = (cmr_uint *)fix_data_ptr->nr.nr_set_group.nlm;
 
 					nr_param_update_info.param_type = ISP_BLK_VST_T;
 					nr_param_update_info.nr_param_ptr = (cmr_uint *) (fix_data_ptr->nr.nr_set_group.vst);
 					nr_param_update_info.size_of_per_unit = sizeof(struct sensor_vst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T];
 					isp_nr_param_update(&nr_param_update_info);
-					*((intptr_t *) dst_data_ptr) = (intptr_t) fix_data_ptr->nr.nr_set_group.vst;
-					dst_data_ptr += sizeof(intptr_t);
+					dst_nlm_data ->param1_ptr = (cmr_uint *)fix_data_ptr->nr.nr_set_group.vst;
 
 					nr_param_update_info.param_type = ISP_BLK_IVST_T;
 					nr_param_update_info.nr_param_ptr = (cmr_uint *) (fix_data_ptr->nr.nr_set_group.ivst);
 					nr_param_update_info.size_of_per_unit = sizeof(struct sensor_ivst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T];
 					isp_nr_param_update(&nr_param_update_info);
-					*((intptr_t *) dst_data_ptr) = (intptr_t) fix_data_ptr->nr.nr_set_group.ivst;
-					dst_data_ptr += sizeof(intptr_t);
+					dst_nlm_data->param2_ptr = (cmr_uint *)fix_data_ptr->nr.nr_set_group.ivst;
 
-					extend_offset += 3 * sizeof(struct sensor_nr_simple_header_param);
-					dst_header[j].size = 3 * sizeof(struct sensor_nr_simple_header_param);
+					extend_offset += 3 * sizeof(struct isp_pm_nr_simple_header_param);
+					dst_header[j].size = 3 * sizeof(struct isp_pm_nr_simple_header_param);
 				}
 				break;
 			case ISP_BLK_RGB_DITHER:{
@@ -912,18 +908,16 @@ static cmr_s32 isp_pm_mode_list_init(isp_pm_handle_t handle,
 				nr_param_update_info.size_of_per_unit = nr_set_size * nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
 				isp_nr_param_update(&nr_param_update_info);
 
-				*((cmr_u32 *) dst_data_ptr) = (cmr_u32) nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
-				dst_data_ptr += sizeof(cmr_u32);
-				*((cmr_u32 *) dst_data_ptr) = (cmr_u32) nr_default_level_ptr->nr_level_map[isp_blk_nr_type];
-				dst_data_ptr += sizeof(cmr_u32);
-				*((cmr_u32 *) dst_data_ptr) = (cmr_u32) multi_nr_flag;
-				dst_data_ptr += sizeof(cmr_u32);
-				*((intptr_t *) dst_data_ptr) = (intptr_t) (&(nr_scene_map_ptr->nr_scene_map[0]));
-				dst_data_ptr += sizeof(intptr_t);
-				*((intptr_t *) dst_data_ptr) = (intptr_t) nr_set_addr;
-				dst_data_ptr += sizeof(intptr_t);
-				extend_offset += sizeof(struct sensor_nr_simple_header_param);
-				dst_header[j].size = sizeof(struct sensor_nr_simple_header_param);
+				dst_blk_data = (struct isp_pm_nr_simple_header_param *)dst_data_ptr;
+				memset(dst_blk_data, 0, sizeof (*dst_blk_data));
+				dst_blk_data->level_number = nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
+				dst_blk_data->default_strength_level = nr_default_level_ptr->nr_level_map[isp_blk_nr_type];
+				dst_blk_data->nr_mode_setting = multi_nr_flag;
+				dst_blk_data->multi_nr_map_ptr = (cmr_uint *)&(nr_scene_map_ptr->nr_scene_map[0]);
+				dst_blk_data->param_ptr = (cmr_uint *)nr_set_addr;
+
+				extend_offset += sizeof(struct isp_pm_nr_simple_header_param);
+				dst_header[j].size = sizeof(struct isp_pm_nr_simple_header_param);
 			}
 		}
 

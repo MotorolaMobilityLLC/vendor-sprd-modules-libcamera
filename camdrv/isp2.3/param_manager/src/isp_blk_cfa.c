@@ -102,7 +102,7 @@ cmr_s32 _pm_cfa_init(void *dst_cfae_param, void *src_cfae_param, void *param1, v
 	cmr_s32 rtn = ISP_SUCCESS;
 
 	struct isp_cfa_param *dst_ptr = (struct isp_cfa_param *)dst_cfae_param;
-	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_cfae_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_cfae_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct isp_size *img_size_ptr = (struct isp_size *)param_ptr2;
 
