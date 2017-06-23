@@ -311,11 +311,13 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 * param)
 	return ret;
 }
 
-static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
+static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_callback_cmd cmd = 0;
+	void *in = NULL;
+	UNUSED(data);
 
 	if (!cxt) {
 		ret = -ISP_PARAM_NULL;
@@ -352,7 +354,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 	}
 
 	if (cxt->commn_cxt.callback) {
-		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, NULL, 0);
+		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, in, 0);
 	}
 exit:
 	return ret;
@@ -439,7 +441,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		ret = ispalg_set_ae_stats_mode(cxt, *(cmr_u32 *)param0, *(cmr_u32 *)param1);
 		break;
 	case ISP_AE_SET_AE_CALLBACK:
-		ret = ispalg_ae_callback(cxt, *(cmr_int *) param0);
+		ret = ispalg_ae_callback(cxt, *(cmr_int *) param0, param1);
 		break;
 	case ISP_AE_GET_SYSTEM_TIME: {
 		cmr_u32 sec = 0;

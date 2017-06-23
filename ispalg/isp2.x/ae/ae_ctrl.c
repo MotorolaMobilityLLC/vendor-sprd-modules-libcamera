@@ -172,18 +172,6 @@ static cmr_s32 ae_set_statistics_mode(cmr_handle handler, enum ae_statistics_mod
 	return 0;
 }
 
-#ifndef CONFIG_CAMERA_DUAL_SYNC
-static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type)
-{
-	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
-
-	if (cxt_ptr->ae_set_cb) {
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_AE_CALLBACK, &cb_type, NULL);
-	}
-
-	return 0;
-}
-#else
 static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type, cmr_handle param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -195,7 +183,6 @@ static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type, cmr_hand
 	return 0;
 }
 
-#endif
 static cmr_s32 ae_get_system_time(cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;

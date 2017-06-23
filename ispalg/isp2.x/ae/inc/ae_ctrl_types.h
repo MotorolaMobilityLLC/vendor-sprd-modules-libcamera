@@ -354,11 +354,7 @@ struct ae_isp_ctrl_ops {
 	 cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
 	 cmr_s32(*set_monitor) (cmr_handle handler, struct ae_monitor_cfg * in_param);
 	 cmr_s32(*set_monitor_win) (cmr_handle handler, struct ae_monitor_info * in_param);
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type, cmr_handle param);
-#else
-	 cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type);
-#endif
+	 cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type, cmr_handle param);
 	 cmr_s32(*set_monitor_bypass) (cmr_handle handler, cmr_u32 is_bypass);
 	 cmr_s32(*get_system_time) (cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec);
 	 cmr_s32(*set_statistics_mode) (cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number);

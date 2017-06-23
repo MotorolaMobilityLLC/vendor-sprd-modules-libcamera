@@ -105,7 +105,7 @@ static nsecs_t isp_get_timestamp(void)
 	return timestamp;
 }
 
-static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 * param)
+static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data param_data;
@@ -130,57 +130,13 @@ static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 * param)
 	return rtn;
 
 }
-#ifndef CONFIG_CAMERA_DUAL_SYNC
-static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
-{
-	cmr_int rtn = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	enum isp_callback_cmd cmd = 0;
 
-	if (NULL != cxt) {
-		switch (cb_type) {
-		case AE_CB_FLASHING_CONVERGED:
-		case AE_CB_CONVERGED:
-		case AE_CB_CLOSE_PREFLASH:
-		case AE_CB_PREFLASH_PERIOD_END:
-		case AE_CB_CLOSE_MAIN_FLASH:
-			cmd = ISP_AE_STAB_CALLBACK;
-			break;
-		case AE_CB_QUICKMODE_DOWN:
-			cmd = ISP_QUICK_MODE_DOWN;
-			break;
-		case AE_CB_TOUCH_AE_NOTIFY:
-		case AE_CB_STAB_NOTIFY:
-			cmd = ISP_AE_STAB_NOTIFY;
-			break;
-		case AE_CB_AE_LOCK_NOTIFY:
-			cmd = ISP_AE_LOCK_NOTIFY;
-			break;
-		case AE_CB_AE_UNLOCK_NOTIFY:
-			cmd = ISP_AE_UNLOCK_NOTIFY;
-			break;
-		case AE_CB_HDR_START:
-			cmd = ISP_HDR_EV_EFFECT_CALLBACK;
-			break;
-		default:
-			cmd = ISP_AE_STAB_CALLBACK;
-			break;
-		}
-
-		if (cxt->commn_cxt.callback) {
-			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, NULL, 0);
-		}
-	}
-
-	return rtn;
-}
-#else
-static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, cmr_handle param0)
+static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, void *data)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	enum isp_callback_cmd      cmd = 0;
-	cmr_handle param1=NULL;
+	void *in = NULL;
 
 	if (NULL != cxt) {
 		switch (cb_type) {
@@ -209,11 +165,11 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, c
 			break;
 		case AE_CB_AE_CALCOUT_NOTIFY:
 			cmd = ISP_AE_CALCOUT_NOTIFY;
-			param1 = param0;
+			in = data;
 			break;
 		case AE_CB_EXPTIME_NOTIFY:
 			cmd = ISP_AE_EXP_TIME;
-			param1 = param0;
+			in = data;
 			break;
 		default:
 			cmd = ISP_AE_STAB_CALLBACK;
@@ -221,14 +177,12 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, c
 		}
 
 		if (cxt->commn_cxt.callback) {
-			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT|cmd, param1, 0);
+			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT|cmd, in, 0);
 		}
 	}
 
 	return rtn;
 }
-
-#endif
 
 static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
@@ -282,11 +236,7 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_STATISTICS_MODE, param0, param1);
 		break;
 	case ISP_AE_SET_AE_CALLBACK:
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 		rtn = isp_alg_ae_callback(cxt, *(cmr_int *)param0, param1);
-#else
-		rtn = isp_alg_ae_callback(cxt, *(cmr_int *) param0);
-#endif
 		break;
 	case ISP_AE_GET_SYSTEM_TIME:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AE_SYSTEM_TIME, param0, param1);
