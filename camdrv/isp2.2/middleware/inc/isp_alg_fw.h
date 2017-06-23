@@ -136,6 +136,7 @@ struct lsc_info {
 	cmr_u32 isp_smart_lsc_lock;
 	cmr_u8 *log_lsc;
 	cmr_u32 log_lsc_size;
+	struct isp_awb_statistic_info ae_out_stats;
 };
 
 struct ispalg_ae_ctrl_ops {

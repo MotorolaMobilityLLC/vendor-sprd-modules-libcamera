@@ -1071,15 +1071,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		/*send message to alsc process */
 		struct isp_alsc_calc_info alsc_info;
 
-		cmr_u32 *buf_stat_lsc = aeStatistic;
-		cmr_u32 *ptr_r_stat = buf_stat_lsc;
-		cmr_u32 *ptr_g_stat = buf_stat_lsc + 1024;
-		cmr_u32 *ptr_b_stat = buf_stat_lsc + 1024 * 2;
-		memcpy(ptr_r_stat, ae_stat_ptr->r_info, 1024 * sizeof(cmr_u32));
-		memcpy(ptr_g_stat, ae_stat_ptr->g_info, 1024 * sizeof(cmr_u32));
-		memcpy(ptr_b_stat, ae_stat_ptr->b_info, 1024 * sizeof(cmr_u32));
+		//TBD need remove memcpy & param ae_out_stats
+		memcpy(cxt->lsc_cxt.ae_out_stats.r_info, ae_stat_ptr->r_info, 1024 * sizeof(cmr_u32));
+		memcpy(cxt->lsc_cxt.ae_out_stats.g_info, ae_stat_ptr->g_info, 1024 * sizeof(cmr_u32));
+		memcpy(cxt->lsc_cxt.ae_out_stats.b_info, ae_stat_ptr->b_info, 1024 * sizeof(cmr_u32));
 
-		alsc_info.stat_ptr = buf_stat_lsc;
 		alsc_info.awb_b_gain = result->gain.b;
 		alsc_info.awb_r_gain = result->gain.r;
 		alsc_info.awb_ct = result->ct;
@@ -1090,7 +1086,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		alsc_info.image_height = cxt->commn_cxt.src.h;
 
 		rtn =
-		    alsc_calc(isp_alg_handle, ptr_r_stat, ptr_g_stat, ptr_b_stat, &alsc_info.stat_img_size, &alsc_info.win_size, alsc_info.image_width,
+		    alsc_calc(isp_alg_handle, cxt->lsc_cxt.ae_out_stats.r_info, cxt->lsc_cxt.ae_out_stats.g_info, cxt->lsc_cxt.ae_out_stats.b_info, &alsc_info.stat_img_size, &alsc_info.win_size, alsc_info.image_width,
 			      alsc_info.image_height, alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain, alsc_info.stable);
 		ISP_TRACE_IF_FAIL(rtn, ("alsc_calc fail "));
 		//}
