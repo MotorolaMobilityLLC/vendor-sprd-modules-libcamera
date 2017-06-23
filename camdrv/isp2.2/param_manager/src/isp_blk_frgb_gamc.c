@@ -27,10 +27,27 @@ cmr_s32 _pm_frgb_gamc_init(void *dst_gamc_param, void *src_gamc_param, void *par
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	for (i = 0; i < SENSOR_GAMMA_NUM; i++) {
-		for (j = 0; j < SENSOR_GAMMA_POINT_NUM; j++) {
-			dst_ptr->curve_tab[i].points[j].x = src_ptr->curve_tab[i].points[j].x;
-			dst_ptr->curve_tab[i].points[j].y = src_ptr->curve_tab[i].points[j].y;
+	if (1 == header_ptr->param_id) {
+		for (i = 0; i < SENSOR_GAMMA_NUM; i++) {
+			for (j = 0; j < SENSOR_GAMMA_POINT_NUM; j++) {
+				dst_ptr->curve_tab[i].points_r[j].x = src_ptr->curve_tab[i].points_r[j].x;
+				dst_ptr->curve_tab[i].points_r[j].y = src_ptr->curve_tab[i].points_r[j].y;
+				dst_ptr->curve_tab[i].points_g[j].x = src_ptr->curve_tab[i].points_g[j].x;
+				dst_ptr->curve_tab[i].points_g[j].y = src_ptr->curve_tab[i].points_g[j].y;
+				dst_ptr->curve_tab[i].points_b[j].x = src_ptr->curve_tab[i].points_b[j].x;
+				dst_ptr->curve_tab[i].points_b[j].y = src_ptr->curve_tab[i].points_b[j].y;
+			}
+		}
+	} else {
+		for (i = 0; i < SENSOR_GAMMA_NUM; i++) {
+			for (j = 0; j < SENSOR_GAMMA_POINT_NUM; j++) {
+				dst_ptr->curve_tab[i].points_r[j].x = src_ptr->curve_tab[i].points_r[j].x;
+				dst_ptr->curve_tab[i].points_r[j].y = src_ptr->curve_tab[i].points_r[j].y;
+				dst_ptr->curve_tab[i].points_g[j].x = src_ptr->curve_tab[i].points_r[j].x;
+				dst_ptr->curve_tab[i].points_g[j].y = src_ptr->curve_tab[i].points_r[j].y;
+				dst_ptr->curve_tab[i].points_b[j].x = src_ptr->curve_tab[i].points_r[j].x;
+				dst_ptr->curve_tab[i].points_b[j].y = src_ptr->curve_tab[i].points_r[j].y;
+			}
 		}
 	}
 
@@ -41,9 +58,24 @@ cmr_s32 _pm_frgb_gamc_init(void *dst_gamc_param, void *src_gamc_param, void *par
 	index = src_ptr->cur_idx_info.x0;
 	dst_ptr->cur.bypass = header_ptr->bypass;
 
-	for (j = 0; j < ISP_PINGPANG_FRGB_GAMC_NUM; j++) {
-		dst_ptr->cur.nodes[j].node_x = src_ptr->curve_tab[index].points[j].x;
-		dst_ptr->cur.nodes[j].node_y = src_ptr->curve_tab[index].points[j].y;
+	if (1 == header_ptr->param_id) {
+		for (j = 0; j < ISP_PINGPANG_FRGB_GAMC_NUM; j++) {
+			dst_ptr->cur.gamc_nodes.nodes_r[j].node_x = src_ptr->curve_tab[index].points_r[j].x;
+			dst_ptr->cur.gamc_nodes.nodes_r[j].node_y = src_ptr->curve_tab[index].points_r[j].y;
+			dst_ptr->cur.gamc_nodes.nodes_g[j].node_x = src_ptr->curve_tab[index].points_g[j].x;
+			dst_ptr->cur.gamc_nodes.nodes_g[j].node_y = src_ptr->curve_tab[index].points_g[j].y;
+			dst_ptr->cur.gamc_nodes.nodes_b[j].node_x = src_ptr->curve_tab[index].points_b[j].x;
+			dst_ptr->cur.gamc_nodes.nodes_b[j].node_y = src_ptr->curve_tab[index].points_b[j].y;
+		}
+	} else {
+		for (j = 0; j < ISP_PINGPANG_FRGB_GAMC_NUM; j++) {
+			dst_ptr->cur.gamc_nodes.nodes_r[j].node_x = src_ptr->curve_tab[index].points_r[j].x;
+			dst_ptr->cur.gamc_nodes.nodes_r[j].node_y = src_ptr->curve_tab[index].points_r[j].y;
+			dst_ptr->cur.gamc_nodes.nodes_g[j].node_x = src_ptr->curve_tab[index].points_r[j].x;
+			dst_ptr->cur.gamc_nodes.nodes_g[j].node_y = src_ptr->curve_tab[index].points_r[j].y;
+			dst_ptr->cur.gamc_nodes.nodes_b[j].node_x = src_ptr->curve_tab[index].points_r[j].x;
+			dst_ptr->cur.gamc_nodes.nodes_b[j].node_y = src_ptr->curve_tab[index].points_r[j].y;
+		}
 	}
 
 	header_ptr->is_update = ISP_ONE;
@@ -73,9 +105,25 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 			gamc_ptr->cur_idx.weight0 = 256;
 			gamc_ptr->cur_idx.weight1 = 0;
 
-			for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
-				gamc_ptr->cur.nodes[i].node_x = gamc_ptr->curve_tab[gamma_idx].points[i].x;
-				gamc_ptr->cur.nodes[i].node_y = gamc_ptr->curve_tab[gamma_idx].points[i].y;
+			if (1 == gamc_header_ptr->param_id) {
+				for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_x = gamc_ptr->curve_tab[gamma_idx].points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_y = gamc_ptr->curve_tab[gamma_idx].points_r[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_x = gamc_ptr->curve_tab[gamma_idx].points_g[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_y = gamc_ptr->curve_tab[gamma_idx].points_g[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_x = gamc_ptr->curve_tab[gamma_idx].points_b[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_y = gamc_ptr->curve_tab[gamma_idx].points_b[i].y;
+				}
+			} else {
+				for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_x = gamc_ptr->curve_tab[gamma_idx].points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_y = gamc_ptr->curve_tab[gamma_idx].points_r[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_x = gamc_ptr->curve_tab[gamma_idx].points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_y = gamc_ptr->curve_tab[gamma_idx].points_r[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_x = gamc_ptr->curve_tab[gamma_idx].points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_y = gamc_ptr->curve_tab[gamma_idx].points_r[i].y;
+				}
+
 			}
 			gamc_header_ptr->is_update = ISP_ONE;
 		}
@@ -110,11 +158,57 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 
 			if (gamc_value.value[0] != gamc_ptr->cur_idx.x0 || gamc_value.weight[0] != gamc_ptr->cur_idx.weight0) {
 
-				void *src[2] = { NULL };
-				void *dst = NULL;
-				src[0] = &gamc_ptr->curve_tab[gamc_value.value[0]].points[0].x;
-				src[1] = &gamc_ptr->curve_tab[gamc_value.value[1]].points[0].x;
-				dst = &gamc_ptr->final_curve;
+				if (1 == gamc_header_ptr->param_id) {
+					void *src_r[2] = { NULL };
+					void *src_g[2] = { NULL };
+					void *src_b[2] = { NULL };
+					void *dst_r = NULL;
+					void *dst_g = NULL;
+					void *dst_b = NULL;
+					src_r[0] = &gamc_ptr->curve_tab[gamc_value.value[0]].points_r[0].x;
+					src_r[1] = &gamc_ptr->curve_tab[gamc_value.value[1]].points_r[0].x;
+					src_g[0] = &gamc_ptr->curve_tab[gamc_value.value[0]].points_g[0].x;
+					src_g[1] = &gamc_ptr->curve_tab[gamc_value.value[1]].points_g[0].x;
+					src_b[0] = &gamc_ptr->curve_tab[gamc_value.value[0]].points_b[0].x;
+					src_b[1] = &gamc_ptr->curve_tab[gamc_value.value[1]].points_b[0].x;
+					dst_r = &gamc_ptr->final_curve.points_r;
+					dst_g = &gamc_ptr->final_curve.points_g;
+					dst_b = &gamc_ptr->final_curve.points_b;
+
+					/*interpolate y coordinates */
+					rtn = isp_interp_data(dst_r, src_r, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+					if (ISP_SUCCESS != rtn) {
+						ISP_LOGE("fail to interp gamc_r data\n");
+						return rtn;
+					}
+					rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+					if (ISP_SUCCESS != rtn) {
+						ISP_LOGE("fail to interp gamc_g data\n");
+						return rtn;
+					}
+					rtn = isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+					if (ISP_SUCCESS == rtn) {
+						gamc_ptr->cur_idx.x0 = weight_value->value[0];
+						gamc_ptr->cur_idx.x1 = weight_value->value[1];
+						gamc_ptr->cur_idx.weight0 = weight_value->weight[0];
+						gamc_ptr->cur_idx.weight1 = weight_value->weight[1];
+						gamc_header_ptr->is_update = ISP_ONE;
+
+						for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+							gamc_ptr->cur.gamc_nodes.nodes_r[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+							gamc_ptr->cur.gamc_nodes.nodes_r[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+							gamc_ptr->cur.gamc_nodes.nodes_g[i].node_x = gamc_ptr->final_curve.points_g[i].x;
+							gamc_ptr->cur.gamc_nodes.nodes_g[i].node_y = gamc_ptr->final_curve.points_g[i].y;
+							gamc_ptr->cur.gamc_nodes.nodes_b[i].node_x = gamc_ptr->final_curve.points_b[i].x;
+							gamc_ptr->cur.gamc_nodes.nodes_b[i].node_y = gamc_ptr->final_curve.points_b[i].y;
+						}
+					}
+				} else {
+					void *src[2] = { NULL };
+					void *dst = NULL;
+					src[0] = &gamc_ptr->curve_tab[gamc_value.value[0]].points_r[0].x;
+					src[1] = &gamc_ptr->curve_tab[gamc_value.value[1]].points_r[0].x;
+					dst = &gamc_ptr->final_curve.points_r;
 
 				/*interpolate y coordinates */
 				rtn = isp_interp_data(dst, src, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
@@ -125,9 +219,14 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 					gamc_ptr->cur_idx.weight1 = weight_value->weight[1];
 					gamc_header_ptr->is_update = ISP_ONE;
 
-					for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
-						gamc_ptr->cur.nodes[i].node_x = gamc_ptr->final_curve.points[i].x;
-						gamc_ptr->cur.nodes[i].node_y = gamc_ptr->final_curve.points[i].y;
+						for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+							gamc_ptr->cur.gamc_nodes.nodes_r[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+							gamc_ptr->cur.gamc_nodes.nodes_r[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+							gamc_ptr->cur.gamc_nodes.nodes_g[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+							gamc_ptr->cur.gamc_nodes.nodes_g[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+							gamc_ptr->cur.gamc_nodes.nodes_b[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+							gamc_ptr->cur.gamc_nodes.nodes_b[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+						}
 					}
 				}
 			}
@@ -161,8 +260,8 @@ cmr_s32 _pm_frgb_gamc_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0,
 		break;
 
 	case ISP_PM_BLK_GAMMA:
-		param_data_ptr->data_ptr = &gamc_ptr->cur.nodes;
-		param_data_ptr->data_size = sizeof(gamc_ptr->cur.nodes);
+		param_data_ptr->data_ptr = &gamc_ptr->cur.gamc_nodes;
+		param_data_ptr->data_size = sizeof(gamc_ptr->cur.gamc_nodes);
 		*update_flag = 0;
 		break;
 
