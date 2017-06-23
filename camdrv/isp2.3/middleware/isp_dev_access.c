@@ -25,6 +25,24 @@ struct isp_dev_access_context {
 	struct isp_statis_mem_info statis_mem_info;
 };
 
+cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	if (!isp_dev_handle) {
+		ret = ISP_PARAM_ERROR;
+		return ret;
+	}
+
+	*u_addr = cxt->statis_mem_info.isp_statis_u_addr + in_ptr->addr_offset;
+
+	ISP_LOGV("u_addr = 0x%lx, isp_statis_u_addr = 0x%lx, addr_offset = 0x%x",
+		*u_addr, cxt->statis_mem_info.isp_statis_u_addr, in_ptr->addr_offset);
+
+	return ret;
+}
+
 cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -263,6 +281,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 
 	statis_info->phy_addr = irq_info->phy_addr;
 	statis_info->vir_addr = irq_info->vir_addr;
+	statis_info->addr_offset = irq_info->addr_offset;
 	statis_info->kaddr[0] = irq_info->kaddr[0];
 	statis_info->kaddr[1] = irq_info->kaddr[1];
 	statis_info->irq_property = irq_info->irq_property;
