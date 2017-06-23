@@ -927,16 +927,13 @@ void camera_grab_3dnr_evt_cb(cmr_int evt, void *data, void *privdata) {
         return;
     }
 
-    if (1 == camera_get_3dnr_flag(cxt)) {
-        if (cxt->ipm_cxt.threednr_handle) {
-            ret = cmr_ipm_post_proc(cxt->ipm_cxt.threednr_handle);
-        } else {
-            ret =
-                prev_3dnr_evt_cb(cxt->prev_cxt.preview_handle, cxt->camera_id);
-        }
-        if (ret) {
-            CMR_LOGE("fail to call_back for 3ndr %ld", ret);
-        }
+    if (cxt->ipm_cxt.threednr_handle) {
+        ret = cmr_ipm_post_proc(cxt->ipm_cxt.threednr_handle);
+    } else {
+        ret = prev_3dnr_evt_cb(cxt->prev_cxt.preview_handle, cxt->camera_id);
+    }
+    if (ret) {
+        CMR_LOGE("fail to call_back for 3ndr %ld", ret);
     }
     ATRACE_END();
 }
@@ -1536,8 +1533,13 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
 }
 
 void camera_set_3dnr_flag(struct camera_context *cxt, cmr_u32 threednr_flag) {
-    CMR_LOGV("flag %d", threednr_flag);
+    char value[PROPERTY_VALUE_MAX];
+    CMR_LOGD("flag %d", threednr_flag);
     sem_wait(&cxt->threednr_flag_sm);
+    property_get("debug.camera.3dnr.capture", value, "true");
+    if (!strcmp(value, "false")) {
+        threednr_flag = 0;
+    }
     cxt->snp_cxt.is_3dnr = threednr_flag;
     sem_post(&cxt->threednr_flag_sm);
 }
@@ -7286,7 +7288,12 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     camera_set_3dnr_flag(cxt, setting_param.cmd_type_value);
-    out_param_ptr->is_3dnr = setting_param.cmd_type_value;
+    property_get("debug.camera.3dnr.preview", value, "true");
+    if (!strcmp(value, "false")) {
+        out_param_ptr->is_3dnr = 0;
+    } else {
+        out_param_ptr->is_3dnr = setting_param.cmd_type_value;
+    }
 
     /*get zoom param*/
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ZOOM_PARAM,
