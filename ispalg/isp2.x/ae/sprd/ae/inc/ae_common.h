@@ -182,24 +182,25 @@ struct ae1_face {
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
-	cmr_u32 end_y;	/*1 x 4bytes */
+	cmr_u32 end_y;	/*4 x 4bytes */
 	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */
 };
 
 struct ae1_face_info {
-	cmr_u16 face_num;	/*1 x 4bytes */
+	cmr_u16 face_num;	
 	cmr_u16 reserved;	/*1 x 4bytes */
-	cmr_u32 rect[1024];	/*256 x 4bytes */
-	struct ae1_face face_area[20];	/*20 x 5bytes */
-};			/*297 x 4bytes */
+	cmr_u32 rect[1024];	/*1024 x 4bytes */
+	struct ae1_face face_area[20];	/*20 x 5 * 4bytes */
+};			/*1125 x 4bytes */
 
 struct ae1_fd_param {
-	struct ae1_face_info cur_info;	/*297 x 4bytes */
+	struct ae1_face_info cur_info;	/*1125 x 4bytes */
 	cmr_u8 update_flag;
 	cmr_u8 enable_flag;
+	cmr_u16 reserved;/*1 x 4bytes */
 	cmr_u16 img_width;
-	cmr_u16 img_height;
-};	/*595 x 4bytes */
+	cmr_u16 img_height;/*1 x 4bytes */
+};	/*1127 x 4bytes */
 
 struct ae_param {
 	cmr_handle param;
