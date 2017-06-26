@@ -79,6 +79,11 @@ SprdCamera3RangeFinder *gRangeFinder = NULL;
         return -ENODEV;                                                        \
     }
 
+#define DEPTH_INVALID_VALUE (-2)
+#define DEPTH_RESULT_ACCURACY_HEIGHT (0)
+#define DEPTH_RESULT_ACCURACY_LOW (1)
+#define DEPTH_RESULT_ACCURACY_NO (-1)
+
 camera3_device_ops_t SprdCamera3RangeFinder::mCameraFinderOps = {
     .initialize = SprdCamera3RangeFinder::initialize,
     .configure_streams = SprdCamera3RangeFinder::configure_streams,
@@ -133,7 +138,8 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
     mPreviewStreamsNum = 0;
     mCurrentState = STATE_IDLE;
     mVcmSteps = 0;
-    mUwDepth = 0;
+    mUwDepth = DEPTH_INVALID_VALUE;
+    mUwDepthAccuracy = DEPTH_INVALID_VALUE;
     mApiLibinit = false;
     mApiLibVersion = 0;
     HAL_LOGI("X");
@@ -1190,10 +1196,12 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     int depth_buffer_size = 0;
     unsigned short uwInX1 = 0, uwInY1 = 0, uwInX2 = 0, uwInY2 = 0;
     int distance = 0;
+    bool depth_result = false;
     distance_tow_point_info points_info;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
+
     unsigned short *puwDisparityBuf = NULL, *disparityRotate = NULL;
     unsigned char *mainRotate = NULL, *auxRotate = NULL;
     property_get("sys.camera.rf.debug", prop, "0");
@@ -1351,6 +1359,7 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
             HAL_LOGE("alSDE2_DistanceMeasurement failed .rc = %d", rc);
             goto ALSDE_FAILED;
         }
+
         HAL_LOGD("eOutDistance=%f", eOutDistance);
         if (eOutDistance > 500) {
             eOutDistance = 500;
@@ -1358,11 +1367,11 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
         }
         {
             Mutex::Autolock l(gRangeFinder->mDepthVauleLock);
-            gRangeFinder->mUwDepth = (int64_t)eOutDistance;
+            gRangeFinder->mUwDepthAccuracy = DEPTH_RESULT_ACCURACY_HEIGHT;
+            gRangeFinder->mUwDepth = eOutDistance;
+            depth_result = true;
         }
-
     } else {
-
         rc = mDepthApi->sprd_depth_Run(
             mDepthInitParam.handle, (void *)puwDisparityBuf,
             (void *)pucBufSub_YCC420NV21, (void *)pucBufMain_YCC420NV21);
@@ -1384,10 +1393,14 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
             HAL_LOGD("error.distanceme frame_number:%d cal is err",
                      combDepthResult->frame_number);
         }
-        if (distance) {
+        if (distance > 0) {
             distance /= 10;
+        }
+        {
             Mutex::Autolock l(gRangeFinder->mDepthVauleLock);
-            gRangeFinder->mUwDepth = (int64_t)distance;
+            gRangeFinder->mUwDepthAccuracy = (double)rc;
+            gRangeFinder->mUwDepth = (double)distance;
+            depth_result = true;
         }
     }
     if (atoi(prop) == 1) {
@@ -1433,6 +1446,12 @@ MEM_AUX_FAILED:
 MEM_MAIN_FAILED:
     delete[] puwDisparityBuf;
 getpmem_fail:
+    if (!depth_result) {
+        Mutex::Autolock l(gRangeFinder->mDepthVauleLock);
+        gRangeFinder->mUwDepthAccuracy = DEPTH_RESULT_ACCURACY_NO;
+        gRangeFinder->mUwDepth = 0;
+    }
+
     return rc;
 }
 
@@ -1505,6 +1524,8 @@ int SprdCamera3RangeFinder::initialize(
     mConfigStreamNum = 0;
     mVcmSteps = 0;
     mApiLibinit = false;
+    mUwDepthAccuracy = DEPTH_INVALID_VALUE;
+    mUwDepth = DEPTH_INVALID_VALUE;
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -1914,22 +1935,23 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
                      metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0]);
             mVcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
         }
-
-        if (mUwDepth != 0) {
-
-            metadata.update(ANDROID_SPRD_3D_RANGEFINDER_DISTANCE, &mUwDepth, 1);
+        if (mUwDepthAccuracy != DEPTH_INVALID_VALUE) {
+            double depth_result[2];
+            depth_result[0] = mUwDepth;
+            depth_result[1] = mUwDepthAccuracy;
+            metadata.update(ANDROID_SPRD_3D_RANGEFINDER_DISTANCE, depth_result,
+                            2);
             camera3_capture_result_t new_result = *result;
             new_result.result = metadata.release();
             mCallbackOps->process_capture_result(mCallbackOps, &new_result);
             {
                 Mutex::Autolock l(mDepthVauleLock);
-                mUwDepth = 0;
+                mUwDepthAccuracy = DEPTH_INVALID_VALUE;
             }
             free_camera_metadata(
                 const_cast<camera_metadata_t *>(new_result.result));
             return;
         }
-
         mCallbackOps->process_capture_result(mCallbackOps, result);
         return;
     }
@@ -2070,9 +2092,9 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
                     result_timestamp = i->message.shutter.timestamp;
                     mNotifyListAux.erase(i);
                 } else if (i->type == CAMERA3_MSG_ERROR) {
-                    HAL_LOGE(
-                        "Return local buffer:%d caused by error Notify status",
-                        result->frame_number);
+                    HAL_LOGE("Return local buffer:%d caused by error "
+                             "Notify status",
+                             result->frame_number);
                     searchnotifyresult = NOTIFY_ERROR;
                     Mutex::Autolock l(mMeasureThread->mLocalBufferLock);
                     mMeasureThread->mLocalBufferList.push_back(

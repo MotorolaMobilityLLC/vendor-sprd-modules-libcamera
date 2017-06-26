@@ -248,6 +248,7 @@ class SprdCamera3RangeFinder : SprdCamera3MultiBase {
     sp<MeasureThread> mMeasureThread;
     sp<SyncThread> mSyncThread;
     double mUwDepth;
+    double mUwDepthAccuracy;
     Mutex mDepthVauleLock;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,

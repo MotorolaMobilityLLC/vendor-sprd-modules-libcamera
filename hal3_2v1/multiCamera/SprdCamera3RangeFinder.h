@@ -252,6 +252,7 @@ class SprdCamera3RangeFinder : SprdCamera3MultiBase {
     sp<MeasureThread> mMeasureThread;
     sp<SyncThread> mSyncThread;
     double mUwDepth;
+    double mUwDepthAccuracy;
     Mutex mDepthVauleLock;
     int mApiLibVersion;
     bool mApiLibinit;
