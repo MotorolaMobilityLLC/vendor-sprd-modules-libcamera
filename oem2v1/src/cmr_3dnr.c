@@ -47,6 +47,7 @@ struct class_3dnr_pre { // 3dnr pre
     cmr_uint pre_buf_vir[PRE_3DNR_NUM];
     cmr_s32 pre_buf_fd[PRE_3DNR_NUM];
     cmr_u32 g_num;
+    cmr_uint is_stop;
 };
 
 struct class_3dnr {
@@ -72,6 +73,7 @@ struct class_3dnr {
     cmr_s32 small_buf_fd[CAP_3DNR_NUM];
     sem_t sem_3dnr;
     cmr_u32 g_num;
+    cmr_uint is_stop;
 };
 
 #define CHECK_HANDLE_VALID(handle)                                             \
@@ -173,6 +175,8 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_size;
     cmr_u32 small_buf_num;
 
+    CMR_LOGI("E");
+
     if (!out || !in || !ipm_handle || !class_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
@@ -210,10 +214,11 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_handle->small_width = threednr_handle->width / 2;
     threednr_handle->reg_cb = in->reg_cb;
     threednr_handle->g_num = 0;
+    threednr_handle->is_stop = 0;
 
     ret = threednr_thread_create(threednr_handle);
     if (ret) {
-        CMR_LOGE("3dnr error: create thread.");
+        CMR_LOGE("3dnr error: create thread");
         goto free_all;
     }
 
@@ -231,9 +236,9 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                 CAMERA_SNAPSHOT_3DNR_DST, &buf_size, &buf_num,
                 &threednr_handle->out_buf_phy, &threednr_handle->out_buf_vir,
                 &threednr_handle->out_buf_fd, cam_cxt->client_data)) {
-            CMR_LOGE("Fail to alloc mem for 3DNR out.");
+            CMR_LOGE("Fail to alloc mem for 3DNR out");
         } else {
-            CMR_LOGD("OK to alloc mem for 3DNR out.");
+            CMR_LOGD("OK to alloc mem for 3DNR out");
         }
         if (0 !=
             cam_cxt->hal_malloc(
@@ -241,12 +246,12 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                 (cmr_uint *)threednr_handle->small_buf_phy,
                 (cmr_uint *)threednr_handle->small_buf_vir,
                 threednr_handle->small_buf_fd, cam_cxt->client_data)) {
-            CMR_LOGE("Fail to malloc buffers for small image.\n");
+            CMR_LOGE("Fail to malloc buffers for small image");
         } else {
-            CMR_LOGD("OK to malloc buffers for small image.");
+            CMR_LOGD("OK to malloc buffers for small image");
         }
     } else {
-        CMR_LOGE("cam_cxt->hal_malloc is NULL.");
+        CMR_LOGE("cam_cxt->hal_malloc is NULL");
     }
     for (int i = 0; i < 2; i++) {
         memset(&param.out_img[i], 0, sizeof(struct c3dnr_buffer));
@@ -268,16 +273,17 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.isp_handle = isp_cxt->isp_handle;
     param.isp_ioctrl = isp_ioctl_for_3dnr;
     if (NULL == param.isp_handle) {
-        CMR_LOGE("isp_handle is null.\n");
+        CMR_LOGE("isp_handle is null");
     }
     ret = threednr_init(&param);
     if (ret < 0) {
-        CMR_LOGE("Fail to call threednr_init().\n");
+        CMR_LOGE("Fail to call threednr_init");
     } else {
-        CMR_LOGD("ok to call threednr_init().\n");
+        CMR_LOGD("ok to call threednr_init");
     }
 
     *class_handle = (cmr_handle)threednr_handle;
+    CMR_LOGI("X");
 
     return ret;
 
@@ -294,7 +300,19 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
 
+    CMR_LOGI("E");
     CHECK_HANDLE_VALID(threednr_handle);
+
+    threednr_handle->is_stop = 1;
+    threednr_cancel();
+    CMR_LOGI("OK to threednr_cancel");
+
+    ret = threednr_deinit();
+    if (ret) {
+        CMR_LOGE("3dnr failed to threednr_deinit");
+    }
+
+    CMR_LOGI("OK to threednr_deinit");
 
     sem_destroy(&threednr_handle->sem_3dnr);
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
@@ -305,9 +323,9 @@ static cmr_int threednr_close(cmr_handle class_handle) {
                 CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
                 &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
                 cam_cxt->client_data)) {
-            CMR_LOGE("Fail to free the output buffer.\n");
+            CMR_LOGE("Fail to free the output buffer");
         } else {
-            CMR_LOGD("OK to free the output buffer.\n");
+            CMR_LOGD("OK to free the output buffer");
         }
         if (0 !=
             cam_cxt->hal_free(CAMERA_SNAPSHOT_3DNR,
@@ -315,26 +333,23 @@ static cmr_int threednr_close(cmr_handle class_handle) {
                               (cmr_uint *)threednr_handle->small_buf_vir,
                               threednr_handle->small_buf_fd, CAP_3DNR_NUM,
                               cam_cxt->client_data)) {
-            CMR_LOGE("Fail to free the small image buffers.\n");
+            CMR_LOGE("Fail to free the small image buffers");
         }
     } else {
-        CMR_LOGD("cam_cxt->hal_free is NULL.");
+        CMR_LOGD("cam_cxt->hal_free is NULL");
     }
 
     ret = threednr_thread_destroy(threednr_handle);
     if (ret) {
-        CMR_LOGE("3dnr failed to destroy 3dnr thread.");
+        CMR_LOGE("3dnr failed to destroy 3dnr thread");
     }
 
     if (NULL != threednr_handle)
         free(threednr_handle);
 
-    ret = threednr_deinit();
-    if (ret) {
-        CMR_LOGE("3dnr failed to threednr_deinit().");
-    }
+    sem_post(&cam_cxt->threednr_proc_sm);
 
-    CMR_LOGD("done");
+    CMR_LOGI("X");
 
     return ret;
 }
@@ -355,12 +370,12 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_size;
     cmr_u32 small_buf_num;
 
+    CMR_LOGI("E");
+
     if (!out || !in || !ipm_handle || !class_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
-    CMR_LOGD("in");
 
     threednr_prev_handle =
         (struct class_3dnr_pre *)malloc(sizeof(struct class_3dnr_pre));
@@ -387,6 +402,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_prev_handle->mem_size = size;
     threednr_prev_handle->height = in->frame_size.height;
     threednr_prev_handle->width = in->frame_size.width;
+    threednr_prev_handle->is_stop = 0;
 
     isp_cxt = (struct isp_context *)&(cam_cxt->isp_cxt);
     buf_size =
@@ -401,10 +417,10 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
                                 cam_cxt->client_data)) {
             CMR_LOGE("Fail to alloc mem for 3DNR preview");
         } else {
-            CMR_LOGD("OK to alloc mem for 3DNR preview.");
+            CMR_LOGD("OK to alloc mem for 3DNR preview");
         }
     } else {
-        CMR_LOGE("cam_cxt->hal_malloc is NULL.");
+        CMR_LOGE("cam_cxt->hal_malloc is NULL");
     }
 
     param.orig_width = threednr_prev_handle->width;
@@ -425,18 +441,18 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.isp_handle = isp_cxt->isp_handle;
     param.isp_ioctrl = isp_ioctl_for_3dnr;
     if (NULL == param.isp_handle) {
-        CMR_LOGE("isp_handle is null.\n");
+        CMR_LOGE("isp_handle is null");
     }
 
     ret = threednr_init(&param);
     if (ret < 0) {
-        CMR_LOGE("Fail to call preview threednr_init().\n");
+        CMR_LOGE("Fail to call preview threednr_init");
     } else {
-        CMR_LOGD("ok to call preview threednr_init().\n");
+        CMR_LOGD("ok to call preview threednr_init");
     }
     *class_handle = (cmr_handle)threednr_prev_handle;
 
-    CMR_LOGD("done");
+    CMR_LOGI("X");
 
     return ret;
 }
@@ -449,7 +465,16 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
 
+    CMR_LOGI("E");
     CHECK_HANDLE_VALID(threednr_prev_handle);
+
+    threednr_prev_handle->is_stop = 1;
+    threednr_cancel();
+    CMR_LOGI("OK to threednr_cancel for preview");
+    ret = threednr_deinit();
+    if (ret) {
+        CMR_LOGE("3dnr preview failed to threednr_deinit");
+    }
 
     oem_handle = threednr_prev_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
@@ -461,23 +486,18 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
                               threednr_prev_handle->pre_buf_vir,
                               threednr_prev_handle->pre_buf_fd, PRE_3DNR_NUM,
                               cam_cxt->client_data)) {
-            CMR_LOGE("Fail to free the preview output buffer.\n");
+            CMR_LOGE("Fail to free the preview output buffer");
         } else {
-            CMR_LOGD("OK to free thepreview  output buffer.\n");
+            CMR_LOGD("OK to free thepreview  output buffer");
         }
     } else {
-        CMR_LOGD("cam_cxt->hal_free is NULL.");
+        CMR_LOGD("cam_cxt->hal_free is NULL");
     }
 
     if (NULL != threednr_prev_handle)
         free(threednr_prev_handle);
 
-    ret = threednr_deinit();
-    if (ret) {
-        CMR_LOGE("3dnr preview failed to threednr_deinit().");
-    }
-
-    CMR_LOGD("done");
+    CMR_LOGI("X");
 
     return ret;
 }
@@ -489,18 +509,24 @@ cmr_int threednr_transfer_prev_frame(cmr_handle class_handle,
 {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     c3dnr_buffer_t image;
+    struct class_3dnr_pre *threednr_prev_handle =
+        (struct class_3dnr_pre *)class_handle;
 
     image.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
     image.bufferU =
         image.bufferY + in->src_frame.size.width * in->src_frame.size.height;
     image.bufferV = image.bufferU;
     image.fd = in->src_frame.fd;
-    CMR_LOGV(" in buf:Y  0x%x, U 0x%x,fd 0x%x.", (uint32_t)image.bufferY,
-             image.bufferU, image.fd);
+    CMR_LOGV(" in buf:Y  %p, U %p,fd 0x%x", image.bufferY, image.bufferU,
+             image.fd);
+
+    if (threednr_prev_handle->is_stop) {
+        return ret;
+    }
 
     ret = threednr_function_pre(&image, &image);
     if (ret) {
-        CMR_LOGE("3dnr failed to threednr_pre_function().");
+        CMR_LOGE("3dnr failed to threednr_pre_function");
     }
 
     return ret;
@@ -508,9 +534,11 @@ cmr_int threednr_transfer_prev_frame(cmr_handle class_handle,
 
 static cmr_int threednr_post_proc(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct class_3dnr *threednr_handle = (struct class_3dnr *)class_handle;
 
     threednr_callback();
-    CMR_LOGV("call back done");
+    CMR_LOGV("call back done ,threednr_handle->g_num %d",
+             threednr_handle->g_num);
     return ret;
 }
 
@@ -562,8 +590,7 @@ static cmr_int req_3dnr_save_frame(cmr_handle class_handle,
 
     threednr_handle->common.save_frame_count++;
     if (threednr_handle->common.save_frame_count > CAP_3DNR_NUM) {
-        CMR_LOGE("cap cnt error,%ld.",
-                 threednr_handle->common.save_frame_count);
+        CMR_LOGE("cap cnt error,%ld", threednr_handle->common.save_frame_count);
         return CMR_CAMERA_FAIL;
     }
 
@@ -579,7 +606,7 @@ static cmr_int req_3dnr_save_frame(cmr_handle class_handle,
     message.alloc_flag = 1;
     ret = cmr_thread_msg_send(threednr_handle->threednr_thread, &message);
     if (ret) {
-        CMR_LOGE("Failed to send one msg to 3dnr thread.");
+        CMR_LOGE("Failed to send one msg to 3dnr thread");
         if (message.data) {
             free(message.data);
         }
@@ -620,7 +647,7 @@ void *thread_3dnr(void *p_data) {
     sem_wait(&threednr_handle->sem_3dnr);
 
     cur_frm = threednr_handle->common.save_frame_count;
-    CMR_LOGD("wait sem. cur_frm: %d.", cur_frm);
+    CMR_LOGD("wait sem. cur_frm: %d", cur_frm);
 
     CMR_LOGI("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
     addr = &in->dst_frame.addr_vir;
@@ -660,12 +687,17 @@ void *thread_3dnr(void *p_data) {
         threednr_handle->small_width * threednr_handle->small_height;
     dst.addr_vir.addr_v = dst.addr_vir.addr_u;
     dst.fd = threednr_handle->small_buf_fd[cur_frm];
-    CMR_LOGV(
-        "Call the threednr_start_scale().src Y: 0x%x, 0x%x, dst Y: 0x%x, 0x%x.",
-        src->addr_vir.addr_y, src->fd, dst.addr_vir.addr_y, dst.fd);
+    CMR_LOGV("Call the threednr_start_scale().src Y: 0x%lx, 0x%x, dst Y: "
+             "0x%lx, 0x%x",
+             src->addr_vir.addr_y, src->fd, dst.addr_vir.addr_y, dst.fd);
+
+    if (threednr_handle->is_stop) {
+        return NULL;
+    }
+
     ret = threednr_start_scale(oem_handle, src, &dst);
     if (ret) {
-        CMR_LOGE("Fail to call threednr_start_scale().");
+        CMR_LOGE("Fail to call threednr_start_scale");
         return NULL;
     }
 
@@ -707,12 +739,18 @@ void *thread_3dnr(void *p_data) {
         threednr_handle->small_width * threednr_handle->small_height;
     small_buf.bufferV = small_buf.bufferU;
     small_buf.fd = threednr_handle->small_buf_fd[cur_frm];
-    CMR_LOGV(
-        "Call the threednr_function().big Y: 0x%x, 0x%x, small Y: 0x%x, 0x%x.",
-        big_buf.bufferY, big_buf.fd, small_buf.bufferY, small_buf.fd);
+    CMR_LOGV("Call the threednr_function().big Y: %p, 0x%x, small Y: %p, 0x%x. "
+             " ,threednr_handle->is_stop %ld",
+             big_buf.bufferY, big_buf.fd, small_buf.bufferY, small_buf.fd,
+             threednr_handle->is_stop);
+
+    if (threednr_handle->is_stop) {
+        return NULL;
+    }
+
     ret = threednr_function(&small_buf, &big_buf);
     if (ret < 0) {
-        CMR_LOGE("Fail to call the threednr_function.");
+        CMR_LOGE("Fail to call the threednr_function");
     }
 
     if (CAP_3DNR_NUM == threednr_handle->common.save_frame_count) {
@@ -722,7 +760,7 @@ void *thread_3dnr(void *p_data) {
         ret = req_3dnr_do(threednr_handle, addr, size);
     }
 
-    CMR_LOGI("post sem.");
+    CMR_LOGI("post sem");
     sem_post(&threednr_handle->sem_3dnr);
 
     return NULL;
@@ -737,7 +775,7 @@ cmr_int create_3dnr_thread(struct thread_3dnr_info *info) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     rtn = pthread_create(&handle, &attr, thread_3dnr, info);
     if (rtn) {
-        CMR_LOGE("Fail to create thread for thread_3dnr.");
+        CMR_LOGE("Fail to create thread for thread_3dnr");
         return rtn;
     }
 
@@ -766,6 +804,11 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
+
+    if (threednr_handle->is_stop) {
+        return 0;
+    }
+
     CMR_LOGD("get one frame, num %d", cur_num);
     threednr_handle->g_info_3dnr[cur_num].class_handle = class_handle;
     memcpy(&threednr_handle->g_info_3dnr[cur_num].in, in,
@@ -821,8 +864,7 @@ static cmr_int threednr_save_frame(cmr_handle class_handle,
     }
 
     if (threednr_handle->common.save_frame_count > CAP_3DNR_NUM) {
-        CMR_LOGE("cap cnt error,%ld.",
-                 threednr_handle->common.save_frame_count);
+        CMR_LOGE("cap cnt error,%ld", threednr_handle->common.save_frame_count);
         return CMR_CAMERA_FAIL;
     }
 

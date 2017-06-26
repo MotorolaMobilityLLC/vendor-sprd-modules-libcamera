@@ -3286,7 +3286,6 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             } else {
                 CMR_LOGD("wait 3dnr  close in 2s");
             }
-            sem_destroy(&cxt->threednr_proc_sm);
         }
 
         /*stop channel*/

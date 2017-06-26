@@ -1573,6 +1573,7 @@ cmr_int camera_close_3dnr(struct camera_context *cxt) {
         cxt->ipm_cxt.threednr_handle = 0;
     }
     sem_post(&cxt->threednr_flag_sm);
+    sem_destroy(&cxt->threednr_proc_sm);
     CMR_LOGI("close 3dnr done %ld", ret);
     return ret;
 }
@@ -8628,6 +8629,18 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
+    if (camera_get_3dnr_flag(cxt)) {
+#ifdef OEM_HANDLE_3DNR
+        if (0 != cxt->ipm_cxt.frm_num) {
+            cxt->ipm_cxt.frm_num = 0;
+        }
+#endif
+        ret = camera_close_3dnr(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close 3dnr");
+        }
+    }
+
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to stop snp %ld", ret);
@@ -8663,18 +8676,6 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
                                 SETTING_CLEAR_HDR, &setting_param);
         if (ret) {
             CMR_LOGE("failed to clear hdr sem");
-        }
-    }
-
-    if (camera_get_3dnr_flag(cxt)) {
-#ifdef OEM_HANDLE_3DNR
-        if (0 != cxt->ipm_cxt.frm_num) {
-            cxt->ipm_cxt.frm_num = 0;
-        }
-#endif
-        ret = camera_close_3dnr(cxt);
-        if (ret) {
-            CMR_LOGE("failed to close 3dnr");
         }
     }
 
