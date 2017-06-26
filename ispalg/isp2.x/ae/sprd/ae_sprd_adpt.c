@@ -4945,7 +4945,7 @@ EXIT:
 static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
 	UNUSED(param);
-	cxt->hdr_up = cxt->hdr_down = 50;
+	cxt->hdr_up = cxt->hdr_down = 33;//50
 
 	cxt->hdr_frame_cnt++;
 	if (cxt->hdr_frame_cnt == cxt->hdr_cb_cnt) {
