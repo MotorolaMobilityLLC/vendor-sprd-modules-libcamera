@@ -4388,7 +4388,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 i = 0;
     cmr_u32 mem_size, buffer_size, frame_size, y_addr, u_addr = 0;
     cmr_s32 fd = 0;
-    cmr_u32 y_addr_vir, u_addr_vir = 0;
+    cmr_uint y_addr_vir, u_addr_vir = 0;
     cmr_u32 no_scaling = 0;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;

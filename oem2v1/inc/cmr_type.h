@@ -117,9 +117,9 @@ struct refocus_info {
     cmr_u32 channel_id;
     cmr_uint sec;
     cmr_uint usec;
-    cmr_u32 base;
-    cmr_u32 yaddr;
-    cmr_u32 yaddr_vir;
+    cmr_uint base;
+    cmr_uint yaddr;
+    cmr_uint yaddr_vir;
     cmr_u32 mfd;
 };
 
@@ -133,12 +133,12 @@ struct frm_info {
     cmr_u32 length;
     cmr_u32 base;
     cmr_u32 fmt;
-    cmr_u32 yaddr;
-    cmr_u32 uaddr;
-    cmr_u32 vaddr;
-    cmr_u32 yaddr_vir;
-    cmr_u32 uaddr_vir;
-    cmr_u32 vaddr_vir;
+    cmr_uint yaddr;
+    cmr_uint uaddr;
+    cmr_uint vaddr;
+    cmr_uint yaddr_vir;
+    cmr_uint uaddr_vir;
+    cmr_uint vaddr_vir;
     cmr_uint zsl_private;
     cmr_u32 fd;
     cmr_s64 monoboottime;
