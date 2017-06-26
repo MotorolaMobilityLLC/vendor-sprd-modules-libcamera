@@ -64,10 +64,7 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_GET_THIRD_PART_INIT_SFT_AF,
 
 	ISP_PM_CMD_UPDATE_THIRD_PART_BASE = 0x6000,
-
 };
-
-typedef cmr_handle isp_pm_handle_t;
 
 struct isp_pm_init_input {
 	cmr_u32 num;
@@ -100,10 +97,10 @@ struct isp_pm_update_output {
 	cmr_u32 param_size;
 };
 
-isp_pm_handle_t isp_pm_init(struct isp_pm_init_input *input, void *output);
-cmr_s32 isp_pm_ioctl(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output);
-cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output);
-cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output);
+cmr_handle isp_pm_init(struct isp_pm_init_input *input, void *output);
+cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
+cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
+cmr_s32 isp_pm_deinit(cmr_handle handle, void *input, void *output);
 
 #ifdef	 __cplusplus
 }
