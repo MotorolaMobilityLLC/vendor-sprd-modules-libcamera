@@ -54,6 +54,7 @@ EXIF_SPEC_BASIC_T exif_spec_basic = {
     {1, 2, 3, 0}, /*ComponentsConfiguration*/
     640,          /*PixelXDimension will be repace after set*/
     480,          /*PixelYDimension will be repace after set*/
+    0,            /*MimeType*/
 };
 
 static cmr_int set_exif_pri_desc(JINF_EXIF_INFO_T *jinf_exif_info_ptr,

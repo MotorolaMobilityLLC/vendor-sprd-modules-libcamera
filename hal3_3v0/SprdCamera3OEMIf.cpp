@@ -1091,6 +1091,13 @@ int SprdCamera3OEMIf::zslTakePicture() {
             HAL_LOGD("reprocess mode, force enable reprocess");
         }
     }
+    if (mSprdReprocessing) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 mMultiCameraMode);
+    } else {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 MODE_SINGLE_CAMERA);
+    }
     /**add for 3d capture, set raw call back mode & reprocess capture size end*/
 
     if (mIsCancellingCapture) {
@@ -8478,7 +8485,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
 
     case CMR_EVT_ZSL_STOP_MULTI_LAYER:
         obj->processStopMultiLayer(p_data);
-	break;
+        break;
     default:
         HAL_LOGE("unsupported zsl message");
         break;
@@ -9197,76 +9204,77 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
                 default:
                     break;
                 }
+                }
             }
         }
+
+        if (Gsensor_flag) {
+            q->disableSensor(gsensor);
+            Gsensor_flag = 0;
+        }
+        if (Gyro_flag) {
+            q->disableSensor(gyroscope);
+            Gyro_flag = 0;
+        }
+    exit:
+        sem_post(&obj->mGyro_sem);
+        obj->mGyroExit = 1;
+        // mgr.sensorManagerDied();
+        HAL_LOGD("X");
+
+        return NULL;
     }
 
-    if (Gsensor_flag) {
-        q->disableSensor(gsensor);
-        Gsensor_flag = 0;
-    }
-    if (Gyro_flag) {
-        q->disableSensor(gyroscope);
-        Gyro_flag = 0;
-    }
-exit:
-    sem_post(&obj->mGyro_sem);
-    obj->mGyroExit = 1;
-    // mgr.sensorManagerDied();
-    HAL_LOGD("X");
+    int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
+        int ret = NO_ERROR;
+        void *dummy;
+        struct timespec ts;
+        SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
 
-    return NULL;
-}
+        if (!obj) {
+            HAL_LOGE("obj null error");
+            return UNKNOWN_ERROR;
+        }
 
-int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
-    int ret = NO_ERROR;
-    void *dummy;
-    struct timespec ts;
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+        HAL_LOGD("E inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
 
-    if (!obj) {
-        HAL_LOGE("obj null error");
-        return UNKNOWN_ERROR;
-    }
+        if (obj->mGyroInit) {
+            obj->mGyroInit = 0;
 
-    HAL_LOGD("E inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
+            if (!obj->mGyroExit) {
+                if (clock_gettime(CLOCK_REALTIME, &ts)) {
+                    HAL_LOGE("get time failed");
+                    return UNKNOWN_ERROR;
+                }
+                /*when gyro thread proc time is long when camera close, we
+                 * should
+                 * wait for thread end at last 1000ms*/
+                ts.tv_nsec += ms2ns(1000);
+                if (ts.tv_nsec > 1000000000) {
+                    ts.tv_sec += 1;
+                    ts.tv_nsec -= 1000000000;
+                }
+                ret = sem_timedwait(&obj->mGyro_sem, &ts);
+                if (ret)
+                    HAL_LOGW("wait for gyro timeout");
+            } else
+                HAL_LOGW("gyro thread already end");
 
-    if (obj->mGyroInit) {
-        obj->mGyroInit = 0;
-
-        if (!obj->mGyroExit) {
-            if (clock_gettime(CLOCK_REALTIME, &ts)) {
-                HAL_LOGE("get time failed");
-                return UNKNOWN_ERROR;
-            }
-            /*when gyro thread proc time is long when camera close, we should
-             * wait for thread end at last 1000ms*/
-            ts.tv_nsec += ms2ns(1000);
-            if (ts.tv_nsec > 1000000000) {
-                ts.tv_sec += 1;
-                ts.tv_nsec -= 1000000000;
-            }
-            ret = sem_timedwait(&obj->mGyro_sem, &ts);
-            if (ret)
-                HAL_LOGW("wait for gyro timeout");
-        } else
-            HAL_LOGW("gyro thread already end");
-
-        sem_destroy(&obj->mGyro_sem);
-        // ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
-        obj->mGyroMsgQueHandle = 0;
+            sem_destroy(&obj->mGyro_sem);
+            // ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
+            obj->mGyroMsgQueHandle = 0;
 
 #ifdef CONFIG_CAMERA_EIS
-        while (!obj->mGyroPreviewInfo.empty())
-            obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
-        while (!obj->mGyroVideoInfo.empty())
-            obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+            while (!obj->mGyroPreviewInfo.empty())
+                obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
+            while (!obj->mGyroVideoInfo.empty())
+                obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
 #endif
-    }
-    HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
+        }
+        HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
 
-    return ret;
-}
+        return ret;
+    }
 
 #endif
 }

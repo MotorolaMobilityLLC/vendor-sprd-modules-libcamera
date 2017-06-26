@@ -163,6 +163,7 @@ typedef struct exif_spec_basic_tag {
     EXIF_UNDEFINED_T ComponentsConfiguration[4];
     EXIF_LONG_T PixelXDimension;
     EXIF_LONG_T PixelYDimension;
+    EXIF_LONG_T MimeType;
 } EXIF_SPEC_BASIC_T;
 
 // Tags relating to version, read only.

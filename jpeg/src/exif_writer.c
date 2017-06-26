@@ -1063,6 +1063,21 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
+    {
+        ifd_info.tag = IFD_MIMETYPE;
+        ifd_info.type = IFD_LONG;
+        ifd_info.count = 1;
+        ifd_info.value_offset.long_value = ifd_value_offset - ifh_offset;
+        ifd_info.value_ptr = (void *)&baisc_ptr->MimeType;
+
+        if (!Jpeg_WriteLongIFD(context_ptr, &ifd_info, &ifd_offset, &ifd_value_offset))
+        {
+            return JPEG_FAILED;
+        }
+
+        entries++;
+    }
+
     if (PNULL != rel_file_ptr && rel_file_ptr->valid.RelatedSoundFile)
     {
         ifd_info.tag = IFD_RELATEDSOUNDFILE;

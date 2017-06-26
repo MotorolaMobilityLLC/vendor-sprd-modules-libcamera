@@ -173,6 +173,7 @@ struct setting_hal_param {
     cmr_uint sprd_yuv_callback_enable;
     cmr_uint is_awb_lock;
     cmr_uint sprd_hdr_plus_enable;
+    cmr_uint exif_mime_type;
 };
 
 struct setting_camera_info {
@@ -1055,6 +1056,16 @@ static cmr_int setting_set_focal_length(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_exif_mime_type(struct setting_component *cpt,
+                                          struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->exif_mime_type = parm->cmd_type_value;
+    CMR_LOGD("set exif mime type is %lu", parm->cmd_type_value);
+    return ret;
+}
+
 static cmr_int setting_process_zoom(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -1428,6 +1439,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     uint32_t focal_length_numerator;
     uint32_t focal_length_denominator;
     uint32_t rotation_angle;
+    uint32_t exif_mime_type;
     char property[PROPERTY_VALUE_MAX];
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
@@ -1511,6 +1523,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 
     focal_length_numerator = hal_param->hal_common.focal_length;
     focal_length_denominator = 1000;
+    exif_mime_type = hal_param->exif_mime_type;
     /* Some info is not get from the kernel */
     if (NULL != p_exif_info->spec_ptr) {
         p_exif_info->spec_ptr->basic.PixelXDimension =
@@ -1524,6 +1537,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             p_exif_info->spec_ptr->basic.PixelYDimension =
                 exif_unit->picture_size.width;
         }
+        p_exif_info->spec_ptr->basic.MimeType = exif_mime_type;
     }
     rotation_angle = setting_get_exif_orientation(hal_param->encode_rotation);
     if (rotation_angle == ORIENTATION_ROTATE_90 ||
@@ -3234,7 +3248,7 @@ cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
 }
 
 setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {
-    if (cmd>= CAMERA_PARAM_ZOOM && cmd < SETTING_TYPE_MAX) {
+    if (cmd >= CAMERA_PARAM_ZOOM && cmd < SETTING_TYPE_MAX) {
         return setting_list[cmd];
     } else {
         return NULL;
@@ -3409,6 +3423,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_CLEAR_HDR, setting_clear_hdr);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_HDR_NORMAL_ENABLED,
                              setting_get_sprd_hdr_plus_enable);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
+                             setting_set_exif_mime_type);
     setting_parms_inited = 1;
     return 0;
 }

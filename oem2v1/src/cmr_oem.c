@@ -8085,6 +8085,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_EXIF_MIME_TYPE:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     default:
         CMR_LOGI("don't support %d", id);
     }

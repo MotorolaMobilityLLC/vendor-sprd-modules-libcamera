@@ -862,6 +862,8 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+             MODE_SINGLE_CAMERA);
 
     LENS_Tag lensInfo;
     mSetting->getLENSTag(&lensInfo);
@@ -966,6 +968,8 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
     }
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+             mMultiCameraMode);
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -2034,7 +2038,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         if (!strcmp(value, "false")) {
             fps_param.min_fps = 15;
             fps_param.max_fps = 30;
-         }
+        }
 #endif
 
         // when 3D video recording with face beautify, fix frame rate at 25fps.
@@ -8711,7 +8715,7 @@ void SprdCamera3OEMIf::EisPreview_init() {
             mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
-    //clear preview  gyro
+    // clear preview  gyro
     mGyroPreviewInfo.clear();
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mPreviewParam.f, mPreviewParam.td,
              mPreviewParam.ts);
@@ -8747,7 +8751,7 @@ void SprdCamera3OEMIf::EisVideo_init() {
             mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
-    //clear video  gyro
+    // clear video  gyro
     mGyroVideoInfo.clear();
     mIsRecording = true;
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mVideoParam.f, mVideoParam.td,
@@ -9229,8 +9233,9 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
                         obj->pushEISPreviewQueue(
                             &obj->mGyrodata[obj->mGyroNum]);
                         obj->mReadGyroPreviewCond.signal();
-                        if(obj->mIsRecording) {
-                            obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
+                        if (obj->mIsRecording) {
+                            obj->pushEISVideoQueue(
+                                &obj->mGyrodata[obj->mGyroNum]);
                             obj->mReadGyroVideoCond.signal();
                         }
                         if (++obj->mGyroNum >= obj->kGyrocount)
