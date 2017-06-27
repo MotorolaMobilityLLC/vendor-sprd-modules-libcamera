@@ -104,9 +104,10 @@ camera3_callback_ops SprdCamera3SelfShot::callback_ops_aux = {
 SprdCamera3SelfShot::SprdCamera3SelfShot() {
     HAL_LOGI(" E");
     m_nPhyCameras = 2;
-
+    mAvailableSensorSelfSot = 0;
     mStaticMetadata = NULL;
     setupPhysicalCameras();
+    mStartPreviewTime = 0;
     m_VirtualCamera.id = SELF_SHOT_CAM_MAIN_ID;
     HAL_LOGI("X");
 }
@@ -603,9 +604,8 @@ int SprdCamera3SelfShot::initialize(
     CHECK_HWI_ERROR(hwiMain);
 
     SprdCamera3MultiBase::initialize(MODE_SELF_SHOT);
-    mAvailableSensorSelfSot = 1;
+    mAvailableSensorSelfSot = 0;
     mCallbackOps = callback_ops;
-    mStartPreviewTime = systemTime();
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -719,6 +719,7 @@ int SprdCamera3SelfShot::processCaptureRequest(
         }
         HAL_LOGD("open sub camera ok");
         mOpenSubsensor = true;
+        mStartPreviewTime = systemTime();
     } else if (!mAvailableSensorSelfSot && mOpenSubsensor) {
         HAL_LOGD("cover camera stream off");
         CHECK_HWI_ERROR(m_pPhyCamera[CAM_TYPE_AUX].hwi);
@@ -729,6 +730,7 @@ int SprdCamera3SelfShot::processCaptureRequest(
         }
         HAL_LOGD("close sub camera ok");
         mOpenSubsensor = false;
+        mStartPreviewTime = 0;
     }
 
     return rc;
@@ -781,11 +783,12 @@ void SprdCamera3SelfShot::processCaptureResultMain(
     uint32_t cur_frame_number = result->frame_number;
 
     if (result->output_buffers == NULL && result->result != NULL) {
-        if (mOpenSubsensor && ns2ms(systemTime() - mStartPreviewTime) > 1000) {
+        if (mOpenSubsensor && ns2ms(systemTime() - mStartPreviewTime) > 300) {
             CameraMetadata metadata;
             metadata = result->result;
             SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-            mCoveredValue = getCoveredValue(metadata, hwiSub,
+            SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+            mCoveredValue = getCoveredValue(metadata, hwiSub, hwiMain,
                                             m_pPhyCamera[CAM_TYPE_AUX].id);
             metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
             camera3_capture_result_t new_result = *result;

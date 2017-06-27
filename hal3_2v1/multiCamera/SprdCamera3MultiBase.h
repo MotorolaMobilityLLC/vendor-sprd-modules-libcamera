@@ -71,6 +71,7 @@ class SprdCamera3MultiBase {
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
     virtual uint8_t getCoveredValue(CameraMetadata &frame_settings,
                                     SprdCamera3HWI *hwiSub,
+                                    SprdCamera3HWI *hwiMin,
                                     int convered_camera_id);
     virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
     virtual buffer_handle_t *popBufferList(List<new_mem_t *> &list,
@@ -118,9 +119,15 @@ class SprdCamera3MultiBase {
     int mVFrameCount;
     int mVLastFrameCount;
     nsecs_t mVLastFpsTime;
-    List<uint32_t> mLumaList;
+    // for convered feature
+    List<int> mLumaList;
     multiCameraMode mCameraMode;
-    uint32_t mMinLumaConut;
+    int mLowLumaConut;
+    int mconut;
+    uint32_t mCurScene;
+    uint8_t mBrightConut;
+    uint8_t mLowConut;
+    uint8_t mDarkConut;
 };
 }
 #endif

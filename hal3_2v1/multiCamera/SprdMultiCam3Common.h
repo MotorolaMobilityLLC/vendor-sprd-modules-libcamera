@@ -289,12 +289,13 @@ typedef enum {
     BLUR_SELFSHOT_LOWLIGHT_DISABLE = 0,
     BLUR_SELFSHOT_NO_CONVERED,
     BLUR_SELFSHOT_CONVERED,
-    NORMAL_LIGHT = 3,
-    LOW_LIGHT,
+    NORMAL_LIGHT_VALUE = 3,
+    LOW_LIGHT_VALUE,
     MAX_EXIT
 } sprd_convered_info_t;
 
 enum rot_angle { ROT_0 = 0, ROT_90, ROT_180, ROT_270, ROT_MAX };
+typedef enum { DARK_LIGHT = 0, LOW_LIGHT, BRIGHT_LIGHT } scene_Light;
 };
 
 #endif

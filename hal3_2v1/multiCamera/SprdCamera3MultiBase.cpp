@@ -31,13 +31,17 @@
 
 using namespace android;
 namespace sprdcamera {
-#define MAX_UNMATCHED_QUEUE_BASE_SIZE 3
+#define MAX_UNMATCHED_QUEUE_BASE_SIZE (3)
 #define MATCH_FRAME_TIME_DIFF (15)
-#define LUMA_SOOMTH_COEFF 3
+#define LUMA_SOOMTH_COEFF (5)
+#define DARK_LIGHT_TH (3000)
+#define LOW_LIGHT_TH (1500)
+#define BRIGHT_LIGHT_TH (800)
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
-      mVLastFpsTime(0) {
+      mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
+      mBrightConut(0), mLowConut(0), mDarkConut(0) {
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
 }
@@ -48,7 +52,13 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
 
     mLumaList.clear();
     mCameraMode = mode;
-    mMinLumaConut = 0;
+    mLowLumaConut = 0;
+    mconut = 0;
+    mCurScene = DARK_LIGHT;
+    mBrightConut = 0;
+    mLowConut = 0;
+    mDarkConut = 0;
+
     return rc;
 }
 
@@ -219,22 +229,96 @@ void SprdCamera3MultiBase::convertToRegions(int32_t *rect, int32_t *region,
 
 uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
                                               SprdCamera3HWI *hwiSub,
+                                              SprdCamera3HWI *hwiMin,
                                               int convered_camera_id) {
     int rc = 0;
     uint32_t couvered_value = 0;
-    uint32_t average_value = 0;
-    uint32_t value = 0;
-    uint32_t max_convered_value = 8;
-    uint32_t luma_soomth_coeff = LUMA_SOOMTH_COEFF;
+    int average_value = 0;
+    uint32_t value = 0, main_value = 0;
+    int max_convered_value = 8;
+    int luma_soomth_coeff = LUMA_SOOMTH_COEFF;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
+    int i = 0;
+    if (hwiMin) {
+        rc = hwiMin->getCoveredValue(&main_value);
+        if (rc < 0) {
+            HAL_LOGD("read main sensor failed");
+            main_value = BRIGHT_LIGHT_TH;
+        }
+    } else {
+        main_value = BRIGHT_LIGHT_TH;
+    }
+
+    if (main_value <= BRIGHT_LIGHT_TH) {
+        mCurScene = BRIGHT_LIGHT;
+    } else if (mCameraMode == MODE_SELF_SHOT) {
+        if (main_value <= LOW_LIGHT_TH) {
+            mCurScene = LOW_LIGHT;
+        } else {
+            mCurScene = DARK_LIGHT;
+        }
+    }
+    // 10 frame to see init scene
+    if (mconut < 10) {
+        if (main_value <= BRIGHT_LIGHT_TH) {
+            mCurScene = BRIGHT_LIGHT;
+            mBrightConut++;
+        } else if (main_value <= LOW_LIGHT_TH) {
+            mCurScene = LOW_LIGHT;
+            mLowConut++;
+        } else {
+            mCurScene = DARK_LIGHT;
+            mDarkConut++;
+        }
+        mCurScene = mBrightConut >= mLowConut ? BRIGHT_LIGHT : LOW_LIGHT;
+        if (mCurScene == BRIGHT_LIGHT) {
+            mCurScene = mBrightConut >= mDarkConut ? BRIGHT_LIGHT : DARK_LIGHT;
+        } else {
+            mCurScene = mLowConut >= mDarkConut ? LOW_LIGHT : DARK_LIGHT;
+        }
+        mconut++;
+    }
+    HAL_LOGD("avCurScene=%u,main_value=%u", mCurScene, main_value);
+
+    if (mCurScene == BRIGHT_LIGHT) {
+        if (main_value > DARK_LIGHT_TH) {
+            // convered main camera
+            luma_soomth_coeff = 1;
+            max_convered_value = MAX_CONVERED_VALURE + 5;
+        } else if (main_value > LOW_LIGHT_TH) {
+            // convered main camera or low light or move
+            luma_soomth_coeff = LUMA_SOOMTH_COEFF;
+            max_convered_value = MAX_CONVERED_VALURE - 2;
+        } else if (main_value < 200) {
+            // high bright light, sensitivity high
+            max_convered_value = MAX_CONVERED_VALURE + 5;
+            luma_soomth_coeff = 1;
+        } else if (main_value < BRIGHT_LIGHT_TH - 400) {
+            // bright light, sensitivity high
+            max_convered_value = MAX_CONVERED_VALURE;
+            luma_soomth_coeff = 2;
+        } else {
+            luma_soomth_coeff = LUMA_SOOMTH_COEFF;
+            max_convered_value = MAX_CONVERED_VALURE;
+        }
+    } else if (mCurScene == LOW_LIGHT) {
+        max_convered_value = 3;
+    } else {
+        max_convered_value = -1;
+    }
+    property_get("debug.camera.covered_max_th", prop, "0");
+    if (0 != atoi(prop)) {
+        max_convered_value = atoi(prop);
+    }
 
     property_get("debug.camera.covered", prop, "0");
     rc = hwiSub->getCoveredValue(&value);
     if (rc < 0) {
         HAL_LOGD("read sub sensor failed");
     }
+
     if (0 != atoi(prop)) {
         value = atoi(prop);
     }
@@ -242,49 +326,33 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     if (0 != atoi(prop)) {
         luma_soomth_coeff = atoi(prop);
     }
-    if (mLumaList.size() >= luma_soomth_coeff) {
-        List<uint32_t>::iterator itor = mLumaList.begin();
+    if ((int)mLumaList.size() >= luma_soomth_coeff) {
+        List<int>::iterator itor = mLumaList.begin();
         mLumaList.erase(itor);
     }
-    mLumaList.push_back(value);
-    for (List<uint32_t>::iterator i = mLumaList.begin(); i != mLumaList.end();
-         i++) {
+    mLumaList.push_back((int)value);
+    for (List<int>::iterator i = mLumaList.begin(); i != mLumaList.end(); i++) {
         average_value += *i;
     }
     if (average_value)
         average_value /= mLumaList.size();
 
-    switch (mCameraMode) {
-    case MODE_BLUR:
-        max_convered_value = MAX_CONVERED_VALURE;
-        break;
-    case MODE_SELF_SHOT:
-        max_convered_value = MAX_CONVERED_VALURE;
-        break;
-    case MODE_PAGE_TURN:
-        max_convered_value = MAX_CONVERED_VALURE;
-        break;
-    default:
-        max_convered_value = MAX_CONVERED_VALURE;
-    }
-    property_get("debug.camera.covered_max_th", prop, "0");
-    if (0 != atoi(prop)) {
-        max_convered_value = atoi(prop);
-    }
     if (average_value < max_convered_value) {
-        mMinLumaConut++;
+        mLowLumaConut++;
     } else {
-        mMinLumaConut = 0;
+        mLowLumaConut = 0;
     }
-    if (mMinLumaConut >= luma_soomth_coeff) {
+    if (mLowLumaConut >= luma_soomth_coeff) {
         couvered_value = BLUR_SELFSHOT_CONVERED;
     } else {
         couvered_value = BLUR_SELFSHOT_NO_CONVERED;
     }
-    HAL_LOGD("update_value %u ,ori value=%u ,average_value=%u,mMinLumaConut=%u",
-             couvered_value, value, average_value, mMinLumaConut);
-    if (mMinLumaConut >= luma_soomth_coeff) {
-        mMinLumaConut--;
+    HAL_LOGD("update_value %u ,ori value=%u "
+             ",average_value=%u,mLowLumaConut=%u,th:%d",
+             couvered_value, value, average_value, mLowLumaConut,
+             max_convered_value);
+    if (mLowLumaConut >= luma_soomth_coeff) {
+        mLowLumaConut--;
     }
     // update face[10].score info to mean convered value when api1 is used
     {

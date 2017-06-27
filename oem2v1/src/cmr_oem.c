@@ -9862,16 +9862,30 @@ void camera_set_oem_multimode(multiCameraMode camera_mode) {
 }
 
 cmr_int camera_local_get_cover(cmr_handle oem_handle, cmr_u32 *cover_value) {
-    cmr_int ret;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
     SENSOR_VAL_T val;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    CMR_LOGD("E");
-    val.type = SENSOR_VAL_TYPE_GET_BV;
-    val.pval = cover_value;
-    ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                           SENSOR_ACCESS_VAL, (cmr_uint)&val);
+    CMR_LOGD("E id=%d", cxt->camera_id);
+    if (cxt->camera_id < 2) {
 
+        struct camera_context *cxt = (struct camera_context *)oem_handle;
+        struct isp_context *isp_cxt = &cxt->isp_cxt;
+        struct common_isp_cmd_param isp_param;
+
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
+                               &isp_param);
+        cmr_u32 adgain = isp_param.isp_adgain.adgain;
+        cmr_u32 exp_time = isp_param.isp_adgain.exp_time;
+        cmr_u32 bv = isp_param.isp_adgain.bv;
+        CMR_LOGD("tadgain=%d, exp_time=%d, bv=%d", adgain, exp_time, bv);
+        *cover_value = adgain;
+    } else {
+        val.type = SENSOR_VAL_TYPE_GET_BV;
+        val.pval = cover_value;
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                               SENSOR_ACCESS_VAL, (cmr_uint)&val);
+    }
     CMR_LOGD("done");
     return ret;
 }

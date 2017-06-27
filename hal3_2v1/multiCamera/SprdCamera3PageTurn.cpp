@@ -778,7 +778,7 @@ void SprdCamera3PageTurn::processCaptureResultMain() {
     // send meta
     CameraMetadata metadata;
     mCoveredValue = getCoveredValue(metadata, m_pPhyCamera[CAM_TYPE_MAIN].hwi,
-                                    m_pPhyCamera[CAM_TYPE_MAIN].id);
+                                    NULL, m_pPhyCamera[CAM_TYPE_MAIN].id);
     if (ns2ms(systemTime() - mStartPreviewTime) > 1000) {
         metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
     }

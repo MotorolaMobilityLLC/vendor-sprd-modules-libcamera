@@ -3059,7 +3059,8 @@ void SprdCamera3Blur::processCaptureResultMain(
         } else {
             if (2 == m_nPhyCameras && cur_frame_number > 2) {
                 SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-                coverValue = getCoveredValue(metadata, hwiSub,
+                SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+                coverValue = getCoveredValue(metadata, hwiSub, hwiMain,
                                              m_pPhyCamera[CAM_TYPE_AUX].id);
             } else {
                 char prop[PROPERTY_VALUE_MAX] = {
