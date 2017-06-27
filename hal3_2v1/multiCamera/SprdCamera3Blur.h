@@ -280,6 +280,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase {
     int mjpegSize;
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
+    int mCoverValue;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int blur_camera_id, struct camera_info *info);

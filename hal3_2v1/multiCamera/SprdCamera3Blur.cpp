@@ -104,6 +104,7 @@ SprdCamera3Blur::SprdCamera3Blur() {
     mFlushing = false;
     mReqState = PREVIEW_REQUEST_STATE;
     mPerfectskinlevel = 0;
+    mCoverValue = 1;
     m_pPhyCamera = NULL;
     m_nPhyCameras = 0;
     HAL_LOGI("X");
@@ -2943,7 +2944,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
             HAL_LOGD("mFlushing:%d,frame_number:%d", mFlushing,
                      request->frame_number);
 
-            if (!mFlushing &&
+            if (!mFlushing && mCoverValue == 1 &&
                 !(mCaptureThread->mVersion == 3 &&
                   0 != mCaptureThread->mIspInfo.distance_reminder)) {
                 if (mCaptureThread->mVersion == 3) {
@@ -3032,7 +3033,6 @@ void SprdCamera3Blur::processCaptureResultMain(
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     CameraMetadata metadata;
     metadata = result->result;
-    int coverValue = 1;
 
     /* Direclty pass preview buffer and meta result for Main camera */
     if (result_buffer == NULL && result->result != NULL) {
@@ -3054,26 +3054,26 @@ void SprdCamera3Blur::processCaptureResultMain(
         if (mReqState != PREVIEW_REQUEST_STATE) {
             if (mCaptureThread->mVersion == 3 &&
                 1 == mCaptureThread->mIspInfo.distance_reminder) {
-                coverValue = 6;
+                mCoverValue = 6;
             }
         } else {
             if (2 == m_nPhyCameras && cur_frame_number > 2) {
                 SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
                 SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
-                coverValue = getCoveredValue(metadata, hwiSub, hwiMain,
-                                             m_pPhyCamera[CAM_TYPE_AUX].id);
+                mCoverValue = getCoveredValue(metadata, hwiSub, hwiMain,
+                                              m_pPhyCamera[CAM_TYPE_AUX].id);
             } else {
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
                 property_get("persist.sys.camera.blur.prop7", prop, "1");
                 if (mCaptureThread->mVersion == 3) {
-                    coverValue = atoi(prop);
+                    mCoverValue = atoi(prop);
                 }
             }
         }
 
-        metadata.update(ANDROID_SPRD_BLUR_COVERED, &coverValue, 1);
+        metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoverValue, 1);
         camera3_capture_result_t new_result = *result;
         new_result.result = metadata.release();
         mCaptureThread->mCallbackOps->process_capture_result(
@@ -3081,8 +3081,8 @@ void SprdCamera3Blur::processCaptureResultMain(
         free_camera_metadata(
             const_cast<camera_metadata_t *>(new_result.result));
 
-        HAL_LOGV("cur_frame_number:%d coverValue:%d mReqState:%d",
-                 cur_frame_number, coverValue, mReqState);
+        HAL_LOGV("cur_frame_number:%d mCoverValue:%d mReqState:%d",
+                 cur_frame_number, mCoverValue, mReqState);
         return;
     }
 
@@ -3184,7 +3184,8 @@ void SprdCamera3Blur::processCaptureResultMain(
                 if (i->frame_number == result->frame_number) {
                     if (result->output_buffers->status !=
                             CAMERA3_BUFFER_STATUS_ERROR &&
-                        mReqState == PREVIEW_REQUEST_STATE) {
+                        mReqState == PREVIEW_REQUEST_STATE &&
+                        mCoverValue == 1) {
                         if (!mFlushing &&
                             !(mCameraId == CAM_BLUR_MAIN_ID_2 &&
                               mCaptureThread->mLastFaceNum <= 0 &&
