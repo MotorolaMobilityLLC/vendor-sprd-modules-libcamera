@@ -123,6 +123,7 @@ struct ae_info {
 	cmr_handle handle;
 	struct isp3a_ae_hw_cfg hw_cfg;
 	cmr_u32 hw_iso_speed;
+	cmr_int ui_metering_mode;
 	struct ae_ctrl_proc_out proc_out;
 	struct isp3a_statistics_data statistics_buffer[ISP3A_STATISTICS_BUF_NUM];
 };
@@ -946,7 +947,11 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 				   (void *)&af_notice, sizeof(struct isp_af_notice));
 
 	/* change ae measure mode */
-	ae_in.measure_lum.lum_mode = AE_CTRL_MEASURE_LUM_CENTER;
+	if (cxt->ae_cxt.ui_metering_mode == -1)
+		ae_in.measure_lum.lum_mode = AE_CTRL_MEASURE_LUM_CENTER;
+	else
+		ae_in.measure_lum.lum_mode = cxt->ae_cxt.ui_metering_mode;
+
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_MEASURE_LUM, &ae_in, NULL);
 exit:
 	ISP_LOGI("done, %ld", ret);
@@ -1284,6 +1289,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	if (ret) {
 		ISP_LOGE("failed to AE initialize");
 	}
+	cxt->ae_cxt.ui_metering_mode = -1;
 	cxt->ae_cxt.hw_cfg = ae_output.hw_cfg;
 	cxt->ae_cxt.hw_iso_speed = ae_output.hw_iso_speed;
 
@@ -2005,6 +2011,7 @@ cmr_int isp3a_set_measure_lum(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
+	cxt->ae_cxt.ui_metering_mode = *(cmr_u32 *)param_ptr;
 	ae_in.measure_lum.lum_mode = *(cmr_u32 *)param_ptr;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_MEASURE_LUM, &ae_in, NULL);
 exit:
