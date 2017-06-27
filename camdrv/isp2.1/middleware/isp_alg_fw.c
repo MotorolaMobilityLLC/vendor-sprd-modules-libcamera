@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <dlfcn.h>
+#include <cutils/properties.h>
 #include "isp_alg_fw.h"
 #include "cmr_msg.h"
 #include "isp_dev_access.h"
@@ -52,6 +53,7 @@ struct commn_info {
 
 struct ae_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	struct isp_time time;
 	cmr_u8 *log_alc_ae;
 	cmr_u32 log_alc_ae_size;
@@ -73,6 +75,7 @@ struct ae_info {
 
 struct awb_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	cmr_u32 alc_awb;
 	cmr_s32 awb_pg_flag;
 	cmr_u8 *log_alc_awb;
@@ -101,6 +104,7 @@ struct smart_info {
 
 struct afl_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	cmr_uint vir_addr;
 	cmr_int buf_size;
 	cmr_int buf_num;
@@ -113,6 +117,7 @@ struct afl_info {
 
 struct af_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	cmr_u8 *log_af;
 	cmr_u32 log_af_size;
 };
@@ -125,6 +130,7 @@ struct aft_info {
 
 struct pdaf_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	cmr_u8 pdaf_support;
 	cmr_u8 pdaf_en;
 	//struct pdaf_ctrl_process_out proc_out;
@@ -132,6 +138,7 @@ struct pdaf_info {
 
 struct lsc_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	void *lsc_tab_address;
 	cmr_u32 lsc_tab_size;
 	cmr_u32 isp_smart_lsc_lock;
@@ -802,6 +809,29 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	return ret;
 }
 
+static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
+				       struct isp_statis_info *statis_info, cmr_u32 buf_property)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_statis_buf_input statis_buf;
+
+	memset((void *)&statis_buf, 0, sizeof(statis_buf));
+	statis_buf.buf_size = statis_info->buf_size;
+	statis_buf.phy_addr = statis_info->phy_addr;
+	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.addr_offset = statis_info->addr_offset;
+	statis_buf.kaddr[0] = statis_info->kaddr[0];
+	statis_buf.kaddr[1] = statis_info->kaddr[1];
+	statis_buf.buf_property = buf_property;
+	statis_buf.buf_flag = 1;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+	return ret;
+}
+
 static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -867,14 +897,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ae_stat_ptr->g_info[i] = (((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff)) << cxt->ae_cxt.shift;
 		ae_stat_ptr->b_info[i] = (val0 & 0x1fffff) << cxt->ae_cxt.shift;
 	}
-	memset((void *)&statis_buf, 0, sizeof(statis_buf));
-	statis_buf.buf_size = statis_info->buf_size;
-	statis_buf.phy_addr = statis_info->phy_addr;
-	statis_buf.vir_addr = statis_info->vir_addr;
-	statis_buf.addr_offset = statis_info->addr_offset;
-	statis_buf.buf_property = ISP_AEM_BLOCK;
-	statis_buf.buf_flag = 1;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AEM_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
@@ -891,6 +914,10 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	struct ae_calc_out ae_result;
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
+
+	if (cxt->ae_cxt.sw_bypass) {
+		return ret;
+	}
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&gain, NULL);
@@ -1147,7 +1174,9 @@ exit:
 	return ret;
 }
 
-static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_awb_calc_info *awb_calc_info, struct awb_ctrl_calc_result *result)
+static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
+					 struct isp_awb_calc_info *awb_calc_info,
+					 struct awb_ctrl_calc_result *result)
 {
 	cmr_int ret = ISP_SUCCESS;
 
@@ -1252,15 +1281,17 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		alsc_info.image_width = cxt->commn_cxt.src.w;
 		alsc_info.image_height = cxt->commn_cxt.src.h;
 
-		ret = ispalg_alsc_calc(isp_alg_handle,
-				       cxt->lsc_cxt.ae_out_stats.r_info,
-				       cxt->lsc_cxt.ae_out_stats.g_info,
-				       cxt->lsc_cxt.ae_out_stats.b_info,
-				       &alsc_info.stat_img_size, &alsc_info.win_size,
-				       alsc_info.image_width, alsc_info.image_height,
-				       alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain,
-				       alsc_info.stable);
-		ISP_TRACE_IF_FAIL(ret, ("alsc_calc fail "));
+		if (!cxt->lsc_cxt.sw_bypass) {
+			ret = ispalg_alsc_calc(isp_alg_handle,
+					       cxt->lsc_cxt.ae_out_stats.r_info,
+					       cxt->lsc_cxt.ae_out_stats.g_info,
+					       cxt->lsc_cxt.ae_out_stats.b_info,
+					       &alsc_info.stat_img_size, &alsc_info.win_size,
+					       alsc_info.image_width, alsc_info.image_height,
+					       alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain,
+					       alsc_info.stable);
+			ISP_TRACE_IF_FAIL(ret, ("alsc_calc fail "));
+		}
 	}
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-smart:%zd ms", time_end - time_start);
@@ -1329,10 +1360,15 @@ cmr_int ispalg_ae_awb_process(cmr_handle isp_alg_handle)
 	memset(&awb_result, 0, sizeof(awb_result));
 	memset(&ae_result, 0, sizeof(ae_result));
 
+	if (cxt->ae_cxt.sw_bypass) //TBD
+		goto exit;
 	ret = ispalg_start_ae_process((cmr_handle) cxt, &awb_calc_info);
 	if (ret) {
 		goto exit;
 	}
+
+	if (cxt->awb_cxt.sw_bypass)
+		goto exit;
 
 	ret = ispalg_start_awb_process((cmr_handle) cxt, &awb_calc_info, &awb_result);
 	if (ret) {
@@ -1370,6 +1406,15 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	//memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
 	ae_stat_ptr = cxt->aem_stats;
 
+	if (cxt->afl_cxt.sw_bypass) {
+		ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AFL_BLOCK);
+		if (ret) {
+			ISP_LOGE("fail to set statis buf");
+		}
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 0);
+		goto exit;
+	}
+
 	bypass = 1;
 	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
 
@@ -1404,14 +1449,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_TRACE_IF_FAIL(ret, ("afl process fail "));
 	}
 
-	memset((void *)&statis_buf, 0, sizeof(statis_buf));
-	statis_buf.buf_size = statis_info->buf_size;
-	statis_buf.phy_addr = statis_info->phy_addr;
-	statis_buf.vir_addr = statis_info->vir_addr;
-	statis_buf.addr_offset= statis_info->addr_offset;
-	statis_buf.buf_property = ISP_AFL_BLOCK;
-	statis_buf.buf_flag = 1;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AFL_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
@@ -1453,30 +1491,23 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	case AF_DATA_AF:{
 			struct isp_statis_buf_input statis_buf;
 			statis_info = (struct isp_statis_info *)in_ptr;
+			cmr_u32 af_temp[30];
+
 			ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 			ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
-			cmr_u32 af_temp[30];
+
 			for (i = 0; i < 30; i++) {
 				af_temp[i] = (cmr_u32)*((cmr_uint *) u_addr + i);
 			}
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps = cxt->sensor_fps;
 			calc_param.data = (void *)(af_temp);
-			if (cxt->ops.af_ops.process) {
+			if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
 				ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
 				ISP_TRACE_IF_FAIL(ret, ("af process fail "));
 			}
 
-			memset((void *)&statis_buf, 0, sizeof(statis_buf));
-			statis_buf.buf_size = statis_info->buf_size;
-			statis_buf.phy_addr = statis_info->phy_addr;
-			statis_buf.vir_addr = statis_info->vir_addr;
-			statis_buf.addr_offset = statis_info->addr_offset;
-			statis_buf.kaddr[0] = statis_info->kaddr[0];
-			statis_buf.kaddr[1] = statis_info->kaddr[1];
-			statis_buf.buf_property = ISP_AFM_BLOCK;
-			statis_buf.buf_flag = 1;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+			ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AFM_BLOCK);
 			if (ret) {
 				ISP_LOGE("fail to set statis buf");
 			}
@@ -1484,7 +1515,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		}
 	case AF_DATA_IMG_BLK:
 		calc_param.data_type = AF_DATA_IMG_BLK;
-		if (cxt->ops.af_ops.process)
+		if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass)
 			ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
 		break;
 	case AF_DATA_AE:
@@ -1503,7 +1534,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_statis_info *statis_info = NULL;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
 	cmr_uint u_addr = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct pdaf_ctrl_param_out pdaf_param_out;
@@ -1512,8 +1543,6 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-
-	statis_info = (struct isp_statis_info *)in_ptr;
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
@@ -1525,20 +1554,12 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 		cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
 
 	ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
-	if (!pdaf_param_out.is_busy) {
+	if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
 		if (cxt->ops.pdaf_ops.process)
 			ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 	}
 
-	statis_buf.buf_size = statis_info->buf_size;
-	statis_buf.phy_addr = statis_info->phy_addr;
-	statis_buf.vir_addr = statis_info->vir_addr;
-	statis_buf.addr_offset= statis_info->addr_offset;
-	statis_buf.kaddr[0] = statis_info->kaddr[0];
-	statis_buf.kaddr[1] = statis_info->kaddr[1];
-	statis_buf.buf_property = ISP_PDAF_BLOCK;
-	statis_buf.buf_flag = 1;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_PDAF_BLOCK);
 
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -1702,13 +1723,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 
 	ISP_LOGV("binning_stats_size=(%d, %d)\n", cxt->binning_stats.binning_size.w, cxt->binning_stats.binning_size.h);
 
-	memset((void *)&statis_buf, 0, sizeof(statis_buf));
-	statis_buf.buf_size = statis_info->buf_size;
-	statis_buf.phy_addr = statis_info->phy_addr;
-	statis_buf.vir_addr = statis_info->vir_addr;
-	statis_buf.addr_offset = statis_info->addr_offset;
-	statis_buf.buf_property = ISP_BINNING_BLOCK, statis_buf.buf_flag = 1;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_BINNING_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
@@ -2343,30 +2358,70 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	return ret;
 }
 
+static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
+{
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+
+	property_get("persist.sys.camera.bypass.ae", value, "0");
+	if (1 == atoi(value)) {
+		cxt->ae_cxt.sw_bypass = 1;
+		ISP_LOGI("ae sw bypass");
+	}
+	property_get("persist.sys.camera.bypass.af", value, "0");
+	if (1 == atoi(value)) {
+		cxt->af_cxt.sw_bypass = 1;
+		ISP_LOGI("af sw bypass");
+	}
+	property_get("persist.sys.camera.bypass.awb", value, "0");
+	if (1 == atoi(value)) {
+		cxt->awb_cxt.sw_bypass = 1;
+		ISP_LOGI("awb sw bypass");
+	}
+	property_get("persist.sys.camera.bypass.lsc", value, "0");
+	if (1 == atoi(value)) {
+		cxt->lsc_cxt.sw_bypass = 1;
+		ISP_LOGI("lsc sw bypass");
+	}
+	property_get("persist.sys.camera.bypass.pdaf", value, "0");
+	if (1 == atoi(value)) {
+		cxt->pdaf_cxt.sw_bypass = 1;
+		ISP_LOGI("pdaf sw bypass");
+	}
+	property_get("persist.sys.camera.bypass.afl", value, "0");
+	if (1 == atoi(value)) {
+		cxt->afl_cxt.sw_bypass = 1;
+	}
+
+	return ISP_SUCCESS;
+}
+
 static cmr_u32 ispalg_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 
 	ret = ispalg_afl_init(cxt, input_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to do anti_flicker param update"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to do afl_init"));
 
 	ret = ispalg_awb_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_init"));
 
 	ret = ispalg_ae_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do ae_ctrl_init"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to do ae_init"));
 
 	ret = ispalg_smart_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_init"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to do smart_init"));
 
 	ret = ispalg_af_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do af_ctrl_init"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to do af_init"));
 
 	ret = ispalg_pdaf_init(cxt, input_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do pdaf_ctrl_init"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to do pdaf_init"));
 
 	ret = ispalg_lsc_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_lsc_init"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to do lsc_init"));
+
+	ret = ispalg_bypass_init(cxt);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do bypass_init"));
 
 	ISP_LOGI("done %ld", ret);
 	return ret;
