@@ -3037,9 +3037,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
 	flash_in.tune_info = &cxt->dflash_param[0];
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	flash_in.tune_info = NULL;
-#endif
 	flash_in.statH  = cxt->monitor_unit.win_num.h;
 	flash_in.statW = cxt->monitor_unit.win_num.w;
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
