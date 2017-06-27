@@ -38,6 +38,7 @@ enum allib_awb_response_type_t {
 	alawb_response_stable = 0,
 	alawb_response_quick_act,
 	alawb_response_direct,
+	alawb_response_clear,
 	alawb_response_unknow
 };
 

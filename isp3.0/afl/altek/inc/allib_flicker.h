@@ -19,6 +19,7 @@
 #define FLICKERINIT_MAX_FPS                 ( 3000 )
 #define FLICKERINIT_LINETIME                ( 9900 ) /* unit: ns(nano second) */
 #define REFERENCE_PREVIOUS_DATA_INTERVAL    ( 1 )
+#define REFERENCE_PREVIOUS_DATA_INTERVAL2   ( 3 )
 
 
 #ifdef __cplusplus
