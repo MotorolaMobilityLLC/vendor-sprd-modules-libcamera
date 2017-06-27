@@ -212,6 +212,7 @@ typedef struct _af_ctrl {
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
+	struct isp_face_area face_info;
 	pthread_mutex_t af_work_lock;
 	pthread_mutex_t caf_work_lock;
 	sem_t af_wait_caf;
@@ -246,11 +247,11 @@ typedef struct _af_ctrl {
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
 	afm_tuning_sharkl2 afm_tuning;
-	cmr_u32 face_cnt;
 	struct aft_proc_calc_param prm_ae;
 	struct aft_proc_calc_param prm_af;
 	struct aft_proc_calc_param prm_sensor;
 	struct aft_proc_calc_param prm_pd;
+	struct aft_proc_calc_param prm_fd;
 	isp_awb_statistic_hist_info_t rgb_stat;
 	cmr_u32 trigger_source_type;
 	struct af_ctrl_otp_info otp_info;

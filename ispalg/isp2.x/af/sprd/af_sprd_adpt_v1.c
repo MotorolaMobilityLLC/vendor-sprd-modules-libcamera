@@ -1301,7 +1301,6 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 	pthread_mutex_unlock(&af->af_work_lock);
 	do_start_af(af);
 	af->vcm_stable = 0;
-	faf_trigger_init(af->af_alg_cxt);
 }
 
 static cmr_s32 saf_process_frame(af_ctrl_t * af)
@@ -1364,7 +1363,6 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 
 	notify_start(af);
 	af->vcm_stable = 0;
-	faf_trigger_init(af->af_alg_cxt);
 }
 
 static cmr_s32 caf_process_frame(af_ctrl_t * af)
@@ -1403,6 +1401,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 {
 	struct aft_proc_result res;
 	AF_Trigger_Data aft_in;
+	struct af_trig_info win;
 	memset(&res, 0, sizeof(res));
 
 	trigger_calc(af, prm, &res);
@@ -1412,7 +1411,17 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 		if (res.is_caf_trig || AFV1_TRUE == af->force_trigger) {
 			ISP_LOGI("lib trigger af %d, force trigger %d", res.is_caf_trig, af->force_trigger);
 			pthread_mutex_lock(&af->af_work_lock);
-			caf_start(af, &res);
+			if (AFT_DATA_FD == prm->active_data_type) {
+				win.win_num = 1;
+				win.win_pos[0].sx = prm->fd_info.face_info[0].sx;
+				win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
+				win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
+				win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
+				af->state = STATE_FAF;
+				faf_start(af, &win);
+			} else {
+				caf_start(af, &res);
+			}
 			af->focus_state = AF_SEARCHING;
 			af->force_trigger = (AFV1_FALSE);
 			pthread_mutex_unlock(&af->af_work_lock);
@@ -1579,69 +1588,63 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 
 static void caf_monitor_process_fd(af_ctrl_t * af)
 {
-	ISP_LOGV("face detect af state = %s", STATE_STRING(af->state));
 
-	if (STATE_NORMAL_AF == af->state) {
-		return;
-	} else {
-		cmr_u8 trigger = face_dectect_trigger(af->af_alg_cxt);
-		if (trigger) {
-			if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
-				af_stop_search(af);
-				trigger_set_mode(af, AFT_MODE_NORMAL);
-				trigger_stop(af);
-			} else if (STATE_FAF == af->state) {
-				pthread_mutex_lock(&af->af_work_lock);
-				AF_STOP(af->af_alg_cxt);
-				AF_Process_Frame(af->af_alg_cxt);
-				pthread_mutex_unlock(&af->af_work_lock);
-			}
-			af->pre_state = af->state;
-			af->state = STATE_FAF;
-			faf_start(af, NULL);
-			ISP_LOGV("FAF Trigger");
-		}
+	struct aft_proc_calc_param *prm = &(af->prm_fd);
+	cmr_u8 i = 0;
+
+	memset(prm, 0, sizeof(struct aft_proc_calc_param));
+	prm->active_data_type = AFT_DATA_FD;
+
+	i = sizeof(prm->fd_info.face_info) / sizeof(prm->fd_info.face_info[0]);
+	prm->fd_info.face_num = i > af->face_info.face_num ? af->face_info.face_num : i;
+
+	i = 0;
+	while (i < prm->fd_info.face_num) {
+		prm->fd_info.face_info[i].sx = af->face_info.face_info[i].sx;
+		prm->fd_info.face_info[i].ex = af->face_info.face_info[i].ex;
+		prm->fd_info.face_info[i].sy = af->face_info.face_info[i].sy;
+		prm->fd_info.face_info[i].ey = af->face_info.face_info[i].ey;
+		i++;
 	}
+	prm->fd_info.frame_width = af->face_info.frame_width;
+	prm->fd_info.frame_height = af->face_info.frame_height;
+
+	caf_monitor_calc(af, prm);
 }
 
 static void caf_monitor_process(af_ctrl_t * af)
 {
 	if (af->trigger_source_type & AF_DATA_FD) {
-		af->face_cnt = 0;
 		af->trigger_source_type &= (~AF_DATA_FD);
 		caf_monitor_process_fd(af);
-	} else {
-		if (20 > af->face_cnt) {
-			af->face_cnt++;
-			return;
-		}
-
-		if (af->trigger_source_type & AF_DATA_AF) {
-			af->trigger_source_type &= (~AF_DATA_AF);
-			caf_monitor_process_af(af);
-		}
-
-		if (af->trigger_source_type & AF_DATA_AE) {
-			af->trigger_source_type &= (~AF_DATA_AE);
-			caf_monitor_process_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
-		}
-
-		if (af->trigger_source_type & AF_DATA_PD) {
-			af->trigger_source_type &= (~AF_DATA_PD);
-			caf_monitor_process_phase_diff(af);
-		}
-
-		if (af->trigger_source_type & AF_DATA_G) {
-			struct af_aux_sensor_info_t aux_sensor_info;
-			aux_sensor_info.type = AF_ACCELEROMETER;
-			aux_sensor_info.gsensor_info.vertical_up = af->gsensor_info.vertical_up;
-			aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
-			aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
-			aux_sensor_info.gsensor_info.timestamp = af->gsensor_info.timestamp;
-			caf_monitor_process_sensor(af, &aux_sensor_info);
-			af->trigger_source_type &= (~AF_DATA_G);
-		}
 	}
+
+	if (af->trigger_source_type & AF_DATA_AF) {
+		af->trigger_source_type &= (~AF_DATA_AF);
+		caf_monitor_process_af(af);
+	}
+
+	if (af->trigger_source_type & AF_DATA_AE) {
+		af->trigger_source_type &= (~AF_DATA_AE);
+		caf_monitor_process_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
+	}
+
+	if (af->trigger_source_type & AF_DATA_PD) {
+		af->trigger_source_type &= (~AF_DATA_PD);
+		caf_monitor_process_phase_diff(af);
+	}
+
+	if (af->trigger_source_type & AF_DATA_G) {
+		struct af_aux_sensor_info_t aux_sensor_info;
+		aux_sensor_info.type = AF_ACCELEROMETER;
+		aux_sensor_info.gsensor_info.vertical_up = af->gsensor_info.vertical_up;
+		aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
+		aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
+		aux_sensor_info.gsensor_info.timestamp = af->gsensor_info.timestamp;
+		caf_monitor_process_sensor(af, &aux_sensor_info);
+		af->trigger_source_type &= (~AF_DATA_G);
+	}
+
 	return;
 }
 
@@ -2059,12 +2062,8 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct isp_face_area *face = (struct isp_face_area *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
-	if (NULL != face && 0 != face->face_num && STATE_FAF != af->state) {
-		cmr_u32 index = 0;
-		while (index < face->face_num) {
-			AF_record_faces(af->af_alg_cxt, index, face->face_info[index].sx, face->face_info[index].sy, face->face_info[index].ex, face->face_info[index].ey);
-			index = index + 1;
-		}
+	if (NULL != face && 0 != face->face_num) {
+		memcpy(&af->face_info, face, sizeof(struct isp_face_area));
 		af->trigger_source_type |= AF_DATA_FD;
 	}
 	return rtn;
@@ -2383,7 +2382,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	pthread_mutex_init(&af->caf_work_lock, NULL);
 	sem_init(&af->af_wait_caf, 0, 0);
 
-	faf_trigger_init(af->af_alg_cxt);
 	if (trigger_init(af, CAF_TRIGGER_LIB) != 0) {
 		ISP_LOGE("fail to init trigger");
 		goto ERROR_INIT;

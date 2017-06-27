@@ -76,6 +76,7 @@ enum aft_calc_data_type {
 	AFT_DATA_SENSOR,
 	AFT_DATA_CAF,
 	AFT_DATA_PD,
+	AFT_DATA_FD,
 	AFT_DATA_MAX
 };
 
@@ -161,6 +162,28 @@ struct aft_phase_diff_info {
 	cmr_u32 reserved[16];
 };
 
+struct prime_face_base_info {
+	cmr_u32 sx;
+	cmr_u32 ex;
+	cmr_u32 sy;
+	cmr_u32 ey;
+	cmr_u32 area;
+};
+
+struct isp_face_coor {
+	cmr_u32 sx;
+	cmr_u32 ex;
+	cmr_u32 sy;
+	cmr_u32 ey;
+};
+
+struct aft_face_info {
+	cmr_u16 face_num;
+	cmr_u16 frame_width;
+	cmr_u16 frame_height;
+	struct isp_face_coor face_info[10];
+};
+
 struct aft_common_info {
 	cmr_u32 registor_pos;
 	cmr_u32 otp_inf_pos;
@@ -198,6 +221,7 @@ struct aft_proc_calc_param {
 	struct aft_caf_blk_info caf_blk_info;
 	struct aft_phase_diff_info pd_info;
 	struct aft_common_info comm_info;
+	struct aft_face_info fd_info;
 };
 
 struct aft_caf_stats_cfg {
