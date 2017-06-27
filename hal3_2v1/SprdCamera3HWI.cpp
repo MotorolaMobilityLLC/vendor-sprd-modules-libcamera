@@ -1617,6 +1617,8 @@ int SprdCamera3HWI::flush() {
     int ret = NO_ERROR;
     int64_t timestamp = 0;
     // Mutex::Autolock l(mLock);
+   if (mOEMIf)
+        mOEMIf->enablePowerHint();
 
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
@@ -1658,6 +1660,8 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = false;
+    if (mOEMIf)
+        mOEMIf->disablePowerHint();
     HAL_LOGI(":hal3: X");
     return 0;
 }

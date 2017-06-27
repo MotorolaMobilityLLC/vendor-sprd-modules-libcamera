@@ -27,6 +27,10 @@ extern "C" {
 
 #include <utils/threads.h>
 #include <utils/RefBase.h>
+#include <binder/IInterface.h>
+#include <binder/BinderService.h>
+#include <powermanager/IPowerManager.h>
+#include <powermanager/PowerManager.h>
 #ifndef MINICAMERA
 #include <binder/MemoryBase.h>
 #endif
@@ -59,6 +63,9 @@ extern "C" {
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
+
+#include <sys/socket.h>
+#include <cutils/sockets.h>
 
 using namespace android;
 
@@ -196,8 +203,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-
+    void thermalEnabled(bool flag);
     void initPowerHint();
+    void deinitPowerHint();
     void enablePowerHint();
     void disablePowerHint();
     int changeDfsPolicy(int dfs_policy);
@@ -726,8 +734,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /*ZSL Monitor Thread*/
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
-
+    uint32_t mPowermanageInited;
+    sp<IPowerManager> mPowerManager;
+    sp<IBinder> mPrfmLock;
+    Mutex mPowermanageLock;
     power_module_t *m_pPowerModule;
+
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
     /* 1- start acceleration, 0 - finish acceleration*/

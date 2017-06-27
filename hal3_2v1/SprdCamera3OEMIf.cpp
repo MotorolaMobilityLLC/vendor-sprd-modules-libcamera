@@ -264,6 +264,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
+      mPowermanageInited(0), mPowerManager(NULL), mPrfmLock(NULL),
       m_pPowerModule(NULL), mHDRPowerHint(0), mHDRPowerHintFlag(0),
       mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
       mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
@@ -469,6 +470,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
     changeDfsPolicy(CAM_EXIT);
     disablePowerHint();
+    deinitPowerHint();
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
@@ -1657,30 +1659,110 @@ void SprdCamera3OEMIf::print_time() {
 #endif
 }
 
+void SprdCamera3OEMIf::thermalEnabled(bool flag) {
+	int therm_fd= -1;
+	int i = 0;
+	char buf[20]={0};
+	char *p = NULL;
+	do {
+		if (i++ < 25) {
+			therm_fd = socket_local_client("thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
+			if (therm_fd <= 0) {
+				HAL_LOGD("%s open thermald  failed: %s\n", __func__,strerror(errno));
+				HAL_LOGD("wait for thermald local server.");
+				usleep(200*1000);
+			} else
+				HAL_LOGD("got the thermald local server.");
+				break;
+		} else {
+			HAL_LOGE("thermald service does not run now");
+			therm_fd = -1;
+			break;
+		}
+	} while (1);
+
+	if (therm_fd > 0) {
+		p = buf;
+		if (flag) {
+			p += snprintf(p, 20, "%s", "SetThmEn");
+		} else {
+			p += snprintf(p, 20, "%s", "SetThmDis");
+		}
+		write(therm_fd, buf, strlen(buf));
+		close(therm_fd);
+		HAL_LOGD("%s, strlen of buf: %d, flag: %d", buf, strlen(buf), flag);
+	}
+}
+
+
 void SprdCamera3OEMIf::initPowerHint() {
 #ifdef HAS_CAMERA_HINTS
-    if (hw_get_module(POWER_HARDWARE_MODULE_ID,
-                      (const hw_module_t **)&m_pPowerModule)) {
-        HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
+    Mutex::Autolock l(&mPowermanageLock);
+    if (mPowerManager == NULL) {
+        // use checkService() to avoid blocking if power service is not up yet
+        sp<IBinder> binder =
+            defaultServiceManager()->checkService(String16("power"));
+        if (binder == NULL) {
+            ALOGE("Thread cannot connect to the power manager service");
+        } else {
+            mPowerManager = interface_cast<IPowerManager>(binder);
+        }
     }
+
+    if (!mPowermanageInited)
+        mPowermanageInited = 1;
+#endif
+}
+
+void SprdCamera3OEMIf::deinitPowerHint() {
+#ifdef HAS_CAMERA_HINTS
+    mPowermanageInited = 0;
+    if (mPowerManager != NULL)
+        mPowerManager.clear();
+    if (mPrfmLock != NULL)
+        mPrfmLock.clear();
 #endif
 }
 
 void SprdCamera3OEMIf::enablePowerHint() {
 #ifdef HAS_CAMERA_HINTS
-    if (m_pPowerModule && m_pPowerModule->powerHint) {
-        m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-                                  (void *)"state=1");
+    Mutex::Autolock l(&mPowermanageLock);
+    HAL_LOGD("IN ");
+    if (mPrfmLock != NULL) {
+        if (mPowerManager != 0) {
+            ALOGI("releaseWakeLock_l() - Prfmlock ");
+            mPowerManager->releasePrfmLock(mPrfmLock);
+        }
+        mPrfmLock.clear();
     }
+
+    if (mPowerManager != NULL) {
+        sp<IBinder> binder = new BBinder();
+        mPowerManager->acquirePrfmLock(binder, String16("Camera"),
+                                       String16("CameraServer"),
+                                       POWER_HINT_VENDOR_CAMERA_HDR);
+        mPrfmLock = binder;
+    }
+    //disable thermal
+    thermalEnabled(false);
+    HAL_LOGD("OUT");
 #endif
 }
 
 void SprdCamera3OEMIf::disablePowerHint() {
 #ifdef HAS_CAMERA_HINTS
-    if (m_pPowerModule && m_pPowerModule->powerHint) {
-        m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-                                  (void *)"state=0");
+    HAL_LOGD("IN");
+    Mutex::Autolock l(&mPowermanageLock);
+    if (mPrfmLock != 0) {
+        if (mPowerManager != 0) {
+            ALOGI("releaseWakeLock_l() - Prfmlock ");
+            mPowerManager->releasePrfmLock(mPrfmLock);
+        }
+        mPrfmLock.clear();
     }
+    //enable thermal
+    thermalEnabled(true);
+    HAL_LOGD("OUT");
 #endif
 }
 
