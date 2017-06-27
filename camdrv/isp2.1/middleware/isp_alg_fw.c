@@ -227,9 +227,6 @@ struct isp_alg_fw_context {
 	cmr_handle handle_pm;
 	cmr_handle handle_otp;
 
-	cmr_u32 gamma_sof_cnt;
-	cmr_u32 gamma_sof_cnt_eb;
-	cmr_u32 update_gamma_eb;
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
 	cmr_u32 takepicture_mode;
@@ -322,41 +319,44 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	void *in = NULL;
 	UNUSED(data);
 
-	if (NULL != cxt) {
-		switch (cb_type) {
-		case AE_CB_FLASHING_CONVERGED:
-		case AE_CB_CONVERGED:
-		case AE_CB_CLOSE_PREFLASH:
-		case AE_CB_PREFLASH_PERIOD_END:
-		case AE_CB_CLOSE_MAIN_FLASH:
-			cmd = ISP_AE_STAB_CALLBACK;
-			break;
-		case AE_CB_QUICKMODE_DOWN:
-			cmd = ISP_QUICK_MODE_DOWN;
-			break;
-		case AE_CB_TOUCH_AE_NOTIFY:
-		case AE_CB_STAB_NOTIFY:
-			cmd = ISP_AE_STAB_NOTIFY;
-			break;
-		case AE_CB_AE_LOCK_NOTIFY:
-			cmd = ISP_AE_LOCK_NOTIFY;
-			break;
-		case AE_CB_AE_UNLOCK_NOTIFY:
-			cmd = ISP_AE_UNLOCK_NOTIFY;
-			break;
-		case AE_CB_HDR_START:
-			cmd = ISP_HDR_EV_EFFECT_CALLBACK;
-			break;
-		default:
-			cmd = ISP_AE_STAB_CALLBACK;
-			break;
-		}
-
-		if (cxt->commn_cxt.callback) {
-			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, in, 0);
-		}
+	if (!cxt) {
+		ret = -ISP_PARAM_NULL;
+		goto exit;
 	}
 
+	switch (cb_type) {
+	case AE_CB_FLASHING_CONVERGED:
+	case AE_CB_CONVERGED:
+	case AE_CB_CLOSE_PREFLASH:
+	case AE_CB_PREFLASH_PERIOD_END:
+	case AE_CB_CLOSE_MAIN_FLASH:
+		cmd = ISP_AE_STAB_CALLBACK;
+		break;
+	case AE_CB_QUICKMODE_DOWN:
+		cmd = ISP_QUICK_MODE_DOWN;
+		break;
+	case AE_CB_TOUCH_AE_NOTIFY:
+	case AE_CB_STAB_NOTIFY:
+		cmd = ISP_AE_STAB_NOTIFY;
+		break;
+	case AE_CB_AE_LOCK_NOTIFY:
+		cmd = ISP_AE_LOCK_NOTIFY;
+		break;
+	case AE_CB_AE_UNLOCK_NOTIFY:
+		cmd = ISP_AE_UNLOCK_NOTIFY;
+		break;
+	case AE_CB_HDR_START:
+		cmd = ISP_HDR_EV_EFFECT_CALLBACK;
+		break;
+	default:
+		cmd = ISP_AE_STAB_CALLBACK;
+		break;
+	}
+
+	if (cxt->commn_cxt.callback) {
+		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, in, 0);
+	}
+exit:
 	return ret;
 }
 
@@ -502,7 +502,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		break;
 	case ISP_AF_LENS_GET_OTP:
 		if (cxt->ioctrl_ptr->get_otp) {
-			ret = cxt->ioctrl_ptr->get_otp(cxt->ioctrl_ptr->caller_handler, (uint16_t *) param0, (uint16_t *) param1);
+			ret = cxt->ioctrl_ptr->get_otp(cxt->ioctrl_ptr->caller_handler, param0, param1);
 		}
 		break;
 	case ISP_AF_SET_MOTOR_BESTMODE:
@@ -512,7 +512,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		break;
 	case ISP_AF_GET_MOTOR_POS:
 		if (cxt->ioctrl_ptr->get_motor_pos) {
-			ret = cxt->ioctrl_ptr->get_motor_pos(cxt->ioctrl_ptr->caller_handler,  (uint16_t *)param0);
+			ret = cxt->ioctrl_ptr->get_motor_pos(cxt->ioctrl_ptr->caller_handler, param0);
 		}
 		break;
 	case ISP_AF_SET_VCM_TEST_MODE:
@@ -830,10 +830,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 			ISP_TRACE_IF_FAIL(ret, ("isp_dev_cfg_block fail"));
 		}
 
-		if (ISP_BLK_RGB_GAMC == param_data->id) {
-			cxt->gamma_sof_cnt = 0;
-			cxt->update_gamma_eb = 0;
-		}
 		param_data++;
 	}
 
@@ -1817,13 +1813,6 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_SOF:
-		if (cxt->gamma_sof_cnt_eb) {
-			cxt->gamma_sof_cnt++;
-			if (cxt->gamma_sof_cnt >= 2) {
-				cxt->update_gamma_eb = 1;
-			}
-		}
-
 		if (cxt->aem_is_update) {
 			ret = ispalg_ae_awb_process((cmr_handle) cxt);
 			cxt->aem_is_update = 0;
@@ -2685,10 +2674,6 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	struct isp_pm_param_data *param_data;
 	cmr_u32 i = 0;
 
-	cxt->gamma_sof_cnt = 0;
-	cxt->gamma_sof_cnt_eb = 0;
-	cxt->update_gamma_eb = 0;
-
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
@@ -3422,7 +3407,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
-	cxt->gamma_sof_cnt_eb = 1;
 
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl)
@@ -3570,7 +3554,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
-	cxt->gamma_sof_cnt_eb = 1;
 
 	ISP_LOGV("isp start raw proc\n");
 	ret = ispalg_slice_raw_proc(cxt, in_ptr);
