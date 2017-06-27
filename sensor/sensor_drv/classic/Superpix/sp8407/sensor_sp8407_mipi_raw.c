@@ -437,13 +437,19 @@ static cmr_int sp8407_drv_access_val(cmr_handle handle,
  * Initialize Exif Info
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int sp8407_drv_init_exif_info(void) {
-    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_sp8407_exif_info;
+static cmr_int sp8407_drv_init_exif_info(cmr_handle handle,
+                                         void **exif_info_in /*in*/) {
+    cmr_int ret = SENSOR_FAIL;
+    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
+    *exif_info_in = NULL;
+    SENSOR_IC_CHECK_HANDLE(handle);
 
-    memset(&s_sp8407_exif_info, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
+    SENSOR_IC_CHECK_PTR(exif_ptr);
+    *exif_info_in = exif_ptr;
 
     SENSOR_LOGI("Start");
-
     /*aperture = numerator/denominator */
     /*fnumber = numerator/denominator */
     exif_ptr->valid.FNumber = 1;
@@ -460,11 +466,7 @@ static cmr_int sp8407_drv_init_exif_info(void) {
     exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
 
-    return SENSOR_SUCCESS;
-}
-
-static cmr_int sp8407_drv_get_exif_info(cmr_uint param) {
-    return (cmr_uint)&s_sp8407_exif_info;
+    return ret;
 }
 
 /*==============================================================================
@@ -820,9 +822,6 @@ static cmr_int sp8407_drv_handle_create(
     sns_drv_cxt->sensor_ev_info.preview_gain = SENSOR_BASE_GAIN;
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
-    /*get exif pointer*/
-    sns_drv_cxt->exif_ptr = (void*)&s_sp8407_exif_info;
-    
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
@@ -833,7 +832,7 @@ static cmr_int sp8407_drv_handle_create(
 
     /*init exif info,this will be deleted in the future*/
     sp8407_drv_init_mode_fps_info(sns_drv_cxt);
-    sp8407_drv_init_exif_info();
+    sp8407_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
 
     /*add private here*/
     return ret;

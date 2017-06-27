@@ -538,13 +538,19 @@ static cmr_int gc2375_drv_access_val(cmr_handle handle, cmr_int param) {
  * Initialize Exif Info
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int gc2375_drv_InitExifInfo(void) {
-    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_gc2375_exif_info;
+static cmr_int gc2375_drv_init_exif_info(cmr_handle handle,
+                                         void **exif_info_in /*in*/) {
+    cmr_int ret = SENSOR_FAIL;
+    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
+    *exif_info_in = NULL;
+    SENSOR_IC_CHECK_HANDLE(handle);
 
-    memset(&s_gc2375_exif_info, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
+    SENSOR_IC_CHECK_PTR(exif_ptr);
+    *exif_info_in = exif_ptr;
 
     SENSOR_LOGI("Start");
-
     /*aperture = numerator/denominator */
     /*fnumber = numerator/denominator */
     exif_ptr->valid.FNumber = 1;
@@ -561,12 +567,7 @@ static cmr_int gc2375_drv_InitExifInfo(void) {
     exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
 
-    return SENSOR_SUCCESS;
-}
-
-static cmr_int gc2375_drv_get_exif_info(cmr_handle handle, cmr_int param) {
-    UNUSED(param);
-    return (cmr_int)&s_gc2375_exif_info;
+    return ret;
 }
 
 /*==============================================================================
@@ -613,7 +614,7 @@ static cmr_int gc2375_drv_identify(cmr_handle handle, cmr_int param) {
                 SENSOR_LOGI("no identify_otp function!");
             }
 #endif
-            gc2375_drv_InitExifInfo();
+            //gc2375_drv_InitExifInfo();
             ret_value = SENSOR_SUCCESS;
 
         } else {
@@ -947,7 +948,7 @@ static cmr_int gc2375_drv_handle_create(
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
-    sns_drv_cxt->exif_ptr = (void*)&s_gc2375_exif_info;
+    gc2375_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
     /*add private here*/
     return ret;
 }

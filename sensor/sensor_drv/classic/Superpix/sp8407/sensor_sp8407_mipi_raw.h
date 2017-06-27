@@ -119,7 +119,6 @@
 static struct sensor_ic_ops s_sp8407_ops_tab;
 static struct sensor_raw_info *s_sp8407_mipi_raw_info_ptr =
                                    &s_sp8407_mipi_raw_info;
-static EXIF_SPEC_PIC_TAKING_COND_T s_sp8407_exif_info;
 
 static const SENSOR_REG_T sp8407_init_setting1[] = {
     // lsy 20160616

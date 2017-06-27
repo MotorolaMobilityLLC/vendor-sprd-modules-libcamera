@@ -198,8 +198,6 @@ static struct raw_param_info_tab *s_gc2375_raw_param_tab_ptr =
 static struct sensor_ic_ops s_gc2375_ops_tab;
 static struct sensor_raw_info *s_gc2375_mipi_raw_info_ptr =
     &s_gc2375_mipi_raw_info;
-static EXIF_SPEC_PIC_TAKING_COND_T s_gc2375_exif_info;
-
 static const SENSOR_REG_T gc2375_init_setting[] = {
     /*System*/
     {0xfe, 0x00},

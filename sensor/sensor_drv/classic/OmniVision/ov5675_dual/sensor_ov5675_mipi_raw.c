@@ -29,8 +29,6 @@
 #define RES_TRIM_TAB s_ov5675_resolution_trim_tab
 #define MIPI_RAW_INFO g_ov5675_dual_mipi_raw_info
 
-static EXIF_SPEC_PIC_TAKING_COND_T s_ov5675_exif_info;
-
 /*==============================================================================
  * Description:
  * set video mode
