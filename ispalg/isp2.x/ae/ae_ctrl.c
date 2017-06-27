@@ -35,7 +35,6 @@ struct aectrl_cxt {
 	isp_ae_cb ae_set_cb;
 	struct aectrl_work_lib work_lib;
 	struct ae_ctrl_param_out ioctrl_out;
-	struct ae_calc_out proc_out;
 	cmr_u32 bakup_rgb_gain;
 	pthread_mutex_t ioctrl_sync_lock;
 };
@@ -393,7 +392,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 	case AECTRL_EVT_IOCTRL:
 		break;
 	case AECTRL_EVT_PROCESS:
-		rtn = aectrl_process(cxt_ptr, (struct ae_calc_in *)message->data, &cxt_ptr->proc_out);
+		rtn = aectrl_process(cxt_ptr, (struct ae_calc_in *)message->data, NULL);
 		break;
 	default:
 		ISP_LOGE("fail to check param, don't support msg");
@@ -622,6 +621,7 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle_ae;
+	UNUSED(result);
 
 	ISP_CHECK_HANDLE_VALID(handle_ae);
 	CMR_MSG_INIT(message);
@@ -644,10 +644,6 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 		if (message.data)
 			free(message.data);
 		goto exit;
-	}
-
-	if (result) {
-		*result = cxt_ptr->proc_out;
 	}
 
 exit:

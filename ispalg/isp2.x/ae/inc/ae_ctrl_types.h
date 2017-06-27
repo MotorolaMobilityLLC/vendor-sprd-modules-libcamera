@@ -160,6 +160,7 @@ enum ae_cb_type {
 	AE_CB_CLOSE_MAIN_FLASH,
 	AE_CB_HDR_START,
 	AE_CB_LED_NOTIFY,
+	AE_CB_PROCESS_OUT,
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	AE_CB_AE_CALCOUT_NOTIFY,	//for Binding frame and calc ae dt
 	AE_CB_EXPTIME_NOTIFY,
@@ -418,11 +419,6 @@ struct ae_stat_img_info {
 	cmr_u32 exposure;
 	cmr_u32 again;
 	cmr_u32 dgain;
-};
-
-struct tg_ae_ctrl_alc_log {
-	cmr_u8 *log;
-	cmr_u32 size;
 };
 
 struct ae_stat_mode {
