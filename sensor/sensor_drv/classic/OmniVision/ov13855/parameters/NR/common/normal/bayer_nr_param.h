@@ -4858,15 +4858,15 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x30,
+						0x3F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x0190,
 						/*addback0*/
-						0x003E,
+						0x0012,
 						/*addback1*/
-						0x0016,
+						0x0012,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -4882,7 +4882,7 @@
 						/*flat_thresh*/
 						0x01F4,
 						/*addback0*/
-						0x0032,
+						0x0014,
 						/*addback1*/
 						0x0014,
 						/*addback_clip_max*/
@@ -4894,15 +4894,15 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x19,
+						0x20,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
 						0x0258,
 						/*addback0*/
-						0x003E,
+						0x001A,
 						/*addback1*/
-						0x0020,
+						0x001A,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -4913,11 +4913,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0xF6,
+					0xEC,
 					/*addback30*/
-					0x30,
+					0x1A,
 					/*addback31*/
-					0x30,
+					0x1A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4934,13 +4934,13 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x36,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x01C2,
 						/*addback0*/
-						0x003E,
+						0x0016,
 						/*addback1*/
 						0x0016,
 						/*addback_clip_max*/
@@ -4952,13 +4952,13 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x1E,
+						0x28,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x0226,
 						/*addback0*/
-						0x003E,
+						0x001C,
 						/*addback1*/
 						0x0016,
 						/*addback_clip_max*/
@@ -4970,13 +4970,13 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0C,
+						0x18,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
 						0x0212,
 						/*addback0*/
-						0x003E,
+						0x0020,
 						/*addback1*/
 						0x0020,
 						/*addback_clip_max*/
@@ -4989,11 +4989,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x0A,
+					0xF6,
 					/*addback30*/
-					0x30,
+					0x24,
 					/*addback31*/
-					0x30,
+					0x24,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -5108,7 +5108,7 @@
 		/*simple_bpc_bypass*/
 		0x00,
 		/*simple_bpc_thr*/
-		0x04,
+		0x02,
 		/*simple_bpc_lum_thr*/
 		0x012C,
 
@@ -5127,7 +5127,7 @@
 	/*nlm_den_strenth*/
 	0x00,
 	/*imp_opt_bypass*/
-	0x01,
+	0x00,
 	/*vst_bypass*/
 	0x00,
 	/*nlm_bypass*/
