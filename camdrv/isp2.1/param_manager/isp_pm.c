@@ -1472,7 +1472,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 	if (ISP_PM_CMD_GET_MODEID_BY_FPS == cmd) {
 		struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
 		*((cmr_s32 *) out_ptr) = ISP_MODE_ID_VIDEO_0;
-		for (i = ISP_MODE_ID_VIDEO_0; i < ISP_MODE_ID_VIDEO_3; i++) {
+		for (i = ISP_MODE_ID_VIDEO_0; i <= ISP_MODE_ID_VIDEO_3; i++) {
 			if (cxt_ptr->tune_mode_array[i] != NULL) {
 				if (cxt_ptr->tune_mode_array[i]->fps == (cmr_u32) (*(cmr_s32 *) in_ptr)) {
 					*((cmr_s32 *) out_ptr) = cxt_ptr->tune_mode_array[i]->mode_id;
@@ -1485,7 +1485,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		param_ptr = in_ptr;
 		if (param_ptr->work_mode == 0) {
 			*((cmr_s32 *) out_ptr) = ISP_MODE_ID_PRV_0;
-			for (i = ISP_MODE_ID_PRV_0; i < ISP_MODE_ID_PRV_3; i++) {
+			for (i = ISP_MODE_ID_PRV_0; i <= ISP_MODE_ID_PRV_3; i++) {
 				if (cxt_ptr->tune_mode_array[i] != NULL) {
 					if (cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
 						*((cmr_s32 *) out_ptr) = cxt_ptr->tune_mode_array[i]->mode_id;
@@ -1496,7 +1496,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			}
 		} else {
 			*((cmr_s32 *) out_ptr) = ISP_MODE_ID_CAP_0;
-			for (i = ISP_MODE_ID_CAP_0; i < ISP_MODE_ID_CAP_3; i++) {
+			for (i = ISP_MODE_ID_CAP_0; i <= ISP_MODE_ID_CAP_3; i++) {
 				if (cxt_ptr->tune_mode_array[i] != NULL) {
 					if (cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
 						*((cmr_s32 *) out_ptr) = cxt_ptr->tune_mode_array[i]->mode_id;
@@ -1512,7 +1512,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			ISP_LOGE("fail to  get valid dv mode\n");
 		} else {
 			*((cmr_s32 *) out_ptr) = ISP_MODE_ID_VIDEO_0;
-			for (i = ISP_MODE_ID_VIDEO_0; i < ISP_MODE_ID_VIDEO_3; i++) {
+			for (i = ISP_MODE_ID_VIDEO_0; i <= ISP_MODE_ID_VIDEO_3; i++) {
 				if (cxt_ptr->tune_mode_array[i] != NULL) {
 					if (cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
 						*((cmr_s32 *) out_ptr) = cxt_ptr->tune_mode_array[i]->mode_id;
