@@ -148,7 +148,8 @@ cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus);
 cmr_int cmr_grab_deinit_notice(cmr_handle grab_handle);
 
 // for sharkl2-like capture path
-cmr_int cmr_grab_start_capture(cmr_handle grab_handle, cmr_uint capture_status);
+cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
+                               struct sprd_img_capture_param capture_param);
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
 
 #ifdef __cplusplus

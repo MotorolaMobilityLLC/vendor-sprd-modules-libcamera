@@ -953,6 +953,10 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                             HAL_LOGE("depthPreviewHandle failed");
                             return false;
                         }
+                        mRealBokeh->pushBufferList(
+                            mRealBokeh->mLocalBuffer, scaled_buffer,
+                            mRealBokeh->mLocalBufferNumber,
+                            mRealBokeh->mLocalBufferList);
                     }
                     rc = bokehPreviewHandle(output_buffer,
                                             muxer_msg.combo_frame.buffer1,
@@ -981,10 +985,6 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                 if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
                     mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer,
                                                depth_output_buffer,
-                                               mRealBokeh->mLocalBufferNumber,
-                                               mRealBokeh->mLocalBufferList);
-                    mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer,
-                                               scaled_buffer,
                                                mRealBokeh->mLocalBufferNumber,
                                                mRealBokeh->mLocalBufferList);
                 }
@@ -1083,7 +1083,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
             }
         }
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-        HAL_LOGD("arcsoft preview bokeh run began");
+        HAL_LOGV("arcsoft preview bokeh run began");
         MRESULT rc = MOK;
         ASVLOFFSCREEN leftImg, rightImg, dstImg;
 
@@ -1136,8 +1136,6 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
             &mArcSoftPrevParam);
         if (rc != MOK) {
             HAL_LOGE("arcsoft ARC_DCVR_PrevProcess failed ,rc = %ld", rc);
-        } else {
-            HAL_LOGD("arcsoft ARC_DCVR_PrevProcess succeed");
         }
         mRealBokeh->flush_ion_buffer(depth_handle->share_fd, depth_handle->base,
                                      depth_handle->size);
@@ -1163,7 +1161,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
                     mRealBokeh->mPreviewHeight, arcsoftprevRun, 3);
             }
         }
-        HAL_LOGD("arcsoft preview bokeh run end");
+        HAL_LOGV("arcsoft preview bokeh run end");
     }
 
     return rc;
@@ -2786,7 +2784,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                     .F_number != fnum) {
                 mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number =
                     fnum;
-                fnum = 256 - fnum * 255 / 20;
+                fnum = (21 - fnum) * 255 / 20;
                 mCaptureThread->mCapbokehParam.bokeh_level = fnum;
             }
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
@@ -2796,6 +2794,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             mCaptureThread->mArcSoftCapParam.i32BlurIntensity =
                 (MInt32)(fnum * 100 / 20);
         }
+        HAL_LOGD("f_number=%d", fnum);
     }
 
     if (metaSettings.exists(ANDROID_CONTROL_AF_REGIONS)) {
@@ -3577,7 +3576,9 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     req_aux.settings = metaSettingsAux.release();
 
     if (is_captureing) {
-        uint64_t currentmainTimestamp = systemTime();
+        struct timespec t1;
+        clock_gettime(CLOCK_BOOTTIME, &t1);
+        uint64_t currentmainTimestamp = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
         uint64_t currentauxTimestamp = currentmainTimestamp;
         HAL_LOGD("currentmainTimestamp=%llu,currentauxTimestamp=%llu",
                  currentmainTimestamp, currentauxTimestamp);
@@ -3727,13 +3728,13 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             capture_msg.combo_buff.buffer2 =
                 mCaptureThread->mSavedOneResultBuff;
             capture_msg.combo_buff.input_buffer = result->input_buffer;
-            HAL_LOGV("capture combined begin: framenumber %d",
+            HAL_LOGD("capture combined begin: framenumber %d",
                      capture_msg.combo_buff.frame_number);
             {
                 hwiMain->setMultiCallBackYuvMode(false);
                 hwiAux->setMultiCallBackYuvMode(false);
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
-                HAL_LOGV("Enqueue combo frame:%d for frame merge!",
+                HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                          capture_msg.combo_buff.frame_number);
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);
                 mCaptureThread->mMergequeueSignal.signal();
@@ -3968,14 +3969,14 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
                 hwiMain->setMultiCallBackYuvMode(false);
                 hwiAux->setMultiCallBackYuvMode(false);
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
-                HAL_LOGV("Enqueue combo frame:%d for frame merge!",
+                HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                          capture_msg.combo_buff.frame_number);
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);
                 mCaptureThread->mMergequeueSignal.signal();
             }
         }
     } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
-        HAL_LOGV("should not entry here, shutter frame:%d",
+        HAL_LOGD("should not entry here, shutter frame:%d",
                  result->frame_number);
     } else if (currStreamType == CALLBACK_STREAM) {
         if (!mIsSupportPBokeh) {
@@ -4050,7 +4051,7 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
                     mPreviewMuxerThread->mMergequeueSignal.signal();
                 }
             } else {
-                HAL_LOGD("Enqueue newest unmatched frame:%d for Aux camera",
+                HAL_LOGV("Enqueue newest unmatched frame:%d for Aux camera",
                          cur_frame.frame_number);
                 hwi_frame_buffer_info_t *discard_frame =
                     pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListAux);

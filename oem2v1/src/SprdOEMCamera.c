@@ -1075,6 +1075,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = cmr_get_ae_fps(handle, (cmr_u32 *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
+        ret = cmr_set_snapshot_timestamp(handle, *(int64_t *)param);
+        break;
+    }
     default:
         break;
     }

@@ -3351,6 +3351,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     if (sprddefInfo.sprd_3dcapture_enabled) {
         mZslNum = DUALCAM_ZSL_NUM;
         mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
+    } else if (MODE_BOKEH == mMultiCameraMode) {
+        mZslNum = DUALCAM_ZSL_NUM - 2;
     }
 
     HAL_LOGD("mCaptureMode=%d", mCaptureMode);
@@ -8481,6 +8483,8 @@ uint64_t SprdCamera3OEMIf::getZslBufferTimestamp() {
 
 void SprdCamera3OEMIf::setZslBufferTimestamp(uint64_t timestamp) {
     mNeededTimestamp = timestamp;
+    mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP, &timestamp);
 }
 
 // this is for real zsl flash capture, like sharkls/sharklt8, not sharkl2-like

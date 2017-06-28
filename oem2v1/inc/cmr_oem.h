@@ -153,6 +153,7 @@ struct snapshot_context {
     cmr_u32 zsl_frame;
     cmr_uint is_req_snp;
     cmr_s64 cap_time_stamp;
+    cmr_s64 cap_need_time_stamp;
     struct img_size request_size;
     struct img_size capture_align_size;
     struct img_size actual_capture_size;
@@ -448,6 +449,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode mode,
                                             struct frm_info *frm_data);
 
+cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 #ifdef __cplusplus
 }
 #endif

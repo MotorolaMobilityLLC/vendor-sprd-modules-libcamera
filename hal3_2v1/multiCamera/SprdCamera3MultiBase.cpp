@@ -89,7 +89,7 @@ int SprdCamera3MultiBase::flush_ion_buffer(int buffer_fd, void *v_addr,
             return -2;
         }
     }
-    HAL_LOGD("flush v_addr=%p,size=%d,fd=%d", v_addr, size, buffer_fd);
+    HAL_LOGV("flush v_addr=%p,size=%d,fd=%d", v_addr, size, buffer_fd);
     return 0;
 }
 

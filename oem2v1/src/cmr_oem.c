@@ -6024,6 +6024,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     struct setting_cmd_parameter setting_param;
     cmr_uint is_zsl_enable = 0;
     cmr_uint video_snapshot_type = VIDEO_SNAPSHOT_NONE;
+    struct sprd_img_capture_param capture_param;
 
     if (!oem_handle) {
         CMR_LOGE("in parm error");
@@ -6063,7 +6064,10 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         /* for sharkl2 offline path */
         if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
             video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
-            ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, 1);
+            cmr_bzero(&capture_param, sizeof(capture_param));
+            capture_param.type = 1;
+            ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,
+                                         capture_param);
             if (ret) {
                 CMR_LOGE("failed to start off the fly path,ret %ld", ret);
             }
@@ -9991,17 +9995,31 @@ exit:
 cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    cmr_uint capture_status = DCAM_CAPTURE_START;
+    struct snapshot_context *snp_cxt = &cxt->snp_cxt;
+
     cmr_u32 flash_status = 0;
+    struct sprd_img_capture_param capture_param;
+    cmr_bzero(&capture_param, sizeof(capture_param));
+
+    capture_param.type = DCAM_CAPTURE_START;
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
     if (flash_status > 0)
-        capture_status = DCAM_CAPTURE_START_WITH_FLASH;
+        capture_param.type = DCAM_CAPTURE_START_WITH_FLASH;
     else if (1 == camera_get_hdr_flag(cxt))
-        capture_status = DCAM_CAPTURE_START_HDR;
+        capture_param.type = DCAM_CAPTURE_START_HDR;
     else if (1 == camera_get_3dnr_flag(cxt))
-        capture_status = DCAM_CAPTURE_START_3DNR;
-    ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, capture_status);
+        capture_param.type = DCAM_CAPTURE_START_3DNR;
+    else if (cxt->is_multi_mode == MODE_BOKEH) {
+        if (cxt->is_yuv_callback_mode) {
+            capture_param.type = DCAM_CAPTURE_START_WITH_TIMESTAMP;
+            capture_param.timestamp = snp_cxt->cap_need_time_stamp;
+        } else {
+            return ret;
+        }
+    }
+
+    ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, capture_param);
     if (ret) {
         CMR_LOGE("cmr_grab_start_capture failed");
         goto exit;
@@ -10118,6 +10136,19 @@ cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value) {
         ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
                         (void *)&value);
     }
+
+    return ret;
+}
+
+cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct snapshot_context *snp_cxt = &cxt->snp_cxt;
+
+    snp_cxt->cap_need_time_stamp = timestamp;
+
+    CMR_LOGI("E timestamp=%lld", snp_cxt->cap_need_time_stamp);
 
     return ret;
 }

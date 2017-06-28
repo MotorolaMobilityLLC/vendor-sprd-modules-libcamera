@@ -71,7 +71,7 @@ namespace sprdcamera {
 #else
 #define LOCAL_CAPBUFF_NUM (4)
 #endif
-#define LOCAL_PREVIEW_NUM (18)
+#define LOCAL_PREVIEW_NUM (20)
 #define LOCAL_DEPTH_OUTBUFF_NUM 2
 #define LOCAL_BUFFER_NUM                                                       \
     (LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + LOCAL_DEPTH_OUTBUFF_NUM)
