@@ -2712,7 +2712,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			FLASH_PRE_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;/*flash status reset*/
-			cxt->send_once[1] = 0;
+			cxt->send_once[1] = cxt->send_once[0] = 0;
 		}
 
 		if (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
