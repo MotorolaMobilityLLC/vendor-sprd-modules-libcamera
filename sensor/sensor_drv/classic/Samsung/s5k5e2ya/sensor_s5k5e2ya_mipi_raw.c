@@ -234,7 +234,7 @@ static cmr_u16 s5k5e2ya_drv_read_gain(cmr_handle handle) {
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void s5k5e2ya_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
+static void s5k5e2ya_drv_write_gain(cmr_handle handle, float gain) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -244,8 +244,8 @@ static void s5k5e2ya_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
     float a_gain = 0;
     float d_gain = 0;
 
-    if (SENSOR_MAX_GAIN < gain)
-        gain = SENSOR_MAX_GAIN;
+//    if (SENSOR_MAX_GAIN < gain)
+//        gain = SENSOR_MAX_GAIN;
 
     if ((cmr_u32)real_gain <= 16 * 32) {
         a_gain = real_gain;
@@ -255,11 +255,12 @@ static void s5k5e2ya_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
     } else {
         a_gain = 16 * 32;
         d_gain = 256.0 * real_gain / a_gain;
-        SENSOR_LOGI("real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x",
-            (cmr_u32)real_gain, (cmr_u32)a_gain, (cmr_u32)d_gain);
+
         if ((cmr_u32)d_gain > 256 * 256)
             d_gain = 256 * 256; // d_gain < 256x
     }
+    SENSOR_LOGI("real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x",
+            (cmr_u32)real_gain, (cmr_u32)a_gain, (cmr_u32)d_gain);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x204, (int)a_gain >> 8 & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x205, (int)a_gain & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20e, (int)d_gain >> 8 & 0xff);
@@ -639,15 +640,15 @@ static cmr_u32 isp_to_real_gain(cmr_u32 param) {
 static cmr_int s5k5e2ya_drv_write_gain_value(cmr_handle handle,
                                           cmr_u32 param) {
     cmr_int ret_value = SENSOR_SUCCESS;
-    cmr_u32 real_gain = 0;
+    float real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    real_gain = isp_to_real_gain(param);
+  //  real_gain = isp_to_real_gain(param);
 
-    real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+    real_gain = 1.0f * param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_LOGI("real_gain = 0x%x", real_gain);
+    SENSOR_LOGI("param = 0x%x real_gain %f", param, real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     s5k5e2ya_drv_write_gain(handle,real_gain);

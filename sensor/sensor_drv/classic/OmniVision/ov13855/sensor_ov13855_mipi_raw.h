@@ -89,8 +89,6 @@
 // static uint32_t s_current_default_frame_length;
 // struct sensor_ev_info_t s_sensor_ev_info;
 
-
-
 static const SENSOR_REG_T ov13855_init_setting[] = {
     /*mipi 1080Mbps,4224,3136*/
     // Address   value
@@ -152,7 +150,9 @@ static const SENSOR_REG_T ov13855_init_setting[] = {
     {0x5315, 0x20}, {0x5316, 0x08}, {0x5317, 0x08}, {0x5318, 0x10},
     {0x5319, 0x88}, {0x531a, 0x88}, {0x531b, 0xa9}, {0x531c, 0xaa},
     {0x531d, 0x0a}, {0x5405, 0x02}, {0x5406, 0x67}, {0x5407, 0x01},
-    {0x5408, 0x4a}, {0x3503, 0x78},
+    {0x5408, 0x4a}, {0x3503, 0x78}, {0x3681, 0x50}, {0x3682, 0x50},
+    {0x3683, 0xa9}, {0x3684, 0xa9}, {0x3709, 0x5f},
+
     //   {0x0100,0x01},
 };
 
@@ -160,26 +160,60 @@ static const SENSOR_REG_T ov13855_2112x1568_setting[] = {
     /*4Lane
        binning (4:3) 29.96fps
            line time 10.38
-		   bps 540Mbps/lan
+                   bps 540Mbps/lan
        H: 2112
        V: 1568
        Output format Setting
            Address value*/
     //	{0x0100,0x00},
-    {0x0303, 0x01}, {0x3500, 0x00}, {0x3501, 0x40}, {0x3502, 0x00},
-    {0x3662, 0x10}, {0x3714, 0x28}, {0x3737, 0x08}, {0x3739, 0x20},
-    {0x37c2, 0x14}, {0x37e3, 0x08}, {0x37e4, 0x34}, {0x37e6, 0x08},
-    {0x3800, 0x00}, {0x3801, 0x00}, {0x3802, 0x00}, {0x3803, 0x08},
-    {0x3804, 0x10}, {0x3805, 0x9f}, {0x3806, 0x0c}, {0x3807, 0x4f},
-    {0x3808, 0x08}, {0x3809, 0x40}, {0x380a, 0x06}, {0x380b, 0x20},
-    {0x380c, 0x04}, {0x380d, 0x62}, {0x380e, 0x0c}, {0x380f, 0x90},
-    {0x3811, 0x08}, {0x3813, 0x02}, {0x3814, 0x03}, {0x3816, 0x03},
+    {0x0303, 0x01},
+    {0x3500, 0x00},
+    {0x3501, 0x40},
+    {0x3502, 0x00},
+    {0x3662, 0x10},
+    {0x3714, 0x28},
+    {0x3737, 0x08},
+    {0x3739, 0x20},
+    {0x37c2, 0x14},
+    {0x37e3, 0x08},
+    //{0x37e4, 0x34},
+    {0x37e4, 0x38},
+    {0x37e6, 0x08},
+    {0x3800, 0x00},
+    {0x3801, 0x00},
+    {0x3802, 0x00},
+    {0x3803, 0x08},
+    {0x3804, 0x10},
+    {0x3805, 0x9f},
+    {0x3806, 0x0c},
+    {0x3807, 0x4f},
+    {0x3808, 0x08},
+    {0x3809, 0x40},
+    {0x380a, 0x06},
+    {0x380b, 0x20},
+    {0x380c, 0x04},
+    {0x380d, 0x62},
+    {0x380e, 0x0c},
+    {0x380f, 0x90},
+    {0x3811, 0x08},
+    {0x3813, 0x02},
+    {0x3814, 0x03},
+    {0x3816, 0x03},
 #if defined(CONFIG_DUAL_MODULE)
-    {0x3820, 0xb3}, {0x3826, 0x04}, {0x3827, 0x90}, {0x3829, 0x07},
+    {0x3820, 0xb3},
+    {0x3826, 0x04},
+    {0x3827, 0x90},
+    {0x3829, 0x07},
 #else
-    {0x3820, 0xab}, {0x3826, 0x04}, {0x3827, 0x90}, {0x3829, 0x07},
+    {0x3820, 0xab},
+    {0x3826, 0x04},
+    {0x3827, 0x90},
+    {0x3829, 0x07},
 #endif
-    {0x4009, 0x0d}, {0x4050, 0x04}, {0x4051, 0x0b}, {0x4837, 0x1c},
+    {0x4009, 0x0d},
+    {0x4050, 0x04},
+    {0x4051, 0x0b},
+    {0x4837, 0x1c},
     {0x4902, 0x01},
     // {0x0100,0x01},
 };
@@ -188,26 +222,60 @@ static const SENSOR_REG_T ov13855_4224x3136_30fps_setting[] = {
     /*4Lane
     Full (4:3) 29.95fps
         line time 10.38
-		bps 1080Mbps/lan
+                bps 1080Mbps/lan
     H: 4224
     V: 3136
     Output format Setting
         Address value*/
     //  {0x0100,0x00},
-    {0x0303, 0x00}, {0x3500, 0x00}, {0x3501, 0x80}, {0x3502, 0x00},
-    {0x3662, 0x12}, {0x3714, 0x24}, {0x3737, 0x04}, {0x3739, 0x12},
-    {0x37c2, 0x04}, {0x37e3, 0x04}, {0x37e4, 0x26}, {0x37e6, 0x04},
-    {0x3800, 0x00}, {0x3801, 0x00}, {0x3802, 0x00}, {0x3803, 0x08},
-    {0x3804, 0x10}, {0x3805, 0x9f}, {0x3806, 0x0c}, {0x3807, 0x57},
-    {0x3808, 0x10}, {0x3809, 0x80}, {0x380a, 0x0c}, {0x380b, 0x40},
-    {0x380c, 0x04}, {0x380d, 0x62}, {0x380e, 0x0c}, {0x380f, 0x8e},
-    {0x3811, 0x10}, {0x3813, 0x08}, {0x3814, 0x01}, {0x3816, 0x01},
+    {0x0303, 0x00},
+    {0x3500, 0x00},
+    {0x3501, 0x80},
+    {0x3502, 0x00},
+    {0x3662, 0x12},
+    {0x3714, 0x24},
+    {0x3737, 0x04},
+    {0x3739, 0x12},
+    {0x37c2, 0x04},
+    {0x37e3, 0x04},
+    //{0x37e4, 0x26},
+    {0x37e4, 0x2a},
+    {0x37e6, 0x04},
+    {0x3800, 0x00},
+    {0x3801, 0x00},
+    {0x3802, 0x00},
+    {0x3803, 0x08},
+    {0x3804, 0x10},
+    {0x3805, 0x9f},
+    {0x3806, 0x0c},
+    {0x3807, 0x57},
+    {0x3808, 0x10},
+    {0x3809, 0x80},
+    {0x380a, 0x0c},
+    {0x380b, 0x40},
+    {0x380c, 0x04},
+    {0x380d, 0x62},
+    {0x380e, 0x0c},
+    {0x380f, 0x8e},
+    {0x3811, 0x10},
+    {0x3813, 0x08},
+    {0x3814, 0x01},
+    {0x3816, 0x01},
 #if defined(CONFIG_DUAL_MODULE)
-    {0x3820, 0xb0}, {0x3826, 0x11}, {0x3827, 0x1c}, {0x3829, 0x03},
+    {0x3820, 0xb0},
+    {0x3826, 0x11},
+    {0x3827, 0x1c},
+    {0x3829, 0x03},
 #else
-    {0x3820, 0xa8}, {0x3826, 0x11}, {0x3827, 0x1c}, {0x3829, 0x03},
+    {0x3820, 0xa8},
+    {0x3826, 0x11},
+    {0x3827, 0x1c},
+    {0x3829, 0x03},
 #endif
-    {0x4009, 0x0f}, {0x4050, 0x04}, {0x4051, 0x0b}, {0x4837, 0x0e},
+    {0x4009, 0x0f},
+    {0x4050, 0x04},
+    {0x4051, 0x0b},
+    {0x4837, 0x0e},
     {0x4902, 0x01},
     //    {0x0100,0x01},
 
@@ -223,20 +291,54 @@ static const SENSOR_REG_T ov13855_4224x3136_15fps_setting[] = {
     Output format Setting
         Address value*/
     //    {0x0100,0x00},
-    {0x0303, 0x01}, {0x3500, 0x00}, {0x3501, 0x80}, {0x3502, 0x00},
-    {0x3662, 0x12}, {0x3714, 0x24}, {0x3737, 0x04}, {0x3739, 0x12},
-    {0x37c2, 0x04}, {0x37e3, 0x04}, {0x37e4, 0x26}, {0x37e6, 0x04},
-    {0x3800, 0x00}, {0x3801, 0x00}, {0x3802, 0x00}, {0x3803, 0x08},
-    {0x3804, 0x10}, {0x3805, 0x9f}, {0x3806, 0x0c}, {0x3807, 0x57},
-    {0x3808, 0x10}, {0x3809, 0x80}, {0x380a, 0x0c}, {0x380b, 0x40},
-    {0x380c, 0x08}, {0x380d, 0xc4}, {0x380e, 0x0c}, {0x380f, 0x8e},
-    {0x3811, 0x10}, {0x3813, 0x08}, {0x3814, 0x01}, {0x3816, 0x01},
+    {0x0303, 0x01},
+    {0x3500, 0x00},
+    {0x3501, 0x80},
+    {0x3502, 0x00},
+    {0x3662, 0x12},
+    {0x3714, 0x24},
+    {0x3737, 0x04},
+    {0x3739, 0x12},
+    {0x37c2, 0x04},
+    {0x37e3, 0x04},
+    //{0x37e4, 0x26},
+    {0x37e4, 0x2a},
+    {0x37e6, 0x04},
+    {0x3800, 0x00},
+    {0x3801, 0x00},
+    {0x3802, 0x00},
+    {0x3803, 0x08},
+    {0x3804, 0x10},
+    {0x3805, 0x9f},
+    {0x3806, 0x0c},
+    {0x3807, 0x57},
+    {0x3808, 0x10},
+    {0x3809, 0x80},
+    {0x380a, 0x0c},
+    {0x380b, 0x40},
+    {0x380c, 0x08},
+    {0x380d, 0xc4},
+    {0x380e, 0x0c},
+    {0x380f, 0x8e},
+    {0x3811, 0x10},
+    {0x3813, 0x08},
+    {0x3814, 0x01},
+    {0x3816, 0x01},
 #if defined(CONFIG_DUAL_MODULE)
-    {0x3820, 0xb0}, {0x3826, 0x11}, {0x3827, 0x1c}, {0x3829, 0x03},
+    {0x3820, 0xb0},
+    {0x3826, 0x11},
+    {0x3827, 0x1c},
+    {0x3829, 0x03},
 #else
-    {0x3820, 0xa8}, {0x3826, 0x11}, {0x3827, 0x1c}, {0x3829, 0x03},
+    {0x3820, 0xa8},
+    {0x3826, 0x11},
+    {0x3827, 0x1c},
+    {0x3829, 0x03},
 #endif
-    {0x4009, 0x0f}, {0x4050, 0x04}, {0x4051, 0x0b}, {0x4837, 0x1c},
+    {0x4009, 0x0f},
+    {0x4050, 0x04},
+    {0x4051, 0x0b},
+    {0x4837, 0x1c},
     {0x4902, 0x01},
     // {0x0100,0x01},
 };
@@ -244,28 +346,63 @@ static const SENSOR_REG_T ov13855_4224x3136_15fps_setting[] = {
 static const SENSOR_REG_T ov13855_1024x768_setting[] = {
     /*4Lane
     HV1/4 (4:3) 119.72fps
-		line time 10.38us
+                line time 10.38us
         bps 270Mbps/lan
     H: 1024
     V: 768
     Output format Setting
         Address value*/
     //    {0x0100,0x00},
-    {0x0303, 0x03}, {0x3500, 0x00}, {0x3501, 0x20}, {0x3502, 0x00},
-    {0x3662, 0x08}, {0x3714, 0x30}, {0x3737, 0x08}, {0x3739, 0x20},
-    {0x37c2, 0x2c}, {0x37d9, 0x06}, {0x37e3, 0x08}, {0x37e4, 0x34},
-    {0x37e6, 0x08}, {0x3800, 0x00}, {0x3801, 0x40}, {0x3802, 0x00},
-    {0x3803, 0x40}, {0x3804, 0x10}, {0x3805, 0x5f}, {0x3806, 0x0c},
-    {0x3807, 0x5f}, {0x3808, 0x04}, {0x3809, 0x00}, {0x380a, 0x03},
-    {0x380b, 0x00}, {0x380c, 0x04}, {0x380d, 0x62}, {0x380e, 0x03},
-    {0x380f, 0x24}, {0x3811, 0x04}, {0x3813, 0x04}, {0x3814, 0x07},
+    {0x0303, 0x03},
+    {0x3500, 0x00},
+    {0x3501, 0x20},
+    {0x3502, 0x00},
+    {0x3662, 0x08},
+    {0x3714, 0x30},
+    {0x3737, 0x08},
+    {0x3739, 0x20},
+    {0x37c2, 0x2c},
+    {0x37d9, 0x06},
+    {0x37e3, 0x08},
+    //{0x37e4, 0x34},
+    {0x37e4, 0x36},
+    {0x37e6, 0x08},
+    {0x3800, 0x00},
+    {0x3801, 0x40},
+    {0x3802, 0x00},
+    {0x3803, 0x40},
+    {0x3804, 0x10},
+    {0x3805, 0x5f},
+    {0x3806, 0x0c},
+    {0x3807, 0x5f},
+    {0x3808, 0x04},
+    {0x3809, 0x00},
+    {0x380a, 0x03},
+    {0x380b, 0x00},
+    {0x380c, 0x04},
+    {0x380d, 0x62},
+    {0x380e, 0x03},
+    {0x380f, 0x24},
+    {0x3811, 0x04},
+    {0x3813, 0x04},
+    {0x3814, 0x07},
 #if defined(CONFIG_DUAL_MODULE)
-    {0x3816, 0x07}, {0x3820, 0xb4}, {0x3826, 0x04}, {0x3827, 0x48},
+    {0x3816, 0x07},
+    {0x3820, 0xb4},
+    {0x3826, 0x04},
+    {0x3827, 0x48},
 #else
-    {0x3816, 0x07}, {0x3820, 0xac}, {0x3826, 0x04}, {0x3827, 0x48},
+    {0x3816, 0x07},
+    {0x3820, 0xac},
+    {0x3826, 0x04},
+    {0x3827, 0x48},
 #endif
-    {0x3829, 0x03}, {0x4009, 0x05}, {0x4050, 0x02}, {0x4051, 0x05},
-    {0x4837, 0x38}, {0x4902, 0x02},
+    {0x3829, 0x03},
+    {0x4009, 0x05},
+    {0x4050, 0x02},
+    {0x4051, 0x05},
+    {0x4837, 0x38},
+    {0x4902, 0x02},
     // {0x0100,0x01},
 };
 
@@ -279,146 +416,183 @@ static const SENSOR_REG_T ov13855_1280x720_setting[] = {
     Output format Setting
         Address value*/
     //   {0x0100,0x00},
-    {0x0303, 0x01}, {0x3500, 0x00}, {0x3501, 0x40}, {0x3502, 0x00},
-    {0x3662, 0x10}, {0x3714, 0x28}, {0x3737, 0x08}, {0x3739, 0x20},
-    {0x37c2, 0x14}, {0x37e3, 0x08}, {0x37e4, 0x34}, {0x37e6, 0x08},
-    {0x3800, 0x03}, {0x3801, 0x30}, {0x3802, 0x03}, {0x3803, 0x50},
-    {0x3804, 0x0d}, {0x3805, 0x6f}, {0x3806, 0x09}, {0x3807, 0x0f},
-    {0x3808, 0x05}, {0x3809, 0x00}, {0x380a, 0x02}, {0x380b, 0xd0},
-    {0x380c, 0x04}, {0x380d, 0x62}, {0x380e, 0x04}, {0x380f, 0x2d},
-    {0x3811, 0x08}, {0x3813, 0x08}, {0x3814, 0x03}, {0x3816, 0x03},
+    {0x0303, 0x01},
+    {0x3500, 0x00},
+    {0x3501, 0x40},
+    {0x3502, 0x00},
+    {0x3662, 0x10},
+    {0x3714, 0x28},
+    {0x3737, 0x08},
+    {0x3739, 0x20},
+    {0x37c2, 0x14},
+    {0x37e3, 0x08},
+    //{0x37e4, 0x34},
+    {0x37e4, 0x38},
+    {0x37e6, 0x08},
+    {0x3800, 0x03},
+    {0x3801, 0x30},
+    {0x3802, 0x03},
+    {0x3803, 0x50},
+    {0x3804, 0x0d},
+    {0x3805, 0x6f},
+    {0x3806, 0x09},
+    {0x3807, 0x0f},
+    {0x3808, 0x05},
+    {0x3809, 0x00},
+    {0x380a, 0x02},
+    {0x380b, 0xd0},
+    {0x380c, 0x04},
+    {0x380d, 0x62},
+    {0x380e, 0x04},
+    {0x380f, 0x2d},
+    {0x3811, 0x08},
+    {0x3813, 0x08},
+    {0x3814, 0x03},
+    {0x3816, 0x03},
 #if defined(CONFIG_DUAL_MODULE)
-    {0x3820, 0xb3}, {0x3826, 0x04}, {0x3827, 0x90}, {0x3829, 0x07},
+    {0x3820, 0xb3},
+    {0x3826, 0x04},
+    {0x3827, 0x90},
+    {0x3829, 0x07},
 #else
-    {0x3820, 0xab}, {0x3826, 0x04}, {0x3827, 0x90}, {0x3829, 0x07},
+    {0x3820, 0xab},
+    {0x3826, 0x04},
+    {0x3827, 0x90},
+    {0x3829, 0x07},
 #endif
-    {0x4009, 0x0d}, {0x4050, 0x04}, {0x4051, 0x0b}, {0x4837, 0x1c},
+    {0x4009, 0x0d},
+    {0x4050, 0x04},
+    {0x4051, 0x0b},
+    {0x4837, 0x1c},
     {0x4902, 0x01},
     //    {0x0100,0x01},
 };
 
 static SENSOR_STATIC_INFO_T s_ov13855_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .static_info = {
-        .f_num = 200,
-        .focal_length = 354,
-        .max_fps = 0,
-        .max_adgain = 15 * 2,
-        .ois_supported = 0,
-        .pdaf_supported = 0,
+     .static_info = {.f_num = 200,
+                     .focal_length = 354,
+                     .max_fps = 0,
+                     .max_adgain = 15 * 2,
+                     .ois_supported = 0,
+                     .pdaf_supported = 0,
 
 #ifdef CONFIG_CAMERA_PDAF_TYPE
-        .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
+                     .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
 #else
-        .pdaf_supported = 0,
+                     .pdaf_supported = 0,
 #endif
-        .exp_valid_frame_num = 1,
-        .clamp_level = 64,
-        .adgain_valid_frame_num = 1,
-        .fov_info = {{4.614f, 3.444f}, 4.222f}}
-    }
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 64,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
     /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_MODE_FPS_INFO_T s_ov13855_mode_fps_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-       {.is_init = 0,
-         {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
-    }
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
     /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_res_tab_info s_ov13855_resolution_tab_raw[VENDOR_NUM] = {
-    {
-      .module_id = MODULE_SUNNY,
-      .reg_tab = {
-        {ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting), PNULL, 0,
-        .width = 0, .height = 0,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+    {.module_id = MODULE_SUNNY,
+     .reg_tab =
+         {{ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting), PNULL, 0, .width = 0,
+           .height = 0, .xclk_to_sensor = EX_MCLK,
+           .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting), PNULL, 0,
-        .width = 1280, .height = 720,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+          {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting), PNULL, 0,
+           .width = 1280, .height = 720, .xclk_to_sensor = 24,
+           .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        /*{ADDR_AND_LEN_OF_ARRAY(ov13855_1024x768_setting), PNULL, 0,
-        .width = 1024, .height = 768,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}*/
+          /*{ADDR_AND_LEN_OF_ARRAY(ov13855_1024x768_setting), PNULL, 0,
+          .width = 1024, .height = 768,
+          .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}*/
 
-        {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting), PNULL, 0,
-        .width = 2112, .height = 1568,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+          {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting), PNULL, 0,
+           .width = 2112, .height = 1568, .xclk_to_sensor = 24,
+           .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting), PNULL, 0,
-        .width = 4224, .height = 3136,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
-    }
-/*If there are multiple modules,please add here*/
-};
-
-static SENSOR_TRIM_T s_ov13855_resolution_trim_tab[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .trim_info = {
-       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-       {.trim_start_x = 0, .trim_start_y = 0,
-        .trim_width = 1280,   .trim_height = 720,
-        .line_time = 10380, .bps_per_lane = 540,
-        .frame_line = 1069,
-        .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
-       /*{
-        .trim_start_x = 0, .trim_start_y = 0,
-        .trim_width = 1024,   .trim_height = 768,
-        .line_time = 10380, .bps_per_lane = 270,
-        .frame_line = 804,
-        .scaler_trim = {.x = 0, .y = 0, .w = 1024, .h = 768}},*/
-       {
-        .trim_start_x = 0,.trim_start_y = 0,
-        .trim_width = 2112,.trim_height = 1568,
-        .line_time = 10380,.bps_per_lane = 540,
-        .frame_line = 3216,
-        .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
-       {
-        .trim_start_x = 0, .trim_start_y = 0,
-        .trim_width = 4224,   .trim_height = 3136,
-        .line_time = 10380, .bps_per_lane = 1080,
-        .frame_line = 3214,
-        .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
-      }}
-
+          {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting), PNULL, 0,
+           .width = 4224, .height = 3136, .xclk_to_sensor = 24,
+           .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
     /*If there are multiple modules,please add here*/
 };
 
+static SENSOR_TRIM_T
+    s_ov13855_resolution_trim_tab[VENDOR_NUM] =
+        {
+            {.module_id = MODULE_SUNNY,
+             .trim_info =
+                 {
+                     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 1280,
+                      .trim_height = 720,
+                      .line_time = 10380,
+                      .bps_per_lane = 540,
+                      .frame_line = 1069,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
+                     /*{
+                      .trim_start_x = 0, .trim_start_y = 0,
+                      .trim_width = 1024,   .trim_height = 768,
+                      .line_time = 10380, .bps_per_lane = 270,
+                      .frame_line = 804,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 1024, .h = 768}},*/
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 2112,
+                      .trim_height = 1568,
+                      .line_time = 10380,
+                      .bps_per_lane = 540,
+                      .frame_line = 3216,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 4224,
+                      .trim_height = 3136,
+                      .line_time = 10380,
+                      .bps_per_lane = 1080,
+                      .frame_line = 3214,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
+                 }}
+
+            /*If there are multiple modules,please add here*/
+};
 
 static const SENSOR_REG_T
     s_ov13855_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-    /*video mode 0: ?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 1:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 2:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 3:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /*video mode 0: ?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 1:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 2:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 3:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
 };
 
 static const SENSOR_REG_T
     s_ov13855_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-    /*video mode 0: ?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 1:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 2:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 3:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /*video mode 0: ?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 1:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 2:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 3:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
 };
 
 static SENSOR_VIDEO_INFO_T s_ov13855_video_info[SENSOR_MODE_MAX] = {
@@ -429,47 +603,45 @@ static SENSOR_VIDEO_INFO_T s_ov13855_video_info[SENSOR_MODE_MAX] = {
      (SENSOR_REG_T **)s_ov13855_capture_size_video_tab},
 };
 
-
 static struct sensor_module_info s_ov13855_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {
-         .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
-         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
-                                SENSOR_I2C_FREQ_400,
+                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                                            SENSOR_I2C_VAL_8BIT |
+                                            SENSOR_I2C_FREQ_400,
 
-         .avdd_val = SENSOR_AVDD_2800MV,
-         .iovdd_val = SENSOR_AVDD_1800MV,
-         .dvdd_val = SENSOR_AVDD_1200MV,
+                     .avdd_val = SENSOR_AVDD_2800MV,
+                     .iovdd_val = SENSOR_AVDD_1800MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-         .preview_skip_num = 1,
-         .capture_skip_num = 1,
-         .flash_capture_skip_num = 6,
-         .mipi_cap_skip_num = 0,
-         .preview_deci_num = 0,
-         .video_preview_deci_num = 0,
+                     .preview_skip_num = 1,
+                     .capture_skip_num = 1,
+                     .flash_capture_skip_num = 6,
+                     .mipi_cap_skip_num = 0,
+                     .preview_deci_num = 0,
+                     .video_preview_deci_num = 0,
 
-         .threshold_eb = 0,
-         .threshold_mode = 0,
-         .threshold_start = 0,
-         .threshold_end = 0,
+                     .threshold_eb = 0,
+                     .threshold_mode = 0,
+                     .threshold_start = 0,
+                     .threshold_end = 0,
 
-         .sensor_interface = {
-              .type = SENSOR_INTERFACE_TYPE_CSI2,
-              .bus_width = 4,
-              .pixel_width = 10,
-              .is_loose = 0,
-          },
-         .change_setting_skip_num = 1,
-         .horizontal_view_angle = 35,
-         .vertical_view_angle = 35
-      }
-    }
+                     .sensor_interface =
+                         {
+                             .type = SENSOR_INTERFACE_TYPE_CSI2,
+                             .bus_width = 4,
+                             .pixel_width = 10,
+                             .is_loose = 0,
+                         },
+                     .change_setting_skip_num = 1,
+                     .horizontal_view_angle = 35,
+                     .vertical_view_angle = 35}}
 
-/*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_ic_ops s_ov13855_ops_tab;
@@ -492,9 +664,9 @@ SENSOR_INFO_T g_ov13855_mipi_raw_info = {
     .power_down_level = SENSOR_LOW_LEVEL_PWDN,
     .identify_count = 1,
     .identify_code =
-        {{ .reg_addr = ov13855_PID_ADDR, .reg_value = ov13855_PID_VALUE},
-         { .reg_addr = ov13855_VER_ADDR, .reg_value = ov13855_VER_VALUE},
-         { .reg_addr = ov13855_VER_1_ADDR, .reg_value = ov13855_VER_1_VALUE}},
+        {{.reg_addr = ov13855_PID_ADDR, .reg_value = ov13855_PID_VALUE},
+         {.reg_addr = ov13855_VER_ADDR, .reg_value = ov13855_VER_VALUE},
+         {.reg_addr = ov13855_VER_1_ADDR, .reg_value = ov13855_VER_1_VALUE}},
 
     .source_width_max = SNAPSHOT_WIDTH,
     .source_height_max = SNAPSHOT_HEIGHT,

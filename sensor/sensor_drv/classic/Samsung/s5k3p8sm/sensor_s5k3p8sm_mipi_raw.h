@@ -441,7 +441,7 @@ static SENSOR_TRIM_T s_s5k3p8sm_Resolution_Trim_Tab[VENDOR_NUM] = {
        {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
        {.trim_start_x = 0, .trim_start_y = 0,
         .trim_width = 1280, .trim_height = 720,
-        .line_time = 9248, .bps_per_lane = 1320,
+        .line_time = 8629, .bps_per_lane = 1320,
         .frame_line = 965,
         .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
        {
