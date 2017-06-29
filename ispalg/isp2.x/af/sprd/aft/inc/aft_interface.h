@@ -89,6 +89,13 @@ enum aft_log_level {
 	AFT_LOG_MAX
 };
 
+enum aft_trigger_type {
+	AFT_TRIG_NONE = 0x00,
+	AFT_TRIG_CB,
+	AFT_TRIG_PD,
+	AFT_TRIG_MAX
+};
+
 struct aft_tuning_block_param {
 	cmr_u8 *data;
 	cmr_u32 data_len;
@@ -160,14 +167,6 @@ struct aft_phase_diff_info {
 	cmr_u32 pd_roi_dcc[PD_MAX_AREA];
 	cmr_u32 pd_roi_num;
 	cmr_u32 reserved[16];
-};
-
-struct prime_face_base_info {
-	cmr_u32 sx;
-	cmr_u32 ex;
-	cmr_u32 sy;
-	cmr_u32 ey;
-	cmr_u32 area;
 };
 
 struct isp_face_coor {

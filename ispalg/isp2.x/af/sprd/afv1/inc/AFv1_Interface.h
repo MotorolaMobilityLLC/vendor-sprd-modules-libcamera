@@ -52,7 +52,7 @@ void *AF_init(AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, cmr_
 cmr_u8 AF_deinit(void *handle);
 
 cmr_u8 AF_Process_Frame(void *handle);
-cmr_u8 AF_Get_Result(void *handle, cmr_u8 * AF_Result);
+cmr_u8 AF_Get_Result(void *handle, cmr_u32* AF_Result, cmr_u32 *af_mode);
 cmr_u8 AF_record_wins(void *handle, cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y);
 cmr_u8 AF_set_hw_wins(void *handle, void *win_settings, cmr_u32 af_mode);
 cmr_u8 AF_record_vcm_pos(void *handle, cmr_u32 vcm_pos);

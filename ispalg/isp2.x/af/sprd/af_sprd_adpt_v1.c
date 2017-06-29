@@ -557,10 +557,10 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	rpt->AE_Pixel_Sum = af->Y_sum_normalize;
 
 	frame_len = (frame_len > (exp_line + dummy_line)) ? frame_len : (exp_line + dummy_line);
-	frame_time = frame_len * line_time / 10;
+	frame_time = frame_len * line_time;
 	frame_time = frame_time > 0 ? frame_time : 1;
 
-	rpt->cur_fps = 1000000 / frame_time;
+	rpt->cur_fps = (1000000000 / ((exp_line +dummy_line) * line_time));
 	rpt->cur_lum = ae->ae_report.cur_lum;
 	rpt->cur_index = ae->ae_report.cur_index;
 	rpt->cur_ev = ae->ae_report.cur_ev;
@@ -1276,10 +1276,10 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 
 static cmr_s32 faf_process_frame(af_ctrl_t * af)
 {
-	cmr_u8 res;
+	cmr_u32 res,mode;
 	AF_Process_Frame(af->af_alg_cxt);
 	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
-		AF_Get_Result(af->af_alg_cxt, &res);
+		AF_Get_Result(af->af_alg_cxt, &res, &mode);
 		ISP_LOGI("face af result %d", res);
 		return 1;
 	} else {
@@ -1305,10 +1305,10 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 
 static cmr_s32 saf_process_frame(af_ctrl_t * af)
 {
-	cmr_u8 res;
+	cmr_u32 res,mode;
 	AF_Process_Frame(af->af_alg_cxt);
 	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
-		AF_Get_Result(af->af_alg_cxt, &res);
+		AF_Get_Result(af->af_alg_cxt, &res, &mode);
 		ISP_LOGI("notify_stop");
 		notify_stop(af, HAVE_PEAK == res ? 1 : 0);
 		return 1;
@@ -1360,19 +1360,20 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	}
 	AF_Trigger(af->af_alg_cxt, &aft_in);
 	do_start_af(af);
-
-	notify_start(af);
+	if(AFT_TRIG_PD != aft_in.trigger_source){
+		notify_start(af);
+	}
 	af->vcm_stable = 0;
 }
 
 static cmr_s32 caf_process_frame(af_ctrl_t * af)
 {
-	cmr_u8 res;
+	cmr_u32 res,mode;
 	AF_Process_Frame(af->af_alg_cxt);
 
 	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
-		AF_Get_Result(af->af_alg_cxt, &res);
-		ISP_LOGV("Normal AF end, result = %d", res);
+		AF_Get_Result(af->af_alg_cxt, &res, &mode);
+		ISP_LOGV("Normal AF end, result = %d mode = %d ", res, mode);
 
 		if (1 == af->need_re_trigger) {
 			af->need_re_trigger = 0;
@@ -1619,6 +1620,11 @@ static void caf_monitor_process(af_ctrl_t * af)
 		caf_monitor_process_fd(af);
 	}
 
+	if (af->trigger_source_type & AF_DATA_PD) {
+		af->trigger_source_type &= (~AF_DATA_PD);
+		caf_monitor_process_phase_diff(af);
+	}
+	
 	if (af->trigger_source_type & AF_DATA_AF) {
 		af->trigger_source_type &= (~AF_DATA_AF);
 		caf_monitor_process_af(af);
@@ -1627,11 +1633,6 @@ static void caf_monitor_process(af_ctrl_t * af)
 	if (af->trigger_source_type & AF_DATA_AE) {
 		af->trigger_source_type &= (~AF_DATA_AE);
 		caf_monitor_process_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
-	}
-
-	if (af->trigger_source_type & AF_DATA_PD) {
-		af->trigger_source_type &= (~AF_DATA_PD);
-		caf_monitor_process_phase_diff(af);
 	}
 
 	if (af->trigger_source_type & AF_DATA_G) {
@@ -2314,6 +2315,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	ISP_LOGI("Enter");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
@@ -2410,6 +2412,11 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
+
+	property_get("debug.isp.af.skip", value, "0");
+	af->bypass = !!atoi(value);
+	ISP_LOGV("debug.isp.af.skip %s[%d]", value,!!atoi(value));
+
 	ISP_LOGI("Exit");
 	return (cmr_handle) af;
 
