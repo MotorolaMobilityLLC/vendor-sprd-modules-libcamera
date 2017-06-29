@@ -62,6 +62,13 @@ enum isp_br_ioctl_cmd {
 	SET_ALL_MODULE_AND_OTP = 18,
 	GET_ALL_MODULE_AND_OTP = 19,
 
+	/* sync status */
+	SET_SLAVE_AE_SYNC_STATUS = 20,
+	GET_SLAVE_AE_SYNC_STATUS = 21,
+
+	SET_MASTER_AE_SYNC_STATUS=22,
+	GET_MASTER_AE_SYNC_STATUS=23,
+
 	// TODO: turnning info
 };
 

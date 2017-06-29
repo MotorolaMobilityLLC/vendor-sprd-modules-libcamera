@@ -28,6 +28,12 @@
 extern "C" {
 #endif
 
+enum  sync_status{
+	SYNC_INIT = 0x00,
+	SYNC_RUN,
+	SYNC_DEINIT,
+};
+
 
 struct awb_match_data {
 	uint32_t ct;
@@ -45,6 +51,7 @@ struct ae_otp_param {
 
 struct ae_sync_out {
 	uint32_t updata_flag;
+	enum sync_status ae_sync_status;
 	struct ae_alg_calc_result slave_ae;
 };
 

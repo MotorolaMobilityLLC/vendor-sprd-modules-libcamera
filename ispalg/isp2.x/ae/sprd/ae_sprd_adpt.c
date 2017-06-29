@@ -5250,12 +5250,52 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		return AE_PARAM_NULL;
 	}
 
+
 	rtn = _check_handle(handle);
 	if (AE_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle, ret: %d\n", rtn);
 		return AE_HANDLER_NULL;
 	}
 	cxt = (struct ae_ctrl_cxt *)handle;
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	enum  sync_status ae_sync_status;
+	if(cxt->is_multi_mode && cxt->ae_role)
+	{
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MASTER_AE_SYNC_STATUS, NULL, &ae_sync_status);
+		if(ae_sync_status == SYNC_INIT)
+		{
+			ae_sync_status = SYNC_RUN;
+			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AE_SYNC_STATUS, &ae_sync_status, NULL );
+		}
+
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AE_SYNC_STATUS, NULL, &ae_sync_status);
+
+		if(ae_sync_status != SYNC_RUN)
+		{
+			ISP_LOGE("master: fail to get slave ae_sync_status  =%d", ae_sync_status);
+			return AE_SKIP_FRAME;
+		}
+	}
+	else  if(cxt->is_multi_mode && !cxt->ae_role)
+	{
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AE_SYNC_STATUS, NULL, &ae_sync_status);
+		if(ae_sync_status == SYNC_INIT)
+		{
+			ae_sync_status = SYNC_RUN;
+			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_SLAVE_AE_SYNC_STATUS, &ae_sync_status, NULL );
+		}
+
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MASTER_AE_SYNC_STATUS, NULL, &ae_sync_status);
+
+		if(ae_sync_status != SYNC_RUN)
+		{
+			ISP_LOGE("slave: fail to get master ae_sync_status=%d", ae_sync_status);
+			return AE_SKIP_FRAME;
+		}
+	}
+#endif
+
 
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	if (cxt->bypass) {
@@ -6083,6 +6123,19 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 			cxt->debug_info_handle = (cmr_handle) NULL;
 		}
 	}
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	enum  sync_status ae_sync_status = SYNC_DEINIT;
+	if(cxt->is_multi_mode && cxt->ae_role)
+	{
+		rtn  =cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AE_SYNC_STATUS, &ae_sync_status, NULL );
+	}
+	else  if(cxt->is_multi_mode && !cxt->ae_role)
+	{
+		rtn  = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_SLAVE_AE_SYNC_STATUS, &ae_sync_status, NULL);
+
+	}
+#endif
 
 	pthread_mutex_destroy(&cxt->data_sync_lock);
 	ISP_LOGI("cam-id %d", cxt->camera_id);
