@@ -3613,6 +3613,11 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
 
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to set rgb gain"));
+	}
+
 	ISP_LOGV("isp start raw proc\n");
 	ret = ispalg_slice_raw_proc(cxt, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to isp_slice_raw_proc"));
