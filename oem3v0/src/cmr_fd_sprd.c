@@ -43,7 +43,7 @@ struct class_faceattr {
 
 struct class_faceattr_array {
     int count;     /* face count      */
-    int frame_idx; /* The frame when the face attributes are updated */
+    cmr_uint frame_idx; /* The frame when the face attributes are updated */
     struct class_faceattr face[FD_MAX_FACE_NUM + 1]; /* face attricutes */
 };
 
@@ -490,6 +490,9 @@ static void fd_recognize_face_attribute(
     img.step = img.width;
 
     face_count = FdGetFaceCount(hDT);
+    // When there are many faces, process every face will be too slow.
+    // Limit face count to 2
+    face_count = MIN(face_count, 2);
 
     for (fd_idx = 0; fd_idx < face_count; fd_idx++) {
         struct class_faceattr *fattr = &(new_attr_array.face[fd_idx]);
@@ -567,28 +570,74 @@ static cmr_int fd_get_face_overlap(const struct face_finder_data *i_face1,
     return percent;
 }
 
-static void fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
-                                struct face_finder_data *io_curr_face) {
-    const cmr_int overlap_thr = 85;
+static void
+fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
+                    const struct class_faceattr_array *i_faceattr_arr,
+                    struct face_finder_data *io_curr_face) {
+    cmr_int overlap_thr = 0;
+    cmr_uint trust_curr_face = 0;
     cmr_uint prevIdx = 0;
 
+    // Try to correct the face rectangle by the face shape which is often more
+    // accurate
+    if (i_faceattr_arr != NULL) {
+        // find the face shape with the same face ID
+        const cmr_int shape_score_thr = 200;
+        const struct class_faceattr *fattr = NULL;
+        cmr_int i = 0;
+        for (i = 0; i < i_faceattr_arr->count; i++) {
+            if (i_faceattr_arr->face[i].face_id == io_curr_face->face_id) {
+                fattr = &(i_faceattr_arr->face[i]);
+                break;
+            }
+        }
+
+        // Calculate the new face rectangle according to the face shape
+        if (fattr != NULL && fattr->shape.score >= shape_score_thr) {
+            const int *sdata = (const int *)(fattr->shape.data);
+            cmr_int eye_cx = (sdata[0] + sdata[2] + sdata[4] + sdata[6]) / 4;
+            cmr_int eye_cy = (sdata[1] + sdata[3] + sdata[5] + sdata[7]) / 4;
+            cmr_int mouth_cx = (sdata[10] + sdata[12]) / 2;
+            cmr_int mouth_cy = (sdata[11] + sdata[13]) / 2;
+            cmr_int cx = (eye_cx + mouth_cx) / 2;
+            cmr_int cy = (eye_cy + mouth_cy) / 2;
+            cmr_int curr_cx = (io_curr_face->sx + io_curr_face->ex) / 2;
+            cmr_int curr_cy = (io_curr_face->sy + io_curr_face->ey) / 2;
+            cmr_int x_shift = cx - curr_cx;
+            cmr_int y_shift = cy - curr_cy;
+
+            // only correct the face center; size is not changed.
+            io_curr_face->sx += x_shift;
+            io_curr_face->sy += y_shift;
+            io_curr_face->srx += x_shift;
+            io_curr_face->sry += y_shift;
+            io_curr_face->elx += x_shift;
+            io_curr_face->ely += y_shift;
+            io_curr_face->ex += x_shift;
+            io_curr_face->ey += y_shift;
+
+            trust_curr_face = 1;
+        }
+    }
+
+    // Try to keep the face rectangle to be the same with the previous
+    // frame (for stable looks)
+    overlap_thr = trust_curr_face ? 90 : 80;
     for (prevIdx = 0; prevIdx < i_face_area_prev->face_count; prevIdx++) {
         const struct face_finder_data *prev_face =
             &(i_face_area_prev->range[prevIdx]);
-        {
-            cmr_int overlap_percent =
-                fd_get_face_overlap(prev_face, io_curr_face);
-            if (overlap_percent >= overlap_thr) {
-                io_curr_face->sx = prev_face->sx;
-                io_curr_face->sy = prev_face->sy;
-                io_curr_face->srx = prev_face->srx;
-                io_curr_face->sry = prev_face->sry;
-                io_curr_face->elx = prev_face->elx;
-                io_curr_face->ely = prev_face->ely;
-                io_curr_face->ex = prev_face->ex;
-                io_curr_face->ey = prev_face->ey;
-                break;
-            }
+        cmr_int overlap_percent = fd_get_face_overlap(prev_face, io_curr_face);
+
+        if (overlap_percent >= overlap_thr) {
+            io_curr_face->sx = prev_face->sx;
+            io_curr_face->sy = prev_face->sy;
+            io_curr_face->srx = prev_face->srx;
+            io_curr_face->sry = prev_face->sry;
+            io_curr_face->elx = prev_face->elx;
+            io_curr_face->ely = prev_face->ely;
+            io_curr_face->ex = prev_face->ex;
+            io_curr_face->ey = prev_face->ey;
+            break;
         }
     }
 }
@@ -597,7 +646,8 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
                               const struct class_faceattr_array *i_faceattr_arr,
                               const struct img_face_area *i_face_area_prev,
                               struct img_face_area *o_face_area,
-                              struct img_size image_size) {
+                              struct img_size image_size,
+                              const cmr_uint i_curr_frame_idx) {
     cmr_int face_num = 0;
     FD_FACEINFO info;
     cmr_int face_idx = 0;
@@ -605,6 +655,8 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
     cmr_int sx = 0, ex = 0, sy = 0, ey = 0;
     cmr_int valid_count = 0;
     struct face_finder_data *face_ptr = NULL;
+    const struct class_faceattr_array *curr_faceattr =
+        (i_curr_frame_idx == i_faceattr_arr->frame_idx) ? i_faceattr_arr : NULL;
 
     face_num = FdGetFaceCount(hDT);
     for (face_idx = 0; face_idx < face_num; face_idx++) {
@@ -631,16 +683,6 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
             ey += delta;
         }
 
-        /* Ensure the face coordinates are in image region */
-        if (sx < 0)
-            sx = 0;
-        if (sy < 0)
-            sy = 0;
-        if (ex >= (cmr_int)image_size.width)
-            ex = image_size.width - 1;
-        if (ey >= (cmr_int)image_size.height)
-            ey = image_size.height - 1;
-
         face_ptr = &(o_face_area->range[valid_count]);
         valid_count++;
 
@@ -661,7 +703,17 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
         face_ptr->blink_level = 0;
         face_ptr->brightness = 128;
 
-        fd_smooth_face_rect(i_face_area_prev, face_ptr);
+        fd_smooth_face_rect(i_face_area_prev, curr_faceattr, face_ptr);
+
+        /* Ensure the face coordinates are in image region */
+        if (face_ptr->sx < 0)
+            face_ptr->sx = face_ptr->elx = 0;
+        if (face_ptr->sy < 0)
+            face_ptr->sy = face_ptr->sry = 0;
+        if (face_ptr->ex >= (cmr_int)image_size.width)
+            face_ptr->ex = face_ptr->srx = image_size.width - 1;
+        if (face_ptr->ey >= (cmr_int)image_size.height)
+            face_ptr->ey = face_ptr->ely = image_size.height - 1;
 
         /* set smile detection result */
         {
@@ -725,8 +777,8 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     opt.trackDensity = 5;
     opt.lostRetryCount = 1;
     opt.lostHoldCount = 1;
-    opt.holdPositionRate = 10;
-    opt.holdSizeRate = 6;
+    opt.holdPositionRate = 5;
+    opt.holdSizeRate = 4;
     opt.swapFaceRate = 200;
     opt.guessFaceDirection = 1;
 
@@ -849,7 +901,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         fd_get_fd_results(class_handle->hDT, &(class_handle->faceattr_arr),
                           &(class_handle->face_area_prev),
                           &(class_handle->frame_out.face_area),
-                          class_handle->fd_img_size);
+                          class_handle->fd_img_size,
+                          class_handle->curr_frame_idx);
         /* save a copy for next frame */
         memcpy(&(class_handle->face_area_prev),
                &(class_handle->frame_out.face_area),

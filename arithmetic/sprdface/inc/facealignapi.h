@@ -19,7 +19,7 @@
 #define FAAPI(rettype) extern FA_EXPORTS rettype
 #endif
 
-#define FA_SHAPE_POINTNUM 7 /* Number of vertex on the face shape 68/49/7*/
+#define FA_SHAPE_POINTNUM 7 /* Number of vertex on the face shape 28/12/7*/
 
 /* The error codes */
 #define FA_OK 0                 /* Ok!                                      */
@@ -47,8 +47,8 @@ typedef struct {
 
 typedef struct {
     int data[FA_SHAPE_POINTNUM *
-             2]; /*Coordinates of landmarks [x0,y0,x1,y1, ..., xn,yn]*/
-    int score;   /*Confidence score of face shape*/
+             2]; /* Coordinates of landmarks [x0,y0,x1,y1, ..., xn,yn]   */
+    int score;   /* Confidence score of face shape                       */
 } FA_SHAPE;
 
 /* The facle alignment detector handle*/
