@@ -2553,13 +2553,18 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
-	if ((AE_WORK_MODE_VIDEO == current_status->settings.work_mode)
-		&& (AE_VIDEO_DECR_FPS_DARK_ENV_THRD > cxt->sync_cur_result.cur_bv)) {
+	if (AE_WORK_MODE_VIDEO == current_status->settings.work_mode) {
+		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD > cxt->sync_cur_result.cur_bv) {
 			/*only adjust the fps to [15, 15] in dark environment during video mode*/
 			current_status->settings.max_fps  = cxt->fps_range.min;
 			current_status->settings.min_fps  = cxt->fps_range.min;
 			ISP_LOGV("fps: %d, %d just fix to 15fps in dark during video, bv%d\n",
 				cxt->fps_range.min, cxt->fps_range.max, cxt->sync_cur_result.cur_bv);
+		} else {
+			current_status->settings.max_fps  = cxt->fps_range.max;
+			current_status->settings.min_fps  = cxt->fps_range.max;
+		}
+
 	} else {
 		current_status->settings.max_fps = cxt->fps_range.max;
 		current_status->settings.min_fps = cxt->fps_range.min;
