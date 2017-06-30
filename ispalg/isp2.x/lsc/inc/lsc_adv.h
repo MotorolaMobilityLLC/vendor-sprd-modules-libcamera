@@ -32,22 +32,25 @@ extern "C" {
 /**---------------------------------------------------------------------------*
 **				Micro Define				**
 **----------------------------------------------------------------------------*/
+
+/*
 #define LSC_ADV_DEBUG_STR       "[ALSC]: L %d, %s: "
 #define LSC_ADV_DEBUG_ARGS    __LINE__,__FUNCTION__
-/*
+
 #define LOG_TAG "[ALSC]"
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
-*/
+
 
 #define LSC_ADV_LOGE(format,...) ALOGE(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGW(format,...) ALOGW(LSC_ADV_DEBUG_STR, format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGI(format,...) ALOGI(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGD(format,...) ALOGD(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGV(format,...) ALOGV(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
+*/
 
 /**---------------------------------------------------------------------------*
 **				Data Structures 				*
@@ -396,9 +399,32 @@ struct lsc2_context {
 	cmr_u32 lsc_otp_oc_gb_y;
 	cmr_u32 lsc_otp_oc_b_x;
 	cmr_u32 lsc_otp_oc_b_y;
+    // lsc command set address
+	void* lsc_eng_cmd_set_ptr;
+	void* lsc_eng_cmd_set2_ptr;
 };
 
 ////////////////////////////// calculation dependent //////////////////////////////
+
+
+struct lsc_eng_cmd_set{
+    cmr_s32 eng_lsc_lock;
+    cmr_s32 eng_lsc_dump_aem;
+    cmr_s32 eng_lsc_dump_intable;
+    cmr_s32 eng_lsc_dump_outtable;
+    cmr_s32 eng_lsc_dump_otptable;
+    cmr_s32 eng_lsc_dump_param_intable;
+    cmr_s32 eng_lsc_dump_otptrans_intable;
+};
+
+
+struct lsc_eng_cmd_set2{
+    cmr_s32 eng_lsc_set_unit_table;
+    cmr_s32 eng_lsc_set_tab_enable;
+    cmr_s32 eng_lsc_set_tab_index;
+};
+
+
 struct lsc_size {
 	cmr_u32 w;
 	cmr_u32 h;
