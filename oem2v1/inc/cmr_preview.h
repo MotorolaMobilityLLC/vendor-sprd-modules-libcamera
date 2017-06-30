@@ -290,6 +290,10 @@ cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id,
 cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
                                     cmr_u32 camera_id, float *zoom_factor);
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
+
+cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
+                               struct frm_info *in, struct img_frm *out);
+
 #ifdef __cplusplus
 }
 #endif

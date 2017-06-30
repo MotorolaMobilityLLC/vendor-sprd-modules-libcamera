@@ -723,11 +723,9 @@ cmr_int camera_get_post_proc_chn_out_frm_id(struct img_frm *frame,
                                             struct frm_info *data) {
     cmr_int i;
 
-    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-        if (data->yaddr == (frame + i)->addr_phy.addr_y &&
-            data->uaddr == (frame + i)->addr_phy.addr_u) {
+    for(i = 0; i<CMR_CAPTURE_MEM_SUM;i++){
+        if ((cmr_u32)frame[i].fd == data->fd)
             break;
-        }
     }
     CMR_LOGI("frm id %ld", i);
     return i;
@@ -790,14 +788,24 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             }
         } else {
             frm_id = camera_get_post_proc_chn_out_frm_id(
-                cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
-            if (frm_id >= CMR_CAPTURE_MEM_SUM)
+                     cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
+            /*if frm_id biger than 0,you should search hdr buffer in
+              hdr buffer list. You can't use (frame->yaddr) on 64bit system*/
+            if (frm_id >= CMR_CAPTURE_MEM_SUM) {
+                ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
+                                           cxt->camera_id, frame, &out_param);
+                if (ret) {
+                    CMR_LOGE("failed to get hdr buffer %ld", ret);
+                    goto exit;
+                }
+            } else {
+            /*if frm_id is 0,use default chn_out_frm.
+              This is also dest img buffer         */
                 out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-            else
-                out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[frm_id];
+            }
         }
-        ipm_in_param.dst_frame = out_param;
-        out_param.addr_vir.addr_y = frame->yaddr_vir;
+
+        ipm_in_param.dst_frame = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
         cxt->snp_cxt.cur_frm_info = *frame;
         ipm_cxt->frm_num++;
         ipm_in_param.src_frame = out_param;
