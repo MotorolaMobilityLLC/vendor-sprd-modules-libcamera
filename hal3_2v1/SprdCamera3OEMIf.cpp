@@ -860,8 +860,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
-             MODE_SINGLE_CAMERA);
 
     LENS_Tag lensInfo;
     mSetting->getLENSTag(&lensInfo);
@@ -881,6 +879,8 @@ int SprdCamera3OEMIf::zslTakePicture() {
     jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+             MODE_SINGLE_CAMERA);
 
     if (SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
         if (sprddefInfo.capture_mode == 1) {
@@ -964,10 +964,10 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
                  mSprdYuvCallBack);
         HAL_LOGD("reprocess mode, force enable reprocess");
     }
-
-    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
              mMultiCameraMode);
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
