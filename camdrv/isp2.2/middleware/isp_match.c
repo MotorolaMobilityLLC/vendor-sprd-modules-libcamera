@@ -134,26 +134,26 @@ int32_t isp_br_ioctrl(uint32_t camera_id, enum isp_br_ioctl_cmd cmd, void *in, v
 		break;
 	case SET_SLAVE_AE_SYNC_STATUS:
 		sem_wait(&cxt->ae_update_sm2);
-		memcpy(&cxt->match_param.slave_ae_info.ae_sync_result.ae_sync_status, in,
-			sizeof(cxt->match_param.slave_ae_info.ae_sync_result.ae_sync_status));
+		memcpy(&cxt->match_param.slave_ae_info.ae_sync_status, in,
+			sizeof(cxt->match_param.slave_ae_info.ae_sync_status));
 		sem_post(&cxt->ae_update_sm2);
 		break;
 	case GET_SLAVE_AE_SYNC_STATUS:
 		sem_wait(&cxt->ae_update_sm2);
-		memcpy(out, &cxt->match_param.slave_ae_info.ae_sync_result.ae_sync_status,
-			sizeof(cxt->match_param.slave_ae_info.ae_sync_result.ae_sync_status));
+		memcpy(out, &cxt->match_param.slave_ae_info.ae_sync_status,
+			sizeof(cxt->match_param.slave_ae_info.ae_sync_status));
 		sem_post(&cxt->ae_update_sm2);
 		break;
 	case SET_MASTER_AE_SYNC_STATUS:
 		sem_wait(&cxt->ae_update_sm2);
-		memcpy(&cxt->match_param.master_ae_info.ae_sync_result.ae_sync_status, in,
-			sizeof(cxt->match_param.master_ae_info.ae_sync_result.ae_sync_status));
+		memcpy(&cxt->match_param.master_ae_info.ae_sync_status, in,
+			sizeof(cxt->match_param.master_ae_info.ae_sync_status));
 		sem_post(&cxt->ae_update_sm2);
 		break;
 	case GET_MASTER_AE_SYNC_STATUS:
 		sem_wait(&cxt->ae_update_sm2);
-		memcpy(out, &cxt->match_param.master_ae_info.ae_sync_result.ae_sync_status,
-			sizeof(cxt->match_param.master_ae_info.ae_sync_result.ae_sync_status));
+		memcpy(out, &cxt->match_param.master_ae_info.ae_sync_status,
+			sizeof(cxt->match_param.master_ae_info.ae_sync_status));
 		sem_post(&cxt->ae_update_sm2);
 		break;
 	case SET_SLAVE_AESYNC_SETTING:
@@ -182,13 +182,13 @@ int32_t isp_br_ioctrl(uint32_t camera_id, enum isp_br_ioctl_cmd cmd, void *in, v
 		}
 
 		ISP_LOGD("slave wait sm");
-		if(cxt->match_param.master_ae_info.ae_sync_result.ae_sync_status== SYNC_RUN)
+		if(cxt->match_param.master_ae_info.ae_sync_status== SYNC_RUN)
 			result=sem_timedwait(&cxt->ae_updata_sm, &ts);
 		if (result == -1 && errno == ETIMEDOUT)
 			ISP_LOGD("slave sem_timedwait \n");
 		else
 			ISP_LOGD("slave wait sm  result =%d, ae sync status =%d", result,
-				cxt->match_param.master_ae_info.ae_sync_result.ae_sync_status );
+				cxt->match_param.master_ae_info.ae_sync_status );
 		sem_wait(&cxt->ae_update_sm2);
 		ISP_LOGD("slave read, flag=%u", cxt->match_param.slave_ae_info.ae_sync_result.updata_flag);
 		memcpy(out, &cxt->match_param.slave_ae_info.ae_sync_result,
@@ -254,10 +254,10 @@ int32_t isp_br_init(uint8_t is_master, cmr_handle isp_3a_handle)
 	ISP_LOGI("E is_master %d", is_master);
 	if(!is_master) {
 		cxt->isp_3afw_slave_handles = isp_3a_handle;
-		br_cxt.match_param.slave_ae_info.ae_sync_result.ae_sync_status=SYNC_INIT;
+		br_cxt.match_param.slave_ae_info.ae_sync_status=SYNC_INIT;
 	} else {
 		cxt->isp_3afw_master_handles = isp_3a_handle;
-		br_cxt.match_param.master_ae_info.ae_sync_result.ae_sync_status=SYNC_INIT;
+		br_cxt.match_param.master_ae_info.ae_sync_status=SYNC_INIT;
 	}
 	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt++;
@@ -281,10 +281,10 @@ int32_t isp_br_deinit(uint8_t is_master)
 
 	if(!is_master) {
 		cxt->isp_3afw_slave_handles = NULL;
-		br_cxt.match_param.slave_ae_info.ae_sync_result.ae_sync_status=SYNC_DEINIT;
+		br_cxt.match_param.slave_ae_info.ae_sync_status=SYNC_DEINIT;
 	} else {
 		cxt->isp_3afw_master_handles = NULL;
-		br_cxt.match_param.master_ae_info.ae_sync_result.ae_sync_status=SYNC_DEINIT;
+		br_cxt.match_param.master_ae_info.ae_sync_status=SYNC_DEINIT;
 	}
 	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt--;

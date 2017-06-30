@@ -5304,18 +5304,20 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	enum  sync_status ae_sync_status;
+	enum  sync_status ae_sync_status_temp;
+
 	if(cxt->is_multi_mode && cxt->ae_role)
 	{
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MASTER_AE_SYNC_STATUS, NULL, &ae_sync_status);
 		if(ae_sync_status == SYNC_INIT)
 		{
-			ae_sync_status = SYNC_RUN;
-			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AE_SYNC_STATUS, &ae_sync_status, NULL );
+			ae_sync_status_temp = SYNC_RUN;	
+			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AE_SYNC_STATUS, &ae_sync_status_temp, NULL );
 		}
 
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AE_SYNC_STATUS, NULL, &ae_sync_status);
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AE_SYNC_STATUS, NULL, &ae_sync_status_temp);
 
-		if(ae_sync_status != SYNC_RUN)
+		if(ae_sync_status_temp != SYNC_RUN ||  ae_sync_status != SYNC_RUN)
 		{
 			ISP_LOGE("master: fail to get slave ae_sync_status  =%d", ae_sync_status);
 			return AE_SKIP_FRAME;

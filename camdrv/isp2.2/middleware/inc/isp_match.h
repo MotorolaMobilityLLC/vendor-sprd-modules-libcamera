@@ -51,7 +51,6 @@ struct ae_otp_param {
 
 struct ae_sync_out {
 	uint32_t updata_flag;
-	enum sync_status ae_sync_status;
 	struct ae_alg_calc_result slave_ae;
 };
 
@@ -79,6 +78,7 @@ struct module_info {
 };
 
 struct ae_match_data {
+	enum sync_status ae_sync_status;
 	struct ae_alg_calc_result ae_calc_result;
 	struct ae_sync_out ae_sync_result;
 };
