@@ -119,6 +119,9 @@ enum alg_flash_type {
 	FLASH_MAIN_RECEIVE,
 	FLASH_MAIN_AFTER,
 	FLASH_MAIN_AFTER_RECEIVE,
+	FLASH_LED_ON,
+	FLASH_LED_OFF,
+	FLASH_LED_AUTO,
 	FLASH_MAX
 };
 
@@ -424,7 +427,7 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_expline;
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
-
+	cmr_u8	led_state;	//0:off, 1:on
 //caliberation for bv match with lv
 	float lv_cali_lv;
 	float lv_cali_bv;

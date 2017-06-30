@@ -115,6 +115,12 @@ struct ae_face_tune_param {
 	cmr_s32 param_lock_weight_no_face;	/* frames to lock the weight table, when no faces */
 	cmr_s32 param_shrink_face_ratio;	/* The ratio to shrink face area. In percent */
 };
+
+struct front_flash_param {
+	cmr_s16 led_thr_up;
+	cmr_s16 led_thr_down;
+};
+
 struct ae_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;
 	cmr_u32 verify;
