@@ -3041,7 +3041,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else {
         mUhdRecodingEnabled = false;
     }
-
+    //for cts
+    if (mUhdRecodingEnabled && (mCaptureWidth > UHD_WIDTH)) {
+        mZslNum = 1;
+    }
     HAL_LOGD("mUhdRecodingEnabled=%d", mUhdRecodingEnabled);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_UHD_RECORDING_ENABLED,
              (cmr_uint)mUhdRecodingEnabled);
@@ -7009,7 +7012,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
     HAL_LOGD("sum %d", sum);
 
     if (type == CAMERA_PREVIEW_RESERVED) {
-        for (i = 0; i < PREV_RESERVED_FRM_CNT; i++) {
+        for (i = 0; i < sum; i++) {
             if (NULL != mPreviewHeapReserved[i]) {
                 freeCameraMem(mPreviewHeapReserved[i]);
                 mPreviewHeapReserved[i] = NULL;
@@ -7027,7 +7030,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
     }
 
     if (type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
-        for (i = 0; i < CAP_ZSL_RESERVED_FRM_CNT; i++) {
+        for (i = 0; i < sum; i++) {
             if (NULL != mZslHeapReserved[i]) {
                 freeCameraMem(mZslHeapReserved[i]);
                 mZslHeapReserved[i] = NULL;
@@ -7124,7 +7127,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     *vir_addr = 0;
     *fd = 0;
     if (type == CAMERA_PREVIEW_RESERVED) {
-        for (i = 0; i < PREV_RESERVED_FRM_CNT; i++) {
+        for (i = 0; i < sum; i++) {
             if (mPreviewHeapReserved[i] == NULL) {
                 memory = allocCameraMem(size, 1, true);
                 if (NULL == memory) {
@@ -7152,7 +7155,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *fd++ = mVideoHeapReserved[i]->fd;
         }
     } else if (type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
-        for (i = 0; i < CAP_ZSL_RESERVED_FRM_CNT; i++) {
+        for (i = 0; i < sum; i++) {
             if (mZslHeapReserved[i] == NULL) {
                 memory = allocCameraMem(size, 1, true);
                 if (NULL == memory) {

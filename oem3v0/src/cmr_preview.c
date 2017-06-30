@@ -76,7 +76,10 @@
 #define PREV_EVT_ASSIST_STOP (PREV_EVT_BASE + 0x14)
 #define PREV_EVT_SET_PDAF_DATATYPE_BUFFER (PREV_EVT_BASE + 0x15)
 
-#define ALIGN_16_PIXEL(x) (((x) + 15) & (~15))
+#define ALIGN_16_PIXEL(x) (((x) + 15) & (~15))\
+
+#define UHD_WIDTH 3840
+#define UHD_HEIGHT 2160
 
 #define IS_PREVIEW(handle, cam_id)                                             \
     (PREVIEWING ==                                                             \
@@ -627,6 +630,10 @@ static cmr_uint prev_get_src_rot_buffer(struct prev_context *prev_cxt,
 
 static cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
                                  struct frm_info *data);
+
+static cmr_uint prev_get_prev_res_buffer_count(struct prev_context *prev_cxt);
+
+static cmr_uint prev_get_capzsl_res_buffer_count(struct prev_context *prev_cxt);
 
 static cmr_int
 prev_get_cap_post_proc_param(struct prev_handle *handle, cmr_u32 camera_id,
@@ -4530,7 +4537,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint i = 0;
     cmr_u32 width, height = 0;
     cmr_u32 prev_num = 0;
-    cmr_uint reserved_count = PREV_RESERVED_FRM_CNT;
+    cmr_uint reserved_count = 0;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
@@ -4549,6 +4556,8 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt = &handle->prev_cxt[camera_id];
     mem_ops = &prev_cxt->prev_param.memory_setting;
+
+    reserved_count = prev_get_prev_res_buffer_count(prev_cxt);
 
     sensor_mode_info = &prev_cxt->sensor_info.mode_info[prev_cxt->prev_mode];
     reserved_width = prev_cxt->actual_prev_size.width;
@@ -4718,7 +4727,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
         buffer->fd[i] = prev_cxt->prev_frm[i].fd;
     }
 
-    for (i = 0; i < PREV_RESERVED_FRM_CNT; i++) {
+    for (i = 0; i < reserved_count; i++) {
         prev_cxt->prev_reserved_frm[i].buf_size = reserved_frame_size;
         prev_cxt->prev_reserved_frm[i].addr_vir.addr_y =
             prev_cxt->prev_reserved_virt_addr[i];
@@ -4774,7 +4783,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint i = 0;
     cmr_u32 width, height = 0;
     cmr_u32 prev_num = 0;
-    cmr_uint reserved_count = PREV_RESERVED_FRM_CNT;
+    cmr_uint reserved_count = 0;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
@@ -4791,6 +4800,8 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
     width = prev_cxt->actual_prev_size.width;
     height = prev_cxt->actual_prev_size.height;
     aligned_type = CAMERA_MEM_NO_ALIGNED;
+
+    reserved_count = prev_get_prev_res_buffer_count(prev_cxt);
 
     /*init preview memory info*/
     buffer_size = width * height;
@@ -4927,7 +4938,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
         buffer->addr_vir[i].addr_u = prev_cxt->prev_frm[i].addr_vir.addr_u;
         buffer->fd[i] = prev_cxt->prev_frm[i].fd;
     }
-    for (i = 0; i < PREV_RESERVED_FRM_CNT; i++) {
+    for (i = 0; i < reserved_count; i++) {
         prev_cxt->prev_reserved_frm[i].buf_size = frame_size;
         prev_cxt->prev_reserved_frm[i].addr_vir.addr_y =
             prev_cxt->prev_reserved_virt_addr[i];
@@ -4979,13 +4990,14 @@ cmr_int prev_free_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
-    cmr_uint reserved_count = PREV_RESERVED_FRM_CNT;
+    cmr_uint reserved_count = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
     mem_ops = &prev_cxt->prev_param.memory_setting;
+    reserved_count = prev_get_prev_res_buffer_count(prev_cxt);
 
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
         CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,
@@ -5806,7 +5818,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
     cmr_u32 width, height = 0;
     cmr_u32 prev_num = 0;
     cmr_u32 cap_rot = 0;
-    cmr_uint reserved_count = CAP_ZSL_RESERVED_FRM_CNT;
+    cmr_uint reserved_count = 0;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
@@ -5817,6 +5829,8 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
 
     prev_cxt = &handle->prev_cxt[camera_id];
     CMR_LOGI("is_restart %d", is_restart);
+
+    reserved_count = prev_get_capzsl_res_buffer_count(prev_cxt);
 
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
     mem_ops = &prev_cxt->prev_param.memory_setting;
@@ -5876,7 +5890,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
 
     frame_size = prev_cxt->cap_zsl_mem_size;
 
-    for (i = 0; i < CAP_ZSL_RESERVED_FRM_CNT; i++) {
+    for (i = 0; i < reserved_count; i++) {
         prev_cxt->cap_zsl_reserved_frm[i].buf_size = frame_size;
         prev_cxt->cap_zsl_reserved_frm[i].addr_vir.addr_y =
             prev_cxt->cap_zsl_reserved_virt_addr[i];
@@ -5904,13 +5918,15 @@ cmr_int prev_free_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
-    cmr_uint reserved_count = CAP_ZSL_RESERVED_FRM_CNT;
+    cmr_uint reserved_count = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
     mem_ops = &prev_cxt->prev_param.memory_setting;
+
+    reserved_count = prev_get_capzsl_res_buffer_count(prev_cxt);
 
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
         CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,
@@ -8039,11 +8055,11 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
     buf_cfg.channel_id = prev_cxt->prev_channel_id;
     buf_cfg.base_id = CMR_PREV_ID_BASE;
-    buf_cfg.count = PREV_RESERVED_FRM_CNT;
+    buf_cfg.count = prev_get_prev_res_buffer_count(prev_cxt);
     buf_cfg.length = prev_cxt->prev_mem_size;
     buf_cfg.is_reserved_buf = 1;
     buf_cfg.flag = BUF_FLAG_INIT;
-    for (i = 0; i < PREV_RESERVED_FRM_CNT; i++) {
+    for (i = 0; i < buf_cfg.count; i++) {
         buf_cfg.addr[i].addr_y = prev_cxt->prev_reserved_frm[i].addr_phy.addr_y;
         buf_cfg.addr[i].addr_u = prev_cxt->prev_reserved_frm[i].addr_phy.addr_u;
         buf_cfg.addr_vir[i].addr_y =
@@ -8905,11 +8921,11 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             } else {
                 buf_cfg.base_id = CMR_CAP0_ID_BASE;
             }
-            buf_cfg.count = CAP_ZSL_RESERVED_FRM_CNT;
+            buf_cfg.count = prev_get_capzsl_res_buffer_count(prev_cxt);;
             buf_cfg.length = prev_cxt->cap_zsl_mem_size;
             buf_cfg.is_reserved_buf = 1;
             buf_cfg.flag = BUF_FLAG_INIT;
-            for (i = 0; i < CAP_ZSL_RESERVED_FRM_CNT; i++) {
+            for (i = 0; i < buf_cfg.count; i++) {
                 buf_cfg.addr[i].addr_y =
                     prev_cxt->cap_zsl_reserved_frm[i].addr_phy.addr_y;
                 buf_cfg.addr[i].addr_u =
@@ -11653,6 +11669,36 @@ cmr_int prev_start_zsl_rotate(struct prev_handle *handle, cmr_u32 camera_id,
 exit:
     CMR_LOGI("out");
     return ret;
+}
+
+cmr_uint prev_get_prev_res_buffer_count(struct prev_context *prev_cxt) {
+    cmr_uint count = 0;
+
+    //for cts
+    if ((prev_cxt->actual_pic_size.width >= UHD_WIDTH)
+            && (prev_cxt->actual_video_size.width >= UHD_WIDTH)
+            && (1== prev_cxt->prev_param.is_uhd_recording_mode)) {
+        count = 2;
+    } else {
+        count = PREV_RESERVED_FRM_CNT;
+    }
+
+    return count;
+}
+
+cmr_uint prev_get_capzsl_res_buffer_count(struct prev_context *prev_cxt) {
+    cmr_uint count = 0;
+
+    //for cts
+    if ((prev_cxt->actual_pic_size.width >= UHD_WIDTH)
+            && (prev_cxt->actual_video_size.width >= UHD_WIDTH)
+            && (1== prev_cxt->prev_param.is_uhd_recording_mode)) {
+        count = 2;
+    } else {
+        count = CAP_ZSL_RESERVED_FRM_CNT;
+    }
+
+    return count;
 }
 
 cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
