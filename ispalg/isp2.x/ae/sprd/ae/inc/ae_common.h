@@ -133,7 +133,6 @@ enum ae_flicker_mode {
 	AE_FLICKER_MAX
 };
 
-
 typedef cmr_handle ae_handle_t;
 
 struct ae_ct_table

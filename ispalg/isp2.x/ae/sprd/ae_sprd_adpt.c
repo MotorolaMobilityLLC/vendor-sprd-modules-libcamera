@@ -2711,6 +2711,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			if (3 == cxt->send_once[0]) {
 				ISP_LOGI("ae_flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_PREFLASH);
+
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED, NULL);
 				cxt->cur_result.flash_status = FLASH_NONE;/*flash status reset*/
 				ISP_LOGI("ae_flash1_callback do-pre-open!\r\n");
@@ -2750,6 +2751,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 					ISP_LOGI("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1,
 								cxt->flash_esti_result.captureFlahLevel2);
 					rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_MAIN);
+
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED, NULL);
 					ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
 				} else if (5 == cxt->send_once[2]) {
@@ -2773,6 +2775,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			}
 		}
 	}
+
 	/* for front flash algorithm (LED+LCD) */
 	if (cxt->camera_id == 1 && cxt->cur_status.settings.flash == FLASH_LED_AUTO) {
 		if ((cxt->sync_cur_result.cur_bv <= cxt->front_flash_param[0].led_thr_down) &&
@@ -5084,7 +5087,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 /* send STAB notify to HAL */
     if (calc_out && calc_out->is_stab) {
         if (cxt->isp_ops.callback)
-		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY,NULL);
+		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
 	}
 
     if (1 == cxt->debug_enable) {
@@ -5511,11 +5514,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	if (calc_out && calc_out->is_stab) {
         if (cxt->isp_ops.callback)
 		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
-	}
+        }
 /***********************************************************/
 /*display the AE running status*/
     if (1 == cxt->debug_enable) {
-		save_to_mlog_file(cxt, &misc_calc_out);
+	save_to_mlog_file(cxt, &misc_calc_out);
     }
 /***********************************************************/
 	cxt->cur_status.frame_id++;
@@ -6131,6 +6134,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
 		}
 		break;
+
 	default:
 		rtn = AE_ERROR;
 		break;

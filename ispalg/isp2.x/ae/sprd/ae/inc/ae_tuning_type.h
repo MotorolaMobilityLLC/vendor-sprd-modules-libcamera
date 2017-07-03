@@ -50,12 +50,14 @@ struct mulaes_cfg {
 	cmr_s16 x_idx;
 	cmr_s16 y_lum;
 };
+
 struct mulaes_tuning_param {
 	cmr_u8 enable;
 	cmr_u8 num;
 	cmr_u16 reserved;	/*1 * 4bytes */
 	struct mulaes_cfg cfg[MULAES_CFG_NUM];	/*8 * 4bytes */
 };			/*9 * 4bytes */
+
 typedef struct {
 	struct ae_range region_thrd[6];	/*u d l r */
 	cmr_s16 up_max;
@@ -72,7 +74,6 @@ struct region_tuning_param {
 	struct ae_piecewise_func u_out_piecewise;	/*17 * 4bytes */
 	struct ae_piecewise_func d_out_piecewise;	/*17 * 4bytes */
 };			/*180 * 4bytes */
-
 
 typedef struct {
 	cmr_s16 thrd[2];
