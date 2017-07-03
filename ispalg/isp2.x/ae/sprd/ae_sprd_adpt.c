@@ -4786,7 +4786,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 
 static void _set_flash_calibration_script(struct ae_ctrl_cxt *cxt)
 {	
-	char str[50];
+	char str[PROPERTY_VALUE_MAX];
 	memset((void*)&str[0], 0, sizeof(str));
 	property_get("persist.sys.isp.ae.fc_stript", str, "");
 	if (!strcmp(str, "on")) {
@@ -4797,7 +4797,7 @@ static void _set_flash_calibration_script(struct ae_ctrl_cxt *cxt)
 
 static void _set_led(struct ae_ctrl_cxt *cxt)
 {
-	char str[50];
+	char str[PROPERTY_VALUE_MAX];
 	cmr_s16 i = 0;
 	cmr_s16 j = 0;
 	float tmp = 0;

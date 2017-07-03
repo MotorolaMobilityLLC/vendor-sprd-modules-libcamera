@@ -26,11 +26,10 @@ LOCAL_C_INCLUDES := \
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
-
 ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/midgard
+LOCAL_C_INCLUDES += vendor/sprd/external/drivers/gpu/midgard/include
 else ifeq ($(strip $(TARGET_GPU_PLATFORM)),utgard)
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/utgard
+LOCAL_C_INCLUDES += vendor/sprd/external/drivers/gpu/utgard/include
 else ifeq ($(strip $(TARGET_GPU_PLATFORM)),rogue)
 LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/
 LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/

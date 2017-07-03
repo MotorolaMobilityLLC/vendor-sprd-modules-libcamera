@@ -17,7 +17,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Cam3Setting"
 
-#include <camera/Camera.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
 #include <sys/types.h>

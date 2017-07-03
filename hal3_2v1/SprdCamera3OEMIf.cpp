@@ -18,7 +18,6 @@
 #define LOG_TAG "Cam3OEMIf"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
-#include <camera/Camera.h>
 #include "SprdCamera3OEMIf.h"
 #include <utils/Log.h>
 #include <utils/String16.h>
