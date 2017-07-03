@@ -10191,7 +10191,7 @@ cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
                           struct frm_info *data) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
     cmr_u32 frm_id = 0;
-    cmr_u32 rot_frm_id = 0;
+    cmr_uint rot_frm_id = 0;
     struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
     struct rot_param rot_param;
     struct cmr_op_mean op_mean;
@@ -10204,7 +10204,7 @@ cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&op_mean, sizeof(struct cmr_op_mean));
     /*check preview status and frame id*/
     if (PREVIEWING == prev_cxt->prev_status) {
-        ret = prev_get_src_rot_buffer(prev_cxt, data, (cmr_uint *)&rot_frm_id);
+        ret = prev_get_src_rot_buffer(prev_cxt, data, &rot_frm_id);
         if (ret) {
             CMR_LOGE("get src rot buffer failed");
             ret = CMR_CAMERA_FAIL;
