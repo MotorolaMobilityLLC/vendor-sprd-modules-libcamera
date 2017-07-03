@@ -11,7 +11,7 @@
 #include <string.h>
 #include <isp_type.h>
 
-#define PD_VERSION "PDAF_Algo_Ver: v1.09"
+#define PD_VERSION "PDAF_Algo_Ver: v1.10"
 #define PD_PIXEL_NUM (24576)
 #define PD_AREA_NUMBER (4)
 #define PD_PIXEL_ALIGN_X (16)
@@ -49,6 +49,8 @@ typedef struct {
 	//Only dCalibration = 1 to be effective
 	void *OTPBuffer;
 	cmr_s32 dOVSpeedup;
+	//0: Normal, 1:Mirror+Flip
+	int dSensorSetting;
 } PD_GlobalSetting;
 
 typedef void (*PDCALLBACK) (unsigned char *);

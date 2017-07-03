@@ -288,10 +288,12 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
-	//cxt->pd_gobal_setting.OTPBuffer = (void *)&(in_p->pdaf_otp);
 	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;	
 	cxt->pd_gobal_setting.dCalibration = 1;
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
+	//0: Normal, 1:Mirror+Flip
+	cxt->pd_gobal_setting.dSensorSetting = 1;
+	
 
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
@@ -346,6 +348,11 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 dRectH = 0;
 	cmr_s32 *pPD_left = NULL;
 	cmr_s32 *pPD_right = NULL;
+	cmr_s32 *pPD_left_rotation = NULL;
+	cmr_s32 *pPD_right_rotation = NULL;
+	cmr_s32 *pPD_left_final = NULL;
+	cmr_s32 *pPD_right_final = NULL;
+	cmr_s32 i;
 
 	UNUSED(out);
 	if (!in) {
@@ -376,13 +383,28 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	pPD_left  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+	pPD_left_rotation  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+	pPD_right_rotation = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 
-	ISP_LOGI("PDALGO Converter");
+	ISP_LOGI("PDALGO Converter. Sensor[%d]", cxt->pd_gobal_setting.dSensorSetting);
 	ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
+	
+	if(cxt->pd_gobal_setting.dSensorSetting==1){
+	    for(i=0;i<PD_PIXEL_NUM;i++){
+		    pPD_left_rotation[i] = pPD_left[PD_PIXEL_NUM-i-1];
+			pPD_right_rotation[i] = pPD_right[PD_PIXEL_NUM-i-1];
+		}
+		pPD_left_final = pPD_left_rotation;
+		pPD_right_final = pPD_right_rotation;
+	}
+	else{
+		pPD_left_final = pPD_left;
+		pPD_right_final = pPD_right;
+	}
+	
 
 	for (cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++) {
-		//ret = PD_DoType2(pInPhaseBuf_left, pInPhaseBuf_right, dRectX, dRectY, dRectW, dRectH, area_index);
-		ret = PD_DoType2((void *)pPD_left, (void *)pPD_right, dRectX, dRectY, dRectW, dRectH, area_index);
+		ret = PD_DoType2((void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
 		if (ret) {
 			ISP_LOGE("fail to do pd algo.");
 			goto exit;
@@ -409,6 +431,8 @@ exit:
 
 	free(pPD_left);
 	free(pPD_right);
+	free(pPD_left_rotation);
+	free(pPD_right_rotation);
 	return ret;
 }
 
