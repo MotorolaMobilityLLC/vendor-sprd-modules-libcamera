@@ -267,7 +267,7 @@ static cmr_int s5k4h8yx_drv_write_exposure(cmr_handle handle,
 }
 
 // cmr_u32 s_af_step=0x00;
-static cmr_int 	s5k4h8yx_drv_write_exp_dummy(cmr_handle handle,
+static cmr_int s5k4h8yx_drv_write_exp_dummy(cmr_handle handle,
                                                     cmr_u16 expsure_line,
                                                     cmr_u16 dummy_line,
                                                     cmr_u16 size_index) {
@@ -383,10 +383,10 @@ static cmr_int s5k4h8yx_drv_before_snapshot(cmr_handle handle,
 
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    if (prv_linetime == cap_linetime) {
+    /*if (prv_linetime == cap_linetime) {
         SENSOR_LOGI("prvline equal to capline");
         goto CFG_INFO;
-    }
+    }*/
 
     capture_maxline = s5k4h8yx_drv_get_vts(handle);
 
@@ -407,6 +407,7 @@ static cmr_int s5k4h8yx_drv_before_snapshot(cmr_handle handle,
     }
 
     s5k4h8yx_drv_set_shutter(handle, capture_exposure);
+    s5k4h8yx_drv_write_gain(handle, gain);
 
 CFG_INFO:
     // s_capture_shutter = s5k4h8yx_drv_get_shutter(handle);
@@ -443,7 +444,7 @@ static cmr_int s5k4h8yx_drv_after_snapshot(cmr_handle handle,
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("after_snapshot mode:%ld", param);
-    if(sns_drv_cxt->ops_cb.set_mode) 
+    if(sns_drv_cxt->ops_cb.set_mode)
         ret = sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle,(cmr_u32)param);
 
     return ret;
@@ -632,7 +633,7 @@ static cmr_int s5k4h8yx_drv_set_ev(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = sns_drv_cxt->exp_line;
     cmr_u32 cap_vts = *((cmr_u32*)sns_drv_cxt->privata_data.data);
     cmr_u32 ev = ext_ptr->param;
-     
+
     cmr_u16 expsure_line = 0x00;
     cmr_u16 line_time = 0x00;
     cmr_u32 exp_delay_time = 0;
@@ -946,7 +947,7 @@ static struct sensor_ic_ops s5k4h8yx_ops_tab = {
     .write_gain_value = s5k4h8yx_drv_write_gain,
     .ext_ops = {
         [SENSOR_IOCTL_EXT_FUNC].ops = s5k4h8yx_drv_ext_func,
-        [SENSOR_IOCTL_VIDEO_MODE].ops = s5k4h8yx_drv_set_video_mode, 
+        [SENSOR_IOCTL_VIDEO_MODE].ops = s5k4h8yx_drv_set_video_mode,
         [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = s5k4h8yx_drv_before_snapshot,
         [SENSOR_IOCTL_STREAM_ON].ops = s5k4h8yx_drv_stream_on,
         [SENSOR_IOCTL_STREAM_OFF].ops = s5k4h8yx_drv_stream_off,
