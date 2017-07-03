@@ -324,7 +324,6 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_callback_cmd cmd = 0;
 	void *in = NULL;
-	UNUSED(data);
 
 	if (!cxt) {
 		ret = -ISP_PARAM_NULL;
@@ -354,6 +353,10 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_HDR_START:
 		cmd = ISP_HDR_EV_EFFECT_CALLBACK;
+		break;
+	case AE_CB_LED_NOTIFY:
+		in = data;
+		cmd = ISP_ONLINE_FLASH_CALLBACK;
 		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;

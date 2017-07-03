@@ -282,6 +282,7 @@ struct ae_ctrl_cxt {
 	struct ae_tuning_param *cur_param;
 	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_NUM][AE_FLICKER_NUM];
 	struct flash_tune_param dflash_param[AE_MAX_PARAM_NUM];
+	struct front_flash_param front_flash_param[AE_MAX_PARAM_NUM];
 	/*
 	 * sensor related information
 	 */
@@ -1446,6 +1447,22 @@ static cmr_s32 _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 	case AE_FLASH_MAIN_LIGHTING:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_LIGHTING");
 		break;
+
+	case AE_LED_FLASH_ON:
+		cxt->cur_status.settings.flash = FLASH_LED_ON;
+		ISP_LOGI("ae_flash_status FLASH_LED_ON");
+		break;
+
+	case AE_LED_FLASH_OFF:
+		cxt->cur_status.settings.flash = FLASH_LED_OFF;
+		ISP_LOGI("ae_flash_status FLASH_LED_OFF");
+		break;
+
+	case AE_LED_FLASH_AUTO:
+		cxt->cur_status.settings.flash = FLASH_LED_AUTO;
+		ISP_LOGI("ae_flash_status FLASH_LED_AUTO");
+		break;
+
 	default:
 		rtn = AE_ERROR;
 		break;
@@ -1590,7 +1607,10 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		for (i = 0; i < init_param->dflash_num && i < AE_MAX_PARAM_NUM; ++i) {
 			memcpy(&cxt->dflash_param[i], init_param->flash_tuning[i].param, sizeof(struct flash_tune_param));
 		}
-
+/*start read front flash tuning param*/
+		cxt->front_flash_param[0].led_thr_down = 250;
+		cxt->front_flash_param[0].led_thr_up = 330;
+/*end to read front flash tuning param*/
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
 		cxt->monitor_unit.win_num = init_param->monitor_win_num;
@@ -2620,6 +2640,7 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
+	cmr_s32 led_eb;
 	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 
 	/* for flash algorithm 0 */
@@ -2750,6 +2771,24 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			if (0 != cxt->flash_ver) {
 				flash_finish(cxt);
 			}
+		}
+	}
+	/* for front flash algorithm (LED+LCD) */
+	if (cxt->camera_id == 1 && cxt->cur_status.settings.flash == FLASH_LED_AUTO) {
+		if ((cxt->sync_cur_result.cur_bv <= cxt->front_flash_param[0].led_thr_down) &&
+			cxt->sync_cur_status.led_state == 0) {
+			led_eb = 1;
+			cxt->cur_status.led_state = 1;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_LED_NOTIFY, &led_eb);
+			ISP_LOGI("ae_flash1_callback do-led-open!\r\n");
+		}
+
+		if ((cxt->sync_cur_result.cur_bv >= cxt->front_flash_param[0].led_thr_up) &&
+			cxt->sync_cur_status.led_state == 1) {
+			led_eb = 0;
+			cxt->cur_status.led_state = 0;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_LED_NOTIFY, &led_eb);
+			ISP_LOGI("ae_flash1_callback do-led-close!\r\n");
 		}
 	}
 
