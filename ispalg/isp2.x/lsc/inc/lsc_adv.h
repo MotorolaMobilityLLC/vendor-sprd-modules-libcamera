@@ -94,6 +94,9 @@ enum alsc_io_ctrl_cmd {
 	ALSC_GET_VER = 4,
 	ALSC_FLASH_ON = 5,
 	ALSC_FLASH_OFF = 6,
+	ALSC_FW_STOP = 7,
+	ALSC_FW_START = 8,
+	ALSC_FW_START_END = 9,
 };
 
 struct tg_alsc_debug_info {
@@ -402,8 +405,21 @@ struct lsc2_context {
     // lsc command set address
 	void* lsc_eng_cmd_set_ptr;
 	void* lsc_eng_cmd_set2_ptr;
-};
 
+	//fw start/stop
+	cmr_u16 *fwstop_output_table;
+	cmr_u16 *fwstart_new_scaled_table;
+	cmr_u16 can_update_dest;
+	cmr_u16 fw_start_end;
+};
+// change mode (fw_start, fw_stop)
+struct alsc_fwstart_info {
+	cmr_u16* lsc_result_address_new;
+	cmr_u16* lsc_tab_address_new[9];
+	cmr_u32 gain_width_new;
+	cmr_u32 gain_height_new;
+	cmr_u32 image_pattern_new;
+};
 ////////////////////////////// calculation dependent //////////////////////////////
 
 
