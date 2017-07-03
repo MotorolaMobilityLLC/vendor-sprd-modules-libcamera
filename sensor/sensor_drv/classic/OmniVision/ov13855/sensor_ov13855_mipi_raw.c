@@ -367,40 +367,27 @@ static cmr_int ov13855_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
-/*block size 16x16 normal pos(x,y) mirror(15-x,y) flip(x,15-y) mirror&&flip(15-x, 15-y)*/
+/*block size 16x16 normal pos(x,y) mirror(16-x,y) flip(x,16-y) mirror&&flip(16-x, 16-y)*/
 
 #if defined(CONFIG_DUAL_MODULE)
-static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
-static int  flip_disable_factor = -1; //enable: -1  diable: 1
+//static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
+//static int  flip_disable_factor = -1; //enable: -1  diable: 1
 
 static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
-#if 0
 static const cmr_u16 ov13855_pd_row[] = {2, 6, 10, 14};//{14, 10, 6, 2};//y
 
 static const cmr_u16 ov13855_pd_col[] = {10, 10, 2, 2};//{2, 2, 10, 10};//x
 static const struct pd_pos_info _ov13855_pd_pos_l[] = {
-     {2, 10},{10, 6},
+    {10, 6}, {2, 10},
 };
 
 static const struct pd_pos_info _ov13855_pd_pos_r[] = {
-     {2, 14},{10, 2},
+     {10, 2},{2, 14},
 };
+
 #else
-static const cmr_u16 ov13855_pd_row[] = {1, 5, 9, 13};//{14, 10, 6, 2};//y
-
-static const cmr_u16 ov13855_pd_col[] = {9, 9, 1, 1};//{2, 2, 10, 10};//x
-static const struct pd_pos_info _ov13855_pd_pos_l[] = {
-     {1, 9},{9, 5},
-};
-
-static const struct pd_pos_info _ov13855_pd_pos_r[] = {
-     {1, 13},{9, 1},
-};
-
-#endif
-#else
-static int  mirror_diasble_factor = 1; //enable: -1  diable: 1
-static int  flip_disable_factor = 1; //enable:-1  diable: 1
+//static int  mirror_diasble_factor = 1; //enable: -1  diable: 1
+//static int  flip_disable_factor = 1; //enable:-1  diable: 1
 
 static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
 
