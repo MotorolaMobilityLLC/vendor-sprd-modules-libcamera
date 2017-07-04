@@ -109,17 +109,19 @@ typedef struct _camera3_default_info {
     camera3_config_t config[2];
 } SprdCamera3DefaultInfo;
 
-typedef struct sensor_fov_tab {
-    char sn_name[36];
-    float physical_size[2];
-    float focal_lengths;
-} sensor_fov_tab_t;
-
 static SprdCamera3DefaultInfo camera3_default_info;
 static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
 
+static drv_fov_info default_sensor_fov[CAMERA_ID_COUNT] = {
+    {{3.50f, 2.625f}, 3.75f},
+    {{3.50f, 2.625f}, 3.75f},
+    {{3.50f, 2.625f}, 3.75f},
+    {{3.50f, 2.625f}, 3.75f},
+};
+static drv_fov_info sensor_fov[CAMERA_ID_COUNT];
+#if 0
 const sensor_fov_tab_t back_sensor_fov_tab[] = {
     {"ov8825_mipi_raw", {4.614f, 3.444f}, 4.222f},
     {"ov5648_mipi_raw", {3.50f, 2.625f}, 3.75f},
@@ -161,6 +163,7 @@ const sensor_fov_tab_t fourth_sensor_fov_tab[] = {
     {"ov2680_mipi_raw", {2.84f, 2.15f}, 2.15f},
     {"", {3.50f, 2.625f}, 3.75f},
 };
+#endif
 
 const int32_t klens_shading_map_size[2] = {1, 1};
 const int64_t kexposure_time_range[2] = {1000L, 30000000000L}; // 1 us - 30 sec
@@ -1613,6 +1616,20 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
              sensor_cxt->sensor_info_ptr->name,
              mSensorFocusEnable[cameraId]);
 
+    if (sensor_cxt->fov_info.physical_size[0] <= 0 ||
+                 sensor_cxt->fov_info.physical_size[1] <= 0 ||
+                 sensor_cxt->fov_info.focal_lengths <= 0) {
+        memcpy(&sensor_fov[cameraId], &default_sensor_fov[cameraId],
+                 sizeof(default_sensor_fov[cameraId]));
+    } else {
+        memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info, sizeof(sensor_cxt->fov_info));
+    }
+    HAL_LOGD("debug---: sensor %s fov physical size (%f, %f), focal_lengths %f",
+                           sensor_cxt->sensor_info_ptr->name,
+                           sensor_fov[cameraId].physical_size[0],
+                           sensor_fov[cameraId].physical_size[1],
+                           sensor_fov[cameraId].focal_lengths);
+
     setLargestSensorSize(
         cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
         sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
@@ -1659,105 +1676,16 @@ int SprdCamera3Setting::getNumberOfCameras() {
     return num;
 }
 
-int SprdCamera3Setting::GetFovParam(int32_t cameraId) {
-    int i = 0, SnNum = 0, retValue = 0;
-    if (0 == cameraId) {
-        SnNum = sizeof(back_sensor_fov_tab) / sizeof(sensor_fov_tab);
-        LOGI("check back sensor numbers %d", SnNum);
-        for (i = 0; i < SnNum; i++) {
-            if (strcmp(back_sensor_fov_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_BACK) == 0) {
-                LOGI("sensor matched  the %dth  is %s", i,
-                     CAMERA_SENSOR_TYPE_BACK);
-                retValue = i;
-                break;
-            }
-        }
-    } else if (1 == cameraId) {
-        SnNum = sizeof(front_sensor_fov_tab) / sizeof(sensor_fov_tab);
-        LOGI("check front sensor numbers %d", SnNum);
-        for (i = 0; i < SnNum; i++) {
-            if (strcmp(front_sensor_fov_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_FRONT) == 0) {
-                LOGI("sensor matched the %dth  is %s", i,
-                     CAMERA_SENSOR_TYPE_FRONT);
-                retValue = i;
-                break;
-            }
-        }
-    }
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
-    else if (2 == cameraId) {
-        SnNum = sizeof(third_sensor_fov_tab) / sizeof(sensor_fov_tab);
-        LOGI("check third sensor numbers %d", SnNum);
-        for (i = 0; i < SnNum; i++) {
-            if (strcmp(third_sensor_fov_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
-                LOGI("sensor matched the %dth  is %s", i,
-                     CAMERA_SENSOR_TYPE_BACK_EXT);
-                retValue = i;
-                break;
-            }
-        }
-    }
-#endif
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
-    else if (3 == cameraId) {
-        SnNum = sizeof(fourth_sensor_fov_tab) / sizeof(sensor_fov_tab);
-        LOGI("check third sensor numbers %d", SnNum);
-        for (i = 0; i < SnNum; i++) {
-            if (strcmp(fourth_sensor_fov_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
-                LOGI("sensor matched the %dth  is %s", i,
-                     CAMERA_SENSOR_TYPE_FRONT_EXT);
-                retValue = i;
-                break;
-            }
-        }
-    }
-#endif
-
-    if (i == SnNum) {
-        retValue = SnNum - 1;
-    }
-
-    return retValue;
-}
-
 int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     // camera3_default_info.common.aperture = 2.8f;
-    int index = 0;
     camera3_default_info.common.filter_density = 0.0f;
     camera3_default_info.common.optical_stabilization = 0;
 
-    index = GetFovParam(cameraId);
-
     memcpy(camera3_default_info.common.lens_shading_map_size,
            klens_shading_map_size, sizeof(klens_shading_map_size));
-    if (cameraId == 0) {
-        memcpy(camera3_default_info.common.sensor_physical_size,
-               back_sensor_fov_tab[index].physical_size,
-               sizeof(back_sensor_fov_tab[index].physical_size));
-    } else if (cameraId == 1) {
-        memcpy(camera3_default_info.common.sensor_physical_size,
-               front_sensor_fov_tab[index].physical_size,
-               sizeof(front_sensor_fov_tab[index].physical_size));
-    }
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
-    else if (cameraId == 2) {
-        memcpy(camera3_default_info.common.sensor_physical_size,
-               third_sensor_fov_tab[index].physical_size,
-               sizeof(third_sensor_fov_tab[index].physical_size));
-    }
-#endif
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
-    else if (cameraId == 3) {
-        memcpy(camera3_default_info.common.sensor_physical_size,
-               fourth_sensor_fov_tab[index].physical_size,
-               sizeof(fourth_sensor_fov_tab[index].physical_size));
-    }
-#endif
 
+    memcpy(camera3_default_info.common.sensor_physical_size,
+        sensor_fov[cameraId].physical_size, sizeof(sensor_fov[cameraId].physical_size));
     HAL_LOGI("Camera %d, physical_size %f, %f", cameraId,
              camera3_default_info.common.sensor_physical_size[0],
              camera3_default_info.common.sensor_physical_size[1]);
@@ -1885,11 +1813,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     int i = 0;
-    int index = 0;
 
     memset(&(s_setting[cameraId]), 0, sizeof(sprd_setting_info_t));
-
-    index = GetFovParam(cameraId);
 
     s_setting[cameraId].supported_hardware_level =
         ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
@@ -1911,19 +1836,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     s_setting[cameraId].lens_InfoInfo.hyperfocal_distance = 2.0f;
-    if (cameraId == 0) {
-        s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
-            back_sensor_fov_tab[index].focal_lengths;
-    } else if (cameraId == 1) {
-        s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
-            front_sensor_fov_tab[index].focal_lengths;
-    } else if (cameraId == 2) {
-        s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
-            third_sensor_fov_tab[index].focal_lengths;
-    } else if (cameraId == 3) {
-        s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
-            fourth_sensor_fov_tab[index].focal_lengths;
-    }
+
+    s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
+        sensor_fov[cameraId].focal_lengths;
+
     s_setting[cameraId].lens_InfoInfo.available_apertures =
         default_info->common.aperture;
     s_setting[cameraId].lens_InfoInfo.filter_density =

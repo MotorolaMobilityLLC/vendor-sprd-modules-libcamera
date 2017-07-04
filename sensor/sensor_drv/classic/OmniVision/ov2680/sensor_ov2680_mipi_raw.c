@@ -770,6 +770,8 @@ static cmr_int ov2680_drv_get_static_info(cmr_handle handle,
     ex_info->capture_skip_num = module_info->capture_skip_num;
     ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
+    memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
+
     sensor_ic_print_static_info(SENSOR_NAME, ex_info);
 
     return rtn;

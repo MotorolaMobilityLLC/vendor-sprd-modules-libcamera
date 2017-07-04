@@ -135,6 +135,11 @@ struct af_pose_dis {
     cmr_u32 hori2down;
 };
 
+struct drv_fov_info {
+    float physical_size[2];
+    float focal_lengths;
+};
+
 struct sensor_ex_info {
     cmr_u32 f_num;
     cmr_u32 focal_length;
@@ -147,6 +152,7 @@ struct sensor_ex_info {
     cmr_u32 adgain_valid_frame_num;
     cmr_u32 preview_skip_num;
     cmr_u32 capture_skip_num;
+    struct drv_fov_info fov_info;
     cmr_s8 *name;
     cmr_s8 *sensor_version_info;
     struct af_pose_dis pos_dis;

@@ -793,6 +793,7 @@ struct sensor_drv_context {
     cmr_u32 error_cnt;
     cmr_uint lnc_addr_bakup[8][4];
     cmr_u32 bypass_mode;
+    struct drv_fov_info fov_info;
 
     cmr_handle sensor_hw_handler;
     void *module_list[SENSOR_ID_MAX];

@@ -807,6 +807,8 @@ static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
 
+    memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
+
     sensor_ic_print_static_info(SENSOR_NAME, ex_info);
     return rtn;
 }

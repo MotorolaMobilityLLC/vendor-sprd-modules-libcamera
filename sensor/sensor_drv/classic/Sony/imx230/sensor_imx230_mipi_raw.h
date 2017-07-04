@@ -687,7 +687,7 @@ static SENSOR_STATIC_INFO_T s_imx230_static_info[VENDOR_NUM] = {
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
-        .fov_info = {{4.614f, 3.444f}, 4.222f}}
+        .fov_info = {{5.985f, 4.498f}, 4.75f}}
     }
 };
 

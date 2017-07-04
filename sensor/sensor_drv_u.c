@@ -2836,6 +2836,34 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle)
              sensor_cxt->sensor_info_ptr->name,
              sensor_cxt->sensor_info_ptr->focus_eb);
 
+    {
+        SENSOR_VAL_T val;
+        struct sensor_ic_ops *sns_ops = PNULL;
+        cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+        struct sensor_ex_info sn_ex_info_slv;
+        memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
+
+        val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+        val.pval = &sn_ex_info_slv;
+
+        sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+        if (sns_ops) {
+            ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle, (cmr_uint)&val);
+            if (ret) {
+                SENSOR_LOGI("get sensor ex info failed");
+            }
+            SENSOR_LOGI("sensor %s fov physical size (%f, %f), focal_lengths %f",
+                                  module->sn_name,
+                                  sn_ex_info_slv.fov_info.physical_size[0],
+                                  sn_ex_info_slv.fov_info.physical_size[1],
+                                  sn_ex_info_slv.fov_info.focal_lengths);
+            memcpy(&sensor_cxt->fov_info, &sn_ex_info_slv.fov_info,
+                                  sizeof(sn_ex_info_slv.fov_info));
+        } else {
+            SENSOR_LOGI("sns_ops null");
+        }
+    }
+
     if (module && module->af_dev_info.af_drv_entry && (!sensor_cxt->af_drv_handle)) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
         hw_sensor_set_monitor_val(sensor_cxt->hw_drv_handle,

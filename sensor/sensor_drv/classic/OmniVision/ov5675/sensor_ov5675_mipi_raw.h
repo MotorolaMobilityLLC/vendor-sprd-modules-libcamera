@@ -482,7 +482,7 @@ static SENSOR_STATIC_INFO_T s_ov5675_static_info[VENDOR_NUM] = {
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
-        .fov_info = {{4.614f, 3.444f}, 4.222f}}
+        .fov_info = {{2.9457f, 2.214f}, 3.061f}}
     },
 
     /*If there are multiple modules,please add here*/
