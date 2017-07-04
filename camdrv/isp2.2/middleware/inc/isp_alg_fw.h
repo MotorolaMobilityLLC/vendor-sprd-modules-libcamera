@@ -221,6 +221,7 @@ struct isp_alg_fw_context {
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
 	cmr_handle thr_handle;
+	cmr_handle thr_afhandle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
 	cmr_handle handle_otp;
