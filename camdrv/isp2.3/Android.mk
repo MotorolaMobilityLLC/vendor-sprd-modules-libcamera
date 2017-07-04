@@ -60,6 +60,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/calibration \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
+	$(LOCAL_PATH)/bridge \
 	$(LOCAL_PATH)/param_parse \
 	$(LOCAL_PATH)/calibration/inc
 
@@ -83,9 +84,9 @@ LOCAL_MODULE := libcamdrv
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libcampm
+LOCAL_SHARED_LIBRARIES := libcutils libutils libdl
 
-LOCAL_SHARED_LIBRARIES += libcamsensor #libcalibration
+LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamcommon libcampm
 
 include $(BUILD_SHARED_LIBRARY)
 

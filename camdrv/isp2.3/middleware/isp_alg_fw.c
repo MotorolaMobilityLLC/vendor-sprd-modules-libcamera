@@ -32,6 +32,7 @@
 #include "smart_ctrl.h"
 #include "lsc_adv.h"
 #include "pdaf_ctrl.h"
+#include "isp_bridge.h"
 
 struct commn_info {
 	cmr_s32 isp_mode;
@@ -3436,6 +3437,7 @@ exit:
 	} else {
 		*isp_alg_handle = (cmr_handle) cxt;
 		isp_dev_access_evt_reg(cxt->dev_access_handle, ispalg_dev_evt_msg, (cmr_handle) cxt);
+		isp_br_init(cxt->camera_id, cxt);
 	}
 
 	ISP_LOGI("done %ld", ret);
@@ -3458,6 +3460,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
 
+	isp_br_deinit(cxt->camera_id);
 	otp_ctrl_deinit(cxt->handle_otp);
 
 	if (cxt->ae_cxt.log_alc) {
