@@ -9188,8 +9188,24 @@ cmr_int camera_local_start_focus(cmr_handle oem_handle) {
 cmr_int camera_local_cancel_focus(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_int has_preflashed = 0;
+    struct setting_cmd_parameter setting_param;
 
-    ret = cmr_af_cancel_notice_flash(cxt->setting_cxt.setting_handle);
+    {
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                              SETTING_GET_PRE_LOWFLASH_VALUE, &setting_param);
+        has_preflashed = setting_param.cmd_type_value;
+
+        if (has_preflashed) {
+            struct common_isp_cmd_param isp_param;
+            ret = camera_isp_ioctl(oem_handle,
+                                  COM_ISP_SET_SNAPSHOT_FINISHED, &isp_param);
+        }
+    }
+
+    ret = cmr_af_cancel_notice_flash(cxt->setting_cxt.setting_handle, cxt->camera_id);
     ret = cmr_af_cancel_notice_focus(cxt->focus_cxt.focus_handle);
     ret = cmr_focus_stop(cxt->focus_cxt.focus_handle, cxt->camera_id, 1);
 

@@ -2628,7 +2628,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     break;
                 default:
                     CMR_LOGI("pre flash open");
-                    hal_param->flash_param.has_preflashed = 1;
+                    hal_param->flash_param.has_preflashed = 0;
                     hal_param->flash_param.flash_opened = 1;
                     cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
                     while (0 < tmpVal) {
@@ -3481,10 +3481,14 @@ cmr_int cmr_af_start_notice_flash(cmr_handle setting_handle) {
     return ret;
 }
 
-cmr_int cmr_af_cancel_notice_flash(cmr_handle setting_handle) {
+cmr_int cmr_af_cancel_notice_flash(cmr_handle setting_handle,
+                          cmr_u32 camera_id) {
     cmr_int ret = 0;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, camera_id);
     CMR_LOGI("cmr_af_cancel_notice_flash");
+
+    hal_param->flash_param.has_preflashed = 0;
 
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_NEED_QUIT;
