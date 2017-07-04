@@ -34,22 +34,22 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../vsp/inc \
 	$(LOCAL_PATH)/../../tool/mtrace \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/awb/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/awb/alc_awb/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/awb/sprd/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/af/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/afv1/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/aft/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/af/sft_af/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/af/alc_af/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/lsc/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/common/inc/ \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/afl/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/smart \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
-        $(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc
+	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/sprd/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/af/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/afv1/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/aft/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sft_af/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/af/alc_af/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/lsc/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/common/inc/ \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/afl/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/smart \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
+	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc
 
 # ************************************************
 # internal header file
@@ -66,7 +66,16 @@ LOCAL_C_INCLUDES += \
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 # don't modify this code
-LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name 'param_manager' -prune -o -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
+LOCAL_COMPILE_DIR := $(LOCAL_PATH)/calibration
+LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
+LOCAL_COMPILE_DIR := $(LOCAL_PATH)/driver
+LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
+LOCAL_COMPILE_DIR := $(LOCAL_PATH)/isp_tune
+LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
+LOCAL_COMPILE_DIR := $(LOCAL_PATH)/middleware
+LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
+LOCAL_COMPILE_DIR := $(LOCAL_PATH)/param_parse
+LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
