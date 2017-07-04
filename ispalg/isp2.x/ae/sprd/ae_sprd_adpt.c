@@ -81,6 +81,20 @@ struct flash_calibration_data
 	int32 driverIndexP2[32];
 	int32 driverIndexM1[32];
 	int32 driverIndexM2[32];
+	float maP1[32];
+	float maP2[32];
+	float maM1[32];
+	float maM2[32];
+	int numP1_hwSample;
+	int numP2_hwSample;
+	int numM1_hwSample;
+	int numM2_hwSample;
+	float mAMaxP1;
+	float mAMaxP2;
+	float mAMaxP12;
+	float mAMaxM1;
+	float mAMaxM2;
+	float mAMaxM12;
 };
 
 enum FlashCaliError
@@ -187,6 +201,7 @@ struct ae_exposure_param {
 	cmr_u32 sensor_gain;
 	cmr_u32 isp_gain;
 };
+
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 #include <sprd_sensor_k.h>
 typedef enum { FALSE, TRUE } BOOL;
@@ -1713,6 +1728,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 			sensor_info.line_time);
 	}
 #endif
+
 	cxt->cur_status.start_index = cxt->cur_param->start_index;
 	ev_table = &cxt->cur_param->ev_table;
 	cxt->cur_status.target_lum = _calc_target_lum(cxt->cur_param->target_lum, ev_table->default_level, ev_table);
@@ -3769,8 +3785,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				}
 			caliData->testIndAll = id;
 
-			caliData->expTimeBase = 500000;
-			caliData->expTime = 500000;
+			caliData->expTimeBase = 0.05 * AEC_LINETIME_PRECESION;
+			caliData->expTime = 0.05 * AEC_LINETIME_PRECESION;
 			caliData->gainBase = 8*128;
 			caliData->gain = 8 * 128;
 
@@ -3804,7 +3820,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					&bmean);
 				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
 				if ( (gmean>200 && gmean<400) ||
-					 (caliData->expTime==500000 && caliData->gain == 8 * 128))
+					 (caliData->expTime==0.05 * AEC_LINETIME_PRECESION && caliData->gain == 8 * 128))
 				{
 					caliData->stateCaliFrameCntSt = frameCount+1;
 					caliData->expTimeBase = caliData->expTime;
@@ -3823,16 +3839,16 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						caliData->expTime *= 300 / gmean;
 						caliData->gain = caliData->gain;
 					}
-					if (caliData->expTime>500000)
+					if (caliData->expTime>0.05 * AEC_LINETIME_PRECESION)
 					{
-						float ratio = caliData->expTime / 500000.0f;
-						caliData->expTime = 500000;
+						float ratio = caliData->expTime / (0.05 * AEC_LINETIME_PRECESION);
+						caliData->expTime = 0.05 * AEC_LINETIME_PRECESION;
 						caliData->gain *= ratio;
 					}
-					else if (caliData->expTime<10000)
+					else if (caliData->expTime<0.001 * AEC_LINETIME_PRECESION)
 					{
-						float ratio = caliData->expTime / 10000.0f;
-						caliData->expTime = 10000;
+						float ratio = caliData->expTime / (0.001 * AEC_LINETIME_PRECESION);
+						caliData->expTime = 0.001 * AEC_LINETIME_PRECESION;
 						caliData->gain *= ratio;
 					}
 					if (caliData->gain<128)
@@ -3913,13 +3929,13 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					double rat2;
 					double rat3;
 
-					if (caliData->expTime > 300000)
+					if (caliData->expTime > 0.03 * AEC_LINETIME_PRECESION)
 					{
 						rat1 = rat;
 						int expTest;
 						expTest = caliData->expTime / rat1;
-						if (expTest < 300000)
-							expTest = 300000;
+						if (expTest < 0.03 * AEC_LINETIME_PRECESION)
+							expTest = 0.03 * AEC_LINETIME_PRECESION;
 						rat1 = (double)caliData->expTime / expTest;
 						caliData->expTime = expTest;
 					}
@@ -3944,12 +3960,12 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						rat3 = rat / rat1 / rat2;
 						int expTest;
 						expTest = caliData->expTime / rat3;
-						if (expTest < 10000)
-							expTest = 10000;
+						if (expTest < 0.001 * AEC_LINETIME_PRECESION)
+							expTest = 0.001 * AEC_LINETIME_PRECESION;
 						rat3 = (double)caliData->expTime / expTest;
 						caliData->expTime = expTest;
 
-						if (expTest == 10000 && caliData->gain == 128)
+						if (expTest == 0.001 * AEC_LINETIME_PRECESION && caliData->gain == 128)
 						{
 							char err[] = "error: the exposure is min\n";
 #ifdef WIN32
@@ -4119,11 +4135,13 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			}
 
 			caliData->out.version = 1;
-			caliData->out.preflashLevelNum1 = caliData->numP1_alg;
-			caliData->out.preflashLevelNum2 = caliData->numP2_alg;
-			caliData->out.flashLevelNum1 = caliData->numM1_alg;
-			caliData->out.flashLevelNum2 = caliData->numM2_alg;
-
+			for (i = 0; i < 32; i++)
+			{
+				caliData->out.driverIndexP1[i] = -1;
+				caliData->out.driverIndexP2[i] = -1;
+				caliData->out.driverIndexM1[i] = -1;
+				caliData->out.driverIndexM2[i] = -1;
+			}
 			for (i = 0; i < caliData->numP1_alg; i++)
 				caliData->out.driverIndexP1[i] = caliData->indHwP1_alg[i];
 			for (i = 0; i < caliData->numP2_alg; i++)
@@ -4132,7 +4150,25 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				caliData->out.driverIndexM1[i] = caliData->indHwM1_alg[i];
 			for (i = 0; i < caliData->numM2_alg; i++)
 				caliData->out.driverIndexM2[i] = caliData->indHwM2_alg[i];
+			for (i = 0; i < caliData->numP1_alg; i++)
+				caliData->out.maP1[i] = caliData->maHwP1_alg[i];
+			for (i = 0; i < caliData->numP2_alg; i++)
+				caliData->out.maP2[i] = caliData->maHwP2_alg[i];
+			for (i = 0; i < caliData->numM1_alg; i++)
+				caliData->out.maM1[i] = caliData->maHwM1_alg[i];
+			for (i = 0; i < caliData->numM2_alg; i++)
+				caliData->out.maM2[i] = caliData->maHwM2_alg[i];
 
+			caliData->out.numP1_hwSample = caliData->numP1_hwSample;
+			caliData->out.numP2_hwSample = caliData->numP2_hwSample;
+			caliData->out.numM1_hwSample = caliData->numM1_hwSample;
+			caliData->out.numM2_hwSample = caliData->numM2_hwSample;
+			caliData->out.mAMaxP1 = caliData->mAMaxP1;
+			caliData->out.mAMaxP2 = caliData->mAMaxP2;
+			caliData->out.mAMaxP12 = caliData->mAMaxP12;
+			caliData->out.mAMaxM1 = caliData->mAMaxM1;
+			caliData->out.mAMaxM2 = caliData->mAMaxM2;
+			caliData->out.mAMaxM12 = caliData->mAMaxM12;
 			//--------------------------
 			//--------------------------
 			//@@
@@ -4232,6 +4268,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			caliData->numM2_alg = 32;
 			caliData->numP1_alg = 32;
 			caliData->numP2_alg = 32;
+			caliData->out.preflashLevelNum1 = caliData->numP1_alg;
+			caliData->out.preflashLevelNum2 = caliData->numP2_alg;
+			caliData->out.flashLevelNum1 = caliData->numM1_alg;
+			caliData->out.flashLevelNum2 = caliData->numM2_alg;
 
 			FILE* fp;
 
@@ -4240,7 +4280,16 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			int propRet;
 			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug", 1, propValue);
 
-			if (propValue[0] == 1)
+			int debug1En=0;
+			int debug2En=0;
+			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug", 1, propValue);
+			if (propRet >= 1)
+				debug1En = propValue[0];
+			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug2", 1, propValue);
+			if (propRet >= 1)
+				debug2En = propValue[0];
+
+			if (debug2En == 1)
 			{
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_raw.txt", "wt");
@@ -4355,7 +4404,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						fprintf(fp, "\n");
 				}
 				fclose(fp);
+				}
 
+				if(debug1En==1)
+				{
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_debug.bin", "wb");
 #else
@@ -5084,11 +5136,11 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 /* send STAB notify to HAL */
     if (calc_out && calc_out->is_stab) {
         if (cxt->isp_ops.callback)
-		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
 	}
 
     if (1 == cxt->debug_enable) {
-	save_to_mlog_file(cxt, &misc_calc_out);
+		save_to_mlog_file(cxt, &misc_calc_out);
 	}
 
 	cxt->cur_status.frame_id++;
@@ -5294,7 +5346,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		return AE_PARAM_NULL;
 	}
 
-
 	rtn = _check_handle(handle);
 	if (AE_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle, ret: %d\n", rtn);
@@ -5341,7 +5392,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		}
 	}
 #endif
-
 
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	if (cxt->bypass) {
@@ -5447,49 +5497,45 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 /*update parameters to sensor*/
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-		struct match_data_param dualcam_aesync;
-		float cur_fps=0;
+	struct match_data_param dualcam_aesync;
+	float cur_fps=0;
 
-		if(cxt->is_multi_mode && cxt->ae_role)
-		{
-			memcpy(&dualcam_aesync.master_ae_info.ae_calc_result,
-				current_result, sizeof(dualcam_aesync.master_ae_info.ae_calc_result));
-			ISP_LOGD("[master] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
-				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_fps,
-				dualcam_aesync.master_ae_info.ae_calc_result.cur_lum,
-				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_again,
-				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_exp_line,
-				dualcam_aesync.master_ae_info.ae_calc_result.wts.exposure_time,
-				dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_dummy);
-			/* store calculated master's ae value */
-			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AECALC_RESULT, current_result, NULL);
+	if(cxt->is_multi_mode && cxt->ae_role) {
+		memcpy(&dualcam_aesync.master_ae_info.ae_calc_result,
+			current_result, sizeof(dualcam_aesync.master_ae_info.ae_calc_result));
+		ISP_LOGD("[master] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
+			dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_fps,
+			dualcam_aesync.master_ae_info.ae_calc_result.cur_lum,
+			dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_again,
+			dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_exp_line,
+			dualcam_aesync.master_ae_info.ae_calc_result.wts.exposure_time,
+			dualcam_aesync.master_ae_info.ae_calc_result.wts.cur_dummy);
+		/* store calculated master's ae value */
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AECALC_RESULT, current_result, NULL);
 
-			/* use stored master's ae value to calculate slave's ae value */
-			rtn = dualcamera_aesync_calc(cxt, &dualcam_aesync);
+		/* use stored master's ae value to calculate slave's ae value */
+		rtn = dualcamera_aesync_calc(cxt, &dualcam_aesync);
 
-		}
-		else  if(cxt->is_multi_mode && !cxt->ae_role)
-		{
-			/* use slave's ae_sync_result as final ae value */
-			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AESYNC_SETTING,
-				NULL, &dualcam_aesync.slave_ae_info.ae_sync_result);
+	} else if(cxt->is_multi_mode && !cxt->ae_role) {
+		/* use slave's ae_sync_result as final ae value */
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AESYNC_SETTING,
+			NULL, &dualcam_aesync.slave_ae_info.ae_sync_result);
 
-			current_result->wts.cur_exp_line= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line;
-			current_result->wts.exposure_time=  dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time;
-			current_result->wts.cur_again= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
-			current_result->wts.cur_dummy = dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;
+		current_result->wts.cur_exp_line= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line;
+		current_result->wts.exposure_time=  dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time;
+		current_result->wts.cur_again= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
+		current_result->wts.cur_dummy = dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;
 
-			cur_fps = (float)(10000000.0 / ((current_result->wts.cur_exp_line +current_result->wts.cur_dummy) * current_status->line_time));
+		cur_fps = (float)(AEC_LINETIME_PRECESION / ((current_result->wts.cur_exp_line +current_result->wts.cur_dummy) * current_status->line_time));
 
-			ISP_LOGD("[slave ] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
-				cur_fps,
-				current_result->cur_lum,
-				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again,
-				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line,
-				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time,
-				dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy);
-
-		}
+		ISP_LOGD("[slave ] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
+			cur_fps,
+			current_result->cur_lum,
+			dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again,
+			dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line,
+			dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time,
+			dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy);
+	}
 #endif
 
 /*update parameters to sensor*/
@@ -5506,16 +5552,17 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_AE_CALCOUT_NOTIFY, calc_out);
 	}
 #endif
+
 	rtn = _touch_ae_process(cxt, current_result);
 /* send STAB notify to HAL */
 	if (calc_out && calc_out->is_stab) {
         if (cxt->isp_ops.callback)
-		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
         }
 /***********************************************************/
 /*display the AE running status*/
     if (1 == cxt->debug_enable) {
-	save_to_mlog_file(cxt, &misc_calc_out);
+		save_to_mlog_file(cxt, &misc_calc_out);
     }
 /***********************************************************/
 	cxt->cur_status.frame_id++;
