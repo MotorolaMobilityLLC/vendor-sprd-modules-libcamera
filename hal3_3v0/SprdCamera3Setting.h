@@ -127,6 +127,7 @@ typedef int64_t nsecs_t;
 #define MIDDLE_FPS_RANGE 20
 #define SPRD_SHADING_FACTOR_NUM (2 * 2) //(>1*1*4,<=64*64*4)
 #define SPRD_MAX_TONE_CURVE_POINT 64    //>=64
+#define SPRD_FACE_BEAUTY_PARAM_NUM  9
 #ifdef CONFIG_CAMERA_FACE_DETECT
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 2
 #else
@@ -365,7 +366,7 @@ typedef struct {
     uint8_t sensor_orientation;
     int32_t sensor_rotation;
     int32_t am_regions[5];
-    int32_t perfect_skin_level;
+    int32_t perfect_skin_level[SPRD_FACE_BEAUTY_PARAM_NUM];
     uint8_t sprd_zsl_enabled;
     uint8_t flip_on;
     uint8_t sprd_pipviv_enabled;
@@ -642,6 +643,7 @@ class SprdCamera3Setting {
                            int is_mirror, struct img_size *preview_size,
                            struct img_rect *preview_rect);
     static int GetFovParam(int32_t cameraId);
+    bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
 };
 
 }; // namespace sprdcamera

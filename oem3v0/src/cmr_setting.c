@@ -143,13 +143,12 @@ struct setting_hal_param {
     cmr_uint preview_angle;
 
     struct img_size video_size;
-
     struct img_size thumb_size;
     struct img_size capture_size;
+    struct beauty_info perfect_skinlevel;
     cmr_uint capture_format;
     cmr_uint capture_mode;
     cmr_uint shot_num;
-    cmr_uint perfect_skinlevel;
     cmr_uint flip_on;
 
     struct setting_flash_param flash_param;
@@ -2241,7 +2240,7 @@ setting_set_perfect_skinlevel(struct setting_component *cpt,
                               struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-    hal_param->perfect_skinlevel = parm->cmd_type_value;
+    hal_param->perfect_skinlevel = parm->fb_param;
     return ret;
 }
 
@@ -2250,7 +2249,7 @@ setting_get_perfect_skinlevel(struct setting_component *cpt,
                               struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-    parm->cmd_type_value = hal_param->perfect_skinlevel;
+    parm->fb_param = hal_param->perfect_skinlevel;
     return ret;
 }
 

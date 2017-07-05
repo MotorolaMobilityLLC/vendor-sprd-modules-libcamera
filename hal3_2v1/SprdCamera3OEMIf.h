@@ -160,6 +160,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int displayCopy(cmr_uint dst_phy_addr, cmr_uint dst_virtual_addr,
                     cmr_uint src_phy_addr, cmr_uint src_virtual_addr,
                     uint32_t src_w, uint32_t src_h);
+    bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
 
     enum camera_flush_mem_type_e {
         CAMERA_FLUSH_RAW_HEAP,

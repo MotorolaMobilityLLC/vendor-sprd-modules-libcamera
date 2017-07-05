@@ -694,29 +694,32 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
 
     struct camera_frame_type cap_3d_frame;
     struct camera_frame_type *frame = NULL;
-    int faceInfo[4];
-    FACE_Tag newFace;
+    int32_t origW = SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                        .sensor_InfoInfo.pixer_array_size[0];
+    int32_t origH = SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                        .sensor_InfoInfo.pixer_array_size[1];
+    FACE_Tag newFace = SprdCamera3Setting::s_setting[mBlur->mCameraId].faceInfo;
     bzero(&cap_3d_frame, sizeof(struct camera_frame_type));
     frame = &cap_3d_frame;
     frame->y_vir_addr = (cmr_uint)private_handle->base;
     frame->width = private_handle->width;
     frame->height = private_handle->height;
 
-    faceInfo[0] =
-        mFaceInfo[0] * mCaptureInitParams.width / mPreviewInitParams.width;
-    faceInfo[1] =
-        mFaceInfo[1] * mCaptureInitParams.height / mPreviewInitParams.height;
-    faceInfo[2] =
-        mFaceInfo[2] * mCaptureInitParams.width / mPreviewInitParams.width;
-    faceInfo[3] =
-        mFaceInfo[3] * mCaptureInitParams.height / mPreviewInitParams.height;
-
-    newFace.face_num = SprdCamera3Setting::s_setting[mBlur->mCameraId].faceInfo.face_num;
-
-    newFace.face[0].rect[0] = faceInfo[0];
-    newFace.face[0].rect[1] = faceInfo[1];
-    newFace.face[0].rect[2] = faceInfo[2];
-    newFace.face[0].rect[3] = faceInfo[3];
+    for (int i = 0; i < newFace.face_num; i++) {
+        newFace.face[i].rect[0] =
+            newFace.face[i].rect[0] * mCaptureInitParams.width / origW;
+        newFace.face[i].rect[1] =
+            newFace.face[i].rect[1] * mCaptureInitParams.height / origH;
+        newFace.face[i].rect[2] =
+            newFace.face[i].rect[2] * mCaptureInitParams.width / origW;
+        newFace.face[i].rect[3] =
+            newFace.face[i].rect[3] * mCaptureInitParams.height / origH;
+        HAL_LOGD(
+            "blur capture face:%d sx:%d sy:%d ex:%d ey:%d angle:%d pose:%d", i,
+            newFace.face[i].rect[0], newFace.face[i].rect[1],
+            newFace.face[i].rect[2], newFace.face[i].rect[3], newFace.angle[i],
+            newFace.pose[i]);
+    }
     mBlur->doFaceMakeup2(frame, mBlur->fbLevels, newFace,
                          0); // work mode 1 for preview, 0 for picture
 }
@@ -1156,7 +1159,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             HAL_LOGD("mFlushing:%d, frame idx:%d", mBlur->mFlushing,
                      capture_msg.combo_buff.frame_number);
 #ifdef CONFIG_FACE_BEAUTY
-            if (mBlur->fbLevels.smoothLevel > 0 &&
+            if (mBlur->isFaceBeautyOn(mBlur->fbLevels) &&
                 mFaceInfo[2] - mFaceInfo[0] > 0 &&
                 mFaceInfo[3] - mFaceInfo[1] > 0) {
                 BlurFaceMakeup((struct private_handle_t *)*(
@@ -2990,11 +2993,16 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
         uint8_t sprdZslEnabled = 1;
         metaSettings.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
     }
-    /* save Perfectskinlevel */
     if (metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
-        mBlur->fbLevels.smoothLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
-        HAL_LOGD("smoothLevel=%d", mBlur->fbLevels.smoothLevel);
+        mBlur->fbLevels.blemishLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
+        mBlur->fbLevels.smoothLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[1];
+        mBlur->fbLevels.skinColor = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[2];
+        mBlur->fbLevels.skinLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[3];
+        mBlur->fbLevels.brightLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[4];
+        mBlur->fbLevels.lipColor = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[5];
+        mBlur->fbLevels.lipLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[6];
+        mBlur->fbLevels.slimLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[7];
+        mBlur->fbLevels.largeLevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[8];
     }
     if (metaSettings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
         int32_t aeTargetFpsRange[2] = {25, 30};

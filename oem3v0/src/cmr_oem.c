@@ -4617,32 +4617,33 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             } else {
 #ifdef CONFIG_FACE_BEAUTY
                 struct face_beauty_levels beautyLevels;
-                beautyLevels.blemishLevel = 0;
-                beautyLevels.skinColor = 0;
-                beautyLevels.skinLevel = 0;
-                beautyLevels.lipColor = 0;
-                beautyLevels.lipLevel = 0;
-                beautyLevels.slimLevel = 0;
-                beautyLevels.largeLevel = 0;
                 int pic_width = src->size.width;
                 int pic_height = src->size.height;
+                int face_beauty_on = 0;
                 ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_PERFECT_SKINLEVEL,
                                     &setting_param);
                 if (ret) {
                     CMR_LOGE("failed to get perfect skinlevel %ld", ret);
                 } else {
-                    unsigned char levelParam = (unsigned char)setting_param.cmd_type_value;
-                    beautyLevels.smoothLevel =(levelParam < 0) ? 0: ((levelParam > 90) ? 90 : levelParam);
-                    beautyLevels.brightLevel = beautyLevels.smoothLevel;
-                    CMR_LOGD("perfect_skin_level = %d", beautyLevels.brightLevel);
+                    beautyLevels.blemishLevel = (unsigned char)setting_param.fb_param.blemishLevel;
+                    beautyLevels.smoothLevel = (unsigned char)setting_param.fb_param.smoothLevel;
+                    beautyLevels.skinColor = (unsigned char)setting_param.fb_param.skinColor;
+                    beautyLevels.skinLevel = (unsigned char)setting_param.fb_param.skinLevel;
+                    beautyLevels.brightLevel = (unsigned char)setting_param.fb_param.brightLevel;
+                    beautyLevels.lipColor = (unsigned char)setting_param.fb_param.lipColor;
+                    beautyLevels.lipLevel = (unsigned char)setting_param.fb_param.lipLevel;
+                    beautyLevels.slimLevel = (unsigned char)setting_param.fb_param.slimLevel;
+                    beautyLevels.largeLevel = (unsigned char)setting_param.fb_param.largeLevel;
+                    CMR_LOGD("smooth %d ,bright %d, slim %d, large %d.", beautyLevels.smoothLevel, beautyLevels.brightLevel, beautyLevels.slimLevel, beautyLevels.largeLevel);
                 }
                     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                   SETTING_GET_ENCODE_ROTATION, &setting_param);
                 if (ret) {
                     CMR_LOGE("failed to get enc rotation %ld", ret);
                 }
-                if ((beautyLevels.smoothLevel || beautyLevels.brightLevel) != 0) {
+                face_beauty_on = beautyLevels.blemishLevel ||beautyLevels.smoothLevel || beautyLevels.skinColor ||beautyLevels.skinLevel ||beautyLevels.brightLevel ||beautyLevels.lipColor ||beautyLevels.lipLevel || beautyLevels.slimLevel ||beautyLevels.largeLevel;
+                if (face_beauty_on) {
                     int sx, sy, ex, ey, angle, pose;
                     for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
                     sx = (cxt->fd_face_area.face_info[i].sx * pic_width) /
@@ -8113,7 +8114,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_PERFECT_SKIN_LEVEL:
-        setting_param.cmd_type_value = param;
+        setting_param.fb_param =*(struct beauty_info*)param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;

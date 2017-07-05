@@ -997,6 +997,14 @@ int SprdCamera3Setting::getNumberOfCameras() {
     return num;
 }
 
+bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
+    for (int i =0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
+        if (sprddefInfo.perfect_skin_level[i] != 0)
+               return true;
+    }
+    return false;
+}
+
 int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     // camera3_default_info.common.aperture = 2.8f;
     camera3_default_info.common.filter_density = 0.0f;
@@ -3166,12 +3174,14 @@ int SprdCamera3Setting::updateWorkParameters(
             is_raw_capture = 1;
         }
 
-        int32_t perfectskinlevel =
-            frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
-        if ((perfectskinlevel > 100 || perfectskinlevel < 0) ||
-            (is_raw_capture == 1))
-            perfectskinlevel = 0;
-        s_setting[mCameraId].sprddefInfo.perfect_skin_level = perfectskinlevel;
+        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM];
+        if (is_raw_capture == 1)
+            memset(perfectskinlevel, 0, sizeof(int32_t)*SPRD_FACE_BEAUTY_PARAM_NUM);
+        for (size_t i=0 ; i < (frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).count); i++){
+                    perfectskinlevel[i] = frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[i];
+                    HAL_LOGD("face beauty level %d : %d .", i, perfectskinlevel[i]);
+        }
+        memcpy(s_setting[mCameraId].sprddefInfo.perfect_skin_level, perfectskinlevel, sizeof(int32_t)*SPRD_FACE_BEAUTY_PARAM_NUM);
         pushAndroidParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
     }
 
@@ -3716,13 +3726,13 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
     }
 
-    HAL_LOGD("perfectskinlevel=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
+    HAL_LOGD("isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
              "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
              "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
              "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled is %d",
-             s_setting[mCameraId].sprddefInfo.perfect_skin_level,
+             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
              s_setting[mCameraId].flashInfo.mode,
              s_setting[mCameraId].controlInfo.ae_lock,
@@ -4050,7 +4060,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        1);
     if (ANDROID_STATISTICS_FACE_DETECT_MODE_OFF !=
             (s_setting[mCameraId].statisticsInfo.face_detect_mode) ||
-        (s_setting[mCameraId].sprddefInfo.perfect_skin_level) > 0) {
+        (isFaceBeautyOn(s_setting[mCameraId].sprddefInfo))) {
 #define MAX_ROI 10
         FACE_Tag *faceDetectionInfo =
             (FACE_Tag *)&(s_setting[mCameraId].faceInfo);
@@ -4109,8 +4119,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 
     // perfect_level
     camMetadata.update(ANDROID_SPRD_UCAM_SKIN_LEVEL,
-                       &(s_setting[mCameraId].sprddefInfo.perfect_skin_level),
-                       1);
+                       s_setting[mCameraId].sprddefInfo.perfect_skin_level,
+                       SPRD_FACE_BEAUTY_PARAM_NUM);
     // sensor
     if (s_setting[mCameraId].controlInfo.ae_target_fps_range[1])
         s_setting[mCameraId].sensorInfo.frame_duration =

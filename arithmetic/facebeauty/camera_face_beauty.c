@@ -171,7 +171,7 @@ void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
     } else {
         faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV21;
         if (format == 1) {
-             faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV12;
+            faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV12;
         }
         faceBeauty->arc_fb_image.i32Width = picWidth;
         faceBeauty->arc_fb_image.i32Height = picHeight;
@@ -188,19 +188,25 @@ void construct_fb_level(struct class_fb *faceBeauty,
         ALOGE("construct_fb_level faceBeauty is null");
         return;
     }
-    int level_num = 0;
     // init the static parameters table. save the value until the process is
     // restart or the device is restart.
-    unsigned char preview_whitenLevel[NUM_LEVELS] = {0,  15, 20, 25, 30,
-                                                     40, 45, 50, 55, 60};
-    unsigned char preview_cleanLevel[NUM_LEVELS] = {0,  15, 20, 25, 30,
-                                                     40, 45, 50, 55, 60};
+    unsigned char preview_whitenLevel[NUM_LEVELS] = {0,  15, 20, 30, 40,
+                                                      45, 50, 55, 60, 65};
+    unsigned char preview_cleanLevel[NUM_LEVELS] = {0,  15, 20, 30, 40,
+                                                      45, 50, 55, 60, 65};
     unsigned char picture_whitenLevel[NUM_LEVELS] = {0,  10, 15, 20, 25,
                                                      30, 35, 40, 45, 50};
     unsigned char picture_cleanLevel[NUM_LEVELS] = {0,  10, 15, 20, 25,
                                                     30, 35, 40, 45, 50};
+    unsigned char face_slimLevel[NUM_LEVELS] = {0, 6, 8, 10, 15,
+                                                     18, 25, 30, 35, 40};
+    unsigned char eye_largeLevel[NUM_LEVELS] = {0, 8, 10, 15, 20,
+                                                      25, 30, 40, 45, 50};
     unsigned char tab_skinWhitenLevel[NUM_LEVELS];
     unsigned char tab_skinCleanLevel[NUM_LEVELS];
+    unsigned char tab_faceSlimLevel[NUM_LEVELS];
+    unsigned char tab_eyeLargeLevel[NUM_LEVELS];
+
     if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
         memcpy(tab_skinWhitenLevel, preview_whitenLevel,
                sizeof(unsigned char) * NUM_LEVELS);
@@ -218,6 +224,10 @@ void construct_fb_level(struct class_fb *faceBeauty,
             memcpy(tab_skinCleanLevel, picture_cleanLevel,
                    sizeof(unsigned char) * NUM_LEVELS);
         }
+        memcpy(tab_faceSlimLevel, face_slimLevel,
+               sizeof(unsigned char) * NUM_LEVELS);
+        memcpy(tab_eyeLargeLevel, eye_largeLevel,
+               sizeof(unsigned char) * NUM_LEVELS);
     }
     // get the property level and parameters value and save in the parameters
     // table.
@@ -227,14 +237,22 @@ void construct_fb_level(struct class_fb *faceBeauty,
         char str_adb_level[PROPERTY_VALUE_MAX];
         char str_adb_white[PROPERTY_VALUE_MAX];
         char str_adb_clean[PROPERTY_VALUE_MAX];
+        char str_adb_faceSlim[PROPERTY_VALUE_MAX];
+        char str_adb_eyeLarge[PROPERTY_VALUE_MAX];
         int adb_level_val = 0;
         int adb_white_val = 0;
         int adb_clean_val = 0;
+        int adb_faceSlim_val = 0;
+        int adb_eyeLarge_val = 0;
         if ((property_get("persist.sys.camera.beauty.level", str_adb_level,
                           "0")) &&
             (property_get("persist.sys.camera.beauty.white", str_adb_white,
                           "0")) &&
             (property_get("persist.sys.camera.beauty.clean", str_adb_clean,
+                          "0")) &&
+            (property_get("persist.sys.camera.beauty.slim", str_adb_faceSlim,
+                          "0")) &&
+            (property_get("persist.sys.camera.beauty.large", str_adb_eyeLarge,
                           "0"))) {
             adb_level_val = atoi(str_adb_level);
             adb_level_val = (adb_level_val < 0)
@@ -248,10 +266,22 @@ void construct_fb_level(struct class_fb *faceBeauty,
             adb_clean_val = (adb_clean_val < 0)
                                 ? 0
                                 : ((adb_clean_val > 100) ? 100 : adb_clean_val);
+            adb_faceSlim_val = atoi(str_adb_faceSlim);
+            adb_faceSlim_val =
+                (adb_faceSlim_val < 0)
+                    ? 0
+                    : ((adb_faceSlim_val > 100) ? 100 : adb_faceSlim_val);
+            adb_eyeLarge_val = atoi(str_adb_eyeLarge);
+            adb_eyeLarge_val =
+                (adb_eyeLarge_val < 0)
+                    ? 0
+                    : ((adb_eyeLarge_val > 100) ? 100 : adb_eyeLarge_val);
 
             // replace the static value.
             tab_skinWhitenLevel[adb_level_val] = adb_white_val;
             tab_skinCleanLevel[adb_level_val] = adb_clean_val;
+            tab_faceSlimLevel[adb_level_val] = adb_faceSlim_val;
+            tab_eyeLargeLevel[adb_level_val] = adb_eyeLarge_val;
         }
     }
 
@@ -259,14 +289,31 @@ void construct_fb_level(struct class_fb *faceBeauty,
     // the table saved.
     {
         beautyLevels.smoothLevel =
-            (beautyLevels.smoothLevel < 0)
-                ? 0
-                : ((beautyLevels.smoothLevel > 90) ? 90
+            (beautyLevels.smoothLevel <= 0)
+                ? 1
+                : ((beautyLevels.smoothLevel > 10) ? 10
                                                    : beautyLevels.smoothLevel);
-        level_num = beautyLevels.smoothLevel / 10;
-
-        beautyLevels.brightLevel = tab_skinWhitenLevel[level_num];
-        beautyLevels.smoothLevel = tab_skinCleanLevel[level_num];
+        beautyLevels.brightLevel =
+            (beautyLevels.brightLevel <= 0)
+                ? 1
+                : ((beautyLevels.brightLevel > 10) ? 10
+                                                   : beautyLevels.brightLevel);
+        beautyLevels.slimLevel =
+            (beautyLevels.slimLevel <= 0)
+                ? 1
+                : ((beautyLevels.slimLevel > 10) ? 10 : beautyLevels.slimLevel);
+        beautyLevels.largeLevel =
+            (beautyLevels.largeLevel <= 0)
+                ? 1
+                : ((beautyLevels.largeLevel > 10) ? 10
+                                                  : beautyLevels.largeLevel);
+        beautyLevels.smoothLevel =
+            tab_skinCleanLevel[beautyLevels.smoothLevel - 1];
+        beautyLevels.brightLevel =
+            tab_skinWhitenLevel[beautyLevels.brightLevel - 1];
+        beautyLevels.slimLevel = tab_faceSlimLevel[beautyLevels.slimLevel - 1];
+        beautyLevels.largeLevel =
+            tab_eyeLargeLevel[beautyLevels.largeLevel - 1];
     }
 
     char isDebug[PROPERTY_VALUE_MAX];
@@ -281,8 +328,8 @@ void construct_fb_level(struct class_fb *faceBeauty,
         faceBeauty->fb_option.skinBrightLevel = beautyLevels.brightLevel / 10;
         faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
         faceBeauty->fb_option.lipColorLevel = beautyLevels.lipLevel;
-        faceBeauty->fb_option.slimFaceLevel = beautyLevels.slimLevel;
-        faceBeauty->fb_option.largeEyeLevel = beautyLevels.largeLevel;
+        faceBeauty->fb_option.slimFaceLevel = beautyLevels.slimLevel / 10;
+        faceBeauty->fb_option.largeEyeLevel = beautyLevels.largeLevel / 10;
         if (!strcmp(isDebug, "1")) {
             faceBeauty->fb_option.debugMode = 1;
             faceBeauty->fb_option.removeBlemishFlag = 1;
@@ -298,22 +345,23 @@ void construct_fb_level(struct class_fb *faceBeauty,
     } else {
         faceBeauty->faceSoften = (MInt32)beautyLevels.smoothLevel;
         faceBeauty->faceWhiten = (MInt32)beautyLevels.brightLevel;
-        faceBeauty->eyeEnlargement = (MInt32)beautyLevels.largeLevel * 10;
-        faceBeauty->faceSlender = (MInt32)beautyLevels.slimLevel * 10;
+        faceBeauty->eyeEnlargement = (MInt32)beautyLevels.largeLevel;
+        faceBeauty->faceSlender = (MInt32)beautyLevels.slimLevel;
         if (!strcmp(isDebug, "1")) {
             faceBeauty->eyeEnlargement = 50;
             faceBeauty->faceSlender = 50;
         }
-        // ALOGV("arc_levels: %d %d %d
-        // %d.",faceBeauty->faceSoften,faceBeauty->faceWhiten,faceBeauty->eyeEnlargement,faceBeauty->faceSlender);
+        ALOGD("arc_levels: %d %d %d %d.", faceBeauty->faceSoften,
+              faceBeauty->faceWhiten, faceBeauty->eyeEnlargement,
+              faceBeauty->faceSlender);
     }
 }
 
 void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
 
     int retVal = 0;
-    clock_t start_time, end_time;
-    int duration = 0;
+    struct timespec start_time ,end_time;
+    unsigned int duration;
     if (!faceBeauty) {
         ALOGE("do_face_beauty faceBeauty is null");
         return;
@@ -321,12 +369,12 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
     property_get("persist.sys.camera.beauty.sprd", faceBeauty->sprdAlgorithm,
                  "0");
     if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
-        start_time = clock();
+        clock_gettime(CLOCK_BOOTTIME, &start_time);
         retVal = FB_FaceBeauty_YUV420SP(
             faceBeauty->hSprdFB, &(faceBeauty->fb_image),
             &(faceBeauty->fb_option), faceBeauty->fb_face, faceCount);
-        end_time = clock();
-        duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
+        clock_gettime(CLOCK_BOOTTIME, &end_time);
+        duration = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
         ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
     } else {
         faceBeauty->arc_fb_face.lFaceNum = faceCount;
@@ -343,12 +391,12 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
                                           FEATURE_FACE_SLENDER_KEY,
                                           faceBeauty->faceSlender);
-            start_time = clock();
+            clock_gettime(CLOCK_BOOTTIME, &start_time);
             retVal = arcsoft_bsv_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
-            end_time = clock();
-            duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
+            clock_gettime(CLOCK_BOOTTIME, &end_time);
+            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
             ALOGV("arcsoft_bsv_process duration is %d ms", duration);
         } else {
             arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
@@ -363,12 +411,12 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
                                           FEATURE_FACE_SLENDER_KEY,
                                           faceBeauty->faceSlender);
-            start_time = clock();
+            clock_gettime(CLOCK_BOOTTIME, &start_time);
             retVal = arcsoft_bsi_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
-            end_time = clock();
-            duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
+            clock_gettime(CLOCK_BOOTTIME, &end_time);
+            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
             ALOGD("arcsoft_bsi_process duration is %d ms", duration);
         }
     }

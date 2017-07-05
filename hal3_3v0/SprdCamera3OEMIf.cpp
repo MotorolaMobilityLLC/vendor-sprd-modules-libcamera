@@ -3081,7 +3081,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         PushFirstZslbuff();
     }
 
-    if (!sprddefInfo.perfect_skin_level)
+    if (!isFaceBeautyOn(sprddefInfo))
         PushFirstVideobuff();
     if (!is_push_zsl)
         PushFirstZslbuff();
@@ -3388,6 +3388,14 @@ int SprdCamera3OEMIf::displayCopy(uintptr_t dst_phy_addr,
     }
 
     return ret;
+}
+
+bool SprdCamera3OEMIf::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
+    for (int i =0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
+        if (sprddefInfo.perfect_skin_level[i] != 0)
+               return true;
+    }
+    return false;
 }
 
 void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
@@ -3796,19 +3804,17 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
 #ifdef CONFIG_FACE_BEAUTY
-    unsigned char skinWhiten = (unsigned char)sprddefInfo.perfect_skin_level;
-    skinWhiten = (skinWhiten<0)?0:((skinWhiten>90)?90:skinWhiten);
     int sx,sy,ex,ey,angle,pose;
     struct face_beauty_levels beautyLevels;
-    beautyLevels.blemishLevel = 1;
-    beautyLevels.smoothLevel= skinWhiten;
-    beautyLevels.skinColor = 0;
-    beautyLevels.skinLevel = 3;
-    beautyLevels.brightLevel = skinWhiten;
-    beautyLevels.lipColor =1;
-    beautyLevels.lipLevel = 5;
-    beautyLevels.slimLevel = 0;
-    beautyLevels.largeLevel = 0;
+    beautyLevels.blemishLevel = (unsigned char)sprddefInfo.perfect_skin_level[0];
+    beautyLevels.smoothLevel= (unsigned char)sprddefInfo.perfect_skin_level[1];
+    beautyLevels.skinColor = (unsigned char)sprddefInfo.perfect_skin_level[2];
+    beautyLevels.skinLevel = (unsigned char)sprddefInfo.perfect_skin_level[3];
+    beautyLevels.brightLevel= (unsigned char)sprddefInfo.perfect_skin_level[4];
+    beautyLevels.lipColor =(unsigned char)sprddefInfo.perfect_skin_level[5];
+    beautyLevels.lipLevel = (unsigned char)sprddefInfo.perfect_skin_level[6];
+    beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
+    beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
 #endif
     SENSOR_Tag sensorInfo;
 
@@ -3824,7 +3830,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                  rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-    if (PREVIEW_ZSL_FRAME != frame->type && skinWhiten > 0) {
+    if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
         faceDectect(1);
         if (isPreviewing() && frame->type == PREVIEW_FRAME) {
             if (MODE_3D_VIDEO != mMultiCameraMode &&
@@ -5830,11 +5836,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
     case ANDROID_SPRD_UCAM_SKIN_LEVEL: {
         SPRD_DEF_Tag sprddefInfo;
-
+        struct beauty_info fb_param;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        HAL_LOGD("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL,
-                 sprddefInfo.perfect_skin_level);
+        fb_param.blemishLevel = sprddefInfo.perfect_skin_level[0];
+        fb_param.smoothLevel = sprddefInfo.perfect_skin_level[1];
+        fb_param.skinColor = sprddefInfo.perfect_skin_level[2];
+        fb_param.skinLevel = sprddefInfo.perfect_skin_level[3];
+        fb_param.brightLevel = sprddefInfo.perfect_skin_level[4];
+        fb_param.lipColor = sprddefInfo.perfect_skin_level[5];
+        fb_param.lipLevel = sprddefInfo.perfect_skin_level[6];
+        fb_param.slimLevel = sprddefInfo.perfect_skin_level[7];
+        fb_param.largeLevel = sprddefInfo.perfect_skin_level[8];
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL, (cmr_uint)&(fb_param));
     } break;
     case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR: {
         SPRD_DEF_Tag sprddefInfo;
@@ -9204,3 +9217,4 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 
 #endif
 }
+

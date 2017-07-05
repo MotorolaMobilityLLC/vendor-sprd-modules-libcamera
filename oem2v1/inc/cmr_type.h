@@ -144,6 +144,18 @@ struct frm_info {
     cmr_s64 monoboottime;
 };
 
+struct beauty_info {
+    cmr_u32 blemishLevel;
+    cmr_u32 smoothLevel;
+    cmr_u32 skinColor;
+    cmr_u32 skinLevel;
+    cmr_u32 brightLevel;
+    cmr_u32 lipColor;
+    cmr_u32 lipLevel;
+    cmr_u32 slimLevel;
+    cmr_u32 largeLevel;
+};
+
 struct cmr_af_gyro_info {
     cmr_s64 timestamp;
     float x;

@@ -65,6 +65,13 @@ SprdCamera3Channel::SprdCamera3Channel(SprdCamera3OEMIf *oem_if,
 
 SprdCamera3Channel::~SprdCamera3Channel() {}
 
+bool SprdCamera3Channel::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
+    for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
+        if (sprddefInfo.perfect_skin_level[i] != 0)
+            return true;
+    }
+    return false;
+}
 /**************************SprdCamera3RegularChannel
  * start**********************************/
 SprdCamera3RegularChannel::SprdCamera3RegularChannel(
@@ -838,7 +845,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             mSetting->getSTATISTICSTag(&statisticsInfo);
             if (statisticsInfo.face_detect_mode ==
                     ANDROID_STATISTICS_FACE_DETECT_MODE_OFF &&
-                sprddefInfo.perfect_skin_level <= 0) {
+                !isFaceBeautyOn(sprddefInfo)) {
                 mOEMIf->faceDectect(0);
             } else
                 mOEMIf->faceDectect(1);

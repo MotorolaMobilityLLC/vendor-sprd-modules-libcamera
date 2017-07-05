@@ -107,6 +107,7 @@ struct setting_cmd_parameter {
     cmr_uint camera_id;
     union {
         cmr_uint cmd_type_value;
+        struct beauty_info fb_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_cond_info;
         struct cmr_zoom_param zoom_param;
         struct camera_position_type position_info;
