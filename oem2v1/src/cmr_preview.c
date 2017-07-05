@@ -1706,7 +1706,7 @@ exit:
 }
 
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
-                               struct frm_info *in, struct img_frm *out){
+                                struct frm_info *in, struct img_frm *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     int i = 0;
     CHECK_HANDLE_VALID(handle);
@@ -1718,9 +1718,9 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    for(i = 0; i < HDR_CAP_NUM; i++){
-        if(in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
-        break;
+    for (i = 0; i < HDR_CAP_NUM; i++) {
+        if (in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
+            break;
     }
 
     if (i == HDR_CAP_NUM) {
@@ -1731,7 +1731,7 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
     out->fd = prev_cxt->cap_hdr_fd_path_array[i];
     out->addr_vir.addr_y = prev_cxt->cap_hdr_virt_addr_path_array[i];
 
-    CMR_LOGI("fd:%d",i);
+    CMR_LOGI("fd:%d", i);
 
 exit:
     return ret;
@@ -2336,12 +2336,6 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         } else {
             ret = prev_capture_frame_handle(handle, camera_id, data);
         }
-    }
-
-    /*received frame, reset recovery status*/
-    if (prev_cxt->recovery_status) {
-        CMR_LOGD("reset the recover status");
-        prev_cxt->recovery_status = PREV_RECOVERY_IDLE;
     }
 
     ATRACE_END();
@@ -3427,6 +3421,11 @@ cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         ret = prev_start(handle, camera_id, 1, 1);
+        /*prev start success, reset recovery status*/
+        if (prev_cxt->recovery_status) {
+            CMR_LOGD("reset the recover status to idle");
+            prev_cxt->recovery_status = PREV_RECOVERY_IDLE;
+        }
 
         break;
 
@@ -8725,18 +8724,20 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
                     img_cap->dst_img_size.width = tmp_width;
                 }
                 img_cap->dst_img_size.height =
-                    (img_cap->dst_img_size.width * cap_size->height) / cap_size->width;
+                    (img_cap->dst_img_size.width * cap_size->height) /
+                    cap_size->width;
             } else if (cap_size->height > tmp_height) {
                 img_cap->dst_img_size.height = tmp_height;
-                img_cap->dst_img_size.width = (tmp_height * cap_size->width) / cap_size->height;
+                img_cap->dst_img_size.width =
+                    (tmp_height * cap_size->width) / cap_size->height;
             } else {
                 /*just use scaler on the fly*/
                 img_cap->dst_img_size.width = cap_size->width;
                 img_cap->dst_img_size.height = cap_size->height;
             }
         } else {
-                img_cap->dst_img_size.width = cap_size->width;
-                img_cap->dst_img_size.height = cap_size->height;
+            img_cap->dst_img_size.width = cap_size->width;
+            img_cap->dst_img_size.height = cap_size->height;
         }
     }
     img_cap->dst_img_size.width = CAMERA_START(img_cap->dst_img_size.width);
@@ -10962,7 +10963,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         frame_type.face_info[i].brightness =
             cb_param->face_area.range[i].brightness;
         frame_type.face_info[i].angle = cb_param->face_area.range[i].angle;
-        frame_type.face_info[i].pose       = cb_param->face_area.range[i].pose;
+        frame_type.face_info[i].pose = cb_param->face_area.range[i].pose;
         frame_type.face_info[i].smile_level =
             cb_param->face_area.range[i].smile_level;
         frame_type.face_info[i].blink_level =
