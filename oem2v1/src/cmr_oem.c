@@ -9935,12 +9935,6 @@ cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable) {
 
     if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
         isp_param.cmd_value = enable;
-        if (sensor_info.source_width_max == 1920 &&
-            sensor_info.source_height_max == 1080) {
-            usleep(500 * 1000);
-        } else {
-            usleep(100 * 1000);
-        }
         ret =
             camera_isp_ioctl(oem_handle, COM_ISP_SET_3DNR, (void *)&isp_param);
     }
