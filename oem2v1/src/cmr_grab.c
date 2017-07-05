@@ -1278,8 +1278,9 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.mfd = op.parm.frame.mfd;
                 statis_info.sec = op.parm.frame.sec;
                 statis_info.usec = op.parm.frame.usec;
+                statis_info.frame_id = op.parm.frame.frame_id;
                 CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
-                         "vir_addr 0x%x irq_property 0x%x, op.parm.frame.vir_addr = 0xlx, op.parm.frame.addr_offset = 0x%x",
+                         "vir_addr 0x%x irq_property 0x%x, op.parm.frame.vir_addr = 0x%x, op.parm.frame.addr_offset = 0x%x",
                          statis_info.buf_size, statis_info.phy_addr,
                          statis_info.vir_addr, statis_info.irq_property, op.parm.frame.vir_addr, op.parm.frame.addr_offset);
 
