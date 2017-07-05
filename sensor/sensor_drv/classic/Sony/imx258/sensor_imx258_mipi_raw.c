@@ -40,7 +40,7 @@ static cmr_int imx258_drv_set_video_mode(cmr_handle handle, cmr_u32 param) {
 
     SENSOR_REG_T_PTR sensor_reg_ptr;
     cmr_u16 i = 0x00;
-    cmr_u32 mode;
+    cmr_u32 mode = 0;
 
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;

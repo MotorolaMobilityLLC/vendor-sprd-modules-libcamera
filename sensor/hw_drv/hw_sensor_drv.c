@@ -63,7 +63,7 @@ static cmr_int _hw_sensor_dev_init(cmr_handle hw_handle, cmr_u32 sensor_id) {
 static cmr_int _hw_sensor_dev_deinit(cmr_handle hw_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    cmr_int ret;
+    cmr_int ret = HW_SUCCESS;
     CHECK_HANDLE(hw_handle);
     struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt*)hw_handle;
 

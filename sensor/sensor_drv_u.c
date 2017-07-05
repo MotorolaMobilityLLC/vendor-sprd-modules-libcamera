@@ -356,7 +356,7 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
 
         if ((NULL != exp_info_ptr) && (NULL != exp_info_ptr->raw_info_ptr) &&
             (NULL != exp_info_ptr->raw_info_ptr->ioctrl_ptr)) {
-            struct sensor_raw_ioctrl *ioctl = 
+            struct sensor_raw_ioctrl *ioctl =
                                      exp_info_ptr->raw_info_ptr->ioctrl_ptr;
             ioctl->caller_handler = sensor_cxt;
             ioctl->set_focus = sensor_af_set_pos;
@@ -2066,7 +2066,7 @@ LOCAL cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
 
     cmr_int err = 0xff;
     cmr_u32 param = 0;
-    SENSOR_IOCTL_FUNC_PTR stream_on_func;
+    SENSOR_IOCTL_FUNC_PTR stream_on_func = PNULL;
     struct sensor_ic_ops *sns_ops = PNULL;
 
     SENSOR_LOGI("E");
@@ -2075,8 +2075,13 @@ LOCAL cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
     SENSOR_DRV_CHECK_ZERO(sensor_cxt->sensor_info_ptr);
 
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-    if(sns_ops && sns_ops->ext_ops[SENSOR_IOCTL_STREAM_ON].ops)
+    if(sns_ops && sns_ops->ext_ops[SENSOR_IOCTL_STREAM_ON].ops) {
         stream_on_func = sns_ops->ext_ops[SENSOR_IOCTL_STREAM_ON].ops;
+    } else {
+        SENSOR_LOGE("get stream_on function failed!");
+        return SENSOR_FAIL;
+    }
+
 
     if (!sensor_is_init_common(sensor_cxt)) {
         SENSOR_LOGE("X: sensor has not been initialized");
@@ -2160,7 +2165,7 @@ LOCAL cmr_int sensor_stream_off(struct sensor_drv_context *sensor_cxt) {
 
     cmr_int err = 0xff;
     cmr_u32 param = 0;
-    SENSOR_IOCTL_FUNC_PTR stream_off_func;
+    SENSOR_IOCTL_FUNC_PTR stream_off_func = PNULL;
     struct sensor_ic_ops *sns_ops = PNULL;
 
     SENSOR_LOGI("E");
@@ -2168,8 +2173,12 @@ LOCAL cmr_int sensor_stream_off(struct sensor_drv_context *sensor_cxt) {
     SENSOR_DRV_CHECK_ZERO(sensor_cxt->sensor_info_ptr);
 
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-    if(sns_ops &&sns_ops->ext_ops[SENSOR_IOCTL_STREAM_OFF].ops)
+    if(sns_ops &&sns_ops->ext_ops[SENSOR_IOCTL_STREAM_OFF].ops) {
         stream_off_func = sns_ops->ext_ops[SENSOR_IOCTL_STREAM_OFF].ops;
+    } else {
+        SENSOR_LOGE("get stream_off function failed!");
+        return SENSOR_FAIL;
+    }
 
     if (!sensor_is_init_common(sensor_cxt)) {
         SENSOR_LOGE("X: sensor has not been initialized");

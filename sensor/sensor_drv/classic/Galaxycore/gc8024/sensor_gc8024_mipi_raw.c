@@ -37,7 +37,7 @@
 static cmr_int gc8024_set_video_mode(cmr_handle handle, cmr_uint param) {
     SENSOR_REG_T_PTR sensor_reg_ptr;
     cmr_u16 i = 0x00;
-    cmr_u32 mode;
+    cmr_u32 mode = 0;
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_PTR(handle);
@@ -535,7 +535,7 @@ static cmr_int gc8024_drv_access_val(cmr_handle handle,
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_SHUTTER:
         //*((uint32_t *)param_ptr->pval) = gc8024_read_shutter();
-        *((uint32_t *)param_ptr->pval) = 
+        *((uint32_t *)param_ptr->pval) =
                              sns_drv_cxt->sensor_ev_info.preview_shutter;;
         break;
     case SENSOR_VAL_TYPE_READ_OTP_GAIN:
@@ -950,7 +950,7 @@ static cmr_int gc8024_drv_stream_off(cmr_handle handle, cmr_uint param) {
 static cmr_int gc8024_drv_handle_create(
           struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
     cmr_int ret = SENSOR_SUCCESS;
-    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL; 
+    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL;
     void *pri_data = NULL;
     cmr_u32 pri_data_size = sizeof(PRIVATE_DATA);
 

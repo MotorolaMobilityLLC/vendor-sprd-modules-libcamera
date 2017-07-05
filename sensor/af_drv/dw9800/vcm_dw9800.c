@@ -20,8 +20,6 @@ static uint32_t _dw9800_set_motor_bestmode(cmr_handle sns_af_drv_handle)
 	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
 	CHECK_PTR(sns_af_drv_handle);
 
-	uint8_t ctrl,mode,freq;
-	uint8_t pos1,pos2;
 	uint8_t cmd_val[2];
 
 	//set
@@ -38,7 +36,6 @@ static uint32_t _dw9800_set_motor_bestmode(cmr_handle sns_af_drv_handle)
 	hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
 	usleep(200*1000);
 
-	CMR_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d %d",ctrl,mode,freq,(pos1<<8)+pos2);
 	return 0;
 }
 
