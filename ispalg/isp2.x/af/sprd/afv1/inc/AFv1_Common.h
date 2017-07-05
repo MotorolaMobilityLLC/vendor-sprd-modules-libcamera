@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.121"
-#define SUB_VERSION             "-01-API"
+#define VERSION             "2.123"
+#define SUB_VERSION             "-00-HAF"
 
 #define STRING(s) #s
 
@@ -72,8 +72,7 @@
 
 #define TOTAL_POS 1024
 #define SOFT_LANDING_ENABLE 0
-//Data num for AF
-#define TOTAL_AF_ZONE 10
+
 #define MAX_SAMPLE_NUM	    25
 #define TOTAL_SAMPLE_NUM	29
 #define ROUGH_SAMPLE_NUM	25	//MAX((ROUGH_SAMPLE_NUM_L3+ROUGH_SAMPLE_NUM_L2),(ROUGH_START_POS_L1+ROUGH_START_POS_L2))
@@ -96,6 +95,7 @@
 #define AF_NOT_FINISHED 0
 #define AF_FINISHED 1
 
+#define AE_GAIN_UINIT 128
 #define AE_GAIN_1x 0
 #define AE_GAIN_2x 1
 #define AE_GAIN_4x 2
@@ -110,6 +110,7 @@
 #define BOKEH_SCAN_STEP 12	//at least 20
 
 #define PD_MAX_AREA 16
+#define PD_MAX_MOVECOUNT 6
 
 typedef struct _af_tuning_block_param {
 	cmr_u8 *data;
@@ -692,6 +693,7 @@ typedef struct _af_control_status_s {
 	cmr_u32 idsp_reset_frmid;
 	cmr_u32 debug_cb;
 	cmr_u32 env_avgy_histroy[AF_CHECK_SCENE_HISTORY];
+	cmr_u32 lock_status;
 	pd_info_t pd_info;
 } afctrl_status_t;
 
@@ -777,6 +779,28 @@ typedef struct motion_sensor_result_s {
 	cmr_u32 reserved[12];
 } motion_sensor_result_t;
 
+
+typedef struct pd_algo_focuing_s {
+	cmr_u32 B_frmid;
+	cmr_u32 B_confidence[5];
+	double  B_pd_value[5];
+	cmr_s32 B_delta_vcm;
+	cmr_u32 frmid[PD_MAX_MOVECOUNT];
+	cmr_u32 Area0_confidence[PD_MAX_MOVECOUNT];
+	double  Area0_pd_value[PD_MAX_MOVECOUNT];
+	cmr_u32 Area1_confidence[PD_MAX_MOVECOUNT];
+	double  Area1_pd_value[PD_MAX_MOVECOUNT];
+	cmr_u32 Area2_confidence[PD_MAX_MOVECOUNT];
+	double  Area2_pd_value[PD_MAX_MOVECOUNT];
+	cmr_u32 Area3_confidence[PD_MAX_MOVECOUNT];
+	double  Area3_pd_value[PD_MAX_MOVECOUNT];
+	cmr_u32 Area4_confidence[PD_MAX_MOVECOUNT];
+	double  Area4_pd_value[PD_MAX_MOVECOUNT];
+	cmr_u32 cur_vcm_pos[PD_MAX_MOVECOUNT];
+	cmr_s32 delta_vcm[PD_MAX_MOVECOUNT];
+	cmr_u32 reserved[16];
+} pd_algo_focusing_t;
+
 typedef struct pd_algo_result_s {
 	cmr_u32 pd_enable;
 	cmr_u32 effective_pos;
@@ -788,8 +812,23 @@ typedef struct pd_algo_result_s {
 	cmr_u32 reserved[16];
 } pd_algo_result_t;
 
+typedef struct _exposure_result_s {
+	cmr_u32 is_converge;	//flag: check AE is converged or not
+	cmr_u32 cur_fps;
+	cmr_u32 cur_lum;
+	cmr_u32 cur_iso;
+	cmr_u32 cur_exp;
+	cmr_u32 target_lum;
+} exposure_result_t;
+
+typedef struct _focus_stat_result_s {
+	cmr_u32 center_stat;
+	cmr_u32 full_stat;
+} focus_stat_result_t;
+
 typedef struct _pdaf_process_s
 {
+	pd_algo_focusing_t pd_focusing;
 	pd_algo_result_t pd_result;
 	cmr_u32 proc_status;
 	cmr_u32 curr_pd_frmid;
@@ -865,35 +904,54 @@ typedef struct _AF_Softlanding_Config{
 	cmr_u32 reserved[36];
 } AF_Softlanding_Config;
 
+typedef struct _weight_setting_s {
+	cmr_u8 table_sum;
+	cmr_u8 weight_value[FOCUS_STAT_WIN_TOTAL];
+	cmr_u8 reserved[13];
+}_weight_setting_t;	//four byte aligment
+
+typedef struct _af_weight_table_s {
+	_weight_setting_t mode_0_weight_table[ALG_SCENE_NUM];
+	_weight_setting_t mode_1_weight_table[ALG_SCENE_NUM];
+	_weight_setting_t mode_2_weight_table[ALG_SCENE_NUM];
+	_weight_setting_t mode_3_weight_table[ALG_SCENE_NUM];
+} _weight_table_t;
+
 typedef struct _face_af_tuning_s {
-	cmr_u32 face_is_enable;
-	cmr_u32 converge_cnt_thr;
-	cmr_u32 area_thr;
-	cmr_u32 diff_area_thr;
-	cmr_u32 diff_cx_thr;
-	cmr_u32 diff_cy_thr;
-	cmr_u8 reserved[10];
+	cmr_u32 big_size_thr; // big face thr
+	cmr_u32 middle_size_thr;// middle face thr
+	cmr_u32 little_size_thr; // little face thr
+	cmr_u32 absolute_thr; // too little face thr
+	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 reserved[10];
 } face_af_tuning_t;
 
 typedef struct _af_tuning_param {
 	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
-	filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];	// AF filter threshold
-	cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];	//BV threshold
-	#if 1	//win config 502*3 = 1506
+	#if 1	//16*18+4*9 = 324 bytes ,win config 502*3 = 1506 bytes
 	AF_Softlanding_Config Soft_landing_param;// 192bytes
-	cmr_u8 dummy1[1506-192];//
+	face_af_tuning_t face_param; // 92 bytes
+	_weight_table_t weight_table;	//288 bytes
+	cmr_u8 dummy1[324+1506-192-92-288];
 	#else	//long time for unused
+	//filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];       // AF filter threshold,
+	//cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];     //BV threshold
 					       //AF_Window_Config SAF_win;       // SAF window config ,502bytes
 					       //AF_Window_Config CAF_win;       // CAF window config ,502bytes
 					       //AF_Window_Config VAF_win;       // VAF window config ,502bytes
 	#endif
 	// default param for indoor/outdoor/dark
 	AF_Tuning AF_Tuning_Data[ALG_SCENE_NUM];	// Algorithm related parameter
-	cmr_u8 soft_landing_dly;
-	cmr_u8 soft_landing_step;
+	#if 1 // 2 bytes
+	cmr_u8 dummy2[2];
+	#else// long time for unused
+	//cmr_u8 soft_landing_dly;
+	//cmr_u8 soft_landing_step;
+	#endif
 	cmr_u8 vcm_hysteresis;
-	face_af_tuning_t face_param;
-	cmr_u8 dummy[64];       // for 4-bytes alignment issue,101-37
+	cmr_u8 dummy[98];       // for 4-bytes alignment issue
 } af_tuning_param_t;
 #pragma pack(pop)
 
@@ -997,10 +1055,10 @@ typedef struct _AF_Trigger_Data {
 
 typedef struct _AF_Win {
 	cmr_u16 Set_Zone_Num;	//FV zone number
-	cmr_u16 AF_Win_X[TOTAL_AF_ZONE];
-	cmr_u16 AF_Win_Y[TOTAL_AF_ZONE];
-	cmr_u16 AF_Win_W[TOTAL_AF_ZONE];
-	cmr_u16 AF_Win_H[TOTAL_AF_ZONE];
+	cmr_u16 AF_Win_X[FOCUS_STAT_WIN_TOTAL];
+	cmr_u16 AF_Win_Y[FOCUS_STAT_WIN_TOTAL];
+	cmr_u16 AF_Win_W[FOCUS_STAT_WIN_TOTAL];
+	cmr_u16 AF_Win_H[FOCUS_STAT_WIN_TOTAL];
 
 } AF_Win;
 
@@ -1018,23 +1076,6 @@ typedef struct _AF_face_area {
 	cmr_u32 reserved[4];
 } AF_face_area;
 
-typedef struct _prime_face_base_info {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-	cmr_u32 area;
-	cmr_u32 area_thr;
-	cmr_u32 diff_area_thr;
-	cmr_u32 diff_cx_thr;
-	cmr_u32 diff_cy_thr;
-	cmr_u32 converge_cnt_thr;
-	cmr_u32 percentage_base;
-	cmr_u32 converge_cnt;
-	cmr_u32 diff_trigger;
-	cmr_u32 face_is_enable;
-} prime_face_base_info_t;
-
 typedef struct _Bokeh_tuning_param {
 	cmr_u16 from_pos;
 	cmr_u16 to_pos;
@@ -1050,6 +1091,14 @@ typedef struct _af_time_info_s {
 	cmr_u64 takepic_timestamp;
 	cmr_u64 reserved[16];
 } _af_time_info_t;
+
+typedef struct _af_history_info_s {
+	cmr_u64 timestamp_info;
+	cmr_u32 history_index;
+	pd_algo_result_t pd_result[AF_RESULT_DATA_SIZE];
+	exposure_result_t ae_result[AF_RESULT_DATA_SIZE];
+	focus_stat_result_t stat_result[AF_RESULT_DATA_SIZE];
+} _af_history_info_t;
 
 typedef struct _AF_Data {
 	cmr_s8 AF_Version[40];
@@ -1069,7 +1118,6 @@ typedef struct _AF_Data {
 	lens_distance_map_t dis_map;
 	Bokeh_tuning_param bokeh_param;
 	AF_face_area face_info;
-	prime_face_base_info_t face_base;
 	cmr_u32 hw_num;
 	cmr_u32 isp_w;
 	cmr_u32 isp_h;
@@ -1077,11 +1125,14 @@ typedef struct _AF_Data {
 	cmr_u32 hysteresis_step;
 	cmr_u32 cur_scene;
 	cmr_u32 pre_scene;
-	cmr_u32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];
 	_af_time_info_t time_info;
 	_pdaf_process_t pdaf_proc_data;
 	pdaftuning_param_t PDAF_Tuning_Data;
 	AF_Softlanding_Config Soft_landing_param;
+	face_af_tuning_t face_param; // 92 bytes
+	_weight_table_t weight_table;	//288 bytes
+	_af_history_info_t history_data;
+	cmr_u32 postpone_notice;
 	cmr_u32 distance_reminder;
 	cmr_u32 near_dist;
 	cmr_u32 far_dist;

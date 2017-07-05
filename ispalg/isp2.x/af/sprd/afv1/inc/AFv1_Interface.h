@@ -63,4 +63,5 @@ cmr_u8 AF_record_faces(void *handle, cmr_u32 index, cmr_u32 start_x, cmr_u32 sta
 cmr_u8 faf_trigger_init(void *handle);
 cmr_u8 face_dectect_trigger(void *handle);
 cmr_u32 AF_Set_time_stamp(void *handle,cmr_u32 type, cmr_u64 time_stamp);
+cmr_u32 AF_Set_Pre_Trigger_Data(void * handle);
 #endif

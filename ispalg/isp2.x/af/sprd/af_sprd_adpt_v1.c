@@ -117,6 +117,13 @@ static cmr_s32 _check_handle(cmr_handle handle)
 	return rtn;
 }
 
+// misc
+static cmr_u64 get_systemtime_ns()
+{
+	cmr_s64 timestamp = systemTime(CLOCK_MONOTONIC);
+	return timestamp;
+}
+
 // afm hardware
 static void afm_enable(af_ctrl_t * af)
 {
@@ -404,7 +411,8 @@ static cmr_u8 if_lens_get_pos(cmr_u16 * pos, void *cookie)
 static cmr_u8 if_lens_move_to(cmr_u16 pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-
+	af->vcm_timestamp = get_systemtime_ns();
+	AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_VCM, af->vcm_timestamp);
 	lens_move_to(af, pos);
 	return 0;
 }
@@ -515,13 +523,6 @@ static cmr_u8 if_lock_nlm(e_LOCK lock, void *cookie)
 	return 0;
 }
 
-// misc
-static cmr_u64 get_systemtime_ns()
-{
-	cmr_s64 timestamp = systemTime(CLOCK_MONOTONIC);
-	return timestamp;
-}
-
 static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 {
 	UNUSED(cookie);
@@ -533,8 +534,6 @@ static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 {
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 
-	af->vcm_timestamp = get_systemtime_ns();
-	AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_VCM, af->vcm_timestamp);
 	//ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
@@ -2575,6 +2574,9 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 					af->focus_state = AF_IDLE;
 					trigger_start(af);
 				}
+			}
+			else{
+				AF_Set_Pre_Trigger_Data(af->af_alg_cxt);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
 			break;
