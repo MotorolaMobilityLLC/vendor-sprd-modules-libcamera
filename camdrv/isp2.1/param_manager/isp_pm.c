@@ -237,7 +237,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle)
 				continue;
 			}
 		}
-		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
+		if (PNULL != blk_cfg_ptr) {
 			if (blk_cfg_ptr->ops) {
 				ops = blk_cfg_ptr->ops;
 				if (ops->init) {
@@ -246,8 +246,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle)
 						offset = blk_cfg_ptr->offset;
 						blk_ptr = (void *)(isp_cxt_start_addr + offset);
 						param_data_ptr = (void *)blk_header_ptr->absolute_addr;
-						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)
-						    || (PNULL == blk_header_ptr)) {
+						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)) {
 							ISP_LOGE("fail to get valid param : blk_addr:%p, param:%p, header:%p, resolution:%p",
 								 blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 							rtn = ISP_ERROR;
@@ -292,7 +291,7 @@ static cmr_s32 isp_pm_context_update(cmr_handle handle, struct isp_pm_mode_param
 		id = blk_header_array[i].block_id;
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = &blk_header_array[i];
-		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
+		if (PNULL != blk_cfg_ptr) {
 			if (blk_cfg_ptr->ops) {
 				ops = blk_cfg_ptr->ops;
 				if (ops->init) {
@@ -301,8 +300,7 @@ static cmr_s32 isp_pm_context_update(cmr_handle handle, struct isp_pm_mode_param
 						offset = blk_cfg_ptr->offset;
 						blk_ptr = (void *)(isp_cxt_start_addr + offset);
 						param_data_ptr = (void *)blk_header_ptr->absolute_addr;
-						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)
-						    || (PNULL == blk_header_ptr)) {
+						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)) {
 							ISP_LOGE("fail to get valid param: blk_addr:%p, param:%p, header:%p, resolution:%p",
 								 blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 							rtn = ISP_ERROR;
@@ -360,7 +358,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 		id = blk_header_array[i].block_id;
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = &blk_header_array[i];
-		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
+		if (PNULL != blk_cfg_ptr) {
 			if (blk_cfg_ptr->ops) {
 				ops = blk_cfg_ptr->ops;
 				if (ops->deinit) {
@@ -389,7 +387,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 			id = blk_header_array[i].block_id;
 			blk_cfg_ptr = isp_pm_get_block_cfg(id);
 			blk_header_ptr = &blk_header_array[i];
-			if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
+			if (PNULL != blk_cfg_ptr) {
 				if (blk_cfg_ptr->ops) {
 					ops = blk_cfg_ptr->ops;
 					if (ops->deinit) {
@@ -1220,8 +1218,7 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr, struct 
 			offset = blk_cfg_ptr->offset;
 			ops = blk_cfg_ptr->ops;
 			blk_ptr = (void *)(cxt_start_addr + offset);
-			if ((PNULL == blk_ptr)
-			    || (PNULL == blk_header_ptr)) {
+			if (PNULL == blk_ptr) {
 				rtn = ISP_ERROR;
 				ISP_LOGE("fail to  get valid param : blk_addr:%p, param data_ptr:%p, header:%p", blk_ptr, param_data_ptr, blk_header_ptr);
 			} else {
@@ -1551,7 +1548,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			id = blk_header_array[i].block_id;
 			blk_cfg_ptr = isp_pm_get_block_cfg(id);
 			blk_header_ptr = &blk_header_array[i];
-			if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
+			if (PNULL != blk_cfg_ptr) {
 				is_update = 0;
 				if ((ISP_ZERO != blk_header_ptr->is_update) || (ISP_ZERO != flag)) {
 					is_update = 1;

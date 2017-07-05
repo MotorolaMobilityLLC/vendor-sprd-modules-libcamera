@@ -140,13 +140,13 @@ cmr_s32 _pm_cce_adjust(struct isp_cce_param * cce_param)
 	}
 
 	rtn0 = _pm_cce_adjust_hue_saturation(cce_param, hue, saturation);
-	if (ISP_SUCCESS != rtn) {
+	if (ISP_SUCCESS != rtn0) {
 		ISP_LOGE("fail to adjust pm cce  hue saturation ");
 		rtn = rtn0;
 	}
 
 	rtn0 = _pm_cce_adjust_gain_offset(cce_param, r_gain, g_gain, b_gain);
-	if (ISP_SUCCESS != rtn) {
+	if (ISP_SUCCESS != rtn0) {
 		ISP_LOGE("fail to adjust pm cce gain offset ");
 		rtn = rtn0;
 	}

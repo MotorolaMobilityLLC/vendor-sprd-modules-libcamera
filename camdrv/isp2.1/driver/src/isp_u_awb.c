@@ -40,52 +40,6 @@ cmr_s32 isp_u_awb_block(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_awbm_statistics *awbm_statistics = NULL;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	if (!r_info || !g_info || !b_info) {
-		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx", (cmr_uint) r_info, (cmr_uint) g_info, (cmr_uint) b_info);
-		return -1;
-	}
-
-	awbm_statistics = (struct isp_awbm_statistics *)malloc(sizeof(struct isp_awbm_statistics));
-	if (!awbm_statistics) {
-		ISP_LOGE("No mem");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_AWB;
-	param.property = ISP_PRO_AWBM_STATISTICS;
-	memset(awbm_statistics, 0x00, sizeof(struct isp_awbm_statistics));
-	param.property_param = awbm_statistics;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-	if (0 == ret) {
-		memcpy((cmr_handle) r_info, (cmr_handle) (awbm_statistics->r), ISP_AWBM_ITEM * 4);
-		memcpy((cmr_handle) g_info, (cmr_handle) (awbm_statistics->g), ISP_AWBM_ITEM * 4);
-		memcpy((cmr_handle) b_info, (cmr_handle) (awbm_statistics->b), ISP_AWBM_ITEM * 4);
-	} else {
-		ISP_LOGE("copy awbm info error.");
-	}
-
-	if (awbm_statistics) {
-		free(awbm_statistics);
-		awbm_statistics = NULL;
-	}
-	return ret;
-}
-
 cmr_s32 isp_u_awbm_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;

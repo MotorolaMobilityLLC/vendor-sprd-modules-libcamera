@@ -56,8 +56,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	return ret;
 
 isp_free:
-	if (file)
-		free((void *)file);
+	free((void *)file);
 	file = NULL;
 
 	return ret;
@@ -76,10 +75,9 @@ cmr_s32 isp_dev_close(cmr_handle handle)
 
 	file = (struct isp_file *)handle;
 
-	if (file) {
-		free((void *)file);
-		file = NULL;
-	}
+	free((void *)file);
+	file = NULL;
+
 
 	return ret;
 }

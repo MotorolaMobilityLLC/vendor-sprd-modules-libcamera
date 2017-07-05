@@ -46,10 +46,6 @@ cmr_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf
 		dst_ptr->cur.pattern_col[i] = src_ptr->pdaf_region.pdaf_pattern[i].pattern_pixel.y;
 	}
 #endif
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to  init pdaf param!");
-		return rtn;
-	}
 
 	header_ptr->is_update = ISP_ONE;
 

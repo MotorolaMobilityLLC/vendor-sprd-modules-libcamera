@@ -93,53 +93,6 @@ cmr_s32 isp_u_raw_aem_mode(cmr_handle handle, cmr_u32 mode)
 	return ret;
 }
 
-cmr_s32 isp_u_raw_aem_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_raw_aem_statistics *aem_statistics = NULL;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	if (!r_info || !g_info || !b_info) {
-		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx", (cmr_uint) r_info, (cmr_uint) g_info, (cmr_uint) b_info);
-		return -1;
-	}
-
-	aem_statistics = (struct isp_raw_aem_statistics *)malloc(sizeof(struct isp_raw_aem_statistics));
-	if (!aem_statistics) {
-		ISP_LOGE("NO mem");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_RAW_AEM;
-	param.property = ISP_PRO_RAW_AEM_STATISTICS;
-	memset(aem_statistics, 0x00, sizeof(struct isp_raw_aem_statistics));
-	param.property_param = aem_statistics;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-	if (0 == ret) {
-		memcpy((void *)r_info, (void *)(aem_statistics->r), ISP_RAW_AEM_ITEM * 4);
-		memcpy((void *)g_info, (void *)(aem_statistics->g), ISP_RAW_AEM_ITEM * 4);
-		memcpy((void *)b_info, (void *)(aem_statistics->b), ISP_RAW_AEM_ITEM * 4);
-	} else {
-		ISP_LOGE("copy aem info error.");
-	}
-
-	if (aem_statistics) {
-		free(aem_statistics);
-		aem_statistics = NULL;
-	}
-
-	return ret;
-}
-
 cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num)
 {
 	cmr_s32 ret = 0;

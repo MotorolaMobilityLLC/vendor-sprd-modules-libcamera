@@ -922,6 +922,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 
+	memset(&gain, 0, sizeof(gain));
 	if (cxt->ae_cxt.sw_bypass) {
 		return ret;
 	}
@@ -987,6 +988,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	struct ae_get_ev ae_ev;
 
 	memset(&ae_ev, 0, sizeof(ae_ev));
+	memset(&info, 0, sizeof(info));
 
 	if (!in_ptr || !out_ptr || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
@@ -1207,6 +1209,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
+	memset(&info, 0, sizeof(info));
 
 	CMR_MSG_INIT(message);
 
@@ -1406,6 +1409,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct isp_statis_buf_input statis_buf;
 	cmr_uint u_addr = 0;
 
+	memset(&afl_output, 0, sizeof(afl_output));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
@@ -1491,6 +1495,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct isp_statis_info *statis_info = NULL;
 	cmr_uint u_addr = 0;
 	cmr_s32 i = 0;
+	cmr_u32 af_temp[30];
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	memset((void *)&calc_param, 0, sizeof(calc_param));
@@ -1501,7 +1506,6 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	case AF_DATA_AF:{
 			struct isp_statis_buf_input statis_buf;
 			statis_info = (struct isp_statis_info *)in_ptr;
-			cmr_u32 af_temp[30];
 
 			ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 			ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
@@ -1552,6 +1556,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	UNUSED(data_type);
 
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
+	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
@@ -2044,6 +2049,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	memset((void *)&input, 0, sizeof(input));
 	memset((void *)&output, 0, sizeof(output));
 	memset((void *)&param, 0, sizeof(param));
+	memset((void *)&info, 0, sizeof(info));
 
 	cxt->awb_cxt.cur_gain.r = 1;
 	cxt->awb_cxt.cur_gain.b = 1;
@@ -2861,6 +2867,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	cmr_s32 bv = 0;
 	cmr_s32 bv_gain = 0;
 
+	memset(&result, 0, sizeof(result));
 	/*update aem information */
 	cxt->aem_is_update = 0;
 
@@ -2957,6 +2964,8 @@ static cmr_int ispalg_update_alsc_param(cmr_handle isp_alg_handle)
 		struct awb_size stat_img_size;
 		struct awb_size win_size;
 		struct isp_ae_grgb_statistic_info *stat_info;
+		memset(&stat_img_size, 0, sizeof(stat_img_size));
+		memset(&win_size, 0, sizeof(win_size));
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 		ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
@@ -3020,11 +3029,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
-
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
-	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 	struct isp_lsc_info *lsc_info_new = NULL;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0};
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
@@ -3138,8 +3145,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
-
 	// update lsc reslut
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
@@ -3186,7 +3193,6 @@ exit:
 
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 {
-
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
@@ -3542,10 +3548,8 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		dlclose(cxt->ispalg_lib_handle);
 		cxt->ispalg_lib_handle = NULL;
 	}
-	if (cxt) {
-		free((void *)cxt);
-		cxt = NULL;
-	}
+	free((void *)cxt);
+	cxt = NULL;
 
 exit:
 	ISP_LOGI("done %d", ret);
