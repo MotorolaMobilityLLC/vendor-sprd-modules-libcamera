@@ -3005,6 +3005,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
+	struct isp_pm_param_data param_data_alsc;
+	struct isp_lsc_info *lsc_info_new = NULL;
+	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5 };
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -3114,9 +3120,27 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
+
+	// update lsc reslut
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
+	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	fwstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
+	for(int i=0; i<9;i++)
+		fwstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+	fwstart_info.gain_width_new = lsc_info_new->gain_w;
+	fwstart_info.gain_height_new = lsc_info_new->gain_h;
+	fwstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)&fwstart_info, NULL);
+
+
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
-	ret = ispalg_update_alsc_param(cxt);
+	//ret = ispalg_update_alsc_param(cxt);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_work_mode"));
@@ -3134,6 +3158,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, in_ptr, NULL);
 	}
+
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, NULL, NULL);
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -3155,6 +3182,12 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	if (cxt->ops.af_ops.ioctrl) {
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
 	}
+
+	if (cxt->ops.lsc_ops.ioctrl){
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_STOP, NULL, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("ALSC_FW_STOP fail"));
+	}
+
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
 exit:
