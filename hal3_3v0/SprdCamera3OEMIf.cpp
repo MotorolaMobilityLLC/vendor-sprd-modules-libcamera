@@ -273,7 +273,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
       mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFlagMultiLayerStart(false), mTempStates(CAMERA_NORMAL_TEMP),
+      mFlagMultiLayerStart(false), mFixedFpsEnabled(0), mTempStates(CAMERA_NORMAL_TEMP),
       mIsTempChanged(0) {
     int i = 0;
     ATRACE_CALL();
@@ -1987,15 +1987,11 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
         property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false")) {
+        if (!strcmp(value, "false") && !mFixedFpsEnabled) {
             fps_param.min_fps = 16;
             fps_param.max_fps = 25;
         }
 #endif
-        if(mFixedFpsEnabled){
-            fps_param.min_fps = 30;
-            fps_param.max_fps = 30;
-        }
         // when 3D video recording with face beautify, fix frame rate at 25fps.
         if (mSprdCameraLowpower) {
             fps_param.min_fps = fps_param.max_fps = 20;
