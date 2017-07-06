@@ -1061,7 +1061,7 @@ cmr_int cmr_preview_receive_data(cmr_handle preview_handle, cmr_u32 camera_id,
     inter_param->param2 = (void *)evt;
     inter_param->param3 = (void *)frm_data;
 
-    if (CMR_GRAB_TX_DONE == evt) {
+    if (CMR_GRAB_TX_DONE == evt || CMR_GRAB_TX_ERROR == evt) {
         thread = handle->thread_cxt.assist_thread_handle;
     } else {
         thread = handle->thread_cxt.thread_handle;
