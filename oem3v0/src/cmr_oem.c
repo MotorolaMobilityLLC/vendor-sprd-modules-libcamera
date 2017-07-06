@@ -4755,6 +4755,10 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    cmr_bzero((void*)&enc_exif_param, sizeof(struct jpeg_enc_exif_param));
+    cmr_bzero((void*)&out_pram, sizeof(struct jpeg_wexif_cb_param));
+    cmr_bzero((void*)&setting_param, sizeof(struct setting_cmd_parameter));
+    cmr_bzero((void*)&isp_param, sizeof(struct common_isp_cmd_param));
 
     enc_exif_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
     enc_exif_param.src_jpeg_addr_virt = pic_src->addr_vir.addr_y;
@@ -4804,9 +4808,7 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     } else {
         CMR_LOGE("failed to compund exif jpeg %ld", ret);
     }
-#if (SC_FPGA == 1)
-//	sleep(20);
-#endif
+
 exit:
     CMR_LOGI("done %ld", ret);
     return ret;
