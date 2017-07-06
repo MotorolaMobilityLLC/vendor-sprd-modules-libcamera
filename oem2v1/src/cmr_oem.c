@@ -5416,6 +5416,14 @@ exit:
     return ret;
 }
 
+cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->is_3dnr_video = is_3dnr_video;
+    CMR_LOGI("is_3dnr_video %ld", cxt->is_3dnr_video);
+    return ret;
+}
+
 cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -7615,7 +7623,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
         }
     }
-    if (1 == camera_get_3dnr_flag(cxt)) {
+    if (1 == camera_get_3dnr_flag(cxt) && 1 != cxt->is_3dnr_video) {
         struct ipm_open_in in_param;
         struct ipm_open_out out_param;
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;

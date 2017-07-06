@@ -305,6 +305,7 @@ struct camera_context {
     cmr_u8 flag_highiso_alloc_mem;
     cmr_uint dump_cnt;
     cmr_uint is_start_snapshot;
+    cmr_uint is_3dnr_video;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
@@ -448,7 +449,7 @@ cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps);
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode mode,
                                             struct frm_info *frm_data);
-
+cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 #ifdef __cplusplus
 }

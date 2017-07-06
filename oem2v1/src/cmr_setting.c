@@ -2467,7 +2467,7 @@ static cmr_int setting_get_3dnr(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->is_3dnr;
-    CMR_LOGD("get 3dhdr %ld", parm->cmd_type_value);
+    CMR_LOGD("get 3dnr %ld", parm->cmd_type_value);
 
     return ret;
 }

@@ -234,6 +234,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int autoFocusToFaceFocus();
     bool isNeedAfFullscan();
     int camera_ioctrl(int cmd, void *param1, void *param2);
+    bool isVideoCopyFromPreview();
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);
@@ -272,6 +273,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mBurstVideoSnapshot;
     int mVideoParameterSetFlag;
     bool mSetCapRatioFlag;
+    bool mVideoCopyFromPreviewFlag;
 
   private:
     inline void print_time();

@@ -915,6 +915,12 @@ cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id,
     return 0;
 }
 
+cmr_int camera_set_3dnr_video_mode(cmr_handle camera_handle,
+                                   cmr_uint is_3dnr_video) {
+    camera_set_3dnr_video(camera_handle, is_3dnr_video);
+    return 0;
+}
+
 cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle,
                                     struct sensor_otp_cust_info *otp_info) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
@@ -1077,6 +1083,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
         ret = cmr_set_snapshot_timestamp(handle, *(int64_t *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_3DNR_VIDEOMODE: {
+        ret = camera_set_3dnr_video(handle, *(cmr_uint *)param);
         break;
     }
     default:

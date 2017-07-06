@@ -345,11 +345,12 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
                     mOEMIf->PushPreviewbuff(buffer);
                 else if (i == (CAMERA_STREAM_TYPE_VIDEO -
                                REGULAR_STREAM_TYPE_BASE)) {
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-                    HAL_LOGD("video stream copy preview stream");
-#else
-                    mOEMIf->PushVideobuff(buffer);
-#endif
+                    if (mOEMIf->isVideoCopyFromPreview()) {
+                        HAL_LOGD("video stream copy preview stream");
+                    } else {
+                        mOEMIf->PushVideobuff(buffer);
+                    }
+
                 } else if (i == (CAMERA_STREAM_TYPE_CALLBACK -
                                  REGULAR_STREAM_TYPE_BASE))
                     mOEMIf->PushZslbuff(buffer);

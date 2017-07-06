@@ -112,6 +112,12 @@ enum DFS_POLICY {
     CAM_VERYHIGH,
 };
 
+// 3dnr Video mode
+enum VIDEO_3DNR {
+    VIDEO_OFF,
+    VIDEO_ON,
+};
+
 //#define CAM_EXIT_STR          "exit"
 #define CAM_LOW_STR "camlow"
 #define CAM_HIGH_STR "camhigh"
@@ -235,8 +241,9 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 }
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
-    : mSetCapRatioFlag(false), mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0),
-      mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
+    : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
+      mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
+      mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
       mIsUnpopped(false), mIsBlur2Zsl(false), mParameters(),
       mPreviewHeight_trimy(0), mPreviewWidth_trimx(0),
@@ -615,7 +622,11 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             (mCaptureWidth != 0 && mCaptureHeight != 0) &&
             mVideoParameterSetFlag == 0) {
             mPicCaptureCnt = 1;
-            ret = setVideoSnapshotParameter();
+            if (mVideoCopyFromPreviewFlag) {
+                HAL_LOGV("no need to setVideoSnapshotParameter");
+            } else {
+                ret = setVideoSnapshotParameter();
+            }
             mVideoParameterSetFlag = true;
         }
         break;
@@ -1502,7 +1513,6 @@ void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width,
 
 int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
     int ret = 0;
-
     switch (cmd) {
     case CAMERA_IOCTRL_SET_MULTI_CAMERAMODE: {
         mMultiCameraMode = *(multiCameraMode *)param1;
@@ -2055,12 +2065,12 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
             mCaptureMode = CAMERA_ZSL_MODE;
     }
 
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-    HAL_LOGD("video stream copy preview stream");
-#else
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SIZE,
-             (cmr_uint)&video_size);
-#endif
+    if (mVideoCopyFromPreviewFlag) {
+        HAL_LOGD("video stream copy from preview stream");
+    } else {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SIZE,
+                 (cmr_uint)&video_size);
+    }
 
     if (mZslPreviewMode == false) {
         if (mSprdZslEnabled == false) {
@@ -2179,6 +2189,8 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
     struct cmr_range_fps_param fps_param;
     char value[PROPERTY_VALUE_MAX];
     CONTROL_Tag controlInfo;
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
     mSetting->getCONTROLTag(&controlInfo);
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -2205,6 +2217,11 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
             fps_param.min_fps = fps_param.max_fps = 20;
         }
 
+        // 3dnr video recording on
+        if (sprddefInfo.sprd_3dnr_enabled == 1) {
+            fps_param.min_fps = 5;
+            fps_param.max_fps = 30;
+        }
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];
         int val_max = 0;
@@ -3328,6 +3345,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
             stopPreviewInternal();
     }
     mRestartFlag = false;
+    mVideoCopyFromPreviewFlag = false;
+    unsigned int on_off = VIDEO_OFF;
+    camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
@@ -3336,6 +3356,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
         changeDfsPolicy(CAM_LOW);
+        if (sprddefInfo.sprd_3dnr_enabled == 1) {
+            mVideoCopyFromPreviewFlag = true;
+            on_off = VIDEO_ON;
+            camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
+        }
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -3420,7 +3445,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     PushFirstPreviewbuff();
-    PushFirstVideobuff();
+    if (mVideoCopyFromPreviewFlag) {
+        HAL_LOGI("copy preview buffer to video");
+    } else {
+        PushFirstVideobuff();
+    }
     PushFirstZslbuff();
 
     HAL_LOGI("X camera id %d", mCameraId);
@@ -4110,14 +4139,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     int32_t buf_deq_num = 0;
     int32_t buf_num = 0;
 
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
     cmr_uint videobuf_phy = 0;
     cmr_uint videobuf_vir = 0;
     cmr_uint prebuf_phy = 0;
     cmr_uint prebuf_vir = 0;
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
-#endif
+
 #ifdef CONFIG_FACE_BEAUTY
     int sx, sy, ex, ey, angle, pose;
     struct face_beauty_levels beautyLevels;
@@ -4290,48 +4318,53 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
 #endif
 
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-            if (rec_stream) {
-                ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir,
-                                                    &videobuf_phy, &fd0);
-                if (ret == NO_ERROR && videobuf_vir != 0) {
-                    mIsRecording = true;
-                    if (mSlowPara.last_frm_timestamp == 0) {
-                        mSlowPara.last_frm_timestamp = buffer_timestamp;
-                        mSlowPara.rec_timestamp = buffer_timestamp;
+            if (mVideoCopyFromPreviewFlag) {
+                if (rec_stream) {
+                    ret = rec_stream->getQBufAddrForNum(
+                        frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+                    if (ret == NO_ERROR && videobuf_vir != 0) {
+                        mIsRecording = true;
+                        if (mSlowPara.last_frm_timestamp == 0) {
+                            mSlowPara.last_frm_timestamp = buffer_timestamp;
+                            mSlowPara.rec_timestamp = buffer_timestamp;
+                        }
                     }
                 }
             }
-#endif
 
             if (mIsRecording && rec_stream) {
                 if (frame_num > mRecordFrameNum)
                     calculateTimestampForSlowmotion(buffer_timestamp);
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-                ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir,
-                                                    &videobuf_phy, &fd0);
-                if (ret || videobuf_vir == 0) {
-                    HAL_LOGE("getQBufAddrForNum failed");
-                    goto exit;
+
+                if (mVideoCopyFromPreviewFlag) {
+                    ret = rec_stream->getQBufAddrForNum(
+                        frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+                    if (ret || videobuf_vir == 0) {
+                        HAL_LOGE("getQBufAddrForNum failed");
+                        goto exit;
+                    }
+
+                    pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
+                                                  &prebuf_phy, &fd1);
+                    HAL_LOGV(
+                        "frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx",
+                        frame_num, videobuf_phy, videobuf_vir);
+                    HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
+                             frame_num, prebuf_phy, prebuf_vir);
+                    memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+                           mPreviewWidth * mPreviewHeight * 3 / 2);
+                    channel->channelCbRoutine(frame_num,
+                                              mSlowPara.rec_timestamp,
+                                              CAMERA_STREAM_TYPE_VIDEO);
+                    if (frame_num ==
+                        (mDropVideoFrameNum + 1)) // for IOMMU error
+                        channel->channelClearInvalidQBuff(
+                            mDropVideoFrameNum, buffer_timestamp,
+                            CAMERA_STREAM_TYPE_VIDEO);
+                    if (frame_num > mRecordFrameNum)
+                        mRecordFrameNum = frame_num;
                 }
 
-                pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
-                                              &prebuf_phy, &fd1);
-                HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx",
-                         frame_num, videobuf_phy, videobuf_vir);
-                HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
-                         frame_num, prebuf_phy, prebuf_vir);
-                memcpy((void *)videobuf_vir, (void *)prebuf_vir,
-                       mPreviewWidth * mPreviewHeight * 3 / 2);
-                channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
-                                          CAMERA_STREAM_TYPE_VIDEO);
-                if (frame_num == (mDropVideoFrameNum + 1)) // for IOMMU error
-                    channel->channelClearInvalidQBuff(mDropVideoFrameNum,
-                                                      buffer_timestamp,
-                                                      CAMERA_STREAM_TYPE_VIDEO);
-                if (frame_num > mRecordFrameNum)
-                    mRecordFrameNum = frame_num;
-#endif
                 channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
                                           CAMERA_STREAM_TYPE_PREVIEW);
             } else {
@@ -4345,11 +4378,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         } else {
             channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
                                               CAMERA_STREAM_TYPE_PREVIEW);
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-            if (rec_stream)
-                channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
-                                                  CAMERA_STREAM_TYPE_VIDEO);
-#endif
+            if (mVideoCopyFromPreviewFlag) {
+                if (rec_stream)
+                    channel->channelClearInvalidQBuff(
+                        frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+            }
         }
         if (callback_stream)
             callback_stream->getQBufListNum(&buf_num);
@@ -8766,6 +8799,10 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         HAL_LOGD("zsl monitor thread exit ");
     }
     return ret;
+}
+
+bool SprdCamera3OEMIf::isVideoCopyFromPreview() {
+    return mVideoCopyFromPreviewFlag;
 }
 
 uint32_t SprdCamera3OEMIf::isPreAllocCapMem() {
