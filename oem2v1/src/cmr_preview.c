@@ -1706,7 +1706,7 @@ exit:
 }
 
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
-                               struct frm_info *in, struct img_frm *out){
+                                struct frm_info *in, struct img_frm *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     int i = 0;
     CHECK_HANDLE_VALID(handle);
@@ -1718,9 +1718,9 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    for(i = 0; i < HDR_CAP_NUM; i++){
-        if(in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
-        break;
+    for (i = 0; i < HDR_CAP_NUM; i++) {
+        if (in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
+            break;
     }
 
     if (i == HDR_CAP_NUM) {
@@ -1731,7 +1731,7 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
     out->fd = prev_cxt->cap_hdr_fd_path_array[i];
     out->addr_vir.addr_y = prev_cxt->cap_hdr_virt_addr_path_array[i];
 
-    CMR_LOGI("fd:%d",i);
+    CMR_LOGI("fd:%d", i);
 
 exit:
     return ret;
@@ -1759,6 +1759,11 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
             ret = CMR_CAMERA_FAIL;
             goto end;
         }
+        ret = cmr_thread_set_name(handle->thread_cxt.assist_thread_handle, "prev_assist");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
+        }
 
         ret = cmr_thread_create(&handle->thread_cxt.thread_handle,
                                 PREV_MSG_QUEUE_SIZE, prev_thread_proc,
@@ -1767,6 +1772,11 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             goto end;
+        }
+        ret = cmr_thread_set_name(handle->thread_cxt.thread_handle, "prev");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
         }
 
         handle->thread_cxt.is_inited = 1;
@@ -1838,6 +1848,11 @@ cmr_int prev_create_cb_thread(struct prev_handle *handle) {
         CMR_LOGE("send msg failed!");
         ret = CMR_CAMERA_FAIL;
         goto end;
+    }
+    ret = cmr_thread_set_name(handle->thread_cxt.cb_thread_handle, "prev_cb");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
     }
 
     message.msg_type = PREV_EVT_CB_INIT;
@@ -8725,18 +8740,20 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
                     img_cap->dst_img_size.width = tmp_width;
                 }
                 img_cap->dst_img_size.height =
-                    (img_cap->dst_img_size.width * cap_size->height) / cap_size->width;
+                    (img_cap->dst_img_size.width * cap_size->height) /
+                    cap_size->width;
             } else if (cap_size->height > tmp_height) {
                 img_cap->dst_img_size.height = tmp_height;
-                img_cap->dst_img_size.width = (tmp_height * cap_size->width) / cap_size->height;
+                img_cap->dst_img_size.width =
+                    (tmp_height * cap_size->width) / cap_size->height;
             } else {
                 /*just use scaler on the fly*/
                 img_cap->dst_img_size.width = cap_size->width;
                 img_cap->dst_img_size.height = cap_size->height;
             }
         } else {
-                img_cap->dst_img_size.width = cap_size->width;
-                img_cap->dst_img_size.height = cap_size->height;
+            img_cap->dst_img_size.width = cap_size->width;
+            img_cap->dst_img_size.height = cap_size->height;
         }
     }
     img_cap->dst_img_size.width = CAMERA_START(img_cap->dst_img_size.width);

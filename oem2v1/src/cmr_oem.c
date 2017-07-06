@@ -720,7 +720,7 @@ cmr_int camera_get_post_proc_chn_out_frm_id(struct img_frm *frame,
                                             struct frm_info *data) {
     cmr_int i;
 
-    for(i = 0; i<CMR_CAPTURE_MEM_SUM;i++){
+    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
         if ((cmr_u32)frame[i].fd == data->fd)
             break;
     }
@@ -785,19 +785,20 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             }
         } else {
             frm_id = camera_get_post_proc_chn_out_frm_id(
-                     cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
+                cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
             /*if frm_id biger than 0,you should search hdr buffer in
               hdr buffer list. You can't use (frame->yaddr) on 64bit system*/
             if (frm_id >= CMR_CAPTURE_MEM_SUM) {
-                ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
-                                           cxt->camera_id, frame, &out_param);
+                ret =
+                    cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
+                                            cxt->camera_id, frame, &out_param);
                 if (ret) {
                     CMR_LOGE("failed to get hdr buffer %ld", ret);
                     goto exit;
                 }
             } else {
-            /*if frm_id is 0,use default chn_out_frm.
-              This is also dest img buffer         */
+                /*if frm_id is 0,use default chn_out_frm.
+                  This is also dest img buffer         */
                 out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
             }
         }
@@ -3995,6 +3996,11 @@ cmr_int camera_create_prev_thread(cmr_handle oem_handle) {
         CMR_LOGE("create preview thread fail");
         ret = -CMR_CAMERA_NO_SUPPORT;
     }
+    ret = cmr_thread_set_name(cxt->prev_cb_thr_handle, "preview_cb");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
+    }
     CMR_LOGD("done %ld", ret);
     return ret;
 }
@@ -4034,6 +4040,11 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto exit;
     }
+    ret = cmr_thread_set_name(cxt->snp_cb_thr_handle, "snap_cb");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
+    }
     ret = cmr_thread_create(
         &cxt->snp_secondary_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
         camera_snapshot_secondary_thread_proc, (void *)oem_handle);
@@ -4041,6 +4052,11 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto destroy_cb_thr;
+    }
+    ret = cmr_thread_set_name(cxt->snp_secondary_thr_handle, "snap_sec");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
     }
 
     ret = cmr_thread_create(
@@ -4051,6 +4067,11 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto destroy_secondary_thr;
     } else {
+        ret = cmr_thread_set_name(cxt->snp_send_raw_image_handle, "snap_raw");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
+        }
         goto exit;
     }
 
@@ -4322,6 +4343,11 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
                             (void *)cxt);
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("create thread fail");
+    }
+    ret = cmr_thread_set_name(cxt->init_thread, "res_init");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
     }
     CMR_LOGI("init thread created");
     message.msg_type = CMR_EVT_INIT;

@@ -798,6 +798,11 @@ cmr_int cmr_sns_create_thread(struct cmr_sensor_handle *handle) {
         ret = cmr_thread_create(&handle->thread_cxt.thread_handle,
                                 SENSOR_MSG_QUEUE_SIZE, cmr_sns_thread_proc,
                                 (void *)handle);
+        ret = cmr_thread_set_name(handle->thread_cxt.thread_handle, "sensor");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
+        }
     }
 
 end:
@@ -880,7 +885,8 @@ cmr_int cmr_sns_thread_proc(struct cmr_msg *message, void *p_data) {
     case CMR_SENSOR_EVT_SETMODONE:
         CMR_LOGI("SENSOR_EVT_SET_MODE_DONE_OK");
         camera_id = (cmr_u32)message->sub_msg_type;
-        sensor_set_mode_done_common(&handle->sensor_cxt[camera_id]); // for debug
+        sensor_set_mode_done_common(
+            &handle->sensor_cxt[camera_id]); // for debug
         break;
 
     case CMR_SENSOR_EVT_STREAM:
@@ -1391,6 +1397,7 @@ cmr_sns_create_monitor_thread(struct cmr_sensor_handle *sensor_handle) {
         ret = pthread_create(&sensor_handle->monitor_thread_cxt.thread_handle,
                              &attr, (void *(*)(void *))cmr_sns_monitor_proc,
                              (void *)sensor_handle);
+	pthread_setname_np(sensor_handle->monitor_thread_cxt.thread_handle, "sns_monitor");
         pthread_attr_destroy(&attr);
     }
 
@@ -1507,6 +1514,7 @@ cmr_sns_create_fmove_thread(struct cmr_sensor_handle *sensor_handle) {
         ret = pthread_create(&sensor_handle->fmove_thread_cxt.thread_handle,
                              &attr, (void *(*)(void *))cmr_sns_fmove_proc,
                              (void *)sensor_handle);
+	pthread_setname_np(sensor_handle->fmove_thread_cxt.thread_handle, "sns_fmove");
         pthread_attr_destroy(&attr);
     }
 #endif

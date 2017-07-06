@@ -1873,7 +1873,7 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	ret = cmr_thread_set_name(cxt->thr_handle, "algfw");
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to set fw name");
-		ret = -ISP_ERROR;
+		ret = CMR_MSG_SUCCESS;
 	}
 
 	ret = cmr_thread_create(&cxt->thr_afhandle, ISP_THREAD_QUEUE_NUM, ispalg_afthread_proc, (void *)cxt);
@@ -1885,7 +1885,7 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	ret = cmr_thread_set_name(cxt->thr_afhandle, "afstats");
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to set af name");
-		ret = -ISP_ERROR;
+		ret = CMR_MSG_SUCCESS;
 	}
 
 	return ret;

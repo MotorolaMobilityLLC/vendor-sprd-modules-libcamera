@@ -42,7 +42,7 @@ struct class_faceattr {
 };
 
 struct class_faceattr_array {
-    int count;     /* face count      */
+    int count;          /* face count      */
     cmr_uint frame_idx; /* The frame when the face attributes are updated */
     struct class_faceattr face[FD_MAX_FACE_NUM + 1]; /* face attricutes */
 };
@@ -454,6 +454,11 @@ static cmr_int fd_thread_create(struct class_fd *class_handle) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             goto end;
+        }
+        ret = cmr_thread_set_name(class_handle->thread_handle, "fd");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
         }
 
         class_handle->is_inited = 1;

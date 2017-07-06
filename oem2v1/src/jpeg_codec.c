@@ -1092,6 +1092,11 @@ cmr_int jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle) {
         ret = JPEG_CODEC_ERROR;
         goto jpeg_init_end;
     }
+    ret = cmr_thread_set_name(jcontext->thread_handle, "jpeg");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
+    }
     *jpeg_handle = (cmr_handle)jcontext;
 
     ret = JPEGCODEC_Open();

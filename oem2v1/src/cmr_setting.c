@@ -3455,6 +3455,11 @@ cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
         ret = -CMR_CAMERA_NO_MEM;
         goto setting_out;
     }
+    ret = cmr_thread_set_name(cpt->thread_handle, "setting");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
+    }
 
     for (i = 0; i < CAMERA_ID_MAX; ++i) {
         memset(&cpt->camera_info[i].hal_param.hal_common, INVALID_SETTING_BYTE,

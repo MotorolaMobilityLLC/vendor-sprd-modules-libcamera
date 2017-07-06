@@ -448,6 +448,11 @@ static cmr_int refocus_thread_create(struct class_refocus *class_handle) {
             ret = CMR_CAMERA_FAIL;
             goto end;
         }
+        ret = cmr_thread_set_name(class_handle->thread_handle, "refocus");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
+        }
 
         class_handle->is_inited = 1;
     } else {

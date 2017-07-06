@@ -122,12 +122,12 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
              "dst_aspect_ratio %f,sensor_aspect_ratio =%f",
              src_trim_rect->start_x, src_trim_rect->start_y,
              src_trim_rect->width, src_trim_rect->height, sensor_w, sensor_h,
-             zoom_ratio, dst_aspect_ratio,sensor_aspect_ratio);
+             zoom_ratio, dst_aspect_ratio, sensor_aspect_ratio);
 
     sensor_w = CAMERA_ALIGNED_16(sensor_w);
     sensor_h = CAMERA_ALIGNED_16(sensor_h);
 
-   CMR_LOGD("align sensor w,h  %d %d", sensor_w,sensor_h);
+    CMR_LOGD("align sensor w,h  %d %d", sensor_w, sensor_h);
 
     if (rot != IMG_ANGLE_0 && rot != IMG_ANGLE_180) {
         output_aspect_ratio = 1 / output_aspect_ratio;
@@ -143,10 +143,10 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
     trim_width = (cmr_u32)zoom_width;
     trim_height = (cmr_u32)zoom_height;
 
-    if(trim_width  > src_trim_rect->width)
+    if (trim_width > src_trim_rect->width)
         trim_width = src_trim_rect->width;
 
-   if(trim_height > src_trim_rect->height )
+    if (trim_height > src_trim_rect->height)
         trim_height = src_trim_rect->height;
 
     src_trim_rect->start_x += (src_trim_rect->width - trim_width) >> 1;

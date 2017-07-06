@@ -1134,6 +1134,7 @@ static cmr_int cmr_grab_create_thread(cmr_handle grab_handle) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     ret = pthread_create(&p_grab->thread_handle, &attr, cmr_grab_thread_proc,
                          (void *)grab_handle);
+    pthread_setname_np(p_grab->thread_handle, "grab");
     pthread_attr_destroy(&attr);
     return ret;
 }

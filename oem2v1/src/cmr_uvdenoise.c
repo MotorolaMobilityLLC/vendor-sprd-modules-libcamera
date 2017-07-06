@@ -517,6 +517,11 @@ static cmr_int uvde_thread_create(struct class_uvde *class_handle) {
                 ret = CMR_CAMERA_FAIL;
                 return ret;
             }
+            ret = cmr_thread_set_name(*cur_handle_ptr, "uvde");
+            if (CMR_MSG_SUCCESS != ret) {
+                CMR_LOGE("fail to set thr name");
+                ret = CMR_MSG_SUCCESS;
+            }
             message.sync_flag = CMR_MSG_SYNC_PROCESSED;
             message.msg_type = CMR_EVT_UVDE_INIT;
             ret = cmr_thread_msg_send(*cur_handle_ptr, &message);

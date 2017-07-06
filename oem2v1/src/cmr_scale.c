@@ -328,6 +328,11 @@ static cmr_int cmr_scale_create_thread(struct scale_file *file) {
             ret = CMR_CAMERA_FAIL;
             goto out;
         }
+        ret = cmr_thread_set_name(file->scale_thread, "scale");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
+        }
 
         file->is_inited = 1;
     }

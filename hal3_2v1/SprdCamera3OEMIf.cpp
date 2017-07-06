@@ -8517,6 +8517,7 @@ int SprdCamera3OEMIf::pre_alloc_cap_mem_thread_init(void *p_data) {
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
         ret = pthread_create(&obj->mPreAllocCapMemThread, &attr,
                              pre_alloc_cap_mem_thread_proc, (void *)obj);
+        pthread_setname_np(obj->mPreAllocCapMemThread, "pre_alloc");
         if (ret) {
             obj->mPreAllocCapMemInited = 0;
             sem_destroy(&obj->mPreAllocCapMemSemDone);
@@ -8990,6 +8991,7 @@ int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data) {
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
         ret = pthread_create(&obj->mGyroMsgQueHandle, &attr,
                              gyro_monitor_thread_proc, (void *)obj);
+        pthread_setname_np(obj->mGyroMsgQueHandle, "gyro");
         pthread_attr_destroy(&attr);
         if (ret) {
             obj->mGyroInit = 0;
