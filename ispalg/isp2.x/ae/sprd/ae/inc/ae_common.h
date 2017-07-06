@@ -427,6 +427,7 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
 	cmr_u8	led_state;	//0:off, 1:on
+	cmr_u8	flash_fired;	//just notify APP in flash auto
 //caliberation for bv match with lv
 	float lv_cali_lv;
 	float lv_cali_bv;
