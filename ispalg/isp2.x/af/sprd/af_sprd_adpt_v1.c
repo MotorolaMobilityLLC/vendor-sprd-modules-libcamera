@@ -248,7 +248,7 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 	if (NULL != af->af_lens_move) {
 		if (last_pos != pos)
 			af->af_lens_move(af->caller, pos);
-		ISP_LOGV("pos = %d", pos);
+		ISP_LOGI("pos = %d", pos);
 		af->lens.pos = pos;
 	}
 }
@@ -1876,6 +1876,10 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 	UNUSED(param0);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	ISP_LOGI("af state = %s, focus state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
+
+	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+		trigger_stop(af);
+	}
 
 	if (AF_SEARCHING == af->focus_state) {
 		ISP_LOGW("serious problem, current af is not done, af state %s", STATE_STRING(af->state));
