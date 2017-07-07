@@ -45,11 +45,12 @@ static cmr_int gc8024_set_video_mode(cmr_handle handle, cmr_uint param) {
 
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;
-    if(sns_drv_cxt->ops_cb.get_mode)
+    if (sns_drv_cxt->ops_cb.get_mode) {
         ret = sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &mode);
         if (SENSOR_SUCCESS != ret) {
             SENSOR_LOGI("get mode fail.");
             return ret;
+        }
     }
 
     if (PNULL == VIDEO_INFO[mode].setting_ptr) {
@@ -395,8 +396,8 @@ static void gc8024_drv_write_shutter(cmr_handle handle, cmr_uint shutter) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    if (!shutter)
-        shutter = 1; /* avoid 0 */
+   // if (!shutter)
+   //     shutter = 1; /* avoid 0 */
     if (shutter < 1)
         shutter = 1;
     if (shutter > 8191)
@@ -510,7 +511,7 @@ static cmr_int gc8024_drv_power_on(cmr_handle handle, cmr_uint power_on) {
  *============================================================================*/
 static cmr_int gc8024_drv_access_val(cmr_handle handle,
                                               cmr_uint param) {
-    cmr_int ret = SENSOR_FAIL;
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     SENSOR_IC_CHECK_PTR(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -552,7 +553,6 @@ static cmr_int gc8024_drv_access_val(cmr_handle handle,
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
 
     return ret;
 }

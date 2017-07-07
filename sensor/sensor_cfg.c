@@ -171,7 +171,7 @@ const SENSOR_MATCH_T sensor3_infor_tab[] = {
 #endif
 #endif
 #ifdef SC_FPGA
-//	{"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
+    //"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
 #endif
     {0}};
 
@@ -205,6 +205,7 @@ SENSOR_MATCH_T *sensor_get_module_tab(cmr_int at_flag, cmr_u32 sensor_id) {
             break;
         case SENSOR_SUB:
             sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sub_sensor_infor_tab;
+            break;
         case SENSOR_DEVICE3:
             sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor3_infor_tab;
             break;

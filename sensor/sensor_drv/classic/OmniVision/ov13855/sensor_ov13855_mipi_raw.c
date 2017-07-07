@@ -486,7 +486,6 @@ static cmr_int ov13855_drv_access_val(cmr_handle handle, cmr_uint param) {
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
 
     return ret;
 }

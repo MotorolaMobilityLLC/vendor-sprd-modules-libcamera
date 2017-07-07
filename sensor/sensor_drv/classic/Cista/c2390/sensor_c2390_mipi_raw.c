@@ -484,7 +484,7 @@ static cmr_int c2390_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
 
-    sns_drv_cxt->frame_length_def = 
+    sns_drv_cxt->frame_length_def =
                           sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
 
     SENSOR_LOGI("capture_mode = %d", capture_mode);
@@ -579,7 +579,7 @@ static cmr_int c2390_drv_write_exposure_ex(cmr_handle handle,
 
     SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                  exposure_line, dummy_line);
-    sns_drv_cxt->frame_length_def = 
+    sns_drv_cxt->frame_length_def =
                            sns_drv_cxt->trim_tab_info[mode].frame_line;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
@@ -808,7 +808,7 @@ static cmr_int c2390_drv_stream_off(cmr_handle handle, cmr_uint param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int c2390_drv_access_val(cmr_handle handle, cmr_uint param) {
-    cmr_int ret = SENSOR_FAIL;
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param_ptr);
@@ -832,7 +832,6 @@ static cmr_int c2390_drv_access_val(cmr_handle handle, cmr_uint param) {
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
 
     return ret;
 }

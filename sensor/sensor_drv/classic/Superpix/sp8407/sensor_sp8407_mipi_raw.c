@@ -189,7 +189,7 @@ static cmr_int sp8407_drv_get_fps_info(cmr_handle handle, cmr_uint *param) {
     fps_info->max_fps = fps_data->sensor_mode_fps[sensor_mode].max_fps;
     fps_info->min_fps = fps_data->sensor_mode_fps[sensor_mode].min_fps;
     fps_info->is_high_fps = fps_data->sensor_mode_fps[sensor_mode].is_high_fps;
-    fps_info->high_fps_skip_num = 
+    fps_info->high_fps_skip_num =
                       fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
     SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
     SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
@@ -404,7 +404,7 @@ static cmr_int sp8407_drv_power_on(cmr_handle handle, cmr_u32 power_on) {
  *============================================================================*/
 static cmr_int sp8407_drv_access_val(cmr_handle handle,
                                        cmr_uint param) {
-    cmr_int ret = SENSOR_FAIL;
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -427,7 +427,6 @@ static cmr_int sp8407_drv_access_val(cmr_handle handle,
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
 
     return ret;
 }

@@ -518,15 +518,15 @@ static cmr_int c2580_drv_write_exposure(cmr_handle handle, cmr_u32 param) {
                         ? (expsure_line + c2580_ES_OFFSET)
                         : max_frame_len;
         frame_len = (frame_len + 1) >> 1 << 1;
-
         frame_len_cur = c2580_drv_get_vts(handle);
-
-        SENSOR_LOGI("frame_len_cur:%d, frame_len:%d,", frame_len_cur,
-                    frame_len);
+        SENSOR_LOGI("frame_len_cur:%d, frame_len:%d,", frame_len_cur, frame_len);
 
         if (frame_len_cur != frame_len) {
-
             ret_value = c2580_drv_set_vts(handle, frame_len);
+            if (SENSOR_SUCCESS != ret_value) {
+                SENSOR_LOGE("set vts failed");
+                return SENSOR_FAIL;
+            }
         }
     }
 
