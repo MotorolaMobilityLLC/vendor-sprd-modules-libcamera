@@ -5105,7 +5105,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	if (1 == cxt->last_enable) {
-		if (cxt->cur_status.line_time == (cmr_s16)cxt->last_exp_param.line_time) {
+		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
 			cxt->cur_result.wts.cur_exp_line = cxt->last_exp_param.exp_line;
 			cxt->cur_result.wts.cur_again = cxt->last_exp_param.gain;
 			cxt->cur_result.wts.cur_dummy = cxt->last_exp_param.dummy;

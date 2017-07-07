@@ -64,7 +64,31 @@ struct flash_tune_param {
 	uint32 preflash_ct;/*4bytes*/
 	int16 driverId1[32];
 	int16 driverId2[32];
-	uint8 reserved1[896];/*255 * 4bytes*/
+	int16 preflahLevel1_new;
+	int16 preflahLevel2_new;
+
+
+	int16 preflash_max_ma;
+	int16 mainflash_max_ma;
+
+	int16 driverIndexP1[32];
+	int16 driverIndexP2[32];
+	int16 maP1[32];
+	int16 maP2[32];
+	int16 maM1[32];
+	int16 maM2[32];
+	int16 numP1_hwSample;
+	int16 numP2_hwSample;
+	int16 numM1_hwSample;
+	int16 numM2_hwSample;
+	int16 mAMaxP1;
+	int16 mAMaxP2;
+	int16 mAMaxP12;
+	int16 mAMaxM1;
+	int16 mAMaxM2;
+	int16 mAMaxM12;
+
+	uint8 reserved1[484];/*255 * 4bytes*/
 };/*2053 * 4 bypes*/
 
 struct Flash_initInput
@@ -85,7 +109,7 @@ struct Flash_initOut
 
 enum Flash_flickerMode
 {
-	
+
 	flash_flicker_50hz=0,
 	flash_flicker_60hz,
 
