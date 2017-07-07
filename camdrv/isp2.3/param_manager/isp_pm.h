@@ -68,6 +68,7 @@ enum isp_pm_cmd {
 
 struct isp_pm_init_input {
 	cmr_u32 num;
+	cmr_u32 init_mode_id;
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
@@ -86,15 +87,6 @@ struct isp_pm_ioctl_input {
 struct isp_pm_ioctl_output {
 	struct isp_pm_param_data *param_data;
 	cmr_u32 param_num;
-};
-
-struct isp_pm_update_input {
-	cmr_u32 num;
-	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
-};
-struct isp_pm_update_output {
-	void *param_ptr;
-	cmr_u32 param_size;
 };
 
 cmr_handle isp_pm_init(struct isp_pm_init_input *input, void *output);

@@ -2434,7 +2434,6 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	memset(&otp_input, 0, sizeof(otp_input));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
-	memcpy((void *)cxt->sn_cxt.isp_init_data, (void *)input_ptr->mode_ptr, ISP_MODE_NUM_MAX * sizeof(struct isp_data_info));
 
 	input.num = MAX_MODE_NUM;
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
@@ -2446,6 +2445,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 		input.fix_data[i] = sensor_raw_info_ptr->fix_ptr[i];
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
+	input.init_mode_id = ISP_MODE_ID_PRV_0;
 
 	cxt->handle_pm = isp_pm_init(&input, &output);
 	cxt->commn_cxt.multi_nr_flag = output.multi_nr_flag;
@@ -2715,8 +2715,8 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_pm_ioctl_input input;
-	struct isp_pm_ioctl_output output;
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data *param_data;
 	cmr_u32 i = 0;
 
