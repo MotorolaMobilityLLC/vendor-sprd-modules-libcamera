@@ -1706,7 +1706,7 @@ exit:
 }
 
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
-                                struct frm_info *in, struct img_frm *out) {
+                                struct frm_info *in, cmr_uint *addr_vir_y) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     int i = 0;
     CHECK_HANDLE_VALID(handle);
@@ -1728,8 +1728,7 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    out->fd = prev_cxt->cap_hdr_fd_path_array[i];
-    out->addr_vir.addr_y = prev_cxt->cap_hdr_virt_addr_path_array[i];
+    *addr_vir_y = prev_cxt->cap_hdr_virt_addr_path_array[i];
 
     CMR_LOGI("fd:%d", i);
 
