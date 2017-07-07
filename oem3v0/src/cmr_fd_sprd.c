@@ -455,6 +455,11 @@ static cmr_int fd_thread_create(struct class_fd *class_handle) {
             ret = CMR_CAMERA_FAIL;
             goto end;
         }
+        ret = cmr_thread_set_name(class_handle->thread_handle, "fd");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set thr name");
+            ret = CMR_MSG_SUCCESS;
+        }
 
         class_handle->is_inited = 1;
     } else {
@@ -476,20 +481,26 @@ static void fd_recognize_face_attribute(
     struct class_faceattr_array new_attr_array;
     FA_IMAGE img;
 
-    cmr_bzero(&new_attr_array, sizeof(struct class_faceattr_array));
-    cmr_bzero(&img, sizeof(FA_IMAGE));
-    /* Don't update face attribute, if the frame interval is not enough. For
-     * reducing computation cost */
-    if ((i_curr_frame_idx - io_faceattr_arr->frame_idx) < FD_RUN_FAR_INTERVAL) {
+    face_count = FdGetFaceCount(hDT);
+    if (face_count <= 0) {
         return;
     }
+
+    /* Don't update face attribute, if the frame interval is not enough. For
+     * reducing computation cost */
+    if ((io_faceattr_arr->count > 0) &&
+        (i_curr_frame_idx - io_faceattr_arr->frame_idx) < FD_RUN_FAR_INTERVAL) {
+        return;
+    }
+
+    cmr_bzero(&new_attr_array, sizeof(struct class_faceattr_array));
+    cmr_bzero(&img, sizeof(FA_IMAGE));
 
     img.data = (unsigned char *)i_image_data;
     img.width = i_image_size.width;
     img.height = i_image_size.height;
     img.step = img.width;
 
-    face_count = FdGetFaceCount(hDT);
     // When there are many faces, process every face will be too slow.
     // Limit face count to 2
     face_count = MIN(face_count, 2);
@@ -570,10 +581,9 @@ static cmr_int fd_get_face_overlap(const struct face_finder_data *i_face1,
     return percent;
 }
 
-static void
-fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
-                    const struct class_faceattr_array *i_faceattr_arr,
-                    struct face_finder_data *io_curr_face) {
+static void fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
+                                const struct class_faceattr_array *i_faceattr_arr,
+                                struct face_finder_data *io_curr_face) {
     cmr_int overlap_thr = 0;
     cmr_uint trust_curr_face = 0;
     cmr_uint prevIdx = 0;
@@ -605,18 +615,23 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
             cmr_int curr_cy = (io_curr_face->sy + io_curr_face->ey) / 2;
             cmr_int x_shift = cx - curr_cx;
             cmr_int y_shift = cy - curr_cy;
+            cmr_int max_shift = (io_curr_face->ex - io_curr_face->sx) / 4;
 
-            // only correct the face center; size is not changed.
-            io_curr_face->sx += x_shift;
-            io_curr_face->sy += y_shift;
-            io_curr_face->srx += x_shift;
-            io_curr_face->sry += y_shift;
-            io_curr_face->elx += x_shift;
-            io_curr_face->ely += y_shift;
-            io_curr_face->ex += x_shift;
-            io_curr_face->ey += y_shift;
+            // If the shift calculted by face shape is not too large,
+            // we're very sure the face shape is correct.
+            if ((abs(x_shift) + abs(y_shift)) < max_shift) {
+                // only correct the face center; size is not changed.
+                io_curr_face->sx += x_shift;
+                io_curr_face->sy += y_shift;
+                io_curr_face->srx += x_shift;
+                io_curr_face->sry += y_shift;
+                io_curr_face->elx += x_shift;
+                io_curr_face->ely += y_shift;
+                io_curr_face->ex += x_shift;
+                io_curr_face->ey += y_shift;
 
-            trust_curr_face = 1;
+                trust_curr_face = 1;
+            }
         }
     }
 
@@ -626,7 +641,8 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
     for (prevIdx = 0; prevIdx < i_face_area_prev->face_count; prevIdx++) {
         const struct face_finder_data *prev_face =
             &(i_face_area_prev->range[prevIdx]);
-        cmr_int overlap_percent = fd_get_face_overlap(prev_face, io_curr_face);
+        cmr_int overlap_percent =
+            fd_get_face_overlap(prev_face, io_curr_face);
 
         if (overlap_percent >= overlap_thr) {
             io_curr_face->sx = prev_face->sx;
@@ -656,7 +672,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
     cmr_int valid_count = 0;
     struct face_finder_data *face_ptr = NULL;
     const struct class_faceattr_array *curr_faceattr =
-        (i_curr_frame_idx == i_faceattr_arr->frame_idx) ? i_faceattr_arr : NULL;
+         (i_curr_frame_idx == i_faceattr_arr->frame_idx) ? i_faceattr_arr : NULL;
 
     face_num = FdGetFaceCount(hDT);
     for (face_idx = 0; face_idx < face_num; face_idx++) {
@@ -764,15 +780,13 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     CMR_LOGI("SPRD FD version: %s .", FdGetVersion());
     opt.workMode = FD_WORKMODE_MOVIE;
     opt.maxFaceNum = FACE_DETECT_NUM;
-    opt.minFaceSize = MIN(fd_img_size->width, fd_img_size->height) / 10;
+    opt.minFaceSize = MIN(fd_img_size->width, fd_img_size->height) / 12;
     opt.directions = FD_DIRECTION_ALL;
     opt.angleFrontal = FD_ANGLE_RANGE_90;
     opt.angleHalfProfile = FD_ANGLE_RANGE_30;
     opt.angleFullProfile = FD_ANGLE_RANGE_30; // FD_ANGLE_NONE; for Bug 636739;
     opt.detectDensity = 5;
     opt.scoreThreshold = 0;
-    opt.initFrames = 2;
-    opt.detectFrames = 1;
     opt.detectInterval = 6;
     opt.trackDensity = 5;
     opt.lostRetryCount = 1;
