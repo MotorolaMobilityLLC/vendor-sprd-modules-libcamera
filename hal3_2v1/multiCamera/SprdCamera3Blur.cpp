@@ -651,7 +651,7 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
     HAL_LOGI(" E");
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
-    memset(mBlurApi, 0, sizeof(BlurAPI_t) * BLUR_LIB_BOKEH_NUM);
+    memset(mBlurApi, 0, sizeof(BlurAPI_t *) * BLUR_LIB_BOKEH_NUM);
     memset(mWinPeakPos, 0, sizeof(short) * BLUR_AF_WINDOW_NUM);
     memset(&mPreviewInitParams, 0, sizeof(preview_init_params_t));
     memset(&mPreviewWeightParams, 0, sizeof(preview_weight_params_t));
@@ -712,11 +712,13 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
         mFaceInfo[3] * mCaptureInitParams.height / mPreviewInitParams.height;
 
     newFace.face_num = SprdCamera3Setting::s_setting[mBlur->mCameraId].faceInfo.face_num;
+
     newFace.face[0].rect[0] = faceInfo[0];
     newFace.face[0].rect[1] = faceInfo[1];
     newFace.face[0].rect[2] = faceInfo[2];
     newFace.face[0].rect[3] = faceInfo[3];
-    mBlur->doFaceMakeup2(frame, mBlur->fbLevels, newFace, 0);//work mode 1 for preview, 0 for picture
+    mBlur->doFaceMakeup2(frame, mBlur->fbLevels, newFace,
+                         0); // work mode 1 for preview, 0 for picture
 }
 #endif
 
@@ -1141,7 +1143,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             HAL_LOGD("mFlushing:%d, frame idx:%d", mBlur->mFlushing,
                      capture_msg.combo_buff.frame_number);
 #ifdef CONFIG_FACE_BEAUTY
-            if (mBlur->fbLevels.smoothLevel> 0 &&
+            if (mBlur->fbLevels.smoothLevel > 0 &&
                 mFaceInfo[2] - mFaceInfo[0] > 0 &&
                 mFaceInfo[3] - mFaceInfo[1] > 0) {
                 BlurFaceMakeup((struct private_handle_t *)*(
@@ -3091,6 +3093,11 @@ void SprdCamera3Blur::processCaptureResultMain(
 
         HAL_LOGV("cur_frame_number:%d mCoverValue:%d mReqState:%d",
                  cur_frame_number, mCoverValue, mReqState);
+        return;
+    }
+
+    if (result_buffer == NULL) {
+        HAL_LOGE("result_buffer = result->output_buffers is NULL");
         return;
     }
 

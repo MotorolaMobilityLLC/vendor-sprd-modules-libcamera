@@ -1638,6 +1638,11 @@ cmr_int snp_start_isp_next_proc(cmr_handle snp_handle, void *data) {
         ret = CMR_CAMERA_NORNAL_EXIT;
         return ret;
     }
+    if (index >= CMR_CAPTURE_MEM_SUM) {
+        CMR_LOGD("index over than CMR_CAPTURE_MEM_SUM %d,index:%d",
+                 CMR_CAPTURE_MEM_SUM, index);
+        return CMR_CAMERA_FAIL;
+    }
     cmr_copy((void *)&isp_in_param, (void *)&chn_param_ptr->isp_proc_in[index],
              sizeof(struct raw_proc_param));
     process_ptr = &chn_param_ptr->isp_process[index];

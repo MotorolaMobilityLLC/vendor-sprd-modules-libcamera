@@ -3238,7 +3238,7 @@ setting_set_highflash_ae_measure(struct setting_component *cpt,
 }
 
 cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
-    if (cmd >= CAMERA_PARAM_ZOOM && cmd < SETTING_TYPE_MAX) {
+    if (cmd < SETTING_TYPE_MAX) {
         CMR_LOGD(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
         setting_list[cmd] = (setting_ioctl_fun_ptr)fun_ptr;
     } else {
@@ -3248,7 +3248,7 @@ cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
 }
 
 setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {
-    if (cmd >= CAMERA_PARAM_ZOOM && cmd < SETTING_TYPE_MAX) {
+    if (cmd < SETTING_TYPE_MAX) {
         return setting_list[cmd];
     } else {
         return NULL;
@@ -3579,9 +3579,9 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
     struct setting_component *cpt = (struct setting_component *)setting_handle;
 
     if (!cpt || !parm || cmd_type >= SETTING_TYPE_MAX) {
-        CMR_LOGE("param has error cpt 0x%p, camera_id %ld, array_size %zu, "
+        CMR_LOGE("param has error cpt %p, parm %p, array_size %zu, "
                  "cmd_type %ld",
-                 cpt, parm->camera_id, cmr_array_size(setting_list), cmd_type);
+                 cpt, parm, cmr_array_size(setting_list), cmd_type);
         return -CMR_CAMERA_INVALID_PARAM;
     }
 

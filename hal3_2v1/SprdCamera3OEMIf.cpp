@@ -3292,9 +3292,9 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     deinitPreview();
     end_timestamp = systemTime();
 
-   #ifdef CONFIG_FACE_BEAUTY
-     deinit_fb_handle(&face_beauty);
-    #endif
+#ifdef CONFIG_FACE_BEAUTY
+    deinit_fb_handle(&face_beauty);
+#endif
 
     HAL_LOGI("X Time:%lld(ms). camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
@@ -3566,7 +3566,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d\n",
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
-                     faceInfo.face[k].rect[3],faceInfo.angle[k]);
+                     faceInfo.face[k].rect[3], faceInfo.angle[k]);
             CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
             /*When the half of face at the edge of the screen,the smile level
             returned by face detection library  can often more than 30.
@@ -3933,15 +3933,15 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #endif
 #ifdef CONFIG_FACE_BEAUTY
     unsigned char skinWhiten = (unsigned char)sprddefInfo.perfect_skin_level;
-    skinWhiten = (skinWhiten<0)?0:((skinWhiten>90)?90:skinWhiten);
-    int sx,sy,ex,ey,angle,pose;
+    skinWhiten = (skinWhiten < 0) ? 0 : ((skinWhiten > 90) ? 90 : skinWhiten);
+    int sx, sy, ex, ey, angle, pose;
     struct face_beauty_levels beautyLevels;
     beautyLevels.blemishLevel = 1;
-    beautyLevels.smoothLevel= skinWhiten;
+    beautyLevels.smoothLevel = skinWhiten;
     beautyLevels.skinColor = 0;
     beautyLevels.skinLevel = 3;
     beautyLevels.brightLevel = skinWhiten;
-    beautyLevels.lipColor =1;
+    beautyLevels.lipColor = 1;
     beautyLevels.lipLevel = 5;
     beautyLevels.slimLevel = 0;
     beautyLevels.largeLevel = 0;
@@ -3971,26 +3971,28 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 MODE_3D_PREVIEW != mMultiCameraMode) {
                 FACE_Tag faceInfo;
                 mSetting->getFACETag(&faceInfo);
-                if (faceInfo.face_num>0) {
-                    for (int i = 0 ; i < faceInfo.face_num; i++) {
-                        CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
+                if (faceInfo.face_num > 0) {
+                    for (int i = 0; i < faceInfo.face_num; i++) {
+                        CameraConvertCoordinateFromFramework(
+                            faceInfo.face[i].rect);
                         sx = faceInfo.face[i].rect[0];
                         sy = faceInfo.face[i].rect[1];
                         ex = faceInfo.face[i].rect[2];
                         ey = faceInfo.face[i].rect[3];
                         angle = faceInfo.angle[i];
                         pose = faceInfo.pose[i];
-                        construct_fb_face(&face_beauty, i, sx, sy, ex, ey,angle,pose);
+                        construct_fb_face(&face_beauty, i, sx, sy, ex, ey,
+                                          angle, pose);
                     }
                 }
                 init_fb_handle(&face_beauty,1,2);
                 construct_fb_image(&face_beauty, frame->width, frame->height, (unsigned char *)(frame->y_vir_addr), (unsigned char *)(frame->y_vir_addr + frame->width * frame->height), 0);
                 construct_fb_level(&face_beauty, beautyLevels);
-                do_face_beauty(&face_beauty,faceInfo.face_num);
+                do_face_beauty(&face_beauty, faceInfo.face_num);
             }
         }
-    }else if (PREVIEW_ZSL_FRAME != frame->type){
-         deinit_fb_handle(&face_beauty);
+    } else if (PREVIEW_ZSL_FRAME != frame->type) {
+        deinit_fb_handle(&face_beauty);
     }
 #endif
 
@@ -5613,7 +5615,6 @@ int SprdCamera3OEMIf::openCamera() {
     gyro_monitor_thread_init((void *)this);
 #endif
 
-
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
@@ -6292,8 +6293,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
                  sprddefInfo.sprd_hdr_plus_enable);
     } break;
-    case ANDROID_SPRD_FIXED_FPS_ENABLED:
-    {
+    case ANDROID_SPRD_FIXED_FPS_ENABLED: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mFixedFpsEnabled = sprddefInfo.sprd_fixedfps_enabled;
@@ -6787,40 +6787,29 @@ int SprdCamera3OEMIf::Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum,
     *phy_addr = 0;
     *vir_addr = 0;
 
-    if (mRefocusHeapNum >= (kRefocusBufferCount + 1)) {
+    if (mRefocusHeapNum >= kRefocusBufferCount) {
         HAL_LOGE("error mRefocusHeapNum %d", mRefocusHeapNum);
         return BAD_VALUE;
     }
-
-    if (sum >= (kRefocusBufferCount + 1)) {
+    if (mRefocusHeapNum + sum >= kRefocusBufferCount) {
         HAL_LOGE("malloc is too more %d %d", mRefocusHeapNum, sum);
         return BAD_VALUE;
     }
 
-    if (sum >= mRefocusHeapNum) {
-        // mRefocusHeapNum = kRefocusBufferCount;
-        // phy_addr += kRefocusBufferCount;
-        // vir_addr += kRefocusBufferCount;
-        for (i = mRefocusHeapNum; i < (cmr_int)sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+    for (i = 0; i < (cmr_int)sum; i++) {
+        memory = allocCameraMem(size, 1, true);
 
-            if (NULL == memory) {
-                HAL_LOGE("error memory is null.");
-                goto mem_fail;
-            }
-
-            mRefocusHeapArray[mRefocusHeapNum] = memory;
-            mRefocusHeapNum++;
-            *phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
-            *vir_addr++ = (cmr_uint)memory->data;
-            if (NULL != fd)
-                *fd++ = (cmr_s32)memory->fd;
+        if (NULL == memory) {
+            HAL_LOGE("error memory is null.");
+            goto mem_fail;
         }
-    } else {
-        HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request "
-                 "size 0x%x",
-                 mRefocusHeapNum, sum, size);
-        goto mem_fail;
+
+        mRefocusHeapArray[mRefocusHeapNum] = memory;
+        mRefocusHeapNum++;
+        *phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
+        *vir_addr++ = (cmr_uint)memory->data;
+        if (NULL != fd)
+            *fd++ = (cmr_s32)memory->fd;
     }
 
     return 0;
@@ -6859,40 +6848,28 @@ int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum,
     *phy_addr = 0;
     *vir_addr = 0;
 
-    if (mPdafRawHeapNum >= (kPdafRawBufferCount + 1)) {
+    if (mPdafRawHeapNum >= kPdafRawBufferCount) {
         HAL_LOGE("error mPdafRawHeapNum %d", mPdafRawHeapNum);
         return BAD_VALUE;
     }
-
-    if (sum >= (kPdafRawBufferCount + 1)) {
+    if (mPdafRawHeapNum + sum >= kPdafRawBufferCount) {
         HAL_LOGE("malloc is too more %d %d", mPdafRawHeapNum, sum);
         return BAD_VALUE;
     }
 
-    if (sum >= mPdafRawHeapNum) {
-        // mPdafRawHeapNum = kPdafRawBufferCount;
-        // phy_addr += kPdafRawBufferCount;
-        // vir_addr += kPdafRawBufferCount;
-        for (i = mPdafRawHeapNum; i < (cmr_int)sum; i++) {
-            memory = allocCameraMem(size, 1, true);
-
-            if (NULL == memory) {
-                HAL_LOGE("error memory is null.");
-                goto mem_fail;
-            }
-
-            mPdafRawHeapArray[mPdafRawHeapNum] = memory;
-            mPdafRawHeapNum++;
-            *phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
-            *vir_addr++ = (cmr_uint)memory->data;
-            if (NULL != fd)
-                *fd++ = (cmr_s32)memory->fd;
+    for (i = 0; i < (cmr_int)sum; i++) {
+        memory = allocCameraMem(size, 1, true);
+        if (NULL == memory) {
+            HAL_LOGE("error memory is null.");
+            goto mem_fail;
         }
-    } else {
-        HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request "
-                 "size 0x%x",
-                 mPdafRawHeapNum, sum, size);
-        goto mem_fail;
+
+        mPdafRawHeapArray[mPdafRawHeapNum] = memory;
+        mPdafRawHeapNum++;
+        *phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
+        *vir_addr++ = (cmr_uint)memory->data;
+        if (NULL != fd)
+            *fd++ = (cmr_s32)memory->fd;
     }
 
     return 0;

@@ -44,6 +44,7 @@ SprdCamera3MultiBase::SprdCamera3MultiBase()
       mBrightConut(0), mLowConut(0), mDarkConut(0) {
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
+    mReqState = PREVIEW_REQUEST_STATE;
 }
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
@@ -81,21 +82,11 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     //  mem_size = (mem_size + 4095U) & (~4095U);
 
     if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_MM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM);
-        }
+        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
+                              (1 << 31) | ION_HEAP_ID_MASK_MM);
     } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM);
-        }
+        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
+                              (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
     }
 
     if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
