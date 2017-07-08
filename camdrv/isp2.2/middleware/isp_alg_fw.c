@@ -3234,7 +3234,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_pm_param_data param_data_alsc;
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 	struct isp_lsc_info *lsc_info_new = NULL;
-	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5 };
+	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0};
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 
 
@@ -3358,6 +3358,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	fwstart_info.gain_width_new = lsc_info_new->gain_w;
 	fwstart_info.gain_height_new = lsc_info_new->gain_h;
 	fwstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
+	fwstart_info.grid_new = lsc_info_new->grid;
 	if (cxt->ops.lsc_ops.ioctrl)
 		rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)&fwstart_info, NULL);
 
@@ -3383,7 +3384,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 
 	if (cxt->ops.lsc_ops.ioctrl)
-		rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, NULL, NULL);
+		rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;

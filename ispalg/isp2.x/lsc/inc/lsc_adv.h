@@ -97,6 +97,8 @@ enum alsc_io_ctrl_cmd {
 	ALSC_FW_STOP = 7,
 	ALSC_FW_START = 8,
 	ALSC_FW_START_END = 9,
+	ALSC_FLASH_PRE_BEFORE = 10,
+	ALSC_FLASH_PRE_AFTER = 11,
 };
 
 struct tg_alsc_debug_info {
@@ -419,6 +421,7 @@ struct alsc_fwstart_info {
 	cmr_u32 gain_width_new;
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
+	cmr_u32 grid_new;
 };
 ////////////////////////////// calculation dependent //////////////////////////////
 
