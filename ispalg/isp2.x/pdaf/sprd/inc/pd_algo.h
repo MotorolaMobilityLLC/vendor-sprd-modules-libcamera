@@ -11,7 +11,7 @@
 #include <string.h>
 #include <isp_type.h>
 
-#define PD_VERSION "PDAF_Algo_Ver: v1.10"
+#define PD_VERSION "PDAF_Algo_Ver: v1.11"
 #define PD_PIXEL_NUM (24576)
 #define PD_AREA_NUMBER (4)
 #define PD_PIXEL_ALIGN_X (16)

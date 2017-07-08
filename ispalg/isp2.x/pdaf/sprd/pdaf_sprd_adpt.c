@@ -422,7 +422,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGE("fail to do get pd_result.");
 		goto exit;
 	}
-	pd_calc_result.pd_roi_num = AREA_LOOP;
+	pd_calc_result.pd_roi_num = AREA_LOOP+1;
 	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4]);
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;
