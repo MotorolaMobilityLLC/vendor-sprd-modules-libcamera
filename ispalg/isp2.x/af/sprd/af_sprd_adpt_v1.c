@@ -558,11 +558,9 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	frame_len = (frame_len > (exp_line + dummy_line)) ? frame_len : (exp_line + dummy_line);
 	frame_time = frame_len * line_time;
 	frame_time = frame_time > 0 ? frame_time : 1;
-
 	if(0==((exp_line +dummy_line) * line_time)){
 		ISP_LOGI("Get wrong exposure info , exp_line %d line_time %d",(exp_line +dummy_line),line_time);
 	}
-
 	rpt->cur_fps = (1000000000 / MAX(1,(exp_line +dummy_line) * line_time));
 	rpt->cur_lum = ae->ae_report.cur_lum;
 	rpt->cur_index = ae->ae_report.cur_index;
