@@ -44,8 +44,6 @@
 #define CAMERA_OEM_MSG_QUEUE_SIZE 10
 #define CAMERA_RECOVER_CNT 3
 
-#define CONFIG_ZSL_FLASH_CAPTURE 1
-
 #define OEM_HANDLE_HDR 1
 #define CAMERA_PATH_SHARE 1
 #define OEM_RESTART_SUM 2
@@ -1865,41 +1863,18 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
-    cmr_int need_pre_flash = 1;
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
+
     // set focus flag to 1
     cxt->is_enter_focus = 1;
-    /*open flash*/
+
     setting_param.camera_id = cxt->camera_id;
-
-#ifndef CONFIG_ZSL_FLASH_CAPTURE
+    setting_param.ctrl_flash.is_active = 1;
+    setting_param.ctrl_flash.flash_type = FLASH_OPEN;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
+                            SETTING_CTRL_FLASH, &setting_param);
     if (ret) {
-        CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-        // goto exit;
-    }
-    if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode &&
-        1 == setting_param.cmd_type_value) {
-        need_pre_flash = 0;
-    }
-#endif
-
-    // wait ROI converged for 3d calibration
-    /*ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_SET_ROI_CONVERGENCE_REQ, &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to _SET_ROI_CONVERGENCE_REQ");
-    }*/
-
-    if (need_pre_flash) {
-        setting_param.ctrl_flash.is_active = 1;
-        setting_param.ctrl_flash.flash_type = FLASH_OPEN;
-        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_CTRL_FLASH, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to open flash");
-        }
+        CMR_LOGE("failed to open flash");
     }
 
     return ret;
@@ -1942,19 +1917,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     }
     flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num;
     CMR_LOGI("flash_capture_skip_num = %d", flash_capture_skip_num);
-
-#ifndef CONFIG_ZSL_FLASH_CAPTURE
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-        // goto exit;
-    }
-    if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode &&
-        1 == setting_param.cmd_type_value) {
-        need_close_flash = 0;
-    }
-#endif
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;

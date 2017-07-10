@@ -599,7 +599,7 @@ class SprdCamera3Setting {
     static int initStaticMetadata(int32_t cameraId,
                                   camera_metadata_t **static_metadata);
     static void convertToRegions(int32_t *rect, int32_t *region, int weight);
-    static int checkROIValid(int32_t *ae_area, int32_t *crop_area);
+    static int checkROIValid(int32_t *roi_area, int32_t *crop_area);
     void coordinate_struct_convert(int *rect_arr, int arr_size);
     int coordinate_convert(int *rect_arr, int arr_size, int angle,
                            int is_mirror, struct img_size *preview_size,

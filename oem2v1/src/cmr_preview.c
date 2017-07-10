@@ -1158,50 +1158,7 @@ cmr_int cmr_preview_release_frame(cmr_handle preview_handle, cmr_u32 camera_id,
     UNUSED(index);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
-#if 0
-	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
-	struct prev_context    *prev_cxt = NULL;
-	cmr_u32                channel_id = 0;
-	cmr_u32                frm_id = 0;
 
-	CHECK_HANDLE_VALID(handle);
-	CHECK_CAMERA_ID(camera_id);
-
-	if (!IS_PREVIEW(handle, camera_id)) {
-		CMR_LOGE("warning, not in preview!");
-		/*return ret;*/
-	}
-
-	if (!handle->ops.channel_free_frame) {
-		CMR_LOGE("ops channel_free_frame is null");
-		return CMR_CAMERA_INVALID_PARAM;
-	}
-
-	CMR_LOGD("index, 0x%lx ", index);
-
-	prev_cxt = &handle->prev_cxt[camera_id];;
-
-	/* only the frame whose rotation angle is zero should be released by app,
-	   otherwise, it will be released after rotation done; */
-	if (IMG_ANGLE_0 == prev_cxt->prev_param.prev_rot) {
-		index += CMR_PREV_ID_BASE;
-		if (index >= CMR_PREV_ID_BASE && index < (CMR_PREV_ID_BASE + prev_cxt->prev_mem_num)) {
-
-			frm_id     = index;
-			channel_id = prev_cxt->prev_channel_id;
-			ret = handle->ops.channel_free_frame(handle->oem_handle, channel_id, frm_id);
-			if (ret) {
-				CMR_LOGE("release frm failed");
-			}
-
-		} else {
-			CMR_LOGE("wrong index, 0x%lx ", index);
-		}
-	} else {
-		CMR_LOGD("[prev_rot] unlock %ld", (index % PREV_ROT_FRM_CNT));
-		prev_cxt->prev_rot_frm_is_lock[index % PREV_ROT_FRM_CNT] = 0;
-	}
-#endif
     return ret;
 }
 

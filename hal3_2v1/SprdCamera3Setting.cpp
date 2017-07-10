@@ -537,7 +537,7 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
     ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AF_MODE,
     ANDROID_CONTROL_AF_TRIGGER,
-    //ANDROID_CONTROL_AF_REGIONS,
+    // ANDROID_CONTROL_AF_REGIONS,
     ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_AWB_MODE,
     // ANDROID_CONTROL_AWB_REGIONS,
     ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE,
@@ -854,8 +854,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
     HAL_LOGD("camera id = %d, sensor name: %s, sensorFocusEnable = %d",
-             cameraId,
-             sensor_cxt->sensor_info_ptr->name,
+             cameraId, sensor_cxt->sensor_info_ptr->name,
              mSensorFocusEnable[cameraId]);
 
     if (sensor_cxt->fov_info.physical_size[0] <= 0 ||
@@ -1469,12 +1468,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                kavailable_request_keys, sizeof(kavailable_request_keys));
         if (mSensorFocusEnable[cameraId]) {
             int length = ARRAY_SIZE(kavailable_request_keys);
-            int maxIndex = ARRAY_SIZE(s_setting[cameraId].requestInfo.available_request_keys);
+            int maxIndex = ARRAY_SIZE(
+                s_setting[cameraId].requestInfo.available_request_keys);
             if (length < maxIndex) {
                 s_setting[cameraId].requestInfo.available_request_keys[length] =
                     ANDROID_CONTROL_AF_REGIONS;
             } else {
-                HAL_LOGE("camera id %d available_request_keys out of size", cameraId);
+                HAL_LOGE("camera id %d available_request_keys out of size",
+                         cameraId);
             }
         }
     } else {
@@ -1483,12 +1484,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                sizeof(front_kavailable_request_keys));
         if (mSensorFocusEnable[cameraId]) {
             int length = ARRAY_SIZE(front_kavailable_request_keys);
-            int maxIndex = ARRAY_SIZE(s_setting[cameraId].requestInfo.available_request_keys);
+            int maxIndex = ARRAY_SIZE(
+                s_setting[cameraId].requestInfo.available_request_keys);
             if (length < maxIndex) {
                 s_setting[cameraId].requestInfo.available_request_keys[length] =
                     ANDROID_CONTROL_AF_REGIONS;
             } else {
-                HAL_LOGE("camera id %d available_request_keys out of size", cameraId);
+                HAL_LOGE("camera id %d available_request_keys out of size",
+                         cameraId);
             }
         }
     }
@@ -3588,8 +3591,8 @@ int SprdCamera3Setting::updateWorkParameters(
 
             if (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count == 5) {
                 for (i = 0; i < 5; i++)
-                    af_area[i] =
-                        frame_settings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[i];
+                    af_area[i] = frame_settings.find(ANDROID_CONTROL_AF_REGIONS)
+                                     .data.i32[i];
 
                 if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
                     cnt = frame_settings.find(ANDROID_SCALER_CROP_REGION).count;
@@ -3607,14 +3610,15 @@ int SprdCamera3Setting::updateWorkParameters(
 
                 ret = checkROIValid(af_area, crop_area);
                 if (ret) {
-                    HAL_LOGE("ae region invalid");
+                    HAL_LOGE("af region invalid");
                 } else {
                     af_area[2] = af_area[2] - af_area[0];
                     af_area[3] = af_area[3] - af_area[1];
 
                     if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
-                        af_triger = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER)
-                                        .data.u8[0];
+                        af_triger =
+                            frame_settings.find(ANDROID_CONTROL_AF_TRIGGER)
+                                .data.u8[0];
                     }
 
                     if (af_triger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
@@ -3732,30 +3736,38 @@ int SprdCamera3Setting::updateWorkParameters(
     return rc;
 }
 
-int SprdCamera3Setting::checkROIValid(int32_t *ae_area, int32_t *crop_area) {
+int SprdCamera3Setting::checkROIValid(int32_t *roi_area, int32_t *crop_area) {
     int ret = NO_ERROR;
 
-    if (crop_area[0] == 0 && crop_area[1] == 0 && crop_area[2] == 0 &&
-        crop_area[3] == 0) {
-        HAL_LOGV("crop area is zero, dont check ae_area");
+    if (roi_area == NULL || crop_area == NULL) {
+        HAL_LOGE("roi_area=%p,crop_area=%p", roi_area, crop_area);
         goto exit;
     }
 
-    if (ae_area[2] < crop_area[0] || ae_area[0] > crop_area[2] ||
-        ae_area[3] < crop_area[1] || ae_area[1] > crop_area[3]) {
-        HAL_LOGE("ae area invalid");
+    if (crop_area[0] == 0 && crop_area[1] == 0 && crop_area[2] == 0 &&
+        crop_area[3] == 0) {
+        HAL_LOGV("crop area is zero, dont check roi_area");
+        goto exit;
+    }
+
+    if (roi_area[2] < crop_area[0] || roi_area[0] > crop_area[2] ||
+        roi_area[3] < crop_area[1] || roi_area[1] > crop_area[3]) {
+        HAL_LOGE(
+            "roi_area invalid, roi_area: %d %d %d %d, crop_area: %d %d %d %d",
+            roi_area[0], roi_area[1], roi_area[2], roi_area[3], crop_area[0],
+            crop_area[1], crop_area[2], crop_area[3]);
         ret = -1;
         goto exit;
     }
 
-    if (ae_area[0] <= crop_area[0])
-        ae_area[0] = crop_area[0];
-    if (ae_area[1] <= crop_area[1])
-        ae_area[1] = crop_area[1];
-    if (ae_area[2] >= crop_area[2])
-        ae_area[2] = crop_area[2];
-    if (ae_area[3] >= crop_area[3])
-        ae_area[3] = crop_area[3];
+    if (roi_area[0] <= crop_area[0])
+        roi_area[0] = crop_area[0];
+    if (roi_area[1] <= crop_area[1])
+        roi_area[1] = crop_area[1];
+    if (roi_area[2] >= crop_area[2])
+        roi_area[2] = crop_area[2];
+    if (roi_area[3] >= crop_area[3])
+        roi_area[3] = crop_area[3];
 
 exit:
     return ret;
