@@ -125,11 +125,11 @@
 				/*ee_t1_cfg*/
 				0x0014,
 				/*ee_t2_cfg*/
-				0x0054,
+				0x0050,
 				/*ee_t3_cfg*/
-				0x0055,
+				0x0052,
 				/*ee_t4_cfg*/
-				0x00D5,
+				0x00D2,
 
 			},
 			/*r_cfg*/
@@ -164,11 +164,11 @@
 				/*ee_t1_cfg*/
 				0x0014,
 				/*ee_t2_cfg*/
-				0x0054,
+				0x0050,
 				/*ee_t3_cfg*/
-				0x0055,
+				0x0052,
 				/*ee_t4_cfg*/
-				0x00D5,
+				0x00D2,
 
 			},
 			/*r_cfg*/
@@ -720,17 +720,17 @@
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
-				0x0004,
+				0x0006,
 				/*positive*/
-				0x0004,
+				0x0006,
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
-				0x0004,
+				0x0006,
 				/*positive*/
-				0x0004,
+				0x0006,
 
 			}
 		}
@@ -1157,17 +1157,17 @@
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
-				0x0004,
+				0x0006,
 				/*positive*/
-				0x0004,
+				0x0006,
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
-				0x0004,
+				0x0006,
 				/*positive*/
-				0x0004,
+				0x0006,
 
 			}
 		}
