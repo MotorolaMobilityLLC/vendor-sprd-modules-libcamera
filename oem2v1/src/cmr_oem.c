@@ -7628,23 +7628,20 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 
 exit:
     CMR_LOGD(
-        "prev size %d %d pic size %d %d", out_param_ptr->preview_size.width,
-        out_param_ptr->preview_size.height, out_param_ptr->picture_size.width,
-        out_param_ptr->picture_size.height);
-    CMR_LOGD("video size %d %d android zsl flag %d",
-             out_param_ptr->video_size.width, out_param_ptr->video_size.height,
-             cxt->is_android_zsl);
-    CMR_LOGD("prev rot %ld snp rot %d rot snp %d", out_param_ptr->prev_rot,
-             out_param_ptr->cap_rot, out_param_ptr->is_cfg_rot_cap);
-    CMR_LOGD("zoom mode %ld fd %ld is dv %d tool eb %d",
-             out_param_ptr->zoom_setting.mode, out_param_ptr->is_fd_on,
-             out_param_ptr->is_dv, out_param_ptr->tool_eb);
-    CMR_LOGD("q %d thumb q %d enc angle %d thumb size %d %d",
-             jpeg_cxt->param.quality, jpeg_cxt->param.thumb_quality,
-             jpeg_cxt->param.set_encode_rotation,
-             jpeg_cxt->param.thum_size.width, jpeg_cxt->param.thum_size.height);
-    CMR_LOGD("frame cnt %d", out_param_ptr->frame_count);
-    CMR_LOGD("out_param_ptr->flip_on  %d", out_param_ptr->flip_on);
+        "prev size %d %d, pic size %d %d, video size %d %d, android zsl flag "
+        "%d, prev rot %ld snp rot %d rot snp %d, zoom mode %ld fd %ld is dv %d "
+        "tool eb %d, q %d thumb q %d enc angle %d thumb size %d %d, frame cnt "
+        "%d, out_param_ptr->flip_on %d, is_3dnr %d",
+        out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
+        out_param_ptr->picture_size.width, out_param_ptr->picture_size.height,
+        out_param_ptr->video_size.width, out_param_ptr->video_size.height,
+        cxt->is_android_zsl, out_param_ptr->prev_rot, out_param_ptr->cap_rot,
+        out_param_ptr->is_cfg_rot_cap, out_param_ptr->zoom_setting.mode,
+        out_param_ptr->is_fd_on, out_param_ptr->is_dv, out_param_ptr->tool_eb,
+        jpeg_cxt->param.quality, jpeg_cxt->param.thumb_quality,
+        jpeg_cxt->param.set_encode_rotation, jpeg_cxt->param.thum_size.width,
+        jpeg_cxt->param.thum_size.height, out_param_ptr->frame_count,
+        out_param_ptr->flip_on, out_param_ptr->is_3dnr);
 
     ATRACE_END();
     return ret;

@@ -1082,6 +1082,7 @@ cmr_int cmr_preview_receive_data(cmr_handle preview_handle, cmr_u32 camera_id,
     message.data = (void *)inter_param;
     message.alloc_flag = 1;
     ret = cmr_thread_msg_send(thread, &message);
+
     if (ret) {
         CMR_LOGE("send msg failed!");
         goto exit;
@@ -3709,8 +3710,9 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             prev_fd_open(handle, camera_id);
         }
         /*init 3dnr*/
-        CMR_LOGD("is_support_3dnr %ld", prev_cxt->prev_param.is_3dnr);
-        if (prev_cxt->prev_param.is_3dnr) {
+
+        CMR_LOGD("is_support_3dnr %u", prev_cxt->prev_param.is_3dnr);
+        if (prev_cxt->prev_param.is_3dnr == 1) {
             prev_3dnr_open(handle, camera_id);
         }
 
@@ -6532,7 +6534,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->prev_param.is_fd_on) {
             prev_fd_send_data(handle, camera_id, frm_ptr);
         }
-        if (prev_cxt->prev_param.is_3dnr) {
+        if (prev_cxt->prev_param.is_3dnr == 1) {
             prev_3dnr_send_data(handle, camera_id, frm_ptr);
         }
 
@@ -11101,7 +11103,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         frame_type.face_info[i].brightness =
             cb_param->face_area.range[i].brightness;
         frame_type.face_info[i].angle = cb_param->face_area.range[i].angle;
-        frame_type.face_info[i].pose       = cb_param->face_area.range[i].pose;
+        frame_type.face_info[i].pose = cb_param->face_area.range[i].pose;
         frame_type.face_info[i].smile_level =
             cb_param->face_area.range[i].smile_level;
         frame_type.face_info[i].blink_level =
@@ -11156,7 +11158,7 @@ cmr_int prev_3dnr_open(struct prev_handle *handle, cmr_u32 camera_id) {
 
     CMR_LOGD("is_support_3dnr %ld", prev_cxt->prev_param.is_3dnr);
 
-    if (!prev_cxt->prev_param.is_3dnr) {
+    if (prev_cxt->prev_param.is_3dnr == 0) {
         CMR_LOGD("not support preview 3dnr");
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -11237,7 +11239,7 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    if (!prev_cxt->prev_param.is_3dnr) {
+    if (prev_cxt->prev_param.is_3dnr == 0) {
         CMR_LOGE("3dnr unsupport or closed");
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -11271,7 +11273,7 @@ cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id) {
     CHECK_CAMERA_ID(camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    if (prev_cxt->prev_param.is_3dnr) {
+    if (prev_cxt->prev_param.is_3dnr == 1) {
         ret = cmr_ipm_post_proc(prev_cxt->prev_3dnr_handle);
         if (ret) {
             CMR_LOGE("failed to post proc frame to 3dnr preview %ld", ret);
