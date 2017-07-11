@@ -5374,7 +5374,11 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		cxt->sync_cur_status.settings.min_fps = cxt->high_fps_info.min_fps;
 		cxt->sync_cur_status.settings.max_fps = cxt->high_fps_info.max_fps;
 		//ISP_LOGV("slow motion fps=(%d, %d)", cxt->cur_status.settings.min_fps, cxt->cur_status.settings.max_fps);
+		cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
+		cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
+		ISP_LOGV("SYSTEM_TEST -ae   %dus ",(cmr_s32) ((ae_time1 - ae_time0) / 1000));
+
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
 
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
@@ -5556,7 +5560,10 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	if ((current_status->ae_start_delay <= current_status->frame_id)) {
 		misc_calc_in.sync_settings = current_status;
 		misc_calc_out.ae_output = &cxt->cur_result;
+		cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
+		cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
+		ISP_LOGV("SYSTEM_TEST -ae_test   %dus ",(cmr_s32) ((ae_time1 - ae_time0) / 1000));
 		if (rtn) {
 			ISP_LOGE("fail to calc ae misc");
 			rtn = AE_ERROR;

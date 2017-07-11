@@ -18,6 +18,7 @@
 #include "isp_adpt.h"
 #include <dlfcn.h>
 #include "isp_mw.h"
+#include <utils/Timers.h>
 
 
 #define SMART_LSC_VERSION 1
@@ -378,9 +379,10 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	cxt = (struct lsc_ctrl_context *)handle;
-
+	cmr_u64 lsc_time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
-
+	cmr_u64 lsc_time1 = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("SYSTEM_TEST -lsc_test   %dus ",(cmr_s32) ((lsc_time1 - lsc_time0) / 1000));
 	return rtn;
 }
 

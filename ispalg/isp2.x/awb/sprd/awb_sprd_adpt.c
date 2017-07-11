@@ -1068,7 +1068,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cmr_u64 time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
+	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, SYSTEM_TEST -awb_test %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
 		      calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
 
 	result->gain.r = calc_result.awb_gain[0].r_gain;
