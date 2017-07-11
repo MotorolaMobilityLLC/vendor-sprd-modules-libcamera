@@ -367,6 +367,29 @@ struct ae_alg_rgb_gain {
 	cmr_u32 b;
 };
 
+struct ae_stats_gyro_info{
+	/* Gyro data in float */
+	cmr_u32 validate;
+	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+};
+
+struct ae_stats_accelerator_info {
+	cmr_u32 validate;
+	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+};
+
+struct ae_stats_sensor_info {
+	cmr_u32 aux_sensor_support;
+	struct ae_stats_gyro_info gyro;
+	struct ae_stats_accelerator_info accelerator;
+};
+
 struct ae_settings {
 	cmr_u16 ver;
 	cmr_s8 lock_ae;	/* 0:unlock 1:lock 2:pause 3:wait-lock */
@@ -407,6 +430,7 @@ struct ae_alg_calc_param {
 	struct ae_size touch_tuning_win;	//for touch ae
 	struct ae_trim touch_scrn_win;	//for touch ae
 	cmr_u8 *weight_table;
+	struct ae_stats_sensor_info aux_sensor_data;
 	cmr_u32 *stat_img;
 	cmr_u8 monitor_shift;	//for ae monitor data overflow
 	cmr_u8 win1_weight;	//for touch ae

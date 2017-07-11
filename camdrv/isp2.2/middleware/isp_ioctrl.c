@@ -2318,6 +2318,41 @@ static cmr_int _ispSetAuxSensorInfo(cmr_handle isp_alg_handle, void *param_ptr, 
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_UPDATE_AUX_SENSOR, (void *)param_ptr, NULL);
 
+	if (cxt->ops.ae_ops.ioctrl) {
+		struct ae_aux_sensor_info ae_sensor_info;
+		struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)param_ptr;
+		memset((void*)&ae_sensor_info, 0, sizeof(struct ae_aux_sensor_info));
+
+		switch (aux_sensor_info->type) {
+		case AF_ACCELEROMETER:
+			ae_sensor_info.gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
+			ae_sensor_info.gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
+			ae_sensor_info.gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
+			ae_sensor_info.gsensor_info.timestamp = aux_sensor_info->gsensor_info.timestamp;
+			ae_sensor_info.gsensor_info.valid = 1;
+			ae_sensor_info.type = AE_ACCELEROMETER;
+			break;
+		case AF_MAGNETIC_FIELD:
+			break;
+		case AF_GYROSCOPE:
+			ae_sensor_info.gyro_info.timestamp = aux_sensor_info->gyro_info.timestamp;
+			ae_sensor_info.gyro_info.x = aux_sensor_info->gyro_info.x;
+			ae_sensor_info.gyro_info.y = aux_sensor_info->gyro_info.y;
+			ae_sensor_info.gyro_info.z = aux_sensor_info->gyro_info.z;
+			ae_sensor_info.gyro_info.valid = 1;
+			ae_sensor_info.type = AE_GYROSCOPE;
+			break;
+		case AF_LIGHT:
+			break;
+		case AF_PROXIMITY:
+			break;
+		default:
+			ISP_LOGI("sensor type not support");
+			break;
+		}
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_UPDATE_AUX_SENSOR, (void*)&ae_sensor_info, NULL);
+	}
+
 	return ret;
 }
 

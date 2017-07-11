@@ -1756,7 +1756,6 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[ev_table->default_level * 2 + 1];
 	cxt->cur_status.under_satu = 5;
 	cxt->cur_status.ae_satur = 250;
-
 	cxt->cur_status.settings.ver = 0;
 	cxt->cur_status.settings.lock_ae = 0;
 	/* Be effective when 1 == lock_ae */
@@ -5238,6 +5237,50 @@ static cmr_s32 _touch_ae_process(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_res
 	return rtn;
 }
 
+static cmr_s32 _set_update_aux_sensor(struct ae_ctrl_cxt *cxt, void *param0, void *param1)
+{
+	struct ae_aux_sensor_info *aux_sensor_info_ptr = (struct ae_aux_sensor_info *)param0;
+	UNUSED(param1);
+
+	switch (aux_sensor_info_ptr->type) {
+	case AE_ACCELEROMETER:
+		ISP_LOGV("accelerometer E\n");
+		cxt->cur_status.aux_sensor_data.accelerator.validate = aux_sensor_info_ptr->gsensor_info.valid;
+		cxt->cur_status.aux_sensor_data.accelerator.timestamp = aux_sensor_info_ptr->gsensor_info.timestamp;
+		cxt->cur_status.aux_sensor_data.accelerator.x = aux_sensor_info_ptr->gsensor_info.vertical_down;
+		cxt->cur_status.aux_sensor_data.accelerator.y = aux_sensor_info_ptr->gsensor_info.vertical_up;
+		cxt->cur_status.aux_sensor_data.accelerator.z = aux_sensor_info_ptr->gsensor_info.horizontal;
+		break;
+
+	case AE_MAGNETIC_FIELD:
+		ISP_LOGV("magnetic field E\n");
+		break;
+
+	case AE_GYROSCOPE:
+		ISP_LOGV("gyro E\n");
+		cxt->cur_status.aux_sensor_data.gyro.validate = aux_sensor_info_ptr->gyro_info.valid;
+		cxt->cur_status.aux_sensor_data.gyro.timestamp = aux_sensor_info_ptr->gyro_info.timestamp;
+		cxt->cur_status.aux_sensor_data.gyro.x = aux_sensor_info_ptr->gyro_info.x;
+		cxt->cur_status.aux_sensor_data.gyro.y = aux_sensor_info_ptr->gyro_info.y;
+		cxt->cur_status.aux_sensor_data.gyro.z = aux_sensor_info_ptr->gyro_info.z;
+		break;
+
+	case AE_LIGHT:
+		ISP_LOGV("light E\n");
+		break;
+
+	case AE_PROXIMITY:
+		ISP_LOGV("proximity E\n");
+		break;
+
+	default:
+		ISP_LOGI("sensor type not support");
+		break;
+	}
+	return AE_SUCCESS;
+}
+
+
 static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
@@ -6215,6 +6258,10 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 			if (cxt->isp_ops.set_rgb_gain)
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
 		}
+		break;
+
+	case AE_SET_UPDATE_AUX_SENSOR:
+		rtn = _set_update_aux_sensor(cxt, param, result);
 		break;
 
 	default:

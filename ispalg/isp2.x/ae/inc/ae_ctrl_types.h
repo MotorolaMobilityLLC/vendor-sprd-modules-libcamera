@@ -133,6 +133,7 @@ enum ae_io_ctrl_cmd {
 	AE_CAF_LOCKAE_STOP,
 	AE_GET_LEDS_CTRL,
 	AE_SET_RGB_GAIN,
+	AE_SET_UPDATE_AUX_SENSOR,
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	AE_CTRL_SET_ROLE,
 #endif
@@ -201,6 +202,39 @@ enum ae_flash_type {
 	AE_FLASH_TYPE_MAIN,
 	AE_FLASH_TYPE_MAX
 };
+
+enum ae_aux_sensor_type {
+	AE_ACCELEROMETER,
+	AE_MAGNETIC_FIELD,
+	AE_GYROSCOPE,
+	AE_LIGHT,
+	AE_PROXIMITY,
+};
+
+struct ae_gyro_info{
+	cmr_u32 valid;
+	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+};
+
+struct ae_gsensor_info {
+	cmr_u32 valid;
+	cmr_s64 timestamp;
+	float vertical_up;
+	float vertical_down;
+	float horizontal;
+};
+
+struct ae_aux_sensor_info {
+	enum ae_aux_sensor_type type;
+	union {
+		struct ae_gyro_info gyro_info;
+		struct ae_gsensor_info gsensor_info;
+	};
+};
+
 
 struct ae_set_flicker {
 	enum ae_flicker_mode mode;
