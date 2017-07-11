@@ -471,7 +471,7 @@ cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
 #ifdef 	LSC_ADV_ENABLE
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
-	isp_pm_handle_t pm_handle = cxt->handle_pm;
+	cmr_handle pm_handle = cxt->handle_pm;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -2258,7 +2258,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 	cmr_s32 i = 0;
 	lsc_adv_handle_t lsc_adv_handle = NULL;
 	struct lsc_adv_init_param lsc_param;
-	isp_pm_handle_t pm_handle = cxt->handle_pm;
+	cmr_handle pm_handle = cxt->handle_pm;
 	uint16_t *lsc_table = NULL;
 
 	struct isp_pm_ioctl_input io_pm_input;
@@ -2433,17 +2433,17 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->setting_param_ptr;
 	struct sensor_version_info *version_info = PNULL;
 	struct isp_pm_init_input input;
+	struct isp_pm_init_output output;
 	struct isp_otp_init_in otp_input;
-	isp_ctrl_context isp_ctrl_cxt;
 	cmr_u32 i = 0;
 
-	memset(&isp_ctrl_cxt, 0, sizeof(isp_ctrl_cxt));
+	memset(&input, 0, sizeof(input));
+	memset(&output, 0, sizeof(output));
+	memset(&otp_input, 0, sizeof(otp_input));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
-	memcpy((void *)cxt->sn_cxt.isp_init_data, (void *)input_ptr->mode_ptr, ISP_MODE_NUM_MAX * sizeof(struct isp_data_info));
 
 	input.num = MAX_MODE_NUM;
-	input.isp_ctrl_cxt_handle = &isp_ctrl_cxt;
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
 	input.sensor_name = version_info->sensor_ver_name.sensor_name;
 
@@ -2454,8 +2454,8 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
 
-	cxt->handle_pm = isp_pm_init(&input, NULL);
-	cxt->commn_cxt.multi_nr_flag = isp_ctrl_cxt.multi_nr_flag;
+	cxt->handle_pm = isp_pm_init(&input, &output);
+	cxt->commn_cxt.multi_nr_flag = output.multi_nr_flag;
 	cxt->commn_cxt.src.w = input_ptr->size.w;
 	cxt->commn_cxt.src.h = input_ptr->size.h;
 	cxt->camera_id = input_ptr->camera_id;

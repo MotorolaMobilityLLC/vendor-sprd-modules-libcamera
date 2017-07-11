@@ -797,7 +797,6 @@ struct isp_init_param {
 	cmr_u32 camera_id;
 	void *sensor_lsc_golden_data;
 	struct isp_ops ops;
-	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
 	void *setting_param_list_ptr[3];	//0:back,1:front,2:dual back

@@ -67,20 +67,16 @@ enum isp_pm_cmd {
 
 };
 
-typedef cmr_handle isp_pm_handle_t;
-
 struct isp_pm_init_input {
 	cmr_u32 num;
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
-	isp_ctrl_context *isp_ctrl_cxt_handle;
 	cmr_s8 *sensor_name;
 };
 
 struct isp_pm_init_output {
-	void *param_ptr;
-	cmr_u32 param_size;
+	cmr_u32 multi_nr_flag;
 };
 
 struct isp_pm_ioctl_input {
@@ -102,10 +98,10 @@ struct isp_pm_update_output {
 	cmr_u32 param_size;
 };
 
-isp_pm_handle_t isp_pm_init(struct isp_pm_init_input *input, void *output);
-cmr_s32 isp_pm_ioctl(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output);
-cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output);
-cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output);
+cmr_handle isp_pm_init(struct isp_pm_init_input *input, void *output);
+cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
+cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
+cmr_s32 isp_pm_deinit(cmr_handle handle, void *input, void *output);
 
 #ifdef	 __cplusplus
 }
