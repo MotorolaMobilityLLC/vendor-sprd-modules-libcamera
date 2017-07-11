@@ -242,6 +242,7 @@ struct isp_alg_fw_context {
 	struct awb_ct_table ct_table;
 	cmr_u32 lsc_flash_onoff;
 	cmr_u32 capture_mode;
+	pthread_mutex_t stats_buf_lock;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -819,6 +820,8 @@ static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_buf_input statis_buf;
 
+	pthread_mutex_lock(&cxt->stats_buf_lock);
+
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
@@ -832,6 +835,8 @@ static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
+	pthread_mutex_unlock(&cxt->stats_buf_lock);
+
 	return ret;
 }
 
@@ -3467,6 +3472,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.w = binnng_w / 2;
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
+	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
 
@@ -3484,6 +3490,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 exit:
 	if (ret) {
 		if (cxt) {
+			pthread_mutex_destroy(&cxt->stats_buf_lock);
 			ispalg_destroy_thread_proc((cmr_handle) cxt);
 			ispalg_deinit((cmr_handle) cxt);
 			if (binning_info) {
@@ -3508,6 +3515,8 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		ISP_LOGE("fail to get cxt pointer");
 		goto exit;
 	}
+	pthread_mutex_destroy(&cxt->stats_buf_lock);
+
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
 
 	ret = ispalg_deinit((cmr_handle) cxt);
