@@ -9,7 +9,6 @@ extern "C" {
 #endif
 
 #include "cmr_types.h"
-//#include "isp_mw.h"
 
 typedef struct c3dnr_buffer
 {
@@ -29,7 +28,6 @@ typedef struct c3dn_io_info
         cmr_u8 blending_no;
 }c3dnr_io_info_t;
 
-//typedef cmr_int (* isp_ioctl_fun)(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr);
 typedef cmr_int (* isp_ioctl_fun)(cmr_handle isp_handler, c3dnr_io_info_t *param_ptr);
 
 typedef struct c3dnr_param_info
@@ -43,7 +41,6 @@ typedef struct c3dnr_param_info
 	cmr_handle isp_handle; //wxz: call the isp_ioctl need the handle.
 	isp_ioctl_fun isp_ioctrl;
 	c3dnr_buffer_t out_img[2]; //wxz: for preview
-	//uint8_t is_preview;
 }c3dnr_param_info_t;
 
 int threednr_init(c3dnr_param_info_t *param);
@@ -51,6 +48,7 @@ int threednr_function(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image);
 int threednr_function_pre(c3dnr_buffer_t *small_image,c3dnr_buffer_t *orig_image);
 int threednr_deinit();
 int threednr_callback();
+int threednr_cancel();
 
 #ifdef __cplusplus
 }
