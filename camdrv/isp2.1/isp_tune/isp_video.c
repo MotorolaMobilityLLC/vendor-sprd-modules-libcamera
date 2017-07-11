@@ -4120,7 +4120,7 @@ void stopispserver()
 #endif
 }
 
-void startispserver()
+void startispserver(cmr_u32 cam_id)
 {
 	cmr_u32 handler_id = 0x00;
 	pthread_t tdiag;
@@ -4130,6 +4130,7 @@ void startispserver()
 #else
 	cmr_s32 ret = -1;
 #endif
+	UNUSED(cam_id);
 
 	ISP_LOGV("startispserver\n");
 

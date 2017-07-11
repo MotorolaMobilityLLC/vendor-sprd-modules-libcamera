@@ -20,7 +20,8 @@
 #include "isp_app.h"
 #include "isp_video.h"
 
-extern void *sensor_get_dev_cxt(void);
+extern cmr_u32 camera_id;
+extern void *sensor_get_dev_cxt_Ex(cmr_u32 camera_id);
 static cmr_s32 _ispParamVerify(void *in_param_ptr)
 {
 	cmr_s32 rtn = 0x00;
@@ -61,7 +62,7 @@ static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void *in_param_ptr)
 	void *data_addr = (void *)&param_ptr[4];
 	cmr_u32 data_len = packet_len - 0x10;
 	cmr_u32 mode_offset = 0;
-	SENSOR_EXP_INFO_T *sensor_info_ptr = Sensor_GetInfo();
+	SENSOR_EXP_INFO_T *sensor_info_ptr = Sensor_GetInfo_withid(camera_id);
 	ISP_LOGV(" _ispParserDownParam");
 
 	while (mode_offset < data_len) {
@@ -95,7 +96,7 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void *in_param_ptr)
 	//ISP_LOGE("ISP_TOOL:0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x \n", param_ptr[0], param_ptr[1], param_ptr[2], param_ptr[3], param_ptr[4],param_ptr[5]);
 
 	if (ISP_CTRL_AF == cmd) {
-		SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+		SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo_withid(camera_id);
 		struct isp_af_win *in_af_ptr = (struct isp_af_win *)&param_ptr[3];
 		cmr_u16 img_width = (param_ptr[2] >> 0x10) & 0xffff;
 		cmr_u16 img_height = param_ptr[2] & 0xffff;
@@ -128,7 +129,7 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void *in_param_ptr)
 static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 {
 	cmr_u32 rtn = 0x00;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo_withid(camera_id);
 	struct isp_parser_buf_rtn *rtn_ptr = (struct isp_parser_buf_rtn *)rtn_param_ptr;
 	cmr_u32 i = 0x00;
 	cmr_u32 j = 0x00;
@@ -231,7 +232,7 @@ static cmr_s32 _ispParserUpParam(void *rtn_param_ptr)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_s32 i = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo_withid(camera_id);
 	cmr_u32 version_id = sensor_info_ptr->raw_info_ptr->version_info->version_id;
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
 	struct isp_parser_buf_rtn *rtn_ptr = (struct isp_parser_buf_rtn *)rtn_param_ptr;
@@ -335,7 +336,8 @@ static cmr_s32 _ispParserReadSensorReg(void *in_param_ptr, void *rtn_param_ptr)
 	cmr_u16 reg_addr = (cmr_u16) in_ptr->param[1];
 	cmr_u16 reg_data = 0x00;
 	cmr_u32 i = 0x00;
-	struct sensor_drv_context *current_sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
+	struct sensor_drv_context *current_sensor_cxt =
+			(struct sensor_drv_context *)sensor_get_dev_cxt_Ex(camera_id);
 
 	rtn_ptr->buf_addr = (cmr_uint) NULL;
 	rtn_ptr->buf_len = 0x00;
@@ -372,7 +374,8 @@ static cmr_s32 _ispParserWriteSensorReg(void *in_param_ptr)
 	cmr_u16 reg_addr = 0x00;
 	cmr_u16 reg_data = 0x00;
 	cmr_u32 i = 0x00;
-	struct sensor_drv_context *current_sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
+	struct sensor_drv_context *current_sensor_cxt =
+			(struct sensor_drv_context *)sensor_get_dev_cxt_Ex(camera_id);
 
 	for (i = 0x00; i < reg_num; i++) {
 		reg_addr = (cmr_u16) in_ptr->param[2 + i * 2];

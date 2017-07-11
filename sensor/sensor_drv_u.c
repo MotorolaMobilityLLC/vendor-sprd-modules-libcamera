@@ -2232,6 +2232,23 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo(void) {
     return &sensor_cxt->sensor_exp_info;
 }
 
+SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id) {
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sensor_get_dev_cxt_Ex(id);
+
+    if (PNULL == sensor_cxt) {
+        SENSOR_LOGE("zero pointer ");
+        return PNULL;
+    }
+    if (!sensor_is_init_common(sensor_cxt)) {
+        SENSOR_LOGI("sensor has not init");
+        return PNULL;
+    }
+
+    SENSOR_LOGI("info=%lx ", (void *)&sensor_cxt->sensor_exp_info);
+    return &sensor_cxt->sensor_exp_info;
+}
+
 /*********************************************************************************
  todo:
  now the sensor_close_common only support close all sensor, and the function

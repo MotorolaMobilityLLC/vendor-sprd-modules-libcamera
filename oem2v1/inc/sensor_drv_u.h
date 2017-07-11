@@ -901,6 +901,7 @@ cmr_int hw_Sensor_SetMode(cmr_handle handle, cmr_u32 mode);
 #define Sensor_SetMode(mode) hw_Sensor_SetMode(handle, mode)
 
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
+SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
 cmr_int hw_Sensor_SetFlash(SENSOR_HW_HANDLE handle, uint32_t is_open);
 #define Sensor_SetFlash(is_open) hw_Sensor_SetFlash(handle, is_open)

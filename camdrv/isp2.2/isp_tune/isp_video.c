@@ -340,6 +340,8 @@ static cmr_u32 g_type = 8;	// the mipi
 static cmr_u32 g_command = CMD_TAKE_PICTURE;
 struct denoise_param_update nr_update_param;
 
+cmr_u32 camera_id = 0;
+
 struct camera_func *ispvideo_GetCameraFunc(void)
 {
 	return s_camera_fun_ptr;
@@ -1908,7 +1910,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
 	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
 
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo_withid(camera_id);
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
 
 	if (0xff == read_cmd->isp_mode) {
@@ -2261,7 +2263,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo_withid(camera_id);
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
 	if (MAX_MODE_NUM > mode_id) {
 		if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
@@ -4119,7 +4121,7 @@ void stopispserver()
 #endif
 }
 
-void startispserver()
+void startispserver(cmr_u32 cam_id)
 {
 	cmr_u32 handler_id = 0x00;
 	pthread_t tdiag;
@@ -4136,6 +4138,7 @@ void startispserver()
 	capture_flag = 0;
 	preview_img_end_flag = 1;
 	capture_img_end_flag = 1;
+	camera_id = cam_id;
 
 	if (ret != 0) {
 		pthread_attr_init(&attr);

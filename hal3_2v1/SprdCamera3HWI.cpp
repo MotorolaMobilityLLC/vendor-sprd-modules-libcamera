@@ -376,7 +376,7 @@ int SprdCamera3HWI::openCamera() {
 
     if (mOEMIf->isIspToolMode()) {
         mOEMIf->ispToolModeInit();
-        startispserver();
+        startispserver(mCameraId);
         ispvideo_RegCameraFunc(1, ispVideoStartPreview);
         ispvideo_RegCameraFunc(2, ispVideoStopPreview);
         ispvideo_RegCameraFunc(3, ispVideoTakePicture);
