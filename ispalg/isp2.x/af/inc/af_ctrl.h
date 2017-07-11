@@ -228,6 +228,7 @@ extern "C" {
 		 cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
 		 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
 		 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
+		 cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
 	};
 
 	struct afctrl_init_out {

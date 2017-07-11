@@ -247,11 +247,7 @@ typedef struct _af_ctrl {
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
 	afm_tuning_sharkl2 afm_tuning;
-	struct aft_proc_calc_param prm_ae;
-	struct aft_proc_calc_param prm_af;
-	struct aft_proc_calc_param prm_sensor;
-	struct aft_proc_calc_param prm_pd;
-	struct aft_proc_calc_param prm_fd;
+	struct aft_proc_calc_param prm_trigger;
 	isp_awb_statistic_hist_info_t rgb_stat;
 	cmr_u32 trigger_source_type;
 	struct af_ctrl_otp_info otp_info;
@@ -274,6 +270,7 @@ typedef struct _af_ctrl {
 	 cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
 	 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
 	 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
+	 cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
