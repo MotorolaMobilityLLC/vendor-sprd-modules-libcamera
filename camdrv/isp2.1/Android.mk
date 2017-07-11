@@ -66,7 +66,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 # don't modify this code
-LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name 'param_manager' -prune -o -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
+LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name 'param_manager' -prune -o -name '*.c' -print | sed s:^$(LOCAL_PATH)/::g)
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
@@ -74,7 +74,7 @@ LOCAL_MODULE := libcamdrv
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libcampm
+LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libcampm liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcalibration
 
