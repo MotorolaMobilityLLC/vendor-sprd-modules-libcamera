@@ -19,8 +19,8 @@
 *
 */
 
-#include "sensor_ov13855_mipi_raw.h"
 #define LOG_TAG "ov13855_mipi_raw"
+#include "sensor_ov13855_mipi_raw.h"
 
 #define FPS_INFO s_ov13855_mode_fps_info
 #define STATIC_INFO s_ov13855_static_info
@@ -241,7 +241,7 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -334,7 +334,7 @@ static cmr_int ov13855_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    sensor_ic_print_static_info(SENSOR_NAME, ex_info);
+    sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
 }

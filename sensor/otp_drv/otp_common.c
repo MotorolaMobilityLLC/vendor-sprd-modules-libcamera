@@ -84,7 +84,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
         break;
     case OTP_READ_FORMAT_FROM_BIN: {
         OTP_LOGI("read data:%s", otp_bin_ext_path);
-        cmr_u32 try_time = 3, mRead = 0;
+        int try_time = 3, mRead = 0;
         if (-1 != access(otp_bin_ext_path, 0)) {
             fp = fopen(otp_bin_ext_path, "rb");
             if (fp != NULL) {

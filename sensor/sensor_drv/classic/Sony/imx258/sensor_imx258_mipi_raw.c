@@ -15,9 +15,8 @@
  * V2.0
  */
 
-#include "sensor_imx258_mipi_raw.h"
-
 #define LOG_TAG "sensor_imx258"
+#include "sensor_imx258_mipi_raw.h"
 
 #define VIDEO_INFO      s_imx258_video_info
 #define STATIC_INFO     s_imx258_static_info
@@ -280,7 +279,7 @@ static cmr_int imx258_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
     BOOLEAN power_down = MIPI_RAW_INFO.power_down_level;
     BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
-    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
 
     if (SENSOR_TRUE == power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
@@ -299,7 +298,7 @@ static cmr_int imx258_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle,SENSOR_AVDD_CLOSED,
                                 SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -552,7 +551,7 @@ static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int imx258_drv_write_gain_value(cmr_handle handle, cmr_u32 param) {
+static cmr_int imx258_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     float real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -712,7 +711,7 @@ unsigned long imx258_SetMaster_FrameSync(SENSOR_HW_HANDLE handle,
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int imx258_drv_stream_on(cmr_handle handle, cmr_u32 param) {
+static cmr_int imx258_drv_stream_on(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
 
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -782,7 +781,7 @@ static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
 
     if(!static_info || !module_info) {
-        SENSOR_LOGI("error:static_info:0x%x,module_info:0x%x",static_info, module_info);
+        SENSOR_LOGI("error:static_info:%p,module_info:%p",static_info, module_info);
         rtn = SENSOR_FAIL;
         goto exit;
     }
@@ -810,9 +809,8 @@ static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
 
     memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
 
-    sensor_ic_print_static_info(SENSOR_NAME, ex_info);
-
 exit:
+    sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
     return rtn;
 }
 

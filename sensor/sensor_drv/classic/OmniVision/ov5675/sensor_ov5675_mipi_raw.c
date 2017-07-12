@@ -18,8 +18,8 @@
 *Date                  Modification                                 Reason
 *
 */
-#include "sensor_ov5675_mipi_raw.h"
 #define LOG_TAG "ov5675_mipi_raw"
+#include "sensor_ov5675_mipi_raw.h"
 
 #define FPS_INFO       s_ov5675_mode_fps_info
 #define STATIC_INFO    s_ov5675_static_info
@@ -168,7 +168,7 @@ static cmr_int ov5675_drv_get_static_info(cmr_handle handle,
 
     memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
 
-    sensor_ic_print_static_info(SENSOR_NAME, ex_info);
+    sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
 }
@@ -406,7 +406,7 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
 #endif
 
     }
-    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -527,7 +527,7 @@ static cmr_int ov5675_drv_before_snapshot(cmr_handle handle,
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    SENSOR_LOGI("capture_shutter = %d, capture_gain = %f", cap_shutter,
+    SENSOR_LOGI("capture_shutter = %d, capture_gain = %d", cap_shutter,
                 cap_gain);
 
 snapshot_info:
@@ -619,7 +619,7 @@ static cmr_int ov5675_drv_write_gain_value(cmr_handle handle,
 
     real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_LOGI("real_gain = %f", real_gain);
+    SENSOR_LOGI("real_gain = %d", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     ov5675_drv_write_gain(handle, real_gain);

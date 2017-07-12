@@ -1,15 +1,12 @@
 #define LOG_TAG "sns_ic_drv"
-
 #include "sensor_ic_drv.h"
 #include "cmr_common.h"
 
-#define LOG_TAG "sensor_ic_drv"
-
 /**
- * There are only four Camera,so far,If there are more than four
- * cameras in the future,you should change the camera nums*/
-static EXIF_SPEC_PIC_TAKING_COND_T *exif_info_ptr[4]={NULL,NULL,NULL,NULL};
-
+* There are only four Camera,so far,If there are more than four
+* cameras in the future,you should change the camera nums*/
+static EXIF_SPEC_PIC_TAKING_COND_T *exif_info_ptr[4] = {NULL, NULL, NULL,
+                                                            NULL };
 /*common interface*/
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
                              cmr_handle *sns_ic_drv_handle) {
@@ -47,8 +44,8 @@ cmr_int sensor_ic_drv_delete(cmr_handle handle, void *param) {
     cmr_int ret = SENSOR_IC_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    if(sns_drv_cxt->exif_ptr) {
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    if (sns_drv_cxt->exif_ptr) {
         free(sns_drv_cxt->exif_ptr);
         exif_info_ptr[sns_drv_cxt->sensor_id] = NULL;
     }
@@ -95,24 +92,24 @@ cmr_int sensor_ic_get_private_data(cmr_handle handle, cmr_uint cmd,
     return SENSOR_IC_SUCCESS;
 }
 
-cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void**exif_info_in){
+cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void **exif_info_in) {
     cmr_int ret = SENSOR_IC_SUCCESS;
-    void* buffer = NULL;
+    void *buffer = NULL;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_int sensor_num = sizeof(exif_info_ptr) /
-                         sizeof(EXIF_SPEC_PIC_TAKING_COND_T *);
-    if(sns_drv_cxt->sensor_id >= sensor_num) {
-        SENSOR_LOGE("sensor id is invalid,support sensor count:%d",sensor_num);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_int sensor_num =
+        sizeof(exif_info_ptr) / sizeof(EXIF_SPEC_PIC_TAKING_COND_T *);
+    if (sns_drv_cxt->sensor_id >= sensor_num) {
+        SENSOR_LOGE("sensor id is invalid,support sensor count:%d", sensor_num);
         ret = SENSOR_IC_FAILED;
         goto exit;
     }
-    if(exif_info_ptr[sns_drv_cxt->sensor_id]){
-        *exif_info_in = (void*)exif_info_ptr[sns_drv_cxt->sensor_id];
+    if (exif_info_ptr[sns_drv_cxt->sensor_id]) {
+        *exif_info_in = (void *)exif_info_ptr[sns_drv_cxt->sensor_id];
     } else {
-         buffer = malloc(sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
-        if(!buffer) {
+        buffer = malloc(sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
+        if (!buffer) {
             SENSOR_LOGE("malloc exif info mem failed");
             ret = SENSOR_IC_FAILED;
             goto exit;
@@ -120,7 +117,7 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void**exif_info_in){
         exif_info_ptr[sns_drv_cxt->sensor_id] = buffer;
         memset(buffer, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
         EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr =
-                           (EXIF_SPEC_PIC_TAKING_COND_T *)buffer;
+            (EXIF_SPEC_PIC_TAKING_COND_T *)buffer;
         exif_ptr->valid.FNumber = 1;
         exif_ptr->FNumber.numerator = 14;
         exif_ptr->FNumber.denominator = 5;
