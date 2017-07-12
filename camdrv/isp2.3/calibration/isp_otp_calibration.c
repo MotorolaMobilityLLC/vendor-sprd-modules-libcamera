@@ -875,7 +875,7 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 	if (ISP_SUCCESS != rtn) {
 		/*do not return error */
 		ISP_LOGE("fail to parse_calibration_data!");
-		return ISP_SUCCESS;
+		goto exit;
 	}
 
 	ISP_LOGV("lsc data: (%p, %d), awb data: (%p, %d)", lsc.data_ptr, lsc.size, awb.data_ptr, awb.size);
