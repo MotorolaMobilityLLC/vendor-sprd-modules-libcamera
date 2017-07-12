@@ -1205,7 +1205,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
 	}
 
-	bypass = 0;
+	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
+		bypass = 0;
+	else
+		bypass = 1;
 	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
 
 exit:
@@ -1656,9 +1659,7 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 		rtn = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
 	case ISP_PROC_AFL_DONE:
-		if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ) {
-			rtn = ispalg_afl_process((cmr_handle) cxt, message->data);
-		}
+		rtn = ispalg_afl_process((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_BINNING:
 		rtn = ispalg_binning_stat_data_parser((cmr_handle) cxt, message->data);
