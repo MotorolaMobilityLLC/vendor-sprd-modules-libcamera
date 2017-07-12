@@ -277,26 +277,25 @@ static cmr_int ov13855_otp_drv_delete(cmr_handle otp_drv_handle) {
 
 static cmr_int ov13855_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    cmr_u8 *buffer = NULL;
     cmr_u8 cmd_val[3];
     cmr_uint i = 0;
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGI("E");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
     otp_params_t *p_data = (otp_params_t *)param;
 
-    if (!otp_cxt->otp_raw_data.buffer) {
-        buffer = sensor_otp_get_raw_buffer(OTP_LEN, otp_cxt->sensor_id);
-        if (NULL == buffer) {
+    if (!otp_raw_data->buffer) {
+        otp_raw_data->buffer =
+            sensor_otp_get_raw_buffer(OTP_LEN, otp_cxt->sensor_id);
+        if (NULL == otp_raw_data->buffer) {
             OTP_LOGE("malloc otp raw buffer failed\n");
             ret = OTP_CAMERA_FAIL;
-        } else {
-            otp_raw_data->buffer = buffer;
-            otp_raw_data->num_bytes = OTP_LEN;
-            _ov13855_buffer_init(otp_drv_handle);
+            goto exit;
         }
+        otp_raw_data->num_bytes = OTP_LEN;
+        _ov13855_buffer_init(otp_drv_handle);
     }
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
@@ -305,19 +304,20 @@ static cmr_int ov13855_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
             p_data->buffer = otp_raw_data->buffer;
             p_data->num_bytes = otp_raw_data->num_bytes;
         }
-        return ret;
-    } else {
-        for (i = 0; i < OTP_LEN; i++) {
-            cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-            cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-            hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               (cmr_u8 *)&cmd_val[0], 2);
-            buffer[i] = cmd_val[0];
-        }
+        goto exit;
     }
-    sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_LEN,
-                             otp_cxt->dev_name);
-    OTP_LOGI("out");
+
+    for (i = 0; i < OTP_LEN; i++) {
+        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
+        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
+        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                           (cmr_u8 *)&cmd_val[0], 2);
+        otp_raw_data->buffer[i] = cmd_val[0];
+    }
+    sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN, otp_cxt->dev_name);
+
+exit:
+    OTP_LOGI("X");
     return ret;
 }
 

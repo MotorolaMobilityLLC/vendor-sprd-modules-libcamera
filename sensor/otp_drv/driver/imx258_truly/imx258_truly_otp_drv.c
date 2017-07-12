@@ -198,7 +198,8 @@ static cmr_int _imx258_truly_parse_pdaf_data(cmr_handle otp_drv_handle) {
 }
 
 /*TODO: This is a temporary function.*/
-static cmr_int _imx258_truly_parse_dual_otp_data(cmr_handle otp_drv_handle, void* param) {
+static cmr_int _imx258_truly_parse_dual_otp_data(cmr_handle otp_drv_handle,
+                                                 void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
@@ -209,27 +210,34 @@ static cmr_int _imx258_truly_parse_dual_otp_data(cmr_handle otp_drv_handle, void
 
     /*dual_master*/
     cmr_u8 *buffer = otp_cxt->otp_raw_data.buffer;
-    struct sensor_dual_otp_info *dual_otp = (struct sensor_dual_otp_info *)param;
-    dual_otp->master_iso_awb_info.iso = buffer[MASTER_ISO_INFO_OFFSET]<<8 |
-        buffer[MASTER_ISO_INFO_OFFSET + 1];
-    dual_otp->master_iso_awb_info.gain_r = buffer[MASTER_ISO_INFO_OFFSET+2]<<8 |
-        buffer[MASTER_ISO_INFO_OFFSET + 3];
-    dual_otp->master_iso_awb_info.gain_g = buffer[MASTER_ISO_INFO_OFFSET+4]<<8 |
-        buffer[MASTER_ISO_INFO_OFFSET + 5];
-    dual_otp->master_iso_awb_info.gain_b = buffer[MASTER_ISO_INFO_OFFSET+6]<<8 |
-        buffer[MASTER_ISO_INFO_OFFSET + 7];
+    struct sensor_dual_otp_info *dual_otp =
+        (struct sensor_dual_otp_info *)param;
+    dual_otp->master_iso_awb_info.iso = buffer[MASTER_ISO_INFO_OFFSET] << 8 |
+                                        buffer[MASTER_ISO_INFO_OFFSET + 1];
+    dual_otp->master_iso_awb_info.gain_r = buffer[MASTER_ISO_INFO_OFFSET + 2]
+                                               << 8 |
+                                           buffer[MASTER_ISO_INFO_OFFSET + 3];
+    dual_otp->master_iso_awb_info.gain_g = buffer[MASTER_ISO_INFO_OFFSET + 4]
+                                               << 8 |
+                                           buffer[MASTER_ISO_INFO_OFFSET + 5];
+    dual_otp->master_iso_awb_info.gain_b = buffer[MASTER_ISO_INFO_OFFSET + 6]
+                                               << 8 |
+                                           buffer[MASTER_ISO_INFO_OFFSET + 7];
     dual_otp->master_lsc_info.lsc_data_addr = buffer + MASTER_LSC_INFO_OFFSET;
     dual_otp->master_lsc_info.lsc_data_size = MASTER_LSC_INFO_SIZE;
 
     /*dual slave*/
-    dual_otp->slave_iso_awb_info.iso = buffer[SLAVE_ISO_INFO_OFFSET]<<8 |
-        buffer[SLAVE_ISO_INFO_OFFSET + 1];
-    dual_otp->slave_iso_awb_info.gain_r = buffer[SLAVE_ISO_INFO_OFFSET+2]<<8 |
-        buffer[SLAVE_ISO_INFO_OFFSET + 3];
-    dual_otp->slave_iso_awb_info.gain_g = buffer[SLAVE_ISO_INFO_OFFSET+4]<<8 |
-        buffer[SLAVE_ISO_INFO_OFFSET + 5];
-    dual_otp->slave_iso_awb_info.gain_b = buffer[SLAVE_ISO_INFO_OFFSET+6]<<8 |
-        buffer[SLAVE_ISO_INFO_OFFSET + 7];
+    dual_otp->slave_iso_awb_info.iso =
+        buffer[SLAVE_ISO_INFO_OFFSET] << 8 | buffer[SLAVE_ISO_INFO_OFFSET + 1];
+    dual_otp->slave_iso_awb_info.gain_r = buffer[SLAVE_ISO_INFO_OFFSET + 2]
+                                              << 8 |
+                                          buffer[SLAVE_ISO_INFO_OFFSET + 3];
+    dual_otp->slave_iso_awb_info.gain_g = buffer[SLAVE_ISO_INFO_OFFSET + 4]
+                                              << 8 |
+                                          buffer[SLAVE_ISO_INFO_OFFSET + 5];
+    dual_otp->slave_iso_awb_info.gain_b = buffer[SLAVE_ISO_INFO_OFFSET + 6]
+                                              << 8 |
+                                          buffer[SLAVE_ISO_INFO_OFFSET + 7];
     dual_otp->slave_lsc_info.lsc_data_addr = buffer + SLAVE_LSC_INFO_OFFSET;
     dual_otp->slave_lsc_info.lsc_data_size = SLAVE_LSC_INFO_SIZE;
 #if 0
@@ -246,15 +254,17 @@ static cmr_int _imx258_truly_parse_dual_otp_data(cmr_handle otp_drv_handle, void
              format_data->awb_cali_dat.awb_rdm_info[0].B;
     }
 #endif
-    OTP_LOGI("master:iso:0x%x,r:0x%x,g:0x%x,b:0x%x",dual_otp->master_iso_awb_info.iso,
-    dual_otp->master_iso_awb_info.gain_r,
-    dual_otp->master_iso_awb_info.gain_g,
-    dual_otp->master_iso_awb_info.gain_b);
+    OTP_LOGI("master:iso:0x%x,r:0x%x,g:0x%x,b:0x%x",
+             dual_otp->master_iso_awb_info.iso,
+             dual_otp->master_iso_awb_info.gain_r,
+             dual_otp->master_iso_awb_info.gain_g,
+             dual_otp->master_iso_awb_info.gain_b);
 
-    OTP_LOGI("slave:iso:0x%x,r:0x%x,g:0x%x,b:0x%x",dual_otp->slave_iso_awb_info.iso,
-    dual_otp->slave_iso_awb_info.gain_r,
-    dual_otp->slave_iso_awb_info.gain_g,
-    dual_otp->slave_iso_awb_info.gain_b);
+    OTP_LOGI("slave:iso:0x%x,r:0x%x,g:0x%x,b:0x%x",
+             dual_otp->slave_iso_awb_info.iso,
+             dual_otp->slave_iso_awb_info.gain_r,
+             dual_otp->slave_iso_awb_info.gain_g,
+             dual_otp->slave_iso_awb_info.gain_b);
     return ret;
 }
 
@@ -340,13 +350,13 @@ static cmr_int imx258_truly_otp_drv_delete(cmr_handle otp_drv_handle) {
 static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle,
                                          void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    char otp_bin_file_name[255];
-    cmr_u8 *buffer = NULL;
     cmr_uint i = 0;
     cmr_u8 cmd_val[3];
+    char otp_bin_file_name[255];
     otp_params_t *p_data = (otp_params_t *)param;
+
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGI("E");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
@@ -354,16 +364,16 @@ static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle,
     snprintf(otp_bin_file_name, sizeof(otp_bin_file_name), "%sotp.bin", "");
 
     if (!otp_raw_data->buffer) {
-        buffer = sensor_otp_get_raw_buffer(OTP_LEN, otp_cxt->sensor_id);
-        OTP_LOGE("buffer pointer:0x%x", buffer);
-        if (NULL == buffer) {
+        otp_raw_data->buffer =
+            sensor_otp_get_raw_buffer(OTP_LEN, otp_cxt->sensor_id);
+        OTP_LOGE("buffer pointer:%p", otp_raw_data->buffer);
+        if (NULL == otp_raw_data->buffer) {
             OTP_LOGE("malloc otp raw buffer failed\n");
             ret = OTP_CAMERA_FAIL;
-        } else {
-            otp_raw_data->buffer = buffer;
-            otp_raw_data->num_bytes = OTP_LEN;
-            _imx258_truly_buffer_init(otp_drv_handle);
+            goto exit;
         }
+        otp_raw_data->num_bytes = OTP_LEN;
+        _imx258_truly_buffer_init(otp_drv_handle);
     }
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
@@ -372,20 +382,20 @@ static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle,
             p_data->buffer = otp_raw_data->buffer;
             p_data->num_bytes = otp_raw_data->num_bytes;
         }
-        return ret;
-    } else {
-        memset(buffer, 0, OTP_LEN);
-        for (i = 0; i < OTP_LEN; i++) {
-            cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-            cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-            hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               (cmr_u8 *)&cmd_val[0], 2);
-            buffer[i] = cmd_val[0];
-        }
-        sensor_otp_dump_raw_data(otp_raw_data->buffer,8192,"imx258_truly");
+        goto exit;
     }
 
-    OTP_LOGI("out");
+    for (i = 0; i < OTP_LEN; i++) {
+        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
+        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
+        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                           (cmr_u8 *)&cmd_val[0], 2);
+        otp_raw_data->buffer[i] = cmd_val[0];
+    }
+    sensor_otp_dump_raw_data(otp_raw_data->buffer, 8192, "imx258_truly");
+
+exit:
+    OTP_LOGI("X");
     return ret;
 }
 
@@ -573,7 +583,8 @@ static cmr_int _imx258_truly_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.dual_flag = 1;
     convert_data->otp_vendor = OTP_VENDOR_SINGLE_CAM_DUAL;
     /**/
-    _imx258_truly_parse_dual_otp_data(otp_drv_handle, (void*)&convert_data->dual_otp);
+    _imx258_truly_parse_dual_otp_data(otp_drv_handle,
+                                      (void *)&convert_data->dual_otp);
 
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;

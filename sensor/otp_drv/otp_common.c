@@ -59,7 +59,7 @@ static cmr_u8 *otp_formatted_data_buffer[4] = {NULL, NULL, NULL, NULL};
  **/
 
 cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
-                                     void **otp_data, int *otp_size) {
+                                     void **otp_data, long *otp_size) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     OTP_LOGI("in");
     CHECK_PTR((void *)otp_data);
