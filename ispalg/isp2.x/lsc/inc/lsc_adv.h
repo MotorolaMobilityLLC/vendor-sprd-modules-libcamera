@@ -427,17 +427,18 @@ struct alsc_fwstart_info {
 
 
 struct lsc_eng_cmd_set{
-    cmr_s32 eng_lsc_lock;
     cmr_s32 eng_lsc_dump_aem;
     cmr_s32 eng_lsc_dump_intable;
     cmr_s32 eng_lsc_dump_outtable;
     cmr_s32 eng_lsc_dump_otptable;
     cmr_s32 eng_lsc_dump_param_intable;
     cmr_s32 eng_lsc_dump_otptrans_intable;
+    cmr_s32 eng_lsc_otp_disable;
 };
 
 
 struct lsc_eng_cmd_set2{
+    cmr_s32 eng_lsc_lock;
     cmr_s32 eng_lsc_set_unit_table;
     cmr_s32 eng_lsc_set_tab_enable;
     cmr_s32 eng_lsc_set_tab_index;
