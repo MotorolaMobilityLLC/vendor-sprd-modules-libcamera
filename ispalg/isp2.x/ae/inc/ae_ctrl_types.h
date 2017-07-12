@@ -273,12 +273,14 @@ struct ae_set_work_param {
 	cmr_u16 fly_eb;
 	cmr_u16 is_snapshot;
 	cmr_u32 shift;
+	cmr_u32 dv_mode;
 	struct ae_size win_num;
 	struct ae_size win_size;
 	enum ae_work_mode mode;
 	struct ae_resolution_info resolution_info;
 	struct ae_measure_highflash highflash_measure;
 	struct ae_sensor_fps_info sensor_fps;
+	struct ae_ct_table ct_table;
 };
 
 struct ae_set_iso {

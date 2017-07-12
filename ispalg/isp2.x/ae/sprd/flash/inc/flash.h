@@ -96,8 +96,6 @@ struct Flash_initInput
 	uint8 debug_level;
 	uint32 statW;/*stat block num in Width dir*/
 	uint32 statH;/*stat block num in Height dir*/
-	float ctTabRg[20];
-	float ctTab[20];
 	struct flash_tune_param *tune_info;/*flash algorithm tune param*/
 };
 
@@ -116,6 +114,8 @@ enum Flash_flickerMode
 };
 struct Flash_pfStartInput
 {
+	float ctTabRg[20];
+	float ctTab[20];
 	float minExposure;
 	float maxExposure;
 	uint32 minGain;  //x128

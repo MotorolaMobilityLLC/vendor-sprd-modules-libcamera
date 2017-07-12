@@ -240,7 +240,6 @@ struct isp_alg_fw_context {
 	cmr_u32 takepicture_mode;
 	cmr_handle ispalg_lib_handle;
 	struct ispalg_lib_ops ops;
-	struct awb_ct_table ct_table;
 	cmr_u32 lsc_flash_onoff;
 	cmr_u32 capture_mode;
 	pthread_mutex_t stats_buf_lock;
@@ -2011,10 +2010,6 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
-	for (i = 0; i < 20; i++) {
-		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
-		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
-	}
 	if (cxt->ops.ae_ops.get_flash_param)
 		ret = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash);
 	if (cxt->ops.ae_ops.init) {
@@ -2098,9 +2093,6 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 
 	if (cxt->ops.awb_ops.init)
 		ret = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
-	if (cxt->ops.awb_ops.ioctrl)
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&cxt->ct_table);
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -2396,14 +2388,14 @@ static cmr_u32 ispalg_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_ini
 {
 	cmr_int ret = ISP_SUCCESS;
 
+	ret = ispalg_ae_init(cxt);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do ae_init"));
+
 	ret = ispalg_afl_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do afl_init"));
 
 	ret = ispalg_awb_init(cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_init"));
-
-	ret = ispalg_ae_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do ae_init"));
 
 	ret = ispalg_smart_init(cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do smart_init"));
@@ -2773,7 +2765,6 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	enum ae_work_mode ae_mode = 0;
 
 	memset(&ae_param, 0, sizeof(ae_param));
-	/*ae should known preview/capture/video work mode */
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
 	case ISP_MODE_ID_PRV_1:
@@ -2810,6 +2801,7 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
 	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
 	ae_param.is_snapshot = param_ptr->is_snapshot;
+	ae_param.dv_mode = param_ptr->dv_mode;
 
 	ae_param.sensor_fps.mode = param_ptr->sensor_fps.mode;
 	ae_param.sensor_fps.max_fps = param_ptr->sensor_fps.max_fps;
@@ -2827,11 +2819,13 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 		ae_param.shift = 1;
 	}
 	cxt->ae_cxt.shift = ae_param.shift;
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&ae_param.ct_table);
+		ISP_TRACE_IF_FAIL(ret, ("AWB_CTRL_CMD_GET_CT_TABLE20 fail"));
+	}
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("AE_VIDEO_START fail"));
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_DC_DV, &param_ptr->dv_mode, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("AE_SET_DC_DV fail"));
 	}
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &ae_param.shift, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));

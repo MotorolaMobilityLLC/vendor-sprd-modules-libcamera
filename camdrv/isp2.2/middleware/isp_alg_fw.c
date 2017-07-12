@@ -1854,11 +1854,6 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
-	for(i=0 ; i< 20; i++){
-		ae_input.ct_table.ct[i] = cxt->ct_table.ct[i];
-		ae_input.ct_table.rg[i] = cxt->ct_table.rg[i];
-	}
-
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	// TODO: change ae_role here
 	if(cxt->is_multi_mode)
@@ -1989,8 +1984,6 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 		if (cxt->ops.awb_ops.init)
 			rtn = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
-		if (cxt->ops.awb_ops.ioctrl)
-			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&cxt->ct_table);
 	} else {
 		ISP_LOGE("fail to get awb init param!");
 	}
@@ -2408,14 +2401,14 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 {
 	cmr_int rtn = ISP_SUCCESS;
 
+	rtn = isp_ae_sw_init(cxt);
+	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
+
 	rtn = isp_afl_sw_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to do anti_flicker param update"));
 
 	rtn = isp_awb_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do awb_ctrl_init"));
-
-	rtn = isp_ae_sw_init(cxt);
-	ISP_TRACE_IF_FAIL(rtn, ("fail to do ae_ctrl_init"));
 
 	rtn = isp_smart_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do _smart_init"));
@@ -2926,7 +2919,6 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 	enum ae_work_mode ae_mode = 0;
 
 	memset(&ae_param, 0, sizeof(ae_param));
-	/*ae should known preview/capture/video work mode */
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
 	case ISP_MODE_ID_PRV_1:
@@ -2963,6 +2955,7 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
 	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
 	ae_param.is_snapshot = param_ptr->is_snapshot;
+	ae_param.dv_mode = param_ptr->dv_mode;
 
 	ae_param.sensor_fps.mode = param_ptr->sensor_fps.mode;
 	ae_param.sensor_fps.max_fps = param_ptr->sensor_fps.max_fps;
@@ -2980,9 +2973,11 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 		ae_param.shift = 1;
 	}
 	cxt->ae_cxt.shift = ae_param.shift;
+	if (cxt->ops.awb_ops.ioctrl) {
+		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&ae_param.ct_table);
+	}
 	if (cxt->ops.ae_ops.ioctrl) {
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_DC_DV, &param_ptr->dv_mode, NULL);
 	}
 	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &ae_param.shift, NULL);
 

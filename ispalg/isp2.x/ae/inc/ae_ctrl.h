@@ -94,7 +94,6 @@ struct ae_init_in {
 	cmr_handle lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
-	struct ae_ct_table ct_table;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u8 ae_role;  //1:master 0: slave
 	cmr_u8 sensor_role;

@@ -234,7 +234,6 @@ struct isp_alg_fw_context {
 	cmr_u32 takepicture_mode;
 	cmr_handle ispalg_lib_handle;
 	struct ispalg_lib_ops ops;
-	struct awb_ct_table ct_table;
 	cmr_u32 lsc_flash_onoff;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC

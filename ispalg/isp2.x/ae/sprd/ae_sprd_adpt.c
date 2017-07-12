@@ -21,7 +21,6 @@
 #include "ae_ctrl.h"
 #include "flash.h"
 #include "isp_debug.h"
-#include "awb.h"
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 #include "isp_match.h"
 #endif
@@ -51,7 +50,7 @@
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 100 /*lower than LV1, if it is 0, disable this feature*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 0 /*lower than LV1, if it is 0, disable this feature*/
 /*
  * should be read from driver later
  */
@@ -2405,8 +2404,12 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.rSta = (cmr_u16*)&cxt->aem_stat_rgb[0];
 	in.gSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num;
 	in.bSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num;
-	rtn = flash_pfStart(cxt->flash_alg_handle, &in, &out);
 
+	for (cmr_u32 i=0 ; i< 20; i++) {
+		in.ctTab[i] = cxt->ctTab[i];
+		in.ctTabRg[i] = cxt->ctTabRg[i];
+	}
+	rtn = flash_pfStart(cxt->flash_alg_handle, &in, &out);
 	out.nextExposure *=  SENSOR_LINETIME_BASE;//Andy.lin temp code!!!
 	current_status->settings.manual_mode = 0;
 	current_status->settings.table_idx = 0;
@@ -2589,7 +2592,7 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
 	if (AE_WORK_MODE_VIDEO == current_status->settings.work_mode) {
-		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD > cxt->sync_cur_result.cur_bv) {
+		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD == cxt->sync_cur_result.cur_bv) {
 			/*only adjust the fps to [15, 15] in dark environment during video mode*/
 			current_status->settings.max_fps  = cxt->fps_range.min;
 			current_status->settings.min_fps  = cxt->fps_range.min;
@@ -3170,7 +3173,6 @@ static cmr_s32 dualcamera_aesync_calc(struct ae_ctrl_cxt *cxt,  struct match_dat
 cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_s32 i = 0;
 	char ae_property[PROPERTY_VALUE_MAX];
 	cmr_handle seq_handle = NULL;
 	struct ae_ctrl_cxt *cxt = NULL;
@@ -3219,13 +3221,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->seq_handle = s_q_open(&s_q_param);
 
 	/* HJW_S: dual flash algorithm init */
-	for (i=0 ; i< 20; i++) {
-		flash_in.ctTab[i] = init_param->ct_table.ct[i];
-		flash_in.ctTabRg[i] = init_param->ct_table.rg[i];
-		cxt->ctTab[i] = init_param->ct_table.ct[i];
-		cxt->ctTabRg[i] = init_param->ct_table.rg[i];
-	}
-
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
 	flash_in.tune_info = &cxt->dflash_param[0];
 	flash_in.statH  = cxt->monitor_unit.win_num.h;
@@ -5010,7 +5005,6 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_s32 i;
 	cmr_s32 again;
 	float rgb_gain_coeff;
 	cmr_s32 ae_skip_num = 0;
@@ -5021,6 +5015,16 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	if (work_info->mode >= AE_WORK_MODE_MAX) {
 		ISP_LOGE("fail to set work mode");
 		work_info->mode = AE_WORK_MODE_COMMON;
+	}
+
+	if (1 == work_info->dv_mode)
+		cxt->cur_status.settings.work_mode = AE_WORK_MODE_VIDEO;
+	else
+		cxt->cur_status.settings.work_mode = AE_WORK_MODE_COMMON;
+
+	for (cmr_u32 k = 0 ; k < 20; k++) {
+		cxt->ctTab[k] = work_info->ct_table.ct[k];
+		cxt->ctTabRg[k] = work_info->ct_table.rg[k];
 	}
 
 	if (0 == work_info->is_snapshot) {
@@ -5075,8 +5079,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	{
 		struct ae_exp_gain_table* src[AE_FLICKER_NUM];
 		struct ae_exp_gain_table* dst[AE_FLICKER_NUM];
-		cmr_u32 i = 0;
-		for (i = 0; i < AE_ISO_NUM_NEW; ++i) {
+		for (cmr_u32 i = 0; i < AE_ISO_NUM_NEW; ++i) {
 			if (0 != cxt->tuning_param[mode].ae_table[AE_FLICKER_50HZ][i].max_index) {
 				src[AE_FLICKER_50HZ] = &cxt->tuning_param[mode].backup_ae_table[AE_FLICKER_50HZ][i];
 				src[AE_FLICKER_60HZ] = &cxt->tuning_param[mode].backup_ae_table[AE_FLICKER_60HZ][i];
@@ -5209,6 +5212,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 	cxt->last_enable = 0;
 	cxt->is_snapshot = work_info->is_snapshot;
+
 	return rtn;
 }
 
