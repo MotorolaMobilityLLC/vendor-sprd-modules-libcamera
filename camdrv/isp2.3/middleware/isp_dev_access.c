@@ -287,9 +287,15 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->irq_property = irq_info->irq_property;
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
+	statis_info->frame_id = irq_info->frame_id;
+	statis_info->sec = irq_info->sec;
+	statis_info->usec = irq_info->usec;
 
-	ISP_LOGV("got one frame statis paddr 0x%x vaddr 0x%x property %d",
-		 statis_info->phy_addr, statis_info->vir_addr, statis_info->irq_property);
+	ISP_LOGV("got one frame stats offset 0x%x vaddr 0x%x property %d frame id %d timestamp %ds %dus",
+		 statis_info->addr_offset, statis_info->vir_addr,
+		 statis_info->irq_property,
+		 statis_info->frame_id,
+		 statis_info->sec, statis_info->usec);
 	if (irq_info->irq_property == IRQ_AEM_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
