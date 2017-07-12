@@ -591,7 +591,7 @@ static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 heigh
 
 	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
-	ISP_LOGV("Chj--writing one pic succeeds");
+	ISP_LOGV("writing one pic succeeds");
 	return 0;
 }
 
@@ -623,7 +623,7 @@ static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height
 
 	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
-	ISP_LOGV("Chj--writing one pic succeeds");
+	ISP_LOGV("writing one pic succeeds");
 	return 0;
 }
 
@@ -979,15 +979,19 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 	return ret;
 }
 
-cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cmr_u32 src_size, cmr_u8 * data_ptr, cmr_u16 * actual_len, cmr_u8 * data_status)
+cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cmr_u32 src_size, cmr_u8 * data_ptr,  cmr_u8 * data_status)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_s32 i, num;
 	cmr_u32 tail_len;
-	if (NULL == tx_buf || NULL == src_ptr || NULL == data_ptr || NULL == actual_len) {
-		ISP_LOGE("fail to check param:tx_buf:%p, src_ptr:%p, data_ptr:%p, actual_len:%p", tx_buf, src_ptr, data_ptr, actual_len);
+
+	MSG_HEAD_T *msg_ret;
+
+	if (NULL == tx_buf || NULL == src_ptr || NULL == data_ptr) {
+		ISP_LOGE("fail to check param:tx_buf:%p, src_ptr:%p, data_ptr:%p", tx_buf, src_ptr, data_ptr);
 		return ISP_PARAM_ERROR;
 	}
+	msg_ret = (MSG_HEAD_T *) (tx_buf + 1) ;
 
 	num = src_size / valid_len;
 	tail_len = src_size % valid_len;
@@ -995,22 +999,22 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 	if (0 != num) {
 		for (i = 0; i < num; i++) {
 			memcpy(data_ptr, (cmr_u8 *) src_ptr + i * valid_len, valid_len);
-			*actual_len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + valid_len;
-			*(tx_buf + (*actual_len) + 1) = 0x7e;
+			msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + valid_len;
+			*(tx_buf + msg_ret->len + 1) = 0x7e;
 			if ((i == (num - 1)) && (0 == tail_len))
 				*data_status = 0x01;
 			else
 				*data_status = 0x00;
 
-			ret = send(sockfd, tx_buf, (*actual_len) + 2, 0);
+			ret = send(sockfd, tx_buf, msg_ret->len + 2, 0);
 		}
 	}
 	if (0 != tail_len) {
 		memcpy(data_ptr, (cmr_u8 *) src_ptr + num * valid_len, tail_len);
-		*actual_len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
-		*(tx_buf + (*actual_len) + 1) = 0x7e;
+		msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
+		*(tx_buf + msg_ret->len + 1) = 0x7e;
 		*data_status = 0x01;
-		ret = send(sockfd, tx_buf, (*actual_len) + 2, 0);
+		ret = send(sockfd, tx_buf, msg_ret->len + 2, 0);
 	}
 	ISP_LOGV("denoise send over! ret = %d", ret);
 	return ret;
@@ -1037,7 +1041,6 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		return ISP_PARAM_ERROR;
 	}
 
-	msg_ret = (MSG_HEAD_T *) (tx_buf + 1);
 	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
 	data_head_ptr->main_type = 0x01;	//denoise param
 	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
@@ -1248,7 +1251,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		break;
 	}
 	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &msg_ret->len, &data_head_ptr->packet_status);
+	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);
@@ -2757,7 +2760,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	switch (msg->subtype) {
 	case CMD_SFT_READ:
 		{
-			ISP_LOGV("Chj--get af info");
+			ISP_LOGV("get af info");
 			ret = isp_sft_read(isp_handler, &eng_rsp_diag[rsp_len], &len);
 			ISP_LOGV("ISP_SFT:CMD_SFT_READ rsp_len %d len %d\n", rsp_len, len);
 			rsp_len += len;
@@ -2768,7 +2771,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_WRITE:
 		{
-			ISP_LOGV("Chj--set af info");
+			ISP_LOGV("set af info");
 			len = msg_ret->len - 8;
 			ret = isp_sft_write(isp_handler, buf + rsp_len, &len);
 			ISP_LOGV("ISP_SFT:CMD_SFT_WRITE rsp_len %d len %d\n", rsp_len, len);
@@ -2780,7 +2783,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_TRIG:
 		{
-			ISP_LOGV("Chj--af trig");
+			ISP_LOGV("af trig");
 			ret = isp_ioctl(isp_handler, ISP_CTRL_AF, NULL);	// set af info after auto focus
 			if (!ret) {
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
@@ -2794,7 +2797,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_SET_POS:
 		{
-			ISP_LOGV("Chj--set pos");
+			ISP_LOGV("set pos");
 			cmr_u32 bypass = 0;
 			g_af_pos = *(cmr_u32 *) (buf + 9);
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, buf + 9);
@@ -2812,7 +2815,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_GET_POS:
 		{
-			ISP_LOGV("Chj--get pos");
+			ISP_LOGV("get pos");
 			cmr_u32 pos;
 			ret = isp_ioctl(isp_handler, ISP_CTRL_GET_AF_POS, &pos);	// set af info after auto focus
 			if (!ret) {
@@ -2829,7 +2832,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_OPEN_FILTER:
 		{
-			ISP_LOGV("Chj--open the filter");
+			ISP_LOGV("open the filter");
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);	// open the filter
 			usleep(1000 * 100);
 			if (!ret) {
@@ -2845,9 +2848,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_SFT_GET_AF_VALUE:	// value back to PC
 		{
 			cmr_u32 statistic[50] = { 0 };
-			ISP_LOGV("Chj-- get af value 1");
+			ISP_LOGV("get af value 1");
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_GET_AF_VALUE, statistic);	// set af info after auto focus
-			ISP_LOGI("Chj-- get af value 2 ret=%d,af_value=%d,af_value=%d", ret, statistic[0], statistic[25]);
+			ISP_LOGI("get af value 2 ret=%d,af_value=%d,af_value=%d", ret, statistic[0], statistic[25]);
 			//ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_BYPASS, NULL);// close the filter
 			if (!ret) {
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
@@ -2863,7 +2866,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_TAKE_PICTURE:	// pic back to PC
 		{
-			ISP_LOGV("Chj--sft take picture");
+			ISP_LOGV("sft take picture");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 width, height, interval;
 
@@ -2880,9 +2883,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					fun_ptr->set_capture_size(width, height);
 				}
 				fun_ptr->take_picture(0, capture_format);
-				ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				ISP_LOGV("1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				sem_wait(&capture_sem_lock);
-				ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+				ISP_LOGV("2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				if (NULL != fun_ptr->stop_preview) {
 					fun_ptr->stop_preview(0, 0);
 				}
@@ -2899,7 +2902,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_SFT_TAKE_PICTURE_NEW:	// save pic to file system
 		{
-			ISP_LOGV("Chj--sft take picture new");
+			ISP_LOGV("sft take picture new");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 startpos, endpos, step, width, height, interval;
 			cmr_u32 pos;
@@ -2929,9 +2932,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						fun_ptr->set_capture_size(width, height);
 					}
 					fun_ptr->take_picture(0, capture_format);
-					ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					sem_wait(&capture_sem_lock);
-					ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
@@ -2950,7 +2951,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_ASIC_TAKE_PICTURE:	// save pic to file system
 		{
-			ISP_LOGV("Chj--asic take picture");
+			ISP_LOGV("asic take picture");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 width, height;
 			g_command = CMD_ASIC_TAKE_PICTURE;
@@ -2964,9 +2965,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					fun_ptr->set_capture_size(width, height);
 				}
 				fun_ptr->take_picture(0, capture_format);
-				ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				sem_wait(&capture_sem_lock);
-				ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 				if (NULL != fun_ptr->stop_preview) {
 					fun_ptr->stop_preview(0, 0);
 				}
@@ -2988,7 +2987,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_ASIC_TAKE_PICTURE_NEW:	// save pic to file system
 		{
-			ISP_LOGV("Chj--asic take picture new");
+			ISP_LOGV("asic take picture new");
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;;
 			cmr_u32 startpos, endpos, step, width, height;
 			cmr_u32 pos;
@@ -3012,9 +3011,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 						fun_ptr->set_capture_size(width, height);
 					}
 					fun_ptr->take_picture(0, capture_format);
-					ISP_LOGV("Chj--1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					ISP_LOGV("1 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					sem_wait(&capture_sem_lock);
-					ISP_LOGV("Chj--2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
+					ISP_LOGV("2 width=%d,height=%d,capture_format=%d", width, height, capture_format);
 					if (NULL != fun_ptr->stop_preview) {
 						fun_ptr->stop_preview(0, 0);
 					}
