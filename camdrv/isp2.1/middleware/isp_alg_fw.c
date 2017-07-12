@@ -240,7 +240,6 @@ struct isp_alg_fw_context {
 	cmr_handle ispalg_lib_handle;
 	struct ispalg_lib_ops ops;
 	cmr_u32 lsc_flash_onoff;
-	cmr_u32 capture_mode;
 	pthread_mutex_t stats_buf_lock;
 };
 
@@ -873,6 +872,9 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		} else {
 			ret = isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
 			ISP_TRACE_IF_FAIL(ret, ("isp_dev_cfg_block fail"));
+			if (ISP_BLK_2D_LSC == param_data->id) {
+				isp_dev_lsc_update(cxt->dev_access_handle, 0);
+			}
 		}
 
 		param_data++;
@@ -2755,14 +2757,6 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			isp_dev_lsc_update(cxt->dev_access_handle, 1);
 		}
 		isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
-		if (ISP_BLK_2D_LSC == param_data->id) {
-			/*cxt->capture_mode : 0 normal mode; 1 zsl mode*/
-			if (0 == cxt->capture_mode) {
-				isp_dev_lsc_update(cxt->dev_access_handle, 1);
-			} else if (1 == cxt->capture_mode) {
-				isp_dev_lsc_update(cxt->dev_access_handle, 0);
-			}
-		}
 		param_data++;
 	}
 	if (cxt->afl_cxt.handle) {
@@ -3050,7 +3044,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		goto exit;
 	}
 
-	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
 	cxt->sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
 	cxt->sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
