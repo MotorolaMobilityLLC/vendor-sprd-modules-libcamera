@@ -1251,7 +1251,7 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     if (sprddefInfo.slowmotion > 1)
         return ret;
 
-    if (enable) {
+    if (enable && (mMultiCameraMode != MODE_BOKEH && mCameraId != 2)) {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
     } else {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 0);

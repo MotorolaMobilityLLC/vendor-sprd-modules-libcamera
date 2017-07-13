@@ -41,10 +41,10 @@ typedef struct _tagARC_DC_CALDATA {
 } ARC_DC_CALDATA, *LPARC_DC_CALDATA;
 
 typedef struct _tagARC_REFOCUSCAMERAIMAGE_PARAM {
-    MInt32 i32LeftFullWidth; // Width of Left full image by ISP. Left as Main.
-    MInt32 i32LeftFullHeight; // Height of Left full image by ISP.
-    MInt32 i32RightFullWidth; // Width of Right full image by ISP. Right as
-                              // Auxiliary.
+    MInt32 i32LeftFullWidth;   // Width of Left full image by ISP. Left as Main.
+    MInt32 i32LeftFullHeight;  // Height of Left full image by ISP.
+    MInt32 i32RightFullWidth;  // Width of Right full image by ISP. Right as
+                               // Auxiliary.
     MInt32 i32RightFullHeight; // Height of Right full image by ISP.
 } ARC_REFOCUSCAMERAIMAGE_PARAM, *LPARC_REFOCUSCAMERAIMAGE_PARAM;
 

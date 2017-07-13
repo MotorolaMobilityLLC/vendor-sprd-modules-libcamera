@@ -44,7 +44,7 @@ ARC_DCVR_API const MPBASE_Version *ARC_DCVR_GetVersion();
 ************************************************************************/
 typedef struct _tag_ARC_DCVR_PARAM {
     MPOINT
-        ptFocus; // [in]  The focus point to decide which region should be clear
+    ptFocus; // [in]  The focus point to decide which region should be clear
     MInt32 i32BlurLevel; // [in]  The intensity of blur,range [1, 100]
     MBool bRefocusOn;    // [in]  Do Refocus or not
 } ARC_DCVR_PARAM, *LPARC_DCVR_PARAM;

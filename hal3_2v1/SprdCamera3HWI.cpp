@@ -779,19 +779,20 @@ int SprdCamera3HWI::configureStreams(
         video_size.width = video_size.width - 2;
     }
 #endif
-
-    // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
-    // we will remove these code
-    if (capture_size.height == 1944 && capture_size.width == 2592) {
-        capture_size.height = 1952;
-    } else if (capture_size.height == 1836 && capture_size.width == 3264) {
-        capture_size.height = 1840;
-    } else if (capture_size.height == 360 && capture_size.width == 640) {
-        capture_size.height = 368;
-    } else if (capture_size.height == 1080 && capture_size.width == 1920) {
-        capture_size.height = 1088;
+    if (mMultiCameraMode != MODE_BOKEH) {
+        // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
+        // issue,
+        // we will remove these code
+        if (capture_size.height == 1944 && capture_size.width == 2592) {
+            capture_size.height = 1952;
+        } else if (capture_size.height == 1836 && capture_size.width == 3264) {
+            capture_size.height = 1840;
+        } else if (capture_size.height == 360 && capture_size.width == 640) {
+            capture_size.height = 368;
+        } else if (capture_size.height == 1080 && capture_size.width == 1920) {
+            capture_size.height = 1088;
+        }
     }
-
     mOEMIf->SetDimensionPreview(preview_size);
     mOEMIf->SetDimensionCapture(capture_size);
     mOEMIf->SetDimensionVideo(video_size);

@@ -619,6 +619,67 @@ hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
 
     return pushout;
 }
+bool SprdCamera3MultiBase::alignTransform(void *src, int w_old, int h_old,
+                                          int w_new, int h_new, void *dest) {
+    if (w_new <= w_old && h_new <= h_old) {
+        HAL_LOGE("check size failed");
+        return false;
+    }
+    if (src == NULL || dest == NULL) {
+        HAL_LOGE("ops, src data or dest is empty, please check it");
+        return false;
+    }
+    int diff_num = 0;
+    unsigned char *srcTmp = (unsigned char *)src;
+    unsigned char *destTmp = (unsigned char *)dest;
+
+    if (h_new > h_old && w_new == w_old) {
+        // int heightOfData = height;
+        diff_num = h_new - h_old;
+
+        // copy y data
+        memcpy(destTmp, srcTmp, w_old * h_old);
+
+        // fill last y data
+        destTmp += w_old * h_old;
+        srcTmp += w_old * (h_old - 1);
+        for (int i = 0; i < diff_num; i++) {
+            memcpy(destTmp, srcTmp, w_old);
+            destTmp += w_old;
+        }
+
+        // copy uv data
+        srcTmp = (unsigned char *)src;
+        destTmp = (unsigned char *)dest;
+        destTmp += w_new * h_new;
+        srcTmp += w_old * h_old;
+        memcpy(destTmp, srcTmp, w_old * h_old / 2);
+
+        ////fill last uv data
+        srcTmp = (unsigned char *)src;
+        destTmp = (unsigned char *)dest;
+        destTmp += w_new * (h_new + h_old / 2);
+        srcTmp += w_old * h_old * 3 / 2 - w_old;
+        for (int i = 0; i < diff_num / 2; i++) {
+            memcpy(destTmp, srcTmp, w_old);
+            destTmp += w_old;
+        }
+    } else if (w_new > w_old && h_new == h_old) {
+        int heightOfData = h_new * 3 / 2;
+        diff_num = w_new - w_old;
+
+        for (int i = 0; i < heightOfData; i++) {
+            memcpy(destTmp, srcTmp, w_old);
+            for (int j = 0; j < diff_num; j++) {
+                *(destTmp + w_old + j) = *(srcTmp + w_old - 1);
+            }
+            srcTmp += w_old;
+            destTmp += w_new;
+        }
+    }
+    return true;
+}
+
 /*
 #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int width,

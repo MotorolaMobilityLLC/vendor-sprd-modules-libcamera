@@ -50,14 +50,14 @@ typedef struct _tag_ARC_DCIR_PARAM {
     MFloat fMaxFOV;      // [in]  The maximum camera FOV among horizontal and
                          // vertical in degree
     ARC_DCIR_FACE_PARAM
-        faceParam; // [in]  The information of faces in the left image
+    faceParam; // [in]  The information of faces in the left image
 } ARC_DCIR_PARAM, *LPARC_DCIR_PARAM;
 
 ARCDCIR_API const MPBASE_Version *ARC_DCIR_GetVersion();
 
 typedef struct _tag_ARC_DCIR_REFOCUS_PARAM {
     MPOINT
-        ptFocus; // [in]  The focus point to decide which region should be clear
+    ptFocus; // [in]  The focus point to decide which region should be clear
     MInt32 i32BlurIntensity; // [in]  The intensity of blur,Range is [0,100],
                              // default as 50.
 } ARC_DCIR_REFOCUS_PARAM, *LPARC_DCIR_REFOCUS_PARAM;

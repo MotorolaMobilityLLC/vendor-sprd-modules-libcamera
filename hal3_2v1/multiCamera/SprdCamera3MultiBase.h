@@ -90,6 +90,8 @@ class SprdCamera3MultiBase {
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
+    virtual bool alignTransform(void *src, int w_old, int h_old, int w_new,
+                                int h_new, void *dest);
     /*
 #ifdef CONFIG_FACE_BEAUTY
 virtual void doFaceMakeup(struct camera_frame_type *frame,

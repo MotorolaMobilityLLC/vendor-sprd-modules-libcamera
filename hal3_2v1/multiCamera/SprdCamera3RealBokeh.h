@@ -65,7 +65,12 @@
 #include "./arcsoft/arcsoft_dualcam_image_refocus.h"
 
 namespace sprdcamera {
+#define BOKEH_YUV_DATA_TRANSFORM
+#ifdef BOKEH_YUV_DATA_TRANSFORM
+#define LOCAL_CAPBUFF_NUM (5)
+#else
 #define LOCAL_CAPBUFF_NUM (4)
+#endif
 #define LOCAL_PREVIEW_NUM (18)
 #define LOCAL_DEPTH_OUTBUFF_NUM 2
 #define LOCAL_BUFFER_NUM                                                       \
@@ -373,6 +378,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int32_t mFaceInfo[4];
     int mCaptureWidth;
     int mCaptureHeight;
+#ifdef BOKEH_YUV_DATA_TRANSFORM
+    int mTransformWidth;
+    int mTransformHeight;
+#endif
     int mPreviewWidth;
     int mPreviewHeight;
     int mCallbackWidth;
