@@ -116,6 +116,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES += liblog
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
 endif

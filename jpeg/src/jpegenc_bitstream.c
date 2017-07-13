@@ -92,7 +92,9 @@ PUBLIC void JPEGFW_PutW_II(uint16 w)
 PUBLIC void JPEGFW_PutBits32_II(uint32 val, uint32 nbits)
 {
 	uint32 tmp = (((val & 0xFF) << 24) | (((val >> 8) & 0xFF) << 16) | (((val >> 16) & 0xFF) << 8) | ((val >> 24) & 0xFF) );
+#ifndef ANDROID_VERSION_O_BRINGUP
 	JPEGFW_PutBits(tmp, 32);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////

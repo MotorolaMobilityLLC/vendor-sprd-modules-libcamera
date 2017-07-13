@@ -1,4 +1,3 @@
-#include <camera/Camera.h>
 #include <utils/Log.h>
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 #include "hal3_2v1/SprdCamera3OEMIf.h"
