@@ -5131,6 +5131,9 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         //		mSprdPipVivEnabled = 1;
         if ((mSprdPipVivEnabled || mSprdRefocusEnabled) && (parm4 != NULL)) {
             Sprd_camera_state tmpCapState = getCaptureState();
+            struct camera_frame_type *zsl_frame = NULL;
+            zsl_frame = (struct camera_frame_type *)parm4;
+            uint32_t buf_id = 0;
             HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d camera "
                      "id = %d",
                      tmpCapState,
@@ -5146,6 +5149,18 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                 LOGE("HandleEncode: CAMERA_EXIT_CB_DONE error cap status, %s",
                      getCameraStateStr(tmpCapState));
                 transitionState(tmpCapState, SPRD_ERROR, STATE_CAPTURE);
+            }
+            if (zsl_frame->fd <= 0) {
+                HAL_LOGW("zsl lost a buffer, this should not happen");
+                break;
+            }
+            HAL_LOGD("PIP Return zsl_frame->fd=0x%x", zsl_frame->fd);
+            buf_id = getZslBufferIDForFd(zsl_frame->fd);
+            if (buf_id != 0xFFFF) {
+                mHalOem->ops->camera_set_zsl_buffer(
+                    mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
+                    (cmr_uint)mZslHeapArray[buf_id]->data,
+                    mZslHeapArray[buf_id]->fd);
             }
         }
         break;
@@ -5228,7 +5243,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
             }
             HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
             buf_id = getZslBufferIDForFd(zsl_frame->fd);
-            if (buf_id != 0xFFFFFFFF) {
+            if (buf_id != 0xFFFF) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
                     (cmr_uint)mZslHeapArray[buf_id]->data,
@@ -8298,7 +8313,7 @@ void SprdCamera3OEMIf::setZslBuffers() {
 }
 
 uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd) {
-    uint32_t id = 0xFFFFFFFF;
+    uint32_t id = 0xFFFF;
     uint32_t i;
     for (i = 0; i < mZslHeapNum; i++) {
         if (0 != mZslHeapArray[i]->fd && mZslHeapArray[i]->fd == fd) {

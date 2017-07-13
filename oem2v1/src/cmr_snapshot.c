@@ -3991,12 +3991,15 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
             (struct camera_context *)cxt->oem_handle;
         CMR_LOGD("camera id %d, refocus_mode %d", oem_cxt->camera_id,
                  oem_cxt->is_refocus_mode);
-        if (oem_cxt->is_refocus_mode == 2)
+        if (oem_cxt->is_refocus_mode == 2) {
             frame_type->y_vir_addr = info->yaddr_vir;
-        else
+             frame_type->fd = info->fd;
+        }
+        else {
             frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
+            frame_type->fd = mem_ptr->target_yuv.fd;
+        }
 
-        frame_type->fd = mem_ptr->target_yuv.fd;
         frame_type->y_phy_addr = mem_ptr->target_yuv.addr_phy.addr_y;
         frame_type->uv_vir_addr = mem_ptr->target_yuv.addr_vir.addr_u;
         frame_type->uv_phy_addr = mem_ptr->target_yuv.addr_phy.addr_u;
