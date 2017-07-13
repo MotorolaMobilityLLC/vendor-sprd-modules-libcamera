@@ -923,6 +923,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, struct isp_awb_calc_i
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 
+	memset(&gain, 0, sizeof(gain));
 	if (cxt->ae_cxt.sw_bypass) {
 		return ret;
 	}
@@ -988,6 +989,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	struct ae_get_ev ae_ev;
 
 	memset(&ae_ev, 0, sizeof(ae_ev));
+	memset(&info, 0, sizeof(info));
 
 	if (!in_ptr || !out_ptr || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
@@ -1208,6 +1210,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
+	memset(&info, 0, sizeof(info));
 
 	CMR_MSG_INIT(message);
 
@@ -1407,6 +1410,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct isp_statis_buf_input statis_buf;
 	cmr_u32 u_addr = 0;
 
+	memset(&afl_output, 0, sizeof(afl_output));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
 	u_addr = statis_info->vir_addr;
@@ -1490,6 +1494,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct isp_statis_info *statis_info = NULL;
 	cmr_uint u_addr = 0;
 	cmr_s32 i = 0;
+	cmr_u32 af_temp[30];
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
@@ -1503,7 +1508,6 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			statis_info = (struct isp_statis_info *)in_ptr;
 			u_addr = statis_info->vir_addr;
 
-			cmr_u32 af_temp[30];
 			for (i = 0; i < 30; i++) {
 				af_temp[i] = *((cmr_u32 *) u_addr + i);
 			}
@@ -1550,6 +1554,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	UNUSED(data_type);
 
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
+	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
 	u_addr = statis_info->vir_addr;
@@ -2041,6 +2046,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	memset((void *)&input, 0, sizeof(input));
 	memset((void *)&output, 0, sizeof(output));
 	memset((void *)&param, 0, sizeof(param));
+	memset((void *)&info, 0, sizeof(info));
 
 	cxt->awb_cxt.cur_gain.r = 1;
 	cxt->awb_cxt.cur_gain.b = 1;
@@ -2854,6 +2860,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	cmr_s32 bv = 0;
 	cmr_s32 bv_gain = 0;
 
+	memset(&result, 0, sizeof(result));
 	/*update aem information */
 	cxt->aem_is_update = 0;
 
@@ -2950,6 +2957,8 @@ static cmr_int ispalg_update_alsc_param(cmr_handle isp_alg_handle)
 		struct awb_size stat_img_size;
 		struct awb_size win_size;
 		struct isp_ae_grgb_statistic_info *stat_info;
+		memset(&stat_img_size, 0, sizeof(stat_img_size));
+		memset(&win_size, 0, sizeof(win_size));
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 		ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
@@ -3530,10 +3539,8 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		dlclose(cxt->ispalg_lib_handle);
 		cxt->ispalg_lib_handle = NULL;
 	}
-	if (cxt) {
-		free((void *)cxt);
-		cxt = NULL;
-	}
+	free((void *)cxt);
+	cxt = NULL;
 
 exit:
 	ISP_LOGI("done %d", ret);

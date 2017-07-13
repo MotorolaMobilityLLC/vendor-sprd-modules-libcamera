@@ -215,7 +215,6 @@ cmr_s32 isp_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input *b
 
 /*ISP Sub Block: AWBM*/
 cmr_s32 isp_u_awb_block(cmr_handle handle, void *block_info);
-cmr_s32 isp_u_awbm_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info);
 cmr_s32 isp_u_awbm_bypass(cmr_handle handle, cmr_u32 bypass);
 cmr_s32 isp_u_awbm_mode(cmr_handle handle, cmr_u32 mode);
 cmr_s32 isp_u_awbm_skip_num(cmr_handle handle, cmr_u32 num);
@@ -437,7 +436,6 @@ cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height
 cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_raw_aem_mode(cmr_handle handle, cmr_u32 mode);
-cmr_s32 isp_u_raw_aem_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info);
 cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num);
 cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *shift);
 cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y);

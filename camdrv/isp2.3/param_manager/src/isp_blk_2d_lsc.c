@@ -202,15 +202,18 @@ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_c
 			if (is_print_log)
 				ISP_LOGV("suitable lsc find! min index = %d, min ct diff=%d", dst_index, min_ct_diff);
 
-			src_size.w = cali_lsc_ptr->map[dst_index].width;
-			src_size.h = cali_lsc_ptr->map[dst_index].height;
-			dst_size.w = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.width;
-			dst_size.h = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.height;
-			cmr_u16 *dst_data = (cmr_u16 *) ((cmr_u8 *) & lsc_ptr->tab_info.lsc_2d_map + lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_offset);
-			cmr_u32 dst_data_size = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_len;
-
-			if (src_size.w == dst_size.w && src_size.h == dst_size.h && src_data_size == dst_data_size) {
-				memcpy(dst_data, src_data, dst_data_size);
+			if(dst_index < ISP_CALIBRATION_MAX_LSC_NUM){
+				src_size.w = cali_lsc_ptr->map[dst_index].width;
+				src_size.h = cali_lsc_ptr->map[dst_index].height;
+			}
+			if(dst_index < LNC_MAP_COUNT){
+				dst_size.w = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.width;
+				dst_size.h = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.height;
+				cmr_u16 *dst_data = (cmr_u16 *) ((cmr_u8 *) & lsc_ptr->tab_info.lsc_2d_map + lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_offset);
+				cmr_u32 dst_data_size = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_len;
+				if (src_size.w == dst_size.w && src_size.h == dst_size.h && src_data_size == dst_data_size) {
+					memcpy(dst_data, src_data, dst_data_size);
+			}
 				if (is_print_log)
 					ISP_LOGV("size is the same, just copy!");
 			} else {

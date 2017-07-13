@@ -2077,7 +2077,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			data_len = sizeof(struct sensor_libuse_info);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
-			if (0 != data_len && NULL != data_addr) {
+			if (NULL != data_addr) {
 				memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
 				rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
 			} else {
@@ -2308,10 +2308,12 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				offset = 0;
 				flag = 0;
-				if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
-					ISP_LOGV(" sensor raw mode ptr addr is , mode_id=%d", mode_id);
+				if (MAX_MODE_NUM > mode_id){
+					if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
+						ISP_LOGV(" sensor raw mode ptr addr is , mode_id=%d", mode_id);
+					}
+					memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
 				}
-				memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
@@ -2553,7 +2555,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				offset = 0;
 				flag = 0;
-				memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note, data_addr, sensor_raw_info_ptr->note_ptr[mode_id].node_len);
+				if (MAX_MODE_NUM > mode_id)
+					memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note, data_addr, sensor_raw_info_ptr->note_ptr[mode_id].node_len);
 				if (NULL != data_addr) {
 					free(data_addr);
 					data_addr = NULL;

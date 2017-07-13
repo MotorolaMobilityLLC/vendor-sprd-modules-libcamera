@@ -622,6 +622,7 @@ static cmr_int ispctl_video_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_s32 mode = 0;
+	cmr_u32 idx = 0;
 	struct ae_set_fps fps;
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
@@ -667,7 +668,7 @@ static cmr_int ispctl_video_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 #ifdef SEPARATE_GAMMA_IN_VIDEO
 	if (*((cmr_u32 *) param_ptr) != 0) {
-		cmr_u32 idx = VIDEO_GAMMA_INDEX;
+		idx = VIDEO_GAMMA_INDEX;
 		if (cxt->ops.smart_ops.block_disable)
 			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, &idx, sizeof(idx));
@@ -888,7 +889,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		return ISP_PARAM_NULL;
 	}
 
-	if (cxt->awb_cxt.alc_awb || log_ae_size) {
+	if (cxt->awb_cxt.alc_awb) {
 		total_size = cxt->awb_cxt.log_alc_awb_size + cxt->awb_cxt.log_alc_lsc_size;
 
 		if (cxt->ae_cxt.log_alc_size < total_size) {
@@ -1003,7 +1004,7 @@ static cmr_int ispctl_get_awb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
-
+	memset(&result, 0, sizeof(result));
 	if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
 

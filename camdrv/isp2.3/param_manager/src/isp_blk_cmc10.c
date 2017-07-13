@@ -161,6 +161,8 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 				}
 
 				void *src_matrix[2] = { NULL };
+				cmr_u16 flash_result[SENSOR_CMC_POINT_NUM] = { 0 };
+				cmr_u16 tmp_result[SENSOR_CMC_POINT_NUM] = { 0 };
 				src_matrix[0] = &ct_result[0][0];
 				src_matrix[1] = &ct_result[1][0];
 
@@ -173,8 +175,6 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 				isp_interp_data(bv_result, src_matrix, weight, 9, ISP_INTERP_INT14);
 
 				if (block_result->component[0].flash == 1) {
-					cmr_u16 flash_result[SENSOR_CMC_POINT_NUM] = { 0 };
-
 					src_matrix[0] = cmc10_ptr->matrix[weight_value[3].value[0]];
 					src_matrix[1] = cmc10_ptr->matrix[weight_value[3].value[1]];
 					weight[0] = weight_value[3].weight[0];
@@ -183,7 +183,6 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 					weight[1] = SMART_WEIGHT_UNIT - weight[0];
 					isp_interp_data(flash_result, src_matrix, weight, 9, ISP_INTERP_INT14);
 
-					cmr_u16 tmp_result[SENSOR_CMC_POINT_NUM] = { 0 };
 					memcpy(tmp_result, bv_result, sizeof(cmc10_ptr->result_cmc));
 
 					src_matrix[0] = &flash_result[0];
@@ -216,10 +215,8 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 				is_reduce = 1;
 				update = 1;
 
-				if (0 != update) {
-					_pm_cmc10_adjust(cmc10_ptr, is_reduce);
-					cmc10_header_ptr->is_update = ISP_ONE;
-				}
+				_pm_cmc10_adjust(cmc10_ptr, is_reduce);
+				cmc10_header_ptr->is_update = ISP_ONE;
 			}
 		}
 		break;
