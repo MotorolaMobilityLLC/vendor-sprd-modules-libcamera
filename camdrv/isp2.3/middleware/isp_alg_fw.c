@@ -620,6 +620,14 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AFM_MODULES_CFG:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, param0, param1);
 		break;
+	case ISP_AF_GET_SYSTEM_TIME: {
+		cmr_u32 sec = 0;
+		cmr_u32 usec = 0;
+		ret = ispalg_get_k_timestamp(cxt, &sec, &usec);
+		*(cmr_u32 *)param0 = sec;
+		*(cmr_u32 *)param1 = usec;
+		}
+		break;
 	default:
 		break;
 	}

@@ -391,6 +391,9 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 	case ISP_AFM_MODULES_CFG:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, param0, param1);
 		break;
+	case ISP_AF_GET_SYSTEM_TIME:
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_SYSTEM_TIME, param0, param1);
+		break;
 	default:
 		break;
 	}
