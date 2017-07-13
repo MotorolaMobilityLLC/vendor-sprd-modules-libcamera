@@ -84,7 +84,7 @@ LOCAL_MODULE := libcamdrv
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES := libcutils libutils libdl
+LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamcommon libcampm
 
