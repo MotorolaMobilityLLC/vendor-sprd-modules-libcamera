@@ -844,35 +844,39 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
         HAL_LOGE("set a default value(5M) to app, in case exception");
         setLargestSensorSize(cameraId, 2592, 1944);
+        memcpy(&sensor_fov[cameraId], &default_sensor_fov[cameraId],
+               sizeof(default_sensor_fov[cameraId]));
         goto exit;
     }
 
-    HAL_LOGD("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
-             cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_height_max,
-             sensor_cxt->sensor_list_ptr[cameraId]->source_width_max);
-
     mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
-    HAL_LOGD("camera id = %d, sensor name: %s, sensorFocusEnable = %d",
-             cameraId, sensor_cxt->sensor_info_ptr->name,
-             mSensorFocusEnable[cameraId]);
 
     if (sensor_cxt->fov_info.physical_size[0] <= 0 ||
-                 sensor_cxt->fov_info.physical_size[1] <= 0 ||
-                 sensor_cxt->fov_info.focal_lengths <= 0) {
+        sensor_cxt->fov_info.physical_size[1] <= 0 ||
+        sensor_cxt->fov_info.focal_lengths <= 0) {
+        HAL_LOGI("fov info is not configured, use default fov info");
         memcpy(&sensor_fov[cameraId], &default_sensor_fov[cameraId],
-                 sizeof(default_sensor_fov[cameraId]));
+               sizeof(default_sensor_fov[cameraId]));
+
     } else {
-        memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info, sizeof(sensor_cxt->fov_info));
+        memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info,
+               sizeof(sensor_cxt->fov_info));
     }
-    HAL_LOGD("debug---: sensor %s fov physical size (%f, %f), focal_lengths %f",
-                           sensor_cxt->sensor_info_ptr->name,
-                           sensor_fov[cameraId].physical_size[0],
-                           sensor_fov[cameraId].physical_size[1],
-                           sensor_fov[cameraId].focal_lengths);
 
     setLargestSensorSize(
         cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
         sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
+
+    HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
+             cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_height_max,
+             sensor_cxt->sensor_list_ptr[cameraId]->source_width_max);
+
+    HAL_LOGI("sensor name: %s, sensorFocusEnable = %d, fov physical size (%f, "
+             "%f), focal_lengths %f",
+             sensor_cxt->sensor_info_ptr->name, mSensorFocusEnable[cameraId],
+             sensor_fov[cameraId].physical_size[0],
+             sensor_fov[cameraId].physical_size[1],
+             sensor_fov[cameraId].focal_lengths);
 
 exit:
     sensor_close_common(sensor_cxt, cameraId);
@@ -1004,7 +1008,8 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            klens_shading_map_size, sizeof(klens_shading_map_size));
 
     memcpy(camera3_default_info.common.sensor_physical_size,
-        sensor_fov[cameraId].physical_size, sizeof(sensor_fov[cameraId].physical_size));
+           sensor_fov[cameraId].physical_size,
+           sizeof(sensor_fov[cameraId].physical_size));
     HAL_LOGI("Camera %d, physical_size %f, %f", cameraId,
              camera3_default_info.common.sensor_physical_size[0],
              camera3_default_info.common.sensor_physical_size[1]);
@@ -1154,7 +1159,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].lens_InfoInfo.hyperfocal_distance = 2.0f;
 
     s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
-           sensor_fov[cameraId].focal_lengths;
+        sensor_fov[cameraId].focal_lengths;
 
     s_setting[cameraId].lens_InfoInfo.available_apertures =
         default_info->common.aperture;
@@ -3666,7 +3671,7 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
         s_setting[mCameraId].sprddefInfo.refocus_enable = valueU8;
         pushAndroidParaTag(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE);
-        HAL_LOGD("camera id %d, refocus mode %d", mCameraId, valueU8);
+        HAL_LOGV("camera id %d, refocus mode %d", mCameraId, valueU8);
     }
     if (frame_settings.exists(ANDROID_SPRD_SET_TOUCH_INFO)) {
         s_setting[mCameraId].sprddefInfo.touchxy[0] =
@@ -3674,7 +3679,7 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].sprddefInfo.touchxy[1] =
             frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[1];
         pushAndroidParaTag(ANDROID_SPRD_SET_TOUCH_INFO);
-        HAL_LOGD("touch info %d %d",
+        HAL_LOGV("touch info %d %d",
                  s_setting[mCameraId].sprddefInfo.touchxy[0],
                  s_setting[mCameraId].sprddefInfo.touchxy[1]);
     }
@@ -3682,24 +3687,23 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled =
             frame_settings.find(ANDROID_SPRD_PIPVIV_ENABLED).data.u8[0];
         pushAndroidParaTag(ANDROID_SPRD_PIPVIV_ENABLED);
-        HAL_LOGD("sprd pipviv enabled is %d",
+        HAL_LOGV("sprd pipviv enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
     }
-    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)){
-       s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
+    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
             frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-       pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-       HAL_LOGD("sprd fixed fps enabled is %d",
-            s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+        pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
+        HAL_LOGV("sprd fixed fps enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
     }
 
-    HAL_LOGD("cap_intent=%d, perfectskinlevel=%d, eis=%d, flash_mode=%d, "
-             "ae_lock=%d, scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg "
-             "orien=%d, zsl=%d, 3dcali=%d, crop %d %d %d %d "
-             "cropRegionUpdate=%d, am_mode=%d, updateAE=%d, ae_regions: %d %d "
-             "%d %d %d, af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d "
-             "%d %d %d %d, sprd_hdr_plus_enable:%d",
-             s_setting[mCameraId].controlInfo.capture_intent,
+    HAL_LOGD("perfectskinlevel=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
+             "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
+             "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
+             "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
+             "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
+             "%d, sprd_hdr_plus_enable:%d",
              s_setting[mCameraId].sprddefInfo.perfect_skin_level,
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
              s_setting[mCameraId].flashInfo.mode,
