@@ -225,6 +225,18 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		goto exit;
 	}
 
+
+	char otp_pdaf_name[1024];
+	property_get("debug.isp.pdaf.otp.filename", otp_pdaf_name, "/dev/null");
+	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
+		FILE* fp = fopen(otp_pdaf_name, "rb");
+		if (fp != NULL) {
+			in_p->pdaf_otp.size = fread(in_p->pdaf_otp.otp_data, 1, 4096, fp);
+			fclose(fp);
+		}
+	}
+
+
 	isp_ctx = (struct isp_alg_fw_context *)in_p->caller_handle;
 	cxt = (struct sprd_pdaf_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
@@ -294,7 +306,15 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	//0: Normal, 1:Mirror+Flip
 	cxt->pd_gobal_setting.dSensorSetting = 1;
 	
-
+	property_get("debug.isp.pdaf.otp.dump", otp_pdaf_name, "/dev/null");
+	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
+		FILE* fp = fopen(otp_pdaf_name, "wb");
+		if (fp != NULL) {
+			fwrite(in_p->pdaf_otp.otp_data, 1, in_p->pdaf_otp.size, fp);
+			fclose(fp);
+		}
+	}
+	
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
 	if (ret) {
