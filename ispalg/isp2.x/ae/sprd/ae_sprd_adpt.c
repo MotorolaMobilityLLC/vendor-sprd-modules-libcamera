@@ -5119,6 +5119,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			cxt->cur_result.wts.cur_again = cxt->last_exp_param.gain;
 			cxt->cur_result.wts.cur_dummy = cxt->last_exp_param.dummy;
 		}
+		cxt->cur_result.wts.exposure_time = cxt->last_exp_param.exp_time;
 		cxt->cur_result.wts.cur_index = cxt->last_index;
 	} else {
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)\
