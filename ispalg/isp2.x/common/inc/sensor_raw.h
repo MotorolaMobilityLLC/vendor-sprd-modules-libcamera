@@ -614,12 +614,11 @@ struct sensor_cce_uvdiv_level {
 
 //3DNR, two sets for pre and cap at least
 struct sensor_3dnr_cfg {
-	cmr_u8 src_wgt;
+	cmr_u8 src_wgt[4];
 	cmr_u8 nr_thr;
 	cmr_u8 nr_wgt;
 	cmr_u8 thr_polyline[9];
 	cmr_u8 gain_polyline[9];
-	cmr_u8 reserved[3];
 };
 
 struct sensor_3dnr_factor {
