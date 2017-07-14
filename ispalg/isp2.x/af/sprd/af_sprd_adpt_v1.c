@@ -1399,8 +1399,8 @@ static void af_stop_search(af_ctrl_t * af)
 	pthread_mutex_lock(&af->af_work_lock);
 	AF_STOP(af->af_alg_cxt);
 	AF_Process_Frame(af->af_alg_cxt);
-	pthread_mutex_unlock(&af->af_work_lock);
 	af->focus_state = AF_IDLE;
+	pthread_mutex_unlock(&af->af_work_lock);
 }
 
 static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
@@ -1762,6 +1762,13 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		break;
 	}
 
+	if (AF_MODE_FULLSCAN == af_mode || AF_MODE_NORMAL == af_mode) {
+		if (AF_SEARCHING == af->focus_state) {
+			ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
+			af_stop_search(af);
+		}
+	}
+
 	return rtn;
 }
 
@@ -1775,11 +1782,6 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
 	property_set("af_mode", "none");
 	af->test_loop_quit = 1;
-
-	if (AF_SEARCHING == af->focus_state) {
-		ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
-		af_stop_search(af);
-	}
 
 	if (STATE_FULLSCAN == af->state) {
 		af->algo_mode = CAF;
@@ -2189,10 +2191,6 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	cmr_int rtn = AFV1_SUCCESS;
 
 	switch (cmd) {
-	case AF_CMD_SET_AF_MODE:
-		rtn = af_sprd_set_af_mode(handle, param0);
-		break;
-
 	case AF_CMD_SET_AF_POS:
 		if (NULL != af->af_lens_move) {
 			af->af_lens_move(af->caller, *(cmr_u16 *) param0);
@@ -2202,10 +2200,6 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	case AF_CMD_SET_TUNING_MODE:
 		break;
 	case AF_CMD_SET_SCENE_MODE:
-		break;
-
-	case AF_CMD_SET_AF_START:
-		rtn = af_sprd_set_af_trigger(handle, param0);
 		break;
 
 	case AF_CMD_SET_AF_STOP:
@@ -2235,10 +2229,6 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 
 	case AF_CMD_SET_ISP_START_INFO:
 		rtn = af_sprd_set_video_start(handle, param0);
-		break;
-
-	case AF_CMD_SET_ISP_STOP_INFO:
-		rtn = af_sprd_set_video_stop(handle, param0);
 		break;
 
 	case AF_CMD_SET_ISP_TOOL_AF_TEST:
@@ -2623,6 +2613,24 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check cxt");
 		return AFV1_ERROR;
+	}
+	// all the af_process with lock should be put here, not be in ioctrl with lock
+	if (AF_CMD_SET_AF_MODE == cmd || AF_CMD_SET_AF_START == cmd || AF_CMD_SET_ISP_STOP_INFO == cmd) {
+		switch (cmd) {
+		case AF_CMD_SET_AF_MODE:
+			rtn = af_sprd_set_af_mode(handle, param0);
+			break;
+		case AF_CMD_SET_AF_START:
+			rtn = af_sprd_set_af_trigger(handle, param0);
+			break;
+		case AF_CMD_SET_ISP_STOP_INFO:
+			rtn = af_sprd_set_video_stop(handle, param0);
+			break;
+		default:
+			break;
+		}
+		ISP_LOGV("without lock rtn %ld", rtn);
+		return rtn;
 	}
 
 	pthread_mutex_lock(&af->status_lock);
