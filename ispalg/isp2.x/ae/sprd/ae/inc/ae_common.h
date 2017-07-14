@@ -435,9 +435,10 @@ struct ae_alg_calc_param {
 	cmr_u8 monitor_shift;	//for ae monitor data overflow
 	cmr_u8 win1_weight;	//for touch ae
 	cmr_u8 win2_weight;	//for touch ae
-	cmr_s16 start_index;
+	cmr_s8 target_offset;
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;
+	cmr_s16 start_index;
 	cmr_u32 line_time;
 	cmr_s16 snr_max_fps;
 	cmr_s16 snr_min_fps;
