@@ -216,11 +216,9 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
-    BOOLEAN power_down = MIPI_RAW_INFO.power_down_level;
     BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
@@ -231,7 +229,6 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
 
         usleep(1 * 1000);
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
@@ -239,7 +236,6 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         usleep(200);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
