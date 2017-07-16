@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.123"
-#define SUB_VERSION             "-00-HAF"
+#define VERSION             "2.124"
+#define SUB_VERSION             "-05-HAF"
 
 #define STRING(s) #s
 
@@ -504,8 +504,11 @@ typedef struct pdaftuning_param_s{
 	cmr_u32 near_tolerance;
 	cmr_u32 err_limit;
 	cmr_u32 pd_converge_thr;
+	cmr_u32 pd_converge_thr_2nd;
 	cmr_u32 pd_focus_times_thr;
-	cmr_u32 reserved[59];
+	cmr_u32 pd_thread_sync_frm;
+	cmr_u32 pd_thread_sync_frm_init;
+	cmr_u32 reserved[56];
 }pdaftuning_param_t;
 
 typedef struct _AF_Tuning_Para {
@@ -694,6 +697,7 @@ typedef struct _af_control_status_s {
 	cmr_u32 debug_cb;
 	cmr_u32 env_avgy_histroy[AF_CHECK_SCENE_HISTORY];
 	cmr_u32 lock_status;
+	cmr_u32 last_lock_status;
 	pd_info_t pd_info;
 } afctrl_status_t;
 
@@ -798,7 +802,8 @@ typedef struct pd_algo_focuing_s {
 	double  Area4_pd_value[PD_MAX_MOVECOUNT];
 	cmr_u32 cur_vcm_pos[PD_MAX_MOVECOUNT];
 	cmr_s32 delta_vcm[PD_MAX_MOVECOUNT];
-	cmr_u32 reserved[16];
+	cmr_u32 fv_info[PD_MAX_MOVECOUNT];
+	cmr_u32 reserved[16-PD_MAX_MOVECOUNT];
 } pd_algo_focusing_t;
 
 typedef struct pd_algo_result_s {
@@ -831,8 +836,9 @@ typedef struct _pdaf_process_s
 	pd_algo_focusing_t pd_focusing;
 	pd_algo_result_t pd_result;
 	cmr_u32 proc_status;
-	cmr_u32 curr_pd_frmid;
+	cmr_u32 vcm_drive_frmid;
 	cmr_u32 pre_pd_frmid;
+	cmr_u32 init_pd_frmid;
 	cmr_u32 confidence_level;
 	cmr_u32 pd_active;
 	cmr_u32 cd_active;
@@ -860,7 +866,11 @@ typedef struct _pdaf_process_s
 	cmr_u32 select_roi;
 	double phase_diff_value;
 	cmr_u32 conf_value;
-	cmr_u32 reserved[59];
+	cmr_u32 focusing_dir;
+	cmr_u32 hybrid_focus;
+	cmr_u32 fv_stat_sum;
+	cmr_u32 fv_stat_weight;
+	cmr_u32 reserved[54];
 }_pdaf_process_t;
 
 typedef struct motion_sensor_data_s {
@@ -1089,7 +1099,8 @@ typedef struct _af_time_info_s {
 	cmr_u64 vcm_timestamp;
 	cmr_u64 dcam_timestamp;
 	cmr_u64 takepic_timestamp;
-	cmr_u64 reserved[16];
+	cmr_u64 local_frame_id;
+	cmr_u64 reserved[15];
 } _af_time_info_t;
 
 typedef struct _af_history_info_s {
@@ -1132,6 +1143,7 @@ typedef struct _AF_Data {
 	face_af_tuning_t face_param; // 92 bytes
 	_weight_table_t weight_table;	//288 bytes
 	_af_history_info_t history_data;
+	_af_history_info_t runtime_data;
 	cmr_u32 postpone_notice;
 	cmr_u32 distance_reminder;
 	cmr_u32 near_dist;
@@ -1150,6 +1162,7 @@ typedef struct _AF_Data {
 	cmr_u32 far_maxfv_index;
 	cmr_s32 far_shift;
 	cmr_u32 face_delay;
+	cmr_u64 FV_record;
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 
