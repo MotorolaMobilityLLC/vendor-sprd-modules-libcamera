@@ -5158,11 +5158,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
-	if (1 == cxt->tuning_param_enable[work_info->mode])
-		mode = work_info->mode;
-	else
-		mode = AE_WORK_MODE_COMMON;
-	
+	mode = AE_WORK_MODE_COMMON;//AE block only be in common
+
 	memcpy(&cxt->tuning_param[mode].ae_table[0][0],\
 		&cxt->tuning_param[mode].backup_ae_table[0][0],\
 		AE_FLICKER_NUM * AE_ISO_NUM * sizeof(struct ae_exp_gain_table));
@@ -5178,7 +5175,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 				exposure_time2line(src, dst, cxt->cur_status.line_time, cxt->tuning_param[mode].ae_tbl_exp_mode);
 			}
-		} 
+		}
 	}
 
 	for (cmr_s32 j = 0; j < AE_SCENE_NUM; ++j) {
@@ -5186,11 +5183,12 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		struct ae_exp_gain_table* dst[AE_FLICKER_NUM];
 		src[AE_FLICKER_50HZ] = &cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ];
 		src[AE_FLICKER_60HZ] = &cxt->back_scene_mode_ae_table[j][AE_FLICKER_60HZ];
-		dst[AE_FLICKER_50HZ] = &cxt->tuning_param[work_info->mode].scene_info[j].ae_table[AE_FLICKER_50HZ];
-		dst[AE_FLICKER_60HZ] = &cxt->tuning_param[work_info->mode].scene_info[j].ae_table[AE_FLICKER_60HZ];
-		if (1 == cxt->tuning_param[work_info->mode].scene_info[j].table_enable) {
+		dst[AE_FLICKER_50HZ] = &cxt->tuning_param[mode].scene_info[j].ae_table[AE_FLICKER_50HZ];
+		dst[AE_FLICKER_60HZ] = &cxt->tuning_param[mode].scene_info[j].ae_table[AE_FLICKER_60HZ];
+
+		if (1 == cxt->tuning_param[mode].scene_info[j].table_enable) {
 			exposure_time2line(src, dst, cxt->cur_status.line_time,
-							  cxt->tuning_param[work_info->mode].scene_info[j].exp_tbl_mode);
+							  cxt->tuning_param[mode].scene_info[j].exp_tbl_mode);
 		}
 	}
 
