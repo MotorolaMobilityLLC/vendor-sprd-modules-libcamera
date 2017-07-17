@@ -23,6 +23,7 @@ enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_LEFT,
 	PDAF_DATA_TYPE_RIGHT,
 	PDAF_DATA_TYPE_OUT,
+	PDAF_DATA_TYPE_RAW_OUT,
 	PDAF_DATA_TYPE_MAX
 };
 enum pdaf_ctrl_cmd_type {

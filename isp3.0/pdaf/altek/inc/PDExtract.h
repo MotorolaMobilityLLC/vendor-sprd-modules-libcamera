@@ -2,6 +2,18 @@
 #define __PDData_H__
 #include "alPDAF.h"
 
+#define ERR_SUCCESS               0
+#define ERR_NULL_POINTER          1
+#define ERR_OUT_OF_BOUNDARY       2
+#define ERR_BUFFER_SIZE           3
+#define ERR_NULL_INPUT_ROI        4
+#define ERR_NULL_PD_DATA_WIDTH    5
+#define ERR_NULL_PD_DATA_HEIGHT   6
+#define ERR_ZERO_PD_DATA_PITCH    7
+#define ERR_ZERO_PD_DATA_DENSITY  8
+#define ERR_ZERO_RAW_WIDTH        9
+#define ERR_ZERO_RAW_HEIGHT       10
+
 struct altek_pos_info {
     unsigned short pd_pos_x;
     unsigned short pd_pos_y;
@@ -30,13 +42,16 @@ extern int alPDExtract_GetSize(struct altek_pdaf_info *PDSensorInfo,
                                unsigned short RawFileHeight,
                                unsigned short *PDDataWidth,
                                unsigned short *PDDataHeight);
+extern int alPDExtract_Run(struct altek_pdaf_info *PDSensorInfo,
+                                   unsigned char *RawFile,
+                                   alPD_RECT *InputROI,
+                                   unsigned short RawFileWidth,
+                                   unsigned short RawFileHeight,
+                                   unsigned short *PDOutLeft,
+                                   unsigned short *PDOutRight,
+                                   unsigned short *PDDataWidth,
+                                   unsigned short *PDDataHeight);
 
-extern int alPDExtract_Run(unsigned char *RawFile,
-                           alPD_RECT *InputROI,
-                           unsigned short RawFileWidth,
-                           unsigned short RawFileHeight,
-                           unsigned short *PDOutLeft,
-                           unsigned short *PDOutRight);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

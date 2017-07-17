@@ -33,7 +33,7 @@
 
 #define PDLIB_PATH "libalPDAF.so"
 //#define PDEXTRACT_LIBPATH "libalPDExtract.so"
-#define PDEXTRACT_LIBPATH "libPDExtract.so"
+#define PDEXTRACT_LIBPATH "libalPDExtract.so"
 #define PDEXTRACT_TYPE2_LIBPATH "libalpdextract2.so"
 #define PD_REG_OUT_SIZE 352
 #define PD_OTP_PACK_SIZE 550
@@ -51,8 +51,8 @@ struct pdaf_type3_extract_ops {
 	cmr_s32 (*getsize)(struct altek_pdaf_info *PDSensorInfo, alPD_RECT *InputROI,
 					unsigned short RawFileWidth, unsigned short RawFileHeight,
 					unsigned short *PDDataWidth, unsigned short *PDDataHeight);
-	cmr_s32 (*extract)(cmr_u8 *RawFile, alPD_RECT *InputROI, cmr_u16 RawFileWidth,
-					cmr_u16 RawFileHeight, cmr_u16 *PDOutLeft, cmr_u16 *PDOutRight);
+	cmr_s32 (*extract)(struct altek_pdaf_info *PDSensorInfo, cmr_u8 *RawFile, alPD_RECT *InputROI, cmr_u16 RawFileWidth,
+					cmr_u16 RawFileHeight, cmr_u16 *PDOutLeft, cmr_u16 *PDOutRight,unsigned short *PDDataWidth, unsigned short *PDDataHeight);
 };
 
 struct pdaf_type2_extract_ops {
@@ -692,6 +692,19 @@ cmr_int pdafaltek_dump_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u
 
 		fwrite((void *)addr, 1, PD_REG_OUT_SIZE, fp);
 		fclose(fp);
+	} else if (PDAF_DATA_TYPE_RAW_OUT == img_fmt) {
+		strcat(file_name, "_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".raw");
+		ISP_LOGI("file name %s", file_name);
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
+		fwrite((void *)addr, 1, (cmr_u32)(width * height * 5 / 4), fp);
+		fclose(fp);
 	}
 	return 0;
 }
@@ -741,17 +754,16 @@ static cmr_int pdafaltek_adpt_extract_type3(cmr_handle adpt_handle, struct pd_ra
 		 pd_raw->addr, image_width, image_height,
 		 cxt->roi.m_wLeft, cxt->roi.m_wTop,
 		 cxt->roi.m_wWidth, cxt->roi.m_wHeight);
+	ISP_LOGV("pd_offset_x %d, pd_offset_y %d, pd_pitch_x %d, pd_pitch_y %d, pd_density_x %d, pd_density_y %d, pd_block_num_x %d, pd_block_num_y %d, pd_pos_size %d, pd_raw_crop_en %d",
+			cxt->pd_info.pd_offset_x,cxt->pd_info.pd_offset_y,cxt->pd_info.pd_pitch_x, cxt->pd_info.pd_pitch_y,
+			cxt->pd_info.pd_density_x,cxt->pd_info.pd_density_y,cxt->pd_info.pd_block_num_x,cxt->pd_info.pd_block_num_y,
+			cxt->pd_info.pd_pos_size,cxt->pd_info.pd_raw_crop_en);
+	ISP_LOGV("pd_pos_r.pd_pos_x %d pd_pos_r.pd_pos_y %d pd_pos_l.pd_pos_x %d pd_pos_l.pd_pos_y %d",
+			cxt->pd_info.pd_pos_r->pd_pos_x, cxt->pd_info.pd_pos_r->pd_pos_y, cxt->pd_info.pd_pos_l->pd_pos_x, cxt->pd_info.pd_pos_l->pd_pos_y);
 
-	ret = cxt->extract3_ops.getsize(&cxt->pd_info, &cxt->roi, image_width, image_height,
-				       (cmr_u16 *)&pdroi->m_wWidth, (cmr_u16 *)&pdroi->m_wHeight);
-	if (ret) {
-		ISP_LOGE("failed to get pd data size%ld", ret);
-		goto exit;
-	}
+	ret = cxt->extract3_ops.extract(&cxt->pd_info,(cmr_u8 *)pd_raw->addr, &cxt->roi, image_width, image_height,
+			(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right,(cmr_u16 *)&pdroi->m_wWidth, (cmr_u16 *)&pdroi->m_wHeight);
 	ISP_LOGV("pd size %d, %d,", pdroi->m_wWidth, pdroi->m_wHeight);
-
-	ret = cxt->extract3_ops.extract((cmr_u8 *)pd_raw->addr, &cxt->roi, image_width, image_height,
-				       (cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
 	if (ret) {
 		ISP_LOGE("failed to extract pd data %ld", ret);
 		goto exit;
@@ -769,6 +781,10 @@ static cmr_int pdafaltek_adpt_extract_type3(cmr_handle adpt_handle, struct pd_ra
 				    pdroi->m_wWidth,
 				    pdroi->m_wHeight,
 				    cxt->pd_right, cxt->pd_reg_in.dcurrentVCM);
+		pdafaltek_dump_file(cxt->frame_id, PDAF_DATA_TYPE_RAW_OUT,
+				pd_raw->roi.trim_width,
+				pd_raw->roi.trim_height,
+				pd_raw->addr, cxt->pd_reg_in.dcurrentVCM);
 	}
 exit:
 	return ret;
