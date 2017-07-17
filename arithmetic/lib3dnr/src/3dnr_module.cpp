@@ -2,7 +2,6 @@
 #include "3dnr_module.h"
 #include <time.h>
 #include <properties.h>
-#include <arm_neon.h>
 #include <semaphore.h>
 
 #define SAVE_IMG
