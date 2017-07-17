@@ -226,12 +226,31 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	}
 
 
+
 	char otp_pdaf_name[1024];
-	property_get("debug.isp.pdaf.otp.filename", otp_pdaf_name, "/dev/null");
-	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
+
+	char value[PROPERTY_VALUE_MAX];
+	property_get("ro.debuggable", value, "0");
+	if (!strcmp(value, "1")) {
+		// userdebug: replace otp with binary file specific by property
+		property_get("debug.isp.pdaf.otp.filename", otp_pdaf_name, "/dev/null");
+		if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
+			FILE* fp = fopen(otp_pdaf_name, "rb");
+			if (fp != NULL) {
+				if (in_p->pdaf_otp.otp_data != NULL) {
+					in_p->pdaf_otp.size = fread(in_p->pdaf_otp.otp_data, 1, 1024, fp);
+				}
+				fclose(fp);
+			}
+		}
+	} else {
+		// user: replace pdaf otp if /productinfo/otp_pdaf.bin exist
+		strcpy(otp_pdaf_name, "/productinfo/otp_pdaf.bin");
 		FILE* fp = fopen(otp_pdaf_name, "rb");
 		if (fp != NULL) {
-			in_p->pdaf_otp.size = fread(in_p->pdaf_otp.otp_data, 1, 4096, fp);
+			if (in_p->pdaf_otp.otp_data != NULL) {
+				in_p->pdaf_otp.size = fread(in_p->pdaf_otp.otp_data, 1, 1024, fp);
+			}
 			fclose(fp);
 		}
 	}
@@ -300,21 +319,23 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
-	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;	
+	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;
 	cxt->pd_gobal_setting.dCalibration = 1;
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
 	//0: Normal, 1:Mirror+Flip
 	cxt->pd_gobal_setting.dSensorSetting = 1;
-	
+
 	property_get("debug.isp.pdaf.otp.dump", otp_pdaf_name, "/dev/null");
 	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
 		FILE* fp = fopen(otp_pdaf_name, "wb");
 		if (fp != NULL) {
-			fwrite(in_p->pdaf_otp.otp_data, 1, in_p->pdaf_otp.size, fp);
+			if (in_p->pdaf_otp.otp_data != NULL) {
+				fwrite(in_p->pdaf_otp.otp_data, 1, in_p->pdaf_otp.size, fp);
+			}
 			fclose(fp);
 		}
 	}
-	
+
 	ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
 	if (ret) {
