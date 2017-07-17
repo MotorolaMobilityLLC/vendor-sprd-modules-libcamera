@@ -167,7 +167,7 @@ typedef struct {
 
 typedef struct {
     int version;                  // 1~2, 1: 1.0 bokeh; 2: 2.0 bokeh with AF
-    int roi_type;                 // 0: circle 1:rectangle
+    int roi_type;                 // // 0: circle 1:rectangle 2:seg
     int f_number;                 // 1 ~ 20
     unsigned short sel_x;         /* The point which be touched */
     unsigned short sel_y;         /* The point which be touched */
@@ -179,6 +179,9 @@ typedef struct {
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
     int flag[BLUR_MAX_ROI];                 // 0:face 1:body
+    int rotate_angle; // counter clock-wise. 0:face up body down 90:face left
+                      // body right 180:face down body up 270:face right body
+                      // left  ->
 } capture_weight_params_t;
 
 typedef struct {
@@ -191,7 +194,8 @@ typedef struct {
     int (*iSmoothCreateWeightMap)(void *handle,
                                   preview_weight_params_t *params);
     int (*iSmoothCapCreateWeightMap)(void *handle,
-                                     capture_weight_params_t *params);
+                                     capture_weight_params_t *params,
+                                     unsigned char *Src_YUV);
     int (*iSmoothBlurImage)(void *handle, unsigned char *Src_YUV,
                             unsigned char *Output_YUV);
     void *mHandle;
@@ -233,7 +237,7 @@ typedef struct {
     void *mHandle;
 } BlurAPI2_t;
 
-class SprdCamera3Blur : SprdCamera3MultiBase , SprdCamera3FaceBeautyBase{
+class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
     static void getCameraBlur(SprdCamera3Blur **pBlur);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -302,8 +306,8 @@ class SprdCamera3Blur : SprdCamera3MultiBase , SprdCamera3FaceBeautyBase{
         virtual void requestExit();
         int loadBlurApi();
         void unLoadBlurApi();
-        void initBlur20Params();
-        void initBlurInitParams();
+        int initBlur20Params();
+        int initBlurInitParams();
         void initBlurWeightParams();
         bool isBlurInitParamsChanged();
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);

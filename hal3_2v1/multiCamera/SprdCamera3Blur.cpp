@@ -740,6 +740,7 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
         mBlurApi[i] = (BlurAPI_t *)malloc(sizeof(BlurAPI_t));
         if (mBlurApi[i] == NULL) {
             HAL_LOGE("mBlurApi malloc failed.");
+            return -1;
         }
         memset(mBlurApi[i], 0, sizeof(BlurAPI_t));
         HAL_LOGD("i = %d", i);
@@ -807,8 +808,9 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
                 return -1;
             }
             mBlurApi[i]->iSmoothCapCreateWeightMap =
-                (int (*)(void *handle, capture_weight_params_t *params))dlsym(
-                    mBlurApi[i]->handle, "iSmoothCapCreateWeightMap");
+                (int (*)(void *handle, capture_weight_params_t *params,
+                         unsigned char *Src_YUV))
+                    dlsym(mBlurApi[i]->handle, "iSmoothCapCreateWeightMap");
             if (mBlurApi[i]->iSmoothCapCreateWeightMap == NULL) {
                 error = dlerror();
                 HAL_LOGE("sym iSmoothCapCreateWeightMap failed.error = %s",
@@ -831,6 +833,7 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
     mBlurApi2 = (BlurAPI2_t *)malloc(sizeof(BlurAPI2_t));
     if (mBlurApi2 == NULL) {
         HAL_LOGE("mBlurApi2 malloc failed.");
+        return -1;
     }
     memset(mBlurApi2, 0, sizeof(BlurAPI2_t));
     mBlurApi2->handle = dlopen(BLUR_LIB_BOKEH_CAPTURE2, RTLD_LAZY);
@@ -1067,14 +1070,23 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
                 ret = mBlurApi2->BokehFrames_WeightMap(
                     input2, srcYUV, weight_map, mBlurApi2->mHandle);
             } else {
-                HAL_LOGD("capture mCaptureWeightParams:%d %d %d %d %d %d",
-                         mCaptureWeightParams.version,
+                HAL_LOGD("capture mCaptureWeightParams:rotate_angle:%d "
+                         "roi_type:%d f_number:%d sel_x:%d sel_y:%d "
+                         "circle_size:%d",
+                         mCaptureWeightParams.rotate_angle,
                          mCaptureWeightParams.roi_type,
                          mCaptureWeightParams.f_number,
                          mCaptureWeightParams.sel_x, mCaptureWeightParams.sel_y,
                          mCaptureWeightParams.circle_size);
+
+                HAL_LOGD("capture mCaptureWeightParams:valid_roi:%d x1:%d "
+                         "y1:%d x2:%d y2:%d flag:%d",
+                         mCaptureWeightParams.valid_roi,
+                         mCaptureWeightParams.x1[0], mCaptureWeightParams.y1[0],
+                         mCaptureWeightParams.x2[0], mCaptureWeightParams.y2[0],
+                         mCaptureWeightParams.flag[0]);
                 ret = mBlurApi[1]->iSmoothCapCreateWeightMap(
-                    mBlurApi[1]->mHandle, &mCaptureWeightParams);
+                    mBlurApi[1]->mHandle, &mCaptureWeightParams, srcYUV);
             }
 
             if (ret != 0) {
@@ -1097,7 +1109,8 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
             HAL_LOGE("BlurImage Err:%d", ret);
         }
         if (libid != 0) {
-            HAL_LOGD("capture iSmoothBlurImage cost %lld ms",
+            HAL_LOGD("mVersion:%d.%d capture iSmoothBlurImage cost %lld ms",
+                     mVersion, mCaptureWeightParams.roi_type,
                      ns2ms(systemTime() - blurStart));
         } else {
             HAL_LOGV("preview iSmoothBlurImage cost %lld ms",
@@ -1344,7 +1357,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
  *
  * RETURN     : none
  *==========================================================================*/
-void SprdCamera3Blur::CaptureThread::initBlur20Params() {
+int SprdCamera3Blur::CaptureThread::initBlur20Params() {
     memset(mWinPeakPos, 0x00, sizeof(short) * BLUR_AF_WINDOW_NUM);
     unsigned short cali_dist_seq_8M[] = {30, 40, 50,  60,  70,
                                          80, 90, 100, 110, 120};
@@ -1372,8 +1385,14 @@ void SprdCamera3Blur::CaptureThread::initBlur20Params() {
     mCaptureInitParams.cali_seq_len = 10;
     mCaptureInitParams.cali_dist_seq = (unsigned short *)malloc(
         sizeof(unsigned short) * mCaptureInitParams.cali_seq_len);
+    if (mCaptureInitParams.cali_dist_seq == NULL) {
+        return -1;
+    }
     mCaptureInitParams.cali_dac_seq = (unsigned short *)malloc(
         sizeof(unsigned short) * mCaptureInitParams.cali_seq_len);
+    if (mCaptureInitParams.cali_dac_seq == NULL) {
+        return -1;
+    }
 
     if (SprdCamera3Setting::s_setting[mBlur->mCameraId]
             .sensor_InfoInfo.pixer_array_size[0] == 4160) {
@@ -1387,6 +1406,7 @@ void SprdCamera3Blur::CaptureThread::initBlur20Params() {
         memcpy(mCaptureInitParams.cali_dac_seq, cali_dac_seq_8M,
                sizeof(unsigned short) * mCaptureInitParams.cali_seq_len);
     }
+    return 0;
 }
 
 /*===========================================================================
@@ -1399,7 +1419,7 @@ void SprdCamera3Blur::CaptureThread::initBlur20Params() {
  *
  * RETURN     : none
  *==========================================================================*/
-void SprdCamera3Blur::CaptureThread::initBlurInitParams() {
+int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mFirstCapture = true;
     mFirstPreview = true;
     mUpdateCaptureWeightParams = true;
@@ -1428,7 +1448,7 @@ void SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mCaptureInitParams.findex2gamma_adjust_ratio =
         (float)(mLastAdjustRati) / 10000;
 
-    initBlur20Params();
+    return initBlur20Params();
 }
 
 /*===========================================================================
@@ -1479,10 +1499,14 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     }
     if (mBlur->mCameraId == CAM_BLUR_MAIN_ID_2 &&
         mCaptureWeightParams.version == 1) {
-        property_get("persist.sys.cam.fr.blur.type", prop, "1");
-        if (atoi(prop) == 0 || atoi(prop) == 1) {
+        property_get("persist.sys.cam.fr.blur.type", prop, "2");
+        if (atoi(prop) == 0 || atoi(prop) == 1 || atoi(prop) == 2) {
             mPreviewWeightParams.roi_type = atoi(prop);
             mCaptureWeightParams.roi_type = atoi(prop);
+            if (atoi(prop) == 2) {
+                mPreviewWeightParams.roi_type = 1;
+                mCaptureInitParams.box_filter_size = 3;
+            }
         }
     }
     HAL_LOGD("Camera:%d,lib1v:%d,lib2v:%d", mBlur->mCameraId,
@@ -1524,6 +1548,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     mCaptureWeightParams.circle_size =
         mCaptureInitParams.height * mCircleSizeScale / 100 / 2;
     mCaptureWeightParams.valid_roi = 0;
+    mCaptureWeightParams.rotate_angle = 0;
     memset(mCaptureWeightParams.x1, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mCaptureWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
     memset(mCaptureWeightParams.x2, 0x00, sizeof(int) * BLUR_MAX_ROI);
@@ -1823,7 +1848,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
         } else if (metaSettings.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
             if (mIsBlurAlways) {
                 mPreviewWeightParams.roi_type = 1;
-                mCaptureWeightParams.roi_type = 1;
+                mCaptureWeightParams.roi_type = 2;
             }
             HAL_LOGV("roi_type:%d,face_num:%d mUpdataTouch:%d",
                      mPreviewWeightParams.roi_type, face_num, mUpdataTouch);
@@ -1932,6 +1957,18 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 }
                 k = 0;
 
+                if (mCaptureWeightParams.roi_type == 2) {
+                    memset(mCaptureWeightParams.x1, 0x00,
+                           sizeof(int) * BLUR_MAX_ROI);
+                    memset(mCaptureWeightParams.y1, 0x00,
+                           sizeof(int) * BLUR_MAX_ROI);
+                    memset(mCaptureWeightParams.x2, 0x00,
+                           sizeof(int) * BLUR_MAX_ROI);
+                    memset(mCaptureWeightParams.y2, 0x00,
+                           sizeof(int) * BLUR_MAX_ROI);
+                    memset(mCaptureWeightParams.flag, 0x00,
+                           sizeof(int) * BLUR_MAX_ROI);
+                }
                 for (i = 0; i < face_num; i++) {
                     faceInfo[0] =
                         metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
@@ -1948,6 +1985,49 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     if (faceInfo[2] - faceInfo[0] < max * atoi(prop1) / 100) {
                         k++;
                         continue;
+                    }
+                    if (mCaptureWeightParams.roi_type == 2) {
+                        if (mRotation == 0) {
+                            mCaptureWeightParams.x1[i - k] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i - k] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i - k] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i - k] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.valid_roi = face_num - k;
+                        } else if (mRotation == 90) {
+                            mCaptureWeightParams.x1[i - k] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i - k] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i - k] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i - k] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.valid_roi = face_num - k;
+                        } else if (mRotation == 180) {
+                            mCaptureWeightParams.x1[i - k] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i - k] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i - k] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i - k] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.valid_roi = face_num - k;
+                        } else {
+                            mCaptureWeightParams.x1[i - k] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i - k] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i - k] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i - k] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.valid_roi = face_num - k;
+                        }
                     }
                     if (mRotation == 270) {
                         int w = faceInfo[2] - faceInfo[0];
@@ -2237,9 +2317,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                                      mPreviewInitParams.height;
         mCapture2WeightParams.sel_x = mCaptureWeightParams.sel_x;
         mCapture2WeightParams.sel_y = mCaptureWeightParams.sel_y;
-        mCaptureWeightParams.valid_roi = mPreviewWeightParams.valid_roi;
         if (mCaptureWeightParams.roi_type == 1 &&
-            mCaptureWeightParams.valid_roi > 0) {
+            mPreviewWeightParams.valid_roi > 0) {
+            mCaptureWeightParams.valid_roi = mPreviewWeightParams.valid_roi;
             memset(mCaptureWeightParams.x1, 0x00, sizeof(int) * BLUR_MAX_ROI);
             memset(mCaptureWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
             memset(mCaptureWeightParams.x2, 0x00, sizeof(int) * BLUR_MAX_ROI);
@@ -2352,6 +2432,15 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t scaleSmoothHeight = MainHeightData / BLUR_SMOOTH_SIZE_SCALE;
         uint32_t box_filter_size = mCaptureInitParams.box_filter_size;
         uint32_t version = mCaptureWeightParams.version;
+
+        char prop1[PROPERTY_VALUE_MAX] = {
+            0,
+        };
+        property_get("persist.sys.camera.blur9", prop1, "0");
+        mCaptureWeightParams.rotate_angle = orientation; // atoi(prop1);
+
+        HAL_LOGD("jpegorientation=%d, blur=%d", orientation,
+                 mCaptureWeightParams.rotate_angle);
         unsigned char BlurFlag[] = {'B', 'L', 'U', 'R'};
         unsigned char *p1[] = {(unsigned char *)&orientation,
                                (unsigned char *)&MainWidethData,
@@ -2681,7 +2770,7 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
     mCaptureThread->run(String8::format("Blur").string());
-    mCaptureThread->initBlurInitParams();
+    rc = mCaptureThread->initBlurInitParams();
     mCaptureThread->initBlurWeightParams();
     HAL_LOGI("X");
 
