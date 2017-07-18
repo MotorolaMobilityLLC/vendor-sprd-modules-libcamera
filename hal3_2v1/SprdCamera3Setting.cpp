@@ -2921,6 +2921,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprd3dnrEnabled = 0;
     requestInfo.update(ANDROID_SPRD_3DNR_ENABLED, &sprd3dnrEnabled, 1);
 
+    uint8_t sprdFilterType = 0;
+    requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
+
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
@@ -3187,6 +3190,13 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].sprddefInfo.flip_on = flip_on;
         pushAndroidParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);
         HAL_LOGV("flip_on_level %d", s_setting[mCameraId].sprddefInfo.flip_on);
+    }
+
+    if(frame_settings.exists(ANDROID_SPRD_FILTER_TYPE)) {
+        s_setting[mCameraId].sprddefInfo.sprd_filter_type =
+                 frame_settings.find(ANDROID_SPRD_FILTER_TYPE).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_FILTER_TYPE);
+         HAL_LOGD("sprddefInfo.sprd_filter_type: %d ",s_setting[mCameraId].sprddefInfo.sprd_filter_type);
     }
 
     // JPEG
@@ -3711,7 +3721,7 @@ int SprdCamera3Setting::updateWorkParameters(
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
              "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
-             "%d, sprd_hdr_plus_enable:%d,sprd 3dnr enabled is %d",
+             "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled is %d",
              s_setting[mCameraId].sprddefInfo.perfect_skin_level,
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
              s_setting[mCameraId].flashInfo.mode,
@@ -3742,6 +3752,7 @@ int SprdCamera3Setting::updateWorkParameters(
              s_setting[mCameraId].controlInfo.af_regions[3],
              s_setting[mCameraId].controlInfo.af_regions[4],
              s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
+             s_setting[mCameraId].sprddefInfo.sprd_filter_type,
              s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
 
 #undef GET_VALUE_IF_DIF

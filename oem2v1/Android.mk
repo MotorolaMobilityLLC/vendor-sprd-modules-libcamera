@@ -20,7 +20,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
-	$(LOCAL_PATH)/../sensor/otp_drv
+	$(LOCAL_PATH)/../sensor/otp_drv \
+	$(LOCAL_PATH)/../arithmetic/filter/inc
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -110,6 +111,8 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
+LOCAL_SHARED_LIBRARIES += libamipengine
+
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
@@ -184,7 +187,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
-	$(LOCAL_PATH)/../sensor/otp_drv
+	$(LOCAL_PATH)/../sensor/otp_drv \
+	$(LOCAL_PATH)/../arithmetic/filter/inc
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
@@ -273,6 +277,8 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
+LOCAL_SHARED_LIBRARIES += libamipengine
+
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
@@ -342,7 +348,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
-	$(LOCAL_PATH)/../sensor/otp_drv
+	$(LOCAL_PATH)/../sensor/otp_drv \
+	$(LOCAL_PATH)/../arithmetic/filter/inc
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -425,6 +432,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
+LOCAL_SHARED_LIBRARIES += libamipengine
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 

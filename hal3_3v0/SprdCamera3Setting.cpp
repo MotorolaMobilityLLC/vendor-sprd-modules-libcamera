@@ -3643,6 +3643,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     requestInfo.update(ANDROID_SPRD_BURSTMODE_ENABLED, &sprdBurstModeEnabled,
                        1);
 
+    uint8_t sprdFilterType = 0;
+    requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
+
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
@@ -3914,6 +3917,13 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].sprddefInfo.flip_on = flip_on;
         pushAndroidParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);
         HAL_LOGV("flip_on_level %d", s_setting[mCameraId].sprddefInfo.flip_on);
+    }
+
+    if(frame_settings.exists(ANDROID_SPRD_FILTER_TYPE)) {
+        s_setting[mCameraId].sprddefInfo.sprd_filter_type =
+                 frame_settings.find(ANDROID_SPRD_FILTER_TYPE).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_FILTER_TYPE);
+         HAL_LOGD("sprddefInfo.sprd_filter_type: %d ",s_setting[mCameraId].sprddefInfo.sprd_filter_type);
     }
 
     // JPEG

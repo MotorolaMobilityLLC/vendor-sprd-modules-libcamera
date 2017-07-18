@@ -937,6 +937,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_3DNR_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_3DNR_ENABLED);
             break;
+        case ANDROID_SPRD_FILTER_TYPE:
+            HAL_LOGD("ANDROID_SPRD_FILTER_TYPE");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_FILTER_TYPE);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

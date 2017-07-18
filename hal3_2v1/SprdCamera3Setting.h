@@ -350,6 +350,7 @@ typedef struct {
     uint8_t sprd_hdr_plus_enable;
     uint8_t sprd_fixedfps_enabled;
     uint8_t sprd_3dnr_enabled;
+    uint32_t sprd_filter_type;
 } SPRD_DEF_Tag;
 
 typedef struct {

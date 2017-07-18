@@ -173,6 +173,7 @@ struct setting_hal_param {
     cmr_uint sprd_yuv_callback_enable;
     cmr_uint uhd_recording_enable;
     cmr_uint exif_mime_type;
+    cmr_uint sprd_filter_type;
 };
 
 struct setting_camera_info {
@@ -1718,6 +1719,23 @@ static cmr_int setting_get_thumb_quality(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->thumb_quality;
+    return ret;
+}
+static cmr_int setting_set_sprd_filter_type(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    hal_param->sprd_filter_type = parm->cmd_type_value;
+    CMR_LOGI(" set sprd_filter_type = %ld", hal_param->sprd_filter_type);
+    return ret;
+}
+
+static cmr_int setting_get_sprd_filter_type(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm){
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->cmd_type_value = hal_param->sprd_filter_type;
+    CMR_LOGI("get sprd_filter_type = %ld", hal_param->sprd_filter_type);
     return ret;
 }
 
@@ -3382,6 +3400,8 @@ cmr_int cmr_setting_parms_init() {
                              setting_get_uhd_recording_enable);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
                              setting_set_exif_mime_type);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FILTER_TYPE,setting_set_sprd_filter_type);
+    cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,setting_get_sprd_filter_type);
     setting_parms_inited = 1;
     return 0;
 }

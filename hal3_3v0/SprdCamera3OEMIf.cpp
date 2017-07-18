@@ -6149,6 +6149,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mFixedFpsEnabled = sprddefInfo.sprd_fixedfps_enabled;
     } break;
+    case ANDROID_SPRD_FILTER_TYPE: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD("sprddefInfo.sprd_filter_type: %d ", sprddefInfo.sprd_filter_type);
+        SET_PARM(mHalOem, mCameraHandle,CAMERA_PARAM_FILTER_TYPE,
+                 sprddefInfo.sprd_filter_type);
+    } break;
     default:
         ret = BAD_VALUE;
         break;
