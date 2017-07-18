@@ -5619,7 +5619,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 	calc_in = (struct ae_calc_in *)param;
 	calc_out = (struct ae_calc_out *)result;
-
 	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
@@ -5682,6 +5681,18 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	if (cxt->hdr_enable)
 		ae_hdr_ctrl(cxt, param);
 
+	{
+		char prop[PROPERTY_VALUE_MAX];
+		int val_max = 0;
+		int val_min = 0;
+		property_get("persist.sys.isp.ae.fps", prop, "0");
+		if (atoi(prop) != 0) {
+			val_min = atoi(prop) % 100;
+			val_max = atoi(prop) / 100;
+			cxt->cur_status.settings.min_fps = val_min > 5 ? val_min : 5;
+			cxt->cur_status.settings.max_fps = val_max;
+		}
+	}
 	current_status = &cxt->sync_cur_status;
 	current_result = &cxt->sync_cur_result;
 	memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
