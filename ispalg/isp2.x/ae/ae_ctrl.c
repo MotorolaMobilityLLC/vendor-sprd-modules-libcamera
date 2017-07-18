@@ -172,7 +172,7 @@ static cmr_s32 ae_set_statistics_mode(cmr_handle handler, enum ae_statistics_mod
 	return 0;
 }
 
-static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type, cmr_handle param)
+static cmr_s32 ae_callback(cmr_handle handler, cmr_int cb_type, cmr_handle param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 
