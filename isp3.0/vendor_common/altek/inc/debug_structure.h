@@ -1,16 +1,16 @@
 /******************************************************************************
  *  File name: debug_structure.h
- *  Latest Update Date:2017/5/15
+ *  Latest Update Date:2017/7/17
  *
  *  Comment:
  *  Describe structure definition of debug information
  *****************************************************************************/
 #include "mtype.h"
 
-#define DEBUG_STRUCT_VERSION               (507)
+#define DEBUG_STRUCT_VERSION               (508)
 
-#define MAX_AEFE_DEBUG_SIZE_STRUCT1        (771)
-#define MAX_AEFE_DEBUG_SIZE_STRUCT2        (1099)
+#define MAX_AEFE_DEBUG_SIZE_STRUCT1        (781)
+#define MAX_AEFE_DEBUG_SIZE_STRUCT2        (1109)
 #define MAX_FLICKER_DEBUG_SIZE_STRUCT1     (20)
 #define MAX_FLICKER_DEBUG_SIZE_STRUCT2     (1296)
 #define MAX_AWB_DEBUG_SIZE_STRUCT1         (438)
@@ -38,7 +38,7 @@
 #define MAX_IRP_GAMMA_TONE_SIZE            (1027)
 #define ISP_SW_DEBUG_RESERVED_SIZE         (59)
 #define OTHER_DEBUG_RESERVED_SIZE          (11)
-#define DEBUG_INFO1_RESERVED_SIZE          (119)
+#define DEBUG_INFO1_RESERVED_SIZE          (109)
 enum e_scinfo_color_order {
 	E_SCINFO_COLOR_ORDER_RG = 0,
 	E_SCINFO_COLOR_ORDER_GR,
