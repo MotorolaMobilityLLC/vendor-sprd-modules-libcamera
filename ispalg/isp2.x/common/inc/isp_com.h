@@ -543,7 +543,11 @@ struct isp_ynr_param {
 };
 
 struct isp_3d_nr_pre_param {
+#if defined(CONFIG_ISP_2_3)
 	struct isp_dev_3dnr_pre_param_info cur;
+#else
+	struct isp_3dnr_const_param cur;
+#endif
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -552,7 +556,11 @@ struct isp_3d_nr_pre_param {
 };
 
 struct isp_3d_nr_cap_param {
+#if defined(CONFIG_ISP_2_3)
 	struct isp_dev_3dnr_cap_param_info cur;
+#else
+	struct isp_3dnr_const_param cur;
+#endif
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
