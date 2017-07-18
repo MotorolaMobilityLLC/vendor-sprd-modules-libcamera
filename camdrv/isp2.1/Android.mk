@@ -78,6 +78,11 @@ LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libcampm liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcalibration
 
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))

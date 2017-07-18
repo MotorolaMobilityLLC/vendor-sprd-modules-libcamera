@@ -32,5 +32,9 @@ LOCAL_MODULE_STEM_32 := libgyrostab.so
 LOCAL_MODULE_STEM_64 := libgyrostab.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libgyrostab.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libgyrostab.so
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 include $(BUILD_PREBUILT)
 endif

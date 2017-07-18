@@ -186,6 +186,12 @@ ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_SHARED_LIBRARIES += liblog
 endif
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
+
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(wildcard $(LOCAL_PATH)/*/*/*/*/Android.mk)

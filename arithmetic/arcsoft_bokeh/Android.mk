@@ -29,5 +29,10 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_dualcam_refocus.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_dualcam_refocus.so
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
+
 include $(BUILD_PREBUILT)
 endif

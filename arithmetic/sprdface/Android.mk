@@ -33,6 +33,10 @@ LOCAL_MODULE_STEM_64 := libsprdfd.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfd.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfd.a
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 include $(BUILD_PREBUILT)
 
 
@@ -46,6 +50,10 @@ LOCAL_MODULE_STEM_64 := libsprdfa.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfa.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfa.a
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 include $(BUILD_PREBUILT)
 
 # SPRD face attribute recognition (smile detection) library
@@ -58,5 +66,9 @@ LOCAL_MODULE_STEM_64 := libsprdfar.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfar.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfar.a
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 include $(BUILD_PREBUILT)
 endif

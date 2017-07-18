@@ -31,6 +31,9 @@ LOCAL_MODULE_STEM_64 := libsprdfacebeauty.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty.a
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -42,6 +45,9 @@ LOCAL_MODULE_STEM_64 := libarcsoft_beautyshot.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot.so
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -53,6 +59,9 @@ LOCAL_MODULE_STEM_64 := libmpbase.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libmpbase.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libmpbase.so
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -64,6 +73,9 @@ LOCAL_MODULE_STEM_64 := libarcsoft_beautyshot_wrapper.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot_wrapper.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot_wrapper.so
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -86,6 +98,10 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_MODULE := libcamfb
 LOCAL_MODULE_TAGS := optional
 
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 

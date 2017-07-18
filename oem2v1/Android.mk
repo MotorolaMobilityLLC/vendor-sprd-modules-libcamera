@@ -159,6 +159,12 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
+
+
 include $(BUILD_SHARED_LIBRARY)
 endif
 
@@ -311,6 +317,12 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
+
 include $(BUILD_SHARED_LIBRARY)
 endif
 
@@ -456,6 +468,12 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
+
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 
 include $(BUILD_SHARED_LIBRARY)
 endif

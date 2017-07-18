@@ -157,4 +157,8 @@ LOCAL_MODULE := libcamsensortuning
 
 LOCAL_MODULE_TAGS := optional
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+endif
+
 include $(BUILD_SHARED_LIBRARY)
