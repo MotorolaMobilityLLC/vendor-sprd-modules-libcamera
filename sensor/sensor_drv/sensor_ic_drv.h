@@ -4,31 +4,31 @@
 #include "../hw_drv/hw_sensor_drv.h"
 
 #define SENSOR_IC_SUCCESS CMR_CAMERA_SUCCESS
-#define SENSOR_IC_FAILED  CMR_CAMERA_FAIL
+#define SENSOR_IC_FAILED CMR_CAMERA_FAIL
 
-#define SENSOR_IC_CHECK_HANDLE(handle)                 \
-    if (NULL == handle ) {                             \
-        SENSOR_LOGE("Handle is invalid " #handle);     \
-        return SENSOR_IC_FAILED;                       \
+#define SENSOR_IC_CHECK_HANDLE(handle)                                         \
+    if (NULL == handle) {                                                      \
+        SENSOR_LOGE("Handle is invalid " #handle);                             \
+        return SENSOR_IC_FAILED;                                               \
     }
 /*no reture value*/
-#define SENSOR_IC_CHECK_HANDLE_VOID(handle)            \
-    if (NULL == handle ) {                             \
-        SENSOR_LOGE("Handle is invalid " #handle);     \
-        return ;                                       \
+#define SENSOR_IC_CHECK_HANDLE_VOID(handle)                                    \
+    if (NULL == handle) {                                                      \
+        SENSOR_LOGE("Handle is invalid " #handle);                             \
+        return;                                                                \
     }
 
-#define SENSOR_IC_CHECK_PTR(expr)    \
-    if ((expr) == NULL) {            \
-        SENSOR_LOGE("ERROR: NULL pointer detected " #expr);  \
-        return SENSOR_IC_FAILED;  \
+#define SENSOR_IC_CHECK_PTR(expr)                                              \
+    if ((expr) == NULL) {                                                      \
+        SENSOR_LOGE("ERROR: NULL pointer detected " #expr);                    \
+        return SENSOR_IC_FAILED;                                               \
     }
 
 /*no reture value*/
-#define SENSOR_IC_CHECK_PTR_VOID(expr)    \
-    if ((expr) == NULL) {                 \
-        SENSOR_LOGE("ERROR: NULL pointer detected " #expr);  \
-        return;                            \
+#define SENSOR_IC_CHECK_PTR_VOID(expr)                                         \
+    if ((expr) == NULL) {                                                      \
+        SENSOR_LOGE("ERROR: NULL pointer detected " #expr);                    \
+        return;                                                                \
     }
 
 #define SENSOR_IDENTIFY_CODE_COUNT 0x02
@@ -107,7 +107,7 @@ typedef enum {
 typedef enum {
     SENSOR_VAL_TYPE_SHUTTER = 0,
 #if 1
-/*TODO:to be deleted*/
+    /*TODO:to be deleted*/
     SENSOR_VAL_TYPE_READ_VCM,
     SENSOR_VAL_TYPE_WRITE_VCM,
     SENSOR_VAL_TYPE_WRITE_OTP,
@@ -129,20 +129,21 @@ typedef enum {
     SENSOR_VAL_TYPE_GET_PDAF_INFO,
     SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG,
     SENSOR_VAL_TYPE_GET_BV,
+    SENSOR_VAL_TYPE_SET_SENSOR_MULTI_MODE,
     SENSOR_VAL_TYPE_MAX
 } SENSOR_IOCTL_VAL_TYPE;
 
 /**
  * Get sensor privage data
  **/
-typedef enum{
+typedef enum {
     SENSOR_CMD_GET_TRIM_TAB,
     SENSOR_CMD_GET_RESOLUTION,
     SENSOR_CMD_GET_MODULE_CFG,
     SENSOR_CMD_GET_EXIF,
-    
+
     SENSOR_CMD_GET_MAX,
-}sensor_get_private_data;
+} sensor_get_private_data;
 
 /** If the camera module vendor name is not
  *  in the list above, please add to the following.
@@ -150,8 +151,8 @@ typedef enum{
  *  add module name at array {@camera_module_name_str}
  *  following.
  **/
-enum camera_module_id{
-    MODULE_DEFAULT = 0x00,/*NULL*/
+enum camera_module_id {
+    MODULE_DEFAULT = 0x00, /*NULL*/
     MODULE_SUNNY = 0x01,
     MODULE_TRULY,
     MODULE_A_KERR,
@@ -171,7 +172,7 @@ enum camera_module_id{
     MODULE_TONGJU,
     /*add camera vendor name index here*/
 
-    MODULE_MAX,/*NOTE:This must be the last line*/
+    MODULE_MAX, /*NOTE:This must be the last line*/
 };
 
 struct hdr_info_t {
@@ -196,13 +197,13 @@ struct module_fov_info {
      * Cmos width and height.You can get this information from sensor datasheet
      * [1]:width.[2]:height
      **/
-    float physical_size[2]; 
+    float physical_size[2];
 
     /**
-     * Sensor focal length.You should Confirm the information from the 
+     * Sensor focal length.You should Confirm the information from the
      * module vendor.
      **/
-    float focal_lengths;/*focal*/
+    float focal_lengths; /*focal*/
 };
 
 struct sensor_static_info {
@@ -237,10 +238,10 @@ struct sensor_static_info {
     struct module_fov_info fov_info;
 };
 
-typedef struct sensor_static_info_tab{
+typedef struct sensor_static_info_tab {
     cmr_u16 module_id;
     struct sensor_static_info static_info;
-}SENSOR_STATIC_INFO_T;
+} SENSOR_STATIC_INFO_T;
 
 typedef struct sensor_mode_fps_tag {
     enum sensor_mode mode;
@@ -251,27 +252,27 @@ typedef struct sensor_mode_fps_tag {
     cmr_u32 high_fps_skip_num; // max_fps/30
 } SENSOR_MODE_FPS_T, *SENSOR_MODE_FPS_T_PTR;
 
-struct sensor_fps_info{
+struct sensor_fps_info {
     cmr_u32 is_init;
     SENSOR_MODE_FPS_T sensor_mode_fps[SENSOR_MODE_MAX];
 };
 
 typedef struct {
-   /**
-    * module id is very important,
-    * you need to confirm this info
-    * again and again
-    */
+    /**
+     * module id is very important,
+     * you need to confirm this info
+     * again and again
+     */
     cmr_u16 module_id;
     struct sensor_fps_info fps_info;
-}SENSOR_MODE_FPS_INFO_T;
+} SENSOR_MODE_FPS_INFO_T;
 
 struct sensor_ext_reg_tab {
     SENSOR_REG_T_PTR sensor_reg_tab_ptr;
     cmr_u32 reg_count;
 };
 
-struct sensor_res_tab_info{
+struct sensor_res_tab_info {
     cmr_u16 module_id;
     SENSOR_REG_TAB_INFO_T reg_tab[SENSOR_MODE_MAX];
 };
@@ -287,7 +288,7 @@ struct sensor_trim_tag {
     SENSOR_RECT_T scaler_trim;
 };
 
-typedef struct sensor_trim_info{
+typedef struct sensor_trim_info {
     cmr_u16 module_id;
     struct sensor_trim_tag trim_info[SENSOR_MODE_MAX];
 } SENSOR_TRIM_T, *SENSOR_TRIM_T_PTR;
@@ -316,12 +317,13 @@ typedef struct sensor_video_info_tag {
 } SENSOR_VIDEO_INFO_T, *SENSOR_VIDEO_INFO_T_PTR;
 
 /**
- *  callbcak from sensor_drv_u.if you 
+ *  callbcak from sensor_drv_u.if you
  *  need to add additional interfaces.
  *  Please note the format.
  **/
 struct sensor_ic_ctrl_cb {
-    cmr_int (*set_exif_info)(cmr_handle sns_module_handle, cmr_u32 cmd, cmr_u32 param);
+    cmr_int (*set_exif_info)(cmr_handle sns_module_handle, cmr_u32 cmd,
+                             cmr_u32 param);
     cmr_int (*get_exif_info)(cmr_handle sns_module_handle);
     cmr_int (*set_mode)(cmr_handle sns_module_handle, cmr_u32 mode);
     cmr_int (*set_mode_wait_done)(cmr_handle sns_module_handle);
@@ -329,8 +331,7 @@ struct sensor_ic_ctrl_cb {
     /*add ops here,if you need*/
 };
 
-struct sensor_ic_drv_init_para
-{
+struct sensor_ic_drv_init_para {
     /*hardware instance to communicate with kernel*/
     cmr_handle hw_handle;
 
@@ -355,33 +356,33 @@ struct sensor_ic_exif_info {
 };
 
 /*
- * The following is sensor ic control interface,you can not 
+ * The following is sensor ic control interface,you can not
  * add the interface arbitrarily. If you want to add an interface,
  * you can add your function at ioctl item as described next.
- * 
+ *
  * 1.add you sub command at above SENSOR_IOCTL_CMD_E enumeration
  * 2.Implement your control function at sensor driver(mipi_raw.c).
  * 3.add you control function at ioctl table.
- * 
+ *
  * NOTE: you can't add interface arbitrarily in this structure.
  **/
 struct sensor_ic_ops {
     /*create a sensor ic instance */
     cmr_int (*create_handle)(struct sensor_ic_drv_init_para *init_param,
-                                      cmr_handle* sns_ic_drv_handle);
+                             cmr_handle *sns_ic_drv_handle);
 
     /*delete sensor ic instance.you can release buffer etc*/
-    cmr_int (*delete_handle)(cmr_handle handle, void * param);
+    cmr_int (*delete_handle)(cmr_handle handle, void *param);
 
-    /*  
-     *  you can get private data of current sensor instance 
+    /*
+     *  you can get private data of current sensor instance
      *  with the interface.
      *  for example:
      *       1.exif info of current sensor instance.
      *       2.resolution setting table.
      *       3.module cfg info,such as i2_dev_addr,bayer_patter,etc
      */
-    cmr_int (*get_data)(cmr_handle handle, cmr_uint cmd, void** param);
+    cmr_int (*get_data)(cmr_handle handle, cmr_uint cmd, void **param);
 
     /**
      *  Some common control interfaces
@@ -398,20 +399,20 @@ struct sensor_ic_ops {
     struct sensor_ic_ioctl_func_tag ext_ops[SENSOR_IOCTL_MAX];
 
     /* not used currently*/
-    cmr_int (*ioctl)(cmr_handle handle, int cmd, void* param);
+    cmr_int (*ioctl)(cmr_handle handle, int cmd, void *param);
 };
 
 /**
  * current module config info
  **/
-struct module_cfg_info{
+struct module_cfg_info {
     /* salve i2c write address */
-    //cmr_u8 salve_i2c_addr_w;
+    // cmr_u8 salve_i2c_addr_w;
 
     /* salve i2c read address */
-    //cmr_u8 salve_i2c_addr_r;
+    // cmr_u8 salve_i2c_addr_r;
 
-    //cmr_u8 i2c_addr[2];
+    // cmr_u8 i2c_addr[2];
 
     /**
      * Different modules may have different addresses with same sensor ic,
@@ -472,7 +473,7 @@ struct module_cfg_info{
     cmr_u16 vertical_view_angle;
 };
 
-struct sensor_module_info{
+struct sensor_module_info {
     cmr_u16 module_id;
     struct module_cfg_info module_info;
 };
@@ -535,7 +536,7 @@ typedef struct sensor_info_tag {
     SENSOR_IMAGE_FORMAT image_format;
 
     /* point to resolution table information structure */
-    //SENSOR_REG_TAB_INFO_T_PTR resolution_tab_info_ptr;
+    // SENSOR_REG_TAB_INFO_T_PTR resolution_tab_info_ptr;
     struct sensor_res_tab_info *resolution_tab_info_ptr;
 
     /* point to ioctl function table */
@@ -558,7 +559,7 @@ typedef struct sensor_info_tag {
     cmr_u8 focus_eb;
 } SENSOR_INFO_T;
 
-struct sensor_ic_ad_gain{
+struct sensor_ic_ad_gain {
     cmr_u16 a_gain;
     cmr_u16 d_gain;
 };
@@ -572,6 +573,8 @@ struct sensor_ic_drv_cxt {
     cmr_handle caller_handle;
     cmr_u8 is_sensor_close;
 
+    /*multi camera mode flag*/
+    cmr_int is_multi_mode;
     /**
      * The flag indicates fps information of all module
      * is initialized or not.
@@ -609,14 +612,14 @@ struct sensor_ic_drv_cxt {
     struct sensor_ic_exif_info exif_info;
 
     /**
-     *  TODO:Some sensor drivers has exif data of type 
+     *  TODO:Some sensor drivers has exif data of type
      *  EXIF_SPEC_PIC_TAKING_COND_T.So in order to compatible
      *  with this situation,we defined a temporary pointer to
      *  point exif data type of EXIF_SPEC_PIC_TAKING_COND_T.
      *
      *  if you need to write exif info,please write to above
      *  exif_info field.
-     *  
+     *
      *  this pointer point static variable,don't need free.
      **/
     void *exif_ptr;
@@ -637,33 +640,33 @@ struct sensor_ic_drv_cxt {
       you should mallc new buffer.*/
     union {
         cmr_u8 *buffer;
-        cmr_u8  data[4];
+        cmr_u8 data[4];
     } privata_data;
-
 };
 
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
-                                                 cmr_handle* sns_ic_drv_handle);
+                             cmr_handle *sns_ic_drv_handle);
 
 cmr_int sensor_ic_drv_delete(cmr_handle handle, void *param);
 
-cmr_int sensor_ic_get_private_data(cmr_handle handle, cmr_uint cmd, void**param);
+cmr_int sensor_ic_get_private_data(cmr_handle handle, cmr_uint cmd,
+                                   void **param);
 
-cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void**exif_info_in);
+cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void **exif_info_in);
 
-cmr_int sensor_ic_set_match_static_info(cmr_handle handle,
-                                   cmr_u16 vendor_num, void* static_info_ptr);
-cmr_int sensor_ic_set_match_fps_info(cmr_handle handle,
-                              cmr_u16 vendor_num, void* fps_info_ptr);
+cmr_int sensor_ic_set_match_static_info(cmr_handle handle, cmr_u16 vendor_num,
+                                        void *static_info_ptr);
+cmr_int sensor_ic_set_match_fps_info(cmr_handle handle, cmr_u16 vendor_num,
+                                     void *fps_info_ptr);
 cmr_int sensor_ic_set_match_resolution_info(cmr_handle handle,
-                                         cmr_u16 vendor_num, void* param);
+                                            cmr_u16 vendor_num, void *param);
 
-cmr_int sensor_ic_set_match_trim_info(cmr_handle handle,
-                                cmr_u16 vendor_num, void* param);
+cmr_int sensor_ic_set_match_trim_info(cmr_handle handle, cmr_u16 vendor_num,
+                                      void *param);
 
-cmr_int sensor_ic_set_match_module_info(cmr_handle handle,
-                              cmr_u16 vendor_num, void* module_info_ptr);
+cmr_int sensor_ic_set_match_module_info(cmr_handle handle, cmr_u16 vendor_num,
+                                        void *module_info_ptr);
 
 void sensor_ic_print_static_info(cmr_s8 *log_tag,
-                                  struct sensor_ex_info *ex_info);
+                                 struct sensor_ex_info *ex_info);
 #endif

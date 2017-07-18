@@ -806,12 +806,14 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             if (frm_id >= CMR_CAPTURE_MEM_SUM) {
                 if (1 == camera_get_hdr_flag(cxt))
                     ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
-                                                cxt->camera_id, frame, &vir_addr_y);
+                                                  cxt->camera_id, frame,
+                                                  &vir_addr_y);
                 else if (1 == camera_get_3dnr_flag(cxt))
                     ret = cmr_preview_get_3dnr_buf(cxt->prev_cxt.preview_handle,
-                            cxt->camera_id, frame, &vir_addr_y);
-                out_param.size = cxt->snp_cxt.post_proc_setting.
-                                                   chn_out_frm[0].size;
+                                                   cxt->camera_id, frame,
+                                                   &vir_addr_y);
+                out_param.size =
+                    cxt->snp_cxt.post_proc_setting.chn_out_frm[0].size;
                 out_param.fd = frame->fd;
                 out_param.addr_vir.addr_y = vir_addr_y;
                 if (ret) {
@@ -1399,19 +1401,19 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     cxt = (struct camera_context *)cb_param->private_data;
 
     if (1 == camera_get_hdr_flag(cxt)) {
-            if (cb_param->is_plus ==1) { // normal pic need backup first. and wait until next req received
-                frame = cxt->snp_cxt.cur_frm_info;
-                camera_snapshot_cb_to_hal(cxt, SNAPSHOT_EVT_HDR_PLUS,
-                                          SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
-            }
-            else {
-                    frame = cxt->snp_cxt.cur_frm_info;
-                    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
-                    camera_post_share_path_available((cmr_handle)cxt);
-                    cxt->ipm_cxt.frm_num = 0;
-                    ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                        SNAPSHOT_EVT_HDR_DONE, &frame);
-             }
+        if (cb_param->is_plus == 1) { // normal pic need backup first. and wait
+                                      // until next req received
+            frame = cxt->snp_cxt.cur_frm_info;
+            camera_snapshot_cb_to_hal(cxt, SNAPSHOT_EVT_HDR_PLUS,
+                                      SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
+        } else {
+            frame = cxt->snp_cxt.cur_frm_info;
+            cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
+            camera_post_share_path_available((cmr_handle)cxt);
+            cxt->ipm_cxt.frm_num = 0;
+            ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
+                                            SNAPSHOT_EVT_HDR_DONE, &frame);
+        }
     } else if (1 == camera_get_3dnr_flag(cxt)) {
         frame = cxt->snp_cxt.cur_frm_info;
         cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
@@ -1971,8 +1973,8 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle) {
     setting_param.camera_id = cxt->camera_id;
     setting_param.ctrl_flash.is_active = 1;
     setting_param.ctrl_flash.flash_type = FLASH_OPEN;
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_CTRL_FLASH, &setting_param);
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH,
+                            &setting_param);
     if (ret) {
         CMR_LOGE("failed to open flash");
     }
@@ -4918,10 +4920,10 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    cmr_bzero((void*)&enc_exif_param, sizeof(struct jpeg_enc_exif_param));
-    cmr_bzero((void*)&out_pram, sizeof(struct jpeg_wexif_cb_param));
-    cmr_bzero((void*)&setting_param, sizeof(struct setting_cmd_parameter));
-    cmr_bzero((void*)&isp_param, sizeof(struct common_isp_cmd_param));
+    cmr_bzero((void *)&enc_exif_param, sizeof(struct jpeg_enc_exif_param));
+    cmr_bzero((void *)&out_pram, sizeof(struct jpeg_wexif_cb_param));
+    cmr_bzero((void *)&setting_param, sizeof(struct setting_cmd_parameter));
+    cmr_bzero((void *)&isp_param, sizeof(struct common_isp_cmd_param));
 
     enc_exif_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
     enc_exif_param.src_jpeg_addr_virt = pic_src->addr_vir.addr_y;
@@ -9736,9 +9738,20 @@ cmr_int cmr_sensor_init_static_info(cmr_handle oem_handle) {
     struct sensor_ex_info *sns_ex_info_ptr = NULL;
     SENSOR_VAL_T val;
     CHECK_HANDLE_VALID(oem_handle);
+    cmr_int is_multi_mode = 0;
     cxt = (struct camera_context *)oem_handle;
+    is_multi_mode = (cmr_int)cxt->is_multi_mode;
     sns_ex_info_ptr = &cxt->sn_cxt.cur_sns_ex_info;
     cmr_bzero(sns_ex_info_ptr, sizeof(struct sensor_ex_info));
+    if (cxt->is_multi_mode && cxt->sn_cxt.sensor_handle) {
+        val.type = SENSOR_VAL_TYPE_SET_SENSOR_MULTI_MODE;
+        val.pval = (void *)&is_multi_mode;
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                               SENSOR_ACCESS_VAL, (cmr_uint)&val);
+    } else {
+        ret = CMR_CAMERA_FAIL;
+    }
+
     if (cxt->sn_cxt.inited && cxt->sn_cxt.sensor_handle) {
         val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
         val.pval = sns_ex_info_ptr;

@@ -162,7 +162,8 @@ static cmr_int ov5675_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
 
-    memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
+    memcpy(&ex_info->fov_info, &static_info->fov_info,
+           sizeof(static_info->fov_info));
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -773,9 +774,10 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E:module_id=%d", sns_drv_cxt->module_id);
-#if defined(CONFIG_DUAL_MODULE)
-    ov5675_drv_set_frame_sync(handle, 0);
-#endif
+    if (sns_drv_cxt->module_id == MODULE_SUNNY && sns_drv_cxt->is_multi_mode) {
+        ov5675_drv_set_frame_sync(handle, 0);
+        SENSOR_LOGI("set frame sync");
+    }
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     return 0;
@@ -834,6 +836,10 @@ static cmr_int ov5675_drv_access_val(cmr_handle handle, unsigned long param) {
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         sns_drv_cxt->is_sensor_close = 1;
         break;
+    case SENSOR_VAL_TYPE_SET_SENSOR_MULTI_MODE:
+        sns_drv_cxt->is_multi_mode = *(cmr_int *)param_ptr->pval;
+        break;
+
     default:
         break;
     }
