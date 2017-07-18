@@ -5354,7 +5354,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
             }
             HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
             buf_id = getZslBufferIDForFd(zsl_frame->fd);
-            if (buf_id != 0xFFFFFFFF) {
+            if (buf_id != 0xFFFF) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
                     (cmr_uint)mZslHeapArray[buf_id]->data,
