@@ -35,6 +35,10 @@
 #define FD_RUN_FAR_INTERVAL                                                    \
     8 /* The frame interval to run FAR. For reducing computation cost */
 
+#ifndef ABS
+#define ABS(x) (((x) > 0) ? (x) : -(x))
+#endif
+
 struct class_faceattr {
     FA_SHAPE shape;
     FAR_ATTRIBUTE attr;
@@ -619,7 +623,7 @@ static void fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
 
             // If the shift calculted by face shape is not too large,
             // we're very sure the face shape is correct.
-            if ((abs(x_shift) + abs(y_shift)) < max_shift) {
+            if ((ABS(x_shift) + ABS(y_shift)) < max_shift) {
                 // only correct the face center; size is not changed.
                 io_curr_face->sx += x_shift;
                 io_curr_face->sy += y_shift;
