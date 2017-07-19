@@ -323,7 +323,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dCalibration = 1;
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
 	//0: Normal, 1:Mirror+Flip
-	cxt->pd_gobal_setting.dSensorSetting = 1;
+	cxt->pd_gobal_setting.dSensorSetting = in_p->pd_info->sns_orientation;
+	ISP_LOGV("gobal_setting.dSensorSetting = %d\n",cxt->pd_gobal_setting.dSensorSetting);
 
 	property_get("debug.isp.pdaf.otp.dump", otp_pdaf_name, "/dev/null");
 	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {

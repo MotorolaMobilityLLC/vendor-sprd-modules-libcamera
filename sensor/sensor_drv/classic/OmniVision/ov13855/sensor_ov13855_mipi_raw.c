@@ -450,6 +450,12 @@ static cmr_int ov13855_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov13855_pd_pos_l;
     pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
 
+#ifdef CONFIG_DUAL_MODULE
+    pdaf_info->sns_orientation = 1; /*mirror+flip*/
+#else
+   pdaf_info->sns_orientation = 0; /*Normal*/
+#endif
+
     return rtn;
 }
 

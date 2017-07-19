@@ -507,6 +507,7 @@ struct sensor_pdaf_info {
     cmr_u16 *pd_pos_col;
     enum sensor_vendor_type vendor_type;
     struct sensor_pdaf_type2_info type2_info;
+    cmr_u32 sns_orientation; //0: Normal, 1:Mirror+Flip
 };
 
 struct sensor_ex_exposure {
