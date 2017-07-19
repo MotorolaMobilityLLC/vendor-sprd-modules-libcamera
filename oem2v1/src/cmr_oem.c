@@ -4808,10 +4808,10 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 construct_fb_level(&(cxt->face_beauty), beautyLevels);
                 do_face_beauty(&(cxt->face_beauty), cxt->fd_face_area.face_num);
                 deinit_fb_handle(&(cxt->face_beauty));
+                cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
             }
         }
 #endif
-
         ret = jpeg_enc_start(&enc_in_param);
     } else {
         ret = jpeg_enc_thumbnail(&enc_in_param, &stream_size);
