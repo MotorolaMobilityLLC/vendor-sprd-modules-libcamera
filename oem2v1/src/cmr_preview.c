@@ -341,6 +341,7 @@ struct prev_context {
     cmr_handle prev_3dnr_handle;
     cmr_uint recovery_status;
     cmr_uint recovery_cnt;
+    cmr_u64 recovery_start_time;
     cmr_uint isp_status;
     struct sensor_exp_info sensor_info;
     cmr_uint ae_time;
@@ -1705,7 +1706,7 @@ exit:
 }
 
 cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
-                                struct frm_info *in, cmr_uint *addr_vir_y) {
+                                 struct frm_info *in, cmr_uint *addr_vir_y) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     int i = 0;
     CHECK_HANDLE_VALID(handle);
@@ -1757,7 +1758,8 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
             ret = CMR_CAMERA_FAIL;
             goto end;
         }
-        ret = cmr_thread_set_name(handle->thread_cxt.assist_thread_handle, "prev_assist");
+        ret = cmr_thread_set_name(handle->thread_cxt.assist_thread_handle,
+                                  "prev_assist");
         if (CMR_MSG_SUCCESS != ret) {
             CMR_LOGE("fail to set thr name");
             ret = CMR_MSG_SUCCESS;
@@ -2305,6 +2307,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 video_enable = 0;
     cmr_u32 refocus_eb;
     cmr_u32 pdaf_eb = 0;
+    cmr_u64 timestamp = 0;
     struct prev_context *prev_cxt = NULL;
 
     CHECK_HANDLE_VALID(handle);
@@ -2327,6 +2330,13 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
              prev_cxt->prev_channel_id, prev_cxt->cap_channel_id);
 
     if (preview_enable && (data->channel_id == prev_cxt->prev_channel_id)) {
+        timestamp = data->sec * 1000000000LL + data->usec * 1000;
+        if ((prev_cxt->recovery_start_time != 0) &&
+            (prev_cxt->recovery_start_time > timestamp) &&
+            (prev_cxt->recovery_status == PREV_RECOVERING)) {
+            CMR_LOGD("recovery mode,skip frame");
+            return CMR_CAMERA_INVALID_PARAM;
+        }
         ret = prev_preview_frame_handle(handle, camera_id, data);
     }
 
@@ -2355,6 +2365,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     if (prev_cxt->recovery_status) {
         CMR_LOGD("reset the recover status");
         prev_cxt->recovery_status = PREV_RECOVERY_IDLE;
+        prev_cxt->recovery_start_time = 0;
     }
 
     ATRACE_END();
@@ -3325,6 +3336,7 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     enum recovery_mode mode = 0;
     struct prev_context *prev_cxt = NULL;
     struct prev_cb_info cb_data_info;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -3334,7 +3346,8 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
     cmr_bzero(&cb_data_info, sizeof(struct prev_cb_info));
 
-    CMR_LOGE("error type 0x%lx, camera_id %d", evt_type, camera_id);
+    CMR_LOGE("error type 0x%lx, camera_id %d cameramode=%d", evt_type,
+             camera_id, cxt->is_multi_mode);
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
@@ -3360,7 +3373,12 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
             CMR_LOGD("recovery_cnt, %ld", prev_cxt->recovery_cnt);
             if (prev_cxt->recovery_cnt) {
                 /* try once more */
-                mode = RECOVERY_MIDDLE;
+                if (cxt->is_multi_mode == MODE_REFOCUS ||
+                    cxt->is_multi_mode == MODE_BOKEH) {
+                    mode = RECOVERY_HEAVY;
+                } else {
+                    mode = RECOVERY_MIDDLE;
+                }
             } else {
                 /* tried three times, it hasn't recovered yet, restart */
                 mode = RECOVERY_HEAVY;
@@ -3368,7 +3386,12 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
             }
         } else {
             /* not in recovering, start to recover three times */
-            mode = RECOVERY_MIDDLE;
+            if (cxt->is_multi_mode == MODE_REFOCUS ||
+                cxt->is_multi_mode == MODE_BOKEH) {
+                mode = RECOVERY_HEAVY;
+            } else {
+                mode = RECOVERY_MIDDLE;
+            }
             prev_cxt->recovery_status = PREV_RECOVERING;
             prev_cxt->recovery_cnt = PREV_RECOVERY_CNT;
             CMR_LOGD("Need recover, recovery_cnt, %ld", prev_cxt->recovery_cnt);
@@ -3607,6 +3630,11 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     video_enable = prev_cxt->prev_param.video_eb;
     tool_eb = prev_cxt->prev_param.tool_eb;
     pdaf_enable = prev_cxt->prev_param.pdaf_eb;
+    if (prev_cxt->recovery_status == PREV_RECOVERING) {
+        prev_cxt->recovery_start_time = systemTime(CLOCK_MONOTONIC);
+    } else {
+        prev_cxt->recovery_start_time = 0;
+    }
     CMR_LOGD("camera_id %d, prev_status %ld, preview_eb %d, snapshot_eb %d",
              camera_id, prev_cxt->prev_status, preview_enable, snapshot_enable);
 
