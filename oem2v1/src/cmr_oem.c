@@ -865,7 +865,6 @@ void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata) {
     struct frm_info *frame = (struct frm_info *)data;
     cmr_u32 channel_id;
     cmr_handle receiver_handle;
-    struct isp_af_ts af_ts;
 
     if (!cxt || !data || !privdata ||
         CMR_EVT_GRAB_BASE != (CMR_EVT_GRAB_BASE & evt)) {
@@ -883,12 +882,6 @@ void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata) {
 
     switch (evt) {
     case CMR_GRAB_TX_DONE:
-        if (0 == cxt->camera_id) {
-            af_ts.timestamp = frame->sec * 1000000000LL + frame->usec * 1000LL;
-            af_ts.capture = 0;
-            isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_DCAM_TIMESTAMP,
-                      (void *)&af_ts);
-        }
 #if defined OEM_HANDLE_HDR || defined OEM_HANDLE_3DNR
         camera_grab_handle(evt, data, privdata);
 #else

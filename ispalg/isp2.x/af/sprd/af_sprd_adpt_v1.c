@@ -303,14 +303,10 @@ static void notify_start(af_ctrl_t * af)
 
 static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
 {
-	ISP_LOGI(". %s ", (win_num) ? "Suc" : "Fail");
 	struct af_result_param af_result;
 	af_result.suc_win = win_num;
+	ISP_LOGI(". %s ", (win_num) ? "Suc" : "Fail");
 
-	af->vcm_stable = 1;
-	if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {	// todo: should add SNAPSHOT status
-		sem_post(&af->af_wait_caf);	// should be protected by af_work_lock mutex exclusives
-	}
 	af->end_notice(af->caller, &af_result);
 }
 
@@ -1380,9 +1376,6 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 		AF_Get_Result(af->af_alg_cxt, &res, &mode);
 		ISP_LOGV("Normal AF end, result = %d mode = %d ", res, mode);
 
-		if (1 == af->need_re_trigger) {
-			af->need_re_trigger = 0;
-		}
 		ISP_LOGI("notify_stop");
 		notify_stop(af, res);
 
@@ -1437,7 +1430,6 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	} else {
 		if (res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) {
 			ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
-			af->need_re_trigger = 1;
 			pthread_mutex_lock(&af->af_work_lock);
 			if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt)) {
 				AF_Process_Frame(af->af_alg_cxt);
@@ -1661,6 +1653,7 @@ static cmr_u8 af_clear_sem(af_ctrl_t * af)
 
 	pthread_mutex_lock(&af->af_work_lock);
 	sem_getvalue(&af->af_wait_caf, &tmpVal);
+	ISP_LOGI("af->af_wait_caf sem %d", tmpVal);
 	while (0 < tmpVal) {
 		sem_wait(&af->af_wait_caf);
 		sem_getvalue(&af->af_wait_caf, &tmpVal);
@@ -1678,8 +1671,8 @@ static cmr_u8 af_wait_caf_finish(af_ctrl_t * af)
 	if (clock_gettime(CLOCK_REALTIME, &ts)) {
 		rtn = -1;
 	} else {
-		ts.tv_sec += 0;
-		ts.tv_nsec += AF_WAIT_CAF_TIMEOUT;
+		ts.tv_sec += AF_WAIT_CAF_SEC;
+		ts.tv_nsec += AF_WAIT_CAF_NSEC;
 		if (ts.tv_nsec >= 1000000000) {
 			ts.tv_nsec -= 1000000000;
 			ts.tv_sec += 1;
@@ -1702,8 +1695,11 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 af_mode = *(cmr_u32 *) param0;
+	cmr_s32 timecompare = DCAM_AFTER_VCM_NO;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	enum aft_mode mode;
+	nsecs_t system_time0 = 0;
+	nsecs_t system_time1 = 0;
 
 	property_get("af_mode", AF_MODE, "none");
 	if (0 != strcmp(AF_MODE, "none")) {
@@ -1742,9 +1738,14 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	case AF_MODE_PICTURE:
 		af->request_mode = af_mode;
 		af->takePicture_timeout = 0;
-		if (AF_NOT_FINISHED == AF_is_finished(af->af_alg_cxt) || af->need_re_trigger || DCAM_AFTER_VCM_NO == compare_timestamp(af)) {
+		timecompare = compare_timestamp(af);
+		if (AF_SEARCHING == af->focus_state || DCAM_AFTER_VCM_YES != timecompare) {
+			ISP_LOGI("af is finished %d, timecompare %d", AF_is_finished(af->af_alg_cxt), timecompare);
+			system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 			af_clear_sem(af);
 			af_wait_caf_finish(af);
+			system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
+			ISP_LOGI("picture mode wait caf %" PRId64 " ms", system_time1 - system_time0);
 		};
 		af->state = STATE_PICTURE;
 		ISP_LOGV("dcam_timestamp-vcm_timestamp = %" PRIu64 " ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
@@ -1762,13 +1763,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		break;
 	}
 
-	if (AF_MODE_FULLSCAN == af_mode || AF_MODE_NORMAL == af_mode) {
-		if (AF_SEARCHING == af->focus_state) {
-			ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
-			af_stop_search(af);
-		}
-	}
-
 	return rtn;
 }
 
@@ -1782,6 +1776,11 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
 	property_set("af_mode", "none");
 	af->test_loop_quit = 1;
+
+	if (AF_SEARCHING == af->focus_state) {
+		ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
+		af_stop_search(af);
+	}
 
 	if (STATE_FULLSCAN == af->state) {
 		af->algo_mode = CAF;
@@ -2085,12 +2084,15 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
+	cmr_s32 timecompare = compare_timestamp(af);
+
 	if (0 == af_ts->capture) {
 		af->dcam_timestamp = af_ts->timestamp;
 		AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_DCAM, af->dcam_timestamp);
-		//ISP_LOGV("dcam_timestamp %" PRIu64 " ms", (cmr_s64) af->dcam_timestamp);
-		if (DCAM_AFTER_VCM_YES == compare_timestamp(af) && 1 == af->vcm_stable) {
+		//ISP_LOGV("dcam_timestamp %" PRIu64 " ", (cmr_s64) af->dcam_timestamp);
+		if (AF_IDLE == af->focus_state && DCAM_AFTER_VCM_YES == timecompare && 0 == af->vcm_stable) {
 			sem_post(&af->af_wait_caf);
+			af->vcm_stable = 1;
 		}
 	} else if (1 == af_ts->capture) {
 		af->takepic_timestamp = af_ts->timestamp;
@@ -2380,6 +2382,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		return NULL;
 	}
 
+	pthread_mutex_init(&af->status_lock, NULL);
 	pthread_mutex_init(&af->af_work_lock, NULL);
 	pthread_mutex_init(&af->caf_work_lock, NULL);
 	sem_init(&af->af_wait_caf, 0, 0);
@@ -2424,6 +2427,7 @@ ERROR_INIT:
 	sem_destroy(&af->af_wait_caf);
 	pthread_mutex_destroy(&af->caf_work_lock);
 	pthread_mutex_destroy(&af->af_work_lock);
+	pthread_mutex_destroy(&af->status_lock);
 	AF_deinit(af->af_alg_cxt);
 	memset(af, 0, sizeof(*af));
 	free(af);
@@ -2451,6 +2455,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	sem_destroy(&af->af_wait_caf);
 	pthread_mutex_destroy(&af->caf_work_lock);
 	pthread_mutex_destroy(&af->af_work_lock);
+	pthread_mutex_destroy(&af->status_lock);
 	AF_deinit(af->af_alg_cxt);
 
 	property_set("af_mode", "none");
@@ -2581,10 +2586,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			rtn = faf_process_frame(af);
 			if (1 == rtn) {
 				af->state = STATE_CAF;	// todo: consider af->pre_state
-				af->vcm_stable = 1;
-				if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {	// todo: should add SNAPSHOT status
-					sem_post(&af->af_wait_caf);	// should be protected by af_work_lock mutex exclusives
-				}
 				af->focus_state = AF_IDLE;
 				trigger_set_mode(af, AFT_MODE_CONTINUE);
 				trigger_start(af);

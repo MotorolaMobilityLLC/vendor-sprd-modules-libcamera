@@ -26,7 +26,8 @@
 
 #define AF_SYS_VERSION "-20170511-01"
 #define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
-#define AF_WAIT_CAF_TIMEOUT 3000000000;	//1s == (1000 * 1000 * 1000)ns
+#define AF_WAIT_CAF_SEC 3 //1s == (1000 * 1000 * 1000)ns
+#define AF_WAIT_CAF_NSEC 0 //this macro should be less than 1000 * 1000 * 1000
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -200,7 +201,6 @@ typedef struct _af_ctrl {
 	cmr_u32 algo_mode;	//eAF_MODE algo_mode;
 	cmr_u32 takePicture_timeout;
 	cmr_u32 request_mode;
-	cmr_u32 need_re_trigger;
 	cmr_u64 vcm_timestamp;
 	cmr_u64 dcam_timestamp;
 	cmr_u64 takepic_timestamp;

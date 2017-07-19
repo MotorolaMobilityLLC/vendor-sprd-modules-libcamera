@@ -855,6 +855,9 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_pm_param_data *param_data = NULL;
+	struct isp_af_ts af_ts;
+	cmr_u32 sec = 0;
+	cmr_u32 usec = 0;
 	cmr_u32 i;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
@@ -882,6 +885,14 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_TUNING_EB, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set ae tuning eb"));
+	}
+
+	if (cxt->ops.af_ops.ioctrl) {
+		ret = ispalg_get_k_timestamp(cxt, &sec, &usec);
+		af_ts.timestamp = sec * 1000000000LL + usec * 1000LL;
+		af_ts.capture = 0;
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DCAM_TIMESTAMP, (void *)(&af_ts), NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
 	}
 
 	ret = isp_dev_comm_shadow(cxt->dev_access_handle, ISP_ONE);
