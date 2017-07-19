@@ -3139,6 +3139,7 @@ out:
 cmr_int camera_isp_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
+    char value[PROPERTY_VALUE_MAX];
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = NULL;
@@ -3303,6 +3304,11 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
              isp_param.ex_info.preview_skip_num,
              isp_param.ex_info.capture_skip_num);
     CMR_LOGD("w %d h %d", isp_param.size.w, isp_param.size.h);
+
+    property_get("persist.sys.camera.pdaf.off", value, "0");
+    if (atoi(value)) {
+        isp_param.ex_info.pdaf_supported = 0;
+    }
 
     if (SENSOR_PDAF_TYPE3_ENABLE == isp_param.ex_info.pdaf_supported) {
 
