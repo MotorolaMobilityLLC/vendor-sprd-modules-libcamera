@@ -1970,19 +1970,26 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 				param.lsc_otp_height = otp_info->height;
 			}
 			if (NULL != cxt->otp_data) {
-				param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
-				param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
-				param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_b;
+
 #if defined(CONFIG_DUAL_MODULE)
+				param.otp_info.gldn_stat_info.r = cxt->otp_data->dual_otp.master_awb_golden_info.gain_r;
+				param.otp_info.gldn_stat_info.g = cxt->otp_data->dual_otp.master_awb_golden_info.gain_g;
+				param.otp_info.gldn_stat_info.b = cxt->otp_data->dual_otp.master_awb_golden_info.gain_b;
+
 				param.otp_info.rdm_stat_info.r = cxt->otp_data->dual_otp.master_iso_awb_info.gain_r;
 				param.otp_info.rdm_stat_info.g = cxt->otp_data->dual_otp.master_iso_awb_info.gain_g;
 				param.otp_info.rdm_stat_info.b = cxt->otp_data->dual_otp.master_iso_awb_info.gain_b;
+
 #else
+				param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
+				param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
+				param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_b;
+
 				param.otp_info.rdm_stat_info.r = cxt->otp_data->single_otp.iso_awb_info.gain_r;
 				param.otp_info.rdm_stat_info.g = cxt->otp_data->single_otp.iso_awb_info.gain_g;
 				param.otp_info.rdm_stat_info.b = cxt->otp_data->single_otp.iso_awb_info.gain_b;
 #endif
-				ISP_LOGV("otp golden [%d %d %d]  rdn [%d %d %d ]", param.otp_info.gldn_stat_info.r, param.otp_info.gldn_stat_info.g,
+				ISP_LOGD("otp golden [%d %d %d]  rdn [%d %d %d ]", param.otp_info.gldn_stat_info.r, param.otp_info.gldn_stat_info.g,
 					 param.otp_info.gldn_stat_info.b, param.otp_info.rdm_stat_info.r, param.otp_info.rdm_stat_info.g, param.otp_info.rdm_stat_info.b);
 			} else {
 				ISP_LOGV("otp is not used");
