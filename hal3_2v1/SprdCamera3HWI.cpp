@@ -1023,7 +1023,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     if ((mMultiCameraMode == MODE_REFOCUS || mMultiCameraMode == MODE_BOKEH ||
          mMultiCameraMode == MODE_RANGE_FINDER) &&
         meta.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-        int32_t aeTargetFpsRange[2] = {30, 30};
+        int32_t aeTargetFpsRange[2] = {20, 20};
         meta.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE, aeTargetFpsRange,
                     ARRAY_SIZE(aeTargetFpsRange));
     }
