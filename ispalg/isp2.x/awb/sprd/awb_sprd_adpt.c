@@ -58,6 +58,11 @@ char libawb_path[][20] = {
 	"libawb_v5.so",
 };
 
+static cmr_u32 s_awb_init_cur_ct_front = 0;
+static cmr_u32 s_awb_init_cur_ct = 0;
+static struct awb_ctrl_gain s_init_awb_cur_gain_front;
+static struct awb_ctrl_gain s_init_awb_cur_gain;
+
 struct awb_ctrl_tuning_param {
 	 /**/ cmr_u32 enable;
 	/*window size of statistic image */
@@ -915,11 +920,33 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->cur_gain.g = result->gain.g;
 	cxt->cur_gain.b = result->gain.b;
 	cxt->cur_ct = result->ct;
+	cxt->camera_id = param->camera_id;
 
-	cxt->output_gain.r = result->gain.r;
-	cxt->output_gain.g = result->gain.g;
-	cxt->output_gain.b = result->gain.b;
-	cxt->output_ct = result->ct;
+	if(cxt->camera_id == 0) {
+		if(s_awb_init_cur_ct == 0) {
+			cxt->output_gain.r = result->gain.r;
+			cxt->output_gain.g = result->gain.g;
+			cxt->output_gain.b = result->gain.b;
+			cxt->output_ct = result->ct;
+		} else {
+			cxt->output_gain.r = s_init_awb_cur_gain.r;
+			cxt->output_gain.g = s_init_awb_cur_gain.g;
+			cxt->output_gain.b = s_init_awb_cur_gain.b;
+			cxt->output_ct = s_awb_init_cur_ct;
+		}
+	} else if(cxt->camera_id == 1) {
+		if(s_awb_init_cur_ct_front == 0) {
+			cxt->output_gain.r = result->gain.r;
+			cxt->output_gain.g = result->gain.g;
+			cxt->output_gain.b = result->gain.b;
+			cxt->output_ct = result->ct;
+		} else {
+			cxt->output_gain.r = s_init_awb_cur_gain_front.r;
+			cxt->output_gain.g = s_init_awb_cur_gain_front.g;
+			cxt->output_gain.b = s_init_awb_cur_gain_front.b;
+			cxt->output_ct = s_awb_init_cur_ct_front;
+		}
+	}
 
 	ISP_LOGV("AWB init: (%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 
@@ -1208,6 +1235,18 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result->gain.g = cxt->output_gain.g;
 	result->gain.b = cxt->output_gain.b;
 	result->ct = cxt->output_ct;
+
+	if(cxt->camera_id == 0) {
+		s_init_awb_cur_gain.r = result->gain.r;
+		s_init_awb_cur_gain.g = result->gain.g;
+		s_init_awb_cur_gain.b = result->gain.b;
+		s_awb_init_cur_ct = result->ct;
+	} else if(cxt->camera_id == 1) {
+		s_init_awb_cur_gain_front.r = result->gain.r;
+		s_init_awb_cur_gain_front.g = result->gain.g;
+		s_init_awb_cur_gain_front.b = result->gain.b;
+		s_awb_init_cur_ct_front = result->ct;
+	}
 
 	pthread_mutex_unlock(&cxt->status_lock);
 EXIT:
