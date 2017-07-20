@@ -118,13 +118,14 @@ static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
 
-static drv_fov_info default_sensor_fov[CAMERA_ID_COUNT] = {
+// if cant get valid sensor fov info, use the default value
+static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
 };
-static drv_fov_info sensor_fov[CAMERA_ID_COUNT];
+
 #if 0
 const sensor_fov_tab_t back_sensor_fov_tab[] = {
     {"ov13855_mipi_raw", {4.815f, 3.6783f}, 3.95f},
@@ -839,26 +840,22 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
     int ret = 0;
 
+    HAL_LOGI("E");
+
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
         HAL_LOGE("set a default value(5M) to app, in case exception");
         setLargestSensorSize(cameraId, 2592, 1944);
-        memcpy(&sensor_fov[cameraId], &default_sensor_fov[cameraId],
-               sizeof(default_sensor_fov[cameraId]));
         goto exit;
     }
 
     mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
 
-    if (sensor_cxt->fov_info.physical_size[0] <= 0 ||
-        sensor_cxt->fov_info.physical_size[1] <= 0 ||
-        sensor_cxt->fov_info.focal_lengths <= 0) {
-        HAL_LOGI("fov info is not configured, use default fov info");
-        memcpy(&sensor_fov[cameraId], &default_sensor_fov[cameraId],
-               sizeof(default_sensor_fov[cameraId]));
-
-    } else {
+    // if sensor fov info is valid, use it; else use default value
+    if (sensor_cxt->fov_info.physical_size[0] > 0 &&
+        sensor_cxt->fov_info.physical_size[1] > 0 &&
+        sensor_cxt->fov_info.focal_lengths > 0) {
         memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info,
                sizeof(sensor_cxt->fov_info));
     }
@@ -885,6 +882,7 @@ exit:
         free(sensor_cxt);
     sensor_cxt = NULL;
 
+    HAL_LOGI("X");
     return 0;
 }
 
