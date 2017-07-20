@@ -805,8 +805,8 @@ void SprdCamera3RealBokeh::getDepthImageSize(int inputWidth, int inputHeight,
         }
     } else if (mApiVersion == ARCSOFT_API_MODE) {
         if (type == PREVIEW_STREAM) {
-            *outWidth = 1280;
-            *outHeight = 960;
+            *outWidth = inputWidth;
+            *outHeight = inputHeight;
         } else if (type == SNAPSHOT_STREAM) {
             *outWidth = 1296;
             *outHeight = 972;
@@ -2786,10 +2786,11 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                     .F_number != fnum) {
                 mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number =
                     fnum;
-                fnum = fnum * 255 / 20;
+                fnum = 256 - fnum * 255 / 20;
                 mCaptureThread->mCapbokehParam.bokeh_level = fnum;
             }
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
+            fnum = 21 - fnum;
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
                 (MInt32)(fnum * 100 / 20);
             mCaptureThread->mArcSoftCapParam.i32BlurIntensity =
