@@ -351,6 +351,9 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	struct isp_flash_param *flash_cali = NULL;
 	enum smart_ctrl_flash_mode flash_mode = 0;
 	enum awb_ctrl_flash_status awb_flash_status = 0;
+	float captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
+	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
+	struct alsc_flash_info flash_info = { 0, 0};
 	UNUSED(call_back);
 
 	if (NULL == cxt || NULL == flash_notice) {
@@ -360,6 +363,9 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 	switch (flash_notice->mode) {
 	case ISP_FLASH_PRE_BEFORE:
+		cxt->lsc_flash_onoff = 1;
+		if (cxt->ops.lsc_ops.ioctrl)
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_BEFORE, NULL, NULL);
 		ae_notice.mode = AE_FLASH_PRE_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
@@ -378,8 +384,6 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		flash_mode = SMART_CTRL_FLASH_PRE;
 		if (cxt->ops.smart_ops.ioctrl)
 			rtn = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
-		if (cxt->ops.lsc_ops.ioctrl)
-			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_BEFORE, NULL, NULL);
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
@@ -404,13 +408,11 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 			rtn = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 		if (cxt->ops.af_ops.ioctrl)
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+		if (cxt->ops.lsc_ops.ioctrl)
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_LIGHTING, NULL, NULL);
 		break;
 
 	case ISP_FLASH_PRE_AFTER:
-
-		if (cxt->ops.lsc_ops.ioctrl)
-			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, NULL, NULL);
-
 		ae_notice.mode = AE_FLASH_PRE_AFTER;
 		ae_notice.will_capture = flash_notice->will_capture;
 		if (cxt->ops.ae_ops.ioctrl)
@@ -428,12 +430,20 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 			rtn = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 		if (cxt->ops.af_ops.ioctrl)
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+
+		//lnc flash update
+		cxt->lsc_flash_onoff = 0;
+		captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
+		captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
+		flash_info.io_captureFlashEnvRatio = captureFlashEnvRatio;
+		flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
+		if (cxt->ops.lsc_ops.ioctrl)
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void*)&flash_info, NULL);
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
-		cxt->lsc_flash_onoff = 1;
-		if (cxt->ops.lsc_ops.ioctrl)
-			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_ON, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
@@ -447,9 +457,14 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		rtn = _isp_set_awb_flash_gain((cmr_handle) cxt);
 		if (cxt->ops.awb_ops.ioctrl)
 			rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
+		cxt->lsc_flash_onoff = 1;
+		if (cxt->ops.lsc_ops.ioctrl)
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_BEFORE, NULL, NULL);
 		break;
 
 	case ISP_FLASH_MAIN_LIGHTING:
+		if (cxt->ops.lsc_ops.ioctrl)
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_LIGHTING, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_LIGHTING;
 		if (cxt->ops.ae_ops.ioctrl)
 			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
@@ -483,7 +498,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 	case ISP_FLASH_MAIN_AFTER:
 		if (cxt->ops.lsc_ops.ioctrl)
-			rtn  = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_OFF, NULL, NULL);
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_AFTER, NULL, NULL);
 		cxt->lsc_flash_onoff = 0;
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		if (cxt->ops.ae_ops.ioctrl)
@@ -1623,6 +1638,11 @@ static cmr_int _ispAeTouchIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	touch_zone.touch_zone.h = rect->end_y - rect->start_y + 1;
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_TOUCH_ZONE, &touch_zone, &out_param);
+
+	if(touch_zone.touch_zone.w != 1 || touch_zone.touch_zone.h != 1){
+		if (cxt->ops.lsc_ops.ioctrl)
+			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_GET_TOUCH, NULL, NULL);
+	}
 
 	ISP_LOGV("w,h=(%d,%d)", touch_zone.touch_zone.w, touch_zone.touch_zone.h);
 

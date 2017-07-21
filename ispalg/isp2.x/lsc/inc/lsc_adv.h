@@ -92,13 +92,16 @@ enum alsc_io_ctrl_cmd {
 	ALSC_CMD_GET_DEBUG_INFO = 2,
 	LSC_INFO_TO_AWB = 3,
 	ALSC_GET_VER = 4,
-	ALSC_FLASH_ON = 5,
-	ALSC_FLASH_OFF = 6,
+	ALSC_FLASH_MAIN_BEFORE = 5,
+	ALSC_FLASH_MAIN_AFTER = 6,
 	ALSC_FW_STOP = 7,
 	ALSC_FW_START = 8,
 	ALSC_FW_START_END = 9,
 	ALSC_FLASH_PRE_BEFORE = 10,
 	ALSC_FLASH_PRE_AFTER = 11,
+	ALSC_FLASH_MAIN_LIGHTING =12,
+	ALSC_FLASH_PRE_LIGHTING =13,
+	ALSC_GET_TOUCH =14,
 };
 
 struct tg_alsc_debug_info {
@@ -350,6 +353,8 @@ struct lsc2_context {
 	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
 	cmr_u32 alg_locked;	// lock alsc or not by ioctrl
 	cmr_u32 flash_mode;
+	cmr_u32 pre_flash_mode;
+	cmr_u32 between_pre_main_flash_count;
 	cmr_u32 alg_open;	// complie alg0.c or alg2.c
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
@@ -422,6 +427,11 @@ struct alsc_fwstart_info {
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
+};
+
+struct alsc_flash_info {
+	float io_captureFlashEnvRatio;
+	float io_captureFlash1Ratio;
 };
 ////////////////////////////// calculation dependent //////////////////////////////
 
