@@ -114,6 +114,11 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *handle = (struct lsc_ctrl_cxt *)p_data;
 
+	if(NULL == handle) {
+		ISP_LOGE("Error: handle is NULL");
+		return rtn;
+	}
+
 	if (!message || !p_data) {
 		ISP_LOGE("fail to chcek param");
 		goto exit;
@@ -361,6 +366,7 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
+	cxt = NULL;
 	ISP_LOGI("done rtn = %d", rtn);
 
 	return rtn;
