@@ -61,6 +61,7 @@ extern otp_drv_entry_t ov5675_sunny_drv_entry;
 extern otp_drv_entry_t imx258_truly_drv_entry;
 extern otp_drv_entry_t ov13855_altek_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_qtech_drv_entry;
+extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -127,7 +128,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
     //{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {NULL,0}, NULL},
     {MODULE_SUNNY ,"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, NULL},
     {MODULE_SUNNY ,"imx230_mipi_raw", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, NULL},
-    {MODULE_SUNNY ,"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, NULL},
+    {MODULE_SUNNY ,"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &s5k3p8sm_truly_drv_entry},
 #endif
     {0}};
 
@@ -305,7 +306,7 @@ cmr_u32 sensor_get_match_index(cmr_int at_flag, cmr_u32 sensor_id) {
     cmr_u32 sSnNum = 0;
 
     if (AUTO_TEST_CAMERA == at_flag) {
-        if (sensor_id == SENSOR_MAIN || sensor_id == SENSOR_DEVICE2) {
+        if (sensor_id == SENSOR_MAIN ) {
             mSnNum = ARRAY_SIZE(main_sensor_infor_tab) - 1;
             SENSOR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum);
             for (i = 0; i < mSnNum; i++) {
@@ -318,7 +319,7 @@ cmr_u32 sensor_get_match_index(cmr_int at_flag, cmr_u32 sensor_id) {
                 }
             }
         }
-        if (sensor_id == SENSOR_SUB || sensor_id == SENSOR_DEVICE3) {
+        if (sensor_id == SENSOR_SUB ) {
             sSnNum = ARRAY_SIZE(sub_sensor_infor_tab) - 1;
             SENSOR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum);
             for (i = 0; i < sSnNum; i++) {

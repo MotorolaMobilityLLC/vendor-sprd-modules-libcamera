@@ -944,16 +944,16 @@ static cmr_int s5k3p8sm_drv_access_val(cmr_handle handle, cmr_int param) {
     SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_INIT_OTP:
-        s5k3p8sm_otp_init(handle);
+      //  s5k3p8sm_otp_init(handle);
         break;
     case SENSOR_VAL_TYPE_SHUTTER:
         *((uint32_t *)param_ptr->pval) = s5k3p8sm_drv_get_shutter(handle);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
-        s5k3p8sm_otp_read(handle, param_ptr);
+       // s5k3p8sm_otp_read(handle, param_ptr);
         break;
     case SENSOR_VAL_TYPE_PARSE_OTP:
-        s5k3p8sm_parse_otp(handle, param_ptr);
+        //s5k3p8sm_parse_otp(handle, param_ptr);
         break;
     case SENSOR_VAL_TYPE_WRITE_OTP:
         break;
