@@ -3505,8 +3505,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 exit:
 	if (ret) {
 		if (cxt) {
-			pthread_mutex_destroy(&cxt->stats_buf_lock);
 			ispalg_destroy_thread_proc((cmr_handle) cxt);
+			pthread_mutex_destroy(&cxt->stats_buf_lock);
 			ispalg_deinit((cmr_handle) cxt);
 			if (binning_info) {
 				free((void *)binning_info);
@@ -3530,9 +3530,10 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		ISP_LOGE("fail to get cxt pointer");
 		goto exit;
 	}
-	pthread_mutex_destroy(&cxt->stats_buf_lock);
 
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
+
+	pthread_mutex_destroy(&cxt->stats_buf_lock);
 
 	ret = ispalg_deinit((cmr_handle) cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do _ispAlgDeInit"));
