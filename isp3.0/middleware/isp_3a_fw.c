@@ -2311,6 +2311,7 @@ cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)
 		if (!isp_notice_ptr->will_capture) {
 			awb_in.flash_status = AWB_CTRL_FLASH_PRE_AFTER;
 			ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, &awb_in, NULL);
+			ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, &awb_in, NULL);
 		}
 		break;
 	case ISP_FLASH_MAIN_BEFORE:
@@ -3083,9 +3084,19 @@ cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	union awb_ctrl_cmd_in                       awb_in;
 
 	UNUSED(param_ptr);
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_SNAPSHOT_FINISHED, NULL, NULL);
+	if(ret) {
+		ISP_LOGE("ae ioctrl snapshaot failed");
+		goto exit;
+	}
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, &awb_in, NULL);
+	if(ret) {
+		ISP_LOGE("awb ioctrl unlock failed");
+		goto exit;
+	}
 exit:
 	return ret;
 }

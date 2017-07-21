@@ -458,7 +458,7 @@ cmr_int awbctrl_set_flash_close(cmr_handle awb_ctrl_handle, void *input_ptr, voi
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASH_CLOSE, input_ptr, output_ptr);
 	}
 
-	ret = awbctrl_set_unlock(awb_ctrl_handle, NULL, NULL);
+	//ret = awbctrl_set_unlock(awb_ctrl_handle, NULL, NULL);
 
 	return ret;
 }
