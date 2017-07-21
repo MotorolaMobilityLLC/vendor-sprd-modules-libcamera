@@ -352,20 +352,18 @@ cmr_int sensor_otp_dump_raw_data(cmr_u8 *buffer, int size, char *dev_name) {
     char otp_bin_ext_path[255];
 
     CHECK_PTR(buffer);
-    property_get("debug.camera.save.otp.raw.data", value, "0");
-    if (atoi(value) == 1) {
-        snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path),
+    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path),
                  "%s%s_otp_dump.bin", otp_bin_path, dev_name);
-        OTP_LOGD("otp_data_dump_path:%s", otp_bin_ext_path);
-        FILE *fp = fopen(otp_bin_ext_path, "wb");
-        if (fp != NULL) {
-            fwrite(buffer, 1, size, fp);
-            fclose(fp);
-        } else {
-            OTP_LOGE("fp is null!! dump otp raw data failed");
-            ret = -1;
-        }
+    OTP_LOGD("otp_data_dump_path:%s", otp_bin_ext_path);
+    FILE *fp = fopen(otp_bin_ext_path, "wb");
+    if (fp != NULL) {
+        fwrite(buffer, 1, size, fp);
+        fclose(fp);
+    } else {
+        OTP_LOGE("fp is null!! dump otp raw data failed");
+        ret = -1;
     }
+
     return ret;
 }
 

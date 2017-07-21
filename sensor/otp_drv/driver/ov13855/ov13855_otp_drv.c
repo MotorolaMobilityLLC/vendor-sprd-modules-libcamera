@@ -279,6 +279,7 @@ static cmr_int ov13855_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_u8 cmd_val[3];
     cmr_uint i = 0;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("E");
 
@@ -307,14 +308,18 @@ static cmr_int ov13855_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         goto exit;
     }
 
-    for (i = 0; i < OTP_LEN; i++) {
-        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                           (cmr_u8 *)&cmd_val[0], 2);
-        otp_raw_data->buffer[i] = cmd_val[0];
+    ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                       (cmr_u8 *)otp_raw_data->buffer,
+                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+
+    if (OTP_CAMERA_SUCCESS == ret ) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
+                                         otp_cxt->dev_name))
+            OTP_LOGE("dump failed");
+        }
     }
-    sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN, otp_cxt->dev_name);
 
 exit:
     OTP_LOGI("X");

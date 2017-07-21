@@ -383,6 +383,7 @@ static cmr_int ov13855_sunny_otp_drv_read(cmr_handle otp_drv_handle,
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_u8 cmd_val[3];
     cmr_uint i = 0;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("E");
 
@@ -411,10 +412,18 @@ static cmr_int ov13855_sunny_otp_drv_read(cmr_handle otp_drv_handle,
         goto exit;
     }
     /*in burst mode,otp data read from kernel one time*/
-    hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+    ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
                        (cmr_u8 *)otp_raw_data->buffer,
                        SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
-    sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN, otp_cxt->dev_name);
+
+    if (OTP_CAMERA_SUCCESS == ret ) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
+                                        otp_cxt->dev_name))
+                OTP_LOGE("dump failed");
+        }
+    }
 
 exit:
     OTP_LOGI("X");
