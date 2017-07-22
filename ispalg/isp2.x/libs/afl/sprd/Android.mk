@@ -23,6 +23,11 @@ else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
 endif
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
 LOCAL_MODULE := libdeflicker
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional

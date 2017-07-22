@@ -1251,6 +1251,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		break;
 	}
 	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+
 	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {

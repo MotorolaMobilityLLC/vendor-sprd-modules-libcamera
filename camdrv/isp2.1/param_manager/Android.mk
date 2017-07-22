@@ -58,7 +58,8 @@ LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon liblog
 
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_SHARED_LIBRARY)
