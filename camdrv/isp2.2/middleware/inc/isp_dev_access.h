@@ -77,7 +77,7 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, cmr_int bypass);
 cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypass);
 cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow);
-cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle);
+cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, cmr_int flag);
 cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id);
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata);
 cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle * isp_dev_handle);

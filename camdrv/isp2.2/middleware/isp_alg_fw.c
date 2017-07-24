@@ -614,11 +614,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 			ISP_TRACE_IF_FAIL(rtn, ("isp_dev_cfg_block fail"));
 		}
 
-		if (ISP_BLK_2D_LSC == param_data->id) {
-			rtn = isp_dev_lsc_update(cxt->dev_access_handle);
-			ISP_TRACE_IF_FAIL(rtn, ("isp_dev_lsc_update fail"));
-		}
-
 		if (ISP_BLK_RGB_GAMC == param_data->id) {
 			cxt->gamma_sof_cnt = 0;
 			cxt->update_gamma_eb = 0;
@@ -2907,9 +2902,17 @@ static cmr_s32 isp_alg_cfg(cmr_handle isp_alg_handle)
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
+		if (ISP_BLK_2D_LSC == param_data->id) {
+			isp_dev_lsc_update(cxt->dev_access_handle, 1);
+		}
 		isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
 		if (ISP_BLK_2D_LSC == param_data->id) {
-			isp_dev_lsc_update(cxt->dev_access_handle);
+			/*cxt->capture_mode : 0 normal mode; 1 zsl mode*/
+			if (0 == cxt->capture_mode) {
+				isp_dev_lsc_update(cxt->dev_access_handle, 1);
+			} else if (1 == cxt->capture_mode) {
+				isp_dev_lsc_update(cxt->dev_access_handle, 0);
+			}
 		}
 		param_data++;
 	}
@@ -3260,6 +3263,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		goto exit;
 	}
 
+	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
 	cxt->sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
 	cxt->sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
