@@ -1280,6 +1280,9 @@ static void *cmr_grab_thread_proc(void *data) {
                 pthread_mutex_unlock(&p_grab->cb_mutex);
             } else if (op.parm.frame.irq_type == CAMERA_IRQ_DONE) {
                 irq_info.irq_property = op.parm.frame.irq_property;
+                irq_info.sec = op.parm.frame.sec;
+                irq_info.usec = op.parm.frame.usec;
+                irq_info.frame_id = op.parm.frame.frame_id;
 
                 pthread_mutex_lock(&p_grab->cb_mutex);
                 if (p_grab->isp_irq_proc_evt_cb && p_grab->isp_cb_enable) {
