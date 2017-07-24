@@ -1303,6 +1303,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                      BLUR_REFOCUS_PARAM_NUM * 4);
                 mBlur->mReqState = REPROCESS_STATE;
             }
+            request.num_output_buffers = 1;
 
             if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
                                                            &request)) {
@@ -1795,15 +1796,15 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
     if (type == 1 && mVersion == 1) {
         face_num =
             SprdCamera3Setting::s_setting[mBlur->mCameraId].faceInfo.face_num;
-        if (mLastFaceNum <= 0 && face_num <= 0) {
-            if (mSkipFaceNum < 30) {
-                HAL_LOGV("mSkipFaceNum:%d", mSkipFaceNum);
-                mSkipFaceNum++;
-            }
+        if (mLastFaceNum > 0 && face_num <= 0 && mSkipFaceNum < 30) {
+            HAL_LOGV("mSkipFaceNum:%d", mSkipFaceNum);
+            mSkipFaceNum++;
             return;
         }
         HAL_LOGV("mLastFaceNum:%d,face_num:%d", mLastFaceNum, face_num);
-
+        if (face_num <= 0 && mLastFaceNum <= 0) {
+            return;
+        }
         mLastFaceNum = face_num;
         mSkipFaceNum = 0;
 
@@ -2679,6 +2680,9 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
            sizeof(camera3_stream_buffer_t));
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
+    mCaptureThread->run(String8::format("Blur").string());
+    mCaptureThread->initBlurInitParams();
+    mCaptureThread->initBlurWeightParams();
     HAL_LOGI("X");
 
     return rc;
@@ -2795,10 +2799,6 @@ int SprdCamera3Blur::configureStreams(
                  stream_list->streams[i]->width,
                  stream_list->streams[i]->height);
     }
-
-    mCaptureThread->run(String8::format("Blur").string());
-    mCaptureThread->initBlurInitParams();
-    mCaptureThread->initBlurWeightParams();
 
     HAL_LOGV("X");
 
