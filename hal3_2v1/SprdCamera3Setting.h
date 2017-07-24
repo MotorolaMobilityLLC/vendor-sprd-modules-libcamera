@@ -103,8 +103,13 @@ typedef int64_t nsecs_t;
 
 #define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE 2
 
+#ifdef CONFIG_CAMERA_MAX_PREVSIZE_1080P
+#define MAX_PREVIEW_SIZE_WIDTH 1920
+#define MAX_PREVIEW_SIZE_HEIGHT 1080
+#else
 #define MAX_PREVIEW_SIZE_WIDTH 1280
 #define MAX_PREVIEW_SIZE_HEIGHT 720
+#endif
 
 typedef struct {
     uint8_t correction_mode;
