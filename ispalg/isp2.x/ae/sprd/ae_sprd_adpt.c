@@ -50,7 +50,7 @@
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 0 /*lower than LV1, if it is 0, disable this feature*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 100 /*lower than LV1, if it is 0, disable this feature*/
 /*
  * should be read from driver later
  */
@@ -2720,7 +2720,7 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
 	if (AE_WORK_MODE_VIDEO == current_status->settings.work_mode) {
-		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD == cxt->sync_cur_result.cur_bv) {
+		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD > cxt->sync_cur_result.cur_bv) {
 			/*only adjust the fps to [15, 15] in dark environment during video mode*/
 			current_status->settings.max_fps  = cxt->fps_range.min;
 			current_status->settings.min_fps  = cxt->fps_range.min;
