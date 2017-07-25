@@ -348,8 +348,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 
 	switch (flash_notice->mode) {
 	case ISP_FLASH_PRE_BEFORE:
-
-
 		cxt->lsc_flash_onoff = 1;
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_BEFORE, NULL, NULL);
@@ -373,12 +371,9 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		if (cxt->ops.smart_ops.ioctrl)
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 
-
-
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
-
 		if (cxt->ops.ae_ops.get_flash_param)
 			ret = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash_cali);
 		if (ISP_SUCCESS == ret)
@@ -406,7 +401,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		break;
 
 	case ISP_FLASH_PRE_AFTER:
-
 		ae_notice.mode = AE_FLASH_PRE_AFTER;
 		ae_notice.will_capture = flash_notice->will_capture;
 		if (cxt->ops.ae_ops.ioctrl)
@@ -436,7 +430,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void*)&flash_info, NULL);
 
-
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
@@ -460,7 +453,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		break;
 
 	case ISP_FLASH_MAIN_LIGHTING:
-
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_LIGHTING, NULL, NULL);
 
@@ -1607,11 +1599,10 @@ static cmr_int ispctl_ae_touch(cmr_handle isp_alg_handle, void *param_ptr)
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_TOUCH_ZONE, &touch_zone, &out_param);
 
-	if(touch_zone.touch_zone.w != 1 || touch_zone.touch_zone.h != 1){
+	if(touch_zone.touch_zone.w != 1 || touch_zone.touch_zone.h != 1) {
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_GET_TOUCH, NULL, NULL);
 	}
-
 	ISP_LOGV("w,h=(%d,%d)", touch_zone.touch_zone.w, touch_zone.touch_zone.h);
 
 	return ret;
