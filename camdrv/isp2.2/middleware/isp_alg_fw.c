@@ -1875,13 +1875,14 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	/* save otp info */
 	if (cxt->is_multi_mode) {
 		struct sensor_otp_ae_info info;
-		info = cxt->otp_data->dual_otp.master_ae_info; // TODO: why always master?
 		if (cxt->is_master) {
+			info = cxt->otp_data->dual_otp.master_ae_info;
 			rtn = isp_br_ioctrl(cxt->camera_id,
 				SET_MASTER_OTP_AE,
 				&info,
 				NULL);
 		} else {
+			info = cxt->otp_data->dual_otp.slave_ae_info;
 			rtn = isp_br_ioctrl(cxt->camera_id,
 				SET_SLAVE_OTP_AE,
 				&info,
