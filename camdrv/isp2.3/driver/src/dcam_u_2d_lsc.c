@@ -23,7 +23,7 @@
 
 cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *block_info)
 {
-	cmr_s32 ret = 0, i = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 

@@ -66,7 +66,6 @@ static cmr_s32 _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 	cmr_u8 module_index = 0xff;
 	cmr_u8 lsc_index = 0xff;
 	cmr_u8 awb_index = 0xff;
-	cmr_u16 version = 0;
 	cmr_u32 i = 0;
 
 	if (PNULL == golden)
@@ -231,7 +230,6 @@ static cmr_s32 _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, stru
 	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	cmr_u32 version = 0;
 	cmr_u8 *start = 0;
-	cmr_u16 offset = 0;
 	struct isp_cali_awb_info *awb_info = PNULL;
 
 	if (PNULL == golden || PNULL == otp || PNULL == target_buf || PNULL == size)
@@ -347,7 +345,6 @@ cmr_s32 isp_calibration(struct isp_cali_param * param, struct isp_data_t * resul
 	struct isp_cali_data *cali_data = PNULL;
 	cmr_u8 *cur = PNULL;
 	cmr_u8 *start = PNULL;
-	cmr_u32 offset = 0;
 	cmr_u32 awb_size = 0;
 	cmr_u32 lsc_size = 0;
 

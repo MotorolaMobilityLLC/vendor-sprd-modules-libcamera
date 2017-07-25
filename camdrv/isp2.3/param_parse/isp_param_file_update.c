@@ -28,7 +28,6 @@
 #define SCENE_INFO_NUM 10
 #define ISP_PARAM_VERSION_V21 0x0005
 
-static cmr_s32 count = 8;
 extern cmr_s8 nr_mode_name[MAX_MODE_NUM][8];
 
 cmr_s32 update_param_v1(struct sensor_raw_info *sensor_raw_info_ptr, const char *sensor_name)
@@ -232,8 +231,6 @@ cmr_s32 read_ae_table_16bit(FILE * fp, cmr_u16 * data_ptr, cmr_u32 * data_len)
 
 cmr_s32 read_ae_weight(FILE * fp, struct ae_weight_tab * weight_ptr)
 {
-	cmr_s32 rtn = 0x00;
-
 	cmr_u8 *param_buf = weight_ptr->weight_table;
 	cmr_s32 i;
 	char line_buff[512];
@@ -306,8 +303,6 @@ cmr_s32 read_ae_scene_info(FILE * fp, struct sensor_ae_tab * ae_ptr, cmr_s32 sce
 
 cmr_s32 read_ae_auto_iso(FILE * fp, struct ae_auto_iso_tab_v1 * auto_iso_ptr)
 {
-	cmr_s32 rtn = 0x00;
-
 	cmr_u16 *param_buf = auto_iso_ptr->auto_iso_tab;
 	cmr_s32 i;
 	char line_buff[512];
@@ -611,8 +606,6 @@ exit:
 
 cmr_s32 read_awb_win_map(FILE * fp, struct sensor_awb_map * awb_map_ptr)
 {
-	cmr_s32 rtn = 0x00;
-
 	cmr_u16 *param_buf = awb_map_ptr->addr;
 	cmr_s32 i;
 	char line_buff[512];
@@ -691,8 +684,6 @@ cmr_s32 read_awb_pos_weight(FILE * fp, struct sensor_awb_weight * awb_weight_ptr
 
 cmr_s32 read_awb_width_height(FILE * fp, struct sensor_awb_weight * awb_weight_ptr)
 {
-	cmr_s32 rtn = 0x00;
-
 	cmr_u16 *param_buf = awb_weight_ptr->size;
 	cmr_s32 i;
 	char line_buff[512];
@@ -967,9 +958,7 @@ cmr_s32 read_lnc_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 {
 	cmr_s32 rtn = 0x00;
-
 	cmr_s32 i;
-	cmr_s32 flag_end = 0;
 
 	char lnc_map_info[50];
 	char lnc_weight_info[50];
@@ -1070,8 +1059,6 @@ cmr_s32 read_lnc_map(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 
 cmr_s32 read_libuse_info(FILE * fp, struct sensor_raw_info * sensor_raw_ptr)
 {
-	cmr_s32 rtn = 0x00;
-
 	cmr_u32 *param_buf = (cmr_u32 *) sensor_raw_ptr->libuse_info;
 	cmr_s32 i;
 	char line_buff[512];
@@ -1108,8 +1095,7 @@ cmr_s32 read_libuse_info(FILE * fp, struct sensor_raw_info * sensor_raw_ptr)
 cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
 {
 	cmr_s32 rtn = 0x00;
-
-	cmr_s32 i, j = 0;
+	cmr_s32 i = 0;
 
 	char tune_info[128];
 	char note_name[128];

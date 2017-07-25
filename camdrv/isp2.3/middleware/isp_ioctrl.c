@@ -213,7 +213,7 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr)
 		break;
 	}
 
-	ISP_LOGV("--IOCtrl--AWB_MODE--:0x%x", awb_id);
+	ISP_LOGV("AWB_MODE :0x%x", awb_id);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WB_MODE, (void *)&awb_id, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("awb set wb mode error"));
@@ -336,7 +336,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_flash_param *flash_cali = NULL;
 	enum smart_ctrl_flash_mode flash_mode = 0;
 	enum awb_ctrl_flash_status awb_flash_status = 0;
-
 	float captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
 	float captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
 	struct alsc_flash_info flash_info = { 0, 0};
@@ -355,6 +354,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		ae_notice.mode = AE_FLASH_PRE_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+
 		ae_notice.power.max_charge = flash_notice->power.max_charge;
 		ae_notice.power.max_time = flash_notice->power.max_time;
 		ae_notice.capture_skip_num = flash_notice->capture_skip_num;
@@ -370,7 +370,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		flash_mode = SMART_CTRL_FLASH_PRE;
 		if (cxt->ops.smart_ops.ioctrl)
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
-
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
@@ -383,6 +382,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		ae_notice.flash_ratio = ratio;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
+
 		awb_flash_status = AWB_FLASH_PRE_LIGHTING;
 		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
@@ -394,7 +394,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
-
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_LIGHTING, NULL, NULL);
 
@@ -421,15 +420,14 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 
 		//lnc flash update
 		cxt->lsc_flash_onoff = 0;
-		captureFlashEnvRatio=0.0; //0-1, flash/ (flash+environment)
-		captureFlash1ofALLRatio=0.0; //0-1,  flash1 / (flash1+flash2)
+		captureFlashEnvRatio = 0.0; //0-1, flash/ (flash+environment)
+		captureFlash1ofALLRatio = 0.0; //0-1,  flash1 / (flash1+flash2)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
 		flash_info.io_captureFlashEnvRatio = captureFlashEnvRatio;
 		flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void*)&flash_info, NULL);
-
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
@@ -484,7 +482,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 			if (cxt->ops.awb_ops.ioctrl)
 				ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
 		}
-
 		break;
 
 	case ISP_FLASH_MAIN_AFTER:
@@ -560,7 +557,7 @@ static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr)
 	set_iso.mode = *(cmr_u32 *) param_ptr;
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_ISO, &set_iso, NULL);
-	ISP_LOGV("ISP_AE: AE_SET_ISO=%d, ret=%ld", set_iso.mode, ret);
+	ISP_LOGV("ISO=%d, ret=%ld", set_iso.mode, ret);
 
 	return ret;
 }
@@ -899,7 +896,6 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_info *info_ptr = param_ptr;
 	cmr_u32 total_size = 0;
 	cmr_u32 mem_offset = 0;
-	cmr_u32 log_ae_size = 0;
 	struct sprd_isp_debug_info *p;
 	struct _isp_log_info log;
 	size_t off;

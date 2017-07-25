@@ -336,7 +336,6 @@ struct camera_func *s_camera_fun_ptr = &s_camera_fun;
 static void *isp_handler;
 
 static cmr_u32 g_af_pos = 0;	// the af position
-static cmr_u32 g_type = 8;	// the mipi
 static cmr_u32 g_command = CMD_TAKE_PICTURE;
 struct denoise_param_update nr_update_param;
 
@@ -460,7 +459,7 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 	cmr_s32 i, res, total_number;
 	cmr_s32 send_number = 0;
 	cmr_s32 chn0_number, chn1_number, chn2_number;
-	cmr_s32 len = 0, rlen = 0, rsp_len = 0, extra_len = 0;
+	cmr_s32 len = 0, rsp_len = 0;
 	MSG_HEAD_T *msg_ret;
 	ISP_IMAGE_HEADER_T isp_msg;
 
@@ -1023,15 +1022,12 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	cmr_s32 num;
-	MSG_HEAD_T *msg_ret;
 	struct isp_data_header_normal *data_head_ptr;
 	cmr_u8 *data_ptr;
 	cmr_u32 data_valid_len;
 	cmr_u32 src_size = 0;
 	cmr_s32 file_num = 0;
 	cmr_u8 isp_mode = 0;
-	cmr_u8 i = 0;
 	cmr_u8 nr_mode = 0;
 	cmr_u8 *nr_scene_and_level_map = NULL;
 	cmr_u32 *temp_nr_map_addr = NULL;
@@ -1418,7 +1414,6 @@ cmr_u32 get_libuse_info_packet_num(cmr_u32 packet_len)
 cmr_s32 send_isp_mode_id_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg, cmr_u32 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u32 i;
 	cmr_s32 res;
 	cmr_u32 len = 0;
 	cmr_u32 rsp_len = 0;
@@ -1426,7 +1421,6 @@ cmr_s32 send_isp_mode_id_param(struct isp_data_header_read * read_cmd, struct ms
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
-	cmr_u8 *data_ptr = NULL;
 	struct isp_data_header_normal data_header;
 	struct msg_head_tag msg_tag;
 	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
@@ -1542,7 +1536,6 @@ cmr_s32 send_fix_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	data_ptr = (cmr_u8 *) data_addr;
 
 	for (i = 0; i < packet_num; i++) {
-		cmr_u32 tmp = 0;
 		if (i < (packet_num - 1)) {
 			len = DATA_BUF_SIZE - 2;
 			msg_tag.len = len;
@@ -1861,7 +1854,6 @@ cmr_s32 get_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_t
 
 static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
 {
-	cmr_s32 ret = 0;
 	char file_name[40];
 	char tmp_str[30];
 	FILE *fp = NULL;
@@ -1903,7 +1895,6 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 
 	cmr_u32 data_len = 0;
 	cmr_u32 *data_addr = NULL;
-	cmr_u32 packet_num = 0;
 	cmr_u8 mode_id = 0;
 
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
@@ -1938,7 +1929,6 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			cmr_u8 isp_mode_num = 0;
 			cmr_u8 data_mode_id[ISP_READ_MODE_ID_MAX] = { 0 };
 
-			struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 			for (i = 0; i < ISP_READ_MODE_ID_MAX; i++) {
 				if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
 					data_mode_id[isp_mode_num] = i;
@@ -2250,7 +2240,6 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 {
 	cmr_s32 rtn = 0x00;
 	static cmr_u8 *data_addr = NULL;
-	static cmr_u8 *isp_data_addr = NULL;
 	static cmr_u32 offset = 0;
 	static cmr_u32 flag = 0;
 	cmr_u32 data_len = 0;
@@ -2612,8 +2601,6 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * msg)
 {
 	cmr_s32 rtn = 0x00;
-
-	cmr_u32 len = 0;
 	cmr_u32 rsp_len = 0;
 
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
@@ -2727,10 +2714,8 @@ CHECK_CMD_UNVALID:
 
 static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 {
-	cmr_u32 handler_id = 0x00;
-	cmr_s32 rlen = 0, rsp_len = 0, extra_len = 0;
+	cmr_s32 rlen = 0, rsp_len = 0;
 	cmr_s32 ret = 1, res = 0;
-	cmr_s32 image_type = 0;
 	MSG_HEAD_T *msg, *msg_ret;
 
 	ISP_DATA_HEADER_T isp_msg;
@@ -2799,7 +2784,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_SFT_SET_POS:
 		{
 			ISP_LOGV("set pos");
-			cmr_u32 bypass = 0;
 			g_af_pos = *(cmr_u32 *) (buf + 9);
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SET_AF_POS, buf + 9);
 			ret = isp_ioctl(isp_handler, ISP_CTRL_SFT_SET_PASS, NULL);	// open the filter
@@ -2907,7 +2891,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u32 startpos, endpos, step, width, height, interval;
 			cmr_u32 pos;
-			cmr_u32 statistic[50] = { 0 };
 			g_command = CMD_SFT_TAKE_PICTURE_NEW;
 			if (NULL != fun_ptr->take_picture) {
 				ret = isp_ioctl(isp_handler, ISP_CTRL_STOP_3A, NULL);
@@ -3154,7 +3137,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			cmr_u32 *packet = (cmr_u32 *) (buf + sizeof(MSG_HEAD_T) + 1);
 			cmr_u32 packet_num = 0;
 			static cmr_u32 offset = 0;
-			cmr_u32 param_len = 0;
 			cmr_u32 packet_total = 0;
 			packet_total = packet[0];
 			packet_num = packet[1];
@@ -3245,7 +3227,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		{
 			ISP_LOGV("CMD_WRITE_ISP_PARAM_V1 \n");
 			struct isp_data_header_normal *write_cmd = NULL;
-			cmr_u8 *dig_ptr = buf;
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u8 *isp_data_ptr = isp_ptr + sizeof(struct isp_data_header_normal);
 			struct isp_check_cmd_valid cmd;
@@ -3277,8 +3258,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			struct isp_parser_cmd_param rtn_cmd;
 			cmr_u8 *dig_ptr = buf;
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
-			cmr_u8 i = 0x00;
-			cmr_u32 *addr = (cmr_u32 *) isp_ptr;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
 			in_param.buf_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
@@ -3319,7 +3298,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		{
 			ISP_LOGV("CMD_TAKE_PICTURE\n");
 			struct isp_parser_buf_in in_param = { 0x00, 0x00 };
-			struct isp_parser_buf_rtn rtn_param = { 0x00, 0x00 };
 			struct isp_parser_cmd_param rtn_cmd;
 			cmr_u8 *dig_ptr = buf;
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
@@ -3497,7 +3475,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			cmr_u8 *dig_ptr = buf;
 			cmr_u8 *isp_ptr = buf + sizeof(MSG_HEAD_T) + 1;
 			cmr_u8 i = 0x00;
-			cmr_u32 *addr = (cmr_u32 *) isp_ptr;
 			cmr_u32 *ptr = NULL;
 
 			memset(&rtn_cmd, 0, sizeof(rtn_cmd));
@@ -3705,7 +3682,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 
 void ispvideo_Scale(cmr_u32 format, cmr_u32 in_w, cmr_u32 in_h, char *in_imgptr, cmr_s32 in_imglen, cmr_u32 * out_w, cmr_u32 * out_h, char **out_imgptr, cmr_s32 * out_imglen)
 {
-	cmr_s32 ret;
 	cmr_u32 x = 0x00;
 	cmr_u32 y = 0x00;
 	cmr_u32 src_img_w = in_w;
@@ -3779,7 +3755,6 @@ void ispvideo_Scale(cmr_u32 format, cmr_u32 in_w, cmr_u32 in_h, char *in_imgptr,
 
 void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, cmr_s32 imagelen)
 {
-	cmr_u32 handler_id = 0x00;
 	cmr_s32 ret;
 
 	if (0 == preview_img_end_flag) {
@@ -3814,7 +3789,6 @@ void send_capture_complete_msg()
 
 void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
 {
-	cmr_u32 handler_id = 0x00;
 	cmr_s32 ret;
 
 	if ((0 == capture_img_end_flag) && (format == (cmr_u32) capture_format)) {
@@ -3845,12 +3819,9 @@ void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_
 cmr_s32 isp_RecDataCheck(cmr_u8 * rx_buf_ptr, cmr_s32 rx_bug_len, cmr_u8 * cmd_buf_ptr, cmr_s32 * cmd_len)
 {
 	cmr_s32 rtn;
-	cmr_u8 *rx_ptr = rx_buf_ptr;
-	cmr_u8 *cmd_ptr = cmd_buf_ptr;
 	cmr_u8 packet_header = rx_buf_ptr[0];
 	cmr_u16 packet_len = (rx_buf_ptr[6] << 0x08) | (rx_buf_ptr[5]);
 	cmr_u8 packet_end = rx_buf_ptr[rx_bug_len - 1];
-	cmr_s32 rx_len = rx_bug_len;
 	cmr_s32 cmd_buf_offset = rx_packet_len;
 
 	rtn = 0;
@@ -3883,9 +3854,8 @@ cmr_s32 isp_RecDataCheck(cmr_u8 * rx_buf_ptr, cmr_s32 rx_bug_len, cmr_u8 * cmd_b
 
 static void *isp_diag_handler(void *args)
 {
-	cmr_u32 handler_id = 0x00;
 	cmr_s32 from = *((cmr_s32 *) args);
-	cmr_s32 i, cnt, res, cmd_len, rtn, last_len;
+	cmr_s32 cnt, res, cmd_len, rtn, last_len;
 	static char *code = "diag channel exit";
 	fd_set rfds;
 	struct timeval tv;
@@ -3960,10 +3930,8 @@ static void *isp_diag_handler(void *args)
 static void *ispserver_thread(void *args)
 {
 	UNUSED(args);
-	cmr_u32 handler_id = 0x00;
 	struct sockaddr claddr;
 	cmr_s32 lfd, cfd, optval;
-	cmr_s32 log_fd;
 	struct sockaddr_in sock_addr;
 	socklen_t addrlen;
 #ifdef CLIENT_DEBUG
@@ -4099,8 +4067,6 @@ cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32))
 
 void stopispserver()
 {
-	cmr_u32 handler_id = 0x00;
-
 	ISP_LOGV("stopispserver\n");
 	wire_connected = 0;
 
@@ -4125,7 +4091,6 @@ void stopispserver()
 
 void startispserver(cmr_u32 cam_id)
 {
-	cmr_u32 handler_id = 0x00;
 	pthread_t tdiag;
 	pthread_attr_t attr;
 #ifdef MINICAMERA
