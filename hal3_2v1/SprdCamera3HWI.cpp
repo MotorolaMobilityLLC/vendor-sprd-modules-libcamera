@@ -1617,9 +1617,10 @@ int SprdCamera3HWI::flush() {
     int ret = NO_ERROR;
     int64_t timestamp = 0;
     // Mutex::Autolock l(mLock);
+#ifndef ANDROID_VERSION_O_BRINGUP
    if (mOEMIf)
         mOEMIf->enablePowerHint();
-
+#endif
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
         if (mPicChan) {
@@ -1660,8 +1661,10 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = false;
+#ifndef ANDROID_VERSION_O_BRINGUP
     if (mOEMIf)
         mOEMIf->disablePowerHint();
+#endif
     HAL_LOGI(":hal3: X");
     return 0;
 }

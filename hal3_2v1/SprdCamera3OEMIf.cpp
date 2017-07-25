@@ -1697,6 +1697,12 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
 
 void SprdCamera3OEMIf::initPowerHint() {
 #ifdef HAS_CAMERA_HINTS
+#ifdef ANDROID_VERSION_O_BRINGUP
+   if (hw_get_module(POWER_HARDWARE_MODULE_ID,
+                      (const hw_module_t **)&m_pPowerModule)) {
+        HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
+    }
+#else
     Mutex::Autolock l(&mPowermanageLock);
     if (mPowerManager == NULL) {
         // use checkService() to avoid blocking if power service is not up yet
@@ -1712,20 +1718,29 @@ void SprdCamera3OEMIf::initPowerHint() {
     if (!mPowermanageInited)
         mPowermanageInited = 1;
 #endif
+#endif
 }
 
 void SprdCamera3OEMIf::deinitPowerHint() {
 #ifdef HAS_CAMERA_HINTS
+#ifndef ANDROID_VERSION_O_BRINGUP
     mPowermanageInited = 0;
     if (mPowerManager != NULL)
         mPowerManager.clear();
     if (mPrfmLock != NULL)
         mPrfmLock.clear();
 #endif
+#endif
 }
 
 void SprdCamera3OEMIf::enablePowerHint() {
 #ifdef HAS_CAMERA_HINTS
+#ifdef ANDROID_VERSION_O_BRINGUP
+    if (m_pPowerModule && m_pPowerModule->powerHint) {
+        m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+                                  (void *)"state=1");
+    }
+#else
     Mutex::Autolock l(&mPowermanageLock);
     HAL_LOGD("IN ");
     if (mPrfmLock != NULL) {
@@ -1747,10 +1762,17 @@ void SprdCamera3OEMIf::enablePowerHint() {
     thermalEnabled(false);
     HAL_LOGD("OUT");
 #endif
+#endif
 }
 
 void SprdCamera3OEMIf::disablePowerHint() {
 #ifdef HAS_CAMERA_HINTS
+#ifdef ANDROID_VERSION_O_BRINGUP
+    if (m_pPowerModule && m_pPowerModule->powerHint) {
+        m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+                                  (void *)"state=0");
+    }
+#else
     HAL_LOGD("IN");
     Mutex::Autolock l(&mPowermanageLock);
     if (mPrfmLock != 0) {
@@ -1763,6 +1785,7 @@ void SprdCamera3OEMIf::disablePowerHint() {
     //enable thermal
     thermalEnabled(true);
     HAL_LOGD("OUT");
+#endif
 #endif
 }
 
