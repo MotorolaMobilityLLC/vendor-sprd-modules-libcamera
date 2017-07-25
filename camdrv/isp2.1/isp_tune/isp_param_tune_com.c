@@ -57,12 +57,11 @@ static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void *in_param_ptr)
 	cmr_u32 version_id = param_ptr[0];
 	cmr_u32 module_id = param_ptr[1];
 	cmr_u32 packet_len = param_ptr[2];
-	cmr_u32 module_bypass = param_ptr[3];
 	void *data_addr = (void *)&param_ptr[4];
 	cmr_u32 data_len = packet_len - 0x10;
 	cmr_u32 mode_offset = 0;
 	SENSOR_EXP_INFO_T *sensor_info_ptr = Sensor_GetInfo();
-	ISP_LOGV(" _ispParserDownParam");
+	ISP_LOGV("ver %d, module id %d", version_id, module_id);
 
 	while (mode_offset < data_len) {
 		struct isp_mode_param *mode_param_ptr = (struct isp_mode_param *)((char *)data_addr + mode_offset);
@@ -131,7 +130,6 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
 	struct isp_parser_buf_rtn *rtn_ptr = (struct isp_parser_buf_rtn *)rtn_param_ptr;
 	cmr_u32 i = 0x00;
-	cmr_u32 j = 0x00;
 	cmr_u32 *data_addr = NULL;
 	cmr_u32 data_len = 0x10;
 	struct isp_main_info *param_ptr = NULL;
@@ -388,7 +386,6 @@ static cmr_s32 _ispParserGetInfo(cmr_handle isp_handler, void *in_param_ptr, voi
 	cmr_s32 rtn = 0x00;
 	cmr_u32 *param_ptr = (cmr_u32 *) in_param_ptr;
 	struct isp_parser_buf_rtn *rtn_ptr = (struct isp_parser_buf_rtn *)rtn_param_ptr;
-	cmr_u32 cmd_id = param_ptr[0];
 	enum isp_ctrl_cmd cmd = param_ptr[1];
 	void *ioctl_param_ptr = NULL;
 	cmr_u32 *data_addr = NULL;
@@ -529,7 +526,6 @@ static cmr_s32 _ispParserDownHandle(cmr_handle isp_handler, void *in_param_ptr, 
 static cmr_s32 _ispParserUpHandle(cmr_handle isp_handler, cmr_u32 cmd, void *in_param_ptr, void *rtn_param_ptr)
 {
 	cmr_s32 rtn = 0x00;
-	struct isp_parser_up_data *in_ptr = (struct isp_parser_up_data *)in_param_ptr;
 	struct isp_parser_buf_rtn *rtn_ptr = (struct isp_parser_buf_rtn *)rtn_param_ptr;
 	cmr_u32 *data_addr = NULL;
 	cmr_u32 data_len = 0x10;

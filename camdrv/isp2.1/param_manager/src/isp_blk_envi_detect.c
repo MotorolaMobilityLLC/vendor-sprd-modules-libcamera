@@ -74,8 +74,8 @@ cmr_s32 _pm_envi_detect_get_param(void *envi_detect_param, cmr_u32 cmd, void *rt
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	struct isp_envi_detect_param *envi_detect_ptr = (struct isp_envi_detect_param *)envi_detect_param;
-	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
+	UNUSED(rtn_param1);
 	param_data_ptr->id = ISP_BLK_ENVI_DETECT;
 	param_data_ptr->cmd = cmd;
 

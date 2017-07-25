@@ -128,8 +128,6 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
-	void *addr = NULL;
 	struct isp_nlm_param *dst_ptr = (struct isp_nlm_param *)dst_nlm_param;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_nlm_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;

@@ -51,10 +51,11 @@ cmr_s32 _pm_dualflash_init(void *dst_flash_param, void *src_flash_param, void *p
 cmr_s32 _pm_dualflash_set_param(void *flash_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct dual_flash_tune_param *src_flash_ptr = PNULL;
-	struct isp_dual_flash_param *dst_flash_ptr = (struct isp_dual_flash_param *)flash_param;
 	struct isp_pm_block_header *flash_header_ptr = (struct isp_pm_block_header *)param_ptr1;
+
+	UNUSED(flash_param);
 	UNUSED(param_ptr0);
+
 	flash_header_ptr->is_update = ISP_ONE;
 	switch (cmd) {
 	case ISP_PM_BLK_DUAL_FLASH:
@@ -72,8 +73,8 @@ cmr_s32 _pm_dualflash_get_param(void *flash_param, cmr_u32 cmd, void *rtn_param0
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	struct isp_dual_flash_param *flash_ptr = (struct isp_dual_flash_param *)flash_param;
-	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
+	UNUSED(rtn_param1);
 	param_data_ptr->id = ISP_BLK_DUAL_FLASH;
 	param_data_ptr->cmd = cmd;
 

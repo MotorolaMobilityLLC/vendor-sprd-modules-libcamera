@@ -85,7 +85,6 @@ cmr_u32 _pm_iircnr_iir_convert_param(void *dst_param, cmr_u32 strength_level, cm
 cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
 	struct isp_iircnr_iir_param *dst_ptr = (struct isp_iircnr_iir_param *)dst_iircnr_param;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_iircnr_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
@@ -114,7 +113,6 @@ cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void
 cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 index = 0;
 	struct isp_iircnr_iir_param *dst_ptr = (struct isp_iircnr_iir_param *)iircnr_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 

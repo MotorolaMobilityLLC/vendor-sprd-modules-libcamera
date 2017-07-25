@@ -19,7 +19,7 @@
 cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, j = 0;
+	cmr_u32 i = 0;
 	struct isp_chrom_saturation_param *dst_csa_ptr = (struct isp_chrom_saturation_param *)dst_csa_param;
 	struct sensor_saturation_param *src_csa_ptr = (struct sensor_saturation_param *)src_csa_param;
 	struct isp_pm_block_header *csa_header_ptr = (struct isp_pm_block_header *)param1;

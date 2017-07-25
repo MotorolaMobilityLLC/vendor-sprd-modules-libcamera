@@ -91,8 +91,9 @@ cmr_s32 _pm_pdaf_correct_init(void *dst_pdaf_correct_param, void *src_pdaf_corre
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_pdaf_correct_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 
-	struct isp_size *img_size_ptr = (struct isp_size *)param2;
+	//struct isp_size *img_size_ptr = (struct isp_size *)param2;
 
+	UNUSED(param2);
 	dst_ptr->cur.ppi_corrector_bypass = header_ptr->bypass;
 
 	dst_ptr->cur_level = src_ptr->default_strength_level;

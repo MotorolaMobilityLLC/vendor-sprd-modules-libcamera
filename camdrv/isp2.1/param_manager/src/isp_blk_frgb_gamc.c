@@ -135,9 +135,6 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_weight_value *weight_value = NULL;
 			struct isp_weight_value gamc_value = { {0}, {0} };
-			struct isp_gamma_curve_info *src_ptr0 = PNULL;
-			struct isp_gamma_curve_info *src_ptr1 = PNULL;
-			struct isp_gamma_curve_info *dst_ptr = PNULL;
 			struct isp_range val_range = { 0, 0 };
 			cmr_s32 i;
 

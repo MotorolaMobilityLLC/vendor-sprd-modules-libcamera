@@ -21,8 +21,8 @@ cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void *param1, voi
 
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)dst_awb_new;
-	struct sensor_awbc_param *src_ptr = (struct sensor_awbc_param *)src_awb_new;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
+	UNUSED(src_awb_new);
 	UNUSED(param2);
 
 	dst_ptr->ct_value = 5000;

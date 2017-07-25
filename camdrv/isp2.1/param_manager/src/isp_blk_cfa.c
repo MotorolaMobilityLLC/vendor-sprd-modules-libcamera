@@ -19,7 +19,6 @@
 cmr_u32 _pm_cfa_convert_param(void *dst_cfae_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
 	struct isp_cfa_param *dst_ptr = (struct isp_cfa_param *)dst_cfae_param;
 	struct sensor_cfa_param_level *cfae_param = PNULL;

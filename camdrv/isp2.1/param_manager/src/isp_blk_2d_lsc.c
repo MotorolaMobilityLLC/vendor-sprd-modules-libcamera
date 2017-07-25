@@ -138,12 +138,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_cali_lsc_info * cali_lsc_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, j = 0, num = 0;
-	cmr_u32 buf_size = 0;
-	cmr_u32 ct_min = 0, ct_max = 0, ct = 0;
-	cmr_u16 *tmp_buf = PNULL;
-	cmr_u16 *data_addr = PNULL, *dst_ptr = PNULL;
-	cmr_u16 *addr_array[ISP_CALIBRATION_MAX_LSC_NUM];
+	cmr_u32 i = 0;
 	cmr_u32 is_print_log = _is_print_log();
 
 	if (NULL == lsc_ptr || NULL == cali_lsc_ptr) {
@@ -246,7 +241,6 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 
 	case ISP_PM_BLK_LSC_MEM_ADDR:
 		{
-			cmr_u16 *plsc = param_ptr0;
 			memcpy((void *)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, dst_lnc_ptr->final_lsc_param.size);
 
 #if __WORDSIZE == 64
@@ -275,11 +269,6 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_weight_value *weight_value = NULL;
 			struct isp_range val_range = { 0, 0 };
-			struct isp_weight_value lnc_value = { {0}, {0} };
-			void *src_lsc_ptr0 = NULL;
-			void *src_lsc_ptr1 = NULL;
-			void *dst_lsc_ptr = NULL;
-			cmr_u32 index = 0;
 
 			if (block_result->update == 0) {
 				return rtn;

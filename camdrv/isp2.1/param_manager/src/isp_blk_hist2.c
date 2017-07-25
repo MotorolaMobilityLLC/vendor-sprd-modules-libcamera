@@ -19,7 +19,6 @@
 cmr_s32 _pm_hist2_init(void *dst_hist2_param, void *src_hist2_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct sensor_yuv_hists2_param *src_ptr = (struct sensor_yuv_hists2_param *)src_hist2_param;
 	struct isp_hist2_param *dst_ptr = (struct isp_hist2_param *)dst_hist2_param;

@@ -236,7 +236,6 @@ cmr_s32 isp_lsc_adjust(void *lnc0_ptr, void *lnc1_ptr, cmr_u32 lnc_len, struct i
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0x00;
-	cmr_u32 handler_id = 0;
 
 	cmr_u16 *src0_ptr = (cmr_u16 *) lnc0_ptr;
 	cmr_u16 *src1_ptr = (cmr_u16 *) lnc1_ptr;

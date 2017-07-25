@@ -96,7 +96,6 @@ cmr_u32 _pm_ynr_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 cmr_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
 	struct isp_ynr_param *dst_ptr = (struct isp_ynr_param *)dst_ynr_param;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_ynr_param;
 	struct isp_pm_block_header *ynr_header_ptr = (struct isp_pm_block_header *)param1;

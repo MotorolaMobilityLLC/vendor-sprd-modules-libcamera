@@ -43,8 +43,8 @@ cmr_s32 _pm_af_new_get_param(void *af_new_param, cmr_u32 cmd, void *rtn_param0, 
 	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(af_new_param);
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
-	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
+	UNUSED(rtn_param1);
 	param_data_ptr->id = ISP_BLK_AF_NEW;
 	param_data_ptr->cmd = cmd;
 

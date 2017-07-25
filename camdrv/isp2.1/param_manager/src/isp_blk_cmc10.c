@@ -53,10 +53,6 @@ cmr_s32 _pm_cmc10_init(void *dst_cmc10_param, void *src_cmc10_param, void *param
 cmr_s32 _pm_cmc10_adjust(struct isp_cmc10_param * cmc_ptr, cmr_u32 is_reduce)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u16 *cmc_matrix_x0 = NULL;
-	cmr_u16 *cmc_matrix_x1 = NULL;
-	cmr_u32 alpha_x0 = 0x00;
-	cmr_u32 alpha_x1 = 0x00;
 	void *src_matrix[2] = { NULL };
 	cmr_u16 weight[2] = { 0 };
 	cmr_u16 interp_result[SENSOR_CMC_POINT_NUM] = { 0 };
@@ -112,7 +108,6 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
-			struct isp_weight_value cmc_value = { {0}, {0} };
 			cmr_u32 is_reduce = ISP_ZERO;
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 update = 0;

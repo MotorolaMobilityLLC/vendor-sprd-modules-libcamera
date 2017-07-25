@@ -19,7 +19,6 @@
 cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
 	struct isp_grgb_param *dst_ptr = (struct isp_grgb_param *)dst_param;
 	struct sensor_grgb_level *grgb_param = PNULL;

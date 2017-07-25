@@ -76,7 +76,6 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0x00;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_bpc_param;
 	struct isp_bpc_param *dst_ptr = (struct isp_bpc_param *)dst_bpc_param;
 	struct isp_pm_block_header *bpc_header_ptr = (struct isp_pm_block_header *)param1;

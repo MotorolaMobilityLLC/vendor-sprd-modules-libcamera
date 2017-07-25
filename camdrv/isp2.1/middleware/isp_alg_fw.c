@@ -907,7 +907,6 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
-	struct isp_statis_buf_input statis_buf;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	cmr_uint u_addr = 0;
 	cmr_u32 val0 = 0;
@@ -1427,7 +1426,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_statis_info *statis_info = NULL;
-	struct isp_statis_buf_input statis_buf;
 	cmr_uint u_addr = 0;
 
 	memset(&afl_output, 0, sizeof(afl_output));
@@ -1525,7 +1523,6 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	switch (data_type) {
 	case AF_DATA_AFM_STAT:
 	case AF_DATA_AF:{
-			struct isp_statis_buf_input statis_buf;
 			statis_info = (struct isp_statis_info *)in_ptr;
 
 			ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
@@ -1573,14 +1570,12 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_uint u_addr = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct pdaf_ctrl_param_out pdaf_param_out;
-	struct isp_statis_buf_input statis_buf;
 	UNUSED(data_type);
 
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
 	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
-	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("get_statis_buf_vir_addr fail "));
 
@@ -1654,7 +1649,6 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_statis_buf_input statis_buf;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	cmr_uint u_addr = 0;
 	cmr_u32 val = 0;

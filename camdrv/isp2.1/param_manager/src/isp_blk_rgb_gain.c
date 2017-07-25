@@ -19,7 +19,6 @@
 cmr_s32 _pm_rgb_gain_init(void *dst_gbl_gain, void *src_gbl_gain, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
 	struct sensor_rgb_gain_param *src_ptr = (struct sensor_rgb_gain_param *)src_gbl_gain;
 	struct isp_rgb_gain_param *dst_ptr = (struct isp_rgb_gain_param *)dst_gbl_gain;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;

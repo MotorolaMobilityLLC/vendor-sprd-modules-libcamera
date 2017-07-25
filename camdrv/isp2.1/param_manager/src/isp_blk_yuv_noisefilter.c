@@ -67,7 +67,6 @@ cmr_u32 _pm_yuv_noisefilter_convert_param(void *dst_yuv_noisefilter_param, cmr_u
 cmr_s32 _pm_yuv_noisefilter_init(void *dst_yuv_noisefilter_param, void *src_yuv_noisefilter_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_yuv_noisefilter_param;
 	struct isp_dev_noise_filter_param *dst_ptr = (struct isp_dev_noise_filter_param *)dst_yuv_noisefilter_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;

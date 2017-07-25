@@ -77,7 +77,6 @@ cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param * cce_param, cmr_u16 r_g
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 cce_coef_index = 0;
 	cmr_u16 cce_coef[3] = { 0 };
-	struct isp_rgb_gains rgb_gain = { 0x00, 0x00, 0x00, 0x00 };
 	struct isp_cce_param *dst_cce_ptr = (struct isp_cce_param *)cce_param;
 	cmr_u32 i = 0x00;
 	cmr_u32 cur_idx = 0;

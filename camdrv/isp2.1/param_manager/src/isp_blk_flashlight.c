@@ -98,8 +98,8 @@ cmr_s32 _pm_flashlight_get_param(void *flash_param, cmr_u32 cmd, void *rtn_param
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	struct isp_flash_param *flash_ptr = (struct isp_flash_param *)flash_param;
-	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
+	UNUSED(rtn_param1);
 	param_data_ptr->id = ISP_BLK_FLASH_CALI;
 	param_data_ptr->cmd = cmd;
 

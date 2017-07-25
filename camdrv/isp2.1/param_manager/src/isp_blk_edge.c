@@ -19,7 +19,6 @@
 cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
 	cmr_u32 total_offset_units = 0;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
@@ -167,7 +166,6 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_edge_param;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
