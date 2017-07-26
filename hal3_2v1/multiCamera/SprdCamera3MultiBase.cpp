@@ -38,6 +38,12 @@ namespace sprdcamera {
 #define DARK_LIGHT_TH (3000)
 #define LOW_LIGHT_TH (1500)
 #define BRIGHT_LIGHT_TH (800)
+#define DARK_LIGHT_LUAM_TH (150)
+#ifdef CONFIG_COVERED_SENSOR
+#define CAMERA3MAXFACE 11
+#else
+#define CAMERA3MAXFACE 10
+#endif
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
@@ -374,6 +380,7 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
 
         memset((void *)faceScores, 0, sizeof(uint8_t) * CAMERA3MAXFACE);
         memset((void *)faceRectangles, 0, sizeof(int32_t) * CAMERA3MAXFACE * 4);
+
         numFaces = CAMERA3MAXFACE - 1;
 
         for (int i = 0; i < numFaces; i++) {

@@ -2010,12 +2010,14 @@ cmr_int snp_create_main_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create main thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.main_thr_handle, "snp_main");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2066,12 +2068,15 @@ cmr_int snp_create_postproc_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create post proc thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.post_proc_thr_handle, "snp_post");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2121,12 +2126,14 @@ cmr_int snp_create_notify_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create notify thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.notify_thr_handle, "snp_notify");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2166,6 +2173,7 @@ cmr_int snp_create_proc_cb_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create proc cb thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret =
         cmr_thread_set_name(cxt->thread_cxt.proc_cb_thr_handle, "snp_proc_cb");
@@ -2173,6 +2181,7 @@ cmr_int snp_create_proc_cb_thread(cmr_handle snp_handle) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2212,12 +2221,15 @@ cmr_int snp_create_secondary_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create secondary thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.secondary_thr_handle, "snp_sec");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2256,12 +2268,14 @@ cmr_int snp_create_cvt_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create cvt thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.cvt_thr_handle, "snp_cvt");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2312,6 +2326,7 @@ cmr_int snp_create_write_exif_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create write exif thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     } else {
         sem_init(&cxt->thread_cxt.writte_exif_access_sm, 0, 1);
     }
@@ -2319,8 +2334,10 @@ cmr_int snp_create_write_exif_thread(cmr_handle snp_handle) {
         cmr_thread_set_name(cxt->thread_cxt.write_exif_thr_handle, "snp_exif");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2366,6 +2383,7 @@ cmr_int snp_create_redisplay_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create redisplay thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.proc_redisplay_handle,
                               "snp_redisplay");
@@ -2373,6 +2391,7 @@ cmr_int snp_create_redisplay_thread(cmr_handle snp_handle) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
@@ -2412,12 +2431,14 @@ cmr_int snp_create_thumb_thread(cmr_handle snp_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("failed to create thumb thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->thread_cxt.proc_thumb_handle, "snp_thumb");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
     }
+exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }

@@ -801,7 +801,7 @@ cmr_int cmr_sns_create_thread(struct cmr_sensor_handle *handle) {
         ret = cmr_thread_set_name(handle->thread_cxt.thread_handle, "sensor");
         if (CMR_MSG_SUCCESS != ret) {
             CMR_LOGE("fail to set thr name");
-            ret = CMR_MSG_SUCCESS;
+            ret = -CMR_MSG_SUCCESS;
         }
     }
 
@@ -1285,7 +1285,6 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
 
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     func_ptr = sns_ops->ext_ops[sns_cmd].ops;
-
     if (!module->otp_drv_info) {
         ret =
             cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr, &read_flag);
@@ -1397,7 +1396,8 @@ cmr_sns_create_monitor_thread(struct cmr_sensor_handle *sensor_handle) {
         ret = pthread_create(&sensor_handle->monitor_thread_cxt.thread_handle,
                              &attr, (void *(*)(void *))cmr_sns_monitor_proc,
                              (void *)sensor_handle);
-	pthread_setname_np(sensor_handle->monitor_thread_cxt.thread_handle, "sns_monitor");
+        pthread_setname_np(sensor_handle->monitor_thread_cxt.thread_handle,
+                           "sns_monitor");
         pthread_attr_destroy(&attr);
     }
 
@@ -1514,7 +1514,8 @@ cmr_sns_create_fmove_thread(struct cmr_sensor_handle *sensor_handle) {
         ret = pthread_create(&sensor_handle->fmove_thread_cxt.thread_handle,
                              &attr, (void *(*)(void *))cmr_sns_fmove_proc,
                              (void *)sensor_handle);
-	pthread_setname_np(sensor_handle->fmove_thread_cxt.thread_handle, "sns_fmove");
+        pthread_setname_np(sensor_handle->fmove_thread_cxt.thread_handle,
+                           "sns_fmove");
         pthread_attr_destroy(&attr);
     }
 #endif

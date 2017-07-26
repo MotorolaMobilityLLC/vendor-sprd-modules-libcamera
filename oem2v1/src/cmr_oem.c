@@ -4149,12 +4149,15 @@ cmr_int camera_create_prev_thread(cmr_handle oem_handle) {
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("create preview thread fail");
         ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
     ret = cmr_thread_set_name(cxt->prev_cb_thr_handle, "preview_cb");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
     }
+exit:
     CMR_LOGD("done %ld", ret);
     return ret;
 }
@@ -4197,7 +4200,8 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
     ret = cmr_thread_set_name(cxt->snp_cb_thr_handle, "snap_cb");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
     }
     ret = cmr_thread_create(
         &cxt->snp_secondary_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
@@ -4210,7 +4214,8 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
     ret = cmr_thread_set_name(cxt->snp_secondary_thr_handle, "snap_sec");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
     }
 
     ret = cmr_thread_create(
@@ -4853,7 +4858,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
         if (cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
             cxt->is_multi_mode == MODE_SELF_SHOT ||
-            (cxt->is_multi_mode == MODE_BLUR && cxt->blur_facebeauty_flag == 1)) {
+            (cxt->is_multi_mode == MODE_BLUR &&
+             cxt->blur_facebeauty_flag == 1)) {
             if (filter_type > 0) {
 #ifdef CONFIG_ARCSOFT_FILTER
                 clock_gettime(CLOCK_BOOTTIME, &start_time);
@@ -6127,7 +6133,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 #ifdef CONFIG_CAMERA_DCAM_PDAF
     if (sensor_info.source_width_max == sensor_mode_info->width) {
         param_ptr->cap_inf_cfg.cfg.pdaf_ctrl.mode =
-                sn_cxt->cur_sns_ex_info.pdaf_supported;
+            sn_cxt->cur_sns_ex_info.pdaf_supported;
     } else
         param_ptr->cap_inf_cfg.cfg.pdaf_ctrl.mode = 0;
 #endif
