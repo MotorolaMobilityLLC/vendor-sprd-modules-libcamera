@@ -84,8 +84,8 @@ namespace sprdcamera {
 #define LIB_ARCSOFT_BOKEH_PATH "libarcsoft_dualcam_refocus.so"
 #define BOKEH_REFOCUS_COMMON_PARAM_NUM (12)
 #define ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM (9)
-#define DEPTH_OUTPUT_WIDTH (324)
-#define DEPTH_OUTPUT_HEIGHT (243)
+#define DEPTH_OUTPUT_WIDTH (160)
+#define DEPTH_OUTPUT_HEIGHT (120)
 #define DEPTH_DATA_SIZE (68)
 #define ARCSOFT_DEPTH_DATA_SIZE (561616)
 #define ARCSOFT_CALIB_DATA_SIZE (2048)
@@ -143,8 +143,10 @@ typedef struct {
 } bokeh_cap_params_t;
 
 typedef struct {
-    int width;                  // image width
-    int height;                 // image height
+    int width;  // image width
+    int height; // image height
+    int depth_width;
+    int depth_height;
     int SmoothWinSize;          // odd number
     int ClipRatio;              // RANGE 1:64
     int Scalingratio;           // 2,4,6,8

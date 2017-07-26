@@ -808,8 +808,8 @@ void SprdCamera3RealBokeh::getDepthImageSize(int inputWidth, int inputHeight,
             *outWidth = inputWidth;
             *outHeight = inputHeight;
         } else if (type == SNAPSHOT_STREAM) {
-            *outWidth = 1296;
-            *outHeight = 972;
+            *outWidth = 800;
+            *outHeight = 600;
         }
     }
 
@@ -2552,6 +2552,10 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
             mPreviewWidth;
         mPreviewMuxerThread->mPreviewbokehParam.init_params.height =
             mPreviewHeight;
+        mPreviewMuxerThread->mPreviewbokehParam.init_params.depth_width =
+            DEPTH_OUTPUT_WIDTH;
+        mPreviewMuxerThread->mPreviewbokehParam.init_params.depth_height =
+            DEPTH_OUTPUT_HEIGHT;
         mPreviewMuxerThread->mPreviewbokehParam.init_params.SmoothWinSize = 11;
         mPreviewMuxerThread->mPreviewbokehParam.init_params.ClipRatio = 50;
         mPreviewMuxerThread->mPreviewbokehParam.init_params.Scalingratio = 2;
@@ -2655,6 +2659,9 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
             free(mCaptureThread->mArcSoftDepthMap);
         }
         mCaptureThread->mArcSoftDepthMap = malloc(ARCSOFT_DEPTH_DATA_SIZE);
+        if (mCaptureThread->mArcSoftDepthMap == NULL) {
+            HAL_LOGE("mArcSoftDepthMap malloc failed.");
+        }
         HAL_LOGD("arcsoft OK");
     }
 }
@@ -2886,7 +2893,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             hwiMain->mSetting->s_setting[mCameraId].controlInfo.af_state;
         HAL_LOGD("af_state %d", af_state);
         if (af_state == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN ||
-            af_state == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN) {
+            af_state == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN || mIsCapturing) {
             mPreviewMuxerThread->mArcSoftPrevParam.bRefocusOn = false;
         } else {
             mPreviewMuxerThread->mArcSoftPrevParam.bRefocusOn = true;
