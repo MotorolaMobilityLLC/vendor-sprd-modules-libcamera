@@ -208,7 +208,7 @@ static cmr_s32 _lscsprd_unload_lib(struct lsc_ctrl_context *cxt)
 		goto exit;
 	}
 
-	if (!cxt->lib_handle) {
+	if (cxt->lib_handle) {
 		dlclose(cxt->lib_handle);
 		cxt->lib_handle = NULL;
 	}

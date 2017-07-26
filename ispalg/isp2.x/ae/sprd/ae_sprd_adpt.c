@@ -2968,6 +2968,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 	return AE_SUCCESS;
 }
 
+#if 0 
 static cmr_s32 ae_set_magic_tag(struct debug_ae_param *param_ptr)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -2982,7 +2983,7 @@ static cmr_s32 ae_set_magic_tag(struct debug_ae_param *param_ptr)
 
 	return rtn;
 }
-
+#endif
 // wanghao @2015-12-22
 static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 {
