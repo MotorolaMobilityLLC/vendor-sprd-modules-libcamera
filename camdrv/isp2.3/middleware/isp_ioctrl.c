@@ -66,12 +66,14 @@ static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 	struct isp_awbc_cfg awbc_cfg = { 0, 0, 0, 0, 0, 0 };
 	struct awb_gain result = { 0, 0, 0 };
 	struct isp_pm_ioctl_input ioctl_input = { NULL, 0 };
-	struct isp_pm_param_data ioctl_data = { 0, 0, 0, NULL, 0, {0} };
+	struct isp_pm_param_data ioctl_data[ISP_MODE_MAX];
+	cmr_s32 i;
 
 	if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get awb gain"));
 
+	memset(ioctl_data, 0x0, sizeof(ioctl_data));
 	/*set awb gain */
 	awbc_cfg.r_gain = result.r;
 	awbc_cfg.g_gain = result.g;
@@ -80,14 +82,24 @@ static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
 
-	ioctl_data.id = ISP_BLK_AWB_NEW;
-	ioctl_data.cmd = ISP_PM_BLK_AWBC;
-	ioctl_data.data_ptr = &awbc_cfg;
-	ioctl_data.data_size = sizeof(awbc_cfg);
-
-	ioctl_input.param_data_ptr = &ioctl_data;
-	ioctl_input.param_num = 1;
-
+	if (cxt->zsl_flag) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_AWBC,
+					ISP_BLK_AWB_NEW,
+					cxt->mode_id[i],
+					&awbc_cfg,
+					sizeof(awbc_cfg));
+		}
+		ioctl_input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_AWBC,
+				ISP_BLK_AWB_NEW,
+				cxt->mode_id[0],
+				&awbc_cfg,
+				sizeof(awbc_cfg));
+		ioctl_input.param_num = 1;
+	}
+	ioctl_input.param_data_ptr = ioctl_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 	ISP_LOGV("set AWB_TAG:  ret=%d, gain=(%d, %d, %d)", ret, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
 
@@ -576,14 +588,28 @@ static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_bright_cfg cfg = { 0 };
-	struct isp_pm_param_data param_data;
+	struct isp_pm_param_data param_data[ISP_MODE_MAX];
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
-	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_BRIGHT, ISP_BLK_BRIGHT, &cfg, sizeof(cfg));
-
+	memset(param_data, 0x0, sizeof(param_data));
+	if (cxt->zsl_flag) {
+		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_BRIGHT,
+					ISP_BLK_BRIGHT,
+					cxt->mode_id[i],
+					&cfg, sizeof(cfg));
+		}
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_BRIGHT,
+				ISP_BLK_BRIGHT,
+				cxt->mode_id[0],
+				&cfg, sizeof(cfg));
+		input.param_num = 1;
+	}
+	input.param_data_ptr = param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -594,14 +620,28 @@ static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_contrast_cfg cfg = { 0 };
-	struct isp_pm_param_data param_data;
+	struct isp_pm_param_data param_data[ISP_MODE_MAX];
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
-	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CONTRAST, ISP_BLK_CONTRAST, &cfg, sizeof(cfg));
-
+	memset(param_data, 0x0, sizeof(param_data));
+	if (cxt->zsl_flag) {
+		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_CONTRAST,
+					ISP_BLK_CONTRAST,
+					cxt->mode_id[i],
+					&cfg, sizeof(cfg));
+		}
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_CONTRAST,
+				ISP_BLK_CONTRAST,
+				cxt->mode_id[0],
+				&cfg, sizeof(cfg));
+		input.param_num = 1;
+	}
+	input.param_data_ptr = param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -612,14 +652,28 @@ static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_saturation_cfg cfg = { 0 };
-	struct isp_pm_param_data param_data;
+	struct isp_pm_param_data param_data[ISP_MODE_MAX];
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
-	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SATURATION, ISP_BLK_SATURATION, &cfg, sizeof(cfg));
-
+	memset(param_data, 0x0, sizeof(param_data));
+	if (cxt->zsl_flag) {
+		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_SATURATION,
+					ISP_BLK_SATURATION,
+					cxt->mode_id[i],
+					&cfg, sizeof(cfg));
+		}
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_SATURATION,
+				ISP_BLK_SATURATION,
+				cxt->mode_id[0],
+				&cfg, sizeof(cfg));
+		input.param_num = 1;
+	}
+	input.param_data_ptr = param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -630,14 +684,28 @@ static cmr_int ispctl_sharpness(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_edge_cfg cfg = { 0 };
-	struct isp_pm_param_data param_data;
+	struct isp_pm_param_data param_data[ISP_MODE_MAX];
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
-	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_EDGE_STRENGTH, ISP_BLK_EDGE, &cfg, sizeof(cfg));
-
+	memset(param_data, 0x0, sizeof(param_data));
+	if (cxt->zsl_flag) {
+		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_EDGE_STRENGTH,
+					ISP_BLK_EDGE,
+					cxt->mode_id[i],
+					&cfg, sizeof(cfg));
+		}
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_EDGE_STRENGTH,
+				ISP_BLK_EDGE,
+				cxt->mode_id[0],
+				&cfg, sizeof(cfg));
+		input.param_num = 1;
+	}
+	input.param_data_ptr = param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -697,10 +765,14 @@ static cmr_int ispctl_video_mode(cmr_handle isp_alg_handle, void *param_ptr)
 		idx = VIDEO_GAMMA_INDEX;
 		if (cxt->ops.smart_ops.block_disable)
 			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, &idx, sizeof(idx));
+		BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, mode, &idx, sizeof(idx));
+		input.param_num = 1;
+		input.param_data_ptr = &param_data;
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, (void *)&input, (void *)&output);
 #ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_YGAMMA, ISP_BLK_Y_GAMMC, &idx, sizeof(idx));
+		BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_YGAMMA, ISP_BLK_Y_GAMMC, mode, &idx, sizeof(idx));
+		input.param_num = 1;
+		input.param_data_ptr = &param_data;
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, (void *)&input, (void *)&output);
 #endif
 	} else {
@@ -1288,13 +1360,27 @@ static cmr_int ispctl_special_effect(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_pm_param_data param_data;
+	struct isp_pm_param_data param_data[ISP_MODE_MAX];
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
-	memset((void *)&param_data, 0, sizeof(struct isp_pm_param_data));
-
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SPECIAL_EFFECT, ISP_BLK_CCE, param_ptr, sizeof(param_ptr));
+	memset(param_data, 0x0, sizeof(param_data));
+	if (cxt->zsl_flag) {
+		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_SPECIAL_EFFECT,
+					ISP_BLK_CCE,
+					cxt->mode_id[i],
+					param_ptr, sizeof(param_ptr));
+		}
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_SPECIAL_EFFECT,
+				ISP_BLK_CCE,
+				cxt->mode_id[0],
+				param_ptr, sizeof(param_ptr));
+		input.param_num = 1;
+	}
+	input.param_data_ptr = param_data;
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SPECIAL_EFFECT, (void *)&input, (void *)&output);
 
 	return ret;
@@ -2090,15 +2176,16 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
 	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
+	struct isp_pm_param_data ioctl_data[ISP_MODE_MAX];
 	struct isp_awbc_cfg awbc_cfg;
 	struct smart_proc_input smart_proc_in;
+	cmr_s32 i;
 	cmr_u32 ret = ISP_SUCCESS;
 
 	memset((void *)&smart_proc_in, 0, sizeof(struct smart_proc_input));
+	memset(ioctl_data, 0x0, sizeof(ioctl_data));
 
 	cxt->takepicture_mode = CAMERA_ISP_SIMULATION_MODE;
-
 	scene_parm = (struct isptool_scene_param *)param_ptr;
 	/*set awb gain */
 	awbc_cfg.r_gain = scene_parm->awb_gain_r;
@@ -2108,21 +2195,31 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
 
-	ioctl_data.id = ISP_BLK_AWB_NEW;
-	ioctl_data.cmd = ISP_PM_BLK_AWBC;
-	ioctl_data.data_ptr = &awbc_cfg;
-	ioctl_data.data_size = sizeof(awbc_cfg);
-
-	ioctl_input.param_data_ptr = &ioctl_data;
-	ioctl_input.param_num = 1;
-
-	if (0 == awbc_cfg.r_gain && 0 == awbc_cfg.g_gain && 0 == awbc_cfg.b_gain) {
+	if (!awbc_cfg.r_gain && !awbc_cfg.g_gain && !awbc_cfg.b_gain) {
 		awbc_cfg.r_gain = 1800;
 		awbc_cfg.g_gain = 1024;
 		awbc_cfg.b_gain = 1536;
 	}
 
-	ISP_LOGV("AWB_TAG:  ret=%d, gain=(%d, %d, %d)", ret, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
+	if (cxt->zsl_flag) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(ioctl_data[i], ISP_PM_BLK_AWBC,
+					ISP_BLK_AWB_NEW,
+					cxt->mode_id[i],
+					&awbc_cfg,
+					sizeof(awbc_cfg));
+		}
+		ioctl_input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_AWBC,
+				ISP_BLK_AWB_NEW,
+				cxt->mode_id[0],
+				&awbc_cfg,
+				sizeof(awbc_cfg));
+		ioctl_input.param_num = 1;
+	}
+
+	ioctl_input.param_data_ptr = ioctl_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to set awb gain ");

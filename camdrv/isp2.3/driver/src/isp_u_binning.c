@@ -142,7 +142,6 @@ cmr_s32 isp_u_binning4awb_get_scaling_ratio(cmr_handle handle, void *param_ptr)
 	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	param.isp_id = file->isp_id;
-	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_GET_SCALING_RATIO;
 	param.property_param = &binnging_ptr->scaling_ratio;
@@ -225,7 +224,6 @@ cmr_s32 isp_u_binning4awb_transaddr(cmr_handle handle, void *param_ptr)
 	phys_addr.phys1 = binnging_ptr->phys_addr.phys1;
 
 	param.isp_id = file->isp_id;
-	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_TRANSADDR;
 	param.property_param = &phys_addr;

@@ -34,6 +34,12 @@
 #include "pdaf_ctrl.h"
 #include "isp_bridge.h"
 
+enum {
+	ISP_MODE_PRV = 0x0,
+	ISP_MODE_CAP,
+	ISP_MODE_MAX
+};
+
 struct commn_info {
 	cmr_s32 isp_mode;
 	cmr_u32 mode_flag;
@@ -244,6 +250,8 @@ struct isp_alg_fw_context {
 	struct ispalg_lib_ops ops;
 	cmr_u32 lsc_flash_onoff;
 	cmr_u32 capture_mode;
+	cmr_u32 zsl_flag;
+	cmr_u32 mode_id[ISP_MODE_MAX]; /*when none zsl: mode_id[0] for prev, cap, video etc*/
 	pthread_mutex_t stats_buf_lock;
 };
 
@@ -308,8 +316,13 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 * param)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_fw_handle;
 
 	memset(&param_data, 0, sizeof(param_data));
-
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_RGB_GAIN, NULL, 0);
+	/*zsl mode_id[0]: prev; none zsl mode_id[0]: prev, cap, video etc*/
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_RGB_GAIN,
+			cxt->mode_id[0],
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		gain_info = (struct isp_dev_rgb_gain_info *)output.param_data->data_ptr;
@@ -387,24 +400,48 @@ static cmr_int ispalg_set_ae_stats_mode(cmr_handle isp_alg_handle, cmr_u32 mode,
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info ae_block_info;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 
-	memset(&ae_block_info, 0x0, sizeof(ae_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
 	switch (mode) {
 	case AE_STATISTICS_MODE_SINGLE:
-		ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_SINGLE;
-		ae_block_info.stats_info.skip_num = skip_number;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-					   ISP_DEV_SET_AE_STATISTICS_MODE,
-					   &ae_block_info,
-					   NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&ae_block_info, 0x0, sizeof(ae_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				ae_block_info.scene_id = ISP_MODE_CAP;
+			else
+				ae_block_info.scene_id = ISP_MODE_PRV;
+
+			ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_SINGLE;
+			ae_block_info.stats_info.skip_num = skip_number;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+					ISP_DEV_SET_AE_STATISTICS_MODE,
+					&ae_block_info,
+					NULL);
+		}
 		break;
 	case AE_STATISTICS_MODE_CONTINUE:
-		ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_CONTINUE;
-		ae_block_info.stats_info.skip_num = skip_number;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-					   ISP_DEV_SET_AE_STATISTICS_MODE,
-					   &ae_block_info,
-					   NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&ae_block_info, 0x0, sizeof(ae_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				ae_block_info.scene_id = ISP_MODE_CAP;
+			else
+				ae_block_info.scene_id = ISP_MODE_PRV;
+
+			ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_CONTINUE;
+			ae_block_info.stats_info.skip_num = skip_number;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+					ISP_DEV_SET_AE_STATISTICS_MODE,
+					&ae_block_info,
+					NULL);
+		}
 		break;
 	}
 	return ret;
@@ -413,17 +450,29 @@ static cmr_int ispalg_set_ae_stats_mode(cmr_handle isp_alg_handle, cmr_u32 mode,
 static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_info *aem_info)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info aem_block_info;
 
-	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+	for (i = 0; i < param_num; i++) {
+		memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+			aem_block_info.scene_id = ISP_MODE_CAP;
+		else
+			aem_block_info.scene_id = ISP_MODE_PRV;
 
-	aem_block_info.win_info.offset.x = aem_info->trim.x;
-	aem_block_info.win_info.offset.y = aem_info->trim.y;
-	aem_block_info.win_info.size.width = aem_info->win_size.w;
-	aem_block_info.win_info.size.height = aem_info->win_size.h;
-
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_block_info, NULL);
+		aem_block_info.win_info.offset.x = aem_info->trim.x;
+		aem_block_info.win_info.offset.y = aem_info->trim.y;
+		aem_block_info.win_info.size.width = aem_info->win_size.w;
+		aem_block_info.win_info.size.height = aem_info->win_size.h;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_block_info, NULL);
+	}
 	return ret;
 }
 
@@ -444,8 +493,14 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info aem_block_info;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 
-	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
 	switch (type) {
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
@@ -457,15 +512,33 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_uint) param0);
 		break;
 	case ISP_AE_SET_MONITOR:
-		aem_block_info.skip_num = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, &aem_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				aem_block_info.scene_id = ISP_MODE_CAP;
+			else
+				aem_block_info.scene_id = ISP_MODE_PRV;
+
+			aem_block_info.skip_num = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, &aem_block_info, NULL);
+		}
 		break;
 	case ISP_AE_SET_MONITOR_WIN:
 		ret = ispalg_set_aem_win(cxt, param0);
 		break;
 	case ISP_AE_SET_MONITOR_BYPASS:
-		aem_block_info.bypass = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, &aem_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				aem_block_info.scene_id = ISP_MODE_CAP;
+			else
+				aem_block_info.scene_id = ISP_MODE_PRV;
+
+			aem_block_info.bypass = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, &aem_block_info, NULL);
+		}
 		break;
 	case ISP_AE_SET_STATISTICS_MODE:
 		ret = ispalg_set_ae_stats_mode(cxt, *(cmr_u32 *)param0, *(cmr_u32 *)param1);
@@ -482,8 +555,17 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
-		aem_block_info.rgb_gain_coeff = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				aem_block_info.scene_id = ISP_MODE_CAP;
+			else
+				aem_block_info.scene_id = ISP_MODE_PRV;
+
+			aem_block_info.rgb_gain_coeff = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
+		}
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
 		ret = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0, param1);
@@ -503,7 +585,15 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AE_GET_RGB_GAIN:
 		ret = ispalg_get_rgb_gain(cxt, param0);
 		break;
-	case ISP_AE_SET_WBC_GAIN: {
+	case ISP_AE_SET_WBC_GAIN:
+		for (i = 0; i < param_num; i++) {
+			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				aem_block_info.scene_id = ISP_MODE_CAP;
+			else
+				aem_block_info.scene_id = ISP_MODE_PRV;
+
 			memcpy((void *)&aem_block_info.awbc_rgb, param0, sizeof(struct ae_awb_gain));
 			ret = isp_dev_awb_gain(cxt->dev_access_handle, &aem_block_info);
 		}
@@ -518,10 +608,16 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info afm_block_info;
 
-	memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
 	switch (type) {
 	case ISP_AF_SET_POS:
 		if (cxt->ioctrl_ptr->set_focus) {
@@ -616,42 +712,102 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AF_NLM_UNLOCK:
 		cxt->smart_cxt.lock_nlm_en = 0;
 		break;
-	case ISP_AF_SET_MONITOR: {
-		struct af_monitor_set *monitor_set = (struct af_monitor_set *)param0;
-		afm_block_info.afm_info.bypass = monitor_set->bypass;
-		afm_block_info.afm_info.skip_num = monitor_set->skip_num;
-		afm_block_info.afm_info.cur_envi = *(cmr_u32 *)param1;
-
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_block_info, NULL);
+	case ISP_AF_SET_MONITOR:
+		for (i = 0; i < param_num; i++) {
+			struct af_monitor_set *monitor_set = (struct af_monitor_set *)param0;
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.afm_info.bypass = monitor_set->bypass;
+			afm_block_info.afm_info.skip_num = monitor_set->skip_num;
+			afm_block_info.afm_info.cur_envi = *(cmr_u32 *)param1;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_block_info, NULL);
 		}
 		break;
 	case ISP_AF_SET_MONITOR_WIN:
-		afm_block_info.win_range = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR_WIN, &afm_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.win_range = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR_WIN, &afm_block_info, NULL);
+		}
 		break;
 	case ISP_AF_GET_MONITOR_WIN_NUM:
+		memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+		if (cxt->mode_id[0] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[0] <= ISP_MODE_ID_CAP_3)
+			afm_block_info.scene_id = ISP_MODE_CAP;
+		else
+			afm_block_info.scene_id = ISP_MODE_PRV;
 		afm_block_info.win_num = (cmr_u32 *)param0;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, NULL, &afm_block_info);
 		break;
 	case ISP_AFM_BYPASS:
-		afm_block_info.bypass = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, &afm_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.bypass = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, &afm_block_info, param1);
+		}
 		break;
 	case ISP_AFM_SKIP_NUM:
-		afm_block_info.skip_num = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, &afm_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.skip_num = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, &afm_block_info, param1);
+		}
 		break;
 	case ISP_AFM_MODE:
-		afm_block_info.mode = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, &afm_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.mode = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, &afm_block_info, param1);
+		}
 		break;
 	case ISP_AFM_IIR_NR_CFG:
-		afm_block_info.block_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, &afm_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.block_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, &afm_block_info, param1);
+		}
 		break;
 	case ISP_AFM_MODULES_CFG:
-		afm_block_info.block_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, &afm_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afm_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afm_block_info.scene_id = ISP_MODE_PRV;
+			afm_block_info.block_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, &afm_block_info, param1);
+		}
 		break;
 	case ISP_AF_GET_SYSTEM_TIME: {
 		cmr_u32 sec = 0;
@@ -671,10 +827,16 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info pdaf_block_info;
 
-	memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
 	ISP_LOGV("isp_pdaf_set_cb type = 0x%lx", type);
 	switch (type) {
 	case ISP_AF_SET_PD_INFO:
@@ -682,32 +844,88 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_PD_INFO, param0, param1);
 		break;
 	case ISP_PDAF_SET_CFG_PARAM:
-		pdaf_block_info.block_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.block_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, &pdaf_block_info, NULL);
+		}
 		break;
 	case ISP_PDAF_SET_PPI_INFO:
-		pdaf_block_info.ppi_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.ppi_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &pdaf_block_info, NULL);
+		}
 		break;
 	case ISP_PDAF_SET_BYPASS:
-		pdaf_block_info.bypass = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.bypass = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_block_info, NULL);
+		}
 		break;
 	case ISP_PDAF_SET_WORK_MODE:
-		pdaf_block_info.mode = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.mode = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, &pdaf_block_info, NULL);
+		}
 		break;
 	case ISP_PDAF_SET_EXTRACTOR_BYPASS:
-		pdaf_block_info.bypass = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.bypass = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, &pdaf_block_info, NULL);
+		}
 		break;
 	case ISP_PDAF_SET_ROI:
-		pdaf_block_info.roi_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.roi_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, &pdaf_block_info, NULL);
+		}
 		break;
 	case ISP_PDAF_SET_SKIP_NUM:
-		pdaf_block_info.skip_num = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, &pdaf_block_info, NULL);
+		for (i = 0; i < param_num; i++) {
+			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				pdaf_block_info.scene_id = ISP_MODE_CAP;
+			else
+				pdaf_block_info.scene_id = ISP_MODE_PRV;
+			pdaf_block_info.skip_num = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, &pdaf_block_info, NULL);
+		}
 		break;
 
 	default:
@@ -720,26 +938,64 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info afl_block_info;
 
-	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
 	switch (type) {
 	case ISP_AFL_SET_CFG_PARAM:
-		afl_block_info.block_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, &afl_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afl_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afl_block_info.scene_id = ISP_MODE_PRV;
+			afl_block_info.block_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, &afl_block_info, param1);
+		}
 		break;
 	case ISP_AFL_NEW_SET_CFG_PARAM:
-		afl_block_info.block_info = param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, &afl_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afl_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afl_block_info.scene_id = ISP_MODE_PRV;
+			afl_block_info.block_info = param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, &afl_block_info, param1);
+		}
 		break;
 	case ISP_AFL_SET_BYPASS:
-		afl_block_info.bypass = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_BYPASS, &afl_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afl_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afl_block_info.scene_id = ISP_MODE_PRV;
+			afl_block_info.bypass = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_BYPASS, &afl_block_info, param1);
+		}
 		break;
 	case ISP_AFL_NEW_SET_BYPASS:
-		afl_block_info.bypass = *(cmr_u32 *)param0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, param1);
+		for (i = 0; i < param_num; i++) {
+			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+				afl_block_info.scene_id = ISP_MODE_CAP;
+			else
+				afl_block_info.scene_id = ISP_MODE_PRV;
+			afl_block_info.bypass = *(cmr_u32 *)param0;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, param1);
+		}
 		break;
 	default:
 		break;
@@ -763,7 +1019,8 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	cmr_handle pm_handle = cxt->handle_pm;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
-	struct isp_pm_param_data pm_param;
+	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
+	cmr_u32 i = 0;
 	struct alsc_ver_info lsc_ver = { 0 };
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
@@ -772,7 +1029,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	}
 
 	if (lsc_ver.LSC_SPD_VERSION >= 2) {
-		cmr_u32 i = 0;
+
 		memset(&pm_param, 0, sizeof(pm_param));
 
 		if (NULL == ae_stat_r) {
@@ -780,7 +1037,13 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			return ISP_ERROR;
 		}
 
-		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+		/*zsl mode_id[0]: prev; none zsl mode_id[0]: prev, cap, video etc*/
+		BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_INFO,
+				ISP_BLK_2D_LSC,
+				cxt->mode_id[0],
+				PNULL, 0);
+		io_pm_input.param_num = 1;
+		io_pm_input.param_data_ptr = pm_param;
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
 		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
@@ -831,7 +1094,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.lsc_tab_size = cxt->lsc_cxt.lsc_tab_size;
 
 		/*AF lock ALSC */
-
 		if (cxt->lsc_cxt.isp_smart_lsc_lock == 0) {
 			if (cxt->ops.lsc_ops.process)
 				ret = cxt->ops.lsc_ops.process(lsc_adv_handle, &calc_param, &calc_result);
@@ -840,8 +1102,22 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				return ret;
 			}
 
-			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-			io_pm_input.param_data_ptr = &pm_param;
+			if (cxt->zsl_flag) {
+				for (i = 0; i < ISP_MODE_MAX; i++) {
+					BLOCK_PARAM_CFG(pm_param[i], ISP_PM_BLK_LSC_INFO,
+							ISP_BLK_2D_LSC,
+							cxt->mode_id[i],
+							PNULL, 0);
+				}
+				io_pm_input.param_num = ISP_MODE_MAX;
+			} else {
+				BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_INFO,
+						ISP_BLK_2D_LSC,
+						cxt->mode_id[0],
+						PNULL, 0);
+				io_pm_input.param_num = 1;
+			}
+			io_pm_input.param_data_ptr = pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		}
 	}
@@ -882,6 +1158,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_pm_param_data input_param[ISP_MODE_MAX];
 	struct isp_pm_param_data *param_data = NULL;
 	struct isp_u_blocks_info sub_block_info;
 	struct isp_af_ts af_ts;
@@ -892,10 +1169,33 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
 	memset(&sub_block_info, 0x0, sizeof(sub_block_info));
+	memset(input_param, 0x0, sizeof(input_param));
+	if (cxt->zsl_flag) {
+		for (i = 0; i < ISP_MODE_MAX; i++)
+			input_param[i].mod_id = cxt->mode_id[i];
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		/*none zsl mode, only one mode valid: prev, cap, video etc*/
+		input_param[0].mod_id = cxt->mode_id[0];
+		input.param_num = 1;
+	}
+
+	input.param_data_ptr = input_param;
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
+		if (param_data->mod_id >= ISP_MODE_ID_CAP_0 &&
+				param_data->mod_id <= ISP_MODE_ID_CAP_3)
+			sub_block_info.scene_id = ISP_MODE_CAP;
+		else if (param_data->mod_id != ISP_MODE_ID_MAX)
+			sub_block_info.scene_id = ISP_MODE_PRV;
+		ISP_LOGV("get the zsl flag is:%d, scene id is:%d, block info:%p, cmd:0x%x",
+				cxt->zsl_flag,
+				sub_block_info.scene_id,
+				sub_block_info.block_info,
+				param_data->cmd);
+
 		if (ISP_BLK_AE_NEW == param_data->id) {
 			if (ISP_PM_BLK_ISP_SETTING == param_data->cmd) {
 				ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
@@ -1105,12 +1405,15 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 //ALC_E
 	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
-// simulation info
-
+// CMC
+	/*zsl mode_id[0]: prev, none zsl mode_id[0]: prev, cap, video etc*/
 	memset(&pm_param, 0, sizeof(pm_param));
-
-	// CMC
-	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, 0, 0);
+	BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CMC10,
+			ISP_BLK_CMC10,
+			cxt->mode_id[0],
+			0, 0);
+	io_pm_input.param_num = 1;
+	io_pm_input.param_data_ptr = &pm_param;
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
 	if (io_pm_output.param_data != NULL) {
@@ -1125,7 +1428,14 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 		}
 	}
 	// GAMMA
-	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, 0, 0);
+	/*zsl mode_id[0]: prev, none zsl mode_id[0]: prev, cap, video etc*/
+	memset(&pm_param, 0, sizeof(pm_param));
+	BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_GAMMA,
+			ISP_BLK_RGB_GAMC,
+			cxt->mode_id[0],
+			0, 0);
+	io_pm_input.param_num = 1;
+	io_pm_input.param_data_ptr = &pm_param;
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
 	if (io_pm_output.param_data != NULL) {
@@ -1148,17 +1458,18 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
+	struct isp_pm_param_data ioctl_data[ISP_MODE_MAX];
 	struct isp_awbc_cfg awbc_cfg;
+	cmr_s32 i;
 
 	if (!awb_output || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
 
-	memset((void *)&ioctl_input, 0, sizeof(ioctl_input));
-	memset((void *)&ioctl_data, 0, sizeof(ioctl_data));
-	memset((void *)&awbc_cfg, 0, sizeof(awbc_cfg));
+	memset(&ioctl_input, 0, sizeof(ioctl_input));
+	memset(ioctl_data, 0, sizeof(ioctl_data));
+	memset(&awbc_cfg, 0, sizeof(awbc_cfg));
 
 	/*set awb gain */
 	awbc_cfg.r_gain = awb_output->gain.r;
@@ -1168,29 +1479,55 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
 
-	ioctl_data.id = ISP_BLK_AWB_NEW;
-	ioctl_data.cmd = ISP_PM_BLK_AWBC;
-	ioctl_data.data_ptr = &awbc_cfg;
-	ioctl_data.data_size = sizeof(awbc_cfg);
-
-	ioctl_input.param_data_ptr = &ioctl_data;
-	ioctl_input.param_num = 1;
-
-	if (0 == awbc_cfg.r_gain && 0 == awbc_cfg.g_gain && 0 == awbc_cfg.b_gain) {
+	if (!awbc_cfg.r_gain && !awbc_cfg.g_gain && !awbc_cfg.b_gain) {
 		awbc_cfg.r_gain = 1800;
 		awbc_cfg.g_gain = 1024;
 		awbc_cfg.b_gain = 1536;
 	}
+
+	if (cxt->zsl_flag) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(ioctl_data[i], ISP_PM_BLK_AWBC,
+					ISP_BLK_AWB_NEW,
+					cxt->mode_id[i],
+					&awbc_cfg,
+					sizeof(awbc_cfg));
+		}
+		ioctl_input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_AWBC,
+				ISP_BLK_AWB_NEW,
+				cxt->mode_id[0],
+				&awbc_cfg,
+				sizeof(awbc_cfg));
+		ioctl_input.param_num = 1;
+	}
+
+	ioctl_input.param_data_ptr = ioctl_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 
 	if (awb_output->use_ccm) {
-		struct isp_pm_param_data param_data;
+		struct isp_pm_param_data param_data[ISP_MODE_MAX];
 		struct isp_pm_ioctl_input input = { NULL, 0 };
 		struct isp_pm_ioctl_output output = { NULL, 0 };
 
-		memset(&param_data, 0x0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, awb_output->ccm, 9 * sizeof(cmr_u16));
-
+		memset(param_data, 0x0, sizeof(param_data));
+		if (cxt->zsl_flag) {
+			for (i = 0; i < ISP_MODE_MAX; i++) {
+				BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_CMC10,
+						ISP_BLK_CMC10,
+						cxt->mode_id[i],
+						awb_output->ccm, 9 * sizeof(cmr_u16));
+			}
+			input.param_num = ISP_MODE_MAX;
+		} else {
+			BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_CMC10,
+					ISP_BLK_CMC10,
+					cxt->mode_id[0],
+					awb_output->ccm, 9 * sizeof(cmr_u16));
+			input.param_num = 1;
+		}
+		input.param_data_ptr = param_data;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
 
@@ -1199,13 +1536,25 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	cxt->awb_cxt.log_awb_size = awb_output->log_awb.size;
 
 	if (awb_output->use_lsc) {
-		struct isp_pm_param_data param_data;
+		struct isp_pm_param_data param_data[ISP_MODE_MAX];
 		struct isp_pm_ioctl_input input = { NULL, 0 };
 		struct isp_pm_ioctl_output output = { NULL, 0 };
 
-		memset(&param_data, 0x0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, awb_output->lsc, awb_output->lsc_size);
-
+		memset(param_data, 0x0, sizeof(param_data));
+		if (cxt->zsl_flag) {
+			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_LSC_MEM_ADDR,
+					ISP_BLK_2D_LSC,
+					cxt->mode_id[i],
+					awb_output->lsc, awb_output->lsc_size);
+			input.param_num = ISP_MODE_MAX;
+		} else {
+			BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_LSC_MEM_ADDR,
+					ISP_BLK_2D_LSC,
+					cxt->mode_id[0],
+					awb_output->lsc, awb_output->lsc_size);
+			input.param_num = 1;
+		}
+		input.param_data_ptr = param_data;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
 
@@ -1317,13 +1666,18 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		cxt->smart_cxt.log_smart = smart_proc_in.log;
 		cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
-
+		/*LscTab*/
 		struct isp_pm_param_data param_data_alsc;
 		struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
 		struct isp_pm_ioctl_output param_data_alsc_output = { NULL, 0 };
-		memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 
-		BLOCK_PARAM_CFG(param_data_alsc_input, param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
+		memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+		BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB,
+				ISP_BLK_2D_LSC,
+				cxt->mode_id[0],
+				NULL, 0);
+		param_data_alsc_input.param_num = 1;
+		param_data_alsc_input.param_data_ptr = &param_data_alsc;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,
 				   (void *)&param_data_alsc_input,
 				   (void *)&param_data_alsc_output);
@@ -1463,14 +1817,15 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
 	cmr_int nxt_flicker = 0;
+	cmr_u32 u_addr = 0;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 	struct isp_awb_statistic_info ae_stat_ptr;
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_u_blocks_info afl_block_info;
 	struct isp_statis_info *statis_info = NULL;
-	cmr_u32 u_addr = 0;
 
-	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
 	memset(&afl_output, 0, sizeof(afl_output));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
@@ -1487,8 +1842,21 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		goto exit;
 	}
 
-	afl_block_info.bypass = 1;
-	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
+	for (i = 0; i < param_num; i++) {
+		memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+			afl_block_info.scene_id = ISP_MODE_CAP;
+		else
+			afl_block_info.scene_id = ISP_MODE_PRV;
+		afl_block_info.bypass = 1;
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
+	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
@@ -1536,11 +1904,19 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
 	}
 
-	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
-		afl_block_info.bypass = 0;
-	else
-		afl_block_info.bypass = 1;
-	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
+	for (i = 0; i < param_num; i++) {
+		memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+			afl_block_info.scene_id = ISP_MODE_CAP;
+		else
+			afl_block_info.scene_id = ISP_MODE_PRV;
+		if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
+			afl_block_info.bypass = 0;
+		else
+			afl_block_info.bypass = 1;
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
+	}
 
 exit:
 	ISP_LOGV("done ret %ld", ret);
@@ -1732,8 +2108,12 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	u_addr = statis_info->vir_addr;
 
 	memset(&param_data, 0, sizeof(param_data));
-
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_BINNING4AWB, NULL, 0);
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_BINNING4AWB,
+			cxt->mode_id[0],
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 
 	if (ISP_SUCCESS != ret || NULL == output.param_data) {
@@ -2111,12 +2491,10 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_pm_ioctl_input input;
 	struct isp_pm_ioctl_output output;
 	struct awb_ctrl_init_param param;
 	struct ae_monitor_info info;
 
-	memset((void *)&input, 0, sizeof(input));
 	memset((void *)&output, 0, sizeof(output));
 	memset((void *)&param, 0, sizeof(param));
 	memset((void *)&info, 0, sizeof(info));
@@ -2124,7 +2502,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	cxt->awb_cxt.cur_gain.r = 1;
 	cxt->awb_cxt.cur_gain.b = 1;
 
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, NULL, &output);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get awb init param"));
 
 	if (cxt->ops.ae_ops.ioctrl) {
@@ -2213,17 +2591,15 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct smart_init_param smart_init_param;
-	struct isp_pm_ioctl_input pm_input;
 	struct isp_pm_ioctl_output pm_output;
 	cmr_u32 i = 0;
 
-	memset(&pm_input, 0, sizeof(pm_input));
 	memset(&pm_output, 0, sizeof(pm_output));
 
 	cxt->smart_cxt.isp_smart_eb = 0;
 	memset(&smart_init_param, 0, sizeof(smart_init_param));
 
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_SMART, &pm_input, &pm_output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_SMART, NULL, &pm_output);
 	if (ISP_SUCCESS == ret) {
 		for (i = 0; i < pm_output.param_num; ++i) {
 			smart_init_param.tuning_param[i].data.size = pm_output.param_data[i].data_size;
@@ -2362,12 +2738,22 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	memset(&pm_tab_output, 0, sizeof(struct isp_pm_ioctl_output));
 	memset(&pm_tab_param, 0, sizeof(struct isp_pm_param_data));
 
-	BLOCK_PARAM_CFG(pm_tab_input, pm_tab_param, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
+	BLOCK_PARAM_CFG(pm_tab_param, ISP_PM_BLK_LSC_GET_LSCTAB,
+			ISP_BLK_2D_LSC,
+			ISP_MODE_ID_PRV_0,
+			NULL, 0);
+	pm_tab_input.param_num = 1;
+	pm_tab_input.param_data_ptr = &pm_tab_param;
 	ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&pm_tab_input, (void *)&pm_tab_output);
 	cxt->lsc_cxt.lsc_tab_address = pm_tab_output.param_data->data_ptr;
 	struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 
-	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_LSC_INFO,
+			ISP_BLK_2D_LSC,
+			ISP_MODE_ID_PRV_0,
+			NULL, 0);
+	io_pm_input.param_num = 1;
+	io_pm_input.param_data_ptr = &pm_param;
 	ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
 	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 
@@ -2816,7 +3202,8 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
-	struct isp_pm_param_data *param_data;
+	struct isp_pm_param_data input_param[ISP_MODE_MAX];
+	struct isp_pm_param_data *param_data = NULL;
 	struct isp_u_blocks_info sub_block_info;
 	cmr_u32 i = 0;
 
@@ -2824,9 +3211,27 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
+	memset(input_param, 0x0, sizeof(input_param));
+	if (cxt->zsl_flag) {
+		for (i = 0; i < ISP_MODE_MAX; i++)
+			input_param[i].mod_id = cxt->mode_id[i];
+		input.param_num = ISP_MODE_MAX;
+	} else {
+		/*none zsl mode, only one mode valid: prev, cap, video etc*/
+		input_param[0].mod_id = cxt->mode_id[0];
+		input.param_num = 1;
+	}
+
+	input.param_data_ptr = input_param;
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
+		if (param_data->mod_id >= ISP_MODE_ID_CAP_0 &&
+				param_data->mod_id <= ISP_MODE_ID_CAP_3)
+			sub_block_info.scene_id = ISP_MODE_CAP;
+		else if (param_data->mod_id != ISP_MODE_ID_MAX)
+			sub_block_info.scene_id = ISP_MODE_PRV;
+
 		if (ISP_BLK_2D_LSC == param_data->id) {
 			sub_block_info.flag = 1;
 			isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
@@ -2834,11 +3239,12 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 		sub_block_info.block_info = param_data->data_ptr;
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 		if (ISP_BLK_2D_LSC == param_data->id) {
-			/*cxt->capture_mode : 0 normal mode; 1 zsl mode*/
-			if (0 == cxt->capture_mode) {
+			if (!cxt->zsl_flag) {
+				/*normal mode*/
 				sub_block_info.flag = 1;
 				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
-			} else if (1 == cxt->capture_mode) {
+			} else if (cxt->zsl_flag) {
+				/*zsl mode*/
 				sub_block_info.flag = 0;
 				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
 			}
@@ -2868,8 +3274,14 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	struct ae_set_work_param ae_param;
 	struct isp_u_blocks_info aem_block_info;
 	enum ae_work_mode ae_mode = 0;
+	cmr_u32 i;
+	cmr_u32 param_num = 0;
 
-	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
 	memset(&ae_param, 0x0, sizeof(ae_param));
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
@@ -2933,9 +3345,18 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("AE_VIDEO_START fail"));
 	}
-	aem_block_info.shift = &ae_param.shift;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &aem_block_info, NULL);
-	ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));
+
+	for (i = 0; i < param_num; i++) {
+		memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
+			aem_block_info.scene_id = ISP_MODE_CAP;
+		else
+			aem_block_info.scene_id = ISP_MODE_PRV;
+		aem_block_info.shift = &ae_param.shift;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &aem_block_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));
+	}
 
 	return ret;
 }
@@ -2947,8 +3368,9 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	struct smart_proc_input smart_proc_in;
 	struct awb_gain result;
 	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
+	struct isp_pm_param_data ioctl_data[ISP_MODE_MAX];
 	struct isp_awbc_cfg awbc_cfg;
+	cmr_s32 i;
 	cmr_u32 ct = 0;
 	cmr_s32 bv = 0;
 	cmr_s32 bv_gain = 0;
@@ -2968,12 +3390,25 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	awbc_cfg.r_offset = 0;
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
-	ioctl_data.id = ISP_BLK_AWB_NEW;
-	ioctl_data.cmd = ISP_PM_BLK_AWBC;
-	ioctl_data.data_ptr = &awbc_cfg;
-	ioctl_data.data_size = sizeof(awbc_cfg);
-	ioctl_input.param_data_ptr = &ioctl_data;
-	ioctl_input.param_num = 1;
+
+	if (cxt->zsl_flag) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
+			BLOCK_PARAM_CFG(ioctl_data[i], ISP_PM_BLK_AWBC,
+					ISP_BLK_AWB_NEW,
+					cxt->mode_id[i],
+					&awbc_cfg,
+					sizeof(awbc_cfg));
+		}
+		ioctl_input.param_num = ISP_MODE_MAX;
+	} else {
+		BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_AWBC,
+				ISP_BLK_AWB_NEW,
+				cxt->mode_id[0],
+				&awbc_cfg,
+				sizeof(awbc_cfg));
+		ioctl_input.param_num = 1;
+	}
+	ioctl_input.param_data_ptr = ioctl_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 
 	/*update smart param */
@@ -3028,14 +3463,20 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	cmr_s32 i =0;
 
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
-	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+
+	BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_INFO,
+			ISP_BLK_2D_LSC,
+			cxt->mode_id[0],
+			PNULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data_alsc;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
 
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
-	for(i=0; i<9;i++)
+	for (i = 0; i < 9; i++)
 		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
 	fwstart_info->gain_width_new = lsc_info_new->gain_w;
 	fwstart_info->gain_height_new = lsc_info_new->gain_h;
@@ -3057,16 +3498,19 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size org_size;
+	struct isp_video_start video_in_info;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	cmr_s32 mode = 0, dv_mode = 0;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	cmr_s32 mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
 
+	memset(&video_in_info, 0x0, sizeof(video_in_info));
+	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
 	cxt->sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
@@ -3078,6 +3522,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	org_size.h = cxt->commn_cxt.src.h;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
+
+	video_in_info.size.w = in_ptr->size.w;
+	video_in_info.size.h = in_ptr->size.h;
 
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
 	statis_mem_input.buffer_client_data = in_ptr->buffer_client_data;
@@ -3101,13 +3548,28 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = isp_dev_set_interface(interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
-
 	switch (in_ptr->work_mode) {
 	case 0:		/*preview */
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, in_ptr, &mode);
+			if (cxt->zsl_flag) {
+				cxt->mode_id[ISP_MODE_PRV] = mode;
+				video_in_info.work_mode = 1;
+				isp_pm_ioctl(cxt->handle_pm,
+						ISP_PM_CMD_GET_MODEID_BY_RESOLUTION,
+						&video_in_info,
+						&cxt->mode_id[ISP_MODE_CAP]);
+			}
 		break;
 	case 1:		/*capture */
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, in_ptr, &mode);
+			if (cxt->zsl_flag) {
+				cxt->mode_id[ISP_MODE_CAP] = mode;
+				video_in_info.work_mode = 0;
+				isp_pm_ioctl(cxt->handle_pm,
+						ISP_PM_CMD_GET_MODEID_BY_RESOLUTION,
+						&video_in_info,
+						&cxt->mode_id[ISP_MODE_PRV]);
+			}
 		break;
 	case 2:
 		mode = ISP_MODE_ID_VIDEO_0;
@@ -3116,26 +3578,37 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		mode = ISP_MODE_ID_PRV_0;
 		break;
 	}
+	if (!cxt->zsl_flag)
+		cxt->mode_id[0] = mode;
 	if (SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
 		if ((mode != cxt->commn_cxt.isp_mode) && (org_size.w != cxt->commn_cxt.src.w)) {
-			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
-			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+			BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
+					ISP_BLK_CFA,
+					mode,
+					&cxt->commn_cxt.src.w,
+					sizeof(cxt->commn_cxt.src.w));
+			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			cxt->commn_cxt.isp_mode = mode;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
 	} else {
-
 		if (0 != in_ptr->dv_mode) {
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION, in_ptr, &dv_mode);
 			cxt->commn_cxt.mode_flag = dv_mode;
+			if (!cxt->zsl_flag)
+				cxt->mode_id[0] = dv_mode;
 		} else {
 			cxt->commn_cxt.mode_flag = mode;
 		}
 		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
-			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
-			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+			BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
+					ISP_BLK_CFA,
+					cxt->commn_cxt.mode_flag,
+					&cxt->commn_cxt.src.w,
+					sizeof(cxt->commn_cxt.src.w));
+			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
@@ -3163,6 +3636,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			ISP_RETURN_IF_FAIL(ret, ("fail to disable pdaf"));
 		}
 	}
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf param"));
 
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
@@ -3323,12 +3797,17 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ISP_RETURN_IF_FAIL(ret, ("fail to get isp_mode"));
 
 	if (org_size.w != cxt->commn_cxt.src.w) {
-		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
-		pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+		BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
+				ISP_BLK_CFA,
+				mode,
+				&cxt->commn_cxt.src.w,
+				sizeof(cxt->commn_cxt.src.w));
+		io_pm_input.param_num = 1;
 		io_pm_input.param_data_ptr = &pm_param;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		cxt->commn_cxt.isp_mode = mode;
 		cxt->commn_cxt.mode_flag = mode;
+		cxt->mode_id[0] = mode;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
 	}

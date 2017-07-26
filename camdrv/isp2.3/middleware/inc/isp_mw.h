@@ -673,6 +673,7 @@ struct ipn_in_param {
 struct isp_video_start {
 	cmr_u16 is_snapshot;
 	cmr_u32 dv_mode;
+	cmr_u32 zsl_flag;
 	void *cb_of_malloc;
 	void *cb_of_free;
 	void *buffer_client_data;

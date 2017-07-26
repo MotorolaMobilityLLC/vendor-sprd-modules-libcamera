@@ -108,7 +108,6 @@ cmr_s32 isp_u_anti_flicker_transaddr(cmr_handle handle, void *param_ptr)
 	anti_flicker_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	param.isp_id = file->isp_id;
-	param.scene_id = anti_flicker_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER;
 	param.property = ISP_PRO_ANTI_FLICKER_TRANSADDR;
 	param.property_param = &anti_flicker_ptr->phy_addr;
