@@ -422,8 +422,10 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		cxt->lsc_flash_onoff = 0;
 		captureFlashEnvRatio = 0.0; //0-1, flash/ (flash+environment)
 		captureFlash1ofALLRatio = 0.0; //0-1,  flash1 / (flash1+flash2)
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
+		if (cxt->ops.ae_ops.ioctrl) {
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO, NULL, (void *)&captureFlashEnvRatio);
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL, (void *)&captureFlash1ofALLRatio);
+		}
 		flash_info.io_captureFlashEnvRatio = captureFlashEnvRatio;
 		flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
 		if (cxt->ops.lsc_ops.ioctrl)
