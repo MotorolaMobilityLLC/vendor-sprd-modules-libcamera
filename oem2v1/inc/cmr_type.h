@@ -20,11 +20,8 @@
 extern "C" {
 #endif
 
+#include <errno.h>
 #include "cmr_types.h"
-//#if(MINICAMERA == 1)
-#include "port.h"
-//#endif
-#include "mtrace.h"
 
 /********************************* error type *********************************/
 #define CMR_CAMERA_SUCCESS 0

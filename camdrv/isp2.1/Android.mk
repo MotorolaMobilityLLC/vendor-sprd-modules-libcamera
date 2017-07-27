@@ -29,10 +29,6 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem2v1/inc \
-	$(LOCAL_PATH)/../../oem2v1/isp_calibration/inc \
-	$(LOCAL_PATH)/../../jpeg/inc \
-	$(LOCAL_PATH)/../../vsp/inc \
-	$(LOCAL_PATH)/../../tool/mtrace \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
         $(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
         $(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
@@ -80,7 +76,6 @@ LOCAL_SHARED_LIBRARIES += libcamsensor libcalibration
 
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
