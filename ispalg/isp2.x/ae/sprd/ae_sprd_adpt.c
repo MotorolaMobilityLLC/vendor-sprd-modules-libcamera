@@ -543,9 +543,6 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
 {
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
-	cmr_u64 exp_time = 0;
-	cmr_int cb_type;
-
 	if (0 !=  write_param->exp_line) {
 		struct ae_exposure exp;
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
@@ -558,6 +555,8 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 				|| (write_param->dummy != prv_param->dummy)) {
 				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
 #ifdef CONFIG_CAMERA_DUAL_SYNC
+				cmr_u64 exp_time = 0;
+				cmr_int cb_type;
 				exp_time = (cmr_u64)write_param->exp_time;
 				cb_type = AE_CB_EXPTIME_NOTIFY;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &exp_time);
@@ -667,7 +666,7 @@ static cmr_s32 ae_exp_gain_adjust(struct ae_ctrl_cxt *cxt,
 	double tmp_mn = fps_range->min;
 	double tmp_mx = fps_range->max;
 	double product = 1.0 * src_exp_param->exp_time * src_exp_param->gain;
-	cmr_u32 exp_cnts = 0, exp_time = 0;;
+	cmr_u32 exp_cnts = 0;
 	cmr_u32 sensor_maxfps = cxt->cur_status.snr_max_fps;
 	double product_max =  1.0 * cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index]
 						* cxt->cur_status.line_time * cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index];
@@ -1407,8 +1406,6 @@ static float _get_real_gain(cmr_u32 gain)
 {	
 	// x=real_gain/16
 	float real_gain = 0;
-	cmr_u32 cur_gain = gain;
-	cmr_u32 i = 0;
 
 	real_gain = gain * 1.0 / 8.0;	// / 128 * 16;
 
@@ -1660,7 +1657,6 @@ static cmr_s32 exposure_time2line(struct ae_exp_gain_table* src[AE_FLICKER_NUM],
 	cmr_u32 thrd = 0;
 	double product = 0.0;
 	double tmp_1 = 0;
-	double tmp_2 = 0;
 
 	cmr_s32 mx = src[AE_FLICKER_50HZ]->max_index;
 
@@ -1987,8 +1983,6 @@ static cmr_s32 _ae_online_ctrl_set(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_online_ctrl *ae_ctrl_ptr = (struct ae_online_ctrl *)param;
-	struct ae_misc_calc_out ctrl_result;
-	cmr_u32 ctrl_index = 0;
 
 	if ((NULL == cxt) || (NULL == param)) {
 		ISP_LOGE("fail to set ae online ctrl, in %p out %p", cxt, param);
@@ -2070,9 +2064,6 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 	struct ae_scene_info *scene_info = NULL;
 	struct ae_alg_calc_param *cur_status = NULL;
 	struct ae_alg_calc_param *prv_status = NULL;
-	struct ae_exp_gain_table *ae_table = NULL;
-	struct ae_weight_table *weight_table = NULL;
-	struct ae_set_fps fps_param;
 	cmr_u32 i = 0;
 	cmr_s32 target_lum = 0;
 	cmr_u32 iso = 0;
@@ -2572,10 +2563,6 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_s64 cur_ev = 0;
-	cmr_s64 orig_ev = 0;
-	cmr_s64 ev_delta = 0;
-	cmr_u32 ratio = 0;
 	cmr_u32 blk_num = 0;
 	struct Flash_pfOneIterationInput *in = NULL;
 	struct Flash_pfOneIterationOutput out;
@@ -2988,9 +2975,9 @@ static cmr_s32 ae_set_magic_tag(struct debug_ae_param *param_ptr)
 static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 len = 0;
 
 #if 0
+	cmr_u32 len = 0;
 	struct debug_ae_param *param = (struct debug_ae_param *)result;
 	rtn = ae_set_magic_tag(param);
 	if (AE_SUCCESS != rtn) {
@@ -3327,7 +3314,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	char ae_property[PROPERTY_VALUE_MAX];
-	cmr_handle seq_handle = NULL;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_init_out *ae_init_out = NULL;
 	struct ae_misc_init_in misc_init_in = { 0, 0, 0, NULL, 0 };
@@ -5161,8 +5147,6 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_s32 again;
-	float rgb_gain_coeff;
 	cmr_s32 ae_skip_num = 0;
 	cmr_s32 mode = 0;
 	struct ae_trim trim;
@@ -5469,7 +5453,6 @@ static cmr_s32 _set_update_aux_sensor(struct ae_ctrl_cxt *cxt, void *param0, voi
 static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
-	cmr_s32 i = 0;
 	cmr_int cb_type;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status;
@@ -5478,13 +5461,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	struct ae_misc_calc_out misc_calc_out = { 0 };
 	struct ae_calc_in *calc_in = NULL;
 	struct ae_calc_out *calc_out = NULL;
-	struct ae_exposure_param exp_param;
-
-	cmr_s32 max_again;
-	double rgb_gain_coeff;
-	cmr_s32 expline;
-	cmr_s32 dummy;
-	cmr_s32 again;
 
 	if ((NULL == param) || (NULL == result)) {
 		ISP_LOGE("fail to get param, in %p out %p", param, result);
@@ -5602,10 +5578,7 @@ ERROR_EXIT:
 cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
-	cmr_s32 i = 0;
 	cmr_int cb_type;
-	char ae_exp[PROPERTY_VALUE_MAX];
-	char ae_gain[PROPERTY_VALUE_MAX];
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status = NULL;
 	struct ae_alg_calc_result *current_result = NULL;

@@ -145,7 +145,6 @@ cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_ou
 	cmr_s32 ret = 0;
 	struct queue_context *q_cxt = NULL;
 	cmr_u32 i = 0;
-	cmr_s32 offset = 0;
 
 	if ((NULL == in) || (NULL == out) || (NULL == out)) {
 		ret = -1;

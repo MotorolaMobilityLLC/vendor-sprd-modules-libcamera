@@ -466,7 +466,6 @@ exit:
 static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in_ptr, struct ae_init_out *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct aectrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param,param is NULL!");
