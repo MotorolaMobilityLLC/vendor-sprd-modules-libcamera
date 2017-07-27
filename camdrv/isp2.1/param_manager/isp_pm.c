@@ -960,69 +960,6 @@ _mode_list_init_error_exit:
 	return rtn;
 }
 
-static cmr_s32 isp_pm_mode_param_convert(struct isp_pm_mode_param *next_mode_in, struct isp_pm_mode_param *active_mode_in, struct isp_pm_mode_update_status *mode_convert_status)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 block_num_active = 0;
-	cmr_u32 block_num_next = 0;
-	cmr_u32 i = 0, j = 0, count = 0;
-	cmr_s32 smart_index = -1;
-	void *smart_absolute_addr = NULL;
-
-	if (NULL == next_mode_in || NULL == active_mode_in) {
-		rtn = ISP_ERROR;
-		ISP_LOGE("fail to  get valid param address :%p %p", next_mode_in, active_mode_in);
-		return rtn;
-	}
-
-	block_num_active = active_mode_in->block_num;
-	block_num_next = next_mode_in->block_num;
-
-	memset(mode_convert_status, 0x00, sizeof(struct isp_pm_mode_update_status));
-
-	for (i = 0; i < block_num_active; i++) {
-		for (j = 0; j < block_num_next; j++) {
-			if (active_mode_in->header[i].block_id == next_mode_in->header[j].block_id) {
-				if (next_mode_in->header[j].source_flag != active_mode_in->header[i].source_flag) {
-					mode_convert_status->pm_blk_status[count].block_id = active_mode_in->header[i].block_id;
-					mode_convert_status->pm_blk_status[count].update_flag = 1;
-					if (ISP_BLK_SMART == active_mode_in->header[i].block_id) {
-						smart_index = count;
-						smart_absolute_addr = active_mode_in->header[i].absolute_addr;
-					}
-					count++;
-				}
-				break;
-			} else {
-				continue;
-			}
-		}
-	}
-
-	if (smart_index >= 0 && NULL != smart_absolute_addr) {
-		struct isp_smart_param *smart_param = (struct isp_smart_param *)smart_absolute_addr;
-
-		ISP_LOGV("update smart related blocks");
-
-		for (i = 0; i < smart_param->block_num; i++) {
-			cmr_u32 block_id = smart_param->block[i].block_id;
-
-			if (block_id >= ISP_BLK_EXT || 0 == block_id || 0 == smart_param->block[i].enable)
-				continue;
-
-			mode_convert_status->pm_blk_status[count].block_id = block_id;
-			mode_convert_status->pm_blk_status[count].update_flag = 1;
-			count++;
-
-			ISP_LOGV("[%d], id=0x%x update", i, block_id);
-		}
-	}
-
-	mode_convert_status->blk_num = count;
-
-	return rtn;
-}
-
 static cmr_s32 isp_pm_mode_common_to_other(struct isp_pm_mode_param *mode_common_in, struct isp_pm_mode_param *mode_other_list_out)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -1104,53 +1041,6 @@ static cmr_s32 isp_pm_layout_param_and_init(cmr_handle handle)
 	}
 
 	pm_cxt_ptr->cxt_num = counts;
-
-	return rtn;
-}
-
-static cmr_u32 isp_pm_active_mode_param_update(struct isp_context *isp_cxt_ptr, struct isp_pm_mode_param *mode_param, struct isp_pm_mode_update_status *mode_convert_status)
-{
-	cmr_u32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, id = 0, offset = 0;
-	intptr_t isp_cxt_start_addr = 0;
-	cmr_s32 tmp_idx = 0;
-	void *blk_ptr = PNULL;
-	void *param_data_ptr = PNULL;
-	struct isp_block_cfg *blk_cfg_ptr = PNULL;
-	struct isp_block_operations *ops = PNULL;
-	struct isp_pm_block_header *blk_header_ptr = PNULL;
-
-	if ((PNULL == isp_cxt_ptr)
-	    || (PNULL == mode_param)
-	    || (PNULL == mode_convert_status)) {
-		ISP_LOGE("fail to  get valid param ptr :%p %p %p", isp_cxt_ptr, mode_param, mode_convert_status);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
-	for (i = 0; i < mode_convert_status->blk_num; i++) {
-		if (mode_convert_status->pm_blk_status[i].update_flag) {
-			id = mode_convert_status->pm_blk_status[i].block_id;
-			blk_cfg_ptr = isp_pm_get_block_cfg(id);
-			blk_header_ptr = isp_pm_get_block_header(mode_param, id, &tmp_idx);
-			if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-				if (blk_cfg_ptr->ops) {
-					ops = blk_cfg_ptr->ops;
-					isp_cxt_start_addr = (intptr_t) isp_cxt_ptr;	/*get isp context start address */
-					offset = blk_cfg_ptr->offset;
-					blk_ptr = (void *)(isp_cxt_start_addr + offset);	/*current block struct address; */
-					param_data_ptr = (void *)blk_header_ptr->absolute_addr;	/*current block struct address; */
-					if (ops->reset) {
-						ops->reset(blk_ptr, blk_cfg_ptr->param_size);
-					}
-					if (ops->init) {
-						ops->init(blk_ptr, param_data_ptr, blk_header_ptr, &mode_param->resolution);
-					}
-				}
-			}
-		}
-
-	}
 
 	return rtn;
 }

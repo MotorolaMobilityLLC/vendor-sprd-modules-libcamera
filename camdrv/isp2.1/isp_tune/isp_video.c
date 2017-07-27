@@ -594,6 +594,7 @@ static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 heigh
 	return 0;
 }
 
+#if 0
 static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
 {
 	UNUSED(format);
@@ -625,7 +626,7 @@ static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height
 	ISP_LOGV("writing one pic succeeds");
 	return 0;
 }
-
+#endif
 cmr_s32 isp_sft_read(cmr_handle handler, cmr_u8 * data_buf, cmr_u32 * data_size)
 {
 	cmr_s32 ret = 0;
@@ -1851,6 +1852,7 @@ cmr_s32 get_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_t
 	return rtn;
 }
 
+#if 0
 static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
 {
 	char file_name[40];
@@ -1887,6 +1889,7 @@ static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
 	fclose(fp);
 	return 0;
 }
+#endif
 
 cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg)
 {

@@ -1095,29 +1095,6 @@ static cmr_int ispctl_get_lum(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_hue(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_hue_cfg cfg = { 0 };
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
-
-	if (NULL == param_ptr) {
-		ISP_LOGE("fail to get valid param !");
-		return ISP_PARAM_NULL;
-	}
-
-	cfg.factor = *(cmr_u32 *) param_ptr;
-	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_HUE, ISP_BLK_HUE, &cfg, sizeof(cfg));
-
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-
-	return ret;
-}
-
 static cmr_int ispctl_af_stop(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;

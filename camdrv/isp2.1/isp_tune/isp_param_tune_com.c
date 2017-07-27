@@ -40,14 +40,6 @@ static cmr_s32 _ispParamVerify(void *in_param_ptr)
 	return rtn;
 }
 
-static cmr_u32 _ispParserGetType(void *in_param_ptr)
-{
-	cmr_u32 *param_ptr = (cmr_u32 *) in_param_ptr;
-	cmr_u32 type = param_ptr[2];
-
-	return type;
-}
-
 static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void *in_param_ptr)
 {
 	cmr_u32 rtn = 0x00;

@@ -2937,95 +2937,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static cmr_int ispalg_update_alsc_param(cmr_handle isp_alg_handle)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
-	struct alsc_ver_info lsc_ver = { 0 };
-
-	if (cxt->ops.lsc_ops.ioctrl)
-		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("isp_update_alsc_param fail to Get ALSC ver info!");
-	}
-
-	if (lsc_ver.LSC_SPD_VERSION >= 2) {
-		struct isp_pm_ioctl_input input = { PNULL, 0 };
-		struct isp_pm_ioctl_output output = { PNULL, 0 };
-		struct isp_pm_param_data param_data;
-		struct lsc_adv_calc_param calc_param;
-		struct lsc_adv_calc_result calc_result = { 0 };
-		cmr_u32 i = 0;
-		memset(&param_data, 0, sizeof(param_data));
-		memset(&calc_param, 0, sizeof(calc_param));
-
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-		ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
-		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
-
-		struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-
-		calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
-		struct awb_size stat_img_size;
-		struct awb_size win_size;
-		struct isp_ae_grgb_statistic_info *stat_info;
-		memset(&stat_img_size, 0, sizeof(stat_img_size));
-		memset(&win_size, 0, sizeof(win_size));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-		ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
-		stat_info = output.param_data->data_ptr;
-
-		if (cxt->ops.awb_ops.ioctrl) {
-			cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
-			cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
-		}
-
-		//ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
-
-		calc_param.stat_img.r = cxt->aem_stats.r_info;
-		calc_param.stat_img.gr = cxt->aem_stats.g_info;
-		calc_param.stat_img.gb = cxt->aem_stats.g_info;
-		calc_param.stat_img.b = cxt->aem_stats.b_info;
-		calc_param.stat_size.w = stat_img_size.w;
-		calc_param.stat_size.h = stat_img_size.h;
-		calc_param.gain_width = lsc_info->gain_w;
-		calc_param.gain_height = lsc_info->gain_h;
-		calc_param.grid = lsc_info->grid;
-		calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
-		calc_param.block_size.w = win_size.w;
-		calc_param.block_size.h = win_size.h;
-		//calc_param.ct = ct;
-		calc_param.bv = isp_cur_bv;
-		calc_param.isp_id = ISP_2_0;
-
-		calc_param.r_gain = cxt->awb_cxt.cur_gain.r;
-		calc_param.b_gain = cxt->awb_cxt.cur_gain.b;
-		calc_param.img_size.w = cxt->commn_cxt.src.w;
-		calc_param.img_size.h = cxt->commn_cxt.src.h;
-
-		if (lsc_tab_pram_ptr == 0) {
-			return 0;
-		} else {
-			for (i = 0; i < 9; i++) {
-				calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
-			}
-		}
-
-		if (cxt->ops.lsc_ops.process)
-			cxt->ops.lsc_ops.process(lsc_adv_handle, &calc_param, &calc_result);
-
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-		input.param_data_ptr = &param_data;
-
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
-	}
-
-	return ret;
-}
-
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3171,7 +3082,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
-	//ret = ispalg_update_alsc_param(cxt);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_work_mode"));
