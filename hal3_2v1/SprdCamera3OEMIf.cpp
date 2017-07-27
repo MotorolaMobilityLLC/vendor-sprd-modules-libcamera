@@ -2265,7 +2265,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
-    HAL_LOGD("min_fps=0x%lx, max_fps=0x%lx, video_mode=0x%lx",
+    HAL_LOGD("min_fps=%ld, max_fps=%ld, video_mode=%ld",
              fps_param.min_fps, fps_param.max_fps, fps_param.video_mode);
 #if 1 // for cts
     mIsUpdateRangeFps = true;
