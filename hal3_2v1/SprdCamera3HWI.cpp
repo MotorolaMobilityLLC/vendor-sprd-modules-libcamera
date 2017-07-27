@@ -358,7 +358,8 @@ int SprdCamera3HWI::openCamera() {
         }
         return NO_MEMORY;
     }
-    mOEMIf->setMultiCameraMode(mMultiCameraMode);
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTI_CAMERAMODE, &mMultiCameraMode,
+                          NULL);
     ret = mOEMIf->openCamera();
     if (NO_ERROR != ret) {
         HAL_LOGE("camera_open failed.");
@@ -403,7 +404,8 @@ int SprdCamera3HWI::closeCamera() {
         }
         if (mCameraSessionActive == 0) {
             mMultiCameraMode = MODE_SINGLE_CAMERA;
-            mOEMIf->setMultiCameraMode(mMultiCameraMode);
+            mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTI_CAMERAMODE,
+                                  &mMultiCameraMode, NULL);
         }
         mOEMIf->closeCamera();
         delete mOEMIf;
@@ -1334,7 +1336,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         /*refocus mode, need sync timestamp*/
         if (MODE_REFOCUS == mMultiCameraMode) {
             uint64_t currentTimestamp = getZslBufferTimestamp();
-            setZslBufferTimestamp(currentTimestamp);
+            camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                          &currentTimestamp, NULL);
         }
     }
 
@@ -1570,10 +1573,6 @@ uint64_t SprdCamera3HWI::getZslBufferTimestamp() {
     return mOEMIf->getZslBufferTimestamp();
 }
 
-void SprdCamera3HWI::setZslBufferTimestamp(uint64_t timestamp) {
-    mOEMIf->setZslBufferTimestamp(timestamp);
-}
-
 /**add for 3d capture, get/set needed zsl buffer's timestamp in zsl query end*/
 void SprdCamera3HWI::setMultiCallBackYuvMode(bool mode) {
     mOEMIf->setMultiCallBackYuvMode(mode);
@@ -1616,9 +1615,9 @@ int SprdCamera3HWI::flush() {
     /*Enable lock when we implement this function */
     int ret = NO_ERROR;
     int64_t timestamp = 0;
-    // Mutex::Autolock l(mLock);
+// Mutex::Autolock l(mLock);
 #ifndef ANDROID_VERSION_O_BRINGUP
-   if (mOEMIf)
+    if (mOEMIf)
         mOEMIf->enablePowerHint();
 #endif
     timestamp = systemTime();
@@ -1939,42 +1938,11 @@ void SprdCamera3HWI::setSprdCameraLowpower(int flag) {
     mOEMIf->setSprdCameraLowpower(flag);
 }
 
-int SprdCamera3HWI::getCoveredValue(uint32_t *value) {
-    int rc = 0;
-    rc = mOEMIf->getCoveredValue(value);
+int SprdCamera3HWI::camera_ioctrl(int cmd, void *param1, void *param2) {
 
-    return rc;
-}
-int SprdCamera3HWI::setAfPos(uint32_t value) {
-    int rc = 0;
-    rc = mOEMIf->setAfPos(value);
-
-    return rc;
-}
-
-int SprdCamera3HWI::set3AbyPass(uint32_t value) {
-    int rc = 0;
-    rc = mOEMIf->set3AbyPass(value);
-
-    return rc;
-}
-
-int SprdCamera3HWI::getIspAfFullscanInfo(
-    struct isp_af_fullscan_info *af_fullscan_info, int version) {
-    int rc = 0;
-
-    rc = mOEMIf->getIspAfFullscanInfo(af_fullscan_info, version);
-
-    return rc;
-}
-
-int SprdCamera3HWI::setSensorStream(uint32_t on_off) {
     int ret = 0;
 
-    HAL_LOGD("set on_off %d", on_off);
-
-    ret = mOEMIf->setSensorStream(on_off);
-
+    ret = mOEMIf->camera_ioctrl(cmd, param1, param2);
     return ret;
 }
 

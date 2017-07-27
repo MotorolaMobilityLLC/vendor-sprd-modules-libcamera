@@ -263,7 +263,8 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     };
     int i = 0;
     if (hwiMin) {
-        rc = hwiMin->getCoveredValue(&main_value);
+        rc = hwiMin->camera_ioctrl(CAMERA_IOCTRL_GET_SENSOR_LUMA, &main_value,
+                                   NULL);
         if (rc < 0) {
             HAL_LOGD("read main sensor failed");
             main_value = BRIGHT_LIGHT_TH;
@@ -335,7 +336,8 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
     }
 
     property_get("debug.camera.covered", prop, "0");
-    rc = hwiSub->getCoveredValue(&value);
+
+    rc = hwiSub->camera_ioctrl(CAMERA_IOCTRL_GET_SENSOR_LUMA, &value, NULL);
     if (rc < 0) {
         HAL_LOGD("read sub sensor failed");
     }

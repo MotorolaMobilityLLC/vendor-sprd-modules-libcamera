@@ -556,12 +556,14 @@ int SprdCamera3PageTurn::initialize(
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
+    int on_off = STREAM_ON;
 
     HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
     SprdCamera3MultiBase::initialize(MODE_PAGE_TURN);
-    hwiMain->setSensorStream(STREAM_ON);
+    hwiMain->camera_ioctrl(CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL, &on_off,
+                           NULL);
     mCoveredValue = 0;
     mCallbackOps = callback_ops;
     mStartPreviewTime = systemTime();

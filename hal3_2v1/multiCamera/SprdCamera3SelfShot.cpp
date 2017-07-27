@@ -713,7 +713,9 @@ int SprdCamera3SelfShot::processCaptureRequest(
         HAL_LOGD("cover camera stream on");
         CHECK_HWI_ERROR(m_pPhyCamera[CAM_TYPE_AUX].hwi);
         SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-        rc = hwiAux->setSensorStream(STREAM_ON);
+        int on_off = STREAM_ON;
+        rc = hwiAux->camera_ioctrl(CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
+                                   &on_off, NULL);
         if (rc != NO_ERROR) {
             HAL_LOGE("cover sensor stream on failed");
         }
@@ -724,7 +726,9 @@ int SprdCamera3SelfShot::processCaptureRequest(
         HAL_LOGD("cover camera stream off");
         CHECK_HWI_ERROR(m_pPhyCamera[CAM_TYPE_AUX].hwi);
         SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-        rc = hwiAux->setSensorStream(STREAM_OFF);
+        int on_off = STREAM_OFF;
+        rc = hwiAux->camera_ioctrl(CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
+                                   &on_off, NULL);
         if (rc != NO_ERROR) {
             HAL_LOGE("cover sensor stream off failed");
         }

@@ -1190,11 +1190,13 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                                       capture_msg.combo_buff.buffer);
             } else if (mVersion == 3 && !mBlur->mFlushing) {
                 if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
-                    hwiMain->setAfPos(mIspInfo.far_peak_pos);
+                    hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_AF_POS,
+                                           &(mIspInfo.far_peak_pos), NULL);
                     saveCaptureBlurParams(mSavedResultBuff,
                                           capture_msg.combo_buff.buffer);
                 } else if (mBlur->mReqState == WAIT_SECOND_YUV_STATE) {
-                    hwiMain->setAfPos(mIspInfo.af_peak_pos);
+                    hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_AF_POS,
+                                           &(mIspInfo.af_peak_pos), NULL);
                     if (mIsGalleryBlur) {
                         unsigned char *farYuvBase =
                             (unsigned char *)((struct private_handle_t *)*(
@@ -2571,7 +2573,8 @@ uint8_t SprdCamera3Blur::CaptureThread::getIspAfFullscanInfo() {
     int rc = 0;
     struct isp_af_fullscan_info af_fullscan_info;
     SprdCamera3HWI *hwiMain = mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
-    rc = hwiMain->getIspAfFullscanInfo(&af_fullscan_info, mVersion);
+    rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FULLSCAN_INFO,
+                                &af_fullscan_info, &mVersion);
     if (rc < 0) {
         HAL_LOGE("read sub sensor failed");
         return rc;
@@ -2759,7 +2762,9 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
             HAL_LOGE("Error aux camera while initialize !! ");
             return rc;
         }
-        rc = hwiAux->setSensorStream(STREAM_ON);
+        int on_off = STREAM_ON;
+        rc = hwiAux->camera_ioctrl(CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
+                                   &on_off, NULL);
         if (rc != NO_ERROR) {
             HAL_LOGE("Error while aux camera streamon !! ");
             return rc;
@@ -2976,6 +2981,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     camera3_stream_buffer_t *out_streams_main = NULL;
     uint32_t tagCnt = 0;
     int snap_stream_num = 2;
+    int af_bypass = 0;
 
     memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
     rc = validateCaptureRequest(req);
@@ -3055,8 +3061,12 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                 !(mCaptureThread->mVersion == 3 &&
                   0 != mCaptureThread->mIspInfo.distance_reminder)) {
                 if (mCaptureThread->mVersion == 3) {
-                    hwiMain->set3AbyPass(1);
-                    hwiMain->setAfPos(mCaptureThread->mIspInfo.near_peak_pos);
+                    af_bypass = 1;
+                    hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_3A_BYPASS,
+                                           &af_bypass, NULL);
+                    hwiMain->camera_ioctrl(
+                        CAMERA_IOCTRL_SET_AF_POS,
+                        &mCaptureThread->mIspInfo.near_peak_pos, NULL);
                 }
                 snap_stream_num = 2;
                 out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
@@ -3276,7 +3286,9 @@ void SprdCamera3Blur::processCaptureResultMain(
             mCaptureThread->mCallbackOps, &newResult);
         if (mCaptureThread->mVersion == 3 &&
             1 != mCaptureThread->mIspInfo.distance_reminder) {
-            hwiMain->set3AbyPass(0);
+            int af_bypass = 0;
+            hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_3A_BYPASS, &af_bypass,
+                                   NULL);
         }
         if (mCaptureThread->mIsBlurAlways && mCaptureThread->mVersion == 1) {
             mCaptureThread->mVersion = 3;

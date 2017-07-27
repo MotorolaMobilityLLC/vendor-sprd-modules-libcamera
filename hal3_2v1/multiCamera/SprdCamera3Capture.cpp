@@ -121,10 +121,8 @@ SprdCamera3Capture::SprdCamera3Capture() {
     mCaptureHeight = 0;
     mIsCapturing = false;
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
-    memset(mNativeBuffer, 0,
-           sizeof(native_handle_t *) * MAX_CAP_QEQUEST_BUF);
-    memset(mNativeCapBuffer, 0,
-           sizeof(native_handle_t *) * LOCAL_CAPBUFF_NUM);
+    memset(mNativeBuffer, 0, sizeof(native_handle_t *) * MAX_CAP_QEQUEST_BUF);
+    memset(mNativeCapBuffer, 0, sizeof(native_handle_t *) * LOCAL_CAPBUFF_NUM);
     memset(mSavedReqStreams, 0, sizeof(camera3_stream_t *) * MAX_NUM_STREAMS);
     mPreviewStreamsNum = 0;
     mPreviewID = 0;
@@ -2200,14 +2198,17 @@ int SprdCamera3Capture::processCaptureRequest(
                  currentMainTimestamp, currentAuxTimestamp);
         if (currentMainTimestamp < currentAuxTimestamp) {
             HAL_LOGV("start main, idx:%d", req_main.frame_number);
-            hwiMain->setZslBufferTimestamp(currentMainTimestamp);
+
+            hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                   &currentMainTimestamp, NULL);
             rc = hwiMain->process_capture_request(
                 m_pPhyCamera[CAM_TYPE_MAIN].dev, &req_main);
             if (rc < 0) {
                 HAL_LOGE("failed, idx:%d", req_main.frame_number);
                 goto req_fail;
             }
-            hwiAux->setZslBufferTimestamp(currentMainTimestamp);
+            hwiAux->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                  &currentMainTimestamp, NULL);
             HAL_LOGV("start sub, idx:%d", req_aux.frame_number);
             rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,
                                                  &req_aux);
@@ -2217,14 +2218,16 @@ int SprdCamera3Capture::processCaptureRequest(
             }
         } else {
             HAL_LOGV("start sub, idx:%d", req_aux.frame_number);
-            hwiAux->setZslBufferTimestamp(currentAuxTimestamp);
+            hwiAux->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                  &currentAuxTimestamp, NULL);
             rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,
                                                  &req_aux);
             if (rc < 0) {
                 HAL_LOGE("failed, idx:%d", req_aux.frame_number);
                 goto req_fail;
             }
-            hwiMain->setZslBufferTimestamp(currentAuxTimestamp);
+            hwiAux->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                  &currentAuxTimestamp, NULL);
             HAL_LOGV("start main, idx:%d", req_main.frame_number);
             rc = hwiMain->process_capture_request(
                 m_pPhyCamera[CAM_TYPE_MAIN].dev, &req_main);

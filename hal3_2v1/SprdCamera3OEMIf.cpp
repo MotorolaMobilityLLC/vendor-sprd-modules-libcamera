@@ -1489,42 +1489,31 @@ void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width,
         mCameraHandle, mSprdReprocessing, mCameraId, width, height);
 }
 
-int SprdCamera3OEMIf::setSensorStream(uint32_t on_off) {
-    int ret;
+int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
+    int ret = 0;
 
-    HAL_LOGD("E");
-    ret = mHalOem->ops->camera_ioctrl(
-        mCameraHandle, CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL, &on_off);
-
-    return ret;
-}
-
-int SprdCamera3OEMIf::getCoveredValue(uint32_t *value) {
-    int32_t ret = 0;
-
-    HAL_LOGD("E");
-    ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
-                                      CAMERA_IOCTRL_GET_SENSOR_LUMA, value);
-
-    return ret;
-}
-
-int SprdCamera3OEMIf::setAfPos(uint32_t value) {
-    int32_t ret = 0;
-
-    HAL_LOGD("E  pos:%d", value);
-    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_POS,
-                                      &value);
-
-    return ret;
-}
-
-int SprdCamera3OEMIf::set3AbyPass(uint32_t value) {
-    int32_t ret = 0;
-
-    HAL_LOGD("E");
-    ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
-                                      CAMERA_IOCTRL_SET_3A_BYPASS, &value);
+    switch (cmd) {
+    case CAMERA_IOCTRL_SET_MULTI_CAMERAMODE: {
+        mMultiCameraMode = *(multiCameraMode *)param1;
+        break;
+    }
+    case CAMERA_IOCTRL_GET_FULLSCAN_INFO: {
+        int version = *(int *)param2;
+        struct isp_af_fullscan_info *af_fullscan_info =
+            (struct isp_af_fullscan_info *)param1;
+        if (version == 3 && af_fullscan_info->distance_reminder != 1) {
+            mIsBlur2Zsl = true;
+        } else {
+            mIsBlur2Zsl = false;
+        }
+        break;
+    }
+    case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
+        mNeededTimestamp = *(uint64_t *)param1;
+        break;
+    }
+    }
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
     return ret;
 }
@@ -1548,22 +1537,6 @@ bool SprdCamera3OEMIf::isNeedAfFullscan() {
     return ret;
 }
 
-int SprdCamera3OEMIf::getIspAfFullscanInfo(
-    struct isp_af_fullscan_info *af_fullscan_info, int version) {
-    int32_t ret = 0;
-
-    ret = mHalOem->ops->camera_ioctrl(
-        mCameraHandle, CAMERA_IOCTRL_GET_FULLSCAN_INFO, af_fullscan_info);
-
-    if (version == 3 && af_fullscan_info->distance_reminder != 1) {
-        mIsBlur2Zsl = true;
-    } else {
-        mIsBlur2Zsl = false;
-    }
-    HAL_LOGI("E mIsBlur2Zsl:%d", mIsBlur2Zsl);
-    return ret;
-}
-
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state) {
     status_t ret = 0;
     Mutex::Autolock l(&mLock);
@@ -1574,16 +1547,6 @@ status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state) {
     mSetting->setAeCONTROLTag(&controlInfo);
     HAL_LOGD("ae sta %d", state);
     return ret;
-}
-
-void SprdCamera3OEMIf::setMultiCameraMode(multiCameraMode mode) {
-    mMultiCameraMode = mode;
-    if (mHalOem) {
-        mHalOem->ops->camera_ioctrl(mCameraHandle,
-                                    CAMERA_IOCTRL_SET_MULTI_CAMERAMODE,
-                                    &mMultiCameraMode);
-    }
-    HAL_LOGD("mMultiCameraMode %d", mMultiCameraMode);
 }
 
 void SprdCamera3OEMIf::setCaptureRawMode(bool mode) {
@@ -1660,45 +1623,46 @@ void SprdCamera3OEMIf::print_time() {
 }
 
 void SprdCamera3OEMIf::thermalEnabled(bool flag) {
-	int therm_fd= -1;
-	int i = 0;
-	char buf[20]={0};
-	char *p = NULL;
-	do {
-		if (i++ < 25) {
-			therm_fd = socket_local_client("thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
-			if (therm_fd <= 0) {
-				HAL_LOGD("%s open thermald  failed: %s\n", __func__,strerror(errno));
-				HAL_LOGD("wait for thermald local server.");
-				usleep(200*1000);
-			} else
-				HAL_LOGD("got the thermald local server.");
-				break;
-		} else {
-			HAL_LOGE("thermald service does not run now");
-			therm_fd = -1;
-			break;
-		}
-	} while (1);
+    int therm_fd = -1;
+    int i = 0;
+    char buf[20] = {0};
+    char *p = NULL;
+    do {
+        if (i++ < 25) {
+            therm_fd = socket_local_client(
+                "thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
+            if (therm_fd <= 0) {
+                HAL_LOGD("%s open thermald  failed: %s\n", __func__,
+                         strerror(errno));
+                HAL_LOGD("wait for thermald local server.");
+                usleep(200 * 1000);
+            } else
+                HAL_LOGD("got the thermald local server.");
+            break;
+        } else {
+            HAL_LOGE("thermald service does not run now");
+            therm_fd = -1;
+            break;
+        }
+    } while (1);
 
-	if (therm_fd > 0) {
-		p = buf;
-		if (flag) {
-			p += snprintf(p, 20, "%s", "SetThmEn");
-		} else {
-			p += snprintf(p, 20, "%s", "SetThmDis");
-		}
-		write(therm_fd, buf, strlen(buf));
-		close(therm_fd);
-		HAL_LOGD("%s, strlen of buf: %d, flag: %d", buf, strlen(buf), flag);
-	}
+    if (therm_fd > 0) {
+        p = buf;
+        if (flag) {
+            p += snprintf(p, 20, "%s", "SetThmEn");
+        } else {
+            p += snprintf(p, 20, "%s", "SetThmDis");
+        }
+        write(therm_fd, buf, strlen(buf));
+        close(therm_fd);
+        HAL_LOGD("%s, strlen of buf: %d, flag: %d", buf, strlen(buf), flag);
+    }
 }
-
 
 void SprdCamera3OEMIf::initPowerHint() {
 #ifdef HAS_CAMERA_HINTS
 #ifdef ANDROID_VERSION_O_BRINGUP
-   if (hw_get_module(POWER_HARDWARE_MODULE_ID,
+    if (hw_get_module(POWER_HARDWARE_MODULE_ID,
                       (const hw_module_t **)&m_pPowerModule)) {
         HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
     }
@@ -1758,7 +1722,7 @@ void SprdCamera3OEMIf::enablePowerHint() {
                                        POWER_HINT_VENDOR_CAMERA_HDR);
         mPrfmLock = binder;
     }
-    //disable thermal
+    // disable thermal
     thermalEnabled(false);
     HAL_LOGD("OUT");
 #endif
@@ -1782,7 +1746,7 @@ void SprdCamera3OEMIf::disablePowerHint() {
         }
         mPrfmLock.clear();
     }
-    //enable thermal
+    // enable thermal
     thermalEnabled(true);
     HAL_LOGD("OUT");
 #endif
@@ -8499,12 +8463,6 @@ uint64_t SprdCamera3OEMIf::getZslBufferTimestamp() {
     }
 
     return timestamp;
-}
-
-void SprdCamera3OEMIf::setZslBufferTimestamp(uint64_t timestamp) {
-    mNeededTimestamp = timestamp;
-    mHalOem->ops->camera_ioctrl(
-        mCameraHandle, CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP, &timestamp);
 }
 
 // this is for real zsl flash capture, like sharkls/sharklt8, not sharkl2-like

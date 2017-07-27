@@ -3109,6 +3109,7 @@ int SprdCamera3RealBokeh::configureStreams(
                  stream_list->streams[i]->stream_type);
         if (requestStreamType == PREVIEW_STREAM) {
             previewStream = stream_list->streams[i];
+
             mPreviewWidth = stream_list->streams[i]->width;
             mPreviewHeight = stream_list->streams[i]->height;
             getDepthImageSize(mPreviewWidth, mPreviewHeight,
@@ -3586,14 +3587,16 @@ int SprdCamera3RealBokeh::processCaptureRequest(
         hwiAux->setMultiCallBackYuvMode(true);
         if (currentmainTimestamp < currentauxTimestamp) {
             HAL_LOGD("start main, idx:%d", req_main.frame_number);
-            hwiMain->setZslBufferTimestamp(currentmainTimestamp);
+            hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                   &currentmainTimestamp, NULL);
             rc = hwiMain->process_capture_request(
                 m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev, &req_main);
             if (rc < 0) {
                 HAL_LOGE("failed, idx:%d", req_main.frame_number);
                 goto req_fail;
             }
-            hwiAux->setZslBufferTimestamp(currentmainTimestamp);
+            hwiAux->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                  &currentmainTimestamp, NULL);
             HAL_LOGD("start sub, idx:%d", req_aux.frame_number);
             if (!mFlushing) {
                 rc = hwiAux->process_capture_request(
@@ -3606,7 +3609,8 @@ int SprdCamera3RealBokeh::processCaptureRequest(
         } else {
             HAL_LOGD("start sub, idx:%d,currentauxTimestamp=%llu",
                      req_aux.frame_number, currentauxTimestamp);
-            hwiAux->setZslBufferTimestamp(currentauxTimestamp);
+            hwiAux->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                  &currentmainTimestamp, NULL);
             if (!mFlushing) {
                 rc = hwiAux->process_capture_request(
                     m_pPhyCamera[CAM_TYPE_DEPTH].dev, &req_aux);
@@ -3615,7 +3619,8 @@ int SprdCamera3RealBokeh::processCaptureRequest(
                     goto req_fail;
                 }
             }
-            hwiMain->setZslBufferTimestamp(currentauxTimestamp);
+            hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                   &currentmainTimestamp, NULL);
             HAL_LOGD("start main, idx:%d", req_main.frame_number);
             rc = hwiMain->process_capture_request(
                 m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev, &req_main);

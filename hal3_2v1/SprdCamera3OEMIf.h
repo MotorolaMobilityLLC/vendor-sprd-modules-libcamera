@@ -219,19 +219,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void ispToolModeInit();
     uint64_t getZslBufferTimestamp(); /**add for 3dcapture, get zsl buffer's
                                          timestamp in zsl query*/
-    void setZslBufferTimestamp(
-        uint64_t timestamp); /**add for 3dcapture, set the needed timestamp*/
-    void setMultiCallBackYuvMode(bool mode);
     int getMultiCameraMode(void);
+    void setMultiCallBackYuvMode(bool mode);
     void setSprdCameraLowpower(int flag);
-    int getCoveredValue(uint32_t *value);
-    int setSensorStream(uint32_t on_off);
     int autoFocusToFaceFocus();
     bool isNeedAfFullscan();
-    int getIspAfFullscanInfo(struct isp_af_fullscan_info *af_fullscan_info,
-                             int version);
-    int setAfPos(uint32_t value);
-    int set3AbyPass(uint32_t value);
+    int camera_ioctrl(int cmd, void *param1, void *param2);
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);
@@ -257,7 +250,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void pushEISVideoQueue(vsGyro *mGyrodata);
     void popEISVideoQueue(vsGyro *gyro, int gyro_num);
     void EisPreviewFrameStab(struct camera_frame_type *frame);
-    vsOutFrame EisVideoFrameStab(struct camera_frame_type *frame,uint32_t frame_num);
+    vsOutFrame EisVideoFrameStab(struct camera_frame_type *frame,
+                                 uint32_t frame_num);
 #endif
 
 #ifdef CONFIG_CAMERA_GYRO
@@ -797,7 +791,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
-
 };
 
 }; // namespace sprdcamera

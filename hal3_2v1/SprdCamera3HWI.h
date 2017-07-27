@@ -96,7 +96,6 @@ class SprdCamera3HWI {
     int flush();
     void captureResultCb(cam_result_data_info_t *result_info);
     uint64_t getZslBufferTimestamp();
-    void setZslBufferTimestamp(uint64_t timestamp);
     void setVideoBufferTimestamp(uint64_t timestamp);
     uint64_t getVideoBufferTimestamp(void);
     void setMultiCallBackYuvMode(bool mode);
@@ -106,12 +105,7 @@ class SprdCamera3HWI {
     void setMultiCameraMode(multiCameraMode multiCameraModeId);
     static bool isMultiCameraMode(int cameraId);
     void setSprdCameraLowpower(int flag);
-    int getCoveredValue(uint32_t *value);
-    int setSensorStream(uint32_t on_off);
-    int getIspAfFullscanInfo(struct isp_af_fullscan_info *af_fullscan_info,
-                             int version);
-    int setAfPos(uint32_t value);
-    int set3AbyPass(uint32_t value);
+    int camera_ioctrl(int cmd, void *param1, void *param2);
 
   private:
     int openCamera();
