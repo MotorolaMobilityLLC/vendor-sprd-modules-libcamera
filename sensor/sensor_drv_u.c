@@ -117,6 +117,9 @@ static cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt, uint8_t cmd,
                            uint8_t sub_cmd, void *data);
 
+LOCAL cmr_int sensor_otp_rw_ctrl(struct sensor_drv_context *sensor_cxt,
+                                 uint8_t cmd, uint8_t sub_cmd, void* data);
+
 extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
                                                         SENSOR_ID_E sensor_id);
 

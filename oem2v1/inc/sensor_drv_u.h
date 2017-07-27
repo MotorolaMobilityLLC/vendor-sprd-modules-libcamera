@@ -829,9 +829,6 @@ cmr_int sensor_update_isparm_from_file(struct sensor_drv_context *sensor_cxt,
 
 cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt);
 
-LOCAL cmr_int sensor_otp_rw_ctrl(struct sensor_drv_context *sensor_cxt,
-                        uint8_t cmd,uint8_t sub_cmd,void* data);
-
 cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off);
 
