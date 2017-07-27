@@ -1627,6 +1627,7 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
     int i = 0;
     char buf[20] = {0};
     char *p = NULL;
+
     do {
         if (i++ < 25) {
             therm_fd = socket_local_client(
@@ -6443,8 +6444,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        HAL_LOGD("sprddefInfo.sprd_filter_type: %d ", sprddefInfo.sprd_filter_type);
-        SET_PARM(mHalOem, mCameraHandle,CAMERA_PARAM_FILTER_TYPE,
+        HAL_LOGD("sprddefInfo.sprd_filter_type: %d ",
+                 sprddefInfo.sprd_filter_type);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FILTER_TYPE,
                  sprddefInfo.sprd_filter_type);
     } break;
 
