@@ -833,13 +833,14 @@ static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
 	return ret;
 }
 
-static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
+static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_pm_param_data *param_data = NULL;
+	struct isp_u_irq_info *irq_info = (struct isp_u_irq_info *)data;
 	struct isp_af_ts af_ts;
 	cmr_u32 sec = 0;
 	cmr_u32 usec = 0;
@@ -867,7 +868,8 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	}
 
 	if (cxt->ops.af_ops.ioctrl) {
-		ret = ispalg_get_k_timestamp(cxt, &sec, &usec);
+		sec = irq_info->sec;
+		usec = irq_info->usec;
 		af_ts.timestamp = sec * 1000000000LL + usec * 1000LL;
 		af_ts.capture = 0;
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DCAM_TIMESTAMP, (void *)(&af_ts), NULL);
@@ -1837,7 +1839,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
-		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
+		ret = ispalg_handle_sensor_sof((cmr_handle) cxt, message->data);
 		break;
 	case ISP_PROC_AFL_DONE:
 		ret = ispalg_afl_process((cmr_handle) cxt, message->data);

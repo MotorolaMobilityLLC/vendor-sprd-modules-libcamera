@@ -71,6 +71,12 @@ struct isp_statis_info {
 	cmr_s64 monoboottime;
 };
 
+struct isp_u_irq_info {
+	cmr_s32 frame_id;
+	cmr_u32 sec;
+	cmr_u32 usec;
+};
+
 enum isp_fetch_format {
 	ISP_FETCH_YUV422_3FRAME = 0x00,
 	ISP_FETCH_YUYV,
