@@ -244,6 +244,7 @@ struct isp_alg_fw_context {
 	cmr_u32 is_multi_mode;
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
 #endif
+	cmr_u16 *binning_statis_ptr;
 };
 
 struct isp_alg_fw_init_in {

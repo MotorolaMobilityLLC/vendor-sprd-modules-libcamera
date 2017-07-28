@@ -34,12 +34,14 @@
 #include "isp_match.h"
 #endif
 #include <dlfcn.h>
+#include <immintrin.h>
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 
 #define LSC_ADV_ENABLE
 #define PDLIB_PATH "libispalg.so"
+#define MAX_BINNING_STATS_SIZE (640*480)
 //#define ANTI_FLICKER_INFO_VERSION_NEW
 
 cmr_s32 gAWBGainR = 1;
@@ -1431,6 +1433,97 @@ static cmr_u32 binning_data_cvt(cmr_u32 bayermode, cmr_u32 width, cmr_u32 height
 	return ret;
 }
 
+static void pixel_split_sse(unsigned int *src, unsigned short *dst, int num) {
+    unsigned int *tmp_src = src;
+    unsigned short *tmp_dst = dst;
+    int i;
+
+    if (!tmp_src || !tmp_dst || num < 0) {
+        return;
+    }
+
+    __m128i mask = _mm_set1_epi32(0x3FF);
+
+    int mlt_8 = num / 8;
+    int remain = num % 8;
+
+    //#pragma omp parallel for
+    for (i = 0; i < mlt_8; i++) {
+        __m128i xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8;
+
+        // load 4 unsigned int
+        //xmm3 = _mm_load_si128((__m128i *)tmp_src);
+        xmm3 = _mm_stream_load_si128((__m128i *)tmp_src);
+        xmm1 = _mm_and_si128(xmm3, mask);  // 1 0, 4 0, 7 0, 10 0
+        xmm2 = _mm_srli_epi32(xmm3, 10);
+        xmm2 = _mm_and_si128(xmm2, mask);  // 2 0, 5 0, 8 0, 11 0
+        xmm3 = _mm_srli_epi32(xmm3, 20);
+        xmm3 = _mm_and_si128(xmm3, mask);  // 3 0, 6 0, 9 0, 12 0
+        xmm4 = _mm_or_si128(xmm1, _mm_slli_si128(xmm2, 2)); // 1 2, 4 5, 7 8, 10 11
+        xmm5 = _mm_or_si128(xmm3, _mm_srli_si128(xmm1, 2)); // 3 4, 6 7, 9 10, 12 0
+        xmm6 = _mm_or_si128(xmm2, _mm_slli_si128(xmm3, 2)); // 2 3, 5 6, 8 9; 11 12
+        xmm1 = _mm_unpacklo_epi32(xmm4, xmm5); // 1 2, 3 4, 4 5, 6 7
+        xmm2 = _mm_unpacklo_epi32(_mm_srli_si128(xmm6, 4), _mm_srli_si128(xmm4, 8)); // 5 6, 7 8, 8 9, 10 11
+        xmm8 = _mm_unpackhi_epi32(xmm5, _mm_srli_si128(xmm6, 4)); // 9 10, 11 12, 12 0, 0 0
+        xmm7 = _mm_unpacklo_epi64(xmm1, xmm2); // 1 2, 3 4, 5 6, 7 8
+
+        tmp_src += 4;
+
+        // load 4 unsigned int
+        //xmm3 = _mm_load_si128((__m128i *)tmp_src);
+        xmm3 = _mm_stream_load_si128((__m128i *)tmp_src);
+        xmm1 = _mm_and_si128(xmm3, mask);  // 13 0, 16 0, 19 0, 22 0
+        xmm2 = _mm_srli_epi32(xmm3, 10);
+        xmm2 = _mm_and_si128(xmm2, mask);  // 14 0, 17 0, 20 0, 23 0
+        xmm3 = _mm_srli_epi32(xmm3, 20);
+        xmm3 = _mm_and_si128(xmm3, mask);  // 15 0, 18 0, 21 0, 24 0
+        xmm4 = _mm_or_si128(xmm1, _mm_slli_si128(xmm2, 2)); // 13 14, 16 17, 19 20, 22 23
+        xmm5 = _mm_or_si128(xmm3, _mm_srli_si128(xmm1, 2)); // 15 16, 18 19, 21 22, 24 0
+        xmm6 = _mm_or_si128(xmm2, _mm_slli_si128(xmm3, 2)); // 14 15, 17 18, 20 21, 23 24
+        xmm1 = _mm_unpacklo_epi32(xmm4, xmm5); // 13 14, 15 16, 16 17, 18 19
+        xmm2 = _mm_unpacklo_epi32(_mm_srli_si128(xmm6, 4), _mm_srli_si128(xmm4, 8)); // 17 18, 19 20, 20 21, 22 23
+        xmm3 = _mm_unpackhi_epi32(xmm5, _mm_srli_si128(xmm6, 4)); // 21 22, 23 24, 24 0, 0 0
+        xmm8 = _mm_unpacklo_epi64(xmm8, xmm1); // 9 10, 11 12, 13 14, 15 16
+        xmm1 = _mm_unpacklo_epi64(xmm2, xmm3); // 17 18, 19 20, 21 22, 23 24
+
+        //_mm_store_si128((__m128i *)tmp_dst, xmm7);
+        _mm_stream_si128((__m128i *)tmp_dst, xmm7);
+        tmp_dst += 8;
+        //_mm_store_si128((__m128i *)tmp_dst, xmm8);
+        _mm_stream_si128((__m128i *)tmp_dst, xmm8);
+        tmp_dst += 8;
+        //_mm_store_si128((__m128i *)tmp_dst, xmm1);
+        _mm_stream_si128((__m128i *)tmp_dst, xmm1);
+        tmp_dst += 8;
+
+        tmp_src += 4;
+    }
+
+    for (i = 0; i < remain; i++) {
+        unsigned int val = *tmp_src++;
+        *tmp_dst++ = val & 0x3FF;
+        *tmp_dst++ = (val >> 10) & 0x3FF;
+        *tmp_dst++ = (val >> 20) & 0x3FF;
+    }
+}
+
+/*
+p_dst_sse: the temp buffer to store the 16bit raw data.
+p_dst_sse = (unsigned short *)memalign(16, 3 * pixel_num * sizeof(unsigned short));
+*/
+static cmr_u16 *binning_pixel_split(cmr_u16 *binning_statis_ptr, cmr_u32 *src_ptr, cmr_u32 pixel_num)
+{
+	cmr_u16 *p_dst_sse = binning_statis_ptr;
+
+	if (p_dst_sse == NULL) {
+		ISP_LOGE("error binning_statis_ptr null");
+		return NULL;
+	}
+
+	pixel_split_sse(src_ptr, p_dst_sse, pixel_num);
+	return p_dst_sse;
+}
+
 static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1444,18 +1537,17 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	cmr_u32 last_val1 = 0;
 	cmr_u32 src_w = cxt->commn_cxt.src.w;
 	cmr_u32 src_h = cxt->commn_cxt.src.h;
-	cmr_u32 binnng_w = 0;
-	cmr_u32 binnng_h = 0;
+	cmr_u32 binning_w = 0;
+	cmr_u32 binning_h = 0;
 	cmr_u32 double_binning_num = 0;
 	cmr_u32 remainder = 0;
-	cmr_u16 *binning_img_data = NULL;
+	cmr_u16 *raw_data_ptr = NULL;
 	cmr_u16 *binning_img_ptr = NULL;
 	cmr_u32 bayermode = cxt->commn_cxt.image_pattern;
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_dev_binning4awb_info *binning_info = NULL;
-	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	k_addr = statis_info->phy_addr;
@@ -1477,30 +1569,21 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 		return ISP_ERROR;
 	}
 
-	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d\n",
-		bayermode, src_w, src_h, binning_info->hx, binning_info->vx);
+	binning_w = (src_w >> binning_info->hx) & ~0x1;
+	binning_h = (src_h >> binning_info->vx) & ~0x1;
+	double_binning_num = binning_w * binning_h / 6 * 2;
+	remainder = binning_w * binning_h % 6;
 
-	binnng_w = (src_w >> binning_info->hx) & ~0x1;
-	binnng_h = (src_h >> binning_info->vx) & ~0x1;
-	double_binning_num = binnng_w * binnng_h / 6 * 2;
+	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d, binning:w:%d, binning_h:%d, double_binning_num:%d",
+				bayermode, src_w, src_h,
+				binning_info->hx, binning_info->vx,
+				binning_w, binning_h, double_binning_num);
 
-	binning_img_data = (cmr_u16 *) malloc(binnng_w * binnng_h * 2);
-	if (binning_img_data == NULL) {
-		ISP_LOGE("fail to malloc binning img data\n");
-		return -1;
-	}
-	memset(binning_img_data, 0, binnng_w * binnng_h * 2);
-	binning_img_ptr = binning_img_data;
+	raw_data_ptr = binning_pixel_split(cxt->binning_statis_ptr, (cmr_u32 *)u_addr, double_binning_num);
 
-	for (i = 0; i < double_binning_num; i++) {
-		val = *((cmr_u32 *) u_addr + i);
-		*binning_img_ptr++ = val & 0x3FF;
-		*binning_img_ptr++ = (val >> 10) & 0x3FF;
-		*binning_img_ptr++ = (val >> 20) & 0x3FF;
-	}
-	remainder = binnng_w * binnng_h % 6;
-	last_val0 = *((cmr_u32 *) u_addr + i);
-	last_val1 = *((cmr_u32 *) u_addr + i + 1);
+	binning_img_ptr = raw_data_ptr + double_binning_num * 3;
+	last_val0 = *((cmr_u32 *) u_addr + double_binning_num);
+	last_val1 = *((cmr_u32 *) u_addr + double_binning_num + 1);
 
 	switch (remainder) {
 	case 1:{
@@ -1537,7 +1620,9 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 		break;
 	}
 
-	binning_data_cvt(bayermode, binnng_w, binnng_h, binning_img_data, &cxt->binning_stats);
+	if (raw_data_ptr) {
+		binning_data_cvt(bayermode, binning_w, binning_h, raw_data_ptr, &cxt->binning_stats);
+	}
 
 	ISP_LOGV("binning_stats_size=(%d, %d)\n", cxt->binning_stats.binning_size.w, cxt->binning_stats.binning_size.h);
 
@@ -1551,14 +1636,8 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 		ISP_LOGE("fail to set statis buf");
 	}
 
-	if (binning_img_data != NULL) {
-		free(binning_img_data);
-		binning_img_data = NULL;
-	}
-
 	ISP_LOGV("done %ld", ret);
 	return ret;
-
 }
 
 static cmr_int _ispProcessEndHandle(cmr_handle isp_alg_handle)
@@ -2757,6 +2836,13 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	}
 	memset(cxt, 0, sizeof(*cxt));
 
+	cxt->binning_statis_ptr = (unsigned short *)memalign(16, MAX_BINNING_STATS_SIZE * sizeof(cmr_u16));
+	if (!cxt->binning_statis_ptr) {
+		ISP_LOGE("binning statis buffer malloc failed");
+		ret = ISP_ALLOC_ERROR;
+		goto exit;
+	}
+
 	ret = isp_pm_sw_init(cxt, input_ptr->init_param);
 
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
@@ -2789,10 +2875,10 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cmr_u32 binning_vx = 4;
 	cmr_u32 src_w = cxt->commn_cxt.src.w;
 	cmr_u32 src_h = cxt->commn_cxt.src.h;
-	cmr_u32 binnng_w = (src_w >> binning_hx) & ~0x1;
-	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
-	cxt->binning_stats.binning_size.w = binnng_w / 2;
-	cxt->binning_stats.binning_size.h = binnng_h / 2;
+	cmr_u32 binning_w = (src_w >> binning_hx) & ~0x1;
+	cmr_u32 binning_h = (src_h >> binning_vx) & ~0x1;
+	cxt->binning_stats.binning_size.w = binning_w / 2;
+	cxt->binning_stats.binning_size.h = binning_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
@@ -2818,6 +2904,9 @@ exit:
 			isp_alg_sw_deinit((cmr_handle) cxt);
 			if (binning_info) {
 				free((void *)binning_info);
+			}
+			if (cxt->binning_statis_ptr) {
+				free(cxt->binning_statis_ptr);
 			}
 			free((void *)cxt);
 		}
@@ -2869,6 +2958,12 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 #endif
 	if (cxt->binning_stats.r_info) {
 		free((void *)cxt->binning_stats.r_info);
+	}
+
+	if (cxt->binning_statis_ptr) {
+		ISP_LOGV("free binning_statis_ptr");
+		free(cxt->binning_statis_ptr);
+		cxt->binning_statis_ptr = NULL;
 	}
 
 	if (cxt) {
