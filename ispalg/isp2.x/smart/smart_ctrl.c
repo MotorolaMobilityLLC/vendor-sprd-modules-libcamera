@@ -160,7 +160,6 @@ static cmr_s32 smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 	struct isp_piecewise_func *func = NULL;
 	struct isp_range *bv_range = NULL;
 	cmr_u32 i = 0;
-	cmr_u32 j = 0;
 	cmr_u32 k = 0;
 
 	for (i = 0; i < blk_cfg->component_num; i++) {
@@ -209,7 +208,6 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 	struct isp_smart_component_cfg *comp_cfg = NULL;
 	struct isp_piecewise_func *func = NULL;
 	struct isp_range *bv_range = NULL;
-	char value = 0;
 
 	if (0 == is_print_log())
 		return rtn;
@@ -311,7 +309,6 @@ static cmr_s32 smart_ctl_parse_tuning_param(struct smart_tuning_param src[], str
 static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0;
 	struct smart_init_param *param = NULL;
 
 	if (NULL == in_param) {
@@ -424,7 +421,6 @@ static cmr_s32 smart_ctl_piecewise_func_v0(struct isp_piecewise_func *func, cmr_
 static cmr_s32 smart_crl_calc_func(struct isp_piecewise_func *func, cmr_u32 y_type, cmr_s32 x, struct isp_weight_value *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_weight_value weight_value = { {0}, {0} };
 	cmr_s32 value = 0;
 
 	switch (y_type) {
@@ -450,10 +446,7 @@ static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 nu
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u16 bv_distance[2] = { 0, 1 };
-	cmr_s32 bv_max = 0;
-	cmr_s32 bv_min = 0;
 	cmr_u32 i = 0;
-	cmr_s32 bv_cur = 0;
 
 	if (num < 1)
 		return ISP_ERROR;
@@ -503,8 +496,6 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 	cmr_s32 bv = param->bv;
 	cmr_s32 bv_gain = param->bv_gain;
 	cmr_u32 ct = param->ct;
-	cmr_u32 section_num = cfg->section_num;
-	struct isp_range *bv_range = cfg->bv_range;
 	struct isp_weight_value func_result = { {0}, {0} };
 	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
 	struct isp_weight_value bv_result = { {0}, {0} };
@@ -743,9 +734,8 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
 	struct isp_weight_value *weight_value = NULL;
-	cmr_u32 i = 0, j = 0, k = 0;
+	cmr_u32 i = 0, j = 0;
 	const char *block_name = NULL;
-	cmr_s32 fd = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
 	char value[PROPERTY_VALUE_MAX] = { 0 };
 
@@ -812,8 +802,7 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
 	struct isp_weight_value *weight_value = NULL;
-	struct smart_context *cxt = NULL;
-	cmr_u32 i = 0, j = 0, k = 0;
+	cmr_u32 i = 0, j = 0;
 	const char *block_name = NULL;
 
 	if (0 == is_print_log())
@@ -861,7 +850,6 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0;
 	smart_handle_t handle = NULL;
 	struct smart_context *cxt = NULL;
 
@@ -962,14 +950,13 @@ param_failed:
 static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_param *param, struct smart_calc_result *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, mod_num = 0, func_num = 0;
+	cmr_u32 i = 0;
 	struct smart_context *cxt = NULL;
 	struct tuning_param *cur_param = NULL;
 	struct isp_smart_param *smart_param = NULL;
 	struct smart_block_result *blk = NULL;
 	cmr_u32 update_block_num = 0;
 	enum smart_ctrl_flash_mode flash_mode = SMART_CTRL_FLASH_CLOSE;
-	cmr_u32 cmd = ISP_SMART_IOCTL_SET_FLASH_MODE;
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {

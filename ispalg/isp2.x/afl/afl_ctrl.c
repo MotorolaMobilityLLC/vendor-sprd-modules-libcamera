@@ -122,8 +122,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cmr_u32 cur_flicker = 0;
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
-	cmr_u32 nxt_flicker = 0;
-	cmr_int debug_index = 0;
 	cmr_u32 i = 0;
 	cmr_int flag = 0;
 	cmr_s32 *addr = NULL;

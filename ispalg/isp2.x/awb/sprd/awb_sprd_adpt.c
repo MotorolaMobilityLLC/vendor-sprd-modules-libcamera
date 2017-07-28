@@ -443,7 +443,6 @@ static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 mawb_id = cxt->wb_mode;
 	struct awb_gain *awb_result = (struct awb_gain *)param;
 
 	awb_result->r = cxt->output_gain.r;
@@ -483,7 +482,6 @@ static cmr_u32 _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
 static cmr_u32 _awb_get_winsize(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 workmode = cxt->work_mode;
 	struct awb_size *win_size = (struct awb_size *)param;
 	cmr_u32 param_index = cxt->param_index;
 
@@ -850,8 +848,6 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		ISP_LOGE("fail to init awb, invalid param: param=%p, result=%p", param, result);
 		goto ERROR_EXIT;
 	}
-
-	cmr_u32 base_gain = param->base_gain;
 
 	cxt = (struct awb_ctrl_cxt *)malloc(sizeof(struct awb_ctrl_cxt));
 	if (NULL == cxt) {

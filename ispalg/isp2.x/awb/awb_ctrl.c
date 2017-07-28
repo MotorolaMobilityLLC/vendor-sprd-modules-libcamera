@@ -76,7 +76,6 @@ exit:
 static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_init_param *in_ptr, struct awb_ctrl_init_result *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check para, param is NULL!");

@@ -169,7 +169,6 @@ exit:
 static cmr_s32 _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_init_param *in_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
-	struct lsc_ctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param, param is NULL!");

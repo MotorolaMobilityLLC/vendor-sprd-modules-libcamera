@@ -202,7 +202,6 @@ cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue * queue)
 	cmr_s32 size = 0;
 	cmr_u32 delta = 0;
 	cmr_u32 *q = NULL;
-	cmr_u32 index = 0;
 	if (NULL == queue)
 		return 0;
 
