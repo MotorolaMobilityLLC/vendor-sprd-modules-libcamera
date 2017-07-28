@@ -523,7 +523,7 @@ static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 	cmr_u32 sec, usec;
 
 	af->af_get_system_time(af->caller, &sec, &usec);
-	*time = sec * 1000000000 + usec * 1000;
+	*time = (cmr_u64) sec *1000000000 + (cmr_u64) usec *1000;
 	//*time = get_systemtime_ns();
 	return 0;
 }
@@ -1016,18 +1016,22 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 {
 	FILE *fp = fopen("/data/misc/cameraserver/calibration_ae_mean.txt", "ab");
 	cmr_u8 i = 0;
+	cmr_u16 pos = 0;
+
 	UNUSED(test_param);
 	if_lock_lsc(LOCK, af);
 	if_lock_ae(LOCK, af);
 	if_statistics_get_data(af->fv_combine, NULL, af);
+	pos = get_vcm_registor_pos(af);
+	AF_record_FV(af->af_alg_cxt, af->fv_combine[T_SPSMD]);
 	for (i = 0; i < 9; i++) {
 		ISP_LOGV
 		    ("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n",
-		     get_vcm_registor_pos(af), i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
+		     pos, i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
 		     af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
 		fprintf(fp,
 			"pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n",
-			get_vcm_registor_pos(af), i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
+			pos, i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
 			af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
 	}
 	fclose(fp);
