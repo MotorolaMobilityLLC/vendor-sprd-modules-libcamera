@@ -109,11 +109,14 @@ enum DFS_POLICY {
     CAM_EXIT,
     CAM_LOW,
     CAM_HIGH,
+    CAM_VERYHIGH,
 };
 
 //#define CAM_EXIT_STR          "exit"
 #define CAM_LOW_STR "camlow"
 #define CAM_HIGH_STR "camhigh"
+#define CAM_VERYHIGH_STR "camveryhigh"
+
 
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM /*pre alloc memory for capture*/
 #define HAS_CAMERA_HINTS 1
@@ -616,8 +619,14 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
-        changeDfsPolicy(CAM_HIGH);
-        HAL_LOGI("set dfs CAM_HIGH");
+        if (getMultiCameraMode() == MODE_BLUR ||
+            getMultiCameraMode() == MODE_BOKEH) {
+            changeDfsPolicy(CAM_VERYHIGH);
+            HAL_LOGI("set dfs CAM_VERYHIGH");
+        } else {
+            changeDfsPolicy(CAM_HIGH);
+            HAL_LOGI("set dfs CAM_HIGH");
+        }
 
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
             mTakePictureMode == SNAPSHOT_ONLY_MODE)
@@ -1761,7 +1770,8 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
             releaseDfsPolicy(CAM_LOW);
         } else if (CAM_HIGH == mCameraDfsPolicyCur) {
             releaseDfsPolicy(CAM_HIGH);
-        }
+        } else if (CAM_VERYHIGH == mCameraDfsPolicyCur)
+            releaseDfsPolicy(CAM_VERYHIGH);
         mCameraDfsPolicyCur = CAM_EXIT;
         break;
     case CAM_LOW:
@@ -1770,6 +1780,9 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
         } else if (CAM_HIGH == mCameraDfsPolicyCur) {
             setDfsPolicy(CAM_LOW);
             releaseDfsPolicy(CAM_HIGH);
+        } else if (CAM_VERYHIGH == mCameraDfsPolicyCur) {
+            setDfsPolicy(CAM_LOW);
+            releaseDfsPolicy(CAM_VERYHIGH);
         }
         mCameraDfsPolicyCur = CAM_LOW;
         break;
@@ -1779,8 +1792,23 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
         } else if (CAM_LOW == mCameraDfsPolicyCur) {
             setDfsPolicy(CAM_HIGH);
             releaseDfsPolicy(CAM_LOW);
+        } else if (CAM_VERYHIGH == mCameraDfsPolicyCur) {
+            setDfsPolicy(CAM_HIGH);
+            releaseDfsPolicy(CAM_VERYHIGH);
         }
         mCameraDfsPolicyCur = CAM_HIGH;
+        break;
+   case CAM_VERYHIGH:
+        if (CAM_EXIT == mCameraDfsPolicyCur) {
+            setDfsPolicy(CAM_VERYHIGH);
+        } else if (CAM_LOW == mCameraDfsPolicyCur) {
+            setDfsPolicy(CAM_VERYHIGH);
+            releaseDfsPolicy(CAM_LOW);
+        } else if (CAM_HIGH == mCameraDfsPolicyCur) {
+            setDfsPolicy(CAM_VERYHIGH);
+            releaseDfsPolicy(CAM_HIGH);
+        }
+        mCameraDfsPolicyCur = CAM_VERYHIGH;
         break;
     default:
         HAL_LOGW("unrecognize dfs policy");
@@ -1805,6 +1833,9 @@ int SprdCamera3OEMIf::setDfsPolicy(int dfs_policy) {
         break;
     case CAM_HIGH:
         dfs_scene = CAM_HIGH_STR;
+        break;
+    case CAM_VERYHIGH:
+        dfs_scene = CAM_VERYHIGH_STR;
         break;
     default:
         HAL_LOGW("unrecognize dfs policy");
@@ -1833,6 +1864,9 @@ int SprdCamera3OEMIf::releaseDfsPolicy(int dfs_policy) {
         break;
     case CAM_HIGH:
         dfs_scene = CAM_HIGH_STR;
+        break;
+    case CAM_VERYHIGH:
+        dfs_scene = CAM_VERYHIGH_STR;
         break;
     default:
         HAL_LOGW("unrecognize dfs policy");
@@ -3252,7 +3286,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
-        changeDfsPolicy(CAM_HIGH);
+        changeDfsPolicy(CAM_LOW);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -3269,6 +3303,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
+    }
+
+    if (getMultiCameraMode() == MODE_BLUR || getMultiCameraMode() == MODE_BOKEH) {
+        changeDfsPolicy(CAM_VERYHIGH);
     }
 
     property_get("volte.incall.camera.enable", value, "false");
