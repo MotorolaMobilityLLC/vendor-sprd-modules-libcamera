@@ -127,7 +127,6 @@ static cmr_u64 get_systemtime_ns()
 // afm hardware
 static void afm_enable(af_ctrl_t * af)
 {
-	cmr_s32 rtn = AFV1_SUCCESS;
 	int bypass = 0;
 
 	af->af_monitor_bypass(af->caller, (void *)&bypass);
@@ -354,7 +353,6 @@ static cmr_u8 if_statistics_get_data(cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 	af_ctrl_t *af = cookie;
 	cmr_u64 spsmd[MAX_ROI_NUM];
 	cmr_u64 sum = 0;
-	cmr_u32 i;
 	memset(fv, 0, sizeof(fv[0]) * T_TOTAL_FILTER_TYPE);
 	memset(&(spsmd[0]), 0, sizeof(cmr_u64) * MAX_ROI_NUM);
 	afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num);
@@ -530,10 +528,8 @@ static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 	return 0;
 }
 
-static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
+static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time)
 {
-	af_ctrl_t *af = (af_ctrl_t *) cookie;
-
 	//ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
@@ -1977,7 +1973,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 Y_sx = 0, Y_ex = 0, Y_sy = 0, Y_ey = 0, r_sum = 0, g_sum = 0, b_sum = 0, y_sum = 0;
-	float af_area, ae_area;
+	float ae_area;
 	cmr_u16 width, height, i = 0, blockw, blockh, index;
 
 	width = af->isp_info.width;
@@ -2476,7 +2472,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
-	struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
@@ -2485,7 +2480,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	cmr_u32 afm_skip_num = 0;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	cmr_u8 i = 0;
-
+	UNUSED(out);
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle");
