@@ -94,6 +94,7 @@ static struct sensor_raw_ioctrl s_ov5675_ioctrl=
 	0,
 	0,
 	0,
+	0,
 	0
 };
 
