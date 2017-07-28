@@ -132,12 +132,20 @@ static const struct cap_size_to_mem front_cam_mem_size_tab[IMG_SIZE_NUM] = {
     {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
     {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
     {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)}};
+    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)},
+    {PIXEL_9P0_MEGA, (40 << 20)}, {PIXEL_AP0_MEGA, (40 << 20)},
+    {PIXEL_BP0_MEGA, (40 << 20)}, {PIXEL_CP0_MEGA, (40 << 20)},
+    {PIXEL_DP0_MEGA, (40 << 20)}, {PIXEL_10P0_MEGA, (52 << 20)},
+    {PIXEL_15P0_MEGA, (65 << 20)}};
 static const struct cap_size_to_mem front_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
     {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
     {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
     {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)}};
+    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)},
+    {PIXEL_9P0_MEGA, (40 << 20)}, {PIXEL_AP0_MEGA, (40 << 20)},
+    {PIXEL_BP0_MEGA, (40 << 20)}, {PIXEL_CP0_MEGA, (40 << 20)},
+    {PIXEL_DP0_MEGA, (40 << 20)}, {PIXEL_10P0_MEGA, (52 << 20)},
+    {PIXEL_15P0_MEGA, (65 << 20)}};
 
 static const struct cap_size_to_mem Stereo_video_mem_size_tab[IMG_SIZE_NUM] = {
     {PIXEL_1P3_MEGA, (25 << 20)}, {PIXEL_2P0_MEGA, (25 << 20)},

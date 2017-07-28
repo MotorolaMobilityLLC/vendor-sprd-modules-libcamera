@@ -32,6 +32,9 @@ extern SENSOR_INFO_T g_imx230_mipi_raw_info;
 extern SENSOR_INFO_T g_imx258_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
 extern SENSOR_INFO_T g_c2580_mipi_raw_info;
+extern SENSOR_INFO_T g_ov13855a_mipi_raw_info;
+extern SENSOR_INFO_T g_s5k3l8xxm3q_mipi_raw_info;
+extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
 
 #ifdef CONFIG_COVERED_SENSOR
 extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
@@ -56,6 +59,8 @@ extern otp_drv_entry_t ov13855_drv_entry;
 extern otp_drv_entry_t ov13855_sunny_drv_entry;
 extern otp_drv_entry_t ov5675_sunny_drv_entry;
 extern otp_drv_entry_t imx258_truly_drv_entry;
+extern otp_drv_entry_t ov13855_altek_drv_entry;
+extern otp_drv_entry_t s5k3l8xxm3_qtech_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -108,6 +113,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
     {MODULE_SUNNY, "gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
+    {MODULE_SUNNY, "ov13855a_mipi_raw", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &ov13855_altek_drv_entry},
 #else
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
 #endif
@@ -135,6 +141,7 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
     {MODULE_DARLING, "ov5675_mipi_raw", &g_ov5675_mipi_raw_info, {NULL, 0}, NULL},
     {MODULE_SUNNY, "sp8407_mipi_raw", &g_sp8407_mipi_raw_info, {NULL, 0}, NULL},
     //{MODULE_SUNNY, "gc2375_mipi_raw", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_QTECH, "s5k3l8xxm3q_mipi_raw", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, &s5k3l8xxm3_qtech_drv_entry},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     {MODULE_SUNNY, "s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, {NULL, 0}, NULL},
@@ -156,6 +163,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
+    {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
 #endif

@@ -137,6 +137,7 @@ typedef struct {
     /*sometime wb data is ratio */
     cmr_u16 rg_ratio;
     cmr_u16 bg_ratio;
+    cmr_u16 GrGb_ratio;
 } awb_target_packet_t;
 
 typedef struct {
@@ -274,6 +275,10 @@ typedef struct {
     cmr_uint is_pdaf_self_cal : 1;
     /* support pdaf calibration */
     cmr_uint is_pdafc : 1;
+    /* support af self calibration */
+    cmr_uint is_af_self_cal : 1;
+    /* support af calibration */
+    cmr_uint is_afc : 1;
 } otp_calib_items_t;
 /*
  * here include base info include
