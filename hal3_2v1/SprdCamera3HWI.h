@@ -192,11 +192,13 @@ class SprdCamera3HWI {
 
     timer_t mPrvTimerID;
     Condition mFlushSignal;
+    Condition mFlushInvReqSignal;
 
     uint8_t mReciveQeqMax;
     bool mHDRProcessFlag;
     uint64_t mCurFrameTimeStamp;
     int mSprdCameraLowpower;
+    bool mInvaildRequest;
 };
 
 }; // namespace sprdcamera

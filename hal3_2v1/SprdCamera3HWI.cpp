@@ -96,7 +96,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     : mCameraId(cameraId), mOEMIf(NULL), mCameraOpened(false),
       mCameraInitialized(false), mLastFrmNum(0), mCallbackOps(NULL),
       mInputStream(NULL), mMetadataChannel(NULL), mPictureChannel(NULL),
-      mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false) {
+      mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false),
+      mInvaildRequest(false) {
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: E");
@@ -1008,7 +1009,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int ret = NO_ERROR;
     CapRequestPara capturePara;
     CameraMetadata meta;
-    bool invaildRequest = false;
     SprdCamera3Stream *pre_stream = NULL;
     int receive_req_max = mReciveQeqMax;
     int32_t width = 0, height = 0;
@@ -1019,6 +1019,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         HAL_LOGE("incoming request is not valid");
         goto exit;
     }
+    mInvaildRequest = false;
     mFrameNum = request->frame_number;
     meta = request->settings;
     /*fix 30fps for blur mode**/
@@ -1126,7 +1127,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         mOldCapIntent = capturePara.cap_intent;
     } else {
         mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
-        invaildRequest = true;
+        mInvaildRequest = true;
     }
 
     if (capturePara.cap_request_id == 0)
@@ -1302,12 +1303,15 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
     }
 
-    if (invaildRequest) {
+    if (mInvaildRequest) {
         mFirstRegularRequest = false;
         mPictureRequest = false;
         timer_set(this, 1);
-        usleep(200 * 1000);
-        HAL_LOGE("invalid request");
+        ret = mFlushInvReqSignal.waitRelative(mLock, 200000000); // 200ms
+        if (ret == TIMED_OUT) {
+            HAL_LOGE("Flush invalid request is timeout");
+        }
+        HAL_LOGI("invalid request");
         goto exit;
     }
 
@@ -1915,7 +1919,11 @@ void SprdCamera3HWI::timer_handler(union sigval arg) {
                                          CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
     }
     // dev->mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
+    if (dev->mInvaildRequest) {
+        (dev->mFlushInvReqSignal).signal();
+    }
     (dev->mFlushSignal).signal();
+
     HAL_LOGD("X");
 }
 
