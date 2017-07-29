@@ -3969,7 +3969,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                         EisPreviewFrameStab(frame);
                     }
 #endif
-                    if (rec_stream && sprddefInfo.perfect_skin_level > 0) {
+                    if (rec_stream && isFaceBeautyOn(sprddefInfo)) {
                         ret = rec_stream->getQBufAddrForNum(
                             frame_num, &videobuf_vir, &videobuf_phy, &fd0);
                         if (ret == NO_ERROR && videobuf_vir != 0) {
@@ -3984,7 +3984,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     if (mIsRecording && rec_stream) {
                         if (frame_num > mRecordFrameNum)
                             calculateTimestampForSlowmotion(buffer_timestamp);
-                        if (sprddefInfo.perfect_skin_level > 0 &&
+                        if (isFaceBeautyOn(sprddefInfo) &&
                             MODE_SINGLE_CAMERA ==
                                 mMultiCameraMode) { // for 2D video recoding
                                                     // face_beauty
@@ -4033,7 +4033,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     channel->channelClearInvalidQBuff(
                         frame_num, buffer_timestamp,
                         CAMERA_STREAM_TYPE_PREVIEW);
-                    if (rec_stream && sprddefInfo.perfect_skin_level > 0)
+                    if (rec_stream && isFaceBeautyOn(sprddefInfo))
                         channel->channelClearInvalidQBuff(
                             frame_num, buffer_timestamp,
                             CAMERA_STREAM_TYPE_VIDEO);
