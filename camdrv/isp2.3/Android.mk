@@ -19,7 +19,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 
 # ************************************************
