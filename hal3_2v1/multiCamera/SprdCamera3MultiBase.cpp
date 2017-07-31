@@ -323,7 +323,7 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
             luma_soomth_coeff = 2;
         } else {
             luma_soomth_coeff = LUMA_SOOMTH_COEFF;
-            max_convered_value = MAX_CONVERED_VALURE;
+            max_convered_value = MAX_CONVERED_VALURE + 5;
         }
     } else if (mCurScene == LOW_LIGHT) {
         max_convered_value = 3;
@@ -387,7 +387,10 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
         int32_t faceRectangles[CAMERA3MAXFACE * 4];
         int j = 0;
 
-        numFaces = CAMERA3MAXFACE;
+        memset((void *)faceScores, 0, sizeof(uint8_t) * CAMERA3MAXFACE);
+        memset((void *)faceRectangles, 0, sizeof(int32_t) * CAMERA3MAXFACE * 4);
+        numFaces = CAMERA3MAXFACE - 1;
+
         for (int i = 0; i < numFaces; i++) {
             faceScores[i] = faceDetectionInfo->face[i].score;
             if (faceScores[i] == 0) {
@@ -398,7 +401,8 @@ uint8_t SprdCamera3MultiBase::getCoveredValue(CameraMetadata &frame_settings,
                              faceRectangles + j, -1);
             j += 4;
         }
-        faceScores[10] = couvered_value;
+        faceScores[CAMERA3MAXFACE - 1] = couvered_value;
+        faceRectangles[(CAMERA3MAXFACE * 4) - 1] = -1;
 
         frame_settings.update(ANDROID_STATISTICS_FACE_SCORES, faceScores,
                               dataSize);
@@ -802,8 +806,8 @@ bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
             }
         }
     }
-    delete uwHPos;
-    delete uwVPos;
+    delete[] uwHPos;
+    delete[] uwVPos;
     return true;
 }
 

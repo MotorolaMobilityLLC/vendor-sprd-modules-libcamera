@@ -42,12 +42,16 @@ namespace sprdcamera {
 #define CONTEXT_FAIL 0
 #define TIME_DIFF (15e6)
 #define MAX_CONVERED_VALURE 10
-#define CAMERA3MAXFACE 11
 #define SFACTOR 100
 #define AR4_3 133
 #define AR16_9 177
 #ifndef MAX_UNMATCHED_QUEUE_SIZE
 #define MAX_UNMATCHED_QUEUE_SIZE 3
+#endif
+#ifdef CONFIG_COVERED_SENSOR
+#define CAMERA3MAXFACE 11
+#else
+#define CAMERA3MAXFACE 10
 #endif
 
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
