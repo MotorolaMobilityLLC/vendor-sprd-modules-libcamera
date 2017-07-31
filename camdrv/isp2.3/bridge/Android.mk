@@ -18,7 +18,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function -Werror
 
 # ************************************************
 # external header file
@@ -52,6 +52,10 @@ LOCAL_MODULE := libcambr
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog libcamcommon
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 

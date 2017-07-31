@@ -19,7 +19,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 
 # ************************************************
@@ -29,10 +29,6 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem2v1/inc \
-	$(LOCAL_PATH)/../../oem2v1/isp_calibration/inc \
-	$(LOCAL_PATH)/../../jpeg/inc \
-	$(LOCAL_PATH)/../../vsp/inc \
-	$(LOCAL_PATH)/../../tool/mtrace \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
@@ -87,6 +83,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamcommon libcampm
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
