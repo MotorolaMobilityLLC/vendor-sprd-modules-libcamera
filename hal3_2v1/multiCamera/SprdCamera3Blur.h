@@ -60,7 +60,7 @@ namespace sprdcamera {
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
 #define BLUR_LIB_BOKEH_CAPTURE2 "libBokeh2Frames.so"
 #define BLUR_LIB_BOKEH_NUM (2)
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (18)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (19)
 #define BLUR_REFOCUS_2_PARAM_NUM (17)
 #define BLUR_AF_WINDOW_NUM (9)
 #define BLUR_MAX_ROI (10)
@@ -182,6 +182,7 @@ typedef struct {
     int rotate_angle; // counter clock-wise. 0:face up body down 90:face left
                       // body right 180:face down body up 270:face right body
                       // left  ->
+    bool rear_cam_en; // 1:rear camera capture 0:front camera capture
 } capture_weight_params_t;
 
 typedef struct {
@@ -190,14 +191,20 @@ typedef struct {
                        float max_slope, float findex2gamma_adjust_ratio,
                        int box_filter_size);
     int (*iSmoothCapInit)(void **handle, capture_init_params_t *params);
+    int (*iSmoothCap_VersionInfo_Get)(void *a_pOutBuf, int a_dInBufMaxSize);
     int (*iSmoothDeinit)(void *handle);
     int (*iSmoothCreateWeightMap)(void *handle,
                                   preview_weight_params_t *params);
     int (*iSmoothCapCreateWeightMap)(void *handle,
                                      capture_weight_params_t *params,
-                                     unsigned char *Src_YUV);
+                                     unsigned char *Src_YUV,
+                                     unsigned short *outWeightMap);
     int (*iSmoothBlurImage)(void *handle, unsigned char *Src_YUV,
                             unsigned char *Output_YUV);
+    int (*iSmoothCapBlurImage)(void *handle, unsigned char *Src_YUV,
+                               unsigned short *inWeightMap,
+                               capture_weight_params_t *params,
+                               unsigned char *Output_YUV);
     void *mHandle;
 } BlurAPI_t;
 
@@ -358,6 +365,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mIsBlurAlways;
         blur_isp_info_t mIspInfo;
         void *mNearYuv;
+        unsigned short *mOutWeightMap;
 
       private:
         void waitMsgAvailable();
