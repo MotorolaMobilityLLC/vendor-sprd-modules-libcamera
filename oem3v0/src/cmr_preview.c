@@ -8870,7 +8870,8 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
 
         /* for capture, not skip frame for now, for cts
          * testMandatoryOutputCombinations issue */
-        if ((prev_cxt->skip_mode == IMG_SKIP_SW_KER) && 0) {
+        //if ((prev_cxt->skip_mode == IMG_SKIP_SW_KER) && 0) {
+        if (prev_cxt->skip_mode == IMG_SKIP_SW_KER) {
             /*config skip num buffer*/
             for (i = 0; i < prev_cxt->cap_skip_num; i++) {
                 cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
