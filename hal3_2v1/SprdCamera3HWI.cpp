@@ -174,7 +174,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
     }
 
     if (mOEMIf) {
-        mOEMIf->enablePowerHint();
+        mOEMIf->enablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
         // for performance tuning: close camera
         mOEMIf->setSensorCloseFlag();
     }
@@ -1622,7 +1622,7 @@ int SprdCamera3HWI::flush() {
 // Mutex::Autolock l(mLock);
 #ifndef ANDROID_VERSION_O_BRINGUP
     if (mOEMIf)
-        mOEMIf->enablePowerHint();
+        mOEMIf->enablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
 #endif
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
@@ -1666,7 +1666,7 @@ int SprdCamera3HWI::flush() {
     mFlush = false;
 #ifndef ANDROID_VERSION_O_BRINGUP
     if (mOEMIf)
-        mOEMIf->disablePowerHint();
+        mOEMIf->disablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
 #endif
     HAL_LOGI(":hal3: X");
     return 0;

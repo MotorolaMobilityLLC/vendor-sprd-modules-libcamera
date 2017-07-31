@@ -267,12 +267,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
-      mPowermanageInited(0), mPowerManager(NULL), mPrfmLock(NULL),
-      m_pPowerModule(NULL), mHDRPowerHint(0), mHDRPowerHintFlag(0),
-      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
-      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
-      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
-      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
+      mPowermanageInited(0), mPowerManager(NULL), mPowerManagerLowPower(NULL),
+      mPrfmLock(NULL), m_pPowerModule(NULL), mHDRPowerHint(0),
+      mHDRPowerHintFlag(0), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false),
+      mEisVideoInit(false), mGyroNum(0), mSprdEisEnabled(false),
+      mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
+      mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
       mFixedFpsEnabled(0), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0)
@@ -286,7 +286,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     HAL_LOGI(":hal3: E cameraId: %d.", cameraId);
 
     initPowerHint();
-    enablePowerHint();
+    enablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
+    enablePowerHint(POWER_HINT_VENDOR_CAMERA_LOWPOWER);
     changeDfsPolicy(CAM_HIGH);
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
@@ -472,7 +473,8 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
     }
 
     changeDfsPolicy(CAM_EXIT);
-    disablePowerHint();
+    disablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
+    disablePowerHint(POWER_HINT_VENDOR_CAMERA_LOWPOWER);
     deinitPowerHint();
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
@@ -715,7 +717,7 @@ int SprdCamera3OEMIf::takePicture() {
     }
 
     if (1 == mHDRPowerHint) {
-        enablePowerHint();
+        enablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
         mHDRPowerHintFlag = 1;
     }
 
@@ -1010,7 +1012,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(frm_info *frm_data) {
     }
 
     if (1 == mHDRPowerHint) {
-        enablePowerHint();
+        enablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
         mHDRPowerHintFlag = 1;
     }
     if (SPRD_ERROR == mCameraState.capture_state) {
@@ -1678,17 +1680,27 @@ void SprdCamera3OEMIf::initPowerHint() {
     }
 #else
     Mutex::Autolock l(&mPowermanageLock);
-    if (mPowerManager == NULL) {
+    char value[PROPERTY_VALUE_MAX];
+    sp<IPowerManager> mPowerManagerEnable = NULL;
+    if (mPowerManagerEnable == NULL) {
         // use checkService() to avoid blocking if power service is not up yet
         sp<IBinder> binder =
             defaultServiceManager()->checkService(String16("power"));
         if (binder == NULL) {
             ALOGE("Thread cannot connect to the power manager service");
         } else {
-            mPowerManager = interface_cast<IPowerManager>(binder);
+            mPowerManagerEnable = interface_cast<IPowerManager>(binder);
         }
     }
-
+    if (mPowerManagerEnable != NULL) {
+        mPowerManager = mPowerManagerEnable;
+#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
+        property_get("debug.camera.dis.lowpower", value, "0");
+        if (!atoi(value)) {
+            mPowerManagerLowPower = mPowerManagerEnable;
+        }
+#endif
+    }
     if (!mPowermanageInited)
         mPowermanageInited = 1;
 #endif
@@ -1703,12 +1715,45 @@ void SprdCamera3OEMIf::deinitPowerHint() {
         mPowerManager.clear();
     if (mPrfmLock != NULL)
         mPrfmLock.clear();
+#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
+    if (mPowerManagerLowPower != NULL)
+        mPowerManagerLowPower.clear();
+    if (mPrfmLockLowPower != NULL)
+        mPrfmLockLowPower.clear();
+#endif
 #endif
 #endif
 }
 
-void SprdCamera3OEMIf::enablePowerHint() {
+void SprdCamera3OEMIf::enablePowerHintExt(sp<IPowerManager> mPowerManager,
+                                          sp<IBinder> mPrfmLockEnable,
+                                          int mPowerHintId) {
+    if (mPrfmLockEnable != NULL) {
+        if (mPowerManager != 0) {
+            ALOGI("releaseWakeLock_l() - Prfmlock ");
+            mPowerManager->releasePrfmLock(mPrfmLockEnable);
+        }
+        mPrfmLockEnable.clear();
+    }
+    if (mPowerManager != NULL) {
+        sp<IBinder> binder = new BBinder();
+        mPowerManager->acquirePrfmLock(binder, String16("Camera"),
+                                       String16("CameraServer"), mPowerHintId);
+        mPrfmLockEnable = binder;
+    }
+
+    if (mPowerHintId == POWER_HINT_VENDOR_CAMERA_HDR) {
+        mPrfmLock = mPrfmLockEnable;
+    } else if (mPowerHintId == POWER_HINT_VENDOR_CAMERA_LOWPOWER) {
+        mPrfmLockLowPower = mPrfmLockEnable;
+    }
+}
+
+void SprdCamera3OEMIf::enablePowerHint(int mPowerHintId) {
 #ifdef HAS_CAMERA_HINTS
+    if (mPowerHintId == 0xFF) {
+        return;
+    }
 #ifdef ANDROID_VERSION_O_BRINGUP
     if (m_pPowerModule && m_pPowerModule->powerHint) {
         m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
@@ -1716,31 +1761,37 @@ void SprdCamera3OEMIf::enablePowerHint() {
     }
 #else
     Mutex::Autolock l(&mPowermanageLock);
-    HAL_LOGD("IN ");
-    if (mPrfmLock != NULL) {
+    HAL_LOGD("IN");
+    if (mPowerHintId == POWER_HINT_VENDOR_CAMERA_HDR) {
+        enablePowerHintExt(mPowerManager, mPrfmLock, mPowerHintId);
+        // disable thermal
+        thermalEnabled(false);
+    } else if (mPowerHintId == POWER_HINT_VENDOR_CAMERA_LOWPOWER) {
+        enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
+                           mPowerHintId);
+    }
+    HAL_LOGD("OUT");
+#endif
+#endif
+}
+
+void SprdCamera3OEMIf::disablePowerHintExt(sp<IPowerManager> mPowerManager,
+                                           sp<IBinder> mPrfmLock,
+                                           int mPowerHintId) {
+    if (mPrfmLock != 0) {
         if (mPowerManager != 0) {
             ALOGI("releaseWakeLock_l() - Prfmlock ");
             mPowerManager->releasePrfmLock(mPrfmLock);
         }
         mPrfmLock.clear();
     }
-
-    if (mPowerManager != NULL) {
-        sp<IBinder> binder = new BBinder();
-        mPowerManager->acquirePrfmLock(binder, String16("Camera"),
-                                       String16("CameraServer"),
-                                       POWER_HINT_VENDOR_CAMERA_HDR);
-        mPrfmLock = binder;
-    }
-    // disable thermal
-    thermalEnabled(false);
-    HAL_LOGD("OUT");
-#endif
-#endif
 }
 
-void SprdCamera3OEMIf::disablePowerHint() {
+void SprdCamera3OEMIf::disablePowerHint(int mPowerHintId) {
 #ifdef HAS_CAMERA_HINTS
+    if (mPowerHintId == 0xFF) {
+        return;
+    }
 #ifdef ANDROID_VERSION_O_BRINGUP
     if (m_pPowerModule && m_pPowerModule->powerHint) {
         m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
@@ -1749,15 +1800,13 @@ void SprdCamera3OEMIf::disablePowerHint() {
 #else
     HAL_LOGD("IN");
     Mutex::Autolock l(&mPowermanageLock);
-    if (mPrfmLock != 0) {
-        if (mPowerManager != 0) {
-            ALOGI("releaseWakeLock_l() - Prfmlock ");
-            mPowerManager->releasePrfmLock(mPrfmLock);
-        }
-        mPrfmLock.clear();
+    if (mPowerHintId == POWER_HINT_VENDOR_CAMERA_HDR) {
+        disablePowerHintExt(mPowerManager, mPrfmLock, mPowerHintId);
+        thermalEnabled(true);
+    } else if (mPowerHintId == POWER_HINT_VENDOR_CAMERA_LOWPOWER) {
+        disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
+                            mPowerHintId);
     }
-    // enable thermal
-    thermalEnabled(true);
     HAL_LOGD("OUT");
 #endif
 #endif
@@ -3955,7 +4004,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
         miSPreviewFirstFrame = 0;
 
-        disablePowerHint();
+        disablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
         if (mSprdZslEnabled == 0) {
             changeDfsPolicy(CAM_LOW);
             HAL_LOGI("after first non-zsl preview: set dfs CAM_LOW");
@@ -4942,7 +4991,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
     if (1 == mHDRPowerHint) {
-        disablePowerHint();
+        disablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
         mHDRPowerHintFlag = 0;
     }
 

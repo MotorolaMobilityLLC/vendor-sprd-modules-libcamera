@@ -136,6 +136,11 @@ typedef struct {
 
 #define USE_ONE_RESERVED_BUF 1
 
+#ifdef ANDROID_VERSION_O_BRINGUP
+#define POWER_HINT_VENDOR_CAMERA_HDR 0xFF
+#define POWER_HINT_VENDOR_CAMERA_LOWPOWER 0xFF
+#endif
+
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
     SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -207,8 +212,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void thermalEnabled(bool flag);
     void initPowerHint();
     void deinitPowerHint();
-    void enablePowerHint();
-    void disablePowerHint();
+    void enablePowerHint(int mPowerHintId);
+    void enablePowerHintExt(sp<IPowerManager> mPowerManager,
+                            sp<IBinder> mPrfmLockEnable, int mPowerHintId);
+    void disablePowerHint(int mPowerHintId);
+    void disablePowerHintExt(sp<IPowerManager> mPowerManager,
+                             sp<IBinder> mPrfmLock, int mPowerHintId);
     int changeDfsPolicy(int dfs_policy);
     int setDfsPolicy(int dfs_policy);
     int releaseDfsPolicy(int dfs_policy);
@@ -731,7 +740,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mZSLModeMonitorInited;
     uint32_t mPowermanageInited;
     sp<IPowerManager> mPowerManager;
+    sp<IPowerManager> mPowerManagerLowPower;
     sp<IBinder> mPrfmLock;
+    sp<IBinder> mPrfmLockLowPower;
     Mutex mPowermanageLock;
     power_module_t *m_pPowerModule;
 
