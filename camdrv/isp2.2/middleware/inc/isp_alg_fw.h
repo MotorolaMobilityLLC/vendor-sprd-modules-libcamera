@@ -78,6 +78,7 @@ struct ae_info {
 
 struct awb_info {
 	cmr_handle handle;
+	cmr_u32 sw_bypass;
 	cmr_u32 alc_awb;
 	cmr_s32 awb_pg_flag;
 	cmr_u8 *log_alc_awb;
@@ -86,6 +87,7 @@ struct awb_info {
 	cmr_u32 log_alc_lsc_size;
 	cmr_u8 *log_awb;
 	cmr_u32 log_awb_size;
+	struct awb_ctrl_gain cur_gain;
 };
 
 struct smart_info {
