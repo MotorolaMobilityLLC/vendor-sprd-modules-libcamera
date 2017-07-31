@@ -1827,15 +1827,17 @@ cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt) {
 cmr_int read_txt_file(const char *file_name, void *data) {
     FILE *pf = fopen(file_name, "r");
     uint32_t read_byte = 0;
-    cmr_u8 *otp_data = (cmr_u8 *) data;
-    if(NULL == data){
-        SENSOR_LOGI("dualotp data malloc failed!");
-        return 0;
-    }
+    cmr_u8 *otp_data = (cmr_u8 *)data;
 
     if (NULL == pf) {
-        SENSOR_LOGI("dualotp read failed!");
-        return 0;
+        SENSOR_LOGE("dualotp read failed!");
+        goto exit;
+    }
+
+    if (NULL == otp_data) {
+        SENSOR_LOGE("dualotp data malloc failed!");
+        fclose(pf);
+        goto exit;
     }
 
     while (!feof(pf)) {
@@ -1843,10 +1845,10 @@ cmr_int read_txt_file(const char *file_name, void *data) {
         otp_data += 4;
         read_byte += 4;
     }
-
     fclose(pf);
-
     SENSOR_LOGI("dualotp read_bytes=%d ", read_byte);
+
+exit:
     return read_byte;
 }
 

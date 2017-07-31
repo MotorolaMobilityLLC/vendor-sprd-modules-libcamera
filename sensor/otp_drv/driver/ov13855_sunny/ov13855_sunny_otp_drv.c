@@ -435,7 +435,7 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
     CHECK_PTR(p_data);
-    OTP_LOGI(" dualotp write in");
+    OTP_LOGI("dualotp write in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_write_data = (otp_params_t *)p_data;
 
@@ -444,14 +444,14 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
 
     if (!strcmp(value, "false")) {
         OTP_LOGI("do not set dual camera otp write property,directly return.");
-        return ret;
+        goto exit;
     }
     /*for before write*/
     cmr_int bSum = 0;
     /*for after  write*/
     cmr_int aSum = 0;
     /*open write permission*/
-    ret = hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_WR_ADDR,
+    hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_WR_ADDR,
                                   0x0000, 0x00, BITS_ADDR16_REG8);
     sensor_otp_dump_raw_data(otp_write_data->buffer, DUAL_DATA_SIZE, "write");
 
@@ -492,9 +492,11 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
     }
 
     /*close write permission*/
-    ret = hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_RD_ADDR,
+    hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_RD_ADDR,
                                   0x0000, 0x00, BITS_ADDR16_REG8);
-    OTP_LOGI("out");
+
+exit:
+    OTP_LOGI("X");
     return ret;
 }
 

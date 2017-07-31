@@ -100,6 +100,7 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void**exif_info_in){
     if(sns_drv_cxt->sensor_id > sensor_num) {
         SENSOR_LOGE("sensor id is invalid,support sensor count:%d",sensor_num);
         ret = SENSOR_IC_FAILED;
+        goto exit;
     }
     if(exif_info_ptr[sns_drv_cxt->sensor_id]){
         *exif_info_in = (void*)exif_info_ptr[sns_drv_cxt->sensor_id];
@@ -107,11 +108,12 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void**exif_info_in){
          buffer = malloc(sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
         if(!buffer) {
             SENSOR_LOGE("malloc exif info mem failed");
-            return SENSOR_IC_FAILED;
+            ret = SENSOR_IC_FAILED;
+            goto exit;
         }
         exif_info_ptr[sns_drv_cxt->sensor_id] = buffer;
         memset(buffer, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
-        EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = 
+        EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr =
                            (EXIF_SPEC_PIC_TAKING_COND_T *)buffer;
         exif_ptr->valid.FNumber = 1;
         exif_ptr->FNumber.numerator = 14;
@@ -129,6 +131,8 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void**exif_info_in){
 
         *exif_info_in = buffer;
     }
+
+exit:
     return ret;
 }
 

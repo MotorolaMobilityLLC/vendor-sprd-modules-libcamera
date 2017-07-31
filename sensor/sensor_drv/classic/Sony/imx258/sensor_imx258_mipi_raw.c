@@ -781,9 +781,10 @@ static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
 
-    if(!static_info && !module_info) {
+    if(!static_info || !module_info) {
         SENSOR_LOGI("error:static_info:0x%x,module_info:0x%x",static_info, module_info);
-        return SENSOR_FAIL;
+        rtn = SENSOR_FAIL;
+        goto exit;
     }
 
     // make sure we have get max fps of all settings.
@@ -810,6 +811,8 @@ static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
 
     sensor_ic_print_static_info(SENSOR_NAME, ex_info);
+
+exit:
     return rtn;
 }
 
@@ -820,10 +823,13 @@ static cmr_int imx258_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_IC_CHECK_PTR(param);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
+    SENSOR_IC_CHECK_PTR(fps_data);
+
     // make sure have inited fps of every sensor mode.
-    if (fps_data && !fps_data->is_init) {
+    if (!fps_data->is_init) {
         imx258_drv_init_fps_info(handle);
     }
+
     fps_info = (SENSOR_MODE_FPS_T *)param;
     cmr_u32 sensor_mode = fps_info->mode;
     fps_info->max_fps = fps_data->sensor_mode_fps[sensor_mode].max_fps;

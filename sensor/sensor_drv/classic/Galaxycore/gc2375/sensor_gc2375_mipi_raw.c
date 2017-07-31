@@ -18,10 +18,8 @@
 *Date                  Modification                                 Reason
 *
 */
-
-#include "sensor_gc2375_mipi_raw.h"
-
 #define LOG_TAG "gc2375_mipi_raw"
+#include "sensor_gc2375_mipi_raw.h"
 
 #define MIPI_RAW_INFO  g_gc2375_mipi_raw_info
 #define RES_TRIM_TAB   s_gc2375_resolution_trim_tab
@@ -39,7 +37,7 @@
 static cmr_int gc2375_drv_set_video_mode(cmr_handle handle, cmr_int param) {
     SENSOR_REG_T_PTR sensor_reg_ptr;
     uint16_t i = 0x00;
-    uint32_t mode;
+    uint32_t mode = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -492,7 +490,7 @@ static cmr_int gc2375_drv_power_on(cmr_handle handle, cmr_int power_on) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int gc2375_drv_access_val(cmr_handle handle, cmr_int param) {
-    cmr_int ret = SENSOR_FAIL;
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
 
     if (!param_ptr) {
@@ -507,7 +505,7 @@ static cmr_int gc2375_drv_access_val(cmr_handle handle, cmr_int param) {
             SENSOR_LOGI("no update otp function!");
         }
 #endif
-        return ret;
+        goto exit;
     }
 
     SENSOR_LOGI("sensor gc2375: param_ptr->type=%x", param_ptr->type);
@@ -528,8 +526,8 @@ static cmr_int gc2375_drv_access_val(cmr_handle handle, cmr_int param) {
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
 
+exit:
     return ret;
 }
 
