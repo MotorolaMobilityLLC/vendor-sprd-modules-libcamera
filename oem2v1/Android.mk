@@ -295,7 +295,8 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
+	LOCAL_STATIC_LIBRARIES += libsprdfa libsprdfar
+        LOCAL_SHARED_LIBRARIES += libsprdfd
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
@@ -329,7 +330,6 @@ ifeq ($(PLATFORM_VERSION),8.0.0)
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
-
 
 include $(BUILD_SHARED_LIBRARY)
 endif
@@ -454,7 +454,8 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-	LOCAL_STATIC_LIBRARIES += libsprdfd libsprdfa libsprdfar
+	LOCAL_STATIC_LIBRARIES += libsprdfa libsprdfar
+        LOCAL_SHARED_LIBRARIES += libsprdfd
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
@@ -488,7 +489,6 @@ ifeq ($(PLATFORM_VERSION),8.0.0)
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
-
 
 include $(BUILD_SHARED_LIBRARY)
 endif
