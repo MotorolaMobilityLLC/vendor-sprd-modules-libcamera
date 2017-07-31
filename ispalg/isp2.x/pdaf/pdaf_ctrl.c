@@ -113,7 +113,6 @@ static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
 static cmr_u32 pdaf_set_ppi_info(void *handle, struct pdaf_ppi_info *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
-	struct pdaf_ppi_info *pdinfo = in_param;
 
 	if (cxt_ptr->pdaf_set_cb) {
 		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_PPI_INFO, in_param, NULL);
@@ -240,7 +239,6 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_handle handle = (cmr_handle) p_data;
-	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
 	struct pdaf_ctrl_msg_ctrl *msg_ctrl = NULL;
 	struct pdaf_init_msg_ctrl *msg_init = NULL;
 

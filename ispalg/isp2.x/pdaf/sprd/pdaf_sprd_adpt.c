@@ -213,11 +213,9 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct pdaf_ctrl_init_in *in_p = (struct pdaf_ctrl_init_in *)in;
-	struct pdaf_ctrl_init_out *out_p = (struct pdaf_ctrl_init_out *)out;
 	struct sprd_pdaf_context *cxt = NULL;
-	struct sensor_otp_af_info *otp_af_info = NULL;
 	struct isp_alg_fw_context *isp_ctx = NULL;
-	cmr_u32 pd_in_size = 0;
+	UNUSED(out);
 
 	if (!in_p) {
 		ISP_LOGE("fail to check init param %p!!!", in_p);
@@ -382,8 +380,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	struct pdaf_ctrl_callback_in callback_in;
 	struct pd_result pd_calc_result;
-	cmr_u16 image_width = 0;
-	cmr_u16 image_height = 0;
 	cmr_s32 dRectX = 0;
 	cmr_s32 dRectY = 0;
 	cmr_s32 dRectW = 0;
@@ -487,7 +483,7 @@ static cmr_s32 pdafsprd_adpt_set_param(cmr_handle adpt_handle, struct pdaf_ctrl_
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	pdaf_setup(cxt);
-	return 0;
+	return ret;
 }
 
 static cmr_int pdafsprd_adpt_get_busy(cmr_handle adpt_handle, struct pdaf_ctrl_param_out *out)
@@ -498,7 +494,7 @@ static cmr_int pdafsprd_adpt_get_busy(cmr_handle adpt_handle, struct pdaf_ctrl_p
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 
 	out->is_busy = cxt->is_busy;
-	return 0;
+	return ret;
 }
 
 static cmr_s32 pdafsprd_adpt_disable_pdaf(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
@@ -511,14 +507,13 @@ static cmr_s32 pdafsprd_adpt_disable_pdaf(cmr_handle adpt_handle, struct pdaf_ct
 	if (cxt->pdaf_set_bypass) {
 		cxt->pdaf_set_bypass(cxt->caller, 1);
 	}
-	return 0;
+	return ret;
 }
 
 static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct pdaf_ctrl_param_in *in_ptr = (struct pdaf_ctrl_param_in *)in;
-	struct pdaf_ctrl_param_out *out_ptr = (struct pdaf_ctrl_param_out *)out;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	ISP_LOGV("cmd = %d", cmd);
