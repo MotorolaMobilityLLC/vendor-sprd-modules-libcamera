@@ -122,13 +122,19 @@ struct front_flash_param {
 	cmr_s16 led_thr_down;
 };
 
+struct ae_hdr_tuning_param {
+	cmr_s32 ev_minus_offset;
+	cmr_s32 ev_plus_offset;
+};
 struct ae_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;
 	cmr_u32 verify;
 	cmr_u32 alg_id;
 	cmr_u32 target_lum;
 	cmr_u32 target_lum_zone;	// x16
-	cmr_u32 convergence_speed;	// x16
+	cmr_u8 convergence_speed;
+	cmr_u8 iso_special_mode;
+	cmr_u16 reserved1;
 	cmr_u32 flicker_index;
 	cmr_u32 min_line;
 	cmr_u32 start_index;
@@ -168,8 +174,8 @@ struct ae_tuning_param {	//total bytes must be 263480
 	struct region_tuning_param region_param;	/*180 * 4bytes */
 	struct mulaes_tuning_param mulaes_param;	/*9 * 4bytes */
 	struct face_tuning_param face_param;
-
-	cmr_u32 reserved[2046];
+	struct ae_hdr_tuning_param hdr_param;
+	cmr_u32 reserved[2044];
 };
 
 #endif
