@@ -117,7 +117,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
                        uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                        uint32_t a_udFileSize);
-    int flush_ion_buffer(int buffer_fd, void *v_addr, size_t size);
+    int flushIonBuffer(int buffer_fd, void *v_addr, size_t size);
 
   private:
     Mutex mBufferListLock;

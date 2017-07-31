@@ -167,15 +167,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
                     uint32_t src_w, uint32_t src_h);
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
 
-    enum camera_flush_mem_type_e {
-        CAMERA_FLUSH_RAW_HEAP,
-        CAMERA_FLUSH_RAW_HEAP_ALL,
-        CAMERA_FLUSH_PREVIEW_HEAP,
-        CAMERA_FLUSH_MAX
-    };
-
-    int flush_buffer(camera_flush_mem_type_e type, int index, void *v_addr,
-                     void *p_addr, int size);
+    int flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
+                         size_t size);
     sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
                                          uint32_t is_cache);
     sprd_camera_memory_t *allocReservedMem(int buf_size, int num_bufs,

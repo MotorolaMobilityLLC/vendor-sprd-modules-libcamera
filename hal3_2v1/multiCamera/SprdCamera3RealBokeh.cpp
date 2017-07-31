@@ -1137,7 +1137,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
         if (rc != MOK) {
             HAL_LOGE("arcsoft ARC_DCVR_PrevProcess failed ,rc = %ld", rc);
         }
-        mRealBokeh->flush_ion_buffer(depth_handle->share_fd, depth_handle->base,
+        mRealBokeh->flushIonBuffer(depth_handle->share_fd, depth_handle->base,
                                      depth_handle->size);
         HAL_LOGD("arcsoftprevRun cost %lld ms",
                  ns2ms(systemTime() - arcsoftprevRun));
@@ -1978,7 +1978,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             HAL_LOGD("ARC_DCIR_CapProcess cost %lld ms",
                      ns2ms(systemTime() - bokehRun));
         }
-        mRealBokeh->flush_ion_buffer(depth_handle->share_fd, depth_handle->base,
+        mRealBokeh->flushIonBuffer(depth_handle->share_fd, depth_handle->base,
                                      depth_handle->size);
         res =
             mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(&(mArcSoftCapHandle));

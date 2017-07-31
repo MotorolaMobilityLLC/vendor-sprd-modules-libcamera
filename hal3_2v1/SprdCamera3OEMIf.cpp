@@ -42,6 +42,7 @@
 #include "SprdCamera3Channel.h"
 #include "SprdCamera3Flash.h"
 #include <dlfcn.h>
+#include <linux/ion.h>
 
 extern "C" {
 #include "isp_video.h"
@@ -122,7 +123,6 @@ enum VIDEO_3DNR {
 #define CAM_LOW_STR "camlow"
 #define CAM_HIGH_STR "camhigh"
 #define CAM_VERYHIGH_STR "camveryhigh"
-
 
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM /*pre alloc memory for capture*/
 #define HAS_CAMERA_HINTS 1
@@ -1857,7 +1857,7 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
         }
         mCameraDfsPolicyCur = CAM_HIGH;
         break;
-   case CAM_VERYHIGH:
+    case CAM_VERYHIGH:
         if (CAM_EXIT == mCameraDfsPolicyCur) {
             setDfsPolicy(CAM_VERYHIGH);
         } else if (CAM_LOW == mCameraDfsPolicyCur) {
@@ -3380,7 +3380,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         changeDfsPolicy(CAM_LOW);
     }
 
-    if (getMultiCameraMode() == MODE_BLUR || getMultiCameraMode() == MODE_BOKEH) {
+    if (getMultiCameraMode() == MODE_BLUR ||
+        getMultiCameraMode() == MODE_BOKEH) {
         changeDfsPolicy(CAM_VERYHIGH);
     }
 
@@ -5195,12 +5196,11 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FLUSH:
         HAL_LOGV("CAMERA_EVT_CB_FLUSH");
         {
-            struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
+            hal_mem_info_t *mem_info = (hal_mem_info_t *)parm4;
             mPrevBufLock.lock();
             if (isPreviewing()) {
-                flush_buffer(CAMERA_FLUSH_PREVIEW_HEAP, frame->buf_id,
-                             (void *)frame->y_vir_addr,
-                             (void *)frame->y_phy_addr, 0);
+                flushIonBuffer(mem_info->fd, mem_info->addr_vir,
+                                 mem_info->addr_phy, mem_info->size);
             }
             mPrevBufLock.unlock();
         }
@@ -5269,14 +5269,13 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_PREPARE:
         prepareForPostProcess();
         break;
-    case CAMERA_EVT_CB_FLUSH:
+    case CAMERA_EVT_CB_FLUSH: {
         HAL_LOGV("CAMERA_EVT_CB_FLUSH");
-        mCapBufLock.lock();
-        if (mCapBufIsAvail == 1) {
-            flush_buffer(CAMERA_FLUSH_RAW_HEAP_ALL, 0, (void *)0, (void *)0, 0);
-        }
-        mCapBufLock.unlock();
+        hal_mem_info_t *mem_info = (hal_mem_info_t *)parm4;
+        flushIonBuffer(mem_info->fd, mem_info->addr_vir, mem_info->addr_phy,
+                         mem_info->size);
         break;
+    }
     case CAMERA_RSP_CB_SUCCESS: {
         HAL_LOGV("CAMERA_RSP_CB_SUCCESS");
 
@@ -5762,63 +5761,15 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
     HAL_LOGV("X");
 }
 
-int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e type, int index,
-                                   void *v_addr, void *p_addr, int size) {
+int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr,
+                                       void *p_addr, size_t size) {
     ATRACE_CALL();
-
     int ret = 0;
-    sprd_camera_memory_t *pmem = NULL;
-    MemIon *pHeapIon = NULL;
-    uint32_t i;
-
-    switch (type) {
-    case CAMERA_FLUSH_RAW_HEAP:
-        break;
-
-    case CAMERA_FLUSH_RAW_HEAP_ALL:
-        for (i = 0; i < mSubRawHeapNum; i++) {
-
-            pmem = mSubRawHeapArray[i];
-            v_addr = (void *)mSubRawHeapArray[i]->data;
-            p_addr = (void *)mSubRawHeapArray[i]->phys_addr;
-            size = (int)mSubRawHeapArray[i]->phys_size;
-
-            if (pmem) {
-                pHeapIon = pmem->ion_heap;
-            }
-            if (pHeapIon) {
-                HAL_LOGD("index=%d,vaddr=%p, paddr=%p,size=0x%x", i, v_addr,
-                         p_addr, size);
-                ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
-                if (ret) {
-                    HAL_LOGW("abnormal ret=%d", ret);
-                    HAL_LOGW("index=%d,vaddr=%p, paddr=%p", i, v_addr, p_addr);
-                }
-            }
-        }
-        break;
-
-    case CAMERA_FLUSH_PREVIEW_HEAP:
-        break;
-
-    default:
-        break;
+    ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, p_addr, size);
+    if (ret) {
+        HAL_LOGE("abnormal ret=%d", ret);
+        HAL_LOGE("fd=%d,vaddr=%p, paddr=%p", buffer_fd, v_addr, p_addr);
     }
-
-    if (pmem) {
-        pHeapIon = pmem->ion_heap;
-    }
-
-    if (pHeapIon) {
-        HAL_LOGV("index=%d,vaddr=%p, paddr=%p,size=0x%zx", index, v_addr,
-                 p_addr, size);
-        ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
-        if (ret) {
-            HAL_LOGW("abnormal ret=%d", ret);
-            HAL_LOGW("index=%d,vaddr=%p, paddr=%p", index, v_addr, p_addr);
-        }
-    }
-
     return ret;
 }
 

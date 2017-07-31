@@ -248,7 +248,8 @@ cmr_int cmr_snapshot_release_frame(cmr_handle snapshot_handle, cmr_uint index);
 cmr_int cmr_snapshot_format_convert(cmr_handle snapshot_handle, void *data,
                                     struct img_frm *out_ptr);
 
-cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle);
+cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
+                                  struct img_frm *img);
 
 /* performance optimization, use zsl buf to postprocess, not copy */
 cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle,

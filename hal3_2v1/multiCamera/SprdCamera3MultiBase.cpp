@@ -29,7 +29,6 @@
 
 #include "SprdCamera3MultiBase.h"
 #include <linux/ion.h>
-#include "sprd_ion.h"
 
 using namespace android;
 namespace sprdcamera {
@@ -65,32 +64,16 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
     return rc;
 }
 
-int SprdCamera3MultiBase::flush_ion_buffer(int buffer_fd, void *v_addr,
+int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
                                            size_t size) {
-    int fd = open("/dev/ion", O_SYNC);
-    if (fd < 0) {
-        HAL_LOGE("open dev ion error!");
-        return -1;
-    } else {
-        int ret;
-        struct ion_msync_data msync_data;
-        struct ion_custom_data custom_data;
-
-        msync_data.fd_buffer = buffer_fd;
-        msync_data.vaddr = (unsigned long)v_addr;
-        msync_data.paddr = 0;
-        msync_data.size = size;
-        custom_data.cmd = ION_SPRD_CUSTOM_MSYNC;
-        custom_data.arg = (unsigned long)&msync_data;
-        ret = ioctl(fd, ION_IOC_CUSTOM, &custom_data);
-        close(fd);
-        if (ret) {
-            HAL_LOGE("return error: %d", ret);
-            return -2;
-        }
+    int ret = 0;
+    ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
+    if (ret) {
+        HAL_LOGW("abnormal ret=%d", ret);
+        HAL_LOGW("fd=%d,vaddr=%p", buffer_fd, v_addr);
     }
-    HAL_LOGV("flush v_addr=%p,size=%d,fd=%d", v_addr, size, buffer_fd);
-    return 0;
+
+    return ret;
 }
 
 int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,

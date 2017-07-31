@@ -1200,6 +1200,14 @@ struct camera_cap_frm_info {
         struct frm_info          frame_info;
 };*/
 
+typedef struct {
+    int fd;
+    size_t size;
+    // offset from fd, always set to 0
+    void *addr_phy;
+    void *addr_vir;
+} hal_mem_info_t;
+
 struct camera_position_type {
     long timestamp;
     double latitude;

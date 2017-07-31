@@ -469,7 +469,8 @@ cmr_int snp_proc_copy_frame(cmr_handle snp_handle, void *data) {
 
             cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
         }
-        cmr_snapshot_memory_flush(cxt);
+        cmr_snapshot_memory_flush(
+            cxt, &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
     }
     CMR_LOGD("done");
 #endif
@@ -1374,7 +1375,7 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data) {
 
 #ifdef CAMERA_BRINGUP
     camera_scale_down_software(&src, &dst);
-    cmr_snapshot_memory_flush(snp_cxt);
+    cmr_snapshot_memory_flush(snp_cxt, &dst);
 #else
     ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst,
                                    &mean);
@@ -2188,7 +2189,8 @@ cmr_int snp_create_proc_cb_thread(cmr_handle snp_handle) {
         CMR_LOGE("failed to create proc cb thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
     }
-    ret = cmr_thread_set_name(cxt->thread_cxt.proc_cb_thr_handle, "snp_proc_cb");
+    ret =
+        cmr_thread_set_name(cxt->thread_cxt.proc_cb_thr_handle, "snp_proc_cb");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
@@ -2335,7 +2337,8 @@ cmr_int snp_create_write_exif_thread(cmr_handle snp_handle) {
     } else {
         sem_init(&cxt->thread_cxt.writte_exif_access_sm, 0, 1);
     }
-    ret = cmr_thread_set_name(cxt->thread_cxt.write_exif_thr_handle, "snp_exif");
+    ret =
+        cmr_thread_set_name(cxt->thread_cxt.write_exif_thr_handle, "snp_exif");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
@@ -2386,7 +2389,8 @@ cmr_int snp_create_redisplay_thread(cmr_handle snp_handle) {
         CMR_LOGE("failed to create redisplay thread %ld", ret);
         ret = -CMR_CAMERA_NO_SUPPORT;
     }
-    ret = cmr_thread_set_name(cxt->thread_cxt.proc_redisplay_handle, "snp_redisplay");
+    ret = cmr_thread_set_name(cxt->thread_cxt.proc_redisplay_handle,
+                              "snp_redisplay");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = CMR_MSG_SUCCESS;
@@ -3993,9 +3997,8 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
                  oem_cxt->is_refocus_mode);
         if (oem_cxt->is_refocus_mode == 2) {
             frame_type->y_vir_addr = info->yaddr_vir;
-             frame_type->fd = info->fd;
-        }
-        else {
+            frame_type->fd = info->fd;
+        } else {
             frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
             frame_type->fd = mem_ptr->target_yuv.fd;
         }
@@ -4775,12 +4778,12 @@ cmr_int snp_proc_hdr_src(cmr_handle snp_handle, void *data) {
         CMR_LOGE("failed to transfer frame to ipm %ld", ret);
         return ret;
     }
-    cmr_snapshot_memory_flush(snp_handle);
+    cmr_snapshot_memory_flush(snp_handle, &ipm_in_param.dst_frame);
     if (cxt->hdr_src_num == cxt->req_param.hdr_need_frm_num) {
         snp_set_status(snp_handle, IPM_WORKING);
         sem_wait(&cxt->hdr_sync_sm);
         snp_set_status(snp_handle, POST_PROCESSING);
-        cmr_snapshot_memory_flush(snp_handle);
+        cmr_snapshot_memory_flush(snp_handle, &ipm_in_param.dst_frame);
     }
     return ret;
 }
@@ -5124,7 +5127,9 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
 
                     cmr_copy((void *)dst_vir, (void *)src_vir,
                              width * height / 2);
-                    cmr_snapshot_memory_flush(cxt);
+                    cmr_snapshot_memory_flush(
+                        cxt,
+                        &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
                 } else if (1 == cxt->req_param.is_zsl_snapshot) {
 #ifndef PERFORMANCE_OPTIMIZATION
                     chn_data.yaddr =
@@ -5174,7 +5179,9 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
 
                     cmr_copy((void *)dst_vir, (void *)src_vir,
                              width * height / 2);
-                    cmr_snapshot_memory_flush(cxt);
+                    cmr_snapshot_memory_flush(
+                        cxt,
+                        &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
 #endif
                 }
             }
@@ -5341,14 +5348,23 @@ exit:
     return ret;
 }
 
-cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle) {
+cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
+                                  struct img_frm *img) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snapshot_handle;
 
     CHECK_HANDLE_VALID(snapshot_handle);
-
-    ret = snp_send_msg_notify_thr(snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
-                                  SNAPSHOT_EVT_CB_FLUSH, NULL, 0);
+    if (img) {
+        hal_mem_info_t mem_info;
+        bzero(&mem_info, sizeof(hal_mem_info_t));
+        mem_info.addr_vir = (void *)img->addr_vir.addr_y;
+        mem_info.addr_phy = (void *)img->addr_phy.addr_y;
+        mem_info.fd = img->fd;
+        mem_info.size = img->size.width * img->size.height * 3 / 2;
+        ret = snp_send_msg_notify_thr(
+            snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_CB_FLUSH,
+            (void *)&mem_info, sizeof(hal_mem_info_t));
+    }
     CMR_LOGD("done %ld", ret);
     return ret;
 }
