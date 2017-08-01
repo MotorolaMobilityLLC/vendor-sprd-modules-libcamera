@@ -525,5 +525,6 @@ cmr_s32 isp_u_pdaf_ppi_info(isp_handle handle, void *ppi_info);
 cmr_s32 isp_u_pdaf_extractor_bypass(isp_handle handle, cmr_u32 *bypass);
 cmr_s32 isp_u_pdaf_roi(isp_handle handle, void *roi);
 cmr_s32 isp_u_pdaf_correction(isp_handle handle, void *correction_param);
-
+cmr_s32 isp_u_3dnr_cap_block(isp_handle handle, void *block_info);
+cmr_s32 isp_u_3dnr_pre_block(isp_handle handle, void *block_info);
 #endif
