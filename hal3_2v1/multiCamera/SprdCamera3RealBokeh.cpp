@@ -1493,6 +1493,16 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
 #endif
     capture_queue_msg_t_bokeh capture_msg;
     int rc = 0;
+    bool bokeh_enable = false;
+    char prop1[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("persist.sys.camera.bokeh.enable", prop1, "0");
+    if (0 == atoi(prop1)) {
+        bokeh_enable = false;
+    } else {
+        bokeh_enable = true;
+    }
 
     while (!mCaptureMsgList.empty()) {
         List<capture_queue_msg_t_bokeh>::iterator itor1 =
@@ -1552,8 +1562,14 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             if (mRealBokeh->mTransformWidth != 0) {
                 transform_buffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_TRANSFORM_BUFFER));
-                struct private_handle_t *output_handle =
-                    (struct private_handle_t *)(*output_buffer);
+                struct private_handle_t *output_handle = NULL;
+                if (bokeh_enable) {
+                    output_handle = (struct private_handle_t *)(*output_buffer);
+                } else {
+                    output_handle =
+                        (struct private_handle_t *)(*capture_msg.combo_buff
+                                                         .buffer1);
+                }
                 struct private_handle_t *transform_handle =
                     (struct private_handle_t *)(*transform_buffer);
                 int64_t alignTransform = systemTime();
@@ -1614,12 +1630,20 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             } else {
                 input_buffer->stream->width = mRealBokeh->mCaptureWidth;
                 input_buffer->stream->height = mRealBokeh->mCaptureHeight;
-                input_buffer->buffer = output_buffer;
+                if (bokeh_enable) {
+                    input_buffer->buffer = output_buffer;
+                } else {
+                    input_buffer->buffer = capture_msg.combo_buff.buffer1;
+                }
             }
 #else
             input_buffer->stream->width = mRealBokeh->mCaptureWidth;
             input_buffer->stream->height = mRealBokeh->mCaptureHeight;
-            input_buffer->buffer = output_buffer;
+            if (bokeh_enable) {
+                input_buffer->buffer = output_buffer;
+            } else {
+                input_buffer->buffer = capture_msg.combo_buff.buffer1;
+            }
 #endif
 
             memcpy((void *)&output_buffers[0], &mSavedCapReqStreamBuff,
@@ -1842,7 +1866,6 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         ASVLOFFSCREEN rightImg;
 
         MInt32 lDMSize = 0;
-        ARC_DCIR_PARAM dcrParam;
 
         MLong LWidth = 0, LHeight = 0;
         MLong RWidth = 0, RHeight = 0;
@@ -1850,7 +1873,6 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
               *pRightImgDataY = NULL, *pRightImgDataUV = NULL,
               *pDstDataY = NULL, *pDstDataUV = NULL;
 
-        memset(&dcrParam, 0, sizeof(ARC_DCIR_PARAM));
         LWidth = (MLong)(mRealBokeh->mCaptureWidth);
         LHeight = (MLong)(mRealBokeh->mCaptureHeight);
         RWidth = (MLong)(mRealBokeh->mDepthSnapImageWidth);
@@ -1898,11 +1920,6 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             HAL_LOGD("ARC_DCIR_CapInit succeed");
         }
 
-        rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_GetDefaultCapParam(
-            &dcrParam);
-        if (rc != MOK) {
-            HAL_LOGE("ARC_DCIR_GetDefaultCapParam failed!");
-        }
         // read cal data
         res = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_SetCaliData(
             mArcSoftCapHandle, &(mRealBokeh->mCaliData));
@@ -1946,15 +1963,21 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         if (res != MOK) {
             HAL_LOGE("arcsoft AARC_DCIR_GetDisparityData failed");
         }
-        int64_t bokehRun = systemTime();
-        res = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_CapProcess(
-            mArcSoftCapHandle, mArcSoftDepthMap, lDMSize, &leftImg,
-            &mArcSoftCapParam, &dstImg);
-        if (res != MOK) {
-            HAL_LOGE("arcsoft ARC_DCIR_CapProcess failed");
+        char prop[PROPERTY_VALUE_MAX] = {
+            0,
+        };
+        property_get("persist.sys.camera.bokeh.enable", prop, "0");
+        if (1 == atoi(prop)) {
+            int64_t bokehRun = systemTime();
+            res = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_CapProcess(
+                mArcSoftCapHandle, mArcSoftDepthMap, lDMSize, &leftImg,
+                &mArcSoftCapParam, &dstImg);
+            if (res != MOK) {
+                HAL_LOGE("arcsoft ARC_DCIR_CapProcess failed");
+            }
+            HAL_LOGD("ARC_DCIR_CapProcess cost %lld ms",
+                     ns2ms(systemTime() - bokehRun));
         }
-        HAL_LOGD("ARC_DCIR_CapProcess cost %lld ms",
-                 ns2ms(systemTime() - bokehRun));
         mRealBokeh->flush_ion_buffer(depth_handle->share_fd, depth_handle->base,
                                      depth_handle->size);
         res =
@@ -1962,7 +1985,6 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         if (res != MOK) {
             HAL_LOGE("arcsoft ARC_DCIR_Uninit failed");
         }
-
         { // dump yuv data
             char prop6[PROPERTY_VALUE_MAX] = {
                 0,
