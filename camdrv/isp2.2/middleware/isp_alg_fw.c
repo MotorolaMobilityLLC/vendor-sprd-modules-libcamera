@@ -39,7 +39,7 @@ cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 
 #define LSC_ADV_ENABLE
-#define PDLIB_PATH "libCamAlgo.so"
+#define PDLIB_PATH "libispalg.so"
 //#define ANTI_FLICKER_INFO_VERSION_NEW
 
 cmr_s32 gAWBGainR = 1;

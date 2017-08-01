@@ -250,7 +250,7 @@ struct isp_alg_fw_context {
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 
-#define LIBCAM_ALG_PATH "libCamAlgo.so"
+#define LIBCAM_ALG_PATH "libispalg.so"
 //#define ANTI_FLICKER_INFO_VERSION_NEW
 
 struct isp_awb_calc_info {
