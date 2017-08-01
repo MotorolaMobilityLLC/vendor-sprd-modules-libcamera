@@ -3377,6 +3377,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
+        changeDfsPolicy(CAM_LOW);
     }
 
     if (getMultiCameraMode() == MODE_BLUR || getMultiCameraMode() == MODE_BOKEH) {
@@ -4034,10 +4035,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         miSPreviewFirstFrame = 0;
 
         disablePowerHint(POWER_HINT_VENDOR_CAMERA_HDR);
-        if (mSprdZslEnabled == 0) {
-            changeDfsPolicy(CAM_LOW);
-            HAL_LOGI("after first non-zsl preview: set dfs CAM_LOW");
-        }
     }
 
     SPRD_DEF_Tag sprddefInfo;
