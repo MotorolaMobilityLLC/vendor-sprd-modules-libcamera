@@ -363,10 +363,11 @@ struct lsc2_context {
 	cmr_u32 dual_cam_id;
 
 	
-	cmr_u16 *lsc_tab_address[9];	  // log the using table address
-	cmr_u16 *lsc_OTP_tab_storage[8];  // the storage to save OTP tab
-	cmr_u16 *lsc_pm0;	              // log the tab0 from pm
-	cmr_u16 *lsc_pm0_with_OTP;	      // log the tab0 from pm used to OTP
+	cmr_u16 *lsc_tab_address[9];	      // log the using table address
+    cmr_u16 *lsc_OTP_tab_copy;                // the copy of OTP table from init
+	cmr_u16 *lsc_OTP_tab_storage[8];          // the storage to save OTP tab
+    cmr_u16 *lsc_OTP_tab_storage_binning[8];  // the storage to save binning OTP tab
+	cmr_u16 *lsc_pm0;	        // log the tab0 from pm
 	cmr_u16 *lsc_table_ptr_r;	// storage to save Rfirst table
 	cmr_u16 *tabptr[9];	        // address of origianl shading table will be used to interperlation in slsc2
 	cmr_u16 *tabptrPlane[9];	// address R-first shading table ( lsc_table_ptr )
@@ -399,8 +400,12 @@ struct lsc2_context {
     cmr_u32 alg_count;
     cmr_u32 alg_quick_in;
 	// otp
-	cmr_u32 lsc_otp_table_flag; // 0 non-OTP, 1 OTP table
-	cmr_u32 lsc_otp_oc_flag;    // 0 no OTP data, 1 OTP data
+	cmr_u32 lsc_otp_table_flag;         // 0 non-OTP, 1 OTP table
+    cmr_u32 lsc_otp_table_flag_binning; // 0 non-OTP, 1 OTP table
+	cmr_u32 lsc_otp_oc_flag;            // 0 no OTP data, 1 OTP data
+    cmr_u32 lsc_otp_grid;
+    cmr_u32 lsc_otp_table_width;
+    cmr_u32 lsc_otp_table_height;
 	cmr_u32 lsc_otp_oc_r_x;
 	cmr_u32 lsc_otp_oc_r_y;
 	cmr_u32 lsc_otp_oc_gr_x;
