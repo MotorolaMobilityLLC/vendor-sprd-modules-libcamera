@@ -5010,7 +5010,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
     if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
-        mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
+        mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||
+        mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
         SprdCamera3RegularChannel *regularChannel =
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (regularChannel) {
