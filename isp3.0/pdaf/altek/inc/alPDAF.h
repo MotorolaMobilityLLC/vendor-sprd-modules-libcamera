@@ -20,7 +20,15 @@ typedef struct {
 	float dBv;
 	// black offset
 	int dBlackOffset;
-	unsigned char ucPrecision;
+
+	unsigned char ucIsBlackOffset;
+	unsigned char ucIsCentralWeighting;
+	int dFocusSpeed;
+	int dNRLevel;
+	int dGamma;
+	unsigned char ucCentralWeighting;
+	int dPDValidity;
+
 } PDInReg;
 
 typedef struct {
@@ -44,13 +52,14 @@ typedef struct {
 #ifdef __cplusplus
 extern "C"{
 #endif
-alPDAF_ERR_CODE alPDAF_Initial(void *a_pInPDPackData,void *a_pInOTPData , int a_dInOTPSize, void *a_pInTuningPara);
+alPDAF_ERR_CODE alPDAF_Initial(void *a_pInPDPackData, void *a_pInOTPData, int a_dInOTPSize, void *a_pInTuningPara);
 alPDAF_ERR_CODE alPDAF_VersionInfo_Get(void *a_pOutBuf, int a_dInBufMaxSize);
 alPDAF_ERR_CODE alPDAF_Calculate(float *a_pfInPDValue, void *a_pOutPDReg, void *a_pInImageBuf_left, void *a_pInImageBuf_right,
-								unsigned short a_uwInWidth, unsigned short a_uwInHeight,alGE_RECT a_tInWOI,
+						unsigned short a_uwInWidth, unsigned short a_uwInHeight,alGE_RECT a_tInWOI,
 								DataBit a_tInbit, PDInReg *a_tInPDReg);
 alPDAF_ERR_CODE alPDAF_Close();
 alPDAF_ERR_CODE alPDAF_Reset();
+alPDAF_ERR_CODE alPDAF_GetPDResult(PDResult *a_ptOutPDOut, void *a_pInPdReg);
 #ifdef __cplusplus
 }
 #endif
