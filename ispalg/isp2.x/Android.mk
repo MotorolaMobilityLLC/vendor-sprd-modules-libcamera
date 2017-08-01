@@ -86,7 +86,7 @@ LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
-LOCAL_MODULE := libCamAlgo
+LOCAL_MODULE := libispalg
 
 LOCAL_MODULE_TAGS := optional
 #LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
