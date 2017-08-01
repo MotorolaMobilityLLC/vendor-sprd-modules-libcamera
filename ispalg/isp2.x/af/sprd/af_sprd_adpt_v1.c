@@ -259,12 +259,16 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 	else
 		ISP_LOGV("win is NULL, use default roi");
 
-	if (NULL != win && 0 != win->win_num) {
+	if (NULL != win) {
 		cmr_u32 i;
 		for (i = 0; i < win->win_num; ++i) {
 			AF_record_wins(af->af_alg_cxt, i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
 			ISP_LOGV("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
 		}
+
+		if (0 == win->win_num)
+			win = NULL;
+
 	}
 	AF_set_hw_wins(af->af_alg_cxt, (void *)win, alg_mode);
 }
@@ -990,6 +994,7 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	do_start_af(af);
 }
 
+static void af_stop_search(af_ctrl_t * af);
 static void trigger_saf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
@@ -999,17 +1004,23 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;
 	af->state = STATE_NORMAL_AF;
-	af->focus_state = AF_IDLE;
+	trigger_set_mode(af, AFT_MODE_NORMAL);
+	trigger_stop(af);
+	if (AF_SEARCHING == af->focus_state) {
+		af_stop_search(af);
+	}
 	//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
 	//saf_start(af, NULL);  //SAF, win is NULL using default
-	ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
+	//ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
 	af->algo_mode = SAF;
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
-	aft_in.AF_Trigger_Type = (1 == af->defocus) ? DEFOCUS : RF_NORMAL;
+	//aft_in.AF_Trigger_Type = (1 == af->defocus) ? DEFOCUS : RF_NORMAL;
+	aft_in.AF_Trigger_Type = DEFOCUS;
 	AF_Trigger(af->af_alg_cxt, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
+	af->focus_state = AF_SEARCHING;
 }
 
 static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
