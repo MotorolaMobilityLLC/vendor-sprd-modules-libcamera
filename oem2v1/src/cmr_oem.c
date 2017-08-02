@@ -1137,6 +1137,11 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGD("ISP_HDR_EV_EFFECT_CALLBACK");
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
         break;
+    case ISP_AE_CB_FLASH_FIRED:
+        oem_cb = CAMERA_EVT_CB_AE_FLASH_FIRED;
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                       data);
+        break;
     default:
         break;
     }

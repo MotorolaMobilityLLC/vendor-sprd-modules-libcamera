@@ -1557,6 +1557,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.max_preview_size[1] =
         MAX_PREVIEW_SIZE_HEIGHT;
 
+    // default 0, will be update
+    s_setting[cameraId].sprddefInfo.is_takepicture_with_flash = 0;
+
     return ret;
 }
 
@@ -1879,6 +1882,10 @@ int SprdCamera3Setting::initStaticMetadata(
     // max preview size supported for hardware limitation
     staticInfo.update(ANDROID_SPRD_MAX_PREVIEW_SIZE,
                       s_setting[cameraId].sprddefInfo.max_preview_size, 2);
+    // takepicture with flash or not
+    staticInfo.update(
+        ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
+        &(s_setting[cameraId].sprddefInfo.is_takepicture_with_flash), 1);
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
@@ -2932,6 +2939,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 
     uint8_t sprdFilterType = 0;
     requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
+
+    uint8_t isTakePictureWithFlash = 0;
+    requestInfo.update(ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
+                       &isTakePictureWithFlash, 1);
 
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
@@ -4177,6 +4188,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
     }
+    camMetadata.update(
+        ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
+        &(s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash), 1);
 
     resultMetadata = camMetadata.release();
     return resultMetadata;
