@@ -8978,7 +8978,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
                 gyro = (vsGyro *)malloc(gyro_num * sizeof(vsGyro));
                 if (NULL == gyro) {
                     HAL_LOGE(" malloc gyro buffer is fail");
-                    goto eis_process_fail;
+                    break;
                 }
                 memset(gyro, 0, gyro_num * sizeof(vsGyro));
                 popEISPreviewQueue(gyro, gyro_num);
@@ -8988,35 +8988,32 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
                     gyro = NULL;
                 }
             }
-            ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
+            ret_eis = video_stab_check_gyro(mPreviewInst);
             if (ret_eis == 0) {
-                HAL_LOGD("frame_in %p, frame_out %p", frame_in.frame_data,
-                         frame_out_preview.frame_data);
-                if (frame_in.frame_data == frame_out_preview.frame_data)
-                    return frame_out_preview;
-                else
-                    ret_eis = 1;
-            } else if (ret_eis != 1) {
-                HAL_LOGE("fail to read matrix");
-                goto eis_process_fail;
+                HAL_LOGD("gyro is ready ");
+                break;
+            } else {
+                ret_eis = 1;
+                HAL_LOGD("gyro is NOT ready,check  gyro again");
             }
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
                                      mReadGyroPreviewLock, 30000000))) {
                 HAL_LOGD("gyro data is too slow for eis process");
-                goto eis_process_fail;
+                break;
             }
         } while (ret_eis == 1);
-    } else
-        HAL_LOGW("no gyro data to process EIS");
 
-eis_process_fail:
-    frame_out_preview.warp.dat[0][0] = frame_out_preview.warp.dat[1][1] =
-        frame_out_preview.warp.dat[2][2] = 1.0;
-    frame_out_preview.warp.dat[0][1] = frame_out_preview.warp.dat[0][2] =
-        frame_out_preview.warp.dat[1][0] = 0.0;
-    frame_out_preview.warp.dat[1][2] = frame_out_preview.warp.dat[2][0] =
-        frame_out_preview.warp.dat[2][1] = 0.0;
+        ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
+        if (ret_eis == 0)
+            HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+                     frame_out_preview.frame_num, frame_out_preview.timestamp,
+                     frame_out_preview.frame_data);
+        else
+            HAL_LOGD("no frame out");
+    } else
+        HAL_LOGD("no gyro data to process EIS");
+
     return frame_out_preview;
 }
 
@@ -9041,7 +9038,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                 gyro = (vsGyro *)malloc(gyro_num * sizeof(vsGyro));
                 if (NULL == gyro) {
                     HAL_LOGE(" malloc gyro buffer is fail");
-                    goto eis_process_fail;
+                    break;
                 }
                 memset(gyro, 0, gyro_num * sizeof(vsGyro));
                 popEISVideoQueue(gyro, gyro_num);
@@ -9051,34 +9048,32 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                     gyro = NULL;
                 }
             }
-            ret_eis = video_stab_read(mVideoInst, &frame_out_video);
+            ret_eis = video_stab_check_gyro(mVideoInst);
             if (ret_eis == 0) {
-                HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
-                         frame_out_video.frame_num, frame_out_video.timestamp,
-                         frame_out_video.frame_data);
-                return frame_out_video;
+                HAL_LOGD("gyro is ready ");
+                break;
             } else {
-                ret_eis = -1;
-                HAL_LOGE("no frame out,exit directly");
-                goto eis_process_fail;
+                ret_eis = 1;
+                HAL_LOGE("gyro is NOT ready,check  gyro again");
             }
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroVideoCond.waitRelative(
                                      mReadGyroVideoLock, 30000000))) {
                 HAL_LOGW("gyro data is too slow for eis process");
-                goto eis_process_fail;
+                break;
             }
         } while (ret_eis == 1);
-    } else
-        HAL_LOGW("no gyro data to process EIS");
 
-eis_process_fail:
-    frame_out_video.warp.dat[0][0] = frame_out_video.warp.dat[1][1] =
-        frame_out_video.warp.dat[2][2] = 1.0;
-    frame_out_video.warp.dat[0][1] = frame_out_video.warp.dat[0][2] =
-        frame_out_video.warp.dat[1][0] = 0.0;
-    frame_out_video.warp.dat[1][2] = frame_out_video.warp.dat[2][0] =
-        frame_out_video.warp.dat[2][1] = 0.0;
+        ret_eis = video_stab_read(mVideoInst, &frame_out_video);
+        if (ret_eis == 0)
+            HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+                     frame_out_video.frame_num, frame_out_video.timestamp,
+                     frame_out_video.frame_data);
+        else
+            HAL_LOGD("no frame out");
+    } else
+        HAL_LOGD("no gyro data to process EIS");
+
     return frame_out_video;
 }
 
