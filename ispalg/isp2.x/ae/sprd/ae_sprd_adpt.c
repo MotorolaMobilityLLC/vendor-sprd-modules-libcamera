@@ -50,7 +50,9 @@
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD 100 /*lower than LV1, if it is 0, disable this feature*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 10 /*lower than thrd1, min fps*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 180 /*higher than thrd2, max fps*/
+
 /*
  * should be read from driver later
  */
@@ -254,6 +256,10 @@ struct ae_fd_info {
 /*
 * END: FDAE related definitions
 */
+struct ae_update_list {
+	cmr_u32 is_scene:1;
+};
+
 /**************************************************************************/
 /*
 * ae handler for isp_app
@@ -302,6 +308,10 @@ struct ae_ctrl_cxt {
 	 * sensor related information
 	 */
 	struct ae_resolution_info snr_info;
+	/*
+	* force update list
+	*/
+	struct ae_update_list mod_update_list;
 	/*
 	 * ae current status: include some tuning
 	 * param/calculatioin result and so on
@@ -1828,7 +1838,8 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	} else {
 		cxt->min_exp_line = cxt->cur_param->sensor_cfg.min_exp_line;
 	}
-
+	cxt->mod_update_list.is_scene = 1;/*force update scene mode parameters */
+	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	cxt->cur_status.log_level = g_isp_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
@@ -2136,8 +2147,10 @@ static cmr_s32 _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 		*/
 #endif
 		cur_status->settings.iso = scene_info[i].iso_index;
-		cur_status->settings.min_fps = scene_info[i].min_fps;
-		cur_status->settings.max_fps = scene_info[i].max_fps;
+		if (AE_WORK_MODE_VIDEO != cur_status->settings.work_mode) {
+			cur_status->settings.min_fps = scene_info[i].min_fps;
+			cur_status->settings.max_fps = scene_info[i].max_fps;
+		}
 		target_lum = _calc_target_lum(scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
 		cur_status->target_lum_zone = (cmr_s16)(cur_param->stable_zone_ev[cur_param->ev_table.default_level]*target_lum * 1.0 / cur_param->target_lum + 0.5);
 		if(2 > cur_status->target_lum_zone){
@@ -2720,15 +2733,18 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
 	if (AE_WORK_MODE_VIDEO == current_status->settings.work_mode) {
-		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD > cxt->sync_cur_result.cur_bv) {
-			/*only adjust the fps to [15, 15] in dark environment during video mode*/
-			current_status->settings.max_fps  = cxt->fps_range.min;
-			current_status->settings.min_fps  = cxt->fps_range.min;
-			ISP_LOGV("fps: %d, %d just fix to 15fps in dark during video, bv%d\n",
-				cxt->fps_range.min, cxt->fps_range.max, cxt->sync_cur_result.cur_bv);
-		} else {
+		ISP_LOGI("%d, %d, %d, %d, %d",
+			cxt->sync_cur_result.cur_bv, current_status->settings.min_fps, current_status->settings.max_fps,
+			cxt->fps_range.min, cxt->fps_range.max);
+		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 < cxt->sync_cur_result.cur_bv) {
 			current_status->settings.max_fps  = cxt->fps_range.max;
 			current_status->settings.min_fps  = cxt->fps_range.max;
+		} else if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD1< cxt->sync_cur_result.cur_bv) {
+			current_status->settings.max_fps  = cxt->fps_range.max;
+			current_status->settings.min_fps  = cxt->fps_range.min;
+		} else {
+			current_status->settings.max_fps  = cxt->fps_range.min;
+			current_status->settings.min_fps  = cxt->fps_range.min;
 		}
 
 	} else {
@@ -5132,15 +5148,15 @@ static void _set_ae_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_enable = 1;
 		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
-		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d E %d G %d lt %d W %d H %d", cxt->camera_id , cxt->last_exp_param.exp_line,
-				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
+		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id , cxt->last_exp_param.exp_line,
+				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
 		if ((1 == cxt->is_snapshot) &&
 			((FLASH_NONE == cxt->cur_status.settings.flash) || FLASH_MAIN_BEFORE <= cxt->cur_status.settings.flash)) {
 			_set_restore_cnt(cxt);
 		}
-		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d E %d G %d lt %d W %d H %d", cxt->camera_id , cxt->last_exp_param.exp_line,
-				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
+		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id , cxt->last_exp_param.exp_line,
+				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	}
 }
 
@@ -5229,6 +5245,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 				exposure_time2line(src, dst, cxt->cur_status.line_time, cxt->tuning_param[mode].ae_tbl_exp_mode);
 			}
+			dst[AE_FLICKER_50HZ]->min_index = 0;
+			dst[AE_FLICKER_60HZ]->min_index = 0;
 		}
 	}
 
@@ -5243,10 +5261,30 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		if (1 == cxt->tuning_param[mode].scene_info[j].table_enable) {
 			exposure_time2line(src, dst, cxt->cur_status.line_time,
 							  cxt->tuning_param[mode].scene_info[j].exp_tbl_mode);
+			dst[AE_FLICKER_50HZ]->min_index = 0;
+			dst[AE_FLICKER_60HZ]->min_index = 0;
 		}
 	}
 
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
+	if (AE_SCENE_NORMAL != cxt->sync_cur_status.settings.scene_mode) {
+		cmr_u32 i= 0;
+		struct ae_scene_info *scene_info = &cxt->cur_param->scene_info[0];
+		for (i = 0; i < AE_SCENE_NUM; ++i) {
+			ISP_LOGI("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
+			if ((1 == scene_info[i].enable) && ((cmr_u32)cxt->sync_cur_status.settings.scene_mode == scene_info[i].scene_mode)) {
+				break;
+			}
+		}
+		if (AE_SCENE_NUM > i) {
+			if (scene_info[i].table_enable) {
+				cxt->cur_status.ae_table = &scene_info[i].ae_table[cxt->cur_status.settings.flicker];
+			}
+		}
+	}
+	cxt->cur_status.ae_table->min_index = 0;
+	//cxt->mod_update_list.is_scene = 1;
+	ISP_LOGI("ae table: [%d, %d]\n", cxt->cur_status.ae_table->min_index, cxt->cur_status.ae_table->max_index);
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
@@ -5282,22 +5320,32 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			src_exp.target_offset = 0;
 		}
 	}
-	src_exp.dummy = 0;
-	max_exp = cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index];
 
-	if (work_info->sensor_fps.is_high_fps) {
-		fps_range.min = work_info->sensor_fps.max_fps;
-		fps_range.max = work_info->sensor_fps.max_fps;
+	if ((1 == cxt->last_enable) && (1 == work_info->is_snapshot)) {
+		dst_exp.exp_time = src_exp.exp_time;
+		dst_exp.exp_line = src_exp.exp_line;
+		dst_exp.gain = src_exp.gain;
+		dst_exp.dummy = src_exp.dummy;
+		dst_exp.cur_index = src_exp.cur_index;
 	} else {
-		if (work_info->dv_mode) {
-			fps_range.min = cxt->cur_status.snr_max_fps;
-			fps_range.max = cxt->cur_status.snr_max_fps;
+		src_exp.dummy = 0;
+		max_exp = cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index];
+		if (work_info->sensor_fps.is_high_fps) {
+			fps_range.min = work_info->sensor_fps.max_fps;
+			fps_range.max = work_info->sensor_fps.max_fps;
+			cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 		} else {
-			fps_range.min = cxt->fps_range.max;
-			fps_range.max = cxt->fps_range.max;
+			if (work_info->dv_mode) {
+				fps_range.min = cxt->cur_status.snr_max_fps;
+				fps_range.max = cxt->cur_status.snr_max_fps;
+			} else {
+				fps_range.min = cxt->fps_range.min;
+				fps_range.max = cxt->fps_range.max;
+			}
 		}
+		ae_exp_gain_adjust(cxt, &src_exp, &fps_range, max_exp, &dst_exp);
 	}
-	ae_exp_gain_adjust(cxt, &src_exp, &fps_range, max_exp, &dst_exp);
+
 	cxt->cur_status.target_offset = src_exp.target_offset;
 	cxt->cur_result.wts.exposure_time = dst_exp.exp_time;
 	cxt->cur_result.wts.cur_exp_line = dst_exp.exp_line;
@@ -5372,10 +5420,21 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		cxt->cur_status.settings.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
 		cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
 	}
-	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%dCAP %d", cxt->camera_id, cxt->cur_status.line_time,
-		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again, work_info->is_snapshot);
+	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%dCAP %d, enable: %d", cxt->camera_id, cxt->cur_status.line_time,
+		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again, work_info->is_snapshot, cxt->last_enable);
 
-	cxt->last_enable = 0;
+	if ((1 ==cxt->last_enable) && (FLASH_NONE == cxt->cur_status.settings.flash)) {
+		if (0 ==work_info->is_snapshot) {
+			cxt->last_enable = 0;
+			_set_restore_cnt(cxt);
+		} else {
+			_set_pause(cxt);
+			cxt->cur_status.settings.manual_mode = 0;
+			cxt->cur_status.settings.table_idx = 0;
+			cxt->cur_status.settings.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+			cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
+		}
+	}
 	cxt->is_snapshot = work_info->is_snapshot;
 
 	return rtn;
@@ -5693,12 +5752,13 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
-		if (nx_mod != cur_mod) {
+		if ((nx_mod != cur_mod)) {
 			ISP_LOGV("before set scene mode: \n");
 			_printf_status_log(cxt, cur_mod, &cxt->cur_status);
 			_set_scene_mode(cxt, cur_mod, nx_mod);
 			ISP_LOGV("after set scene mode: \n");
 			_printf_status_log(cxt, nx_mod, &cxt->cur_status);
+			//cxt->mod_update_list.is_scene = 0;
 		}
 	}
 	// END
@@ -5840,11 +5900,6 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 	cmr_s32 rtn = AE_ERROR;
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
 
-	if (cxt->last_enable) {
-		ISP_LOGI("video_stop to video_start, ae calc skip\n");
-		return AE_SUCCESS;
-	}
-
 	if (cxt->high_fps_info.is_high_fps)
 		rtn = ae_calculation_slow_motion(handle, param, result);
 	else
@@ -5918,8 +5973,26 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 			if (flicker->mode < AE_FLICKER_OFF) {
 				cxt->cur_status.settings.flicker = flicker->mode;
 				cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
+				if (AE_SCENE_NORMAL != cxt->sync_cur_status.settings.scene_mode) {
+					cmr_u32 i= 0;
+					struct ae_scene_info *scene_info = &cxt->cur_param->scene_info[0];
+					for (i = 0; i < AE_SCENE_NUM; ++i) {
+						ISP_LOGI("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
+						if ((1 == scene_info[i].enable) && ((cmr_u32)cxt->sync_cur_status.settings.scene_mode == scene_info[i].scene_mode)) {
+							break;
+						}
+					}
+					if (AE_SCENE_NUM > i) {
+						if (scene_info[i].table_enable) {
+							cxt->cur_status.ae_table = &scene_info[i].ae_table[cxt->cur_status.settings.flicker];
+						}
+					}
+				}
+				cxt->cur_status.ae_table->min_index = 0;
+				//cxt->mod_update_list.is_scene = 1;
+				ISP_LOGI("ae table: [%d, %d]\n", cxt->cur_status.ae_table->min_index, cxt->cur_status.ae_table->max_index);
 			}
-		ISP_LOGI("AE_SET_FLICKER %d\n", cxt->cur_status.settings.flicker);
+			ISP_LOGI("AE_SET_FLICKER %d\n", cxt->cur_status.settings.flicker);
 		}
 		break;
 
