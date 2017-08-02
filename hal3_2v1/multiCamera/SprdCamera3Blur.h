@@ -60,7 +60,7 @@ namespace sprdcamera {
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
 #define BLUR_LIB_BOKEH_CAPTURE2 "libBokeh2Frames.so"
 #define BLUR_LIB_BOKEH_NUM (2)
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (19)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
 #define BLUR_REFOCUS_2_PARAM_NUM (17)
 #define BLUR_AF_WINDOW_NUM (9)
 #define BLUR_MAX_ROI (10)
@@ -176,6 +176,7 @@ typedef struct {
     int circle_size;              // for version 1.0 only
     // for rectangle
     int valid_roi;
+    int total_roi;
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
     int flag[BLUR_MAX_ROI];                 // 0:face 1:body

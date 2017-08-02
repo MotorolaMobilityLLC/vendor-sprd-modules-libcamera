@@ -1467,9 +1467,9 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mUpdateCaptureWeightParams = true;
 
     // preview 720P v1.0 v1.1
-    mLastMinScope = 10;      // min_slope*1000
-    mLastMaxScope = 50;      // max_slope*1000
-    mLastAdjustRati = 20000; // findex2gamma_adjust_ratio*1000
+    mLastMinScope = 10;      // min_slope*10000
+    mLastMaxScope = 50;      // max_slope*10000
+    mLastAdjustRati = 20000; // findex2gamma_adjust_ratio*10000
     // mPreviewInitParams.SmoothWinSize = 11;
     // mPreviewInitParams.Scalingratio = 2;
     mPreviewInitParams.box_filter_size = 13;
@@ -1479,9 +1479,9 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
         (float)(mLastAdjustRati) / 10000;
 
     // capture 5M v1.0 v1.1
-    mLastMinScope = 4;       // min_slope*1000
-    mLastMaxScope = 19;      // max_slope*1000
-    mLastAdjustRati = 20000; // findex2gamma_adjust_ratio*1000
+    mLastMinScope = 4;        // min_slope*10000
+    mLastMaxScope = 19;       // max_slope*10000
+    mLastAdjustRati = 100000; // findex2gamma_adjust_ratio*10000
     mCaptureInitParams.SmoothWinSize = 5;
     mCaptureInitParams.Scalingratio = 8;
     mCaptureInitParams.box_filter_size = 7;
@@ -1547,7 +1547,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
             mCaptureWeightParams.roi_type = atoi(prop);
             if (atoi(prop) == 2) {
                 mPreviewWeightParams.roi_type = 1;
-                mCaptureInitParams.box_filter_size = 3;
+                mCaptureInitParams.box_filter_size = 1;
             }
         }
     }
@@ -1581,6 +1581,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     // capture weight params
     mCaptureWeightParams.f_number = 1;
     mCaptureWeightParams.valid_roi = 0;
+    mCaptureWeightParams.total_roi = 0;
     mCaptureWeightParams.rotate_angle = 0;
     mCaptureWeightParams.win_peak_pos = mWinPeakPos;
     memset(mCaptureWeightParams.x1, 0x00, sizeof(int) * BLUR_MAX_ROI);
@@ -1912,7 +1913,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                      .data.i32[k * 4 + 3]) *
                 mPreviewInitParams.height / origH;
 
-            if (k >= BLUR_MAX_ROI / 2 && mPreviewWeightParams.roi_type == 1) {
+            if (k >= BLUR_MAX_ROI / 2 && mPreviewWeightParams.roi_type != 0) {
                 metaSettings.update(ANDROID_STATISTICS_FACE_RECTANGLES,
                                     mFaceInfo, 4);
             }
@@ -1960,7 +1961,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     0,
                 };
 
-                // Don't blur which face width less than max face width x%
+                // Don't blur which face acreage less than max acreage width x%
                 property_get("persist.sys.cam.blur.face.prop1", prop1, "50");
 
                 // The face width increase by x%
@@ -2014,53 +2015,54 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     faceInfo[3] =
                         metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES)
                             .data.i32[i * 4 + 3];
-                    if (faceInfo[2] - faceInfo[0] < max * atoi(prop1) / 100) {
+
+                    if (mCaptureWeightParams.roi_type == 2) {
+                        if (mRotation == 0) {
+                            mCaptureWeightParams.x1[i] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                        } else if (mRotation == 90) {
+                            mCaptureWeightParams.x1[i] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                        } else if (mRotation == 180) {
+                            mCaptureWeightParams.x1[i] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                        } else {
+                            mCaptureWeightParams.x1[i] =
+                                faceInfo[0] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y1[i] =
+                                faceInfo[1] * mCaptureInitParams.height / origH;
+                            mCaptureWeightParams.x2[i] =
+                                faceInfo[2] * mCaptureInitParams.width / origW;
+                            mCaptureWeightParams.y2[i] =
+                                faceInfo[3] * mCaptureInitParams.height / origH;
+                        }
+                        mCaptureWeightParams.total_roi = face_num;
+                    }
+                    if (((faceInfo[2] - faceInfo[0]) *
+                         (faceInfo[2] - faceInfo[0])) <
+                        (max * max * atoi(prop1) / 100)) {
                         k++;
                         continue;
                     }
-                    if (mCaptureWeightParams.roi_type == 2) {
-                        if (mRotation == 0) {
-                            mCaptureWeightParams.x1[i - k] =
-                                faceInfo[2] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y1[i - k] =
-                                faceInfo[1] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.x2[i - k] =
-                                faceInfo[0] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y2[i - k] =
-                                faceInfo[3] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.valid_roi = face_num - k;
-                        } else if (mRotation == 90) {
-                            mCaptureWeightParams.x1[i - k] =
-                                faceInfo[2] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y1[i - k] =
-                                faceInfo[3] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.x2[i - k] =
-                                faceInfo[0] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y2[i - k] =
-                                faceInfo[1] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.valid_roi = face_num - k;
-                        } else if (mRotation == 180) {
-                            mCaptureWeightParams.x1[i - k] =
-                                faceInfo[0] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y1[i - k] =
-                                faceInfo[3] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.x2[i - k] =
-                                faceInfo[2] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y2[i - k] =
-                                faceInfo[1] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.valid_roi = face_num - k;
-                        } else {
-                            mCaptureWeightParams.x1[i - k] =
-                                faceInfo[0] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y1[i - k] =
-                                faceInfo[1] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.x2[i - k] =
-                                faceInfo[2] * mCaptureInitParams.width / origW;
-                            mCaptureWeightParams.y2[i - k] =
-                                faceInfo[3] * mCaptureInitParams.height / origH;
-                            mCaptureWeightParams.valid_roi = face_num - k;
-                        }
-                    }
+
                     if (mRotation == 270) {
                         int w = faceInfo[2] - faceInfo[0];
                         int h = faceInfo[3] - faceInfo[1];
@@ -2288,7 +2290,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     mPreviewWeightParams.flag[2 * (i - k) + 1] = 1;
                 }
                 mPreviewWeightParams.valid_roi = (face_num - k) * 2;
-
+                if (mCaptureWeightParams.roi_type == 2) {
+                    mCaptureWeightParams.valid_roi = face_num - k;
+                }
                 if (mBlurBody == true) {
                     mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
                                                   mPreviewWeightParams.x1[0]) /
@@ -2459,6 +2463,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t FNum = mCaptureWeightParams.f_number;
         uint32_t circle = mCaptureWeightParams.circle_size;
         uint32_t valid_roi = mCaptureWeightParams.valid_roi;
+        uint32_t total_roi = mCaptureWeightParams.total_roi;
         uint32_t MinScope = mLastMinScope;
         uint32_t MaxScope = mLastMaxScope;
         uint32_t AdjustRati = mLastAdjustRati;
@@ -2487,6 +2492,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
                                (unsigned char *)&FNum,
                                (unsigned char *)&circle,
                                (unsigned char *)&valid_roi,
+                               (unsigned char *)&total_roi,
                                (unsigned char *)&MinScope,
                                (unsigned char *)&MaxScope,
                                (unsigned char *)&AdjustRati,
