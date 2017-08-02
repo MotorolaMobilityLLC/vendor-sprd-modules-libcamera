@@ -5325,6 +5325,14 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGI("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
         break;
+    case CAMERA_EVT_CB_AE_FLASH_FIRED:
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
+        mSetting->setSPRDDEFTag(sprddefInfo);
+        HAL_LOGI("is_takepicture_with_flash = %d",
+                 sprddefInfo.is_takepicture_with_flash);
+        break;
     default:
         break;
     }
