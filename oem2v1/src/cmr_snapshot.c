@@ -5355,15 +5355,15 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
 
     CHECK_HANDLE_VALID(snapshot_handle);
     if (img) {
-        hal_mem_info_t mem_info;
-        bzero(&mem_info, sizeof(hal_mem_info_t));
+        cam_ion_buffer_t mem_info;
+        bzero(&mem_info, sizeof(cam_ion_buffer_t));
         mem_info.addr_vir = (void *)img->addr_vir.addr_y;
         mem_info.addr_phy = (void *)img->addr_phy.addr_y;
         mem_info.fd = img->fd;
         mem_info.size = img->size.width * img->size.height * 3 / 2;
         ret = snp_send_msg_notify_thr(
             snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_CB_FLUSH,
-            (void *)&mem_info, sizeof(hal_mem_info_t));
+            (void *)&mem_info, sizeof(cam_ion_buffer_t));
     }
     CMR_LOGD("done %ld", ret);
     return ret;

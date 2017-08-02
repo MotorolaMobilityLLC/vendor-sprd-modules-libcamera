@@ -5196,7 +5196,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FLUSH:
         HAL_LOGV("CAMERA_EVT_CB_FLUSH");
         {
-            hal_mem_info_t *mem_info = (hal_mem_info_t *)parm4;
+            cam_ion_buffer_t *mem_info = (cam_ion_buffer_t *)parm4;
             mPrevBufLock.lock();
             if (isPreviewing()) {
                 flushIonBuffer(mem_info->fd, mem_info->addr_vir,
@@ -5271,7 +5271,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         break;
     case CAMERA_EVT_CB_FLUSH: {
         HAL_LOGV("CAMERA_EVT_CB_FLUSH");
-        hal_mem_info_t *mem_info = (hal_mem_info_t *)parm4;
+        cam_ion_buffer_t *mem_info = (cam_ion_buffer_t *)parm4;
         flushIonBuffer(mem_info->fd, mem_info->addr_vir, mem_info->addr_phy,
                          mem_info->size);
         break;

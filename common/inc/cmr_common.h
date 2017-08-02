@@ -1206,7 +1206,7 @@ typedef struct {
     // offset from fd, always set to 0
     void *addr_phy;
     void *addr_vir;
-} hal_mem_info_t;
+} cam_ion_buffer_t;
 
 struct camera_position_type {
     long timestamp;
