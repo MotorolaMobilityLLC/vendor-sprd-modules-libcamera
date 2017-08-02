@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.124"
-#define SUB_VERSION             "-06-HAF-CoC40"
+#define VERSION             "2.125"
+#define SUB_VERSION             "-0728-00-golden_distance_trace_deinit"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -71,7 +71,7 @@
 #define ERR_UNKNOW          0x0002
 
 #define TOTAL_POS 1024
-#define SOFT_LANDING_ENABLE 0
+#define SOFT_LANDING_ENABLE 1
 
 #define MAX_SAMPLE_NUM	    25
 #define TOTAL_SAMPLE_NUM	29
@@ -665,6 +665,9 @@ typedef struct _afscan_status_s {
 	cmr_u32 peak_calc_cond;
 	cmr_s32 phase_diff_tbl[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 pd_conf_tbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 pd_peak_idx;
+	cmr_u32 inverse_calc_pos;
+	cmr_u32 reserve[64];	//for temp debug
 } afscan_status_t;
 
 typedef struct af_ctrl_pd_info_s {
@@ -681,8 +684,8 @@ typedef struct _af_control_status_s {
 	cmr_u32 state;
 	cmr_u32 frmid;
 	cmr_u32 scene_reg;
-	cmr_u32 scene_result;
-	cmr_u32 scene_event;
+	cmr_u32 scene_stable;
+	cmr_u32 stop_event;
 	cmr_u32 env_ena;
 	cmr_u32 env_reconv_cnt;
 	cmr_u32 env_reconv_limit;
@@ -701,6 +704,7 @@ typedef struct _af_control_status_s {
 	cmr_u32 lock_status;
 	cmr_u32 last_lock_status;
 	pd_info_t pd_info;
+	cmr_u32 reserve[64];	//for temp debug
 } afctrl_status_t;
 
 typedef struct af_scan_env_info_s {
@@ -718,6 +722,7 @@ typedef struct af_scan_env_info_s {
 	cmr_s32 phase_diff;
 	cmr_u32 pd_conf;
 	cmr_u32 af_y_avg;
+	cmr_u32 posture_status;
 } scan_env_info_t;
 
 typedef struct af_scan_info_s {
@@ -733,9 +738,15 @@ typedef struct af_scan_info_s {
 	cmr_u32 frmid_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 coast_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 ma_count;
-	cmr_u32 posture_status;
+	cmr_u32 reserve[32];	//for temp debug        
 } afscan_info_t;
 
+typedef struct af_prescan_info_s {
+	cmr_u32 curr_index;
+	cmr_u32 frmid[AF_CHECK_SCENE_HISTORY];
+	scan_env_info_t env[AF_CHECK_SCENE_HISTORY];
+	cmr_u32 reserved[64];
+} af_prescan_info_t;
 /* ========================== Structure ============================ */
 typedef struct afstat_frame_buffer_s {
 	cmr_u32 curr_frm_stat[FOCUS_STAT_WIN_TOTAL];
@@ -753,6 +764,7 @@ typedef struct afstat_frame_buffer_s {
 	cmr_u32 luma_avg;
 	//cmr_u32 multi_grid_sum[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function */
+	cmr_u32 reserve[32];	//for temp debug
 } afstat_frmbuf_t;
 
 typedef struct defocus_param_s {
@@ -765,6 +777,7 @@ typedef struct afdbg_ctrl_s {
 	cmr_u32 alg_msg;
 	cmr_u32 dump_info;
 	defocus_param_t defocus;
+	cmr_u32 reserve[16];	//for temp debug
 } afdbg_ctrl_t;
 
 typedef struct _af_process_s {
@@ -774,9 +787,8 @@ typedef struct _af_process_s {
 	afstat_frmbuf_t stat_data;
 	afdbg_ctrl_t dbg_ctrl;
 	aftuning_param_t adapt_af_param;	//adapt AF parameter
-	cmr_u32 pd_peak_idx;
-	cmr_u32 inverse_calc_pos;
-	cmr_u8 reserve[(128 * 4) - 4 - 4];	//for temp debug
+	af_prescan_info_t pre_scan_info;
+	cmr_u32 reserve[128];	//for temp debug
 } _af_process_t;
 
 typedef struct motion_sensor_result_s {
@@ -807,7 +819,8 @@ typedef struct pd_algo_focuing_s {
 	cmr_u32 cur_vcm_pos[PD_MAX_MOVECOUNT];
 	cmr_s32 delta_vcm[PD_MAX_MOVECOUNT];
 	cmr_u32 fv_info[PD_MAX_MOVECOUNT];
-	cmr_u32 reserved[16 - PD_MAX_MOVECOUNT];
+	cmr_u32 af_frmid[PD_MAX_MOVECOUNT];
+	cmr_u32 reserved[64];
 } pd_algo_focusing_t;
 
 typedef struct pd_algo_result_s {
@@ -877,7 +890,7 @@ typedef struct _pdaf_process_s {
 	cmr_u32 vcm_smooth_table[PD_MAX_MOVECOUNT];
 	cmr_u32 target_vcm_pos;
 	cmr_u32 statistics_dir;
-	cmr_u32 reserved[51 - PD_MAX_MOVECOUNT];
+	cmr_u32 reserved[128];
 } _pdaf_process_t;
 
 typedef struct motion_sensor_data_s {
@@ -945,13 +958,16 @@ typedef struct _face_af_tuning_s {
 	cmr_u32 reserved[10];
 } face_af_tuning_t;
 
-typedef struct _bokeh2frame_s {
+typedef struct _microdepth_s {
+	cmr_u32 tuning_enable;
 	cmr_u32 near_thr_low;
 	cmr_u32 near_thr_up;
 	cmr_u32 far_thr_low;
 	cmr_u32 far_thr_up;
+	cmr_u32 golden_vcm_steps[DISTANCE_MAP_TOTAL * 2];	// 4*DISTANCE_MAP_TOTAL*2 =96 bytes
+	cmr_u32 golden_distance[DISTANCE_MAP_TOTAL * 2];	// 4*DISTANCE_MAP_TOTAL*2 =96 bytes
 	cmr_u32 reverved[40];
-} bokeh2frame_t;
+} microdepth_t;
 
 typedef struct _af_tuning_param {
 	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
@@ -959,8 +975,8 @@ typedef struct _af_tuning_param {
 	AF_Softlanding_Config Soft_landing_param;	// 192bytes
 	face_af_tuning_t face_param;	// 92 bytes
 	_weight_table_t weight_table;	//288 bytes
-	bokeh2frame_t bokeh2frame_param;	// 176bytes
-	cmr_u8 dummy1[324 + 1506 - 192 - 92 - 288 - 176];
+	microdepth_t microdepth_param;	// 176bytes + 196 bytes
+	cmr_u8 dummy1[324 + 1506 - 192 - 92 - 288 - 372];
 #else				//long time for unused
 	//filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];       // AF filter threshold, 
 	//cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];     //BV threshold
@@ -1179,7 +1195,10 @@ typedef struct _AF_Data {
 	cmr_s32 far_shift;
 	cmr_u32 face_delay;
 	cmr_u64 FV_record;
-	bokeh2frame_t bokeh2frame_param;	// 176bytes
+	microdepth_t microdepth_param;	// 176bytes
+	cmr_u16 SAF_Softlanding_dac[MAX_SAMPLE_NUM * 2];
+	cmr_u32 SAF_Softlanding_index;
+	cmr_u32 SAF_Softlanding_enable;
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 
