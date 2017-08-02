@@ -110,10 +110,9 @@ otp_drv_entry_t imx258_drv_entry = {
                 {
                     .is_lsc_drv_decompression = FALSE,
                     .compress_flag = OTP_COMPRESSED_FLAG,
-                    .image_width = 4208,
-                    .image_height = 3120,
-                    .grid_width = 23,
-                    .grid_height = 18,
+                    .full_img_width = 4208,
+                    .full_img_height = 3120,
+                    .lsc_otp_grid = 96,
                     .gain_width = GAIN_WIDTH,
                     .gain_height = GAIN_HEIGHT,
                 },

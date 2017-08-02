@@ -127,10 +127,9 @@ otp_drv_entry_t ov5675_sunny_drv_entry = {
                 {
                     .is_lsc_drv_decompression = FALSE,
                     .compress_flag = OTP_COMPRESSED_FLAG,
-                    .image_width = 2592,
-                    .image_height = 1944,
-                    .grid_width = 22,
-                    .grid_height = 17,
+                    .full_img_width = 2592,
+                    .full_img_height = 1944,
+                    .lsc_otp_grid = 64,
                     .gain_width = GAIN_WIDTH,
                     .gain_height = GAIN_HEIGHT,
                 },

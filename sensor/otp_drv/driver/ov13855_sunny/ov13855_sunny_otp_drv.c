@@ -631,6 +631,12 @@ static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
         format_data->lsc_cali_dat.lsc_calib_random.offset;
     convert_data->dual_otp.master_lsc_info.lsc_data_size =
         format_data->lsc_cali_dat.lsc_calib_random.length;
+    convert_data->dual_otp.master_lsc_info.full_img_width =
+        ov13855_sunny_drv_entry.otp_cfg.base_info_cfg.full_img_width;
+    convert_data->dual_otp.master_lsc_info.full_img_height =
+        ov13855_sunny_drv_entry.otp_cfg.base_info_cfg.full_img_height;
+    convert_data->dual_otp.master_lsc_info.lsc_otp_grid =
+        ov13855_sunny_drv_entry.otp_cfg.base_info_cfg.lsc_otp_grid;
 
     /*lsc golden data*/
     convert_data->dual_otp.master_lsc_golden_info.lsc_data_addr =

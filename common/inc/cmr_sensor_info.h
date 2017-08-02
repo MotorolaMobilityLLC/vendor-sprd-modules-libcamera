@@ -354,6 +354,9 @@ struct sensor_otp_iso_awb_info {
 struct sensor_otp_lsc_info {
     cmr_u8 *lsc_data_addr;
     cmr_u16 lsc_data_size;
+    cmr_u32 full_img_width;
+    cmr_u32 full_img_height;
+    cmr_u32 lsc_otp_grid;
 };
 
 struct sensor_otp_ae_info {

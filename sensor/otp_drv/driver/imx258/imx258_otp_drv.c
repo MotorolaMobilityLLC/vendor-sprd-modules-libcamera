@@ -473,6 +473,12 @@ static cmr_int imx258_compatible_convert(cmr_handle otp_drv_handle,
         format_data->lsc_cali_dat.lsc_calib_random.offset;
     convert_data->single_otp.lsc_info.lsc_data_size =
         format_data->lsc_cali_dat.lsc_calib_random.length;
+    convert_data->single_otp.lsc_info.full_img_width =
+        imx258_drv_entry.otp_cfg.base_info_cfg.full_img_width;
+    convert_data->single_otp.lsc_info.full_img_height =
+        imx258_drv_entry.otp_cfg.base_info_cfg.full_img_height;
+    convert_data->single_otp.lsc_info.lsc_otp_grid =
+        imx258_drv_entry.otp_cfg.base_info_cfg.lsc_otp_grid;
     /*lsc golden data*/
     convert_data->single_otp.lsc_golden_info.lsc_data_addr =
         (cmr_u8 *)&format_data->lsc_cali_dat +

@@ -301,7 +301,10 @@ typedef struct {
     /*the height of the stream the sensor can output*/
     cmr_uint image_height;
 
-    /*the height of the stream the sensor can output*/
+    /*lsc otp grid: 16M-128, 13M/8M-96, 5M-64, 2M/0.5M-32*/
+    cmr_u32 lsc_otp_grid;
+    cmr_u32 full_img_width;
+    cmr_u32 full_img_height;
     cmr_uint grid_width;
     cmr_uint grid_height;
     cmr_uint gain_width;

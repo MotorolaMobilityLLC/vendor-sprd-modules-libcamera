@@ -140,10 +140,9 @@ otp_drv_entry_t ov13855_sunny_drv_entry = {
                 {
                     .is_lsc_drv_decompression = FALSE,
                     .compress_flag = OTP_COMPRESSED_FLAG,
-                    .image_width = 4224,
-                    .image_height = 3136,
-                    .grid_width = 23,
-                    .grid_height = 18,
+                    .full_img_width = 4224,
+                    .full_img_height = 3136,
+                    .lsc_otp_grid = 96,
                     .gain_width = GAIN_WIDTH,
                     .gain_height = GAIN_HEIGHT,
                 },
