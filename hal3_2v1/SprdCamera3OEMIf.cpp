@@ -349,12 +349,16 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         oem_module_t *omi;
 
         mHalOem = (oem_module_t *)malloc(sizeof(oem_module_t));
+        if (mHalOem == NULL) {
+            HAL_LOGE("mHalOem is NULL");
+            goto exit;
+        }
 
         handle = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
-
         if (handle == NULL) {
             char const *err_str = dlerror();
             HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
+            goto exit;
         }
 
         /* Get the address of the struct hal_module_info. */
@@ -362,6 +366,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         omi = (oem_module_t *)dlsym(handle, sym);
         if (omi == NULL) {
             HAL_LOGE("load: couldn't find symbol %s", sym);
+            goto exit;
         }
 
         mHalOem->dso = handle;
@@ -468,6 +473,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
     HAL_LOGI(":hal3: X cameraId: %d.", cameraId);
+
+exit:
+    HAL_LOGV("X");
 }
 
 SprdCamera3OEMIf::~SprdCamera3OEMIf() {
@@ -1658,9 +1666,10 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
                          strerror(errno));
                 HAL_LOGD("wait for thermald local server.");
                 usleep(200 * 1000);
-            } else
+            } else {
                 HAL_LOGD("got the thermald local server.");
-            break;
+                break;
+            }
         } else {
             HAL_LOGE("thermald service does not run now");
             therm_fd = -1;

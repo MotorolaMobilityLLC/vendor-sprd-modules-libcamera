@@ -3174,7 +3174,7 @@ int SprdCamera3Setting::updateWorkParameters(
             is_raw_capture = 1;
         }
 
-        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM];
+        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM] = {0};
         if (is_raw_capture == 1)
             memset(perfectskinlevel, 0, sizeof(int32_t)*SPRD_FACE_BEAUTY_PARAM_NUM);
         for (size_t i=0 ; i < (frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).count); i++){

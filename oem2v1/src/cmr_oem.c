@@ -4791,6 +4791,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             } else {
 #ifdef CONFIG_FACE_BEAUTY
                 struct face_beauty_levels beautyLevels;
+                memset(&beautyLevels, 0, sizeof(struct face_beauty_levels));
                 int pic_width = src->size.width;
                 int pic_height = src->size.height;
                 int face_beauty_on = 0;
