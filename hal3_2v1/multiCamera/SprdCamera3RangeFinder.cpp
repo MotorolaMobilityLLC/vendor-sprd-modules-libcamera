@@ -32,6 +32,21 @@
 
 using namespace android;
 namespace sprdcamera {
+#define MAX_NUM_CAMERAS 3
+#ifndef MAX_NUM_STREAMS
+#define MAX_NUM_STREAMS 2
+#endif
+
+#define MAX_UNMATCHED_QUEUE_SIZE 3
+#define FINDER_TIME_DIFF (1000e6)
+#define DEPTH_ENGINE_PATH "libdepthengine.so"
+#ifndef MAX_NOTIFY_QUEUE_SIZE
+#define MAX_NOTIFY_QUEUE_SIZE 100
+#endif
+#define CLEAR_NOTIFY_QUEUE 50
+#define UWINY1_MAX 240
+#define UWINY2_MAX 240
+#define LIB_SPRD_DEPTH_PATH "libsprddepth.so"
 
 SprdCamera3RangeFinder *gRangeFinder = NULL;
 
@@ -996,9 +1011,9 @@ int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
 
         mDepthApi->sprd_depth_Init =
             (void *(*)(depth_init_inputparam *inparam,
-                       depth_init_outputparam *outputinfo,
-                       depth_mode mode))dlsym(mDepthApi->handle,
-                                              "sprd_depth_Init");
+                       depth_init_outputparam *outputinfo, depth_mode mode,
+                       outFormat format))dlsym(mDepthApi->handle,
+                                               "sprd_depth_Init");
         if (mDepthApi->sprd_depth_Init == NULL) {
             error = dlerror();
             HAL_LOGE("sym sprd_depth_Init failed.error = %s", error);
@@ -1007,8 +1022,9 @@ int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
 
         mDepthApi->sprd_depth_Run =
             (int (*)(void *, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
-                     void *a_pInMain_YCC420NV21))dlsym(mDepthApi->handle,
-                                                       "sprd_depth_Run");
+                     void *a_pInMain_YCC420NV21,
+                     WeightParams *wParams))dlsym(mDepthApi->handle,
+                                                  "sprd_depth_Run");
         if (mDepthApi->sprd_depth_Run == NULL) {
             error = dlerror();
             HAL_LOGE("sym sprd_depth_Run failed.error = %s", error);
@@ -1374,7 +1390,7 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     } else {
         rc = mDepthApi->sprd_depth_Run(
             mDepthInitParam.handle, (void *)puwDisparityBuf,
-            (void *)pucBufSub_YCC420NV21, (void *)pucBufMain_YCC420NV21);
+            (void *)pucBufSub_YCC420NV21, (void *)pucBufMain_YCC420NV21, NULL);
         if (rc == 0) {
             HAL_LOGD("sprd_depth_Run ok");
         } else {
@@ -1676,8 +1692,11 @@ int SprdCamera3RangeFinder::configureStreams(
     if (mApiLibVersion == 1) {
         depth_init_inputparam init_parm;
         depth_init_outputparam outputinfo;
-        init_parm.input_width = mDepthWidth;
-        init_parm.input_height = mDepthHeight;
+        outFormat outformat;
+        init_parm.input_width_main = mDepthWidth;
+        init_parm.input_height_main = mDepthHeight;
+        init_parm.input_width_sub = mDepthWidth;
+        init_parm.input_height_sub = mDepthHeight;
         init_parm.output_depthwidth = mDepthWidth;
         init_parm.output_depthheight = mDepthHeight;
         init_parm.imageFormat_main = YUV420_NV12;
@@ -1686,9 +1705,10 @@ int SprdCamera3RangeFinder::configureStreams(
         init_parm.otpsize = SPRD_DUAL_OTP_SIZE;
         init_parm.config_param = NULL;
         depth_mode mode = MODE_CAPTURE;
+        outformat = MODE_DISPARITY;
         mMeasureThread->mDepthInitParam.handle =
             mMeasureThread->mDepthApi->sprd_depth_Init(&init_parm, &outputinfo,
-                                                       mode);
+                                                       mode, outformat);
         mMeasureThread->mDepthInitParam.outputsize = outputinfo.outputsize;
         if (!mMeasureThread->mDepthInitParam.handle) {
             HAL_LOGD("sprd_depth_Init failed.");

@@ -74,6 +74,7 @@ typedef enum {
     SNAPSHOT_DEPTH_BUFFER,
     SNAPSHOT_TRANSFORM_BUFFER,
     DEPTH_OUT_BUFFER,
+    DEPTH_OUT_WEIGHTMAP,
     YUV420
 } camera_buffer_type_t;
 
@@ -98,10 +99,43 @@ enum sensor_stream_ctrl {
 
 typedef enum { YUV420_NV12 = 0, YUV422_YUYV } ImageYUVFormat;
 typedef enum { MODE_PREVIEW, MODE_CAPTURE } depth_mode;
+typedef enum { MODE_DISPARITY, MODE_WEIGHTMAP } outFormat;
 
 typedef struct {
-    int input_width;
-    int input_height;
+    int sel_x;       /* The point which be touched */
+    int sel_y;       /* The point which be touched */
+    int bokeh_level; // The strength of bokeh region 0~255
+    char *config_param;
+} bokeh_cap_params_t;
+
+typedef struct {
+    int width;  // image width
+    int height; // image height
+    int depth_width;
+    int depth_height;
+    int SmoothWinSize;          // odd number
+    int ClipRatio;              // RANGE 1:64
+    int Scalingratio;           // 2,4,6,8
+    int DisparitySmoothWinSize; // odd number
+} InitParams;
+
+typedef struct {
+    int F_number; // 1 ~ 20
+    int sel_x;    /* The point which be touched */
+    int sel_y;    /* The point which be touched */
+    unsigned char *DisparityImage;
+} WeightParams;
+
+typedef struct {
+    InitParams init_params;
+    WeightParams weight_params;
+} bokeh_prev_params_t;
+
+struct depth_init_inputparam {
+    int input_width_main;
+    int input_height_main;
+    int input_width_sub;
+    int input_height_sub;
     int output_depthwidth;
     int output_depthheight;
     ImageYUVFormat imageFormat_main;
@@ -109,7 +143,7 @@ typedef struct {
     void *potpbuf;
     int otpsize;
     char *config_param;
-} depth_init_inputparam;
+};
 
 typedef struct {
     int outputsize;
@@ -135,11 +169,11 @@ typedef struct {
                                       unsigned int a_udInSize);
     void *(*sprd_depth_Init)(depth_init_inputparam *inparam,
                              depth_init_outputparam *outputinfo,
-                             depth_mode mode);
+                             depth_mode mode, outFormat format);
 
     int (*sprd_depth_Run)(void *handle, void *a_pOutDisparity,
-                          void *a_pInSub_YCC420NV21,
-                          void *a_pInMain_YCC420NV21);
+                          void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
+                          WeightParams *wParams);
     int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
                              int angle);
     int (*sprd_depth_distancemeasurement)(int *distance, void *disparity,

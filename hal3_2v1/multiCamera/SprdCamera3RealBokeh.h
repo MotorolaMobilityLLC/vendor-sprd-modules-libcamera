@@ -66,6 +66,7 @@
 
 namespace sprdcamera {
 #define BOKEH_YUV_DATA_TRANSFORM
+
 #ifdef BOKEH_YUV_DATA_TRANSFORM
 #define LOCAL_CAPBUFF_NUM (5)
 #else
@@ -77,27 +78,7 @@ namespace sprdcamera {
     (LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + LOCAL_DEPTH_OUTBUFF_NUM)
 
 #define REAL_BOKEH_MAX_NUM_STREAMS 3
-#define BOKEH_THREAD_TIMEOUT 50e6
-#define LIB_BOKEH_PATH "libsprdbokeh.so"
-#define LIB_DEPTH_PATH "libsprddepth.so"
-#define LIB_BOKEH_PREVIEW_PATH "libbokeh_depth.so"
-#define LIB_ARCSOFT_BOKEH_PATH "libarcsoft_dualcam_refocus.so"
-#define BOKEH_REFOCUS_COMMON_PARAM_NUM (12)
-#define ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM (9)
-#define DEPTH_OUTPUT_WIDTH (160)
-#define DEPTH_OUTPUT_HEIGHT (120)
-#define DEPTH_DATA_SIZE (68)
-#define ARCSOFT_DEPTH_DATA_SIZE (561616)
 #define ARCSOFT_CALIB_DATA_SIZE (2048)
-
-#define BOKEH_CIRCLE_SIZE_SCALE (3)
-#define BOKEH_SMOOTH_SIZE_SCALE (8)
-#define BOKEH_CIRCLE_VALUE_MIN (20)
-
-/* refocus api error code */
-#define ALRNB_ERR_SUCCESS 0x00
-
-#define BOKEH_TIME_DIFF (100e6)
 
 typedef struct {
     uint32_t frame_number;
@@ -134,36 +115,6 @@ typedef struct {
     captureMsgType_bokeh msg_type;
     buffer_combination_t_bokeh combo_buff;
 } capture_queue_msg_t_bokeh;
-
-typedef struct {
-    int sel_x;       /* The point which be touched */
-    int sel_y;       /* The point which be touched */
-    int bokeh_level; // The strength of bokeh region 0~255
-    char *config_param;
-} bokeh_cap_params_t;
-
-typedef struct {
-    int width;  // image width
-    int height; // image height
-    int depth_width;
-    int depth_height;
-    int SmoothWinSize;          // odd number
-    int ClipRatio;              // RANGE 1:64
-    int Scalingratio;           // 2,4,6,8
-    int DisparitySmoothWinSize; // odd number
-} InitParams;
-
-typedef struct {
-    int F_number; // 1 ~ 20
-    int sel_x;    /* The point which be touched */
-    int sel_y;    /* The point which be touched */
-    unsigned char *DisparityImage;
-} WeightParams;
-
-typedef struct {
-    InitParams init_params;
-    WeightParams weight_params;
-} bokeh_prev_params_t;
 
 typedef struct {
     void *handle;
@@ -356,7 +307,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
                                buffer_handle_t *input_buf1,
                                buffer_handle_t *depth_bufer);
         int depthPreviewHandle(buffer_handle_t *output_bufer,
-                               buffer_handle_t *scaled_buffer,
                                buffer_handle_t *input_buf1,
                                buffer_handle_t *input_buf2);
 
@@ -390,10 +340,14 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mCallbackHeight;
     int mDepthOutWidth;
     int mDepthOutHeight;
+    int mDepthSnapOutWidth;
+    int mDepthSnapOutHeight;
     int mDepthPrevImageWidth;
     int mDepthPrevImageHeight;
     int mDepthSnapImageWidth;
     int mDepthSnapImageHeight;
+    outFormat mDepthPrevFormat;
+    camera_buffer_type_t mDepthPrevbufType;
     uint8_t mCaptureStreamsNum;
     uint8_t mCallbackStreamsNum;
     uint8_t mPreviewStreamsNum;
@@ -411,6 +365,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     ARC_DC_CALDATA mCaliData;
     uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
     char mArcSoftCalibData[ARCSOFT_CALIB_DATA_SIZE];
+    int mMaxPendingCount;
+    int mPendingRequest;
+    Mutex mPendingLock;
+    Condition mRequestSignal;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);

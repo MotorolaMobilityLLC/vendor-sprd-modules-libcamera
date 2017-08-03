@@ -51,23 +51,9 @@
 
 namespace sprdcamera {
 
-#define MAX_NUM_CAMERAS 3
-#ifndef MAX_NUM_STREAMS
-#define MAX_NUM_STREAMS 2
-#endif
 #ifndef MAX_FINDER_QEQUEST_BUF
 #define MAX_FINDER_QEQUEST_BUF 16
 #endif
-#define MAX_UNMATCHED_QUEUE_SIZE 3
-#define FINDER_TIME_DIFF (1000e6)
-#define DEPTH_ENGINE_PATH "libdepthengine.so"
-#ifndef MAX_NOTIFY_QUEUE_SIZE
-#define MAX_NOTIFY_QUEUE_SIZE 100
-#endif
-#define CLEAR_NOTIFY_QUEUE 50
-#define UWINY1_MAX 240
-#define UWINY2_MAX 240
-#define LIB_SPRD_DEPTH_PATH "libsprddepth.so"
 
 typedef int alDE_ERR_CODE;
 

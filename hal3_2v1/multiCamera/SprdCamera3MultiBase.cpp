@@ -65,7 +65,7 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
 }
 
 int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
-                                           size_t size) {
+                                         size_t size) {
     int ret = 0;
     ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
     if (ret) {
@@ -88,6 +88,8 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     HAL_LOGI("E");
     if (type == DEPTH_OUT_BUFFER) {
         mem_size = w * h + 68;
+    } else if (type == DEPTH_OUT_WEIGHTMAP) {
+        mem_size = w * h * 2;
     } else {
         mem_size = w * h * 3 / 2;
     }
