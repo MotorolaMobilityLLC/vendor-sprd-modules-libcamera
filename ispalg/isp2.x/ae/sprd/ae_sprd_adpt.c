@@ -583,8 +583,8 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			cmr_u32 ae_expline = write_param->exp_line;
 			memset(&exp, 0, sizeof(exp));
 			ae_expline = ae_expline & 0x0000ffff;
-			ae_expline |= (write_param->dummy < 0x10) & 0x0fff0000;
-			ae_expline |= (size_index << 0x1c) & 0xf0000000;
+			ae_expline |= ((write_param->dummy < 0x10) & 0x0fff0000);
+			ae_expline |= ((size_index << 0x1c) & 0xf0000000);
 			exp.exposure = ae_expline;
 			if ((write_param->exp_line != prv_param->exp_line)
 				|| (write_param->dummy != prv_param->dummy)) {
@@ -624,7 +624,7 @@ static cmr_s32 ae_result_update_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct ae_exposure_param write_param;
-	struct q_item write_item;
+	struct q_item write_item = { 0, 0, 0, 0, 0 };
 	struct q_item actual_item;
 
 	if (0 == cxt) {
@@ -2473,7 +2473,7 @@ static cmr_s32 _set_restore_cnt(struct ae_ctrl_cxt *cxt)
 static int32_t _aem_stat_preprocess(cmr_u32 *src_aem_stat, cmr_u16 *dst_aem_stat, struct ae_size aem_blk_size, struct ae_size aem_blk_num, cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
+	cmr_u32 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32*)src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32*)src_aem_stat + stat_blocks;
@@ -3580,7 +3580,7 @@ static int _aem_stat_preprocess2(cmr_u32 *src_aem_stat,
                                  cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
+	cmr_u32 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32*)src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32*)src_aem_stat + stat_blocks;
@@ -3857,7 +3857,7 @@ void reduceFlashIndexTab(int n, int* indTab, float* maTab, float maMax, int nMax
 	}
 	while (nCur > nMax)
 	{
-		int indSort[256];
+		int indSort[256] = {0};
 		for (i = 0; i<nCur - 2; i++)
 		{
 			int ind_1;
@@ -3896,43 +3896,45 @@ void readFCConfig(char* f, struct FCData* d, char* fout)
 	int i;
 	FILE* fp;
 	fp = fopen(f, "rt");
-	fscanf(fp, "%d", &d->numP1_hw);
-	fscanf(fp, "%d", &d->numP2_hw);
-	fscanf(fp, "%d", &d->numM1_hw);
-	fscanf(fp, "%d", &d->numM2_hw);
+	if(fp){
+		fscanf(fp, "%d", &d->numP1_hw);
+		fscanf(fp, "%d", &d->numP2_hw);
+		fscanf(fp, "%d", &d->numM1_hw);
+		fscanf(fp, "%d", &d->numM2_hw);
 
-	fscanf(fp, "%d", &d->numP1_hwSample);
-	for (i = 0; i < d->numP1_hwSample; i++)
-		fscanf(fp, "%d", &d->indP1_hwSample[i]);
-	for (i = 0; i < d->numP1_hwSample; i++)
-		fscanf(fp, "%f", &d->maP1_hwSample[i]);
+		fscanf(fp, "%d", &d->numP1_hwSample);
+		for (i = 0; i < d->numP1_hwSample; i++)
+			fscanf(fp, "%d", &d->indP1_hwSample[i]);
+		for (i = 0; i < d->numP1_hwSample; i++)
+			fscanf(fp, "%f", &d->maP1_hwSample[i]);
 
-	fscanf(fp, "%d", &d->numP2_hwSample);
-	for (i = 0; i < d->numP2_hwSample; i++)
-		fscanf(fp, "%d", &d->indP2_hwSample[i]);
-	for (i = 0; i < d->numP2_hwSample; i++)
-		fscanf(fp, "%f", &d->maP2_hwSample[i]);
+		fscanf(fp, "%d", &d->numP2_hwSample);
+		for (i = 0; i < d->numP2_hwSample; i++)
+			fscanf(fp, "%d", &d->indP2_hwSample[i]);
+		for (i = 0; i < d->numP2_hwSample; i++)
+			fscanf(fp, "%f", &d->maP2_hwSample[i]);
 
 
-	fscanf(fp, "%d", &d->numM1_hwSample);
-	for (i = 0; i < d->numM1_hwSample; i++)
-		fscanf(fp, "%d", &d->indM1_hwSample[i]);
-	for (i = 0; i < d->numM1_hwSample; i++)
-		fscanf(fp, "%f", &d->maM1_hwSample[i]);
+		fscanf(fp, "%d", &d->numM1_hwSample);
+		for (i = 0; i < d->numM1_hwSample; i++)
+			fscanf(fp, "%d", &d->indM1_hwSample[i]);
+		for (i = 0; i < d->numM1_hwSample; i++)
+			fscanf(fp, "%f", &d->maM1_hwSample[i]);
 
-	fscanf(fp, "%d", &d->numM2_hwSample);
-	for (i = 0; i < d->numM2_hwSample; i++)
-		fscanf(fp, "%d", &d->indM2_hwSample[i]);
-	for (i = 0; i < d->numM2_hwSample; i++)
-		fscanf(fp, "%f", &d->maM2_hwSample[i]);
+		fscanf(fp, "%d", &d->numM2_hwSample);
+		for (i = 0; i < d->numM2_hwSample; i++)
+			fscanf(fp, "%d", &d->indM2_hwSample[i]);
+		for (i = 0; i < d->numM2_hwSample; i++)
+			fscanf(fp, "%f", &d->maM2_hwSample[i]);
 
-	fscanf(fp, "%f", &d->mAMaxP1);
-	fscanf(fp, "%f", &d->mAMaxP2);
-	fscanf(fp, "%f", &d->mAMaxP12);
-	fscanf(fp, "%f", &d->mAMaxM1);
-	fscanf(fp, "%f", &d->mAMaxM2);
-	fscanf(fp, "%f", &d->mAMaxM12);
-	fclose(fp);
+		fscanf(fp, "%f", &d->mAMaxP1);
+		fscanf(fp, "%f", &d->mAMaxP2);
+		fscanf(fp, "%f", &d->mAMaxP12);
+		fscanf(fp, "%f", &d->mAMaxM1);
+		fscanf(fp, "%f", &d->mAMaxM2);
+		fscanf(fp, "%f", &d->mAMaxM12);
+		fclose(fp);
+	}
 
 	if (fout != 0)
 	{
@@ -4179,12 +4181,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					if (gmean<10)
 					{
 						caliData->expTime *= 25;
-						caliData->gain = caliData->gain;
 					}
 					else
 					{
 						caliData->expTime *= 300 / gmean;
-						caliData->gain = caliData->gain;
 					}
 					if (caliData->expTime>0.05 * AEC_LINETIME_PRECESION)
 					{
@@ -5189,7 +5189,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cmr_s32 mode = 0;
 	struct ae_trim trim;
 	cmr_u32 max_exp = 0;
-	struct ae_exposure_param src_exp;
+	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;

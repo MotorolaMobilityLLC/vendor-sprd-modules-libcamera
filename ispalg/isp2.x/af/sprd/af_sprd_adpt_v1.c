@@ -2113,9 +2113,9 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	af->pd.pd_enable = (af->pd.effective_frmid) ? 1 : 0;
 	af->pd.pd_roi_num = pd_calc_result->pd_roi_num;
 	//transfer full phase diff data value to algorithm
-	memcpy(&(af->pd.confidence[0]), &(pd_calc_result->pdConf[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
-	memcpy(&(af->pd.pd_value[0]), &(pd_calc_result->pdPhaseDiff[0]), sizeof(double) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
-	memcpy(&(af->pd.pd_roi_dcc[0]), &(pd_calc_result->pdDCCGain[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+	memcpy(&(af->pd.confidence[0]), &(pd_calc_result->pdConf[0]), sizeof(cmr_u32) * (af->pd.pd_roi_num));
+	memcpy(&(af->pd.pd_value[0]), &(pd_calc_result->pdPhaseDiff[0]), sizeof(double) * (af->pd.pd_roi_num));
+	memcpy(&(af->pd.pd_roi_dcc[0]), &(pd_calc_result->pdDCCGain[0]), sizeof(cmr_u32) * (af->pd.pd_roi_num));
 	af->trigger_source_type |= AF_DATA_PD;
 	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n", pd_calc_result->pdPhaseDiff[0], pd_calc_result->pdPhaseDiff[1], pd_calc_result->pdPhaseDiff[2], pd_calc_result->pdPhaseDiff[3]);
 	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n", pd_calc_result->pdConf[0], pd_calc_result->pdConf[1], pd_calc_result->pdConf[2], pd_calc_result->pdConf[3],
