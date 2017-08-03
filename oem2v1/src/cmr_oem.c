@@ -851,13 +851,6 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             CMR_LOGE("failed to transfer frame to ipm %ld", ret);
             goto exit;
         }
-        cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle,
-                                  &imp_out_param.dst_frame);
-        /*		if(ipm_cxt->frm_num == ipm_cxt->hdr_num) {
-                                camera_post_share_path_available((cmr_handle)cxt);
-                                sem_wait(&cxt->hdr_sync_sm);
-                                cxt->ipm_cxt.frm_num = 0;
-                        }*/
     } else {
         camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
     }
@@ -1505,20 +1498,32 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         break;
     }
     CMR_LOGI("camera_cb %ld %ld", oem_cb_type, oem_func);
+    // TBD: remove camera_frame_type and cam_ion_buffer_t, only data and size
     if (param) {
-        message.data = malloc(sizeof(struct camera_frame_type));
-        if (!message.data) {
-            CMR_LOGE("failed to malloc msg");
-            ret = -CMR_CAMERA_NO_MEM;
-            return;
+        if (oem_cb_type == CAMERA_EVT_CB_FLUSH) {
+            message.data = malloc(sizeof(cam_ion_buffer_t));
+            if (!message.data) {
+                CMR_LOGE("malloc failed");
+                ret = -CMR_CAMERA_NO_MEM;
+                goto exit;
+            }
+            message.alloc_flag = 1;
+            memcpy(message.data, param, sizeof(cam_ion_buffer_t));
+        } else {
+            message.data = malloc(sizeof(struct camera_frame_type));
+            if (!message.data) {
+                CMR_LOGE("failed to malloc msg");
+                ret = -CMR_CAMERA_NO_MEM;
+                goto exit;
+            }
+            message.alloc_flag = 1;
+            frame_ptr = (struct camera_frame_type *)message.data;
+            memcpy(message.data, param, sizeof(struct camera_frame_type));
+            frame_ptr->sensor_info.exposure_time_numerator =
+                cxt->sn_cxt.exif_info.ExposureTime.numerator;
+            frame_ptr->sensor_info.exposure_time_denominator =
+                cxt->sn_cxt.exif_info.ExposureTime.denominator;
         }
-        message.alloc_flag = 1;
-        frame_ptr = (struct camera_frame_type *)message.data;
-        memcpy(message.data, param, sizeof(struct camera_frame_type));
-        frame_ptr->sensor_info.exposure_time_numerator =
-            cxt->sn_cxt.exif_info.ExposureTime.numerator;
-        frame_ptr->sensor_info.exposure_time_denominator =
-            cxt->sn_cxt.exif_info.ExposureTime.denominator;
     }
     message.msg_type = oem_func;
     message.sub_msg_type = oem_cb_type;
@@ -1538,7 +1543,10 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         if (message.data) {
             free(message.data);
         }
+        goto exit;
     }
+exit:
+    CMR_LOGV("X");
 }
 
 void camera_set_3dnr_flag(struct camera_context *cxt, cmr_u32 threednr_flag) {
@@ -4649,7 +4657,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     cmr_u32 tmp = 0;
     struct timespec start_time, end_time;
     unsigned int duration;
-    int filter_type = 0;
+    cmr_s32 filter_type = 0;
 
     if (!caller_handle || !oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
@@ -4773,10 +4781,11 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                                 SETTING_GET_FILTER_TEYP, &setting_param);
         if (ret) {
             CMR_LOGE("failed to get filtertype %ld", ret);
-        } else {
-            filter_type = setting_param.cmd_type_value;
-            CMR_LOGD("filter type:%d", filter_type);
+            goto exit;
         }
+        filter_type = setting_param.cmd_type_value;
+        CMR_LOGD("filter type:%d", filter_type);
+
         if (cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
             cxt->is_multi_mode == MODE_SELF_SHOT) {
             if (filter_type > 0) {

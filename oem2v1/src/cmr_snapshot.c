@@ -554,21 +554,21 @@ cmr_int snp_notify_thread_proc(struct cmr_msg *message, void *p_data) {
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGD("message.msg_type 0x%x, data 0x%lx", message->msg_type,
-             (cmr_uint)message->data);
-
-    if (SNAPSHOT_CB_MAX > message->msg_type) {
-        if (cxt->oem_cb) {
-            cxt->oem_cb(cxt->oem_handle, message->msg_type,
-                        message->sub_msg_type, message->data);
-        } else {
-            CMR_LOGE("err, oem cb is null");
-        }
-    } else {
-        CMR_LOGE("don't support this 0x%x", message->msg_type);
+    if (cxt == NULL || cxt->oem_cb == NULL) {
+        CMR_LOGE("param error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
     }
+    CMR_LOGD("message.msg_type 0x%x, data %p", message->msg_type,
+             message->data);
+    if (message->msg_type >= SNAPSHOT_CB_MAX) {
+        CMR_LOGE("don't support this 0x%x", message->msg_type);
+        goto exit;
+    }
+    cxt->oem_cb(cxt->oem_handle, message->msg_type, message->sub_msg_type,
+                message->data);
+
 exit:
-    CMR_LOGD("done %ld", ret);
     return ret;
 }
 
@@ -1375,7 +1375,6 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data) {
 
 #ifdef CAMERA_BRINGUP
     camera_scale_down_software(&src, &dst);
-    cmr_snapshot_memory_flush(snp_cxt, &dst);
 #else
     ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst,
                                    &mean);
@@ -3824,10 +3823,10 @@ cmr_int snp_send_msg_notify_thr(cmr_handle snp_handle, cmr_int func_type,
         if (!message.data) {
             ret = CMR_CAMERA_NO_MEM;
             goto exit;
-        } else {
-            memcpy(message.data, data, data_len);
-            message.alloc_flag = 1;
         }
+        memcpy(message.data, data, data_len);
+        message.alloc_flag = 1;
+
     } else {
         message.alloc_flag = 0;
     }
@@ -3840,6 +3839,7 @@ cmr_int snp_send_msg_notify_thr(cmr_handle snp_handle, cmr_int func_type,
         if (message.data) {
             free(message.data);
             message.data = NULL;
+            goto exit;
         }
     }
 exit:
@@ -5352,20 +5352,31 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
                                   struct img_frm *img) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snapshot_handle;
+    cam_ion_buffer_t ion_buf;
 
+    CMR_LOGD("E");
+
+    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
     CHECK_HANDLE_VALID(snapshot_handle);
-    if (img) {
-        cam_ion_buffer_t mem_info;
-        bzero(&mem_info, sizeof(cam_ion_buffer_t));
-        mem_info.addr_vir = (void *)img->addr_vir.addr_y;
-        mem_info.addr_phy = (void *)img->addr_phy.addr_y;
-        mem_info.fd = img->fd;
-        mem_info.size = img->size.width * img->size.height * 3 / 2;
-        ret = snp_send_msg_notify_thr(
-            snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_CB_FLUSH,
-            (void *)&mem_info, sizeof(cam_ion_buffer_t));
+
+    if (img == NULL) {
+        CMR_LOGE("img = %p", img);
+        goto exit;
     }
-    CMR_LOGD("done %ld", ret);
+    ion_buf.fd = img->fd;
+    ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
+    ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
+    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+    ret = snp_send_msg_notify_thr(snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                  SNAPSHOT_EVT_CB_FLUSH, (void *)&ion_buf,
+                                  sizeof(cam_ion_buffer_t));
+    if (ret) {
+        CMR_LOGE("SNAPSHOT_EVT_CB_FLUSH failed, ret = %ld", ret);
+        goto exit;
+    }
+
+    CMR_LOGD("X");
+exit:
     return ret;
 }
 

@@ -5205,11 +5205,11 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FLUSH:
         HAL_LOGV("CAMERA_EVT_CB_FLUSH");
         {
-            cam_ion_buffer_t *mem_info = (cam_ion_buffer_t *)parm4;
+            cam_ion_buffer_t *ion_buffer = (cam_ion_buffer_t *)parm4;
             mPrevBufLock.lock();
             if (isPreviewing()) {
-                flushIonBuffer(mem_info->fd, mem_info->addr_vir,
-                                 mem_info->addr_phy, mem_info->size);
+                flushIonBuffer(ion_buffer->fd, ion_buffer->addr_vir,
+                               ion_buffer->addr_phy, ion_buffer->size);
             }
             mPrevBufLock.unlock();
         }
@@ -5273,6 +5273,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     camera_position_type pt = {0, 0, 0, 0, NULL};
     SPRD_DEF_Tag sprddefInfo; /**add for 3d calibration*/
     memset(&sprddefInfo, 0, sizeof(SPRD_DEF_Tag));
+    cam_ion_buffer_t *ion_buffer = NULL;
 
     switch (cb) {
     case CAMERA_EXIT_CB_PREPARE:
@@ -5280,9 +5281,9 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         break;
     case CAMERA_EVT_CB_FLUSH: {
         HAL_LOGV("CAMERA_EVT_CB_FLUSH");
-        cam_ion_buffer_t *mem_info = (cam_ion_buffer_t *)parm4;
-        flushIonBuffer(mem_info->fd, mem_info->addr_vir, mem_info->addr_phy,
-                         mem_info->size);
+        ion_buffer = (cam_ion_buffer_t *)parm4;
+        flushIonBuffer(ion_buffer->fd, ion_buffer->addr_vir,
+                       ion_buffer->addr_phy, ion_buffer->size);
         break;
     }
     case CAMERA_RSP_CB_SUCCESS: {
@@ -5770,15 +5771,18 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
     HAL_LOGV("X");
 }
 
-int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr,
-                                       void *p_addr, size_t size) {
+int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
+                                     size_t size) {
     ATRACE_CALL();
+    HAL_LOGD("E");
     int ret = 0;
-    ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, p_addr, size);
+    ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
     if (ret) {
-        HAL_LOGE("abnormal ret=%d", ret);
-        HAL_LOGE("fd=%d,vaddr=%p, paddr=%p", buffer_fd, v_addr, p_addr);
+        HAL_LOGE("Flush_ion_buffer failed, ret=%d", ret);
+        goto exit;
     }
+    HAL_LOGD("X");
+exit:
     return ret;
 }
 
