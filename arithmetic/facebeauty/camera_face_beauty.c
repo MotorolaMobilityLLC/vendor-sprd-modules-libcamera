@@ -191,17 +191,17 @@ void construct_fb_level(struct class_fb *faceBeauty,
     // init the static parameters table. save the value until the process is
     // restart or the device is restart.
     unsigned char preview_whitenLevel[NUM_LEVELS] = {0,  15, 20, 30, 40,
-                                                      45, 50, 55, 60, 65};
+                                                     45, 50, 55, 60, 65};
     unsigned char preview_cleanLevel[NUM_LEVELS] = {0,  15, 20, 30, 40,
-                                                      45, 50, 55, 60, 65};
+                                                    45, 50, 55, 60, 65};
     unsigned char picture_whitenLevel[NUM_LEVELS] = {0,  10, 15, 20, 25,
                                                      30, 35, 40, 45, 50};
     unsigned char picture_cleanLevel[NUM_LEVELS] = {0,  10, 15, 20, 25,
                                                     30, 35, 40, 45, 50};
-    unsigned char face_slimLevel[NUM_LEVELS] = {0, 6, 8, 10, 15,
-                                                     18, 25, 30, 35, 40};
-    unsigned char eye_largeLevel[NUM_LEVELS] = {0, 8, 10, 15, 20,
-                                                      25, 30, 40, 45, 50};
+    unsigned char face_slimLevel[NUM_LEVELS] = {0,  6,  8,  10, 15,
+                                                18, 25, 30, 35, 40};
+    unsigned char eye_largeLevel[NUM_LEVELS] = {0,  8,  10, 15, 20,
+                                                25, 30, 40, 45, 50};
     unsigned char tab_skinWhitenLevel[NUM_LEVELS];
     unsigned char tab_skinCleanLevel[NUM_LEVELS];
     unsigned char tab_faceSlimLevel[NUM_LEVELS];
@@ -357,10 +357,35 @@ void construct_fb_level(struct class_fb *faceBeauty,
     }
 }
 
+void save_yuv_data(int num, int width, int height, unsigned char *addr_y) {
+    char file_name[80];
+    char tmp_str[20];
+    FILE *fp = NULL;
+    memset(file_name, '\0', 80);
+    strcpy(file_name, "/data/misc/cameraserver/");
+    sprintf(tmp_str, "%d-%d", num, width);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "x");
+    sprintf(tmp_str, "%d,nv21", height);
+    strcat(file_name, tmp_str);
+
+    ALOGD("file name %s", file_name);
+    fp = fopen(file_name, "wb");
+
+    if (NULL == fp) {
+        ALOGE("cannot open file:%s \n", file_name);
+        return;
+    }
+
+    fwrite(addr_y, 1, width * height * 3 / 2, fp);
+    fclose(fp);
+}
+
 void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
 
     int retVal = 0;
-    struct timespec start_time ,end_time;
+    struct timespec start_time, end_time;
+    char value[PROPERTY_VALUE_MAX];
     unsigned int duration;
     if (!faceBeauty) {
         ALOGE("do_face_beauty faceBeauty is null");
@@ -374,7 +399,8 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             faceBeauty->hSprdFB, &(faceBeauty->fb_image),
             &(faceBeauty->fb_option), faceBeauty->fb_face, faceCount);
         clock_gettime(CLOCK_BOOTTIME, &end_time);
-        duration = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
+        duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
+                   (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
         ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
     } else {
         faceBeauty->arc_fb_face.lFaceNum = faceCount;
@@ -392,11 +418,31 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                                           FEATURE_FACE_SLENDER_KEY,
                                           faceBeauty->faceSlender);
             clock_gettime(CLOCK_BOOTTIME, &start_time);
+            ALOGD("format : %d,w %d,h %d , white %d ,soft %d",
+                  faceBeauty->arc_fb_image.u32PixelArrayFormat,
+                  faceBeauty->arc_fb_image.i32Width,
+                  faceBeauty->arc_fb_image.i32Height, faceBeauty->faceSoften,
+                  faceBeauty->faceWhiten);
+            property_get("persist.sys.cam.beauty.dump", value, "off");
+            if (!strcmp(value, "on")) {
+                save_yuv_data(11, faceBeauty->arc_fb_image.i32Width,
+                              faceBeauty->arc_fb_image.i32Height,
+                              faceBeauty->arc_fb_image.ppu8Plane[0]);
+            }
+
             retVal = arcsoft_bsv_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
+
+            property_get("persist.sys.cam.beauty.dump", value, "off");
+            if (!strcmp(value, "on")) {
+                save_yuv_data(22, faceBeauty->arc_fb_image.i32Width,
+                              faceBeauty->arc_fb_image.i32Height,
+                              faceBeauty->arc_fb_image.ppu8Plane[0]);
+            }
             clock_gettime(CLOCK_BOOTTIME, &end_time);
-            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
+            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
+                       (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
             ALOGV("arcsoft_bsv_process duration is %d ms", duration);
         } else {
             arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
@@ -416,7 +462,8 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
             clock_gettime(CLOCK_BOOTTIME, &end_time);
-            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
+            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
+                       (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
             ALOGD("arcsoft_bsi_process duration is %d ms", duration);
         }
     }
