@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.125"
-#define SUB_VERSION             "-0728-00-golden_distance_trace_deinit"	//use the date code to naming
+#define SUB_VERSION             "-0803-00-remove-build-error"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -510,7 +510,9 @@ typedef struct pdaftuning_param_s {
 	cmr_u32 pd_thread_sync_frm_init;
 	cmr_u32 min_process_frm;
 	cmr_u32 max_process_frm;
-	cmr_u32 reserved[54];
+	cmr_u32 pd_conf_thr;
+	cmr_u32 pd_conf_thr_2nd;
+	cmr_u32 reserved[52];
 } pdaftuning_param_t;
 
 typedef struct _AF_Tuning_Para {
@@ -820,7 +822,9 @@ typedef struct pd_algo_focuing_s {
 	cmr_s32 delta_vcm[PD_MAX_MOVECOUNT];
 	cmr_u32 fv_info[PD_MAX_MOVECOUNT];
 	cmr_u32 af_frmid[PD_MAX_MOVECOUNT];
-	cmr_u32 reserved[64];
+	cmr_u32 ae_stable[PD_MAX_MOVECOUNT];
+	cmr_u32 curr_luma[PD_MAX_MOVECOUNT];
+	cmr_u32 reserved[64 - (PD_MAX_MOVECOUNT * 2)];
 } pd_algo_focusing_t;
 
 typedef struct pd_algo_result_s {
@@ -890,7 +894,12 @@ typedef struct _pdaf_process_s {
 	cmr_u32 vcm_smooth_table[PD_MAX_MOVECOUNT];
 	cmr_u32 target_vcm_pos;
 	cmr_u32 statistics_dir;
-	cmr_u32 reserved[128];
+	cmr_u32 vcm_register_pos;
+	cmr_u32 curr_luma;
+	cmr_u32 target_luma;
+	cmr_u32 ae_stable;
+	cmr_u32 curr_bv;
+	cmr_u32 reserved[128 - 5];
 } _pdaf_process_t;
 
 typedef struct motion_sensor_data_s {
