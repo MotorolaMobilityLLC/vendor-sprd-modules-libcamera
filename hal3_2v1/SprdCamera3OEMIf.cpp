@@ -3365,7 +3365,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
-        changeDfsPolicy(CAM_HIGH);
+        changeDfsPolicy(CAM_LOW);
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
@@ -3394,9 +3394,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         changeDfsPolicy(CAM_LOW);
     }
 
-    if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_BOKEH) {
-        changeDfsPolicy(CAM_VERYHIGH);
+    if (getMultiCameraMode() == MODE_BLUR || getMultiCameraMode() == MODE_BOKEH) {
+        changeDfsPolicy(CAM_HIGH);
     }
 
     property_get("volte.incall.camera.enable", value, "false");
@@ -4656,6 +4655,10 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
         }
     }
 
+    if (getMultiCameraMode() == MODE_BLUR || getMultiCameraMode() == MODE_BOKEH) {
+        changeDfsPolicy(CAM_HIGH);
+    }
+
     HAL_LOGD("X");
 
     return true;
@@ -5041,10 +5044,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         mHDRPowerHintFlag = 0;
     }
 
-    if ((mSprdZslEnabled == 0) ||
-        (mSprdZslEnabled == 1 && mRecordingMode == true)) {
+    if (getMultiCameraMode() == MODE_BLUR || getMultiCameraMode() == MODE_BOKEH) {
+        changeDfsPolicy(CAM_HIGH);
+    } else {
         changeDfsPolicy(CAM_LOW);
-        HAL_LOGV("after take picture,enter non-zsl preview: set dfs CAM_LOW");
     }
 
 exit:
