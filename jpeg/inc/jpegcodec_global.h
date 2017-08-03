@@ -29,24 +29,25 @@ extern uint8			g_shift_bits;
 extern BOOLEAN 		g_huff_tbl_malloced;
 extern int32		g_flush_word_count;
 
+extern BOOLEAN			g_JpegOpened;
+
 #if defined(_SIMULATION_)
 	extern volatile BOOLEAN			g_int_time_out;
-	
+
 	//decoder
 	extern volatile BOOLEAN			g_int_yuv_buf0_full;
 	extern volatile BOOLEAN			g_int_yuv_buf1_full;
 	extern volatile BOOLEAN			g_int_stream_buf0_empty;
 	extern volatile BOOLEAN			g_int_stream_buf1_empty;
 	extern volatile BOOLEAN			g_int_vld_error;
-		
-	//encoder	
+
+	//encoder
 	extern volatile BOOLEAN			g_int_yuv_buf0_empty;
 	extern volatile BOOLEAN			g_int_yuv_buf1_empty;
 	extern volatile BOOLEAN			g_int_stream_buf0_full;
 	extern volatile BOOLEAN			g_int_stream_buf1_full;
-	extern volatile BOOLEAN			g_int_vlc_done;	
+	extern volatile BOOLEAN			g_int_vlc_done;
 
-	
 
 	extern uint8 			*g_cur_bs_bfr_ptr;
 	extern uint8 			*g_y_bfr_ptr;

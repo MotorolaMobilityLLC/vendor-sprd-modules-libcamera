@@ -703,6 +703,12 @@ int JPEGCODEC_Open(void) {
   int jpg_fd = -1;
   void *jpg_addr = NULL;
 
+    if (g_JpegOpened) {
+        SCI_TRACE_LOW("jpeg dev has been opened, fd %d, reg addr 0x%x", jpeg_fw_enc->fd,
+            jpeg_fw_enc->jpg_addr);
+        return 0;
+    }
+
   jpeg_fw_enc->fd = jpg_fd;
   jpeg_fw_enc->jpg_addr = jpg_addr;
   jpeg_fw_dec->fd = jpg_fd;
@@ -719,6 +725,7 @@ int JPEGCODEC_Open(void) {
   jpeg_fw_enc->jpg_addr = jpg_addr;
   jpeg_fw_dec->fd = jpg_fd;
   jpeg_fw_dec->jpg_addr = jpg_addr;
+  g_JpegOpened = 1;
   SCI_TRACE_LOW("jpeg dev fd %d, reg addr %p", jpeg_fw_enc->fd,
                 jpeg_fw_enc->jpg_addr);
   return 0;
@@ -729,6 +736,12 @@ int JPEGCODEC_Close(void) {
   JPEG_CODEC_T *jpeg_fw_dec = Get_JPEGDecCodec();
   int jpg_fd = -1;
   void *jpg_addr = NULL;
+
+    if (!g_JpegOpened) {
+        SCI_TRACE_LOW("jpeg dev has been closed \n");
+        return 0;
+    }
+
 
   jpg_fd = jpeg_fw_enc->fd;
   jpg_addr = jpeg_fw_enc->jpg_addr;
@@ -743,7 +756,9 @@ int JPEGCODEC_Close(void) {
   jpeg_fw_enc->jpg_addr = NULL;
   jpeg_fw_dec->fd = -1;
   jpeg_fw_dec->jpg_addr = NULL;
+  g_JpegOpened = 0;
   SCI_TRACE_LOW("jpeg dev close \n");
+
   return 0;
 }
 

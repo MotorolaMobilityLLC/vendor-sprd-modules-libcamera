@@ -22,6 +22,8 @@ LOCAL JPEG_CODEC_T 	g_JpegEncCodec;
 LOCAL JPEG_CODEC_T 	g_JpegDecCodec;
 JPEG_PROGRESSIVE_INFO_T *g_JpegProgInfo;
 
+BOOLEAN			g_JpegOpened = 0;
+
 uint32			g_encoded_stream_len;
 uint8 			*g_jpeg_fw_buf_ptr;
 uint32 			g_start_offset;
