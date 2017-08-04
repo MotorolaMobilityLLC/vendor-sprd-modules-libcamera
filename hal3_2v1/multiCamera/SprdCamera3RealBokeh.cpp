@@ -893,7 +893,6 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
     buffer_handle_t *scaled_buffer = NULL;
     uint32_t frame_number = 0;
     int rc = 0;
-    HAL_LOGI("E:");
     while (!mPreviewMuxerMsgList.empty()) {
         List<muxer_queue_msg_t>::iterator it;
         {
@@ -928,7 +927,6 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                         output_buffer = itor->buffer;
                         mRealBokeh->mPrevFrameNumber =
                             muxer_msg.combo_frame.frame_number;
-                        HAL_LOGV("output_buffer %p", output_buffer);
                         frame_number = muxer_msg.combo_frame.frame_number;
                         break;
                     }
@@ -1138,7 +1136,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
             HAL_LOGE("arcsoft ARC_DCVR_PrevProcess failed ,rc = %ld", rc);
         }
         mRealBokeh->flushIonBuffer(depth_handle->share_fd, depth_handle->base,
-                                     depth_handle->size);
+                                   depth_handle->size);
         HAL_LOGD("arcsoftprevRun cost %lld ms",
                  ns2ms(systemTime() - arcsoftprevRun));
         {
@@ -1979,7 +1977,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
                      ns2ms(systemTime() - bokehRun));
         }
         mRealBokeh->flushIonBuffer(depth_handle->share_fd, depth_handle->base,
-                                     depth_handle->size);
+                                   depth_handle->size);
         res =
             mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(&(mArcSoftCapHandle));
         if (res != MOK) {
@@ -2821,7 +2819,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
                 (MInt32)(fnum * 100 / 20);
             mCaptureThread->mArcSoftCapParam.i32BlurIntensity =
-                (MInt32)(fnum * 100 / 20);
+                mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel * 60 / 100;
         }
         HAL_LOGD("f_number=%d", fnum);
     }
@@ -3907,7 +3905,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                 muxer_msg.combo_frame.input_buffer = result->input_buffer;
                 {
                     Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
-                    HAL_LOGV("Enqueue combo frame:%d for frame merge!",
+                    HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                              muxer_msg.combo_frame.frame_number);
                     clearFrameNeverMatched(cur_frame.frame_number,
                                            matched_frame.frame_number);
@@ -4076,7 +4074,7 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
                 muxer_msg.combo_frame.input_buffer = result->input_buffer;
                 {
                     Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
-                    HAL_LOGV("Enqueue combo frame:%d for frame merge!",
+                    HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                              muxer_msg.combo_frame.frame_number);
                     clearFrameNeverMatched(matched_frame.frame_number,
                                            cur_frame.frame_number);
@@ -4220,7 +4218,7 @@ void SprdCamera3RealBokeh::clearFrameNeverMatched(uint32_t main_frame_number,
         if (itor->frame_number < main_frame_number) {
             pushBufferList(mLocalBuffer, itor->buffer, mLocalBufferNumber,
                            mLocalBufferList);
-            HAL_LOGV("clear frame main idx:%d", itor->frame_number);
+            HAL_LOGD("clear frame main idx:%d", itor->frame_number);
             frame_num = itor->frame_number;
             mUnmatchedFrameListMain.erase(itor);
             CallBackResult(frame_num, CAMERA3_BUFFER_STATUS_ERROR);
@@ -4233,7 +4231,7 @@ void SprdCamera3RealBokeh::clearFrameNeverMatched(uint32_t main_frame_number,
         if (itor->frame_number < sub_frame_number) {
             pushBufferList(mLocalBuffer, itor->buffer, mLocalBufferNumber,
                            mLocalBufferList);
-            HAL_LOGV("clear frame aux idx:%d", itor->frame_number);
+            HAL_LOGD("clear frame aux idx:%d", itor->frame_number);
             mUnmatchedFrameListAux.erase(itor);
         }
         itor++;
