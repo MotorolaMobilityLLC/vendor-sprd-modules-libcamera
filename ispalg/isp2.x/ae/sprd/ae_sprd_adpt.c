@@ -5411,7 +5411,10 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		current_result->wts.exposure_time=  dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.exposure_time;
 		current_result->wts.cur_again= dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
 		current_result->wts.cur_dummy = dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;
-
+              cxt->sync_cur_result.wts.exposure_time = current_result->wts.exposure_time;
+              cxt->sync_cur_result.wts.cur_exp_line = current_result->wts.cur_exp_line;
+              cxt->sync_cur_result.wts.cur_again = current_result->wts.cur_again;
+              cxt->sync_cur_result.wts.cur_dummy = current_result->wts.cur_dummy;
 		ISP_LOGD("[slave ] cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
 			current_result->cur_lum,
 			dualcam_aesync.slave_ae_info.ae_sync_result.slave_ae.wts.cur_again,
