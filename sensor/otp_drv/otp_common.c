@@ -352,8 +352,8 @@ cmr_int sensor_otp_dump_raw_data(cmr_u8 *buffer, int size, char *dev_name) {
     char otp_bin_ext_path[255];
 
     CHECK_PTR(buffer);
-    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path),
-                 "%s%s_otp_dump.bin", otp_bin_path, dev_name);
+    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path), "%s%s_otp_dump.bin",
+             otp_bin_path, dev_name);
     OTP_LOGD("otp_data_dump_path:%s", otp_bin_ext_path);
     FILE *fp = fopen(otp_bin_ext_path, "wb");
     if (fp != NULL) {
@@ -420,6 +420,7 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
     otp_cxt->otp_data = NULL;
     otp_cxt->hw_handle = input_para->hw_handle;
     otp_cxt->sensor_id = input_para->sensor_id;
+    otp_cxt->sensor_ic_addr = input_para->sensor_ic_addr;
     OTP_LOGI("out");
     *sns_otp_drv_handle = otp_cxt;
 

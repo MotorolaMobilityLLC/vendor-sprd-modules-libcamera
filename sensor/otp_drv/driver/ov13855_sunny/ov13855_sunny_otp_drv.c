@@ -10,21 +10,26 @@
  **/
 static cmr_int _ov13855_sunny_section_checksum(cmr_u8 *buf, cmr_uint offset,
                                                cmr_uint data_count,
-                                               cmr_uint check_sum_offset) {
+                                               cmr_uint check_sum_offset,
+                                               cmr_uint module_idx) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_int i = 0, sum = 0;
+    cmr_u32 check_sum = 0;
 
     OTP_LOGI("in");
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
-    if ((sum % 255 + 1) == buf[check_sum_offset]) {
+    check_sum = (sum % 256);
+    if (module_idx == OTP_TRULY)
+        check_sum = (sum % 255 + 1);
+    if (check_sum == buf[check_sum_offset]) {
         ret = OTP_CAMERA_SUCCESS;
     } else {
         ret = CMR_CAMERA_FAIL;
     }
-    OTP_LOGI("out: offset:%d, checksum:%d buf: %d", check_sum_offset, sum,
-             buf[check_sum_offset]);
+    OTP_LOGI("module_idx:%d,out: offset:%d, checksum:%d buf: %d", module_idx,
+             check_sum_offset, sum, buf[check_sum_offset]);
     return ret;
 }
 
@@ -79,6 +84,12 @@ static cmr_int _ov13855_sunny_parse_module_data(cmr_handle otp_drv_handle) {
     module_dat->work_stat_id = (module_info[9] << 8) | module_info[10];
     module_dat->env_record = (module_info[11] << 8) | module_info[12];
 
+    if (module_dat->calib_version == 0x0400) {
+        module_dat->calib_version = 0x0004;
+    }
+    if (module_dat->calib_version == 0x0001) {
+        otp_cxt->otp_data_module_index = OTP_TRULY;
+    }
     OTP_LOGI("moule_id:0x%x\n vendor_id:0x%x\n calib_version:%d\n "
              "work_stat_id:0x%x \n env_record :0x%x",
              module_dat->moule_id, module_dat->vendor_id,
@@ -96,9 +107,11 @@ static cmr_int _ov13855_sunny_parse_af_data(cmr_handle otp_drv_handle) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
+
     ret = _ov13855_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
-        AF_INFO_CHECKSUM - AF_INFO_OFFSET, AF_INFO_CHECKSUM);
+        AF_INFO_CHECKSUM - AF_INFO_OFFSET, AF_INFO_CHECKSUM,
+        otp_cxt->otp_data_module_index);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("auto focus checksum error,parse failed");
         return ret;
@@ -113,6 +126,7 @@ static cmr_int _ov13855_sunny_parse_af_data(cmr_handle otp_drv_handle) {
 
 static cmr_int _ov13855_sunny_parse_awb_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    cmr_u32 section_num = 1;
 
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
@@ -121,17 +135,22 @@ static cmr_int _ov13855_sunny_parse_awb_data(cmr_handle otp_drv_handle) {
     awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
     cmr_u8 *awb_src_dat = otp_cxt->otp_raw_data.buffer + AWB_INFO_OFFSET;
 
+    if (otp_cxt->otp_data_module_index == OTP_TRULY) {
+        section_num = 2;
+    }
+
     ret = _ov13855_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, AWB_INFO_OFFSET,
-        AWB_INFO_CHECKSUM - AWB_INFO_OFFSET, AWB_INFO_CHECKSUM);
+        AWB_INFO_CHECKSUM - AWB_INFO_OFFSET, AWB_INFO_CHECKSUM,
+        otp_cxt->otp_data_module_index);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("awb otp data checksum error,parse failed");
         return ret;
     } else {
         cmr_u32 i;
         /*random*/
-        OTP_LOGI("awb section count:0x%x", AWB_SECTION_NUM);
-        for (i = 0; i < AWB_SECTION_NUM; i++, awb_src_dat += AWB_INFO_SIZE) {
+        OTP_LOGI("awb section count:0x%x", section_num);
+        for (i = 0; i < section_num; i++, awb_src_dat += AWB_INFO_SIZE) {
             awb_cali_dat->awb_rdm_info[i].R =
                 (awb_src_dat[1] << 8) | awb_src_dat[0];
             awb_cali_dat->awb_rdm_info[i].G =
@@ -139,9 +158,15 @@ static cmr_int _ov13855_sunny_parse_awb_data(cmr_handle otp_drv_handle) {
             awb_cali_dat->awb_rdm_info[i].B =
                 (awb_src_dat[5] << 8) | awb_src_dat[4];
             /*golden awb data ,you should ensure awb group number*/
-            awb_cali_dat->awb_gld_info[i].R = golden_awb[i].R;
-            awb_cali_dat->awb_gld_info[i].G = golden_awb[i].G;
-            awb_cali_dat->awb_gld_info[i].B = golden_awb[i].B;
+            if (otp_cxt->otp_data_module_index == OTP_TRULY) {
+                awb_cali_dat->awb_gld_info[i].R = truly_awb[i].R;
+                awb_cali_dat->awb_gld_info[i].G = truly_awb[i].G;
+                awb_cali_dat->awb_gld_info[i].B = truly_awb[i].B;
+            } else {
+                awb_cali_dat->awb_gld_info[i].R = golden_awb[i].R;
+                awb_cali_dat->awb_gld_info[i].G = golden_awb[i].G;
+                awb_cali_dat->awb_gld_info[i].B = golden_awb[i].B;
+            }
         }
         for (i = 0; i < AWB_MAX_LIGHT; i++)
             OTP_LOGD("rdm:R=0x%x,G=0x%x,B=0x%x.god:R=0x%x,G=0x%x,B=0x%x",
@@ -171,7 +196,8 @@ static cmr_int _ov13855_sunny_parse_lsc_data(cmr_handle otp_drv_handle) {
 
     ret = _ov13855_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, OPTICAL_INFO_OFFSET,
-        LSC_INFO_CHECKSUM - OPTICAL_INFO_OFFSET, LSC_INFO_CHECKSUM);
+        LSC_INFO_CHECKSUM - OPTICAL_INFO_OFFSET, LSC_INFO_CHECKSUM,
+        otp_cxt->otp_data_module_index);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGI("lsc otp data checksum error,parse failed.\n");
     } else {
@@ -192,8 +218,15 @@ static cmr_int _ov13855_sunny_parse_lsc_data(cmr_handle otp_drv_handle) {
         lsc_dst->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
 
         /*gold data*/
-        memcpy(gld_dst, golden_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
-        lsc_dst->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        if (otp_cxt->otp_data_module_index == OTP_TRULY) {
+            memcpy(gld_dst, truly_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
+            lsc_dst->lsc_calib_golden.length =
+                LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        } else {
+            memcpy(gld_dst, golden_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
+            lsc_dst->lsc_calib_golden.length =
+                LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        }
     }
 
     OTP_LOGD("optical_center:\nR=(0x%x,0x%x)\n GR=(0x%x,0x%x)\n "
@@ -211,11 +244,11 @@ static cmr_int _ov13855_sunny_parse_pdaf_data(cmr_handle otp_drv_handle) {
     OTP_LOGI("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-
     cmr_u8 *pdaf_src_dat = otp_cxt->otp_raw_data.buffer + PDAF_INFO_OFFSET;
     ret = _ov13855_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, PDAF_INFO_OFFSET,
-        PDAF_INFO_CHECKSUM - PDAF_INFO_OFFSET, PDAF_INFO_CHECKSUM);
+        PDAF_INFO_CHECKSUM - PDAF_INFO_OFFSET, PDAF_INFO_CHECKSUM,
+        otp_cxt->otp_data_module_index);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGI("pdaf otp data checksum error,parse failed.\n");
         return ret;
@@ -234,19 +267,25 @@ static int _ov13855_sunny_parse_ae_data(void *otp_drv_handle) {
     OTP_LOGI("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    aecalib_data_t *ae_cali_dat = &(otp_cxt->otp_data->ae_cali_dat);
-    cmr_u8 *ae_src_dat = otp_cxt->otp_raw_data.buffer + AE_INFO_OFFSET;
+    if (otp_cxt->otp_data_module_index == OTP_SUNNY) {
+        aecalib_data_t *ae_cali_dat = &(otp_cxt->otp_data->ae_cali_dat);
+        cmr_u8 *ae_src_dat = otp_cxt->otp_raw_data.buffer + AE_INFO_OFFSET;
 
-    // for ae calibration
-    ae_cali_dat->target_lum = (ae_src_dat[1] << 8) | ae_src_dat[0];
-    ae_cali_dat->gain_1x_exp = (ae_src_dat[5] << 24) | (ae_src_dat[4] << 16) |
-                               (ae_src_dat[3] << 8) | ae_src_dat[2];
-    ae_cali_dat->gain_2x_exp = (ae_src_dat[9] << 24) | (ae_src_dat[8] << 16) |
-                               (ae_src_dat[7] << 8) | ae_src_dat[6];
-    ae_cali_dat->gain_4x_exp = (ae_src_dat[13] << 24) | (ae_src_dat[12] << 16) |
-                               (ae_src_dat[11] << 8) | ae_src_dat[10];
-    ae_cali_dat->gain_8x_exp = (ae_src_dat[17] << 24) | (ae_src_dat[16] << 16) |
-                               (ae_src_dat[15] << 8) | ae_src_dat[14];
+        // for ae calibration
+        ae_cali_dat->target_lum = (ae_src_dat[1] << 8) | ae_src_dat[0];
+        ae_cali_dat->gain_1x_exp = (ae_src_dat[5] << 24) |
+                                   (ae_src_dat[4] << 16) |
+                                   (ae_src_dat[3] << 8) | ae_src_dat[2];
+        ae_cali_dat->gain_2x_exp = (ae_src_dat[9] << 24) |
+                                   (ae_src_dat[8] << 16) |
+                                   (ae_src_dat[7] << 8) | ae_src_dat[6];
+        ae_cali_dat->gain_4x_exp = (ae_src_dat[13] << 24) |
+                                   (ae_src_dat[12] << 16) |
+                                   (ae_src_dat[11] << 8) | ae_src_dat[10];
+        ae_cali_dat->gain_8x_exp = (ae_src_dat[17] << 24) |
+                                   (ae_src_dat[16] << 16) |
+                                   (ae_src_dat[15] << 8) | ae_src_dat[14];
+    }
     OTP_LOGI("out");
     return ret;
 }
@@ -258,41 +297,45 @@ static cmr_int _ov13855_sunny_parse_dualcam_data(cmr_handle otp_drv_handle) {
     OTP_LOGI("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
+    if (otp_cxt->otp_data_module_index == OTP_SUNNY) {
+        afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
 
-    /*dualcam data*/
-    cmr_u8 *dualcam_src_dat = otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
-    cmr_u8 *vcm_src_dat = otp_cxt->otp_raw_data.buffer + VCM_INFO_OFFSET;
-    ret = _ov13855_sunny_section_checksum(
-        otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
-        DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET, DUAL_INFO_CHECKSUM);
-
-    switch (ret) {
-    case OTP_CAMERA_SUCCESS:
-        af_cali_dat->vcm_step = 0;
-        af_cali_dat->vcm_step_min = vcm_src_dat[0];
-        af_cali_dat->vcm_step_max = vcm_src_dat[1];
-        otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
-        otp_cxt->otp_data->dual_cam_cali_dat.size =
-            DUAL_DATA_SIZE - VCM_DATA_SIZE;
-        break;
-    default:
+        /*dualcam data*/
+        cmr_u8 *dualcam_src_dat =
+            otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
+        cmr_u8 *vcm_src_dat = otp_cxt->otp_raw_data.buffer + VCM_INFO_OFFSET;
         ret = _ov13855_sunny_section_checksum(
             otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
-            DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET - VCM_DATA_SIZE,
-            DUAL_INFO_CHECKSUM - VCM_DATA_SIZE);
-        if (OTP_CAMERA_SUCCESS != ret) {
-            OTP_LOGI("dualcamera otp data checksum error,parse failed.\n");
-            return ret;
-        } else {
-            OTP_LOGI("vcm data is not in otp data.\n");
-            af_cali_dat->vcm_step = -1;
+            DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET, DUAL_INFO_CHECKSUM,
+            otp_cxt->otp_data_module_index);
+
+        switch (ret) {
+        case OTP_CAMERA_SUCCESS:
+            af_cali_dat->vcm_step = 0;
+            af_cali_dat->vcm_step_min = vcm_src_dat[0];
+            af_cali_dat->vcm_step_max = vcm_src_dat[1];
             otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
             otp_cxt->otp_data->dual_cam_cali_dat.size =
                 DUAL_DATA_SIZE - VCM_DATA_SIZE;
+            break;
+        default:
+            ret = _ov13855_sunny_section_checksum(
+                otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
+                DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET - VCM_DATA_SIZE,
+                DUAL_INFO_CHECKSUM - VCM_DATA_SIZE,
+                otp_cxt->otp_data_module_index);
+            if (OTP_CAMERA_SUCCESS != ret) {
+                OTP_LOGI("dualcamera otp data checksum error,parse failed.\n");
+                return ret;
+            } else {
+                OTP_LOGI("vcm data is not in otp data.\n");
+                af_cali_dat->vcm_step = -1;
+                otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
+                otp_cxt->otp_data->dual_cam_cali_dat.size =
+                    DUAL_DATA_SIZE - VCM_DATA_SIZE;
+            }
         }
     }
-
     OTP_LOGI("out");
     return ret;
 }
@@ -411,16 +454,28 @@ static cmr_int ov13855_sunny_otp_drv_read(cmr_handle otp_drv_handle,
         }
         goto exit;
     }
-    /*in burst mode,otp data read from kernel one time*/
-    ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                       (cmr_u8 *)otp_raw_data->buffer,
-                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
 
-    if (OTP_CAMERA_SUCCESS == ret ) {
+    /*the otp start address is stored in first two bytes, must be set correctly.*/
+    otp_raw_data->buffer[0] = 0;
+    otp_raw_data->buffer[1] = 0;
+    ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                                 (cmr_u8 *)otp_raw_data->buffer,
+                                 SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+
+/*
+    for (i = 0; i < OTP_LEN; i++) {
+        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
+        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
+        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                           (cmr_u8 *)&cmd_val[0], 2);
+        otp_raw_data->buffer[i] = cmd_val[0];
+    }
+*/
+    if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
             if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
-                                        otp_cxt->dev_name))
+                                         otp_cxt->dev_name))
                 OTP_LOGE("dump failed");
         }
     }
@@ -451,8 +506,8 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
     /*for after  write*/
     cmr_int aSum = 0;
     /*open write permission*/
-    hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_WR_ADDR,
-                                  0x0000, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_WR_ADDR, 0x0000,
+                            0x00, BITS_ADDR16_REG8);
     sensor_otp_dump_raw_data(otp_write_data->buffer, DUAL_DATA_SIZE, "write");
 
     if (NULL != otp_write_data->buffer) {
@@ -492,8 +547,8 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
     }
 
     /*close write permission*/
-    hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_RD_ADDR,
-                                  0x0000, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_RD_ADDR, 0x0000,
+                            0x00, BITS_ADDR16_REG8);
 
 exit:
     OTP_LOGI("X");

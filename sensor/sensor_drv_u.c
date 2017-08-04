@@ -2994,6 +2994,7 @@ static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
         input_para.hw_handle = sensor_cxt->hw_drv_handle;
         input_para.sensor_name = sensor_cxt->sensor_info_ptr->name;
         input_para.sensor_id = sensor_cxt->sensor_register_info.cur_id;
+        input_para.sensor_ic_addr = sensor_cxt->i2c_addr;
         ret = module->otp_drv_info->otp_ops.sensor_otp_create(&input_para,&sensor_cxt->otp_drv_handle);
     } else {
         SENSOR_LOGE("error:Don't register otp_driver please double check! ");

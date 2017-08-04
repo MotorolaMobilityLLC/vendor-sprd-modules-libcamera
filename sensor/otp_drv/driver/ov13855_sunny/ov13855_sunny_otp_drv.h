@@ -100,8 +100,8 @@ typedef struct {
 } module_info_t;
 
 static cmr_int _ov13855_sunny_section_checksum(cmr_u8 *buf, cmr_uint first,
-                                               cmr_uint last,
-                                               cmr_uint position);
+                                               cmr_uint last, cmr_uint position,
+                                               cmr_uint module_idx);
 static cmr_int _ov13855_sunny_buffer_init(cmr_handle otp_drv_handle);
 static cmr_int _ov13855_sunny_parse_awb_data(cmr_handle otp_drv_handle);
 static cmr_int _ov13855_sunny_parse_lsc_data(cmr_handle otp_drv_handle);

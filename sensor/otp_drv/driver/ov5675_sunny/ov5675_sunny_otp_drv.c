@@ -9,15 +9,20 @@
  **/
 static cmr_int _ov5675_sunny_section_checksum(cmr_u8 *buf, cmr_uint offset,
                                               cmr_uint data_count,
-                                              cmr_uint check_sum_offset) {
+                                              cmr_uint check_sum_offset,
+                                              cmr_uint module_idx) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_int i = 0, sum = 0;
+    cmr_u32 check_sum = 0;
 
     OTP_LOGI("in");
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
-    if ((sum % 255 + 1) == buf[check_sum_offset]) {
+    check_sum = (sum % 256);
+    if (module_idx == OTP_TRULY)
+        check_sum = (sum % 255 + 1);
+    if (check_sum == buf[check_sum_offset]) {
         ret = OTP_CAMERA_SUCCESS;
     } else {
         ret = CMR_CAMERA_FAIL;
@@ -79,6 +84,9 @@ static cmr_int _ov5675_sunny_parse_module_data(cmr_handle otp_drv_handle) {
     module_dat->work_stat_id = (module_info[9] << 8) | module_info[10];
     module_dat->env_record = (module_info[11] << 8) | module_info[12];
 
+    if (module_dat->calib_version == 0x0001) {
+        otp_cxt->otp_data_module_index = OTP_TRULY;
+    }
     OTP_LOGI("moule_id:0x%x\n vendor_id:0x%x\n calib_version:%d\n "
              "work_stat_id:0x%x \n env_record :0x%x",
              module_dat->moule_id, module_dat->vendor_id,
@@ -99,7 +107,8 @@ static cmr_int _ov5675_sunny_parse_awb_data(cmr_handle otp_drv_handle) {
 
     ret = _ov5675_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, AWB_INFO_OFFSET,
-        AWB_INFO_CHECKSUM - AWB_INFO_OFFSET, AWB_INFO_CHECKSUM);
+        AWB_INFO_CHECKSUM - AWB_INFO_OFFSET, AWB_INFO_CHECKSUM,
+        otp_cxt->otp_data_module_index);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("awb otp data checksum error,parse failed");
         return ret;
@@ -146,7 +155,8 @@ static cmr_int _ov5675_sunny_parse_lsc_data(cmr_handle otp_drv_handle) {
 
     ret = _ov5675_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, OPTICAL_INFO_OFFSET,
-        LSC_INFO_CHECKSUM - OPTICAL_INFO_OFFSET, LSC_INFO_CHECKSUM);
+        LSC_INFO_CHECKSUM - OPTICAL_INFO_OFFSET, LSC_INFO_CHECKSUM,
+        otp_cxt->otp_data_module_index);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGI("lsc otp data checksum error,parse failed.\n");
     } else {
@@ -303,11 +313,23 @@ static cmr_int ov5675_sunny_otp_drv_read(cmr_handle otp_drv_handle,
         }
         goto exit;
     }
-    /*in burst mode,otp data read from kernel one time*/
+
+    /*the otp start address is stored in first two bytes, must be set correctly.*/
+    otp_raw_data->buffer[0] = 0;
+    otp_raw_data->buffer[1] = 0;
     ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                       (cmr_u8 *)otp_raw_data->buffer,
-                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
-    if (OTP_CAMERA_SUCCESS == ret ) {
+                                 (cmr_u8 *)otp_raw_data->buffer,
+                                 SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+/*
+    for (i = 0; i < OTP_LEN; i++) {
+        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
+        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
+        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                           (cmr_u8 *)&cmd_val[0], 2);
+        otp_raw_data->buffer[i] = cmd_val[0];
+    }
+*/
+    if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
             if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,

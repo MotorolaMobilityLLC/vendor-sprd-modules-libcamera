@@ -87,6 +87,12 @@ enum awb_light_type {
     AWB_MAX_LIGHT,
 };
 
+typedef enum otp_vendor {
+    OTP_SUNNY = 0,
+    OTP_TRULY,
+    OTP_MAX
+} otp_vendor_t;
+
 typedef struct {
     cmr_u16 reg_addr;  /* otp start address.if read ,we don't need care it*/
     cmr_u8 *data;      /* format otp data saved or otp data write to sensor*/
@@ -320,6 +326,7 @@ typedef struct otp_drv_init_para {
     cmr_handle hw_handle;
     char *sensor_name;
     cmr_u32 sensor_id;
+    cmr_u8 sensor_ic_addr;
     /*you can add your param here*/
 } otp_drv_init_para_t;
 
@@ -346,6 +353,9 @@ typedef struct {
 typedef struct {
     cmr_u32 sensor_id;
     char dev_name[32];
+    /*sensor ic i2c address*/
+    cmr_u8 sensor_ic_addr;
+
     cmr_handle hw_handle;
 
     /*raw otp data buffer*/
@@ -357,6 +367,8 @@ typedef struct {
     /*format otp data length*/
     uint32_t otp_data_len;
     void *compat_convert_data;
+
+    cmr_uint otp_data_module_index;
 } otp_drv_cxt_t;
 
 #endif
