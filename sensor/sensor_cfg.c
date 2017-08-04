@@ -35,6 +35,11 @@ extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13855a_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k3l8xxm3q_mipi_raw_info;
 extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
+extern SENSOR_INFO_T g_gc5024_mipi_raw_info;
+extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
+extern SENSOR_INFO_T g_imx135_mipi_raw_info;
+extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
+extern SENSOR_INFO_T g_s5k3l8xxm3r_mipi_raw_info;
 
 #ifdef CONFIG_COVERED_SENSOR
 extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
@@ -43,7 +48,6 @@ extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5675_dual_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
@@ -65,12 +69,15 @@ extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
+extern struct sns_af_drv_entry dw9714a_drv_entry;
 extern struct sns_af_drv_entry dw9718s_drv_entry;
 extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
 extern struct sns_af_drv_entry lc898214_drv_entry;
 extern struct sns_af_drv_entry dw9763_drv_entry;
 extern struct sns_af_drv_entry vcm_zc524_drv_entry;
+extern struct sns_af_drv_entry ad5823_drv_entry;
+extern struct sns_af_drv_entry vm242_drv_entry;
 
 
 
@@ -115,6 +122,8 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
     {MODULE_SUNNY, "ov13855a_mipi_raw", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &ov13855_altek_drv_entry},
+    {MODULE_SUNNY, "imx135_mipi_raw", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, NULL},
+    {MODULE_SUNNY, "s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
 #else
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
 #endif
@@ -125,7 +134,6 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
 #else
     {MODULE_SUNNY ,"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&lc898214_drv_entry, 0}, &imx258_truly_drv_entry},
 #endif
-    //{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {NULL,0}, NULL},
     {MODULE_SUNNY ,"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, NULL},
     {MODULE_SUNNY ,"imx230_mipi_raw", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, NULL},
     {MODULE_SUNNY ,"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &s5k3p8sm_truly_drv_entry},
@@ -143,6 +151,9 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
     {MODULE_SUNNY, "sp8407_mipi_raw", &g_sp8407_mipi_raw_info, {NULL, 0}, NULL},
     //{MODULE_SUNNY, "gc2375_mipi_raw", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
     {MODULE_QTECH, "s5k3l8xxm3q_mipi_raw", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, &s5k3l8xxm3_qtech_drv_entry},
+    {MODULE_SUNNY, "gc5024_mipi_raw", &g_gc5024_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, NULL},
+
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     {MODULE_SUNNY, "s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, {NULL, 0}, NULL},
@@ -165,6 +176,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
     {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, NULL},
+	{MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
 #endif
