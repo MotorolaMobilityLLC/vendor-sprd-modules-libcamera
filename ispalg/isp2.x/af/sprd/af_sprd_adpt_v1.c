@@ -1723,6 +1723,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	af->pre_state = af->state;
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
+		af->force_trigger = (AFV1_FALSE);
 		af->request_mode = af_mode;
 		af->state = STATE_NORMAL_AF;
 		trigger_set_mode(af, AFT_MODE_NORMAL);
