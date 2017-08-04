@@ -704,7 +704,7 @@ int JPEGCODEC_Open(void) {
   void *jpg_addr = NULL;
 
     if (g_JpegOpened) {
-        SCI_TRACE_LOW("jpeg dev has been opened, fd %d, reg addr 0x%x", jpeg_fw_enc->fd,
+        SCI_TRACE_LOW("jpeg dev has been opened, fd %d, reg addr %p", jpeg_fw_enc->fd,
             jpeg_fw_enc->jpg_addr);
         return 0;
     }
