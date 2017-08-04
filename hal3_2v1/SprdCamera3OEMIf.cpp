@@ -1657,26 +1657,11 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
     char buf[20] = {0};
     char *p = NULL;
 
-    do {
-        if (i++ < 25) {
-            therm_fd = socket_local_client(
-                "thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
-            if (therm_fd <= 0) {
-                HAL_LOGD("%s open thermald  failed: %s\n", __func__,
-                         strerror(errno));
-                HAL_LOGD("wait for thermald local server.");
-                usleep(200 * 1000);
-            } else
-                HAL_LOGD("got the thermald local server.");
-            break;
-        } else {
-            HAL_LOGE("thermald service does not run now");
-            therm_fd = -1;
-            break;
-        }
-    } while (1);
-
-    if (therm_fd > 0) {
+    therm_fd = socket_local_client(
+        "thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
+    if (therm_fd <= 0)
+        HAL_LOGD("%s open thermald  failed: %s\n", __func__, strerror(errno));
+    else {
         p = buf;
         if (flag) {
             p += snprintf(p, 20, "%s", "SetThmEn");
