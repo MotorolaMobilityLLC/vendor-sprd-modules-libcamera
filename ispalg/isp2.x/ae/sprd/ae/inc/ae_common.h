@@ -532,6 +532,6 @@ struct ae_alg_fun_tab {
 	cmr_handle(*init) (cmr_handle, cmr_handle);
 	cmr_s32(*deinit) (cmr_handle, cmr_handle, cmr_handle);
 	cmr_s32(*calc) (cmr_handle, cmr_handle, cmr_handle);
-	cmr_s32(*ioctrl) (cmr_handle, cmr_u32, cmr_handle);
+	cmr_s32(*ioctrl) (cmr_handle, cmr_u32, cmr_handle, cmr_handle);
 };
 #endif
