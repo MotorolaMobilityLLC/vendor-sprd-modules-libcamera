@@ -1666,10 +1666,9 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
                          strerror(errno));
                 HAL_LOGD("wait for thermald local server.");
                 usleep(200 * 1000);
-            } else {
+            } else
                 HAL_LOGD("got the thermald local server.");
-                break;
-            }
+            break;
         } else {
             HAL_LOGE("thermald service does not run now");
             therm_fd = -1;
