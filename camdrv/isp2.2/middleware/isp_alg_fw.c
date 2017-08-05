@@ -2044,6 +2044,20 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 			if (NULL != cxt->otp_data) {
 
 #if defined(CONFIG_DUAL_MODULE)
+		if (cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE)
+		{
+			param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
+			param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
+			param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_g;
+
+			param.otp_info.rdm_stat_info.r = cxt->otp_data->single_otp.iso_awb_info.gain_r;
+			param.otp_info.rdm_stat_info.g = cxt->otp_data->single_otp.iso_awb_info.gain_g;
+			param.otp_info.rdm_stat_info.b = cxt->otp_data->single_otp.iso_awb_info.gain_b;
+		}
+		else
+		{
+			if ((cxt->camera_id == 0) || (cxt->camera_id == 1))
+			{
 				param.otp_info.gldn_stat_info.r = cxt->otp_data->dual_otp.master_awb_golden_info.gain_r;
 				param.otp_info.gldn_stat_info.g = cxt->otp_data->dual_otp.master_awb_golden_info.gain_g;
 				param.otp_info.gldn_stat_info.b = cxt->otp_data->dual_otp.master_awb_golden_info.gain_b;
@@ -2051,6 +2065,18 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 				param.otp_info.rdm_stat_info.r = cxt->otp_data->dual_otp.master_iso_awb_info.gain_r;
 				param.otp_info.rdm_stat_info.g = cxt->otp_data->dual_otp.master_iso_awb_info.gain_g;
 				param.otp_info.rdm_stat_info.b = cxt->otp_data->dual_otp.master_iso_awb_info.gain_b;
+			}
+			else
+			{
+				param.otp_info.gldn_stat_info.r = cxt->otp_data->dual_otp.slave_awb_golden_info.gain_r;
+				param.otp_info.gldn_stat_info.g = cxt->otp_data->dual_otp.slave_awb_golden_info.gain_g;
+				param.otp_info.gldn_stat_info.b = cxt->otp_data->dual_otp.slave_awb_golden_info.gain_b;
+
+				param.otp_info.rdm_stat_info.r = cxt->otp_data->dual_otp.slave_iso_awb_info.gain_r;
+				param.otp_info.rdm_stat_info.g = cxt->otp_data->dual_otp.slave_iso_awb_info.gain_g;
+				param.otp_info.rdm_stat_info.b = cxt->otp_data->dual_otp.slave_iso_awb_info.gain_b;
+			}
+		}
 
 #else
 				param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
@@ -2397,18 +2423,44 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 	}
 
 	//_alsc_set_param(&lsc_param);   // for LSC2.X neet to reopen
-	#if 0
+	#if 1
 	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
 		int original_lens_bits = 16;
 		int compressed_lens_bits = 14;
-		int otp_grid = 96;
-		int lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
+		//int otp_grid = 96;
+		//int lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
+
+		int otp_grid = 0;
+		uint8_t *lsc_otp_addr = NULL;
+		int lsc_otp_len = 0;
+
+		if (cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE)
+		{
+			otp_grid = cxt->otp_data->single_otp.lsc_info.lsc_otp_grid;
+			lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
+			lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
+		}
+		else
+		{
+			if ((cxt->camera_id == 0) || (cxt->camera_id == 1))
+			{
+				otp_grid = cxt->otp_data->dual_otp.master_lsc_info.lsc_otp_grid;
+				lsc_otp_addr = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_addr;
+				lsc_otp_len = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_size;
+			}
+			else
+			{
+				otp_grid = cxt->otp_data->dual_otp.slave_lsc_info.lsc_otp_grid;
+				lsc_otp_addr = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_addr;
+				lsc_otp_len = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_size;
+			}
+		}
 		int lsc_otp_len_chn = lsc_otp_len / 4;
 		int lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
 		int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
 		int gain_w, gain_h;
-		uint8_t *lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
+		//uint8_t *lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
 
 		if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
