@@ -391,6 +391,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 *pPD_left_final = NULL;
 	cmr_s32 *pPD_right_final = NULL;
 	cmr_s32 i;
+  cmr_u8  *ucOTPBuffer = NULL;
+	cmr_s32 otp_orientation = 0;
 
 	UNUSED(out);
 	if (!in) {
@@ -418,18 +420,27 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		dRectW = ROI_Width;
 		dRectH = ROI_Height;
 	}
+	
+	ucOTPBuffer = (cmr_u8 *)cxt->pd_gobal_setting.OTPBuffer;
+	
+	//Check OTP orientation: TBD
+  if(ucOTPBuffer!=NULL){
+    if( (*(ucOTPBuffer+2) != 0) && (*(ucOTPBuffer+2) != 255) ) {
+  	  otp_orientation = 1;
+    }
+  }
 
 	pPD_left  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_left_rotation  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right_rotation = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 
-	ISP_LOGI("PDALGO Converter. Sensor[%d]", cxt->pd_gobal_setting.dSensorSetting);
+	ISP_LOGI("PDALGO Converter. Sensor[%d] OTP[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation);
 	ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
-	
-	if(cxt->pd_gobal_setting.dSensorSetting==1){
-	    for(i=0;i<PD_PIXEL_NUM;i++){
-		    pPD_left_rotation[i] = pPD_left[PD_PIXEL_NUM-i-1];
+
+	if(cxt->pd_gobal_setting.dSensorSetting != otp_orientation){
+	  for(i=0;i<PD_PIXEL_NUM;i++){
+		  pPD_left_rotation[i] = pPD_left[PD_PIXEL_NUM-i-1];
 			pPD_right_rotation[i] = pPD_right[PD_PIXEL_NUM-i-1];
 		}
 		pPD_left_final = pPD_left_rotation;
