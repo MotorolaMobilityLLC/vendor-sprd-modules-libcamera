@@ -3357,6 +3357,12 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     unsigned int on_off = VIDEO_OFF;
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
 
+#ifdef CONFIG_CAMERA_MAX_PREVSIZE_1080P
+    if (mPreviewWidth >= 1080 && mPreviewWidth == mVideoWidth) {
+        mVideoCopyFromPreviewFlag = true;
+    }
+#endif
+
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
         changeDfsPolicy(CAM_HIGH);
