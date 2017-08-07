@@ -27,6 +27,15 @@ extern "C" {
 
 #define ISP_PARAM_FROM_TOOL 1
 
+#define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\
+	do {\
+		param_data.cmd = blk_cmd;\
+		param_data.id = blk_id;\
+		param_data.data_ptr = cfg_ptr;\
+		param_data.data_size = cfg_size;\
+		input.param_data_ptr = &param_data;\
+		input.param_num = 1;} while (0)
+
 enum isp_pm_cmd {
 	ISP_PM_CMD_SET_BASE = 0x1000,
 	ISP_PM_CMD_SET_MODE,

@@ -77,15 +77,6 @@ typedef void *lsc_adv_handle_t;
 #define SENSOR_IMAGE_PATTERN_RAWRGB_B                 0x02
 #define SENSOR_IMAGE_PATTERN_RAWRGB_GB                0x03
 
-#define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\
-	do {\
-		param_data.cmd = blk_cmd;\
-		param_data.id = blk_id;\
-		param_data.data_ptr = cfg_ptr;\
-		param_data.data_size = cfg_size;\
-		input.param_data_ptr = &param_data;\
-		input.param_num = 1;} while (0);
-
 enum alsc_io_ctrl_cmd {
 	SMART_LSC_ALG_UNLOCK = 0,
 	SMART_LSC_ALG_LOCK = 1,
