@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.125"
-#define SUB_VERSION             "-0803-00-remove-build-error"	//use the date code to naming
+#define SUB_VERSION             "-0807-00-bokeh-improve"	//use the date code to naming
 
 #define STRING(s) #s
 
