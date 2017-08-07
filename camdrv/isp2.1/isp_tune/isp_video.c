@@ -3664,6 +3664,9 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 				sem_wait(&capture_sem_lock);
 			}
 			capture_flag = 0;
+			if (NULL != fun_ptr->start_preview) {
+				fun_ptr->start_preview(0, 0);
+			}
 			break;
 		}
 	default:

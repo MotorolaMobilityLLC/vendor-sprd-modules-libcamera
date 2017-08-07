@@ -1588,20 +1588,6 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                                      mem_ptr->cap_raw.size.width,
                                      mem_ptr->cap_raw.size.height,
                                      &mem_ptr->cap_raw.addr_vir);
-        if (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode) {
-            snp_cvt_done(snp_handle);
-            if (HW_SIMULATION_SLICE_WIDTH < mem_ptr->cap_raw.size.width) {
-                ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle,
-                                            &isp_in_param);
-                if (ret) {
-                    CMR_LOGE("failed to start isp proc %ld", ret);
-                }
-                camera_save_mipi_raw_to_file(
-                    snp_handle, datetime, IMG_DATA_TYPE_RAW,
-                    mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                    &mem_ptr->cap_raw.addr_vir);
-            }
-        }
     }
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
