@@ -53,7 +53,6 @@
 #define SNP_EVT_JPEG_DEC_ERR (SNP_EVT_BASE + 38)  /*SNAPSHOT_EVT_JPEG_DEC_ERR*/
 #define SNP_EVT_ANDROID_ZSL_DATA                                               \
     (SNP_EVT_BASE + 39) /*SNAPSHOT_EVT_ANDROID_ZSL_DATA*/
-#define SNP_EVT_HDR_SRC_DONE (SNP_EVT_BASE + 40)
 #define SNP_EVT_IPM_POST_PROC (SNP_EVT_BASE + 41)
 #define SNP_EVT_FREE_FRM (SNP_EVT_BASE + 42)
 #define SNP_EVT_WRITE_EXIF (SNP_EVT_BASE + 43)
@@ -322,7 +321,6 @@ static cmr_int isp_overwrite_cap_mem(cmr_handle snp_handle);
 static cmr_int snp_proc_android_zsl_data(cmr_handle snp_handle, void *data);
 static void snp_set_status(cmr_handle snp_handle, cmr_uint status);
 static cmr_uint snp_get_status(cmr_handle snp_handle);
-static cmr_int snp_proc_hdr_src(cmr_handle snp_handle, void *data);
 static void snp_jpeg_enc_err_handle(cmr_handle snp_handle);
 /*static void snp_jpeg_dec_err_handle(cmr_handle snp_handle);*/
 static void snp_autotest_proc(cmr_handle snp_handle, void *data);
@@ -497,10 +495,6 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     CMR_LOGD("message.msg_type 0x%x, data 0x%lx, fd 0x%x", message->msg_type,
              (cmr_uint)message->data, chn_data_ptr->fd);
     switch (message->msg_type) {
-    case SNP_EVT_HDR_SRC_DONE:
-        snp_proc_copy_frame((cmr_handle)p_data, message->data);
-        ret = snp_proc_hdr_src((cmr_handle)p_data, message->data);
-        break;
     case SNP_EVT_CHANNEL_DONE:
         snp_proc_copy_frame((cmr_handle)p_data, message->data);
         ret = snp_post_proc((cmr_handle)p_data, message->data);
@@ -4741,53 +4735,6 @@ exit:
     return ret;
 }
 
-cmr_int snp_proc_hdr_src(cmr_handle snp_handle, void *data) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    cmr_int is_change_fmt = 0;
-    struct snp_context *cxt = (struct snp_context *)snp_handle;
-    struct frm_info *data_ptr = (struct frm_info *)data;
-    struct img_frm out_param;
-    struct ipm_frame_in ipm_in_param;
-
-    if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
-        CMR_LOGD("snp has been cancel");
-        return ret;
-    }
-    if (IMG_DATA_TYPE_JPEG == data_ptr->fmt ||
-        IMG_DATA_TYPE_RAW == data_ptr->fmt) {
-        is_change_fmt = 1;
-    }
-    if (is_change_fmt) {
-        ret = cmr_snapshot_format_convert((cmr_handle)cxt, data,
-                                          &out_param); // sync
-        if (ret) {
-            CMR_LOGE("failed to format convert %ld", ret);
-            return ret;
-        }
-    } else {
-        out_param = cxt->req_param.post_proc_setting
-                        .chn_out_frm[data_ptr->frame_id - data_ptr->base];
-    }
-    cxt->hdr_src_num++;
-    ipm_in_param.src_frame = out_param;
-    ipm_in_param.dst_frame = out_param;
-    ipm_in_param.private_data = (void *)cxt->oem_handle;
-    ret = ipm_transfer_frame(cxt->req_param.hdr_handle, &ipm_in_param,
-                             NULL); /*async*/
-    if (ret) {
-        CMR_LOGE("failed to transfer frame to ipm %ld", ret);
-        return ret;
-    }
-    cmr_snapshot_memory_flush(snp_handle, &ipm_in_param.dst_frame);
-    if (cxt->hdr_src_num == cxt->req_param.hdr_need_frm_num) {
-        snp_set_status(snp_handle, IPM_WORKING);
-        sem_wait(&cxt->hdr_sync_sm);
-        snp_set_status(snp_handle, POST_PROCESSING);
-        cmr_snapshot_memory_flush(snp_handle, &ipm_in_param.dst_frame);
-    }
-    return ret;
-}
-
 cmr_int snp_stop_proc(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
@@ -5046,145 +4993,127 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
     cmr_u32 flag = 0;
     struct frm_info chn_data;
     unsigned long src_vir, dst_vir;
-    CMR_MSG_INIT(message);
+    cmr_u32 width = 0, height = 0, act_width = 0, act_height = 0;
 
+    CMR_MSG_INIT(message);
     CHECK_HANDLE_VALID(snapshot_handle);
-    CMR_LOGD("evt %ld", evt);
 
     send_thr_handle = cxt->thread_cxt.post_proc_thr_handle;
 
+    CMR_LOGD("evt %ld", evt);
     if ((evt >= SNPASHOT_EVT_MAX) || !data) {
         CMR_LOGE("err param %ld %p", evt, data);
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+
     switch (evt) {
     case SNAPSHOT_EVT_CHANNEL_DONE:
         malloc_len = sizeof(struct frm_info);
-        CMR_LOGD("hdr %d, video %d zsl %d frame_info_ptr.yaddr_vir 0x%x",
-                 cxt->req_param.is_hdr, cxt->req_param.is_video_snapshot,
+        CMR_LOGD("video %d zsl %d yaddr_vir 0x%x",
+                 cxt->req_param.is_video_snapshot,
                  cxt->req_param.is_zsl_snapshot, frame_info_ptr->yaddr_vir);
         buffer_id = snp_get_buffer_id(snapshot_handle, data);
         buffer_id += frame_info_ptr->base;
-        if (1 == cxt->req_param.is_hdr) {
-            snp_evt = SNP_EVT_HDR_SRC_DONE;
-        } else {
-            snp_evt = SNP_EVT_CHANNEL_DONE;
-            if (1 == cxt->req_param.is_video_snapshot ||
-                1 == cxt->req_param.is_zsl_snapshot) {
-                flag = 1;
-                cmr_u32 width =
-                    cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
-                cmr_u32 height =
-                    cxt->req_param.post_proc_setting.chn_out_frm[0].size.height;
-                cmr_u32 act_width =
-                    cxt->req_param.post_proc_setting.actual_snp_size.width;
-                cmr_u32 act_height =
-                    cxt->req_param.post_proc_setting.actual_snp_size.height;
 
-                memcpy(&chn_data, data, sizeof(struct frm_info));
-                chn_data.base = CMR_CAP0_ID_BASE;
-                chn_data.frame_id = CMR_CAP0_ID_BASE;
-                if (1 == cxt->req_param.is_zsl_snapshot) {
-                    chn_data.base = CMR_CAP1_ID_BASE;
-                    chn_data.frame_id = CMR_CAP1_ID_BASE;
-                }
+        snp_evt = SNP_EVT_CHANNEL_DONE;
+        if (1 == cxt->req_param.is_video_snapshot ||
+            1 == cxt->req_param.is_zsl_snapshot) {
+            flag = 1;
+            width = cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
+            height =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].size.height;
+            act_width = cxt->req_param.post_proc_setting.actual_snp_size.width;
+            act_height =
+                cxt->req_param.post_proc_setting.actual_snp_size.height;
 
-                if (1 == cxt->req_param.is_video_snapshot) {
-                    chn_data.yaddr =
-                        cxt->req_param.post_proc_setting.chn_out_frm[0]
-                            .addr_phy.addr_y;
-                    chn_data.uaddr =
-                        cxt->req_param.post_proc_setting.chn_out_frm[0]
-                            .addr_phy.addr_u;
-                    chn_data.fd =
-                        cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
-
-                    src_vir = (unsigned long)chn_data.yaddr_vir;
-                    dst_vir =
-                        (unsigned long)
-                            cxt->req_param.post_proc_setting.chn_out_frm[0]
-                                .addr_vir.addr_y;
-                    CMR_LOGD("y src_vir = %lx dst_vir = %lx width %d height %d "
-                             "channel_zoom_mode %ld",
-                             src_vir, dst_vir, width, height,
-                             proc_param_ptr->channel_zoom_mode);
-                    cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
-
-                    src_vir =
-                        (unsigned long)chn_data.yaddr_vir + width * height;
-
-                    dst_vir =
-                        (unsigned long)
-                            cxt->req_param.post_proc_setting.chn_out_frm[0]
-                                .addr_vir.addr_u;
-                    CMR_LOGD("uv src_vir = %lx dst_vir = %lx width %d height "
-                             "%d act_width %d act_height %d max_size.width %d "
-                             "max_size.height %d",
-                             src_vir, dst_vir, width, height, act_width,
-                             act_height, proc_param_ptr->max_size.width,
-                             proc_param_ptr->max_size.height);
-
-                    cmr_copy((void *)dst_vir, (void *)src_vir,
-                             width * height / 2);
-                    cmr_snapshot_memory_flush(
-                        cxt,
-                        &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
-                } else if (1 == cxt->req_param.is_zsl_snapshot) {
-#ifndef PERFORMANCE_OPTIMIZATION
-                    chn_data.yaddr =
-                        cxt->req_param.post_proc_setting.chn_out_frm[0]
-                            .addr_phy.addr_y;
-                    chn_data.uaddr =
-                        cxt->req_param.post_proc_setting.chn_out_frm[0]
-                            .addr_phy.addr_u;
-                    chn_data.fd =
-                        cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
-
-                    src_vir = (unsigned long)chn_data.yaddr_vir;
-                    dst_vir =
-                        (unsigned long)
-                            cxt->req_param.post_proc_setting.chn_out_frm[0]
-                                .addr_vir.addr_y;
-                    CMR_LOGD("y src_vir = %lx dst_vir = %lx width %d height %d "
-                             "channel_zoom_mode %d",
-                             src_vir, dst_vir, width, height,
-                             proc_param_ptr->channel_zoom_mode);
-                    cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
-
-                    if (ZOOM_POST_PROCESS ==
-                        proc_param_ptr->channel_zoom_mode) {
-                        src_vir =
-                            (unsigned long)chn_data.yaddr_vir + width * height;
-                    } else if (ZOOM_POST_PROCESS_WITH_TRIM ==
-                               proc_param_ptr->channel_zoom_mode) {
-                        src_vir = (unsigned long)chn_data.yaddr_vir +
-                                  proc_param_ptr->max_size.width *
-                                      proc_param_ptr->max_size.height;
-                    } else {
-                        src_vir = (unsigned long)chn_data.yaddr_vir +
-                                  act_width * act_height;
-                    }
-
-                    dst_vir =
-                        (unsigned long)
-                            cxt->req_param.post_proc_setting.chn_out_frm[0]
-                                .addr_vir.addr_u;
-                    CMR_LOGD("uv src_vir = %lx dst_vir = %lx width %d height "
-                             "%d act_width %d act_height %d max_size.width %d "
-                             "max_size.height %d",
-                             src_vir, dst_vir, width, height, act_width,
-                             act_height, proc_param_ptr->max_size.width,
-                             proc_param_ptr->max_size.height);
-
-                    cmr_copy((void *)dst_vir, (void *)src_vir,
-                             width * height / 2);
-                    cmr_snapshot_memory_flush(
-                        cxt,
-                        &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
-#endif
-                }
+            memcpy(&chn_data, data, sizeof(struct frm_info));
+            chn_data.base = CMR_CAP0_ID_BASE;
+            chn_data.frame_id = CMR_CAP0_ID_BASE;
+            if (1 == cxt->req_param.is_zsl_snapshot) {
+                chn_data.base = CMR_CAP1_ID_BASE;
+                chn_data.frame_id = CMR_CAP1_ID_BASE;
             }
+        }
+
+        if (1 == cxt->req_param.is_video_snapshot) {
+            chn_data.yaddr =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
+            chn_data.uaddr =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
+            chn_data.fd = cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
+
+            src_vir = (unsigned long)chn_data.yaddr_vir;
+            dst_vir =
+                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
+                    .addr_vir.addr_y;
+            CMR_LOGD("y src_vir = %lx dst_vir = %lx width %d height %d "
+                     "channel_zoom_mode %ld",
+                     src_vir, dst_vir, width, height,
+                     proc_param_ptr->channel_zoom_mode);
+            cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
+
+            src_vir = (unsigned long)chn_data.yaddr_vir + width * height;
+
+            dst_vir =
+                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
+                    .addr_vir.addr_u;
+            CMR_LOGD("uv src_vir = %lx dst_vir = %lx width %d height "
+                     "%d act_width %d act_height %d max_size.width %d "
+                     "max_size.height %d",
+                     src_vir, dst_vir, width, height, act_width, act_height,
+                     proc_param_ptr->max_size.width,
+                     proc_param_ptr->max_size.height);
+
+            cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
+                cmr_snapshot_memory_flush(
+                    cxt,
+                    &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
+            } else if (1 == cxt->req_param.is_zsl_snapshot) {
+#ifndef PERFORMANCE_OPTIMIZATION
+            chn_data.yaddr =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
+            chn_data.uaddr =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
+            chn_data.fd = cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
+
+            src_vir = (unsigned long)chn_data.yaddr_vir;
+            dst_vir =
+                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
+                    .addr_vir.addr_y;
+            CMR_LOGD("y src_vir = %lx dst_vir = %lx width %d height %d "
+                     "channel_zoom_mode %d",
+                     src_vir, dst_vir, width, height,
+                     proc_param_ptr->channel_zoom_mode);
+            cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
+
+            if (ZOOM_POST_PROCESS == proc_param_ptr->channel_zoom_mode) {
+                src_vir = (unsigned long)chn_data.yaddr_vir + width * height;
+            } else if (ZOOM_POST_PROCESS_WITH_TRIM ==
+                       proc_param_ptr->channel_zoom_mode) {
+                src_vir = (unsigned long)chn_data.yaddr_vir +
+                          proc_param_ptr->max_size.width *
+                              proc_param_ptr->max_size.height;
+            } else {
+                src_vir =
+                    (unsigned long)chn_data.yaddr_vir + act_width * act_height;
+            }
+
+            dst_vir =
+                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
+                    .addr_vir.addr_u;
+            CMR_LOGD("uv src_vir = %lx dst_vir = %lx width %d height "
+                     "%d act_width %d act_height %d max_size.width %d "
+                     "max_size.height %d",
+                     src_vir, dst_vir, width, height, act_width, act_height,
+                     proc_param_ptr->max_size.width,
+                     proc_param_ptr->max_size.height);
+
+            cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
+                cmr_snapshot_memory_flush(
+                    cxt,
+                    &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
+#endif
         }
         break;
     case SNAPSHOT_EVT_RAW_PROC:
@@ -5243,6 +5172,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
         CMR_LOGD("don't support evt 0x%lx", evt);
         goto exit;
     }
+
     if (malloc_len) {
         message.data = malloc(malloc_len);
         if (!message.data) {
@@ -5264,7 +5194,9 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
     ret = cmr_thread_msg_send(send_thr_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send stop msg to main thr %ld", ret);
+        goto exit;
     }
+
 exit:
     ATRACE_END();
     return ret;
