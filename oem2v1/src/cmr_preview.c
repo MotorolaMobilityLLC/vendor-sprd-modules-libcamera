@@ -787,7 +787,7 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGD("in");
+    CMR_LOGD("E");
 
     /*check every device, if previewing, stop it*/
     for (i = 0; i < CAMERA_ID_MAX; i++) {
@@ -799,7 +799,6 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
         }
     }
 
-    /*destory thread*/
     ret = prev_destroy_thread(handle);
     if (ret) {
         CMR_LOGE("destory thread failed!");
@@ -814,14 +813,14 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
         goto deinit_end;
     }
 
-    /*release handle*/
     if (handle) {
         free(handle);
         handle = NULL;
     }
 
+    CMR_LOGD("X");
+
 deinit_end:
-    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -1819,9 +1818,11 @@ cmr_int prev_destroy_thread(struct prev_handle *handle) {
             CMR_LOGE("send msg failed!");
         }
 
+        CMR_LOGI("destory prev thread");
         ret = cmr_thread_destroy(handle->thread_cxt.thread_handle);
         handle->thread_cxt.thread_handle = 0;
 
+        CMR_LOGI("destory prev assist thread");
         ret = cmr_thread_destroy(handle->thread_cxt.assist_thread_handle);
         handle->thread_cxt.assist_thread_handle = 0;
 
@@ -3541,7 +3542,11 @@ cmr_int prev_recovery_reset(struct prev_handle *handle, cmr_u32 camera_id) {
 cmr_int prev_local_init(struct prev_handle *handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(handle);
+
+    CMR_LOGI("X");
 
     return ret;
 }
@@ -3549,7 +3554,11 @@ cmr_int prev_local_init(struct prev_handle *handle) {
 cmr_int prev_local_deinit(struct prev_handle *handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(handle);
+
+    CMR_LOGI("X");
 
     return ret;
 }

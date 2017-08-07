@@ -2346,6 +2346,8 @@ cmr_int camera_jpeg_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct jpeg_context *jpeg_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     jpeg_cxt = &cxt->jpeg_cxt;
     CHECK_HANDLE_VALID(jpeg_cxt);
@@ -2367,8 +2369,9 @@ cmr_int camera_jpeg_deinit(cmr_handle oem_handle) {
     }
     cmr_bzero(jpeg_cxt, sizeof(*jpeg_cxt));
 
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -2413,6 +2416,8 @@ cmr_int camera_scaler_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct scaler_context *scaler_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     scaler_cxt = &cxt->scaler_cxt;
     CHECK_HANDLE_VALID(scaler_cxt);
@@ -2427,8 +2432,10 @@ cmr_int camera_scaler_deinit(cmr_handle oem_handle) {
         goto exit;
     }
     cmr_bzero(scaler_cxt, sizeof(*scaler_cxt));
+
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -2473,6 +2480,8 @@ cmr_int camera_rotation_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct rotation_context *rot_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     rot_cxt = &cxt->rot_cxt;
     CHECK_HANDLE_VALID(rot_cxt);
@@ -2489,8 +2498,9 @@ cmr_int camera_rotation_deinit(cmr_handle oem_handle) {
     }
     cmr_bzero(rot_cxt, sizeof(*rot_cxt));
 
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -3565,10 +3575,14 @@ cmr_int camera_isp_deinit_notice(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
+    CMR_LOGI("E");
+
     ret = cmr_setting_deinit_notice(cxt->setting_cxt.setting_handle);
     ret = cmr_focus_deinit_notice(cxt->focus_cxt.focus_handle);
     ret = cmr_grab_deinit_notice(cxt->grab_cxt.grab_handle);
-    CMR_LOGI("done %ld", ret);
+
+    CMR_LOGI("X %ld", ret);
+
     return ret;
 }
 
@@ -3579,6 +3593,8 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt;
     cmr_s32 fd = 0;
+
+    CMR_LOGI("E");
 
     CHECK_HANDLE_VALID(oem_handle);
     isp_cxt = &cxt->isp_cxt;
@@ -3609,8 +3625,9 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
 
 #endif
 
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGI("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -3686,6 +3703,8 @@ cmr_int camera_preview_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct preview_context *prev_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     prev_cxt = &cxt->prev_cxt;
     CHECK_HANDLE_VALID(prev_cxt);
@@ -3694,14 +3713,17 @@ cmr_int camera_preview_deinit(cmr_handle oem_handle) {
         CMR_LOGD("preview has been de-intialized");
         goto exit;
     }
+
     ret = cmr_preview_deinit(prev_cxt->preview_handle);
     if (ret) {
         CMR_LOGE("failed to de-init preview %ld", ret);
         goto exit;
     }
     cmr_bzero(prev_cxt, sizeof(*prev_cxt));
+
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -3768,6 +3790,8 @@ cmr_int camera_snapshot_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct snapshot_context *snp_cxt;
 
+    CMR_LOGD("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     snp_cxt = &cxt->snp_cxt;
     CHECK_HANDLE_VALID(snp_cxt);
@@ -3776,14 +3800,17 @@ cmr_int camera_snapshot_deinit(cmr_handle oem_handle) {
         CMR_LOGD("snp has been de-intialized");
         goto exit;
     }
+
     ret = cmr_snapshot_deinit(snp_cxt->snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to de-init snapshot %ld", ret);
         goto exit;
     }
     cmr_bzero(snp_cxt, sizeof(*snp_cxt));
+
+    CMR_LOGD("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -3831,6 +3858,8 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct ipm_context *ipm_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     ipm_cxt = &cxt->ipm_cxt;
     CHECK_HANDLE_VALID(ipm_cxt);
@@ -3839,14 +3868,17 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
         CMR_LOGD("ipm has been de-intialized");
         goto exit;
     }
+
     ret = cmr_ipm_deinit(ipm_cxt->ipm_handle);
     if (ret) {
         CMR_LOGE("failed to de-init ipm %ld", ret);
         goto exit;
     }
     cmr_bzero(ipm_cxt, sizeof(*ipm_cxt));
+
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -3897,6 +3929,8 @@ cmr_int camera_setting_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_context *setting_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     setting_cxt = &cxt->setting_cxt;
     CHECK_HANDLE_VALID(setting_cxt);
@@ -3905,14 +3939,17 @@ cmr_int camera_setting_deinit(cmr_handle oem_handle) {
         CMR_LOGD("setting has been de-intialized");
         goto exit;
     }
+
     ret = cmr_setting_deinit(setting_cxt->setting_handle);
     if (ret) {
         CMR_LOGE("failed to de-init setting %ld", ret);
         goto exit;
     }
     cmr_bzero(setting_cxt, sizeof(*setting_cxt));
+
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -3963,6 +4000,8 @@ cmr_int camera_focus_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct focus_context *focus_cxt;
 
+    CMR_LOGI("E");
+
     CHECK_HANDLE_VALID(oem_handle);
     focus_cxt = &cxt->focus_cxt;
     CHECK_HANDLE_VALID(focus_cxt);
@@ -3971,6 +4010,7 @@ cmr_int camera_focus_deinit(cmr_handle oem_handle) {
         CMR_LOGD("focus has been de-intialized");
         goto exit;
     }
+
     ret = cmr_focus_deinit(focus_cxt->focus_handle);
     if (ret) {
         CMR_LOGE("failed to de-init focus %ld", ret);
@@ -3978,8 +4018,9 @@ cmr_int camera_focus_deinit(cmr_handle oem_handle) {
     }
     cmr_bzero(focus_cxt, sizeof(*focus_cxt));
 
+    CMR_LOGI("X");
+
 exit:
-    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -4257,12 +4298,12 @@ exit:
 }
 
 cmr_int camera_deinit_thread(cmr_handle oem_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
+    CMR_LOGI("E");
     camera_destroy_prev_thread(oem_handle);
     camera_destroy_snp_thread(oem_handle);
-    CMR_LOGI("done %ld", ret);
-    return ret;
+    CMR_LOGI("X");
+
+    return CMR_CAMERA_SUCCESS;
 }
 
 static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
@@ -4350,7 +4391,7 @@ exit:
 static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    CMR_LOGI("In");
+    CMR_LOGI("E");
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     /*for multicamera mode,when close convered sensor,only need to deinit
@@ -4383,7 +4424,7 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
 
 exit:
 
-    CMR_LOGI("Out");
+    CMR_LOGI("X");
 
     ATRACE_END();
     return CMR_CAMERA_SUCCESS;
@@ -4496,6 +4537,8 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CMR_MSG_INIT(message);
 
+    CMR_LOGI("E");
+
     message.msg_type = CMR_EVT_EXIT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     ret = cmr_thread_msg_send(cxt->init_thread, &message);
@@ -4506,24 +4549,26 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     if (cxt->camera_cb) {
         cxt->camera_cb(CAMERA_EXIT_CB_DONE, cxt->client_data, CAMERA_FUNC_STOP,
                        0);
-    } else {
-        CMR_LOGE("err, camera_cb is null, don't notify HAL");
     }
-    /*destroy thread*/
+
     if (cxt->init_thread) {
         cmr_thread_destroy(cxt->init_thread);
         cxt->init_thread = 0;
     }
+
 #ifdef OEM_HANDLE_HDR
     sem_destroy(&cxt->hdr_sync_sm);
     sem_destroy(&cxt->hdr_flag_sm);
 #endif
+
 #ifdef OEM_HANDLE_3DNR
     sem_destroy(&cxt->threednr_flag_sm);
 #endif
 
     sem_destroy(&cxt->share_path_sm);
     sem_destroy(&cxt->access_sm);
+
+    CMR_LOGI("X");
     ATRACE_END();
     return ret;
 }

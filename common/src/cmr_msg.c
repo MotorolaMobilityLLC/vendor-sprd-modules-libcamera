@@ -149,15 +149,11 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message,
             sem_post(&msg_cur->sem);
         }
     }
-    if (0 != log_level) {
-        CMR_LOGV("queue_handle 0x%lx, msg type 0x%x num %d cnt %d",
-                 (cmr_uint)queue_handle, message->msg_type, msg_cxt->msg_number,
-                 msg_cxt->msg_count);
-    } else {
-        CMR_LOGV("queue_handle 0x%lx, msg type 0x%x num %d cnt %d",
-                 (cmr_uint)queue_handle, message->msg_type, msg_cxt->msg_number,
-                 msg_cxt->msg_count);
-    }
+
+    CMR_LOGV("queue_handle 0x%lx, msg type 0x%x num %d cnt %d",
+             (cmr_uint)queue_handle, message->msg_type, msg_cxt->msg_number,
+             msg_cxt->msg_count);
+
     return CMR_MSG_SUCCESS;
 }
 
@@ -240,15 +236,10 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
     }
     ori_node = msg_cxt->msg_write;
 
-    if (0 != log_level) {
-        CMR_LOGV("queue_handle 0x%lx, msg type 0x%x num %d cnt %d",
-                 (cmr_uint)queue_handle, message->msg_type, msg_cxt->msg_number,
-                 msg_cxt->msg_count);
-    } else {
-        CMR_LOGV("queue_handle 0x%lx, msg type 0x%x num %d cnt %d",
-                 (cmr_uint)queue_handle, message->msg_type, msg_cxt->msg_number,
-                 msg_cxt->msg_count);
-    }
+    CMR_LOGV("queue_handle 0x%lx, msg type 0x%x num %d cnt %d",
+             (cmr_uint)queue_handle, message->msg_type, msg_cxt->msg_number,
+             msg_cxt->msg_count);
+
     MSG_CHECK_MSG_MAGIC(queue_handle);
 
     pthread_mutex_lock(&msg_cxt->mutex);
@@ -289,19 +280,17 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
 
     if (message->msg_type == CMR_THREAD_EXIT_EVT) {
         msg_cxt->will_destroy_msg_queue_flag = 1;
-        CMR_LOGD(
-            "posting CMR_THREAD_EXIT_EVT, set will_destroy_msg_queue_flag");
+        CMR_LOGD("CMR_THREAD_EXIT_EVT");
     }
 
     pthread_mutex_unlock(&msg_cxt->mutex);
 
-    /*	CMR_LOGD("msg_cur 0x%lx", (cmr_uint)msg_cur);*/
     sem_post(&msg_cxt->msg_sem);
-    // if (NULL != msg_cur) {
+
     if (CMR_MSG_SYNC_NONE != msg_cur->sync_f) {
         rtn = sem_wait(&msg_cur->sem);
     }
-    //}
+
     return rtn;
 }
 
@@ -414,9 +403,12 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
     struct cmr_thread *thread = NULL;
     CMR_MSG_INIT(message);
 
+    CMR_LOGV("E");
+
     if (!thread_handle || !queue_length || !proc_cb) {
         return CMR_MSG_PARAM_ERR;
     }
+
     *thread_handle = 0;
     thread = (struct cmr_thread *)malloc(sizeof(struct cmr_thread));
     if (!thread) {
@@ -444,6 +436,7 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
         free((void *)thread);
         return rtn;
     }
+
     message.msg_type = CMR_THREAD_INIT_EVT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     rtn = cmr_msg_post(thread->queue_handle, &message, 1);
@@ -456,6 +449,8 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
 
     pthread_attr_destroy(&attr);
     *thread_handle = (cmr_handle)thread;
+
+    CMR_LOGV("X");
     return rtn;
 }
 
@@ -464,6 +459,8 @@ cmr_int cmr_thread_destroy(cmr_handle thread_handle) {
     cmr_int ret = CMR_MSG_SUCCESS;
     struct cmr_thread *thread = (struct cmr_thread *)thread_handle;
     struct cmr_msg_cxt *msg_cxt = NULL;
+
+    CMR_LOGV("E");
 
     message.msg_type = CMR_THREAD_EXIT_EVT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -476,6 +473,8 @@ cmr_int cmr_thread_destroy(cmr_handle thread_handle) {
         free(thread_handle);
         thread_handle = NULL;
     }
+
+    CMR_LOGV("X");
     return ret;
 }
 
