@@ -700,6 +700,10 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
     case CAMERA_CHANNEL_TYPE_REGULAR:
         stopPreviewInternal();
         mVideoParameterSetFlag = false;
+        mSlowPara.rec_timestamp = 0;
+        mSlowPara.last_frm_timestamp = 0;
+        mIsRecording = false;
+
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
             video_stab_close(mPreviewInst);
@@ -709,7 +713,6 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         if (mEisVideoInit) {
             video_stab_close(mVideoInst);
             mEisVideoInit = false;
-            mIsRecording = false;
             HAL_LOGI("video stab close");
         }
 #endif
@@ -3343,7 +3346,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
 
 #ifdef CONFIG_CAMERA_MAX_PREVSIZE_1080P
-    if (mPreviewWidth >= 1080 && mPreviewWidth == mVideoWidth) {
+    if (mPreviewWidth >= 1920 && mPreviewWidth == mVideoWidth) {
         mVideoCopyFromPreviewFlag = true;
     }
 #endif
@@ -4212,13 +4215,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #endif
 
     if (rec_stream) {
-        // reset timestamp and mIsRecording after recording
-        rec_stream->getQBufListNum(&buf_deq_num);
-        if (buf_deq_num == 0) {
-            mSlowPara.last_frm_timestamp = 0;
-            mIsRecording = false;
-        }
-
         ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
         if (ret) {
             goto bypass_rec;
