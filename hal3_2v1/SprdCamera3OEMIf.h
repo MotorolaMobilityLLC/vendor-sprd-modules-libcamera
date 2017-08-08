@@ -141,6 +141,12 @@ typedef struct {
 #define POWER_HINT_VENDOR_CAMERA_LOWPOWER 0xFF
 #endif
 
+typedef enum {
+    CAMERA_POWER_HINT_PERFORMANCE = POWER_HINT_VENDOR_CAMERA_HDR,
+    CAMERA_POWER_HINT_LOWPOWER = POWER_HINT_VENDOR_CAMERA_LOWPOWER,
+    CAMERA_POWER_HINT_MAX = 0xFF
+} powerhint_mode_type_t;
+
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
     SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -167,8 +173,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
                     uint32_t src_w, uint32_t src_h);
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
 
-    int flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
-                         size_t size);
+    int flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr, size_t size);
     sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
                                          uint32_t is_cache);
     sprd_camera_memory_t *allocReservedMem(int buf_size, int num_bufs,
@@ -205,12 +210,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void thermalEnabled(bool flag);
     void initPowerHint();
     void deinitPowerHint();
-    void enablePowerHint(int mPowerHintId);
-    void enablePowerHintExt(sp<IPowerManager> mPowerManager,
-                            sp<IBinder> mPrfmLockEnable, int mPowerHintId);
-    void disablePowerHint(int mPowerHintId);
-    void disablePowerHintExt(sp<IPowerManager> mPowerManager,
-                             sp<IBinder> mPrfmLock, int mPowerHintId);
+    void enablePowerHint(int powerhint_id);
+    void enablePowerHintExt(sp<IPowerManager> powermanager,
+                            sp<IBinder> prfmlock, int powerhint_id);
+    void disablePowerHint(int powerhint_id);
+    void disablePowerHintExt(sp<IPowerManager> powermanager,
+                             sp<IBinder> prfmlock);
     int changeDfsPolicy(int dfs_policy);
     int setDfsPolicy(int dfs_policy);
     int releaseDfsPolicy(int dfs_policy);
@@ -743,8 +748,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
+    uint32_t mPerformancePowerHint;
+    uint32_t mLowerPowerPowerHint;
     /* 1- start acceleration, 0 - finish acceleration*/
-    bool mHDRPowerHintFlag;
 
     /* for eis*/
     bool mGyroInit;
