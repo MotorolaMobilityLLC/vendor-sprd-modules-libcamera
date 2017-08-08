@@ -3258,6 +3258,31 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	else
 		exp_line_slave = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.min_exp_line;
 
+
+
+	float iso_ratio = 1.0f;
+	if ((exp_master_1x != 0) && (exp_slave_1x != 0))
+	{
+		iso_ratio = ((float)exp_slave_1x) / ((float)exp_master_1x);
+	}
+
+	if (iso_ratio < 1.0f)
+	{
+		if ((cmr_u32)(gain_master*iso_ratio) > 128)
+		{
+			gain_slave = (cmr_u32)(gain_master * iso_ratio);
+		}
+		else
+		{
+			exp_line_slave = (cmr_u32)(exp_line_slave * iso_ratio);
+		}
+	}
+	else
+	{
+		gain_slave = (cmr_u32)(gain_master * iso_ratio);
+	}
+
+
 	/* calculate dummy line */
 	tmp = master_line_time * (ae_master_calc_out->wts.cur_exp_line + ae_master_calc_out->wts.cur_dummy);
 	slave_dummy = tmp / slv_line_time - exp_line_slave;
