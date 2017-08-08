@@ -1742,9 +1742,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
 		trigger_set_mode(af, mode);
 		trigger_start(af);
-		if (STATE_PICTURE != af->pre_state) {
-			af->force_trigger = AFV1_TRUE;
-		}
 		break;
 	case AF_MODE_PICTURE:
 		af->request_mode = af_mode;
