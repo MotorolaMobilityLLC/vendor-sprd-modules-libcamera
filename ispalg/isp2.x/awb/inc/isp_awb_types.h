@@ -79,6 +79,12 @@ struct awb_gain {
 	cmr_u16 b;
 };
 
+struct awb_save_gain {
+	cmr_u16 r;
+	cmr_u16 g;
+	cmr_u16 b;
+	cmr_u16 ct;
+};
 struct awb_linear_func {
 	cmr_s32 a;
 	cmr_s32 b;
