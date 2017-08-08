@@ -476,10 +476,11 @@ struct lsc_adv_init_param {
 	cmr_u16 *lum_gain;	// space to save pre_table from smart1.0
 	struct lsc_adv_tune_param tune_param;
 
-	//otp data	
+	//otp data
 	cmr_u32 lsc_otp_table_en;
 	cmr_u32 lsc_otp_table_width;
 	cmr_u32 lsc_otp_table_height;
+	cmr_u32 lsc_otp_grid;
 	cmr_u16 *lsc_otp_table_addr;
 
 	cmr_u32 lsc_otp_oc_en;
