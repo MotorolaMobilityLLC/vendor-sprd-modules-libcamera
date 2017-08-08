@@ -204,8 +204,8 @@ void construct_fb_level(struct class_fb *faceBeauty,
                                                 25, 30, 40, 45, 50};
     unsigned char tab_skinWhitenLevel[NUM_LEVELS];
     unsigned char tab_skinCleanLevel[NUM_LEVELS];
-    unsigned char tab_faceSlimLevel[NUM_LEVELS];
-    unsigned char tab_eyeLargeLevel[NUM_LEVELS];
+    unsigned char tab_faceSlimLevel[NUM_LEVELS] = {0};
+    unsigned char tab_eyeLargeLevel[NUM_LEVELS] = {0};
 
     if (!strcmp(faceBeauty->sprdAlgorithm, "1")) {
         memcpy(tab_skinWhitenLevel, preview_whitenLevel,
