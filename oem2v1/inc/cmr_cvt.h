@@ -45,6 +45,8 @@ cmr_int cmr_rot_open(cmr_handle *rot_handle);
 cmr_int cmr_rot(struct cmr_rot_param *rot_param);
 cmr_int cmr_rot_close(cmr_handle rot_handle);
 cmr_int cmr_scale_open(cmr_handle *scale_handle);
+cmr_int cmr_scale_get_cpp_capability(cmr_handle *scale_handle,
+                                     cmr_u32 *max_width, cmr_u32 *max_height);
 cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
                         struct img_frm *dst_img, cmr_evt_cb cmr_event_cb,
                         cmr_handle cb_handle);

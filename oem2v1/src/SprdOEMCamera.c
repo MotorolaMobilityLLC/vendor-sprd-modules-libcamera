@@ -413,6 +413,22 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
+                                  cmr_u32 *max_height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!max_width || !max_height) {
+        CMR_LOGE("Invalid Param");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_local_get_cpp_capability(oem_handle, max_width, max_height);
+
+exit:
+    CMR_LOGI("done %ld", ret);
+    return ret;
+}
+
 cmr_int camera_get_sensor_info_for_raw(cmr_handle camera_handle,
                                        struct sensor_mode_info *mode_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1087,6 +1103,12 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_3DNR_VIDEOMODE: {
         ret = camera_set_3dnr_video(handle, *(cmr_uint *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_GET_CPP_CAPABILITY: {
+        ret = camera_get_cpp_capability(handle,
+                                        &(((struct img_size *)param)->width),
+                                        &(((struct img_size *)param)->height));
         break;
     }
     default:

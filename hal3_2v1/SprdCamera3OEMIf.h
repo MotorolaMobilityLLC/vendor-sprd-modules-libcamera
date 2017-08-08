@@ -233,6 +233,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isNeedAfFullscan();
     int camera_ioctrl(int cmd, void *param1, void *param2);
     bool isVideoCopyFromPreview();
+    int getCppMaxSize(cam_dimension_t *);
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);

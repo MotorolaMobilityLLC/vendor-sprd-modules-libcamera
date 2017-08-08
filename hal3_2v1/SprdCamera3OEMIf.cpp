@@ -1585,6 +1585,15 @@ bool SprdCamera3OEMIf::isNeedAfFullscan() {
     return ret;
 }
 
+int SprdCamera3OEMIf::getCppMaxSize(cam_dimension_t *max_cpp_size) {
+    int32_t ret = 0;
+    ret = mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_GET_CPP_CAPABILITY, max_cpp_size);
+    if (ret)
+        HAL_LOGE("Invalid Parameter for cpp capability");
+    return ret;
+}
+
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state) {
     status_t ret = 0;
     Mutex::Autolock l(&mLock);

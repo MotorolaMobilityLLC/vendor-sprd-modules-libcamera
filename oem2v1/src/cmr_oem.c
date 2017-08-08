@@ -9046,6 +9046,23 @@ exit:
     return ret;
 }
 
+cmr_int camera_local_get_cpp_capability(cmr_handle oem_handle,
+                                        cmr_u32 *max_width,
+                                        cmr_u32 *max_height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!max_width || !max_height) {
+        CMR_LOGE("error param");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        return ret;
+    }
+    ret = cmr_scale_get_cpp_capability(cxt->scaler_cxt.scaler_handle, max_width,
+                                       max_height);
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
 cmr_int camera_local_get_zsl_info(cmr_handle oem_handle, cmr_uint *is_support,
                                   cmr_uint *max_width, cmr_uint *max_height) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

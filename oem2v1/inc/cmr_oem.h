@@ -368,6 +368,10 @@ cmr_int camera_local_set_param(cmr_handle camera_handle,
 cmr_int camera_local_get_zsl_info(cmr_handle oem_handle, cmr_uint *is_support,
                                   cmr_uint *max_width, cmr_uint *max_height);
 
+cmr_int camera_local_get_cpp_capability(cmr_handle oem_handle,
+                                        cmr_u32 *max_width,
+                                        cmr_u32 *max_height);
+
 cmr_int camera_local_fast_ctrl(cmr_handle oem_handle);
 
 cmr_int camera_local_pre_flash(cmr_handle oem_handle);
@@ -451,6 +455,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             struct frm_info *frm_data);
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
+cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
+                                  cmr_u32 *max_height);
 #ifdef __cplusplus
 }
 #endif

@@ -46,6 +46,7 @@ struct scale_file {
     cmr_handle scale_thread;
     sem_t sync_sem;
     pthread_mutex_t scale_mutex;
+    struct sprd_cpp_size sc_cpp_cap_param;
 };
 
 struct scale_cfg_param_t {
@@ -404,6 +405,30 @@ exit:
     return ret;
 }
 
+cmr_int cmr_scale_get_cpp_capability(cmr_handle *scale_handle,
+                                     cmr_u32 *max_width, cmr_u32 *max_height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    struct scale_file *file = (struct scale_file *)(scale_handle);
+    if (!file) {
+        CMR_LOGE("scale error: no memory for file");
+        ret = CMR_CAMERA_NO_MEM;
+        goto exit;
+    }
+
+    if (!max_width || !max_height) {
+        CMR_LOGE("scale error: no memory for file");
+        ret = CMR_CAMERA_FAIL;
+        return ret;
+    }
+
+    *max_width = file->sc_cpp_cap_param.w;
+    *max_height = file->sc_cpp_cap_param.h;
+
+exit:
+    return ret;
+}
+
 cmr_int cmr_scale_open(cmr_handle *scale_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_int fd = -1;
@@ -422,6 +447,9 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
         // fd = cmr_grab_get_cpp_fd(*scale_handle);
         fd = open(scaler_dev_name, O_RDWR, 0);
         ret = ioctl(fd, SPRD_CPP_IO_OPEN_SCALE, &val);
+        file->sc_cpp_cap_param.w = val & 0xFFFF;
+        file->sc_cpp_cap_param.h = (val >> 16) & 0xFFFF;
+
         if (ret) {
             close(fd);
             fd = -1;
