@@ -944,8 +944,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	struct smart_proc_input smart_proc_in;
 	struct ae_monitor_info info;
 	struct awb_size win_size = { 0, 0 };
-	struct afctrl_ae_info ae_info;
-	struct afctrl_awb_info awb_info;
+	struct afctrl_ae_info *ae_info;
+	struct afctrl_awb_info *awb_info;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	cmr_s32 bv = 0;
@@ -1049,38 +1049,40 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	isp_cur_bv = ae_in->ae_output.cur_bv;
 	isp_cur_ct = awb_output->ct;
 
-	memset((void *)&ae_info, 0, sizeof(struct afctrl_ae_info));
-	ae_info.img_blk_info.block_w = 32;
-	ae_info.img_blk_info.block_h = 32;
-	ae_info.img_blk_info.chn_num = 3;
-	ae_info.img_blk_info.pix_per_blk = 1;
-	ae_info.img_blk_info.data = (cmr_u32 *) &cxt->aem_stats;
-	ae_info.ae_rlt_info.bv = ae_in->ae_output.cur_bv;
-	ae_info.ae_rlt_info.is_stab = ae_in->ae_output.is_stab;
-	ae_info.ae_rlt_info.cur_exp_line = ae_in->ae_output.cur_exp_line;
-	ae_info.ae_rlt_info.cur_dummy = ae_in->ae_output.cur_dummy;
-	ae_info.ae_rlt_info.frame_line = ae_in->ae_output.frame_line;
-	ae_info.ae_rlt_info.line_time = ae_in->ae_output.line_time;
-	ae_info.ae_rlt_info.cur_again = ae_in->ae_output.cur_again;
-	ae_info.ae_rlt_info.cur_dgain = ae_in->ae_output.cur_dgain;
-	ae_info.ae_rlt_info.cur_lum = ae_in->ae_output.cur_lum;
-	ae_info.ae_rlt_info.target_lum = ae_in->ae_output.target_lum;
-	ae_info.ae_rlt_info.target_lum_ori = ae_in->ae_output.target_lum_ori;
-	ae_info.ae_rlt_info.flag4idx = ae_in->ae_output.flag4idx;
-	ae_info.ae_rlt_info.cur_ev = ae_in->ae_output.cur_ev;
-	ae_info.ae_rlt_info.cur_index = ae_in->ae_output.cur_index;
-	ae_info.ae_rlt_info.cur_iso = ae_in->ae_output.cur_iso;
+	ae_info = &cxt->ae_info;
+	awb_info = &cxt->awb_info;
 
-	memset((void *)&awb_info, 0, sizeof(struct afctrl_awb_info));
-	awb_info.r_gain = awb_output->gain.r;
-	awb_info.g_gain = awb_output->gain.g;
-	awb_info.b_gain = awb_output->gain.b;
+	if (0 == ae_info->is_update) {
+		memset((void *)ae_info, 0, sizeof(struct afctrl_ae_info));
+		ae_info->img_blk_info.block_w = 32;
+		ae_info->img_blk_info.block_h = 32;
+		ae_info->img_blk_info.chn_num = 3;
+		ae_info->img_blk_info.pix_per_blk = 1;
+		ae_info->img_blk_info.data = (cmr_u32 *) &cxt->aem_stats;
+		ae_info->ae_rlt_info.bv = ae_in->ae_output.cur_bv;
+		ae_info->ae_rlt_info.is_stab = ae_in->ae_output.is_stab;
+		ae_info->ae_rlt_info.cur_exp_line = ae_in->ae_output.cur_exp_line;
+		ae_info->ae_rlt_info.cur_dummy = ae_in->ae_output.cur_dummy;
+		ae_info->ae_rlt_info.frame_line = ae_in->ae_output.frame_line;
+		ae_info->ae_rlt_info.line_time = ae_in->ae_output.line_time;
+		ae_info->ae_rlt_info.cur_again = ae_in->ae_output.cur_again;
+		ae_info->ae_rlt_info.cur_dgain = ae_in->ae_output.cur_dgain;
+		ae_info->ae_rlt_info.cur_lum = ae_in->ae_output.cur_lum;
+		ae_info->ae_rlt_info.target_lum = ae_in->ae_output.target_lum;
+		ae_info->ae_rlt_info.target_lum_ori = ae_in->ae_output.target_lum_ori;
+		ae_info->ae_rlt_info.flag4idx = ae_in->ae_output.flag4idx;
+		ae_info->ae_rlt_info.cur_ev = ae_in->ae_output.cur_ev;
+		ae_info->ae_rlt_info.cur_index = ae_in->ae_output.cur_index;
+		ae_info->ae_rlt_info.cur_iso = ae_in->ae_output.cur_iso;
+		ae_info->is_update = 1;
+	}
 
-	if (cxt->ops.af_ops.ioctrl) {
-		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void *)(&ae_info), NULL);
-		ISP_TRACE_IF_FAIL(ret, ("AF_CMD_SET_AE_INFO fail "));
-		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void *)(&awb_info), NULL);
-		ISP_TRACE_IF_FAIL(ret, ("AF_CMD_SET_AWB_INFO fail "));
+	if (0 == awb_info->is_update) {
+		memset((void *)awb_info, 0, sizeof(struct afctrl_awb_info));
+		awb_info->r_gain = awb_output->gain.r;
+		awb_info->g_gain = awb_output->gain.g;
+		awb_info->b_gain = awb_output->gain.b;
+		awb_info->is_update = 1;
 	}
 
 	message.msg_type = ISP_CTRL_EVT_AF;
@@ -1274,20 +1276,26 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			}
 			break;
 		}
-	case AF_DATA_IMG_BLK:{
-			struct af_img_blk_info img_blk_info;
-			memset((void *)&img_blk_info, 0, sizeof(img_blk_info));
-			img_blk_info.block_w = 32;
-			img_blk_info.block_h = 32;
-			img_blk_info.chn_num = 3;
-			img_blk_info.pix_per_blk = 1;
-			img_blk_info.data = (cmr_u32 *) in_ptr;
-			if(NULL != in_ptr)
-				memcpy((void *)&img_blk_info,in_ptr,sizeof(struct af_img_blk_info));
+	case AF_DATA_IMG_BLK: {
+			if (cxt->ops.af_ops.ioctrl) {
+				struct afctrl_ae_info *ae_info = &cxt->ae_info;
+				struct afctrl_awb_info *awb_info = &cxt->awb_info;
+				if (1 == ae_info->is_update) {
+					ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void *)ae_info, NULL);
+					ISP_TRACE_IF_FAIL(ret, ("AF_CMD_SET_AE_INFO fail "));
+					ae_info->is_update = 0;
+				}
+
+				if (awb_info->is_update) {
+					ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void *)awb_info, NULL);
+					ISP_TRACE_IF_FAIL(ret, ("AF_CMD_SET_AWB_INFO fail "));
+					awb_info->is_update = 0;
+				}
+			}
 			calc_param.data_type = AF_DATA_IMG_BLK;
-			calc_param.data = (void *)(&img_blk_info);
-			if (cxt->ops.af_ops.process)
+			if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
 				ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
+			}
 			break;
 		}
 	case AF_DATA_AE:{

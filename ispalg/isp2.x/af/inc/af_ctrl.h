@@ -138,11 +138,13 @@ extern "C" {
 	};
 
 	struct afctrl_ae_info {
+		cmr_u32 is_update;
 		struct af_img_blk_info img_blk_info;
 		struct af_ae_calc_out ae_rlt_info;
 	};
 
 	struct afctrl_awb_info {
+		cmr_u32 is_update;
 		cmr_u32 r_gain;
 		cmr_u32 g_gain;
 		cmr_u32 b_gain;
