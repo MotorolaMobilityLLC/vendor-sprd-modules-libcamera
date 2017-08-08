@@ -60,7 +60,6 @@
 #define SNP_EVT_THUMB (SNP_EVT_BASE + 45)
 #define SNP_EVT_CHANNEL_VIDEO_DONE (SNP_EVT_BASE + 46)
 #define SNP_EVT_3DNR_DONE (SNP_EVT_BASE + 47) /*SNAPSHOT_EVT_3DNR_DONE*/
-
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -4731,6 +4730,117 @@ cmr_int snp_stop_proc(cmr_handle snp_handle) {
     CMR_LOGI("X");
     return ret;
 }
+
+cmr_int cmr_snapshot_thumb_yuv_proc(cmr_handle snp_handle,
+                                    struct snp_thumb_yuv_param *thumb_parm) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    if ((NULL == snp_handle) || (NULL == thumb_parm)) {
+        CMR_LOGE("param invalid");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    CMR_LOGI("E");
+    struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
+    struct snapshot_param *req_param_ptr = &snp_cxt->req_param;
+    struct jpeg_param *jpeg_ptr = &req_param_ptr->jpeg_setting;
+    struct snp_channel_param *chn_param_ptr = &snp_cxt->chn_param;
+    struct img_frm src, dst, rot_img;
+    struct cmr_op_mean mean;
+    bool is_scale = false;
+
+    src = thumb_parm->src_img;
+    dst = thumb_parm->dst_img;
+    mean.slice_height = dst.rect.height;
+    mean.is_sync = 1;
+    mean.rot = thumb_parm->angle;
+    src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+    src.rect.start_x = 0;
+    src.rect.start_y = 0;
+    src.fmt = IMG_DATA_TYPE_YUV420;
+    dst.fmt = IMG_DATA_TYPE_YUV420;
+    dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+
+    if (src.size.width != dst.size.width ||
+        src.size.height != dst.size.height) {
+        is_scale = true;
+    }
+    if (chn_param_ptr->is_scaling) {
+        rot_img = req_param_ptr->post_proc_setting.mem[0].cap_yuv;
+    } else {
+        rot_img = req_param_ptr->post_proc_setting.mem[0].target_yuv;
+    }
+    if (IMG_ANGLE_90 == mean.rot || IMG_ANGLE_270 == mean.rot) {
+        rot_img.size.width = src.size.height;
+        rot_img.size.height = src.size.width;
+        rot_img.rect.width = src.size.height;
+        rot_img.rect.height = src.size.width;
+        dst.size.width = thumb_parm->dst_img.size.height;
+        dst.size.height = thumb_parm->dst_img.size.width;
+        dst.rect.width = thumb_parm->dst_img.size.height;
+        dst.rect.height = thumb_parm->dst_img.size.width;
+    } else {
+        rot_img.size.width = src.size.width;
+        rot_img.size.height = src.size.height;
+        rot_img.rect.width = src.size.width;
+        rot_img.rect.height = src.size.height;
+    }
+    if (mean.rot) {
+        if (snp_cxt->ops.start_rot == NULL) {
+            CMR_LOGE("snp_cxt->ops.start_rot is null");
+            goto exit;
+        }
+
+        CMR_LOGD("rot start");
+        ret = snp_cxt->ops.start_rot(snp_cxt->oem_handle, snp_handle, &src,
+                                     &rot_img, &mean);
+        if (ret) {
+            CMR_LOGE("snp_cxt->ops.start_rot failed");
+            goto exit;
+        }
+        src = rot_img;
+        mean.slice_height = dst.rect.height;
+        mean.rot = 0;
+    }
+    if (is_scale) {
+        if (snp_cxt->ops.start_scale == NULL) {
+            CMR_LOGE("snp_cxt->ops.start_scale is null");
+            ret = -CMR_CAMERA_FAIL;
+            goto exit;
+        }
+        CMR_LOGD("scale start");
+
+        ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src,
+                                       &dst, &mean);
+        if (ret) {
+            CMR_LOGE("snp_cxt->ops.start_scale failed");
+            goto exit;
+        }
+    }
+
+exit:
+
+    CMR_LOGD("src addr 0x%lx 0x%lx 0x%lx 0x%lx fd 0x%x size %d %d %d",
+             thumb_parm->src_img.addr_phy.addr_y,
+             thumb_parm->src_img.addr_phy.addr_u,
+             thumb_parm->src_img.addr_vir.addr_y,
+             thumb_parm->src_img.addr_vir.addr_u, thumb_parm->src_img.fd,
+             thumb_parm->src_img.size.width, thumb_parm->src_img.size.height,
+             thumb_parm->src_img.buf_size);
+
+    CMR_LOGD("rot addr 0x%lx 0x%lx 0x%lx 0x%lx fd 0x%x size %d %d %d",
+             rot_img.addr_phy.addr_y, rot_img.addr_phy.addr_u,
+             rot_img.addr_vir.addr_y, rot_img.addr_vir.addr_u, rot_img.fd,
+             rot_img.rect.width, rot_img.rect.height, rot_img.buf_size);
+
+    CMR_LOGD("dst addr 0x%lx 0x%lx add 0x%lx 0x%lx fd 0x%x size %d %d %d",
+             dst.addr_phy.addr_y, dst.addr_phy.addr_u, dst.addr_vir.addr_y,
+             dst.addr_vir.addr_u, dst.fd, dst.rect.width, dst.rect.height,
+             dst.buf_size);
+
+    CMR_LOGI("X slice_height=%d rot=%d", mean.slice_height, mean.rot);
+    return ret;
+}
+
 cmr_int snp_proc_android_zsl_data(cmr_handle snp_handle, void *data) {
     UNUSED(data);
 
@@ -5052,10 +5162,9 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
                      proc_param_ptr->max_size.height);
 
             cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
-                cmr_snapshot_memory_flush(
-                    cxt,
-                    &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
-            } else if (1 == cxt->req_param.is_zsl_snapshot) {
+            cmr_snapshot_memory_flush(
+                cxt, &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
+        } else if (1 == cxt->req_param.is_zsl_snapshot) {
 #ifndef PERFORMANCE_OPTIMIZATION
             chn_data.yaddr =
                 cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
@@ -5096,9 +5205,8 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
                      proc_param_ptr->max_size.height);
 
             cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
-                cmr_snapshot_memory_flush(
-                    cxt,
-                    &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
+            cmr_snapshot_memory_flush(
+                cxt, &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
 #endif
         }
         break;

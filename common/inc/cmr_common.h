@@ -437,6 +437,12 @@ struct img_frm {
     void *reserved;
 };
 
+struct snp_thumb_yuv_param {
+    int angle;
+    struct img_frm src_img;
+    struct img_frm dst_img;
+};
+
 struct ccir_if {
     cmr_u8 v_sync_pol;
     cmr_u8 h_sync_pol;
@@ -1262,6 +1268,8 @@ typedef enum {
     CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
     CAMERA_IOCTRL_3DNR_VIDEOMODE,
     CAMERA_IOCTRL_GET_CPP_CAPABILITY,
+    CAMERA_IOCTRL_THUMB_YUV_PROC,
+    CAMERA_IOCTRL_SET_MIME_TYPE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

@@ -220,7 +220,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     camera_metadata_t *mStaticMetadata;
 
     new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
-
     bool mFirstArcBokeh;
     bool mFirstArcBokehReset;
     bool mFirstSprdBokeh;
@@ -253,6 +252,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int allocateBuff();
     void clearFrameNeverMatched(uint32_t main_frame_number,
                                 uint32_t sub_frame_number);
+    int thumbYuvProc(buffer_handle_t *src_buffer);
 
   public:
     SprdCamera3RealBokeh();
@@ -297,6 +297,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         MVoid *mArcSoftDepthMap;
         MInt32 mArcSoftDepthSize;
         ARC_DCIR_PARAM mArcSoftDcrParam;
+        bool mAbokehGallery;
 
       private:
         void waitMsgAvailable();
@@ -374,6 +375,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mPendingRequest;
     Mutex mPendingLock;
     Condition mRequestSignal;
+    bool mhasCallbackStream;
+    request_saved_bokeh_t mThumbReq;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
@@ -388,6 +391,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
                                     int type);
     void CallBackResult(uint32_t frame_number,
                         camera3_buffer_status_t buffer_status);
+    void CallBackSnapResult();
     int loadBokehApi();
     void unLoadBokehApi();
     int loadDepthApi();

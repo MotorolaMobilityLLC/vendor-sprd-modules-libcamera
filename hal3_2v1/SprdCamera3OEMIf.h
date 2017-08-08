@@ -234,6 +234,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int camera_ioctrl(int cmd, void *param1, void *param2);
     bool isVideoCopyFromPreview();
     int getCppMaxSize(cam_dimension_t *);
+    void setMimeType(int type);
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);

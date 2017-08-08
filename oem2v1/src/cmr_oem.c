@@ -2323,7 +2323,8 @@ cmr_int camera_jpeg_init(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(jpeg_cxt);
 
     if (cxt->camera_id >= 2 && is_multi_camera_mode_oem == MODE_BOKEH) {
-        CMR_LOGD("jpeg init do nothing when sub camera in bokeh mode, just return");
+        CMR_LOGD(
+            "jpeg init do nothing when sub camera in bokeh mode, just return");
         goto exit;
     }
 
@@ -2358,7 +2359,8 @@ cmr_int camera_jpeg_deinit(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(jpeg_cxt);
 
     if (cxt->camera_id >= 2 && is_multi_camera_mode_oem == MODE_BOKEH) {
-        CMR_LOGD("jpeg deinit do nothing when sub camera in bokeh mode, just return");
+        CMR_LOGD("jpeg deinit do nothing when sub camera in bokeh mode, just "
+                 "return");
         goto exit;
     }
 
@@ -5161,7 +5163,7 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    if (!caller_handle || !oem_handle || !src || !dst || !mean) {
+    if (!oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -5198,14 +5200,14 @@ exit:
 cmr_int camera_start_rot(cmr_handle oem_handle, cmr_handle caller_handle,
                          struct img_frm *src, struct img_frm *dst,
                          struct cmr_op_mean *mean) {
-    ATRACE_BEGIN(__FUNCTION__);
 
+    ATRACE_BEGIN(__FUNCTION__);
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct cmr_rot_param rot_param;
     cmr_uint restart_cnt = 0;
 
-    if (!caller_handle || !oem_handle || !src || !dst || !mean) {
+    if (!oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -10473,5 +10475,20 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
 exit:
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
+    return ret;
+}
+
+cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
+                                  struct snp_thumb_yuv_param *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_LOGI("E");
+
+    ret = cmr_snapshot_thumb_yuv_proc(cxt->snp_cxt.snapshot_handle, param);
+
+    if (ret) {
+        CMR_LOGE("snp_thumb_yuv_proc failed.");
+    }
+
     return ret;
 }

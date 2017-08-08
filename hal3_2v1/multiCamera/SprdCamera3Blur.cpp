@@ -1172,7 +1172,8 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
 bool SprdCamera3Blur::CaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     blur_queue_msg_t capture_msg;
-    HAL_LOGI("run");
+    int mime_type = (int)MODE_BLUR;
+    HAL_LOGV("run");
 
     while (!mCaptureMsgList.empty()) {
         List<blur_queue_msg_t>::iterator itor1 = mCaptureMsgList.begin();
@@ -1359,6 +1360,13 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 mBlur->mReqState = REPROCESS_STATE;
             }
             request.num_output_buffers = 1;
+
+            mime_type = (int)MODE_BLUR;
+            if (mVersion == 3 && mIsGalleryBlur) {
+                mime_type = (1 << 8) | (int)MODE_BLUR;
+            }
+            mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
+                                         &mime_type, NULL);
 
             if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
                                                            &request)) {

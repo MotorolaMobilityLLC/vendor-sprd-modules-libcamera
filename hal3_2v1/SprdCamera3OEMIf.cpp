@@ -1010,6 +1010,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
     ATRACE_CALL();
 
     uint32_t ret = 0;
+
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
@@ -1028,13 +1029,11 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE,
                  sprddefInfo.sprd_3dcalibration_enabled);
     }
-    if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_BOKEH) {
+
+    if (getMultiCameraMode() == MODE_BOKEH ||
+        getMultiCameraMode() == MODE_BLUR) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                  mSprdYuvCallBack);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
-                 (int)MODE_BLUR);
-        HAL_LOGD("reprocess mode, force enable reprocess");
     }
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
@@ -1580,6 +1579,11 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         mNeededTimestamp = *(uint64_t *)param1;
         break;
     }
+    case CAMERA_IOCTRL_SET_MIME_TYPE: {
+        int type = *(int *)param1;
+        setMimeType(type);
+        break;
+    }
     }
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
@@ -1612,6 +1616,14 @@ int SprdCamera3OEMIf::getCppMaxSize(cam_dimension_t *max_cpp_size) {
     if (ret)
         HAL_LOGE("Invalid Parameter for cpp capability");
     return ret;
+}
+
+void SprdCamera3OEMIf::setMimeType(int type) {
+    int mime_type = type;
+
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE, mime_type);
+
+    HAL_LOGI("X,mime_type=0x%x", mime_type);
 }
 
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state) {

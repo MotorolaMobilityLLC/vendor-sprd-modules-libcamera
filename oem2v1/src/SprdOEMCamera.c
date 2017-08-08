@@ -1109,6 +1109,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_get_cpp_capability(handle,
                                         &(((struct img_size *)param)->width),
                                         &(((struct img_size *)param)->height));
+    }
+    case CAMERA_IOCTRL_THUMB_YUV_PROC: {
+        ret = camera_set_thumb_yuv_proc(handle,
+                                        (struct snp_thumb_yuv_param *)param);
         break;
     }
     default:

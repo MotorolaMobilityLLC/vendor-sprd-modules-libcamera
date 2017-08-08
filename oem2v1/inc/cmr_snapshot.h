@@ -82,6 +82,7 @@ enum snapshot_receive_evt_type {
     SNAPSHOT_EVT_JPEG_DEC_ERR,
     SNAPSHOT_EVT_ANDROID_ZSL_DATA,
     SNAPSHOT_EVT_FREE_FRM,
+    SNAPSHOT_EVT_THUMB_YUV_PROC,
     SNPASHOT_EVT_MAX
 };
 
@@ -254,6 +255,8 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
 /* performance optimization, use zsl buf to postprocess, not copy */
 cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle,
                                        struct img_frm *img_frame);
+cmr_int cmr_snapshot_thumb_yuv_proc(cmr_handle snp_handle,
+                                    struct snp_thumb_yuv_param *thumb_parm);
 
 #ifdef __cplusplus
 }

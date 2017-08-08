@@ -457,6 +457,8 @@ cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
                                   cmr_u32 *max_height);
+cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
+                                  struct snp_thumb_yuv_param *param);
 #ifdef __cplusplus
 }
 #endif
