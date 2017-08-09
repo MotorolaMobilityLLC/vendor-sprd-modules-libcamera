@@ -34,41 +34,110 @@ cmr_u32 _pm_3d_nr_cap_convert_param(void *dst_3d_nr_param, cmr_u32 strength_leve
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 	if (nr_3d_param != NULL) {
-		dst_ptr->cur.blend_bypass = nr_3d_param[strength_level].bypass;
-
-		dst_ptr->cur.yuv_src_weight.y = nr_3d_param[strength_level].yuv_cfg.y_cfg.src_wgt;
-		dst_ptr->cur.yuv_src_weight.u = nr_3d_param[strength_level].yuv_cfg.u_cfg.src_wgt;
-		dst_ptr->cur.yuv_src_weight.v = nr_3d_param[strength_level].yuv_cfg.v_cfg.src_wgt;
-		dst_ptr->cur.yuv_noise_thr.y = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_thr;
-		dst_ptr->cur.yuv_noise_thr.u = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_thr;
-		dst_ptr->cur.yuv_noise_thr.v = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_thr;
-		dst_ptr->cur.yuv_noise_weight.y = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_wgt;
-		dst_ptr->cur.yuv_noise_weight.u = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_wgt;
-		dst_ptr->cur.yuv_noise_weight.v = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_wgt;
-		dst_ptr->cur.u_thr_min = nr_3d_param[strength_level].sensor_3dnr_cor.u_range.min;
-		dst_ptr->cur.u_thr_max = nr_3d_param[strength_level].sensor_3dnr_cor.u_range.max;
-		dst_ptr->cur.v_thr_min = nr_3d_param[strength_level].sensor_3dnr_cor.v_range.min;
-		dst_ptr->cur.v_thr_max = nr_3d_param[strength_level].sensor_3dnr_cor.v_range.max;
-		for (i = 0; i < 9; i++) {
-			dst_ptr->cur.yuv_threshold[i].y = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[i];
-			dst_ptr->cur.yuv_threshold[i].u = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[i];
-			dst_ptr->cur.yuv_threshold[i].v = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[i];
-			dst_ptr->cur.yuv_intens_gain[i].y = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[i];
-			dst_ptr->cur.yuv_intens_gain[i].u = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[i];
-			dst_ptr->cur.yuv_intens_gain[i].v = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[i];
-		}
-		for (i = 0; i < 11; i++) {
-			dst_ptr->cur.gradient_w[i] = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[i];
-		}
+		//dst_ptr->cur.blend_bypass = nr_3d_param[strength_level].bypass;
+#if 0
+		dst_ptr->cur.fusion_mode = nr_3d_param[strength_level].fusion_mode;
+		dst_ptr->cur.filter_switch = nr_3d_param[strength_level].filter_swt_en;
 		for (i = 0; i < 4; i++) {
-			dst_ptr->cur.uv_thr_factor[i].u = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.u_thr[i];
-			dst_ptr->cur.uv_thr_factor[i].v = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.v_thr[i];
-			dst_ptr->cur.uv_div_factor[i].u = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.u_div[i];
-			dst_ptr->cur.uv_div_factor[i].v = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.v_div[i];
+			dst_ptr->cur.y_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.y_cfg.src_wgt[i];
+			dst_ptr->cur.u_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.u_cfg.src_wgt[i];
+			dst_ptr->cur.v_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.v_cfg.src_wgt[i];
 		}
-		for (i = 0; i < 3; i++) {
-			dst_ptr->cur.r_value[i] = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle[i];
+
+		dst_ptr->cur.y_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_thr;
+		dst_ptr->cur.u_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_thr;
+		dst_ptr->cur.v_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_thr;
+		dst_ptr->cur.y_pixel_noise_weight = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_wgt;
+		dst_ptr->cur.u_pixel_noise_weight = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_wgt;
+		dst_ptr->cur.v_pixel_noise_weight = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_wgt;
+		dst_ptr->cur.threshold_radial_variation_u_range_min = nr_3d_param[strength_level].sensor_3dnr_cor.u_range.min;
+		dst_ptr->cur.threshold_radial_variation_u_range_max = nr_3d_param[strength_level].sensor_3dnr_cor.u_range.max;
+		dst_ptr->cur.threshold_radial_variation_v_range_min = nr_3d_param[strength_level].sensor_3dnr_cor.v_range.min;
+		dst_ptr->cur.threshold_radial_variation_v_range_max = nr_3d_param[strength_level].sensor_3dnr_cor.v_range.max;
+
+		dst_ptr->cur.y_threshold_polyline_0 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[0];
+		dst_ptr->cur.y_threshold_polyline_1 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[1];
+		dst_ptr->cur.y_threshold_polyline_2 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[2];
+		dst_ptr->cur.y_threshold_polyline_3 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[3];
+		dst_ptr->cur.y_threshold_polyline_4 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[4];
+		dst_ptr->cur.y_threshold_polyline_5 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[5];
+		dst_ptr->cur.y_threshold_polyline_6 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[6];
+		dst_ptr->cur.y_threshold_polyline_7 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[7];
+		dst_ptr->cur.y_threshold_polyline_8 = nr_3d_param[strength_level].yuv_cfg.y_cfg.thr_polyline[8];
+
+		dst_ptr->cur.u_threshold_polyline_0 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[0];
+		dst_ptr->cur.u_threshold_polyline_1 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[1];
+		dst_ptr->cur.u_threshold_polyline_2 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[2];
+		dst_ptr->cur.u_threshold_polyline_3 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[3];
+		dst_ptr->cur.u_threshold_polyline_4 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[4];
+		dst_ptr->cur.u_threshold_polyline_5 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[5];
+		dst_ptr->cur.u_threshold_polyline_6 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[6];
+		dst_ptr->cur.u_threshold_polyline_7 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[7];
+		dst_ptr->cur.u_threshold_polyline_8 = nr_3d_param[strength_level].yuv_cfg.u_cfg.thr_polyline[8];
+
+		dst_ptr->cur.v_threshold_polyline_0 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[0];
+		dst_ptr->cur.v_threshold_polyline_1 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[1];
+		dst_ptr->cur.v_threshold_polyline_2 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[2];
+		dst_ptr->cur.v_threshold_polyline_3 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[3];
+		dst_ptr->cur.v_threshold_polyline_4 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[4];
+		dst_ptr->cur.v_threshold_polyline_5 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[5];
+		dst_ptr->cur.v_threshold_polyline_6 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[6];
+		dst_ptr->cur.v_threshold_polyline_7 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[7];
+		dst_ptr->cur.v_threshold_polyline_8 = nr_3d_param[strength_level].yuv_cfg.v_cfg.thr_polyline[8];
+
+		dst_ptr->cur.y_intensity_gain_polyline_0 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[0];
+		dst_ptr->cur.y_intensity_gain_polyline_1 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[1];
+		dst_ptr->cur.y_intensity_gain_polyline_2 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[2];
+		dst_ptr->cur.y_intensity_gain_polyline_3 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[3];
+		dst_ptr->cur.y_intensity_gain_polyline_4 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[4];
+		dst_ptr->cur.y_intensity_gain_polyline_5 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[5];
+		dst_ptr->cur.y_intensity_gain_polyline_6 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[6];
+		dst_ptr->cur.y_intensity_gain_polyline_7 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[7];
+		dst_ptr->cur.y_intensity_gain_polyline_8 = nr_3d_param[strength_level].yuv_cfg.y_cfg.gain_polyline[8];
+
+		dst_ptr->cur.u_intensity_gain_polyline_0 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[0];
+		dst_ptr->cur.u_intensity_gain_polyline_1 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[1];
+		dst_ptr->cur.u_intensity_gain_polyline_2 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[2];
+		dst_ptr->cur.u_intensity_gain_polyline_3 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[3];
+		dst_ptr->cur.u_intensity_gain_polyline_4 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[4];
+		dst_ptr->cur.u_intensity_gain_polyline_5 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[5];
+		dst_ptr->cur.u_intensity_gain_polyline_6 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[6];
+		dst_ptr->cur.u_intensity_gain_polyline_7 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[7];
+		dst_ptr->cur.u_intensity_gain_polyline_8 = nr_3d_param[strength_level].yuv_cfg.u_cfg.gain_polyline[8];
+
+		dst_ptr->cur.v_intensity_gain_polyline_0 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[0];
+		dst_ptr->cur.v_intensity_gain_polyline_1 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[1];
+		dst_ptr->cur.v_intensity_gain_polyline_2 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[2];
+		dst_ptr->cur.v_intensity_gain_polyline_3 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[3];
+		dst_ptr->cur.v_intensity_gain_polyline_4 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[4];
+		dst_ptr->cur.v_intensity_gain_polyline_5 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[5];
+		dst_ptr->cur.v_intensity_gain_polyline_6 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[6];
+		dst_ptr->cur.v_intensity_gain_polyline_7 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[7];
+		dst_ptr->cur.v_intensity_gain_polyline_8 = nr_3d_param[strength_level].yuv_cfg.v_cfg.gain_polyline[8];
+
+		dst_ptr->cur.gradient_weight_polyline_0 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[0];
+		dst_ptr->cur.gradient_weight_polyline_1 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[1];
+		dst_ptr->cur.gradient_weight_polyline_2 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[2];
+		dst_ptr->cur.gradient_weight_polyline_3 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[3];
+		dst_ptr->cur.gradient_weight_polyline_4 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[4];
+		dst_ptr->cur.gradient_weight_polyline_5 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[5];
+		dst_ptr->cur.gradient_weight_polyline_6 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[6];
+		dst_ptr->cur.gradient_weight_polyline_7 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[7];
+		dst_ptr->cur.gradient_weight_polyline_8 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[8];
+		dst_ptr->cur.gradient_weight_polyline_9 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[9];
+		dst_ptr->cur.gradient_weight_polyline_10 = nr_3d_param[strength_level].yuv_cfg.grad_wgt_polyline[10];
+
+		for (i = 0; i < 4; i++) {
+			dst_ptr->cur.u_threshold_factor[i] = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.u_thr[i];
+			dst_ptr->cur.v_threshold_factor[i] = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.v_thr[i];
+			dst_ptr->cur.u_divisor_factor[i] = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.u_div[i];
+			dst_ptr->cur.v_divisor_factor[i] = nr_3d_param[strength_level].sensor_3dnr_cor.uv_factor.v_div[i];
 		}
+
+		dst_ptr->cur.r1_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle[0];
+		dst_ptr->cur.r2_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle[1];
+		dst_ptr->cur.r3_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle[2];
+#endif
 	}
 	return rtn;
 }
@@ -82,7 +151,7 @@ cmr_s32 _pm_3d_nr_cap_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 	struct isp_pm_block_header *nr_3d_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	dst_ptr->cur.blend_bypass = nr_3d_header_ptr->bypass;
+	//dst_ptr->cur.blend_bypass = nr_3d_header_ptr->bypass;
 
 	dst_ptr->cur_level = src_ptr->default_strength_level;
 	dst_ptr->level_num = src_ptr->level_number;
@@ -91,7 +160,7 @@ cmr_s32 _pm_3d_nr_cap_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_3d_nr_cap_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	dst_ptr->cur.blend_bypass |= nr_3d_header_ptr->bypass;
+	//dst_ptr->cur.blend_bypass |= nr_3d_header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm 3d nr cap param  !");
 		return rtn;
@@ -109,7 +178,7 @@ cmr_s32 _pm_3d_nr_cap_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0
 
 	switch (cmd) {
 	case ISP_PM_BLK_3D_NR_BYPASS:
-		dst_ptr->cur.blend_bypass = *((cmr_u32 *) param_ptr0);
+		//dst_ptr->cur.blend_bypass = *((cmr_u32 *) param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 		break;
 
@@ -142,7 +211,7 @@ cmr_s32 _pm_3d_nr_cap_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0
 				block_result->mode_flag_changed = 0;
 
 				rtn = _pm_3d_nr_cap_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
-				dst_ptr->cur.blend_bypass |= header_ptr->bypass;
+				//dst_ptr->cur.blend_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm 3d nr cap param !");
 					return rtn;
