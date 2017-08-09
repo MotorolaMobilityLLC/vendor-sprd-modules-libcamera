@@ -2056,7 +2056,7 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 		{
 			param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
 			param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
-			param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_g;
+			param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_b;
 
 			param.otp_info.rdm_stat_info.r = cxt->otp_data->single_otp.iso_awb_info.gain_r;
 			param.otp_info.rdm_stat_info.g = cxt->otp_data->single_otp.iso_awb_info.gain_g;
