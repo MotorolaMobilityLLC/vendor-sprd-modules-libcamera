@@ -418,28 +418,9 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                                           FEATURE_FACE_SLENDER_KEY,
                                           faceBeauty->faceSlender);
             clock_gettime(CLOCK_BOOTTIME, &start_time);
-            ALOGD("format : %d,w %d,h %d , white %d ,soft %d",
-                  faceBeauty->arc_fb_image.u32PixelArrayFormat,
-                  faceBeauty->arc_fb_image.i32Width,
-                  faceBeauty->arc_fb_image.i32Height, faceBeauty->faceSoften,
-                  faceBeauty->faceWhiten);
-            property_get("persist.sys.cam.beauty.dump", value, "off");
-            if (!strcmp(value, "on")) {
-                save_yuv_data(11, faceBeauty->arc_fb_image.i32Width,
-                              faceBeauty->arc_fb_image.i32Height,
-                              faceBeauty->arc_fb_image.ppu8Plane[0]);
-            }
-
             retVal = arcsoft_bsv_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
-
-            property_get("persist.sys.cam.beauty.dump", value, "off");
-            if (!strcmp(value, "on")) {
-                save_yuv_data(22, faceBeauty->arc_fb_image.i32Width,
-                              faceBeauty->arc_fb_image.i32Height,
-                              faceBeauty->arc_fb_image.ppu8Plane[0]);
-            }
             clock_gettime(CLOCK_BOOTTIME, &end_time);
             duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                        (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
@@ -458,9 +439,26 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                                           FEATURE_FACE_SLENDER_KEY,
                                           faceBeauty->faceSlender);
             clock_gettime(CLOCK_BOOTTIME, &start_time);
+            ALOGD("format : %d,w %d,h %d , white %d ,soft %d",
+                  faceBeauty->arc_fb_image.u32PixelArrayFormat,
+                  faceBeauty->arc_fb_image.i32Width,
+                  faceBeauty->arc_fb_image.i32Height, faceBeauty->faceSoften,
+                  faceBeauty->faceWhiten);
+            property_get("persist.sys.cam.beauty.dump", value, "off");
+            if (!strcmp(value, "on")) {
+                save_yuv_data(11, faceBeauty->arc_fb_image.i32Width,
+                              faceBeauty->arc_fb_image.i32Height,
+                              faceBeauty->arc_fb_image.ppu8Plane[0]);
+            }
             retVal = arcsoft_bsi_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
+            property_get("persist.sys.cam.beauty.dump", value, "off");
+            if (!strcmp(value, "on")) {
+                save_yuv_data(22, faceBeauty->arc_fb_image.i32Width,
+                              faceBeauty->arc_fb_image.i32Height,
+                              faceBeauty->arc_fb_image.ppu8Plane[0]);
+            }
             clock_gettime(CLOCK_BOOTTIME, &end_time);
             duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                        (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
