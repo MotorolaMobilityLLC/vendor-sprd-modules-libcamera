@@ -1293,7 +1293,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				}
 			}
 			calc_param.data_type = AF_DATA_IMG_BLK;
-			if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
+			if (cxt->ops.af_ops.process) {
 				ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
 			}
 			break;
