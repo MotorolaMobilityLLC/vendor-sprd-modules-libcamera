@@ -21,6 +21,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
+	cmr_u32 max_len = 0;
 	intptr_t addr = 0, index = 0;
 	struct isp_size *img_size_ptr = (struct isp_size *)param2;
 	struct isp_2d_lsc_param *dst_ptr = (struct isp_2d_lsc_param *)dst_lnc_param;
@@ -32,6 +33,10 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		addr = (intptr_t) & (src_ptr->tab_info.lsc_2d_map) + src_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset;
 		dst_ptr->map_tab[i].param_addr = (void *)addr;
 		dst_ptr->map_tab[i].len = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_len;
+		if (dst_ptr->map_tab[i].len == 0) {
+			ISP_LOGE("map_tab len is 0 for idx: %d", i);
+			dst_ptr->map_tab[i].param_addr = NULL;
+		}
 		dst_ptr->map_tab[i].grid = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
 		dst_ptr->map_tab[i].grid_mode = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
 		dst_ptr->map_tab[i].grid_pitch = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->w, ISP_ONE);
@@ -39,8 +44,16 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		dst_ptr->map_tab[i].gain_w = dst_ptr->map_tab[i].grid_pitch;
 		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->h, ISP_ONE);
 
+		max_len = (max_len < dst_ptr->map_tab[i].len) ? dst_ptr->map_tab[i].len : max_len;
 	}
-	if (dst_ptr->final_lsc_param.size < src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len) {
+
+	if (max_len == 0) {
+		rtn = ISP_ERROR;
+		ISP_LOGE("no map tab for 2d_lsc!");
+		return rtn;
+	}
+
+	if (dst_ptr->final_lsc_param.size < max_len) {
 		if (NULL != dst_ptr->final_lsc_param.data_ptr) {
 			free(dst_ptr->final_lsc_param.data_ptr);
 			dst_ptr->final_lsc_param.data_ptr = NULL;
@@ -61,7 +74,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	}
 
 	if (NULL == dst_ptr->final_lsc_param.data_ptr) {
-		dst_ptr->final_lsc_param.data_ptr = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		dst_ptr->final_lsc_param.data_ptr = (void *)malloc(max_len);
 		if (NULL == dst_ptr->final_lsc_param.data_ptr) {
 			rtn = ISP_ERROR;
 			ISP_LOGE("fail to malloc\n");
@@ -70,7 +83,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	}
 
 	if (NULL == dst_ptr->final_lsc_param.param_ptr) {
-		dst_ptr->final_lsc_param.param_ptr = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		dst_ptr->final_lsc_param.param_ptr = (void *)malloc(max_len);
 		if (NULL == dst_ptr->final_lsc_param.param_ptr) {
 			rtn = ISP_ERROR;
 			ISP_LOGE("fail to malloc\n");
@@ -79,7 +92,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	}
 
 	if (NULL == dst_ptr->tmp_ptr_a) {
-		dst_ptr->tmp_ptr_a = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		dst_ptr->tmp_ptr_a = (void *)malloc(max_len);
 		if (NULL == dst_ptr->tmp_ptr_a) {
 			rtn = ISP_ERROR;
 			ISP_LOGE("fail to malloc\n");
@@ -88,7 +101,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	}
 
 	if (NULL == dst_ptr->tmp_ptr_b) {
-		dst_ptr->tmp_ptr_b = (void *)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		dst_ptr->tmp_ptr_b = (void *)malloc(max_len);
 		if (NULL == dst_ptr->tmp_ptr_b) {
 			rtn = ISP_ERROR;
 			ISP_LOGE("fail to malloc\n");
