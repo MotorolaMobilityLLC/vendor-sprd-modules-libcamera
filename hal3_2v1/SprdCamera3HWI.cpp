@@ -808,8 +808,9 @@ int SprdCamera3HWI::configureStreams(
     mSetting->setVideoSize(video_size);
     mSetting->setPictureSize(capture_size);
     // for cts
-    if (preview_size.height * preview_size.width > 3264 * 2448 ||
-        raw_size.height * raw_size.width > 3264 * 2448) {
+    if ((preview_size.height * preview_size.width > 3264 * 2448 ||
+         raw_size.height * raw_size.width > 3264 * 2448) &&
+        (mMultiCameraMode != MODE_BOKEH)) {
         mReciveQeqMax = SprdCamera3PicChannel::kMaxBuffers;
     } else {
         mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
