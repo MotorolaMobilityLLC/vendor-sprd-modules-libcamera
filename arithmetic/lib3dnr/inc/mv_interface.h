@@ -11,7 +11,6 @@ typedef enum {
 
 #define DEBUG_STR     "L %d, %s: "
 #define DEBUG_ARGS    __LINE__,__FUNCTION__
-#define LOG_TAG "3DNR"
 
 #define BL_LOGV(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 

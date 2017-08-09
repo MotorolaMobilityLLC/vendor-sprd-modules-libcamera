@@ -38,11 +38,11 @@ include $(BUILD_PREBUILT)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := src/3dnr_module.cpp
 LOCAL_MODULE :=libsprd3dnr
- 
+
 LOCAL_SHARED_LIBRARIES :=libcutils libsprd3dnrmv
 LOCAL_MODULE_TAGS := optional
-LOCAL_CFLAGS :=  -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
- 
+LOCAL_CFLAGS :=  -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wunused-variable -Wunused-function  -Werror
+
 LOCAL_C_INCLUDES := \
          $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
          $(LOCAL_PATH)/inc \

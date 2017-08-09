@@ -1,7 +1,7 @@
 #include "mv_interface.h"
 #include "3dnr_module.h"
 #include <time.h>
-#include <properties.h>
+#include <cutils/properties.h>
 #include <semaphore.h>
 
 #define SAVE_IMG
@@ -86,7 +86,7 @@ int buffer_copy(c3dnr_buffer_t *buf_dst, c3dnr_buffer_t *buf_src)
 }
 
 int blend_trigger(c3dnr_buffer_t *pfirst_blendimg , c3dnr_buffer_t  *psecond_blendimg, c3dnr_buffer_t *pblend_out, int mv_y, int mv_x, int blending_no)
-{	
+{
 	c3dnr_io_info_t isp_3dnr;
 	int ret = 0;
 
@@ -109,11 +109,11 @@ int blend_trigger(c3dnr_buffer_t *pfirst_blendimg , c3dnr_buffer_t  *psecond_ble
 		BL_LOGE("p3dnr_info->isp_ioctrl is NULL.\n");
 
 	if (0 != ret) {
-		BL_LOGE("fail to call isp_ioctl(). ret = %d.\n", ret);	
+		BL_LOGE("fail to call isp_ioctl(). ret = %d.\n", ret);
 	}
 
 	BL_LOGI("done.\n");
-	
+
 	return ret;
 }
 
@@ -121,7 +121,7 @@ static int save_yuv(char* filename , char* buffer , uint32_t width , uint32_t he
 {
 	FILE *fp;
 	fp = fopen(filename , "wb");
-	BL_LOGI("save_yuv: buf: 0x%x.\n", buffer);
+	BL_LOGI("save_yuv: buf: 0x%p.\n", buffer);
 	if(fp)
 	{
 		fwrite(buffer , 1 , width*save_height , fp);
@@ -146,23 +146,10 @@ static int check_is_cancelled()
 
 __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t *small_image,c3dnr_buffer_t *orig_image)//fix on 5.20,struct to struct pointer
 {
-	int i,ret=0;
-	c3dnr_buffer_t* pblend_out , *pfirst_blendimg , *psecond_blendimg;
-	FILE *fp;
-	struct tm *pt;
-	time_t t;
-	int cur_sec, cur_min, cur_hour, cur_day, cur_mouth, cur_year;
 	int width = p3dnr_info->small_width;
 	int height = p3dnr_info->small_height;
-	uint8_t *curr_imageY;
-	uint8_t *curr_imageU;
-	uint8_t *curr_imageV;
 	int8_t mv_xy[2];
 #ifdef SAVE_IMG
-	static c3dnr_buffer_t temp_first;
-	static c3dnr_buffer_t temp_second;
-	static c3dnr_buffer_t temp_out;
-	FILE *file;
 	char filename[128];
 #endif
 	{
@@ -214,8 +201,8 @@ __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t
 
 	//1d process
 	threeDNR_1D_process(small_image , width , height , p3dnr_info->curr_frameno);
-	BL_LOGI("------------threeDNR_1D_process frameno:%d , width:%d , height:%d , smallimage:%x,%x,%x\n" , p3dnr_info->curr_frameno , width , height , small_image->bufferY,small_image->bufferU ,small_image->bufferV);
-	
+	BL_LOGI("------------threeDNR_1D_process frameno:%d , width:%d , height:%d , smallimage:%p,%p,%p\n" , p3dnr_info->curr_frameno , width , height , small_image->bufferY,small_image->bufferU ,small_image->bufferV);
+
 	//buffer_copy(&p3dnr_info->porigimg[p3dnr_info->curr_frameno], orig_image);
 	if (1 == p3dnr_info->is_first_frame) {
 		p3dnr_info->is_first_frame = 0;
@@ -223,12 +210,12 @@ __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t
 	} else {
 		//calculate mv
 		if (1 == p3dnr_info->curr_frameno) {
-			ProjectMatching(p3dnr_info->xProj1D[0] , p3dnr_info->yProj1D[0] , 
+			ProjectMatching(p3dnr_info->xProj1D[0] , p3dnr_info->yProj1D[0] ,
 				 p3dnr_info->xProj1D[1], p3dnr_info->yProj1D[1] ,
 				width, height, mv_xy, 2, p3dnr_info->extra);
-		} else {			
+		} else {
 			ProjectMatching(p3dnr_info->xProj1D[1], p3dnr_info->yProj1D[1],
-				p3dnr_info->xProj1D[0] , p3dnr_info->yProj1D[0],	 
+				p3dnr_info->xProj1D[0] , p3dnr_info->yProj1D[0],
 				width, height, mv_xy, 2, p3dnr_info->extra);
 		}
 		BL_LOGI("-----------ProjectMatching framno:%d,%d , mv:%d,%d\n" , 1 - p3dnr_info->curr_frameno, p3dnr_info->curr_frameno , mv_xy[0],mv_xy[1]);
@@ -236,7 +223,7 @@ __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t
 		p3dnr_info->pfirst_blendimg = &p3dnr_info->out_img[1 - p3dnr_info->curr_frameno];
 		p3dnr_info->psecond_blendimg = orig_image;
 		p3dnr_info->pout_blendimg = &p3dnr_info->out_img[p3dnr_info->curr_frameno];
-		
+
 		//In preview mode, MV is calculated in original size with half pixel precision
 		//so here MV need to be divided by 2
 		//To avoid that -1 divided by 2 is always -1, the negative MV is first converted to positive before divided by 2
@@ -305,9 +292,8 @@ __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t
 			}
 		}
 #endif //DUMP_IMG_ENABLE
-		
+
 		{//save the preview frame for debug.
-			char flag[8] = {0};
 			static int num = 0;
 			property_get("save_preview_data" , save_flag , "no");
                         if(!strcmp(save_flag , "yes")) {
@@ -319,16 +305,14 @@ __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t
 		                        save_yuv(filename , (char*)p3dnr_info->psecond_blendimg->bufferY, p3dnr_info->orig_width , p3dnr_info->orig_height, p3dnr_info->orig_height);
 		                        sprintf(filename , "/data/misc/cameraserver/%dx%d_blend_img_index_%d.yuv" , p3dnr_info->orig_width , p3dnr_info->orig_height, num);
 		                        save_yuv(filename , (char*)p3dnr_info->pout_blendimg->bufferY, p3dnr_info->orig_width , p3dnr_info->orig_height, p3dnr_info->orig_height);
-					
 		                }
 				num++;
 			}
 		}
-		BL_LOGI("size: %dx%d, dst: 0x%x, src: 0x%x", p3dnr_info->orig_width, p3dnr_info->orig_height, orig_image->bufferY, p3dnr_info->pout_blendimg->bufferY);
+		BL_LOGI("size: %dx%d, dst: 0x%p, src: 0x%p", p3dnr_info->orig_width, p3dnr_info->orig_height, orig_image->bufferY, p3dnr_info->pout_blendimg->bufferY);
 		memcpy(orig_image->bufferY, p3dnr_info->pout_blendimg->bufferY, p3dnr_info->orig_width * p3dnr_info->orig_height * 3 / 2);
 		BL_LOGI("copy done.");
 		{//save the preview frame for debug.
-			char flag[8] = {0};
 			static int num0 = 0;
 			property_get("save_preview_data" , save_flag , "no");
                         if(!strcmp(save_flag , "yes")) {
@@ -366,24 +350,10 @@ __attribute__ ((visibility("default"))) int threednr_function_pre(c3dnr_buffer_t
 
 __attribute__ ((visibility("default"))) int threednr_function(c3dnr_buffer_t *small_image,c3dnr_buffer_t *orig_image)//fix on 5.20,struct to struct pointer
 {
-
-	int i,ret=0;
-	c3dnr_buffer_t* pblend_out , *pfirst_blendimg , *psecond_blendimg;
-	FILE *fp;
-	struct tm *pt;
-	time_t t;
-	int cur_sec, cur_min, cur_hour, cur_day, cur_mouth, cur_year;
 	int width = p3dnr_info->small_width;
 	int height = p3dnr_info->small_height;
-	uint8_t *curr_imageY;
-	uint8_t *curr_imageU;
-	uint8_t *curr_imageV;
 	int8_t mv_xy[2];
 #ifdef SAVE_IMG
-	static c3dnr_buffer_t temp_first;
-	static c3dnr_buffer_t temp_second;
-	static c3dnr_buffer_t temp_out;
-	FILE *file;
 	char filename[128];
 #endif
 
@@ -467,9 +437,9 @@ __attribute__ ((visibility("default"))) int threednr_function(c3dnr_buffer_t *sm
 #endif
 			BL_LOGI("ok to get blend img. cur_frm: %d.", p3dnr_info->curr_frameno);
 		}
-		
+
 		//call blending trigger function , curr_frameno&curr_frameno-1
-		if((p3dnr_info->curr_frameno == 1)) {
+		if(p3dnr_info->curr_frameno == 1) {
 			p3dnr_info->pfirst_blendimg = &p3dnr_info->porigimg[0];
 			p3dnr_info->pout_blendimg = &p3dnr_info->pdst_img;
 		}
@@ -515,21 +485,20 @@ __attribute__ ((visibility("default"))) int threednr_function(c3dnr_buffer_t *sm
                         {
                                 sprintf(filename , "/data/misc/cameraserver/%dx%d_blend_img_index_%d.yuv" , p3dnr_info->orig_width , IMG_SAVE_H/*p3dnr_info->orig_height*/,p3dnr_info->curr_frameno);
                                 save_yuv(filename , (char*)p3dnr_info->porigimg[0].bufferY , p3dnr_info->orig_width , p3dnr_info->orig_height, IMG_SAVE_H);
-				BL_LOGI("save_yuv last buf: 0x%x.", p3dnr_info->porigimg[0].bufferY);
+				BL_LOGI("save_yuv last buf: 0x%p.", p3dnr_info->porigimg[0].bufferY);
                         }
 #endif
 			p3dnr_info->status = C3DNR_STATUS_IDLE;
 
 		}
-		
 	} else {
 		p3dnr_info->status = C3DNR_STATUS_IDLE;
 	}
 	//record current orig image
-	
+
 	p3dnr_info->curr_frameno++;
 
-	} 
+	}
 
 	if(!(strcmp(timeout,"yes")))
 	{
@@ -538,16 +507,11 @@ __attribute__ ((visibility("default"))) int threednr_function(c3dnr_buffer_t *sm
 
 	return 0;
 }
-void threeDNR_1D_process(c3dnr_buffer_t *curr_image ,int32_t width ,int32_t height , int32_t fram_no)
+void threeDNR_1D_process(c3dnr_buffer_t *curr_image ,int32_t width ,int32_t height , uint32_t fram_no)
 {
-		int i;
-	int8_t mv_xy[2];
-	FILE *fp;
-	char filename[128];
-
 	if(T3DNR_CAPTURE_MODE_CAPTURE_STAGE != p3dnr_info->operation_mode)
 	{
-		if(T3DNR_FULLSIZE_MODE_FUSE_STAGE != p3dnr_info->operation_mode) 
+		if(T3DNR_FULLSIZE_MODE_FUSE_STAGE != p3dnr_info->operation_mode)
 		{
 			if(!(strcmp(timeout,"yes")))
 			{
@@ -563,10 +527,10 @@ void threeDNR_1D_process(c3dnr_buffer_t *curr_image ,int32_t width ,int32_t heig
 	}
 }
 
-int get_weight(char *weight,int32_t imageNum)
+int get_weight(char *weight,uint32_t imageNum)
 {
 	char *ptr=NULL;
-	int i;
+	uint32_t i;
 	char *str=weight;
 	uint8_t value;
 
@@ -628,10 +592,9 @@ int get_weight(char *weight,int32_t imageNum)
 }
 
 
-int initModule(int32_t small_width,int32_t small_height,int32_t orig_width , int32_t orig_height , int32_t imageNum)
+int initModule(int32_t small_width,int32_t small_height,int32_t orig_width , int32_t orig_height , uint32_t imageNum)
 {
-	int i,ret=0;
-	char str[256];
+	int ret=0;
 	char weight[PROPERTY_VALUE_MAX]={0};
 	char weight_default[PROPERTY_VALUE_MAX]="_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128";
 	property_get("debug" ,debug , "no");
@@ -642,21 +605,21 @@ int initModule(int32_t small_width,int32_t small_height,int32_t orig_width , int
 	{
 		return -1;
 	}
-	
+
 	p3dnr_info->xProj1D = new int32_t* [imageNum]; //1d
 	if(NULL == p3dnr_info->xProj1D)
 	{
-		delete mem0;
+		delete [] mem0;
 		return -1;
 	}
 	p3dnr_info->yProj1D = new int32_t* [imageNum];
 	if(NULL == p3dnr_info->yProj1D)
 	{
-		delete mem0;
+		delete [] mem0;
 		delete p3dnr_info->xProj1D;
 		return -1;
 	}
-	for(int i = 0; i < imageNum; i++)
+	for(uint32_t i = 0; i < imageNum; i++)
 	{
 		p3dnr_info->xProj1D[i] = mem0 + i*small_height;
 		p3dnr_info->yProj1D[i] = mem0 + imageNum*small_height + i * small_width;

@@ -34,18 +34,18 @@ typedef struct c3dnr_info
 		int32_t *MV_x;                   //6bit signed [-32, 31] output MV_x calculated by integral projection
 		int32_t *MV_y;                   //6bit signed [-32, 31] output MV_y calcualted by integral projection
 		//int32_t MV_x_output;                   //6bit signed [-32, 31] output MV_x calculated by integral projection
-		//int32_t MV_y_output;   
+		//int32_t MV_y_output;
 		uint8_t filter_switch;                 //1bit unsigned{0, 1} whether use 3x3 filter to smooth current pixel to calculate pixel difference for Y component 0: not filtering 1: filtering
 		uint8_t *y_src_weight;					 //8bit unsigned [0, 255] weight for fusing current frame and reference frame set by user for Y component
 		uint8_t *u_src_weight;					 //8bit unsigned [0, 255] weight for fusing current frame and reference frame set by user for U component
 		uint8_t *v_src_weight;					 //8bit unsigned [0, 255] weight for fusing current frame and reference frame set by user for V component
 		uint32_t frame_num;                    //count;
-		uint32_t curr_frameno;			
+		uint32_t curr_frameno;
 		int32_t orig_width;
 		int32_t orig_height;
 		int32_t small_width;
 		int32_t small_height;
-		int32_t imageNum;			
+		uint32_t imageNum;
 		int32_t** xProj1D;
 		int32_t** yProj1D;
 		c3dnr_buffer_t pdst_img;
@@ -76,8 +76,8 @@ typedef enum c3dnr_frame_type
 	LAST_FRAME
 }c3dnr_frame_type_t;
 
-int initModule(int32_t small_width,int32_t small_height , int32_t orig_width , int32_t orig_height , int32_t total_imageNum);
+int initModule(int32_t small_width,int32_t small_height , int32_t orig_width , int32_t orig_height , uint32_t total_imageNum);
 void Config3DNR(c3dnr_param_info_t *param);
-void threeDNR_1D_process(c3dnr_buffer_t curr_image[] ,int32_t width ,int32_t height , int32_t imageNum);
+void threeDNR_1D_process(c3dnr_buffer_t curr_image[] ,int32_t width ,int32_t height , uint32_t imageNum);
 c3dnr_info_t *get_3dnr_moduleinfo();
 #endif
