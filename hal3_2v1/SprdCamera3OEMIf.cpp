@@ -351,26 +351,24 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         mHalOem = (oem_module_t *)malloc(sizeof(oem_module_t));
         if (mHalOem == NULL) {
             HAL_LOGE("mHalOem is NULL");
-            goto exit;
+        } else {
+            memset(mHalOem, 0, sizeof(*mHalOem));
         }
 
         handle = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
         if (handle == NULL) {
             char const *err_str = dlerror();
             HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
-            goto exit;
         }
 
-        /* Get the address of the struct hal_module_info. */
-        const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
-        omi = (oem_module_t *)dlsym(handle, sym);
-        if (omi == NULL) {
-            HAL_LOGE("load: couldn't find symbol %s", sym);
-            goto exit;
+        if (mHalOem && handle) {
+            const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
+            omi = (oem_module_t *)dlsym(handle, sym);
+            if (omi) {
+                mHalOem->dso = handle;
+                mHalOem->ops = omi->ops;
+            }
         }
-
-        mHalOem->dso = handle;
-        mHalOem->ops = omi->ops;
 
         HAL_LOGI("loaded libcamoem.so handle=%p", handle);
     }
@@ -472,6 +470,22 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoParameterSetFlag = false;
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
+
+    mZslFrameNum = 0;
+    mPictureFrameNum = 0;
+    mStartFrameNum = 0;
+    mStopFrameNum = 0;
+    mDropPreviewFrameNum = 0;
+    mDropVideoFrameNum = 0;
+    mDropZslFrameNum = 0;
+    mGyromaxtimestamp = 0.0;
+    mZslPopFlag = 0;
+    mVideoSnapshotFrameNum = 0;
+    mPreAllocCapMemThread = 0;
+    mGyroMsgQueHandle = 0;
+    mPreAllocCapMemSemDone.count = 0;
+    mGyro_sem.count = 0;
+
     HAL_LOGI(":hal3: X cameraId: %d.", cameraId);
 
 exit:
@@ -1687,7 +1701,7 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
 
     therm_fd = socket_local_client(
         "thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
-    if (therm_fd <= 0)
+    if (therm_fd < 0)
         HAL_LOGD("%s open thermald  failed: %s\n", __func__, strerror(errno));
     else {
         p = buf;
