@@ -126,6 +126,10 @@ ARCDCIR_API MRESULT ARC_DCIR_Process( // return MOK if success, otherwise fail
     LPASVLOFFSCREEN pDstImg // [out]  The off-screen of result image
     );
 
+ARCDCIR_API MRESULT ARC_DCIR_Reset( // return MOK if success, otherwise fail
+    MHandle hHandle // [in/out] The algorithm engine will be reset by this API
+    );
+
 #ifdef __cplusplus
 }
 #endif

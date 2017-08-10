@@ -149,6 +149,7 @@ typedef struct {
     ARCDCIR_API MRESULT (*ARC_DCIR_CapInit)(MHandle *phHandle, MInt32 i32Mode);
     ARC_DCVR_API MRESULT (*ARC_DCVR_Uninit)(MHandle *phHandle);
     ARCDCIR_API MRESULT (*ARC_DCIR_Uninit)(MHandle *phHandle);
+    ARCDCIR_API MRESULT (*ARC_DCIR_Reset)(MHandle hHandle);
     ARCDCIR_API MRESULT (*ARC_DCIR_SetCameraImageInfo)(
         MHandle hHandle, LPARC_REFOCUSCAMERAIMAGE_PARAM pParam);
     ARC_DCVR_API MRESULT (*ARC_DCVR_SetCameraImageInfo)(
@@ -218,6 +219,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     camera_metadata_t *mStaticMetadata;
 
     new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
+
+    bool mFirstArcBokeh;
+    bool mFirstArcBokehReset;
+    bool mFirstSprdBokeh;
 
     Mutex mRequestLock;
     List<new_mem_t *> mLocalBufferList;
@@ -317,7 +322,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void *mPrevDepthhandle;
         MHandle mArcSoftPrevHandle;
         ARC_DCVR_PARAM mArcSoftPrevParam;
-        bool misInit;
 
       private:
         Mutex mLock;
@@ -391,6 +395,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void unLoadBokehPreviewApi();
     void initBokehApiParams();
     void initDepthApiParams();
+    void initBokehPrevApiParams();
     int checkOtpInfo();
     void bokehFaceMakeup(private_handle_t *private_handle);
     void updateApiParams(CameraMetadata metaSettings, int type);
