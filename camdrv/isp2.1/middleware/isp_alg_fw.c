@@ -1479,7 +1479,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	ISP_LOGV("begin data_type %d", data_type);
 	switch (data_type) {
 	case AF_DATA_AFM_STAT:
-	case AF_DATA_AF:{
+	case AF_DATA_AF: {
 			statis_info = (struct isp_statis_info *)in_ptr;
 
 			ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
@@ -1503,6 +1503,9 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			break;
 		}
 	case AF_DATA_IMG_BLK:
+		if (cxt->af_cxt.sw_bypass)
+			break;
+
 		if (cxt->ops.af_ops.ioctrl) {
 			struct afctrl_ae_info *ae_info = &cxt->ae_info;
 			struct afctrl_awb_info *awb_info = &cxt->awb_info;
@@ -1519,7 +1522,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			}
 		}
 		calc_param.data_type = AF_DATA_IMG_BLK;
-		if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
+		if (cxt->ops.af_ops.process) {
 			ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, (void *)&calc_result);
 		}
 		break;
@@ -2093,9 +2096,10 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		param.otp_info.rdm_stat_info.b = 0;
 	}
 
-	if (cxt->ops.awb_ops.init)
+	if (cxt->ops.awb_ops.init) {
 		ret = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
+		ISP_TRACE_IF_FAIL(ret, ("failed to do awb_ctrl_init"));
+	}
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
