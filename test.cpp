@@ -1664,4 +1664,84 @@ int eng_tst_camera_init(int cameraId, minui_backend *backend, GRSurface *draw) {
 exit:
     return ret;
 }
+
+// for blur factory test
+int eng_tst_covered_camera_init(int cameraId) {
+    int ret = 0, multi_camera_mode = MODE_BLUR;
+    int sensor_stream_on = 1;
+
+    ALOGI("Native MMI Test: eng_tst_covered_camera_init E");
+
+    ret = mHalOem->ops->camera_ioctrl(
+        oem_handle, CAMERA_IOCTRL_SET_MULTI_CAMERAMODE, &multi_camera_mode);
+    if (ret) {
+        ALOGE("Native MMI Test: SET_MULTI_CAMERAMODE failed, ret=%d", ret);
+        goto exit;
+    }
+
+    ret = mHalOem->ops->camera_init(cameraId, eng_tst_camera_cb, &client_data,
+                                    0, &oem_handle, (void *)Callback_Malloc,
+                                    (void *)Callback_Free);
+    if (ret) {
+        ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);
+        goto exit;
+    }
+
+    ret = mHalOem->ops->camera_ioctrl(oem_handle,
+                                      CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
+                                      &sensor_stream_on);
+    if (ret) {
+        ALOGE("Native MMI Test: SENSOR_STREAM_CTRL failed, ret=%d", ret);
+        goto exit;
+    }
+
+    ALOGI("Native MMI Test: eng_tst_covered_camera_init X");
+
+exit:
+    return ret;
+}
+
+int eng_tst_covered_camera_get_lum(void) {
+    int lum_value = 0, ret = 0;
+
+    ret = mHalOem->ops->camera_ioctrl(oem_handle, CAMERA_IOCTRL_GET_SENSOR_LUMA,
+                                      (void *)&lum_value);
+    if (ret) {
+        ALOGE("Native MMI Test: eng_tst_camera_get_lum, ret=%d", ret);
+        ret = -1;
+        goto exit;
+    }
+    ALOGI("Native MMI Test: eng_tst_camera_get_lum lum_value = %d", lum_value);
+
+    return lum_value;
+
+exit:
+    return ret;
+}
+
+int eng_tst_covered_camera_deinit(void) {
+    cmr_int ret = 0;
+    int sensor_stream_on = 0;
+
+    ALOGI("Native MMI Test: eng_tst_covered_camera_deinit E");
+
+    ret = mHalOem->ops->camera_ioctrl(oem_handle,
+                                      CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
+                                      &sensor_stream_on);
+    if (ret) {
+        ALOGE("Native MMI Test: SENSOR_STREAM_CTRL failed, ret=%ld", ret);
+        goto exit;
+    }
+
+    ret = mHalOem->ops->camera_deinit(oem_handle);
+    if (ret) {
+        ALOGE("Native MMI Test: camera_deinit failed, ret=%ld", ret);
+        goto exit;
+    }
+
+    ALOGI("Native MMI Test: eng_tst_covered_camera_deinit X");
+
+exit:
+    return ret;
+}
 }
