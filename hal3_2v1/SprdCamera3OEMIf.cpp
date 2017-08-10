@@ -8942,14 +8942,17 @@ void SprdCamera3OEMIf::EisPreview_init() {
             mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
-    // clear preview  gyro
-    mGyroPreviewInfo.clear();
+
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mPreviewParam.f, mPreviewParam.td,
              mPreviewParam.ts);
     video_stab_open(&mPreviewInst, &mPreviewParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mPreviewParam.src_w, mPreviewParam.src_h, mPreviewParam.dst_w,
              mPreviewParam.dst_h);
+
+    // clear preview  gyro
+    mGyroPreviewInfo.clear();
+
 }
 
 void SprdCamera3OEMIf::EisVideo_init() {
@@ -8978,15 +8981,17 @@ void SprdCamera3OEMIf::EisVideo_init() {
             mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }
     }
-    // clear video  gyro
-    mGyroVideoInfo.clear();
-    mIsRecording = true;
+
     HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mVideoParam.f, mVideoParam.td,
              mVideoParam.ts);
     video_stab_open(&mVideoInst, &mVideoParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mVideoParam.src_w, mVideoParam.src_h, mVideoParam.dst_w,
              mVideoParam.dst_h);
+
+    // clear video  gyro
+    mGyroVideoInfo.clear();
+    mIsRecording = true;
 }
 
 vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
