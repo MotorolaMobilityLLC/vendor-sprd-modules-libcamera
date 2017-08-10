@@ -176,7 +176,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
     {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, NULL},
-	{MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
 #endif

@@ -3531,8 +3531,12 @@ int SprdCamera3Setting::updateWorkParameters(
     /**add for 3d calibration update metadata end*/
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
+#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
+        s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 0;
+#else
         s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
             frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
+#endif
         /**add for 3d calibration force set sprd zsl enable begin*/
         if (s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled)
             s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
