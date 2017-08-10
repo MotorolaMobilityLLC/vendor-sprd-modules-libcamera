@@ -22,9 +22,6 @@ LIB_PATH := lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
 endif
-ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
-endif
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/

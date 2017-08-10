@@ -24,6 +24,7 @@ LIB_PATH := x86_lib
 endif
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -51,10 +52,6 @@ else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
 endif
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
-endif
-
 LOCAL_MODULE := libcalibration
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
@@ -77,10 +74,6 @@ ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
-endif
-
-ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 endif
 
 LOCAL_MODULE := libsprdlsc

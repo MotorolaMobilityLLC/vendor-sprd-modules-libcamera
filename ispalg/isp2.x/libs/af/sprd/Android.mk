@@ -24,6 +24,7 @@ LIB_PATH := x86_lib
 endif
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -51,12 +52,8 @@ LIB_PATH := x86_lib
 endif
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-<<<<<<< HEAD
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
-=======
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
->>>>>>> Bug #708568
 endif
 
 LOCAL_MODULE := libspcaftrigger
