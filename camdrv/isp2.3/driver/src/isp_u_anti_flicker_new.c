@@ -18,45 +18,52 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *flicker_new_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	flicker_new_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = flicker_new_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER_NEW;
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BYPASS;
-	param.property_param = block_info;
+	param.property_param = &flicker_new_ptr->bypass;
 
-	ISP_LOGE("$$LHC:bypass %d", *(cmr_u32 *) block_info);
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *flicker_new_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	flicker_new_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = flicker_new_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER_NEW;
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BLOCK;
-	param.property_param = block_info;
+	param.property_param = flicker_new_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

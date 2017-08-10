@@ -18,112 +18,133 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_awb_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_awb_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWB_BLOCK;
-	param.property_param = block_info;
+	param.property_param = awb_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_awbm_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBM_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &awb_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_mode(cmr_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_awbm_mode(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBM_MODE;
-	param.property_param = &mode;
+	param.property_param = &awb_ptr->mode;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_skip_num(cmr_handle handle, cmr_u32 num)
+cmr_s32 isp_u_awbm_skip_num(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBM_SKIP_NUM;
-	param.property_param = &num;
+	param.property_param = &awb_ptr->skip_num;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_block_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
+cmr_s32 isp_u_awbm_block_offset(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_offset offset;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	offset.x = awb_ptr->offset.x;
+	offset.y = awb_ptr->offset.y;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBM_BLOCK_OFFSET;
-	offset.x = x;
-	offset.y = y;
 	param.property_param = &offset;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -131,24 +152,29 @@ cmr_s32 isp_u_awbm_block_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_block_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_awbm_block_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = awb_ptr->size.width;
+	size.height = awb_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBM_BLOCK_SIZE;
-	size.width = w;
-	size.height = h;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -156,69 +182,82 @@ cmr_s32 isp_u_awbm_block_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_awbm_shift(cmr_handle handle, cmr_u32 shift)
+cmr_s32 isp_u_awbm_shift(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBM_SHIFT;
-	param.property_param = &shift;
+	param.property_param = &awb_ptr->shift;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_awbc_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBC_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &awb_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_gain(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_s32 isp_u_awbc_gain(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_awbc_rgb gain;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	gain.r = awb_ptr->awbc_rgb.r;
+	gain.g = awb_ptr->awbc_rgb.g;
+	gain.b = awb_ptr->awbc_rgb.b;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBC_GAIN;
-	gain.r = r;
-	gain.g = g;
-	gain.b = b;
 	param.property_param = &gain;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -226,25 +265,30 @@ cmr_s32 isp_u_awbc_gain(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_thrd(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_s32 isp_u_awbc_thrd(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_awbc_rgb thrd;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	thrd.r = awb_ptr->awbc_rgb.r;
+	thrd.g = awb_ptr->awbc_rgb.g;
+	thrd.b = awb_ptr->awbc_rgb.b;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBC_THRD;
-	thrd.r = r;
-	thrd.g = g;
-	thrd.b = b;
 	param.property_param = &thrd;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -252,25 +296,30 @@ cmr_s32 isp_u_awbc_thrd(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 	return ret;
 }
 
-cmr_s32 isp_u_awbc_gain_offset(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_s32 isp_u_awbc_gain_offset(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *awb_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_awbc_rgb offset;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	awb_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	offset.r = awb_ptr->awbc_rgb.r;
+	offset.g = awb_ptr->awbc_rgb.g;
+	offset.b = awb_ptr->awbc_rgb.b;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = awb_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_AWB;
 	param.property = ISP_PRO_AWBC_GAIN_OFFSET;
-	offset.r = r;
-	offset.g = g;
-	offset.b = b;
 	param.property_param = &offset;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);

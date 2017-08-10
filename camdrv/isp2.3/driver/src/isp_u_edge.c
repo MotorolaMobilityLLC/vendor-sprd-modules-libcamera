@@ -18,70 +18,82 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_edge_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_edge_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *edge_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	edge_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	param.isp_id = file->isp_id;
+	param.scene_id = edge_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_EDGE;
 	param.property = ISP_PRO_EDGE_BLOCK;
-	param.property_param = block_info;
+	param.property_param = edge_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_edge_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_edge_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *edge_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	edge_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = edge_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_EDGE;
 	param.property = ISP_PRO_EDGE_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &edge_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_edge_param(cmr_handle handle, cmr_u32 detail, cmr_u32 smooth, cmr_u32 strength)
+cmr_s32 isp_u_edge_param(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *edge_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_edge_thrd edge_thrd;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	edge_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	edge_thrd.detail = edge_ptr->edge_thrd.detail;
+	edge_thrd.smooth = edge_ptr->edge_thrd.smooth;
+	edge_thrd.strength = edge_ptr->edge_thrd.strength;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = edge_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_EDGE;
 	param.property = ISP_PRO_EDGE_PARAM;
-	edge_thrd.detail = detail;
-	edge_thrd.smooth = smooth;
-	edge_thrd.strength = strength;
 	param.property_param = &edge_thrd;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);

@@ -18,46 +18,55 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_cfa_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_cfa_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *cfa_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	cfa_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = cfa_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_CFA;
 	param.property = ISP_PRO_CFA_BLOCK;
-	param.property_param = block_info;
+	param.property_param = cfa_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_cfa_thrd(cmr_handle handle, cmr_u32 edge, cmr_u32 ctrl)
+cmr_s32 isp_u_cfa_thrd(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *cfa_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_cfa_thrd thrd;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	cfa_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	thrd.edge = cfa_ptr->cfa_thrd.edge;
+	thrd.ctrl = cfa_ptr->cfa_thrd.ctrl;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = cfa_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_CFA;
 	param.property = ISP_PRO_CFA_THRD;
-	thrd.edge = edge;
-	thrd.ctrl = ctrl;;
 	param.property_param = &thrd;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -65,24 +74,29 @@ cmr_s32 isp_u_cfa_thrd(cmr_handle handle, cmr_u32 edge, cmr_u32 ctrl)
 	return ret;
 }
 
-cmr_s32 isp_u_cfa_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_cfa_slice_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *cfa_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	cfa_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = cfa_ptr->size.width;
+	size.height = cfa_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = cfa_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_CFA;
 	param.property = ISP_PRO_CFA_SLICE_SIZE;
-	size.width = w;
-	size.height = h;;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -90,22 +104,26 @@ cmr_s32 isp_u_cfa_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_cfa_slice_info(cmr_handle handle, cmr_u32 info)
+cmr_s32 isp_u_cfa_slice_info(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *cfa_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	cfa_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = cfa_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_CFA;
 	param.property = ISP_PRO_CFA_SLICE_INFO;
-	param.property_param = &info;
+	param.property_param = &cfa_ptr->info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

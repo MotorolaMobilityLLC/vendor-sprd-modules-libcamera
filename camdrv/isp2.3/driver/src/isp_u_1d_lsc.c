@@ -18,46 +18,55 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *rlsc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	rlsc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = rlsc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RLSC;
 	param.property = ISP_PRO_RLSC_BLOCK;
-	param.property_param = block_info;
+	param.property_param = rlsc_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
+cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *rlsc_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size slice_size;
 
-	if (!handle) {
-		ISP_LOGE("isp_u_1d_lsc_slice_size: handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	rlsc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	slice_size.width = rlsc_ptr->size.width;
+	slice_size.height = rlsc_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = rlsc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RLSC;
 	param.property = ISP_PRO_RLSC_SLICE_SIZE;
-	slice_size.width = width;
-	slice_size.height = height;
 	param.property_param = &slice_size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -65,22 +74,26 @@ cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height
 	return ret;
 }
 
-cmr_s32 isp_u_1d_lsc_pos(cmr_handle handle, struct img_offset pos)
+cmr_s32 isp_u_1d_lsc_pos(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *rlsc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("isp_u_1d_lsc_pos: handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	rlsc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = rlsc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RLSC;
 	param.property = ISP_PRO_RLSC_POS;
-	param.property_param = &pos;
+	param.property_param = &rlsc_ptr->offset;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

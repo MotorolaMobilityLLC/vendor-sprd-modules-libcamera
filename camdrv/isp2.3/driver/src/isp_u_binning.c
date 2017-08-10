@@ -18,90 +18,107 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_BLOCK;
-	param.property_param = block_info;
+	param.property_param = binnging_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_binning4awb_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &binnging_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_endian(cmr_handle handle, cmr_u32 endian)
+cmr_s32 isp_u_binning4awb_endian(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_ENDIAN;
-	param.property_param = &endian;
-	ISP_LOGE("endian %d", endian);
+	param.property_param = &binnging_ptr->endian;
+
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_scaling_ratio(cmr_handle handle, cmr_u32 vertical, cmr_u32 horizontal)
+cmr_s32 isp_u_binning4awb_scaling_ratio(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_scaling_ratio scaling_ratio;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	scaling_ratio.vertical = binnging_ptr->scaling_ratio.vertical;
+	scaling_ratio.horizontal = binnging_ptr->scaling_ratio.horizontal;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_SCALING_RATIO;
-	scaling_ratio.vertical = vertical;
-	scaling_ratio.horizontal = horizontal;
 	param.property_param = &scaling_ratio;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -109,96 +126,108 @@ cmr_s32 isp_u_binning4awb_scaling_ratio(cmr_handle handle, cmr_u32 vertical, cmr
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_get_scaling_ratio(cmr_handle handle, cmr_u32 * vertical, cmr_u32 * horizontal)
+cmr_s32 isp_u_binning4awb_get_scaling_ratio(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
-	struct isp_scaling_ratio scaling_ratio;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_GET_SCALING_RATIO;
-	param.property_param = &scaling_ratio;
+	param.property_param = &binnging_ptr->scaling_ratio;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
-	*vertical = scaling_ratio.vertical;
-	*horizontal = scaling_ratio.horizontal;
 
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_mem_addr(cmr_handle handle, cmr_u32 phy_addr)
+cmr_s32 isp_u_binning4awb_mem_addr(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_MEM_ADDR;
-	param.property_param = &phy_addr;
+	param.property_param = &binnging_ptr->phy_addr;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_statistics_buf(cmr_handle handle, cmr_u32 * buf_id)
+cmr_s32 isp_u_binning4awb_statistics_buf(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
-	cmr_u32 id;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_STATISTICS_BUF;
-	param.property_param = &id;
+	param.property_param = binnging_ptr->buf_id;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-	*buf_id = id;
 
 	return ret;
 }
 
-cmr_s32 isp_u_binning4awb_transaddr(cmr_handle handle, cmr_u32 phys0, cmr_u32 phys1)
+cmr_s32 isp_u_binning4awb_transaddr(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *binnging_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_b4awb_phys phys_addr;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error: %lx", (cmr_uint) handle);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	binnging_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	phys_addr.phys0 = binnging_ptr->phys_addr.phys0;
+	phys_addr.phys1 = binnging_ptr->phys_addr.phys1;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = binnging_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_TRANSADDR;
-	phys_addr.phys0 = phys0;
-	phys_addr.phys1 = phys1;
 	param.property_param = &phys_addr;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -213,11 +242,12 @@ cmr_s32 isp_u_binning4awb_initbuf(cmr_handle handle)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: %lx", (cmr_uint) handle);
+		ISP_LOGE("failed to get ptr: %p", handle);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_BINNING;
 	param.property = ISP_PRO_BINNING_INITBUF;

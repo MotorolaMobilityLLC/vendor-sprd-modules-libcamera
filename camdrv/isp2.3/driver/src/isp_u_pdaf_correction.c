@@ -18,43 +18,51 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_pdaf_correct_bypass(cmr_handle handle, cmr_u32 *bypass)
+cmr_s32 isp_u_pdaf_correct_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *pdaf_correct_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	pdaf_correct_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = pdaf_correct_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_PDAF_CORRECT;
 	param.property = ISP_PRO_PDAF_SET_CORRECT_BYPASS;
-	param.property_param = bypass;
+	param.property_param = &pdaf_correct_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 	return ret;
 }
 
-cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *correction_param)
+cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *pdaf_correct_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	pdaf_correct_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = pdaf_correct_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_PDAF_CORRECT;
 	param.property = ISP_PRO_PDAF_SET_CORRECT_PARAM;
-	param.property_param = correction_param;
+	param.property_param = pdaf_correct_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 	return ret;

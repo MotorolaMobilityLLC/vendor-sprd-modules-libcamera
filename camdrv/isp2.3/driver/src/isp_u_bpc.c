@@ -18,118 +18,139 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_bpc_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_bpc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_BLOCK;
-	param.property_param = block_info;
+	param.property_param = bpc_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_bpc_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &bpc_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_mode(cmr_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_bpc_mode(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_MODE;
-	param.property_param = &mode;
+	param.property_param = &bpc_ptr->mode;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_param_common(cmr_handle handle, cmr_u32 pattern_type, cmr_u32 detect_thrd, cmr_u32 super_bad_thrd)
+cmr_s32 isp_u_bpc_param_common(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_bpc_common bpc_param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	bpc_param.pattern_type = bpc_ptr->bpc_param.pattern_type;
+	bpc_param.detect_thrd = bpc_ptr->bpc_param.detect_thrd;
+	bpc_param.super_bad_thrd = bpc_ptr->bpc_param.super_bad_thrd;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_PARAM_COMMON;
-	bpc_param.pattern_type = pattern_type;
-	bpc_param.detect_thrd = detect_thrd;
-	bpc_param.super_bad_thrd = super_bad_thrd;
-	param.property_param = &param;
+	param.property_param = &bpc_param;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_thrd(cmr_handle handle, cmr_u32 flat, cmr_u32 std, cmr_u32 texture)
+cmr_s32 isp_u_bpc_thrd(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_bpc_thrd thrd;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	thrd.flat = bpc_ptr->bpc_thrd.flat;
+	thrd.std = bpc_ptr->bpc_thrd.std;
+	thrd.texture = bpc_ptr->bpc_thrd.texture;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_THRD;
-	thrd.flat = flat;
-	thrd.std = std;
-	thrd.texture = texture;
 	param.property_param = &thrd;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -137,44 +158,52 @@ cmr_s32 isp_u_bpc_thrd(cmr_handle handle, cmr_u32 flat, cmr_u32 std, cmr_u32 tex
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_map_addr(cmr_handle handle, cmr_u32 addr)
+cmr_s32 isp_u_bpc_map_addr(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_MAP_ADDR;
-	param.property_param = &addr;
+	param.property_param = &bpc_ptr->addr;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_bpc_pixel_num(cmr_handle handle, cmr_u32 pixel_num)
+cmr_s32 isp_u_bpc_pixel_num(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *bpc_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	bpc_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = bpc_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_BPC;
 	param.property = ISP_PRO_BPC_PIXEL_NUM;
-	param.property_param = &pixel_num;
+	param.property_param = &bpc_ptr->pixel_num;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

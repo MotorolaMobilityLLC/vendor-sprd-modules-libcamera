@@ -226,6 +226,7 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_ae_awb_bypass(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	struct isp_u_blocks_info aem_block_info;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 type = 0;
 	cmr_u32 bypass = 0;
@@ -234,24 +235,28 @@ static cmr_int ispctl_ae_awb_bypass(cmr_handle isp_alg_handle, void *param_ptr)
 		return ISP_PARAM_NULL;
 	}
 
+	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 	type = *(cmr_u32 *) param_ptr;
 	switch (type) {
-	case 0:		/*ae awb normal */
-		bypass = 0;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AEM_BYPASS, &bypass, NULL);
+	case 0:
+		/*ae awb normal */
+		aem_block_info.bypass = 0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AEM_BYPASS, &aem_block_info, NULL);
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_BYPASS, &bypass, NULL);
 		break;
 	case 1:
 		break;
-	case 2:		/*ae by pass */
+	case 2:
+		/*ae by pass */
 		bypass = 1;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_BYPASS, &bypass, NULL);
 		break;
-	case 3:		/*awb by pass */
-		bypass = 1;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AEM_BYPASS, &bypass, NULL);
+	case 3:
+		/*awb by pass */
+		aem_block_info.bypass = 1;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AEM_BYPASS, &aem_block_info, NULL);
 		break;
 	default:
 		break;
@@ -285,12 +290,13 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_flicker set_flicker = { 0 };
-	cmr_int bypass = 0;
+	struct isp_u_blocks_info flicker_block_info;
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
 	}
 
+	memset(&flicker_block_info, 0x0, sizeof(flicker_block_info));
 	cxt->afl_cxt.afl_mode = *(cmr_u32 *) param_ptr;
 	set_flicker.mode = *(cmr_u32 *) param_ptr;
 	if (cxt->ops.ae_ops.ioctrl)
@@ -298,8 +304,8 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	ISP_LOGV("ISP_AE: AE_SET_FLICKER=%d, ret=%ld", set_flicker.mode, ret);
 
 	if (set_flicker.mode == AE_FLICKER_AUTO) {
-		bypass = 0;
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+		flicker_block_info.bypass = 0;
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &flicker_block_info);
 	}
 
 	return ret;
@@ -1661,17 +1667,18 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_af_ctrl *af_ctrl_ptr = (struct isp_af_ctrl *)param_ptr;
-	struct isp_dev_access_afm_info afm_info;
+	struct isp_u_blocks_info afm_block_info;
 	cmr_u32 isp_tool_af_test;
 
+	memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 	if (ISP_CTRL_SET == af_ctrl_ptr->mode) {
 		isp_tool_af_test = 1;
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_TOOL_AF_TEST, &isp_tool_af_test, NULL);
-		afm_info.bypass = 0;
-		afm_info.skip_num = 0;
-		afm_info.cur_envi = INDOOR_SCENE;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&afm_info, NULL);
+		afm_block_info.afm_info.bypass = 0;
+		afm_block_info.afm_info.skip_num = 0;
+		afm_block_info.afm_info.cur_envi = INDOOR_SCENE;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&afm_block_info, NULL);
 		if (cxt->ops.af_ops.ioctrl) {
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DEFAULT_AF_WIN, NULL, NULL);
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_POS, (void *)&af_ctrl_ptr->step, NULL);
@@ -1683,7 +1690,8 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr)
 		memset((void *)&afm_stat, 0, sizeof(afm_stat));
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_CUR_POS, (void *)&cur_pos, NULL);
-		ret = isp_dev_raw_afm_type1_statistic(cxt->dev_access_handle, (void *)afm_stat.info_tshark3);
+		afm_block_info.statis = afm_stat.info_tshark3;
+		ret = isp_dev_raw_afm_type1_statistic(cxt->dev_access_handle, &afm_block_info);
 		af_ctrl_ptr->step = cur_pos;
 		af_ctrl_ptr->num = 9;
 		for (i = 0; i < af_ctrl_ptr->num; i++) {
@@ -1691,10 +1699,10 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr)
 		}
 	} else {
 		isp_tool_af_test = 0;
-		cmr_u32 bypass = 1;
+		afm_block_info.bypass = 1;
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_TOOL_AF_TEST, (void *)&isp_tool_af_test, NULL);
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, (void *)&bypass, NULL);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, &afm_block_info, NULL);
 	}
 
 	return ret;

@@ -18,52 +18,57 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *rgbg_ptr = NULL;
 	struct isp_io_param param;
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-	struct isp_dev_rgb_gain_info *ggg = (struct isp_dev_rgb_gain_info *)block_info;
-#endif
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	rgbg_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 #ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
+	struct isp_dev_rgb_gain_info *ggg = (struct isp_dev_rgb_gain_info *)rgbg_ptr->block_info;
 	ggg->bypass = 1;
 #endif
 
 	param.isp_id = file->isp_id;
+	param.scene_id = rgbg_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RGBG;
 	param.property = ISP_PRO_RGB_GAIN_BLOCK;
-	param.property_param = block_info;
+	param.property_param = rgbg_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_rgb_dither_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_rgb_dither_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *rgbg_dither_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	rgbg_dither_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = rgbg_dither_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RGBG_DITHER;
 	param.property = ISP_PRO_RGB_EDITHER_RANDOM_BLOCK;
-	param.property_param = block_info;
+	param.property_param = rgbg_dither_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

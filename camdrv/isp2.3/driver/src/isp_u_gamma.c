@@ -18,66 +18,78 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_gamma_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_gamma_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *gamma_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	gamma_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = gamma_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_GAMMA;
 	param.property = ISP_PRO_GAMMA_BLOCK;
-	param.property_param = block_info;
+	param.property_param = gamma_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_gamma_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_gamma_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *gamma_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	gamma_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = gamma_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_GAMMA;
 	param.property = ISP_PRO_GAMMA_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &gamma_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_gamma_node(cmr_handle handle, cmr_u16 * node_ptr)
+cmr_s32 isp_u_gamma_node(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *gamma_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !node_ptr) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) node_ptr);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	gamma_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = gamma_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_GAMMA;
 	param.property = ISP_PRO_GAMMA_NODE;
-	param.property_param = node_ptr;
+	param.property_param = gamma_ptr->node_ptr;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

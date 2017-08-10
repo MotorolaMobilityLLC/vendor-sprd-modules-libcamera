@@ -386,23 +386,24 @@ static cmr_int ispalg_set_ae_stats_mode(cmr_handle isp_alg_handle, cmr_u32 mode,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_dev_access_ae_stats_info ae_info;
+	struct isp_u_blocks_info ae_block_info;
 
+	memset(&ae_block_info, 0x0, sizeof(ae_block_info));
 	switch (mode) {
 	case AE_STATISTICS_MODE_SINGLE:
-		ae_info.mode = ISP_DEV_AE_STATS_MODE_SINGLE;
-		ae_info.skip_num = skip_number;
+		ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_SINGLE;
+		ae_block_info.stats_info.skip_num = skip_number;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
 					   ISP_DEV_SET_AE_STATISTICS_MODE,
-					   &ae_info,
+					   &ae_block_info,
 					   NULL);
 		break;
 	case AE_STATISTICS_MODE_CONTINUE:
-		ae_info.mode = ISP_DEV_AE_STATS_MODE_CONTINUE;
-		ae_info.skip_num = skip_number;
+		ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_CONTINUE;
+		ae_block_info.stats_info.skip_num = skip_number;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
 					   ISP_DEV_SET_AE_STATISTICS_MODE,
-					   &ae_info,
+					   &ae_block_info,
 					   NULL);
 		break;
 	}
@@ -413,13 +414,16 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_dev_access_aem_win_info aem_win_info;
+	struct isp_u_blocks_info aem_block_info;
 
-	aem_win_info.offset.x = aem_info->trim.x;
-	aem_win_info.offset.y = aem_info->trim.y;
-	aem_win_info.blk_size.width = aem_info->win_size.w;
-	aem_win_info.blk_size.height = aem_info->win_size.h;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_win_info, NULL);
+	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+
+	aem_block_info.win_info.offset.x = aem_info->trim.x;
+	aem_block_info.win_info.offset.y = aem_info->trim.y;
+	aem_block_info.win_info.size.width = aem_info->win_size.w;
+	aem_block_info.win_info.size.height = aem_info->win_size.h;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_block_info, NULL);
 	return ret;
 }
 
@@ -439,7 +443,9 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_u_blocks_info aem_block_info;
 
+	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 	switch (type) {
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
@@ -451,13 +457,15 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_uint) param0);
 		break;
 	case ISP_AE_SET_MONITOR:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, param0, NULL);
+		aem_block_info.skip_num = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, &aem_block_info, NULL);
 		break;
 	case ISP_AE_SET_MONITOR_WIN:
 		ret = ispalg_set_aem_win(cxt, param0);
 		break;
 	case ISP_AE_SET_MONITOR_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, param0, NULL);
+		aem_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, &aem_block_info, NULL);
 		break;
 	case ISP_AE_SET_STATISTICS_MODE:
 		ret = ispalg_set_ae_stats_mode(cxt, *(cmr_u32 *)param0, *(cmr_u32 *)param1);
@@ -474,7 +482,8 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, param0, param1);
+		aem_block_info.rgb_gain_coeff = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
 		ret = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0, param1);
@@ -495,8 +504,8 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		ret = ispalg_get_rgb_gain(cxt, param0);
 		break;
 	case ISP_AE_SET_WBC_GAIN: {
-			struct ae_awb_gain *awb_gain = (struct ae_awb_gain*)param0;
-			ret = isp_dev_awb_gain(cxt->dev_access_handle, awb_gain->r, awb_gain->g, awb_gain->b);
+			memcpy((void *)&aem_block_info.awbc_rgb, param0, sizeof(struct ae_awb_gain));
+			ret = isp_dev_awb_gain(cxt->dev_access_handle, &aem_block_info);
 		}
 		break;
 	default:
@@ -510,7 +519,9 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_u_blocks_info afm_block_info;
 
+	memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 	switch (type) {
 	case ISP_AF_SET_POS:
 		if (cxt->ioctrl_ptr->set_focus) {
@@ -607,34 +618,40 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		break;
 	case ISP_AF_SET_MONITOR: {
 		struct af_monitor_set *monitor_set = (struct af_monitor_set *)param0;
-		struct isp_dev_access_afm_info afm_info;
+		afm_block_info.afm_info.bypass = monitor_set->bypass;
+		afm_block_info.afm_info.skip_num = monitor_set->skip_num;
+		afm_block_info.afm_info.cur_envi = *(cmr_u32 *)param1;
 
-		afm_info.bypass = monitor_set->bypass;
-		afm_info.skip_num = monitor_set->skip_num;
-		afm_info.cur_envi = *(cmr_u32 *)param1;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_info, NULL);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_block_info, NULL);
 		}
 		break;
 	case ISP_AF_SET_MONITOR_WIN:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR_WIN, param0, param1);
+		afm_block_info.win_range = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR_WIN, &afm_block_info, NULL);
 		break;
 	case ISP_AF_GET_MONITOR_WIN_NUM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, NULL, param0);
+		afm_block_info.win_num = (cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, NULL, &afm_block_info);
 		break;
 	case ISP_AFM_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, param0, param1);
+		afm_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, &afm_block_info, param1);
 		break;
 	case ISP_AFM_SKIP_NUM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, param0, param1);
+		afm_block_info.skip_num = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, &afm_block_info, param1);
 		break;
 	case ISP_AFM_MODE:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, param0, param1);
+		afm_block_info.mode = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, &afm_block_info, param1);
 		break;
 	case ISP_AFM_IIR_NR_CFG:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, param0, param1);
+		afm_block_info.block_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, &afm_block_info, param1);
 		break;
 	case ISP_AFM_MODULES_CFG:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, param0, param1);
+		afm_block_info.block_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, &afm_block_info, param1);
 		break;
 	case ISP_AF_GET_SYSTEM_TIME: {
 		cmr_u32 sec = 0;
@@ -655,7 +672,9 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_u_blocks_info pdaf_block_info;
 
+	memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 	ISP_LOGV("isp_pdaf_set_cb type = 0x%lx", type);
 	switch (type) {
 	case ISP_AF_SET_PD_INFO:
@@ -663,25 +682,32 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_PD_INFO, param0, param1);
 		break;
 	case ISP_PDAF_SET_CFG_PARAM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, param0, param1);
+		pdaf_block_info.block_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, &pdaf_block_info, NULL);
 		break;
 	case ISP_PDAF_SET_PPI_INFO:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, param0, param1);
+		pdaf_block_info.ppi_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &pdaf_block_info, NULL);
 		break;
 	case ISP_PDAF_SET_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, param0, param1);
+		pdaf_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_block_info, NULL);
 		break;
 	case ISP_PDAF_SET_WORK_MODE:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, param0, param1);
+		pdaf_block_info.mode = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, &pdaf_block_info, NULL);
 		break;
 	case ISP_PDAF_SET_EXTRACTOR_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, param0, param1);
+		pdaf_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, &pdaf_block_info, NULL);
 		break;
 	case ISP_PDAF_SET_ROI:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, param0, param1);
+		pdaf_block_info.roi_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, &pdaf_block_info, NULL);
 		break;
 	case ISP_PDAF_SET_SKIP_NUM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, param0, param1);
+		pdaf_block_info.skip_num = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, &pdaf_block_info, NULL);
 		break;
 
 	default:
@@ -695,19 +721,25 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_u_blocks_info afl_block_info;
 
+	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
 	switch (type) {
 	case ISP_AFL_SET_CFG_PARAM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, param0, param1);
+		afl_block_info.block_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, &afl_block_info, param1);
 		break;
 	case ISP_AFL_NEW_SET_CFG_PARAM:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, param0, param1);
+		afl_block_info.block_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, &afl_block_info, param1);
 		break;
 	case ISP_AFL_SET_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_BYPASS, param0, param1);
+		afl_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_BYPASS, &afl_block_info, param1);
 		break;
 	case ISP_AFL_NEW_SET_BYPASS:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, param0, param1);
+		afl_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, param1);
 		break;
 	default:
 		break;
@@ -851,6 +883,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_pm_param_data *param_data = NULL;
+	struct isp_u_blocks_info sub_block_info;
 	struct isp_af_ts af_ts;
 	cmr_u32 sec = 0;
 	cmr_u32 usec = 0;
@@ -858,16 +891,18 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
+	memset(&sub_block_info, 0x0, sizeof(sub_block_info));
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
+		sub_block_info.block_info = param_data->data_ptr;
 		if (ISP_BLK_AE_NEW == param_data->id) {
 			if (ISP_PM_BLK_ISP_SETTING == param_data->cmd) {
-				ret = isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
+				ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_TRACE_IF_FAIL(ret, ("isp_dev_cfg_block fail"));
 			}
 		} else {
-			ret = isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
+			ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 			ISP_TRACE_IF_FAIL(ret, ("isp_dev_cfg_block fail"));
 		}
 
@@ -881,9 +916,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DCAM_TIMESTAMP, (void *)(&af_ts), NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
 	}
-
-	ret = isp_dev_comm_shadow(cxt->dev_access_handle, ISP_ONE);
-	ISP_TRACE_IF_FAIL(ret, ("fail to set dev shadow "));
 
 	return ret;
 }
@@ -1426,7 +1458,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_int bypass = 0;
 	cmr_u32 cur_flicker = 0;
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
@@ -1435,9 +1466,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct isp_awb_statistic_info ae_stat_ptr;
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
+	struct isp_u_blocks_info afl_block_info;
 	struct isp_statis_info *statis_info = NULL;
 	cmr_u32 u_addr = 0;
 
+	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
 	memset(&afl_output, 0, sizeof(afl_output));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
@@ -1449,12 +1482,13 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		if (ret) {
 			ISP_LOGE("fail to set statis buf");
 		}
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 0);
+		afl_block_info.bypass = 0;
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
 		goto exit;
 	}
 
-	bypass = 1;
-	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+	afl_block_info.bypass = 1;
+	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
@@ -1503,10 +1537,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	}
 
 	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
-		bypass = 0;
+		afl_block_info.bypass = 0;
 	else
-		bypass = 1;
-	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+		afl_block_info.bypass = 1;
+	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
 
 exit:
 	ISP_LOGV("done ret %ld", ret);
@@ -2772,8 +2806,10 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data *param_data;
+	struct isp_u_blocks_info sub_block_info;
 	cmr_u32 i = 0;
 
+	memset(&sub_block_info, 0x0, sizeof(sub_block_info));
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
@@ -2781,15 +2817,19 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		if (ISP_BLK_2D_LSC == param_data->id) {
-			isp_dev_lsc_update(cxt->dev_access_handle, 1);
+			sub_block_info.flag = 1;
+			isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
 		}
-		isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
+		sub_block_info.block_info = param_data->data_ptr;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 		if (ISP_BLK_2D_LSC == param_data->id) {
 			/*cxt->capture_mode : 0 normal mode; 1 zsl mode*/
 			if (0 == cxt->capture_mode) {
-				isp_dev_lsc_update(cxt->dev_access_handle, 1);
+				sub_block_info.flag = 1;
+				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
 			} else if (1 == cxt->capture_mode) {
-				isp_dev_lsc_update(cxt->dev_access_handle, 0);
+				sub_block_info.flag = 0;
+				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
 			}
 		}
 		param_data++;
@@ -2818,9 +2858,11 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_work_param ae_param;
+	struct isp_u_blocks_info aem_block_info;
 	enum ae_work_mode ae_mode = 0;
 
-	memset(&ae_param, 0, sizeof(ae_param));
+	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
+	memset(&ae_param, 0x0, sizeof(ae_param));
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
 	case ISP_MODE_ID_PRV_1:
@@ -2883,7 +2925,8 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("AE_VIDEO_START fail"));
 	}
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &ae_param.shift, NULL);
+	aem_block_info.shift = &ae_param.shift;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &aem_block_info, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));
 
 	return ret;

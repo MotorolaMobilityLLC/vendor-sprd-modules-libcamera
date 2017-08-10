@@ -439,48 +439,56 @@ cmr_s32 isp_set_slice_size(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_drv_slice_param *slice_ptr)
+cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_u_blocks_info *block_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_drv_slice_param *slice_ptr = NULL;
 
-	ret = isp_u_1d_lsc_slice_size(handle,
-				      slice_ptr->size[ISP_DRV_LSC].w,
-				      slice_ptr->size[ISP_DRV_LSC].h);
+	ISP_CHECK_HANDLE_VALID(block_ptr);
+
+	slice_ptr = (struct isp_drv_slice_param *)block_ptr->block_info;
+	ISP_CHECK_HANDLE_VALID(slice_ptr);
+
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_LSC].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_LSC].h;
+	ret = isp_u_1d_lsc_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp 1d lsc slice size error"));
 
-	ret = isp_u_2d_lsc_slice_size(handle,
-				      slice_ptr->size[ISP_DRV_LENS].w,
-				      slice_ptr->size[ISP_DRV_LENS].h);
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_LENS].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_LENS].h;
+	ret = isp_u_2d_lsc_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp 2d lsc slice size error"));
 
-	ret = isp_u_raw_aem_slice_size(handle,
-				       slice_ptr->size[ISP_DRV_AEM].w,
-				       slice_ptr->size[ISP_DRV_AEM].h);
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_AEM].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_AEM].h;
+	ret = isp_u_raw_aem_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp raw aem slice size error"));
 
-	ret = isp_u_raw_afm_slice_size(handle,
-				       slice_ptr->size[ISP_DRV_RGB_AFM].w,
-				       slice_ptr->size[ISP_DRV_RGB_AFM].h);
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_RGB_AFM].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_RGB_AFM].h;
+	ret = isp_u_raw_afm_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp raw afm slice size error"));
 
+#if 0
 	ret = isp_u_hist_slice_size(handle,
 				    slice_ptr->size[ISP_DRV_HISTS].w,
 				    slice_ptr->size[ISP_DRV_HISTS].h);
 	ISP_RETURN_IF_FAIL(ret, ("isp hist slice size error"));
+#endif
 
-	ret = isp_u_dispatch_ch0_size(handle,
-				      slice_ptr->size[ISP_DRV_DISPATCH].w,
-				      slice_ptr->size[ISP_DRV_DISPATCH].h);
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_DISPATCH].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_DISPATCH].h;
+	ret = isp_u_dispatch_ch0_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp dispatch ch0 size error"));
 
-	ret = isp_u_fetch_slice_size(handle,
-				     slice_ptr->size[ISP_DRV_STORE].w,
-				     slice_ptr->size[ISP_DRV_STORE].h);
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_STORE].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_STORE].h;
+	ret = isp_u_fetch_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp fetch slice size error"));
 
-	ret = isp_u_store_slice_size(handle,
-				     slice_ptr->size[ISP_DRV_STORE].w,
-				     slice_ptr->size[ISP_DRV_STORE].h);
+	block_ptr->size.width = slice_ptr->size[ISP_DRV_STORE].w;
+	block_ptr->size.height = slice_ptr->size[ISP_DRV_STORE].h;
+	ret = isp_u_store_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("isp store slice size error"));
 
 	return ret;
@@ -538,11 +546,11 @@ cmr_s32 isp_set_comm_param(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_dev_common_info * param_ptr)
+cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_u_blocks_info *block_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 
-	ret = isp_u_comm_block(handle, (void *)param_ptr);
+	ret = isp_u_comm_block(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("store block cfg error"));
 
 	return ret;

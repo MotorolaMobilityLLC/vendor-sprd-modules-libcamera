@@ -20,34 +20,36 @@
 
 #define FEATURE_DCAM_AEM
 
-cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *param_ptr)
 {
 #ifdef FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_block(handle, block_info);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_block(handle, raw_aem_ptr->block_info);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
-	if (!block_info) {
-		ISP_LOGE("block info is null");
-		return ret;
-	}
-
-	if (((struct isp_dev_raw_aem_info *)block_info)->bypass > 1) {
-		return ret;
-
-	}
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	if (((struct isp_dev_raw_aem_info *)raw_aem_ptr->block_info)->bypass > 1) {
+		return ret;
+	}
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_BLOCK;
-	param.property_param = block_info;
+	param.property_param = raw_aem_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -55,25 +57,32 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *block_info)
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *param_ptr)
 {
 #if 0//def FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_bypass(handle, block_info);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_bypass(handle, &raw_aem_ptr->bypass);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_BYPASS;
-	param.property_param = block_info;
+	param.property_param = &raw_aem_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -81,25 +90,32 @@ cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *block_info)
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_mode(cmr_handle handle, cmr_u32 mode)
+cmr_s32 isp_u_raw_aem_mode(cmr_handle handle, void *param_ptr)
 {
 #ifdef FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_mode(handle, mode);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_mode(handle, raw_aem_ptr->stats_info.mode);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error: 0x%lx", (cmr_uint) handle);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_MODE;
-	param.property_param = &mode;
+	param.property_param = &raw_aem_ptr->stats_info.mode;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -158,25 +174,32 @@ cmr_s32 isp_u_raw_aem_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * 
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num)
+cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, void *param_ptr)
 {
 #ifdef FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_skip_num(handle, skip_num);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_skip_num(handle, raw_aem_ptr->stats_info.skip_num);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_SKIP_NUM;
-	param.property_param = &skip_num;
+	param.property_param = &raw_aem_ptr->stats_info.skip_num;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -184,24 +207,32 @@ cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num)
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *shift)
+cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *param_ptr)
 {
 #ifdef FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_shift(handle, shift);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_shift(handle, raw_aem_ptr->shift);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
+
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_SHIFT;
-	param.property_param = shift;
+	param.property_param = raw_aem_ptr->shift;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -209,27 +240,37 @@ cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *shift)
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
+cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, void *param_ptr)
 {
 #ifdef FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_offset(handle, x, y);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_offset(handle,
+			raw_aem_ptr->win_info.offset.x,
+			raw_aem_ptr->win_info.offset.y);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
-	struct img_offset offset;
+	struct isp_img_offset offset;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	offset.x = raw_aem_ptr->win_info.offset.x;
+	offset.y = raw_aem_ptr->win_info.offset.y;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_OFFSET;
-	offset.x = x;
-	offset.y = y;
 	param.property_param = &offset;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -238,27 +279,37 @@ cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
+cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, void *param_ptr)
 {
 #ifdef FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_blk_size(handle, width, height);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_blk_size(handle,
+			raw_aem_ptr->win_info.size.width,
+			raw_aem_ptr->win_info.size.height);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = raw_aem_ptr->win_info.size.width;
+	size.height = raw_aem_ptr->win_info.size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_BLK_SIZE;
-	size.width = width;
-	size.height = height;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -267,27 +318,35 @@ cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 #endif
 }
 
-cmr_s32 isp_u_raw_aem_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
+cmr_s32 isp_u_raw_aem_slice_size(cmr_handle handle, void *param_ptr)
 {
 #if 0//def FEATURE_DCAM_AEM
-	return dcam_u_raw_aem_slice_size(handle, block_info);
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	return dcam_u_raw_aem_slice_size(handle, &raw_aem_ptr->size);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = raw_aem_ptr->size.width;
+	size.height = raw_aem_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_SLICE_SIZE;
-	size.width = width;
-	size.height = height;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);

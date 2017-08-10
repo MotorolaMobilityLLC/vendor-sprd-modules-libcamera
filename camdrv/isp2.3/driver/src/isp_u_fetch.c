@@ -18,22 +18,26 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_fetch_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *fetch_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get prt: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	fetch_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = fetch_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_FETCH;
 	param.property = ISP_PRO_FETCH_RAW_BLOCK;
-	param.property_param = block_info;
+	param.property_param = fetch_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -62,24 +66,29 @@ cmr_s32 isp_u_fetch_raw_transaddr(cmr_handle handle, struct isp_dev_block_addr *
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_fetch_slice_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *fetch_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	fetch_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = fetch_ptr->size.width;
+	size.height = fetch_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = fetch_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_FETCH;
 	param.property = ISP_PRO_FETCH_SLICE_SIZE;
-	size.width = w;
-	size.height = h;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -87,68 +96,81 @@ cmr_s32 isp_u_fetch_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, cmr_u32 fetch_start)
+cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *fetch_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	fetch_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = fetch_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_FETCH;
 	param.property = ISP_PRO_FETCH_START;
-	param.property_param = &fetch_start;
+	param.property_param = &fetch_ptr->fetch_start;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_yuv_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_fetch_yuv_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *fetch_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	fetch_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = fetch_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_YUV_FETCH;
 	param.property = ISP_PRO_FETCH_YUV_BLOCK;
-	param.property_param = block_info;
+	param.property_param = fetch_ptr->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_yuv_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_fetch_yuv_slice_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *fetch_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	fetch_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = fetch_ptr->size.width;
+	size.height = fetch_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = fetch_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_YUV_FETCH;
 	param.property = ISP_PRO_FETCH_SLICE_SIZE;
-	size.width = w;
-	size.height = h;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -156,22 +178,26 @@ cmr_s32 isp_u_fetch_yuv_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_yuv_start_isp(cmr_handle handle, cmr_u32 fetch_start)
+cmr_s32 isp_u_fetch_yuv_start_isp(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *fetch_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	fetch_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = fetch_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_YUV_FETCH;
 	param.property = ISP_PRO_FETCH_START;
-	param.property_param = &fetch_start;
+	param.property_param = &fetch_ptr->fetch_start;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

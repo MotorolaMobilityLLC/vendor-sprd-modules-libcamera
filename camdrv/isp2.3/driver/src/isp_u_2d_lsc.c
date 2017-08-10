@@ -291,24 +291,29 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 
 	return 0;
 }
-
 /*end cal Q value*/
 
-cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	struct isp_dev_2d_lsc_info *lens_info = (struct isp_dev_2d_lsc_info *)(block_info);
 	cmr_uint buf_addr;
+	struct isp_dev_2d_lsc_info *lens_info = (struct isp_dev_2d_lsc_info *)(lsc_2d_ptr->block_info);
+	if (!lens_info) {
+		ISP_LOGE("failed to get ptr: %p", lens_info);
+		return -1;
+	}
 
 #if __WORDSIZE == 64
 	buf_addr = ((cmr_uint) lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
@@ -333,6 +338,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	lens_info->bypass = 1;
 #endif
 	param.isp_id = file->isp_id;
+	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_BLOCK;
 	param.property_param = lens_info;
@@ -342,68 +348,81 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_bypass(cmr_handle handle, cmr_u32 bypass)
+cmr_s32 isp_u_2d_lsc_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_BYPASS;
-	param.property_param = &bypass;
+	param.property_param = &lsc_2d_ptr->bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, cmr_u32 flag)
+cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_io_param param;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_PARAM_UPDATE;
-	param.property_param = &flag;
+	param.property_param = &lsc_2d_ptr->flag;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, cmr_u32 x, cmr_u32 y)
+cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_offset offset;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	offset.x = lsc_2d_ptr->offset.x;
+	offset.y = lsc_2d_ptr->offset.y;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_POS;
-	offset.x = x;
-	offset.y = y;
 	param.property_param = &offset;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -411,24 +430,29 @@ cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = lsc_2d_ptr->size.width;
+	size.height = lsc_2d_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_GRID_SIZE;
-	size.width = w;
-	size.height = h;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -436,24 +460,29 @@ cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
+cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
 
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	size.width = lsc_2d_ptr->size.width;
+	size.height = lsc_2d_ptr->size.height;
+
 	param.isp_id = file->isp_id;
+	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_SLICE_SIZE;
-	size.width = w;
-	size.height = h;
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
