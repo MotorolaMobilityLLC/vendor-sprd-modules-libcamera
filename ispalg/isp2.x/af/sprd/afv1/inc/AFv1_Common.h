@@ -1079,7 +1079,7 @@ typedef struct _AF_Ctrl_Ops {
 	cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
 	cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
 	cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
-	cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time);
+	cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
 	cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
 	cmr_u8(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
 	cmr_u8(*set_motor_sacmode) (void *cookie);

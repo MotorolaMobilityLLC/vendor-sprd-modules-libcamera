@@ -5320,8 +5320,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		&cxt->tuning_param[mode].backup_ae_table[0][0],\
 		AE_FLICKER_NUM * AE_ISO_NUM * sizeof(struct ae_exp_gain_table));
 	{
-		struct ae_exp_gain_table* src[AE_FLICKER_NUM];
-		struct ae_exp_gain_table* dst[AE_FLICKER_NUM];
+		struct ae_exp_gain_table* src[AE_FLICKER_NUM] = {NULL, NULL};
+		struct ae_exp_gain_table* dst[AE_FLICKER_NUM] = {NULL, NULL};
 		for (cmr_u32 i = 0; i < AE_ISO_NUM_NEW; ++i) {
 			if (0 != cxt->tuning_param[mode].ae_table[AE_FLICKER_50HZ][i].max_index) {
 				src[AE_FLICKER_50HZ] = &cxt->tuning_param[mode].backup_ae_table[AE_FLICKER_50HZ][i];

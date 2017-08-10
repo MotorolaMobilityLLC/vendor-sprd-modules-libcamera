@@ -532,8 +532,9 @@ static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 	return 0;
 }
 
-static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time)
+static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 {
+	UNUSED(cookie);
 	//ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	usleep(sleep_time * 1000);
 	return 0;
