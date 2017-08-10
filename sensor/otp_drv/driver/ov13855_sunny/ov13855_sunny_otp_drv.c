@@ -267,30 +267,69 @@ static int _ov13855_sunny_parse_ae_data(void *otp_drv_handle) {
     OTP_LOGI("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    if (otp_cxt->otp_data_module_index == OTP_SUNNY) {
-        aecalib_data_t *ae_cali_dat = &(otp_cxt->otp_data->ae_cali_dat);
-        cmr_u8 *ae_src_dat = otp_cxt->otp_raw_data.buffer + AE_INFO_OFFSET;
 
-        // for ae calibration
-        ae_cali_dat->target_lum = (ae_src_dat[1] << 8) | ae_src_dat[0];
-        ae_cali_dat->gain_1x_exp = (ae_src_dat[5] << 24) |
-                                   (ae_src_dat[4] << 16) |
-                                   (ae_src_dat[3] << 8) | ae_src_dat[2];
-        ae_cali_dat->gain_2x_exp = (ae_src_dat[9] << 24) |
-                                   (ae_src_dat[8] << 16) |
-                                   (ae_src_dat[7] << 8) | ae_src_dat[6];
-        ae_cali_dat->gain_4x_exp = (ae_src_dat[13] << 24) |
-                                   (ae_src_dat[12] << 16) |
-                                   (ae_src_dat[11] << 8) | ae_src_dat[10];
-        ae_cali_dat->gain_8x_exp = (ae_src_dat[17] << 24) |
-                                   (ae_src_dat[16] << 16) |
-                                   (ae_src_dat[15] << 8) | ae_src_dat[14];
-    }
+    aecalib_data_t *ae_cali_dat = &(otp_cxt->otp_data->ae_cali_dat);
+    cmr_u8 *ae_src_dat = otp_cxt->otp_raw_data.buffer + AE_INFO_OFFSET;
+
+    // for ae calibration
+    ae_cali_dat->target_lum = (ae_src_dat[1] << 8) | ae_src_dat[0];
+    ae_cali_dat->gain_1x_exp = (ae_src_dat[5] << 24) | (ae_src_dat[4] << 16) |
+                               (ae_src_dat[3] << 8) | ae_src_dat[2];
+    ae_cali_dat->gain_2x_exp = (ae_src_dat[9] << 24) | (ae_src_dat[8] << 16) |
+                               (ae_src_dat[7] << 8) | ae_src_dat[6];
+    ae_cali_dat->gain_4x_exp = (ae_src_dat[13] << 24) | (ae_src_dat[12] << 16) |
+                               (ae_src_dat[11] << 8) | ae_src_dat[10];
+    ae_cali_dat->gain_8x_exp = (ae_src_dat[17] << 24) | (ae_src_dat[16] << 16) |
+                               (ae_src_dat[15] << 8) | ae_src_dat[14];
     OTP_LOGI("out");
     return ret;
 }
 
 static cmr_int _ov13855_sunny_parse_dualcam_data(cmr_handle otp_drv_handle) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    cmr_uint data_len = DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET;
+    cmr_uint data_sum = DUAL_INFO_CHECKSUM;
+
+    CHECK_PTR(otp_drv_handle);
+    OTP_LOGI("in");
+
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+
+    if (otp_cxt->otp_data_module_index == OTP_TRULY) {
+        data_len -= VCM_DATA_SIZE;
+        data_sum -= VCM_DATA_SIZE;
+    }
+    afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
+
+    /*dualcam data*/
+    cmr_u8 *dualcam_src_dat = otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
+    cmr_u8 *vcm_src_dat = otp_cxt->otp_raw_data.buffer + VCM_INFO_OFFSET;
+    ret = _ov13855_sunny_section_checksum(otp_cxt->otp_raw_data.buffer,
+                                          DUAL_INFO_OFFSET, data_len, data_sum,
+                                          otp_cxt->otp_data_module_index);
+
+    if (OTP_CAMERA_SUCCESS != ret) {
+        OTP_LOGI("dualcamera otp data checksum error,parse failed.\n");
+        af_cali_dat->vcm_step = -1;
+        otp_cxt->otp_data->dual_cam_cali_dat.buffer = NULL;
+        otp_cxt->otp_data->dual_cam_cali_dat.size = 0;
+        return ret;
+    } else {
+        if (otp_cxt->otp_data_module_index == OTP_SUNNY) {
+            af_cali_dat->vcm_step = 0;
+            af_cali_dat->vcm_step_min = vcm_src_dat[0];
+            af_cali_dat->vcm_step_max = vcm_src_dat[1];
+        } else {
+            af_cali_dat->vcm_step = -1;
+        }
+        otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
+        otp_cxt->otp_data->dual_cam_cali_dat.size = data_len;
+    }
+    OTP_LOGI("out");
+    return ret;
+}
+
+static cmr_int _ov13855_sunny_parse_arcsoft_ip_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
@@ -298,43 +337,25 @@ static cmr_int _ov13855_sunny_parse_dualcam_data(cmr_handle otp_drv_handle) {
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     if (otp_cxt->otp_data_module_index == OTP_SUNNY) {
-        afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
-
-        /*dualcam data*/
-        cmr_u8 *dualcam_src_dat =
-            otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
-        cmr_u8 *vcm_src_dat = otp_cxt->otp_raw_data.buffer + VCM_INFO_OFFSET;
+        cmr_u8 *arcsoft_src_dat =
+            otp_cxt->otp_raw_data.buffer + ARCSOFT_INFO_OFFSET;
         ret = _ov13855_sunny_section_checksum(
-            otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
-            DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET, DUAL_INFO_CHECKSUM,
+            otp_cxt->otp_raw_data.buffer, ARCSOFT_INFO_OFFSET,
+            ARCSOFT_INFO_CHECKSUM - ARCSOFT_INFO_OFFSET, ARCSOFT_INFO_CHECKSUM,
             otp_cxt->otp_data_module_index);
-
-        switch (ret) {
-        case OTP_CAMERA_SUCCESS:
-            af_cali_dat->vcm_step = 0;
-            af_cali_dat->vcm_step_min = vcm_src_dat[0];
-            af_cali_dat->vcm_step_max = vcm_src_dat[1];
-            otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
-            otp_cxt->otp_data->dual_cam_cali_dat.size =
-                DUAL_DATA_SIZE - VCM_DATA_SIZE;
-            break;
-        default:
-            ret = _ov13855_sunny_section_checksum(
-                otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
-                DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET - VCM_DATA_SIZE,
-                DUAL_INFO_CHECKSUM - VCM_DATA_SIZE,
-                otp_cxt->otp_data_module_index);
-            if (OTP_CAMERA_SUCCESS != ret) {
-                OTP_LOGI("dualcamera otp data checksum error,parse failed.\n");
-                return ret;
-            } else {
-                OTP_LOGI("vcm data is not in otp data.\n");
-                af_cali_dat->vcm_step = -1;
-                otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
-                otp_cxt->otp_data->dual_cam_cali_dat.size =
-                    DUAL_DATA_SIZE - VCM_DATA_SIZE;
-            }
+        if (OTP_CAMERA_SUCCESS != ret) {
+            OTP_LOGI("arcsoft otp data checksum error,parse failed.\n");
+            otp_cxt->otp_data->third_cali_dat.buffer = NULL;
+            otp_cxt->otp_data->third_cali_dat.size = 0;
+            return ret;
+        } else {
+            otp_cxt->otp_data->third_cali_dat.buffer = arcsoft_src_dat;
+            otp_cxt->otp_data->third_cali_dat.size =
+                ARCSOFT_INFO_CHECKSUM - ARCSOFT_INFO_OFFSET;
         }
+    } else {
+        otp_cxt->otp_data->third_cali_dat.buffer = NULL;
+        otp_cxt->otp_data->third_cali_dat.size = 0;
     }
     OTP_LOGI("out");
     return ret;
@@ -455,22 +476,23 @@ static cmr_int ov13855_sunny_otp_drv_read(cmr_handle otp_drv_handle,
         goto exit;
     }
 
-    /*the otp start address is stored in first two bytes, must be set correctly.*/
+    /*the otp start address is stored in first two bytes, must be set
+     * correctly.*/
     otp_raw_data->buffer[0] = 0;
     otp_raw_data->buffer[1] = 0;
     ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                                 (cmr_u8 *)otp_raw_data->buffer,
-                                 SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+                             (cmr_u8 *)otp_raw_data->buffer,
+                             SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
 
-/*
-    for (i = 0; i < OTP_LEN; i++) {
-        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                           (cmr_u8 *)&cmd_val[0], 2);
-        otp_raw_data->buffer[i] = cmd_val[0];
-    }
-*/
+    /*
+        for (i = 0; i < OTP_LEN; i++) {
+            cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
+            cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
+            hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                               (cmr_u8 *)&cmd_val[0], 2);
+            otp_raw_data->buffer[i] = cmd_val[0];
+        }
+    */
     if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
@@ -582,7 +604,7 @@ static cmr_int ov13855_sunny_otp_drv_parse(cmr_handle otp_drv_handle,
         _ov13855_sunny_parse_pdaf_data(otp_drv_handle);
         _ov13855_sunny_parse_ae_data(otp_drv_handle);
         _ov13855_sunny_parse_dualcam_data(otp_drv_handle);
-
+        _ov13855_sunny_parse_arcsoft_ip_data(otp_drv_handle);
         /*decompress lsc data if needed*/
         if ((base_info->compress_flag != GAIN_ORIGIN_BITS) &&
             base_info->is_lsc_drv_decompression == TRUE) {
@@ -629,6 +651,7 @@ static cmr_int ov13855_sunny_otp_drv_calibration(cmr_handle otp_drv_handle) {
 static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
                                                 void *p_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
@@ -726,11 +749,20 @@ static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
     single_otp->pdaf_info.pdaf_data_size = format_data->pdaf_cali_dat.size;
 
     /*dual camera*/
+    property_get("persist.sys.cam.api.version", value, "0");
     convert_data->dual_otp.dual_flag = 1;
-    convert_data->dual_otp.data_3d.data_ptr =
-        otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
-    convert_data->dual_otp.data_3d.size = DUAL_DATA_SIZE - VCM_DATA_SIZE;
-
+    if (atoi(value) == 0) {
+        convert_data->dual_otp.data_3d.data_ptr =
+            format_data->dual_cam_cali_dat.buffer;
+        convert_data->dual_otp.data_3d.size =
+            format_data->dual_cam_cali_dat.size;
+        convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_SPRD;
+    } else {
+        convert_data->dual_otp.data_3d.data_ptr =
+            format_data->third_cali_dat.buffer;
+        convert_data->dual_otp.data_3d.size = format_data->third_cali_dat.size;
+        convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_ARCSOFT;
+    }
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;

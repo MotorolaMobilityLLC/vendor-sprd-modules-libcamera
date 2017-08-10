@@ -78,6 +78,11 @@
 /**/
 #define TOTAL_CHECKSUM_OFFSET 0x0FFF
 
+/*ARCSOFT*/
+#define ARCSOFT_INFO_RESERVE_SIZE 255
+#define ARCSOFT_INFO_OFFSET 0x1000
+#define ARCSOFT_INFO_CHECKSUM 0x18ff
+
 #define LSC_GRID_SIZE 96 // 726
 #define LSC_FORMAT_SIZE                                                        \
     GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include truly and random data*/

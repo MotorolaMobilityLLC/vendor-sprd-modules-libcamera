@@ -93,6 +93,13 @@ typedef enum otp_vendor {
     OTP_MAX
 } otp_vendor_t;
 
+typedef enum otp_third_cali {
+    OTP_CALI_SPRD = 0,
+    OTP_CALI_ARCSOFT,
+    OTP_CALI_ALTEK,
+    OTP_CALI_MAX
+} otp_third_cali_t;
+
 typedef struct {
     cmr_u16 reg_addr;  /* otp start address.if read ,we don't need care it*/
     cmr_u8 *data;      /* format otp data saved or otp data write to sensor*/
@@ -247,6 +254,7 @@ typedef struct {
     otp_data_info_t dual_cam_cali_dat;
     extended_data_t extend_dat;
     lsccalib_data_t lsc_cali_dat;
+    otp_data_info_t third_cali_dat;
     cmr_u8 data[4]; /*must be last*/
 } otp_format_data_t;
 

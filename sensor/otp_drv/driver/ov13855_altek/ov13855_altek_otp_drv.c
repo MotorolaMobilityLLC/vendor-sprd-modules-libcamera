@@ -359,12 +359,47 @@ static cmr_int _ov13855_altek_parse_dualcam_data(cmr_handle otp_drv_handle) {
 
     /*dualcam data*/
     cmr_u8 *dualcam_src_dat = otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
-    otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
-    otp_cxt->otp_data->dual_cam_cali_dat.size =
-        DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET;
+    ret = _ov13855_altek_section_checksum(
+        otp_cxt->otp_raw_data.buffer, DUAL_INFO_OFFSET,
+        DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET, DUAL_INFO_CHECKSUM);
+    if (OTP_CAMERA_SUCCESS != ret) {
+        OTP_LOGI("dualcam otp data checksum error,parse failed.\n");
+        otp_cxt->otp_data->dual_cam_cali_dat.buffer = NULL;
+        otp_cxt->otp_data->dual_cam_cali_dat.size = 0;
+        return ret;
+    } else {
+        otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
+        otp_cxt->otp_data->dual_cam_cali_dat.size =
+            DUAL_INFO_CHECKSUM - DUAL_INFO_OFFSET;
+    }
 
     /*END*/
 
+    OTP_LOGI("out");
+    return ret;
+}
+
+static cmr_int _ov13855_altek_parse_altek_ip_data(cmr_handle otp_drv_handle) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+
+    CHECK_PTR(otp_drv_handle);
+    OTP_LOGI("in");
+
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    cmr_u8 *altek_src_dat = otp_cxt->otp_raw_data.buffer + ALTEK_INFO_OFFSET;
+    ret = _ov13855_altek_section_checksum(
+        otp_cxt->otp_raw_data.buffer, ALTEK_INFO_OFFSET,
+        ALTEK_INFO_CHECKSUM - ALTEK_INFO_OFFSET, ALTEK_INFO_CHECKSUM);
+    if (OTP_CAMERA_SUCCESS != ret) {
+        OTP_LOGI("altek otp data checksum error,parse failed.\n");
+        otp_cxt->otp_data->third_cali_dat.buffer = NULL;
+        otp_cxt->otp_data->third_cali_dat.size = 0;
+        return ret;
+    } else {
+        otp_cxt->otp_data->third_cali_dat.buffer = altek_src_dat;
+        otp_cxt->otp_data->third_cali_dat.size =
+            ALTEK_INFO_CHECKSUM - ALTEK_INFO_OFFSET;
+    }
     OTP_LOGI("out");
     return ret;
 }
@@ -473,6 +508,11 @@ static cmr_int _ov13855_altek_split_data(cmr_handle otp_drv_handle) {
             OTP_LOGE("parse dualcam data failed");
             return ret;
         }
+        ret = _ov13855_altek_parse_altek_ip_data(otp_drv_handle);
+        if (OTP_CAMERA_SUCCESS != ret) {
+            OTP_LOGE("parse altek dualcam data failed");
+            return ret;
+        }
     }
 
     OTP_LOGI("out");
@@ -482,6 +522,7 @@ static cmr_int _ov13855_altek_split_data(cmr_handle otp_drv_handle) {
 static cmr_int _ov13855_altek_compatible_convert(cmr_handle otp_drv_handle,
                                                  void *p_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
@@ -571,11 +612,19 @@ static cmr_int _ov13855_altek_compatible_convert(cmr_handle otp_drv_handle,
     single_otp->pdaf_info.pdaf_data_size = format_data->pdaf_cali_dat.size;
 
     /*dual camera*/
+    property_get("persist.sys.cam.api.version", value, "0");
     convert_data->dual_otp.dual_flag = 1;
-    convert_data->dual_otp.data_3d.data_ptr =
-        format_data->dual_cam_cali_dat.buffer;
-    convert_data->dual_otp.data_3d.size = format_data->dual_cam_cali_dat.size;
-
+    if (atoi(value) == 0) {
+        convert_data->dual_otp.data_3d.data_ptr =
+            format_data->dual_cam_cali_dat.buffer;
+        convert_data->dual_otp.data_3d.size =
+            format_data->dual_cam_cali_dat.size;
+        convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_SPRD;
+    } else {
+        convert_data->dual_otp.data_3d.data_ptr = otp_cxt->otp_raw_data.buffer;
+        convert_data->dual_otp.data_3d.size = otp_cxt->otp_raw_data.num_bytes;
+        convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_ALTEK;
+    }
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
@@ -602,6 +651,7 @@ static cmr_int ov13855_altek_otp_drv_delete(cmr_handle otp_drv_handle) {
 static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
                                           void *p_params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     // CHECK_PTR(p_params);
     OTP_LOGI("in");
@@ -635,15 +685,22 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
     } else {
         /*start read otp data one time*/
         /*TODO*/
-
-        hw_sensor_read_i2c(otp_cxt->hw_handle, OTP_I2C_ADDR, (cmr_u8 *)buffer,
-                           SENSOR_I2C_REG_16BIT | OTP_RAW_DATA_LEN << 16);
+        buffer[0] = 0;
+        buffer[1] = 0;
+        ret = hw_sensor_read_i2c(otp_cxt->hw_handle, OTP_I2C_ADDR,
+                                 (cmr_u8 *)buffer,
+                                 SENSOR_I2C_REG_16BIT | OTP_RAW_DATA_LEN << 16);
 
         /*END*/
     }
-
-    sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
-                             otp_cxt->dev_name);
+    if (OTP_CAMERA_SUCCESS == ret) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_RAW_DATA_LEN,
+                                         otp_cxt->dev_name))
+                OTP_LOGE("dump failed");
+        }
+    }
     OTP_LOGI("out");
     return ret;
 }
@@ -661,7 +718,6 @@ static cmr_int ov13855_altek_otp_drv_write(cmr_handle otp_drv_handle,
     if (NULL != otp_write_data->buffer) {
         OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
-
         /*TODO*/
 
         /*END*/

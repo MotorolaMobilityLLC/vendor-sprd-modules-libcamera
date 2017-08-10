@@ -332,6 +332,7 @@ struct sensor_data_info {
     struct isp_data_info isp_init_data[MAX_MODE_NUM];
     struct isp_data_info isp_update_data[MAX_MODE_NUM]; /*for isp_tool*/
 #endif
+    cmr_u8 dualcam_cali_lib_type;
 };
 
 struct sensor_otp_module_info {

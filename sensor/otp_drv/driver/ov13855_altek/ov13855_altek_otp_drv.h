@@ -75,6 +75,11 @@
 #define RES_DATA_SIZE (RES_INFO_END_OFFSET - RES_INFO_OFFSET)
 /**/
 
+/*ARCSOFT*/
+#define ALTEK_INFO_RESERVE_SIZE 59
+#define ALTEK_INFO_OFFSET 0x146C
+#define ALTEK_INFO_CHECKSUM 0x1E6B
+
 #define GAIN_WIDTH 23
 #define GAIN_HEIGHT 18
 #define LSC_FORMAT_SIZE ((LSC_INFO_END_OFFSET - LSC_INFO_OFFSET) * 2)
@@ -122,10 +127,10 @@ otp_drv_entry_t
                                                           ISP Side calibration*/
                             .is_afc = TRUE,
                             .is_af_self_cal = FALSE,
-                            .is_dul_camc = FALSE, /* TRUE: support dual camera
-                                                     calibration, FALSE: Not
-                                                     support dual camera
-                                                     calibration */
+                            .is_dul_camc = TRUE, /* TRUE: support dual camera
+                                                    calibration, FALSE: Not
+                                                    support dual camera
+                                                    calibration */
                         },
                     .base_info_cfg =
                         {
