@@ -2317,6 +2317,11 @@ cmr_int camera_jpeg_init(cmr_handle oem_handle) {
     jpeg_cxt = &cxt->jpeg_cxt;
     CHECK_HANDLE_VALID(jpeg_cxt);
 
+    if (cxt->camera_id >= 2 && is_multi_camera_mode_oem == MODE_BOKEH) {
+        CMR_LOGD("jpeg init do nothing when sub camera in bokeh mode, just return");
+        goto exit;
+    }
+
     if (0 == jpeg_cxt->inited) {
         ret = jpeg_init(oem_handle, &jpeg_cxt->jpeg_handle);
         if (CMR_CAMERA_SUCCESS == ret) {
@@ -2327,6 +2332,8 @@ cmr_int camera_jpeg_init(cmr_handle oem_handle) {
             ret = -CMR_CAMERA_NO_SUPPORT;
         }
     }
+
+exit:
     CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
@@ -2342,6 +2349,11 @@ cmr_int camera_jpeg_deinit(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(oem_handle);
     jpeg_cxt = &cxt->jpeg_cxt;
     CHECK_HANDLE_VALID(jpeg_cxt);
+
+    if (cxt->camera_id >= 2 && is_multi_camera_mode_oem == MODE_BOKEH) {
+        CMR_LOGD("jpeg deinit do nothing when sub camera in bokeh mode, just return");
+        goto exit;
+    }
 
     if (0 == jpeg_cxt->inited) {
         CMR_LOGD("jpeg codec has been de-intialized");
