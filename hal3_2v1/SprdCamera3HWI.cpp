@@ -475,6 +475,13 @@ int SprdCamera3HWI::checkStreamList(
     if (streamList->streams == NULL) {
         HAL_LOGE("NULL stream list");
         return BAD_VALUE;
+    } else if (streamList->streams[0]->width == 0 ||
+               streamList->streams[0]->height == 0 ||
+               streamList->streams[0]->width == UINT32_MAX ||
+               streamList->streams[0]->height == UINT32_MAX ||
+               (uint32_t)streamList->streams[0]->format == UINT32_MAX ||
+               (uint32_t)streamList->streams[0]->rotation == UINT32_MAX) {
+        return BAD_VALUE; /*vts configureStreamsInvalidOutputs */
     }
 
     if (streamList->num_streams < 1) {
@@ -869,6 +876,12 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request) {
     }
 
     uint32_t frameNumber = request->frame_number;
+    /* vts processCaptureRequest */
+    if ((request->settings == NULL) && (frameNumber == 1)) {
+        HAL_LOGE("NULL capture request setting");
+        return BAD_VALUE;
+    }
+
     if (request->input_buffer != NULL &&
         request->input_buffer->stream ==
             NULL) { /**modified for 3d capture, enable reprocessing*/
@@ -1024,6 +1037,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mInvaildRequest = false;
     mFrameNum = request->frame_number;
     meta = request->settings;
+
     /*fix 30fps for blur mode**/
     if ((mMultiCameraMode == MODE_REFOCUS || mMultiCameraMode == MODE_BOKEH ||
          mMultiCameraMode == MODE_RANGE_FINDER) &&
