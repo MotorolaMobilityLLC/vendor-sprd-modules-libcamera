@@ -113,9 +113,10 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
 		 flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
 
-	if (cxt->ops.ae_ops.ioctrl)
+	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_WB_GAIN, NULL, &flash_wb_gain);
-	ISP_TRACE_IF_FAIL(ret, ("awb get gain error"));
+		ISP_TRACE_IF_FAIL(ret, ("awb get gain error"));
+	}
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EFFECT, NULL, &ae_effect);
@@ -443,7 +444,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		awb_flash_status = AWB_FLASH_MAIN_BEFORE;
 		if (cxt->ops.awb_ops.ioctrl)
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
-		ret = ispctl_set_awb_flash_gain((cmr_handle) cxt);
+		ret = ispctl_set_awb_flash_gain((cmr_handle)cxt);
 		if (cxt->ops.awb_ops.ioctrl)
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 

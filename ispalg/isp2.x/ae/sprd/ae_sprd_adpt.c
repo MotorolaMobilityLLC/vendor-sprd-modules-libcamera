@@ -52,6 +52,7 @@
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
 #define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0/*lower than thrd1, min fps*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0 /*lower than thrd1, min fps*/
 #define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 300 /*higher than thrd2, max fps*/
 
 /*
@@ -352,6 +353,8 @@ struct ae_ctrl_cxt {
 	cmr_s16 pre_flash_level2;
 	struct Flash_pfOneIterationInput flash_esti_input;
 	struct Flash_pfOneIterationOutput flash_esti_result;
+	struct Flash_mfCalcInput flash_main_esti_input;
+	struct Flash_mfCalcOutput flash_main_esti_result;
 	cmr_s32 flash_last_exp_line;
 	cmr_s32 flash_last_gain;
 	float ctTabRg[20];
@@ -1621,6 +1624,9 @@ static cmr_s32 _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 
 	case AE_FLASH_MAIN_LIGHTING:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_LIGHTING");
+		if (0 != cxt->flash_ver) {
+			cxt->cur_status.settings.flash = FLASH_MAIN;
+		}
 		break;
 
 	case AE_LED_FLASH_ON:
@@ -2673,6 +2679,23 @@ EXIT:
 	return rtn;
 }
 
+static cmr_s32 flash_high_flash_reestimation(struct ae_ctrl_cxt *cxt)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	cmr_u32 blk_num = 0;
+	struct Flash_mfCalcInput *input = &cxt->flash_main_esti_input;
+	struct Flash_mfCalcOutput *output = &cxt->flash_main_esti_result;
+	memset((void*)input, 0, sizeof(input));
+	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
+	input->staW = cxt->monitor_unit.win_num.w;
+	input->staH= cxt->monitor_unit.win_num.h;
+	memcpy((cmr_handle*)&input->rSta[0], (cmr_u16*)&cxt->aem_stat_rgb[0], sizeof(input->rSta));
+	memcpy((cmr_handle*)&input->gSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num), sizeof(input->gSta));
+	memcpy((cmr_handle*)&input->bSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(input->bSta));
+	flash_mfCalc(cxt->flash_alg_handle, input, output);
+	ISP_LOGD("high flash wb gain: %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
+	return rtn;
+}
 static cmr_s32 flash_finish(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -2685,6 +2708,8 @@ static cmr_s32 flash_finish(struct ae_ctrl_cxt *cxt)
 	cxt->flash_last_gain = 0;
 	memset(&cxt->flash_esti_input, 0, sizeof(cxt->flash_esti_input));
 	memset(&cxt->flash_esti_result, 0, sizeof(cxt->flash_esti_result));
+	memset(&cxt->flash_main_esti_input, 0, sizeof(cxt->flash_main_esti_input));
+	memset(&cxt->flash_main_esti_result, 0, sizeof(cxt->flash_main_esti_result));
 	//memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
 	//cxt->flash_buf_len = 0;
 
@@ -2797,6 +2822,10 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 			} else {
 				ISP_LOGW("ae_flash estimation does not work well");
 			}
+			if (FLASH_MAIN == current_status->settings.flash) {
+				flash_high_flash_reestimation(cxt);
+				ISP_LOGI("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
+			}
 
 			ISP_LOGV("ae_flash main_b prinf: %.f, %d, %d, %d\n",\
 				cxt->flash_esti_result.captureExposure,\
@@ -2880,7 +2909,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->cur_status.settings.flash = FLASH_NONE;
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
 		}
-	}else {
+	} else {
 	/* for new flash algorithm (flash algorithm1, dual flash) */
 		if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
 			FLASH_PRE_BEFORE == current_status->settings.flash) {
@@ -2919,13 +2948,12 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			FLASH_PRE_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;/*flash status reset*/
-			cxt->send_once[1] = cxt->send_once[0] = 0;
+			cxt->send_once[1] = cxt->send_once[0] = cxt->send_once[2] = 0;
 		}
 
 		if (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
 			FLASH_MAIN_BEFORE == current_status->settings.flash) {
-			ISP_LOGI("ae_flash1_status shake_4 %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum);
-			//cxt->cur_status.settings.lock_ae = AE_STATE_PAUSE;/**/
+			ISP_LOGI("ae_flash1_status shake_4 %d", cxt->send_once[2]);
 			if (cxt->cur_result.wts.stable) {
 				if (1 == cxt->send_once[2]) {
 					ISP_LOGI("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1,
@@ -2935,13 +2963,31 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 					ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
-				} else if (5 == cxt->send_once[2]) {
+				}
+				cxt->send_once[2]++;
+			}
+		}
+
+		if (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status &&
+			FLASH_MAIN == current_status->settings.flash) {
+			ISP_LOGI("ae_flash1_status shake_5 %d", cxt->send_once[2]);
+			if (cxt->cur_result.wts.stable) {
+				if (5 == cxt->send_once[2]) {
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 					cxt->cur_result.flash_status = FLASH_NONE;/*flash status reset*/
 					ISP_LOGI("ae_flash1_callback do-capture!\r\n");
 				} else {
 					ISP_LOGI("ae_flash1 wait-capture!\r\n");
+				}
+				if (1 == cxt->flash_main_esti_result.isEnd) {
+					if (cxt->isp_ops.set_wbc_gain) {
+						struct ae_alg_rgb_gain awb_gain;
+						awb_gain.r = cxt->flash_main_esti_result.captureRGain;
+						awb_gain.g = cxt->flash_main_esti_result.captureGGain;
+						awb_gain.b = cxt->flash_main_esti_result.captureBGain;
+						cxt->isp_ops.set_wbc_gain(cxt->isp_ops.isp_handler, &awb_gain);
+					}
 				}
 				cxt->send_once[2]++;
 			}
@@ -4235,10 +4281,12 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					if (gmean<10)
 					{
 						caliData->expTime *= 25;
+						caliData->gain = caliData->gain;
 					}
 					else
 					{
 						caliData->expTime *= 300 / gmean;
+						caliData->gain = caliData->gain;
 					}
 					if (caliData->expTime>0.05 * AEC_LINETIME_PRECESION)
 					{
@@ -5201,7 +5249,7 @@ static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	return;
 }
 
-struct ae_exposure_param s_bakup_exp_param[2] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0}};
+static struct ae_exposure_param s_bakup_exp_param[2] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0}};
 static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 {
 	cmr_u32 i = 0;

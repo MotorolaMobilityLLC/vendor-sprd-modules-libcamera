@@ -253,6 +253,13 @@ cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, cmr_int flag)
 	return ret;
 }
 
+cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b);
+	return ret;
+}
 cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow)
 {
 	cmr_int ret = ISP_SUCCESS;

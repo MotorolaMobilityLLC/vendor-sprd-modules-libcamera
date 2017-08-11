@@ -270,6 +270,21 @@ static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
 	return rtn;
 }
 
+static cmr_s32 ae_set_wbc_gain(cmr_handle handler, struct ae_alg_rgb_gain *awb_gain)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+	struct ae_awb_gain wbc_gain;
+	wbc_gain.r = awb_gain->r;
+	wbc_gain.g = awb_gain->g;
+	wbc_gain.b = awb_gain->b;
+
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_WBC_GAIN, &wbc_gain, NULL);
+	}
+
+	return rtn;
+}
 static cmr_int ae_get_rgb_gain(cmr_handle handler, cmr_u32 * gain)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -529,6 +544,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_ha
 	input_ptr->isp_ops.ex_set_exposure = ae_ex_set_exposure;
 	input_ptr->isp_ops.set_rgb_gain = ae_set_rgb_gain;
 	input_ptr->isp_ops.set_shutter_gain_delay_info = ae_set_shutter_gain_delay_info;
+	input_ptr->isp_ops.set_wbc_gain = ae_set_wbc_gain;
 #ifdef  CONFIG_CAMERA_SINGLE_WRITE
 	input_ptr->isp_ops.write_aec_info = isp3a_write_aec_info;
 	input_ptr->isp_ops.read_aec_info = isp3a_read_aec_info;

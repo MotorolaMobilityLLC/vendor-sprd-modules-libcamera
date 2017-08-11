@@ -272,6 +272,11 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 	case ISP_AE_GET_RGB_GAIN:
 		ret = isp_get_rgb_gain(cxt, param0);
 		break;
+	case ISP_AE_SET_WBC_GAIN: {
+			struct ae_awb_gain *awb_gain = (struct ae_awb_gain*)param0;
+			ret = isp_dev_awb_gain(cxt->dev_access_handle, awb_gain->r, awb_gain->g, awb_gain->b);
+		}
+		break;
 	default:
 		break;
 	}

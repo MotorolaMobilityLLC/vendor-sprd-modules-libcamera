@@ -182,11 +182,27 @@ struct Flash_pfOneIterationOutput
 	void* debugBuffer;
 };
 
+struct Flash_mfCalcInput
+{
+	uint16 staW;
+	uint16 staH;
+	uint16 rSta[1024];
+	uint16 gSta[1024];
+	uint16 bSta[1024];
+};
+struct Flash_mfCalcOutput
+{
+	uint16 isEnd;
+	uint16 captureRGain;
+	uint16 captureGGain;
+	uint16 captureBGain;
+};
 int flash_get_tuning_param(struct flash_tune_param* param);/*It will be removed in the future*/
 flash_handle flash_init(struct Flash_initInput* in, struct Flash_initOut *out);
 int flash_deinit(flash_handle handle);
 int flash_pfStart(flash_handle handle, struct Flash_pfStartInput* in, struct Flash_pfStartOutput* out);
 int flash_pfOneIteration(flash_handle handle, struct Flash_pfOneIterationInput* in, struct Flash_pfOneIterationOutput* out);
+int flash_mfCalc(flash_handle handle, struct Flash_mfCalcInput* in, struct Flash_mfCalcOutput* out);
 int flash_pfEnd(flash_handle handle);
 
 #ifdef __cplusplus

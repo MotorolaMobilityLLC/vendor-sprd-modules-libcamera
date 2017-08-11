@@ -386,6 +386,12 @@ struct ae_flash_cfg {
 	cmr_u32 led1_enable;
 };
 
+struct ae_awb_gain {
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
+};
+
 struct ae_isp_ctrl_ops {
 	cmr_handle isp_handler;
 #ifdef CONFIG_CAMERA_SINGLE_WRITE
@@ -411,6 +417,7 @@ struct ae_isp_ctrl_ops {
 	 cmr_s32(*ex_set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
 	 cmr_s32(*lcd_set_awb) (cmr_handle handler, cmr_u32 effect);
 	 cmr_s32(*set_rgb_gain) (cmr_handle handler, double rgb_gain_coeff);
+	 cmr_s32(*set_wbc_gain)(cmr_handle handler, struct ae_alg_rgb_gain *awb_gain);
 	 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
 };
 
@@ -486,12 +493,6 @@ struct ae_flash_notice {
 	cmr_u32 capture_skip_num;
 	cmr_u32 lcd_flash_tune_a;
 	cmr_u32 lcd_flash_tune_b;
-};
-
-struct ae_awb_gain {
-	cmr_u32 r;
-	cmr_u32 g;
-	cmr_u32 b;
 };
 
 struct ae_leds_ctrl {
