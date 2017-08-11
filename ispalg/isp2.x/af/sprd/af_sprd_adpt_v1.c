@@ -1427,6 +1427,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 				win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
 				win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
 				win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
+				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
 			} else {
@@ -1541,7 +1542,7 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = OUT_SCENE;	// need to check
 	prm->ae_info.registor_pos = lens_get_pos(af);
-	//ISP_LOGV("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d", prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable);
+	//ISP_LOGI("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d, bv = %d", prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable, prm->ae_info.bv);
 
 	caf_monitor_calc(af, prm);
 }
@@ -1768,7 +1769,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		break;
 	default:
 		ISP_LOGW("af_mode %d is not supported", af_mode);
-
 		break;
 	}
 
@@ -2098,7 +2098,7 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 	if (0 == af_ts->capture) {
 		af->dcam_timestamp = af_ts->timestamp;
 		AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_DCAM, af->dcam_timestamp);
-		//ISP_LOGV("dcam_timestamp %" PRIu64 " ", (cmr_s64) af->dcam_timestamp);
+		//ISP_LOGI("dcam_timestamp %" PRIu64 " ", (cmr_s64) af->dcam_timestamp);
 		if (AF_IDLE == af->focus_state && DCAM_AFTER_VCM_YES == timecompare && 0 == af->vcm_stable) {
 			sem_post(&af->af_wait_caf);
 			af->vcm_stable = 1;
@@ -2106,7 +2106,7 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 	} else if (1 == af_ts->capture) {
 		af->takepic_timestamp = af_ts->timestamp;
 		AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_CAPTURE, af->takepic_timestamp);
-		//ISP_LOGV("takepic_timestamp %" PRIu64 " ms", (cmr_s64) af->takepic_timestamp);
+		//ISP_LOGI("takepic_timestamp %" PRIu64 " ", (cmr_s64) af->takepic_timestamp);
 		ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 	}
 	return AFV1_SUCCESS;
@@ -2593,17 +2593,21 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			pthread_mutex_lock(&af->af_work_lock);
 			rtn = faf_process_frame(af);
 			if (1 == rtn) {
-				af->state = STATE_CAF;	// todo: consider af->pre_state
+				af->state = af->pre_state;
 				af->focus_state = AF_IDLE;
-				trigger_set_mode(af, AFT_MODE_CONTINUE);
 				trigger_start(af);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
 			break;
-		default:
+		case STATE_MANUAL:
 			pthread_mutex_lock(&af->af_work_lock);
 			AF_Process_Frame(af->af_alg_cxt);
 			pthread_mutex_unlock(&af->af_work_lock);
+			break;
+		case STATE_PICTURE:
+			break;
+		default:
+			ISP_LOGW("af->state %s is not supported", STATE_STRING(af->state));
 			break;
 		}
 	}
