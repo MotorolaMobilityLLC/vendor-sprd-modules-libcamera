@@ -977,20 +977,17 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_monitor_info info;
-	//float gain = 0;
-	//float exposure = 0;
-	//cmr_s32 bv = 0;
-	//cmr_s32 iso = 0;
 	struct ae_get_ev ae_ev;
-
-	memset(&ae_ev, 0, sizeof(ae_ev));
-	memset(&info, 0, sizeof(info));
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
 
 	if (!out_ptr || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
-
+	memset(&ae_ev, 0, sizeof(ae_ev));
+	memset(&info, 0, sizeof(info));
 	ISP_LOGV("cur_iso:%d monitor_info h:%d w:%d again:%d ev_level:%d",
 		ae_in->ae_output.cur_iso,
 		ae_in->monitor_info.win_size.h,
@@ -1022,9 +1019,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
 // simulation info
-	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
-	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
-	struct isp_pm_param_data pm_param;
 
 	memset(&pm_param, 0, sizeof(pm_param));
 

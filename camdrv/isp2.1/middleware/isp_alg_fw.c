@@ -981,8 +981,9 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_monitor_info info;
 	struct ae_get_ev ae_ev;
-
-
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
 
 	if (!out_ptr || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
@@ -1021,9 +1022,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
 // simulation info
-	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
-	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
-	struct isp_pm_param_data pm_param;
 
 	memset(&pm_param, 0, sizeof(pm_param));
 
