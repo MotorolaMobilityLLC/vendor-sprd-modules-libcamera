@@ -377,15 +377,15 @@ static cmr_int ov13855_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 // static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
 // static int  flip_disable_factor = -1; //enable: -1  diable: 1
 
-static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
+static const cmr_u16 ov13855_pd_is_right[] = {0, 1, 1, 0};
 static const cmr_u16 ov13855_pd_row[] = {2, 6, 10, 14}; //{14, 10, 6, 2};//y
 
 static const cmr_u16 ov13855_pd_col[] = {10, 10, 2, 2}; //{2, 2, 10, 10};//x
-static const struct pd_pos_info _ov13855_pd_pos_l[] = {
+static const struct pd_pos_info _ov13855_pd_pos_r[] = {
     {10, 6}, {2, 10},
 };
 
-static const struct pd_pos_info _ov13855_pd_pos_r[] = {
+static const struct pd_pos_info _ov13855_pd_pos_l[] = {
     {10, 2}, {2, 14},
 };
 
