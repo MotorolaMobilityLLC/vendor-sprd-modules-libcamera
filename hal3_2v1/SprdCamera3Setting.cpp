@@ -975,6 +975,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
             if (id == cameraId) {
                 cameraInfo->facing = kCameraInfo[i].facing;
                 cameraInfo->orientation = kCameraInfo[i].orientation;
+                cameraInfo->resource_cost = kCameraInfo[i].resource_cost;
                 break;
             }
         }
