@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <utils/Log.h>
+#include "cmr_types.h"
 
 typedef enum {
 	THREAD_NUM_ONE = 1,
@@ -19,11 +20,11 @@ typedef enum {
 #define BL_LOGI(format,...) ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
 #define BL_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-void ProjectMatching(int32_t *xProjRef, int32_t *yProjRef, int32_t *xProjIn, int32_t *yProjIn, uint32_t width,
-		     uint32_t height, int8_t *pOffset, uint32_t num, int32_t *extra);
-int DNR_init_threadPool();
-int DNR_destroy_threadPool();
-void IntegralProjection1D_process(uint8_t *img, uint32_t w, uint32_t h, int32_t *xProjIn, int32_t *yProjIn,
-				  int32_t *extra);
+void ProjectMatching(cmr_s32 *xProjRef, cmr_s32 *yProjRef, cmr_s32 *xProjIn, cmr_s32 *yProjIn, cmr_u32 width,
+		     cmr_u32 height, cmr_s8 *pOffset, cmr_u32 num, cmr_s32 *extra);
+cmr_s32 DNR_init_threadPool();
+cmr_s32 DNR_destroy_threadPool();
+void IntegralProjection1D_process(cmr_u8 *img, cmr_u32 w, cmr_u32 h, cmr_s32 *xProjIn, cmr_s32 *yProjIn,
+				  cmr_s32 *extra);
 
 #endif
