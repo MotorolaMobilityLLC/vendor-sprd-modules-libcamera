@@ -61,49 +61,6 @@
 #define LSC_2D_MAP_8_OFFSET (LSC_2D_MAP_7_OFFSET + LSC_2D_MAP_7)
 
 
-
-#undef LSC_2D_MAP_0
-#define LSC_2D_MAP_0 (0)
-#undef LSC_2D_MAP_1
-#define LSC_2D_MAP_1 (0)
-#undef LSC_2D_MAP_2
-#define LSC_2D_MAP_2 (0)
-#undef LSC_2D_MAP_3
-#define LSC_2D_MAP_3 (0)
-#undef LSC_2D_MAP_4
-#define LSC_2D_MAP_4 (0)
-#undef LSC_2D_MAP_5
-#define LSC_2D_MAP_5 (0)
-#undef LSC_2D_MAP_6
-#define LSC_2D_MAP_6 (0)
-#undef LSC_2D_MAP_7
-#define LSC_2D_MAP_7 (0)
-#undef LSC_2D_MAP_8
-#define LSC_2D_MAP_8 (0)
-
-#undef LSC_2D_MAP_0_OFFSET
-#define LSC_2D_MAP_0_OFFSET (0)
-#undef LSC_2D_MAP_1_OFFSET
-#define LSC_2D_MAP_1_OFFSET (LSC_2D_MAP_0_OFFSET + LSC_2D_MAP_0)
-#undef LSC_2D_MAP_2_OFFSET
-#define LSC_2D_MAP_2_OFFSET (LSC_2D_MAP_1_OFFSET + LSC_2D_MAP_1)
-#undef LSC_2D_MAP_3_OFFSET
-#define LSC_2D_MAP_3_OFFSET (LSC_2D_MAP_2_OFFSET + LSC_2D_MAP_2)
-#undef LSC_2D_MAP_4_OFFSET
-#define LSC_2D_MAP_4_OFFSET (LSC_2D_MAP_3_OFFSET + LSC_2D_MAP_3)
-#undef LSC_2D_MAP_5_OFFSET
-#define LSC_2D_MAP_5_OFFSET (LSC_2D_MAP_4_OFFSET + LSC_2D_MAP_4)
-#undef LSC_2D_MAP_6_OFFSET
-#define LSC_2D_MAP_6_OFFSET (LSC_2D_MAP_5_OFFSET + LSC_2D_MAP_5)
-#undef LSC_2D_MAP_7_OFFSET
-#define LSC_2D_MAP_7_OFFSET (LSC_2D_MAP_6_OFFSET + LSC_2D_MAP_6)
-#undef LSC_2D_MAP_8_OFFSET
-#define LSC_2D_MAP_8_OFFSET (LSC_2D_MAP_7_OFFSET + LSC_2D_MAP_7)
-
-
-/************************************************************************/
-
-
 static uint8_t s_ov5675_dual_tune_info_common[]=
 {
 #if 1 /* version_id=0x00070005, mode_name=COMMON, mode_id=0, size=2592x1944 */
