@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.125"
-#define SUB_VERSION             "-0807-00-bokeh-improve"	//use the date code to naming
+#define SUB_VERSION             "-0811-00-soft"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -977,6 +977,12 @@ typedef struct _microdepth_s {
 	cmr_u32 golden_distance[DISTANCE_MAP_TOTAL * 2];	// 4*DISTANCE_MAP_TOTAL*2 =96 bytes
 	cmr_u32 reverved[40];
 } microdepth_t;
+
+typedef struct _haf_tuning_param_s {
+	// default param for outdoor/indoor/dark
+	pdaftuning_param_t PDAF_Tuning_Data[ALG_SCENE_NUM];
+	cmr_u32 reverved[256];
+} haf_tuning_param_t;
 
 typedef struct _af_tuning_param {
 	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
