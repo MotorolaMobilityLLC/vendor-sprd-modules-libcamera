@@ -6613,7 +6613,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_SET_RGB_GAIN:
 		if (0 != cxt->exp_data.actual_data.isp_gain) {
-			double rgb_coeff = cxt->exp_data.actual_data.isp_gain * 1.0 / 4096.0 + 0.5;
+			double rgb_coeff = cxt->exp_data.actual_data.isp_gain * 1.0 / 4096.0;
 			if (cxt->isp_ops.set_rgb_gain)
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
 		}
