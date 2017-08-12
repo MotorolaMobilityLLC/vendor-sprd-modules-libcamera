@@ -216,6 +216,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     sprd_virtual_camera_t m_VirtualCamera;
     uint8_t m_nPhyCameras;
     Mutex mLock;
+    Mutex mDefaultStreamLock;
     camera_metadata_t *mStaticMetadata;
 
     new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
@@ -223,7 +224,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool mFirstArcBokeh;
     bool mFirstArcBokehReset;
     bool mFirstSprdBokeh;
-
     Mutex mRequestLock;
     List<new_mem_t *> mLocalBufferList;
     List<camera3_notify_msg_t> mNotifyListMain;

@@ -2033,6 +2033,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         }
     }
     HAL_LOGI(":X");
+
     return rc;
 }
 
@@ -3551,6 +3552,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     camera3_capture_request_t req_main;
     camera3_capture_request_t req_aux;
     camera3_stream_t *new_stream = NULL;
+    buffer_handle_t *new_buffer = NULL;
     camera3_stream_buffer_t out_streams_main[REAL_BOKEH_MAX_NUM_STREAMS];
     camera3_stream_buffer_t out_streams_aux[REAL_BOKEH_MAX_NUM_STREAMS];
     bool is_captureing = false;
@@ -3619,6 +3621,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
         int requestStreamType =
             getStreamType(request->output_buffers[i].stream);
         new_stream = (req->output_buffers[i]).stream;
+        new_buffer = (req->output_buffers[i]).buffer;
         HAL_LOGV("num_output_buffers:%d, streamtype:%d",
                  req->num_output_buffers, requestStreamType);
 
@@ -3631,9 +3634,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             mCapFrameNumber = request->frame_number;
             mCaptureThread->mSavedResultBuff =
                 request->output_buffers[i].buffer;
-            mjpegSize = ((struct private_handle_t *)(*request->output_buffers[i]
-                                                          .buffer))
-                            ->size;
+            mjpegSize = ((struct private_handle_t *)*new_buffer)->size;
             // sencond step:construct callback Request
             out_streams_main[main_buffer_index] = req->output_buffers[i];
             if (!mFlushing) {
@@ -3871,11 +3872,10 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         }
     }
     int currStreamType = getStreamType(result_buffer->stream);
-
     struct private_handle_t *input_handle =
         (struct private_handle_t *)(*result->output_buffers->buffer);
-
     if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
+        Mutex::Autolock l(mDefaultStreamLock);
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
             mCaptureThread->mSavedOneResultBuff =
                 result->output_buffers->buffer;
@@ -4107,8 +4107,8 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
     }
 
     int currStreamType = getStreamType(result_buffer->stream);
-
     if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
+        Mutex::Autolock l(mDefaultStreamLock);
         result_buffer = result->output_buffers;
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
             mCaptureThread->mSavedOneResultBuff =
