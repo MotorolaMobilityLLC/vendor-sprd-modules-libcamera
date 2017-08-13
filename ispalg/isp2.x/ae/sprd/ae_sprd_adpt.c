@@ -51,8 +51,8 @@
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 10 /*lower than thrd1, min fps*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 180 /*higher than thrd2, max fps*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0/*lower than thrd1, min fps*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 300 /*higher than thrd2, max fps*/
 
 /*
  * should be read from driver later
