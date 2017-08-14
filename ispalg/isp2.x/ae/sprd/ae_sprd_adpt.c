@@ -2811,6 +2811,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_s32 led_eb;
+	cmr_s32 flash_fired;
 	cmr_int cb_type;
 	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 
@@ -2973,6 +2974,27 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			cb_type = AE_CB_LED_NOTIFY;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
 			ISP_LOGI("ae_flash1_callback do-led-close!\r\n");
+		}
+	}
+
+	/* notify APP if need flash fired or not, just in flash auto mode */
+	if (cxt->camera_id == 0) {
+		ISP_LOGI("flash will thr=%d, bv=%d, flash_fired=%d", cxt->flash_on_off_thr, cxt->sync_cur_result.cur_bv,
+			cxt->sync_cur_status.flash_fired);
+		if ((cxt->sync_cur_result.cur_bv < (cxt->flash_on_off_thr)) &&
+			cxt->sync_cur_status.flash_fired == 0 && cxt->sync_cur_result.wts.stable) {
+			flash_fired = 1;
+			cxt->cur_status.flash_fired = 1;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_FIRED, &flash_fired);
+			ISP_LOGV("flash will fire!\r\n");
+		}
+
+		if ((cxt->sync_cur_result.cur_bv > (cxt->flash_on_off_thr + 20)) &&
+			cxt->sync_cur_status.flash_fired == 1 && cxt->sync_cur_result.wts.stable) {
+			flash_fired = 0;
+			cxt->cur_status.flash_fired = 0;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_FIRED, &flash_fired);
+			ISP_LOGV("flash will not fire!\r\n");
 		}
 	}
 

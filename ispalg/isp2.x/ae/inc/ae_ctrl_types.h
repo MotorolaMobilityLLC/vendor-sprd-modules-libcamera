@@ -160,6 +160,7 @@ enum ae_cb_type {
 	AE_CB_CLOSE_MAIN_FLASH,
 	AE_CB_HDR_START,
 	AE_CB_LED_NOTIFY,
+	AE_CB_FLASH_FIRED,
 	AE_CB_PROCESS_OUT,
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	AE_CB_AE_CALCOUT_NOTIFY,	//for Binding frame and calc ae dt

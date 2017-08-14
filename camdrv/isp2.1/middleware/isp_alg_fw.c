@@ -361,6 +361,10 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		in = data;
 		cmd = ISP_ONLINE_FLASH_CALLBACK;
 		break;
+	case AE_CB_FLASH_FIRED:
+		in = data;
+		cmd = ISP_AE_CB_FLASH_FIRED;
+		break;
 	case AE_CB_PROCESS_OUT:
 		ispalg_ae_process_out(cxt, data);
 		break;
