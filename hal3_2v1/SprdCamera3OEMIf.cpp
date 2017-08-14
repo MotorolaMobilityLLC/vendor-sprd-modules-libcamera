@@ -2956,7 +2956,7 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocReservedMem(int buf_size,
 
     mem_size = buf_size * num_bufs;
     // to make it page size aligned
-    mem_size = (mem_size + 4095U) & (~4095U);
+    mem_size = (mem_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     if (mem_size == 0) {
         goto getpmem_fail;
     }
@@ -3024,7 +3024,7 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
 
     mem_size = buf_size * num_bufs;
     // to make it page size aligned
-    mem_size = (mem_size + 4095U) & (~4095U);
+    mem_size = (mem_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     if (mem_size == 0) {
         goto getpmem_fail;
     }

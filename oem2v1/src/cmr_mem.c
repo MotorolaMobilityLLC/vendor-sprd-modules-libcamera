@@ -45,7 +45,6 @@
 #define PIXEL_10P0_MEGA 0x1000000 // 16.0 *1024*1024
 #define PIXEL_15P0_MEGA 0x1500000 // 21.0 *1024*1024
 #define MIN_GAP_LINES 0x80
-#define ALIGN_PAGE_SIZE (1 << 12)
 
 #define ISP_YUV_TO_RAW_GAP CMR_SLICE_HEIGHT
 #define BACK_CAMERA_ID 0
@@ -642,7 +641,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     uint32_t mem_res = 0, mem_end = 0;
     uint32_t offset = 0;
     uint32_t raw_size = 0, raw2_size = 0;
-    uint32_t tmp1, tmp2, tmp3, max_size;
+    uint32_t tmp1, tmp2, tmp3, max_size, tmp4_page_align;
     /*&capture_mem[0];*/
     struct cmr_cap_mem *cap_mem = capture_mem;
 
@@ -674,10 +673,12 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->target_yuv.size.height = image_size->height;
     cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
 
+    /* to make buf start address page size aligned */
+    tmp4_page_align = (max_size * 3 / 2 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     cap_mem->cap_yuv.addr_phy.addr_y =
-        cap_2_frm->mem_frm.addr_phy.addr_y + max_size * 3 / 2;
+        cap_2_frm->mem_frm.addr_phy.addr_y + tmp4_page_align;
     cap_mem->cap_yuv.addr_vir.addr_y =
-        cap_2_frm->mem_frm.addr_vir.addr_y + max_size * 3 / 2;
+        cap_2_frm->mem_frm.addr_vir.addr_y + tmp4_page_align;
     cap_mem->cap_yuv.addr_phy.addr_u =
         cap_mem->cap_yuv.addr_phy.addr_y + cap_size->width * cap_size->height;
     cap_mem->cap_yuv.addr_vir.addr_u =
@@ -711,9 +712,10 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
 
     /* update io param */
-    CMR_NO_MEM(max_size * 3 / 2 + max_size * 3 / 2, mem_res);
-    *io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 3 / 2);
-    *io_mem_end = mem_end + max_size * 3 / 2 + max_size * 3 / 2;
+    /*To avoid memory coverage, memory gap is required here.*/
+    CMR_NO_MEM(tmp4_page_align + max_size * 3 / 2, mem_res);
+    *io_mem_res = mem_res - (tmp4_page_align + max_size * 3 / 2);
+    *io_mem_end = mem_end + tmp4_page_align + max_size * 3 / 2;
     CMR_LOGD("mem_end=%0x", *io_mem_end);
 
     return 0;
@@ -786,7 +788,7 @@ int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         gap_size = (MIN_GAP_LINES * align16_image_size.width) -
                    (cap_mem->cap_yuv.addr_phy.addr_y -
                     cap_mem->target_yuv.addr_phy.addr_y);
-        gap_size = (gap_size + ALIGN_PAGE_SIZE - 1) & (~(ALIGN_PAGE_SIZE - 1));
+        gap_size = (gap_size + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1));
     }
 
     cap_mem->cap_yuv.addr_phy.addr_y += gap_size;
@@ -857,7 +859,7 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     uint32_t mem_res = 0, mem_end = 0;
     uint32_t offset = 0;
-    uint32_t tmp1, tmp2, tmp3, max_size;
+    uint32_t tmp1, tmp2, tmp3, max_size, tmp4_page_align;
     /*&capture_mem[0];*/
     struct cmr_cap_mem *cap_mem = capture_mem;
 
@@ -885,10 +887,12 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->target_yuv.size.height = image_size->height;
     cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
 
+    /* to make buf start address page size aligned */
+    tmp4_page_align = (max_size * 3 / 2 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     cap_mem->cap_yuv.addr_phy.addr_y =
-        cap_mem->target_yuv.addr_phy.addr_y + max_size * 3 / 2;
+        cap_mem->target_yuv.addr_phy.addr_y + tmp4_page_align;
     cap_mem->cap_yuv.addr_vir.addr_y =
-        cap_mem->target_yuv.addr_vir.addr_y + max_size * 3 / 2;
+        cap_mem->target_yuv.addr_vir.addr_y + tmp4_page_align;
     cap_mem->cap_yuv.addr_phy.addr_u =
         cap_mem->cap_yuv.addr_phy.addr_y + cap_size->width * cap_size->height;
     cap_mem->cap_yuv.addr_vir.addr_u =
@@ -903,8 +907,9 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
 
-    tmp1 = max_size * 3 / 2 + max_size * 3 / 2;
-    tmp2 = max_size * 3 / 2 + cap_mem->target_jpeg.buf_size;
+    /*To avoid memory coverage, memory gap is required here.*/
+    tmp1 = tmp4_page_align + max_size * 3 / 2;
+    tmp2 = tmp4_page_align + cap_mem->target_jpeg.buf_size;
     offset = tmp1 > tmp2 ? tmp1 : tmp2;
 
     CMR_LOGD("offset %d", offset);
