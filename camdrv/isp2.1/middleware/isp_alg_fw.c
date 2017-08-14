@@ -2314,6 +2314,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.gain_height = lsc_info->gain_h;
 	lsc_param.lum_gain = (cmr_u16 *) lsc_info->data_ptr;
 	lsc_param.grid = lsc_info->grid;
+	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
 
 	switch (cxt->commn_cxt.image_pattern) {
@@ -2925,7 +2926,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
 	struct isp_lsc_info *lsc_info_new = NULL;
-	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0};
+	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 
 
@@ -3050,6 +3051,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	fwstart_info.gain_height_new = lsc_info_new->gain_h;
 	fwstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
 	fwstart_info.grid_new = lsc_info_new->grid;
+	fwstart_info.camera_id = cxt->camera_id;
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)&fwstart_info, NULL);
 

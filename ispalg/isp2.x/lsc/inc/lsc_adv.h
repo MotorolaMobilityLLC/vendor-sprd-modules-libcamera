@@ -352,6 +352,7 @@ struct lsc2_context {
 	cmr_u32 gain_pattern;
 	cmr_u32 grid;
 	cmr_u32 dual_cam_id;
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 
 	
 	cmr_u16 *lsc_tab_address[9];	      // log the using table address
@@ -370,6 +371,7 @@ struct lsc2_context {
 	void *lsc1d_param;
 	void* post_shading_gain_param;
 	void* lsc_flash_proc_param;
+	void* lsc_last_info;
 
 	// tmp storage
 	cmr_u16 *color_gain_r;
@@ -423,6 +425,7 @@ struct alsc_fwstart_info {
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 };
 
 struct alsc_flash_info {
@@ -462,6 +465,7 @@ struct lsc_adv_init_param {
 	cmr_u32 gain_height;
 	cmr_u32 gain_pattern;
 	cmr_u32 grid;
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 
 	// isp2.1 added , need to modify to match old version
 	struct third_lib_info lib_param;
@@ -512,7 +516,7 @@ struct lsc_adv_calc_param {
 	cmr_u32 bv;	// bv from AE calc
 	cmr_u32 isp_mode;	// about the mode of interperlation of shading table
 	cmr_u32 isp_id;	// 0. alg0.c ,  2. alg2.c
-	cmr_u32 camera_id;	// 0. back camera  ,  1. front camera
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 	struct lsc_size img_size;	// raw size
 	cmr_s32 grid;	// grid size
 
