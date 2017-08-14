@@ -170,7 +170,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     memset(mOtpData, 0, sizeof(uint8_t) * SPRD_DUAL_OTP_SIZE);
     memset(&mArcSoftInfo, 0, sizeof(ARC_REFOCUSCAMERAIMAGE_PARAM));
     memset(&mCaliData, 0, sizeof(ARC_DC_CALDATA));
-    memset(mArcSoftCalibData, 0, sizeof(char) * ARCSOFT_CALIB_DATA_SIZE);
+    memset(mArcSoftCalibData, 0, sizeof(char) * THIRD_OTP_SIZE);
     memset(&mPerfectskinlevel, 0, sizeof(face_beauty_levels));
     mLocalBufferList.clear();
     mUnmatchedFrameListMain.clear();
@@ -337,10 +337,13 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
     }
-    // wait threads quit to relese object
-    mCaptureThread->join();
-    mPreviewMuxerThread->join();
-    HAL_LOGI("threads quit.");
+    if (!mFlushing) {
+        bokehThreadExit();
+        // wait threads quit to relese object
+        mCaptureThread->join();
+        mPreviewMuxerThread->join();
+        HAL_LOGI("threads quit.");
+    }
 
     freeLocalBuffer();
     mSavedRequestList.clear();
@@ -3459,10 +3462,32 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
     }
     CameraMetadata metadata;
     metadata = fwk_metadata;
+#define OTP_CALI_SPRD 0
+#define OTP_CALI_ARCSOFT 1
+#define OTP_CALI_ALTEK 2
     if (metadata.exists(ANDROID_SPRD_OTP_DATA)) {
-        HAL_LOGD("get otp data");
-        memcpy(mOtpData, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
-               SPRD_DUAL_OTP_SIZE);
+        uint8_t otpType;
+        int otpSize;
+        otpType = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                      .otpInfo.otp_type;
+        otpSize = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                      .otpInfo.otp_size;
+        HAL_LOGD("otpType %d, otpSize %d", otpType, otpSize);
+
+        if ((mRealBokeh->mApiVersion == SPRD_API_MODE) &&
+            (otpType == OTP_CALI_SPRD)) {
+            memcpy(mOtpData, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
+                   otpSize);
+        } else if ((mRealBokeh->mApiVersion == ARCSOFT_API_MODE) &&
+                   ((otpType == OTP_CALI_ARCSOFT) ||
+                    (otpType == OTP_CALI_ALTEK))) {
+            mCaliData.i32CalibDataSize = otpSize;
+            mCaliData.pCalibData = mArcSoftCalibData;
+            memcpy(mCaliData.pCalibData,
+                   metadata.find(ANDROID_SPRD_OTP_DATA).data.u8, otpSize);
+        }
+    } else {
+        HAL_LOGD("use default otp calibration.bin");
         checkOtpInfo();
     }
     HAL_LOGI("X");
@@ -3484,16 +3509,6 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
 int SprdCamera3RealBokeh::checkOtpInfo() {
     char value[PROPERTY_VALUE_MAX];
     int rc = 0;
-
-    property_get("persist.sys.camera.bokeh.data", value, "0");
-    if (1 == atoi(value)) {
-        char OTPFileName[256];
-        snprintf(OTPFileName, sizeof(OTPFileName),
-                 "/data/misc/cameraserver/otp.bin");
-        uint32_t read_bytes =
-            save_file(OTPFileName, (void *)(mOtpData), SPRD_DUAL_OTP_SIZE);
-        HAL_LOGD("read_file %u", read_bytes);
-    }
     if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         mCaliData.i32CalibDataSize = ARCSOFT_CALIB_DATA_SIZE;
         mCaliData.pCalibData = mArcSoftCalibData;
@@ -4309,6 +4324,31 @@ void SprdCamera3RealBokeh::_dump(const struct camera3_device *device, int fd) {
 }
 
 /*===========================================================================
+ * FUNCTION   :bokehThreadExit
+ *
+ * DESCRIPTION: preview and capture thread exit
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3RealBokeh::bokehThreadExit(void) {
+
+    HAL_LOGI("E");
+    if (mCaptureThread != NULL) {
+        if (mCaptureThread->isRunning()) {
+            mCaptureThread->requestExit();
+        }
+    }
+    if (mPreviewMuxerThread != NULL) {
+        if (mPreviewMuxerThread->isRunning()) {
+            mPreviewMuxerThread->requestExit();
+        }
+    }
+    HAL_LOGI("X");
+}
+
+/*===========================================================================
  * FUNCTION   :flush
  *
  * DESCRIPTION: flush
@@ -4327,18 +4367,9 @@ int SprdCamera3RealBokeh::_flush(const struct camera3_device *device) {
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
 
-    if (mCaptureThread != NULL) {
-        if (mCaptureThread->isRunning()) {
-            mCaptureThread->requestExit();
-        }
-    }
-    if (mPreviewMuxerThread != NULL) {
-        if (mPreviewMuxerThread->isRunning()) {
-            mPreviewMuxerThread->requestExit();
-        }
-    }
-    HAL_LOGI("X");
+    bokehThreadExit();
 
+    HAL_LOGI("X");
     return rc;
 }
 

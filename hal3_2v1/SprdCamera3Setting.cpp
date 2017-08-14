@@ -390,7 +390,7 @@ const cam_stream_info_t stream_info[] = {
     //{{1920, 1920}, 33331760L, 33331760L},
     {{1920, HEIGHT_2M}, 33331760L, 33331760L},
     {{1600, 1200}, 33331760L, 33331760L},
-    {{1440, 1080},33331760L,33331760L},
+    {{1440, 1080}, 33331760L, 33331760L},
     {{1280, 960}, 33331760L, 33331760L},
     {{1280, 720}, 33331760L, 33331760L},
     {{960, 720}, 33331760L, 33331760L},
@@ -999,9 +999,9 @@ int SprdCamera3Setting::getNumberOfCameras() {
 }
 
 bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
-    for (int i =0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
+    for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
         if (sprddefInfo.perfect_skin_level[i] != 0)
-               return true;
+            return true;
     }
     return false;
 }
@@ -2936,9 +2936,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
-        requestInfo.update(ANDROID_SPRD_OTP_DATA,
-                           s_setting[mCameraId].otpInfo.otp_data,
-                           SPRD_DUAL_OTP_SIZE);
+        if (s_setting[mCameraId].otpInfo.otp_size != 0)
+            requestInfo.update(ANDROID_SPRD_OTP_DATA,
+                               s_setting[mCameraId].otpInfo.otp_data,
+                               s_setting[mCameraId].otpInfo.otp_size);
         requestInfo.update(ANDROID_SPRD_DUAL_OTP_FLAG,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
@@ -3177,12 +3178,17 @@ int SprdCamera3Setting::updateWorkParameters(
 
         int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM] = {0};
         if (is_raw_capture == 1)
-            memset(perfectskinlevel, 0, sizeof(int32_t)*SPRD_FACE_BEAUTY_PARAM_NUM);
-        for (size_t i=0 ; i < (frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).count); i++){
-                    perfectskinlevel[i] = frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[i];
-                    HAL_LOGD("face beauty level %d : %d .", i, perfectskinlevel[i]);
+            memset(perfectskinlevel, 0,
+                   sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
+        for (size_t i = 0;
+             i < (frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).count);
+             i++) {
+            perfectskinlevel[i] =
+                frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[i];
+            HAL_LOGD("face beauty level %d : %d .", i, perfectskinlevel[i]);
         }
-        memcpy(s_setting[mCameraId].sprddefInfo.perfect_skin_level, perfectskinlevel, sizeof(int32_t)*SPRD_FACE_BEAUTY_PARAM_NUM);
+        memcpy(s_setting[mCameraId].sprddefInfo.perfect_skin_level,
+               perfectskinlevel, sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
         pushAndroidParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
     }
 
@@ -3203,11 +3209,12 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("flip_on_level %d", s_setting[mCameraId].sprddefInfo.flip_on);
     }
 
-    if(frame_settings.exists(ANDROID_SPRD_FILTER_TYPE)) {
+    if (frame_settings.exists(ANDROID_SPRD_FILTER_TYPE)) {
         s_setting[mCameraId].sprddefInfo.sprd_filter_type =
-                 frame_settings.find(ANDROID_SPRD_FILTER_TYPE).data.i32[0];
+            frame_settings.find(ANDROID_SPRD_FILTER_TYPE).data.i32[0];
         pushAndroidParaTag(ANDROID_SPRD_FILTER_TYPE);
-         HAL_LOGD("sprddefInfo.sprd_filter_type: %d ",s_setting[mCameraId].sprddefInfo.sprd_filter_type);
+        HAL_LOGD("sprddefInfo.sprd_filter_type: %d ",
+                 s_setting[mCameraId].sprddefInfo.sprd_filter_type);
     }
 
     // JPEG
@@ -3719,9 +3726,9 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
         s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
             frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-       pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-       HAL_LOGV("sprd fixed fps enabled is %d",
-            s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+        pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
+        HAL_LOGV("sprd fixed fps enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
     }
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
         s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
@@ -3731,44 +3738,45 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
     }
 
-    HAL_LOGD("isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
-             "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
-             "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
-             "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
-             "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
-             "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled is %d",
-             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
-             s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
-             s_setting[mCameraId].flashInfo.mode,
-             s_setting[mCameraId].controlInfo.ae_lock,
-             s_setting[mCameraId].controlInfo.scene_mode,
-             s_setting[mCameraId].sprddefInfo.capture_mode,
-             s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
-             s_setting[mCameraId].sprddefInfo.iso,
-             s_setting[mCameraId].jpgInfo.orientation_original,
-             s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
-             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
-             s_setting[mCameraId].scalerInfo.crop_region[0],
-             s_setting[mCameraId].scalerInfo.crop_region[1],
-             s_setting[mCameraId].scalerInfo.crop_region[2],
-             s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
-             s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
-             s_setting[mCameraId].controlInfo.ae_regions[0],
-             s_setting[mCameraId].controlInfo.ae_regions[1],
-             s_setting[mCameraId].controlInfo.ae_regions[2],
-             s_setting[mCameraId].controlInfo.ae_regions[3],
-             s_setting[mCameraId].controlInfo.ae_regions[4],
-             s_setting[mCameraId].controlInfo.af_trigger,
-             s_setting[mCameraId].controlInfo.af_mode,
-             s_setting[mCameraId].controlInfo.af_state,
-             s_setting[mCameraId].controlInfo.af_regions[0],
-             s_setting[mCameraId].controlInfo.af_regions[1],
-             s_setting[mCameraId].controlInfo.af_regions[2],
-             s_setting[mCameraId].controlInfo.af_regions[3],
-             s_setting[mCameraId].controlInfo.af_regions[4],
-             s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
-             s_setting[mCameraId].sprddefInfo.sprd_filter_type,
-             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
+    HAL_LOGD(
+        "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
+        "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
+        "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
+        "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
+        "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
+        "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled is %d",
+        isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
+        s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
+        s_setting[mCameraId].flashInfo.mode,
+        s_setting[mCameraId].controlInfo.ae_lock,
+        s_setting[mCameraId].controlInfo.scene_mode,
+        s_setting[mCameraId].sprddefInfo.capture_mode,
+        s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
+        s_setting[mCameraId].sprddefInfo.iso,
+        s_setting[mCameraId].jpgInfo.orientation_original,
+        s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
+        s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
+        s_setting[mCameraId].scalerInfo.crop_region[0],
+        s_setting[mCameraId].scalerInfo.crop_region[1],
+        s_setting[mCameraId].scalerInfo.crop_region[2],
+        s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
+        s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
+        s_setting[mCameraId].controlInfo.ae_regions[0],
+        s_setting[mCameraId].controlInfo.ae_regions[1],
+        s_setting[mCameraId].controlInfo.ae_regions[2],
+        s_setting[mCameraId].controlInfo.ae_regions[3],
+        s_setting[mCameraId].controlInfo.ae_regions[4],
+        s_setting[mCameraId].controlInfo.af_trigger,
+        s_setting[mCameraId].controlInfo.af_mode,
+        s_setting[mCameraId].controlInfo.af_state,
+        s_setting[mCameraId].controlInfo.af_regions[0],
+        s_setting[mCameraId].controlInfo.af_regions[1],
+        s_setting[mCameraId].controlInfo.af_regions[2],
+        s_setting[mCameraId].controlInfo.af_regions[3],
+        s_setting[mCameraId].controlInfo.af_regions[4],
+        s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
+        s_setting[mCameraId].sprddefInfo.sprd_filter_type,
+        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
 
 #undef GET_VALUE_IF_DIF
     return rc;
@@ -4158,9 +4166,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     if (mCameraId == 0) { // && s_setting[mCameraId].otpInfo.otp_data){ //
                           // "s_setting[mCameraId].otpInfo.otp_data" always
                           // "true"
-        camMetadata.update(ANDROID_SPRD_OTP_DATA,
-                           s_setting[mCameraId].otpInfo.otp_data,
-                           SPRD_DUAL_OTP_SIZE);
+        if (s_setting[mCameraId].otpInfo.otp_size != 0)
+            camMetadata.update(ANDROID_SPRD_OTP_DATA,
+                               s_setting[mCameraId].otpInfo.otp_data,
+                               s_setting[mCameraId].otpInfo.otp_size);
         camMetadata.update(ANDROID_SPRD_DUAL_OTP_FLAG,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
@@ -4386,6 +4395,14 @@ int SprdCamera3Setting::setOTPTag(OTP_Tag *otpInfo) {
     s_setting[mCameraId].otpInfo = *otpInfo;
     return 0;
 }
+
+int SprdCamera3Setting::setOTPTag(OTP_Tag *otpInfo, int size, uint8_t type) {
+    s_setting[mCameraId].otpInfo = *otpInfo;
+    s_setting[mCameraId].otpInfo.otp_size = size;
+    s_setting[mCameraId].otpInfo.otp_type = type;
+    return 0;
+}
+
 int SprdCamera3Setting::getOTPTag(OTP_Tag *otpInfo) {
     *otpInfo = s_setting[mCameraId].otpInfo;
     return 0;

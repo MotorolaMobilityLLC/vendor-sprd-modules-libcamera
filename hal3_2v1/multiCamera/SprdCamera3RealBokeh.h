@@ -368,7 +368,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     ARC_REFOCUSCAMERAIMAGE_PARAM mArcSoftInfo;
     ARC_DC_CALDATA mCaliData;
     uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
-    char mArcSoftCalibData[ARCSOFT_CALIB_DATA_SIZE];
+    char mArcSoftCalibData[THIRD_OTP_SIZE];
     int mMaxPendingCount;
     int mPendingRequest;
     Mutex mPendingLock;
@@ -404,6 +404,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void _dump(const struct camera3_device *device, int fd);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
+    void bokehThreadExit();
 };
 };
 

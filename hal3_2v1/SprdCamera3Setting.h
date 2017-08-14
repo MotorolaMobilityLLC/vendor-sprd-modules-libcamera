@@ -90,13 +90,15 @@ typedef int64_t nsecs_t;
 #define MIDDLE_FPS_RANGE 20
 #define SPRD_SHADING_FACTOR_NUM (2 * 2) //(>1*1*4,<=64*64*4)
 #define SPRD_MAX_TONE_CURVE_POINT 64    //>=64
-#define SPRD_FACE_BEAUTY_PARAM_NUM  9
+#define SPRD_FACE_BEAUTY_PARAM_NUM 9
 #ifdef CONFIG_CAMERA_FACE_DETECT
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 2
 #else
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 1
 #endif
-#define SPRD_DUAL_OTP_SIZE 228
+#define SPRD_DUAL_OTP_SIZE 230
+
+#define THIRD_OTP_SIZE 8192
 
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 90
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
@@ -371,8 +373,10 @@ typedef struct { int32_t max_latency; } SYNC_Tag;
 typedef struct { int32_t crop[4]; } EIS_CROP_Tag;
 
 typedef struct {
-    uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
+    uint8_t otp_data[THIRD_OTP_SIZE];
     uint8_t dual_otp_flag;
+    uint8_t otp_type;
+    int otp_size;
 } OTP_Tag;
 
 typedef struct { int32_t vcm_step; } VCM_Tag;
@@ -570,6 +574,7 @@ class SprdCamera3Setting {
     int getMETAInfo(meta_info_t *metaInfo);
 
     int setOTPTag(OTP_Tag *otpInfo);
+    int setOTPTag(OTP_Tag *otpInfo, int size, uint8_t type);
     int getOTPTag(OTP_Tag *otpInfo);
 
     int setVCMTag(VCM_Tag vcmInfo);
