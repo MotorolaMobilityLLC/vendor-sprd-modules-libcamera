@@ -510,14 +510,24 @@ void SprdCamera3MultiBase::dumpFps() {
 void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
                                     int param1, int param2, int param3,
                                     int param4) {
-    HAL_LOGD(" E %p %d %d %d %d", addr, type, size, param1, param2);
-    char name[128];
     FILE *fp = NULL;
+    char tmp_str[64] = {0};
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    char file_name[256] = {0};
+    p = localtime(&timep);
+    strcpy(file_name, "/data/misc/cameraserver/");
+    sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    strcat(file_name, tmp_str);
     switch (type) {
     case 1: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%d.yuv",
-                 param1, param2, param3, param4);
-        fp = fopen(name, "w");
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "_%dx%d_%d_%d.yuv", param1, param2, param3, param4);
+        strcat(file_name, tmp_str);
+
+        fp = fopen(file_name, "w");
         if (fp == NULL) {
             HAL_LOGE("open yuv file fail!\n");
             return;
@@ -526,11 +536,12 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fclose(fp);
     } break;
     case 2: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%d.jpg",
-                 param1, param2, param3, param4);
-        fp = fopen(name, "wb");
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "_%dx%d_%d_%d.jpg", param1, param2, param3, param4);
+        strcat(file_name, tmp_str);
+        fp = fopen(file_name, "wb");
         if (fp == NULL) {
-            HAL_LOGE("can not open file: %s \n", name);
+            HAL_LOGE("can not open file: %s \n", file_name);
             return;
         }
         fwrite((void *)addr, 1, size, fp);
@@ -539,10 +550,10 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
     case 3: {
         int i = 0;
         int j = 0;
-        snprintf(name, sizeof(name),
-                 "/data/misc/cameraserver/refocus_%d_params_%d.txt", size,
-                 param4);
-        fp = fopen(name, "w+");
+        memset(tmp_str, 0, sizeof(tmp_str));
+        snprintf(tmp_str, sizeof(tmp_str), "_%d_params_%d.txt", size, param4);
+        strcat(file_name, tmp_str);
+        fp = fopen(file_name, "w+");
         if (fp == NULL) {
             HAL_LOGE("open txt file fail!\n");
             return;
