@@ -2448,6 +2448,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 			otp_grid = cxt->otp_data->single_otp.lsc_info.lsc_otp_grid;
 			lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
 			lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
+			ISP_LOGI("init_lsc_otp, single cam, otp_grid=%d, lsc_otp_addr=%p, lsc_otp_len=%d", otp_grid, lsc_otp_addr, lsc_otp_len);
 		}
 		else
 		{
@@ -2456,12 +2457,14 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 				otp_grid = cxt->otp_data->dual_otp.master_lsc_info.lsc_otp_grid;
 				lsc_otp_addr = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_addr;
 				lsc_otp_len = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_size;
+				ISP_LOGI("init_lsc_otp, dual cam master, otp_grid=%d, lsc_otp_addr=%p, lsc_otp_len=%d", otp_grid, lsc_otp_addr, lsc_otp_len);
 			}
 			else
 			{
 				otp_grid = cxt->otp_data->dual_otp.slave_lsc_info.lsc_otp_grid;
 				lsc_otp_addr = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_addr;
 				lsc_otp_len = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_size;
+				ISP_LOGI("init_lsc_otp, dual cam slave, otp_grid=%d, lsc_otp_addr=%p, lsc_otp_len=%d", otp_grid, lsc_otp_addr, lsc_otp_len);
 			}
 		}
 		int lsc_otp_len_chn = lsc_otp_len / 4;
@@ -2469,8 +2472,9 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 		int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
 		int gain_w, gain_h;
 		//uint8_t *lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
-
-		if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
+		if( otp_grid < 32 || otp_grid > 256){
+			ISP_LOGI("init_lsc_otp, otp_grid=%d, skip lsc otp transfrom", otp_grid);
+		}else if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
 			uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
 			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);

@@ -111,11 +111,10 @@ otp_drv_entry_t ov13855_altek_drv_entry = {
                       should confirm with module fae*/
                     .compress_flag = GAIN_ORIGIN_BITS,
                     /*the width of the stream the sensor can output*/
-                    .image_width = 4224,
+                    .full_img_width = 4224,
                     /*the height of the stream the sensor can output*/
-                    .image_height = 3136,
-                    .grid_width = 23,
-                    .grid_height = 18,
+                    .full_img_height = 3136,
+                    .lsc_otp_grid = 96,
                     .gain_width = GAIN_WIDTH,
                     .gain_height = GAIN_HEIGHT,
                 },

@@ -89,7 +89,7 @@ static uint16_t *ispalg_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int 
 
 	void *lsc_handle = dlopen("libsprdlsc.so", RTLD_NOW);
 	if (!lsc_handle) {
-		ISP_LOGE("init_lsc_otp, fail to dlopen libsprdlsc lib");
+		ISP_LOGE("fail to dlopen libsprdlsc lib");
 		ret = ISP_ERROR;
 		return lsc_table;
 	}
@@ -98,28 +98,28 @@ static uint16_t *ispalg_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int 
 
 	lsc_ops.lsc2d_grid_samples = dlsym(lsc_handle, "lsc2d_grid_samples");
 	if (!lsc_ops.lsc2d_grid_samples) {
-		ISP_LOGE("init_lsc_otp, fail to dlsym lsc2d_grid_samples");
+		ISP_LOGE("fail to dlsym lsc2d_grid_samples");
 		ret = ISP_ERROR;
 		goto error_dlsym;
 	}
 
 	lsc_ops.lsc2d_calib_param_default = dlsym(lsc_handle, "lsc2d_calib_param_default");
 	if (!lsc_ops.lsc2d_calib_param_default) {
-		ISP_LOGE("init_lsc_otp, fail to dlsym lsc2d_calib_param_default");
+		ISP_LOGE("fail to dlsym lsc2d_calib_param_default");
 		ret = ISP_ERROR;
 		goto error_dlsym;
 	}
 
 	lsc_ops.lsc2d_table_preproc = dlsym(lsc_handle, "lsc2d_table_preproc");
 	if (!lsc_ops.lsc2d_table_preproc) {
-		ISP_LOGE("init_lsc_otp, fail to dlsym lsc2d_table_preproc");
+		ISP_LOGE("fail to dlsym lsc2d_table_preproc");
 		ret = ISP_ERROR;
 		goto error_dlsym;
 	}
 
 	lsc_ops.lsc2d_table_postproc = dlsym(lsc_handle, "lsc2d_table_postproc");
 	if (!lsc_ops.lsc2d_table_postproc) {
-		ISP_LOGE("init_lsc_otp, fail to dlsym lsc2d_table_postproc");
+		ISP_LOGE("fail to dlsym lsc2d_table_postproc");
 		ret = ISP_ERROR;
 		goto error_dlsym;
 	}
@@ -151,53 +151,17 @@ error_dlsym:
 	return lsc_table;
 }
 
-void get_lsc_otp_size_info(int full_img_width, int full_img_height, int* lsc_otp_width, int* lsc_otp_height, int lsc_otp_grid)
-{
-	*lsc_otp_width  = 0;
-	*lsc_otp_height = 0;
-
-	*lsc_otp_width  = (int)( full_img_width  / ( 2*lsc_otp_grid) ) + 1;
-	*lsc_otp_height = (int)( full_img_height / ( 2*lsc_otp_grid) ) + 1;
-
-	if ( full_img_width % ( 2*lsc_otp_grid ) !=0 ){
-		*lsc_otp_width += 1;
-	}
-
-	if ( full_img_height % ( 2*lsc_otp_grid ) !=0 ){
-		*lsc_otp_height += 1;
-	}
-}
-
-
 static uint16_t *need_mv_lsc_otp(struct sensor_otp_cust_info *otp_data,
 			struct isp_2d_lsc_param *lsc_tab_param_ptr,
 			struct lsc_adv_init_param *lsc_param)
 {
 	int compressed_lens_bits = 14;
-	int full_img_width  = (int)otp_data->single_otp.lsc_info.full_img_width;
-	int full_img_height = (int)otp_data->single_otp.lsc_info.full_img_height;
-	int lsc_otp_grid = (int)otp_data->single_otp.lsc_info.lsc_otp_grid;
+	int otp_grid = 96;
 	int lsc_otp_len = otp_data->single_otp.lsc_info.lsc_data_size;
-	int lsc_otp_width, lsc_otp_height;
 	int lsc_otp_len_chn = lsc_otp_len / 4;
 	int lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
-
-	ISP_LOGI("init_lsc_otp, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
-	ISP_LOGI("init_lsc_otp, before, lsc_otp_chn_gain_num=%d", lsc_otp_chn_gain_num);
-
-	// error handling
-	if( lsc_otp_grid < 32 || lsc_otp_grid > 256 || full_img_width < 800 || full_img_height < 600){
-		ISP_LOGE("init_lsc_otp, sensor setting error, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
-		return NULL;
-	}
-	get_lsc_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
-	lsc_otp_chn_gain_num = lsc_otp_width*lsc_otp_height;
-
-	ISP_LOGI("init_lsc_otp, after, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d", lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height);
-
 	int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
 	int gain_w, gain_h;
-
 	uint8_t *lsc_otp_addr = otp_data->single_otp.lsc_info.lsc_data_addr;
 	uint16_t *lsc_table = NULL;
 
@@ -213,7 +177,7 @@ static uint16_t *need_mv_lsc_otp(struct sensor_otp_cust_info *otp_data,
 		ispalg_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3),
 						 lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
 
-		lsc_table = ispalg_lsc_table_wrapper(lsc_16_bits, lsc_otp_grid,
+		lsc_table = ispalg_lsc_table_wrapper(lsc_16_bits, otp_grid,
 						     lsc_tab_param_ptr->resolution.w,
 						     lsc_tab_param_ptr->resolution.h,
 						     &gain_w, &gain_h);	//  wrapper otp table
@@ -223,7 +187,6 @@ static uint16_t *need_mv_lsc_otp(struct sensor_otp_cust_info *otp_data,
 		}
 		lsc_param->lsc_otp_table_width = gain_w;
 		lsc_param->lsc_otp_table_height = gain_h;
-		lsc_param->lsc_otp_grid = lsc_otp_grid;
 		lsc_param->lsc_otp_table_addr = lsc_table;
 		lsc_param->lsc_otp_table_en = 1;
 	}
