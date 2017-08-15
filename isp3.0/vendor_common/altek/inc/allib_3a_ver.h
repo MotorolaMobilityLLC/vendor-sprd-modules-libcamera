@@ -13,7 +13,7 @@ extern "C"
 {
 #endif
 
-#define _ALLIB_3A_VERSION 0.1610
+#define _ALLIB_3A_VERSION 0.1620
 
 /*
 * API name: allib_3a_getversion
