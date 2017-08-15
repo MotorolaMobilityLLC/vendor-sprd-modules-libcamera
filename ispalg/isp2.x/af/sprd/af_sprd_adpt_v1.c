@@ -1234,7 +1234,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 static cmr_s32 af_test_lens(af_ctrl_t * af, cmr_u16 pos)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt);
+	AF_STOP(af->af_alg_cxt,AFV1_TRUE);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 
@@ -1402,16 +1402,38 @@ static void af_stop_search(af_ctrl_t * af)
 {
 	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt);
+	AF_STOP(af->af_alg_cxt,AFV1_TRUE);	//modifiy for force stop to SAF/Flow control
 	AF_Process_Frame(af->af_alg_cxt);
 	af->focus_state = AF_IDLE;
+	pthread_mutex_unlock(&af->af_work_lock);
+}
+
+static void af_retrigger_search(af_ctrl_t * af, struct aft_proc_result *res)
+{
+	AF_Trigger_Data aft_in;
+
+	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (RE_TRIGGER);
+	aft_in.trigger_source = res->is_caf_trig;
+
+	pthread_mutex_lock(&af->af_work_lock);
+	if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt,AFV1_FALSE)) {
+		AF_Process_Frame(af->af_alg_cxt);
+		AF_Trigger(af->af_alg_cxt, &aft_in);
+		do_start_af(af);
+		ISP_LOGI("AF retrigger start \n");
+	} else {
+		ISP_LOGI("AF retrigger no support @%d \n", AF_Get_alg_mode(af->af_alg_cxt));
+	}
 	pthread_mutex_unlock(&af->af_work_lock);
 }
 
 static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 {
 	struct aft_proc_result res;
-	AF_Trigger_Data aft_in;
 	struct af_trig_info win;
 	memset(&res, 0, sizeof(res));
 
@@ -1443,21 +1465,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	} else {
 		if (res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) {
 			ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
-			pthread_mutex_lock(&af->af_work_lock);
-			if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt)) {
-				AF_Process_Frame(af->af_alg_cxt);
-				memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-				aft_in.AFT_mode = af->algo_mode;
-				aft_in.bisTrigger = AF_TRIGGER;
-				aft_in.AF_Trigger_Type = (RE_TRIGGER);
-				aft_in.trigger_source = res.is_caf_trig;
-				AF_Trigger(af->af_alg_cxt, &aft_in);
-				do_start_af(af);
-				ISP_LOGI("AF retrigger start \n");
-			} else {
-				ISP_LOGI("AF retrigger no support @%d \n", AF_Get_alg_mode(af->af_alg_cxt));
-			}
-			pthread_mutex_unlock(&af->af_work_lock);
+			af_retrigger_search(af,&res);
 		}
 	}
 }
