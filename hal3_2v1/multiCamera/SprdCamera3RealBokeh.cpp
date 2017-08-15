@@ -337,6 +337,11 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
     }
+    // wait threads quit to relese object
+    mCaptureThread->join();
+    mPreviewMuxerThread->join();
+    HAL_LOGI("threads quit.");
+
     freeLocalBuffer();
     mSavedRequestList.clear();
     mLocalBufferList.clear();
@@ -344,19 +349,10 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
-    mFirstArcBokeh = false;
-    mFirstArcBokehReset = false;
-    mFirstSprdBokeh = false;
-
     if (mCaptureThread->mArcSoftDepthMap != NULL) {
         free(mCaptureThread->mArcSoftDepthMap);
         mCaptureThread->mArcSoftDepthMap = NULL;
     }
-
-    // wait threads quit to relese object
-    mCaptureThread->join();
-    mPreviewMuxerThread->join();
-
     if (mBokehCapApi != NULL) {
         unLoadBokehApi();
         free(mBokehCapApi);
@@ -377,6 +373,9 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
         free(mArcSoftBokehApi);
         mArcSoftBokehApi = NULL;
     }
+    mFirstArcBokeh = false;
+    mFirstArcBokehReset = false;
+    mFirstSprdBokeh = false;
     HAL_LOGI("X, rc: %d", rc);
 
     return rc;
@@ -1301,7 +1300,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3RealBokeh::PreviewMuxerThread::requestExit() {
-
+    HAL_LOGI("E");
     Mutex::Autolock l(mMergequeueMutex);
     muxer_queue_msg_t muxer_msg;
     muxer_msg.msg_type = MUXER_MSG_EXIT;
@@ -1535,12 +1534,14 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
         switch (capture_msg.msg_type) {
         case BOKEH_MSG_EXIT: {
             // flush queue
+            HAL_LOGI("E.BOKEH_MSG_EXIT");
             memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
             memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
             if (NULL != mSavedCapReqsettings) {
                 free_camera_metadata(mSavedCapReqsettings);
                 mSavedCapReqsettings = NULL;
             }
+            HAL_LOGI("X.BOKEH_MSG_EXIT");
             return false;
         }
         case BOKEH_MSG_DATA_PROC: {
@@ -1774,8 +1775,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3RealBokeh::BokehCaptureThread::requestExit() {
+    HAL_LOGI("E");
+    Mutex::Autolock l(mMergequeueMutex);
     capture_queue_msg_t_bokeh capture_msg;
-
     capture_msg.msg_type = BOKEH_MSG_EXIT;
     mCaptureMsgList.push_back(capture_msg);
     mMergequeueSignal.signal();
@@ -1887,13 +1889,10 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         }
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         MRESULT res = MOK;
-
         ASVLOFFSCREEN leftImg;
         ASVLOFFSCREEN dstImg;
         ASVLOFFSCREEN rightImg;
-
         MInt32 lDMSize = 0;
-
         MLong LWidth = 0, LHeight = 0;
         MLong RWidth = 0, RHeight = 0;
         MByte *pLeftImgDataY = NULL, *pLeftImgDataUV = NULL,
@@ -2053,7 +2052,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::bokehCaptureHandle(
     char acVersion[256] = {
         0,
     };
-    HAL_LOGI(":E");
+    HAL_LOGI("E");
     if (output_buf == NULL || input_buf1 == NULL || depth_bufer == NULL) {
         HAL_LOGE("buffer is NULL!");
         return -1;
@@ -2356,26 +2355,29 @@ int SprdCamera3RealBokeh::loadBokehApi() {
 void SprdCamera3RealBokeh::unLoadBokehApi() {
     HAL_LOGI("E");
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        mRealBokeh->mBokehCapApi->sprd_bokeh_Close();
+        if (mFirstSprdBokeh)
+            mRealBokeh->mBokehCapApi->sprd_bokeh_Close();
         if (mBokehCapApi->handle != NULL) {
             dlclose(mBokehCapApi->handle);
             mBokehCapApi->handle = NULL;
         }
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-        MRESULT rc = MOK;
-        if (mPreviewMuxerThread->mArcSoftPrevHandle != NULL) {
-            rc = mArcSoftBokehApi->ARC_DCVR_Uninit(
-                &(mPreviewMuxerThread->mArcSoftPrevHandle));
-            if (rc != MOK) {
-                HAL_LOGE("preview ARC_DCVR_Uninit failed!");
-                return;
+        if (mFirstArcBokeh) {
+            MRESULT rc = MOK;
+            if (mPreviewMuxerThread->mArcSoftPrevHandle != NULL) {
+                rc = mArcSoftBokehApi->ARC_DCVR_Uninit(
+                    &(mPreviewMuxerThread->mArcSoftPrevHandle));
+                if (rc != MOK) {
+                    HAL_LOGE("preview ARC_DCVR_Uninit failed!");
+                    return;
+                }
             }
-        }
 
-        rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(
-            &(mCaptureThread->mArcSoftCapHandle));
-        if (rc != MOK) {
-            HAL_LOGE("arcsoft ARC_DCIR_Uninit failed");
+            rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(
+                &(mCaptureThread->mArcSoftCapHandle));
+            if (rc != MOK) {
+                HAL_LOGE("arcsoft ARC_DCIR_Uninit failed");
+            }
         }
 
         if (mArcSoftBokehApi->handle != NULL) {
@@ -2456,17 +2458,19 @@ int SprdCamera3RealBokeh::loadBokehPreviewApi() {
 void SprdCamera3RealBokeh::unLoadBokehPreviewApi() {
     HAL_LOGI("E");
     int rc = NO_ERROR;
-    if (mRealBokeh->mBokehPrevApi->mHandle != NULL) {
-        int64_t deinitStart = systemTime();
-        rc = mRealBokeh->mBokehPrevApi->iBokehDeinit(
-            mRealBokeh->mBokehPrevApi->mHandle);
-        if (rc != ALRNB_ERR_SUCCESS) {
-            HAL_LOGE("Deinit Err:%d", rc);
+    if (mFirstSprdBokeh) {
+        if (mRealBokeh->mBokehPrevApi->mHandle != NULL) {
+            int64_t deinitStart = systemTime();
+            rc = mRealBokeh->mBokehPrevApi->iBokehDeinit(
+                mRealBokeh->mBokehPrevApi->mHandle);
+            if (rc != ALRNB_ERR_SUCCESS) {
+                HAL_LOGE("Deinit Err:%d", rc);
+            }
+            HAL_LOGD("iBokehDeinit cost %lld ms",
+                     ns2ms(systemTime() - deinitStart));
         }
-        mRealBokeh->mBokehPrevApi->mHandle = NULL;
-        HAL_LOGD("iBokehDeinit cost %lld ms",
-                 ns2ms(systemTime() - deinitStart));
     }
+    mRealBokeh->mBokehPrevApi->mHandle = NULL;
 
     if (mBokehPrevApi->handle != NULL) {
         dlclose(mBokehPrevApi->handle);
@@ -2548,28 +2552,31 @@ int SprdCamera3RealBokeh::loadDepthApi() {
 void SprdCamera3RealBokeh::unLoadDepthApi() {
     HAL_LOGI("E");
     int rc = 0;
-    if (mCaptureThread->mCapDepthhandle != NULL) {
-        int64_t depthClose = systemTime();
-        rc = mDepthApi->sprd_depth_Close(mCaptureThread->mCapDepthhandle);
-        if (rc != ALRNB_ERR_SUCCESS) {
-            HAL_LOGE("cap sprd_depth_Close failed! %d", rc);
-            return;
+    if (mFirstSprdBokeh) {
+        if (mCaptureThread->mCapDepthhandle != NULL) {
+            int64_t depthClose = systemTime();
+            rc = mDepthApi->sprd_depth_Close(mCaptureThread->mCapDepthhandle);
+            if (rc != ALRNB_ERR_SUCCESS) {
+                HAL_LOGE("cap sprd_depth_Close failed! %d", rc);
+                return;
+            }
+            HAL_LOGD("cap depth close cost %lld ms",
+                     ns2ms(systemTime() - depthClose));
         }
-        mCaptureThread->mCapDepthhandle = NULL;
-        HAL_LOGD("cap depth close cost %lld ms",
-                 ns2ms(systemTime() - depthClose));
-    }
-    if (mPreviewMuxerThread->mPrevDepthhandle != NULL) {
-        int64_t depthClose = systemTime();
-        rc = mDepthApi->sprd_depth_Close(mPreviewMuxerThread->mPrevDepthhandle);
-        if (rc != ALRNB_ERR_SUCCESS) {
-            HAL_LOGE("prev sprd_depth_Close failed! %d", rc);
-            return;
+        if (mPreviewMuxerThread->mPrevDepthhandle != NULL) {
+            int64_t depthClose = systemTime();
+            rc = mDepthApi->sprd_depth_Close(
+                mPreviewMuxerThread->mPrevDepthhandle);
+            if (rc != ALRNB_ERR_SUCCESS) {
+                HAL_LOGE("prev sprd_depth_Close failed! %d", rc);
+                return;
+            }
+            HAL_LOGD("prev depth close cost %lld ms",
+                     ns2ms(systemTime() - depthClose));
         }
-        mPreviewMuxerThread->mPrevDepthhandle = NULL;
-        HAL_LOGD("prev depth close cost %lld ms",
-                 ns2ms(systemTime() - depthClose));
     }
+    mCaptureThread->mCapDepthhandle = NULL;
+    mPreviewMuxerThread->mPrevDepthhandle = NULL;
     if (mDepthApi->handle != NULL) {
         dlclose(mDepthApi->handle);
         mDepthApi->handle = NULL;
