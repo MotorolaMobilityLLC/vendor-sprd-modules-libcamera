@@ -2288,8 +2288,8 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
-    HAL_LOGD("min_fps=%ld, max_fps=%ld, video_mode=%ld",
-             fps_param.min_fps, fps_param.max_fps, fps_param.video_mode);
+    HAL_LOGD("min_fps=%ld, max_fps=%ld, video_mode=%ld", fps_param.min_fps,
+             fps_param.max_fps, fps_param.video_mode);
 #if 1 // for cts
     mIsUpdateRangeFps = true;
     mUpdateRangeFpsCount++;
@@ -4388,6 +4388,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                              frame_num, prebuf_phy, prebuf_vir);
                     memcpy((void *)videobuf_vir, (void *)prebuf_vir,
                            mPreviewWidth * mPreviewHeight * 3 / 2);
+                    flushIonBuffer(fd0, (void *)videobuf_vir, 0,
+                                   mPreviewWidth * mPreviewHeight * 3 / 2);
                     channel->channelCbRoutine(frame_num,
                                               mSlowPara.rec_timestamp,
                                               CAMERA_STREAM_TYPE_VIDEO);
@@ -8975,7 +8977,6 @@ void SprdCamera3OEMIf::EisPreview_init() {
 
     // clear preview  gyro
     mGyroPreviewInfo.clear();
-
 }
 
 void SprdCamera3OEMIf::EisVideo_init() {
