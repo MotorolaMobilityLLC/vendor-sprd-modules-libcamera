@@ -4074,9 +4074,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         miSPreviewFirstFrame = 0;
 
         disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
-        if (getMultiCameraMode() != MODE_BLUR &&
-            getMultiCameraMode() != MODE_BOKEH && !mLowerPowerPowerHint &&
-            !mHDRPowerHint) {
+        if (!mLowerPowerPowerHint && !mHDRPowerHint) {
             enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
             mLowerPowerPowerHint = 1;
         }
