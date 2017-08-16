@@ -15,8 +15,8 @@
  * V4.0
  */
 
-#include "sensor_c2390_mipi_raw.h"
 #define LOG_TAG "c2390_mipi_raw"
+#include "sensor_c2390_mipi_raw.h"
 
 #define FPS_INFO s_c2390_mode_fps_info
 #define STATIC_INFO s_c2390_static_info
@@ -55,8 +55,7 @@ static cmr_int c2390_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
         return SENSOR_FAIL;
     }
 
-    sensor_reg_ptr =
-        (SENSOR_REG_T_PTR)&VIDEO_INFO[mode].setting_ptr[param];
+    sensor_reg_ptr = (SENSOR_REG_T_PTR)&VIDEO_INFO[mode].setting_ptr[param];
     if (PNULL == sensor_reg_ptr) {
         SENSOR_LOGI("fail.");
         return SENSOR_FAIL;
@@ -66,7 +65,7 @@ static cmr_int c2390_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
                    (0xff != sensor_reg_ptr[i].reg_value);
          i++) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, sensor_reg_ptr[i].reg_addr,
-                        sensor_reg_ptr[i].reg_value);
+                            sensor_reg_ptr[i].reg_value);
     }
 
     return ret;
@@ -111,14 +110,13 @@ static cmr_int c2390_drv_init_fps_info(cmr_handle handle) {
                 }
             }
             SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                         tempfps, trim_info[i].frame_line,
-                         trim_info[i].line_time);
+                        tempfps, trim_info[i].frame_line,
+                        trim_info[i].line_time);
             SENSOR_LOGI("mode %d,max_fps: %d ", i,
-                         fps_info->sensor_mode_fps[i].max_fps);
-            SENSOR_LOGI(
-                "is_high_fps: %d,highfps_skip_num %d",
-                fps_info->sensor_mode_fps[i].is_high_fps,
-                fps_info->sensor_mode_fps[i].high_fps_skip_num);
+                        fps_info->sensor_mode_fps[i].max_fps);
+            SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
+                        fps_info->sensor_mode_fps[i].is_high_fps,
+                        fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
         fps_info->is_init = 1;
     }
@@ -126,10 +124,9 @@ static cmr_int c2390_drv_init_fps_info(cmr_handle handle) {
     return rtn;
 }
 
-static cmr_int c2390_drv_get_static_info(cmr_handle handle,
-                                      cmr_u32 *param) {
+static cmr_int c2390_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
-    struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;;
+    struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     cmr_u32 up = 0;
     cmr_u32 down = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -157,16 +154,15 @@ static cmr_int c2390_drv_get_static_info(cmr_handle handle,
     ex_info->pdaf_supported = static_info->pdaf_supported;
     ex_info->exp_valid_frame_num = static_info->exp_valid_frame_num;
     ex_info->clamp_level = static_info->clamp_level;
-    ex_info->adgain_valid_frame_num =
-        static_info->adgain_valid_frame_num;
+    ex_info->adgain_valid_frame_num = static_info->adgain_valid_frame_num;
     ex_info->preview_skip_num = module_info->preview_skip_num;
     ex_info->capture_skip_num = module_info->capture_skip_num;
-    ex_info->name = MIPI_RAW_INFO.name;
-    ex_info->sensor_version_info = MIPI_RAW_INFO.sensor_version_info;
+    ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
+    ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    sensor_ic_print_static_info(SENSOR_NAME, ex_info);
+    sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
 }
@@ -238,6 +234,7 @@ static void c2390_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
     cmr_u32 sensor_gain = 0x00;
     cmr_u32 reg0216 = 0x00;
     cmr_u32 reg0217 = 0x00;
+    cmr_u16 sleep = 0;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -245,39 +242,75 @@ static void c2390_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
     if (gain > SENSOR_MAX_GAIN)
         gain = SENSOR_MAX_GAIN;
 
-    if (gain < SENSOR_BASE_GAIN) {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe002, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe005, 0x20);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe008, 0x01);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe00b, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x10);
-    } else if (gain <= 0x100) // <16x
-    {
-        sensor_gain = (((gain - 16) / 16) << 4) + gain % 16;
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe002, sensor_gain);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe005, 0x20);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe008, 0x01);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe00b, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x10);
-    } else if (gain <= 0x200) // <32x
-    {
-        sensor_gain = (((gain / 2 - 16) / 16) << 4) + (gain / 2) % 16;
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe002, sensor_gain);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe005, 0x10); // night mode x2
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe008, 0x01);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe00b, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x10);
-    } else // >= 32x
-    {
-        reg0216 = (gain / SENSOR_BASE_GAIN) >> 5;
-        reg0217 = (gain % (SENSOR_BASE_GAIN * 32)) / 2;
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe002, 0xf0);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe005, 0x10); // night mode x2
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe008, reg0216);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe00b, reg0217);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x10);
-    }
+    sleep = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100) & 0xff;
 
+    if (sleep == 0) {
+        if (gain < SENSOR_BASE_GAIN) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x328e, 0x20);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0216, 0x01);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0217, 0x00);
+        } else if (gain <= 0x100) // <16x
+        {
+            sensor_gain = (((gain - 16) / 16) << 4) + gain % 16;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, sensor_gain);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x328e, 0x20);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0216, 0x01);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0217, 0x00);
+        } else if (gain <= 0x200) // <32x
+        {
+            sensor_gain = (((gain / 2 - 16) / 16) << 4) + (gain / 2) % 16;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, sensor_gain);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x328e,
+                                0x10); // night mode x2
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0216, 0x01);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0217, 0x00);
+        } else // >= 32x
+        {
+            reg0216 = (gain / SENSOR_BASE_GAIN) >> 5;
+            reg0217 = (gain % (SENSOR_BASE_GAIN * 32)) / 2;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, 0xf0);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x328e,
+                                0x10); // night mode x2
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0216, reg0216);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0217, reg0217);
+        }
+    } else {
+        if (gain < SENSOR_BASE_GAIN) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe062, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe065, 0x20);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe068, 0x01);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe06b, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x12);
+        } else if (gain <= 0x100) // <16x
+        {
+            sensor_gain = (((gain - 16) / 16) << 4) + gain % 16;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe062, sensor_gain);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe065, 0x20);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe068, 0x01);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe06b, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x12);
+        } else if (gain <= 0x200) // <32x
+        {
+            sensor_gain = (((gain / 2 - 16) / 16) << 4) + (gain / 2) % 16;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe062, sensor_gain);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe065,
+                                0x10); // night mode x2
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe068, 0x01);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe06b, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x12);
+        } else // >= 32x
+        {
+            reg0216 = (gain / SENSOR_BASE_GAIN) >> 5;
+            reg0217 = (gain % (SENSOR_BASE_GAIN * 32)) / 2;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe062, 0xf0);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe065,
+                                0x10); // night mode x2
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe068, reg0216);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe06b, reg0217);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x340f, 0x12);
+        }
+    }
     SENSOR_LOGI("sensor_gain = %d\n", sensor_gain);
 }
 
@@ -303,12 +336,12 @@ static cmr_u16 c2390_drv_read_frame_length(cmr_handle handle) {
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void c2390_drv_write_frame_length(cmr_handle handle,
-                                     cmr_u32 frame_len) {
+static void c2390_drv_write_frame_length(cmr_handle handle, cmr_u32 frame_len) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, (frame_len >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340,
+                        (frame_len >> 8) & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0341, frame_len & 0xff);
 }
 
@@ -351,7 +384,7 @@ static void c2390_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
  * please don't change this function if it's necessary
  *============================================================================*/
 static cmr_u16 c2390_drv_update_exposure(cmr_handle handle, cmr_u32 shutter,
-                                      cmr_u32 dummy_line) {
+                                         cmr_u32 dummy_line) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
@@ -386,7 +419,7 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_u32 c2390_drv_power_on(cmr_handle handle, cmr_uint power_on) {
+static cmr_int c2390_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
@@ -428,7 +461,7 @@ static cmr_u32 c2390_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         usleep(1 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -455,8 +488,7 @@ static cmr_int c2390_drv_identify(cmr_handle handle, cmr_uint param) {
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is c2390 sensor");
         } else {
-            SENSOR_LOGI("Identify this is %x%x sensor", pid_value,
-                              ver_value);
+            SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
         }
     } else {
         SENSOR_LOGE("identify fail, pid_value = %x", pid_value);
@@ -485,7 +517,7 @@ static cmr_int c2390_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
 
     sns_drv_cxt->frame_length_def =
-                          sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
+        sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
 
     SENSOR_LOGI("capture_mode = %d", capture_mode);
 
@@ -503,18 +535,17 @@ static cmr_int c2390_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     if (sns_drv_cxt->ops_cb.set_mode_wait_done)
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
-
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
     cap_shutter = c2390_drv_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
     c2390_drv_write_gain(handle, cap_gain);
-    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = 0x%x",
-                 sns_drv_cxt->sensor_ev_info.preview_shutter,
-                 sns_drv_cxt->sensor_ev_info.preview_gain);
+    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = %f",
+                sns_drv_cxt->sensor_ev_info.preview_shutter,
+                sns_drv_cxt->sensor_ev_info.preview_gain);
 
     SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
-                 cap_gain);
+                cap_gain);
 snapshot_info:
     sns_drv_cxt->hdr_info.capture_shutter = cap_shutter;
     sns_drv_cxt->hdr_info.capture_gain = cap_gain;
@@ -553,7 +584,7 @@ static cmr_int c2390_drv_write_exposure(cmr_handle handle, cmr_u32 param) {
     mode = (param >> 0x1c) & 0x0f;
 
     SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
-                 exposure_line, dummy_line);
+                exposure_line, dummy_line);
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
@@ -562,8 +593,7 @@ static cmr_int c2390_drv_write_exposure(cmr_handle handle, cmr_u32 param) {
     return ret_value;
 }
 
-static cmr_int c2390_drv_write_exposure_ex(cmr_handle handle,
-                                        cmr_uint param) {
+static cmr_int c2390_drv_write_exposure_ex(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -578,9 +608,8 @@ static cmr_int c2390_drv_write_exposure_ex(cmr_handle handle,
     mode = ex->size_index;
 
     SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
-                 exposure_line, dummy_line);
-    sns_drv_cxt->frame_length_def =
-                           sns_drv_cxt->trim_tab_info[mode].frame_line;
+                exposure_line, dummy_line);
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         c2390_drv_update_exposure(handle, exposure_line, dummy_line);
@@ -617,8 +646,7 @@ static cmr_u32 isp_to_real_gain(cmr_u32 param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int c2390_drv_write_gain_value(cmr_handle handle,
-                                       cmr_uint param) {
+static cmr_int c2390_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u32 real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -642,26 +670,27 @@ static cmr_int c2390_drv_write_gain_value(cmr_handle handle,
  *
  *============================================================================*/
 static void c2390_drv_increase_hdr_exposure(cmr_handle handle,
-                                        cmr_u8 ev_multiplier) {
+                                            cmr_u8 ev_multiplier) {
     cmr_u32 shutter_multiply = 0;
     cmr_u32 gain = 0;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct hdr_info_t *hdr_info = &sns_drv_cxt->hdr_info;
 
-    shutter_multiply = hdr_info->capture_max_shutter / hdr_info->capture_shutter;
+    shutter_multiply =
+        hdr_info->capture_max_shutter / hdr_info->capture_shutter;
 
     if (0 == shutter_multiply)
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
         c2390_drv_update_exposure(handle,
-                              hdr_info->capture_shutter * ev_multiplier, 0);
+                                  hdr_info->capture_shutter * ev_multiplier, 0);
         c2390_drv_write_gain(handle, hdr_info->capture_gain);
     } else {
         gain = hdr_info->capture_gain * ev_multiplier / shutter_multiply;
-        c2390_drv_update_exposure(handle,
-                              hdr_info->capture_shutter * shutter_multiply, 0);
+        c2390_drv_update_exposure(
+            handle, hdr_info->capture_shutter * shutter_multiply, 0);
         c2390_drv_write_gain(handle, gain);
     }
 }
@@ -672,7 +701,7 @@ static void c2390_drv_increase_hdr_exposure(cmr_handle handle,
  *
  *============================================================================*/
 static void c2390_drv_decrease_hdr_exposure(cmr_handle handle,
-                                        cmr_u8 ev_divisor) {
+                                            cmr_u8 ev_divisor) {
     cmr_u16 gain_multiply = 0;
     cmr_u32 shutter = 0;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
@@ -790,7 +819,7 @@ static cmr_int c2390_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0309, 0x2e);
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0309, 0x5e);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
@@ -889,14 +918,14 @@ static struct sensor_ic_ops s_c2390_ops_tab = {
     .ex_write_exp = c2390_drv_write_exposure_ex,
     .write_gain_value = c2390_drv_write_gain_value,
 
-    .ext_ops = {
-        [SENSOR_IOCTL_EXT_FUNC].ops = c2390_drv_ext_func,
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = c2390_drv_before_snapshot,
-        [SENSOR_IOCTL_AFTER_SNAPSHOT].ops = NULL,
-        [SENSOR_IOCTL_STREAM_ON].ops = c2390_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = c2390_drv_stream_off,
-        [SENSOR_IOCTL_ACCESS_VAL].ops = c2390_drv_access_val,
-    }
+    .ext_ops =
+        {
+                [SENSOR_IOCTL_EXT_FUNC].ops = c2390_drv_ext_func,
+                [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = c2390_drv_before_snapshot,
+                [SENSOR_IOCTL_AFTER_SNAPSHOT].ops = NULL,
+                [SENSOR_IOCTL_STREAM_ON].ops = c2390_drv_stream_on,
+                [SENSOR_IOCTL_STREAM_OFF].ops = c2390_drv_stream_off,
+                [SENSOR_IOCTL_ACCESS_VAL].ops = c2390_drv_access_val,
+        }
 
 };
-

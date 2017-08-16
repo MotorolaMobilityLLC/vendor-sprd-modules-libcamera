@@ -60,7 +60,7 @@
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH 1104 // 0x450
-#define PREVIEW_FRAME_LENGTH 1104 // 0x450
+#define PREVIEW_FRAME_LENGTH 1104  // 0x450
 
 /* please ref your spec */
 #define FRAME_OFFSET 4
@@ -102,7 +102,6 @@ static uint32_t BLC_FLAG = 0;
 #define GAIN_THRESHOLD_LOW 0x50
 #define DATA_THRESHOLD 16
 #endif
-
 
 static const SENSOR_REG_T c2390_init_setting[] = {
     {0x0103, 0x01},
@@ -313,41 +312,47 @@ static const SENSOR_REG_T c2390_snapshot_setting[] = {
 };
 
 static struct sensor_res_tab_info s_c2390_resolution_tab_raw[VENDOR_NUM] = {
-    {
-      .module_id = MODULE_SUNNY,
-      .reg_tab = {
-        {ADDR_AND_LEN_OF_ARRAY(c2390_init_setting), PNULL, 0,
-        .width = 0, .height = 0,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+    {.module_id = MODULE_SUNNY,
+     .reg_tab = {{ADDR_AND_LEN_OF_ARRAY(c2390_init_setting), PNULL, 0,
+                  .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(c2390_preview_setting), PNULL, 0,
-        .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                 {ADDR_AND_LEN_OF_ARRAY(c2390_preview_setting), PNULL, 0,
+                  .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
+                  .xclk_to_sensor = EX_MCLK,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(c2390_snapshot_setting), PNULL, 0,
-        .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
-    }
-/*If there are multiple modules,please add here*/
+                 {ADDR_AND_LEN_OF_ARRAY(c2390_snapshot_setting), PNULL, 0,
+                  .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
+                  .xclk_to_sensor = EX_MCLK,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
+    /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_TRIM_T s_c2390_resolution_trim_tab[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .trim_info = {
-       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-       {.trim_start_x = 0, .trim_start_y = 0,
-        .trim_width = PREVIEW_WIDTH,   .trim_height = PREVIEW_HEIGHT,
-        .line_time = PREVIEW_LINE_TIME, .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
-        .frame_line = PREVIEW_FRAME_LENGTH,
-        .scaler_trim = {.x = 0, .y = 0, .w = PREVIEW_WIDTH, .h = PREVIEW_HEIGHT}},
-       {
-        .trim_start_x = 0,.trim_start_y = 0,
-        .trim_width = SNAPSHOT_WIDTH,.trim_height = SNAPSHOT_HEIGHT,
-        .line_time = SNAPSHOT_LINE_TIME,.bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
-        .frame_line = SNAPSHOT_FRAME_LENGTH,
-        .scaler_trim = {.x = 0, .y = 0, .w = SNAPSHOT_WIDTH, .h = SNAPSHOT_HEIGHT}},
-      }}
+    {.module_id = MODULE_SUNNY,
+     .trim_info =
+         {
+             {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = PREVIEW_WIDTH,
+              .trim_height = PREVIEW_HEIGHT,
+              .line_time = PREVIEW_LINE_TIME,
+              .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
+              .frame_line = PREVIEW_FRAME_LENGTH,
+              .scaler_trim =
+                  {.x = 0, .y = 0, .w = PREVIEW_WIDTH, .h = PREVIEW_HEIGHT}},
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = SNAPSHOT_WIDTH,
+              .trim_height = SNAPSHOT_HEIGHT,
+              .line_time = SNAPSHOT_LINE_TIME,
+              .bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
+              .frame_line = SNAPSHOT_FRAME_LENGTH,
+              .scaler_trim =
+                  {.x = 0, .y = 0, .w = SNAPSHOT_WIDTH, .h = SNAPSHOT_HEIGHT}},
+         }}
 
     /*If there are multiple modules,please add here*/
 };
@@ -384,76 +389,74 @@ static SENSOR_VIDEO_INFO_T s_c2390_video_info[SENSOR_MODE_MAX] = {
 
 static SENSOR_STATIC_INFO_T s_c2390_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .static_info = {
-        .f_num = 220,
-        .focal_length = 346,
-        .max_fps = 0,
-        .max_adgain = 8,
-        .ois_supported = 0,
-        .pdaf_supported = 0,
-        .exp_valid_frame_num = 1,
-        .clamp_level = 0,
-        .adgain_valid_frame_num = 1,
-        .fov_info = {{4.614f, 3.444f}, 4.222f}}
-    }
+     .static_info = {.f_num = 220,
+                     .focal_length = 346,
+                     .max_fps = 0,
+                     .max_adgain = 8,
+                     .ois_supported = 0,
+                     .pdaf_supported = 0,
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 0,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
     /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_MODE_FPS_INFO_T s_c2390_mode_fps_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-       {.is_init = 0,
-         {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
-    }
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
     /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_module_info s_c2390_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {
-         .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info =
+         {
+             .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
+             .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
-         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
-                                SENSOR_I2C_FREQ_400,
+             .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                                    SENSOR_I2C_FREQ_400,
 
-         .avdd_val = SENSOR_AVDD_3300MV,
-         .iovdd_val = SENSOR_AVDD_1800MV,
-         .dvdd_val = SENSOR_AVDD_1500MV,
+             .avdd_val = SENSOR_AVDD_3300MV,
+             .iovdd_val = SENSOR_AVDD_1800MV,
+             .dvdd_val = SENSOR_AVDD_1500MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+             .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-         .preview_skip_num = 2,
-         .capture_skip_num = 3,
-         .mipi_cap_skip_num = 0,
-         .preview_deci_num = 0,
-         .video_preview_deci_num = 0,
+             .preview_skip_num = 3,
+             .capture_skip_num = 3,
+             .mipi_cap_skip_num = 0,
+             .preview_deci_num = 0,
+             .video_preview_deci_num = 0,
 
-         .threshold_eb = 0,
-         .threshold_mode = 0,
-         .threshold_start = 0,
-         .threshold_end = 0,
+             .threshold_eb = 0,
+             .threshold_mode = 0,
+             .threshold_start = 0,
+             .threshold_end = 0,
 
-         .sensor_interface = {
-              .type = SENSOR_INTERFACE_TYPE_CSI2,
-              .bus_width = LANE_NUM,
-              .pixel_width = RAW_BITS,
-              .is_loose = 0,
-          },
+             .sensor_interface =
+                 {
+                     .type = SENSOR_INTERFACE_TYPE_CSI2,
+                     .bus_width = LANE_NUM,
+                     .pixel_width = RAW_BITS,
+                     .is_loose = 0,
+                 },
 
-         .change_setting_skip_num = 2,
-         .horizontal_view_angle = 65,
-         .vertical_view_angle = 60,
-      }
-    }
-/*If there are multiple modules,please add here*/
+             .change_setting_skip_num = 2,
+             .horizontal_view_angle = 65,
+             .vertical_view_angle = 60,
+         }}
+    /*If there are multiple modules,please add here*/
 };
 
 /*==============================================================================
@@ -461,7 +464,7 @@ static struct sensor_module_info s_c2390_module_info_tab[VENDOR_NUM] = {
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
- static struct sensor_ic_ops s_c2390_ops_tab;
+static struct sensor_ic_ops s_c2390_ops_tab;
 struct sensor_raw_info *s_c2390_mipi_raw_info_ptr = &s_c2390_mipi_raw_info;
 
 SENSOR_INFO_T g_c2390_mipi_raw_info = {
@@ -470,10 +473,11 @@ SENSOR_INFO_T g_c2390_mipi_raw_info = {
 
     .environment_mode = SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
 
-    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL | SENSOR_IMAGE_EFFECT_BLACKWHITE |
-                    SENSOR_IMAGE_EFFECT_RED | SENSOR_IMAGE_EFFECT_GREEN |
-                    SENSOR_IMAGE_EFFECT_BLUE | SENSOR_IMAGE_EFFECT_YELLOW |
-                    SENSOR_IMAGE_EFFECT_NEGATIVE | SENSOR_IMAGE_EFFECT_CANVAS,
+    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL |
+                    SENSOR_IMAGE_EFFECT_BLACKWHITE | SENSOR_IMAGE_EFFECT_RED |
+                    SENSOR_IMAGE_EFFECT_GREEN | SENSOR_IMAGE_EFFECT_BLUE |
+                    SENSOR_IMAGE_EFFECT_YELLOW | SENSOR_IMAGE_EFFECT_NEGATIVE |
+                    SENSOR_IMAGE_EFFECT_CANVAS,
 
     .wb_mode = 0,
     .step_count = 7,
@@ -484,12 +488,12 @@ SENSOR_INFO_T g_c2390_mipi_raw_info = {
 
     .identify_count = 1,
 
-    .identify_code ={{c2390_PID_ADDR, c2390_PID_VALUE},
-                     {c2390_VER_ADDR, c2390_VER_VALUE}},
+    .identify_code = {{c2390_PID_ADDR, c2390_PID_VALUE},
+                      {c2390_VER_ADDR, c2390_VER_VALUE}},
 
     .source_width_max = SNAPSHOT_WIDTH,
     .source_height_max = SNAPSHOT_HEIGHT,
-    .name = SENSOR_NAME,
+    .name = (cmr_s8 *)SENSOR_NAME,
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 
@@ -500,8 +504,7 @@ SENSOR_INFO_T g_c2390_mipi_raw_info = {
 
     .raw_info_ptr = &s_c2390_mipi_raw_info_ptr,
     .video_tab_info_ptr = s_c2390_video_info,
-    .sensor_version_info = (cmr_s8 *) "c2390_v1",
+    .sensor_version_info = (cmr_s8 *)"c2390_v1",
 };
 
 #endif
-

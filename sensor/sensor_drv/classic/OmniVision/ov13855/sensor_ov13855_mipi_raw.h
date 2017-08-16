@@ -478,7 +478,8 @@ static SENSOR_STATIC_INFO_T s_ov13855_static_info[VENDOR_NUM] = {
                      .pdaf_supported = 0,
 
 #ifdef CONFIG_CAMERA_PDAF_TYPE
-                     .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
+                     .pdaf_supported =
+                         CONFIG_CAMERA_PDAF_TYPE, // pdaf_supported;
 #else
                      .pdaf_supported = 0,
 #endif

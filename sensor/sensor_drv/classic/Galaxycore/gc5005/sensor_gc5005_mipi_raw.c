@@ -15,16 +15,15 @@
  * V4.0
  */
 #define LOG_TAG "sensor_gc5005"
-
 #include "sensor_gc5005_mipi_raw.h"
 
-#define VIDEO_INFO    s_gc5005_video_info
-#define FPS_INFO      s_gc5005_mode_fps_info
-#define RES_TRIM_TAB  s_gc5005_resolution_trim_tab
-#define STATIC_INFO   s_gc5005_static_info
+#define VIDEO_INFO s_gc5005_video_info
+#define FPS_INFO s_gc5005_mode_fps_info
+#define RES_TRIM_TAB s_gc5005_resolution_trim_tab
+#define STATIC_INFO s_gc5005_static_info
 #define MIPI_RAW_INFO g_gc5005_mipi_raw_info
-#define MODULE_INFO   s_gc5005_module_info_tab
-#define RES_TAB_RAW   s_gc5005_resolution_tab_raw
+#define MODULE_INFO s_gc5005_module_info_tab
+#define RES_TAB_RAW s_gc5005_resolution_tab_raw
 /*==============================================================================
  * Description:
  * set video mode
@@ -37,11 +36,11 @@ static cmr_int gc5005_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
     cmr_s32 ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;
-    if(sns_drv_cxt->ops_cb.get_mode) {
+    if (sns_drv_cxt->ops_cb.get_mode) {
         ret = sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &mode);
         if (SENSOR_SUCCESS != ret) {
             SENSOR_LOGI("fail.");
@@ -61,9 +60,10 @@ static cmr_int gc5005_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
     }
 
     for (i = 0x00; (0xffff != sensor_reg_ptr[i].reg_addr) ||
-                   (0xff != sensor_reg_ptr[i].reg_value); i++) {
+                   (0xff != sensor_reg_ptr[i].reg_value);
+         i++) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, sensor_reg_ptr[i].reg_addr,
-                        sensor_reg_ptr[i].reg_value);
+                            sensor_reg_ptr[i].reg_value);
     }
 
     return 0;
@@ -77,12 +77,12 @@ static cmr_int gc5005_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
 static cmr_int gc5005_drv_init_fps_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
-    if(!(fps_info && static_info && trim_info)) {
+    if (!(fps_info && static_info && trim_info)) {
         SENSOR_LOGE("error:null pointer checked.return");
         return SENSOR_FAIL;
     }
@@ -112,14 +112,13 @@ static cmr_int gc5005_drv_init_fps_info(cmr_handle handle) {
                 }
             }
             SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                         tempfps, trim_info[i].frame_line,
-                         trim_info[i].line_time);
+                        tempfps, trim_info[i].frame_line,
+                        trim_info[i].line_time);
             SENSOR_LOGI("mode %d,max_fps: %d ", i,
-                         fps_info->sensor_mode_fps[i].max_fps);
-            SENSOR_LOGI(
-                "is_high_fps: %d,highfps_skip_num %d",
-                fps_info->sensor_mode_fps[i].is_high_fps,
-                fps_info->sensor_mode_fps[i].high_fps_skip_num);
+                        fps_info->sensor_mode_fps[i].max_fps);
+            SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
+                        fps_info->sensor_mode_fps[i].is_high_fps,
+                        fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
         fps_info->is_init = 1;
     }
@@ -134,12 +133,12 @@ static cmr_int gc5005_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_u32 down = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
-    if(!(fps_info && static_info && module_info)) {
+    if (!(fps_info && static_info && module_info)) {
         SENSOR_LOGE("error:null pointer checked.return");
         return SENSOR_FAIL;
     }
@@ -165,7 +164,7 @@ static cmr_int gc5005_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    sensor_ic_print_static_info(SENSOR_NAME,ex_info);
+    sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
 }
@@ -176,7 +175,7 @@ static cmr_int gc5005_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
 
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
 
     // make sure have inited fps of every sensor mode.
@@ -188,7 +187,8 @@ static cmr_int gc5005_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     fps_info->max_fps = fps_data->sensor_mode_fps[sensor_mode].max_fps;
     fps_info->min_fps = fps_data->sensor_mode_fps[sensor_mode].min_fps;
     fps_info->is_high_fps = fps_data->sensor_mode_fps[sensor_mode].is_high_fps;
-    fps_info->high_fps_skip_num = fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
+    fps_info->high_fps_skip_num =
+        fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
     SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
     SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
     SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
@@ -260,7 +260,7 @@ static uint16_t gc5005_drv_read_gain(void) {
 
 static void gc5005_drv_write_gain(cmr_handle handle, uint32_t gain) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     uint16_t temp = 0x00;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
@@ -379,8 +379,9 @@ static uint16_t gc5005_drv_read_frame_length(void) {
  * please modify this function acording your spec
  *============================================================================*/
 static void gc5005_drv_write_frame_length(cmr_handle handle,
-                                      uint32_t frame_len) {
-    //	hw_sensor_write_reg(sns_drv_cxt->hw_handle, (0xYYYY, (frame_len >> 8) & 0xff);
+                                          uint32_t frame_len) {
+    //	hw_sensor_write_reg(sns_drv_cxt->hw_handle, (0xYYYY, (frame_len >> 8) &
+    // 0xff);
     //	hw_sensor_write_reg(sns_drv_cxt->hw_handle, (0xYYYY, frame_len & 0xff);
 }
 
@@ -407,7 +408,7 @@ static cmr_u32 gc5005_drv_read_shutter(void) {
  *============================================================================*/
 static void gc5005_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if (shutter < 4)
         shutter = 4;
@@ -435,13 +436,13 @@ static void gc5005_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static cmr_u16 gc5005_drv_update_exposure(cmr_handle handle,
-                                       cmr_u32 shutter, cmr_u32 dummy_line) {
+static cmr_u16 gc5005_drv_update_exposure(cmr_handle handle, cmr_u32 shutter,
+                                          cmr_u32 dummy_line) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     fr_len = sns_drv_cxt->frame_length_def;
 
     if (1 == SUPPORT_AUTO_FRAME_LENGTH)
@@ -471,7 +472,7 @@ write_sensor_shutter:
  *============================================================================*/
 static cmr_int gc5005_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
 
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
@@ -479,7 +480,6 @@ static cmr_int gc5005_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
     BOOLEAN power_down = MIPI_RAW_INFO.power_down_level;
     BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
-
 
     if (SENSOR_TRUE == power_on) {
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
@@ -505,7 +505,7 @@ static cmr_int gc5005_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
     }
-    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -523,7 +523,7 @@ static cmr_int gc5005_get_otp_info(struct otp_info_t *otp_info) {
     // identify otp information
     for (i = 0; i < NUMBER_OF_ARRAY(s_gc5005_raw_param_tab); i++) {
         SENSOR_LOGI("identify module_id=0x%x",
-                     s_gc5005_raw_param_tab[i].param_id);
+                    s_gc5005_raw_param_tab[i].param_id);
 
         if (PNULL != s_gc5005_raw_param_tab[i].identify_otp) {
             // set default value;
@@ -534,7 +534,7 @@ static cmr_int gc5005_get_otp_info(struct otp_info_t *otp_info) {
                 // if (s_gc5005_raw_param_tab[i].param_id== otp_info->module_id)
                 // {
                 SENSOR_LOGI("identify otp sucess! module_id=0x%x",
-                             s_gc5005_raw_param_tab[i].param_id);
+                            s_gc5005_raw_param_tab[i].param_id);
                 ret = SENSOR_SUCCESS;
                 break;
                 //}
@@ -570,7 +570,7 @@ static cmr_int gc5005_apply_otp(struct otp_info_t *otp_info, int id) {
 
         if (SENSOR_SUCCESS == s_gc5005_raw_param_tab[id].cfg_otp(otp_info)) {
             SENSOR_LOGI("apply otp parameters sucess! module_id=0x%x",
-                         s_gc5005_raw_param_tab[id].param_id);
+                        s_gc5005_raw_param_tab[id].param_id);
             ret = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGI("update_otp failed!");
@@ -618,7 +618,7 @@ static cmr_int gc5005_drv_identify(cmr_handle handle, cmr_uint param) {
     cmr_u16 ver_value = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("mipi raw identify");
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC5005_PID_ADDR);
@@ -630,8 +630,7 @@ static cmr_int gc5005_drv_identify(cmr_handle handle, cmr_uint param) {
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is gc5005 sensor");
         } else {
-            SENSOR_LOGI("Identify this is %x%x sensor", pid_value,
-                              ver_value);
+            SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
         }
     } else {
         SENSOR_LOGE("identify fail, pid_value = %x", pid_value);
@@ -656,8 +655,7 @@ static cmr_uint gc5005_drv_get_trim_tab(cmr_handle handle,
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int gc5005_drv_before_snapshot(cmr_handle handle,
-                                       cmr_uint param) {
+static cmr_int gc5005_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
     cmr_u32 gain = 0;
@@ -666,7 +664,7 @@ static cmr_int gc5005_drv_before_snapshot(cmr_handle handle,
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
@@ -683,9 +681,9 @@ static cmr_int gc5005_drv_before_snapshot(cmr_handle handle,
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    if(sns_drv_cxt->ops_cb.set_mode)
+    if (sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if(sns_drv_cxt->ops_cb.set_mode_wait_done)
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
@@ -694,11 +692,11 @@ static cmr_int gc5005_drv_before_snapshot(cmr_handle handle,
     cap_gain = gain;
     gc5005_drv_write_gain(handle, cap_gain);
     SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = %f",
-                 sns_drv_cxt->sensor_ev_info.preview_shutter,
-                 sns_drv_cxt->sensor_ev_info.preview_gain);
+                sns_drv_cxt->sensor_ev_info.preview_shutter,
+                sns_drv_cxt->sensor_ev_info.preview_gain);
 
     SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
-                 cap_gain);
+                cap_gain);
 snapshot_info:
     sns_drv_cxt->hdr_info.capture_shutter = cap_shutter;
     sns_drv_cxt->hdr_info.capture_gain = cap_gain;
@@ -707,9 +705,10 @@ snapshot_info:
      */
     sns_drv_cxt->hdr_info.capture_max_shutter = 1000000 / cap_linetime;
 
-    if(sns_drv_cxt->ops_cb.set_exif_info) {
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          cap_shutter);
     } else {
         sns_drv_cxt->exif_info.exposure_time = cap_shutter;
     }
@@ -722,8 +721,7 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static cmr_int gc5005_drv_write_exposure(cmr_handle handle,
-                                                    cmr_uint param) {
+static cmr_int gc5005_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -731,8 +729,8 @@ static cmr_int gc5005_drv_write_exposure(cmr_handle handle,
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    SENSOR_IC_CHECK_PTR(ex);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
 
     exposure_line = ex->exposure;
@@ -740,8 +738,8 @@ static cmr_int gc5005_drv_write_exposure(cmr_handle handle,
     mode = ex->size_index;
 
     SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
-                 exposure_line, dummy_line);
-    sns_drv_cxt->frame_length_def =  trim_info[mode].frame_line;
+                exposure_line, dummy_line);
+    sns_drv_cxt->frame_length_def = trim_info[mode].frame_line;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         gc5005_drv_update_exposure(handle, exposure_line, dummy_line);
@@ -779,12 +777,11 @@ static cmr_u32 isp_to_real_gain(cmr_uint param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int gc5005_drv_write_gain_value(cmr_handle handle,
-                                                      cmr_uint param) {
+static cmr_int gc5005_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u32 real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     real_gain = isp_to_real_gain(param);
 
@@ -804,11 +801,11 @@ static cmr_int gc5005_drv_write_gain_value(cmr_handle handle,
  *
  *============================================================================*/
 static void gc5005_drv_increase_hdr_exposure(cmr_handle handle,
-                                                        cmr_u8 ev_multiplier) {
+                                             cmr_u8 ev_multiplier) {
     struct hdr_info_t *hdr_info = NULL;
 
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     hdr_info = &sns_drv_cxt->hdr_info;
 
     cmr_u32 shutter_multiply =
@@ -819,8 +816,8 @@ static void gc5005_drv_increase_hdr_exposure(cmr_handle handle,
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
-        gc5005_drv_update_exposure(handle,
-                               hdr_info->capture_shutter * ev_multiplier, 0);
+        gc5005_drv_update_exposure(
+            handle, hdr_info->capture_shutter * ev_multiplier, 0);
         gc5005_drv_write_gain(handle, hdr_info->capture_gain);
     } else {
         gain = hdr_info->capture_gain * ev_multiplier / shutter_multiply;
@@ -836,13 +833,13 @@ static void gc5005_drv_increase_hdr_exposure(cmr_handle handle,
  *
  *============================================================================*/
 static void gc5005_drv_decrease_hdr_exposure(cmr_handle handle,
-                                         cmr_u8 ev_divisor) {
+                                             cmr_u8 ev_divisor) {
     cmr_u16 gain_multiply = 0;
     cmr_u32 shutter = 0;
     struct hdr_info_t *hdr_info = NULL;
 
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     hdr_info = &sns_drv_cxt->hdr_info;
 
     gain_multiply = hdr_info->capture_gain / SENSOR_BASE_GAIN;
@@ -921,7 +918,7 @@ static cmr_int gc5005_drv_ext_func(cmr_handle handle, cmr_uint param) {
 static cmr_int gc5005_drv_stream_on(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x03);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x10, 0x91);
@@ -938,13 +935,13 @@ static cmr_int gc5005_drv_stream_on(cmr_handle handle, cmr_uint param) {
 static cmr_int gc5005_drv_stream_off(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x03);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x10, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
 
-    usleep(50 * 1000);    /*delay*/
+    usleep(50 * 1000); /*delay*/
 
     return 0;
 }
@@ -955,14 +952,14 @@ static cmr_int gc5005_drv_access_val(cmr_handle handle, cmr_uint param) {
     uint16_t tmp;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param_ptr);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("param_ptr:%p,param_ptr->type=%x", param_ptr, param_ptr->type);
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_SHUTTER:
         break;
     case SENSOR_VAL_TYPE_GET_RELOADINFO: {
-      } break;
+    } break;
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
         rtn = gc5005_drv_get_static_info(handle, param_ptr->pval);
         break;
@@ -978,44 +975,49 @@ static cmr_int gc5005_drv_access_val(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
-static cmr_int gc5005_drv_handle_create(
-          struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
+static cmr_int
+gc5005_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
+                         cmr_handle *sns_ic_drv_handle) {
     cmr_int ret = SENSOR_SUCCESS;
-    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
 
-    ret = sensor_ic_drv_create(init_param,sns_ic_drv_handle);
-    if(SENSOR_SUCCESS != ret)
+    ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
+    if (SENSOR_SUCCESS != ret)
         return SENSOR_FAIL;
     sns_drv_cxt = *sns_ic_drv_handle;
 
-    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
-    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
-    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
-    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
+                                    MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW),
+                                        RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
+                                  RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO),
+                                    STATIC_INFO);
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
 
     /*add private here*/
     return ret;
 }
 
-static cmr_int gc5005_drv_handle_delete(cmr_handle handle, cmr_uint *param) {
+static cmr_int gc5005_drv_handle_delete(cmr_handle handle, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
 
     /*if has private data,you must release it here*/
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    ret = sensor_ic_drv_delete(handle,param);
+    ret = sensor_ic_drv_delete(handle, param);
     return ret;
 }
 
-static cmr_int gc5005_drv_get_private_data(cmr_handle handle,
-                                                     cmr_uint cmd, void**param){
+static cmr_int gc5005_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
+                                           void **param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
 
-    ret = sensor_ic_get_private_data(handle,cmd, param);
+    ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
 }
 
@@ -1036,11 +1038,10 @@ static struct sensor_ic_ops s_gc5005_ops_tab = {
     .ex_write_exp = gc5005_drv_write_exposure,
     .write_gain_value = gc5005_drv_write_gain_value,
     .ext_ops = {
-        [SENSOR_IOCTL_EXT_FUNC].ops = gc5005_drv_ext_func,
-        [SENSOR_IOCTL_VIDEO_MODE].ops = gc5005_drv_set_video_mode, 
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = gc5005_drv_before_snapshot,
-        [SENSOR_IOCTL_STREAM_ON].ops = gc5005_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = gc5005_drv_stream_off,
-        [SENSOR_IOCTL_ACCESS_VAL].ops = gc5005_drv_access_val,
-    }
-};
+            [SENSOR_IOCTL_EXT_FUNC].ops = gc5005_drv_ext_func,
+            [SENSOR_IOCTL_VIDEO_MODE].ops = gc5005_drv_set_video_mode,
+            [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = gc5005_drv_before_snapshot,
+            [SENSOR_IOCTL_STREAM_ON].ops = gc5005_drv_stream_on,
+            [SENSOR_IOCTL_STREAM_OFF].ops = gc5005_drv_stream_off,
+            [SENSOR_IOCTL_ACCESS_VAL].ops = gc5005_drv_access_val,
+    }};

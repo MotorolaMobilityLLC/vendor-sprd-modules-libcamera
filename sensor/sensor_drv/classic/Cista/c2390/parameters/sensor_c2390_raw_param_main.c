@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-
 /************************************************************************/
-
 
 //#ifdef WIN32
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
-
 
 /* Begin Include */
 #include "sensor_c2390_raw_param_common.c"
@@ -36,22 +32,17 @@
 
 //#endif
 
-
 /************************************************************************/
 
-
 /* IspToolVersion=R1.17.0501 */
-
 
 /* Capture Sizes:
 	1920x1080,1920x1080
 */
 
-
 /************************************************************************/
 
-
-static struct sensor_raw_resolution_info_tab s_c2390_trim_info=
+static struct sensor_raw_resolution_info_tab s_c2390_trim_info =
 {
 	0x00,
 	{
@@ -68,20 +59,30 @@ static struct sensor_raw_resolution_info_tab s_c2390_trim_info=
 	}
 };
 
-
 /************************************************************************/
-
 
 static struct sensor_raw_ioctrl s_c2390_ioctrl=
 {
 	0,
 	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 	0
 };
 
-
 /************************************************************************/
-
 
 static struct sensor_version_info s_c2390_version_info=
 {
@@ -111,9 +112,7 @@ static struct sensor_version_info s_c2390_version_info=
 	0x00000000
 };
 
-
 /************************************************************************/
-
 
 static uint32_t s_c2390_libuse_info[]=
 {
@@ -127,9 +126,7 @@ static uint32_t s_c2390_libuse_info[]=
 	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 };
 
-
 /************************************************************************/
-
 
 static struct sensor_raw_info s_c2390_mipi_raw_info=
 {
@@ -188,3 +185,4 @@ static struct sensor_raw_info s_c2390_mipi_raw_info=
 		&s_c2390_default_nr_level_map_param,
 	},
 };
+

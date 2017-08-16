@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sensor_c2580_mipi_raw.h"
+
 #define LOG_TAG "c2580_mipi_raw"
+#include "sensor_c2580_mipi_raw.h"
 
 #define FPS_INFO s_c2580_mode_fps_info
 #define STATIC_INFO s_c2580_static_info
@@ -148,12 +149,12 @@ static cmr_int c2580_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->adgain_valid_frame_num = static_info->adgain_valid_frame_num;
     ex_info->preview_skip_num = module_info->preview_skip_num;
     ex_info->capture_skip_num = module_info->capture_skip_num;
-    ex_info->name = MIPI_RAW_INFO.name;
-    ex_info->sensor_version_info = MIPI_RAW_INFO.sensor_version_info;
+    ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
+    ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    sensor_ic_print_static_info(SENSOR_NAME, ex_info);
+    sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
 }
@@ -192,8 +193,8 @@ static cmr_int c2580_drv_set_init(cmr_handle handle) {
     SENSOR_REG_T *sensor_reg_ptr = (SENSOR_REG_T *)c2580_1600_1200_setting;
     usleep(100 * 1000);
 
-    for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) &&
-                (0xFF != sensor_reg_ptr[i].reg_value);
+    for (i = 0; i < sizeof(c2580_1600_1200_setting) /
+                        sizeof(c2580_1600_1200_setting[0]);
          i++) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, sensor_reg_ptr[i].reg_addr,
                             sensor_reg_ptr[i].reg_value);
@@ -209,7 +210,7 @@ static cmr_int c2580_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    c2580_drv_set_init(handle);
+    // c2580_drv_set_init(handle);
     temp = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
 
     temp = temp | 0x01;
@@ -261,7 +262,7 @@ static cmr_int c2580_drv_access_val(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
-static cmr_u32 c2580_drv_stream_off(cmr_handle handle, cmr_uint param) {
+static cmr_int c2580_drv_stream_off(cmr_handle handle, cmr_uint param) {
     int temp;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -396,7 +397,7 @@ static int c2580_drv_grouphold_off(cmr_handle handle) {
 
 static void _calculate_hdr_exposure(cmr_handle handle, int capture_gain16,
                                     int capture_VTS, int capture_shutter) {
-    //c2580_drv_grouphold_on();
+    // c2580_drv_grouphold_on();
 
     // write capture gain
     c2580_drv_set_gain16(handle, capture_gain16);
@@ -408,7 +409,7 @@ static void _calculate_hdr_exposure(cmr_handle handle, int capture_gain16,
     }
     c2580_drv_set_shutter(handle, capture_shutter);
 
-    //c2580_drv_grouphold_off();
+    // c2580_drv_grouphold_off();
 }
 
 static cmr_int c2580_drv_power_on(cmr_handle handle, cmr_uint power_on) {
@@ -454,7 +455,7 @@ static cmr_int c2580_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         usleep(2000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("Power_On(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("Power_On(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -490,7 +491,7 @@ static cmr_int c2580_drv_identify(cmr_handle handle, cmr_uint param) {
     return ret_value;
 }
 
-static cmr_int c2580_drv_write_exposure(cmr_handle handle, cmr_u32 param) {
+static cmr_int c2580_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 expsure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -509,7 +510,7 @@ static cmr_int c2580_drv_write_exposure(cmr_handle handle, cmr_u32 param) {
                 dummy_line, size_index);
 
     // group hold on
-    //c2580_drv_grouphold_on();
+    // c2580_drv_grouphold_on();
 
     max_frame_len = sns_drv_cxt->trim_tab_info[size_index].frame_line;
 
@@ -519,7 +520,8 @@ static cmr_int c2580_drv_write_exposure(cmr_handle handle, cmr_u32 param) {
                         : max_frame_len;
         frame_len = (frame_len + 1) >> 1 << 1;
         frame_len_cur = c2580_drv_get_vts(handle);
-        SENSOR_LOGI("frame_len_cur:%d, frame_len:%d,", frame_len_cur, frame_len);
+        SENSOR_LOGI("frame_len_cur:%d, frame_len:%d,", frame_len_cur,
+                    frame_len);
 
         if (frame_len_cur != frame_len) {
             ret_value = c2580_drv_set_vts(handle, frame_len);
@@ -539,7 +541,7 @@ static cmr_int c2580_drv_write_gain(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u32 isp_gain = 0x00;
     cmr_u32 sensor_gain = 0x00;
-    SENSOR_LOGI("write_gain:0x%x", param);
+    SENSOR_LOGI("write_gain:0x%lx", param);
 
     isp_gain = ((param & 0xf) + 16) * (((param >> 4) & 0x01) + 1) *
                (((param >> 5) & 0x01) + 1);
@@ -552,11 +554,11 @@ static cmr_int c2580_drv_write_gain(cmr_handle handle, cmr_uint param) {
     ret_value = c2580_drv_set_gain16(handle, sensor_gain);
 
     // group hold off
-    //c2580_drv_grouphold_off();
+    // c2580_drv_grouphold_off();
     return ret_value;
 }
 
-static cmr_int c2580_drv_before_snapshot(cmr_handle handle, cmr_u32 param) {
+static cmr_int c2580_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 capture_exposure, preview_maxline;
     cmr_u32 capture_maxline, preview_exposure;
     cmr_u32 capture_mode = param & 0xffff;
@@ -569,7 +571,7 @@ static cmr_int c2580_drv_before_snapshot(cmr_handle handle, cmr_u32 param) {
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
 
-    SENSOR_LOGI("mode: 0x%08x", param);
+    SENSOR_LOGI("mode: 0x%lx", param);
 
     if (preview_mode == capture_mode) {
         SENSOR_LOGI("prv mode equal to capmode");
@@ -594,7 +596,7 @@ static cmr_int c2580_drv_before_snapshot(cmr_handle handle, cmr_u32 param) {
 
     SENSOR_LOGI("preview_exposure:%d, capture_exposure:%d, capture_maxline: %d",
                 preview_exposure, capture_exposure, capture_maxline);
-    //c2580_drv_grouphold_on();
+    // c2580_drv_grouphold_on();
     if (capture_exposure > (capture_maxline - c2580_ES_OFFSET)) {
         capture_maxline = capture_exposure + c2580_ES_OFFSET;
         capture_maxline = (capture_maxline + 1) >> 1 << 1;
@@ -602,7 +604,7 @@ static cmr_int c2580_drv_before_snapshot(cmr_handle handle, cmr_u32 param) {
     }
 
     c2580_drv_set_shutter(handle, capture_exposure);
-//c2580_drv_grouphold_off();
+// c2580_drv_grouphold_off();
 CFG_INFO:
     pri_data->cap_shutter = c2580_drv_get_shutter(handle);
     pri_data->cap_vts = c2580_drv_get_vts(handle);
@@ -620,7 +622,7 @@ CFG_INFO:
 }
 
 static cmr_int c2580_drv_after_snapshot(cmr_handle handle, cmr_uint param) {
-    SENSOR_LOGI("after_snapshot mode:%d", param);
+    SENSOR_LOGI("after_snapshot mode:%ld", param);
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -662,30 +664,29 @@ static cmr_int c2580_drv_set_ev(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
-static cmr_int c2580_drv_save_load_exposure(cmr_handle handle,
-                                                        cmr_uint param) {
+static cmr_int c2580_drv_save_load_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR sl_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(sl_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    PRIVATE_DATA *pri_data = sns_drv_cxt->privata_data.buffer;
+    PRIVATE_DATA *pri_data = (PRIVATE_DATA *)sns_drv_cxt->privata_data.buffer;
     SENSOR_IC_CHECK_PTR(pri_data);
 
     cmr_u32 sl_param = sl_ptr->param;
     if (sl_param) {
         /*load exposure params to sensor*/
-        SENSOR_LOGI("load shutter 0x%x gain 0x%x", pri_data->shutter,
+        SENSOR_LOGI("load shutter 0x%lx gain 0x%lx", pri_data->shutter,
                     pri_data->gain_bak);
-        //c2580_drv_grouphold_on();
+        // c2580_drv_grouphold_on();
         c2580_drv_set_gain16(handle, pri_data->gain_bak);
         c2580_drv_set_shutter(handle, pri_data->shutter);
-        //c2580_drv_grouphold_off();
+        // c2580_drv_grouphold_off();
     } else {
         /*ave exposure params from sensor*/
         pri_data->shutter = c2580_drv_get_shutter(handle);
         pri_data->gain_bak = c2580_drv_get_gain16(handle);
-        SENSOR_LOGI("save shutter 0x%x gain 0x%x", pri_data->shutter,
+        SENSOR_LOGI("save shutter 0x%lx gain 0x%lx", pri_data->shutter,
                     pri_data->gain_bak);
     }
     return rtn;
@@ -777,7 +778,7 @@ static cmr_int c2580_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
-//static static SENSOR_IOCTL_FUNC_TAB_T s_c2580_ioctl_func_tab = {
+// static static SENSOR_IOCTL_FUNC_TAB_T s_c2580_ioctl_func_tab = {
 static struct sensor_ic_ops s_c2580_ops_tab = {
     .create_handle = c2580_drv_handle_create,
     .delete_handle = c2580_drv_handle_delete,
@@ -788,13 +789,14 @@ static struct sensor_ic_ops s_c2580_ops_tab = {
     .ex_write_exp = c2580_drv_write_exposure,
     .write_gain_value = c2580_drv_write_gain,
 
-    .ext_ops = {
-        [SENSOR_IOCTL_EXT_FUNC].ops = c2580_drv_ext_func,
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = c2580_drv_before_snapshot,
-        [SENSOR_IOCTL_AFTER_SNAPSHOT].ops = c2580_drv_after_snapshot,
-        [SENSOR_IOCTL_STREAM_ON].ops = c2580_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = c2580_drv_stream_off,
-        [SENSOR_IOCTL_ACCESS_VAL].ops = c2580_drv_access_val,
-    }
+    .ext_ops =
+        {
+                [SENSOR_IOCTL_EXT_FUNC].ops = c2580_drv_ext_func,
+                [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = c2580_drv_before_snapshot,
+                [SENSOR_IOCTL_AFTER_SNAPSHOT].ops = c2580_drv_after_snapshot,
+                [SENSOR_IOCTL_STREAM_ON].ops = c2580_drv_stream_on,
+                [SENSOR_IOCTL_STREAM_OFF].ops = c2580_drv_stream_off,
+                [SENSOR_IOCTL_ACCESS_VAL].ops = c2580_drv_access_val,
+        }
 
 };
