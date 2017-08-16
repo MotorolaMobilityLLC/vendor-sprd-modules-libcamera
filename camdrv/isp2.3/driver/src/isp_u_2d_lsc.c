@@ -296,9 +296,11 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
+	cmr_uint buf_addr;
+	struct isp_io_param param;
 	struct isp_file *file = NULL;
 	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
-	struct isp_io_param param;
+	struct isp_dev_2d_lsc_info *lens_info = NULL;
 
 	if (!handle || !param_ptr) {
 		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
@@ -308,10 +310,9 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 	file = (struct isp_file *)(handle);
 	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	cmr_uint buf_addr;
-	struct isp_dev_2d_lsc_info *lens_info = (struct isp_dev_2d_lsc_info *)(lsc_2d_ptr->block_info);
+	lens_info = (struct isp_dev_2d_lsc_info *)(lsc_2d_ptr->block_info);
 	if (!lens_info) {
-		ISP_LOGE("failed to get ptr: %p", lens_info);
+		ISP_LOGE("failed to get lens_info ptr!");
 		return -1;
 	}
 
@@ -321,15 +322,15 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 	buf_addr = lens_info->buf_addr[0];
 #endif
 
-	if (0 == file->reserved || 0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
-		ISP_LOGE("lsc memory error: 0x%p %lx %x", file->reserved, buf_addr, lens_info->buf_len);
-		return ret;
-	} else {
-		memcpy((void *)file->reserved, (void *)buf_addr, lens_info->buf_len);
+	if (0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
+		ISP_LOGE("lsc memory error:%lx %x", buf_addr, lens_info->buf_len);
+		return -1;
 	}
 
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,
-				  ((cmr_u16) lens_info->grid_x_num & 0xFF) + 2, (lens_info->grid_width & 0xFF), (lens_info->relative_y & 0xFF) >> 1);
+			((cmr_u16) lens_info->grid_x_num & 0xFF) + 2,
+			(lens_info->grid_width & 0xFF),
+			(lens_info->relative_y & 0xFF) >> 1);
 	if (0 != ret) {
 		ISP_LOGE("ISP_GenerateQValues is error");
 		return ret;
@@ -490,27 +491,3 @@ cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, void *param_ptr)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input * buf)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_dev_block_addr lsc_buf;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	memset(&lsc_buf, 0, sizeof(lsc_buf));
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_TRANSADDR;
-	lsc_buf.img_fd = buf->mfd;
-	param.property_param = &lsc_buf;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}

@@ -104,18 +104,25 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	struct isp_file *file = NULL;
 	struct isp_statis_buf_input isp_statis_buf;
-	struct isp_statis_buf_input isp_2d_lsc_buf;
+	struct isp_statis_buf_input lsc_2d_buf;
 
 	memset(&isp_statis_buf, 0x00, sizeof(isp_statis_buf));
-	memset(&isp_2d_lsc_buf, 0x00, sizeof(isp_2d_lsc_buf));
+	memset(&lsc_2d_buf, 0x00, sizeof(lsc_2d_buf));
 	file = (struct isp_file *)(cxt->isp_driver_handle);
-	file->reserved = (void *)statis_mem_info->isp_lsc_virtaddr;
+	file->dcam_lsc_vaddr = (void *)statis_mem_info->isp_lsc_virtaddr;
+
 	/*set buffer to kernel */
-	isp_2d_lsc_buf.buf_size = statis_mem_info->isp_lsc_mem_size;
-	isp_2d_lsc_buf.buf_num = statis_mem_info->isp_lsc_mem_num;
-	isp_2d_lsc_buf.phy_addr = statis_mem_info->isp_lsc_physaddr;
-	isp_2d_lsc_buf.vir_addr = statis_mem_info->isp_lsc_virtaddr;
-	isp_2d_lsc_buf.mfd = statis_mem_info->lsc_mfd;
+	lsc_2d_buf.buf_size = statis_mem_info->isp_lsc_mem_size;
+	lsc_2d_buf.buf_num = statis_mem_info->isp_lsc_mem_num;
+	lsc_2d_buf.phy_addr = statis_mem_info->isp_lsc_physaddr;
+	lsc_2d_buf.vir_addr = statis_mem_info->isp_lsc_virtaddr;
+	lsc_2d_buf.mfd = statis_mem_info->lsc_mfd;
+	ISP_LOGV("dcam lsc buf_size:0x%x, buf_num:%d, phy_addr:0x%lx, vir_addr:0x%lx, mfd:%ld",
+			lsc_2d_buf.buf_size,
+			lsc_2d_buf.buf_num,
+			lsc_2d_buf.phy_addr,
+			lsc_2d_buf.vir_addr,
+			lsc_2d_buf.mfd);
 
 	isp_statis_buf.buf_size = statis_mem_info->isp_statis_mem_size;
 	isp_statis_buf.buf_num = statis_mem_info->isp_statis_mem_num;
@@ -125,8 +132,9 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_statis_buf.buf_flag = 0;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
 	isp_statis_buf.dev_fd = statis_mem_info->statis_buf_dev_fd;
-	/*isp lsc addr transfer */
-	isp_u_2d_lsc_transaddr(cxt->isp_driver_handle, &isp_2d_lsc_buf);
+
+	/*lsc addr transfer */
+	dcam_u_2d_lsc_transaddr(cxt->isp_driver_handle, &lsc_2d_buf);
 
 	isp_statis_buf.buf_property = DCAM_AEM_BLOCK;
 	ret = isp_dev_access_ioctl(isp_dev_handle, ISP_DEV_SET_STSTIS_BUF, &isp_statis_buf, NULL);

@@ -21,21 +21,28 @@
 #define ISP_LSC_BUF_SIZE  (32 * 1024)
 
 
-cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *block_info)
+cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
+	cmr_uint buf_addr;
 	struct isp_io_param param;
+	struct isp_file *file = NULL;
+	struct isp_dev_2d_lsc_info *lens_info = NULL;
+	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
+	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	struct sprd_2d_lsc_info *lens_info = (struct sprd_2d_lsc_info *)(block_info);
-	cmr_uint buf_addr;
+	lens_info = (struct isp_dev_2d_lsc_info *)(lsc_2d_ptr->block_info);
+	if (!lens_info) {
+		ISP_LOGE("failed to get lens_info ptr!");
+		return -1;
+	}
 
 #if __WORDSIZE == 64
 	buf_addr = ((cmr_uint) lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
@@ -43,11 +50,11 @@ cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	buf_addr = lens_info->buf_addr[0];
 #endif
 
-	if (0 == file->reserved || 0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
-		ISP_LOGE("lsc memory error: 0x%p %lx %x", file->reserved, buf_addr, lens_info->buf_len);
-		return ret;
+	if (0 == file->dcam_lsc_vaddr || 0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
+		ISP_LOGE("lsc memory error: 0x%p %lx %x", file->dcam_lsc_vaddr, buf_addr, lens_info->buf_len);
+		return -1;
 	} else {
-		memcpy((void *)file->reserved, (void *)buf_addr, lens_info->buf_len);
+		memcpy((void *)file->dcam_lsc_vaddr, (void *)buf_addr, lens_info->buf_len);
 	}
 
 	param.isp_id = file->isp_id;
@@ -56,6 +63,8 @@ cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	param.property_param = lens_info;
 
 	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
+
+	isp_u_2d_lsc_block(handle, param_ptr); //test code for bypass ISP LSC
 
 	return ret;
 }

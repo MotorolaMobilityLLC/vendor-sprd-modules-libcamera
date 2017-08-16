@@ -33,7 +33,7 @@ struct isp_file {
 	cmr_s32 fd;
 	cmr_u32 chip_id;
 	cmr_u32 isp_id;
-	void *reserved;
+	void *dcam_lsc_vaddr;
 };
 
 struct isp_aem_stats_info {
@@ -307,7 +307,6 @@ cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input *buf);
 cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_1d_lsc_pos(cmr_handle handle, void *param_ptr);
@@ -583,7 +582,7 @@ cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *param_ptr);
 
 
 /* DCAM sub-blocks */
-cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *block_info);
+cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *param_ptr);
 cmr_s32 dcam_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input * buf);
 cmr_s32 dcam_u_blc_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_raw_aem_block(cmr_handle handle, void *block_info);

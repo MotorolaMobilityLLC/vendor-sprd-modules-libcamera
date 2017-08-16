@@ -1039,7 +1039,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 
 		/*zsl mode_id[0]: prev; none zsl mode_id[0]: prev, cap, video etc*/
 		BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_INFO,
-				ISP_BLK_2D_LSC,
+				DCAM_BLK_2D_LSC,
 				cxt->mode_id[0],
 				PNULL, 0);
 		io_pm_input.param_num = 1;
@@ -1101,7 +1101,14 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				ISP_LOGE("fail to do lsc adv gain map calc");
 				return ret;
 			}
-
+			BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_INFO,
+					DCAM_BLK_2D_LSC,
+					cxt->mode_id[0],
+					PNULL, 0);
+			io_pm_input.param_num = 1;
+			io_pm_input.param_data_ptr = &pm_param[0];
+			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+#if 0
 			if (cxt->zsl_flag) {
 				for (i = 0; i < ISP_MODE_MAX; i++) {
 					BLOCK_PARAM_CFG(pm_param[i], ISP_PM_BLK_LSC_INFO,
@@ -1119,6 +1126,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			}
 			io_pm_input.param_data_ptr = pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+#endif
 		}
 	}
 
@@ -1536,27 +1544,20 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	cxt->awb_cxt.log_awb_size = awb_output->log_awb.size;
 
 	if (awb_output->use_lsc) {
-		struct isp_pm_param_data param_data[ISP_MODE_MAX];
+		struct isp_pm_param_data param_data;
 		struct isp_pm_ioctl_input input = { NULL, 0 };
 		struct isp_pm_ioctl_output output = { NULL, 0 };
 
-		memset(param_data, 0x0, sizeof(param_data));
-		if (cxt->zsl_flag) {
-			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_LSC_MEM_ADDR,
-					ISP_BLK_2D_LSC,
-					cxt->mode_id[i],
-					awb_output->lsc, awb_output->lsc_size);
-			input.param_num = ISP_MODE_MAX;
-		} else {
-			BLOCK_PARAM_CFG(param_data[0], ISP_PM_BLK_LSC_MEM_ADDR,
-					ISP_BLK_2D_LSC,
-					cxt->mode_id[0],
-					awb_output->lsc, awb_output->lsc_size);
-			input.param_num = 1;
-		}
-		input.param_data_ptr = param_data;
+		memset(&param_data, 0x0, sizeof(param_data));
+		BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_LSC_MEM_ADDR,
+				DCAM_BLK_2D_LSC,
+				cxt->mode_id[0],
+				awb_output->lsc, awb_output->lsc_size);
+
+		input.param_num = 1;
+		input.param_data_ptr = &param_data;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
+		ISP_TRACE_IF_FAIL(ret, ("fail to set dcam block param"));
 
 		cxt->awb_cxt.log_alc_lsc = awb_output->log_lsc.log;
 		cxt->awb_cxt.log_alc_lsc_size = awb_output->log_lsc.size;
@@ -1673,7 +1674,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 
 		memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 		BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB,
-				ISP_BLK_2D_LSC,
+				DCAM_BLK_2D_LSC,
 				cxt->mode_id[0],
 				NULL, 0);
 		param_data_alsc_input.param_num = 1;
@@ -2739,7 +2740,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	memset(&pm_tab_param, 0, sizeof(struct isp_pm_param_data));
 
 	BLOCK_PARAM_CFG(pm_tab_param, ISP_PM_BLK_LSC_GET_LSCTAB,
-			ISP_BLK_2D_LSC,
+			DCAM_BLK_2D_LSC,
 			ISP_MODE_ID_PRV_0,
 			NULL, 0);
 	pm_tab_input.param_num = 1;
@@ -2749,7 +2750,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 
 	BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_LSC_INFO,
-			ISP_BLK_2D_LSC,
+			DCAM_BLK_2D_LSC,
 			ISP_MODE_ID_PRV_0,
 			NULL, 0);
 	io_pm_input.param_num = 1;
@@ -3231,13 +3232,15 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			sub_block_info.scene_id = ISP_MODE_CAP;
 		else if (param_data->mod_id != ISP_MODE_ID_MAX)
 			sub_block_info.scene_id = ISP_MODE_PRV;
-
+#if 0
 		if (ISP_BLK_2D_LSC == param_data->id) {
 			sub_block_info.flag = 1;
 			isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
 		}
+#endif
 		sub_block_info.block_info = param_data->data_ptr;
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+#if 0
 		if (ISP_BLK_2D_LSC == param_data->id) {
 			if (!cxt->zsl_flag) {
 				/*normal mode*/
@@ -3249,6 +3252,7 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
 			}
 		}
+#endif
 		param_data++;
 	}
 	if (cxt->afl_cxt.handle) {
@@ -3465,7 +3469,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 
 	BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_INFO,
-			ISP_BLK_2D_LSC,
+			DCAM_BLK_2D_LSC,
 			cxt->mode_id[0],
 			PNULL, 0);
 	input.param_num = 1;
