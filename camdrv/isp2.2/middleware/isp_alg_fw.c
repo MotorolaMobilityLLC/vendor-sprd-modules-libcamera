@@ -1957,7 +1957,7 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 		cxt->is_master, cxt->is_multi_mode , ae_input.ae_role);
 
 	/* save otp info */
-	if (cxt->is_multi_mode) {
+	if (cxt->is_multi_mode &&  cxt->otp_data != NULL) {
 		struct sensor_otp_ae_info info;
 		if (cxt->is_master) {
 			info = cxt->otp_data->dual_otp.master_ae_info;
