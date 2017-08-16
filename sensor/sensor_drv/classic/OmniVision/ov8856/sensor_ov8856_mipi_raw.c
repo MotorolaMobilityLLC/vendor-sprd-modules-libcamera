@@ -692,7 +692,7 @@ static void ov8856_drv_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info
     aec_info->dgain->settings[7].reg_value = (cmr_u16)gain_d & 0xff;
 }
 
-static cmr_int ov8856_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+static cmr_int ov8856_drv_read_aec_info(cmr_handle handle, void *param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     cmr_u16 exposure_line = 0x00;

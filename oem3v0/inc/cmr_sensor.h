@@ -94,7 +94,7 @@ cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
 cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id);
 
 cmr_int cmr_sensor_get_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
-                            cmr_uint *mode_ptr);
+                            cmr_u32 *mode_ptr);
 
 cmr_int cmr_sensor_update_isparm_from_file(cmr_handle sensor_handle,
                                            cmr_uint sensor_id);

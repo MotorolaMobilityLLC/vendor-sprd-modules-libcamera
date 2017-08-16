@@ -1256,7 +1256,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             int32_t i = 0;
             struct img_rect src_prev_rect;
             struct sensor_mode_info *sensor_mode_info = NULL;
-            cmr_uint sn_mode = 0;
+            cmr_u32 sn_mode = 0;
             cmr_uint face_info_max_num =
                 sizeof(face_area.face_info) / sizeof(struct isp_face_info);
 
@@ -5443,7 +5443,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
             param_ptr->dst2_frame.addr_vir.addr_u;
         in_param.dst2_slice_height = param_ptr->dst2_slice_height;
         struct sensor_mode_info *sensor_mode_info;
-        cmr_uint sn_mode = 0;
+        cmr_u32 sn_mode = 0;
         ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                   &sn_mode);
         // we think OEM has get sensor info and save it into sensor context,so
@@ -5611,7 +5611,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     struct sensor_ae_info *ae_info;
     struct isp_trim_size wb_trim;
     struct sensor_mode_info *sensor_mode_info;
-    cmr_uint sn_mode = 0;
+    cmr_u32 sn_mode = 0;
 #endif
 
     if (!param_ptr || !oem_handle) {
@@ -5633,7 +5633,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_ae_info.line_time = ae_info->line_time;
     isp_ae_info.min_fps = ae_info->min_frate;
     isp_ae_info.max_fps = ae_info->max_frate;
-    CMR_LOGI("line time %d sn_mode %ld", isp_ae_info.line_time, sn_mode);
+    CMR_LOGI("line time %d sn_mode %d", isp_ae_info.line_time, sn_mode);
     isp_ioctl(NULL, ISP_CTRL_AE_INFO, (void *)&isp_ae_info);
 
     sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
@@ -5738,7 +5738,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
 
     {
         struct sensor_mode_info *sensor_mode_info;
-        cmr_uint sn_mode = 0;
+        cmr_u32 sn_mode = 0;
         struct sensor_exp_info exp_info;
         ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                   &sn_mode);
@@ -8812,7 +8812,7 @@ cmr_int camera_get_sensor_mode_info(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct sensor_exp_info *sensor_info = NULL;
-    cmr_uint sensor_mode = SENSOR_MODE_MAX;
+    cmr_u32 sensor_mode = SENSOR_MODE_MAX;
     cmr_uint i;
 
     if (!oem_handle || !mode_info) {
@@ -8856,7 +8856,7 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct sensor_exp_info *sensor_info = NULL;
-    cmr_uint sensor_mode = SENSOR_MODE_MAX;
+    cmr_u32 sensor_mode = SENSOR_MODE_MAX;
 
     if (!oem_handle || !sn_trim) {
         CMR_LOGE("error param");
@@ -8880,7 +8880,7 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
 
     ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                               &sensor_mode);
-    CMR_LOGI("camera_id =%d sns mode =%ld", cxt->camera_id, sensor_mode);
+    CMR_LOGI("camera_id =%d sns mode =%d", cxt->camera_id, sensor_mode);
     if (sensor_mode >= SENSOR_MODE_MAX) {
         // note:cmr_sensor_get_mode would not set parameter.so sensor_mode
         // ==SENSOR_MODE_MAX

@@ -169,89 +169,11 @@ typedef enum {
     SENSOR_HDR_EV_LEVE_MAX
 } SESOR_HDR_EV_LEVEL_E;
 
-
-#if 0
-typedef enum {
-    SENSOR_IOCTL_RESET = 0,
-    SENSOR_IOCTL_POWER,
-    SENSOR_IOCTL_ENTER_SLEEP,
-    SENSOR_IOCTL_IDENTIFY,
-    SENSOR_IOCTL_WRITE_REG,
-    SENSOR_IOCTL_READ_REG,
-    SENSOR_IOCTL_CUS_FUNC_1,
-    SENSOR_IOCTL_CUS_FUNC_2,
-    SENSOR_IOCTL_AE_ENABLE,
-    SENSOR_IOCTL_HMIRROR_ENABLE,
-    SENSOR_IOCTL_VMIRROR_ENABLE,
-    SENSOR_IOCTL_BRIGHTNESS,
-    SENSOR_IOCTL_CONTRAST,
-    SENSOR_IOCTL_SHARPNESS,
-    SENSOR_IOCTL_SATURATION,
-    SENSOR_IOCTL_PREVIEWMODE,
-    SENSOR_IOCTL_IMAGE_EFFECT,
-    SENSOR_IOCTL_BEFORE_SNAPSHOT,
-    SENSOR_IOCTL_AFTER_SNAPSHOT,
-    SENSOR_IOCTL_FLASH,
-    SENSOR_IOCTL_READ_EV,
-    SENSOR_IOCTL_WRITE_EV,
-    SENSOR_IOCTL_READ_GAIN,
-    SENSOR_IOCTL_WRITE_GAIN,
-    SENSOR_IOCTL_READ_GAIN_SCALE,
-    SENSOR_IOCTL_SET_FRAME_RATE,
-    SENSOR_IOCTL_AF_ENABLE,
-    SENSOR_IOCTL_AF_GET_STATUS,
-    SENSOR_IOCTL_SET_WB_MODE,
-    SENSOR_IOCTL_GET_SKIP_FRAME,
-    SENSOR_IOCTL_ISO,
-    SENSOR_IOCTL_EXPOSURE_COMPENSATION,
-    SENSOR_IOCTL_CHECK_IMAGE_FORMAT_SUPPORT,
-    SENSOR_IOCTL_CHANGE_IMAGE_FORMAT,
-    SENSOR_IOCTL_ZOOM,
-    SENSOR_IOCTL_CUS_FUNC_3,
-    SENSOR_IOCTL_FOCUS,
-    SENSOR_IOCTL_ANTI_BANDING_FLICKER,
-    SENSOR_IOCTL_VIDEO_MODE,
-    SENSOR_IOCTL_PICK_JPEG_STREAM,
-    SENSOR_IOCTL_SET_METER_MODE,
-    SENSOR_IOCTL_GET_STATUS,
-    SENSOR_IOCTL_STREAM_ON,
-    SENSOR_IOCTL_STREAM_OFF,
-    SENSOR_IOCTL_ACCESS_VAL,
-    SENSOR_IOCTL_MAX
-} SENSOR_IOCTL_CMD_E;
-#endif
-
 struct ae_valid_fn {
     cmr_u8 group_hold_flag;
     cmr_u8 valid_expo_num;
     cmr_u8 valid_gain_num;
 };
-#if 0
-typedef enum {
-    SENSOR_VAL_TYPE_SHUTTER = 0,
-    SENSOR_VAL_TYPE_READ_VCM,
-    SENSOR_VAL_TYPE_WRITE_VCM,
-    SENSOR_VAL_TYPE_WRITE_OTP,
-    SENSOR_VAL_TYPE_READ_OTP,
-    SENSOR_VAL_TYPE_READ_DUAL_OTP,
-    SENSOR_VAL_TYPE_ERASE_OTP,
-    SENSOR_VAL_TYPE_PARSE_OTP,
-    SENSOR_VAL_TYPE_PARSE_DUAL_OTP,
-    SENSOR_VAL_TYPE_GET_RELOADINFO,
-    SENSOR_VAL_TYPE_GET_AFPOSITION,
-    SENSOR_VAL_TYPE_WRITE_OTP_GAIN,
-    SENSOR_VAL_TYPE_READ_OTP_GAIN,
-    SENSOR_VAL_TYPE_GET_GOLDEN_DATA,
-    SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA,
-    SENSOR_VAL_TYPE_GET_STATIC_INFO,
-    SENSOR_VAL_TYPE_GET_FPS_INFO,
-    SENSOR_VAL_TYPE_INIT_OTP,
-    SENSOR_VAL_TYPE_GET_PDAF_INFO,
-    SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG,
-    SENSOR_VAL_TYPE_GET_BV,
-    SENSOR_VAL_TYPE_MAX
-} SENSOR_IOCTL_VAL_TYPE;
-#endif
 
 typedef enum {
     SENSOR_EXT_FOCUS_NONE = 0x00,
@@ -382,24 +304,8 @@ typedef struct sensor_otp_data {
     struct otp_data_tag golden;
 } OTP_DATA_INFO_TAG;
 
-
-
 typedef struct { void *privatedata; } * SENSOR_HW_HANDLE;
-typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle,
-                                          cmr_uint param);
-#if 0
-struct hdr_info_t {
-    uint32_t capture_max_shutter;
-    uint32_t capture_shutter;
-    uint32_t capture_gain;
-};
-
-struct sensor_ev_info_t {
-    uint16_t preview_shutter;
-    float preview_gain;
-    uint16_t preview_framelength;
-};
-#endif
+typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle, cmr_uint param);
 
 typedef struct sensor_ioctl_func_tab_tag {
     /*1: Internal IOCTL function */
@@ -535,13 +441,11 @@ typedef struct sensor_mode_info_tag {
     cmr_u16 out_height; // sensor output height after binning and crop/trim
 } SENSOR_MODE_INFO_T, *SENSOR_MODE_INFO_T_PTR;
 
-
 typedef struct sensor_register_tag {
     cmr_u32 img_sensor_num;
     cmr_u8 cur_id;
     cmr_u8 is_register[SENSOR_ID_MAX];
 } SENSOR_REGISTER_INFO_T, *SENSOR_REGISTER_INFO_T_PTR;
-
 
 typedef struct sensor_exp_info_tag {
     SENSOR_IMAGE_FORMAT image_format;
@@ -737,7 +641,7 @@ typedef enum {
         if (PNULL == a) {                                                      \
             SENSOR_LOGE("Sensor_driver_u, null pointer \n");                   \
             return SENSOR_FAIL;                                                \
-       }                                                                       \
+        }                                                                      \
     } while (0)
 
 #define SENSOR_PARAM_NUM 8
@@ -798,11 +702,10 @@ struct sensor_drv_context {
     cmr_handle sensor_hw_handler;
     void *module_list[SENSOR_ID_MAX];
     void *current_module;
-    void  *module_cxt;
-    cmr_handle  hw_drv_handle;
-    cmr_handle  otp_drv_handle;
-    cmr_handle  af_drv_handle;
-    cmr_handle  sns_ic_drv_handle;
+    cmr_handle hw_drv_handle;
+    cmr_handle otp_drv_handle;
+    cmr_handle af_drv_handle;
+    cmr_handle sns_ic_drv_handle;
 };
 
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
@@ -816,13 +719,11 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt,
 
 void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt);
 
-cmr_int sensor_set_mode_common(struct sensor_drv_context *sensor_cxt,
-                               cmr_uint mode);
+cmr_int sensor_set_mode_common(cmr_handle sns_module_handle, cmr_u32 mode);
 
 cmr_int sensor_set_modone_common(struct sensor_drv_context *sensor_cxt);
 
-cmr_int sensor_get_mode_common(struct sensor_drv_context *sensor_cxt,
-                               cmr_uint *mode);
+cmr_int sensor_get_mode_common(cmr_handle sns_module_handle, cmr_u32 *mode);
 
 cmr_int sensor_update_isparm_from_file(struct sensor_drv_context *sensor_cxt,
                                        cmr_u32 sensor_id);
@@ -832,11 +733,10 @@ cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt);
 cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off);
 
-cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
-                               SENSOR_EXIF_CTRL_E cmd, cmr_u32 param);
+cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
+                               cmr_u32 param);
 
-cmr_int sensor_get_exif_common(struct sensor_drv_context *sensor_cxt,
-                       EXIF_SPEC_PIC_TAKING_COND_T **sensor_exif_info_pptr);
+cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param);
 
 cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
                                SENSOR_EXP_INFO_T **sensor_exp_info_pptr);
@@ -845,39 +745,12 @@ cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                 struct sensor_flash_level *level);
 
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
-                                        struct sensor_flash_level *level);
+                               struct sensor_flash_level *level);
 
-cmr_int sensor_set_mode_done_common(struct sensor_drv_context *sensor_cxt);
+cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 
-/*af device*/
-//LOCAL cmr_int sensor_af_init(cmr_handle sns_module_handle);
-
-//LOCAL cmr_int sensor_af_deinit(cmr_handle sns_module_handle);
-
-//LOCAL cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, uint16_t pos);
-
-//LOCAL cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, uint16_t *pos);
-
-cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle,enum sns_cmd cmd,void* param);
-
-/*otp drv*/
-//LOCAL cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt);
-//LOCAL cmr_int sensor_otp_module_deinit(struct sensor_drv_context * sensor_cxt);
-
-/*hardware device*/
-//cmr_int sensor_hw_ReadI2C(cmr_handle sns_module_handle, cmr_u16 slave_addr,
-//                           cmr_u8 *cmd, cmr_u16 cmd_length);
-//cmr_int sensor_hw_WriteI2C(cmr_handle sns_module_handle, cmr_u16 slave_addr,
-//                           cmr_u8 *cmd, cmr_u16 cmd_length);
-//cmr_int sensor_muti_i2c_write(cmr_handle sns_module_handle,
-//                struct sensor_muti_aec_i2c_tag *aec_i2c_info);
-
-/*sensor ic device*/
-//cmr_uint sensor_ic_write_gain(cmr_handle sns_module_handle, cmr_uint param);
-//unsigned long sensor_ic_ex_write_exposure(cmr_handle sns_module_handle, unsigned long param);
-//unsigned long sensor_ic_write_ae_value(cmr_handle sns_module_handle, unsigned long param);
-//unsigned long sensor_ic_read_aec_info(cmr_handle sns_module_handle, unsigned long param);
-//unsigned long sensor_ic_read_aec_info(cmr_handle sns_module_handle, unsigned long param);
+cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
+                         void *param);
 
 cmr_int hw_Sensor_GetMode(cmr_handle handle, cmr_u32 *mode);
 #define Sensor_GetMode(mode) hw_Sensor_GetMode(handle, mode)
@@ -885,13 +758,12 @@ cmr_int hw_Sensor_GetMode(cmr_handle handle, cmr_u32 *mode);
 cmr_int hw_Sensor_SetMode_WaitDone(cmr_handle handle);
 #define Sensor_SetMode_WaitDone(void) hw_Sensor_SetMode_WaitDone(handle)
 
-cmr_int hw_Sensor_SetSensorExifInfo(cmr_handle handle,
-                                    SENSOR_EXIF_CTRL_E cmd, cmr_u32 param);
+cmr_int hw_Sensor_SetSensorExifInfo(cmr_handle handle, SENSOR_EXIF_CTRL_E cmd,
+                                    cmr_u32 param);
 #define Sensor_SetSensorExifInfo(cmd, param)                                   \
     hw_Sensor_SetSensorExifInfo(handle, cmd, param)
 
-EXIF_SPEC_PIC_TAKING_COND_T *
-hw_Sensor_GetSensorExifInfo(cmr_handle handle);
+EXIF_SPEC_PIC_TAKING_COND_T *hw_Sensor_GetSensorExifInfo(cmr_handle handle);
 #define Sensor_GetSensorExifInfo(void) hw_Sensor_GetSensorExifInfo(handle)
 
 cmr_int hw_Sensor_SetMode(cmr_handle handle, cmr_u32 mode);

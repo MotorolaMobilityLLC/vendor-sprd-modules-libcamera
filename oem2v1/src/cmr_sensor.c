@@ -515,7 +515,7 @@ cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id) {
 }
 
 cmr_int cmr_sensor_get_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
-                            cmr_uint *mode_ptr) {
+                            cmr_u32 *mode_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
@@ -602,7 +602,7 @@ cmr_int cmr_sensor_get_exif(cmr_handle sensor_handle, cmr_uint sensor_id,
 
     CHECK_HANDLE_VALID(handle);
     sensor_get_exif_common(&handle->sensor_cxt[sensor_id],
-                           &cur_sensor_exif_ptr);
+                           (void **)&cur_sensor_exif_ptr);
 
     CHECK_HANDLE_VALID(sensor_exif_ptr);
 

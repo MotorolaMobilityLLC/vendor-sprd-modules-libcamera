@@ -768,13 +768,11 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt,
 
 void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt);
 
-cmr_int sensor_set_mode_common(struct sensor_drv_context *sensor_cxt,
-                               cmr_uint mode);
+cmr_int sensor_set_mode_common(cmr_handle sns_module_handle, cmr_u32 mode);
 
 cmr_int sensor_set_modone_common(struct sensor_drv_context *sensor_cxt);
 
-cmr_int sensor_get_mode_common(struct sensor_drv_context *sensor_cxt,
-                               cmr_uint *mode);
+cmr_int sensor_get_mode_common(cmr_handle sns_module_handle, cmr_u32 *mode);
 
 cmr_int sensor_update_isparm_from_file(struct sensor_drv_context *sensor_cxt,
                                        cmr_u32 sensor_id);
@@ -784,11 +782,10 @@ cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt);
 cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off);
 
-cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
-                               SENSOR_EXIF_CTRL_E cmd, cmr_u32 param);
+cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
+                               cmr_u32 param);
 
-cmr_int sensor_get_exif_common(struct sensor_drv_context *sensor_cxt,
-                       EXIF_SPEC_PIC_TAKING_COND_T **sensor_exif_info_pptr);
+cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param);
 
 cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
                                SENSOR_EXP_INFO_T **sensor_exp_info_pptr);
@@ -799,7 +796,7 @@ cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                 struct sensor_flash_level *level);
 
-cmr_int sensor_set_mode_done_common(struct sensor_drv_context *sensor_cxt);
+cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 
 cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
                          void *param);

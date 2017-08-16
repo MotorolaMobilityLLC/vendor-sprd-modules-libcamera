@@ -1203,7 +1203,7 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 sn_work_mode = 0;
     cmr_u32 i = 0;
-    cmr_uint sensor_mode = SENSOR_MODE_MAX;
+    cmr_u32 sensor_mode = SENSOR_MODE_MAX;
     cmr_u32 camera_id = 0;
     struct sensor_mode_info *sensor_mode_info;
     struct sensor_exp_info sensor_info;
@@ -1234,7 +1234,7 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
     ret = cmr_sensor_get_mode(cam_cxt->sn_cxt.sensor_handle, camera_id,
                               &sensor_mode);
 
-    CMR_LOGD("camera_id %d sensor_mode %ld rect_num %d", camera_id, sensor_mode,
+    CMR_LOGD("camera_id %d sensor_mode %d rect_num %d", camera_id, sensor_mode,
              rect_num);
     if (sensor_mode >= SENSOR_MODE_MAX) { // for coverity issue 88201; normal
                                           // sensor_mode must < SENSOR_MODE_MAX

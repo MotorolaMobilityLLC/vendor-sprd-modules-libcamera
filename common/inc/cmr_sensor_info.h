@@ -165,29 +165,29 @@ struct sensor_raw_resolution_info_tab {
 
 struct sensor_raw_ioctrl {
     cmr_handle caller_handler;
-    cmr_u32 (*set_focus)(cmr_handle caller_handler, cmr_u32 param);
-    cmr_u32 (*set_exposure)(cmr_handle caller_handler, cmr_u32 param);
-    cmr_u32 (*set_gain)(cmr_handle caller_handler, cmr_u32 param);
-    cmr_u32 (*ext_fuc)(cmr_handle caller_handler, void *param);
+    cmr_int (*set_focus)(cmr_handle caller_handler, cmr_u32 param);
+    cmr_int (*set_exposure)(cmr_handle caller_handler, cmr_u32 param);
+    cmr_int (*set_gain)(cmr_handle caller_handler, cmr_u32 param);
+    cmr_int (*ext_fuc)(cmr_handle caller_handler, void *param);
     cmr_int (*write_i2c)(cmr_handle caller_handler, cmr_u16 slave_addr,
                          cmr_u8 *cmd, cmr_u16 cmd_length);
     cmr_int (*read_i2c)(cmr_handle caller_handler, cmr_u16 slave_addr,
                         cmr_u8 *cmd, cmr_u16 cmd_length);
-    uint32_t (*ex_set_exposure)(cmr_handle caller_handler, cmr_uint param);
+    cmr_int (*ex_set_exposure)(cmr_handle caller_handler, cmr_uint param);
     cmr_int (*read_aec_info)(cmr_handle caller_handler, void *param);
     cmr_int (*write_aec_info)(cmr_handle caller_handler, void *param);
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
     // af control and DVT test funcs valid only af_enable works
-    uint32_t (*set_pos)(cmr_handle caller_handler, uint16_t pos);
-    uint32_t (*get_otp)(cmr_handle caller_handler, uint16_t *inf,
-                        uint16_t *macro);
-    uint32_t (*get_motor_pos)(cmr_handle caller_handler, uint16_t *pos);
-    uint32_t (*set_motor_bestmode)(cmr_handle caller_handler);
-    uint32_t (*get_test_vcm_mode)(cmr_handle caller_handler);
-    uint32_t (*set_test_vcm_mode)(cmr_handle caller_handler, char *vcm_mode);
+    cmr_int (*set_pos)(cmr_handle caller_handler, cmr_u32 pos);
+    cmr_int (*get_otp)(cmr_handle caller_handler, uint16_t *inf,
+                       uint16_t *macro);
+    cmr_int (*get_motor_pos)(cmr_handle caller_handler, cmr_u16 *pos);
+    cmr_int (*set_motor_bestmode)(cmr_handle caller_handler);
+    cmr_int (*get_test_vcm_mode)(cmr_handle caller_handler);
+    cmr_int (*set_test_vcm_mode)(cmr_handle caller_handler, char *vcm_mode);
 #endif
-    int (*sns_ioctl)(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
-                     void *param);
+    cmr_int (*sns_ioctl)(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                         void *param);
 };
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 /*************new***************************/

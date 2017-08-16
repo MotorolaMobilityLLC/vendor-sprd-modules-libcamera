@@ -1227,7 +1227,7 @@ static void sp2509_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
 }
 
 static unsigned long sp2509_read_aec_info(SENSOR_HW_HANDLE handle,
-                                          unsigned long param) {
+                                          void *param) {
     unsigned long ret_value = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     uint16_t exposure_line = 0x00;

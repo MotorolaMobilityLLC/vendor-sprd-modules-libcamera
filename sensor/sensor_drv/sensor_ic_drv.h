@@ -324,7 +324,7 @@ typedef struct sensor_video_info_tag {
 struct sensor_ic_ctrl_cb {
     cmr_int (*set_exif_info)(cmr_handle sns_module_handle, cmr_u32 cmd,
                              cmr_u32 param);
-    cmr_int (*get_exif_info)(cmr_handle sns_module_handle);
+    cmr_int (*get_exif_info)(cmr_handle sns_module_handle, void **param);
     cmr_int (*set_mode)(cmr_handle sns_module_handle, cmr_u32 mode);
     cmr_int (*set_mode_wait_done)(cmr_handle sns_module_handle);
     cmr_int (*get_mode)(cmr_handle sns_module_handle, cmr_u32 *mode);
@@ -393,7 +393,7 @@ struct sensor_ic_ops {
     cmr_int (*ex_write_exp)(cmr_handle handle, cmr_uint param);
     cmr_int (*write_gain_value)(cmr_handle handle, cmr_uint param);
     cmr_int (*write_ae_value)(cmr_handle handle, cmr_uint param);
-    cmr_int (*read_aec_info)(cmr_handle handle, cmr_uint param);
+    cmr_int (*read_aec_info)(cmr_handle handle, void *param);
 
     /*expend ops */
     struct sensor_ic_ioctl_func_tag ext_ops[SENSOR_IOCTL_MAX];

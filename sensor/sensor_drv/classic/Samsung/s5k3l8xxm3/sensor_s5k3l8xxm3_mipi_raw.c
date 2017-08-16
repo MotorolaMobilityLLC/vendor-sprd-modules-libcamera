@@ -778,8 +778,7 @@ static void s5k3l8xxm3_calc_gain(float gain,
         aec_info->dgain->settings[i].reg_value = (cmr_u16)d_gain;
 }
 
-static cmr_int s5k3l8xxm3_read_aec_info(cmr_handle handle,
-                                              cmr_uint param) {
+static cmr_int s5k3l8xxm3_read_aec_info(cmr_handle handle, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     cmr_u16 exposure_line = 0x00;

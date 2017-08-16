@@ -61,7 +61,7 @@ static cmr_u8 *otp_formatted_data_buffer[4] = {NULL, NULL, NULL, NULL};
 cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
                                      void **otp_data, long *otp_size) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    OTP_LOGI("in");
+    OTP_LOGI("E");
     CHECK_PTR((void *)otp_data);
 
     char otp_bin_ext_path[255];
@@ -99,7 +99,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
                             break;
                         else
                             OTP_LOGE("error:otp lenght doesn't "
-                                     "match,Read:0x%x,otp_data_len:0x%x",
+                                     "match,Read:0x%x,otp_data_len:0x%lx",
                                      mRead, *otp_size);
                     }
                     fclose(fp);
@@ -128,7 +128,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
         break;
     }
 
-    OTP_LOGI("Exit");
+    OTP_LOGI("X");
     return ret;
 }
 
@@ -161,11 +161,11 @@ cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
     cmr_u32 cmp_uncompensate_size = 0;
     cmr_u32 i;
 
-    cmr_u8 *lsc_rdm_src_data = NULL, *lsc_rdm_dst_data = NULL;
+    cmr_u16 *lsc_rdm_src_data = NULL, *lsc_rdm_dst_data = NULL;
 
     /* get random lsc data */
-    lsc_rdm_src_data =
-        (cmr_u8 *)lsc_cal_data + lsc_cal_data->lsc_calib_random.offset;
+    lsc_rdm_src_data = (cmr_u16 *)((cmr_u8 *)lsc_cal_data +
+                                   lsc_cal_data->lsc_calib_random.offset);
 
     compress_bits_size = otp_base_info->gain_width *
                          otp_base_info->gain_height * GAIN_COMPRESSED_14BITS;
@@ -182,11 +182,11 @@ cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
     /*malloc random temp buffer*/
     random_buf_size = otp_base_info->gain_width * otp_base_info->gain_height *
                       sizeof(uint16_t) * CHANNAL_NUM;
-    lsc_rdm_dst_data = (uint16_t *)malloc(random_buf_size);
+    lsc_rdm_dst_data = (cmr_u16 *)malloc(random_buf_size);
     if (NULL == lsc_rdm_dst_data) {
         ret = -1;
         OTP_LOGE("malloc decompress buf failed!");
-        goto EXIT;
+        goto exit;
     }
 
     gain_compressed_bits = GAIN_COMPRESSED_14BITS;
@@ -198,13 +198,13 @@ cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
             lsc_rdm_dst_data, gain_compressed_bits, gain_mak_bits);
         if (0 == one_channal_decmp_size) {
             ret = -1;
-            goto EXIT;
+            goto exit;
         }
         lsc_rdm_src_data += channal_cmp_bytes_size / 2;
         lsc_rdm_dst_data += one_channal_decmp_size;
     }
     memcpy(lsc_rdm_src_data, lsc_rdm_dst_data, random_buf_size);
-EXIT:
+exit:
 
     if (NULL != lsc_rdm_dst_data) {
         free(lsc_rdm_dst_data);
@@ -461,7 +461,7 @@ cmr_int sensor_otp_drv_delete(void *otp_drv_handle) {
  **/
 cmr_u8 *sensor_otp_get_raw_buffer(cmr_uint size, cmr_u32 sensor_id) {
     cmr_u32 cur_size = 0;
-    OTP_LOGE("raw buffer:0x%x", otp_raw_buffer[sensor_id]);
+    OTP_LOGE("raw buffer:%p", otp_raw_buffer[sensor_id]);
     if (otp_raw_buffer[sensor_id] != NULL) {
         cur_size = *((cmr_u32 *)(otp_raw_buffer[sensor_id] + 4));
         if (cur_size != size) {
@@ -480,7 +480,7 @@ cmr_u8 *sensor_otp_get_raw_buffer(cmr_uint size, cmr_u32 sensor_id) {
 
 cmr_u8 *sensor_otp_get_formatted_buffer(cmr_uint size, cmr_u32 sensor_id) {
     cmr_u32 cur_size = 0;
-    OTP_LOGE("formatted buffer:0x%x", otp_formatted_data_buffer[sensor_id]);
+    OTP_LOGE("formatted buffer:%p", otp_formatted_data_buffer[sensor_id]);
     if (otp_formatted_data_buffer[sensor_id] != NULL) {
         cur_size = *((cmr_u32 *)otp_formatted_data_buffer[sensor_id]);
         if (cur_size != size) {
