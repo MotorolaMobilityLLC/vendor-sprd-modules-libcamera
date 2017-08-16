@@ -1768,11 +1768,12 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
         if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
             int fnum =
                 metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
-            if (fnum < 1) {
-                fnum = 1;
-            } else if (fnum > 20) {
-                fnum = 20;
+            if (fnum < MIN_F_FUMBER) {
+                fnum = MIN_F_FUMBER;
+            } else if (fnum > MAX_F_FUMBER) {
+                fnum = MAX_F_FUMBER;
             }
+            fnum = (fnum)*MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
             if (mPreviewWeightParams.f_number != fnum) {
                 mPreviewWeightParams.f_number = fnum;
                 mCaptureWeightParams.f_number = fnum;

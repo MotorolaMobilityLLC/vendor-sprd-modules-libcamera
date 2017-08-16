@@ -2916,21 +2916,21 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
 
     if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
         int fnum = metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
-        if (fnum < 1) {
-            fnum = 1;
-        } else if (fnum > 20) {
-            fnum = 20;
+        if (fnum < MIN_F_FUMBER) {
+            fnum = MIN_F_FUMBER;
+        } else if (fnum > MAX_F_FUMBER) {
+            fnum = MAX_F_FUMBER;
         }
 
         if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
             mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number =
-                fnum;
-            fnum = (21 - fnum) * 255 / 20;
+                fnum * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
+            fnum = (MAX_F_FUMBER + 1 - fnum) * 255 / MAX_F_FUMBER;
             mCaptureThread->mCapbokehParam.bokeh_level = fnum;
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-            fnum = 21 - fnum;
+            fnum = MAX_F_FUMBER + 1 - fnum;
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
-                (MInt32)(fnum * 100 / 20);
+                (MInt32)(fnum * 100 / MAX_F_FUMBER);
             mCaptureThread->mArcSoftCapParam.i32BlurIntensity =
                 mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel * 60 / 100;
         }

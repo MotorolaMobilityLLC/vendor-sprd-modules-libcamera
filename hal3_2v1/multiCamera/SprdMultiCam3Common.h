@@ -53,6 +53,10 @@ namespace sprdcamera {
 #else
 #define CAMERA3MAXFACE 10
 #endif
+#define MAX_F_FUMBER (10)
+#define MIN_F_FUMBER (1)
+#define MAX_BLUR_F_FUMBER (20)
+#define MIN_BLUR_F_FUMBER (1)
 
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
