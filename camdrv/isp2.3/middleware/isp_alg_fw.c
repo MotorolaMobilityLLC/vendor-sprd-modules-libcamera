@@ -886,22 +886,68 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	cmr_u64 u_addr = 0;
-	cmr_u32 val0 = 0;
-	cmr_u32 val1 = 0;
 	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+
+	cmr_u64 stats_pixel = 0;
+	cmr_u32 sum_r_oe = 0;
+	cmr_u32 sum_g_oe = 0;
+	cmr_u32 sum_b_oe = 0;
+	cmr_u32 sum_r_ue = 0;
+	cmr_u32 sum_g_ue = 0;
+	cmr_u32 sum_b_ue = 0;
+	cmr_u32 sum_r_ae = 0;
+	cmr_u32 sum_g_ae = 0;
+	cmr_u32 sum_b_ae = 0;
+
+	cmr_u32 cnt_r_oe = 0;
+	cmr_u32 cnt_r_ue = 0;
+	cmr_u32 cnt_b_oe = 0;
+	cmr_u32 cnt_b_ue = 0;
+	cmr_u32 cnt_g_oe = 0;
+	cmr_u32 cnt_g_ue = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	u_addr = statis_info->vir_addr;
 
 	ae_stat_ptr = &cxt->aem_stats;
-	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
-		val0 = *((cmr_u32 *) u_addr + i * 2);
-		val1 = *(((cmr_u32 *) u_addr) + i * 2 + 1);
-		ae_stat_ptr->r_info[i] = ((val1 >> 11) & 0x1fffff) << cxt->ae_cxt.shift;
-		ae_stat_ptr->g_info[i] = (((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff)) << cxt->ae_cxt.shift;
-		ae_stat_ptr->b_info[i] = (val0 & 0x1fffff) << cxt->ae_cxt.shift;
+	for (i = 0x00; i < 5120; i++) {
+		stats_pixel = *((cmr_u64 *)u_addr + i);
+		sum_b_oe = stats_pixel & 0x1fffff;
+		sum_g_oe = (stats_pixel >> 21) & 0x3fffff;
+		sum_r_oe = (stats_pixel >> 43) & 0x1fffff;
+
+		i++;
+		stats_pixel = *((cmr_u64 *)u_addr + i);
+		sum_b_ue = stats_pixel & 0x1fffff;
+		sum_g_ue = (stats_pixel >> 21) & 0x3fffff;
+		sum_r_ue = (stats_pixel >> 43) & 0x1fffff;
+
+		i++;
+		stats_pixel = *((cmr_u64 *)u_addr + i);
+		sum_b_ae = stats_pixel & 0x1fffff;
+		sum_g_ae = (stats_pixel >> 21) & 0x3fffff;
+		sum_r_ae = (stats_pixel >> 43) & 0x1fffff;
+
+		i++;
+		stats_pixel = *((cmr_u64 *)u_addr + i);
+		cnt_b_ue = stats_pixel & 0x1fff;
+		cnt_b_oe = (stats_pixel >> 16) & 0x1fff;
+		cnt_r_ue = (stats_pixel >> 32) & 0x1fff;
+		cnt_r_oe = (stats_pixel >> 48) & 0x1fff;
+		i++;
+		stats_pixel = *((cmr_u64 *)u_addr + i);
+		cnt_g_ue = stats_pixel & 0x1fff;
+		cnt_g_oe = (stats_pixel >> 16) & 0x1fff;
+
+		//TBD
+		ae_stat_ptr->r_info[j] = sum_r_oe + sum_r_ue + sum_r_ae;
+		ae_stat_ptr->g_info[j] = sum_g_oe + sum_g_ue + sum_g_ae;
+		ae_stat_ptr->b_info[j] = sum_b_oe + sum_b_ue + sum_b_ae;
+		j++;
 	}
-	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AEM_BLOCK);
+
+	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_AEM_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
