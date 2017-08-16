@@ -171,9 +171,13 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_HDR_START:
 		cmd = ISP_HDR_EV_EFFECT_CALLBACK;
 		break;
-	case AE_CB_AE_CALCOUT_NOTIFY:
-		cmd = ISP_AE_CALCOUT_NOTIFY;
+	case AE_CB_FLASH_FIRED:
 		in = data;
+		cmd = ISP_AE_CB_FLASH_FIRED;
+		break;
+	case AE_CB_AE_CALCOUT_NOTIFY:
+		in = data;
+		cmd = ISP_AE_CALCOUT_NOTIFY;
 		break;
 	case AE_CB_EXPTIME_NOTIFY:
 		cmd = ISP_AE_EXP_TIME;
