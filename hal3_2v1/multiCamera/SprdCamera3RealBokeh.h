@@ -240,6 +240,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     face_beauty_levels mPerfectskinlevel;
     bool mFlushing;
     bool mIsSupportPBokeh;
+    bool mOtpExist;
     int mApiVersion;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();

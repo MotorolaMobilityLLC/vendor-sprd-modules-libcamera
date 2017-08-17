@@ -29,6 +29,7 @@
 #define LOG_TAG "Cam3RealBokeh"
 //#define LOG_NDEBUG 0
 #include "SprdCamera3RealBokeh.h"
+#include "../../sensor/otp_drv/otp_info.h"
 
 using namespace android;
 namespace sprdcamera {
@@ -339,11 +340,11 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     }
     if (!mFlushing) {
         bokehThreadExit();
-        // wait threads quit to relese object
-        mCaptureThread->join();
-        mPreviewMuxerThread->join();
-        HAL_LOGI("threads quit.");
     }
+    // wait threads quit to relese object
+    mCaptureThread->join();
+    mPreviewMuxerThread->join();
+    HAL_LOGI("threads quit.");
 
     freeLocalBuffer();
     mSavedRequestList.clear();
@@ -1173,7 +1174,11 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
         rc = mRealBokeh->mArcSoftBokehApi->ARC_DCVR_PrevProcess(
             mArcSoftPrevHandle, &leftImg, &rightImg, &dstImg,
             &mArcSoftPrevParam);
-        if (rc != MOK) {
+        if ((rc != MOK) && (rc == MERR_BAD_STATE)) {
+            HAL_LOGW("there is no calibration file");
+            // if no calibration file just return left image.
+            memcpy(pDstDataY, pLeftImgDataY, input_handle1->size);
+        } else {
             HAL_LOGD("arcsoft ARC_DCVR_PrevProcess ,rc = %ld", rc);
         }
         mRealBokeh->flushIonBuffer(depth_handle->share_fd, depth_handle->base,
@@ -2934,7 +2939,12 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             mCaptureThread->mArcSoftCapParam.i32BlurIntensity =
                 mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel * 60 / 100;
         }
-        HAL_LOGD("f_number=%d", fnum);
+        HAL_LOGD("f_number=%d sprd:%d,%d,arcsoft:%d,%d,",
+                 metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0],
+                 mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number,
+                 mCaptureThread->mCapbokehParam.bokeh_level,
+                 mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel,
+                 mCaptureThread->mArcSoftCapParam.i32BlurIntensity);
     }
 
     if (metaSettings.exists(ANDROID_CONTROL_AF_REGIONS)) {
@@ -3235,9 +3245,15 @@ int SprdCamera3RealBokeh::configureStreams(
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.cam.pbokeh.enable", prop, "1");
-    mIsSupportPBokeh = atoi(prop);
-    HAL_LOGD("mIsSupportPBokeh %d", mIsSupportPBokeh);
+
+    if (mOtpExist) {
+        property_get("persist.sys.cam.pbokeh.enable", prop, "1");
+        mIsSupportPBokeh = atoi(prop);
+        HAL_LOGD("mIsSupportPBokeh prop %d", mIsSupportPBokeh);
+    } else {
+        mIsSupportPBokeh = false;
+        HAL_LOGD("mIsSupportPBokeh %d", mIsSupportPBokeh);
+    }
 
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
@@ -3462,12 +3478,10 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
     }
     CameraMetadata metadata;
     metadata = fwk_metadata;
-#define OTP_CALI_SPRD 0
-#define OTP_CALI_ARCSOFT 1
-#define OTP_CALI_ALTEK 2
     if (metadata.exists(ANDROID_SPRD_OTP_DATA)) {
         uint8_t otpType;
         int otpSize;
+        mOtpExist = true;
         otpType = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
                       .otpInfo.otp_type;
         otpSize = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
@@ -3487,6 +3501,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
                    metadata.find(ANDROID_SPRD_OTP_DATA).data.u8, otpSize);
         }
     } else {
+        mOtpExist = false;
         HAL_LOGD("use default otp calibration.bin");
         checkOtpInfo();
     }
@@ -3519,7 +3534,7 @@ int SprdCamera3RealBokeh::checkOtpInfo() {
                   mCaliData.i32CalibDataSize, fid);
             fclose(fid);
         } else {
-            HAL_LOGE("open calibration file error");
+            HAL_LOGW("open calibration file error");
             rc = -1;
         }
     }
