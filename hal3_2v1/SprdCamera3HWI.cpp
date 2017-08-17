@@ -475,6 +475,7 @@ int SprdCamera3HWI::checkStreamList(
     if (streamList->streams == NULL) {
         HAL_LOGE("NULL stream list");
         return BAD_VALUE;
+#ifdef CONFIG_CAMERA_PLATFORM_VERSION_8
     } else if (streamList->streams[0]->width == 0 ||
                streamList->streams[0]->height == 0 ||
                streamList->streams[0]->width == UINT32_MAX ||
@@ -482,6 +483,7 @@ int SprdCamera3HWI::checkStreamList(
                (uint32_t)streamList->streams[0]->format == UINT32_MAX ||
                (uint32_t)streamList->streams[0]->rotation == UINT32_MAX) {
         return BAD_VALUE; /*vts configureStreamsInvalidOutputs */
+ #endif
     }
 
     if (streamList->num_streams < 1) {
@@ -876,11 +878,14 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request) {
     }
 
     uint32_t frameNumber = request->frame_number;
+
+#ifdef CONFIG_CAMERA_PLATFORM_VERSION_8
     /* vts processCaptureRequest */
     if ((request->settings == NULL) && (frameNumber == 1)) {
         HAL_LOGE("NULL capture request setting");
         return BAD_VALUE;
     }
+#endif
 
     if (request->input_buffer != NULL &&
         request->input_buffer->stream ==
