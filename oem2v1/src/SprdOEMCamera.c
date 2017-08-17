@@ -413,22 +413,6 @@ exit:
     return ret;
 }
 
-cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
-                                  cmr_u32 *max_height) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    if (!max_width || !max_height) {
-        CMR_LOGE("Invalid Param");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    ret = camera_local_get_cpp_capability(oem_handle, max_width, max_height);
-
-exit:
-    CMR_LOGI("done %ld", ret);
-    return ret;
-}
-
 cmr_int camera_get_sensor_info_for_raw(cmr_handle camera_handle,
                                        struct sensor_mode_info *mode_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1106,9 +1090,9 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         break;
     }
     case CAMERA_IOCTRL_GET_CPP_CAPABILITY: {
-        ret = camera_get_cpp_capability(handle,
-                                        &(((struct img_size *)param)->width),
-                                        &(((struct img_size *)param)->height));
+        ret = camera_local_get_cpp_capability(
+              handle, &(((struct img_size *)param)->width),
+              &(((struct img_size *)param)->height));
     }
     case CAMERA_IOCTRL_THUMB_YUV_PROC: {
         ret = camera_set_thumb_yuv_proc(handle,

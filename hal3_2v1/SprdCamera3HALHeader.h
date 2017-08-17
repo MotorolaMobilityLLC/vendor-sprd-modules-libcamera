@@ -342,6 +342,8 @@ typedef enum {
     CAMERA_CAPTURE_MODE_SPRD_ZSL_PREVIEW,  /* sprd zsl snapshot */
 
     CAMERA_CAPTURE_MODE_ISP_SIMULATION_TOOL,
+    CAMERA_CAPTURE_MODE_CALLBACK_SNAPSHOT, /*for cts
+                                              testAllOutputYuvResolutions */
     CAMERA_CAPTURE_MODE_MAX,
 } camera_capture_mode_t;
 

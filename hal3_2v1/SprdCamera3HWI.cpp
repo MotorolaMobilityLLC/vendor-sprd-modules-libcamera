@@ -1032,7 +1032,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     SprdCamera3Stream *pre_stream = NULL;
     int receive_req_max = mReciveQeqMax;
     int32_t width = 0, height = 0;
+    uint16_t max_sensor_width = 0, max_sensor_height = 0;
     Mutex::Autolock l(mLock);
+    cam_dimension_t max_cpp_size = {0, 0};
 
     ret = validateCaptureRequest(request);
     if (ret) {
@@ -1067,7 +1069,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     // check if need to stop offline zsl
     mOEMIf->checkIfNeedToStopOffLineZsl();
-
+    mSetting->getLargestSensorSize(mCameraId, &max_sensor_width,
+                                   &max_sensor_height);
+    mOEMIf->getCppMaxSize(&max_cpp_size);
     switch (capturePara.cap_intent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if (mOldCapIntent != capturePara.cap_intent) {
@@ -1239,7 +1243,16 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 } else if (capturePara.cap_intent ==
                                ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
                            channel == mPicChan) {
-                    if (request->num_output_buffers >= 2) {
+                    if (request->num_output_buffers == 2 &&
+                        request->output_buffers[(i + 1) % 2].stream->priv ==
+                            mCallbackChan &&
+                        (max_cpp_size.width > max_sensor_width) &&
+                        (max_cpp_size.height > max_sensor_height)) {
+                        mOEMIf->setCapturePara(
+                            CAMERA_CAPTURE_MODE_CALLBACK_SNAPSHOT, frameNumber);
+                        mFirstRegularRequest = false;
+                        receive_req_max = SprdCamera3PicChannel::kMaxBuffers;
+                    } else if (request->num_output_buffers >= 2) {
                         mOEMIf->setCapturePara(
                             CAMERA_CAPTURE_MODE_PREVIEW_SNAPSHOT, frameNumber);
                         if (mOEMIf->GetCameraStatus(CAMERA_STATUS_PREVIEW) ==
@@ -1257,6 +1270,21 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 }
             } else {
                 if (capturePara.cap_intent ==
+                        ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
+                    request->num_output_buffers == 2 &&
+                    request->output_buffers[(i + 1) % 2].stream->priv == mPicChan &&
+                    (max_cpp_size.width > max_sensor_width) &&
+                    (max_cpp_size.height > max_sensor_height)) {
+                    ret = mPicChan->request(stream, output.buffer, frameNumber);
+                    if (ret) {
+                        HAL_LOGE("mPicChan->request failed %p (%d)",
+                                 output.buffer, frameNumber);
+                        continue;
+                    }
+                    mPictureRequest = true;
+                    mFirstRegularRequest = false;
+                } else if (
+                    capturePara.cap_intent ==
                         ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW ||
                     capturePara.cap_intent ==
                         ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ||

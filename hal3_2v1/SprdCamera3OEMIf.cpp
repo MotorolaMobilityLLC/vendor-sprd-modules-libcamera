@@ -6795,6 +6795,15 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
         break;
+    case CAMERA_CAPTURE_MODE_CALLBACK_SNAPSHOT:
+        mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
+        mCaptureMode = CAMERA_NORMAL_MODE;
+        mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
+        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
+        mRecordingMode = false;
+        mPicCaptureCnt = 1;
+        mZslPreviewMode = false;
+        break;
     case CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT:
         mTakePictureMode = SNAPSHOT_ZSL_MODE;
         mCaptureMode = CAMERA_ZSL_MODE;
