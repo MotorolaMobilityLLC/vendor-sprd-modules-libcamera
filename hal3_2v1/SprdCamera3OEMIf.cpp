@@ -485,6 +485,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mGyroMsgQueHandle = 0;
     mPreAllocCapMemSemDone.count = 0;
     mGyro_sem.count = 0;
+    mCapBufIsAvail = 0;
+    m_zslValidDataWidth = 0;
+    m_zslValidDataHeight = 0;
+    mChannelCb = NULL;
+    mUserData = NULL;
+    mZslStreamInfo = NULL;
 
     HAL_LOGI(":hal3: X cameraId: %d.", cameraId);
 
