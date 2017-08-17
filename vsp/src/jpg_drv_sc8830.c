@@ -121,7 +121,7 @@ PUBLIC void open_jpg_iram (void)
 	cmd |= (1<<2);
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, cmd, "DCAM_CFG: allow software to access the vsp buffer");
 
-	if ((jpeg_fw_codec->jpg_version != SHARKL2) && (jpeg_fw_codec->jpg_version != IWHALE2))
+	if ((jpeg_fw_codec->jpg_version != SHARKL2) && (jpeg_fw_codec->jpg_version != IWHALE2) && (jpeg_fw_codec->jpg_version != SHARKLE))
 		JPG_READ_REG_POLL(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, 1<<8, 1<<8, TIME_OUT_CLK, "DCAM_CFG: polling dcam clock status");
 }
 
@@ -136,7 +136,7 @@ PUBLIC void close_jpg_iram (void)
 	cmd = (cmd & ~0x4) ;
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, cmd, "DCAM_CFG: allow hardware to access the vsp buffer");
 
-	if ((jpeg_fw_codec->jpg_version != SHARKL2) && (jpeg_fw_codec->jpg_version != IWHALE2))
+	if ((jpeg_fw_codec->jpg_version != SHARKL2) && (jpeg_fw_codec->jpg_version != IWHALE2) && (jpeg_fw_codec->jpg_version != SHARKLE) )
 		JPG_READ_REG_POLL (JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, 1,1, TIME_OUT_CLK, "DCAM_CFG: polling dcam clock status");
 }
 
