@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-
 /************************************************************************/
-
 
 //#ifdef WIN32
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
-
 
 /* Begin Include */
 #include "sensor_s5k3l8xxm3r_raw_param_common.c"
@@ -42,155 +38,125 @@
 
 //#endif
 
-
 /************************************************************************/
-
 
 /* IspToolVersion=R1.17.0501 */
 
-
 /* Capture Sizes:
-	4208x3120,2104x1560,1280x720
+        4208x3120,2096x1560,1280x720
 */
 
+/************************************************************************/
+
+static struct sensor_raw_resolution_info_tab s_s5k3l8xxm3r_trim_info = {
+    0x00,
+    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}};
 
 /************************************************************************/
 
-
-static struct sensor_raw_resolution_info_tab s_s5k3l8xxm3r_trim_info=
-{
-	0x00,
-	{
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-	}
-};
-
+static struct sensor_raw_ioctrl s_s5k3l8xxm3r_ioctrl = {0, 0, 0};
 
 /************************************************************************/
 
-
-static struct sensor_raw_ioctrl s_s5k3l8xxm3r_ioctrl=
-{
-	0,
-	0,
-	0
-};
-
-
-/************************************************************************/
-
-
-static struct sensor_version_info s_s5k3l8xxm3r_version_info=
-{
-	0x00070005,
-	{
-		{
-			0x336B3573,
-			0x7878386C,
-			0x0000336D,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000
-		}
-	},
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000
-};
-
+static struct sensor_version_info s_s5k3l8xxm3r_version_info = {
+    0x00070005,
+    {{0x336B3573, 0x7878386C, 0x0072336D, 0x00000000, 0x00000000, 0x00000000,
+      0x00000000, 0x00000000}},
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000};
 
 /************************************************************************/
 
-
-static uint32_t s_s5k3l8xxm3r_libuse_info[]=
-{
-	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
-};
-
+static uint32_t s_s5k3l8xxm3r_libuse_info[] = {
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000};
 
 /************************************************************************/
 
-
-static struct sensor_raw_info s_s5k3l8xxm3r_mipi_raw_info=
-{
-	&s_s5k3l8xxm3r_version_info,
-	{
-		{s_s5k3l8xxm3r_tune_info_common, sizeof(s_s5k3l8xxm3r_tune_info_common)},
-		{s_s5k3l8xxm3r_tune_info_prv_0, sizeof(s_s5k3l8xxm3r_tune_info_prv_0)},
-		{s_s5k3l8xxm3r_tune_info_prv_1, sizeof(s_s5k3l8xxm3r_tune_info_prv_1)},
-		{NULL, 0},
-		{NULL, 0},
-		{s_s5k3l8xxm3r_tune_info_cap_0, sizeof(s_s5k3l8xxm3r_tune_info_cap_0)},
-		{s_s5k3l8xxm3r_tune_info_cap_1, sizeof(s_s5k3l8xxm3r_tune_info_cap_1)},
-		{NULL, 0},
-		{NULL, 0},
-		{s_s5k3l8xxm3r_tune_info_video_0, sizeof(s_s5k3l8xxm3r_tune_info_video_0)},
-		{s_s5k3l8xxm3r_tune_info_video_1, sizeof(s_s5k3l8xxm3r_tune_info_video_1)},
-		{s_s5k3l8xxm3r_tune_info_video_2, sizeof(s_s5k3l8xxm3r_tune_info_video_2)},
-		{NULL, 0},
-	},
-	&s_s5k3l8xxm3r_trim_info,
-	&s_s5k3l8xxm3r_ioctrl,
-	(struct sensor_libuse_info *)s_s5k3l8xxm3r_libuse_info,
-	{
-		&s_s5k3l8xxm3r_fix_info_common,
-		&s_s5k3l8xxm3r_fix_info_prv_0,
-		&s_s5k3l8xxm3r_fix_info_prv_1,
-		NULL,
-		NULL,
-		&s_s5k3l8xxm3r_fix_info_cap_0,
-		&s_s5k3l8xxm3r_fix_info_cap_1,
-		NULL,
-		NULL,
-		&s_s5k3l8xxm3r_fix_info_video_0,
-		&s_s5k3l8xxm3r_fix_info_video_1,
-		&s_s5k3l8xxm3r_fix_info_video_2,
-		NULL,
-	},
-	{
-		{s_s5k3l8xxm3r_common_tool_ui_input, sizeof(s_s5k3l8xxm3r_common_tool_ui_input)},
-		{s_s5k3l8xxm3r_prv_0_tool_ui_input, sizeof(s_s5k3l8xxm3r_prv_0_tool_ui_input)},
-		{s_s5k3l8xxm3r_prv_1_tool_ui_input, sizeof(s_s5k3l8xxm3r_prv_1_tool_ui_input)},
-		{NULL, 0},
-		{NULL, 0},
-		{s_s5k3l8xxm3r_cap_0_tool_ui_input, sizeof(s_s5k3l8xxm3r_cap_0_tool_ui_input)},
-		{s_s5k3l8xxm3r_cap_1_tool_ui_input, sizeof(s_s5k3l8xxm3r_cap_1_tool_ui_input)},
-		{NULL, 0},
-		{NULL, 0},
-		{s_s5k3l8xxm3r_video_0_tool_ui_input, sizeof(s_s5k3l8xxm3r_video_0_tool_ui_input)},
-		{s_s5k3l8xxm3r_video_1_tool_ui_input, sizeof(s_s5k3l8xxm3r_video_1_tool_ui_input)},
-		{s_s5k3l8xxm3r_video_2_tool_ui_input, sizeof(s_s5k3l8xxm3r_video_2_tool_ui_input)},
-		{NULL, 0},
-	},
-	{
-		&s_s5k3l8xxm3r_nr_scene_map_param,
-		&s_s5k3l8xxm3r_nr_level_number_map_param,
-		&s_s5k3l8xxm3r_default_nr_level_map_param,
-	},
+static struct sensor_raw_info s_s5k3l8xxm3r_mipi_raw_info = {
+    &s_s5k3l8xxm3r_version_info,
+    {
+        {s_s5k3l8xxm3r_tune_info_common,
+         sizeof(s_s5k3l8xxm3r_tune_info_common)},
+        {s_s5k3l8xxm3r_tune_info_prv_0, sizeof(s_s5k3l8xxm3r_tune_info_prv_0)},
+        {s_s5k3l8xxm3r_tune_info_prv_1, sizeof(s_s5k3l8xxm3r_tune_info_prv_1)},
+        {NULL, 0},
+        {NULL, 0},
+        {s_s5k3l8xxm3r_tune_info_cap_0, sizeof(s_s5k3l8xxm3r_tune_info_cap_0)},
+        {s_s5k3l8xxm3r_tune_info_cap_1, sizeof(s_s5k3l8xxm3r_tune_info_cap_1)},
+        {NULL, 0},
+        {NULL, 0},
+        {s_s5k3l8xxm3r_tune_info_video_0,
+         sizeof(s_s5k3l8xxm3r_tune_info_video_0)},
+        {s_s5k3l8xxm3r_tune_info_video_1,
+         sizeof(s_s5k3l8xxm3r_tune_info_video_1)},
+        {s_s5k3l8xxm3r_tune_info_video_2,
+         sizeof(s_s5k3l8xxm3r_tune_info_video_2)},
+        {NULL, 0},
+    },
+    &s_s5k3l8xxm3r_trim_info,
+    &s_s5k3l8xxm3r_ioctrl,
+    (struct sensor_libuse_info *)s_s5k3l8xxm3r_libuse_info,
+    {
+        &s_s5k3l8xxm3r_fix_info_common, &s_s5k3l8xxm3r_fix_info_prv_0,
+        &s_s5k3l8xxm3r_fix_info_prv_1, NULL, NULL,
+        &s_s5k3l8xxm3r_fix_info_cap_0, &s_s5k3l8xxm3r_fix_info_cap_1, NULL,
+        NULL, &s_s5k3l8xxm3r_fix_info_video_0, &s_s5k3l8xxm3r_fix_info_video_1,
+        &s_s5k3l8xxm3r_fix_info_video_2, NULL,
+    },
+    {
+        {s_s5k3l8xxm3r_common_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_common_tool_ui_input)},
+        {s_s5k3l8xxm3r_prv_0_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_prv_0_tool_ui_input)},
+        {s_s5k3l8xxm3r_prv_1_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_prv_1_tool_ui_input)},
+        {NULL, 0},
+        {NULL, 0},
+        {s_s5k3l8xxm3r_cap_0_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_cap_0_tool_ui_input)},
+        {s_s5k3l8xxm3r_cap_1_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_cap_1_tool_ui_input)},
+        {NULL, 0},
+        {NULL, 0},
+        {s_s5k3l8xxm3r_video_0_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_video_0_tool_ui_input)},
+        {s_s5k3l8xxm3r_video_1_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_video_1_tool_ui_input)},
+        {s_s5k3l8xxm3r_video_2_tool_ui_input,
+         sizeof(s_s5k3l8xxm3r_video_2_tool_ui_input)},
+        {NULL, 0},
+    },
+    {
+        &s_s5k3l8xxm3r_nr_scene_map_param,
+        &s_s5k3l8xxm3r_nr_level_number_map_param,
+        &s_s5k3l8xxm3r_default_nr_level_map_param,
+    },
 };

@@ -66,6 +66,8 @@ extern otp_drv_entry_t imx258_truly_drv_entry;
 extern otp_drv_entry_t ov13855_altek_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_qtech_drv_entry;
 extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
+extern otp_drv_entry_t gc5024_common_drv_entry;
+extern otp_drv_entry_t s5k3l8xxm3_reachtech_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -78,7 +80,7 @@ extern struct sns_af_drv_entry dw9763_drv_entry;
 extern struct sns_af_drv_entry vcm_zc524_drv_entry;
 extern struct sns_af_drv_entry ad5823_drv_entry;
 extern struct sns_af_drv_entry vm242_drv_entry;
-
+extern struct sns_af_drv_entry dw9763r_drv_entry;
 
 
 /**
@@ -125,6 +127,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
     {MODULE_SUNNY, "imx135_mipi_raw", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, NULL},
     {MODULE_SUNNY, "s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
 #else
+{MODULE_SUNNY,"s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&dw9763r_drv_entry, 0}, &s5k3l8xxm3_reachtech_drv_entry},
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
 #endif
 #endif
@@ -151,8 +154,8 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
     {MODULE_SUNNY, "sp8407_mipi_raw", &g_sp8407_mipi_raw_info, {NULL, 0}, NULL},
     //{MODULE_SUNNY, "gc2375_mipi_raw", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
     {MODULE_QTECH, "s5k3l8xxm3q_mipi_raw", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, &s5k3l8xxm3_qtech_drv_entry},
-    {MODULE_SUNNY, "gc5024_mipi_raw", &g_gc5024_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_SUNNY, "ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, NULL},
+{MODULE_SUNNY,"gc5024_mipi_raw", &g_gc5024_mipi_raw_info, {NULL, 0}, &gc5024_common_drv_entry},
+{MODULE_SUNNY, "ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, NULL},
 
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
@@ -178,7 +181,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
     {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, NULL},
     {MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
 #endif
-
+	{MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
 #endif
     {0}};
 
