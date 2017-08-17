@@ -557,11 +557,6 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	awb_gain.g = cxt->recover_gain.g;
 	awb_gain.b = cxt->recover_gain.b;
 
-	cxt->output_gain.r = cxt->recover_gain.r;
-	cxt->output_gain.g = cxt->recover_gain.g;
-	cxt->output_gain.b = cxt->recover_gain.b;
-	cxt->output_ct = cxt->recover_ct;
-
 	cxt->cur_gain.r = awb_gain.r;
 	cxt->cur_gain.g = awb_gain.g;
 	cxt->cur_gain.b = awb_gain.b;
