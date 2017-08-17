@@ -278,6 +278,7 @@ struct ae_ctrl_cxt {
 	 */
 	cmr_s8 camera_id;
 	cmr_s8 is_snapshot;
+	cmr_u8 is_first;
 	pthread_mutex_t data_sync_lock;
 	/*
 	 * ae control operation infaces
@@ -5438,6 +5439,9 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			if (scene_info[i].table_enable) {
 				cxt->cur_status.ae_table = &scene_info[i].ae_table[cxt->cur_status.settings.flicker];
 			}
+			if (0 != scene_info[i].target_lum) {
+				cxt->cur_status.target_lum = scene_info[i].target_lum;
+			}
 		}
 	}
 	cxt->cur_status.ae_table->min_index = 0;
@@ -5598,6 +5602,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		}
 	}
 	cxt->is_snapshot = work_info->is_snapshot;
+	cxt->is_first = 1;
 
 	return rtn;
 }
@@ -5909,7 +5914,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
-		if ((nx_mod != cur_mod)) {
+		if ((nx_mod != cur_mod) || cxt->is_first) {
 			ISP_LOGV("before set scene mode: \n");
 			_printf_status_log(cxt, cur_mod, &cxt->cur_status);
 			_set_scene_mode(cxt, cur_mod, nx_mod);
@@ -6061,6 +6066,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_PROCESS_OUT, &callback_in);
 	}
 
+	cxt->is_first = 0;
 
 ERROR_EXIT:
 	pthread_mutex_unlock(&cxt->data_sync_lock);
