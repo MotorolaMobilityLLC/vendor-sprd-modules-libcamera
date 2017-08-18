@@ -802,9 +802,18 @@ static cmr_int c2390_drv_stream_on(cmr_handle handle, cmr_uint param) {
     usleep(30 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3108, 0x00);
+
+    //	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3108, 0xcd);
+
     /*delay*/
     usleep(20 * 1000);
+    usleep(200 * 1000);
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x328b, 0x03);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3108, 0xcd);
 
     return 0;
 }
@@ -819,14 +828,14 @@ static cmr_int c2390_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0309, 0x5e);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0003, 0x00);
-    usleep(100 * 1000); // 100*1000 capture fail
+
+    usleep(200 * 1000); // 100*1000 capture fail
 
     return 0;
 }
