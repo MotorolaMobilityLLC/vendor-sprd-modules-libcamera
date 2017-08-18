@@ -895,7 +895,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[4] = 1;
 			break;
 		}
-	case YUV_PRECDN:
+	case V21PRECDN:
 		{
 			static cmr_u32 precdn_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
