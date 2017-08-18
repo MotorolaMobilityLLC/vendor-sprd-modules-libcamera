@@ -143,8 +143,8 @@ ifeq ($(strip $(TARGET_BOARD_STEREOCAPTURE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp
 endif
-#	hal1.0/src/SprdCameraHardwareInterface.cpp \
-#	hal1.0/src/SprdCameraFlash.cpp
+#    hal1.0/src/SprdCameraHardwareInterface.cpp \
+#    hal1.0/src/SprdCameraFlash.cpp
 
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
@@ -159,10 +159,12 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp
+    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp \
+    hal3_$(ISP_HW_VER)/multiCamera/altek/arcsoft_calibration_parser.cpp
 else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp
+    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp \
+    hal3_$(ISP_HW_VER)/multiCamera/altek/arcsoft_calibration_parser.cpp
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)

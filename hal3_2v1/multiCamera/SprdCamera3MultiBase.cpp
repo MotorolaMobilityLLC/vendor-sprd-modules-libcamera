@@ -493,17 +493,24 @@ int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
 }
 
 void SprdCamera3MultiBase::dumpFps() {
-    mVFrameCount++;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     int64_t now = systemTime();
     int64_t diff = now - mVLastFpsTime;
     double mVFps;
-    if (diff > ms2ns(10000)) {
-        mVFps =
-            (((double)(mVFrameCount - mVLastFrameCount)) * (double)(s2ns(1))) /
-            (double)diff;
-        HAL_LOGD("[KPI Perf]:Fps: %.4f ", mVFps);
-        mVLastFpsTime = now;
-        mVLastFrameCount = mVFrameCount;
+
+    property_get("dump.mCamera.fps", prop, "0");
+    if (atoi(prop) == 1) {
+        mVFrameCount++;
+        if (diff > ms2ns(10000)) {
+            mVFps = (((double)(mVFrameCount - mVLastFrameCount)) *
+                     (double)(s2ns(1))) /
+                    (double)diff;
+            HAL_LOGD("[KPI Perf]:Fps: %.4f ", mVFps);
+            mVLastFpsTime = now;
+            mVLastFrameCount = mVFrameCount;
+        }
     }
 }
 
@@ -684,12 +691,14 @@ bool SprdCamera3MultiBase::alignTransform(void *src, int w_old, int h_old,
 
 /*
 #ifdef CONFIG_FACE_BEAUTY
-void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int width,
+void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int
+width,
                                              int height) {}
 
 void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
                                         int perfect_level, int *face_info) {
-    // init the parameters table. save the value until the process is restart or
+    // init the parameters table. save the value until the process is
+restart or
     // the device is restart.
     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
     int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
@@ -703,14 +712,16 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
         Tsface.top = face_info[1];
         Tsface.right = face_info[2];
         Tsface.bottom = face_info[3];
-        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left, Tsface.top,
+        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left,
+Tsface.top,
                  Tsface.right, Tsface.bottom);
 
         int level = perfect_level;
         int skinWhitenLevel = 0;
         int skinCleanLevel = 0;
         int level_num = 0;
-        // convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel
+        // convert the skin_level set by APP to skinWhitenLevel &
+skinCleanLevel
         // according to the table saved.
         level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
         level_num = level / 10;
@@ -718,12 +729,14 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
         skinCleanLevel = tab_skinCleanLevel[level_num];
         HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d "
                  "frame->height %d frame->width %d",
-                 skinWhitenLevel, skinCleanLevel, frame->height, frame->width);
+                 skinWhitenLevel, skinCleanLevel, frame->height,
+frame->width);
 
         TSMakeupData inMakeupData;
         unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
         unsigned char *uvBuf =
-            (unsigned char *)(frame->y_vir_addr) + frame->width * frame->height;
+            (unsigned char *)(frame->y_vir_addr) + frame->width *
+frame->height;
 
         inMakeupData.frameWidth = frame->width;
         inMakeupData.frameHeight = frame->height;
@@ -732,7 +745,8 @@ void SprdCamera3MultiBase::doFaceMakeup(struct camera_frame_type *frame,
 
         if (frame->width > 0 && frame->height > 0) {
             int ret_val =
-                ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
+                ts_face_beautify(&inMakeupData, &inMakeupData,
+skinCleanLevel,
                                  skinWhitenLevel, &Tsface, 0, yuvFormat);
             if (ret_val != TS_OK) {
                 HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);

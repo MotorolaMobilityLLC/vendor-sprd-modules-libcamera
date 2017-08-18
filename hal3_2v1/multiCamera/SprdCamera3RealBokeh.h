@@ -63,6 +63,7 @@
 #include "./arcsoft/merror.h"
 #include "./arcsoft/arcsoft_dualcam_video_refocus.h"
 #include "./arcsoft/arcsoft_dualcam_image_refocus.h"
+#include "./altek/arcsoft_calibration_parser.h"
 
 namespace sprdcamera {
 #define BOKEH_YUV_DATA_TRANSFORM
@@ -118,12 +119,15 @@ typedef struct {
 
 typedef struct {
     void *handle;
-    int (*sprd_bokeh_Init)(int a_dInImgW, int a_dInImgH, char *param);
-    int (*sprd_bokeh_Close)();
+    void *muti_handle;
+    int (*sprd_bokeh_Init)(void **muti_handle, int a_dInImgW, int a_dInImgH,
+                           char *param);
+    int (*sprd_bokeh_Close)(void *muti_handle);
     int (*sprd_bokeh_VersionInfo_Get)(void *a_pOutBuf, int a_dInBufMaxSize);
-    int (*sprd_bokeh_ReFocusPreProcess)(void *a_pInBokehBufYCC420NV21,
+    int (*sprd_bokeh_ReFocusPreProcess)(void *muti_handle,
+                                        void *a_pInBokehBufYCC420NV21,
                                         void *a_pInDisparityBuf16);
-    int (*sprd_bokeh_ReFocusGen)(void *a_pOutBlurYCC420NV21,
+    int (*sprd_bokeh_ReFocusGen)(void *muti_handle, void *a_pOutBlurYCC420NV21,
                                  int a_dInBlurStrength, int a_dInPositionX,
                                  int a_dInPositionY);
 } BokehAPI_t;
@@ -149,7 +153,6 @@ typedef struct {
     ARCDCIR_API MRESULT (*ARC_DCIR_CapInit)(MHandle *phHandle, MInt32 i32Mode);
     ARC_DCVR_API MRESULT (*ARC_DCVR_Uninit)(MHandle *phHandle);
     ARCDCIR_API MRESULT (*ARC_DCIR_Uninit)(MHandle *phHandle);
-    ARCDCIR_API MRESULT (*ARC_DCIR_Reset)(MHandle hHandle);
     ARCDCIR_API MRESULT (*ARC_DCIR_SetCameraImageInfo)(
         MHandle hHandle, LPARC_REFOCUSCAMERAIMAGE_PARAM pParam);
     ARC_DCVR_API MRESULT (*ARC_DCVR_SetCameraImageInfo)(
@@ -176,6 +179,7 @@ typedef struct {
                                                  LPASVLOFFSCREEN pAuxImg,
                                                  LPASVLOFFSCREEN pDstImg,
                                                  LPARC_DCVR_PARAM pParam);
+    ARCDCIR_API const MPBASE_Version *(*ARC_DCIR_GetVersion)();
 } ArcSoftBokehAPI_t;
 
 class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
@@ -240,7 +244,11 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool mFlushing;
     bool mIsSupportPBokeh;
     bool mOtpExist;
+    int mVcmSteps;
+    int mOtpSize;
+    int mOtpType;
     int mApiVersion;
+    int mJpegOrientation;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -298,6 +306,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         MInt32 mArcSoftDepthSize;
         ARC_DCIR_PARAM mArcSoftDcrParam;
         bool mAbokehGallery;
+        void reprocessReq(buffer_handle_t *output_buffer,
+                          capture_queue_msg_t_bokeh capture_msg,
+                          buffer_handle_t *depth_output_buffer,
+                          buffer_handle_t *scaled_buffer);
 
       private:
         void waitMsgAvailable();
@@ -371,6 +383,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     ARC_DC_CALDATA mCaliData;
     uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
     char mArcSoftCalibData[THIRD_OTP_SIZE];
+    ArcParam mArcParam;
     int mMaxPendingCount;
     int mPendingRequest;
     Mutex mPendingLock;
@@ -410,6 +423,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
     void bokehThreadExit();
+    int createArcSoftCalibrationData(unsigned char *pBuffer, int nBufSize);
 };
 };
 

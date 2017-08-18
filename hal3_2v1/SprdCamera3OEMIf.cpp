@@ -4182,7 +4182,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
 
     VCM_Tag sprdvcmInfo;
-    if (mSprdRefocusEnabled == true && mCameraId == 0) {
+    if ((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH) &&
+        mCameraId == 0) {
         mSetting->getVCMTag(&sprdvcmInfo);
         uint32_t vcm_step = 0;
         mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,

@@ -27,8 +27,13 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+ifeq ($(strip $(TARGET_BOARD_ARCSOFT_ZTE_MODE_SUPPORT)),true)
+LOCAL_SRC_FILES_32 := zte_x86_lib/libarcsoft_dualcam_refocus.so
+LOCAL_SRC_FILES_64 := zte_x86_lib64/libarcsoft_dualcam_refocus.so
+else
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_dualcam_refocus.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_dualcam_refocus.so
+endif
 ifeq ($(PLATFORM_VERSION),8.0.0)
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true

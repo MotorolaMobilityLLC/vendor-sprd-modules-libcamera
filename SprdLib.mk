@@ -65,6 +65,7 @@ LOCAL_SHARED_LIBRARIES += libsprddepth
 endif
 ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libarcsoft_dualcam_refocus
+LOCAL_SHARED_LIBRARIES += libalParseOTP
 endif
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
