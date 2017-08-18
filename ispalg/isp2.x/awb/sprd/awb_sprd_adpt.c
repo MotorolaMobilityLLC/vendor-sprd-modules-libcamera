@@ -469,12 +469,13 @@ static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 
 	ISP_LOGV("FLASH_TAG: awb flash recover gain = (%d, %d, %d), recover mode = %d", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_mode);
 
-	s_save_awb_param[cxt->camera_id].r = awb_gain.r;
-	s_save_awb_param[cxt->camera_id].g = awb_gain.g;
-	s_save_awb_param[cxt->camera_id].b = awb_gain.b;
-	s_save_awb_param[cxt->camera_id].ct = cxt->cur_ct;
-	_awb_save_gain(&s_save_awb_param[0], sizeof(s_save_awb_param)/sizeof(struct awb_save_gain));
-
+	if(cxt->wb_mode == 0){
+		s_save_awb_param[cxt->camera_id].r = awb_gain.r;
+		s_save_awb_param[cxt->camera_id].g = awb_gain.g;
+		s_save_awb_param[cxt->camera_id].b = awb_gain.b;
+		s_save_awb_param[cxt->camera_id].ct = cxt->cur_ct;
+		_awb_save_gain(&s_save_awb_param[0], sizeof(s_save_awb_param)/sizeof(struct awb_save_gain));
+	}
 	return rtn;
 
 }
@@ -1231,7 +1232,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 
 	//lock mode
-	if (AWB_CTRL_LOCKMODE == cxt->lock_info.lock_mode) {
+	if (AWB_CTRL_LOCKMODE == cxt->lock_info.lock_mode && cxt->wb_mode == 0) {
 		cxt->output_gain.r = cxt->lock_info.lock_gain.r;
 		cxt->output_gain.g = cxt->lock_info.lock_gain.g;
 		cxt->output_gain.b = cxt->lock_info.lock_gain.b;
@@ -1330,8 +1331,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_FLASH_CLOSE:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_CLOSE");
-		if ((AWB_CTRL_FLASH_PRE == cxt->flash_info.flash_mode) || (AWB_CTRL_FLASH_MAIN == cxt->flash_info.flash_mode)) {
-			rtn = _awb_get_recgain(cxt, in);
+		if(cxt->wb_mode == 0){
+			if ((AWB_CTRL_FLASH_PRE == cxt->flash_info.flash_mode) || (AWB_CTRL_FLASH_MAIN == cxt->flash_info.flash_mode)) {
+				rtn = _awb_get_recgain(cxt, in);
+			}
 		}
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
 		break;
@@ -1388,7 +1391,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_VIDEO_STOP_NOTIFY:
-//		ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+		ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
 		if (cxt->lock_info.lock_mode == AWB_CTRL_UNLOCKMODE && cxt->last_enable == 0  && cxt->flash_info.flash_enable == 0){
 			rtn = _awb_set_recgain(cxt, in);
 		}
