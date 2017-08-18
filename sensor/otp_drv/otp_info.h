@@ -330,6 +330,11 @@ typedef struct {
     otp_base_info_cfg_t base_info_cfg;
 } otp_config_t;
 
+typedef struct {
+    cmr_uint is_depend_relation;
+    cmr_uint depend_sensor_id;
+} otp_depend_sensor_t;
+
 typedef struct otp_drv_init_para {
     cmr_handle hw_handle;
     char *sensor_name;
@@ -356,6 +361,7 @@ typedef struct {
 typedef struct {
     otp_config_t otp_cfg;
     sensor_otp_ops_t otp_ops;
+    otp_depend_sensor_t otp_dep;
 } otp_drv_entry_t;
 
 typedef struct {

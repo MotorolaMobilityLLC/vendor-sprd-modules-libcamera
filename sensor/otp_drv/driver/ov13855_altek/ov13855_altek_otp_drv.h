@@ -97,65 +97,63 @@ static cmr_int ov13855_altek_otp_drv_calibration(cmr_handle otp_drv_handle);
 static cmr_int ov13855_altek_otp_drv_ioctl(cmr_handle otp_drv_handle,
                                            cmr_uint cmd, void *p_params);
 
-otp_drv_entry_t
-    ov13855_altek_drv_entry =
+otp_drv_entry_t ov13855_altek_drv_entry = {
+    .otp_cfg =
         {
-            .otp_cfg =
+            .cali_items =
                 {
-                    .cali_items =
-                        {
-                            .is_self_cal =
-                                TRUE,        /*TRUE:OC calibration on,FALSE; OC
-                                                calibration off*/
-                            .is_awbc = TRUE, /* TRUE: support awb calibration,
-                                                FALSE: Not support awb
-                                                calibration */
-                            .is_awbc_self_cal = FALSE, /*TRUE: Sensor side
-                                                          calibration, FALSE:
-                                                          ISP Side calibration*/
-                            .is_lsc = TRUE, /* TRUE: support lsc calibration,
-                                               FALSE: Not support lsc
-                                               calibration */
-                            .is_lsc_self_cal =
-                                FALSE, /*TRUE: Sensor side calibration, FALSE:
-                                          ISP Side calibration*/
-                            .is_pdafc =
-                                TRUE, /* TRUE: support pdaf calibration, FALSE:
+                    .is_self_cal = TRUE, /*TRUE:OC calibration on,FALSE; OC
+                                            calibration off*/
+                    .is_awbc = TRUE,     /* TRUE: support awb calibration,
+                                            FALSE: Not support awb
+                                            calibration */
+                    .is_awbc_self_cal = FALSE, /*TRUE: Sensor side
+                                                  calibration, FALSE:
+                                                  ISP Side calibration*/
+                    .is_lsc = TRUE,            /* TRUE: support lsc calibration,
+                                                  FALSE: Not support lsc
+                                                  calibration */
+                    .is_lsc_self_cal =
+                        FALSE,        /*TRUE: Sensor side calibration, FALSE:
+                                         ISP Side calibration*/
+                    .is_pdafc = TRUE, /* TRUE: support pdaf calibration, FALSE:
                                          Not support pdaf calibration */
-                            .is_pdaf_self_cal = FALSE, /*TRUE: Sensor side
-                                                          calibration, FALSE:
-                                                          ISP Side calibration*/
-                            .is_afc = TRUE,
-                            .is_af_self_cal = FALSE,
-                            .is_dul_camc = TRUE, /* TRUE: support dual camera
-                                                    calibration, FALSE: Not
-                                                    support dual camera
-                                                    calibration */
-                        },
-                    .base_info_cfg =
-                        {
-                            /*decompression on otp driver or isp*/
-                            .is_lsc_drv_decompression = FALSE,
-                            /*otp data compressed format,
-                              should confirm with module fae*/
-                            .compress_flag = GAIN_ORIGIN_BITS,
-                            /*the width of the stream the sensor can output*/
-                            .full_img_width = 4224,
-                            /*the height of the stream the sensor can output*/
-                            .full_img_height = 3136,
-                            .lsc_otp_grid = 96,
-                            .gain_width = GAIN_WIDTH,
-                            .gain_height = GAIN_HEIGHT,
-                        },
+                    .is_pdaf_self_cal = FALSE, /*TRUE: Sensor side
+                                                  calibration, FALSE:
+                                                  ISP Side calibration*/
+                    .is_afc = TRUE,
+                    .is_af_self_cal = FALSE,
+                    .is_dul_camc = TRUE, /* TRUE: support dual camera
+                                            calibration, FALSE: Not
+                                            support dual camera
+                                            calibration */
                 },
-            .otp_ops =
+            .base_info_cfg =
                 {
-                    .sensor_otp_create = ov13855_altek_otp_drv_create,
-                    .sensor_otp_delete = ov13855_altek_otp_drv_delete,
-                    .sensor_otp_read = ov13855_altek_otp_drv_read,
-                    .sensor_otp_write = ov13855_altek_otp_drv_write,
-                    .sensor_otp_parse = ov13855_altek_otp_drv_parse,
-                    .sensor_otp_calibration = ov13855_altek_otp_drv_calibration,
-                    .sensor_otp_ioctl = ov13855_altek_otp_drv_ioctl, /*expend*/
+                    /*decompression on otp driver or isp*/
+                    .is_lsc_drv_decompression = FALSE,
+                    /*otp data compressed format,
+                      should confirm with module fae*/
+                    .compress_flag = GAIN_ORIGIN_BITS,
+                    /*the width of the stream the sensor can output*/
+                    .full_img_width = 4224,
+                    /*the height of the stream the sensor can output*/
+                    .full_img_height = 3136,
+                    .lsc_otp_grid = 96,
+                    .gain_width = GAIN_WIDTH,
+                    .gain_height = GAIN_HEIGHT,
                 },
-};
+        },
+    .otp_ops =
+        {
+            .sensor_otp_create = ov13855_altek_otp_drv_create,
+            .sensor_otp_delete = ov13855_altek_otp_drv_delete,
+            .sensor_otp_read = ov13855_altek_otp_drv_read,
+            .sensor_otp_write = ov13855_altek_otp_drv_write,
+            .sensor_otp_parse = ov13855_altek_otp_drv_parse,
+            .sensor_otp_calibration = ov13855_altek_otp_drv_calibration,
+            .sensor_otp_ioctl = ov13855_altek_otp_drv_ioctl, /*expend*/
+        },
+    .otp_dep = {
+        .is_depend_relation = TRUE, .depend_sensor_id = 2,
+    }};

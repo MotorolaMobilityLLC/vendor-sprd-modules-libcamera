@@ -68,6 +68,7 @@ extern otp_drv_entry_t s5k3l8xxm3_qtech_drv_entry;
 extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
 extern otp_drv_entry_t gc5024_common_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_reachtech_drv_entry;
+extern otp_drv_entry_t gc2375_altek_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -178,7 +179,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
-    {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, &gc2375_altek_drv_entry},
     {MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 	{MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
