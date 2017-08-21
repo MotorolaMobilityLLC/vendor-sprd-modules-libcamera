@@ -188,7 +188,7 @@ cmr_s32 isp_set_dispatch(cmr_handle handle)
 	isp_dispatch_ptr->bayer_ch1 = isp_context_ptr->data.format_pattern;
 	isp_dispatch_ptr->ch1_size.width = isp_context_ptr->data.input_size.w;
 	isp_dispatch_ptr->ch1_size.height = isp_context_ptr->data.input_size.h;
-	isp_dispatch_ptr->height_dly_num_ch0 = 0x10;	//default value
+	isp_dispatch_ptr->height_dly_num_ch0 = 0x10;
 	isp_dispatch_ptr->width_dly_num_ch0 = 0x3C;
 	isp_dispatch_ptr->pipe_dly_num = 0x8;
 
@@ -275,7 +275,7 @@ static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 cmr_s32 isp_get_fetch_addr(struct isp_drv_interface_param * isp_context_ptr, struct isp_dev_fetch_info * fetch_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	cmr_u16 fetch_width = fetch_ptr->size.width;	//isp_context_ptr->slice.size[ISP_FETCH].w;
+	cmr_u16 fetch_width = fetch_ptr->size.width;
 	cmr_u32 start_col = ISP_ZERO;
 	cmr_u32 end_col = ISP_ZERO;
 	cmr_u32 mipi_word_num_start[16] = { 0,
