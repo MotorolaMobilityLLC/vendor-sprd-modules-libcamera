@@ -1693,12 +1693,39 @@ void ispalg_dev_evt_cb(cmr_int evt, void *data, void *privdata)
 	message.data = data;
 	if (ISP_CTRL_EVT_AF == message.msg_type)
 		ret = cmr_thread_msg_send(cxt->thr_afhandle, &message);
+	else if (ISP_PROC_AFL_DONE == message.msg_type)
+		ret = cmr_thread_msg_send(cxt->thr_afl_handle, &message);
 	else
 		ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("fail to send a message, evt is %ld", evt);
 		free(message.data);
 	}
+}
+
+cmr_int ispalg_afl_thread_proc(struct cmr_msg *message, void *p_data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+
+	if (!message || !p_data) {
+		ISP_LOGE("fail to check input param ");
+		goto exit;
+	}
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+
+	switch (message->msg_type) {
+	case ISP_PROC_AFL_DONE:
+		ret = ispalg_afl_process((cmr_handle) cxt, message->data);
+		break;
+	default:
+		ISP_LOGV("don't support msg, 0x%x", message->msg_type);
+		break;
+	}
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+
 }
 
 cmr_int ispalg_afthread_proc(struct cmr_msg *message, void *p_data)
@@ -1760,9 +1787,6 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 			ISP_LOGE("fail to start ae process");
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
-	case ISP_PROC_AFL_DONE:
-		ret = ispalg_afl_process((cmr_handle) cxt, message->data);
-		break;
 	case ISP_CTRL_EVT_BINNING:
 		ret = ispalg_binning_stat_data_parser((cmr_handle) cxt, message->data);
 		break;
@@ -1785,7 +1809,6 @@ cmr_int isp_alg_create_thread(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM, isp_alg_thread_proc, (void *)cxt);
-
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create process thread");
 		ret = -ISP_ERROR;
@@ -1797,12 +1820,22 @@ cmr_int isp_alg_create_thread(cmr_handle isp_alg_handle)
 	}
 
 	ret = cmr_thread_create(&cxt->thr_afhandle, ISP_THREAD_QUEUE_NUM, ispalg_afthread_proc, (void *)cxt);
-
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create process thread");
 		ret = -ISP_ERROR;
 	}
 	ret = cmr_thread_set_name(cxt->thr_afhandle, "afstats");
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to set af name");
+		ret = -ISP_ERROR;
+	}
+
+	ret = cmr_thread_create(&cxt->thr_afl_handle, ISP_THREAD_QUEUE_NUM, ispalg_afl_thread_proc, (void *)cxt);
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to create afl process thread");
+		ret = -ISP_ERROR;
+	}
+	ret = cmr_thread_set_name(cxt->thr_afl_handle, "afl_stats");
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to set af name");
 		ret = -ISP_ERROR;
@@ -1835,6 +1868,15 @@ cmr_int isp_alg_destroy_thread_proc(cmr_handle isp_alg_handle)
 		ret = cmr_thread_destroy(cxt->thr_afhandle);
 		if (!ret) {
 			cxt->thr_afhandle = (cmr_handle) NULL;
+		} else {
+			ISP_LOGE("fail to destroy process thread");
+		}
+	}
+
+	if (cxt->thr_afl_handle) {
+		ret = cmr_thread_destroy(cxt->thr_afl_handle);
+		if (!ret) {
+			cxt->thr_afl_handle = (cmr_handle) NULL;
 		} else {
 			ISP_LOGE("fail to destroy process thread");
 		}
