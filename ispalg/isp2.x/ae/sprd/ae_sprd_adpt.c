@@ -5597,19 +5597,6 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
 
 	/*it is normal capture, not in flash mode*/
-	if ((1 == work_info->is_snapshot) &&
-		(FLASH_NONE == cxt->cur_status.settings.flash ||
-		(FLASH_LED_OFF == cxt->cur_status.settings.flash))) {
-		ISP_LOGV("nozsl cap will lock ae");
-		_set_pause(cxt);
-		cxt->cur_status.settings.manual_mode = 0;
-		cxt->cur_status.settings.table_idx = 0;
-		cxt->cur_status.settings.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
-		cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
-	}
-	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%dCAP %d, enable: %d", cxt->camera_id, cxt->cur_status.line_time,
-		cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again, work_info->is_snapshot, cxt->last_enable);
-
 	if ((1 ==cxt->last_enable) && (FLASH_NONE == cxt->cur_status.settings.flash)) {
 		if (0 ==work_info->is_snapshot) {
 			cxt->last_enable = 0;
@@ -5624,6 +5611,9 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	}
 	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->is_first = 1;
+
+	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%dCAP %d, enable: %d", cxt->camera_id, cxt->cur_status.line_time,
+	cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again, work_info->is_snapshot, cxt->last_enable);
 
 	return rtn;
 }
