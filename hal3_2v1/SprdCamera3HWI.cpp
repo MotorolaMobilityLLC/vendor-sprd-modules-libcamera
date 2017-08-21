@@ -476,6 +476,14 @@ int SprdCamera3HWI::checkStreamList(
     if (streamList->streams == NULL) {
         HAL_LOGE("NULL stream list");
         return BAD_VALUE;
+    } else if (streamList->streams[0]->width == 0 ||
+               streamList->streams[0]->height == 0 ||
+               streamList->streams[0]->width == UINT32_MAX ||
+               streamList->streams[0]->height == UINT32_MAX ||
+               (uint32_t)streamList->streams[0]->format == UINT32_MAX ||
+               (uint32_t)streamList->streams[0]->rotation == UINT32_MAX) {
+        HAL_LOGE("INVALID stream list");
+        return BAD_VALUE; /*vts configureStreamsInvalidOutputs */
     }
 
     if (streamList->num_streams < 1) {
