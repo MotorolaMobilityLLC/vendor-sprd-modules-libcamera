@@ -97,7 +97,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
       mCameraInitialized(false), mLastFrmNum(0), mCallbackOps(NULL),
       mInputStream(NULL), mMetadataChannel(NULL), mPictureChannel(NULL),
       mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false),
-      mInvaildRequest(false) {
+      mInvaildRequest(false),mFirstRequestGet(false) {
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: E");
@@ -420,6 +420,7 @@ int SprdCamera3HWI::closeCamera() {
     }
 
     mCameraOpened = false;
+    mFirstRequestGet = false;
 
     HAL_LOGI(":hal3: X");
     return ret;
@@ -817,6 +818,7 @@ int SprdCamera3HWI::configureStreams(
         mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
     }
 
+    mFirstRequestGet= false;
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
 
@@ -869,7 +871,13 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request) {
     }
 
     uint32_t frameNumber = request->frame_number;
-
+    if (!mFirstRequestGet) {
+        mFirstRequestGet = true;
+        if (request->settings == NULL) {
+           HAL_LOGE("NULL capture request settings");
+           return BAD_VALUE;
+      }
+    }
     if (request->input_buffer != NULL &&
         request->input_buffer->stream ==
             NULL) { /**modified for 3d capture, enable reprocessing*/
