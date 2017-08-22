@@ -330,6 +330,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 		return ret;
 	}
 
+	lens_info->bypass = 1; //added by qin for bringup debug.
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_BLOCK;
