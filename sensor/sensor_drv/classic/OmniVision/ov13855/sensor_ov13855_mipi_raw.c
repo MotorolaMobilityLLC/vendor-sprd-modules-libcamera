@@ -63,6 +63,11 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
     }
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x320a, 0x01);
     // group 1:all other registers( gain)
+
+#if defined(CONFIG_CAMERA_SHARKLE_BRINGUP)
+    gain_a = 0x1fff;
+#endif
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3508,
                         ((cmr_u16)gain_a >> 8) & 0x1f);
