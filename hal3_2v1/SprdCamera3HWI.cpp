@@ -706,6 +706,7 @@ int SprdCamera3HWI::configureStreams(
                 raw_size.height = newStream->height;
             }
 
+           //kMaxBuffers should <GRAB_BUF_MAX
             mSetting->getSPRDDEFTag(&sprddefInfo);
             if (preview_size.width > 3264 && preview_size.height > 2448)
                 SprdCamera3RegularChannel::kMaxBuffers = 2;

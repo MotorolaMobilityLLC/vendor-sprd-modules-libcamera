@@ -690,7 +690,7 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
     struct cmr_grab *p_grab;
     struct sprd_img_parm parm;
 
-    if (NULL == buf_cfg || buf_cfg->count > IMG_PATH_BUFFER_COUNT)
+    if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX)
         return -1;
     p_grab = (struct cmr_grab *)grab_handle;
 

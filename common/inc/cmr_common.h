@@ -67,7 +67,7 @@ extern "C" {
 #define CMR_SLICE_HEIGHT 256
 #define CMR_SHARK_SCALING_TH 2048
 #define CMR_DOLPHIN_SCALING_TH 1280
-#define GRAB_BUF_MAX 24
+#define GRAB_BUF_MAX IMG_PATH_BUFFER_COUNT
 #define GRAB_CHANNEL_MAX 6
 #define SESNOR_NAME_LEN 40
 #define CMR_CAPTURE_MEM_SUM 1
@@ -564,10 +564,10 @@ struct buffer_cfg {
     cmr_u32 start_buf_id;
     cmr_u32 is_reserved_buf;
     cmr_u32 flag;
-    cmr_u32 index[IMG_PATH_BUFFER_COUNT];
-    struct img_addr addr[IMG_PATH_BUFFER_COUNT];
-    struct img_addr addr_vir[IMG_PATH_BUFFER_COUNT];
-    cmr_u32 fd[IMG_PATH_BUFFER_COUNT];
+    cmr_u32 index[GRAB_BUF_MAX];
+    struct img_addr addr[GRAB_BUF_MAX];
+    struct img_addr addr_vir[GRAB_BUF_MAX];
+    cmr_u32 fd[GRAB_BUF_MAX];
     cmr_uint zsl_private;
 };
 
