@@ -103,7 +103,7 @@ typedef struct _roi_rgb_y {
 } roi_rgb_y_t;
 
 typedef struct _lens_info {
-	cmr_u32 pos;
+	cmr_u16 pos;
 } lens_info_t;
 
 typedef struct _ae_info {

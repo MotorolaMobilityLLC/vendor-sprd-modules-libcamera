@@ -216,60 +216,57 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 }
 
 // len
-static cmr_s32 lens_get_pos(af_ctrl_t * af)
-{
-	// ISP_LOGV("pos = %d", af->lens.pos);
-	return af->lens.pos;
-}
-
-static cmr_u16 get_vcm_registor_pos(af_ctrl_t * af)
+static cmr_u16 lens_get_pos(af_ctrl_t * af)
 {
 	cmr_u16 pos = 0;
 
-	if (NULL != af->af_get_motor_pos) {
-		af->af_get_motor_pos(af->caller, &pos);
-		if (0 == pos || pos > 1023) {
-			pos = (cmr_u16) lens_get_pos(af);
-		}
+	if (NULL == af->af_get_motor_pos) {
+		ISP_LOGE("af->af_get_motor_pos null");
 	} else {
-		pos = (cmr_u16) lens_get_pos(af);
+		af->af_get_motor_pos(af->caller, &pos);
 	}
-	AF_record_vcm_pos(af->af_alg_cxt, pos);
-	ISP_LOGV("VCM registor pos :%d", pos);
+	if (0 == pos || pos > 1023) {
+		pos = af->lens.pos;
+	}
+
+	ISP_LOGV("pos = %d", pos);
 	return pos;
 }
 
 static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 {
 	cmr_u16 last_pos = 0;
-	last_pos = lens_get_pos(af);
 
-	if (NULL != af->af_lens_move) {
-		if (last_pos != pos)
-			af->af_lens_move(af->caller, pos);
+	if (NULL == af->af_lens_move) {
+		ISP_LOGE("af->af_lens_move null error");
+		return;
+	}
+
+	last_pos = lens_get_pos(af);
+	if (last_pos != pos) {
 		ISP_LOGI("pos = %d", pos);
+		af->af_lens_move(af->caller, pos);
 		af->lens.pos = pos;
+	} else {
+		ISP_LOGV("pos %d was set last time", pos);
 	}
 }
 
 static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE alg_mode)
 {
-	if (NULL != win)
-		ISP_LOGV("valid_win = %d, mode = %d", win->win_num, win->mode);
-	else
+	cmr_u32 i;
+	if (NULL == win) {
 		ISP_LOGV("win is NULL, use default roi");
-
-	if (NULL != win) {
-		cmr_u32 i;
+	} else {
+		ISP_LOGV("valid_win = %d, mode = %d", win->win_num, win->mode);
 		for (i = 0; i < win->win_num; ++i) {
 			AF_record_wins(af->af_alg_cxt, i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
 			ISP_LOGV("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
 		}
-
 		if (0 == win->win_num)
 			win = NULL;
-
 	}
+
 	AF_set_hw_wins(af->af_alg_cxt, (void *)win, alg_mode);
 }
 
@@ -600,19 +597,8 @@ static cmr_u8 if_get_otp(AF_OTP_Data * pAF_OTP, void *cookie)
 static cmr_u8 if_get_motor_pos(cmr_u16 * motor_pos, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	cmr_u16 pos = 0;
-
-	if (NULL != af->af_get_motor_pos) {
-		af->af_get_motor_pos(af->caller, &pos);
-		ISP_LOGV("motor pos in register %d", pos);
-		if (0 == pos || pos > 1023) {
-			pos = (cmr_u16) lens_get_pos(af);
-		}
-	} else {
-		pos = (cmr_u16) lens_get_pos(af);
-	}
 	if (NULL != motor_pos) {
-		*motor_pos = pos;
+		*motor_pos = lens_get_pos(af);
 	}
 
 	return 0;
@@ -1034,7 +1020,9 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 	if_lock_lsc(LOCK, af);
 	if_lock_ae(LOCK, af);
 	if_statistics_get_data(af->fv_combine, NULL, af);
-	pos = get_vcm_registor_pos(af);
+	pos = lens_get_pos(af);
+	ISP_LOGV("VCM registor pos :%d", pos);
+	AF_record_vcm_pos(af->af_alg_cxt, (cmr_u32) pos);
 	AF_record_FV(af->af_alg_cxt, af->fv_combine[T_SPSMD]);
 	for (i = 0; i < 9; i++) {
 		ISP_LOGV
@@ -1549,8 +1537,8 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *
 	prm->ae_info.is_stable = ae->is_stab;
 	prm->ae_info.bv = ae->bv;
 	prm->ae_info.y_sum = af->Y_sum_trigger;
-	prm->ae_info.cur_scene = OUT_SCENE;	// need to check
-	prm->ae_info.registor_pos = lens_get_pos(af);
+	prm->ae_info.cur_scene = OUT_SCENE;
+	prm->ae_info.registor_pos = (cmr_u32) lens_get_pos(af);
 	//ISP_LOGI("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d, bv = %d", prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable, prm->ae_info.bv);
 
 	caf_monitor_calc(af, prm);
@@ -1598,7 +1586,7 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 	memcpy(&(prm->pd_info.pd_roi_dcc[0]), &(af->pd.pd_roi_dcc[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
 	prm->comm_info.otp_inf_pos = af->otp_info.rdm_data.infinite_cali;
 	prm->comm_info.otp_macro_pos = af->otp_info.rdm_data.macro_cali;
-	prm->comm_info.registor_pos = lens_get_pos(af);
+	prm->comm_info.registor_pos = (cmr_u32) lens_get_pos(af);
 	ISP_LOGV("[%d] pd data in ", prm->pd_info.effective_frmid);
 	caf_monitor_calc(af, prm);
 
@@ -1721,15 +1709,18 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	enum aft_mode mode;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
+	cmr_u16 pos = 0;
 
+	ISP_LOGI("af state = %s, focus state = %s, set af_mode = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), af_mode);
 	property_get("af_mode", AF_MODE, "none");
 	if (0 != strcmp(AF_MODE, "none")) {
 		ISP_LOGI("AF_MODE %s is not null, af test mode", AF_MODE);
-		get_vcm_registor_pos(af);	// get final vcm pos when in test mode
+		pos = lens_get_pos(af);
+		ISP_LOGV("VCM registor pos :%d", pos);
+		AF_record_vcm_pos(af->af_alg_cxt, (cmr_u32) pos);
 		return rtn;
 	}
 
-	ISP_LOGI("af state = %s, focus state = %s, set af_mode = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), af_mode);
 	af->pre_state = af->state;
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
@@ -1758,8 +1749,8 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		af->request_mode = af_mode;
 		af->takePicture_timeout = 0;
 		timecompare = compare_timestamp(af);
+		ISP_LOGI("af is finished %d, timecompare %d", AF_is_finished(af->af_alg_cxt), timecompare);
 		if (AF_SEARCHING == af->focus_state || DCAM_AFTER_VCM_YES != timecompare) {
-			ISP_LOGI("af is finished %d, timecompare %d", AF_is_finished(af->af_alg_cxt), timecompare);
 			system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 			af_clear_sem(af);
 			af_wait_caf_finish(af);
@@ -1768,7 +1759,9 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		};
 		af->state = STATE_PICTURE;
 		ISP_LOGV("dcam_timestamp-vcm_timestamp = %" PRIu64 " ms", ((cmr_s64) af->dcam_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
-		get_vcm_registor_pos(af);
+		pos = lens_get_pos(af);
+		ISP_LOGV("VCM registor pos :%d in picture mode.", pos);
+		AF_record_vcm_pos(af->af_alg_cxt, (cmr_u32) pos);
 		break;
 	case AF_MODE_FULLSCAN:
 		af->request_mode = af_mode;
@@ -2301,7 +2294,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 		break;
 
 	case AF_CMD_GET_AF_CUR_POS:
-		*(cmr_u32 *) param0 = lens_get_pos(af);
+		*(cmr_u32 *) param0 = (cmr_u32) lens_get_pos(af);
 		break;
 
 	case AF_CMD_GET_AF_FULLSCAN_INFO:
@@ -2515,9 +2508,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		return AFV1_ERROR;
 	}
 
-	if (1 == af->bypass)
-		return 0;
-
 	if (1 == af->test_loop_quit) {
 		property_get("af_mode", AF_MODE, "none");
 		if (0 == strcmp(AF_MODE, "ISP_FOCUS_MANUAL")) {
@@ -2525,6 +2515,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
 			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+			ISP_LOGI("pthread_create test thread.");
 			rtn = pthread_create(&af->test_loop_handle, &attr, (void *(*)(void *))loop_for_test_mode, (void *)af);
 			pthread_attr_destroy(&attr);
 			if (rtn) {
@@ -2533,9 +2524,14 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			}
 		}
 	}
+
+	if (1 == af->bypass) {
+		return 0;
+	}
+
 	system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
-	ISP_LOGV("state = %s, focus_state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
+	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
@@ -2563,7 +2559,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 
 	default:
-		ISP_LOGV("unsupport data type! type: %d", inparam->data_type);
+		ISP_LOGV("unsupported data type: %d", inparam->data_type);
 		rtn = AFV1_ERROR;
 		break;
 	}
