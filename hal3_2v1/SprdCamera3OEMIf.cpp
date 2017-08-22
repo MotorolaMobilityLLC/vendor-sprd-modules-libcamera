@@ -5691,6 +5691,11 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
             {
                 mIsAutoFocus = false;
             }
+            if (controlInfo.af_mode ==
+                ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                         CAMERA_FOCUS_MODE_CAF);
+            }
         }
         break;
 
@@ -5704,6 +5709,10 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                                           // process
         {
             mIsAutoFocus = false;
+        }
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_CAF);
         }
 
     } break;
