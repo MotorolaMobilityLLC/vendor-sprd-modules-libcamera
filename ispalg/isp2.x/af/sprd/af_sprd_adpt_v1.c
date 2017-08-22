@@ -1234,7 +1234,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 static cmr_s32 af_test_lens(af_ctrl_t * af, cmr_u16 pos)
 {
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt,AFV1_TRUE);
+	AF_STOP(af->af_alg_cxt, AFV1_TRUE);
 	AF_Process_Frame(af->af_alg_cxt);
 	pthread_mutex_unlock(&af->af_work_lock);
 
@@ -1402,7 +1402,7 @@ static void af_stop_search(af_ctrl_t * af)
 {
 	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
 	pthread_mutex_lock(&af->af_work_lock);
-	AF_STOP(af->af_alg_cxt,AFV1_TRUE);	//modifiy for force stop to SAF/Flow control
+	AF_STOP(af->af_alg_cxt, AFV1_TRUE);	//modifiy for force stop to SAF/Flow control
 	AF_Process_Frame(af->af_alg_cxt);
 	af->focus_state = AF_IDLE;
 	pthread_mutex_unlock(&af->af_work_lock);
@@ -1420,7 +1420,7 @@ static void af_retrigger_search(af_ctrl_t * af, struct aft_proc_result *res)
 	aft_in.trigger_source = res->is_caf_trig;
 
 	pthread_mutex_lock(&af->af_work_lock);
-	if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt,AFV1_FALSE)) {
+	if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt, AFV1_FALSE)) {
 		AF_Process_Frame(af->af_alg_cxt);
 		AF_Trigger(af->af_alg_cxt, &aft_in);
 		do_start_af(af);
@@ -1465,7 +1465,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	} else {
 		if (res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) {
 			ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
-			af_retrigger_search(af,&res);
+			af_retrigger_search(af, &res);
 		}
 	}
 }
@@ -2468,6 +2468,14 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 		return AFV1_ERROR;
 	}
 
+	property_set("af_mode", "none");
+	property_set("af_set_pos", "none");
+	if (0 == af->test_loop_quit) {
+		af->test_loop_quit = 1;
+		pthread_join(af->test_loop_handle, NULL);
+		af->test_loop_handle = 0;
+	}
+
 	afm_disable(af);
 	trigger_deinit(af);
 	sem_destroy(&af->af_wait_caf);
@@ -2475,13 +2483,6 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	pthread_mutex_destroy(&af->af_work_lock);
 	pthread_mutex_destroy(&af->status_lock);
 	AF_deinit(af->af_alg_cxt);
-
-	property_set("af_mode", "none");
-	property_set("af_set_pos", "none");
-	if (0 == af->test_loop_quit) {
-		af->test_loop_quit = 1;
-		pthread_join(af->test_loop_handle, NULL);
-	}
 
 	memset(af, 0, sizeof(*af));
 	free(af);
@@ -2524,7 +2525,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
 			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-			rtn = pthread_create(&af->test_loop_handle, &attr, loop_for_test_mode, af);
+			rtn = pthread_create(&af->test_loop_handle, &attr, (void *(*)(void *))loop_for_test_mode, (void *)af);
 			pthread_attr_destroy(&attr);
 			if (rtn) {
 				ISP_LOGE("fail to create loop manual mode");

@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.125"
-#define SUB_VERSION             "-0811-00-soft"	//use the date code to naming
+#define SUB_VERSION             "-0821-01-buffer_overlap"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -1214,13 +1214,14 @@ typedef struct _AF_Data {
 	cmr_u16 SAF_Softlanding_dac[MAX_SAMPLE_NUM * 2];
 	cmr_u32 SAF_Softlanding_index;
 	cmr_u32 SAF_Softlanding_enable;
+	cmr_u32 Tuning_Buffer_checksum;
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 
 typedef struct _AF_Bokeh_Test {
 	cmr_u8(*bokeh_set_scan_range) (cmr_u32 * pos_from, cmr_u32 * pos_to, cmr_u32 * steps, cmr_u16 INF, cmr_u16 MACRO);
 	cmr_u8(*bokeh_set_window) (AF_Win * wins, cmr_u32 isp_w, cmr_u32 isp_h);
-	cmr_u8(*bokeh_calc) (const cmr_u32 multi_stat_tbl[][9], const cmr_u32 * multi_pkpos, cmr_u32 pkfrm_num, Bokeh_Result * result);
+	cmr_u8(*bokeh_calc) (const cmr_u32 multi_stat_tbl[][9], const cmr_u32 * multi_pkpos, const cmr_u32 * pos_tbl, cmr_u32 pkfrm_num, Bokeh_Result * result);
 	cmr_u8 Bokeh_Test_init_state;
 } AF_Bokeh_Test;
 AF_Bokeh_Test Bokeh_Test;
