@@ -779,9 +779,9 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
     }
 
     receiver_handle = cxt->grab_cxt.caller_handle[frame->channel_id];
-    if ((0 != cxt->snp_cxt.channel_bits) &&
-        (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) &&
-        ((1 == camera_get_hdr_flag(cxt)) || (1 == camera_get_3dnr_flag(cxt)))) {
+    if ((chn_bits == cxt->snp_cxt.channel_bits)
+        && ((1 == camera_get_hdr_flag(cxt)) || (1 == camera_get_3dnr_flag(cxt)))
+        &&(TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt))) {
         struct img_frm out_param;
         struct ipm_frame_in ipm_in_param;
         struct ipm_frame_out imp_out_param;
