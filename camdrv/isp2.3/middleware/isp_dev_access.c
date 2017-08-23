@@ -128,6 +128,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	/*isp lsc addr transfer */
 	isp_u_2d_lsc_transaddr(cxt->isp_driver_handle, &isp_2d_lsc_buf);
 
+	isp_statis_buf.buf_property = DCAM_AEM_BLOCK;
 	ret = isp_dev_access_ioctl(isp_dev_handle, ISP_DEV_SET_STSTIS_BUF, &isp_statis_buf, NULL);
 
 	return ret;
