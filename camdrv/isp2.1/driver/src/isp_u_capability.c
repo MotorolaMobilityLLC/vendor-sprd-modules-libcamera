@@ -26,7 +26,7 @@ cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u
 	struct isp_capability param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to check handle");
 		return -1;
 	}
 
@@ -42,7 +42,7 @@ cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u
 	} else {
 		*width = 0;
 		*height = 0;
-		ISP_LOGE("get continue size erro.");
+		ISP_LOGE("fail to get continue size");
 	}
 
 	return ret;
@@ -56,7 +56,7 @@ cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec)
 	struct isp_time time = { 0, 0 };
 
 	if (!handle || !sec || !usec) {
-		ISP_LOGE("handle is null error: %p %p %p", handle, sec, usec);
+		ISP_LOGE("fail to check handle: %p %p %p", handle, sec, usec);
 		return -1;
 	}
 
@@ -69,7 +69,7 @@ cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec)
 	if (ret) {
 		*sec = 0;
 		*usec = 0;
-		ISP_LOGE("get time error.");
+		ISP_LOGE("fail to get time");
 	} else {
 		*sec = time.sec;
 		*usec = time.usec;

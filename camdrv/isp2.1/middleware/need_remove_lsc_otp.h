@@ -187,7 +187,7 @@ static uint16_t *need_mv_lsc_otp(struct sensor_otp_cust_info *otp_data,
 
 	// error handling
 	if( lsc_otp_grid < 32 || lsc_otp_grid > 256 || full_img_width < 800 || full_img_height < 600){
-		ISP_LOGE("init_lsc_otp, sensor setting error, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+		ISP_LOGE("init_lsc_otp, fail to sensor setting, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
 		return NULL;
 	}
 	get_lsc_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);

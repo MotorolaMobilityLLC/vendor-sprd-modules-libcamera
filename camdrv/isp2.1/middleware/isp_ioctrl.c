@@ -70,7 +70,7 @@ static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
-	ISP_TRACE_IF_FAIL(ret, ("awb get gain error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to get awb gain"));
 
 	/*set awb gain */
 	awbc_cfg.r_gain = result.r;
@@ -115,12 +115,12 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_WB_GAIN, NULL, &flash_wb_gain);
-		ISP_TRACE_IF_FAIL(ret, ("awb get gain error"));
+		ISP_TRACE_IF_FAIL(ret, ("fail to get awb gain"));
 	}
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EFFECT, NULL, &ae_effect);
-	ISP_TRACE_IF_FAIL(ret, ("ae get flash effect error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to get ae flash effect"));
 
 	flash_awb.effect = ae_effect;
 	flash_awb.flash_ratio.r = flash->cur.r_ratio;
@@ -137,10 +137,10 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
-	ISP_TRACE_IF_FAIL(ret, ("awb set flash gain error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to set awb flash gain"));
 
 	ret = ispctl_set_awb_gain(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("awb set gain error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to set awb gain"));
 
 	return ret;
 }
@@ -217,7 +217,7 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	ISP_LOGV("AWB_MODE :0x%x", awb_id);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WB_MODE, (void *)&awb_id, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("awb set wb mode error"));
+		ISP_TRACE_IF_FAIL(ret, ("fail to set awb wb mode"));
 	}
 
 	return ret;
@@ -669,20 +669,20 @@ static cmr_int ispctl_video_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	fps.max_fps = 0;
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FPS, &fps, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("ae set fps error"));
+		ISP_TRACE_IF_FAIL(ret, ("fail to set ae fps"));
 	}
 
 	if (0 != *((cmr_u32 *) param_ptr)) {
 		cmr_u32 work_mode = 2;
 		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &work_mode, NULL);
-			ISP_RETURN_IF_FAIL(ret, ("awb set_work_mode error"));
+			ISP_RETURN_IF_FAIL(ret, ("fail to awb set_work_mode"));
 		}
 	} else {
 		cmr_u32 work_mode = 0;
 		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &work_mode, NULL);
-			ISP_RETURN_IF_FAIL(ret, ("awb set_work_mode error"));
+			ISP_RETURN_IF_FAIL(ret, ("fail to awb set_work_mode"));
 		}
 	}
 
@@ -965,7 +965,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 			}
 			cxt->commn_cxt.log_isp = malloc(total_size);
 			if (cxt->commn_cxt.log_isp == NULL) {
-				ISP_LOGE("failed to malloc %d", total_size);
+				ISP_LOGE("fail to malloc %d", total_size);
 				cxt->commn_cxt.log_isp_size = 0;
 				info_ptr->addr = 0;
 				info_ptr->size = 0;

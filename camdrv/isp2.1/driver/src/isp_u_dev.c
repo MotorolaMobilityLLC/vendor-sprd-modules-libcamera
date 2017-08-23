@@ -28,13 +28,13 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	file = malloc(sizeof(struct isp_file));
 	if (!file) {
 		ret = -1;
-		ISP_LOGE("alloc memory error.");
+		ISP_LOGE("fail to alloc memory");
 		return ret;
 	}
 
 	if (fd < 0) {
 		ret = -1;
-		ISP_LOGE("there is something wrong about opening device.");
+		ISP_LOGE("fail to open device");
 		goto isp_free;
 	}
 
@@ -57,7 +57,7 @@ cmr_s32 isp_dev_close(cmr_handle handle)
 	struct isp_file *file = NULL;
 
 	if (!handle) {
-		ISP_LOGE("file hand is null error.");
+		ISP_LOGE("fail to check file handle");
 		ret = -1;
 		return ret;
 	}
@@ -78,7 +78,7 @@ cmr_s32 isp_dev_reset(cmr_handle handle)
 	struct isp_file *file = NULL;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to check handle");
 		return -1;
 	}
 
@@ -87,7 +87,7 @@ cmr_s32 isp_dev_reset(cmr_handle handle)
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_RST, &isp_id);
 	if (ret) {
-		ISP_LOGE("isp hardawre reset error.");
+		ISP_LOGE("fail to reset isp hardawre");
 	}
 
 	return ret;
@@ -99,11 +99,11 @@ cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *p
 	struct isp_file *file = NULL;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to check handle");
 		return -1;
 	}
 	if (!param) {
-		ISP_LOGE("Param is null error.");
+		ISP_LOGE("fail to check param");
 		return -1;
 	}
 
@@ -111,7 +111,7 @@ cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *p
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_SET_STATIS_BUF, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_statis_buf error. 0x%x", ret);
+		ISP_LOGE("fail to isp_dev_set_statis_buf 0x%x", ret);
 	}
 
 	return ret;
@@ -124,11 +124,11 @@ cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
 	struct isp_3dnr_param isp_3dnr;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to check handle");
 		return -1;
 	}
 	if (!param) {
-		ISP_LOGE("Param is null error.");
+		ISP_LOGE("fail to check param");
 		return -1;
 	}
 
@@ -159,7 +159,7 @@ cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_POST_3DNR, &isp_3dnr);
 	if (ret) {
-		ISP_LOGE("isp_dev_3dnr error. 0x%x", ret);
+		ISP_LOGE("fail to do isp_dev_3dnr 0x%x", ret);
 	}
 
 	return ret;
@@ -171,11 +171,11 @@ cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *
 	struct isp_file *file = NULL;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to check handle");
 		return -1;
 	}
 	if (!param) {
-		ISP_LOGE("Param is null error.");
+		ISP_LOGE("fail to check param");
 		return -1;
 	}
 
@@ -183,7 +183,7 @@ cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_RAW_CAP, param);
 	if (ret) {
-		ISP_LOGE("failed to set raw slice info 0x%x", ret);
+		ISP_LOGE("fail to set raw slice info 0x%x", ret);
 	}
 
 	return ret;

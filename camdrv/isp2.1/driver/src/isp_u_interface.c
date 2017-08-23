@@ -480,37 +480,37 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_drv_slice_param *slice_
 	ret = isp_u_1d_lsc_slice_size(handle,
 				      slice_ptr->size[ISP_DRV_LSC].w,
 				      slice_ptr->size[ISP_DRV_LSC].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp 1d lsc slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 1d lsc slice size"));
 
 	ret = isp_u_2d_lsc_slice_size(handle,
 				      slice_ptr->size[ISP_DRV_LENS].w,
 				      slice_ptr->size[ISP_DRV_LENS].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp 2d lsc slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 2d lsc slice size"));
 
 	ret = isp_u_raw_aem_slice_size(handle,
 				       slice_ptr->size[ISP_DRV_AEM].w,
 				       slice_ptr->size[ISP_DRV_AEM].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp raw aem slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw aem slice size"));
 
 	ret = isp_u_raw_afm_slice_size(handle,
 				       slice_ptr->size[ISP_DRV_RGB_AFM].w,
 				       slice_ptr->size[ISP_DRV_RGB_AFM].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp raw afm slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw afm slice size"));
 
 	ret = isp_u_hist_slice_size(handle,
 				    slice_ptr->size[ISP_DRV_HISTS].w,
 				    slice_ptr->size[ISP_DRV_HISTS].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp hist slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp hist slice size"));
 
 	ret = isp_u_dispatch_ch0_size(handle,
 				      slice_ptr->size[ISP_DRV_DISPATCH].w,
 				      slice_ptr->size[ISP_DRV_DISPATCH].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp dispatch ch0 size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp dispatch ch0 size"));
 
 	ret = isp_u_fetch_slice_size(handle,
 				     slice_ptr->size[ISP_DRV_STORE].w,
 				     slice_ptr->size[ISP_DRV_STORE].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp fetch slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp fetch slice size"));
 
 	ret = isp_u_store_slice_size(handle,
 				     slice_ptr->size[ISP_DRV_STORE].w,
