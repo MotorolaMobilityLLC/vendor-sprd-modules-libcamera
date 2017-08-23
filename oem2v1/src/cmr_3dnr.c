@@ -703,9 +703,9 @@ void *thread_3dnr(void *p_data) {
 
 #if 1
     {
-        char flag;
-        property_get("post_3dnr_save_scl_data", &flag, "0");
-        if (!strcmp(&flag, "1")) { // save input image.
+        char flag[PROPERTY_VALUE_MAX];
+        property_get("post_3dnr_save_scl_data", flag, "0");
+        if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
             sprintf(filename,

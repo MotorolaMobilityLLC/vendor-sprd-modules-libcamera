@@ -23,6 +23,11 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/vendor/sprd/modules/libmemion \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_C_INCLUDES += \
+    $(TOP)/frameworks/native/libs/sensor/include
+endif
+
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
@@ -181,7 +186,8 @@ include $(LOCAL_PATH)/SprdCtrl.mk
 include $(LOCAL_PATH)/SprdLib.mk
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_SHARED_LIBRARIES += liblog
+LOCAL_SHARED_LIBRARIES += liblog libsensor
+LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8
 endif
 
 LOCAL_MODULE_RELATIVE_PATH := hw

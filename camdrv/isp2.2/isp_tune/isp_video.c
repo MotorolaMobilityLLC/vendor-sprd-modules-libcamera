@@ -981,15 +981,19 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 	return ret;
 }
 
-cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cmr_u32 src_size, cmr_u8 * data_ptr, cmr_u16 * actual_len, cmr_u8 * data_status)
+cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cmr_u32 src_size, cmr_u8 * data_ptr,  cmr_u8 * data_status)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_s32 i, num;
 	cmr_u32 tail_len;
-	if (NULL == tx_buf || NULL == src_ptr || NULL == data_ptr || NULL == actual_len) {
-		ISP_LOGE("fail to check param:tx_buf:%p, src_ptr:%p, data_ptr:%p, actual_len:%p", tx_buf, src_ptr, data_ptr, actual_len);
+
+	MSG_HEAD_T *msg_ret;
+
+	if (NULL == tx_buf || NULL == src_ptr || NULL == data_ptr) {
+		ISP_LOGE("fail to check param:tx_buf:%p, src_ptr:%p, data_ptr:%p", tx_buf, src_ptr, data_ptr);
 		return ISP_PARAM_ERROR;
 	}
+	msg_ret = (MSG_HEAD_T *) (tx_buf + 1) ;
 
 	num = src_size / valid_len;
 	tail_len = src_size % valid_len;
@@ -997,22 +1001,22 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 	if (0 != num) {
 		for (i = 0; i < num; i++) {
 			memcpy(data_ptr, (cmr_u8 *) src_ptr + i * valid_len, valid_len);
-			*actual_len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + valid_len;
-			*(tx_buf + (*actual_len) + 1) = 0x7e;
+			msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + valid_len;
+			*(tx_buf + msg_ret->len + 1) = 0x7e;
 			if ((i == (num - 1)) && (0 == tail_len))
 				*data_status = 0x01;
 			else
 				*data_status = 0x00;
 
-			ret = send(sockfd, tx_buf, (*actual_len) + 2, 0);
+			ret = send(sockfd, tx_buf, msg_ret->len + 2, 0);
 		}
 	}
 	if (0 != tail_len) {
 		memcpy(data_ptr, (cmr_u8 *) src_ptr + num * valid_len, tail_len);
-		*actual_len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
-		*(tx_buf + (*actual_len) + 1) = 0x7e;
+		msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
+		*(tx_buf + msg_ret->len + 1) = 0x7e;
 		*data_status = 0x01;
-		ret = send(sockfd, tx_buf, (*actual_len) + 2, 0);
+		ret = send(sockfd, tx_buf, msg_ret->len + 2, 0);
 	}
 	ISP_LOGV("denoise send over! ret = %d", ret);
 	return ret;
@@ -1250,7 +1254,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		break;
 	}
 	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &msg_ret->len, &data_head_ptr->packet_status);
+	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);

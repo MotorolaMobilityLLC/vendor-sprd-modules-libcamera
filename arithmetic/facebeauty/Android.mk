@@ -32,7 +32,8 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty.a
 LOCAL_MODULE_TAGS := optional
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
 
@@ -46,7 +47,8 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot.so
 LOCAL_MODULE_TAGS := optional
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
 
@@ -75,7 +77,8 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot_wrapper.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot_wrapper.so
 LOCAL_MODULE_TAGS := optional
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
 
@@ -101,7 +104,8 @@ LOCAL_MODULE_TAGS := optional
 
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_SHARED_LIBRARY)

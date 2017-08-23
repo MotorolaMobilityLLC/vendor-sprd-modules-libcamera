@@ -40,6 +40,9 @@ LOCAL_SRC_FILES := src/3dnr_module.cpp
 LOCAL_MODULE :=libsprd3dnr
 
 LOCAL_SHARED_LIBRARIES :=libcutils libsprd3dnrmv
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES +=liblog
+endif
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS :=  -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wunused-variable -Wunused-function  -Werror
 
@@ -51,7 +54,8 @@ LOCAL_C_INCLUDES := \
          $(TOP)/system/core/include/cutils/
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 
 

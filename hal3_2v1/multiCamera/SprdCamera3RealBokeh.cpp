@@ -1245,9 +1245,22 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
                                 GraphicBuffer::USAGE_SW_WRITE_OFTEN;
         int32_t yuvTextFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
         uint32_t inWidth = 0, inHeight = 0, inStride = 0;
+#if defined(CONFIG_SPRD_ANDROID_8)
+        uint32_t inLayCount = 1;
+#endif
         inWidth = mRealBokeh->mPreviewWidth;
         inHeight = mRealBokeh->mPreviewHeight;
         inStride = mRealBokeh->mPreviewWidth;
+#if defined(CONFIG_SPRD_ANDROID_8)
+        struct private_handle_t *depth_handle =
+            (struct private_handle_t *)(*depth_bufer);
+        sp<GraphicBuffer> srcBuffer = new GraphicBuffer(
+            inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+            inStride, (native_handle_t *)(*input_buf1), 0);
+        sp<GraphicBuffer> dstBuffer = new GraphicBuffer(
+            inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+            inStride, (native_handle_t *)(*output_buf), 0);
+#else
         struct private_handle_t *depth_handle =
             (struct private_handle_t *)(*depth_bufer);
         sp<GraphicBuffer> srcBuffer =
@@ -1256,6 +1269,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
         sp<GraphicBuffer> dstBuffer =
             new GraphicBuffer(inWidth, inHeight, yuvTextFormat, yuvTextUsage,
                               inStride, (native_handle_t *)(*output_buf), 0);
+#endif
         mPreviewbokehParam.weight_params.DisparityImage =
             (unsigned char *)(depth_handle->base);
 
@@ -4505,7 +4519,7 @@ void SprdCamera3RealBokeh::CallBackSnapResult() {
     result.partial_result = 0;
 
     mCallbackOps->process_capture_result(mCallbackOps, &result);
-    memset(&mThumbReq, sizeof(request_saved_bokeh_t), 0);
+    memset(&mThumbReq, 0,sizeof(request_saved_bokeh_t));
     HAL_LOGD("snap id:%d ", result.frame_number);
 }
 

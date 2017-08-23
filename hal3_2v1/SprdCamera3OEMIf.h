@@ -50,9 +50,15 @@ extern "C" {
 #include <hardware/power.h>
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
+#ifdef CONFIG_SPRD_ANDROID_8
+#include <sensor/Sensor.h>
+#include <sensor/SensorManager.h>
+#include <sensor/SensorEventQueue.h>
+#else
 #include <gui/Sensor.h>
 #include <gui/SensorManager.h>
 #include <gui/SensorEventQueue.h>
+#endif
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
 #include <utils/Looper.h>

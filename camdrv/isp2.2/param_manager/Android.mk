@@ -55,6 +55,10 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES += liblog
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))
