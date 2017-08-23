@@ -274,12 +274,6 @@ struct isp_drv_interface_param {
 cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle * handle);
 cmr_s32 isp_dev_close(cmr_handle handle);
 cmr_s32 isp_dev_reset(cmr_handle handle);
-cmr_s32 isp_dev_stop(cmr_handle handle);
-cmr_s32 isp_dev_enable_irq(cmr_handle handle, cmr_u32 irq_mode);
-cmr_s32 isp_dev_get_irq(cmr_handle handle, cmr_u32 * evt_ptr);
-cmr_s32 isp_dev_reg_write(cmr_handle handle, cmr_u32 num, void *param_ptr);
-cmr_s32 isp_dev_reg_read(cmr_handle handle, cmr_u32 num, void *param_ptr);
-cmr_s32 isp_dev_reg_fetch(cmr_handle handle, cmr_u32 base_offset, cmr_u32 * buf, cmr_u32 len);
 cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *param);
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param);
 
@@ -289,12 +283,7 @@ cmr_s32 isp_u_3dnr_cap_block(isp_handle handle, void *param_ptr);
 cmr_s32 isp_u_3dnr_pre_block(isp_handle handle, void *param_ptr);
 
 /*ISP Capability*/
-cmr_s32 isp_u_capability_chip_id(cmr_handle handle, cmr_u32 * chip_id);
 cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height);
-cmr_s32 isp_u_capability_single_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height);
-cmr_s32 isp_u_capability_awb_win(cmr_handle handle, cmr_u16 * width, cmr_u16 * height);
-cmr_u32 isp_u_capability_awb_default_gain(cmr_handle handle);
-cmr_u32 isp_u_capability_af_max_win_num(cmr_handle handle);
 cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec);
 
 /*ISP Sub Block: Fetch*/

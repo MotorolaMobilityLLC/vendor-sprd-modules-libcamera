@@ -185,11 +185,11 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 	ISP_RETURN_IF_FAIL(ret, ("isp get cfa default param error"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->cfa_param;
-	isp_u_cfa_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+	ret = isp_u_cfa_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
 	ISP_RETURN_IF_FAIL(ret, ("isp cfg cfa error"));
 #endif
 	dev_blocks_info.block_info = (void *)&in_ptr->fetch;
-	isp_u_fetch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+	ret = isp_u_fetch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
 	ISP_RETURN_IF_FAIL(ret, ("isp cfg fetch error"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->store;
@@ -201,7 +201,7 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 	ISP_RETURN_IF_FAIL(ret, ("isp cfg dispatch error"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->arbiter;
-	isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+	ret = isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
 	ISP_RETURN_IF_FAIL(ret, ("isp cfg arbiter error"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->com;
@@ -444,15 +444,6 @@ cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_
 			ret = isp_u_capability_continue_size(cxt->isp_driver_handle, &size_ptr->width, &size_ptr->height);
 			break;
 		}
-	case ISP_CAPTURE_SIZE:{
-			struct isp_video_limit *size_ptr = param_ptr;
-
-			ret = isp_u_capability_single_size(cxt->isp_driver_handle, &size_ptr->width, &size_ptr->height);
-			break;
-		}
-	case ISP_REG_VAL:
-		ret = isp_dev_reg_fetch(cxt->isp_driver_handle, 0, (cmr_u32 *) param_ptr, 0x1000);
-		break;
 	default:
 		break;
 	}
@@ -546,11 +537,11 @@ static cmr_int ispdev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp
 	memset(&fetch_info, 0x0, sizeof(fetch_info));
 
 	ret = isp_dev_set_slice_raw_info(cxt->isp_driver_handle, info);
-	ISP_TRACE_IF_FAIL(ret, ("failed to slice raw info"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to slice raw info"));
 
 	fetch_info.fetch_start = ISP_ONE;
 	ret = isp_u_fetch_start_isp(cxt->isp_driver_handle, (void *)&fetch_info);
-	ISP_TRACE_IF_FAIL(ret, ("failed to fetch start isp"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to fetch start isp"));
 
 	return ret;
 }
@@ -561,10 +552,10 @@ static cmr_int ispdev_access_set_aem_win(cmr_handle isp_dev_handle, struct isp_u
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, (void *)block_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("failed to aem offset"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
 
 	ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, (void *)block_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("failed to aem blk"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to aem blk"));
 
 	return ret;
 }
@@ -609,12 +600,6 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		break;
 	case ISP_DEV_RESET:
 		ret = isp_dev_reset(cxt->isp_driver_handle);
-		break;
-	case ISP_DEV_STOP:
-		ret = isp_dev_stop(cxt->isp_driver_handle);
-		break;
-	case ISP_DEV_ENABLE_IRQ:
-		ret = isp_dev_enable_irq(cxt->isp_driver_handle, *(cmr_u32 *) in);
 		break;
 	case ISP_DEV_SET_AFL_BLOCK:
 		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in);

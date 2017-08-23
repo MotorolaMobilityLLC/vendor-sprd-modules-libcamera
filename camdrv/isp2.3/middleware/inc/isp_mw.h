@@ -30,21 +30,10 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_BINNING_MAX_STAT_W    640
 #define ISP_BINNING_MAX_STAT_H     480
 
-#define ISP_CTRL_EVT_INIT                    (1 << 2)
-#define ISP_CTRL_EVT_DEINIT                  (1 << 3)
-#define ISP_CTRL_EVT_CONTINUE                (1 << 4)
-#define ISP_CTRL_EVT_CONTINUE_STOP           (1 << 5)
-#define ISP_CTRL_EVT_SIGNAL                  (1 << 6)
-#define ISP_CTRL_EVT_SIGNAL_NEXT             (1 << 7)
-#define ISP_CTRL_EVT_IOCTRL                  (1 << 8)
 #define ISP_CTRL_EVT_TX                      (1 << 9)
 #define ISP_CTRL_EVT_SOF                     (1 << 10)
-#define ISP_CTRL_EVT_EOF                     (1 << 11)
 #define ISP_CTRL_EVT_AE                      (1 << 12)
-#define ISP_CTRL_EVT_AWB                     (1 << 13)
 #define ISP_CTRL_EVT_AF                      (1 << 14)
-#define ISP_CTRL_EVT_CTRL_SYNC               (1 << 15)
-#define ISP_CTRL_EVT_CONTINUE_AF             (1 << 16)
 #define ISP_CTRL_EVT_PDAF		     (1 << 17)
 #define ISP_CTRL_EVT_BINNING                     (1 << 18)
 
@@ -371,12 +360,9 @@ enum isp_ctrl_cmd {
 
 enum isp_capbility_cmd {
 	ISP_VIDEO_SIZE,
-	ISP_CAPTURE_SIZE,
 	ISP_LOW_LUX_EB,
 	ISP_CUR_ISO,
-	ISP_DENOISE_LEVEL,
 	ISP_DENOISE_INFO,
-	ISP_REG_VAL,
 	ISP_CTRL_GET_AE_LUM,	//for LLS feature
 	ISP_CAPBILITY_MAX
 };
@@ -499,16 +485,6 @@ struct isp_af_fullscan_info {
 	cmr_u32 far_peak_pos;
 	cmr_u32 distance_reminder;
 	cmr_u32 reserved[16];
-	/* The configuration for the af scanning */
-	//cmr_u8 valid_depth_clip; /* The up bound of valid_depth */ /* For Tuning */
-	//cmr_u8 method; /* The depth method. (Resaved) */ /* For Tuning */
-	/* No need to be set */
-	/* Customer Parameter */
-	//cmr_u16 sel_x; /* The point which be touched */
-	//cmr_u16 sel_y; /* The point which be touched */
-	//cmr_u8 sel_size; /* The size of area which be touched (Resaved) */ /* For Tuning */
-	//cmr_u16 slope; /* For Tuning */
-	//cmr_u8 valid_depth; /* For Tuning */
 };
 
 enum af_aux_sensor_type {

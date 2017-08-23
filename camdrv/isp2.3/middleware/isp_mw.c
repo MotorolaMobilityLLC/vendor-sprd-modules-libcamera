@@ -135,10 +135,10 @@ cmr_int isp_deinit(cmr_handle handle)
 
 	ret = isp_alg_fw_deinit(cxt->alg_fw_handle);
 	if (ret)
-		ISP_LOGE("failed to deinit 3a fw %ld", ret);
+		ISP_LOGE("fail to deinit 3a fw %ld", ret);
 	ret = isp_dev_access_deinit(cxt->dev_access_handle);
 	if (ret)
-		ISP_LOGE("failed to deinit access %ld", ret);
+		ISP_LOGE("fail to deinit access %ld", ret);
 
 	if (NULL != cxt) {
 		free(cxt);
@@ -157,8 +157,6 @@ cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *para
 
 	switch (cmd) {
 	case ISP_VIDEO_SIZE:
-	case ISP_CAPTURE_SIZE:
-	case ISP_REG_VAL:
 		ret = isp_dev_access_capability(cxt->dev_access_handle, cmd, param_ptr);
 		break;
 	case ISP_LOW_LUX_EB:
