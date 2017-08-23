@@ -606,13 +606,13 @@ cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width
 	}
 	p3dnr_info->xProj1D = new cmr_s32 *[imageNum];
 	if (NULL == p3dnr_info->xProj1D) {
-		delete[]mem0;
+		delete [] mem0;
 		return -1;
 	}
 	p3dnr_info->yProj1D = new cmr_s32 *[imageNum];
 	if (NULL == p3dnr_info->yProj1D) {
-		delete[]mem0;
-		delete p3dnr_info->xProj1D;
+		delete [] mem0;
+		delete [] p3dnr_info->xProj1D;
 		return -1;
 	}
 	for (cmr_u32 i = 0; i < imageNum; i++) {
@@ -624,9 +624,9 @@ cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width
 	p3dnr_info->MV_y = p3dnr_info->MV_x + imageNum - 1;
 	cmr_u8 *mem1 = new cmr_u8[3 * imageNum];
 	if (NULL == mem1) {
-		delete[]mem0;
-		delete p3dnr_info->xProj1D;
-		delete p3dnr_info->yProj1D;
+		delete [] mem0;
+		delete [] p3dnr_info->xProj1D;
+		delete [] p3dnr_info->yProj1D;
 		return -1;
 	}
 	p3dnr_info->y_src_weight = mem1;
@@ -638,10 +638,10 @@ cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width
 	if (imageNum > 2) {
 		p3dnr_info->intermedbuf.bufferY = (cmr_u8 *)malloc(orig_width * orig_height * 3 / 2);
 		if (NULL == p3dnr_info->intermedbuf.bufferY) {
-			delete[]mem0;
-			delete[]mem1;
-			delete p3dnr_info->xProj1D;
-			delete p3dnr_info->yProj1D;
+			delete [] mem0;
+			delete [] mem1;
+			delete [] p3dnr_info->xProj1D;
+			delete [] p3dnr_info->yProj1D;
 			return -1;
 		}
 		{
@@ -652,10 +652,10 @@ cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width
 	}
 	p3dnr_info->porigimg = (c3dnr_buffer_t *)malloc(sizeof(c3dnr_buffer_t) * p3dnr_info->imageNum);
 	if (p3dnr_info->porigimg == NULL) {
-		delete[]mem0;
-		delete[]mem1;
-		delete p3dnr_info->xProj1D;
-		delete p3dnr_info->yProj1D;
+		delete [] mem0;
+		delete [] mem1;
+		delete [] p3dnr_info->xProj1D;
+		delete [] p3dnr_info->yProj1D;
 		BL_LOGI("porigimg alloc error");
 		free(p3dnr_info->intermedbuf.bufferY);
 		return -1;
@@ -796,7 +796,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_deinit()
 		free(p3dnr_info->porigimg);
 	}
 	if (NULL != p3dnr_info->xProj1D[0])
-		delete p3dnr_info->xProj1D[0];
+		delete [] p3dnr_info->xProj1D[0];
 	if (NULL != p3dnr_info->xProj1D)
 		delete[]p3dnr_info->xProj1D;
 	if (NULL != p3dnr_info->yProj1D)
