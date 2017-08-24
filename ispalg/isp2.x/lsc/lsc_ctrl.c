@@ -129,6 +129,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case LSCCTRL_EVT_INIT:
 		break;
 	case LSCCTRL_EVT_DEINIT:
+		rtn = _lscctrl_deinit_adpt(handle);
 		break;
 	case LSCCTRL_EVT_IOCTRL:
 		break;
@@ -500,8 +501,9 @@ exit:
 
 cmr_int lsc_ctrl_deinit(cmr_handle * handle_lsc)
 {
-	cmr_s32 rtn = LSC_SUCCESS;
+	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = *handle_lsc;
+	CMR_MSG_INIT(message);
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param, param is NULL!");
@@ -509,18 +511,19 @@ cmr_int lsc_ctrl_deinit(cmr_handle * handle_lsc)
 		goto exit;
 	}
 
-	rtn = _lscctrl_deinit_adpt(cxt_ptr);
+	message.msg_type = LSCCTRL_EVT_DEINIT;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	message.alloc_flag = 0;
+	message.data = NULL;
+	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 	if (rtn) {
-		ISP_LOGE("fail to deinit lscctrl adpt %d", rtn);
-		rtn = _lscctrl_destroy_thread(cxt_ptr);
-		if (rtn)
-			ISP_LOGE("fail to destroy lscctrl thread %d", rtn);
+		ISP_LOGE("failed to send msg to lsc thr %ld", rtn);
 		goto exit;
 	}
 
 	rtn = _lscctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("fail to destroy lscctrl thread %d", rtn);
+		ISP_LOGE("fail to destroy lscctrl thread %ld", rtn);
 		goto exit;
 	}
 
@@ -530,7 +533,7 @@ exit:
 		*handle_lsc = NULL;
 	}
 
-	ISP_LOGI("done %d", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
@@ -539,7 +542,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt *)handle_lsc;
 
-	if (!handle_lsc) {
+	if (!handle_lsc || !in_ptr || !result) {
 		ISP_LOGE("fail to check param, param is NULL!");
 		rtn = LSC_HANDLER_NULL;
 		goto exit;
@@ -562,7 +565,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 
 	if (rtn) {
-		ISP_LOGE("fail to send msg to main thr %ld", rtn);
+		ISP_LOGE("fail to send msg to lsc thr %ld", rtn);
 		if (message.data)
 			free(message.data);
 		goto exit;
