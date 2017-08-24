@@ -452,44 +452,44 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_u_blocks_info *block_pt
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_LSC].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_LSC].h;
 	ret = isp_u_1d_lsc_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp 1d lsc slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 1d lsc slice size"));
 
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_LENS].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_LENS].h;
 	ret = isp_u_2d_lsc_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp 2d lsc slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 2d lsc slice size"));
 
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_AEM].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_AEM].h;
 	ret = isp_u_raw_aem_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp raw aem slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw aem slice size"));
 
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_RGB_AFM].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_RGB_AFM].h;
 	ret = isp_u_raw_afm_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp raw afm slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw afm slice size"));
 
 #if 0
 	ret = isp_u_hist_slice_size(handle,
 				    slice_ptr->size[ISP_DRV_HISTS].w,
 				    slice_ptr->size[ISP_DRV_HISTS].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp hist slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp hist slice size"));
 #endif
 
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_DISPATCH].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_DISPATCH].h;
 	ret = isp_u_dispatch_ch0_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp dispatch ch0 size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp dispatch ch0 size"));
 
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_STORE].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_STORE].h;
 	ret = isp_u_fetch_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp fetch slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp fetch slice size"));
 
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_STORE].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_STORE].h;
 	ret = isp_u_store_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("isp store slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to store isp slice size"));
 
 	return ret;
 }

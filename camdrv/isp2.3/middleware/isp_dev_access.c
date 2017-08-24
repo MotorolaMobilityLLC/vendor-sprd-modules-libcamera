@@ -144,22 +144,22 @@ cmr_int isp_dev_set_interface(struct isp_drv_interface_param *in_ptr)
 	}
 
 	ret = isp_set_comm_param((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("isp_set_comm_param error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to isp_set_comm_param"));
 
 	ret = isp_set_slice_size((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("isp_set_slice_size error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to isp_set_slice_size"));
 
 	ret = isp_set_fetch_param((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("isp_set_fetch_param error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to isp_set_fetch_param"));
 
 	ret = isp_set_store_param((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("isp_set_store_param error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to isp_set_store_param"));
 
 	ret = isp_set_dispatch((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("isp_set_dispatch error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to isp_set_dispatch"));
 
 	ret = isp_set_arbiter((cmr_handle) in_ptr);
-	ISP_TRACE_IF_FAIL(ret, ("isp_set_arbiter error"));
+	ISP_TRACE_IF_FAIL(ret, ("fail to isp_set_arbiter"));
 
 exit:
 	return ret;
@@ -178,31 +178,31 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 	isp_u_fetch_raw_transaddr(cxt->isp_driver_handle, &in_ptr->fetch.fetch_addr);
 
 	ret = isp_get_fetch_addr(in_ptr, &in_ptr->fetch);
-	ISP_RETURN_IF_FAIL(ret, ("isp get fetch addr error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to get isp fetch addr"));
 
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
 	ret = isp_get_cfa_default_param(in_ptr, &cfa_param);
-	ISP_RETURN_IF_FAIL(ret, ("isp get cfa default param error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to get isp cfa default param"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->cfa_param;
 	ret = isp_u_cfa_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("isp cfg cfa error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp cfa"));
 #endif
 	dev_blocks_info.block_info = (void *)&in_ptr->fetch;
 	ret = isp_u_fetch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("isp cfg fetch error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp fetch"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->store;
 	ret = isp_u_store_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("isp cfg store error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp store"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->dispatch;
 	ret = isp_u_dispatch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("isp cfg dispatch error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp dispatch"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->arbiter;
 	ret = isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("isp cfg arbiter error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp arbiter"));
 
 	dev_blocks_info.block_info = (void *)&in_ptr->com;
 	isp_cfg_comm_data(cxt->isp_driver_handle, &dev_blocks_info);
