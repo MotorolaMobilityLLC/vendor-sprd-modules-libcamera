@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "isp_u_pdaf"
+#define LOG_TAG "dcam_u_pdaf"
 
 #include "isp_drv.h"
 
@@ -35,11 +35,11 @@ cmr_s32 isp_u_pdaf_bypass(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_BYPASS;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_BYPASS;
 	param.property_param = &pdaf_ptr->bypass;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 	return ret;
 }
 
@@ -60,11 +60,11 @@ cmr_s32 isp_u_pdaf_work_mode(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_SET_MODE;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_SET_MODE;
 	param.property_param = &pdaf_ptr->mode;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 	return ret;
 }
 
@@ -85,11 +85,11 @@ cmr_s32 isp_u_pdaf_extractor_bypass(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_SET_EXTRACTOR_BYPASS;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_SET_EXTRACTOR_BYPASS;
 	param.property_param = &pdaf_ptr->bypass;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 	return ret;
 }
 
@@ -110,11 +110,11 @@ cmr_s32 isp_u_pdaf_skip_num(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_SET_SKIP_NUM;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_SET_SKIP_NUM;
 	param.property_param = &pdaf_ptr->skip_num;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 	return ret;
 }
 
@@ -135,11 +135,11 @@ cmr_s32 isp_u_pdaf_roi(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_SET_ROI;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_SET_ROI;
 	param.property_param = pdaf_ptr->roi_info;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 	return ret;
 }
 
@@ -160,11 +160,11 @@ cmr_s32 isp_u_pdaf_ppi_info(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_SET_PPI_INFO;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_SET_PPI_INFO;
 	param.property_param = pdaf_ptr->ppi_info;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 	return ret;
 }
 
@@ -185,11 +185,11 @@ cmr_s32 isp_u_pdaf_block(cmr_handle handle, void *param_ptr)
 
 	param.isp_id = file->isp_id;
 	param.scene_id = pdaf_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_PDAF;
-	param.property = ISP_PRO_PDAF_BLOCK;
+	param.sub_block = DCAM_BLOCK_PDAF;
+	param.property = DCAM_PRO_PDAF_BLOCK;
 	param.property_param = pdaf_ptr->block_info;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
 
 	return ret;
 }

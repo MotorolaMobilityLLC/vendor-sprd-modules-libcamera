@@ -512,6 +512,9 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
 
     parm.channel_id = channel_id;
     parm.pdaf_ctrl.mode = config->cfg.pdaf_ctrl.mode;
+#ifdef CONFIG_CAMERA_DCAM_PDAF
+    parm.pdaf_ctrl.image_vc = 0;
+#endif
     parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
     if (ret) {
@@ -637,7 +640,11 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.need_isp_tool = config->cfg.need_isp_tool;
     parm.need_isp = config->cfg.need_isp;
     parm.regular_desc = config->cfg.regular_desc;
+#ifdef CONFIG_CAMERA_DCAM_PDAF
+    parm.rt_refocus = 0;
+#else
     parm.rt_refocus = config->cfg.pdaf_ctrl.mode;
+#endif
     parm.slowmotion = config->cfg.slowmotion;
 
     parm.crop_rect.x = config->cfg.src_img_rect.start_x;

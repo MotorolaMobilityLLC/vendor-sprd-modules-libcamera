@@ -1649,7 +1649,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 			ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 	}
 
-	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_PDAF_BLOCK);
+	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_PDAF_BLOCK);
 
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -3150,7 +3150,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = ispalg_update_alg_param(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to isp smart param calc"));
 
-	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
 	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d",
 		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
