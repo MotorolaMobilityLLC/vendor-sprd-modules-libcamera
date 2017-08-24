@@ -250,11 +250,8 @@ static void ov5675_drv_write_gain(cmr_handle handle, cmr_uint gain) {
 
     if (SENSOR_MAX_GAIN < gain)
         gain = SENSOR_MAX_GAIN;
-#if defined(CONFIG_CAMERA_SHARKLE_BRINGUP)
-    gain = 0x1fff;
-#endif
-
     cmr_u16 value = 0;
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x00);
 
     value = (gain >> 8) & 0x1f;
