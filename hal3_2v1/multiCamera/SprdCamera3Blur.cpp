@@ -260,6 +260,12 @@ int SprdCamera3Blur::closeCameraDevice() {
         sprdCam->dev = NULL;
     }
 
+    if (mCaptureThread != NULL) {
+        if (mCaptureThread->isRunning()) {
+            mCaptureThread->requestExit();
+        }
+    }
+
     freeLocalCapBuffer();
     mSavedRequestList.clear();
     mCaptureThread->unLoadBlurApi();
@@ -2832,7 +2838,7 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
            sizeof(camera3_stream_buffer_t));
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
-    mCaptureThread->run(String8::format("Blur").string());
+    mCaptureThread->run(String8::format("Blur").string(), -7);
     rc = mCaptureThread->initBlurInitParams();
     mCaptureThread->initBlurWeightParams();
     HAL_LOGI("X");
