@@ -5,11 +5,11 @@
 
 static awb_target_packet_t golden_awb[AWB_MAX_LIGHT] = {
     {
-        .R = 0x141,
-        .G = 0x278,
-        .B = 0x151,
-        .rg_ratio = 0x104,
-        .bg_ratio = 0x111,
+        .R = 0x140,
+        .G = 0x27c,
+        .B = 0x154,
+        .rg_ratio = 0x102,
+        .bg_ratio = 0x112,
         .GrGb_ratio = 0x200,
     },
 };

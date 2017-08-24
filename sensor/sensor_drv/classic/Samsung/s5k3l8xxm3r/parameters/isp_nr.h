@@ -1,19 +1,22 @@
 #ifdef _NR_MAP_PARAM_
-static struct sensor_nr_level_map_param
-    s_s5k3l8xxm3r_nr_level_number_map_param = {
-        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25,
-         25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25}};
+static struct sensor_nr_level_map_param s_s5k3l8xxm3r_nr_level_number_map_param = {{
+	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,
+	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25
+}};
 
-static struct sensor_nr_level_map_param
-    s_s5k3l8xxm3r_default_nr_level_map_param = {
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0}};
+static struct sensor_nr_level_map_param s_s5k3l8xxm3r_default_nr_level_map_param = {{
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+}};
 
 static struct sensor_nr_scene_map_param s_s5k3l8xxm3r_nr_scene_map_param = {{
-
-    0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000}};
+	
+	
+	
+	
+	0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
+}};
 #endif
 
 #ifdef _NR_PDAF_CORRECTION_PARAM_
@@ -91,3 +94,4 @@ static struct sensor_nr_scene_map_param s_s5k3l8xxm3r_nr_scene_map_param = {{
 #ifdef _NR_UV_POSTCDN_PARAM_
 #include "NR/common/normal/uv_postcdn_param.h"
 #endif
+
