@@ -23,6 +23,7 @@ cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *block_info)
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
+	struct isp_dev_rgb_gain_info *ggg = (struct isp_dev_rgb_gain_info *)block_info;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
@@ -30,6 +31,9 @@ cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *block_info)
 	}
 
 	file = (struct isp_file *)(handle);
+
+	ggg->bypass = 1;//by qin for bringup
+
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_RGBG;
 	param.property = ISP_PRO_RGB_GAIN_BLOCK;
