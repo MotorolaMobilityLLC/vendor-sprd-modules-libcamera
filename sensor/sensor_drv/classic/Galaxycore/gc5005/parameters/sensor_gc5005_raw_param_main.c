@@ -39,107 +39,151 @@
 /* IspToolVersion=1.15.46.2 */
 
 /* Capture Sizes:
-        2592x1944
+	2592x1944
 */
 
 /************************************************************************/
 
-static struct sensor_raw_resolution_info_tab s_gc5005_trim_info = {
-    0x00,
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}};
-
-/************************************************************************/
-
-static struct sensor_raw_ioctrl s_gc5005_ioctrl = {0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                   0, 0, 0, 0, 0, 0, 0, 0};
-
-/************************************************************************/
-
-static struct sensor_version_info s_gc5005_version_info = {
-    0x00070005,
-    {{0x30356367, 0x00003530, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-      0x00000000, 0x00000000}},
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000};
-
-/************************************************************************/
-
-static uint32_t s_gc5005_libuse_info[] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000};
-
-/************************************************************************/
-
-static struct sensor_raw_info s_gc5005_mipi_raw_info = {
-    &s_gc5005_version_info,
-    {
-        {s_gc5005_tune_info_common, sizeof(s_gc5005_tune_info_common)},
-        {s_gc5005_tune_info_prv_0, sizeof(s_gc5005_tune_info_prv_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_gc5005_tune_info_cap_0, sizeof(s_gc5005_tune_info_cap_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_gc5005_tune_info_video_0, sizeof(s_gc5005_tune_info_video_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-    },
-    &s_gc5005_trim_info,
-    &s_gc5005_ioctrl,
-    (struct sensor_libuse_info *)s_gc5005_libuse_info,
-    {
-        &s_gc5005_fix_info_common, &s_gc5005_fix_info_prv_0, NULL, NULL, NULL,
-        &s_gc5005_fix_info_cap_0, NULL, NULL, NULL, &s_gc5005_fix_info_video_0,
-        NULL, NULL, NULL,
-    },
-    {
-        {s_gc5005_common_tool_ui_input, sizeof(s_gc5005_common_tool_ui_input)},
-        {s_gc5005_prv_0_tool_ui_input, sizeof(s_gc5005_prv_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_gc5005_cap_0_tool_ui_input, sizeof(s_gc5005_cap_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-        {s_gc5005_video_0_tool_ui_input,
-         sizeof(s_gc5005_video_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-    },
-    {
-        &s_gc5005_nr_scene_map_param, &s_gc5005_nr_level_number_map_param,
-        &s_gc5005_default_nr_level_map_param,
-    },
+static struct sensor_raw_resolution_info_tab s_gc5005_trim_info=
+{
+	0x00,
+	{
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+	}
 };
+
+/************************************************************************/
+
+static struct sensor_raw_ioctrl s_gc5005_ioctrl=
+{
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+/************************************************************************/
+
+static struct sensor_version_info s_gc5005_version_info=
+{
+	0x00070005,
+	{
+		{
+			0x30356367,
+			0x00003530,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000
+		}
+	},
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000
+};
+
+/************************************************************************/
+
+static uint32_t s_gc5005_libuse_info[]=
+{
+	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
+};
+
+/************************************************************************/
+
+static struct sensor_raw_info s_gc5005_mipi_raw_info=
+{
+	&s_gc5005_version_info,
+	{
+		{s_gc5005_tune_info_common, sizeof(s_gc5005_tune_info_common)},
+		{s_gc5005_tune_info_prv_0, sizeof(s_gc5005_tune_info_prv_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_gc5005_tune_info_cap_0, sizeof(s_gc5005_tune_info_cap_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_gc5005_tune_info_video_0, sizeof(s_gc5005_tune_info_video_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+	},
+	&s_gc5005_trim_info,
+	&s_gc5005_ioctrl,
+	(struct sensor_libuse_info *)s_gc5005_libuse_info,
+	{
+		&s_gc5005_fix_info_common,
+		&s_gc5005_fix_info_prv_0,
+		NULL,
+		NULL,
+		NULL,
+		&s_gc5005_fix_info_cap_0,
+		NULL,
+		NULL,
+		NULL,
+		&s_gc5005_fix_info_video_0,
+		NULL,
+		NULL,
+		NULL,
+	},
+	{
+		{s_gc5005_common_tool_ui_input, sizeof(s_gc5005_common_tool_ui_input)},
+		{s_gc5005_prv_0_tool_ui_input, sizeof(s_gc5005_prv_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_gc5005_cap_0_tool_ui_input, sizeof(s_gc5005_cap_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{s_gc5005_video_0_tool_ui_input, sizeof(s_gc5005_video_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+	},
+	{
+		&s_gc5005_nr_scene_map_param,
+		&s_gc5005_nr_level_number_map_param,
+		&s_gc5005_default_nr_level_map_param,
+	},
+};
+

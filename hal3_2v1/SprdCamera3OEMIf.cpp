@@ -404,6 +404,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         mPreviewBufferHandle[i] = NULL;
         mPreviewCancelBufHandle[i] = NULL;
     }
+    for (int i = 0; i < kRefocusBufferCount + 1; i++) {
+        mRefocusHeapArray[i] = NULL;
+    }
     mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
     mZSLTakePicture = false;
 

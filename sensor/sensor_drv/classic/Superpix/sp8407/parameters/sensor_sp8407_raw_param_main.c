@@ -41,108 +41,151 @@
 /* IspToolVersion=1.15.46.2 */
 
 /* Capture Sizes:
-        3264x2448,1632x1224
+	3264x2448,1632x1224
 */
 
 /************************************************************************/
 
-static struct sensor_raw_resolution_info_tab s_sp8407_trim_info = {
-    0x00,
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}};
-
-/************************************************************************/
-
-static struct sensor_raw_ioctrl s_sp8407_ioctrl = {0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                   0, 0, 0, 0, 0, 0, 0, 0};
-
-/************************************************************************/
-
-static struct sensor_version_info s_sp8407_version_info = {
-    0x00070005,
-    {{0x34387073, 0x78793730, 0x006C6175, 0x00000000, 0x00000000, 0x00000000,
-      0x00000000, 0x00000000}},
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000};
-
-/************************************************************************/
-
-static uint32_t s_sp8407_libuse_info[] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000};
-
-/************************************************************************/
-
-static struct sensor_raw_info s_sp8407_mipi_raw_info = {
-    &s_sp8407_version_info,
-    {
-        {s_sp8407_tune_info_common, sizeof(s_sp8407_tune_info_common)},
-        {s_sp8407_tune_info_prv_0, sizeof(s_sp8407_tune_info_prv_0)},
-        {s_sp8407_tune_info_prv_1, sizeof(s_sp8407_tune_info_prv_1)},
-        {NULL, 0},
-        {NULL, 0},
-        {s_sp8407_tune_info_cap_0, sizeof(s_sp8407_tune_info_cap_0)},
-        {s_sp8407_tune_info_cap_1, sizeof(s_sp8407_tune_info_cap_1)},
-        {NULL, 0},
-        {NULL, 0},
-        {s_sp8407_tune_info_video_0, sizeof(s_sp8407_tune_info_video_0)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-    },
-    &s_sp8407_trim_info,
-    &s_sp8407_ioctrl,
-    (struct sensor_libuse_info *)s_sp8407_libuse_info,
-    {
-        &s_sp8407_fix_info_common, &s_sp8407_fix_info_prv_0,
-        &s_sp8407_fix_info_prv_1, NULL, NULL, &s_sp8407_fix_info_cap_0,
-        &s_sp8407_fix_info_cap_1, NULL, NULL, &s_sp8407_fix_info_video_0, NULL,
-        NULL, NULL,
-    },
-    {
-        {s_sp8407_common_tool_ui_input, sizeof(s_sp8407_common_tool_ui_input)},
-        {s_sp8407_prv_0_tool_ui_input, sizeof(s_sp8407_prv_0_tool_ui_input)},
-        {s_sp8407_prv_1_tool_ui_input, sizeof(s_sp8407_prv_1_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {s_sp8407_cap_0_tool_ui_input, sizeof(s_sp8407_cap_0_tool_ui_input)},
-        {s_sp8407_cap_1_tool_ui_input, sizeof(s_sp8407_cap_1_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {s_sp8407_video_0_tool_ui_input,
-         sizeof(s_sp8407_video_0_tool_ui_input)},
-        {NULL, 0},
-        {NULL, 0},
-        {NULL, 0},
-    },
-    {
-        &s_sp8407_nr_scene_map_param, &s_sp8407_nr_level_number_map_param,
-        &s_sp8407_default_nr_level_map_param,
-    },
+static struct sensor_raw_resolution_info_tab s_sp8407_trim_info=
+{
+	0x00,
+	{
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+	}
 };
+
+/************************************************************************/
+
+static struct sensor_raw_ioctrl s_sp8407_ioctrl=
+{
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+/************************************************************************/
+
+static struct sensor_version_info s_sp8407_version_info=
+{
+	0x00070005,
+	{
+		{
+			0x34387073,
+			0x78793730,
+			0x006C6175,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000
+		}
+	},
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000
+};
+
+/************************************************************************/
+
+static uint32_t s_sp8407_libuse_info[]=
+{
+    0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
+};
+
+/************************************************************************/
+
+static struct sensor_raw_info s_sp8407_mipi_raw_info=
+{
+	&s_sp8407_version_info,
+	{
+		{s_sp8407_tune_info_common, sizeof(s_sp8407_tune_info_common)},
+		{s_sp8407_tune_info_prv_0, sizeof(s_sp8407_tune_info_prv_0)},
+		{s_sp8407_tune_info_prv_1, sizeof(s_sp8407_tune_info_prv_1)},
+		{NULL, 0},
+		{NULL, 0},
+		{s_sp8407_tune_info_cap_0, sizeof(s_sp8407_tune_info_cap_0)},
+		{s_sp8407_tune_info_cap_1, sizeof(s_sp8407_tune_info_cap_1)},
+		{NULL, 0},
+		{NULL, 0},
+		{s_sp8407_tune_info_video_0, sizeof(s_sp8407_tune_info_video_0)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+	},
+	&s_sp8407_trim_info,
+	&s_sp8407_ioctrl,
+	(struct sensor_libuse_info *)s_sp8407_libuse_info,
+	{
+		&s_sp8407_fix_info_common,
+		&s_sp8407_fix_info_prv_0,
+		&s_sp8407_fix_info_prv_1,
+		NULL,
+		NULL,
+		&s_sp8407_fix_info_cap_0,
+		&s_sp8407_fix_info_cap_1,
+		NULL,
+		NULL,
+		&s_sp8407_fix_info_video_0,
+		NULL,
+		NULL,
+		NULL,
+	},
+	{
+		{s_sp8407_common_tool_ui_input, sizeof(s_sp8407_common_tool_ui_input)},
+		{s_sp8407_prv_0_tool_ui_input, sizeof(s_sp8407_prv_0_tool_ui_input)},
+		{s_sp8407_prv_1_tool_ui_input, sizeof(s_sp8407_prv_1_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{s_sp8407_cap_0_tool_ui_input, sizeof(s_sp8407_cap_0_tool_ui_input)},
+		{s_sp8407_cap_1_tool_ui_input, sizeof(s_sp8407_cap_1_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{s_sp8407_video_0_tool_ui_input, sizeof(s_sp8407_video_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+	},
+	{
+		&s_sp8407_nr_scene_map_param,
+		&s_sp8407_nr_level_number_map_param,
+		&s_sp8407_default_nr_level_map_param,
+	},
+};
+
