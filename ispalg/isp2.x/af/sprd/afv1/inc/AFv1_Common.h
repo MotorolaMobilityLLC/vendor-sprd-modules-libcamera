@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.125"
-#define SUB_VERSION             "-0821-01-buffer_overlap"	//use the date code to naming
+#define SUB_VERSION             "-0824-02-SAF_exceed_num"	//use the date code to naming
 
 #define STRING(s) #s
 
