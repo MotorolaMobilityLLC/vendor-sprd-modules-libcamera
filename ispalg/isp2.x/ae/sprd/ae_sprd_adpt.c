@@ -59,7 +59,7 @@
  * should be read from driver later
  */
 #define AE_FLASH_ON_OFF_THR 380
-#define AE_FLASH_CALC_TIMES	15	/* prevent flash_pfOneIteration time out */
+#define AE_FLASH_CALC_TIMES	60	/* prevent flash_pfOneIteration time out */
 #define AE_THREAD_QUEUE_NUM		(50)
 const char AE_MAGIC_TAG[] = "ae_debug_info";
 
