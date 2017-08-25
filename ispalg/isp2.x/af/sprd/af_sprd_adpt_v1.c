@@ -1332,6 +1332,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 		return;
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+	af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.trigger_source = p_aft_result->is_caf_trig;
@@ -2575,7 +2576,10 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				rtn = saf_process_frame(af);
 				if (1 == rtn) {
 					af->focus_state = AF_IDLE;
+					af->state = AF_MODE_CONTINUE == af->pre_state ? STATE_CAF : STATE_RECORD_CAF;
+					trigger_set_mode(af, STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO);
 					trigger_start(af);
+					ISP_LOGI("after saf pre_state %u cur_state %u",af->pre_state,af->state);
 				}
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
