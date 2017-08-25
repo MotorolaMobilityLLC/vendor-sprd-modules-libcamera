@@ -76,7 +76,7 @@
 
 /*line time unit: 1us*/
 #define SNAPSHOT_LINE_TIME 20833 // 16700 // 20833
-#define PREVIEW_LINE_TIME 20833  // 16700  // 33333
+#define PREVIEW_LINE_TIME 41666  // 16700  // 33333
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH 2000
