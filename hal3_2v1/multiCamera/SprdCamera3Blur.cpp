@@ -3066,6 +3066,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     uint32_t tagCnt = 0;
     int snap_stream_num = 2;
     int af_bypass = 0;
+    int fb_on = 0;
 
     memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
     rc = validateCaptureRequest(req);
@@ -3139,12 +3140,6 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                    sizeof(camera3_capture_request_t));
             memcpy(&mCaptureThread->mSavedCapReqstreambuff,
                    &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
-            if (NULL != mCaptureThread->mSavedCapReqsettings) {
-                free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
-                mCaptureThread->mSavedCapReqsettings = NULL;
-            }
-            mCaptureThread->mSavedCapReqsettings =
-                clone_camera_metadata(req_main.settings);
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
             HAL_LOGD("mFlushing:%d,frame_number:%d", mFlushing,
@@ -3163,9 +3158,15 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                 }
                 snap_stream_num = 2;
                 out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
+                fb_on = 0;
+                hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
+                                       &fb_on, NULL);
             } else {
                 snap_stream_num = 1;
+                fb_on = 1;
                 out_streams_main[i].buffer = (req->output_buffers[i]).buffer;
+                hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
+                                       &fb_on, NULL);
             }
             out_streams_main[i].stream =
                 &mCaptureThread->mMainStreams[snap_stream_num];
@@ -3181,6 +3182,17 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     }
     req_main.output_buffers = out_streams_main;
     req_main.settings = metaSettings.release();
+    for (size_t i = 0; i < req->num_output_buffers; i++) {
+        if (getStreamType(request->output_buffers[i].stream) ==
+            SNAPSHOT_STREAM) {
+            if (NULL != mCaptureThread->mSavedCapReqsettings) {
+                free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
+                mCaptureThread->mSavedCapReqsettings = NULL;
+            }
+            mCaptureThread->mSavedCapReqsettings =
+                clone_camera_metadata(req_main.settings);
+        }
+    }
     rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,
                                           &req_main);
     if (rc < 0) {

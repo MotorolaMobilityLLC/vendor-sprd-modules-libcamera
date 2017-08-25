@@ -779,9 +779,9 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
     }
 
     receiver_handle = cxt->grab_cxt.caller_handle[frame->channel_id];
-    if ((chn_bits == cxt->snp_cxt.channel_bits)
-        && ((1 == camera_get_hdr_flag(cxt)) || (1 == camera_get_3dnr_flag(cxt)))
-        &&(TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt))) {
+    if ((chn_bits == cxt->snp_cxt.channel_bits) &&
+        ((1 == camera_get_hdr_flag(cxt)) || (1 == camera_get_3dnr_flag(cxt))) &&
+        (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt))) {
         struct img_frm out_param;
         struct ipm_frame_in ipm_in_param;
         struct ipm_frame_out imp_out_param;
@@ -4851,7 +4851,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         CMR_LOGD("filter type:%d", filter_type);
 
         if (cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
-            cxt->is_multi_mode == MODE_SELF_SHOT) {
+            cxt->is_multi_mode == MODE_SELF_SHOT ||
+            (cxt->is_multi_mode == MODE_BLUR && cxt->blur_facebeauty_flag == 1)) {
             if (filter_type > 0) {
 #ifdef CONFIG_ARCSOFT_FILTER
                 clock_gettime(CLOCK_BOOTTIME, &start_time);
@@ -8458,6 +8459,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     cxt->hal_malloc = cb_of_malloc;
     cxt->hal_free = cb_of_free;
     cxt->is_multi_mode = is_multi_camera_mode_oem;
+    cxt->blur_facebeauty_flag = 0;
 
     CMR_LOGI("create handle 0x%lx 0x%lx", (cmr_uint)cxt,
              (cmr_uint)cxt->client_data);
@@ -10489,6 +10491,17 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
     if (ret) {
         CMR_LOGE("snp_thumb_yuv_proc failed.");
     }
+
+    return ret;
+}
+
+cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CHECK_HANDLE_VALID(cxt);
+    cxt->blur_facebeauty_flag = *on;
+    CMR_LOGD("blur_facebeauty_flag %d", cxt->blur_facebeauty_flag);
 
     return ret;
 }

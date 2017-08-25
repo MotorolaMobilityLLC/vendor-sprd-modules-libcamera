@@ -1115,6 +1115,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                         (struct snp_thumb_yuv_param *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY: {
+        ret = camera_local_set_capture_fb(handle, (cmr_u32 *)param);
+        break;
+    }
     default:
         break;
     }

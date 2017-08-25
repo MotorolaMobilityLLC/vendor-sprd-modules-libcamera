@@ -306,6 +306,7 @@ struct camera_context {
     cmr_uint dump_cnt;
     cmr_uint is_start_snapshot;
     cmr_uint is_3dnr_video;
+    cmr_u32 blur_facebeauty_flag;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
@@ -459,6 +460,7 @@ cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
                                   cmr_u32 *max_height);
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param);
+cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
 #ifdef __cplusplus
 }
 #endif
