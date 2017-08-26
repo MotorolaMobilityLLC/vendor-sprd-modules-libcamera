@@ -558,6 +558,11 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	awb_gain.g = cxt->recover_gain.g;
 	awb_gain.b = cxt->recover_gain.b;
 
+	cxt->output_gain.r = cxt->recover_gain.r;
+	cxt->output_gain.g = cxt->recover_gain.g;
+	cxt->output_gain.b = cxt->recover_gain.b;
+	cxt->output_ct = cxt->recover_ct;
+
 	cxt->cur_gain.r = awb_gain.r;
 	cxt->cur_gain.g = awb_gain.g;
 	cxt->cur_gain.b = awb_gain.b;
@@ -1120,6 +1125,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, SYSTEM_TEST -awb_test %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
 		      calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
 
+
 	result->gain.r = calc_result.awb_gain[0].r_gain;
 	result->gain.g = calc_result.awb_gain[0].g_gain;
 	result->gain.b = calc_result.awb_gain[0].b_gain;
@@ -1259,8 +1265,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result->ct = cxt->output_ct;
 
 	pthread_mutex_unlock(&cxt->status_lock);
-EXIT:
-	pthread_mutex_unlock(&cxt->status_lock);
+
 	return rtn;
 }
 
@@ -1391,8 +1396,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_VIDEO_STOP_NOTIFY:
-		ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
-		if (cxt->lock_info.lock_mode == AWB_CTRL_UNLOCKMODE && cxt->last_enable == 0  && cxt->flash_info.flash_enable == 0){
+		if (cxt->last_enable == 0  && cxt->flash_info.flash_enable == 0){
 			rtn = _awb_set_recgain(cxt, in);
 		}
 		cxt->last_enable++;

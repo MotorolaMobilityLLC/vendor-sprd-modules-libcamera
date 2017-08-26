@@ -2584,11 +2584,11 @@ static cmr_u32 ispalg_deinit(cmr_handle isp_alg_handle)
 	if (cxt->ops.smart_ops.deinit)
 		cxt->ops.smart_ops.deinit(&cxt->smart_cxt.handle, NULL, NULL);
 
-	if (cxt->ops.awb_ops.deinit)
-		cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
-
 	if (cxt->ops.ae_ops.deinit)
 		cxt->ops.ae_ops.deinit(&cxt->ae_cxt.handle);
+
+	if (cxt->ops.awb_ops.deinit)
+		cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
 
 	if (cxt->ops.afl_ops.deinit)
 		cxt->ops.afl_ops.deinit(&cxt->afl_cxt.handle);
