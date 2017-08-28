@@ -515,7 +515,7 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_drv_slice_param *slice_
 	ret = isp_u_store_slice_size(handle,
 				     slice_ptr->size[ISP_DRV_STORE].w,
 				     slice_ptr->size[ISP_DRV_STORE].h);
-	ISP_RETURN_IF_FAIL(ret, ("isp store slice size error"));
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp store slice size"));
 
 	return ret;
 }

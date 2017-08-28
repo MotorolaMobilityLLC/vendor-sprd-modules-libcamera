@@ -797,7 +797,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.lsc_tab_size = cxt->lsc_cxt.lsc_tab_size;
 
 		/*AF lock ALSC */
-
 		if (cxt->lsc_cxt.isp_smart_lsc_lock == 0) {
 			if (cxt->ops.lsc_ops.process)
 				ret = cxt->ops.lsc_ops.process(lsc_adv_handle, &calc_param, &calc_result);
@@ -984,6 +983,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	return ret;
 }
 
+#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 				struct ae_ctrl_callback_in *ae_in,
 				struct awb_ctrl_calc_param * out_ptr)
@@ -995,6 +995,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
+	cmr_s32 i;
 
 	if (!out_ptr || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
@@ -1020,7 +1021,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	out_ptr->stat_width_awb = cxt->binning_stats.binning_size.w;
 	out_ptr->stat_height_awb = cxt->binning_stats.binning_size.h;
 	out_ptr->bv = ae_in->ae_output.cur_bv;
-//ALC_S
+
 	out_ptr->ae_info.bv = ae_in->ae_output.cur_bv;
 	out_ptr->ae_info.iso = ae_in->ae_output.cur_iso;
 	out_ptr->ae_info.gain = ae_in->ae_output.cur_again;
@@ -1029,10 +1030,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	out_ptr->ae_info.stable = ae_in->ae_output.is_stab;
 	out_ptr->ae_info.ev_index = ae_in->ae_ev.ev_index;
 	memcpy(out_ptr->ae_info.ev_table, ae_in->ae_ev.ev_tab, 16 * sizeof(cmr_s32));
-//ALC_E
-	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
-// simulation info
+	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
 	memset(&pm_param, 0, sizeof(pm_param));
 
@@ -1044,8 +1043,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 		cmr_u16 *cmc_info = io_pm_output.param_data->data_ptr;
 
 		if (cmc_info != NULL) {
-#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
-			cmr_s32 i;
 			for (i = 0; i < 9; i++) {
 				out_ptr->matrix[i] = CMC10(cmc_info[i]);
 			}
@@ -1059,7 +1056,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 		struct isp_dev_gamma_info *gamma_info = io_pm_output.param_data->data_ptr;
 
 		if (gamma_info != NULL) {
-			cmr_s32 i;
 			for (i = 0; i < 256; i++) {
 				out_ptr->gamma[i] = (gamma_info->gamc_nodes.nodes_r[i].node_y + gamma_info->gamc_nodes.nodes_r[i + 1].node_y) / 2;
 			}
@@ -1171,7 +1167,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.awb_ops.process) {
 		ret = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &param, awb_output);
-		ISP_TRACE_IF_FAIL(ret, ("fial to do awb process"));
+		ISP_TRACE_IF_FAIL(ret, ("fail to do awb process"));
 	}
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
@@ -1208,11 +1204,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	time_start = ispalg_get_sys_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
 		struct alsc_ver_info lsc_ver = { 0 };
-		if (cxt->ops.lsc_ops.ioctrl)
+		if (cxt->ops.lsc_ops.ioctrl) {
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
-		if (ISP_SUCCESS != ret) {
-			ISP_LOGE("fail to Get ALSC ver info!");
+			ISP_TRACE_IF_FAIL(ret, ("fail to Get ALSC ver info!"));
 		}
+
 		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f",
 			ae_in->ae_output.cur_bv,
 			ae_in->ae_output.cur_exp_line,
@@ -1238,12 +1234,12 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.lock_postcdn = cxt->smart_cxt.lock_postcdn_en;
 		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
 		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
-		if (cxt->ops.smart_ops.calc)
+		if (cxt->ops.smart_ops.calc) {
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
-		ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
+			ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
+		}
 		cxt->smart_cxt.log_smart = smart_proc_in.log;
 		cxt->smart_cxt.log_smart_size = smart_proc_in.size;
-
 
 		struct isp_pm_param_data param_data_alsc;
 		struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
@@ -1663,7 +1659,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 
 	if (ISP_SUCCESS != ret || NULL == output.param_data) {
 		ISP_LOGE("fail to check output.param_data\n");
-		return ret;
+		return ISP_PARAM_ERROR;
 	}
 
 	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
@@ -2938,7 +2934,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+	if (ISP_SUCCESS != ret || NULL == output.param_data) {
+		ISP_LOGE("fail to check output.param_data");
+		return ISP_PARAM_ERROR;
+	}
 
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
