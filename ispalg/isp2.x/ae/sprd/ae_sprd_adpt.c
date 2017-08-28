@@ -5453,8 +5453,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			src_exp.exp_time = cxt->last_exp_param.exp_time;
 			src_exp.dummy = cxt->last_exp_param.dummy;
 		} else {
-			src_exp.exp_line = cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / (float)cxt->cur_status.line_time;
-			if (cxt->min_exp_line > cxt->cur_result.wts.cur_exp_line)
+			src_exp.exp_line = (cmr_u32)(1.0*cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.line_time+0.5);
+			if (cxt->min_exp_line > src_exp.exp_line)
 				src_exp.exp_line = cxt->min_exp_line;
 			src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
 			src_exp.gain = cxt->last_exp_param.gain;
