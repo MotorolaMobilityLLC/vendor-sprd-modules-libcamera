@@ -83,7 +83,7 @@ class SprdCamera3MultiBase {
     virtual int getStreamType(camera3_stream_t *new_stream);
     virtual void dumpFps();
     virtual void dumpData(unsigned char *addr, int type, int size, int param1,
-                          int param2, int param3, int param4);
+                          int param2, int param3, const char param4[20]);
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
                                hwi_frame_buffer_info_t *result2);

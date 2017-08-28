@@ -1425,28 +1425,28 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
                    ->base;
         size = ((struct private_handle_t *)*(combDepthResult->buffer1))->size;
         gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
-                               combDepthResult->frame_number, 1);
+                               combDepthResult->frame_number, "main");
         addr = (unsigned char *)((struct private_handle_t *)*(
                                      combDepthResult->buffer2))
                    ->base;
         size = ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
         gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
-                               combDepthResult->frame_number, 2);
+                               combDepthResult->frame_number, "sub");
         addr = (unsigned char *)puwDisparityBuf;
         size = mDepthInitParam.outputsize;
         gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
-                               combDepthResult->frame_number, 3);
+                               combDepthResult->frame_number, "depth");
         if (gRangeFinder->mApiLibVersion == 0) {
             addr = (unsigned char *)mainRotate;
             size =
                 ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
             gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
-                                   combDepthResult->frame_number, 4);
+                                   combDepthResult->frame_number, "mainRotate");
             addr = (unsigned char *)auxRotate;
             size =
                 ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
             gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
-                                   combDepthResult->frame_number, 5);
+                                   combDepthResult->frame_number, "subRotate");
         }
     }
 

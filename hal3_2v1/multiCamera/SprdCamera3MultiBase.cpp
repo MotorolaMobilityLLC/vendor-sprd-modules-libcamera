@@ -516,7 +516,7 @@ void SprdCamera3MultiBase::dumpFps() {
 
 void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
                                     int param1, int param2, int param3,
-                                    int param4) {
+                                    const char param4[20]) {
     FILE *fp = NULL;
     char tmp_str[64] = {0};
     time_t timep;
@@ -531,7 +531,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
     switch (type) {
     case 1: {
         memset(tmp_str, 0, sizeof(tmp_str));
-        sprintf(tmp_str, "_%dx%d_%d_%d.yuv", param1, param2, param3, param4);
+        sprintf(tmp_str, "_%dx%d_%d_%s.yuv", param1, param2, param3, param4);
         strcat(file_name, tmp_str);
 
         fp = fopen(file_name, "w");
@@ -544,7 +544,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
     } break;
     case 2: {
         memset(tmp_str, 0, sizeof(tmp_str));
-        sprintf(tmp_str, "_%dx%d_%d_%d.jpg", param1, param2, param3, param4);
+        sprintf(tmp_str, "_%dx%d_%d_%s.jpg", param1, param2, param3, param4);
         strcat(file_name, tmp_str);
         fp = fopen(file_name, "wb");
         if (fp == NULL) {
@@ -558,7 +558,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         int i = 0;
         int j = 0;
         memset(tmp_str, 0, sizeof(tmp_str));
-        snprintf(tmp_str, sizeof(tmp_str), "_%d_params_%d.txt", size, param4);
+        snprintf(tmp_str, sizeof(tmp_str), "_%d_params_%s.txt", size, param4);
         strcat(file_name, tmp_str);
         fp = fopen(file_name, "w+");
         if (fp == NULL) {

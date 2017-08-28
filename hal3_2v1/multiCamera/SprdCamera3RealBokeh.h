@@ -306,6 +306,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         MInt32 mArcSoftDepthSize;
         ARC_DCIR_PARAM mArcSoftDcrParam;
         bool mAbokehGallery;
+        bool mBokehResult;
         void reprocessReq(buffer_handle_t *output_buffer,
                           capture_queue_msg_t_bokeh capture_msg,
                           buffer_handle_t *depth_output_buffer,

@@ -1219,11 +1219,11 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                     (unsigned char *)((struct private_handle_t *)*(
                                           capture_msg.combo_buff.buffer))
                         ->base;
-                mBlur->dumpData(
-                    buffer_base, 1,
-                    mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2,
-                    mBlur->mCaptureWidth, mBlur->mCaptureHeight,
-                    mBlur->mReqState, capture_msg.combo_buff.frame_number);
+                mBlur->dumpData(buffer_base, 1,
+                                mBlur->mCaptureWidth * mBlur->mCaptureHeight *
+                                    3 / 2,
+                                mBlur->mCaptureWidth, mBlur->mCaptureHeight,
+                                capture_msg.combo_buff.frame_number, "src");
             }
             if (mVersion == 1 && !mBlur->mFlushing) {
                 saveCaptureBlurParams(mSavedResultBuff,
@@ -1275,11 +1275,11 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                         (unsigned char
                              *)((struct private_handle_t *)*output_buffer)
                             ->base;
-                    mBlur->dumpData(buffer_base, 1,
-                                    mBlur->mCaptureWidth *
-                                        mBlur->mCaptureHeight * 3 / 2,
-                                    mBlur->mCaptureWidth, mBlur->mCaptureHeight,
-                                    3, capture_msg.combo_buff.frame_number);
+                    mBlur->dumpData(
+                        buffer_base, 1,
+                        mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2,
+                        mBlur->mCaptureWidth, mBlur->mCaptureHeight,
+                        capture_msg.combo_buff.frame_number, "blur");
                 }
             }
 #ifndef BLUR_V3_TAKE_3_YUV
@@ -3346,11 +3346,12 @@ void SprdCamera3Blur::processCaptureResultMain(
                     (unsigned char *)(((struct private_handle_t *)*(
                                            result->output_buffers->buffer))
                                           ->base);
-                dumpData(
-                    buffer_base, 2, (int)((struct private_handle_t *)*(
-                                              result->output_buffers->buffer))
-                                        ->size,
-                    mCaptureWidth, mCaptureHeight, 0, result->frame_number);
+                dumpData(buffer_base, 2,
+                         (int)((struct private_handle_t *)*(
+                                   result->output_buffers->buffer))
+                             ->size,
+                         mCaptureWidth, mCaptureHeight, result->frame_number,
+                         "blur");
             }
             char prop4[PROPERTY_VALUE_MAX] = {
                 0,
@@ -3371,8 +3372,8 @@ void SprdCamera3Blur::processCaptureResultMain(
                                           result->output_buffers->buffer))
                                          ->size -
                                      size * 4);
-                mBlur->dumpData(buffer_base, 3, size, 4, 0, 0,
-                                result->frame_number);
+                mBlur->dumpData(buffer_base, 3, size, 4, 0,
+                                result->frame_number, "parameter");
             }
         }
         mCaptureThread->mCallbackOps->process_capture_result(
