@@ -423,6 +423,17 @@ struct isp_dual_flash_param {
 	struct isp_dualflash_param cur;
 };
 
+struct isp_antiflicker_param {
+	cmr_u32 normal_50hz_thrd;
+	cmr_u32 lowlight_50hz_thrd;
+	cmr_u32 normal_60hz_thrd;
+	cmr_u32 lowlight_60hz_thrd;
+};
+
+struct isp_anti_flicker_param {
+	struct isp_antiflicker_param cur;
+};
+
 struct isp_envi_detect_param {
 	cmr_u32 enable;
 	struct isp_range envi_range[SENSOR_ENVI_NUM];
@@ -826,6 +837,7 @@ struct isp_context {
 	struct isp_contrast_param contrast;
 	struct isp_flash_param flash;
 	struct isp_dualflash_param dual_flash;
+	struct isp_antiflicker_param anti_flicker;
 	struct isp_envi_detect_param envi_detect;
 
 	struct isp_pre_global_gain_param pre_gbl_gain;

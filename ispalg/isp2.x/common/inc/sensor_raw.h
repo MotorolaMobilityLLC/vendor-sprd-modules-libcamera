@@ -199,6 +199,14 @@ struct dual_flash_tune_param {
 	cmr_u8 reserved1[1024];/*256 * 4bytes*/
 };/*2053 * 4 bypes*/
 
+struct anti_flicker_tune_param {
+	cmr_u32 normal_50hz_thrd;
+	cmr_u32 lowlight_50hz_thrd;
+	cmr_u32 normal_60hz_thrd;
+	cmr_u32 lowlight_60hz_thrd;
+	cmr_u32 reserved[16];
+};
+
 //environment detec
 struct sensor_envi_detect_param {
 	cmr_u32 enable;
@@ -1761,6 +1769,7 @@ enum ISP_BLK_ID {
 	DCAM_BLK_BLC = 0x4037,
 	DCAM_BLK_RAW_AEM = 0x4038,
 	DCAM_BLK_2D_LSC = 0x4039,
+	ISP_BLK_ANTI_FLICKER = 0x403B,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };

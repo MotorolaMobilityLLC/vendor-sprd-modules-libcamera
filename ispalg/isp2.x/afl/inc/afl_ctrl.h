@@ -36,6 +36,7 @@ struct afl_proc_in {
 	cmr_s32 ae_exp_flag;
 	cmr_uint vir_addr;
 	struct isp_awb_statistic_info *ae_stat_ptr;
+	cmr_handle handle_pm;
 };
 
 cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in *input_ptr);

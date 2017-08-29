@@ -18,6 +18,7 @@
 #include "deflicker.h"
 #include <cutils/properties.h>
 #include <math.h>
+#include "isp_pm.h"
 
 #define ISP_AFL_BUFFER_LEN                   (3120 * 4 * 61)
 #define ISP_SET_AFL_THR                      "isp.afl.thr"
@@ -125,6 +126,14 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cmr_u32 i = 0;
 	cmr_int flag = 0;
 	cmr_s32 *addr = NULL;
+	cmr_u32 normal_50hz_thrd = 0;
+	cmr_u32 lowlight_50hz_thrd = 0;
+	cmr_u32 normal_60hz_thrd = 0;
+	cmr_u32 lowlight_60hz_thrd = 0;
+	struct isp_antiflicker_param *afl_param = NULL;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -137,6 +146,22 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	ae_exp_flag = in_ptr->ae_exp_flag;
 	addr = (cmr_s32 *)(cmr_uint)in_ptr->vir_addr;
 
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_ANTI_FLICKER, NULL, 0);
+	ret = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		afl_param = (struct isp_antiflicker_param *)output.param_data->data_ptr;
+		normal_50hz_thrd = afl_param->normal_50hz_thrd;
+		lowlight_50hz_thrd = afl_param->lowlight_50hz_thrd;
+		normal_60hz_thrd = afl_param->normal_60hz_thrd;
+		lowlight_60hz_thrd = afl_param->lowlight_60hz_thrd;
+	} else {
+		normal_50hz_thrd = 280;
+		lowlight_50hz_thrd = 100;
+		normal_60hz_thrd = 140;
+		lowlight_60hz_thrd = 100;
+	}
+
 	if (cur_exp_flag) {
 		if (cur_flicker) {
 			ret = _set_afl_thr(thr);
@@ -147,7 +172,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[0] = 200;
 				thr[1] = 20;
 				thr[2] = 160;
-				thr[3] = (ae_exp_flag == 1) ? 100 : 140;//160
+				thr[3] = (ae_exp_flag == 1) ? lowlight_60hz_thrd : normal_60hz_thrd;
 				thr[4] = 100;
 				thr[5] = 4;
 				thr[6] = 30;
@@ -164,7 +189,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[0] = 200;
 				thr[1] = 20;
 				thr[2] = 160;
-				thr[3] = (ae_exp_flag == 1) ? 100 : 280;
+				thr[3] = (ae_exp_flag == 1) ? lowlight_50hz_thrd : normal_50hz_thrd;
 				thr[4] = 100;
 				thr[5] = 4;
 				thr[6] = 30;
