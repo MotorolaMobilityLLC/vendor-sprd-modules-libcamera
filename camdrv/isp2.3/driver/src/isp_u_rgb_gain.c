@@ -33,11 +33,6 @@ cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *param_ptr)
 	file = (struct isp_file *)(handle);
 	rgbg_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-	struct isp_dev_rgb_gain_info *ggg = (struct isp_dev_rgb_gain_info *)rgbg_ptr->block_info;
-	ggg->bypass = 1;
-#endif
-
 	param.isp_id = file->isp_id;
 	param.scene_id = rgbg_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RGBG;
