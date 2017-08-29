@@ -58,15 +58,18 @@ LOCAL_SHARED_LIBRARIES += libamipengine
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libBokeh2Frames
 endif
+
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libalParseOTP
 #else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 #LOCAL_SHARED_LIBRARIES += libsprddepth
 endif
+
 ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libarcsoft_dualcam_refocus
 LOCAL_SHARED_LIBRARIES += libalParseOTP
 endif
+
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
 else ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)

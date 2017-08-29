@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
@@ -34,6 +33,5 @@ ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-
 include $(BUILD_PREBUILT)
-endif
+
