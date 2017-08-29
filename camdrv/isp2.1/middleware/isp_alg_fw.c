@@ -750,7 +750,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
 		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-		if (NULL == lsc_tab_param_ptr || NULL == lsc_info) {
+		if (NULL == lsc_tab_param_ptr || NULL == lsc_info || ISP_SUCCESS != ret) {
 			ISP_LOGE("fail to get param");
 			return ISP_ERROR;
 		}
@@ -1037,9 +1037,9 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 
 	// CMC
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, 0, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
-	if (io_pm_output.param_data != NULL) {
+	if (io_pm_output.param_data != NULL && ISP_SUCCESS == ret) {
 		cmr_u16 *cmc_info = io_pm_output.param_data->data_ptr;
 
 		if (cmc_info != NULL) {
@@ -1050,9 +1050,9 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	}
 	// GAMMA
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, 0, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
-	if (io_pm_output.param_data != NULL) {
+	if (io_pm_output.param_data != NULL && ISP_SUCCESS == ret) {
 		struct isp_dev_gamma_info *gamma_info = io_pm_output.param_data->data_ptr;
 
 		if (gamma_info != NULL) {
@@ -1250,7 +1250,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,
 				   (void *)&param_data_alsc_input,
 				   (void *)&param_data_alsc_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+		ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
 		cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
 		cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
 

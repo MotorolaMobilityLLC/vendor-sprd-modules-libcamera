@@ -1720,6 +1720,10 @@ cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *
 		break;
 	case ISP_PM_CMD_GET_BASE:
 	case ISP_PM_CMD_GET_THIRD_PART_BASE:
+		if (cxt_ptr->param_source) {
+			ISP_LOGV("ISPTOOL is writing param");
+			return ISP_ERROR;
+		}
 		pthread_mutex_lock(&cxt_ptr->pm_mutex);
 		isp_pm_get_param(handle, cmd, input, output);
 		pthread_mutex_unlock(&cxt_ptr->pm_mutex);
