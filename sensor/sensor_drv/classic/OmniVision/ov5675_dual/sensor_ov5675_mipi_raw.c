@@ -843,7 +843,7 @@ static cmr_int ov5675_drv_access_val(cmr_handle handle, unsigned long param) {
     default:
         break;
     }
-    SENSOR_LOGI("X:");
+    SENSOR_LOGV("X:");
 
     return rtn;
 }

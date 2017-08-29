@@ -1,3 +1,5 @@
+#define LOG_TAG "sns_ic_drv"
+
 #include "sensor_ic_drv.h"
 #include "cmr_common.h"
 

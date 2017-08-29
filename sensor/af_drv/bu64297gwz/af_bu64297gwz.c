@@ -14,7 +14,7 @@
  * limitations under the License.
 ver: 1.0
 */
-
+#define LOG_TAG "af_bu64297"
 #include "af_bu64297gwz.h"
 
 #if 0

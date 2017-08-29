@@ -1,3 +1,4 @@
+
 #include "ov13855_otp_drv.h"
 
 /** ov13855_section_checksum:
@@ -13,7 +14,7 @@ static cmr_int _ov13855_section_checksum(cmr_u8 *buf, cmr_uint offset,
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_int i = 0, sum = 0;
 
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
@@ -32,7 +33,7 @@ static cmr_int _ov13855_buffer_init(cmr_handle otp_drv_handle) {
     cmr_int otp_len;
     cmr_u8 *otp_data = NULL;
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
@@ -54,14 +55,14 @@ static cmr_int _ov13855_buffer_init(cmr_handle otp_drv_handle) {
             sizeof(lsccalib_data_t) + lsc_data->lsc_calib_random.length;
     }
     otp_cxt->otp_data = (otp_format_data_t *)otp_data;
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 static cmr_int _ov13855_parse_af_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
@@ -76,7 +77,7 @@ static cmr_int _ov13855_parse_af_data(cmr_handle otp_drv_handle) {
         af_cali_dat->infinity_dac = (af_src_dat[1] << 8) | af_src_dat[0];
         af_cali_dat->macro_dac = (af_src_dat[3] << 8) | af_src_dat[2];
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
@@ -84,7 +85,7 @@ static cmr_int _ov13855_parse_awb_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
@@ -113,7 +114,7 @@ static cmr_int _ov13855_parse_awb_data(cmr_handle otp_drv_handle) {
             awb_cali_dat->awb_gld_info[i].B = truly_awb[i].B;
         }
         for (i = 0; i < AWB_MAX_LIGHT; i++)
-            OTP_LOGD("rdm:R=0x%x,G=0x%x,B=0x%x.god:R=0x%x,G=0x%x,B=0x%x",
+            OTP_LOGV("rdm:R=0x%x,G=0x%x,B=0x%x.god:R=0x%x,G=0x%x,B=0x%x",
                      awb_cali_dat->awb_rdm_info[i].R,
                      awb_cali_dat->awb_rdm_info[i].G,
                      awb_cali_dat->awb_rdm_info[i].B,
@@ -121,14 +122,14 @@ static cmr_int _ov13855_parse_awb_data(cmr_handle otp_drv_handle) {
                      awb_cali_dat->awb_gld_info[i].G,
                      awb_cali_dat->awb_gld_info[i].B);
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
 static cmr_int _ov13855_parse_lsc_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
@@ -163,11 +164,11 @@ static cmr_int _ov13855_parse_lsc_data(cmr_handle otp_drv_handle) {
         lsc_dst->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
     }
 
-    OTP_LOGD("optical_center:\nR=(0x%x,0x%x)\n GR=(0x%x,0x%x)\n "
+    OTP_LOGI("optical_center:\nR=(0x%x,0x%x)\n GR=(0x%x,0x%x)\n "
              "GB=(0x%x,0x%x)\n B=(0x%x,0x%x)",
              opt_dst->R.x, opt_dst->R.y, opt_dst->GR.x, opt_dst->GR.y,
              opt_dst->GB.x, opt_dst->GB.y, opt_dst->B.x, opt_dst->B.y);
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
@@ -175,7 +176,7 @@ static cmr_int _ov13855_parse_pdaf_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
@@ -191,13 +192,13 @@ static cmr_int _ov13855_parse_pdaf_data(cmr_handle otp_drv_handle) {
         otp_cxt->otp_data->pdaf_cali_dat.size =
             PDAF_INFO_CHECKSUM - PDAF_INFO_OFFSET;
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
 static cmr_int _ov13855_awb_calibration(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     CHECK_PTR(otp_drv_handle);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
@@ -229,36 +230,34 @@ static cmr_int _ov13855_awb_calibration(cmr_handle otp_drv_handle) {
     } else {
         OTP_LOGE("awb parse problem!");
     }
-    OTP_LOGI("r_Gain=0x%x\n", R_gain);
-    OTP_LOGI("g_Gain=0x%x\n", G_gain);
-    OTP_LOGI("b_Gain=0x%x\n", B_gain);
+    OTP_LOGI("r_Gain=0x%x,g_Gain=0x%x,b_Gain=0x%x\n", R_gain, G_gain, B_gain);
 
     if (cal_items->is_awbc_self_cal) {
         OTP_LOGD("Do wb calibration local");
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
 static cmr_int _ov13855_lsc_calibration(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     CHECK_PTR(otp_drv_handle);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
 static cmr_int _ov13855_pdaf_calibration(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     CHECK_PTR(otp_drv_handle);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
@@ -281,7 +280,7 @@ static cmr_int ov13855_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     cmr_uint i = 0;
     char value[255];
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("E");
+    OTP_LOGV("E");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
@@ -330,7 +329,7 @@ static cmr_int ov13855_otp_drv_write(cmr_handle otp_drv_handle, void *p_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
     CHECK_PTR(p_data);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_write_data = p_data;
@@ -347,7 +346,7 @@ static cmr_int ov13855_otp_drv_write(cmr_handle otp_drv_handle, void *p_data) {
         OTP_LOGE("ERROR:buffer pointer is null");
         ret = OTP_CAMERA_FAIL;
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
@@ -355,7 +354,7 @@ static cmr_int ov13855_otp_drv_parse(cmr_handle otp_drv_handle, void *params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_base_info_cfg_t *base_info = &(ov13855_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
@@ -399,14 +398,14 @@ static cmr_int ov13855_otp_drv_parse(cmr_handle otp_drv_handle, void *params) {
         OTP_LOGE("should read otp before parse");
         return OTP_CAMERA_FAIL;
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }
 
 static cmr_int ov13855_otp_drv_calibration(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
     otp_calib_items_t *cali_items = &(ov13855_drv_entry.otp_cfg.cali_items);
@@ -421,7 +420,7 @@ static cmr_int ov13855_otp_drv_calibration(cmr_handle otp_drv_handle) {
             _ov13855_lsc_calibration(otp_drv_handle);
     }
     /*If there are other items that need calibration, please add to here*/
-    OTP_LOGI("Exit");
+    OTP_LOGV("Exit");
     return ret;
 }
 
@@ -429,7 +428,7 @@ static cmr_int ov13855_compatible_convert(cmr_handle otp_drv_handle,
                                           void *p_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_format_data_t *format_data = otp_cxt->otp_data;
     SENSOR_VAL_T *p_val = (SENSOR_VAL_T *)p_data;
@@ -488,7 +487,7 @@ static cmr_int ov13855_compatible_convert(cmr_handle otp_drv_handle,
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return 0;
 }
 
@@ -497,7 +496,7 @@ static cmr_int ov13855_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
                                      void *params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("in");
+    OTP_LOGV("in");
 
     /*you can add you command*/
     switch (cmd) {
@@ -507,6 +506,6 @@ static cmr_int ov13855_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
     default:
         break;
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return ret;
 }

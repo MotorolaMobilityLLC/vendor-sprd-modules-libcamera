@@ -61,7 +61,7 @@ static cmr_u8 *otp_formatted_data_buffer[4] = {NULL, NULL, NULL, NULL};
 cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
                                      void **otp_data, long *otp_size) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    OTP_LOGI("E");
+    OTP_LOGV("E");
     CHECK_PTR((void *)otp_data);
 
     char otp_bin_ext_path[255];
@@ -128,7 +128,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
         break;
     }
 
-    OTP_LOGI("X");
+    OTP_LOGV("X");
     return ret;
 }
 
@@ -406,11 +406,11 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(input_para);
     CHECK_PTR((void *)sns_otp_drv_handle);
-    OTP_LOGI("In");
+    OTP_LOGV("In");
 
     otp_drv_cxt_t *otp_cxt = malloc(sizeof(otp_drv_cxt_t));
     if (!otp_cxt) {
-        OTP_LOGD("otp handle create failed!");
+        OTP_LOGE("otp handle create failed!");
         return OTP_CAMERA_FAIL;
     }
     memset(otp_cxt, 0, sizeof(otp_drv_cxt_t));
@@ -421,7 +421,7 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
     otp_cxt->hw_handle = input_para->hw_handle;
     otp_cxt->sensor_id = input_para->sensor_id;
     otp_cxt->sensor_ic_addr = input_para->sensor_ic_addr;
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     *sns_otp_drv_handle = otp_cxt;
 
     return ret;
@@ -439,7 +439,7 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
  **/
 cmr_int sensor_otp_drv_delete(void *otp_drv_handle) {
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGI("In");
+    OTP_LOGV("In");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
     if (otp_cxt->compat_convert_data) {
@@ -449,7 +449,7 @@ cmr_int sensor_otp_drv_delete(void *otp_drv_handle) {
     if (otp_cxt) {
         free(otp_cxt);
     }
-    OTP_LOGI("out");
+    OTP_LOGV("out");
     return 0;
 }
 
@@ -461,7 +461,7 @@ cmr_int sensor_otp_drv_delete(void *otp_drv_handle) {
  **/
 cmr_u8 *sensor_otp_get_raw_buffer(cmr_uint size, cmr_u32 sensor_id) {
     cmr_u32 cur_size = 0;
-    OTP_LOGE("raw buffer:%p", otp_raw_buffer[sensor_id]);
+    OTP_LOGI("raw buffer:%p", otp_raw_buffer[sensor_id]);
     if (otp_raw_buffer[sensor_id] != NULL) {
         cur_size = *((cmr_u32 *)(otp_raw_buffer[sensor_id] + 4));
         if (cur_size != size) {
@@ -480,7 +480,7 @@ cmr_u8 *sensor_otp_get_raw_buffer(cmr_uint size, cmr_u32 sensor_id) {
 
 cmr_u8 *sensor_otp_get_formatted_buffer(cmr_uint size, cmr_u32 sensor_id) {
     cmr_u32 cur_size = 0;
-    OTP_LOGE("formatted buffer:%p", otp_formatted_data_buffer[sensor_id]);
+    OTP_LOGI("formatted buffer:%p", otp_formatted_data_buffer[sensor_id]);
     if (otp_formatted_data_buffer[sensor_id] != NULL) {
         cur_size = *((cmr_u32 *)otp_formatted_data_buffer[sensor_id]);
         if (cur_size != size) {

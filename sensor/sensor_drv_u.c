@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#define LOG_TAG "sensor_drv_u"
+#define LOG_TAG "sns_drv_u"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <cutils/trace.h>
@@ -490,7 +490,7 @@ LOCAL cmr_int sensor_set_id(struct sensor_drv_context *sensor_cxt,
             } else if (SENSOR_DEVICE2 == sensor_id) {
                 sensor_cxt->is_main2_sensor = 0;
             }
-            SENSOR_LOGI("add I2C error");
+            SENSOR_LOGE("add I2C error");
             return SENSOR_FAIL;
         } else {
             SENSOR_LOGV("add I2C OK.");
@@ -616,7 +616,7 @@ LOCAL cmr_u32 sensor_identify_strsearch(struct sensor_drv_context *sensor_cxt,
     sensor_info_ptr = module_tab[sensor_index].sensor_info;
 
     if (NULL == sensor_info_ptr) {
-        SENSOR_LOGW("%d info of Sensor table %d is null", sensor_index,
+        SENSOR_LOGE("%d info of Sensor table %d is null", sensor_index,
                     sensor_id);
         return retValue;
     }
@@ -712,15 +712,15 @@ static cmr_int sensor_get_module_cfg_info(struct sensor_drv_context *sensor_cxt,
     tab_size = sensor_cxt->sensor_info_ptr->module_info_tab_size;
     mod_cfg_tab = sensor_cxt->sensor_info_ptr->module_info_tab;
     module_info = sensor_cxt->current_module;
-    SENSOR_LOGE("p1:%p,p2:%p", module_info, mod_cfg_tab);
+    SENSOR_LOGI("p1:%p,p2:%p", module_info, mod_cfg_tab);
 
     if (mod_cfg_tab && module_info) {
-        SENSOR_LOGE("tab_size:%d,%d,%d", tab_size, sizeof(mod_cfg_tab),
+        SENSOR_LOGI("tab_size:%d,%d,%d", tab_size, sizeof(mod_cfg_tab),
                     sizeof(mod_cfg_tab[0]));
         // tab_size = 3;
         for(i = 0; i < tab_size; i++) {
             *cfg_info = &mod_cfg_tab[i].module_info;
-            SENSOR_LOGE("mid1:%d,mid2:%d,index:%d", module_info->module_id,
+            SENSOR_LOGI("mid1:%d,mid2:%d,index:%d", module_info->module_id,
                         mod_cfg_tab[i].module_id, i);
             if (mod_cfg_tab[i].module_id == module_info->module_id) {
                 return SENSOR_SUCCESS;
@@ -921,7 +921,7 @@ cmr_int sensor_register(struct sensor_drv_context *sensor_cxt,
 
     if (sensor_cxt->sensor_identified) {
         ret = sensor_get_match_info(sensor_cxt, sensor_id);
-        SENSOR_LOGE("ret:%ld,sensor_id:%d", ret, sensor_id);
+        SENSOR_LOGI("ret:%ld,sensor_id:%d", ret, sensor_id);
         if (SENSOR_SUCCESS != ret) {
             return ret;
         }
@@ -972,7 +972,7 @@ LOCAL void sensor_save_info2file(struct sensor_drv_context *sensor_cxt) {
     if (is_saved) {
         fp = fopen(SENSOR_PARA, "wb+");
         if (NULL == fp) {
-            SENSOR_LOGI("file %s open error:%s ", SENSOR_PARA, strerror(errno));
+            SENSOR_LOGE("file %s open error:%s ", SENSOR_PARA, strerror(errno));
         } else {
             fwrite(sensor_param, 1, SENSOR_PARAM_NUM, fp);
             fclose(fp);
@@ -1110,7 +1110,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 
         fp = fopen(file_name, "rb");
         if (0 == fp) {
-            SENSOR_LOGI("does not find calibration file");
+            SENSOR_LOGW("does not find calibration file");
             i++;
             continue;
         }
@@ -1123,7 +1123,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
             fclose(fp);
             free(temp_buf_16);
             temp_buf_16 = NULL;
-            SENSOR_LOGI("file pointers error!");
+            SENSOR_LOGE("file pointers error!");
             rtn = SENSOR_FAIL;
             goto cali_lnc_param_update_exit;
         }
@@ -1145,7 +1145,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
             sensor_cxt->lnc_addr_bakup[index][1] = (cmr_uint)malloc(file_size);
             if (0 == sensor_cxt->lnc_addr_bakup[index][1]) {
                 rtn = SENSOR_FAIL;
-                SENSOR_LOGI("malloc failed i = %d", i);
+                SENSOR_LOGW("malloc failed i = %d", i);
                 goto cali_lnc_param_update_exit;
             }
             cmr_bzero((void *)sensor_cxt->lnc_addr_bakup[index][1], file_size);
@@ -1245,7 +1245,7 @@ cmr_int _sensor_cali_awb_param_update(cmr_s8 *cfg_file_dir,
             file_size = (cmr_u32)file_pos;
         } else {
             fclose(fp);
-            SENSOR_LOGI("file pointers error!");
+            SENSOR_LOGE("file pointers error!");
             return SENSOR_FAIL;
         }
 
@@ -1299,7 +1299,7 @@ cmr_int _sensor_cali_awb_param_update(cmr_s8 *cfg_file_dir,
             file_size = (cmr_u32)file_pos;
         } else {
             fclose(fp);
-            SENSOR_LOGI("file pointers error!");
+            SENSOR_LOGE("file pointers error!");
             return SENSOR_FAIL;
         }
         fseek(fp, 0L, SEEK_SET);
@@ -1382,7 +1382,7 @@ cmr_int _sensor_cali_flashlight_param_update(cmr_s8 *cfg_file_dir,
             file_size = (cmr_u32)file_pos;
         } else {
             fclose(fp);
-            SENSOR_LOGI("file pointers error!");
+            SENSOR_LOGE("file pointers error!");
             return SENSOR_FAIL;
         }
         fseek(fp, 0L, SEEK_SET);
@@ -1437,7 +1437,7 @@ cmr_int _sensor_cali_flashlight_param_update(cmr_s8 *cfg_file_dir,
             file_size = (cmr_u32)file_pos;
         } else {
             fclose(fp);
-            SENSOR_LOGI("file pointers error!");
+            SENSOR_LOGE("file pointers error!");
             return SENSOR_FAIL;
         }
         fseek(fp, 0L, SEEK_SET);
@@ -1555,7 +1555,7 @@ end:
         sensor_cxt->ctrl_thread_cxt.is_inited = 0;
     }
 
-    SENSOR_LOGI("ret %ld", ret);
+    SENSOR_LOGV("ret %ld", ret);
     return ret;
 }
 
@@ -1824,7 +1824,7 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
                 _sensor_cali_load_param(sensor_cxt, (cmr_s8 *)CALI_FILE_DIR,
                                         sensor_cxt->sensor_info_ptr, sensor_id);
             if (ret_val) {
-                SENSOR_LOGI("load cali data failed!! rtn:%ld", ret_val);
+                SENSOR_LOGW("load cali data failed!! rtn:%ld", ret_val);
                 goto init_exit;
             }
         }
@@ -1838,7 +1838,6 @@ init_exit:
         // sns_device_deinit(sensor_cxt);
     }
 
-    SENSOR_LOGI("2 init OK!");
     ATRACE_END();
     return ret_val;
 }
@@ -1975,7 +1974,7 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
         sensor_af_init(sensor_cxt);
         sensor_cxt->stream_on = 1;
         sensor_stream_off(sensor_cxt);
-        SENSOR_LOGI("4 open success");
+        SENSOR_LOGI("open success");
     } else {
         SENSOR_LOGE("Sensor not register, open failed, sensor_id = %d",
                     sensor_id);
@@ -2047,7 +2046,7 @@ LOCAL cmr_int sensor_set_mode(struct sensor_drv_context *sensor_cxt,
 
     SENSOR_LOGI("mode = %d.", mode);
     if (SENSOR_FALSE == sensor_is_init_common(sensor_cxt)) {
-        SENSOR_LOGI("sensor has not init");
+        SENSOR_LOGE("sensor has not init");
         return SENSOR_OP_STATUS_ERR;
     }
 
@@ -2093,7 +2092,7 @@ cmr_int sensor_get_mode_common(cmr_handle sns_module_handle, cmr_u32 *mode) {
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_DRV_CHECK_ZERO(mode);
     if (SENSOR_FALSE == sensor_is_init_common(sensor_cxt)) {
-        SENSOR_LOGI("sensor has not init");
+        SENSOR_LOGE("sensor has not init");
         return SENSOR_OP_STATUS_ERR;
     }
     *mode = sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)];
@@ -2181,7 +2180,7 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
             if (ret) {
                 SENSOR_LOGE("mipi initial failed ret %ld", ret);
             } else {
-                SENSOR_LOGE("mipi initial ok");
+                SENSOR_LOGI("mipi initial ok");
             }
         }
         ret = sensor_stream_on(sensor_cxt);
@@ -2264,7 +2263,7 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo(void) {
         return PNULL;
     }
     if (!sensor_is_init_common(sensor_cxt)) {
-        SENSOR_LOGI("sensor has not init");
+        SENSOR_LOGE("sensor has not init");
         return PNULL;
     }
 
@@ -2864,7 +2863,7 @@ static void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
             sprintf(sensor_info, "%s %s ", sensor_info,
                     sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3]
                         ->sensor_version_info);
-        SENSOR_LOGE("WRITE srid %s \n", sensor_info);
+        SENSOR_LOGI("WRITE srid %s \n", sensor_info);
 
         fd = open(sensorInterface0, O_WRONLY | O_TRUNC);
         if (-1 == fd) {
@@ -2960,7 +2959,6 @@ static cmr_int sensor_af_deinit(cmr_handle sns_module_handle) {
         (struct sensor_drv_context *)sns_module_handle;
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
-    SENSOR_LOGI("E:");
     if (module && module->af_dev_info.af_drv_entry &&
         sensor_cxt->af_drv_handle) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
@@ -3193,7 +3191,7 @@ static void *sensor_ic_get_data(struct sensor_drv_context *sensor_cxt,
                           &data);
         break;
     default:
-        SENSOR_LOGE("not support cmd:0x%lx", cmd);
+        SENSOR_LOGW("not support cmd:0x%lx", cmd);
     }
 
     return data;

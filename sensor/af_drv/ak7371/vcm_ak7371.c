@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "vcm_ak7371"
 #include "vcm_ak7371.h"
 
 #if 0

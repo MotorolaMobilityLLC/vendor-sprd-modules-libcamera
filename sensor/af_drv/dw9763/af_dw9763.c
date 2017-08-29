@@ -14,7 +14,7 @@
  * limitations under the License.
  ver: 1.0
  */
-
+#define LOG_TAG "af_dw9763"
 #include "af_dw9763.h"
 
 /*==============================================================================
@@ -38,7 +38,7 @@ static uint32_t _dw9763_write_dac_code(cmr_handle sns_af_drv_handle, int32_t cod
     else if ((int32_t)code > 0x3FF)
         code = 0x3FF;
 
-    CMR_LOGD("%d", code);
+    CMR_LOGV("%d", code);
 
     cmd_len = 2;
     cmd_val[0] = 0x03;

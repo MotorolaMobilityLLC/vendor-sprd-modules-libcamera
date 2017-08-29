@@ -351,7 +351,7 @@ static cmr_int imx258_drv_init_fps_info(cmr_handle handle) {
         }
         fps_info->is_init = 1;
     }
-    SENSOR_LOGI("X:");
+    SENSOR_LOGV("X:");
     return ret;
 }
 
@@ -955,7 +955,7 @@ static cmr_int imx258_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     }
 
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
 
     return rtn;
 }

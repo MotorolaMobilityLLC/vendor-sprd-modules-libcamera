@@ -14,9 +14,7 @@
  * limitations under the License.
  ver: 1.0
  */
-
 #include "af_dw9763r.h"
-
 /*==============================================================================
  * Description:
  * write code to vcm driver
@@ -39,7 +37,7 @@ static uint32_t _dw9763r_write_dac_code(cmr_handle sns_af_drv_handle,
     else if ((int32_t)code > 0x3FF)
         code = 0x3FF;
 
-    CMR_LOGD("%d", code);
+    CMR_LOGV("%d", code);
 
     cmd_len = 2;
     cmd_val[0] = 0x03;

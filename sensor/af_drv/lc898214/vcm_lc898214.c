@@ -113,7 +113,7 @@ static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos) {
     cmd_val[1] = ivalue2 & 0xff; // pos&0xf0;//ivalue2;//TODO
     ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                    (uint8_t *)&cmd_val[0], cmd_len);
-    CMR_LOGI("set position set_pos %d SlvCh 0x%04x 0x%04x", pos, ivalue2,
+    CMR_LOGV("set position set_pos %d SlvCh 0x%04x 0x%04x", pos, ivalue2,
             ret_value);
 
     uint16_t SlvCh;
@@ -184,7 +184,7 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     uint16_t SlvCh = 0xff;
     uint16_t EepCh = 0xff;
 
-    CMR_LOGI("E");
+    CMR_LOGV("E");
     for (int i = 0; i < 30; i++) {
         SlvCh = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, SlaveID, 0xF0,
                                        BITS_ADDR8_REG8);
@@ -219,7 +219,7 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     uint16_t Min = (uint16_t)((Min_H << 8) | Min_L);
     pri_data->Hall_Max = (int16_t)Max; //(int16_t)Max;//0x6000
     pri_data->Hall_Min = (int16_t)Min; //(int16_t)Min; //0x9000
-    CMR_LOGI("DriverIC Init Max_H	%d %d %d %d! %d %d", Max_H, Max_L,
+    CMR_LOGV("DriverIC Init Max_H	%d %d %d %d! %d %d", Max_H, Max_L,
             Min_H, Min_L, Max, Min);
 
     // I2C_Write(SlaveID, 0xE0, 0x01, 0);
@@ -236,7 +236,7 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
         }
     }
     if ((SlvCh != 0x42) || (EepCh != 0x00)) {
-        CMR_LOGI("DriverIC Init Err!");
+        CMR_LOGE("DriverIC Init Err!");
         return -1;
     }
     //	cmd_val_1[0] = 0xA0;

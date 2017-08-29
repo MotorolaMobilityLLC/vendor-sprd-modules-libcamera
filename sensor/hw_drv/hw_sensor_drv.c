@@ -70,7 +70,7 @@ static cmr_int _hw_sensor_dev_deinit(cmr_handle hw_handle) {
     if (-1 != hw_drv_cxt->fd_sensor) {
         ret = close(hw_drv_cxt->fd_sensor);
         hw_drv_cxt->fd_sensor = SENSOR_FD_INIT;
-        HW_LOGI("is done, ret = %ld ", ret);
+        HW_LOGV("is done, ret = %ld ", ret);
     }
     ATRACE_END();
     return ret;
@@ -325,7 +325,7 @@ cmr_int hw_sensor_reset(cmr_handle hw_handle, cmr_u32 level, cmr_u32 pulse_width
 
     CHECK_HANDLE(hw_handle);
     struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt*)hw_handle;
-    HW_LOGI("in");
+    HW_LOGV("in");
 
     rst_val[0] = level;
     rst_val[1] = pulse_width;
@@ -338,7 +338,7 @@ cmr_int hw_sensor_reset(cmr_handle hw_handle, cmr_u32 level, cmr_u32 pulse_width
     if (ret) {
         ret = HW_FAILED;
     }
-    HW_LOGI("OK out.");
+    HW_LOGV("OK out.");
     return ret;
 }
 
@@ -1026,7 +1026,7 @@ cmr_int hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
     CHECK_HANDLE(hw_handle);
     CHECK_PTR(sensor_reg_tab_info_ptr);
     struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt*)hw_handle;
-    HW_LOGI("E");
+    HW_LOGV("E");
 
     SENSOR_REG_TAB_T regTab;
     regTab.reg_count = sensor_reg_tab_info_ptr->reg_count;
@@ -1037,7 +1037,7 @@ cmr_int hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
     ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
     if((0 != sensor_reg_tab_info_ptr->ext_reg_count) && (0 == ret)
        && (NULL != sensor_reg_tab_info_ptr->sensor_ext_reg_tab_ptr)) {
-        HW_LOGI("write expend register tab value: count=%d",
+        HW_LOGV("write expend register tab value: count=%d",
                                   sensor_reg_tab_info_ptr->ext_reg_count);
         regTab.reg_count = sensor_reg_tab_info_ptr->ext_reg_count;
         regTab.sensor_reg_tab_ptr = sensor_reg_tab_info_ptr->sensor_ext_reg_tab_ptr;
@@ -1046,7 +1046,7 @@ cmr_int hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
     HW_LOGI("reg_count %d, senosr_id: %ld",
                 sensor_reg_tab_info_ptr->reg_count, hw_drv_cxt->sensor_id);
 
-    HW_LOGI("X");
+    HW_LOGV("X");
 
     ATRACE_END();
     return ret;

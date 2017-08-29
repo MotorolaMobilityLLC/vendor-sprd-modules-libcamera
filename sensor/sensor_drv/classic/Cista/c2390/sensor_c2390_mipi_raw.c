@@ -85,7 +85,7 @@ static cmr_int c2390_drv_init_fps_info(cmr_handle handle) {
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
 
-    SENSOR_LOGI("E");
+    SENSOR_LOGV("E");
     if (!fps_info->is_init) {
         cmr_u32 i, modn, tempfps = 0;
         SENSOR_LOGI("start init");
@@ -120,7 +120,7 @@ static cmr_int c2390_drv_init_fps_info(cmr_handle handle) {
         }
         fps_info->is_init = 1;
     }
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
     return rtn;
 }
 
@@ -198,14 +198,14 @@ static cmr_int c2390_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void c2390_group_hold_on(void) { SENSOR_LOGI("E"); }
+static void c2390_group_hold_on(void) { SENSOR_LOGV("E"); }
 
 /*==============================================================================
  * Description:
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void c2390_group_hold_off(void) { SENSOR_LOGI("E"); }
+static void c2390_group_hold_off(void) { SENSOR_LOGV("E"); }
 
 /*==============================================================================
  * Description:

@@ -110,7 +110,7 @@ static cmr_int ov2680_drv_init_fps_info(cmr_handle handle) {
         }
         fps_info->is_init = 1;
     }
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
     return rtn;
 }
 

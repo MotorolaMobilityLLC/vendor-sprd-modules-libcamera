@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "vcm_zc524"
 #include "vcm_zc524.h"
 
 #if 0
@@ -28,7 +29,7 @@ uint32_t vcm_zc524_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_
 static int vcm_zc524_drv_create(struct af_drv_init_para *input_ptr,
                                 cmr_handle *sns_af_drv_handle) {
     cmr_int ret = AF_SUCCESS;
-    CMR_LOGD("create");
+    CMR_LOGV("create");
     CHECK_PTR(input_ptr);
     ret = af_drv_create(input_ptr, sns_af_drv_handle);
     if (ret != AF_SUCCESS) {
@@ -38,7 +39,7 @@ static int vcm_zc524_drv_create(struct af_drv_init_para *input_ptr,
         if (ret != AF_SUCCESS)
             ret = AF_FAIL;
     }
-    CMR_LOGD("done");
+    CMR_LOGV("done");
 
     return ret;
 }

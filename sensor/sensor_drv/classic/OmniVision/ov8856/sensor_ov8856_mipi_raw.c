@@ -20,6 +20,7 @@
 */
 #include "sensor_ov8856_mipi_raw.h"
 
+#define LOG_TAG "sensor_ov8856"
 #define MIPI_RAW_INFO  g_ov8856_mipi_raw_info
 #define RES_TRIM_TAB   s_ov8856_resolution_trim_tab
 #define RES_TAB_RAW    s_ov8856_resolution_tab_raw

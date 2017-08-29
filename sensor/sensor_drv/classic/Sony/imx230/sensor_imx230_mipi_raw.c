@@ -969,7 +969,7 @@ static cmr_int imx230_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     }
 
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("SENSOR_IMX230: _imx230_access_val X");
 
     return rtn;
 }

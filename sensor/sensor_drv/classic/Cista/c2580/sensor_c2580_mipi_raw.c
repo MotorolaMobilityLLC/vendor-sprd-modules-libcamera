@@ -80,7 +80,7 @@ static cmr_int c2580_drv_init_fps_info(cmr_handle handle) {
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
 
-    SENSOR_LOGI("E");
+    SENSOR_LOGV("E");
     if (!fps_info->is_init) {
         cmr_u32 i, modn, tempfps = 0;
         SENSOR_LOGI("start init");
@@ -113,7 +113,7 @@ static cmr_int c2580_drv_init_fps_info(cmr_handle handle) {
         }
         fps_info->is_init = 1;
     }
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
     return rtn;
 }
 
@@ -200,7 +200,7 @@ static cmr_int c2580_drv_set_init(cmr_handle handle) {
                             sensor_reg_ptr[i].reg_value);
     }
 
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
 
     return 0;
 }
@@ -257,7 +257,7 @@ static cmr_int c2580_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     }
 
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
 
     return rtn;
 }

@@ -47,7 +47,7 @@ static cmr_int gc2375_drv_set_video_mode(cmr_handle handle, cmr_int param) {
         sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &mode);
 
     if (PNULL == VIDEO_INFO[mode].setting_ptr) {
-        SENSOR_LOGI("fail.");
+        SENSOR_LOGE("fail.");
         return SENSOR_FAIL;
     }
 
@@ -112,7 +112,7 @@ static cmr_int gc2375_drv_init_fps_info(cmr_handle handle) {
         }
         fps_info->is_init = 1;
     }
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
     return rtn;
 }
 
