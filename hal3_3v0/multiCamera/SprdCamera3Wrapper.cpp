@@ -42,6 +42,7 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
     SprdCamera3Capture::getCameraCapture(&mCapture);
 #endif
+    SprdDualCamera3Tuning::getTCamera(&mTCam);
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper() {}

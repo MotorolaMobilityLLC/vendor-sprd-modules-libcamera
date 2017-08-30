@@ -64,6 +64,7 @@
 #include "SprdCamera3SelfShot.h"
 #include "SprdCamera3PageTurn.h"
 #endif
+#include "SprdDualCamera3Tuning.h"
 
 namespace sprdcamera {
 
@@ -99,6 +100,7 @@ class SprdCamera3Wrapper {
     SprdCamera3SelfShot *mSelfShot;
     SprdCamera3PageTurn *mPageturn;
 #endif
+    SprdDualCamera3Tuning *mTCam;
 };
 };
 #endif

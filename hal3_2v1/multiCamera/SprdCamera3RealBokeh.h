@@ -81,13 +81,6 @@ namespace sprdcamera {
 #define REAL_BOKEH_MAX_NUM_STREAMS 3
 #define ARCSOFT_CALIB_DATA_SIZE (2048)
 
-typedef struct {
-    uint32_t frame_number;
-    buffer_handle_t *buffer;
-    camera3_stream_t *preview_stream;
-    camera3_stream_buffer_t *input_buffer;
-} request_saved_bokeh_t;
-
 typedef enum {
     BOKEH_MSG_DATA_PROC = 1,
     BOKEH_MSG_COMBAIN_PROC,
@@ -373,7 +366,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     uint8_t mCaptureStreamsNum;
     uint8_t mCallbackStreamsNum;
     uint8_t mPreviewStreamsNum;
-    List<request_saved_bokeh_t> mSavedRequestList;
+    List<multi_request_saved_t> mSavedRequestList;
     camera3_stream_t *mSavedCapStreams;
     uint32_t mCapFrameNumber;
     uint32_t mPrevFrameNumber;
@@ -393,7 +386,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     Mutex mPendingLock;
     Condition mRequestSignal;
     bool mhasCallbackStream;
-    request_saved_bokeh_t mThumbReq;
+    multi_request_saved_t mThumbReq;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);

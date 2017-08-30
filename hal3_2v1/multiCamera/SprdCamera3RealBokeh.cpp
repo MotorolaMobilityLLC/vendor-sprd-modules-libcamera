@@ -181,7 +181,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     memset(mArcSoftCalibData, 0, sizeof(char) * THIRD_OTP_SIZE);
     memset(&mPerfectskinlevel, 0, sizeof(face_beauty_levels));
     memset(&mArcParam, 0, sizeof(ArcParam));
-    memset(&mThumbReq, 0, sizeof(request_saved_bokeh_t));
+    memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
     mLocalBufferList.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
@@ -976,7 +976,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
         }
         switch (muxer_msg.msg_type) {
         case MUXER_MSG_EXIT: {
-            List<request_saved_bokeh_t>::iterator itor =
+            List<multi_request_saved_t>::iterator itor =
                 mRealBokeh->mSavedRequestList.begin();
             HAL_LOGD("exit frame_number %u", itor->frame_number);
             while (itor != mRealBokeh->mSavedRequestList.end()) {
@@ -990,7 +990,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
         case MUXER_MSG_DATA_PROC: {
             {
                 Mutex::Autolock l(mRealBokeh->mRequestLock);
-                List<request_saved_bokeh_t>::iterator itor =
+                List<multi_request_saved_t>::iterator itor =
                     mRealBokeh->mSavedRequestList.begin();
                 HAL_LOGV("muxer_msg.combo_frame.frame_number %d",
                          muxer_msg.combo_frame.frame_number);
@@ -3744,7 +3744,7 @@ int SprdCamera3RealBokeh::checkOtpInfo() {
 void SprdCamera3RealBokeh::saveRequest(camera3_capture_request_t *request) {
     size_t i = 0;
     camera3_stream_t *newStream = NULL;
-    request_saved_bokeh_t currRequest;
+    multi_request_saved_t currRequest;
     Mutex::Autolock l(mRequestLock);
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
@@ -4616,7 +4616,7 @@ void SprdCamera3RealBokeh::CallBackSnapResult() {
     result.partial_result = 0;
 
     mCallbackOps->process_capture_result(mCallbackOps, &result);
-    memset(&mThumbReq, 0, sizeof(request_saved_bokeh_t));
+    memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
     HAL_LOGD("snap id:%d ", result.frame_number);
 }
 
@@ -4633,7 +4633,7 @@ void SprdCamera3RealBokeh::CallBackResult(
     uint32_t frame_number, camera3_buffer_status_t buffer_status) {
 
     camera3_capture_result_t result;
-    List<request_saved_bokeh_t>::iterator itor;
+    List<multi_request_saved_t>::iterator itor;
     camera3_stream_buffer_t result_buffers;
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));

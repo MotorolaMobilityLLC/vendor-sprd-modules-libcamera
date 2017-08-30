@@ -352,9 +352,9 @@ int SprdCamera3HWI::openCamera() {
     }
 
     mOEMIf = new SprdCamera3OEMIf(mCameraId, mSetting);
-    if (!mOEMIf) {
+    if (mOEMIf == NULL) {
         HAL_LOGE("alloc oemif failed.");
-        if (mSetting) {
+        if (mSetting != NULL) {
             delete mSetting;
             mSetting = NULL;
         }
@@ -365,11 +365,11 @@ int SprdCamera3HWI::openCamera() {
     ret = mOEMIf->openCamera();
     if (NO_ERROR != ret) {
         HAL_LOGE("camera_open failed.");
-        if (mOEMIf) {
+        if (mOEMIf != NULL) {
             delete mOEMIf;
             mOEMIf = NULL;
         }
-        if (mSetting) {
+        if (mSetting != NULL) {
             delete mSetting;
             mSetting = NULL;
         }
@@ -715,7 +715,7 @@ int SprdCamera3HWI::configureStreams(
                 raw_size.height = newStream->height;
             }
 
-           //kMaxBuffers should <GRAB_BUF_MAX
+            // kMaxBuffers should <GRAB_BUF_MAX
             mSetting->getSPRDDEFTag(&sprddefInfo);
             if (preview_size.width > 3264 && preview_size.height > 2448)
                 SprdCamera3RegularChannel::kMaxBuffers = 2;
@@ -1048,7 +1048,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     /*fix 30fps for blur mode**/
     if ((mMultiCameraMode == MODE_REFOCUS || mMultiCameraMode == MODE_BOKEH ||
-         mMultiCameraMode == MODE_RANGE_FINDER) &&
+         mMultiCameraMode == MODE_RANGE_FINDER ||
+         mMultiCameraMode == MODE_TUNING) &&
         meta.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
         int32_t aeTargetFpsRange[2] = {20, 20};
         meta.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE, aeTargetFpsRange,
@@ -1273,7 +1274,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 if (capturePara.cap_intent ==
                         ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
                     request->num_output_buffers == 2 &&
-                    request->output_buffers[(i + 1) % 2].stream->priv == mPicChan &&
+                    request->output_buffers[(i + 1) % 2].stream->priv ==
+                        mPicChan &&
                     (max_cpp_size.width > max_sensor_width) &&
                     (max_cpp_size.height > max_sensor_height)) {
                     ret = mPicChan->request(stream, output.buffer, frameNumber);

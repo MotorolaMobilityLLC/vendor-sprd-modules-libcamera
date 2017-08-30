@@ -51,6 +51,7 @@
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
 #include "SprdCamera3Capture.h"
 #endif
+#include "SprdDualCamera3Tuning.h"
 
 namespace sprdcamera {
 
@@ -73,6 +74,7 @@ class SprdCamera3Wrapper {
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
     SprdCamera3Capture *mCapture;
 #endif
+    SprdDualCamera3Tuning *mTCam;
 };
 };
 #endif

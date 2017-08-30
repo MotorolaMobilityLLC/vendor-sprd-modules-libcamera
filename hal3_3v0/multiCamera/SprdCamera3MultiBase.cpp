@@ -261,6 +261,52 @@ SprdCamera3MultiBase::popRequestList(List<buffer_handle_t *> &list) {
     return ret;
 }
 
+buffer_handle_t *
+SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
+                                    camera_buffer_type_t type) {
+    buffer_handle_t *ret = NULL;
+    if (list.empty()) {
+        HAL_LOGE("list is NULL");
+        return NULL;
+    }
+    Mutex::Autolock l(mBufferListLock);
+    List<new_mem_t *>::iterator j = list.begin();
+    for (; j != list.end(); j++) {
+        if ((*j)->type == type) {
+            ret = &((*j)->native_handle);
+            break;
+        }
+    }
+    if (ret == NULL) {
+        HAL_LOGE("popBufferList failed!");
+        return ret;
+    }
+    list.erase(j);
+    return ret;
+}
+void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
+                                          buffer_handle_t *backbuf,
+                                          int localbuffer_num,
+                                          List<new_mem_t *> &list) {
+    int i;
+
+    if (backbuf == NULL) {
+        HAL_LOGE("backbuf is NULL");
+        return;
+    }
+    Mutex::Autolock l(mBufferListLock);
+    for (i = 0; i < localbuffer_num; i++) {
+        if ((&(localbuffer[i].native_handle)) == backbuf) {
+            list.push_back(&(localbuffer[i]));
+            break;
+        }
+    }
+    if (i >= localbuffer_num) {
+        HAL_LOGE("find backbuf failed");
+    }
+    return;
+}
+
 int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
     int stream_type = 0;
     int format = new_stream->format;

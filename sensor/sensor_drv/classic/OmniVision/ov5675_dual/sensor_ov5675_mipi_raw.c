@@ -773,8 +773,10 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E:module_id=%d", sns_drv_cxt->module_id);
-    if (sns_drv_cxt->module_id == MODULE_SUNNY && sns_drv_cxt->is_multi_mode) {
+    SENSOR_LOGI("E:module_id=%d is_mulit_mode = %d", sns_drv_cxt->module_id,
+                sns_drv_cxt->is_multi_mode);
+    if (sns_drv_cxt->module_id == MODULE_SUNNY && sns_drv_cxt->is_multi_mode &&
+        sns_drv_cxt->is_multi_mode != MODE_TUNING) {
         ov5675_drv_set_frame_sync(handle, 0);
         SENSOR_LOGI("set frame sync");
     }

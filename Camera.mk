@@ -124,7 +124,8 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
 
 ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
@@ -196,7 +197,7 @@ LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+#LOCAL_MODULE_PATH : = $(TARGET_OUT_VENDOR) / lib /
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

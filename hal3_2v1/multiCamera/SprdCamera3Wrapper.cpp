@@ -55,6 +55,7 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
     SprdCamera3SelfShot::getCameraMuxer(&mSelfShot);
     SprdCamera3PageTurn::getCameraMuxer(&mPageturn);
 #endif
+    SprdDualCamera3Tuning::getTCamera(&mTCam);
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper() {}
@@ -100,6 +101,12 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 #endif
 #ifdef CONFIG_BOKEH_SUPPORT
     case MODE_BLUR:
+        property_get("persist.sys.camera.raw.mode", prop, "jpeg");
+        if (!strcmp(prop, "raw")) {
+            rc = mTCam->camera_device_open(module, id, hw_device);
+            return rc;
+        }
+
         property_get("persist.sys.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
             rc = mRealBokeh->camera_device_open(module, id, hw_device);
@@ -163,6 +170,12 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #endif
 #ifdef CONFIG_BOKEH_SUPPORT
     case MODE_BLUR:
+        property_get("persist.sys.camera.raw.mode", prop, "jpeg");
+        if (!strcmp(prop, "raw")) {
+            rc = mTCam->get_camera_info(camera_id, info);
+            return rc;
+        }
+
         property_get("persist.sys.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
             rc = mRealBokeh->get_camera_info(camera_id, info);

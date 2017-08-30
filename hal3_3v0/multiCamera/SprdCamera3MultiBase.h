@@ -66,7 +66,11 @@ class SprdCamera3MultiBase {
     virtual void freeOneBuffer(new_mem_t *LocalBuffer);
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
-
+    virtual buffer_handle_t *popBufferList(List<new_mem_t *> &list,
+                                           camera_buffer_type_t type);
+    virtual void pushBufferList(new_mem_t *localbuffer,
+                                buffer_handle_t *backbuf, int localbuffer_num,
+                                List<new_mem_t *> &list);
     virtual int getStreamType(camera3_stream_t *new_stream);
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
@@ -79,13 +83,13 @@ class SprdCamera3MultiBase {
     virtual void dumpImg(void *addr, int size, int frameId, int flag);
     virtual void dumpFps();
     virtual int initialize(const camera3_callback_ops_t *callback_ops);
-/*#ifdef CONFIG_FACE_BEAUTY
-    virtual void doFaceMakeup(struct camera_frame_type *frame,
-                              int perfect_level, int *face_info);
-    virtual void convert_face_info(int *ptr_cam_face_inf, int width,
-                                   int height);
+    /*#ifdef CONFIG_FACE_BEAUTY
+        virtual void doFaceMakeup(struct camera_frame_type *frame,
+                                  int perfect_level, int *face_info);
+        virtual void convert_face_info(int *ptr_cam_face_inf, int width,
+                                       int height);
 
-#endif */
+    #endif */
     bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                           uint32_t a_udFileSize);
@@ -100,6 +104,7 @@ class SprdCamera3MultiBase {
                        uint32_t a_udFileSize);
 
   private:
+    Mutex mBufferListLock;
     bool mIommuEnabled;
     int mVFrameCount;
     int mVLastFrameCount;

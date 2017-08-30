@@ -1254,6 +1254,7 @@ typedef enum {
                          // hal transform to open physics Camera id is 2
     MODE_BLUR_FRONT = 15,
     MODE_BOKEH = 16,
+    MODE_TUNING = 50,
     MODE_CAMERA_MAX
 } multiCameraMode;
 

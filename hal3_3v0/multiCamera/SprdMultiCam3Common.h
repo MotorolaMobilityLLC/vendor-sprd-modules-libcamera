@@ -40,7 +40,9 @@ namespace sprdcamera {
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
 #define TIME_DIFF (15e6)
-
+#ifndef MAX_UNMATCHED_QUEUE_SIZE
+#define MAX_UNMATCHED_QUEUE_SIZE 3
+#endif
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
 typedef enum {
@@ -53,6 +55,17 @@ typedef enum {
 typedef enum { MATCH_FAILED = 0, MATCH_SUCCESS } matchResult;
 
 typedef enum { NOTIFY_SUCCESS = 0, NOTIFY_ERROR, NOTIFY_NOT_FOUND } notifytype;
+
+typedef enum {
+    PREVIEW_MAIN_BUFFER = 0,
+    PREVIEW_DEPTH_BUFFER,
+    SNAPSHOT_MAIN_BUFFER,
+    SNAPSHOT_DEPTH_BUFFER,
+    SNAPSHOT_TRANSFORM_BUFFER,
+    DEPTH_OUT_BUFFER,
+    DEPTH_OUT_WEIGHTMAP,
+    YUV420
+} camera_buffer_type_t;
 
 typedef enum {
     CAMERA_LEFT = 0,
@@ -153,6 +166,7 @@ typedef struct {
 typedef struct {
     const native_handle_t *native_handle;
     MemIon *pHeapIon;
+    camera_buffer_type_t type;
 } new_mem_t;
 
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
@@ -199,6 +213,13 @@ typedef struct line_buf_s {
     float warp_matrix[18];
     int points[32];
 } line_buf_t;
+
+typedef struct {
+    uint32_t frame_number;
+    buffer_handle_t *buffer;
+    camera3_stream_t *preview_stream;
+    camera3_stream_buffer_t *input_buffer;
+} multi_request_saved_t;
 
 enum rot_angle { ROT_0 = 0, ROT_90, ROT_180, ROT_270, ROT_MAX };
 };
