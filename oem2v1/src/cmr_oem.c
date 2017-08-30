@@ -1702,7 +1702,8 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void *param) {
                 if (1 != jpeg_param_ptr->need_free &&
                     TAKE_PICTURE_NEEDED ==
                         camera_get_snp_req((cmr_handle)cxt) &&
-                    1 != camera_get_hdr_flag(cxt)) {
+                    1 != camera_get_hdr_flag(cxt) &&
+                    1 != camera_get_3dnr_flag(cxt)) {
                     is_need_resume = 1;
                 }
             }
