@@ -42,6 +42,9 @@
 
 #define DV_FLASH_ON_DV_WITH_PREVIEW 1
 
+// pre-flash interval time
+#define PREFLASH_INTERVAL_TIME 1
+
 enum exif_orientation {
     ORIENTATION_UNDEFINED = 0,
     ORIENTATION_NORMAL = 1,
@@ -96,6 +99,7 @@ struct setting_flash_param {
     cmr_uint flash_status;
     cmr_uint auto_flash_status;
     cmr_uint has_preflashed;
+    cmr_s64 last_preflash_time;
     cmr_uint flash_hw_status;
     cmr_uint set_flash_mode_off_after_close_flash;
     cmr_uint flash_opened;
@@ -2309,8 +2313,9 @@ static cmr_int setting_set_thumb_size(struct setting_component *cpt,
     hal_param->thumb_size = parm->size_param;
     return ret;
 }
-static cmr_int setting_set_sprd_filter_type(struct setting_component *cpt,
-                                 struct setting_cmd_parameter *parm) {
+static cmr_int
+setting_set_sprd_filter_type(struct setting_component *cpt,
+                             struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
     hal_param->sprd_filter_type = parm->cmd_type_value;
@@ -2318,8 +2323,9 @@ static cmr_int setting_set_sprd_filter_type(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int setting_get_sprd_filter_type(struct setting_component *cpt,
-                                 struct setting_cmd_parameter *parm){
+static cmr_int
+setting_get_sprd_filter_type(struct setting_component *cpt,
+                             struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
     parm->cmd_type_value = hal_param->sprd_filter_type;
@@ -2731,6 +2737,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
                     setting_isp_wait_notice(cpt);
                     hal_param->flash_param.has_preflashed = 1;
+                    hal_param->flash_param.last_preflash_time =
+                        systemTime(CLOCK_MONOTONIC);
                     break;
                 }
 
@@ -3188,12 +3196,28 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
     cmr_uint flash_mode = 0;
     cmr_uint image_format = 0;
     cmr_uint been_preflash = 0;
+    cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
     struct setting_init_in *init_in = &cpt->init_in;
 
     image_format = local_param->sensor_static_info.image_format;
     flash_mode = hal_param->flash_param.flash_mode;
+
+    last_preflash_time = hal_param->flash_param.last_preflash_time;
+    now_time = systemTime(CLOCK_MONOTONIC);
+    CMR_LOGV("last_preflash_time = %lld, now_time=%lld", last_preflash_time,
+             now_time);
+    if (hal_param->flash_param.has_preflashed == 1 &&
+        now_time > last_preflash_time) {
+        diff = (now_time - last_preflash_time) / 1000000000;
+        CMR_LOGV("diff = %lld", diff);
+        if (diff > PREFLASH_INTERVAL_TIME) {
+            CMR_LOGD("last preflash is 3s ago, need to reset preflash flag");
+            hal_param->flash_param.has_preflashed = 0;
+        }
+    }
     been_preflash = hal_param->flash_param.has_preflashed;
-    CMR_LOGD("camera_preflash without AF, image_format %ld, flash_mode %ld, "
+
+    CMR_LOGD("preflash without af, image_format %ld, flash_mode %ld, "
              "been_preflash %ld",
              image_format, flash_mode, been_preflash);
 
@@ -3467,8 +3491,10 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
                              setting_set_exif_mime_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_3DNR, setting_get_3dnr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FILTER_TYPE,setting_set_sprd_filter_type);
-    cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,setting_get_sprd_filter_type);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FILTER_TYPE,
+                             setting_set_sprd_filter_type);
+    cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,
+                             setting_get_sprd_filter_type);
     setting_parms_inited = 1;
     return 0;
 }
