@@ -260,6 +260,8 @@ struct ae_fd_info {
 */
 struct ae_update_list {
 	cmr_u32 is_scene:1;
+	cmr_u32 is_miso:1;
+	cmr_u32 is_mev:1;
 };
 
 /**************************************************************************/
@@ -5914,7 +5916,18 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		}
 	}
 	// END
-
+	ISP_LOGV("Beth0814:mode update list %d\n", cxt->mod_update_list.is_miso);
+	if (1 == cxt->mod_update_list.is_miso){
+		//cxt->cur_result.tcAE_status = 0;
+		//cxt->cur_result.tcRls_flag = 1;
+		cxt->cur_status.settings.iso_manual_status = 1;
+		//rtn = _set_restore_cnt(cxt);
+		ISP_LOGV("Beth0814 release  %d\n", cxt->cur_status.settings.lock_ae);
+	}else{
+		cxt->cur_status.settings.iso_manual_status = 0;
+	}
+	 cxt->mod_update_list.is_miso = 0;
+	 
 	rtn = _ae_pre_process(cxt);
 	_set_flash_calibration_script(cxt);/*for flash calibration*/
 	_set_led(cxt);
@@ -6116,6 +6129,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 			if (scene_mode->mode < AE_SCENE_MOD_MAX) {
 				cxt->cur_status.settings.scene_mode = (cmr_s8) scene_mode->mode;
+				cxt->mod_update_list.is_scene = 1;
 			}
 		ISP_LOGI("AE_SET_SCENE %d\n", cxt->cur_status.settings.scene_mode);
 		}
@@ -6127,6 +6141,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 			if (iso->mode < AE_ISO_MAX) {
 				cxt->cur_status.settings.iso = iso->mode;
+				cxt->mod_update_list.is_miso = 1;
 			}
 		ISP_LOGI("AE_SET_ISO %d\n", cxt->cur_status.settings.iso);
 		}
@@ -6201,6 +6216,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 			struct ae_set_ev *ev = param;
 
 			if (ev->level < AE_LEVEL_MAX) {
+				cxt->mod_update_list.is_mev = 1;
 				cxt->cur_status.settings.ev_index = ev->level;
 				cxt->cur_status.target_lum = _calc_target_lum(cxt->cur_param->target_lum,
 					cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);

@@ -418,6 +418,7 @@ struct ae_settings {
 	cmr_s8 af_info;	/*AF trigger info */
 	cmr_s8 reserve_case;
 	cmr_u32 iso_special_mode;
+	cmr_u32 iso_manual_status;/*iso manual setting*/
 	cmr_u8 *reserve_info;	/* reserve for future */
 	cmr_s16 reserve_len;	/*len for reserve */
 };
