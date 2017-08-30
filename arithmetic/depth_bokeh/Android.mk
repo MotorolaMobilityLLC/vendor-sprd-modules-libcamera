@@ -18,7 +18,6 @@ LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
-endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libbokeh_depth
@@ -35,4 +34,5 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+endif
 endif
