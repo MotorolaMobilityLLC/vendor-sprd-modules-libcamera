@@ -253,7 +253,7 @@ cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 
 #define LIBCAM_ALG_PATH "libispalg.so"
-//#define ANTI_FLICKER_INFO_VERSION_NEW
+#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 
 struct isp_awb_calc_info {
 	struct ae_calc_out ae_result;
@@ -983,7 +983,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 				struct ae_ctrl_callback_in *ae_in,
 				struct awb_ctrl_calc_param * out_ptr)
@@ -995,7 +994,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	cmr_s32 i;
+	cmr_s32 i = 0;
 
 	if (!out_ptr || !isp_alg_handle) {
 		ret = ISP_PARAM_NULL;
