@@ -354,12 +354,13 @@ MRESULT Arc_CaliData_ZTE_FillAltekParam(ArcCaliData *pCaliData,
     // pArcParam->left_afcode2; // 13. 左镜头对焦在无穷远处的 AFcode 值
     pArcParam->left_intf_f = 3.57; // 14. 左镜头对焦在无穷远处的焦距(mm)
     pArcParam->left_pixelsize = 1.75; // 15. 左镜头传感器的单位像素物理大小(um)
-    // pArcParam->left_image_width = pAltekData->width_L; // 16.
+    pArcParam->left_image_width = pAltekData->width_L; // 16. 左镜头标定图像的宽
+    pArcParam->left_image_height =
+        pAltekData->height_L; // 17. 左镜头标定图像的高
+    // pArcParam->left_image_width = CALIBRATION_WIDTH; // 16.
     // 左镜头标定图像的宽
-    // pArcParam->left_image_height = pAltekData->height_L; // 17.
+    // pArcParam->left_image_height = CALIBRATION_HEIGHT; // 17.
     // 左镜头标定图像的高
-    pArcParam->left_image_width = CALIBRATION_WIDTH; // 16. 左镜头标定图像的宽
-    pArcParam->left_image_height = CALIBRATION_HEIGHT; // 17. 左镜头标定图像的高
 
     pArcParam->left_fov = 78.4; // 18. 左镜头 FOV
 
@@ -392,13 +393,14 @@ MRESULT Arc_CaliData_ZTE_FillAltekParam(ArcCaliData *pCaliData,
     // pArcParam->right_afcode2; // 41. 右镜头对焦在无穷远处的 AFcode 值
     pArcParam->right_intf_f = 2.0; // 42. 右镜头对焦在无穷远处的焦距(mm)
     pArcParam->right_pixelsize = 1.12; // 43. 右镜头传感器的单位像素物理大小(um)
-    // pArcParam->right_image_width = pAltekData->width_R; // 44.
-    // 右镜头标定图像的宽
-    // pArcParam->right_image_height = pAltekData->height_R; // 45.
-    // 右镜头标定图像的高
-    pArcParam->right_image_width = CALIBRATION_WIDTH; // 44. 右镜头标定图像的宽
+    pArcParam->right_image_width =
+        pAltekData->width_R; // 44. 右镜头标定图像的宽
     pArcParam->right_image_height =
-        CALIBRATION_HEIGHT; // 45. 右镜头标定图像的高
+        pAltekData->height_R; // 45. 右镜头标定图像的高
+    // pArcParam->right_image_width = CALIBRATION_WIDTH; // 44.
+    // 右镜头标定图像的宽
+    // pArcParam->right_image_height = CALIBRATION_HEIGHT; // 45.
+    // 右镜头标定图像的高
 
     pArcParam->right_fov = 83; // 46. 右镜头 FOV
 

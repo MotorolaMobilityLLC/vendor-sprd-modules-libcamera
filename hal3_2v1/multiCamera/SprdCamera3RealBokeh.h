@@ -180,6 +180,9 @@ typedef struct {
                                                  LPASVLOFFSCREEN pDstImg,
                                                  LPARC_DCVR_PARAM pParam);
     ARCDCIR_API const MPBASE_Version *(*ARC_DCIR_GetVersion)();
+    ARCDCIR_API MRESULT (*ARC_DCIR_SetDistortionCoef)(MHandle hHandle,
+                                                      MFloat leftDis[],
+                                                      MFloat rightDis[]);
 } ArcSoftBokehAPI_t;
 
 class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {

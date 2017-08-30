@@ -59,13 +59,6 @@ namespace sprdcamera {
 #define PENDINGTIME (1000000)
 #define PENDINGTIMEOUT (5000000000)
 
-#ifdef CONFIG_ALTEK_ZTE_CALI
-#define ZTE_CROPSIZE_LEFTWIDTH 1280
-#define ZTE_CROPSIZE_LEFTHEIGHT 960
-#define ZTE_CROPSIZE_RIGHTWIDTH 1280
-#define ZTE_CROPSIZE_RIGHTHEIGHT 960
-#endif
-
 SprdCamera3RealBokeh *mRealBokeh = NULL;
 
 // Error Check Macros
@@ -1971,6 +1964,17 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             HAL_LOGE("arcsoft ARC_DCIR_SetCaliData failed");
         }
 
+#ifndef CONFIG_ALTEK_ZTE_CALI
+        MFloat leftDis[11] = {0.00, 0.09, 0.57, 1.12, 1.40, 1.52,
+                              1.51, 1.45, 1.33, 1.55, 1.51};
+        MFloat rightDis[11] = {0.00, 0.09, 0.57, 1.12, 1.40, 1.52,
+                               1.51, 1.45, 1.33, 1.55, 1.51};
+        rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_SetDistortionCoef(
+            mArcSoftCapHandle, leftDis, rightDis);
+        if (rc != MOK) {
+            HAL_LOGE("arcsoft ARC_DCIR_SetDistortionCoef failed");
+        }
+#endif
         rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_SetCameraImageInfo(
             mArcSoftCapHandle, &(mRealBokeh->mArcSoftInfo));
         if (rc != MOK) {
@@ -2351,6 +2355,14 @@ int SprdCamera3RealBokeh::loadBokehApi() {
             HAL_LOGE("sym ARC_DCIR_SetCaliData failed.error = %s", error);
             return -1;
         }
+        mArcSoftBokehApi->ARC_DCIR_SetDistortionCoef =
+            (MRESULT (*)(MHandle hHandle, MFloat leftDis[], MFloat rightDis[]))
+                dlsym(mArcSoftBokehApi->handle, "ARC_DCIR_SetDistortionCoef");
+        if (mArcSoftBokehApi->ARC_DCIR_SetDistortionCoef == NULL) {
+            error = dlerror();
+            HAL_LOGE("sym ARC_DCIR_SetDistortionCoef failed.error = %s", error);
+            return -1;
+        }
         mArcSoftBokehApi->ARC_DCIR_CalcDisparityData =
             (MRESULT (*)(MHandle hHandle, LPASVLOFFSCREEN pMainImg,
                          LPASVLOFFSCREEN pAuxImg, LPARC_DCIR_PARAM pDCIRParam))
@@ -2727,10 +2739,10 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
             (MInt32)SprdCamera3Setting::s_setting[CAM_DEPTH_ID]
                 .sensor_InfoInfo.pixer_array_size[1];
 #else
-        mArcSoftInfo.i32LeftFullWidth = ZTE_CROPSIZE_LEFTWIDTH;
-        mArcSoftInfo.i32LeftFullHeight = ZTE_CROPSIZE_LEFTHEIGHT;
-        mArcSoftInfo.i32RightFullWidth = ZTE_CROPSIZE_RIGHTWIDTH;
-        mArcSoftInfo.i32RightFullHeight = ZTE_CROPSIZE_RIGHTHEIGHT;
+        mArcSoftInfo.i32LeftFullWidth = mArcParam.left_image_height;
+        mArcSoftInfo.i32LeftFullHeight = mArcParam.left_image_width;
+        mArcSoftInfo.i32RightFullWidth = mArcParam.left_image_height;
+        mArcSoftInfo.i32RightFullHeight = mArcParam.left_image_width;
 #endif
         HAL_LOGD("i32LeftFullWidth %d , i32LeftFullHeight %d,i32RightFullWidth "
                  "%d,i32RightFullHeight %d",
@@ -2753,7 +2765,11 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
             (MInt32)(mCaptureHeight / 2);
         mCaptureThread->mArcSoftCapParam.i32BlurIntensity = 100;
 
+#ifndef CONFIG_ALTEK_ZTE_CALI
+        mCaptureThread->mArcSoftDcrParam.fMaxFOV = 85.0f;
+#else
         mCaptureThread->mArcSoftDcrParam.fMaxFOV = 83.0f;
+#endif
         mCaptureThread->mArcSoftDcrParam.i32ImgDegree = 270;
 
         version = mArcSoftBokehApi->ARC_DCVR_GetVersion();
@@ -2780,7 +2796,7 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
                 }
             }
         }
-
+#ifndef CONFIG_ALTEK_ZTE_CALI
         rc = mArcSoftBokehApi->ARC_DCVR_PrevInit(
             &(mPreviewMuxerThread->mArcSoftPrevHandle));
         if (rc != MOK) {
@@ -2811,7 +2827,7 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
         } else {
             HAL_LOGD("arcsoft ARC_DCVR_SetCaliData succeed");
         }
-
+#endif
         if (mCaptureThread->mArcSoftDepthMap != NULL) {
             free(mCaptureThread->mArcSoftDepthMap);
         }
@@ -3588,10 +3604,9 @@ int SprdCamera3RealBokeh::createArcSoftCalibrationData(unsigned char *pBuffer,
     Arc_CaliData_PrintArcParam(&mArcParam);
     mRealBokeh->mCaliData.i32CalibDataSize = sizeof(mRealBokeh->mArcParam);
     mRealBokeh->mCaliData.pCalibData = &mRealBokeh->mArcParam;
-    HAL_LOGI("ARC_DCIR_SetCaliData i32CalibDataSize:%d, pCalibData: %p",
+    HAL_LOGI("i32CalibDataSize:%d, pCalibData: %p",
              mRealBokeh->mCaliData.i32CalibDataSize,
              mRealBokeh->mCaliData.pCalibData);
-    HAL_LOGI("end ARC_DCIR_SetCaliData");
 error:
     Arc_CaliData_Uninit(&hHandle);
 

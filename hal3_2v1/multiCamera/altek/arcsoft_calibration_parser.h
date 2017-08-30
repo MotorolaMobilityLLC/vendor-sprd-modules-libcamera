@@ -48,8 +48,8 @@ extern "C" {
 #define MERR_CAL_INVALID_ARGUMENT (MERR_CAL_BASE + 1)
 #define MERR_CAL_OUTOFMEMORY (MERR_CAL_BASE + 2)
 
-#define CALIBRATION_WIDTH 960
-#define CALIBRATION_HEIGHT 1280
+// #define CALIBRATION_WIDTH	960
+// #define CALIBRATION_HEIGHT  1280
 
 typedef struct _ArcParam {
     double left_fx;           // 1. 左镜头水平方向焦距 fx
