@@ -331,6 +331,10 @@ cmr_s32 _pm_dcam_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, v
 cmr_s32 _pm_dcam_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_dcam_lsc_deinit(void *lnc_param);
 
+cmr_s32 _pm_antiflicker_init(void *dst_antiflicker_param, void *src_antiflicker_param, void *param1, void *param2);
+cmr_s32 _pm_antiflicker_set_param(void *antiflicker_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_antiflicker_get_param(void *antiflicker_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);
 	cmr_s32(*set) (void *blk_ptr, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

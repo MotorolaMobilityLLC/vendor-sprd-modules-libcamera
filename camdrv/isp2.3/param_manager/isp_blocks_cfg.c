@@ -34,6 +34,7 @@ struct isp_block_operations s_bright_ops = { _pm_brightness_init, _pm_brightness
 struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_set_param, _pm_contrast_get_param, PNULL, PNULL };
 struct isp_block_operations s_flash_ops = { _pm_flashlight_init, _pm_flashlight_set_param, _pm_flashlight_get_param, PNULL, PNULL };
 struct isp_block_operations s_dual_flash_ops = { _pm_dualflash_init, _pm_dualflash_set_param, _pm_dualflash_get_param, PNULL, PNULL };
+struct isp_block_operations s_anti_flicker_ops = { _pm_antiflicker_init, _pm_antiflicker_set_param, _pm_antiflicker_get_param, PNULL, PNULL };
 struct isp_block_operations s_envi_detect_ops = { _pm_envi_detect_init, _pm_envi_detect_set_param, _pm_envi_detect_get_param, PNULL, PNULL };
 
 struct isp_block_operations s_pre_gbl_gain_ops = { _pm_pre_gbl_gain_init, _pm_pre_gbl_gain_set_param, _pm_pre_gbl_gain_get_param, PNULL, PNULL };
@@ -93,6 +94,7 @@ struct isp_block_operations s_dcam_aem_ops = { _pm_dcam_aem_init, _pm_dcam_aem_s
 struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_FLASH_CALI, array_offset(struct isp_context, flash), sizeof(struct isp_flash_param), &s_flash_ops},
 	{ISP_BLK_DUAL_FLASH, array_offset(struct isp_context, dual_flash), sizeof(struct isp_dual_flash_param), &s_dual_flash_ops},
+	{ISP_BLK_ANTI_FLICKER, array_offset(struct isp_context, anti_flicker), sizeof(struct isp_anti_flicker_param), &s_anti_flicker_ops},
 	{ISP_BLK_ENVI_DETECT, array_offset(struct isp_context, envi_detect), sizeof(struct isp_envi_detect_param), &s_envi_detect_ops},
 	{ISP_BLK_PRE_GBL_GAIN, array_offset(struct isp_context, pre_gbl_gain), sizeof(struct isp_pre_global_gain_param), &s_pre_gbl_gain_ops},
 	{ISP_BLK_BLC, array_offset(struct isp_context, blc), sizeof(struct isp_blc_param), &s_blc_ops},
