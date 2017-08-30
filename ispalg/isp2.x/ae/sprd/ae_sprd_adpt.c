@@ -3801,10 +3801,10 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 	{
 		int led1_driver_ind=led1;
 		int led2_driver_ind=led2;
-		if(led1_driver_ind<-1)
-			led1_driver_ind=-1;
-		if(led2_driver_ind<-1)
-			led2_driver_ind=-1;
+		if(led1_driver_ind<0)
+			led1_driver_ind=0;
+		if(led2_driver_ind<0)
+			led2_driver_ind=0;
 
 		cfg.led_idx = 1;
 		cfg.type = type;
@@ -4440,7 +4440,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					caliData->bFrame[caliData->testInd][frmCnt] = bmean;
 				}
 			}
-			else if (frmCnt < 15)
+			if (frmCnt < 15)
 			{
 				float rmean;
 				float gmean;
@@ -4741,18 +4741,44 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			if (propRet >= 1)
 				debug2En = propValue[0];
 
-			if (debug2En == 1)
+			
+			if(debug1En==1)
 			{
 #ifdef WIN32
-				fp = fopen("d:\\temp\\fc_raw.txt", "wt");
+				fp = fopen("d:\\temp\\fc_frame_rgb.txt", "wt");
 #else
-				fp = fopen("/data/misc/cameraserver/fc_raw.txt", "wt");
+				fp = fopen("/data/misc/cameraserver/fc_frame_rgb.txt", "wt");
 #endif
 				for (i = 0; i < caliData->testIndAll; i++)
 				{
+					if (caliData->isMainTab[i] == 0)
+						fprintf(fp,"pf ");
+					else
+						fprintf(fp,"mf ");
+					
+					int led1;
+					int led2;
+					led1 = caliData->ind1Tab[i];
+					led2 = caliData->ind2Tab[i];
+					int led1_hw;
+					int led2_hw;
+					if (caliData->isMainTab[i] == 0)
+					{
+						led1_hw = caliData->indHwP1_alg[led1];
+						led2_hw = caliData->indHwP2_alg[led2];
+					}
+					else
+					{
+						led1_hw = caliData->indHwM1_alg[led1];
+						led2_hw = caliData->indHwM1_alg[led2];
+					}
 					fprintf(fp, "ind1,ind2: %d\t%d\n",
-						(int)caliData->ind1Tab[i],
-						(int)caliData->ind2Tab[i]);
+						//(int)caliData->ind1Tab[i],
+						//(int)caliData->ind2Tab[i]);
+						(int)led1_hw,
+						(int)led2_hw);
+						
+					
 
 
 					fprintf(fp, "expBase,gainBase,exp,gain: %d\t%d\t%d\t%d\n",
@@ -4766,6 +4792,9 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 				}
 				fclose(fp);
+			}
+			if (debug2En == 1)
+			{  
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_debug.txt", "wt");
 #else
