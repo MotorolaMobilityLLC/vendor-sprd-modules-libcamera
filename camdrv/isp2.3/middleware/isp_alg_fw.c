@@ -2465,9 +2465,6 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 		cxt->lsc_cxt.sw_bypass = 1;
 		ISP_LOGI("lsc sw bypass");
 	}
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-	cxt->lsc_cxt.sw_bypass = 1;
-#endif
 	property_get("persist.sys.camera.bypass.pdaf", value, "0");
 	if (1 == atoi(value)) {
 		cxt->pdaf_cxt.sw_bypass = 1;
@@ -2762,23 +2759,28 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym smart_ops.NR_disable");
 		goto error_dlsym;
 	}
+
+#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
+	memset(&cxt->ops.lsc_ops, 0, sizeof(cxt->ops.lsc_ops));
+	return 0;
+#endif
 	/*init lsc_ctrl_ops*/
-	cxt->ops.lsc_ops.init = NULL;//dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_init");
+	cxt->ops.lsc_ops.init = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_init");
 	if (!cxt->ops.lsc_ops.init) {
 		ISP_LOGE("fail to dlsym lsc_ops.init");
 		goto error_dlsym;
 	}
-	cxt->ops.lsc_ops.deinit = NULL;//dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_deinit");
+	cxt->ops.lsc_ops.deinit = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_deinit");
 	if (!cxt->ops.lsc_ops.deinit) {
 		ISP_LOGE("fail to dlsym lsc_ops.deinit");
 		goto error_dlsym;
 	}
-	cxt->ops.lsc_ops.process = NULL;//dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_process");
+	cxt->ops.lsc_ops.process = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_process");
 	if (!cxt->ops.lsc_ops.process) {
 		ISP_LOGE("fail to dlsym lsc_ops.process");
 		goto error_dlsym;
 	}
-	cxt->ops.lsc_ops.ioctrl = NULL;//dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_ioctrl");
+	cxt->ops.lsc_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_ioctrl");
 	if (!cxt->ops.lsc_ops.ioctrl) {
 		ISP_LOGE("fail to dlsym lsc_ops.ioctrl");
 		goto error_dlsym;
