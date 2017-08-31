@@ -4861,6 +4861,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 clock_gettime(CLOCK_BOOTTIME, &end_time);
                 duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                            (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
+                cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
                 CMR_LOGD("do effect time = %d", duration);
 #endif
             } else {
