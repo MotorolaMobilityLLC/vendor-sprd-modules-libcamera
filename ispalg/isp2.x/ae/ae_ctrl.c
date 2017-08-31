@@ -51,7 +51,18 @@ cmr_s32 _isp_get_flash_cali_param(cmr_handle pm_handle, struct isp_flash_param *
 		return ISP_PARAM_NULL;
 	}
 
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_FLASH_CALI, NULL, 0);
+#ifdef CONFIG_ISP_2_3
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_FLASH_CALI,
+			0,
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+#else
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_FLASH_CALI,
+			NULL, 0);
+#endif
 	rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == rtn && 1 == output.param_num) {
 		(*out_param_ptr) = (struct isp_flash_param *)output.param_data->data_ptr;

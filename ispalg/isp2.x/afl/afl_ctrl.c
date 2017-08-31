@@ -147,7 +147,19 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	addr = (cmr_s32 *)(cmr_uint)in_ptr->vir_addr;
 
 	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_ANTI_FLICKER, NULL, 0);
+
+#ifdef CONFIG_ISP_2_3
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_ANTI_FLICKER,
+			0,
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+#else
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_ANTI_FLICKER,
+			NULL, 0);
+#endif
 	ret = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		afl_param = (struct isp_antiflicker_param *)output.param_data->data_ptr;
