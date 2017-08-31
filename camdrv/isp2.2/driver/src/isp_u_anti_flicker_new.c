@@ -35,7 +35,6 @@ cmr_s32 isp_u_anti_flicker_new_bypass(isp_handle handle, void *block_info)
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BYPASS;
 	param.property_param = block_info;
 
-	ISP_LOGE("$$LHC:bypass %d", *(cmr_u32 *) block_info);
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;

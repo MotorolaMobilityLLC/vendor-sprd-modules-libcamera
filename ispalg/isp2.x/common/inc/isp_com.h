@@ -318,6 +318,7 @@ struct isp_anti_flicker_cfg {
 	cmr_uint afl_region_total_num;
 	struct afl_ctrl_proc_out proc_out;
 	isp_afl_cb afl_set_cb;
+	cmr_s8 version;
 };
 
 struct isp_af_statistic_info {

@@ -104,6 +104,7 @@ struct smart_info {
 
 struct afl_info {
 	cmr_handle handle;
+	cmr_u32 version;
 	cmr_u32 sw_bypass;
 	cmr_uint vir_addr;
 	cmr_int buf_size;
@@ -1408,7 +1409,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	}
 
 	bypass = 1;
-	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+	if(cxt->afl_cxt.version) {
+		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, bypass);
+	} else {
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
@@ -1470,7 +1475,12 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		bypass = 0;
 	else
 		bypass = 1;
-	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+
+	if(cxt->afl_cxt.version) {
+		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, bypass);
+	} else {
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+	}
 
 exit:
 	ISP_LOGV("done ret %ld", ret);
@@ -2122,10 +2132,11 @@ static cmr_int ispalg_afl_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	afl_input.vir_addr = &cxt->afl_cxt.vir_addr;
 	afl_input.caller_handle = (cmr_handle) cxt;
 	afl_input.afl_set_cb = ispalg_afl_set_cb;
+	afl_input.version = cxt->afl_cxt.version;
 	if (cxt->ops.afl_ops.init)
 		ret = cxt->ops.afl_ops.init(&cxt->afl_cxt.handle, &afl_input);
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI("done %ld, version:%d", ret, afl_input.version);
 	return ret;
 }
 
@@ -2766,13 +2777,14 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.src.w;
 		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.src.h;
 	}
-#ifdef ANTI_FLICKER_INFO_VERSION_NEW
-	if (cxt->ops.afl_ops.config_new)
-		ret = cxt->ops.afl_ops.config_new(cxt->afl_cxt.handle);
-#else
-	if (cxt->ops.afl_ops.config)
-		ret = cxt->ops.afl_ops.config(cxt->afl_cxt.handle);
-#endif
+	if(cxt->afl_cxt.version) {
+		if (cxt->ops.afl_ops.config_new)
+			ret = cxt->ops.afl_ops.config_new(cxt->afl_cxt.handle);
+	} else {
+		if (cxt->ops.afl_ops.config)
+			ret = cxt->ops.afl_ops.config(cxt->afl_cxt.handle);
+	}
+
 	ISP_TRACE_IF_FAIL(ret, ("fail to do anti_flicker param update"));
 
 	return ret;
@@ -3419,6 +3431,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.w = binnng_w / 2;
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
+    /*0:afl_old mode, 1:afl_new mode*/
+	cxt->afl_cxt.version = 0;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);

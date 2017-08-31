@@ -108,6 +108,7 @@ struct smart_info {
 
 struct afl_info {
 	cmr_handle handle;
+	cmr_s8 version;
 	cmr_uint vir_addr;
 	cmr_int buf_size;
 	cmr_int buf_num;

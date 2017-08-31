@@ -137,6 +137,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	memset(&param_data, 0, sizeof(param_data));
 #endif
+	cmr_s32 algo_width;
+	cmr_s32 algo_height;
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -194,7 +196,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[3] = (ae_exp_flag == 1) ? lowlight_60hz_thrd : normal_60hz_thrd;
 				thr[4] = 100;
 				thr[5] = 4;
-				thr[6] = 30;
+				thr[6] = (cxt_ptr->version == 1) ? 50 : 30;
 				thr[7] = 20;
 				thr[8] = 120;
 				ISP_LOGI("60Hz using default threshold");
@@ -211,23 +213,31 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[3] = (ae_exp_flag == 1) ? lowlight_50hz_thrd : normal_50hz_thrd;
 				thr[4] = 100;
 				thr[5] = 4;
-				thr[6] = 30;
+				thr[6] = (cxt_ptr->version == 1) ? 50 : 30;
 				thr[7] = 20;
 				thr[8] = 120;
 				ISP_LOGI("50Hz using default threshold");
 			}
 		}
 
+		if (cxt_ptr->version) {
+			algo_width= 640;
+			algo_height = 480;
+		} else {
+			algo_width= cxt_ptr->width;
+			algo_height = cxt_ptr->height;
+		}
+
 		for (i = 0; i < cxt_ptr->frame_num; i++) {
 			if (cur_flicker) {
-				flag = antiflcker_sw_process(cxt_ptr->width,
-							     cxt_ptr->height, addr, 0, thr[0], thr[1],
+				flag = antiflcker_sw_process(algo_width,
+							     algo_height, addr, 0, thr[0], thr[1],
 							     thr[2], thr[3], thr[4], thr[5], thr[6],
 							     thr[7], thr[8], (cmr_s32 *) ae_stat_ptr->r_info, (cmr_s32 *) ae_stat_ptr->g_info, (cmr_s32 *) ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "60Hz");
 			} else {
-				flag = antiflcker_sw_process(cxt_ptr->width,
-							     cxt_ptr->height, addr, 1, thr[0], thr[1],
+				flag = antiflcker_sw_process(algo_width,
+							     algo_height, addr, 1, thr[0], thr[1],
 							     thr[2], thr[3], thr[4], thr[5], thr[6],
 							     thr[7], thr[8], (cmr_s32 *) ae_stat_ptr->r_info, (cmr_s32 *) ae_stat_ptr->g_info, (cmr_s32 *) ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "50Hz");
@@ -235,7 +245,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 			if (flag)
 				break;
 
-			addr += cxt_ptr->vheight;
+			if (cxt_ptr->version)
+				addr += algo_height;
+			else
+				addr += cxt_ptr->vheight;
 		}
 	}
 
@@ -320,6 +333,7 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 	cxt_ptr->vir_addr = (cmr_int) input_ptr->vir_addr;
 	cxt_ptr->afl_set_cb = input_ptr->afl_set_cb;
 	cxt_ptr->caller_handle = input_ptr->caller_handle;
+	cxt_ptr->version = input_ptr->version;
 	rtn = aflctrl_create_thread(cxt_ptr);
 exit:
 	if (rtn) {
@@ -353,6 +367,7 @@ cmr_int afl_ctrl_cfg(isp_handle isp_afl_handle)
 	afl_info.vheight = cxt_ptr->height;
 	afl_info.img_size.height = cxt_ptr->height;
 	afl_info.img_size.width = cxt_ptr->width;
+
 	if (cxt_ptr->afl_set_cb) {
 		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_CFG_PARAM, &afl_info, NULL);
 	}
@@ -368,20 +383,20 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 
 	cxt_ptr->vheight = cxt_ptr->height;
 	cxt_ptr->start_col = 0;
-	cxt_ptr->end_col = cxt_ptr->width - 1;
+	cxt_ptr->end_col = cxt_ptr->width;
 
 	afl_info_v3.bypass = cxt_ptr->bypass;
 	afl_info_v3.mode = cxt_ptr->mode;
 	afl_info_v3.skip_frame_num = cxt_ptr->skip_frame_num;
-	afl_info_v3.afl_stepx = 0xA0000;
-	afl_info_v3.afl_stepy = 0x100000;
+	afl_info_v3.afl_stepx = (cmr_u64)cxt_ptr->width *0x100000/640;
+	afl_info_v3.afl_stepy = (cmr_u64)cxt_ptr->height*0x100000/480;
 	afl_info_v3.frame_num = cxt_ptr->frame_num;
 	afl_info_v3.start_col = cxt_ptr->start_col;
 	afl_info_v3.end_col = cxt_ptr->end_col;
-	afl_info_v3.step_x_region = 0x280000;
-	afl_info_v3.step_y_region = 0x1E0000;
+	afl_info_v3.step_x_region = (cmr_u64)cxt_ptr->width *0x100000/640;
+	afl_info_v3.step_y_region = (cmr_u64)cxt_ptr->height*0x100000/480;
 	afl_info_v3.step_x_start_region = 0;
-	afl_info_v3.step_x_end_region = 640;
+	afl_info_v3.step_x_end_region = cxt_ptr->width;
 
 	afl_info_v3.img_size.width = cxt_ptr->width;
 	afl_info_v3.img_size.height = cxt_ptr->height;
@@ -390,7 +405,12 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_CFG_PARAM, &afl_info_v3, NULL);
 	}
 
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI("done:afl_stepx: 0x%x, stepy: 0x%x, x_region %x, y_region:0x%x, x_start_region:0x%x, x_end_region:0x%x", 
+					afl_info_v3.afl_stepx, afl_info_v3.afl_stepy,
+					afl_info_v3.step_x_region,
+					afl_info_v3.step_y_region,
+					afl_info_v3.step_x_start_region,
+					afl_info_v3.step_x_end_region);
 	return rtn;
 }
 
@@ -447,12 +467,12 @@ cmr_int afl_ctrl_deinit(cmr_handle * isp_afl_handle)
 		return rtn;
 	}
 	if (cxt_ptr->afl_set_cb) {
-#ifdef ANTI_FLICKER_INFO_VERSION_NEW
-		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
-#else
-		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_BYPASS, &bypass, NULL);
-#endif
+		if (cxt_ptr->version)
+			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
+		else
+			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_BYPASS, &bypass, NULL);
 	}
+
 	rtn = aflctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to destroy aflctrl thread.");

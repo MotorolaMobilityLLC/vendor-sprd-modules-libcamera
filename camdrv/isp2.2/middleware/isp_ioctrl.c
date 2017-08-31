@@ -312,7 +312,13 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 
 	if (set_flicker.mode == AE_FLICKER_AUTO) {
 		bypass = 0;
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+		if(cxt->afl_cxt.version) {
+			isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, bypass);
+			isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 1);
+		} else {
+			isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+		}
+
 	}
 
 	return rtn;
