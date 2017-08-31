@@ -1844,6 +1844,26 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     }
                 }
             }
+        } else {
+            if (mPreviewWeightParams.sel_x != mPreviewInitParams.width / 2 &&
+                mPreviewWeightParams.sel_y != mPreviewInitParams.height / 2) {
+                if (mPreviewWeightParams.roi_type == 0) {
+                    CONTROL_Tag controlInfo;
+                    mBlur->m_pPhyCamera[CAM_TYPE_MAIN]
+                        .hwi->mSetting->getCONTROLTag(&controlInfo);
+                    if (controlInfo.af_state ==
+                            ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN &&
+                        controlInfo.af_mode ==
+                            ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                        mPreviewWeightParams.sel_x =
+                            mPreviewInitParams.width / 2;
+                        mPreviewWeightParams.sel_y =
+                            mPreviewInitParams.height / 2;
+                        mUpdatePreviewWeightParams = true;
+                        HAL_LOGD("autofocus and blur center");
+                    }
+                }
+            }
         }
     }
     // back camera get other WeightParams in request

@@ -3038,6 +3038,53 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             }
             HAL_LOGD("sel_x %d ,sel_y %d", x, y);
         }
+    } else {
+        if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
+            if (mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_x !=
+                    mPreviewWidth / 2 &&
+                mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_y !=
+                    mPreviewHeight / 2) {
+                CONTROL_Tag controlInfo;
+                mRealBokeh->m_pPhyCamera[CAM_TYPE_MAIN]
+                    .hwi->mSetting->getCONTROLTag(&controlInfo);
+                if (controlInfo.af_state ==
+                        ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN &&
+                    controlInfo.af_mode ==
+                        ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                    mPreviewMuxerThread->mPreviewbokehParam.weight_params
+                        .sel_x = mPreviewWidth / 2;
+                    mPreviewMuxerThread->mPreviewbokehParam.weight_params
+                        .sel_y = mPreviewHeight / 2;
+                    mCaptureThread->mCapbokehParam.sel_x = mCaptureWidth / 2;
+                    mCaptureThread->mCapbokehParam.sel_y = mCaptureHeight / 2;
+                    HAL_LOGD("autofocus and bokeh center");
+                }
+            }
+        } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
+            if (mPreviewMuxerThread->mArcSoftPrevParam.ptFocus.x !=
+                    mPreviewWidth / 2 &&
+                mPreviewMuxerThread->mArcSoftPrevParam.ptFocus.y !=
+                    mPreviewHeight / 2) {
+                CONTROL_Tag controlInfo;
+                mRealBokeh->m_pPhyCamera[CAM_TYPE_MAIN]
+                    .hwi->mSetting->getCONTROLTag(&controlInfo);
+                if (controlInfo.af_state ==
+                        ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN &&
+                    controlInfo.af_mode ==
+                        ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                    mPreviewMuxerThread->mArcSoftPrevParam.ptFocus.x =
+                        mPreviewWidth / 2;
+                    mPreviewMuxerThread->mArcSoftPrevParam.ptFocus.y =
+                        mPreviewHeight / 2;
+                    mCaptureThread->mArcSoftCapParam.ptFocus.x =
+                        mCaptureWidth / 2;
+                    mCaptureThread->mArcSoftCapParam.ptFocus.y =
+                        mCaptureHeight / 2;
+
+                    HAL_LOGD("autofocus and bokeh center");
+                }
+            }
+        }
     }
 #ifdef CONFIG_FACE_BEAUTY
     if (metaSettings.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
