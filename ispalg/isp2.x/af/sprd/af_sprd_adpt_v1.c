@@ -1333,6 +1333,9 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
+	ISP_LOGI("current af->algo_mode %d", af->algo_mode);
+	calc_roi(af, NULL, af->algo_mode);
+
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.trigger_source = p_aft_result->is_caf_trig;
@@ -1375,12 +1378,10 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 
 	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
 		AF_Get_Result(af->af_alg_cxt, &res, &mode);
-		ISP_LOGV("Normal AF end, result = %d mode = %d ", res, mode);
+		ISP_LOGV("caf end, result = %d mode = %d ", res, mode);
 
 		ISP_LOGI("notify_stop");
-		notify_stop(af, res);
-
-		do_start_af(af);
+		notify_stop(af, HAVE_PEAK == res ? 1 : 0);
 		return 1;
 	} else {
 		return 0;
@@ -1412,7 +1413,6 @@ static void af_retrigger_search(af_ctrl_t * af, struct aft_proc_result *res)
 	if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt, AFV1_FALSE)) {
 		AF_Process_Frame(af->af_alg_cxt);
 		AF_Trigger(af->af_alg_cxt, &aft_in);
-		do_start_af(af);
 		ISP_LOGI("AF retrigger start \n");
 	} else {
 		ISP_LOGI("AF retrigger no support @%d \n", AF_Get_alg_mode(af->af_alg_cxt));
@@ -1439,6 +1439,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 				win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
 				win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
 				win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
+				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex, win.win_pos[0].ey);
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
@@ -2428,9 +2429,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
 
-	property_get("debug.isp.af.skip", value, "0");
+	property_get("persist.sys.isp.af.bypass", value, "0");
 	af->bypass = ! !atoi(value);
-	ISP_LOGV("debug.isp.af.skip %s[%d]", value, ! !atoi(value));
+	ISP_LOGV("property af bypass %s[%d]", value, ! !atoi(value));
 
 	ISP_LOGI("Exit");
 	return (cmr_handle) af;
@@ -2579,7 +2580,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 					af->state = AF_MODE_CONTINUE == af->pre_state ? STATE_CAF : STATE_RECORD_CAF;
 					trigger_set_mode(af, STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO);
 					trigger_start(af);
-					ISP_LOGI("after saf pre_state %u cur_state %u",af->pre_state,af->state);
+					ISP_LOGI("after saf pre_state %u cur_state %u", af->pre_state, af->state);
 				}
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
@@ -2603,8 +2604,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			pthread_mutex_lock(&af->af_work_lock);
 			rtn = faf_process_frame(af);
 			if (1 == rtn) {
-				af->state = af->pre_state;
 				af->focus_state = AF_IDLE;
+				af->state = af->pre_state;
 				trigger_start(af);
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
