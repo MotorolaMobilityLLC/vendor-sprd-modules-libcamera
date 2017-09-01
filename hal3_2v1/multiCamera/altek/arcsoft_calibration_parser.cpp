@@ -75,8 +75,9 @@ ARCCALI_API MRESULT Arc_CaliData_Init(MHandle *phHandle) {
     pCaliData->pAltekAPI = (AltekParseOTP_t *)malloc(sizeof(AltekParseOTP_t));
     if (pCaliData->pAltekAPI == NULL) {
         LOGE("pAltekAPI malloc failed.");
+    } else {
+        memset(pCaliData->pAltekAPI, 0, sizeof(AltekParseOTP_t));
     }
-    memset(pCaliData->pAltekAPI, 0, sizeof(AltekParseOTP_t));
     if (LoadAltekAPI(pCaliData->pAltekAPI) < 0) {
         LOGE("load arcsoft bokeh api failed.");
     }

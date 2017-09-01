@@ -105,6 +105,7 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
             rc = mRealBokeh->camera_device_open(module, id, hw_device);
             return rc;
         }
+        break;
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:
@@ -167,6 +168,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
             rc = mRealBokeh->get_camera_info(camera_id, info);
             return rc;
         }
+        break;
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:

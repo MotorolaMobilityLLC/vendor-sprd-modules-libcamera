@@ -737,7 +737,7 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
             newFace.pose[i]);
     }
 
-    mBlur->doFaceMakeup2(frame, mBlur->fbLevels, newFace,
+    mBlur->doFaceMakeup2(frame, mBlur->fbLevels, &newFace,
                          0); // work mode 1 for preview, 0 for picture
 }
 #endif

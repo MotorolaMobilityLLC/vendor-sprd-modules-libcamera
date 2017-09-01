@@ -157,6 +157,7 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
     mUwDepthAccuracy = DEPTH_INVALID_VALUE;
     mApiLibinit = false;
     mApiLibVersion = 0;
+    mCallbackOps = NULL;
     HAL_LOGI("X");
 }
 
@@ -767,9 +768,13 @@ void SprdCamera3RangeFinder::SyncThread::requestExit() {
  *==========================================================================*/
 void SprdCamera3RangeFinder::SyncThread::waitMsgAvailable() {
     // TODO:what to do for timeout
+    int ret = 0;
     while (mSyncMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, THREAD_TIMEOUT);
+        ret = mMergequeueSignal.waitRelative(mMergequeueMutex, THREAD_TIMEOUT);
+        if (ret == TIMED_OUT) {
+            HAL_LOGE("wait time out");
+        }
     }
 }
 
@@ -797,6 +802,7 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
     memset(mNativeBuffer, 0,
            sizeof(native_handle_t *) * MAX_FINDER_QEQUEST_BUF);
     memset(&mLastPreCoods, 0, sizeof(uw_Coordinate));
+    memset(&mDepthInitParam, 0, sizeof(depth_init_param_t));
     HAL_LOGI("X");
 }
 /*===========================================================================
@@ -2026,6 +2032,9 @@ void SprdCamera3RangeFinder::processCaptureResultMain(
 
     hwi_frame_buffer_info_t matched_frame;
     hwi_frame_buffer_info_t cur_frame;
+
+    memset(&matched_frame, 0, sizeof(hwi_frame_buffer_info_t));
+    memset(&cur_frame, 0, sizeof(hwi_frame_buffer_info_t));
     cur_frame.frame_number = cur_frame_number;
     cur_frame.timestamp = result_timestamp;
     cur_frame.buffer = result->output_buffers->buffer;
@@ -2145,6 +2154,9 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
 
     hwi_frame_buffer_info_t matched_frame;
     hwi_frame_buffer_info_t cur_frame;
+
+    memset(&matched_frame, 0, sizeof(hwi_frame_buffer_info_t));
+    memset(&cur_frame, 0, sizeof(hwi_frame_buffer_info_t));
     cur_frame.frame_number = cur_frame_number;
     cur_frame.timestamp = result_timestamp;
     cur_frame.buffer = (result->output_buffers)->buffer;
