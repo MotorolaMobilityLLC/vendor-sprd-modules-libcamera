@@ -18,49 +18,118 @@
 #include "sensor_drv_u.h"
 #include "sensor_cfg.h"
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
+// gc area
+#ifdef GC0310
+extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
+#endif
+#ifdef GC2165
+extern SENSOR_INFO_T g_gc2165_mipi_yuv_info;
+#endif
+#ifdef GC2375
+extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
+#endif
+#ifdef GC2375A
+extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
+#endif
+#ifdef GC5005
+extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
+#endif
+#ifdef GC5024
+extern SENSOR_INFO_T g_gc5024_mipi_raw_info;
+#endif
+#ifdef GC8024
+extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
+#endif
+#ifdef GC030A
+extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
+#endif
+
+// ov area
+#ifdef OV2680
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info;
-extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
+#endif
+#ifdef OV5675
+extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
+#endif
+#ifdef OV5675_DUAL
+extern SENSOR_INFO_T g_ov5675_dual_mipi_raw_info;
+#endif
+#ifdef OV8856
 extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
-extern SENSOR_INFO_T g_ov8856s_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k5e2ya_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
+#endif
+#ifdef OV8858
+extern SENSOR_INFO_T g_ov8858_mipi_raw_info;
+#endif
+#ifdef OV13855
+extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
+#endif
+#ifdef OV13855_SUNNY
+extern SENSOR_INFO_T g_ov13855_sunny_mipi_raw_info;
+#endif
+#ifdef OV13855A
+extern SENSOR_INFO_T g_ov13855a_mipi_raw_info;
+#endif
+#ifdef OV13850R2A
+extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
+#endif
+
+// imx 258
+#ifdef IMX135
+extern SENSOR_INFO_T g_imx135_mipi_raw_info;
+#endif
+#ifdef IMX230
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
 #endif
+#ifdef IMX258
 extern SENSOR_INFO_T g_imx258_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
-extern SENSOR_INFO_T g_c2580_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13855a_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k3l8xxm3q_mipi_raw_info;
-extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
-extern SENSOR_INFO_T g_gc5024_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
-extern SENSOR_INFO_T g_imx135_mipi_raw_info;
-extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k3l8xxm3r_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13855_sunny_mipi_raw_info;
-
-#ifdef CONFIG_COVERED_SENSOR
-extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
-//extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
-extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
-extern SENSOR_INFO_T g_ov5675_dual_mipi_raw_info;
-extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
-extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
-extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
+
+// cista area
+#ifdef C2390
 extern SENSOR_INFO_T g_c2390_mipi_raw_info;
-//extern SENSOR_INFO_T g_c2580_mipi_raw_info;
+#endif
+#ifdef C2580
+extern SENSOR_INFO_T g_c2580_mipi_raw_info;
+#endif
+
+// sp area
+#ifdef SP2509
+extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
+#endif
+#ifdef SP2509R
+extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
+#endif
+#ifdef SP2509V
+extern SENSOR_INFO_T g_sp2509v_mipi_raw_info;
+#endif
+#ifdef SP8407
 extern SENSOR_INFO_T g_sp8407_mipi_raw_info;
-// extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
+#endif
+
+//samsung area
+#ifdef S5K3L8XXM3
+extern SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info;
+#endif
+#ifdef S5K3L8XXM3Q
+extern SENSOR_INFO_T g_s5k3l8xxm3q_mipi_raw_info;
+#endif
+#ifdef S5K3L8XXM3R
+extern SENSOR_INFO_T g_s5k3l8xxm3r_mipi_raw_info;
+#endif
+#ifdef S5K3P8SM
+extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
+#endif
+#ifdef S5K4H8YX
+extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
+#endif
+#ifdef S5K5E2YA
+extern SENSOR_INFO_T g_s5k5e2ya_mipi_raw_info;
+#endif
+#ifdef S5K5E8YX
 extern SENSOR_INFO_T g_s5k5e8yx_mipi_raw_info;
 #endif
 
-#define AUTO_TEST_CAMERA 1
+
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
 extern otp_drv_entry_t ov13855_sunny_drv_entry;
@@ -72,6 +141,11 @@ extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
 extern otp_drv_entry_t gc5024_common_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_reachtech_drv_entry;
 extern otp_drv_entry_t gc2375_altek_drv_entry;
+extern otp_drv_entry_t ov8856_cmk_drv_entry;
+extern otp_drv_entry_t ov8858_cmk_drv_entry;
+extern otp_drv_entry_t ov2680_cmk_drv_entry;
+extern otp_drv_entry_t sp8407_otp_entry;
+
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -81,6 +155,7 @@ extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
 extern struct sns_af_drv_entry lc898214_drv_entry;
 extern struct sns_af_drv_entry dw9763_drv_entry;
+extern struct sns_af_drv_entry dw9763a_drv_entry;
 extern struct sns_af_drv_entry vcm_zc524_drv_entry;
 extern struct sns_af_drv_entry ad5823_drv_entry;
 extern struct sns_af_drv_entry vm242_drv_entry;
@@ -120,98 +195,168 @@ const cmr_u8 camera_module_name_str[MODULE_MAX][20] = {
 // .af_dev_info = {.af_drv_entry = &dw9800_drv_entry, .af_work_mode = 0},
 // &imx258_drv_entry},
 
-const SENSOR_MATCH_T main_sensor_infor_tab[] = {
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {MODULE_SUNNY, "gc8024_mipi_raw", &g_gc8024_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
-    {MODULE_TRULY, "imx258_mipi_raw", &g_imx258_mipi_raw_info, {&dw9800_drv_entry, 0}, &imx258_drv_entry},
-    {MODULE_SUNNY, "gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_SUNNY, "gc030a_mipi_raw", &g_gc030a_mipi_raw_info, {NULL, 0}, NULL},
-#if defined(CONFIG_DUAL_MODULE)
-    {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
-    {MODULE_SUNNY, "ov13855a_mipi_raw", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &ov13855_altek_drv_entry},
-    {MODULE_SUNNY, "imx135_mipi_raw", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, NULL},
-    {MODULE_SUNNY, "s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
+const SENSOR_MATCH_T back_sensor_infor_tab[] = {
+// gc area
+#ifdef GC5005
+    {MODULE_SUNNY, "gc5005", &g_gc5005_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#endif
+#ifdef GC8024
+    {MODULE_SUNNY, "gc8024", &g_gc8024_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#endif
+#ifdef GC030A
+    {MODULE_SUNNY, "gc030a", &g_gc030a_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
+// ov area
+#ifdef OV8856
+    {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8856_cmk_drv_entry},
+#endif
+#ifdef OV8858
+#ifdef CAMERA_BACK_MIPI_LANE_SWITCH
+    {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8858_cmk_drv_entry},
 #else
-    {MODULE_SUNNY,"s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&dw9763r_drv_entry, 0}, &s5k3l8xxm3_reachtech_drv_entry},
-    {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
-    {MODULE_SUNNY, "ov13855_sunny_mipi_raw", &g_ov13855_sunny_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
+    {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
 #endif
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
+#ifdef OV13855
+#if defined(CONFIG_DUAL_MODULE)
+    {MODULE_SUNNY, "ov13855", &g_ov13855_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
+#else
+    {MODULE_SUNNY, "ov13855", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
+#endif
+#endif
+#ifdef OV13855_SUNNY
+    {MODULE_SUNNY, "ov13855_sunny", &g_ov13855_sunny_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
+#endif
+#ifdef OV13855A
+    {MODULE_SUNNY, "ov13855a", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &ov13855_altek_drv_entry},
+#endif
+
+// imx area
+#ifdef IMX258
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+    {MODULE_TRULY, "imx258", &g_imx258_mipi_raw_info, {&dw9800_drv_entry, 0}, &imx258_drv_entry},
+#elif defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
-    {MODULE_DARLING, "imx258_mipi_raw", &g_imx258_mipi_raw_info, {&dw9763_drv_entry, 0}, NULL},
+    {MODULE_DARLING, "imx258", &g_imx258_mipi_raw_info, {&dw9763_drv_entry, 0}, NULL},
 #else
-    {MODULE_SUNNY ,"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&lc898214_drv_entry, 0}, &imx258_truly_drv_entry},
+    {MODULE_SUNNY ,"imx258", &g_imx258_mipi_raw_info, {&lc898214_drv_entry, 0}, &imx258_truly_drv_entry},
 #endif
-    {MODULE_SUNNY ,"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, NULL},
-    {MODULE_SUNNY ,"imx230_mipi_raw", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, NULL},
-    {MODULE_SUNNY ,"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &s5k3p8sm_truly_drv_entry},
 #endif
+#endif
+#ifdef IMX135
+    {MODULE_SUNNY, "imx135", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, NULL},
+#endif
+#ifdef IMX230
+    {MODULE_SUNNY ,"imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, NULL},
+#endif
+// cista area
+#ifdef C2390
+    {MODULE_SUNNY, "c2390", &g_c2390_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
+// sp area
+#ifdef SP8407
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763a_drv_entry, 0}, &sp8407_otp_entry},
+#endif
+
+// samsung area
+#ifdef S5K3L8XXM3R
+    {MODULE_SUNNY, "s5k3l8xxm3r", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
+#endif
+#ifdef S5K3L8XXM3
+    {MODULE_SUNNY ,"s5k3l8xxm3", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, NULL},
+#endif
+#ifdef S5K3P8SM
+    {MODULE_SUNNY ,"s5k3p8sm", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &s5k3p8sm_truly_drv_entry},
+#endif
+
     {0, "0", NULL, {NULL, 0}, NULL}};
 
-const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
-#ifdef CONFIG_COVERED_SENSOR
-//{MODULE_SUNNY ,"GC0310_MIPI", &g_GC0310_MIPI_yuv_info, {NULL, 0}, NULL},
-//{"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL,0}, NULL},
+const SENSOR_MATCH_T front_sensor_infor_tab[] = {
+// gc area
+#ifdef GC5005
+    {MODULE_SUNNY, "gc5005", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {MODULE_SUNNY, "gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_DARLING, "ov5675_mipi_raw", &g_ov5675_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_SUNNY, "sp8407_mipi_raw", &g_sp8407_mipi_raw_info, {NULL, 0}, NULL},
-    //{MODULE_SUNNY, "gc2375_mipi_raw", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_QTECH, "s5k3l8xxm3q_mipi_raw", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, &s5k3l8xxm3_qtech_drv_entry},
-{MODULE_SUNNY,"gc5024_mipi_raw", &g_gc5024_mipi_raw_info, {NULL, 0}, &gc5024_common_drv_entry},
-{MODULE_SUNNY, "ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, NULL},
+#ifdef GC5024
+    {MODULE_SUNNY, "gc5024", &g_gc5024_mipi_raw_info, {NULL, 0}, &gc5024_common_drv_entry},
+#endif
 
+//ov area
+#ifdef OV5675
+    {MODULE_DARLING, "ov5675", &g_ov5675_mipi_raw_info, {NULL, 0}, NULL},
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    {MODULE_SUNNY, "s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_SUNNY, "ov8856_mipi_raw", &g_ov8856_mipi_raw_info, {NULL, 0}, NULL},
-    {MODULE_SUNNY, "g_s5k5e2ya_mipi_raw_info", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#ifdef OV8856
+    {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef OV13850R2A
+    {MODULE_SUNNY,  "ov13850r2a", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, NULL},
+#endif
+
+// sp area
+#ifdef SP8407
+#ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, NULL},
+#else
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#endif
+
+// samsung area
+#ifdef S5K3L8XXM3Q
+    {MODULE_QTECH, "s5k3l8xxm3q", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, &s5k3l8xxm3_qtech_drv_entry},
+#endif
+#ifdef S5K4H8YX
+    {MODULE_SUNNY, "s5k4h8yx", &g_s5k4h8yx_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#ifdef S5K5E2YA
+    {MODULE_SUNNY, "s5k5e2ya", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#endif
+
     {0, "0", NULL, {NULL, 0}, NULL}};
 
-const SENSOR_MATCH_T sensor2_infor_tab[] = {
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    {MODULE_SUNNY, "ov2680_mipi_raw", &g_ov2680_mipi_raw_info, {NULL, 0}, NULL},
-    //{MODULE_SUNNY, "sp2509_mipi_raw", &g_sp2509_mipi_raw_info, {NULL, 0}, NULL},
+const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
+// ov area
+#ifdef OV2680
+    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, &ov2680_cmk_drv_entry},
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {MODULE_SUNNY, "g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
-#ifdef CONFIG_COVERED_SENSOR
-    {MODULE_SUNNY, "g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
+#ifdef OV5675_DUAL
+    {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
 #endif
 
-#if defined(CONFIG_DUAL_MODULE)
-    {MODULE_SUNNY, "ov5675_dual_mipi_raw", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
-    {MODULE_SUNNY, "gc2375a_mipi_raw", &g_gc2375a_mipi_raw_info, {NULL, 0}, &gc2375_altek_drv_entry},
-    {MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
+// gc area
+#ifdef GC2165
+    {MODULE_SUNNY, "gc2165", &g_gc2165_mipi_yuv_info, {NULL, 0}, NULL},
 #endif
-	{MODULE_SUNNY, "sp2509r_mipi_raw", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
+#ifdef GC2375A
+    {MODULE_SUNNY, "gc2375a", &g_gc2375a_mipi_raw_info, {NULL, 0}, &gc2375_altek_drv_entry},
 #endif
+
+// cista area
+#ifdef C2580
+    {MODULE_SUNNY, "c2580", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
+// sp area
+#ifdef SP2509V
+    {MODULE_SUNNY, "sp2509v", &g_sp2509v_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#ifdef SP2509R
+    {MODULE_SUNNY, "sp2509r", &g_sp2509r_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
     {0, "0", NULL, {NULL, 0}, NULL}};
 
-const SENSOR_MATCH_T sensor3_infor_tab[] = {
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-//{MODULE_SUNNY, "ov8856s_mipi_raw", &g_ov8856s_mipi_raw_info, {NULL, 0}, NULL},
+const SENSOR_MATCH_T front_ext_sensor_infor_tab[] = {
+// cista area
+#ifdef C2580
+    {MODULE_SUNNY, "c2580", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-#if defined(CONFIG_COVERED_SENSOR)
-    {MODULE_SUNNY,"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
-#endif
-#endif
+
 #ifdef SC_FPGA
-//"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
+//"ov5640_mipi_raw", &g_ov5640_mipi_raw_info
 #endif
-    {0, "0", NULL, {NULL, 0}, NULL}};
 
-const SENSOR_MATCH_T atv_infor_tab[] = {
-    //&g_nmi600_yuv_info, //&g_tlg1120_yuv_info,
-    {0, "0", NULL, {NULL, 0}, NULL}};
-
-const SENSOR_MATCH_T at_atv_infor_tab[] = {
-    //{"nmi600_yuv", &g_nmi600_yuv_info},
-    //{"tlg1120_yuv", &g_tlg1120_yuv_info},  bonnie
     {0, "0", NULL, {NULL, 0}, NULL}};
 
 /*
@@ -223,98 +368,45 @@ const SENSOR_MATCH_T at_atv_infor_tab[] = {
 SENSOR_MATCH_T *sensor_get_module_tab(cmr_int at_flag, cmr_u32 sensor_id) {
     SENSOR_MATCH_T *sensor_infor_tab_ptr = NULL;
     cmr_u32 index = 0;
-    SENSOR_LOGD("at_flag: %ld", at_flag);
 
-    if (AUTO_TEST_CAMERA == at_flag) {
-        switch (sensor_id) {
-        case SENSOR_MAIN:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&main_sensor_infor_tab;
-            break;
-        case SENSOR_DEVICE2:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor2_infor_tab;
-            break;
-        case SENSOR_SUB:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sub_sensor_infor_tab;
-            break;
-        case SENSOR_DEVICE3:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor3_infor_tab;
-            break;
-        case SENSOR_ATV:
-            sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&at_atv_infor_tab;
-            break;
-        default:
-            break;
-        }
-        return (SENSOR_MATCH_T *)sensor_infor_tab_ptr;
-    }
     switch (sensor_id) {
     case SENSOR_MAIN:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&main_sensor_infor_tab;
+        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&back_sensor_infor_tab;
         break;
     case SENSOR_SUB:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sub_sensor_infor_tab;
+        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&front_sensor_infor_tab;
         break;
     case SENSOR_DEVICE2:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor2_infor_tab;
+        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&back_ext_sensor_infor_tab;
         break;
     case SENSOR_DEVICE3:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&sensor3_infor_tab;
+        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&front_ext_sensor_infor_tab;
         break;
-
-    case SENSOR_ATV:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&atv_infor_tab;
-        break;
-
     default:
         break;
     }
-
     return (SENSOR_MATCH_T *)sensor_infor_tab_ptr;
 }
 
 // Sensor_GetInforTabLenght
 cmr_u32 sensor_get_tab_length(cmr_int at_flag, cmr_u32 sensor_id) {
     cmr_u32 tab_lenght = 0;
-    if (AUTO_TEST_CAMERA == at_flag) {
-        switch (sensor_id) {
-        case SENSOR_MAIN:
-            tab_lenght = ARRAY_SIZE(main_sensor_infor_tab);
-            break;
-        case SENSOR_DEVICE2:
-            tab_lenght = ARRAY_SIZE(sensor2_infor_tab);
-            break;
-        case SENSOR_SUB:
-            tab_lenght = ARRAY_SIZE(sub_sensor_infor_tab);
-            break;
-        case SENSOR_DEVICE3:
-            tab_lenght = ARRAY_SIZE(sensor3_infor_tab);
-            break;
-        case SENSOR_ATV:
-            tab_lenght = ARRAY_SIZE(at_atv_infor_tab);
-            break;
-        default:
-            break;
-        }
-    } else {
-        switch (sensor_id) {
-        case SENSOR_MAIN:
-            tab_lenght = ARRAY_SIZE(main_sensor_infor_tab);
-            break;
-        case SENSOR_SUB:
-            tab_lenght = ARRAY_SIZE(sub_sensor_infor_tab);
-            break;
-        case SENSOR_DEVICE2:
-            tab_lenght = ARRAY_SIZE(sensor2_infor_tab);
-            break;
-        case SENSOR_DEVICE3:
-            tab_lenght = ARRAY_SIZE(sensor3_infor_tab);
-            break;
-        case SENSOR_ATV:
-            tab_lenght = ARRAY_SIZE(atv_infor_tab);
-            break;
-        default:
-            break;
-        }
+
+    switch (sensor_id) {
+    case SENSOR_MAIN:
+        tab_lenght = ARRAY_SIZE(back_sensor_infor_tab);
+        break;
+    case SENSOR_SUB:
+        tab_lenght = ARRAY_SIZE(front_sensor_infor_tab);
+        break;
+    case SENSOR_DEVICE2:
+        tab_lenght = ARRAY_SIZE(back_ext_sensor_infor_tab);
+        break;
+    case SENSOR_DEVICE3:
+        tab_lenght = ARRAY_SIZE(front_ext_sensor_infor_tab);
+        break;
+    default:
+        break;
     }
     SENSOR_LOGI("module table length:%d", tab_lenght);
     return tab_lenght;
@@ -326,110 +418,55 @@ cmr_u32 sensor_get_match_index(cmr_int at_flag, cmr_u32 sensor_id) {
     cmr_u32 mSnNum = 0;
     cmr_u32 sSnNum = 0;
 
-    if (AUTO_TEST_CAMERA == at_flag) {
-        if (sensor_id == SENSOR_MAIN) {
-            mSnNum = ARRAY_SIZE(main_sensor_infor_tab) - 1;
-            SENSOR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum);
-            for (i = 0; i < mSnNum; i++) {
-                if (strcmp(main_sensor_infor_tab[i].sn_name,
-                           AT_CAMERA_SENSOR_TYPE_BACK) == 0) {
-                    SENSOR_LOGI("sensor autotest sensor matched  %dth  is %s",
-                                i, AT_CAMERA_SENSOR_TYPE_BACK);
-                    retValue = i;
-                    break;
-                }
+    if (sensor_id == SENSOR_MAIN) {
+        mSnNum = ARRAY_SIZE(back_sensor_infor_tab) - 1;
+        SENSOR_LOGI("sensor sensorTypeMatch main is %d", mSnNum);
+        for (i = 0; i < mSnNum; i++) {
+            if (strcmp(back_sensor_infor_tab[i].sn_name,
+                       CAMERA_SENSOR_TYPE_BACK) == 0) {
+                SENSOR_LOGI("sensor sensor matched %dth  is %s", i,
+                            CAMERA_SENSOR_TYPE_BACK);
+                retValue = i;
+                break;
             }
         }
-        if (sensor_id == SENSOR_SUB) {
-            sSnNum = ARRAY_SIZE(sub_sensor_infor_tab) - 1;
-            SENSOR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum);
-            for (i = 0; i < sSnNum; i++) {
-                if (strcmp(sub_sensor_infor_tab[i].sn_name,
-                           AT_CAMERA_SENSOR_TYPE_FRONT) == 0) {
-                    SENSOR_LOGI("sensor autotest matched the %dth  is %s", i,
-                                AT_CAMERA_SENSOR_TYPE_FRONT);
-                    retValue = i;
-                    break;
-                }
+    }
+    if (sensor_id == SENSOR_SUB) {
+        sSnNum = ARRAY_SIZE(front_sensor_infor_tab) - 1;
+        SENSOR_LOGI("sensor sensorTypeMatch sub is %d", sSnNum);
+        for (i = 0; i < sSnNum; i++) {
+            if (strcmp(front_sensor_infor_tab[i].sn_name,
+                       CAMERA_SENSOR_TYPE_FRONT) == 0) {
+                SENSOR_LOGI("sensor sensor matched the %dth is %s", i,
+                            CAMERA_SENSOR_TYPE_FRONT);
+                retValue = i;
+                break;
             }
         }
-        if (sensor_id == SENSOR_DEVICE2) {
-            mSnNum = sizeof(sensor2_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
-            SENSOR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum);
-            for (i = 0; i < mSnNum; i++) {
-                if (strcmp(sensor2_infor_tab[i].sn_name,
-                           CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
-                    SENSOR_LOGI("sensor sensor matched  %dth  is %s", i,
-                                CAMERA_SENSOR_TYPE_BACK_EXT);
-                    retValue = i;
-                    break;
-                }
+    }
+    if (sensor_id == SENSOR_DEVICE2) {
+        mSnNum = ARRAY_SIZE(back_ext_sensor_infor_tab) - 1;
+        SENSOR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum);
+        for (i = 0; i < mSnNum; i++) {
+            if (strcmp(back_ext_sensor_infor_tab[i].sn_name,
+                       CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
+                SENSOR_LOGI("sensor sensor matched %dth is %s", i,
+                            CAMERA_SENSOR_TYPE_BACK_EXT);
+                retValue = i;
+                break;
             }
         }
-        if (sensor_id == SENSOR_DEVICE3) {
-            sSnNum = sizeof(sensor3_infor_tab) / sizeof(SENSOR_MATCH_T) - 1;
-            SENSOR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum);
-            for (i = 0; i < sSnNum; i++) {
-                if (strcmp(sensor3_infor_tab[i].sn_name,
-                           CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
-                    SENSOR_LOGI("sensor sensor matched the %dth  is %s", i,
-                                CAMERA_SENSOR_TYPE_FRONT_EXT);
-                    retValue = i;
-                    break;
-                }
-            }
-        }
-    } else {
-        if (sensor_id == SENSOR_MAIN) {
-            mSnNum = ARRAY_SIZE(main_sensor_infor_tab) - 1;
-            SENSOR_LOGI("sensor sensorTypeMatch main is %d", mSnNum);
-            for (i = 0; i < mSnNum; i++) {
-                if (strcmp(main_sensor_infor_tab[i].sn_name,
-                           CAMERA_SENSOR_TYPE_BACK) == 0) {
-                    SENSOR_LOGI("sensor sensor matched  %dth  is %s", i,
-                                CAMERA_SENSOR_TYPE_BACK);
-                    retValue = i;
-                    break;
-                }
-            }
-        }
-        if (sensor_id == SENSOR_SUB) {
-            sSnNum = ARRAY_SIZE(sub_sensor_infor_tab) - 1;
-            SENSOR_LOGI("sensor sensorTypeMatch sub is %d", sSnNum);
-            for (i = 0; i < sSnNum; i++) {
-                if (strcmp(sub_sensor_infor_tab[i].sn_name,
-                           CAMERA_SENSOR_TYPE_FRONT) == 0) {
-                    SENSOR_LOGI("sensor sensor matched the %dth  is %s", i,
-                                CAMERA_SENSOR_TYPE_FRONT);
-                    retValue = i;
-                    break;
-                }
-            }
-        }
-        if (sensor_id == SENSOR_DEVICE2) {
-            mSnNum = ARRAY_SIZE(sensor2_infor_tab) - 1;
-            SENSOR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum);
-            for (i = 0; i < mSnNum; i++) {
-                if (strcmp(sensor2_infor_tab[i].sn_name,
-                           CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
-                    SENSOR_LOGI("sensor sensor matched  %dth  is %s", i,
-                                CAMERA_SENSOR_TYPE_BACK_EXT);
-                    retValue = i;
-                    break;
-                }
-            }
-        }
-        if (sensor_id == SENSOR_DEVICE3) {
-            sSnNum = ARRAY_SIZE(sensor3_infor_tab) - 1;
-            SENSOR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum);
-            for (i = 0; i < sSnNum; i++) {
-                if (strcmp(sensor3_infor_tab[i].sn_name,
-                           CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
-                    SENSOR_LOGI("sensor sensor matched the %dth  is %s", i,
-                                CAMERA_SENSOR_TYPE_FRONT_EXT);
-                    retValue = i;
-                    break;
-                }
+    }
+    if (sensor_id == SENSOR_DEVICE3) {
+        sSnNum = ARRAY_SIZE(front_ext_sensor_infor_tab) - 1;
+        SENSOR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum);
+        for (i = 0; i < sSnNum; i++) {
+            if (strcmp(front_ext_sensor_infor_tab[i].sn_name,
+                       CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
+                SENSOR_LOGI("sensor sensor matched the %dth is %s", i,
+                            CAMERA_SENSOR_TYPE_FRONT_EXT);
+                retValue = i;
+                break;
             }
         }
     }
