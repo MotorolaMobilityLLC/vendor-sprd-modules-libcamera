@@ -2212,6 +2212,10 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		}
 		break;
 
+	case AF_CMD_SET_AF_MODE:
+		rtn = af_sprd_set_af_mode(handle, param0);
+		break;
+
 	case AF_CMD_SET_TUNING_MODE:
 		break;
 	case AF_CMD_SET_SCENE_MODE:
@@ -2261,10 +2265,6 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 
 	case AF_CMD_SET_FACE_DETECT:
 		rtn = af_sprd_set_face_detect(handle, param0);
-		break;
-
-	case AF_CMD_SET_DCAM_TIMESTAMP:
-		rtn = af_sprd_set_dcam_timestamp(handle, param0);
 		break;
 
 	case AF_CMD_SET_PD_INFO:
@@ -2639,16 +2639,16 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 		return AFV1_ERROR;
 	}
 	// all the af_process with lock should be put here, not be in ioctrl with lock
-	if (AF_CMD_SET_AF_MODE == cmd || AF_CMD_SET_AF_START == cmd || AF_CMD_SET_ISP_STOP_INFO == cmd) {
+	if (AF_CMD_SET_DCAM_TIMESTAMP == cmd || AF_CMD_SET_AF_START == cmd || AF_CMD_SET_ISP_STOP_INFO == cmd) {
 		switch (cmd) {
-		case AF_CMD_SET_AF_MODE:
-			rtn = af_sprd_set_af_mode(handle, param0);
-			break;
 		case AF_CMD_SET_AF_START:
 			rtn = af_sprd_set_af_trigger(handle, param0);
 			break;
 		case AF_CMD_SET_ISP_STOP_INFO:
 			rtn = af_sprd_set_video_stop(handle, param0);
+			break;
+		case AF_CMD_SET_DCAM_TIMESTAMP:
+			rtn = af_sprd_set_dcam_timestamp(handle, param0);
 			break;
 		default:
 			break;
