@@ -3423,7 +3423,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
-        changeDfsPolicy(CAM_HIGH);
+        changeDfsPolicy(CAM_LOW);
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
             mVideoCopyFromPreviewFlag = true;
             on_off = VIDEO_ON;
@@ -5110,8 +5110,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
             mPerformancePowerHint = 0;
         }
-    } else if (mRecordingMode == true) {
-        changeDfsPolicy(CAM_HIGH);
     } else {
         changeDfsPolicy(CAM_LOW);
         if (!mLowerPowerPowerHint) {
