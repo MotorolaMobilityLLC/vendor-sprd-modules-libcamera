@@ -656,23 +656,21 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
     // CHECK_PTR(p_params);
     OTP_LOGI("in");
 
-    cmr_u8 *buffer = NULL;
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
     otp_params_t *p_data = (otp_params_t *)p_params;
 
     if (!otp_cxt->otp_raw_data.buffer) {
         /*when mobile power on , it will init*/
-        buffer =
+        otp_raw_data->buffer =
             sensor_otp_get_raw_buffer(OTP_RAW_DATA_LEN, otp_cxt->sensor_id);
-        if (NULL == buffer) {
+        if (NULL == otp_raw_data->buffer) {
             OTP_LOGE("malloc otp raw buffer failed\n");
             ret = OTP_CAMERA_FAIL;
-        } else {
-            otp_raw_data->buffer = buffer;
-            otp_raw_data->num_bytes = OTP_RAW_DATA_LEN;
-            _ov13855_altek_buffer_init(otp_drv_handle);
+            goto exit;
         }
+        otp_raw_data->num_bytes = OTP_RAW_DATA_LEN;
+        _ov13855_altek_buffer_init(otp_drv_handle);
     }
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
@@ -681,26 +679,24 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
             p_data->buffer = otp_raw_data->buffer;
             p_data->num_bytes = otp_raw_data->num_bytes;
         }
-        return ret;
-    } else {
-        /*start read otp data one time*/
-        /*TODO*/
-        buffer[0] = 0;
-        buffer[1] = 0;
-        ret = hw_sensor_read_i2c(otp_cxt->hw_handle, OTP_I2C_ADDR,
-                                 (cmr_u8 *)buffer,
-                                 SENSOR_I2C_REG_16BIT | OTP_RAW_DATA_LEN << 16);
-
-        /*END*/
+        goto exit;
     }
+    /*start read otp data one time*/
+    /*TODO*/
+    otp_raw_data->buffer[0] = 0;
+    otp_raw_data->buffer[1] = 0;
+    ret = hw_sensor_read_i2c(otp_cxt->hw_handle, OTP_I2C_ADDR,
+                             (cmr_u8 *)otp_raw_data->buffer,
+                             SENSOR_I2C_REG_16BIT | OTP_RAW_DATA_LEN << 16);
+    /*END*/
     if (OTP_CAMERA_SUCCESS == ret) {
         if (ov13855_altek_drv_entry.otp_dep.is_depend_relation &&
             (ov13855_altek_drv_entry.otp_dep.depend_sensor_id !=
              otp_cxt->sensor_id)) {
-            buffer = sensor_otp_get_raw_buffer(
+            otp_raw_data->buffer = sensor_otp_get_raw_buffer(
                 OTP_RAW_DATA_LEN,
                 ov13855_altek_drv_entry.otp_dep.depend_sensor_id);
-            memcpy(buffer, otp_raw_data->buffer, OTP_RAW_DATA_LEN);
+            memcpy(otp_raw_data->buffer, otp_raw_data->buffer, OTP_RAW_DATA_LEN);
         }
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
@@ -709,6 +705,7 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
                 OTP_LOGE("dump failed");
         }
     }
+exit:
     OTP_LOGI("out");
     return ret;
 }
