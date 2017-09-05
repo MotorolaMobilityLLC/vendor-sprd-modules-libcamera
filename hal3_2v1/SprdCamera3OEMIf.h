@@ -811,6 +811,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
+
+    int64_t mLastCafDoneTime;
 };
 
 }; // namespace sprdcamera

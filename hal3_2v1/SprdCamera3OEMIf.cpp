@@ -283,7 +283,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
-      mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0)
+      mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
+      mLastCafDoneTime(0)
 
 {
     ATRACE_CALL();
@@ -899,6 +900,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     ATRACE_CALL();
 
     uint32_t ret = 0;
+    int64_t tmp1, tmp2;
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
@@ -956,15 +958,12 @@ int SprdCamera3OEMIf::zslTakePicture() {
              MODE_SINGLE_CAMERA);
 
     if (SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
-        if (sprddefInfo.capture_mode == 1) {
-            HAL_LOGV("set focus af mode %d", CAMERA_FOCUS_MODE_PICTURE);
-            if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan()) {
-                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
-                         CAMERA_FOCUS_MODE_FULLSCAN);
-            } else {
-                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
-                         CAMERA_FOCUS_MODE_PICTURE);
-            }
+        if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan()) {
+            tmp1 = systemTime();
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_FULLSCAN);
+            tmp2 = systemTime();
+            HAL_LOGD("wait caf cost %lldms", (tmp2 - tmp1) / 1000000);
             /*after caf picture, set af mode again to isp*/
             SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
         }
@@ -5723,6 +5722,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
             } else {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
+                mLastCafDoneTime = systemTime();
             }
             mSetting->setAfCONTROLTag(&controlInfo);
         }
@@ -8706,6 +8706,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         goto exit;
     }
 
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
 
     if (mZslPopFlag == 0 && mVideoWidth != 0 && mVideoHeight != 0) {
@@ -8731,10 +8734,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             usleep(20 * 1000);
             continue;
         }
+
         if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
-            char prop[PROPERTY_VALUE_MAX] = {
-                0,
-            };
+            char prop[PROPERTY_VALUE_MAX];
             uint32_t ae_fps = 30;
             uint32_t delay_time = 200;
             // mHalOem->ops->camera_ioctrl(mCameraHandle,
@@ -8755,9 +8757,17 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                     zsl_frame.y_vir_addr, zsl_frame.fd);
                 continue;
             }
-        } else if (mZslSnapshotTime > zsl_frame.timestamp) {
+
+            HAL_LOGD("fd=0x%x", zsl_frame.fd);
+            mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
+                zsl_frame.fd);
+            break;
+        }
+
+        if (mZslSnapshotTime > zsl_frame.timestamp) {
             diff_ms = (mZslSnapshotTime - zsl_frame.timestamp) / 1000000;
-            HAL_LOGD("diff_ms=%lld", diff_ms);
+            HAL_LOGV("diff_ms=%lld", diff_ms);
             if (diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
                 HAL_LOGD("not the right frame, skip it");
                 mHalOem->ops->camera_set_zsl_buffer(
@@ -8765,6 +8775,16 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                     zsl_frame.y_vir_addr, zsl_frame.fd);
                 continue;
             }
+        }
+
+        // single capture wait the caf focused frame
+        if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
+            zsl_frame.timestamp < obj->mLastCafDoneTime) {
+            HAL_LOGD("not the focused frame, skip it");
+            mHalOem->ops->camera_set_zsl_buffer(
+                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
+                zsl_frame.fd);
+            continue;
         }
 
         HAL_LOGD("fd=0x%x", zsl_frame.fd);
@@ -8776,6 +8796,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
 exit:
     obj->mZslShotPushFlag = 0;
+    obj->mFlashCaptureFlag = 0;
 }
 
 int SprdCamera3OEMIf::ZSLMode_monitor_thread_init(void *p_data) {
