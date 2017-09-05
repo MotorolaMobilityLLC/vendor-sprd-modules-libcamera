@@ -552,7 +552,7 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 		s_q_put(cxt->seq_handle, &input_item, write_item, actual_item);
 	}	
 
-	ISP_LOGD("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
+	ISP_LOGV("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
 		is_force, exp_data->lib_data.exp_line, exp_data->lib_data.dummy, exp_data->lib_data.sensor_gain, exp_data->lib_data.isp_gain,\
 		write_item->exp_line, write_item->dumy_line, write_item->sensor_gain, write_item->isp_gain,\
 		actual_item->exp_line, actual_item->dumy_line, actual_item->sensor_gain, actual_item->isp_gain);
@@ -6101,7 +6101,7 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
 	struct ae_calc_in *calc_in = (struct ae_calc_in *)param;
 
-	ISP_LOGI("is_update %d", calc_in->is_update);
+	ISP_LOGV("is_update %d", calc_in->is_update);
 	if (cxt->high_fps_info.is_high_fps) {
 		if (calc_in->is_update) {
 			rtn = ae_calculation_slow_motion(handle, param, result);
