@@ -1027,8 +1027,9 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 		iq_info.b_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_b;
 		iq_info.lsc_length = 0;
 	}
-	ISP_LOGI("set otp data iso r g b %d, %d, %d, %d, lsc size %d",
-			iq_info.iso, iq_info.r_gain, iq_info.g_gain, iq_info.b_gain, iq_info.lsc_length);
+	ISP_LOGI("set otp data cali_status %d iso r g b %d, %d, %d, %d, lsc size %d",
+			iq_info.cali_status, iq_info.iso, iq_info.r_gain, iq_info.g_gain, iq_info.b_gain,
+			iq_info.lsc_length);
 
 	if (0 == iq_info.r_gain || 0 == iq_info.g_gain || 0 == iq_info.b_gain) {
 		ISP_LOGE("failed to otp data is wrong");
