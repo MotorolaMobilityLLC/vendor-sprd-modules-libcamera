@@ -150,7 +150,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_AFT, array_offset(struct isp_context, aft), sizeof(struct isp_aft_param), &s_aft_ops},
 	{DCAM_BLK_BLC, array_offset(struct isp_context, dcam_blc), sizeof(struct dcam_blc_param), &s_dcam_blc_ops},
 	{ISP_BLK_AE_NEW, array_offset(struct isp_context, dcam_aem), sizeof(struct dcam_rgb_aem_param), &s_dcam_aem_ops},
-	{DCAM_BLK_2D_LSC, array_offset(struct isp_context, dcam_2d_lsc), sizeof(struct dcam_2d_lsc_param), &s_dcam_lsc_ops},
+	{DCAM_BLK_2D_LSC, array_offset(struct isp_context, dcam_2d_lsc), sizeof(struct isp_2d_lsc_param), &s_dcam_lsc_ops},
 };
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)

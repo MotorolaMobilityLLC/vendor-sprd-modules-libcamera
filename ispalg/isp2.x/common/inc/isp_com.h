@@ -769,21 +769,6 @@ struct dcam_blc_param {
 	struct isp_blc_offset offset[SENSOR_BLC_NUM];
 };
 
-struct dcam_2d_lsc_param {
-	struct sprd_2d_lsc_info cur;
-	struct isp_sample_point_info cur_index_info;
-	struct isp_data_info final_lsc_param;	//store the resulted lsc params
-	struct isp_lnc_map map_tab[ISP_COLOR_TEMPRATURE_NUM];
-	cmr_u32 tab_num;
-	struct isp_lsc_info lsc_info;
-	struct isp_size resolution;
-	cmr_u32 update_flag;
-	cmr_u32 is_init;
-
-	void *tmp_ptr_a;
-	void *tmp_ptr_b;
-};
-
 struct dcam_ae_stat_threshold {
 	cmr_u32 r_thr_high;
 	cmr_u32 r_thr_low;
@@ -887,7 +872,7 @@ struct isp_context {
 	struct isp_3d_nr_cap_param nr_3d_cap;
 
 	struct dcam_blc_param dcam_blc;
-	struct dcam_2d_lsc_param dcam_2d_lsc;
+	struct isp_2d_lsc_param dcam_2d_lsc;
 	struct dcam_rgb_aem_param dcam_aem;
 };
 

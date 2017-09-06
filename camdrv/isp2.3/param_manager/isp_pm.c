@@ -753,6 +753,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			case ISP_BLK_2D_LSC:{
 					extend_offset += add_lnc_len;
 					dst_header[j].size = src_header[j].size + add_lnc_len;
+					dst_header[j].block_id = DCAM_BLK_2D_LSC;
 					memcpy((void *)(dst_data_ptr + src_header[j].size), (void *)(fix_data_ptr->lnc.lnc_param.lnc), add_lnc_len);
 				}
 				break;
@@ -1484,7 +1485,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				for (i = 0; i < inctl_ptr->param_num; i++) {
 					if (inctl_param_ptr && (inctl_param_ptr->mod_id == mode_id)) {
 						mode_param_ptr = pm_cxt_ptr->merged_mode_array[mode_id];
+						break;
 					}
+					inctl_param_ptr++;
 				}
 				if (mode_param_ptr == PNULL) {
 					ISP_LOGV("isp pm context for mode: %d is not wanted. ", mode_id);
