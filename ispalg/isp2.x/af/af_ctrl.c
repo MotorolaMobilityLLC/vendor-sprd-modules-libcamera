@@ -634,7 +634,7 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	struct afctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("fail to check param is NULL!");
+		ISP_LOGV("fail to check param is NULL!");
 		goto exit;
 	}
 
