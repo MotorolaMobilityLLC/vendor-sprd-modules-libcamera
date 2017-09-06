@@ -8872,7 +8872,8 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
          * testMandatoryOutputCombinations issue */
         //if ((prev_cxt->skip_mode == IMG_SKIP_SW_KER) && 0) {
         if (prev_cxt->skip_mode == IMG_SKIP_SW_KER &&
-		!prev_cxt->prev_param.sprd_burstmode_enabled) {
+		!prev_cxt->prev_param.sprd_burstmode_enabled &&
+		prev_cxt->prev_param.frame_ctrl !=FRAME_HDR_PROC) {
             /*config skip num buffer*/
             for (i = 0; i < prev_cxt->cap_skip_num; i++) {
                 cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
