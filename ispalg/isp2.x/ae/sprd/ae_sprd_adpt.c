@@ -2824,6 +2824,11 @@ static cmr_s32 _ae_pre_process(struct ae_ctrl_cxt *cxt)
 				ISP_LOGW("ae_flash estimation does not work well");
 			}
 			if (FLASH_MAIN == current_status->settings.flash) {
+ rtn = _aem_stat_preprocess((cmr_u32*)&cxt->sync_aem[0],
+                                                                           (cmr_u16*)&cxt->aem_stat_rgb[0],
+                                                                            cxt->monitor_unit.win_size,
+                                                                            cxt->monitor_unit.win_num,
+                                                                            current_status->monitor_shift);
 				flash_high_flash_reestimation(cxt);
 				ISP_LOGI("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
 			}
