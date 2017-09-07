@@ -650,6 +650,11 @@ void *thread_3dnr(void *p_data) {
     CMR_LOGD("wait sem. cur_frm: %d", cur_frm);
 
     CMR_LOGI("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
+    if (NULL == in->private_data) {
+        CMR_LOGE("private_data is ptr of camera_context, now is null");
+        return NULL;
+    }
+
     addr = &in->dst_frame.addr_vir;
     size = in->src_frame.size;
 
