@@ -62,17 +62,11 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
-# don't modify this code
-LOCAL_COMPILE_DIR := $(LOCAL_PATH)/calibration
-LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
-LOCAL_COMPILE_DIR := $(LOCAL_PATH)/driver
-LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
-LOCAL_COMPILE_DIR := $(LOCAL_PATH)/isp_tune
-LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
-LOCAL_COMPILE_DIR := $(LOCAL_PATH)/middleware
-LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
-LOCAL_COMPILE_DIR := $(LOCAL_PATH)/param_parse
-LOCAL_SRC_FILES += $(shell find $(LOCAL_COMPILE_DIR) -name '*.c' -print | sed s:^$(LOCAL_PATH)::g )
+LOCAL_SRC_FILES := $(call all-c-files-under, calibration) \
+    $(call all-c-files-under, driver) \
+    $(call all-c-files-under, isp_tune) \
+    $(call all-c-files-under, middleware) \
+    $(call all-c-files-under, param_parse)
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
