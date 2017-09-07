@@ -8643,7 +8643,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
     uint count = 0;
     vsGyro *gyro = NULL;
     vsOutFrame frame_out_preview;
-    frame_out_preview.frame_data = NULL;
+    memset(&frame_out_preview, 0x00, sizeof(vsOutFrame));
 
     if (mGyromaxtimestamp) {
         HAL_LOGD("in frame timestamp: %lf, mGyromaxtimestamp %lf",
@@ -8705,7 +8705,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
     uint count = 0;
     vsGyro *gyro = NULL;
     vsOutFrame frame_out_video;
-    frame_out_video.frame_data = NULL;
+    memset(&frame_out_video, 0x00, sizeof(vsOutFrame));
 
     if (mGyromaxtimestamp) {
         HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",
@@ -8867,12 +8867,13 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
-    frame_out.frame_data = NULL;
     EIS_CROP_Tag eiscrop_Info;
-    memset(&eiscrop_Info, 0x00, sizeof(EIS_CROP_Tag));
     int64_t boot_time = frame->monoboottime;
     int64_t ae_time = frame->ae_time;
     uintptr_t buff_vir = (uintptr_t)(frame->y_vir_addr);
+
+    memset(&frame_out, 0x00, sizeof(vsOutFrame));
+    memset(&eiscrop_Info, 0x00, sizeof(EIS_CROP_Tag));
 
     // gyro data is should be used for video frame stab
     if (mGyroInit && !mGyroExit) {

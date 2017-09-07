@@ -589,6 +589,7 @@ int SprdCamera3HWI::configureStreams(
     cam_dimension_t raw_size = {0, 0};
     cam_dimension_t capture_size = {0, 0};
     SPRD_DEF_Tag sprddefInfo;
+    memset(&sprddefInfo, 0x00, sizeof(SPRD_DEF_Tag));
 
     ret = checkStreamList(streamList);
     if (ret) {

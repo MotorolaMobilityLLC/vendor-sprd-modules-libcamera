@@ -863,7 +863,7 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 
 	otp_info = (struct isp_otp_info *)malloc(sizeof(struct isp_otp_info));
 	if (NULL == otp_info) {
-		ISP_LOGE("fail to check param");
+		ISP_LOGE("fail to malloc otp_info");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
@@ -873,6 +873,8 @@ cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input
 	if (ISP_SUCCESS != rtn) {
 		/*do not return error */
 		ISP_LOGE("fail to parse_calibration_data!");
+		free((void *)otp_info);
+		otp_info = NULL;
 		return ISP_SUCCESS;
 	}
 
