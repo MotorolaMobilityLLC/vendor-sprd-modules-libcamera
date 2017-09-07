@@ -652,7 +652,7 @@ void *thread_3dnr(void *p_data) {
     CMR_LOGI("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
     if (NULL == in->private_data) {
         CMR_LOGE("private_data is ptr of camera_context, now is null");
-        return NULL;
+        goto exit;
     }
 
     addr = &in->dst_frame.addr_vir;
@@ -661,7 +661,7 @@ void *thread_3dnr(void *p_data) {
     ret = req_3dnr_save_frame(threednr_handle, in);
     if (ret != CMR_CAMERA_SUCCESS) {
         CMR_LOGE("req_dnr_save_frame fail");
-        return NULL;
+        goto exit;
     }
 
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
@@ -697,13 +697,14 @@ void *thread_3dnr(void *p_data) {
              src->addr_vir.addr_y, src->fd, dst.addr_vir.addr_y, dst.fd);
 
     if (threednr_handle->is_stop) {
-        return NULL;
+        CMR_LOGE("threednr_handle is stop");
+        goto exit;
     }
 
     ret = threednr_start_scale(oem_handle, src, &dst);
     if (ret) {
         CMR_LOGE("Fail to call threednr_start_scale");
-        return NULL;
+        goto exit;
     }
 
 #if 1
@@ -750,7 +751,8 @@ void *thread_3dnr(void *p_data) {
              threednr_handle->is_stop);
 
     if (threednr_handle->is_stop) {
-        return NULL;
+        CMR_LOGE("threednr_handle is stop");
+        goto exit;
     }
 
     ret = threednr_function(&small_buf, &big_buf);
@@ -765,9 +767,9 @@ void *thread_3dnr(void *p_data) {
         ret = req_3dnr_do(threednr_handle, addr, size);
     }
 
+exit:
     CMR_LOGI("post sem");
     sem_post(&threednr_handle->sem_3dnr);
-
     return NULL;
 }
 
