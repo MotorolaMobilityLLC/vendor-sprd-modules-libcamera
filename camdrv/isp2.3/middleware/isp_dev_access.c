@@ -62,8 +62,11 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		statis_mem_info->cb_of_malloc = in_ptr->cb_of_malloc;
 		statis_mem_info->cb_of_free = in_ptr->cb_of_free;
 		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE +
+							ISP_AEM_STATIS_BUF_SIZE +
 							ISP_AFM_STATIS_BUF_SIZE +
 							ISP_AFL_STATIS_BUF_SIZE +
+							ISP_HIST_STATIS_BUF_SIZE +
+							ISP_HIST2_STATIS_BUF_SIZE +
 							ISP_PDAF_STATIS_BUF_SIZE +
 							ISP_BINNING_STATIS_BUF_SIZE) * 5;
 		statis_mem_info->isp_statis_mem_num = 1;
@@ -136,7 +139,6 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	/*lsc addr transfer */
 	dcam_u_2d_lsc_transaddr(cxt->isp_driver_handle, &lsc_2d_buf);
 
-	isp_statis_buf.buf_property = DCAM_AEM_BLOCK;
 	ret = isp_dev_access_ioctl(isp_dev_handle, ISP_DEV_SET_STSTIS_BUF, &isp_statis_buf, NULL);
 
 	return ret;
