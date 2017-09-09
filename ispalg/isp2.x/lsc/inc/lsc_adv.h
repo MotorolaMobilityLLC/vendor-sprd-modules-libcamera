@@ -93,6 +93,8 @@ enum alsc_io_ctrl_cmd {
 	ALSC_FLASH_MAIN_LIGHTING =12,
 	ALSC_FLASH_PRE_LIGHTING =13,
 	ALSC_GET_TOUCH =14,
+	ALSC_FW_PROC_START =15,
+	ALSC_FW_PROC_START_END = 16,
 };
 
 struct tg_alsc_debug_info {
@@ -416,6 +418,10 @@ struct lsc2_context {
 	cmr_u16 *fwstart_new_scaled_table;
 	cmr_u16 can_update_dest;
 	cmr_u16 fw_start_end;
+
+	//dual cam
+	cmr_u8  is_master;
+	cmr_u32 is_multi_mode;
 };
 // change mode (fw_start, fw_stop)
 struct alsc_fwstart_info {
@@ -428,6 +434,19 @@ struct alsc_fwstart_info {
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 };
 
+//for fw proc start
+struct alsc_fwprocstart_info {
+	cmr_u16* lsc_result_address_new;
+	cmr_u16* lsc_tab_address_new[9];
+	cmr_u32 gain_width_new;
+	cmr_u32 gain_height_new;
+	cmr_u32 image_pattern_new;
+	cmr_u32 grid_new;
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
+
+};
+
+//update flash info
 struct alsc_flash_info {
 	float io_captureFlashEnvRatio;
 	float io_captureFlash1Ratio;
@@ -496,6 +515,10 @@ struct lsc_adv_init_param {
 	cmr_u32 lsc_otp_oc_gb_y;
 	cmr_u32 lsc_otp_oc_b_x;
 	cmr_u32 lsc_otp_oc_b_y;
+
+	//dual cam
+	cmr_u8  is_master;
+	cmr_u32 is_multi_mode;
 };
 
 struct statistic_raw_t {
@@ -584,6 +607,10 @@ cmr_s32 otp_lsc_mod(cmr_u16 * otpLscTabGolden, cmr_u16 * otpLSCTabRandom,	//T1, 
 		    cmr_u16 * otpLscTabGoldenRef,	//Ts1
 		    cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
 		    cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
+
+cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info *lsc_otp_info,struct sensor_otp_optCenter_info *optical_center_info, cmr_s32 height, cmr_s32 width, cmr_s32 grid, struct lsc_adv_init_param *lsc_param);
+
+
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

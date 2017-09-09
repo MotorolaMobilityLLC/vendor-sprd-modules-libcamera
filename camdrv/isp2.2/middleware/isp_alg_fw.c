@@ -46,8 +46,8 @@ cmr_u32 isp_cur_ct;
 
 cmr_s32 gAWBGainR = 1;
 cmr_s32 gAWBGainB = 1;
-cmr_s32 gCntSendMsgLsc = 0;
-static cmr_u32 aeStatistic[32 * 32 * 4];
+//cmr_s32 gCntSendMsgLsc = 0;                   //lsc removed
+//static cmr_u32 aeStatistic[32 * 32 * 4];      //lsc removed
 
 struct isp_awb_calc_info {
 	struct ae_calc_out ae_result;
@@ -89,13 +89,6 @@ typedef struct {
 	int shading_mode;
 	int shading_pct;
 } lsc2d_calib_param_t;
-
-struct lsc_wrapper_ops {
-	void (*lsc2d_grid_samples) (int w, int h, int gridx, int gridy, int *nx, int *ny);
-	void (*lsc2d_calib_param_default) (lsc2d_calib_param_t * calib_param, int grid_size, int lpf_radius, int shading_pct);
-	int (*lsc2d_table_preproc) (uint16_t * otp_chn[4], uint16_t * tbl_chn[4], int w, int h, int sx, int sy, lsc2d_calib_param_t * calib_param);
-	int (*lsc2d_table_postproc) (uint16_t * tbl_chn[4], int w, int h, int sx, int sy, lsc2d_calib_param_t * calib_param);
-};
 
 static cmr_int ispalg_ae_process_out(cmr_handle isp_alg_handle, struct ae_ctrl_callback_in *ae_in);
 
@@ -526,7 +519,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
 		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-		if (NULL == lsc_tab_param_ptr || NULL == lsc_info) {
+		if (NULL == lsc_tab_param_ptr || NULL == lsc_info || ISP_SUCCESS != ret) {
 			ISP_LOGE("Get param failed\n");
 			return ISP_ERROR;
 		}
@@ -2311,125 +2304,6 @@ exit:
 	return ret;
 }
 
-static int lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigned short *dst_16bits, unsigned int size_bytes)
-{
-	unsigned int gain_compressed_bits = 14;
-	unsigned int gain_origin_bits = 16;
-	unsigned int i = 0;
-	unsigned int j = 0;
-	unsigned int bit_left = 0;
-	unsigned int bit_buf = 0;
-	unsigned int offset = 0;
-	unsigned int dst_gain_num = 0;
-	unsigned int src_uncompensate_bytes = size_bytes * gain_compressed_bits % gain_origin_bits;
-	unsigned int cmp_bits = size_bytes * gain_compressed_bits;
-	unsigned int src_bytes = (cmp_bits + gain_origin_bits - 1) / gain_origin_bits * (gain_origin_bits / 8);
-
-	if (0 == src_bytes || 0 != (src_bytes & 1)) {
-		return 0;
-	}
-
-	for (i = 0; i < src_bytes / 2; i++) {
-		bit_buf |= src_14bits[i] << bit_left;
-		bit_left += 16;
-
-		if (bit_left > gain_compressed_bits) {
-			offset = 0;
-			while (bit_left >= gain_compressed_bits) {
-				dst_16bits[j] = (unsigned short)(bit_buf & 0x3fff);
-				j++;
-				bit_left -= gain_compressed_bits;
-				bit_buf = (bit_buf >> gain_compressed_bits);
-			}
-		}
-	}
-
-	if (gain_compressed_bits == src_uncompensate_bytes) {
-		dst_gain_num = j - 1;
-	} else {
-		dst_gain_num = j;
-	}
-
-	return dst_gain_num;
-}
-
-static uint16_t *lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_width, int image_height, int *tbl_w, int *tbl_h)
-{
-	int ret = ISP_SUCCESS;
-	lsc2d_calib_param_t calib_param;
-	int lpf_radius = 16;
-	int shading_pct = 100;
-	int nx, ny, sx, sy;
-	uint16_t *otp_chn[4], *tbl_chn[4];
-	int w = image_width / 2;
-	int h = image_height / 2;
-	uint16_t *lsc_table = NULL;
-
-	void *lsc_handle = dlopen("libsprdlsc.so", RTLD_NOW);
-	if (!lsc_handle) {
-		ISP_LOGE("fail to dlopen libsprdlsc lib");
-		ret = ISP_ERROR;
-		return lsc_table;
-	}
-
-	struct lsc_wrapper_ops lsc_ops;
-
-	lsc_ops.lsc2d_grid_samples = dlsym(lsc_handle, "lsc2d_grid_samples");
-	if (!lsc_ops.lsc2d_grid_samples) {
-		ISP_LOGE("fail to dlsym lsc2d_grid_samples");
-		ret = ISP_ERROR;
-		goto error_dlsym;
-	}
-
-	lsc_ops.lsc2d_calib_param_default = dlsym(lsc_handle, "lsc2d_calib_param_default");
-	if (!lsc_ops.lsc2d_calib_param_default) {
-		ISP_LOGE("fail to dlsym lsc2d_calib_param_default");
-		ret = ISP_ERROR;
-		goto error_dlsym;
-	}
-
-	lsc_ops.lsc2d_table_preproc = dlsym(lsc_handle, "lsc2d_table_preproc");
-	if (!lsc_ops.lsc2d_table_preproc) {
-		ISP_LOGE("fail to dlsym lsc2d_table_preproc");
-		ret = ISP_ERROR;
-		goto error_dlsym;
-	}
-
-	lsc_ops.lsc2d_table_postproc = dlsym(lsc_handle, "lsc2d_table_postproc");
-	if (!lsc_ops.lsc2d_table_postproc) {
-		ISP_LOGE("fail to dlsym lsc2d_table_postproc");
-		ret = ISP_ERROR;
-		goto error_dlsym;
-	}
-
-	lsc_ops.lsc2d_grid_samples(w, h, grid, grid, &nx, &ny);
-	sx = nx + 2;
-	sy = ny + 2;
-
-	lsc_table = (uint16_t *) malloc(4 * sx * sy * sizeof(uint16_t));
-
-	*tbl_w = sx;
-	*tbl_h = sy;
-
-	for (int i = 0; i < 4; i++) {
-		otp_chn[i] = lsc_otp_tbl + i * nx * ny;
-		tbl_chn[i] = lsc_table + i * sx * sy;
-	}
-
-	lsc_ops.lsc2d_calib_param_default(&calib_param, grid, lpf_radius, shading_pct);
-
-	lsc_ops.lsc2d_table_preproc(otp_chn, tbl_chn, w, h, sx, sy, &calib_param);
-
-	lsc_ops.lsc2d_table_postproc(tbl_chn, w, h, sx, sy, &calib_param);
-
-error_dlsym:
-	dlclose(lsc_handle);
-	lsc_handle = NULL;
-
-
-	return lsc_table;
-}
-
 static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_u32 ret = ISP_SUCCESS;
@@ -2437,7 +2311,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 	lsc_adv_handle_t lsc_adv_handle = NULL;
 	struct lsc_adv_init_param lsc_param;
 	cmr_handle pm_handle = cxt->handle_pm;
-	uint16_t *lsc_table = NULL;
+	cmr_u16 *lsc_table = NULL;
 
 	struct isp_pm_ioctl_input io_pm_input;
 	struct isp_pm_ioctl_output io_pm_output;
@@ -2482,80 +2356,39 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 	}
 
 	//_alsc_set_param(&lsc_param);   // for LSC2.X neet to reopen
-	#if 1
+
 	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
-		int original_lens_bits = 16;
-		int compressed_lens_bits = 14;
-		//int otp_grid = 96;
-		//int lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
-
-		int otp_grid = 0;
-		uint8_t *lsc_otp_addr = NULL;
-		int lsc_otp_len = 0;
-
-		if (cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE)
-		{
-			otp_grid = cxt->otp_data->single_otp.lsc_info.lsc_otp_grid;
-			lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
-			lsc_otp_len = cxt->otp_data->single_otp.lsc_info.lsc_data_size;
-			ISP_LOGI("init_lsc_otp, single cam, otp_grid=%d, lsc_otp_addr=%p, lsc_otp_len=%d", otp_grid, lsc_otp_addr, lsc_otp_len);
-		}
-		else
-		{
-			if ((cxt->camera_id == 0) || (cxt->camera_id == 1))
-			{
-				otp_grid = cxt->otp_data->dual_otp.master_lsc_info.lsc_otp_grid;
-				lsc_otp_addr = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_addr;
-				lsc_otp_len = cxt->otp_data->dual_otp.master_lsc_info.lsc_data_size;
-				ISP_LOGI("init_lsc_otp, dual cam master, otp_grid=%d, lsc_otp_addr=%p, lsc_otp_len=%d", otp_grid, lsc_otp_addr, lsc_otp_len);
-			}
-			else
-			{
-				otp_grid = cxt->otp_data->dual_otp.slave_lsc_info.lsc_otp_grid;
-				lsc_otp_addr = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_addr;
-				lsc_otp_len = cxt->otp_data->dual_otp.slave_lsc_info.lsc_data_size;
-				ISP_LOGI("init_lsc_otp, dual cam slave, otp_grid=%d, lsc_otp_addr=%p, lsc_otp_len=%d", otp_grid, lsc_otp_addr, lsc_otp_len);
+		ISP_LOGI("init_lsc_otp, start to get lsc otp data");
+		struct sensor_otp_cust_info* otp_data = (struct sensor_otp_cust_info*)cxt->otp_data;
+		struct sensor_otp_lsc_info* lsc_otp_info = NULL;
+		struct sensor_otp_optCenter_info* optical_center_info = NULL;
+		cmr_s32 full_img_width = lsc_tab_param_ptr->resolution.w;
+		cmr_s32 full_img_height = lsc_tab_param_ptr->resolution.h;
+		cmr_s32 lsc_otp_grid = lsc_info->grid;
+		if (otp_data->otp_vendor == OTP_VENDOR_SINGLE && otp_data->otp_vendor != OTP_VENDOR_NONE) {
+			lsc_otp_info =        &otp_data->single_otp.lsc_info;
+			optical_center_info = &otp_data->single_otp.optical_center_info;
+			ISP_LOGI("init_lsc_otp, single cam, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+		} else {
+			if ((cxt->camera_id == 0) || (cxt->camera_id == 1)) {
+				lsc_otp_info =        &otp_data->dual_otp.master_lsc_info;
+				optical_center_info = &otp_data->dual_otp.master_optical_center_info;
+				ISP_LOGI("init_lsc_otp, dual cam master, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+			} else {
+				lsc_otp_info =        &otp_data->dual_otp.slave_lsc_info;
+				optical_center_info = &otp_data->dual_otp.slave_optical_center_info;
+				ISP_LOGI("init_lsc_otp, dual cam slave, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
 			}
 		}
-		int lsc_otp_len_chn = lsc_otp_len / 4;
-		int lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
-		int lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
-		int gain_w, gain_h;
-		//uint8_t *lsc_otp_addr = cxt->otp_data->single_otp.lsc_info.lsc_data_addr;
-		if( otp_grid < 32 || otp_grid > 256){
-			ISP_LOGI("init_lsc_otp, otp_grid=%d, skip lsc otp transfrom", otp_grid);
-		}else if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
-			uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
-			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
-
-			lsc_table = lsc_table_wrapper(lsc_16_bits, otp_grid, lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h, &gain_w, &gain_h);	//  wrapper otp table
-			free(lsc_16_bits);
-			if (lsc_table == NULL) {
-				ret = ISP_ERROR;
-				return ret;
-			}
-			lsc_param.lsc_otp_table_width = gain_w;
-			lsc_param.lsc_otp_table_height = gain_h;
-			lsc_param.lsc_otp_table_addr = lsc_table;
-			lsc_param.lsc_otp_table_en = 1;
+		if (cxt->ops.lsc_ops.get_lsc_otp) {
+			cxt->ops.lsc_ops.get_lsc_otp(lsc_otp_info, optical_center_info, full_img_height, full_img_width, lsc_otp_grid, &lsc_param);
+		}else{
+			ISP_LOGE("fail to do cxt->ops.lsc_ops.get_lsc_otp");
 		}
-
-		lsc_param.lsc_otp_oc_r_x = cxt->otp_data->single_otp.optical_center_info.R.x;
-		lsc_param.lsc_otp_oc_r_y = cxt->otp_data->single_otp.optical_center_info.R.y;
-		lsc_param.lsc_otp_oc_gr_x = cxt->otp_data->single_otp.optical_center_info.GR.x;
-		lsc_param.lsc_otp_oc_gr_y = cxt->otp_data->single_otp.optical_center_info.GR.y;
-		lsc_param.lsc_otp_oc_gb_x = cxt->otp_data->single_otp.optical_center_info.GB.x;
-		lsc_param.lsc_otp_oc_gb_y = cxt->otp_data->single_otp.optical_center_info.GB.y;
-		lsc_param.lsc_otp_oc_b_x = cxt->otp_data->single_otp.optical_center_info.B.x;
-		lsc_param.lsc_otp_oc_b_y = cxt->otp_data->single_otp.optical_center_info.B.y;
-		lsc_param.lsc_otp_oc_en = 1;
 	}
-	#endif
+
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
 	}
@@ -2587,6 +2420,10 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
+	lsc_param.is_master     = 1;   //cxt->is_master;        // wait for SBS sync
+	lsc_param.is_multi_mode = 0;   //cxt->is_multi_mode;    // wait for SBS sync
+
+	lsc_table = lsc_param.lsc_otp_table_addr;
 	if (NULL == cxt->lsc_cxt.handle) {
 		if (cxt->ops.lsc_ops.init) {
 			ret = cxt->ops.lsc_ops.init(&lsc_param, &lsc_adv_handle);
@@ -2899,6 +2736,11 @@ static cmr_int load_ispalg_library(cmr_handle adpt_handle)
 	cxt->ops.lsc_ops.ioctrl= dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_ioctrl");
 	if (!cxt->ops.lsc_ops.ioctrl) {
 		ISP_LOGE("failed to dlsym lsc_ops.ioctrl");
+		goto error_dlsym;
+	}
+	cxt->ops.lsc_ops.get_lsc_otp = dlsym(cxt->ispalg_lib_handle, "ispalg_get_lsc_otp");
+	if (!cxt->ops.lsc_ops.get_lsc_otp) {
+		ISP_LOGE("failed to dlsym lsc_ops.get_lsc_otp");
 		goto error_dlsym;
 	}
 
@@ -3359,90 +3201,40 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static cmr_int isp_update_alsc_param(cmr_handle isp_alg_handle)
+static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle out_ptr)
 {
-    cmr_int ret = ISP_SUCCESS;
-
-#ifdef LSC_ADV_ENABLE
-    struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-    cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
-    struct alsc_ver_info lsc_ver = { 0 };
-    	if (cxt->ops.lsc_ops.ioctrl)
-			ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("isp_update_alsc_param fail to Get ALSC ver info!");
-	}
-
-if (lsc_ver.LSC_SPD_VERSION >= 2) {
+	cmr_int ret = ISP_SUCCESS;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
-	struct isp_pm_param_data param_data;
-	struct lsc_adv_calc_param calc_param;
-	struct lsc_adv_calc_result calc_result = { 0 };
-	cmr_u32 i = 0;
-	memset(&param_data, 0, sizeof(param_data));
-	memset(&calc_param, 0, sizeof(calc_param));
+	struct isp_pm_param_data param_data_alsc;
+	struct isp_lsc_info *lsc_info_new = NULL;
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct alsc_fwstart_info *fwstart_info = (struct alsc_fwstart_info *)out_ptr;
+	cmr_s32 i =0;
 
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)output.param_data->data_ptr;
-
-	struct isp_2d_lsc_param *lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-
-	calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
-	struct awb_size stat_img_size;
-	struct awb_size win_size;
-	struct isp_ae_grgb_statistic_info *stat_info;
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	stat_info = output.param_data->data_ptr;
-
-	if (cxt->ops.awb_ops.ioctrl) {
-		cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
-		cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
+	if (ISP_SUCCESS != ret || NULL == output.param_data) {
+		ISP_LOGE("fail to check output.param_data");
+		return ISP_PARAM_ERROR;
 	}
 
-	//ISP_LOGV("0x%x, 0x%x, 0x%x", stat_info->r_info, stat_info->g_info, stat_info->b_info);
-
-	calc_param.stat_img.r = cxt->aem_stats.r_info;
-	calc_param.stat_img.gr = cxt->aem_stats.g_info;
-	calc_param.stat_img.gb = cxt->aem_stats.g_info;
-	calc_param.stat_img.b = cxt->aem_stats.b_info;
-	calc_param.stat_size.w = stat_img_size.w;
-	calc_param.stat_size.h = stat_img_size.h;
-	calc_param.gain_width = lsc_info->gain_w;
-	calc_param.gain_height = lsc_info->gain_h;
-        calc_param.grid = lsc_info->grid;
-	calc_param.lum_gain = (cmr_u16 *) lsc_info->param_ptr;
-	calc_param.block_size.w = win_size.w;
-	calc_param.block_size.h = win_size.h;
-	//calc_param.ct = ct;
-	calc_param.bv = isp_cur_bv;
-	calc_param.isp_id = ISP_2_0;
-
-	calc_param.r_gain = gAWBGainR;
-	calc_param.b_gain = gAWBGainB;
-	calc_param.img_size.w = cxt->commn_cxt.src.w;
-	calc_param.img_size.h = cxt->commn_cxt.src.h;
-
-	if (lsc_tab_pram_ptr == 0)
-		return 0;
-	else {
-		for (i = 0; i < 9; i++) {
-			calc_param.lsc_tab_address[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
-		}
+	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
+	for(i=0; i<9;i++)
+		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+	fwstart_info->gain_width_new = lsc_info_new->gain_w;
+	fwstart_info->gain_height_new = lsc_info_new->gain_h;
+	fwstart_info->image_pattern_new = cxt->commn_cxt.image_pattern;
+	fwstart_info->grid_new = lsc_info_new->grid;
+	fwstart_info->camera_id = cxt->camera_id;
+	if (cxt->ops.lsc_ops.ioctrl) {
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)fwstart_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_START"));
 	}
-
-	if (cxt->ops.lsc_ops.process)
-		cxt->ops.lsc_ops.process(lsc_adv_handle, &calc_param, &calc_result);
-
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-	input.param_data_ptr = &param_data;
-
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
-
-}
-#endif
 
 	return ret;
 }
@@ -3456,16 +3248,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_size org_size;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	cmr_s32 mode = 0, dv_mode = 0;
-
-	struct isp_pm_ioctl_input input = { PNULL, 0 };
-	struct isp_pm_ioctl_output output = { PNULL, 0 };
-	struct isp_pm_param_data param_data_alsc;
-	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
-	struct isp_lsc_info *lsc_info_new = NULL;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
-	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
-
+	cmr_s32 mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -3576,26 +3360,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
-	// update lsc reslut
-	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
-	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
-	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-	fwstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
-	for(int i=0; i<9;i++)
-		fwstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
-	fwstart_info.gain_width_new = lsc_info_new->gain_w;
-	fwstart_info.gain_height_new = lsc_info_new->gain_h;
-	fwstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
-	fwstart_info.grid_new = lsc_info_new->grid;
-	fwstart_info.camera_id = cxt->camera_id;
-	if (cxt->ops.lsc_ops.ioctrl)
-		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)&fwstart_info, NULL);
+	/* update lsc reslut */
+	ret = ispalg_update_alsc_result(cxt, (void *)&fwstart_info);
+	ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 
 	ret = isp_alg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
-	ret = isp_update_alsc_param(cxt);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
@@ -3614,8 +3384,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, in_ptr, NULL);
 	}
 
-	if (cxt->ops.lsc_ops.ioctrl)
+	if (cxt->ops.lsc_ops.ioctrl){
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
+	}
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -3696,6 +3468,14 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");
+	// SBS lsc added 1
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
+	struct isp_pm_param_data param_data_alsc;
+	struct isp_lsc_info *lsc_info_new = NULL;
+	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
+
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
 
@@ -3762,12 +3542,35 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param * in_p
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
+	// SBS lsc added 2, update lsc reslut
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
+	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
+	for(int i=0; i<9;i++)
+		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
+	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;
+	fwprocstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
+	fwprocstart_info.grid_new  = lsc_info_new->grid;
+	fwprocstart_info.camera_id = cxt->camera_id;
+
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);
+
 	ret = isp_alg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
 	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr_v1);
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
 	cxt->gamma_sof_cnt_eb = 1;
+
+	// SBS lsc added 3
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START_END, (void *)&fwprocstart_info, NULL);
 
 	ISP_LOGV("isp start raw proc\n");
 	ret = isp_slice_raw_proc(cxt, in_ptr);

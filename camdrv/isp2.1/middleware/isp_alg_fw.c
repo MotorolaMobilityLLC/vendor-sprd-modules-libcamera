@@ -199,6 +199,7 @@ struct ispalg_lsc_ctrl_ops {
 	cmr_int (*deinit)(cmr_handle *handle_lsc);
 	cmr_int (*process)(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
 	cmr_int (*ioctrl)(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
+	cmr_int (*get_lsc_otp)(struct sensor_otp_lsc_info *lsc_otp_info, struct sensor_otp_optCenter_info *optical_center_info,cmr_s32 height, cmr_s32 width, cmr_s32 grid, struct lsc_adv_init_param *lsc_param);
 };
 
 struct ispalg_lib_ops {
@@ -2257,7 +2258,6 @@ exit:
 	return ret;
 }
 
-#include "need_remove_lsc_otp.h" //TBD need remove
 static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_u32 ret = ISP_SUCCESS;
@@ -2313,7 +2313,34 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 
 	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
-		lsc_table = need_mv_lsc_otp(cxt->otp_data, lsc_tab_param_ptr, &lsc_param); //TBD need remove this function
+		ISP_LOGI("init_lsc_otp, start to get lsc otp data");
+		struct sensor_otp_cust_info* otp_data = (struct sensor_otp_cust_info*)cxt->otp_data;
+		struct sensor_otp_lsc_info* lsc_otp_info = NULL;
+		struct sensor_otp_optCenter_info* optical_center_info = NULL;
+		cmr_s32 full_img_width = lsc_tab_param_ptr->resolution.w;
+		cmr_s32 full_img_height = lsc_tab_param_ptr->resolution.h;
+		cmr_s32 lsc_otp_grid = lsc_info->grid;
+		if (otp_data->otp_vendor == OTP_VENDOR_SINGLE && otp_data->otp_vendor != OTP_VENDOR_NONE) {
+			lsc_otp_info =        &otp_data->single_otp.lsc_info;
+			optical_center_info = &otp_data->single_otp.optical_center_info;
+			ISP_LOGI("init_lsc_otp, single cam, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+		} else {
+			if ((cxt->camera_id == 0) || (cxt->camera_id == 1)) {
+				lsc_otp_info =        &otp_data->dual_otp.master_lsc_info;
+				optical_center_info = &otp_data->dual_otp.master_optical_center_info;
+				ISP_LOGI("init_lsc_otp, dual cam master, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+			} else {
+				lsc_otp_info =        &otp_data->dual_otp.slave_lsc_info;
+				optical_center_info = &otp_data->dual_otp.slave_optical_center_info;
+				ISP_LOGI("init_lsc_otp, dual cam slave, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+			}
+		}
+
+		if (cxt->ops.lsc_ops.get_lsc_otp) {
+			cxt->ops.lsc_ops.get_lsc_otp(lsc_otp_info, optical_center_info, full_img_height, full_img_width, lsc_otp_grid, &lsc_param);
+		}else{
+			ISP_LOGE("fail to do cxt->ops.lsc_ops.get_lsc_otp");
+		}
 	}
 
 	for (i = 0; i < 9; i++) {
@@ -2347,6 +2374,10 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
+	lsc_param.is_master     = 1;   //cxt->is_master;        // wait for SBS sync
+	lsc_param.is_multi_mode = 0;   //cxt->is_multi_mode;    // wait for SBS sync
+
+	lsc_table = lsc_param.lsc_otp_table_addr;
 	if (NULL == cxt->lsc_cxt.handle) {
 		if (cxt->ops.lsc_ops.init) {
 			ret = cxt->ops.lsc_ops.init(&lsc_param, &lsc_adv_handle);
@@ -2705,6 +2736,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym lsc_ops.ioctrl");
 		goto error_dlsym;
 	}
+	cxt->ops.lsc_ops.get_lsc_otp = dlsym(cxt->ispalg_lib_handle, "ispalg_get_lsc_otp");
+	if (!cxt->ops.lsc_ops.get_lsc_otp) {
+		ISP_LOGE("failed to dlsym lsc_ops.get_lsc_otp");
+		goto error_dlsym;
+	}
 
 	return 0;
 error_dlsym:
@@ -2966,8 +3002,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_size org_size;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	cmr_s32 mode = 0, dv_mode = 0;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	cmr_s32 mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -3181,6 +3217,14 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");
+	// SBS lsc added 1
+	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
+	struct isp_pm_param_data param_data_alsc;
+	struct isp_lsc_info *lsc_info_new = NULL;
+	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
+
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
 
@@ -3256,6 +3300,25 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
+	// SBS lsc added 2, update lsc reslut
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
+	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
+	for(int i=0; i<9;i++)
+		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
+	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;
+	fwprocstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
+	fwprocstart_info.grid_new  = lsc_info_new->grid;
+	fwprocstart_info.camera_id = cxt->camera_id;
+
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);
+
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
@@ -3266,6 +3329,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set rgb gain"));
 	}
+
+	// SBS lsc added 3
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START_END, (void *)&fwprocstart_info, NULL);
 
 	ISP_LOGV("isp start raw proc\n");
 	ret = ispalg_slice_raw_proc(cxt, in_ptr);
