@@ -3869,7 +3869,12 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	//SBS lsc added 2, update lsc reslut
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
-	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+	BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_INFO,
+			DCAM_BLK_2D_LSC,
+			cxt->mode_id[0],
+			PNULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data_alsc;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
