@@ -3179,10 +3179,6 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		goto error_dlsym;
 	}
 
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-	memset(&cxt->ops.lsc_ops, 0, sizeof(cxt->ops.lsc_ops));
-	return 0;
-#endif
 	/*init lsc_ctrl_ops*/
 	cxt->ops.lsc_ops.init = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_init");
 	if (!cxt->ops.lsc_ops.init) {
