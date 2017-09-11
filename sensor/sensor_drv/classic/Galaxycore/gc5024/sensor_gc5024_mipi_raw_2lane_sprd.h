@@ -485,7 +485,7 @@ static struct sensor_module_info s_gc5024_module_info_tab[VENDOR_NUM] = {
 
                      .avdd_val = SENSOR_AVDD_2800MV,
                      .iovdd_val = SENSOR_AVDD_1800MV,
-                     .dvdd_val = SENSOR_AVDD_1500MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
