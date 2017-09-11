@@ -29,6 +29,7 @@
      1.3M---------4M--------------1M
 */
 
+#define PIXEL_0P3_MEGA 0x80000    // actually 0.5 *1024*1024
 #define PIXEL_1P3_MEGA 0x180000   // actually 1.5 *1024*1024
 #define PIXEL_2P0_MEGA 0x200000   // actually 2.0 *1024*1024
 #define PIXEL_3P0_MEGA 0x300000   // actually 3.0 *1024*1024
@@ -62,7 +63,8 @@
     } while (0)
 
 enum {
-    IMG_1P3_MEGA = 0,
+    IMG_0P3_MEGA = 0,
+    IMG_1P3_MEGA,
     IMG_2P0_MEGA,
     IMG_3P0_MEGA,
     IMG_4P0_MEGA,
@@ -97,14 +99,14 @@ struct cap_size_to_mem {
 };
 
 static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)},
-    {PIXEL_9P0_MEGA, (40 << 20)}, {PIXEL_AP0_MEGA, (40 << 20)},
-    {PIXEL_BP0_MEGA, (40 << 20)}, {PIXEL_CP0_MEGA, (40 << 20)},
-    {PIXEL_DP0_MEGA, (40 << 20)}, {PIXEL_10P0_MEGA, (52 << 20)},
-    {PIXEL_15P0_MEGA, (65 << 20)}};
+    {PIXEL_0P3_MEGA, (3 << 20)},   {PIXEL_1P3_MEGA, (18 << 20)},
+    {PIXEL_2P0_MEGA, (18 << 20)},  {PIXEL_3P0_MEGA, (18 << 20)},
+    {PIXEL_4P0_MEGA, (18 << 20)},  {PIXEL_5P0_MEGA, (18 << 20)},
+    {PIXEL_6P0_MEGA, (26 << 20)},  {PIXEL_7P0_MEGA, (26 << 20)},
+    {PIXEL_8P0_MEGA, (26 << 20)},  {PIXEL_9P0_MEGA, (40 << 20)},
+    {PIXEL_AP0_MEGA, (40 << 20)},  {PIXEL_BP0_MEGA, (40 << 20)},
+    {PIXEL_CP0_MEGA, (40 << 20)},  {PIXEL_DP0_MEGA, (40 << 20)},
+    {PIXEL_10P0_MEGA, (52 << 20)}, {PIXEL_15P0_MEGA, (65 << 20)}};
 
 /* how to calculate cap size(raw capture):
 * target_yuv = w * h * 3 / 2;
@@ -118,14 +120,14 @@ static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
 * * 3(bytes);
 */
 static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)},
-    {PIXEL_9P0_MEGA, (40 << 20)}, {PIXEL_AP0_MEGA, (40 << 20)},
-    {PIXEL_BP0_MEGA, (40 << 20)}, {PIXEL_CP0_MEGA, (40 << 20)},
-    {PIXEL_DP0_MEGA, (40 << 20)}, {PIXEL_10P0_MEGA, (52 << 20)},
-    {PIXEL_15P0_MEGA, (65 << 20)}};
+    {PIXEL_0P3_MEGA, (3 << 20)},   {PIXEL_1P3_MEGA, (18 << 20)},
+    {PIXEL_2P0_MEGA, (18 << 20)},  {PIXEL_3P0_MEGA, (18 << 20)},
+    {PIXEL_4P0_MEGA, (18 << 20)},  {PIXEL_5P0_MEGA, (18 << 20)},
+    {PIXEL_6P0_MEGA, (26 << 20)},  {PIXEL_7P0_MEGA, (26 << 20)},
+    {PIXEL_8P0_MEGA, (26 << 20)},  {PIXEL_9P0_MEGA, (40 << 20)},
+    {PIXEL_AP0_MEGA, (40 << 20)},  {PIXEL_BP0_MEGA, (40 << 20)},
+    {PIXEL_CP0_MEGA, (40 << 20)},  {PIXEL_DP0_MEGA, (40 << 20)},
+    {PIXEL_10P0_MEGA, (52 << 20)}, {PIXEL_15P0_MEGA, (65 << 20)}};
 
 static const struct cap_size_to_mem front_cam_mem_size_tab[IMG_SIZE_NUM] = {
     {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
@@ -160,14 +162,14 @@ static const struct cap_size_to_mem mem_size_tab[IMG_SIZE_NUM] = {
     {PIXEL_7P0_MEGA, (20 << 20)}, {PIXEL_8P0_MEGA, (20 << 20)}};
 
 static const struct cap_size_to_mem reserve_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (8 << 20)},  {PIXEL_2P0_MEGA, (8 << 20)},
-    {PIXEL_3P0_MEGA, (8 << 20)},  {PIXEL_4P0_MEGA, (8 << 20)},
-    {PIXEL_5P0_MEGA, (8 << 20)},  {PIXEL_6P0_MEGA, (12 << 20)},
-    {PIXEL_7P0_MEGA, (12 << 20)}, {PIXEL_8P0_MEGA, (12 << 20)},
-    {PIXEL_9P0_MEGA, (20 << 20)}, {PIXEL_AP0_MEGA, (20 << 20)},
-    {PIXEL_BP0_MEGA, (20 << 20)}, {PIXEL_CP0_MEGA, (20 << 20)},
-    {PIXEL_DP0_MEGA, (20 << 20)}, {PIXEL_10P0_MEGA, (25 << 20)},
-    {PIXEL_15P0_MEGA, (32 << 20)}};
+    {PIXEL_0P3_MEGA, (2 << 20)},   {PIXEL_1P3_MEGA, (8 << 20)},
+    {PIXEL_2P0_MEGA, (8 << 20)},   {PIXEL_3P0_MEGA, (8 << 20)},
+    {PIXEL_4P0_MEGA, (8 << 20)},   {PIXEL_5P0_MEGA, (8 << 20)},
+    {PIXEL_6P0_MEGA, (12 << 20)},  {PIXEL_7P0_MEGA, (12 << 20)},
+    {PIXEL_8P0_MEGA, (12 << 20)},  {PIXEL_9P0_MEGA, (20 << 20)},
+    {PIXEL_AP0_MEGA, (20 << 20)},  {PIXEL_BP0_MEGA, (20 << 20)},
+    {PIXEL_CP0_MEGA, (20 << 20)},  {PIXEL_DP0_MEGA, (20 << 20)},
+    {PIXEL_10P0_MEGA, (25 << 20)}, {PIXEL_15P0_MEGA, (32 << 20)}};
 
 static multiCameraMode is_multi_camera_mode_mem;
 
@@ -265,25 +267,24 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id, cmr_u16 width,
 
     CMR_LOGI("camera_pre_capture_buf_id width = %d, height = %d", width,
              height);
-    if ((width * height <= 5312 * 3984) &&
-        (width * height > 4608 * 3456)) { // 21M
-        buffer_id = IMG_15P0_MEGA;
-    } else if ((width * height <= 4608 * 3456) &&
-               (width * height > 4160 * 3120)) { // 16M
-        buffer_id = IMG_10P0_MEGA;
-    } else if ((width * height <= 4160 * 3120) &&
-               (width * height > 3264 * 2448)) { // 13M
-        buffer_id = IMG_DP0_MEGA;
-    } else if ((width * height <= 3264 * 2448) &&
-               (width * height > 2592 * 1944)) { // 8M
-        buffer_id = IMG_8P0_MEGA;
-    } else if ((width * height <= 2592 * 1944) &&
-               (width * height > 1920 * HEIGHT_2M)) { // 5M
-        buffer_id = IMG_5P0_MEGA;
+
+    if (width * height <= 720 * 480) { // 0M3
+        buffer_id = IMG_0P3_MEGA;
     } else if (width * height <= 1920 * HEIGHT_2M) { // 2M
         buffer_id = IMG_2P0_MEGA;
+    } else if (width * height <= 2592 * 1944) { // 5M
+        buffer_id = IMG_5P0_MEGA;
+    } else if (width * height <= 3264 * 2448) { // 8M
+        buffer_id = IMG_8P0_MEGA;
+    } else if (width * height <= 4160 * 3120) { // 13M
+        buffer_id = IMG_DP0_MEGA;
+    } else if (width * height <= 4608 * 3456) { // 16M
+        buffer_id = IMG_10P0_MEGA;
+    } else if (width * height <= 5312 * 3984) { // 21M
+        buffer_id = IMG_15P0_MEGA;
     } else {
-        CMR_LOGI("unsupport buffer id = %d", buffer_id);
+        CMR_LOGD("support to 21M for now");
+        buffer_id = IMG_15P0_MEGA;
     }
 
     CMR_LOGI("buffer id = %d", buffer_id);
@@ -295,7 +296,7 @@ int camera_reserve_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
                             cmr_u32 *mem_size, cmr_u32 *mem_sum) {
     struct cap_size_to_mem *mem_tab_ptr = NULL;
 
-    if (mem_size_id < IMG_1P3_MEGA || mem_size_id >= IMG_SIZE_NUM ||
+    if (mem_size_id < IMG_0P3_MEGA || mem_size_id >= IMG_SIZE_NUM ||
         NULL == mem_size) {
         CMR_LOGE("no matched size for this image: id=%d, %p", mem_size_id,
                  mem_size);
@@ -317,7 +318,7 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
     struct cap_size_to_mem *mem_tab_ptr = NULL;
     struct cap_size_to_mem *yuv_mem_tab_ptr = NULL;
 
-    if (mem_size_id < IMG_1P3_MEGA || mem_size_id >= IMG_SIZE_NUM ||
+    if (mem_size_id < IMG_0P3_MEGA || mem_size_id >= IMG_SIZE_NUM ||
         NULL == mem_size) {
         CMR_LOGE("no matched size for this image: id=%d, %p", mem_size_id,
                  mem_size);
@@ -417,7 +418,7 @@ int camera_capture_buf_size(uint32_t camera_id, uint32_t sn_fmt,
         }
     }
 
-    for (i = IMG_1P3_MEGA; i < IMG_SIZE_NUM; i++) {
+    for (i = IMG_0P3_MEGA; i < IMG_SIZE_NUM; i++) {
         if (size_pixel <= mem_tab_ptr[i].pixel_num)
             break;
     }

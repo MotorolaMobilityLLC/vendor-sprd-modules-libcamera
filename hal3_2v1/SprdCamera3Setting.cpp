@@ -311,6 +311,8 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
     {1920, HEIGHT_2M},
 #elif defined(CONFIG_CAMERA_SUPPORT_2M)
     {1600, 1200},
+#elif defined(CONFIG_CAMERA_SUPPORT_0M3)
+    {640, 480},
 #else
     {1600, 1200},
 #endif
