@@ -683,7 +683,7 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 }
 
 /* initialization */
-static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_output)
+static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_output, struct isp_haf_tune_param *pdaf_tune_data)
 {
 	//tuning data from common_mode
 	af_tuning_block_param af_tuning_data;
@@ -725,6 +725,10 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
 	af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
 	af_tuning_data.data_len = af_pm_output->param_data[0].data_size;
+
+	if(pdaf_tune_data != NULL){
+	    ISP_LOGI("PDAF Tuning 1[%d] 2[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
+	}
 
 	alg_cxt = AF_init(&AF_Ops, &af_tuning_data, &af->af_dump_info_len, AF_SYS_VERSION);
 	return alg_cxt;
@@ -2387,7 +2391,30 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,
 		 af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
 
-	af->af_alg_cxt = load_settings(af, &af_pm_output);
+
+	//PDAF Tuning Data
+	struct isp_haf_tune_param *isp_pdaf_tune_data = NULL;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	memset(&param_data, 0, sizeof(param_data));
+
+#ifdef CONFIG_ISP_2_3
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+#else
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
+#endif
+	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (AFV1_SUCCESS == rtn && 1 == output.param_num) {
+		isp_pdaf_tune_data = (struct isp_haf_tune_param *)output.param_data->data_ptr;
+	} else {
+		ISP_LOGE("fail to get sensor HAF tuning param data");
+		//return NULL;
+	}
+
+	af->af_alg_cxt = load_settings(af, &af_pm_output, isp_pdaf_tune_data);
 	if (NULL == af->af_alg_cxt) {
 		ISP_LOGE("fail to init lib func AF_init");
 		free(af);

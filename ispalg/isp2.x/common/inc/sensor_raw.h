@@ -207,6 +207,31 @@ struct anti_flicker_tune_param {
 	cmr_u32 reserved[16];
 };
 
+struct pdaf_tune_param {
+	cmr_u32 min_pd_vcm_steps;
+	cmr_u32 max_pd_vcm_steps;
+	cmr_u32 coc_range;
+	cmr_u32 far_tolerance;
+	cmr_u32 near_tolerance;
+	cmr_u32 err_limit;
+	cmr_u32 pd_converge_thr;
+	cmr_u32 pd_converge_thr_2nd;
+	cmr_u32 pd_focus_times_thr;
+	cmr_u32 pd_thread_sync_frm;
+	cmr_u32 pd_thread_sync_frm_init;
+	cmr_u32 min_process_frm;
+	cmr_u32 max_process_frm;
+	cmr_u32 pd_conf_thr;
+	cmr_u32 pd_conf_thr_2nd;
+	cmr_u32 reserved[52];
+};
+
+struct haf_tune_param {
+	//default param for outdoor/indoor/dark
+	struct pdaf_tune_param pdaf_tune_data[3];
+	cmr_u32 reserved[256];
+};
+
 //environment detec
 struct sensor_envi_detect_param {
 	cmr_u32 enable;
@@ -1770,6 +1795,7 @@ enum ISP_BLK_ID {
 	DCAM_BLK_RAW_AEM = 0x4038,
 	DCAM_BLK_2D_LSC = 0x4039,
 	ISP_BLK_ANTI_FLICKER = 0x403B,
+	ISP_BLK_PDAF_TUNE = 0x403C,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };

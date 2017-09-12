@@ -123,6 +123,7 @@ struct pdaf_ctrl_init_in {
 	struct pdaf_ctrl_cb_ops_type pdaf_ctrl_cb_ops;
 	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
+	cmr_handle handle_pm;
 	cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
 	cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info *pd_info);
 	cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
