@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+
 /************************************************************************/
+
 
 //#ifdef WIN32
 
@@ -24,6 +26,8 @@
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
 
+
+
 /* Begin Include */
 #include "sensor_sp8407_raw_param_common.c"
 #include "sensor_sp8407_raw_param_prv_0.c"
@@ -31,20 +35,26 @@
 #include "sensor_sp8407_raw_param_cap_0.c"
 #include "sensor_sp8407_raw_param_cap_1.c"
 #include "sensor_sp8407_raw_param_video_0.c"
+#include "sensor_sp8407_raw_param_video_1.c"
 
 /* End Include */
 
 //#endif
 
+
 /************************************************************************/
 
+
 /* IspToolVersion=1.15.46.2 */
+
 
 /* Capture Sizes:
 	3264x2448,1632x1224
 */
 
+
 /************************************************************************/
+
 
 static struct sensor_raw_resolution_info_tab s_sp8407_trim_info=
 {
@@ -63,7 +73,9 @@ static struct sensor_raw_resolution_info_tab s_sp8407_trim_info=
 	}
 };
 
+
 /************************************************************************/
+
 
 static struct sensor_raw_ioctrl s_sp8407_ioctrl=
 {
@@ -82,10 +94,13 @@ static struct sensor_raw_ioctrl s_sp8407_ioctrl=
 	0,
 	0,
 	0,
+	0,
 	0
 };
 
+
 /************************************************************************/
+
 
 static struct sensor_version_info s_sp8407_version_info=
 {
@@ -93,8 +108,8 @@ static struct sensor_version_info s_sp8407_version_info=
 	{
 		{
 			0x34387073,
-			0x78793730,
-			0x006C6175,
+			0x00003730,
+			0x00000000,
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -115,7 +130,9 @@ static struct sensor_version_info s_sp8407_version_info=
 	0x00000000
 };
 
+
 /************************************************************************/
+
 
 static uint32_t s_sp8407_libuse_info[]=
 {
@@ -129,7 +146,9 @@ static uint32_t s_sp8407_libuse_info[]=
     0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 };
 
+
 /************************************************************************/
+
 
 static struct sensor_raw_info s_sp8407_mipi_raw_info=
 {
@@ -145,7 +164,7 @@ static struct sensor_raw_info s_sp8407_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{s_sp8407_tune_info_video_0, sizeof(s_sp8407_tune_info_video_0)},
-		{NULL, 0},
+		{s_sp8407_tune_info_video_1, sizeof(s_sp8407_tune_info_video_1)},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -163,7 +182,7 @@ static struct sensor_raw_info s_sp8407_mipi_raw_info=
 		NULL,
 		NULL,
 		&s_sp8407_fix_info_video_0,
-		NULL,
+		&s_sp8407_fix_info_video_1,
 		NULL,
 		NULL,
 	},
@@ -178,7 +197,7 @@ static struct sensor_raw_info s_sp8407_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{s_sp8407_video_0_tool_ui_input, sizeof(s_sp8407_video_0_tool_ui_input)},
-		{NULL, 0},
+		{s_sp8407_video_1_tool_ui_input, sizeof(s_sp8407_video_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -188,4 +207,3 @@ static struct sensor_raw_info s_sp8407_mipi_raw_info=
 		&s_sp8407_default_nr_level_map_param,
 	},
 };
-
