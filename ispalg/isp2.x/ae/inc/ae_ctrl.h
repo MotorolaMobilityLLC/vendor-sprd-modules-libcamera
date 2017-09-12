@@ -21,7 +21,9 @@
 #include "isp_pm.h"
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
+#ifdef CONFIG_ISP_2_2
 #include "isp_otp_calibration.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

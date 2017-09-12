@@ -53,11 +53,9 @@ LOCAL_C_INCLUDES := \
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/middleware/inc \
 	$(LOCAL_PATH)/isp_tune \
-	$(LOCAL_PATH)/calibration \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
-	$(LOCAL_PATH)/param_parse \
-	$(LOCAL_PATH)/calibration/inc
+	$(LOCAL_PATH)/param_parse
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
@@ -72,7 +70,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libcampm liblog
 
-LOCAL_SHARED_LIBRARIES += libcamsensor libcalibration
+LOCAL_SHARED_LIBRARIES += libcamsensor
 
 
 ifeq ($(PLATFORM_VERSION),8.0.0)

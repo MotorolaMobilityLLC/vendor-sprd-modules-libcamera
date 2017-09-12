@@ -26,7 +26,6 @@
 #include "isp_pm_com_type.h"
 #include "isp_com_alg.h"
 #include "smart_ctrl.h"
-#include "isp_otp_calibration.h"
 #include <cutils/properties.h>
 #include "isp_video.h"
 

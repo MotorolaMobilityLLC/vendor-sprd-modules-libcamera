@@ -234,7 +234,6 @@ struct isp_alg_fw_context {
 	cmr_handle thr_afhandle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
-	cmr_handle handle_otp;
 
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
@@ -2468,12 +2467,10 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	struct sensor_version_info *version_info = PNULL;
 	struct isp_pm_init_input input;
 	struct isp_pm_init_output output;
-	struct isp_otp_init_in otp_input;
 	cmr_u32 i = 0;
 
 	memset(&input, 0, sizeof(input));
 	memset(&output, 0, sizeof(output));
-	memset(&otp_input, 0, sizeof(otp_input));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
 	memcpy((void *)cxt->sn_cxt.isp_init_data, (void *)input_ptr->mode_ptr, ISP_MODE_NUM_MAX * sizeof(struct isp_data_info));
@@ -2505,13 +2502,6 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	       sensor_raw_info_ptr->resolution_info_ptr->tab,
 	       ISP_INPUT_SIZE_NUM_MAX * sizeof(struct sensor_raw_resolution_info));
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &input_ptr->size);
-
-	/*Notice: otp_init must be called before _ispAlgInit */
-	otp_input.handle_pm = cxt->handle_pm;
-	otp_input.lsc_golden_data = input_ptr->sensor_lsc_golden_data;
-	otp_input.calibration_param = input_ptr->calibration_param;
-	ret = otp_ctrl_init(&cxt->handle_otp, &otp_input);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do _otp_init"));
 
 	return ret;
 }
@@ -3486,8 +3476,6 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
-
-	otp_ctrl_deinit(cxt->handle_otp);
 
 	if (cxt->ae_cxt.log_alc) {
 		free(cxt->ae_cxt.log_alc);
