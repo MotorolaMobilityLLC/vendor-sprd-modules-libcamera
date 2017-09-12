@@ -18,7 +18,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter #-Werror
 
 ISP_HW_VER = 3v0
 
