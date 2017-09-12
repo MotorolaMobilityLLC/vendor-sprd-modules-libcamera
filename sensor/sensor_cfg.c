@@ -46,6 +46,7 @@ extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
 //extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5675_dual_mipi_raw_info;
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
@@ -123,6 +124,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
     {MODULE_SUNNY, "gc8024_mipi_raw", &g_gc8024_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
     {MODULE_TRULY, "imx258_mipi_raw", &g_imx258_mipi_raw_info, {&dw9800_drv_entry, 0}, &imx258_drv_entry},
     {MODULE_SUNNY, "gc5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "gc030a_mipi_raw", &g_gc030a_mipi_raw_info, {NULL, 0}, NULL},
 #if defined(CONFIG_DUAL_MODULE)
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
     {MODULE_SUNNY, "ov13855a_mipi_raw", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &ov13855_altek_drv_entry},
