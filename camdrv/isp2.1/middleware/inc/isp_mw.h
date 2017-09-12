@@ -18,7 +18,7 @@
 
 #include "isp_exif.h"
 #include "isp_type.h"
-#include "sprd_isp_k.h"
+#include "sprd_isp_r6p10.h"
 #include "cmr_sensor_info.h"
 
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
@@ -570,8 +570,8 @@ struct isp_sensor_ex_info {
 };
 
 struct isp_video_limit {
-	cmr_u16 width;
-	cmr_u16 height;
+	cmr_u32 width;
+	cmr_u32 height;
 	cmr_u32 res;
 };
 

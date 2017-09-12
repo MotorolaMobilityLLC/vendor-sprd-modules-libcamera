@@ -21,6 +21,7 @@
 
 struct isp_video_limit {
     uint32_t width;
+    uint32_t height;
     uint32_t res;
 };
 

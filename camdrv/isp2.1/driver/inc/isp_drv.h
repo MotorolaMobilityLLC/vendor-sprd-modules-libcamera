@@ -17,7 +17,7 @@
 #define _ISP_DRV_H_
 #include <fcntl.h>
 #include <errno.h>
-#include "sprd_isp_k.h"
+#include "sprd_isp_r6p10.h"
 #include "sprd_img.h"
 #include "cmr_types.h"
 #include "sensor_raw.h"
@@ -191,10 +191,9 @@ cmr_s32 isp_dev_close(cmr_handle handle);
 cmr_s32 isp_dev_reset(cmr_handle handle);
 cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *param);
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param);
-
 cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
 
-cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height);
+cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 * width, cmr_u32 * height);
 cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec);
 
 cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info);
