@@ -659,6 +659,7 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
     otp_params_t *p_data = (otp_params_t *)p_params;
+    cmr_u8 *buffer = NULL;
 
     if (!otp_cxt->otp_raw_data.buffer) {
         /*when mobile power on , it will init*/
@@ -693,10 +694,14 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
         if (ov13855_altek_drv_entry.otp_dep.is_depend_relation &&
             (ov13855_altek_drv_entry.otp_dep.depend_sensor_id !=
              otp_cxt->sensor_id)) {
-            otp_raw_data->buffer = sensor_otp_get_raw_buffer(
+            buffer = sensor_otp_get_raw_buffer(
                 OTP_RAW_DATA_LEN,
                 ov13855_altek_drv_entry.otp_dep.depend_sensor_id);
-            memcpy(otp_raw_data->buffer, otp_raw_data->buffer, OTP_RAW_DATA_LEN);
+            if (buffer) {
+                memcpy(buffer, otp_raw_data->buffer, OTP_RAW_DATA_LEN);
+            } else {
+                OTP_LOGE("get buffer is null");
+            }
         }
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
