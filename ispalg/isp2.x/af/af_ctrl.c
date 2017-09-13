@@ -42,8 +42,8 @@ struct afctrl_cxt {
 static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	cmr_s8 value[PROPERTY_VALUE_MAX];
-	cmr_s8 pos[PROPERTY_VALUE_MAX];
+	cmr_s8 value[4];
+	cmr_s8 pos[8];
 
 	if (cxt_ptr->af_set_cb) {
 		property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
@@ -325,7 +325,7 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
-	cmr_s8 value[PROPERTY_VALUE_MAX];
+	cmr_s8 value[4];
 	struct af_motor_pos pos = { 0, 0, 0 };
 
 	if (!cxt_ptr) {
