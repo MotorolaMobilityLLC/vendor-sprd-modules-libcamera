@@ -17,7 +17,7 @@
 #define _ISP_DRV_H_
 #include <fcntl.h>
 #include <errno.h>
-#include "sprd_isp_r6p10.h"
+#include "sprd_isp_k.h"
 #include "sprd_img.h"
 #include "cmr_types.h"
 #include "sensor_raw.h"
