@@ -367,6 +367,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     uint8_t mCallbackStreamsNum;
     uint8_t mPreviewStreamsNum;
     List<multi_request_saved_t> mSavedRequestList;
+    Mutex mMetatLock;
+    List<meta_save_t> mMetadataList;
     camera3_stream_t *mSavedCapStreams;
     uint32_t mCapFrameNumber;
     uint32_t mPrevFrameNumber;
@@ -401,6 +403,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
                                     int type);
     void CallBackResult(uint32_t frame_number,
                         camera3_buffer_status_t buffer_status);
+    void CallBackMetadata();
     void CallBackSnapResult();
     int loadBokehApi();
     void unLoadBokehApi();

@@ -346,6 +346,11 @@ typedef struct {
 
 enum rot_angle { ROT_0 = 0, ROT_90, ROT_180, ROT_270, ROT_MAX };
 typedef enum { DARK_LIGHT = 0, LOW_LIGHT, BRIGHT_LIGHT } scene_Light;
+
+typedef struct {
+    camera_metadata_t *metadata;
+    uint32_t frame_number;
+} meta_save_t;
 };
 
 #endif

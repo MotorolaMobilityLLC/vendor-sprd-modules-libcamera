@@ -183,6 +183,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     memset(&mArcParam, 0, sizeof(ArcParam));
     memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
     mLocalBufferList.clear();
+    mMetadataList.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
@@ -358,6 +359,7 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     freeLocalBuffer();
     mSavedRequestList.clear();
     mLocalBufferList.clear();
+    mMetadataList.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
@@ -3290,6 +3292,7 @@ int SprdCamera3RealBokeh::initialize(
     mFlushing = false;
     mCallbackOps = callback_ops;
     mLocalBufferList.clear();
+    mMetadataList.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
@@ -4206,13 +4209,13 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     uint32_t cur_frame_number = result->frame_number;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
     CameraMetadata metadata;
+    meta_save_t metadata_t;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
 
-    metadata = result->result;
-
     if (result_buffer == NULL) {
+        metadata = clone_camera_metadata(result->result);
         // meta process
         if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
             if (mCaptureThread->mReprocessing) {
@@ -4220,12 +4223,22 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                          result->frame_number);
             } else {
                 mVcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
-                mCallbackOps->process_capture_result(mCallbackOps, result);
+                HAL_LOGD("mVcmSteps %d", mVcmSteps);
+                {
+                    Mutex::Autolock l(mRealBokeh->mMetatLock);
+                    metadata_t.frame_number = cur_frame_number;
+                    metadata_t.metadata = metadata.release();
+                    mMetadataList.push_back(metadata_t);
+                }
+                CallBackMetadata();
             }
             return;
         } else {
             HAL_LOGV("send  meta, framenumber:%d", cur_frame_number);
-            mCallbackOps->process_capture_result(mCallbackOps, result);
+            metadata_t.frame_number = cur_frame_number;
+            metadata_t.metadata = metadata.release();
+            Mutex::Autolock l(mRealBokeh->mMetatLock);
+            mMetadataList.push_back(metadata_t);
             return;
         }
     }
@@ -4327,8 +4340,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         mIsCapturing = false;
     } else if (currStreamType == CALLBACK_STREAM) {
         if (!mIsSupportPBokeh) {
-            mRealBokeh->CallBackResult(cur_frame_number,
-                                       CAMERA3_BUFFER_STATUS_OK);
+            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK);
             return;
         }
         // process preview buffer
@@ -4587,6 +4599,39 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
 }
 
 /*===========================================================================
+ * FUNCTION   :CallBackMetadata
+ *
+ * DESCRIPTION: CallBackMetadata
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3RealBokeh::CallBackMetadata() {
+
+    camera3_capture_result_t result;
+    bzero(&result, sizeof(camera3_capture_result_t));
+    List<meta_save_t>::iterator itor;
+    {
+        Mutex::Autolock l(mMetatLock);
+        itor = mMetadataList.begin();
+        while (itor != mMetadataList.end()) {
+            result.frame_number = itor->frame_number;
+            result.result = const_cast<camera_metadata_t *>(itor->metadata);
+            result.num_output_buffers = 0;
+            result.output_buffers = NULL;
+            result.input_buffer = NULL;
+            result.partial_result = 1;
+            mCallbackOps->process_capture_result(mCallbackOps, &result);
+            free_camera_metadata(
+                const_cast<camera_metadata_t *>(result.result));
+            mMetadataList.erase(itor);
+            itor++;
+        }
+    }
+}
+
+/*===========================================================================
  * FUNCTION   :CallBackSnapResult
  *
  * DESCRIPTION: CallBackSnapResult
@@ -4637,6 +4682,9 @@ void SprdCamera3RealBokeh::CallBackResult(
     camera3_stream_buffer_t result_buffers;
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
+
+    CallBackMetadata();
+
     {
         Mutex::Autolock l(mRealBokeh->mRequestLock);
         itor = mRealBokeh->mSavedRequestList.begin();
