@@ -211,6 +211,7 @@ extern "C" {
 		struct isp_size src;
 		cmr_handle caller;	//struct afctrl_cxt *cxt_ptr
 		struct af_ctrl_otp_info otp_info;
+		cmr_u32 is_multi_mode;
 		 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 		 cmr_s32(*start_notice) (void *handle);
 		 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);

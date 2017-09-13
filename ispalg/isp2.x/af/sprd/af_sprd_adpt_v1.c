@@ -904,6 +904,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 			ISP_LOGV("aft tuning size = %d", aft_in.data_len);
 		}
 	}
+	af->trig_ops.handle.is_multi_mode = af->is_multi_mode;
 	af->trig_ops.handle.aft_ops.aft_cookie = af;
 	af->trig_ops.handle.aft_ops.get_sys_time = if_get_sys_time;
 	af->trig_ops.handle.aft_ops.binfile_is_exist = if_aft_binfile_is_exist;
@@ -2391,6 +2392,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->otp_info.gldn_data.macro_cali = init_param->otp_info.gldn_data.macro_cali;
 	af->otp_info.rdm_data.infinite_cali = init_param->otp_info.rdm_data.infinite_cali;
 	af->otp_info.rdm_data.macro_cali = init_param->otp_info.rdm_data.macro_cali;
+	af->is_multi_mode = init_param->is_multi_mode;
 	af->end_notice = init_param->end_notice;
 	af->start_notice = init_param->start_notice;
 	af->set_monitor = init_param->set_monitor;
@@ -2411,7 +2413,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->af_monitor_module_cfg = init_param->af_monitor_module_cfg;
 	af->af_get_system_time = init_param->af_get_system_time;
 
-	ISP_LOGI("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
+	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,
 		 af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
 
