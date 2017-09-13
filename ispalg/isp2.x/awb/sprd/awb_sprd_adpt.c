@@ -28,14 +28,14 @@
 
 #include <utils/Timers.h>
 
-#define AWB_GAIN_PARAM_FILE_NAME "/data/misc/cameraserver/awb.file"
-
 #define AWB_CTRL_MAGIC_BEGIN		0xe5a55e5a
 #define AWB_CTRL_MAGIC_END		0x5e5ae5a5
 #define AWB_CTRL_RESOLUTION_NUM 	8
 #define AWB_CTRL_MWB_NUM		20
 #define AWB_CTRL_SCENEMODE_NUM	10
 #define AWBV_WEIGHT_UNIT 256
+
+#define AWB_GAIN_PARAM_FILE_NAME "/data/misc/cameraserver/awb.file"
 
 #define AWB_CTRL_TRUE			1
 #define AWB_CTRL_FALSE			0
@@ -138,6 +138,8 @@ struct awb_ctrl_cxt {
 	struct awb_ctrl_gain prv_gain;
 	/*flash info */
 	struct awb_flash_info flash_info;
+	/* ctrl touch flash awb */
+	cmr_u32 flash_pre_state;
 	/*previous ct */
 	cmr_u32 prv_ct;
 	/*current gain */
@@ -374,16 +376,6 @@ static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
 	return rtn;
 }
 
-static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
-{
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 awb_mode = *(cmr_u32 *) in_param;
-
-	cxt->wb_mode = awb_mode;
-	ISP_LOGV("debug wbmode changed!");
-	return rtn;
-}
-
 struct awb_save_gain s_save_awb_param[2] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
 static void _awb_save_gain(struct awb_save_gain*cxt, cmr_u32 num)
 {
@@ -417,6 +409,16 @@ static void _awb_read_gain(struct awb_save_gain*cxt, cmr_u32 num)
 		}
 	}
 }
+static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 awb_mode = *(cmr_u32 *) in_param;
+
+	cxt->wb_mode = awb_mode;
+	ISP_LOGV("debug wbmode changed!");
+	return rtn;
+}
+
 static cmr_u32 _awb_set_workmode(struct awb_ctrl_cxt *cxt, void *in_param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -447,14 +449,11 @@ static cmr_u32 _awb_set_scenemode(struct awb_ctrl_cxt *cxt, void *in_param)
 	return rtn;
 }
 
-
-
 static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_gain awb_gain = { 0x0, 0x0, 0x0 };
-
 
 	rtn = _awb_get_gain(cxt, (void *)&awb_gain);
 
@@ -712,6 +711,12 @@ static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->flash_info.flash_status = *flash_status;
 
+	if(cxt->flash_info.flash_status == 2 ){
+		cxt->flash_pre_state = 10;
+	}else{
+		cxt->flash_pre_state = 0;
+	}
+
 	ISP_LOGV("flashing status = %d", cxt->flash_info.flash_status);
 
 	return rtn;
@@ -911,6 +916,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->init = AWB_CTRL_TRUE;
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
+	cxt->flash_pre_state = 0;
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
@@ -1122,7 +1128,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cmr_u64 time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, SYSTEM_TEST -awb_test %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
+	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
 		      calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
 
 
@@ -1244,6 +1250,14 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_gain.b = cxt->lock_info.lock_gain.b;
 		cxt->output_ct = cxt->lock_info.lock_ct;
 	}
+	//only pre flash after
+	if(cxt->flash_pre_state !=0){
+		cxt->output_gain.r = cxt->recover_gain.r;
+		cxt->output_gain.g = cxt->recover_gain.g;
+		cxt->output_gain.b = cxt->recover_gain.b;
+		cxt->output_ct = cxt->recover_ct;
+		cxt->flash_pre_state -=1;
+	}
 
 	//lock awb after flash
 	if(cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0){
@@ -1257,7 +1271,6 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 
 //	ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-
 
 	result->gain.r = cxt->output_gain.r;
 	result->gain.g = cxt->output_gain.g;
@@ -1297,7 +1310,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_SET_WORK_MODE:
-		ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+//		ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
 		if (cxt->last_enable == 2 && cxt->flash_info.flash_enable == 0) {
 			rtn = _awb_get_recgain(cxt, in);
 			if (AWB_CTRL_SUCCESS != rtn) {
@@ -1396,6 +1409,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_VIDEO_STOP_NOTIFY:
+//		ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
 		if (cxt->last_enable == 0  && cxt->flash_info.flash_enable == 0){
 			rtn = _awb_set_recgain(cxt, in);
 		}
