@@ -983,7 +983,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                 frame_number = itor->frame_number;
                 itor++;
                 mRealBokeh->CallBackResult(frame_number,
-                                           CAMERA3_BUFFER_STATUS_OK);
+                                           CAMERA3_BUFFER_STATUS_ERROR);
             }
         }
             return false;
