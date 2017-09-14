@@ -689,7 +689,7 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	af_tuning_block_param af_tuning_data;
 	AF_Ctrl_Ops AF_Ops;
 	void *alg_cxt = NULL;
-
+	cmr_u32 i;
 	if (PNULL == af_pm_output->param_data || PNULL == af_pm_output->param_data[0].data_ptr) {
 		ISP_LOGE("sensor tuning param data null");
 		return alg_cxt;
@@ -726,11 +726,34 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
 	af_tuning_data.data_len = af_pm_output->param_data[0].data_size;
 
+	haf_tuning_param_t haf_tuning_data;
+
 	if(pdaf_tune_data != NULL){
-	    ISP_LOGI("PDAF Tuning 1[%d] 2[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
+	    ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
+		for(i=0;i<3;i++){
+			haf_tuning_data.PDAF_Tuning_Data[i].min_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].min_pd_vcm_steps;
+			haf_tuning_data.PDAF_Tuning_Data[i].max_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].max_pd_vcm_steps;
+			haf_tuning_data.PDAF_Tuning_Data[i].coc_range = pdaf_tune_data->isp_pdaf_tune_data[i].coc_range;
+			haf_tuning_data.PDAF_Tuning_Data[i].far_tolerance = pdaf_tune_data->isp_pdaf_tune_data[i].far_tolerance;
+			haf_tuning_data.PDAF_Tuning_Data[i].near_tolerance = pdaf_tune_data->isp_pdaf_tune_data[i].near_tolerance;
+			haf_tuning_data.PDAF_Tuning_Data[i].err_limit = pdaf_tune_data->isp_pdaf_tune_data[i].err_limit;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_converge_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_converge_thr;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_converge_thr_2nd = pdaf_tune_data->isp_pdaf_tune_data[i].pd_converge_thr_2nd;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_focus_times_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_focus_times_thr;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_thread_sync_frm = pdaf_tune_data->isp_pdaf_tune_data[i].pd_thread_sync_frm;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_thread_sync_frm_init = pdaf_tune_data->isp_pdaf_tune_data[i].pd_thread_sync_frm_init;
+			haf_tuning_data.PDAF_Tuning_Data[i].min_process_frm = pdaf_tune_data->isp_pdaf_tune_data[i].min_process_frm;
+			haf_tuning_data.PDAF_Tuning_Data[i].max_process_frm = pdaf_tune_data->isp_pdaf_tune_data[i].max_process_frm;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_conf_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_conf_thr;
+			haf_tuning_data.PDAF_Tuning_Data[i].pd_conf_thr_2nd = pdaf_tune_data->isp_pdaf_tune_data[i].pd_conf_thr_2nd;
+		}
+    }
+	else{
+		ISP_LOGI("PDAF Tuning NULL!");
+		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1; //Use Default Setting
 	}
 
-	alg_cxt = AF_init(&AF_Ops, &af_tuning_data, &af->af_dump_info_len, AF_SYS_VERSION);
+	alg_cxt = AF_init(&AF_Ops, &af_tuning_data, &haf_tuning_data,  &af->af_dump_info_len, AF_SYS_VERSION);
 	return alg_cxt;
 }
 

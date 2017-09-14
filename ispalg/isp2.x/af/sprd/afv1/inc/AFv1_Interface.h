@@ -48,7 +48,7 @@
 cmr_u8 AF_Trigger(void *handle, AF_Trigger_Data * aft_in);
 cmr_u8 AF_STOP(void *handle, cmr_u32 force_stop);	//force_stop : for mode change (ex. caf to saf)
 
-void *AF_init(AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, cmr_u32 * dump_info_len, char *sys_version);
+void * AF_init(AF_Ctrl_Ops* AF_Ops,af_tuning_block_param* af_tuning_data,  haf_tuning_param_t *haf_tune_data,cmr_u32* dump_info_len,char* sys_version);
 cmr_u8 AF_deinit(void *handle);
 
 cmr_u8 AF_Process_Frame(void *handle);
