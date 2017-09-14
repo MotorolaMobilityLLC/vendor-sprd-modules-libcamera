@@ -53,12 +53,10 @@ LOCAL_C_INCLUDES := \
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/middleware/inc \
 	$(LOCAL_PATH)/isp_tune \
-	$(LOCAL_PATH)/calibration \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
 	$(LOCAL_PATH)/bridge \
-	$(LOCAL_PATH)/param_parse \
-	$(LOCAL_PATH)/calibration/inc
+	$(LOCAL_PATH)/param_parse
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
