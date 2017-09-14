@@ -245,10 +245,10 @@ cmr_u16 _pm_get_lens_grid_pitch(cmr_u32 grid_pitch, cmr_u32 width, cmr_u32 flag)
 		return pitch;
 	}
 
-	if (ISP_ZERO != ((width / ISP_TWO - ISP_ONE) % grid_pitch)) {
-		pitch = ((width / ISP_TWO - ISP_ONE) / grid_pitch + ISP_TWO);
+	if (ISP_ZERO != ((width / ISP_TWO - ISP_ZERO) % grid_pitch)) {
+		pitch = ((width / ISP_TWO - ISP_ZERO) / grid_pitch + ISP_TWO);
 	} else {
-		pitch = ((width / ISP_TWO - ISP_ONE) / grid_pitch + ISP_ONE);
+		pitch = ((width / ISP_TWO - ISP_ZERO) / grid_pitch + ISP_ONE);
 	}
 
 	if (ISP_ONE == flag) {
