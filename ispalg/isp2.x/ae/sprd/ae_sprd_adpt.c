@@ -52,8 +52,7 @@
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
 #define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0/*lower than thrd1, min fps*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0 /*lower than thrd1, min fps*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 300 /*higher than thrd2, max fps*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 600 /*higher than thrd2, max fps*/
 
 /*
  * should be read from driver later
@@ -552,7 +551,7 @@ static cmr_s32 ae_exp_data_update(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 		s_q_put(cxt->seq_handle, &input_item, write_item, actual_item);
 	}	
 
-	ISP_LOGV("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
+	ISP_LOGD("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
 		is_force, exp_data->lib_data.exp_line, exp_data->lib_data.dummy, exp_data->lib_data.sensor_gain, exp_data->lib_data.isp_gain,\
 		write_item->exp_line, write_item->dumy_line, write_item->sensor_gain, write_item->isp_gain,\
 		actual_item->exp_line, actual_item->dumy_line, actual_item->sensor_gain, actual_item->isp_gain);
@@ -631,7 +630,7 @@ static cmr_s32 ae_result_update_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct ae_exposure_param write_param;
-	struct q_item write_item = { 0, 0, 0, 0, 0 };
+	struct q_item write_item;
 	struct q_item actual_item;
 
 	if (0 == cxt) {
@@ -744,7 +743,6 @@ static cmr_s32 ae_exp_gain_adjust(struct ae_ctrl_cxt *cxt,
 			dst_exp_param->exp_line = src_exp_param->exp_line;
 			dst_exp_param->gain = src_exp_param->gain;
 		}
-
 		tmp_fps = 1.0 * AEC_LINETIME_PRECESION / (dst_exp_param->exp_line * cxt->cur_status.line_time);
 		if (tmp_fps > sensor_maxfps) {
 			tmp_fps = sensor_maxfps;
@@ -1791,7 +1789,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		}
 /*start read front flash tuning param*/
 		cxt->front_flash_param[0].led_thr_down = 250;
-		cxt->front_flash_param[0].led_thr_up = 350;
+		cxt->front_flash_param[0].led_thr_up = 500;
 /*end to read front flash tuning param*/
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
@@ -2487,7 +2485,7 @@ static cmr_s32 _set_restore_cnt(struct ae_ctrl_cxt *cxt)
 static int32_t _aem_stat_preprocess(cmr_u32 *src_aem_stat, cmr_u16 *dst_aem_stat, struct ae_size aem_blk_size, struct ae_size aem_blk_num, cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
+	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32*)src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32*)src_aem_stat + stat_blocks;
@@ -2848,8 +2846,8 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_s32 led_eb;
+	cmr_u32 cb_type;
 	cmr_s32 flash_fired;
-	cmr_int cb_type;
 	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 
 	/* for flash algorithm 0 */
@@ -2859,8 +2857,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGI("ae_flash0_status shake_1");
 			if (0 == cxt->send_once[0]) {
 				cxt->send_once[0]++;
-				cb_type = AE_CB_CONVERGED;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED, NULL);
 				ISP_LOGI("ae_flash0_callback do-pre-open!\r\n");
 			}
 		}
@@ -2873,8 +2870,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			if (cxt->cur_result.wts.stable || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
 				if (0 == cxt->send_once[1]) {
 					cxt->send_once[1]++;
-					cb_type = AE_CB_CONVERGED;
-					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED, NULL);
 					ISP_LOGI("ae_flash0_callback do-pre-close!\r\n");
 				}
 				cxt->flash_effect = cxt->cur_result.flash_effect;
@@ -2895,12 +2891,10 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGI("ae_flash0_status shake_4 %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum);
 			if (cxt->cur_result.wts.stable) {
 				if (1 == cxt->send_once[2]) {
-					cb_type = AE_CB_CONVERGED;
-					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED, NULL);
 					ISP_LOGI("ae_flash0_callback do-main-flash!\r\n");
 				} else if (4 == cxt->send_once[2]) {
-					cb_type = AE_CB_CONVERGED;
-					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED, NULL);
 					ISP_LOGI("ae_flash0_callback do-capture!\r\n");
 				} else {
 					ISP_LOGI("ae_flash0 wait-capture!\r\n");
@@ -3016,8 +3010,9 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->sync_cur_status.led_state == 0) {
 			led_eb = 1;
 			cxt->cur_status.led_state = 1;
-			cb_type = AE_CB_LED_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_LED_NOTIFY, &led_eb);
+			ISP_LOGI("ae_flash1_led_thr_down = %d", cxt->front_flash_param[0].led_thr_down);
+			ISP_LOGI("ae_flash1_cur_bv = %d", cxt->sync_cur_result.cur_bv);
 			ISP_LOGI("ae_flash1_callback do-led-open!\r\n");
 		}
 
@@ -3025,8 +3020,9 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->sync_cur_status.led_state == 1) {
 			led_eb = 0;
 			cxt->cur_status.led_state = 0;
-			cb_type = AE_CB_LED_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_LED_NOTIFY, &led_eb);
+			ISP_LOGI("ae_flash1_led_thr_up = %d", cxt->front_flash_param[0].led_thr_up);
+			ISP_LOGI("ae_flash1_cur_bv = %d", cxt->sync_cur_result.cur_bv);
 			ISP_LOGI("ae_flash1_callback do-led-close!\r\n");
 		}
 	}
@@ -3039,8 +3035,7 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->sync_cur_status.flash_fired == 0 && cxt->sync_cur_result.wts.stable) {
 			flash_fired = 1;
 			cxt->cur_status.flash_fired = 1;
-			cb_type = AE_CB_FLASH_FIRED;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &flash_fired);
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_FIRED, &flash_fired);
 			ISP_LOGV("flash will fire!\r\n");
 		}
 
@@ -3048,16 +3043,14 @@ static cmr_s32 _ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->sync_cur_status.flash_fired == 1 && cxt->sync_cur_result.wts.stable) {
 			flash_fired = 0;
 			cxt->cur_status.flash_fired = 0;
-			cb_type = AE_CB_FLASH_FIRED;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &flash_fired);
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_FIRED, &flash_fired);
 			ISP_LOGV("flash will not fire!\r\n");
 		}
 	}
 
 	return AE_SUCCESS;
 }
-
-#if 0 
+#if 0
 static cmr_s32 ae_set_magic_tag(struct debug_ae_param *param_ptr)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -3688,7 +3681,7 @@ static int _aem_stat_preprocess2(cmr_u32 *src_aem_stat,
                                  cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
+	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32*)src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32*)src_aem_stat + stat_blocks;
@@ -5254,14 +5247,12 @@ EXIT:
 
 static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
-	cmr_int cb_type;
 	UNUSED(param);
 	cxt->hdr_up = cxt->hdr_down = 33;//50
 
 	cxt->hdr_frame_cnt++;
 	if (cxt->hdr_frame_cnt == cxt->hdr_cb_cnt) {
-		cb_type = AE_CB_HDR_START;
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, NULL);
 		ISP_LOGI("_isp_hdr_callback do-capture!\r\n");
 	}
 
@@ -5362,7 +5353,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cmr_s32 mode = 0;
 	struct ae_trim trim;
 	cmr_u32 max_exp = 0;
-	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	struct ae_exposure_param src_exp;
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
@@ -5481,6 +5472,8 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		}
 	}
 	cxt->cur_status.ae_table->min_index = 0;
+	//cxt->mod_update_list.is_scene = 1;
+	ISP_LOGI("ae table: [%d, %d]\n", cxt->cur_status.ae_table->min_index, cxt->cur_status.ae_table->max_index);
 
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
@@ -5489,7 +5482,7 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			src_exp.exp_time = cxt->last_exp_param.exp_time;
 			src_exp.dummy = cxt->last_exp_param.dummy;
 		} else {
-			src_exp.exp_line = (cmr_u32)(1.0*cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.line_time+0.5);
+			src_exp.exp_line = (cmr_u32)(1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.line_time + 0.5);
 			if (cxt->min_exp_line > src_exp.exp_line)
 				src_exp.exp_line = cxt->min_exp_line;
 			src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
@@ -5608,11 +5601,12 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
 	cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
-
 	rtn = ae_result_update_to_sensor(cxt, &cxt->exp_data, 1);
 
 	/*it is normal capture, not in flash mode*/
-	if ((1 ==cxt->last_enable) && (FLASH_NONE == cxt->cur_status.settings.flash)) {
+	if ((1 ==cxt->last_enable) 
+		&& ((FLASH_NONE == cxt->cur_status.settings.flash) 
+		|| (FLASH_LED_OFF == cxt->cur_status.settings.flash))) {
 		if (0 ==work_info->is_snapshot) {
 			cxt->last_enable = 0;
 			_set_restore_cnt(cxt);
@@ -5624,11 +5618,13 @@ static cmr_s32 _set_ae_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
 		}
 	}
+
 	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->is_first = 1;
-
-	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%dCAP %d, enable: %d", cxt->camera_id, cxt->cur_status.line_time,
-	cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again, work_info->is_snapshot, cxt->last_enable);
+	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%d flash: %d CAP %d, enable: %d",
+				cxt->camera_id, cxt->cur_status.line_time, cxt->snr_info.frame_size.w,
+				cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line,
+				cxt->sync_cur_result.wts.cur_again, cxt->cur_status.settings.flash, work_info->is_snapshot, cxt->last_enable);
 
 	return rtn;
 }
@@ -5705,7 +5701,6 @@ static cmr_s32 _set_update_aux_sensor(struct ae_ctrl_cxt *cxt, void *param0, voi
 static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
-	cmr_int cb_type;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status;
 	struct ae_alg_calc_result *current_result;
@@ -5714,7 +5709,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	struct ae_calc_in *calc_in = NULL;
 	struct ae_ctrl_callback_in callback_in;
 	UNUSED(result);
-
 
 	if (NULL == param) {
 		ISP_LOGE("fail to get param, in %p", param);
@@ -5801,10 +5795,8 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 /***********************************************************/
 /* send STAB notify to HAL */
     if (callback_in.ae_output.is_stab) {
-        if (cxt->isp_ops.callback) {
-			cb_type = AE_CB_STAB_NOTIFY;
-			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, cb_type, NULL);
-        }
+        if (cxt->isp_ops.callback)
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
 	}
 
     if (1 == cxt->debug_enable) {
@@ -5813,8 +5805,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 
 	cxt->cur_status.frame_id++;
 	if (cxt->isp_ops.callback) {
-		cb_type = AE_CB_PROCESS_OUT;
-		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, cb_type, &callback_in);
+		(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_PROCESS_OUT, &callback_in);
 	}
 ERROR_EXIT:
 	pthread_mutex_unlock(&cxt->data_sync_lock);
@@ -5824,7 +5815,6 @@ ERROR_EXIT:
 cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
-	cmr_int cb_type;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status = NULL;
 	struct ae_alg_calc_result *current_result = NULL;
@@ -5911,6 +5901,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
 	cxt->sync_aem[3 * 1024 + 2] = cxt->cur_status.effect_dummy;
 	cxt->sync_aem[3 * 1024 + 3] = cxt->cur_status.effect_gain;
+
+	ISP_LOGI("exp: %d, gain:%d line time: %d\n",
+		cxt->cur_status.settings.exp_line,
+		cxt->cur_status.settings.gain,
+		cxt->cur_status.line_time);
 
 //START
 	alg_status_ptr = &cxt->cur_status;
@@ -6069,19 +6064,16 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	if(cxt->is_multi_mode ) {
 		ISP_LOGD("notify ae info, camera id=%d",cxt->camera_id);
-		cb_type = AE_CB_AE_CALCOUT_NOTIFY;
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &callback_in.ae_output);
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_AE_CALCOUT_NOTIFY, &callback_in.ae_output);
 	}
 #endif
 
 	rtn = _touch_ae_process(cxt, current_result);
 /* send STAB notify to HAL */
 	if (callback_in.ae_output.is_stab) {
-        if (cxt->isp_ops.callback) {
-			cb_type = AE_CB_STAB_NOTIFY;
-			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, cb_type, NULL);
+        if (cxt->isp_ops.callback)
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_STAB_NOTIFY, NULL);
         }
-	}
 /***********************************************************/
 /*display the AE running status*/
     if (1 == cxt->debug_enable) {
@@ -6106,7 +6098,7 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
 	struct ae_calc_in *calc_in = (struct ae_calc_in *)param;
 
-	ISP_LOGV("is_update %d", calc_in->is_update);
+	ISP_LOGI("is_update %d", calc_in->is_update);
 	if (cxt->high_fps_info.is_high_fps) {
 		if (calc_in->is_update) {
 			rtn = ae_calculation_slow_motion(handle, param, result);
