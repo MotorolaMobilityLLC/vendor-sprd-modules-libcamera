@@ -300,6 +300,9 @@ cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
 
 cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 
+cmr_int cal_dcam_output_size(cmr_u16 *src_w, cmr_u16 *src_h, cmr_u32 *dst_w, cmr_u32 *dst_h);
+
+
 #ifdef __cplusplus
 }
 #endif

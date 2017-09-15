@@ -3717,6 +3717,10 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
             video_param.lv_size = prev_cxt->lv_size;
             video_param.video_size = prev_cxt->video_size;
+#ifdef CONFIG_CAMERA_OFFLINE
+            video_param.dcam_size.width = sensor_mode_info->trim_width;
+            video_param.dcam_size.height = sensor_mode_info->trim_height;
+#endif
             ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
             if (ret) {
                 CMR_LOGE("isp start video failed");
@@ -7043,6 +7047,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct video_start_param video_param;
     struct img_data_end endian;
     struct buffer_cfg buf_cfg;
+    struct img_size tmp_size;
     cmr_u32 i;
 
     CHECK_HANDLE_VALID(handle);
@@ -7273,6 +7278,25 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         }
         video_param.size.height = sensor_mode_info->trim_height;
         video_param.img_format = ISP_DATA_NORMAL_RAW10;
+
+#ifdef CONFIG_CAMERA_OFFLINE
+        if (prev_cxt->actual_video_size.width >
+            prev_cxt->actual_video_size.width) {
+            tmp_size.width = prev_cxt->actual_video_size.width;
+            tmp_size.height = prev_cxt->actual_video_size.height;
+        } else {
+            tmp_size.width = prev_cxt->actual_prev_size.width;
+            tmp_size.height = prev_cxt->actual_prev_size.height;
+        }
+        ret = cal_dcam_output_size(&sensor_mode_info->trim_width,
+                                   &sensor_mode_info->trim_height,
+                                   &tmp_size.width, &tmp_size.height);
+        if (ret) {
+            CMR_LOGE("get dcam output failed");
+            goto exit;
+        }
+        video_param.dcam_size = tmp_size;
+#endif
         video_param.video_mode = ISP_VIDEO_MODE_CONTINUE;
         video_param.work_mode = 0;
         video_param.is_snapshot = 0;
@@ -7312,6 +7336,35 @@ exit:
     }
 
     ATRACE_END();
+    return ret;
+}
+
+cmr_int cal_dcam_output_size(cmr_u16 *src_w, cmr_u16 *src_h, cmr_u32 *dst_w,
+                             cmr_u32 *dst_h) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 tmp_w, tmp_h;
+
+    if (NULL == src_w || NULL == src_h || NULL == dst_w || NULL == dst_h) {
+        CMR_LOGE("pointer of src_w = %p, src_h = %p, dst_w = %p, dst_w = %p",
+                 src_w, src_h, dst_w, dst_h);
+        return -CMR_CAMERA_INVALID_PARAM;
+    }
+    if (*dst_w > *src_w / 2 || *dst_h > *src_h / 2) {
+        *dst_w = *src_w;
+        *dst_h = *src_h;
+    } else {
+        if (*dst_w <= *src_w / 4 && *dst_h <= *src_h / 4) {
+            tmp_w = (*src_w) & (~0xf); // 16 aligned
+            tmp_h = (*src_h) & (~0x7); // 8 aligned
+            *dst_w = tmp_w / 4;
+            *dst_h = tmp_h / 4;
+        } else {
+            tmp_w = (*src_w) & (~0x7); // 8 aligned
+            tmp_h = (*src_h) & (~0x3); // 4 aligned
+            *dst_w = tmp_w / 2;
+            *dst_h = tmp_h / 2;
+        }
+    }
     return ret;
 }
 

@@ -679,6 +679,7 @@ struct isp_video_start {
 	void *buffer_client_data;
 
 	struct isp_size size;
+	struct isp_size dcam_size;
 	struct isp_sensor_resolution_info resolution_info;
 	cmr_u16 is_slow_motion;
 	cmr_u16 is_refocus;

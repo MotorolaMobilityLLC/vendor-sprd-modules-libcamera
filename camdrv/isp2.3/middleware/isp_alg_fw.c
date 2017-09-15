@@ -3578,8 +3578,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	interface_ptr->data.input = ISP_CAP_MODE;
 	interface_ptr->data.input_format = in_ptr->format;
 	interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
-	interface_ptr->data.input_size.w = in_ptr->size.w;
-	interface_ptr->data.input_size.h = in_ptr->size.h;
+	interface_ptr->data.input_size.w = in_ptr->dcam_size.w;
+	interface_ptr->data.input_size.h = in_ptr->dcam_size.h;
 	interface_ptr->data.output_format = ISP_DATA_UYVY;
 	interface_ptr->data.output = ISP_DCAM_MODE;
 
@@ -3699,6 +3699,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
+			in_ptr->size = in_ptr->dcam_size;
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, in_ptr, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to set_af_isp_start_info"));
 		}

@@ -474,6 +474,9 @@ struct cmr_op_mean {
 
 struct video_start_param {
     struct img_size size;
+#ifdef CONFIG_CAMERA_OFFLINE
+    struct img_size dcam_size;
+#endif
     cmr_u32 img_format;
     cmr_u32 video_mode;
     cmr_u32 work_mode;

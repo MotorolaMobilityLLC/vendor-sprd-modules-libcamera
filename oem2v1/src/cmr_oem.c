@@ -5824,6 +5824,10 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     memset(&isp_param, 0x00, sizeof(isp_param));
     isp_param.size.w = param_ptr->size.width;
     isp_param.size.h = param_ptr->size.height;
+#ifdef CONFIG_CAMERA_OFFLINE
+    isp_param.dcam_size.w = param_ptr->dcam_size.width;
+    isp_param.dcam_size.h = param_ptr->dcam_size.height;
+#endif
     isp_param.format = ISP_DATA_NORMAL_RAW10;
     isp_param.mode = param_ptr->video_mode;
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
@@ -8983,7 +8987,9 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
                                    struct img_rect *sn_trim) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt = &cxt->prev_cxt;
     struct sensor_exp_info *sensor_info = NULL;
+    struct img_size tmp_size;
     cmr_u32 sensor_mode = SENSOR_MODE_MAX;
 
     if (!oem_handle || !sn_trim) {
@@ -9021,6 +9027,26 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
     sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
     sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
     sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height;
+
+#ifdef CONFIG_CAMERA_OFFLINE
+    if (prev_cxt->actual_video_size.width > prev_cxt->size.width) {
+        tmp_size.width = prev_cxt->actual_video_size.width;
+        tmp_size.height = prev_cxt->actual_video_size.height;
+    } else {
+        tmp_size.width = prev_cxt->size.width;
+        tmp_size.height = prev_cxt->size.height;
+    }
+    ret = cal_dcam_output_size(&sensor_info->mode_info[sensor_mode].trim_width,
+                               &sensor_info->mode_info[sensor_mode].trim_height,
+                               &tmp_size.width, &tmp_size.height);
+    if (ret) {
+        CMR_LOGE("get dcam output failed");
+        goto exit;
+    }
+    sn_trim->width = tmp_size.width;
+    sn_trim->height = tmp_size.height;
+#endif
+
     CMR_LOGI("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
              sn_trim->width, sn_trim->height);
 exit:
