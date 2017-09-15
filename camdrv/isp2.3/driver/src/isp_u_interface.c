@@ -189,9 +189,8 @@ cmr_s32 isp_set_dispatch(cmr_handle handle)
 	isp_dispatch_ptr->bayer_ch1 = isp_context_ptr->data.format_pattern;
 	isp_dispatch_ptr->ch1_size.width = isp_context_ptr->data.input_size.w;
 	isp_dispatch_ptr->ch1_size.height = isp_context_ptr->data.input_size.h;
-	isp_dispatch_ptr->height_dly_num_ch0 = 0x10;
+	isp_dispatch_ptr->height_dly_num_ch0 = 0x1D;
 	isp_dispatch_ptr->width_dly_num_ch0 = 0x3C;
-	isp_dispatch_ptr->pipe_dly_num = 0x8;
 
 	return ret;
 }
