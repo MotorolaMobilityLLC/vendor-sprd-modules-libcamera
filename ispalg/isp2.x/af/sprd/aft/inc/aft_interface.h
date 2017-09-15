@@ -35,6 +35,14 @@
 #define MAX_AF_WIN 32
 #define PD_MAX_AREA 16
 
+enum aft_isp_mode{
+	AFT_ISP_SINGLE = 0,
+	AFT_ISP_DUAL_NORMAL,
+	AFT_ISP_DUAL_SBS,
+	AFT_ISP_DUAL_SWITCH,
+	AFT_ISP_CAMERA_MAX
+};
+
 enum aft_posture_type {
 	AFT_POSTURE_ACCELEROMETER,
 	AFT_POSTURE_MAGNETIC,
@@ -139,8 +147,8 @@ struct aft_img_blk_info {
 };
 
 struct aft_ae_info {
-	cmr_u32 exp_time;	//us
-	cmr_u32 gain;		//256 --> 1X
+	cmr_u32 exp_time;
+	cmr_u32 gain;
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
@@ -152,7 +160,6 @@ struct aft_ae_info {
 
 struct aft_sensor_info {
 	cmr_u32 sensor_type;
-//      cmr_s64 timestamp;
 	float x;
 	float y;
 	float z;
@@ -212,7 +219,6 @@ struct aft_proc_result {
 
 struct aft_proc_calc_param {
 	cmr_u32 active_data_type;
-	cmr_u32 af_has_suc_rec;
 	struct aft_afm_info afm_info;
 	struct aft_img_blk_info img_blk_info;
 	struct aft_ae_info ae_info;
@@ -242,7 +248,6 @@ typedef struct aft_ctrl_ops {
 	cmr_u8(*binfile_is_exist) (cmr_u8 * is_exist, void *cookie);
 	cmr_u8(*is_aft_mlog) (cmr_u32 * is_mlog, void *cookie);
 	cmr_u8(*aft_log) (cmr_u32 log_level, const char *format, ...);
-
 	void *aft_cookie;
 } aft_ctrl_ops_t;
 
@@ -252,6 +257,7 @@ typedef struct aft_context {
 	aft_sub_handle_t aft_sub_handle;
 	cmr_u32 aft_dump_info_len;
 	cmr_u32 tuning_param_len;
+	cmr_u32 is_multi_mode;
 	cmr_u32 af_mode;
 	struct aft_ae_info ae_info;
 	aft_ctrl_ops_t aft_ops;
