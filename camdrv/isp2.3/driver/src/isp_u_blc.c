@@ -41,6 +41,8 @@ cmr_s32 isp_u_blc_block(cmr_handle handle, void *param_ptr)
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
+	ret |= dcam_u_blc_block(handle, blc_ptr->block_info);
+
 	return ret;
 }
 
