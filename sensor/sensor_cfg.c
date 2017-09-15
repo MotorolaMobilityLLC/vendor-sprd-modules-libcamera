@@ -467,116 +467,74 @@ const SENSOR_MATCH_T front_ext_sensor_infor_tab[] = {
 
     {0, "0", NULL, {NULL, 0}, NULL}};
 
-/*
-* add for auto test for main and sub camera (raw yuv)
-* 2014-02-07 freed wang end
-*/
-// SENSOR_MATCH_T *Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt,
-// SENSOR_ID_E sensor_id) {
-SENSOR_MATCH_T *sensor_get_module_tab(cmr_int at_flag, cmr_u32 sensor_id) {
-    SENSOR_MATCH_T *sensor_infor_tab_ptr = NULL;
-    cmr_u32 index = 0;
+SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
+    SENSOR_MATCH_T *sensor_reg_tab_ptr = NULL;
 
     switch (sensor_id) {
     case SENSOR_MAIN:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&back_sensor_infor_tab;
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)back_sensor_infor_tab;
         break;
     case SENSOR_SUB:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&front_sensor_infor_tab;
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_sensor_infor_tab;
         break;
     case SENSOR_DEVICE2:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&back_ext_sensor_infor_tab;
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)back_ext_sensor_infor_tab;
         break;
     case SENSOR_DEVICE3:
-        sensor_infor_tab_ptr = (SENSOR_MATCH_T *)&front_ext_sensor_infor_tab;
-        break;
-    default:
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_ext_sensor_infor_tab;
         break;
     }
-    return (SENSOR_MATCH_T *)sensor_infor_tab_ptr;
+
+    return (SENSOR_MATCH_T *)sensor_reg_tab_ptr;
 }
 
-// Sensor_GetInforTabLenght
-cmr_u32 sensor_get_tab_length(cmr_int at_flag, cmr_u32 sensor_id) {
-    cmr_u32 tab_lenght = 0;
+char *sensor_get_name_list(cmr_u32 sensor_id) {
+    char *sensor_name_list_ptr = NULL;
 
     switch (sensor_id) {
     case SENSOR_MAIN:
-        tab_lenght = ARRAY_SIZE(back_sensor_infor_tab);
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK;
         break;
     case SENSOR_SUB:
-        tab_lenght = ARRAY_SIZE(front_sensor_infor_tab);
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT;
         break;
     case SENSOR_DEVICE2:
-        tab_lenght = ARRAY_SIZE(back_ext_sensor_infor_tab);
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK_EXT;
         break;
     case SENSOR_DEVICE3:
-        tab_lenght = ARRAY_SIZE(front_ext_sensor_infor_tab);
-        break;
-    default:
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT_EXT;
         break;
     }
-    SENSOR_LOGI("module table length:%d", tab_lenght);
-    return tab_lenght;
+
+    return (char *)sensor_name_list_ptr;
 }
 
-cmr_u32 sensor_get_match_index(cmr_int at_flag, cmr_u32 sensor_id) {
-    cmr_u32 i = 0;
-    cmr_u32 retValue = 0xFF;
-    cmr_u32 mSnNum = 0;
-    cmr_u32 sSnNum = 0;
+SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx) {
+    SENSOR_MATCH_T *sns_reg_tab_ptr = sensor_get_regist_table(sensor_id);
 
-    if (sensor_id == SENSOR_MAIN) {
-        mSnNum = ARRAY_SIZE(back_sensor_infor_tab) - 1;
-        SENSOR_LOGI("sensor sensorTypeMatch main is %d", mSnNum);
-        for (i = 0; i < mSnNum; i++) {
-            if (strcmp(back_sensor_infor_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_BACK) == 0) {
-                SENSOR_LOGI("sensor sensor matched %dth  is %s", i,
-                            CAMERA_SENSOR_TYPE_BACK);
-                retValue = i;
-                break;
-            }
+    if (sns_reg_tab_ptr == NULL)
+        return NULL;
+
+    sns_reg_tab_ptr += idx;
+
+    return sns_reg_tab_ptr;
+}
+
+cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr) {
+    cmr_int ret = SENSOR_SUCCESS;
+    const char *delimiters = ",";
+    char *sns_name_list_ptr = sensor_get_name_list(sensor_id);
+    char sns_name_str[MAX_SENSOR_NAME_LEN] = {0};
+    char *token;
+
+    memcpy(sns_name_str, sns_name_list_ptr,
+           MIN(strlen(sns_name_list_ptr), MAX_SENSOR_NAME_LEN));
+    for (token = strtok(sns_name_str, delimiters); token != NULL;
+         token = strtok(NULL, delimiters)) {
+        if (strcasecmp(reg_tab_ptr->sn_name, token) == 0) {
+            SENSOR_LOGI("%s name match succesful\n", token);
+            return ret;
         }
     }
-    if (sensor_id == SENSOR_SUB) {
-        sSnNum = ARRAY_SIZE(front_sensor_infor_tab) - 1;
-        SENSOR_LOGI("sensor sensorTypeMatch sub is %d", sSnNum);
-        for (i = 0; i < sSnNum; i++) {
-            if (strcmp(front_sensor_infor_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_FRONT) == 0) {
-                SENSOR_LOGI("sensor sensor matched the %dth is %s", i,
-                            CAMERA_SENSOR_TYPE_FRONT);
-                retValue = i;
-                break;
-            }
-        }
-    }
-    if (sensor_id == SENSOR_DEVICE2) {
-        mSnNum = ARRAY_SIZE(back_ext_sensor_infor_tab) - 1;
-        SENSOR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum);
-        for (i = 0; i < mSnNum; i++) {
-            if (strcmp(back_ext_sensor_infor_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
-                SENSOR_LOGI("sensor sensor matched %dth is %s", i,
-                            CAMERA_SENSOR_TYPE_BACK_EXT);
-                retValue = i;
-                break;
-            }
-        }
-    }
-    if (sensor_id == SENSOR_DEVICE3) {
-        sSnNum = ARRAY_SIZE(front_ext_sensor_infor_tab) - 1;
-        SENSOR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum);
-        for (i = 0; i < sSnNum; i++) {
-            if (strcmp(front_ext_sensor_infor_tab[i].sn_name,
-                       CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
-                SENSOR_LOGI("sensor sensor matched the %dth is %s", i,
-                            CAMERA_SENSOR_TYPE_FRONT_EXT);
-                retValue = i;
-                break;
-            }
-        }
-    }
-    return retValue;
+    return SENSOR_FAIL;
 }

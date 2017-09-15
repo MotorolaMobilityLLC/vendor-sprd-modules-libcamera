@@ -40,7 +40,7 @@ split_sensor:=$(sort $(subst $(sensor_comma),$(sensor_space) ,$(shell echo $(SEN
 
 sensor_macro:=$(shell echo $(split_sensor) | tr a-z A-Z)
 #$(warning $(sensor_macro))
-$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
+$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))=\"$(item)\"))
 
 define sensor-ic-identifier
 $(shell echo $(sensor_macro) | grep -w $(shell echo $(1) | tr a-z A-Z))

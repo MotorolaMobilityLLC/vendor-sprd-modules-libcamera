@@ -19,12 +19,15 @@
 #include "otp_info.h"
 #include "sns_af_drv.h"
 
+/*boardconfig.mk sensor name len*/
+#define MAX_SENSOR_NAME_LEN 128
+
 typedef struct sensor_match_tab {
     /**
      * In order to avoid user input errors and uniform format sensor
      * vendor name,we use enumeration to get sensor vendor name.So when you
      * config module_name,you should select a module_index between MODULE_SUNNY
-     * and MODULE_MAX at enumeration group{@camera_vendor_name_type} 
+     * and MODULE_MAX at enumeration group{@camera_vendor_name_type}
      **/
     cmr_u16 module_id;
     char sn_name[36];
@@ -33,7 +36,8 @@ typedef struct sensor_match_tab {
     otp_drv_entry_t *otp_drv_info;
 } SENSOR_MATCH_T;
 
-SENSOR_MATCH_T *sensor_get_module_tab(cmr_int at_flag, cmr_u32 sensor_id);
-cmr_u32 sensor_get_tab_length(cmr_int at_flag, cmr_u32 sensor_id);
-cmr_u32 sensor_get_match_index(cmr_int at_flag, cmr_u32 index);
+SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id);
+char *sensor_get_name_list(cmr_u32 sensor_id);
+SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx);
+cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr);
 #endif
