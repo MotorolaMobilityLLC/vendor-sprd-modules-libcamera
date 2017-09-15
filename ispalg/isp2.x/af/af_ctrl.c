@@ -42,19 +42,9 @@ struct afctrl_cxt {
 static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	cmr_s8 value[PROPERTY_VALUE_MAX];
-	cmr_s8 pos[PROPERTY_VALUE_MAX];
 
 	if (cxt_ptr->af_set_cb) {
-		property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
-		if (1 == atoi((char *)value)) {
-			memset(pos, 0, sizeof(pos));
-			property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
-			in_param->motor_pos = atoi((char *)pos);
-			cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
-		} else {
-			cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
-		}
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -332,8 +322,11 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 		ISP_LOGE("fail to check param!");
 		goto exit;
 	}
+
 	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 	if (1 == atoi((char *)value)) {
+		property_get("persist.sys.isp.vcm.position", (char *)value, "0");
+		pos.motor_pos = atoi((char *)value);
 		af_set_pos(cxt_ptr, &pos);
 		goto exit;
 	}
