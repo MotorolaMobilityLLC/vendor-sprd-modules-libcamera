@@ -17,7 +17,6 @@
 #define _SPRD_AF_CTRL_V1_H
 
 #include <utils/Timers.h>
-#include <cutils/properties.h>
 
 #include "AFv1_Common.h"
 #include "AFv1_Interface.h"
@@ -27,8 +26,8 @@
 
 #define AF_SYS_VERSION "-20170511-01"
 #define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
-#define AF_WAIT_CAF_SEC 3	//1s == (1000 * 1000 * 1000)ns
-#define AF_WAIT_CAF_NSEC 0	//this macro should be less than 1000 * 1000 * 1000
+#define AF_WAIT_CAF_SEC 3 //1s == (1000 * 1000 * 1000)ns
+#define AF_WAIT_CAF_NSEC 0 //this macro should be less than 1000 * 1000 * 1000
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -251,7 +250,6 @@ typedef struct _af_ctrl {
 	struct aft_proc_calc_param prm_trigger;
 	isp_awb_statistic_hist_info_t rgb_stat;
 	cmr_u32 trigger_source_type;
-	char AF_MODE[PROPERTY_VALUE_MAX];
 	struct af_ctrl_otp_info otp_info;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);

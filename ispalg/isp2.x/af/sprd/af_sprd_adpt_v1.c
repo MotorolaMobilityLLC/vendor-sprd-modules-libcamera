@@ -833,7 +833,7 @@ static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 static cmr_u8 if_is_aft_mlog(cmr_u32 * is_save, void *cookie)
 {
 	UNUSED(cookie);
-	char value[8] = { '\0' };
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
 
 	property_get(AF_SAVE_MLOG_STR, value, "no");
 
@@ -878,7 +878,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 {
 	struct aft_tuning_block_param aft_in;
 	struct isp_pm_ioctl_output aft_pm_output;
-	char value[8] = { '\0' };
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
 
 	if (0 != load_trigger_lib(af, lib_name))
 		return -1;
@@ -1264,7 +1264,7 @@ static void *loop_for_test_mode(void *data_client)
 {
 	af_ctrl_t *af = NULL;
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
-	char AF_POS[8] = { '\0' };
+	char AF_POS[PROPERTY_VALUE_MAX] = { '\0' };
 	af = data_client;
 
 	while (0 == af->test_loop_quit) {
@@ -1323,8 +1323,8 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.AF_Trigger_Type = (1 == af->defocus) ? (DEFOCUS) : (RF_NORMAL);
-	pthread_mutex_lock(&af->af_work_lock);
 	calc_roi(af, win, af->algo_mode);
+	pthread_mutex_lock(&af->af_work_lock);
 	AF_Trigger(af->af_alg_cxt, &aft_in);
 	pthread_mutex_unlock(&af->af_work_lock);
 	do_start_af(af);
@@ -1731,6 +1731,7 @@ static cmr_u8 af_wait_caf_finish(af_ctrl_t * af)
 static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 af_mode = *(cmr_u32 *) param0;
 	cmr_s32 timecompare = DCAM_AFTER_VCM_NO;
 	cmr_s32 rtn = AFV1_SUCCESS;
@@ -1740,9 +1741,9 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	cmr_u16 pos = 0;
 
 	ISP_LOGI("af state = %s, focus state = %s, set af_mode = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), af_mode);
-	property_get("af_mode", af->AF_MODE, "none");
-	if (0 != strcmp(af->AF_MODE, "none")) {
-		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
+	property_get("af_mode", AF_MODE, "none");
+	if (0 != strcmp(AF_MODE, "none")) {
+		ISP_LOGI("AF_MODE %s is not null, af test mode", AF_MODE);
 		pos = lens_get_pos(af);
 		ISP_LOGV("VCM registor pos :%d", pos);
 		AF_record_vcm_pos(af->af_alg_cxt, (cmr_u32) pos);
@@ -1767,9 +1768,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		}
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
-		pthread_mutex_lock(&af->af_work_lock);
 		calc_roi(af, NULL, af->algo_mode);
-		pthread_mutex_unlock(&af->af_work_lock);
 		do_start_af(af);
 		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
 		trigger_set_mode(af, mode);
@@ -1855,10 +1854,10 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 	cmr_u32 flash_status = *(cmr_u32 *) param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
-	ISP_LOGV("flash_status %u", flash_status);
 	switch (flash_status) {
 	case ISP_FLASH_PRE_BEFORE:
 	case ISP_FLASH_PRE_LIGHTING:
+	case ISP_FLASH_PRE_AFTER:
 	case ISP_FLASH_MAIN_BEFORE:
 	case ISP_FLASH_MAIN_LIGHTING:
 		if (0 == af->flash_on) {
@@ -1866,8 +1865,7 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 		}
 		break;
 	case ISP_FLASH_MAIN_AFTER:
-	case ISP_FLASH_PRE_AFTER:
-		if (1 == af->flash_on) {
+		if (0 == af->flash_on) {
 			af->flash_on = 0;
 		}
 		break;
@@ -1894,20 +1892,20 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct isp_video_start *in_ptr = (struct isp_video_start *)param0;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 
 	ae_calc_win_size(af, in_ptr);
 	af->isp_info.width = in_ptr->size.w;
 	af->isp_info.height = in_ptr->size.h;
 	ISP_LOGI("af state = %s, focus state = %s; image width = %d, height = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), in_ptr->size.w, in_ptr->size.h);
 
-	property_get("af_mode", af->AF_MODE, "none");
-	if (0 != strcmp(af->AF_MODE, "none")) {
-		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
+	property_get("af_mode", AF_MODE, "none");
+	if (0 != strcmp(AF_MODE, "none")) {
+		ISP_LOGI("AF_MODE %s is not null, af test mode", AF_MODE);
 		return AFV1_SUCCESS;
 	}
-	pthread_mutex_lock(&af->af_work_lock);
+
 	calc_roi(af, NULL, af->algo_mode);
-	pthread_mutex_unlock(&af->af_work_lock);
 	do_start_af(af);
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
 		trigger_start(af);	// for hdr capture no af mode update at whole procedure
@@ -2017,6 +2015,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 #define AE_BLOCK_W 32
 #define AE_BLOCK_H 32
 
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	cmr_u32 Y_sx = 0, Y_ex = 0, Y_sy = 0, Y_ey = 0, r_sum = 0, g_sum = 0, b_sum = 0, y_sum = 0;
 	float ae_area;
 	cmr_u16 width, height, i = 0, blockw, blockh, index;
@@ -2078,8 +2077,8 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 		break;
 	}
 
-	property_get("af_mode", af->AF_MODE, "none");
-	if (0 != strcmp(af->AF_MODE, "none")) {	// test mode only
+	property_get("af_mode", AF_MODE, "none");
+	if (0 != strcmp(AF_MODE, "none")) {	// test mode only
 		ae_calibration(af, rgb);
 	}
 
@@ -2357,7 +2356,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
-	char value[8] = { '\0' };
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	ISP_LOGI("Enter");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
@@ -2541,6 +2540,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
+	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
@@ -2559,10 +2559,10 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGE("fail to get input param data");
 		return AFV1_ERROR;
 	}
-	memset(af->AF_MODE, '\0', sizeof(af->AF_MODE));
+
 	if (1 == af->test_loop_quit) {
-		property_get("af_mode", af->AF_MODE, "none");
-		if (0 == strcmp(af->AF_MODE, "ISP_FOCUS_MANUAL")) {
+		property_get("af_mode", AF_MODE, "none");
+		if (0 == strcmp(AF_MODE, "ISP_FOCUS_MANUAL")) {
 			af->test_loop_quit = 0;
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
@@ -2627,12 +2627,10 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				rtn = saf_process_frame(af);
 				if (1 == rtn) {
 					af->focus_state = AF_IDLE;
-					if (0 == af->flash_on) {
-						af->state = AF_MODE_CONTINUE == af->pre_state ? STATE_CAF : STATE_RECORD_CAF;
-						trigger_set_mode(af, STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO);
-						trigger_start(af);
-						ISP_LOGI("after saf pre_state %u cur_state %u", af->pre_state, af->state);
-					}
+					af->state = AF_MODE_CONTINUE == af->pre_state ? STATE_CAF : STATE_RECORD_CAF;
+					trigger_set_mode(af, STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO);
+					trigger_start(af);
+					ISP_LOGI("after saf pre_state %u cur_state %u", af->pre_state, af->state);
 				}
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
