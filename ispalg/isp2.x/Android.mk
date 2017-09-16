@@ -59,6 +59,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_DIR)/calibration \
 	$(LOCAL_PATH)/$(ISP_DIR)/driver/inc \
 	$(LOCAL_PATH)/$(ISP_DIR)/param_manager \
+	$(LOCAL_PATH)/$(ISP_DIR)/bridge \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/flash/inc \
