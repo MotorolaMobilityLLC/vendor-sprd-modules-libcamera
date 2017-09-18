@@ -483,6 +483,9 @@ struct video_start_param {
     cmr_u32 is_need_flash;
     cmr_u32 capture_skip_num;
     cmr_u32 is_snapshot;
+#ifdef CONFIG_CAMERA_OFFLINE
+    cmr_u32 sprd_zsl_flag;
+#endif
     struct img_size live_view_sz;
     struct img_size lv_size;
     struct img_size video_size;

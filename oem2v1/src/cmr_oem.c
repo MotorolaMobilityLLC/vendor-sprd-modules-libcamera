@@ -5827,6 +5827,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
 #ifdef CONFIG_CAMERA_OFFLINE
     isp_param.dcam_size.w = param_ptr->dcam_size.width;
     isp_param.dcam_size.h = param_ptr->dcam_size.height;
+    isp_param.zsl_flag = param_ptr->sprd_zsl_flag;
 #endif
     isp_param.format = ISP_DATA_NORMAL_RAW10;
     isp_param.mode = param_ptr->video_mode;

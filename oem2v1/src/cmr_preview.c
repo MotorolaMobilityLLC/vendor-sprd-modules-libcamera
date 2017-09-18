@@ -3632,6 +3632,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
+    cmr_bzero(&video_param, sizeof(struct video_start_param));
     prev_cxt = &handle->prev_cxt[camera_id];
     sensor_mode_info = &prev_cxt->sensor_info.mode_info[prev_cxt->cap_mode];
 
@@ -7310,6 +7311,12 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
         video_param.lv_size = prev_cxt->lv_size;
         video_param.video_size = prev_cxt->video_size;
+#ifdef CONFIG_CAMERA_OFFLINE
+        if (prev_cxt->prev_param.sprd_zsl_enabled)
+            video_param.sprd_zsl_flag = 1;
+        else
+            video_param.sprd_zsl_flag = 0;
+#endif
         ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
         if (ret) {
             CMR_LOGE("isp start video failed");
