@@ -1726,9 +1726,9 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
     else {
         p = buf;
         if (flag) {
-            p += snprintf(p, 20, "%s", "SetThmEn");
+            p += snprintf(p, 20, "%s", "SetPerfDis");
         } else {
-            p += snprintf(p, 20, "%s", "SetThmDis");
+            p += snprintf(p, 20, "%s", "SetPerfEn");
         }
         write(therm_fd, buf, strlen(buf));
         close(therm_fd);
