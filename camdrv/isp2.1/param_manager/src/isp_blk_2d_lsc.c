@@ -231,14 +231,6 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 	struct isp_pm_block_header *lnc_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
-	case ISP_PM_BLK_LSC_BYPASS:
-		{
-			dst_lnc_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
-			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
-			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
-		}
-		break;
-
 	case ISP_PM_BLK_LSC_MEM_ADDR:
 		{
 			memcpy((void *)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, dst_lnc_ptr->final_lsc_param.size);
@@ -253,15 +245,6 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
 			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
 		}
-		break;
-
-	case ISP_PM_BLK_LSC_VALIDATE:
-		if (0 != *((cmr_u32 *) param_ptr0)) {
-			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
-		} else {
-			lnc_header_ptr->is_update &= (~ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE);
-		}
-		dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
 		break;
 
 	case ISP_PM_BLK_SMART_SETTING:
@@ -404,19 +387,6 @@ cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, voi
 		param_data_ptr->data_ptr = (void *)&lnc_ptr->cur;
 		param_data_ptr->data_size = sizeof(lnc_ptr->cur);
 		*update_flag &= (~(ISP_PM_BLK_LSC_UPDATE_MASK_PARAM | ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE));
-		lnc_ptr->update_flag = *update_flag;
-		break;
-
-	case ISP_PM_BLK_LSC_BYPASS:
-		param_data_ptr->data_ptr = (void *)&lnc_ptr->cur.bypass;
-		param_data_ptr->data_size = sizeof(lnc_ptr->cur.bypass);
-		break;
-
-	case ISP_PM_BLK_LSC_VALIDATE:
-		param_data_ptr->data_ptr = PNULL;
-		param_data_ptr->data_size = 0;
-		param_data_ptr->user_data[1] = lnc_ptr->update_flag;
-		*update_flag &= (~ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE);
 		lnc_ptr->update_flag = *update_flag;
 		break;
 

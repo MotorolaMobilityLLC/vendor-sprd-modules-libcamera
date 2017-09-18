@@ -25,12 +25,12 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
 	if (!block_info) {
-		ISP_LOGE("block info is null");
+		ISP_LOGE("fail to get handle.");
 		return ret;
 	}
 
@@ -56,7 +56,7 @@ cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -78,7 +78,7 @@ cmr_s32 isp_u_raw_aem_mode(cmr_handle handle, cmr_u32 mode)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error: 0x%lx", (cmr_uint) handle);
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -100,7 +100,7 @@ cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -122,7 +122,7 @@ cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *shift)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 	file = (struct isp_file *)(handle);
@@ -144,7 +144,7 @@ cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, cmr_u32 x, cmr_u32 y)
 	struct img_offset offset;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -169,7 +169,7 @@ cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 	struct isp_img_size size;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -194,7 +194,7 @@ cmr_s32 isp_u_raw_aem_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 heigh
 	struct isp_img_size size;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 

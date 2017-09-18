@@ -25,7 +25,7 @@ cmr_s32 isp_u_arbiter_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 

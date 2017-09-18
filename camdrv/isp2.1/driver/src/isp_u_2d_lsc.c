@@ -228,7 +228,7 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 	cmr_u32 *addr = (cmr_u32 *) param_address;
 
 	if (param_address == 0x0 || grid_num == 0x0) {
-		ISP_LOGE("ISP_GenerateQValues param_address error addr=0x%lx grid_num=%d \n", param_address, grid_num);
+		ISP_LOGE("fail to get ISP_GenerateQValues param_address : addr=0x%lx grid_num=%d \n", param_address, grid_num);
 		return -1;
 	}
 #if 0
@@ -301,7 +301,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -317,7 +317,8 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 #endif
 
 	if (0 == file->reserved || 0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
-		ISP_LOGE("lsc memory error: 0x%p %lx %x", file->reserved, buf_addr, lens_info->buf_len);
+		ISP_LOGE("fail to get lsc memory: file->reserved = %p buf_addr = %lx lens_info->buf_len = %d.",
+			file->reserved, buf_addr, lens_info->buf_len);
 		return ret;
 	} else {
 		memcpy((void *)file->reserved, (void *)buf_addr, lens_info->buf_len);
@@ -326,7 +327,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,
 				  ((cmr_u16) lens_info->grid_x_num & 0xFF) + 2, (lens_info->grid_width & 0xFF), (lens_info->relative_y & 0xFF) >> 1);
 	if (0 != ret) {
-		ISP_LOGE("ISP_GenerateQValues is error");
+		ISP_LOGE("fail to get ISP_GenerateQValues.");
 		return ret;
 	}
 
@@ -340,28 +341,6 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_bypass(cmr_handle handle, cmr_u32 bypass)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_BYPASS;
-	param.property_param = &bypass;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
 cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, cmr_u32 flag)
 {
 	cmr_s32 ret = 0;
@@ -369,7 +348,7 @@ cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, cmr_u32 flag)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -384,56 +363,6 @@ cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, cmr_u32 flag)
 	return ret;
 }
 
-cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, cmr_u32 x, cmr_u32 y)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_img_offset offset;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_POS;
-	offset.x = x;
-	offset.y = y;
-	param.property_param = &offset;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_img_size size;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_GRID_SIZE;
-	size.width = w;
-	size.height = h;
-	param.property_param = &size;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
 cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 {
 	cmr_s32 ret = 0;
@@ -442,7 +371,7 @@ cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h)
 	struct isp_img_size size;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -467,7 +396,7 @@ cmr_s32 isp_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input * 
 	struct isp_dev_block_addr lsc_buf;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 

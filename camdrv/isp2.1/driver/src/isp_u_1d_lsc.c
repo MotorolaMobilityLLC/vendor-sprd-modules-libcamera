@@ -25,7 +25,7 @@ cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -48,7 +48,7 @@ cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height
 	struct isp_img_size slice_size;
 
 	if (!handle) {
-		ISP_LOGE("isp_u_1d_lsc_slice_size: handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -72,7 +72,7 @@ cmr_s32 isp_u_1d_lsc_pos(cmr_handle handle, struct img_offset pos)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("isp_u_1d_lsc_pos: handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 

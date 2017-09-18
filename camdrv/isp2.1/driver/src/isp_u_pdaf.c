@@ -25,7 +25,7 @@ cmr_s32 isp_u_pdaf_bypass(cmr_handle handle, cmr_u32 *bypass)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -46,7 +46,7 @@ cmr_s32 isp_u_pdaf_work_mode(cmr_handle handle, cmr_u32 *work_mode)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -67,7 +67,7 @@ cmr_s32 isp_u_pdaf_extractor_bypass(cmr_handle handle, cmr_u32 *bypass)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -88,7 +88,7 @@ cmr_s32 isp_u_pdaf_skip_num(cmr_handle handle, cmr_u32 *skip_num)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -109,7 +109,7 @@ cmr_s32 isp_u_pdaf_roi(cmr_handle handle, void *roi_info)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -130,7 +130,7 @@ cmr_s32 isp_u_pdaf_ppi_info(cmr_handle handle, void *ppi_info)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
@@ -151,7 +151,7 @@ cmr_s32 isp_u_pdaf_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 

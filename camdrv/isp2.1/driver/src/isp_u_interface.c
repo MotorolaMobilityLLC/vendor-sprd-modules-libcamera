@@ -60,7 +60,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_IIRCNR_YRANDOM, isp_u_yrandom_block},
 	{ISP_BLK_YUV_NOISEFILTER, isp_u_noise_filter_block},
 	{ISP_BLK_AE_NEW, isp_u_raw_aem_block},
-	{ISP_BLK_AWB_NEW, isp_u_awb_block},
+	{ISP_BLK_AWB_NEW, isp_u_awbc_block},
 	{ISP_BLK_AF_NEW, isp_u_raw_afm_block},
 	{ISP_BLK_PDAF_CORRECT, isp_u_pdaf_correction},
 	{ISP_BLK_3DNR_PRE,isp_u_3dnr_pre_block},

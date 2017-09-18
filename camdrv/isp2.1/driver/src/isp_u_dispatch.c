@@ -25,7 +25,7 @@ cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -48,7 +48,7 @@ cmr_s32 isp_u_dispatch_ch0_size(cmr_handle handle, cmr_u32 width, cmr_u32 height
 	struct isp_img_size size;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error");
+		ISP_LOGE("fail to get handle");
 		return -1;
 	}
 

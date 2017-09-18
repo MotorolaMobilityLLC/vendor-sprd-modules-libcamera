@@ -25,7 +25,7 @@ cmr_s32 isp_u_hist_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -66,49 +66,5 @@ cmr_s32 isp_u_hist_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 #endif
-	return ret;
-}
-
-cmr_s32 isp_u_hist_bypass(cmr_handle handle, cmr_u32 bypass)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_HIST;
-	param.property = ISP_PRO_HIST_BYPASS;
-	param.property_param = &bypass;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_hist_mode(cmr_handle handle, cmr_u32 mode)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_HIST;
-	param.property = ISP_PRO_HIST_MODE;
-	param.property_param = &mode;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
 	return ret;
 }

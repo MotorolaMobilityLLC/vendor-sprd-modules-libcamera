@@ -25,7 +25,7 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -35,7 +35,7 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info)
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BYPASS;
 	param.property_param = block_info;
 
-	ISP_LOGE("$$LHC:bypass %d", *(cmr_u32 *) block_info);
+	ISP_LOGV("$$LHC:bypass %d", *(cmr_u32 *) block_info);
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
@@ -48,7 +48,7 @@ cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 

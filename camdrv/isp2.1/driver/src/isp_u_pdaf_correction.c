@@ -18,27 +18,6 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_pdaf_correct_bypass(cmr_handle handle, cmr_u32 *bypass)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_PDAF_CORRECT;
-	param.property = ISP_PRO_PDAF_SET_CORRECT_BYPASS;
-	param.property_param = bypass;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-	return ret;
-}
-
 cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *correction_param)
 {
 	cmr_s32 ret = 0;
@@ -46,7 +25,7 @@ cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *correction_param)
 	struct isp_io_param param;
 
 	if (!handle) {
-		ISP_LOGE("handle is null error.");
+		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 

@@ -25,7 +25,7 @@ cmr_s32 isp_u_dispatch_yuv_block(cmr_handle handle, void *block_info)
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
-		ISP_LOGE("handle is null error: 0x%lx 0x%lx", (cmr_uint) handle, (cmr_uint) block_info);
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
@@ -35,31 +35,6 @@ cmr_s32 isp_u_dispatch_yuv_block(cmr_handle handle, void *block_info)
 	param.sub_block = ISP_BLOCK_DISPATCH_YUV;
 	param.property = ISP_PRO_DISPATCH_YUV_BLOCK;
 	param.property_param = block_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_dispatch_yuv_ch0_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_img_size size;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_DISPATCH_YUV;
-	param.property = ISP_PRO_DISPATCH_YUV_CH0_SIZE;
-	size.width = width;
-	size.height = height;
-	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
