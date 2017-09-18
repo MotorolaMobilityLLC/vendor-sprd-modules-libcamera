@@ -1783,7 +1783,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		if (AF_SEARCHING == af->focus_state || DCAM_AFTER_VCM_YES != timecompare) {
 			system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 			af_clear_sem(af);
-			af_wait_caf_finish(af);
+			//af_wait_caf_finish(af);
 			system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 			ISP_LOGI("picture mode wait caf %" PRId64 " ms", system_time1 - system_time0);
 		};
