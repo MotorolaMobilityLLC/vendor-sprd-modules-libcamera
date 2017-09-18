@@ -50,7 +50,7 @@
 
 
 /* Capture Sizes:
-	2112x1568,4224x3136,1280x720
+	1280x720,2112x1568,4224x3136
 */
 
 
@@ -95,7 +95,7 @@ static struct sensor_version_info s_ov13855a_version_info=
 	{
 		{
 			0x3331766F,
-			0x00353538,
+			0x61353538,
 			0x00000000,
 			0x00000000,
 			0x00000000,
