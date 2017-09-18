@@ -1159,7 +1159,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_ct = cxt->cur_ct;
 	}
 
-	ISP_LOGV("AWB output: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
+	ISP_LOGV("AWB smooth output: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 
 	//lock awb after snapshot
 	if (cxt->snap_lock != 0){
@@ -1271,6 +1271,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 
 //	ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
+	ISP_LOGV("AWB result : (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 
 	result->gain.r = cxt->output_gain.r;
 	result->gain.g = cxt->output_gain.g;
