@@ -21,7 +21,6 @@
 cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
-#if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -37,7 +36,7 @@ cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info)
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
+
 	return ret;
 }
 
