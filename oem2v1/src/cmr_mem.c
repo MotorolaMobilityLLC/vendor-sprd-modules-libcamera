@@ -328,7 +328,7 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
 

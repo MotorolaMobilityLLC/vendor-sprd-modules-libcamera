@@ -3185,7 +3185,7 @@ int SprdCamera3Setting::updateWorkParameters(
         uint8_t is_raw_capture = 0;
         char value[PROPERTY_VALUE_MAX];
         property_get("persist.sys.camera.raw.mode", value, "jpeg");
-        if (!strcmp(value, "raw")) {
+        if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
             is_raw_capture = 1;
         }
 

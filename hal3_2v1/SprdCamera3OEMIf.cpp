@@ -3479,7 +3479,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 1);
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
     }
 #else
@@ -4992,7 +4992,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     timestamp = sensorInfo.timestamp;
 
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
     property_get("persist.sys.camera.debug.mode", debug_value, "non-debug");
@@ -5910,7 +5910,7 @@ int SprdCamera3OEMIf::openCamera() {
 #endif
 
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
 
@@ -6353,7 +6353,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mJpegRotaSet = true;
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 1);
-        if (!strcmp(value, "raw")) {
+        if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
         }
 #else
@@ -6697,7 +6697,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
-        if (!strcmp(value, "raw")) {
+        if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
             HAL_LOGD("enter isp tuning mode ");
             mCaptureMode = CAMERA_ISP_TUNING_MODE;
         } else if (!strcmp(value, "sim")) {
@@ -6723,7 +6723,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mRecordingMode = false;
             mPicCaptureCnt = 100;
             mZslPreviewMode = false;
-            if (!strcmp(value, "raw")) {
+            if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
                 HAL_LOGE("enter isp tuning mode ");
                 mCaptureMode = CAMERA_ISP_TUNING_MODE;
             } else if (!strcmp(value, "sim")) {
@@ -8046,7 +8046,7 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
         mRestartFlag = true;
     }
 
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
         for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
             HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,

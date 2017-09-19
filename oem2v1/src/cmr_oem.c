@@ -4741,7 +4741,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     sem_wait(&cxt->access_sm);
 
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
 
@@ -7391,7 +7391,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.free_mem = camera_free;
 
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
 
