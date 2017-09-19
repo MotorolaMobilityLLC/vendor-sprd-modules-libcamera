@@ -40,6 +40,7 @@ extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
 extern SENSOR_INFO_T g_imx135_mipi_raw_info;
 extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k3l8xxm3r_mipi_raw_info;
+extern SENSOR_INFO_T g_ov13855_sunny_mipi_raw_info;
 
 #ifdef CONFIG_COVERED_SENSOR
 extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
@@ -131,8 +132,9 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
     {MODULE_SUNNY, "imx135_mipi_raw", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, NULL},
     {MODULE_SUNNY, "s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
 #else
-{MODULE_SUNNY,"s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&dw9763r_drv_entry, 0}, &s5k3l8xxm3_reachtech_drv_entry},
+    {MODULE_SUNNY,"s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&dw9763r_drv_entry, 0}, &s5k3l8xxm3_reachtech_drv_entry},
     {MODULE_SUNNY, "ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
+    {MODULE_SUNNY, "ov13855_sunny_mipi_raw", &g_ov13855_sunny_mipi_raw_info, {&vcm_zc524_drv_entry, 0}, &ov13855_sunny_drv_entry},
 #endif
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
