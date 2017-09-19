@@ -254,6 +254,7 @@ struct isp_alg_fw_context {
 	cmr_u32 zsl_flag;
 	cmr_u32 mode_id[ISP_MODE_MAX]; /*when none zsl: mode_id[0] for prev, cap, video etc*/
 	pthread_mutex_t stats_buf_lock;
+	cmr_u8 is_master;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -2511,6 +2512,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output output;
 	struct awb_ctrl_init_param param;
 	struct ae_monitor_info info;
+	struct sensor_otp_section_info *awb_otp_info = NULL;
 
 	memset((void *)&output, 0, sizeof(output));
 	memset((void *)&param, 0, sizeof(param));
@@ -2545,34 +2547,21 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.param_size = output.param_data->data_size;
 	param.lib_param = cxt->lib_use_info->awb_lib_info;
 	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
-	struct isp_otp_info *otp_info = (struct isp_otp_info *)cxt->handle_otp;
-	if (NULL != otp_info) {
-		param.lsc_otp_golden = otp_info->lsc_golden;
-		param.lsc_otp_random = otp_info->lsc_random;
-		param.lsc_otp_width = otp_info->width;
-		param.lsc_otp_height = otp_info->height;
-	}
 	if (NULL != cxt->otp_data) {
-		param.otp_info.gldn_stat_info.r = cxt->otp_data->single_otp.awb_golden_info.gain_r;
-		param.otp_info.gldn_stat_info.g = cxt->otp_data->single_otp.awb_golden_info.gain_g;
-		param.otp_info.gldn_stat_info.b = cxt->otp_data->single_otp.awb_golden_info.gain_b;
-		param.otp_info.rdm_stat_info.r = cxt->otp_data->single_otp.iso_awb_info.gain_r;
-		param.otp_info.rdm_stat_info.g = cxt->otp_data->single_otp.iso_awb_info.gain_g;
-		param.otp_info.rdm_stat_info.b = cxt->otp_data->single_otp.iso_awb_info.gain_b;
-		ISP_LOGV("otp golden [%d %d %d]  rdn [%d %d %d ]",
-			 param.otp_info.gldn_stat_info.r, param.otp_info.gldn_stat_info.g,
-			 param.otp_info.gldn_stat_info.b, param.otp_info.rdm_stat_info.r,
-			 param.otp_info.rdm_stat_info.g, param.otp_info.rdm_stat_info.b);
-	} else {
-		ISP_LOGV("otp is not used");
-		param.otp_info.gldn_stat_info.r = 0;
-		param.otp_info.gldn_stat_info.g = 0;
-		param.otp_info.gldn_stat_info.b = 0;
-		param.otp_info.rdm_stat_info.r = 0;
-		param.otp_info.rdm_stat_info.g = 0;
-		param.otp_info.rdm_stat_info.b = 0;
+		if (cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE) {
+			awb_otp_info = cxt->otp_data->single_otp.iso_awb_info;
+			ISP_LOGI("pass awb otp, single cam");
+		} else if(cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL || cxt->otp_data->otp_vendor ==OTP_VENDOR_DUAL_CAM_DUAL) {
+			if (cxt->is_master == 1) {
+				awb_otp_info = cxt->otp_data->dual_otp.master_iso_awb_info;
+				ISP_LOGI("pass awb otp, dual cam master");
+			} else {
+				awb_otp_info = cxt->otp_data->dual_otp.slave_iso_awb_info;
+				ISP_LOGI("pass awb otp, dual cam slave");
+			}
+		}
+		param.otp_info_ptr = awb_otp_info;
 	}
-
 	if (cxt->ops.awb_ops.init) {
 		ret = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
@@ -2645,6 +2634,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
 	struct af_log_info aft_param = {NULL, 0};
+	struct sensor_otp_section_info *otp_info_af = NULL;
 
 	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos) {
 		ISP_LOGE("fail to check param");
@@ -2662,18 +2652,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.handle_pm = cxt->handle_pm;
 
 	if (NULL != cxt->otp_data) {
-		af_input.otp_info.gldn_data.infinite_cali = 0;
-		af_input.otp_info.gldn_data.macro_cali = 0;
-		af_input.otp_info.rdm_data.infinite_cali = cxt->otp_data->single_otp.af_info.infinite_cali;
-		af_input.otp_info.rdm_data.macro_cali = cxt->otp_data->single_otp.af_info.macro_cali;
-		ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", af_input.otp_info.gldn_data.infinite_cali, af_input.otp_info.gldn_data.macro_cali,
-			 af_input.otp_info.rdm_data.infinite_cali, af_input.otp_info.rdm_data.macro_cali);
-	} else {
-		ISP_LOGV("af otp is not used");
-		af_input.otp_info.gldn_data.infinite_cali = 0;
-		af_input.otp_info.gldn_data.macro_cali = 0;
-		af_input.otp_info.rdm_data.infinite_cali = 0;
-		af_input.otp_info.rdm_data.macro_cali = 0;
+		otp_info_af = cxt->otp_data->single_otp.af_info;
+		af_input.otp_info_ptr = otp_info_af;
 	}
 	if (cxt->ops.af_ops.init) {
 		ret = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
@@ -2699,6 +2679,7 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	cmr_int ret = ISP_SUCCESS;
 	struct pdaf_ctrl_init_in pdaf_input;
 	struct pdaf_ctrl_init_out pdaf_output;
+	struct sensor_otp_section_info *otp_info_pdaf = NULL;
 
 	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
 	memset(&pdaf_output, 0x00, sizeof(pdaf_output));
@@ -2712,8 +2693,8 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	pdaf_input.handle_pm = cxt->handle_pm;
 
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support) {
-		pdaf_input.pdaf_otp.otp_data = (void *)input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_addr;
-		pdaf_input.pdaf_otp.size = input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_size;
+		otp_info_pdaf = input_ptr->otp_data->single_otp.pdaf_info;
+		pdaf_input.otp_info_ptr = otp_info_pdaf;
 	}
 
 	if (cxt->ops.pdaf_ops.init)
@@ -2793,40 +2774,34 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 
 	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
-		ISP_LOGI("init_lsc_otp, start to get lsc otp data");
 		struct sensor_otp_cust_info* otp_data = (struct sensor_otp_cust_info*)cxt->otp_data;
-		struct sensor_otp_lsc_info* lsc_otp_info = NULL;
-		struct sensor_otp_optCenter_info* optical_center_info = NULL;
-		cmr_s32 full_img_width = lsc_tab_param_ptr->resolution.w;
-		cmr_s32 full_img_height = lsc_tab_param_ptr->resolution.h;
-		cmr_s32 lsc_otp_grid = lsc_info->grid;
-		if (otp_data->otp_vendor == OTP_VENDOR_SINGLE && otp_data->otp_vendor != OTP_VENDOR_NONE) {
-			lsc_otp_info =        &otp_data->single_otp.lsc_info;
-			optical_center_info = &otp_data->single_otp.optical_center_info;
-			ISP_LOGI("init_lsc_otp, single cam, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
-		} else {
-			if ((cxt->camera_id == 0) || (cxt->camera_id == 1)) {
-				lsc_otp_info =        &otp_data->dual_otp.master_lsc_info;
-				optical_center_info = &otp_data->dual_otp.master_optical_center_info;
-				ISP_LOGI("init_lsc_otp, dual cam master, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+		struct sensor_otp_section_info *otp_info_lsc = NULL;
+		struct sensor_otp_section_info *otp_info_optical_center = NULL;
+		if (otp_data->otp_vendor == OTP_VENDOR_SINGLE) {
+			otp_info_lsc = otp_data->single_otp.lsc_info;
+			otp_info_optical_center = otp_data->single_otp.optical_center_info;
+			ISP_LOGI("init_lsc_otp, single cam");
+		} else if(otp_data->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || otp_data->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL) {
+			if (cxt->is_master == 1) {
+				otp_info_lsc = otp_data->dual_otp.master_lsc_info;
+				otp_info_optical_center = otp_data->dual_otp.master_optical_center_info;
+				ISP_LOGI("init_lsc_otp, dual cam master");
 			} else {
-				lsc_otp_info =        &otp_data->dual_otp.slave_lsc_info;
-				optical_center_info = &otp_data->dual_otp.slave_optical_center_info;
-				ISP_LOGI("init_lsc_otp, dual cam slave, full_img_width=%d, full_img_height=%d, otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+				otp_info_lsc = otp_data->dual_otp.slave_lsc_info;
+				otp_info_optical_center = otp_data->dual_otp.slave_optical_center_info;
+				ISP_LOGI("init_lsc_otp, dual cam slave");
 			}
 		}
-
-		if (cxt->ops.lsc_ops.get_lsc_otp) {
-			cxt->ops.lsc_ops.get_lsc_otp(lsc_otp_info, optical_center_info, full_img_height, full_img_width, lsc_otp_grid, &lsc_param);
-		}else{
-			ISP_LOGE("fail to do cxt->ops.lsc_ops.get_lsc_otp");
-		}
+		lsc_param.otp_info_lsc_ptr = otp_info_lsc;
+		lsc_param.otp_info_optical_center_ptr = otp_info_optical_center;
 	}
 
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
 	}
 
+	lsc_param.img_height = lsc_tab_param_ptr->resolution.h;
+	lsc_param.img_width = lsc_tab_param_ptr->resolution.w;
 	lsc_param.gain_width = lsc_info->gain_w;
 	lsc_param.gain_height = lsc_info->gain_h;
 	lsc_param.lum_gain = (cmr_u16 *) lsc_info->data_ptr;
@@ -3215,11 +3190,6 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	cxt->ops.lsc_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_ioctrl");
 	if (!cxt->ops.lsc_ops.ioctrl) {
 		ISP_LOGE("fail to dlsym lsc_ops.ioctrl");
-		goto error_dlsym;
-	}
-	cxt->ops.lsc_ops.get_lsc_otp = dlsym(cxt->ispalg_lib_handle, "ispalg_get_lsc_otp");
-	if (!cxt->ops.lsc_ops.get_lsc_otp) {
-		ISP_LOGE("failed to dlsym lsc_ops.get_lsc_otp");
 		goto error_dlsym;
 	}
 
