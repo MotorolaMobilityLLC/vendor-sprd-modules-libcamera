@@ -242,7 +242,6 @@ struct isp_data_param {
 	enum isp_format output_format;
 	enum isp_match_mode output;
 	struct isp_addr output_addr;
-	cmr_u16 slice_height;
 	cmr_u32 input_fd;
 };
 

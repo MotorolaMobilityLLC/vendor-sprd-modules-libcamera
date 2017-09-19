@@ -3582,7 +3582,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	interface_ptr->data.input_size.h = in_ptr->size.h;
 	interface_ptr->data.output_format = ISP_DATA_UYVY;
 	interface_ptr->data.output = ISP_DCAM_MODE;
-	interface_ptr->data.slice_height = in_ptr->size.h;
 
 	ret = isp_dev_set_interface(interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
@@ -3822,7 +3821,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	interface_ptr->data.input_vir.chn1 = in_ptr->src_frame.img_addr_vir.chn1;
 	interface_ptr->data.input_vir.chn2 = in_ptr->src_frame.img_addr_vir.chn2;
 	interface_ptr->data.input_fd = in_ptr->src_frame.img_fd.y;
-	interface_ptr->data.slice_height = in_ptr->src_frame.img_size.h;
 
 	interface_ptr->data.output_format = in_ptr->dst_frame.img_fmt;
 	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
