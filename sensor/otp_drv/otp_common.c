@@ -144,6 +144,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
  * SENSOR_SUCCESS : decompress success
  * SENSOR_FAILURE : decompress failed
  **/
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
                                   lsccalib_data_t *lsc_cal_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
@@ -212,6 +213,15 @@ exit:
     }
     return ret;
 }
+#else
+cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
+                                  otp_section_info_t *lsc_cal_data) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    CHECK_PTR(otp_base_info);
+    CHECK_PTR(lsc_cal_data);
+    return ret;
+}
+#endif
 /** sensor_otp_decompress_gain:
  *  @src: random lsc otp data.
  *  @src_bytes: the orign data size one channel.

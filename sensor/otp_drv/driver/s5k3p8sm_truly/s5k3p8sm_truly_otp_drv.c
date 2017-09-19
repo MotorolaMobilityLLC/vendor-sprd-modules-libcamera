@@ -8,8 +8,8 @@
  *Return: unsigned char.
  **/
 static cmr_int _s5k3p8sm_truly_section_checksum(cmr_u8 *buf, cmr_uint offset,
-                                              cmr_uint data_count,
-                                              cmr_uint check_sum_offset) {
+                                                cmr_uint data_count,
+                                                cmr_uint check_sum_offset) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_uint i = 0, sum = 0;
 
@@ -148,7 +148,7 @@ static cmr_int _s5k3p8sm_truly_parse_lsc_data(cmr_handle otp_drv_handle) {
     /*gold data*/
     memcpy(gld_dst, golden_lsc, LSC_DATA_SIZE);
     lsc_dst->lsc_calib_golden.length = LSC_DATA_SIZE;
-   // sensor_otp_dump_data2txt(rdm_dst,LSC_DATA_SIZE,"s5k3p8sm_lsc_golden");
+    // sensor_otp_dump_data2txt(rdm_dst,LSC_DATA_SIZE,"s5k3p8sm_lsc_golden");
     OTP_LOGI("out");
     return ret;
 }
@@ -199,7 +199,7 @@ static cmr_int _s5k3p8sm_truly_parse_pdaf_data(cmr_handle otp_drv_handle) {
 
 /*TODO: This is a temporary function.*/
 static cmr_int _s5k3p8sm_truly_parse_dual_otp_data(cmr_handle otp_drv_handle,
-                                                 void *param) {
+                                                   void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
@@ -275,7 +275,8 @@ static cmr_int _s5k3p8sm_truly_awb_calibration(cmr_handle otp_drv_handle) {
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
-    otp_calib_items_t *cal_items = &(s5k3p8sm_truly_drv_entry.otp_cfg.cali_items);
+    otp_calib_items_t *cal_items =
+        &(s5k3p8sm_truly_drv_entry.otp_cfg.cali_items);
     awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
     int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
 
@@ -339,7 +340,7 @@ static cmr_int _s5k3p8sm_truly_pdaf_calibration(cmr_handle otp_drv_handle) {
 ====================================================*/
 
 static cmr_int s5k3p8sm_truly_otp_drv_create(otp_drv_init_para_t *input_para,
-                                           cmr_handle *sns_af_drv_handle) {
+                                             cmr_handle *sns_af_drv_handle) {
     return sensor_otp_drv_create(input_para, sns_af_drv_handle);
 }
 
@@ -348,7 +349,7 @@ static cmr_int s5k3p8sm_truly_otp_drv_delete(cmr_handle otp_drv_handle) {
 }
 
 static cmr_int s5k3p8sm_truly_otp_drv_read(cmr_handle otp_drv_handle,
-                                         void *param) {
+                                           void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_uint i = 0;
     cmr_u8 cmd_val[3];
@@ -400,7 +401,7 @@ exit:
 }
 
 static cmr_int s5k3p8sm_truly_otp_drv_write(cmr_handle otp_drv_handle,
-                                          void *p_data) {
+                                            void *p_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
     CHECK_PTR(p_data);
@@ -426,7 +427,7 @@ static cmr_int s5k3p8sm_truly_otp_drv_write(cmr_handle otp_drv_handle,
 }
 
 static cmr_int s5k3p8sm_truly_otp_drv_parse(cmr_handle otp_drv_handle,
-                                          void *params) {
+                                            void *params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
@@ -513,7 +514,7 @@ static cmr_int s5k3p8sm_truly_otp_drv_calibration(cmr_handle otp_drv_handle) {
 }
 
 static cmr_int _s5k3p8sm_truly_compatible_convert(cmr_handle otp_drv_handle,
-                                                void *p_data) {
+                                                  void *p_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
@@ -583,8 +584,8 @@ static cmr_int _s5k3p8sm_truly_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.dual_flag = 0;
     convert_data->otp_vendor = OTP_VENDOR_SINGLE;
     /**/
-   // _s5k3p8sm_truly_parse_dual_otp_data(otp_drv_handle,
-  //                                    (void *)&convert_data->dual_otp);
+    // _s5k3p8sm_truly_parse_dual_otp_data(otp_drv_handle,
+    //                                    (void *)&convert_data->dual_otp);
 
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
@@ -595,7 +596,7 @@ static cmr_int _s5k3p8sm_truly_compatible_convert(cmr_handle otp_drv_handle,
 
 /*just for expend*/
 static cmr_int s5k3p8sm_truly_otp_drv_ioctl(cmr_handle otp_drv_handle,
-                                          cmr_uint cmd, void *params) {
+                                            cmr_uint cmd, void *params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");

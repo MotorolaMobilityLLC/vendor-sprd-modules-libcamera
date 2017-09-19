@@ -385,10 +385,10 @@ static cmr_int imx258_truly_otp_drv_read(cmr_handle otp_drv_handle,
     }
 
     ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                       (cmr_u8 *)otp_raw_data->buffer,
-                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+                             (cmr_u8 *)otp_raw_data->buffer,
+                             SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
 
-    if (OTP_CAMERA_SUCCESS == ret ) {
+    if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
             if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,

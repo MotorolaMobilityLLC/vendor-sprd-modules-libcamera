@@ -42,16 +42,6 @@ static cmr_int _imx258_buffer_init(cmr_handle otp_drv_handle) {
     if (NULL == otp_data) {
         OTP_LOGE("malloc otp data buffer failed.\n");
         ret = CMR_CAMERA_FAIL;
-    } else {
-        otp_cxt->otp_data_len = otp_len;
-        lsccalib_data_t *lsc_data =
-            &((otp_format_data_t *)otp_data)->lsc_cali_dat;
-        lsc_data->lsc_calib_golden.length = LSC_FORMAT_SIZE / 2;
-        lsc_data->lsc_calib_golden.offset = sizeof(lsccalib_data_t);
-
-        lsc_data->lsc_calib_random.length = LSC_FORMAT_SIZE / 2;
-        lsc_data->lsc_calib_random.offset =
-            sizeof(lsccalib_data_t) + LSC_FORMAT_SIZE / 2;
     }
     otp_cxt->otp_data = (otp_format_data_t *)otp_data;
     OTP_LOGV("out");
@@ -64,7 +54,7 @@ static cmr_int _imx258_parse_af_data(cmr_handle otp_drv_handle) {
     OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
+    otp_section_info_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
     ret = _imx258_section_checksum(otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
                                    AF_INFO_SIZE - 1, AF_INFO_CHECKSUM);
@@ -72,8 +62,10 @@ static cmr_int _imx258_parse_af_data(cmr_handle otp_drv_handle) {
         OTP_LOGE("auto focus checksum error,parse failed");
         return ret;
     } else {
-        af_cali_dat->infinity_dac = (af_src_dat[1] << 8) | af_src_dat[0];
-        af_cali_dat->macro_dac = (af_src_dat[3] << 8) | af_src_dat[2];
+        af_cali_dat->rdm_info.buffer = af_src_dat;
+        af_cali_dat->rdm_info.size = AF_INFO_CHECKSUM - AF_INFO_OFFSET;
+        af_cali_dat->gld_info.buffer = NULL;
+        af_cali_dat->gld_info.size = 0;
     }
     OTP_LOGV("out");
     return ret;
@@ -81,12 +73,14 @@ static cmr_int _imx258_parse_af_data(cmr_handle otp_drv_handle) {
 
 static cmr_int _imx258_parse_awb_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    cmr_uint data_count_rdm = 0;
+    cmr_uint data_count_gld = 0;
 
     CHECK_PTR(otp_drv_handle);
     OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
+    otp_section_info_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
     cmr_u8 *awb_src_dat = otp_cxt->otp_raw_data.buffer + AWB_INFO_OFFSET;
 
     ret = _imx258_section_checksum(
@@ -96,29 +90,13 @@ static cmr_int _imx258_parse_awb_data(cmr_handle otp_drv_handle) {
         OTP_LOGE("awb otp data checksum error,parse failed");
         return ret;
     } else {
-        cmr_u32 i;
-        /*random*/
         OTP_LOGI("awb section count:0x%x", AWB_SECTION_NUM);
-        for (i = 0; i < AWB_SECTION_NUM; i++, awb_src_dat += AWB_INFO_SIZE) {
-            awb_cali_dat->awb_rdm_info[i].R =
-                (awb_src_dat[1] << 8) | awb_src_dat[0];
-            awb_cali_dat->awb_rdm_info[i].G =
-                (awb_src_dat[3] << 8) | awb_src_dat[2];
-            awb_cali_dat->awb_rdm_info[i].B =
-                (awb_src_dat[5] << 8) | awb_src_dat[4];
-            /*golden awb data ,you should ensure awb group number*/
-            awb_cali_dat->awb_gld_info[i].R = golden_awb[i].R;
-            awb_cali_dat->awb_gld_info[i].G = golden_awb[i].G;
-            awb_cali_dat->awb_gld_info[i].B = golden_awb[i].B;
-        }
-        for (i = 0; i < AWB_MAX_LIGHT; i++)
-            OTP_LOGD("rdm:R=0x%x,G=0x%x,B=0x%x.god:R=0x%x,G=0x%x,B=0x%x",
-                     awb_cali_dat->awb_rdm_info[i].R,
-                     awb_cali_dat->awb_rdm_info[i].G,
-                     awb_cali_dat->awb_rdm_info[i].B,
-                     awb_cali_dat->awb_gld_info[i].R,
-                     awb_cali_dat->awb_gld_info[i].G,
-                     awb_cali_dat->awb_gld_info[i].B);
+        data_count_rdm = AWB_SECTION_NUM * AWB_INFO_SIZE;
+        data_count_gld = AWB_SECTION_NUM * (sizeof(awb_target_packet_t));
+        awb_cali_dat->rdm_info.buffer = awb_src_dat;
+        awb_cali_dat->rdm_info.size = data_count_rdm;
+        awb_cali_dat->gld_info.buffer = golden_awb;
+        awb_cali_dat->gld_info.size = data_count_gld;
     }
     OTP_LOGV("out");
     return ret;
@@ -131,10 +109,8 @@ static cmr_int _imx258_parse_lsc_data(cmr_handle otp_drv_handle) {
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
-    lsccalib_data_t *lsc_dst = &(otp_cxt->otp_data->lsc_cali_dat);
-    optical_center_t *opt_dst = &(otp_cxt->otp_data->opt_center_dat);
-    cmr_u8 *rdm_dst = (cmr_u8 *)lsc_dst + lsc_dst->lsc_calib_random.offset;
-    cmr_u8 *gld_dst = (cmr_u8 *)lsc_dst + lsc_dst->lsc_calib_golden.offset;
+    otp_section_info_t *lsc_dst = &(otp_cxt->otp_data->lsc_cali_dat);
+    otp_section_info_t *opt_dst = &(otp_cxt->otp_data->opt_center_dat);
 
     ret = _imx258_section_checksum(
         otp_cxt->otp_raw_data.buffer, OPTICAL_INFO_OFFSET,
@@ -144,28 +120,18 @@ static cmr_int _imx258_parse_lsc_data(cmr_handle otp_drv_handle) {
     } else {
         /*optical center data*/
         cmr_u8 *opt_src = otp_cxt->otp_raw_data.buffer + OPTICAL_INFO_OFFSET;
-        opt_dst->R.x = (opt_src[1] << 8) | opt_src[0];
-        opt_dst->R.y = (opt_src[3] << 8) | opt_src[2];
-        opt_dst->GR.x = (opt_src[5] << 8) | opt_src[4];
-        opt_dst->GR.y = (opt_src[7] << 8) | opt_src[6];
-        opt_dst->GB.x = (opt_src[9] << 8) | opt_src[8];
-        opt_dst->GB.y = (opt_src[11] << 8) | opt_src[10];
-        opt_dst->B.x = (opt_src[13] << 8) | opt_src[12];
-        opt_dst->B.y = (opt_src[15] << 8) | opt_src[14];
+        opt_dst->rdm_info.buffer = opt_src;
+        opt_dst->rdm_info.size = LSC_INFO_OFFSET - OPTICAL_INFO_OFFSET;
+        opt_dst->gld_info.buffer = NULL;
+        opt_dst->gld_info.size = 0;
 
-        /*R channel raw data*/
-        memcpy(rdm_dst, otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET,
-               LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
-        lsc_dst->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-        /*gold data*/
-        memcpy(gld_dst, golden_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
-        lsc_dst->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        /*lsc data*/
+        cmr_u8 *rdm_dst = otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET;
+        lsc_dst->rdm_info.buffer = rdm_dst;
+        lsc_dst->rdm_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        lsc_dst->gld_info.buffer = golden_lsc;
+        lsc_dst->gld_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
     }
-
-    OTP_LOGI("optical_center:\nR=(0x%x,0x%x)\n GR=(0x%x,0x%x)\n "
-             "GB=(0x%x,0x%x)\n B=(0x%x,0x%x)",
-             opt_dst->R.x, opt_dst->R.y, opt_dst->GR.x, opt_dst->GR.y,
-             opt_dst->GB.x, opt_dst->GB.y, opt_dst->B.x, opt_dst->B.y);
     OTP_LOGV("out");
     return ret;
 }
@@ -186,9 +152,11 @@ static cmr_int _imx258_parse_pdaf_data(cmr_handle otp_drv_handle) {
         OTP_LOGI("pdaf otp data checksum error,parse failed.\n");
         return ret;
     } else {
-        otp_cxt->otp_data->pdaf_cali_dat.buffer = pdaf_src_dat;
-        otp_cxt->otp_data->pdaf_cali_dat.size =
+        otp_cxt->otp_data->pdaf_cali_dat.rdm_info.buffer = pdaf_src_dat;
+        otp_cxt->otp_data->pdaf_cali_dat.rdm_info.size =
             PDAF_INFO_CHECKSUM - PDAF_INFO_OFFSET;
+        otp_cxt->otp_data->pdaf_cali_dat.gld_info.buffer = NULL;
+        otp_cxt->otp_data->pdaf_cali_dat.gld_info.size = 0;
     }
     OTP_LOGV("out");
     return ret;
@@ -200,39 +168,40 @@ static cmr_int _imx258_awb_calibration(cmr_handle otp_drv_handle) {
     CHECK_PTR(otp_drv_handle);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    /*
+        otp_calib_items_t *cal_items = &(imx258_drv_entry.otp_cfg.cali_items);
+        awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
+        int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
 
-    otp_calib_items_t *cal_items = &(imx258_drv_entry.otp_cfg.cali_items);
-    awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
-    int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
+        // calculate G gain
 
-    // calculate G gain
+        R_gain = awb_cali_dat->awb_gld_info[0].rg_ratio * 1000 /
+                 awb_cali_dat->awb_rdm_info[0].rg_ratio;
+        B_gain = awb_cali_dat->awb_gld_info[0].bg_ratio * 1000 /
+                 awb_cali_dat->awb_rdm_info[0].bg_ratio;
+        G_gain = 1000;
 
-    R_gain = awb_cali_dat->awb_gld_info[0].rg_ratio * 1000 /
-             awb_cali_dat->awb_rdm_info[0].rg_ratio;
-    B_gain = awb_cali_dat->awb_gld_info[0].bg_ratio * 1000 /
-             awb_cali_dat->awb_rdm_info[0].bg_ratio;
-    G_gain = 1000;
+        if (R_gain < 1000 || B_gain < 1000) {
+            if (R_gain < B_gain)
+                Base_gain = R_gain;
+            else
+                Base_gain = B_gain;
+        } else {
+            Base_gain = G_gain;
+        }
+        if (Base_gain != 0) {
+            R_gain = 0x400 * R_gain / (Base_gain);
+            B_gain = 0x400 * B_gain / (Base_gain);
+            G_gain = 0x400 * G_gain / (Base_gain);
+        } else {
+            OTP_LOGE("awb parse problem!");
+        }
+        OTP_LOGI("r_Gain=0x%x,g_Gain=0x%x,b_Gain=0x%x\n", R_gain, G_gain,
+       B_gain);
 
-    if (R_gain < 1000 || B_gain < 1000) {
-        if (R_gain < B_gain)
-            Base_gain = R_gain;
-        else
-            Base_gain = B_gain;
-    } else {
-        Base_gain = G_gain;
-    }
-    if (Base_gain != 0) {
-        R_gain = 0x400 * R_gain / (Base_gain);
-        B_gain = 0x400 * B_gain / (Base_gain);
-        G_gain = 0x400 * G_gain / (Base_gain);
-    } else {
-        OTP_LOGE("awb parse problem!");
-    }
-    OTP_LOGI("r_Gain=0x%x,g_Gain=0x%x,b_Gain=0x%x\n", R_gain, G_gain, B_gain);
-
-    if (cal_items->is_awbc_self_cal) {
-        OTP_LOGD("Do wb calibration local");
-    }
+        if (cal_items->is_awbc_self_cal) {
+            OTP_LOGD("Do wb calibration local");
+        }*/
     OTP_LOGV("out");
     return ret;
 }
@@ -309,10 +278,10 @@ static cmr_int imx258_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     }
 
     ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                       (cmr_u8 *)otp_raw_data->buffer,
-                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+                             (cmr_u8 *)otp_raw_data->buffer,
+                             SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
 
-    if (OTP_CAMERA_SUCCESS == ret ) {
+    if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
             if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
@@ -359,8 +328,6 @@ static cmr_int imx258_otp_drv_parse(cmr_handle otp_drv_handle, void *params) {
     otp_base_info_cfg_t *base_info = &(imx258_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
 
-    module_data_t *module_dat = &(otp_cxt->otp_data->module_dat);
-    module_info_t *module_info = NULL;
     char otp_parse_bin_file_name[255];
 
     snprintf(otp_parse_bin_file_name, sizeof(otp_parse_bin_file_name),
@@ -371,16 +338,6 @@ static cmr_int imx258_otp_drv_parse(cmr_handle otp_drv_handle, void *params) {
         return ret;
     } else if (otp_raw_data->buffer) {
         /*begain read raw data, save module info */
-        module_info = (module_info_t *)(otp_cxt->otp_raw_data.buffer +
-                                        MODULE_INFO_OFFSET);
-        module_dat->moule_id = module_info->moule_id;
-        module_dat->vcm_id = module_info->vcm_id;
-        module_dat->ir_bg_id = module_info->ir_bg_id;
-        module_dat->drvier_ic_id = module_info->drvier_ic_id;
-
-        OTP_LOGI("moule_id:%d\n vcm_id:%d\n ir_bg_id:%d\n drvier_ic_id:%d",
-                 module_info->moule_id, module_info->vcm_id,
-                 module_info->ir_bg_id, module_info->drvier_ic_id);
         OTP_LOGI("drver has read otp raw data,start parsed.");
         _imx258_parse_af_data(otp_drv_handle);
         _imx258_parse_awb_data(otp_drv_handle);
@@ -440,59 +397,34 @@ static cmr_int imx258_compatible_convert(cmr_handle otp_drv_handle,
 
     struct sensor_otp_cust_info *convert_data =
         malloc(sizeof(struct sensor_otp_cust_info));
+    cmr_bzero(convert_data, sizeof(*convert_data));
     /*otp raw data*/
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
     /*module data*/
-    convert_data->single_otp.module_info.vcm_id =
-        format_data->module_dat.vcm_id;
-    convert_data->single_otp.module_info.driver_ic_id =
-        format_data->module_dat.drvier_ic_id;
+    convert_data->single_otp.module_info =
+        (struct sensor_otp_section_info *)&format_data->module_dat;
+
     /*awb convert*/
-    convert_data->single_otp.iso_awb_info.gain_r =
-        format_data->awb_cali_dat.awb_rdm_info[0].R;
-    convert_data->single_otp.iso_awb_info.gain_g =
-        format_data->awb_cali_dat.awb_rdm_info[0].G;
-    convert_data->single_otp.iso_awb_info.gain_b =
-        format_data->awb_cali_dat.awb_rdm_info[0].B;
-    /*awb golden data*/
-    convert_data->single_otp.awb_golden_info.gain_r =
-        format_data->awb_cali_dat.awb_gld_info[0].R;
-    convert_data->single_otp.awb_golden_info.gain_g =
-        format_data->awb_cali_dat.awb_gld_info[0].G;
-    convert_data->single_otp.awb_golden_info.gain_b =
-        format_data->awb_cali_dat.awb_gld_info[0].B;
+    convert_data->single_otp.iso_awb_info =
+        (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
+
     /*optical center*/
-    memcpy((void *)&convert_data->single_otp.optical_center_info,
-           (void *)&format_data->opt_center_dat, sizeof(optical_center_t));
+    convert_data->single_otp.optical_center_info,
+        (struct sensor_otp_section_info *)&format_data->opt_center_dat;
+
     /*lsc convert*/
-    convert_data->single_otp.lsc_info.lsc_data_addr =
-        (cmr_u8 *)&format_data->lsc_cali_dat +
-        format_data->lsc_cali_dat.lsc_calib_random.offset;
-    convert_data->single_otp.lsc_info.lsc_data_size =
-        format_data->lsc_cali_dat.lsc_calib_random.length;
-    convert_data->single_otp.lsc_info.full_img_width =
-        imx258_drv_entry.otp_cfg.base_info_cfg.full_img_width;
-    convert_data->single_otp.lsc_info.full_img_height =
-        imx258_drv_entry.otp_cfg.base_info_cfg.full_img_height;
-    convert_data->single_otp.lsc_info.lsc_otp_grid =
-        imx258_drv_entry.otp_cfg.base_info_cfg.lsc_otp_grid;
-    /*lsc golden data*/
-    convert_data->single_otp.lsc_golden_info.lsc_data_addr =
-        (cmr_u8 *)&format_data->lsc_cali_dat +
-        format_data->lsc_cali_dat.lsc_calib_golden.offset;
-    convert_data->single_otp.lsc_golden_info.lsc_data_size =
-        format_data->lsc_cali_dat.lsc_calib_golden.length;
+    convert_data->single_otp.lsc_info =
+        (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
+
     /*af convert*/
-    convert_data->single_otp.af_info.infinite_cali =
-        format_data->af_cali_dat.infinity_dac;
-    convert_data->single_otp.af_info.macro_cali =
-        format_data->af_cali_dat.macro_dac;
+    convert_data->single_otp.af_info =
+        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
+
     /*pdaf convert*/
-    convert_data->single_otp.pdaf_info.pdaf_data_addr =
-        format_data->pdaf_cali_dat.buffer;
-    convert_data->single_otp.pdaf_info.pdaf_data_size =
-        format_data->pdaf_cali_dat.size;
+    convert_data->single_otp.pdaf_info =
+        (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
+
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;

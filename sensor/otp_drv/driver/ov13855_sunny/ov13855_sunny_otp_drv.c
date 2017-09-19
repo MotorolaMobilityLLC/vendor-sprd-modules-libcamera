@@ -49,16 +49,6 @@ static cmr_int _ov13855_sunny_buffer_init(cmr_handle otp_drv_handle) {
     if (NULL == otp_data) {
         OTP_LOGE("malloc otp data buffer failed.\n");
         ret = CMR_CAMERA_FAIL;
-    } else {
-        otp_cxt->otp_data_len = otp_len;
-        lsccalib_data_t *lsc_data =
-            &((otp_format_data_t *)otp_data)->lsc_cali_dat;
-        lsc_data->lsc_calib_golden.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-        lsc_data->lsc_calib_golden.offset = sizeof(lsccalib_data_t);
-
-        lsc_data->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-        lsc_data->lsc_calib_random.offset =
-            sizeof(lsccalib_data_t) + lsc_data->lsc_calib_random.length;
     }
     otp_cxt->otp_data = (otp_format_data_t *)otp_data;
     OTP_LOGV("out");
@@ -66,36 +56,25 @@ static cmr_int _ov13855_sunny_buffer_init(cmr_handle otp_drv_handle) {
 }
 static cmr_int _ov13855_sunny_parse_module_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    cmr_u16 calib_version = 0;
     CHECK_PTR(otp_drv_handle);
     OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    module_data_t *module_dat = &(otp_cxt->otp_data->module_dat);
+    otp_section_info_t *module_dat = &(otp_cxt->otp_data->module_dat);
     cmr_u8 *module_info = NULL;
 
     /*begain read raw data, save module info */
     module_info = (cmr_u8 *)(otp_cxt->otp_raw_data.buffer + MODULE_INFO_OFFSET);
-    module_dat->vendor_id = module_info[0];
-    module_dat->moule_id =
-        (module_info[1] << 16) | (module_info[2] << 8) | module_info[3];
-    module_dat->calib_version = (module_info[4] << 8) | module_info[5];
-    module_dat->year = module_info[6];
-    module_dat->month = module_info[7];
-    module_dat->day = module_info[8];
-    module_dat->work_stat_id = (module_info[9] << 8) | module_info[10];
-    module_dat->env_record = (module_info[11] << 8) | module_info[12];
+    module_dat->rdm_info.buffer = module_info;
+    module_dat->rdm_info.size = MODULE_INFO_CHECKSUM - MODULE_INFO_OFFSET;
+    module_dat->gld_info.buffer = NULL;
+    module_dat->gld_info.size = 0;
 
-    if (module_dat->calib_version == 0x0400) {
-        module_dat->calib_version = 0x0004;
-    }
-    if (module_dat->calib_version == 0x0001) {
+    calib_version = (module_info[4] << 8) | module_info[5];
+    if (calib_version == 0x0001) {
         otp_cxt->otp_data_module_index = OTP_TRULY;
     }
-    OTP_LOGI("moule_id:0x%x\n vendor_id:0x%x\n calib_version:%d\n "
-             "work_stat_id:0x%x \n env_record :0x%x",
-             module_dat->moule_id, module_dat->vendor_id,
-             module_dat->calib_version, module_dat->work_stat_id,
-             module_dat->env_record);
 
     return ret;
 }
@@ -106,7 +85,7 @@ static cmr_int _ov13855_sunny_parse_af_data(cmr_handle otp_drv_handle) {
     OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
+    otp_section_info_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
 
     ret = _ov13855_sunny_section_checksum(
@@ -117,9 +96,10 @@ static cmr_int _ov13855_sunny_parse_af_data(cmr_handle otp_drv_handle) {
         OTP_LOGE("auto focus checksum error,parse failed");
         return ret;
     } else {
-        af_cali_dat->infinity_dac = (af_src_dat[1] << 8) | af_src_dat[0];
-        af_cali_dat->macro_dac = (af_src_dat[3] << 8) | af_src_dat[2];
-        af_cali_dat->afc_direction = af_src_dat[4];
+        af_cali_dat->rdm_info.buffer = af_src_dat;
+        af_cali_dat->rdm_info.size = AF_INFO_CHECKSUM - AF_INFO_OFFSET;
+        af_cali_dat->gld_info.buffer = NULL;
+        af_cali_dat->gld_info.size = 0;
     }
     OTP_LOGV("out");
     return ret;
@@ -128,12 +108,14 @@ static cmr_int _ov13855_sunny_parse_af_data(cmr_handle otp_drv_handle) {
 static cmr_int _ov13855_sunny_parse_awb_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_u32 section_num = 1;
+    cmr_uint data_count_rdm = 0;
+    cmr_uint data_count_gld = 0;
 
     CHECK_PTR(otp_drv_handle);
     OTP_LOGV("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
+    otp_section_info_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
     cmr_u8 *awb_src_dat = otp_cxt->otp_raw_data.buffer + AWB_INFO_OFFSET;
 
     if (otp_cxt->otp_data_module_index == OTP_TRULY) {
@@ -148,35 +130,15 @@ static cmr_int _ov13855_sunny_parse_awb_data(cmr_handle otp_drv_handle) {
         OTP_LOGE("awb otp data checksum error,parse failed");
         return ret;
     } else {
-        cmr_u32 i;
-        /*random*/
-        OTP_LOGI("awb section count:0x%x", section_num);
-        for (i = 0; i < section_num; i++, awb_src_dat += AWB_INFO_SIZE) {
-            awb_cali_dat->awb_rdm_info[i].R =
-                (awb_src_dat[1] << 8) | awb_src_dat[0];
-            awb_cali_dat->awb_rdm_info[i].G =
-                (awb_src_dat[3] << 8) | awb_src_dat[2];
-            awb_cali_dat->awb_rdm_info[i].B =
-                (awb_src_dat[5] << 8) | awb_src_dat[4];
-            /*golden awb data ,you should ensure awb group number*/
-            if (otp_cxt->otp_data_module_index == OTP_TRULY) {
-                awb_cali_dat->awb_gld_info[i].R = truly_awb[i].R;
-                awb_cali_dat->awb_gld_info[i].G = truly_awb[i].G;
-                awb_cali_dat->awb_gld_info[i].B = truly_awb[i].B;
-            } else {
-                awb_cali_dat->awb_gld_info[i].R = golden_awb[i].R;
-                awb_cali_dat->awb_gld_info[i].G = golden_awb[i].G;
-                awb_cali_dat->awb_gld_info[i].B = golden_awb[i].B;
-            }
-        }
-        for (i = 0; i < AWB_MAX_LIGHT; i++)
-            OTP_LOGV("rdm:R=0x%x,G=0x%x,B=0x%x.god:R=0x%x,G=0x%x,B=0x%x",
-                     awb_cali_dat->awb_rdm_info[i].R,
-                     awb_cali_dat->awb_rdm_info[i].G,
-                     awb_cali_dat->awb_rdm_info[i].B,
-                     awb_cali_dat->awb_gld_info[i].R,
-                     awb_cali_dat->awb_gld_info[i].G,
-                     awb_cali_dat->awb_gld_info[i].B);
+        data_count_rdm = section_num * AWB_INFO_SIZE;
+        data_count_gld = section_num * (sizeof(awb_target_packet_t));
+        awb_cali_dat->rdm_info.buffer = awb_src_dat;
+        awb_cali_dat->rdm_info.size = data_count_rdm;
+        if (otp_cxt->otp_data_module_index == OTP_TRULY)
+            awb_cali_dat->gld_info.buffer = truly_awb;
+        else
+            awb_cali_dat->gld_info.buffer = golden_awb;
+        awb_cali_dat->gld_info.size = data_count_gld;
     }
     OTP_LOGV("out");
     return ret;
@@ -190,10 +152,8 @@ static cmr_int _ov13855_sunny_parse_lsc_data(cmr_handle otp_drv_handle) {
     cmr_u32 i = 0;
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
-    lsccalib_data_t *lsc_dst = &(otp_cxt->otp_data->lsc_cali_dat);
-    optical_center_t *opt_dst = &(otp_cxt->otp_data->opt_center_dat);
-    cmr_u8 *rdm_dst = (cmr_u8 *)lsc_dst + lsc_dst->lsc_calib_random.offset;
-    cmr_u8 *gld_dst = (cmr_u8 *)lsc_dst + lsc_dst->lsc_calib_golden.offset;
+    otp_section_info_t *lsc_dst = &(otp_cxt->otp_data->lsc_cali_dat);
+    otp_section_info_t *opt_dst = &(otp_cxt->otp_data->opt_center_dat);
 
     ret = _ov13855_sunny_section_checksum(
         otp_cxt->otp_raw_data.buffer, OPTICAL_INFO_OFFSET,
@@ -204,36 +164,21 @@ static cmr_int _ov13855_sunny_parse_lsc_data(cmr_handle otp_drv_handle) {
     } else {
         /*optical center data*/
         cmr_u8 *opt_src = otp_cxt->otp_raw_data.buffer + OPTICAL_INFO_OFFSET;
-        opt_dst->R.x = (opt_src[1] << 8) | opt_src[0];
-        opt_dst->R.y = (opt_src[3] << 8) | opt_src[2];
-        opt_dst->GR.x = (opt_src[5] << 8) | opt_src[4];
-        opt_dst->GR.y = (opt_src[7] << 8) | opt_src[6];
-        opt_dst->GB.x = (opt_src[9] << 8) | opt_src[8];
-        opt_dst->GB.y = (opt_src[11] << 8) | opt_src[10];
-        opt_dst->B.x = (opt_src[13] << 8) | opt_src[12];
-        opt_dst->B.y = (opt_src[15] << 8) | opt_src[14];
+        opt_dst->rdm_info.buffer = opt_src;
+        opt_dst->rdm_info.size = LSC_INFO_OFFSET - OPTICAL_INFO_OFFSET;
+        opt_dst->gld_info.buffer = NULL;
+        opt_dst->gld_info.size = 0;
 
-        /*R channel raw data*/
-        memcpy(rdm_dst, otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET,
-               LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
-        lsc_dst->lsc_calib_random.length = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-
-        /*gold data*/
-        if (otp_cxt->otp_data_module_index == OTP_TRULY) {
-            memcpy(gld_dst, truly_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
-            lsc_dst->lsc_calib_golden.length =
-                LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-        } else {
-            memcpy(gld_dst, golden_lsc, LSC_INFO_CHECKSUM - LSC_INFO_OFFSET);
-            lsc_dst->lsc_calib_golden.length =
-                LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-        }
+        /*lsc data*/
+        cmr_u8 *rdm_dst = otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET;
+        lsc_dst->rdm_info.buffer = rdm_dst;
+        lsc_dst->rdm_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        if (otp_cxt->otp_data_module_index == OTP_TRULY)
+            lsc_dst->gld_info.buffer = truly_lsc;
+        else
+            lsc_dst->gld_info.buffer = golden_lsc;
+        lsc_dst->gld_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
     }
-
-    OTP_LOGI("optical_center:\nR=(0x%x,0x%x)\n GR=(0x%x,0x%x)\n "
-             "GB=(0x%x,0x%x)\n B=(0x%x,0x%x)",
-             opt_dst->R.x, opt_dst->R.y, opt_dst->GR.x, opt_dst->GR.y,
-             opt_dst->GB.x, opt_dst->GB.y, opt_dst->B.x, opt_dst->B.y);
     OTP_LOGV("out");
     return ret;
 }
@@ -254,9 +199,11 @@ static cmr_int _ov13855_sunny_parse_pdaf_data(cmr_handle otp_drv_handle) {
         OTP_LOGI("pdaf otp data checksum error,parse failed.\n");
         return ret;
     } else {
-        otp_cxt->otp_data->pdaf_cali_dat.buffer = pdaf_src_dat;
-        otp_cxt->otp_data->pdaf_cali_dat.size =
+        otp_cxt->otp_data->pdaf_cali_dat.rdm_info.buffer = pdaf_src_dat;
+        otp_cxt->otp_data->pdaf_cali_dat.rdm_info.size =
             PDAF_INFO_CHECKSUM - PDAF_INFO_OFFSET;
+        otp_cxt->otp_data->pdaf_cali_dat.gld_info.buffer = NULL;
+        otp_cxt->otp_data->pdaf_cali_dat.gld_info.size = 0;
     }
     OTP_LOGV("out");
     return ret;
@@ -269,19 +216,14 @@ static int _ov13855_sunny_parse_ae_data(void *otp_drv_handle) {
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
-    aecalib_data_t *ae_cali_dat = &(otp_cxt->otp_data->ae_cali_dat);
+    otp_section_info_t *ae_cali_dat = &(otp_cxt->otp_data->ae_cali_dat);
     cmr_u8 *ae_src_dat = otp_cxt->otp_raw_data.buffer + AE_INFO_OFFSET;
 
     // for ae calibration
-    ae_cali_dat->target_lum = (ae_src_dat[1] << 8) | ae_src_dat[0];
-    ae_cali_dat->gain_1x_exp = (ae_src_dat[5] << 24) | (ae_src_dat[4] << 16) |
-                               (ae_src_dat[3] << 8) | ae_src_dat[2];
-    ae_cali_dat->gain_2x_exp = (ae_src_dat[9] << 24) | (ae_src_dat[8] << 16) |
-                               (ae_src_dat[7] << 8) | ae_src_dat[6];
-    ae_cali_dat->gain_4x_exp = (ae_src_dat[13] << 24) | (ae_src_dat[12] << 16) |
-                               (ae_src_dat[11] << 8) | ae_src_dat[10];
-    ae_cali_dat->gain_8x_exp = (ae_src_dat[17] << 24) | (ae_src_dat[16] << 16) |
-                               (ae_src_dat[15] << 8) | ae_src_dat[14];
+    ae_cali_dat->rdm_info.buffer = ae_src_dat;
+    ae_cali_dat->rdm_info.size = AE_INFO_CHECKSUM - AE_INFO_OFFSET;
+    ae_cali_dat->gld_info.buffer = NULL;
+    ae_cali_dat->gld_info.size = 0;
     OTP_LOGV("out");
     return ret;
 }
@@ -300,7 +242,6 @@ static cmr_int _ov13855_sunny_parse_dualcam_data(cmr_handle otp_drv_handle) {
         data_len -= VCM_DATA_SIZE;
         data_sum -= VCM_DATA_SIZE;
     }
-    afcalib_data_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
 
     /*dualcam data*/
     cmr_u8 *dualcam_src_dat = otp_cxt->otp_raw_data.buffer + DUAL_INFO_OFFSET;
@@ -311,21 +252,15 @@ static cmr_int _ov13855_sunny_parse_dualcam_data(cmr_handle otp_drv_handle) {
 
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGI("dualcamera otp data checksum error,parse failed.\n");
-        af_cali_dat->vcm_step = -1;
-        otp_cxt->otp_data->dual_cam_cali_dat.buffer = NULL;
-        otp_cxt->otp_data->dual_cam_cali_dat.size = 0;
+        otp_cxt->otp_data->dual_cam_cali_dat.rdm_info.buffer = NULL;
+        otp_cxt->otp_data->dual_cam_cali_dat.rdm_info.size = 0;
         return ret;
     } else {
-        if (otp_cxt->otp_data_module_index == OTP_SUNNY) {
-            af_cali_dat->vcm_step = 0;
-            af_cali_dat->vcm_step_min = vcm_src_dat[0];
-            af_cali_dat->vcm_step_max = vcm_src_dat[1];
-        } else {
-            af_cali_dat->vcm_step = -1;
-        }
-        otp_cxt->otp_data->dual_cam_cali_dat.buffer = dualcam_src_dat;
-        otp_cxt->otp_data->dual_cam_cali_dat.size = data_len;
+        otp_cxt->otp_data->dual_cam_cali_dat.rdm_info.buffer = dualcam_src_dat;
+        otp_cxt->otp_data->dual_cam_cali_dat.rdm_info.size = data_len;
     }
+    otp_cxt->otp_data->dual_cam_cali_dat.gld_info.buffer = NULL;
+    otp_cxt->otp_data->dual_cam_cali_dat.gld_info.size = 0;
     OTP_LOGI("out");
     return ret;
 }
@@ -346,18 +281,20 @@ static cmr_int _ov13855_sunny_parse_arcsoft_ip_data(cmr_handle otp_drv_handle) {
             otp_cxt->otp_data_module_index);
         if (OTP_CAMERA_SUCCESS != ret) {
             OTP_LOGI("arcsoft otp data checksum error,parse failed.\n");
-            otp_cxt->otp_data->third_cali_dat.buffer = NULL;
-            otp_cxt->otp_data->third_cali_dat.size = 0;
+            otp_cxt->otp_data->third_cali_dat.rdm_info.buffer = NULL;
+            otp_cxt->otp_data->third_cali_dat.rdm_info.size = 0;
             return ret;
         } else {
-            otp_cxt->otp_data->third_cali_dat.buffer = arcsoft_src_dat;
-            otp_cxt->otp_data->third_cali_dat.size =
+            otp_cxt->otp_data->third_cali_dat.rdm_info.buffer = arcsoft_src_dat;
+            otp_cxt->otp_data->third_cali_dat.rdm_info.size =
                 ARCSOFT_INFO_CHECKSUM - ARCSOFT_INFO_OFFSET;
         }
     } else {
-        otp_cxt->otp_data->third_cali_dat.buffer = NULL;
-        otp_cxt->otp_data->third_cali_dat.size = 0;
+        otp_cxt->otp_data->third_cali_dat.rdm_info.buffer = NULL;
+        otp_cxt->otp_data->third_cali_dat.rdm_info.size = 0;
     }
+    otp_cxt->otp_data->third_cali_dat.gld_info.buffer = NULL;
+    otp_cxt->otp_data->third_cali_dat.gld_info.size = 0;
     OTP_LOGV("out");
     return ret;
 }
@@ -368,40 +305,41 @@ static cmr_int _ov13855_sunny_awb_calibration(cmr_handle otp_drv_handle) {
     CHECK_PTR(otp_drv_handle);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    /*
+        otp_calib_items_t *cal_items =
+            &(ov13855_sunny_drv_entry.otp_cfg.cali_items);
+        awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
+        int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
 
-    otp_calib_items_t *cal_items =
-        &(ov13855_sunny_drv_entry.otp_cfg.cali_items);
-    awbcalib_data_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
-    int rg, bg, R_gain, G_gain, B_gain, Base_gain, temp, i;
+        // calculate G gain
 
-    // calculate G gain
+        R_gain = awb_cali_dat->awb_gld_info[0].rg_ratio * 1000 /
+                 awb_cali_dat->awb_rdm_info[0].rg_ratio;
+        B_gain = awb_cali_dat->awb_gld_info[0].bg_ratio * 1000 /
+                 awb_cali_dat->awb_rdm_info[0].bg_ratio;
+        G_gain = 1000;
 
-    R_gain = awb_cali_dat->awb_gld_info[0].rg_ratio * 1000 /
-             awb_cali_dat->awb_rdm_info[0].rg_ratio;
-    B_gain = awb_cali_dat->awb_gld_info[0].bg_ratio * 1000 /
-             awb_cali_dat->awb_rdm_info[0].bg_ratio;
-    G_gain = 1000;
+        if (R_gain < 1000 || B_gain < 1000) {
+            if (R_gain < B_gain)
+                Base_gain = R_gain;
+            else
+                Base_gain = B_gain;
+        } else {
+            Base_gain = G_gain;
+        }
+        if (Base_gain != 0) {
+            R_gain = 0x400 * R_gain / (Base_gain);
+            B_gain = 0x400 * B_gain / (Base_gain);
+            G_gain = 0x400 * G_gain / (Base_gain);
+        } else {
+            OTP_LOGE("awb parse problem!");
+        }
+        OTP_LOGI("r_Gain=0x%x,g_Gain=0x%x,b_Gain=0x%x\n", R_gain, G_gain,
+       B_gain);
 
-    if (R_gain < 1000 || B_gain < 1000) {
-        if (R_gain < B_gain)
-            Base_gain = R_gain;
-        else
-            Base_gain = B_gain;
-    } else {
-        Base_gain = G_gain;
-    }
-    if (Base_gain != 0) {
-        R_gain = 0x400 * R_gain / (Base_gain);
-        B_gain = 0x400 * B_gain / (Base_gain);
-        G_gain = 0x400 * G_gain / (Base_gain);
-    } else {
-        OTP_LOGE("awb parse problem!");
-    }
-    OTP_LOGI("r_Gain=0x%x,g_Gain=0x%x,b_Gain=0x%x\n", R_gain, G_gain, B_gain);
-
-    if (cal_items->is_awbc_self_cal) {
-        OTP_LOGD("Do wb calibration local");
-    }
+        if (cal_items->is_awbc_self_cal) {
+            OTP_LOGD("Do wb calibration local");
+        }*/
     OTP_LOGV("out");
     return ret;
 }
@@ -588,9 +526,6 @@ static cmr_int ov13855_sunny_otp_drv_parse(cmr_handle otp_drv_handle,
         &(ov13855_sunny_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
 
-    module_data_t *module_dat = &(otp_cxt->otp_data->module_dat);
-    module_info_t *module_info = NULL;
-
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
         OTP_LOGI("otp has parse before,return directly");
         return ret;
@@ -673,94 +608,47 @@ static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
     /*module data*/
-    convert_data->dual_otp.master_module_info.year =
-        format_data->module_dat.year;
-    convert_data->dual_otp.master_module_info.month =
-        format_data->module_dat.month;
-    convert_data->dual_otp.master_module_info.day = format_data->module_dat.day;
-    convert_data->dual_otp.master_module_info.mid =
-        format_data->module_dat.moule_id;
-    convert_data->dual_otp.master_module_info.vcm_id =
-        format_data->module_dat.vcm_id;
-    convert_data->dual_otp.master_module_info.driver_ic_id =
-        format_data->module_dat.drvier_ic_id;
-    /*awb convert*/
-    convert_data->dual_otp.master_iso_awb_info.iso = format_data->iso_dat;
-    convert_data->dual_otp.master_iso_awb_info.gain_r =
-        format_data->awb_cali_dat.awb_rdm_info[0].R;
-    convert_data->dual_otp.master_iso_awb_info.gain_g =
-        format_data->awb_cali_dat.awb_rdm_info[0].G;
-    convert_data->dual_otp.master_iso_awb_info.gain_b =
-        format_data->awb_cali_dat.awb_rdm_info[0].B;
+    convert_data->dual_otp.master_module_info =
+        (struct sensor_otp_section_info *)&format_data->module_dat;
 
-    /*awb golden data*/
-    convert_data->dual_otp.master_awb_golden_info.gain_r =
-        format_data->awb_cali_dat.awb_gld_info[0].R;
-    convert_data->dual_otp.master_awb_golden_info.gain_g =
-        format_data->awb_cali_dat.awb_gld_info[0].G;
-    convert_data->dual_otp.master_awb_golden_info.gain_b =
-        format_data->awb_cali_dat.awb_gld_info[0].B;
+    /*awb convert*/
+    convert_data->dual_otp.master_iso_awb_info =
+        (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
 
     /*optical center*/
-    memcpy((void *)&convert_data->dual_otp.master_optical_center_info,
-           (void *)&format_data->opt_center_dat, sizeof(optical_center_t));
+    convert_data->dual_otp.master_optical_center_info =
+        (struct sensor_otp_section_info *)&format_data->opt_center_dat;
 
     /*lsc convert*/
-    convert_data->dual_otp.master_lsc_info.lsc_data_addr =
-        (cmr_u8 *)&format_data->lsc_cali_dat +
-        format_data->lsc_cali_dat.lsc_calib_random.offset;
-    convert_data->dual_otp.master_lsc_info.lsc_data_size =
-        format_data->lsc_cali_dat.lsc_calib_random.length;
-    convert_data->dual_otp.master_lsc_info.full_img_width =
-        ov13855_sunny_drv_entry.otp_cfg.base_info_cfg.full_img_width;
-    convert_data->dual_otp.master_lsc_info.full_img_height =
-        ov13855_sunny_drv_entry.otp_cfg.base_info_cfg.full_img_height;
-    convert_data->dual_otp.master_lsc_info.lsc_otp_grid =
-        ov13855_sunny_drv_entry.otp_cfg.base_info_cfg.lsc_otp_grid;
-
-    /*lsc golden data*/
-    convert_data->dual_otp.master_lsc_golden_info.lsc_data_addr =
-        (cmr_u8 *)&format_data->lsc_cali_dat +
-        format_data->lsc_cali_dat.lsc_calib_golden.offset;
-    convert_data->dual_otp.master_lsc_golden_info.lsc_data_size =
-        format_data->lsc_cali_dat.lsc_calib_golden.length;
+    convert_data->dual_otp.master_lsc_info =
+        (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
 
     /*ae convert*/
-    convert_data->dual_otp.master_ae_info.ae_target_lum =
-        format_data->ae_cali_dat.target_lum;
-    convert_data->dual_otp.master_ae_info.gain_1x_exp =
-        format_data->ae_cali_dat.gain_1x_exp;
-    convert_data->dual_otp.master_ae_info.gain_2x_exp =
-        format_data->ae_cali_dat.gain_2x_exp;
-    convert_data->dual_otp.master_ae_info.gain_4x_exp =
-        format_data->ae_cali_dat.gain_4x_exp;
-    convert_data->dual_otp.master_ae_info.gain_8x_exp =
-        format_data->ae_cali_dat.gain_8x_exp;
+    convert_data->dual_otp.master_ae_info =
+        (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
     /*af convert*/
-    single_otp->af_info.infinite_cali = format_data->af_cali_dat.infinity_dac;
-    single_otp->af_info.macro_cali = format_data->af_cali_dat.macro_dac;
-    single_otp->af_info.vcm_step = format_data->af_cali_dat.vcm_step;
-    single_otp->af_info.vcm_step_min = format_data->af_cali_dat.vcm_step_min;
-    single_otp->af_info.vcm_step_max = format_data->af_cali_dat.vcm_step_max;
+    single_otp->af_info =
+        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
 
     /*pdaf convert*/
-    single_otp->pdaf_info.pdaf_data_addr = format_data->pdaf_cali_dat.buffer;
-    single_otp->pdaf_info.pdaf_data_size = format_data->pdaf_cali_dat.size;
+    single_otp->pdaf_info =
+        (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
     /*dual camera*/
     property_get("persist.sys.cam.api.version", value, "0");
     convert_data->dual_otp.dual_flag = 1;
     if (atoi(value) == 0) {
         convert_data->dual_otp.data_3d.data_ptr =
-            format_data->dual_cam_cali_dat.buffer;
+            format_data->dual_cam_cali_dat.rdm_info.buffer;
         convert_data->dual_otp.data_3d.size =
-            format_data->dual_cam_cali_dat.size;
+            format_data->dual_cam_cali_dat.rdm_info.size;
         convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_SPRD;
     } else {
         convert_data->dual_otp.data_3d.data_ptr =
-            format_data->third_cali_dat.buffer;
-        convert_data->dual_otp.data_3d.size = format_data->third_cali_dat.size;
+            format_data->third_cali_dat.rdm_info.buffer;
+        convert_data->dual_otp.data_3d.size =
+            format_data->third_cali_dat.rdm_info.size;
         convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_ARCSOFT;
     }
     otp_cxt->compat_convert_data = convert_data;

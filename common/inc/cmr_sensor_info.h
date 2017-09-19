@@ -335,6 +335,16 @@ struct sensor_data_info {
     cmr_u8 dualcam_cali_lib_type;
 };
 
+struct sensor_otp_data_info {
+    cmr_u32 data_size;
+    void *data_addr;
+};
+
+struct sensor_otp_section_info {
+    struct sensor_otp_data_info rdm_info;
+    struct sensor_otp_data_info gld_info;
+};
+
 struct sensor_otp_module_info {
     cmr_u8 year;
     cmr_u8 month;
@@ -396,6 +406,7 @@ struct sensor_otp_optCenter_info {
     struct point B;
 };
 
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 enum otp_vendor_type {
     OTP_VENDOR_NONE = 0,        /*CAMERA NOT SOPPROT OTP*/
     OTP_VENDOR_SINGLE,          /*ONE CAMERA SENSOR ONE OTP*/
@@ -424,7 +435,7 @@ struct sensor_single_otp_info {
 };
 
 struct sensor_dual_otp_info {
-    cmr_u8 dual_flag;/*for 3ddata calibration flag*/
+    cmr_u8 dual_flag; /*for 3ddata calibration flag*/
     struct sensor_data_info data_3d;
     struct sensor_otp_iso_awb_info master_iso_awb_info;
     struct sensor_otp_lsc_info master_lsc_info;
@@ -441,7 +452,48 @@ struct sensor_dual_otp_info {
     struct sensor_otp_lsc_info slave_lsc_golden_info;
     struct sensor_otp_iso_awb_info slave_awb_golden_info;
 };
+#else
+enum otp_vendor_type {
+    OTP_VENDOR_SINGLE = 0,      /*ONE CAMERA SENSOR ONE OTP*/
+    OTP_VENDOR_SINGLE_CAM_DUAL, /*TWO CAMERA SENSOR AND ONE OTP,JUST FOR DUAL
+                                   CAMERA*/
+    OTP_VENDOR_DUAL_CAM_DUAL,   /*TWO CAMERA SENSOR AND TWO OTP,JUST FOR DUAL
+                                   CAMERA*/
+    OTP_VENDOR_NONE,            /*CAMERA NOT SOPPROT OTP*/
+    OTP_VENDOR_MAX
+};
 
+struct sensor_single_otp_info {
+    cmr_u8 program_flag;
+    struct sensor_otp_section_info *module_info;
+    struct sensor_otp_section_info *iso_awb_info;
+    struct sensor_otp_section_info *lsc_info;
+    struct sensor_otp_section_info *af_info;
+    struct sensor_otp_section_info *pdaf_info;
+    /*spc:sesor pixel calibration,used by pdaf*/
+    struct sensor_otp_section_info *spc_info;
+    struct sensor_otp_section_info *optical_center_info;
+    struct sensor_otp_section_info *ae_info;
+    cmr_u16 checksum;
+};
+
+struct sensor_dual_otp_info {
+    cmr_u8 dual_flag; /*for 3ddata calibration flag*/
+    struct sensor_data_info data_3d;
+    struct sensor_otp_section_info *master_iso_awb_info;
+    struct sensor_otp_section_info *master_lsc_info;
+    struct sensor_otp_section_info *master_optical_center_info;
+    struct sensor_otp_section_info *master_module_info;
+    struct sensor_otp_section_info *master_ae_info;
+    struct sensor_otp_section_info *master_af_info;
+    struct sensor_otp_section_info *slave_iso_awb_info;
+    struct sensor_otp_section_info *slave_lsc_info;
+    struct sensor_otp_section_info *slave_optical_center_info;
+    struct sensor_otp_section_info *slave_module_info;
+    struct sensor_otp_section_info *slave_ae_info;
+    struct sensor_otp_section_info *slave_af_info;
+};
+#endif
 struct sensor_otp_cust_info {
     struct sensor_data_info total_otp;
     enum otp_vendor_type otp_vendor;
@@ -511,7 +563,7 @@ struct sensor_pdaf_info {
     cmr_u16 *pd_pos_col;
     enum sensor_vendor_type vendor_type;
     struct sensor_pdaf_type2_info type2_info;
-    cmr_u32 sns_orientation; //0: Normal, 1:Mirror+Flip
+    cmr_u32 sns_orientation; // 0: Normal, 1:Mirror+Flip
 };
 
 struct sensor_ex_exposure {

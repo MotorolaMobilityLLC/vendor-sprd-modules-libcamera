@@ -30,6 +30,7 @@
 #define MODULE_INFO_OFFSET 0x08
 #define MODULE_INFO_END_OFFSET 0x70
 #define MODULE_INFO_SECTION_NUM 2
+#define MODULE_INFO_SIZE 8
 /**********************************
 // gc_stand otp no module_info_checksum
 #define MODULE_INFO_CHECKSUM 0x00

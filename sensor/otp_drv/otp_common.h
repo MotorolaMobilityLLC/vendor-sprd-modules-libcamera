@@ -8,8 +8,13 @@
 
 cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *sensor_name,
                                      void **otp_data, long *format_otp_size);
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
                                   lsccalib_data_t *lsc_cal_data);
+#else
+cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
+                                  otp_section_info_t *lsc_cal_data);
+#endif
 cmr_int sensor_otp_decompress_gain(cmr_u16 *src, cmr_u32 src_bytes,
                                    cmr_u32 src_uncompensate_bytes, cmr_u16 *dst,
                                    cmr_u32 GAIN_COMPRESSED_BITS,
