@@ -1194,26 +1194,19 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
+
 		if (param_data->mod_id >= ISP_MODE_ID_CAP_0 &&
 				param_data->mod_id <= ISP_MODE_ID_CAP_3)
 			sub_block_info.scene_id = ISP_MODE_CAP;
 		else if (param_data->mod_id != ISP_MODE_ID_MAX)
 			sub_block_info.scene_id = ISP_MODE_PRV;
-		ISP_LOGV("get the zsl flag is:%d, scene id is:%d, block info:%p, cmd:0x%x",
+
+		ISP_LOGV("get the zsl flag is:%d, scene id is:%d, block info:%p",
 				cxt->zsl_flag,
 				sub_block_info.scene_id,
-				sub_block_info.block_info,
-				param_data->cmd);
-
-		if (ISP_BLK_AE_NEW == param_data->id) {
-			if (ISP_PM_BLK_ISP_SETTING == param_data->cmd) {
-				ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-				ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));
-			}
-		} else {
-			ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-			ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));
-		}
+				sub_block_info.block_info);
+		ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+		ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));
 
 		param_data++;
 	}
@@ -3266,27 +3259,10 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			sub_block_info.scene_id = ISP_MODE_CAP;
 		else if (param_data->mod_id != ISP_MODE_ID_MAX)
 			sub_block_info.scene_id = ISP_MODE_PRV;
-#if 0
-		if (ISP_BLK_2D_LSC == param_data->id) {
-			sub_block_info.flag = 1;
-			isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
-		}
-#endif
+
 		sub_block_info.block_info = param_data->data_ptr;
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-#if 0
-		if (ISP_BLK_2D_LSC == param_data->id) {
-			if (!cxt->zsl_flag) {
-				/*normal mode*/
-				sub_block_info.flag = 1;
-				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
-			} else if (cxt->zsl_flag) {
-				/*zsl mode*/
-				sub_block_info.flag = 0;
-				isp_dev_lsc_update(cxt->dev_access_handle, &sub_block_info);
-			}
-		}
-#endif
+
 		param_data++;
 	}
 	if (cxt->afl_cxt.handle) {
