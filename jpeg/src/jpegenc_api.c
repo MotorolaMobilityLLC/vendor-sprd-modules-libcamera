@@ -817,19 +817,40 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
 	SCI_TRACE_LOW("fd %x => %x\n",jpegenc_params->src_fd, jpegenc_params->stream_buf_fd);
 	SCI_TRACE_LOW("offset %x,%x => %x\n",jpegenc_params->yuv_phy_buf, jpegenc_params->yuv_u_phy_buf, jpegenc_params->stream_phy_buf[0]);
 
-    JPG_Get_IOVA(jpg_fd, jpegenc_params->stream_buf_fd, &phy_ddr, &iova_size);
+	ret = JPG_Get_IOVA(jpg_fd, jpegenc_params->stream_buf_fd, &phy_ddr, &iova_size);
+	if(ret)
+	{
+		ret = -1;
+		jpegenc_params->iova[0] = 0;
+		goto error;
+	}
+
 	SCI_TRACE_LOW("mfd %x,iova 0x%lx\n",jpegenc_params->stream_buf_fd, phy_ddr);
 	jpegenc_params->stream_phy_buf[0] = jpegenc_params->stream_phy_buf[0] + phy_ddr;
 	jpegenc_params->iova[0] = phy_ddr;
 	jpegenc_params->iova_size[0] = iova_size;
 
-	JPG_Get_IOVA(jpg_fd, jpegenc_params->src_fd, &phy_ddr, &iova_size);
+	ret = JPG_Get_IOVA(jpg_fd, jpegenc_params->src_fd, &phy_ddr, &iova_size);
+	if(ret)
+        {
+                ret = -1;
+                jpegenc_params->iova[1] = 0;
+                goto error;
+        }
+
 	SCI_TRACE_LOW("fd %x,iova 0x%lx\n",jpegenc_params->src_fd, phy_ddr);
 	jpegenc_params->yuv_phy_buf = jpegenc_params->yuv_phy_buf + phy_ddr;
 	jpegenc_params->iova[1] = phy_ddr;
 	jpegenc_params->iova_size[1] = iova_size;
 
-	JPG_Get_IOVA(jpg_fd, jpegenc_params->src_fd, &phy_ddr, &iova_size);
+	ret = JPG_Get_IOVA(jpg_fd, jpegenc_params->src_fd, &phy_ddr, &iova_size);
+	if(ret)
+        {
+                ret = -1;
+                jpegenc_params->iova[2] = 0;
+                goto error;
+        }
+
 	SCI_TRACE_LOW("fd %x,iova 0x%lx\n",jpegenc_params->src_fd, phy_ddr);
 	jpegenc_params->yuv_u_phy_buf = jpegenc_params->yuv_u_phy_buf + phy_ddr;
 	jpegenc_params->iova[2] = phy_ddr;
@@ -888,9 +909,12 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
 error:
   if (-1 == ret) {
     /*		munmap(jpg_addr,SPRD_JPG_MAP_SIZE);*/
-    JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[0], jpegenc_params->iova_size[0]);
-    JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[1], jpegenc_params->iova_size[1]);
-    JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[2], jpegenc_params->iova_size[2]);
+    if(jpegenc_params->iova[0])
+        JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[0], jpegenc_params->iova_size[0]);
+    if(jpegenc_params->iova[1])
+        JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[1], jpegenc_params->iova_size[1]);
+    if(jpegenc_params->iova[2])
+        JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[2], jpegenc_params->iova_size[2]);
     ioctl(jpg_fd, JPG_DISABLE, NULL);
     ioctl(jpg_fd, JPG_RELEASE, NULL);
     SCI_TRACE_LOW("error\n");

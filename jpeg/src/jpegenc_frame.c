@@ -151,7 +151,13 @@ PUBLIC void START_HW_ENCODE(uint32 total_mcu_num)
 		cmd = (total_mcu_num & 0xfffff);
 		JPG_WRITE_REG(JPG_VLC_REG_BASE+VLC_TOTAL_MCU_OFFSET, cmd, "VLC_CFG_OFF: total mcu number of current slice");
 	}
-	
+
+        if (jpeg_fw_codec->jpg_version == SHARKL2)
+        {
+            cmd = JPG_READ_REG(JPG_GLB_REG_BASE+0x100, "mmu_en");
+            if((cmd & 0x1) == 0)
+                SCI_TRACE_LOW("%s, %d, mmu_en is disabled\n", __FUNCTION__, __LINE__);
+	}
 	/*start MEA*/
 	JPG_WRITE_REG(JPG_MBIO_REG_BASE+MCU_NUM_OFFSET, total_mcu_num&0xfffff, "MEA_MCU_NUM: total mcu number");
 	//hardware will auto switch mbio bfr between 0 and 1. sw can't interfere. but sw should fill the corresponding mbio bfr for hw. xiaowei@20090417
