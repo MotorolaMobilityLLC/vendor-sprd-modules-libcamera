@@ -971,7 +971,8 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
     if (cameraInfo) {
         int id = -1;
-        for (int i = 0;; i++) {
+        for (int i = 0; i < (int)(sizeof(kCameraInfo) / sizeof(kCameraInfo[0]));
+             i++) {
             if (kCameraInfo[i].orientation != -1)
                 id++;
             if (id == cameraId) {
@@ -1183,7 +1184,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION_UNCALIBRATED;
 
     // sensor
-    s_setting[cameraId].sensorInfo.orientation = cameraId ? 270 : 90;
+    struct camera_info cameraInfo;
+    memset(&cameraInfo, 0, sizeof(cameraInfo));
+    getCameraInfo(cameraId, &cameraInfo);
+    s_setting[cameraId].sensorInfo.orientation = cameraInfo.orientation;
+
     memcpy(s_setting[cameraId].sensorInfo.available_test_pattern_modes,
            kavailable_test_pattern_modes,
            sizeof(kavailable_test_pattern_modes));
