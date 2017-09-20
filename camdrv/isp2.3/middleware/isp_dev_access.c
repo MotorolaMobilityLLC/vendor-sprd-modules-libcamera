@@ -175,9 +175,12 @@ exit:
 	return ret;
 }
 
-cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param *in_ptr)
+cmr_int isp_dev_start(cmr_handle isp_dev_handle, cmr_u32 zsl_flag, cmr_u32 *mode_id,
+		struct isp_drv_interface_param *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 mode_num = 0;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_u_blocks_info dev_blocks_info;
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
@@ -185,6 +188,12 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 #endif
 
 	memset(&dev_blocks_info, 0x0, sizeof(dev_blocks_info));
+
+	if (zsl_flag)
+		mode_num = 2;
+	else
+		mode_num = 1;
+
 	isp_u_fetch_raw_transaddr(cxt->isp_driver_handle, &in_ptr->fetch.fetch_addr);
 
 	ret = isp_get_fetch_addr(in_ptr, &in_ptr->fetch);
@@ -194,33 +203,49 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 	ret = isp_get_cfa_default_param(in_ptr, &cfa_param);
 	ISP_RETURN_IF_FAIL(ret, ("fail to get isp cfa default param"));
 
-	dev_blocks_info.block_info = (void *)&in_ptr->cfa_param;
-	ret = isp_u_cfa_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp cfa"));
+	for (i = 0; i < mode_num; i++) {
+		if (mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+				mode_id[i] <= ISP_MODE_ID_CAP_3)
+			dev_blocks_info.scene_id = 1;
+		else
+			dev_blocks_info.scene_id = 0;
+
+		dev_blocks_info.block_info = (void *)&in_ptr->cfa_param;
+		ret = isp_u_cfa_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+		ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp cfa"));
+	}
 #endif
-	dev_blocks_info.block_info = (void *)&in_ptr->fetch;
-	ret = isp_u_fetch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp fetch"));
+	for (i = 0; i < mode_num; i++) {
+		if (mode_id[i] >= ISP_MODE_ID_CAP_0 &&
+				mode_id[i] <= ISP_MODE_ID_CAP_3)
+			dev_blocks_info.scene_id = 1;
+		else
+			dev_blocks_info.scene_id = 0;
 
-	dev_blocks_info.block_info = (void *)&in_ptr->store;
-	ret = isp_u_store_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp store"));
+		dev_blocks_info.block_info = (void *)&in_ptr->fetch;
+		ret = isp_u_fetch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+		ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp fetch"));
 
-	dev_blocks_info.block_info = (void *)&in_ptr->dispatch;
-	ret = isp_u_dispatch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp dispatch"));
+		dev_blocks_info.block_info = (void *)&in_ptr->store;
+		ret = isp_u_store_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+		ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp store"));
 
-	dev_blocks_info.block_info = (void *)&in_ptr->arbiter;
-	ret = isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp arbiter"));
+		dev_blocks_info.block_info = (void *)&in_ptr->dispatch;
+		ret = isp_u_dispatch_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+		ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp dispatch"));
 
-	dev_blocks_info.block_info = (void *)&in_ptr->com;
-	isp_cfg_comm_data(cxt->isp_driver_handle, &dev_blocks_info);
+		dev_blocks_info.block_info = (void *)&in_ptr->arbiter;
+		ret = isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&dev_blocks_info);
+		ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp arbiter"));
 
-	dev_blocks_info.block_info = (void *)&in_ptr->slice;
-	isp_cfg_slice_size(cxt->isp_driver_handle, &dev_blocks_info);
+		dev_blocks_info.block_info = (void *)&in_ptr->com;
+		isp_cfg_comm_data(cxt->isp_driver_handle, &dev_blocks_info);
 
-	return ret;
+		dev_blocks_info.block_info = (void *)&in_ptr->slice;
+		isp_cfg_slice_size(cxt->isp_driver_handle, &dev_blocks_info);
+	}
+
+		return ret;
 }
 
 cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)

@@ -3254,13 +3254,18 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
+		sub_block_info.block_info = param_data->data_ptr;
+
 		if (param_data->mod_id >= ISP_MODE_ID_CAP_0 &&
 				param_data->mod_id <= ISP_MODE_ID_CAP_3)
 			sub_block_info.scene_id = ISP_MODE_CAP;
 		else if (param_data->mod_id != ISP_MODE_ID_MAX)
 			sub_block_info.scene_id = ISP_MODE_PRV;
 
-		sub_block_info.block_info = param_data->data_ptr;
+		ISP_LOGV("get the zsl flag is:%d, scene id is:%d, block info:%p",
+				cxt->zsl_flag,
+				sub_block_info.scene_id,
+				sub_block_info.block_info);
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 
 		param_data++;
@@ -3508,6 +3513,9 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 mode_num = 0;
+	cmr_u32 i = 0;
+	cmr_s32 mode = 0, dv_mode = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_statis_mem_info statis_mem_input;
@@ -3516,7 +3524,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
-	cmr_s32 mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -3603,17 +3610,24 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			cxt->commn_cxt.isp_mode = mode;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
+
+			if (cxt->zsl_flag)
+				mode_num = ISP_MODE_MAX;
+			else
+				mode_num = 1;
+			for (i = 0; i < mode_num; i++) {
+				cxt->commn_cxt.isp_mode = cxt->mode_id[i];
+				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
+			}
 		}
 	} else {
 		if (0 != in_ptr->dv_mode) {
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION, in_ptr, &dv_mode);
 			cxt->commn_cxt.mode_flag = dv_mode;
-			if (!cxt->zsl_flag)
-				cxt->mode_id[0] = dv_mode;
+			/* none zsl flag */
+			cxt->mode_id[0] = dv_mode;
 		} else {
-			cxt->commn_cxt.mode_flag = mode;
+			cxt->commn_cxt.mode_flag = cxt->mode_id[0];
 		}
 		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
 			BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
@@ -3624,8 +3638,15 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
+
+			if (cxt->zsl_flag)
+				mode_num = ISP_MODE_MAX;
+			else
+				mode_num = 1;
+			for (i = 0; i < mode_num; i++) {
+				cxt->commn_cxt.isp_mode = cxt->mode_id[i];
+				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
+			}
 		}
 	}
 
@@ -3670,7 +3691,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
 
-	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
+	ret = isp_dev_start(cxt->dev_access_handle, cxt->zsl_flag,
+			cxt->mode_id,
+			interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
 
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
@@ -3867,7 +3890,9 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
-	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
+	ret = isp_dev_start(cxt->dev_access_handle, cxt->zsl_flag,
+			cxt->mode_id,
+			interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
 
 	if (cxt->ops.ae_ops.ioctrl) {
