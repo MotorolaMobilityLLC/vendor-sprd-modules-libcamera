@@ -76,6 +76,11 @@ enum setting_general_type {
     SETTING_GENERAL_SENSOR_ROTATION,
     SETTING_GENERAL_AE_LOCK_UNLOCK,
     SETTING_GENERAL_AWB_LOCK_UNLOCK,
+    SETTING_GENERAL_AE_MODE,
+    SETTING_GENERAL_EXPOSURE_TIME,
+    SETTING_GENERAL_SENSITIVITY,
+    SETTING_GENERAL_AF_BYPASS,
+    SETTING_GENERAL_FOCUS_DISTANCE,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -120,6 +125,11 @@ struct setting_hal_common {
     cmr_uint video_mode;
     cmr_uint frame_rate;
     cmr_uint auto_exposure_mode;
+    cmr_uint ae_mode;
+    cmr_uint exposure_time;
+    cmr_uint sensitivity;
+    cmr_uint af_bypass;
+    cmr_uint focus_distance;
 };
 
 enum zoom_status { ZOOM_IDLE, ZOOM_UPDATING };
@@ -524,6 +534,16 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AE_LOCK_UNLOCK, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
          COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AE_MODE, &hal_param->hal_common.ae_mode,
+         COM_ISP_SET_AE_MODE_CONTROL, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
+         COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_SENSITIVITY, &hal_param->hal_common.sensitivity,
+         COM_ISP_SET_SENSITIVITY, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AF_BYPASS, &hal_param->hal_common.af_bypass,
+         COM_ISP_SET_AF_BYPASS, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_FOCUS_DISTANCE, &hal_param->hal_common.focus_distance,
+         COM_ISP_SET_AF_POS, COM_SN_TYPE_MAX},
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -2351,6 +2371,55 @@ setting_get_sprd_filter_type(struct setting_component *cpt,
     CMR_LOGI("get sprd_filter_type = %ld", hal_param->sprd_filter_type);
     return ret;
 }
+
+static cmr_int setting_set_ae_mode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AE_MODE, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_exposure_time(struct setting_component *cpt,
+                                         struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGI("exposure time = %lu", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_EXPOSURE_TIME, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_sensitivity(struct setting_component *cpt,
+                                          struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGI("sensitivity = %lu", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_SENSITIVITY, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_af_bypass(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AF_BYPASS, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_focus_distance(struct setting_component *cpt,
+                                          struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGI("focus_distance = %lu", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_FOCUS_DISTANCE, parm);
+
+    return ret;
+}
+
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -2429,6 +2498,36 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     if (invalid_word != hal_param->hal_common.scene_mode) {
         cmd_param.cmd_type_value = hal_param->hal_common.scene_mode;
         ret = setting_set_scene_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.ae_mode) {
+        cmd_param.cmd_type_value = hal_param->hal_common.ae_mode;
+        ret = setting_set_ae_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.exposure_time) {
+        cmd_param.cmd_type_value = hal_param->hal_common.exposure_time;
+        ret = setting_set_exposure_time(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.sensitivity) {
+        cmd_param.cmd_type_value = hal_param->hal_common.sensitivity;
+        ret = setting_set_sensitivity(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.af_bypass) {
+        cmd_param.cmd_type_value = hal_param->hal_common.af_bypass;
+        ret = setting_set_af_bypass(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.focus_distance) {
+        cmd_param.cmd_type_value = hal_param->hal_common.focus_distance;
+        ret = setting_set_focus_distance(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
@@ -3514,6 +3613,13 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_sprd_filter_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,
                              setting_get_sprd_filter_type);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_MODE, setting_set_ae_mode);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
+                             setting_set_exposure_time);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SENSITIVITY, setting_set_sensitivity);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AF_BYPASS, setting_set_af_bypass);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_LENS_FOCUS_DISTANCE,
+                             setting_set_focus_distance);
     setting_parms_inited = 1;
     return 0;
 }

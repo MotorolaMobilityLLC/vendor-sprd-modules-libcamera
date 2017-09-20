@@ -2412,7 +2412,8 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
         property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false") && !mFixedFpsEnabled) {
+        if (!strcmp(value, "false") && !mFixedFpsEnabled &&
+            controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
             fps_param.min_fps = CONFIG_MIN_CAMRECORDER_FPS;
             fps_param.max_fps = 30;
         }
@@ -4280,7 +4281,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #else
     int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
-
+    // use boottime not monotonic time for AR
+    buffer_timestamp = frame->monoboottime;
     if (0 == buffer_timestamp)
         HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
 
@@ -6278,6 +6280,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
 int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     int ret = 0;
     CONTROL_Tag controlInfo;
+    SENSOR_Tag sensorInfo;
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
 
@@ -6287,7 +6290,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
-
+    mSetting->getSENSORTag(&sensorInfo);
     mSetting->getCONTROLTag(&controlInfo);
     switch (cameraParaTag) {
     case ANDROID_CONTROL_SCENE_MODE: {
@@ -6324,6 +6327,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AWB_MODE: {
         int8_t drvAwbMode = 0;
         mSetting->androidAwbModeToDrvAwbMode(controlInfo.awb_mode, &drvAwbMode);
+
+        HAL_LOGD("awb mode:%d", controlInfo.awb_mode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbMode);
         if (controlInfo.awb_mode != ANDROID_CONTROL_AWB_MODE_AUTO)
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
@@ -6451,7 +6456,19 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AF_MODE: {
         int8_t AfMode = 0;
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
-        if (!mIsAutoFocus) {
+
+        HAL_LOGD("af_mode:%d, AfMode:%d", controlInfo.af_mode, AfMode);
+
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_OFF) {
+            cmr_uint param = 1;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_BYPASS, param);
+        } else {
+            cmr_uint param = 0;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_BYPASS, param);
+        }
+
+        if (!mIsAutoFocus &&
+            controlInfo.af_mode != ANDROID_CONTROL_AF_MODE_OFF) {
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==
                     AfMode) { /*dv mode but recording not start*/
@@ -6510,6 +6527,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (mCameraId == 0 || mCameraId == 1) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
+
+            HAL_LOGD("ae_mode:%d, drvAeMode:%d, mFlashMode:%d",
+                     controlInfo.ae_mode, drvAeMode, mFlashMode);
+
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
+                     controlInfo.ae_mode);
 
             if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
                 if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
@@ -6765,6 +6788,60 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.sprd_filter_type);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FILTER_TYPE,
                  sprddefInfo.sprd_filter_type);
+    } break;
+
+    case ANDROID_SENSOR_EXPOSURE_TIME:
+        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
+            HAL_LOGD("exposure_time %ld", sensorInfo.exposure_time);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
+                     (cmr_uint)(sensorInfo.exposure_time));
+        }
+        break;
+
+    case ANDROID_SENSOR_FRAME_DURATION: {
+        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
+            struct cmr_range_fps_param fps_param;
+
+            fps_param.is_recording = (cmr_int)mRecordingMode;
+            fps_param.video_mode = (cmr_int)mRecordingMode;
+            fps_param.min_fps = 1000000000 / sensorInfo.frame_duration;
+            if (1000000000 % sensorInfo.frame_duration >
+                sensorInfo.frame_duration / 2) {
+                fps_param.min_fps++;
+            }
+            fps_param.max_fps = fps_param.min_fps;
+            controlInfo.ae_target_fps_range[0] = fps_param.min_fps;
+            controlInfo.ae_target_fps_range[1] = fps_param.max_fps;
+
+            mSetting->setCONTROLTag(&controlInfo);
+            HAL_LOGD("fps:%lu, frame_duration:%ld", fps_param.min_fps,
+                     sensorInfo.frame_duration);
+
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
+                     (cmr_uint)&fps_param);
+        }
+    } break;
+
+    case ANDROID_SENSOR_SENSITIVITY: {
+        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
+            HAL_LOGD("sensitivity:%d", sensorInfo.sensitivity);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSITIVITY,
+                     (cmr_uint)(sensorInfo.sensitivity));
+        }
+    } break;
+
+    case ANDROID_LENS_FOCUS_DISTANCE: {
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_OFF) {
+            LENS_Tag lensInfo;
+            mSetting->getLENSTag(&lensInfo);
+
+            HAL_LOGD("focus_distance:%f", lensInfo.focus_distance);
+            if (lensInfo.focus_distance) {
+                SET_PARM(mHalOem, mCameraHandle,
+                         CAMERA_PARAM_LENS_FOCUS_DISTANCE,
+                         (cmr_uint)(lensInfo.focus_distance));
+            }
+        }
     } break;
 
     default:

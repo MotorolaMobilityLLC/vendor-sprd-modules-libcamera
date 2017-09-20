@@ -7098,6 +7098,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_fps.min_fps = param_ptr->range_fps.min_fps;
         isp_fps.max_fps = param_ptr->range_fps.max_fps;
         isp_param_ptr = (void *)&isp_fps;
+        CMR_LOGD("fps %d %d", isp_fps.min_fps, isp_fps.max_fps);
         break;
 
     case COM_ISP_SET_FPS_LLS_MODE:
@@ -7203,6 +7204,36 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_cmd = ISP_CTRL_GET_LEDS_CTRL;
         isp_param_ptr = (void *)&param_ptr->leds_ctrl;
+        break;
+
+    case COM_ISP_SET_AE_MODE_CONTROL:
+        isp_cmd = ISP_CTRL_SET_AE_MODE;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("ae_mode %d", param_ptr->cmd_value);
+        break;
+
+    case COM_ISP_SET_EXPOSURE_TIME:
+        isp_cmd = ISP_CTRL_SET_AE_EXP_TIME;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("exposure time %d", isp_param);
+        break;
+
+    case COM_ISP_SET_SENSITIVITY:
+        isp_cmd = ISP_CTRL_SENSITIVITY;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("sensitivity %d", isp_param);
+        break;
+
+    case COM_ISP_SET_AF_BYPASS:
+        isp_cmd = ISP_CTRL_SET_AF_BYPASS;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("af_bypass %d", param_ptr->cmd_value);
+        break;
+
+    case COM_ISP_SET_AF_POS:
+        isp_cmd = ISP_CTRL_SET_AF_POS;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("af_pos %d", param_ptr->cmd_value);
         break;
 
     default:
@@ -8352,6 +8383,36 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_FILTER_TYPE:
         setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_AE_MODE:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("ae_mode=%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_EXPOSURE_TIME:
+        CMR_LOGI("exposure time=%lu", param);
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_SENSITIVITY:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("sensitivity=%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_AF_BYPASS:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("af_bypass=%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_LENS_FOCUS_DISTANCE:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("focus_distance=%lu", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
