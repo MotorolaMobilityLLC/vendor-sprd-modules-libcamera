@@ -131,9 +131,12 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cmr_u32 normal_60hz_thrd = 0;
 	cmr_u32 lowlight_60hz_thrd = 0;
 	struct isp_antiflicker_param *afl_param = NULL;
+#ifdef CONFIG_ISP_2_2
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+	memset(&param_data, 0, sizeof(param_data));
+#endif
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -146,20 +149,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	ae_exp_flag = in_ptr->ae_exp_flag;
 	addr = (cmr_s32 *)(cmr_uint)in_ptr->vir_addr;
 
-	memset(&param_data, 0, sizeof(param_data));
-
-#ifdef CONFIG_ISP_2_3
-	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_ANTI_FLICKER,
-			0,
-			NULL, 0);
-	input.param_num = 1;
-	input.param_data_ptr = &param_data;
-#else
+#ifdef CONFIG_ISP_2_2
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_ANTI_FLICKER,
 			NULL, 0);
-#endif
 	ret = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		afl_param = (struct isp_antiflicker_param *)output.param_data->data_ptr;
@@ -173,6 +166,20 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 		normal_60hz_thrd = 140;
 		lowlight_60hz_thrd = 100;
 	}
+#else
+	if (1 == in_ptr->pm_param_num) {
+		afl_param = in_ptr->afl_param_ptr;
+		normal_50hz_thrd = afl_param->normal_50hz_thrd;
+		lowlight_50hz_thrd = afl_param->lowlight_50hz_thrd;
+		normal_60hz_thrd = afl_param->normal_60hz_thrd;
+		lowlight_60hz_thrd = afl_param->lowlight_60hz_thrd;
+	} else {
+		normal_50hz_thrd = 280;
+		lowlight_50hz_thrd = 100;
+		normal_60hz_thrd = 140;
+		lowlight_60hz_thrd = 100;
+	}
+#endif
 
 	if (cur_exp_flag) {
 		if (cur_flicker) {

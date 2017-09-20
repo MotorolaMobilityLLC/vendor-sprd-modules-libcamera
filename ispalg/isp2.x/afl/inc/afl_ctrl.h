@@ -34,9 +34,13 @@ struct afl_proc_in {
 	cmr_u32 cur_flicker;
 	cmr_u32 cur_exp_flag;
 	cmr_s32 ae_exp_flag;
+	cmr_s32 pm_param_num;
 	cmr_uint vir_addr;
 	struct isp_awb_statistic_info *ae_stat_ptr;
+	struct isp_antiflicker_param *afl_param_ptr;
+#ifdef CONFIG_ISP_2_2
 	cmr_handle handle_pm;
+#endif
 };
 
 cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in *input_ptr);
