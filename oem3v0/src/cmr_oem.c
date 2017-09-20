@@ -7254,7 +7254,7 @@ static cmr_int camera_get_pdaf_flag(cmr_handle oem_handle,
                CAMERA_AUTOTEST_MODE == mode ||
                CAMERA_ISP_SIMULATION_MODE == mode ||
                1 == out_param_ptr->video_eb || 1 == out_param_ptr->is_dv ||
-               cxt->is_multi_mode) {
+               cxt->is_multi_mode || 0 == out_param_ptr->sprd_zsl_enabled) {
         out_param_ptr->pdaf_mode = SENSOR_PDAF_DISABLED;
     } else if (SENSOR_PDAF_TYPE1_ENABLE ==
                    sn_cxt->cur_sns_ex_info.pdaf_supported &&
@@ -7414,25 +7414,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         CMR_LOGE("failed to get zoom param %ld", ret);
         goto exit;
     }
-    /*get pdaf enable flag*/
-    ret = camera_get_pdaf_flag(cxt, mode, out_param_ptr, is_raw_capture);
-
-    property_get("persist.sys.camera.pdaf.off", value, "0");
-    if (atoi(value)) {
-        out_param_ptr->pdaf_mode = 0;
-        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
-    }
-
-    if ((out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) ||
-        (out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE2_ENABLE)) {
-        haf_enable = out_param_ptr->pdaf_mode;
-        CMR_LOGI("haf_enable %d", haf_enable);
-        ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE,
-                        &haf_enable);
-        if (ret) {
-            CMR_LOGE("isp_ioctl-ISP_CTRL_SET_HAF_ENABLE failed");
-        }
-    }
 
     out_param_ptr->zoom_setting = setting_param.zoom_param;
     CMR_LOGV("aspect ratio prev=%f, video=%f, cap=%f",
@@ -7485,6 +7466,26 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     if (CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode ||
         CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode) {
         out_param_ptr->tool_eb = 1;
+    }
+
+    /*get pdaf enable flag*/
+    ret = camera_get_pdaf_flag(cxt, mode, out_param_ptr, is_raw_capture);
+
+    property_get("persist.sys.camera.pdaf.off", value, "0");
+    if (atoi(value)) {
+        out_param_ptr->pdaf_mode = 0;
+        out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
+    }
+
+    if ((out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) ||
+        (out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE2_ENABLE)) {
+        haf_enable = out_param_ptr->pdaf_mode;
+        CMR_LOGI("haf_enable %d", haf_enable);
+        ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE,
+                        &haf_enable);
+        if (ret) {
+            CMR_LOGE("isp_ioctl-ISP_CTRL_SET_HAF_ENABLE failed");
+        }
     }
 
     /*get snapshot size*/
