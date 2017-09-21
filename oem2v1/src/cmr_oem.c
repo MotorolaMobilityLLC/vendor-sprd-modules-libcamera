@@ -3195,6 +3195,14 @@ cmr_s32 camera_isp_set_pulse_line(void *handler, cmr_u32 line) {
     return ret;
 }
 
+cmr_s32 camera_isp_set_next_vcm_pos(void *handler, cmr_s32 pos) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)handler;
+
+    ret = cmr_grab_set_next_vcm_pos(cxt->grab_cxt.grab_handle, pos);
+    return ret;
+}
+
 cmr_int camera_isp_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -3303,6 +3311,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     isp_param.ops.flash_set_time = camera_isp_flash_set_time;
 #ifdef CONFIG_CAMERA_OFFLINE
     isp_param.ops.set_pulse_line = camera_isp_set_pulse_line;
+    isp_param.ops.set_next_vcm_pos = camera_isp_set_next_vcm_pos;
 #endif
 
     isp_param.ctrl_callback = camera_isp_evt_cb;

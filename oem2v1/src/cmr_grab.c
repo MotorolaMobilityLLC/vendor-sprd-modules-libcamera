@@ -1548,6 +1548,20 @@ cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line) {
     return ret;
 }
 
+cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle, cmr_s32 pos) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_NEXT_VCM_POS, &pos);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+
 cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
                            struct sprd_flash_cfg_param *cfg) {
     cmr_int ret = 0;

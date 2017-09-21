@@ -825,6 +825,12 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AF_SET_PULSE_LINE:
 		ret = cxt->commn_cxt.ops.set_pulse_line(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
 		break;
+	case ISP_AF_SET_NEXT_VCM_POS:
+		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
+		break;
+	case ISP_AF_SET_CLEAR_NEXT_VCM_POS:
+		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, -1);
+		break;
 	default:
 		break;
 	}
