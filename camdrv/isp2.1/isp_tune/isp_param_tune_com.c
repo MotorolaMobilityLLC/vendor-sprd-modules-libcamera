@@ -43,9 +43,7 @@ static cmr_s32 _ispParamVerify(void *in_param_ptr)
 static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void *in_param_ptr)
 {
 	cmr_u32 rtn = 0x00;
-	cmr_u32 *param_ptr = (cmr_u32 *) ((cmr_u8 *) in_param_ptr + 0x0c);	// packet data
-
-	// version_id||module_id||packet_len||module_info||data
+	cmr_u32 *param_ptr = (cmr_u32 *) ((cmr_u8 *) in_param_ptr + 0x0c);	// packet data version_id||module_id||packet_len||module_info||data
 	cmr_u32 version_id = param_ptr[0];
 	cmr_u32 module_id = param_ptr[1];
 	cmr_u32 packet_len = param_ptr[2];
@@ -81,9 +79,6 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void *in_param_ptr)
 	struct isp_af_win af_param;
 
 	cmd = module_id;
-
-	//ISP_LOGE("ISP_TOOL:Level cmd :%d level :%d \n", cmd, level);
-	//ISP_LOGE("ISP_TOOL:0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x \n", param_ptr[0], param_ptr[1], param_ptr[2], param_ptr[3], param_ptr[4],param_ptr[5]);
 
 	if (ISP_CTRL_AF == cmd) {
 		SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
@@ -135,7 +130,6 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 	}
 
 	temp_param_version = (struct sensor_version_info *)ispParserAlloc(ISP_PARASER_VERSION_INFO_SIZE);
-	//ISP_LOGE("ISP_TOOL:temp_param_version size=%d", sizeof(temp_param_version));
 	if (!temp_param_version) {
 		ISP_LOGE("fail to check temp_param_version");
 		ispParserFree(data_addr);
@@ -149,9 +143,7 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 	rtn_ptr->buf_addr = (cmr_uint) data_addr;
 	rtn_ptr->buf_len = sizeof(struct isp_main_info);
 
-	if ((NULL != sensor_info_ptr)
-	    /*&&(NULL!=sensor_info_ptr->raw_info_ptr) */
-	    ) {
+	if ((NULL != sensor_info_ptr)) {
 		/*get sensor name */
 		if (NULL != sensor_info_ptr->raw_info_ptr) {
 			param_ptr->version_id = sensor_info_ptr->raw_info_ptr->version_info->version_id;
@@ -201,15 +193,8 @@ static cmr_s32 _ispParserUpMainInfo(void *rtn_param_ptr)
 			strcat((char *)&param_ptr->sensor_id, "--YUV");
 		}
 	} else {
-#if  1
 		strcpy((char *)&param_ptr->sensor_id, "no sensor identified");
 		param_ptr->version_id = TOOL_DEFAULT_VER;
-#else
-		rtn_ptr->buf_addr = (cmr_u32) NULL;
-		rtn_ptr->buf_len = 0x00;
-		ispParserFree(data_addr);
-		rtn = 0x01;
-#endif
 	}
 
 	ispParserFree(temp_param_version);
@@ -238,8 +223,7 @@ static cmr_s32 _ispParserUpParam(void *rtn_param_ptr)
 	rtn_ptr->buf_addr = (cmr_uint) data_addr;
 
 	if (NULL != data_addr) {
-		// packet cfg
-		// version_id||module_id||packet_len||module_info||data
+		// packet cfg version_id||module_id||packet_len||module_info||data
 		data_addr[0] = version_id;
 		data_addr[1] = ISP_PACKET_ALL;
 		data_addr[2] = data_len;
@@ -283,7 +267,6 @@ static cmr_s32 _ispParserUpdata(void *in_param_ptr, void *rtn_param_ptr)
 
 		memcpy((void *)&data_addr[5], (void *)in_ptr->buf_addr, in_ptr->buf_len);
 
-		// rtn sesult
 		rtn_ptr->buf_addr = (cmr_uint) data_addr;
 		rtn_ptr->buf_len = data_len;
 	}
@@ -306,7 +289,6 @@ static cmr_s32 _ispParserCapturesize(void *in_param_ptr, void *rtn_param_ptr)
 		data_addr[1] = data_len;
 		data_addr[2] = in_ptr->param[0];
 
-		// rtn sesult
 		rtn_ptr->buf_addr = (cmr_uint) data_addr;
 		rtn_ptr->buf_len = data_len;
 	}
@@ -345,7 +327,6 @@ static cmr_s32 _ispParserReadSensorReg(void *in_param_ptr, void *rtn_param_ptr)
 			reg_addr++;
 		}
 
-		// rtn sesult
 		rtn_ptr->buf_addr = (cmr_uint) data_addr;
 		rtn_ptr->buf_len = data_len;
 	}
@@ -356,7 +337,6 @@ static cmr_s32 _ispParserReadSensorReg(void *in_param_ptr, void *rtn_param_ptr)
 static cmr_s32 _ispParserWriteSensorReg(void *in_param_ptr)
 {
 	cmr_s32 rtn = 0x00;
-	// cmd|packet_len|reg_num|reg_addr|reg_data|...
 	struct isp_parser_cmd_param *in_ptr = (struct isp_parser_cmd_param *)in_param_ptr;
 	cmr_u32 reg_num = in_ptr->param[1];
 	cmr_u16 reg_addr = 0x00;
@@ -481,7 +461,7 @@ static cmr_s32 _ispParserDownCmd(void *in_param_ptr, void *rtn_param_ptr)
 static cmr_s32 _ispParserDownHandle(cmr_handle isp_handler, void *in_param_ptr, void *rtn_param_ptr)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u32 *param_ptr = (cmr_u32 *) in_param_ptr;	//packet
+	cmr_u32 *param_ptr = (cmr_u32 *) in_param_ptr;	//packet data
 	cmr_u32 type = param_ptr[1];
 
 	rtn = _ispParamVerify(in_param_ptr);
@@ -621,7 +601,6 @@ static cmr_s32 _ispParserUpHandle(cmr_handle isp_handler, cmr_u32 cmd, void *in_
 
 			ispParserFree((void *)rtn_ptr->buf_addr);
 
-			// rtn sesult
 			rtn_ptr->buf_addr = (cmr_uint) data_addr;
 			rtn_ptr->buf_len = data_len;
 		}

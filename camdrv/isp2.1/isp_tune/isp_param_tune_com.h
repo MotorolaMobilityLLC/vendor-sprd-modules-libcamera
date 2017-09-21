@@ -15,22 +15,13 @@
  */
 #ifndef _ISP_PARAM_TUNE_COM_H_
 #define _ISP_PARAM_TUNE_COM_H_
-/*----------------------------------------------------------------------------*
- **				Dependencies					*
- **---------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include "sensor_drv_u.h"
 
-/**---------------------------------------------------------------------------*
- **				Compiler Flag					*
- **---------------------------------------------------------------------------*/
 #ifdef   __cplusplus
 extern "C" {
 #endif
 
-/**---------------------------------------------------------------------------*
-**				Micro Define					*
-**----------------------------------------------------------------------------*/
 typedef cmr_s32(*isp_fun) (cmr_handle isp_handler, void *param_ptr);
 
 #define ISP_AE_TAB_NUM 0x04
@@ -47,7 +38,6 @@ typedef cmr_s32(*isp_fun) (cmr_handle isp_handler, void *param_ptr);
 
 #define ISP_PARASER_VERSION_INFO_SIZE sizeof(struct sensor_version_info)
 
-//parser cmd
 #define ISP_PARSER_DOWN 0x0000
 #define ISP_PARSER_UP_PARAM   0x0001
 #define ISP_PARSER_UP_PRV_DATA 0x0003
@@ -57,7 +47,6 @@ typedef cmr_s32(*isp_fun) (cmr_handle isp_handler, void *param_ptr);
 #define ISP_PARSER_UP_SENSOR_REG 0x0007
 #define ISP_PARSER_UP_INFO 0x0008
 
-//packet type
 #define ISP_TYPE_CMD   0x0000
 #define ISP_TYPE_PARAM 0x0001
 #define ISP_TYPE_LEVEL 0x0002
@@ -163,13 +152,11 @@ struct isp_parser_up_data {
 };
 
 struct isp_parser_buf_in {
-	//cmr_u32 buf_addr;
 	cmr_uint buf_addr;
 	cmr_u32 buf_len;
 };
 
 struct isp_parser_buf_rtn {
-	//cmr_u32 buf_addr;
 	cmr_uint buf_addr;
 	cmr_u32 buf_len;
 };

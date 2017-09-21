@@ -27,9 +27,6 @@
 #include <pthread.h>
 #define LOG_TAG "isp_video"
 #include <cutils/log.h>
-#if 0				/*Solve compile problem */
-//#include <hardware/camera.h>
-#endif
 #include "isp_param_tune_com.h"
 #include "isp_type.h"
 #include "isp_video.h"
@@ -66,11 +63,11 @@ enum {
 	CMD_GET_INFO,
 	CMD_OTP_WRITE,
 	CMD_OTP_READ,
-	CMD_READ_ISP_PARAM_V1,	//15
-	CMD_WRITE_ISP_PARAM_V1,	//16
-	CMD_DOWNLOAD_RAW_PIC,	//17
-	CMD_WRTIE_SCENE_PARAM,	//18
-	CMD_START_SIMULATION,	//19
+	CMD_READ_ISP_PARAM_V1,
+	CMD_WRITE_ISP_PARAM_V1,
+	CMD_DOWNLOAD_RAW_PIC,
+	CMD_WRTIE_SCENE_PARAM,
+	CMD_START_SIMULATION,
 
 	CMD_SFT_READ = 200,
 	CMD_SFT_WRITE,
@@ -236,7 +233,6 @@ enum {
 	AWB_MAX
 };
 
-/* This is the communication frame head */
 typedef struct msg_head_tag {
 	cmr_u32 seq_num;	// Message sequence number, used for flow control
 	cmr_u16 len;		// The totoal size of the packet "sizeof(MSG_HEAD_T)
@@ -292,10 +288,10 @@ struct camera_func {
 #define PREVIEW_MAX_WIDTH 640
 #define PREVIEW_MAX_HEIGHT 480
 
-#define CMD_BUF_SIZE  65536	// 64k
-#define SEND_IMAGE_SIZE 64512	// 63k
-#define SEND_DATA_SIZE 64512	//63k
-#define DATA_BUF_SIZE 65536	//64k
+#define CMD_BUF_SIZE  65536
+#define SEND_IMAGE_SIZE 64512
+#define SEND_DATA_SIZE 64512
+#define DATA_BUF_SIZE 65536
 #define PORT_NUM 16666		/* Port number for server */
 #define BACKLOG 5
 #define ISP_CMD_SUCCESS             0x0000
@@ -312,9 +308,9 @@ static cmr_u8 diag_rx_buf[CMD_BUF_SIZE];
 static cmr_u8 temp_rx_buf[CMD_BUF_SIZE];
 static cmr_u8 diag_cmd_buf[CMD_BUF_SIZE];
 static cmr_u8 eng_rsp_diag[DATA_BUF_SIZE];
-static cmr_s32 preview_flag = 0;		// 1: start preview
-static cmr_s32 preview_img_end_flag = 1;	// 1: preview image send complete
-static cmr_s32 capture_img_end_flag = 1;	// 1: capture image send complete
+static cmr_s32 preview_flag = 0;
+static cmr_s32 preview_img_end_flag = 1;
+static cmr_s32 capture_img_end_flag = 1;
 static cmr_s32 capture_format = 1;		// 1: start preview
 static cmr_s32 capture_flag = 0;		// 1: call get pic
 char raw_filename[200] = { 0 };
@@ -474,7 +470,7 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 
 	msg_ret = (MSG_HEAD_T *) (eng_rsp_diag + 1);
 
-	for (i = 0; i < chn0_number; i++, send_number++) {	// chn0
+	for (i = 0; i < chn0_number; i++, send_number++) {
 		if (i < chn0_number - 1)
 			len = SEND_IMAGE_SIZE;
 		else
@@ -500,7 +496,7 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 
 	}
 
-	for (i = 0; i < chn1_number; i++, send_number++) {	// chn1
+	for (i = 0; i < chn1_number; i++, send_number++) {
 		if (i < chn1_number - 1)
 			len = SEND_IMAGE_SIZE;
 		else
@@ -526,7 +522,7 @@ static cmr_s32 handle_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, ch
 
 	}
 
-	for (i = 0; i < chn2_number; i++, send_number++) {	// chn2
+	for (i = 0; i < chn2_number; i++, send_number++) {
 		if (i < chn2_number - 1)
 			len = SEND_IMAGE_SIZE;
 		else
@@ -586,39 +582,6 @@ static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 heigh
 	return 0;
 }
 
-#if 0
-static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
-{
-	UNUSED(format);
-	UNUSED(width);
-	UNUSED(height);
-	char name[100] = { '\0' };
-	FILE *fp = NULL;
-	switch (capture_format) {
-	case 8:		// the mipi
-		sprintf(name, "/data/misc/cameraserver/the_pic_%u.mipi_raw", g_af_pos);
-		break;
-	case 16:		//jpeg
-		sprintf(name, "/data/misc/cameraserver/the_pic_%u.jpg", g_af_pos);
-		break;
-	}
-	fp = fopen(name, "wb");
-
-	if (fp == NULL) {
-		ISP_LOGE("fail to create file fails");
-		return 0;
-	}
-
-	fwrite(ch0_ptr, 1, ch0_len, fp);
-
-	fwrite(ch1_ptr, 1, ch1_len, fp);
-
-	fwrite(ch2_ptr, 1, ch2_len, fp);
-	fclose(fp);
-	ISP_LOGV("writing one pic succeeds");
-	return 0;
-}
-#endif
 cmr_s32 isp_sft_read(cmr_handle handler, cmr_u8 * data_buf, cmr_u32 * data_size)
 {
 	cmr_s32 ret = 0;
@@ -705,19 +668,6 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
 	}
 	switch (data_head->sub_type) {
-	case SCENEINFO:
-		{
-#if 0
-			memcpy((cmr_u8 *) nr_update_param.nr_scene_map_ptr, (cmr_u8 *) data_actual_ptr, sizeof(struct sensor_nr_scene_map_param));
-			memcpy((cmr_u8 *) nr_update_param.nr_level_number_map_ptr, ((cmr_u8 *) data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param),
-			       sizeof(struct sensor_nr_level_map_param));
-			memcpy((cmr_u8 *) nr_update_param.nr_default_level_map_ptr,
-			       ((cmr_u8 *) data_actual_ptr) + sizeof(struct sensor_nr_scene_map_param) + sizeof(struct sensor_nr_level_map_param),
-			       sizeof(struct sensor_nr_level_map_param));
-#endif
-			break;
-
-		}
 	case V21PPI:
 		{
 			static cmr_u32 ppi_ptr_offset;
@@ -1061,7 +1011,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 	switch (file_num) {
 	case SCENEINFO:
 		{
-			data_head_ptr->sub_type = SCENEINFO;	//0x00
+			data_head_ptr->sub_type = SCENEINFO;
 			src_size = sizeof(struct sensor_nr_scene_map_param)
 			    + sizeof(struct sensor_nr_level_map_param)
 			    + sizeof(struct sensor_nr_level_map_param);
@@ -1086,7 +1036,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21PPI:
 		{
-			data_head_ptr->sub_type = V21PPI;	//0x14
+			data_head_ptr->sub_type = V21PPI;
 			src_size = sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.pdaf_correction_level_ptr + offset_units * src_size;
@@ -1094,7 +1044,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21BAYER_NR:
 		{
-			data_head_ptr->sub_type = V21BAYER_NR;	//0x15
+			data_head_ptr->sub_type = V21BAYER_NR;
 			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.nlm_level_ptr + offset_units * src_size;
@@ -1102,7 +1052,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21VST:
 		{
-			data_head_ptr->sub_type = V21VST;	//0x16
+			data_head_ptr->sub_type = V21VST;
 			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.vst_level_ptr + offset_units * src_size;
@@ -1110,7 +1060,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21IVST:
 		{
-			data_head_ptr->sub_type = V21IVST;	//0x17
+			data_head_ptr->sub_type = V21IVST;
 			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
@@ -1118,7 +1068,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21DITHER:
 		{
-			data_head_ptr->sub_type = V21DITHER;	//0x18
+			data_head_ptr->sub_type = V21DITHER;
 			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
@@ -1126,7 +1076,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21BPC:
 		{
-			data_head_ptr->sub_type = V21BPC;	//0x19
+			data_head_ptr->sub_type = V21BPC;
 			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.bpc_level_ptr + offset_units * src_size;
@@ -1134,7 +1084,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21GRGB:
 		{
-			data_head_ptr->sub_type = V21GRGB;	//0x1A
+			data_head_ptr->sub_type = V21GRGB;
 			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.grgb_level_ptr + offset_units * src_size;
@@ -1142,7 +1092,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21CFA:
 		{
-			data_head_ptr->sub_type = V21CFA;	//0x1B
+			data_head_ptr->sub_type = V21CFA;
 			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cfae_level_ptr + offset_units * src_size;
@@ -1150,7 +1100,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21RGB_AFM:
 		{
-			data_head_ptr->sub_type = V21RGB_AFM;	//0x0C
+			data_head_ptr->sub_type = V21RGB_AFM;
 			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
@@ -1158,7 +1108,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21UVDIV:
 		{
-			data_head_ptr->sub_type = V21UVDIV;	//0x0D
+			data_head_ptr->sub_type = V21UVDIV;
 			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
@@ -1166,7 +1116,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21PRE3DNR:
 		{
-			data_head_ptr->sub_type = V21PRE3DNR;	//0x0E
+			data_head_ptr->sub_type = V21PRE3DNR;
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_pre_level_ptr + offset_units * src_size;
@@ -1174,7 +1124,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21CAP3DNR:
 		{
-			data_head_ptr->sub_type = V21CAP3DNR;	//0x0F
+			data_head_ptr->sub_type = V21CAP3DNR;
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
@@ -1182,7 +1132,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21EDGE:
 		{
-			data_head_ptr->sub_type = V21EDGE;	//0x20
+			data_head_ptr->sub_type = V21EDGE;
 			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ee_level_ptr + offset_units * src_size;
@@ -1190,7 +1140,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21PRECDN:
 		{
-			data_head_ptr->sub_type = V21PRECDN;	//0x21
+			data_head_ptr->sub_type = V21PRECDN;
 			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
@@ -1198,7 +1148,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21Y_NR:
 		{
-			data_head_ptr->sub_type = V21Y_NR;	//0x22
+			data_head_ptr->sub_type = V21Y_NR;
 			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ynr_level_ptr + offset_units * src_size;
@@ -1206,7 +1156,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21CDN:
 		{
-			data_head_ptr->sub_type = V21CDN;	//0x23
+			data_head_ptr->sub_type = V21CDN;
 			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
@@ -1214,7 +1164,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21POSTCDN:
 		{
-			data_head_ptr->sub_type = V21POSTCDN;	//0x24
+			data_head_ptr->sub_type = V21POSTCDN;
 			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
@@ -1222,7 +1172,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21IIRCNR:
 		{
-			data_head_ptr->sub_type = V21IIRCNR;	//0x25
+			data_head_ptr->sub_type = V21IIRCNR;
 			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
@@ -1230,7 +1180,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	case V21NOISEFILTER:
 		{
-			data_head_ptr->sub_type = V21NOISEFILTER;	//0x26
+			data_head_ptr->sub_type = V21NOISEFILTER;
 			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
@@ -1841,45 +1791,6 @@ cmr_s32 get_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_t
 	return rtn;
 }
 
-#if 0
-static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
-{
-	char file_name[40];
-	char tmp_str[30];
-	FILE *fp = NULL;
-	cmr_u32 i = 0;
-	cmr_s32 tmp_size = 0;
-	cmr_s32 count = 0;
-
-	ISP_LOGV("size %d", size);
-
-	memset(file_name, 0, sizeof(file_name));
-	sprintf(file_name, "/data/misc/cameraserver/read_lnc_param_%d.txt", sn);
-
-	ISP_LOGV("file name %s", file_name);
-	fp = fopen(file_name, "wb");
-
-	if (NULL == fp) {
-		ISP_LOGE("fail to open file: %s \n", file_name);
-		return 0;
-	}
-	for (i = 0; i < size; ++i) {
-		count++;
-		memset(tmp_str, 0, sizeof(tmp_str));
-		sprintf(tmp_str, "0x%02x,", *addr++);
-		if (16 == count) {
-			strcat(tmp_str, "\n");
-			count = 0;
-		}
-
-		tmp_size = strlen(tmp_str);
-		fwrite((void *)tmp_str, 1, tmp_size, fp);
-	}
-	fclose(fp);
-	return 0;
-}
-#endif
-
 cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_tag * msg)
 {
 	cmr_s32 rtn = 0x00;
@@ -2029,23 +1940,6 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			}
 		}
 		break;
-#if 0
-	case MODE_AWB_DATA:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_awb_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			memset((cmr_u8 *) data_addr, 0x00, data_len);
-			if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-				rtn = get_awb_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-#endif
 	case MODE_NOTE_DATA:
 		{
 			data_len = sensor_note_param.node_len;
@@ -2181,49 +2075,10 @@ cmr_s32 down_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_
 cmr_s32 down_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 data_len)
 {
 	cmr_s32 rtn = 0x00;
-#if 1
 	UNUSED(sensor_raw_fix);
 	UNUSED(sub_type);
 	UNUSED(data_addr);
 	UNUSED(data_len);
-#else
-	cmr_u32 offset_tmp = 0;
-
-	cmr_u32 len_mode_info = sizeof(struct sensor_fix_param_mode_info);
-	cmr_u32 len_block_info = sizeof(struct sensor_fix_param_block_info);
-
-	if (NULL == sensor_raw_fix || NULL == data_addr) {
-		ISP_LOGE("ISP_TOOL : get lnc param error");
-		rtn = 0x01;
-		return rtn;
-	}
-
-	switch (sub_type) {
-	case AWB_WIN_MAP:
-		{
-//              memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_mode_info);
-			offset_tmp += len_mode_info;
-//              memcpy((void *)sensor_raw_fix->awb.block.block_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_block_info);
-			offset_tmp += len_block_info;
-			sensor_raw_fix->awb.awb_map.addr = (cmr_u16 *) (data_addr + offset_tmp);
-			sensor_raw_fix->awb.awb_map.len = data_len - len_mode_info - len_block_info;
-		}
-		break;
-	case AWB_WEIGHT:
-		{
-//              memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_mode_info);
-			offset_tmp += len_mode_info;
-//              memcpy((void *)sensor_raw_fix->awb.block.block_info,(void *)((cmr_u8 *)data_addr + offset_tmp),len_block_info);
-			offset_tmp += len_block_info;
-			memcpy((void *)sensor_raw_fix->awb.awb_weight.addr, (void *)((cmr_u8 *) data_addr + offset_tmp), sensor_raw_fix->awb.awb_weight.weight_len);
-			offset_tmp += sensor_raw_fix->awb.awb_weight.weight_len;
-			memcpy((void *)sensor_raw_fix->awb.awb_weight.size, (void *)((cmr_u8 *) data_addr + offset_tmp), sensor_raw_fix->awb.awb_weight.size_param_len);
-		}
-		break;
-	default:
-		break;
-	}
-#endif
 	return rtn;
 }
 
@@ -3067,7 +2922,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					ret = ispParser(isp_handler, ISP_PARSER_UP_PARAM, (void *)in_param.buf_addr, (void *)&rtn_param);
 
 					if (0x00 == ret) {
-
 						packet_num = (rtn_param.buf_len + SEND_DATA_SIZE - 1) / SEND_DATA_SIZE;
 						for (i = 0; i < packet_num; i++, send_number++) {
 							if (i < (packet_num - 1))
@@ -3744,10 +3598,6 @@ void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_
 		case CMD_ASIC_TAKE_PICTURE_NEW:
 			ret = handle_img_data_asic(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
 			break;
-			/* case CMD_SFT_TAKE_PICTURE_NEW:
-			 * ret = handle_img_data_sft(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
-			 * break;
-			 */
 		default:
 			ret = handle_img_data(format, width, height, ch0_ptr, ch0_len, ch1_ptr, ch1_len, ch2_ptr, ch2_len);
 			break;
