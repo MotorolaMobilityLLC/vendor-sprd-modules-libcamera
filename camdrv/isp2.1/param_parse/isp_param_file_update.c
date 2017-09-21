@@ -836,82 +836,6 @@ cmr_s32 read_lnc_weight_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 	return rtn;
 }
 
-cmr_s32 find_digit(char *dst, const char *src, cmr_s32 out_buff_size)
-{
-	cmr_s32 num = 0, i = 0, cur = 0;
-	char *dst_ptr = dst;
-	num = strlen(src);
-	for (i = 0; i < num; i++) {
-		if (src[i] >= '0' && src[i] <= '9') {
-			*dst_ptr++ = src[i];
-			cur++;
-		}
-		if (cur == out_buff_size) {
-			break;
-		}
-	}
-	*dst_ptr = '\0';
-	if (cur == 0)
-		return -1;
-	return cur;
-}
-
-cmr_s32 read_lnc_tab_size_offset_info(FILE * fp, struct sensor_lsc_map * lsc_ptr)
-{
-	cmr_s32 rtn = 0x00;
-
-	cmr_u32 map_tab_offset = 0;
-	cmr_s32 i = 0;
-	char line_buff[512];
-	char digit_buff[8];
-	char lsc_2d_macro[64] = { 0 };
-	cmr_s32 lnc_flag_len = 0;
-	cmr_u32 c = 0;
-
-	struct sensor_lens_map *lnc_map_ptr = PNULL;
-	cmr_u8 *lnc_start_addr = PNULL;
-	lnc_map_ptr = (struct sensor_lens_map *)&(lsc_ptr->map[0]);
-	lnc_start_addr = (cmr_u8 *) lsc_ptr->map[0].lnc_addr;
-	for (i = 0; i < LNC_MAP_COUNT; i++) {
-		lnc_flag_len = sprintf(lsc_2d_macro, "#define LSC_2D_MAP_%d", i);
-		while (1) {
-			if (feof(fp)) {
-				return -1;
-			}
-			if (fgets(line_buff, 512, fp) == NULL) {
-				return -1;
-			}
-
-			if (strstr(line_buff, "/*") != NULL) {
-				continue;
-			}
-
-			if (strstr(line_buff, "#undef") != NULL) {
-				continue;
-			}
-
-			if (strstr(line_buff, lsc_2d_macro) != NULL) {
-				if (find_digit(digit_buff, &line_buff[lnc_flag_len], sizeof(digit_buff)) < 0) {
-					return -1;
-				}
-				sscanf(digit_buff, "%d", &c);
-
-				lnc_map_ptr[i].lnc_addr = (cmr_u16 *) (lnc_start_addr + map_tab_offset);
-				*(lnc_map_ptr[i].lnc_map_tab_len) = c;
-				map_tab_offset += c;
-				*(lnc_map_ptr[i].lnc_map_tab_offset) = map_tab_offset;
-#if 0
-				ISP_LOGV("offset calc:%d,%d,%d,%d,%p,%p\n", i, map_tab_offset,
-					 *(lnc_map_ptr[i].lnc_map_tab_len), *(lnc_map_ptr[i].lnc_map_tab_offset), lnc_map_ptr[i].lnc_addr, lnc_map_ptr[i].lnc_len);
-#endif
-				break;
-			}
-		}
-	}
-
-	return rtn;
-}
-
 cmr_s32 read_lnc_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 {
 	cmr_s32 rtn = 0x00;
@@ -1218,17 +1142,6 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 				}
 				break;
 			}
-			/*if ((strstr(line_buf, lsc_2d_map_flag1) != NULL) && (strstr(line_buf, lsc_2d_map_flag2) == NULL)) {
-				if (sensor_raw_ptr->fix_ptr[i]->lnc.lnc_param.lnc != NULL) {
-					rtn = read_lnc_tab_size_offset_info(fp, &sensor_raw_ptr->fix_ptr[i]->lnc);
-					if (0x00 != rtn) {
-						ISP_LOGE("fail to check read_lnc_size_offset!");
-						fclose(fp);
-						goto exit;
-					}
-				}
-				continue;
-			}*/
 			if (strstr(line_buf, tune_info) != NULL) {
 				rtn = read_tune_info(fp, sensor_raw_ptr->mode_ptr[i].addr, &sensor_raw_ptr->mode_ptr[i].len);
 				if (0x00 != rtn) {
