@@ -137,6 +137,7 @@ cmr_int cmr_grab_stream_cb(cmr_handle grab_handle, grab_stream_on str_on);
 cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner,
                                 cmr_u32 val);
 cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt);
+cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line);
 cmr_u32 cmr_grab_get_dcam_endian(struct img_data_end *in_endian,
                                  struct img_data_end *out_endian);
 cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
