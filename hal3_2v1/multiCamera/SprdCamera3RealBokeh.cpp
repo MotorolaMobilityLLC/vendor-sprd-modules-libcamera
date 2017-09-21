@@ -351,10 +351,6 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     if (!mFlushing) {
         bokehThreadExit();
     }
-    // wait threads quit to relese object
-    mCaptureThread->join();
-    mPreviewMuxerThread->join();
-    HAL_LOGI("threads quit.");
 
     freeLocalBuffer();
     mSavedRequestList.clear();
@@ -1690,10 +1686,16 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
         mRealBokeh->mLocalBuffer, capture_msg.combo_buff.buffer2,
         mRealBokeh->mLocalBufferNumber, mRealBokeh->mLocalBufferList);
 
+    if (mRealBokeh->mFlushing) {
+        mRealBokeh->CallBackResult(mRealBokeh->mCapFrameNumber,
+                                   CAMERA3_BUFFER_STATUS_ERROR);
+        goto exit;
+    }
     if (0 > mDevmain->hwi->process_capture_request(mDevmain->dev, &request)) {
         HAL_LOGE("failed. process capture request!");
     }
 
+exit:
     if (NULL != mSavedCapReqsettings) {
         free_camera_metadata(mSavedCapReqsettings);
         mSavedCapReqsettings = NULL;
@@ -1794,7 +1796,6 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             break;
         }
     };
-
     waitMsgAvailable();
 
     return true;
@@ -4685,7 +4686,7 @@ void SprdCamera3RealBokeh::CallBackResult(
 
     CallBackMetadata();
 
-    {
+    if ((frame_number != mRealBokeh->mCapFrameNumber) || (frame_number == 0)) {
         Mutex::Autolock l(mRealBokeh->mRequestLock);
         itor = mRealBokeh->mSavedRequestList.begin();
         while (itor != mRealBokeh->mSavedRequestList.end()) {
@@ -4702,6 +4703,9 @@ void SprdCamera3RealBokeh::CallBackResult(
             HAL_LOGE("can't find frame in mSavedRequestList %u:", frame_number);
             return;
         }
+    } else {
+        result_buffers.stream = mRealBokeh->mSavedCapStreams;
+        result_buffers.buffer = mCaptureThread->mSavedCapReqStreamBuff.buffer;
     }
 
     result_buffers.status = buffer_status;
@@ -4719,7 +4723,8 @@ void SprdCamera3RealBokeh::CallBackResult(
     if (!buffer_status) {
         mRealBokeh->dumpFps();
     }
-    {
+
+    if ((frame_number != mRealBokeh->mCapFrameNumber) || (frame_number == 0)) {
         Mutex::Autolock l(mRealBokeh->mPendingLock);
         mRealBokeh->mPendingRequest--;
         if (mRealBokeh->mPendingRequest < mRealBokeh->mMaxPendingCount) {
@@ -4767,6 +4772,9 @@ void SprdCamera3RealBokeh::bokehThreadExit(void) {
             mPreviewMuxerThread->requestExit();
         }
     }
+    // wait threads quit to relese object
+    mCaptureThread->join();
+    mPreviewMuxerThread->join();
     HAL_LOGI("X");
 }
 
