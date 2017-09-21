@@ -133,7 +133,6 @@ struct pdaf_info {
 	cmr_u32 sw_bypass;
 	cmr_u8 pdaf_support;
 	cmr_u8 pdaf_en;
-	//struct pdaf_ctrl_process_out proc_out;
 };
 
 struct lsc_info {
@@ -797,7 +796,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		}
 		calc_param.lsc_tab_size = cxt->lsc_cxt.lsc_tab_size;
 
-		/*AF lock ALSC */
 		if (cxt->lsc_cxt.isp_smart_lsc_lock == 0) {
 			if (cxt->ops.lsc_ops.process)
 				ret = cxt->ops.lsc_ops.process(lsc_adv_handle, &calc_param, &calc_result);
@@ -1035,7 +1033,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 
 	memset(&pm_param, 0, sizeof(pm_param));
 
-	// CMC
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, 0, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
@@ -1048,7 +1045,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 			}
 		}
 	}
-	// GAMMA
+
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, 0, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
 
@@ -1083,7 +1080,6 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	memset((void *)&ioctl_data, 0, sizeof(ioctl_data));
 	memset((void *)&awbc_cfg, 0, sizeof(awbc_cfg));
 
-	/*set awb gain */
 	awbc_cfg.r_gain = awb_output->gain.r;
 	awbc_cfg.g_gain = awb_output->gain.g;
 	awbc_cfg.b_gain = awb_output->gain.b;
@@ -1254,10 +1250,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
 		cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
 
-		/*send message to alsc process */
 		struct isp_alsc_calc_info alsc_info;
 
-		//TBD need remove memcpy & param ae_out_stats
 		memcpy(cxt->lsc_cxt.ae_out_stats.r_info, cxt->aem_stats.r_info, 1024 * sizeof(cmr_u32));
 		memcpy(cxt->lsc_cxt.ae_out_stats.g_info, cxt->aem_stats.g_info, 1024 * sizeof(cmr_u32));
 		memcpy(cxt->lsc_cxt.ae_out_stats.b_info, cxt->aem_stats.b_info, 1024 * sizeof(cmr_u32));
@@ -1421,11 +1415,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FLICKER_MODE"));
 		ISP_LOGV("cur flicker mode %d", cur_flicker);
 
-		//exposure 1/33 s  -- 302921 (+/-10)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, &ae_exp);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_EXP"));
 
-		if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {//0.06
+		if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {
 			ae_exp_flag = 1;
 		}
 		ISP_LOGV("ae_exp %f; ae_exp_flag %d", ae_exp, ae_exp_flag);
@@ -1462,7 +1455,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
-	//change ae table
+
 	if (afl_output.flag) {
 		if (afl_output.cur_flicker) {
 			nxt_flicker = AE_FLICKER_50HZ;
@@ -1975,7 +1968,6 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	memset((void *)&result, 0, sizeof(result));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
 
-	/*get dual flash tuning parameters*/
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_DUAL_FLASH, NULL, &output);
 	if (ISP_SUCCESS != ret) {
@@ -2072,7 +2064,6 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		ISP_TRACE_IF_FAIL(ret, ("fail to get ae monitor info"));
 	}
 
-	//if use AIS, AWB this does not  need for awb_ctrl
 	param.camera_id = cxt->camera_id;
 	param.base_gain = 1024;
 	param.awb_enable = 1;
@@ -2327,9 +2318,6 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 		lsc_param.tune_param_ptr = get_pm_output.param_data->data_ptr;
 	}
 
-	//_alsc_set_param(&lsc_param);   // for LSC2.X neet to reopen
-
-	//get lsc & optical center otp data
 	if (cxt->otp_data != NULL) {
 		ISP_LOGI("init_lsc_otp, start to get lsc otp data");
 		struct sensor_otp_cust_info* otp_data = (struct sensor_otp_cust_info*)cxt->otp_data;
@@ -2524,7 +2512,6 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	cxt->commn_cxt.caller_id = input_ptr->oem_handle;
 	cxt->commn_cxt.ops = input_ptr->ops;
 
-	/* init sensor param */
 	cxt->ioctrl_ptr = sensor_raw_info_ptr->ioctrl_ptr;
 	cxt->commn_cxt.image_pattern = sensor_raw_info_ptr->resolution_info_ptr->image_pattern;
 	memcpy(cxt->commn_cxt.input_size_trim,
@@ -2582,7 +2569,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlopen");
 		goto error_dlopen;
 	}
-	/*init af_ctrl_ops*/
+
 	cxt->ops.af_ops.init = dlsym(cxt->ispalg_lib_handle, "af_ctrl_init");
 	if (!cxt->ops.af_ops.init) {
 		ISP_LOGE("fail to dlsym af_ops.init");
@@ -2603,7 +2590,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym af_ops.ioctrl");
 		goto error_dlsym;
 	}
-	/*init afl_ctrl_ops*/
+
 	cxt->ops.afl_ops.init = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_init");
 	if (!cxt->ops.afl_ops.init) {
 		ISP_LOGE("fail to dlsym afl_ops.init");
@@ -2629,7 +2616,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym afl_ops.cfg_new");
 		goto error_dlsym;
 	}
-	/*init ae_ctrl_ops*/
+
 	cxt->ops.ae_ops.init = dlsym(cxt->ispalg_lib_handle, "ae_ctrl_init");
 	if (!cxt->ops.ae_ops.init) {
 		ISP_LOGE("fail to dlsym ae_ops.init");
@@ -2655,7 +2642,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym ae_ops.get_flash_param");
 		goto error_dlsym;
 	}
-	/*init awb_ctrl_ops*/
+
 	cxt->ops.awb_ops.init = dlsym(cxt->ispalg_lib_handle, "awb_ctrl_init");
 	if (!cxt->ops.awb_ops.init) {
 		ISP_LOGE("fail to dlsym awb_ops.init");
@@ -2676,7 +2663,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym awb_ops.ioctrl");
 		goto error_dlsym;
 	}
-	/*init pdaf_ctrl_ops*/
+
 	cxt->ops.pdaf_ops.init = dlsym(cxt->ispalg_lib_handle, "pdaf_ctrl_init");
 	if (!cxt->ops.pdaf_ops.init) {
 		ISP_LOGE("fail to dlsym pdaf_ops.init");
@@ -2697,7 +2684,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym pdaf_ops.ioctrl");
 		goto error_dlsym;
 	}
-	/*init smart_ctrl_ops*/
+
 	cxt->ops.smart_ops.init = dlsym(cxt->ispalg_lib_handle, "smart_ctl_init");
 	if (!cxt->ops.smart_ops.init) {
 		ISP_LOGE("fail to dlsym smart_ops.init");
@@ -2733,7 +2720,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym smart_ops.NR_disable");
 		goto error_dlsym;
 	}
-	/*init lsc_ctrl_ops*/
+
 	cxt->ops.lsc_ops.init = dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_init");
 	if (!cxt->ops.lsc_ops.init) {
 		ISP_LOGE("fail to dlsym lsc_ops.init");
@@ -2912,10 +2899,8 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	cmr_s32 bv_gain = 0;
 
 	memset(&result, 0, sizeof(result));
-	/*update aem information */
 	cxt->aem_is_update = 0;
 
-	/*update awb gain */
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
@@ -2934,7 +2919,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	ioctl_input.param_num = 1;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 
-	/*update smart param */
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_CT"));
@@ -2997,7 +2981,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for(i=0; i<9;i++)
-		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
 	fwstart_info->gain_width_new = lsc_info_new->gain_w;
 	fwstart_info->gain_height_new = lsc_info_new->gain_h;
 	fwstart_info->image_pattern_new = cxt->commn_cxt.image_pattern;
@@ -3102,14 +3086,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		}
 	}
 
-	/* isp param index */
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->size);
-	/* todo: base on param_index to get sensor line_time/frame_line */
 
 	ret = ispalg_update_alg_param(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to isp smart param calc"));
 
-	/*TBD pdaf_support will get form sensor,pdaf_en will get from oem*/
 	ISP_LOGI("cxt->pdaf_cxt.pdaf_support = %d, in_ptr->pdaf_enable = %d",
 		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
@@ -3127,7 +3108,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
-	/* update lsc reslut */
 	ret = ispalg_update_alsc_result(cxt, (void *)&fwstart_info);
 	ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 
@@ -3304,9 +3284,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
 	}
 
-	/* isp param index */
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->src_frame.img_size);
-	/* todo: base on param_index to get sensor line_time/frame_line */
 
 	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
 		ret = ispalg_update_alg_param(cxt);
@@ -3325,7 +3303,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for(int i=0; i<9;i++)
-		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
 	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
 	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;
 	fwprocstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
@@ -3354,18 +3332,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = ispalg_slice_raw_proc(cxt, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to isp_slice_raw_proc"));
 
-exit:
-	ISP_LOGV("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp_alg_fw_proc_next(cmr_handle isp_alg_handle, struct ipn_in_param *in_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	UNUSED(isp_alg_handle);
-	UNUSED(in_ptr);
-	/*do not support silce capture function now */
-	ISP_LOGV("If need slice capture process, add releated code!");
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;

@@ -254,7 +254,5 @@ cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips
 	ret = ispmw_check_proc_next_param(in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to check init param"));
 
-	ret = isp_alg_fw_proc_next(cxt->alg_fw_handle, in_ptr);
-
 	return ret;
 }

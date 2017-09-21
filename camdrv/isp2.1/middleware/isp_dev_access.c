@@ -16,7 +16,6 @@
 #define LOG_TAG "isp_dev_access"
 
 #include "isp_dev_access.h"
-//#define ISP_DEFAULT_CFG_FOR_BRING_UP
 
 struct isp_dev_access_context {
 	cmr_handle evt_alg_handle;
@@ -125,7 +124,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_statis_buf.buf_flag = 0;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
 	isp_statis_buf.dev_fd = statis_mem_info->statis_buf_dev_fd;
-	/*isp lsc addr transfer */
+
 	isp_u_2d_lsc_transaddr(cxt->isp_driver_handle, &isp_2d_lsc_buf);
 
 	ret = isp_dev_access_ioctl(isp_dev_handle, ISP_DEV_SET_STSTIS_BUF, &isp_statis_buf, NULL);

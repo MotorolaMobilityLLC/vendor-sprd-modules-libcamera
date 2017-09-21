@@ -60,7 +60,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
 	ISP_AE_SET_WBC_GAIN,
-	/*AF*/
+
 	ISP_AF_SET_POS,
 	ISP_AF_END_NOTICE,
 	ISP_AF_START_NOTICE,
@@ -287,14 +287,14 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_STOP_3A,
 	ISP_CTRL_SFT_READ,
 	ISP_CTRL_SFT_WRITE,
-	ISP_CTRL_SFT_SET_PASS,	// added for sft
-	ISP_CTRL_SFT_GET_AF_VALUE,	// added for sft
-	ISP_CTRL_SFT_SET_BYPASS,	// added for sft
+	ISP_CTRL_SFT_SET_PASS,
+	ISP_CTRL_SFT_GET_AF_VALUE,
+	ISP_CTRL_SFT_SET_BYPASS,
 	ISP_CTRL_GET_AWB_GAIN,	// for mp tool
 	ISP_CTRL_GET_AWB_CT,
 	ISP_CTRL_RANGE_FPS,
 	ISP_CTRL_SET_AE_FPS,	// for LLS feature
-	ISP_CTRL_BURST_NOTICE,	// burst mode notice
+	ISP_CTRL_BURST_NOTICE,
 	ISP_CTRL_GET_INFO,
 	ISP_CTRL_SET_AE_NIGHT_MODE,
 	ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK,
@@ -336,7 +336,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_DCAM_TIMESTAMP,
 	ISP_CTRL_GET_FULLSCAN_INFO,
 	ISP_CTRL_SET_AF_BYPASS,
-	ISP_CTRL_POST_3DNR, //for post 3dnr
+	ISP_CTRL_POST_3DNR,
 	ISP_CTRL_3DNR,
 	ISP_CTRL_MAX
 };
@@ -362,8 +362,8 @@ enum isp_flash_led_tag {
 };
 
 struct isp_flash_cfg {
-	cmr_u32 type;		// enum isp_flash_type
-	cmr_u32 led_idx;	//enum isp_flash_led
+	cmr_u32 type;
+	cmr_u32 led_idx;
 	cmr_u32 led0_enable;
 	cmr_u32 led1_enable;
 };
@@ -434,7 +434,7 @@ struct isp_flash_power {
 struct isp_flash_led_info {
 	struct isp_flash_power power_0;
 	struct isp_flash_power power_1;
-	cmr_u32 led_tag;	// isp_flash_led_tag
+	cmr_u32 led_tag;
 };
 
 struct isp_flash_notice {
@@ -455,14 +455,12 @@ struct isp_af_win {
 };
 
 struct isp_af_fullscan_info {
-	/* Register Parameters */
-	/* These params will depend on the AF setting */
-	cmr_u8 row_num;		/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
-	cmr_u8 column_num;	/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
-	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
+	cmr_u8 row_num;
+	cmr_u8 column_num;
+	cmr_u32 *win_peak_pos;
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
+	cmr_u16 boundary_ratio;
 	cmr_u32 af_peak_pos;
 	cmr_u32 near_peak_pos;
 	cmr_u32 far_peak_pos;
@@ -517,7 +515,7 @@ struct isp_face_info {
 };
 
 struct isp_face_area {
-	cmr_u16 type;		//focus or ae,
+	cmr_u16 type;
 	cmr_u16 face_num;
 	cmr_u16 frame_width;
 	cmr_u16 frame_height;
@@ -576,7 +574,7 @@ struct isp_video_limit {
 };
 
 struct isp_sensor_fps_info {
-	cmr_u32 mode;		//sensor mode
+	cmr_u32 mode;
 	cmr_u32 max_fps;
 	cmr_u32 min_fps;
 	cmr_u32 is_high_fps;
@@ -611,7 +609,7 @@ struct isp_info {
 
 struct isp_hdr_ev_param {
 	cmr_s32 level;
-	cmr_s32 skip_frame_num;	//return from isp
+	cmr_s32 skip_frame_num;
 };
 
 struct isp_sensor_resolution_info {
@@ -673,7 +671,7 @@ struct isp_video_start {
 	enum isp_format format;
 	enum isp_video_mode mode;
 	cmr_u32 work_mode;
-	cmr_u32 capture_mode;	//enum isp_capture_mode
+	cmr_u32 capture_mode;
 	cmr_uint lsc_buf_size;
 	cmr_uint lsc_buf_num;
 	cmr_uint lsc_phys_addr;
@@ -723,7 +721,6 @@ struct isp_img_param {
 	cmr_uint zsl_private;
 };
 
-//add two struct defination for the 3DNR capture.
 struct isp_buffer {
 	cmr_u8 *buffer;
 	cmr_s32 fd;
@@ -758,17 +755,13 @@ struct isp_init_param {
 	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
-	void *setting_param_list_ptr[3];	//0:back,1:front,2:dual back
+	void *setting_param_list_ptr[3];
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_size sensor_max_size;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	struct isp_sensor_ex_info ex_info_slv;
-	void *setting_param_ptr_slv;	// slave sensor
-	struct sensor_otp_cust_info *otp_data_slv;
-#endif
+
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
 };
