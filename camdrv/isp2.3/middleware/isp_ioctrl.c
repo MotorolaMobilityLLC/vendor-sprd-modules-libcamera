@@ -317,7 +317,7 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (set_flicker.mode == AE_FLICKER_AUTO) {
 		flicker_block_info.bypass = 0;
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &flicker_block_info);
+		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &flicker_block_info);
 	}
 
 	return ret;
