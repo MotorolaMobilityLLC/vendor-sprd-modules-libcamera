@@ -4860,6 +4860,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
              enc_in_param.stream_buf_vir, enc_in_param.out_size.width,
              enc_in_param.out_size.height);
 
+    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, dst);
+
     if (1 != mean->is_thumb) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_GET_FILTER_TEYP, &setting_param);
