@@ -871,6 +871,55 @@ static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *re
 	return rtn;
 }
 
+static cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u8 *awb_rdm_otp_data = NULL;
+	cmr_u16 awb_rdm_otp_len = 0;
+	cmr_u16 *awb_golden_otp_data  = NULL;
+	cmr_u16 awb_golden_otp_len = 0;
+
+	if(NULL != param->otp_info_ptr){
+		awb_rdm_otp_data = (cmr_u8 *)param->otp_info_ptr->rdm_info.data_addr;
+		awb_rdm_otp_len = param->otp_info_ptr->rdm_info.data_size;
+		awb_golden_otp_data = (cmr_u16 *)param->otp_info_ptr->gld_info.data_addr;
+		awb_golden_otp_len = param->otp_info_ptr->gld_info.data_size;
+		if(NULL!=awb_rdm_otp_data && 0!=awb_rdm_otp_len){
+			param->otp_info.rdm_stat_info.r = (awb_rdm_otp_data[1]<<8) | awb_rdm_otp_data[0];
+			param->otp_info.rdm_stat_info.g = (awb_rdm_otp_data[3]<<8) | awb_rdm_otp_data[2];
+			param->otp_info.rdm_stat_info.b = (awb_rdm_otp_data[5]<<8) | awb_rdm_otp_data[4];
+			ISP_LOGV("awb otp random [%d %d %d ]",param->otp_info.rdm_stat_info.r, param->otp_info.rdm_stat_info.g, param->otp_info.rdm_stat_info.b);
+		}else{
+			param->otp_info.rdm_stat_info.r = 0;
+			param->otp_info.rdm_stat_info.g = 0;
+			param->otp_info.rdm_stat_info.b = 0;
+			ISP_LOGE("awb_rdm_otp_data = %p, awb_rdm_otp_len = %d. Parser fail", awb_rdm_otp_data, awb_rdm_otp_len);
+		}
+
+		if(NULL!=awb_golden_otp_data && 0!=awb_golden_otp_len){
+			param->otp_info.gldn_stat_info.r = awb_golden_otp_data[0];
+			param->otp_info.gldn_stat_info.g = awb_golden_otp_data[1];
+			param->otp_info.gldn_stat_info.b = awb_golden_otp_data[2];
+			ISP_LOGV("awb otp golden [%d %d %d]",param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g,param->otp_info.gldn_stat_info.b);
+		}else{
+			param->otp_info.gldn_stat_info.r = 0;
+			param->otp_info.gldn_stat_info.g = 0;
+			param->otp_info.gldn_stat_info.b = 0;
+			ISP_LOGE("awb_golden_otp_data = %p, awb_golden_otp_len = %d. Parser fail", awb_golden_otp_data, awb_golden_otp_len);
+		}
+	}else{
+		ISP_LOGE("awb otp_info_ptr is NULL . Parser fail !");
+		param->otp_info.rdm_stat_info.r = 0;
+		param->otp_info.rdm_stat_info.g = 0;
+		param->otp_info.rdm_stat_info.b = 0;
+		param->otp_info.gldn_stat_info.r = 0;
+		param->otp_info.gldn_stat_info.g = 0;
+		param->otp_info.gldn_stat_info.b = 0;
+	}
+
+	return rtn;
+}
+
 /*------------------------------------------------------------------------------*
 *					public functions			*
 *-------------------------------------------------------------------------------*/
@@ -917,6 +966,9 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
 	cxt->flash_pre_state = 0;
+
+	// paser awb otp info
+	_awb_parser_otp_info(param);
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 

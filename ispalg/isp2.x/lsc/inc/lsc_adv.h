@@ -485,6 +485,8 @@ struct lsc_adv_init_param {
 	cmr_u32 gain_pattern;
 	cmr_u32 grid;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
+	cmr_u32 img_height;
+	cmr_u32 img_width;
 
 	// isp2.1 added , need to modify to match old version
 	struct third_lib_info lib_param;
@@ -519,6 +521,9 @@ struct lsc_adv_init_param {
 	//dual cam
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
+	
+	struct sensor_otp_section_info *otp_info_lsc_ptr;
+	struct sensor_otp_section_info *otp_info_optical_center_ptr;
 };
 
 struct statistic_raw_t {
@@ -607,8 +612,6 @@ cmr_s32 otp_lsc_mod(cmr_u16 * otpLscTabGolden, cmr_u16 * otpLSCTabRandom,	//T1, 
 		    cmr_u16 * otpLscTabGoldenRef,	//Ts1
 		    cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
 		    cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
-
-cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info *lsc_otp_info,struct sensor_otp_optCenter_info *optical_center_info, cmr_s32 height, cmr_s32 width, cmr_s32 grid, struct lsc_adv_init_param *lsc_param);
 
 
 /**----------------------------------------------------------------------------*

@@ -192,6 +192,7 @@ struct awb_ctrl_init_param {
 	cmr_u32 img_width;
 	cmr_u32 img_height;
 	void *priv_handle;
+	struct sensor_otp_section_info *otp_info_ptr;
 };
 
 struct awb_ctrl_init_result {

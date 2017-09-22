@@ -22,7 +22,6 @@
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
 #include "isp_otp_calibration.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -100,6 +99,7 @@ struct ae_init_in {
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 #endif
+	struct sensor_otp_section_info *otp_info_ptr;
 };
 
 struct ae_init_out {

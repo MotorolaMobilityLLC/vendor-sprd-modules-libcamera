@@ -62,7 +62,7 @@ struct lsc_wrapper_ops {
 	int (*lsc2d_table_postproc) (uint16_t * tbl_chn[4], int w, int h, int sx, int sy, lsc2d_calib_param_t * calib_param);
 };
 
-static int _ispalg_lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigned short *dst_16bits, unsigned int size_bytes)
+static int _lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigned short *dst_16bits, unsigned int size_bytes)
 {
 	unsigned int gain_compressed_bits = 14;
 	unsigned int gain_origin_bits = 16;
@@ -104,7 +104,7 @@ static int _ispalg_lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigne
 	return dst_gain_num;
 }
 
-static uint16_t *_ispalg_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_width, int image_height, int *tbl_w, int *tbl_h)
+static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_width, int image_height, int *tbl_w, int *tbl_h)
 {
 	int ret = ISP_SUCCESS;
 	lsc2d_calib_param_t calib_param;
@@ -180,7 +180,7 @@ error_dlsym:
 	return lsc_table;
 }
 
-void _get_lsc_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr_s32* lsc_otp_width, cmr_s32* lsc_otp_height, cmr_s32 lsc_otp_grid)
+void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr_s32* lsc_otp_width, cmr_s32* lsc_otp_height, cmr_s32 lsc_otp_grid)
 {
 	*lsc_otp_width  = 0;
 	*lsc_otp_height = 0;
@@ -197,14 +197,16 @@ void _get_lsc_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr
 	}
 }
 
-cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info* lsc_otp_info, struct sensor_otp_optCenter_info* optical_center_info,cmr_s32 height, cmr_s32 width, cmr_s32 grid, struct lsc_adv_init_param *lsc_param)
+cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 {
-	uint8_t *lsc_otp_addr = lsc_otp_info->lsc_data_addr;
-	cmr_s32 lsc_otp_len =  lsc_otp_info->lsc_data_size;
+	struct sensor_otp_data_info *lsc_otp_info = &lsc_param->otp_info_lsc_ptr->rdm_info;
+	struct sensor_otp_data_info *oc_otp_info = &lsc_param->otp_info_optical_center_ptr->rdm_info;
+	cmr_u32 full_img_width = lsc_param->img_width;
+	cmr_u32 full_img_height = lsc_param->img_height;
+	cmr_u32 lsc_otp_grid = lsc_param->grid;
+	cmr_u8 *lsc_otp_addr = (cmr_u8 *)lsc_otp_info->data_addr;
+	cmr_u16 lsc_otp_len =  lsc_otp_info->data_size;
 	cmr_s32 compressed_lens_bits = 14;
-	cmr_s32 full_img_width = width;
-	cmr_s32 full_img_height = height;
-	cmr_s32 lsc_otp_grid = grid;
 	cmr_s32 lsc_otp_width, lsc_otp_height;
 	cmr_s32 lsc_otp_len_chn = lsc_otp_len / 4;
 	cmr_s32 lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
@@ -222,7 +224,7 @@ cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info* lsc_otp_info, struct sen
 		return LSC_ERROR;
 	}
 
-	_get_lsc_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
+	_lsc_get_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
 
 	if( lsc_otp_chn_gain_num != lsc_otp_width*lsc_otp_height){
 		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
@@ -237,16 +239,16 @@ cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info* lsc_otp_info, struct sen
 	if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
 		uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
-		_ispalg_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0),
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0),
 						 lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
-		_ispalg_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1),
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1),
 						 lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
-		_ispalg_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2),
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2),
 						 lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
-		_ispalg_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3),
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3),
 						 lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
 
-		lsc_table = _ispalg_lsc_table_wrapper(lsc_16_bits, lsc_otp_grid,
+		lsc_table = _lsc_table_wrapper(lsc_16_bits, lsc_otp_grid,
 						     full_img_width,
 						     full_img_height,
 						     &gain_w, &gain_h);	//  wrapper otp table
@@ -269,6 +271,7 @@ cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info* lsc_otp_info, struct sen
 		ISP_LOGI("init_lsc_otp, lsc_table0_RGGB=[%d,%d,%d,%d]", lsc_table[0], lsc_table[gain_w*gain_h], lsc_table[gain_w*gain_h*2], lsc_table[gain_w*gain_h*3]);
 		ISP_LOGI("init_lsc_otp, lsc_table1_RGGB=[%d,%d,%d,%d]", lsc_table[gain_w+1], lsc_table[gain_w*gain_h + gain_w+1], lsc_table[gain_w*gain_h*2 + gain_w+1], lsc_table[gain_w*gain_h*3 + gain_w+1]);
 	}else{
+		ISP_LOGE("lsc_otp_addr = %p, lsc_otp_len = %d. Parser lsc otp fail", lsc_otp_addr, lsc_otp_len);
 		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
 		lsc_param->lsc_otp_table_addr = NULL;
 		lsc_param->lsc_otp_table_en = 0;
@@ -276,22 +279,39 @@ cmr_int  ispalg_get_lsc_otp(struct sensor_otp_lsc_info* lsc_otp_info, struct sen
 		return LSC_ERROR;
 	}
 
-	if(optical_center_info){
-		lsc_param->lsc_otp_oc_r_x = optical_center_info->R.x;
-		lsc_param->lsc_otp_oc_r_y = optical_center_info->R.y;
-		lsc_param->lsc_otp_oc_gr_x = optical_center_info->GR.x;
-		lsc_param->lsc_otp_oc_gr_y = optical_center_info->GR.y;
-		lsc_param->lsc_otp_oc_gb_x = optical_center_info->GB.x;
-		lsc_param->lsc_otp_oc_gb_y = optical_center_info->GB.y;
-		lsc_param->lsc_otp_oc_b_x = optical_center_info->B.x;
-		lsc_param->lsc_otp_oc_b_y = optical_center_info->B.y;
+	cmr_u8 *oc_otp_data = (cmr_u8 *)oc_otp_info->data_addr;
+	cmr_u16 oc_otp_len = oc_otp_info->data_size;
+	if(NULL!=oc_otp_data && 0!=oc_otp_len){
+		lsc_param->lsc_otp_oc_r_x = (oc_otp_data[1]<<8) | oc_otp_data[0];
+		lsc_param->lsc_otp_oc_r_y = (oc_otp_data[3]<<8) | oc_otp_data[2];
+		lsc_param->lsc_otp_oc_gr_x = (oc_otp_data[5]<<8) | oc_otp_data[4];
+		lsc_param->lsc_otp_oc_gr_y = (oc_otp_data[7]<<8) | oc_otp_data[6];
+		lsc_param->lsc_otp_oc_gb_x = (oc_otp_data[9]<<8) | oc_otp_data[8];
+		lsc_param->lsc_otp_oc_gb_y = (oc_otp_data[11]<<8) | oc_otp_data[10];
+		lsc_param->lsc_otp_oc_b_x = (oc_otp_data[13]<<8) | oc_otp_data[12];
+		lsc_param->lsc_otp_oc_b_y = (oc_otp_data[15]<<8) | oc_otp_data[14];
 		lsc_param->lsc_otp_oc_en = 1;
 
-		ISP_LOGI("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ", lsc_param->lsc_otp_oc_r_x, lsc_param->lsc_otp_oc_r_y, lsc_param->lsc_otp_oc_gr_x, lsc_param->lsc_otp_oc_gr_y, lsc_param->lsc_otp_oc_gb_x, lsc_param->lsc_otp_oc_gb_y, lsc_param->lsc_otp_oc_b_x, lsc_param->lsc_otp_oc_b_y);
+		ISP_LOGI("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ", 
+			lsc_param->lsc_otp_oc_r_x,
+			lsc_param->lsc_otp_oc_r_y,
+			lsc_param->lsc_otp_oc_gr_x,
+			lsc_param->lsc_otp_oc_gr_y,
+			lsc_param->lsc_otp_oc_gb_x,
+			lsc_param->lsc_otp_oc_gb_y,
+			lsc_param->lsc_otp_oc_b_x,
+			lsc_param->lsc_otp_oc_b_y);
 	}else{
-		ISP_LOGE("init_lsc_otp, oc otp data error");
+		lsc_param->lsc_otp_oc_r_x = 0;
+		lsc_param->lsc_otp_oc_r_y = 0;
+		lsc_param->lsc_otp_oc_gr_x = 0;
+		lsc_param->lsc_otp_oc_gr_y = 0;
+		lsc_param->lsc_otp_oc_gb_x = 0;
+		lsc_param->lsc_otp_oc_gb_y = 0;
+		lsc_param->lsc_otp_oc_b_x = 0;
+		lsc_param->lsc_otp_oc_b_y = 0;
 		lsc_param->lsc_otp_oc_en = 0;
-		return LSC_ERROR;
+		ISP_LOGE("oc_otp_data = %p, oc_otp_len = %d, Parser OC otp fail", oc_otp_data, oc_otp_len);
 	}
 
 	return LSC_SUCCESS;
@@ -547,6 +567,13 @@ static void *lsc_sprd_init(void *in, void *out)
 	struct lsc_adv_init_param *init_param = (struct lsc_adv_init_param *)in;
 	void *alsc_handle = NULL;
 	UNUSED(out);
+
+	//parser lsc otp info
+	if(NULL != init_param->otp_info_lsc_ptr && NULL!= init_param->otp_info_optical_center_ptr){
+		_lsc_parser_otp(init_param);
+	}else{
+		ISP_LOGE("otp_info_lsc_ptr = %p, otp_info_optical_center_ptr = %p. Parser fail !", init_param->otp_info_lsc_ptr,  init_param->otp_info_optical_center_ptr);
+	}
 
 	cxt = (struct lsc_ctrl_context *)malloc(sizeof(struct lsc_ctrl_context));
 	if (NULL == cxt) {

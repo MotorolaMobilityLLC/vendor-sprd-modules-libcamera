@@ -2577,12 +2577,50 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	}
 	init_param = (struct ae_init_in *)param;
 	ae_init_out = (struct ae_init_out *)in_param;
+
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->ae_role = init_param->ae_role;
 	cxt->sensor_role = init_param->sensor_role;
 	cxt->is_multi_mode = init_param->is_multi_mode;
 	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
 	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
+
+	// parser ae otp info
+	if(NULL!=init_param->otp_info_ptr){
+		cmr_u8 *rdm_otp_data = (cmr_u8*)init_param->otp_info_ptr->rdm_info.data_addr;
+		cmr_u16 rdm_otp_len = init_param->otp_info_ptr->rdm_info.data_size;
+		struct sensor_otp_ae_info info;
+		if(NULL != rdm_otp_data && 0 != rdm_otp_len){
+			info.ae_target_lum = (rdm_otp_data[1]<<8) | rdm_otp_data[0];
+			info.gain_1x_exp = (rdm_otp_data[5] <<24) | (rdm_otp_data[4]<<16) | (rdm_otp_data[3]<<8) | rdm_otp_data[2];
+			info.gain_2x_exp = (rdm_otp_data[9] <<24) | (rdm_otp_data[8]<<16) | (rdm_otp_data[7]<<8) | rdm_otp_data[6];
+			info.gain_4x_exp = (rdm_otp_data[13] <<24) | (rdm_otp_data[12]<<16) | (rdm_otp_data[11]<<8) | rdm_otp_data[10];
+			info.gain_8x_exp = (rdm_otp_data[17] <<24) | (rdm_otp_data[16]<<16) | (rdm_otp_data[15]<<8) | rdm_otp_data[14];
+
+			#ifdef CONFIG_ISP_2_3
+			//rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
+			#endif
+
+			#ifdef CONFIG_ISP_2_1
+			//rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
+			#endif
+
+			#ifdef CONFIG_ISP_2_2
+			if (cxt->sensor_role) {
+				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_MASTER_OTP_AE,&info,NULL);
+			} else {
+				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_SLAVE_OTP_AE,&info,NULL);
+			}
+			#endif
+
+			ISP_LOGI("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
+		}else{
+			ISP_LOGE("rdm_otp_data = %p, rdm_otp_len = %d. Parser fail", rdm_otp_data, rdm_otp_len);
+		}
+	}else{
+		ISP_LOGE("ae otp_info_ptr is NULL . Parser fail !");
+	}
+
 #endif
 	work_param.mode = AE_WORK_MODE_COMMON;
 	work_param.fly_eb = 1;

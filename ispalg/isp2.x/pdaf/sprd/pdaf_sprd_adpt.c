@@ -223,6 +223,13 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		goto exit;
 	}
 
+	// parser pdaf otp info
+	if(NULL != in_p->otp_info_ptr){
+		in_p->pdaf_otp.otp_data = in_p->otp_info_ptr->rdm_info.data_addr;
+		in_p->pdaf_otp.size = in_p->otp_info_ptr->rdm_info.data_size;
+	}else{
+		ISP_LOGE("Pdaf otp_info_ptr is NULL . Parser fail !");
+	}
 
 
 	char otp_pdaf_name[1024];

@@ -2370,6 +2370,26 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		return NULL;
 	}
 
+	// parser af otp info
+	if(NULL != init_param->otp_info_ptr){
+		cmr_u8 *af_rdm_otp_data = (cmr_u8 *)init_param->otp_info_ptr->rdm_info.data_addr;
+		cmr_u16 af_rdm_otp_len = init_param->otp_info_ptr->rdm_info.data_size;
+		if(NULL != af_rdm_otp_data && 0 != af_rdm_otp_len){
+			init_param->otp_info.rdm_data.infinite_cali = (af_rdm_otp_data[1]<<8) | af_rdm_otp_data[0];
+			init_param->otp_info.rdm_data.macro_cali = (af_rdm_otp_data[3]<<8) | af_rdm_otp_data[2];
+		}else{
+			ISP_LOGE("af_rdm_otp_data = %p, af_rdm_otp_len = %d. Parser fail !", af_rdm_otp_data,af_rdm_otp_len);
+			init_param->otp_info.rdm_data.infinite_cali = 0;
+			init_param->otp_info.rdm_data.macro_cali = 0;
+		}
+	}else{
+		ISP_LOGE("af otp_info_ptr is NULL . Parser fail !");
+	}
+	init_param->otp_info.gldn_data.infinite_cali = 0;
+	init_param->otp_info.gldn_data.macro_cali = 0;
+	ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", init_param->otp_info.gldn_data.infinite_cali, init_param->otp_info.gldn_data.macro_cali,
+		 init_param->otp_info.rdm_data.infinite_cali, init_param->otp_info.rdm_data.macro_cali);
+
 	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
 	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
 	if (rtn != 0 || PNULL == af_pm_output.param_data || PNULL == af_pm_output.param_data[0].data_ptr) {

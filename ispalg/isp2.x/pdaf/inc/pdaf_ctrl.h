@@ -132,6 +132,7 @@ struct pdaf_ctrl_init_in {
 	cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
 	cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
 	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
+	struct sensor_otp_section_info *otp_info_ptr;
 };
 
 struct pdaf_ctrl_init_out {
