@@ -109,6 +109,8 @@ int32_t SprdCamera3Flash::registerCallbacks(
 *==========================================================================*/
 int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     int32_t retVal = 0;
+    int32_t bytes = 0;
+    char buffer[16];
     const char *const flashInterface =
         "/sys/devices/virtual/misc/sprd_flash/test";
     ssize_t wr_ret;
@@ -119,13 +121,12 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
         LOGE("Failed to open: flash_light_interface, %s", flashInterface);
         return -EINVAL;
     }
-    if (mode) {
-        m_flashOn[0] = SPRD_FLASH_STATUS_ON;
-        wr_ret = write(fd, SPRD_FLASH_CMD_ON, 4);
-    } else {
-        m_flashOn[0] = SPRD_FLASH_STATUS_OFF;
-        wr_ret = write(fd, SPRD_FLASH_CMD_OFF, 4);
-    }
+
+    m_flashOn[0] = mode ? SPRD_FLASH_STATUS_ON : SPRD_FLASH_STATUS_OFF;
+
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x", 0x11 ^ mode);
+    wr_ret = write(fd, buffer, bytes);
+
     if (-1 == wr_ret) {
         LOGE("WRITE FAILED \n");
         retVal = -EINVAL;
