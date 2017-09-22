@@ -1098,8 +1098,8 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	if (cxt->single_otp_data && input_ptr->otp_data) {
 		pdaf_input.af_otp.otp_data = &cxt->single_otp_data->af_info;
 		pdaf_input.af_otp.size = sizeof(cxt->single_otp_data->af_info);
-		pdaf_input.pdaf_otp.otp_data = input_ptr->otp_data->total_otp.data_ptr;
-		pdaf_input.pdaf_otp.size = input_ptr->otp_data->total_otp.size;
+		pdaf_input.pdaf_otp.otp_data = input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_addr;
+		pdaf_input.pdaf_otp.size = input_ptr->otp_data->single_otp.pdaf_info.pdaf_data_size;
 		//pdaf_input.pdaf_otp.otp_data = cxt->single_otp_data->pdaf_info.pdaf_data_addr;
 		//pdaf_input.pdaf_otp.size = cxt->single_otp_data->pdaf_info.pdaf_data_size;
 	}

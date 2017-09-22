@@ -546,13 +546,13 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	/* show version */
 	pdafaltek_adpt_get_version(cxt);
 
-	pdafaltek_get_pd_pack_bin(cxt, (const cmr_s8 *)in_p->name);
+	//pdafaltek_get_pd_pack_bin(cxt, (const cmr_s8 *)in_p->name);
 	/* init lib */
 	for (i = 0; i < ISP_INDEX_MAX; i++) {
 		cxt->tuning_param[i] = in_p->tuning_param[i];
 	}
 	ISP_LOGI("otp ptr %p size %ld", in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
-	ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size, in_p->tuning_param[0]);
+	ret = cxt->ops.init(in_p->pdaf_otp.otp_data, NULL, 0, in_p->tuning_param[0]);
 	if (ret) {
 		ISP_LOGE("failed to init lib %ld", ret);
 		goto error_lib_init;
