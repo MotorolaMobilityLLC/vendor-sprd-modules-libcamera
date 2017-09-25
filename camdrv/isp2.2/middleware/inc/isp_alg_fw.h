@@ -193,7 +193,6 @@ struct ispalg_lsc_ctrl_ops {
 	cmr_int (*deinit)(cmr_handle * handle_lsc);
 	cmr_int (*process)(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_ptr, struct lsc_adv_calc_result * result);
 	cmr_int (*ioctrl)(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
-	cmr_int (*get_lsc_otp)(struct sensor_otp_lsc_info *lsc_otp_info, struct sensor_otp_optCenter_info *optical_center_info,cmr_s32 height, cmr_s32 width, cmr_s32 grid, struct lsc_adv_init_param *lsc_param);
 };
 
 
