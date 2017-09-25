@@ -163,7 +163,6 @@ cmr_s32 _pm_yuv_ygamma_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0
 				src[1] = &ygamma_ptr->curve_tab[gamc_value.value[1]].points[0].x;
 				dst = &ygamma_ptr->final_curve;
 
-				/*interpolate y coordinates */
 				rtn = isp_interp_data(dst, src, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 				if (ISP_SUCCESS == rtn) {
 					ygamma_ptr->cur_idx_weight.x0 = weight_value->value[0];

@@ -16,7 +16,7 @@
 #define LOG_TAG "isp_blk_awbc"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_awb_init(void *dst_awb, void *src_awb, void *param1, void *param2)
+cmr_s32 _pm_awbc_init(void *dst_awb, void *src_awb, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)dst_awb;
@@ -45,7 +45,7 @@ cmr_s32 _pm_awb_init(void *dst_awb, void *src_awb, void *param1, void *param2)
 	return rtn;
 }
 
-cmr_s32 _pm_awb_set_param(void *awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_awbc_set_param(void *awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)awb_param;
@@ -101,7 +101,7 @@ cmr_s32 _pm_awb_set_param(void *awb_param, cmr_u32 cmd, void *param_ptr0, void *
 	return rtn;
 }
 
-cmr_s32 _pm_awb_get_param(void *awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_awbc_get_param(void *awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param *awb_param_ptr = (struct isp_awb_param *)awb_param;

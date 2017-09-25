@@ -118,10 +118,9 @@ cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void 
 cmr_s32 _pm_binning4awb_set_param(void *binning4awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_binning4awb_get_param(void *binning4awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-//awbc
-cmr_s32 _pm_awb_init(void *dst_pwd, void *src_pwd, void *param1, void *param2);
-cmr_s32 _pm_awb_set_param(void *pwd_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_awb_get_param(void *pwd_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_awbc_init(void *dst_pwd, void *src_pwd, void *param1, void *param2);
+cmr_s32 _pm_awbc_set_param(void *pwd_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_awbc_get_param(void *pwd_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_frgb_gamc_init(void *dst_gamc_param, void *src_gamc_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -294,25 +293,9 @@ cmr_s32 _pm_aft_init(void *dst_aft_param, void *src_aft_param, void *param1, voi
 cmr_s32 _pm_aft_set_param(void *aft_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_aft_get_param(void *aft_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_alsc_set_param(void *alsc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_alsc_get_param(void *alsc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_sft_af_init(void *dst_sft_af_param, void *src_sft_af_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_sft_af_set_param(void *aft_af_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_sft_af_get_param(void *aft_af_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_ae_new_init(void *dst_ae_new_param, void *src_ae_new_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_ae_new_set_param(void *ae_new_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_ae_new_get_param(void *ae_new_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
 cmr_s32 _pm_awb_new_init(void *dst_awb_new_param, void *src_awb_new_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_af_new_init(void *dst_af_new_param, void *src_af_new_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_af_new_set_param(void *af_new_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_af_new_get_param(void *af_new_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_dualflash_init(void *dst_flash_param, void *src_flash_param, void *param1, void *param2);
 cmr_s32 _pm_dualflash_set_param(void *flash_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

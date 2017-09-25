@@ -34,7 +34,6 @@ cmr_u32 _pm_3d_nr_pre_convert_param(void *dst_3d_nr_param, cmr_u32 strength_leve
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 	if (nr_3d_param != NULL) {
-		//dst_ptr->cur.blend_bypass = nr_3d_param[strength_level].bypass;
 		dst_ptr->cur.fusion_mode = nr_3d_param[strength_level].fusion_mode;
 		dst_ptr->cur.filter_switch = nr_3d_param[strength_level].filter_swt_en;
 		for (i = 0; i < 4; i++) {
@@ -150,8 +149,6 @@ cmr_s32 _pm_3d_nr_pre_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 	struct isp_pm_block_header *nr_3d_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	//dst_ptr->cur.blend_bypass = nr_3d_header_ptr->bypass;
-
 	dst_ptr->cur_level = src_ptr->default_strength_level;
 	dst_ptr->level_num = src_ptr->level_number;
 	dst_ptr->param_ptr = src_ptr->param_ptr;
@@ -159,7 +156,6 @@ cmr_s32 _pm_3d_nr_pre_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_3d_nr_pre_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	//dst_ptr->cur.blend_bypass |= nr_3d_header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm 3d nr pre param !");
 		return rtn;
@@ -178,7 +174,6 @@ cmr_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0
 
 	switch (cmd) {
 	case ISP_PM_BLK_3D_NR_BYPASS:
-		//dst_ptr->cur.blend_bypass = *((cmr_u32 *) param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 		break;
 
@@ -211,7 +206,6 @@ cmr_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0
 				block_result->mode_flag_changed = 0;
 
 				rtn = _pm_3d_nr_pre_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
-				//dst_ptr->cur.blend_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm 3d nr pre param !");
 					return rtn;

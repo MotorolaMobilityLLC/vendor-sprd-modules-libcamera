@@ -376,7 +376,6 @@ static void _interp_uint32(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 	}
 }
 
-/*special data type for CMC*/
 static void _interp_int14(cmr_u16 * dst, cmr_u16 * src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
 	cmr_u32 data_bytes = 0;
@@ -417,11 +416,7 @@ static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 	} else if (INTERP_WEIGHT_UNIT == weight[1]) {
 		memcpy(dst, src[1], data_bytes);
 	} else {
-
 		for (i = 0; i < data_num; i++) {
-
-			// just for hsv@smart
-
 			cmr_u32 src0_val = (cmr_u32) (*src[0]);
 			cmr_u32 src1_val = (cmr_u32) (*src[1]);
 
@@ -452,7 +447,7 @@ cmr_s32 isp_interp_data(void *dst, void *src[2], cmr_u16 weight[2], cmr_u32 data
 		ISP_LOGE("fail to get valid param: dst=%p, src=(%p, %p), data_num=%d\n", dst, src[0], src[1], data_num);
 		return ISP_ERROR;
 	}
-	//for speedup
+
 	if (256 != weight[0] + weight[1]) {
 		ISP_LOGE("fail to get valid weight[2] (%d, %d)\n", weight[0], weight[1]);
 		return ISP_ERROR;
@@ -480,81 +475,10 @@ cmr_s32 isp_interp_data(void *dst, void *src[2], cmr_u16 weight[2], cmr_u32 data
 		break;
 
 	default:
+		ISP_LOGE("fail to get a valid data type %d\n", data_type);
 		rtn = ISP_ERROR;
 		break;
 	}
 
 	return rtn;
 }
-
-#if 0
-cmr_s32 isp_scaling_lsc_gain(cmr_u16 * dst, cmr_u16 * src, struct isp_size * dst_size, struct isp_size * src_size)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u16 *dst_line = dst;
-	cmr_u32 i = 0;
-	cmr_u32 j = 0;
-	cmr_u32 x_scalar = 0;
-	cmr_u32 y_scalar = 0;
-
-	if (NULL == dst || NULL == src || NULL == dst_size || NULL == src_size)
-		return ISP_ERROR;
-
-	if (0 == dst_size->w || 0 == dst_size->h || 0 == src_size->w || 0 == src_size->h)
-		return ISP_ERROR;
-
-	x_scalar = src_size->w * (1 << 16) / dst_size->w;
-	y_scalar = src_size->h * (1 << 16) / dst_size->h;
-
-	/*for channel interlaced */
-	for (i = 0; i < dst_size->h; i++) {
-
-		cmr_u32 src_y = y_scalar * i;
-		cmr_u32 v = (src_y & (0xffff)) >> 8;
-		cmr_u16 *src_line[2] = { NULL };
-
-		src_y >>= 16;
-
-		if (src_y < dst_size->h - 1) {
-
-			src_line[0] = src + src_y * src_size->w;
-			src_line[1] = src_line[0] + src_size->w;
-		} else {
-
-			src_y = dst_size->h - 1;
-			src_line[0] = src + src_y * src_size->w;
-			src_line[1] = src_line[0];
-		}
-
-		for (j = 0; j < dst_size->w; j++) {
-
-			cmr_u32 src_x = x_scalar * j;
-			cmr_u32 u = (src_x & (0xffff)) >> 8;
-			cmr_u32 src_l[4] = { 0 };
-			cmr_u32 weight_value[4] = { 0 };
-
-			src_x >>= 16;
-
-			if (src_x < dst_size->w - 1) {
-				src_l[0] = src_line[0] + src_x;
-				src_l[1] = src_line[0] + src_x + 1;
-				src_l[2] = src_line[1] + src_x;
-				src_l[3] = src_line[1] + src_x + 1;
-			} else {
-				src_x = dst_size->w - 1;
-				src_l[0] = src_line[0] + src_x;
-				src_l[1] = src_l[0];
-				src_l[2] = src_line[1] + src_x;
-				src_l[3] = src_l[3];
-			}
-
-			dst_line[j] = (src_l[0] * (256 - u) * (256 - v) + src_l[1] * u * (256 - v)
-				       + src_l[2] * (256 - u) * v + src_l[3] * u * v) / 65536;
-		}
-
-		dst_line += dst_size->w;
-	}
-
-	return rtn;
-}
-#endif

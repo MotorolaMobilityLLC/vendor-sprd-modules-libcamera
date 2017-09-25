@@ -83,7 +83,7 @@ cmr_s32 _pm_yuv_noisefilter_init(void *dst_yuv_noisefilter_param, void *src_yuv_
 	rtn = _pm_yuv_noisefilter_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.yrandom_bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to  convert pm yuv noisefilter param!");
+		ISP_LOGE("fail to convert pm yuv noisefilter param!");
 		return rtn;
 	}
 
@@ -135,7 +135,7 @@ cmr_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, cmr_u32 cmd, 
 				rtn = _pm_yuv_noisefilter_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.yrandom_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("fail to  convert pm yuv noisefilter param!");
+					ISP_LOGE("fail to convert pm yuv noisefilter param!");
 					return rtn;
 				}
 			}

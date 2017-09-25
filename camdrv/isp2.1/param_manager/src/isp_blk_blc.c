@@ -143,7 +143,6 @@ cmr_s32 _pm_blc_get_param(void *blc_param, cmr_u32 cmd, void *rtn_param0, void *
 		param_data_ptr->data_size = sizeof(blc_ptr->cur.bypass);
 		break;
 
-		//this is the test code.yongheng.lu add
 	case ISP_PM_BLK_BLC_OFFSET_GB:
 		param_data_ptr->data_ptr = &blc_ptr->cur.gb;
 		param_data_ptr->data_size = sizeof(blc_ptr->cur.gb);

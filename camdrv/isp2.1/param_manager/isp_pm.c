@@ -83,12 +83,12 @@ struct isp_pm_buffer {
 };
 
 struct isp_pm_blk_status {
-	cmr_u32 update_flag;	/*0: not update 1: update */
-	cmr_u32 block_id;	/*need update block_id */
+	cmr_u32 update_flag;
+	cmr_u32 block_id;
 };
 
 struct isp_pm_mode_update_status {
-	cmr_u32 blk_num;	/*need update total numbers */
+	cmr_u32 blk_num;
 	struct isp_pm_blk_status pm_blk_status[ISP_TUNE_BLOCK_MAX];
 };
 
@@ -106,10 +106,10 @@ struct isp_pm_context {
 	struct isp_pm_param_data temp_param_data[ISP_TUNE_BLOCK_MAX];
 	struct isp_pm_param_data *tmp_param_data_ptr;
 	struct isp_context *active_cxt_ptr;
-	struct isp_context cxt_array[ISP_TUNE_MODE_MAX];	/*preview,capture,video and so on */
+	struct isp_context cxt_array[ISP_TUNE_MODE_MAX];
 	struct isp_pm_mode_param *active_mode;
-	struct isp_pm_mode_param *merged_mode_array[ISP_TUNE_MODE_MAX];	/*new preview/capture/video mode param */
-	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];	/*bakup isp tuning parameter, come frome sensor tuning file */
+	struct isp_pm_mode_param *merged_mode_array[ISP_TUNE_MODE_MAX];
+	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];
 	cmr_u32 param_source;
 	cmr_u32 cur_mode_id;
 };
@@ -395,7 +395,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 						if (PNULL != blk_ptr) {
 							ops->deinit(blk_ptr);
 						} else {
-							ISP_LOGV("blk_addr is null erro");
+							ISP_LOGV("fail to get valid blk_addr");
 						}
 					}
 				}
@@ -456,23 +456,9 @@ static struct isp_context *isp_pm_get_context(struct isp_pm_context *pm_cxt_ptr,
 {
 	struct isp_context *isp_cxt_ptr = PNULL;
 
-#if 0
-	num = pm_cxt_ptr->cxt_num;
-
-	for (i = 0; i < num; i++) {
-		if (id == pm_cxt_ptr->cxt_array[i].mode_id) {
-			break;
-		}
-	}
-
-	if (i < num) {
-		isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[i];
-	}
-#else
 	isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[ISP_MODE_ID_PRV_0];
 	isp_cxt_ptr->mode_id = id;
 
-#endif
 	return isp_cxt_ptr;
 }
 
@@ -593,7 +579,6 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info *nr_param_upd
 
 	nr_param_ptr += basic_offset_units * size_of_per_unit;
 
-	/* calc current block */
 	if (one_multi_mode_ptr[sensor_mode]) {
 		for (scene_number = 0; scene_number < MAX_SCENEMODE_NUM; scene_number++) {
 
@@ -724,7 +709,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 		dst_header = (struct isp_pm_block_header *)dst_mod_ptr->header;
 		for (j = 0; j < src_mod_ptr->block_num; j++) {
 			dst_header[j].is_update = 0;
-			dst_header[j].source_flag = i;	/*data source is common,preview,capture or video */
+			dst_header[j].source_flag = i;
 			dst_header[j].bypass = src_header[j].bypass;
 			dst_header[j].block_id = src_header[j].block_id;
 			dst_header[j].param_id = src_header[j].param_id;
@@ -968,7 +953,7 @@ static cmr_s32 isp_pm_mode_common_to_other(struct isp_pm_mode_param *mode_common
 
 	if (NULL == mode_common_in || NULL == mode_other_list_out) {
 		rtn = ISP_ERROR;
-		ISP_LOGE("fail to  get valid param :%p %p", mode_common_in, mode_other_list_out);
+		ISP_LOGE("fail to get valid param :%p %p", mode_common_in, mode_other_list_out);
 		return rtn;
 	}
 
@@ -977,7 +962,7 @@ static cmr_s32 isp_pm_mode_common_to_other(struct isp_pm_mode_param *mode_common
 
 	if (common_block_num < other_block_num) {
 		rtn = ISP_ERROR;
-		ISP_LOGE("fail to  get valid block num : %d %d", common_block_num, other_block_num);
+		ISP_LOGE("fail to get valid block num : %d %d", common_block_num, other_block_num);
 		return rtn;
 	}
 
@@ -1008,7 +993,7 @@ static cmr_s32 isp_pm_layout_param_and_init(cmr_handle handle)
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
 	if (NULL == pm_cxt_ptr) {
-		ISP_LOGE("fail to  get valid cxt ptr ");
+		ISP_LOGE("fail to get valid cxt ptr ");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1106,13 +1091,13 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr, struct 
 			blk_ptr = (void *)(cxt_start_addr + offset);
 			if (PNULL == blk_ptr) {
 				rtn = ISP_ERROR;
-				ISP_LOGE("fail to  get valid param : blk_addr:%p, param data_ptr:%p, header:%p", blk_ptr, param_data_ptr, blk_header_ptr);
+				ISP_LOGE("fail to get valid param : blk_addr:%p, param data_ptr:%p, header:%p", blk_ptr, param_data_ptr, blk_header_ptr);
 			} else {
 				ops->set(blk_ptr, cmd, param_data_ptr->data_ptr, blk_header_ptr);
 			}
 		}
 	} else {
-		ISP_LOGE("fail to  get validated id , id=%d", id);
+		ISP_LOGE("fail to get validated id, id=%d", id);
 	}
 
 	return rtn;
@@ -1127,7 +1112,7 @@ static cmr_s32 isp_pm_set_mode(cmr_handle handle, cmr_u32 mode_id)
 	struct isp_pm_tune_merge_param merged_mode_param;
 
 	if (ISP_TUNE_MODE_MAX < mode_id) {
-		ISP_LOGE("fail to  get valid mode id , id=%d\n", mode_id);
+		ISP_LOGE("fail to get valid mode id , mode_id=%d\n", mode_id);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -1311,7 +1296,7 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_mode_param *mode_para
 
 	blk_num = blk_info_in->param_num;
 	block_param_data_ptr = blk_info_in->param_data_ptr;
-	for (i = 0; i < 1; i++) {	//just support get only one block info
+	for (i = 0; i < 1; i++) {
 		id = block_param_data_ptr[i].id;
 		cmd = block_param_data_ptr[i].cmd;
 		blk_header_ptr = isp_pm_get_block_header(mode_param_in, id, &tm_idx);
@@ -1348,7 +1333,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 	cmr_s32 *version_id = PNULL;
 
 	if (PNULL == out_ptr) {
-		ISP_LOGE("fail to  get valid output ptr");
+		ISP_LOGE("fail to get valid output ptr");
 		return ISP_PARAM_NULL;
 	}
 
@@ -1392,7 +1377,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		cxt_ptr = (struct isp_pm_context *)handle;
 		param_ptr = in_ptr;
 		if (param_ptr->dv_mode == 0) {
-			ISP_LOGE("fail to  get valid dv mode\n");
+			ISP_LOGE("fail to get valid dv mode\n");
 		} else {
 			*((cmr_s32 *) out_ptr) = ISP_MODE_ID_VIDEO_0;
 			for (i = ISP_MODE_ID_VIDEO_0; i <= ISP_MODE_ID_VIDEO_3; i++) {
@@ -1446,7 +1431,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 					blk_ptr = (void *)(isp_cxt_start_addr + offset);
 					if (ops != NULL) {
 						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)) {
-							ISP_LOGE("fail to  get valid param: blk_addr:%p, param_ptr:%p, isp_update:%d\n",
+							ISP_LOGE("fail to get valid param: blk_addr:%p, param_ptr:%p, isp_update:%d\n",
 								 blk_ptr, param_data_ptr, blk_header_ptr->is_update);
 						} else {
 							ops->get(blk_ptr, ISP_PM_BLK_ISP_SETTING, param_data_ptr, &blk_header_ptr->is_update);
@@ -1480,7 +1465,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		result_ptr->param_num = 0;
 		result_ptr->param_data = PNULL;
 		result_ptr->param_data = &pm_cxt_ptr->temp_param_data[blk_idx];
-		result_ptr->param_num = single_param_counts;	//always is one
+		result_ptr->param_num = single_param_counts;
 	} else if (ISP_PM_CMD_GET_AE_VERSION_ID == cmd) {
 		pm_cxt_ptr = (struct isp_pm_context *)handle;
 		mod_num = 0;
@@ -1568,7 +1553,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 
 			param_data_ptr->cmd = cmd;
 			param_data_ptr->mod_id = j;
-			param_data_ptr->id = (j << 16) | block_id;	/*H-16: mode id L-16: block id */
+			param_data_ptr->id = (j << 16) | block_id;
 			param_data_ptr++;
 			result_ptr->param_num++;
 		}

@@ -108,7 +108,6 @@ cmr_s32 _pm_bpc_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *
 
 	switch (cmd) {
 	case ISP_PM_BLK_BPC:
-		//TODO:
 		break;
 
 	case ISP_PM_BLK_BPC_BYPASS:
@@ -125,14 +124,11 @@ cmr_s32 _pm_bpc_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *
 		break;
 
 	case ISP_PM_BLK_BPC_THRD:
-		//TODO:
 		break;
 
 	case ISP_PM_BLK_BPC_MAP_ADDR:
 		{
-			/*need caller this enum to set this value. */
-			//      intptr_t map_addr = *(intptr_t*)param_ptr0;
-			//      bpc_ptr->cur.bpc_map_addr_new = map_addr;
+			/* need caller this enum to set this value. */
 			header_ptr->is_update = ISP_ONE;
 		}
 		break;

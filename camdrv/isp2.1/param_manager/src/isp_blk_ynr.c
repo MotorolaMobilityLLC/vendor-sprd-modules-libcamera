@@ -113,7 +113,7 @@ cmr_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void *param1, voi
 	dst_ptr->cur.bypass |= ynr_header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to  convert pm ynr param!");
+		ISP_LOGE("fail to convert pm ynr param!");
 		return rtn;
 	}
 
@@ -158,7 +158,7 @@ cmr_s32 _pm_ynr_set_param(void *ynr_param, cmr_u32 cmd, void *param_ptr0, void *
 				rtn = _pm_ynr_convert_param(dst_ptr, cur_level, block_result->mode_flag, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("fail to  convert pm ynr param!");
+					ISP_LOGE("fail to convert pm ynr param!");
 					return rtn;
 				}
 			}

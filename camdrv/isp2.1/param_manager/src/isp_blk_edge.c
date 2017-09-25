@@ -240,19 +240,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 			}
 		}
 		break;
-#if 0
-	case ISP_PM_BLK_SCENE_MODE:
-		{
-			cmr_u32 idx = *((cmr_u32 *) param_ptr0);
-			if (0 == idx) {
-				//      edge_ptr->cur.ee_level = edge_ptr->tab[edge_ptr->cur_idx] + edge_ptr->level;
-			} else {
-				//      edge_ptr->cur.ee_level = edge_ptr->scene_mode_tab[idx] + edge_ptr->level;
-			}
-			edge_header_ptr->is_update = ISP_ZERO;
-		}
-		break;
-#endif
+
 	default:
 		break;
 	}

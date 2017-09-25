@@ -42,7 +42,7 @@ cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 
 		dst_ptr->cur.slash_flat_thr = grgb_param[strength_level].slash_flat_thr;
 		dst_ptr->cur.gr_ratio = grgb_param[strength_level].grgb_ratio.gr_ratio;
 		dst_ptr->cur.gb_ratio = grgb_param[strength_level].grgb_ratio.gb_ratio;
-		//lum
+
 		dst_ptr->cur.lum.curve_t[0][0] = grgb_param[strength_level].lum_curve_flat.t_cfg.grgb_t1_cfg;
 		dst_ptr->cur.lum.curve_t[0][1] = grgb_param[strength_level].lum_curve_flat.t_cfg.grgb_t2_cfg;
 		dst_ptr->cur.lum.curve_t[0][2] = grgb_param[strength_level].lum_curve_flat.t_cfg.grgb_t3_cfg;
@@ -66,7 +66,7 @@ cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 
 		dst_ptr->cur.lum.curve_r[2][0] = grgb_param[strength_level].lum_curve_tex.r_cfg.grgb_r1_cfg;
 		dst_ptr->cur.lum.curve_r[2][1] = grgb_param[strength_level].lum_curve_tex.r_cfg.grgb_r2_cfg;
 		dst_ptr->cur.lum.curve_r[2][2] = grgb_param[strength_level].lum_curve_tex.r_cfg.grgb_r3_cfg;
-		//frez
+
 		dst_ptr->cur.frez.curve_t[0][0] = grgb_param[strength_level].frez_curve_flat.t_cfg.grgb_t1_cfg;
 		dst_ptr->cur.frez.curve_t[0][1] = grgb_param[strength_level].frez_curve_flat.t_cfg.grgb_t2_cfg;
 		dst_ptr->cur.frez.curve_t[0][2] = grgb_param[strength_level].frez_curve_flat.t_cfg.grgb_t3_cfg;

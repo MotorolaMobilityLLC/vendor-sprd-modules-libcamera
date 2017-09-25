@@ -172,7 +172,6 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 					dst_g = &gamc_ptr->final_curve.points_g;
 					dst_b = &gamc_ptr->final_curve.points_b;
 
-					/*interpolate y coordinates */
 					rtn = isp_interp_data(dst_r, src_r, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 					if (ISP_SUCCESS != rtn) {
 						ISP_LOGE("fail to interp gamc_r data\n");
@@ -207,7 +206,6 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 					src[1] = &gamc_ptr->curve_tab[gamc_value.value[1]].points_r[0].x;
 					dst = &gamc_ptr->final_curve.points_r;
 
-					/*interpolate y coordinates */
 					rtn = isp_interp_data(dst, src, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 					if (ISP_SUCCESS == rtn) {
 						gamc_ptr->cur_idx.x0 = weight_value->value[0];

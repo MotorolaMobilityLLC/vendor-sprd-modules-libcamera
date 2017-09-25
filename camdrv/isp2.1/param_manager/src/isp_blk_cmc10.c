@@ -68,7 +68,6 @@ cmr_s32 _pm_cmc10_adjust(struct isp_cmc10_param * cmc_ptr, cmr_u32 is_reduce)
 	weight[0] = cmc_ptr->cur_idx_info.weight0;
 	weight[1] = cmc_ptr->cur_idx_info.weight1;
 
-	/*interplate alg. */
 	rtn = isp_interp_data(interp_result, src_matrix, weight, 9, ISP_INTERP_INT14);
 	if (ISP_SUCCESS != rtn) {
 		rtn = ISP_ERROR;
@@ -242,7 +241,7 @@ cmr_s32 _pm_cmc10_get_param(void *cmc10_param, cmr_u32 cmd, void *rtn_param0, vo
 		*update_flag = 0;
 		break;
 
-      case ISP_PM_BLK_CMC10:
+	case ISP_PM_BLK_CMC10:
 		param_data_ptr->data_ptr = cmc10_ptr->cur.matrix.val;
 		param_data_ptr->data_size = 9*sizeof(cmr_u16);
 		*update_flag = 0;

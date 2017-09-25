@@ -91,8 +91,6 @@ cmr_s32 _pm_pdaf_correct_init(void *dst_pdaf_correct_param, void *src_pdaf_corre
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_pdaf_correct_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 
-	//struct isp_size *img_size_ptr = (struct isp_size *)param2;
-
 	UNUSED(param2);
 	dst_ptr->cur.ppi_corrector_bypass = header_ptr->bypass;
 
@@ -102,14 +100,11 @@ cmr_s32 _pm_pdaf_correct_init(void *dst_pdaf_correct_param, void *src_pdaf_corre
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
-	//dst_ptr->cur.block_size.width = img_size_ptr->w;
-	//dst_ptr->cur.block_size.height = img_size_ptr->h;
-
 	rtn = _pm_pdaf_correct_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.ppi_corrector_bypass |= header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to  convert pm pdaf param!");
+		ISP_LOGE("fail to convert pm pdaf param!");
 		return rtn;
 	}
 
@@ -187,7 +182,7 @@ cmr_s32 _pm_pdaf_correct_get_param(void *pdaf_correct_param, cmr_u32 cmd, void *
 		break;
 
 	case ISP_PM_BLK_PDAF_BYPASS:
-		param_data_ptr->data_ptr = (void *)&pdaf_correct_ptr->cur.ppi_corrector_bypass;	// not sure
+		param_data_ptr->data_ptr = (void *)&pdaf_correct_ptr->cur.ppi_corrector_bypass;
 		param_data_ptr->data_size = sizeof(pdaf_correct_ptr->cur.ppi_corrector_bypass);
 		break;
 

@@ -33,7 +33,6 @@ cmr_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf
 	dst_ptr->cur.ppi_af_win_sx0 = src_ptr->pdaf_af_win.af_win_sx0;
 	dst_ptr->cur.ppi_af_win_ey0 = src_ptr->pdaf_af_win.af_win_ey0;
 	dst_ptr->cur.ppi_af_win_ex0 = src_ptr->pdaf_af_win.af_win_ex0;
-#if 1
 	dst_ptr->cur.ppi_block_start_col = src_ptr->pdaf_region.start_col;
 	dst_ptr->cur.ppi_block_start_row = src_ptr->pdaf_region.start_row;
 	dst_ptr->cur.ppi_block_end_col = src_ptr->pdaf_region.end_col;
@@ -45,7 +44,6 @@ cmr_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf
 		dst_ptr->cur.pattern_row[i] = src_ptr->pdaf_region.pdaf_pattern[i].pattern_pixel.x;
 		dst_ptr->cur.pattern_col[i] = src_ptr->pdaf_region.pdaf_pattern[i].pattern_pixel.y;
 	}
-#endif
 
 	header_ptr->is_update = ISP_ONE;
 

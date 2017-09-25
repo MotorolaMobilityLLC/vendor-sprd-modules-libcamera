@@ -55,8 +55,6 @@ cmr_s32 _pm_postblc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, vo
 	struct isp_postblc_param *blc_ptr = (struct isp_postblc_param *)blc_param;
 	struct isp_pm_block_header *blc_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
-	//blc_header_ptr->is_update = ISP_ONE;//for no smart blc
-
 	switch (cmd) {
 	case ISP_PM_BLK_BLC_OFFSET:
 		index = *((cmr_u32 *) param_ptr0);
@@ -100,13 +98,13 @@ cmr_s32 _pm_postblc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, vo
 			if (blc_value.value[0] != blc_ptr->cur_idx.x0 || blc_value.weight[0] != blc_ptr->cur_idx.weight0) {
 
 				blc_ptr->cur.r_para = (blc_ptr->offset[blc_value.value[0]].r * blc_value.weight[0] +
-						       blc_ptr->offset[blc_value.value[1]].r * blc_value.weight[1] + SMART_WEIGHT_UNIT / 2) / SMART_WEIGHT_UNIT;
+							blc_ptr->offset[blc_value.value[1]].r * blc_value.weight[1] + SMART_WEIGHT_UNIT / 2) / SMART_WEIGHT_UNIT;
 				blc_ptr->cur.gr_para = (blc_ptr->offset[blc_value.value[0]].gr * blc_value.weight[0] +
 							blc_ptr->offset[blc_value.value[1]].gr * blc_value.weight[1] + SMART_WEIGHT_UNIT / 2) / SMART_WEIGHT_UNIT;
 				blc_ptr->cur.gb_para = (blc_ptr->offset[blc_value.value[0]].gb * blc_value.weight[0] +
 							blc_ptr->offset[blc_value.value[1]].gb * blc_value.weight[1] + SMART_WEIGHT_UNIT / 2) / SMART_WEIGHT_UNIT;
 				blc_ptr->cur.b_para = (blc_ptr->offset[blc_value.value[0]].b * blc_value.weight[0] +
-						       blc_ptr->offset[blc_value.value[1]].b * blc_value.weight[1] + SMART_WEIGHT_UNIT / 2) / SMART_WEIGHT_UNIT;
+							blc_ptr->offset[blc_value.value[1]].b * blc_value.weight[1] + SMART_WEIGHT_UNIT / 2) / SMART_WEIGHT_UNIT;
 				blc_ptr->cur_idx.x0 = weight_value->value[0];
 				blc_ptr->cur_idx.x1 = weight_value->value[1];
 				blc_ptr->cur_idx.weight0 = weight_value->weight[0];
@@ -145,7 +143,6 @@ cmr_s32 _pm_postblc_get_param(void *blc_param, cmr_u32 cmd, void *rtn_param0, vo
 		param_data_ptr->data_size = sizeof(blc_ptr->cur.bypass);
 		break;
 
-		//this is the test code.yongheng.lu add
 	case ISP_PM_BLK_BLC_OFFSET_GB:
 		param_data_ptr->data_ptr = &blc_ptr->cur.gb_para;
 		param_data_ptr->data_size = sizeof(blc_ptr->cur.gb_para);
