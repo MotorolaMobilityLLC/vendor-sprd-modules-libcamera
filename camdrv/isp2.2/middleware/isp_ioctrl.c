@@ -531,6 +531,27 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 				rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 		}
 		break;
+	case ISP_FLASH_SLAVE_FLASH_TORCH:
+		ae_notice.mode = AE_LED_FLASH_ON;
+		if (cxt->camera_id == 1) {
+			if (cxt->ops.ae_ops.ioctrl)
+				rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
+		}
+		break;
+	case ISP_FLASH_SLAVE_FLASH_AUTO:
+		ae_notice.mode = AE_LED_FLASH_AUTO;
+		if (cxt->camera_id == 1) {
+			if (cxt->ops.ae_ops.ioctrl)
+				rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
+		}
+		break;
+	case ISP_FLASH_SLAVE_FLASH_OFF:
+		ae_notice.mode = AE_LED_FLASH_OFF;
+		if (cxt->camera_id == 1) {
+			if (cxt->ops.ae_ops.ioctrl)
+				rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
+		}
+		break;
 
 	default:
 		break;

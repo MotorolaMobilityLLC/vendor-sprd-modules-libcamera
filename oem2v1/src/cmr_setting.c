@@ -824,6 +824,25 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
             isp_param.cmd_value = parm->cmd_type_value;
             ret = (*init_in->setting_isp_ioctl)(
                 init_in->oem_handle, COM_ISP_SET_FLASH_MODE, &isp_param);
+#ifdef CONFIG_CAMERA_FLASH_LED_0
+            if (parm->camera_id == 1) {
+                isp_param.camera_id = parm->camera_id;
+                isp_param.cmd_value = ISP_ONLINE_FLASH_CALLBACK;
+                switch (flash_mode) {
+                case CAMERA_FLASH_MODE_TORCH:
+                    isp_param.flash_notice.mode = ISP_FLASH_SLAVE_FLASH_TORCH;
+                    break;
+                case CAMERA_FLASH_MODE_AUTO:
+                    isp_param.flash_notice.mode = ISP_FLASH_SLAVE_FLASH_AUTO;
+                    break;
+                case CAMERA_FLASH_MODE_OFF:
+                    isp_param.flash_notice.mode = ISP_FLASH_SLAVE_FLASH_OFF;
+                    break;
+                }
+                ret = (*init_in->setting_isp_ioctl)(
+                    init_in->oem_handle, COM_ISP_SET_FLASH_NOTICE, &isp_param);
+            }
+#endif
         }
     }
 
