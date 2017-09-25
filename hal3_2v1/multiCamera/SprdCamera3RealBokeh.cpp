@@ -1953,6 +1953,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
                                                             lFocusMode);
         if (rc != MOK) {
             HAL_LOGE("ARC_DCIR_Init failed!");
+            goto exit;
         } else {
             HAL_LOGD("ARC_DCIR_Init succeed");
         }
@@ -2003,7 +2004,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             mArcSoftCapHandle, &leftImg, &rightImg, &mArcSoftDcrParam);
         if (rc != MOK) {
             HAL_LOGE("arcsoft ARC_DCIR_CalcDisparityData failed,res=%d", rc);
-            goto exit;
+            goto exit_arc;
         }
         HAL_LOGD("ARC_DCIR_CalcDisparityData cost %lld ms",
                  ns2ms(systemTime() - depthRun));
@@ -2021,7 +2022,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             mArcSoftCapHandle, &lDMSize);
         if (rc != MOK) {
             HAL_LOGE("arcsoft ARC_DCIR_GetDisparityDataSize failed");
-            goto exit;
+            goto exit_arc;
         }
         if (mArcSoftDepthSize != lDMSize) {
             mArcSoftDepthSize = lDMSize;
@@ -2031,7 +2032,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             mArcSoftDepthMap = malloc(mArcSoftDepthSize);
             if (!mArcSoftDepthMap) {
                 HAL_LOGE("arcsoft pDispMap error!");
-                goto exit;
+                goto exit_arc;
             } else {
                 HAL_LOGD("arcsoft pDispMap apply memory succeed, lDMSize %ld",
                          lDMSize);
@@ -2042,9 +2043,6 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         if (rc != MOK) {
             HAL_LOGE("arcsoft AARC_DCIR_GetDisparityData failed");
         }
-        char prop[PROPERTY_VALUE_MAX] = {
-            0,
-        };
         if (!mAbokehGallery) {
             int64_t bokehRun = systemTime();
             rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_CapProcess(
@@ -2058,7 +2056,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             HAL_LOGD("ARC_DCIR_CapProcess cost %lld ms",
                      ns2ms(systemTime() - bokehRun));
         }
-
+    exit_arc:
         rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(&mArcSoftCapHandle);
         if (rc != MOK) {
             HAL_LOGE("arcsoft ARC_DCIR_Uninit failed");
