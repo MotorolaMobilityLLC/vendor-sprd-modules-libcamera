@@ -1522,28 +1522,6 @@ static void af_stop_search(af_ctrl_t * af)
 	pthread_mutex_unlock(&af->af_work_lock);
 }
 
-static void af_retrigger_search(af_ctrl_t * af, struct aft_proc_result *res)
-{
-	AF_Trigger_Data aft_in;
-
-	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
-	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-	aft_in.AFT_mode = af->algo_mode;
-	aft_in.bisTrigger = AF_TRIGGER;
-	aft_in.AF_Trigger_Type = (RE_TRIGGER);
-	aft_in.trigger_source = res->is_caf_trig;
-
-	pthread_mutex_lock(&af->af_work_lock);
-	if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt, AFV1_FALSE)) {
-		AF_Process_Frame(af->af_alg_cxt);
-		AF_Trigger(af->af_alg_cxt, &aft_in);
-		ISP_LOGI("AF retrigger start \n");
-	} else {
-		ISP_LOGI("AF retrigger no support @%d \n", AF_Get_alg_mode(af->af_alg_cxt));
-	}
-	pthread_mutex_unlock(&af->af_work_lock);
-}
-
 static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 {
 	struct aft_proc_result res;
@@ -1581,8 +1559,37 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 		}
 	} else {
 		if (res.is_cancel_caf || res.is_caf_trig || AFV1_TRUE == af->force_trigger) {
+			AF_Trigger_Data aft_in;
 			ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", res.is_cancel_caf, res.is_caf_trig, af->force_trigger);
-			af_retrigger_search(af, &res);
+			memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+			aft_in.AFT_mode = af->algo_mode;
+			aft_in.bisTrigger = AF_TRIGGER;
+			aft_in.AF_Trigger_Type = (RE_TRIGGER);
+			aft_in.trigger_source = res.is_caf_trig;
+
+			pthread_mutex_lock(&af->af_work_lock);
+			if (AFV1_SUCCESS == AF_STOP(af->af_alg_cxt, AFV1_FALSE)) {
+				AF_Process_Frame(af->af_alg_cxt);
+				win.win_num = 0;
+				if (AFT_DATA_FD == prm->active_data_type) {
+					win.win_num = 1;
+					win.win_pos[0].sx = prm->fd_info.face_info[0].sx;
+					win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
+					win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
+					win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
+					ISP_LOGI("retrigger face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex,
+						 win.win_pos[0].ey);
+					af->algo_mode = FAF;
+					af->state = STATE_FAF;
+				}
+				calc_roi(af, &win, af->algo_mode);
+				AF_Trigger(af->af_alg_cxt, &aft_in);
+				do_start_af(af);
+				ISP_LOGI("AF retrigger start \n");
+			} else {
+				ISP_LOGI("AF retrigger no support @%d \n", AF_Get_alg_mode(af->af_alg_cxt));
+			}
+			pthread_mutex_unlock(&af->af_work_lock);
 		}
 	}
 }
@@ -2539,7 +2546,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,
 		 af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
-
 
 	//PDAF Tuning Data
 	struct isp_haf_tune_param *isp_pdaf_tune_data = NULL;
