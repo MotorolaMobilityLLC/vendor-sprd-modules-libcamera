@@ -275,9 +275,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
       mPowermanageInited(0), mPowerManager(NULL), mPowerManagerLowPower(NULL),
-      mPrfmLock(NULL), m_pPowerModule(NULL), mHDRPowerHint(0),
-      mPerformancePowerHint(0), mLowerPowerPowerHint(0), mGyroInit(0),
-      mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
+      mPrfmLock(NULL), m_pPowerModule(NULL), miSBindcorePreviewFrame(false),
+      mBindcorePreivewFrameCount(0), mHDRPowerHint(0), mPerformancePowerHint(0),
+      mLowerPowerPowerHint(0), mGyroInit(0), mGyroExit(0),
+      mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
       mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
       mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
       mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
@@ -767,7 +768,6 @@ int SprdCamera3OEMIf::takePicture() {
 
     if (1 == mLowerPowerPowerHint) {
         disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
-        mLowerPowerPowerHint = 0;
     }
 
     if (1 == mHDRPowerHint) {
@@ -914,7 +914,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     if ((mLowerPowerPowerHint == 1) && getMultiCameraMode() != MODE_BLUR &&
         getMultiCameraMode() != MODE_BOKEH) {
         disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
-        mLowerPowerPowerHint = 0;
     }
 
     if (SPRD_ERROR == mCameraState.capture_state) {
@@ -1736,6 +1735,32 @@ void SprdCamera3OEMIf::thermalEnabled(bool flag) {
     }
 }
 
+static int set_camera_affinity(pid_t pid) {
+    cpu_set_t cpu_set;
+    cpu_set_t cpu_get;
+    int i;
+    CPU_ZERO(&cpu_set);
+    CPU_SET(0, &cpu_set);
+    CPU_SET(1, &cpu_set);
+    if (sched_setaffinity(pid, sizeof(cpu_set), &cpu_set) == -1) {
+        return -1;
+    }
+    return 0;
+}
+
+void SprdCamera3OEMIf::bindcoreEnabled() {
+    int pid = getpid();
+    int ret = 0;
+    ret = set_camera_affinity(pid);
+    if (ret < 0) {
+        HAL_LOGV("affinity,failed for pid:%d, error:%d", pid, ret);
+    }
+    miSBindcorePreviewFrame = false;
+    mBindcorePreivewFrameCount = 0;
+    HAL_LOGV("bind:%d,%d,%d", ret, miSBindcorePreviewFrame,
+             mBindcorePreivewFrameCount);
+}
+
 void SprdCamera3OEMIf::initPowerHint() {
 #ifdef HAS_CAMERA_HINTS
 #ifdef ANDROID_VERSION_O_BRINGUP
@@ -1758,7 +1783,12 @@ void SprdCamera3OEMIf::initPowerHint() {
         }
     }
     if (mPowerManagerEnable != NULL) {
-        mPowerManager = mPowerManagerEnable;
+#ifdef CONFIG_CAMERA_POWERHINT_PERFORMANCE
+        property_get("debug.camera.dis.perf", value, "0");
+        if (!atoi(value)) {
+            mPowerManager = mPowerManagerEnable;
+        }
+#endif
 #ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
         property_get("debug.camera.dis.lowpower", value, "0");
         if (!atoi(value)) {
@@ -1827,16 +1857,24 @@ void SprdCamera3OEMIf::enablePowerHint(int powerhint_id) {
     }
 #else
     Mutex::Autolock l(&mPowermanageLock);
-    HAL_LOGD("IN");
+    HAL_LOGV("IN");
     if (powerhint_id == CAMERA_POWER_HINT_PERFORMANCE) {
-        enablePowerHintExt(mPowerManager, mPrfmLock, powerhint_id);
-        // disable thermal
-        thermalEnabled(false);
+        if (mPowerManager != NULL) {
+            enablePowerHintExt(mPowerManager, mPrfmLock, powerhint_id);
+            // disable thermal
+            thermalEnabled(false);
+        }
     } else if (powerhint_id == CAMERA_POWER_HINT_LOWPOWER) {
-        enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
-                           powerhint_id);
+        if (mPowerManagerLowPower != NULL) {
+            enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
+                               powerhint_id);
+            mLowerPowerPowerHint = 1;
+#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
+            miSBindcorePreviewFrame = true;
+#endif
+        }
     }
-    HAL_LOGD("OUT");
+    HAL_LOGV("OUT");
 #endif
 #endif
 }
@@ -1863,15 +1901,23 @@ void SprdCamera3OEMIf::disablePowerHint(int powerhint_id) {
                                   (void *)"state=0");
     }
 #else
-    HAL_LOGD("IN");
+    HAL_LOGV("IN");
     Mutex::Autolock l(&mPowermanageLock);
     if (powerhint_id == CAMERA_POWER_HINT_PERFORMANCE) {
-        disablePowerHintExt(mPowerManager, mPrfmLock);
-        thermalEnabled(true);
+        if (mPowerManager != NULL) {
+            disablePowerHintExt(mPowerManager, mPrfmLock);
+            thermalEnabled(true);
+        }
     } else if (powerhint_id == CAMERA_POWER_HINT_LOWPOWER) {
-        disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower);
+        if (mPowerManagerLowPower != NULL) {
+            disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower);
+            mLowerPowerPowerHint = 0;
+#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
+            miSBindcorePreviewFrame = false;
+#endif
+        }
     }
-    HAL_LOGD("OUT");
+    HAL_LOGV("OUT");
 #endif
 #endif
 }
@@ -3388,8 +3434,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         return UNKNOWN_ERROR;
     }
 
-    if (!miSPreviewFirstFrame) {
-        enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
+    if (!miSPreviewFirstFrame && !mLowerPowerPowerHint) {
+        if ((sprddefInfo.slowmotion <= 1)) {
+            enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
+        }
     }
 
     if (isCapturing()) {
@@ -4105,7 +4153,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
         if (!mLowerPowerPowerHint && !mHDRPowerHint) {
             enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
-            mLowerPowerPowerHint = 1;
         }
     }
 
@@ -4537,7 +4584,18 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
         }
     }
-
+#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
+    HAL_LOGV("bind core :%d,%d,mBindcorePreivewFrameCount:%d",
+             miSBindcorePreviewFrame, sysconf(_SC_NPROCESSORS_ONLN),
+             mBindcorePreivewFrameCount);
+    if ((miSBindcorePreviewFrame == true) &&
+        sysconf(_SC_NPROCESSORS_ONLN) == 3) {
+        mBindcorePreivewFrameCount++;
+        if (mBindcorePreivewFrameCount == 3) {
+            bindcoreEnabled();
+        }
+    }
+#endif
 exit:
     HAL_LOGV("X");
 }
@@ -5113,7 +5171,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         changeDfsPolicy(CAM_LOW);
         if (!mLowerPowerPowerHint) {
             enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
-            mLowerPowerPowerHint = 1;
         }
     }
 

@@ -209,6 +209,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
     void thermalEnabled(bool flag);
+    void bindcoreEnabled();
     void initPowerHint();
     void deinitPowerHint();
     void enablePowerHint(int powerhint_id);
@@ -748,6 +749,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sp<IBinder> mPrfmLockLowPower;
     Mutex mPowermanageLock;
     power_module_t *m_pPowerModule;
+    bool miSBindcorePreviewFrame;
+    int mBindcorePreivewFrameCount;
 
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
