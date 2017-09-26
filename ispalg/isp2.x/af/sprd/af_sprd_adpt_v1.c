@@ -2719,7 +2719,7 @@ cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *par
 			rtn = af_sprd_set_af_trigger(handle, param0);
 			break;
 		case AF_CMD_SET_ISP_STOP_INFO:
-			rtn = af_sprd_set_video_stop(handle, param0);
+			//rtn = af_sprd_set_video_stop(handle, param0);
 			break;
 		case AF_CMD_SET_DCAM_TIMESTAMP:
 			rtn = af_sprd_set_dcam_timestamp(handle, param0);
