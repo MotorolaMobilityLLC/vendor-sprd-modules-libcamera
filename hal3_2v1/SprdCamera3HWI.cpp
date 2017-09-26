@@ -794,7 +794,6 @@ int SprdCamera3HWI::configureStreams(
         video_size.width = video_size.width - 2;
     }
 #endif
-#ifndef CONFIG_BYPASS_JPG_ALIGNMENT
     if (mMultiCameraMode != MODE_BOKEH) {
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue,
@@ -809,7 +808,6 @@ int SprdCamera3HWI::configureStreams(
             capture_size.height = 1088;
         }
     }
-#endif
     mOEMIf->SetDimensionPreview(preview_size);
     mOEMIf->SetDimensionCapture(capture_size);
     mOEMIf->SetDimensionVideo(video_size);
