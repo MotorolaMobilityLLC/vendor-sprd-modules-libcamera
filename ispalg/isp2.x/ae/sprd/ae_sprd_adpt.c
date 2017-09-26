@@ -1006,7 +1006,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_LED_FLASH_OFF:
-		cxt->cur_status.settings.flash = FLASH_LED_OFF;
+		cxt->cur_status.settings.flash = FLASH_NONE;
 		ISP_LOGI("ae_flash_status FLASH_LED_OFF");
 		break;
 
