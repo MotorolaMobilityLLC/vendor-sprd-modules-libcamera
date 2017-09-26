@@ -32,6 +32,7 @@
 #include "sensor_ov13855_raw_param_common.c"
 #include "sensor_ov13855_raw_param_prv_0.c"
 #include "sensor_ov13855_raw_param_prv_1.c"
+#include "sensor_ov13855_raw_param_prv_2.c"
 #include "sensor_ov13855_raw_param_cap_0.c"
 #include "sensor_ov13855_raw_param_cap_1.c"
 #include "sensor_ov13855_raw_param_video_0.c"
@@ -50,7 +51,7 @@
 
 
 /* Capture Sizes:
-	2112x1568,4224x3136,1280x720
+	2112x1568,4224x3136,1280x720,1056x784
 */
 
 
@@ -109,8 +110,8 @@ static struct sensor_version_info s_ov13855_version_info=
 	{
 		{
 			0x3331766F,
-			0x64353538,
-			0x006C6175,
+			0x00353538,
+			0x00000000,
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -158,7 +159,7 @@ static struct sensor_raw_info s_ov13855_mipi_raw_info=
 		{s_ov13855_tune_info_common, sizeof(s_ov13855_tune_info_common)},
 		{s_ov13855_tune_info_prv_0, sizeof(s_ov13855_tune_info_prv_0)},
 		{s_ov13855_tune_info_prv_1, sizeof(s_ov13855_tune_info_prv_1)},
-		{NULL, 0},
+		{s_ov13855_tune_info_prv_2, sizeof(s_ov13855_tune_info_prv_2)},
 		{NULL, 0},
 		{s_ov13855_tune_info_cap_0, sizeof(s_ov13855_tune_info_cap_0)},
 		{s_ov13855_tune_info_cap_1, sizeof(s_ov13855_tune_info_cap_1)},
@@ -176,7 +177,7 @@ static struct sensor_raw_info s_ov13855_mipi_raw_info=
 		&s_ov13855_fix_info_common,
 		&s_ov13855_fix_info_prv_0,
 		&s_ov13855_fix_info_prv_1,
-		NULL,
+		&s_ov13855_fix_info_prv_2,
 		NULL,
 		&s_ov13855_fix_info_cap_0,
 		&s_ov13855_fix_info_cap_1,
@@ -191,7 +192,7 @@ static struct sensor_raw_info s_ov13855_mipi_raw_info=
 		{s_ov13855_common_tool_ui_input, sizeof(s_ov13855_common_tool_ui_input)},
 		{s_ov13855_prv_0_tool_ui_input, sizeof(s_ov13855_prv_0_tool_ui_input)},
 		{s_ov13855_prv_1_tool_ui_input, sizeof(s_ov13855_prv_1_tool_ui_input)},
-		{NULL, 0},
+		{s_ov13855_prv_2_tool_ui_input, sizeof(s_ov13855_prv_2_tool_ui_input)},
 		{NULL, 0},
 		{s_ov13855_cap_0_tool_ui_input, sizeof(s_ov13855_cap_0_tool_ui_input)},
 		{s_ov13855_cap_1_tool_ui_input, sizeof(s_ov13855_cap_1_tool_ui_input)},
