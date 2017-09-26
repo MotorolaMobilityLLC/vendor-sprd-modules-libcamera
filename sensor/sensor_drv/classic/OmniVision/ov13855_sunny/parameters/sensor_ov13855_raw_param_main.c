@@ -109,8 +109,8 @@ static struct sensor_version_info s_ov13855_version_info=
 	{
 		{
 			0x3331766F,
-			0x00353538,
-			0x00000000,
+			0x64353538,
+			0x006C6175,
 			0x00000000,
 			0x00000000,
 			0x00000000,
