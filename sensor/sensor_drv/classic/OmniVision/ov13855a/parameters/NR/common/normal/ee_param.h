@@ -1592,17 +1592,17 @@
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
-				0x0006,
+				0x0004,
 				/*positive*/
-				0x0006,
+				0x0004,
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
-				0x0006,
+				0x0004,
 				/*positive*/
-				0x0006,
+				0x0004,
 
 			}
 		}
