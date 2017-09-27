@@ -232,6 +232,7 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
+         usleep(500);
     } else {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
