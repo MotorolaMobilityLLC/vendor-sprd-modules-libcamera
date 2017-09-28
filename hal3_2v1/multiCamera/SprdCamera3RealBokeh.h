@@ -63,7 +63,8 @@
 #include "./arcsoft/merror.h"
 #include "./arcsoft/arcsoft_dualcam_video_refocus.h"
 #include "./arcsoft/arcsoft_dualcam_image_refocus.h"
-#include "./altek/arcsoft_calibration_parser.h"
+#include "./arcsoft/altek/arcsoft_calibration_parser.h"
+#include "./arcsoft/arcsoft_configurable_param.h"
 
 namespace sprdcamera {
 #define BOKEH_YUV_DATA_TRANSFORM
@@ -423,7 +424,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
     void bokehThreadExit();
+#ifdef CONFIG_ALTEK_ZTE_CALI
     int createArcSoftCalibrationData(unsigned char *pBuffer, int nBufSize);
+#endif
 };
 };
 

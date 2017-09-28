@@ -1948,9 +1948,8 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         dstImg.pi32Pitch[1] = LWidth / 2 * 2;
         dstImg.ppu8Plane[1] = pDstDataUV;
 
-        MInt32 lFocusMode = ARC_DCIR_NORMAL_MODE;
-        rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_CapInit(&mArcSoftCapHandle,
-                                                            lFocusMode);
+        rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_CapInit(
+            &mArcSoftCapHandle, arcsoft_config_para.lFocusMode);
         if (rc != MOK) {
             HAL_LOGE("ARC_DCIR_Init failed!");
             goto exit;
@@ -1960,14 +1959,16 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         // read cal data
         HAL_LOGI("begin ARC_DCIR_SetCaliData");
 
+#ifdef CONFIG_ALTEK_ZTE_CALI
         if (mRealBokeh->mOtpType == OTP_CALI_ALTEK) {
             rc = mRealBokeh->createArcSoftCalibrationData(
                 (unsigned char *)mRealBokeh->mArcSoftCalibData,
                 mRealBokeh->mOtpSize);
-            if (rc) {
+            if (rc != MOK) {
                 HAL_LOGE("create arcsoft calibration failed");
             }
         }
+#endif
 
         rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_SetCaliData(
             mArcSoftCapHandle, &(mRealBokeh->mCaliData));
@@ -1976,12 +1977,9 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         }
 
 #ifndef CONFIG_ALTEK_ZTE_CALI
-        MFloat leftDis[11] = {0.00, 0.09, 0.57, 1.12, 1.40, 1.52,
-                              1.51, 1.45, 1.33, 1.55, 1.51};
-        MFloat rightDis[11] = {0.00, 0.09, 0.57, 1.12, 1.40, 1.52,
-                               1.51, 1.45, 1.33, 1.55, 1.51};
         rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_SetDistortionCoef(
-            mArcSoftCapHandle, leftDis, rightDis);
+            mArcSoftCapHandle, arcsoft_config_para.leftDis,
+            arcsoft_config_para.rightDis);
         if (rc != MOK) {
             HAL_LOGE("arcsoft ARC_DCIR_SetDistortionCoef failed");
         }
@@ -2057,9 +2055,9 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
                      ns2ms(systemTime() - bokehRun));
         }
     exit_arc:
-        rc = mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(&mArcSoftCapHandle);
-        if (rc != MOK) {
+        if (mRealBokeh->mArcSoftBokehApi->ARC_DCIR_Uninit(&mArcSoftCapHandle)) {
             HAL_LOGE("arcsoft ARC_DCIR_Uninit failed");
+            rc = -1;
         }
     }
 exit : { // dump yuv data
@@ -2771,11 +2769,7 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
             (MInt32)(mCaptureHeight / 2);
         mCaptureThread->mArcSoftCapParam.i32BlurIntensity = 100;
 
-#ifndef CONFIG_ALTEK_ZTE_CALI
-        mCaptureThread->mArcSoftDcrParam.fMaxFOV = 85.0f;
-#else
-        mCaptureThread->mArcSoftDcrParam.fMaxFOV = 83.0f;
-#endif
+        mCaptureThread->mArcSoftDcrParam.fMaxFOV = arcsoft_config_para.fMaxFOV;
         mCaptureThread->mArcSoftDcrParam.i32ImgDegree = 270;
 
         version = mArcSoftBokehApi->ARC_DCVR_GetVersion();
@@ -3012,7 +3006,8 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
                 (MInt32)(fnum * 100 / MAX_F_FUMBER);
             mCaptureThread->mArcSoftCapParam.i32BlurIntensity =
-                mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel * 60 / 100;
+                mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel *
+                arcsoft_config_para.blurCapPrevRatio;
         }
         HAL_LOGD("f_number=%d sprd:%d,%d,arcsoft:%d,%d,",
                  metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0],
@@ -3552,6 +3547,7 @@ int SprdCamera3RealBokeh::configureStreams(
     return rc;
 }
 
+#ifdef CONFIG_ALTEK_ZTE_CALI
 /*===========================================================================
  * FUNCTION   : createArcSoftCalibrationData
  *
@@ -3580,7 +3576,7 @@ int SprdCamera3RealBokeh::createArcSoftCalibrationData(unsigned char *pBuffer,
     }
 
     stAltkeParam.a_dInVCMStep = mVcmSteps;
-    stAltkeParam.a_dInCamLayout = 3; /// type3
+    stAltkeParam.a_dInCamLayout = arcsoft_config_para.a_dInCamLayout; // type3
 
     hr = Arc_CaliData_ParseDualCamData(hHandle, pBuffer, nBufSize,
                                        cali_type_altek, &stAltkeParam);
@@ -3621,6 +3617,7 @@ error:
 
     return nRet;
 }
+#endif
 
 /*===========================================================================
  * FUNCTION   :constructDefaultRequestSettings
@@ -3680,6 +3677,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
                 // useful, others is reserved.
                 mCaliData.i32CalibDataSize = ARCSOFT_CALIB_DATA_SIZE;
                 mCaliData.pCalibData = mArcSoftCalibData;
+#ifdef CONFIG_ALTEK_ZTE_CALI
             } else if (otpType == OTP_CALI_ALTEK) {
                 int rc;
                 rc = createArcSoftCalibrationData(
@@ -3687,6 +3685,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
                 if (rc) {
                     HAL_LOGE("create arcsoft calibration failed");
                 }
+#endif
             } else {
                 HAL_LOGE("Unknown otp calibration type");
             }
