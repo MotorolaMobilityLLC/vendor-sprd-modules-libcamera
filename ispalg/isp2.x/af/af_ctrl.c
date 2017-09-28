@@ -39,6 +39,12 @@ struct afctrl_cxt {
 	isp_af_cb af_set_cb;
 };
 
+struct af_ctrl_msg_ctrl {
+	cmr_int cmd;
+	void *in;
+	void *out;
+};
+
 static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
@@ -366,6 +372,29 @@ exit:
 	return rtn;
 }
 
+static cmr_int afctrl_evtctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+	struct afctrl_work_lib *lib_ptr = NULL;
+
+	if (!cxt_ptr) {
+		ISP_LOGV("fail to check param is NULL!");
+		goto exit;
+	}
+
+	lib_ptr = &cxt_ptr->work_lib;
+	if (lib_ptr->adpt_ops->adpt_ioctrl) {
+		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
+	} else {
+		ISP_LOGI("ioctrl fun is NULL");
+	}
+
+exit:
+	ISP_LOGV("cmd = %ld,done %ld", cmd, rtn);
+	return rtn;
+}
+
 static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -386,6 +415,8 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AFCTRL_EVT_EXIT:
 		break;
 	case AFCTRL_EVT_IOCTRL:
+		rtn = afctrl_evtctrl(cxt_ptr, ((struct af_ctrl_msg_ctrl *)message->data)->cmd, ((struct af_ctrl_msg_ctrl *)message->data)->in,
+				     ((struct af_ctrl_msg_ctrl *)message->data)->out);
 		break;
 	case AFCTRL_EVT_PROCESS:
 		rtn = afctrl_process(cxt_ptr, (struct afctrl_calc_in *)message->data, (struct af_result_param *)&cxt_ptr->proc_out);
@@ -631,21 +662,19 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct afctrl_work_lib *lib_ptr = NULL;
+	struct af_ctrl_msg_ctrl msg_ctrl;
 
-	if (!cxt_ptr) {
-		ISP_LOGV("fail to check param is NULL!");
-		goto exit;
-	}
-
-	lib_ptr = &cxt_ptr->work_lib;
-	if (lib_ptr->adpt_ops->adpt_ioctrl) {
-		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
-	} else {
-		ISP_LOGI("ioctrl fun is NULL");
-	}
+	ISP_CHECK_HANDLE_VALID(handle_af);
+	CMR_MSG_INIT(message);
+	msg_ctrl.cmd = cmd;
+	msg_ctrl.in = in_ptr;
+	msg_ctrl.out = out_ptr;
+	message.data = &msg_ctrl;
+	message.msg_type = AFCTRL_EVT_IOCTRL;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 
 exit:
-	ISP_LOGV("cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
