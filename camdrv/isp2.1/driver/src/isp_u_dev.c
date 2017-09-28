@@ -71,7 +71,7 @@ cmr_s32 isp_dev_close(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_dev_reset(cmr_handle handle)
+cmr_s32 isp_dev_cfg_start(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 isp_id = 0;
@@ -85,9 +85,9 @@ cmr_s32 isp_dev_reset(cmr_handle handle)
 	file = (struct isp_file *)(handle);
 	isp_id = file->isp_id;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_RST, &isp_id);
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_START, &isp_id);
 	if (ret) {
-		ISP_LOGE("fail to reset isp hardawre.");
+		ISP_LOGE("fail to do cfg start.");
 	}
 
 	return ret;

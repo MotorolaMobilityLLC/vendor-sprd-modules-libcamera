@@ -233,16 +233,6 @@ cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int dat
 	return ret;
 }
 
-cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, cmr_int flag)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_u_2d_lsc_param_update(cxt->isp_driver_handle, flag);
-
-	return ret;
-}
-
 cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -559,8 +549,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_GET_SYSTEM_TIME:
 		ret = ispdev_access_get_timestamp(cxt, out);
 		break;
-	case ISP_DEV_RESET:
-		ret = isp_dev_reset(cxt->isp_driver_handle);
+	case ISP_DEV_CFG_START:
+		ret = isp_dev_cfg_start(cxt->isp_driver_handle);
 		break;
 	case ISP_DEV_SET_AFL_BLOCK:
 		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in);

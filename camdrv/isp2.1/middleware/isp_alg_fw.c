@@ -866,9 +866,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 		} else {
 			ret = isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
 			ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));
-			if (ISP_BLK_2D_LSC == param_data->id) {
-				isp_dev_lsc_update(cxt->dev_access_handle, 0);
-			}
 		}
 
 		param_data++;
@@ -2751,15 +2748,12 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	struct isp_pm_param_data *param_data;
 	cmr_u32 i = 0;
 
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
 
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
-		if (ISP_BLK_2D_LSC == param_data->id) {
-			isp_dev_lsc_update(cxt->dev_access_handle, 1);
-		}
 		isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
 		param_data++;
 	}
