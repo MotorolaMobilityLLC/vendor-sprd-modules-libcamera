@@ -19,6 +19,7 @@
 #define MAX_STATS_ROW_NUM (9)
 #define ALAF_MAX_STATS_NUM (MAX_STATS_COLUMN_NUM*MAX_STATS_ROW_NUM)
 #define ALAF_MAX_ZONE (9)
+#define MAX_TRIGGER_DATA_SIZE (128)
 
 //#define NEW_AF_ALGORITHM
 #ifdef NEW_AF_ALGORITHM
@@ -190,6 +191,7 @@ struct allib_af_input_from_calib_t {
 struct allib_af_input_module_info_t {
 	float f_number;
 	float focal_lenth;
+	int   cam_layout_type;
 };
 #pragma pack(pop)
 
@@ -719,6 +721,38 @@ struct allib_af_input_pd_info_t {
 };
 #pragma pack(pop)
 
+#pragma pack(push, 4)
+struct allib_af_input_tirgger_info_t {
+	uint32 frame_id;
+	int8 ac_trigger_data[MAX_TRIGGER_DATA_SIZE];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 4)
+struct allib_af_eeprom_data_t {
+	uint8 *buff;
+	uint32 num_bytes;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 4)
+struct allib_af_dual_cam_share_info_t {
+	void *af_status;
+	int32 (*get_vcm_step)(void *af_status);
+	int32 (*get_af_requirement)(void *af_status, int32 type, uint32 data);
+};
+#pragma pack(pop)
+
+#pragma pack(push, 4)
+struct allib_af_input_tube_info_t {
+	struct allib_af_eeprom_data_t eeprom_data;
+	int32 current_session;
+	int32 main_session_id;
+	int32 sub_session_id;
+	struct allib_af_dual_cam_share_info_t share_info;
+} ;
+#pragma pack(pop)
+
 /*
  * allib_af_set_param_type
  * the type of which parameter setin to alAFLib.
@@ -784,6 +818,8 @@ enum allib_af_set_param_type {
 	alAFLIB_SET_PARAM_UPDATE_BIN,
 	alAFLIB_SET_PARAM_SPECIAL_EVENT,
 	alAFLIB_SET_PARAM_UPDATE_PD_INFO,
+	alAFLIB_SET_PARAM_TRIG_INFO,
+	alAFLIB_SET_PARAM_TUBE_CONFIG,
 	alAFLIB_SET_PARAM_MAX
 };
 #pragma pack(pop)
@@ -846,6 +882,8 @@ struct allib_af_input_set_param_t {
 		struct allib_af_input_image_buf_t	img_buf;
 		struct allib_af_input_pd_info_t pd_info;
 		struct allib_af_input_update_bin_t update_bin;
+		struct allib_af_input_tirgger_info_t trig_info;
+		struct allib_af_input_tube_info_t         tube_info;
 	} u_set_data;
 };
 #pragma pack(pop)
@@ -1043,6 +1081,7 @@ struct allib_af_pseudoy_t {
 #pragma pack(push, 4)
 struct allib_af_out_stats_config_t {
 	uint16		token_id;
+	enum allib_af_roi_type	roi_type;
 	struct allib_af_roi_t	roi;
 	struct allib_af_img_t	src_img_sz;
 	uint8		num_blk_ver;
