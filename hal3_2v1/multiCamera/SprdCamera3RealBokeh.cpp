@@ -882,8 +882,8 @@ void SprdCamera3RealBokeh::getDepthImageSize(int inputWidth, int inputHeight,
             *outWidth = inputWidth;
             *outHeight = inputHeight;
         } else if (type == SNAPSHOT_STREAM) {
-            *outWidth = 800;
-            *outHeight = 600;
+            *outWidth = 2592;
+            *outHeight = 1944;
         }
     }
 
