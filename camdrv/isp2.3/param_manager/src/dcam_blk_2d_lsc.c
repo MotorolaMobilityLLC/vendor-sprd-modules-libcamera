@@ -28,6 +28,9 @@ cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1
 	struct sensor_2d_lsc_param *src_ptr = (struct sensor_2d_lsc_param *)src_lnc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 
+	ISP_LOGD("src: %p,  tab_num=%d, image size %d %d", src_lnc_param,
+		src_ptr->tab_num, img_size_ptr->w, img_size_ptr->h);
+
 	dst_ptr->tab_num = src_ptr->tab_num;
 	for (i = 0; i < ISP_COLOR_TEMPRATURE_NUM; ++i) {
 		addr = (intptr_t) & (src_ptr->tab_info.lsc_2d_map) + src_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset;
@@ -45,6 +48,10 @@ cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1
 		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->h, ISP_ONE);
 
 		max_len = (max_len < dst_ptr->map_tab[i].len) ? dst_ptr->map_tab[i].len : max_len;
+		ISP_LOGD("%d, %d, %d, %d, %d, %d, %d\n", i,
+			dst_ptr->map_tab[i].len, dst_ptr->map_tab[i].grid,
+			dst_ptr->map_tab[i].grid_mode, dst_ptr->map_tab[i].grid_pitch,
+			dst_ptr->map_tab[i].gain_w, dst_ptr->map_tab[i].gain_h);
 	}
 
 	if (max_len == 0) {

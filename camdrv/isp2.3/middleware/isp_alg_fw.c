@@ -3504,9 +3504,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size org_size;
-	struct isp_video_start video_in_info;
-	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
-	struct isp_pm_param_data pm_param;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 
 	if (!isp_alg_handle || !in_ptr) {
@@ -3514,7 +3511,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		goto exit;
 	}
 
-	memset(&video_in_info, 0x0, sizeof(video_in_info));
 	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -3527,9 +3523,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	org_size.h = cxt->commn_cxt.src.h;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
-
-	video_in_info.size.w = in_ptr->size.w;
-	video_in_info.size.h = in_ptr->size.h;
 
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
 	statis_mem_input.buffer_client_data = in_ptr->buffer_client_data;
@@ -3552,28 +3545,21 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = isp_dev_set_interface(interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
+
+	mode_num = 1;
 	switch (in_ptr->work_mode) {
 	case 0:		/*preview */
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, in_ptr, &mode);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION, in_ptr, &mode);
 			if (cxt->zsl_flag) {
-				cxt->mode_id[ISP_MODE_PRV] = mode;
-				video_in_info.work_mode = 1;
 				isp_pm_ioctl(cxt->handle_pm,
-						ISP_PM_CMD_GET_MODEID_BY_RESOLUTION,
-						&video_in_info,
+						ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION,
+						in_ptr,
 						&cxt->mode_id[ISP_MODE_CAP]);
+				mode_num = ISP_MODE_MAX;
 			}
 		break;
 	case 1:		/*capture */
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, in_ptr, &mode);
-			if (cxt->zsl_flag) {
-				cxt->mode_id[ISP_MODE_CAP] = mode;
-				video_in_info.work_mode = 0;
-				isp_pm_ioctl(cxt->handle_pm,
-						ISP_PM_CMD_GET_MODEID_BY_RESOLUTION,
-						&video_in_info,
-						&cxt->mode_id[ISP_MODE_PRV]);
-			}
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, in_ptr, &mode);
 		break;
 	case 2:
 		mode = ISP_MODE_ID_VIDEO_0;
@@ -3582,56 +3568,34 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		mode = ISP_MODE_ID_PRV_0;
 		break;
 	}
-	if (!cxt->zsl_flag)
-		cxt->mode_id[0] = mode;
-	if (SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
-		if ((mode != cxt->commn_cxt.isp_mode) && (org_size.w != cxt->commn_cxt.src.w)) {
-			BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
-					ISP_BLK_CFA,
-					mode,
-					&cxt->commn_cxt.src.w,
-					sizeof(cxt->commn_cxt.src.w));
-			io_pm_input.param_num = 1;
-			io_pm_input.param_data_ptr = &pm_param;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+	cxt->mode_id[0] = mode;
 
-			if (cxt->zsl_flag)
-				mode_num = ISP_MODE_MAX;
-			else
-				mode_num = 1;
-			for (i = 0; i < mode_num; i++) {
-				cxt->commn_cxt.isp_mode = cxt->mode_id[i];
-				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
-			}
+	ISP_LOGD("zsl %d, mode %d %d, isp_mode %d, mode_flag %d, work_mode %d,  dv %d",
+		in_ptr->zsl_flag, cxt->mode_id[0], cxt->mode_id[1], cxt->commn_cxt.isp_mode,
+		cxt->commn_cxt.mode_flag, in_ptr->work_mode, in_ptr->dv_mode);
+	ISP_LOGD("orig_size %d %d, isp_size %d %d, sn_size %d %d",
+		org_size.w, org_size.h, in_ptr->dcam_size.w, in_ptr->dcam_size.h, in_ptr->size.w, in_ptr->size.h);
+
+	if (SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
+		for (i = 0; i < mode_num; i++) {
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->mode_id[i], NULL);
 		}
+		cxt->commn_cxt.isp_mode = cxt->mode_id[0];
 	} else {
 		if (0 != in_ptr->dv_mode) {
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION, in_ptr, &dv_mode);
 			cxt->commn_cxt.mode_flag = dv_mode;
-			/* none zsl flag */
 			cxt->mode_id[0] = dv_mode;
+			mode_num = 1;
 		} else {
 			cxt->commn_cxt.mode_flag = cxt->mode_id[0];
 		}
-		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
-			BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
-					ISP_BLK_CFA,
-					cxt->commn_cxt.mode_flag,
-					&cxt->commn_cxt.src.w,
-					sizeof(cxt->commn_cxt.src.w));
-			io_pm_input.param_num = 1;
-			io_pm_input.param_data_ptr = &pm_param;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 
-			if (cxt->zsl_flag)
-				mode_num = ISP_MODE_MAX;
-			else
-				mode_num = 1;
-			for (i = 0; i < mode_num; i++) {
-				cxt->commn_cxt.isp_mode = cxt->mode_id[i];
-				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
-			}
+		for (i = 0; i < mode_num; i++) {
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->mode_id[i], NULL);
 		}
+		cxt->commn_cxt.isp_mode = cxt->mode_id[0];
+		ISP_LOGD("multi_nr. mode_num %d, mode %d %d", mode_num, cxt->mode_id[0], cxt->mode_id[1]);
 	}
 
 	/* isp param index */
@@ -3821,8 +3785,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	param.work_mode = 1;
 	param.size.w = cxt->commn_cxt.src.w;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, &param, &mode);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, &param, &mode);
 	ISP_RETURN_IF_FAIL(ret, ("fail to get isp_mode"));
+	ISP_LOGD("mode %d, isp_mode %d, orig_size %d %d,  cur_size %d %d", mode,
+		cxt->commn_cxt.isp_mode, org_size.w, org_size.h, cxt->commn_cxt.src.w, cxt->commn_cxt.src.h);
 
 	if (org_size.w != cxt->commn_cxt.src.w) {
 		BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
