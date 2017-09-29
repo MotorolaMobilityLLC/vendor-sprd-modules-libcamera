@@ -3204,6 +3204,37 @@ out:
     return ret;
 }
 
+cmr_s32 camera_get_pos_info(cmr_handle oem_handle, struct sensor_vcm_info *info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_context *sn_cxt = NULL;
+    struct sensor_exp_info *sensor_info_ptr;
+    struct sensor_raw_ioctrl *ioctrl_ptr;
+
+    sn_cxt = &(cxt->sn_cxt);
+
+    ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id,
+                              &(sn_cxt->sensor_info));
+    if (ret) {
+        CMR_LOGE("fail to get sensor info ret %ld", ret);
+        return ret;
+    }
+
+    sensor_info_ptr = &(sn_cxt->sensor_info);
+    CHECK_HANDLE_VALID(sensor_info_ptr);
+    ioctrl_ptr = sensor_info_ptr->raw_info_ptr->ioctrl_ptr;
+    CHECK_HANDLE_VALID(ioctrl_ptr);
+
+    if (sensor_info_ptr->raw_info_ptr &&
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr &&
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr->get_pos) {
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr->get_pos(
+            ioctrl_ptr->caller_handler, info);
+    }
+
+    return ret;
+}
+
 cmr_s32 camera_isp_set_pulse_line(void *handler, cmr_u32 line) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)handler;
@@ -3215,8 +3246,24 @@ cmr_s32 camera_isp_set_pulse_line(void *handler, cmr_u32 line) {
 cmr_s32 camera_isp_set_next_vcm_pos(void *handler, cmr_s32 pos) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)handler;
+    struct sensor_vcm_info info;
+    struct sprd_img_vcm_param vcm_param;
 
-    ret = cmr_grab_set_next_vcm_pos(cxt->grab_cxt.grab_handle, pos);
+    cmr_bzero(&info, sizeof(info));
+    cmr_bzero(&vcm_param, sizeof(vcm_param));
+
+    if (0 <= pos) {
+	    info.pos = pos;
+	    camera_get_pos_info(handler, &info);
+	    vcm_param.next_vcm_pos = pos;
+	    vcm_param.vcm_i2c_count = info.cmd_len;
+	    memcpy(vcm_param.vcm_i2c_data, info.cmd_val, info.cmd_len);
+	    vcm_param.vcm_slave_addr = info.slave_addr;
+    } else {
+	    vcm_param.next_vcm_pos = pos;
+    }
+
+    ret = cmr_grab_set_next_vcm_pos(cxt->grab_cxt.grab_handle, &vcm_param);
     return ret;
 }
 

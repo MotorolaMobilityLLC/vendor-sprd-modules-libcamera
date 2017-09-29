@@ -79,6 +79,22 @@ static int vcm_zc524_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos) {
     return ret_value;
 }
 
+static int vcm_zc524_drv_get_pos_info(struct sensor_vcm_info *info) {
+    CHECK_PTR(info);
+
+    if ((int32_t)(info->pos) < 0)
+        info->pos = 0;
+    else if ((int32_t)(info->pos) > 0x3FF)
+        info->pos = 0x3FF;
+
+    info->slave_addr = zc524_VCM_SLAVE_ADDR;
+    info->cmd_len = 2;
+    info->cmd_val[0] = ((info->pos) >> 4) & 0x3F;
+    info->cmd_val[1] = (((info->pos) & 0xFF) << 4) & 0xF0;
+
+    return AF_SUCCESS;
+}
+
 static int vcm_zc524_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
                                void *param) {
     uint32_t ret_value = AF_SUCCESS;
@@ -93,6 +109,8 @@ static int vcm_zc524_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
         break;
     case CMD_SNS_AF_SET_TEST_MODE:
         break;
+    case CMD_SNS_AF_GET_POS_INFO:
+        vcm_zc524_drv_get_pos_info(param);
     default:
         break;
     }

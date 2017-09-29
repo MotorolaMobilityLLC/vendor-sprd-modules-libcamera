@@ -46,7 +46,8 @@ enum sns_cmd {
 
     CMD_SNS_AF_SET_BEST_MODE = CMD_SNS_AF_START, /*include 256 sub AF cmd*/
     CMD_SNS_AF_GET_TEST_MODE,
-    CMD_SNS_AF_SET_TEST_MODE
+    CMD_SNS_AF_SET_TEST_MODE,
+    CMD_SNS_AF_GET_POS_INFO
 };
 
 struct isp_block_header {
@@ -131,6 +132,13 @@ struct sensor_raw_resolution_info {
     cmr_u32 frame_line;
 };
 
+struct sensor_vcm_info {
+    uint16_t pos;
+    uint16_t slave_addr;
+    uint16_t cmd_len;
+    uint8_t cmd_val[8];
+};
+
 struct af_pose_dis {
     cmr_u32 up2hori;
     cmr_u32 hori2down;
@@ -167,6 +175,7 @@ struct sensor_raw_resolution_info_tab {
 struct sensor_raw_ioctrl {
     cmr_handle caller_handler;
     cmr_int (*set_focus)(cmr_handle caller_handler, cmr_u32 param);
+    cmr_int (*get_pos)(cmr_handle caller_handler, struct sensor_vcm_info *param);
     cmr_int (*set_exposure)(cmr_handle caller_handler, cmr_u32 param);
     cmr_int (*set_gain)(cmr_handle caller_handler, cmr_u32 param);
     cmr_int (*ext_fuc)(cmr_handle caller_handler, void *param);

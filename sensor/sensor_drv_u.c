@@ -113,6 +113,9 @@ static cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, cmr_u32 pos);
 
 static cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, cmr_u16 *pos);
 
+static cmr_int sensor_af_get_pos_info(cmr_handle sns_module_handle,
+                                         struct sensor_vcm_info *info);
+
 static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt);
 
 static cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt);
@@ -123,10 +126,10 @@ extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
                                               SENSOR_ID_E sensor_id);
 
 LOCAL cmr_int sensor_otp_rw_ctrl(struct sensor_drv_context *sensor_cxt,
-                                 uint8_t cmd, uint8_t sub_cmd, void* data);
+                                 uint8_t cmd, uint8_t sub_cmd, void *data);
 
 extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
-                                                        SENSOR_ID_E sensor_id);
+                                              SENSOR_ID_E sensor_id);
 
 void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt) {
     SENSOR_ID_E sensor_id = 0;
@@ -376,6 +379,7 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
                 exp_info_ptr->raw_info_ptr->ioctrl_ptr;
             ioctl->caller_handler = sensor_cxt;
             ioctl->set_focus = sensor_af_set_pos;
+            ioctl->get_pos = sensor_af_get_pos_info;
             ioctl->set_exposure = sensor_ic_write_ae_value;
             ioctl->set_gain = sensor_ic_write_gain;
             ioctl->ext_fuc = NULL;
@@ -725,7 +729,7 @@ static cmr_int sensor_get_module_cfg_info(struct sensor_drv_context *sensor_cxt,
         SENSOR_LOGI("tab_size:%d,%d,%d", tab_size, sizeof(mod_cfg_tab),
                     sizeof(mod_cfg_tab[0]));
         // tab_size = 3;
-        for(i = 0; i < tab_size; i++) {
+        for (i = 0; i < tab_size; i++) {
             *cfg_info = &mod_cfg_tab[i].module_info;
             SENSOR_LOGI("mid1:%d,mid2:%d,index:%d", module_info->module_id,
                         mod_cfg_tab[i].module_id, i);
@@ -813,7 +817,8 @@ static cmr_int sensor_ic_identify(struct sensor_drv_context *sensor_cxt,
                     mod_cfg_info->minor_i2c_addr != 0x00) {
                     sensor_cxt->i2c_addr = mod_cfg_info->minor_i2c_addr;
                     SENSOR_LOGI("use backup i2c address,try again!");
-                    goto try;
+                    goto try
+                        ;
                 }
                 SENSOR_LOGI("identify failed!");
                 sensor_ic_delete(sensor_cxt);
@@ -1916,7 +1921,6 @@ LOCAL cmr_int sensor_write_dualcam_otpdata(
     return ret_val;
 }
 
-
 static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 sensor_id) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -1971,7 +1975,7 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
         if ((SENSOR_IMAGE_FORMAT_RAW ==
              sensor_cxt->sensor_info_ptr->image_format) &&
             module && module->otp_drv_info) {
-          /*if property debug.dualcamera.write.otp is false do nothing*/
+            /*if property debug.dualcamera.write.otp is false do nothing*/
             sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
             sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
         } else {
@@ -3037,6 +3041,31 @@ static cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, cmr_u16 *pos) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
         if (af_ops->get_pos) {
             ret = af_ops->get_pos(sensor_cxt->af_drv_handle, pos);
+            if (SENSOR_SUCCESS != ret)
+                return SENSOR_FAIL;
+        }
+    } else {
+        SENSOR_LOGE("af driver not exist,return directly");
+        return SENSOR_FAIL;
+    }
+    return ret;
+}
+
+static cmr_int sensor_af_get_pos_info(cmr_handle sns_module_handle,
+                                         struct sensor_vcm_info *info) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sns_af_drv_ops *af_ops = NULL;
+    SENSOR_DRV_CHECK_ZERO(sns_module_handle);
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_module_handle;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+
+    if (module && module->af_dev_info.af_drv_entry &&
+        sensor_cxt->af_drv_handle) {
+        af_ops = &module->af_dev_info.af_drv_entry->af_ops;
+        if (af_ops->ioctl) {
+            ret = af_ops->ioctl(sensor_cxt->af_drv_handle,
+                                CMD_SNS_AF_GET_POS_INFO, (void *)info);
             if (SENSOR_SUCCESS != ret)
                 return SENSOR_FAIL;
         }
