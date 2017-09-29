@@ -208,6 +208,8 @@ cmr_int hw_sensor_set_monitor_val(cmr_handle handle, SENSOR_AVDD_VAL_E vdd_val);
 /*i2c and mipi hardware interface init,deinit,control*/
 cmr_int hw_sensor_mipi_init(cmr_handle handle,
                                     struct hw_mipi_init_param init_param);
+cmr_int hw_sensor_mipi_switch(cmr_handle hw_handle,
+                                    struct hw_mipi_init_param init_param);
 cmr_int hw_sensor_mipi_deinit(cmr_handle handle);
 
 cmr_int hw_sensor_set_avdd_en_level(cmr_handle handle, cmr_u32 level);

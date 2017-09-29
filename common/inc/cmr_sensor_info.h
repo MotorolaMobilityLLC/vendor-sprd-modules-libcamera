@@ -42,6 +42,7 @@ enum sns_cmd {
         CMD_SNS_OTP_START, /*include 256 sub OTP cmd*/
 
     CMD_SNS_IC_DEFAULT = CMD_SNS_IC_START, /*include 256 sub IC cmd*/
+    CMD_SNS_IC_WRITE_MULTI_AE,
 
     CMD_SNS_AF_SET_BEST_MODE = CMD_SNS_AF_START, /*include 256 sub AF cmd*/
     CMD_SNS_AF_GET_TEST_MODE,
@@ -126,8 +127,8 @@ struct sensor_raw_resolution_info {
     cmr_u16 start_y;
     cmr_u16 width;
     cmr_u16 height;
-    cmr_u16 line_time;
-    cmr_u16 frame_line;
+    cmr_u32 line_time;
+    cmr_u32 frame_line;
 };
 
 struct af_pose_dis {
@@ -383,10 +384,12 @@ struct sensor_otp_af_info {
     cmr_u8 flag;
     cmr_u16 infinite_cali;
     cmr_u16 macro_cali;
+    cmr_u16 afc_direction;
     /*for dual camera*/
     cmr_s32 vcm_step;
     cmr_u16 vcm_step_min;
     cmr_u16 vcm_step_max;
+    cmr_u16 af_60cm_pos;
 };
 
 struct sensor_otp_pdaf_info {
@@ -562,6 +565,7 @@ struct sensor_pdaf_info {
     cmr_u16 *pd_pos_row;
     cmr_u16 *pd_pos_col;
     enum sensor_vendor_type vendor_type;
+    cmr_u32 data_type;
     struct sensor_pdaf_type2_info type2_info;
     cmr_u32 sns_orientation; // 0: Normal, 1:Mirror+Flip
 };
@@ -591,6 +595,14 @@ struct sensor_aec_reg_info {
     struct sensor_ex_exposure exp;
     cmr_u32 gain;
     struct sensor_aec_i2c_tag *aec_i2c_info_out;
+};
+
+struct sensor_multi_ae_info {
+    cmr_int camera_id;
+    cmr_handle handle;
+    cmr_u32 count;
+    cmr_u32 gain;
+    struct sensor_ex_exposure exp;
 };
 
 #endif

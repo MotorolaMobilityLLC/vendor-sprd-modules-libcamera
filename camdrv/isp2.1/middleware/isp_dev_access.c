@@ -17,6 +17,9 @@
 
 #include "isp_dev_access.h"
 
+#define ISP_LSC_BUF_SIZE (32 * 1024)
+#define ISP_LSC_BUF_NUM 1
+
 struct isp_dev_access_context {
 	cmr_handle evt_alg_handle;
 	isp_evt_cb isp_event_cb;
@@ -50,48 +53,60 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
 
-	statis_mem_info->isp_lsc_mem_size = in_ptr->isp_lsc_mem_size;
-	statis_mem_info->isp_lsc_mem_num = in_ptr->isp_lsc_mem_num;
-	statis_mem_info->isp_lsc_physaddr = in_ptr->isp_lsc_physaddr;
-	statis_mem_info->isp_lsc_virtaddr = in_ptr->isp_lsc_virtaddr;
-	statis_mem_info->lsc_mfd = in_ptr->lsc_mfd;
+	statis_mem_info->oem_handle = in_ptr->oem_handle;
+	if (statis_mem_info->isp_lsc_alloc_flag == 0) {
+		statis_mem_info->isp_lsc_mem_num = ISP_LSC_BUF_NUM;
+		statis_mem_info->isp_lsc_mem_size = ISP_LSC_BUF_SIZE;
+		if (in_ptr->alloc_cb) {
+			in_ptr->alloc_cb(CAMERA_ISP_LSC,
+				statis_mem_info->oem_handle,
+				&statis_mem_info->isp_lsc_mem_size,
+				&statis_mem_info->isp_lsc_mem_num,
+				&statis_mem_info->isp_lsc_physaddr,
+				&statis_mem_info->isp_lsc_virtaddr,
+				&statis_mem_info->lsc_mfd);
+			statis_mem_info->isp_lsc_alloc_flag = 1;
+			}
+		}
+
+	if (statis_mem_info->lsc_mfd == 0) {
+		ret = ISP_ALLOC_ERROR;
+		ISP_LOGE("failed to malloc isp lsc buffer");
+		goto exit;
+	}
 
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
-		statis_mem_info->buffer_client_data = in_ptr->buffer_client_data;
-		statis_mem_info->cb_of_malloc = in_ptr->cb_of_malloc;
-		statis_mem_info->cb_of_free = in_ptr->cb_of_free;
+		statis_mem_info->alloc_cb = in_ptr->alloc_cb;
+		statis_mem_info->free_cb = in_ptr->free_cb;
 		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE +
 							ISP_AFM_STATIS_BUF_SIZE +
 							ISP_AFL_STATIS_BUF_SIZE +
 							ISP_PDAF_STATIS_BUF_SIZE +
 							ISP_BINNING_STATIS_BUF_SIZE) * 5;
 		statis_mem_info->isp_statis_mem_num = 1;
-		if (statis_mem_info->cb_of_malloc) {
-			isp_cb_of_malloc cb_malloc = in_ptr->cb_of_malloc;
-
-			if (-EINVAL == cb_malloc(CAMERA_ISP_STATIS,
+		memset(&fds, 0x00, sizeof(fds));
+		if (statis_mem_info->alloc_cb) {
+			in_ptr->alloc_cb(CAMERA_ISP_STATIS,
+				  statis_mem_info->oem_handle,
 				  &statis_mem_info->isp_statis_mem_size,
 				  &statis_mem_info->isp_statis_mem_num,
 				  kaddr,
 				  &statis_mem_info->isp_statis_u_addr,
-				  //&statis_mem_info->statis_mfd,
-				  fds,
-				  statis_mem_info->buffer_client_data)) {
-					ISP_LOGE("fail to malloc statis_bq buffer");
-					return ISP_ALLOC_ERROR;
-
-				  }
-		} else {
-			ISP_LOGE("fail to malloc statis_bq buffer");
-			return -ISP_PARAM_NULL;
+				  fds);
 		}
-
+		if (fds[0] == 0 || fds[1] == 0) {
+			ISP_LOGE("fail to malloc statis_bq buffer");
+			ret = ISP_ALLOC_ERROR;
+			goto exit;
+		}
 		statis_mem_info->isp_statis_k_addr[0] = kaddr[0];
 		statis_mem_info->isp_statis_k_addr[1] = kaddr[1];
 		statis_mem_info->statis_mfd = fds[0];
 		statis_mem_info->statis_buf_dev_fd = fds[1];
 		statis_mem_info->isp_statis_alloc_flag = 1;
 	}
+
+exit:
 
 	return ret;
 }
@@ -109,7 +124,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	memset(&isp_2d_lsc_buf, 0x00, sizeof(isp_2d_lsc_buf));
 	file = (struct isp_file *)(cxt->isp_driver_handle);
 	file->reserved = (void *)statis_mem_info->isp_lsc_virtaddr;
-	/*set buffer to kernel */
+	ISP_LOGI("file %p reserved %p", file, file->reserved);
 	isp_2d_lsc_buf.buf_size = statis_mem_info->isp_lsc_mem_size;
 	isp_2d_lsc_buf.buf_num = statis_mem_info->isp_lsc_mem_num;
 	isp_2d_lsc_buf.phy_addr = statis_mem_info->isp_lsc_physaddr;
@@ -240,6 +255,7 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u3
 	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b);
 	return ret;
 }
+
 cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -378,17 +394,29 @@ cmr_int isp_dev_access_deinit(cmr_handle handle)
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
+	if (statis_mem_info->isp_lsc_alloc_flag == 1) {
+		type = CAMERA_ISP_LSC;
+		if (statis_mem_info->free_cb) {
+			statis_mem_info->free_cb(type,
+				statis_mem_info->oem_handle,
+				&statis_mem_info->isp_lsc_physaddr,
+				&statis_mem_info->isp_lsc_virtaddr,
+				&statis_mem_info->lsc_mfd,
+				statis_mem_info->isp_lsc_mem_num);
+		}
+
+		statis_mem_info->isp_lsc_alloc_flag = 0;
+	}
+
 	if (statis_mem_info->isp_statis_alloc_flag == 1) {
 		type = CAMERA_ISP_STATIS;
-
-		if (statis_mem_info->cb_of_free) {
-			isp_cb_of_free cb_free = statis_mem_info->cb_of_free;
-
-			cb_free(type, &statis_mem_info->isp_statis_k_addr[0],
+		if (statis_mem_info->free_cb) {
+			statis_mem_info->free_cb(type,
+				statis_mem_info->oem_handle,
+				&statis_mem_info->isp_statis_k_addr[0],
 				&statis_mem_info->isp_statis_u_addr,
 				&statis_mem_info->statis_mfd,
-				statis_mem_info->isp_statis_mem_num,
-				statis_mem_info->buffer_client_data);
+				statis_mem_info->isp_statis_mem_num);
 		}
 
 		statis_mem_info->isp_statis_alloc_flag = 0;
@@ -626,6 +654,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		break;
 	case ISP_DEV_POST_3DNR:
 		ret = isp_dev_3dnr(cxt->isp_driver_handle, in);
+		break;
+	case ISP_DEV_POST_YNR:
+		ret = isp_dev_ynr(cxt->isp_driver_handle, in);
 		break;
 	case ISP_DEV_SET_RAW_SLICE:
 		ret = ispdev_access_set_slice_raw(cxt, in);

@@ -299,6 +299,10 @@ cmr_s32 _pm_dualflash_init(void *dst_flash_param, void *src_flash_param, void *p
 cmr_s32 _pm_dualflash_set_param(void *flash_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_dualflash_get_param(void *flash_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+cmr_s32 _pm_bokeh_init(void *dst_bokeh_param, void *src_bokeh_param, void *param1, void *param2);
+cmr_s32 _pm_bokeh_set_param(void *bokeh_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_bokeh_get_param(void *bokeh_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
 cmr_s32 _pm_pdaf_tune_init(void *dst_pdaf_tune_param, void *src_pdaf_tune_param, void *param1, void *param2);
 cmr_s32 _pm_pdaf_tune_set_param(void *pdaf_tune_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_pdaf_tune_get_param(void *pdaf_tune_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);

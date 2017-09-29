@@ -721,6 +721,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			src_data_ptr = (cmr_u8 *) ((intptr_t) src_mod_ptr + src_header[j].offset);
 			dst_data_ptr = (cmr_u8 *) ((intptr_t) dst_mod_ptr + size + extend_offset);
 			dst_header[j].absolute_addr = (void *)dst_data_ptr;
+			dst_header[j].mode_id = i;
 			memcpy((void *)dst_data_ptr, (void *)src_data_ptr, src_header[j].size);
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 

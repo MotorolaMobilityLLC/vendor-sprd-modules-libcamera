@@ -7100,6 +7100,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
 
@@ -7413,6 +7414,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
 
@@ -7546,6 +7548,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_RECORDING;
@@ -7794,6 +7797,7 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
@@ -8247,6 +8251,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.cap_fmt;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = prev_cxt->cap_skip_num;
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
@@ -8355,6 +8360,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*config capture ability*/
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw"))
         chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
@@ -8500,6 +8506,8 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
     CMR_LOGD("camera_id %d", camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
+    sensor_info = &prev_cxt->sensor_info;
+    sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
 
     chn_param.cap_inf_cfg.chn_deci_factor = 0;
     chn_param.cap_inf_cfg.frm_num = -1;
@@ -8507,6 +8515,7 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     // chn_param.cap_inf_cfg.cfg.dst_img_size.width   =
     // prev_cxt->actual_prev_size.width;
@@ -8646,6 +8655,7 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_isp = 0;
     chn_param.cap_inf_cfg.cfg.dst_img_fmt =
         IMG_DATA_TYPE_RAW; // IMG_DATA_TYPE_PDAF_TYPE3;
+    chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.flip_on = 0;
     chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
@@ -8853,6 +8863,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
              prev_cxt->cap_org_fmt, prev_cxt->cap_zoom_mode);
 
     img_cap->dst_img_fmt = prev_cxt->cap_org_fmt;
+    img_cap->src_img_fmt = sn_mode_info->image_format;
     img_cap->notice_slice_height = sn_mode_info->scaler_trim.height;
     img_cap->src_img_rect.start_x = sn_mode_info->scaler_trim.start_x;
     img_cap->src_img_rect.start_y = sn_mode_info->scaler_trim.start_y;

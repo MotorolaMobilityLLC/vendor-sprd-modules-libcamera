@@ -88,6 +88,14 @@ enum isp_slice_pos_info {
 	ISP_SLICE_LAST,
 };
 
+enum {
+	ISP_ALG_SINGLE = 0,
+	ISP_ALG_DUAL_NORMAL,
+	ISP_ALG_DUAL_SBS,
+	ISP_ALG_DUAL_SWITCH,
+	ISP_ALG_CAMERA_MAX
+};
+
 struct isp_slice_param {
 	enum isp_slice_pos_info pos_info;
 	cmr_u32 slice_line;
@@ -158,6 +166,7 @@ struct isp_ae_info {
 	float f_value;
 	cmr_u32 stable;
 };
+
 
 typedef struct {
 	/* isp_ctrl private */
@@ -424,6 +433,33 @@ struct isp_dual_flash_param {
 	struct isp_dualflash_param cur;
 };
 
+struct isp_dev_bokeh_micro_depth_param{
+	cmr_u32 tuning_exist;
+	cmr_u32 enable;
+	cmr_u32  fir_mode;
+	cmr_u32 fir_len;
+	cmr_s32 hfir_coeff[7];
+	cmr_s32 vfir_coeff[7];
+	cmr_u32 fir_channel;
+	cmr_u32 fir_cal_mode;
+	cmr_s32 fir_edge_factor;
+	cmr_u32 depth_mode;
+	cmr_u32 smooth_thr;
+	cmr_u32 touch_factor;
+	cmr_u32 scale_factor;
+	cmr_u32 refer_len;
+	cmr_u32 merge_factor;
+	cmr_u32 similar_factor;
+	cmr_u32 similar_coeff[3];
+	cmr_u32 tmp_mode;
+	cmr_s32 tmp_coeff[8];
+	cmr_u32 tmp_thr;
+	cmr_u32 reserved[100];
+};
+
+struct isp_bokeh_micro_depth_param {
+	struct isp_dev_bokeh_micro_depth_param cur;
+};
 
 struct isp_pdaf_tune_param {
 	cmr_u32 min_pd_vcm_steps;
@@ -847,8 +883,9 @@ struct isp_context {
 	struct isp_contrast_param contrast;
 	struct isp_flash_param flash;
 	struct isp_dualflash_param dual_flash;
-	struct isp_antiflicker_param anti_flicker;
+	struct isp_dev_bokeh_micro_depth_param bokeh_micro_depth;
 	struct isp_haf_tune_param pdaf_tune;
+	struct isp_antiflicker_param anti_flicker;
 	struct isp_envi_detect_param envi_detect;
 
 	struct isp_pre_global_gain_param pre_gbl_gain;

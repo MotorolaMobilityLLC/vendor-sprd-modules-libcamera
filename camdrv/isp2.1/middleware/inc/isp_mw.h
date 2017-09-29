@@ -34,6 +34,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CTRL_EVT_TX				(1 << 2)
 #define ISP_CTRL_EVT_SOF			(1 << 3)
 #define ISP_CTRL_EVT_AE				(1 << 4)
+#define ISP_CTRL_EVT_SW_AE			(1 << 4) + 1
 #define ISP_CTRL_EVT_AF				(1 << 5)
 #define ISP_CTRL_EVT_PDAF			(1 << 6)
 #define ISP_CTRL_EVT_BINNING			(1 << 7)
@@ -61,6 +62,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
 	ISP_AE_SET_WBC_GAIN,
+	ISP_AE_MULTI_WRITE,
 
 	ISP_AF_SET_POS,
 	ISP_AF_END_NOTICE,
@@ -354,7 +356,10 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_FULLSCAN_INFO,
 	ISP_CTRL_SET_AF_BYPASS,
 	ISP_CTRL_POST_3DNR,
+	ISP_CTRL_POST_YNR,
 	ISP_CTRL_3DNR,
+	ISP_CTRL_GET_MICRODEPTH_PARAM,
+	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_MAX
 };
 
@@ -376,6 +381,14 @@ enum isp_ae_lock_unlock_mode {
 enum isp_flash_led_tag {
 	ISP_FLASH_LED_0 = 0x0001,
 	ISP_FLASH_LED_1 = 0x0002
+};
+
+enum {
+	ISP_SINGLE = 0,
+	ISP_DUAL_NORMAL,
+	ISP_DUAL_SBS,
+	ISP_DUAL_SWITCH,
+	ISP_CAMERA_MAX
 };
 
 struct isp_flash_cfg {
@@ -554,6 +567,27 @@ struct isp_img_frm {
 	cmr_u32 format_pattern;
 };
 
+struct soft_isp_misc_img_frm
+{
+	struct isp_img_frm cpu_frminfo;
+	void*  graphicbuffer;
+};
+
+typedef struct {
+        int F_number;
+        int sel_x;
+        int sel_y;
+        unsigned char *DisparityImage;
+} WeightParams_t;
+
+struct soft_isp_frm_param {
+	struct isp_img_frm raw;
+	struct soft_isp_misc_img_frm m_yuv_pre;
+	struct soft_isp_misc_img_frm m_yuv_bokeh;
+	WeightParams_t weightparam;
+	uint32_t af_status;
+};
+
 struct isp_flash_element {
 	cmr_u16 index;
 	cmr_u16 val;
@@ -660,6 +694,10 @@ struct ips_in_param {
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 cap_mode;
 	struct isp_sbs_info sbs_info;
+	cmr_handle oem_handle;
+	cmr_malloc alloc_cb;
+	cmr_free free_cb;
+	cmr_u32 sensor_id;
 };
 
 struct ips_out_param {
@@ -718,6 +756,12 @@ struct isp_video_start {
 	cmr_uint highiso_buf_size;
 	struct isp_size live_view_sz;
 	cmr_u8 pdaf_enable;
+	cmr_handle oem_handle;
+	cmr_malloc alloc_cb;
+	cmr_free free_cb;
+	cmr_u32 is_real_bokeh;
+	struct isp_img_frm s_yuv_depth;
+	struct isp_img_frm s_yuv_sw_out;
 };
 
 struct isp_img_param {
@@ -752,6 +796,16 @@ struct isp_3dnr_info {
 	cmr_u8 blending_no;
 };
 
+struct isp_ynr_info {
+	unsigned int src_img_w;
+	unsigned int src_img_h;
+	unsigned int dst_img_w;
+	unsigned int dst_img_h;
+	unsigned int src_buf_fd;
+	unsigned int dst_buf_fd;
+	struct ynr_param ynr_param;
+};
+
 struct isp_ops {
 	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
 	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
@@ -781,6 +835,8 @@ struct isp_init_param {
 
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
+	uint32_t is_multi_mode;
+	uint32_t is_master;
 };
 
 typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,
@@ -800,6 +856,10 @@ cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *para
 cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
+cmr_int isp_sw_proc(cmr_handle handle, void *param_ptr);
+cmr_int isp_sw_check_buf(cmr_handle handle, void *param_ptr);
+cmr_int isp_sw_get_bokeh_status(cmr_handle handle);
+cmr_s32 isp_ynr_post_proc(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);

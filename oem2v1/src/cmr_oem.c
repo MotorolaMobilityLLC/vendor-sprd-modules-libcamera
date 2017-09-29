@@ -3405,162 +3405,31 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.ex_info.af_supported = 0;
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-    isp_param.is_multi_mode = cxt->is_multi_mode;
+    if (cxt->is_multi_mode == MODE_SBS)
+        isp_param.is_multi_mode = ISP_DUAL_SBS;
+    else if (cxt->is_multi_mode)
+        isp_param.is_multi_mode = ISP_DUAL_NORMAL;
+    else
+        isp_param.is_multi_mode = ISP_SINGLE;
 
-    if ((0 == cxt->camera_id) || (1 == cxt->camera_id)) // need modify,
-                                                        // initialized by app,
-                                                        // Similar to multi_mode
+    // need modify,initialized by app,Similar to multi_mode
+    if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
         isp_param.is_master = 1;
 
-    CMR_LOGI("is_multi_mode %d: %d", cxt->is_multi_mode,
-             isp_param.is_multi_mode);
-#if 0
-    if ((CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_1 == cxt->camera_id) &&
-        cxt->is_multi_mode) {
-        if (CAMERA_ID_0 == cxt->camera_id) {
-            ret = cmr_sensor_open(sn_cxt->sensor_handle, 1 << SENSOR_DEVICE2);
-            if (ret) {
-                CMR_LOGE("open 2 sensor failed %ld", ret);
-                ret = CMR_CAMERA_FAIL;
-                goto exit;
-            }
-            ret = cmr_sensor_get_info(sn_cxt->sensor_handle, CAMERA_ID_2,
-                                      &sn_cxt->sensor_info_slv);
-            if (ret) {
-                CMR_LOGE("get_sensor info failed!");
-                ret = CMR_CAMERA_FAIL;
-                goto exit;
-            }
-            sensor_info_ptr = &sn_cxt->sensor_info_slv;
-            CHECK_HANDLE_VALID(sensor_info_ptr);
-
-            isp_param.setting_param_ptr_slv = sensor_info_ptr->raw_info_ptr;
-
-            struct sensor_ex_info sn_ex_info_slv;
-            memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
-            val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-            val.pval = &sn_ex_info_slv;
-            ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_2,
-                                   SENSOR_ACCESS_VAL, (cmr_uint)&val);
-            if (ret) {
-                CMR_LOGE("get sensor static info failed %ld", ret);
-                goto exit;
-            }
-            camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info_slv,
-                                              &sn_ex_info_slv);
-            if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
-                isp_param.ex_info_slv.preview_skip_num = 0;
-                isp_param.ex_info_slv.capture_skip_num = 0;
-            }
-            if ((NULL != sn_ex_info_slv.name) &&
-                (NULL != sn_ex_info_slv.sensor_version_info)) {
-                CMR_LOGD("get static info:slave sensor name: %s, version: %s.",
-                         isp_param.ex_info_slv.name,
-                         isp_param.ex_info_slv.sensor_version_info);
-            } else {
-                CMR_LOGE("maybe fail to get static info: slave sensor name or "
-                         "sensor version info is null.");
-            }
-            val.type = SENSOR_VAL_TYPE_READ_OTP;
-            val.pval = NULL;
-            ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_2,
-                                   SENSOR_ACCESS_VAL, (cmr_uint)&val);
-            if (ret) {
-                CMR_LOGE("get sensor otp failed %ld", ret);
-                goto exit;
-            }
-            if (val.pval) {
-                isp_param.otp_data_slv = val.pval;
-            }
-            ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle,
-                                   1 << SENSOR_DEVICE2);
-            if (ret) {
-                CMR_LOGE("close 2 sensor failed %ld", ret);
-                goto exit;
-            }
-        } else if (CAMERA_ID_1 == cxt->camera_id) {
-            ret = cmr_sensor_open(sn_cxt->sensor_handle, 1 << SENSOR_DEVICE3);
-            if (ret) {
-                CMR_LOGE("open 3 sensor failed %ld", ret);
-                ret = CMR_CAMERA_FAIL;
-                goto exit;
-            }
-            ret = cmr_sensor_get_info(sn_cxt->sensor_handle, CAMERA_ID_3,
-                                      &sn_cxt->sensor_info_slv);
-            if (ret) {
-                CMR_LOGE("get_sensor info failed!");
-                ret = CMR_CAMERA_FAIL;
-                goto exit;
-            }
-            sensor_info_ptr = &sn_cxt->sensor_info_slv;
-            CHECK_HANDLE_VALID(sensor_info_ptr);
-
-            isp_param.setting_param_ptr_slv = sensor_info_ptr->raw_info_ptr;
-
-            struct sensor_ex_info sn_ex_info_slv;
-            memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
-            val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-            val.pval = &sn_ex_info_slv;
-            ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_3,
-                                   SENSOR_ACCESS_VAL, (cmr_uint)&val);
-            if (ret) {
-                CMR_LOGE("get sensor static info failed %ld", ret);
-                goto exit;
-            }
-            camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info_slv,
-                                              &sn_ex_info_slv);
-            if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
-                isp_param.ex_info_slv.preview_skip_num = 0;
-                isp_param.ex_info_slv.capture_skip_num = 0;
-            }
-            if ((NULL != sn_ex_info_slv.name) &&
-                (NULL != sn_ex_info_slv.sensor_version_info)) {
-                CMR_LOGD("get static info:slave sensor name: %s, version: %s.",
-                         isp_param.ex_info_slv.name,
-                         isp_param.ex_info_slv.sensor_version_info);
-            } else {
-                CMR_LOGE("maybe fail to get static info: slave sensor name or "
-                         "sensor version info is null.");
-            }
-            val.type = SENSOR_VAL_TYPE_READ_OTP;
-            val.pval = NULL;
-            ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_3,
-                                   SENSOR_ACCESS_VAL, (cmr_uint)&val);
-            if (ret) {
-                CMR_LOGE("get sensor otp failed %ld", ret);
-                goto exit;
-            }
-            if (val.pval) {
-                isp_param.otp_data_slv = val.pval;
-            }
-            ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle,
-                                   1 << SENSOR_DEVICE3);
-            if (ret) {
-                CMR_LOGE("close 3 sensor failed %ld", ret);
-                goto exit;
-            }
-        }
-        CMR_LOGD(
-            "get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: "
-            "%d",
-            isp_param.ex_info_slv.f_num, isp_param.ex_info_slv.focal_length,
-            isp_param.ex_info_slv.max_fps, isp_param.ex_info_slv.max_adgain);
-        CMR_LOGD("get static info:ois_supported: %d,pdaf_supported "
-                 "%d,exp_valid_frame_num %d,clamp_level %d",
-                 isp_param.ex_info_slv.ois_supported,
-                 isp_param.ex_info_slv.pdaf_supported,
-                 isp_param.ex_info_slv.exp_valid_frame_num,
-                 isp_param.ex_info_slv.clamp_level);
-        CMR_LOGD("get static info:adgain_valid_frame_num %d,preview_skip_num "
-                 "%d,capture_skip_num %d",
-                 isp_param.ex_info_slv.adgain_valid_frame_num,
-                 isp_param.ex_info_slv.preview_skip_num,
-                 isp_param.ex_info_slv.capture_skip_num);
-        CMR_LOGD("w %d h %d", isp_param.size.w, isp_param.size.h);
-    }
-#endif
-#endif
+    CMR_LOGI(
+        "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
+        "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
+        "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
+        "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
+        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
+        isp_param.is_multi_mode, isp_param.ex_info.f_num,
+        isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
+        isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
+        isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,
+        isp_param.ex_info.clamp_level, isp_param.ex_info.adgain_valid_frame_num,
+        isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
+        isp_param.size.w, isp_param.size.h, isp_param.image_pattern,
+        sensor_info_ptr->image_pattern);
 
     CMR_PRINT_TIME;
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
@@ -5628,6 +5497,10 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         struct ips_in_param in_param;
         struct ips_out_param out_param;
 
+        in_param.oem_handle = oem_handle;
+        in_param.alloc_cb = camera_malloc;
+        in_param.free_cb = camera_free;
+
         in_param.src_frame.img_fmt = param_ptr->src_frame.fmt;
         in_param.src_frame.img_size.w = param_ptr->src_frame.size.width;
         in_param.src_frame.img_size.h = param_ptr->src_frame.size.height;
@@ -5898,6 +5771,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_param.cb_of_free = cxt->hal_free;
     isp_param.buffer_client_data = cxt->client_data;
 #endif
+    isp_param.oem_handle = oem_handle;
+    isp_param.alloc_cb = camera_malloc;
+    isp_param.free_cb = camera_free;
 
     if (0 == param_ptr->work_mode) {
         work_mode = param_ptr->work_mode;
@@ -6088,6 +5964,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 
     cmr_bzero(&sensor_cfg, sizeof(struct sn_cfg));
     param_ptr->cap_inf_cfg.buffer_cfg_isp = 0;
+    param_ptr->cap_inf_cfg.sensor_id = camera_id;
     CMR_LOGV("param_ptr->cap_inf_cfg.buffer_cfg_isp %d",
              param_ptr->cap_inf_cfg.buffer_cfg_isp);
     if (param_ptr->is_lightly) {
@@ -6160,6 +6037,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     } else
         param_ptr->cap_inf_cfg.cfg.pdaf_ctrl.mode = 0;
 #endif
+    param_ptr->cap_inf_cfg.sensor_id = camera_id;
     if (!param_ptr->is_lightly) {
         ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,
                                &param_ptr->cap_inf_cfg, channel_id, endian);
@@ -6215,6 +6093,7 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     }
 
     cap_cfg->buffer_cfg_isp = 0;
+    cap_cfg->sensor_id = camera_id;
     ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, cap_cfg, channel_id,
                            endian);
     if (ret) {

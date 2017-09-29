@@ -37,23 +37,25 @@ struct isp_file {
 };
 
 struct isp_statis_mem_info {
-	cmr_uint isp_statis_mem_size;
-	cmr_uint isp_statis_mem_num;
+	cmr_u32 isp_statis_mem_size;
+	cmr_u32 isp_statis_mem_num;
 	cmr_uint isp_statis_k_addr[2];
 	cmr_uint isp_statis_u_addr;
 	cmr_uint isp_statis_alloc_flag;
 	cmr_s32 statis_mfd;
 	cmr_s32 statis_buf_dev_fd;
 
-	cmr_uint isp_lsc_mem_size;
-	cmr_uint isp_lsc_mem_num;
+	cmr_u32 isp_lsc_mem_size;
+	cmr_u32 isp_lsc_mem_num;
 	cmr_uint isp_lsc_physaddr;
 	cmr_uint isp_lsc_virtaddr;
+	cmr_uint isp_lsc_alloc_flag;
 	cmr_s32 lsc_mfd;
 
 	void *buffer_client_data;
-	void *cb_of_malloc;
-	void *cb_of_free;
+	cmr_malloc alloc_cb;
+	cmr_free free_cb;
+	cmr_handle oem_handle;
 };
 
 struct isp_statis_info {
@@ -191,6 +193,7 @@ cmr_s32 isp_dev_cfg_start(cmr_handle handle);
 cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *param);
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param);
 cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
+cmr_s32 isp_dev_ynr(cmr_handle handle, struct isp_ynr_info *param);
 
 cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 * width, cmr_u32 * height);
 cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec);

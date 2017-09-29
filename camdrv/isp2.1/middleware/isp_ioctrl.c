@@ -58,6 +58,8 @@ static const char *SMART_START = "ISP_SMART_";
 static const char *SMART_END = "ISP_SMART_";
 static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
+static const char *MICRODEPTH_START = "ISP_MICRODEPTH_";
+static const char *MICRODEPTH_END = "ISP_MICRODEPTH_";
 
 static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 {
@@ -926,6 +928,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		    + calc_log_size(cxt->awb_cxt.log_awb, cxt->awb_cxt.log_awb_size, AWB_START, AWB_END)
 		    + calc_log_size(cxt->lsc_cxt.log_lsc, cxt->lsc_cxt.log_lsc_size, LSC_START, LSC_END)
 		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
+		    + calc_log_size(cxt->microdepth_cxt.log_microdepth, cxt->microdepth_cxt.log_microdepth_size, MICRODEPTH_START, MICRODEPTH_END)
 		    + sizeof(cmr_u32);
 
 		if (cxt->otp_data != NULL) {
@@ -966,6 +969,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
+		COPY_LOG(microdepth, MICRODEPTH);
 
 		if (cxt->otp_data != NULL) {
 			size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
@@ -1186,6 +1190,47 @@ static cmr_int ispctl_af_get_full_scan_info(cmr_handle isp_alg_handle, void *par
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
 					AF_CMD_GET_AF_FULLSCAN_INFO,
 					(void *)af_fullscan_info, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_get_microdepth_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_bokeh_micro_depth_param *macrodepth = (struct isp_bokeh_micro_depth_param *)param_ptr;
+
+	if (NULL != macrodepth) {
+
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_BOKEH_MICRO_DEPTH, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+		if (ISP_SUCCESS == ret && 1 == output.param_num) {
+			memcpy(macrodepth, output.param_data->data_ptr, sizeof(struct isp_bokeh_micro_depth_param));
+		} else {
+			macrodepth->cur.tuning_exist = 0;
+		}
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_set_microdepth_debug_info(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct microdepth_info *param;
+
+	if (NULL == cxt || NULL == param_ptr) {
+		ISP_LOGE("fail to set microdepth debug info %p %p",cxt,param_ptr);
+		return ISP_ERROR;
+	} else {
+		param = (struct microdepth_info *)param_ptr;
+		cxt->microdepth_cxt.log_microdepth = param->log_microdepth;
+		cxt->microdepth_cxt.log_microdepth_size = param->log_microdepth_size;
+	}
 
 	return ret;
 }
@@ -2225,6 +2270,16 @@ static cmr_int ispctl_post_3dnr(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_post_ynr(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_POST_YNR, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2242,6 +2297,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 
 	{ISP_CTRL_AF, ispctl_af},
 	{ISP_CTRL_GET_FULLSCAN_INFO, ispctl_af_get_full_scan_info},
+	{ISP_CTRL_GET_MICRODEPTH_PARAM, ispctl_get_microdepth_param},
+	{ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO, ispctl_set_microdepth_debug_info},
 	{ISP_CTRL_SET_AF_BYPASS, ispctl_af_bypass},
 	{ISP_CTRL_BURST_NOTICE, ispctl_burst_notice},
 	{ISP_CTRL_SFT_READ, ispctl_sfti_read},
@@ -2294,6 +2351,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_FPS, ispctl_get_fps},
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
 	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},
+	{ISP_CTRL_POST_YNR, ispctl_post_ynr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_MAX, NULL}
 };

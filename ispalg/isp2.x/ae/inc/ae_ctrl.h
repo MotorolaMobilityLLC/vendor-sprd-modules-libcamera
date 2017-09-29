@@ -21,6 +21,9 @@
 #include "isp_pm.h"
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
+#ifndef CONFIG_ISP_2_2
+#include "isp_bridge.h"
+#endif
 #ifdef CONFIG_ISP_2_2
 #include "isp_otp_calibration.h"
 #endif
@@ -50,11 +53,9 @@ struct ae_init_in {
 	cmr_handle lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u8 sensor_role;  //1:master 0: slave
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
-#endif
 	struct sensor_otp_section_info *otp_info_ptr;
 };
 

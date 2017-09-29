@@ -19,6 +19,9 @@
 #include "isp_awb_types.h"
 #include "isp_com.h"
 #include "isp_common_types.h"
+#ifndef CONFIG_ISP_2_2
+#include "isp_bridge.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -192,6 +195,16 @@ struct awb_ctrl_init_param {
 	cmr_u32 img_width;
 	cmr_u32 img_height;
 	void *priv_handle;
+
+	/*
+	 * for dual camera sync
+	 */
+	cmr_u8 sensor_role;
+	cmr_u32 is_multi_mode;
+#ifndef CONFIG_ISP_2_2
+	func_isp_br_ioctrl ptr_isp_br_ioctrl;
+#endif
+
 	struct sensor_otp_section_info *otp_info_ptr;
 };
 

@@ -25,12 +25,13 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 
-	file = malloc(sizeof(struct isp_file));
+	file = (struct isp_file *)malloc(sizeof(struct isp_file));
 	if (!file) {
 		ret = -1;
 		ISP_LOGE("fail to alloc memory.");
 		return ret;
 	}
+	memset((void *)file, 0x00, sizeof(struct isp_file));
 
 	if (fd < 0) {
 		ret = -1;
@@ -42,6 +43,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	file->isp_id = 0;
 	*handle = (cmr_handle) file;
 
+	ISP_LOGI("fd %d handle %p", file->fd, file);
 	return ret;
 
 isp_free:
@@ -160,6 +162,39 @@ cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
 	ret = ioctl(file->fd, SPRD_ISP_IO_POST_3DNR, &isp_3dnr);
 	if (ret) {
 		ISP_LOGE("fail to do isp_dev_3dnr %d.", ret);
+	}
+
+	return ret;
+}
+
+cmr_s32 isp_dev_ynr(cmr_handle handle, struct isp_ynr_info *param)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct sprd_isp_ynr_param isp_ynr;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!param) {
+		ISP_LOGE("Param is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	isp_ynr.src_img_w = param->src_img_w;
+	isp_ynr.src_img_h = param->src_img_h;
+	isp_ynr.dst_img_w = param->dst_img_w;
+	isp_ynr.dst_img_h = param->dst_img_h;
+	isp_ynr.src_buf_fd = param->src_buf_fd;
+	isp_ynr.dst_buf_fd = param->dst_buf_fd;
+	memcpy(&isp_ynr.ynr_param, &param->ynr_param, sizeof(struct ynr_param));
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_POST_YNR, &isp_ynr);
+	if (ret) {
+		ISP_LOGE("isp_dev_ynr error. 0x%x", ret);
 	}
 
 	return ret;

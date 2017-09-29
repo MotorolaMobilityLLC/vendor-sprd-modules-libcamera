@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
+#ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libbokeh_depth
@@ -29,10 +32,8 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libbokeh_depth.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libbokeh_depth.so
 ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
-endif
-endif
+#endif

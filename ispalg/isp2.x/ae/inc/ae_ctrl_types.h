@@ -417,6 +417,7 @@ struct ae_isp_ctrl_ops {
 	 cmr_s32(*set_rgb_gain) (cmr_handle handler, double rgb_gain_coeff);
 	 cmr_s32(*set_wbc_gain)(cmr_handle handler, struct ae_alg_rgb_gain *awb_gain);
 	 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
+	 cmr_int (*write_multi_ae)(cmr_handle handler, void *ae_info);
 };
 
 struct ae_stat_img_info {

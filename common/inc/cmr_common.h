@@ -77,6 +77,7 @@ extern "C" {
 #define CMR_MAX_SKIP_NUM 10
 #define CAMERA_DEPTH_META_SIZE (480 * 360 + 1280)
 #define CAMERA_EMBEDDED_INFO_META_SIZE (480 * 360 + 1280)
+#define CAMERA_PDAF_META_SIZE (144 * 864 * 5 / 4)
 #define CAMERA_DEPTH_META_DATA_TYPE 0x35
 #define CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE 4
 #define CAMERA_EMBEDDED_INFO_TYPE 0x12
@@ -416,6 +417,15 @@ enum frame_contrl_type {
     FRAME_3DNR_PROC
 };
 
+enum blur_tips_type {
+    BLUR_TIPS_OK = 50,
+    BLUR_TIPS_FURTHER,
+    BLUR_TIPS_CLOSE,
+    BLUR_TIPS_NEED_LIGHT,
+    BLUR_TIPS_UNABLED,
+    BLUR_TIPS_DEFAULT
+};
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;
@@ -516,6 +526,14 @@ struct leds_ctrl {
     cmr_u32 led1_ctrl;
 };
 
+typedef struct {
+    int fd;
+    size_t size;
+    // offset from fd, always set to 0
+    void *addr_phy;
+    void *addr_vir;
+} cam_ion_buffer_t;
+
 /********************************* v4l2 start *********************************/
 
 /********************************* v4l2 start *********************************/
@@ -552,6 +570,7 @@ struct img_frm_cap {
     struct img_rect src_img_rect;
     struct img_size dst_img_size;
     cmr_u32 dst_img_fmt;
+    cmr_u32 src_img_fmt;
     cmr_u32 notice_slice_height;
     cmr_u32 need_isp;
     cmr_u32 need_binning;
@@ -586,6 +605,8 @@ struct cap_cfg {
     cmr_u32 frm_num;
     cmr_u32 buffer_cfg_isp;
     cmr_u32 slowmotion_enabled;
+    cmr_u32 video_enabled;
+    cmr_u32 sensor_id;
     struct img_frm_cap cfg;
 };
 
@@ -614,6 +635,12 @@ struct cmr_path_capability {
     uint32_t capture_no_trim;
     uint32_t capture_pause;
     uint32_t zoom_post_proc;
+};
+
+struct dual_sensor_luma_info {
+    uint32_t sub_luma;
+    uint32_t main_gain;
+    uint32_t main_luma;
 };
 
 /********************************** v4l2 end **********************************/
@@ -1218,14 +1245,6 @@ struct camera_cap_frm_info {
         struct frm_info          frame_info;
 };*/
 
-typedef struct {
-    int fd;
-    size_t size;
-    // offset from fd, always set to 0
-    void *addr_phy;
-    void *addr_vir;
-} cam_ion_buffer_t;
-
 struct camera_position_type {
     long timestamp;
     double latitude;
@@ -1265,9 +1284,37 @@ typedef enum {
                          // hal transform to open physics Camera id is 2
     MODE_BLUR_FRONT = 15,
     MODE_BOKEH = 16,
+    MODE_SBS = 17,
     MODE_TUNING = 50,
     MODE_CAMERA_MAX
 } multiCameraMode;
+
+struct img_sbs_info {
+    cmr_u32 sbs_mode;
+    struct img_size size;
+};
+
+struct isp_awb_info {
+    cmr_u32 r_gain;
+    cmr_u32 g_gain;
+    cmr_u32 b_gain;
+    cmr_u32 r_offset;
+    cmr_u32 g_offset;
+    cmr_u32 b_offset;
+};
+
+struct tuning_param_info {
+    cmr_u32 pos; // VCM position
+    cmr_u32 gain;
+    cmr_u32 shutter;
+    cmr_int bv;
+    struct isp_awb_info awb_info;
+};
+
+struct isp_af_otp_info {
+    cmr_u16 infinite_cali;
+    cmr_u16 macro_cali;
+};
 
 typedef enum {
     CAMERA_IOCTRL_SET_MULTI_CAMERAMODE = 0,
@@ -1277,12 +1324,16 @@ typedef enum {
     CAMERA_IOCTRL_SET_AF_POS,
     CAMERA_IOCTRL_SET_3A_BYPASS,
     CAMERA_IOCTRL_GET_AE_FPS,
-    CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
     CAMERA_IOCTRL_3DNR_VIDEOMODE,
+    CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+    CAMERA_IOCTRL_GET_MICRODEPTH_PARAM,
+    CAMERA_IOCTRL_SET_MICRODEPTH_DEBUG_INFO,
+    CAMERA_IOCTRL_GET_SENSOR_FORMAT,
     CAMERA_IOCTRL_GET_CPP_CAPABILITY,
     CAMERA_IOCTRL_THUMB_YUV_PROC,
     CAMERA_IOCTRL_SET_MIME_TYPE,
     CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
+    CAMERA_IOCTRL_GET_BLUR_COVERED,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

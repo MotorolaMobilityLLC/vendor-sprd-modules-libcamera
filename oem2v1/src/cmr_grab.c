@@ -624,6 +624,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     if (NULL == config || NULL == channel_id)
         return -1;
+    memset(&parm, 0, sizeof(struct sprd_img_parm));
     p_grab = (struct cmr_grab *)grab_handle;
 
     CMR_CHECK_HANDLE;
@@ -633,10 +634,16 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
              config->frm_num, config->cfg.dst_img_size.width,
              config->cfg.dst_img_size.height, config->cfg.slowmotion);
 
+    CMR_LOGI("src_img_fmt %d dst_img_fmt %d.", config->cfg.src_img_fmt,
+             config->cfg.dst_img_fmt);
+
     parm.dst_size.w = config->cfg.dst_img_size.width;
     parm.dst_size.h = config->cfg.dst_img_size.height;
     pxl_fmt = cmr_grab_get_4cc(config->cfg.dst_img_fmt);
     parm.pixel_fmt = pxl_fmt;
+    parm.sensor_id = config->sensor_id;
+    pxl_fmt = cmr_grab_get_4cc(config->cfg.src_img_fmt);
+    parm.sn_fmt = pxl_fmt;
     parm.need_isp_tool = config->cfg.need_isp_tool;
     parm.need_isp = config->cfg.need_isp;
     parm.regular_desc = config->cfg.regular_desc;

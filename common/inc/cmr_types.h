@@ -66,6 +66,8 @@ enum camera_mem_cb_type {
     CAMERA_SNAPSHOT_3DNR_DST,
     CAMERA_PREVIEW_3DNR,
 #endif
+    CAMERA_PREVIEW_DEPTH,
+    CAMERA_PREVIEW_SW_OUT,
     CAMERA_MEM_CB_TYPE_MAX
 };
 

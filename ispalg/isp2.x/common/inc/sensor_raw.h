@@ -199,12 +199,28 @@ struct dual_flash_tune_param {
 	cmr_u8 reserved1[1024];/*256 * 4bytes*/
 };/*2053 * 4 bypes*/
 
-struct anti_flicker_tune_param {
-	cmr_u32 normal_50hz_thrd;
-	cmr_u32 lowlight_50hz_thrd;
-	cmr_u32 normal_60hz_thrd;
-	cmr_u32 lowlight_60hz_thrd;
-	cmr_u32 reserved[16];
+struct bokeh_micro_depth_tune_param{
+	cmr_u32 tuning_exist;
+	cmr_u32 enable;
+	cmr_u32 fir_mode;
+	cmr_u32 fir_len;
+	cmr_s32 hfir_coeff[7];
+	cmr_s32 vfir_coeff[7];
+	cmr_u32 fir_channel;
+	cmr_u32 fir_cal_mode;
+	cmr_s32 fir_edge_factor;
+	cmr_u32 depth_mode;
+	cmr_u32 smooth_thr;
+	cmr_u32 touch_factor;
+	cmr_u32 scale_factor;
+	cmr_u32 refer_len;
+	cmr_u32 merge_factor;
+	cmr_u32 similar_factor;
+	cmr_u32 similar_coeff[3];
+	cmr_u32 tmp_mode;
+	cmr_s32 tmp_coeff[8];
+	cmr_u32 tmp_thr;
+	cmr_u32 reserved[100];
 };
 
 struct pdaf_tune_param {
@@ -230,6 +246,14 @@ struct haf_tune_param {
 	//default param for outdoor/indoor/dark
 	struct pdaf_tune_param pdaf_tune_data[3];
 	cmr_u32 reserved[256];
+};
+
+struct anti_flicker_tune_param {
+	cmr_u32 normal_50hz_thrd;
+	cmr_u32 lowlight_50hz_thrd;
+	cmr_u32 normal_60hz_thrd;
+	cmr_u32 lowlight_60hz_thrd;
+	cmr_u32 reserved[16];
 };
 
 //environment detec
@@ -1794,6 +1818,7 @@ enum ISP_BLK_ID {
 	DCAM_BLK_BLC = 0x4037,
 	DCAM_BLK_RAW_AEM = 0x4038,
 	DCAM_BLK_2D_LSC = 0x4039,
+	ISP_BLK_BOKEH_MICRO_DEPTH = 0x403A,
 	ISP_BLK_ANTI_FLICKER = 0x403B,
 	ISP_BLK_PDAF_TUNE = 0x403C,
 	ISP_BLK_EXT,

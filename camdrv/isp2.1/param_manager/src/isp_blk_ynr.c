@@ -109,7 +109,7 @@ cmr_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void *param1, voi
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
-	rtn = _pm_ynr_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	rtn = _pm_ynr_convert_param(dst_ptr, dst_ptr->cur_level, ynr_header_ptr->mode_id, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= ynr_header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {

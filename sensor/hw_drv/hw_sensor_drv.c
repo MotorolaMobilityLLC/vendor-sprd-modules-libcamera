@@ -462,6 +462,32 @@ cmr_int hw_sensor_mipi_init(cmr_handle hw_handle,
     return ret;
 }
 
+cmr_int hw_sensor_mipi_switch(cmr_handle hw_handle,
+                                    struct hw_mipi_init_param init_param) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = HW_SUCCESS;
+    SENSOR_IF_CFG_T if_cfg;
+
+    CHECK_HANDLE(hw_handle);
+    struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt*)hw_handle;
+
+    cmr_u32 lane_num = init_param.lane_num;
+    cmr_u32 bps = init_param.bps_per_lane;
+
+    cmr_bzero((void *)&if_cfg, sizeof(SENSOR_IF_CFG_T));
+    if_cfg.phy_id = _hw_get_mipi_phy_id(hw_handle);
+
+    HW_LOGI("phy id %d", if_cfg.phy_id);
+    ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_IF_SWITCH, &if_cfg);
+    if (0 != ret) {
+        HW_LOGE("failed, ret=%ld, fd=%d", ret, hw_drv_cxt->fd_sensor);
+        ret = -1;
+    }
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int hw_sensor_mipi_deinit(cmr_handle hw_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
