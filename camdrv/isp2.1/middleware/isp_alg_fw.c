@@ -3028,12 +3028,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 	if (SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
 		if ((mode != cxt->commn_cxt.isp_mode) && (org_size.w != cxt->commn_cxt.src.w)) {
+			cxt->commn_cxt.isp_mode = mode;
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
 			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
 			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			cxt->commn_cxt.isp_mode = mode;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
 	} else {
 
@@ -3044,12 +3044,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			cxt->commn_cxt.mode_flag = mode;
 		}
 		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
+			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
 			pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
 			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
 	}
 
@@ -3242,14 +3242,14 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ISP_RETURN_IF_FAIL(ret, ("fail to get isp_mode"));
 
 	if (org_size.w != cxt->commn_cxt.src.w) {
-		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
-		pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
-		io_pm_input.param_data_ptr = &pm_param;
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		cxt->commn_cxt.isp_mode = mode;
 		cxt->commn_cxt.mode_flag = mode;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
+		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CFA_CFG, ISP_BLK_CFA, PNULL, 0);
+		pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
+		io_pm_input.param_data_ptr = &pm_param;
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 	}
 
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->src_frame.img_size);
