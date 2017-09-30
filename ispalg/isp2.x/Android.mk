@@ -28,7 +28,20 @@ LOCAL_CFLAGS += -DAE_WORK_MOD_V0
 # ************************************************
 # external header file
 # ************************************************
+
+ISP_HW_VER = 2v1
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ISP_HW_VER = 2v1a
+else
+ISP_HW_VER = 2v1
+endif
+
+ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
+ISP_HW_VER = 2v1
+endif
+
 ISP_DIR := ../../camdrv/isp2.1
 endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
@@ -42,8 +55,8 @@ endif
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
-	$(LOCAL_PATH)/../../oem2v1/inc \
-	$(LOCAL_PATH)/../../oem2v1/isp_calibration/inc \
+	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/inc \
+	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/isp_calibration/inc \
 	$(LOCAL_PATH)/../../jpeg/inc \
 	$(LOCAL_PATH)/../../vsp/inc \
 	$(LOCAL_PATH)/../../tool/mtrace

@@ -10712,6 +10712,107 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     return ret;
 }
 
+cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
+                                            enum takepicture_mode cap_mode,
+                                            struct frm_info *frm_data) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt;
+    struct snapshot_param snp_param;
+    struct common_sn_cmd_param param;
+    struct setting_cmd_parameter setting_param;
+    cmr_int flash_status = FLASH_CLOSE;
+    cmr_s32 sm_val = 0;
+
+    if (!oem_handle) {
+        CMR_LOGE("error handle");
+        goto exit;
+    }
+    camera_take_snapshot_step(CMR_STEP_TAKE_PIC);
+    prev_cxt = &cxt->prev_cxt;
+
+    sem_getvalue(&cxt->share_path_sm, &sm_val);
+    if (0 != sm_val) {
+        sem_destroy(&cxt->share_path_sm);
+        sem_init(&cxt->share_path_sm, 0, 0);
+        CMR_LOGI("re-initialize share_path_sm");
+    }
+
+    ret = camera_get_snapshot_param(oem_handle, &snp_param);
+
+    // check snp size
+    if (snp_param.post_proc_setting.snp_size.height == 0 ||
+        snp_param.post_proc_setting.snp_size.width == 0 ||
+        snp_param.post_proc_setting.actual_snp_size.height == 0 ||
+        snp_param.post_proc_setting.actual_snp_size.width == 0) {
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        //CMR_LOGI("camera id: %d", setting_param.camera_id);
+
+        /*get snapshot size*/
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_GET_CAPTURE_SIZE, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get capture size %ld", ret);
+            goto exit;
+        }
+        snp_param.post_proc_setting.actual_snp_size = setting_param.size_param;
+        snp_param.post_proc_setting.snp_size = setting_param.size_param;
+    }
+    if (snp_param.channel_id == 0 || snp_param.channel_id >= GRAB_CHANNEL_MAX) {
+        snp_param.channel_id = frm_data->channel_id;
+    }
+    CMR_LOGI("chn id: %d ,picture: width:%d, height:%d", snp_param.channel_id,
+             cxt->snp_cxt.post_proc_setting.actual_snp_size.width,
+             cxt->snp_cxt.post_proc_setting.actual_snp_size.height);
+
+    snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_y =
+        frm_data->yaddr_vir;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_u =
+        frm_data->uaddr_vir;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_v =
+        frm_data->vaddr_vir;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y =
+        frm_data->yaddr;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u =
+        frm_data->uaddr;
+    snp_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_v =
+        frm_data->vaddr;
+    snp_param.post_proc_setting.chn_out_frm[0].fd = frm_data->fd;
+    snp_param.post_proc_setting.chn_out_frm[0].fmt = frm_data->fmt;
+
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_y =
+        frm_data->yaddr_vir;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_u =
+        frm_data->uaddr_vir;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_v =
+        frm_data->vaddr_vir;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_y =
+        frm_data->yaddr;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_u =
+        frm_data->uaddr;
+    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_v =
+        frm_data->vaddr;
+    snp_param.post_proc_setting.mem[0].target_yuv.fd = frm_data->fd;
+    snp_param.post_proc_setting.mem[0].target_yuv.fmt = frm_data->fmt;
+    camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
+
+    ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
+
+    // because of only hdr plus(normal pic) need to backup the normal pic.
+    // so directly use HDR post-snapshot.
+    ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
+                                    SNAPSHOT_EVT_HDR_DONE, frm_data);
+    camera_post_share_path_available(oem_handle);
+
+exit:
+    CMR_LOGV("done %ld", ret);
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

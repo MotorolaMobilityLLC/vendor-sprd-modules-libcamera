@@ -35,7 +35,16 @@ ISP_HW_VER = 3v0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ISP_HW_VER = 2v1a
+else
 ISP_HW_VER = 2v1
+endif
+
+ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
+ISP_HW_VER = 2v1
+endif
+
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.1
 LOCAL_C_INCLUDES += \
@@ -124,8 +133,18 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp
+
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+else
+LOCAL_SRC_FILES+= \
+    hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
+endif
+
+ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
+LOCAL_SRC_FILES+= \
+    hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
+endif
 
 ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
