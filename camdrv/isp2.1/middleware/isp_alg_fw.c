@@ -2947,7 +2947,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
-	for(i=0; i<9;i++)
+	for (i = 0; i < 9; i++)
 		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
 	fwstart_info->gain_width_new = lsc_info_new->gain_w;
 	fwstart_info->gain_height_new = lsc_info_new->gain_h;
@@ -3178,6 +3178,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	struct isp_video_start param;
+	cmr_s32 i = 0;
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");
@@ -3269,7 +3270,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
-	for(int i=0; i<9;i++)
+	for (i = 0; i < 9; i++)
 		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
 	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
 	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;

@@ -47,16 +47,14 @@ void generate_bicubic_weight_table(LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight
 	cmr_u16 relative;
 
 	//init
-	for(relative=0; relative<MAX_TABLE_SIZE; relative++)
-	{
+	for (relative = 0; relative < MAX_TABLE_SIZE; relative++) {
 		lnc_bicubic_weight_t_simple[relative].w0 = 0;
 		lnc_bicubic_weight_t_simple[relative].w1 = 0;
 		lnc_bicubic_weight_t_simple[relative].w2 = 0;
 	}
 
 	//generate weight table based on current LNC_GRID
-	for(relative=0; relative<((LNC_GRID/2)+1); relative++)
-	{
+	for (relative = 0; relative < ((LNC_GRID/2)+1); relative++) {
 		t = relative * 1.0 / LNC_GRID;
 
 		matrix_result = 1*param[0][0] + t*param[1][0] + t*t*param[2][0] + t*t*t*param[3][0];
@@ -82,8 +80,7 @@ cmr_u16 cubic_1D( cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16
 	cmr_s16 sub_tmp2;
 
 	//use simple table
-	if ( u < (box/2 + 1) )
-	{
+	if (u < (box/2 + 1)) {
 		w0 = lnc_bicubic_weight_t_simple[u].w0;
 		w1 = lnc_bicubic_weight_t_simple[u].w1;
 		w2 = lnc_bicubic_weight_t_simple[u].w2;
@@ -93,9 +90,7 @@ cmr_u16 cubic_1D( cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16
 		sub_tmp2 = c-d;
 		out_value_tmp = ((cmr_u32)d)<<10;
 		out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
-	}
-	else
-	{
+	} else {
 		w1 = lnc_bicubic_weight_t_simple[box - u].w2;
 		w2 = lnc_bicubic_weight_t_simple[box - u].w1;
 		w3 = lnc_bicubic_weight_t_simple[box - u].w0;
