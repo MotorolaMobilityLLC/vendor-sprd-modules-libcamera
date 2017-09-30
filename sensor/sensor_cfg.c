@@ -318,7 +318,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
 // ov area
 #ifdef OV2680
-    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, &ov2680_cmk_drv_entry},
+    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #ifdef OV5675_DUAL
     {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
