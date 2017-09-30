@@ -54,12 +54,14 @@
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
 #define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0/*lower than thrd1, min fps*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 600 /*higher than thrd2, max fps*/
+#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 1000 /*higher than thrd2, max fps*/
 
 /*
  * should be read from driver later
  */
 #define AE_FLASH_ON_OFF_THR 380
+#define AE_FLASH_OFFSET_UP 100
+#define AE_FLASH_OFFSET_DOWN 0
 #define AE_FLASH_CALC_TIMES	60	/* prevent flash_pfOneIteration time out */
 #define AE_THREAD_QUEUE_NUM		(50)
 const char AE_MAGIC_TAG[] = "ae_debug_info";
@@ -3268,13 +3270,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			fps_range.max = work_info->sensor_fps.max_fps;
 			cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 		} else {
-			if (work_info->dv_mode) {
-				fps_range.min = cxt->cur_status.snr_max_fps;
-				fps_range.max = cxt->cur_status.snr_max_fps;
-			} else {
 				fps_range.min = cxt->fps_range.min;
 				fps_range.max = cxt->fps_range.max;
-			}
 		}
 		ae_adjust_exp_gain(cxt, &src_exp, &fps_range, max_exp, &dst_exp);
 	}
@@ -3583,18 +3580,23 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 		cmr_u32 *flash_eb = (cmr_u32 *) result;
 		cmr_s32 bv = 0;
 		cmr_s32 bv_thr = cxt->flash_on_off_thr;
+		cmr_s32 ae_flash_on_thr = 0;
+		cmr_s32 ae_flash_off_thr = 0;
 
 		if (0 >= bv_thr)
 			bv_thr = AE_FLASH_ON_OFF_THR;
 
 		rtn = ae_get_bv_by_lum_new(cxt, &bv);
 
-		if (bv < bv_thr)
+		ae_flash_off_thr = bv_thr + AE_FLASH_OFFSET_UP;
+		ae_flash_on_thr = bv_thr + AE_FLASH_OFFSET_DOWN;
+
+		if (bv <= ae_flash_on_thr)
 			*flash_eb = 1;
-		else
+		else if(bv >= ae_flash_off_thr)
 			*flash_eb = 0;
 
-		ISP_LOGI("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, thr=%d", *flash_eb, bv, bv_thr);
+		ISP_LOGI("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, thr=%d, ae_flash_off_thr=%d, ae_flash_on_thr=%d", *flash_eb, bv, bv_thr, ae_flash_off_thr, ae_flash_on_thr);
 	}
 	return rtn;
 }
