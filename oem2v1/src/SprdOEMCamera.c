@@ -1131,6 +1131,37 @@ exit:
     return ret;
 }
 
+#if defined(CONFIG_ISP_2_1)
+cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
+                               cmr_s32 *point_y) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    return ret;
+}
+
+cmr_s32 camera_isp_sw_check_buf(cmr_handle camera_handle, cmr_uint *param_ptr) {
+    cmr_s32 ret = CMR_CAMERA_SUCCESS;
+    return ret;
+}
+
+cmr_int camera_isp_sw_proc(cmr_handle camera_handle,
+                           struct soft_isp_frm_param *param_ptr) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    return ret;
+}
+
+cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
+                             struct img_frm *yuv_buff,
+                             struct img_sbs_info *sbs_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    return ret;
+}
+
+cmr_int camera_get_tuning_param(cmr_handle camera_handle,
+                                struct tuning_param_info *tuning_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    return ret;
+}
+#endif
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1160,6 +1191,11 @@ static oem_ops_t oem_module_ops = {
     camera_start_capture, camera_stop_capture,
     camera_pre_capture_set_buffer_size, camera_ioctrl,
     camera_reprocess_yuv_for_jpeg,
+#if defined(CONFIG_ISP_2_1)
+    camera_get_focus_point,  camera_isp_sw_check_buf,
+    camera_isp_sw_proc, camera_raw_post_proc,
+    camera_get_tuning_param
+ #endif
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
