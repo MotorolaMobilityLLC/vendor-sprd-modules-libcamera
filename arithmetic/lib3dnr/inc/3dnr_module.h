@@ -75,6 +75,6 @@ typedef enum c3dnr_frame_type {
 cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width, cmr_s32 orig_height,
 	       cmr_u32 total_imageNum);
 void Config3DNR(c3dnr_param_info_t *param);
-void threeDNR_1D_process(c3dnr_buffer_t *curr_image ,cmr_s32 width ,cmr_s32 height , cmr_u32 fram_no, c3dnr_mode_e mode);
+void threeDNR_1D_process(c3dnr_buffer_t curr_image[], cmr_s32 width, cmr_s32 height, cmr_u32 imageNum);
 c3dnr_info_t *get_3dnr_moduleinfo();
 #endif

@@ -29,6 +29,10 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
+endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -36,6 +40,9 @@ LOCAL_SRC_FILES := src/3dnr_module.cpp
 LOCAL_MODULE :=libsprd3dnr
 
 LOCAL_SHARED_LIBRARIES :=libcutils libsprd3dnrmv
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES +=liblog
+endif
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS :=  -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wunused-variable -Wunused-function  -Werror
 
@@ -45,6 +52,12 @@ LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/../../common/inc \
          $(LOCAL_PATH)/../libgralloc_mali \
          $(TOP)/system/core/include/cutils/
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
 
 include $(BUILD_SHARED_LIBRARY)
 endif
