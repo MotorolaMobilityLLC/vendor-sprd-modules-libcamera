@@ -3809,8 +3809,8 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     }
     HAL_LOGV("frame_number:%d,num_output_buffers=%d", request->frame_number,
              request->num_output_buffers);
-    metaSettingsMain = clone_camera_metadata(request->settings);
-    metaSettingsAux = clone_camera_metadata(request->settings);
+    metaSettingsMain = request->settings;
+    metaSettingsAux = request->settings;
 
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         int requestStreamType =
@@ -4050,8 +4050,11 @@ int SprdCamera3RealBokeh::processCaptureRequest(
         }
     }
 req_fail:
-    free_camera_metadata((camera_metadata_t *)req_main.settings);
-    free_camera_metadata((camera_metadata_t *)req_aux.settings);
+    if (req_main.settings)
+        free_camera_metadata((camera_metadata_t *)req_main.settings);
+
+    if (req_aux.settings)
+        free_camera_metadata((camera_metadata_t *)req_aux.settings);
     HAL_LOGV("rc. %d idx%d", rc, request->frame_number);
 
     return rc;
@@ -4076,7 +4079,8 @@ void SprdCamera3RealBokeh::notifyMain(const camera3_notify_msg_t *msg) {
         return;
     }
 
-    if (!(cur_frame_number == mCapFrameNumber && cur_frame_number != 0)) {
+    if ((!(cur_frame_number == mCapFrameNumber && cur_frame_number != 0)) &&
+        mIsSupportPBokeh) {
         Mutex::Autolock l(mNotifyLockMain);
         mNotifyListMain.push_back(*msg);
     }
@@ -4213,28 +4217,29 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
 
     if (result_buffer == NULL) {
-        metadata = clone_camera_metadata(result->result);
         // meta process
         if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
             if (mCaptureThread->mReprocessing) {
-                HAL_LOGD("hold yuv picture call bac1k, framenumber:%d",
+                HAL_LOGD("hold jpeg picture call bac1k, framenumber:%d",
                          result->frame_number);
             } else {
+                metadata = result->result;
                 mVcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
                 HAL_LOGD("mVcmSteps %d", mVcmSteps);
                 {
                     Mutex::Autolock l(mRealBokeh->mMetatLock);
                     metadata_t.frame_number = cur_frame_number;
-                    metadata_t.metadata = metadata.release();
+                    metadata_t.metadata = clone_camera_metadata(result->result);
                     mMetadataList.push_back(metadata_t);
                 }
                 CallBackMetadata();
             }
             return;
         } else {
+
             HAL_LOGV("send  meta, framenumber:%d", cur_frame_number);
             metadata_t.frame_number = cur_frame_number;
-            metadata_t.metadata = metadata.release();
+            metadata_t.metadata = clone_camera_metadata(result->result);
             Mutex::Autolock l(mRealBokeh->mMetatLock);
             mMetadataList.push_back(metadata_t);
             return;
@@ -4443,7 +4448,8 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
 void SprdCamera3RealBokeh::notifyAux(const camera3_notify_msg_t *msg) {
     uint32_t cur_frame_number = msg->message.shutter.frame_number;
 
-    if (!(cur_frame_number == mCapFrameNumber && cur_frame_number != 0)) {
+    if ((!(cur_frame_number == mCapFrameNumber && cur_frame_number != 0)) &&
+        mIsSupportPBokeh) {
         Mutex::Autolock l(mNotifyLockAux);
         HAL_LOGV("notifyAux push success frame_number %d", cur_frame_number);
         mNotifyListAux.push_back(*msg);
@@ -4682,7 +4688,6 @@ void SprdCamera3RealBokeh::CallBackResult(
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
 
     CallBackMetadata();
-
     if ((frame_number != mRealBokeh->mCapFrameNumber) || (frame_number == 0)) {
         Mutex::Autolock l(mRealBokeh->mRequestLock);
         itor = mRealBokeh->mSavedRequestList.begin();
