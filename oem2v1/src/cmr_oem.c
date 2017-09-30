@@ -6011,7 +6011,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
             }
         }
         isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
-        CMR_LOGI("isp_param:max_gain:%d ", isp_param.resolution_info.max_gain);
+	  isp_param.capture_skip_num = sns_ex_info_ptr->capture_skip_num;
+        CMR_LOGI("isp_param:max_gain:%d skip_num:%d", isp_param.resolution_info.max_gain, isp_param.capture_skip_num);
     }
 
     ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);

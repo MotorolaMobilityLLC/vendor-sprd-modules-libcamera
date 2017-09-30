@@ -110,6 +110,7 @@ struct ae_ctrl_cxt {
 	char alg_id[32];
 	cmr_u32 checksum;
 	cmr_u32 bypass;
+	cmr_u32 capture_skip_num;
 	/*
 	 * camera id: front camera or rear camera
 	 */

@@ -283,6 +283,7 @@ struct ae_set_work_param {
 	struct ae_measure_highflash highflash_measure;
 	struct ae_sensor_fps_info sensor_fps;
 	struct ae_ct_table ct_table;
+	cmr_u32 capture_skip_num;
 };
 
 struct ae_set_iso {

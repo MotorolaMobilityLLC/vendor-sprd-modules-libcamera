@@ -2731,37 +2731,6 @@ static cmr_s32 ae_get_flicker_switch_flag(struct ae_ctrl_cxt *cxt, cmr_handle in
 	return rtn;
 }
 
-static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
-{
-	UNUSED(param);
-	cxt->hdr_up = cxt->hdr_down = 33;//50
-
-	cxt->hdr_frame_cnt++;
-	if (cxt->hdr_frame_cnt == cxt->hdr_cb_cnt) {
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, NULL);
-		ISP_LOGI("_isp_hdr_callback do-capture!\r\n");
-	}
-
-	if (3 == cxt->hdr_flag) {
-		cxt->cur_status.settings.manual_mode = 1;
-		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_up;
-		cxt->hdr_flag--;
-		ISP_LOGI("_isp_hdr_3: %d\n", cxt->cur_status.settings.table_idx);
-	} else if (2 == cxt->hdr_flag) {
-		cxt->cur_status.settings.manual_mode = 1;
-		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_down;
-		cxt->hdr_flag--;
-		ISP_LOGI("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
-	} else if (1 == cxt->hdr_flag) {
-		cxt->cur_status.settings.manual_mode = 1;
-		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx;
-		cxt->hdr_flag--;
-		ISP_LOGI("_isp_hdr_1: %d\n", cxt->cur_status.settings.table_idx);
-	} else {
-		;
-	}
-	return;
-}
 
 static void ae_set_led(struct ae_ctrl_cxt *cxt)
 {
@@ -2904,6 +2873,144 @@ EXIT:
 	return;
 }
 
+static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_line, cmr_u32 in_min_frame_line, cmr_u32 in_exposure, cmr_u32 base_gain, cmr_u32 *exp_l)
+{
+	cmr_u32 exp_line = 0;
+	cmr_u32 exp_time = 0;
+	cmr_u32 exposure = in_exposure;
+	cmr_u32 max_frame_line = in_max_frame_line;
+	cmr_u32 min_frame_line = in_min_frame_line;
+
+	if (cxt->cur_flicker == 0){
+		if (exposure >= 10000000){
+			exp_time = (cmr_u32)(1.0 * exposure / 10000000 + 0.5) * 10000000;
+			exp_line = (cmr_u32)(1.0 * exp_time / cxt->cur_status.line_time + 0.5);
+				if(exp_line < min_frame_line) exp_line = min_frame_line;
+					else if(exp_line > max_frame_line){
+						exp_line = max_frame_line;
+						base_gain =  (cmr_u32)(exp_time * base_gain / (1.0 * max_frame_line * cxt->cur_status.line_time) + 0.5);
+						}
+			}
+		else exp_line = (cmr_u32)(1.0 * exposure / cxt->cur_status.line_time + 0.5);
+		}
+	if (cxt->cur_flicker == 1){
+		if (exposure >= 8333333){
+			exp_time = (cmr_u32)(1.0 * exposure / 8333333 + 0.5) * 8333333;
+			exp_line = (cmr_u32)(1.0 * exp_time / cxt->cur_status.line_time + 0.5);
+				if(exp_line < min_frame_line) exp_line = min_frame_line;
+					else if(exp_line > max_frame_line){
+						exp_line = max_frame_line;
+						base_gain =  (cmr_u32)(exp_time * base_gain / (1.0 * max_frame_line * cxt->cur_status.line_time) + 0.5);
+						}
+			}
+		else exp_line = (cmr_u32)(1.0 * exposure / cxt->cur_status.line_time + 0.5);
+		}
+
+	*exp_l = exp_line;
+
+	ISP_LOGI("exposure %d, max_frame_line %d, min_frame_line %d, exp_time %d, exp_line %d\n", in_exposure, in_max_frame_line, in_min_frame_line, exp_time, exp_line);
+}
+static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
+{
+	UNUSED(param);
+	cmr_u32 base_exposure_line = 0;
+	cmr_u32 up_exposure = 0;
+	cmr_u32 down_exposure = 0;
+	cmr_u16 base_gain = 0;
+	cmr_u16 base_idx = 0;
+	cmr_u32 up_EV_offset = 0;
+	cmr_u32 down_EV_offset = 0;
+	cmr_u32 max_frame_line = 0;
+	cmr_u32 min_frame_line = 0;
+	cmr_u32 min_index = cxt->cur_status.ae_table->min_index;
+	cmr_u32 exp_line = 0;
+	cmr_s32 counts = 0;
+	cmr_u32 skip_num = 0;
+	cmr_s8 hdr_callback_flag = 0;
+
+	cxt->hdr_frame_cnt++;
+	hdr_callback_flag = MAX((cmr_s8)cxt->hdr_cb_cnt, (cmr_s8)cxt->capture_skip_num);
+	if (cxt->hdr_frame_cnt == hdr_callback_flag) {
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, NULL);
+		ISP_LOGI("_isp_hdr_callback do-capture!\r\n");
+	}
+#if 0
+	if (3 == cxt->hdr_flag) {
+		cxt->cur_status.settings.manual_mode = 1;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_up;
+		cxt->hdr_flag--;
+		ISP_LOGI("_isp_hdr_3: %d\n", cxt->cur_status.settings.table_idx);
+	} else if (2 == cxt->hdr_flag) {
+		cxt->cur_status.settings.manual_mode = 1;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_down;
+		cxt->hdr_flag--;
+		ISP_LOGI("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
+	} else if (1 == cxt->hdr_flag) {
+		cxt->cur_status.settings.manual_mode = 1;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx;
+		cxt->hdr_flag--;
+		ISP_LOGI("_isp_hdr_1: %d\n", cxt->cur_status.settings.table_idx);
+	} else {
+		;
+	}
+#else
+		skip_num = cxt->capture_skip_num;
+		ISP_LOGI("skip_num %d", skip_num);
+		counts = cxt->capture_skip_num - cxt->hdr_cb_cnt - cxt->hdr_frame_cnt;
+		if(0 > counts){
+			up_EV_offset = cxt->cur_param->hdr_param.ev_plus_offset;
+				if (up_EV_offset == 0)
+					up_EV_offset = 150;
+			down_EV_offset = cxt->cur_param->hdr_param.ev_minus_offset;
+				if (down_EV_offset == 0)
+					down_EV_offset = 150;
+			max_frame_line = (cmr_u32)(1.0 * 1000000000 / cxt->fps_range.min / cxt->cur_status.line_time);
+			min_frame_line = cxt->cur_status.ae_table->exposure[min_index];
+			ISP_LOGV("counts %d\n", counts);
+			ISP_LOGV("up_EV_offset %d\n", up_EV_offset);
+			ISP_LOGV("down_EV_offset %d\n", down_EV_offset);
+			ISP_LOGV("max_frame_line %d, min_frame_line %d, fps_min %d, cur_line_time %d\n", max_frame_line, min_frame_line, cxt->fps_range.min, cxt->cur_status.line_time);
+				if (3 == cxt->hdr_flag) {
+					base_idx = cxt->hdr_base_ae_idx;
+					base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
+					base_gain = cxt->cur_status.ae_table->again[base_idx];
+					down_exposure = 1.0 / pow(2 , down_EV_offset / 100.0) * base_exposure_line * cxt->cur_status.line_time;
+					ISP_LOGV("down_ev_offset %f, pow2 %f\n", down_EV_offset / 100.0, pow(2 , down_EV_offset / 100.0));
+					ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_gain, &exp_line);
+					ISP_LOGV("base_idx: %d, base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_idx, base_exposure_line, base_gain, down_exposure, exp_line);
+					cxt->cur_status.settings.manual_mode = 0;
+					cxt->cur_status.settings.exp_line = exp_line;
+					cxt->cur_status.settings.gain = base_gain;
+					cxt->hdr_flag--;
+					ISP_LOGI("_isp_hdr_3: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+				} else if (2 == cxt->hdr_flag) {
+					base_idx = cxt->hdr_base_ae_idx;
+					base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
+					base_gain = cxt->cur_status.ae_table->again[base_idx];
+					up_exposure = pow(2 , up_EV_offset / 100.0) * base_exposure_line * cxt->cur_status.line_time;
+					ISP_LOGV("up_ev_offset %f, pow2 %f\n", up_EV_offset / 100.0, pow(2 , up_EV_offset / 100.0));
+					ae_hdr_calculation(cxt, max_frame_line, min_frame_line, up_exposure, base_gain, &exp_line);
+					ISP_LOGV("base_idx: %d, base_exposure: %d, base_gain: %d, up_exposure: %d, exp_line: %d", base_idx, base_exposure_line, base_gain, up_exposure, exp_line);
+					cxt->cur_status.settings.manual_mode = 0;
+					cxt->cur_status.settings.exp_line = exp_line;
+					cxt->cur_status.settings.gain = base_gain;
+					cxt->hdr_flag--;
+					ISP_LOGI("_isp_hdr_2: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+				} else if (1 == cxt->hdr_flag) {
+					base_idx = cxt->hdr_base_ae_idx;
+					base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
+					base_gain = cxt->cur_status.ae_table->again[base_idx];
+					cxt->cur_status.settings.manual_mode = 0;
+					cxt->cur_status.settings.exp_line = base_exposure_line;
+					cxt->cur_status.settings.gain = base_gain;
+					cxt->hdr_flag--;
+					ISP_LOGI("_isp_hdr_1: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+				} else {
+						;
+				}
+			}
+#endif
+}
 
 static struct ae_exposure_param s_bakup_exp_param[2] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0}};
 static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
@@ -2990,6 +3097,9 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		ISP_LOGE("param is NULL \n");
 		return AE_ERROR;
 	}
+
+	cxt->capture_skip_num = work_info->capture_skip_num;
+	ISP_LOGI("capture_skip_num %d", cxt->capture_skip_num);
 
 	if (work_info->mode >= AE_WORK_MODE_MAX) {
 		ISP_LOGE("fail to set work mode");
