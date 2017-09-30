@@ -104,7 +104,7 @@ static struct sensor_version_info s_gc2375a_version_info=
 	{
 		{
 			0x33326367,
-			0x00003537,
+			0x00613537,
 			0x00000000,
 			0x00000000,
 			0x00000000,
