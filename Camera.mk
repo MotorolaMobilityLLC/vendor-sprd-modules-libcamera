@@ -3,6 +3,8 @@ include $(CLEAR_VARS)
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
+PLATFORM_VERSION_FILTER = sp9850ka sc9850kh
+
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc \
 	$(LOCAL_PATH)/vsp/src \
@@ -35,7 +37,7 @@ ISP_HW_VER = 3v0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ISP_HW_VER = 2v1a
 else
 ISP_HW_VER = 2v1
@@ -135,7 +137,7 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ifneq ($(strip $(PLATFORM_VERSION)),8.0.0)
 else
 LOCAL_SRC_FILES+= \

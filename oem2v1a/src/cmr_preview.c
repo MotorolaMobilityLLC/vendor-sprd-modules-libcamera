@@ -1676,6 +1676,37 @@ exit:
     return ret;
 }
 
+cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
+                                struct frm_info *in, cmr_uint *addr_vir_y) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    int i = 0;
+    CHECK_HANDLE_VALID(handle);
+    struct prev_handle *pre_handle = (struct prev_handle *)handle;
+    struct prev_context *prev_cxt = &pre_handle->prev_cxt[camera_id];
+
+    if (!in) {
+        CMR_LOGE("input parameters is null");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+    for (i = 0; i < HDR_CAP_NUM; i++) {
+        if (in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
+            break;
+    }
+
+    if (i == HDR_CAP_NUM) {
+        CMR_LOGE("search hdr buffer failed");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+    *addr_vir_y = prev_cxt->cap_hdr_virt_addr_path_array[i];
+
+    CMR_LOGI("fd:%d", i);
+
+exit:
+    return ret;
+}
+
 /**************************LOCAL FUNCTION
  * ***************************************************************************/
 cmr_int prev_create_thread(struct prev_handle *handle) {
@@ -4570,7 +4601,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 i = 0;
     cmr_u32 mem_size, buffer_size, frame_size, y_addr, u_addr = 0;
     cmr_s32 fd = 0;
-    cmr_u32 y_addr_vir, u_addr_vir = 0;
+    cmr_uint y_addr_vir, u_addr_vir = 0;
     cmr_u32 no_scaling = 0;
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
@@ -10687,7 +10718,7 @@ cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
                           struct frm_info *data) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
     cmr_u32 frm_id = 0;
-    cmr_u32 rot_frm_id = 0;
+    cmr_uint rot_frm_id = 0;
     struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
     struct rot_param rot_param;
     struct cmr_op_mean op_mean;
@@ -10700,7 +10731,7 @@ cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&op_mean, sizeof(struct cmr_op_mean));
     /*check preview status and frame id*/
     if (PREVIEWING == prev_cxt->prev_status) {
-        ret = prev_get_src_rot_buffer(prev_cxt, data, (cmr_uint *)&rot_frm_id);
+        ret = prev_get_src_rot_buffer(prev_cxt, data, &rot_frm_id);
         if (ret) {
             CMR_LOGE("get src rot buffer failed");
             ret = CMR_CAMERA_FAIL;
@@ -10735,7 +10766,7 @@ cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
         rot_param.angle = prev_cxt->prev_param.prev_rot;
         ;
 
-        CMR_LOGD("frm_id %d, rot_frm_id %d", frm_id, rot_frm_id);
+        CMR_LOGD("frm_id %d, rot_frm_id %ld", frm_id, rot_frm_id);
 
         op_mean.rot = rot_param.angle;
 

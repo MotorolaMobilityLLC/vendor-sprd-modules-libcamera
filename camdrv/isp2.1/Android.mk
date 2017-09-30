@@ -22,7 +22,7 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ISP_HW_VER = 2v1a
 else
 ISP_HW_VER = 2v1

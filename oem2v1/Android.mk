@@ -6,7 +6,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=fo
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
-ifneq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ifeq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.1

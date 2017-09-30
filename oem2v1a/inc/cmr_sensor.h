@@ -89,7 +89,7 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id,
                             struct sensor_exp_info *sensor_info);
 
 cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
-                            cmr_u32 mode);
+                            cmr_uint mode);
 
 cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id);
 

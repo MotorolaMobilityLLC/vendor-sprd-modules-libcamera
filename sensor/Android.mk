@@ -25,7 +25,7 @@ TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 ISP_HW_VER = 3v0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ISP_HW_VER = 2v1a
 else
 ISP_HW_VER = 2v1

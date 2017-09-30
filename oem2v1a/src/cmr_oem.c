@@ -749,10 +749,8 @@ cmr_int camera_get_post_proc_chn_out_frm_id(struct img_frm *frame,
     cmr_int i;
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-        if (data->yaddr == (frame + i)->addr_phy.addr_y &&
-            data->uaddr == (frame + i)->addr_phy.addr_u) {
+        if ((cmr_u32)frame[i].fd == data->fd)
             break;
-        }
     }
     CMR_LOGI("frm id %ld", i);
     return i;
@@ -798,6 +796,10 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
         struct img_frm out_param;
         struct ipm_frame_in ipm_in_param;
         struct ipm_frame_out imp_out_param;
+        cmr_uint vir_addr_y = 0;
+        cmr_bzero(&out_param, sizeof(out_param));
+        cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
+        cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
         /* for bug 396318, will be removed later */
         // camera_set_discard_frame((cmr_handle)cxt, 1);
@@ -816,14 +818,32 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
         } else {
             frm_id = camera_get_post_proc_chn_out_frm_id(
                 cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
-            if (frm_id >= CMR_CAPTURE_MEM_SUM)
+            /*if frm_id biger than 0,you should search hdr buffer in
+              hdr buffer list. You can't use (frame->yaddr) on 64bit system*/
+            if (frm_id >= CMR_CAPTURE_MEM_SUM) {
+                if (1 == camera_get_hdr_flag(cxt))
+                    ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
+                                                  cxt->camera_id, frame,
+                                                  &vir_addr_y);
+                out_param.size =
+                    cxt->snp_cxt.post_proc_setting.chn_out_frm[0].size;
+                out_param.fd = frame->fd;
+                out_param.addr_vir.addr_y = vir_addr_y;
+                out_param.addr_phy.addr_y = frame->yaddr;
+                out_param.addr_phy.addr_u = frame->uaddr;
+                out_param.addr_phy.addr_v = frame->vaddr;
+                if (ret) {
+                    CMR_LOGE("failed to get hdr buffer %ld", ret);
+                    goto exit;
+                }
+            } else {
+                /*if frm_id is 0,use default chn_out_frm.
+                  This is also dest img buffer         */
                 out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-            else
-                out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[frm_id];
+            }
         }
-        ipm_in_param.dst_frame = out_param;
-        out_param.addr_vir.addr_y = frame->yaddr_vir;
-        out_param.fd = frame->fd;
+
+        ipm_in_param.dst_frame = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
         cxt->snp_cxt.cur_frm_info = *frame;
         ipm_cxt->frm_num++;
         ipm_in_param.src_frame = out_param;
