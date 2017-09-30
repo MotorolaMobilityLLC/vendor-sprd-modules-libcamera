@@ -18,6 +18,7 @@
 #endif
 
 #include "stdio.h"
+#include "isp_pm.h"
 
 /**---------------------------------------------------------------------------*
 **				Compiler Flag				*
@@ -338,7 +339,6 @@ struct lsc2_tune_param {	// if modified, please contact to TOOL team
 	cmr_u32 flash_enhance_en;
 	cmr_u32 flash_enhance_max_strength;
 	cmr_u32 flash_enahnce_gain;
-
 };
 
 struct lsc2_context {
@@ -349,6 +349,8 @@ struct lsc2_context {
 	cmr_u32 pre_flash_mode;
 	cmr_u32 between_pre_main_flash_count;
 	cmr_u32 alg_open;	// complie alg0.c or alg2.c
+	cmr_u32 img_width;
+	cmr_u32 img_height;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
 	cmr_u32 gain_pattern;
@@ -356,11 +358,11 @@ struct lsc2_context {
 	cmr_u32 dual_cam_id;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 
-	
-	cmr_u16 *lsc_tab_address[9];	      // log the using table address
-    cmr_u16 *lsc_OTP_tab_copy;                // the copy of OTP table from init
+	cmr_u16 *lsc_tab_address[9];	          // log the using table address
+	cmr_u16 *lsc_OTP_tab_copy;                // the copy of OTP table from init
 	cmr_u16 *lsc_OTP_tab_storage[8];          // the storage to save OTP tab
-    cmr_u16 *lsc_OTP_tab_storage_binning[8];  // the storage to save binning OTP tab
+	cmr_u16 *lsc_OTP_tab_storage_binning[8];  // the storage to save binning OTP tab
+	cmr_u16 *lsc_OTP_tab_storage_720p[9];     // the storage to save 720p OTP tab
 	cmr_u16 *lsc_pm0;	        // log the tab0 from pm
 	cmr_u16 *lsc_table_ptr_r;	// storage to save Rfirst table
 	cmr_u16 *tabptr[9];	        // address of origianl shading table will be used to interperlation in slsc2
@@ -391,16 +393,18 @@ struct lsc2_context {
 	cmr_u16 *dst_gain;
 
 	// flag in ALSC LIB
-    cmr_u32 frame_count;
-    cmr_u32 alg_count;
-    cmr_u32 alg_quick_in;
+	cmr_u32 frame_count;
+	cmr_u32 alg_count;
+	cmr_u32 alg_quick_in;
+
 	// otp
 	cmr_u32 lsc_otp_table_flag;         // 0 non-OTP, 1 OTP table
-    cmr_u32 lsc_otp_table_flag_binning; // 0 non-OTP, 1 OTP table
+	cmr_u32 lsc_otp_table_flag_binning; // 0 non-OTP, 1 OTP table
+	cmr_u32 lsc_otp_table_flag_720p;    // 0 non-OTP, 1 OTP table
 	cmr_u32 lsc_otp_oc_flag;            // 0 no OTP data, 1 OTP data
-    cmr_u32 lsc_otp_grid;
-    cmr_u32 lsc_otp_table_width;
-    cmr_u32 lsc_otp_table_height;
+	cmr_u32 lsc_otp_grid;
+	cmr_u32 lsc_otp_table_width;
+	cmr_u32 lsc_otp_table_height;
 	cmr_u32 lsc_otp_oc_r_x;
 	cmr_u32 lsc_otp_oc_r_y;
 	cmr_u32 lsc_otp_oc_gr_x;
@@ -409,7 +413,8 @@ struct lsc2_context {
 	cmr_u32 lsc_otp_oc_gb_y;
 	cmr_u32 lsc_otp_oc_b_x;
 	cmr_u32 lsc_otp_oc_b_y;
-    // lsc command set address
+
+	// lsc command set address
 	void* lsc_eng_cmd_set_ptr;
 	void* lsc_eng_cmd_set2_ptr;
 
@@ -423,6 +428,7 @@ struct lsc2_context {
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
 };
+
 // change mode (fw_start, fw_stop)
 struct alsc_fwstart_info {
 	cmr_u16* lsc_result_address_new;
@@ -443,7 +449,6 @@ struct alsc_fwprocstart_info {
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
-
 };
 
 //update flash info
@@ -451,25 +456,25 @@ struct alsc_flash_info {
 	float io_captureFlashEnvRatio;
 	float io_captureFlash1Ratio;
 };
+
 ////////////////////////////// calculation dependent //////////////////////////////
 
-
 struct lsc_eng_cmd_set{
-    cmr_s32 eng_lsc_dump_aem;
-    cmr_s32 eng_lsc_dump_intable;
-    cmr_s32 eng_lsc_dump_outtable;
-    cmr_s32 eng_lsc_dump_otptable;
-    cmr_s32 eng_lsc_dump_param_intable;
-    cmr_s32 eng_lsc_dump_otptrans_intable;
-    cmr_s32 eng_lsc_otp_disable;
+	cmr_s32 eng_lsc_dump_aem;
+	cmr_s32 eng_lsc_dump_intable;
+	cmr_s32 eng_lsc_dump_outtable;
+	cmr_s32 eng_lsc_dump_otptable;
+	cmr_s32 eng_lsc_dump_param_intable;
+	cmr_s32 eng_lsc_dump_otptrans_intable;
+	cmr_s32 eng_lsc_otp_disable;
 };
 
 
 struct lsc_eng_cmd_set2{
-    cmr_s32 eng_lsc_lock;
-    cmr_s32 eng_lsc_set_unit_table;
-    cmr_s32 eng_lsc_set_tab_enable;
-    cmr_s32 eng_lsc_set_tab_index;
+	cmr_s32 eng_lsc_lock;
+	cmr_s32 eng_lsc_set_unit_table;
+	cmr_s32 eng_lsc_set_tab_enable;
+	cmr_s32 eng_lsc_set_tab_index;
 };
 
 
@@ -480,13 +485,13 @@ struct lsc_size {
 
 struct lsc_adv_init_param {
 	cmr_u32 alg_open;	// complie alg0.c or alg2.c
+	cmr_u32 img_width;
+	cmr_u32 img_height;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
 	cmr_u32 gain_pattern;
 	cmr_u32 grid;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
-	cmr_u32 img_height;
-	cmr_u32 img_width;
 
 	// isp2.1 added , need to modify to match old version
 	struct third_lib_info lib_param;
@@ -521,7 +526,7 @@ struct lsc_adv_init_param {
 	//dual cam
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
-	
+
 	struct sensor_otp_section_info *otp_info_lsc_ptr;
 	struct sensor_otp_section_info *otp_info_optical_center_ptr;
 };
@@ -564,6 +569,8 @@ struct lsc_adv_calc_param {
 	//for single and dual flash.
 	float captureFlashEnvRatio; //0-1, flash/ (flash+environment)
 	float captureFlash1ofALLRatio; //0-1,  flash1 / (flash1+flash2)
+
+	cmr_handle handle_pm;
 };
 
 struct lsc_adv_calc_result {
@@ -573,8 +580,8 @@ struct lsc_adv_calc_result {
 struct lsc_lib_ops {
 	cmr_s32(*alsc_calc) (void *handle, struct lsc_adv_calc_param * param, struct lsc_adv_calc_result * adv_calc_result);
 	void *(*alsc_init) (struct lsc_adv_init_param * param);
-	 cmr_s32(*alsc_deinit) (void *handle);
-	 cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+	cmr_s32(*alsc_deinit) (void *handle);
+	cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
 };
 
 struct lsc_ctrl_context {
@@ -583,6 +590,34 @@ struct lsc_ctrl_context {
 	void *lib_handle;
 	struct lsc_lib_ops lib_ops;
 	struct third_lib_info *lib_info;
+	cmr_u16 *dst_gain;
+};
+
+struct binning_info{
+	float ratio;  // binning = 1/2,  double = 2
+};
+
+struct crop_info{
+	unsigned int start_x;
+	unsigned int start_y;
+	unsigned int width;
+	unsigned int height;
+};
+
+enum lsc_transform_action {
+	LSC_BINNING = 0,
+	LSC_CROP = 1,
+};
+
+struct lsc_table_transf_info{
+	unsigned int img_width;
+	unsigned int img_height;
+	unsigned int grid;
+	unsigned int gain_width;
+	unsigned int gain_height;
+
+	unsigned short* pm_tab0;
+	unsigned short* tab;
 };
 
 /**---------------------------------------------------------------------------*
@@ -613,6 +648,7 @@ cmr_s32 otp_lsc_mod(cmr_u16 * otpLscTabGolden, cmr_u16 * otpLSCTabRandom,	//T1, 
 		    cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
 		    cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
 
+cmr_s32  lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_transf_info* dst, enum lsc_transform_action action, void* action_info);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
