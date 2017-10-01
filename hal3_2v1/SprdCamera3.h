@@ -198,6 +198,7 @@ static tags_info_t
         {"sprd3dnrEnabled", TYPE_BYTE},
         {"sprdfiltertype", TYPE_BYTE},
         {"isTakePictureWithFlash", TYPE_BYTE},
+        {"sprdfastthumb", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
