@@ -36,7 +36,12 @@ struct aectrl_cxt {
 	struct aectrl_work_lib work_lib;
 	struct ae_ctrl_param_out ioctrl_out;
 	cmr_u32 bakup_rgb_gain;
-	pthread_mutex_t ioctrl_sync_lock;
+};
+
+struct ae_ctrl_msg_ctrl {
+	cmr_int cmd;
+	cmr_handle in;
+	cmr_handle out;
 };
 
 cmr_s32 _isp_get_flash_cali_param(cmr_handle pm_handle, struct isp_flash_param **out_param_ptr)
@@ -382,14 +387,12 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 		goto exit;
 	}
 
-	pthread_mutex_lock(&cxt_ptr->ioctrl_sync_lock);
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
 		ISP_LOGI("ioctrl fun is NULL");
 	}
-	pthread_mutex_unlock(&cxt_ptr->ioctrl_sync_lock);
 
 exit:
 	ISP_LOGV("done %ld", rtn);
@@ -416,6 +419,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 	case AECTRL_EVT_EXIT:
 		break;
 	case AECTRL_EVT_IOCTRL:
+		rtn = aectrl_ioctrl(cxt_ptr,((struct ae_ctrl_msg_ctrl*)message->data)->cmd,((struct ae_ctrl_msg_ctrl*)message->data)->in,((struct ae_ctrl_msg_ctrl*)message->data)->out);
 		break;
 	case AECTRL_EVT_PROCESS:
 		rtn = aectrl_process(cxt_ptr, (struct ae_calc_in *)message->data, NULL);
@@ -514,21 +518,18 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle;
-	struct aectrl_work_lib *lib_ptr = NULL;
+	struct ae_ctrl_msg_ctrl msg_ctrl;
 
-	if (!cxt_ptr) {
-		ISP_LOGE("fail to check param ,param is NULL!");
-		goto exit;
-	}
+	ISP_CHECK_HANDLE_VALID(handle);
+	CMR_MSG_INIT(message);
+	msg_ctrl.cmd = cmd;
+	msg_ctrl.in = in_ptr;
+	msg_ctrl.out = out_ptr;
+	message.data = &msg_ctrl;
+	message.msg_type = AECTRL_EVT_IOCTRL;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 
-	pthread_mutex_lock(&cxt_ptr->ioctrl_sync_lock);
-	lib_ptr = &cxt_ptr->work_lib;
-	if (lib_ptr->adpt_ops->adpt_ioctrl) {
-		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
-	} else {
-		ISP_LOGI("ioctrl fun is NULL");
-	}
-	pthread_mutex_unlock(&cxt_ptr->ioctrl_sync_lock);
 exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
@@ -574,8 +575,6 @@ cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_ha
 	cxt_ptr->caller_handle = input_ptr->caller_handle;
 	cxt_ptr->ae_set_cb = input_ptr->ae_set_cb;
 
-	pthread_mutex_init(&cxt_ptr->ioctrl_sync_lock, NULL);
-
 	rtn = aectrl_create_thread(cxt_ptr);
 	if (rtn) {
 		goto exit;
@@ -595,7 +594,6 @@ cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_ha
 
 error_adpt_init:
 	aectrl_destroy_thread(cxt_ptr);
-	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 exit:
 	if (cxt_ptr) {
 		free((cmr_handle) cxt_ptr);
@@ -628,12 +626,10 @@ cmr_int ae_ctrl_deinit(cmr_handle * handle_ae)
 
 	rtn = aectrl_destroy_thread(cxt_ptr);
 	if (rtn) {
-		pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 		ISP_LOGE("fail to destroy aectrl thread %ld", rtn);
 		goto exit;
 	}
 
-	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 exit:
 	if (cxt_ptr) {
 		free((cmr_handle) cxt_ptr);
