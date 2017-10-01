@@ -3691,17 +3691,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = isp_dev_statis_buf_malloc(cxt->dev_access_handle, &statis_mem_input);
 	ISP_RETURN_IF_FAIL(ret, ("fail to malloc buf"));
-	interface_ptr->data.work_mode = ISP_CONTINUE_MODE;
-	interface_ptr->data.input = ISP_CAP_MODE;
-	interface_ptr->data.input_format = in_ptr->format;
-	interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
-	interface_ptr->data.input_size.w = in_ptr->dcam_size.w;
-	interface_ptr->data.input_size.h = in_ptr->dcam_size.h;
-	interface_ptr->data.output_format = ISP_DATA_UYVY;
-	interface_ptr->data.output = ISP_DCAM_MODE;
-
-	ret = isp_dev_set_interface(interface_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
 
 	mode_num = 1;
 	switch (in_ptr->work_mode) {
@@ -3796,10 +3785,24 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
 
-	ret = isp_dev_start(cxt->dev_access_handle, cxt->zsl_flag,
-			cxt->mode_id,
-			interface_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
+	interface_ptr->data.input = ISP_CAP_MODE;
+	interface_ptr->data.input_format = in_ptr->format;
+	interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
+	interface_ptr->data.output_format = ISP_DATA_UYVY;
+	for (i = 0; i < mode_num; i++) {
+		if (i == 0) {
+			interface_ptr->data.input_size.w = in_ptr->dcam_size.w;
+			interface_ptr->data.input_size.h = in_ptr->dcam_size.h;
+		} else if (cxt->zsl_flag && i == 1) {
+			interface_ptr->data.input_size.w = in_ptr->size.w;
+			interface_ptr->data.input_size.h = in_ptr->size.h;
+		}
+		ret = isp_dev_set_interface(interface_ptr);
+		ISP_RETURN_IF_FAIL(ret, ("fail to set param"));
+
+		ret = isp_dev_start(cxt->dev_access_handle, cxt->mode_id[i], interface_ptr);
+		ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
+	}
 
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
@@ -3997,8 +4000,8 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
-	ret = isp_dev_start(cxt->dev_access_handle, cxt->zsl_flag,
-			cxt->mode_id,
+	ret = isp_dev_start(cxt->dev_access_handle,
+			cxt->mode_id[0],
 			interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
 
