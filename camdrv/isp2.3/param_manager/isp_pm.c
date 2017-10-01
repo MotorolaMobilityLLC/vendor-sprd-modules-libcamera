@@ -1442,7 +1442,7 @@ static cmr_s32 isp_pm_get_isp_lsc(cmr_handle handle,
 			continue;
 
 		for (j = 0; j < mode_param_ptr->block_num; j++) {
-			if (mode_param_ptr->header[j].block_id == ISP_BLK_2D_LSC) {
+			if (mode_param_ptr->header[j].block_id == DCAM_BLK_2D_LSC) {
 				memcpy((cmr_u8 *) isp_lsc_hdr,
 						(cmr_u8 *) & mode_param_ptr->header[j],
 						sizeof(struct isp_pm_block_header));
@@ -1652,7 +1652,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			mode_ptr = pm_cxt_ptr->merged_mode_array[mode_id];
 		}
 		if (inctl_param_ptr->id == DCAM_BLK_2D_LSC || inctl_param_ptr->id == ISP_BLK_2D_LSC) {
-			ISP_LOGE("blk_id 0x%x, mode %d,  cxt %p", inctl_param_ptr->id, mode_id, isp_cxt_ptr);
+			ISP_LOGV("blk_id 0x%x, mode %d,  cxt %p", inctl_param_ptr->id, mode_id, isp_cxt_ptr);
 		}
 
 		if (isp_cxt_ptr == PNULL || isp_cxt_ptr->is_validate != ISP_ONE || mode_ptr == PNULL) {
