@@ -139,6 +139,11 @@ struct class_tab_t threednr_prev_tab_info = {
 cmr_int isp_ioctl_for_3dnr(cmr_handle isp_handle, c3dnr_io_info_t *io_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct isp_3dnr_info isp_3dnr;
+    if (!isp_handle) {
+        CMR_LOGI("isp_handle is null,return");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
 
     isp_3dnr.image[0].buffer = io_info->image[0].bufferY;
     isp_3dnr.image[0].fd = io_info->image[0].fd;
@@ -153,7 +158,7 @@ cmr_int isp_ioctl_for_3dnr(cmr_handle isp_handle, c3dnr_io_info_t *io_info) {
     isp_3dnr.blending_no = io_info->blending_no;
 
     ret = isp_ioctl(isp_handle, ISP_CTRL_POST_3DNR, (void *)&isp_3dnr);
-
+exit:
     return ret;
 }
 
@@ -314,7 +319,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
 
     CMR_LOGI("OK to threednr_deinit");
 
-    sem_destroy(&threednr_handle->sem_3dnr);
+    sem_wait(&threednr_handle->sem_3dnr);
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
     if (NULL != cam_cxt->hal_malloc) {
@@ -338,6 +343,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     } else {
         CMR_LOGD("cam_cxt->hal_free is NULL");
     }
+    sem_post(&threednr_handle->sem_3dnr);
 
     ret = threednr_thread_destroy(threednr_handle);
     if (ret) {
@@ -347,6 +353,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     if (NULL != threednr_handle)
         free(threednr_handle);
 
+    sem_destroy(&threednr_handle->sem_3dnr);
     sem_post(&cam_cxt->threednr_proc_sm);
 
     CMR_LOGI("X");
@@ -644,6 +651,10 @@ void *thread_3dnr(void *p_data) {
     cmr_u32 cur_frm;
     char filename[128];
 
+    if (threednr_handle->is_stop) {
+        CMR_LOGE("threednr_handle is stop");
+        goto exit;
+    }
     sem_wait(&threednr_handle->sem_3dnr);
 
     cur_frm = threednr_handle->common.save_frame_count;
@@ -759,7 +770,10 @@ void *thread_3dnr(void *p_data) {
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
-
+    if (threednr_handle->is_stop) {
+        CMR_LOGE("threednr_handle is stop");
+        goto exit;
+    }
     if (CAP_3DNR_NUM == threednr_handle->common.save_frame_count) {
         cmr_bzero(&out->dst_frame, sizeof(struct img_frm));
         oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;

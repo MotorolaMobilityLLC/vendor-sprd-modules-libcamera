@@ -6042,6 +6042,7 @@ cmr_int camera_isp_stop_video(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
+    CMR_LOGI("E");
 
     if (!oem_handle) {
         CMR_LOGE("in parm error");
@@ -8569,7 +8570,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct common_isp_cmd_param param;
 
-    CMR_LOGI("s");
+    CMR_LOGI("E");
 
     if (PREVIEWING !=
         cmr_preview_get_status(cxt->prev_cxt.preview_handle, cxt->camera_id)) {
@@ -8595,7 +8596,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     cxt->prev_cxt.video_size.width = 0;
     cxt->prev_cxt.video_size.height = 0;
 exit:
-    CMR_LOGV("done %ld", ret);
+    CMR_LOGI("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -8865,7 +8866,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
 
 exit:
-    CMR_LOGV("done %ld", ret);
+    CMR_LOGI("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -8877,18 +8878,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
-
-    if (camera_get_3dnr_flag(cxt)) {
-#ifdef OEM_HANDLE_3DNR
-        if (0 != cxt->ipm_cxt.frm_num) {
-            cxt->ipm_cxt.frm_num = 0;
-        }
-#endif
-        ret = camera_close_3dnr(cxt);
-        if (ret) {
-            CMR_LOGE("failed to close 3dnr");
-        }
-    }
+    CMR_LOGI("E");
 
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
@@ -8908,6 +8898,18 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     if (ret) {
         CMR_LOGE("failed to cancel %ld", ret);
         goto exit;
+    }
+
+    if (camera_get_3dnr_flag(cxt)) {
+#ifdef OEM_HANDLE_3DNR
+        if (0 != cxt->ipm_cxt.frm_num) {
+            cxt->ipm_cxt.frm_num = 0;
+        }
+#endif
+        ret = camera_close_3dnr(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close 3dnr");
+        }
     }
 
     if (camera_get_hdr_flag(cxt)) {
@@ -8931,7 +8933,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     cxt->snp_cxt.status = IDLE;
 
 exit:
-    CMR_LOGV("done %ld", ret);
+    CMR_LOGI("done %ld", ret);
     ATRACE_END();
     return ret;
 }

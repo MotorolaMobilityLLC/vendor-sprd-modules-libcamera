@@ -2575,7 +2575,7 @@ bool SprdCamera3OEMIf::isPreviewStart() {
 
 bool SprdCamera3OEMIf::isCapturing() {
     bool ret = false;
-    HAL_LOGV("%s", getCameraStateStr(mCameraState.capture_state));
+    HAL_LOGD("%s", getCameraStateStr(mCameraState.capture_state));
     if (SPRD_FLASH_IN_PROGRESS == mCameraState.capture_state) {
         return false;
     }

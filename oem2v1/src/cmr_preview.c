@@ -923,7 +923,7 @@ cmr_int cmr_preview_stop(cmr_handle preview_handle, cmr_u32 camera_id) {
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    CMR_LOGD("in");
+    CMR_LOGI("in");
 
     message.msg_type = PREV_EVT_ASSIST_STOP;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -943,7 +943,7 @@ cmr_int cmr_preview_stop(cmr_handle preview_handle, cmr_u32 camera_id) {
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGV("out");
+    CMR_LOGI("out");
     return ret;
 }
 
@@ -3851,7 +3851,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     video_enable = prev_cxt->prev_param.video_eb;
     pdaf_enable = prev_cxt->prev_param.pdaf_eb;
 
-    CMR_LOGD("camera_id %d, prev_status %ld, isp_status %ld, preview_eb %d, "
+    CMR_LOGI("camera_id %d, prev_status %ld, isp_status %ld, preview_eb %d, "
              "snapshot_eb %d",
              camera_id, prev_cxt->prev_status, prev_cxt->isp_status,
              preview_enable, snapshot_enable);
@@ -3979,7 +3979,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
 
 exit:
 
-    CMR_LOGD("out");
+    CMR_LOGI("out");
     ATRACE_END();
     return ret;
 }
