@@ -2218,8 +2218,8 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	cmr_u32 val = 0;
 	cmr_u32 last_val0 = 0;
 	cmr_u32 last_val1 = 0;
-	cmr_u32 src_w = cxt->commn_cxt.src.w;
-	cmr_u32 src_h = cxt->commn_cxt.src.h;
+	cmr_u32 src_w = cxt->dcam_size.w;
+	cmr_u32 src_h = cxt->dcam_size.h;
 	cmr_u32 binnng_w = 0;
 	cmr_u32 binnng_h = 0;
 	cmr_u32 double_binning_num = 0;
@@ -2781,8 +2781,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.lib_param = cxt->lib_use_info->af_lib_info;
 	af_input.caller_handle = (cmr_handle) cxt;
 	af_input.af_set_cb = ispalg_af_set_cb;
-	af_input.src.w = cxt->commn_cxt.src.w;
-	af_input.src.h = cxt->commn_cxt.src.h;
+	af_input.src.w = cxt->dcam_size.w;
+	af_input.src.h = cxt->dcam_size.h;
 	af_input.handle_pm = cxt->handle_pm;
 
 	if (NULL != cxt->otp_data) {
@@ -3389,8 +3389,8 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 		param_data++;
 	}
 	if (cxt->afl_cxt.handle) {
-		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.src.w;
-		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.src.h;
+		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->dcam_size.w;
+		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->dcam_size.h;
 	}
 	if(cxt->afl_cxt.version) {
 		if (cxt->ops.afl_ops.config_new)
@@ -4122,7 +4122,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.w = binnng_w / 2;
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
-    /*0:afl_old mode, 1:afl_new mode*/
+	/*0:afl_old mode, 1:afl_new mode*/
 	cxt->afl_cxt.version = 1;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
