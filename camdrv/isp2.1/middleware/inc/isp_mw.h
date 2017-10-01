@@ -30,6 +30,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_BINNING_MAX_STAT_W    640
 #define ISP_BINNING_MAX_STAT_H     480
 
+
 #define ISP_CTRL_EVT_TX				(1 << 2)
 #define ISP_CTRL_EVT_SOF			(1 << 3)
 #define ISP_CTRL_EVT_AE				(1 << 4)
@@ -38,7 +39,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CTRL_EVT_BINNING			(1 << 7)
 #define ISP_PROC_AFL_DONE			(1 << 8)
 
-#define ISP_THREAD_QUEUE_NUM              (100)
+#define ISP_THREAD_QUEUE_NUM			(100)
 
 #define ISP_CALLBACK_EVT                     0x00040000
 
@@ -277,14 +278,26 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SMART_AE,
 	ISP_CTRL_CONTINUE_AF,
 	ISP_CTRL_AF_DENOISE,
+	ISP_CTRL_FLASH_CTRL = 38,	// for isp tool
+	ISP_CTRL_AE_CTRL = 39,	// for isp tool
+	ISP_CTRL_AF_CTRL = 40,	// for isp tool
+	ISP_CTRL_REG_CTRL = 41,	// for isp tool
 	ISP_CTRL_DENOISE_PARAM_READ,	//for isp tool
 	ISP_CTRL_DUMP_REG,	//for isp tool
+	ISP_CTRL_AF_END_INFO,	// for isp tool
 	ISP_CTRL_FLASH_NOTICE,
+	ISP_CTRL_AE_FORCE_CTRL,	// for mp tool
+	ISP_CTRL_GET_AE_STATE,	// for isp tool
+	ISP_CTRL_SET_LUM,	// for isp tool
+	ISP_CTRL_GET_LUM,	// for isp tool
 	ISP_CTRL_SET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_POS,	// for isp tool
+	ISP_CTRL_GET_AF_MODE,	// for isp tool
 	ISP_CTRL_FACE_AREA,
+	ISP_CTRL_SCALER_TRIM,
 	ISP_CTRL_START_3A,
 	ISP_CTRL_STOP_3A,
+	IST_CTRL_SNAPSHOT_NOTICE,
 	ISP_CTRL_SFT_READ,
 	ISP_CTRL_SFT_WRITE,
 	ISP_CTRL_SFT_SET_PASS,
@@ -301,6 +314,10 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_LOCK_UNLOCK,
 	ISP_CTRL_TOOL_SET_SCENE_PARAM,
 	ISP_CTRL_IFX_PARAM_UPDATE,
+	ISP_CTRL_FORCE_AE_QUICK_MODE,
+	ISP_CTRL_DENOISE_PARAM_UPDATE,	//for isp tool
+	ISP_CTRL_SET_AE_EXP_TIME,
+	ISP_CTRL_SET_AE_SENSITIVITY,
 	ISP_CTRL_SET_DZOOM_FACTOR,
 	ISP_CTRL_SET_CONVERGENCE_REQ,
 	ISP_CTRL_SET_SNAPSHOT_FINISHED,
