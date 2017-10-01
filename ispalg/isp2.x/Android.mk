@@ -107,7 +107,12 @@ LOCAL_SHARED_LIBRARIES += libawb1 liblsc libae libflash libsprdlsc
 #LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor
 
-LOCAL_SHARED_LIBRARIES += libspafv1 libspcaftrigger
+LOCAL_SHARED_LIBRARIES += libspcaftrigger
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
+LOCAL_SHARED_LIBRARIES += libspafv1_le
+else
+LOCAL_SHARED_LIBRARIES += libspafv1
+endif
 
 LOCAL_SHARED_LIBRARIES += libdeflicker
 LOCAL_SHARED_LIBRARIES += libSprdPdAlgo

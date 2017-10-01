@@ -682,6 +682,77 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 	return 0;
 }
 
+//SharkLE Only ++
+//helper function
+//copy the original lens_move_to()
+static void lens_move_to_sharkle(af_ctrl_t * af, cmr_u16 pos)
+{
+	//ISP_LOGD(" lens_move_to_sharkle, pos= %d",pos);
+
+	cmr_u16 last_pos = 0;
+
+	if (NULL == af->af_set_next_vcm_pos) {
+		ISP_LOGE("af->af_set_next_vcm_pos null error");
+		return;
+	}
+
+	last_pos = lens_get_pos(af);
+	ISP_LOGD(" lens_move_to_sharkle, last_pos= %d",last_pos);
+
+	if (last_pos != pos) {
+		af->af_set_next_vcm_pos(af->caller, pos);
+		af->lens.pos = pos;
+	} else {
+		ISP_LOGV("pos %d was set last time", pos);
+	}
+}
+
+//original driver new support
+static cmr_u8 if_af_set_pulse_line(cmr_u32 line, void *cookie)
+{
+
+	af_ctrl_t *af = cookie;
+	ISP_LOGD(" if_af_set_pulse_line = %d",line);
+
+	if (NULL != af->af_set_pulse_line)
+		af->af_set_pulse_line(af->caller, line);
+
+	return 0;
+}
+
+//copy the original if_lens_move_to
+static cmr_u8 if_af_set_next_vcm_pos(cmr_u32 pos, void *cookie)
+{
+	ISP_LOGD(" if_af_set_next_vcm_pos, pos= %d",pos);
+
+	af_ctrl_t *af = cookie;
+	af->vcm_timestamp = get_systemtime_ns();
+	AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_VCM, af->vcm_timestamp);
+	lens_move_to_sharkle(af, pos);
+	return 0;
+
+	/*
+	af_ctrl_t *af = cookie;
+	if (NULL != af->af_set_next_vcm_pos)
+		af->af_set_next_vcm_pos(af->caller, pos);
+
+	return 0;
+	*/
+}
+
+static cmr_u8 if_af_set_clear_next_vcm_pos( void *cookie)
+{
+
+	af_ctrl_t *af = cookie;
+
+
+	if (NULL != af->af_set_clear_next_vcm_pos)
+		af->af_set_clear_next_vcm_pos(af->caller);
+
+	return 0;
+}
+//SharkLE Only --
+
 /* initialization */
 static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_output, struct isp_haf_tune_param *pdaf_tune_data)
 {
@@ -721,6 +792,11 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	AF_Ops.set_wins = if_set_wins;
 	AF_Ops.get_win_info = if_get_win_info;
 	AF_Ops.lock_ae_partial = if_lock_partial_ae;
+	//SharkLE Only ++
+	AF_Ops.set_pulse_line = if_af_set_pulse_line;
+	AF_Ops.set_next_vcm_pos = if_af_set_next_vcm_pos;
+	AF_Ops.set_clear_next_vcm_pos = if_af_set_clear_next_vcm_pos;
+	//SharkLE Only --
 
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
 	af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
@@ -2432,6 +2508,11 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->af_monitor_iir_nr_cfg = init_param->af_monitor_iir_nr_cfg;
 	af->af_monitor_module_cfg = init_param->af_monitor_module_cfg;
 	af->af_get_system_time = init_param->af_get_system_time;
+	//SharkLE Only ++
+	af->af_set_pulse_line = init_param->af_set_pulse_line;
+	af->af_set_next_vcm_pos = init_param->af_set_next_vcm_pos;
+	af->af_set_clear_next_vcm_pos = init_param->af_set_clear_next_vcm_pos;
+	//SharkLE Only --
 
 	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,

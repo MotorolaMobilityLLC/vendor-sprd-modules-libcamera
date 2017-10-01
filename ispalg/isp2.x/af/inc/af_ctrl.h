@@ -233,6 +233,11 @@ extern "C" {
 		 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
 		 cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
 		 struct sensor_otp_section_info *otp_info_ptr;
+		 //SharkLE Only ++
+		 cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
+		 cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
+		 cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
+		 //SharkLE Only --
 	};
 
 	struct afctrl_init_out {

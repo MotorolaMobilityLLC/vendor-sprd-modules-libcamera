@@ -317,6 +317,47 @@ static cmr_s32 af_get_system_time(cmr_handle handle_af, cmr_u32 * sec, cmr_u32 *
 	return 0;
 }
 
+#ifdef CONFIG_ISP_2_3
+//SharkLE Only ++
+static cmr_s32 af_set_pulse_line(cmr_handle handle_af, cmr_u32 line)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_PULSE_LINE, (void *)&line, NULL);
+	}
+
+	return 0;
+}
+
+static cmr_s32 af_set_next_vcm_pos(cmr_handle handle_af, cmr_u32 pos)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+	ISP_LOGD("af_set_next_vcm_pos = %d",pos);
+	//ISP_LOGD(" (void *)&pos = %p",(void *)&pos);
+
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_NEXT_VCM_POS, (void *)&pos, NULL);
+	}
+
+	return 0;
+}
+
+static cmr_s32 af_set_clear_next_vcm_pos(cmr_handle handle_af)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_CLEAR_NEXT_VCM_POS, NULL, NULL);
+	}
+
+	return 0;
+}
+//SharkLE Only --
+#endif
+
+
 static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in *in_ptr, struct af_result_param *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -543,6 +584,15 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->af_monitor_iir_nr_cfg = af_monitor_iir_nr_cfg;
 	input_ptr->af_monitor_module_cfg = af_monitor_module_cfg;
 	input_ptr->af_get_system_time = af_get_system_time;
+	
+	#ifdef CONFIG_ISP_2_3
+	//SharkLE Only ++
+	input_ptr->af_set_pulse_line         = af_set_pulse_line;
+	input_ptr->af_set_next_vcm_pos       = af_set_next_vcm_pos;
+	input_ptr->af_set_clear_next_vcm_pos = af_set_clear_next_vcm_pos;
+	//SharkLE Only --
+	#endif
+
 
 	cxt_ptr = (struct afctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
