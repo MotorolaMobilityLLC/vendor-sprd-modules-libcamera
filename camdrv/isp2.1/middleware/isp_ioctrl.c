@@ -97,20 +97,18 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_flash_param *flash = NULL;
 	struct awb_flash_info flash_awb;
 	struct ae_awb_gain flash_wb_gain = { 0, 0, 0 };
 	cmr_u32 ae_effect = 0;
 
 	memset((void *)&flash_awb, 0, sizeof(struct awb_flash_info));
-	if (cxt->ops.ae_ops.get_flash_param)
-		ret = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash);
+
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to get flash cali parm ");
 		return ret;
 	}
 	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
-		 flash->cur.r_ratio, flash->cur.g_ratio, flash->cur.b_ratio, flash->cur.lum_ratio);
+		 cxt->pm_flash_info->cur.r_ratio, cxt->pm_flash_info->cur.g_ratio, cxt->pm_flash_info->cur.b_ratio, cxt->pm_flash_info->cur.lum_ratio);
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_WB_GAIN, NULL, &flash_wb_gain);
@@ -122,9 +120,9 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 	ISP_TRACE_IF_FAIL(ret, ("fail to get ae flash effect"));
 
 	flash_awb.effect = ae_effect;
-	flash_awb.flash_ratio.r = flash->cur.r_ratio;
-	flash_awb.flash_ratio.g = flash->cur.g_ratio;
-	flash_awb.flash_ratio.b = flash->cur.b_ratio;
+	flash_awb.flash_ratio.r = cxt->pm_flash_info->cur.r_ratio;
+	flash_awb.flash_ratio.g = cxt->pm_flash_info->cur.g_ratio;
+	flash_awb.flash_ratio.b = cxt->pm_flash_info->cur.b_ratio;
 
 	if (cxt->ae_cxt.flash_version) {
 		flash_awb.effect = 1024;
@@ -315,7 +313,6 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_flash_notice *flash_notice = (struct isp_flash_notice *)param_ptr;
 	struct ae_flash_notice ae_notice;
-	struct isp_flash_param *flash_cali = NULL;
 	enum smart_ctrl_flash_mode flash_mode = 0;
 	enum awb_ctrl_flash_status awb_flash_status = 0;
 	float captureFlashEnvRatio=0.0;
@@ -355,10 +352,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
-		if (cxt->ops.ae_ops.get_flash_param)
-			ret = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash_cali);
 		if (ISP_SUCCESS == ret)
-			ratio = flash_cali->cur.lum_ratio;
+			ratio = cxt->pm_flash_info->cur.lum_ratio;
 
 		ae_notice.mode = AE_FLASH_PRE_LIGHTING;
 		ae_notice.flash_ratio = ratio;
@@ -1348,7 +1343,6 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 	{
 		struct isp_pm_ioctl_input input = { NULL, 0 };
 		struct isp_pm_ioctl_output output = { NULL, 0 };
-		struct isp_flash_param *flash_param_ptr = NULL;
 
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, &input, &output);
 		if (ISP_SUCCESS == ret && output.param_num) {
@@ -1365,11 +1359,9 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 			}
 		}
 
-		if (cxt->ops.ae_ops.get_flash_param)
-			ret = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash_param_ptr);
 		if (ISP_SUCCESS == ret) {
 			if (cxt->ops.ae_ops.ioctrl)
-				cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash_param_ptr->cur.auto_flash_thr, NULL);
+				cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&cxt->pm_flash_info->cur.auto_flash_thr, NULL);
 		}
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &input, &output);
 		if (ISP_SUCCESS == ret && output.param_num) {

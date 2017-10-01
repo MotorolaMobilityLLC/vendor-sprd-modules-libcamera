@@ -242,6 +242,7 @@ struct isp_alg_fw_context {
 	struct ispalg_lib_ops ops;
 	cmr_u32 lsc_flash_onoff;
 	cmr_u32 capture_mode;
+	struct isp_flash_param *pm_flash_info;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u8  is_master;

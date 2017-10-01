@@ -44,40 +44,6 @@ struct ae_ctrl_msg_ctrl {
 	cmr_handle out;
 };
 
-cmr_s32 _isp_get_flash_cali_param(cmr_handle pm_handle, struct isp_flash_param **out_param_ptr)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
-	memset(&param_data, 0, sizeof(param_data));
-
-	if (NULL == out_param_ptr) {
-		return ISP_PARAM_NULL;
-	}
-
-#ifdef CONFIG_ISP_2_3
-	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_FLASH_CALI,
-			0,
-			NULL, 0);
-	input.param_num = 1;
-	input.param_data_ptr = &param_data;
-#else
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_FLASH_CALI,
-			NULL, 0);
-#endif
-	rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-	if (ISP_SUCCESS == rtn && 1 == output.param_num) {
-		(*out_param_ptr) = (struct isp_flash_param *)output.param_data->data_ptr;
-	} else {
-		rtn = ISP_ERROR;
-	}
-
-	return rtn;
-}
-
 static cmr_s32 ae_ex_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;

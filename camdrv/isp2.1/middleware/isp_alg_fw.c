@@ -241,6 +241,7 @@ struct isp_alg_fw_context {
 	cmr_handle ispalg_lib_handle;
 	struct ispalg_lib_ops ops;
 	cmr_u32 lsc_flash_onoff;
+	struct isp_flash_param *pm_flash_info;
 	pthread_mutex_t stats_buf_lock;
 	cmr_u8  is_master;
 };
@@ -1965,11 +1966,27 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	struct ae_init_in ae_input;
 	struct isp_pm_ioctl_output output;
 	struct isp_pm_param_data *param_data = NULL;
-	struct isp_flash_param *flash = NULL;
 	struct ae_init_out result;
+	struct isp_pm_param_data flash_param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
 	cmr_u32 num = 0;
 	cmr_u32 i = 0;
 	cmr_u32 dflash_num = 0;
+
+	memset(&flash_param_data, 0, sizeof(flash_param_data));
+	BLOCK_PARAM_CFG(input, flash_param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_FLASH_CALI, NULL, 0);
+
+
+	memset(&output, 0, sizeof(output));
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+	cxt->pm_flash_info = (struct isp_flash_param *)output.param_data->data_ptr;
+	} else {
+	ret = ISP_ERROR;
+	}
+
+	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
+	cxt->pm_flash_info->cur.r_ratio, cxt->pm_flash_info->cur.g_ratio, cxt->pm_flash_info->cur.b_ratio, cxt->pm_flash_info->cur.lum_ratio);
 
 	memset((void *)&result, 0, sizeof(result));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
@@ -2034,15 +2051,13 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
-	if (cxt->ops.ae_ops.get_flash_param)
-		ret = cxt->ops.ae_ops.get_flash_param(cxt->handle_pm, &flash);
 	if (cxt->ops.ae_ops.init) {
 		ret = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle)&result);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do ae_ctrl_init"));
 	}
 	cxt->ae_cxt.flash_version = result.flash_ver;
 	if (cxt->ops.ae_ops.ioctrl)
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&flash->cur.auto_flash_thr, NULL);
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void *)&cxt->pm_flash_info->cur.auto_flash_thr, NULL);
 	return ret;
 }
 
@@ -2609,11 +2624,6 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	cxt->ops.ae_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "ae_ctrl_ioctrl");
 	if (!cxt->ops.ae_ops.ioctrl) {
 		ISP_LOGE("fail to dlsym ae_ops.ioctrl");
-		goto error_dlsym;
-	}
-	cxt->ops.ae_ops.get_flash_param = dlsym(cxt->ispalg_lib_handle, "_isp_get_flash_cali_param");
-	if (!cxt->ops.ae_ops.get_flash_param) {
-		ISP_LOGE("fail to dlsym ae_ops.get_flash_param");
 		goto error_dlsym;
 	}
 
