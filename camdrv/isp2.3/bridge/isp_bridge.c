@@ -17,10 +17,6 @@
 
 #include "isp_bridge.h"
 
-/**************************************** MACRO DEFINE *****************************************/
-
-
-/************************************* INTERNAL DATA TYPE **************************************/
 struct ispbr_context {
 	cmr_u32 user_cnt;
 	cmr_handle isp_3afw_handles[SENSOR_NUM_MAX];
@@ -37,11 +33,10 @@ struct ispbr_context {
 static struct ispbr_context br_cxt;
 static pthread_mutex_t g_br_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/*************************************INTERNAK FUNCTION ****************************************/
 cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id)
 {
 	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("fail camera_id %d", camera_id);
+		ISP_LOGE("fail to camera_id %d", camera_id);
 		return NULL;
 	}
 	return br_cxt.isp_3afw_handles[camera_id];
@@ -52,7 +47,7 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 	struct ispbr_context *cxt = &br_cxt;
 
 	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("invalid camera_id %u", camera_id);
+		ISP_LOGE("fail to invalid camera_id %u", camera_id);
 		return -ISP_PARAM_ERROR;
 	}
 
@@ -82,6 +77,42 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		memcpy(out, &cxt->match_param.ae_info,
 			sizeof(cxt->match_param.ae_info));
 		sem_post(&cxt->ae_sm);
+		break;
+	case SET_MATCH_BV_DATA:
+		sem_wait(&cxt->ae_sm);
+		memcpy(&cxt->match_param.bv, in,
+			sizeof(cxt->match_param.bv));
+		sem_post(&cxt->ae_sm);
+		break;
+	case GET_MATCH_BV_DATA:
+		sem_wait(&cxt->ae_sm);
+		memcpy(out, &cxt->match_param.bv,
+			sizeof(cxt->match_param.bv));
+		sem_post(&cxt->ae_sm);
+		break;
+	case SET_STAT_AWB_DATA:
+		sem_wait(&cxt->awb_sm);
+		memcpy(&cxt->match_param.awb_stat[camera_id], in,
+			sizeof(cxt->match_param.awb_stat[camera_id]));
+		sem_post(&cxt->awb_sm);
+		break;
+	case GET_STAT_AWB_DATA:
+		sem_wait(&cxt->awb_sm);
+		memcpy(out, &cxt->match_param.awb_stat[camera_id],
+			sizeof(cxt->match_param.awb_stat[camera_id]));
+		sem_post(&cxt->awb_sm);
+		break;
+	case SET_GAIN_AWB_DATA:
+		sem_wait(&cxt->awb_sm);
+		memcpy(&cxt->match_param.awb_gain, in,
+			sizeof(cxt->match_param.awb_gain));
+		sem_post(&cxt->awb_sm);
+		break;
+	case GET_GAIN_AWB_DATA:
+		sem_wait(&cxt->awb_sm);
+		memcpy(out, &cxt->match_param.awb_gain,
+			sizeof(cxt->match_param.awb_gain));
+		sem_post(&cxt->awb_sm);
 		break;
 	case SET_MODULE_INFO:
 		sem_wait(&cxt->module_sm);
@@ -186,7 +217,7 @@ cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dua
 	struct ispbr_context *cxt = &br_cxt;
 
 	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("fail save camera_id %d dual otp", camera_id);
+		ISP_LOGE("fail to save camera_id %d dual otp", camera_id);
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
@@ -201,7 +232,7 @@ cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dua
 	struct ispbr_context *cxt = &br_cxt;
 
 	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("fail get camera_id %d dual otp", camera_id);
+		ISP_LOGE("fail to get camera_id %d dual otp", camera_id);
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}

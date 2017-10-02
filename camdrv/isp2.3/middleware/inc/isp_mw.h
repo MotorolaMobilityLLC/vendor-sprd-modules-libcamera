@@ -61,6 +61,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
 	ISP_AE_SET_WBC_GAIN,
+	ISP_AE_MULTI_WRITE,
 	/*AF*/
 	ISP_AF_SET_POS,
 	ISP_AF_END_NOTICE,
@@ -379,6 +380,14 @@ enum isp_flash_led_tag {
 	ISP_FLASH_LED_1 = 0x0002
 };
 
+enum {
+	ISP_SINGLE = 0,
+	ISP_DUAL_NORMAL,
+	ISP_DUAL_SBS,
+	ISP_DUAL_SWITCH,
+	ISP_CAMERA_MAX
+};
+
 struct isp_flash_cfg {
 	cmr_u32 type;		// enum isp_flash_type
 	cmr_u32 led_idx;	//enum isp_flash_led
@@ -645,6 +654,11 @@ struct isp_sensor_resolution_info {
 	struct isp_size sensor_output_size;
 };
 
+struct isp_sbs_info {
+	cmr_u32 sbs_mode;
+	struct isp_size img_size;
+};
+
 struct ips_in_param {
 	struct isp_img_frm src_frame;
 	cmr_u32 src_avail_height;
@@ -657,6 +671,11 @@ struct ips_in_param {
 	struct isp_sensor_resolution_info resolution_info;
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 cap_mode;
+	struct isp_sbs_info sbs_info;
+	cmr_handle oem_handle;
+	cmr_malloc alloc_cb;
+	cmr_free free_cb;
+	cmr_u32 sensor_id;
 };
 
 struct ips_out_param {
@@ -717,6 +736,9 @@ struct isp_video_start {
 	cmr_uint highiso_buf_size;
 	struct isp_size live_view_sz;
 	cmr_u8 pdaf_enable;
+	cmr_handle oem_handle;
+	cmr_malloc alloc_cb;
+	cmr_free free_cb;
 };
 
 struct isp_img_param {
@@ -785,6 +807,8 @@ struct isp_init_param {
 #endif
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
+	uint32_t is_multi_mode;
+	uint32_t is_master;
 };
 
 typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,
