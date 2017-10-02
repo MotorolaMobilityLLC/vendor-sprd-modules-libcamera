@@ -212,8 +212,6 @@ cmr_int hw_sensor_mipi_switch(cmr_handle hw_handle,
                                     struct hw_mipi_init_param init_param);
 cmr_int hw_sensor_mipi_deinit(cmr_handle handle);
 
-cmr_int hw_sensor_set_avdd_en_level(cmr_handle handle, cmr_u32 level);
-
 cmr_int hw_sensor_set_mipi_level(cmr_handle handle, cmr_u32 plus_level);
 #define Sensor_SetMIPILevel(plus_level)  hw_sensor_set_mipi_level(handle, plus_level)
 

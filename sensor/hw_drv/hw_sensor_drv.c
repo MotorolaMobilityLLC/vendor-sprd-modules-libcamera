@@ -513,23 +513,6 @@ cmr_int hw_sensor_mipi_deinit(cmr_handle hw_handle) {
     return ret;
 }
 
-cmr_int hw_sensor_set_avdd_en_level(cmr_handle hw_handle, cmr_u32 level)
-{
-    cmr_u8 ret = HW_SUCCESS;
-
-    CHECK_HANDLE(hw_handle);
-    struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt*)hw_handle;
-    HW_LOGI("E");
-
-    ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_SET_AVDD_EN, &level);
-    if (0 != ret) {
-        HW_LOGE("failed,  level = %d, ret=%ld ", level, ret);
-        ret = HW_FAILED;
-    }
-
-    return ret;
-}
-
 cmr_int hw_sensor_set_mipi_level(cmr_handle hw_handle, cmr_u32 plus_level)
 {
     cmr_u8 ret = HW_SUCCESS;
