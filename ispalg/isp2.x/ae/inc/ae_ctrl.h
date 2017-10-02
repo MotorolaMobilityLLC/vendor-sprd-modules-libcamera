@@ -29,52 +29,7 @@ extern "C" {
 #endif
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-
-/* all set ioctl should be even number, while get should be odd */
-enum isp_br_ioctl_cmd {
-	SET_MATCH_AWB_DATA = 0,
-	GET_MATCH_AWB_DATA = 1,
-
-	/* module info (vcm/frame number/view angle/efl) */
-	SET_SLAVE_MODULE_INFO = 2,
-	GET_SLAVE_MODULE_INFO = 3,
-	SET_MASTER_MODULE_INFO = 4,
-	GET_MASTER_MODULE_INFO = 5,
-
-	/* sensor otp info */
-	SET_SLAVE_OTP_AE = 6,
-	GET_SLAVE_OTP_AE = 7,
-	SET_MASTER_OTP_AE = 8,
-	GET_MASTER_OTP_AE = 9,
-
-	/* slave ae match */
-	SET_SLAVE_AESYNC_SETTING = 10,
-	GET_SLAVE_AESYNC_SETTING = 11,
-	SET_SLAVE_AECALC_RESULT = 12,
-	GET_SLAVE_AECALC_RESULT = 13,
-
-	/* master ae match */
-	SET_MASTER_AESYNC_SETTING = 14,
-	GET_MASTER_AESYNC_SETTING = 15,
-	SET_MASTER_AECALC_RESULT = 16,
-	GET_MASTER_AECALC_RESULT = 17,
-
-	/* all module and otp */
-	SET_ALL_MODULE_AND_OTP = 18,
-	GET_ALL_MODULE_AND_OTP = 19,
-
-	/* sync status */
-	SET_SLAVE_AE_SYNC_STATUS = 20,
-	GET_SLAVE_AE_SYNC_STATUS = 21,
-
-	SET_MASTER_AE_SYNC_STATUS=22,
-	GET_MASTER_AE_SYNC_STATUS=23,
-
-	// TODO: turnning info
-};
-
-typedef int32_t(*func_isp_br_ioctrl) (uint32_t is_master, enum isp_br_ioctl_cmd cmd, void *in, void *out);
-
+typedef int32_t(*func_isp_br_ioctrl) (uint32_t is_master, int32_t cmd, void *in, void *out);
 #endif
 
 struct ae_init_in {
@@ -96,8 +51,7 @@ struct ae_init_in {
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	cmr_u8 ae_role;  //1:master 0: slave
-	cmr_u8 sensor_role;
+	cmr_u8 sensor_role;  //1:master 0: slave
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 #endif
@@ -128,9 +82,6 @@ struct ae_calc_in {
 	cmr_u32 usec;
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 is_update;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	cmr_s64 monoboottime;
-#endif
 };
 
 struct ae_ctrl_param_out {

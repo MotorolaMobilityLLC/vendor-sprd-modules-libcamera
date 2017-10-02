@@ -23,9 +23,6 @@
 #include "ae_ctrl.h"
 #include "flash.h"
 #include "isp_debug.h"
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-#include "isp_match.h"
-#endif
 #ifndef WIN32
 #include <utils/Timers.h>
 #include <cutils/properties.h>
@@ -1245,10 +1242,10 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	if (init_param->is_multi_mode) {
 		/* save master & slave sensor info */
 		struct sensor_info sensor_info;
-//		sensor_info.max_again = cxt->cur_status.max_gain;
-//		sensor_info.min_again = cxt->cur_status.min_gain;
+		sensor_info.max_again = cxt->sensor_max_gain;
+		sensor_info.min_again = cxt->sensor_min_gain;
 		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
-//		sensor_info.min_exp_line = cxt->cur_status.min_exp_line;
+		sensor_info.min_exp_line = cxt->min_exp_line;
 		sensor_info.line_time = cxt->cur_status.line_time;
 
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,
@@ -2348,22 +2345,6 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt,
 }
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-static cmr_s32 ae_set_role(struct ae_ctrl_cxt *cxt_ptr, cmr_u8 ae_role)
-{
-	cmr_s32 ret = ISP_ERROR;
-
-	if (!cxt_ptr) {
-		ISP_LOGE("param %p is NULL error!", cxt_ptr);
-		goto exit;
-	}
-	cxt_ptr->ae_role=ae_role;
-	ISP_LOGI("camera_id %d master = %d", cxt_ptr->camera_id, cxt_ptr->ae_role);
-	return ISP_SUCCESS;
-exit:
-	ISP_LOGE("ret=%d !!!", ret);
-	return ret;
-}
-
 static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *multicam_aesync)
 {
 	struct sensor_otp_ae_info* ae_otp_master = NULL;
@@ -2465,37 +2446,10 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 
 	// TODO: calculate this value, or remove it!
 	slv_sync_result->slave_ae.wts.cur_dgain= ae_master_calc_out->wts.cur_dgain;
-	
+
 	/* set flag to 1 if need update, otherwise  set to 0 */
 	slv_sync_result->updata_flag = 1;
 }
-
-static cmr_s32 ae_get_sync_info_from_lib(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *multicam_aesync)
-{
-	cmr_s32  ret = ISP_ERROR;
-
-	ISP_LOGV("camera_id=%d, ae_role=%d", cxt_ptr->camera_id, cxt_ptr->ae_role);
-
-	if (!cxt_ptr || !multicam_aesync) {
-		ISP_LOGE("param is NULL error!");
-		return ret;
-	}
-
-	/* use ae_mapping to update slave's ae info, update slave_ae_info.ae_sync_result */
-	ae_mapping(cxt_ptr, multicam_aesync);
-
-	/* store calculated values into ae_calc_result for reference */
-	// TODO: check fields
-	multicam_aesync->slave_ae_info.ae_calc_result.wts.cur_again =
-		multicam_aesync->slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
-	multicam_aesync->slave_ae_info.ae_calc_result.wts.cur_exp_line =
-		multicam_aesync->slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line;
-	multicam_aesync->slave_ae_info.ae_calc_result.wts.cur_dummy =
-		multicam_aesync->slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;
-
-	return ret;
-}
-
 
 static cmr_s32 ae_dual_cam_sync_calc(struct ae_ctrl_cxt *cxt,  struct match_data_param *dualcam_aesync)
 {
@@ -2507,9 +2461,8 @@ static cmr_s32 ae_dual_cam_sync_calc(struct ae_ctrl_cxt *cxt,  struct match_data
 	}
 
 	// TODO: debug sensor_role=0
-	ISP_LOGV("is_multi_mode=%d, ae_role=%d, sensor_role=%d",
+	ISP_LOGV("is_multi_mode=%d, sensor_role=%d",
 		cxt->is_multi_mode,
-		cxt->ae_role,
 		cxt->sensor_role);
 
 	//get slave sensor aeinfo
@@ -2531,8 +2484,18 @@ static cmr_s32 ae_dual_cam_sync_calc(struct ae_ctrl_cxt *cxt,  struct match_data
 			&dualcam_aesync->module_info);
 	}
 
-	//need check ret
-	ret = ae_get_sync_info_from_lib(cxt, dualcam_aesync);
+
+	/* use ae_mapping to update slave's ae info, update slave_ae_info.ae_sync_result */
+	ae_mapping(cxt, dualcam_aesync);
+
+	/* store calculated values into ae_calc_result for reference */
+	dualcam_aesync->slave_ae_info.ae_calc_result.wts.cur_again =
+		dualcam_aesync->slave_ae_info.ae_sync_result.slave_ae.wts.cur_again;
+	dualcam_aesync->slave_ae_info.ae_calc_result.wts.cur_exp_line =
+		dualcam_aesync->slave_ae_info.ae_sync_result.slave_ae.wts.cur_exp_line;
+	dualcam_aesync->slave_ae_info.ae_calc_result.wts.cur_dummy =
+		dualcam_aesync->slave_ae_info.ae_sync_result.slave_ae.wts.cur_dummy;
+
 
 	if (cxt->sensor_role)
 	{
@@ -2581,7 +2544,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	ae_init_out = (struct ae_init_out *)in_param;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	cxt->ae_role = init_param->ae_role;
 	cxt->sensor_role = init_param->sensor_role;
 	cxt->is_multi_mode = init_param->is_multi_mode;
 	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
@@ -3297,7 +3259,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	struct ae_alg_calc_result *current_result = NULL;
 	current_result = &cxt->sync_cur_result;
 
-	if(cxt->is_multi_mode && cxt->ae_role) {
+	if(cxt->is_multi_mode && cxt->sensor_role) {
 		memcpy(&dualcam_aesync.master_ae_info.ae_calc_result,
 			current_result, sizeof(dualcam_aesync.master_ae_info.ae_calc_result));
 		ISP_LOGD("[master] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
@@ -3312,7 +3274,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 		/* use stored master's ae value to calculate slave's ae value */
 		rtn = ae_dual_cam_sync_calc(cxt, &dualcam_aesync);
-	} else if(cxt->is_multi_mode && !cxt->ae_role) {
+	} else if(cxt->is_multi_mode && !cxt->sensor_role) {
 		/* use slave's ae_sync_result as final ae value */
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AESYNC_SETTING,
 			NULL, &dualcam_aesync.slave_ae_info.ae_sync_result);
@@ -3998,12 +3960,12 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	enum  sync_status ae_sync_status;
 	enum  sync_status ae_sync_status_temp;
 
-	if(cxt->is_multi_mode && cxt->ae_role)
+	if(cxt->is_multi_mode && cxt->sensor_role)
 	{
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MASTER_AE_SYNC_STATUS, NULL, &ae_sync_status);
 		if(ae_sync_status == SYNC_INIT)
 		{
-			ae_sync_status_temp = SYNC_RUN;	
+			ae_sync_status_temp = SYNC_RUN;
 			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AE_SYNC_STATUS, &ae_sync_status_temp, NULL );
 		}
 
@@ -4015,7 +3977,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			return AE_SKIP_FRAME;
 		}
 	}
-	else  if(cxt->is_multi_mode && !cxt->ae_role)
+	else  if(cxt->is_multi_mode && !cxt->sensor_role)
 	{
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AE_SYNC_STATUS, NULL, &ae_sync_status);
 		if(ae_sync_status == SYNC_INIT)
@@ -4173,7 +4135,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	struct match_data_param dualcam_aesync;
 	float cur_fps=0;
 
-	if(cxt->is_multi_mode && cxt->ae_role) {
+	if(cxt->is_multi_mode && cxt->sensor_role) {
 		memcpy(&dualcam_aesync.master_ae_info.ae_calc_result,
 			current_result, sizeof(dualcam_aesync.master_ae_info.ae_calc_result));
 		ISP_LOGD("[master] cur_fps=%f, cur_lum=%d, gain=%u, expline=%u, exptime=%u, dummy=%u",
@@ -4189,7 +4151,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		/* use stored master's ae value to calculate slave's ae value */
 		rtn = ae_dual_cam_sync_calc(cxt, &dualcam_aesync);
 
-	} else if(cxt->is_multi_mode && !cxt->ae_role) {
+	} else if(cxt->is_multi_mode && !cxt->sensor_role) {
 		/* use slave's ae_sync_result as final ae value */
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AESYNC_SETTING,
 			NULL, &dualcam_aesync.slave_ae_info.ae_sync_result);
@@ -4431,12 +4393,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_set_fd_param(cxt, param);
 		break;
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	case AE_CTRL_SET_ROLE:
-		rtn = ae_set_role(cxt, *((cmr_u8 *)param));
-		break;
-#endif
-
 	case AE_GET_GAIN:
 		rtn = ae_get_gain(cxt, result);
 		break;
@@ -4591,11 +4547,11 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	enum  sync_status ae_sync_status = SYNC_DEINIT;
-	if(cxt->is_multi_mode && cxt->ae_role)
+	if(cxt->is_multi_mode && cxt->sensor_role)
 	{
 		rtn  =cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AE_SYNC_STATUS, &ae_sync_status, NULL );
 	}
-	else  if(cxt->is_multi_mode && !cxt->ae_role)
+	else  if(cxt->is_multi_mode && !cxt->sensor_role)
 	{
 		rtn  = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_SLAVE_AE_SYNC_STATUS, &ae_sync_status, NULL);
 

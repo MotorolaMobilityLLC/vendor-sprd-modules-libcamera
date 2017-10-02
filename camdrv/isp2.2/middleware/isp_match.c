@@ -55,7 +55,7 @@ cmr_handle isp_br_get_3a_handle(uint8_t is_master)
 	}
 	return rtn;
 }
-int32_t isp_br_ioctrl(uint32_t camera_id, enum isp_br_ioctl_cmd cmd, void *in, void *out)
+int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
 	struct timespec ts;

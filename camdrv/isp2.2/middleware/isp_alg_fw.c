@@ -2012,12 +2012,10 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	// TODO: change ae_role here
-	if(cxt->is_multi_mode)
-		ae_input.ae_role = cxt->is_master;
 	ae_input.sensor_role = cxt->is_master;
 	ae_input.is_multi_mode = cxt->is_multi_mode;
 	ISP_LOGI("sensor_role=%d, is_multi_mode=%d, ae_role=%d",
-		cxt->is_master, cxt->is_multi_mode , ae_input.ae_role);
+		cxt->is_master, cxt->is_multi_mode , ae_input.sensor_role);
 
 	/* save otp info */
 	if (cxt->is_multi_mode &&  cxt->otp_data != NULL) {

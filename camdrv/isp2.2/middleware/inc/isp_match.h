@@ -28,6 +28,51 @@
 extern "C" {
 #endif
 
+
+/* all set ioctl should be even number, while get should be odd */
+enum isp_br_ioctl_cmd {
+	SET_MATCH_AWB_DATA = 0,
+	GET_MATCH_AWB_DATA = 1,
+
+	/* module info (vcm/frame number/view angle/efl) */
+	SET_SLAVE_MODULE_INFO = 2,
+	GET_SLAVE_MODULE_INFO = 3,
+	SET_MASTER_MODULE_INFO = 4,
+	GET_MASTER_MODULE_INFO = 5,
+
+	/* sensor otp info */
+	SET_SLAVE_OTP_AE = 6,
+	GET_SLAVE_OTP_AE = 7,
+	SET_MASTER_OTP_AE = 8,
+	GET_MASTER_OTP_AE = 9,
+
+	/* slave ae match */
+	SET_SLAVE_AESYNC_SETTING = 10,
+	GET_SLAVE_AESYNC_SETTING = 11,
+	SET_SLAVE_AECALC_RESULT = 12,
+	GET_SLAVE_AECALC_RESULT = 13,
+
+	/* master ae match */
+	SET_MASTER_AESYNC_SETTING = 14,
+	GET_MASTER_AESYNC_SETTING = 15,
+	SET_MASTER_AECALC_RESULT = 16,
+	GET_MASTER_AECALC_RESULT = 17,
+
+	/* all module and otp */
+	SET_ALL_MODULE_AND_OTP = 18,
+	GET_ALL_MODULE_AND_OTP = 19,
+
+	/* sync status */
+	SET_SLAVE_AE_SYNC_STATUS = 20,
+	GET_SLAVE_AE_SYNC_STATUS = 21,
+
+	SET_MASTER_AE_SYNC_STATUS=22,
+	GET_MASTER_AE_SYNC_STATUS=23,
+
+	// TODO: turnning info
+};
+
+
 enum  sync_status{
 	SYNC_INIT = 0x00,
 	SYNC_RUN,
@@ -59,7 +104,7 @@ struct sensor_info {
 	cmr_s16 max_again;
 	cmr_s16 min_again;
 	cmr_s16 sensor_gain_precision;
-	cmr_s16 line_time;
+	cmr_u32 line_time;
 };
 
 struct module_sensor_info {
@@ -94,7 +139,7 @@ struct match_data_param {
 cmr_handle isp_br_get_3a_handle(uint8_t is_master);
 int32_t isp_br_init(uint8_t is_master, void* isp_3a_handle);
 int32_t isp_br_deinit(uint8_t is_master);
-int32_t isp_br_ioctrl(uint32_t is_master, enum isp_br_ioctl_cmd cmd, void *in, void *out);
+int32_t isp_br_ioctrl(uint32_t is_master, int32_t cmd, void *in, void *out);
 int32_t isp_br_save_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info *dual_otp);
 int32_t isp_br_get_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info **dual_otp);
 

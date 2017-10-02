@@ -43,11 +43,6 @@ struct ae_exposure_param {
 	cmr_s32 target_offset;
 };
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-#include <sprd_sensor_k.h>
-typedef enum { FALSE, TRUE } BOOL;
-#endif
-
 struct ae_sensor_exp_data {
 	struct ae_exposure_param lib_data;/*AE lib output data*/
 	struct ae_exposure_param actual_data;/*the actual effect data*/
@@ -269,11 +264,10 @@ struct ae_ctrl_cxt {
 	 * for dual camera sync
 	 */
 #ifdef  CONFIG_CAMERA_DUAL_SYNC
-	cmr_u8 ae_role;
 	cmr_u8 sensor_role;
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
-	
+
 //	struct ae_calc_result pre_write_exp_data_slv;
 	struct ae_exposure_param pre_write_exp_data_slv;
 //	struct ae_calc_result pre_write_exp_data;

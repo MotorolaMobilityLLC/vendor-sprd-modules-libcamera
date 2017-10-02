@@ -134,9 +134,6 @@ enum ae_io_ctrl_cmd {
 	AE_GET_LEDS_CTRL,
 	AE_SET_RGB_GAIN,
 	AE_SET_UPDATE_AUX_SENSOR,
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	AE_CTRL_SET_ROLE,
-#endif
 	AE_IO_MAX
 };
 
