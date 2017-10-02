@@ -131,8 +131,16 @@ typedef struct {
 } WeightParams;
 
 typedef struct {
+    int F_number; // 1 ~ 20
+    int sel_x;    /* The point which be touched */
+    int sel_y;    /* The point which be touched */
+    unsigned char *DisparityImage;
+} weightmap_param;
+
+typedef struct {
     InitParams init_params;
     WeightParams weight_params;
+    weightmap_param depth_param;
 } bokeh_prev_params_t;
 
 struct depth_init_inputparam {
@@ -177,7 +185,7 @@ typedef struct {
 
     int (*sprd_depth_Run)(void *handle, void *a_pOutDisparity,
                           void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
-                          WeightParams *wParams);
+                          weightmap_param *wParams);
     int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
                              int angle);
     int (*sprd_depth_distancemeasurement)(int *distance, void *disparity,
