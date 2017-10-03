@@ -494,6 +494,7 @@ struct ae1_senseor_out {
 	cmr_u16 cur_dummy;	/*dummy line: the value is related to the resolution & fps */
 	cmr_s16 cur_again;	/*current analog gain */
 	cmr_s16 cur_dgain;	/*current digital gain */
+	cmr_u32 cur_bv;
 };
 
 struct ae_alg_calc_result {

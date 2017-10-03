@@ -41,6 +41,7 @@ struct ae_exposure_param {
 	cmr_u32 sensor_gain;
 	cmr_u32 isp_gain;
 	cmr_s32 target_offset;
+	cmr_u32 bv;
 };
 
 struct ae_sensor_exp_data {

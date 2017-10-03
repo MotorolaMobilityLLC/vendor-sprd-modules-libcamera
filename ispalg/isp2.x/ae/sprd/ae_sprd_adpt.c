@@ -2646,7 +2646,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_result.wts.cur_dgain = 0;
 	cxt->cur_result.wts.cur_exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 	cxt->cur_result.wts.exposure_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
-	cxt->sync_cur_result.cur_bv = 500;
 
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
 	property_get("persist.sys.isp.ae.manual", ae_property, "off");
@@ -2976,7 +2975,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 #endif
 }
 
-static struct ae_exposure_param s_bakup_exp_param[2] = {{0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0}};
+static struct ae_exposure_param s_bakup_exp_param[2] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 {
 	cmr_u32 i = 0;
@@ -2984,7 +2983,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 	pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME, "wb");
 	if (pf) {
 		for (i = 0; i < num; ++i) {
-			ISP_LOGD("[%d]: %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain);
+			ISP_LOGD("write:[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
 		}
 
 		fwrite((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
@@ -3005,7 +3004,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 		pf = NULL;
 
 		for (i = 0; i < num; ++i) {
-			ISP_LOGD("[%d]: %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain);
+			ISP_LOGD("read[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
 		}
 	}
 }
@@ -3020,6 +3019,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->cur_status.start_index;
 			cxt->last_index = cxt->cur_status.start_index;
+			cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
 		} else {
 			cxt->last_exp_param.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
 			cxt->last_exp_param.exp_time = cxt->sync_cur_result.wts.cur_exp_line * cxt->cur_status.line_time;
@@ -3028,19 +3028,20 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.wts.cur_index;
 			cxt->last_index = cxt->sync_cur_result.wts.cur_index;
+			cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
 		}
 		cxt->last_enable = 1;
 		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param));
-		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id , cxt->last_exp_param.exp_line,
+		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id , cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line,
 				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
 		if ((1 == cxt->is_snapshot) &&
 			((FLASH_NONE == cxt->cur_status.settings.flash) || FLASH_MAIN_BEFORE <= cxt->cur_status.settings.flash)) {
 			ae_set_restore_cnt(cxt);
 		}
-		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id , cxt->last_exp_param.exp_line,
+		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id , cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line,
 				cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	}
 }
@@ -3052,11 +3053,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cmr_s32 mode = 0;
 	struct ae_trim trim;
 	cmr_u32 max_exp = 0;
-	struct ae_exposure_param src_exp;
+	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
-
 	if (NULL == param) {
 		ISP_LOGE("param is NULL \n");
 		return AE_ERROR;
@@ -3179,8 +3179,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		}
 	}
 	cxt->cur_status.ae_table->min_index = 0;
-	//cxt->mod_update_list.is_scene = 1;
-	ISP_LOGI("ae table: [%d, %d]\n", cxt->cur_status.ae_table->min_index, cxt->cur_status.ae_table->max_index);
 
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
@@ -3202,12 +3200,14 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param));
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)\
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)\
-			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)) {
+			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)\
+			&&(0 != s_bakup_exp_param[cxt->camera_id].bv)) {
 			src_exp.exp_line = s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.line_time;
 			src_exp.exp_time = s_bakup_exp_param[cxt->camera_id].exp_time;
 			src_exp.gain = s_bakup_exp_param[cxt->camera_id].gain;
 			src_exp.cur_index = s_bakup_exp_param[cxt->camera_id].cur_index;
 			src_exp.target_offset = s_bakup_exp_param[cxt->camera_id].target_offset;
+			src_exp.bv = s_bakup_exp_param[cxt->camera_id].bv;
 		} else {
 			src_exp.exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 			src_exp.exp_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
@@ -3215,8 +3215,18 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			src_exp.cur_index  =cxt->cur_status.start_index;
 			cxt->cur_result.wts.stable = 0;
 			src_exp.target_offset = 0;
+			src_exp.bv = cxt->cur_result.cur_bv = 500;
 		}
 	}
+
+	ISP_LOGD("Camera_id %d, BV %d, Backup_bv %d, Backup_exp_line %d, Backup_exp_time %d, Backup_dummy %d, Backup_gain %d",
+		cxt->camera_id,
+		cxt->sync_cur_result.cur_bv,
+		s_bakup_exp_param[cxt->camera_id].bv,
+		s_bakup_exp_param[cxt->camera_id].exp_line,
+		s_bakup_exp_param[cxt->camera_id].exp_time,
+		s_bakup_exp_param[cxt->camera_id].dummy,
+		s_bakup_exp_param[cxt->camera_id].gain);
 
 	if ((1 == cxt->last_enable) && (1 == work_info->is_snapshot)) {
 		dst_exp.exp_time = src_exp.exp_time;
@@ -3232,12 +3242,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			fps_range.max = work_info->sensor_fps.max_fps;
 			cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 		} else {
-				fps_range.min = cxt->fps_range.min;
-				fps_range.max = cxt->fps_range.max;
+			fps_range.min = cxt->fps_range.min;
+			fps_range.max = cxt->fps_range.max;
 		}
 		ae_adjust_exp_gain(cxt, &src_exp, &fps_range, max_exp, &dst_exp);
 	}
-
+	dst_exp.bv = src_exp.bv;
 	cxt->cur_status.target_offset = src_exp.target_offset;
 	cxt->cur_result.wts.exposure_time = dst_exp.exp_time;
 	cxt->cur_result.wts.cur_exp_line = dst_exp.exp_line;
@@ -3246,6 +3256,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->cur_result.wts.cur_dummy = dst_exp.dummy;
 	cxt->cur_result.wts.cur_index = dst_exp.cur_index;
 	cxt->cur_result.wts.stable = 0;
+	cxt->cur_result.wts.cur_bv = dst_exp.bv;
 	cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
 	cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
 	cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
@@ -3253,6 +3264,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
 	cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
 	cxt->sync_cur_result.wts.stable = cxt->cur_result.wts.stable;
+	cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	struct match_data_param dualcam_aesync;
@@ -3303,11 +3315,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
 	cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
+
 	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 
 	/*it is normal capture, not in flash mode*/
-	if ((1 ==cxt->last_enable) 
-		&& ((FLASH_NONE == cxt->cur_status.settings.flash) 
+	if ((1 ==cxt->last_enable)
+		&& ((FLASH_NONE == cxt->cur_status.settings.flash)
 		|| (FLASH_LED_OFF == cxt->cur_status.settings.flash))) {
 		if (0 ==work_info->is_snapshot) {
 			cxt->last_enable = 0;
@@ -3323,8 +3336,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->is_first = 1;
-	ISP_LOGI("AE_VIDEO_START cam-id %d lt %d W %d H %d , exp: %d, gain:%d flash: %d CAP %d, enable: %d",
-				cxt->camera_id, cxt->cur_status.line_time, cxt->snr_info.frame_size.w,
+	ISP_LOGI("AE_VIDEO_START cam-id %d BV %d lt %d W %d H %d , exp: %d, gain:%d flash: %d CAP %d, enable: %d",
+				cxt->camera_id, cxt->cur_result.cur_bv, cxt->cur_status.line_time, cxt->snr_info.frame_size.w,
 				cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line,
 				cxt->sync_cur_result.wts.cur_again, cxt->cur_status.settings.flash, work_info->is_snapshot, cxt->last_enable);
 
