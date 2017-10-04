@@ -21,6 +21,8 @@
 #include "isp_common_types.h"
 #ifndef CONFIG_ISP_2_2
 #include "isp_bridge.h"
+#else
+#include "isp_match.h"
 #endif
 
 #ifdef __cplusplus
@@ -201,9 +203,7 @@ struct awb_ctrl_init_param {
 	 */
 	cmr_u8 sensor_role;
 	cmr_u32 is_multi_mode;
-#ifndef CONFIG_ISP_2_2
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
-#endif
 
 	struct sensor_otp_section_info *otp_info_ptr;
 };

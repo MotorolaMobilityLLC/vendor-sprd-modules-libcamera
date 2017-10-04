@@ -23,7 +23,10 @@
 #include "sensor_drv_u.h"
 #ifndef CONFIG_ISP_2_2
 #include "isp_bridge.h"
+#else
+#include "isp_match.h"
 #endif
+
 #ifdef CONFIG_ISP_2_2
 #include "isp_otp_calibration.h"
 #endif
@@ -32,7 +35,7 @@ extern "C" {
 #endif
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-typedef int32_t(*func_isp_br_ioctrl) (uint32_t is_master, int32_t cmd, void *in, void *out);
+typedef long(*func_isp_br_ioctrl)(unsigned int is_master, long cmd, void *in, void *out);
 #endif
 
 struct ae_init_in {

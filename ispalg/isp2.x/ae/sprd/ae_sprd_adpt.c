@@ -185,7 +185,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			cmr_u32 ae_expline = write_param->exp_line;
 			memset(&exp, 0, sizeof(exp));
 			ae_expline = ae_expline & 0x0000ffff;
-			ae_expline |= ((write_param->dummy < 0x10) & 0x0fff0000);
+			ae_expline |= ((write_param->dummy << 0x10) & 0x0fff0000);
 			ae_expline |= ((size_index << 0x1c) & 0xf0000000);
 			exp.exposure = ae_expline;
 			if ((write_param->exp_line != prv_param->exp_line)
@@ -226,7 +226,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct ae_exposure_param write_param;
-	struct q_item write_item;
+	struct q_item write_item = { 0, 0, 0, 0, 0 };
 	struct q_item actual_item;
 
 	if (0 == cxt) {

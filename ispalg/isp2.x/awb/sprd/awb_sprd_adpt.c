@@ -51,6 +51,9 @@ do { \
 	} \
 }while(0)
 
+#define __MIN(a,b) (((a)<(b))?(a):(b))
+
+
 char libawb_path[][20] = {
 	"libawb.so",
 	"libawb1.so",
@@ -173,6 +176,14 @@ struct awb_ctrl_cxt {
 	cmr_u8 *log;
 	cmr_u32 size;
 	cmr_u32 frame_count;
+
+	/*
+	 * for dual camera sync
+	 */
+	cmr_u8 sensor_role;
+	cmr_u32 is_multi_mode;
+	func_isp_br_ioctrl ptr_isp_br_ioctrl;
+
 	/*must be the last one */
 	cmr_u32 magic_end;
 
@@ -871,7 +882,66 @@ static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *re
 	return rtn;
 }
 
-static cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
+static int awb_sync_gain(cmr_u32* stat_r_master, cmr_u32* stat_g_master, cmr_u32* stat_b_master, cmr_u32 width_master, cmr_u32 height_master, 
+						     cmr_u32* stat_r_slave, cmr_u32* stat_g_slave, cmr_u32* stat_b_slave, cmr_u32 width_slave, cmr_u32 height_slave, 
+						     cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master, 
+						     cmr_u32* gain_r_slave, cmr_u32* gain_g_slave, cmr_u32* gain_b_slave)
+{
+	cmr_u32 i, j;
+
+	uint64_t sum_r_master = 0;
+	uint64_t sum_g_master = 0;
+	uint64_t sum_b_master = 0;
+	for (j=0; j<height_master; j++)
+	{
+		for (i=0; i<width_master; i++)
+		{
+			sum_r_master += stat_r_master[j*width_master + i];
+			sum_g_master += stat_g_master[j*width_master + i];
+			sum_b_master += stat_b_master[j*width_master + i];
+		}
+	}
+	uint32_t ave_r_master = (uint32_t)(sum_r_master / (width_master * height_master));
+	uint32_t ave_g_master = (uint32_t)(sum_g_master / (width_master * height_master));
+	uint32_t ave_b_master = (uint32_t)(sum_b_master / (width_master * height_master));
+
+	uint64_t sum_r_slave = 0;
+	uint64_t sum_g_slave = 0;
+	uint64_t sum_b_slave = 0;
+	for (j=0; j<height_slave; j++)
+	{
+		for (i=0; i<width_slave; i++)
+		{
+			sum_r_slave += stat_r_slave[j*width_slave + i];
+			sum_g_slave += stat_g_slave[j*width_slave + i];
+			sum_b_slave += stat_b_slave[j*width_slave + i];
+		}
+	}
+	uint32_t ave_r_slave = (uint32_t)(sum_r_slave / (width_slave * height_slave));
+	uint32_t ave_g_slave = (uint32_t)(sum_g_slave / (width_slave * height_slave));
+	uint32_t ave_b_slave = (uint32_t)(sum_b_slave / (width_slave * height_slave));
+
+
+	float gain_r = (ave_r_master * gain_r_master + ave_r_slave/2.0) / ave_r_slave;
+	float gain_g = (ave_g_master * gain_g_master + ave_g_slave/2.0) / ave_g_slave;
+	float gain_b = (ave_b_master * gain_b_master +  ave_b_slave/2.0) / ave_b_slave;
+	float gain = __MIN(__MIN(gain_r, gain_b), gain_g);
+
+	if (gain != 0)
+	{
+		*gain_r_slave = (uint32_t)(gain_r / gain * 1024 + 0.5f);
+		*gain_g_slave = (uint32_t)(gain_g / gain * 1024 + 0.5f);
+		*gain_b_slave = (uint32_t)(gain_b / gain * 1024 + 0.5f);
+
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	cmr_u8 *awb_rdm_otp_data = NULL;
@@ -966,6 +1036,11 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
 	cxt->flash_pre_state = 0;
+
+	cxt->sensor_role = param->sensor_role;
+	cxt->is_multi_mode = param->is_multi_mode;
+	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
+	ISP_LOGI("is_multi_mode=%d\n", param->is_multi_mode);
 
 	// paser awb otp info
 	_awb_parser_otp_info(param);
@@ -1121,6 +1196,43 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		ISP_LOGE("fail to check handle");
 		return AWB_CTRL_ERROR;
 	}
+
+
+	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL)) {
+		if (!cxt->sensor_role) {
+			struct awb_stat_data stat_master;
+			struct awb_stat_data stat_slave;
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_STAT_AWB_DATA, NULL, &stat_master);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_STAT_AWB_DATA, NULL, &stat_slave);
+
+			struct awb_ctrl_gain gain_master;
+			struct awb_ctrl_gain gain_slave;
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_GAIN_AWB_DATA, NULL, &gain_master);
+
+			cmr_u32 ct;
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_MATCH_AWB_DATA, NULL, &ct);
+
+			int ret = awb_sync_gain(stat_master.r_info, stat_master.g_info, stat_master.b_info, 32, 32, stat_slave.r_info, stat_slave.g_info, stat_slave.b_info, 32, 32, gain_master.r, gain_master.g, gain_master.b, &gain_slave.r, &gain_slave.g, &gain_slave.b);
+
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &gain_slave, NULL);
+
+			result->gain.r = gain_slave.r;
+			result->gain.g = gain_slave.g;
+			result->gain.b = gain_slave.b;
+			result->ct = ct;
+
+			cxt->output_gain.r = result->gain.r;
+			cxt->output_gain.g = result->gain.g;
+			cxt->output_gain.b = result->gain.b;
+			cxt->output_ct = result->ct;
+
+			if (ret == 0)
+			{
+				return AWB_CTRL_SUCCESS;
+			}
+		}
+	}
+
 
 	cmr_u32 smooth_buffer_num = cxt->awb_init_param.tuning_param.smooth_buffer_num;
 	cmr_u32 skip_frame_num = cxt->awb_init_param.tuning_param.skip_frame_num;
@@ -1329,6 +1441,10 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result->gain.g = cxt->output_gain.g;
 	result->gain.b = cxt->output_gain.b;
 	result->ct = cxt->output_ct;
+
+	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
+		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result->gain, NULL);
+	}
 
 	pthread_mutex_unlock(&cxt->status_lock);
 

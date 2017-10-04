@@ -55,7 +55,7 @@ cmr_handle isp_br_get_3a_handle(uint8_t is_master)
 	}
 	return rtn;
 }
-int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
+long isp_br_ioctrl(unsigned int camera_id, long cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
 	struct timespec ts;
@@ -67,11 +67,11 @@ int32_t isp_br_ioctrl(uint32_t camera_id, int32_t cmd, void *in, void *out)
 	}
 
 	if (((cmd & 1) && !out) || ((!(cmd & 1)) && !in)) {
-		ISP_LOGE("invalid param: cmd=%u, in=%p, out=%p", cmd, in, out);
+		ISP_LOGE("invalid param: cmd=%ld, in=%p, out=%p", cmd, in, out);
 		return -ISP_PARAM_ERROR;
 	}
 
-	ISP_LOGV("E camera_id=%u, cmd=%u", camera_id, cmd);
+	ISP_LOGV("E camera_id=%u, cmd=%ld", camera_id, cmd);
 
 	switch (cmd) {
 	case SET_MATCH_AWB_DATA:

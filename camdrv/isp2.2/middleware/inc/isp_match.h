@@ -24,10 +24,14 @@
 #include "ae_ctrl.h"
 //#include "ae_com.h"
 
+#define SENSOR_NUM_MAX 4
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+//typedef long(*func_isp_br_ioctrl) (unsigned int camera_id, long cmd, void *in, void *out);
 
 /* all set ioctl should be even number, while get should be odd */
 enum isp_br_ioctl_cmd {
@@ -70,8 +74,17 @@ enum isp_br_ioctl_cmd {
 	GET_MASTER_AE_SYNC_STATUS=23,
 
 	// TODO: turnning info
+	SET_STAT_AWB_DATA,
+	GET_STAT_AWB_DATA,
+	SET_GAIN_AWB_DATA,
+	GET_GAIN_AWB_DATA,
 };
 
+struct awb_stat_data {
+	cmr_u32 r_info[1024];
+	cmr_u32 g_info[1024];
+	cmr_u32 b_info[1024];
+};
 
 enum  sync_status{
 	SYNC_INIT = 0x00,
@@ -81,13 +94,7 @@ enum  sync_status{
 
 
 struct awb_match_data {
-	uint32_t ct;
-	uint32_t ct_flash_off;
-	uint32_t ct_capture;
-	uint32_t is_update;
-	uint32_t awb_states;
-	uint16_t light_source;
-	uint32_t awb_decision;
+	cmr_u32 ct;
 };
 
 struct ae_otp_param {
@@ -132,6 +139,7 @@ struct match_data_param {
 	struct module_info module_info;
 	struct ae_match_data master_ae_info;
 	struct ae_match_data slave_ae_info;
+	struct awb_stat_data awb_stat[SENSOR_NUM_MAX];
 	struct awb_match_data master_awb_info;
 	struct awb_match_data slave_awb_info;
 };
@@ -139,7 +147,7 @@ struct match_data_param {
 cmr_handle isp_br_get_3a_handle(uint8_t is_master);
 int32_t isp_br_init(uint8_t is_master, void* isp_3a_handle);
 int32_t isp_br_deinit(uint8_t is_master);
-int32_t isp_br_ioctrl(uint32_t is_master, int32_t cmd, void *in, void *out);
+long isp_br_ioctrl(unsigned int is_master, long cmd, void *in, void *out);
 int32_t isp_br_save_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info *dual_otp);
 int32_t isp_br_get_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info **dual_otp);
 
