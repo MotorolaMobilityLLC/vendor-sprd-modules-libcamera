@@ -1375,7 +1375,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cnt_g_ue = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-	u_addr = statis_info->vir_addr;
+	u_addr = (cmr_u64)statis_info->vir_addr;
 
 	ae_stat_ptr = &cxt->aem_stats;
 	for (i = 0x00; i < 5120; i++) {
