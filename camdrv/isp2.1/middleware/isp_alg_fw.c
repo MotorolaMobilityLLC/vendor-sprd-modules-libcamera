@@ -893,8 +893,7 @@ static cmr_int ispalg_dump_block_param(cmr_handle isp_alg_handle,
 	struct tm *p;
 
 	property_get("persist.sys.save.isp.param", value, "0");
-	if ((cxt->is_multi_mode == ISP_DUAL_SBS ||
-			cxt->is_multi_mode == ISP_DUAL_SWITCH) &&
+	if (cxt->is_multi_mode == ISP_DUAL_SBS &&
 			!cxt->is_master && (atoi(value) == 1)) {
 			ISP_LOGV("save param");
 	} else {
@@ -2107,7 +2106,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_CTRL_EVT_AE:
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message);
-		if ((cxt->is_multi_mode == ISP_DUAL_SBS) || (cxt->is_multi_mode == ISP_DUAL_SWITCH)) {
+		if (cxt->is_multi_mode == ISP_DUAL_SBS) {
 			struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->aem_stats;
 			isp_br_ioctrl(cxt->camera_id, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
 
@@ -2336,10 +2335,6 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		ae_input.is_multi_mode = ISP_ALG_DUAL_SBS;
 		break;
 
-	case ISP_DUAL_SWITCH:
-		ae_input.is_multi_mode = ISP_ALG_DUAL_SWITCH;
-		break;
-
 	default:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
 		break;
@@ -2437,9 +2432,6 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		break;
 	case ISP_DUAL_SBS:
 		param.is_multi_mode = ISP_ALG_DUAL_SBS;
-		break;
-	case ISP_DUAL_SWITCH:
-		param.is_multi_mode = ISP_ALG_DUAL_SWITCH;
 		break;
 	default:
 		param.is_multi_mode = ISP_ALG_SINGLE;
@@ -2552,10 +2544,6 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 
 	case ISP_DUAL_SBS:
 		af_input.is_multi_mode = ISP_ALG_DUAL_SBS;
-		break;
-
-	case ISP_DUAL_SWITCH:
-		af_input.is_multi_mode = ISP_ALG_DUAL_SWITCH;
 		break;
 
 	default:
@@ -3612,8 +3600,8 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	struct isp_video_start param;
-	cmr_s32 i = 0;
 	struct isp_statis_mem_info statis_mem_input;
+	cmr_s32 i = 0;
 	cmr_s32 mode = 0;
 
 	ISP_LOGV("isp proc start\n");

@@ -273,7 +273,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 
 static int savefile(char* filename , uint8_t* ptr , int width , int height, int yuv)
 {
-
+	int i;
 	//static int inum = 0;
 	char file_name[256];
 	time_t timep;
@@ -284,20 +284,16 @@ static int savefile(char* filename , uint8_t* ptr , int width , int height, int 
 			(1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec , filename);
 	//if(inum < 5)
 	FILE* fp = fopen(file_name , "wb");
-	if(fp)
-	{
+	if (fp) {
 #if 1
 		//yuv
 		if(yuv == 1)
 			fwrite(ptr , 1 , width*height*3/2 , fp);
-		else if(0 == yuv) //raw
-		{
+		else if (0 == yuv) { //raw
 			uint16_t* rawptr = (uint16_t*)ptr;
-			for(int i = 0; i < height; i++)
+			for (i = 0; i < height; i++)
 				fwrite(rawptr  + i*width*2, 1 ,width*sizeof(uint16_t) , fp);
-		}
-		else if(2 == yuv) //weight table
-		{
+		} else if(2 == yuv) { //weight table
 			uint16_t* rawptr = (uint16_t*)ptr;
 			fwrite(rawptr, 1 ,width*height*sizeof(uint16_t) , fp);
 		}
