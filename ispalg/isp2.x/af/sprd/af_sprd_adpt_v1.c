@@ -681,7 +681,7 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 
 	return 0;
 }
-
+#ifdef CONFIG_ISP_2_3
 //SharkLE Only ++
 //helper function
 //copy the original lens_move_to()
@@ -751,6 +751,7 @@ static cmr_u8 if_af_set_clear_next_vcm_pos( void *cookie)
 
 	return 0;
 }
+#endif
 //SharkLE Only --
 
 /* initialization */
@@ -792,11 +793,13 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	AF_Ops.set_wins = if_set_wins;
 	AF_Ops.get_win_info = if_get_win_info;
 	AF_Ops.lock_ae_partial = if_lock_partial_ae;
+	#ifdef CONFIG_ISP_2_3
 	//SharkLE Only ++
 	AF_Ops.set_pulse_line = if_af_set_pulse_line;
 	AF_Ops.set_next_vcm_pos = if_af_set_next_vcm_pos;
 	AF_Ops.set_clear_next_vcm_pos = if_af_set_clear_next_vcm_pos;
 	//SharkLE Only --
+	#endif
 
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
 	af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
@@ -2508,11 +2511,13 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->af_monitor_iir_nr_cfg = init_param->af_monitor_iir_nr_cfg;
 	af->af_monitor_module_cfg = init_param->af_monitor_module_cfg;
 	af->af_get_system_time = init_param->af_get_system_time;
+	#ifdef CONFIG_ISP_2_3
 	//SharkLE Only ++
 	af->af_set_pulse_line = init_param->af_set_pulse_line;
 	af->af_set_next_vcm_pos = init_param->af_set_next_vcm_pos;
 	af->af_set_clear_next_vcm_pos = init_param->af_set_clear_next_vcm_pos;
 	//SharkLE Only --
+	#endif
 
 	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,

@@ -1097,11 +1097,13 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
+	 #ifdef CONFIG_ISP_2_3
 	//SharkLE Only ++
 	cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
 	cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
 	cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
 	//SharkLE Only --
+	#endif
 	void *cookie;
 } AF_Ctrl_Ops;
 
