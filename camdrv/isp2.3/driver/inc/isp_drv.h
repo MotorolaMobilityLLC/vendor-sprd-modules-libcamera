@@ -168,6 +168,7 @@ struct isp_statis_info {
 	cmr_u32 sec;
 	cmr_u32 usec;
 	cmr_s64 monoboottime;
+	struct sprd_img_vcm_dac_info dac_info;
 };
 
 enum isp_fetch_format {

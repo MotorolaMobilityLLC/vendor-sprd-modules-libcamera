@@ -828,6 +828,9 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AF_SET_NEXT_VCM_POS:
 		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
 		break;
+	case ISP_AF_SET_PULSE_LOG:
+		ret = cxt->commn_cxt.ops.set_pulse_log(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
+		break;
 	case ISP_AF_SET_CLEAR_NEXT_VCM_POS:
 		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, -1);
 		break;
@@ -1129,7 +1132,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			binning_src.gain_height = dcam_lsc_info->gain_h;
 			binning_src.pm_tab0 = lsc_tab_param_ptr->map_tab[0].param_addr;
 			binning_src.tab = (cmr_u16 *)dcam_lsc_info->data_ptr;
-			ISP_LOGD("binning src: img_width:%d, img_height:%d, grid:%d, gain_width:%d, gain_height:%d, pm_tab0:%p, tab:%p",
+			ISP_LOGV("binning src: img_width:%d, img_height:%d, grid:%d, gain_width:%d, gain_height:%d, pm_tab0:%p, tab:%p",
 					binning_src.img_width,
 					binning_src.img_height,
 					binning_src.grid,
@@ -1190,7 +1193,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 						binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 						cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
 								LSC_BINNING, &binning);
-						ISP_LOGD("Zsl-binning dst: img_width:%d, img_height:%d, grid:%d, gain_width:%d, gain_height:%d, pm_tab0:%p, tab:%p",
+						ISP_LOGV("Zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:%p, tab:%p",
 								binning_dst.img_width,
 								binning_dst.img_height,
 								binning_dst.grid,
@@ -1230,7 +1233,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 					cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
 							LSC_BINNING, &binning);
-					ISP_LOGD("None zsl-binning dst: img_width:%d, img_height:%d, grid:%d, gain_width:%d, gain_height:%d, pm_tab0:%p, tab:%p",
+					ISP_LOGV("None zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:%p, tab:%p",
 							binning_dst.img_width,
 							binning_dst.img_height,
 							binning_dst.grid,
@@ -2078,6 +2081,18 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	case AF_DATA_AFM_STAT:
 	case AF_DATA_AF: {
 			statis_info = (struct isp_statis_info *)in_ptr;
+
+			if (IRQ_DCAM_PULSE == statis_info->irq_property) {
+				ISP_LOGI("pulse_line %d dac %d psec %d pusec %d mvsec %d mvuse %d",
+					 statis_info->dac_info.pulse_line,
+					 statis_info->dac_info.dac,
+					 statis_info->dac_info.pulse_sec,
+					 statis_info->dac_info.pulse_usec,
+					 statis_info->dac_info.vcm_mv_sec,
+					 statis_info->dac_info.vcm_mv_usec
+					 );
+				break;
+			}
 			u_addr = statis_info->vir_addr;
 
 			for (i = 0; i < 30; i++) {

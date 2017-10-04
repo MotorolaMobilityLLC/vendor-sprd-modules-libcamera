@@ -1282,6 +1282,7 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.sec = op.parm.frame.sec;
                 statis_info.usec = op.parm.frame.usec;
                 statis_info.frame_id = op.parm.frame.frame_id;
+                statis_info.dac_info = op.parm.frame.dac_info;
                 CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
                          "vir_addr 0x%x irq_property 0x%x, "
                          "op.parm.frame.vir_addr = 0x%x, "
@@ -1556,6 +1557,20 @@ cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle, cmr_s32 pos) {
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
     ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_NEXT_VCM_POS, &pos);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+
+cmr_int cmr_grab_set_pulse_log(cmr_handle grab_handle, cmr_u32 enable) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_VCM_LOG, &enable);
     if (ret) {
         CMR_LOGE("error");
     }

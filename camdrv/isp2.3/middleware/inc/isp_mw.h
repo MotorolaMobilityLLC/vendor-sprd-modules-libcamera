@@ -86,6 +86,7 @@ enum isp_alg_set_cmd {
 	ISP_AF_SET_PULSE_LINE,
 	ISP_AF_SET_NEXT_VCM_POS,
 	ISP_AF_SET_CLEAR_NEXT_VCM_POS,
+	ISP_AF_SET_PULSE_LOG,
 	ISP_AF_LENS_GET_OTP,
 	ISP_AF_GET_MOTOR_POS,
 	ISP_AF_SET_MOTOR_BESTMODE,
@@ -783,6 +784,7 @@ struct isp_ops {
 	cmr_s32 (*flash_ctrl)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 	cmr_s32 (*set_pulse_line)(void *handler, cmr_u32 pulse_line);
 	cmr_s32 (*set_next_vcm_pos)(void *handler, cmr_s32 pos);
+	cmr_s32 (*set_pulse_log)(void *handler, cmr_u32 enable);
 };
 
 struct isp_init_param {

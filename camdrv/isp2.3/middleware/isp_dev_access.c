@@ -342,6 +342,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->frame_id = irq_info->frame_id;
 	statis_info->sec = irq_info->sec;
 	statis_info->usec = irq_info->usec;
+	statis_info->dac_info = irq_info->dac_info;
 
 	ISP_LOGV("got one frame stats offset 0x%x vaddr 0x%x property %d frame id %d timestamp %ds %dus",
 		 statis_info->addr_offset, statis_info->vir_addr,
@@ -353,6 +354,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
 		}
 	} else if (irq_info->irq_property == IRQ_AFM_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
+		}
+	} else if (irq_info->irq_property == IRQ_DCAM_PULSE) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
 		}
