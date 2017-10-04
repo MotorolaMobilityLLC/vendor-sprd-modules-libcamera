@@ -450,6 +450,7 @@ static void* misc_process(void* handle)
 	// input: phandle->misc_arg.m_yuv_pre +  phandle->misc_arg.s_yuv_depth ; output:phandle->misc_arg.m_yuv_depth;
 	ret = sprd_depth_Run_distance(phandle->depth_handle , (void*)phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] ,
 					(void*)phandle->misc_arg.s_yuv_depth.img_addr_vir.chn0 , (void*)phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0 ,&wParams , &distance);
+	distance = DISTANCE_OK;
 //	memset(phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] , 0 , 960*720);
 //	memset((void*)phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] , 0 , 960*720);
 	SWISP_LOGI("-------micro process after Depth calculate use output index:%d , depthrun costtime:%zd ms, distance:%d , ret:%d\n" , (phandle->depth_weight_valid_index+1)%2 ,
