@@ -392,6 +392,7 @@ struct ae_stats_sensor_info {
 
 struct ae_settings {
 	cmr_u16 ver;
+	cmr_u8 force_lock_ae;
 	cmr_s8 lock_ae;	/* 0:unlock 1:lock 2:pause 3:wait-lock */
 	cmr_s32 pause_cnt;
 	cmr_s8 manual_mode;	/* 0:exp&gain       1:table-index */
@@ -434,6 +435,8 @@ struct ae_alg_calc_param {
 	cmr_u8 *weight_table;
 	struct ae_stats_sensor_info aux_sensor_data;
 	cmr_u32 *stat_img;
+	cmr_u16 *binning_stat_data;
+	struct ae_size binnig_stat_size;
 	cmr_u8 monitor_shift;	//for ae monitor data overflow
 	cmr_u8 win1_weight;	//for touch ae
 	cmr_u8 win2_weight;	//for touch ae

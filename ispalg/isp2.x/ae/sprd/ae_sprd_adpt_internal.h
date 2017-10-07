@@ -113,7 +113,6 @@ struct ae_ctrl_cxt {
 	cmr_s8 camera_id;
 	cmr_s8 is_snapshot;
 	cmr_u8 is_first;
-	pthread_mutex_t data_sync_lock;
 	/*
 	 * ae control operation infaces
 	 */
@@ -125,7 +124,7 @@ struct ae_ctrl_cxt {
 	/*
 	 * ae slow motion info
 	 */
-	struct isp_sensor_fps_info high_fps_info;
+	struct ae_sensor_fps_info high_fps_info;
  	/*
 	* ae fps range
 	*/
@@ -162,7 +161,6 @@ struct ae_ctrl_cxt {
 	struct ae_alg_calc_param cur_status;
 	struct ae_alg_calc_param sync_cur_status;
 	cmr_s32 target_lum_zone_bak;
-	cmr_u32 sync_aem[3 * 1024 + 4];	/*0: frame id;1: exposure time, 2: dummy line, 3: gain; */
 	/*
 	 * convergence & stable zone
 	 */
@@ -183,6 +181,9 @@ struct ae_ctrl_cxt {
 	struct ae_leds_ctrl ae_leds_ctrl;
 	cmr_handle flash_alg_handle;
 	cmr_u16 aem_stat_rgb[3 * 1024];/*save the average data of AEM Stats data*/
+	cmr_u32 sync_aem[3 * 1024 + 4];	/*aem statistics data, 0: frame id;1: exposure time, 2: dummy line, 3: gain; */
+	cmr_u16 sync_binning_stats_data[3 * 640 * 480];/*binning statistics data*/
+	struct ae_size binning_stat_size;
 	cmr_u8 bakup_ae_status_for_flash;/* 0:unlock 1:lock 2:pause 3:wait-lock */
 	cmr_s16 pre_flash_level1;
 	cmr_s16 pre_flash_level2;
@@ -210,6 +211,7 @@ struct ae_ctrl_cxt {
 	 */
 	struct ae_alg_calc_result cur_result;
 	struct ae_alg_calc_result sync_cur_result;
+	struct ae_calc_results calc_results;/*ae current calculation results, and it is just for other algorithm block*/
 	/*
 	 * AE write/effective E&G queue
 	 */

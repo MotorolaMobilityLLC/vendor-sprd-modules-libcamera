@@ -78,6 +78,7 @@ struct ae_calc_in {
 		cmr_u32 *rgb_stat_img;
 	};
 	cmr_u32 *yiq_stat_img;
+	struct ae_binning_stats_info binning_stat_info;
 	cmr_u32 awb_gain_r;
 	cmr_u32 awb_gain_g;
 	cmr_u32 awb_gain_b;

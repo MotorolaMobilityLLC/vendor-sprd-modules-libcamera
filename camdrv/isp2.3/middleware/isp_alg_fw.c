@@ -1641,7 +1641,9 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	}
 
 	ioctl_input.param_data_ptr = ioctl_data;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+       if(awb_output->update_gain){
+               ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+       }
 
 	if (awb_output->use_ccm) {
 		struct isp_pm_param_data param_data[ISP_MODE_MAX];

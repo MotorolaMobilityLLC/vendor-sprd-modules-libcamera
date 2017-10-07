@@ -90,7 +90,6 @@ typedef struct {
 	int shading_pct;
 } lsc2d_calib_param_t;
 
-static cmr_int ispalg_ae_process_out(cmr_handle isp_alg_handle, struct ae_ctrl_callback_in *ae_in);
 
 static nsecs_t ispalg_get_sys_timestamp(void)
 {
@@ -180,8 +179,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		in = data;
 		break;
 	case AE_CB_PROCESS_OUT:
-		ispalg_ae_process_out(cxt, data);
-		goto exit;
+		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;
@@ -723,7 +721,11 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 
 	in_param.sec = cxt->ae_cxt.time.sec;
 	in_param.usec = cxt->ae_cxt.time.usec;
-
+	in_param.binning_stat_info.r_info = cxt->binning_stats.r_info;
+	in_param.binning_stat_info.g_info = cxt->binning_stats.g_info;
+	in_param.binning_stat_info.b_info = cxt->binning_stats.b_info;
+	in_param.binning_stat_info.binning_size.w = cxt->binning_stats.binning_size.w;
+	in_param.binning_stat_info.binning_size.h = cxt->binning_stats.binning_size.h;
 	in_param.is_update = cxt->aem_is_update;
 	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
 	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
@@ -743,7 +745,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 		cxt->ae_cxt.log_alc_ae = ae_result.log_ae.log;
 		cxt->ae_cxt.log_alc_ae_size = ae_result.log_ae.size;
 	}
-	cxt->aem_is_update = 0;
 
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -874,7 +875,9 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 		awbc_cfg.g_gain = 1024;
 		awbc_cfg.b_gain = 1536;
 	}
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+	if(awb_output->update_gain){
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+	}
 
 	if (awb_output->use_ccm) {
 		struct isp_pm_param_data param_data;
@@ -1123,24 +1126,42 @@ exit:
 	return ret;
 }
 
-static cmr_int ispalg_ae_process_out(cmr_handle isp_alg_handle, struct ae_ctrl_callback_in *ae_in)
+static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct awb_ctrl_calc_result awb_output;
+	struct ae_calc_results ae_result;
+	struct ae_ctrl_callback_in ae_ctrl_calc_result;
 
 	memset(&awb_output, 0, sizeof(awb_output));
+	memset(&ae_result, 0, sizeof(ae_result));
+	memset(&ae_ctrl_calc_result, 0, sizeof(ae_ctrl_calc_result));
 
+	if (0 ==cxt->aem_is_update) {
+		ISP_LOGI("aem is not update\n");
+		goto exit;
+	}
 	if (cxt->awb_cxt.sw_bypass)
 		goto exit;
 
-	ret = ispalg_start_awb_process((cmr_handle) cxt, ae_in, &awb_output);
+	if (cxt->ops.ae_ops.ioctrl) {
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_CALC_RESULTS, NULL, &ae_result);
+		ae_ctrl_calc_result.is_skip_cur_frame = ae_result.is_skip_cur_frame;
+		ae_ctrl_calc_result.ae_output = ae_result.ae_output;
+		ae_ctrl_calc_result.ae_result = ae_result.ae_result;
+		ae_ctrl_calc_result.ae_ev = ae_result.ae_ev;
+		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
+		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;
+		ae_ctrl_calc_result.flash_param.captureFlash1ofALLRatio = ae_result.flash_param.captureFlash1ofALLRatio;
+	}
+	ret = ispalg_start_awb_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
 	if (ret) {
 		ISP_LOGE("fail to start awb process");
 		goto exit;
 	}
 
-	ret = ispalg_aeawb_post_process((cmr_handle) cxt, ae_in, &awb_output);
+	ret = ispalg_aeawb_post_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
 	if (ret) {
 		ISP_LOGE("fail to proc aeawb ");
 		goto exit;
@@ -1792,6 +1813,10 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
+		ret = ispalg_awb_process((cmr_handle) cxt);
+		if (ret)
+			ISP_LOGE("fail to start awb process");
+		cxt->aem_is_update = 0;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
 	case ISP_CTRL_EVT_BINNING:

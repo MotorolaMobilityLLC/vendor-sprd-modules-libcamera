@@ -100,7 +100,6 @@ enum ae_io_ctrl_cmd {
 	AE_SET_ONLINE_CTRL,
 	AE_SET_EXP_ANIT,
 	AE_GET_FLICKER_SWITCH_FLAG,
-	AE_SET_FD_ENABLE,
 	AE_SET_FD_PARAM,
 	AE_GET_EXP,
 	AE_GET_GAIN,
@@ -109,7 +108,6 @@ enum ae_io_ctrl_cmd {
 	AE_SET_FLASH_ON_OFF_THR,
 	AE_SET_NIGHT_MODE,
 	AE_SET_NORMAL_MODE,
-	AE_GET_NORMAL_INFO,
 	AE_GET_AIS_HANDLE,
 	AE_SET_SPORT_MODE,
 	AE_SET_PANORAMA_START,
@@ -121,12 +119,9 @@ enum ae_io_ctrl_cmd {
 	AE_GET_SENSITIVITY,
 	AE_GET_EM_PARAM,
 	AE_GET_DEBUG_INFO,
-	AE_INTELLIGENT_OPEN,
-	AE_INTELLIGENT_CLOSE,
 	AE_SET_DC_DV,
 	AE_VIDEO_STOP,
 	AE_VIDEO_START,
-	AE_GET_AF_INFO,
 	AE_HDR_START,
 	AE_GET_FLASH_WB_GAIN,
 	AE_CAF_LOCKAE_START,
@@ -134,6 +129,7 @@ enum ae_io_ctrl_cmd {
 	AE_GET_LEDS_CTRL,
 	AE_SET_RGB_GAIN,
 	AE_SET_UPDATE_AUX_SENSOR,
+	AE_GET_CALC_RESULTS,
 	AE_IO_MAX
 };
 
@@ -495,6 +491,59 @@ struct ae_leds_ctrl {
     cmr_u32 led1_ctrl;
 };
 
+struct ae_ctrl_alc_log {
+	cmr_u8 *log;
+	cmr_u32 size;
+};
+
+struct ae_calc_out {
+	cmr_u32 cur_lum;
+	cmr_u32 cur_index;
+	cmr_u32 cur_ev;
+	cmr_u32 cur_exp_line;
+	cmr_u32 cur_dummy;
+	cmr_u32 cur_again;
+	cmr_u32 cur_dgain;
+	cmr_u32 cur_iso;
+	cmr_u32 is_stab;
+	cmr_u32 line_time;
+	cmr_u32 frame_line;
+	cmr_u32 target_lum;
+	cmr_u32 flag;
+	float *ae_data;
+	cmr_s32 ae_data_size;
+	cmr_u32 target_lum_ori;
+	cmr_u32 flag4idx;
+	cmr_u32 cur_bv;
+	float exposure_time;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cmr_u32 sec;
+	cmr_u32 usec;
+	cmr_s64 monoboottime;
+#endif
+	struct ae_ctrl_alc_log log_ae;
+};
+
+struct ae_flash_param {
+	float captureFlashEnvRatio;
+	float captureFlash1ofALLRatio;
+};
+
+struct ae_calc_results {
+	cmr_u32 is_skip_cur_frame;
+	struct ae_alg_calc_result ae_result;
+	struct ae_calc_out ae_output;
+	struct ae_get_ev ae_ev;
+	struct ae_monitor_info monitor_info;
+	struct ae_flash_param flash_param;
+};
+
+struct ae_binning_stats_info {
+	cmr_u32 *r_info;
+	cmr_u32 *g_info;
+	cmr_u32 *b_info;
+	struct ae_size binning_size;
+};
 #ifdef __cplusplus
 }
 #endif

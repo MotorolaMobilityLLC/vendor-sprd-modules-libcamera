@@ -136,6 +136,7 @@ struct awb_ctrl_cxt {
 	struct awb_ctrl_size stat_img_size;
 	struct awb_ctrl_size stat_win_size;
 
+	cmr_u32 flash_update_awb;
 	struct awb_ctrl_opt_info otp_info;
 	/*previous gain */
 	struct awb_ctrl_gain prv_gain;
@@ -731,6 +732,12 @@ static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->flash_info.flash_status = *flash_status;
 
+	if(cxt->flash_info.flash_status == 4){
+		cxt->flash_update_awb = 0;
+	}else{
+		cxt->flash_update_awb = 1;
+	}
+
 	if(cxt->flash_info.flash_status == 2 ){
 		cxt->flash_pre_state = 10;
 	}else{
@@ -1044,6 +1051,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->init = AWB_CTRL_TRUE;
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
+	cxt->flash_update_awb = 1;
 	cxt->flash_pre_state = 0;
 
 	cxt->sensor_role = param->sensor_role;
@@ -1053,7 +1061,6 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 
 	// paser awb otp info
 	_awb_parser_otp_info(param);
-
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
 	cxt->stat_img_size = param->stat_img_size;
@@ -1313,6 +1320,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result->green100 = calc_result.awb_gain[0].green100;
 	result->log_awb.log = calc_result.log_buffer;
 	result->log_awb.size = calc_result.log_size;
+	result->update_gain = cxt->flash_update_awb;
 
 	cxt->cur_gain.r = result->gain.r;
 	cxt->cur_gain.g = result->gain.g;
