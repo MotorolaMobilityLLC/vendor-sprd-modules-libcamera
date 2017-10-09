@@ -3728,7 +3728,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		}
 		cxt->commn_cxt.isp_mode = cxt->mode_id[0];
 	} else {
-		if (0 != in_ptr->dv_mode) {
+		if ((0 != in_ptr->dv_mode) && (0 == cxt->zsl_flag)) {
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION, in_ptr, &dv_mode);
 			cxt->commn_cxt.mode_flag = dv_mode;
 			cxt->mode_id[0] = dv_mode;
