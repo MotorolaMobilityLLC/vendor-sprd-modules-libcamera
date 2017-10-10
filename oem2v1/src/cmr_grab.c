@@ -156,6 +156,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         CMR_LOGI("get dcam res w %d h %d sn id %d", res.width, res.height,
                  res.sensor_id);
         ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_DCAM_RES, &res);
+        CMR_LOGI("get dcam res done, ret:%d", (unsigned int)ret);
         CMR_RTN_IF_ERR(ret);
         if (0 == res.flag) {
             CMR_LOGE("get dcam res failed!");
