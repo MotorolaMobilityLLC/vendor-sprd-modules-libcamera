@@ -567,7 +567,7 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	rpt->target_lum = ae->ae_report.target_lum;
 	rpt->target_lum_ori = ae->ae_report.target_lum_ori;
 	rpt->flag4idx = ae->ae_report.flag4idx;
-
+    rpt->bisFlashOn = af->flash_on;
 	return 0;
 }
 

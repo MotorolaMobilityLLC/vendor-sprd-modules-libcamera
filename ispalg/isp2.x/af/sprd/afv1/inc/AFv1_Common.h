@@ -343,6 +343,7 @@ typedef struct _AE_Report {
 	cmr_u32 target_lum;
 	cmr_u32 target_lum_ori;
 	cmr_u32 flag4idx;
+	cmr_s32 bisFlashOn;
 } AE_Report;
 
 typedef struct _AF_FV_DATA {
