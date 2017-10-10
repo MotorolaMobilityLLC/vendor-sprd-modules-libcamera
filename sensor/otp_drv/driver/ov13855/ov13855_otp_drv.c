@@ -18,7 +18,7 @@ static cmr_int _ov13855_section_checksum(cmr_u8 *buf, cmr_uint offset,
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
-    if ((sum % 255 + 1) == buf[check_sum_offset]) {
+    if ((sum % 255 + 1) == buf[check_sum_offset] || (sum % 256) == buf[check_sum_offset]) {
         ret = OTP_CAMERA_SUCCESS;
     } else {
         ret = CMR_CAMERA_FAIL;
@@ -59,7 +59,7 @@ static cmr_int _ov13855_parse_af_data(cmr_handle otp_drv_handle) {
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
     ret =
         _ov13855_section_checksum(otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
-                                  AF_INFO_SIZE - 1, AF_INFO_CHECKSUM);
+                                  AF_INFO_CHECKSUM - AF_INFO_OFFSET, AF_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("auto focus checksum error,parse failed");
         return ret;
