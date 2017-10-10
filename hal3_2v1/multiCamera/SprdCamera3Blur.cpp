@@ -475,7 +475,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     if (camera_id == MODE_BLUR_FRONT) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
-        if (atoi(prop) == 1) {
+        if (atoi(prop) == 1 || atoi(prop) == 2) {
             m_nPhyCameras = 2;
         } else {
             m_nPhyCameras = 1;
@@ -483,7 +483,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     } else {
         mCameraId = CAM_BLUR_MAIN_ID;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
-        if (atoi(prop) == 0) {
+        if (atoi(prop) == 0 || atoi(prop) == 2) {
             m_nPhyCameras = 2;
         } else {
             m_nPhyCameras = 1;
