@@ -1246,10 +1246,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				}
 
 				binning.ratio = (float)cxt->dcam_size.w / calc_param.img_size.w;
-				if ((cxt->mode_id[0] >= ISP_MODE_ID_PRV_0 &&
-						cxt->mode_id[0] <= ISP_MODE_ID_PRV_3) &&
-						binning.ratio != 1.0) {
-
+				if (binning.ratio != 1.0) {
 					binning_dst.img_width = cxt->dcam_size.w;
 					binning_dst.img_height = cxt->dcam_size.h;
 					binning_dst.grid = isp_lsc_info->grid;
