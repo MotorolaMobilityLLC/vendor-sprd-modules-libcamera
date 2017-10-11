@@ -29,21 +29,11 @@
 
 #include "SprdCamera3MultiBase.h"
 #include <linux/ion.h>
-#include <cutils/ashmem.h>
-#include <sys/mman.h>
-#include "gralloc_priv.h"
-#include "gralloc_buffer_priv.h"
 
 using namespace android;
 namespace sprdcamera {
 #define MAX_UNMATCHED_QUEUE_BASE_SIZE (3)
-
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-#define MATCH_FRAME_TIME_DIFF (40)
-#else
 #define MATCH_FRAME_TIME_DIFF (30)
-#endif
-
 #define LUMA_SOOMTH_COEFF (5)
 #define DARK_LIGHT_TH (3000)
 #define LOW_LIGHT_TH (1500)
@@ -56,18 +46,12 @@ namespace sprdcamera {
 #endif
 
 SprdCamera3MultiBase::SprdCamera3MultiBase()
-    : mIommuEnabled(false), mVFrameCount(0), mVLastFrameCount(0),
+    : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
       mBrightConut(0), mLowConut(0), mDarkConut(0) {
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
     mReqState = PREVIEW_REQUEST_STATE;
-
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-    mIommuEnabled = false;
-#else
-    mIommuEnabled = true;
-#endif
 }
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
@@ -149,25 +133,6 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
         goto getpmem_fail;
     }
 
-    if( buffer->share_attr_fd < 0 ) {
-        buffer->share_attr_fd = ashmem_create_region( "camera_gralloc_shared_attr", PAGE_SIZE );
-        if(buffer->share_attr_fd < 0) {
-            ALOGE("Failed to allocate page for shared attribute region");
-            goto getpmem_fail;
-        }
-    }
-    buffer->attr_base = mmap( NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->share_attr_fd, 0 );
-    if(buffer->attr_base != MAP_FAILED)	{
-        attr_region *region = (attr_region *) buffer->attr_base;
-        memset(buffer->attr_base, 0xff, PAGE_SIZE);
-        munmap( buffer->attr_base, PAGE_SIZE );
-        buffer->attr_base = MAP_FAILED;
-    }
-    else {
-        ALOGE("Failed to mmap shared attribute region");
-        goto getpmem_fail;
-    }
-
     buffer->share_fd = pHeapIon->getHeapID();
     buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
     buffer->byte_stride = w;
@@ -180,7 +145,9 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
 
     new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
+
     HAL_LOGI("X");
+
     return result;
 
 getpmem_fail:
@@ -191,15 +158,6 @@ getpmem_fail:
 
 void SprdCamera3MultiBase::freeOneBuffer(new_mem_t *buffer) {
     if (buffer->native_handle != NULL) {
-        struct private_handle_t *private_buffer = (struct private_handle_t *)(buffer->native_handle);
-        if(private_buffer->attr_base != MAP_FAILED) {
-            ALOGW("Warning shared attribute region mapped at free. Unmapping");
-            munmap( private_buffer->attr_base, PAGE_SIZE );
-            private_buffer->attr_base = MAP_FAILED;
-        }
-        close(private_buffer->share_attr_fd);
-        private_buffer->share_attr_fd = -1;
-
         delete (private_handle_t *)*(&buffer->native_handle);
         buffer->native_handle = NULL;
     }

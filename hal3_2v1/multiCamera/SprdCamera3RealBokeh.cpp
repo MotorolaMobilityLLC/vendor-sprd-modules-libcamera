@@ -1105,7 +1105,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
         rc = mRealBokeh->mDepthApi->sprd_depth_Run(
             mPrevDepthhandle, (void *)(depth_handle->base),
             (void *)(input_handle2->base), (void *)(input_handle1->base),
-            &(mPreviewbokehParam.depth_param));
+            &(mPreviewbokehParam.weight_params));
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("sprd_depth_Run failed! %d", rc);
             return rc;
@@ -1251,7 +1251,6 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
                                 GraphicBuffer::USAGE_SW_WRITE_OFTEN;
         int32_t yuvTextFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
         uint32_t inWidth = 0, inHeight = 0, inStride = 0;
-
 #if defined(CONFIG_SPRD_ANDROID_8)
         uint32_t inLayCount = 1;
 #endif
@@ -1262,13 +1261,11 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
         struct private_handle_t *depth_handle =
             (struct private_handle_t *)(*depth_bufer);
         sp<GraphicBuffer> srcBuffer = new GraphicBuffer(
-            (native_handle_t *)(*input_buf1), GraphicBuffer::HandleWrapMethod::CLONE_HANDLE,
-            inWidth, inHeight, yuvTextFormat,
-            inLayCount, yuvTextUsage, inStride);
+            inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+            inStride, (native_handle_t *)(*input_buf1), 0);
         sp<GraphicBuffer> dstBuffer = new GraphicBuffer(
-            (native_handle_t *)(*output_buf), GraphicBuffer::HandleWrapMethod::CLONE_HANDLE,
-            inWidth, inHeight, yuvTextFormat,
-            inLayCount , yuvTextUsage, inStride);
+            inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+            inStride, (native_handle_t *)(*output_buf), 0);
 #else
         struct private_handle_t *depth_handle =
             (struct private_handle_t *)(*depth_bufer);
@@ -1295,7 +1292,6 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
         int64_t bokehBlurImage = systemTime();
         rc = mRealBokeh->mBokehPrevApi->iBokehBlurImage(
             mRealBokeh->mBokehPrevApi->mHandle, &(*srcBuffer), &(*dstBuffer));
-
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("iBokehBlurImage failed!");
             return rc;
@@ -1887,7 +1883,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             mRealBokeh->mCaptureWidth, mRealBokeh->mCaptureHeight,
             input_handle1->size);
         int64_t depthRun = systemTime();
-        weightmap_param weightParams;
+        WeightParams weightParams;
         weightParams.F_number = mCapbokehParam.bokeh_level;
         weightParams.sel_x = mCapbokehParam.sel_x;
         weightParams.sel_y = mCapbokehParam.sel_y;
@@ -2604,7 +2600,7 @@ int SprdCamera3RealBokeh::loadDepthApi() {
     mDepthApi->sprd_depth_Run =
         (int (*)(void *handle, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
                  void *a_pInMain_YCC420NV21,
-                 weightmap_param *wParams))dlsym(mDepthApi->handle,
+                 WeightParams *wParams))dlsym(mDepthApi->handle,
                                               "sprd_depth_Run");
     if (mDepthApi->sprd_depth_Run == NULL) {
         error = dlerror();
@@ -2712,14 +2708,6 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
         mPreviewMuxerThread->mPreviewbokehParam.weight_params.DisparityImage =
             NULL;
 
-        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_x =
-            mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_x;
-        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_y =
-            mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_y;
-        mPreviewMuxerThread->mPreviewbokehParam.depth_param.F_number =
-            mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number;
-        mPreviewMuxerThread->mPreviewbokehParam.depth_param.DisparityImage =
-            NULL;
         // capture bokeh params
         mCaptureThread->mCapbokehParam.sel_x = mCaptureWidth / 2;
         mCaptureThread->mCapbokehParam.sel_y = mCaptureHeight / 2;
@@ -3013,8 +3001,6 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                 fnum * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
             fnum = (MAX_F_FUMBER + 1 - fnum) * 255 / MAX_F_FUMBER;
             mCaptureThread->mCapbokehParam.bokeh_level = fnum;
-            mPreviewMuxerThread->mPreviewbokehParam.depth_param.F_number =
-              mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number;
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
             fnum = MAX_F_FUMBER + 1 - fnum;
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
@@ -3058,10 +3044,6 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                         x * mCaptureWidth / mPreviewWidth;
                     mCaptureThread->mCapbokehParam.sel_y =
                         y * mCaptureHeight / mPreviewHeight;
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_x =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_x;
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_y =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_y;
                 }
             } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
                 mPreviewMuxerThread->mArcSoftPrevParam.ptFocus.x = (MInt32)x;
@@ -3092,11 +3074,6 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                         .sel_y = mPreviewHeight / 2;
                     mCaptureThread->mCapbokehParam.sel_x = mCaptureWidth / 2;
                     mCaptureThread->mCapbokehParam.sel_y = mCaptureHeight / 2;
-
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_x =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_x;
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_y =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_y;
                     HAL_LOGD("autofocus and bokeh center");
                 }
             }
