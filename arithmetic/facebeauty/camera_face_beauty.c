@@ -43,6 +43,7 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
             faceBeauty->fb_mode = 1;
             if (faceBeauty->hArcSoftFB == 0) {
                 ALOGD("init_fb_handle to arcsoft_bsv_create");
+                faceBeauty->firstFrm = 1;
                 if (arcsoft_bsv_create(&(faceBeauty->hArcSoftFB)) != MOK ||
                     faceBeauty->hArcSoftFB == NULL) {
                     ALOGE("arcsoft_bsv_create  fail");
@@ -421,6 +422,15 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             retVal = arcsoft_bsv_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
+            /* Arcsoft issue, first frame is no effective, so process two times*/
+            if (1 == faceBeauty->firstFrm) {
+                ALOGD("do_facebeauty in the oem first frame!");
+                retVal = arcsoft_bsv_process(faceBeauty->hArcSoftFB,
+                                             &(faceBeauty->arc_fb_image),
+                                             &(faceBeauty->arc_fb_image),
+                                             &(faceBeauty->arc_fb_face), MNull);
+                faceBeauty->firstFrm = 0;
+            }
             clock_gettime(CLOCK_BOOTTIME, &end_time);
             duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                        (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
