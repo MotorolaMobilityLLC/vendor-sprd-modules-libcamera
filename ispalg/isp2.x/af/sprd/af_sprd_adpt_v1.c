@@ -1537,8 +1537,11 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
 	if (AF_SEARCHING != af->focus_state) {
-		if (res.is_caf_trig || AFV1_TRUE == af->force_trigger) {
+		if (res.is_caf_trig || (AFV1_TRUE == af->force_trigger && af->ae.ae_report.is_stab)) {
 			ISP_LOGI("lib trigger af %d, force trigger %d", res.is_caf_trig, af->force_trigger);
+			if(AFV1_TRUE == af->force_trigger) {
+				trigger_start(af);
+			}
 			pthread_mutex_lock(&af->af_work_lock);
 			if (AFT_DATA_FD == prm->active_data_type) {
 				win.win_num = 1;
@@ -2254,8 +2257,8 @@ static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 
 	switch (aux_sensor_info->type) {
 	case AF_ACCELEROMETER:
-		//ISP_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f", aux_sensor_info->gsensor_info.vertical_up,
-		//aux_sensor_info->gsensor_info.vertical_down, aux_sensor_info->gsensor_info.horizontal);
+		ISP_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f", aux_sensor_info->gsensor_info.vertical_up,
+		aux_sensor_info->gsensor_info.vertical_down, aux_sensor_info->gsensor_info.horizontal);
 		af->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
 		af->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
 		af->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
