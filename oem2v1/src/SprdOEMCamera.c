@@ -1159,7 +1159,7 @@ static oem_ops_t oem_module_ops = {
     camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
     camera_start_capture, camera_stop_capture,
     camera_pre_capture_set_buffer_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg
+    camera_reprocess_yuv_for_jpeg,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

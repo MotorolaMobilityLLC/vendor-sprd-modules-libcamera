@@ -3,14 +3,6 @@ include $(LOCAL_PATH)/SprdCtrl.mk
 ISP_HW_VER = 3v0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9850ka)
-ISP_HW_VER = 2v1a
-else
-ISP_HW_VER = 2v1
-endif
-endif
-
-ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
 ISP_HW_VER = 2v1
 endif
 

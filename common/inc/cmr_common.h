@@ -1535,20 +1535,7 @@ typedef struct oem_ops {
     cmr_int (*camera_reprocess_yuv_for_jpeg)(cmr_handle camera_handle,
                                              enum takepicture_mode cap_mode,
                                              struct frm_info *frm_data);
-#if defined(CONFIG_ISP_2_1)
-    cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
-                                      cmr_s32 *point_x, cmr_s32 *point_y);
-    cmr_s32 (*camera_isp_sw_check_buf)(cmr_handle camera_handle,
-                                       cmr_uint *param_ptr);
-    cmr_int (*camera_isp_sw_proc)(cmr_handle camera_handle,
-                                  struct soft_isp_frm_param *param_ptr);
-    cmr_int (*camera_raw_post_proc)(cmr_handle camera_handle,
-                                    struct img_frm *raw_buff,
-                                    struct img_frm *yuv_buff,
-                                    struct img_sbs_info *sbs_info);
-    cmr_int (*camera_get_tuning_param)(cmr_handle camera_handle,
-                                       struct tuning_param_info *tuning_info);
-#endif
+
 } oem_ops_t;
 
 typedef struct oem_module {

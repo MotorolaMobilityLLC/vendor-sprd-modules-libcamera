@@ -473,9 +473,6 @@ cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
 cmr_int cmr_set_af_pos(cmr_handle oem_handle, cmr_u32 af_pos);
 cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value);
 cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps);
-cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
-                                            enum takepicture_mode mode,
-                                            struct frm_info *frm_data);
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 cmr_int cmr_get_microdepth_param(cmr_handle oem_handle, void *param);
