@@ -58,29 +58,10 @@ enum af_state {
 	STATE_PICTURE,
 };
 
-static const char *state_string[] = {
-	"manual",
-	"normal_af",
-	"caf",
-	"record caf",
-	"faf",
-	"fullscan",
-	"picture",
-};
-
-#define STATE_STRING(state)    state_string[state]
-
 enum focus_state {
 	AF_IDLE,
 	AF_SEARCHING,
 };
-
-static const char *focus_state_str[] = {
-	"af idle",
-	"af searching",
-};
-
-#define FOCUS_STATE_STR(state)    focus_state_str[state]
 
 enum dcam_after_vcm {
 	DCAM_AFTER_VCM_NO = 0,

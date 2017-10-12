@@ -115,7 +115,7 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 	int w = image_width / 2;
 	int h = image_height / 2;
 	uint16_t *lsc_table = NULL;
-
+       int i;
 	void *lsc_handle = dlopen("libsprdlsc.so", RTLD_NOW);
 	if (!lsc_handle) {
 		ISP_LOGE("init_lsc_otp, fail to dlopen libsprdlsc lib");
@@ -162,7 +162,7 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 	*tbl_w = sx;
 	*tbl_h = sy;
 
-	for (int i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 		otp_chn[i] = lsc_otp_tbl + i * nx * ny;
 		tbl_chn[i] = lsc_table + i * sx * sy;
 	}

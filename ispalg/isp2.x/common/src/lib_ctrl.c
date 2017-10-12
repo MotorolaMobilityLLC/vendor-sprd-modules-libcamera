@@ -113,7 +113,7 @@ cmr_u32 isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib_
 	struct third_lib_info awb_lib_info;
 	cmr_u32 awb_producer_id = 0;
 	cmr_u32 awb_lib_version = 0;
-
+       UNUSED(awb_lib_fun);
 	ISP_LOGI("E");
 	if (libuse_info) {
 		awb_lib_info = libuse_info->awb_lib_info;
@@ -137,16 +137,6 @@ cmr_u32 isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib_
 			ISP_LOGE("fail to check param, version = 0x%x", awb_lib_version);
 			rtn = AWB_CTRL_ERROR;
 		}
-		break;
-
-	case AL_AWB_LIB:
-		awb_lib_fun = NULL;
-		//al_awb_lib_version = awb_lib_version;
-		//al_awb_lib_open(al_awb_lib_version);
-		//awb_lib_fun->awb_ctrl_init            = awb_al_ctrl_init;
-		//awb_lib_fun->awb_ctrl_deinit          = awb_al_ctrl_deinit;
-		//awb_lib_fun->awb_ctrl_calculation     = awb_al_ctrl_calculation;
-		//awb_lib_fun->awb_ctrl_ioctrl          = awb_al_ctrl_ioctrl;
 		break;
 
 	default:

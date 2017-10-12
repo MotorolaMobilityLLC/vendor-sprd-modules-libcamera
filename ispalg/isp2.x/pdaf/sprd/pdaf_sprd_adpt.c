@@ -215,6 +215,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct pdaf_ctrl_init_in *in_p = (struct pdaf_ctrl_init_in *)in;
 	struct sprd_pdaf_context *cxt = NULL;
 	struct isp_alg_fw_context *isp_ctx = NULL;
+	cmr_u16 i;
 	UNUSED(out);
 
 	if (!in_p) {
@@ -296,7 +297,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->ppi_info.block.end_y = in_p->pd_info->pd_end_y;
 	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
 	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
-	for (cmr_u16 i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {
+	for (i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {
 		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
 		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
 		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
@@ -401,6 +402,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_u8 *ucOTPBuffer = NULL;
 	cmr_s32 otp_orientation = 0;
 	cmr_u8 OTPSensorStatus = 0;
+	cmr_s32 area_index;
 
 	UNUSED(out);
 	if (!in) {
@@ -467,14 +469,14 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 #endif
 	
 
-	for (cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++) {
+	for (area_index = 0; area_index < AREA_LOOP; area_index++) {
 		ret = PD_DoType2((void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
 		if (ret) {
 			ISP_LOGE("fail to do pd algo.");
 			goto exit;
 		}
 	}
-	for(cmr_s32 area_index = 0; area_index < AREA_LOOP; area_index++){
+	for(area_index = 0; area_index < AREA_LOOP; area_index++){
 		ret = PD_GetResult(&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
 		if (ret) {
 			ISP_LOGE("fail to do get pd_result.");

@@ -458,7 +458,7 @@ static void ae_print_debug_info(char *log_str, struct ae_ctrl_cxt *cxt_ptr)
 		    cxt_ptr->sync_cur_status.settings.min_fps, cxt_ptr->sync_cur_status.settings.max_fps, fps);
 
 	if (result_ptr->log) {
-		pos += sprintf((char *)((char *)log_str + pos), "adv info:\n%s\n", result_ptr->log);
+		pos += sprintf((char *)((char *)log_str + pos), "adv info:\n%s\n", (char*)result_ptr->log);
 	}
 }
 
@@ -1753,7 +1753,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	struct Flash_pfStartOutput out;
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 	cmr_u32 blk_num = 0;
-
+       cmr_u32 i;
 	/*reset flash debug information*/
 	memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
 	cxt->flash_buf_len = 0;
@@ -1781,7 +1781,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.gSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num;
 	in.bSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num;
 
-	for (cmr_u32 i=0 ; i< 20; i++) {
+	for (i=0 ; i< 20; i++) {
 		in.ctTab[i] = cxt->ctTab[i];
 		in.ctTabRg[i] = cxt->ctTabRg[i];
 	}
@@ -3057,6 +3057,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
+	cmr_u32 k;
+	cmr_u32 j;
 	if (NULL == param) {
 		ISP_LOGE("param is NULL \n");
 		return AE_ERROR;
@@ -3075,7 +3077,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	else
 		cxt->cur_status.settings.work_mode = AE_WORK_MODE_COMMON;
 
-	for (cmr_u32 k = 0 ; k < 20; k++) {
+	for (k = 0 ; k < 20; k++) {
 		cxt->ctTab[k] = work_info->ct_table.ct[k];
 		cxt->ctTabRg[k] = work_info->ct_table.rg[k];
 	}
@@ -3129,7 +3131,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	{
 		struct ae_exp_gain_table* src[AE_FLICKER_NUM] = {NULL, NULL};
 		struct ae_exp_gain_table* dst[AE_FLICKER_NUM] = {NULL, NULL};
-		for (cmr_u32 i = 0; i < AE_ISO_NUM_NEW; ++i) {
+		cmr_u32 i;
+		for (i = 0; i < AE_ISO_NUM_NEW; ++i) {
 			if (0 != cxt->tuning_param[mode].ae_table[AE_FLICKER_50HZ][i].max_index) {
 				src[AE_FLICKER_50HZ] = &cxt->tuning_param[mode].backup_ae_table[AE_FLICKER_50HZ][i];
 				src[AE_FLICKER_60HZ] = &cxt->tuning_param[mode].backup_ae_table[AE_FLICKER_60HZ][i];
@@ -3143,7 +3146,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 		}
 	}
 
-	for (cmr_s32 j = 0; j < AE_SCENE_NUM; ++j) {
+	for (j = 0; j < AE_SCENE_NUM; ++j) {
 		struct ae_exp_gain_table* src[AE_FLICKER_NUM];
 		struct ae_exp_gain_table* dst[AE_FLICKER_NUM];
 		src[AE_FLICKER_50HZ] = &cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ];

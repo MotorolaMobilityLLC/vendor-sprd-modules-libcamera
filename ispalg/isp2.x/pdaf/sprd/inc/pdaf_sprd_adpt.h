@@ -51,7 +51,7 @@ typedef struct {
 	short int m_wHeight;
 } alPD_RECT;
 
-static cmr_u16 Reg[256];
+//static cmr_u16 Reg[256];
 
 typedef struct {
 	cmr_s32 dSensorID;	//0:for SamSung 1: for Sony

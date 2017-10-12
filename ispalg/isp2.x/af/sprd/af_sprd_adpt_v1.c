@@ -38,6 +38,23 @@
 #define  MIN( _x, _y ) ( ((_x) < (_y)) ? (_x) : (_y) )
 #endif
 
+static const char *state_string[] = {
+        "manual",
+        "normal_af",
+        "caf",
+        "record caf",
+        "faf",
+        "fullscan",
+        "picture",
+};
+#define STATE_STRING(state)    state_string[state]
+
+static const char *focus_state_str[] = {
+        "af idle",
+        "af searching",
+};
+#define FOCUS_STATE_STR(state)    focus_state_str[state]
+
 static char AFlog_buffer[2048] = { 0 };
 
 static struct af_iir_nr_info af_iir_nr[3] = {
