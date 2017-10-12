@@ -60,9 +60,9 @@ LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libBokeh2Frame
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libalParseOTP
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth
 #else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
-#LOCAL_SHARED_LIBRARIES += libsprddepth
+#LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
 
 ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
