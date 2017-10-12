@@ -582,6 +582,7 @@ static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_bright_cfg cfg = { 0 };
 	struct isp_pm_param_data param_data[ISP_MODE_MAX];
@@ -591,7 +592,7 @@ static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(param_data, 0x0, sizeof(param_data));
 	if (cxt->zsl_flag) {
-		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
 			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_BRIGHT,
 					ISP_BLK_BRIGHT,
 					cxt->mode_id[i],
@@ -614,6 +615,7 @@ static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_contrast_cfg cfg = { 0 };
 	struct isp_pm_param_data param_data[ISP_MODE_MAX];
@@ -623,7 +625,7 @@ static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(param_data, 0x0, sizeof(param_data));
 	if (cxt->zsl_flag) {
-		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
 			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_CONTRAST,
 					ISP_BLK_CONTRAST,
 					cxt->mode_id[i],
@@ -646,6 +648,7 @@ static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_saturation_cfg cfg = { 0 };
 	struct isp_pm_param_data param_data[ISP_MODE_MAX];
@@ -655,7 +658,7 @@ static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(param_data, 0x0, sizeof(param_data));
 	if (cxt->zsl_flag) {
-		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
 			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_SATURATION,
 					ISP_BLK_SATURATION,
 					cxt->mode_id[i],
@@ -678,6 +681,7 @@ static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_sharpness(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_edge_cfg cfg = { 0 };
 	struct isp_pm_param_data param_data[ISP_MODE_MAX];
@@ -687,7 +691,7 @@ static cmr_int ispctl_sharpness(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(param_data, 0x0, sizeof(param_data));
 	if (cxt->zsl_flag) {
-		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
 			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_EDGE_STRENGTH,
 					ISP_BLK_EDGE,
 					cxt->mode_id[i],
@@ -1355,6 +1359,7 @@ static cmr_int ispctl_burst_notice(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_special_effect(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_param_data param_data[ISP_MODE_MAX];
 	struct isp_pm_ioctl_input input = { NULL, 0 };
@@ -1362,7 +1367,7 @@ static cmr_int ispctl_special_effect(cmr_handle isp_alg_handle, void *param_ptr)
 
 	memset(param_data, 0x0, sizeof(param_data));
 	if (cxt->zsl_flag) {
-		for (cmr_s32 i = 0; i < ISP_MODE_MAX; i++) {
+		for (i = 0; i < ISP_MODE_MAX; i++) {
 			BLOCK_PARAM_CFG(param_data[i], ISP_PM_BLK_SPECIAL_EFFECT,
 					ISP_BLK_CCE,
 					cxt->mode_id[i],

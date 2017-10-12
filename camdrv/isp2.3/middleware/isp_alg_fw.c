@@ -1355,7 +1355,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
-	cmr_u64 u_addr = 0;
+	cmr_uint u_addr = 0;
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
 
@@ -1479,7 +1479,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	}
 	cxt->smart_cxt.isp_smart_eb = 1;
 	time_end = ispalg_get_sys_timestamp();
-	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", time_end - time_start);
+	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", (cmr_u32)(time_end - time_start));
 	cxt->aem_is_update = 0;
 
 	ISP_LOGV("done %ld", ret);
@@ -1718,7 +1718,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb process"));
 	}
 	time_end = ispalg_get_sys_timestamp();
-	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
+	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", (cmr_u32)(time_end - time_start));
 
 	ret = ispalg_awb_post_process((cmr_handle) cxt, awb_output);
 
@@ -1833,7 +1833,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		}
 	}
 	time_end = ispalg_get_sys_timestamp();
-	ISP_LOGV("SYSTEM_TEST-smart:%zd ms", time_end - time_start);
+	ISP_LOGV("SYSTEM_TEST-smart:%zd ms", (cmr_u32)(time_end - time_start));
 
 	isp_cur_bv = ae_in->ae_output.cur_bv;
 	isp_cur_ct = awb_output->ct;
@@ -2235,7 +2235,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
-	cmr_u64 u_addr = 0;
+	cmr_uint u_addr = 0;
 	cmr_u32 val = 0;
 	cmr_u32 last_val0 = 0;
 	cmr_u32 last_val1 = 0;
@@ -3891,6 +3891,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_pm_param_data pm_param;
 	struct isp_video_start param;
 	cmr_s32 mode = 0;
+	cmr_s32 i = 0;
 
 	ISP_LOGV("isp proc start\n");
 	//SBS lsc added 1
@@ -3986,7 +3987,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
-	for(int i=0; i<9;i++)
+	for (i = 0; i < 9; i++)
 		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
 	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
 	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;
