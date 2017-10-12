@@ -948,6 +948,13 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->cur_flicker = cxt->sync_cur_status.settings.flicker;/*backup the flicker flag before flash
 														* and will lock flicker result
 														*/
+		cxt->flash_backup.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+		cxt->flash_backup.exp_time = cxt->sync_cur_result.wts.cur_exp_line * cxt->cur_status.line_time;
+		cxt->flash_backup.dummy = cxt->sync_cur_result.wts.cur_dummy;
+		cxt->flash_backup.gain = cxt->sync_cur_result.wts.cur_again;
+		cxt->flash_backup.line_time = cxt->cur_status.line_time;
+		cxt->flash_backup.cur_index = cxt->sync_cur_result.wts.cur_index;
+		cxt->flash_backup.bv = cxt->cur_result.cur_bv;
 		if (0 != cxt->flash_ver)
 			rtn = ae_set_pause(cxt);
 		break;
@@ -966,6 +973,27 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
 		cxt->cur_status.settings.flash = FLASH_PRE_AFTER;
+		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
+		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
+		cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
+		cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
+		cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
+		cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
+		cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
+		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
+		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
+		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
+		cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
+		cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
+		memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
+		cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+		cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
+		cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
+		cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
+		cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
+
+		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
+
 		if (0 != cxt->flash_ver)
 			rtn = ae_set_restore_cnt(cxt);
 		break;
@@ -983,6 +1011,27 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->cur_status.settings.flicker = cxt->cur_flicker;
 		if (cxt->camera_id && cxt->fdae.pause)
 			cxt->fdae.pause = 0;
+		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
+		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
+		cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
+		cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
+		cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
+		cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
+		cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
+		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
+		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
+		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
+		cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
+		cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
+
+		memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
+		cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+		cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
+		cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
+		cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
+		cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
+
+		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 
 		if (0 != cxt->flash_ver)
 			rtn = ae_set_restore_cnt(cxt);

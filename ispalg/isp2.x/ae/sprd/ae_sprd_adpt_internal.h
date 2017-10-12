@@ -197,6 +197,7 @@ struct ae_ctrl_cxt {
 	/*ED: for dual flash algorithm*/
 	cmr_s16 flash_on_off_thr;
 	cmr_u32 flash_effect;
+	struct ae_exposure_param flash_backup;
 	struct flash_cali_data flash_cali[32][32];
 	cmr_u8 flash_debug_buf[256 * 1024];
 	cmr_u32 flash_buf_len;
