@@ -113,7 +113,7 @@ cmr_u32 isp_awblib_init(struct sensor_libuse_info * libuse_info, struct awb_lib_
 	struct third_lib_info awb_lib_info;
 	cmr_u32 awb_producer_id = 0;
 	cmr_u32 awb_lib_version = 0;
-       UNUSED(awb_lib_fun);
+	UNUSED(awb_lib_fun);
 	ISP_LOGI("E");
 	if (libuse_info) {
 		awb_lib_info = libuse_info->awb_lib_info;

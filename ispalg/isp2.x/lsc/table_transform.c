@@ -62,8 +62,9 @@ float calc_slope(float a1, float a2, float a3)
 
 static void matrix_multiply_R(float* C_mx, float* A_mx, int* B_mx)
 {
-	for(int j=0; j<4; j++){
-		for(int i=0; i<4; i++){
+	int j,i;
+	for(j=0; j<4; j++){
+		for(i=0; i<4; i++){
 			C_mx[j*4 + i] = A_mx[j*4 + 0]*B_mx[0*4 + i] + A_mx[j*4 + 1]*B_mx[1*4 + i] + A_mx[j*4 + 2]*B_mx[2*4 + i] + A_mx[j*4 + 3]*B_mx[3*4 + i];
 		}
 	}
@@ -71,8 +72,9 @@ static void matrix_multiply_R(float* C_mx, float* A_mx, int* B_mx)
 
 static void matrix_multiply_L(float* C_mx, int* A_mx, float* B_mx)
 {
-	for(int j=0; j<4; j++){
-		for(int i=0; i<4; i++){
+	int j,i;
+	for(j=0; j<4; j++){
+		for(i=0; i<4; i++){
 			C_mx[j*4 + i] = A_mx[j*4 + 0]*B_mx[0*4 + i] + A_mx[j*4 + 1]*B_mx[1*4 + i] + A_mx[j*4 + 2]*B_mx[2*4 + i] + A_mx[j*4 + 3]*B_mx[3*4 + i];
 		}
 	}
@@ -126,11 +128,11 @@ float table_bicubic_interpolation(unsigned short* src_tab, unsigned int src_gain
 	float y_col[4] = {1, dy, dy*dy, dy*dy*dy};
 	float tmp_col[4];
 	float answer;
-
+	int j;
 	matrix_multiply_R(tmp_mx, f_mx, coef_mx_R);
 	matrix_multiply_L(a_mx, coef_mx_L, tmp_mx);
 
-	for(int j=0; j<4; j++){
+	for(j=0; j<4; j++){
 		tmp_col[j] = a_mx[j*4 + 0]*y_col[0] + a_mx[j*4 + 1]*y_col[1] + a_mx[j*4 + 2]*y_col[2] + a_mx[j*4 + 3]*y_col[3];
 	}
 
@@ -194,7 +196,7 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 	int TL_j = 0;     // src table top left index-j
 	float dx = 0.0;   // distence to left     , where total length normalize to 1
 	float dy = 0.0;   // distence to bottem   , where total length normalize to 1
-
+	unsigned int j,i;
 	switch(action){
 
 	case LSC_BINNING:
@@ -209,8 +211,8 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 			return -1;
 		}
 
-		for(unsigned int j=0; j<dst->gain_height; j++){
-			for(unsigned int i=0; i<dst->gain_width; i++){
+		for(j=0; j<dst->gain_height; j++){
+			for(i=0; i<dst->gain_width; i++){
 				dif0_gb[j*dst->gain_width + i] = (float)dst0_gb[j*dst->gain_width + i]/(float)src0_gb[j*src->gain_width + i];
 				dif0_b [j*dst->gain_width + i] = (float)dst0_b [j*dst->gain_width + i]/(float)src0_b [j*src->gain_width + i];
 				dif0_r [j*dst->gain_width + i] = (float)dst0_r [j*dst->gain_width + i]/(float)src0_r [j*src->gain_width + i];
@@ -243,8 +245,8 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 
 		start_x = crop->start_x/2;
 		start_y = crop->start_y/2;
-		for(unsigned int j=0; j<dst->gain_height; j++){
-			for(unsigned int i=0; i<dst->gain_width; i++){
+		for(j=0; j<dst->gain_height; j++){
+			for(i=0; i<dst->gain_width; i++){
 				crop_x = start_x + (i-1)*dst->grid;
 				crop_y = start_y + (j-1)*dst->grid;
 

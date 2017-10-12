@@ -1753,7 +1753,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	struct Flash_pfStartOutput out;
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 	cmr_u32 blk_num = 0;
-       cmr_u32 i;
+	cmr_u32 i;
 	/*reset flash debug information*/
 	memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
 	cxt->flash_buf_len = 0;

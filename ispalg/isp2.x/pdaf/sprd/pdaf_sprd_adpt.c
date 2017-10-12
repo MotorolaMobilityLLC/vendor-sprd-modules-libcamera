@@ -467,7 +467,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
   pPD_left_final = pPD_left;
 	pPD_right_final = pPD_right;
 #endif
-	
 
 	for (area_index = 0; area_index < AREA_LOOP; area_index++) {
 		ret = PD_DoType2((void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
