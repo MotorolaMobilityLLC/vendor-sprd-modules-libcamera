@@ -479,7 +479,7 @@ static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 
 	ISP_LOGV("FLASH_TAG: awb flash recover gain = (%d, %d, %d), recover mode = %d", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_mode);
 
-	if(cxt->wb_mode == 0){
+	if(cxt->wb_mode == 0 && cxt->last_enable == 0  && cxt->flash_info.flash_enable== 0){
 		s_save_awb_param[cxt->camera_id].r = awb_gain.r;
 		s_save_awb_param[cxt->camera_id].g = awb_gain.g;
 		s_save_awb_param[cxt->camera_id].b = awb_gain.b;
@@ -1524,6 +1524,8 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			}
 		}
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
+		cxt->flash_info.flash_enable = AWB_CTRL_FLASH_END;
+
 		break;
 
 	case AWB_CTRL_CMD_FLASH_BEFORE_P:

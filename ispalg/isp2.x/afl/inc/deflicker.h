@@ -22,9 +22,9 @@ extern "C" {
 
 cmr_s32 antiflcker_sw_init();
 cmr_s32 antiflcker_sw_deinit();
-cmr_s32 antiflcker_sw_process(cmr_s32 input_img_width, cmr_s32 input_img_height, cmr_s32 * debug_sat_img_H_scaling,
-			      cmr_s32 exposure_time, cmr_s32 reg_mflicker_frame_thrd, cmr_s32 reg_mflicker_video_thrd,
-			      cmr_s32 reg_sflicker_frame_thrd, cmr_s32 reg_mflicker_long_thrd, cmr_s32 reg_flat_thrd, cmr_s32 reg_flat_count_thrd, cmr_s32 reg_fflicker_frame_thrd, cmr_s32 reg_fflicker_video_thrd, cmr_s32 reg_fflicker_length_thrd, cmr_s32 * R_window, cmr_s32 * G_window, cmr_s32 * B_window);
+
+cmr_s32 antiflcker_sw_process(int input_img_width, int input_img_height, int *debug_sat_img_H_scaling, int exposure_time, int reg_mflicker_frame_thrd, int reg_mflicker_video_thrd, int reg_sflicker_frame_thrd, int reg_mflicker_long_thrd, int reg_flat_thrd, int reg_flat_count_thrd, int reg_fflicker_frame_thrd,int reg_fflicker_video_thrd,int reg_fflicker_length_thrd,int *R_window, int *G_window, int *B_window );
+cmr_s32 antiflcker_sw_process_v2p2(int input_img_width, int input_img_height, int *debug_sat_img_H_scaling, int exposure_time, int reg_mflicker_frame_thrd, int reg_mflicker_video_thrd, int reg_sflicker_frame_thrd, int reg_mflicker_long_thrd, int reg_flat_thrd, int reg_flat_count_thrd, int reg_fflicker_frame_thrd,int reg_fflicker_video_thrd,int reg_fflicker_length_thrd,int *R_window, int *G_window, int *B_window );
 
 #ifdef __cplusplus
 }
