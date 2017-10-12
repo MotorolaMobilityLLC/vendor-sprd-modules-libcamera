@@ -43,7 +43,7 @@
 #define DV_FLASH_ON_DV_WITH_PREVIEW 1
 
 // pre-flash interval time
-#define PREFLASH_INTERVAL_TIME 1
+#define PREFLASH_INTERVAL_TIME 3
 
 enum exif_orientation {
     ORIENTATION_UNDEFINED = 0,
