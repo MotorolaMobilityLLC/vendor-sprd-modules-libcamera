@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.125"
-#define SUB_VERSION             "-0824-02-SAF_exceed_num"	//use the date code to naming
+#define VERSION             "2.127"
+#define SUB_VERSION             "-1005-too_small_face"//use the date code to naming
 
 #define STRING(s) #s
 
@@ -719,6 +719,7 @@ typedef struct af_scan_env_info_s {
 	cmr_u32 curr_gain;
 	cmr_u32 exp_time;
 	cmr_u32 y_stdev;
+	cmr_u32 y_stable;
 	cmr_s32 curr_bv;
 	cmr_s32 next_bv;
 	cmr_s32 diff_bv;
@@ -853,7 +854,8 @@ typedef struct _focus_stat_result_s {
 	cmr_u32 full_stat;
 } focus_stat_result_t;
 
-typedef struct _pdaf_process_s {
+typedef struct _pdaf_process_s
+{
 	pd_algo_focusing_t pd_focusing;
 	pd_algo_result_t pd_result;
 	cmr_u32 proc_status;
@@ -958,14 +960,15 @@ typedef struct _af_weight_table_s {
 } _weight_table_t;
 
 typedef struct _face_af_tuning_s {
-	cmr_u32 big_size_thr;	// big face thr
-	cmr_u32 middle_size_thr;	// middle face thr
-	cmr_u32 little_size_thr;	// little face thr
-	cmr_u32 absolute_thr;	// too little face thr
-	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
-	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
-	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
-	cmr_u32 reserved[10];
+	cmr_u32 big_size_thr; // big face thr
+	cmr_u32 middle_size_thr;// middle face thr
+	cmr_u32 little_size_thr; // little face thr
+	cmr_u32 absolute_thr; // too little face thr
+	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 absolute_thr_ratio; // when fit in too little face thr ,then enlarge the face area
+	cmr_u32 reserved[9];
 } face_af_tuning_t;
 
 typedef struct _microdepth_s {
