@@ -940,10 +940,11 @@ static void freeCameraMem(sprd_camera_memory_t *memory) {
         return;
 
     if (memory->ion_heap) {
+#if 0
         if (s_mem_method)
             ; // memory->ion_heap->free_iova(ION_MM,memory->phys_addr,
               // memory->phys_size);
-
+#endif
         delete memory->ion_heap;
         memory->ion_heap = NULL;
     }

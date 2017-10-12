@@ -276,14 +276,16 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
       mPowermanageInited(0), mPowerManager(NULL), mPowerManagerLowPower(NULL),
       mPrfmLock(NULL), m_pPowerModule(NULL), miSBindcorePreviewFrame(false),
-      mBindcorePreivewFrameCount(0), mHDRPowerHint(0), mPerformancePowerHint(0),
-      mLowerPowerPowerHint(0), mGyroInit(0), mGyroExit(0),
-      mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
-      mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
-      mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
-      mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
-      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
-      mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
+      mBindcorePreivewFrameCount(0),
+#ifdef POWER_HINT_USED
+      mHDRPowerHint(0), mPerformancePowerHint(0), mLowerPowerPowerHint(0),
+#endif
+      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
+      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
+      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
+      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
+      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
+      mFixedFpsEnabled(0), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mLastCafDoneTime(0)
 
@@ -294,9 +296,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI(":hal3: E cameraId: %d.", cameraId);
-
+#ifdef POWER_HINT_USED
     initPowerHint();
     enablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
+#endif
     changeDfsPolicy(CAM_HIGH);
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
@@ -513,8 +516,10 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
     }
 
     changeDfsPolicy(CAM_EXIT);
+#ifdef POWER_HINT_USED
     disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
     deinitPowerHint();
+#endif
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
@@ -668,9 +673,11 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             getMultiCameraMode() == MODE_BOKEH) {
             changeDfsPolicy(CAM_VERYHIGH);
             HAL_LOGI("set dfs CAM_VERYHIGH");
+#ifdef POWER_HINT_USED
             if (!mPerformancePowerHint) {
                 enablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
             }
+#endif
         } else {
             changeDfsPolicy(CAM_HIGH);
             HAL_LOGI("set dfs CAM_HIGH");
@@ -764,7 +771,7 @@ int SprdCamera3OEMIf::takePicture() {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-
+#ifdef POWER_HINT_USED
     if (1 == mLowerPowerPowerHint) {
         disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
     }
@@ -772,6 +779,7 @@ int SprdCamera3OEMIf::takePicture() {
     if (1 == mHDRPowerHint) {
         enablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
     }
+#endif
 
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("take picture in error status, deinit capture at first");
@@ -905,12 +913,12 @@ int SprdCamera3OEMIf::zslTakePicture() {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-
+#ifdef POWER_HINT_USED
     if ((mLowerPowerPowerHint == 1) && getMultiCameraMode() != MODE_BLUR &&
         getMultiCameraMode() != MODE_BOKEH) {
         disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
     }
-
+#endif
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
@@ -1071,10 +1079,11 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(frm_info *frm_data) {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-
+#ifdef POWER_HINT_USED
     if (1 == mHDRPowerHint) {
         enablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
     }
+#endif
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("take picture in error status, deinit capture at first");
         deinitCapture(mIsPreAllocCapMem);
@@ -1210,11 +1219,11 @@ int SprdCamera3OEMIf::VideoTakePicture() {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-
+#ifdef POWER_HINT_USED
     if (1 == mLowerPowerPowerHint) {
         disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
     }
-
+#endif
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
@@ -1767,6 +1776,7 @@ void SprdCamera3OEMIf::bindcoreEnabled() {
              mBindcorePreivewFrameCount);
 }
 
+#ifdef POWER_HINT_USED
 void SprdCamera3OEMIf::initPowerHint() {
 #ifdef HAS_CAMERA_HINTS
 #ifdef ANDROID_VERSION_O_BRINGUP
@@ -1930,6 +1940,7 @@ void SprdCamera3OEMIf::disablePowerHint(int powerhint_id) {
 #endif
 #endif
 }
+#endif
 
 int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
     switch (dfs_policy) {
@@ -3442,13 +3453,13 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
-
+#ifdef POWER_HINT_USED
     if (!miSPreviewFirstFrame && !mLowerPowerPowerHint) {
         if ((sprddefInfo.slowmotion <= 1)) {
             enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
         }
     }
-
+#endif
     if (isCapturing()) {
         // WaitForCaptureDone();
         WaitForBurstCaptureDone();
@@ -4155,11 +4166,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-
+#ifdef POWER_HINT_USED
         disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
         if (!mLowerPowerPowerHint && !mHDRPowerHint) {
             enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
         }
+#endif
     }
 
     SPRD_DEF_Tag sprddefInfo;
@@ -4776,9 +4788,11 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
     if (getMultiCameraMode() == MODE_BLUR ||
         getMultiCameraMode() == MODE_BOKEH) {
         changeDfsPolicy(CAM_HIGH);
+#ifdef POWER_HINT_USED
         if (mPerformancePowerHint && (mCameraId == 2)) {
             disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
         }
+#endif
     }
 
     HAL_LOGD("X");
@@ -5160,22 +5174,26 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             deinitCapture(mIsPreAllocCapMem);
         }
     }
-
+#ifdef POWER_HINT_USED
     if (1 == mHDRPowerHint) {
         disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
     }
-
+#endif
     if (getMultiCameraMode() == MODE_BLUR ||
         getMultiCameraMode() == MODE_BOKEH) {
         changeDfsPolicy(CAM_HIGH);
+#ifdef POWER_HINT_USED
         if (mPerformancePowerHint) {
             disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
         }
+#endif
     } else {
         changeDfsPolicy(CAM_LOW);
+#ifdef POWER_HINT_USED
         if (!mLowerPowerPowerHint) {
             enablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
         }
+#endif
     }
 
 exit:
@@ -6222,11 +6240,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+#ifdef POWER_HINT_USED
         if (CAMERA_SCENE_MODE_HDR == drvSceneMode) {
             mHDRPowerHint = 1;
         } else {
             mHDRPowerHint = 0;
         }
+#endif
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {

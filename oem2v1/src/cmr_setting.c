@@ -3005,7 +3005,7 @@ static cmr_int setting_thread_proc(struct cmr_msg *message, void *data) {
 
         break;
     case SETTING_EVT_ZOOM: {
-        struct setting_cmd_parameter new_zoom_param;
+        struct setting_cmd_parameter new_zoom_param = {0, {0}};
 
         while (setting_is_zoom_pull(cpt, &new_zoom_param)) {
             setting_zoom_update_status(cpt, ZOOM_UPDATING);

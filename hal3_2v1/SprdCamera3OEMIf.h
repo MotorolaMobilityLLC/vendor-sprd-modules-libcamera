@@ -142,11 +142,13 @@ typedef struct {
 
 #define USE_ONE_RESERVED_BUF 1
 
+#ifdef POWER_HINT_USED
 typedef enum {
     CAMERA_POWER_HINT_PERFORMANCE = POWER_HINT_VENDOR_CAMERA_PERFORMANCE,
     CAMERA_POWER_HINT_LOWPOWER = POWER_HINT_VENDOR_CAMERA_LOW_POWER,
     CAMERA_POWER_HINT_MAX = 0xFF
 } powerhint_mode_type_t;
+#endif
 
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
@@ -210,14 +212,16 @@ class SprdCamera3OEMIf : public virtual RefBase {
     camera_status_t GetCameraStatus(camera_status_type_t state);
     void thermalEnabled(bool flag);
     void bindcoreEnabled();
+#ifdef POWER_HINT_USED
     void initPowerHint();
     void deinitPowerHint();
     void enablePowerHint(int powerhint_id);
+    void disablePowerHint(int powerhint_id);
     void enablePowerHintExt(sp<IPowerManager> powermanager,
                             sp<IBinder> prfmlock, int powerhint_id);
-    void disablePowerHint(int powerhint_id);
     void disablePowerHintExt(sp<IPowerManager> powermanager,
                              sp<IBinder> prfmlock);
+#endif
     int changeDfsPolicy(int dfs_policy);
     int setDfsPolicy(int dfs_policy);
     int releaseDfsPolicy(int dfs_policy);

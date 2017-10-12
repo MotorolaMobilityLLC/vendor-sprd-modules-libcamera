@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #define LOG_TAG "ae_sprd_adpt"
-
+#include <cutils/trace.h>
 #include "ae_sprd_adpt.h"
 #include "ae_sprd_adpt_internal.h"
 #include "ae_sprd_flash_calibration.h"

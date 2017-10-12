@@ -304,7 +304,8 @@ typedef struct sensor_otp_data {
     struct otp_data_tag golden;
 } OTP_DATA_INFO_TAG;
 
-typedef struct { void *privatedata; } * SENSOR_HW_HANDLE;
+
+typedef void* SENSOR_HW_HANDLE;
 typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle, cmr_uint param);
 
 typedef struct sensor_ioctl_func_tab_tag {

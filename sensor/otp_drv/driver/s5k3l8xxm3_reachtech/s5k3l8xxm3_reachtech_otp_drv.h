@@ -130,7 +130,7 @@ otp_drv_entry_t
                             .is_pdaf_self_cal = FALSE, /*TRUE: Sensor side
                                                           calibration, FALSE:
                                                           ISP Side calibration*/
-                            .is_afc = true,
+                            .is_afc = TRUE,
                             .is_af_self_cal = FALSE,
                             .is_dul_camc = FALSE, /* TRUE: support dual camera
                                                      calibration, FALSE: Not

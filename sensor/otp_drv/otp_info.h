@@ -30,11 +30,6 @@
     }
 #endif
 
-#define CHECK_HANDLE(handle)                                                   \
-    if (NULL == handle || NULL == handle->privatedata) {                       \
-        ALOGE("Handle is invalid " #handle);                                   \
-        return SENSOR_CTX_ERROR;                                               \
-    }
 
 #define SENSOR_I2C_VAL_8BIT 0x00
 #define SENSOR_I2C_VAL_16BIT 0x01

@@ -10505,6 +10505,7 @@ exit:
     return ret;
 }
 
+#if 0  /*not used now*/
 cmr_int prev_start_video_rotate(struct prev_handle *handle, cmr_u32 camera_id,
                                 struct frm_info *data) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
@@ -10606,6 +10607,8 @@ exit:
     CMR_LOGD("out");
     return ret;
 }
+
+#endif
 
 cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
                                      cmr_u32 camera_id, cmr_u32 encode_angle,

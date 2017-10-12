@@ -112,7 +112,9 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
-LOCAL_SHARED_LIBRARIES += libamipengine
+ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
+	LOCAL_SHARED_LIBRARIES += libamipengine
+endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
@@ -279,7 +281,9 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
-LOCAL_SHARED_LIBRARIES += libamipengine
+ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
+	LOCAL_SHARED_LIBRARIES += libamipengine
+endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
@@ -438,7 +442,9 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
-LOCAL_SHARED_LIBRARIES += libamipengine
+ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
+	LOCAL_SHARED_LIBRARIES += libamipengine
+endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 

@@ -74,6 +74,7 @@ static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos) {
     uint32_t time_out = 0;
 
     uint16_t slave_addr = (0xE4 >> 1); // LC898214_VCM_SLAVE_ADDR;
+    int i;
 
     if ((int32_t)pos < 0)
         pos = 0;
@@ -117,7 +118,7 @@ static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos) {
             ret_value);
 
     uint16_t SlvCh;
-    for (int i = 0; i < 30; i++) {
+    for (i = 0; i < 30; i++) {
         SlvCh = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, slave_addr, 0x8F,
                                        BITS_ADDR8_REG8);
         // ret_value
@@ -183,9 +184,10 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
 
     uint16_t SlvCh = 0xff;
     uint16_t EepCh = 0xff;
+    int i;
 
     CMR_LOGV("E");
-    for (int i = 0; i < 30; i++) {
+    for (i = 0; i < 30; i++) {
         SlvCh = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, SlaveID, 0xF0,
                                        BITS_ADDR8_REG8);
         usleep(50);
@@ -227,7 +229,7 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     cmd_val[1] = 0x01;
     ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, SlaveID,
                                    (uint8_t *)&cmd_val[0], cmd_len);
-    for (int i = 0; i < 30; i++) {
+    for (i = 0; i < 30; i++) {
         EepCh = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, SlaveID, 0xE0,
                                        BITS_ADDR8_REG8);
         usleep(50);

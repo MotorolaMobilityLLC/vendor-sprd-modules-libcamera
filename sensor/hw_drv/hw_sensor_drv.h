@@ -2,7 +2,8 @@
 #define _HW_SENSOR_DRV_
 #include "cmr_common.h"
 #include <fcntl.h>
-#include <cutils/trace.h>
+
+
 
 /*kernel type redefine*/
 typedef struct sensor_i2c_tag SENSOR_I2C_T, *SENSOR_I2C_T_PTR;

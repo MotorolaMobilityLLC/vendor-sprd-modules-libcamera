@@ -704,6 +704,7 @@ static cmr_int gc5024_common_otp_drv_delete(cmr_handle otp_drv_handle) {
 static cmr_int gc5024_common_otp_drv_read(cmr_handle otp_drv_handle,
                                           void *p_params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    int i;
     CHECK_PTR(otp_drv_handle);
     // CHECK_PTR(p_params);
     OTP_LOGI("in");
@@ -738,7 +739,7 @@ static cmr_int gc5024_common_otp_drv_read(cmr_handle otp_drv_handle,
     /*TODO*/
     //_gc5024_common_otp_enable(otp_drv_handle, otp_open);
 
-    for (int i = 0; i < OTP_RAW_DATA_LEN; i++) {
+    for (i = 0; i < OTP_RAW_DATA_LEN; i++) {
         // ret=_gc5024_common_i2c_read_8bit(otp_drv_handle,OTP_I2C_ADDR,OTP_START_ADDR+i*8,buffer+i);
         otp_raw_data->buffer[i] =
             _gc5024_common_read_otp(otp_drv_handle, OTP_START_ADDR + i * 8);

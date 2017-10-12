@@ -1,6 +1,8 @@
-#include "hw_sensor_drv.h"
-
 #define LOG_TAG "hw_sensor"
+
+#include "hw_sensor_drv.h"
+#include <cutils/trace.h>
+
 
 #define CHECK_HANDLE(handle)                     \
     if (NULL == handle ) {                       \
