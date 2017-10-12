@@ -899,10 +899,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     ATRACE_CALL();
 
     uint32_t ret = 0;
-    int64_t tmp1, tmp2;
-    SPRD_DEF_Tag sprddefInfo;
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-
     HAL_LOGI("E");
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -925,6 +921,30 @@ int SprdCamera3OEMIf::zslTakePicture() {
     if (isCapturing()) {
         WaitForCaptureDone();
     }
+
+    if (mSprdZslEnabled == true) {
+        CMR_MSG_INIT(message);
+        message.msg_type = CMR_EVT_ZSL_MON_SNP;
+        message.sync_flag = CMR_MSG_SYNC_NONE;
+        message.data = NULL;
+        ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle,
+                                  &message);
+        if (ret) {
+            HAL_LOGE("Fail to send one msg!");
+            goto exit;
+        }
+    }
+
+exit:
+    HAL_LOGI("X");
+    return NO_ERROR;
+}
+
+int SprdCamera3OEMIf::zslTakePictureL() {
+
+    int64_t tmp1, tmp2;
+    int rc = 0;
+    HAL_LOGI("E");
 
     if (isPreviewing()) {
         mHalOem->ops->camera_start_preflash(mCameraHandle);
@@ -972,6 +992,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
         HAL_LOGE("fail to camera_take_picture");
+        rc = UNKNOWN_ERROR;
         goto exit;
     }
 
@@ -979,21 +1000,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
         mFlagOffLineZslStart = 1;
     }
-
-    if (mSprdZslEnabled == true) {
-        CMR_MSG_INIT(message);
-        mZslShotPushFlag = 1;
-        message.msg_type = CMR_EVT_ZSL_MON_SNP;
-        message.sync_flag = CMR_MSG_SYNC_NONE;
-        message.data = NULL;
-        ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle,
-                                  &message);
-        if (ret) {
-            HAL_LOGE("Fail to send one msg!");
-            goto exit;
-        }
-    }
-
 exit:
     HAL_LOGD("mFlashCaptureFlag=%d, focal_length=%f, JPEG thumbnail "
              "size=%dx%d, mZslShotPushFlag=%d",
@@ -1002,8 +1008,9 @@ exit:
              mZslShotPushFlag);
     HAL_LOGV("jpgInfo.quality=%d, jpgInfo.thumbnail_quality=%d",
              jpgInfo.quality, jpgInfo.thumbnail_quality);
+
     HAL_LOGI("X");
-    return NO_ERROR;
+    return rc;
 }
 
 int SprdCamera3OEMIf::reprocessYuvForJpeg() {
@@ -8918,7 +8925,12 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:
-        obj->snapshotZsl(p_data);
+        if (!(obj->zslTakePictureL())) {
+            obj->mZslShotPushFlag = 1;
+            obj->snapshotZsl(p_data);
+        } else {
+            obj->mZslShotPushFlag = 0;
+        }
         break;
     case CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH:
         ret = obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
