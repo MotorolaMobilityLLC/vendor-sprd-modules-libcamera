@@ -48,7 +48,7 @@ cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1
 		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->h, ISP_ONE);
 
 		max_len = (max_len < dst_ptr->map_tab[i].len) ? dst_ptr->map_tab[i].len : max_len;
-		ISP_LOGD("%d, %d, %d, %d, %d, %d, %d\n", i,
+		ISP_LOGD("%d, %p, %d, %d, %d, %d, %d, %d\n", i, dst_ptr->map_tab[i].param_addr,
 			dst_ptr->map_tab[i].len, dst_ptr->map_tab[i].grid,
 			dst_ptr->map_tab[i].grid_mode, dst_ptr->map_tab[i].grid_pitch,
 			dst_ptr->map_tab[i].gain_w, dst_ptr->map_tab[i].gain_h);

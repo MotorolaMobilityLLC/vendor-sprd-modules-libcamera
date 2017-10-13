@@ -3621,6 +3621,19 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	cmr_s32 i =0;
 
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+	BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB,
+			DCAM_BLK_2D_LSC,
+			cxt->mode_id[0],
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data_alsc;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+
+	cxt->lsc_cxt.lsc_tab_address = output.param_data->data_ptr;
+	cxt->lsc_cxt.lsc_tab_size = output.param_data->data_size;
+
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 
 	BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_INFO,
 			DCAM_BLK_2D_LSC,
@@ -3636,6 +3649,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for (i = 0; i < 9; i++)
 		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+	ISP_LOGD("mode %d, lsc_tab_new: %p", cxt->mode_id[0], fwstart_info->lsc_tab_address_new[0]);
 	fwstart_info->gain_width_new = lsc_info_new->gain_w;
 	fwstart_info->gain_height_new = lsc_info_new->gain_h;
 	fwstart_info->image_pattern_new = cxt->commn_cxt.image_pattern;
