@@ -1030,7 +1030,7 @@ int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
             (int (*)(void *, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
                      void *a_pInMain_YCC420NV21,
                      weightmap_param *wParams))dlsym(mDepthApi->handle,
-                                                  "sprd_depth_Run");
+                                                     "sprd_depth_Run");
         if (mDepthApi->sprd_depth_Run == NULL) {
             error = dlerror();
             HAL_LOGE("sym sprd_depth_Run failed.error = %s", error);

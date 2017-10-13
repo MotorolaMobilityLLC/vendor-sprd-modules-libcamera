@@ -32,6 +32,7 @@
 
 #include "../SprdCamera3HWI.h"
 #include <string>
+#include "spreadst/sprd_depth_configurable_param.h"
 
 namespace sprdcamera {
 

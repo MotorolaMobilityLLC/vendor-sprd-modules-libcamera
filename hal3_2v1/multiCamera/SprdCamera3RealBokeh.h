@@ -416,6 +416,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void initDepthApiParams();
     void initBokehPrevApiParams();
     int checkOtpInfo();
+    int checkDepthPara(struct sprd_depth_configurable_para *depth_config_param);
     void bokehFaceMakeup(private_handle_t *private_handle);
     void updateApiParams(CameraMetadata metaSettings, int type);
     int bokehHandle(buffer_handle_t *output_buf, buffer_handle_t *inputbuff1,

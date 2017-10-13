@@ -149,21 +149,22 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
         goto getpmem_fail;
     }
 
-    if( buffer->share_attr_fd < 0 ) {
-        buffer->share_attr_fd = ashmem_create_region( "camera_gralloc_shared_attr", PAGE_SIZE );
-        if(buffer->share_attr_fd < 0) {
+    if (buffer->share_attr_fd < 0) {
+        buffer->share_attr_fd =
+            ashmem_create_region("camera_gralloc_shared_attr", PAGE_SIZE);
+        if (buffer->share_attr_fd < 0) {
             ALOGE("Failed to allocate page for shared attribute region");
             goto getpmem_fail;
         }
     }
-    buffer->attr_base = mmap( NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->share_attr_fd, 0 );
-    if(buffer->attr_base != MAP_FAILED)	{
-        attr_region *region = (attr_region *) buffer->attr_base;
+    buffer->attr_base = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
+                             MAP_SHARED, buffer->share_attr_fd, 0);
+    if (buffer->attr_base != MAP_FAILED) {
+        attr_region *region = (attr_region *)buffer->attr_base;
         memset(buffer->attr_base, 0xff, PAGE_SIZE);
-        munmap( buffer->attr_base, PAGE_SIZE );
+        munmap(buffer->attr_base, PAGE_SIZE);
         buffer->attr_base = MAP_FAILED;
-    }
-    else {
+    } else {
         ALOGE("Failed to mmap shared attribute region");
         goto getpmem_fail;
     }
@@ -191,10 +192,11 @@ getpmem_fail:
 
 void SprdCamera3MultiBase::freeOneBuffer(new_mem_t *buffer) {
     if (buffer->native_handle != NULL) {
-        struct private_handle_t *private_buffer = (struct private_handle_t *)(buffer->native_handle);
-        if(private_buffer->attr_base != MAP_FAILED) {
+        struct private_handle_t *private_buffer =
+            (struct private_handle_t *)(buffer->native_handle);
+        if (private_buffer->attr_base != MAP_FAILED) {
             ALOGW("Warning shared attribute region mapped at free. Unmapping");
-            munmap( private_buffer->attr_base, PAGE_SIZE );
+            munmap(private_buffer->attr_base, PAGE_SIZE);
             private_buffer->attr_base = MAP_FAILED;
         }
         close(private_buffer->share_attr_fd);

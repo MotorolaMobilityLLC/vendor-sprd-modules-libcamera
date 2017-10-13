@@ -1264,13 +1264,13 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
         struct private_handle_t *depth_handle =
             (struct private_handle_t *)(*depth_bufer);
         sp<GraphicBuffer> srcBuffer = new GraphicBuffer(
-            (native_handle_t *)(*input_buf1), GraphicBuffer::HandleWrapMethod::CLONE_HANDLE,
-            inWidth, inHeight, yuvTextFormat,
-            inLayCount, yuvTextUsage, inStride);
+            (native_handle_t *)(*input_buf1),
+            GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth, inHeight,
+            yuvTextFormat, inLayCount, yuvTextUsage, inStride);
         sp<GraphicBuffer> dstBuffer = new GraphicBuffer(
-            (native_handle_t *)(*output_buf), GraphicBuffer::HandleWrapMethod::CLONE_HANDLE,
-            inWidth, inHeight, yuvTextFormat,
-            inLayCount , yuvTextUsage, inStride);
+            (native_handle_t *)(*output_buf),
+            GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth, inHeight,
+            yuvTextFormat, inLayCount, yuvTextUsage, inStride);
 #else
         struct private_handle_t *depth_handle =
             (struct private_handle_t *)(*depth_bufer);
@@ -2627,7 +2627,7 @@ int SprdCamera3RealBokeh::loadDepthApi() {
         (int (*)(void *handle, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
                  void *a_pInMain_YCC420NV21,
                  weightmap_param *wParams))dlsym(mDepthApi->handle,
-                                              "sprd_depth_Run");
+                                                 "sprd_depth_Run");
     if (mDepthApi->sprd_depth_Run == NULL) {
         error = dlerror();
         HAL_LOGE("sym sprd_depth_Run failed.error = %s", error);
@@ -2876,6 +2876,47 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
 }
 
 /*===========================================================================
+ * FUNCTION   :checkDepthPara
+ *
+ * DESCRIPTION: check depth config parameters
+ *
+ * PARAMETERS : struct sprd_depth_configurable_para *depth_config_param
+ *
+ * RETURN     :
+ *                  0  : success
+ *                  other: non-zero failure code
+ *==========================================================================*/
+
+int SprdCamera3RealBokeh::checkDepthPara(
+    struct sprd_depth_configurable_para *depth_config_param) {
+    int rc = NO_ERROR;
+    char para[50] = {0};
+    FILE *fid =
+        fopen("/data/misc/cameraserver/depth_config_parameter.bin", "rb");
+    if (fid != NULL) {
+        HAL_LOGD("open depth_config_parameter.bin file success");
+        rc = fread(para, sizeof(char),
+                   sizeof(struct sprd_depth_configurable_para), fid);
+        HAL_LOGD("read depth_config_parameter.bin size %d bytes", rc);
+        depth_config_param = (struct sprd_depth_configurable_para *)para;
+        HAL_LOGD(
+            "read sprd_depth_configurable_para: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+            depth_config_param->SensorDirection,
+            depth_config_param->DepthScaleMin,
+            depth_config_param->DepthScaleMax,
+            depth_config_param->CalibInfiniteZeroPt,
+            depth_config_param->SearhRange, depth_config_param->MinDExtendRatio,
+            depth_config_param->inDistance, depth_config_param->inRatio,
+            depth_config_param->outDistance, depth_config_param->outRatio);
+        fclose(fid);
+    } else {
+        HAL_LOGW("open depth_config_parameter.bin file error");
+        rc = UNKNOWN_ERROR;
+    }
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   :initDepthApiParams
  *
  * DESCRIPTION: init Depth Api Params
@@ -2892,6 +2933,7 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     }
 
     int rc = NO_ERROR;
+    struct sprd_depth_configurable_para *depth_config_param = NULL;
     char acVersion[256] = {
         0,
     };
@@ -2938,24 +2980,13 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     cap_outformat = MODE_DISPARITY;
     mCaptureThread->mCapDepthhandle = NULL;
 
-    {
-        char prop1[PROPERTY_VALUE_MAX] = {
-            0,
-        };
-        property_get("persist.sys.depth.param", prop1, "0");
-        if (1 == atoi(prop1)) {
-            char FileName[256] = {0};
-            char parameter[12] = {0};
-            uint32_t size = 12;
-
-            snprintf(FileName, sizeof(FileName),
-                     "/data/misc/cameraserver/SGM_parameter.txt");
-            uint32_t read_bytes =
-                read_file(FileName, (void *)(parameter), size);
-            HAL_LOGV("read_file %u", read_bytes);
-            prev_input_param.config_param = parameter;
-            cap_input_param.config_param = parameter;
-        }
+    rc = checkDepthPara(depth_config_param);
+    if (rc) {
+        prev_input_param.config_param = (char *)(&sprd_depth_config_para);
+        cap_input_param.config_param = (char *)(&sprd_depth_config_para);
+    } else {
+        prev_input_param.config_param = (char *)depth_config_param;
+        cap_input_param.config_param = (char *)depth_config_param;
     }
     rc = mDepthApi->sprd_depth_VersionInfo_Get(acVersion, 256);
     HAL_LOGD("depth api version [%s]", acVersion);
@@ -3038,7 +3069,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             fnum = (MAX_F_FUMBER + 1 - fnum) * 255 / MAX_F_FUMBER;
             mCaptureThread->mCapbokehParam.bokeh_level = fnum;
             mPreviewMuxerThread->mPreviewbokehParam.depth_param.F_number =
-              mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number;
+                mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number;
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
             fnum = MAX_F_FUMBER + 1 - fnum;
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
@@ -3082,10 +3113,12 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                         x * mCaptureWidth / mPreviewWidth;
                     mCaptureThread->mCapbokehParam.sel_y =
                         y * mCaptureHeight / mPreviewHeight;
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_x =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_x;
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_y =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_y;
+                    mPreviewMuxerThread->mPreviewbokehParam.weight_params
+                        .sel_x = mPreviewMuxerThread->mPreviewbokehParam
+                                     .depth_param.sel_x;
+                    mPreviewMuxerThread->mPreviewbokehParam.weight_params
+                        .sel_y = mPreviewMuxerThread->mPreviewbokehParam
+                                     .depth_param.sel_y;
                 }
             } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
                 mPreviewMuxerThread->mArcSoftPrevParam.ptFocus.x = (MInt32)x;
@@ -3117,10 +3150,12 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                     mCaptureThread->mCapbokehParam.sel_x = mCaptureWidth / 2;
                     mCaptureThread->mCapbokehParam.sel_y = mCaptureHeight / 2;
 
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_x =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_x;
-                    mPreviewMuxerThread->mPreviewbokehParam.weight_params.sel_y =
-                        mPreviewMuxerThread->mPreviewbokehParam.depth_param.sel_y;
+                    mPreviewMuxerThread->mPreviewbokehParam.weight_params
+                        .sel_x = mPreviewMuxerThread->mPreviewbokehParam
+                                     .depth_param.sel_x;
+                    mPreviewMuxerThread->mPreviewbokehParam.weight_params
+                        .sel_y = mPreviewMuxerThread->mPreviewbokehParam
+                                     .depth_param.sel_y;
                     HAL_LOGD("autofocus and bokeh center");
                 }
             }
@@ -3758,7 +3793,6 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
  *                  other: non-zero failure code
  *==========================================================================*/
 int SprdCamera3RealBokeh::checkOtpInfo() {
-    char value[PROPERTY_VALUE_MAX];
     int rc = 0;
     if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         mCaliData.i32CalibDataSize = ARCSOFT_CALIB_DATA_SIZE;
