@@ -189,10 +189,11 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 		}
 #endif
 
-		threeDNR_1D_process(small_image, width, height, p3dnr_info->curr_frameno);
+		threeDNR_1D_process(small_image, width, height, p3dnr_info->curr_frameno, MODE_PREVIEW);
 		BL_LOGI("------------threeDNR_1D_process frameno:%d , width:%d , height:%d , smallimage:%p,%p,%p\n",
 			p3dnr_info->curr_frameno, width, height, small_image->bufferY, small_image->bufferU,
 			small_image->bufferV);
+		endTime1("threeDNR_1D_process run time in threednr_function_pre");
 
 		if (1 == p3dnr_info->is_first_frame) {
 			p3dnr_info->is_first_frame = 0;
@@ -201,15 +202,15 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 		} else {
 			//calculate mv
 			if (1 == p3dnr_info->curr_frameno) {
-				ProjectMatching(p3dnr_info->xProj1D[0], p3dnr_info->yProj1D[0],
+				ProjectMatching_pre(p3dnr_info->xProj1D[0], p3dnr_info->yProj1D[0],
 						p3dnr_info->xProj1D[1], p3dnr_info->yProj1D[1], width, height, mv_xy,
 						2, p3dnr_info->extra);
 			} else {
-				ProjectMatching(p3dnr_info->xProj1D[1], p3dnr_info->yProj1D[1],
+				ProjectMatching_pre(p3dnr_info->xProj1D[1], p3dnr_info->yProj1D[1],
 						p3dnr_info->xProj1D[0], p3dnr_info->yProj1D[0], width, height, mv_xy,
 						2, p3dnr_info->extra);
 			}
-			BL_LOGI("-----------ProjectMatching framno:%d,%d , mv:%d,%d\n", 1 - p3dnr_info->curr_frameno,
+			BL_LOGI("-----------ProjectMatching_pre framno:%d,%d , mv:%d,%d\n", 1 - p3dnr_info->curr_frameno,
 				p3dnr_info->curr_frameno, mv_xy[0], mv_xy[1]);
 			p3dnr_info->pfirst_blendimg = &p3dnr_info->out_img[1 - p3dnr_info->curr_frameno];
 			p3dnr_info->psecond_blendimg = orig_image;
@@ -218,7 +219,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 			//In preview mode, MV is calculated in original size with half pixel precision
 			//so here MV need to be divided by 2
 			//To avoid that -1 divided by 2 is always -1, the negative MV is first converted to positive before divided by 2
-			if (mv_xy[0] < 0) {
+			/*if (mv_xy[0] < 0) {
 				mv_xy[0] = -1 * ((-1 * mv_xy[0]) / 2);
 			} else {
 				mv_xy[0] = mv_xy[0] / 2;
@@ -227,7 +228,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 				mv_xy[1] = -1 * ((-1 * mv_xy[1]) / 2);
 			} else {
 				mv_xy[1] = mv_xy[1] / 2;
-			}
+			}*/
 			blend_trigger(p3dnr_info->pfirst_blendimg, p3dnr_info->psecond_blendimg,
 				      p3dnr_info->pout_blendimg, mv_xy[0], mv_xy[1], p3dnr_info->blend_num + 10);
 			if (p3dnr_info->blend_num < 3) {
@@ -295,8 +296,10 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 				property_get("save_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (num < 10) {
-						sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
-							p3dnr_info->orig_width, p3dnr_info->orig_height, num);
+						//sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
+						//	p3dnr_info->orig_width, p3dnr_info->orig_height, num);
+						sprintf(filename , "/data/misc/cameraserver/%dx%d_ref_img_index_mv_%d_%d_%d.yuv",
+						    p3dnr_info->orig_width , p3dnr_info->orig_height, mv_xy[0], mv_xy[1], num);
 						save_yuv(filename, (char *)p3dnr_info->pfirst_blendimg->bufferY,
 							 p3dnr_info->orig_width, p3dnr_info->orig_height,
 							 p3dnr_info->orig_height);
@@ -336,8 +339,9 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 		}
 		p3dnr_info->curr_frameno = 1 - p3dnr_info->curr_frameno;
 	}
+	endTime1("threednr_function_pre run time");
 	if (!(strcmp(timeout, "yes"))) {
-		endTime1("threednr_function");
+		endTime1("threednr_function_pre");
 	}
 	p3dnr_info->status = C3DNR_STATUS_IDLE;
 
@@ -401,10 +405,11 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 			return -1;
 		}
 
-		threeDNR_1D_process(small_image, width, height, p3dnr_info->curr_frameno);
+		threeDNR_1D_process(small_image, width, height, p3dnr_info->curr_frameno, MODE_CAPTURE);
 		BL_LOGI("------------threeDNR_1D_process frameno:%d , width:%d , height:%d , smallimage:%x,%x,%x\n",
 			p3dnr_info->curr_frameno, width, height, small_image->bufferY[0], small_image->bufferY[1],
 			small_image->bufferY[2]);
+		endTime1("threeDNR_1D_process run time in threednr_function");
 		buffer_copy(&p3dnr_info->porigimg[p3dnr_info->curr_frameno], orig_image);
 		if (p3dnr_info->curr_frameno > 0) {
 			//calculate mv
@@ -463,9 +468,12 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 			{	//save blend image.
 				property_get(SAVE_IMG_PROPERTY, save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
-					sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
-						p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
-						p3dnr_info->curr_frameno - 1);
+					//sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
+					//	p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
+					//	p3dnr_info->curr_frameno - 1);
+					sprintf(filename , "/data/misc/cameraserver/%dx%d_ref_img_index_%d_mv_%d_%d.yuv",
+						p3dnr_info->orig_width , IMG_SAVE_H/*p3dnr_info->orig_height*/,
+						p3dnr_info->curr_frameno-1, mv_xy[0],mv_xy[1]);
 					save_yuv(filename, (char *)p3dnr_info->pfirst_blendimg->bufferY,
 						 p3dnr_info->orig_width, p3dnr_info->orig_height, IMG_SAVE_H);
 					sprintf(filename, "/data/misc/cameraserver/%dx%d_cur_img_index_%d.yuv",
@@ -517,14 +525,16 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 		//record current orig image
 		p3dnr_info->curr_frameno++;
 	}
+	endTime1("threednr_function run time");
 	if (!(strcmp(timeout, "yes"))) {
 		endTime1("threednr_function");
 	}
 	return 0;
 }
 
-void threeDNR_1D_process(c3dnr_buffer_t *curr_image, cmr_s32 width, cmr_s32 height, cmr_u32 fram_no)
+void threeDNR_1D_process(c3dnr_buffer_t *curr_image, cmr_s32 width, cmr_s32 height, cmr_u32 fram_no, c3dnr_mode_e mode)
 {
+    BL_LOGI("3dnr mode: %d.", mode);
 	if (T3DNR_CAPTURE_MODE_CAPTURE_STAGE != p3dnr_info->operation_mode) {
 		if (T3DNR_FULLSIZE_MODE_FUSE_STAGE != p3dnr_info->operation_mode) {
 			if (!(strcmp(timeout, "yes"))) {
@@ -532,7 +542,7 @@ void threeDNR_1D_process(c3dnr_buffer_t *curr_image, cmr_s32 width, cmr_s32 heig
 			}
 			IntegralProjection1D_process(curr_image->bufferY, width, height,
 						     p3dnr_info->xProj1D[fram_no], p3dnr_info->yProj1D[fram_no],
-						     p3dnr_info->extra);
+						     p3dnr_info->extra, mode);
 			if (!(strcmp(timeout, "yes"))) {
 				endTime("IntegralProjection1D_process");
 			}
