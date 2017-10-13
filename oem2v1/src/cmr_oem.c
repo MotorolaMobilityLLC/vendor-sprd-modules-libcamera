@@ -8779,6 +8779,18 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     memset(&setting_param, 0, sizeof(setting_param));
     CMR_LOGI("E");
 
+    if (camera_get_3dnr_flag(cxt)) {
+#ifdef OEM_HANDLE_3DNR
+        if (0 != cxt->ipm_cxt.frm_num) {
+            cxt->ipm_cxt.frm_num = 0;
+        }
+#endif
+        ret = camera_close_3dnr(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close 3dnr");
+        }
+    }
+
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to stop snp %ld", ret);
@@ -8797,18 +8809,6 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     if (ret) {
         CMR_LOGE("failed to cancel %ld", ret);
         goto exit;
-    }
-
-    if (camera_get_3dnr_flag(cxt)) {
-#ifdef OEM_HANDLE_3DNR
-        if (0 != cxt->ipm_cxt.frm_num) {
-            cxt->ipm_cxt.frm_num = 0;
-        }
-#endif
-        ret = camera_close_3dnr(cxt);
-        if (ret) {
-            CMR_LOGE("failed to close 3dnr");
-        }
     }
 
     if (camera_get_hdr_flag(cxt)) {
