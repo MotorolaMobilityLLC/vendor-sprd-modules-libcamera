@@ -1198,7 +1198,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                           enum preview_func_type func, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    cmr_uint oem_func;
+    cmr_uint oem_func = CAMERA_FUNC_TYPE_MAX;
     cmr_uint oem_cb_type;
     CMR_MSG_INIT(message);
 

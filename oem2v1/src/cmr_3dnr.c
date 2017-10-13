@@ -350,10 +350,10 @@ static cmr_int threednr_close(cmr_handle class_handle) {
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
     }
 
+    sem_destroy(&threednr_handle->sem_3dnr);
     if (NULL != threednr_handle)
         free(threednr_handle);
 
-    sem_destroy(&threednr_handle->sem_3dnr);
     sem_post(&cam_cxt->threednr_proc_sm);
 
     CMR_LOGI("X");
