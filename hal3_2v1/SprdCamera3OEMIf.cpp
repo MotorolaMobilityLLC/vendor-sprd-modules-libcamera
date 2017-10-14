@@ -5007,6 +5007,14 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
                 frame->y_vir_addr, frame->width, frame->height);
             if (ret) {
                 HAL_LOGE("camera_get_data_redisplay failed");
+                SprdCamera3PicChannel *pic_channel =
+                    reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+                if (pic_channel) {
+                    int64_t timestamp = 0;
+                    timestamp = systemTime();
+                    pic_channel->channelClearAllQBuff(timestamp,
+                                                      CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+                }
                 FreeReDisplayMem();
                 goto exit;
             }
