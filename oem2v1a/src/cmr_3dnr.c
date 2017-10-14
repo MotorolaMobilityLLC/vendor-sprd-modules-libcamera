@@ -17,7 +17,7 @@
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
 
 #define LOG_TAG "cmr_3dnr"
-
+#include <cutils/trace.h>
 #include "cmr_msg.h"
 #include "cmr_ipm.h"
 #include "cmr_common.h"
