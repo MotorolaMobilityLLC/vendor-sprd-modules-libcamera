@@ -7,7 +7,6 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=fo
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
-ifneq ($(strip $(PLATFORM_VERSION)),8.0.0)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ISPALG_DIR = ispalg/isp2.x
@@ -128,6 +127,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES += liblog
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
 endif
@@ -162,6 +165,13 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+
 
 include $(BUILD_SHARED_LIBRARY)
 endif
@@ -272,7 +282,11 @@ LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
-LOCAL_SHARED_LIBRARIES += libcamisp
+LOCAL_SHARED_LIBRARIES += libcamdrv
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES += liblog
+endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
@@ -307,6 +321,12 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
+endif
+
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_SHARED_LIBRARY)
@@ -420,6 +440,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamisp
 
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_SHARED_LIBRARIES += liblog
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
 endif
@@ -454,8 +478,13 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
+
+ifeq ($(PLATFORM_VERSION),8.0.0)
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 endif
 
-endif
 endif

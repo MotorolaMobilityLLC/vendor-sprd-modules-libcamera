@@ -211,6 +211,7 @@ class SprdCamera3HWI {
     bool mHDRProcessFlag;
     uint64_t mCurFrameTimeStamp;
     int mSprdCameraLowpower;
+    bool mFirstRequestGet;
 };
 
 }; // namespace sprdcamera

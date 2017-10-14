@@ -96,7 +96,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     : mCameraId(cameraId), mOEMIf(NULL), mCameraOpened(false),
       mCameraInitialized(false), mLastFrmNum(0), mCallbackOps(NULL),
       mInputStream(NULL), mMetadataChannel(NULL), mPictureChannel(NULL),
-      mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false) {
+      mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false), mFirstRequestGet(false){
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
@@ -418,6 +418,7 @@ int SprdCamera3HWI::closeCamera() {
     }
 
     mCameraOpened = false;
+    mFirstRequestGet = false;
 
     HAL_LOGI(":hal3: X");
     return ret;
@@ -473,6 +474,14 @@ int SprdCamera3HWI::checkStreamList(
     if (streamList->streams == NULL) {
         HAL_LOGE("NULL stream list");
         return BAD_VALUE;
+    } else if (streamList->streams[0]->width == 0 ||
+               streamList->streams[0]->height == 0 ||
+               streamList->streams[0]->width == UINT32_MAX ||
+               streamList->streams[0]->height == UINT32_MAX ||
+               (uint32_t)streamList->streams[0]->format == UINT32_MAX ||
+               (uint32_t)streamList->streams[0]->rotation == UINT32_MAX) {
+        HAL_LOGE("INVALID stream list");
+        return BAD_VALUE; /*vts configureStreamsInvalidOutputs */
     }
 
     if (streamList->num_streams < 1) {
@@ -811,6 +820,7 @@ int SprdCamera3HWI::configureStreams(
         mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
     }
 
+    mFirstRequestGet = false;
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
 
@@ -863,6 +873,13 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request) {
     }
 
     uint32_t frameNumber = request->frame_number;
+    if (!mFirstRequestGet) {
+        mFirstRequestGet = true;
+        if (request->settings == NULL) {
+            HAL_LOGE("NULL capture request settings");
+            return BAD_VALUE;
+        }
+    }
     if (request->input_buffer != NULL &&
         request->input_buffer->stream ==
             NULL) { /**modified for 3d capture, enable reprocessing*/

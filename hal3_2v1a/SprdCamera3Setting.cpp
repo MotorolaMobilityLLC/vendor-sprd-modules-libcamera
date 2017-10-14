@@ -17,7 +17,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Cam3Setting"
 
-#include <camera/Camera.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
 #include <sys/types.h>
@@ -995,6 +994,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
             if (id == cameraId) {
                 cameraInfo->facing = kCameraInfo[i].facing;
                 cameraInfo->orientation = kCameraInfo[i].orientation;
+                cameraInfo->resource_cost = kCameraInfo[i].resource_cost;
                 break;
             }
         }

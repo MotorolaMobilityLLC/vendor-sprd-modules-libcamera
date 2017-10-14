@@ -43,9 +43,6 @@ else
 ISP_HW_VER = 2v1
 endif
 
-ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
-ISP_HW_VER = 2v1
-endif
 
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.1
@@ -138,11 +135,6 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp
 
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
-ifneq ($(strip $(PLATFORM_VERSION)),8.0.0)
-else
-LOCAL_SRC_FILES+= \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
-endif
 else
 LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp

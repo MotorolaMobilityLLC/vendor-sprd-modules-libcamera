@@ -14,10 +14,6 @@ ISP_HW_VER = 2v1
 endif
 endif
 
-ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
-ISP_HW_VER = 2v1
-endif
-
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 ISP_HW_VER = 2v1
 endif

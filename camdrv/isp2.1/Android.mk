@@ -28,10 +28,6 @@ else
 ISP_HW_VER = 2v1
 endif
 
-ifeq ($(strip $(PLATFORM_VERSION)),8.0.0)
-ISP_HW_VER = 2v1
-endif
-
 # ************************************************
 # external header file
 # ************************************************
