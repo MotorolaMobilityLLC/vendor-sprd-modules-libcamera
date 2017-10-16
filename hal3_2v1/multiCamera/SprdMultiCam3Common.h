@@ -150,14 +150,24 @@ struct depth_init_inputparam {
     int input_height_sub;
     int output_depthwidth;
     int output_depthheight;
-	int threadNum;
+    int threadNum;
     ImageYUVFormat imageFormat_main;
     ImageYUVFormat imageFormat_sub;
     void *potpbuf;
     int otpsize;
     char *config_param;
 };
-
+typedef enum
+{
+    DISTANCE_OK=0,
+    DISTANCE_FAR,
+    DISTANCE_CLOSE
+}distanceRet;
+typedef enum
+{
+    DEPTH_NORMAL=0,
+    DEPTH_STOP,
+}depth_stop_flag;
 typedef struct {
     int outputsize;
     int calibration_width;
@@ -180,6 +190,9 @@ typedef struct {
     void *handle;
     int (*sprd_depth_VersionInfo_Get)(char a_acOutRetbuf[256],
                                       unsigned int a_udInSize);
+
+    void (*sprd_depth_Set_Stopflag)(void *handle, depth_stop_flag stop_flag);
+
     void *(*sprd_depth_Init)(depth_init_inputparam *inparam,
                              depth_init_outputparam *outputinfo,
                              depth_mode mode, outFormat format);
@@ -187,8 +200,14 @@ typedef struct {
     int (*sprd_depth_Run)(void *handle, void *a_pOutDisparity,
                           void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
                           weightmap_param *wParams);
+
+    int (*sprd_depth_Run_distance)(void *handle, void *a_pOutDisparity,
+                          void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
+                          weightmap_param *wParams, distanceRet *distance);
+
     int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
                              int angle);
+
     int (*sprd_depth_distancemeasurement)(int *distance, void *disparity,
                                           distance_tow_point_info *points_info);
 

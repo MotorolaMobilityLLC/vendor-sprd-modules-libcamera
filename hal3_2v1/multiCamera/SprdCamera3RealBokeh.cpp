@@ -1102,14 +1102,16 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
 
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
         int64_t depthRun = systemTime();
-        rc = mRealBokeh->mDepthApi->sprd_depth_Run(
+        distanceRet distance;
+        rc = mRealBokeh->mDepthApi->sprd_depth_Run_distance(
             mPrevDepthhandle, (void *)(depth_handle->base),
             (void *)(input_handle2->base), (void *)(input_handle1->base),
-            &(mPreviewbokehParam.depth_param));
+            &(mPreviewbokehParam.depth_param), &distance);
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("sprd_depth_Run failed! %d", rc);
             return rc;
         }
+
         HAL_LOGD("depth run cost %lld ms", ns2ms(systemTime() - depthRun));
         {
             char prop9[PROPERTY_VALUE_MAX] = {
@@ -2590,6 +2592,15 @@ int SprdCamera3RealBokeh::loadDepthApi() {
         return -1;
     }
 
+    mDepthApi->sprd_depth_Set_Stopflag =
+        (void (*)(void *handle, depth_stop_flag stop_flag))dlsym(mDepthApi->handle, "sprd_depth_Set_Stopflag");
+    if (mDepthApi->sprd_depth_Set_Stopflag == NULL) {
+        error = dlerror();
+        HAL_LOGE("sym sprd_depth_Set_Stopflag failed.error = %s", error);
+        return -1;
+    }
+
+    HAL_LOGD("load mDepth Api succuss.");
     mDepthApi->sprd_depth_Init =
         (void *(*)(depth_init_inputparam *inparam,
                    depth_init_outputparam *outputinfo, depth_mode mode,
@@ -2601,6 +2612,17 @@ int SprdCamera3RealBokeh::loadDepthApi() {
         return -1;
     }
 
+    mDepthApi->sprd_depth_Run_distance =
+       (int (*)(void *handle, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
+                 void *a_pInMain_YCC420NV21,
+                 weightmap_param *wParams, distanceRet *distance))dlsym(mDepthApi->handle, "sprd_depth_Run_distance");
+    if (mDepthApi->sprd_depth_Run_distance == NULL) {
+        error = dlerror();
+        HAL_LOGE("sym sprd_depth_Run_distance failed.error = %s", error);
+        return -1;
+    }
+
+    HAL_LOGD("load mDepth Api succuss.");
     mDepthApi->sprd_depth_Run =
         (int (*)(void *handle, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
                  void *a_pInMain_YCC420NV21,
@@ -4795,6 +4817,7 @@ void SprdCamera3RealBokeh::bokehThreadExit(void) {
         }
     }
     if (mPreviewMuxerThread != NULL) {
+        mDepthApi->sprd_depth_Set_Stopflag(mPreviewMuxerThread->mPrevDepthhandle, DEPTH_STOP);
         if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
         }
@@ -4802,6 +4825,7 @@ void SprdCamera3RealBokeh::bokehThreadExit(void) {
     // wait threads quit to relese object
     mCaptureThread->join();
     mPreviewMuxerThread->join();
+
     HAL_LOGI("X");
 }
 
