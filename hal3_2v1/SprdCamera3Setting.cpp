@@ -1242,24 +1242,54 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<int32_t> available_stream_configs;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
-                available_stream_configs.add(scaler_formats[j]);
-                available_stream_configs.add(
-                    stream_info[i].stream_sizes_tbl.width);
-                available_stream_configs.add(
-                    stream_info[i].stream_sizes_tbl.height);
-                available_stream_configs.add(
-                    ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
-                /* keep largest */
-                if (stream_info[i].stream_sizes_tbl.width >=
-                        largest_picture_size[cameraId].width &&
-                    stream_info[i].stream_sizes_tbl.height >=
-                        largest_picture_size[cameraId].height)
-                    largest_picture_size[cameraId] =
-                        stream_info[i].stream_sizes_tbl;
+            if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB) {
+                if ((stream_info[i].stream_sizes_tbl.width <=
+                     largest_sensor_width) &&
+                    (stream_info[i].stream_sizes_tbl.height <=
+                     largest_sensor_height)) {
+                    available_stream_configs.add(scaler_formats[j]);
+                    available_stream_configs.add(
+                        stream_info[i].stream_sizes_tbl.width);
+                    available_stream_configs.add(
+                        stream_info[i].stream_sizes_tbl.height);
+                    available_stream_configs.add(
+                        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+                    /* keep largest */
+                    if (stream_info[i].stream_sizes_tbl.width >=
+                            largest_picture_size[cameraId].width &&
+                        stream_info[i].stream_sizes_tbl.height >=
+                            largest_picture_size[cameraId].height)
+                        largest_picture_size[cameraId] =
+                            stream_info[i].stream_sizes_tbl;
+                }
+            } else {
+                cmr_u16 limited_width, limited_height;
+#ifndef CONFIG_CAMERA_OFFLINE
+                limited_width = largest_sensor_width;
+                limited_height = largest_sensor_height;
+#else
+                limited_width = 1920;
+                limited_height = 1088;
+#endif
+                if ((stream_info[i].stream_sizes_tbl.width <=
+                     limited_width) &&
+                    (stream_info[i].stream_sizes_tbl.height <=
+                     limited_height)) {
+                    available_stream_configs.add(scaler_formats[j]);
+                    available_stream_configs.add(
+                        stream_info[i].stream_sizes_tbl.width);
+                    available_stream_configs.add(
+                        stream_info[i].stream_sizes_tbl.height);
+                    available_stream_configs.add(
+                        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+                    /* keep largest */
+                    if (stream_info[i].stream_sizes_tbl.width >=
+                            largest_picture_size[cameraId].width &&
+                        stream_info[i].stream_sizes_tbl.height >=
+                            largest_picture_size[cameraId].height)
+                        largest_picture_size[cameraId] =
+                            stream_info[i].stream_sizes_tbl;
+                }
             }
         }
     }
