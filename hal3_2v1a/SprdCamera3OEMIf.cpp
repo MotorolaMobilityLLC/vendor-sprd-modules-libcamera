@@ -3782,10 +3782,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             In order to repaier this defetion ,so when the face on the screen is
             too close to the edge of screen, the smile level will be set to 0.
             */
-            if (sx >= 40 && sy >= 40)
-                faceInfo.face[k].score = frame->face_info[k].smile_level;
-            else
-                faceInfo.face[k].score = 0;
+            faceInfo.face[k].score = frame->face_info[k].smile_level;
             if (faceInfo.face[k].score < 0)
                 faceInfo.face[k].score = 0;
         }
