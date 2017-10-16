@@ -1596,11 +1596,8 @@ static void caf_monitor_process_af(af_ctrl_t * af)
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
 	afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
 
-	prm->afm_info.win_cfg.win_cnt = 1;
-	prm->afm_info.win_cfg.win_pos[0].sx = af->roi.win[0].start_x;
-	prm->afm_info.win_cfg.win_pos[0].sy = af->roi.win[0].start_y;
-	prm->afm_info.win_cfg.win_pos[0].ex = af->roi.win[0].end_x;
-	prm->afm_info.win_cfg.win_pos[0].ey = af->roi.win[0].end_y;
+	prm->afm_info.win_cfg.win_cnt = af->roi.num;
+	memcpy(prm->afm_info.win_cfg.win_pos, af->roi.win, af->roi.num * sizeof(win_coord_t));	// be carefull that the af->roi.num should be less than af->roi.win number and prm->afm_info.win_cfg.win_pos number
 	prm->afm_info.filter_info.filter_num = 1;
 	prm->afm_info.filter_info.filter_data[0].data = fv;
 	prm->afm_info.filter_info.filter_data[0].type = 1;
