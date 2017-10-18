@@ -4817,7 +4817,9 @@ void SprdCamera3RealBokeh::bokehThreadExit(void) {
         }
     }
     if (mPreviewMuxerThread != NULL) {
-        mDepthApi->sprd_depth_Set_Stopflag(mPreviewMuxerThread->mPrevDepthhandle, DEPTH_STOP);
+        if (mRealBokeh->mApiVersion == SPRD_API_MODE)
+            mDepthApi->sprd_depth_Set_Stopflag(mPreviewMuxerThread->mPrevDepthhandle, DEPTH_STOP);
+
         if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
         }
