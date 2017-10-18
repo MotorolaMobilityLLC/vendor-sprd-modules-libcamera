@@ -8649,13 +8649,13 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 CMR_LOGE("open high flash fail");
         }
     }
-
-    ret = camera_local_start_capture(oem_handle);
-    if (ret) {
-        CMR_LOGE("camera_start_capture failed");
-        goto exit;
+    if (snp_param.is_video_snapshot != 1) {
+        ret = camera_local_start_capture(oem_handle);
+        if (ret) {
+            CMR_LOGE("camera_start_capture failed");
+            goto exit;
+        }
     }
-
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
     camera_snapshot_started((cmr_handle)cxt);
     ret = camera_get_cap_time((cmr_handle)cxt);
