@@ -316,7 +316,7 @@ static cmr_int ov8856_shine_otp_drv_parse(cmr_handle otp_drv_handle,
     OTP_LOGV("in");
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_base_info_cfg_t *base_info =
-        &(ov8856_shine_drv_entry.otp_cfg.base_info_cfg);
+        &(ov8856_shine_otp_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
@@ -336,7 +336,7 @@ static cmr_int ov8856_shine_otp_drv_parse(cmr_handle otp_drv_handle,
         if ((base_info->compress_flag != GAIN_ORIGIN_BITS) &&
             base_info->is_lsc_drv_decompression == TRUE) {
             ret = sensor_otp_lsc_decompress(
-                &ov8856_shine_drv_entry.otp_cfg.base_info_cfg,
+                &ov8856_shine_otp_entry.otp_cfg.base_info_cfg,
                 &otp_cxt->otp_data->lsc_cali_dat);
             if (ret != OTP_CAMERA_SUCCESS) {
                 return OTP_CAMERA_FAIL;
@@ -359,7 +359,7 @@ static cmr_int ov8856_shine_otp_drv_calibration(cmr_handle otp_drv_handle) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
 
     otp_calib_items_t *cali_items =
-        &(ov8856_shine_drv_entry.otp_cfg.cali_items);
+        &(ov8856_shine_otp_entry.otp_cfg.cali_items);
 
     if (cali_items) {
         if (cali_items->is_pdafc && cali_items->is_pdaf_self_cal)

@@ -61,10 +61,6 @@ LOCAL_C_INCLUDES += $(shell find $(LOCAL_SRC_DIR)/$(SUB_DIR) -maxdepth 2 -type d
 LOCAL_SRC_FILES += \
     sensor_drv/sensor_ic_drv.c
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
-    LOCAL_SRC_FILES += \
-    sensor_drv/classic/Galaxycore/gc2375/sensor_gc2375_mipi_raw.c
-endif
 
 #$(foreach item,$(split_sensor),$(eval $(call sensor-c-file-search,$(shell echo $(item) | tr A-Z a-z))))
 $(foreach item,$(split_sensor),$(eval $(call sensor-c-file-search,$(shell echo $(item)))))

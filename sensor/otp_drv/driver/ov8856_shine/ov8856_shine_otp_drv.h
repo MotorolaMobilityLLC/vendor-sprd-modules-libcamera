@@ -126,7 +126,7 @@ static cmr_int ov8856_shine_otp_drv_calibration(cmr_handle otp_drv_handle);
 static cmr_int ov8856_shine_otp_drv_ioctl(cmr_handle otp_drv_handle,
                                            cmr_uint cmd, void *params);
 
-otp_drv_entry_t ov8856_shine_drv_entry = {
+otp_drv_entry_t ov8856_shine_otp_entry = {
     .otp_cfg =
         {
             .cali_items =
