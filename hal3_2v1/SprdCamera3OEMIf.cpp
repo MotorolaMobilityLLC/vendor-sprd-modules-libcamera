@@ -2329,7 +2329,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
         property_get("volte.incall.camera.enable", value, "false");
         if (!strcmp(value, "false") && !mFixedFpsEnabled) {
-            fps_param.min_fps = 15;
+            fps_param.min_fps = CONFIG_MIN_CAMRECORDER_FPS;
             fps_param.max_fps = 30;
         }
 #endif
