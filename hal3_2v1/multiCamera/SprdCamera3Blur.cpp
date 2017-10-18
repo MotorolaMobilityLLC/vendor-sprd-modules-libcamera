@@ -1328,7 +1328,15 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             input_buffer->stream = &mMainStreams[mCaptureStreamsNum - 1];
             input_buffer->stream->width = mBlur->mCaptureWidth;
             input_buffer->stream->height = mBlur->mCaptureHeight;
-            input_buffer->buffer = output_buffer;
+            if (mBlur->mFlushing) {
+                mime_type = 0;
+                input_buffer->buffer = capture_msg.combo_buff.buffer;
+            } else {
+                input_buffer->buffer = output_buffer;
+                mime_type = (int)MODE_BLUR;
+            }
+            mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
+                                         &mime_type, NULL);
 
             memcpy((void *)&output_buffers[0], &mSavedCapReqstreambuff,
                    sizeof(camera3_stream_buffer_t));
@@ -1369,13 +1377,6 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 mBlur->mReqState = REPROCESS_STATE;
             }
             request.num_output_buffers = 1;
-
-            mime_type = (int)MODE_BLUR;
-            if (mVersion == 3 && mIsGalleryBlur) {
-                mime_type = (1 << 8) | (int)MODE_BLUR;
-            }
-            mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
-                                         &mime_type, NULL);
 
             if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
                                                            &request)) {
@@ -3385,6 +3386,9 @@ void SprdCamera3Blur::processCaptureResultMain(
         newOutput_buffers.stream =
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1];
         newOutput_buffers.buffer = result->output_buffers->buffer;
+        if (mFlushing) {
+            newOutput_buffers.status = CAMERA3_BUFFER_STATUS_ERROR;
+        }
 
         newResult.output_buffers = &newOutput_buffers;
         newResult.input_buffer = NULL;
