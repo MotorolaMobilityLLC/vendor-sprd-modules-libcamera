@@ -281,15 +281,19 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pdaf_set_ppi_info = in_p->pdaf_set_ppi_info;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
-	/*TBD dSensorID 0:for imx258 1: for OV13855 */
+	/*TBD dSensorID 0:for imx258 1: for OV13855 2: for 3L8*/
 	if (SENSOR_VENDOR_IMX258 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_0;
 	} else if (SENSOR_VENDOR_OV13855 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_1;
+	} else if (SENSOR_VENDOR_S5K3L8XXM3 == in_p->pd_info->vendor_type) {
+		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_2;
 	} else {
 		ISP_LOGE("fail to support the sensor:%d\n", in_p->pd_info->vendor_type);
 		goto exit;
 	}
+
+	ISP_LOGI("PDALGO Init. Sensor Mode[%d] ", cxt->pd_gobal_setting.dSensorMode);
 
 	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
 	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;
@@ -303,14 +307,20 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
 	}
 
-	if (cxt->pd_gobal_setting.dSensorMode) {
+	if (cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_1 ) {
 		cxt->roi_info.win.start_x = ROI_X_1;
 		cxt->roi_info.win.start_y = ROI_Y_1;
 		cxt->roi_info.win.end_x = ROI_X_1 + ROI_Width;
 		cxt->roi_info.win.end_y = ROI_Y_1 + ROI_Height;
 		cxt->pd_gobal_setting.dBeginX = BEGIN_X_1;
 		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_1;
-
+	} else if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_2){
+		cxt->roi_info.win.start_x = ROI_X_2;
+		cxt->roi_info.win.start_y = ROI_Y_2;
+		cxt->roi_info.win.end_x = ROI_X_2 + ROI_Width;
+		cxt->roi_info.win.end_y = ROI_Y_2 + ROI_Height;
+		cxt->pd_gobal_setting.dBeginX = BEGIN_X_2;
+		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_2;
 	} else {
 		cxt->roi_info.win.start_x = ROI_X_0;
 		cxt->roi_info.win.start_y = ROI_Y_0;
@@ -392,12 +402,16 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 dRectY = 0;
 	cmr_s32 dRectW = 0;
 	cmr_s32 dRectH = 0;
+	cmr_s32 dBuf_width = 0;
+	cmr_s32 dBuf_height = 0;
 	cmr_s32 *pPD_left = NULL;
 	cmr_s32 *pPD_right = NULL;
 	cmr_s32 *pPD_left_rotation = NULL;
 	cmr_s32 *pPD_right_rotation = NULL;
 	cmr_s32 *pPD_left_final = NULL;
 	cmr_s32 *pPD_right_final = NULL;
+	cmr_s32 *pPD_left_reorder = NULL;
+	cmr_s32 *pPD_right_reorder = NULL;
 	cmr_s32 i;
 	cmr_u8 *ucOTPBuffer = NULL;
 	cmr_s32 otp_orientation = 0;
@@ -419,9 +433,14 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	void *pInPhaseBuf_right = (cmr_s32 *) (cmr_uint)(proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
 	ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 
-	if (cxt->pd_gobal_setting.dSensorMode) {
+	if (cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_1) {
 		dRectX = ROI_X_1;
 		dRectY = ROI_Y_1;
+		dRectW = ROI_Width;
+		dRectH = ROI_Height;
+	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_2) {
+		dRectX = ROI_X_2;
+		dRectY = ROI_Y_2;
 		dRectW = ROI_Width;
 		dRectH = ROI_Height;
 	} else {
@@ -430,31 +449,31 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		dRectW = ROI_Width;
 		dRectH = ROI_Height;
 	}
-	
+
 	ucOTPBuffer = (cmr_u8 *)cxt->pd_gobal_setting.OTPBuffer;
 
 	//Check OTP orientation
-  if(ucOTPBuffer!=NULL){
-  	OTPSensorStatus = (*(ucOTPBuffer-2936) & 0x0C) >> 2; //0x0B8C - 0x0014 = 0xB78 = 2936
-
-    if(OTPSensorStatus == 3){
-  	  otp_orientation = 1;
-    }
-  }
+	if(ucOTPBuffer!=NULL){
+ 		OTPSensorStatus = (*(ucOTPBuffer-2936) & 0x0C) >> 2; //0x0B8C - 0x0014 = 0xB78 = 2936
+		if(OTPSensorStatus == 3){
+			otp_orientation = 1;
+		}
+	}
 
 	pPD_left  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_left_rotation  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right_rotation = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+	pPD_left_reorder  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+	pPD_right_reorder = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));	
 
-	ISP_LOGI("PDALGO Converter. Sensor[%d] OTP[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation);
+	ISP_LOGI("PDALGO Converter. Sensor[%d] OTP[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation, cxt->pd_gobal_setting.dSensorMode);
 	ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
 
-#if(1)
 	if(cxt->pd_gobal_setting.dSensorSetting != otp_orientation){
 	  for(i=0;i<PD_PIXEL_NUM;i++){
 		  pPD_left_rotation[i] = pPD_left[PD_PIXEL_NUM-i-1];
-			pPD_right_rotation[i] = pPD_right[PD_PIXEL_NUM-i-1];
+		  pPD_right_rotation[i] = pPD_right[PD_PIXEL_NUM-i-1];
 		}
 		pPD_left_final = pPD_left_rotation;
 		pPD_right_final = pPD_right_rotation;
@@ -463,13 +482,23 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		pPD_left_final = pPD_left;
 		pPD_right_final = pPD_right;
 	}
-#else
-  pPD_left_final = pPD_left;
-	pPD_right_final = pPD_right;
-#endif
+
+	//Phase Pixel Reorder: for 3L8
+	if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_2){
+		dBuf_width = ROI_Width / SENSOR_ID_2_BLOCK_W * 4;
+		dBuf_height = ROI_Height / SENSOR_ID_2_BLOCK_H * 4;
+		ISP_LOGI("PDALGO Reorder Buf. W[%d] H[%d]", dBuf_width, dBuf_height);
+		ret = PD_PhasePixelReorder(pPD_left_final, pPD_right_final, pPD_left_reorder, pPD_right_reorder, dBuf_width, dBuf_height);
+	}
 
 	for (area_index = 0; area_index < AREA_LOOP; area_index++) {
-		ret = PD_DoType2((void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
+		if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_2){
+			ret = PD_DoType2((void *)pPD_left_reorder, (void *)pPD_right_reorder, dRectX, dRectY, dRectW, dRectH, area_index);
+		}
+		else{
+			ret = PD_DoType2((void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
+		}
+
 		if (ret) {
 			ISP_LOGE("fail to do pd algo.");
 			goto exit;
@@ -498,6 +527,8 @@ exit:
 	free(pPD_right);
 	free(pPD_left_rotation);
 	free(pPD_right_rotation);
+	free(pPD_left_reorder);
+	free(pPD_right_reorder);
 	return ret;
 }
 

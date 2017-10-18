@@ -11,7 +11,7 @@
 #include <string.h>
 #include <isp_type.h>
 
-#define PD_VERSION "PDAF_Algo_Ver: v1.15"
+#define PD_VERSION "PDAF_Algo_Ver: v1.16"
 #define PD_PIXEL_NUM (24576)
 #define PD_AREA_NUMBER (4)
 #define PD_PIXEL_ALIGN_X (16)
@@ -42,7 +42,7 @@ typedef struct {
 	cmr_s32 dAreaW;
 	cmr_s32 dAreaH;
 	cmr_s32 dDTCTEdgeTh;
-	//PD Sensor Mode (0: Sony IMX258, 1:OV13855)
+	//PD Sensor Mode (0: Sony IMX258, 1:OV13855, 2:S5K3L8)
 	cmr_s32 dSensorMode;
 	//0:No need calibration data, 1:Calibrated by module house (OTP), 2: Calibrated by SPRD
 	cmr_s32 dCalibration;
@@ -59,9 +59,10 @@ cmr_s32 PD_Init(PD_GlobalSetting * a_pdGSetting);
 cmr_s32 PD_Do(cmr_u8 * raw, cmr_u8 * y, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
 cmr_s32 PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
 cmr_s32 PD_SetCurVCM(cmr_s32 CurVCM);
-cmr_s32 PD_GetResult(cmr_s32 * a_pdConf, double *a_pdPhaseDiff, cmr_s32 * a_pdFrameID, cmr_s32 * a_pdDCCGain, cmr_s32 a_dArea);
+cmr_s32 PD_GetResult(cmr_s32 * a_pdConf, double *a_pdPhaseDiff, cmr_s32 *a_pdFrameID, cmr_s32 *a_pdDCCGain, cmr_s32 a_dArea);
 cmr_s32 PD_Uninit();
-cmr_s32 PD_PhaseFormatConverter(cmr_u8 * left_in, cmr_u8 * right_in, cmr_s32 * left_out, cmr_s32 * right_out, cmr_s32 a_dNumL, cmr_s32 a_dNumR); 
+cmr_s32 PD_PhaseFormatConverter(cmr_u8 *left_in, cmr_u8 *right_in, cmr_s32 *left_out, cmr_s32 *right_out, cmr_s32 a_dNumL, cmr_s32 a_dNumR);
+cmr_s32 PD_PhasePixelReorder(cmr_s32 *pBuf_pd_l, cmr_s32 *pBuf_pd_r, cmr_s32 *pPd_left_reorder, cmr_s32 *pPd_right_reorder, cmr_s32 buf_width, cmr_s32 buf_height);
 
 void FreeBuffer(cmr_u8 * raw);
 
