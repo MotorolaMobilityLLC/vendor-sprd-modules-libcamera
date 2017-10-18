@@ -2469,7 +2469,7 @@ static cmr_int ispalg_afl_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	if (cxt->ops.afl_ops.init)
 		ret = cxt->ops.afl_ops.init(&cxt->afl_cxt.handle, &afl_input);
 exit:
-	ISP_LOGI("done %ld, version:%d", ret, afl_input.version);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
