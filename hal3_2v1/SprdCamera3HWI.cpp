@@ -175,8 +175,8 @@ SprdCamera3HWI::~SprdCamera3HWI() {
 
     if (mOEMIf) {
 #ifdef POWER_HINT_USED
-        mOEMIf->disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
-        mOEMIf->enablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
+        mOEMIf->setPowerHint(CAM_POWER_PERFORMACE_ON);
+
 #endif
         // for performance tuning: close camera
         mOEMIf->setSensorCloseFlag();
@@ -1690,8 +1690,7 @@ int SprdCamera3HWI::flush() {
 #ifndef ANDROID_VERSION_O_BRINGUP
     if (mOEMIf) {
 #ifdef POWER_HINT_USED
-        mOEMIf->disablePowerHint(CAMERA_POWER_HINT_LOWPOWER);
-        mOEMIf->enablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
+        mOEMIf->setPowerHint(CAM_POWER_PERFORMACE_ON);
 #endif
     }
 #endif
@@ -1739,7 +1738,7 @@ int SprdCamera3HWI::flush() {
 #ifndef ANDROID_VERSION_O_BRINGUP
 #ifdef POWER_HINT_USED
     if (mOEMIf)
-        mOEMIf->disablePowerHint(CAMERA_POWER_HINT_PERFORMANCE);
+        mOEMIf->setPowerHint(CAM_POWER_NORMAL);
 #endif
 #endif
 

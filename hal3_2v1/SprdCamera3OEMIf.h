@@ -150,6 +150,12 @@ typedef enum {
 } powerhint_mode_type_t;
 #endif
 
+typedef enum CURRENT_POWER_HINT {
+    CAM_POWER_NORMAL,
+    CAM_POWER_PERFORMACE_ON,
+    CAM_POWER_LOWPOWER_ON
+} power_hint_state_type_t;
+
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
     SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -215,12 +221,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef POWER_HINT_USED
     void initPowerHint();
     void deinitPowerHint();
-    void enablePowerHint(int powerhint_id);
-    void disablePowerHint(int powerhint_id);
     void enablePowerHintExt(sp<IPowerManager> powermanager,
                             sp<IBinder> prfmlock, int powerhint_id);
+
     void disablePowerHintExt(sp<IPowerManager> powermanager,
                              sp<IBinder> prfmlock);
+    void setPowerHint(int powerhint_id);
 #endif
     int changeDfsPolicy(int dfs_policy);
     int setDfsPolicy(int dfs_policy);
@@ -759,8 +765,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
-    uint32_t mPerformancePowerHint;
-    uint32_t mLowerPowerPowerHint;
+    uint32_t mCurrentPowerHint;
     /* 1- start acceleration, 0 - finish acceleration*/
 
     /* for eis*/
