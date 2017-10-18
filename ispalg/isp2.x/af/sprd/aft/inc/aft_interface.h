@@ -100,6 +100,7 @@ enum aft_trigger_type {
 	AFT_TRIG_NONE = 0x00,
 	AFT_TRIG_CB,
 	AFT_TRIG_PD,
+	AFT_TRIG_FD,
 	AFT_TRIG_MAX
 };
 
