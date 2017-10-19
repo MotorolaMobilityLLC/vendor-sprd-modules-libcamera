@@ -1289,6 +1289,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 	case ISP_PM_CMD_SET_SCENE_MODE:
 	case ISP_PM_CMD_SET_SPECIAL_EFFECT:
 		{
+			cmr_u32 i;
 			struct isp_pm_ioctl_input *ioctrl_input_ptr = (struct isp_pm_ioctl_input *)param_ptr;
 			struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)ioctrl_input_ptr->param_data_ptr;
 
@@ -1298,7 +1299,8 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 				return rtn;
 			}
 
-			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr);
+			for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++)
+				rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr);
 		}
 		break;
 	case ISP_PM_CMD_ALLOC_BUF_MEMORY:
