@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.127"
-#define SUB_VERSION             "-1005-too_small_face"//use the date code to naming
+#define SUB_VERSION             "-1019-compatible"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -344,6 +344,7 @@ typedef struct _AE_Report {
 	cmr_u32 target_lum_ori;
 	cmr_u32 flag4idx;
 	cmr_s32 bisFlashOn;
+	cmr_u32 reserved[10];
 } AE_Report;
 
 typedef struct _AF_FV_DATA {
@@ -670,7 +671,9 @@ typedef struct _afscan_status_s {
 	cmr_u32 pd_conf_tbl[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 pd_peak_idx;
 	cmr_u32 inverse_calc_pos;
-	cmr_u32 reserve[64];	//for temp debug
+	cmr_u32 fit_peak_far_limit;
+	cmr_u32 fit_peak_near_limit;
+	cmr_u32 reserve[62];	//for temp debug
 } afscan_status_t;
 
 typedef struct af_ctrl_pd_info_s {
@@ -847,15 +850,16 @@ typedef struct _exposure_result_s {
 	cmr_u32 cur_iso;
 	cmr_u32 cur_exp;
 	cmr_u32 target_lum;
+	cmr_u32 reserved[30];
 } exposure_result_t;
 
 typedef struct _focus_stat_result_s {
 	cmr_u32 center_stat;
 	cmr_u32 full_stat;
+	cmr_u32 reserved[30];
 } focus_stat_result_t;
 
-typedef struct _pdaf_process_s
-{
+typedef struct _pdaf_process_s {
 	pd_algo_focusing_t pd_focusing;
 	pd_algo_result_t pd_result;
 	cmr_u32 proc_status;
@@ -917,7 +921,7 @@ typedef struct lens_distance_map_s {
 	cmr_u32 valid_code;
 	cmr_u32 steps_table[DISTANCE_MAP_TOTAL];	//vcm step
 	cmr_u32 distance_table[DISTANCE_MAP_TOTAL];	//distance by mm, 10/20/30/40/50/60/70/80/90/120/200/Inf
-	cmr_u32 reserved[DISTANCE_MAP_TOTAL];
+	cmr_u32 reserved[50];
 } lens_distance_map_t;
 
 typedef struct _filter_clip {
@@ -960,14 +964,14 @@ typedef struct _af_weight_table_s {
 } _weight_table_t;
 
 typedef struct _face_af_tuning_s {
-	cmr_u32 big_size_thr; // big face thr
-	cmr_u32 middle_size_thr;// middle face thr
-	cmr_u32 little_size_thr; // little face thr
-	cmr_u32 absolute_thr; // too little face thr
-	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
-	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
-	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
-	cmr_u32 absolute_thr_ratio; // when fit in too little face thr ,then enlarge the face area
+	cmr_u32 big_size_thr;	// big face thr
+	cmr_u32 middle_size_thr;	// middle face thr
+	cmr_u32 little_size_thr;	// little face thr
+	cmr_u32 absolute_thr;	// too little face thr
+	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
+	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
+	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
+	cmr_u32 absolute_thr_ratio;	// when fit in too little face thr ,then enlarge the face area
 	cmr_u32 reserved[9];
 } face_af_tuning_t;
 
@@ -1065,7 +1069,7 @@ typedef struct _AF_OTP_Data {
 	cmr_u8 bIsExist;
 	cmr_u16 INF;
 	cmr_u16 MACRO;
-
+	cmr_u32 reserved[10];
 } AF_OTP_Data;
 
 typedef struct _af_stat_data_s {
@@ -1075,40 +1079,38 @@ typedef struct _af_stat_data_s {
 } _af_stat_data_t;
 
 typedef struct _AF_Ctrl_Ops {
-	cmr_u8(*statistics_wait_cal_done) (void *cookie);
-	cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
-	cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
-	cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
-	cmr_u8(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
-	cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
-	cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
-	cmr_u8(*lens_wait_stop) (void *cookie);
-	cmr_u8(*lock_ae) (e_LOCK bisLock, void *cookie);
-	cmr_u8(*lock_awb) (e_LOCK bisLock, void *cookie);
-	cmr_u8(*lock_lsc) (e_LOCK bisLock, void *cookie);
-	cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
-	cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
-	cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
-	cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
-	cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
-	cmr_u8(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
-	cmr_u8(*set_motor_sacmode) (void *cookie);
-	cmr_u8(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
-	cmr_u8(*get_vcm_param) (cmr_u32 * param, void *cookie);
-	cmr_u8(*af_log) (const char *format, ...);
+	void *cookie;
+	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
+	 cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
+	 cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
+	 cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
+	 cmr_u8(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
+	 cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
+	 cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
+	 cmr_u8(*lens_wait_stop) (void *cookie);
+	 cmr_u8(*lock_ae) (e_LOCK bisLock, void *cookie);
+	 cmr_u8(*lock_awb) (e_LOCK bisLock, void *cookie);
+	 cmr_u8(*lock_lsc) (e_LOCK bisLock, void *cookie);
+	 cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
+	 cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
+	 cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
+	 cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
+	 cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
+	 cmr_u8(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
+	 cmr_u8(*set_motor_sacmode) (void *cookie);
+	 cmr_u8(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
+	 cmr_u8(*get_vcm_param) (cmr_u32 * param, void *cookie);
+	 cmr_u8(*af_log) (const char *format, ...);
 	 cmr_u8(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
 	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
-	 #ifdef CONFIG_ISP_2_3
 	//SharkLE Only ++
-	cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
-	cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
-	cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
+	 cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
+	 cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
+	 cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
 	//SharkLE Only --
-	#endif
-	void *cookie;
 } AF_Ctrl_Ops;
 
 typedef struct _AF_Trigger_Data {
@@ -1127,7 +1129,7 @@ typedef struct _AF_Win {
 	cmr_u16 AF_Win_Y[FOCUS_STAT_WIN_TOTAL];
 	cmr_u16 AF_Win_W[FOCUS_STAT_WIN_TOTAL];
 	cmr_u16 AF_Win_H[FOCUS_STAT_WIN_TOTAL];
-
+	cmr_u16 reserved[4 * 20];
 } AF_Win;
 
 typedef struct _AF_face_info {
@@ -1167,6 +1169,7 @@ typedef struct _af_history_info_s {
 	pd_algo_result_t pd_result[AF_RESULT_DATA_SIZE];
 	exposure_result_t ae_result[AF_RESULT_DATA_SIZE];
 	focus_stat_result_t stat_result[AF_RESULT_DATA_SIZE];
+	cmr_u32 reserved[100];
 } _af_history_info_t;
 
 typedef struct _AF_Data {
@@ -1226,6 +1229,8 @@ typedef struct _AF_Data {
 	cmr_u32 SAF_Softlanding_index;
 	cmr_u32 SAF_Softlanding_enable;
 	cmr_u32 Tuning_Buffer_checksum;
+	cmr_u32 is_flash;
+	cmr_u32 reserved[500];
 	AF_Ctrl_Ops AF_Ops;
 } AF_Data;
 

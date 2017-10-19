@@ -584,7 +584,7 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	rpt->target_lum = ae->ae_report.target_lum;
 	rpt->target_lum_ori = ae->ae_report.target_lum_ori;
 	rpt->flag4idx = ae->ae_report.flag4idx;
-    rpt->bisFlashOn = af->flash_on;
+	rpt->bisFlashOn = af->flash_on;
 	return 0;
 }
 
@@ -698,7 +698,7 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 
 	return 0;
 }
-#ifdef CONFIG_ISP_2_3
+
 //SharkLE Only ++
 //helper function
 //copy the original lens_move_to()
@@ -768,7 +768,6 @@ static cmr_u8 if_af_set_clear_next_vcm_pos( void *cookie)
 
 	return 0;
 }
-#endif
 //SharkLE Only --
 
 /* initialization */
@@ -810,13 +809,12 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 	AF_Ops.set_wins = if_set_wins;
 	AF_Ops.get_win_info = if_get_win_info;
 	AF_Ops.lock_ae_partial = if_lock_partial_ae;
-	#ifdef CONFIG_ISP_2_3
+
 	//SharkLE Only ++
 	AF_Ops.set_pulse_line = if_af_set_pulse_line;
 	AF_Ops.set_next_vcm_pos = if_af_set_next_vcm_pos;
 	AF_Ops.set_clear_next_vcm_pos = if_af_set_clear_next_vcm_pos;
 	//SharkLE Only --
-	#endif
 
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
 	af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
@@ -824,9 +822,10 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 
 	haf_tuning_param_t haf_tuning_data;
 
-	if(pdaf_tune_data != NULL){
-	    ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
-		for(i=0;i<3;i++){
+	if (pdaf_tune_data != NULL) {
+		ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps,
+			 pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
+		for (i = 0; i < 3; i++) {
 			haf_tuning_data.PDAF_Tuning_Data[i].min_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].min_pd_vcm_steps;
 			haf_tuning_data.PDAF_Tuning_Data[i].max_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].max_pd_vcm_steps;
 			haf_tuning_data.PDAF_Tuning_Data[i].coc_range = pdaf_tune_data->isp_pdaf_tune_data[i].coc_range;
@@ -843,13 +842,12 @@ static void *load_settings(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_out
 			haf_tuning_data.PDAF_Tuning_Data[i].pd_conf_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_conf_thr;
 			haf_tuning_data.PDAF_Tuning_Data[i].pd_conf_thr_2nd = pdaf_tune_data->isp_pdaf_tune_data[i].pd_conf_thr_2nd;
 		}
-    }
-	else{
+	} else {
 		ISP_LOGI("PDAF Tuning NULL!");
-		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1; //Use Default Setting
+		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1;	//Use Default Setting
 	}
 
-	alg_cxt = AF_init(&AF_Ops, &af_tuning_data, &haf_tuning_data,  &af->af_dump_info_len, AF_SYS_VERSION);
+	alg_cxt = AF_init(&AF_Ops, &af_tuning_data, &haf_tuning_data, &af->af_dump_info_len, AF_SYS_VERSION);
 	return alg_cxt;
 }
 
@@ -1887,7 +1885,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		if (AF_SEARCHING == af->focus_state || DCAM_AFTER_VCM_YES != timecompare) {
 			system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 			af_clear_sem(af);
-			//af_wait_caf_finish(af);
+			af_wait_caf_finish(af);
 			system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 			ISP_LOGI("picture mode wait caf %" PRId64 " ms", system_time1 - system_time0);
 		};
@@ -2492,6 +2490,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	init_param->otp_info.gldn_data.macro_cali = 0;
 	ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", init_param->otp_info.gldn_data.infinite_cali, init_param->otp_info.gldn_data.macro_cali,
 		 init_param->otp_info.rdm_data.infinite_cali, init_param->otp_info.rdm_data.macro_cali);
+
 
 	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
 	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
