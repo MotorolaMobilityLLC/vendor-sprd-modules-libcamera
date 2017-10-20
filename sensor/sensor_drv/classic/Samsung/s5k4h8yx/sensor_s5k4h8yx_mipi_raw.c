@@ -171,6 +171,7 @@ static cmr_int s5k4h8yx_drv_init_mode_fps_info(cmr_handle handle) {
 
 static cmr_int s5k4h8yx_drv_get_raw_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
+#if 0
     void *handlelib;
     handlelib = dlopen("libcamsensortuning.so", RTLD_NOW);
     if (handlelib == NULL) {
@@ -187,7 +188,7 @@ static cmr_int s5k4h8yx_drv_get_raw_info(cmr_handle handle) {
     } else {
         SENSOR_LOGI("link symbol success");
     }
-
+#endif
     return rtn;
 }
 
@@ -215,10 +216,10 @@ static cmr_int s5k4h8yx_drv_identify(cmr_handle handle,
         if (S5K4H8YX_VER_VALUE == ver_value) {
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is %s sensor !",SENSOR_NAME);
-            ret_value = s5k4h8yx_drv_get_raw_info(handle);
+           /* ret_value = s5k4h8yx_drv_get_raw_info(handle);
             if (SENSOR_SUCCESS != ret_value) {
                 SENSOR_LOGI("the module is unknow error !");
-            }
+            }*/
             s5k4h8yx_drv_init_mode_fps_info(handle);
         } else {
             SENSOR_LOGI("Identify this is hm%x%x sensor !",

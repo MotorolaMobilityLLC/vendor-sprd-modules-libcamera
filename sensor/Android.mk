@@ -189,7 +189,7 @@ LOCAL_MODULE := libcamsensor
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libcamsensortuning
+LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl
 
 ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_SHARED_LIBRARIES += liblog

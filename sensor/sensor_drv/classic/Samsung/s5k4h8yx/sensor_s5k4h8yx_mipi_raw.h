@@ -18,14 +18,14 @@
 
 #include "cutils/properties.h"
 #include <utils/Log.h>
-#include <dlfcn.h>
+//#include <dlfcn.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 //#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
 // defined(CONFIG_CAMERA_ISP_VERSION_V4)
-//#include "parameters/sensor_s5k4h8yx_raw_param_v3.c"
+#include "parameters/sensor_s5k4h8yx_raw_param_v3.c"
 //#else
 //#endif
 #include "isp_param_file_update.h"
@@ -565,7 +565,7 @@ static struct sensor_module_info s_s5k4h8yx_module_info_tab[VENDOR_NUM] = {
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
-static struct sensor_raw_info *s_s5k4h8yx_mipi_raw_info_ptr = NULL;
+static struct sensor_raw_info *s_s5k4h8yx_mipi_raw_info_ptr = &s_s5k4h8yx_mipi_raw_info;
 static struct sensor_ic_ops s5k4h8yx_ops_tab;
 
 SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
