@@ -392,11 +392,7 @@ struct ae_awb_gain {
 
 struct ae_isp_ctrl_ops {
 	cmr_handle isp_handler;
-#ifdef CONFIG_CAMERA_SINGLE_WRITE
-	cmr_s32(*read_aec_info) (cmr_handle handler, cmr_handle aec_info); /* TBD master & slave will merge by bridge */
-	cmr_s32(*read_aec_info_slv) (cmr_handle handler, cmr_handle aec_info);
-	cmr_s32(*write_aec_info) (cmr_handle handler, cmr_handle aec_i2c_info);
-#endif
+
 	 cmr_s32(*set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
 	 cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
 	 cmr_s32(*set_monitor) (cmr_handle handler, struct ae_monitor_cfg * in_param);
