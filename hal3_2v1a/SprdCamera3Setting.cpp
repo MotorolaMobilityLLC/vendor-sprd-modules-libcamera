@@ -116,8 +116,8 @@ typedef struct _camera3_default_info {
 static SprdCamera3DefaultInfo camera3_default_info;
 
 static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
-static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
-static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
+static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592, 2592};
+static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944, 1944};
 
 // if cant get valid sensor fov info, use the default value
 static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
@@ -819,6 +819,16 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
     *width = default_sensor_max_sizes[cameraId].width;
     *height = default_sensor_max_sizes[cameraId].height;
 #endif
+
+    // just for camera developer debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.auto.detect.sensor", value, "on");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("turn off auto detect sensor, just for debug");
+        *width = default_sensor_max_sizes[cameraId].width;
+        *height = default_sensor_max_sizes[cameraId].height;
+    }
+
     HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width,
              *height);
     return 0;
@@ -838,13 +848,19 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
     int ret = 0;
 
+    // just for camera developer debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.auto.detect.sensor", value, "on");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("turn off auto detect sensor, just for debug");
+        return 0;
+    }
+
     HAL_LOGI("E");
 
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
-        HAL_LOGE("set a default value(5M) to app, in case exception");
-        setLargestSensorSize(cameraId, 2592, 1944);
         goto exit;
     }
 
