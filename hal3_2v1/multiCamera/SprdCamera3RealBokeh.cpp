@@ -4846,12 +4846,15 @@ void SprdCamera3RealBokeh::bokehThreadExit(void) {
 
     HAL_LOGI("E");
     if (mCaptureThread != NULL) {
+        if ((mRealBokeh->mApiVersion == SPRD_API_MODE)&& mCaptureThread->mCapDepthhandle && mDepthApi)
+            mDepthApi->sprd_depth_Set_Stopflag(mCaptureThread->mCapDepthhandle, DEPTH_STOP);
+
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
         }
     }
     if (mPreviewMuxerThread != NULL) {
-        if (mRealBokeh->mApiVersion == SPRD_API_MODE)
+        if ((mRealBokeh->mApiVersion == SPRD_API_MODE)&& mPreviewMuxerThread->mPrevDepthhandle && mDepthApi)
             mDepthApi->sprd_depth_Set_Stopflag(mPreviewMuxerThread->mPrevDepthhandle, DEPTH_STOP);
 
         if (mPreviewMuxerThread->isRunning()) {
