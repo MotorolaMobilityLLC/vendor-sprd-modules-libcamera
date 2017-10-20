@@ -1844,15 +1844,76 @@ SET_SCENE_MOD_EXIT:
 	return rtn;
 }
 
+static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	if (param) {
+		if(0 == *(cmr_u32*)param){
+			ae_set_pause(cxt);
+			cxt->cur_status.settings.manual_mode = 0;
+			cxt->manual_exp_time = 0;
+			cxt->manual_iso_value = 0;
+		} else if(1 == *(cmr_u32*)param){
+			ae_set_restore_cnt(cxt);
+		}
+		ISP_LOGI("AE_SET_MANUAL_MODE: %d, manual: 0, auto: 1\n", *(cmr_u32*)param);
+	}
+	return rtn;
+}
+
 static cmr_s32 ae_set_exp_time(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 exp_time = *(cmr_u32 *) param;
+	cmr_u32 exp_time = 10000000; //init default value(10ms)
 	cmr_u32 line_time = cxt->snr_info.line_time;
+	cmr_u16 gain = 1280; //init default value(10xgain)
 
 	if (param) {
+		exp_time = *(cmr_u32 *) param;
+		if(exp_time > 0)
+			cxt->manual_exp_time = exp_time;
+		else{
+			ISP_LOGE("set invalid expouser time: %d",exp_time);
+			exp_time = cxt->cur_result.wts.exposure_time;
+		}
+		if(cxt->manual_iso_value > 0)
+			gain = (cxt->manual_iso_value / 50)*128; 
+		else
+			gain = cxt->cur_result.wts.cur_again; //reusing current gain
+
 		if (AE_STATE_LOCKED == cxt->cur_status.settings.lock_ae) {
-			cxt->cur_status.settings.exp_line = exp_time * 10 / line_time;
+			cxt->cur_status.settings.exp_line = exp_time  / line_time;
+			cxt->cur_status.settings.gain = gain;
+			ISP_LOGI("exp_time: %d line_time: %d gain: %d iso: %d", exp_time,line_time,gain,cxt->manual_iso_value);
+		}
+	}
+	return rtn;
+}
+
+static cmr_s32 ae_set_manual_iso(struct ae_ctrl_cxt *cxt, cmr_handle param)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	cmr_u32 iso = 600; //init default value(600)
+	cmr_u32 exp_time = 10000000; //init default value(10ms)
+	cmr_u32 line_time = cxt->snr_info.line_time;
+	cmr_u32 gain = 1280; //init default value(10xgain)
+
+	if (param) {
+		iso = *(cmr_u32 *) param;
+		if(iso > 0){
+			cxt->manual_iso_value = iso;
+			gain = (iso / 50)*128;
+		}else
+			gain = cxt->cur_result.wts.cur_again; //reusing current gain
+		if(cxt->manual_exp_time > 0)
+			exp_time = cxt->manual_exp_time;
+		else
+			exp_time = cxt->cur_result.wts.exposure_time; //reusing current exp_time
+
+		if (AE_STATE_LOCKED == cxt->cur_status.settings.lock_ae) {
+			cxt->cur_status.settings.exp_line = exp_time  / line_time;
+			cxt->cur_status.settings.gain = gain;
+			ISP_LOGI("exp_time: %d line_time: %d gain: %d iso: %d", exp_time,line_time,gain,iso);
 		}
 	}
 	return rtn;
@@ -4511,6 +4572,10 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_set_iso(cxt, param);
 		break;
 
+	case AE_SET_MANUAL_ISO:
+		rtn = ae_set_manual_iso(cxt, param);
+		break;
+
 	case AE_GET_ISO:
 		rtn = ae_get_iso(cxt, (cmr_u32*)result);
 		break;
@@ -4672,6 +4737,10 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		break;
 
 	case AE_SET_FORCE_QUICK_MODE:
+		break;
+
+       case AE_SET_MANUAL_MODE:
+		rtn = ae_set_manual_mode(cxt, param);
 		break;
 
 	case AE_SET_EXP_TIME:

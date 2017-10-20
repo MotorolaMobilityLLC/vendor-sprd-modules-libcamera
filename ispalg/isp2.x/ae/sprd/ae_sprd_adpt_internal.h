@@ -243,6 +243,11 @@ struct ae_ctrl_cxt {
 	 */
 	cmr_u8 manual_ae_on;
 	/*
+	*Save exposure & iso value on manual ae mode
+	*/
+	cmr_u32 manual_exp_time;
+	cmr_u32 manual_iso_value;
+	/*
 	 * flash_callback control
 	 */
 	cmr_s8 send_once[4];

@@ -1355,7 +1355,13 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	if (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode) {
 		cmr_u32 mawb_id = cxt->wb_mode;
 		if (AWB_CTRL_WB_MODE_AUTO != cxt->wb_mode) {
-			if ((mawb_id > 0) && (mawb_id < 10))	// return mwb by mwb mode id
+			if (mawb_id == AWB_CTRL_AWB_MODE_OFF)
+			{
+				cxt->output_gain.r = 1024;
+				cxt->output_gain.g = 1024;
+				cxt->output_gain.b = 1024;
+				cxt->output_ct  = 5000;
+			}else if ((mawb_id > 0) && (mawb_id < 10))	// return mwb by mwb mode id
 			{
 				cmr_s32 index = 0;
 

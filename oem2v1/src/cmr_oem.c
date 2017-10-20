@@ -6797,6 +6797,10 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm) {
             out_param = ISP_AWB_INDEX6;
             break;
 
+	case CAMERA_WB_MAX:
+            out_param = ISP_AWB_OFF;
+	     break;
+
         default:
             break;
         }

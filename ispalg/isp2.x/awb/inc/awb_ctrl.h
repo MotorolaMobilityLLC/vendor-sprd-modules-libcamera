@@ -80,6 +80,7 @@ enum awb_ctrl_wb_mode {
 	AWB_CTRL_MWB_MODE_INCANDESCENT = 0x4,
 	AWB_CTRL_MWB_MODE_USER_0 = 0x5,
 	AWB_CTRL_MWB_MODE_USER_1 = 0x6,
+	AWB_CTRL_AWB_MODE_OFF = 0x7
 };
 
 enum awb_ctrl_scene_mode {

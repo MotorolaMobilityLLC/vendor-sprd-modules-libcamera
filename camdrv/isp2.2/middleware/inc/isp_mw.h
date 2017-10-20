@@ -245,6 +245,7 @@ enum isp_awb_mode {
 	ISP_AWB_INDEX7,
 	ISP_AWB_INDEX8,
 	ISP_AWB_AUTO,
+	ISP_AWB_OFF,
 	ISP_AWB_MAX
 };
 
@@ -393,6 +394,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AF_BYPASS,
 	ISP_CTRL_POST_3DNR, //for post 3dnr
 	ISP_CTRL_3DNR,
+	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_MAX
 };
 

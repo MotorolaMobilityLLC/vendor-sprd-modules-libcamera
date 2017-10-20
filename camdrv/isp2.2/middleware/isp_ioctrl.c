@@ -217,6 +217,9 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	case ISP_AWB_INDEX6:
 		awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
 		break;
+	case ISP_AWB_OFF:
+		awb_id = AWB_CTRL_AWB_MODE_OFF;
+		break;
 	default:
 		awb_id = AWB_CTRL_WB_MODE_AUTO;
 		break;
@@ -574,6 +577,24 @@ static cmr_int _ispIsoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_ISO, &set_iso, NULL);
 	ISP_LOGV("ISP_AE: AE_SET_ISO=%d, rtn=%ld", set_iso.mode, rtn);
+
+	return rtn;
+}
+
+static cmr_int _ispSensitivityIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 set_sensitivity = 0;
+	UNUSED(call_back);
+
+	if (NULL == param_ptr)
+		return ISP_PARAM_NULL;
+
+	set_sensitivity = *(cmr_u32 *) param_ptr;
+	if (cxt->ops.ae_ops.ioctrl)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MANUAL_ISO, &set_sensitivity, NULL);
+	ISP_LOGV("ISP_AE: AE_SET_SENSITIVITY=%d, rtn=%ld", set_sensitivity, rtn);
 
 	return rtn;
 }
@@ -2361,6 +2382,17 @@ static cmr_int _ispForceAeQuickMode(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
+static cmr_int _ispSetAeMode(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int rtn = ISP_SUCCESS;
+	cmr_u32 manual_mode = *(cmr_u32 *) param_ptr;
+	UNUSED(call_back);
+	if (cxt->ops.ae_ops.ioctrl)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MANUAL_MODE, (void *)&manual_mode, NULL);
+	return rtn;
+}
+
 static cmr_int _ispSetAeExpTime(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2500,6 +2532,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_EV, _ispEVIOCtrl},
 	{ISP_CTRL_FLICKER, _ispFlickerIOCtrl},
 	{ISP_CTRL_ISO, _ispIsoIOCtrl},
+	{ISP_CTRL_SENSITIVITY, _ispSensitivityIOCtrl},
 	{ISP_CTRL_AE_TOUCH, _ispAeTouchIOCtrl},
 	{ISP_CTRL_FLASH_NOTICE, _ispFlashNoticeIOCtrl},
 	{ISP_CTRL_VIDEO_MODE, _ispVideoModeIOCtrl},
@@ -2560,6 +2593,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_TOOL_SET_SCENE_PARAM, _ispToolSetSceneParam},	// for tool scene param setting
 	{ISP_CTRL_FORCE_AE_QUICK_MODE, _ispForceAeQuickMode},
 	{ISP_CTRL_DENOISE_PARAM_UPDATE, _ispSensorDenoiseParamUpdate},	//for tool cali
+	{ISP_CTRL_SET_AE_MODE, _ispSetAeMode},
 	{ISP_CTRL_SET_AE_EXP_TIME, _ispSetAeExpTime},
 	{ISP_CTRL_SET_AE_SENSITIVITY, _ispSetAeSensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, _ispSetDcamTimestamp},
