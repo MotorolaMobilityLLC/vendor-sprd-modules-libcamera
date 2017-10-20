@@ -208,7 +208,7 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 		|| src->grid != (unsigned int)(dst->grid/binning->ratio)){
 			memcpy(dst->tab, dst->pm_tab0, dst->gain_width*dst->gain_height*4*sizeof(unsigned short));
 			ISP_LOGE("do LSC_BINNING error, output default dnp table, src->grid=%d, (unsigned int)(dst->grid/binning->ratio)=%d", src->grid, (unsigned int)(dst->grid/binning->ratio));
-			return -1;
+			goto exit;
 		}
 
 		for(j=0; j<dst->gain_height; j++){
@@ -240,7 +240,7 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 		|| crop->start_y+(dst->gain_height-2)*dst->grid*2 > (src->gain_height-3)*src->grid*2){
 			memcpy(dst->tab, dst->pm_tab0, dst->gain_width*dst->gain_height*4*sizeof(unsigned short));
 			ISP_LOGE("do LSC_CROP error, output default dnp table");
-			return -1;
+			goto exit;
 		}
 
 		start_x = crop->start_x/2;
@@ -278,7 +278,7 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 		}
 		break;
 	}
-
+exit:
 	free_set_null(src_r);
 	free_set_null(src_gr);
 	free_set_null(src_gb);
