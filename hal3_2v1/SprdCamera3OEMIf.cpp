@@ -5802,6 +5802,7 @@ handle_encode_exit:
 void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
+    struct cmr_focus_status *focus_status;
     int64_t timeStamp = 0;
     timeStamp = systemTime();
 
@@ -5857,16 +5858,19 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     } break;
 
     case CAMERA_EVT_CB_FOCUS_MOVE:
-        HAL_LOGV("camera cb: autofocus focus moving  %p autofocus=%d", parm4,
-                 mIsAutoFocus);
+        focus_status = (cmr_focus_status *)parm4;
+        HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
+
         if (!mIsAutoFocus) {
-            if (parm4) {
+            if (focus_status->is_in_focus) {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
             } else {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
                 mLastCafDoneTime = systemTime();
             }
-            mSetting->setAfCONTROLTag(&controlInfo);
+
+            if (focus_status->af_focus_type == CAM_AF_FOCUS_CAF)
+                mSetting->setAfCONTROLTag(&controlInfo);
         }
         break;
 

@@ -307,6 +307,9 @@ struct camera_context {
     cmr_uint is_start_snapshot;
     cmr_uint is_3dnr_video;
     cmr_u32 blur_facebeauty_flag;
+
+    cmr_u32 is_focus;
+    struct isp_pos focus_rect;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,

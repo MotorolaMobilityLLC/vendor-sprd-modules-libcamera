@@ -1162,6 +1162,7 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)privdata;
     cmr_int oem_cb;
+    struct cmr_focus_status *focus_status;
 
     if (!privdata) {
         CMR_LOGE("err, handle for callback");
@@ -1179,6 +1180,12 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
         break;
     case AF_CB_FOCUS_MOVE:
         oem_cb = CAMERA_EVT_CB_FOCUS_MOVE;
+        focus_status = (struct cmr_focus_status *)param;
+        cxt->is_focus = focus_status->is_in_focus;
+        if (cxt->is_focus) {
+            cxt->focus_rect.x = 0;
+            cxt->focus_rect.y = 0;
+        }
         break;
     default:
         CMR_LOGE("failed focus cb %d", cb);
