@@ -689,9 +689,15 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	struct ae_calc_out ae_result;
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
+	cmr_u32 awb_mode = 0;
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&gain, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	if(cxt->ops.awb_ops.ioctrl){
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WB_MODE, NULL, (void *)&awb_mode);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
 	}
 
@@ -701,10 +707,12 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 		in_param.awb_gain_r = 1024;
 		in_param.awb_gain_g = 1024;
 		in_param.awb_gain_b = 1024;
+		in_param.awb_mode = awb_mode;
 	} else {
 		in_param.awb_gain_r = gain.r;
 		in_param.awb_gain_g = gain.g;
 		in_param.awb_gain_b = gain.b;
+		in_param.awb_mode = awb_mode;
 	}
 
 	in_param.stat_fmt = AE_AEM_FMT_RGB;

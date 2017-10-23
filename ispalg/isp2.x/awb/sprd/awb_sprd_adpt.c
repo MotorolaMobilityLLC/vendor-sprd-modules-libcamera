@@ -430,6 +430,15 @@ static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 	return rtn;
 }
 
+static cmr_u32 _awb_get_wbmode(struct awb_ctrl_cxt *cxt, void *out_param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+
+	*(cmr_u32 *) out_param = cxt->wb_mode ;
+	ISP_LOGV("AWB get mode = %d", *(cmr_u32 *) out_param );
+	return rtn;
+}
+
 static cmr_u32 _awb_set_workmode(struct awb_ctrl_cxt *cxt, void *in_param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -1415,7 +1424,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_ct = cxt->lock_info.lock_ct;
 	}
 	//only pre flash after
-	if(cxt->flash_pre_state !=0){
+	if(cxt->flash_pre_state !=0 && cxt->wb_mode == 0){
 		cxt->output_gain.r = cxt->recover_gain.r;
 		cxt->output_gain.g = cxt->recover_gain.g;
 		cxt->output_gain.b = cxt->recover_gain.b;
@@ -1424,7 +1433,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 
 	//lock awb after flash
-	if(cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0){
+	if(cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0 && cxt->wb_mode == 0){
 		cxt->output_gain.r = cxt->recover_gain.r ;
 		cxt->output_gain.g = cxt->recover_gain.g;
 		cxt->output_gain.b = cxt->recover_gain.b;
@@ -1476,6 +1485,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	switch (cmd) {
 	case AWB_CTRL_CMD_SET_WB_MODE:
 		rtn = _awb_set_wbmode(cxt, in);
+		break;
+
+	case AWB_CTRL_CMD_GET_WB_MODE:
+		rtn = _awb_get_wbmode(cxt, out);
 		break;
 
 	case AWB_CTRL_CMD_SET_WORK_MODE:

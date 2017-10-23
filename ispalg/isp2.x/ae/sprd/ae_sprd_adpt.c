@@ -1432,6 +1432,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->cur_status.awb_gain.r = 1024;
 	cxt->cur_status.awb_gain.g = 1024;
 	cxt->cur_status.awb_gain.b = 1024;
+	cxt->cur_status.awb_mode = 0;
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_param->flicker_index][AE_ISO_AUTO];
 	cxt->cur_status.ae_table->min_index = 0;
 	cxt->cur_status.weight_table = cxt->cur_param->weight_table[AE_WEIGHT_CENTER].weight;
@@ -2403,7 +2404,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				} else {
 					ISP_LOGI("ae_flash1 wait-capture!\r\n");
 				}
-				if (1 == cxt->flash_main_esti_result.isEnd) {
+				if (1 == cxt->flash_main_esti_result.isEnd && cxt->cur_status.awb_mode == 0){
 					if (cxt->isp_ops.set_wbc_gain) {
 						struct ae_alg_rgb_gain awb_gain;
 						awb_gain.r = cxt->flash_main_esti_result.captureRGain;
@@ -4116,6 +4117,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
+	cxt->cur_status.awb_mode =  calc_in->awb_mode;
 	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	cxt->cur_status.stat_img = cxt->sync_aem;
 	// get effective E&g
@@ -4271,6 +4273,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
+	cxt->cur_status.awb_mode =  calc_in->awb_mode;
 	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	cxt->cur_status.stat_img = cxt->sync_aem;
 

@@ -482,6 +482,7 @@ struct ae_alg_calc_param {
 	   5:flash ae????
 	 */
 	struct ae_settings settings;
+	cmr_u32 awb_mode;
 };
 
 struct ae1_senseor_out {
