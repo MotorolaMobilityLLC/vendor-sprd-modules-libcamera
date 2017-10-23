@@ -8630,6 +8630,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         if (ret) {
             CMR_LOGE("failed to start prev %ld", ret);
         }
+        cxt->setting_cxt.is_active = 1;
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_SET_ENVIRONMENT, &setting_param);
         cxt->camera_mode = mode;
     }
 
@@ -8656,6 +8660,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             goto exit;
         }
     }
+
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
     camera_snapshot_started((cmr_handle)cxt);
     ret = camera_get_cap_time((cmr_handle)cxt);
