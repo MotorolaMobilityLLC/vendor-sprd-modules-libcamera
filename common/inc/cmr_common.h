@@ -648,6 +648,18 @@ struct dual_sensor_luma_info {
     uint32_t main_luma;
 };
 
+enum cmr_af_focus_type {
+    CAM_AF_FOCUS_SAF,
+    CAM_AF_FOCUS_CAF,
+    CAM_AF_FOCUS_FAF,
+    CAM_AF_FOCUS_MAX
+};
+
+struct cmr_focus_status {
+    int is_in_focus;
+    int af_focus_type;
+};
+
 /********************************** v4l2 end **********************************/
 
 /******************************** memory start ********************************/

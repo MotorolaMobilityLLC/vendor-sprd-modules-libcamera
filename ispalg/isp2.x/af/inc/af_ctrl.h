@@ -18,6 +18,7 @@
 #define _ISP_AF_H_
 
 #include "isp_pm.h"
+#include "cmr_common.h"
 
 #ifdef WIN32
 #include "sci_type.h"
@@ -159,6 +160,8 @@ extern "C" {
 	struct af_result_param {
 		cmr_u32 motor_pos;
 		cmr_u32 suc_win;
+		cmr_u32 focus_type;
+		cmr_u32 reserved[10];
 	};
 
 	struct af_monitor_set {
@@ -214,7 +217,7 @@ extern "C" {
 		cmr_u32 is_multi_mode;
 		cmr_u32 is_supoprt;
 		 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
-		 cmr_s32(*start_notice) (void *handle);
+		 cmr_s32(*start_notice) (void *handle, struct af_result_param *in_param);
 		 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 		 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 		 cmr_s32(*set_monitor_win) (void *handle, struct af_monitor_win * in_param);

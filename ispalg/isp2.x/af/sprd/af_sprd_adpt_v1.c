@@ -312,16 +312,19 @@ static cmr_s32 compare_timestamp(af_ctrl_t * af)
 		return DCAM_AFTER_VCM_YES;
 }
 
-static void notify_start(af_ctrl_t * af)
+static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 {
 	ISP_LOGI(".");
-	af->start_notice(af->caller);
+	struct af_result_param af_result;
+	af_result.focus_type = focus_type;
+	af->start_notice(af->caller, &af_result);
 }
 
-static void notify_stop(af_ctrl_t * af, cmr_s32 win_num)
+static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
 {
 	struct af_result_param af_result;
 	af_result.suc_win = win_num;
+	af_result.focus_type = focus_type;
 	ISP_LOGI(". %s ", (win_num) ? "Suc" : "Fail");
 
 	af->end_notice(af->caller, &af_result);
@@ -1395,6 +1398,7 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	AF_Trigger(af->af_alg_cxt, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
+	notify_start(af, CAM_AF_FOCUS_FAF);
 }
 
 static cmr_s32 faf_process_frame(af_ctrl_t * af)
@@ -1403,6 +1407,7 @@ static cmr_s32 faf_process_frame(af_ctrl_t * af)
 	AF_Process_Frame(af->af_alg_cxt);
 	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
 		AF_Get_Result(af->af_alg_cxt, &res, &mode);
+		notify_stop(af, HAVE_PEAK == res ? 1 : 0, CAM_AF_FOCUS_FAF);
 		ISP_LOGI("face af result %d", res);
 		return 1;
 	} else {
@@ -1433,7 +1438,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == AF_Get_alg_mode(af->af_alg_cxt)) {
 		AF_Get_Result(af->af_alg_cxt, &res, &mode);
 		ISP_LOGI("notify_stop");
-		notify_stop(af, HAVE_PEAK == res ? 1 : 0);
+		notify_stop(af, HAVE_PEAK == res ? 1 : 0, CAM_AF_FOCUS_SAF);
 		return 1;
 	} else {
 		return 0;
@@ -1488,7 +1493,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	AF_Trigger(af->af_alg_cxt, &aft_in);
 	do_start_af(af);
 	if (AFT_TRIG_PD != aft_in.trigger_source) {
-		notify_start(af);
+		notify_start(af, CAM_AF_FOCUS_CAF);
 	}
 	af->vcm_stable = 0;
 }
@@ -1503,7 +1508,7 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 		ISP_LOGV("caf end, result = %d mode = %d ", res, mode);
 
 		ISP_LOGI("notify_stop");
-		notify_stop(af, HAVE_PEAK == res ? 1 : 0);
+		notify_stop(af, HAVE_PEAK == res ? 1 : 0, CAM_AF_FOCUS_CAF);
 		return 1;
 	} else {
 		return 0;

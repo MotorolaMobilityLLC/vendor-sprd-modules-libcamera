@@ -125,10 +125,11 @@ static uint32_t af_get_vcm_test_mode(void *handle_af)
 static cmr_s32 af_end_notice(void *handle_af, struct af_result_param *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct isp_af_notice af_notice = { 0x00, 0x00 };
+	struct isp_af_notice af_notice;
 
 	af_notice.mode = ISP_FOCUS_MOVE_END;
 	af_notice.valid_win = in_param->suc_win;
+	af_notice.focus_type = in_param->focus_type;
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_END_NOTICE, (void *)&af_notice, NULL);
 	}
@@ -136,13 +137,14 @@ static cmr_s32 af_end_notice(void *handle_af, struct af_result_param *in_param)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_start_notice(void *handle_af)
+static cmr_s32 af_start_notice(void *handle_af, struct af_result_param *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct isp_af_notice af_notice = { 0x00, 0x00 };
+	struct isp_af_notice af_notice;
 
 	af_notice.mode = ISP_FOCUS_MOVE_START;
 	af_notice.valid_win = 0x00;
+	af_notice.focus_type = in_param->focus_type;
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_START_NOTICE, (void *)&af_notice, NULL);
 	}

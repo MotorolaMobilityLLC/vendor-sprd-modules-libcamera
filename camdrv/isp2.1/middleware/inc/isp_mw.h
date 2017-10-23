@@ -447,6 +447,8 @@ struct trim_info {
 struct isp_af_notice {
 	cmr_u32 mode;
 	cmr_u32 valid_win;
+	cmr_u32 focus_type;
+	cmr_u32 reserved[10];
 };
 
 enum isp_flash_type {

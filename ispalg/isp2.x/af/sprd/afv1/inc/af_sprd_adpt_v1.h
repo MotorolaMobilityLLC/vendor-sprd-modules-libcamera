@@ -237,7 +237,7 @@ typedef struct _af_ctrl {
 	cmr_u32 is_multi_mode;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
-	 cmr_s32(*start_notice) (void *handle);
+	 cmr_s32(*start_notice) (void *handle, struct af_result_param *in_param);
 	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 	 cmr_s32(*set_monitor_win) (void *handler, struct af_monitor_win * in_param);
 	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
