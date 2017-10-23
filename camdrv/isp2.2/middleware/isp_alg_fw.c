@@ -2216,13 +2216,17 @@ exit:
 static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 is_af_support = 1;
 	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
 	struct af_log_info af_param = {NULL, 0};
 
-	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
+	if (NULL == cxt || NULL == cxt->ioctrl_ptr)
 		return ret;
+
+	if (NULL == cxt->ioctrl_ptr->set_pos)
+		is_af_support = 0;
 
 	memset((void *)&af_input, 0, sizeof(af_input));
 	memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
@@ -2235,6 +2239,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
 	af_input.handle_pm = cxt->handle_pm;
+	af_input.is_supoprt = is_af_support;
 
 	if (NULL != cxt->otp_data) {
 		af_input.otp_info_ptr = cxt->otp_data->single_otp.af_info;

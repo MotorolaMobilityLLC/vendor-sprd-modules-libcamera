@@ -2796,15 +2796,19 @@ exit:
 static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 is_af_support = 1;
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
 	struct af_log_info aft_param = {NULL, 0};
 	struct sensor_otp_section_info *otp_info_af = NULL;
 
-	if (NULL == cxt || NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos) {
+	if (NULL == cxt || NULL == cxt->ioctrl_ptr) {
 		ISP_LOGE("fail to check param");
 		return ISP_PARAM_ERROR;
 	}
+
+	if (NULL == cxt->ioctrl_ptr->set_pos)
+		is_af_support = 0;
 
 	memset((void *)&af_input, 0, sizeof(af_input));
 
@@ -2815,6 +2819,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->dcam_size.w;
 	af_input.src.h = cxt->dcam_size.h;
 	af_input.handle_pm = cxt->handle_pm;
+	af_input.is_supoprt = is_af_support;
 
 	if (NULL != cxt->otp_data) {
 		otp_info_af = cxt->otp_data->single_otp.af_info;
