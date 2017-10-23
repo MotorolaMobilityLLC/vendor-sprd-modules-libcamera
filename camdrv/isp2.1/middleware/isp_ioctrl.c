@@ -291,6 +291,7 @@ static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, flag);
 		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 1);
 	} else {
+		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, 1);
 		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, flag);
 	}
 

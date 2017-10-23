@@ -1676,7 +1676,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		if (ret) {
 			ISP_LOGE("fail to set statis buf");
 		}
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 0);
+		if(cxt->afl_cxt.version) {
+			isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, 0);
+		} else {
+			isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 0);
+		}
 		goto exit;
 	}
 
