@@ -3226,7 +3226,10 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->cur_status.start_index;
 			cxt->last_index = cxt->cur_status.start_index;
-			cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
+			if(0 != cxt->cur_result.cur_bv)
+				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
+			else
+				cxt->last_exp_param.bv = 1;
 		} else {
 			cxt->last_exp_param.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
 			cxt->last_exp_param.exp_time = cxt->sync_cur_result.wts.cur_exp_line * cxt->cur_status.line_time;
@@ -3235,7 +3238,10 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.wts.cur_index;
 			cxt->last_index = cxt->sync_cur_result.wts.cur_index;
-			cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
+			if(0 != cxt->cur_result.cur_bv)
+				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
+			else
+				cxt->last_exp_param.bv = 1;
 		}
 		cxt->last_enable = 1;
 		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
