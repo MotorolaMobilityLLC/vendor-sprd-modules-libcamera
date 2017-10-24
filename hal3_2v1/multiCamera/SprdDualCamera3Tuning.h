@@ -109,7 +109,6 @@ class SprdDualCamera3Tuning : SprdCamera3MultiBase {
 
     multi_request_saved_t mThumbReq;
     int mCaptureStreamsNum;
-    buffer_handle_t *mCallbackBuffer;
     List<new_mem_t *> mLocalBufferList;
     camera3_stream_t mMainStreams[MAX_NUM_TUNING_STREAMS];
     camera3_stream_t mAuxStreams[MAX_NUM_TUNING_STREAMS];

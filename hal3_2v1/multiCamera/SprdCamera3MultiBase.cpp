@@ -183,9 +183,10 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     new_mem->pHeapIon = pHeapIon;
     HAL_LOGI("X");
     return result;
-
 getpmem_fail:
     delete pHeapIon;
+    if (buffer)
+        delete buffer;
 
     return -1;
 }

@@ -93,12 +93,16 @@ SprdDualCamera3Tuning::SprdDualCamera3Tuning() {
     m_VirtualCamera.id = (uint8_t)CAM_TMAIN_ID;
     mStaticMetadata = NULL;
     m_pPhyCamera = NULL;
+    mCallbackOps = NULL;
+    mSaveSnapStream = NULL;
     mCaptureWidth = 0;
     mCaptureHeight = 0;
     mPreviewWidth = 0;
     mPreviewHeight = 0;
     mCaptureStreamsNum = 0;
     mPreviewStreamsNum = 0;
+    mCapFrameNumber = 0;
+    mhasCallbackStream = false;
     mSavedRequestList.clear();
 
     setupPhysicalCameras();
@@ -107,6 +111,7 @@ SprdDualCamera3Tuning::SprdDualCamera3Tuning() {
     memset(mLocalBuffer, 0, sizeof(new_mem_t) * mLocalBufferNumber);
     memset(mAuxStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_TUNING_STREAMS);
     memset(mMainStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_TUNING_STREAMS);
+    memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
 
     mLocalBufferList.clear();
 
