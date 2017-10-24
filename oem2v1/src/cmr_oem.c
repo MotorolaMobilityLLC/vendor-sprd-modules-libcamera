@@ -51,6 +51,7 @@
 
 #define OEM_HANDLE_HDR 1
 #define OEM_HANDLE_3DNR 1
+#define FLASH_CAPTURE_SKIP_NUM_OFFSET 7
 
 #define CAMERA_PATH_SHARE 1
 #define OEM_RESTART_SUM 2
@@ -2021,7 +2022,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     cmr_uint has_preflashed = 0;
     cmr_u32 flash_capture_skip_num = 0;
     struct sensor_exp_info exp_info_ptr;
-
+    cmr_u32 offset = 0;
     if (cxt->camera_id == 1)
         goto exit;
 
@@ -2046,8 +2047,12 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     if (ret) {
         CMR_LOGE("camera_get_sensor_info failed");
     }
-    flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num;
-    CMR_LOGI("flash_capture_skip_num = %d", flash_capture_skip_num);
+    if (cxt->snp_cxt.snp_mode == CAMERA_ZSL_MODE) {
+        offset = FLASH_CAPTURE_SKIP_NUM_OFFSET;
+    }
+
+    flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num + offset;
+    CMR_LOGI("flash_capture_skip_num = %d");
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -5920,8 +5925,10 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
             }
         }
         isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
-	  isp_param.capture_skip_num = sns_ex_info_ptr->capture_skip_num;
-        CMR_LOGI("isp_param:max_gain:%d skip_num:%d", isp_param.resolution_info.max_gain, isp_param.capture_skip_num);
+        isp_param.capture_skip_num = sns_ex_info_ptr->capture_skip_num;
+        CMR_LOGI("isp_param:max_gain:%d skip_num:%d",
+                 isp_param.resolution_info.max_gain,
+                 isp_param.capture_skip_num);
     }
 
     ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
