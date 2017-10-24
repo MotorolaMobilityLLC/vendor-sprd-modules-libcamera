@@ -1150,6 +1150,19 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->mSetCapRatioFlag = false;
         }
     }
+    // fix BUG760944, reset crop ratio when request have both jpeg stream and
+    // callback stream, num_output_buffers is 2 when take picture the first time.
+    if (request->num_output_buffers == 2 && mPictureRequest == 1 &&
+        (capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)) {
+        if ((request->output_buffers[0].stream->data_space ==
+             HAL_DATASPACE_JFIF) ||
+            (request->output_buffers[1].stream->data_space ==
+             HAL_DATASPACE_JFIF)) {
+            mOEMIf->mSetCapRatioFlag = true;
+            mOEMIf->setCameraConvertCropRegion();
+            mOEMIf->mSetCapRatioFlag = false;
+        }
+    }
 
 #ifndef MINICAMERA
     for (size_t i = 0; i < request->num_output_buffers; i++) {
