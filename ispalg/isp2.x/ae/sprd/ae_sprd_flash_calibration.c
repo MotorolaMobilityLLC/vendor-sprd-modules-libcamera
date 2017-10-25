@@ -377,9 +377,9 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 	struct ae_flash_cfg cfg;
 	struct ae_flash_element element;
 	if(isMainflash==0)
-		type = ISP_FLASH_TYPE_PREFLASH;
+		type = AE_FLASH_TYPE_PREFLASH;
 	else
-		type = ISP_FLASH_TYPE_MAIN;
+		type = AE_FLASH_TYPE_MAIN;
 
 
 	if(onoff==0)

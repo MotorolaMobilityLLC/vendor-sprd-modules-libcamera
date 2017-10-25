@@ -142,7 +142,7 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 		s_q_put(cxt->seq_handle, &input_item, write_item, actual_item);
 	}	
 
-	ISP_LOGD("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
+	ISP_LOGV("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
 		is_force, exp_data->lib_data.exp_line, exp_data->lib_data.dummy, exp_data->lib_data.sensor_gain, exp_data->lib_data.isp_gain,\
 		write_item->exp_line, write_item->dumy_line, write_item->sensor_gain, write_item->isp_gain,\
 		actual_item->exp_line, actual_item->dumy_line, actual_item->sensor_gain, actual_item->isp_gain);
@@ -392,8 +392,9 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 		if (cxt->sensor_role)
 			ae_sync_write_to_sensor(cxt, &write_param);
 #endif
-	} else
+	} else {
 		ae_write_to_sensor(cxt, &write_param);
+	}
 
 	//exp_data->write_data = write_item;
 	//exp_data->actual_data = actual_item;
@@ -2464,7 +2465,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			FLASH_PRE_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;/*flash status reset*/
-			cxt->send_once[1] = cxt->send_once[0] = cxt->send_once[2] = cxt->send_once[3] = 0;
+			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
 		}
 
 		if ((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
@@ -4521,7 +4522,7 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
 	struct ae_calc_in *calc_in = (struct ae_calc_in *)param;
 
-	ISP_LOGI("is_update %d", calc_in->is_update);
+	ISP_LOGV("is_update %d", calc_in->is_update);
 	if (cxt->high_fps_info.is_high_fps) {
 		if (calc_in->is_update) {
 			rtn = ae_calculation_slow_motion(handle, param, result);
@@ -4679,6 +4680,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_SET_SNAPSHOT_NOTICE:
 		break;
+
 	case AE_GET_MONITOR_INFO:
 		rtn = ae_get_monitor_info(cxt, result);
 		break;
