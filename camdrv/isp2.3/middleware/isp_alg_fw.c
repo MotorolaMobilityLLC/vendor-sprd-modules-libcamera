@@ -1761,12 +1761,6 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 
 	time_start = ispalg_get_sys_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
-		struct alsc_ver_info lsc_ver = { 0 };
-		if (cxt->ops.lsc_ops.ioctrl)
-			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
-		if (ISP_SUCCESS != ret) {
-			ISP_LOGE("fail to Get ALSC ver info!");
-		}
 		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f",
 			ae_in->ae_output.cur_bv,
 			ae_in->ae_output.cur_exp_line,
@@ -1784,7 +1778,6 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
-		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 		smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
 		smart_proc_in.lock_precdn = cxt->smart_cxt.lock_precdn_en;
@@ -3601,13 +3594,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	}
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
-
-		struct alsc_ver_info lsc_ver = { 0 };
-		if (cxt->ops.lsc_ops.ioctrl) {
-			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
-			ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_GET_VER"));
-		}
-
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
@@ -3615,7 +3601,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
-		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		if (cxt->ops.smart_ops.calc)
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}

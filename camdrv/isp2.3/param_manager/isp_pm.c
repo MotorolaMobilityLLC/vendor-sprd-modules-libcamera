@@ -1815,47 +1815,6 @@ static void isp_pm_free(cmr_handle handle)
 	}
 }
 
-static cmr_s32 isp_pm_lsc_otp_param_update(cmr_handle handle, struct isp_pm_param_data *param_data)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	void *blk_ptr = PNULL;
-	cmr_u32 i = 0, offset = 0;
-	cmr_u32 mod_id = 0, id = 0;
-	cmr_s32 tmp_idx = 0;
-	intptr_t isp_cxt_start_addr = 0;
-	struct isp_context *isp_cxt_ptr = PNULL;
-	struct isp_block_cfg *blk_cfg = PNULL;
-	struct isp_pm_block_header *blk_header_ptr = PNULL;
-	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
-
-	for (i = ISP_MODE_ID_PRV_0; i < ISP_TUNE_MODE_MAX; ++i) {
-		if (pm_cxt_ptr->merged_mode_array[i]) {
-			mod_id = pm_cxt_ptr->merged_mode_array[i]->mode_id;
-			isp_cxt_ptr = isp_pm_get_context(pm_cxt_ptr, mod_id);
-			if (PNULL == isp_cxt_ptr) {
-				ISP_LOGE("No pm context for mode: %d", mod_id);
-				continue;
-			}
-			isp_cxt_start_addr = (intptr_t) isp_cxt_ptr;
-			id = param_data->id;
-			blk_cfg = isp_pm_get_block_cfg(id);
-			blk_header_ptr = isp_pm_get_block_header(pm_cxt_ptr->merged_mode_array[i], id, &tmp_idx);
-			if ((PNULL != blk_cfg)
-			    && (PNULL != blk_cfg->ops)
-			    && (PNULL != blk_cfg->ops->set)
-			    && (PNULL != blk_header_ptr)) {
-				offset = blk_cfg->offset;
-				blk_ptr = (void *)(isp_cxt_start_addr + offset);
-				blk_cfg->ops->set(blk_ptr, ISP_PM_BLK_LSC_OTP, param_data->data_ptr, blk_header_ptr);
-			} else {
-				ISP_LOGE("fail to get valid cfg, ops, set, header");
-			}
-		}
-	}
-
-	return rtn;
-}
-
 cmr_handle isp_pm_init(struct isp_pm_init_input * input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -1949,14 +1908,6 @@ cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void 
 		{
 			pthread_mutex_lock(&cxt_ptr->pm_mutex);
 			rtn = isp_pm_param_init_and_update(handle, input, output, cxt_ptr->cur_mode_id);
-			pthread_mutex_unlock(&cxt_ptr->pm_mutex);
-		}
-		break;
-
-	case ISP_PM_CMD_UPDATE_LSC_OTP:
-		{
-			pthread_mutex_lock(&cxt_ptr->pm_mutex);
-			rtn = isp_pm_lsc_otp_param_update(handle, input);
 			pthread_mutex_unlock(&cxt_ptr->pm_mutex);
 		}
 		break;
