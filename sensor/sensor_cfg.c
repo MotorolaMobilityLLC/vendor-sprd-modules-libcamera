@@ -145,6 +145,7 @@ extern otp_drv_entry_t ov8856_cmk_drv_entry;
 extern otp_drv_entry_t ov8858_cmk_drv_entry;
 extern otp_drv_entry_t ov2680_cmk_drv_entry;
 extern otp_drv_entry_t sp8407_otp_entry;
+extern otp_drv_entry_t sp8407_cmk_otp_entry;
 
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
@@ -257,7 +258,11 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // sp area
 #ifdef SP8407
+#ifdef SBS_SENSOR_FRONT
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, &sp8407_cmk_otp_entry},
+#else
     {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763a_drv_entry, 0}, &sp8407_otp_entry},
+#endif
 #endif
 
 // samsung area
@@ -296,7 +301,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 // sp area
 #ifdef SP8407
 #ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
-    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, NULL},
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, &sp8407_cmk_otp_entry},
 #else
     {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {NULL, 0}, NULL},
 #endif
