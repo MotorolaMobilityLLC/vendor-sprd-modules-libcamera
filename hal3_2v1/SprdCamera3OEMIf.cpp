@@ -2986,56 +2986,6 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs otp begin*/
         if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true) &&
             mCameraId == 0) {
-#ifdef CAMERA_READ_OTP_FROM_FILE
-            char *psPath_OtpData =
-                "data/misc/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
-            char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
-            OTP_Tag otpInfo = {0};
-            mSetting->getOTPTag(&otpInfo);
-            fseek(psPath_OtpData, 0xD26, 0);
-            int otp_ret =
-                read_file(psPath_OtpData, dual_otp_data, SPRD_DUAL_OTP_SIZE);
-            if (otp_ret == 0) {
-                struct sensor_otp_cust_info otp_info = {0};
-                mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle,
-                                                         &otp_info);
-                if (otp_info.total_otp.data_ptr != NULL &&
-                    otp_info.dual_otp.dual_flag) {
-                    save_file(psPath_OtpData, otp_info.total_otp.data_ptr,
-                              otp_info.total_otp.size);
-                    HAL_LOGD(
-                        "camera_id: %d,otp_info %p, data_ptr %p, size 0x%x",
-                        mCameraId, &otp_info, otp_info.total_otp.data_ptr,
-                        otp_info.total_otp.size);
-                    memcpy(otpInfo.otp_data,
-                           (char *)otp_info.total_otp.data_ptr + 0xD26,
-                           SPRD_DUAL_OTP_SIZE);
-                    otpInfo.dual_otp_flag = 1;
-                } else {
-                    otpInfo.dual_otp_flag = 0;
-                    HAL_LOGD("camera_id: %d, dual_otp_flag %d", mCameraId,
-                             otpInfo.dual_otp_flag);
-                }
-            } else {
-                HAL_LOGD("camera_id: %d,dual_otp_data %p", mCameraId,
-                         dual_otp_data);
-                memcpy(otpInfo.otp_data, dual_otp_data, SPRD_DUAL_OTP_SIZE);
-                otpInfo.dual_otp_flag = 1;
-                HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d",
-                         mCameraId, dual_otp_data, otpInfo.dual_otp_flag);
-            }
-            save_file("data/misc/cameraserver/dualcamera.bin", dual_otp_data,
-                      SPRD_DUAL_OTP_SIZE);
-
-#define OTP_CALI_SPRD 0
-            uint8_t otp_type = OTP_CALI_SPRD;
-            mSetting->setOTPTag(&otpInfo, SPRD_DUAL_OTP_SIZE, otp_type);
-
-            if (dual_otp_data != NULL) {
-                free(dual_otp_data);
-                dual_otp_data = NULL;
-            }
-#else
             OTP_Tag otpInfo;
             memset(&otpInfo, 0, sizeof(OTP_Tag));
             mSetting->getOTPTag(&otpInfo);
@@ -3069,7 +3019,6 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 mSetting->setOTPTag(&otpInfo, otp_info.dual_otp.data_3d.size,
                                     otpInfo.otp_type);
             }
-#endif
         }
         /*read refoucs otp end*/
 
