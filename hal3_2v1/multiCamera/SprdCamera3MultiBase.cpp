@@ -64,12 +64,8 @@ SprdCamera3MultiBase::SprdCamera3MultiBase()
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
     mReqState = PREVIEW_REQUEST_STATE;
-
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-    mIommuEnabled = false;
-#else
+    /* forcibly set to enabled */
     mIommuEnabled = true;
-#endif
 }
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
