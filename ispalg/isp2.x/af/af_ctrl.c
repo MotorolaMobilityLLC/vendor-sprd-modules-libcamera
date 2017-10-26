@@ -569,6 +569,10 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	struct afctrl_cxt *cxt_ptr = NULL;
 	struct afctrl_init_out result;
 
+	if (!input_ptr->is_supoprt) {
+		ISP_LOGV("sensor don't support AF");
+		return rtn;
+	}
 	memset((void *)&result, 0, sizeof(result));
 	input_ptr->go_position = af_set_pos;
 	input_ptr->end_notice = af_end_notice;
@@ -647,8 +651,8 @@ cmr_int af_ctrl_deinit(cmr_handle * handle_af)
 	CMR_MSG_INIT(message);
 
 	if (!cxt_ptr) {
-		ISP_LOGE("fail to deinit, handle_af is NULL");
-		return -ISP_ERROR;
+		ISP_LOGV("sensor don't support AF");
+		return rtn;
 	}
 	message.msg_type = AFCTRL_EVT_DEINIT;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -681,7 +685,10 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
-	ISP_CHECK_HANDLE_VALID(handle_af);
+	if (!handle_af) {
+		ISP_LOGV("sensor don't support AF");
+		return rtn;
+	}
 	CMR_MSG_INIT(message);
 
 	message.data = malloc(sizeof(struct afctrl_calc_in));
@@ -719,7 +726,10 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	struct af_ctrl_msg_ctrl msg_ctrl;
 
-	ISP_CHECK_HANDLE_VALID(handle_af);
+	if (!handle_af) {
+		ISP_LOGV("sensor don't support AF");
+		return rtn;
+	}
 	CMR_MSG_INIT(message);
 	msg_ctrl.cmd = cmd;
 	msg_ctrl.in = in_ptr;
