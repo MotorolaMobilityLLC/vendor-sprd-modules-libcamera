@@ -1015,7 +1015,7 @@ static cmr_s32 isp_pm_mode_common_to_other(
 static cmr_s32 isp_pm_layout_param_and_init(cmr_handle handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, j = 0, counts = 0, mode_count = 0;
+	cmr_u32 i = 0, j = 0, lsc_idx = 0, counts = 0, mode_count = 0;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 	struct isp_pm_mode_param * cur_mode;
 
@@ -1056,19 +1056,35 @@ static cmr_s32 isp_pm_layout_param_and_init(cmr_handle handle)
 			continue;
 		cur_mode->isp_resolution = cur_mode->resolution;
 
+		lsc_idx = ISP_TUNE_BLOCK_MAX;
 		for (j = 0; j < cur_mode->block_num; j++) {
 			if (cur_mode->header[j].block_id == ISP_BLK_2D_LSC) {
-				memcpy((cmr_u8 *) & cur_mode->header[cur_mode->block_num],
-						(cmr_u8 *) & cur_mode->header[j],
-						sizeof(struct isp_pm_block_header));
-				cur_mode->header[cur_mode->block_num].source_flag = cur_mode->mode_id;
-				cur_mode->header[cur_mode->block_num].block_id = DCAM_BLK_2D_LSC;
-				cur_mode->block_num++;
-				ISP_LOGD("set DCAM_BLK_2D_LSC for mode %d (%s).",
-							cur_mode->mode_id, cur_mode->mode_name);
+				lsc_idx = j;
 				break;
 			}
 		}
+
+		if (lsc_idx == ISP_TUNE_BLOCK_MAX) {
+			ISP_LOGE("ISP_BLK_2D_LSC is not found for mode %d (%s).",
+							cur_mode->mode_id, cur_mode->mode_name);
+			continue;
+		}
+
+		for (j = cur_mode->block_num; j >0; j--) {
+			memcpy((cmr_u8 *) & cur_mode->header[j],
+					 (cmr_u8 *) & cur_mode->header[j-1],
+					 sizeof(struct isp_pm_block_header));
+		}
+
+		/* Make sure that DCAM_BLK_2D_LSC is always the first subblock.  */
+		memcpy((cmr_u8 *) & cur_mode->header[0],
+				 (cmr_u8 *) & cur_mode->header[lsc_idx+1],
+				 sizeof(struct isp_pm_block_header));
+		cur_mode->header[0].source_flag = cur_mode->mode_id;
+		cur_mode->header[0].block_id = DCAM_BLK_2D_LSC;
+		cur_mode->block_num++;
+		ISP_LOGD("get DCAM_BLK_2D_LSC for mode %d (%s).",
+				cur_mode->mode_id, cur_mode->mode_name);
 	}
 
 	return rtn;
