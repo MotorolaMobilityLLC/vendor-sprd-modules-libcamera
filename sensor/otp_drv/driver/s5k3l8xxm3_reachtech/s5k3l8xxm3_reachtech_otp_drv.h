@@ -18,7 +18,7 @@
 
 /*I2C slave address setting*/
 //#define OTP_I2C_ADDR (0xB0 >> 1)
-#define OTP_I2C_ADDR (0xA0 >> 1)
+#define OTP_I2C_ADDR (0xB0 >> 1)
 #define SENSOR_I2C_ADDR (0x5A >> 1)
 
 /*OTP space setting*/

@@ -19,7 +19,7 @@
 #include <utils/Log.h>
 #include "sns_af_drv.h"
 
-#define DW9763R_VCM_SLAVE_ADDR (0x1C >> 1)
+#define DW9763R_VCM_SLAVE_ADDR (0x18 >> 1)
 
 #define MOVE_CODE_STEP_MAX 40
 #define WAIT_STABLE_TIME 20 // ms

@@ -267,7 +267,11 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // samsung area
 #ifdef S5K3L8XXM3R
-    {MODULE_SUNNY, "s5k3l8xxm3r", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
+#if defined(CONFIG_DUAL_MODULE)
+    {MODULE_SUNNY, "s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&vm242_drv_entry, 0}, NULL},
+#else
+    {MODULE_SUNNY, "s5k3l8xxm3r_mipi_raw", &g_s5k3l8xxm3r_mipi_raw_info, {&dw9763r_drv_entry, 0}, &s5k3l8xxm3_reachtech_drv_entry},
+#endif
 #endif
 #ifdef S5K3L8XXM3
     {MODULE_SUNNY ,"s5k3l8xxm3", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, NULL},
