@@ -197,7 +197,7 @@ struct sensor_raw_ioctrl {
     cmr_int (*get_test_vcm_mode)(cmr_handle caller_handler);
     cmr_int (*set_test_vcm_mode)(cmr_handle caller_handler, char *vcm_mode);
 #endif
-    cmr_int (*sns_ioctl)(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+    cmr_int (*sns_ioctl)(cmr_handle caller_handler, enum sns_cmd cmd,
                          void *param);
 };
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
