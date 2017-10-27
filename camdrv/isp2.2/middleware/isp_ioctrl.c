@@ -293,6 +293,25 @@ static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	return rtn;
 }
 
+static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int flag = bypass;
+
+	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO)
+		flag = 1;
+
+	if(cxt->afl_cxt.version) {
+		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, flag);
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 1);
+	} else {
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, flag);
+	}
+
+	return ret;
+}
+
 static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -311,16 +330,7 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &set_flicker, NULL);
 	ISP_LOGV("ISP_AE: AE_SET_FLICKER=%d, rtn=%ld", set_flicker.mode, rtn);
 
-	if (set_flicker.mode == AE_FLICKER_AUTO) {
-		bypass = 0;
-		if(cxt->afl_cxt.version) {
-			isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, bypass);
-			isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 1);
-		} else {
-			isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
-		}
-
-	}
+	ispctl_flicker_bypass(isp_alg_handle, bypass);
 
 	return rtn;
 }
@@ -369,6 +379,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 
 	switch (flash_notice->mode) {
 	case ISP_FLASH_PRE_BEFORE:
+		ispctl_flicker_bypass(isp_alg_handle, 1);
 		cxt->lsc_flash_onoff = 1;
 		if (cxt->ops.lsc_ops.ioctrl)
 			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_BEFORE, NULL, NULL);
@@ -417,6 +428,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_PRE_AFTER:
+		ispctl_flicker_bypass(isp_alg_handle, 0);
 		ae_notice.mode = AE_FLASH_PRE_AFTER;
 		ae_notice.will_capture = flash_notice->will_capture;
 		if (cxt->ops.ae_ops.ioctrl)
@@ -448,6 +460,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
+		ispctl_flicker_bypass(isp_alg_handle, 1);
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
@@ -501,6 +514,7 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_AFTER:
+		ispctl_flicker_bypass(isp_alg_handle, 0);
 		if (cxt->ops.lsc_ops.ioctrl)
 			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_AFTER, NULL, NULL);
 		cxt->lsc_flash_onoff = 0;
