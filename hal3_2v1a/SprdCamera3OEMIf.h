@@ -279,7 +279,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mVideoParameterSetFlag;
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
-    int mVideo3dnrFlag;
+    cmr_uint mVideo3dnrFlag;
 
   private:
     inline void print_time();
