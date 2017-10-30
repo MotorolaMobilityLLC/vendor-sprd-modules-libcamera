@@ -222,6 +222,22 @@ cmr_int cmr_msg_timedget(cmr_handle queue_handle, struct cmr_msg *message) {
     return CMR_MSG_SUCCESS;
 }
 
+cmr_int cmr_msg_get_num(cmr_handle queue_handle, cmr_u32 *pmsg_num) {
+    struct cmr_msg_cxt *msg_cxt = (struct cmr_msg_cxt *)queue_handle;
+
+    if (!queue_handle || !pmsg_num) {
+        CMR_LOGW("NULL queue!");
+        return -CMR_MSG_PARAM_ERR;
+    }
+    MSG_CHECK_MSG_MAGIC(queue_handle);
+
+    pthread_mutex_lock(&msg_cxt->mutex);
+    *pmsg_num = msg_cxt->msg_number;
+    pthread_mutex_unlock(&msg_cxt->mutex);
+
+    return CMR_MSG_SUCCESS;
+}
+
 cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
                      cmr_u32 log_level) {
     struct cmr_msg_cxt *msg_cxt = (struct cmr_msg_cxt *)queue_handle;
@@ -488,6 +504,20 @@ cmr_int cmr_thread_msg_send(cmr_handle thread_handle, struct cmr_msg *message) {
 
     thread = (struct cmr_thread *)thread_handle;
     ret = cmr_msg_post(thread->queue_handle, message, 1);
+    return ret;
+}
+
+cmr_int cmr_thread_msg_num(cmr_handle thread_handle, cmr_u32 *pmsg_num) {
+    cmr_int ret = CMR_MSG_SUCCESS;
+    struct cmr_thread *thread = NULL;
+
+    if (!thread_handle || !pmsg_num) {
+        return -CMR_MSG_PARAM_ERR;
+    }
+
+    thread = (struct cmr_thread *)thread_handle;
+    ret = cmr_msg_get_num(thread->queue_handle, pmsg_num);
+
     return ret;
 }
 

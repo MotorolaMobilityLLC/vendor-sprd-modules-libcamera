@@ -65,17 +65,19 @@ struct cmr_msg {
 
 typedef cmr_int (*msg_process)(struct cmr_msg *message, void *p_data);
 
-cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle);
-
 cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message,
                     cmr_u32 log_level);
 
 cmr_int cmr_msg_timedget(cmr_handle queue_handle, struct cmr_msg *message);
 
+cmr_int cmr_msg_get_num(cmr_handle queue_handle, cmr_u32 *pmsg_num);
+
 cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
                      cmr_u32 log_level);
 
 cmr_int cmr_msg_flush(cmr_handle queue_handle, struct cmr_msg *message);
+
+cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle);
 
 cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle);
 
@@ -84,9 +86,11 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
 
 cmr_int cmr_thread_destroy(cmr_handle thread_handle);
 
+cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name);
+
 cmr_int cmr_thread_msg_send(cmr_handle thread_handle, struct cmr_msg *message);
 
-cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name);
+cmr_int cmr_thread_msg_num(cmr_handle thread_handle, cmr_u32 *pmsg_num);
 
 cmr_int cmr_sem_init(sem_t *sem, cmr_int pshared, cmr_uint value);
 
