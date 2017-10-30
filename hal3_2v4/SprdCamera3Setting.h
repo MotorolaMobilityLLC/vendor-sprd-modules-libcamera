@@ -352,6 +352,8 @@ typedef struct {
     uint8_t sprd_fixedfps_enabled;
     uint8_t is_takepicture_with_flash;
     uint32_t sprd_filter_type;
+    uint8_t sprd_available_flash_level;
+    uint8_t sprd_adjust_flash_level;
 } SPRD_DEF_Tag;
 
 typedef struct {

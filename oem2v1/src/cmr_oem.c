@@ -65,6 +65,9 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 #define OFFLINE_CHANNEL_BIT 0x8
 #define OFFLINE_CHANNEL 3
 
+#define MIN_FLASH_LEVEL 1
+#define MAX_FLASH_LEVEL CONFIG_AVAILABLE_FLASH_LEVEL
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -347,6 +350,8 @@ static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle,
                                              struct yuv_info_t *yuv);
 static void camera_filter_doeffect(cmr_handle oem_handle, struct img_frm *src,
                                    cmr_s32 type);
+static cmr_int camera_set_flash_level(void *handler, cmr_uint target_level);
+
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info,
                                         struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param,
@@ -6895,7 +6900,6 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         goto exit;
     }
     grab_handle = cxt->grab_cxt.grab_handle;
-
     switch (cmd_type) {
     case SETTING_IO_GET_CAPTURE_SIZE:
         param_ptr->size_param = cxt->snp_cxt.post_proc_setting.snp_size;
@@ -6908,6 +6912,17 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         break;
     case SETTING_IO_CTRL_FLASH: {
         struct grab_flash_opt flash_opt;
+        CMR_LOGI("param_ptr->camera_id:0x%lx, "
+                 "param_ptr->cmd_value:0x%lx, "
+                 "param_ptr->flash_level:0x%lx",
+                 param_ptr->camera_id, param_ptr->cmd_value,
+                 param_ptr->flash_level);
+        if (FLASH_CURRENT_LEVEL_SET == param_ptr->cmd_value) {
+            if (1 == param_ptr->camera_id) {
+                camera_set_flash_level(oem_handle, param_ptr->flash_level);
+            }
+            break;
+        }
 
         if (FLASH_OPEN == param_ptr->cmd_value ||
             FLASH_HIGH_LIGHT == param_ptr->cmd_value ||
@@ -6918,11 +6933,23 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
 
         /*cfg torch value*/
         if (param_ptr->cmd_value == FLASH_TORCH) {
+            // get current flash level
+            struct setting_cmd_parameter setting_param;
+            cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                              CAMERA_PARAM_SPRD_GET_FLASH_LEVEL,
+                              &setting_param);
+            cmr_uint flash_level = setting_param.cmd_type_value;
+            CMR_LOGD("flash_level:%d", flash_level);
+
             struct sprd_flash_cfg_param cfg;
             cfg.real_cell.type = FLASH_TYPE_TORCH;
             cfg.real_cell.count = 1;
             cfg.real_cell.led_idx = 0x01; /*main*/
-            cfg.real_cell.element[0].index = 0x06;
+            if (flash_level != 0) {
+                cfg.real_cell.element[0].index = flash_level;
+            } else {
+                cfg.real_cell.element[0].index = 0x06;
+            }
             cfg.real_cell.element[0].val = 0;
             cfg.io_id = FLASH_IOID_SET_CHARGE;
             cfg.flash_idx = cxt->camera_id;
@@ -8568,6 +8595,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
 
     case CAMERA_PARAM_SPRD_3DNR_ENABLED:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+
+    case CAMERA_PARAM_SPRD_ADJUST_FLASH_LEVEL:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
@@ -11032,6 +11065,7 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
     return ret;
 }
 
+
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -11039,6 +11073,34 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     CHECK_HANDLE_VALID(cxt);
     cxt->blur_facebeauty_flag = *on;
     CMR_LOGD("blur_facebeauty_flag %d", cxt->blur_facebeauty_flag);
+
+    return ret;
+}
+
+
+cmr_int camera_set_flash_level(void *handler, cmr_uint target_level) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_uint flash_level_trans;
+    CMR_LOGI("in target_level:%d", target_level);
+
+    if (target_level < MIN_FLASH_LEVEL || target_level > MAX_FLASH_LEVEL) {
+        CMR_LOGE("flash level out of range");
+        ret = CMR_CAMERA_INVALID_PARAM;
+        return ret;
+    } else {
+        flash_level_trans = target_level - 1;
+    }
+
+    struct camera_context *cxt = (struct camera_context *)handler;
+    struct sprd_flash_cfg_param cfg;
+    cfg.real_cell.type = FLASH_TYPE_TORCH;
+    cfg.real_cell.count = 1;
+    cfg.real_cell.led_idx = 0x01;                       /*main, 0x01 is right?*/
+    cfg.real_cell.element[0].index = flash_level_trans; // this place set level
+    cfg.real_cell.element[0].val = 0;
+    cfg.io_id = FLASH_IOID_SET_CHARGE;
+    cfg.flash_idx = cxt->camera_id;
+    ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 
     return ret;
 }

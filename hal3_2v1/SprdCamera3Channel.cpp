@@ -962,6 +962,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGD("ANDROID_SPRD_FILTER_TYPE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_FILTER_TYPE);
             break;
+        case ANDROID_SPRD_ADJUST_FLASH_LEVEL:
+            HAL_LOGV("ANDROID_SPRD_ADJUST_FLASH_LEVEL");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_ADJUST_FLASH_LEVEL);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

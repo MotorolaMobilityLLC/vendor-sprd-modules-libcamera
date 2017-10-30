@@ -6485,6 +6485,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
     } break;
 
+    case ANDROID_SPRD_ADJUST_FLASH_LEVEL:
+    {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD("sprddefInfo.sprd_adjust_flash_level=%d ",
+                 sprddefInfo.sprd_adjust_flash_level);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ADJUST_FLASH_LEVEL,
+                 sprddefInfo.sprd_adjust_flash_level);
+    } break;
+
     default:
         ret = BAD_VALUE;
         break;

@@ -61,6 +61,8 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_FILTER_TYPE,
     ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
     ANDROID_SPRD_FAST_THUMB,
+    ANDROID_SPRD_AVAILABLE_FLASH_LEVEL,
+    ANDROID_SPRD_ADJUST_FLASH_LEVEL,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

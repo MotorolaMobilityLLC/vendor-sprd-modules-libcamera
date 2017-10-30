@@ -1528,7 +1528,7 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle,
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
-
+    CMR_LOGI("in");
     bzero(&set_flash, sizeof(struct sprd_img_set_flash));
     if (FLASH_TORCH == flash_opt->flash_mode) {
 #ifdef CONFIG_CAMERA_FLASH_LED_SWITCH
@@ -1552,6 +1552,7 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle,
     if (ret) {
         CMR_LOGE("error");
     }
+    CMR_LOGI("out ret:%d", ret);
     return ret;
 }
 
@@ -1629,7 +1630,7 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
                            struct sprd_flash_cfg_param *cfg) {
     cmr_int ret = 0;
     struct cmr_grab *p_grab;
-
+    CMR_LOGI("in");
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
@@ -1637,5 +1638,6 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
     if (ret) {
         CMR_LOGE("error");
     }
+    CMR_LOGI("out ret:%d", ret);
     return ret;
 }

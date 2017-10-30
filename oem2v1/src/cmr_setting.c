@@ -189,6 +189,7 @@ struct setting_hal_param {
     cmr_uint sprd_hdr_plus_enable;
     cmr_uint exif_mime_type;
     cmr_uint sprd_filter_type;
+    cmr_uint sprd_flash_level;
 };
 
 struct setting_camera_info {
@@ -2038,6 +2039,47 @@ static cmr_int setting_set_3dnr_enable(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_flash_level(struct setting_component *cpt,
+                                       struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->sprd_flash_level = parm->cmd_type_value;
+    CMR_LOGI("sprd_flash_level=%ld", hal_param->sprd_flash_level);
+
+    cmr_uint flash_status;
+    struct setting_flash_param *flash_param =
+        get_flash_param(cpt, parm->camera_id);
+    flash_status = flash_param->flash_status;
+    if (flash_status != FLASH_TORCH) {
+        goto exit;
+    }
+
+    struct setting_init_in *init_in = &cpt->init_in;
+    struct setting_io_parameter io_param;
+    if (init_in->io_cmd_ioctl) {
+        io_param.camera_id = parm->camera_id;
+        io_param.cmd_value = FLASH_CURRENT_LEVEL_SET;
+        io_param.flash_level = (uint16_t)parm->cmd_type_value;
+        ret = (*init_in->io_cmd_ioctl)(init_in->oem_handle,
+                                       SETTING_IO_CTRL_FLASH, &io_param);
+    }
+
+exit:
+    return ret;
+}
+
+static cmr_int setting_get_flash_level(struct setting_component *cpt,
+                                       struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->sprd_flash_level;
+    CMR_LOGD("get sprd_flash_level=%ld", parm->cmd_type_value);
+
+    return ret;
+}
+
 static cmr_int setting_set_touch_xy(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
 
@@ -3533,6 +3575,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_sprd_hdr_plus_enable);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_ENABLED,
                              setting_set_3dnr_enable);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ADJUST_FLASH_LEVEL,
+                             setting_set_flash_level);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_GET_FLASH_LEVEL,
+                             setting_get_flash_level);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_TYPE_MAX, NULL);
     cmr_add_cmd_fun_to_table(SETTING_GET_PREVIEW_ANGLE,
                              setting_get_preview_angle);

@@ -390,6 +390,8 @@ typedef struct {
     uint8_t sprd_fixedfps_enabled;/* add for fixed fps enable flag */
     uint32_t sprd_filter_type;
     uint8_t is_takepicture_with_flash;
+    uint8_t sprd_available_flash_level;
+    uint8_t sprd_adjust_flash_level;
 } SPRD_DEF_Tag;
 
 typedef struct {

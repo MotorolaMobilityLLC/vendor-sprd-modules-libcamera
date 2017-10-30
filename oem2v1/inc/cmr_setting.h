@@ -130,6 +130,7 @@ struct setting_flash_max_capacity {
 
 struct setting_io_parameter {
     cmr_uint camera_id;
+    cmr_uint flash_level;
     union {
         cmr_uint cmd_value;
         struct img_size size_param;

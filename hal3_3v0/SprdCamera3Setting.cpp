@@ -2268,6 +2268,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // default 1, will be update
     s_setting[cameraId].sprddefInfo.is_takepicture_with_flash = 1;
 
+    s_setting[cameraId].sprddefInfo.sprd_available_flash_level = 0;
+#ifdef CONFIG_AVAILABLE_FLASH_LEVEL
+    if (cameraId == 1) {
+        s_setting[cameraId].sprddefInfo.sprd_available_flash_level =
+            CONFIG_AVAILABLE_FLASH_LEVEL;
+    }
+#endif
+    HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d", cameraId,
+             s_setting[cameraId].sprddefInfo.sprd_available_flash_level);
+
     return ret;
 }
 
@@ -2598,6 +2608,10 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[cameraId].sprddefInfo.is_takepicture_with_flash), 1);
+
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_FLASH_LEVEL,
+        &(s_setting[cameraId].sprddefInfo.sprd_available_flash_level), 1);
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO

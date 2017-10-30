@@ -1637,6 +1637,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // default 0, will be update
     s_setting[cameraId].sprddefInfo.is_takepicture_with_flash = 0;
 
+    s_setting[cameraId].sprddefInfo.sprd_available_flash_level = 0;
+#ifdef CONFIG_AVAILABLE_FLASH_LEVEL
+    if (cameraId == 1) {
+        s_setting[cameraId].sprddefInfo.sprd_available_flash_level =
+            CONFIG_AVAILABLE_FLASH_LEVEL;
+    }
+#endif
+    HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d", cameraId,
+             s_setting[cameraId].sprddefInfo.sprd_available_flash_level);
+
     return ret;
 }
 
@@ -1963,6 +1973,10 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[cameraId].sprddefInfo.is_takepicture_with_flash), 1);
+
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_FLASH_LEVEL,
+        &(s_setting[cameraId].sprddefInfo.sprd_available_flash_level), 1);
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
@@ -3837,6 +3851,14 @@ int SprdCamera3Setting::updateWorkParameters(
         pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_ADJUST_FLASH_LEVEL)) {
+        s_setting[mCameraId].sprddefInfo.sprd_adjust_flash_level =
+            frame_settings.find(ANDROID_SPRD_ADJUST_FLASH_LEVEL).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_ADJUST_FLASH_LEVEL);
+        HAL_LOGV("sprd adjust level is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_adjust_flash_level);
     }
 
     HAL_LOGD(
