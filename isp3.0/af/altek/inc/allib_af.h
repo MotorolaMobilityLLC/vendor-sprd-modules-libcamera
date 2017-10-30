@@ -191,7 +191,7 @@ struct allib_af_input_from_calib_t {
 struct allib_af_input_module_info_t {
 	float f_number;
 	float focal_lenth;
-	int   cam_layout_type;
+	int32 cam_layout_type;
 };
 #pragma pack(pop)
 
@@ -750,7 +750,16 @@ struct allib_af_input_tube_info_t {
 	int32 main_session_id;
 	int32 sub_session_id;
 	struct allib_af_dual_cam_share_info_t share_info;
-} ;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 4)
+struct allib_af_stream_crop_t {
+	uint32 ud_x;
+	uint32 ud_y;
+	uint32 ud_dx;
+	uint32 ud_dy;
+};
 #pragma pack(pop)
 
 /*
@@ -820,6 +829,7 @@ enum allib_af_set_param_type {
 	alAFLIB_SET_PARAM_UPDATE_PD_INFO,
 	alAFLIB_SET_PARAM_TRIG_INFO,
 	alAFLIB_SET_PARAM_TUBE_CONFIG,
+	alAFLIB_SET_PARAM_UPDATE_STREAM_CROP_INFO,
 	alAFLIB_SET_PARAM_MAX
 };
 #pragma pack(pop)
@@ -884,6 +894,7 @@ struct allib_af_input_set_param_t {
 		struct allib_af_input_update_bin_t update_bin;
 		struct allib_af_input_tirgger_info_t trig_info;
 		struct allib_af_input_tube_info_t         tube_info;
+		struct allib_af_stream_crop_t             stream_crop_info;
 	} u_set_data;
 };
 #pragma pack(pop)
@@ -966,7 +977,8 @@ enum allib_af_status_type {
 	alAFLib_STATUS_FORCE_ABORT,
 	alAFLib_STATUS_FOCUSING,
 	alAFLib_STATUS_PD_SEARCH_START,
-	alAFLib_STATUS_PD_SEARCH_DONE
+	alAFLib_STATUS_PD_SEARCH_DONE,
+	alAFLib_STATUS_PD_SEARCH_STOP
 };
 #pragma pack(pop)
 
@@ -1167,6 +1179,7 @@ enum allib_af_output_type {
 	alAFLIB_OUTPUT_IMG_BUF_DONE =( 1 << 4),
 	alAFLIB_OUTPUT_MOVE_LENS =( 1 << 5),
 	alAFLIB_OUTPUT_DEBUG_INFO =( 1 << 6),
+	alAFLIB_OUTPUT_ROI =( 1 << 7),
 	alAFLIB_OUTPUT_MAX
 };
 #pragma pack(pop)
@@ -1178,6 +1191,7 @@ enum allib_af_output_type {
  * type:		refer to alAFLib_output_type
  * focus_status:	AFLib current status. if triggered.
  * stats_config:	ISP driver configuration for HW AF.
+ * roi: 			Output focused roi.
  * al_af_debug_data:	AF lib debug information.
  * al_af_debug_data_size
  * wrap_result:	returns result, the result define in al3ALib_AF_ErrCode.h
@@ -1193,6 +1207,7 @@ struct allib_af_output_report_t {
 	struct allib_af_out_status_t focus_status;
 	struct allib_af_out_stats_config_t stats_config;
 	struct allib_af_out_pd_config_t pd_config;
+	struct allib_af_roi_t roi;
 	void *p_al_af_debug_data;
 	uint32 al_af_debug_data_size;
 	void *p_al_af_exif_data;
