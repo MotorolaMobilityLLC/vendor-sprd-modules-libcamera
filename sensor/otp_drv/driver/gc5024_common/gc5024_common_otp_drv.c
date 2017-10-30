@@ -649,7 +649,7 @@ static cmr_int _gc5024_common_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
 
     /*optical center*/
-    convert_data->dual_otp.master_optical_center_info,
+    convert_data->dual_otp.master_optical_center_info =
         (struct sensor_otp_section_info *)&format_data->opt_center_dat;
 
     /*lsc convert*/

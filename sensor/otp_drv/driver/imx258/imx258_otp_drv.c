@@ -410,7 +410,7 @@ static cmr_int imx258_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
 
     /*optical center*/
-    convert_data->single_otp.optical_center_info,
+    convert_data->single_otp.optical_center_info =
         (struct sensor_otp_section_info *)&format_data->opt_center_dat;
 
     /*lsc convert*/
