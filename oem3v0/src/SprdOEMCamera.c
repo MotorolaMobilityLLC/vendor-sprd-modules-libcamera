@@ -1057,7 +1057,7 @@ static oem_ops_t oem_module_ops = {
     camera_pre_capture_get_buffer_id, camera_get_reserve_buffer_size,
     camera_pre_capture_get_buffer_size, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
-    camera_get_sensor_trim, camera_get_preview_rot_angle, camera_fd_enable,
+    camera_get_sensor_trim, NULL, camera_get_preview_rot_angle, camera_fd_enable,
     camera_flip_enable, camera_fd_start, camera_is_need_stop_preview,
     camera_takepicture_process, camera_get_size_align_page, camera_fast_ctrl,
     camera_start_preflash, camera_get_viewangle, camera_get_sensor_exif_info,

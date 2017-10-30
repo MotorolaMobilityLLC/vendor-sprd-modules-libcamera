@@ -6373,7 +6373,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 zoom.start_y = controlInfo.af_regions[1];
                 zoom.width = controlInfo.af_regions[2];
                 zoom.height = controlInfo.af_regions[3];
+#ifndef CONFIG_CAMERA_OFFLINE
                 mHalOem->ops->camera_get_sensor_trim(mCameraHandle, &zoom1);
+#else
+                mHalOem->ops->camera_get_sensor_trim2(mCameraHandle, &zoom1);
+#endif
                 if ((0 == zoom.start_x && 0 == zoom.start_y &&
                      0 == zoom.width && 0 == zoom.height) ||
                     !CameraConvertCropRegion(zoom1.width, zoom1.height,

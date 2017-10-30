@@ -9037,7 +9037,58 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
     sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
     sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height;
 
-#ifdef CONFIG_CAMERA_OFFLINE
+    CMR_LOGI("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
+             sn_trim->width, sn_trim->height);
+exit:
+    if (sensor_info) {
+        free(sensor_info);
+        sensor_info = NULL;
+    }
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
+                                   struct img_rect *sn_trim) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt = &cxt->prev_cxt;
+    struct sensor_exp_info *sensor_info = NULL;
+    struct img_size tmp_size;
+    cmr_u32 sensor_mode = SENSOR_MODE_MAX;
+
+    if (!oem_handle || !sn_trim) {
+        CMR_LOGE("error param");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    sensor_info =
+        (struct sensor_exp_info *)malloc(sizeof(struct sensor_exp_info));
+    if (!sensor_info) {
+        CMR_LOGE("No mem!");
+        ret = CMR_CAMERA_NO_MEM;
+        goto exit;
+    }
+    ret = camera_get_sensor_info(cxt, cxt->camera_id, sensor_info);
+    if (ret) {
+        CMR_LOGE("get_sensor info failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                              &sensor_mode);
+    CMR_LOGI("camera_id =%d sns mode =%d", cxt->camera_id, sensor_mode);
+    if (sensor_mode >= SENSOR_MODE_MAX) {
+        // note:cmr_sensor_get_mode would not set parameter.so sensor_mode
+        // ==SENSOR_MODE_MAX
+        // then mode_info[sensor_mode] would overflow.
+        CMR_LOGE("cmr_sensor_get_mode failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
     if (prev_cxt->actual_video_size.width > prev_cxt->size.width) {
         tmp_size.width = prev_cxt->actual_video_size.width;
         tmp_size.height = prev_cxt->actual_video_size.height;
@@ -9054,7 +9105,6 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
     }
     sn_trim->width = tmp_size.width;
     sn_trim->height = tmp_size.height;
-#endif
 
     CMR_LOGI("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
              sn_trim->width, sn_trim->height);
