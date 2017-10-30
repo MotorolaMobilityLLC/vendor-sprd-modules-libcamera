@@ -3303,7 +3303,6 @@ void SprdCamera3Blur::processCaptureResultMain(
 
     /* Direclty pass preview buffer and meta result for Main camera */
     if (result_buffer == NULL && result->result != NULL) {
-        mCaptureThread->updateBlurWeightParams(metadata, 1);
         if (result->frame_number ==
                 mCaptureThread->mSavedCapRequest.frame_number &&
             0 != result->frame_number) {
@@ -3324,6 +3323,7 @@ void SprdCamera3Blur::processCaptureResultMain(
                 mCoverValue = 6;
             }
         } else {
+            mCaptureThread->updateBlurWeightParams(metadata, 1);
             if (2 == m_nPhyCameras && cur_frame_number > 2) {
                 SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
                 SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
