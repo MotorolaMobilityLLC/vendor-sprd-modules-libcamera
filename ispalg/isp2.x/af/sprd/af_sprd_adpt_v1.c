@@ -1529,6 +1529,9 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
+	if ((STATE_CAF != af->state) && (STATE_RECORD_CAF != af->state))
+		return;
+
 	if (AF_SEARCHING != af->focus_state) {
 		if (res.is_caf_trig || (AFV1_TRUE == af->force_trigger && af->ae.ae_report.is_stab)) {
 			ISP_LOGI("lib trigger af %d, force trigger %d", res.is_caf_trig, af->force_trigger);
@@ -2589,7 +2592,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	af->pre_state = af->state = STATE_CAF;
 	af->focus_state = AF_IDLE;
-	af->force_trigger = AFV1_TRUE;
+	af->force_trigger = AFV1_FALSE;
 
 	af->ae_lock_num = 1;
 	af->awb_lock_num = 0;
@@ -2735,7 +2738,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 
 	case AF_DATA_IMG_BLK:
-		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 			caf_monitor_process(af);
 		}
 		break;
@@ -2757,12 +2760,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				rtn = saf_process_frame(af);
 				if (1 == rtn) {
 					af->focus_state = AF_IDLE;
-					if (0 == af->flash_on) {
-						af->state = AF_MODE_CONTINUE == af->pre_state ? STATE_CAF : STATE_RECORD_CAF;
-						trigger_set_mode(af, STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO);
-						trigger_start(af);
-						ISP_LOGI("after saf pre_state %u cur_state %u", af->pre_state, af->state);
-					}
+					trigger_start(af);
 				}
 			}
 			pthread_mutex_unlock(&af->af_work_lock);
