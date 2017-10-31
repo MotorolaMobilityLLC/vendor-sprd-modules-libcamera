@@ -71,9 +71,7 @@ struct ae_info {
 	struct ae_size win_num;
 	cmr_u32 shift;
 	cmr_u32 flash_version;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_s64 monoboottime;
-#endif
 };
 
 struct awb_info {
@@ -244,11 +242,9 @@ struct isp_alg_fw_context {
 	cmr_u32 capture_mode;
 	struct isp_flash_param *pm_flash_info;
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
-#endif
 	cmr_u16 *binning_statis_ptr;
 };
 

@@ -144,12 +144,12 @@ struct match_data_param {
 	struct awb_match_data slave_awb_info;
 };
 
-cmr_handle isp_br_get_3a_handle(uint8_t is_master);
-int32_t isp_br_init(uint8_t is_master, void* isp_3a_handle);
-int32_t isp_br_deinit(uint8_t is_master);
-long isp_br_ioctrl(unsigned int is_master, long cmd, void *in, void *out);
-int32_t isp_br_save_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info *dual_otp);
-int32_t isp_br_get_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info **dual_otp);
+cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id);
+cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle);
+cmr_int isp_br_deinit(cmr_u32 camera_id);
+cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
+cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dual_otp);
+cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dual_otp);
 
 #ifdef __cplusplus
 }

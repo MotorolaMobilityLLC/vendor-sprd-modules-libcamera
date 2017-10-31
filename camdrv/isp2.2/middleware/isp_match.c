@@ -43,7 +43,7 @@ static struct ispbr_context br_cxt;
 static pthread_mutex_t g_br_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*************************************INTERNAK FUNCTION ****************************************/
-cmr_handle isp_br_get_3a_handle(uint8_t is_master)
+cmr_handle isp_br_get_3a_handle(cmr_u32 is_master)
 {
 	cmr_handle rtn = NULL;
 
@@ -55,7 +55,7 @@ cmr_handle isp_br_get_3a_handle(uint8_t is_master)
 	}
 	return rtn;
 }
-long isp_br_ioctrl(unsigned int camera_id, long cmd, void *in, void *out)
+cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
 	struct timespec ts;
@@ -246,13 +246,13 @@ long isp_br_ioctrl(unsigned int camera_id, long cmd, void *in, void *out)
 	return 0;
 }
 
-int32_t isp_br_init(uint8_t is_master, cmr_handle isp_3a_handle)
+cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 
-	ISP_LOGI("E is_master %d", is_master);
-	if(!is_master) {
+	ISP_LOGI("E is_master %d", camera_id);
+	if(!camera_id) {
 		cxt->isp_3afw_slave_handles = isp_3a_handle;
 		br_cxt.match_param.slave_ae_info.ae_sync_status=SYNC_INIT;
 	} else {
@@ -274,12 +274,12 @@ int32_t isp_br_init(uint8_t is_master, cmr_handle isp_3a_handle)
 	return ret;
 }
 
-int32_t isp_br_deinit(uint8_t is_master)
+cmr_int isp_br_deinit(cmr_u32 camera_id)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 
-	if(!is_master) {
+	if(!camera_id) {
 		cxt->isp_3afw_slave_handles = NULL;
 		br_cxt.match_param.slave_ae_info.ae_sync_status=SYNC_DEINIT;
 	} else {
@@ -304,7 +304,7 @@ int32_t isp_br_deinit(uint8_t is_master)
 	return ret;
 }
 
-int32_t isp_br_save_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info *dual_otp)
+cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dual_otp)
 {
 	int32_t ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
@@ -319,7 +319,7 @@ exit:
 	return ret;
 }
 
-int32_t isp_br_get_dual_otp(uint32_t camera_id, struct sensor_dual_otp_info **dual_otp)
+cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dual_otp)
 {
 	int32_t ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;

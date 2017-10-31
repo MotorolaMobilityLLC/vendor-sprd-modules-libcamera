@@ -30,9 +30,7 @@
 #include "isp_param_file_update.h"
 #include "pdaf_ctrl.h"
 #include "af_sprd_adpt_v1.h"
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 #include "isp_match.h"
-#endif
 #include <dlfcn.h>
 #include <immintrin.h>
 
@@ -200,7 +198,6 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		break;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	case ISP_AE_DUAL_SYNC_WRITE_SET:
 		ret = cxt->ioctrl_ptr->write_aec_info(cxt->ioctrl_ptr->caller_handler, param0);
 		break;
@@ -224,7 +221,6 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			}
 		}
 		break;
-#endif
 	case ISP_AE_SET_EXPOSURE:
 		ret = cxt->ioctrl_ptr->set_exposure(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		break;
@@ -648,11 +644,13 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	cxt->ae_cxt.time.sec = statis_info->sec;
-	cxt->ae_cxt.time.usec = statis_info->usec;
-	cxt->ae_cxt.monoboottime = statis_info->monoboottime;
-#endif
+
+	if (cxt->is_multi_mode == ISP_DUAL_NORMAL) {
+		cxt->ae_cxt.time.sec = statis_info->sec;
+		cxt->ae_cxt.time.usec = statis_info->usec;
+		cxt->ae_cxt.monoboottime = statis_info->monoboottime;
+	}
+
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 
@@ -2047,7 +2045,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->is_multi_mode == ISP_DUAL_NORMAL) {
 	// TODO: change ae_role here
 	ae_input.sensor_role = cxt->is_master;
 	ae_input.is_multi_mode = cxt->is_multi_mode;
@@ -2065,7 +2063,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	}
 
 	ae_input.ptr_isp_br_ioctrl = isp_br_ioctrl;
-#endif
+	}
+
 
 	if (cxt->ops.ae_ops.init) {
 		ret = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle,(cmr_handle)&result);
@@ -2816,9 +2815,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
     /*0:afl_old mode, 1:afl_new mode*/
 	cxt->afl_cxt.version = 1;
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->is_multi_mode == ISP_DUAL_NORMAL)
 	isp_br_init(cxt->is_master, cxt);
-#endif
+
 	ret = ispalg_libops_init(cxt);
 
 	if (ret) {
@@ -2888,9 +2887,9 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->commn_cxt.log_isp = NULL;
 	}
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	 isp_br_deinit(cxt->is_master);
-#endif
+	if (cxt->is_multi_mode == ISP_DUAL_NORMAL)
+		isp_br_deinit(cxt->is_master);
+
 	if (cxt->binning_stats.r_info) {
 		free((void *)cxt->binning_stats.r_info);
 	}

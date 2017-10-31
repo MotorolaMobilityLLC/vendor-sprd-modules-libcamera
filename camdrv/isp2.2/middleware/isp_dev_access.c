@@ -18,6 +18,7 @@
 #include "isp_dev_access.h"
 #include "ae_ctrl_types.h"
 #include "af_ctrl.h"
+#include "isp_alg_fw.h"
 //#define ISP_DEFAULT_CFG_FOR_BRING_UP
 
 cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info * in_ptr)
@@ -291,12 +292,13 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->irq_property = irq_info->irq_property;
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	// TODO: change this after kernel header modified
-	statis_info->sec = 0;//irq_info->sec;
-	statis_info->usec = 0;//irq_info->usec;
-	statis_info->monoboottime = 0;//irq_info->monoboottime;
-#endif
+
+	if (isp_alg_fw_cxt->is_multi_mode == ISP_DUAL_NORMAL) {
+		// TODO: change this after kernel header modified
+		statis_info->sec = 0;//irq_info->sec;
+		statis_info->usec = 0;//irq_info->usec;
+		statis_info->monoboottime = 0;//irq_info->monoboottime;
+	}
 
 	ISP_LOGV("got one frame statis paddr 0x%x vaddr 0x%x property 0x%d", statis_info->phy_addr, statis_info->vir_addr, statis_info->irq_property);
 	if (irq_info->irq_property == IRQ_AEM_STATIS) {

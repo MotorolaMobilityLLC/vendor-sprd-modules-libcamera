@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-typedef long(*func_isp_br_ioctrl)(unsigned int is_master, long cmd, void *in, void *out);
+typedef cmr_int(*func_isp_br_ioctrl)(cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
 #endif
 
 struct ae_init_in {
@@ -118,3 +118,4 @@ cmr_int ae_ctrl_process(cmr_handle handle, struct ae_calc_in *in_param, struct a
 #endif
 
 #endif
+
