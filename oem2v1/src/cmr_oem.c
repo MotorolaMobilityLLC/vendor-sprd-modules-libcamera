@@ -3437,14 +3437,23 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 
     if (cxt->is_multi_mode == MODE_SBS)
         isp_param.is_multi_mode = ISP_DUAL_SBS;
-    else if (cxt->is_multi_mode)
+    else if (cxt->is_multi_mode == MODE_BOKEH ||
+             cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM ||
+             cxt->is_multi_mode == MODE_3D_CAPTURE ||
+             cxt->is_multi_mode == MODE_3D_VIDEO ||
+             cxt->is_multi_mode == MODE_3D_PREVIEW ||
+             cxt->is_multi_mode == MODE_TUNING)
         isp_param.is_multi_mode = ISP_DUAL_NORMAL;
     else
         isp_param.is_multi_mode = ISP_SINGLE;
-
-    // need modify,initialized by app,Similar to multi_mode
-    if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
-        isp_param.is_master = 1;
+    if (cxt->is_multi_mode == ISP_DUAL_NORMAL) {
+        if ((0 == cxt->camera_id) || (1 == cxt->camera_id)) // need modify,
+            // initialized by app,
+            // Similar to multi_mode
+            isp_param.is_master = 1;
+        CMR_LOGI("is_multi_mode %d: isp mode:%d", cxt->is_multi_mode,
+                 isp_param.is_multi_mode);
+    }
 
     CMR_LOGI(
         "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
@@ -4686,7 +4695,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             enc_in_param.out_size.height = 360;
         } else if (dst->size.height == 1088 && dst->size.width == 1920) {
 #ifndef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
-		enc_in_param.out_size.height = 1080;
+            enc_in_param.out_size.height = 1080;
 #endif
         }
     }
@@ -6797,9 +6806,9 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm) {
             out_param = ISP_AWB_INDEX6;
             break;
 
-	case CAMERA_WB_MAX:
+        case CAMERA_WB_MAX:
             out_param = ISP_AWB_OFF;
-	     break;
+            break;
 
         default:
             break;
@@ -9049,7 +9058,7 @@ exit:
 }
 
 cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
-                                   struct img_rect *sn_trim) {
+                                    struct img_rect *sn_trim) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct preview_context *prev_cxt = &cxt->prev_cxt;
