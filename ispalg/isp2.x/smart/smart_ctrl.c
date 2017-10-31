@@ -601,6 +601,16 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 			fix_data[2].value[0] = tmp_result[1].value[0];
 			fix_data[2].value[1] = tmp_result[1].value[1];
 
+			char value[PROPERTY_VALUE_MAX] = {0};
+			property_get("debug.isp.smart.cmc.index", value, "-1");
+			int index = atoi(value);
+			if ((index >=0) && (index <=8)) {
+				fix_data[1].value[0] = index;
+				fix_data[1].value[1] = index;
+				fix_data[2].value[0] = index;
+				fix_data[2].value[1] = index;
+			}
+
 			if (1 == is_print_log()) {
 				ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data[0].value[0], fix_data[0].value[1], fix_data[0].weight[0], fix_data[0].weight[1]);
 			}
@@ -610,6 +620,25 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 			fix_data->weight[1] = func_result.weight[1];
 			fix_data->value[0] = func_result.value[0];
 			fix_data->value[1] = func_result.value[1];
+
+			if (smart_id == ISP_SMART_GAMMA) {
+				char value[PROPERTY_VALUE_MAX] = {0};
+				property_get("debug.isp.smart.gamma.index", value, "-1");
+				int index = atoi(value);
+				if ((index >=0) && (index <=8)) {
+					fix_data->value[0] = index;
+					fix_data->value[1] = index;
+				}
+			} else if (smart_id == ISP_SMART_HSV) {
+				char value[PROPERTY_VALUE_MAX] = {0};
+				property_get("debug.isp.smart.hsv.index", value, "-1");
+				int index = atoi(value);
+				if ((index >=0) && (index <=8)) {
+					fix_data->value[0] = index;
+					fix_data->value[1] = index;
+				}
+			}
+
 			if (1 == is_print_log()) {
 				ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
 			}
