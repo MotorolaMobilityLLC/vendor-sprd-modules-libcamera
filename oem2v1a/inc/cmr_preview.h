@@ -293,6 +293,8 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
                                struct frm_info *in, cmr_uint *vir_addr_y);
+cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
+                               struct frm_info *in, cmr_uint *vir_addr_y);
 cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 
 #ifdef __cplusplus

@@ -825,6 +825,10 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
                     ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
                                                   cxt->camera_id, frame,
                                                   &vir_addr_y);
+                else if (1 == camera_get_3dnr_flag(cxt))
+                    ret = cmr_preview_get_3dnr_buf(cxt->prev_cxt.preview_handle,
+                                                   cxt->camera_id, frame,
+                                                   &vir_addr_y);
                 out_param.size =
                     cxt->snp_cxt.post_proc_setting.chn_out_frm[0].size;
                 out_param.fd = frame->fd;
@@ -832,6 +836,7 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
                 out_param.addr_phy.addr_y = frame->yaddr;
                 out_param.addr_phy.addr_u = frame->uaddr;
                 out_param.addr_phy.addr_v = frame->vaddr;
+                out_param.fmt = frame->fmt;
                 if (ret) {
                     CMR_LOGE("failed to get hdr buffer %ld", ret);
                     goto exit;
@@ -10771,7 +10776,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         snp_param.post_proc_setting.actual_snp_size.width == 0) {
         cmr_bzero(&setting_param, sizeof(setting_param));
         setting_param.camera_id = cxt->camera_id;
-        //CMR_LOGI("camera id: %d", setting_param.camera_id);
+        // CMR_LOGI("camera id: %d", setting_param.camera_id);
 
         /*get snapshot size*/
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
