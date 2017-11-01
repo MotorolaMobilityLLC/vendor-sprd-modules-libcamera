@@ -299,7 +299,6 @@ struct isp_alg_sw_init_in {
 	struct isp_size	sensor_max_size;
 };
 
-static cmr_int ispalg_ae_process_out(cmr_handle isp_alg_handle, struct ae_ctrl_callback_in *ae_in);
 
 static nsecs_t ispalg_get_sys_timestamp(void)
 {
@@ -386,7 +385,6 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_AE_CB_FLASH_FIRED;
 		break;
 	case AE_CB_PROCESS_OUT:
-		ispalg_ae_process_out(cxt, data);
 		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
@@ -560,6 +558,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
+#if 0 //LE doen't support D gain now
 		for (i = 0; i < param_num; i++) {
 			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -571,6 +570,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			aem_block_info.rgb_gain_coeff = *(cmr_u32 *)param0;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
 		}
+#endif
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
 		ret = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0, param1);
@@ -1535,7 +1535,11 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 
 	in_param.sec = cxt->ae_cxt.time.sec;
 	in_param.usec = cxt->ae_cxt.time.usec;
-
+	in_param.binning_stat_info.r_info = cxt->binning_stats.r_info;
+	in_param.binning_stat_info.g_info = cxt->binning_stats.g_info;
+	in_param.binning_stat_info.b_info = cxt->binning_stats.b_info;
+	in_param.binning_stat_info.binning_size.w = cxt->binning_stats.binning_size.w;
+	in_param.binning_stat_info.binning_size.h = cxt->binning_stats.binning_size.h;
 	in_param.is_update = cxt->aem_is_update;
 	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
 	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
@@ -1550,7 +1554,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	cxt->smart_cxt.isp_smart_eb = 1;
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", (cmr_u32)(time_end - time_start));
-	cxt->aem_is_update = 0;
 
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -1965,24 +1968,44 @@ exit:
 	return ret;
 }
 
-static cmr_int ispalg_ae_process_out(cmr_handle isp_alg_handle, struct ae_ctrl_callback_in *ae_in)
+static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct awb_ctrl_calc_result awb_output;
+	struct ae_calc_results ae_result;
+	struct ae_ctrl_callback_in ae_ctrl_calc_result;
 
 	memset(&awb_output, 0, sizeof(awb_output));
+	memset(&ae_result, 0, sizeof(ae_result));
+	memset(&ae_ctrl_calc_result, 0, sizeof(ae_ctrl_calc_result));
+
+	if (0 ==cxt->aem_is_update) {
+		ISP_LOGI("aem is not update\n");
+		goto exit;
+	}
 
 	if (cxt->awb_cxt.sw_bypass)
 		goto exit;
 
-	ret = ispalg_start_awb_process((cmr_handle) cxt, ae_in, &awb_output);
+	if (cxt->ops.ae_ops.ioctrl) {
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_CALC_RESULTS, NULL, &ae_result);
+		ae_ctrl_calc_result.is_skip_cur_frame = ae_result.is_skip_cur_frame;
+		ae_ctrl_calc_result.ae_output = ae_result.ae_output;
+		ae_ctrl_calc_result.ae_result = ae_result.ae_result;
+		ae_ctrl_calc_result.ae_ev = ae_result.ae_ev;
+		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
+		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;
+		ae_ctrl_calc_result.flash_param.captureFlash1ofALLRatio = ae_result.flash_param.captureFlash1ofALLRatio;
+	}
+
+	ret = ispalg_start_awb_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
 	if (ret) {
 		ISP_LOGE("fail to start awb process");
 		goto exit;
 	}
 
-	ret = ispalg_aeawb_post_process((cmr_handle) cxt, ae_in, &awb_output);
+	ret = ispalg_aeawb_post_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
 	if (ret) {
 		ISP_LOGE("fail to proc aeawb ");
 		goto exit;
@@ -2513,6 +2536,10 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
+		ret = ispalg_awb_process((cmr_handle) cxt);
+		if (ret)
+			ISP_LOGE("fail to start awb process");
+		cxt->aem_is_update = 0;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
 	case ISP_PROC_AFL_DONE:
