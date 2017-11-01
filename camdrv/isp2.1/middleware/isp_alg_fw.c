@@ -261,6 +261,7 @@ struct isp_alg_fw_context {
 	void *sw_isp_handle;
 	struct soft_isp_frm_param sw_isp_reserved_frm;
 	cmr_int bokeh_status;
+	cmr_u32 zsl_flag;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -3201,6 +3202,7 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	ae_param.highflash_measure.highflash_flag = param_ptr->is_need_flash;
 	ae_param.highflash_measure.capture_skip_num = param_ptr->capture_skip_num;
 	ae_param.capture_skip_num = param_ptr->capture_skip_num;
+	ae_param.zsl_flag = param_ptr->capture_mode;
 	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.src.w;
 	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.src.h;
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;

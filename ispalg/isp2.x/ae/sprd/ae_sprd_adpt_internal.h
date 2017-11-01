@@ -107,6 +107,7 @@ struct ae_ctrl_cxt {
 	cmr_u32 checksum;
 	cmr_u32 bypass;
 	cmr_u32 capture_skip_num;
+	cmr_u32 zsl_flag;
 	/*
 	 * camera id: front camera or rear camera
 	 */
@@ -284,6 +285,11 @@ struct ae_ctrl_cxt {
 	struct match_data_param dualcam_aesync_param;
 #endif
 	cmr_u32 end_id;
+	/*
+	 * for binning facter = 2 
+	 */
+	 cmr_s32 binning_factor_before;
+	 cmr_s32 binning_factor_after;
 };
 
 #endif
