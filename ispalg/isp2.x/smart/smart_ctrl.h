@@ -32,6 +32,13 @@ extern "C" {
 
 typedef void *isp_smart_handle_t;
 typedef void *smart_handle_t;
+typedef cmr_int(*isp_smart_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+
+/* smart callback command */
+enum ispalg_smart_set_cmd {
+	ISP_SMART_SET_COMMON,
+	ISP_SMART_SET_GAMMA_CUR,
+};
 
 enum {
 	ISP_SMART_IOCTL_GET_BASE = 0x100,
@@ -80,6 +87,8 @@ struct smart_tuning_param {
 };
 
 struct smart_init_param {
+	cmr_handle caller_handle;
+	isp_smart_cb smart_set_cb;
 	struct smart_tuning_param tuning_param[SMART_MAX_WORK_MODE];
 };
 
@@ -92,6 +101,7 @@ struct smart_calc_param {
 	cmr_handle handle_pm;
 	cmr_s32 flash_ratio;
 	cmr_s32 flash_ratio1;
+	void *gamma_tab;
 };
 
 struct smart_proc_input {

@@ -1021,6 +1021,68 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 	return ret;
 }
 
+
+static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i, j;
+	cmr_u32 param_num = 0;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct smart_calc_result *smart_result = NULL;
+	struct smart_block_result *block_result = NULL;
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
+	UNUSED(param1);
+
+	if (cxt->zsl_flag)
+		param_num = ISP_MODE_MAX;
+	else
+		param_num = 1;
+
+	switch (type) {
+	case ISP_SMART_SET_COMMON:
+		smart_result = (struct smart_calc_result *)param0;
+		for (i = 0; i < smart_result->counts; i++) {
+			block_result = &smart_result->block_result[i];
+			memset(pm_param, 0, sizeof(pm_param));
+			for (j = 0; j < param_num; j++) {
+				/*zsl mode_id[0]: prev, mode_id[1]: cap;  none zsl mode_id[0]: prev, cap, video etc*/
+				BLOCK_PARAM_CFG(pm_param[j], ISP_PM_BLK_SMART_SETTING,
+						block_result->block_id,
+						cxt->mode_id[j],
+						block_result,
+						sizeof(*block_result));
+			}
+			io_pm_input.param_num = param_num;
+			io_pm_input.param_data_ptr = &pm_param[0];
+
+			ISP_LOGV("set param %d, id=%x, data=%p", i, block_result->block_id, block_result);
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
+#ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
+			if (ISP_BLK_RGB_GAMC == block_result->block_id) {
+				pm_param[0].id = ISP_BLK_Y_GAMMC;
+				pm_param[1].id = ISP_BLK_Y_GAMMC;
+				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
+				ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
+			}
+#endif
+		}
+
+		break;
+
+	case ISP_SMART_SET_GAMMA_CUR:
+		/* TODO: wait for alg requirments. */
+		break;
+
+	default:
+		ISP_LOGE("Unknown smart callback command: %d", (cmr_u32)type);
+		break;
+	}
+
+	return ret;
+}
+
 cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		  cmr_u32 * ae_stat_r, cmr_u32 * ae_stat_g, cmr_u32 * ae_stat_b,
 		  struct awb_size * stat_img_size,
@@ -1775,7 +1837,6 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
 		smart_proc_in.cal_para.ct = awb_output->ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
@@ -2773,6 +2834,8 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 		ISP_LOGE("fail to get smart init param ");
 		return ret;
 	}
+	smart_init_param.caller_handle = (cmr_handle)cxt;
+	smart_init_param.smart_set_cb = ispalg_smart_set_cb;
 
 	if (cxt->ops.smart_ops.init) {
 		cxt->smart_cxt.handle = cxt->ops.smart_ops.init(&smart_init_param, NULL);
@@ -3598,7 +3661,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		if (cxt->ops.smart_ops.calc)

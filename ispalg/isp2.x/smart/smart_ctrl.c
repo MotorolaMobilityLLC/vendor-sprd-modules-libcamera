@@ -84,6 +84,8 @@ struct smart_context {
 	cmr_u8 debug_buf[DEBUG_BUF_SIZE];
 	debug_handle_t debug_file;
 	struct nr_data nr_param;
+	cmr_handle caller_handle;
+	isp_smart_cb smart_set_cb;
 };
 
 static cmr_s32 is_print_log(void)
@@ -963,6 +965,8 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->flash_mode = SMART_CTRL_FLASH_CLOSE;
 	cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
 	cxt->debug_file = smart_debug_file_init(DEBUG_FILE_NAME, "wt");
+	cxt->caller_handle = param->caller_handle;
+	cxt->smart_set_cb = param->smart_set_cb;
 	handle = (smart_handle_t) cxt;
 
 	ISP_LOGI("done rtn %d", rtn);
@@ -1536,6 +1540,10 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			block_result->scene_flag = in_ptr->scene_flag;
 		}
 
+		/* If mw implements cb, then set pm in callback. */
+		if (cxt->smart_set_cb)
+			continue;
+
 		pm_param.cmd = ISP_PM_BLK_SMART_SETTING;
 		pm_param.id = block_result->block_id;
 		pm_param.data_size = sizeof(*block_result);
@@ -1552,6 +1560,11 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			rtn = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
 		}
 #endif
+	}
+
+	/* If mw implements cb, then set pm in callback. */
+	if (cxt->smart_set_cb) {
+		rtn = cxt->smart_set_cb(cxt->caller_handle, ISP_SMART_SET_COMMON, &smart_calc_result, NULL);
 	}
 
 exit:
