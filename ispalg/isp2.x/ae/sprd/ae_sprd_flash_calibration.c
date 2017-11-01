@@ -47,7 +47,7 @@ struct flash_g_frames
 	uint16 index_pf1[32];
 	uint16 index_pf2[32];
 	uint16 index_mf1[32];
-	uint16 index_mf2[32];	
+	uint16 index_mf2[32];
 };
 struct flash_calibration_data
 {
@@ -477,7 +477,7 @@ static double interp(double x1, double y1, double x2, double y2, double x)
 
 //rgTab increasing
 float interpCt(float* rgTab, float* ctTab, int numTab, float rg)
-{	
+{
 	int i;
 	if (rg < rgTab[0])
 	{
@@ -1141,7 +1141,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					g=0;
 					b=0;
 				}
-					
+
 				if (maxV < g)
 					maxV = g;
 				if (caliData->ind1Tab[i] != 0 && caliData->isMainTab[i])
@@ -1194,8 +1194,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			caliData->out.version = CALI_VERSION;
 			caliData->out.version_sub = CALI_VERSION_SUB;
 			strcpy(caliData->out.name, "flash_calibration_data");
-			
-			
+
+
 			for (i = 0; i < 32; i++)
 			{
 				caliData->out.driverIndexP1[i] = -1;
@@ -1423,7 +1423,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flash_led_brightness.bin", "wb");
 #else
-				fp = fopen("/data/misc/cameraserver/flash_led_brightness.bin", "wb");			
+				fp = fopen("/data/misc/cameraserver/flash_led_brightness.bin", "wb");
 #endif
 				struct flash_led_brightness led_bri;
 				memset(&led_bri, 0, sizeof(struct flash_led_brightness));
@@ -1450,8 +1450,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					led_bri.index_mf2[i] = caliData->indHwM2_alg[i+1];
 				fwrite(&led_bri, 1, sizeof(struct flash_led_brightness), fp);
 				fclose(fp);
-				
-				struct flash_g_frames gf;				
+
+				struct flash_g_frames gf;
 				memset(&gf, 0, sizeof(struct flash_g_frames));
 				gf.levelNumber_pf1 = led_bri.levelNumber_pf1;
 				gf.levelNumber_pf2 = led_bri.levelNumber_pf2;
@@ -1470,7 +1470,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				gf.gain_off  = caliData->gainTab[0];
 				gf.shutter_off = caliData->expTab[0];
 				for (i = 0; i < caliData->testIndAll; i++)
-				{					
+				{
 					int ind;
 					if (caliData->ind1Tab[i] != 0 && caliData->isMainTab[i])
 					{
@@ -1508,10 +1508,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flash_g_frames.bin", "wb");
 #else
-				fp = fopen("/data/misc/cameraserver/flash_g_frames.bin", "wb"); 
-#endif			
+				fp = fopen("/data/misc/cameraserver/flash_g_frames.bin", "wb");
+#endif
 				fwrite(&gf, 1, sizeof(struct flash_g_frames), fp);
-				fclose(fp);		
+				fclose(fp);
 
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flash_g_frames.txt", "wt");
@@ -1539,7 +1539,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				fprintf(fp, "index_mf2:\n");
 				for (i = 0; i < 32; i++)
 					fprintf(fp, "%d\t", (int)gf.index_mf2[i]);
-				fprintf(fp, "\n");			
+				fprintf(fp, "\n");
 
 				fprintf(fp, "shutter_off: %lf\n", (double)gf.shutter_off);
 				fprintf(fp, "shutter_pf1:\n");
@@ -1582,7 +1582,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				for (i = 0; i < 32; i++)
 					fprintf(fp, "%d\t", (int)gf.gain_mf2[i]);
 				fprintf(fp, "\n");
-				
+
 				fprintf(fp, "g_off:\n");
 				for (j = 0; j < 15; j++)
 					fprintf(fp, "%lf\t", (double)gf.g_off[j]);
@@ -1648,8 +1648,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			if (propRet >= 1)
 				debug2En = propValue[0];
 
-			
-			
+
+
 			if(debug1En==1)
 			{
 #ifdef WIN32
@@ -1663,7 +1663,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						fprintf(fp,"pf ");
 					else
 						fprintf(fp,"mf ");
-					
+
 					int led1;
 					int led2;
 					led1 = caliData->ind1Tab[i];
@@ -1685,8 +1685,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						//(int)caliData->ind2Tab[i]);
 						(int)led1_hw,
 						(int)led2_hw);
-						
-					
+
+
 
 
 					fprintf(fp, "expBase,gainBase,exp,gain: %d\t%d\t%d\t%d\n",
@@ -1702,7 +1702,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				fclose(fp);
 			}
 			if (debug2En == 1)
-			{  
+			{
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_debug.txt", "wt");
 #else
@@ -1970,11 +1970,11 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		{
 			exp2=propValue[0];
 			if(exp2==1)
-			{			
+			{
 				cur_status->settings.manual_mode = 0;
 				cur_status->settings.table_idx = 0;
 				cur_status->settings.exp_line = 800;
-				cur_status->settings.gain = 256;				
+				cur_status->settings.gain = 256;
 			}
 		}
 	}
@@ -2004,7 +2004,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 }
 
 void flash_calibration_script(cmr_handle ae_cxt)
-{	
+{
 	char str[PROPERTY_VALUE_MAX];
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt*)ae_cxt;
 	memset((void*)&str[0], 0, sizeof(str));

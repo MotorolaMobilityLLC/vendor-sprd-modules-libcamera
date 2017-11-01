@@ -898,9 +898,9 @@ static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *re
 	return rtn;
 }
 
-static int awb_sync_gain(cmr_u32* stat_r_master, cmr_u32* stat_g_master, cmr_u32* stat_b_master, cmr_u32 width_master, cmr_u32 height_master, 
-						     cmr_u32* stat_r_slave, cmr_u32* stat_g_slave, cmr_u32* stat_b_slave, cmr_u32 width_slave, cmr_u32 height_slave, 
-						     cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master, 
+static int awb_sync_gain(cmr_u32* stat_r_master, cmr_u32* stat_g_master, cmr_u32* stat_b_master, cmr_u32 width_master, cmr_u32 height_master,
+						     cmr_u32* stat_r_slave, cmr_u32* stat_g_slave, cmr_u32* stat_b_slave, cmr_u32 width_slave, cmr_u32 height_slave,
+						     cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master,
 						     cmr_u32* gain_r_slave, cmr_u32* gain_g_slave, cmr_u32* gain_b_slave)
 {
 	cmr_u32 i, j;

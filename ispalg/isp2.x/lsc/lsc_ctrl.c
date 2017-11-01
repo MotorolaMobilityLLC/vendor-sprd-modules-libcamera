@@ -291,7 +291,7 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		lsc_param->lsc_otp_oc_b_y = (oc_otp_data[15]<<8) | oc_otp_data[14];
 		lsc_param->lsc_otp_oc_en = 1;
 
-		ISP_LOGI("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ", 
+		ISP_LOGI("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ",
 			lsc_param->lsc_otp_oc_r_x,
 			lsc_param->lsc_otp_oc_r_y,
 			lsc_param->lsc_otp_oc_gr_x,

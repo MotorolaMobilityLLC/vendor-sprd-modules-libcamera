@@ -189,7 +189,7 @@ struct ae1_face {
 };
 
 struct ae1_face_info {
-	cmr_u16 face_num;	
+	cmr_u16 face_num;
 	cmr_u16 reserved;	/*1 x 4bytes */
 	cmr_u32 rect[1024];	/*1024 x 4bytes */
 	struct ae1_face face_area[20];	/*20 x 5 * 4bytes */

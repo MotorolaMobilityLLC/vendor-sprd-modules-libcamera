@@ -4,7 +4,7 @@
 
 #include "ae_ctrl_types.h"
 
-struct tg_ae_ctrl_alc_log {	
+struct tg_ae_ctrl_alc_log {
 	cmr_u8 *log;
 	cmr_u32 size;
 };

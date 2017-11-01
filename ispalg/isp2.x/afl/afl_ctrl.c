@@ -431,7 +431,7 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_CFG_PARAM, &afl_info_v3, NULL);
 	}
 
-	ISP_LOGI("done:afl_stepx: 0x%x, stepy: 0x%x, x_region %x, y_region:0x%x, x_start_region:0x%x, x_end_region:0x%x", 
+	ISP_LOGI("done:afl_stepx: 0x%x, stepy: 0x%x, x_region %x, y_region:0x%x, x_start_region:0x%x, x_end_region:0x%x",
 					afl_info_v3.afl_stepx, afl_info_v3.afl_stepy,
 					afl_info_v3.step_x_region,
 					afl_info_v3.step_y_region,

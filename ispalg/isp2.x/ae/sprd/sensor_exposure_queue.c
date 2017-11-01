@@ -48,7 +48,7 @@ struct queue_context {
 	cmr_s32 sensor_gain_valid_num;
 	cmr_s32 isp_gain_valid_num;
 	cmr_s32 max_valid_num;
-	
+
 	cmr_s32 exp_valid_offset;/*according to max validata num*/
 	cmr_s32 sensor_gain_valid_offset;/*according to max validata num*/
 	cmr_s32 isp_gain_valid_offset;/*according to max validata num*/
@@ -71,7 +71,7 @@ static void s_q_increase_idx(struct queue_context *q_cxt, struct q_item_index *i
 
 	idx->idx_sensor_gain += increase_step;
 	idx->idx_sensor_gain = (idx->idx_sensor_gain + S_Q_LENGTH) % S_Q_LENGTH;
-	
+
 	idx->idx_isp_gain += increase_step;
 	idx->idx_isp_gain = (idx->idx_isp_gain + S_Q_LENGTH) % S_Q_LENGTH;
 
@@ -88,13 +88,13 @@ static void s_q_update_actual_idx(struct queue_context *q_cxt, struct q_item_ind
 
 	actual_idx->idx_exp_t = cur_idx->idx_exp_t - q_cxt->max_valid_num;
 	actual_idx->idx_exp_t = (actual_idx->idx_exp_t + S_Q_LENGTH) % S_Q_LENGTH;
-	
+
 	actual_idx->idx_sensor_gain = cur_idx->idx_sensor_gain - q_cxt->max_valid_num;
 	actual_idx->idx_sensor_gain = (actual_idx->idx_sensor_gain + S_Q_LENGTH) % S_Q_LENGTH;
-	
+
 	actual_idx->idx_isp_gain = cur_idx->idx_isp_gain - q_cxt->max_valid_num;
 	actual_idx->idx_isp_gain = (actual_idx->idx_isp_gain + S_Q_LENGTH) % S_Q_LENGTH;
-	
+
 	actual_idx->idx_dmy = cur_idx->idx_dmy - q_cxt->max_valid_num;
 	actual_idx->idx_dmy = (actual_idx->idx_dmy + S_Q_LENGTH) % S_Q_LENGTH;
 }

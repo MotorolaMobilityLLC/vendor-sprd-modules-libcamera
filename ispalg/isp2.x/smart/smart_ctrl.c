@@ -1496,7 +1496,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			}
 		}
 	}
-	
+
 	/*use alc ccm, disable spreadtrum smart ccm */
 	for (i = 0; i < smart_calc_result.counts; i++) {
 		switch (smart_calc_result.block_result[i].smart_id) {

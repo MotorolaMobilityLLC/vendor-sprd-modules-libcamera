@@ -465,7 +465,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	pPD_left_rotation  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right_rotation = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_left_reorder  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
-	pPD_right_reorder = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));	
+	pPD_right_reorder = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 
 	ISP_LOGI("PDALGO Converter. Sensor[%d] OTP[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation, cxt->pd_gobal_setting.dSensorMode);
 	ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
