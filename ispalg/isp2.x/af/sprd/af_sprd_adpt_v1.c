@@ -1959,6 +1959,29 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 	return rtn;
 }
 
+static cmr_s32 af_sprd_set_af_bypass(cmr_handle handle, void *param0)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
+	cmr_s32 rtn = AFV1_SUCCESS;
+
+	if (NULL == param0) {
+		ISP_LOGE("param null error");
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+
+	property_get("persist.sys.isp.af.bypass", value, "0");
+	if (atoi(value) == 0) {
+		ISP_LOGI("param = %d", *(cmr_u32 *) param0);
+		af->bypass = *(cmr_u32 *) param0;
+	} else {
+		ISP_LOGI("af bypass cmd is NOT allowed %d", atoi(value));
+	}
+
+	return rtn;
+}
+
 static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -2373,8 +2396,7 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		break;
 
 	case AF_CMD_SET_AF_BYPASS:
-		if (NULL != param0)
-			af->bypass = *(cmr_u32 *) param0;
+		rtn = af_sprd_set_af_bypass(handle, param0);
 		break;
 
 	case AF_CMD_SET_DEFAULT_AF_WIN:
