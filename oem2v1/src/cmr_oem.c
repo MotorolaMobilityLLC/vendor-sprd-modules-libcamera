@@ -7277,7 +7277,14 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                 } else {
                     cxt->setting_cxt.is_auto_iso = 0;
                 }
-                isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+                if (cxt->setting_cxt.is_auto_iso == 1) {
+#if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
+      defined(CONFIG_CAMERA_ISP_VERSION_V4))
+                    isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+#endif
+                } else {
+                    isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+                }
                 CMR_LOGI("auto iso %d, exif iso %d",
                          cxt->setting_cxt.is_auto_iso, isp_param);
             }
