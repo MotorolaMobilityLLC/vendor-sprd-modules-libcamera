@@ -60,8 +60,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
-LOCAL_SRC_FILES := $(call all-c-files-under, calibration) \
-    $(call all-c-files-under, driver) \
+LOCAL_SRC_FILES := $(call all-c-files-under, driver) \
     $(call all-c-files-under, isp_tune) \
     $(call all-c-files-under, middleware) \
     $(call all-c-files-under, param_parse)
