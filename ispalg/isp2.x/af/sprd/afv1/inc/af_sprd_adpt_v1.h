@@ -219,6 +219,8 @@ typedef struct _af_ctrl {
 	cmr_u32 defocus;
 	cmr_u8 bypass;
 	cmr_u32 force_trigger;
+	cmr_u32 cb_trigger;
+	cmr_u32 ts_counter;
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
