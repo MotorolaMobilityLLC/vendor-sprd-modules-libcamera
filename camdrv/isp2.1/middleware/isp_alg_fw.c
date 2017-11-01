@@ -769,7 +769,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	struct alsc_update_info update_info = { 0, 0, NULL };
 	struct alsc_ver_info lsc_ver = { 0 };
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
@@ -831,8 +830,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.img_size.w = image_width;
 		calc_param.img_size.h = image_height;
 
-		calc_param.handle_pm = pm_handle;
-
 		for (i = 0; i < 9; i++) {
 			calc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
 		}
@@ -845,20 +842,10 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				ISP_LOGE("fail to do lsc adv gain map calc");
 				return ret;
 			}
-		}
 
-		if (cxt->ops.lsc_ops.ioctrl)
-			ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
-		if (ISP_SUCCESS != ret)
-			ISP_LOGE("fail to get ALSC update flag!");
-
-		if (update_info.alsc_update_flag == 1 && update_info.can_update_dest == 1){
-			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, update_info.lsc_buffer_addr, lsc_info->gain_w*lsc_info->gain_h*4*sizeof(cmr_u16));
+			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
+			io_pm_input.param_data_ptr = &pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			if (cxt->ops.lsc_ops.ioctrl)
-				ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
-			if (ISP_SUCCESS != ret)
-				ISP_LOGE("fail to set ALSC update flag!");
 		}
 	}
 
@@ -3323,15 +3310,11 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
-	struct isp_pm_ioctl_input io_pm_input = { PNULL, 0 };
-	struct isp_pm_param_data pm_param;
 	struct isp_lsc_info *lsc_info_new = NULL;
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info *fwstart_info = (struct alsc_fwstart_info *)out_ptr;
-	cmr_s32 i = 0;
-	cmr_s32 dst_gain_size = 0;
-	cmr_u16* dst_gain_tmp = NULL;
+	cmr_s32 i =0;
 
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
@@ -3343,6 +3326,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for (i = 0; i < 9; i++)
 		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
 	fwstart_info->gain_width_new = lsc_info_new->gain_w;
@@ -3350,25 +3334,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	fwstart_info->image_pattern_new = cxt->commn_cxt.image_pattern;
 	fwstart_info->grid_new = lsc_info_new->grid;
 	fwstart_info->camera_id = cxt->camera_id;
-
-	dst_gain_size = lsc_info_new->gain_w*lsc_info_new->gain_h*4*sizeof(cmr_u16);
-	dst_gain_tmp = (cmr_u16*)malloc(dst_gain_size);
-	if (NULL == dst_gain_tmp) {
-		ret = ISP_ALLOC_ERROR;
-		ISP_LOGE("fail to alloc dst_gain_tmp");
-		return ret;
-	}
-	fwstart_info->lsc_result_address_new = dst_gain_tmp;
 	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_START"));
 	}
-
-	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, dst_gain_tmp, dst_gain_size);
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-
-	free(dst_gain_tmp);
-	dst_gain_tmp = NULL;
 
 	return ret;
 }
