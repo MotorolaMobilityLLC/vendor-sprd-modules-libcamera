@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.127"
-#define SUB_VERSION             "-1019-compatible"	//use the date code to naming
+#define SUB_VERSION             "-1101-smile"	//use the date code to naming
 
 #define STRING(s) #s
 
