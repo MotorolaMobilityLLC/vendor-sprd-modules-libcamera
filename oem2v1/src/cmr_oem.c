@@ -191,6 +191,11 @@ static cmr_int camera_start_exif_encode(cmr_handle oem_handle,
                                         struct img_frm *thumb_src, void *exif,
                                         struct img_frm *dst,
                                         struct jpeg_wexif_cb_param *out_ptr);
+static cmr_int
+camera_start_exif_encode_simplify(cmr_handle oem_handle,
+                                  struct img_frm *pic_src, struct img_frm *dst,
+                                  struct jpeg_wexif_cb_param *out_ptr);
+
 static cmr_int camera_stop_codec(cmr_handle oem_handle);
 static cmr_int camera_start_scale(cmr_handle oem_handle,
                                   cmr_handle caller_handle, struct img_frm *src,
@@ -4631,6 +4636,107 @@ exit:
     return ret;
 }
 
+cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
+                                         struct enc_exif_param *param) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct img_frm src = param->src;
+    struct img_frm pic_enc = param->pic_enc;
+    struct img_frm dst = param->last_dst;
+    struct cmr_op_mean mean;
+    struct jpeg_enc_in_param enc_in_param;
+    int ret = CMR_CAMERA_SUCCESS;
+    int need_exif_flag = (dst.addr_vir.addr_y == 0) ? 0 : 1;
+    cmr_u32 SUPER_FINE = 95;
+    cmr_u32 FINE = 80;
+    cmr_u32 NORMAL = 70;
+
+    if (!oem_handle || !src.addr_vir.addr_y || !pic_enc.addr_vir.addr_y) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    sem_wait(&cxt->access_sm);
+    // 1.construct param
+    mean.quality_level = SUPER_FINE;
+    mean.slice_mode = JPEG_YUV_SLICE_ONE_BUF;
+    mean.slice_height = pic_enc.size.height;
+
+    cmr_bzero((void *)&enc_in_param, sizeof(enc_in_param));
+    enc_in_param.no_need_callback = 1;
+    enc_in_param.slice_height = mean.slice_height;
+    enc_in_param.slice_mod = mean.slice_mode;
+    enc_in_param.quality_level = mean.quality_level;
+    CMR_LOGD("enc_in_param.slice_height:%u, enc_in_param.slice_mod:%u, "
+             "enc_in_param.quality_level:%u",
+             enc_in_param.slice_height, enc_in_param.slice_mod,
+             enc_in_param.quality_level);
+
+    enc_in_param.stream_buf_phy = pic_enc.addr_phy.addr_y;
+    enc_in_param.stream_buf_vir = pic_enc.addr_vir.addr_y;
+    enc_in_param.stream_buf_size = pic_enc.buf_size;
+    enc_in_param.stream_buf_fd = pic_enc.fd;
+    enc_in_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
+    CMR_LOGD("enc_in_param.stream_buf_vir:%lx, enc_in_param.stream_buf_size:%u",
+             enc_in_param.stream_buf_vir, enc_in_param.stream_buf_size);
+
+    enc_in_param.size = src.size;
+    enc_in_param.src_addr_phy = src.addr_phy;
+    enc_in_param.src_addr_vir = src.addr_vir;
+    enc_in_param.src_fd = src.fd;
+    enc_in_param.src_endian.y_endian = 0;
+    enc_in_param.src_endian.uv_endian = 2;
+    enc_in_param.out_size.width = pic_enc.size.width;
+    enc_in_param.out_size.height = pic_enc.size.height;
+    CMR_LOGD("enc_in_param.size.width:%u, enc_in_param.size.height:%u, "
+             "enc_in_param.src_addr_vir.addr_y:%lx,"
+             "enc_in_param.out_size.width:%u, enc_in_param.out_size.height:%u",
+             enc_in_param.size.width, enc_in_param.size.height,
+             enc_in_param.src_addr_vir.addr_y, enc_in_param.out_size.width,
+             enc_in_param.out_size.height);
+
+    if (pic_enc.size.height == 1952 && pic_enc.size.width == 2592) {
+        enc_in_param.out_size.height = 1944;
+    } else if (pic_enc.size.height == 1840 && pic_enc.size.width == 3264) {
+        enc_in_param.out_size.height = 1836;
+    } else if (pic_enc.size.height == 368 && pic_enc.size.width == 640) {
+        enc_in_param.out_size.height = 360;
+    } else if (pic_enc.size.height == 1088 && pic_enc.size.width == 1920) {
+        enc_in_param.out_size.height = 1080;
+    }
+
+    // 2.call jpeg interface
+    ret = jpeg_enc_start(&enc_in_param);
+
+    if (ret) {
+        cxt->jpeg_cxt.enc_caller_handle = (cmr_handle)0;
+        CMR_LOGE("failed to jpeg enc %ld", ret);
+        goto exit;
+    }
+
+    param->stream_real_size = enc_in_param.stream_real_size;
+    CMR_LOGD(
+        "need_exif_flag:%d, param->stream_real_size:%u,no_need_callback=%d",
+        need_exif_flag, param->stream_real_size, enc_in_param.no_need_callback);
+    if (need_exif_flag) {
+        struct jpeg_wexif_cb_param enc_out_param;
+        ret = camera_start_exif_encode_simplify(oem_handle, &pic_enc, &dst,
+                                                &enc_out_param);
+        if (ret) {
+            CMR_LOGE("failed to camera_start_exif_encode %ld", ret);
+            goto exit;
+        }
+    }
+
+exit:
+    sem_post(&cxt->access_sm);
+    CMR_LOGD("done %ld", ret);
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
                             struct cmr_op_mean *mean) {
@@ -5052,6 +5158,73 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     enc_exif_param.target_addr_virt = dst->addr_vir.addr_y;
     enc_exif_param.src_jpeg_size = pic_src->buf_size;
     enc_exif_param.thumbnail_size = thumb_src->buf_size;
+    enc_exif_param.target_size = dst->buf_size;
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_EXIF_INFO, &setting_param);
+    enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
+    enc_exif_param.exif_isp_info = NULL;
+
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
+    if (ret) {
+        CMR_LOGW("isp get exif debug info failed");
+        enc_exif_param.exif_isp_debug_info.addr = NULL;
+        enc_exif_param.exif_isp_debug_info.size = 0;
+    } else {
+        enc_exif_param.exif_isp_debug_info.addr = isp_param.isp_dbg_info.addr;
+        enc_exif_param.exif_isp_debug_info.size = isp_param.isp_dbg_info.size;
+    }
+
+    CMR_LOGV("exif_isp_debug_info: addr=%p, size=%d",
+             enc_exif_param.exif_isp_debug_info.addr,
+             enc_exif_param.exif_isp_debug_info.size);
+
+    enc_exif_param.padding = 0;
+    out_pram.output_buf_virt_addr = 0;
+    out_pram.output_buf_size = 0;
+    ret = jpeg_enc_add_eixf(&enc_exif_param, &out_pram);
+    if (!ret) {
+        *out_ptr = out_pram;
+        CMR_LOGI("out addr 0x%lx size %ld", out_ptr->output_buf_virt_addr,
+                 out_ptr->output_buf_size);
+    } else {
+        CMR_LOGE("failed to compund exif jpeg %ld", ret);
+    }
+
+exit:
+    CMR_LOGI("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_start_exif_encode_simplify(cmr_handle oem_handle,
+                                          struct img_frm *pic_src,
+                                          struct img_frm *dst,
+                                          struct jpeg_wexif_cb_param *out_ptr) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
+
+    struct jpeg_enc_exif_param enc_exif_param;
+    struct jpeg_wexif_cb_param out_pram;
+    struct setting_cmd_parameter setting_param;
+    struct common_isp_cmd_param isp_param;
+
+    if (!oem_handle || !pic_src || !dst || !out_ptr) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    cmr_bzero((void *)&enc_exif_param, sizeof(struct jpeg_enc_exif_param));
+    cmr_bzero((void *)&out_pram, sizeof(struct jpeg_wexif_cb_param));
+    cmr_bzero((void *)&setting_param, sizeof(struct setting_cmd_parameter));
+    cmr_bzero((void *)&isp_param, sizeof(struct common_isp_cmd_param));
+
+    enc_exif_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
+    enc_exif_param.src_jpeg_addr_virt = pic_src->addr_vir.addr_y;
+    // enc_exif_param.thumbnail_addr_virt = thumb_src->addr_vir.addr_y;
+    enc_exif_param.target_addr_virt = dst->addr_vir.addr_y;
+    enc_exif_param.src_jpeg_size = pic_src->buf_size;
+    // enc_exif_param.thumbnail_size = thumb_src->buf_size;
     enc_exif_param.target_size = dst->buf_size;
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,

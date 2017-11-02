@@ -70,9 +70,9 @@ namespace sprdcamera {
 #define BOKEH_YUV_DATA_TRANSFORM
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
-#define LOCAL_CAPBUFF_NUM (5)
+#define LOCAL_CAPBUFF_NUM (7)
 #else
-#define LOCAL_CAPBUFF_NUM (4)
+#define LOCAL_CAPBUFF_NUM (6)
 #endif
 #define LOCAL_PREVIEW_NUM (20)
 #define LOCAL_DEPTH_OUTBUFF_NUM 2
@@ -246,6 +246,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mOtpType;
     int mApiVersion;
     int mJpegOrientation;
+    buffer_handle_t *m_pMainSnapBuffer;
+    buffer_handle_t *m_pSprdDepthBuffer;
+    buffer_handle_t *m_pDstJpegBuffer;
+    int mOrigJpegSize;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -270,9 +274,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         virtual bool threadLoop();
         virtual void requestExit();
         void videoErrorCallback(uint32_t frame_number);
-        void saveCaptureBokehParams(buffer_handle_t *saved_result_buff,
-                                    buffer_handle_t *buffer,
-                                    buffer_handle_t *depth_bufer);
+        void saveCaptureBokehParams(buffer_handle_t *result_buff,
+                                    size_t jpeg_size);
         int bokehCaptureHandle(buffer_handle_t *output_buf,
                                buffer_handle_t *input_buf1,
                                buffer_handle_t *depth_bufer);
@@ -280,7 +283,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
                                buffer_handle_t *scaled_buffer,
                                buffer_handle_t *input_buf1,
                                buffer_handle_t *input_buf2);
-
         // This queue stores matched buffer as frame_matched_info_t
         List<capture_queue_msg_t_bokeh> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -417,6 +419,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void initBokehPrevApiParams();
     int checkOtpInfo();
     int checkDepthPara(struct sprd_depth_configurable_para *depth_config_param);
+    void dumpCaptureBokeh(uint32_t jpeg_size);
     void bokehFaceMakeup(private_handle_t *private_handle);
     void updateApiParams(CameraMetadata metaSettings, int type);
     int bokehHandle(buffer_handle_t *output_buf, buffer_handle_t *inputbuff1,

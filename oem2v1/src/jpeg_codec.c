@@ -121,6 +121,7 @@ struct jpeg_enc {
     cmr_u8 mirror;
     cmr_u8 flip;
     cmr_u8 rotation;
+    cmr_u8 no_need_callback;
 };
 
 static cmr_int _dec_next(cmr_handle dec_handle,
@@ -412,7 +413,7 @@ static void _enc_start_post(cmr_handle handle,
             memset((void *)&param, 0, sizeof(struct jpeg_enc_cb_param));
             param.is_thumbnail = 0;
             _prc_enc_cbparam(handle, &param);
-            if (NULL != jcontext->event_cb) {
+            if (NULL != jcontext->event_cb && !enc_cxt_ptr->no_need_callback) {
                 jcontext->event_cb(CMR_JPEG_ENC_DONE, &param,
                                    (void *)jcontext->oem_handle);
             } else {
@@ -430,7 +431,7 @@ static void _enc_start_post(cmr_handle handle,
         }
     } else {
         if (JPEG_CODEC_STOP != ret) {
-            if (NULL != jcontext->event_cb) {
+            if (NULL != jcontext->event_cb && !enc_cxt_ptr->no_need_callback) {
                 jcontext->event_cb(CMR_JPEG_ENC_ERR, NULL,
                                    (void *)jcontext->oem_handle);
             } else {
@@ -1181,6 +1182,7 @@ static cmr_int _get_enc_start_param(struct jpeg_enc *cxt_ptr,
     cxt_ptr->mirror = in_parm_ptr->mirror;
     cxt_ptr->flip = in_parm_ptr->flip;
     cxt_ptr->rotation = in_parm_ptr->rotation;
+    cxt_ptr->no_need_callback = in_parm_ptr->no_need_callback;
     return ret;
 }
 
@@ -1273,10 +1275,17 @@ cmr_int jpeg_enc_start(struct jpeg_enc_in_param *in_parm_ptr) {
         goto enc_start_end;
     }
     jcontext->active_handle = (cmr_handle)enc_cxt_ptr;
+
+    if (!in_parm_ptr->no_need_callback) {
+        message.sync_flag = CMR_MSG_SYNC_NONE;
+    } else {
+        message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    }
+
     message.msg_type = JPEG_EVT_ENC_START;
     message.data = enc_cxt_ptr;
     message.alloc_flag = 0;
-    message.sync_flag = CMR_MSG_SYNC_NONE;
+
     ret = cmr_thread_msg_send(jcontext->thread_handle, &message);
 
     if (CMR_MSG_SUCCESS != ret) {
@@ -1285,6 +1294,7 @@ cmr_int jpeg_enc_start(struct jpeg_enc_in_param *in_parm_ptr) {
     }
 
     jcontext->type = 0;
+    in_parm_ptr->stream_real_size = enc_cxt_ptr->stream_real_size;
     CMR_LOGV("jpeg:handle 0x%p.", enc_cxt_ptr);
 enc_start_end:
     if (ret) {

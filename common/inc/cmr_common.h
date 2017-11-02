@@ -474,6 +474,13 @@ struct snp_thumb_yuv_param {
     struct img_frm dst_img;
 };
 
+struct enc_exif_param {
+    struct img_frm src;      // yuv
+    struct img_frm pic_enc;  // yuv -> encoded
+    struct img_frm last_dst; // in encoded and exif, maybe null
+    cmr_u32 stream_real_size;
+};
+
 struct ccir_if {
     cmr_u8 v_sync_pol;
     cmr_u8 h_sync_pol;
@@ -1420,6 +1427,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_SENSOR_FORMAT,
     CAMERA_IOCTRL_GET_CPP_CAPABILITY,
     CAMERA_IOCTRL_THUMB_YUV_PROC,
+    CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
     CAMERA_IOCTRL_SET_MIME_TYPE,
     CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
     CAMERA_IOCTRL_GET_BLUR_COVERED,
@@ -1523,7 +1531,7 @@ typedef struct oem_ops {
                                       struct img_rect *sn_trim);
 
     cmr_int (*camera_get_sensor_trim2)(cmr_handle camera_handle,
-                                      struct img_rect *sn_trim);
+                                       struct img_rect *sn_trim);
 
     cmr_uint (*camera_get_preview_rot_angle)(cmr_handle camera_handle);
 

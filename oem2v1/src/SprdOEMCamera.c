@@ -448,7 +448,7 @@ exit:
 }
 
 cmr_int camera_get_sensor_trim2(cmr_handle camera_handle,
-                               struct img_rect *sn_trim) {
+                                struct img_rect *sn_trim) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     if (!camera_handle || !sn_trim) {
@@ -1117,6 +1117,11 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                         (struct snp_thumb_yuv_param *)param);
         break;
     }
+    case CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC: {
+        ret = camera_jpeg_encode_exif_simplify(handle,
+                                               (struct enc_exif_param *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY: {
         ret = camera_local_set_capture_fb(handle, (cmr_u32 *)param);
         break;
@@ -1189,10 +1194,11 @@ static oem_ops_t oem_module_ops = {
     camera_pre_capture_get_buffer_id, camera_get_reserve_buffer_size,
     camera_pre_capture_get_buffer_size, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
-    camera_get_sensor_trim, camera_get_sensor_trim2, camera_get_preview_rot_angle, camera_fd_enable,
-    camera_flip_enable, camera_fd_start, camera_is_need_stop_preview,
-    camera_takepicture_process, camera_get_size_align_page, camera_fast_ctrl,
-    camera_start_preflash, camera_get_viewangle, camera_get_sensor_exif_info,
+    camera_get_sensor_trim, camera_get_sensor_trim2,
+    camera_get_preview_rot_angle, camera_fd_enable, camera_flip_enable,
+    camera_fd_start, camera_is_need_stop_preview, camera_takepicture_process,
+    camera_get_size_align_page, camera_fast_ctrl, camera_start_preflash,
+    camera_get_viewangle, camera_get_sensor_exif_info,
     camera_get_sensor_result_exif_info, camera_get_iommu_status,
     camera_set_preview_buffer, camera_set_video_buffer, camera_set_zsl_buffer,
     camera_set_video_snapshot_buffer, camera_set_zsl_snapshot_buffer,
@@ -1209,10 +1215,9 @@ static oem_ops_t oem_module_ops = {
     camera_pre_capture_set_buffer_size, camera_ioctrl,
     camera_reprocess_yuv_for_jpeg,
 #if defined(CONFIG_ISP_2_1)
-    camera_get_focus_point,  camera_isp_sw_check_buf,
-    camera_isp_sw_proc, camera_raw_post_proc,
-    camera_get_tuning_param
- #endif
+    camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
+    camera_raw_post_proc, camera_get_tuning_param
+#endif
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

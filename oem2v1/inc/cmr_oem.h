@@ -345,7 +345,7 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle,
                                    struct img_rect *sn_trim);
 
 cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
-                                   struct img_rect *sn_trim);
+                                    struct img_rect *sn_trim);
 
 cmr_uint camera_get_preview_angle(cmr_handle oem_handle);
 
@@ -464,6 +464,9 @@ cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param);
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
+cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
+                                         struct enc_exif_param *param);
+
 #ifdef __cplusplus
 }
 #endif

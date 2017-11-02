@@ -741,6 +741,31 @@ bool SprdCamera3MultiBase::alignTransform(void *src, int w_old, int h_old,
     return true;
 }
 
+int SprdCamera3MultiBase::convertToImg_frm(private_handle_t *in, img_frm *out,
+                                           cmr_u32 format) {
+    HAL_LOGD("in:%p, out:%p format:%u", in, out, format);
+    int ret = 0;
+    out->addr_phy.addr_y = 0;
+    out->addr_phy.addr_u = out->addr_phy.addr_y + in->width * in->height;
+    out->addr_phy.addr_v = out->addr_phy.addr_u;
+    HAL_LOGD("in->width:%d, in->height:%d", in->width, in->height);
+
+    out->addr_vir.addr_y = (cmr_uint)in->base;
+    out->addr_vir.addr_u = (cmr_uint)in->base + in->width * in->height;
+    HAL_LOGD("out->addr_vir.addr_y:%lx", out->addr_vir.addr_y);
+    out->buf_size = in->size;
+    HAL_LOGD("out->buf_size:%d", out->buf_size);
+    out->fd = in->share_fd;
+    out->fmt = format;
+    out->rect.start_x = 0;
+    out->rect.start_y = 0;
+    out->rect.width = in->width;
+    out->rect.height = in->height;
+    out->size.width = in->width;
+    out->size.height = in->height;
+    return ret;
+}
+
 /*
 #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int
@@ -977,5 +1002,85 @@ bool SprdCamera3MultiBase::NV21Rotate180(uint8_t *a_ucDstBuf,
         }
     }
     return true;
+}
+
+void SprdCamera3MultiBase::setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
+                                       uint32_t jpeg_size) {
+    if (jpeg_base == NULL) {
+        HAL_LOGE("jpeg_base is NULL");
+        return;
+    }
+    camera3_jpeg_blob *jpegBlob = NULL;
+    jpegBlob = (camera3_jpeg_blob *)(jpeg_base + (max_jpeg_size -
+                                                  sizeof(camera3_jpeg_blob)));
+    jpegBlob->jpeg_size = jpeg_size;
+    jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
+    HAL_LOGI("max_jpeg_size %d, jpeg_size %d", max_jpeg_size, jpeg_size);
+}
+
+uint32_t SprdCamera3MultiBase::getJpegSize(uint8_t *jpegBuffer,
+                                           uint32_t maxSize) {
+    uint32_t size = 0;
+    uint8_t *header = jpegBuffer + (maxSize - sizeof(camera3_jpeg_blob));
+    camera3_jpeg_blob *blob = (camera3_jpeg_blob *)(header);
+
+    if (blob->jpeg_blob_id == CAMERA3_JPEG_BLOB_ID) {
+        size = blob->jpeg_size;
+    }
+    HAL_LOGI("Jpeg size %d, maxSize %d", size, maxSize);
+    return size;
+}
+
+int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
+    private_handle_t *src_private_handle,
+    private_handle_t *pic_enc_private_handle,
+    private_handle_t *dst_private_handle, SprdCamera3HWI *hwi) {
+
+    int ret = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    struct enc_exif_param encode_exif_param;
+    struct img_frm src_img;
+    struct img_frm pic_enc_img;
+    struct img_frm dst_img;
+
+    HAL_LOGI("src_private_handle :%p, pic_enc_private_handle:%p",
+             src_private_handle, pic_enc_private_handle);
+    if (hwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+
+    memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&pic_enc_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+
+    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420);
+    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG);
+    if (dst_private_handle != NULL) {
+        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG);
+    }
+
+    memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
+
+    ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
+                             &encode_exif_param, NULL);
+
+    if (ret == NO_ERROR)
+        ret = encode_exif_param.stream_real_size;
+    else
+        ret = UNKNOWN_ERROR;
+    property_get("bokeh.dump.encode_exif", prop, "0");
+    if (atoi(prop) == 1) {
+        unsigned char *vir_jpeg = (unsigned char *)pic_enc_private_handle->base;
+        dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
+                 src_img.size.width, src_img.size.height, 0, "jpegEncode");
+    }
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
 }
 };

@@ -92,6 +92,9 @@ class SprdCamera3MultiBase {
                          List<hwi_frame_buffer_info_t> &queue);
     virtual bool alignTransform(void *src, int w_old, int h_old, int w_new,
                                 int h_new, void *dest);
+    virtual int convertToImg_frm(private_handle_t *in, img_frm *out,
+                                 cmr_u32 format);
+
     /*
 #ifdef CONFIG_FACE_BEAUTY
 virtual void doFaceMakeup(struct camera_frame_type *frame,
@@ -118,6 +121,13 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                        uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                        uint32_t a_udFileSize);
     int flushIonBuffer(int buffer_fd, void *v_addr, size_t size);
+    uint32_t getJpegSize(uint8_t *jpegBuffer, uint32_t maxSize);
+    void setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
+                     uint32_t jpeg_size);
+    int jpeg_encode_exif_simplify(private_handle_t *src_private_handle,
+                                  private_handle_t *pic_enc_private_handle,
+                                  private_handle_t *dst_private_handle,
+                                  SprdCamera3HWI *hwi);
 
   private:
     Mutex mBufferListLock;
