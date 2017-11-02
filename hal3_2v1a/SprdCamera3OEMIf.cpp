@@ -318,6 +318,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mIsRotCapture = 0;
 #endif
 
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+    mBindcoreFlag = false;
+    mBindcorePreivewFrameCount = 0;
+#endif
+
     if (mMultiCameraMatchZsl == NULL) {
         mMultiCameraMatchZsl = (multi_camera_zsl_match_frame *)malloc(
             sizeof(multi_camera_zsl_match_frame));
@@ -659,6 +664,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     case CAMERA_CHANNEL_TYPE_PICTURE: {
         changeDfsPolicy(CAM_HIGH);
         HAL_LOGI("set dfs CAM_HIGH");
+
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+        acquireCore(PERFORMENCE_MODE);
+#endif
 
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
             mTakePictureMode == SNAPSHOT_ONLY_MODE)
@@ -1768,6 +1777,44 @@ void SprdCamera3OEMIf::print_time() {
     HAL_LOGD("time: %lld us.", time.tv_sec * 1000000LL + time.tv_usec);
 #endif
 }
+
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+static int set_camera_affinity(pid_t pid) {
+    cpu_set_t cpu_set;
+    cpu_set_t cpu_get;
+    int i;
+    CPU_ZERO(&cpu_set);
+    CPU_SET(0, &cpu_set);
+    CPU_SET(1, &cpu_set);
+    if (sched_setaffinity(pid, sizeof(cpu_set), &cpu_set) == -1) {
+        return -1;
+    }
+    return 0;
+}
+
+void SprdCamera3OEMIf::acquireCore(int mode) {
+    if (mode == LOWPOWER_MODE) {
+        acquirePrfmLock(POWER_HINT_VENDOR_CAMERA_LOW_POWER);
+        mBindcoreFlag = true;
+    } else if (mode == PERFORMENCE_MODE) {
+        acquirePrfmLock(POWER_HINT_VENDOR_CAMERA_PERFORMANCE);
+        mBindcoreFlag = false;
+    }
+}
+
+void SprdCamera3OEMIf::bindcoreEnabled() {
+    int pid = getpid();
+    int ret = 0;
+    ret = set_camera_affinity(pid);
+    if (ret < 0) {
+        HAL_LOGV("affinity,failed for pid:%d, error:%d", pid, ret);
+    }
+    mBindcoreFlag = false;
+    mBindcorePreivewFrameCount = 0;
+    HAL_LOGV("bind:%d,%d,%d", ret, mBindcoreFlag,
+             mBindcorePreivewFrameCount);
+}
+#endif
 
 void SprdCamera3OEMIf::initPowerManager() {
 #ifdef HAS_CAMERA_POWER_HINTS
@@ -4067,7 +4114,24 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             changeDfsPolicy(CAM_LOW);
             HAL_LOGI("after first non-zsl preview: set dfs CAM_LOW");
         }
+
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+        acquireCore(LOWPOWER_MODE);
+#endif
     }
+
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+    HAL_LOGV("bind core :%d,%d,mBindcorePreivewFrameCount:%d",
+            mBindcoreFlag, sysconf(_SC_NPROCESSORS_ONLN),
+            mBindcorePreivewFrameCount);
+    if ((mBindcoreFlag == true) &&
+        sysconf(_SC_NPROCESSORS_ONLN) == 3) {
+        mBindcorePreivewFrameCount++;
+        if (mBindcorePreivewFrameCount == 3) {
+            bindcoreEnabled();
+        }
+    }
+#endif
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
@@ -5084,6 +5148,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         changeDfsPolicy(CAM_LOW);
         HAL_LOGV("after take picture,enter non-zsl preview: set dfs CAM_LOW");
     }
+
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+       acquireCore(LOWPOWER_MODE);
+#endif
 
 exit:
     HAL_LOGD("X");
