@@ -154,43 +154,6 @@
 #define BLK_Select2_L 0x00
 #endif
 
-#ifdef FEATURE_OTP
-#define MODULE_ID_NULL 0x0000
-#define MODULE_ID_gc2375_yyy 0x0001 // gc2375: sensor P/N;  yyy: module vendor
-#define MODULE_ID_END 0xFFFF
-#define LSC_PARAM_QTY 240
-
-struct otp_info_t {
-    uint16_t flag;
-    uint16_t module_id;
-    uint16_t lens_id;
-    uint16_t vcm_id;
-    uint16_t vcm_driver_id;
-    uint16_t year;
-    uint16_t month;
-    uint16_t day;
-    uint16_t rg_ratio_current;
-    uint16_t bg_ratio_current;
-    uint16_t rg_ratio_typical;
-    uint16_t bg_ratio_typical;
-    uint16_t r_current;
-    uint16_t g_current;
-    uint16_t b_current;
-    uint16_t r_typical;
-    uint16_t g_typical;
-    uint16_t b_typical;
-    uint16_t vcm_dac_start;
-    uint16_t vcm_dac_inifity;
-    uint16_t vcm_dac_macro;
-    uint16_t lsc_param[LSC_PARAM_QTY];
-};
-
-#include "sensor_gc2375_yyy_otp.c"
-static struct otp_info_t *s_gc2375_otp_info_ptr = &s_gc2375_yyy_otp_info;
-static struct raw_param_info_tab *s_gc2375_raw_param_tab_ptr =
-    &s_gc2375_yyy_raw_param_tab; /*otp function interface*/
-#endif
-
 /*===========================================================================
  * Description:
  * global variable

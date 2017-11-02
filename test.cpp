@@ -1,8 +1,13 @@
 #include <utils/Log.h>
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined (CONFIG_CAMERA_ISP_DIR_2)
+#include "hal3_2v0/SprdCamera3OEMIf.h"
+#include "hal3_2v0/SprdCamera3Setting.h"
+#endif
+#if defined (CONFIG_CAMERA_ISP_DIR_2_1)
 #include "hal3_2v1/SprdCamera3OEMIf.h"
 #include "hal3_2v1/SprdCamera3Setting.h"
-#else
+#endif
+#if defined (CONFIG_CAMERA_ISP_DIR_3)
 #include "hal3_3v0/SprdCamera3AutotestMem.h"
 #include "hal3_3v0/SprdCamera3Setting.h"
 #endif

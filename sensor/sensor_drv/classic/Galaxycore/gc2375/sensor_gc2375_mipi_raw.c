@@ -944,8 +944,15 @@ static cmr_int gc2375_drv_handle_create(
     sns_drv_cxt->sensor_ev_info.preview_gain = SENSOR_BASE_GAIN;
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
+
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
+    gc2375_drv_init_fps_info(sns_drv_cxt);
     gc2375_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
     /*add private here*/
     return ret;

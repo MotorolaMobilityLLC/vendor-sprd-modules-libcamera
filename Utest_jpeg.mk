@@ -6,6 +6,10 @@ include $(LOCAL_PATH)/SprdCtrl.mk
 
 ISP_HW_VER = 3v0
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
+ISP_HW_VER = 2v0
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ISP_HW_VER = 2v1a

@@ -22,13 +22,11 @@
 
 #include "sensor_raw.h"
 
-#define _NR_MAP_PARAM_
-#include "isp_nr.h"
-#undef _NR_MAP_PARAM_
-
 /* Begin Include */
 #include "sensor_gc2375_raw_param_common.c"
 #include "sensor_gc2375_raw_param_prv_0.c"
+#include "sensor_gc2375_raw_param_cap_0.c"
+#include "sensor_gc2375_raw_param_video_0.c"
 
 /* End Include */
 
@@ -38,7 +36,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.0901 */
+/* IspToolVersion=R1.16.0901 */
 
 
 /* Capture Sizes:
@@ -74,19 +72,6 @@ static struct sensor_raw_ioctrl s_gc2375_ioctrl=
 {
 	0,
 	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
 	0
 };
 
@@ -96,30 +81,9 @@ static struct sensor_raw_ioctrl s_gc2375_ioctrl=
 
 static struct sensor_version_info s_gc2375_version_info=
 {
-	0x00070005,
-	{
-		{
-			0x33326367,
-			0x00003537,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000
-		}
-	},
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000
+	0x00040004,
+	sizeof(struct sensor_version_info),
+	0x00
 };
 
 
@@ -128,14 +92,14 @@ static struct sensor_version_info s_gc2375_version_info=
 
 static uint32_t s_gc2375_libuse_info[]=
 {
-	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 };
 
 
@@ -151,14 +115,15 @@ static struct sensor_raw_info s_gc2375_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_gc2375_tune_info_cap_0, sizeof(s_gc2375_tune_info_cap_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_gc2375_tune_info_video_0, sizeof(s_gc2375_tune_info_video_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{NULL, 0},
-		{NULL, 0},
+
 	},
 	&s_gc2375_trim_info,
 	&s_gc2375_ioctrl,
@@ -169,14 +134,15 @@ static struct sensor_raw_info s_gc2375_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		&s_gc2375_fix_info_cap_0,
 		NULL,
 		NULL,
 		NULL,
+		&s_gc2375_fix_info_video_0,
 		NULL,
 		NULL,
 		NULL,
-		NULL,
-		NULL,
+
 	},
 	{
 		{s_gc2375_common_tool_ui_input, sizeof(s_gc2375_common_tool_ui_input)},
@@ -184,18 +150,14 @@ static struct sensor_raw_info s_gc2375_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_gc2375_cap_0_tool_ui_input, sizeof(s_gc2375_cap_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_gc2375_video_0_tool_ui_input, sizeof(s_gc2375_video_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{NULL, 0},
-		{NULL, 0},
-	},
-	{
-		&s_gc2375_nr_scene_map_param,
-		&s_gc2375_nr_level_number_map_param,
-		&s_gc2375_default_nr_level_map_param,
-	},
+
+	}
 };

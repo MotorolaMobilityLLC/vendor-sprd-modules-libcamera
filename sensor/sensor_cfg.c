@@ -17,6 +17,9 @@
 
 #include "sensor_drv_u.h"
 #include "sensor_cfg.h"
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
 
 // gc area
 #ifdef GC0310
@@ -25,8 +28,12 @@ extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
 #ifdef GC2165
 extern SENSOR_INFO_T g_gc2165_mipi_yuv_info;
 #endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2)
+extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
+#else
 #ifdef GC2375
 extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
+#endif
 #endif
 #ifdef GC2375A
 extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
@@ -54,8 +61,12 @@ extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
 #ifdef OV5675_DUAL
 extern SENSOR_INFO_T g_ov5675_dual_mipi_raw_info;
 #endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2)
+extern SENSOR_INFO_T g_ov8856_shine_mipi_raw_info;
+#else
 #ifdef OV8856
 extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
+#endif
 #endif
 #ifdef OV8858
 extern SENSOR_INFO_T g_ov8858_mipi_raw_info;
@@ -146,6 +157,7 @@ extern otp_drv_entry_t ov8858_cmk_drv_entry;
 extern otp_drv_entry_t ov2680_cmk_drv_entry;
 extern otp_drv_entry_t sp8407_otp_entry;
 extern otp_drv_entry_t sp8407_cmk_otp_entry;
+extern otp_drv_entry_t ov8856_shine_drv_entry;
 
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
@@ -209,8 +221,12 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #endif
 
 // ov area
+#if defined(CONFIG_CAMERA_ISP_DIR_2)
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, &ov8856_shine_drv_entry},
+#else
 #ifdef OV8856
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8856_cmk_drv_entry},
+#endif
 #endif
 #ifdef OV8858
 #ifdef CAMERA_BACK_MIPI_LANE_SWITCH
@@ -289,6 +305,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #endif
 #ifdef GC5024
     {MODULE_SUNNY, "gc5024", &g_gc5024_mipi_raw_info, {NULL, 0}, &gc5024_common_drv_entry},
+#endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2)
+    {MODULE_SUNNY, "gc2375_mipi_raw", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
 //ov area

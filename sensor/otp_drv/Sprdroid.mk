@@ -27,6 +27,7 @@ LOCAL_SRC_FILES += \
 	otp_drv/driver/s5k3p8sm_truly/s5k3p8sm_truly_otp_drv.c
 else
 LOCAL_SRC_FILES += \
+    otp_drv/driver/ov8856_shine/ov8856_shine_otp_drv.c \
 	otp_drv/driver/gc2375_altek/gc2375_altek_otp_drv.c \
 	otp_drv/driver/gc5024_common/gc5024_common_otp_drv.c \
 	otp_drv/driver/imx258/imx258_otp_drv.c \

@@ -6,6 +6,10 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Werror -Wno-unused-parameter
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
+LOCAL_C_INCLUDES += camdrv/isp2.0/isp_app/
+endif
+
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc/
 
 LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
