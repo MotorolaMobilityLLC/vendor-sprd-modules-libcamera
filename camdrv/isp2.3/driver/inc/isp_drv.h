@@ -487,12 +487,6 @@ cmr_s32 isp_u_raw_afm_spsmd_threshold(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_win(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, void *param_ptr);
 
-/*Anti Flicker*/
-cmr_s32 isp_u_anti_flicker_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_anti_flicker_statistic(cmr_handle handle, void *addr);
-cmr_s32 isp_u_anti_flicker_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_anti_flicker_transaddr(cmr_handle handle, void *param_ptr);
-
 /*Flicker New*/
 cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *param_ptr);

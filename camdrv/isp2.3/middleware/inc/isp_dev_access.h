@@ -38,7 +38,6 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_AF_MODULES_CFG,
 	ISP_DEV_SET_AE_SHIFT,
 	ISP_DEV_SET_RGB_GAIN,
-	ISP_DEV_SET_AFL_BLOCK,
 	ISP_DEV_SET_AFL_NEW_BLOCK,
 	ISP_DEV_RAW_AEM_BYPASS,
 	ISP_DEV_RAW_AFM_BYPASS,
@@ -52,8 +51,6 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS,
 	ISP_DEV_SET_PDAF_ROI,
 	ISP_DEV_SET_PDAF_SKIP_NUM,
-	ISP_DEV_SET_AFL_CFG_PARAM,
-	ISP_DEV_SET_AFL_BYPASS,
 	ISP_DEV_SET_AFL_NEW_CFG_PARAM,
 	ISP_DEV_SET_AFL_NEW_BYPASS,
 	ISP_DEV_POST_3DNR, //for post 3dnr
@@ -74,7 +71,6 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle);
 cmr_int isp_dev_set_interface(struct isp_drv_interface_param *in_ptr);
 cmr_int isp_dev_start(cmr_handle isp_dev_handle, cmr_u32 mode_id, struct isp_drv_interface_param *in_ptr);
-cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);

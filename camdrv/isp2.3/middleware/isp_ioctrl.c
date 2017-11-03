@@ -306,14 +306,7 @@ static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO)
 		afl_block_info.bypass = 1;
 
-	if(cxt->afl_cxt.version) {
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
-		afl_block_info.bypass = 1;
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
-		afl_block_info.bypass = bypass;
-	} else {
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, &afl_block_info);
-	}
+	isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
 
 	return ret;
 }

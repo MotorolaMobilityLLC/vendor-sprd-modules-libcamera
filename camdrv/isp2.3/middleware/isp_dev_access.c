@@ -239,16 +239,6 @@ cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, struct isp_u_
 	return ret;
 }
 
-cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)block_ptr);
-
-	return ret;
-}
-
 cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -623,9 +613,6 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_RESET:
 		ret = isp_dev_reset(cxt->isp_driver_handle);
 		break;
-	case ISP_DEV_SET_AFL_BLOCK:
-		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in);
-		break;
 	case ISP_DEV_SET_AFL_NEW_BLOCK:
 		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in);
 		break;
@@ -668,14 +655,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_SET_PDAF_PPI_INFO:
 		ret = isp_u_pdaf_ppi_info(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_AFL_CFG_PARAM:
-		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in);
-		break;
 	case ISP_DEV_SET_AFL_NEW_CFG_PARAM:
 		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in);
-		break;
-	case ISP_DEV_SET_AFL_BYPASS:
-		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, in);
 		break;
 	case ISP_DEV_SET_AFL_NEW_BYPASS:
 		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in);

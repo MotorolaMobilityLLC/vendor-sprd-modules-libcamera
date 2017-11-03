@@ -966,18 +966,6 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 		param_num = 1;
 
 	switch (type) {
-	case ISP_AFL_SET_CFG_PARAM:
-		for (i = 0; i < param_num; i++) {
-			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				afl_block_info.scene_id = ISP_MODE_CAP;
-			else
-				afl_block_info.scene_id = ISP_MODE_PRV;
-			afl_block_info.block_info = param0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_CFG_PARAM, &afl_block_info, param1);
-		}
-		break;
 	case ISP_AFL_NEW_SET_CFG_PARAM:
 		for (i = 0; i < param_num; i++) {
 			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
@@ -988,18 +976,6 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 				afl_block_info.scene_id = ISP_MODE_PRV;
 			afl_block_info.block_info = param0;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, &afl_block_info, param1);
-		}
-		break;
-	case ISP_AFL_SET_BYPASS:
-		for (i = 0; i < param_num; i++) {
-			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				afl_block_info.scene_id = ISP_MODE_CAP;
-			else
-				afl_block_info.scene_id = ISP_MODE_PRV;
-			afl_block_info.bypass = *(cmr_u32 *)param0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_BYPASS, &afl_block_info, param1);
 		}
 		break;
 	case ISP_AFL_NEW_SET_BYPASS:
@@ -2031,13 +2007,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_u_blocks_info afl_block_info;
 	struct isp_statis_info *statis_info = NULL;
-	struct isp_pm_param_data pm_afl_data;
-	struct isp_pm_ioctl_input pm_afl_input = {NULL, 0};
-	struct isp_pm_ioctl_output pm_afl_output = {NULL, 0};
-	memset(&pm_afl_data, 0, sizeof(pm_afl_data));
 
-	memset(&afl_input, 0, sizeof(afl_input));
-	memset(&afl_output, 0, sizeof(afl_output));
+	memset(&afl_input, 0x0, sizeof(afl_input));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
 	u_addr = statis_info->vir_addr;
@@ -2086,21 +2057,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_SWITCH_FLAG, &cur_exp_flag, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FLICKER_SWITCH_FLAG"));
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
-	}
-	BLOCK_PARAM_CFG(pm_afl_data, ISP_PM_BLK_ISP_SETTING,
-		ISP_BLK_ANTI_FLICKER,
-		cxt->mode_id[0],
-		NULL, 0);
-	pm_afl_input.param_num = 1;
-	pm_afl_input.param_data_ptr = &pm_afl_data;
-
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &pm_afl_input, &pm_afl_output);
-	if (ISP_SUCCESS == ret && 1 == pm_afl_output.param_num) {
-		afl_input.afl_param_ptr = (struct isp_antiflicker_param *)pm_afl_output.param_data->data_ptr;
-		afl_input.pm_param_num = pm_afl_output.param_num;
-	} else {
-		afl_input.afl_param_ptr = NULL;
-		afl_input.pm_param_num = 0;
 	}
 
 	afl_input.ae_stat_ptr = &ae_stat_ptr;
