@@ -3311,6 +3311,9 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	ae_cfg_set_aem_mode(cxt);
 	ae_cfg_monitor(cxt);
 
+	cxt->calc_results.monitor_info.trim = cxt->monitor_unit.trim;
+	cxt->calc_results.monitor_info.win_num  = cxt->monitor_unit.win_num;
+	cxt->calc_results.monitor_info.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
 	mode = AE_WORK_MODE_COMMON;//AE block only be in common
@@ -4227,6 +4230,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		if(ae_sync_status_temp != SYNC_RUN ||  ae_sync_status != SYNC_RUN)
 		{
 			ISP_LOGE("master: fail to get slave ae_sync_status  =%d", ae_sync_status);
+			cxt->calc_results.is_skip_cur_frame = 1;
 			return AE_SKIP_FRAME;
 		}
 	}
