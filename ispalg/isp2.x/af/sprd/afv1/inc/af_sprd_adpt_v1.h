@@ -195,9 +195,6 @@ typedef struct _af_ctrl {
 	struct afm_thrd_rgb thrd;
 	struct af_gsensor_info gsensor_info;
 	struct isp_face_area face_info;
-	pthread_mutex_t af_work_lock;
-	pthread_mutex_t caf_work_lock;
-	sem_t af_wait_caf;
 	isp_info_t isp_info;
 	lens_info_t lens;
 	cmr_s32 flash_on;
@@ -224,7 +221,6 @@ typedef struct _af_ctrl {
 	//non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
-	pthread_mutex_t status_lock;
 	cmr_handle caller;
 	cmr_handle handle_pm;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
