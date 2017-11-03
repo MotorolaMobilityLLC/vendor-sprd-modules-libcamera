@@ -4431,7 +4431,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 #else
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS && (!cxt->sensor_role))
 	{
-		cmr_u16 bv;
+		cmr_s16 bv;
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_BV_DATA, NULL, &bv);
 		current_result->cur_bv = bv;
 

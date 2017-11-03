@@ -498,7 +498,7 @@ struct ae1_senseor_out {
 	cmr_u16 cur_dummy;	/*dummy line: the value is related to the resolution & fps */
 	cmr_s16 cur_again;	/*current analog gain */
 	cmr_s16 cur_dgain;	/*current digital gain */
-	cmr_u32 cur_bv;
+	cmr_s32 cur_bv;
 };
 
 struct ae_alg_calc_result {
@@ -509,7 +509,7 @@ struct ae_alg_calc_result {
 	cmr_s16 target_lum_ori;	/*the ae target lum(original): 0 ~255 */
 	cmr_s16 target_zone_ori;	/*the ae target lum stable zone(original):0~255 */
 	cmr_u32 frame_id;
-	cmr_u16 cur_bv;	/*bv parameter */
+	cmr_s16 cur_bv;	/*bv parameter */
 	cmr_s16 cur_bv_nonmatch;
 	cmr_s16 *histogram;	/*luma histogram of current frame */
 	//for flash
