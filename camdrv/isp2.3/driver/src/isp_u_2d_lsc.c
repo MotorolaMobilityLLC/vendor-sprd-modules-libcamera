@@ -297,7 +297,6 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	cmr_uint buf_addr;
-	cmr_u32 *ptr = NULL;
 	struct isp_io_param param;
 	struct isp_file *file = NULL;
 	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
@@ -328,11 +327,6 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 		return -1;
 	}
 
-	ptr = (void *)buf_addr;
-	ISP_LOGV("ISP value: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x 0x%x, 0x%x, 0x%x",
-			*ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3), *(ptr + 4), *(ptr + 5), *(ptr + 6),
-			*(ptr + 7), *(ptr + 8), *(ptr + 9), *(ptr + 10), *(ptr + 11), *(ptr + 12));
-
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,
 			((cmr_u16) lens_info->grid_x_num & 0xFF) + 2,
 			(lens_info->grid_width & 0xFF),
@@ -341,9 +335,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 		ISP_LOGE("ISP_GenerateQValues is error");
 		return ret;
 	}
-#ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
-	lens_info->bypass = 1;
-#endif
+
 	param.isp_id = file->isp_id;
 	param.scene_id = lsc_2d_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;

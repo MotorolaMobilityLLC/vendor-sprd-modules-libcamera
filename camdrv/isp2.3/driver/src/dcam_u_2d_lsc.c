@@ -25,7 +25,6 @@ cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	cmr_uint buf_addr;
-	cmr_u32 *ptr = NULL;
 	struct isp_io_param param;
 	struct isp_file *file = NULL;
 	struct isp_dev_2d_lsc_info *lens_info = NULL;
@@ -58,18 +57,12 @@ cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 		memcpy((void *)file->dcam_lsc_vaddr, (void *)buf_addr, lens_info->buf_len);
 	}
 
-	ptr = (void *)buf_addr;
-	ISP_LOGV("DCAM value: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x 0x%x, 0x%x, 0x%x",
-			*ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3), *(ptr + 4), *(ptr + 5), *(ptr + 6),
-			*(ptr + 7), *(ptr + 8), *(ptr + 9), *(ptr + 10), *(ptr + 11), *(ptr + 12));
-
 	param.isp_id = file->isp_id;
 	param.sub_block = DCAM_BLOCK_2D_LSC;
 	param.property = DCAM_PRO_2D_LSC_BLOCK;
 	param.property_param = lens_info;
 
 	ret = ioctl(file->fd, SPRD_STATIS_IO_CFG_PARAM, &param);
-
 
 	return ret;
 }
