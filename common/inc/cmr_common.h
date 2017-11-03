@@ -85,6 +85,7 @@ extern "C" {
 #define HDR_CAP_NUM 3
 #define PRE_3DNR_NUM 2
 #define CAP_3DNR_NUM 5
+#define PRE_SW_3DNR_RESERVE_NUM 8
 #define FACE_DETECT_NUM 10
 #define FRAME_NUM_MAX 0xFFFFFFFF
 #define FRAME_FLASH_MAX 0x0000FFFF
@@ -121,6 +122,11 @@ extern "C" {
 #define CAMERA_WIDTH(w) ((w) & ~(8 - 1))
 #define CAMERA_HEIGHT(h) ((h) & ~(8 - 1))
 #define CMR_ADDR_ALIGNED(x) ((((x) + 256 - 1) >> 8) << 8)
+
+#define CMR_3DNR_4_3_SMALL_WIDTH 1280
+#define CMR_3DNR_4_3_SMALL_HEIGHT 960
+#define CMR_3DNR_16_9_SMALL_WIDTH 1280
+#define CMR_3DNR_16_9_SMALL_HEIGHT 720
 
 #define CMR_JPEG_SZIE(w, h) (cmr_u32)((w) * (h)*3 / 2)
 #define CMR_EVT_MASK_BITS                                                      \
@@ -520,6 +526,7 @@ struct video_start_param {
 struct memory_param {
     cmr_malloc alloc_mem;
     cmr_free free_mem;
+    cmr_gpu_malloc gpu_alloc_mem;
 };
 
 struct isptool_scene_param {
@@ -1434,6 +1441,10 @@ typedef cmr_int (*camera_cb_of_free)(enum camera_mem_cb_type type,
                                      cmr_uint *phy_addr, cmr_uint *vir_addr,
                                      cmr_s32 *fd, cmr_u32 sum,
                                      void *private_data);
+typedef cmr_int (*camera_cb_of_gpu_malloc)(
+    enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
+    cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd, void **handle,
+    cmr_uint *width, cmr_uint *height, void *private_data);
 typedef struct oem_ops {
     cmr_int (*camera_init)(cmr_u32 camera_id, camera_cb_of_type callback,
                            void *client_data, cmr_uint is_autotest,
@@ -1647,7 +1658,10 @@ typedef struct oem_ops {
     cmr_int (*camera_get_tuning_param)(cmr_handle camera_handle,
                                        struct tuning_param_info *tuning_info);
 #endif
-
+#if defined(CONFIG_ISP_2_3)
+    cmr_int (*camera_set_gpu_mem_ops)(cmr_handle camera_handle,
+                                      void *cb_of_malloc, void *cb_of_free);
+#endif
 } oem_ops_t;
 
 typedef struct oem_module {
@@ -1660,6 +1674,17 @@ typedef struct oem_module {
     void *dso;
 
 } oem_module_t;
+
+/*sw 3dnr */
+struct threednr_pre_miscinfo {
+    cmr_uint small_width;
+    cmr_uint small_height;
+    cmr_uint width;
+    cmr_uint height;
+    unsigned long *small_buf_phy;
+    unsigned long *small_buf_vir;
+    cmr_s32 *small_buf_fd;
+};
 
 /**
 * Name of the hal_module_info

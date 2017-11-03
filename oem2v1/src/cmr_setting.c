@@ -2033,8 +2033,8 @@ static cmr_int setting_set_3dnr_enable(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     hal_param->is_3dnr = parm->cmd_type_value;
-    CMR_LOGD("sprd_3dnr_enable=%ld", hal_param->is_3dnr);
 
+    CMR_LOGD("sprd_3dnr_enable=%ld", hal_param->is_3dnr);
     return ret;
 }
 

@@ -14,10 +14,32 @@
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 LOCAL_PATH:= $(call my-dir)
 
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9832e)
+
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
-LIB_PATH := mv_lib/lib
+LIB_PATH := blacksesame/mv_lib/lib
+endif
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libtdnsTest
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
+LOCAL_MODULE_TAGS := optional
+ifeq ($(PLATFORM_VERSION),8.0.0)
+LOCAL_PROPRIETARY_MODULE := true
+endif
+include $(BUILD_PREBUILT)
+
+else
+
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := sprd/mv_lib/lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
-LIB_PATH := mv_lib/x86_lib
+LIB_PATH := sprd/mv_lib/x86_lib
 endif
 
 include $(CLEAR_VARS)
@@ -35,7 +57,7 @@ endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := src/3dnr_module.cpp
+LOCAL_SRC_FILES := sprd/src/3dnr_module.cpp
 LOCAL_MODULE :=libsprd3dnr
 
 LOCAL_SHARED_LIBRARIES :=libcutils libsprd3dnrmv
@@ -47,7 +69,7 @@ LOCAL_CFLAGS :=  -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wunused-var
 
 LOCAL_C_INCLUDES := \
          $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-         $(LOCAL_PATH)/inc \
+         $(LOCAL_PATH)/sprd/inc \
          $(LOCAL_PATH)/../../common/inc \
          $(LOCAL_PATH)/../libgralloc_mali \
          $(TOP)/system/core/include/cutils/
@@ -57,4 +79,5 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+endif
 endif

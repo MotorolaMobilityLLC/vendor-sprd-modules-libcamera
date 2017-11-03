@@ -68,6 +68,7 @@ extern "C" {
 
 #include <sys/socket.h>
 #include <cutils/sockets.h>
+#include <ui/GraphicBuffer.h>
 
 using namespace android;
 
@@ -114,6 +115,11 @@ typedef struct sprd_camera_memory {
     void *data;
     bool busy_flag;
 } sprd_camera_memory_t;
+
+typedef struct sprd_3dnr_memory {
+    sp<GraphicBuffer> bufferhandle;
+    void *private_handle;
+} sprd_3dnr_memory_t;
 
 struct ZslBufferQueue {
     camera_frame_type frame;
@@ -273,7 +279,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mVideoParameterSetFlag;
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
-
+    // sw 3dnr solution used
+    bool mUsingSW3DNR; // only for blacksesame 3dnr (sw solution)
+    bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
   private:
     inline void print_time();
 
@@ -490,6 +498,18 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                    cmr_s32 *fd);
     int Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                  cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                   cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRCaptureMalloc(cmr_u32 size, cmr_u32 sum,
+                                     cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                     cmr_s32 *fd, void **handle, cmr_uint width,
+                                     cmr_uint height);
+    int Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                       cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRCapturePathMalloc(cmr_u32 size, cmr_u32 sum,
+                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                         cmr_s32 *fd, void **handle,
+                                         cmr_uint width, cmr_uint height);
     int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
     int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
@@ -502,6 +522,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd,
                                void *private_data);
+    static int Callback_GPUMalloc(enum camera_mem_cb_type type,
+                                  cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
+                                  cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                  cmr_s32 *fd, void **handle, cmr_uint *width,
+                                  cmr_uint *height, void *private_data);
 
     // zsl start
     int getZSLQueueFrameNum();
@@ -576,6 +601,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_3dnr_memory_t m3DNRGraphicArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_3dnr_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
 
     sprd_camera_memory_t *mReDisplayHeap;
     // TODO: put the picture dimensions in the CameraParameters object;
@@ -660,6 +687,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mRefocusHeapNum;
     uint32_t mPdafRawHeapNum;
     uint32_t mSubRawHeapNum;
+    uint32_t m3dnrGraphicHeapNum;
+    uint32_t m3dnrGraphicPathHeapNum;
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;
@@ -701,6 +730,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mIspAntiFlickerHeapReserved;
     sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
     sprd_camera_memory_t *m3DNRPrevHeapReserverd[PRE_3DNR_NUM];
+    sprd_camera_memory_t *m3DNRPrevScaleHeapReserverd[PRE_SW_3DNR_RESERVE_NUM];
     sprd_camera_memory_t *m3DNRHeapReserverd;
     sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
 

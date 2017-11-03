@@ -92,7 +92,7 @@ struct preview_md_ops {
                                cmr_u32 *channel_id,
                                struct img_data_end *endian);
     cmr_int (*channel_dcam_size)(cmr_handle oem_handle,
-                                struct sprd_dcam_path_size *dcam_cfg);
+                                 struct sprd_dcam_path_size *dcam_cfg);
     cmr_int (*channel_scale_capability)(cmr_handle oem_handle, cmr_u32 *width,
                                         cmr_u32 *sc_factor,
                                         cmr_u32 *sc_threshold);
@@ -139,6 +139,8 @@ struct preview_md_ops {
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
     cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
+    cmr_int (*sw_3dnr_info_cfg)(cmr_handle oem_handle,
+                                struct sprd_img_3dnr_param *threednr_info);
 };
 
 struct preview_init_param {
@@ -169,6 +171,7 @@ struct preview_param {
     cmr_u32 is_hdr;
     cmr_u32 sprd_hdr_plus_enable;
     cmr_u32 is_3dnr;
+    cmr_u32 is_sw_3dnr;
     cmr_u32 frame_ctrl;  // 0:stop,1:continue
     cmr_u32 frame_count; // 0xffffffff for zsl
     cmr_u32 isp_width_limit;
@@ -296,14 +299,19 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
 
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
-                               struct frm_info *in, cmr_uint *vir_addr_y);
+                                struct frm_info *in, cmr_uint *vir_addr_y);
 cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
-                               struct frm_info *in, cmr_uint *vir_addr_y);
+                                 struct frm_info *in, cmr_uint *vir_addr_y);
+cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
+                                       struct frm_info *in,
+                                       cmr_uint *vir_addr_y,
+                                       cmr_u32 is_for_path,
+                                       void **thrednr_handle);
 
 cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 
-cmr_int cal_dcam_output_size(cmr_u16 *src_w, cmr_u16 *src_h, cmr_u32 *dst_w, cmr_u32 *dst_h);
-
+cmr_int cal_dcam_output_size(cmr_u16 *src_w, cmr_u16 *src_h, cmr_u32 *dst_w,
+                             cmr_u32 *dst_h);
 
 #ifdef __cplusplus
 }

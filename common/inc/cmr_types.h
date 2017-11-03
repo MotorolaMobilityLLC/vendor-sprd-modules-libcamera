@@ -65,9 +65,12 @@ enum camera_mem_cb_type {
     CAMERA_SNAPSHOT_3DNR,
     CAMERA_SNAPSHOT_3DNR_DST,
     CAMERA_PREVIEW_3DNR,
+    CAMERA_PREVIEW_SCALE_3DNR,
 #endif
     CAMERA_PREVIEW_DEPTH,
     CAMERA_PREVIEW_SW_OUT,
+    CAMERA_SNAPSHOT_SW3DNR,
+    CAMERA_SNAPSHOT_SW3DNR_PATH,
     CAMERA_MEM_CB_TYPE_MAX
 };
 
@@ -98,5 +101,9 @@ typedef cmr_int (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle,
 typedef cmr_int (*cmr_free)(cmr_u32 mem_type, cmr_handle oem_handle,
                             cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
                             cmr_u32 sum);
-
+typedef cmr_int (*cmr_gpu_malloc)(cmr_u32 mem_type, cmr_handle oem_handle,
+                                  cmr_u32 *size, cmr_u32 *sum,
+                                  cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                  cmr_s32 *fd, void **handle, cmr_uint *width,
+                                  cmr_uint *height);
 #endif

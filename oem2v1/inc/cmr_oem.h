@@ -145,6 +145,7 @@ struct snapshot_context {
     cmr_u32 is_hdr;
     cmr_u32 sprd_hdr_plus_enable; //  hdr+nor mode 1, other mode 0
     cmr_u32 is_3dnr;
+    cmr_u32 is_sw_3dnr;
     cmr_u32 total_num;
     cmr_u32 snp_mode;
     cmr_u32 is_cfg_rot_cap;
@@ -284,6 +285,7 @@ struct camera_context {
     /*memory func*/
     camera_cb_of_malloc hal_malloc;
     camera_cb_of_free hal_free;
+    camera_cb_of_gpu_malloc hal_gpu_malloc;
     void *hal_mem_privdata;
     cmr_uint is_enter_focus;
 
@@ -311,6 +313,16 @@ struct camera_context {
 
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
+};
+
+struct prev_threednr_info {
+    struct img_frm frm_preview;
+    struct img_frm frm_smallpreview;
+    struct img_frm frm_video;
+    struct camera_frame_type framtype;
+    unsigned long camera_id;
+    void *caller_handle;
+    struct frm_info data;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
@@ -470,6 +482,8 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
                                          struct enc_exif_param *param);
+cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
+                                     void *cb_of_free);
 
 #ifdef __cplusplus
 }

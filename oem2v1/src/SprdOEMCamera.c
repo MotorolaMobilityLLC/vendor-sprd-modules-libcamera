@@ -1189,6 +1189,19 @@ cmr_int camera_get_tuning_param(cmr_handle camera_handle,
     return ret;
 }
 #endif
+
+cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
+                               void *cb_of_free) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    ret = camera_local_set_gpu_mem_ops(camera_handle, cb_of_malloc, cb_of_free);
+    if (ret) {
+        ret = -CMR_CAMERA_FAIL;
+        CMR_LOGE("failed to set camera gpu callback %ld", ret);
+    }
+
+    return ret;
+}
+
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1222,6 +1235,9 @@ static oem_ops_t oem_module_ops = {
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param
+#endif
+#if defined(CONFIG_ISP_2_3)
+                              camera_set_gpu_mem_ops
 #endif
 };
 

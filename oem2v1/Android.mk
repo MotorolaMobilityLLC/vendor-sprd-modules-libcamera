@@ -110,7 +110,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/inc
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
 	LOCAL_SRC_FILES+= src/cmr_3dnr.c
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
@@ -275,7 +275,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/inc
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
 	LOCAL_SRC_FILES+= src/cmr_3dnr.c
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
@@ -463,6 +463,19 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_STATIC_LIBRARIES += libsprdfa libsprdfar
         LOCAL_SHARED_LIBRARIES += libsprdfd
 endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9832e)
+	LOCAL_SRC_FILES+= src/cmr_3dnr_sw.c
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
+	LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
+else
+	LOCAL_SRC_FILES+= src/cmr_3dnr.c
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
+	LOCAL_SHARED_LIBRARIES += libsprd3dnr
+endif
+endif
+
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 	LOCAL_SHARED_LIBRARIES += libgyrostab

@@ -110,7 +110,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/inc
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
 	LOCAL_SRC_FILES+= src/cmr_3dnr.c
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
