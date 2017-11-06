@@ -5016,31 +5016,6 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     display_flag = iSDisplayCaptureFrame();
     callback_flag = iSCallbackCaptureFrame();
 
-    if (display_flag) {
-        dst_width = mPreviewWidth;
-        dst_height = mPreviewHeight;
-        dst_fd = getRedisplayMem(dst_width, dst_height);
-        if (0 == dst_fd) {
-            HAL_LOGE("get redisplay memory failed");
-            goto exit;
-        }
-        dst_vaddr = (cmr_uint)mReDisplayHeap->data;
-
-        ret = mHalOem->ops->camera_get_redisplay_data(
-            mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
-            frame->fd, frame->y_phy_addr, frame->uv_phy_addr, frame->y_vir_addr,
-            frame->width, frame->height);
-        if (ret) {
-            HAL_LOGE("camera_get_data_redisplay failed");
-            FreeReDisplayMem();
-            goto exit;
-        }
-
-        displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr,
-                                  (char *)mReDisplayHeap->data);
-        FreeReDisplayMem();
-    }
-
     if (callback_flag) {
         dst_paddr = 0;
         dst_width = mRawWidth;
@@ -5080,6 +5055,31 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
                                    (char *)mReDisplayHeap->data);
             FreeReDisplayMem();
         }
+    }
+
+    if (display_flag) {
+        dst_width = mPreviewWidth;
+        dst_height = mPreviewHeight;
+        dst_fd = getRedisplayMem(dst_width, dst_height);
+        if (0 == dst_fd) {
+            HAL_LOGE("get redisplay memory failed");
+            goto exit;
+        }
+        dst_vaddr = (cmr_uint)mReDisplayHeap->data;
+
+        ret = mHalOem->ops->camera_get_redisplay_data(
+            mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
+            frame->fd, frame->y_phy_addr, frame->uv_phy_addr, frame->y_vir_addr,
+            frame->width, frame->height);
+        if (ret) {
+            HAL_LOGE("camera_get_data_redisplay failed");
+            FreeReDisplayMem();
+            goto exit;
+        }
+
+        displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr,
+                                  (char *)mReDisplayHeap->data);
+        FreeReDisplayMem();
     }
 
 exit:
