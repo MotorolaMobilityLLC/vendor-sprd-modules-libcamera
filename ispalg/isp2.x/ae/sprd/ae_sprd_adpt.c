@@ -110,7 +110,7 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 			isp_gain = 1.0;
 		}
 	}
-
+	//ISP_LOGI("calc param: %f, %f, %d, sensor max gain%d\n", sensor_gain, isp_gain, (exp_data->lib_data.gain % cxt->sensor_gain_precision), max_gain);
 	exp_data->lib_data.sensor_gain = sensor_gain;
 	exp_data->lib_data.isp_gain = (isp_gain * 4096.0 + 0.5);
 
@@ -304,7 +304,6 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 		tmp_param.exp_line = (cmr_u32)(1.0 * tmp_param.exp_line * cxt->binning_factor_before / cxt->binning_factor_after + 0.5);
 	}
 	ISP_LOGV("exp_line %d, binning_factor_before %d, binning_factor_after %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_before, cxt->binning_factor_after, cxt->zsl_flag);
-
 	if (0 !=  write_param->exp_line) {
 		struct ae_exposure exp;
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
@@ -2017,6 +2016,44 @@ static int32_t ae_stats_data_preprocess(cmr_u32 *src_aem_stat, cmr_u16 *dst_aem_
 	}
 
 	return rtn;
+}
+
+static cmr_s32 ae_set_soft_gain(struct  ae_ctrl_cxt *cxt,
+								cmr_u32 *src_aem_stat,
+								cmr_u32 *dst_aem_stat,
+								struct ae_size aem_blk_num,
+								cmr_u32 isp_dgain)
+{
+	cmr_s32 ret = AE_SUCCESS;
+	cmr_u32 i = 0, num = 0;
+	cmr_u32 *src_r_ptr = NULL;
+	cmr_u32 *src_g_ptr = NULL;
+	cmr_u32 *src_b_ptr = NULL;
+	cmr_u32 *dst_r_ptr = NULL;
+	cmr_u32 *dst_g_ptr = NULL;
+	cmr_u32 *dst_b_ptr = NULL;
+	UNUSED(cxt);
+
+	num = aem_blk_num.w * aem_blk_num.h;
+	src_r_ptr = (cmr_u32*)src_aem_stat;
+	src_g_ptr = (cmr_u32*)src_aem_stat + num;
+	src_b_ptr = (cmr_u32*)src_aem_stat + 2 * num;
+	dst_r_ptr = (cmr_u32*)dst_aem_stat;
+	dst_g_ptr = (cmr_u32*)dst_aem_stat + num;
+	dst_b_ptr = (cmr_u32*)dst_aem_stat + 2 * num;
+	for (i = 0; i < num; ++i) {
+		*dst_r_ptr = (cmr_u32)(1.0 * (*src_r_ptr) * isp_dgain / 4096 + 0.5);
+		*dst_g_ptr = (cmr_u32)(1.0 * (*src_g_ptr) * isp_dgain / 4096 + 0.5);
+		*dst_b_ptr = (cmr_u32)(1.0 * (*src_b_ptr) * isp_dgain / 4096 + 0.5);
+		src_r_ptr++;
+		src_g_ptr++;
+		src_b_ptr++;
+		dst_r_ptr++;
+		dst_g_ptr++;
+		dst_b_ptr++;
+	}
+
+	return ret;
 }
 
 static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
@@ -4107,7 +4144,10 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.effect_expline  = cxt->exp_data.actual_data.exp_line;
 	cxt->cur_status.effect_dummy  =cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.effect_gain = cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
-
+#if CONFIG_ISP_2_3
+	/*it will be enable lately*/
+	//ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
+#endif
 	cxt->cur_result.face_lum = current_result->face_lum;	//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
@@ -4280,7 +4320,10 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.effect_dummy  =cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.effect_gain = (cmr_s32)(1.0 * cxt->exp_data.actual_data.isp_gain *\
 		cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
-
+#if CONFIG_ISP_2_3
+	/*it will be enable lately*/
+	//ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
+#endif
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
 	cxt->sync_aem[3 * 1024 + 2] = cxt->cur_status.effect_dummy;
@@ -4912,14 +4955,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			info.gain_2x_exp = (rdm_otp_data[9] <<24) | (rdm_otp_data[8]<<16) | (rdm_otp_data[7]<<8) | rdm_otp_data[6];
 			info.gain_4x_exp = (rdm_otp_data[13] <<24) | (rdm_otp_data[12]<<16) | (rdm_otp_data[11]<<8) | rdm_otp_data[10];
 			info.gain_8x_exp = (rdm_otp_data[17] <<24) | (rdm_otp_data[16]<<16) | (rdm_otp_data[15]<<8) | rdm_otp_data[14];
-
-			#ifdef CONFIG_ISP_2_3
-			//rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
-			#endif
-
-			#ifdef CONFIG_ISP_2_1
-			//rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
-			#endif
 
 			#ifdef CONFIG_ISP_2_2
 			if (cxt->sensor_role) {

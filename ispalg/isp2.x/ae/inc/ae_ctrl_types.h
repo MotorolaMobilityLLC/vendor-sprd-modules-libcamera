@@ -157,10 +157,8 @@ enum ae_cb_type {
 	AE_CB_LED_NOTIFY,
 	AE_CB_FLASH_FIRED,
 	AE_CB_PROCESS_OUT,
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	AE_CB_AE_CALCOUT_NOTIFY,	//for Binding frame and calc ae dt
 	AE_CB_EXPTIME_NOTIFY,
-#endif
 	AE_CB_MAX
 };
 
@@ -520,11 +518,9 @@ struct ae_calc_out {
 	cmr_u32 flag4idx;
 	cmr_s32 cur_bv;
 	float exposure_time;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cmr_u32 sec;
 	cmr_u32 usec;
 	cmr_s64 monoboottime;
-#endif
 	struct ae_ctrl_alc_log log_ae;
 };
 
