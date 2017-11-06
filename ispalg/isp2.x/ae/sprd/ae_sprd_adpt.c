@@ -50,15 +50,6 @@
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD1 0/*lower than thrd1, min fps*/
-#define AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 1000 /*higher than thrd2, max fps*/
-
-/*
- * should be read from driver later
- */
-#define AE_FLASH_ON_OFF_THR 380
-#define AE_FLASH_OFFSET_UP 100
-#define AE_FLASH_OFFSET_DOWN 0
 #define AE_FLASH_CALC_TIMES	60	/* prevent flash_pfOneIteration time out */
 #define AE_THREAD_QUEUE_NUM		(50)
 const char AE_MAGIC_TAG[] = "ae_debug_info";
@@ -546,6 +537,9 @@ static cmr_s32 ae_adjust_exp_gain(struct ae_ctrl_cxt *cxt,
 	}
 
 	dst_exp_param->exp_time = dst_exp_param->exp_line * cxt->cur_status.line_time;
+
+	if(0 == cxt->cur_status.line_time)
+		ISP_LOGE("Can't receive line_time from drvier!");
 
 	ISP_LOGV("fps: %d, %d,max exp l: %d src: %d, %d, %d, dst:%d, %d, %d\n",
 		fps_range->min, fps_range->max, max_exp, src_exp_param->exp_line,
@@ -1106,8 +1100,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->cur_status.settings.flash_target = cxt->cur_param->flash_param.target_lum;
 		if (0 != cxt->flash_ver) {
 			/*lock AE algorithm*/
-			cxt->pre_flash_skip = 3;
-			cxt->aem_effect_delay = 0;
+			cxt->pre_flash_skip = cxt->cur_param->flash_control_param.pre_flash_skip;
+			cxt->aem_effect_delay = cxt->cur_param->flash_control_param.aem_effect_delay;
 		}
 		cxt->cur_status.settings.flash = FLASH_PRE;
 		break;
@@ -1346,10 +1340,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 		for (i = 0; i < init_param->dflash_num && i < AE_MAX_PARAM_NUM; ++i) {
 			memcpy(&cxt->dflash_param[i], init_param->flash_tuning[i].param, sizeof(struct flash_tune_param));
 		}
-/*start read front flash tuning param*/
-		cxt->front_flash_param[0].led_thr_down = 250;
-		cxt->front_flash_param[0].led_thr_up = 500;
-/*end to read front flash tuning param*/
+
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
 		cxt->monitor_unit.win_num = init_param->monitor_win_num;
@@ -2123,6 +2114,10 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 	memset((void*)&out, 0, sizeof(out));
 
+	ISP_LOGV("pre_flash_skip %d, aem_effect_delay %d",
+		cxt->pre_flash_skip,
+		cxt->aem_effect_delay);
+
 	if (1 == cxt->flash_esti_result.isEnd) {
 		goto EXIT;
 	}
@@ -2292,14 +2287,18 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
+	ISP_LOGV("ae_video_fps_thr_high: %d, ae_video_fps_thr_low: %d\n",
+		cxt->cur_param->ae_video_fps.ae_video_fps_thr_high,
+		cxt->cur_param->ae_video_fps.ae_video_fps_thr_low);
+
 	if (AE_WORK_MODE_VIDEO == current_status->settings.work_mode) {
 		ISP_LOGV("%d, %d, %d, %d, %d",
 			cxt->sync_cur_result.cur_bv, current_status->settings.min_fps, current_status->settings.max_fps,
 			cxt->fps_range.min, cxt->fps_range.max);
-		if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD2 < cxt->sync_cur_result.cur_bv) {
+		if (cxt->cur_param->ae_video_fps.ae_video_fps_thr_high < cxt->sync_cur_result.cur_bv) {
 			current_status->settings.max_fps  = cxt->fps_range.max;
 			current_status->settings.min_fps  = cxt->fps_range.max;
-		} else if (AE_VIDEO_DECR_FPS_DARK_ENV_THRD1< cxt->sync_cur_result.cur_bv) {
+		} else if (cxt->cur_param->ae_video_fps.ae_video_fps_thr_low < cxt->sync_cur_result.cur_bv) {
 			current_status->settings.max_fps  = cxt->fps_range.max;
 			current_status->settings.min_fps  = cxt->fps_range.min;
 		} else {
@@ -2313,7 +2312,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 	}
 
 	if (0 < cxt->cur_status.settings.flash) {
-		ISP_LOGI("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->settings.flash);
+		ISP_LOGV("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->settings.flash);
 		current_status->settings.flicker = cxt->cur_flicker;
 	}
 
@@ -2441,11 +2440,17 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 	} else {
 	/* for new flash algorithm (flash algorithm1, dual flash) */
-		if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
+	ISP_LOGV("pre_open_count %d, pre_close_count %d, main_flash_set_count %d, main_capture_count %d",
+		 cxt->cur_param->flash_control_param.pre_open_count,
+		cxt->cur_param->flash_control_param.pre_close_count,
+		cxt->cur_param->flash_control_param.main_flash_set_count,
+		cxt->cur_param->flash_control_param.main_capture_count);
+
+	if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
 			FLASH_PRE_BEFORE == current_status->settings.flash) {
 			cxt->send_once[0]++;
 			ISP_LOGI("ae_flash1_status shake_1");
-			if (3 == cxt->send_once[0]) {
+			if (cxt->cur_param->flash_control_param.pre_open_count == cxt->send_once[0]) {
 				ISP_LOGI("ae_flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_PREFLASH);
 
@@ -2462,7 +2467,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cxt->cur_result.cur_lum, cxt->cur_result.flash_effect);
 			cxt->send_once[3]++;//prevent flash_pfOneIteration time out
 			if (cxt->flash_esti_result.isEnd || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
-				if (0 == cxt->send_once[1]) {
+				if (cxt->cur_param->flash_control_param.pre_close_count == cxt->send_once[1]) {
 					cxt->send_once[1]++;
 					cxt->send_once[3] = 0;
 					cb_type = AE_CB_CONVERGED;
@@ -2488,7 +2493,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGI("ae_flash1_status shake_4 %d", cxt->send_once[2]);
 			if (1 > cxt->send_once[2]) {
 				ISP_LOGI("ae_flash1 wait-main-flash!\r\n");
-			} else if (1 == cxt->send_once[2]) {
+			} else if (cxt->cur_param->flash_control_param.main_flash_set_count == cxt->send_once[2]) {
 				ISP_LOGI("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1,
 							cxt->flash_esti_result.captureFlahLevel2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_MAIN);
@@ -2496,7 +2501,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
-			} else if (5 == cxt->send_once[2]) {
+			} else if (cxt->cur_param->flash_control_param.main_capture_count == cxt->send_once[2]) {
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				cxt->cur_result.flash_status = FLASH_NONE;/*flash status reset*/
@@ -2541,7 +2546,13 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->cur_status.led_state = 1;
 			cb_type = AE_CB_LED_NOTIFY;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
-			ISP_LOGI("ae_flash1_callback do-led-open!\r\n");
+			ISP_LOGV("ae_flash1_callback do-led-open!\r\n");
+			ISP_LOGV("camera_id %d, flash_status %d, cur_bv %d, led_open_thr %d, led_state %d",
+				cxt->camera_id,
+				cxt->cur_status.settings.flash,
+				cxt->sync_cur_result.cur_bv,
+				cxt->front_flash_param[0].led_thr_down,
+				cxt->sync_cur_status.led_state);
 		}
 
 		if ((cxt->sync_cur_result.cur_bv >= cxt->front_flash_param[0].led_thr_up) &&
@@ -2550,7 +2561,13 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->cur_status.led_state = 0;
 			cb_type = AE_CB_LED_NOTIFY;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
-			ISP_LOGI("ae_flash1_callback do-led-close!\r\n");
+			ISP_LOGV("ae_flash1_callback do-led-close!\r\n");
+			ISP_LOGV("camera_id %d, flash_status %d, cur_bv %d, led_close_thr %d, led_state %d",
+				cxt->camera_id,
+				cxt->cur_status.settings.flash,
+				cxt->sync_cur_result.cur_bv,
+				cxt->front_flash_param[0].led_thr_up,
+				cxt->sync_cur_status.led_state);
 		}
 	}
 
@@ -3786,39 +3803,21 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 	if (result) {
 		cmr_u32 *flash_eb = (cmr_u32 *) result;
 		cmr_s32 bv = 0;
-		cmr_s32 bv_thr = cxt->flash_on_off_thr;
-		cmr_s32 ae_flash_on_thr = 0;
-		cmr_s32 ae_flash_off_thr = 0;
-
-		if (0 >= bv_thr)
-			bv_thr = AE_FLASH_ON_OFF_THR;
 
 		rtn = ae_get_bv_by_lum_new(cxt, &bv);
 
-		ae_flash_off_thr = bv_thr + AE_FLASH_OFFSET_UP;
-		ae_flash_on_thr = bv_thr + AE_FLASH_OFFSET_DOWN;
-
-		if (bv <= ae_flash_on_thr)
+		if (bv <= cxt->rear_flash_param[0].led_thr_down)
 			*flash_eb = 1;
-		else if(bv >= ae_flash_off_thr)
+		else if(bv > cxt->rear_flash_param[0].led_thr_up)
 			*flash_eb = 0;
 
-		ISP_LOGV("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, thr=%d, ae_flash_off_thr=%d, ae_flash_on_thr=%d", *flash_eb, bv, bv_thr, ae_flash_off_thr, ae_flash_on_thr);
+		ISP_LOGV("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d",
+			*flash_eb,
+			bv,
+			cxt->rear_flash_param[0].led_thr_down,
+			cxt->rear_flash_param[0].led_thr_up);
 	}
 	return rtn;
-}
-
-static cmr_s32 ae_set_flash_thrd(struct ae_ctrl_cxt *cxt, void *param)
-{
-	if (param) {
-		cxt->flash_on_off_thr = *(cmr_s32 *) param;
-		if (0 >= cxt->flash_on_off_thr) {
-			cxt->flash_on_off_thr = AE_FLASH_ON_OFF_THR;
-		}
-		ISP_LOGV("AE_SET_FLASH_ON_OFF_THR: thr %d", cxt->flash_on_off_thr);
-	}
-
-	return AE_SUCCESS;
 }
 
 static cmr_s32 ae_get_gain(struct ae_ctrl_cxt *cxt, void *result)
@@ -4655,10 +4654,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_get_flash_enable(cxt, result);
 		break;
 
-	case AE_SET_FLASH_ON_OFF_THR:
-		rtn = ae_set_flash_thrd(cxt, param);
-		break;
-
 	case AE_SET_TUNING_EB:
 		break;
 
@@ -4983,6 +4978,47 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	s_q_param.sensor_gain_valid_num = cxt->gain_skip_num +  1 + AE_UPDAET_BASE_OFFSET;
 	s_q_param.isp_gain_valid_num = 1 + AE_UPDAET_BASE_OFFSET;
 	cxt->seq_handle = s_q_open(&s_q_param);
+	/*Read tuning param from tuning param*/
+
+	/*start read front flash tuning param*/
+		if(0 != cxt->cur_param->flash_swith_param.flash_open_thr)
+			cxt->front_flash_param[0].led_thr_down = cxt->cur_param->flash_swith_param.flash_open_thr;
+		else
+			cxt->front_flash_param[0].led_thr_down = 250;
+		if(0 != cxt->cur_param->flash_swith_param.flash_close_thr)
+			cxt->front_flash_param[0].led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
+		else
+			cxt->front_flash_param[0].led_thr_up = 500;
+	/*end to read front flash tuning param*/
+
+	/*start read rear flash tuning param*/
+		if(0 != cxt->cur_param->flash_swith_param.flash_open_thr)
+			cxt->rear_flash_param[0].led_thr_down = cxt->cur_param->flash_swith_param.flash_open_thr;
+		else
+			cxt->rear_flash_param[0].led_thr_down = 380;
+		if(0 != cxt->cur_param->flash_swith_param.flash_close_thr)
+			cxt->rear_flash_param[0].led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
+		else
+			cxt->rear_flash_param[0].led_thr_up = 480;
+	/*end to read front flash tuning param*/
+
+	/*start read set video fps tuning param*/
+		if(0 == cxt->cur_param->ae_video_fps.ae_video_fps_thr_high)
+			cxt->cur_param->ae_video_fps.ae_video_fps_thr_high = 1000;
+		if(0 == cxt->cur_param->ae_video_fps.ae_video_fps_thr_low)
+			cxt->cur_param->ae_video_fps.ae_video_fps_thr_low= -300;
+	/*end to set video fps tuning param*/
+
+	/*start read flash control tuning param*/
+		if((0 == cxt->cur_param->flash_control_param.pre_flash_skip) || (3 > cxt->cur_param->flash_control_param.pre_flash_skip))
+			cxt->cur_param->flash_control_param.pre_flash_skip = 3;
+		if((0 == cxt->cur_param->flash_control_param.pre_open_count) || (3 > cxt->cur_param->flash_control_param.pre_open_count))
+			cxt->cur_param->flash_control_param.pre_open_count = 3;
+		if(0 == cxt->cur_param->flash_control_param.main_flash_set_count)
+			cxt->cur_param->flash_control_param.main_flash_set_count = 1;
+		if((0 == cxt->cur_param->flash_control_param.main_capture_count) || (5 > cxt->cur_param->flash_control_param.main_capture_count))
+			cxt->cur_param->flash_control_param.main_capture_count = 5;
+	/*end to read flash control tuning param*/
 
 	/* HJW_S: dual flash algorithm init */
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/

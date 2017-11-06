@@ -143,6 +143,7 @@ struct ae_ctrl_cxt {
 	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_NUM][AE_FLICKER_NUM];
 	struct flash_tune_param dflash_param[AE_MAX_PARAM_NUM];
 	struct front_flash_param front_flash_param[AE_MAX_PARAM_NUM];
+	struct rear_flash_param rear_flash_param[AE_MAX_PARAM_NUM];
 	/*
 	 * sensor related information
 	 */

@@ -122,10 +122,36 @@ struct front_flash_param {
 	cmr_s16 led_thr_down;
 };
 
+struct rear_flash_param {
+	cmr_s16 led_thr_up;
+	cmr_s16 led_thr_down;
+};
+
 struct ae_hdr_tuning_param {
 	cmr_s32 ev_minus_offset;
 	cmr_s32 ev_plus_offset;
 };
+
+struct ae_flash_swith_param {
+	cmr_s32 flash_open_thr;
+	cmr_s32 flash_close_thr;
+};
+
+struct ae_flash_control_param {
+	cmr_u8 pre_flash_skip;
+	cmr_u8 aem_effect_delay;
+	cmr_u8 pre_open_count;
+	cmr_u8 pre_close_count;
+	cmr_u8 main_flash_set_count;
+	cmr_u8 main_capture_count;
+	cmr_u16 reserved;
+};
+
+struct ae_video_set_fps_param {
+	cmr_s32 ae_video_fps_thr_low;
+	cmr_s32 ae_video_fps_thr_high;
+};
+
 struct ae_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;
 	cmr_u32 verify;
@@ -175,7 +201,10 @@ struct ae_tuning_param {	//total bytes must be 263480
 	struct mulaes_tuning_param mulaes_param;	/*9 * 4bytes */
 	struct face_tuning_param face_param;
 	struct ae_hdr_tuning_param hdr_param;
-	cmr_u32 reserved[2044];
+	struct ae_flash_swith_param flash_swith_param;
+	struct ae_flash_control_param flash_control_param;
+	struct ae_video_set_fps_param ae_video_fps;
+	cmr_u32 reserved[2038];
 };
 
 #endif
