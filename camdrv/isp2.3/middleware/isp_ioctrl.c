@@ -301,6 +301,9 @@ static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info afl_block_info;
+
+	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+	afl_block_info.scene_id = ISP_MODE_PRV;
 	afl_block_info.bypass = bypass;
 
 	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO)
@@ -316,14 +319,12 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_flicker set_flicker = { 0 };
-	struct isp_u_blocks_info flicker_block_info;
 	cmr_int bypass = 0;
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
 	}
 
-	memset(&flicker_block_info, 0x0, sizeof(flicker_block_info));
 	cxt->afl_cxt.afl_mode = *(cmr_u32 *) param_ptr;
 	set_flicker.mode = *(cmr_u32 *) param_ptr;
 	if (cxt->ops.ae_ops.ioctrl)

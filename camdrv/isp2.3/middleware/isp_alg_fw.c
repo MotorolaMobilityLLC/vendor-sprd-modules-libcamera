@@ -955,40 +955,20 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 i;
-	cmr_u32 param_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_u_blocks_info afl_block_info;
 
-	if (cxt->zsl_flag)
-		param_num = ISP_MODE_MAX;
-	else
-		param_num = 1;
+	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+	afl_block_info.scene_id = ISP_MODE_PRV;
 
 	switch (type) {
 	case ISP_AFL_NEW_SET_CFG_PARAM:
-		for (i = 0; i < param_num; i++) {
-			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				afl_block_info.scene_id = ISP_MODE_CAP;
-			else
-				afl_block_info.scene_id = ISP_MODE_PRV;
-			afl_block_info.block_info = param0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, &afl_block_info, param1);
-		}
+		afl_block_info.block_info = param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, &afl_block_info, param1);
 		break;
 	case ISP_AFL_NEW_SET_BYPASS:
-		for (i = 0; i < param_num; i++) {
-			memset(&afl_block_info, 0x0, sizeof(afl_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				afl_block_info.scene_id = ISP_MODE_CAP;
-			else
-				afl_block_info.scene_id = ISP_MODE_PRV;
-			afl_block_info.bypass = *(cmr_u32 *)param0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, param1);
-		}
+		afl_block_info.bypass = *(cmr_u32 *)param0;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, param1);
 		break;
 	default:
 		break;
@@ -2014,16 +1994,18 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	float ae_exp = 0.0;
 	cmr_int nxt_flicker = 0;
 	cmr_u32 u_addr = 0;
-	cmr_u32 i;
-	cmr_u32 param_num = 0;
 	struct isp_awb_statistic_info ae_stat_ptr;
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_u_blocks_info afl_block_info;
 	struct isp_statis_info *statis_info = NULL;
 
-	memset(&afl_input, 0x0, sizeof(afl_input));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+
+	memset(&afl_input, 0x0, sizeof(afl_input));
+	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
+
+	afl_block_info.scene_id = ISP_MODE_PRV;
 	statis_info = (struct isp_statis_info *)data;
 	u_addr = statis_info->vir_addr;
 	ae_stat_ptr = cxt->aem_stats;
@@ -2038,21 +2020,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		goto exit;
 	}
 
-	if (cxt->zsl_flag)
-		param_num = ISP_MODE_MAX;
-	else
-		param_num = 1;
-
-	for (i = 0; i < param_num; i++) {
-		memset(&afl_block_info, 0x0, sizeof(afl_block_info));
-		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-			afl_block_info.scene_id = ISP_MODE_CAP;
-		else
-			afl_block_info.scene_id = ISP_MODE_PRV;
-		afl_block_info.bypass = 1;
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
-	}
+	afl_block_info.bypass = 1;
+	isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
@@ -2099,19 +2068,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
 	}
 
-	for (i = 0; i < param_num; i++) {
-		memset(&afl_block_info, 0x0, sizeof(afl_block_info));
-		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-			afl_block_info.scene_id = ISP_MODE_CAP;
-		else
-			afl_block_info.scene_id = ISP_MODE_PRV;
-		if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
-			afl_block_info.bypass = 0;
-		else
-			afl_block_info.bypass = 1;
-			isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
-	}
+	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
+		afl_block_info.bypass = 0;
+	else
+		afl_block_info.bypass = 1;
+	isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
 
 exit:
 	ISP_LOGV("done ret %ld", ret);
