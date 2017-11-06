@@ -79,55 +79,62 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
     HAL_LOGI("id= %d", atoi(id));
 
     switch (atoi(id)) {
+    case MODE_3D_VIDEO_ID:
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
-    case MODE_3D_VIDEO:
         rc = mStereoVideo->camera_device_open(module, id, hw_device);
-        return rc;
 #endif
+        break;
+    case MODE_RANGE_FINDER_ID:
 #ifdef CONFIG_RANGEFINDER_SUPPORT
-    case MODE_RANGE_FINDER:
         rc = mRangeFinder->camera_device_open(module, id, hw_device);
-        return rc;
 #endif
+        break;
+    case MODE_3D_CAPTURE_ID:
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
-    case MODE_3D_CAPTURE:
         rc = mCapture->camera_device_open(module, id, hw_device);
-        return rc;
 #endif
+        break;
+    case MODE_3D_PREVIEW_ID:
 #ifdef CONFIG_STEREOPREVIEW_SUPPORT
-    case MODE_3D_PREVIEW:
         rc = mStereoPreview->camera_device_open(module, id, hw_device);
-        return rc;
 #endif
-#ifdef CONFIG_BOKEH_SUPPORT
-    case MODE_BLUR:
+        break;
+    case MODE_BLUR_ID:
         property_get("persist.sys.camera.raw.mode", prop, "jpeg");
         if (!strcmp(prop, "raw")) {
             rc = mTCam->camera_device_open(module, id, hw_device);
             return rc;
         }
-
         property_get("persist.sys.cam.ba.blur.version", prop, "0");
+
         if (6 == atoi(prop)) {
+#ifdef CONFIG_BOKEH_SUPPORT
             rc = mRealBokeh->camera_device_open(module, id, hw_device);
-            return rc;
+#endif
         }
-        break;
-#endif
+
+        if (3 == atoi(prop)) {
 #ifdef CONFIG_BLUR_SUPPORT
-    case MODE_BLUR:
-    case MODE_BLUR_FRONT:
+            rc = mBlur->camera_device_open(module, id, hw_device);
+#endif
+        }
+
+        break;
+    case MODE_BLUR_FRONT_ID:
+#ifdef CONFIG_BLUR_SUPPORT
         rc = mBlur->camera_device_open(module, id, hw_device);
-        return rc;
 #endif
+        break;
+    case MODE_SELF_SHOT_ID:
 #ifdef CONFIG_COVERED_SENSOR
-    case MODE_SELF_SHOT:
         rc = mSelfShot->camera_device_open(module, id, hw_device);
-        return rc;
-    case MODE_PAGE_TURN:
-        rc = mPageturn->camera_device_open(module, id, hw_device);
-        return rc;
 #endif
+        break;
+    case MODE_PAGE_TURN_ID:
+#ifdef CONFIG_COVERED_SENSOR
+        rc = mPageturn->camera_device_open(module, id, hw_device);
+#endif
+        break;
     default:
 
         HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
@@ -148,55 +155,60 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
     HAL_LOGI("id= %d", camera_id);
 
     switch (camera_id) {
+    case MODE_3D_VIDEO_ID:
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
-    case MODE_3D_VIDEO:
         rc = mStereoVideo->get_camera_info(camera_id, info);
-        return rc;
 #endif
+        break;
+    case MODE_RANGE_FINDER_ID:
 #ifdef CONFIG_RANGEFINDER_SUPPORT
-    case MODE_RANGE_FINDER:
         rc = mRangeFinder->get_camera_info(camera_id, info);
-        return rc;
 #endif
+        break;
+    case MODE_3D_CAPTURE_ID:
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
-    case MODE_3D_CAPTURE:
         rc = mCapture->get_camera_info(camera_id, info);
-        return rc;
 #endif
+        break;
+    case MODE_3D_PREVIEW_ID:
 #ifdef CONFIG_STEREOPREVIEW_SUPPORT
-    case MODE_3D_PREVIEW:
         rc = mStereoPreview->get_camera_info(camera_id, info);
-        return rc;
 #endif
-#ifdef CONFIG_BOKEH_SUPPORT
-    case MODE_BLUR:
+        break;
+    case MODE_BLUR_ID:
         property_get("persist.sys.camera.raw.mode", prop, "jpeg");
         if (!strcmp(prop, "raw")) {
             rc = mTCam->get_camera_info(camera_id, info);
             return rc;
         }
-
         property_get("persist.sys.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
+#ifdef CONFIG_BOKEH_SUPPORT
             rc = mRealBokeh->get_camera_info(camera_id, info);
-            return rc;
+#endif
+        }
+        if (3 == atoi(prop)) {
+#ifdef CONFIG_BLUR_SUPPORT
+            rc = mBlur->get_camera_info(camera_id, info);
+#endif
         }
         break;
-#endif
+
+    case MODE_BLUR_FRONT_ID:
 #ifdef CONFIG_BLUR_SUPPORT
-    case MODE_BLUR:
-    case MODE_BLUR_FRONT:
         rc = mBlur->get_camera_info(camera_id, info);
-        return rc;
 #endif
+        break;
+    case MODE_SELF_SHOT_ID:
 #ifdef CONFIG_COVERED_SENSOR
-    case MODE_SELF_SHOT:
         rc = mSelfShot->get_camera_info(camera_id, info);
-        return rc;
-    case MODE_PAGE_TURN:
-        rc = mPageturn->get_camera_info(camera_id, info);
-        return rc;
 #endif
+        break;
+    case MODE_PAGE_TURN_ID:
+#ifdef CONFIG_COVERED_SENSOR
+        rc = mPageturn->get_camera_info(camera_id, info);
+#endif
+        break;
     default:
 
         HAL_LOGE("cameraId:%d not supported yet!", camera_id);

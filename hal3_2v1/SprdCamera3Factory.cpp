@@ -298,12 +298,13 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         (cameraId > MAX_MULTI_CAMERA_FAKE_ID))
         return false;
 
-    if ((MODE_3D_VIDEO == cameraId) || (MODE_RANGE_FINDER == cameraId) ||
-        (MODE_3D_CAPTURE == cameraId) || (MODE_3D_PREVIEW == cameraId) ||
-        (MODE_BLUR == cameraId) || (MODE_SELF_SHOT == cameraId) ||
-        (MODE_PAGE_TURN == cameraId) || (MODE_BLUR_FRONT == cameraId)) {
+    if ((MODE_3D_VIDEO_ID == cameraId) || (MODE_RANGE_FINDER_ID == cameraId) ||
+        (MODE_3D_CAPTURE_ID == cameraId) || (MODE_3D_PREVIEW_ID == cameraId) ||
+        (MODE_BLUR_ID == cameraId) || (MODE_SELF_SHOT_ID == cameraId) ||
+        (MODE_PAGE_TURN_ID == cameraId) || (MODE_BLUR_FRONT_ID == cameraId)) {
         return true;
-    } else if (MODE_REFOCUS == cameraId || (MODE_3D_CALIBRATION == cameraId)) {
+    } else if (MODE_REFOCUS_ID == cameraId ||
+               (MODE_3D_CALIBRATION_ID == cameraId)) {
         return false;
     }
 
@@ -311,17 +312,24 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
 }
 
 int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     if (MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
         return cameraId;
-    } else if (MODE_REFOCUS == cameraId) { // Camera2 apk open  camera id is
-                                           // MODE_REFOCUS and 2 ,camera hal
-                                           // transform to open physics Camera
-                                           // id is 0 and 2
+    } else if (MODE_REFOCUS_ID == cameraId) { // Camera2 apk open  camera id is
+                                              // MODE_REFOCUS and 2 ,camera hal
+        // transform to open physics Camera
+        // id is 0 and 2
         return 0;
-    } else if (MODE_3D_CALIBRATION ==
+    } else if (MODE_3D_CALIBRATION_ID ==
                cameraId) { // ValidationTools apk open  camera id is
                            // MODE_3D_CALIBRATION and 3 ,camera hal transform to
                            // open physics Camera id is 1 and 3
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        if (6 == atoi(prop)) {
+            return 0;
+        }
         return 1;
     }
 

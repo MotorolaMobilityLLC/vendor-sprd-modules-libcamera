@@ -1310,6 +1310,36 @@ typedef enum {
     MODE_TUNING = 50,
     MODE_CAMERA_MAX
 } multiCameraMode;
+typedef enum {
+    MODE_3D_VIDEO_ID = 5, // Camera2 apk open  camera id is MODE_3D_VIDEO,camera
+                          // hal transform to open physics Camera id is 1 and 3
+    MODE_RANGE_FINDER_ID = 6, // Camera2 apk open  camera id is
+    // MODE_RANGE_FINDER,camera hal transform to open physics
+    // Camera id is 1 and 3
+    MODE_3D_CAPTURE_ID =
+        7, // Camera2 apk open  camera id is MODE_3D_CAPTURE,camera
+           // hal transform to open physics Camera id is 1 and 3
+    MODE_3D_CALIBRATION_ID = 8, // ValidationTools apk open  camera id is
+    // MODE_3D_CALIBRATION and 3 ,camera hal transform
+    // to open physics Camera id is 1/0 and 3
+    MODE_REFOCUS_ID = 9, // Camera2 apk open  camera id is MODE_REFOCUS and 2
+                         // ,camera hal transform to open physics Camera id is 0
+                         // and 2
+    MODE_3D_PREVIEW_ID = 10, // Camera2 apk open  camera id is
+                             // MODE_3D_PREVIEW,camera hal transform to open
+                             // physics Camera id is 1 and 3
+    MODE_SOFY_OPTICAL_ZOOM_ID = 11,
+    MODE_BLUR_ID = 12,
+    MODE_SELF_SHOT_ID =
+        13, // Camera2 apk open  camera id is MODE_SELF_SHOT,camera
+            // hal transform to open physics Camera id is 1 and 2
+    MODE_PAGE_TURN_ID =
+        14, // Camera2 apk open  camera id is MODE_PAGE_TURN,camera
+            // hal transform to open physics Camera id is 2
+    MODE_BLUR_FRONT_ID = 15,
+
+    MODE_CAMERA_ID_MAX
+} multiCameraId; // hal and app interforce
 
 struct img_sbs_info {
     cmr_u32 sbs_mode;
