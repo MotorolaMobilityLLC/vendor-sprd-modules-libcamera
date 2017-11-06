@@ -37,6 +37,9 @@ LOCAL_SRC_FILES += \
 	otp_drv/driver/ov13855_sunny/ov13855_sunny_otp_drv.c \
 	otp_drv/driver/s5k3l8xxm3_qtech/s5k3l8xxm3_qtech_otp_drv.c \
 	otp_drv/driver/s5k3l8xxm3_reachtech/s5k3l8xxm3_reachtech_otp_drv.c \
+	otp_drv/driver/ov2680_cmk/ov2680_cmk_otp_drv.c \
+	otp_drv/driver/ov8856_cmk/ov8856_cmk_otp_drv.c \
+	otp_drv/driver/ov8858_cmk/ov8858_cmk_otp_drv.c \
 	otp_drv/driver/sp8407/sp8407_otp_drv.c \
 	otp_drv/driver/sp8407_cmk/sp8407_cmk_otp_drv.c
 endif

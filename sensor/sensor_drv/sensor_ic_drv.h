@@ -130,6 +130,7 @@ typedef enum {
     SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG,
     SENSOR_VAL_TYPE_GET_BV,
     SENSOR_VAL_TYPE_SET_SENSOR_MULTI_MODE,
+    SENSOR_VAL_TYPE_SET_RAW_INFOR,
     SENSOR_VAL_TYPE_MAX
 } SENSOR_IOCTL_VAL_TYPE;
 
@@ -155,22 +156,31 @@ enum camera_module_id {
     MODULE_DEFAULT = 0x00, /*NULL*/
     MODULE_SUNNY = 0x01,
     MODULE_TRULY,
-    MODULE_A_KERR,
-    MODULE_LITEARRAY,
-    MODULE_DARLING, /*5*/
+    MODULE_RTECH,
     MODULE_QTECH,
+    MODULE_ALTEK, /*5*/
+    MODULE_CMK,
+    MODULE_SHINE,
+    MODULE_DARLING,
+    MODULE_BROAD,
+    MODULE_DMEGC, /*10*/
+    MODULE_SEASONS,
+    MODULE_SUNWIN,
     MODULE_OFLIM,
-    MODULE_HUAQUAN,
-    MODULE_KINGCOM,
-    MODULE_BOOYI, /*10*/
-    MODULE_LAIMU,
-    MODULE_WDSEN,
-    MODULE_SUNRISE,
-    MODULE_CAMERAKING,
+    MODULE_HONGSHI,
+
     MODULE_SUNNINESS, /*15*/
     MODULE_RIYONG,
     MODULE_TONGJU,
     /*add camera vendor name index here*/
+    MODULE_A_KERR,
+    MODULE_LITEARRAY,
+    MODULE_HUAQUAN,
+    MODULE_KINGCOM,
+    MODULE_BOOYI,
+    MODULE_LAIMU,
+    MODULE_WDSEN,
+    MODULE_SUNRISE,
 
     MODULE_MAX, /*NOTE:This must be the last line*/
 };
@@ -623,6 +633,7 @@ struct sensor_ic_drv_cxt {
      *  this pointer point static variable,don't need free.
      **/
     void *exif_ptr;
+    cmr_u8 exif_malloc;
 
     struct hdr_info_t hdr_info;
     struct sensor_ev_info_t sensor_ev_info;
@@ -641,6 +652,7 @@ struct sensor_ic_drv_cxt {
     union {
         cmr_u8 *buffer;
         cmr_u8 data[4];
+        void *priv_handle;
     } privata_data;
 };
 

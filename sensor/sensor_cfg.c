@@ -51,6 +51,9 @@ extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
 #ifdef OV2680
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
 #endif
+#ifdef OV2680_SBS
+extern SENSOR_INFO_T g_ov2680_sbs_mipi_raw_info;
+#endif
 #ifdef OV5675
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
 #endif
@@ -176,21 +179,30 @@ const cmr_u8 camera_module_name_str[MODULE_MAX][20] = {
         [0] = "default",
         [MODULE_SUNNY] = "Sunny",
         [MODULE_TRULY] = "Truly",
-        [MODULE_A_KERR] = "A-kerr",
-        [MODULE_LITEARRAY] = "LiteArray",
-        [MODULE_DARLING] = "Darling", /*5*/
+        [MODULE_RTECH] = "ReachTech",
         [MODULE_QTECH] = "Qtech",
+        [MODULE_ALTEK] = "Altek",/*5*/
+        [MODULE_CMK] = "CameraKing",
+        [MODULE_SHINE] = "Shine",
+        [MODULE_DARLING] = "Darling",
+        [MODULE_BROAD] = "Broad",
+        [MODULE_DMEGC] = "DMEGC",/*10*/
+        [MODULE_SEASONS] = "Seasons",
+        [MODULE_SUNWIN] = " Sunwin",
         [MODULE_OFLIM] = "Oflim",
-        [MODULE_HUAQUAN] = "Huaquan",
-        [MODULE_KINGCOM] = "Kingcom",
-        [MODULE_BOOYI] = "Booyi", /*10*/
-        [MODULE_LAIMU] = "Laimu",
-        [MODULE_WDSEN] = "Wdsen",
-        [MODULE_SUNRISE] = "Sunrise",
-        [MODULE_CAMERAKING] = "CameraKing",
+        [MODULE_HONGSHI] = "Hongshi",
         [MODULE_SUNNINESS] = "Sunniness", /*15*/
         [MODULE_RIYONG] = "Riyong",
         [MODULE_TONGJU] = "Tongju",
+        [MODULE_A_KERR] = "A-kerr",
+        [MODULE_LITEARRAY] = "LiteArray",
+        [MODULE_HUAQUAN] = "Huaquan",
+        [MODULE_KINGCOM] = "Kingcom",
+        [MODULE_BOOYI] = "Booyi",
+        [MODULE_LAIMU] = "Laimu",
+        [MODULE_WDSEN] = "Wdsen",
+        [MODULE_SUNRISE] = "Sunrise",
+
     /*add you camera module name following*/
 };
 
@@ -222,11 +234,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8856_cmk_drv_entry},
 #endif
 #ifdef OV8858
-#ifdef CAMERA_BACK_MIPI_LANE_SWITCH
     {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8858_cmk_drv_entry},
-#else
-    {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
-#endif
 #endif
 #ifdef OV13855
 #if defined(CONFIG_DUAL_MODULE)
@@ -310,6 +318,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef OV8856
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef OV8858
+    {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8858_cmk_drv_entry},
+#endif
 #ifdef OV13850R2A
     {MODULE_SUNNY,  "ov13850r2a", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, NULL},
 #endif
@@ -341,6 +352,9 @@ const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
 #ifdef OV2680
     {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef OV2680_SBS
+    {MODULE_SUNNY, "ov2680_sbs", &g_ov2680_sbs_mipi_raw_info, {NULL, 0}, &ov2680_cmk_drv_entry},
+#endif
 #ifdef OV5675_DUAL
     {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
 #endif
@@ -369,6 +383,11 @@ const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
     {0, "0", NULL, {NULL, 0}, NULL}};
 
 const SENSOR_MATCH_T front_ext_sensor_infor_tab[] = {
+// ov area
+#ifdef OV2680_SBS
+    {MODULE_SUNNY, "ov2680_sbs", &g_ov2680_sbs_mipi_raw_info, {NULL, 0}, &ov2680_cmk_drv_entry},
+#endif
+
 // cista area
 #ifdef C2580
     {MODULE_SUNNY, "c2580", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},

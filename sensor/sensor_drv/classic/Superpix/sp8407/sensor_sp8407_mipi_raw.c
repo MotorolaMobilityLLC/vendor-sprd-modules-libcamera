@@ -163,6 +163,8 @@ static cmr_int sp8407_drv_get_static_info(cmr_handle handle, cmr_uint *param) {
     ex_info->capture_skip_num = module_info->capture_skip_num;
     ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
+    memcpy(&ex_info->fov_info, &static_info->fov_info,
+           sizeof(static_info->fov_info));
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -343,6 +345,10 @@ static cmr_u16 sp8407_drv_update_exposure(cmr_handle handle, cmr_u32 shutter,
 write_sensor_shutter:
     /* write shutter to sensor registers */
     sp8407_drv_write_shutter(handle, shutter);
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(
+            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
+    }
 #ifdef GAIN_DELAY_1_FRAME
     usleep(dest_fr_len * PREVIEW_LINE_TIME / 10);
 #endif
@@ -422,6 +428,16 @@ static cmr_int sp8407_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         ret = sp8407_drv_get_fps_info(handle, param_ptr->pval);
         break;
+    case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+        sns_drv_cxt->is_sensor_close = 1;
+        break;
+#ifdef SBS_MODE_SENSOR
+#ifndef SBS_SENSOR_FRONT
+    case SENSOR_VAL_TYPE_READ_OTP:
+        sp8407_read_otp(handle, param_ptr);
+        break;
+#endif
+#endif
     default:
         break;
     }
@@ -434,19 +450,13 @@ static cmr_int sp8407_drv_access_val(cmr_handle handle, cmr_uint param) {
  * Initialize Exif Info
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int sp8407_drv_init_exif_info(cmr_handle handle,
-                                         void **exif_info_in /*in*/) {
-    cmr_int ret = SENSOR_FAIL;
-    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
-    *exif_info_in = NULL;
-    SENSOR_IC_CHECK_HANDLE(handle);
+static cmr_int sp8407_drv_init_exif_info(void) {
+    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_sp8407_exif_info;
 
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
-    SENSOR_IC_CHECK_PTR(exif_ptr);
-    *exif_info_in = exif_ptr;
+    memset(&s_sp8407_exif_info, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
 
     SENSOR_LOGI("Start");
+
     /*aperture = numerator/denominator */
     /*fnumber = numerator/denominator */
     exif_ptr->valid.FNumber = 1;
@@ -463,7 +473,11 @@ static cmr_int sp8407_drv_init_exif_info(cmr_handle handle,
     exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
 
-    return ret;
+    return SENSOR_SUCCESS;
+}
+
+static cmr_int sp8407_drv_get_exif_info(cmr_uint param) {
+    return (cmr_uint)&s_sp8407_exif_info;
 }
 
 /*==============================================================================
@@ -482,10 +496,10 @@ static cmr_int sp8407_drv_identify(cmr_handle handle, cmr_uint param) {
 
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, sp8407_PID_ADDR);
 
-    if (sp8407_PID_VALUE == pid_value) {
+    if (sp8407_PID_VALUE == pid_value || 0x80 == pid_value) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, sp8407_VER_ADDR);
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
-        if (sp8407_VER_VALUE == ver_value) {
+        if (sp8407_VER_VALUE == ver_value || 0x80 == pid_value) {
             SENSOR_LOGI("this is sp8407 sensor");
             //   sp8407_init_mode_fps_info(handle);
             //   sp8407_InitExifInfo();
@@ -804,12 +818,24 @@ static cmr_int sp8407_drv_stream_on(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int sp8407_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
+    cmr_u8 value;
+    cmr_u32 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-    /*delay*/
-    usleep(50 * 1000);
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
+    if (value != 0x00) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+        if (!sns_drv_cxt->is_sensor_close) {
+            sleep_time = 50 * 1000;
+            usleep(sleep_time);
+        }
+    } else {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+    }
+
+    sns_drv_cxt->is_sensor_close = 0;
+    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
 
     return 0;
 }
@@ -852,7 +878,7 @@ sp8407_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     /*init exif info,this will be deleted in the future*/
     sp8407_drv_init_mode_fps_info(sns_drv_cxt);
-    sp8407_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
+    sp8407_drv_init_exif_info();
 
     /*add private here*/
     return ret;

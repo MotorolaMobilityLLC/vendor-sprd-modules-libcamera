@@ -56,7 +56,14 @@ endef
 
 LOCAL_C_INCLUDES += $(shell find $(LOCAL_SRC_DIR)/$(SUB_DIR) -maxdepth 2 -type d)
 
+LOCAL_C_INCLUDES += sensor_ic_drv.h
+
 #LOCAL_SRC_FILES += $(shell find $(LOCAL_SRC_DIR)/$(SUB_DIR) -maxdepth 3 -iregex ".*\.\(c\)" | sed s:^$(LOCAL_PATH)/::g )
+
+ifeq ($(strip $(TARGET_BOARD_SBS_MODE_SENSOR)),true)
+LOCAL_STATIC_LIBRARIES += libsensor_sbs
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor_drv/classic/OmniVision/sbs/sensor_sbs.h
+endif
 
 LOCAL_SRC_FILES += \
     sensor_drv/sensor_ic_drv.c

@@ -5,8 +5,7 @@
 /**
 * There are only four Camera,so far,If there are more than four
 * cameras in the future,you should change the camera nums*/
-static EXIF_SPEC_PIC_TAKING_COND_T *exif_info_ptr[4] = {NULL, NULL, NULL,
-                                                            NULL };
+static EXIF_SPEC_PIC_TAKING_COND_T *exif_info_ptr[4] = {NULL, NULL, NULL, NULL};
 /*common interface*/
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
                              cmr_handle *sns_ic_drv_handle) {
@@ -33,6 +32,7 @@ cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
         sns_drv_cxt->ops_cb.set_mode_wait_done =
             init_param->ops_cb.set_mode_wait_done;
         sns_drv_cxt->ops_cb.get_mode = init_param->ops_cb.get_mode;
+        sns_drv_cxt->exif_malloc = 0;
 
         *sns_ic_drv_handle = (cmr_handle)sns_drv_cxt;
     }
@@ -45,7 +45,7 @@ cmr_int sensor_ic_drv_delete(cmr_handle handle, void *param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    if (sns_drv_cxt->exif_ptr) {
+    if (sns_drv_cxt->exif_ptr && 1 == sns_drv_cxt->exif_malloc) {
         free(sns_drv_cxt->exif_ptr);
         exif_info_ptr[sns_drv_cxt->sensor_id] = NULL;
     }
@@ -114,6 +114,7 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void **exif_info_in) {
             ret = SENSOR_IC_FAILED;
             goto exit;
         }
+        sns_drv_cxt->exif_malloc = 1;
         exif_info_ptr[sns_drv_cxt->sensor_id] = buffer;
         memset(buffer, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
         EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr =

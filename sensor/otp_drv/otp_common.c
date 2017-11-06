@@ -488,6 +488,28 @@ cmr_u8 *sensor_otp_get_raw_buffer(cmr_uint size, cmr_u32 sensor_id) {
     return otp_raw_buffer[sensor_id] + 8;
 }
 
+cmr_u8 *sensor_otp_copy_raw_buffer(cmr_uint size, cmr_u32 sensor_id,
+                                   cmr_u32 sensor_id2) {
+    cmr_u32 cur_size = 0;
+    OTP_LOGI("raw buffer:%p %d %d", otp_raw_buffer[sensor_id], sensor_id,
+             sensor_id2);
+    if (otp_raw_buffer[sensor_id] != NULL) {
+        cur_size = *((cmr_u32 *)(otp_raw_buffer[sensor_id] + 4));
+        /*      if (cur_size != size) {
+                  free(otp_raw_buffer[sensor_id2]);
+                  otp_raw_buffer[sensor_id2] = malloc(size + 8);
+                  memset(otp_raw_buffer[sensor_id2], 0, size);
+                  *((cmr_u32 *)(otp_raw_buffer[sensor_id2] + 4)) = size;
+              }
+              return otp_raw_buffer[sensor_id2] + 8;*/
+    }
+    otp_raw_buffer[sensor_id2] = malloc(size + 8);
+    if (otp_raw_buffer[sensor_id] != NULL && cur_size >= size)
+        memcpy(otp_raw_buffer[sensor_id2], otp_raw_buffer[sensor_id], size);
+    *((cmr_u32 *)(otp_raw_buffer[sensor_id2] + 4)) = size;
+    return otp_raw_buffer[sensor_id2] + 8;
+}
+
 cmr_u8 *sensor_otp_get_formatted_buffer(cmr_uint size, cmr_u32 sensor_id) {
     cmr_u32 cur_size = 0;
     OTP_LOGI("formatted buffer:%p", otp_formatted_data_buffer[sensor_id]);

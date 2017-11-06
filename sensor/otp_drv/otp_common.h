@@ -32,5 +32,7 @@ cmr_u8 *sensor_otp_get_raw_buffer(cmr_uint size, cmr_u32 sensor_id);
 cmr_u8 *sensor_otp_get_formatted_buffer(cmr_uint size, cmr_u32 sensor_id);
 void sensor_otp_set_buffer_state(cmr_u32 sensor_id, cmr_u32 state);
 cmr_u32 sensor_otp_get_buffer_state(cmr_u32 sensor_id);
+cmr_u8 *sensor_otp_copy_raw_buffer(cmr_uint size, cmr_u32 sensor_id,
+                                   cmr_u32 sensor_id2);
 
 #endif
