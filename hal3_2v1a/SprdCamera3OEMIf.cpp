@@ -247,8 +247,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mRecordingMode(0), mIsSetCaptureMode(false), mRecordingFirstFrameTime(0),
       mUser(0), mPreviewWindow(NULL), mHalOem(NULL), mIsStoreMetaData(false),
       mIsFreqChanged(false), mCameraId(cameraId), miSPreviewFirstFrame(1),
-      mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0),
-      mFlashMask(false), mReleaseFLag(false), mTimeCoeff(1),
+      mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0), mFlashMask(false),
+      mReleaseFLag(false), mTimeCoeff(1),
       mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
       mCameraDfsPolicyCur(CAM_EXIT), mIsPerformanceTestable(false),
       mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
@@ -307,15 +307,15 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
 
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
-      mIsPreAllocCapMem = 1;
+    mIsPreAllocCapMem = 1;
 #else
-      mIsPreAllocCapMem = 0;
+    mIsPreAllocCapMem = 0;
 #endif
 
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
-      mIsRotCapture = 1;
+    mIsRotCapture = 1;
 #else
-      mIsRotCapture = 0;
+    mIsRotCapture = 0;
 #endif
 
     if (mMultiCameraMatchZsl == NULL) {
@@ -5595,6 +5595,7 @@ handle_encode_exit:
 void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
+    struct cmr_focus_status *focus_status;
     int64_t timeStamp = 0;
     timeStamp = systemTime();
 
@@ -5641,16 +5642,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     } break;
 
     case CAMERA_EVT_CB_FOCUS_MOVE:
-        HAL_LOGV("camera cb: autofocus focus moving  %p autofocus=%d", parm4,
-                 mIsAutoFocus);
+        focus_status = (cmr_focus_status *)parm4;
+        HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
         if (!mIsAutoFocus) {
-            if (parm4) {
+            if (focus_status->is_in_focus) {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
             } else {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
                 mLastCafDoneTime = systemTime();
             }
-            mSetting->setAfCONTROLTag(&controlInfo);
+
+            if (focus_status->af_focus_type == CAM_AF_FOCUS_CAF)
+                mSetting->setAfCONTROLTag(&controlInfo);
         }
         break;
 
