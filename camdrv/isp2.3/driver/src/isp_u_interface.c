@@ -63,8 +63,8 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_AWB_NEW, isp_u_awb_block},
 	{ISP_BLK_AF_NEW, isp_u_raw_afm_block},
 	{ISP_BLK_PDAF_CORRECT, isp_u_pdaf_correction},
-	{ISP_BLK_3DNR_PRE,isp_u_3dnr_pre_block},
-	{ISP_BLK_3DNR_CAP,isp_u_3dnr_cap_block},
+//	{ISP_BLK_3DNR_PRE,isp_u_3dnr_pre_block},
+//	{ISP_BLK_3DNR_CAP,isp_u_3dnr_cap_block},
 	{DCAM_BLK_2D_LSC,dcam_u_2d_lsc_block},
 };
 
