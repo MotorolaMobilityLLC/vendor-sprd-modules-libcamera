@@ -96,6 +96,9 @@ enum alsc_io_ctrl_cmd {
 	ALSC_GET_TOUCH =14,
 	ALSC_FW_PROC_START =15,
 	ALSC_FW_PROC_START_END = 16,
+	ALSC_GET_UPDATE_INFO = 17,
+	ALSC_LOCK_UPDATE_FLAG = 18,
+	ALSC_UNLOCK_UPDATE_FLAG = 19,
 };
 
 struct tg_alsc_debug_info {
@@ -105,6 +108,12 @@ struct tg_alsc_debug_info {
 
 struct alsc_ver_info {
 	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
+};
+
+struct alsc_update_info {
+	cmr_u32 alsc_update_flag;
+	cmr_u16 can_update_dest;
+	cmr_u16* lsc_buffer_addr;
 };
 
 struct debug_lsc_param {
@@ -299,6 +308,10 @@ struct lsc_adv_context {
 	float color_gain[NUM_ROWS * NUM_COLS * 4];
 	float color_gain_bak[NUM_ROWS * NUM_COLS * 4];
 	struct alsc_alg0_turn_para alg0_turn_para;
+
+	//update flag
+	cmr_u32 alsc_update_flag;
+	cmr_u16* lsc_buffer_addr;
 };
 
 ////////////////////////////// HLSC_V2.0 structure //////////////////////////////
@@ -427,6 +440,10 @@ struct lsc2_context {
 	//dual cam
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
+
+	//update flag
+	cmr_u32 alsc_update_flag;
+	cmr_u16* lsc_buffer_addr;
 };
 
 // change mode (fw_start, fw_stop)
@@ -529,6 +546,9 @@ struct lsc_adv_init_param {
 
 	struct sensor_otp_section_info *otp_info_lsc_ptr;
 	struct sensor_otp_section_info *otp_info_optical_center_ptr;
+
+	//add lsc buffer addr
+	cmr_u16* lsc_buffer_addr;
 };
 
 struct statistic_raw_t {
@@ -591,6 +611,7 @@ struct lsc_ctrl_context {
 	struct lsc_lib_ops lib_ops;
 	struct third_lib_info *lib_info;
 	cmr_u16 *dst_gain;
+	cmr_u16 *lsc_buffer;
 };
 
 struct binning_info{

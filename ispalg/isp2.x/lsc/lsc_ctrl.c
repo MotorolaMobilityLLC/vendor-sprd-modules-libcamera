@@ -18,7 +18,6 @@
 #include "isp_adpt.h"
 #include <dlfcn.h>
 #include "isp_mw.h"
-#include <utils/Timers.h>
 
 
 #define SMART_LSC_VERSION 1
@@ -292,7 +291,7 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		lsc_param->lsc_otp_oc_b_y = (oc_otp_data[15]<<8) | oc_otp_data[14];
 		lsc_param->lsc_otp_oc_en = 1;
 
-		ISP_LOGI("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ", 
+		ISP_LOGI("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ",
 			lsc_param->lsc_otp_oc_r_x,
 			lsc_param->lsc_otp_oc_r_y,
 			lsc_param->lsc_otp_oc_gr_x,
@@ -331,6 +330,7 @@ static cmr_s32 _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
+		lib_ptr->lib_handle = NULL;
 	} else {
 		ISP_LOGI("adpt_deinit fun is NULL");
 	}
@@ -487,7 +487,7 @@ static cmr_s32 _lscsprd_unload_lib(struct lsc_ctrl_context *cxt)
 		goto exit;
 	}
 
-	if (!cxt->lib_handle) {
+	if (cxt->lib_handle) {
 		dlclose(cxt->lib_handle);
 		cxt->lib_handle = NULL;
 	}
@@ -584,6 +584,21 @@ static void *lsc_sprd_init(void *in, void *out)
 
 	memset(cxt, 0, sizeof(*cxt));
 
+	cxt->dst_gain = (cmr_u16 *)malloc(32*32*4*sizeof(cmr_u16));
+	if (NULL == cxt->dst_gain) {
+		rtn = LSC_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc dst_gain!");
+		goto EXIT;
+	}
+
+	cxt->lsc_buffer = (cmr_u16 *)malloc(32*32*4*sizeof(cmr_u16));
+	if (NULL == cxt->lsc_buffer) {
+		rtn = LSC_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc lsc_buffer!");
+		goto EXIT;
+	}
+	init_param->lsc_buffer_addr = cxt->lsc_buffer;
+
 	cxt->lib_info = &init_param->lib_param;
 
 	rtn = _lscsprd_load_lib(cxt);
@@ -645,6 +660,11 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 
 	pthread_mutex_destroy(&cxt->status_lock);
 
+	free(cxt->dst_gain);
+	cxt->dst_gain = NULL;
+	free(cxt->lsc_buffer);
+	cxt->lsc_buffer = NULL;
+
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
 	cxt = NULL;
@@ -659,6 +679,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	struct lsc_ctrl_context *cxt = NULL;
 	struct lsc_adv_calc_param *param = (struct lsc_adv_calc_param *)in;
 	struct lsc_adv_calc_result *result = (struct lsc_adv_calc_result *)out;
+	struct alsc_update_info update_info = { 0, 0, NULL };
+	cmr_s32 dst_gain_size = param->gain_width*param->gain_height*4*sizeof(cmr_u16);
 
 	if (!handle) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -666,11 +688,17 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	cxt = (struct lsc_ctrl_context *)handle;
-	cmr_u64 lsc_time0 = systemTime(CLOCK_MONOTONIC);
-	if(NULL != cxt->alsc_handle)
-		rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
-	cmr_u64 lsc_time1 = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("SYSTEM_TEST -lsc_test   %dus ",(cmr_s32) ((lsc_time1 - lsc_time0) / 1000));
+
+	result->dst_gain = cxt->dst_gain;
+
+	rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
+
+	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
+	if(update_info.alsc_update_flag == 0 && update_info.can_update_dest == 1){
+		memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
+		rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_LOCK_UPDATE_FLAG, NULL, NULL);
+	}
+
 	return rtn;
 }
 
@@ -829,7 +857,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 		goto exit;
 	}
 
-	cxt_ptr->proc_out.dst_gain = result->dst_gain;
+	//cxt_ptr->proc_out.dst_gain = result->dst_gain;
 
 	CMR_MSG_INIT(message);
 	message.data = malloc(sizeof(struct lsc_adv_calc_param));
