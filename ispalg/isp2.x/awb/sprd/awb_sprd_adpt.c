@@ -1558,7 +1558,8 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_FLASH_BEFORE_P:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_BEFORE_P");
 		cxt->flash_info.flash_enable = 1;
-		rtn = _awb_set_recgain(cxt, in);
+		if(cxt->wb_mode == 0)
+			rtn = _awb_set_recgain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_LOCK:
