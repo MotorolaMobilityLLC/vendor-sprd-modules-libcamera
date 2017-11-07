@@ -30,6 +30,7 @@
 #include "sprdfdapi.h"
 #include "facealignapi.h"
 #include "faceattributeapi.h"
+#include <cutils/properties.h>
 
 #define FD_MAX_FACE_NUM 10
 #define FD_RUN_FAR_INTERVAL                                                    \
@@ -738,9 +739,21 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
         /* set smile detection result */
         {
             const cmr_int app_smile_thr = 30;  // smile threshold in APP
-            const cmr_int algo_smile_thr = 10; // smile threshold by algorithm;
+            //const cmr_int algo_smile_thr = 10; // smile threshold by algorithm;
                                                // it is a tuning parameter, must
                                                // be in [1, 50]
+            char algo_smile_thr_char[PROPERTY_VALUE_MAX];
+            property_get("persist.sys.camera.smile.thr", algo_smile_thr_char, "1");
+            cmr_int algo_smile_threshold = atoi(algo_smile_thr_char);
+            if (algo_smile_threshold <= 0 || algo_smile_threshold > 50) {
+               CMR_LOGW("algo smile threadhold is %d out of range: [1, 50], "
+                        "set to defualt value 1.",
+                        algo_smile_threshold);
+               algo_smile_threshold = 1;
+            }
+            CMR_LOGV("get algo smile threadhold:%d", algo_smile_threshold);
+            const cmr_int algo_smile_thr = algo_smile_threshold;
+
             cmr_int i = 0;
             for (i = 0; i < i_faceattr_arr->count; i++) {
                 const struct class_faceattr *fattr = &(i_faceattr_arr->face[i]);
