@@ -4,8 +4,13 @@
 #include "hal3_2v0/SprdCamera3Setting.h"
 #endif
 #if defined (CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined (CONFIG_CAMERA_ISP_DIR_2_1_A)
+#include "hal3_2v1a/SprdCamera3OEMIf.h"
+#include "hal3_2v1a/SprdCamera3Setting.h"
+#else
 #include "hal3_2v1/SprdCamera3OEMIf.h"
 #include "hal3_2v1/SprdCamera3Setting.h"
+#endif
 #endif
 #if defined (CONFIG_CAMERA_ISP_DIR_3)
 #include "hal3_3v0/SprdCamera3AutotestMem.h"

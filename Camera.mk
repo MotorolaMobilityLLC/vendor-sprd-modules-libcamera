@@ -49,6 +49,7 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_ISP_DIR_2_1_A
 ISP_HW_VER = 2v1a
 else
 ISP_HW_VER = 2v1
