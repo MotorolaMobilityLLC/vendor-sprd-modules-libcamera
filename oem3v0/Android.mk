@@ -4,11 +4,13 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../sensor/inc
+
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 
-LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/inc \
 	$(LOCAL_PATH)/isp_calibration/inc \

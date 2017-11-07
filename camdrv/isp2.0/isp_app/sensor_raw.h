@@ -1792,13 +1792,6 @@ struct sensor_raw_info {
 	struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
 };
 
-struct raw_param_info_tab {
-	uint32_t param_id;
-	struct sensor_raw_info *info_ptr;
-	uint32_t(*identify_otp) (void *param_ptr);
-	uint32_t(*cfg_otp) (void *param_ptr);
-};
-
 struct denoise_param_update {
 	struct sensor_pwd_level *pwd_level_ptr;
 	struct sensor_bpc_level *bpc_level_ptr;

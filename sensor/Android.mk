@@ -56,7 +56,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../tool/mtrace \
 	$(LOCAL_PATH)/dummy \
 	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/inc \
-	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/isp_calibration/inc
+	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/isp_calibration/inc \
+	$(LOCAL_PATH)/inc
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
 ISPDRV_DIR := camdrv/isp2.0

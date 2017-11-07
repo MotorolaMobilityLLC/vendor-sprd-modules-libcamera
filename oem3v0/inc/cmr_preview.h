@@ -22,6 +22,7 @@ extern "C" {
 
 #include "cmr_common.h"
 #include "sensor_drv_u.h"
+
 #if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
 #define PREV_RESERVED_FRM_CNT 4
 #define VIDEO_RESERVED_FRM_CNT 1

@@ -28,9 +28,12 @@
 extern "C" {
 #endif
 
+/*sensor operation return status*/
 #define SENSOR_SUCCESS CMR_CAMERA_SUCCESS
 #define SENSOR_FAIL CMR_CAMERA_FAIL
 #define SENSOR_CTX_ERROR CMR_CAMERA_INVALID_PARAM
+
+/*bool type*/
 #define SENSOR_FALSE 0
 #define SENSOR_TRUE 1
 
@@ -40,7 +43,7 @@ extern "C" {
 #define BOOLEAN cmr_u32
 
 #ifndef PNULL
-    #define PNULL 0
+#define PNULL ((void *)0)
 #endif
 
 #define LOCAL static
@@ -52,7 +55,6 @@ extern "C" {
 #define SENSOR_DISABLE_MCLK 0  /* MHZ */
 #define SENSOR_LOW_PULSE_RESET 0x00
 #define SENSOR_HIGH_PULSE_RESET 0x01
-
 #define SENSOR_RESET_PULSE_WIDTH_DEFAULT 10
 #define SENSOR_RESET_PULSE_WIDTH_MAX 200
 
@@ -134,6 +136,13 @@ extern "C" {
 #define SENSOR_APERT_PREVIEW_MODE 2
 #define SENSOR_APERT_CAPTURE_MODE 2
 
+/*sensor exposure time mode*/
+#define SENSOR_EXP_TIME_PREVIEW_MODE                  2
+#define SENSOR_EXP_TIME_CAPTURE_MODE                  2
+
+typedef struct sensor_i2c_seq_tag                      SENSOR_I2C_SEQ_T, *SENSOR_I2C_SEQ_T_PTR;
+typedef struct _sensor_otp_param_tag                  SENSOR_OTP_PARAM_T, *SENSOR_OTP_PARAM_T_PTR;
+
 typedef cmr_int (*cmr_set_flash)(cmr_u32 set_param, cmr_u32 opt,
                                  cmr_handle oem_handle);
 
@@ -172,31 +181,13 @@ typedef enum {
     SENSOR_HDR_EV_LEVE_2,
     SENSOR_HDR_EV_LEVE_MAX
 } SESOR_HDR_EV_LEVEL_E;
-#if 0
-typedef enum {
-    SENSOR_VAL_TYPE_SHUTTER = 0,
-    SENSOR_VAL_TYPE_READ_VCM,
-    SENSOR_VAL_TYPE_WRITE_VCM,
-    SENSOR_VAL_TYPE_WRITE_OTP,
-    SENSOR_VAL_TYPE_READ_OTP,
-    SENSOR_VAL_TYPE_READ_DUAL_OTP,
-    SENSOR_VAL_TYPE_ERASE_OTP,
-    SENSOR_VAL_TYPE_PARSE_OTP,
-    SENSOR_VAL_TYPE_PARSE_DUAL_OTP,
-    SENSOR_VAL_TYPE_GET_RELOADINFO,
-    SENSOR_VAL_TYPE_GET_AFPOSITION,
-    SENSOR_VAL_TYPE_WRITE_OTP_GAIN,
-    SENSOR_VAL_TYPE_READ_OTP_GAIN,
-    SENSOR_VAL_TYPE_GET_GOLDEN_DATA,
-    SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA,
-    SENSOR_VAL_TYPE_GET_STATIC_INFO,
-    SENSOR_VAL_TYPE_GET_FPS_INFO,
-    SENSOR_VAL_TYPE_INIT_OTP,
-    SENSOR_VAL_TYPE_GET_PDAF_INFO,
-    SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG,
-    SENSOR_VAL_TYPE_MAX
-} SENSOR_IOCTL_VAL_TYPE;
-#endif
+
+struct ae_valid_fn {
+    cmr_u8 group_hold_flag;
+    cmr_u8 valid_expo_num;
+    cmr_u8 valid_gain_num;
+};
+
 typedef enum {
     SENSOR_EXT_FOCUS_NONE = 0x00,
     SENSOR_EXT_FOCUS_TRIG,
@@ -225,6 +216,7 @@ typedef enum {
     SENSOR_EXT_EV,
     SENSOR_EXT_EXPOSURE_SL, /*0 is save the value, 1 is load the value*/
     SENSOR_EXT_GAIN_OVER_THRS,
+    SENSOR_EXT_SET_FPS,
     SENSOR_EXT_FUNC_MAX
 } SENSOR_EXT_FUNC_CMD_E;
 
@@ -326,23 +318,9 @@ typedef struct sensor_otp_data {
     struct otp_data_tag golden;
 } OTP_DATA_INFO_TAG;
 
-#if 0
-struct hdr_info_t {
-    uint32_t capture_max_shutter;
-    uint32_t capture_shutter;
-    uint32_t capture_gain;
-};
 
-struct sensor_ev_info_t {
-    uint16_t preview_shutter;
-    float preview_gain;
-    uint16_t preview_framelength;
-};
-#endif
-
-typedef struct { void *privatedata; } * SENSOR_HW_HANDLE;
-typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle,
-                                          cmr_uint param);
+typedef void* SENSOR_HW_HANDLE;
+typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle, cmr_uint param);
 
 typedef struct sensor_ioctl_func_tab_tag {
     /*1: Internal IOCTL function */
@@ -406,7 +384,16 @@ typedef struct sensor_ioctl_func_tab_tag {
     uint32_t (*stream_off)(SENSOR_HW_HANDLE handle, uint32_t param);
     unsigned long (*cfg_otp)(SENSOR_HW_HANDLE handle, unsigned long param);
     uint32_t (*ex_write_exp)(SENSOR_HW_HANDLE handle, unsigned long param);
+    cmr_uint (*set_shutter_gain_delay_info)(void *);
     cmr_uint (*read_aec_info)(SENSOR_HW_HANDLE handle, cmr_uint param);
+    // af control and DVT test funcs valid only af_enable works
+    cmr_uint (*set_pos)(SENSOR_HW_HANDLE handle, uint16_t pos);
+    cmr_uint (*get_otp)(SENSOR_HW_HANDLE handle, uint16_t *inf,
+                        uint16_t *macro);
+    cmr_uint (*get_motor_pos)(SENSOR_HW_HANDLE handle, uint16_t *pos);
+    cmr_uint (*set_motor_bestmode)(SENSOR_HW_HANDLE handle);
+    cmr_uint (*get_test_vcm_mode)(SENSOR_HW_HANDLE handle);
+    cmr_uint (*set_test_vcm_mode)(SENSOR_HW_HANDLE handle, char *vcm_mode);
 } SENSOR_IOCTL_FUNC_TAB_T, *SENSOR_IOCTL_FUNC_TAB_T_PTR;
 
 struct raw_param_info_tab {
@@ -427,15 +414,7 @@ typedef struct sensor_trim_tag {
     cmr_u32 frame_line;
     SENSOR_RECT_T scaler_trim;
 } SENSOR_TRIM_T, *SENSOR_TRIM_T_PTR;
-
-typedef struct sensor_ae_info_tag {
-    cmr_u32 min_frate; // min frame rate
-    cmr_u32 max_frate; // max frame rate
-    cmr_u32 line_time; // time of line
-    cmr_u32 gain;
-} SENSOR_AE_INFO_T, *SENSOR_AE_INFO_T_PTR;
 #endif
-
 typedef struct _sensor_ext_fun_tag {
     cmr_u32 cmd;
     cmr_u32 param;
@@ -444,6 +423,7 @@ typedef struct _sensor_ext_fun_tag {
 typedef struct _sensor_ext_fun_param_tag {
     cmr_u8 cmd;
     cmr_u8 param;
+    cmr_u8 param2;
     cmr_u16 zone_cnt;
     SENSOR_RECT_T zone[FOCUS_ZONE_CNT_MAX];
     // cmr_u8 is_need_focus_move; //out pram, for caf
@@ -462,7 +442,7 @@ typedef struct _sensor_val_tag {
 
 typedef struct sensor_mode_info_tag {
     enum sensor_mode mode;
-    cmr_u16 width; // width before trim,maybe after binning?
+    cmr_u16 width;  // width before trim,maybe after binning?
     cmr_u16 height; // height before trim,maybe after binning?
     cmr_u16 trim_start_x;
     cmr_u16 trim_start_y;
@@ -473,29 +453,15 @@ typedef struct sensor_mode_info_tag {
     cmr_u32 bps_per_lane;
     cmr_u32 frame_line;
     SENSOR_RECT_T scaler_trim;
-    cmr_u16 out_width; // sensor output width after binning and crop/trim
+    cmr_u16 out_width;  // sensor output width after binning and crop/trim
     cmr_u16 out_height; // sensor output height after binning and crop/trim
 } SENSOR_MODE_INFO_T, *SENSOR_MODE_INFO_T_PTR;
-
-#if 0
-typedef struct sensor_extend_info_tag {
-    cmr_u32 focus_mode;
-    cmr_u32 exposure_mode;
-} SENSOR_EXTEND_INFO_T, *SENSOR_EXTEND_INFO_T_PTR;
-#endif
 
 typedef struct sensor_register_tag {
     cmr_u32 img_sensor_num;
     cmr_u8 cur_id;
     cmr_u8 is_register[SENSOR_ID_MAX];
 } SENSOR_REGISTER_INFO_T, *SENSOR_REGISTER_INFO_T_PTR;
-
-#if 0
-typedef struct sensor_video_info_tag {
-    SENSOR_AE_INFO_T ae_info[SENSOR_VIDEO_MODE_MAX];
-    SENSOR_REG_T **setting_ptr;
-} SENSOR_VIDEO_INFO_T, *SENSOR_VIDEO_INFO_T_PTR;
-#endif
 
 typedef struct sensor_exp_info_tag {
     SENSOR_IMAGE_FORMAT image_format;
@@ -540,10 +506,10 @@ typedef struct sensor_exp_info_tag {
 
 #if 0
 typedef struct sensor_static_info_tag {
-    cmr_u32 f_num; // f-number,focal ratio,actual f-number*100
+    cmr_u32 f_num;        // f-number,focal ratio,actual f-number*100
     cmr_u32 focal_length; // actual focal_length*100
-    cmr_u32 max_fps; // max fps of sensor's all settings
-    cmr_u32 max_adgain; // AD-gain
+    cmr_u32 max_fps;      // max fps of sensor's all settings
+    cmr_u32 max_adgain;   // AD-gain
     cmr_u32 ois_supported;
     cmr_u32 pdaf_supported;
     cmr_u32 exp_valid_frame_num;
@@ -553,10 +519,10 @@ typedef struct sensor_static_info_tag {
 
 typedef struct sensor_mode_fps_tag {
     enum sensor_mode mode;
-    cmr_u32 max_fps; // max fps in current sensor
-                     // mode,10*1000000/(line_time*frame_line)
-    cmr_u32 min_fps; // min fps, we set it to 1.
-    cmr_u32 is_high_fps; // if max_fps > 30,then is high fps.
+    cmr_u32 max_fps;           // max fps in current sensor
+                               // mode,10*1000000/(line_time*frame_line)
+    cmr_u32 min_fps;           // min fps, we set it to 1.
+    cmr_u32 is_high_fps;       // if max_fps > 30,then is high fps.
     cmr_u32 high_fps_skip_num; // max_fps/30
 } SENSOR_MODE_FPS_T, *SENSOR_MODE_FPS_T_PTR;
 
@@ -586,16 +552,16 @@ typedef struct sensor_info_tag {
     SENSOR_IMAGE_FORMAT image_format;
     cmr_u32 image_pattern;
     SENSOR_REG_TAB_INFO_T_PTR resolution_tab_info_ptr;
-    struct sensor_ic_ops *sns_ops;
+    SENSOR_IOCTL_FUNC_TAB_T_PTR ioctl_func_tab_ptr;
     struct sensor_raw_info **raw_info_ptr; /*sensor_raw_info*/
     SENSOR_EXTEND_INFO_T_PTR ext_info_ptr;
     SENSOR_AVDD_VAL_E iovdd_val;
     SENSOR_AVDD_VAL_E dvdd_val;
     cmr_u32 preview_skip_num;
     cmr_u32 capture_skip_num;
+    cmr_u32 preview_deci_num;
     cmr_u32 flash_capture_skip_num;
     cmr_u32 mipi_cap_skip_num;
-    cmr_u32 preview_deci_num;
     cmr_u32 video_preview_deci_num;
     cmr_u16 threshold_eb;
     cmr_u16 threshold_mode;
@@ -685,11 +651,12 @@ typedef enum {
             return;                                                            \
         }                                                                      \
     } while (0)
-#define SENSOR_DRV_CHECK_PTR(a)                                          \
+
+#define SENSOR_DRV_CHECK_PTR(a)                                                \
     do {                                                                       \
         if (PNULL == a) {                                                      \
             SENSOR_LOGE("Sensor_driver_u, null pointer \n");                   \
-            return SENSOR_FAIL;                                                            \
+            return SENSOR_FAIL;                                                \
         }                                                                      \
     } while (0)
 
@@ -751,13 +718,13 @@ struct sensor_drv_context {
     cmr_handle sensor_hw_handler;
     void *module_list[SENSOR_ID_MAX];
     void *current_module;
-
-    void *module_cxt;
     cmr_handle hw_drv_handle;
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
     cmr_handle sns_ic_drv_handle;
 };
+
+#define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
 
 /*common functions for OEM*/
 cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
@@ -794,7 +761,7 @@ cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                 struct sensor_flash_level *level);
 
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
-                                struct sensor_flash_level *level);
+                               struct sensor_flash_level *level);
 
 cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 
@@ -819,15 +786,12 @@ cmr_int hw_Sensor_SetMode(cmr_handle handle, cmr_u32 mode);
 #define Sensor_SetMode(mode) hw_Sensor_SetMode(handle, mode)
 
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
-// SENSOR_EXP_INFO_T *hw_Sensor_GetInfo(SENSOR_HW_HANDLE handle);
-//#define Sensor_GetInfo(void)    hw_Sensor_GetInfo(handle)
+SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
 cmr_int hw_Sensor_SetFlash(SENSOR_HW_HANDLE handle, uint32_t is_open);
 #define Sensor_SetFlash(is_open) hw_Sensor_SetFlash(handle, is_open)
 
 // utest refer
-cmr_int Sensor_set_calibration(cmr_u32 value);
-
 #ifdef __cplusplus
 }
 #endif

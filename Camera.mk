@@ -8,6 +8,7 @@ PLATFORM_VERSION_FILTER = sp9850ka sc9850kh
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc \
 	$(LOCAL_PATH)/vsp/src \
+	$(LOCAL_PATH)/sensor/inc \
 	$(LOCAL_PATH)/sensor \
 	$(LOCAL_PATH)/jpeg/inc \
 	$(LOCAL_PATH)/jpeg/src \

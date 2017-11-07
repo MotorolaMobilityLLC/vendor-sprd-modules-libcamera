@@ -39,8 +39,9 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/calibration/inc \
 	$(LOCAL_PATH)/sft_af/inc \
         $(LOCAL_PATH)/../../tool/mtrace \
-  $(LOCAL_PATH)/afv1/inc \
-  $(LOCAL_PATH)/aft/inc
+	$(LOCAL_PATH)/afv1/inc \
+	$(LOCAL_PATH)/aft/inc \
+	$(LOCAL_PATH)/../../sensor/inc
 
 LOCAL_SRC_DIR := $(LOCAL_PATH)
 

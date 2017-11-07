@@ -4,6 +4,8 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=format
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../sensor/inc
+
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
@@ -11,7 +13,7 @@ ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FIL
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.1
-LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/inc \
 	$(LOCAL_PATH)/isp_calibration/inc \
@@ -173,7 +175,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
 
-LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/inc \
 	$(LOCAL_PATH)/isp_calibration/inc \
@@ -324,7 +326,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
 
-LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/inc \
 	$(LOCAL_PATH)/isp_calibration/inc \
