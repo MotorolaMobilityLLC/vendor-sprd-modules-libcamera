@@ -3498,7 +3498,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.is_multi_mode = ISP_DUAL_NORMAL;
     else
         isp_param.is_multi_mode = ISP_SINGLE;
-    if (cxt->is_multi_mode == ISP_DUAL_NORMAL) {
+    if (isp_param.is_multi_mode == ISP_DUAL_NORMAL) {
         if ((0 == cxt->camera_id) || (1 == cxt->camera_id)) // need modify,
             // initialized by app,
             // Similar to multi_mode
