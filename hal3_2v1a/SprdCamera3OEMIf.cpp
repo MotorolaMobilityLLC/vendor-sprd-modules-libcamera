@@ -1484,7 +1484,7 @@ void SprdCamera3OEMIf::ispSwProc(struct soft_isp_frm_param *param_ptr) {
     }
 
     if (0 != mHalOem->ops->camera_isp_sw_proc(mCameraHandle, param_ptr)) {
-        HAL_LOGE("Fail to process raw buff.");
+        HAL_LOGE("Fail to process isp sw.");
     }
 
     HAL_LOGD("X");
@@ -1629,6 +1629,21 @@ void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     }
 
     HAL_LOGD("OTP INFO:addr 0x%p, size = %d", *addr, *size);
+    return;
+}
+
+void SprdCamera3OEMIf::getIspDebugInfo(void **addr, int *size) {
+
+    void *ispInioAddr = NULL;
+    int ispInfoSize = 0;
+
+    mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInioAddr,
+                                      &ispInfoSize);
+
+    *addr = ispInioAddr;
+    *size = ispInfoSize;
+    HAL_LOGD("ISP INFO:addr 0x%p, size = %d", *addr, *size);
+
     return;
 }
 

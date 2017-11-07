@@ -35,6 +35,10 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_SHARED_LIBRARIES += libgyrostab
 endif
 
+ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)
+LOCAL_SHARED_LIBRARIES += libsprddepth libsprdbokeh
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_GYRO)),true)
 LOCAL_SHARED_LIBRARIES +=libgui
 endif

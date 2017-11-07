@@ -117,7 +117,9 @@ endif
 LOCAL_C_INCLUDES += \
                 $(LOCAL_PATH)/arithmetic/inc \
                 $(LOCAL_PATH)/arithmetic/facebeauty/inc \
-                $(LOCAL_PATH)/arithmetic/sprdface/inc
+                $(LOCAL_PATH)/arithmetic/sprdface/inc \
+                $(LOCAL_PATH)/arithmetic/depth/inc \
+                $(LOCAL_PATH)/arithmetic/bokeh/inc
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 	LOCAL_C_INCLUDES += \
@@ -200,6 +202,11 @@ else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RealBokeh.cpp \
     hal3_$(ISP_HW_VER)/multiCamera/arcsoft/altek/arcsoft_calibration_parser.cpp
+endif
+
+ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)
+LOCAL_SRC_FILES+= \
+    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3SidebySideCamera.cpp
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)

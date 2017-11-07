@@ -143,6 +143,7 @@ SprdCamera3SideBySideCamera::SprdCamera3SideBySideCamera() {
     mBokehPointY = 600;
     mDepthHandle = NULL;
     mDepthState = 0;
+    mIspdebuginfosize = 300000;
     HAL_LOGI("X");
 }
 
@@ -654,6 +655,18 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             sprintf(tmp_str, "_%dx%d", width, height);
             strcat(name, tmp_str);
             strcat(name, "_sub.NV21");
+        } else if (param == 6) {
+            strcpy(name, "/data/misc/cameraserver/");
+            memset(tmp_str, 0, sizeof(tmp_str));
+            sprintf(tmp_str, "%dx%d", width, height);
+            strcat(name, tmp_str);
+            strcat(name, "_left.NV21");
+        } else if (param == 7) {
+            strcpy(name, "/data/misc/cameraserver/");
+            memset(tmp_str, 0, sizeof(tmp_str));
+            sprintf(tmp_str, "%dx%d", width, height);
+            strcat(name, tmp_str);
+            strcat(name, "_right.NV21");
         }
         fp = fopen(name, "wb");
         if (fp == NULL) {
@@ -763,8 +776,13 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp2);
     } break;
     case SBS_FILE_JPEG: {
-        strcat(name, file_name);
+        strcpy(name, "/data/misc/cameraserver/");
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+                (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+        strcat(name, tmp_str);
         strcat(name, ".jpg");
+        fp = fopen(name, "ab");
         if (fp == NULL) {
             HAL_LOGE("can not open file: %s \n", name);
             return;
@@ -774,8 +792,23 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
     } break;
     case SBS_FILE_OTP: {
         strcpy(name, "/data/misc/cameraserver/");
-        strcat(name, "sensor_otp.txt");
+        strcat(name, "original_otp.bin");
         fp = fopen(name, "wb");
+        if (fp == NULL) {
+            HAL_LOGE("can not open file: %s \n", name);
+            return;
+        }
+        fwrite((void *)addr, 1, size, fp);
+        fclose(fp);
+    } break;
+    case SBS_FILE_ISPINFO: {
+        strcpy(name, "/data/misc/cameraserver/");
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+                (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+        strcat(name, tmp_str);
+        strcat(name, ".isp_info");
+        fp = fopen(name, "ab");
         if (fp == NULL) {
             HAL_LOGE("can not open file: %s \n", name);
             return;
@@ -903,6 +936,7 @@ int SprdCamera3SideBySideCamera::getCameraInfo(int blur_camera_id,
     img_size = SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
                (SBS_REFOCUS_PARAM_NUM * 4) + 1024;
     SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size = img_size;
+
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
@@ -959,10 +993,13 @@ SprdCamera3SideBySideCamera::CaptureThread::CaptureThread()
     HAL_LOGI("E");
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * SBS_MAX_NUM_STREAMS);
+    memset(mOtpData, 0, sizeof(int8_t) * OTP_DUALCAM_DATA_SIZE);
     memset(mFaceInfo, 0, sizeof(int32_t) * 4);
     mDevMain = NULL;
     mDevAux = NULL;
     mSavedResultBuff = NULL;
+    m3dVerificationEnable = 0;
+    mRealtimeBokehNum = 0;
     memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     mCaptureMsgList.clear();
 }
@@ -990,6 +1027,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     int otp_size = 0;
     int has_read_otp = 0;
     FILE *fid = NULL;
+    int i = 0;
     char otp[PROPERTY_VALUE_MAX] = {0};
     char dump[PROPERTY_VALUE_MAX] = {0};
     char Sensor_Otp_Data[OTP_DUALCAM_DATA_SIZE] = {0};
@@ -1049,6 +1087,10 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
             fclose(fid);
             fid == NULL;
         }
+    }
+
+    if (m3dVerificationEnable) {
+        memcpy(mOtpData, (char *)otp_data, otp_size);
     }
 
     inparam = (struct depth_init_inputparam *)malloc(
@@ -1111,6 +1153,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessBokehImage(
     char *param = NULL;
     int width = 0;
     int height = 0;
+    void *bokeh_handle = NULL;
 
     if (inputbuffer == NULL || outputbuffer == NULL || Depthoutbuffer == NULL) {
         HAL_LOGE("buffer is null");
@@ -1131,26 +1174,89 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessBokehImage(
 
     HAL_LOGD("width = %d, height = %d", width, height);
 
-    ret = sprd_bokeh_Init(width, height, param);
+    ret = sprd_bokeh_Init(&bokeh_handle, width, height, param);
     if (ret)
         HAL_LOGE("sprd_bokeh_Init fail ret %d", ret);
 
-    ret = sprd_bokeh_ReFocusPreProcess((void *)inputbuffer,
+    ret = sprd_bokeh_ReFocusPreProcess(bokeh_handle, (void *)inputbuffer,
                                        (void *)Depthoutbuffer);
     if (ret)
         HAL_LOGE("sprd_depth_Run fail, ret %d", ret);
 
     HAL_LOGD("BokehLevel: %d, postion x: %d, y: %d", mSidebyside->mBokehLevel,
              width / 2, height / 2);
-    ret = sprd_bokeh_ReFocusGen((void *)outputbuffer, mSidebyside->mBokehLevel,
+    ret = sprd_bokeh_ReFocusGen(bokeh_handle, (void *)outputbuffer, mSidebyside->mBokehLevel,
                                 width / 2, height / 2);
     if (ret)
         HAL_LOGE("sprd_depth_Run fail, ret %d", ret);
 
-    sprd_bokeh_Close();
+    sprd_bokeh_Close(bokeh_handle);
 // fclose(fid);
 exit:
     HAL_LOGI("X");
+}
+
+void SprdCamera3SideBySideCamera::CaptureThread::Save3dVerificationParam(
+    buffer_handle_t *mSavedResultBuff, unsigned char *main_yuv,
+    unsigned char *sub_yuv) {
+    int i = 0;
+    char prop[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.cam.sbs.savefile", prop, "0");
+
+    unsigned char *buffer_base =
+        (unsigned char *)((struct private_handle_t *)*mSavedResultBuff)->base;
+    uint32_t buffer_size = ((struct private_handle_t *)*mSavedResultBuff)->size;
+
+    // refocus commom param
+    uint32_t WidethData = mSidebyside->mMainCaptureWidth;
+    uint32_t HeightData = mSidebyside->mMainCaptureHeight;
+    uint32_t SizeData = WidethData * HeightData * 3 / 2;
+    uint32_t OtpSize = SPRD_DUAL_OTP_SIZE;
+    unsigned char VerificationFlag[] = {'V', 'E', 'R', 'I'};
+
+    unsigned char *p[] = {(unsigned char *)&WidethData,
+                          (unsigned char *)&HeightData,
+                          (unsigned char *)&SizeData, (unsigned char *)&OtpSize,
+                          (unsigned char *)&VerificationFlag};
+
+    // cpoy common param to tail
+    buffer_base += (buffer_size - 5 * 4);
+    HAL_LOGD("common param base=%p", buffer_base);
+    for (i = 0; i < 5; i++) {
+        memcpy(buffer_base + i * 4, p[i], 4);
+    }
+
+    // cpoy otp data to before param
+    buffer_base -= (uint32_t)SPRD_DUAL_OTP_SIZE;
+    HAL_LOGD("otp base=%p, ", buffer_base);
+    memcpy(buffer_base, mOtpData, SPRD_DUAL_OTP_SIZE);
+
+    if (!strcmp(prop, "1")) {
+        mSidebyside->dumpFile((unsigned char *)buffer_base, SBS_FILE_OTP,
+                              SPRD_DUAL_OTP_SIZE, 0, 0, 0, 1, 0);
+    }
+
+    // cpoy sub yuv to before otp
+    buffer_base -= SizeData;
+    HAL_LOGD("sub yuv base=%p, ", buffer_base);
+    memcpy(buffer_base, sub_yuv, SizeData);
+
+    if (!strcmp(prop, "1")) {
+        mSidebyside->dumpFile(buffer_base, SBS_FILE_NV21, (int)SizeData,
+                              WidethData, HeightData, 0, 7, 0);
+    }
+
+    // cpoy main yuv to before sub yuv
+    buffer_base -= SizeData;
+    HAL_LOGD("main yuv base=%p, ", buffer_base);
+    memcpy(buffer_base, main_yuv, SizeData);
+
+    if (!strcmp(prop, "1")) {
+        mSidebyside->dumpFile(buffer_base, SBS_FILE_NV21, (int)SizeData,
+                              WidethData, HeightData, 0, 6, 0);
+    }
+
+    HAL_LOGD("buffer size:%d", buffer_size);
 }
 
 void SprdCamera3SideBySideCamera::CaptureThread::saveCaptureBokehParams(
@@ -1160,6 +1266,9 @@ void SprdCamera3SideBySideCamera::CaptureThread::saveCaptureBokehParams(
     unsigned char *buffer_base =
         (unsigned char *)((struct private_handle_t *)*mSavedResultBuff)->base;
     uint32_t buffer_size = ((struct private_handle_t *)*mSavedResultBuff)->size;
+    void *ispInfoAddr = NULL;
+    int ispInfoSize = 0;
+    char userdebug[PROPERTY_VALUE_MAX] = {0};
 
     // get preview focus point
     mDevMain->hwi->GetFocusPoint(&(mSidebyside->mBokehPointX),
@@ -1196,22 +1305,33 @@ void SprdCamera3SideBySideCamera::CaptureThread::saveCaptureBokehParams(
         (unsigned char *)&rotation,        (unsigned char *)&processedsr,
         (unsigned char *)&BokehFlag};
 
-    // cpoy common param to tail
+    // copy common param to tail
     buffer_base += (buffer_size - BOKEH_REFOCUS_COMMON_PARAM_NUM * 4);
     HAL_LOGD("common param base=%p", buffer_base);
     for (i = 0; i < BOKEH_REFOCUS_COMMON_PARAM_NUM; i++) {
         memcpy(buffer_base + i * 4, p[i], 4);
     }
-    // cpoy depth yuv to before param
+
+    // copy depth yuv to before param
     buffer_base -= DepthSizeData;
     HAL_LOGD("yuv base=%p, ", buffer_base);
     memcpy(buffer_base, disparity_bufer, DepthSizeData);
 
-    // cpoy main yuv to before param
+    // copy main yuv to before depth
     buffer_base -= MainSizeData;
     HAL_LOGD("yuv base=%p, ", buffer_base);
     memcpy(buffer_base, buffer, MainSizeData);
 
+    // copy sub isp debug info if userdebug version before main yuv
+    property_get("ro.debuggable", userdebug, "0");
+    if (!strcmp(userdebug, "1")) {
+        // get sub camera debug info
+        mDevAux->hwi->getIspDebugInfo(&ispInfoAddr, &ispInfoSize);
+        HAL_LOGD("ISP INFO:addr 0x%p, size = %d", ispInfoAddr, ispInfoSize);
+        buffer_base -= ispInfoSize;
+        HAL_LOGD("sub isp debug info base=%p, ", buffer_base);
+        memcpy(buffer_base, ispInfoAddr, ispInfoSize);
+    }
     HAL_LOGD("buffer size:%d", buffer_size);
 }
 /*===========================================================================
@@ -1306,8 +1426,8 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                          (mSidebyside->mMainCaptureWidth *
                               mSidebyside->mMainCaptureHeight * 3 / 2 +
                           mSidebyside->mDepthBufferSize +
-                          BOKEH_REFOCUS_COMMON_PARAM_NUM * 4);
-
+                          BOKEH_REFOCUS_COMMON_PARAM_NUM * 4 +
+                          mSidebyside->mIspdebuginfosize);
             HAL_LOGD(
                 "output buffers w=%d, h=%d, mMainCaptureWidth=%d, "
                 "mMainCaptureHeight=%d, output_buffers size=%d",
@@ -1342,8 +1462,6 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
         } break;
 
         case SBS_MSG_MAIN_PROC: {
-            HAL_LOGD("mFlushing:%d, stop preview and raw proc",
-                     mSidebyside->mFlushing);
             unsigned char *mainRawbuffer =
                 (unsigned char *)(((struct private_handle_t *)*(
                                        capture_msg.combo_buff.main_buffer))
@@ -1386,12 +1504,14 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
             char prop[PROPERTY_VALUE_MAX];
             property_get("persist.sys.cam.sbs.savefile", prop, "0");
 
+            HAL_LOGD("mFlushing:%d, stop preview and raw proc",
+                     mSidebyside->mFlushing);
             if (!mSidebyside->mFlushing) {
                 mDevMain->hwi->stopPreview();
                 mDevMain->hwi->setCameraClearQBuff();
-                mSidebyside->mRealtimeBokeh = 0;
                 HAL_LOGD("process 3200*1200 raw for yuv");
 
+                // STEP_1.1:main raw proc
                 struct img_sbs_info main_sbs_info;
                 main_sbs_info.sbs_mode = SPRD_SBS_MODE_LEFT;
                 main_sbs_info.size.width = SBS_RAW_DATA_WIDTH;
@@ -1400,7 +1520,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                     capture_msg.combo_buff.main_buffer,
                     &mSidebyside->mLocalCapBuffer[2].native_handle,
                     &main_sbs_info);
-
+                // STEP_1.2:sub raw proc
                 struct img_sbs_info sub_sbs_info;
                 sub_sbs_info.sbs_mode = SPRD_SBS_MODE_RIGHT;
                 sub_sbs_info.size.width = SBS_RAW_DATA_WIDTH;
@@ -1414,14 +1534,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                     &mSidebyside->mLocalCapBuffer[3].native_handle,
                     &sub_sbs_info);
 
-                if (mSidebyside->mhasCallbackStream &&
-                    mSidebyside->mThumbReq.frame_number) {
-                    mSidebyside->thumbYuvProc(
-                        &mSidebyside->mLocalCapBuffer[2].native_handle);
-                    mSidebyside->CallBackSnapResult();
-                }
-
-                // dump start
+                // dump raw & 2-yuv
                 if (!strcmp(prop, "1")) {
                     mSidebyside->dumpFile(
                         mainRawbuffer, SBS_FILE_RAW,
@@ -1449,14 +1562,34 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                         mSidebyside->mSubCaptureHeight,
                         capture_msg.combo_buff.frame_number, 1, 1);
                 }
-
                 mDevMain->hwi->startPreview();
             }
 
+            HAL_LOGD("mFlushing=%d, thumb start process",
+                     mSidebyside->mFlushing);
+            if (!mSidebyside->mFlushing) {
+                // STEP_2.1:process thumb
+                HAL_LOGD("process thumb");
+                if (mSidebyside->mhasCallbackStream &&
+                    mSidebyside->mThumbReq.frame_number) {
+                    mSidebyside->thumbYuvProc(
+                        &mSidebyside->mLocalCapBuffer[2].native_handle);
+                }
+            }
+            HAL_LOGD("mFlushing=%d, thumb callback start process",
+                     mSidebyside->mFlushing);
+            if (!mSidebyside->mFlushing) {
+                // STEP_2.2:callback thumb
+                if (mSidebyside->mhasCallbackStream &&
+                    mSidebyside->mThumbReq.frame_number) {
+                    mSidebyside->CallBackSnapResult();
+                }
+            }
+
+            /* scaling down moved to depth.so
             HAL_LOGD("mFlushing=%d, get depth input buffer",
                      mSidebyside->mFlushing);
             if (!mSidebyside->mFlushing) {
-                /* scaling down moved to depth.so
                 mDevMain->hwi->getDepthBuffer(
                     &mSidebyside->mLocalCapBuffer[2].native_handle,
                     &mSidebyside->mLocalCapBuffer[5].native_handle);
@@ -1483,13 +1616,28 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                         mSidebyside->mDepInputHeight,
                         capture_msg.combo_buff.frame_number, 5, 1);
                 }
-            */
             }
+            */
 
-            HAL_LOGD("mFlushing=%d, depth lib start process",
+            // FOR TEST:get 3d verification tag
+            char verifi[PROPERTY_VALUE_MAX];
+            property_get("persist.sys.cam.tool.debug", verifi, "0");
+            if (!strcmp(verifi, "1")) {
+                m3dVerificationEnable = 1;
+            } else {
+                m3dVerificationEnable = 0;
+            }
+            HAL_LOGD("3d verification %d", m3dVerificationEnable);
+
+            HAL_LOGD("mFlushing:%d, depth lib start process",
                      mSidebyside->mFlushing);
             if (!mSidebyside->mFlushing) {
+                // STEP_3.1: process depth
+                // if (BLUR_TIPS_OK == mSidebyside->mCoveredValue ||
+                //    m3dVerificationEnable) {
                 ProcessDepthImage(subbuffer, mainbuffer, Disparity);
+                //}
+                // dump depth buffer
                 if (!strcmp(prop, "1")) {
                     mSidebyside->dumpFile(Disparity, SBS_FILE_DEPTH,
                                           mSidebyside->mDepthBufferSize,
@@ -1499,6 +1647,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                                           0, 0);
                 }
             }
+
             // scaling up to 5M
             if (!mSidebyside->mFlushing) {
                 mDevMain->hwi->getDepthBuffer(
@@ -1510,6 +1659,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                      mSidebyside->mFlushing);
             if (!mSidebyside->mFlushing) {
 #if 0
+                //STEP_4.1:process bokeh
                 ProcessBokehImage(SuperResolution, outputbuffer, Disparity);
 #else
                 cmr_u32 size = 0;
@@ -1517,31 +1667,21 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                        mSidebyside->mScalingUpHeight * 3 / 2;
                 memcpy(outputbuffer, SuperResolution, size);
 #endif
-#if 0
-                if (!strcmp(prop, "1") || !strcmp(prop1, "1")) {
-                    mSidebyside->dumpFile(
-                        mainbuffer, SBS_FILE_NV21,
-                        (int)((struct private_handle_t *)*(output_buffer))
-                            ->size,
-                        mSidebyside->mScalingUpWidth,
-                        mSidebyside->mScalingUpHeight,
-                        capture_msg.combo_buff.frame_number, 3, 0);
-                    mSidebyside->dumpFile(
-                        outputbuffer, SBS_FILE_NV21,
-                        (int)((struct private_handle_t *)*(output_buffer))
-                            ->size,
-                        mSidebyside->mScalingUpWidth,
-                        mSidebyside->mScalingUpHeight,
-                        capture_msg.combo_buff.frame_number, 2, 0);
+
+                HAL_LOGD("mSavedResultBuff=%p,capture_msg.combo_buff.buffer=%p",
+                         mSavedResultBuff, capture_msg.combo_buff.main_buffer);
+                if (m3dVerificationEnable) {
+                    Save3dVerificationParam(mSavedResultBuff, mainbuffer,
+                                            subbuffer);
+                } else {
+                    // if (BLUR_TIPS_OK == mSidebyside->mCoveredValue) {
+                    saveCaptureBokehParams(mSavedResultBuff, SuperResolution,
+                                           Disparity);
+                    // }
                 }
-#endif
-                HAL_LOGD(
-                    "mSavedResultBuff=%p, capture_msg.combo_buff.buffer=%p",
-                    mSavedResultBuff, capture_msg.combo_buff.main_buffer);
-                saveCaptureBokehParams(mSavedResultBuff, SuperResolution,
-                                       Disparity);
             }
 
+            // STEP_5.1: process input capture request
             camera3_capture_request_t request;
             camera3_stream_buffer_t *output_buffers = NULL;
             camera3_stream_buffer_t *input_buffer = NULL;
@@ -1597,7 +1737,8 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                          (mSidebyside->mScalingUpWidth *
                               mSidebyside->mScalingUpHeight * 3 / 2 +
                           mSidebyside->mDepthBufferSize +
-                          BOKEH_REFOCUS_COMMON_PARAM_NUM * 4);
+                          BOKEH_REFOCUS_COMMON_PARAM_NUM * 4 +
+                          mSidebyside->mIspdebuginfosize);
             HAL_LOGD(
                 "output buffers w=%d, h=%d, mMainCaptureWidth=%d, "
                 "mMainCaptureHeight=%d, output_buffers size = %d",
@@ -1609,6 +1750,12 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 ((struct private_handle_t *)(*request.output_buffers[0].buffer))
                     ->size);
 
+            /*if (BLUR_TIPS_OK == mSidebyside->mCoveredValue ||
+                m3dVerificationEnable) {
+                mime_type = (1 << 8) | (int)MODE_BLUR;
+            } else {
+                mime_type = 0;
+            }*/
             mime_type = (1 << 8) | (int)MODE_BLUR;
             mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                          &mime_type, NULL);
@@ -1634,9 +1781,11 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 output_buffers = NULL;
             }
             mSidebyside->mRealtimeBokeh = 1;
+            // reset mRealtimeBokehNum
+            mRealtimeBokehNum = 0;
         } break;
         case SBS_MSG_PREV_PROC: {
-            HAL_LOGD("%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p",
+            HAL_LOGD("%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p -%p",
                      mSidebyside->mLocalCapBuffer[0].native_handle,
                      mSidebyside->mLocalCapBuffer[1].native_handle,
                      mSidebyside->mLocalCapBuffer[2].native_handle,
@@ -1649,7 +1798,8 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                      mSidebyside->mLocalCapBuffer[9].native_handle,
                      mSidebyside->mLocalCapBuffer[10].native_handle,
                      mSidebyside->mLocalCapBuffer[11].native_handle,
-                     mSidebyside->mLocalCapBuffer[12].native_handle);
+                     mSidebyside->mLocalCapBuffer[12].native_handle,
+                     mSidebyside->mLocalCapBuffer[13].native_handle);
             unsigned char *Prev_buffer_1 =
                 (unsigned char *)(((struct private_handle_t *)*(
                                        &mSidebyside->mLocalCapBuffer[8]
@@ -1669,13 +1819,11 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                                        &mSidebyside->mLocalCapBuffer[10]
                                             .native_handle))
                                       ->base);
-
             unsigned char *Raw_buffer_1 =
                 (unsigned char *)(((struct private_handle_t *)*(
                                        &mSidebyside->mLocalCapBuffer[11]
                                             .native_handle))
                                       ->base);
-
             unsigned char *Raw_buffer_2 =
                 (unsigned char *)(((struct private_handle_t *)*(
                                        &mSidebyside->mLocalCapBuffer[12]
@@ -1697,7 +1845,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
             // check buff
             cmr_s32 is_using = 0;
             is_using = mDevMain->hwi->ispSwCheckBuf((cmr_uint *)Prev_buffer_1);
-            HAL_LOGD("buffer is using %d", is_using);
+            HAL_LOGV("buffer is using %d", is_using);
             cmr_u8 *prev_buffer = NULL;
             cmr_u8 *raw_buffer = NULL;
             if (is_using) {
@@ -1731,7 +1879,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
 
             frame_number = capture_msg.prev_combo_buff.frame_number;
             timestamp = capture_msg.timestamp;
-            HAL_LOGD("timestamp %lld", timestamp);
+            HAL_LOGV("timestamp %lld", timestamp);
 
             // get raw frame
             cmr_u8 *raw_frame = NULL;
@@ -1743,6 +1891,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 HAL_LOGD("cannot get matched zsl frame");
                 mSidebyside->CallBackResult(frame_number,
                                             CAMERA3_BUFFER_STATUS_OK);
+                break;
             }
 
 #if 0
@@ -1794,6 +1943,15 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 param_ptr->m_yuv_pre = preview;
                 param_ptr->m_yuv_bokeh = prev_out;
                 param_ptr->weightparam = depth_param;
+                param_ptr->af_status = 0;
+
+                // forced focus after take picture
+                if (!mRealtimeBokehNum) {
+                    param_ptr->af_status = 1;
+                }
+                HAL_LOGD("mRealtimeBokehNum %d, af_status %d",
+                         mRealtimeBokehNum, param_ptr->af_status);
+                mRealtimeBokehNum++;
 
                 // isp sw proc
                 if (BLUR_TIPS_NEED_LIGHT != (mSidebyside->mCoveredValue)) {
@@ -2089,6 +2247,11 @@ int SprdCamera3SideBySideCamera::configureStreams(
                 if (0 > allocateBuffer(SBS_RAW_DATA_WIDTH, SBS_RAW_DATA_HEIGHT,
                                        1, HAL_PIXEL_FORMAT_YCbCr_422_SP,
                                        &(mLocalCapBuffer[12]))) {
+                    HAL_LOGE("request one buf failed.");
+                }
+                if (0 > allocateBuffer(mIspdebuginfosize, 1, 1,
+                                       HAL_PIXEL_FORMAT_YCrCb_420_SP,
+                                       &(mLocalCapBuffer[13]))) {
                     HAL_LOGE("request one buf failed.");
                 }
             }
@@ -2663,6 +2826,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
     CameraMetadata metadata;
     metadata = result->result;
     int rc = 0;
+    Mutex::Autolock l(mResultLock);
 
     // meta process
     if (result_buffer == NULL && result->result != NULL) {
@@ -2679,12 +2843,17 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
                 return;
             }
         }
-        if (mCoveredValue) {
+        if (0) { //(mCoveredValue) {
             // update Blur Covered param
-            rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_BLUR_COVERED,
-                                        &mCoveredValue, NULL);
-            HAL_LOGD("Covered Value is %d", mCoveredValue);
-            metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
+            int value = mCoveredValue;
+            rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_BLUR_COVERED, &value,
+                                        NULL);
+            HAL_LOGV("Covered Value is %d", value);
+            metadata.update(ANDROID_SPRD_BLUR_COVERED, &value, 1);
+            if (mRealtimeBokeh) {
+                // mCoveredValue should not update when capture
+                mCoveredValue = value;
+            }
             camera3_capture_result_t new_result = *result;
             new_result.result = metadata.release();
             mCaptureThread->mCallbackOps->process_capture_result(
@@ -2701,7 +2870,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
     // process preview frame
     if (mRealtimeBokeh) {
         int StreamType = getStreamType(result_buffer->stream);
-        HAL_LOGD("StreamType:%d", StreamType);
+        HAL_LOGV("StreamType:%d", StreamType);
 
         if (StreamType == CALLBACK_STREAM) {
             sidebyside_queue_msg_t capture_msg;
@@ -2725,7 +2894,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
                 }
             }
             if (!mSidebyside->mFlushing) {
-                HAL_LOGD("REAL TIME: process preview frame");
+                HAL_LOGV("REAL TIME: process preview frame");
                 capture_msg.msg_type = SBS_MSG_PREV_PROC;
                 capture_msg.prev_combo_buff.frame_number = cur_frame_number;
                 capture_msg.prev_combo_buff.prev_buffer = result_buffer->buffer;
@@ -2800,6 +2969,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
             capture_msg.combo_buff.sub_buffer = NULL;
             capture_msg.combo_buff.input_buffer = result->input_buffer;
             hwiMain->setMultiCallBackYuvMode(false);
+            mRealtimeBokeh = 0;
             {
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);
@@ -2838,7 +3008,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
         newResult.partial_result = 0;
         ((struct private_handle_t *)*result->output_buffers->buffer)->size =
             mjpegSize;
-#if 1
+        // dump jpeg
         char prop[PROPERTY_VALUE_MAX] = {0};
         property_get("persist.sys.cam.sbs.savefile", prop, "0");
         if (!strcmp(prop, "1")) {
@@ -2853,7 +3023,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
                      mMainCaptureWidth, mMainCaptureHeight,
                      result->frame_number, 0, 0);
         }
-#endif
+
         mCaptureThread->mCallbackOps->process_capture_result(
             mCaptureThread->mCallbackOps, &newResult);
         mCaptureThread->mReprocessing = false;
