@@ -1268,8 +1268,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 limited_width = largest_sensor_width;
                 limited_height = largest_sensor_height;
 #else
-                limited_width = 1920;
-                limited_height = 1088;
+                if(largest_sensor_width > 1920 &&
+                        largest_sensor_height > 1088) {
+                    limited_width = 1920;
+                    limited_height = 1088;
+                } else {
+                    limited_width = largest_sensor_width;
+                    limited_height = largest_sensor_height;
+                }
 #endif
                 if ((stream_info[i].stream_sizes_tbl.width <=
                      limited_width) &&
