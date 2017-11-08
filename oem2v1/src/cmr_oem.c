@@ -6017,9 +6017,13 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         lsc_buf_size = isp_param.lsc_buf_size;
         lsc_buf_num = isp_param.lsc_buf_num;
         if (cxt->hal_malloc) {
-            cxt->hal_malloc(CAMERA_ISP_LSC, &lsc_buf_size, &lsc_buf_num,
+            ret = cxt->hal_malloc(CAMERA_ISP_LSC, &lsc_buf_size, &lsc_buf_num,
                             &cxt->isp_lsc_phys_addr, &cxt->isp_lsc_virt_addr,
                             &cxt->lsc_mfd, cxt->client_data);
+	    if (ret) {
+		    CMR_LOGE("fail to malloc lsc buff.");
+		    goto exit;
+	    }
             cxt->lsc_malloc_flag = 1;
         } else {
             ret = -CMR_CAMERA_NO_MEM;
