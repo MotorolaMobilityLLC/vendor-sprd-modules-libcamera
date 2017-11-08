@@ -4145,7 +4145,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.effect_gain = cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
 #if CONFIG_ISP_2_3
 	/*it will be enable lately*/
-	//ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
+	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
 #endif
 	cxt->cur_result.face_lum = current_result->face_lum;	//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
@@ -4321,7 +4321,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
 #if CONFIG_ISP_2_3
 	/*it will be enable lately*/
-	//ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
+	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
 #endif
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;

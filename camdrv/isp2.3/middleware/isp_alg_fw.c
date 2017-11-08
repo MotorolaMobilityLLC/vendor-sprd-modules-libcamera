@@ -558,7 +558,6 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
-#if 0 //LE doen't support D gain now
 		for (i = 0; i < param_num; i++) {
 			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -570,7 +569,6 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			aem_block_info.rgb_gain_coeff = *(cmr_u32 *)param0;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
 		}
-#endif
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
 		ret = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0, param1);
