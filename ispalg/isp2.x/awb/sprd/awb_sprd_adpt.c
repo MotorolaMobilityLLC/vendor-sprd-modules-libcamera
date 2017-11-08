@@ -1124,7 +1124,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		cxt->output_ct= s_save_awb_param[cxt->camera_id].ct;
 	}
 
-	ISP_LOGV("AWB init: (%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
+	ISP_LOGV("AWB init: (%d,%d,%d), AWB_OTP rr = %d, rg = %d, rb = %d, gr = %d, gg = %d, gb = %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b,
+		cxt->awb_init_param.otp_random_r , cxt->awb_init_param.otp_random_g, cxt->awb_init_param.otp_random_b , cxt->awb_init_param.otp_golden_r, cxt->awb_init_param.otp_golden_g, cxt->awb_init_param.otp_golden_b );
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 	ISP_LOGI("done");
