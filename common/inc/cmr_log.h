@@ -36,9 +36,9 @@ enum {
 #define ERROR_STR "%d, %s: hal_err "
 #define DEBUG_ARGS __LINE__, __FUNCTION__
 
-extern cmr_int g_isp_log_level;
-extern cmr_int g_oem_log_level;
-extern cmr_int g_sensor_log_level;
+extern long g_isp_log_level;
+extern long g_oem_log_level;
+extern long g_sensor_log_level;
 
 #ifndef WIN32
 #define ISP_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
