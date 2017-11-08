@@ -14,8 +14,13 @@
 # limitations under the License.
 #
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_PATH := $(call my-dir)
+
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := x86_lib
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libbokeh_gaussian
@@ -24,8 +29,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
-LOCAL_SRC_FILES_32 := lib/$(LOCAL_MODULE).so
-LOCAL_SRC_FILES_64 := lib64/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
 ifeq ($(PLATFORM_VERSION),8.0.0)
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
@@ -33,4 +38,4 @@ endif
 
 include $(BUILD_PREBUILT)
 endif
-endif
+
