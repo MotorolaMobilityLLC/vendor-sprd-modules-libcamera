@@ -2156,6 +2156,11 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 				ret = ispalg_ae_process((cmr_handle) cxt);
 				if (ret)
 					ISP_LOGE("fail to start ae process");
+
+				ret = ispalg_awb_process((cmr_handle) cxt);
+				if (ret)
+					ISP_LOGE("fail to start awb process");
+
 				ret = ispalg_handle_sensor_sof((cmr_handle) cxt, message->data);
 			}
 		}

@@ -1074,9 +1074,21 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->awb_init_param.otp_golden_b = param->otp_info.gldn_stat_info.b;
 
 	memcpy(&cxt->awb_init_param.tuning_param, param->tuning_param, sizeof(cxt->awb_init_param.tuning_param));
-	cxt->otp_info.gldn_stat_info.r = param->otp_info.gldn_stat_info.r;
-	cxt->otp_info.gldn_stat_info.g = param->otp_info.gldn_stat_info.g;
-	cxt->otp_info.gldn_stat_info.b = param->otp_info.gldn_stat_info.b;
+
+	struct awbParaGenIn* awb_ui_data = (struct awbParaGenIn*)&cxt->awb_init_param.tuning_param.ui_data[0];
+	cxt->awb_init_param.otp_golden_r = awb_ui_data->otp_golden_r;
+	cxt->awb_init_param.otp_golden_g = awb_ui_data->otp_golden_g;
+	cxt->awb_init_param.otp_golden_b = awb_ui_data->otp_golden_b;
+	if ((cxt->awb_init_param.otp_golden_r == 0) || (cxt->awb_init_param.otp_golden_g == 0) || (cxt->awb_init_param.otp_golden_b == 0))
+	{
+		cxt->awb_init_param.otp_golden_r = param->otp_info.gldn_stat_info.r;
+		cxt->awb_init_param.otp_golden_g = param->otp_info.gldn_stat_info.g;
+		cxt->awb_init_param.otp_golden_b = param->otp_info.gldn_stat_info.b;
+	}
+
+	cxt->otp_info.gldn_stat_info.r = cxt->awb_init_param.otp_golden_r;
+	cxt->otp_info.gldn_stat_info.g = cxt->awb_init_param.otp_golden_g;
+	cxt->otp_info.gldn_stat_info.b = cxt->awb_init_param.otp_golden_b;
 	cxt->otp_info.rdm_stat_info.r = param->otp_info.rdm_stat_info.r;
 	cxt->otp_info.rdm_stat_info.g = param->otp_info.rdm_stat_info.g;
 	cxt->otp_info.rdm_stat_info.b = param->otp_info.rdm_stat_info.b;
@@ -1245,6 +1257,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 
 			if (ret == 0)
 			{
+				result->update_gain = 1;
 				return AWB_CTRL_SUCCESS;
 			}
 		}
