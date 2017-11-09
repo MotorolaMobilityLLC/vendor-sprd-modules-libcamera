@@ -558,6 +558,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
+		/* LE doen't support D gain now, will dele later */
 		for (i = 0; i < param_num; i++) {
 			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -3943,16 +3944,15 @@ exit:
 cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_s32 mode = 0;
+	cmr_s32 i = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_size org_size;
+	struct isp_video_start param;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	struct isp_video_start param;
-	cmr_s32 mode = 0;
-	cmr_s32 i = 0;
 
-	ISP_LOGV("isp proc start\n");
 	//SBS lsc added 1
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
@@ -3963,23 +3963,23 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
-
 	cxt->commn_cxt.src.w = in_ptr->src_frame.img_size.w;
 	cxt->commn_cxt.src.h = in_ptr->src_frame.img_size.h;
 
 	interface_ptr->data.work_mode = ISP_SINGLE_MODE;
-	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
+
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE)
 		interface_ptr->data.input = ISP_SIMULATION_MODE;
-	} else {
+	else
 		interface_ptr->data.input = ISP_EMC_MODE;
-	}
+
 	interface_ptr->data.input_format = in_ptr->src_frame.img_fmt;
 
-	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern) {
+	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern)
 		interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
-	} else {
+	else
 		interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
-	}
+
 	interface_ptr->data.input_size.w = in_ptr->src_frame.img_size.w;
 	interface_ptr->data.input_size.h = in_ptr->src_frame.img_size.h;
 	interface_ptr->data.input_addr.chn0 = in_ptr->src_frame.img_addr_phy.chn0;
@@ -3989,13 +3989,13 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	interface_ptr->data.input_vir.chn1 = in_ptr->src_frame.img_addr_vir.chn1;
 	interface_ptr->data.input_vir.chn2 = in_ptr->src_frame.img_addr_vir.chn2;
 	interface_ptr->data.input_fd = in_ptr->src_frame.img_fd.y;
-
 	interface_ptr->data.output_format = in_ptr->dst_frame.img_fmt;
-	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
+
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE)
 		interface_ptr->data.output = ISP_SIMULATION_MODE;
-	} else {
+	else
 		interface_ptr->data.output = ISP_EMC_MODE;
-	}
+
 	interface_ptr->data.output_addr.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
 	interface_ptr->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	interface_ptr->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
@@ -4006,30 +4006,17 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	param.work_mode = 1;
 	param.size.w = cxt->commn_cxt.src.w;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, &param, &mode);
-	ISP_RETURN_IF_FAIL(ret, ("fail to get isp_mode"));
-	ISP_LOGD("mode %d, isp_mode %d, orig_size %d %d,  cur_size %d %d", mode,
+	ISP_RETURN_IF_FAIL(ret, ("fail to get cap modeid by resolution"));
+
+	cxt->mode_id[0] = mode;
+	ISP_LOGV("mode %d, isp_mode %d, orig_size %d %d,  cur_size %d %d", mode,
 		cxt->commn_cxt.isp_mode, org_size.w, org_size.h, cxt->commn_cxt.src.w, cxt->commn_cxt.src.h);
 
-	if (org_size.w != cxt->commn_cxt.src.w) {
-		BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_CFA_CFG,
-				ISP_BLK_CFA,
-				mode,
-				&cxt->commn_cxt.src.w,
-				sizeof(cxt->commn_cxt.src.w));
-		io_pm_input.param_num = 1;
-		io_pm_input.param_data_ptr = &pm_param;
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-		cxt->commn_cxt.isp_mode = mode;
-		cxt->commn_cxt.mode_flag = mode;
-		cxt->mode_id[0] = mode;
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
-		ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
-	}
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &mode, NULL);
+	ISP_RETURN_IF_FAIL(ret, ("fail to set mode"));
 
 	/* isp param index */
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->src_frame.img_size);
-	/* todo: base on param_index to get sensor line_time/frame_line */
-
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
@@ -4043,19 +4030,38 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	input.param_data_ptr = &param_data_alsc;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
+
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for (i = 0; i < 9; i++)
-		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+
 	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
 	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;
 	fwprocstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
 	fwprocstart_info.grid_new  = lsc_info_new->grid;
 	fwprocstart_info.camera_id = cxt->camera_id;
+	ISP_LOGV("gain_w:%d, gain_h:%d, img_pattern:%d, grid:%d, camera_id:%ld",
+			lsc_info_new->gain_w,
+			lsc_info_new->gain_h,
+			cxt->commn_cxt.image_pattern,
+			lsc_info_new->grid,
+			cxt->camera_id);
+
 
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);
+
+	memset(&pm_param, 0x0, sizeof(pm_param));
+	BLOCK_PARAM_CFG(pm_param, ISP_PM_BLK_LSC_INFO,
+			DCAM_BLK_2D_LSC,
+			cxt->mode_id[0],
+			PNULL,
+			0);
+	io_pm_input.param_num = 1;
+	io_pm_input.param_data_ptr = &pm_param;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
