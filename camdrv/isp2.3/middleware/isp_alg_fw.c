@@ -1385,6 +1385,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+	cmr_u32 ae_shift;
 	cmr_uint u_addr = 0;
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
@@ -1411,6 +1412,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	u_addr = (cmr_u64)statis_info->vir_addr;
 
 	ae_stat_ptr = &cxt->aem_stats;
+	ae_shift = cxt->ae_cxt.shift;
 	for (i = 0x00; i < 5120; i++) {
 		stats_pixel = *((cmr_u64 *)u_addr + i);
 		sum_b_oe = stats_pixel & 0x1fffff;
@@ -1441,9 +1443,9 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		cnt_g_oe = (stats_pixel >> 16) & 0x1fff;
 
 		//TBD
-		ae_stat_ptr->r_info[j] = sum_r_oe + sum_r_ue + sum_r_ae;
-		ae_stat_ptr->g_info[j] = sum_g_oe + sum_g_ue + sum_g_ae;
-		ae_stat_ptr->b_info[j] = sum_b_oe + sum_b_ue + sum_b_ae;
+		ae_stat_ptr->r_info[j] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
+		ae_stat_ptr->g_info[j] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
+		ae_stat_ptr->b_info[j] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
 		j++;
 	}
 
