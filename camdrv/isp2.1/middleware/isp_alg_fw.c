@@ -853,13 +853,10 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		if (ISP_SUCCESS != ret)
 			ISP_LOGE("fail to get ALSC update flag!");
 
-		if (update_info.alsc_update_flag == 1 && update_info.can_update_dest == 1){
+
+		if (update_info.alsc_update_flag == 1){
 			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, update_info.lsc_buffer_addr, lsc_info->gain_w*lsc_info->gain_h*4*sizeof(cmr_u16));
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			if (cxt->ops.lsc_ops.ioctrl)
-				ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
-			if (ISP_SUCCESS != ret)
-				ISP_LOGE("fail to set ALSC update flag!");
 		}
 	}
 

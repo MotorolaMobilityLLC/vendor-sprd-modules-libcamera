@@ -97,8 +97,7 @@ enum alsc_io_ctrl_cmd {
 	ALSC_FW_PROC_START =15,
 	ALSC_FW_PROC_START_END = 16,
 	ALSC_GET_UPDATE_INFO = 17,
-	ALSC_LOCK_UPDATE_FLAG = 18,
-	ALSC_UNLOCK_UPDATE_FLAG = 19,
+	ALSC_UNLOCK_UPDATE_FLAG = 18,
 };
 
 struct tg_alsc_debug_info {

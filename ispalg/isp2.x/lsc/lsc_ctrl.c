@@ -694,9 +694,9 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
 
 	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
-	if(update_info.alsc_update_flag == 0 && update_info.can_update_dest == 1){
+	if(update_info.can_update_dest == 1){
 		memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
-		rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_LOCK_UPDATE_FLAG, NULL, NULL);
+		rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
 	}
 
 	return rtn;

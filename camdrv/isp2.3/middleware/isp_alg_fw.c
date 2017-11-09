@@ -1149,7 +1149,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		if (ISP_SUCCESS != ret)
 			ISP_LOGE("fail to get ALSC update flag!");
 
-		if (update_info.alsc_update_flag == 1 && update_info.can_update_dest == 1){
+		if (update_info.alsc_update_flag == 1){
             /* get binning_src paramter */
 			binning_src.img_width = calc_param.img_size.w;
 			binning_src.img_height = calc_param.img_size.h;
@@ -1280,10 +1280,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param[0];
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			if (cxt->ops.lsc_ops.ioctrl)
-				ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
-			if (ISP_SUCCESS != ret)
-				ISP_LOGE("fail to set ALSC update flag!");
 		}
 	}
 	return ret;
