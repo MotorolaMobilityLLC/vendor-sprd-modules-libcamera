@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.127"
-#define SUB_VERSION             "-1101-smile"	//use the date code to naming
+#define SUB_VERSION             "-1108-pdlscawb"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -745,7 +745,7 @@ typedef struct af_scan_info_s {
 	cmr_u32 frmid_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 coast_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 ma_count;
-	cmr_u32 reserve[32];	//for temp debug
+	cmr_u32 reserve[32];	//for temp debug        
 } afscan_info_t;
 
 typedef struct af_prescan_info_s {
@@ -954,7 +954,7 @@ typedef struct _weight_setting_s {
 	cmr_u8 table_sum;
 	cmr_u8 weight_value[FOCUS_STAT_WIN_TOTAL];
 	cmr_u8 reserved[13];
-} _weight_setting_t;		//four byte aligment
+} _weight_setting_t;		//four byte aligment 
 
 typedef struct _af_weight_table_s {
 	_weight_setting_t mode_0_weight_table[ALG_SCENE_NUM];
@@ -1001,7 +1001,7 @@ typedef struct _af_tuning_param {
 	microdepth_t microdepth_param;	// 176bytes + 196 bytes
 	cmr_u8 dummy1[324 + 1506 - 192 - 92 - 288 - 372];
 #else				//long time for unused
-	//filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];       // AF filter threshold,
+	//filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];       // AF filter threshold, 
 	//cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];     //BV threshold
 	//AF_Window_Config SAF_win;       // SAF window config ,502bytes
 	//AF_Window_Config CAF_win;       // CAF window config ,502bytes
