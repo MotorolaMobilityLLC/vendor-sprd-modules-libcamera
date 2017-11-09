@@ -1200,6 +1200,61 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     }
 }
 
+static void camera_cfg_face_roi(cmr_handle oem_handle,
+                                struct camera_frame_type *frame_param,
+                                struct isp_face_area *face_area) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_s32 sx = 0;
+    cmr_s32 sy = 0;
+    cmr_s32 ex = 0;
+    cmr_s32 ey = 0;
+    cmr_s32 i = 0;
+    cmr_uint face_info_max_num =
+        sizeof(face_area->face_info) / sizeof(struct isp_face_info);
+
+    if (face_info_max_num < face_area->face_num)
+        face_area->face_num = face_info_max_num;
+
+    for (i = 0; i < face_area->face_num; i++) {
+        sx = MIN(
+            MIN(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
+            MIN(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
+        sy = MIN(
+            MIN(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
+            MIN(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
+        ex = MAX(
+            MAX(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
+            MAX(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
+        ey = MAX(
+            MAX(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
+            MAX(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
+        // save face info in cmr cxt for other case.such as face beauty
+        // takepicture
+        cxt->fd_face_area.face_info[i].sx = sx;
+        cxt->fd_face_area.face_info[i].sy = sy;
+        cxt->fd_face_area.face_info[i].ex = ex;
+        cxt->fd_face_area.face_info[i].ey = ey;
+        cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
+        cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
+
+        face_area->face_info[i].sx = 1.0 * sx * (float)face_area->frame_width /
+                                     (float)frame_param->width;
+        face_area->face_info[i].sy = 1.0 * sy * (float)face_area->frame_height /
+                                     (float)frame_param->height;
+        face_area->face_info[i].ex = 1.0 * ex * (float)face_area->frame_width /
+                                     (float)frame_param->width;
+        face_area->face_info[i].ey = 1.0 * ey * (float)face_area->frame_height /
+                                     (float)frame_param->height;
+        face_area->face_info[i].brightness =
+            frame_param->face_info[i].brightness;
+        face_area->face_info[i].angle = frame_param->face_info[i].angle;
+        face_area->face_info[i].pose = frame_param->face_info[i].pose;
+        CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d",
+                 face_area->face_info[i].sx, face_area->face_info[i].sy,
+                 face_area->face_info[i].ex, face_area->face_info[i].ey);
+    }
+}
+
 cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                           enum preview_func_type func, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1244,16 +1299,12 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct camera_frame_type *frame_param =
                 (struct camera_frame_type *)param;
             struct isp_face_area face_area;
-            int32_t sx = 0;
-            int32_t sy = 0;
-            int32_t ex = 0;
-            int32_t ey = 0;
-            int32_t i = 0;
             struct img_rect src_prev_rect;
             struct sensor_mode_info *sensor_mode_info = NULL;
             cmr_u32 sn_mode = 0;
-            cmr_uint face_info_max_num =
-                sizeof(face_area.face_info) / sizeof(struct isp_face_info);
+#ifdef CONFIG_CAMERA_OFFLINE
+            struct img_rect af_trim = {0, 0, 0, 0};
+#endif
 
             cxt->fd_face_area.frame_width = frame_param->width;
             cxt->fd_face_area.frame_height = frame_param->height;
@@ -1273,59 +1324,8 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             face_area.face_num = frame_param->face_num;
             CMR_LOGV("face_num %d, size:%dx%d", face_area.face_num,
                      face_area.frame_width, face_area.frame_height);
+            camera_cfg_face_roi(cxt, frame_param, &face_area);
 
-            if (face_info_max_num < face_area.face_num) {
-                face_area.face_num = face_info_max_num;
-            }
-
-            for (i = 0; i < face_area.face_num; i++) {
-                sx = MIN(MIN(frame_param->face_info[i].sx,
-                             frame_param->face_info[i].srx),
-                         MIN(frame_param->face_info[i].ex,
-                             frame_param->face_info[i].elx));
-                sy = MIN(MIN(frame_param->face_info[i].sy,
-                             frame_param->face_info[i].sry),
-                         MIN(frame_param->face_info[i].ey,
-                             frame_param->face_info[i].ely));
-                ex = MAX(MAX(frame_param->face_info[i].sx,
-                             frame_param->face_info[i].srx),
-                         MAX(frame_param->face_info[i].ex,
-                             frame_param->face_info[i].elx));
-                ey = MAX(MAX(frame_param->face_info[i].sy,
-                             frame_param->face_info[i].sry),
-                         MAX(frame_param->face_info[i].ey,
-                             frame_param->face_info[i].ely));
-                // save face info in cmr cxt for other case.such as face beauty
-                // takepicture
-                cxt->fd_face_area.face_info[i].sx = sx;
-                cxt->fd_face_area.face_info[i].sy = sy;
-                cxt->fd_face_area.face_info[i].ex = ex;
-                cxt->fd_face_area.face_info[i].ey = ey;
-                cxt->fd_face_area.face_info[i].angle =
-                    frame_param->face_info[i].angle;
-                cxt->fd_face_area.face_info[i].pose =
-                    frame_param->face_info[i].pose;
-
-                face_area.face_info[i].sx = 1.0 * sx *
-                                            (float)face_area.frame_width /
-                                            (float)frame_param->width;
-                face_area.face_info[i].sy = 1.0 * sy *
-                                            (float)face_area.frame_height /
-                                            (float)frame_param->height;
-                face_area.face_info[i].ex = 1.0 * ex *
-                                            (float)face_area.frame_width /
-                                            (float)frame_param->width;
-                face_area.face_info[i].ey = 1.0 * ey *
-                                            (float)face_area.frame_height /
-                                            (float)frame_param->height;
-                face_area.face_info[i].brightness =
-                    frame_param->face_info[i].brightness;
-                face_area.face_info[i].angle = frame_param->face_info[i].angle;
-                face_area.face_info[i].pose = frame_param->face_info[i].pose;
-                CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d",
-                         face_area.face_info[i].sx, face_area.face_info[i].sy,
-                         face_area.face_info[i].ex, face_area.face_info[i].ey);
-            }
             if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format &&
                 (!cxt->is_vendor_hdr) /* SS requires to disable FD when HDR is
                                          on */
@@ -1333,6 +1333,27 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_FACE_AREA,
                           (void *)&face_area);
             }
+
+#ifdef CONFIG_CAMERA_OFFLINE
+            cmr_bzero(&face_area, sizeof(struct isp_face_area));
+
+            camera_get_senor_mode_trim2(cxt, &af_trim);
+            face_area.frame_width = af_trim.width;
+            face_area.frame_height = af_trim.height;
+            face_area.face_num = frame_param->face_num;
+            CMR_LOGV("af face_num %d, size:%dx%d", face_area.face_num,
+                     face_area.frame_width, face_area.frame_height);
+
+            camera_cfg_face_roi(cxt, frame_param, &face_area);
+
+            if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format &&
+                (!cxt->is_vendor_hdr) /* SS requires to disable FD when HDR is
+                                         on */
+                ) {
+                isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AF_FACE_AREA,
+                          (void *)&face_area);
+            }
+#endif
         }
 
         break;
@@ -3204,7 +3225,8 @@ out:
     return ret;
 }
 
-cmr_s32 camera_get_pos_info(cmr_handle oem_handle, struct sensor_vcm_info *info) {
+cmr_s32 camera_get_pos_info(cmr_handle oem_handle,
+                            struct sensor_vcm_info *info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct sensor_context *sn_cxt = NULL;
@@ -3253,14 +3275,14 @@ cmr_s32 camera_isp_set_next_vcm_pos(void *handler, cmr_s32 pos) {
     cmr_bzero(&vcm_param, sizeof(vcm_param));
 
     if (0 <= pos) {
-	    info.pos = pos;
-	    camera_get_pos_info(handler, &info);
-	    vcm_param.next_vcm_pos = pos;
-	    vcm_param.vcm_i2c_count = info.cmd_len;
-	    memcpy(vcm_param.vcm_i2c_data, info.cmd_val, info.cmd_len);
-	    vcm_param.vcm_slave_addr = info.slave_addr;
+        info.pos = pos;
+        camera_get_pos_info(handler, &info);
+        vcm_param.next_vcm_pos = pos;
+        vcm_param.vcm_i2c_count = info.cmd_len;
+        memcpy(vcm_param.vcm_i2c_data, info.cmd_val, info.cmd_len);
+        vcm_param.vcm_slave_addr = info.slave_addr;
     } else {
-	    vcm_param.next_vcm_pos = pos;
+        vcm_param.next_vcm_pos = pos;
     }
 
     ret = cmr_grab_set_next_vcm_pos(cxt->grab_cxt.grab_handle, &vcm_param);

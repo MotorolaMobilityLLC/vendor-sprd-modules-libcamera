@@ -300,6 +300,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_MODE,	// for isp tool
 	ISP_CTRL_FACE_AREA,
+	ISP_CTRL_AF_FACE_AREA,
 	ISP_CTRL_SCALER_TRIM,
 	ISP_CTRL_START_3A,
 	ISP_CTRL_STOP_3A,
