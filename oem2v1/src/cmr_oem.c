@@ -4833,13 +4833,13 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     unsigned int duration;
     cmr_s32 filter_type = 0;
 
+    sem_wait(&cxt->access_sm);
+
     if (!caller_handle || !oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-
-    sem_wait(&cxt->access_sm);
 
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
@@ -5065,8 +5065,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         cxt->jpeg_cxt.enc_caller_handle = (cmr_handle)0;
         CMR_LOGE("failed to enc start %ld", ret);
     }
-    sem_post(&cxt->access_sm);
+
 exit:
+    sem_post(&cxt->access_sm);
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
     return ret;
