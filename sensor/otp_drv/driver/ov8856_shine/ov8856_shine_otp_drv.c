@@ -13,12 +13,13 @@ static cmr_int _ov8856_shine_section_checksum(cmr_u8 *buf, cmr_uint offset,
     cmr_s32 ret = OTP_CAMERA_SUCCESS;
     cmr_u32 i = 0, sum = 0;
 
-    OTP_LOGV("in");
+    OTP_LOGV("in,offset:0x%lx,data_count:0x%lx,check_sum_offset:%lx",offset,data_count,check_sum_offset);
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
-    if ((sum % 255 + 1) == buf[check_sum_offset]) {
+    if ((sum % 256) == buf[check_sum_offset]) {
         ret = OTP_CAMERA_SUCCESS;
+        OTP_LOGV("OTP_CAMERA_SUCCESS!!");
     } else {
         ret = CMR_CAMERA_FAIL;
     }
@@ -68,7 +69,6 @@ static cmr_int _ov8856_shine_parse_module_data(cmr_handle otp_drv_handle) {
 }
 static cmr_int _ov8856_shine_parse_af_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    cmr_uint offset = MODULE_INFO_OFFSET + 1;
 
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
@@ -76,8 +76,8 @@ static cmr_int _ov8856_shine_parse_af_data(cmr_handle otp_drv_handle) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_section_info_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
-    ret = _ov8856_shine_section_checksum(otp_cxt->otp_raw_data.buffer, offset,
-                                         AF_INFO_CHECKSUM - offset,
+    ret = _ov8856_shine_section_checksum(otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
+                                         AF_INFO_CHECKSUM - AF_INFO_OFFSET,
                                          AF_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("auto focus checksum error,parse failed");
@@ -97,17 +97,16 @@ static cmr_int _ov8856_shine_parse_awb_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_uint data_count_rdm = 0;
     cmr_uint data_count_gld = 0;
-    cmr_uint offset = AWB_INFO_OFFSET + 1;
 
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_section_info_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
-    cmr_u8 *awb_src_dat = otp_cxt->otp_raw_data.buffer + offset;
+    cmr_u8 *awb_src_dat = otp_cxt->otp_raw_data.buffer + AWB_INFO_OFFSET;
 
-    ret = _ov8856_shine_section_checksum(otp_cxt->otp_raw_data.buffer, offset,
-                                         AWB_INFO_CHECKSUM - offset,
+    ret = _ov8856_shine_section_checksum(otp_cxt->otp_raw_data.buffer, AWB_INFO_OFFSET,
+                                         AWB_INFO_CHECKSUM - AWB_INFO_OFFSET,
                                          AWB_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("awb otp data checksum error,parse failed");
@@ -164,10 +163,42 @@ static cmr_int _ov8856_shine_parse_pdaf_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGV("in");
+    OTP_LOGV("in,%d\n",__LINE__);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    /*pdaf*/
+    cmr_u8 *pdaf_src_dat = otp_cxt->otp_raw_data.buffer + PDAF_INFO_OFFSET;
+    ret = _ov8856_shine_section_checksum(
+        otp_cxt->otp_raw_data.buffer, PDAF_INFO_OFFSET,
+        PDAF_INFO_END_OFFSET - PDAF_INFO_OFFSET, PDAF_INFO_CHECKSUM);
+    if (OTP_CAMERA_SUCCESS != ret) {
+        OTP_LOGI("pdaf otp data checksum error,parse failed.\n");
+        return ret;
+    } else {
+        otp_cxt->otp_data->pdaf_cali_dat.rdm_info.buffer = pdaf_src_dat;
+        otp_cxt->otp_data->pdaf_cali_dat.rdm_info.size =
+            PDAF_INFO_CHECKSUM - PDAF_INFO_OFFSET;
+        otp_cxt->otp_data->pdaf_cali_dat.gld_info.buffer = NULL;
+        otp_cxt->otp_data->pdaf_cali_dat.gld_info.size = 0;
+    }
+    /*spc*/
+    cmr_u8 *spc_src_dat = otp_cxt->otp_raw_data.buffer + SPC_INFO_OFFSET;
 
+    ret = _ov8856_shine_section_checksum(
+        otp_cxt->otp_raw_data.buffer, SPC_INFO_OFFSET,
+        SPC_INFO_END_OFFSET - SPC_INFO_OFFSET, SPC_INFO_CHECKSUM);
+
+    otp_cxt->otp_data->spc_cali_dat.rdm_info.buffer = spc_src_dat;
+    otp_cxt->otp_data->spc_cali_dat.rdm_info.size =
+        SPC_INFO_END_OFFSET - SPC_INFO_OFFSET;
+    otp_cxt->otp_data->spc_cali_dat.gld_info.buffer = NULL;
+    otp_cxt->otp_data->spc_cali_dat.gld_info.size = 0;
+
+    /*total checksum*/
+    cmr_u8 *total_chk_sum =
+        otp_cxt->otp_raw_data.buffer + TOTAL_CHECKSUM_OFFSET;
+    otp_cxt->otp_data->extend_dat.checksum =
+        (total_chk_sum[0] << 8) | total_chk_sum[1];
     OTP_LOGV("out");
     return ret;
 }
