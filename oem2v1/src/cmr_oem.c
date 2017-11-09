@@ -6580,7 +6580,7 @@ cmr_int camera_channel_scale_capability(cmr_handle oem_handle, cmr_u32 *width,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    if (!oem_handle || !width | !sc_factor) {
+    if (!oem_handle || !width || !sc_factor) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -6609,7 +6609,7 @@ cmr_int camera_channel_get_cap_time(cmr_handle oem_handle, cmr_u32 *sec,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    if (!oem_handle || !sec | !usec) {
+    if (!oem_handle || !sec || !usec) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
