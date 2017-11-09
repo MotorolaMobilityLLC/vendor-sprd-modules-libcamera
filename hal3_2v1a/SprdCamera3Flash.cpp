@@ -129,7 +129,7 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
 #endif
     if (mode) {
         bytes = snprintf(buffer, sizeof(buffer), "0x%x",
-                         (TORCH_APP_CFG_CURRENT_LEVEL << 8) | 0x0016);
+                         (default_light_level << 8) | 0x0016);
         wr_ret = write(fd, buffer, bytes);
     }
     bytes = snprintf(buffer, sizeof(buffer), "0x%x", 0x11 ^ mode);
