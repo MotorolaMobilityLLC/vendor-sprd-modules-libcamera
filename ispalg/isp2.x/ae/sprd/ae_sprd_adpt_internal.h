@@ -108,6 +108,8 @@ struct ae_ctrl_cxt {
 	cmr_u32 bypass;
 	cmr_u32 capture_skip_num;
 	cmr_u32 zsl_flag;
+	cmr_u32 skip_update_param_flag;
+	cmr_u32 skip_update_param_cnt;
 	/*
 	 * camera id: front camera or rear camera
 	 */

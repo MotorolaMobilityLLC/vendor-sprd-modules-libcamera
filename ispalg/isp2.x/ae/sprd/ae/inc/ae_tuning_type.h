@@ -97,7 +97,7 @@ struct face_tuning_param {
 	cmr_u8 face_tuning_lum1;	// scope is [0,256]
 	cmr_u8 face_tuning_lum2;	//if face lum > this value, offset will set to be 0
 	cmr_u16 cur_offset_weight;	//10~100 will trans 0~1
-	cmr_u16 reserved[1];	//?
+	cmr_u16 reserved[41];	//?
 };
 
 struct ae_touch_param {
@@ -204,7 +204,7 @@ struct ae_tuning_param {	//total bytes must be 263480
 	struct ae_flash_swith_param flash_swith_param;
 	struct ae_flash_control_param flash_control_param;
 	struct ae_video_set_fps_param ae_video_fps;
-	cmr_u32 reserved[2038];
+	cmr_u32 reserved[2018];
 };
 
 #endif
