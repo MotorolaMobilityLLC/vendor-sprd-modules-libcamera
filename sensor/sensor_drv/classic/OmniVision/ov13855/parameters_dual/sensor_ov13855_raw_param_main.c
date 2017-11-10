@@ -38,6 +38,7 @@
 #include "sensor_ov13855_raw_param_video_0.c"
 #include "sensor_ov13855_raw_param_video_1.c"
 #include "sensor_ov13855_raw_param_video_2.c"
+#include "sensor_ov13855_raw_param_video_3.c"
 
 /* End Include */
 
@@ -168,7 +169,7 @@ static struct sensor_raw_info s_ov13855_mipi_raw_info=
 		{s_ov13855_tune_info_video_0, sizeof(s_ov13855_tune_info_video_0)},
 		{s_ov13855_tune_info_video_1, sizeof(s_ov13855_tune_info_video_1)},
 		{s_ov13855_tune_info_video_2, sizeof(s_ov13855_tune_info_video_2)},
-		{NULL, 0},
+		{s_ov13855_tune_info_video_3, sizeof(s_ov13855_tune_info_video_3)},
 	},
 	&s_ov13855_trim_info,
 	&s_ov13855_ioctrl,
@@ -186,7 +187,7 @@ static struct sensor_raw_info s_ov13855_mipi_raw_info=
 		&s_ov13855_fix_info_video_0,
 		&s_ov13855_fix_info_video_1,
 		&s_ov13855_fix_info_video_2,
-		NULL,
+		&s_ov13855_fix_info_video_3,
 	},
 	{
 		{s_ov13855_common_tool_ui_input, sizeof(s_ov13855_common_tool_ui_input)},
@@ -201,7 +202,7 @@ static struct sensor_raw_info s_ov13855_mipi_raw_info=
 		{s_ov13855_video_0_tool_ui_input, sizeof(s_ov13855_video_0_tool_ui_input)},
 		{s_ov13855_video_1_tool_ui_input, sizeof(s_ov13855_video_1_tool_ui_input)},
 		{s_ov13855_video_2_tool_ui_input, sizeof(s_ov13855_video_2_tool_ui_input)},
-		{NULL, 0},
+		{s_ov13855_video_3_tool_ui_input, sizeof(s_ov13855_video_3_tool_ui_input)},
 	},
 	{
 		&s_ov13855_nr_scene_map_param,
