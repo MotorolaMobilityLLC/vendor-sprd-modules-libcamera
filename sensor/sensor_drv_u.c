@@ -283,13 +283,12 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
     exp_info_ptr->sns_ops = sns_info->sns_ops;
 
     for (i = SENSOR_MODE_COMMON_INIT; i < SENSOR_MODE_MAX; i++) {
-        if (SENSOR_IMAGE_FORMAT_JPEG == res_info_ptr[i].image_format) {
-            exp_info_ptr->sensor_image_type = SENSOR_IMAGE_FORMAT_JPEG;
-        }
-
         if ((PNULL != res_info_ptr[i].sensor_reg_tab_ptr) ||
             ((0x00 != res_info_ptr[i].width) &&
              (0x00 != res_info_ptr[i].width))) {
+             if (SENSOR_IMAGE_FORMAT_JPEG == res_info_ptr[i].image_format) {
+                exp_info_ptr->sensor_image_type = SENSOR_IMAGE_FORMAT_JPEG;
+            }
             exp_info_ptr->sensor_mode_info[i].mode = i;
             exp_info_ptr->sensor_mode_info[i].width = res_info_ptr[i].width;
             exp_info_ptr->sensor_mode_info[i].height = res_info_ptr[i].height;
