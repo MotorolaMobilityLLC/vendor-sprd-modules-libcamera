@@ -2120,15 +2120,17 @@ static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 		//ISP_LOGV("y_sum[%d] = %d",i,y_sum);
 	}
 
-	switch (af->state) {
-	case STATE_FAF:
-		af->Y_sum_trigger = af->roi_RGBY.Y_sum[af->roi.num - 1];
-		af->Y_sum_normalize = af->roi_RGBY.Y_sum[af->roi.num - 1];
-		break;
-	default:
-		af->Y_sum_trigger = af->roi_RGBY.Y_sum[af->roi.num - 1];
-		af->Y_sum_normalize = af->roi_RGBY.Y_sum[af->roi.num - 1];
-		break;
+	if (0 != af->roi.num) {
+		switch (af->state) {
+		case STATE_FAF:
+			af->Y_sum_trigger = af->roi_RGBY.Y_sum[af->roi.num - 1];
+			af->Y_sum_normalize = af->roi_RGBY.Y_sum[af->roi.num - 1];
+			break;
+		default:
+			af->Y_sum_trigger = af->roi_RGBY.Y_sum[af->roi.num - 1];
+			af->Y_sum_normalize = af->roi_RGBY.Y_sum[af->roi.num - 1];
+			break;
+		}
 	}
 
 	property_get("af_mode", af->AF_MODE, "none");
@@ -2178,9 +2180,10 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
-	cmr_s32 timecompare = compare_timestamp(af);
+	cmr_s32 timecompare = 0;
 	cmr_u16 pos[2] = { 0 };
 
+	timecompare = compare_timestamp(af);
 	if (0 == af_ts->capture) {
 		af->dcam_timestamp = af_ts->timestamp;
 		AF_Set_time_stamp(af->af_alg_cxt, AF_TIME_DCAM, af->dcam_timestamp);
