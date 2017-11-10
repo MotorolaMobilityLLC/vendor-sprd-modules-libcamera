@@ -245,8 +245,8 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle)
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = &blk_header_array[i];
 		img_res = &mode_param_ptr->resolution;
-		if (id == ISP_BLK_2D_LSC || id == ISP_BLK_BINNING4AWB || id == ISP_BLK_CFA)
-			img_res = &mode_param_ptr->isp_resolution;
+		if (id == DCAM_BLK_2D_LSC)
+			img_res = &mode_param_ptr->sn_resolution;
 		if (PNULL != blk_cfg_ptr) {
 			ops = blk_cfg_ptr->ops;
 			if (ops && ops->init) {
@@ -709,6 +709,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			free(cxt_ptr->tune_mode_array[i]);
 			cxt_ptr->tune_mode_array[i] = PNULL;
 		}
+
 		cxt_ptr->tune_mode_array[i] = (struct isp_pm_mode_param *)malloc(size);
 		if (PNULL == cxt_ptr->tune_mode_array[i]) {
 			ISP_LOGE("fail to malloc tune_mode_array, i=%d", i);
@@ -1054,7 +1055,7 @@ static cmr_s32 isp_pm_layout_param_and_init(cmr_handle handle)
 		cur_mode = pm_cxt_ptr->merged_mode_array[i];
 		if (PNULL == cur_mode)
 			continue;
-		cur_mode->isp_resolution = cur_mode->resolution;
+		cur_mode->sn_resolution = cur_mode->resolution;
 
 		lsc_idx = ISP_TUNE_BLOCK_MAX;
 		for (j = 0; j < cur_mode->block_num; j++) {
@@ -1419,12 +1420,14 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_mode_param *mode_para
 	return rtn;
 }
 
-static cmr_s32 isp_pm_get_isp_lsc(cmr_handle handle,
+static cmr_s32 isp_pm_get_dcam_lsc(cmr_handle handle,
+		cmr_u32  is_prev,
 		struct isp_pm_mode_param *cur_mode,
 		struct isp_video_start *param_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0;
+	cmr_u32 search_start_idx, search_end_idx;
 	struct isp_pm_context *pm_cxt_ptr = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_pm_block_header * dcam_lsc_hdr = PNULL;
@@ -1434,8 +1437,10 @@ static cmr_s32 isp_pm_get_isp_lsc(cmr_handle handle,
 	for (j = 0; j < cur_mode->block_num; j++) {
 		if (cur_mode->header[j].block_id == DCAM_BLK_2D_LSC)
 			dcam_lsc_hdr = &cur_mode->header[j];
-		if (cur_mode->header[j].block_id == ISP_BLK_2D_LSC)
+		else if (cur_mode->header[j].block_id == ISP_BLK_2D_LSC)
 			isp_lsc_hdr = &cur_mode->header[j];
+		if (dcam_lsc_hdr != PNULL && isp_lsc_hdr != PNULL)
+			break;
 	}
 
 	if (dcam_lsc_hdr == PNULL || isp_lsc_hdr == PNULL) {
@@ -1443,30 +1448,33 @@ static cmr_s32 isp_pm_get_isp_lsc(cmr_handle handle,
 		return ISP_PARAM_ERROR;
 	}
 
-	memcpy((cmr_u8 *)isp_lsc_hdr, (cmr_u8 *)dcam_lsc_hdr, sizeof(struct isp_pm_block_header));
-	isp_lsc_hdr->source_flag = cur_mode->mode_id;
-	isp_lsc_hdr->block_id = ISP_BLK_2D_LSC;
+	memcpy((void *)dcam_lsc_hdr, (void *)isp_lsc_hdr, sizeof(struct isp_pm_block_header));
+	dcam_lsc_hdr->block_id = DCAM_BLK_2D_LSC;
 
+	/* resolution = dcam_size - dcam output size; sn_resolution: sensor output size.*/
 	if (param_ptr->dcam_size.w == param_ptr->size.w) {
-		cur_mode->isp_resolution = cur_mode->resolution;
+		cur_mode->sn_resolution = cur_mode->resolution;
 		return rtn;
 	}
-	cur_mode->isp_resolution = param_ptr->dcam_size;
+	cur_mode->sn_resolution = param_ptr->size;
 
-	for (i = ISP_MODE_ID_PRV_0; i <= ISP_MODE_ID_PRV_3; i++) {
+	search_start_idx = is_prev ? ISP_MODE_ID_PRV_0 : ISP_MODE_ID_VIDEO_0;
+	search_end_idx = is_prev ? ISP_MODE_ID_PRV_3 : ISP_MODE_ID_VIDEO_3;
+
+	for (i = search_start_idx; i <= search_end_idx; i++) {
 		mode_param_ptr = pm_cxt_ptr->merged_mode_array[i];
 		if (PNULL == mode_param_ptr ||
-			param_ptr->dcam_size.w != mode_param_ptr->resolution.w)
+			param_ptr->size.w != mode_param_ptr->resolution.w)
 			continue;
 
 		for (j = 0; j < mode_param_ptr->block_num; j++) {
-			if (mode_param_ptr->header[j].block_id == DCAM_BLK_2D_LSC) {
-				memcpy((cmr_u8 *) isp_lsc_hdr,
-						(cmr_u8 *) & mode_param_ptr->header[j],
+			if (mode_param_ptr->header[j].block_id == ISP_BLK_2D_LSC) {
+				memcpy((void *) dcam_lsc_hdr,
+						(void *) & mode_param_ptr->header[j],
 						sizeof(struct isp_pm_block_header));
-				isp_lsc_hdr->source_flag  = mode_param_ptr->mode_id;
-				isp_lsc_hdr->block_id = ISP_BLK_2D_LSC;
-				ISP_LOGD("Get ISP_BLK_2D_LSC for mode %d (%s) from mode %d (%s).",
+				dcam_lsc_hdr->source_flag  = mode_param_ptr->mode_id;
+				dcam_lsc_hdr->block_id = DCAM_BLK_2D_LSC;
+				ISP_LOGD("Get DCAM_BLK_2D_LSC for mode %d (%s) from mode %d (%s).",
 							cur_mode->mode_id, cur_mode->mode_name,
 							mode_param_ptr->mode_id, mode_param_ptr->mode_name);
 				break;
@@ -1511,7 +1519,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		*((cmr_s32 *) out_ptr) = ISP_MODE_ID_PRV_0;
 		for (i = ISP_MODE_ID_PRV_0; i <= ISP_MODE_ID_PRV_3; i++) {
 			if (pm_cxt_ptr->tune_mode_array[i] != NULL) {
-				if (pm_cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
+				if (pm_cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->dcam_size.w) {
 					*((cmr_s32 *) out_ptr) = pm_cxt_ptr->tune_mode_array[i]->mode_id;
 					cur_mode = pm_cxt_ptr->merged_mode_array[i];
 					break;
@@ -1520,9 +1528,12 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		}
 
 		if (cur_mode != PNULL) {
-			rtn = isp_pm_get_isp_lsc(handle, cur_mode, param_ptr);
+			ISP_LOGD("Get mode %d for prev size (%d, %d).", cur_mode->mode_id,
+				param_ptr->dcam_size.w, param_ptr->dcam_size.h);
+			rtn = isp_pm_get_dcam_lsc(handle, 1, cur_mode, param_ptr);
 		} else {
-			ISP_LOGE("No prev param for size (%d, %d).", param_ptr->dcam_size.w, param_ptr->dcam_size.h);
+			ISP_LOGE("No prev param for size (%d, %d).",
+				param_ptr->dcam_size.w, param_ptr->dcam_size.h);
 			rtn = ISP_PARAM_ERROR;
 		}
 	} else if (ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION == cmd) {
@@ -1537,19 +1548,31 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			}
 		}
 	} else if (ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION == cmd) {
+		struct isp_pm_mode_param *cur_mode = PNULL;
 		param_ptr = in_ptr;
 		if (param_ptr->dv_mode == 0) {
 			ISP_LOGE("fail to  get valid dv mode\n");
-		} else {
-			*((cmr_s32 *) out_ptr) = ISP_MODE_ID_VIDEO_0;
-			for (i = ISP_MODE_ID_VIDEO_0; i < ISP_MODE_ID_VIDEO_3; i++) {
-				if (pm_cxt_ptr->tune_mode_array[i] != NULL) {
-					if (pm_cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->size.w) {
-						*((cmr_s32 *) out_ptr) = pm_cxt_ptr->tune_mode_array[i]->mode_id;
-						break;
-					}
+			return ISP_PARAM_ERROR;
+		}
+
+		*((cmr_s32 *) out_ptr) = ISP_MODE_ID_VIDEO_0;
+		for (i = ISP_MODE_ID_VIDEO_0; i <= ISP_MODE_ID_VIDEO_3; i++) {
+			if (pm_cxt_ptr->tune_mode_array[i] != NULL) {
+				if (pm_cxt_ptr->tune_mode_array[i]->resolution.w == param_ptr->dcam_size.w) {
+					*((cmr_s32 *) out_ptr) = pm_cxt_ptr->tune_mode_array[i]->mode_id;
+					cur_mode = pm_cxt_ptr->merged_mode_array[i];
+					break;
 				}
 			}
+		}
+		if (cur_mode != PNULL) {
+			ISP_LOGD("Get mode %d for video size (%d, %d).", cur_mode->mode_id,
+				param_ptr->dcam_size.w, param_ptr->dcam_size.h);
+			rtn = isp_pm_get_dcam_lsc(handle, 0, cur_mode, param_ptr);
+		} else {
+			ISP_LOGE("No video param for size (%d, %d).",
+				param_ptr->dcam_size.w, param_ptr->dcam_size.h);
+			rtn = ISP_PARAM_ERROR;
 		}
 	} else if ((ISP_PM_CMD_GET_ISP_SETTING == cmd) || (ISP_PM_CMD_GET_ISP_ALL_SETTING == cmd)) {
 		void *blk_ptr = PNULL;
