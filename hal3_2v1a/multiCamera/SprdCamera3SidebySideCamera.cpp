@@ -1111,7 +1111,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     else
         inparam->potpbuf = OTP_Data;
     inparam->otpsize = OTP_Datanum;
-    inparam->config_param = NULL;
+    inparam->config_param = (char*)(&sprd_depth_config_para);
     HAL_LOGI("inparam %p, outputinfo %p,", inparam, outputinfo);
     depth_handle = sprd_depth_Init(inparam, outputinfo, mode, format);
     mSidebyside->mDepthHandle = depth_handle;

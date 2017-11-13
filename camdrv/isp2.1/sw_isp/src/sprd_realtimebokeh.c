@@ -19,6 +19,7 @@
 #include "sw_isp_interface.h"
 #include "iBokeh.h"
 #include "SGM_SPRD.h"
+#include "sprd_depth_configurable_param_sbs.h"
 #include <utils/Timers.h>
 #include <semaphore.h>
 #include <cutils/properties.h>
@@ -582,7 +583,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_start(void* handl
 		//		inparam.potpbuf = (uint8_t*)malloc(256);
 		//		inparam.otpsize = 232;
 		//      	memset(inparam.potpbuf , 0x23 , 232);
-		inparam.config_param = NULL;//may change later
+		inparam.config_param = (char*)(&sprd_depth_config_para);
 		struct depth_init_outputparam outparam;
 		SWISP_LOGI("-----depth init param otp:%p , size:%d , prreview width:%d ,height:%d , depth:%d,%d, thread:%d\n" , inparam.potpbuf , inparam.otpsize ,
 			   inparam.input_width_main , inparam.input_height_main , inparam.output_depthwidth , inparam.output_depthheight , inparam.threadNum);

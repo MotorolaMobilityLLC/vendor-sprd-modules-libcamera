@@ -49,6 +49,7 @@
 //#include "ts_makeup_api.h"
 #include "SprdCamera3MultiBase.h"
 #include "SGM_SPRD.h"
+#include "sprd_depth_configurable_param_sbs.h"
 #include "sprdbokeh.h"
 #include <unistd.h>
 
