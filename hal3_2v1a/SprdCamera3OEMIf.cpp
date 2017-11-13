@@ -499,6 +499,14 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslPopFlag = 0;
     mVideoSnapshotFrameNum = 0;
 
+#ifdef CONFIG_CAMERA_EIS
+    memset(mGyrodata, 0, sizeof(mGyrodata));
+    memset(&mPreviewParam, 0, sizeof(mPreviewParam));
+    memset(&mVideoParam, 0, sizeof(mVideoParam));
+    mPreviewInst = NULL;
+    mVideoInst = NULL;
+#endif
+
     HAL_LOGI(":hal3: X");
 }
 
