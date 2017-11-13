@@ -3291,6 +3291,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	ioctl_input.param_data_ptr = &ioctl_data;
 	ioctl_input.param_num = 1;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_CT"));
@@ -3398,23 +3399,29 @@ exit:
 	return ret;
 }
 
-static cmr_int isp_alg_sw_stop(cmr_handle isp_alg_handle)
+cmr_int isp_alg_sw_stop(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt ;
+	struct isp_alg_fw_context *cxt = NULL;
+	struct isp_alg_fw_context *slv_cxt = NULL;
 
 	if(!isp_alg_handle) {
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
 	}
 
-	ISP_LOGI("sw_isp stop");
+	ISP_LOGI("E");
 	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	sprd_realtimebokeh_ynr_callback((void *)cxt->sw_isp_handle);
-	ret = sprd_realtimebokeh_stop(cxt->sw_isp_handle);
+	if(cxt->is_master)
+	{
+		slv_cxt = isp_br_get_3a_handle(cxt->camera_id + 2);
+		if (slv_cxt && slv_cxt->is_real_bokeh)
+			ret = sprd_realtimebokeh_stop(slv_cxt->sw_isp_handle);
+	}
 
 exit:
+	ISP_LOGI("X ret %ld", ret);
 	return ret;
 }
 
@@ -3589,7 +3596,6 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_alg_fw_context *slv_cxt = NULL;
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
@@ -3607,13 +3613,6 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
-	}
-
-	if(cxt->is_master)
-	{
-		slv_cxt = isp_br_get_3a_handle(cxt->camera_id + 2);
-		if (slv_cxt && slv_cxt->is_real_bokeh)
-			ret = isp_alg_sw_stop((cmr_handle)slv_cxt);
 	}
 
 	ISP_RETURN_IF_FAIL(ret, ("fail to stop isp alg fw"));

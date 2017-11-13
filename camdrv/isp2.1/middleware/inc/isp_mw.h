@@ -860,6 +860,7 @@ cmr_int isp_video_stop(cmr_handle handle);
 cmr_int isp_sw_proc(cmr_handle handle, void *param_ptr);
 cmr_int isp_sw_check_buf(cmr_handle handle, void *param_ptr);
 cmr_int isp_sw_get_bokeh_status(cmr_handle handle);
+cmr_int isp_sw_stop(cmr_handle handle);
 cmr_s32 isp_ynr_post_proc(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);

@@ -248,6 +248,23 @@ exit:
 	return ret;
 }
 
+cmr_int isp_sw_stop(cmr_handle handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
+
+	if (!handle) {
+		ret = -ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	ret = isp_alg_sw_stop(cxt->alg_fw_handle);
+
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;

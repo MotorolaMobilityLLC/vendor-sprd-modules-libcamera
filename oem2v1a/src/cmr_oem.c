@@ -6371,6 +6371,7 @@ exit:
 cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
 
     (cmr_u32) channel_bits;
     if (!oem_handle) {
@@ -6385,6 +6386,11 @@ cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits) {
         if (ret) {
             CMR_LOGE("failed to stop off the fly path %ld", ret);
         }
+    }
+
+    ret = isp_sw_stop(isp_cxt->isp_handle);
+    if (ret) {
+        CMR_LOGE("failed to isp sw stop %ld", ret);
     }
 
     ret = cmr_grab_cap_stop(cxt->grab_cxt.grab_handle);
