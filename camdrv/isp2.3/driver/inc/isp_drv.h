@@ -100,15 +100,6 @@ struct isp_u_blocks_info {
 		struct afm_subfilter subfilter;
 		struct afm_shift afm_shift;
 		struct isp_afm_info afm_info;
-#if 0
-		struct sobel_thrd sobel_thrd;
-		struct spsmd_thrd spsmd_thrd;
-#endif
-		/*bpc block*/
-		cmr_u32 addr;
-		cmr_u32 pixel_num;
-		struct isp_bpc_common bpc_param;
-		struct isp_bpc_thrd bpc_thrd;
 		/*edge block*/
 		struct isp_edge_thrd edge_thrd;
 		/*pdaf block*/
@@ -127,11 +118,6 @@ struct isp_u_blocks_info {
 		void *hist2_roi;
 		/*awbc block*/
 		struct isp_awbc_rgb awbc_rgb;
-		/*binnging4awb block*/
-		cmr_u32 endian;
-		cmr_u32 *buf_id;
-		struct isp_scaling_ratio scaling_ratio;
-		struct isp_b4awb_phys phys_addr;
 	};
 };
 
@@ -297,8 +283,6 @@ cmr_s32 isp_u_fetch_yuv_start_isp(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: BLC*/
 cmr_s32 isp_u_blc_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_blc_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_blc_slice_info(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: lens shading calibration*/
 cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr);
@@ -326,12 +310,6 @@ cmr_s32 isp_u_awbc_gain_offset(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: BPC*/
 cmr_s32 isp_u_bpc_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_bpc_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_bpc_mode(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_bpc_param_common(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_bpc_thrd(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_bpc_map_addr(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_bpc_pixel_num(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: GRGB*/
 cmr_s32 isp_u_grgb_block(cmr_handle handle, void *param_ptr);
@@ -411,14 +389,6 @@ cmr_s32 isp_u_nlc_l_node(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Bing4awb*/
 cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_endian(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_scaling_ratio(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_get_scaling_ratio(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_mem_addr(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_statistics_buf(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_transaddr(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_binning4awb_initbuf(cmr_handle handle);
 
 /*ISP Sub Block: Pre Glb Gain*/
 cmr_s32 isp_u_pgg_block(cmr_handle handle, void *param_ptr);
