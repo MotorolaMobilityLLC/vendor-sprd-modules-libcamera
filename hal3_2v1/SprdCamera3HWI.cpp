@@ -1453,7 +1453,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     uint32_t frame_number = result_info->frame_number;
     buffer_handle_t *buffer = result_info->buffer;
     int64_t capture_time = result_info->timestamp;
+    int64_t sensor_timestamp = 0;
     bool is_urgent = result_info->is_urgent;
+    static int64_t prev_timestamp = 0;
     camera3_stream_t *stream = result_info->stream;
     camera3_buffer_status_t buffer_status = result_info->buff_status;
     camera3_msg_type_t msg_type = result_info->msg_type;
@@ -1496,6 +1498,20 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
                 mSetting->setSENSORTag(sensorInfo);
+                SENSOR_Tag resultInfo;
+                mSetting->getResultSENSORTag(&resultInfo);
+                if (sensorInfo.sensor_timestamp) {
+                    sensor_timestamp = sensorInfo.sensor_timestamp;
+                } else {
+                    sensor_timestamp = sensorInfo.timestamp;
+                }
+                if (frame_number != 0)
+                    resultInfo.frame_duration =
+                        sensor_timestamp - prev_timestamp;
+                else
+                    resultInfo.frame_duration = resultInfo.exposure_time;
+                prev_timestamp = sensor_timestamp;
+                mSetting->setResultSENSORTag(resultInfo);
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
                 requestInfo.frame_count = i->frame_number;
@@ -1533,9 +1549,23 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;
+                SENSOR_Tag resultInfo;
                 meta_info_t metaInfo;
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
+                mSetting->getResultSENSORTag(&resultInfo);
+                if (sensorInfo.sensor_timestamp) {
+                    sensor_timestamp = sensorInfo.sensor_timestamp;
+                } else {
+                    sensor_timestamp = sensorInfo.timestamp;
+                }
+                if (frame_number != 0)
+                    resultInfo.frame_duration =
+                        sensor_timestamp - prev_timestamp;
+                else
+                    resultInfo.frame_duration = resultInfo.exposure_time;
+                prev_timestamp = sensor_timestamp;
+                mSetting->setResultSENSORTag(resultInfo);
                 mSetting->setSENSORTag(sensorInfo);
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
@@ -1620,6 +1650,12 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             /**add for 3d capture reprocessing end   */
             break;
         }
+    }
+    SENSOR_Tag sensor_Info;
+    mSetting->getSENSORTag(&sensor_Info);
+    if (sensor_Info.sensor_timestamp) {
+        sensor_Info.sensor_timestamp = 0;
+        mSetting->setSENSORTag(sensor_Info);
     }
 
     if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {

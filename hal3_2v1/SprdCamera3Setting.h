@@ -298,6 +298,7 @@ typedef struct {
     int64_t frame_duration;
     int32_t sensitivity;
     int64_t timestamp;
+    int64_t sensor_timestamp;
     int32_t orientation;
     int32_t black_level_pattern[4];
     int32_t available_test_pattern_modes[6];
@@ -405,6 +406,7 @@ typedef struct {
     REQUEST_Tag requestInfo;
     SCALER_Tag scalerInfo;
     SENSOR_Tag sensorInfo;
+    SENSOR_Tag resultSensorInfo;
     SENSOR_INFO_Tag sensor_InfoInfo;
     SHADING_Tag shadingInfo;
     STATISTICS_Tag statisticsInfo;
@@ -556,6 +558,9 @@ class SprdCamera3Setting {
 
     int setSENSORTag(SENSOR_Tag sensorInfo);
     int getSENSORTag(SENSOR_Tag *sensorInfo);
+
+    int setResultSENSORTag(SENSOR_Tag resultInfo);
+    int getResultSENSORTag(SENSOR_Tag *resultInfo);
 
     int setSHADINGTag(SHADING_Tag shadingInfo);
     int getSHADINGTag(SHADING_Tag *shadingInfo);

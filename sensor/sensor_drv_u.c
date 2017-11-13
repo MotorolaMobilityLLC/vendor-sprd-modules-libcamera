@@ -2431,7 +2431,7 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
         } else if (1000000 >= exposure_time) {
             sensor_exif_info_ptr->ExposureTime.numerator = 0x01;
             sensor_exif_info_ptr->ExposureTime.denominator =
-                1000000 / exposure_time;
+                (1000000.00 / exposure_time + 0.5);
         } else {
             cmr_u32 second = 0x00;
             do {

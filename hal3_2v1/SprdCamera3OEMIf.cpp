@@ -4185,6 +4185,15 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         return;
     }
 
+    SENSOR_Tag resultInfo;
+    mSetting->getResultSENSORTag(&resultInfo);
+    if (0 != frame->sensor_info.exposure_time_denominator) {
+        resultInfo.exposure_time = 1000000000ll *
+                                   frame->sensor_info.exposure_time_numerator /
+                                   frame->sensor_info.exposure_time_denominator;
+    }
+    mSetting->setResultSENSORTag(resultInfo);
+
     if (SHAKE_TEST == getShakeTestState()) {
         overwritePreviewFrame(frame);
     }
@@ -4238,9 +4247,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         fps_range_offset = 1000000000 / fps_param.max_fps;
         fps_range_low =
-            (int64_t)((1000000000.0 / fps_param.max_fps) * (1 - 0.015));
+            (int64_t)((1000000000.0 / fps_param.max_fps) * (1 - 0.004));
         fps_range_up =
-            (int64_t)((1000000000.0 / fps_param.min_fps) * (1 + 0.015));
+            (int64_t)((1000000000.0 / fps_param.min_fps) * (1 + 0.004));
 
         if (mPrvBufferTimestamp == 0) {
             buffer_timestamp_fps = frame->timestamp;
@@ -4279,6 +4288,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #else
     int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
+    SENSOR_Tag sensorInfo;
+
+    mSetting->getSENSORTag(&sensorInfo);
+    sensorInfo.sensor_timestamp = buffer_timestamp;
     // use boottime not monotonic time for AR
     buffer_timestamp = frame->monoboottime;
     if (0 == buffer_timestamp)
@@ -4331,9 +4344,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
     beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
 #endif
-    SENSOR_Tag sensorInfo;
-
-    mSetting->getSENSORTag(&sensorInfo);
     sensorInfo.timestamp = buffer_timestamp;
     mSetting->setSENSORTag(sensorInfo);
 
@@ -5011,6 +5021,15 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     HAL_LOGD("mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,
              frame->y_vir_addr);
 
+    SENSOR_Tag resultInfo;
+    mSetting->getResultSENSORTag(&resultInfo);
+    if (0 != frame->sensor_info.exposure_time_denominator) {
+        resultInfo.exposure_time = 1000000000ll *
+                                   frame->sensor_info.exposure_time_numerator /
+                                   frame->sensor_info.exposure_time_denominator;
+    }
+    mSetting->setResultSENSORTag(resultInfo);
+
     display_flag = iSDisplayCaptureFrame();
     callback_flag = iSCallbackCaptureFrame();
 
@@ -5130,6 +5149,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     sensorInfo.timestamp = frame->timestamp;
     mSetting->setSENSORTag(sensorInfo);
     timestamp = sensorInfo.timestamp;
+    SENSOR_Tag resultInfo;
+    mSetting->getResultSENSORTag(&resultInfo);
+    resultInfo.exposure_time = sensorInfo.exposure_time;
+    mSetting->setResultSENSORTag(resultInfo);
 
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {

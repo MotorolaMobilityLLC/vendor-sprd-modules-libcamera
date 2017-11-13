@@ -1398,6 +1398,22 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         }
         message.alloc_flag = 1;
 
+        if (PREVIEW_EVT_CB_FRAME == cb_type &&
+            CAMERA_FUNC_START_PREVIEW == oem_func) {
+            struct exif_spec_pic_taking_cond_tag exif_pic_info;
+            struct camera_frame_type *preview_frame =
+                (struct camera_frame_type *)param;
+            cmr_sensor_get_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                &exif_pic_info);
+            preview_frame->sensor_info.exposure_time_numerator =
+                exif_pic_info.ExposureTime.numerator;
+            preview_frame->sensor_info.exposure_time_denominator =
+                exif_pic_info.ExposureTime.denominator;
+            CMR_LOGV("exposure_time_numerator %d exposure_time_denominator %d",
+                     preview_frame->sensor_info.exposure_time_numerator,
+                     preview_frame->sensor_info.exposure_time_denominator);
+        }
+
         if ((cxt->is_lls_enable) && (PREVIEW_EVT_CB_FRAME == cb_type)) {
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;

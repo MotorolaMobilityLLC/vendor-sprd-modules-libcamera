@@ -174,7 +174,7 @@ const sensor_fov_tab_t fourth_sensor_fov_tab[] = {
 #endif
 
 const int32_t klens_shading_map_size[2] = {1, 1};
-const int64_t kexposure_time_range[2] = {1000L, 30000000000L}; // 1 us - 30 sec
+const int64_t kexposure_time_range[2] = {100000L, 100000000L}; // 1 us - 30 sec
 const int64_t kframe_duration_range[2] = {33331760L,
                                           30000000000L}; // ~1/30 s - 30 sec
 const int32_t ksharpness_map_size[2] = {64, 64};
@@ -4209,17 +4209,22 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].sprddefInfo.perfect_skin_level,
                        SPRD_FACE_BEAUTY_PARAM_NUM);
     // sensor
-    if (s_setting[mCameraId].controlInfo.ae_target_fps_range[1])
-        s_setting[mCameraId].sensorInfo.frame_duration =
-            (int64_t)(NSEC_PER_SEC /
-                      s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
+    /*    if (s_setting[mCameraId].controlInfo.ae_target_fps_range[1])
+            s_setting[mCameraId].sensorInfo.frame_duration =
+                (int64_t)(NSEC_PER_SEC /
+                          s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
+        camMetadata.update(ANDROID_SENSOR_FRAME_DURATION,
+                           &(s_setting[mCameraId].sensorInfo.frame_duration),
+       1);
+    */
     camMetadata.update(ANDROID_SENSOR_FRAME_DURATION,
-                       &(s_setting[mCameraId].sensorInfo.frame_duration), 1);
-
+                       &(s_setting[mCameraId].resultSensorInfo.frame_duration),
+                       1);
     // s_setting[mCameraId].sensorInfo.exposure_time =
     // (int64_t)(NSEC_PER_SEC/s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
-                       &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+                       &(s_setting[mCameraId].resultSensorInfo.exposure_time),
+                       1);
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
                        &(s_setting[mCameraId].sensorInfo.sensitivity), 1);
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,
@@ -4904,6 +4909,16 @@ int SprdCamera3Setting::setSENSORTag(SENSOR_Tag sensorInfo) {
 
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
     *sensorInfo = s_setting[mCameraId].sensorInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::setResultSENSORTag(SENSOR_Tag resultInfo) {
+    s_setting[mCameraId].resultSensorInfo = resultInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::getResultSENSORTag(SENSOR_Tag *resultInfo) {
+    *resultInfo = s_setting[mCameraId].resultSensorInfo;
     return 0;
 }
 
