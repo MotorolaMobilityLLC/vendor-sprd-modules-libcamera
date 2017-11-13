@@ -118,9 +118,7 @@ $(warning $(LOCAL_SRC_FILES))
 #LOCAL_MODULE := libcamisp$(ISP_HW_VER)
 LOCAL_MODULE := libcamdrv
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 LOCAL_MODULE_TAGS := optional
 
@@ -128,9 +126,7 @@ LOCAL_SHARED_LIBRARIES := libcutils
 
 LOCAL_SHARED_LIBRARIES += libutils libhardware libcamsensor libcamcommon
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_SHARED_LIBRARIES += liblog
-endif
 
 #LOCAL_SHARED_LIBRARIES += libcamoem
 

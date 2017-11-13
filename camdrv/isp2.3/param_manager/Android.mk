@@ -54,9 +54,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon liblog
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 include $(BUILD_SHARED_LIBRARY)
 

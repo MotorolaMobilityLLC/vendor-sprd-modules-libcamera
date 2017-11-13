@@ -25,7 +25,7 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/vendor/sprd/modules/libmemion \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
+ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
 LOCAL_C_INCLUDES += \
     $(TOP)/frameworks/native/libs/sensor/include
 endif
@@ -222,7 +222,7 @@ include $(LOCAL_PATH)/SprdCtrl.mk
 
 include $(LOCAL_PATH)/SprdLib.mk
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
+ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
 LOCAL_SHARED_LIBRARIES += liblog libsensor
 LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8
 endif
@@ -232,10 +232,7 @@ LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 
 LOCAL_MODULE_TAGS := optional
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH : = $(TARGET_OUT_VENDOR) / lib /
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9853i)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MAX_PREVSIZE_1080P

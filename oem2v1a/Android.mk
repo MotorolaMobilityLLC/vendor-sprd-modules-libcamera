@@ -127,9 +127,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_SHARED_LIBRARIES += liblog
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
@@ -166,10 +164,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 
 
@@ -284,9 +279,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_SHARED_LIBRARIES += liblog
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
@@ -324,10 +317,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 endif
 
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 include $(BUILD_SHARED_LIBRARY)
 endif
@@ -440,9 +430,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamisp
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_SHARED_LIBRARIES += liblog
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb
@@ -478,11 +466,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
-
-ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 include $(BUILD_SHARED_LIBRARY)
 endif

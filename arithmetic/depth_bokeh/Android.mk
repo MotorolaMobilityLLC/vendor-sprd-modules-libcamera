@@ -31,9 +31,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libbokeh_depth.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libbokeh_depth.so
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 include $(BUILD_PREBUILT)
 #endif

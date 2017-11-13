@@ -33,10 +33,7 @@ else
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_dualcam_refocus.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_dualcam_refocus.so
 endif
-ifeq ($(PLATFORM_VERSION),8.0.0)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 include $(BUILD_PREBUILT)
 endif

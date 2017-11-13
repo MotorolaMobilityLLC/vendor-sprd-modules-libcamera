@@ -671,7 +671,7 @@ LOCAL_CFLAGS += -DCONFIG_CAMERA_MEET_JPG_ALIGNMENT
 endif
 
 # for 8.0 bringup temp
-ifeq ($(PLATFORM_VERSION),8.0.0)
+ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
 LOCAL_CFLAGS += -DANDROID_VERSION_O_BRINGUP
 endif
 

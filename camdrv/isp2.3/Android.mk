@@ -75,9 +75,7 @@ LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamcommon libcampm
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
 LOCAL_PROPRIETARY_MODULE := true
-endif
 
 include $(BUILD_SHARED_LIBRARY)
 
