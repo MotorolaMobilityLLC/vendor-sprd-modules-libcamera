@@ -24,6 +24,8 @@
 
 #if defined(CONFIG_ISP_2_2)
 #include "sprd_isp_r6p10v2.h"
+#elif defined(CONFIG_ISP_2_4)
+#include "sprd_isp_r6p91.h"
 #else
 #if defined(CONFIG_ISP_2_3)
 #include "sprd_isp_r6p11.h"
@@ -342,6 +344,31 @@ struct isp_af_param {
 	struct isp_afm_param afm;
 };
 
+#if defined(CONFIG_ISP_2_4)
+struct isp_css_param{
+	struct isp_dev_css_info_v1 cur;
+};
+
+struct isp_prfy_param {
+	struct isp_dev_prefilter_info_v1 cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
+//bdn.
+struct isp_bdn_param{
+	struct isp_dev_bdn_info_v1 cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+#endif
+
 struct isp_gamma_curve_info {
 	cmr_u32 axis[2][ISP_GAMMA_SAMPLE_NUM];
 };
@@ -639,6 +666,22 @@ struct isp_3d_nr_cap_param {
 	cmr_u32 nr_mode_setting;
 };
 
+#if defined(CONFIG_ISP_2_4)
+struct isp_nlm_param {
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	struct isp_dev_nlm_info cur;
+	struct isp_data_info vst_map;
+	struct isp_data_info ivst_map;
+	struct isp_data_info nlm_map;
+	cmr_uint *nlm_ptr;
+	cmr_uint *vst_ptr;
+	cmr_uint *ivst_ptr;
+	cmr_uint *flat_offset_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+#else
 struct isp_nlm_param {
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -651,6 +694,7 @@ struct isp_nlm_param {
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
 };
+#endif
 
 struct isp_cfa_param {
 	struct isp_dev_cfa_info cur;
@@ -700,7 +744,11 @@ struct isp_cce_param {
 };
 
 struct isp_cce_uvdiv_param {
+#ifdef CONFIG_ISP_2_4
+	struct isp_dev_cce_uvd_info cur;
+#else
 	struct isp_dev_uvd_info cur;
+#endif
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -715,6 +763,17 @@ struct isp_hsv_param {
 	struct isp_data_info map[SENSOR_HSV_NUM];
 	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
+
+#ifdef CONFIG_ISP_2_4
+struct isp_rgb_pre_cdn_param {
+	struct isp_dev_pre_cdn_rgb_info cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+#endif
 
 struct isp_yuv_pre_cdn_param {
 	struct isp_dev_yuv_precdn_info cur;
@@ -863,6 +922,86 @@ struct dcam_rgb_aem_param {
 	struct dcam_ae_statistic_info stat;
 };
 
+#if defined(CONFIG_ISP_2_4)
+struct isp_context {
+	cmr_u32 is_validate;
+	cmr_u32 mode_id;
+
+
+// 3A owner:
+//      struct isp_awb_param awb;
+	struct isp_ae_param ae;
+	struct isp_af_param af;
+	struct isp_smart_param smart;
+	struct isp_sft_af_param sft_af;
+	struct isp_aft_param aft;
+	struct isp_alsc_param alsc;
+
+//isp related tuning block
+	struct isp_bright_param bright;
+	struct isp_contrast_param contrast;
+	struct isp_flash_param flash;
+	struct isp_dualflash_param dual_flash;
+	struct isp_antiflicker_param anti_flicker;
+	struct isp_haf_tune_param pdaf_tune;
+	struct isp_envi_detect_param envi_detect;
+
+	struct isp_pre_global_gain_param pre_gbl_gain;
+	struct isp_blc_param blc;
+	struct isp_postblc_param post_blc;
+	struct isp_rgb_gain_param rgb_gain;
+	struct isp_nlc_param nlc;
+	struct isp_2d_lsc_param lsc_2d;
+	struct isp_1d_lsc_param lsc_1d;
+	struct isp_binning4awb_param binning4awb;
+	struct isp_awb_param awb;
+	struct isp_rgb_aem_param aem;
+	struct isp_rgb_afm_param afm;
+	struct isp_rgb_pre_cdn_param rgb_pre_cdn;
+	struct isp_bpc_param bpc;
+	struct isp_bdn_param bdn;
+	struct isp_css_param css;
+
+	struct isp_grgb_param grgb;
+	struct isp_ynr_param ynr;
+	struct isp_pdaf_correction_param pdaf_correct;
+	struct isp_pdaf_extraction_param pdaf_extraction;
+	struct isp_nlm_param nlm;
+	struct isp_cfa_param cfa;
+	struct isp_cmc10_param cmc10;
+	struct isp_frgb_gamc_param frgb_gamc;
+
+	struct isp_cce_param cce;
+	struct isp_hsv_param hsv;
+	struct isp_yuv_pre_cdn_param yuv_pre_cdn;
+	struct isp_prfy_param prfy;
+	struct isp_posterize_param posterize;
+	struct isp_yiq_afl_param_v1 yiq_afl_v1;
+	struct isp_yiq_afl_param_v3 yiq_afl_v3;
+	struct isp_rgb_dither_param rgb_dither;
+
+	struct isp_hist_param hist;
+	struct isp_hist2_param hist2;
+	struct isp_uv_cdn_param uv_cdn;
+	struct isp_edge_param edge;
+	struct isp_chrom_saturation_param saturation;
+	struct isp_hue_param hue;
+	struct isp_uv_postcdn_param uv_postcdn;
+	struct isp_yuv_ygamma_param yuv_ygamma;
+	struct isp_ydelay_param ydelay;
+	struct isp_iircnr_iir_param iircnr_iir;
+	struct isp_iircnr_yrandom_param iircnr_yrandom;
+	struct isp_cce_uvdiv_param uv_div;
+	struct isp_dev_noise_filter_param yuv_noisefilter;
+	struct isp_3d_nr_pre_param nr_3d_pre;
+	struct isp_3d_nr_cap_param nr_3d_cap;
+
+	struct dcam_blc_param dcam_blc;
+	struct isp_2d_lsc_param dcam_2d_lsc;
+	struct dcam_rgb_aem_param dcam_aem;
+};
+
+#else
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -937,7 +1076,7 @@ struct isp_context {
 	struct isp_2d_lsc_param dcam_2d_lsc;
 	struct dcam_rgb_aem_param dcam_aem;
 };
-
+#endif
 #ifdef	 __cplusplus
 }
 #endif

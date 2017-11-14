@@ -22,6 +22,12 @@
 
 #include "sensor_raw.h"
 
+
+#define _NR_MAP_PARAM_
+#include "isp_nr.h"
+#undef _NR_MAP_PARAM_
+
+
 /* Begin Include */
 #include "sensor_ov8856_raw_param_common.c"
 #include "sensor_ov8856_raw_param_prv_0.c"
@@ -40,7 +46,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.16.0901 */
+/* IspToolVersion=R1.17.3401 */
 
 
 /* Capture Sizes:
@@ -76,6 +82,20 @@ static struct sensor_raw_ioctrl s_ov8856_ioctrl=
 {
 	0,
 	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 	0
 };
 
@@ -85,9 +105,30 @@ static struct sensor_raw_ioctrl s_ov8856_ioctrl=
 
 static struct sensor_version_info s_ov8856_version_info=
 {
-	0x00040004,
-	sizeof(struct sensor_version_info),
-	0x00
+	0x00080006,
+	{
+		{
+			0x3838766F,
+			0x00003635,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000
+		}
+	},
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000
 };
 
 
@@ -96,14 +137,14 @@ static struct sensor_version_info s_ov8856_version_info=
 
 static uint32_t s_ov8856_libuse_info[]=
 {
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
+	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 };
 
 
@@ -127,7 +168,6 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		{s_ov8856_tune_info_video_1, sizeof(s_ov8856_tune_info_video_1)},
 		{s_ov8856_tune_info_video_2, sizeof(s_ov8856_tune_info_video_2)},
 		{NULL, 0},
-
 	},
 	&s_ov8856_trim_info,
 	&s_ov8856_ioctrl,
@@ -146,7 +186,6 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		&s_ov8856_fix_info_video_1,
 		&s_ov8856_fix_info_video_2,
 		NULL,
-
 	},
 	{
 		{s_ov8856_common_tool_ui_input, sizeof(s_ov8856_common_tool_ui_input)},
@@ -162,6 +201,10 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		{s_ov8856_video_1_tool_ui_input, sizeof(s_ov8856_video_1_tool_ui_input)},
 		{s_ov8856_video_2_tool_ui_input, sizeof(s_ov8856_video_2_tool_ui_input)},
 		{NULL, 0},
-
-	}
+	},
+	{
+		&s_ov8856_nr_scene_map_param,
+		&s_ov8856_nr_level_number_map_param,
+		&s_ov8856_default_nr_level_map_param,
+	},
 };

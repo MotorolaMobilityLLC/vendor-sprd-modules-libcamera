@@ -26,9 +26,14 @@
 #include "sensor_raw.h"
 
 #include "parameters/sensor_gc2375_raw_param_main.c"
-
+#define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+#include "../af_dw9714.h"
+#endif
 
 #define VENDOR_NUM 1
+
+#define CAMERA_IMAGE_180
 
 #define SENSOR_NAME "gc2375"
 #define I2C_SLAVE_ADDR 0x6e /* 8bit slave address*/

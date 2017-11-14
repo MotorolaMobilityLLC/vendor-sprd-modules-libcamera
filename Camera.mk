@@ -89,6 +89,19 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
 endif
 
+#for pike2, based on isp2.1
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
+TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
+ISP_HW_VER = 2v4
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.4
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 ISP_HW_VER = 3v0
 LOCAL_C_INCLUDES += \
@@ -154,8 +167,10 @@ endif
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 else
 ifneq ($(strip $(ISP_HW_VER)),2v0)
+ifneq ($(strip $(ISP_HW_VER)),2v4)
 LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
+endif
 endif
 endif
 

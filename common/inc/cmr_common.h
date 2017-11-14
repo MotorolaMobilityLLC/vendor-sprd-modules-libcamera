@@ -54,7 +54,7 @@ extern "C" {
 #define CMR_CAP0_ID_BASE 0x2000
 #define CMR_CAP1_ID_BASE 0x4000
 #define CMR_VIDEO_ID_BASE 0x8000
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
 #define CMR_REFOCUS_ID_BASE 0xF000
 #else
 #define CMR_SENSOR_DATATYPE_ID_BASE 0xF000
@@ -91,7 +91,7 @@ extern "C" {
 #define INVALID_FORMAT_PATTERN 255
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
 
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
 #ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
@@ -1628,7 +1628,7 @@ typedef struct oem_ops {
         cmr_u32 width,
         cmr_u32
             height); /**add for 3d capture to reset reprocessing capture size*/
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     cmr_int (*camera_start_capture)(cmr_handle camera_handle);
     cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #endif
@@ -1646,7 +1646,7 @@ typedef struct oem_ops {
 #endif
 #endif
 
-#if defined(CONFIG_ISP_2_1)
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
                                       cmr_s32 *point_x, cmr_s32 *point_y);
     cmr_s32 (*camera_isp_sw_check_buf)(cmr_handle camera_handle,

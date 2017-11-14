@@ -26,6 +26,10 @@ LOCAL_32_BIT_ONLY := true
 isp_use2.0:=1
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
+ISP_HW_VER = 2v4
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 ISP_HW_VER = 3v0
 endif

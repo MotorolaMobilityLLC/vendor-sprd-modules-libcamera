@@ -187,7 +187,7 @@ struct sensor_raw_ioctrl {
     cmr_int (*ex_set_exposure)(cmr_handle caller_handler, cmr_uint param);
     cmr_int (*read_aec_info)(cmr_handle caller_handler, void *param);
     cmr_int (*write_aec_info)(cmr_handle caller_handler, void *param);
-#if (defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2))
+#if (defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2) || defined(CONFIG_CAMERA_ISP_DIR_2_4))
     // af control and DVT test funcs valid only af_enable works
     cmr_int (*set_pos)(cmr_handle caller_handler, cmr_u32 pos);
     cmr_int (*get_otp)(cmr_handle caller_handler, uint16_t *inf,
@@ -338,7 +338,7 @@ struct sensor_data_info {
     cmr_u32 size;
     void *sub_data_ptr;
     cmr_u32 sub_size;
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     struct sensor_raw_info *sn_raw_info;
     struct isp_data_info isp_init_data[MAX_MODE_NUM];
     struct isp_data_info isp_update_data[MAX_MODE_NUM]; /*for isp_tool*/

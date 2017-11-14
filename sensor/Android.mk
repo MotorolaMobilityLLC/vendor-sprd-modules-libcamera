@@ -48,6 +48,10 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 ISP_HW_VER = 3v0
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
+ISP_HW_VER = 2v4
+endif
+
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../common/inc \
@@ -145,6 +149,32 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/alc_af/inc \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/lsc/inc \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc/ \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/afl/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/smart \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/utility \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration/inc
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.4
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
+	$(LOCAL_PATH)/../$(ISPDRV_DIR)/param_manager \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/ae/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd_ae/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/sprd_awb/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/sprd_af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/sft_af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/alc_af/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/lsc/inc \
+	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/afl/inc \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/smart \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/utility \
