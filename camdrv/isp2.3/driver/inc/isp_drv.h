@@ -72,8 +72,6 @@ struct isp_u_blocks_info {
 		cmr_u32 rgb_gain_coeff;
 		/*gamma block*/
 		cmr_u16 *node_ptr;
-		/*cmc block*/
-		cmr_u16 *matrix_ptr;
 		/*fetch block*/
 		cmr_u32 fetch_start;
 		/*lsc block*/
@@ -105,15 +103,8 @@ struct isp_u_blocks_info {
 		/*pdaf block*/
 		void *roi_info;
 		void *ppi_info;
-		/*cce block*/
-		struct isp_cce_shift cce_shift;
-		struct isp_cce_uvc *cce_uvc;
-		struct isp_cce_uvd *cce_uvd;
-		struct isp_cce_matrix_tab *matrix_tab;
 		/*grgb block*/
 		struct isp_grgb_thrd grgb_thrd;
-		/*cfa block*/
-		struct isp_cfa_thrd cfa_thrd;
 		/*hist2 block*/
 		void *hist2_roi;
 		/*awbc block*/
@@ -318,14 +309,9 @@ cmr_s32 isp_u_grgb_thrd(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CFA*/
 cmr_s32 isp_u_cfa_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cfa_thrd(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cfa_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cfa_slice_info(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CMC*/
 cmr_s32 isp_u_cmc_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cmc_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cmc_matrix(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: GAMMA*/
 cmr_s32 isp_u_gamma_block(cmr_handle handle, void *param_ptr);
@@ -334,18 +320,9 @@ cmr_s32 isp_u_gamma_node(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CCE*/
 cmr_s32 isp_u_cce_matrix_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_uv_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_uvdivision_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_mode(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_matrix(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_shift(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_uvd(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_cce_uvc(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Brightness*/
 cmr_s32 isp_u_brightness_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_brightness_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_brightness_slice_info(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Contrast*/
 cmr_s32 isp_u_contrast_block(cmr_handle handle, void *param_ptr);
