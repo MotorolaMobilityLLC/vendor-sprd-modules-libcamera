@@ -315,11 +315,41 @@ struct awb_ct_table
 	float rg[20];
 };
 
+struct awb_stat_sync {
+	cmr_u32 r_info[1024];
+	cmr_u32 g_info[1024];
+	cmr_u32 b_info[1024];
+	cmr_u32 width;
+	cmr_u32 height;
+};
+
+struct awb_ctrl_rgb_otp {
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
+};
+
+struct awb_sync_info
+{
+	struct awb_stat_sync stat_master_info;
+	struct awb_stat_sync stat_slave_info;
+	cmr_u32 master_fov;
+	cmr_u32 slave_fov;
+	struct awb_ctrl_rgb_otp master_gldn_stat_info;
+	struct awb_ctrl_rgb_otp master_rdm_stat_info;
+	struct awb_ctrl_rgb_otp slave_gldn_stat_info;
+	struct awb_ctrl_rgb_otp slave_rdm_stat_info;
+};
+/*------------------------------------------------------------------------------*
+*				Function Prototype					*
+*-------------------------------------------------------------------------------*/
 #ifdef WIN32
 void *awb_init_v1(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
 cmr_s32 awb_calc_v1(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
 cmr_s32 awb_ioctrl_v1(void *awb_handle, cmr_s32 cmd, void *param);
 cmr_s32 awb_deinit_v1(void *awb_handle);
+cmr_s32 awb_sync_gain(struct awb_sync_info *sync_info, cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master,
+                               cmr_u32* gain_r_slave, cmr_u32 * gain_g_slave, cmr_u32* gain_b_slave);
 #endif
 
 #ifdef __cplusplus
