@@ -471,10 +471,6 @@ cmr_s32 isp_u_yrandom_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_dispatch_ch0_size(cmr_handle handle, void *param_ptr);
 
-/*Dispatch Yuv*/
-cmr_s32 isp_u_dispatch_yuv_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_dispatch_yuv_ch0_size(cmr_handle handle, void *param_ptr);
-
 /*Arbiter*/
 cmr_s32 isp_u_arbiter_block(cmr_handle handle, void *param_ptr);
 
@@ -489,9 +485,6 @@ cmr_s32 isp_set_slice_size(cmr_handle handle);
 cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_u_blocks_info *block_ptr);
 cmr_s32 isp_set_comm_param(cmr_handle handle);
 cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_u_blocks_info *block_ptr);
-
-/*Rgb2y*/
-cmr_s32 isp_u_rgb2y_block(cmr_handle handle, void *param_ptr);
 
 /*Uvd*/
 cmr_s32 isp_u_uvd_block(cmr_handle handle, void *param_ptr);
@@ -518,8 +511,6 @@ cmr_s32 isp_u_pdaf_work_mode(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_pdaf_ppi_info(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_pdaf_extractor_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_pdaf_roi(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_pdaf_correct_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *param_ptr);
 
 
 /* DCAM sub-blocks */

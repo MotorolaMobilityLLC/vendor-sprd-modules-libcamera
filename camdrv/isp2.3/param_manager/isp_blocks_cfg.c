@@ -48,8 +48,6 @@ struct isp_block_operations s_bpc_ops = { _pm_bpc_init, _pm_bpc_set_param, _pm_b
 struct isp_block_operations s_grgb_ops = { _pm_grgb_init, _pm_grgb_set_param, _pm_grgb_get_param, PNULL, PNULL };
 struct isp_block_operations s_awb_ops = { _pm_awb_init, _pm_awb_set_param, _pm_awb_get_param, PNULL, PNULL };
 struct isp_block_operations s_ynr_ops = { _pm_ynr_init, _pm_ynr_set_param, _pm_ynr_get_param, PNULL, PNULL };
-struct isp_block_operations s_pdaf_extraction_ops = { _pm_pdaf_extraction_init, _pm_pdaf_extraction_set_param, _pm_pdaf_extraction_get_param, PNULL, PNULL };
-struct isp_block_operations s_pdaf_correct_ops = { _pm_pdaf_correct_init, _pm_pdaf_correct_set_param, _pm_pdaf_correct_get_param, PNULL, PNULL };
 struct isp_block_operations s_nlm_ops = { _pm_nlm_init, _pm_nlm_set_param, _pm_nlm_get_param, _pm_common_rest, _pm_nlm_deinit };
 struct isp_block_operations s_cfa_ops = { _pm_cfa_init, _pm_cfa_set_param, _pm_cfa_get_param, PNULL, PNULL };
 struct isp_block_operations s_cmc10_ops = { _pm_cmc10_init, _pm_cmc10_set_param, _pm_cmc10_get_param, PNULL, PNULL };
@@ -107,8 +105,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_BPC, array_offset(struct isp_context, bpc), sizeof(struct isp_bpc_param), &s_bpc_ops},
 	{ISP_BLK_GRGB, array_offset(struct isp_context, grgb), sizeof(struct isp_grgb_param), &s_grgb_ops},
 	{ISP_BLK_YNR, array_offset(struct isp_context, ynr), sizeof(struct isp_ynr_param), &s_ynr_ops},
-	{ISP_BLK_PDAF_CORRECT, array_offset(struct isp_context, pdaf_correct), sizeof(struct isp_pdaf_correction_param), &s_pdaf_correct_ops},
-	{ISP_BLK_PDAF_EXTRACT, array_offset(struct isp_context, pdaf_extraction), sizeof(struct isp_pdaf_extraction_param), &s_pdaf_extraction_ops},
 	{ISP_BLK_NLM, array_offset(struct isp_context, nlm), sizeof(struct isp_nlm_param), &s_nlm_ops},
 	{ISP_BLK_CFA, array_offset(struct isp_context, cfa), sizeof(struct isp_cfa_param), &s_cfa_ops},
 	{ISP_BLK_CMC10, array_offset(struct isp_context, cmc10), sizeof(struct isp_cmc10_param), &s_cmc10_ops},
