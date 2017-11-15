@@ -819,15 +819,6 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
     *height = default_sensor_max_sizes[cameraId].height;
 #endif
 
-    // just for camera developer debug
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.auto.detect.sensor", value, "on");
-    if (!strcmp(value, "off")) {
-        HAL_LOGI("turn off auto detect sensor, just for debug");
-        *width = default_sensor_max_sizes[cameraId].width;
-        *height = default_sensor_max_sizes[cameraId].height;
-    }
-
     HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width,
              *height);
     return 0;
@@ -852,6 +843,8 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     property_get("persist.sys.auto.detect.sensor", value, "on");
     if (!strcmp(value, "off")) {
         HAL_LOGI("turn off auto detect sensor, just for debug");
+        setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
+                             default_sensor_max_sizes[cameraId].height);
         return 0;
     }
 
@@ -859,7 +852,9 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {
-        HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
+        HAL_LOGE("open camera (%d) failed", cameraId);
+        setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
+                             default_sensor_max_sizes[cameraId].height);
         goto exit;
     }
 
