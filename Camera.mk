@@ -224,7 +224,7 @@ include $(LOCAL_PATH)/SprdCtrl.mk
 include $(LOCAL_PATH)/SprdLib.mk
 
 ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
-LOCAL_SHARED_LIBRARIES += liblog libsensor
+LOCAL_SHARED_LIBRARIES += liblog libsensor libandroid
 LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8
 endif
 
