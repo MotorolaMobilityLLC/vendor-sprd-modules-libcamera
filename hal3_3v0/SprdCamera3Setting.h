@@ -141,6 +141,9 @@ typedef int64_t nsecs_t;
 #define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE                                   \
     2 /**add for 3d calibration capture size*/
 
+/*set EV value to 17 in auto mode, same as AE_LEVEL_AUTO*/
+#define CAMERA_AE_LEVEL_AUTO 17
+
 typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;

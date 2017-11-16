@@ -113,6 +113,9 @@ typedef int64_t nsecs_t;
 #define MAX_PREVIEW_SIZE_HEIGHT 720
 #endif
 
+/*set EV value to 17 in auto mode, same as AE_LEVEL_AUTO*/
+#define CAMERA_AE_LEVEL_AUTO 17
+
 typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;

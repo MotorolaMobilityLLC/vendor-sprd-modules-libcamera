@@ -3640,10 +3640,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 
     uint8_t slowMotion = 1;
     requestInfo.update(ANDROID_SPRD_SLOW_MOTION, &slowMotion, 1);
-
+#if 0
     uint8_t iso = 0;
     requestInfo.update(ANDROID_SPRD_ISO, &iso, 1);
-
+#endif
     uint8_t amMode = 0;
     requestInfo.update(ANDROID_SPRD_METERING_MODE, &amMode, 1);
 
@@ -4157,6 +4157,14 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         pushAndroidParaTag(ANDROID_SPRD_ISO);
         HAL_LOGD("iso is %d", valueU8);
+    }else{
+        /*no tag ,in auto mode now,set EV value to 17 */
+        HAL_LOGV("not exists ANDROID_SPRD_ISO ");
+        s_setting[mCameraId].sprddefInfo.iso = CAMERA_ISO_AUTO;
+        pushAndroidParaTag(ANDROID_SPRD_ISO);
+        s_setting[mCameraId].controlInfo.ae_exposure_compensation =
+            CAMERA_AE_LEVEL_AUTO;
+        pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
     }
     if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
         s_setting[mCameraId].sprddefInfo.slowmotion =
