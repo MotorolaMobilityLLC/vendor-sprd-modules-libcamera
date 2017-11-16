@@ -23,7 +23,9 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#if defined(CONFIG_DUAL_MODULE)
+#if defined(CONFIG_CAMERA_FLASH_OCP8137)
+#include "parameters_sharkle/sensor_ov13855_raw_param_main.c"
+#elif defined(CONFIG_DUAL_MODULE)
 #include "parameters_dual/sensor_ov13855_raw_param_main.c"
 #else
 #include "parameters/sensor_ov13855_raw_param_main.c"
