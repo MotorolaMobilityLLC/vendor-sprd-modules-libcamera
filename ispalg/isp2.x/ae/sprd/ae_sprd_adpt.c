@@ -3766,6 +3766,10 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
+		}else{
+				/*ev auto*/
+			cxt->mod_update_list.is_mev = 0;	
+			cxt->cur_status.settings.ev_index = ev->level;
 		}
 		ISP_LOGV("AE_SET_EV_OFFSET %d", cxt->cur_status.settings.ev_index);
 	}
@@ -4403,6 +4407,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	}
 	 cxt->mod_update_list.is_miso = 0;
 
+          if(1 == cxt->mod_update_list.is_mev){
+		cxt->cur_status.settings.ev_manual_status = 1;
+         }else{
+		cxt->cur_status.settings.ev_manual_status = 0;
+         }
 	rtn = ae_pre_process(cxt);
 	flash_calibration_script((cmr_handle)cxt);/*for flash calibration*/
 	ae_set_led(cxt);

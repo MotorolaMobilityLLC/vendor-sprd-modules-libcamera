@@ -45,7 +45,8 @@ enum ae_level {
 	AE_LEVEL13,
 	AE_LEVEL14,
 	AE_LEVEL15,
-	AE_LEVEL_MAX
+	AE_LEVEL_MAX,
+	AE_LEVEL_AUTO
 };
 
 enum ae_weight_mode {
