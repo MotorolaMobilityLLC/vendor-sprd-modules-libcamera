@@ -842,13 +842,23 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
     int ret = 0;
 
+    // just for camera developer debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.auto.detect.sensor", value, "on");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("turn off auto detect sensor, just for debug");
+        setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
+                             default_sensor_max_sizes[cameraId].height);
+        return 0;
+    }
+
     HAL_LOGI("E");
 
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {
-        HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
-        HAL_LOGE("set a default value(5M) to app, in case exception");
-        setLargestSensorSize(cameraId, 2592, 1944);
+        HAL_LOGE("open camera (%d) failed", cameraId);
+        setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
+                             default_sensor_max_sizes[cameraId].height);
         goto exit;
     }
 
@@ -1268,8 +1278,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 limited_width = largest_sensor_width;
                 limited_height = largest_sensor_height;
 #else
-                if(largest_sensor_width > 1920 &&
-                        largest_sensor_height > 1088) {
+                if (largest_sensor_width > 1920 &&
+                    largest_sensor_height > 1088) {
                     limited_width = 1920;
                     limited_height = 1088;
                 } else {
@@ -1277,8 +1287,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     limited_height = largest_sensor_height;
                 }
 #endif
-                if ((stream_info[i].stream_sizes_tbl.width <=
-                     limited_width) &&
+                if ((stream_info[i].stream_sizes_tbl.width <= limited_width) &&
                     (stream_info[i].stream_sizes_tbl.height <=
                      limited_height)) {
                     available_stream_configs.add(scaler_formats[j]);
