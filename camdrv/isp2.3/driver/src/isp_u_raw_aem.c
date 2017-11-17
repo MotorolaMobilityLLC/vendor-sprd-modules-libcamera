@@ -28,13 +28,34 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *param_ptr)
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_dev_raw_aem_info aem_info;
+	struct isp_dev_raw_aem_info *aem_info_ptr;
+	struct sprd_aem_info dcam_aem_info;
+
 
 	if (!handle || !param_ptr) {
 		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
 
-	ret = dcam_u_raw_aem_block(handle, raw_aem_ptr->block_info);
+	memset(&dcam_aem_info, 0x00, sizeof(dcam_aem_info));
+	aem_info_ptr = (struct isp_dev_raw_aem_info *)raw_aem_ptr->block_info;
+	dcam_aem_info.skip_num = aem_info_ptr->skip_num;
+	dcam_aem_info.mode = 1;
+	dcam_aem_info.offset.x = aem_info_ptr->offset.x;
+	dcam_aem_info.offset.y = aem_info_ptr->offset.y;
+	dcam_aem_info.blk_size.width = aem_info_ptr->blk_size.width;
+	dcam_aem_info.blk_size.height = aem_info_ptr->blk_size.height;
+	dcam_aem_info.aem_avgshf.aem_h_avgshf = 0;
+	dcam_aem_info.aem_avgshf.aem_l_avgshf = 0;
+	dcam_aem_info.aem_avgshf.aem_m_avgshf = 0;
+	dcam_aem_info.red_thr.low = 1;
+	dcam_aem_info.red_thr.high = 1022;
+	dcam_aem_info.blue_thr.low = 1;
+	dcam_aem_info.blue_thr.high = 1022;
+	dcam_aem_info.green_thr.low = 1;
+	dcam_aem_info.green_thr.high = 1022;
+
+	ret = dcam_u_raw_aem_block(handle, &dcam_aem_info);
 
 	file = (struct isp_file *)(handle);
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
@@ -208,7 +229,7 @@ cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *param_ptr)
 	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	return dcam_u_raw_aem_shift(handle, raw_aem_ptr->shift);
+	return dcam_u_raw_aem_shift(handle, &raw_aem_ptr->shift);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

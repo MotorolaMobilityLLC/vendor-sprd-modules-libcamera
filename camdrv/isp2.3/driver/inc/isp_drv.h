@@ -65,7 +65,7 @@ struct isp_u_blocks_info {
 		cmr_u32 info;
 		cmr_u32 factor;
 		void *block_info;
-		void *shift;
+		struct sprd_aem_avgshf shift;
 		struct isp_img_offset offset;
 		struct isp_img_size size;
 		/*rgb gain block*/

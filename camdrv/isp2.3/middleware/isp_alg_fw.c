@@ -3534,7 +3534,9 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 			aem_block_info.scene_id = ISP_MODE_CAP;
 		else
 			aem_block_info.scene_id = ISP_MODE_PRV;
-		aem_block_info.shift = &ae_param.shift;
+		aem_block_info.shift.aem_h_avgshf = ae_param.shift;
+		aem_block_info.shift.aem_l_avgshf = ae_param.shift;
+		aem_block_info.shift.aem_m_avgshf = ae_param.shift;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &aem_block_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));
 	}
