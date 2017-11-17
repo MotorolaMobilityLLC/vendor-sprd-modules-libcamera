@@ -193,7 +193,6 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 		BL_LOGI("------------threeDNR_1D_process frameno:%d , width:%d , height:%d , smallimage:%p,%p,%p\n",
 			p3dnr_info->curr_frameno, width, height, small_image->bufferY, small_image->bufferU,
 			small_image->bufferV);
-		endTime1("threeDNR_1D_process run time in threednr_function_pre");
 
 		if (1 == p3dnr_info->is_first_frame) {
 			p3dnr_info->is_first_frame = 0;
@@ -296,10 +295,8 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 				property_get("save_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (num < 10) {
-						//sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
-						//	p3dnr_info->orig_width, p3dnr_info->orig_height, num);
-						sprintf(filename , "/data/misc/cameraserver/%dx%d_ref_img_index_mv_%d_%d_%d.yuv",
-						    p3dnr_info->orig_width , p3dnr_info->orig_height, mv_xy[0], mv_xy[1], num);
+						sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
+							p3dnr_info->orig_width, p3dnr_info->orig_height, num);
 						save_yuv(filename, (char *)p3dnr_info->pfirst_blendimg->bufferY,
 							 p3dnr_info->orig_width, p3dnr_info->orig_height,
 							 p3dnr_info->orig_height);
@@ -339,7 +336,6 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 		}
 		p3dnr_info->curr_frameno = 1 - p3dnr_info->curr_frameno;
 	}
-	endTime1("threednr_function_pre run time");
 	if (!(strcmp(timeout, "yes"))) {
 		endTime1("threednr_function_pre");
 	}
@@ -409,7 +405,6 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 		BL_LOGI("------------threeDNR_1D_process frameno:%d , width:%d , height:%d , smallimage:%x,%x,%x\n",
 			p3dnr_info->curr_frameno, width, height, small_image->bufferY[0], small_image->bufferY[1],
 			small_image->bufferY[2]);
-		endTime1("threeDNR_1D_process run time in threednr_function");
 		buffer_copy(&p3dnr_info->porigimg[p3dnr_info->curr_frameno], orig_image);
 		if (p3dnr_info->curr_frameno > 0) {
 			//calculate mv
@@ -468,12 +463,9 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 			{	//save blend image.
 				property_get(SAVE_IMG_PROPERTY, save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
-					//sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
-					//	p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
-					//	p3dnr_info->curr_frameno - 1);
-					sprintf(filename , "/data/misc/cameraserver/%dx%d_ref_img_index_%d_mv_%d_%d.yuv",
-						p3dnr_info->orig_width , IMG_SAVE_H/*p3dnr_info->orig_height*/,
-						p3dnr_info->curr_frameno-1, mv_xy[0],mv_xy[1]);
+					sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
+						p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
+						p3dnr_info->curr_frameno - 1);
 					save_yuv(filename, (char *)p3dnr_info->pfirst_blendimg->bufferY,
 						 p3dnr_info->orig_width, p3dnr_info->orig_height, IMG_SAVE_H);
 					sprintf(filename, "/data/misc/cameraserver/%dx%d_cur_img_index_%d.yuv",
@@ -525,7 +517,6 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 		//record current orig image
 		p3dnr_info->curr_frameno++;
 	}
-	endTime1("threednr_function run time");
 	if (!(strcmp(timeout, "yes"))) {
 		endTime1("threednr_function");
 	}
@@ -603,6 +594,7 @@ cmr_s32 get_weight(char *weight, cmr_u32 imageNum)
 cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width, cmr_s32 orig_height, cmr_u32 imageNum)
 {
 	cmr_s32 ret = 0;
+	cmr_u32 i = 0;
 	char weight[PROPERTY_VALUE_MAX] = { 0 };
 	char weight_default[PROPERTY_VALUE_MAX] =
 	    "_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128_128";
@@ -625,7 +617,7 @@ cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width
 		delete [] p3dnr_info->xProj1D;
 		return -1;
 	}
-	for (cmr_u32 i = 0; i < imageNum; i++) {
+	for (i = 0; i < imageNum; i++) {
 		p3dnr_info->xProj1D[i] = mem0 + i * small_height;
 		p3dnr_info->yProj1D[i] = mem0 + imageNum * small_height + i * small_width;
 	}
