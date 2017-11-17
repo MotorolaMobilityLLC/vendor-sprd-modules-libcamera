@@ -551,6 +551,8 @@ static cmr_int ispdev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp
 	ret = isp_dev_set_slice_raw_info(cxt->isp_driver_handle, info);
 	ISP_TRACE_IF_FAIL(ret, ("fail to slice raw info"));
 
+	/* raw capture */
+	fetch_info.scene_id = 1;
 	fetch_info.fetch_start = ISP_ONE;
 	ret = isp_u_fetch_start_isp(cxt->isp_driver_handle, (void *)&fetch_info);
 	ISP_TRACE_IF_FAIL(ret, ("fail to fetch start isp"));

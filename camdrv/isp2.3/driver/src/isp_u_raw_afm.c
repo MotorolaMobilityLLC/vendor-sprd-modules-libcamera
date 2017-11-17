@@ -813,6 +813,7 @@ cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, void *param_ptr)
 	raw_afm_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	param.isp_id = file->isp_id;
+	param.scene_id = BLOCK_SCENE_DEF;
 	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_WIN_NUM;
 	param.property_param = (void *)raw_afm_ptr->win_num;

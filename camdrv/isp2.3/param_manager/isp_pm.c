@@ -1155,6 +1155,9 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr,
 	}
 
 	id = param_data_ptr->id;
+	/* LE no support pdaf correct block yet */
+	if (id == ISP_BLK_PDAF_CORRECT)
+		return rtn;
 	blk_cfg_ptr = isp_pm_get_block_cfg(id);
 	blk_header_ptr = isp_pm_get_block_header(mode_ptr, id, &tmp_idx);
 	if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {

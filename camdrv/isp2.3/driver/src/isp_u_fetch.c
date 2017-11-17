@@ -57,6 +57,7 @@ cmr_s32 isp_u_fetch_raw_transaddr(cmr_handle handle, struct isp_dev_block_addr *
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = BLOCK_SCENE_DEF;
 	param.sub_block = ISP_BLOCK_FETCH;
 	param.property = ISP_PRO_FETCH_TRANSADDR;
 	param.property_param = addr;

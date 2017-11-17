@@ -167,6 +167,7 @@ cmr_s32 isp_u_raw_aem_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * 
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = BLOCK_SCENE_DEF;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_STATISTICS;
 	memset(aem_statistics, 0x00, sizeof(struct isp_raw_aem_statistics));
