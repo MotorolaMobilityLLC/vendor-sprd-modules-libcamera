@@ -117,16 +117,6 @@ struct ae_face_tune_param {
 	cmr_s32 param_shrink_face_ratio;	/* The ratio to shrink face area. In percent */
 };
 
-struct front_flash_param {
-	cmr_s16 led_thr_up;
-	cmr_s16 led_thr_down;
-};
-
-struct rear_flash_param {
-	cmr_s16 led_thr_up;
-	cmr_s16 led_thr_down;
-};
-
 struct ae_hdr_tuning_param {
 	cmr_s32 ev_minus_offset;
 	cmr_s32 ev_plus_offset;

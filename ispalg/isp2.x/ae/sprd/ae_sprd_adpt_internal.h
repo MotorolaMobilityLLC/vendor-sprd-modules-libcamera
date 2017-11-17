@@ -77,6 +77,11 @@ struct ae_monitor_unit {
 	cmr_u32 is_stop_monitor;
 };
 
+struct flash_swith_param {
+	cmr_s16 led_thr_up;
+	cmr_s16 led_thr_down;
+};
+
 /**************************************************************************/
 /*
 * BEGIN: FDAE related definitions
@@ -144,8 +149,6 @@ struct ae_ctrl_cxt {
 	struct ae_tuning_param *cur_param;
 	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_NUM][AE_FLICKER_NUM];
 	struct flash_tune_param dflash_param[AE_MAX_PARAM_NUM];
-	struct front_flash_param front_flash_param[AE_MAX_PARAM_NUM];
-	struct rear_flash_param rear_flash_param[AE_MAX_PARAM_NUM];
 	/*
 	 * sensor related information
 	 */
@@ -179,6 +182,7 @@ struct ae_ctrl_cxt {
 	 * flash ae param
 	 */
 	 /*ST: for dual flash algorithm*/
+	struct flash_swith_param flash_swith;
 	cmr_u8 flash_ver;
 	cmr_s32 pre_flash_skip;
 	cmr_s32 aem_effect_delay;
