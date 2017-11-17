@@ -26,7 +26,7 @@ cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void *param1, voi
 
 	dst_ptr->ct_value = 5000;
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
-		dst_ptr->cur.awbc_bypass = header_ptr->bypass;
+	dst_ptr->cur.awbc_bypass = 0;
 
 	dst_ptr->cur.gain.r = 0x700;
 	dst_ptr->cur.gain.gr = 0x400;

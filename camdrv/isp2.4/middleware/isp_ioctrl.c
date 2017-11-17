@@ -79,7 +79,7 @@ static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
 
-	ioctl_data.id = ISP_BLK_AWBC;
+	ioctl_data.id = ISP_BLK_AWB_NEW;
 	ioctl_data.cmd = ISP_PM_BLK_AWBC;
 	ioctl_data.data_ptr = &awbc_cfg;
 	ioctl_data.data_size = sizeof(awbc_cfg);
@@ -1861,7 +1861,7 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
 
-	ioctl_data.id = ISP_BLK_AWBC;
+	ioctl_data.id = ISP_BLK_AWB_NEW;
 	ioctl_data.cmd = ISP_PM_BLK_AWBC;
 	ioctl_data.data_ptr = &awbc_cfg;
 	ioctl_data.data_size = sizeof(awbc_cfg);

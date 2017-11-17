@@ -59,8 +59,8 @@ struct isp_block_operations s_bpc_ops = { _pm_bpc_init, _pm_bpc_set_param, _pm_b
 struct isp_block_operations s_bdn_ops = { _pm_bdn_init, _pm_bdn_set_param, _pm_bdn_get_param, PNULL, PNULL };
 struct isp_block_operations s_css_ops = { _pm_css_init, _pm_css_set_param, _pm_css_get_param, PNULL, PNULL };
 struct isp_block_operations s_grgb_ops = { _pm_grgb_init, _pm_grgb_set_param, _pm_grgb_get_param, PNULL, PNULL };
-struct isp_block_operations s_awbc_ops = { _pm_awbc_init, _pm_awbc_set_param, _pm_awbc_get_param, PNULL, PNULL };
 #ifdef NOT_EXIST_IN_ISP2_0
+struct isp_block_operations s_awbc_ops = { _pm_awbc_init, _pm_awbc_set_param, _pm_awbc_get_param, PNULL, PNULL };
 struct isp_block_operations s_ynr_ops = { _pm_ynr_init, _pm_ynr_set_param, _pm_ynr_get_param, PNULL, PNULL };
 struct isp_block_operations s_pdaf_extraction_ops = { _pm_pdaf_extraction_init, _pm_pdaf_extraction_set_param, _pm_pdaf_extraction_get_param, PNULL, PNULL };
 struct isp_block_operations s_pdaf_correct_ops = { _pm_pdaf_correct_init, _pm_pdaf_correct_set_param, _pm_pdaf_correct_get_param, PNULL, PNULL };
@@ -96,8 +96,8 @@ struct isp_block_operations s_iircnr_yrandom_ops = { _pm_iircnr_yrandom_init, _p
 struct isp_block_operations s_uvdiv_ops = { _pm_uv_div_init, _pm_uv_div_set_param, _pm_uv_div_get_param, PNULL, PNULL };
 struct isp_block_operations s_smart_ops = { _pm_smart_init, _pm_smart_set_param, _pm_smart_get_param, PNULL, PNULL };
 struct isp_block_operations s_aft_ops = { _pm_aft_init, _pm_aft_set_param, _pm_aft_get_param, PNULL, PNULL };
-#ifdef NOT_EXIST_IN_ISP2_0
 struct isp_block_operations s_awb_new_ops = { _pm_awb_new_init, _pm_awb_new_set_param, _pm_awb_new_get_param, PNULL, PNULL };
+#ifdef NOT_EXIST_IN_ISP2_0
 struct isp_block_operations s_3d_nr_pre_ops = { _pm_3d_nr_pre_init, _pm_3d_nr_pre_set_param, _pm_3d_nr_pre_get_param, PNULL, PNULL };
 struct isp_block_operations s_3d_nr_cap_ops = { _pm_3d_nr_cap_init, _pm_3d_nr_cap_set_param, _pm_3d_nr_cap_get_param, PNULL, PNULL };
 struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, _pm_yuv_noisefilter_set_param, _pm_yuv_noisefilter_get_param, PNULL, PNULL };
@@ -123,9 +123,9 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_2D_LSC, array_offset(struct isp_context, lsc_2d), sizeof(struct isp_2d_lsc_param), &s_2d_lsc_ops},
 #ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_BLK_1D_LSC, array_offset(struct isp_context, lsc_1d), sizeof(struct isp_1d_lsc_param), &s_1d_lsc_ops},
+	{ISP_BLK_AWBC, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awbc_ops},
 #endif
 	{ISP_BLK_BINNING4AWB, array_offset(struct isp_context, binning4awb), sizeof(struct isp_binning4awb_param), &s_binning4awb_ops},
-	{ISP_BLK_AWBC, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awbc_ops},
 	{ISP_BLK_BPC, array_offset(struct isp_context, bpc), sizeof(struct isp_bpc_param), &s_bpc_ops},
 	{ISP_BLK_BDN, array_offset(struct isp_context, bdn), sizeof(struct isp_bdn_param), &s_bdn_ops},
 	{ISP_BLK_CSS, array_offset(struct isp_context, css), sizeof(struct isp_css_param), &s_css_ops},
@@ -163,8 +163,8 @@ struct isp_block_cfg s_blk_cfgs[] = {
 #ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_BLK_3DNR_CAP, array_offset(struct isp_context, nr_3d_cap), sizeof(struct isp_3d_nr_cap_param), &s_3d_nr_cap_ops},
 	{ISP_BLK_3DNR_PRE, array_offset(struct isp_context, nr_3d_pre), sizeof(struct isp_3d_nr_pre_param), &s_3d_nr_pre_ops},
-	{ISP_BLK_AWB_NEW, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awb_new_ops},
 #endif
+	{ISP_BLK_AWB_NEW, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awb_new_ops},
 	{ISP_BLK_CCE, array_offset(struct isp_context, cce), sizeof(struct isp_cce_param), &s_cce_ops},
 	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, frgb_gamc), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
 	{ISP_BLK_AE, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},

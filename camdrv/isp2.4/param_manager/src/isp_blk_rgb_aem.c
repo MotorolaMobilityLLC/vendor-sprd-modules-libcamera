@@ -27,6 +27,7 @@ cmr_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void *param1, voi
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	dst_ptr->cur.skip_num = src_ptr->aem_skip_num;
+	dst_ptr->cur.mode = 1;
 	dst_ptr->cur.blk_size.width = src_ptr->win_size.w;
 	dst_ptr->cur.blk_size.height = src_ptr->win_size.h;
 	dst_ptr->cur.offset.x = src_ptr->win_start.x;
@@ -61,7 +62,7 @@ cmr_s32 _pm_rgb_aem_get_param(void *rgb_aem_param, cmr_u32 cmd, void *rtn_param0
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
-#ifdef AE_WORK_MOD_V2
+#if 1//def AE_WORK_MOD_V2
 		rgb_aem_ptr->cur.bypass = 0;
 		rgb_aem_ptr->cur.shift = 0;
 		param_data_ptr->data_ptr = (void *)&rgb_aem_ptr->cur;

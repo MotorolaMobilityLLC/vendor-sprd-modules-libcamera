@@ -738,9 +738,6 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 					       (void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)), (src_header[j].size - sizeof(struct ae_param_tmp_001)));
 				}
 				break;
-			case ISP_BLK_AWBC:{
-				}
-				break;
 			case ISP_BLK_2D_LSC:{
 					extend_offset += add_lnc_len;
 					dst_header[j].size = src_header[j].size + add_lnc_len;

@@ -2623,13 +2623,14 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	memset(&param_data, 0, sizeof(param_data));
-
+#ifndef CONFIG_ISP_2_4
 #ifdef CONFIG_ISP_2_3
 	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
 	input.param_num = 1;
 	input.param_data_ptr = &param_data;
 #else
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
+#endif
 #endif
 	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (AFV1_SUCCESS == rtn && 1 == output.param_num) {

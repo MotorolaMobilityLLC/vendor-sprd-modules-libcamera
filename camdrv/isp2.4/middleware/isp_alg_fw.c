@@ -1111,7 +1111,7 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
 
-	ioctl_data.id = ISP_BLK_AWBC;
+	ioctl_data.id = ISP_BLK_AWB_NEW;
 	ioctl_data.cmd = ISP_PM_BLK_AWBC;
 	ioctl_data.data_ptr = &awbc_cfg;
 	ioctl_data.data_size = sizeof(awbc_cfg);
@@ -2878,7 +2878,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	awbc_cfg.r_offset = 0;
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
-	ioctl_data.id = ISP_BLK_AWBC;
+	ioctl_data.id = ISP_BLK_AWB_NEW;
 	ioctl_data.cmd = ISP_PM_BLK_AWBC;
 	ioctl_data.data_ptr = &awbc_cfg;
 	ioctl_data.data_size = sizeof(awbc_cfg);
