@@ -45,25 +45,50 @@
 #ifndef __AFV1_INTERFACE_H__
 #define  __AFV1_INTERFACE_H__
 
-cmr_u8 AF_Trigger(void *handle, AF_Trigger_Data * aft_in);
-cmr_u8 AF_STOP(void *handle, cmr_u32 force_stop);	//force_stop : for mode change (ex. caf to saf)
+// Interface Commands
+typedef enum _AF_IOCTRL_CMD {
+	AF_IOCTRL_TRIGGER = 0,
+	AF_IOCTRL_STOP,
+	AF_IOCTRL_Get_Result,
+	AF_IOCTRL_Record_Wins,
+	AF_IOCTRL_Set_Hw_Wins,
+	AF_IOCTRL_Record_Vcm_Pos,
+	AF_IOCTRL_Get_Alg_Mode,
+	AF_IOCTRL_Get_Bokeh_Result,
+	AF_IOCTRL_Set_Time_Stamp,
+	AF_IOCTRL_Set_Pre_Trigger_Data,
+	AF_IOCTRL_Record_FV,
+	AF_IOCTRL_MAX,
+} AF_IOCTRL_CMD;
 
-void *AF_init(AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, haf_tuning_param_t * haf_tune_data, cmr_u32 * dump_info_len, char *sys_version);
-cmr_u8 AF_deinit(void *handle);
+// Interface Param Structure
+typedef struct _AF_Result{
+	cmr_u32 AF_Result;
+	cmr_u32 af_mode;
+}AF_Result;
 
-cmr_u8 AF_Process_Frame(void *handle);
-cmr_u8 AF_Get_Result(void *handle, cmr_u32 * AF_Result, cmr_u32 * af_mode);
-cmr_u8 AF_record_wins(void *handle, cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y);
-cmr_u8 AF_set_hw_wins(void *handle, void *win_settings, cmr_u32 af_mode);
-cmr_u8 AF_record_vcm_pos(void *handle, cmr_u32 vcm_pos);
-cmr_u32 AF_Get_alg_mode(void *handle);
-cmr_u8 AF_is_finished(void *handle);
-cmr_u8 AF_Get_Bokeh_result(void *handle, Bokeh_Result * result);
-cmr_u8 AF_record_faces(void *handle, cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y);
-cmr_u8 faf_trigger_init(void *handle);
-cmr_u8 face_dectect_trigger(void *handle);
-cmr_u32 AF_Set_time_stamp(void *handle, cmr_u32 type, cmr_u64 time_stamp);
-cmr_u32 AF_Set_Pre_Trigger_Data(void *handle);
-cmr_u8 AF_record_FV(void *handle, cmr_u64 FV_record);
+typedef struct _AF_Roi{
+	cmr_u32 index;
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+}AF_Roi;
+
+typedef struct _AF_HW_Wins{
+	void* win_settings;
+	cmr_u32 af_mode;
+}AF_HW_Wins;
+
+typedef struct _AF_Timestamp{
+	cmr_u32 type;
+	cmr_u64 time_stamp;
+}AF_Timestamp;
+
+// Interface
+void * AF_init(AF_Ctrl_Ops* AF_Ops,af_tuning_block_param* af_tuning_data,  haf_tuning_param_t *haf_tune_data,cmr_u32* dump_info_len,char* sys_version);
+cmr_u8 AF_deinit(void * handle);
+cmr_u8 AF_Process_Frame(void * handle);
+cmr_u8 AF_IOCtrl_process(void* handle,AF_IOCTRL_CMD cmd,void*param);
 
 #endif

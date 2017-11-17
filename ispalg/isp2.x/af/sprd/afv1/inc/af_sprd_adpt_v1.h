@@ -134,6 +134,16 @@ enum filter_type {
 #define SPSMD_BIT   (1 << FILTER_SPSMD)
 #define ENHANCED_BIT   (1 << FILTER_ENHANCED)
 
+// af lib
+typedef struct _af_lib_ops {
+	void *(*init) (AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, haf_tuning_param_t * haf_tune_data, cmr_u32 * dump_info_len, char *sys_version);
+	 cmr_u8(*deinit) (void *handle);
+	 cmr_u8(*calc) (void *handle);
+	 cmr_u8(*ioctrl) (void *handle, cmr_u32 cmd, void *param);
+} af_lib_ops_t;
+
+#define AF_LIB "libspafv1.so"
+
 // caf trigger
 typedef struct _caf_trigger_ops {
 	aft_proc_handle_t handle;
@@ -210,6 +220,8 @@ typedef struct _af_ctrl {
 	cmr_s32 ae_partial_lock_num;
 	void *trig_lib;
 	caf_trigger_ops_t trig_ops;
+	void *af_lib;
+	af_lib_ops_t af_ops;
 	ae_cali_t ae_cali_data;
 	cmr_u32 vcm_stable;
 	focus_stat_reg_t stat_reg;
@@ -235,7 +247,7 @@ typedef struct _af_ctrl {
 	cmr_u32 is_multi_mode;
 	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
-	 cmr_s32(*start_notice) (void *handle, struct af_result_param *in_param);
+	 cmr_s32(*start_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 	 cmr_s32(*set_monitor_win) (void *handler, struct af_monitor_win * in_param);
 	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
@@ -253,11 +265,11 @@ typedef struct _af_ctrl {
 	 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
 	 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
 	 cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
-	 //SharkLE Only ++
+	//SharkLE Only ++
 	 cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
 	 cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
 	 cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
-	 //SharkLE Only --
+	//SharkLE Only --
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
