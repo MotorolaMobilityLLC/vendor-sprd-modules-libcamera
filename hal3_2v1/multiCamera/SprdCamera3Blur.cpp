@@ -1783,7 +1783,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         .sensor_InfoInfo.pixer_array_size[1];
     unsigned short savePreviewX = mPreviewWeightParams.sel_x;
     unsigned short savePreviewY = mPreviewWeightParams.sel_y;
-
+    if (origW == 0 || origH == 0) {
+        return;
+    }
     // always get f_num and orientattion in request
     if (type == 0) {
         if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
@@ -2350,18 +2352,13 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 if (mCaptureWeightParams.roi_type == 2) {
                     mCaptureWeightParams.valid_roi = face_num - k;
                 }
-                if (mBlurBody == true) {
-                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
-                                                  mPreviewWeightParams.x1[0]) /
-                                                 2;
-                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[0] +
-                                                  mPreviewWeightParams.y1[0]) /
-                                                 2;
-                } else {
-                    mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
-                    mPreviewWeightParams.sel_y = mPreviewInitParams.height - 1;
+                if (mUpdataTouch == true) {
+                    mPreviewWeightParams.sel_x =
+                        mLastTouchX * mPreviewInitParams.width / origW;
+                    mPreviewWeightParams.sel_y =
+                        mLastTouchY * mPreviewInitParams.height / origH;
+                    mUpdataTouch = false;
                 }
-                mUpdataTouch = false;
             }
         } else {
             if (mUpdataTouch) {
@@ -2379,19 +2376,10 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         mBlurBody = false;
                     }
                 }
-                if (mBlurBody == true) {
-                    HAL_LOGD("in body");
-                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
-                                                  mPreviewWeightParams.x1[0]) /
-                                                 2;
-                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[0] +
-                                                  mPreviewWeightParams.y1[0]) /
-                                                 2;
-                } else {
-                    HAL_LOGD("out body");
-                    mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
-                    mPreviewWeightParams.sel_y = mPreviewInitParams.height - 1;
-                }
+                mPreviewWeightParams.sel_x =
+                    mLastTouchX * mPreviewInitParams.width / origW;
+                mPreviewWeightParams.sel_y =
+                    mLastTouchY * mPreviewInitParams.height / origH;
                 mUpdataTouch = false;
             }
         }
