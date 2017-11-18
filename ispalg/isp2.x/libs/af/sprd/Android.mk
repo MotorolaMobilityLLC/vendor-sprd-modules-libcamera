@@ -23,7 +23,9 @@ else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
 endif
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
 LOCAL_MODULE := libspafv1_le
@@ -52,7 +54,9 @@ else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
 endif
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 LOCAL_MODULE := libspcaftrigger
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES

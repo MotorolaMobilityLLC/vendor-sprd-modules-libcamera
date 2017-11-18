@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 PLATFORM_VERSION_FILTER = sp9850ka sc9850kh
+ANDROID_MAJOR_VER := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc \
@@ -26,7 +27,7 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/vendor/sprd/modules/libmemion \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_C_INCLUDES += \
     $(TOP)/frameworks/native/libs/sensor/include
 endif
@@ -238,7 +239,7 @@ include $(LOCAL_PATH)/SprdCtrl.mk
 
 include $(LOCAL_PATH)/SprdLib.mk
 
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_SHARED_LIBRARIES += liblog libsensorndkbridge
 LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8
 endif
@@ -248,7 +249,9 @@ LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 
 LOCAL_MODULE_TAGS := optional
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9853i)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MAX_PREVSIZE_1080P

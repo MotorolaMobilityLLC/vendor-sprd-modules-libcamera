@@ -78,7 +78,7 @@ LOCAL_SHARED_LIBRARIES := libcambr libcutils libutils libdl libcamcommon libcamp
 LOCAL_SHARED_LIBRARIES += libcamsensor
 
 
-ifeq ($(PLATFORM_VERSION),8.0.0)
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

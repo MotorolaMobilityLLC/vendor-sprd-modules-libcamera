@@ -23,7 +23,9 @@ else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
 endif
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 LOCAL_MODULE := libae
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
@@ -53,6 +55,8 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_PREBUILT)

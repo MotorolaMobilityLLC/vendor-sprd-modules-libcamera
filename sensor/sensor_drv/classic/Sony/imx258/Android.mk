@@ -30,7 +30,7 @@ LOCAL_MODULE := imx258_mipi_raw_tuning.bin
 LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/tuning
 endif
 
@@ -41,7 +41,7 @@ LOCAL_MODULE := imx258_mipi_raw_pdotp.bin
 LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/tuning
 endif
 
@@ -52,7 +52,7 @@ LOCAL_MODULE := imx258_mipi_raw_cbc.bin
 LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/tuning
 endif
 

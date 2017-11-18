@@ -240,9 +240,9 @@ LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl
 
 LOCAL_SHARED_LIBRARIES += liblog
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
-
-
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 

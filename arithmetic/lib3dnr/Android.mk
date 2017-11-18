@@ -29,9 +29,7 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
 LOCAL_MODULE_TAGS := optional
-
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
@@ -54,11 +52,9 @@ LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/../libgralloc_mali \
          $(TOP)/system/core/include/cutils/
 
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
-#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
-
 
 include $(BUILD_SHARED_LIBRARY)
 endif

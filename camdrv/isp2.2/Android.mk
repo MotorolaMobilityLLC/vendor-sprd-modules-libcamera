@@ -80,6 +80,10 @@ LOCAL_SHARED_LIBRARIES += liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcalibration
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))

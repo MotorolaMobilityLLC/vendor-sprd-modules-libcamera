@@ -119,7 +119,9 @@ $(warning $(LOCAL_SRC_FILES))
 #LOCAL_MODULE := libcamisp$(ISP_HW_VER)
 LOCAL_MODULE := libcamdrv
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 LOCAL_MODULE_TAGS := optional
 

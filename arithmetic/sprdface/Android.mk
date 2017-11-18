@@ -33,8 +33,9 @@ LOCAL_MODULE_STEM_64 := libsprdfd.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfd.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfd.so
 LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
-
+endif
 include $(BUILD_PREBUILT)
 
 
@@ -48,7 +49,9 @@ LOCAL_MODULE_STEM_64 := libsprdfa.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfa.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfa.a
 LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_PREBUILT)
 
@@ -62,7 +65,9 @@ LOCAL_MODULE_STEM_64 := libsprdfar.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfar.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfar.a
 LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_PREBUILT)
 

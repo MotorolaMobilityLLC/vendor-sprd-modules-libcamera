@@ -44,7 +44,9 @@ LOCAL_MODULE_STEM_64 := libarcsoft_beautyshot.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot.so
 LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_PREBUILT)
 
@@ -57,7 +59,9 @@ LOCAL_MODULE_STEM_64 := libarcsoft_beautyshot_wrapper.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot_wrapper.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot_wrapper.so
 LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_PREBUILT)
 
@@ -81,7 +85,9 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_MODULE := libcamfb
 LOCAL_MODULE_TAGS := optional
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 

@@ -109,8 +109,10 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES += libcampm
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_PROPRIETARY_MODULE := true
+endif
 
 LOCAL_SHARED_LIBRARIES += libcutils libutils libdl libcamcommon
 #LOCAL_SHARED_LIBRARIES := libcamcommon
