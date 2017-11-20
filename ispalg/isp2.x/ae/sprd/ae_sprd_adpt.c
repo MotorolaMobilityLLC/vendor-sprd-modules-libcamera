@@ -4972,10 +4972,12 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	init_param = (struct ae_init_in *)param;
 	ae_init_out = (struct ae_init_out *)in_param;
 
+	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
+
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->sensor_role = init_param->sensor_role;
 	cxt->is_multi_mode = init_param->is_multi_mode;
-	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
+
 	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
 
 	// parser ae otp info
