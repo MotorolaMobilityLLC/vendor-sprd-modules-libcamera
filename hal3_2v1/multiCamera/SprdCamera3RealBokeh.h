@@ -258,6 +258,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void *m_pDstJpegBuffer;
     cmr_uint mOrigJpegSize;
 #endif
+    bool mUpdateDepthFlag;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -344,6 +345,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void *mPrevDepthhandle;
         MHandle mArcSoftPrevHandle;
         ARC_DCVR_PARAM mArcSoftPrevParam;
+        int mPrevAfState;
 
       private:
         Mutex mLock;

@@ -171,6 +171,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mhasCallbackStream = false;
     mJpegOrientation = 0;
     mMaxPendingCount = 0;
+    mUpdateDepthFlag = false;
     mCallbackOps = NULL;
     m_pMainSnapBuffer = NULL;
     m_pSprdDepthBuffer = NULL;
@@ -966,6 +967,7 @@ SprdCamera3RealBokeh::PreviewMuxerThread::PreviewMuxerThread() {
     mArcSoftPrevHandle = NULL;
     memset(&mPreviewbokehParam, 0, sizeof(bokeh_prev_params_t));
     memset(&mArcSoftPrevParam, 0, sizeof(ARC_DCVR_PARAM));
+    mPrevAfState = -1;
     HAL_LOGI("X");
 }
 /*===========================================================================
@@ -1001,6 +1003,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
     buffer_handle_t *depth_output_buffer = NULL;
     uint32_t frame_number = 0;
     int rc = 0;
+
     while (!mPreviewMuxerMsgList.empty()) {
         List<muxer_queue_msg_t>::iterator it;
         {
@@ -1049,7 +1052,15 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
 
             if (output_buffer != NULL) {
                 if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                    if (mRealBokeh->mIsSupportPBokeh) {
+                    CONTROL_Tag controlInfo;
+                    mRealBokeh->m_pPhyCamera[CAM_TYPE_MAIN]
+                        .hwi->mSetting->getCONTROLTag(&controlInfo);
+                    int currAfState = controlInfo.af_state;
+                    if (mPrevAfState != currAfState) {
+                        mRealBokeh->mUpdateDepthFlag = true;
+                        mPrevAfState = currAfState;
+                    }
+                    if (mRealBokeh->mIsSupportPBokeh && mRealBokeh->mUpdateDepthFlag) {
                         rc = depthPreviewHandle(depth_output_buffer,
                                                 muxer_msg.combo_frame.buffer1,
                                                 muxer_msg.combo_frame.buffer2);
@@ -1173,6 +1184,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
                                      mRealBokeh->mPrevFrameNumber, "prevMain");
             }
         }
+        mRealBokeh->mUpdateDepthFlag = false;
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         HAL_LOGV("arcsoft preview bokeh run began");
         MRESULT rc = MOK;
@@ -3182,6 +3194,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
         }
 
         if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
+            mUpdateDepthFlag = true;
             mPreviewMuxerThread->mPreviewbokehParam.weight_params.F_number =
                 fnum * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
             fnum = (MAX_F_FUMBER + 1 - fnum) * 255 / MAX_F_FUMBER;
