@@ -872,7 +872,7 @@ static void freeCameraMem(sprd_camera_memory_t *memory) {
 
 static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                               cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum) {
-    unsigned int i;
+    int i;
     ALOGI("AutoTest: %s,%d IN\n", __func__, __LINE__);
 
     if (type == CAMERA_PREVIEW_RESERVED) {
