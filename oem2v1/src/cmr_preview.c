@@ -7048,7 +7048,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct video_start_param video_param;
     struct img_data_end endian;
     struct buffer_cfg buf_cfg;
-    struct img_size tmp_size;
+    struct sprd_dcam_path_size dcam_cfg;
     cmr_u32 i;
 
     CHECK_HANDLE_VALID(handle);
@@ -7056,6 +7056,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
 
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
     cmr_bzero(&video_param, sizeof(struct video_start_param));
+    cmr_bzero(&dcam_cfg, sizeof(struct sprd_dcam_path_size));
     CMR_LOGD("camera_id %d", camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
 
@@ -7281,22 +7282,21 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         video_param.img_format = ISP_DATA_NORMAL_RAW10;
 
 #ifdef CONFIG_CAMERA_OFFLINE
-        if (prev_cxt->actual_video_size.width >
-            prev_cxt->actual_video_size.width) {
-            tmp_size.width = prev_cxt->actual_video_size.width;
-            tmp_size.height = prev_cxt->actual_video_size.height;
-        } else {
-            tmp_size.width = prev_cxt->actual_prev_size.width;
-            tmp_size.height = prev_cxt->actual_prev_size.height;
-        }
-        ret = cal_dcam_output_size(&sensor_mode_info->trim_width,
-                                   &sensor_mode_info->trim_height,
-                                   &tmp_size.width, &tmp_size.height);
+        dcam_cfg.dcam_in_w = sensor_mode_info->trim_width;
+        dcam_cfg.dcam_in_h = sensor_mode_info->trim_height;
+        dcam_cfg.pre_dst_w = prev_cxt->actual_prev_size.width;
+        dcam_cfg.pre_dst_h = prev_cxt->actual_prev_size.height;
+        dcam_cfg.vid_dst_w = prev_cxt->actual_video_size.width;
+        dcam_cfg.vid_dst_h = prev_cxt->actual_video_size.height;
+
+        ret = handle->ops.channel_dcam_size(handle->oem_handle, &dcam_cfg);
         if (ret) {
-            CMR_LOGE("get dcam output failed");
+            CMR_LOGE("get dcam output size failed.");
+            ret = CMR_CAMERA_FAIL;
             goto exit;
         }
-        video_param.dcam_size = tmp_size;
+        video_param.dcam_size.width = dcam_cfg.dcam_out_w;
+        video_param.dcam_size.height = dcam_cfg.dcam_out_h;
 #endif
         video_param.video_mode = ISP_VIDEO_MODE_CONTINUE;
         video_param.work_mode = 0;

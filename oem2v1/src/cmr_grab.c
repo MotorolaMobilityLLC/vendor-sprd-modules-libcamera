@@ -757,6 +757,28 @@ exit:
     return ret;
 }
 
+cmr_int cmr_grab_dcam_size(cmr_handle grab_handle, struct sprd_dcam_path_size *dcam_cfg) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_DCAM_PATH_SIZE, dcam_cfg);
+    if (ret) {
+        CMR_LOGE("Failed to get dcam size.");
+        goto exit;
+    }
+
+exit:
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
     ATRACE_BEGIN(__FUNCTION__);
 

@@ -91,6 +91,8 @@ struct preview_md_ops {
                                cmr_u32 camera_id, struct cap_cfg *cap_cfg,
                                cmr_u32 *channel_id,
                                struct img_data_end *endian);
+    cmr_int (*channel_dcam_size)(cmr_handle oem_handle,
+                                struct sprd_dcam_path_size *dcam_cfg);
     cmr_int (*channel_scale_capability)(cmr_handle oem_handle, cmr_u32 *width,
                                         cmr_u32 *sc_factor,
                                         cmr_u32 *sc_threshold);

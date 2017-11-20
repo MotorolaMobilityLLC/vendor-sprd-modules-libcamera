@@ -239,6 +239,9 @@ static cmr_int
 camera_channel_cap_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
                        cmr_u32 camera_id, struct cap_cfg *cap_cfg,
                        cmr_u32 *channel_id, struct img_data_end *endian);
+static cmr_int camera_channel_dcam_size(cmr_handle oem_handle,
+                                        struct sprd_dcam_path_size *dcam_cfg);
+
 static cmr_int camera_isp_buff_cfg(cmr_handle oem_handle,
                                    struct buffer_cfg *buf_cfg);
 static cmr_int camera_hdr_set_ev(cmr_handle oem_handle);
@@ -3685,6 +3688,7 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.channel_stop = camera_channel_stop;
     init_param.ops.channel_buff_cfg = camera_channel_buff_cfg;
     init_param.ops.channel_cap_cfg = camera_channel_cap_cfg;
+    init_param.ops.channel_dcam_size = camera_channel_dcam_size;
     init_param.ops.isp_start_video = camera_isp_start_video;
     init_param.ops.isp_stop_video = camera_isp_stop_video;
     init_param.ops.start_rot = camera_start_rot;
@@ -6415,6 +6419,29 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     cap_cfg->sensor_id = camera_id;
     ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, cap_cfg, channel_id,
                            endian);
+    if (ret) {
+        CMR_LOGE("failed to buf cfg %ld", ret);
+        goto exit;
+    }
+exit:
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_channel_dcam_size(cmr_handle oem_handle,
+                                struct sprd_dcam_path_size *dcam_cfg) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ret = cmr_grab_dcam_size(cxt->grab_cxt.grab_handle, dcam_cfg);
+
     if (ret) {
         CMR_LOGE("failed to buf cfg %ld", ret);
         goto exit;
@@ -9340,7 +9367,8 @@ cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct preview_context *prev_cxt = &cxt->prev_cxt;
     struct sensor_exp_info *sensor_info = NULL;
-    struct img_size tmp_size;
+    struct sensor_mode_info *sensor_mode_info = NULL;
+    struct sprd_dcam_path_size dcam_cfg;
     cmr_u32 sensor_mode = SENSOR_MODE_MAX;
 
     if (!oem_handle || !sn_trim) {
@@ -9375,22 +9403,23 @@ cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
         goto exit;
     }
 
-    if (prev_cxt->actual_video_size.width > prev_cxt->size.width) {
-        tmp_size.width = prev_cxt->actual_video_size.width;
-        tmp_size.height = prev_cxt->actual_video_size.height;
-    } else {
-        tmp_size.width = prev_cxt->size.width;
-        tmp_size.height = prev_cxt->size.height;
-    }
-    ret = cal_dcam_output_size(&sensor_info->mode_info[sensor_mode].trim_width,
-                               &sensor_info->mode_info[sensor_mode].trim_height,
-                               &tmp_size.width, &tmp_size.height);
+    sensor_mode_info = &sensor_info->mode_info[sensor_mode];
+    dcam_cfg.dcam_in_w = sensor_mode_info->trim_width;
+    dcam_cfg.dcam_in_h = sensor_mode_info->trim_height;
+    dcam_cfg.pre_dst_w = prev_cxt->size.width;
+    dcam_cfg.pre_dst_h = prev_cxt->size.height;
+    dcam_cfg.vid_dst_w = prev_cxt->actual_video_size.width;
+    dcam_cfg.vid_dst_h = prev_cxt->actual_video_size.height;
+
+    ret = camera_channel_dcam_size(oem_handle, &dcam_cfg);
     if (ret) {
-        CMR_LOGE("get dcam output failed");
+        CMR_LOGE("get dcam output size failed.");
+        ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    sn_trim->width = tmp_size.width;
-    sn_trim->height = tmp_size.height;
+
+    sn_trim->width = dcam_cfg.dcam_out_w;
+    sn_trim->height = dcam_cfg.dcam_out_h;
 
     CMR_LOGI("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
              sn_trim->width, sn_trim->height);
