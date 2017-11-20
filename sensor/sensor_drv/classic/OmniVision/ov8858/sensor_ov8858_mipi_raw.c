@@ -71,15 +71,15 @@ static void ov8858_drv_write_gain(cmr_handle handle, float gain) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3508,
                         ((cmr_u16)gain_a >> 8) & 0x1f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3509, (cmr_u16)gain_a & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5019,
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5018,
                         ((cmr_u16)gain_d >> 8) & 0x7f);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501a, (cmr_u16)gain_d & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501b,
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5019, (cmr_u16)gain_d & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501a,
                         ((cmr_u16)gain_d >> 8) & 0x7f);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501c, (cmr_u16)gain_d & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501d,
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501b, (cmr_u16)gain_d & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501c,
                         ((cmr_u16)gain_d >> 8) & 0x7f);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501e, (cmr_u16)gain_d & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x501d, (cmr_u16)gain_d & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x11);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0xA1);
 }
@@ -642,8 +642,8 @@ static struct sensor_i2c_reg_tab ov8858_again_tab = {
 };
 
 static struct sensor_reg_tag ov8858_dgain_reg[] = {
-    {0x5019, 0}, {0x501a, 0}, {0x501b, 0},    {0x501c, 0},
-    {0x501d, 0}, {0x501e, 0}, {0x3208, 0x11}, {0x3208, 0xA1},
+    {0x5018, 0}, {0x5019, 0}, {0x501a, 0},    {0x501b, 0},
+    {0x501c, 0}, {0x501d, 0}, {0x3208, 0x11}, {0x3208, 0xA1},
 };
 
 struct sensor_i2c_reg_tab ov8858_dgain_tab = {
