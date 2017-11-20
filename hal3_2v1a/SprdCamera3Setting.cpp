@@ -126,6 +126,8 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
 };
 
+static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0};
+
 #if 0
 const sensor_fov_tab_t back_sensor_fov_tab[] = {
     {"ov8825_mipi_raw", {4.614f, 3.444f}, 4.222f},
@@ -848,6 +850,11 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         return 0;
     }
 
+    if (alreadyGetSensorStaticInfo[cameraId] != 0) {
+        HAL_LOGI("already get sensor info");
+        return 0;
+    }
+
     HAL_LOGI("E");
 
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
@@ -889,8 +896,8 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
              sensor_fov[cameraId].focal_lengths);
 
 exit:
+    alreadyGetSensorStaticInfo[cameraId] = 1;
     sensor_close_common(sensor_cxt, cameraId);
-
     if (sensor_cxt != NULL)
         free(sensor_cxt);
     sensor_cxt = NULL;
