@@ -2214,8 +2214,10 @@ static cmr_int ispalg_afl_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	afl_input.version = cxt->afl_cxt.version;
 	if (cxt->ops.afl_ops.init)
 		ret = cxt->ops.afl_ops.init(&cxt->afl_cxt.handle, &afl_input);
-exit:
 	ISP_LOGI("done %ld, version:%d", ret, afl_input.version);
+	return ret;
+exit:
+	ISP_LOGI("isp_afl_sw_init failed: done %ld, ", ret);
 	return ret;
 }
 
