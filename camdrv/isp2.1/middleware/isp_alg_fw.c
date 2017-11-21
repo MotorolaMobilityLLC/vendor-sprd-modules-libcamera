@@ -308,6 +308,7 @@ struct isp_alg_sw_init_in {
 	struct isp_size	sensor_max_size;
 };
 
+static cmr_int isp_prepare_atm_param(cmr_handle isp_alg_handle, struct smart_proc_input *smart_proc_in);
 
 static nsecs_t ispalg_get_sys_timestamp(void)
 {
@@ -1571,6 +1572,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.lock_postcdn = cxt->smart_cxt.lock_postcdn_en;
 		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
 		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
+		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		if (cxt->ops.smart_ops.calc) {
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 			ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
@@ -3357,6 +3359,42 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	return ret;
 }
 
+static cmr_int isp_prepare_atm_param(cmr_handle isp_alg_handle,
+        struct smart_proc_input *smart_proc_in) {
+    cmr_int ret = ISP_SUCCESS;
+    struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+#if 1 // Binning
+    smart_proc_in->r_info = cxt->binning_stats.r_info;
+    smart_proc_in->g_info = cxt->binning_stats.g_info;
+    smart_proc_in->b_info = cxt->binning_stats.b_info;
+    smart_proc_in->win_num_w = cxt->binning_stats.binning_size.w;
+    smart_proc_in->win_num_h = cxt->binning_stats.binning_size.h;
+    smart_proc_in->aem_shift = 0;
+    smart_proc_in->win_size_w = 1;
+    smart_proc_in->win_size_h = 1;
+
+    if (smart_proc_in->r_info == NULL)
+        ISP_LOGE("r/g/b ptr %p/%p/%p\n",
+                smart_proc_in->r_info,
+                smart_proc_in->g_info,
+                smart_proc_in->b_info);
+#else
+    struct ae_monitor_info info;
+    smart_proc_in->r_info = cxt->aem_stats.r_info;
+    smart_proc_in->g_info = cxt->aem_stats.g_info;
+    smart_proc_in->b_info = cxt->aem_stats.b_info;
+    if (cxt->ops.ae_ops.ioctrl) {
+        ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
+        smart_proc_in->win_num_w = info.win_num.w;
+        smart_proc_in->win_num_h = info.win_num.h;
+        smart_proc_in->aem_shift = info.shift;
+        smart_proc_in->win_size_w = info.win_size.w;
+        smart_proc_in->win_size_h = info.win_size.h;
+    }
+#endif
+    return ret;
+}
+
 static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3433,6 +3471,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
+		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		if (cxt->ops.smart_ops.calc)
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}
