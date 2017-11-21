@@ -52,8 +52,13 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
+#if defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO)
+#define SNAPSHOT_WIDTH 1296
+#define SNAPSHOT_HEIGHT 972
+#else
 #define SNAPSHOT_WIDTH 2592
 #define SNAPSHOT_HEIGHT 1944
+#endif
 #define PREVIEW_WIDTH 1296
 #define PREVIEW_HEIGHT 972
 
