@@ -496,6 +496,8 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
     }
     Mutex::Autolock l(mBufferListLock);
     for (i = 0; i < localbuffer_num; i++) {
+        if (localbuffer[i].native_handle == NULL)
+            continue;
         if ((&(localbuffer[i].native_handle)) == backbuf) {
             list.push_back(&(localbuffer[i]));
             break;
@@ -766,6 +768,30 @@ int SprdCamera3MultiBase::convertToImg_frm(private_handle_t *in, img_frm *out,
     return ret;
 }
 
+int SprdCamera3MultiBase::convertToImg_frm(void *phy_addr, void *vir_addr,
+                                           int width, int height, int fd,
+                                           cmr_u32 format, img_frm *out) {
+
+    int ret = 0;
+    out->addr_phy.addr_y = (cmr_uint)phy_addr;
+    out->addr_phy.addr_u = out->addr_phy.addr_y + width * height;
+    out->addr_phy.addr_v = out->addr_phy.addr_u;
+
+    out->addr_vir.addr_y = (cmr_uint)vir_addr;
+    out->addr_vir.addr_u = out->addr_vir.addr_y + width * height;
+    out->buf_size = width * height * 3 >> 1;
+    out->fd = fd;
+    out->fmt = format;
+    out->rect.start_x = 0;
+    out->rect.start_y = 0;
+    out->rect.width = width;
+    out->rect.height = height;
+    out->size.width = width;
+    out->size.height = height;
+
+    return ret;
+}
+
 /*
 #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int
@@ -1031,41 +1057,29 @@ uint32_t SprdCamera3MultiBase::getJpegSize(uint8_t *jpegBuffer,
     return size;
 }
 
-int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
-    private_handle_t *src_private_handle,
-    private_handle_t *pic_enc_private_handle,
-    private_handle_t *dst_private_handle, SprdCamera3HWI *hwi) {
+int SprdCamera3MultiBase::jpeg_encode_exif_simplify(img_frm *src_img,
+                                                    img_frm *pic_enc_img,
+                                                    struct img_frm *dst_img,
+                                                    SprdCamera3HWI *hwi) {
+    HAL_LOGI("E");
 
     int ret = NO_ERROR;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
     struct enc_exif_param encode_exif_param;
-    struct img_frm src_img;
-    struct img_frm pic_enc_img;
-    struct img_frm dst_img;
 
-    HAL_LOGI("src_private_handle :%p, pic_enc_private_handle:%p",
-             src_private_handle, pic_enc_private_handle);
-    if (hwi == NULL) {
-        HAL_LOGE("hwi is NULL");
+    if (hwi == NULL || src_img == NULL || pic_enc_img == NULL) {
+        HAL_LOGE("para is NULL");
         return BAD_VALUE;
     }
 
     memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
-    memset(&src_img, 0, sizeof(struct img_frm));
-    memset(&pic_enc_img, 0, sizeof(struct img_frm));
-    memset(&dst_img, 0, sizeof(struct img_frm));
 
-    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420);
-    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG);
-    if (dst_private_handle != NULL) {
-        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG);
-    }
-
-    memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
-    memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
-    memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.src, src_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, pic_enc_img, sizeof(struct img_frm));
+    if (dst_img != NULL)
+        memcpy(&encode_exif_param.last_dst, dst_img, sizeof(struct img_frm));
 
     ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
                              &encode_exif_param, NULL);
@@ -1076,9 +1090,10 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
         ret = UNKNOWN_ERROR;
     property_get("bokeh.dump.encode_exif", prop, "0");
     if (atoi(prop) == 1) {
-        unsigned char *vir_jpeg = (unsigned char *)pic_enc_private_handle->base;
+        unsigned char *vir_jpeg =
+            (unsigned char *)(pic_enc_img->addr_vir.addr_y);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
-                 src_img.size.width, src_img.size.height, 0, "jpegEncode");
+                 src_img->size.width, src_img->size.height, 0, "jpegEncode");
     }
     HAL_LOGI("out,ret=%d", ret);
     return ret;

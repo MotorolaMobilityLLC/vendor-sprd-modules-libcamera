@@ -68,16 +68,22 @@
 
 namespace sprdcamera {
 #define BOKEH_YUV_DATA_TRANSFORM
+#define YUV_CONVERT_TO_JPEG
+
+#define LOCAL_PREVIEW_NUM (20)
+#define SNAP_DEPTH_NUM 2
+#define LOCAL_CAPBUFF_NUM 2
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
-#define LOCAL_CAPBUFF_NUM (7)
+#define SNAP_TRANSF_NUM 1
 #else
-#define LOCAL_CAPBUFF_NUM (6)
+#define SNAP_TRANSF_NUM 0
 #endif
-#define LOCAL_PREVIEW_NUM (20)
+
 #define LOCAL_DEPTH_OUTBUFF_NUM 2
 #define LOCAL_BUFFER_NUM                                                       \
-    (LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + LOCAL_DEPTH_OUTBUFF_NUM)
+    LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + SNAP_DEPTH_NUM + SNAP_TRANSF_NUM + \
+        LOCAL_DEPTH_OUTBUFF_NUM
 
 #define REAL_BOKEH_MAX_NUM_STREAMS 3
 #define ARCSOFT_CALIB_DATA_SIZE (2048)
@@ -248,8 +254,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mJpegOrientation;
     buffer_handle_t *m_pMainSnapBuffer;
     buffer_handle_t *m_pSprdDepthBuffer;
-    buffer_handle_t *m_pDstJpegBuffer;
-    int mOrigJpegSize;
+#ifdef YUV_CONVERT_TO_JPEG
+    void *m_pDstJpegBuffer;
+    cmr_uint mOrigJpegSize;
+#endif
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -428,6 +436,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
     void bokehThreadExit();
+#ifdef YUV_CONVERT_TO_JPEG
+    cmr_uint yuvToJpeg(struct private_handle_t *input_handle);
+#endif
 #ifdef CONFIG_ALTEK_ZTE_CALI
     int createArcSoftCalibrationData(unsigned char *pBuffer, int nBufSize);
 #endif

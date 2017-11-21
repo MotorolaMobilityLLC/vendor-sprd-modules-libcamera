@@ -3601,8 +3601,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     if (sprddefInfo.sprd_3dcapture_enabled) {
         mZslNum = DUALCAM_ZSL_NUM;
         mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
-    } else if (MODE_BOKEH == mMultiCameraMode) {
-        mZslNum = DUALCAM_ZSL_NUM - 2;
     }
 
     HAL_LOGD("mCaptureMode=%d", mCaptureMode);
