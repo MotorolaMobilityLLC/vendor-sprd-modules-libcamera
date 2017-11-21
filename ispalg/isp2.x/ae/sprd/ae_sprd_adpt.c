@@ -2202,12 +2202,6 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	ISP_LOGV("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 
 	if (1 == out.isEnd) {
-		/*save flash debug information*/
-		memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
-		cxt->flash_buf_len  =0;
-		memcpy((cmr_handle)&cxt->flash_debug_buf[0], out.debugBuffer, out.debugSize);
-		cxt->flash_buf_len = out.debugSize;
-
 		ISP_LOGV("ae_flash esti: isEnd:%d, cap(%d, %d), led(%d, %d), rgb(%d, %d, %d)\n",\
 					out.isEnd, current_status->settings.exp_line,\
 					out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2,\
@@ -2243,6 +2237,16 @@ static cmr_s32 flash_high_flash_reestimation(struct ae_ctrl_cxt *cxt)
 	memcpy((cmr_handle*)&input->bSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(input->bSta));
 	flash_mfCalc(cxt->flash_alg_handle, input, output);
 	ISP_LOGV("high flash wb gain: %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
+
+	/*save flash debug information*/
+	memset(&cxt->flash_debug_buf[0], 0, sizeof(cxt->flash_debug_buf));
+	if (cxt->flash_esti_result.debugSize > sizeof(cxt->flash_debug_buf)) {
+		cxt->flash_buf_len = sizeof(cxt->flash_debug_buf);
+	} else {
+		cxt->flash_buf_len = cxt->flash_esti_result.debugSize;
+	}
+	memcpy((cmr_handle)&cxt->flash_debug_buf[0], cxt->flash_esti_result.debugBuffer, cxt->flash_buf_len);
+
 	return rtn;
 }
 static cmr_s32 flash_finish(struct ae_ctrl_cxt *cxt)
