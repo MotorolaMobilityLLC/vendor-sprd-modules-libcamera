@@ -979,21 +979,21 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 
 			switch (comp->y_type) {
 			case ISP_SMART_Y_TYPE_VALUE:
-				ISP_LOGV("component[%d]: value=%d", j, comp->fix_data[0]);
+				ISP_LOGI("SMART_MLOG %s: component[%d]: value=%d",block_name,j, comp->fix_data[0]);
 				break;
 
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
 
 				if (comp->x_type == ISP_SMART_X_TYPE_BV_CT) {
-					ISP_LOGV("component[%d]: value=(%d, %d), weight=(%d, %d), %d(%d, %d):(%d, %d), %d(%d, %d):(%d, %d)", j,
+					ISP_LOGI("SMART_MLOG %s: component[%d]: value=(%d, %d), weight=(%d, %d), %d(%d, %d):(%d, %d), %d(%d, %d):(%d, %d)", block_name,j,
 						 weight_value[0].value[0], weight_value[0].value[1],
 						 weight_value[0].weight[0], weight_value[0].weight[1],
 						 weight_value[0].value[0], weight_value[1].value[0], weight_value[1].value[1], weight_value[1].weight[0], weight_value[1].weight[1],
 						 weight_value[0].value[1], weight_value[2].value[0], weight_value[2].value[1], weight_value[2].weight[0], weight_value[2].weight[1]
 					    );
 				} else {
-					ISP_LOGV("component[%d]: value=(%d, %d), weight=(%d, %d)", j,
+					ISP_LOGI("SMART_MLOG %s: component[%d]: value=(%d, %d), weight=(%d, %d)",block_name,j,
 						 weight_value->value[0], weight_value->value[1], weight_value->weight[0], weight_value->weight[1]);
 				}
 				break;
