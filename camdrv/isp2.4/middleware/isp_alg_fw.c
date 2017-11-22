@@ -1002,7 +1002,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", time_end - time_start);
 	cxt->aem_is_update = 0;
 
-	ISP_LOGV("done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -2603,11 +2603,6 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym ae_ops.ioctrl");
 		goto error_dlsym;
 	}
-	cxt->ops.ae_ops.get_flash_param = dlsym(cxt->ispalg_lib_handle, "_isp_get_flash_cali_param");
-	if (!cxt->ops.ae_ops.get_flash_param) {
-		ISP_LOGE("fail to dlsym ae_ops.get_flash_param");
-		goto error_dlsym;
-	}
 
 	cxt->ops.awb_ops.init = dlsym(cxt->ispalg_lib_handle, "awb_ctrl_init");
 	if (!cxt->ops.awb_ops.init) {
@@ -3381,6 +3376,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 		goto exit;
 	}
 	memset(cxt, 0, sizeof(*cxt));
+	ISP_LOGI("isp_alg_context: %p", cxt);
 
 	ret = ispalg_pm_init(cxt, input_ptr->init_param);
 

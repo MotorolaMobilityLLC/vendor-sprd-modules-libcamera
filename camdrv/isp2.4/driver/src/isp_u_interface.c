@@ -506,11 +506,9 @@ cmr_s32 isp_set_comm_param(cmr_handle handle)
 		com_param_ptr->fetch_sel_1 = 0x3;
 		com_param_ptr->store_sel_1 = 0x3;
 	}
-	ISP_LOGI("<tang> common: fetch: %d, store:%d", com_param_ptr->fetch_sel_0, com_param_ptr->store_sel_0);
 
 	com_param_ptr->fetch_color_format = 0;
 	com_param_ptr->store_color_format = 2;
-	ISP_LOGI("<tang> common: fetch: %d, store:%d", com_param_ptr->fetch_color_format, com_param_ptr->store_color_format);
 
 	com_param_ptr->lbuf_off.ydly_lbuf_offset = 0x121;
 	com_param_ptr->lbuf_off.comm_lbuf_offset = 0x480;

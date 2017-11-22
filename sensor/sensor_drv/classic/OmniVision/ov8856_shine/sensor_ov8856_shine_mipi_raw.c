@@ -660,6 +660,7 @@ static cmr_int ov8856_drv_stream_off(cmr_handle handle, cmr_uint param)
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
 
+	usleep(50 * 1000);
 	/*END*/
 	/*delay*/
     sns_drv_cxt->is_sensor_close = 0;

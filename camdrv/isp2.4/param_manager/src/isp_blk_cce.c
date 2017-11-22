@@ -209,16 +209,6 @@ cmr_s32 _pm_cce_init(void *dst_cce_param, void *src_cce_param, void *param1, voi
 	_pm_cce_adjust(dst_ptr);
 
 	cce_header_ptr->is_update = ISP_ONE;
-	{
-		struct isp_dev_cce_info  *cce_info = &dst_ptr->cur;
-		ISP_LOGI("<tang>, cce: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
-			cce_info->matrix[0], cce_info->matrix[1],
-			cce_info->matrix[2], cce_info->matrix[3],
-			cce_info->matrix[4], cce_info->matrix[5],
-			cce_info->matrix[6], cce_info->matrix[7],
-			cce_info->matrix[8], cce_info->y_offset,
-			cce_info->u_offset,cce_info->v_offset);
-	}
 
 	return rtn;
 }
@@ -250,16 +240,6 @@ cmr_s32 _pm_cce_set_param(void *cce_param, cmr_u32 cmd, void *param_ptr0, void *
 
 			_pm_cce_adjust(dst_ptr);
 			cce_header_ptr->is_update = ISP_ONE;
-			{
-				struct isp_dev_cce_info  *cce_info = &dst_ptr->cur;
-				ISP_LOGI("<tang>, cce: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
-					cce_info->matrix[0], cce_info->matrix[1],
-					cce_info->matrix[2], cce_info->matrix[3],
-					cce_info->matrix[4], cce_info->matrix[5],
-					cce_info->matrix[6], cce_info->matrix[7],
-					cce_info->matrix[8], cce_info->y_offset,
-					cce_info->u_offset,cce_info->v_offset);
-			}
 		}
 		break;
 
@@ -373,16 +353,6 @@ cmr_s32 _pm_cce_get_param(void *cce_param, cmr_u32 cmd, void *rtn_param0, void *
 			param_data_ptr->data_ptr = (void *)&cce_ptr->cur;
 			param_data_ptr->data_size = sizeof(cce_ptr->cur);
 			*update_flag = 0;
-			{
-				struct isp_dev_cce_info  *cce_info = &cce_ptr->cur;
-				ISP_LOGI("<tang>, cce: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
-					cce_info->matrix[0], cce_info->matrix[1],
-					cce_info->matrix[2], cce_info->matrix[3],
-					cce_info->matrix[4], cce_info->matrix[5],
-					cce_info->matrix[6], cce_info->matrix[7],
-					cce_info->matrix[8], cce_info->y_offset,
-					cce_info->u_offset,cce_info->v_offset);
-			}
 		}
 		break;
 

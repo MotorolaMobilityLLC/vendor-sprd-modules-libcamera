@@ -247,20 +247,20 @@ cmr_s32 isp_u_2d_lsc_transaddr(cmr_handle handle, struct isp_statis_buf_input * 
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
-	struct isp_dev_block_addr lsc_buf;
+	struct isp_lsc_addr lsc_addr;
 
 	if (!handle) {
 		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
-	memset(&lsc_buf, 0, sizeof(lsc_buf));
+	memset(&lsc_addr, 0, sizeof(struct isp_lsc_addr));
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_TRANSADDR;
-	lsc_buf.img_fd = buf->mfd;
-	param.property_param = &lsc_buf;
+	lsc_addr.fd = buf->mfd;
+	param.property_param = &lsc_addr;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

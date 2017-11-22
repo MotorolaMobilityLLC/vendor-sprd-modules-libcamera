@@ -29,9 +29,6 @@ cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info)
 		return -1;
 	}
 
-	struct isp_dev_fetch_info_v1 *fetch = (struct isp_dev_fetch_info_v1 *)block_info;
-	ISP_LOGI("<tang> fetch: y_pitch: %d, word_num_mem: %d", fetch->pitch.chn0, fetch->mipi_word_num);
-
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_FETCH;

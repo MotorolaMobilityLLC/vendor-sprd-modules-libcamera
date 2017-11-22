@@ -232,7 +232,6 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle)
 	blk_num = mode_param_ptr->block_num;
 	for (i = 0; i < blk_num; i++) {
 		id = blk_header_array[i].block_id;
-		ISP_LOGI("<tang> block name: %s, id: 0x%x", blk_header_array[i].name, blk_header_array[i].block_id);
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = &blk_header_array[i];
 		if (pm_cxt_ptr->param_source) {
