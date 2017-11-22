@@ -6052,6 +6052,15 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 width = sensor_info->mode_info[i].trim_width;
                 CMR_LOGD("candidate height = %d, width = %d", height, width);
                 if (search_height == height && search_width == width) {
+                        /* dont choose high fps setting for no-slowmotion */
+                        ret = handle->ops.get_sensor_fps_info(
+                            handle->oem_handle, camera_id, i, &fps_info);
+                        CMR_LOGD("mode=%d, is_high_fps=%d", i,
+                                 fps_info.is_high_fps);
+                        if (fps_info.is_high_fps) {
+                            CMR_LOGD("dont choose high fps setting");
+                            continue;
+                        }
                     target_mode = i;
                     ret = CMR_CAMERA_SUCCESS;
                     break;
@@ -8362,10 +8371,10 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw"))
-        chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
-    else if (!strcmp(value, "bin"))
+    if (!strcmp(value, "bin"))
         chn_param.cap_inf_cfg.cfg.need_isp_tool = 2;
+    else
+        chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
 
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
