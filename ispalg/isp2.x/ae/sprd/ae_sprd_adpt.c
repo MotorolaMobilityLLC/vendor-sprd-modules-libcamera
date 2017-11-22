@@ -180,6 +180,8 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 			ISP_LOGV("master linetime %d", info_master.line_time);
 			ISP_LOGV("slave linetime %d", info_slave.line_time);
 
+			ISP_LOGI("AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
+
 			if (ae_info[0].exp.exposure < (cmr_u32)info_master.min_exp_line) {
 				ae_info[0].exp.exposure = (cmr_u32)info_master.min_exp_line;
 			}
@@ -4974,7 +4976,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->sensor_role = init_param->sensor_role;
 	cxt->is_multi_mode = init_param->is_multi_mode;
 
@@ -4992,12 +4993,14 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			info.gain_4x_exp = (rdm_otp_data[13] <<24) | (rdm_otp_data[12]<<16) | (rdm_otp_data[11]<<8) | rdm_otp_data[10];
 			info.gain_8x_exp = (rdm_otp_data[17] <<24) | (rdm_otp_data[16]<<16) | (rdm_otp_data[15]<<8) | rdm_otp_data[14];
 
-			#ifdef CONFIG_ISP_2_2
+			#ifdef CONFIG_CAMERA_DUAL_SYNC
 			if (cxt->sensor_role) {
 				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_MASTER_OTP_AE,&info,NULL);
 			} else {
 				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_SLAVE_OTP_AE,&info,NULL);
 			}
+			#else
+				rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
 			#endif
 
 			ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
@@ -5008,7 +5011,6 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 		ISP_LOGE("ae otp_info_ptr is NULL . Parser fail !");
 	}
 
-#endif
 	work_param.mode = AE_WORK_MODE_COMMON;
 	work_param.fly_eb = 1;
 	work_param.resolution_info = init_param->resolution_info;
