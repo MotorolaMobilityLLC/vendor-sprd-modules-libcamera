@@ -496,10 +496,10 @@ static cmr_int sp8407_drv_identify(cmr_handle handle, cmr_uint param) {
 
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, sp8407_PID_ADDR);
 
-    if (sp8407_PID_VALUE == pid_value || 0x80 == pid_value) {
+    if (sp8407_PID_VALUE == pid_value) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, sp8407_VER_ADDR);
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
-        if (sp8407_VER_VALUE == ver_value || 0x80 == pid_value) {
+        if (sp8407_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is sp8407 sensor");
             //   sp8407_init_mode_fps_info(handle);
             //   sp8407_InitExifInfo();

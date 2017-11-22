@@ -725,7 +725,7 @@ struct sensor_drv_context {
 };
 
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
-
+cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt);
 /*common functions for OEM*/
 cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 sensor_id, cmr_uint is_autotest);
