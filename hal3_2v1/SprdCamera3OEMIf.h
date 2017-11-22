@@ -52,8 +52,6 @@ extern "C" {
 #include <android/sensor.h>
 #ifdef CONFIG_SPRD_ANDROID_8
 #include <sensor/Sensor.h>
-#include <sensor/SensorManager.h>
-#include <sensor/SensorEventQueue.h>
 #else
 #include <gui/Sensor.h>
 #include <gui/SensorManager.h>
