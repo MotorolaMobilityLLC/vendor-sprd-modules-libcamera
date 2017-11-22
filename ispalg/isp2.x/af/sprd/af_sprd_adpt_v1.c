@@ -1673,7 +1673,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
-	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state)){
 		caf_monitor_trigger(af, prm, &res);
 	}
 }
