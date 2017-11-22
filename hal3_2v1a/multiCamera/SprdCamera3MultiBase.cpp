@@ -43,6 +43,8 @@ namespace sprdcamera {
 #define CAMERA3MAXFACE 10
 #endif
 
+#define IS_CASHE true
+
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
@@ -85,32 +87,28 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem) {
     int result = 0;
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
-    uint32_t is_cache = 1;
-
+    private_handle_t *buffer = NULL;
     HAL_LOGI("E");
     mem_size = w * h * 3 / 2;
     // to make it page size aligned
     //  mem_size = (mem_size + 4095U) & (~4095U);
 
     if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon =
-                new MemIon("/dev/ion", mem_size, 0,
-                           (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
-        }
+    #if IS_CASHE
+        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
+                              (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+    #else
+        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                               ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+    #endif
     } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM |
-                                      ION_FLAG_NO_CLEAR);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
-        }
+    #if IS_CASHE
+        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
+                              (1 << 31) | ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+    #else
+        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                                ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+    #endif
     }
 
     if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {

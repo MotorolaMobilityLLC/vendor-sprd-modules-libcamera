@@ -836,8 +836,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
 }
 
 int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
-    struct sensor_drv_context *sensor_cxt =
-        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
+    struct sensor_drv_context *sensor_cxt = NULL;
     int ret = 0;
 
     // just for camera developer debug
@@ -856,6 +855,12 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     }
 
     HAL_LOGI("E");
+
+    sensor_cxt = (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
+    if (NULL == sensor_cxt) {
+        HAL_LOGE("sensor_cxt is NULL");
+        return -1;
+    }
 
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {

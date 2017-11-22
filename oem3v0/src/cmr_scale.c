@@ -448,7 +448,8 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
     goto exit;
 
 free_cb:
-    close(fd);
+    if (0 < fd)
+        close(fd);
 free_file:
     if (file)
         free(file);

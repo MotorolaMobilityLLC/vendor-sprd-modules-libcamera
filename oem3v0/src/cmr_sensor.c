@@ -799,7 +799,7 @@ cmr_int cmr_sns_create_thread(struct cmr_sensor_handle *handle) {
     }
 
 end:
-    if (ret) {
+    if (CMR_MSG_SUCCESS != ret) {
         handle->thread_cxt.is_inited = 0;
     } else {
         handle->thread_cxt.is_inited = 1;

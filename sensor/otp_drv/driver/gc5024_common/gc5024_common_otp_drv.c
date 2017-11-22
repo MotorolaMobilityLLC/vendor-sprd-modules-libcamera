@@ -186,7 +186,7 @@ static cmr_int _gc5024_common_parse_ae_data(cmr_handle otp_drv_handle) {
 
 static cmr_int _gc5024_common_parse_module_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    cmr_u32 moule_id;
+    cmr_u32 moule_id = 0;
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
 
@@ -227,10 +227,11 @@ static cmr_int _gc5024_common_parse_module_data(cmr_handle otp_drv_handle) {
     } else {
         OTP_LOGI("gc5024_OTP : module info is invalid = 0x%x\n", *flag);
     }
-
+    /*
     if (moule_id != MODULE_ID) {
-        // ret=OTP_CAMERA_FAIL;
+        ret=OTP_CAMERA_FAIL;
     }
+    */
 
     OTP_LOGI("out");
     return ret;

@@ -769,7 +769,7 @@ static cmr_int imx258_drv_stream_off(cmr_handle handle, cmr_uint param) {
 
 static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
-    struct sensor_ex_info *ex_info;
+    struct sensor_ex_info *ex_info = PNULL;
     cmr_u32 up = 0 , down = 0, i = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);

@@ -55,6 +55,8 @@ namespace sprdcamera {
 #define CAMERA3MAXFACE 10
 #endif
 
+#define IS_CASHE true
+
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(false), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
@@ -100,12 +102,10 @@ int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
 
 int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                                       int type) {
-
     int result = 0;
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
     private_handle_t *buffer = NULL;
-    uint32_t is_cache = 1;
 
     HAL_LOGI("E");
     if (type == DEPTH_OUT_BUFFER) {
@@ -119,11 +119,21 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     //  mem_size = (mem_size + 4095U) & (~4095U);
 
     if (!mIommuEnabled) {
+    #if IS_CASHE
         pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                              (1 << 31) | ION_HEAP_ID_MASK_MM);
+                              (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+    #else
+        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                              ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+    #endif
     } else {
+    #if IS_CASHE
         pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                              (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
+                              (1 << 31) | ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+    #else
+        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                               ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+    #endif
     }
 
     if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {

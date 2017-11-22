@@ -1474,14 +1474,12 @@ int autotest_camera_deinit() {
 static cmr_int autotest_load_hal_lib(void) {
     int ret = 0;
     if (!mHalOem) {
-        void *handle;
         oem_module_t *omi;
 
         mHalOem = (oem_module_t *)malloc(sizeof(oem_module_t));
 
-        handle = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
-
-        if (handle == NULL) {
+        mHalOem->dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
+        if (NULL == mHalOem->dso) {
             char const *err_str = dlerror();
             ALOGE("dlopen error%s", err_str ? err_str : "unknown");
             ret = -1;
@@ -1490,17 +1488,16 @@ static cmr_int autotest_load_hal_lib(void) {
 
         /* Get the address of the struct hal_module_info. */
         const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
-        omi = (oem_module_t *)dlsym(handle, sym);
+        omi = (oem_module_t *)dlsym(mHalOem->dso, sym);
         if (omi == NULL) {
             ALOGE("load: couldn't find symbol %s", sym);
             ret = -1;
             goto loaderror;
         }
 
-        mHalOem->dso = handle;
         mHalOem->ops = omi->ops;
 
-        ALOGV("loaded HAL libcamoem handle=%p", handle);
+        ALOGV("loaded HAL libcamoem mHalOem->dso = %p", mHalOem->dso);
     }
 
     return ret;
