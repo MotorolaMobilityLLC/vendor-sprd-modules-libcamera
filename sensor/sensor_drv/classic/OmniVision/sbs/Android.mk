@@ -14,15 +14,18 @@
 # limitations under the License.
 #
 LOCAL_PATH := $(call my-dir)
-
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib/lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := lib/x86_lib
+endif
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsensor_sbs
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := libsensor_sbs.a
 LOCAL_MODULE_STEM_64 := libsensor_sbs.a
-LOCAL_SRC_FILES_32 := libsensor_sbs.a
-LOCAL_SRC_FILES_64 := libsensor_sbs.a
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsensor_sbs.a
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsensor_sbs.a
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_PREBUILT)
-
