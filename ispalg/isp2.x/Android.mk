@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
-
-else
 
 LOCAL_PATH:= $(call my-dir)
 
@@ -138,4 +135,3 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))
 
-endif

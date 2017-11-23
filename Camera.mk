@@ -37,17 +37,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 ISP_HW_VER = 3v0
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
-TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
-ISP_HW_VER = 2v0
-#ISPALG_DIR := ispalg/isp2.x
-ISPDRV_DIR := camdrv/isp2.0
-LOCAL_C_INCLUDES += \
-        $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
-        $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_app \
-        $(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
-endif
-
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
@@ -160,18 +149,16 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/SprdCamera3Setting.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp
-ifneq ($(strip $(ISP_HW_VER)),2v0)
+
 LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3MultiBase.cpp
-endif
+
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 else
-ifneq ($(strip $(ISP_HW_VER)),2v0)
 ifneq ($(strip $(ISP_HW_VER)),2v4)
 LOCAL_SRC_FILES+= \
     hal3_$(ISP_HW_VER)/multiCamera/SprdDualCamera3Tuning.cpp
-endif
 endif
 endif
 

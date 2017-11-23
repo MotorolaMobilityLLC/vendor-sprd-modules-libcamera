@@ -24,10 +24,6 @@ TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ISP_HW_VER = 3v0
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
-ISP_HW_VER = 2v0
-endif
-
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
 ISP_HW_VER = 2v1a
@@ -62,20 +58,6 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/inc \
 	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/isp_calibration/inc \
 	$(LOCAL_PATH)/inc
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
-ISPDRV_DIR := camdrv/isp2.0
-LOCAL_C_INCLUDES += \
-        $(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
-        $(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration \
-        $(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
-        $(LOCAL_PATH)/../$(ISPDRV_DIR)/param_manager \
-        $(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration/inc \
-    $(LOCAL_PATH)/../$(ISPDRV_DIR)/ae/ae1/inc \
-    $(LOCAL_PATH)/../$(ISPDRV_DIR)/awb/inc \
-        $(LOCAL_PATH)/../$(ISPALG_DIR)/af/inc \
-        $(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_app
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 ISPALG_DIR := ispalg/isp2.x
@@ -225,11 +207,6 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/al3200
 LOCAL_SRC_FILES += al3200/al3200.c
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.0)
-LOCAL_SRC_FILES += sensor_isp_param_merge.c
-LOCAL_SRC_FILES += sensor_isp_param_awb_pac.c
 endif
 
 LOCAL_MODULE := libcamsensor

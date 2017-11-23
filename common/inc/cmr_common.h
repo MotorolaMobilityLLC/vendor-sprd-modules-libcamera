@@ -344,10 +344,6 @@ enum common_isp_cmd_type {
     COM_ISP_GET_AE_LUM,
     COM_ISP_SET_HDR,
     COM_ISP_SET_AE_LOCK_UNLOCK,
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    COM_ISP_SET_3A_LOCK_UNLOCK,
-    COM_ISP_SET_CAPTURE_RAW_MODE,
-#endif
     COM_ISP_SET_ROI_CONVERGENCE_REQ,
     COM_ISP_SET_SNAPSHOT_FINISHED,
     COM_ISP_SET_EXIF_DEBUG_INFO,
@@ -368,11 +364,6 @@ enum common_isp_cmd_type {
     COM_ISP_SET_SENSITIVITY,
     COM_ISP_SET_AF_BYPASS,
     COM_ISP_SET_AF_POS,
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    COM_ISP_START_HDR,
-    COM_ISP_STOP_HDR,
-    COM_ISP_GET_HDR_TIMESTAMP,
-#endif
     COM_ISP_TYPE_MAX
 };
 
@@ -407,9 +398,6 @@ enum common_sn_cmd_type {
     COM_SN_SET_HDR_EV,
     COM_SN_GET_INFO,
     COM_SN_GET_FLASH_LEVEL,
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    COM_SN_SET_YUV_FPS,
-#endif
     COM_SN_TYPE_MAX,
 };
 
@@ -601,9 +589,6 @@ struct img_frm_cap {
     cmr_u32 need_isp_tool;
     struct dcam_regular_desc regular_desc;
     cmr_u32 flip_on;
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    cmr_u32 shrink;
-#endif
     cmr_u32 pdaf_type3;
     struct sprd_pdaf_control pdaf_ctrl;
     cmr_u32 sence_mode;
@@ -819,15 +804,10 @@ struct common_isp_cmd_param {
         struct isp_flash_notice flash_notice;
         struct isp_face_area fd_param;
         struct isp_ae_fps fps_param;
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-        struct isp_hdr_ev_param hdr_param;
-#endif
         struct cmr_range_fps_param range_fps;
         struct isp_info isp_dbg_info;
-#ifndef CONFIG_CAMERA_ISP_DIR_2
         struct isp_adgain_exp_info isp_adgain;
         struct isp_yimg_info isp_yimg;
-#endif
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
     };
@@ -842,9 +822,6 @@ struct common_sn_cmd_param {
         cmr_u32 padding;
         struct yuv_sn_af_param yuv_sn_af_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-        struct cmr_range_fps_param range_fps;
-#endif
     };
 };
 /**************************** common ctrl end *********************************/
@@ -863,9 +840,6 @@ struct snp_proc_param {
     struct img_size actual_snp_size;
     struct img_size snp_size;
     struct img_size max_size;
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    struct img_size sn_orig_size;
-#endif
     struct img_data_end data_endian;
     cmr_uint is_need_scaling;
     struct img_rect scaler_src_rect[CMR_CAPTURE_MEM_SUM];
@@ -1015,13 +989,9 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst);
 cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, struct img_addr *addr);
 
-cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
-
-#ifndef CONFIG_CAMERA_ISP_DIR_2
 cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
                                 struct img_addr *addr);
-#endif
 
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 
@@ -1094,9 +1064,6 @@ enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_MACRO_FIXED = 6,
     CAMERA_FOCUS_MODE_PICTURE = 7,
     CAMERA_FOCUS_MODE_FULLSCAN = 8,
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    CAMERA_FOCUS_MODE_TAKE_PICTURE,
-#endif
     CAMERA_FOCUS_MODE_MAX
 };
 
@@ -1220,10 +1187,6 @@ enum camera_param_type {
     CAMERA_PARAM_SENSITIVITY,
     CAMERA_PARAM_AF_BYPASS,
     CAMERA_PARAM_LENS_FOCUS_DISTANCE,
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    CAMERA_PARAM_ISP_3A_LOCK_UNLOCK,
-    CAMERA_PARAM_AE_METERING_AREA,
-#endif
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1451,12 +1414,7 @@ typedef struct oem_ops {
                            void *client_data, cmr_uint is_autotest,
                            cmr_handle *camera_handle, void *cb_of_malloc,
                            void *cb_of_free);
-#ifdef CONFIG_CAMERA_ISP_DIR_2
-    cmr_int (*camera_init_with_mem_func)(cmr_u32 camera_id, camera_cb_of_type callback,
-                           void *client_data,  cmr_uint is_autotest,
-                           cmr_handle *camera_handle, void* cb_of_malloc,
-                           void* cb_of_free);
-#endif
+
     cmr_int (*camera_deinit)(cmr_handle camera_handle);
 
     cmr_int (*camera_release_frame)(cmr_handle camera_handle,
@@ -1640,11 +1598,6 @@ typedef struct oem_ops {
     cmr_int (*camera_reprocess_yuv_for_jpeg)(cmr_handle camera_handle,
                                              enum takepicture_mode cap_mode,
                                              struct frm_info *frm_data);
-#if defined(CONFIG_CAMERA_ISP_DIR_2)
-#ifdef CONFIG_MEM_OPTIMIZATION
-		cmr_int (*camera_notify_closing_gsp_hwc)(cmr_int need_close);
-#endif
-#endif
 
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
