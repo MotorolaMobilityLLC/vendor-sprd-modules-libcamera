@@ -6203,6 +6203,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         /* dont choose high fps setting for no-slowmotion */
+#if 0
                         ret = handle->ops.get_sensor_fps_info(
                             handle->oem_handle, camera_id, i, &fps_info);
                         CMR_LOGV("mode=%d, is_high_fps=%d", i,
@@ -6211,6 +6212,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                             CMR_LOGD("dont choose high fps setting");
                             continue;
                         }
+#endif
                         // check chosen setting for sbs sensor
                         if (0 != prev_check_chosen_setting(handle, sensor_info,
                                                            width, height)) {
