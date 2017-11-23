@@ -583,6 +583,11 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         }
         break;
 
+    case SETTING_GENERAL_EXPOSURE_TIME:
+        *item->cmd_type_value = 0;
+        type_val = parm->cmd_type_value;
+        break;
+
     default:
         type_val = parm->cmd_type_value;
         break;
@@ -2392,7 +2397,7 @@ static cmr_int setting_set_exposure_time(struct setting_component *cpt,
 }
 
 static cmr_int setting_set_sensitivity(struct setting_component *cpt,
-                                          struct setting_cmd_parameter *parm) {
+                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     CMR_LOGI("sensitivity = %lu", parm->cmd_type_value);
 

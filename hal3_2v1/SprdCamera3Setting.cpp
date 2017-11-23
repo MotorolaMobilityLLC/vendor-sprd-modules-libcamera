@@ -608,7 +608,7 @@ const int32_t kavailable_result_keys[] = {
 
 const uint8_t kavailable_capabilities[] = {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-    //ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
+    // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
@@ -3203,6 +3203,13 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("android tonemap mode %d", valueU8);
     }
 
+    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
+        HAL_LOGV("ae mode %d", valueU8);
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, valueU8,
+                         ANDROID_CONTROL_AE_MODE)
+    }
+
     // SENSOR
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
         valueI64 =
@@ -3388,13 +3395,6 @@ int SprdCamera3Setting::updateWorkParameters(
                          ANDROID_FLASH_MODE)
     }
 
-    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
-        HAL_LOGV("ae mode %d", s_setting[mCameraId].controlInfo.ae_mode);
-        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, valueU8,
-                         ANDROID_CONTROL_AE_MODE)
-    }
-
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
         s_setting[mCameraId].controlInfo.ae_lock =
             frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
@@ -3506,7 +3506,7 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         pushAndroidParaTag(ANDROID_SPRD_ISO);
-    }else{
+    } else {
         /*no tag ,in auto mode now,set EV value to 17 */
         HAL_LOGV("not exists ANDROID_SPRD_ISO ");
         s_setting[mCameraId].sprddefInfo.iso = CAMERA_ISO_AUTO;

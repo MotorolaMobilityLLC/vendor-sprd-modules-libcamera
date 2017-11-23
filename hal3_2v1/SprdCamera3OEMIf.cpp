@@ -5614,10 +5614,18 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         HAL_LOGV("CAMERA_EVT_CB_SNAPSHOT_DONE");
         float aperture = 0;
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
+        struct camera_frame_type *frame = NULL;
         memset(&exif_pic_info, 0, sizeof(struct exif_spec_pic_taking_cond_tag));
         LENS_Tag lensInfo;
         mHalOem->ops->camera_get_sensor_result_exif_info(mCameraHandle,
                                                          &exif_pic_info);
+        frame = (struct camera_frame_type *)parm4;
+        if (frame && frame->sensor_info.exposure_time_denominator == 0) {
+            frame->sensor_info.exposure_time_denominator =
+                exif_pic_info.ExposureTime.denominator;
+            frame->sensor_info.exposure_time_numerator =
+                exif_pic_info.ExposureTime.numerator;
+        }
         if (exif_pic_info.ApertureValue.denominator)
             aperture = (float)exif_pic_info.ApertureValue.numerator /
                        (float)exif_pic_info.ApertureValue.denominator;

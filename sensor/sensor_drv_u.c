@@ -286,7 +286,7 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
         if ((PNULL != res_info_ptr[i].sensor_reg_tab_ptr) ||
             ((0x00 != res_info_ptr[i].width) &&
              (0x00 != res_info_ptr[i].width))) {
-             if (SENSOR_IMAGE_FORMAT_JPEG == res_info_ptr[i].image_format) {
+            if (SENSOR_IMAGE_FORMAT_JPEG == res_info_ptr[i].image_format) {
                 exp_info_ptr->sensor_image_type = SENSOR_IMAGE_FORMAT_JPEG;
             }
             exp_info_ptr->sensor_mode_info[i].mode = i;
@@ -2422,8 +2422,11 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
             sensor_info_ptr->sensor_mode_info[img_sensor_mode].line_time;
         cmr_u32 exposureline_num = param;
         cmr_u32 exposure_time = 0x00;
+        cmr_int regen_exposure_time = 0x00;
+        cmr_int orig_exposure_time = 0x00;
 
         exposure_time = exposureline_time * exposureline_num / 1000;
+        orig_exposure_time = exposureline_time * exposureline_num;
         sensor_exif_info_ptr->valid.ExposureTime = 1;
 
         if (0x00 == exposure_time) {
@@ -2445,6 +2448,16 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
                 1000000 / exposure_time;
             sensor_exif_info_ptr->ExposureTime.numerator =
                 sensor_exif_info_ptr->ExposureTime.denominator * second;
+        }
+        regen_exposure_time = 1000000000ll *
+                              sensor_exif_info_ptr->ExposureTime.numerator /
+                              sensor_exif_info_ptr->ExposureTime.denominator;
+// To check within range of CTS
+        if (((orig_exposure_time - regen_exposure_time) > 100000) ||
+            ((regen_exposure_time - orig_exposure_time) > 100000)) {
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                (1000000.00 / exposure_time) * 1000 + 0.5;
+            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
         }
         break;
     }
