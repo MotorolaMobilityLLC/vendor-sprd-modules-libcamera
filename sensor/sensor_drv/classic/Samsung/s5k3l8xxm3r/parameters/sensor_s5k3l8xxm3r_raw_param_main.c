@@ -22,7 +22,6 @@
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
@@ -46,11 +45,11 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.0501 */
+/* IspToolVersion=R1.17.4001 */
 
 
 /* Capture Sizes:
-	4208x3120,2096x1560,1280x720
+	1280x720,1280x720,2096x1560,4208x3120
 */
 
 
@@ -80,6 +79,20 @@ static struct sensor_raw_resolution_info_tab s_s5k3l8xxm3r_trim_info=
 
 static struct sensor_raw_ioctrl s_s5k3l8xxm3r_ioctrl=
 {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 	0,
 	0,
 	0
