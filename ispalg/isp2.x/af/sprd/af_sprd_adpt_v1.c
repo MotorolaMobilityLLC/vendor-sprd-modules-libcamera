@@ -2058,6 +2058,10 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		trigger_start(af);	// for hdr capture no af mode update at whole procedure
 	}
 
+	if(STATE_RECORD_CAF == af->state) {
+		af->force_trigger = AFV1_TRUE;
+	}
+
 	return AFV1_SUCCESS;
 }
 
