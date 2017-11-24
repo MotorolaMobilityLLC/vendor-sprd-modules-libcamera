@@ -29,7 +29,6 @@ cmr_s32 isp_u_gamma_block(cmr_handle handle, void *block_info)
 		return -1;
 	}
 
-	//((struct isp_dev_gamma_info *)block_info)->bypass = 1;
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_GAMMA;

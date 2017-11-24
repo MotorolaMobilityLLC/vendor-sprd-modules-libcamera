@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#define LOG_TAG "isp_u_grgb"
-
-#include "isp_drv.h"
-
-cmr_s32 isp_u_grgb_block(cmr_handle handle, void *block_info)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !block_info) {
-		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_GRGB;
-	param.property = ISP_PRO_GRGB_BLOCK;
-	param.property_param = block_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
+#ifndef _SWISP_INTERFACE_H
+#define _SWISP_INTERFACE_H
+#include "sprd_realtimebokeh.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+void* init_sw_isp(struct soft_isp_init_param* initparam);
+int sw_isp_process(void* handle , uint16_t *img_data, uint8_t* outputyuv , void**aem_addr , int32_t* aem_size);
+int sw_isp_update_param(void* handle , struct soft_isp_block_param *isp_blockparam);
+void deinit_sw_isp(void* handle);
+void load_img(const char* filename , int width ,int height , uint16_t *buffer);
+#ifdef __cplusplus
 }
+#endif
+
+#endif
+

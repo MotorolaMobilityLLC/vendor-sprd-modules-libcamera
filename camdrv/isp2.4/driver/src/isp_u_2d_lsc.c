@@ -47,16 +47,14 @@ void generate_bicubic_weight_table(LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight
 	cmr_u16 relative;
 
 	//init
-	for(relative=0; relative<MAX_TABLE_SIZE; relative++)
-	{
+	for (relative = 0; relative < MAX_TABLE_SIZE; relative++) {
 		lnc_bicubic_weight_t_simple[relative].w0 = 0;
 		lnc_bicubic_weight_t_simple[relative].w1 = 0;
 		lnc_bicubic_weight_t_simple[relative].w2 = 0;
 	}
 
 	//generate weight table based on current LNC_GRID
-	for(relative=0; relative<((LNC_GRID/2)+1); relative++)
-	{
+	for (relative = 0; relative < ((LNC_GRID/2)+1); relative++) {
 		t = relative * 1.0 / LNC_GRID;
 
 		matrix_result = 1*param[0][0] + t*param[1][0] + t*t*param[2][0] + t*t*t*param[3][0];
@@ -82,8 +80,7 @@ cmr_u16 cubic_1D( cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16
 	cmr_s16 sub_tmp2;
 
 	//use simple table
-	if ( u < (box/2 + 1) )
-	{
+	if (u < (box/2 + 1)) {
 		w0 = lnc_bicubic_weight_t_simple[u].w0;
 		w1 = lnc_bicubic_weight_t_simple[u].w1;
 		w2 = lnc_bicubic_weight_t_simple[u].w2;
@@ -93,9 +90,7 @@ cmr_u16 cubic_1D( cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16
 		sub_tmp2 = c-d;
 		out_value_tmp = ((cmr_u32)d)<<10;
 		out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
-	}
-	else
-	{
+	} else {
 		w1 = lnc_bicubic_weight_t_simple[box - u].w2;
 		w2 = lnc_bicubic_weight_t_simple[box - u].w1;
 		w3 = lnc_bicubic_weight_t_simple[box - u].w0;
@@ -184,33 +179,10 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *block_info)
 		return ret;
 	}
 
-	//lens_info->bypass = 1;
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_BLOCK;
 	param.property_param = lens_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, cmr_u32 flag)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle) {
-		ISP_LOGE("fail to get handle.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_PARAM_UPDATE;
-	param.property_param = &flag;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

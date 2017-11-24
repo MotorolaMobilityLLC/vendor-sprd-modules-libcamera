@@ -48,7 +48,6 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_LSC_MEM_ADDR,
 	ISP_PM_BLK_LSC_BYPASS,
 	ISP_PM_BLK_LSC_INFO,
-	ISP_PM_BLK_LSC_OTP,
 	ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE = (1 << 0),
 	ISP_PM_BLK_LSC_UPDATE_MASK_PARAM = (1 << 1),
 	ISP_PM_BLK_LSC_GET_LSCTAB,
@@ -339,6 +338,9 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_ENVI_DETECT_BYPASS,
 	ISP_PM_BLK_ENVI_DETECT,
 
+	ISP_PM_BLK_BOKEH_MICRO_DEPTH_BASE = (ISP_PM_BLK_ENVI_DETECT_BASE + 0x100),
+	ISP_PM_BLK_BOKEH_MICRO_DEPTH_BYPASS,
+	ISP_PM_BLK_BOKEH_MICRO_DEPTH,
 };
 
 struct isp_pm_param_data {
@@ -360,6 +362,7 @@ struct isp_pm_block_header {
 	cmr_u32 is_update;
 	cmr_u32 source_flag;
 	void *absolute_addr;
+	cmr_u32 mode_id;
 };
 
 struct isp_pm_mode_param {

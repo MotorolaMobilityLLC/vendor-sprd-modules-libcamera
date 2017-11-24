@@ -725,6 +725,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			src_data_ptr = (cmr_u8 *) ((intptr_t) src_mod_ptr + src_header[j].offset);
 			dst_data_ptr = (cmr_u8 *) ((intptr_t) dst_mod_ptr + size + extend_offset);
 			dst_header[j].absolute_addr = (void *)dst_data_ptr;
+			dst_header[j].mode_id = i;
 			memcpy((void *)dst_data_ptr, (void *)src_data_ptr, src_header[j].size);
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 
@@ -1637,43 +1638,6 @@ static void isp_pm_free(cmr_handle handle)
 	}
 }
 
-static cmr_s32 isp_pm_lsc_otp_param_update(cmr_handle handle, struct isp_pm_param_data *param_data)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	void *blk_ptr = PNULL;
-	cmr_u32 i = 0, offset = 0;
-	cmr_u32 mod_id = 0, id = 0;
-	cmr_s32 tmp_idx = 0;
-	intptr_t isp_cxt_start_addr = 0;
-	struct isp_context *isp_cxt_ptr = PNULL;
-	struct isp_block_cfg *blk_cfg = PNULL;
-	struct isp_pm_block_header *blk_header_ptr = PNULL;
-	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
-
-	for (i = ISP_MODE_ID_PRV_0; i < ISP_TUNE_MODE_MAX; ++i) {
-		if (pm_cxt_ptr->merged_mode_array[i]) {
-			mod_id = pm_cxt_ptr->merged_mode_array[i]->mode_id;
-			isp_cxt_ptr = isp_pm_get_context(pm_cxt_ptr, mod_id);
-			isp_cxt_start_addr = (intptr_t) isp_cxt_ptr;
-			id = param_data->id;
-			blk_cfg = isp_pm_get_block_cfg(id);
-			blk_header_ptr = isp_pm_get_block_header(pm_cxt_ptr->merged_mode_array[i], id, &tmp_idx);
-			if ((PNULL != blk_cfg)
-			    && (PNULL != blk_cfg->ops)
-			    && (PNULL != blk_cfg->ops->set)
-			    && (PNULL != blk_header_ptr)) {
-				offset = blk_cfg->offset;
-				blk_ptr = (void *)(isp_cxt_start_addr + offset);
-				blk_cfg->ops->set(blk_ptr, ISP_PM_BLK_LSC_OTP, param_data->data_ptr, blk_header_ptr);
-			} else {
-				ISP_LOGE("fail to get valid cfg, ops, set, header");
-			}
-		}
-	}
-
-	return rtn;
-}
-
 cmr_handle isp_pm_init(struct isp_pm_init_input * input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -1769,9 +1733,6 @@ cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void 
 		rtn = isp_pm_param_init_and_update(handle, input, NULL, cxt_ptr->cur_mode_id);
 		break;
 
-	case ISP_PM_CMD_UPDATE_LSC_OTP:
-		rtn = isp_pm_lsc_otp_param_update(handle, input);
-		break;
 	default:
 		break;
 	}

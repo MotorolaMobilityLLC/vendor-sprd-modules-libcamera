@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef __FB_LOG_H__
+#define __FB_LOG_H__
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <cutils/log.h>
+//#define LOG_TAG "SW_ISP"
+#define DEBUG_STR     "%d, %s: "
+//#define DEBUG_ARGS    __LINE__,__FUNCTION__
 
-#define LOG_TAG "isp_u_grgb"
+#define SWISP_LOGE(format,...) \
+	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
-#include "isp_drv.h"
+#define SWISP_LOGW(format,...) \
+        ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
-cmr_s32 isp_u_grgb_block(cmr_handle handle, void *block_info)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
+#define SWISP_LOGI(format,...) \
+	ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
-	if (!handle || !block_info) {
-		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
-		return -1;
-	}
+#define SWISP_LOGD(format,...) \
+	ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_GRGB;
-	param.property = ISP_PRO_GRGB_BLOCK;
-	param.property_param = block_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
+#endif

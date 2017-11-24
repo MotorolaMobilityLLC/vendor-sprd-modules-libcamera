@@ -30,15 +30,17 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_BINNING_MAX_STAT_W    640
 #define ISP_BINNING_MAX_STAT_H     480
 
+
 #define ISP_CTRL_EVT_TX				(1 << 2)
 #define ISP_CTRL_EVT_SOF			(1 << 3)
 #define ISP_CTRL_EVT_AE				(1 << 4)
+#define ISP_CTRL_EVT_SW_AE			(1 << 4) + 1
 #define ISP_CTRL_EVT_AF				(1 << 5)
 #define ISP_CTRL_EVT_PDAF			(1 << 6)
 #define ISP_CTRL_EVT_BINNING			(1 << 7)
 #define ISP_PROC_AFL_DONE			(1 << 8)
 
-#define ISP_THREAD_QUEUE_NUM              (100)
+#define ISP_THREAD_QUEUE_NUM			(100)
 
 #define ISP_CALLBACK_EVT                     0x00040000
 
@@ -278,14 +280,26 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SMART_AE,
 	ISP_CTRL_CONTINUE_AF,
 	ISP_CTRL_AF_DENOISE,
+	ISP_CTRL_FLASH_CTRL = 38,	// for isp tool
+	ISP_CTRL_AE_CTRL = 39,	// for isp tool
+	ISP_CTRL_AF_CTRL = 40,	// for isp tool
+	ISP_CTRL_REG_CTRL = 41,	// for isp tool
 	ISP_CTRL_DENOISE_PARAM_READ,	//for isp tool
 	ISP_CTRL_DUMP_REG,	//for isp tool
+	ISP_CTRL_AF_END_INFO,	// for isp tool
 	ISP_CTRL_FLASH_NOTICE,
+	ISP_CTRL_AE_FORCE_CTRL,	// for mp tool
+	ISP_CTRL_GET_AE_STATE,	// for isp tool
+	ISP_CTRL_SET_LUM,	// for isp tool
+	ISP_CTRL_GET_LUM,	// for isp tool
 	ISP_CTRL_SET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_POS,	// for isp tool
+	ISP_CTRL_GET_AF_MODE,	// for isp tool
 	ISP_CTRL_FACE_AREA,
+	ISP_CTRL_SCALER_TRIM,
 	ISP_CTRL_START_3A,
 	ISP_CTRL_STOP_3A,
+	IST_CTRL_SNAPSHOT_NOTICE,
 	ISP_CTRL_SFT_READ,
 	ISP_CTRL_SFT_WRITE,
 	ISP_CTRL_SFT_SET_PASS,
@@ -302,6 +316,10 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_LOCK_UNLOCK,
 	ISP_CTRL_TOOL_SET_SCENE_PARAM,
 	ISP_CTRL_IFX_PARAM_UPDATE,
+	ISP_CTRL_FORCE_AE_QUICK_MODE,
+	ISP_CTRL_DENOISE_PARAM_UPDATE,	//for isp tool
+	ISP_CTRL_SET_AE_EXP_TIME,
+	ISP_CTRL_SET_AE_SENSITIVITY,
 	ISP_CTRL_SET_DZOOM_FACTOR,
 	ISP_CTRL_SET_CONVERGENCE_REQ,
 	ISP_CTRL_SET_SNAPSHOT_FINISHED,
@@ -366,10 +384,10 @@ enum isp_flash_led_tag {
 };
 
 enum {
-        ISP_SINGLE = 0,
-        ISP_DUAL_NORMAL,
-        ISP_DUAL_SBS,
-        ISP_CAMERA_MAX
+	ISP_SINGLE = 0,
+	ISP_DUAL_NORMAL,
+	ISP_DUAL_SBS,
+	ISP_CAMERA_MAX
 };
 
 struct isp_flash_cfg {
@@ -552,8 +570,8 @@ struct isp_img_frm {
 
 struct soft_isp_misc_img_frm
 {
-        struct isp_img_frm cpu_frminfo;
-        void*  graphicbuffer;
+	struct isp_img_frm cpu_frminfo;
+	void*  graphicbuffer;
 };
 
 typedef struct {
@@ -564,11 +582,11 @@ typedef struct {
 } WeightParams_t;
 
 struct soft_isp_frm_param {
-        struct isp_img_frm raw;
-        struct soft_isp_misc_img_frm m_yuv_pre;
-        struct soft_isp_misc_img_frm m_yuv_bokeh;
-        WeightParams_t weightparam;
-        uint32_t af_status;
+	struct isp_img_frm raw;
+	struct soft_isp_misc_img_frm m_yuv_pre;
+	struct soft_isp_misc_img_frm m_yuv_bokeh;
+	WeightParams_t weightparam;
+	uint32_t af_status;
 };
 
 struct isp_flash_element {
@@ -831,6 +849,11 @@ cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *para
 cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
+cmr_int isp_sw_proc(cmr_handle handle, void *param_ptr);
+cmr_int isp_sw_check_buf(cmr_handle handle, void *param_ptr);
+cmr_int isp_sw_get_bokeh_status(cmr_handle handle);
+cmr_int isp_sw_stop(cmr_handle handle);
+cmr_s32 isp_ynr_post_proc(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);

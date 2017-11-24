@@ -25,12 +25,13 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 
-	file = malloc(sizeof(struct isp_file));
+	file = (struct isp_file *)malloc(sizeof(struct isp_file));
 	if (!file) {
 		ret = -1;
 		ISP_LOGE("fail to alloc memory.");
 		return ret;
 	}
+	memset((void *)file, 0x00, sizeof(struct isp_file));
 
 	if (fd < 0) {
 		ret = -1;
@@ -42,6 +43,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	file->isp_id = 0;
 	*handle = (cmr_handle) file;
 
+	ISP_LOGI("fd %d handle %p", file->fd, file);
 	return ret;
 
 isp_free:
@@ -71,7 +73,7 @@ cmr_s32 isp_dev_close(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_dev_reset(cmr_handle handle)
+cmr_s32 isp_dev_cfg_start(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 isp_id = 0;
@@ -85,9 +87,9 @@ cmr_s32 isp_dev_reset(cmr_handle handle)
 	file = (struct isp_file *)(handle);
 	isp_id = file->isp_id;
 
-	ret = ioctl(file->fd, SPRD_ISP_IO_RST, &isp_id);
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_START, &isp_id);
 	if (ret) {
-		ISP_LOGE("fail to reset isp hardawre.");
+		ISP_LOGE("fail to do cfg start.");
 	}
 
 	return ret;

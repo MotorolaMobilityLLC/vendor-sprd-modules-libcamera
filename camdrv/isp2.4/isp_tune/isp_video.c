@@ -2484,7 +2484,7 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 		switch (cmd_ptr->main_type) {
 		case MODE_NR_DATA:
 			{
-				if (ISP_NR_BLOCK_MIN > cmd_ptr->sub_type || FILE_NAME_MAX < cmd_ptr->sub_type) {
+				if (FILE_NAME_MAX < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
@@ -2493,10 +2493,10 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 			{
 				cmr_u8 flicker = (cmd_ptr->sub_type >> 4) & 0x0f;
 				cmr_u8 iso = cmd_ptr->sub_type & 0x0f;
-				if (ISP_ANTIFLICKER_MAX < flicker || ISP_ANTIFLICKER_MIN > flicker) {
+				if (ISP_ANTIFLICKER_MAX < flicker) {
 					unvalid_flag = 1;
 				} else {
-					if (ISP_ISO_NUM_MIN > iso || ISP_ISO_NUM_MAX < iso) {
+					if (ISP_ISO_NUM_MAX < iso) {
 						unvalid_flag = 1;
 					}
 				}
@@ -2504,7 +2504,7 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 			break;
 		case MODE_AE_WEIGHT_TABLE:
 			{
-				if (ISP_AE_WEIGHT_TYPE_MAX < cmd_ptr->sub_type || ISP_AE_WEIGHT_TYPE_MIN > cmd_ptr->sub_type) {
+				if (ISP_AE_WEIGHT_TYPE_MAX < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
@@ -2513,10 +2513,10 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 			{
 				cmr_u8 scene = (cmd_ptr->sub_type >> 4) & 0x0f;
 				cmr_u8 flicker = cmd_ptr->sub_type & 0x0f;
-				if (ISP_ANTIFLICKER_MAX < flicker || ISP_ANTIFLICKER_MIN > flicker) {
+				if (ISP_ANTIFLICKER_MAX < flicker) {
 					unvalid_flag = 1;
 				} else {
-					if (ISP_SCENE_NUM_MIN > scene || ISP_SCENE_NUM_MAX < scene) {
+					if (ISP_SCENE_NUM_MAX < scene) {
 						unvalid_flag = 1;
 					}
 				}
@@ -2524,21 +2524,21 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 			break;
 		case MODE_AE_AUTO_ISO_TABLE:
 			{
-				if (ISP_ANTIFLICKER_MAX < cmd_ptr->sub_type || ISP_ANTIFLICKER_MIN > cmd_ptr->sub_type) {
+				if (ISP_ANTIFLICKER_MAX < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
 			break;
 		case MODE_LNC_DATA:
 			{
-				if (ISP_LNC_TAB_MAX < cmd_ptr->sub_type || ISP_LNC_TAB_MIN > cmd_ptr->sub_type) {
+				if (ISP_LNC_TAB_MAX < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
 			break;
 		case MODE_AWB_DATA:
 			{
-				if (1 < cmd_ptr->sub_type || 0 > cmd_ptr->sub_type) {
+				if (1 < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
