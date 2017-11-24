@@ -5058,15 +5058,15 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	/*end to set video fps tuning param*/
 
 	/*start read flash control tuning param*/
-		if((0 == cxt->cur_param->flash_control_param.pre_flash_skip) || (3 > cxt->cur_param->flash_control_param.pre_flash_skip))
+		if(0 == cxt->cur_param->flash_control_param.pre_flash_skip)
 			cxt->cur_param->flash_control_param.pre_flash_skip = 3;
-		if((0 == cxt->cur_param->flash_control_param.aem_effect_delay) ||(2 > cxt->cur_param->flash_control_param.pre_flash_skip))
+		if(0 == cxt->cur_param->flash_control_param.aem_effect_delay)
 			cxt->cur_param->flash_control_param.aem_effect_delay = 2;
-		if((0 == cxt->cur_param->flash_control_param.pre_open_count) || (3 > cxt->cur_param->flash_control_param.pre_open_count))
+		if(0 == cxt->cur_param->flash_control_param.pre_open_count)
 			cxt->cur_param->flash_control_param.pre_open_count = 3;
 		if(0 == cxt->cur_param->flash_control_param.main_flash_set_count)
 			cxt->cur_param->flash_control_param.main_flash_set_count = 1;
-		if((0 == cxt->cur_param->flash_control_param.main_capture_count) || (5 > cxt->cur_param->flash_control_param.main_capture_count))
+		if(0 == cxt->cur_param->flash_control_param.main_capture_count)
 			cxt->cur_param->flash_control_param.main_capture_count = 5;
 	/*end to read flash control tuning param*/
 
