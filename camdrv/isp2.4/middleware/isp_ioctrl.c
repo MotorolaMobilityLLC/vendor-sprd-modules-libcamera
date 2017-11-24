@@ -2014,6 +2014,8 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
 
 		switch (header->block_id) {
+		case ISP_BLK_BDN:
+			update_param->bdn_level_ptr = (struct sensor_bdn_level *)fix_data_ptr->nr.nr_set_group.bdn;
 #ifdef NOT_EXIST_IN_ISP2_0
 		case ISP_BLK_PDAF_CORRECT:
 			update_param->pdaf_correction_level_ptr = (struct sensor_pdaf_correction_level *)fix_data_ptr->nr.nr_set_group.pdaf_correct;
@@ -2029,6 +2031,7 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;
 			update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;
 			update_param->ivst_level_ptr = (struct sensor_ivst_level *)fix_data_ptr->nr.nr_set_group.ivst;
+			update_param->flat_offset_level_ptr = (struct sensor_flat_offset_level *)fix_data_ptr->nr.nr_set_group.flat_offset;
 			break;
 #ifdef NOT_EXIST_IN_ISP2_0
 		case ISP_BLK_RGB_DITHER:
@@ -2038,11 +2041,10 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		case ISP_BLK_CFA:
 			update_param->cfae_level_ptr = (struct sensor_cfae_level *)fix_data_ptr->nr.nr_set_group.cfae;
 			break;
-#ifdef NOT_EXIST_IN_ISP2_0
 		case ISP_BLK_RGB_AFM:
 			update_param->rgb_afm_level_ptr = (struct sensor_rgb_afm_level *)fix_data_ptr->nr.nr_set_group.rgb_afm;
 			break;
-#endif
+
 		case ISP_BLK_UVDIV:
 			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.cce_uvdiv;
 			break;
@@ -2068,6 +2070,8 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			update_param->ynr_level_ptr = (struct sensor_ynr_level *)fix_data_ptr->nr.nr_set_group.ynr;
 			break;
 #endif
+		case ISP_BLK_UV_PREFILTER:
+			update_param->prfy_level_ptr = (struct sensor_prfy_level *)fix_data_ptr->nr.nr_set_group.prfy;
 		case ISP_BLK_UV_CDN:
 			update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)fix_data_ptr->nr.nr_set_group.uv_cdn;
 			break;
@@ -2076,6 +2080,7 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			break;
 		case ISP_BLK_IIRCNR_IIR:
 			update_param->iircnr_level_ptr = (struct sensor_iircnr_level *)fix_data_ptr->nr.nr_set_group.iircnr;
+			update_param->iircnr_yrandom_level_ptr = (struct sensor_iircnr_yrandom_level *)fix_data_ptr->nr.nr_set_group.iircnr_yrandom;
 			break;
 #ifdef NOT_EXIST_IN_ISP2_0
 		case ISP_BLK_YUV_NOISEFILTER:
