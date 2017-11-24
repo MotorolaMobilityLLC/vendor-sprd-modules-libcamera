@@ -1002,7 +1002,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
-		if (ISP_BLK_AE == param_data->id) {
+		if (ISP_BLK_AE_NEW == param_data->id) {
 			if (ISP_PM_BLK_ISP_SETTING == param_data->cmd) {
 				ret = isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);
 				ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));

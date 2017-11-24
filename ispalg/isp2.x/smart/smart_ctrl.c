@@ -40,39 +40,6 @@ struct tuning_param {
 	struct isp_smart_param param;
 };
 
-#ifdef CONFIG_CAMERA_ISP_DIR_2_4
-static const char *s_smart_block_name[] = {
-	"lsc",
-	"color_cast",
-	"cmc",
-	"sat_depress",
-	"hsv",
-	"color_transform",
-	"edge",
-	"pref",
-	"uvcdn",
-	"gamma",
-	"gain_offset",
-	"pwd",
-	"bpc",
-	"nlm",
-	"rgb_precdn",
-	"yuv_precdn",
-	"uv_postcdn",
-	"iircnr_iir",
-	"bdn",
-	"uvdiv",
-	"af",
-	"cfae",
-	"grgb",
-	"iir_yrandom",
-	"y_afm",
-	"rgb_afm",
-	"blc",
-	"unkown"
-};
-
-#else
 static const char *s_smart_block_name[] = {
 	"lsc",
 	"color_cast",
@@ -101,9 +68,12 @@ static const char *s_smart_block_name[] = {
 	"iircnr_iir",
 	"iir_yrandom",
 	"yuv_noisefilter",
+	"rgb_precdn",
+	"bdn",
+	"prfy",
+
 	"unkown"
 };
-#endif
 
 struct smart_context {
 	cmr_u32 magic_flag;
@@ -1367,12 +1337,9 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 		return ISP_SUCCESS;
 	}
 
-	#ifdef CONFIG_CAMERA_ISP_DIR_2_4
 	for (i = 0; i < smart_param->block_num; i++) {
 			if (ISP_SMART_EDGE == smart_param->block[i].smart_id ||
-				ISP_SMART_PREF == smart_param->block[i].smart_id ||
-				ISP_SMART_UVCDN == smart_param->block[i].smart_id ||
-				ISP_SMART_PRE_WAVELET == smart_param->block[i].smart_id ||
+				ISP_SMART_PRFY== smart_param->block[i].smart_id ||
 				ISP_SMART_BPC == smart_param->block[i].smart_id ||
 				ISP_SMART_NLM == smart_param->block[i].smart_id ||
 				ISP_SMART_RGB_PRECDN == smart_param->block[i].smart_id ||
@@ -1382,34 +1349,15 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 				ISP_SMART_BDN == smart_param->block[i].smart_id ||
 				ISP_SMART_UVDIV == smart_param->block[i].smart_id ||
 				ISP_SMART_IIR_YRANDOM == smart_param->block[i].smart_id ||
-				ISP_SMART_Y_AFM == smart_param->block[i].smart_id ||
-				ISP_SMART_RGB_AFM == smart_param->block[i].smart_id) {
-				if (is_diseb){
-					smart_param->block[i].enable = 0;
-					} else {
-					smart_param->block[i].enable = org_param->param.block[i].enable;
-					}
-				}
-			}
-
-	#else
-	for (i = 0; i < smart_param->block_num; i++) {
-			if (ISP_SMART_PDAF_CORRECT == smart_param->block[i].smart_id ||
-				ISP_SMART_NLM == smart_param->block[i].smart_id ||
+				ISP_SMART_RGB_AFM == smart_param->block[i].smart_id||
+				ISP_SMART_PDAF_CORRECT == smart_param->block[i].smart_id ||
 				ISP_SMART_RGB_DITHER == smart_param->block[i].smart_id ||
-				ISP_SMART_BPC == smart_param->block[i].smart_id ||
 				ISP_SMART_GRGB == smart_param->block[i].smart_id ||
-				ISP_SMART_RGB_AFM == smart_param->block[i].smart_id ||
 				ISP_SMART_UVDIV == smart_param->block[i].smart_id ||
 				ISP_SMART_3DNR_PRE == smart_param->block[i].smart_id ||
 				ISP_SMART_3DNR_CAP == smart_param->block[i].smart_id ||
-				ISP_SMART_EDGE == smart_param->block[i].smart_id ||
-				ISP_SMART_YUV_PRECDN == smart_param->block[i].smart_id ||
 				ISP_SMART_YNR == smart_param->block[i].smart_id ||
 				ISP_SMART_UVCDN == smart_param->block[i].smart_id ||
-				ISP_SMART_UV_POSTCDN == smart_param->block[i].smart_id ||
-				ISP_SMART_IIRCNR_IIR == smart_param->block[i].smart_id ||
-				ISP_SMART_IIR_YRANDOM == smart_param->block[i].smart_id ||
 				ISP_SMART_YUV_NOISEFILTER == smart_param->block[i].smart_id) {
 				if (is_diseb){
 					smart_param->block[i].enable = 0;
@@ -1418,7 +1366,6 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 					}
 				}
 			}
-	#endif
 
 	return rtn;
 }
@@ -1556,7 +1503,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 		}
 	}
 
-#ifndef CONFIG_CAMERA_ISP_DIR_2_4
 	if (in_ptr->lock_ynr== 1) {
 		for (i = 0; i < smart_calc_result.counts; i++) {
 			if (ISP_SMART_YNR== smart_calc_result.block_result[i].smart_id) {
@@ -1564,7 +1510,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			}
 		}
 	}
-#endif
 
 	/*use alc ccm, disable spreadtrum smart ccm */
 	for (i = 0; i < smart_calc_result.counts; i++) {

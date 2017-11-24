@@ -155,7 +155,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_HUE, array_offset(struct isp_context, hue), sizeof(struct isp_hue_param), &s_hue_ops},
 	{ISP_BLK_UV_POSTCDN, array_offset(struct isp_context, uv_postcdn), sizeof(struct isp_uv_postcdn_param), &s_uv_postcdn_ops},
 	{ISP_BLK_Y_GAMMC, array_offset(struct isp_context, yuv_ygamma), sizeof(struct isp_yuv_ygamma_param), &s_yuv_ygamma_ops},
-	{ISP_BLK_YDELAY, array_offset(struct isp_context, ydelay), sizeof(struct isp_ydelay_param), &s_ydelay_ops},
+	{ISP_BLK_Y_DELAY, array_offset(struct isp_context, ydelay), sizeof(struct isp_ydelay_param), &s_ydelay_ops},
 	{ISP_BLK_IIRCNR_IIR, array_offset(struct isp_context, iircnr_iir), sizeof(struct isp_iircnr_iir_param), &s_iircnr_iir_ops},
 	{ISP_BLK_IIRCNR_YRANDOM, array_offset(struct isp_context, iircnr_yrandom), sizeof(struct isp_iircnr_yrandom_param), &s_iircnr_yrandom_ops},
 	{ISP_BLK_UVDIV, array_offset(struct isp_context, uv_div), sizeof(struct isp_cce_uvdiv_param), &s_uvdiv_ops},
@@ -167,10 +167,10 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_AWB_NEW, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awb_new_ops},
 	{ISP_BLK_CCE, array_offset(struct isp_context, cce), sizeof(struct isp_cce_param), &s_cce_ops},
 	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, frgb_gamc), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
-	{ISP_BLK_AE, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},
+	{ISP_BLK_AE_NEW, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},
 	{ISP_BLK_RGB_AFM, array_offset(struct isp_context, afm), sizeof(struct isp_rgb_afm_param), &s_rgb_afm_ops},
-	{ISP_BLK_YIQ_AFL, array_offset(struct isp_context, yiq_afl_v1), sizeof(struct isp_yiq_afl_param_v1), &s_yiq_afl_ops_v1},
-	{ISP_BLK_YIQ_AFL_NEW, array_offset(struct isp_context, yiq_afl_v3), sizeof(struct isp_yiq_afl_param_v3), &s_yiq_afl_ops_v3},
+	{ISP_BLK_YIQ_AFL_V1, array_offset(struct isp_context, yiq_afl_v1), sizeof(struct isp_yiq_afl_param_v1), &s_yiq_afl_ops_v1},
+	{ISP_BLK_YIQ_AFL_V3, array_offset(struct isp_context, yiq_afl_v3), sizeof(struct isp_yiq_afl_param_v3), &s_yiq_afl_ops_v3},
 #ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_BLK_YUV_NOISEFILTER, array_offset(struct isp_context, yuv_noisefilter), sizeof(struct isp_dev_noise_filter_param), &s_yuv_noisefilter_ops},
 #endif

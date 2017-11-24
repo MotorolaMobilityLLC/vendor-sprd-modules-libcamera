@@ -730,7 +730,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 
 			switch (src_header[j].block_id) {
-			case ISP_BLK_AE:{
+			case ISP_BLK_AE_NEW:{
 					extend_offset += add_ae_len;
 					dst_header[j].size = src_header[j].size + add_ae_len;
 					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)), (void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
@@ -1506,7 +1506,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
 				blk_num = mode_param_ptr->block_num;
 				for (i = 0; i < blk_num; i++) {
-					if (ISP_BLK_AE == blk_header_array[i].block_id) {
+					if (ISP_BLK_AE_NEW == blk_header_array[i].block_id) {
 						*version_id = blk_header_array[i].version_id;
 					}
 					if (-1 != *version_id)
@@ -1523,7 +1523,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		cmr_u32 mod_num = 0;
 		switch (cmd) {
 		case ISP_PM_CMD_GET_INIT_AE:
-			block_id = ISP_BLK_AE;
+			block_id = ISP_BLK_AE_NEW;
 			break;
 		case ISP_PM_CMD_GET_INIT_ALSC:
 			block_id = ISP_BLK_ALSC;

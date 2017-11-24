@@ -57,7 +57,7 @@ cmr_s32 _pm_rgb_aem_get_param(void *rgb_aem_param, cmr_u32 cmd, void *rtn_param0
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_AE;
+	param_data_ptr->id = ISP_BLK_AE_NEW;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

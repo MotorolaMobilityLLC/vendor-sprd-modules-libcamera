@@ -1147,36 +1147,6 @@ enum isp_smart_y_type {
 	ISP_SMART_Y_TYPE_WEIGHT_VALUE = 1,
 };
 
-enum isp_smart_id {
-	ISP_SMART_LNC = 0,
-	ISP_SMART_COLOR_CAST = 1,
-	ISP_SMART_CMC = 2,
-	ISP_SMART_SATURATION_DEPRESS = 3,
-	ISP_SMART_HSV = 4,
-	ISP_SMART_COLOR_TRANSFORM = 5,
-	ISP_SMART_EDGE = 6,
-	ISP_SMART_PREF = 7,
-	ISP_SMART_UVCDN = 8,
-	ISP_SMART_GAMMA = 9,
-	ISP_SMART_GAIN_OFFSET = 10,
-	ISP_SMART_PRE_WAVELET = 11,
-	ISP_SMART_BPC = 12,
-	ISP_SMART_NLM = 13,
-	ISP_SMART_RGB_PRECDN = 14,
-	ISP_SMART_YUV_PRECDN = 15,
-	ISP_SMART_UV_POSTCDN = 16,
-	ISP_SMART_IIRCNR_IIR = 17,
-	ISP_SMART_BDN = 18,
-	ISP_SMART_UVDIV = 19,
-	ISP_SMART_AF = 20,
-	ISP_SMART_CFAE = 21,
-	ISP_SMART_GRGB = 22,
-	ISP_SMART_IIR_YRANDOM = 23,
-	ISP_SMART_Y_AFM = 24,
-	ISP_SMART_RGB_AFM = 25,
-	ISP_SMART_BLC = 26,
-	ISP_SMART_MAX
-};
 
 struct isp_smart_component_cfg {
 	uint32_t id;
@@ -1490,89 +1460,6 @@ struct sensor_rgb_afm_level {
 //////////////////////////////////////////////////
 
 
-enum ISP_BLK_ID {
-	ISP_BLK_ID_BASE = 0,
-
-	ISP_BLK_SHARKL_BASE					= 0x1000,
-	ISP_BLK_FLASH_CALI = 0x1018,
-	ISP_BLK_ENVI_DETECT = 0x1028,
-
-	//TSHARK2
-	ISP_BLK_SHARK2_BASE =				0x2000,
-	ISP_BLK_PRE_GBL_GAIN = 0x2001,
-	ISP_BLK_BLC = 0x2002,
-	ISP_BLK_RGB_GAIN = 0x2003,
-	ISP_BLK_PRE_WAVELET = 0x2004,
-//		ISP_BLK_NLC = 0x2005,
-	ISP_BLK_2D_LSC = 0x2006,
-//		ISP_BLK_1D_LSC = 0x2007,
-	ISP_BLK_BINNING4AWB = 0x2008,
-	ISP_BLK_AWBC = 0x2009,
-	ISP_BLK_AE = 0x200A,
-	ISP_BLK_BPC = 0x200B,
-	ISP_BLK_BDN = 0x200C,
-	ISP_BLK_GRGB = 0x200D,
-//		ISP_BLK_RGB_GAIN2 = 0x200E,
-	ISP_BLK_NLM = 0x200F, // + ISP_BLK_VST + ISP_BLK_IVST
-	ISP_BLK_CFA = 0x2010,
-	ISP_BLK_CMC10 = 0x2011,
-	ISP_BLK_RGB_GAMC = 0x2012,
-	ISP_BLK_CMC8 = 0x2013,
-	ISP_BLK_CTM = 0x2014,
-	ISP_BLK_CCE = 0x2015,
-	ISP_BLK_HSV = 0x2016,
-	ISP_BLK_RADIAL_CSC = 0x2017,
-	ISP_BLK_RGB_PRECDN = 0x2018,
-	ISP_BLK_POSTERIZE = 0x2019,
-//		ISP_BLK_AF = 0x201A,
-//		ISP_BLK_YIQ_AEM = 0x201B,
-	ISP_BLK_YIQ_AFL = 0x201C, // hardware antiflicker
-//		ISP_BLK_YIQ_AFM = 0x201D,
-	ISP_BLK_YUV_PRECDN = 0x201E,
-	ISP_BLK_PREF = 0x201F,
-	ISP_BLK_BRIGHT = 0x2020,
-//		ISP_BLK_CONTRAST = 0x2021,
-	ISP_BLK_HIST = 0x2022,
-	ISP_BLK_HIST2 = 0x2023,
-//		ISP_BLK_AUTO_CONTRAST = 0x2024,//auto-contrast
-	ISP_BLK_UV_CDN = 0x2025,
-	ISP_BLK_EDGE = 0x2026,
-//		ISP_BLK_EMBOSS = 0x2027,
-	ISP_BLK_CSS = 0x2028,
-	ISP_BLK_SATURATION = 0x2029, //csa
-	ISP_BLK_HUE = 0x202A,
-	ISP_BLK_UV_POSTCDN = 0x202B,
-	ISP_BLK_Y_GAMMC = 0x202D,
-	ISP_BLK_YDELAY = 0x202E,
-	ISP_BLK_IIRCNR_IIR = 0x202F,
-	ISP_BLK_UVDIV = 0x2030,
-	ISP_BLK_IIRCNR_YRANDOM = 0x2031,
-
-	ISP_BLK_SMART = 0x2032,
-	ISP_BLK_SFT_AF = 0x2033,
-	ISP_BLK_ALSC = 0x2034,
-	ISP_BLK_AFT	= 0x2035,
-	ISP_BLK_AWB_NEW = 0x2036,
-	ISP_BLK_AF_NEW = 0x2037,
-	ISP_BLK_RGB_AFM = 0x2038,
-	ISP_BLK_RGB_AEM = 0x2039,
-	ISP_BLK_YIQ_AFL_NEW = 0x203A, // hardware new antiflicker
-	ISP_BLK_DUAL_FLASH = 0x203B,
-	ISP_BLK_ANTI_FLICKER = 0x203C, // software antiflicker
-
-
-
-	//pike
-//	ISP_BLK_PIKE_BASE =  0x3000,
-//	ISP_BLK_WDR = 0x3003,
-//		ISP_BLK_RGB2Y = 0x3004,
-	ISP_BLK_UV_PREFILTER = 0x3007,
-	ISP_BLK_YUV_NLM = 0x3008,
-
-	ISP_BLK_EXT,
-	ISP_BLK_ID_MAX,
-};
-
 enum {
 	ISP_BLK_PRE_WAVELET_T = 0,
 	ISP_BLK_BPC_T,
@@ -1809,10 +1696,10 @@ struct sensor_nr_set_group_param {
 	cmr_u32 grgb_len;
 	cmr_u8 *nlm;
 	cmr_u32 nlm_len;
-	cmr_u8 *vst;
-	cmr_u32 vst_len;
 	cmr_u8 *ivst;
 	cmr_u32 ivst_len;
+	cmr_u8 *vst;
+	cmr_u32 vst_len;
 	cmr_u8 *flat_offset;
 	cmr_u32 flat_offset_len;
 	cmr_u8 *cfae;
@@ -1833,14 +1720,14 @@ struct sensor_nr_set_group_param {
 	cmr_u32 uv_postcdn_len;
 	cmr_u8 *iircnr;
 	cmr_u32 iircnr_len;
-	cmr_u8 *iircnr_yrandom;
-	cmr_u32 iircnr_yrandom_len;
 	cmr_u8 *cce_uvdiv;
 	cmr_u32 cce_uvdiv_len;
+	cmr_u8 *iircnr_yrandom;
+	cmr_u32 iircnr_yrandom_len;
 	//cmr_u8 *yiq_afm;
 	//cmr_u32 yiq_afm_len;
 };
-	
+
 struct sensor_nr_param {
 	struct sensor_nr_set_group_param nr_set_group;
 };
@@ -1892,10 +1779,8 @@ struct raw_param_info_tab {
 #endif
 
 struct denoise_param_update {
-	//struct sensor_pwd_level *pwd_level_ptr;
 	struct sensor_bpc_level *bpc_level_ptr;
 	struct sensor_bdn_level *bdn_level_ptr;
-	//struct sensor_grgb_level *grgb_v1_level_ptr; sharkls
 	struct sensor_grgb_level *grgb_level_ptr;
 	struct sensor_nlm_level *nlm_level_ptr;
 	struct sensor_ivst_level *ivst_level_ptr;
@@ -1912,7 +1797,6 @@ struct denoise_param_update {
 	struct sensor_iircnr_level *iircnr_level_ptr;
 	struct sensor_cce_uvdiv_level *cce_uvdiv_level_ptr;
 	struct sensor_iircnr_yrandom_level *iircnr_yrandom_level_ptr;
-	//struct sensor_y_afm_level *y_afm_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
