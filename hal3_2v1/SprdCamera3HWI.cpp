@@ -1734,6 +1734,7 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = true;
+    mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     Mutex::Autolock l(mLock);
 
     // for performance tuning: close camera
@@ -1754,7 +1755,6 @@ int SprdCamera3HWI::flush() {
         mPicChan->stop(mFrameNum);
 
     timer_set(this, 3);
-    mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     ret = mFlushSignal.waitRelative(mLock, 500000000); // 500ms
     if (ret == TIMED_OUT) {
         HAL_LOGE("Flush is time out");
