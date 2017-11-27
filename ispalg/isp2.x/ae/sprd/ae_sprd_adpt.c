@@ -144,7 +144,6 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 
 }
 
-#ifndef CONFIG_CAMERA_DUAL_SYNC
 static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
 {
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
@@ -286,7 +285,6 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 
 	return ISP_SUCCESS;
 }
-#endif
 
 static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param_ptr)
 {
@@ -310,7 +308,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			if ((write_param->exp_line != prv_param->exp_line)
 				|| (write_param->dummy != prv_param->dummy)) {
 				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 				cmr_u64 exp_time = 0;
 				cmr_int cb_type;
 				exp_time = (cmr_u64)write_param->exp_time;
@@ -384,10 +382,8 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	write_param.sensor_gain  =write_item.sensor_gain;
 
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
-#ifndef CONFIG_CAMERA_DUAL_SYNC
 		if (cxt->sensor_role)
 			ae_sync_write_to_sensor(cxt, &write_param);
-#endif
 	} else {
 		ae_write_to_sensor(cxt, &write_param);
 	}
@@ -1433,7 +1429,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
 		sensor_info.min_exp_line = cxt->min_exp_line;
 		sensor_info.line_time = cxt->cur_status.line_time;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,
 			init_param->sensor_role ? SET_MASTER_MODULE_INFO : SET_SLAVE_MODULE_INFO,
 			&sensor_info,
@@ -2738,7 +2734,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt,
 	return rtn;
 }
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *multicam_aesync)
 {
 	struct sensor_otp_ae_info* ae_otp_master = NULL;
@@ -3347,7 +3343,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->cur_status.line_time = work_info->resolution_info.line_time;
 	cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 	cxt->cur_status.snr_min_fps = work_info->sensor_fps.min_fps;
-#ifndef CONFIG_CAMERA_DUAL_SYNC
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
 		/* save master & slave sensor info */
 		struct sensor_info sensor_info;
@@ -3368,7 +3363,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			sensor_info.min_exp_line,
 			sensor_info.line_time);
 	}
-#endif
+
 
 	cxt->start_id = AE_START_ID;
 	cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
@@ -3547,7 +3542,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
 	cxt->sync_cur_result.wts.stable = cxt->cur_result.wts.stable;
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 	struct match_data_param dualcam_aesync;
 	struct ae_alg_calc_result *current_result = NULL;
 	current_result = &cxt->sync_cur_result;
@@ -4042,7 +4037,7 @@ static cmr_s32 ae_get_led_ctrl(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	return AE_SUCCESS;
 }
 
-#ifndef CONFIG_CAMERA_DUAL_SYNC
+#ifndef CONFIG_ISP_2_2
 static cmr_s32 ae_set_isp_gain(struct ae_ctrl_cxt *cxt)
 {
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS && !cxt->sensor_role) {
@@ -4288,7 +4283,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cur_calc_result = &cxt->calc_results;
 	ae_set_restore_skip_update_cnt(cxt);
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 	enum  sync_status ae_sync_status;
 	enum  sync_status ae_sync_status_temp;
 
@@ -4475,7 +4470,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 /***********************************************************/
 /*update parameters to sensor*/
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 	struct match_data_param dualcam_aesync;
 	float cur_fps=0;
 
@@ -4551,7 +4546,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->exp_data.lib_data.line_time = current_status->line_time;
 	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 	if(cxt->is_multi_mode ) {
 		ISP_LOGV("notify ae info, camera id=%d",cxt->camera_id);
 		cb_type = AE_CB_AE_CALCOUT_NOTIFY;
@@ -4869,9 +4864,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		break;
 
 	case AE_SET_RGB_GAIN:
-#ifndef CONFIG_CAMERA_DUAL_SYNC
 		rtn = ae_set_isp_gain(cxt);
-#endif
 		break;
 
 	case AE_SET_UPDATE_AUX_SENSOR:
@@ -4926,7 +4919,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 		}
 	}
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 	enum  sync_status ae_sync_status = SYNC_DEINIT;
 	if(cxt->is_multi_mode && cxt->sensor_role)
 	{
@@ -4997,7 +4990,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			info.gain_4x_exp = (rdm_otp_data[13] <<24) | (rdm_otp_data[12]<<16) | (rdm_otp_data[11]<<8) | rdm_otp_data[10];
 			info.gain_8x_exp = (rdm_otp_data[17] <<24) | (rdm_otp_data[16]<<16) | (rdm_otp_data[15]<<8) | rdm_otp_data[14];
 
-			#ifdef CONFIG_CAMERA_DUAL_SYNC
+			#ifdef CONFIG_ISP_2_2
 			if (cxt->sensor_role) {
 				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_MASTER_OTP_AE,&info,NULL);
 			} else {

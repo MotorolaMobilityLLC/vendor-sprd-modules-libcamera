@@ -284,7 +284,7 @@ struct ae_ctrl_cxt {
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 
-#ifdef  CONFIG_CAMERA_DUAL_SYNC
+#ifdef  CONFIG_ISP_2_2
 //	struct ae_calc_result pre_write_exp_data_slv;
 	struct ae_exposure_param pre_write_exp_data_slv;
 //	struct ae_calc_result pre_write_exp_data;

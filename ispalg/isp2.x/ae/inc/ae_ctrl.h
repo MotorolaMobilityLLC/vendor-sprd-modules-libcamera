@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
+#ifdef CONFIG_ISP_2_2
 typedef cmr_int(*func_isp_br_ioctrl)(cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
 #endif
 

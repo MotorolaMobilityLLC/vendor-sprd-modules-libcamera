@@ -2788,10 +2788,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->is_master = input_ptr->init_param->is_master;
 	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
-#endif
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
