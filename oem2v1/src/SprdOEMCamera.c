@@ -26,6 +26,7 @@
 #endif
 #include "cmr_oem.h"
 #include "SprdOEMCamera.h"
+#include "cmr_img_debug.h"
 
 cmr_int camera_init(cmr_u32 camera_id, camera_cb_of_type callback,
                     void *client_data, cmr_uint is_autotest,
@@ -1124,6 +1125,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY: {
         ret = camera_local_set_capture_fb(handle, (cmr_u32 *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_DEBUG_IMG: {
+        ret = cmr_img_debug(handle, param);
         break;
     }
     default:

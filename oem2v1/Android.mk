@@ -77,7 +77,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_preview.c \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
-	src/cmr_focus.c
+	src/cmr_focus.c \
+	src/cmr_img_debug.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \
@@ -241,7 +242,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_preview.c \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
-	src/cmr_focus.c
+	src/cmr_focus.c \
+	src/cmr_img_debug.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \
@@ -404,7 +406,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_preview.c \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
-	src/cmr_focus.c
+	src/cmr_focus.c \
+	src/cmr_img_debug.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \

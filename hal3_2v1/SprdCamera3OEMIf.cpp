@@ -4396,6 +4396,27 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     }
 #endif
 
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.camera.debug", value, "0");
+    if (atoi(value) != 0) {
+        img_debug img_debug;
+        img_debug.input.addr_y = frame->y_vir_addr;
+        img_debug.input.addr_u = frame->uv_vir_addr;
+        img_debug.input.addr_v = img_debug.input.addr_u;
+        // process img data on input addr, so set output addr to 0.
+        img_debug.output.addr_y = 0;
+        img_debug.output.addr_u = 0;
+        img_debug.output.addr_v = img_debug.output.addr_u;
+        img_debug.size.width = frame->width;
+        img_debug.size.height = frame->height;
+        img_debug.format = frame->format;
+        FACE_Tag ftag;
+        mSetting->getFACETag(&ftag);
+        img_debug.params = &ftag;
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                          CAMERA_IOCTRL_DEBUG_IMG, &img_debug);
+    }
+
     if (rec_stream) {
         ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
         if (ret) {

@@ -546,6 +546,30 @@ typedef struct {
     void *addr_vir;
 } cam_ion_buffer_t;
 
+struct cam_face {
+    int32_t rect[4];
+    int32_t score;
+    int32_t id;
+    int32_t left_eye[2];
+    int32_t right_eye[2];
+    int32_t mouth[2];
+};
+
+struct face_tag {
+    struct cam_face face[10];
+    int angle[10];
+    int pose[10];
+    uint8_t face_num;
+};
+
+struct img_debug {
+    struct img_addr input;
+    struct img_addr output;
+    struct img_size size;
+    cmr_u32 format;
+    void *params;
+};
+
 /********************************* v4l2 start *********************************/
 
 /********************************* v4l2 start *********************************/
@@ -1394,6 +1418,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_MIME_TYPE,
     CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
     CAMERA_IOCTRL_GET_BLUR_COVERED,
+    CAMERA_IOCTRL_DEBUG_IMG,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 
