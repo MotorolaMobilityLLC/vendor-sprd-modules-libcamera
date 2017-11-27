@@ -9599,6 +9599,8 @@ cmr_int camera_local_redisplay_data(
     src_img.fd = input_fd;
     src_img.addr_phy.addr_y = input_addr_y;
     src_img.addr_phy.addr_u = input_addr_uv;
+    src_img.addr_vir.addr_y = input_vir_addr;
+    src_img.addr_vir.addr_u = input_vir_addr + img_len;
     if (IMG_ANGLE_90 == cxt->snp_cxt.cfg_cap_rot ||
         IMG_ANGLE_270 == cxt->snp_cxt.cfg_cap_rot) {
         dst_img.size.width = output_height;
@@ -9606,18 +9608,24 @@ cmr_int camera_local_redisplay_data(
         dst_img.fd = output_fd;
         dst_img.addr_phy.addr_y = output_addr + ((img_len * 3) >> 1);
         dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
+        dst_img.addr_vir.addr_y = output_vir_addr + ((img_len * 3) >> 1);
+        dst_img.addr_vir.addr_u = dst_img.addr_vir.addr_y + img_len;
     } else if (IMG_ANGLE_180 == cxt->snp_cxt.cfg_cap_rot) {
         dst_img.size.width = output_width;
         dst_img.size.height = output_height;
         dst_img.fd = output_fd;
         dst_img.addr_phy.addr_y = output_addr + ((img_len * 3) >> 1);
         dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
+        dst_img.addr_vir.addr_y = output_vir_addr + ((img_len * 3) >> 1);
+        dst_img.addr_vir.addr_u = dst_img.addr_vir.addr_y + img_len;
     } else {
         dst_img.size.width = output_width;
         dst_img.size.height = output_height;
         dst_img.fd = output_fd;
         dst_img.addr_phy.addr_y = output_addr;
         dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
+        dst_img.addr_vir.addr_y = output_vir_addr;
+        dst_img.addr_vir.addr_u = dst_img.addr_vir.addr_y + img_len;
     }
     dst_img.addr_phy.addr_v = 0;
     dst_img.fmt = IMG_DATA_TYPE_YUV420;
