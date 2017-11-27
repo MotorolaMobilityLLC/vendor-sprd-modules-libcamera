@@ -567,7 +567,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			else
 				aem_block_info.scene_id = ISP_MODE_PRV;
 
-			aem_block_info.skip_num = *(cmr_u32 *)param0;
+			aem_block_info.stats_info.skip_num = *(cmr_u32 *)param0;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, &aem_block_info, NULL);
 		}
 		break;
@@ -817,7 +817,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 				afm_block_info.scene_id = ISP_MODE_CAP;
 			else
 				afm_block_info.scene_id = ISP_MODE_PRV;
-			afm_block_info.skip_num = *(cmr_u32 *)param0;
+			afm_block_info.afm_info.skip_num = *(cmr_u32 *)param0;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, &afm_block_info, param1);
 		}
 		break;

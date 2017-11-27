@@ -485,7 +485,6 @@ static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct
 		block_info->stats_info.mode = 1;
 		isp_u_raw_aem_mode(cxt->isp_driver_handle, (void *)block_info);
 
-		block_info->stats_info.skip_num = 0;
 		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, (void *)block_info);
 		break;
 	default:
