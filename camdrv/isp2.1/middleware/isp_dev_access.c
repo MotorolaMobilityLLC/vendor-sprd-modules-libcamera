@@ -39,7 +39,7 @@ cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis
 
 	*u_addr = cxt->statis_mem_info.isp_statis_u_addr + in_ptr->addr_offset;
 
-	ISP_LOGV("u_addr = 0x%lx, isp_statis_u_addr = 0x%lx, addr_offset = 0x%x",
+	ISP_LOGV("u_addr = 0x%lx, isp_statis_u_addr = 0x%lx, addr_offset = 0x%lx",
 		*u_addr, cxt->statis_mem_info.isp_statis_u_addr, in_ptr->addr_offset);
 
 	return ret;
@@ -294,7 +294,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->sec = irq_info->sec;
 	statis_info->usec = irq_info->usec;
 
-	ISP_LOGV("got one frame stats offset 0x%x vaddr 0x%x property %d frame id %d timestamp %ds %dus",
+	ISP_LOGV("got one frame stats offset 0x%lx vaddr 0x%lx property %d frame id %d timestamp %ds %dus",
 		 statis_info->addr_offset, statis_info->vir_addr,
 		 statis_info->irq_property,
 		 statis_info->frame_id,
