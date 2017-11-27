@@ -110,7 +110,7 @@ struct smart_proc_input {
 	struct smart_calc_param cal_para;
 	cmr_u32 mode_flag;
 	cmr_u32 scene_flag;
-	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
+	cmr_u32 lsc_sprd_version;	// LSC version of Spreadtrum
 	cmr_u8 *log;
 	cmr_u32 size;
 	cmr_u8 lock_nlm;

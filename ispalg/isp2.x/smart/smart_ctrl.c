@@ -1499,7 +1499,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 	in_ptr->size = (sizeof(cxt->nr_param));
 
 	//use LSC_SPD_VERSION to control the output of smart lsc
-	if (in_ptr->LSC_SPD_VERSION >= 3) {
+	if (in_ptr->lsc_sprd_version >= 3) {
 		for (i = 0; i < smart_calc_result.counts; i++) {
 			if (ISP_SMART_LNC == smart_calc_result.block_result[i].smart_id) {
 				smart_calc_result.block_result[i].update = 0;
