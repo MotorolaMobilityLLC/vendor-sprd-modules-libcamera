@@ -2370,8 +2370,8 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
-	lsc_param.is_master     = 1;   //cxt->is_master;        // wait for SBS sync
-	lsc_param.is_multi_mode = 0;   //cxt->is_multi_mode;    // wait for SBS sync
+	lsc_param.is_master     = cxt->is_master;
+	lsc_param.is_multi_mode = cxt->is_multi_mode;
 
 	lsc_table = lsc_param.lsc_otp_table_addr;
 	if (NULL == cxt->lsc_cxt.handle) {
