@@ -88,7 +88,7 @@ cmr_s32 _pm_rgb_afm_init(void *dst_rgb_afm, void *src_rgb_afm, void *param1, voi
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-	dst_ptr->cur.bypass = header_ptr->bypass;
+	dst_ptr->cur.bypass = 0;//header_ptr->bypass;
 
 	dst_ptr->cur_level = src_ptr->default_strength_level;
 	dst_ptr->level_num = src_ptr->level_number;
@@ -97,7 +97,7 @@ cmr_s32 _pm_rgb_afm_init(void *dst_rgb_afm, void *src_rgb_afm, void *param1, voi
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_rgb_afm_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	dst_ptr->cur.bypass |= header_ptr->bypass;
+	//dst_ptr->cur.bypass |= header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to  convert pm rgb afm param!");

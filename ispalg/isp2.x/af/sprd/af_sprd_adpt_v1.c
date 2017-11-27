@@ -2623,18 +2623,17 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	//PDAF Tuning Data
 	struct isp_haf_tune_param *isp_pdaf_tune_data = NULL;
+#ifndef CONFIG_ISP_2_4
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	memset(&param_data, 0, sizeof(param_data));
-#ifndef CONFIG_ISP_2_4
 #ifdef CONFIG_ISP_2_3
 	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
 	input.param_num = 1;
 	input.param_data_ptr = &param_data;
 #else
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
-#endif
 #endif
 	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (AFV1_SUCCESS == rtn && 1 == output.param_num) {
@@ -2643,7 +2642,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		ISP_LOGE("fail to get sensor HAF tuning param data");
 		//return NULL;
 	}
-
+#endif
 	af->af_alg_cxt = af_init(af, &af_pm_output, isp_pdaf_tune_data);
 	if (NULL == af->af_alg_cxt) {
 		ISP_LOGE("fail to init lib func AF_init");
