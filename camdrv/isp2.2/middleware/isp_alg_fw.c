@@ -469,6 +469,9 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 	case ISP_AFL_NEW_SET_BYPASS:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, param0, param1);
 		break;
+	case ISP_AFL_SET_STATS_BUFFER:
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, param0, param1);
+		break;
 	default:
 		break;
 	}
@@ -689,6 +692,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 	cmr_u32 awb_mode = 0;
+	struct afl_ctrl_proc_out afl_info;
+	cmr_int nxt_flicker = 0;
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&gain, NULL);
@@ -698,6 +703,20 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	if(cxt->ops.awb_ops.ioctrl){
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WB_MODE, NULL, (void *)&awb_mode);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_GET_INFO, (void *)&afl_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_GET_INFO"));
+	}
+	if (afl_info.flag) {
+		if (afl_info.cur_flicker) {
+			nxt_flicker = AE_FLICKER_50HZ;
+		} else {
+			nxt_flicker = AE_FLICKER_60HZ;
+		}
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
 	}
 
 	memset((void *)&ae_result, 0, sizeof(ae_result));
@@ -1180,15 +1199,12 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
-	cmr_int nxt_flicker = 0;
 	struct isp_awb_statistic_info ae_stat_ptr;
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct afl_proc_in afl_input;
-	struct afl_ctrl_proc_out afl_output;
 	struct isp_statis_info *statis_info = NULL;
-	struct isp_statis_buf_input statis_buf;
 	cmr_u32 k_addr = 0;
 	cmr_u32 u_addr = 0;
 
@@ -1200,10 +1216,9 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	ae_stat_ptr = cxt->aem_stats;
 
 	bypass = 1;
-	if(cxt->afl_cxt.version) {
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, bypass);
-	} else {
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_SET_BYPASS, &bypass, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_SET_BYPASS"));
 	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
@@ -1228,41 +1243,19 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
 	afl_input.vir_addr = u_addr;
+	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
+
+	memset((void *)&cxt->afl_stat_buf, 0, sizeof(cxt->afl_stat_buf));
+	cxt->afl_stat_buf.buf_size = statis_info->buf_size;
+	cxt->afl_stat_buf.phy_addr = statis_info->phy_addr;
+	cxt->afl_stat_buf.vir_addr = statis_info->vir_addr;
+	cxt->afl_stat_buf.buf_property = ISP_AFL_BLOCK;
+	cxt->afl_stat_buf.buf_flag = 1;
+	afl_input.private_len = sizeof(struct isp_statis_buf_input);
+	afl_input.private_data = &cxt->afl_stat_buf;
 
 	if (cxt->ops.afl_ops.process)
-		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
-
-	memset((void *)&statis_buf, 0, sizeof(statis_buf));
-	statis_buf.buf_size = statis_info->buf_size;
-	statis_buf.phy_addr = statis_info->phy_addr;
-	statis_buf.vir_addr = statis_info->vir_addr;
-	statis_buf.buf_property = ISP_AFL_BLOCK;
-	statis_buf.buf_flag = 1;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
-	if (ret) {
-		ISP_LOGE("fail to set statis buf");
-	}
-	//change ae table
-	if (afl_output.flag) {
-		if (afl_output.cur_flicker) {
-			nxt_flicker = AE_FLICKER_50HZ;
-		} else {
-			nxt_flicker = AE_FLICKER_60HZ;
-		}
-		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
-	}
-
-	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
-		bypass = 0;
-	else
-		bypass = 1;
-
-	if(cxt->afl_cxt.version) {
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, bypass);
-	} else {
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
-	}
+		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, NULL);
 
 exit:
 	ISP_LOGV("done ret %ld", ret);
@@ -2587,6 +2580,11 @@ static cmr_int load_ispalg_library(cmr_handle adpt_handle)
 	cxt->ops.afl_ops.process = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_process");
 	if (!cxt->ops.afl_ops.process) {
 		ISP_LOGE("failed to dlsym afl_ops.process");
+		goto error_dlsym;
+	}
+	cxt->ops.afl_ops.ioctrl= dlsym(cxt->ispalg_lib_handle, "afl_ctrl_ioctrl");
+	if (!cxt->ops.afl_ops.ioctrl) {
+		ISP_LOGE("fail to dlsym afl_ops.afl_ctrl_ioctrl");
 		goto error_dlsym;
 	}
 	cxt->ops.afl_ops.config= dlsym(cxt->ispalg_lib_handle, "afl_ctrl_cfg");

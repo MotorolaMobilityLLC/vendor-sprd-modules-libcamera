@@ -309,6 +309,7 @@ struct afl_ctrl_proc_out {
 
 struct isp_anti_flicker_cfg {
 	cmr_u32 bypass;
+	pthread_mutex_t status_lock;
 	cmr_u32 mode;
 	cmr_u32 skip_frame_num;
 	cmr_u32 line_step;
@@ -328,6 +329,8 @@ struct isp_anti_flicker_cfg {
 	cmr_uint afl_region_total_num;
 	struct afl_ctrl_proc_out proc_out;
 	isp_afl_cb afl_set_cb;
+	cmr_int flag;
+	cmr_int cur_flicker;
 	cmr_s8 version;
 };
 

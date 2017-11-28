@@ -31,6 +31,12 @@ struct afl_ctrl_init_in {
 	cmr_s8 version;
 };
 
+enum afl_io_ctrl_cmd {
+	AFL_GET_INFO = 0x00,
+	AFL_SET_BYPASS,
+	AFL_NEW_SET_BYPASS
+};
+
 struct afl_proc_in {
 	cmr_u32 cur_flicker;
 	cmr_u32 cur_exp_flag;
@@ -39,9 +45,13 @@ struct afl_proc_in {
 	cmr_uint vir_addr;
 	struct isp_awb_statistic_info *ae_stat_ptr;
 	struct isp_antiflicker_param *afl_param_ptr;
+	cmr_u32 afl_mode;
 #ifdef CONFIG_ISP_2_2
 	cmr_handle handle_pm;
 #endif
+	void *private_data;
+	cmr_u32 private_len;
+
 };
 
 cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in *input_ptr);
@@ -49,6 +59,7 @@ cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, 
 cmr_int afl_ctrl_cfg(cmr_handle isp_afl_handle);
 cmr_int aflnew_ctrl_cfg(cmr_handle isp_afl_handle);
 cmr_int afl_ctrl_deinit(cmr_handle * isp_afl_handle);
+cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 
 #ifdef __cplusplus
 }

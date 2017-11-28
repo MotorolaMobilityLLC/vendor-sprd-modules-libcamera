@@ -31,6 +31,19 @@
 #define AFLCTRL_EVT_EXIT            (AFLCTRL_EVT_BASE + 4)
 
 static cmr_s32 cnt = 0;
+
+static cmr_s32 afl_check_handle(cmr_handle handle)
+{
+	struct isp_anti_flicker_cfg *cxt = (struct isp_anti_flicker_cfg *)handle;
+
+	if (NULL == cxt) {
+		ISP_LOGE("fail to check handle");
+		return ISP_ERROR;
+	}
+
+	return ISP_SUCCESS;
+}
+
 static cmr_s32 _set_afl_thr(cmr_s32 * thr)
 {
 #ifdef WIN32
@@ -130,6 +143,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cmr_u32 lowlight_50hz_thrd = 0;
 	cmr_u32 normal_60hz_thrd = 0;
 	cmr_u32 lowlight_60hz_thrd = 0;
+	cmr_int bypass = 0;
+	UNUSED(out_ptr);
 	struct isp_antiflicker_param *afl_param = NULL;
 #ifdef CONFIG_ISP_2_2
 	struct isp_pm_param_data param_data;
@@ -139,6 +154,9 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 #endif
 	cmr_s32 algo_width;
 	cmr_s32 algo_height;
+
+	void * afl_stat =  malloc(in_ptr->private_len);
+	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -278,10 +296,43 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 
 	}
 
-	out_ptr->flag = flag;
-	out_ptr->cur_flicker = cur_flicker;
+	pthread_mutex_lock(&cxt_ptr->status_lock);
+
+	cxt_ptr->flag = flag;
+	cxt_ptr->cur_flicker = cur_flicker;
+
+	pthread_mutex_unlock(&cxt_ptr->status_lock);
+
+	if (cxt_ptr->afl_set_cb) {
+		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_STATS_BUFFER, afl_stat, NULL);
+	}
+
+	if (in_ptr->afl_mode > AE_FLICKER_60HZ)
+		bypass = 0;
+	else
+		bypass = 1;
+
+
+
+#ifdef CONFIG_ISP_2_3
+	if (cxt_ptr->afl_set_cb) {
+			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
+	}
+#else
+	if (cxt_ptr->afl_set_cb) {
+		if (cxt_ptr->version)
+			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
+		else
+			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_BYPASS, &bypass, NULL);
+	}
+#endif
+
 
 exit:
+
+	if(afl_stat)
+		free(afl_stat);
+
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -524,9 +575,66 @@ exit:
 	return rtn;
 }
 
+static cmr_u32 _afl_get_info(struct isp_anti_flicker_cfg *cxt, void *result)
+{
+	cmr_u32 rtn = ISP_SUCCESS;
+	struct afl_ctrl_proc_out * param = (struct afl_ctrl_proc_out *) result;
+
+	param->cur_flicker = cxt->cur_flicker;
+	param->flag= cxt->flag;
+
+	return rtn;
+}
+
+cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_anti_flicker_cfg *cxt_ptr = (struct isp_anti_flicker_cfg *)handle;
+	UNUSED(out_ptr);
+
+	rtn = afl_check_handle(handle);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to check handle");
+		return ISP_ERROR;
+	}
+
+	pthread_mutex_lock(&cxt_ptr->status_lock);
+
+	switch (cmd) {
+	case AFL_GET_INFO:
+		rtn = _afl_get_info(cxt_ptr, in_ptr);
+		break;
+	case AFL_SET_BYPASS:
+		if (cxt_ptr->afl_set_cb){
+			if(cxt_ptr->version){
+				cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, in_ptr, NULL);
+			}else{
+				cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_BYPASS, in_ptr, NULL);
+			}
+		}
+		break;
+	case AFL_NEW_SET_BYPASS:
+		if (cxt_ptr->afl_set_cb){
+			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, in_ptr, NULL);
+		}
+		break;
+
+
+	default:
+		ISP_LOGE("fail to get invalid cmd %d", cmd);
+		rtn = ISP_ERROR;
+		break;
+	}
+	pthread_mutex_unlock(&cxt_ptr->status_lock);
+
+	return rtn;
+
+}
+
 cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in * in_ptr, struct afl_ctrl_proc_out * out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
+	UNUSED(out_ptr);
 	struct isp_anti_flicker_cfg *cxt_ptr = (struct isp_anti_flicker_cfg *)isp_afl_handle;
 	if (!isp_afl_handle || !in_ptr) {
 		rtn = ISP_PARAM_ERROR;
@@ -545,11 +653,9 @@ cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in * in_ptr,
 	message.alloc_flag = 1;
 
 	message.msg_type = AFLCTRL_EVT_PROCESS;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	message.sync_flag = CMR_MSG_SYNC_NONE;
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
-	if (out_ptr) {
-		*out_ptr = cxt_ptr->proc_out;
-	}
+
 exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;

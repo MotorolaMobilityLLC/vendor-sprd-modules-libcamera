@@ -287,12 +287,9 @@ static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO)
 		flag = 1;
 
-	if(cxt->afl_cxt.version) {
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, flag);
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 1);
-	} else {
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, 1);
-		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, flag);
+	if (cxt->ops.afl_ops.ioctrl) {
+			ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_SET_BYPASS, &flag, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to AFL_SET_BYPASS"));
 	}
 
 	return ret;

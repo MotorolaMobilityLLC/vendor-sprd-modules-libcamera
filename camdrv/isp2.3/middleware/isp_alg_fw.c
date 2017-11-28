@@ -176,6 +176,7 @@ struct ispalg_afl_ctrl_ops {
 	cmr_int (*process)(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr);
 	cmr_int (*config)(cmr_handle isp_afl_handle);
 	cmr_int (*config_new)(cmr_handle isp_afl_handle);
+	cmr_int (*ioctrl)(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 };
 
 struct ispalg_awb_ctrl_ops {
@@ -258,6 +259,7 @@ struct isp_alg_fw_context {
 	cmr_u32 mode_id[ISP_MODE_MAX]; /*when none zsl: mode_id[0] for prev, cap, video etc*/
 	pthread_mutex_t stats_buf_lock;
 	cmr_u8 is_master;
+	struct isp_statis_info afl_stat_info;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -336,6 +338,47 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 * param)
 	}
 
 	ISP_LOGV("D-gain global gain ori: %d\n", *param);
+
+	return ret;
+}
+
+static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
+				       struct isp_statis_info *statis_info, cmr_u32 buf_property)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_statis_buf_input statis_buf;
+
+	pthread_mutex_lock(&cxt->stats_buf_lock);
+
+	memset((void *)&statis_buf, 0, sizeof(statis_buf));
+	statis_buf.buf_size = statis_info->buf_size;
+	statis_buf.phy_addr = statis_info->phy_addr;
+	statis_buf.vir_addr = statis_info->vir_addr;
+	//statis_buf.addr_offset = statis_info->addr_offset;
+	statis_buf.kaddr[0] = statis_info->kaddr[0];
+	statis_buf.kaddr[1] = statis_info->kaddr[1];
+	statis_buf.buf_property = buf_property;
+	statis_buf.buf_flag = 1;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+	pthread_mutex_unlock(&cxt->stats_buf_lock);
+
+	return ret;
+}
+
+static cmr_int ispalg_set_afl_stats(struct isp_alg_fw_context *cxt, void * param)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_statis_info *stat_info = NULL;
+	stat_info = (struct isp_statis_info *)param;
+
+	ret = ispalg_set_stats_buffer(cxt, stat_info, ISP_AFL_BLOCK);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
 
 	return ret;
 }
@@ -969,6 +1012,9 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 		afl_block_info.bypass = *(cmr_u32 *)param0;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, param1);
 		break;
+	case ISP_AFL_SET_STATS_BUFFER:
+		ret = ispalg_set_afl_stats(cxt, param0);
+		break;
 	default:
 		break;
 	}
@@ -1285,33 +1331,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	return ret;
 }
 
-static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
-				       struct isp_statis_info *statis_info, cmr_u32 buf_property)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_statis_buf_input statis_buf;
-
-	pthread_mutex_lock(&cxt->stats_buf_lock);
-
-	memset((void *)&statis_buf, 0, sizeof(statis_buf));
-	statis_buf.buf_size = statis_info->buf_size;
-	statis_buf.phy_addr = statis_info->phy_addr;
-	statis_buf.vir_addr = statis_info->vir_addr;
-	//statis_buf.addr_offset = statis_info->addr_offset;
-	statis_buf.kaddr[0] = statis_info->kaddr[0];
-	statis_buf.kaddr[1] = statis_info->kaddr[1];
-	statis_buf.buf_property = buf_property;
-	statis_buf.buf_flag = 1;
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
-	if (ret) {
-		ISP_LOGE("fail to set statis buf");
-	}
-	pthread_mutex_unlock(&cxt->stats_buf_lock);
-
-	return ret;
-}
-
 static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1461,6 +1480,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 	cmr_u32 awb_mode = 0;
+	struct afl_ctrl_proc_out afl_info;
+	cmr_int nxt_flicker = 0;
 
 	memset(&gain, 0, sizeof(gain));
 	if (cxt->ae_cxt.sw_bypass) {
@@ -1475,6 +1496,22 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	if(cxt->ops.awb_ops.ioctrl){
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WB_MODE, NULL, (void *)&awb_mode);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_GET_INFO, (void *)&afl_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AF_GET_INFO"));
+	}
+
+	if (afl_info.flag) {
+		if (afl_info.cur_flicker) {
+			nxt_flicker = AE_FLICKER_50HZ;
+		} else {
+			nxt_flicker = AE_FLICKER_60HZ;
+		}
+		if (cxt->ops.ae_ops.ioctrl) {
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
+		}
 	}
 
 	memset((void *)&ae_result, 0, sizeof(ae_result));
@@ -1986,13 +2023,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
-	cmr_int nxt_flicker = 0;
 	cmr_u32 u_addr = 0;
 	struct isp_awb_statistic_info ae_stat_ptr;
 	struct afl_proc_in afl_input;
-	struct afl_ctrl_proc_out afl_output;
 	struct isp_u_blocks_info afl_block_info;
-	struct isp_statis_info *statis_info = NULL;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
@@ -2000,22 +2034,28 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
 
 	afl_block_info.scene_id = ISP_MODE_PRV;
-	statis_info = (struct isp_statis_info *)data;
-	u_addr = statis_info->vir_addr;
+	memcpy(&cxt->afl_stat_info, data, sizeof(struct isp_statis_info));
+	u_addr = cxt->afl_stat_info.vir_addr;
 	ae_stat_ptr = cxt->aem_stats;
 
 	if (cxt->afl_cxt.sw_bypass) {
-		ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AFL_BLOCK);
+		ret = ispalg_set_stats_buffer(cxt, &cxt->afl_stat_info, ISP_AFL_BLOCK);
 		if (ret) {
 			ISP_LOGE("fail to set statis buf");
 		}
 		afl_block_info.bypass = 0;
-		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
+		if (cxt->ops.afl_ops.ioctrl) {
+			ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_NEW_SET_BYPASS, &afl_block_info, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to AFL_NEW_SET_BYPASS"));
+		}
 		goto exit;
 	}
 
 	afl_block_info.bypass = 1;
-	isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_NEW_SET_BYPASS, &afl_block_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_NEW_SET_BYPASS"));
+	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
@@ -2041,32 +2081,15 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
 	afl_input.vir_addr = u_addr;
+	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
+	afl_input.private_len = sizeof(struct isp_statis_info);
+	afl_input.private_data = &cxt->afl_stat_info;
 
 	if (cxt->ops.afl_ops.process) {
-		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
+		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to afl process"));
 	}
 
-	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_AFL_BLOCK);
-	if (ret) {
-		ISP_LOGE("fail to set statis buf");
-	}
-	//change ae table
-	if (afl_output.flag) {
-		if (afl_output.cur_flicker) {
-			nxt_flicker = AE_FLICKER_50HZ;
-		} else {
-			nxt_flicker = AE_FLICKER_60HZ;
-		}
-		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
-	}
-
-	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
-		afl_block_info.bypass = 0;
-	else
-		afl_block_info.bypass = 1;
-	isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, &afl_block_info);
 
 exit:
 	ISP_LOGV("done ret %ld", ret);
@@ -3223,6 +3246,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	cxt->ops.afl_ops.process = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_process");
 	if (!cxt->ops.afl_ops.process) {
 		ISP_LOGE("fail to dlsym afl_ops.process");
+		goto error_dlsym;
+	}
+	cxt->ops.afl_ops.ioctrl= dlsym(cxt->ispalg_lib_handle, "afl_ctrl_ioctrl");
+	if (!cxt->ops.afl_ops.ioctrl) {
+		ISP_LOGE("fail to dlsym afl_ops.afl_ctrl_ioctrl");
 		goto error_dlsym;
 	}
 	cxt->ops.afl_ops.config = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_cfg");

@@ -161,6 +161,7 @@ struct ispalg_afl_ctrl_ops {
 	cmr_int (*process)(cmr_handle isp_afl_handle, struct afl_proc_in * in_ptr, struct afl_ctrl_proc_out * out_ptr);
 	cmr_int (*config)(isp_handle isp_afl_handle);
 	cmr_int (*config_new)(isp_handle isp_afl_handle);
+	cmr_int (*ioctrl)(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 };
 
 struct ispalg_awb_ctrl_ops {
@@ -246,6 +247,7 @@ struct isp_alg_fw_context {
 	cmr_u32 is_multi_mode;
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
 	cmr_u16 *binning_statis_ptr;
+	struct isp_statis_buf_input afl_stat_buf;
 };
 
 struct isp_alg_fw_init_in {
