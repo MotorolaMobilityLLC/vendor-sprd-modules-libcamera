@@ -979,7 +979,7 @@ static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
             mIspLscHeapReserved = NULL;
         }
     }
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     if (type == CAMERA_ISP_STATIS) {
         if (NULL != mIspStatisHeapReserved) {
             mIspStatisHeapReserved->ion_heap->free_kaddr();
@@ -1074,7 +1074,7 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
         ret = Callback_PreviewFree(phy_addr, vir_addr, fd, sum);
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
                type == CAMERA_ISP_FIRMWARE
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
                || type == CAMERA_ISP_STATIS
 #endif
                || type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
@@ -1285,7 +1285,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
             *vir_addr++ = (cmr_uint)mIspLscHeapReserved->data;
             *fd++ = mIspLscHeapReserved->fd;
         }
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     } else if (type == CAMERA_ISP_STATIS) {
 
         cmr_u64 kaddr = 0;
@@ -1436,7 +1436,7 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
         ret = Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
                type == CAMERA_ISP_FIRMWARE
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
                || type == CAMERA_ISP_STATIS
 #endif
                || type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
