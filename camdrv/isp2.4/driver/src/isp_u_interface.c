@@ -15,6 +15,7 @@
  */
 
 #include "isp_drv.h"
+#include "cmr_common.h"
 
 typedef cmr_s32(*isp_cfg_fun_ptr) (cmr_handle handle, void *param_ptr);
 
@@ -322,13 +323,20 @@ cmr_s32 isp_set_fetch_param(cmr_handle handle)
 	fetch_param_ptr->subtract = ISP_ZERO;
 	fetch_param_ptr->size.width = isp_context_ptr->data.input_size.w;
 	fetch_param_ptr->size.height = isp_context_ptr->data.input_size.h;
+	fetch_param_ptr->addr.chn0 = isp_context_ptr->data.input_addr.chn0;
+	fetch_param_ptr->addr.chn1 = isp_context_ptr->data.input_addr.chn1;
+	fetch_param_ptr->addr.chn2 = isp_context_ptr->data.input_addr.chn2;
+	fetch_param_ptr->addr.img_fd = isp_context_ptr->data.input_addr.img_fd;
 
 	fetch_param_ptr->color_format = isp_get_fetch_format(isp_context_ptr->data.input_format);
 	isp_get_fetch_pitch((struct isp_pitch *)&(fetch_param_ptr->pitch),
 		isp_context_ptr->data.input_size.w,
 		isp_context_ptr->data.input_format);
-	ISP_LOGI("fetch format %d pitch %d\n",
-		fetch_param_ptr->color_format,  fetch_param_ptr->pitch.chn0);
+	ISP_LOGI("fetch format %d pitch %d, y addr %x img_fd is%x\n",
+		fetch_param_ptr->color_format,
+		fetch_param_ptr->pitch.chn0,
+		fetch_param_ptr->addr.chn0,
+		isp_context_ptr->data.input_addr.img_fd);
 
 	return ret;
 }
@@ -341,8 +349,8 @@ static enum isp_store_format isp_get_store_format(enum isp_format in_format)
 	case ISP_DATA_UYVY:
 		format = ISP_STORE_UYVY;
 		break;
-	case ISP_DATA_YUV422_2FRAME:
-		format = ISP_STORE_YUV422_2FRAME;
+	case IMG_DATA_TYPE_YUV420:
+		format = ISP_STORE_YUV420_2FRAME;
 		break;
 	case ISP_DATA_YVU422_2FRAME:
 		format = ISP_STORE_YVU422_2FRAME;
@@ -414,7 +422,12 @@ cmr_s32 isp_set_store_param(cmr_handle handle)
 	store_param_ptr->addr.chn0 = isp_context_ptr->data.output_addr.chn0;
 	store_param_ptr->addr.chn1 = isp_context_ptr->data.output_addr.chn1;
 	store_param_ptr->addr.chn2 = isp_context_ptr->data.output_addr.chn2;
-	isp_get_store_pitch((struct isp_pitch *)&(store_param_ptr->pitch), isp_context_ptr->data.input_size.w, isp_context_ptr->data.output_format);
+	store_param_ptr->addr.img_fd = isp_context_ptr->data.output_addr.img_fd;
+	ISP_LOGI("isp store dst addr is %x, fmt is %x, in fmt is %x\n",
+		store_param_ptr->addr.chn0, store_param_ptr->color_format,
+		isp_context_ptr->data.output_format);
+	isp_get_store_pitch((struct isp_pitch *)&(store_param_ptr->pitch),
+		isp_context_ptr->data.input_size.w, isp_context_ptr->data.output_format);
 
 	return ret;
 }
@@ -506,9 +519,9 @@ cmr_s32 isp_set_comm_param(cmr_handle handle)
 		com_param_ptr->fetch_sel_1 = 0x3;
 		com_param_ptr->store_sel_1 = 0x3;
 	}
-
 	com_param_ptr->fetch_color_format = 0;
 	com_param_ptr->store_color_format = 2;
+
 
 	com_param_ptr->lbuf_off.ydly_lbuf_offset = 0x121;
 	com_param_ptr->lbuf_off.comm_lbuf_offset = 0x480;
