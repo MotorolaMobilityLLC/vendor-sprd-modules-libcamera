@@ -2078,7 +2078,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	}
 	calc_roi(af, NULL, af->algo_mode);
 	do_start_af(af);
-	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 		trigger_start(af);	// for hdr capture no af mode update at whole procedure
 	}
 
@@ -2095,7 +2095,7 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	ISP_LOGI("af state = %s, focus state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
 
-	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state) {
+	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 		trigger_stop(af);
 	}
 
@@ -2819,14 +2819,15 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
 		}
 #endif
-		af->afm_skip_num = 0;
+
 		if (inparam->sensor_fps.is_high_fps) {
 			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
-			if (afm_skip_num > 0)
+			if (afm_skip_num != af->afm_skip_num) {
 				af->afm_skip_num = afm_skip_num;
-			else
-				af->afm_skip_num = 0;
-			ISP_LOGI("af.skip_num %d", af->afm_skip_num);
+				ISP_LOGI("af.skip_num %d", af->afm_skip_num);
+			}
+		} else {
+			af->afm_skip_num = 0;
 		}
 		af->trigger_source_type |= AF_DATA_AF;
 		break;
