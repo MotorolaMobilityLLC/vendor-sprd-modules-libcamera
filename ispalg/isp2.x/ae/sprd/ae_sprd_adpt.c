@@ -144,6 +144,7 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 
 }
 
+#ifndef CONFIG_ISP_2_2
 static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
 {
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
@@ -285,6 +286,7 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 
 	return ISP_SUCCESS;
 }
+#endif
 
 static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param_ptr)
 {
@@ -382,8 +384,10 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	write_param.sensor_gain  =write_item.sensor_gain;
 
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
+#ifndef CONFIG_ISP_2_2
 		if (cxt->sensor_role)
 			ae_sync_write_to_sensor(cxt, &write_param);
+#endif
 	} else {
 		ae_write_to_sensor(cxt, &write_param);
 	}
@@ -3344,6 +3348,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 	cxt->cur_status.snr_min_fps = work_info->sensor_fps.min_fps;
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
+#ifndef CONFIG_ISP_2_2
 		/* save master & slave sensor info */
 		struct sensor_info sensor_info;
 		sensor_info.max_again = cxt->sensor_max_gain;
@@ -3362,6 +3367,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 			sensor_info.sensor_gain_precision,
 			sensor_info.min_exp_line,
 			sensor_info.line_time);
+#endif
 	}
 
 
@@ -4864,7 +4870,9 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		break;
 
 	case AE_SET_RGB_GAIN:
+#ifndef CONFIG_ISP_2_2
 		rtn = ae_set_isp_gain(cxt);
+#endif
 		break;
 
 	case AE_SET_UPDATE_AUX_SENSOR:
