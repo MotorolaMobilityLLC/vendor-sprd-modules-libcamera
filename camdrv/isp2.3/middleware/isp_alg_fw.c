@@ -259,6 +259,7 @@ struct isp_alg_fw_context {
 	cmr_u32 mode_id[ISP_MODE_MAX]; /*when none zsl: mode_id[0] for prev, cap, video etc*/
 	pthread_mutex_t stats_buf_lock;
 	cmr_u8 is_master;
+	cmr_u32 is_multi_mode;
 	struct isp_statis_info afl_stat_info;
 };
 
@@ -4212,6 +4213,10 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
+
+	cxt->is_master = input_ptr->init_param->is_master;
+	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
+
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
