@@ -101,9 +101,10 @@ cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, cmr_u32 fetch_start)
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = ISP_BLOCK_FETCH;
-	param.property = ISP_PRO_FETCH_START_ISP;
+	param.property = ISP_PRO_FETCH_START;
 	param.property_param = &fetch_start;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
 	return ret;
 }

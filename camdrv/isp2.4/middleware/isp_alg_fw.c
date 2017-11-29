@@ -2120,7 +2120,7 @@ cmr_int ispalg_afthread_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check input param ");
 		goto exit;
 	}
-  	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case ISP_CTRL_EVT_AF:
@@ -2145,7 +2145,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check input param ");
 		goto exit;
 	}
-  	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case ISP_CTRL_EVT_TX:
@@ -3727,10 +3727,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	interface_ptr->data.input_addr.chn0 = in_ptr->src_frame.img_addr_phy.chn0;
 	interface_ptr->data.input_addr.chn1 = in_ptr->src_frame.img_addr_phy.chn1;
 	interface_ptr->data.input_addr.chn2 = in_ptr->src_frame.img_addr_phy.chn2;
-	interface_ptr->data.input_addr.img_fd = in_ptr->src_frame.img_fd.y;
 	interface_ptr->data.input_vir.chn0 = in_ptr->src_frame.img_addr_vir.chn0;
 	interface_ptr->data.input_vir.chn1 = in_ptr->src_frame.img_addr_vir.chn1;
 	interface_ptr->data.input_vir.chn2 = in_ptr->src_frame.img_addr_vir.chn2;
+	interface_ptr->data.input_fd = in_ptr->src_frame.img_fd.y;
 
 	interface_ptr->data.output_format = in_ptr->dst_frame.img_fmt;
 	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
@@ -3741,7 +3741,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	interface_ptr->data.output_addr.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
 	interface_ptr->data.output_addr.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	interface_ptr->data.output_addr.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
-	interface_ptr->data.output_addr.img_fd = in_ptr->dst_frame.img_fd.y;
 
 	interface_ptr->sbs_info.sbs_mode = in_ptr->sbs_info.sbs_mode;
 	interface_ptr->sbs_info.img_size.w = in_ptr->sbs_info.img_size.w;
