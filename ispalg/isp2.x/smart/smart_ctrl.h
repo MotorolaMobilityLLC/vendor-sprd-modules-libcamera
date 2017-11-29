@@ -90,6 +90,7 @@ struct smart_init_param {
 	cmr_handle caller_handle;
 	isp_smart_cb smart_set_cb;
 	struct smart_tuning_param tuning_param[SMART_MAX_WORK_MODE];
+	cmr_u32 camera_id;
 };
 
 struct smart_calc_param {

@@ -2539,6 +2539,8 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 	cxt->smart_cxt.isp_smart_eb = 0;
 	memset(&smart_init_param, 0, sizeof(smart_init_param));
 
+	smart_init_param.camera_id = cxt->camera_id;
+
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_SMART, &pm_input, &pm_output);
 	if (ISP_SUCCESS == ret) {
 		for (i = 0; i < pm_output.param_num; ++i) {
