@@ -221,6 +221,10 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
+LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(wildcard $(LOCAL_PATH)/*/*/*/*/Android.mk)
