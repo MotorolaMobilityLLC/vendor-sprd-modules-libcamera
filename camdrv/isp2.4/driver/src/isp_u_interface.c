@@ -188,7 +188,7 @@ cmr_s32 isp_set_arbiter(cmr_handle handle)
 	}
 	/*to be fixed*/
 	isp_arbiter_ptr->endian_ch0.bpc_endian = ISP_ENDIAN_LITTLE;
-	isp_arbiter_ptr->endian_ch0.lens_endian = ISP_ENDIAN_LITTLE;
+	isp_arbiter_ptr->endian_ch0.lens_endian = ISP_ENDIAN_BIG;
 	isp_arbiter_ptr->endian_ch0.store_endian = ISP_ENDIAN_BIG;
 	isp_arbiter_ptr->endian_ch0.fetch_bit_reorder = ISP_ZERO;
 
