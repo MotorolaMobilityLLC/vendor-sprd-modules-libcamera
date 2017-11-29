@@ -148,7 +148,8 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/SprdCamera3OEMIf.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Setting.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
-	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp
+	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp  \
+	hal3_$(ISP_HW_VER)/SprdCameraSystemPerformance.cpp
 
 LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \

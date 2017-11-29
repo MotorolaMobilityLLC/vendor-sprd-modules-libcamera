@@ -105,24 +105,11 @@ namespace sprdcamera {
 // 300 means 300ms
 #define ZSL_SNAPSHOT_THRESHOLD_TIME 300
 
-// dfs policy
-enum DFS_POLICY {
-    CAM_EXIT,
-    CAM_LOW,
-    CAM_HIGH,
-    CAM_VERYHIGH,
-};
-
 // 3dnr Video mode
 enum VIDEO_3DNR {
     VIDEO_OFF,
     VIDEO_ON,
 };
-
-//#define CAM_EXIT_STR          "exit"
-#define CAM_LOW_STR "camlow"
-#define CAM_HIGH_STR "camhigh"
-#define CAM_VERYHIGH_STR "camveryhigh"
 
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM /*pre alloc memory for capture*/
 #define HAS_CAMERA_HINTS 1
@@ -260,13 +247,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
       mFlashMask(false), mReleaseFLag(false), mTimeCoeff(1),
       mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
-      mCameraDfsPolicyCur(CAM_EXIT), mIsPerformanceTestable(false),
-      mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
-      mPrvTimerID(SPRD_NULL), mFlashMode(-1), mIsAutoFocus(false),
-      mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
-      mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
-      mHDRPlusFillState(false), mPreviewFrameNum(0), mRecordFrameNum(0),
-      mIsRecording(false),
+      mIsPerformanceTestable(false), mIsAndroidZSL(false), mSetting(setting),
+      BurstCapCnt(0), mCapIntent(0), mPrvTimerID(NULL), mFlashMode(-1),
+      mIsAutoFocus(false), mIspToolStart(false), mSubRawHeapNum(0),
+      mSubRawHeapSize(0), mPathRawHeapNum(0), mPathRawHeapSize(0),
+      mPreviewDcamAllocBufferCnt(0), mHDRPlusFillState(false),
+      mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
       mIsPreAllocCapMem(1),
 #else
@@ -274,16 +260,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
-      mPowermanageInited(0), mPowerManager(NULL), mPowerManagerLowPower(NULL),
-      mPrfmLock(NULL), m_pPowerModule(NULL), miSBindcorePreviewFrame(false),
-      mBindcorePreivewFrameCount(0),
-#ifdef POWER_HINT_USED
-      mHDRPowerHint(0),
-#endif
-      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
-      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
-      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
-      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
+      miSBindcorePreviewFrame(false), mBindcorePreivewFrameCount(0),
+      mHDRPowerHint(0), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false),
+      mEisVideoInit(false), mGyroNum(0), mSprdEisEnabled(false),
+      mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
+      mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
       mFixedFpsEnabled(0), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
@@ -296,12 +277,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI(":hal3: E cameraId: %d.", cameraId);
-#ifdef POWER_HINT_USED
-    initPowerHint();
-    setPowerHint(CAM_POWER_PERFORMACE_ON);
-    changeDfsPolicy(CAM_HIGH);
-#endif
 
+    SprdCameraSystemPerformance::getSysPerformance(&mSysPerformace);
+    if (mSysPerformace) {
+        setCamPreformaceScene(CAM_OPEN_S);
+    }
 #if defined(LOWPOWER_DISPLAY_30FPS)
     property_set("lowpower.display.30fps", "true");
 #endif
@@ -515,12 +495,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
         closeCamera();
     }
 
-    changeDfsPolicy(CAM_EXIT);
-#ifdef POWER_HINT_USED
-    setPowerHint(CAM_POWER_NORMAL);
-    deinitPowerHint();
-#endif
-
+    setCamPreformaceScene(CAM_EXIT_E);
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
     property_get("lowpower.display.30fps", value, "false");
@@ -542,6 +517,8 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
     HAL_LOGI(":hal3: X cameraId: %d.", mCameraId);
     timer_stop();
+
+    SprdCameraSystemPerformance::freeSysPerformance(&mSysPerformace);
 }
 
 void SprdCamera3OEMIf::closeCamera() {
@@ -662,14 +639,11 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     case CAMERA_CHANNEL_TYPE_PICTURE: {
         if (getMultiCameraMode() == MODE_BLUR ||
             getMultiCameraMode() == MODE_BOKEH) {
-            changeDfsPolicy(CAM_VERYHIGH);
-            HAL_LOGI("set dfs CAM_VERYHIGH");
-#ifdef POWER_HINT_USED
-            setPowerHint(CAM_POWER_PERFORMACE_ON);
-#endif
+            setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HH);
+        } else if (1 == mHDRPowerHint) {
+            setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HN);
         } else {
-            changeDfsPolicy(CAM_HIGH);
-            HAL_LOGI("set dfs CAM_HIGH");
+            setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_NH);
         }
 
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
@@ -760,13 +734,6 @@ int SprdCamera3OEMIf::takePicture() {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-#ifdef POWER_HINT_USED
-    if (1 == mHDRPowerHint) {
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
-    } else {
-        setPowerHint(CAM_POWER_NORMAL);
-    }
-#endif
 
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("take picture in error status, deinit capture at first");
@@ -900,12 +867,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-#ifdef POWER_HINT_USED
-    if (getMultiCameraMode() != MODE_BLUR &&
-        getMultiCameraMode() != MODE_BOKEH) {
-        setPowerHint(CAM_POWER_NORMAL);
-    }
-#endif
+
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
@@ -1068,11 +1030,11 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(frm_info *frm_data) {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-#ifdef POWER_HINT_USED
+
     if (1 == mHDRPowerHint) {
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
+        setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HN);
     }
-#endif
+
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("take picture in error status, deinit capture at first");
         deinitCapture(mIsPreAllocCapMem);
@@ -1208,9 +1170,7 @@ int SprdCamera3OEMIf::VideoTakePicture() {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
     }
-#ifdef POWER_HINT_USED
-    setPowerHint(CAM_POWER_NORMAL);
-#endif
+
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
@@ -1714,29 +1674,6 @@ void SprdCamera3OEMIf::print_time() {
 #endif
 }
 
-void SprdCamera3OEMIf::thermalEnabled(bool flag) {
-    int therm_fd = -1;
-    int i = 0;
-    char buf[20] = {0};
-    char *p = NULL;
-
-    therm_fd = socket_local_client(
-        "thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
-    if (therm_fd < 0)
-        HAL_LOGI("%s open thermald  failed: %s\n", __func__, strerror(errno));
-    else {
-        p = buf;
-        if (flag) {
-            p += snprintf(p, 20, "%s", "SetPerfDis");
-        } else {
-            p += snprintf(p, 20, "%s", "SetPerfEn");
-        }
-        write(therm_fd, buf, strlen(buf));
-        close(therm_fd);
-        HAL_LOGI("%s, strlen of buf: %d, flag: %d", buf, strlen(buf), flag);
-    }
-}
-
 static int set_camera_affinity(pid_t pid) {
     cpu_set_t cpu_set;
     cpu_set_t cpu_get;
@@ -1761,379 +1698,6 @@ void SprdCamera3OEMIf::bindcoreEnabled() {
     mBindcorePreivewFrameCount = 0;
     HAL_LOGV("bind:%d,%d,%d", ret, miSBindcorePreviewFrame,
              mBindcorePreivewFrameCount);
-}
-
-#ifdef POWER_HINT_USED
-void SprdCamera3OEMIf::initPowerHint() {
-#ifdef HAS_CAMERA_HINTS
-#ifdef ANDROID_VERSION_O_BRINGUP
-    if (hw_get_module(POWER_HARDWARE_MODULE_ID,
-                      (const hw_module_t **)&m_pPowerModule)) {
-        HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
-    }
-#else
-    Mutex::Autolock l(&mPowermanageLock);
-    char value[PROPERTY_VALUE_MAX];
-    sp<IPowerManager> mPowerManagerEnable = NULL;
-    if (mPowerManagerEnable == NULL) {
-        // use checkService() to avoid blocking if power service is not up yet
-        sp<IBinder> binder =
-            defaultServiceManager()->checkService(String16("power"));
-        if (binder == NULL) {
-            ALOGE("Thread cannot connect to the power manager service");
-        } else {
-            mPowerManagerEnable = interface_cast<IPowerManager>(binder);
-        }
-    }
-    if (mPowerManagerEnable != NULL) {
-#ifdef CONFIG_CAMERA_POWERHINT_PERFORMANCE
-        property_get("debug.camera.dis.perf", value, "0");
-        if (!atoi(value)) {
-            mPowerManager = mPowerManagerEnable;
-        }
-#endif
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
-        property_get("debug.camera.dis.lowpower", value, "0");
-        if (!atoi(value)) {
-            mPowerManagerLowPower = mPowerManagerEnable;
-        }
-#endif
-    }
-    if (!mPowermanageInited)
-        mPowermanageInited = 1;
-    mCurrentPowerHint = CAM_POWER_NORMAL;
-#endif
-#endif
-}
-
-void SprdCamera3OEMIf::deinitPowerHint() {
-#ifdef HAS_CAMERA_HINTS
-#ifndef ANDROID_VERSION_O_BRINGUP
-    mPowermanageInited = 0;
-    if (mPowerManager != NULL)
-        mPowerManager.clear();
-    if (mPrfmLock != NULL)
-        mPrfmLock.clear();
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
-    if (mPowerManagerLowPower != NULL)
-        mPowerManagerLowPower.clear();
-    if (mPrfmLockLowPower != NULL)
-        mPrfmLockLowPower.clear();
-#endif
-#endif
-#endif
-}
-
-void SprdCamera3OEMIf::enablePowerHintExt(sp<IPowerManager> powermanager,
-                                          sp<IBinder> prfmlock,
-                                          int powerhint_id) {
-    if (prfmlock != NULL) {
-        if (powermanager != 0) {
-            HAL_LOGI("releaseWakeLock_l() - Prfmlock ");
-            powermanager->releasePrfmLock(prfmlock);
-        }
-        prfmlock.clear();
-    }
-    if (powermanager != NULL) {
-        sp<IBinder> binder = new BBinder();
-        powermanager->acquirePrfmLock(binder, String16("Camera"),
-                                      String16("CameraServer"), powerhint_id);
-        prfmlock = binder;
-        HAL_LOGI("powerhint enabled,%d", powerhint_id);
-    }
-
-    if (powerhint_id == CAMERA_POWER_HINT_PERFORMANCE) {
-        mPrfmLock = prfmlock;
-    } else if (powerhint_id == CAMERA_POWER_HINT_LOWPOWER) {
-        mPrfmLockLowPower = prfmlock;
-    }
-}
-
-void SprdCamera3OEMIf::disablePowerHintExt(sp<IPowerManager> powermanager,
-                                           sp<IBinder> prfmlock) {
-    if (prfmlock != 0) {
-        if (powermanager != 0) {
-            HAL_LOGI("releaseWakeLock_l() - Prfmlock ");
-            powermanager->releasePrfmLock(prfmlock);
-        }
-        prfmlock.clear();
-    }
-}
-
-void SprdCamera3OEMIf::setPowerHint(int powerhint_id) {
-#ifdef HAS_CAMERA_HINTS
-    HAL_LOGI("IN, mCurrentPowerHint=%d", mCurrentPowerHint);
-    Mutex::Autolock l(&mPowermanageLock);
-#ifdef ANDROID_VERSION_O_BRINGUP
-    switch (mCurrentPowerHint) {
-    case CAM_POWER_NORMAL:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            if (m_pPowerModule && m_pPowerModule->powerHint) {
-                m_pPowerModule->powerHint(
-                    m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=1");
-            }
-            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            HAL_LOGI("current power state is  CAM_POWER_NORMAL, target is "
-                     "CAM_POWER_LOWPOWER_ON,"
-                     "state are both 0, just return");
-            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            HAL_LOGI("current power state is already CAM_POWER_NORMAL,"
-                     "state are both 0, just return");
-            goto exit;
-        }
-        break;
-    case CAM_POWER_PERFORMACE_ON:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            HAL_LOGI("current power state is already CAM_POWER_PERFORMACE_ON,"
-                     "state are both 1, just return");
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            if (m_pPowerModule && m_pPowerModule->powerHint) {
-                m_pPowerModule->powerHint(
-                    m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=0");
-            }
-            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            if (m_pPowerModule && m_pPowerModule->powerHint) {
-                m_pPowerModule->powerHint(
-                    m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=0");
-            }
-            mCurrentPowerHint = CAM_POWER_NORMAL;
-        }
-        break;
-    case CAM_POWER_LOWPOWER_ON:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            if (m_pPowerModule && m_pPowerModule->powerHint) {
-                m_pPowerModule->powerHint(
-                    m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=1");
-            }
-            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            HAL_LOGI("current power state is already CAM_POWER_LOWPOWER_ON,"
-                     "state are both 0, just return");
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            HAL_LOGI("current power state is  CAM_POWER_LOWPOWER_ON, target is "
-                     "CAM_POWER_NORMAL,"
-                     "state are both 0, just return");
-            mCurrentPowerHint = CAM_POWER_NORMAL;
-            goto exit;
-        }
-        break;
-    default:
-        HAL_LOGE("should not be here");
-        goto exit;
-    }
-#else
-    switch (mCurrentPowerHint) {
-    case CAM_POWER_NORMAL:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            powerhint_id = CAMERA_POWER_HINT_PERFORMANCE;
-            enablePowerHintExt(mPowerManager, mPrfmLock, powerhint_id);
-            // disable thermal
-            thermalEnabled(false);
-            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            powerhint_id = CAMERA_POWER_HINT_LOWPOWER;
-            enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
-                               powerhint_id);
-
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
-            miSBindcorePreviewFrame = true;
-#endif
-
-            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            HAL_LOGI("current power state is already POWER_IDLE, just return");
-            goto exit;
-        }
-        break;
-    case CAM_POWER_PERFORMACE_ON:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            HAL_LOGI("current power state is already POWER_PERFORMACE_ON, "
-                     "just return");
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            // first, disable CAMERA_POWER_HINT_PERFORMANCE
-            disablePowerHintExt(mPowerManager, mPrfmLock);
-            thermalEnabled(true);
-
-            // second, enable CAMERA_POWER_HINT_LOWPOWER
-            powerhint_id = CAMERA_POWER_HINT_LOWPOWER;
-            enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
-                               powerhint_id);
-
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
-            miSBindcorePreviewFrame = true;
-#endif
-
-            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            disablePowerHintExt(mPowerManager, mPrfmLock);
-            thermalEnabled(true);
-            mCurrentPowerHint = CAM_POWER_NORMAL;
-        }
-        break;
-    case CAM_POWER_LOWPOWER_ON:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            // first, disable CAMERA_POWER_HINT_LOWPOWER
-            disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower);
-
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
-            miSBindcorePreviewFrame = false;
-#endif
-
-            // second, enable CAMERA_POWER_HINT_PERFORMANCE
-            powerhint_id = CAMERA_POWER_HINT_PERFORMANCE;
-            enablePowerHintExt(mPowerManager, mPrfmLock, powerhint_id);
-            // disable thermal
-            thermalEnabled(false);
-            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            HAL_LOGI("current power state is already POWER_LOWPOWER_ON,"
-                     "just return");
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            // first, disable CAMERA_POWER_HINT_LOWPOWER
-            disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower);
-
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
-            miSBindcorePreviewFrame = false;
-#endif
-
-            mCurrentPowerHint = CAM_POWER_NORMAL;
-        }
-        break;
-    default:
-        HAL_LOGE("should not be here");
-        goto exit;
-    }
-#endif
-exit:
-    HAL_LOGI("out, mCurrentPowerHint=%d", mCurrentPowerHint);
-    return;
-#endif
-}
-#endif
-
-int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy) {
-    switch (dfs_policy) {
-    case CAM_EXIT:
-        if (CAM_LOW == mCameraDfsPolicyCur) {
-            releaseDfsPolicy(CAM_LOW);
-        } else if (CAM_HIGH == mCameraDfsPolicyCur) {
-            releaseDfsPolicy(CAM_HIGH);
-        } else if (CAM_VERYHIGH == mCameraDfsPolicyCur)
-            releaseDfsPolicy(CAM_VERYHIGH);
-        mCameraDfsPolicyCur = CAM_EXIT;
-        break;
-    case CAM_LOW:
-        if (CAM_EXIT == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_LOW);
-        } else if (CAM_HIGH == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_LOW);
-            releaseDfsPolicy(CAM_HIGH);
-        } else if (CAM_VERYHIGH == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_LOW);
-            releaseDfsPolicy(CAM_VERYHIGH);
-        }
-        mCameraDfsPolicyCur = CAM_LOW;
-        break;
-    case CAM_HIGH:
-        if (CAM_EXIT == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_HIGH);
-        } else if (CAM_LOW == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_HIGH);
-            releaseDfsPolicy(CAM_LOW);
-        } else if (CAM_VERYHIGH == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_HIGH);
-            releaseDfsPolicy(CAM_VERYHIGH);
-        }
-        mCameraDfsPolicyCur = CAM_HIGH;
-        break;
-    case CAM_VERYHIGH:
-        if (CAM_EXIT == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_VERYHIGH);
-        } else if (CAM_LOW == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_VERYHIGH);
-            releaseDfsPolicy(CAM_LOW);
-        } else if (CAM_HIGH == mCameraDfsPolicyCur) {
-            setDfsPolicy(CAM_VERYHIGH);
-            releaseDfsPolicy(CAM_HIGH);
-        }
-        mCameraDfsPolicyCur = CAM_VERYHIGH;
-        break;
-    default:
-        HAL_LOGW("unrecognize dfs policy");
-        break;
-    }
-    HAL_LOGI("mCameraDfsPolicyCur: %d", mCameraDfsPolicyCur);
-    return NO_ERROR;
-}
-
-int SprdCamera3OEMIf::setDfsPolicy(int dfs_policy) {
-    const char *dfs_scene = NULL;
-    const char *const scenario_dfs =
-        "/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs";
-    FILE *fp = fopen(scenario_dfs, "wb");
-    if (NULL == fp) {
-        HAL_LOGW("failed to open %s X", scenario_dfs);
-        return BAD_VALUE;
-    }
-    switch (dfs_policy) {
-    case CAM_LOW:
-        dfs_scene = CAM_LOW_STR;
-        break;
-    case CAM_HIGH:
-        dfs_scene = CAM_HIGH_STR;
-        break;
-    case CAM_VERYHIGH:
-        dfs_scene = CAM_VERYHIGH_STR;
-        break;
-    default:
-        HAL_LOGW("unrecognize dfs policy");
-        break;
-    }
-    HAL_LOGD("dfs_scene: %s", dfs_scene);
-    // echo dfs_scene > scenario_dfs
-    fprintf(fp, "%s", dfs_scene);
-    fclose(fp);
-    fp = NULL;
-    return NO_ERROR;
-}
-
-int SprdCamera3OEMIf::releaseDfsPolicy(int dfs_policy) {
-    const char *dfs_scene = NULL;
-    const char *const scenario_dfs =
-        "/sys/class/devfreq/scene-frequency/sprd_governor/exit_scene";
-    FILE *fp = fopen(scenario_dfs, "wb");
-    if (NULL == fp) {
-        HAL_LOGW("failed to open %s X", scenario_dfs);
-        return BAD_VALUE;
-    }
-    switch (dfs_policy) {
-    case CAM_LOW:
-        dfs_scene = CAM_LOW_STR;
-        break;
-    case CAM_HIGH:
-        dfs_scene = CAM_HIGH_STR;
-        break;
-    case CAM_VERYHIGH:
-        dfs_scene = CAM_VERYHIGH_STR;
-        break;
-    default:
-        HAL_LOGW("unrecognize dfs policy");
-        break;
-    }
-    HAL_LOGD("release dfs_scene: %s", dfs_scene);
-    // echo dfs_scene > scenario_dfs
-    fprintf(fp, "%s", dfs_scene);
-    fclose(fp);
-    fp = NULL;
-    return NO_ERROR;
 }
 
 int SprdCamera3OEMIf::getCameraTemp() {
@@ -3480,13 +3044,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
-#ifdef POWER_HINT_USED
-    if (!miSPreviewFirstFrame) {
-        if (sprddefInfo.slowmotion <= 1) {
-            setPowerHint(CAM_POWER_LOWPOWER_ON);
-        }
-    }
-#endif
+
     if (isCapturing()) {
         // WaitForCaptureDone();
         WaitForBurstCaptureDone();
@@ -3513,16 +3071,17 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
-        changeDfsPolicy(CAM_LOW);
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_L);
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
-        changeDfsPolicy(CAM_LOW);
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
             mVideoCopyFromPreviewFlag = true;
             on_off = VIDEO_ON;
             camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
         }
+
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -3530,23 +3089,18 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
-        changeDfsPolicy(CAM_HIGH);
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
     } else if (getMultiCameraMode() == MODE_BLUR ||
                getMultiCameraMode() == MODE_BOKEH) {
         mSprdZslEnabled = true;
+
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
     } else {
         mSprdZslEnabled = false;
-        changeDfsPolicy(CAM_LOW);
     }
-
-    if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_BOKEH) {
-        changeDfsPolicy(CAM_HIGH);
-    }
-
     property_get("volte.incall.camera.enable", value, "false");
     if (!strcmp(value, "true")) {
         mSprdZslEnabled = false;
@@ -4201,13 +3755,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-#ifdef POWER_HINT_USED
-        if (!mHDRPowerHint) {
-            setPowerHint(CAM_POWER_LOWPOWER_ON);
+        if (mHDRPowerHint || getMultiCameraMode() == MODE_BLUR ||
+            getMultiCameraMode() == MODE_BOKEH) {
+            setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_N);
         } else {
-            setPowerHint(CAM_POWER_NORMAL);
+            setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_L);
         }
-#endif
     }
 
     SPRD_DEF_Tag sprddefInfo;
@@ -4863,16 +4416,6 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
         }
     }
 
-    if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_BOKEH) {
-        changeDfsPolicy(CAM_HIGH);
-#ifdef POWER_HINT_USED
-        if (mCameraId == 2) {
-            setPowerHint(CAM_POWER_NORMAL);
-        }
-#endif
-    }
-
     HAL_LOGD("X");
 
     return true;
@@ -5276,21 +4819,13 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
     if (getMultiCameraMode() == MODE_BLUR ||
         getMultiCameraMode() == MODE_BOKEH) {
-        changeDfsPolicy(CAM_HIGH);
-#ifdef POWER_HINT_USED
-        setPowerHint(CAM_POWER_NORMAL);
-#endif
+        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NH);
     } else if (mRecordingMode == true) {
-        changeDfsPolicy(CAM_HIGH);
+        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
     } else if (1 == mHDRPowerHint) {
-#ifdef POWER_HINT_USED
-        setPowerHint(CAM_POWER_NORMAL);
-#endif
+        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NN);
     } else {
-        changeDfsPolicy(CAM_LOW);
-#ifdef POWER_HINT_USED
-        setPowerHint(CAM_POWER_LOWPOWER_ON);
-#endif
+        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LL);
     }
 
 exit:
@@ -6130,6 +5665,14 @@ int SprdCamera3OEMIf::handleCbData(hal3_trans_info_t &result_info,
     // NULL, type);
     HAL_LOGD("X");
     return 0;
+}
+
+void SprdCamera3OEMIf::setCamPreformaceScene(
+    sys_performance_camera_scene camera_scene) {
+
+    if (mSysPerformace) {
+        mSysPerformace->setCamPreformaceScene(camera_scene, mCameraId);
+    }
 }
 
 int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {

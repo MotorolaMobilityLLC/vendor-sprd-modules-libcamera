@@ -29,8 +29,6 @@ extern "C" {
 #include <utils/RefBase.h>
 #include <binder/IInterface.h>
 #include <binder/BinderService.h>
-#include <powermanager/IPowerManager.h>
-#include <powermanager/PowerManager.h>
 #ifndef MINICAMERA
 #include <binder/MemoryBase.h>
 #endif
@@ -46,7 +44,7 @@ extern "C" {
 #include "SprdCamera3Setting.h"
 #include "SprdCamera3Stream.h"
 #include "SprdCamera3Channel.h"
-
+#include "SprdCameraSystemPerformance.h"
 #include <hardware/power.h>
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
@@ -154,20 +152,6 @@ typedef struct {
 #define SPRD_NULL (void *)0
 #endif
 
-#ifdef POWER_HINT_USED
-typedef enum {
-    CAMERA_POWER_HINT_PERFORMANCE = POWER_HINT_VENDOR_CAMERA_PERFORMANCE,
-    CAMERA_POWER_HINT_LOWPOWER = POWER_HINT_VENDOR_CAMERA_LOW_POWER,
-    CAMERA_POWER_HINT_MAX = 0xFF
-} powerhint_mode_type_t;
-#endif
-
-typedef enum CURRENT_POWER_HINT {
-    CAM_POWER_NORMAL,
-    CAM_POWER_PERFORMACE_ON,
-    CAM_POWER_LOWPOWER_ON
-} power_hint_state_type_t;
-
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
     SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -228,21 +212,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-    void thermalEnabled(bool flag);
     void bindcoreEnabled();
-#ifdef POWER_HINT_USED
-    void initPowerHint();
-    void deinitPowerHint();
-    void enablePowerHintExt(sp<IPowerManager> powermanager,
-                            sp<IBinder> prfmlock, int powerhint_id);
-
-    void disablePowerHintExt(sp<IPowerManager> powermanager,
-                             sp<IBinder> prfmlock);
-    void setPowerHint(int powerhint_id);
-#endif
-    int changeDfsPolicy(int dfs_policy);
-    int setDfsPolicy(int dfs_policy);
-    int releaseDfsPolicy(int dfs_policy);
     int IommuIsEnabled(void);
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
@@ -297,6 +267,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static int gyro_get_data(void *p_data, ASensorEvent *buffer, int n,
                              struct cmr_af_aux_sensor_info *sensor_info);
 #endif
+    void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
 
     int mBurstVideoSnapshot;
     int mVideoParameterSetFlag;
@@ -769,19 +740,13 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /*ZSL Monitor Thread*/
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
-    uint32_t mPowermanageInited;
-    sp<IPowerManager> mPowerManager;
-    sp<IPowerManager> mPowerManagerLowPower;
-    sp<IBinder> mPrfmLock;
-    sp<IBinder> mPrfmLockLowPower;
-    Mutex mPowermanageLock;
-    power_module_t *m_pPowerModule;
     bool miSBindcorePreviewFrame;
     int mBindcorePreivewFrameCount;
 
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
-    uint32_t mCurrentPowerHint;
+    SprdCameraSystemPerformance *mSysPerformace;
+
     /* 1- start acceleration, 0 - finish acceleration*/
 
     /* for eis*/

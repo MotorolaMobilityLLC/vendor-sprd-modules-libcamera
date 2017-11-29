@@ -178,10 +178,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
     }
 
     if (mOEMIf) {
-#ifdef POWER_HINT_USED
-        mOEMIf->setPowerHint(CAM_POWER_PERFORMACE_ON);
-
-#endif
+        mOEMIf->setCamPreformaceScene(CAM_EXIT_S);
         // for performance tuning: close camera
         mOEMIf->setSensorCloseFlag();
     }
@@ -1719,9 +1716,7 @@ int SprdCamera3HWI::flush() {
 // Mutex::Autolock l(mLock);
 #ifndef ANDROID_VERSION_O_BRINGUP
     if (mOEMIf) {
-#ifdef POWER_HINT_USED
-        mOEMIf->setPowerHint(CAM_POWER_PERFORMACE_ON);
-#endif
+        mOEMIf->setCamPreformaceScene(CAM_FLUSH_S);
     }
 #endif
     timestamp = systemTime();
@@ -1768,7 +1763,7 @@ int SprdCamera3HWI::flush() {
 #ifndef ANDROID_VERSION_O_BRINGUP
 #ifdef POWER_HINT_USED
     if (mOEMIf)
-        mOEMIf->setPowerHint(CAM_POWER_NORMAL);
+        mOEMIf->setCamPreformaceScene(CAM_FLUSH_E);
 #endif
 #endif
 
