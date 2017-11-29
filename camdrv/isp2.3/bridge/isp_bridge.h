@@ -38,6 +38,8 @@ enum isp_br_ioctl_cmd {
 	GET_MODULE_INFO,
 	SET_OTP_AE,
 	GET_OTP_AE,
+	SET_OTP_AWB,
+	GET_OTP_AWB,
 	SET_ALL_MODULE_AND_OTP,
 	GET_ALL_MODULE_AND_OTP,
 	AE_WAIT_SEM,
@@ -66,6 +68,10 @@ struct ae_otp_param {
 	struct sensor_otp_ae_info otp_info;
 };
 
+struct awb_otp_param {
+	struct sensor_otp_awb_info awb_otp_info;
+};
+
 struct sensor_info {
 	cmr_s16 min_exp_line;
 	cmr_s16 max_again;
@@ -80,6 +86,7 @@ struct module_sensor_info {
 
 struct module_otp_info {
 	struct ae_otp_param ae_otp[SENSOR_NUM_MAX];
+	struct awb_otp_param awb_otp[SENSOR_NUM_MAX];
 };
 
 struct module_info {

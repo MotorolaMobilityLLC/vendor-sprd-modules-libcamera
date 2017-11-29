@@ -138,6 +138,18 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 			sizeof(cxt->match_param.module_info.module_otp_info.ae_otp[camera_id]));
 		sem_post(&cxt->module_sm);
 		break;
+	case SET_OTP_AWB:
+		sem_wait(&cxt->module_sm);
+		memcpy(&cxt->match_param.module_info.module_otp_info.awb_otp[camera_id], in,
+		sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[camera_id]));
+		sem_post(&cxt->module_sm);
+		break;
+	case GET_OTP_AWB:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->match_param.module_info.module_otp_info.awb_otp[camera_id],
+		sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[camera_id]));
+		sem_post(&cxt->module_sm);
+		break;
 	case SET_ALL_MODULE_AND_OTP:
 		ISP_LOGW("not implemented");
 		break;

@@ -390,6 +390,15 @@ struct sensor_otp_ae_info {
     cmr_u64 reserve;
 };
 
+struct sensor_otp_awb_info {
+	cmr_u32 otp_golden_r;
+	cmr_u32 otp_golden_g;
+	cmr_u32 otp_golden_b;
+	cmr_u32 otp_random_r;
+	cmr_u32 otp_random_g;
+	cmr_u32 otp_random_b;
+};
+
 struct sensor_otp_af_info {
     cmr_u8 flag;
     cmr_u16 infinite_cali;

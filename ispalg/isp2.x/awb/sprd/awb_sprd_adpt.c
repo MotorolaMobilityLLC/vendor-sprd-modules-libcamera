@@ -390,7 +390,7 @@ static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
 	return rtn;
 }
 
-struct awb_save_gain s_save_awb_param[2] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
+struct awb_save_gain s_save_awb_param[4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 static void _awb_save_gain(struct awb_save_gain*cxt, cmr_u32 num)
 {
 	cmr_u32 i = 0;
@@ -973,6 +973,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	struct awb_ctrl_init_param *param = (struct awb_ctrl_init_param *)in;
 	struct awb_ctrl_init_result *result = (struct awb_ctrl_init_result *)out;
 	struct awb_ctrl_cxt *cxt = NULL;
+	struct sensor_otp_awb_info otp_info;
 
 	if (NULL == param || NULL == result) {
 		ISP_LOGE("fail to init awb, invalid param: param=%p, result=%p", param, result);
@@ -1074,6 +1075,18 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->output_gain.b = result->gain.b;
 	cxt->output_ct = result->ct;
 
+	otp_info.otp_golden_r = cxt->otp_info.gldn_stat_info.r;
+	otp_info.otp_golden_g = cxt->otp_info.gldn_stat_info.g;
+	otp_info.otp_golden_b = cxt->otp_info.gldn_stat_info.b;
+	otp_info.otp_random_r = cxt->otp_info.rdm_stat_info.r;
+	otp_info.otp_random_g = cxt->otp_info.rdm_stat_info.g;
+	otp_info.otp_random_b = cxt->otp_info.rdm_stat_info.b;
+
+#ifndef CONFIG_ISP_2_2
+	if(cxt->ptr_isp_br_ioctrl != NULL){
+		rtn= cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_OTP_AWB, &otp_info, NULL);
+	}
+#endif
 	_awb_read_gain(&s_save_awb_param[0], sizeof(s_save_awb_param)/sizeof(struct awb_save_gain));
 
 	if(0 != s_save_awb_param[cxt->camera_id].r \
@@ -1176,9 +1189,9 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		return AWB_CTRL_ERROR;
 	}
 
-
+#ifndef CONFIG_ISP_2_2
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL)) {
-		if (!cxt->sensor_role) {
+		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 			struct awb_sync_info awb_sync;
 
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_STAT_AWB_DATA, NULL, &awb_sync.stat_master_info);
@@ -1188,30 +1201,38 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			struct awb_ctrl_gain gain_slave;
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_GAIN_AWB_DATA, NULL, &gain_master);
 
-			awb_sync.master_fov = 0;
-			awb_sync.slave_fov = 0;
-
-			awb_sync.master_gldn_stat_info.r = 0;
-			awb_sync.master_gldn_stat_info.g = 0;
-			awb_sync.master_gldn_stat_info.b = 0;
-			awb_sync.master_rdm_stat_info.r = 0;
-			awb_sync.master_rdm_stat_info.g = 0;
-			awb_sync.master_rdm_stat_info.b = 0;
-
-			awb_sync.slave_gldn_stat_info.r = 0;
-			awb_sync.slave_gldn_stat_info.g  = 0;
-			awb_sync.slave_gldn_stat_info.b  = 0;
-			awb_sync.slave_rdm_stat_info.r = 0;
-			awb_sync.slave_rdm_stat_info.g = 0;
-			awb_sync.slave_rdm_stat_info.b = 0;
-
 			awb_sync.stat_master_info.height = 32;
 			awb_sync.stat_master_info.width = 32;
 			awb_sync.stat_slave_info.height = 32;
 			awb_sync.stat_slave_info.width = 32;
 
+			awb_sync.master_fov = 0;
+			awb_sync.slave_fov = 0;
+			awb_sync.master_pix_cnt = ((1600/awb_sync.stat_master_info.width) * (1200/awb_sync.stat_master_info.height)) / 4;
+			awb_sync.slave_pix_cnt = ((1600/awb_sync.stat_slave_info.width) * (1200/awb_sync.stat_slave_info.height)) / 4;
+
 			cmr_u32 ct;
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_MATCH_AWB_DATA, NULL, &ct);
+
+			struct sensor_otp_awb_info master_otp_info;
+			struct sensor_otp_awb_info slave_otp_info;
+
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_OTP_AWB, NULL, &master_otp_info);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_OTP_AWB, NULL, &slave_otp_info);
+
+			awb_sync.master_gldn_stat_info.r = master_otp_info.otp_golden_r;
+			awb_sync.master_gldn_stat_info.g = master_otp_info.otp_golden_g;
+			awb_sync.master_gldn_stat_info.b = master_otp_info.otp_golden_b;
+			awb_sync.master_rdm_stat_info.r = master_otp_info.otp_random_r;
+			awb_sync.master_rdm_stat_info.g = master_otp_info.otp_random_g;
+			awb_sync.master_rdm_stat_info.b = master_otp_info.otp_random_b;
+
+			awb_sync.slave_gldn_stat_info.r = slave_otp_info.otp_golden_r;
+			awb_sync.slave_gldn_stat_info.g  = slave_otp_info.otp_golden_g;
+			awb_sync.slave_gldn_stat_info.b  = slave_otp_info.otp_golden_b;
+			awb_sync.slave_rdm_stat_info.r = slave_otp_info.otp_random_r;
+			awb_sync.slave_rdm_stat_info.g = slave_otp_info.otp_random_g;
+			awb_sync.slave_rdm_stat_info.b = slave_otp_info.otp_random_b;
 
 			int ret = cxt->lib_ops.awb_sync_gain(&awb_sync, gain_master.r, gain_master.g, gain_master.b, &gain_slave.r, &gain_slave.g, &gain_slave.b);
 
@@ -1234,7 +1255,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			}
 		}
 	}
-
+#endif
 
 	cmr_u32 smooth_buffer_num = cxt->awb_init_param.tuning_param.smooth_buffer_num;
 	cmr_u32 skip_frame_num = cxt->awb_init_param.tuning_param.skip_frame_num;
@@ -1451,7 +1472,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result->gain.b = cxt->output_gain.b;
 	result->ct = cxt->output_ct;
 
-	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
+	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result->gain, NULL);
 	}
 
