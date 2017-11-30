@@ -128,6 +128,10 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                      uint32_t jpeg_size);
     int jpeg_encode_exif_simplify(img_frm *src_img, img_frm *pic_enc_img,
                                   struct img_frm *dst_img, SprdCamera3HWI *hwi);
+    int jpeg_encode_exif_simplify(private_handle_t *src_private_handle,
+                                  private_handle_t *pic_enc_private_handle,
+                                  private_handle_t *dst_private_handle,
+                                  SprdCamera3HWI *hwi);
 
   private:
     Mutex mBufferListLock;

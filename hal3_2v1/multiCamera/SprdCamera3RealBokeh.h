@@ -72,7 +72,7 @@ namespace sprdcamera {
 
 #define LOCAL_PREVIEW_NUM (20)
 #define SNAP_DEPTH_NUM 2
-#define LOCAL_CAPBUFF_NUM 2
+#define LOCAL_CAPBUFF_NUM 3
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
 #define SNAP_TRANSF_NUM 1
@@ -255,7 +255,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     buffer_handle_t *m_pMainSnapBuffer;
     buffer_handle_t *m_pSprdDepthBuffer;
 #ifdef YUV_CONVERT_TO_JPEG
-    void *m_pDstJpegBuffer;
+    buffer_handle_t *m_pDstJpegBuffer;
     cmr_uint mOrigJpegSize;
 #endif
     bool mUpdateDepthFlag;

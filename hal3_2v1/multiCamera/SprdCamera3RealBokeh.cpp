@@ -601,6 +601,7 @@ int SprdCamera3RealBokeh::allocateBuff() {
         mLocalBufferList.push_back(&(mLocalBuffer[preview_num + j]));
     }
     count += LOCAL_PREVIEW_NUM;
+
     if (mCaptureThread->mAbokehGallery) {
         capture_num = LOCAL_CAPBUFF_NUM - 1;
     } else {
@@ -1519,17 +1520,6 @@ void SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
 #endif
     unsigned char *depth_yuv = NULL;
 
-#ifdef YUV_CONVERT_TO_JPEG
-    /* cpoy original jpeg first to avoid data that is covered,
-    because we storage jpeg data in mSavedResultBuff temporarily. */
-    unsigned char *orig_jpeg_addr =
-        (unsigned char *)(mRealBokeh->m_pDstJpegBuffer);
-    buffer_base += (use_size - para_size - depth_size - orig_jpeg_size);
-    memcpy(buffer_base, orig_jpeg_addr, orig_jpeg_size);
-#endif
-    buffer_base =
-        (unsigned char *)((struct private_handle_t *)*result_buff)->base;
-
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
         struct private_handle_t *addr =
             (struct private_handle_t *)(*mRealBokeh->m_pSprdDepthBuffer);
@@ -1612,7 +1602,14 @@ void SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
     buffer_base -= depth_size;
     memcpy(buffer_base, depth_yuv, depth_size);
 
-#ifndef YUV_CONVERT_TO_JPEG
+#ifdef YUV_CONVERT_TO_JPEG
+    // cpoy original jpeg
+    struct private_handle_t *addr =
+        (struct private_handle_t *)(*mRealBokeh->m_pDstJpegBuffer);
+    unsigned char *orig_jpeg_data = (unsigned char *)addr->base;
+    buffer_base -= orig_jpeg_size;
+    memcpy(buffer_base, orig_jpeg_data, orig_jpeg_size);
+#else
     // cpoy original yuv
     struct private_handle_t *addr =
         (struct private_handle_t *)(*mRealBokeh->m_pMainSnapBuffer);
@@ -1712,15 +1709,6 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
         input_buffer.buffer = capture_msg.combo_buff.buffer1;
     }
 
-#endif
-
-#ifdef CONFIG_FACE_BEAUTY
-    if (mRealBokeh->mPerfectskinlevel.smoothLevel > 0 &&
-        mRealBokeh->mFaceInfo[2] - mRealBokeh->mFaceInfo[0] > 0 &&
-        mRealBokeh->mFaceInfo[3] - mRealBokeh->mFaceInfo[1] > 0) {
-        mRealBokeh->bokehFaceMakeup(
-            (struct private_handle_t *)*(input_buffer.buffer));
-    }
 #endif
 
     request.num_output_buffers = 1;
@@ -1825,7 +1813,23 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             return false;
         }
         case BOKEH_MSG_DATA_PROC: {
+#ifdef CONFIG_FACE_BEAUTY
+            if (mRealBokeh->mPerfectskinlevel.smoothLevel > 0 &&
+                mRealBokeh->mFaceInfo[2] - mRealBokeh->mFaceInfo[0] > 0 &&
+                mRealBokeh->mFaceInfo[3] - mRealBokeh->mFaceInfo[1] > 0) {
+                mRealBokeh->bokehFaceMakeup((struct private_handle_t *)*(
+                    capture_msg.combo_buff.buffer1));
+            }
+#endif
             mBokehResult = true;
+            mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
+                mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
+
+            struct private_handle_t *input_handle =
+                (struct private_handle_t *)(*capture_msg.combo_buff.buffer1);
+            struct private_handle_t *output_handle =
+                (struct private_handle_t *)(*mRealBokeh->m_pDstJpegBuffer);
+
             if (!mAbokehGallery) {
                 output_buffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
@@ -1851,6 +1855,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                                             capture_msg.combo_buff.buffer1,
                                             depth_output_buffer);
                     if (rc != NO_ERROR) {
+                        mRealBokeh->mOrigJpegSize = 0;
                         mBokehResult = false;
                         mime_type = 0;
                         HAL_LOGE("bokehCaptureHandle failed");
@@ -1859,6 +1864,14 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 } else {
                     mime_type = (1 << 8) | (int)MODE_BOKEH;
                 }
+#ifdef YUV_CONVERT_TO_JPEG
+                mRealBokeh->mOrigJpegSize =
+                    mRealBokeh->jpeg_encode_exif_simplify(
+                        input_handle, output_handle, NULL,
+                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+#else
+                mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
+#endif
                 mRealBokeh->m_pSprdDepthBuffer = depth_output_buffer;
             } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
                 rc = depthCaptureHandle(output_buffer, NULL,
@@ -1866,6 +1879,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                                         capture_msg.combo_buff.buffer2);
                 if (rc != NO_ERROR) {
                     HAL_LOGW("depthCaptureHandle error");
+                    mRealBokeh->mOrigJpegSize = 0;
                     mBokehResult = false;
                     mime_type = 0;
                 } else {
@@ -1874,6 +1888,15 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     } else {
                         mime_type = (int)MODE_BOKEH;
                     }
+#ifdef YUV_CONVERT_TO_JPEG
+                    mRealBokeh->mOrigJpegSize =
+                        mRealBokeh->jpeg_encode_exif_simplify(
+                            input_handle, output_handle, NULL,
+                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+#else
+                    mRealBokeh->m_pMainSnapBuffer =
+                        capture_msg.combo_buff.buffer1;
+#endif
                 }
             }
 
@@ -1907,16 +1930,17 @@ SprdCamera3RealBokeh::yuvToJpeg(struct private_handle_t *input_handle) {
     cmr_uint size = 0;
     memset(&src_img, 0, sizeof(struct img_frm));
     memset(&pic_enc_img, 0, sizeof(struct img_frm));
+    void *temp;
 
     cmr_u8 *addr =
         (cmr_u8 *)((struct private_handle_t *)*mCaptureThread->mSavedResultBuff)
             ->base;
     cmr_uint offset = mCallbackWidth * mCallbackHeight * 3 / 2;
-    m_pDstJpegBuffer = (void *)(addr + mjpegSize - offset);
+    temp = (void *)(addr + mjpegSize - offset);
     cmr_uint addr_phy = (cmr_uint)(mjpegSize - offset);
 
     convertToImg_frm(
-        (void *)addr_phy, m_pDstJpegBuffer, mCallbackWidth, mCallbackHeight,
+        (void *)addr_phy, temp, mCallbackWidth, mCallbackHeight,
         ((struct private_handle_t *)*mCaptureThread->mSavedResultBuff)
             ->share_fd,
         IMG_DATA_TYPE_JPEG, &pic_enc_img);
@@ -4524,6 +4548,10 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     struct private_handle_t *input_handle =
         (struct private_handle_t *)(*result->output_buffers->buffer);
     if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
+        if (mhasCallbackStream && mThumbReq.frame_number) {
+            thumbYuvProc(result->output_buffers->buffer);
+            CallBackSnapResult();
+        }
         Mutex::Autolock l(mDefaultStreamLock);
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
             mCaptureThread->mSavedOneResultBuff =
@@ -4547,16 +4575,6 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);
                 mCaptureThread->mMergequeueSignal.signal();
             }
-            if (mhasCallbackStream && mThumbReq.frame_number) {
-                thumbYuvProc(result->output_buffers->buffer);
-                CallBackSnapResult();
-            }
-#ifdef YUV_CONVERT_TO_JPEG
-            mOrigJpegSize = yuvToJpeg(
-                (struct private_handle_t *)(*capture_msg.combo_buff.buffer1));
-#else
-            m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
-#endif
         }
     } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
         camera3_capture_result_t newResult = *result;
@@ -4585,6 +4603,10 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         } else {
             mRealBokeh->setJpegSize((char *)jpeg_addr, mjpegSize, jpeg_size);
         }
+
+        mRealBokeh->pushBufferList(
+            mRealBokeh->mLocalBuffer, mRealBokeh->m_pDstJpegBuffer,
+            mRealBokeh->mLocalBufferNumber, mRealBokeh->mLocalBufferList);
 
         mCallbackOps->process_capture_result(mCallbackOps, &newResult);
         mCaptureThread->mReprocessing = false;
@@ -4757,16 +4779,6 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);
                 mCaptureThread->mMergequeueSignal.signal();
             }
-            if (mhasCallbackStream && mThumbReq.frame_number) {
-                thumbYuvProc(result->output_buffers->buffer);
-                CallBackSnapResult();
-            }
-#ifdef YUV_CONVERT_TO_JPEG
-            mOrigJpegSize = yuvToJpeg(
-                (struct private_handle_t *)(*capture_msg.combo_buff.buffer1));
-#else
-            m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
-#endif
         }
     } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
         HAL_LOGD("should not entry here, shutter frame:%d",

@@ -1108,4 +1108,57 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(img_frm *src_img,
     HAL_LOGI("out,ret=%d", ret);
     return ret;
 }
+
+int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
+    private_handle_t *src_private_handle,
+    private_handle_t *pic_enc_private_handle,
+    private_handle_t *dst_private_handle, SprdCamera3HWI *hwi) {
+
+    int ret = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    struct enc_exif_param encode_exif_param;
+    struct img_frm src_img;
+    struct img_frm pic_enc_img;
+    struct img_frm dst_img;
+
+    HAL_LOGI("src_private_handle :%p, pic_enc_private_handle:%p",
+             src_private_handle, pic_enc_private_handle);
+    if (hwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+
+    memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&pic_enc_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+
+    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420);
+    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG);
+    if (dst_private_handle != NULL) {
+        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG);
+    }
+
+    memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
+
+    ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
+                             &encode_exif_param, NULL);
+
+    if (ret == NO_ERROR)
+        ret = encode_exif_param.stream_real_size;
+    else
+        ret = UNKNOWN_ERROR;
+    property_get("bokeh.dump.encode_exif", prop, "0");
+    if (atoi(prop) == 1) {
+        unsigned char *vir_jpeg = (unsigned char *)pic_enc_private_handle->base;
+        dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
+                 src_img.size.width, src_img.size.height, 0, "jpegEncode");
+    }
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
 };
