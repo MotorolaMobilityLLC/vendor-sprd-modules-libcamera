@@ -1517,23 +1517,35 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 main_sbs_info.sbs_mode = SPRD_SBS_MODE_LEFT;
                 main_sbs_info.size.width = SBS_RAW_DATA_WIDTH;
                 main_sbs_info.size.height = SBS_RAW_DATA_HEIGHT;
-                mDevMain->hwi->rawPostProc(
+                ret = mDevMain->hwi->rawPostProc(
                     capture_msg.combo_buff.main_buffer,
                     &mSidebyside->mLocalCapBuffer[2].native_handle,
                     &main_sbs_info);
+                if (ret) {
+                    HAL_LOGE("1st raw proc fail, %d", ret);
+                    return false;
+                }
                 // STEP_1.2:sub raw proc
                 struct img_sbs_info sub_sbs_info;
                 sub_sbs_info.sbs_mode = SPRD_SBS_MODE_RIGHT;
                 sub_sbs_info.size.width = SBS_RAW_DATA_WIDTH;
                 sub_sbs_info.size.height = SBS_RAW_DATA_HEIGHT;
-                mDevAux->hwi->rawPostProc(
+                ret = mDevAux->hwi->rawPostProc(
                     capture_msg.combo_buff.main_buffer,
                     &mSidebyside->mLocalCapBuffer[3].native_handle,
                     &sub_sbs_info);
-                mDevAux->hwi->rawPostProc(
+                if (ret) {
+                    HAL_LOGE("2nd raw proc fail, %d", ret);
+                    return false;
+                }
+                ret = mDevAux->hwi->rawPostProc(
                     capture_msg.combo_buff.main_buffer,
                     &mSidebyside->mLocalCapBuffer[3].native_handle,
                     &sub_sbs_info);
+                if (ret) {
+                    HAL_LOGE("3rd raw proc fail, %d", ret);
+                    return false;
+                }
 
                 // dump raw & 2-yuv
                 if (!strcmp(prop, "1")) {
@@ -2487,6 +2499,7 @@ int SprdCamera3SideBySideCamera::processCaptureRequest(
     camera3_stream_buffer_t *out_streams_main = NULL;
     uint32_t tagCnt = 0;
     int snap_stream_num = 2;
+    int has_snap_buffer = 0;
 
     rc = validateCaptureRequest(req);
     if (rc != NO_ERROR) {
@@ -2529,21 +2542,22 @@ int SprdCamera3SideBySideCamera::processCaptureRequest(
 
     /*config main camera*/
     req_main = *req;
-    out_streams_main = (camera3_stream_buffer_t *)malloc(
-        sizeof(camera3_stream_buffer_t) * (req_main.num_output_buffers));
+    out_streams_main =
+        (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t));
     if (!out_streams_main) {
         HAL_LOGE("failed");
         return NO_MEMORY;
     }
-    memset(out_streams_main, 0x00,
-           (sizeof(camera3_stream_buffer_t)) * (req_main.num_output_buffers));
+    memset(out_streams_main, 0x00, (sizeof(camera3_stream_buffer_t)));
 
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         int requestStreamType =
             getStreamType(request->output_buffers[i].stream);
-        out_streams_main[i] = req->output_buffers[i];
+        HAL_LOGD("requestStreamType=%d", requestStreamType);
 
         if (requestStreamType == SNAPSHOT_STREAM) {
+            has_snap_buffer = 1;
+            *out_streams_main = req->output_buffers[i];
             HAL_LOGD("w=%d, h=%d, stream_format=%d",
                      req->output_buffers[i].stream->width,
                      req->output_buffers[i].stream->height,
@@ -2569,13 +2583,13 @@ int SprdCamera3SideBySideCamera::processCaptureRequest(
 
             if (!mFlushing) {
                 snap_stream_num = 2;
-                out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
+                out_streams_main->buffer = &mLocalCapBuffer[0].native_handle;
                 mIsWaitSnapYuv = true;
             } else {
                 snap_stream_num = 1;
-                out_streams_main[i].buffer = (req->output_buffers[i]).buffer;
+                out_streams_main->buffer = (req->output_buffers[i]).buffer;
             }
-            out_streams_main[i].stream =
+            out_streams_main->stream =
                 &mCaptureThread->mMainStreams[snap_stream_num];
             mIsCapturing = true;
             /* save Rotation angle*/
@@ -2591,20 +2605,23 @@ int SprdCamera3SideBySideCamera::processCaptureRequest(
                 mJpegOrientation =
                     metaSettings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
             }
-        } else {
-            mSavedReqStreams[mPreviewStreamsNum] =
-                req->output_buffers[i].stream;
-            out_streams_main[i].stream =
-                &mCaptureThread->mMainStreams[mPreviewStreamsNum];
         }
     }
 
+    if (!has_snap_buffer) {
+        *out_streams_main = req->output_buffers[0];
+        mSavedReqStreams[mPreviewStreamsNum] = req->output_buffers[0].stream;
+        out_streams_main->stream =
+            &mCaptureThread->mMainStreams[mPreviewStreamsNum];
+    }
+
+    req_main.num_output_buffers = 1;
     req_main.output_buffers = out_streams_main;
     req_main.settings = metaSettings.release();
 
-    HAL_LOGV("num_output_buffers=%d", req_main.num_output_buffers);
+    HAL_LOGD("num_output_buffers=%d", req_main.num_output_buffers);
     for (i = 0; i < req_main.num_output_buffers; i++) {
-        HAL_LOGV("width=%d, height=%d, format=%d",
+        HAL_LOGD("width=%d, height=%d, format=%d",
                  req_main.output_buffers[i].stream->width,
                  req_main.output_buffers[i].stream->height,
                  req_main.output_buffers[i].stream->format);

@@ -1635,10 +1635,14 @@ void SprdCamera3HWI::ispSwProc(struct soft_isp_frm_param *param_ptr) {
     mOEMIf->ispSwProc(param_ptr);
 }
 
-void SprdCamera3HWI::rawPostProc(buffer_handle_t *raw_buff,
-                                 buffer_handle_t *yuv_buff,
-                                 struct img_sbs_info *sbs_info) {
-    mOEMIf->rawPostProc(raw_buff, yuv_buff, sbs_info);
+int SprdCamera3HWI::rawPostProc(buffer_handle_t *raw_buff,
+                                buffer_handle_t *yuv_buff,
+                                struct img_sbs_info *sbs_info) {
+    int ret = NO_ERROR;
+
+    ret = mOEMIf->rawPostProc(raw_buff, yuv_buff, sbs_info);
+
+    return ret;
 }
 
 void SprdCamera3HWI::stopPreview() { mOEMIf->stopPreview(); }

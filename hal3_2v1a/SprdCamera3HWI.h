@@ -105,8 +105,8 @@ class SprdCamera3HWI {
     cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
     void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
     void ispSwProc(struct soft_isp_frm_param *param_ptr);
-    void rawPostProc(buffer_handle_t *raw_buff, buffer_handle_t *yuv_buff,
-                     struct img_sbs_info *sbs_info);
+    int rawPostProc(buffer_handle_t *raw_buff, buffer_handle_t *yuv_buff,
+                    struct img_sbs_info *sbs_info);
     void stopPreview();
     void startPreview();
     SprdCamera3RegularChannel *getRegularChan();

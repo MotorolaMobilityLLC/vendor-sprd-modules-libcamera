@@ -2655,6 +2655,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     cmr_uint is_to_isp = 0;
     cmr_uint work_mode = 0;
     cmr_int tmpVal = 0;
+    cmr_s64 time1 = 0, time2 = 0;
 
     is_active = parm->ctrl_flash.is_active;
 
@@ -2713,15 +2714,26 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     }
 
                     cmr_setting_clear_sem(cpt);
+                    time1 = systemTime(CLOCK_MONOTONIC);
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
                     setting_isp_wait_notice(cpt);
+                    time2 = systemTime(CLOCK_MONOTONIC);
+                    CMR_LOGI("isp_flash_pre_before cost %lld ms",
+                             (time2 - time1) / 1000000);
 
                     if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
                         goto EXIT;
                     }
+
                     setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+
+                    time1 = systemTime(CLOCK_MONOTONIC);
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
                     setting_isp_wait_notice(cpt);
+                    time2 = systemTime(CLOCK_MONOTONIC);
+                    CMR_LOGI("isp_flash_pre_lighting cost %lld ms",
+                             (time2 - time1) / 1000000);
+
                     hal_param->flash_param.has_preflashed = 1;
                     hal_param->flash_param.last_preflash_time =
                         systemTime(CLOCK_MONOTONIC);

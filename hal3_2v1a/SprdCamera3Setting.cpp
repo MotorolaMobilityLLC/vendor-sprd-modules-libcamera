@@ -821,6 +821,15 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
     *height = default_sensor_max_sizes[cameraId].height;
 #endif
 
+    // just for camera developer debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.auto.detect.sensor", value, "on");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("just for camera developer debug use");
+        *width = default_sensor_max_sizes[cameraId].width;
+        *height = default_sensor_max_sizes[cameraId].height;
+    }
+
     HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width,
              *height);
     return 0;
@@ -864,9 +873,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     ret = sensor_open_common(sensor_cxt, cameraId, 0);
     if (ret) {
-        HAL_LOGE("open camera (%d) failed", cameraId);
-        setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
-                             default_sensor_max_sizes[cameraId].height);
+        HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
         goto exit;
     }
 
@@ -3191,7 +3198,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
         uint8_t is_raw_capture = 0;
         char value[PROPERTY_VALUE_MAX];
-        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM];
+        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM] = {0};
         property_get("persist.sys.camera.raw.mode", value, "jpeg");
         if (!strcmp(value, "raw")) {
             is_raw_capture = 1;

@@ -475,7 +475,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     if (camera_id == MODE_BLUR_FRONT) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
-        if (atoi(prop) == 1) {
+        if (atoi(prop) == 1 || atoi(prop) == 2) {
             m_nPhyCameras = 2;
         } else {
             m_nPhyCameras = 1;
@@ -483,7 +483,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     } else {
         mCameraId = CAM_BLUR_MAIN_ID;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
-        if (atoi(prop) == 0) {
+        if (atoi(prop) == 0 || atoi(prop) == 2) {
             m_nPhyCameras = 2;
         } else {
             m_nPhyCameras = 1;
@@ -1454,7 +1454,15 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             input_buffer->stream = &mMainStreams[mCaptureStreamsNum - 1];
             input_buffer->stream->width = mBlur->mCaptureWidth;
             input_buffer->stream->height = mBlur->mCaptureHeight;
-            input_buffer->buffer = output_buffer;
+            if (mBlur->mFlushing) {
+                mime_type = 0;
+                input_buffer->buffer = capture_msg.combo_buff.buffer;
+            } else {
+                input_buffer->buffer = output_buffer;
+                mime_type = (int)MODE_BLUR;
+            }
+            mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
+                                         &mime_type, NULL);
 
             memcpy((void *)&output_buffers[0], &mSavedCapReqstreambuff,
                    sizeof(camera3_stream_buffer_t));
@@ -1495,10 +1503,6 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 mBlur->mReqState = REPROCESS_STATE;
             }
             request.num_output_buffers = 1;
-
-            mime_type = (int)MODE_BLUR;
-            mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
-                                         &mime_type, NULL);
 
             if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
                                                            &request)) {
@@ -1905,7 +1909,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         .sensor_InfoInfo.pixer_array_size[1];
     unsigned short savePreviewX = mPreviewWeightParams.sel_x;
     unsigned short savePreviewY = mPreviewWeightParams.sel_y;
-
+    if (origW == 0 || origH == 0) {
+        return;
+    }
     // always get f_num and orientattion in request
     if (type == 0) {
         if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
@@ -2472,18 +2478,13 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 if (mCaptureWeightParams.roi_type == 2) {
                     mCaptureWeightParams.valid_roi = face_num - k;
                 }
-                if (mBlurBody == true) {
-                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
-                                                  mPreviewWeightParams.x1[0]) /
-                                                 2;
-                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[0] +
-                                                  mPreviewWeightParams.y1[0]) /
-                                                 2;
-                } else {
-                    mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
-                    mPreviewWeightParams.sel_y = mPreviewInitParams.height - 1;
+                if (mUpdataTouch == true) {
+                    mPreviewWeightParams.sel_x =
+                        mLastTouchX * mPreviewInitParams.width / origW;
+                    mPreviewWeightParams.sel_y =
+                        mLastTouchY * mPreviewInitParams.height / origH;
+                    mUpdataTouch = false;
                 }
-                mUpdataTouch = false;
             }
         } else {
             if (mUpdataTouch) {
@@ -2501,19 +2502,10 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         mBlurBody = false;
                     }
                 }
-                if (mBlurBody == true) {
-                    HAL_LOGD("in body");
-                    mPreviewWeightParams.sel_x = (mPreviewWeightParams.x2[0] +
-                                                  mPreviewWeightParams.x1[0]) /
-                                                 2;
-                    mPreviewWeightParams.sel_y = (mPreviewWeightParams.y2[0] +
-                                                  mPreviewWeightParams.y1[0]) /
-                                                 2;
-                } else {
-                    HAL_LOGD("out body");
-                    mPreviewWeightParams.sel_x = mPreviewInitParams.width - 1;
-                    mPreviewWeightParams.sel_y = mPreviewInitParams.height - 1;
-                }
+                mPreviewWeightParams.sel_x =
+                    mLastTouchX * mPreviewInitParams.width / origW;
+                mPreviewWeightParams.sel_y =
+                    mLastTouchY * mPreviewInitParams.height / origH;
                 mUpdataTouch = false;
             }
         }
@@ -3469,7 +3461,6 @@ void SprdCamera3Blur::processCaptureResultMain(
 
     /* Direclty pass preview buffer and meta result for Main camera */
     if (result_buffer == NULL && result->result != NULL) {
-        mCaptureThread->updateBlurWeightParams(metadata, 1);
         if (result->frame_number ==
                 mCaptureThread->mSavedCapRequest.frame_number &&
             0 != result->frame_number) {
@@ -3490,6 +3481,7 @@ void SprdCamera3Blur::processCaptureResultMain(
                 mCoverValue = 6;
             }
         } else {
+            mCaptureThread->updateBlurWeightParams(metadata, 1);
             if (2 == m_nPhyCameras && cur_frame_number > 2) {
                 SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
                 SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
@@ -3552,11 +3544,15 @@ void SprdCamera3Blur::processCaptureResultMain(
         newOutput_buffers.stream =
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1];
         newOutput_buffers.buffer = result->output_buffers->buffer;
+        if (mFlushing) {
+            newOutput_buffers.status = CAMERA3_BUFFER_STATUS_ERROR;
+        }
 
         newResult.output_buffers = &newOutput_buffers;
         newResult.input_buffer = NULL;
         newResult.result = NULL;
         newResult.partial_result = 0;
+
         ((struct private_handle_t *)*result->output_buffers->buffer)->size =
             mjpegSize;
         {

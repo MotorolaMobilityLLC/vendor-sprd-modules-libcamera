@@ -37,22 +37,10 @@ struct cmr_cap_2_frm {
     free_mem_ptr free_mem;
 };
 
-int camera_pre_capture_sensor_size_set(cmr_u32 camera_id, cmr_u16 width,
-                                       cmr_u16 height);
+int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
+                                 cmr_u16 height);
 
-int camera_pre_capture_sensor_size_get(cmr_u32 camera_id, cmr_u16 *width,
-                                       cmr_u16 *height);
-
-int camera_pre_capture_buf_id(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height);
-
-int camera_pre_capture_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                                cmr_u32 *mem_size, cmr_u32 *mem_sum);
-
-int camera_reserve_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                            cmr_u32 *mem_size, cmr_u32 *mem_sum);
-
-int camera_capture_buf_size(uint32_t camera_id, uint32_t sn_fmt,
-                            struct img_size *image_size, uint32_t *mem_size);
+int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size);
 
 int camera_arrange_capture_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,

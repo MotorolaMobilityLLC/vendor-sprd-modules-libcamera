@@ -224,8 +224,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
     void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
     void ispSwProc(struct soft_isp_frm_param *param_ptr);
-    void rawPostProc(buffer_handle_t *raw_buff, buffer_handle_t *yuv_buff,
-                     struct img_sbs_info *sbs_info);
+    int rawPostProc(buffer_handle_t *raw_buff, buffer_handle_t *yuv_buff,
+                    struct img_sbs_info *sbs_info);
     void stopPreview();
     void startPreview();
     int getMultiCameraMode(void);
@@ -606,8 +606,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mVideoHeight;
     int mCaptureWidth;
     int mCaptureHeight;
-    cmr_u16 mLargestSensorWidth;
-    cmr_u16 mLargestSensorHeight;
+    cmr_u16 mLargestPictureWidth;
+    cmr_u16 mLargestPictureHeight;
     camera_data_format_type_t mPreviewFormat; // 0:YUV422;1:YUV420;2:RGB
     int mPictureFormat;                       // 0:YUV422;1:YUV420;2:RGB;3:JPEG
     int mPreviewStartFlag;

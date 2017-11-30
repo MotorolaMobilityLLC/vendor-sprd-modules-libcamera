@@ -393,8 +393,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoHeight = 0;
     mCaptureWidth = 0;
     mCaptureHeight = 0;
-    mLargestSensorWidth = 0;
-    mLargestSensorHeight = 0;
+    mLargestPictureWidth = 0;
+    mLargestPictureHeight = 0;
     mRawWidth = 0;
     mRawHeight = 0;
     mRegularChan = NULL;
@@ -1488,14 +1488,16 @@ void SprdCamera3OEMIf::ispSwProc(struct soft_isp_frm_param *param_ptr) {
     HAL_LOGD("X");
 }
 
-void SprdCamera3OEMIf::rawPostProc(buffer_handle_t *raw_buff,
-                                   buffer_handle_t *yuv_buff,
-                                   struct img_sbs_info *sbs_info) {
+int SprdCamera3OEMIf::rawPostProc(buffer_handle_t *raw_buff,
+                                  buffer_handle_t *yuv_buff,
+                                  struct img_sbs_info *sbs_info) {
     HAL_LOGD("E");
+    int ret = NO_ERROR;
+
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
         NULL == raw_buff || NULL == yuv_buff) {
         HAL_LOGE("oem is null or oem ops is null");
-        return;
+        return BAD_VALUE;
     }
     struct img_frm raw_frame;
     struct img_frm yuv_frame;
@@ -1522,13 +1524,16 @@ void SprdCamera3OEMIf::rawPostProc(buffer_handle_t *raw_buff,
              output_buffer->share_fd, output_buffer->width,
              output_buffer->height);
 
-    if (0 !=
-        mHalOem->ops->camera_raw_post_proc(mCameraHandle, &raw_frame,
-                                           &yuv_frame, sbs_info)) {
+    ret = mHalOem->ops->camera_raw_post_proc(mCameraHandle, &raw_frame,
+                                             &yuv_frame, sbs_info);
+
+    if (ret) {
         HAL_LOGE("Fail to process raw buff.");
     }
 
     HAL_LOGD("X");
+
+    return ret;
 }
 
 void SprdCamera3OEMIf::stopPreview() {
@@ -5899,16 +5904,23 @@ int SprdCamera3OEMIf::openCamera() {
     char value[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     int is_raw_capture = 0;
+    cmr_u16 picW, picH, snsW, snsH;
 
     HAL_LOGI(":hal3: E");
 
     GET_START_TIME;
 
-    mSetting->getLargestPictureSize(mCameraId, &mLargestSensorWidth,
-                                    &mLargestSensorHeight);
-
-    mHalOem->ops->camera_pre_capture_set_buffer_size(
-        mCameraId, mLargestSensorWidth, mLargestSensorHeight);
+    mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
+    mSetting->getLargestSensorSize(mCameraId, &snsW, &snsH);
+    if (picH * picH > snsW * snsH) {
+        mLargestPictureWidth = picW;
+        mLargestPictureHeight = picH;
+    } else {
+        mLargestPictureWidth = snsW;
+        mLargestPictureHeight = snsH;
+    }
+    mHalOem->ops->camera_set_largest_picture_size(
+        mCameraId, mLargestPictureWidth, mLargestPictureHeight);
 
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;
@@ -7613,14 +7625,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED ||
         type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
         if (mCommonHeapReserved == NULL) {
-            buffer_id = camera_pre_capture_get_buffer_id(
-                mCameraId, mLargestSensorWidth, mLargestSensorHeight);
-            ret = camera_get_reserve_buffer_size(mCameraId, buffer_id,
-                                                 &mem_size, &mem_sum);
-            if (ret) {
-                HAL_LOGE("camera_get_reserve_buffer_size failed");
-                goto mem_fail;
-            }
+            mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
                 HAL_LOGE("memory is null");
@@ -8996,14 +9001,17 @@ int SprdCamera3OEMIf::pre_alloc_cap_mem_thread_deinit(void *p_data) {
 }
 
 void *SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data) {
-    uint32_t mem_size = 0;
+    cmr_u32 mem_size = 0;
     int32_t buffer_id = 0;
     cmr_u32 sum = 0;
+    int ret = 0;
+    cmr_uint phy_addr, virt_addr;
+    cmr_s32 fd;
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     HAL_LOGD("E");
 
     if (!obj) {
-        HAL_LOGE("obj null  error");
+        HAL_LOGE("obj=%p", obj);
         return NULL;
     }
 
@@ -9012,30 +9020,27 @@ void *SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data) {
         return NULL;
     }
 
-    buffer_id = obj->mHalOem->ops->camera_pre_capture_get_buffer_id(
-        obj->mCameraId, obj->mLargestSensorWidth, obj->mLargestSensorHeight);
-
-    if (obj->mHalOem->ops->camera_pre_capture_get_buffer_size(
-            obj->mCameraId, buffer_id, &mem_size, &sum)) {
+    ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(obj->mCameraId,
+                                                                 &mem_size);
+    if (ret) {
+        HAL_LOGE("camera_get_postprocess_capture_size failed");
         obj->mIsPreAllocCapMem = 0;
-        HAL_LOGE("buffer size error, using normal alloc cap buffer mode");
-    } else {
-        cmr_uint phy_addr[MAX_SUB_RAWHEAP_NUM] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        cmr_uint virt_addr[MAX_SUB_RAWHEAP_NUM] = {0, 0, 0, 0, 0,
-                                                   0, 0, 0, 0, 0};
-        cmr_s32 fd[MAX_SUB_RAWHEAP_NUM] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        // obj->mSubRawHeapSize = mem_size;
-        if (!obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr[0],
-                                         &virt_addr[0], &fd[0])) {
-            obj->mIsPreAllocCapMemDone = 1;
-            HAL_LOGD("pre alloc capture mem sum %d, fd:%d %d %d %d", sum, fd[0],
-                     fd[1], fd[2], fd[3]);
-        } else {
-            obj->mIsPreAllocCapMem = 0;
-            HAL_LOGE("buffer alloc error, using normal alloc cap buffer mode");
-        }
+        goto exit;
     }
 
+    obj->mSubRawHeapSize = mem_size;
+    sum = 1;
+    ret =
+        obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr, &virt_addr, &fd);
+    if (ret) {
+        obj->mIsPreAllocCapMem = 0;
+        HAL_LOGE("Callback_CaptureMalloc failed");
+        goto exit;
+    }
+
+    obj->mIsPreAllocCapMemDone = 1;
+
+exit:
     sem_post(&obj->mPreAllocCapMemSemDone);
 
     HAL_LOGD("X");

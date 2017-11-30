@@ -9350,7 +9350,9 @@ cmr_int camera_local_isp_sw_proc(cmr_handle oem_handle,
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     CMR_LOGD("E");
 
-    param_ptr->af_status = cxt->is_focus;
+    if (!param_ptr->af_status) {
+        param_ptr->af_status = cxt->is_focus;
+    }
     if (0 != cxt->focus_rect.x || 0 != cxt->focus_rect.y) {
         param_ptr->weightparam.sel_x = cxt->focus_rect.x * 960 / 1600;
         param_ptr->weightparam.sel_y = cxt->focus_rect.y * 960 / 1600;
@@ -9442,9 +9444,12 @@ cmr_int camera_local_raw_proc(cmr_handle oem_handle,
         in_param.sensor_id = cxt->camera_id;
         struct sensor_mode_info *sensor_mode_info;
         cmr_u32 sn_mode = 0;
-        if (cxt->is_multi_mode == MODE_SBS)
-            sn_mode = 1;
-        else
+        if (cxt->is_multi_mode == MODE_SBS) {
+            if (cxt->camera_id == 0 || cxt->camera_id == 1)
+                sn_mode = 2;
+            else
+                sn_mode = 1;
+        } else
             cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                 &sn_mode);
         // we think OEM has get sensor info and save it into sensor context,so
@@ -9538,11 +9543,14 @@ cmr_int camera_local_raw_proc(cmr_handle oem_handle,
         CMR_LOGE("get time failed");
         goto exit;
     }
-    ts.tv_nsec += ms2ns(100);
+    CMR_LOGD("start time is %ld.%ld", ts.tv_sec, ts.tv_nsec);
+    ts.tv_sec += 5;
+    /*ts.tv_nsec += ms2ns(100);
     if (ts.tv_nsec > 1000000000) {
         ts.tv_sec += 1;
         ts.tv_nsec -= 1000000000;
-    }
+    }*/
+    CMR_LOGD("wait time is %ld.%ld", ts.tv_sec, ts.tv_nsec);
 
     if (cxt->is_multi_mode == MODE_SBS) {
         CMR_LOGI("start wait raw proc");

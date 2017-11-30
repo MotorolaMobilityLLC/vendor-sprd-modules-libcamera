@@ -8758,50 +8758,46 @@ int SprdCameraHardware::pre_alloc_cap_mem_thread_deinit(void *p_data) {
 }
 
 void *SprdCameraHardware::pre_alloc_cap_mem_thread_proc(void *p_data) {
-    uint32_t mem_size = 0;
+    cmr_u32 mem_size = 0;
     int32_t buffer_id = 0;
     cmr_u32 sum = 0;
+    int ret = 0;
+    cmr_uint phy_addr, virt_addr;
+    cmr_s32 fd;
     SprdCameraHardware *obj = (SprdCameraHardware *)p_data;
 
-    if (NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
-        LOGE("pre_alloc_cap_mem_thread_proc: oem is null or oem ops is null");
-        return NULL;
-    }
-
     if (!obj) {
-        LOGE("pre_alloc_cap_mem_thread_proc: obj null  error");
+        HAL_LOGE("obj=%p", obj);
         return NULL;
     }
 
-    buffer_id =
-        obj->mHalOem->ops->camera_pre_capture_get_buffer_id(obj->mCameraId);
-
-    if (obj->mHalOem->ops->camera_pre_capture_get_buffer_size(
-            obj->mCameraId, buffer_id, &mem_size, &sum)) {
-        obj->mIsPreAllocCapMem = 0;
-        LOGE("pre_alloc_cap_mem_thread_proc: buffer size error, using normal "
-             "alloc cap buffer mode");
-    } else {
-        cmr_uint phy_addr[MAX_SUB_RAWHEAP_NUM] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        cmr_uint virt_addr[MAX_SUB_RAWHEAP_NUM] = {0, 0, 0, 0, 0,
-                                                   0, 0, 0, 0, 0};
-        cmr_s32 fd[MAX_SUB_RAWHEAP_NUM] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        obj->mSubRawHeapSize = mem_size;
-        if (!obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr[0],
-                                         &virt_addr[0], &fd[0])) {
-            obj->mIsPreAllocCapMemDone = 1;
-            LOGI("pre alloc capture mem sum %d, phy addr:0x%lx 0x%lx 0x%lx "
-                 "0x%lx",
-                 sum, fd[0], fd[1], fd[2], fd[3]);
-        } else {
-            obj->mIsPreAllocCapMem = 0;
-            LOGE("pre_alloc_cap_mem_thread_proc: buffer alloc error, using "
-                 "normal alloc cap buffer mode");
-        }
+    if (NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        return NULL;
     }
 
-    sem_post(&obj->mPreAllocCapMemSemDone);
+    ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(
+            obj->mCameraId, &mem_size);
+    if (ret) {
+        HAL_LOGE("camera_get_postprocess_capture_size failed");
+        obj->mIsPreAllocCapMem = 0;
+        goto exit;
+    }
 
+    obj->mSubRawHeapSize = mem_size;
+    sum = 1;
+    ret = obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr,
+                                     &virt_addr, &fd);
+    if (ret) {
+        obj->mIsPreAllocCapMem = 0;
+        HAL_LOGE("Callback_CaptureMalloc failed");
+        goto exit;
+    }
+
+    obj->mIsPreAllocCapMemDone = 1;
+
+exit:
+    sem_post(&obj->mPreAllocCapMemSemDone);
     return NULL;
 }
 

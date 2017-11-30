@@ -91,76 +91,6 @@ enum {
 typedef uint32_t (*cmr_get_size)(uint32_t width, uint32_t height,
                                  uint32_t thum_width, uint32_t thum_height);
 
-struct cap_size_to_mem {
-    uint32_t pixel_num;
-    uint32_t mem_size;
-};
-
-static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)},
-    {PIXEL_9P0_MEGA, (40 << 20)}, {PIXEL_AP0_MEGA, (40 << 20)},
-    {PIXEL_BP0_MEGA, (40 << 20)}, {PIXEL_CP0_MEGA, (40 << 20)},
-    {PIXEL_DP0_MEGA, (40 << 20)}, {PIXEL_10P0_MEGA, (52 << 20)},
-    {PIXEL_15P0_MEGA, (65 << 20)}};
-
-/* how to calculate cap size(raw capture):
-* target_yuv = w * h * 3 / 2;
-* cap_yuv = w * h * 3 / 2;
-* cap_raw = w * h * 3 / 2, resue target_yuv or cap_yuv
-* thum_yuv = thumW * thumH * 3 / 2; for thumbnail yuv
-* thum_jpeg = thumW * thumH * 3 / 2; for thumbnail jpeg
-* target_jpeg, resue
-* so, the total cap size is:
-* w * h * 3 / 2 + w * h * 3 / 2 + thumW * thumH * 3 = 3 * w * h + thumW * thumH
-* * 3(bytes);
-*/
-static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)},
-    {PIXEL_9P0_MEGA, (40 << 20)}, {PIXEL_AP0_MEGA, (40 << 20)},
-    {PIXEL_BP0_MEGA, (40 << 20)}, {PIXEL_CP0_MEGA, (40 << 20)},
-    {PIXEL_DP0_MEGA, (40 << 20)}, {PIXEL_10P0_MEGA, (52 << 20)},
-    {PIXEL_15P0_MEGA, (65 << 20)}};
-
-static const struct cap_size_to_mem front_cam_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)}};
-static const struct cap_size_to_mem front_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (18 << 20)}, {PIXEL_2P0_MEGA, (18 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (18 << 20)}, {PIXEL_6P0_MEGA, (26 << 20)},
-    {PIXEL_7P0_MEGA, (26 << 20)}, {PIXEL_8P0_MEGA, (26 << 20)}};
-
-static const struct cap_size_to_mem Stereo_video_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (25 << 20)}, {PIXEL_2P0_MEGA, (25 << 20)},
-    {PIXEL_3P0_MEGA, (25 << 20)}, {PIXEL_4P0_MEGA, (25 << 20)},
-    {PIXEL_5P0_MEGA, (25 << 20)}, {PIXEL_6P0_MEGA, (25 << 20)},
-    {PIXEL_7P0_MEGA, (25 << 20)}, {PIXEL_8P0_MEGA, (25 << 20)}};
-
-/*for ATV*/
-static const struct cap_size_to_mem mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (5 << 20)},  {PIXEL_2P0_MEGA, (9 << 20)},
-    {PIXEL_3P0_MEGA, (18 << 20)}, {PIXEL_4P0_MEGA, (18 << 20)},
-    {PIXEL_5P0_MEGA, (19 << 20)}, {PIXEL_6P0_MEGA, (19 << 20)},
-    {PIXEL_7P0_MEGA, (20 << 20)}, {PIXEL_8P0_MEGA, (20 << 20)}};
-
-static const struct cap_size_to_mem reserve_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_1P3_MEGA, (8 << 20)},  {PIXEL_2P0_MEGA, (8 << 20)},
-    {PIXEL_3P0_MEGA, (8 << 20)},  {PIXEL_4P0_MEGA, (8 << 20)},
-    {PIXEL_5P0_MEGA, (8 << 20)},  {PIXEL_6P0_MEGA, (12 << 20)},
-    {PIXEL_7P0_MEGA, (12 << 20)}, {PIXEL_8P0_MEGA, (12 << 20)},
-    {PIXEL_9P0_MEGA, (20 << 20)}, {PIXEL_AP0_MEGA, (20 << 20)},
-    {PIXEL_BP0_MEGA, (20 << 20)}, {PIXEL_CP0_MEGA, (20 << 20)},
-    {PIXEL_DP0_MEGA, (20 << 20)}, {PIXEL_10P0_MEGA, (25 << 20)},
-    {PIXEL_15P0_MEGA, (32 << 20)}};
-
 static multiCameraMode is_multi_camera_mode_mem;
 
 extern int camera_get_is_noscale(void);
@@ -230,195 +160,56 @@ static const cmr_get_size get_size[BUF_TYPE_NUM] = {
 
 #define SENSOR_MAX_NUM 6
 
-static cmr_u16 max_sensor_width[SENSOR_MAX_NUM];
-static cmr_u16 max_sensor_height[SENSOR_MAX_NUM];
+static cmr_u16 largest_picture_width[SENSOR_MAX_NUM];
+static cmr_u16 largest_picture_height[SENSOR_MAX_NUM];
 
-int camera_pre_capture_sensor_size_set(cmr_u32 camera_id, cmr_u16 width,
-                                       cmr_u16 height) {
-    max_sensor_width[camera_id] = width;
-    max_sensor_height[camera_id] = height;
-
-    return 0;
-}
-
-int camera_pre_capture_sensor_size_get(cmr_u32 camera_id, cmr_u16 *width,
-                                       cmr_u16 *height) {
-    *width = max_sensor_width[camera_id];
-    *height = max_sensor_height[camera_id];
-
-    return 0;
-}
-int camera_pre_capture_buf_id(cmr_u32 camera_id, cmr_u16 width,
-                              cmr_u16 height) {
-
-    UNUSED(camera_id);
-
-    int buffer_id = 0;
-
-    CMR_LOGI("width=%d, height=%d", width, height);
-
-    if (width * height <= 1920 * HEIGHT_2M) {
-        buffer_id = IMG_2P0_MEGA;
-    } else if (width * height <= 2592 * 1944) {
-        buffer_id = IMG_5P0_MEGA;
-    } else if (width * height <= 3264 * 2448) {
-        buffer_id = IMG_8P0_MEGA;
-    } else if (width * height <= 4160 * 3120) {
-        buffer_id = IMG_DP0_MEGA;
-    } else if (width * height <= 4608 * 3456) {
-        buffer_id = IMG_10P0_MEGA;
-    } else if (width * height <= 5312 * 3984) {
-        buffer_id = IMG_15P0_MEGA;
-    } else {
-        CMR_LOGD("support to 21M for now");
-        buffer_id = IMG_15P0_MEGA;
-    }
-
-    CMR_LOGI("buffer_id=%d", buffer_id);
-
-    return buffer_id;
-}
-
-int camera_reserve_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                            cmr_u32 *mem_size, cmr_u32 *mem_sum) {
-    struct cap_size_to_mem *mem_tab_ptr = NULL;
-
-    if (mem_size_id < IMG_1P3_MEGA || mem_size_id >= IMG_SIZE_NUM ||
-        NULL == mem_size) {
-        CMR_LOGE("no matched size for this image: id=%d, %p", mem_size_id,
-                 mem_size);
-        return -1;
-    }
-    *mem_sum = 1;
-
-    mem_tab_ptr = (struct cap_size_to_mem *)&reserve_mem_size_tab[0];
-    *mem_size = mem_tab_ptr[mem_size_id].mem_size;
-
-    CMR_LOGD("mem_size_id = %d, mem_size = 0x%x", mem_size_id,
-             mem_tab_ptr[mem_size_id].mem_size);
+int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
+                                 cmr_u16 height) {
+    largest_picture_width[camera_id] = width;
+    largest_picture_height[camera_id] = height;
 
     return 0;
 }
 
-int camera_pre_capture_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                                cmr_u32 *mem_size, cmr_u32 *mem_sum) {
-    struct cap_size_to_mem *mem_tab_ptr = NULL;
-    struct cap_size_to_mem *yuv_mem_tab_ptr = NULL;
+/* how to calculate cap size:
+* target_yuv = w * h * 3 / 2;
+* cap_yuv = w * h * 3 / 2;
+* cap_raw = w * h * 3 / 2, resue target_yuv or cap_yuv
+* thum_yuv = thumW * thumH * 3 / 2; for thumbnail yuv
+* thum_jpeg = thumW * thumH * 3 / 2; for thumbnail jpeg
+* target_jpeg, resue
+* so, the total cap size is:
+* w * h * 3 / 2 + w * h * 3 / 2 + thumW * thumH * 3 = 3 * w * h + thumW * thumH
+* * 3(bytes);
+*/
+int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
+    cmr_u32 max_w, max_h, thumb_w, thumb_h;
+    cmr_u32 redundance_size;
 
-    if (mem_size_id < IMG_1P3_MEGA || mem_size_id >= IMG_SIZE_NUM ||
-        NULL == mem_size) {
-        CMR_LOGE("no matched size for this image: id=%d, %p", mem_size_id,
-                 mem_size);
+    if (pp_cap_size == NULL) {
+        CMR_LOGE("pp_cap_size=%p", pp_cap_size);
         return -1;
     }
 
-    cmr_u32 is_raw_capture = 0;
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
-    }
+    max_w = largest_picture_width[camera_id];
+    max_h = largest_picture_height[camera_id];
 
-    *mem_sum = 1;
+    // we assume that thumb size is not bigger than 512*512
+    thumb_w = 512;
+    thumb_h = 512;
 
-    if (BACK_CAMERA_ID == camera_id || DEV2_CAMERA_ID == camera_id) {
-        mem_tab_ptr = (struct cap_size_to_mem *)&back_cam_raw_mem_size_tab[0];
-        yuv_mem_tab_ptr = (struct cap_size_to_mem *)&back_cam_mem_size_tab[0];
-        if (is_raw_capture)
-            *mem_size = MAX(mem_tab_ptr[mem_size_id].mem_size,
-                            yuv_mem_tab_ptr[mem_size_id].mem_size);
-        else
-            *mem_size = yuv_mem_tab_ptr[mem_size_id].mem_size;
-    } else if (FRONT_CAMERA_ID == camera_id || DEV3_CAMERA_ID == camera_id) {
-        int cameraMode = 0;
+    // alloc more redundance_size(1M) memory for alignment use
+    redundance_size = 1 * 1024 * 1024;
 
-        cameraMode = is_multi_camera_mode_mem;
-        if (cameraMode == MODE_3D_VIDEO) {
-            CMR_LOGD("current mode is 3D video");
-            mem_tab_ptr =
-                (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
-            yuv_mem_tab_ptr =
-                (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
-        } else if (cameraMode == MODE_3D_PREVIEW) {
-            CMR_LOGD("current mode is 3D preview");
-            mem_tab_ptr =
-                (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
-            yuv_mem_tab_ptr =
-                (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
-        } else if (cameraMode == MODE_3D_CAPTURE) {
-            CMR_LOGD("current mode is 3D capture");
-            mem_tab_ptr = (struct cap_size_to_mem *)&front_cam_mem_size_tab[0];
-            yuv_mem_tab_ptr =
-                (struct cap_size_to_mem *)&front_cam_mem_size_tab[0];
-        } else {
-            mem_tab_ptr =
-                (struct cap_size_to_mem *)&front_cam_raw_mem_size_tab[0];
-            yuv_mem_tab_ptr =
-                (struct cap_size_to_mem *)&front_cam_mem_size_tab[0];
-        }
+    *pp_cap_size = 3 * max_w * max_h + 3 * thumb_w * thumb_h + redundance_size;
 
-        *mem_size = MAX(mem_tab_ptr[mem_size_id].mem_size,
-                        yuv_mem_tab_ptr[mem_size_id].mem_size);
-    } else {
-        mem_tab_ptr = (struct cap_size_to_mem *)&mem_size_tab[0];
-        *mem_size = mem_tab_ptr[mem_size_id].mem_size;
-    }
+    // the above is default configuration, for some special case, you can change
+    // it like this:
+    // if (max_w * max_h <= xyyz && max_w * max_h > abcd) {
+    //    *pp_cap_size = you_wanted_size;
+    //}
 
-    CMR_LOGD("image size num, %d, mem size 0x%x", mem_size_id,
-             mem_tab_ptr[mem_size_id].mem_size);
-
-    return 0;
-}
-
-int camera_capture_buf_size(uint32_t camera_id, uint32_t sn_fmt,
-                            struct img_size *image_size, uint32_t *mem_size) {
-    uint32_t size_pixel;
-    int i;
-    struct cap_size_to_mem *mem_tab_ptr = NULL;
-
-    if (NULL == image_size || NULL == mem_size) {
-        CMR_LOGE("Parameter error 0x%p 0x%p ", image_size, mem_size);
-        return -1;
-    }
-
-    size_pixel = (uint32_t)(image_size->width * image_size->height);
-
-    if (SENSOR_IMAGE_FORMAT_RAW == sn_fmt) {
-        if (BACK_CAMERA_ID == camera_id || DEV2_CAMERA_ID == camera_id) {
-            mem_tab_ptr =
-                (struct cap_size_to_mem *)&back_cam_raw_mem_size_tab[0];
-        } else if (FRONT_CAMERA_ID == camera_id ||
-                   DEV3_CAMERA_ID == camera_id) {
-            mem_tab_ptr =
-                (struct cap_size_to_mem *)&front_cam_raw_mem_size_tab[0];
-        } else {
-            mem_tab_ptr = (struct cap_size_to_mem *)&mem_size_tab[0];
-        }
-    } else {
-        if (BACK_CAMERA_ID == camera_id || DEV2_CAMERA_ID == camera_id) {
-            mem_tab_ptr = (struct cap_size_to_mem *)&back_cam_mem_size_tab[0];
-        } else if (FRONT_CAMERA_ID == camera_id ||
-                   DEV3_CAMERA_ID == camera_id) {
-            mem_tab_ptr = (struct cap_size_to_mem *)&front_cam_mem_size_tab[0];
-        } else {
-            mem_tab_ptr = (struct cap_size_to_mem *)&mem_size_tab[0];
-        }
-    }
-
-    for (i = IMG_1P3_MEGA; i < IMG_SIZE_NUM; i++) {
-        if (size_pixel <= mem_tab_ptr[i].pixel_num)
-            break;
-    }
-
-    if (i == IMG_SIZE_NUM) {
-        CMR_LOGE("No matched size for this image, 0x%x", size_pixel);
-        return -1;
-    } else {
-        CMR_LOGD("image size num, %d, mem size 0x%x", i,
-                 mem_tab_ptr[i].mem_size);
-    }
-
-    *mem_size = mem_tab_ptr[i].mem_size;
+    CMR_LOGD("postporc_capture_size=%d", *pp_cap_size);
 
     return 0;
 }

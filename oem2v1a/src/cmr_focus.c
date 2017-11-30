@@ -963,7 +963,6 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     CMR_LOGD("zone_cnt %d, x y w h, %d %d %d %d", zone_cnt, ptr[0], ptr[1],
              ptr[2], ptr[3]);
 
-    CMR_PRINT_TIME;
     if (af_need_exit(af_handle, &af_cancel_is_ext)) {
         ret = CMR_CAMERA_INVALID_STATE;
         goto exit;
@@ -1063,14 +1062,11 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     af_cxt->af_busy = 0;
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 
-    CMR_PRINT_TIME;
-
 exit:
     // if (FOCUS_NEED_QUIT != af_cxt->focus_need_quit) {
     af_cxt->ops.af_post_proc(af_cxt->oem_handle, focus_stop_prew);
     //}
-    CMR_LOGD("af_cxt->focus_need_quit %d ret %ld", af_cxt->focus_need_quit,
-             ret);
+    CMR_LOGD("focus_need_quit %d ret %ld", af_cxt->focus_need_quit, ret);
     return ret;
 }
 
