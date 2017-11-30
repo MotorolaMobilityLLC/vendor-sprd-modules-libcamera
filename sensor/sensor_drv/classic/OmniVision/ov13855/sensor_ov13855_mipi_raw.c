@@ -331,7 +331,8 @@ static cmr_int ov13855_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
 
-    memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
+    memcpy(&ex_info->fov_info, &static_info->fov_info,
+           sizeof(static_info->fov_info));
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -366,27 +367,28 @@ static cmr_int ov13855_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
-/*block size 16x16 normal pos(x,y) mirror(16-x,y) flip(x,16-y) mirror&&flip(16-x, 16-y)*/
+/*block size 16x16 normal pos(x,y) mirror(16-x,y) flip(x,16-y)
+ * mirror&&flip(16-x, 16-y)*/
 
 #if defined(CONFIG_DUAL_MODULE)
-//static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
-//static int  flip_disable_factor = -1; //enable: -1  diable: 1
+// static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
+// static int  flip_disable_factor = -1; //enable: -1  diable: 1
 
 static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
-static const cmr_u16 ov13855_pd_row[] = {2, 6, 10, 14};//{14, 10, 6, 2};//y
+static const cmr_u16 ov13855_pd_row[] = {2, 6, 10, 14}; //{14, 10, 6, 2};//y
 
-static const cmr_u16 ov13855_pd_col[] = {10, 10, 2, 2};//{2, 2, 10, 10};//x
+static const cmr_u16 ov13855_pd_col[] = {10, 10, 2, 2}; //{2, 2, 10, 10};//x
 static const struct pd_pos_info _ov13855_pd_pos_l[] = {
     {10, 6}, {2, 10},
 };
 
 static const struct pd_pos_info _ov13855_pd_pos_r[] = {
-     {10, 2},{2, 14},
+    {10, 2}, {2, 14},
 };
 
 #else
-//static int  mirror_diasble_factor = 1; //enable: -1  diable: 1
-//static int  flip_disable_factor = 1; //enable:-1  diable: 1
+// static int  mirror_diasble_factor = 1; //enable: -1  diable: 1
+// static int  flip_disable_factor = 1; //enable:-1  diable: 1
 
 static const cmr_u16 ov13855_pd_is_right[] = {1, 0, 0, 1};
 
@@ -454,7 +456,7 @@ static cmr_int ov13855_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 #ifdef CONFIG_DUAL_MODULE
     pdaf_info->sns_orientation = 1; /*mirror+flip*/
 #else
-   pdaf_info->sns_orientation = 0; /*Normal*/
+    pdaf_info->sns_orientation = 0; /*Normal*/
 #endif
 
     return rtn;
@@ -880,6 +882,41 @@ static cmr_int ov13855_drv_stream_off(cmr_handle handle, cmr_uint param) {
     return 0;
 }
 
+/*==============================================================================
+ * Description:
+ * Initialize Exif Info
+ * please modify this function acording your spec
+ *============================================================================*/
+static cmr_int ov13855_drv_init_exif_info(cmr_handle handle,
+                                          void **exif_info_in /*in*/) {
+    cmr_int ret = SENSOR_FAIL;
+    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
+    *exif_info_in = NULL;
+    SENSOR_IC_CHECK_HANDLE(handle);
+
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
+    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
+    SENSOR_IC_CHECK_PTR(exif_ptr);
+    *exif_info_in = exif_ptr;
+
+    SENSOR_LOGI("Start");
+    exif_ptr->valid.FNumber = 1;
+    exif_ptr->FNumber.numerator = static_info->f_num;
+    exif_ptr->FNumber.denominator = 100;
+    exif_ptr->valid.ApertureValue = 1;
+    exif_ptr->ApertureValue.numerator = static_info->f_num;
+    exif_ptr->ApertureValue.denominator = 100;
+    exif_ptr->valid.MaxApertureValue = 1;
+    exif_ptr->MaxApertureValue.numerator = static_info->f_num;
+    exif_ptr->MaxApertureValue.denominator = 100;
+    exif_ptr->valid.FocalLength = 1;
+    exif_ptr->FocalLength.numerator = static_info->focal_length;
+    exif_ptr->FocalLength.denominator = 100;
+
+    return ret;
+}
+
 static cmr_int
 ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
                           cmr_handle *sns_ic_drv_handle) {
@@ -909,6 +946,7 @@ ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     /*init exif info,this will be deleted in the future*/
     ov13855_drv_init_fps_info(sns_drv_cxt);
+    ov13855_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
 
     /*add private here*/
     return ret;
