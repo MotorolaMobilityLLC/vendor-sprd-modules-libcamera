@@ -435,8 +435,6 @@ int SprdCamera3HWI::initialize(
     mCameraInitialized = true;
     mFrameNum = 0;
     mCurFrameTimeStamp = 0;
-    if (mOEMIf)
-        mOEMIf->initialize();
 
     return ret;
 }
@@ -640,6 +638,8 @@ int SprdCamera3HWI::configureStreams(
             return INVALID_OPERATION;
         }
     }
+
+    mOEMIf->initialize();
 
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
