@@ -602,17 +602,8 @@ void SprdCamera3OEMIf::closeCamera() {
 int SprdCamera3OEMIf::getCameraId() const { return mCameraId; }
 
 void SprdCamera3OEMIf::initialize() {
-    mPreviewFrameNum = 0;
-    mVideoSnapshotFrameNum = 0;
-    mRecordFrameNum = 0;
-    mZslFrameNum = 0;
-    mPictureFrameNum = 0;
-    mStartFrameNum = 0;
-    mStopFrameNum = 0;
-
-    mDropPreviewFrameNum = 0;
-    mDropVideoFrameNum = 0;
-    mDropZslFrameNum = 0;
+    memset(&mSlowPara, 0, sizeof(slow_motion_para));
+    mIsRecording = false;
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
