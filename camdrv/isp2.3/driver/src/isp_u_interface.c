@@ -468,13 +468,6 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_u_blocks_info *block_pt
 	ret = isp_u_raw_afm_slice_size(handle, (void *)block_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw afm slice size"));
 
-#if 0
-	ret = isp_u_hist_slice_size(handle,
-				    slice_ptr->size[ISP_DRV_HISTS].w,
-				    slice_ptr->size[ISP_DRV_HISTS].h);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp hist slice size"));
-#endif
-
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_DISPATCH].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_DISPATCH].h;
 	ret = isp_u_dispatch_ch0_size(handle, (void *)block_ptr);

@@ -105,8 +105,6 @@ struct isp_u_blocks_info {
 		void *ppi_info;
 		/*grgb block*/
 		struct isp_grgb_thrd grgb_thrd;
-		/*hist2 block*/
-		void *hist2_roi;
 		/*awbc block*/
 		struct isp_awbc_rgb awbc_rgb;
 	};
@@ -329,9 +327,6 @@ cmr_s32 isp_u_contrast_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: HIST*/
 cmr_s32 isp_u_hist_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist_mode(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: AFM*/
 cmr_s32 isp_u_raw_afm_statistic_r6p9(cmr_handle handle, void *param_ptr);
@@ -438,13 +433,8 @@ cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *param_ptr);
 
-/*Hist*/
-cmr_s32 isp_u_hist_v1_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist_slice_size(cmr_handle handle, void *param_ptr);
+/*Hist2*/
 cmr_s32 isp_u_hist2_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist2_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist2_mode(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hist2_roi(cmr_handle handle, void *param_ptr);
 
 /*Pre Cdn*/
 cmr_s32 isp_u_yuv_precdn_block(cmr_handle handle, void *param_ptr);
