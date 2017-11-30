@@ -608,8 +608,26 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 
 static cmr_u8 if_set_af_exif(const void *data, void *cookie)
 {
+	af_ctrl_t *af = cookie;
 	UNUSED(data);
-	UNUSED(cookie);
+	property_get("persist.sys.camera.isp.af.dump", af->AF_MODE, "none");
+
+	if (0 == strcmp(af->AF_MODE, "on")) {
+		FILE *fp = NULL;
+		if (STATE_NORMAL_AF == af->state)
+			fp = fopen("/data/misc/cameraserver/saf_debug_info.jpg", "wb");
+		else
+			fp = fopen("/data/misc/cameraserver/caf_debug_info.jpg", "wb");
+
+		if (NULL == fp) {
+			ISP_LOGE("dump af_debug_info failure");
+			return 0;
+		}
+		fwrite("ISP_AF__", 1, strlen("ISP_AF__"), fp);
+		fwrite(af->af_alg_cxt, 1, af->af_dump_info_len, fp);
+		fclose(fp);
+	}
+
 	return 0;
 }
 
