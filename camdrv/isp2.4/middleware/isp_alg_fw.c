@@ -1934,15 +1934,10 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	cmr_uint u_addr = 0;
-	cmr_u32 val = 0;
-	cmr_u32 last_val0 = 0;
-	cmr_u32 last_val1 = 0;
 	cmr_u32 src_w = cxt->commn_cxt.src.w;
 	cmr_u32 src_h = cxt->commn_cxt.src.h;
 	cmr_u32 binnng_w = 0;
 	cmr_u32 binnng_h = 0;
-	cmr_u32 double_binning_num = 0;
-	cmr_u32 remainder = 0;
 	cmr_u16 *binning_img_data = NULL;
 	cmr_u16 *binning_img_ptr = NULL;
 	cmr_u32 bayermode = cxt->commn_cxt.image_pattern;
@@ -1950,7 +1945,6 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_dev_binning4awb_info *binning_info = NULL;
-	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
@@ -1975,7 +1969,6 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 
 	binnng_w = (src_w >> binning_info->hx) & ~0x1;
 	binnng_h = (src_h >> binning_info->vx) & ~0x1;
-	double_binning_num = binnng_w * binnng_h / 6 * 2;
 
 	binning_img_data = (cmr_u16 *) malloc(binnng_w * binnng_h * 2);
 	if (binning_img_data == NULL) {
@@ -1984,53 +1977,9 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	}
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
-	memset(binning_img_data, 0, binnng_w * binnng_h * 2);
+	memset((char *)binning_img_data, 0, binnng_w * binnng_h * 2);
+	memcpy((char *)binning_img_data, (char *)u_addr, binnng_w * binnng_h * 2);
 	binning_img_ptr = binning_img_data;
-
-	for (i = 0; i < double_binning_num; i++) {
-		val = *((cmr_u32 *) u_addr + i);
-		*binning_img_ptr++ = val & 0x3FF;
-		*binning_img_ptr++ = (val >> 10) & 0x3FF;
-		*binning_img_ptr++ = (val >> 20) & 0x3FF;
-	}
-	remainder = binnng_w * binnng_h % 6;
-	last_val0 = *((cmr_u32 *) u_addr + i);
-	last_val1 = *((cmr_u32 *) u_addr + i + 1);
-
-	switch (remainder) {
-	case 1:{
-			*binning_img_ptr++ = last_val0 & 0x3FF;
-			break;
-		}
-	case 2:{
-			*binning_img_ptr++ = last_val0 & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
-			break;
-		}
-	case 3:{
-			*binning_img_ptr++ = last_val0 & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
-			break;
-		}
-	case 4:{
-			*binning_img_ptr++ = last_val0 & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
-			*binning_img_ptr++ = last_val1 & 0x3FF;
-			break;
-		}
-	case 5:{
-			*binning_img_ptr++ = last_val0 & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
-			*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
-			*binning_img_ptr++ = last_val1 & 0x3FF;
-			*binning_img_ptr++ = (last_val1 >> 10) & 0x3FF;
-			break;
-		}
-	default:
-		break;
-	}
 
 	ispalg_binning_data_cvt(bayermode, binnng_w, binnng_h, binning_img_data, &cxt->binning_stats);
 

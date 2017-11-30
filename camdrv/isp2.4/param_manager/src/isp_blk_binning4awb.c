@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "isp_blk_binning4awb"
 #include "isp_blocks_cfg.h"
+#include "isp_drv.h"
 
 cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2)
 {
@@ -26,9 +27,10 @@ cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void 
 	UNUSED(param2);
 
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
-	dst_ptr->cur.bypass = 0;//header_ptr->bypass;
+	dst_ptr->cur.bypass = header_ptr->bypass;
 	dst_ptr->cur.hx = src_ptr->hx;
 	dst_ptr->cur.vx = src_ptr->vx;
+	dst_ptr->cur.endian = ISP_ENDIAN_BIG;
 	header_ptr->is_update = ISP_ONE;
 
 	return rtn;
