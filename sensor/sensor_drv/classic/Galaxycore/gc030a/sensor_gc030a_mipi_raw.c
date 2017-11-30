@@ -293,6 +293,7 @@ static cmr_int gc030a_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         // hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
     }
 
     SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
