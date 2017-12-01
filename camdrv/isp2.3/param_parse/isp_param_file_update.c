@@ -1218,7 +1218,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 				}
 				break;
 			}
-			if ((strstr(line_buf, lsc_2d_map_flag1) != NULL) && (strstr(line_buf, lsc_2d_map_flag2) == NULL)) {
+			/*if ((strstr(line_buf, lsc_2d_map_flag1) != NULL) && (strstr(line_buf, lsc_2d_map_flag2) == NULL)) {
 				if (sensor_raw_ptr->fix_ptr[i]->lnc.lnc_param.lnc != NULL) {
 					rtn = read_lnc_tab_size_offset_info(fp, &sensor_raw_ptr->fix_ptr[i]->lnc);
 					if (0x00 != rtn) {
@@ -1228,7 +1228,7 @@ cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *se
 					}
 				}
 				continue;
-			}
+			}*/
 			if (strstr(line_buf, tune_info) != NULL) {
 				rtn = read_tune_info(fp, sensor_raw_ptr->mode_ptr[i].addr, &sensor_raw_ptr->mode_ptr[i].len);
 				if (0x00 != rtn) {
