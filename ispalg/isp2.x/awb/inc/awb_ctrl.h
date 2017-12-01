@@ -69,7 +69,8 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_FLASH_SNOP = 0X30f,
 	AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
 	AWB_CTRL_CMD_GET_CT_TABLE20 = 0x500,
-	AWB_CTRL_CMD_GET_WB_MODE
+	AWB_CTRL_CMD_GET_WB_MODE,
+	AWB_CTRL_CMD_RESULT_INFO
 };
 
 enum awb_ctrl_wb_mode {
@@ -268,6 +269,13 @@ struct awb_data_info {
 	void *data_ptr;
 	cmr_u32 data_size;
 };
+
+struct awb_ctrl_msg_ctrl {
+	cmr_int cmd;
+	cmr_handle in;
+	cmr_handle out;
+};
+
 
 cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle * handle_awb);
 cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result);

@@ -189,6 +189,7 @@ struct awb_ctrl_cxt {
 
 	/*must be the last one */
 	cmr_u32 magic_end;
+	struct awb_ctrl_calc_result awb_result;
 
 };
 
@@ -517,6 +518,17 @@ static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
+static cmr_u32 _awb_get_result_info(struct awb_ctrl_cxt *cxt, void *param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	struct awb_ctrl_calc_result *awb_result = (struct awb_ctrl_calc_result *)param;
+
+	memcpy(awb_result, &cxt->awb_result, sizeof(struct awb_ctrl_calc_result));
+
+	return rtn;
+
+}
+
 static cmr_u32 _awb_get_pix_cnt(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -820,7 +832,7 @@ static cmr_u32 awbsprd_load_lib(struct awb_ctrl_cxt *cxt)
 	}
 
 	cxt->lib_ops.awb_calc_v1 = dlsym(cxt->lib_handle, "awb_calc_v1");
-	if (!cxt->lib_ops.awb_init_v1) {
+	if (!cxt->lib_ops.awb_calc_v1) {
 		ISP_LOGE("fail to dlsym awb_calculation");
 		rtn = AWB_CTRL_ERROR;
 		goto load_error;
@@ -1476,6 +1488,8 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result->gain, NULL);
 	}
 
+	memcpy(&cxt->awb_result, result, sizeof(struct awb_ctrl_calc_result));
+
 	pthread_mutex_unlock(&cxt->status_lock);
 
 	return rtn;
@@ -1533,6 +1547,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_GET_GAIN:
 		rtn = _awb_get_gain(cxt, in);
+		break;
+
+	case AWB_CTRL_CMD_RESULT_INFO:
+		rtn = _awb_get_result_info(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASHING:

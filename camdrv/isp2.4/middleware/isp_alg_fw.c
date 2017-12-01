@@ -1394,35 +1394,8 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 	}
 
-	if (awb_output->use_ccm) {
-		struct isp_pm_param_data param_data;
-		struct isp_pm_ioctl_input input = { NULL, 0 };
-		struct isp_pm_ioctl_output output = { NULL, 0 };
-
-		memset(&param_data, 0x0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, awb_output->ccm, 9 * sizeof(cmr_u16));
-
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
-
-	}
 	cxt->awb_cxt.log_awb = awb_output->log_awb.log;
 	cxt->awb_cxt.log_awb_size = awb_output->log_awb.size;
-
-	if (awb_output->use_lsc) {
-		struct isp_pm_param_data param_data;
-		struct isp_pm_ioctl_input input = { NULL, 0 };
-		struct isp_pm_ioctl_output output = { NULL, 0 };
-
-		memset(&param_data, 0x0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, awb_output->lsc, awb_output->lsc_size);
-
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
-
-		cxt->awb_cxt.log_alc_lsc = awb_output->log_lsc.log;
-		cxt->awb_cxt.log_alc_lsc_size = awb_output->log_lsc.size;
-	}
 
 	if (ISP_SUCCESS == ret) {
 		cxt->awb_cxt.alc_awb = awb_output->use_ccm | (awb_output->use_lsc << 8);
@@ -1442,6 +1415,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 	struct awb_ctrl_calc_param param;
+	struct awb_ctrl_calc_result  awb_output_info;
 
 	if (!isp_alg_handle || !awb_output) {
 		ret = ISP_PARAM_NULL;
@@ -1460,7 +1434,14 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
 
-	ret = ispalg_awb_post_process((cmr_handle) cxt, awb_output);
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_RESULT_INFO, (void *)&awb_output_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	memcpy(awb_output, &awb_output_info, sizeof(struct awb_ctrl_calc_result));
+
+	ret = ispalg_awb_post_process((cmr_handle) cxt, &awb_output_info);
 
 exit:
 	ISP_LOGV("done %ld", ret);
@@ -1484,6 +1465,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
+
 
 	memset(&info, 0, sizeof(info));
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
