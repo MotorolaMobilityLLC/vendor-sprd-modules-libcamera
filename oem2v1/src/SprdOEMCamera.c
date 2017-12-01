@@ -1128,7 +1128,7 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         break;
     }
     case CAMERA_IOCTRL_DEBUG_IMG: {
-        ret = cmr_img_debug(handle, param);
+        ret = cmr_img_debug(param, NULL);
         break;
     }
     default:

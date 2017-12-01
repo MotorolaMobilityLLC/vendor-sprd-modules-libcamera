@@ -41,11 +41,11 @@ cmr_int add_face_postion() {
     return CMR_CAMERA_SUCCESS;
 };
 
-cmr_int cmr_img_debug(cmr_handle oem_handle, void *param) {
+cmr_int cmr_img_debug(void *param1, void *param2) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct img_debug *img_debug = param;
+    struct img_debug *img_debug = param1;
     if (NULL == img_debug) {
-        CMR_LOGE("invalid param:%p", param);
+        CMR_LOGE("invalid param1:%p", param1);
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }

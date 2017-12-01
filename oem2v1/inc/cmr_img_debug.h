@@ -36,7 +36,7 @@ extern "C" {
 
 #include "cmr_common.h"
 
-cmr_int cmr_img_debug(cmr_handle oem_handle, void *param);
+cmr_int cmr_img_debug(void *param1, void *param2);
 
 #ifdef __cplusplus
 }
