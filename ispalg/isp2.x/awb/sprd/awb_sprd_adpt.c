@@ -1336,7 +1336,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cxt->log = calc_result.log_buffer;
 	cxt->size = calc_result.log_size;
 
-	if ((cxt->frame_count > smooth_buffer_num) && (AWB_CTRL_FLASH_PRE != cxt->flash_info.flash_mode))
+	if (cxt->frame_count > smooth_buffer_num)
 	{
 		_gain_queue_add(&cxt->gain_queue, &cxt->cur_gain, cxt->cur_ct, 256);
 		_gain_queue_average(&cxt->gain_queue, &cxt->output_gain, &cxt->output_ct);
