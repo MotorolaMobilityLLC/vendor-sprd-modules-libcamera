@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq (true, $(filter $(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)) $(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)), true))
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -36,3 +37,4 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+endif

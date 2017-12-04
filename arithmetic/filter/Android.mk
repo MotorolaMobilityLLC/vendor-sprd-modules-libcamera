@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -32,4 +33,4 @@ LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libamipengine.so
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_PREBUILT)
 
-
+endif

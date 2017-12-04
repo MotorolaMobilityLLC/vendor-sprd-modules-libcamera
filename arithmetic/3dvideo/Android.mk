@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq (true, $(filter $(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)) $(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)) $(strip $(TARGET_BOARD_STEREOCAPTURE_SUPPORT)), true))
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_PATH := $(call my-dir)
 
@@ -31,4 +32,5 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+endif
 endif
