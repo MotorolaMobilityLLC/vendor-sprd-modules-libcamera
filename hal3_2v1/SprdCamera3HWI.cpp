@@ -74,7 +74,11 @@ volatile uint32_t gHALLogLevel = 4;
 camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
     .initialize = SprdCamera3HWI::initialize,
     .configure_streams = SprdCamera3HWI::configure_streams,
+#ifdef ANDROID_VERSION_KK_BRINGUP
+    .register_stream_buffers = SprdCamera3HWI::register_stream_buffers,
+#else
     .register_stream_buffers = NULL, // SprdCamera3HWI::register_stream_buffers,
+#endif
     .construct_default_request_settings =
         SprdCamera3HWI::construct_default_request_settings,
     .process_capture_request = SprdCamera3HWI::process_capture_request,
@@ -141,7 +145,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mVideoSnapshotHint = false;
     mOldCapIntent = 0;
     mOldRequesId = 0;
-    mPrvTimerID = NULL;
+    mPrvTimerID = SPRD_NULL;
     mFrameNum = 0;
     mSetting = NULL;
     mSprdCameraLowpower = 0;
@@ -1952,7 +1956,7 @@ int SprdCamera3HWI::timer_stop() {
 
     if (mPrvTimerID) {
         timer_delete(mPrvTimerID);
-        mPrvTimerID = NULL;
+        mPrvTimerID = SPRD_NULL;
     }
 
     return NO_ERROR;
@@ -1965,7 +1969,7 @@ int SprdCamera3HWI::timer_set(void *obj, int32_t delay_ms) {
     SprdCamera3HWI *dev = reinterpret_cast<SprdCamera3HWI *>(obj);
     HAL_LOGD("E");
 
-    if (mPrvTimerID == NULL) {
+    if (mPrvTimerID == SPRD_NULL) {
         memset(&se, 0, sizeof(struct sigevent));
         se.sigev_notify = SIGEV_THREAD;
         se.sigev_value.sival_ptr = dev;

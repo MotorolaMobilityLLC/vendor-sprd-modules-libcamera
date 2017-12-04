@@ -40,6 +40,10 @@
 
 using namespace android;
 
+#ifndef UINT32_MAX
+#define UINT32_MAX             (4294967295U)
+#endif
+
 namespace sprdcamera {
 
 class SprdCamera3MetadataChannel;

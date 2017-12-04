@@ -147,6 +147,13 @@ typedef struct {
 
 #define USE_ONE_RESERVED_BUF 1
 
+//9820e_4.4.4_NULL
+#ifdef ANDROID_VERSION_KK_BRINGUP
+#define SPRD_NULL (0)
+#else
+#define SPRD_NULL (void *)0
+#endif
+
 #ifdef POWER_HINT_USED
 typedef enum {
     CAMERA_POWER_HINT_PERFORMANCE = POWER_HINT_VENDOR_CAMERA_PERFORMANCE,
@@ -568,18 +575,18 @@ class SprdCamera3OEMIf : public virtual RefBase {
     for preview and raw, and need to be updated when libqcamera
     changes.
     */
-    static const int kPreviewBufferCount = 24;
-    static const int kPreviewRotBufferCount = 24;
-    static const int kVideoBufferCount = 24;
-    static const int kVideoRotBufferCount = 24;
-    static const int kZslBufferCount = 24;
-    static const int kZslRotBufferCount = 24;
-    static const int kRefocusBufferCount = 24;
-    static const int kPdafRawBufferCount = 4;
-    static const int kRawBufferCount = 1;
-    static const int kJpegBufferCount = 1;
-    static const int kRawFrameHeaderSize = 0x0;
-    static const int kISPB4awbCount = 16;
+    static const uint32_t kPreviewBufferCount = 24;
+    static const uint32_t kPreviewRotBufferCount = 24;
+    static const uint32_t kVideoBufferCount = 24;
+    static const uint32_t kVideoRotBufferCount = 24;
+    static const uint32_t kZslBufferCount = 24;
+    static const uint32_t kZslRotBufferCount = 24;
+    static const uint32_t kRefocusBufferCount = 24;
+    static const uint32_t kPdafRawBufferCount = 4;
+    static const uint32_t kRawBufferCount = 1;
+    static const uint32_t kJpegBufferCount = 1;
+    static const uint32_t kRawFrameHeaderSize = 0x0;
+    static const uint32_t kISPB4awbCount = 16;
     static multiCameraMode mMultiCameraMode;
     static multi_camera_zsl_match_frame *mMultiCameraMatchZsl;
     Mutex mLock; // API lock -- all public methods

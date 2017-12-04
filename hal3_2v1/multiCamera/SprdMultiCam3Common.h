@@ -31,7 +31,11 @@
 #define SPRDMULTICAMERACOMMON_H_HEADER
 
 #include "../SprdCamera3HWI.h"
+#ifdef ANDROID_VERSION_KK_BRINGUP
+#include <cstring>
+#else
 #include <string>
+#endif
 #include "spreadst/sprd_depth_configurable_param.h"
 
 namespace sprdcamera {

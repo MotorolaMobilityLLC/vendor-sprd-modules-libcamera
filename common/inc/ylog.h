@@ -90,7 +90,9 @@ extern "C" {
 #endif
 #endif
 
+#ifndef CONDITION
 #define CONDITION(cond) (__builtin_expect((cond) != 0, 0))
+#endif
 
 #ifndef YLOGV_IF
 #if LOG_NDEBUG
@@ -220,7 +222,9 @@ extern "C" {
 #endif
 #endif
 
+#ifndef CONDITION
 #define CONDITION(cond) (__builtin_expect((cond) != 0, 0))
+#endif
 
 #ifndef SLOGV_IF
 #if LOG_NDEBUG
@@ -328,7 +332,9 @@ extern "C" {
 #endif
 #endif
 
+#ifndef CONDITION
 #define CONDITION(cond) (__builtin_expect((cond) != 0, 0))
+#endif
 
 #ifndef RLOGV_IF
 #if LOG_NDEBUG
@@ -578,15 +584,21 @@ typedef enum {
 #ifndef android_testLog
 #define android_testLog(prio, tag) (1)
 #endif
+#ifndef android_writevLog
 #define android_writevLog(vec, num)                                            \
     do {                                                                       \
     } while (0)
+#endif
+#ifndef android_write1Log
 #define android_write1Log(str, len)                                            \
     do {                                                                       \
     } while (0)
+#endif
+#ifndef android_setMinPriority
 #define android_setMinPriority(tag, prio)                                      \
     do {                                                                       \
     } while (0)
+#endif
 //#define android_logToCallback(func) do{}while(0)
 #define android_logToFile(tag, file) (0)
 #define android_logToFd(tag, fd) (0)

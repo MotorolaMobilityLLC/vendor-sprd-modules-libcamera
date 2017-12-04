@@ -68,13 +68,13 @@ namespace sprdcamera {
     do {                                                                       \
         s_use_time = (s_end_timestamp - s_start_timestamp) / 1000000;          \
     } while (0)
-#define ZSL_FRAME_TIMEOUT 1000000000 /*1000ms*/
-#define SET_PARAM_TIMEOUT 2000000000 /*2000ms*/
-#define CAP_TIMEOUT 5000000000       /*5000ms*/
-#define PREV_TIMEOUT 2000000000      /*2000ms*/
-#define CAP_START_TIMEOUT 5000000000 /* 5000ms*/
-#define PREV_STOP_TIMEOUT 3000000000 /* 3000ms*/
-#define CANCEL_AF_TIMEOUT 500000000  /*1000ms*/
+#define ZSL_FRAME_TIMEOUT 1000000000LL /*1000ms*/
+#define SET_PARAM_TIMEOUT 2000000000LL /*2000ms*/
+#define CAP_TIMEOUT 5000000000LL       /*5000ms*/
+#define PREV_TIMEOUT 2000000000LL      /*2000ms*/
+#define CAP_START_TIMEOUT 5000000000LL /* 5000ms*/
+#define PREV_STOP_TIMEOUT 3000000000LL /* 3000ms*/
+#define CANCEL_AF_TIMEOUT 500000000LL  /*1000ms*/
 
 #define SET_PARAMS_TIMEOUT 250 /*250 means 250*10ms*/
 #define ON_OFF_ACT_TIMEOUT 50  /*50 means 50*10ms*/
@@ -262,7 +262,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
       mCameraDfsPolicyCur(CAM_EXIT), mIsPerformanceTestable(false),
       mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
-      mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
+      mPrvTimerID(SPRD_NULL), mFlashMode(-1), mIsAutoFocus(false),
       mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
       mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
       mHDRPlusFillState(false), mPreviewFrameNum(0), mRecordFrameNum(0),
@@ -405,11 +405,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
     mPreviewHeapBakUseFlag = 0;
 
-    for (int i = 0; i < kPreviewBufferCount; i++) {
+    for (uint32_t i = 0; i < kPreviewBufferCount; i++) {
         mPreviewBufferHandle[i] = NULL;
         mPreviewCancelBufHandle[i] = NULL;
     }
-    for (int i = 0; i < kRefocusBufferCount + 1; i++) {
+    for (uint32_t i = 0; i < kRefocusBufferCount + 1; i++) {
         mRefocusHeapArray[i] = NULL;
     }
     mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
@@ -3224,7 +3224,7 @@ void SprdCamera3OEMIf::freeCameraMem(sprd_camera_memory_t *memory) {
 }
 
 void SprdCamera3OEMIf::freeAllCameraMemIon() {
-    int i;
+    uint32_t i;
     uint32_t j;
 
     HAL_LOGI(":hal3: E");
@@ -7097,7 +7097,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
 int SprdCamera3OEMIf::timer_stop() {
     if (mPrvTimerID) {
         timer_delete(mPrvTimerID);
-        mPrvTimerID = NULL;
+        mPrvTimerID = SPRD_NULL;
     }
 
     return NO_ERROR;
@@ -7148,7 +7148,7 @@ void SprdCamera3OEMIf::timer_hand(union sigval arg) {
              dev->mPrvTimerID);
 
     timer_delete(dev->mPrvTimerID);
-    dev->mPrvTimerID = NULL;
+    dev->mPrvTimerID = SPRD_NULL;
     {
         Mutex::Autolock l(&dev->mLock);
         ispStart = dev->mIspToolStart;
@@ -7175,7 +7175,7 @@ void SprdCamera3OEMIf::timer_hand_take(union sigval arg) {
     HAL_LOGD("E timer id=%p", dev->mPrvTimerID);
 
     timer_delete(dev->mPrvTimerID);
-    dev->mPrvTimerID = NULL;
+    dev->mPrvTimerID = SPRD_NULL;
     dev->mCaptureMode = CAMERA_NORMAL_MODE;
     dev->takePicture();
 }
