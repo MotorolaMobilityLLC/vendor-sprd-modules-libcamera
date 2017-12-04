@@ -3559,8 +3559,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         deinitPreview();
         return UNKNOWN_ERROR;
     }
+#ifndef ANDROID_VERSION_KK_BRINGUP
     SprdCamera3Flash::reserveFlash(mCameraId);
-
+#endif
     // api1 dont set thumbnail size when preview, so we calculate the value same
     // as camera app
     chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
