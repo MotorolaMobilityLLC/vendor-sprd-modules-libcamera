@@ -464,6 +464,10 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_drv_slice_param *slice_
 				      slice_ptr->size[ISP_DRV_LENS].h);
 	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 2d lsc slice size"));
 
+	ret = isp_u_bdn_slice_size(handle, slice_ptr->size[ISP_DRV_BDN].w,
+					slice_ptr->size[ISP_DRV_BDN].h);
+	ISP_RETURN_IF_FAIL(ret, ("isp bdn slice size error"));
+
 	ret = isp_u_raw_aem_slice_size(handle,
 				       slice_ptr->size[ISP_DRV_AEM].w,
 				       slice_ptr->size[ISP_DRV_AEM].h);

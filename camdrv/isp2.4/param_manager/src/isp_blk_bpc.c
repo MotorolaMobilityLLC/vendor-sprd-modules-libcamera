@@ -58,6 +58,11 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 			dst_ptr->cur.slope_k[i] = bpc_param[strength_level].bpc_flat.slope_k[i];
 			dst_ptr->cur.intercept_b[i] = bpc_param[strength_level].bpc_flat.intercept_b[i];
 		}
+
+		dst_ptr->cur.bad_map_hw_fifo_clr_en = 0x00;
+		dst_ptr->cur.bpc_map_fifo_clr = 0x00;
+		dst_ptr->cur.bad_pixel_num = 0x00;
+		dst_ptr->cur.bpc_map_addr_new = 0x00;
 	}
 	return rtn;
 }
