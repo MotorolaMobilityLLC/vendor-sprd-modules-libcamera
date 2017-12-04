@@ -253,6 +253,7 @@ struct camera_context {
     sem_t threednr_proc_sm;
     sem_t share_path_sm;
     sem_t access_sm;
+    sem_t snapshot_sm;
     cmr_uint share_path_sm_flag;
     cmr_handle init_thread;
 
