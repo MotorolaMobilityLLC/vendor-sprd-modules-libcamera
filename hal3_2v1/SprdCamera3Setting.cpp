@@ -2541,6 +2541,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t flash_mode = ANDROID_FLASH_MODE_OFF;
     requestInfo.update(ANDROID_FLASH_MODE, &flash_mode, 1);
 
+    uint8_t scene_mode = ANDROID_CONTROL_SCENE_MODE_DISABLED;
+    requestInfo.update(ANDROID_CONTROL_SCENE_MODE, &scene_mode, 1);
+
     {
         bool support_cap_raw = false;
         if (characteristicsInfo.exists(
