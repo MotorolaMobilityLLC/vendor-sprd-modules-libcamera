@@ -365,7 +365,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, cmr_u32 is_force)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	struct ae_exposure_param write_param;
+	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	struct q_item write_item = { 0, 0, 0, 0, 0 };
 	struct q_item actual_item;
 
