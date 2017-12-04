@@ -1111,7 +1111,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     else
         inparam->potpbuf = OTP_Data;
     inparam->otpsize = OTP_Datanum;
-    inparam->config_param = (char*)(&sprd_depth_config_para);
+    inparam->config_param = (char *)(&sprd_depth_config_para);
     HAL_LOGI("inparam %p, outputinfo %p,", inparam, outputinfo);
     depth_handle = sprd_depth_Init(inparam, outputinfo, mode, format);
     mSidebyside->mDepthHandle = depth_handle;
@@ -1185,8 +1185,9 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessBokehImage(
 
     HAL_LOGD("BokehLevel: %d, postion x: %d, y: %d", mSidebyside->mBokehLevel,
              width / 2, height / 2);
-    ret = sprd_bokeh_ReFocusGen(bokeh_handle, (void *)outputbuffer, mSidebyside->mBokehLevel,
-                                width / 2, height / 2);
+    ret =
+        sprd_bokeh_ReFocusGen(bokeh_handle, (void *)outputbuffer,
+                              mSidebyside->mBokehLevel, width / 2, height / 2);
     if (ret)
         HAL_LOGE("sprd_depth_Run fail, ret %d", ret);
 
@@ -1836,6 +1837,9 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                                     GraphicBuffer::USAGE_SW_WRITE_OFTEN;
             int32_t yuvTextFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
             uint32_t inWidth = 0, inHeight = 0, inStride = 0;
+#if defined(CONFIG_SPRD_ANDROID_8)
+            uint32_t inLayCount = 1;
+#endif
             inWidth = mSidebyside->mPreviewWidth;
             inHeight = mSidebyside->mPreviewHeight;
             inStride = mSidebyside->mPreviewWidth;
@@ -1851,24 +1855,50 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
             if (is_using) {
                 prev_buffer = Prev_buffer_2;
                 raw_buffer = Raw_buffer_2;
+#if defined(CONFIG_SPRD_ANDROID_8)
+                srcBuffer = new GraphicBuffer(
+                    inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+                    inStride,
+                    (native_handle_t *)(*(
+                        &mSidebyside->mLocalCapBuffer[9].native_handle)),
+                    0);
+#else
                 srcBuffer = new GraphicBuffer(
                     inWidth, inHeight, yuvTextFormat, yuvTextUsage, inStride,
                     (native_handle_t *)(*(
                         &mSidebyside->mLocalCapBuffer[9].native_handle)),
                     0);
+#endif
             } else {
                 prev_buffer = Prev_buffer_1;
                 raw_buffer = Raw_buffer_1;
+#if defined(CONFIG_SPRD_ANDROID_8)
+                srcBuffer = new GraphicBuffer(
+                    inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+                    inStride,
+                    (native_handle_t *)(*(
+                        &mSidebyside->mLocalCapBuffer[8].native_handle)),
+                    0);
+#else
                 srcBuffer = new GraphicBuffer(
                     inWidth, inHeight, yuvTextFormat, yuvTextUsage, inStride,
                     (native_handle_t *)(*(
                         &mSidebyside->mLocalCapBuffer[8].native_handle)),
                     0);
+#endif
             }
+#if defined(CONFIG_SPRD_ANDROID_8)
+            dstBuffer = new GraphicBuffer(
+                inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
+                inStride,
+                (native_handle_t *)(*capture_msg.prev_combo_buff.prev_buffer),
+                0);
+#else
             dstBuffer = new GraphicBuffer(
                 inWidth, inHeight, yuvTextFormat, yuvTextUsage, inStride,
                 (native_handle_t *)(*capture_msg.prev_combo_buff.prev_buffer),
                 0);
+#endif
             HAL_LOGD("buffer is %p & %p & %p", prev_buffer, Prev_buffer_1,
                      Prev_buffer_2);
 
@@ -3094,7 +3124,7 @@ void SprdCamera3SideBySideCamera::CallBackSnapResult() {
 
     mCaptureThread->mCallbackOps->process_capture_result(
         mCaptureThread->mCallbackOps, &result);
-    memset(&mThumbReq, sizeof(request_saved_sidebyside_t), 0);
+    memset(&mThumbReq, 0, sizeof(request_saved_sidebyside_t));
     HAL_LOGD("snap id:%d ", result.frame_number);
 }
 
