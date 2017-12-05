@@ -11672,6 +11672,12 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGE("failed to transfer frame to 3dnr preview %ld", ret);
         goto exit;
     }
+
+    ret = cmr_preview_flush_cashe(handle, &ipm_in_param.src_frame);
+    if (ret) {
+        goto exit;
+    }
+
     CMR_LOGV("ret %ld", ret);
 
 exit:
@@ -12105,4 +12111,34 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
              prev_cxt->actual_pic_size.height, is_raw_capture, is_need_scaling);
 
     return is_need_scaling;
+}
+
+cmr_int cmr_preview_flush_cashe(cmr_handle preview_handle,
+                                 struct img_frm *img) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CMR_MSG_INIT(message);
+    struct prev_cb_info cb_data_info;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    cam_ion_buffer_t ion_buf;
+
+    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
+    CHECK_HANDLE_VALID(preview_handle);
+
+    if (NULL == img) {
+        CMR_LOGE("img = %p", img);
+        goto exit;
+    }
+
+    ion_buf.fd = img->fd;
+    ion_buf.addr_phy = (void *)&(img->addr_phy);
+    ion_buf.addr_vir = (void *)&(img->addr_vir);
+    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+
+    cb_data_info.cb_type = PREVIEW_EVT_CB_FLUSH;
+    cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+    cb_data_info.frame_data = (struct camera_frame_type *)&ion_buf;
+    prev_cb_start(handle, &cb_data_info);
+
+exit:
+    return ret;
 }

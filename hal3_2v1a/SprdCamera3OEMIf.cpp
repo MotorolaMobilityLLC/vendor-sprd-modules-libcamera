@@ -5267,6 +5267,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
 
     HAL_LOGV("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
+    cam_ion_buffer_t *ionBuf = NULL;
 
     switch (cb) {
     case CAMERA_EXIT_CB_PREPARE:
@@ -5323,8 +5324,11 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
         break;
 
     case CAMERA_EVT_CB_FLUSH:
-        HAL_LOGV("CAMERA_EVT_CB_FLUSH");
-        { HAL_LOGD("not implement preview flush for now"); }
+        ionBuf = (cam_ion_buffer_t *)parm4;
+        if (ionBuf) {
+            flushIonBuffer(ionBuf->fd, ionBuf->addr_vir, ionBuf->addr_phy,
+                           ionBuf->size);
+        }
         break;
 
     case CAMERA_EVT_CB_RESUME:
@@ -7836,7 +7840,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     } else if (type == CAMERA_PREVIEW_3DNR) {
         for (i = 0; i < sum; i++) {
             if (m3DNRPrevHeapReserverd[i] == NULL) {
-                memory = allocCameraMem(size, 1, true);
+                memory = allocCameraMem(size, 1, false);
                 if (NULL == memory) {
                     HAL_LOGE("error memory is null,malloced type %d", type);
                     goto mem_fail;
