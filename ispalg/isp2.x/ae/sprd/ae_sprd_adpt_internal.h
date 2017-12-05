@@ -258,7 +258,7 @@ struct ae_ctrl_cxt {
 	/*
 	 * flash_callback control
 	 */
-	cmr_s8 send_once[4];
+	cmr_s8 send_once[5];
 	/*
 	 * HDR control
 	 */

@@ -2404,6 +2404,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	cmr_s32 led_eb;
 	cmr_s32 flash_fired;
 	cmr_int cb_type;
+	cmr_s32 main_flash_set_counts = 0;
 	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 
 	/* for flash algorithm 0 */
@@ -2514,17 +2515,24 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			FLASH_PRE_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;/*flash status reset*/
-			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
+			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 		}
+
+		if (1 < cxt->capture_skip_num)
+			main_flash_set_counts = cxt->capture_skip_num - cxt->send_once[2];
+		else
+			main_flash_set_counts = -1;
+
+		ISP_LOGV("main_flash_set_counts: %d, capture_skip_num: %d", main_flash_set_counts, cxt->capture_skip_num);
 
 		if ((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status &&
 			FLASH_MAIN_BEFORE == current_status->settings.flash)
 			||(FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status &&
 			FLASH_MAIN == current_status->settings.flash)) {
 			ISP_LOGI("ae_flash1_status shake_4 %d", cxt->send_once[2]);
-			if (1 > cxt->send_once[2]) {
+			if (1 > cxt->send_once[4]) {
 				ISP_LOGI("ae_flash1 wait-main-flash!\r\n");
-			} else if (cxt->cur_param->flash_control_param.main_flash_set_count == cxt->send_once[2]) {
+			} else if (cxt->cur_param->flash_control_param.main_flash_set_count == cxt->send_once[4]) {
 				ISP_LOGI("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1,
 							cxt->flash_esti_result.captureFlahLevel2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_MAIN);
@@ -2532,13 +2540,16 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
-			} else if (cxt->cur_param->flash_control_param.main_capture_count == cxt->send_once[2]) {
+			} else if (cxt->cur_param->flash_control_param.main_capture_count == cxt->send_once[4]) {
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				cxt->cur_result.flash_status = FLASH_NONE;/*flash status reset*/
 				ISP_LOGI("ae_flash1_callback do-capture!\r\n");
 			} else {
 				ISP_LOGI("ae_flash1 wait-capture!\r\n");
+			}
+			if (0 >= main_flash_set_counts) {
+				cxt->send_once[4]++;
 			}
 			cxt->send_once[2]++;
 		}
@@ -2562,7 +2573,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			FLASH_MAIN_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;/*flash status reset*/
-			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
+			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 			if (0 != cxt->flash_ver) {
 				flash_finish(cxt);
 			}
@@ -2606,8 +2617,8 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	if (cxt->camera_id == 0) {
 		ISP_LOGI("flash will thr=%d, bv=%d, flash_fired=%d", cxt->flash_on_off_thr, cxt->sync_cur_result.cur_bv,
 			cxt->sync_cur_status.flash_fired);
-		if ((cxt->sync_cur_result.cur_bv < (cxt->flash_on_off_thr)) &&
-			cxt->sync_cur_status.flash_fired == 0 && cxt->sync_cur_result.wts.stable) {
+		if ((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) &&
+			(cxt->sync_cur_status.flash_fired == 0 && cxt->sync_cur_result.wts.stable)) {
 			flash_fired = 1;
 			cxt->cur_status.flash_fired = 1;
 			cb_type = AE_CB_FLASH_FIRED;
@@ -2615,8 +2626,8 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGV("flash will fire!\r\n");
 		}
 
-		if ((cxt->sync_cur_result.cur_bv > (cxt->flash_on_off_thr + 20)) &&
-			cxt->sync_cur_status.flash_fired == 1 && cxt->sync_cur_result.wts.stable) {
+		if ((cxt->sync_cur_result.cur_bv > cxt->flash_swith.led_thr_up) &&
+			(cxt->sync_cur_status.flash_fired == 1 && cxt->sync_cur_result.wts.stable)) {
 			flash_fired = 0;
 			cxt->cur_status.flash_fired = 0;
 			cb_type = AE_CB_FLASH_FIRED;
