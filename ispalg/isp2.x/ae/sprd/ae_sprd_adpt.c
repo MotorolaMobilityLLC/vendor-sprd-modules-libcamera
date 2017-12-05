@@ -3776,8 +3776,8 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
 		}else{
 				/*ev auto*/
-			cxt->mod_update_list.is_mev = 0;	
-			cxt->cur_status.settings.ev_index = ev->level;
+			cxt->mod_update_list.is_mev = 0;
+			cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
 		}
 		ISP_LOGV("AE_SET_EV_OFFSET %d", cxt->cur_status.settings.ev_index);
 	}
