@@ -82,6 +82,20 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 
 		break;
 
+	case ISP_PM_BLK_GAMMA_CUR:
+		{
+			cmr_u32 i;
+			memcpy((void *)&gamc_ptr->final_curve, param_ptr0, sizeof(gamc_ptr->final_curve));
+
+			for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+				gamc_ptr->cur.nodes[i].node_x = gamc_ptr->final_curve.points[i].x;
+				gamc_ptr->cur.nodes[i].node_y = gamc_ptr->final_curve.points[i].y;
+			}
+			gamc_header_ptr->is_update = ISP_ONE;
+		}
+
+		break;
+
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
@@ -164,6 +178,11 @@ cmr_s32 _pm_frgb_gamc_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0,
 		param_data_ptr->data_ptr = &gamc_ptr->cur.nodes;
 		param_data_ptr->data_size = sizeof(gamc_ptr->cur.nodes);
 		*update_flag = 0;
+		break;
+
+	case ISP_PM_BLK_GAMMA_TAB:
+		param_data_ptr->data_ptr = &gamc_ptr->curve_tab[0];
+		param_data_ptr->data_size = sizeof(gamc_ptr->curve_tab);
 		break;
 
 	default:

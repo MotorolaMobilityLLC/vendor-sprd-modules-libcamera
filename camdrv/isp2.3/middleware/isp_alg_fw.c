@@ -106,7 +106,7 @@ struct smart_info {
 	cmr_u8	lock_postcdn_en;
 	cmr_u8	lock_ccnr_en;
 	cmr_u8	lock_ynr_en;
-	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	void * tunning_gamma_cur;
 };
 
 struct afl_info {
@@ -1047,6 +1047,9 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 		smart_result = (struct smart_calc_result *)param0;
 		for (i = 0; i < smart_result->counts; i++) {
 			block_result = &smart_result->block_result[i];
+			if (block_result->update == 0)
+				continue;
+
 			memset(pm_param, 0, sizeof(pm_param));
 			for (j = 0; j < param_num; j++) {
 				/*zsl mode_id[0]: prev, mode_id[1]: cap;  none zsl mode_id[0]: prev, cap, video etc*/
@@ -1075,7 +1078,24 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 		break;
 
 	case ISP_SMART_SET_GAMMA_CUR:
-		/* TODO: wait for alg requirments. */
+		{
+			/* param0 should be (struct sensor_rgbgamma_curve *)  */
+			void *gamma_cur = param0;
+
+			memset(pm_param, 0, sizeof(pm_param));
+			for (j = 0; j < param_num; j++) {
+				BLOCK_PARAM_CFG(pm_param[j], ISP_PM_BLK_GAMMA_CUR,
+						ISP_BLK_RGB_GAMC,
+						cxt->mode_id[j],
+						gamma_cur,
+						sizeof(struct sensor_gamma_curve));
+			}
+			io_pm_input.param_num = param_num;
+			io_pm_input.param_data_ptr = &pm_param[0];
+
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to set gammar cur"));
+		}
 		break;
 
 	default:
@@ -1793,6 +1813,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			ae_in->ae_output.target_lum,
 			ae_in->flash_param.captureFlashEnvRatio,
 			ae_in->flash_param.captureFlash1ofALLRatio);
+		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 		smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
 		smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
 		smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
@@ -3537,7 +3558,8 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct smart_proc_input smart_proc_in;
 	struct awb_gain result;
-	struct isp_pm_ioctl_input ioctl_input;
+	struct isp_pm_ioctl_input ioctl_output = { PNULL, 0 };
+	struct isp_pm_ioctl_input ioctl_input = { PNULL, 0 };
 	struct isp_pm_param_data ioctl_data[ISP_MODE_MAX];
 	struct isp_awbc_cfg awbc_cfg;
 	struct alsc_ver_info lsc_ver = { 0 };
@@ -3604,8 +3626,22 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	}
 	cxt->lsc_cxt.lsc_sprd_version = lsc_ver.LSC_SPD_VERSION;
 
+	BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_GAMMA_TAB,
+				ISP_BLK_RGB_GAMC,
+				cxt->mode_id[0],
+				PNULL, 0);
+	ioctl_input.param_num = 1;
+	ioctl_input.param_data_ptr = ioctl_data;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&ioctl_input, (void *)&ioctl_output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get GAMMA TAB"));
+
+	if (ioctl_output.param_num > 0 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr) {
+		cxt->smart_cxt.tunning_gamma_cur = ioctl_output.param_data_ptr->data_ptr;
+	}
+
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
+		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;

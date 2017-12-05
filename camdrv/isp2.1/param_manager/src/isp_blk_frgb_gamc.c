@@ -130,6 +130,42 @@ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0,
 
 		break;
 
+	case ISP_PM_BLK_GAMMA_CUR:
+		{
+			cmr_u32 i;
+			memcpy((void *)&gamc_ptr->final_curve, param_ptr0, sizeof(gamc_ptr->final_curve));
+
+			gamc_ptr->cur_idx.x0 = 0;
+			gamc_ptr->cur_idx.x1 = 0;
+			gamc_ptr->cur_idx.weight0 = 256;
+			gamc_ptr->cur_idx.weight1 = 0;
+
+			if (1 == gamc_header_ptr->param_id) {
+				for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_x = gamc_ptr->final_curve.points_g[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_y = gamc_ptr->final_curve.points_g[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_x = gamc_ptr->final_curve.points_b[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_y = gamc_ptr->final_curve.points_b[i].y;
+				}
+			} else {
+				for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_r[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_g[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_x = gamc_ptr->final_curve.points_r[i].x;
+					gamc_ptr->cur.gamc_nodes.nodes_b[i].node_y = gamc_ptr->final_curve.points_r[i].y;
+				}
+
+			}
+
+			gamc_header_ptr->is_update = ISP_ONE;
+		}
+
+		break;
+
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
@@ -258,6 +294,11 @@ cmr_s32 _pm_frgb_gamc_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0,
 		param_data_ptr->data_ptr = &gamc_ptr->cur.gamc_nodes;
 		param_data_ptr->data_size = sizeof(gamc_ptr->cur.gamc_nodes);
 		*update_flag = 0;
+		break;
+
+	case ISP_PM_BLK_GAMMA_TAB:
+		param_data_ptr->data_ptr = &gamc_ptr->curve_tab[0];
+		param_data_ptr->data_size = sizeof(gamc_ptr->curve_tab);
 		break;
 
 	default:

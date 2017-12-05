@@ -101,7 +101,7 @@ struct smart_info {
 	cmr_u8	lock_postcdn_en;
 	cmr_u8	lock_ccnr_en;
 	cmr_u8	lock_ynr_en;
-	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	void * tunning_gamma_cur;
 };
 
 struct afl_info {
