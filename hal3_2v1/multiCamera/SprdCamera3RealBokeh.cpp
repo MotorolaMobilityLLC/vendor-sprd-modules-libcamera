@@ -2258,9 +2258,11 @@ exit : { // dump yuv data
                                  mRealBokeh->mCaptureHeight,
                                  mRealBokeh->mCapFrameNumber, "depth");
         }
-        mRealBokeh->dumpData((unsigned char *)(depth_handle->base), 1,
-                             depth_handle->size, width, height,
-                             mRealBokeh->mCapFrameNumber, "output");
+        if (!mAbokehGallery || (mRealBokeh->mApiVersion == SPRD_API_MODE)) {
+            mRealBokeh->dumpData((unsigned char *)(depth_handle->base), 1,
+                                 depth_handle->size, width, height,
+                                 mRealBokeh->mCapFrameNumber, "output");
+        }
     }
 }
     HAL_LOGI(":X");
@@ -4680,8 +4682,9 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                     Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
                     HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                              muxer_msg.combo_frame.frame_number);
-                    clearFrameNeverMatched(cur_frame.frame_number,
-                                           matched_frame.frame_number);
+                    if (cur_frame.frame_number > 5)
+                        clearFrameNeverMatched(cur_frame.frame_number,
+                                               matched_frame.frame_number);
                     mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(
                         muxer_msg);
                     mPreviewMuxerThread->mMergequeueSignal.signal();
@@ -4849,8 +4852,14 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
                     Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
                     HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                              muxer_msg.combo_frame.frame_number);
-                    clearFrameNeverMatched(matched_frame.frame_number,
-                                           cur_frame.frame_number);
+                    // we don't call clearFrameNeverMatched before five frame.
+                    // for first frame meta and ok status buffer update at the
+                    // same time.
+                    // app need the point that the first meta updated to hide
+                    // image cover
+                    if (cur_frame.frame_number > 5)
+                        clearFrameNeverMatched(matched_frame.frame_number,
+                                               cur_frame.frame_number);
                     mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(
                         muxer_msg);
                     mPreviewMuxerThread->mMergequeueSignal.signal();
