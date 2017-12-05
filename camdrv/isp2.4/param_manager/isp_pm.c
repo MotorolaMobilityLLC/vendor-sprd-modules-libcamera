@@ -777,8 +777,14 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 					isp_nr_param_update(&nr_param_update_info);
 					dst_nlm_data->param2_ptr = (cmr_uint *)fix_data_ptr->nr.nr_set_group.ivst;
 
-					extend_offset += 3 * sizeof(struct isp_pm_nr_simple_header_param);
-					dst_header[j].size = 3 * sizeof(struct isp_pm_nr_simple_header_param);
+					nr_param_update_info.param_type = ISP_BLK_NLM_FLAT_OFFSET_T;
+					nr_param_update_info.nr_param_ptr = (cmr_uint *) (fix_data_ptr->nr.nr_set_group.flat_offset);
+					nr_param_update_info.size_of_per_unit = sizeof(struct sensor_flat_offset_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_FLAT_OFFSET_T];
+					isp_nr_param_update(&nr_param_update_info);
+					dst_nlm_data ->param3_ptr = (cmr_uint *)fix_data_ptr->nr.nr_set_group.flat_offset;
+
+					extend_offset += 4 * sizeof(struct isp_pm_nr_simple_header_param);
+					dst_header[j].size = 4 * sizeof(struct isp_pm_nr_simple_header_param);
 				}
 				break;
 #ifdef NOT_EXIST_IN_ISP2_0

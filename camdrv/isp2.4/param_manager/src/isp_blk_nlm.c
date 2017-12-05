@@ -33,6 +33,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 		nlm_param = (struct sensor_nlm_level *)(dst_ptr->nlm_ptr);
 		vst_param = (struct sensor_vst_level *)(dst_ptr->vst_ptr);
 		ivst_param = (struct sensor_ivst_level *)(dst_ptr->ivst_ptr);
+		flat_offset_level = (struct sensor_flat_offset_level*)(dst_ptr->flat_offset_ptr);
 	} else {
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
@@ -160,6 +161,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	dst_ptr->ivst_ptr = src_ptr->param2_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
+	dst_ptr->flat_offset_ptr = src_ptr->param3_ptr;
 
 	rtn = _pm_nlm_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
@@ -266,6 +268,12 @@ cmr_s32 _pm_nlm_deinit(void *nlm_param)
 		free(nlm_ptr->ivst_map.data_ptr);
 		nlm_ptr->ivst_map.data_ptr = PNULL;
 		nlm_ptr->ivst_map.size = 0;
+	}
+
+	if (PNULL != nlm_ptr->nlm_map.data_ptr) {
+		free(nlm_ptr->nlm_map.data_ptr);
+		nlm_ptr->nlm_map.data_ptr = PNULL;
+		nlm_ptr->nlm_map.size = 0;
 	}
 	return rtn;
 }
