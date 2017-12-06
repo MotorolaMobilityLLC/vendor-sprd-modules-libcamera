@@ -22,7 +22,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
 	$(LOCAL_PATH)/../sensor/otp_drv \
-	$(LOCAL_PATH)/../arithmetic/filter/inc
+	$(LOCAL_PATH)/../arithmetic/filter/inc \
+	$(LOCAL_PATH)/../sensor/inc
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
