@@ -207,7 +207,6 @@ extern "C" {
 
 	struct afctrl_init_in {
 		cmr_handle caller_handle;	//struct isp_alg_fw_context *cxt
-		cmr_handle handle_pm;
 		isp_af_cb af_set_cb;
 		cmr_u32 camera_id;
 		struct third_lib_info lib_param;
@@ -216,6 +215,12 @@ extern "C" {
 		struct af_ctrl_otp_info otp_info;
 		cmr_u32 is_multi_mode;
 		cmr_u32 is_supoprt;
+		cmr_u8 *aftuning_data;
+		cmr_u32 aftuning_data_len;
+		cmr_u8 *pdaftuning_data;
+		cmr_u32 pdaftuning_data_len;
+		cmr_u8 *afttuning_data;
+		cmr_u32 afttuning_data_len;
 		 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 		 cmr_s32(*start_notice) (void *handle, struct af_result_param *in_param);
 		 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
