@@ -5019,7 +5019,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 				rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
 			#endif
 
-			ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
+			//ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
 		}else{
 			ISP_LOGE("rdm_otp_data = %p, rdm_otp_len = %d. Parser fail", rdm_otp_data, rdm_otp_len);
 		}
