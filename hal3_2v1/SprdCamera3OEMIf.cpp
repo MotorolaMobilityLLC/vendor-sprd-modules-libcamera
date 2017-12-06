@@ -248,7 +248,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlashMask(false), mReleaseFLag(false), mTimeCoeff(1),
       mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
       mIsPerformanceTestable(false), mIsAndroidZSL(false), mSetting(setting),
-      BurstCapCnt(0), mCapIntent(0), mPrvTimerID(NULL), mFlashMode(-1),
+      BurstCapCnt(0), mCapIntent(0), mPrvTimerID(SPRD_NULL), mFlashMode(-1),
       mIsAutoFocus(false), mIspToolStart(false), mSubRawHeapNum(0),
       mSubRawHeapSize(0), mPathRawHeapNum(0), mPathRawHeapSize(0),
       mPreviewDcamAllocBufferCnt(0), mHDRPlusFillState(false),
