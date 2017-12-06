@@ -2801,11 +2801,22 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
+#ifdef CONFIG_ISP_2_4
+		for (i = 0; i < 10; i++) {
+			cmr_u64 high = af_fv_val[95 + i / 2];
+			high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
+			af->af_fv_val.af_fv0[i] = af_fv_val[61 + i * 3] + high;	//spsmd g channels
 
+			high = af_fv_val[95 + i / 2];
+			high = (i & 0x01) ? ((high & 0x0F000000) << 12) : ((high & 0x00000F00) << 24);
+			af->af_fv_val.af_fv1[i] = af_fv_val[31 + i * 3] + high;	//soble9x9 g channels
+		}
+#else //ISP2.1/2.2/2.3 share same AFM filter, so share same FV statistic format
 		for (i = 0; i < 10; i++) {
 			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
 			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
 		}
+#endif
 		af->afm_skip_num = 0;
 		if (inparam->sensor_fps.is_high_fps) {
 			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;

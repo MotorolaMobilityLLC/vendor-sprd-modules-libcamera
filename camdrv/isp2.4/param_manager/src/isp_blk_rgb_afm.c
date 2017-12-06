@@ -137,7 +137,7 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 
 			cur_level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (cur_level != dst_ptr->cur_level || nr_tool_flag[9] || block_result->mode_flag_changed) {
+			if (0 && (cur_level != dst_ptr->cur_level || nr_tool_flag[9] || block_result->mode_flag_changed)) {
 				dst_ptr->cur_level = cur_level;
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[9] = 0;
