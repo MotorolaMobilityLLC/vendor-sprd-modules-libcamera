@@ -36,6 +36,36 @@
 
 #define NUMBER_DEBUG 8
 
+static void overlay_rectangle(unsigned char* pbuf, unsigned int w, unsigned int h, int roi_w, int roi_h)
+{
+    int off_x = (w - roi_w) / 2;
+    int off_y = (h - roi_h) / 2;
+    unsigned char* py = NULL;
+    int i;
+
+    py = pbuf;
+    py += w * off_y + off_x;
+    memset(py, 0xff, roi_w);
+
+    py = pbuf;
+    py += w * (off_y+roi_h) + off_x;
+    memset(py, 0xff, roi_w);
+
+    py = pbuf;
+    py += w * off_y + off_x;
+    for (i=off_y; i<off_y+roi_h; i++) {
+        *py = 255;
+        py += w;
+    }
+
+    py = pbuf;
+    py += w * off_y + off_x + roi_w;
+    for (i=off_y; i<off_y+roi_h; i++) {
+        *py = 255;
+        py += w;
+    }
+}
+
 cmr_int add_face_postion() {
     CMR_LOGD("add_face_postion");
     return CMR_CAMERA_SUCCESS;
@@ -75,6 +105,43 @@ cmr_int cmr_img_debug(void *param1, void *param2) {
         }
         case 1 << 1: {
             CMR_LOGD("bit 1 is set");
+            property_get("debug.sys.cam.roi.set", value, "");
+            if (*value != '\0') {
+                unsigned int x1 = 1;
+                unsigned int x1_base = 1;
+                unsigned int y1 = -1;
+                unsigned int y1_base = 1;
+                unsigned int x2 = -1;
+                unsigned int x2_base = 1;
+                unsigned int y2 = -1;
+                unsigned int y2_base = 1;
+                unsigned int w =  img_debug->size.width;
+                unsigned int h = img_debug->size.height;
+                unsigned char* py = (unsigned char *)(img_debug->input.addr_y);
+
+                int num = sscanf(value, "[%d/%d, %d/%d][%d/%d, %d/%d]", &x1, &x1_base, &y1, &y1_base, &x2, &x2_base, &y2, &y2_base);
+
+                if (num >= 4) {
+                    if (x1_base < x1)	x1_base = x1;
+                    if (y1_base < y1)	y1_base = y1;
+                    if (x1_base == 0)	x1_base = 1;
+                    if (y1_base == 0)	y1_base = 1;
+                    int roi_w = (w * x1 + x1_base/2) / x1_base;
+                    int roi_h = (h * y1 + y1_base/2) / y1_base;
+
+                    overlay_rectangle(py, w, h, roi_w, roi_h);
+                }
+                if (num == 8) {
+                    if (x2_base < x2)	x2_base = x2;
+                    if (y2_base < y2)	y2_base = y2;
+                    if (x2_base == 0)	x2_base = 1;
+                    if (y2_base == 0)	y2_base = 1;
+                    int roi_w = (w * x2 + x2_base/2) / x2_base;
+                    int roi_h = (h * y2 + y2_base/2) / y2_base;
+
+                    overlay_rectangle(py, w, h, roi_w, roi_h);
+                }
+            }
             break;
         }
         case 1 << 2: {
