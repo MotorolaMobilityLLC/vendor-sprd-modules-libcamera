@@ -189,6 +189,10 @@ struct Flash_mfCalcInput
 	uint16 rSta[1024];
 	uint16 gSta[1024];
 	uint16 bSta[1024];
+	uint32 rGain;
+	uint32 gGain;
+	uint32 bGain;
+	uint32 wb_mode;
 };
 struct Flash_mfCalcOutput
 {

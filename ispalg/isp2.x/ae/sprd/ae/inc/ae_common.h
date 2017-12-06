@@ -487,6 +487,7 @@ struct ae_alg_calc_param {
 	 */
 	struct ae_settings settings;
 	cmr_u32 awb_mode;
+	struct ae_alg_rgb_gain awb_cur_gain;
 };
 
 struct ae1_senseor_out {

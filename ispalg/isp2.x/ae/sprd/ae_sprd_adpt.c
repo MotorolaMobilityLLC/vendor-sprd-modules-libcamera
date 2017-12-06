@@ -1419,6 +1419,9 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->cur_status.awb_gain.r = 1024;
 	cxt->cur_status.awb_gain.g = 1024;
 	cxt->cur_status.awb_gain.b = 1024;
+	cxt->cur_status.awb_cur_gain.r = 1024;
+	cxt->cur_status.awb_cur_gain.g = 1024;
+	cxt->cur_status.awb_cur_gain.b = 1024;
 	cxt->cur_status.awb_mode = 0;
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_param->flicker_index][AE_ISO_AUTO];
 	cxt->cur_status.ae_table->min_index = 0;
@@ -2097,9 +2100,9 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.maxCapExposure  = current_status->ae_table->exposure[current_status->ae_table->max_index] * current_status->line_time / SENSOR_LINETIME_BASE;
 	in.aeExposure = current_status->effect_expline * current_status->line_time / SENSOR_LINETIME_BASE;
 	in.aeGain = current_status->effect_gain;
-	in.rGain = current_status->awb_gain.r;
-	in.gGain = current_status->awb_gain.g;
-	in.bGain = current_status->awb_gain.b;
+	in.rGain = current_status->awb_cur_gain.r;
+	in.gGain = current_status->awb_cur_gain.g;
+	in.bGain = current_status->awb_cur_gain.b;
 	in.isFlash = 0;/*need to check the meaning*/
 	in.flickerMode = current_status->settings.flicker;
 	in.staW = cxt->monitor_unit.win_num.w;
@@ -2232,6 +2235,10 @@ static cmr_s32 flash_high_flash_reestimation(struct ae_ctrl_cxt *cxt)
 	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
 	input->staW = cxt->monitor_unit.win_num.w;
 	input->staH= cxt->monitor_unit.win_num.h;
+	input->rGain = cxt->cur_status.awb_gain.r;
+	input->gGain = cxt->cur_status.awb_gain.g;
+	input->bGain = cxt->cur_status.awb_gain.b;
+	input->wb_mode = cxt->cur_status.awb_mode;
 	memcpy((cmr_handle*)&input->rSta[0], (cmr_u16*)&cxt->aem_stat_rgb[0], sizeof(input->rSta));
 	memcpy((cmr_handle*)&input->gSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num), sizeof(input->gSta));
 	memcpy((cmr_handle*)&input->bSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(input->bSta));
@@ -2557,7 +2564,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status &&
 			FLASH_MAIN == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_5 %d", cxt->send_once[3]);
-			if (1 == cxt->flash_main_esti_result.isEnd && cxt->cur_status.awb_mode == 0){
+			if (1 == cxt->flash_main_esti_result.isEnd){
 				if (cxt->isp_ops.set_wbc_gain) {
 					struct ae_alg_rgb_gain awb_gain;
 					awb_gain.r = cxt->flash_main_esti_result.captureRGain;
@@ -4175,6 +4182,9 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
+	cxt->cur_status.awb_cur_gain.b = calc_in->awb_cur_gain_b;
+	cxt->cur_status.awb_cur_gain.g = calc_in->awb_cur_gain_g;
+	cxt->cur_status.awb_cur_gain.r = calc_in->awb_cur_gain_r;
 	cxt->cur_status.awb_mode =  calc_in->awb_mode;
 	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	cxt->cur_status.stat_img = cxt->sync_aem;
@@ -4350,6 +4360,9 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
+	cxt->cur_status.awb_cur_gain.b = calc_in->awb_cur_gain_b;
+	cxt->cur_status.awb_cur_gain.g = calc_in->awb_cur_gain_g;
+	cxt->cur_status.awb_cur_gain.r = calc_in->awb_cur_gain_r;
 	cxt->cur_status.awb_mode =  calc_in->awb_mode;
 	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	cxt->cur_status.stat_img = cxt->sync_aem;

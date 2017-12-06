@@ -745,6 +745,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_calc_in in_param;
 	struct awb_gain gain;
+	struct awb_gain cur_gain;
 	struct ae_calc_out ae_result;
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
@@ -755,6 +756,11 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&gain, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CUR_GAIN, (void *)&cur_gain, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_CUR_GAIN"));
 	}
 
 	if(cxt->ops.awb_ops.ioctrl){
@@ -778,15 +784,21 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 
 	memset((void *)&ae_result, 0, sizeof(ae_result));
 	memset((void *)&in_param, 0, sizeof(in_param));
-	if ((0 == gain.r) || (0 == gain.g) || (0 == gain.b)) {
+	if ((0 == gain.r) || (0 == gain.g) || (0 == gain.b) || (0 == cur_gain.r) || (0 == cur_gain.g) || (0 == cur_gain.b) ) {
 		in_param.awb_gain_r = 1024;
 		in_param.awb_gain_g = 1024;
 		in_param.awb_gain_b = 1024;
+		in_param.awb_cur_gain_r = 1024;
+		in_param.awb_cur_gain_g = 1024;
+		in_param.awb_cur_gain_b = 1024;
 		in_param.awb_mode = awb_mode;
 	} else {
 		in_param.awb_gain_r = gain.r;
 		in_param.awb_gain_g = gain.g;
 		in_param.awb_gain_b = gain.b;
+		in_param.awb_cur_gain_r = cur_gain.r;
+		in_param.awb_cur_gain_g = cur_gain.g;
+		in_param.awb_cur_gain_b = cur_gain.b;
 		in_param.awb_mode = awb_mode;
 	}
 

@@ -87,6 +87,9 @@ struct ae_calc_in {
 	cmr_u32 usec;
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 awb_mode;
+	cmr_u32 awb_cur_gain_r;
+	cmr_u32 awb_cur_gain_g;
+	cmr_u32 awb_cur_gain_b;
 	cmr_u32 is_update;
 };
 

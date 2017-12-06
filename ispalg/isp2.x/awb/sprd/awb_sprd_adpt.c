@@ -430,7 +430,16 @@ static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 	cmr_u32 awb_mode = *(cmr_u32 *) in_param;
 
 	cxt->wb_mode = awb_mode;
+
+	if(cxt->wb_mode == 0){
+		cxt->recover_gain.r = cxt->cur_gain.r;
+		cxt->recover_gain.g = cxt->cur_gain.g;
+		cxt->recover_gain.b = cxt->cur_gain.b;
+		cxt->recover_ct = cxt->cur_ct;
+		cxt->recover_mode = cxt->wb_mode;
+	}
 	ISP_LOGV("debug wbmode changed!");
+
 	return rtn;
 }
 
@@ -529,6 +538,21 @@ static cmr_u32 _awb_get_result_info(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
+static cmr_u32 _awb_get_cur_gain(struct awb_ctrl_cxt *cxt, void *param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	struct awb_gain *awb_result = (struct awb_gain *)param;
+
+	awb_result->r = cxt->cur_gain.r;
+	awb_result->g = cxt->cur_gain.g;
+	awb_result->b = cxt->cur_gain.b;
+
+	ISP_LOGV("_awb_get_cur_gain = (%d,%d,%d)", awb_result->r, awb_result->g, awb_result->b);
+
+	return rtn;
+
+}
+
 static cmr_u32 _awb_get_pix_cnt(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -610,7 +634,7 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 
 }
-
+#if 0
 static cmr_u32 _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
@@ -640,7 +664,7 @@ static cmr_u32 _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 
 }
-
+#endif
 static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 #if 1
 {
@@ -1549,13 +1573,17 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		rtn = _awb_get_gain(cxt, in);
 		break;
 
+	case AWB_CTRL_CMD_GET_CUR_GAIN:
+		rtn = _awb_get_cur_gain(cxt, in);
+		break;
+
 	case AWB_CTRL_CMD_RESULT_INFO:
 		rtn = _awb_get_result_info(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASHING:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASHING");
-		rtn = _awb_set_flash_gain(cxt, in);
+		//rtn = _awb_set_flash_gain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
@@ -1583,8 +1611,9 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_FLASH_BEFORE_P:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_BEFORE_P");
 		cxt->flash_info.flash_enable = 1;
-		if(cxt->wb_mode == 0)
+		if(cxt->wb_mode == 0){
 			rtn = _awb_set_recgain(cxt, in);
+		}
 		break;
 
 	case AWB_CTRL_CMD_LOCK:
