@@ -122,9 +122,9 @@ static cmr_int _ov2680_cmk_parse_lsc_data(cmr_handle otp_drv_handle) {
         /*lsc data*/
         cmr_u8 *rdm_dst = otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET;
         lsc_dst->rdm_info.buffer = rdm_dst;
-        lsc_dst->rdm_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        lsc_dst->rdm_info.size = LSC_INFO_END_OFFSET - LSC_INFO_OFFSET;
         lsc_dst->gld_info.buffer = golden_lsc;
-        lsc_dst->gld_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        lsc_dst->gld_info.size = LSC_INFO_END_OFFSET - LSC_INFO_OFFSET;
     }
 
     OTP_LOGV("out");
