@@ -228,7 +228,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // ov area
 #ifdef OV8856_SHINE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, &ov8856_shine_otp_entry},
 #endif
 #ifdef OV8856
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8856_cmk_drv_entry},
