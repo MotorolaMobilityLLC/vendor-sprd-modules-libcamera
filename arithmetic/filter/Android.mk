@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
+ifneq ($(PLATFORM_VERSION),4.4.4)
+#ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
