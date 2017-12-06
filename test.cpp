@@ -88,8 +88,14 @@ static int s_mem_method = 0;        /*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
 /*data processing useful*/
+#if defined(CONFIG_CAMERA_MMITEST_PREVIEWSIZE_320X240)
+#define PREVIEW_WIDTH 320
+#define PREVIEW_HIGHT 240
+#else
 #define PREVIEW_WIDTH 960  // 1280//640//
 #define PREVIEW_HIGHT 720  // 960//480//
+#endif
+
 #define PREVIEW_BUFF_NUM 8 /*preview buffer*/
 #define SPRD_MAX_PREVIEW_BUF PREVIEW_BUFF_NUM
 struct frame_buffer_t {
