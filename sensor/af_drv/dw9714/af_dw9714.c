@@ -87,6 +87,22 @@ static int dw9714_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
 	return ret_value;
 }
 
+static int dw9714_drv_get_pos_info(struct sensor_vcm_info *info) {
+    CHECK_PTR(info);
+
+    if ((int32_t)(info->pos) < 0)
+        info->pos = 0;
+    else if ((int32_t)(info->pos) > 0x3FF)
+        info->pos = 0x3FF;
+
+    info->slave_addr = DW9714_VCM_SLAVE_ADDR;
+    info->cmd_len = 2;
+    info->cmd_val[0] = ((info->pos) >> 4) & 0x3F;
+    info->cmd_val[1] = (((info->pos) & 0xFF) << 4) | 0x09;
+
+    return AF_SUCCESS;
+}
+
 static int dw9714_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param) 
 {
 	uint32_t ret_value = AF_SUCCESS;
@@ -99,6 +115,9 @@ static int dw9714_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void
 			break;
 		case CMD_SNS_AF_SET_TEST_MODE:
 			break;
+                   case CMD_SNS_AF_GET_POS_INFO:
+                            dw9714_drv_get_pos_info(param);
+                            break;
 		default:
 			break;
 	}

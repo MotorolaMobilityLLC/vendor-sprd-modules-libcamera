@@ -626,7 +626,7 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param)
 
 	SENSOR_LOGI("E");
 
-#if defined(CONFIG_DUAL_MODULE)
+#if 0//defined(CONFIG_DUAL_MODULE)
 	ov8856_drv_set_master_FrameSync(handle, param);
 #endif
 	/*TODO*/
