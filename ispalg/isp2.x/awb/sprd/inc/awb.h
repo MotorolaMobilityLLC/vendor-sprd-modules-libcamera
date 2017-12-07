@@ -239,7 +239,8 @@ struct awb_tuning_param {
 
 	cmr_u8 ui_data[sizeof(struct awbParaGenIn)];
 
-	cmr_s32 reserved[(8204 - sizeof(struct awbParaGenIn)) / 4];
+	cmr_s32 reserved[(8200 - sizeof(struct awbParaGenIn)) / 4];
+	cmr_s32 stat_type;  // 0 - binning4awb, 1 - aem, default is 0
 
 	// awb control param
 	cmr_u32 skip_frame_num;

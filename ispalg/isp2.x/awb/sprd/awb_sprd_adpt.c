@@ -1319,25 +1319,27 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	struct awb_calc_result calc_result;
 	memset(&calc_param, 0x00, sizeof(calc_param));
 	memset(&calc_result, 0x00, sizeof(calc_result));
-#ifdef CONFIG_ISP_2_4
-	calc_param.stat_img.r = param->stat_img.chn_img.r;
-	calc_param.stat_img.g = param->stat_img.chn_img.g;
-	calc_param.stat_img.b = param->stat_img.chn_img.b;
-	calc_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-	calc_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-	calc_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-	calc_param.stat_img_w = 32;
-	calc_param.stat_img_h = 32;
-#else
-	calc_param.stat_img.r = param->stat_img_awb.chn_img.r;
-	calc_param.stat_img.g = param->stat_img_awb.chn_img.g;
-	calc_param.stat_img.b = param->stat_img_awb.chn_img.b;
-	calc_param.stat_img_w = param->stat_width_awb;
-	calc_param.stat_img_h = param->stat_height_awb;
-	calc_param.r_pix_cnt = 1;
-	calc_param.g_pix_cnt = 1;
-	calc_param.b_pix_cnt = 1;
-#endif
+	if (cxt->awb_init_param.tuning_param.stat_type)
+	{
+		calc_param.stat_img.r = param->stat_img.chn_img.r;
+		calc_param.stat_img.g = param->stat_img.chn_img.g;
+		calc_param.stat_img.b = param->stat_img.chn_img.b;
+		calc_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+		calc_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+		calc_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+		calc_param.stat_img_w = 32;
+		calc_param.stat_img_h = 32;
+	}else{
+		calc_param.stat_img.r = param->stat_img_awb.chn_img.r;
+		calc_param.stat_img.g = param->stat_img_awb.chn_img.g;
+		calc_param.stat_img.b = param->stat_img_awb.chn_img.b;
+		calc_param.stat_img_w = param->stat_width_awb;
+		calc_param.stat_img_h = param->stat_height_awb;
+		calc_param.r_pix_cnt = 1;
+		calc_param.g_pix_cnt = 1;
+		calc_param.b_pix_cnt = 1;
+	}
+
 	calc_param.bv = param->bv;
 	calc_param.iso = param->ae_info.iso;
 
