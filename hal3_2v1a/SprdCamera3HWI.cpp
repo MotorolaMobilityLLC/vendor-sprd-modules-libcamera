@@ -96,7 +96,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     : mCameraId(cameraId), mOEMIf(NULL), mCameraOpened(false),
       mCameraInitialized(false), mLastFrmNum(0), mCallbackOps(NULL),
       mInputStream(NULL), mMetadataChannel(NULL), mPictureChannel(NULL),
-      mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false), mFirstRequestGet(false){
+      mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false),
+      mFirstRequestGet(false) {
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
@@ -1151,9 +1152,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
     }
     // fix BUG760944, reset crop ratio when request have both jpeg stream and
-    // callback stream, num_output_buffers is 2 when take picture the first time.
+    // callback stream, num_output_buffers is 2 when take picture the first
+    // time.
     if (request->num_output_buffers == 2 && mPictureRequest == 1 &&
-        (capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)) {
+        (capturePara.cap_intent ==
+         ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)) {
         if ((request->output_buffers[0].stream->data_space ==
              HAL_DATASPACE_JFIF) ||
             (request->output_buffers[1].stream->data_space ==
@@ -2048,6 +2051,13 @@ void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
 
     HAL_LOGD("OTP INFO:addr 0x%p, size = %d", *addr, *size);
 
+    return;
+}
+void SprdCamera3HWI::getOnlineBuffer(void *cali_info) {
+
+    mOEMIf->getOnlineBuffer(cali_info);
+
+    HAL_LOGD("online buffer addr %p", cali_info);
     return;
 }
 

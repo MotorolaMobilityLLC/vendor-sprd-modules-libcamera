@@ -77,7 +77,44 @@ camera3_callback_ops SprdCamera3SideBySideCamera::callback_ops_aux = {
     .process_capture_result =
         SprdCamera3SideBySideCamera::process_capture_result_aux,
     .notify = SprdCamera3SideBySideCamera::notifyAux};
-
+static int save_onlinecalbinfo(char *filename, uint8_t *input, uint32_t size) {
+    char file_name[256];
+    FILE *fp;
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(file_name, "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
+            (1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
+            p->tm_min, p->tm_sec, filename);
+    fp = fopen(file_name, "wb");
+    if (fp) {
+        fwrite(input, size, 1, fp);
+        fclose(fp);
+        return 0;
+    }
+    return -1;
+}
+static int savefile(char *filename, uint8_t *ptr, int width, int height) {
+    int i;
+    // static int inum = 0;
+    char file_name[256];
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(file_name, "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
+            (1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
+            p->tm_min, p->tm_sec, filename);
+    // if(inum < 5)
+    FILE *fp = fopen(file_name, "wb");
+    if (fp) {
+        fwrite(ptr, 1, width * height * 3 / 2, fp);
+        fclose(fp);
+        return 0;
+    }
+    return -1;
+}
 /*===========================================================================
  * FUNCTION   : SprdCamera3SideBySideCamera
  *
@@ -1075,6 +1112,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     struct depth_init_inputparam *inparam = NULL;
     struct depth_init_outputparam *outputinfo = NULL;
     void *depth_handle = NULL;
+    struct isp_depth_cali_info cali_info;
     depth_mode mode = MODE_CAPTURE;
     outFormat format = MODE_DISPARITY;
     weightmap_param *wParams = NULL;
@@ -1082,7 +1120,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
         HAL_LOGE("buffer is null");
         goto exit;
     }
-
+    memset(&cali_info, 0, sizeof(isp_depth_cali_info));
     property_get("persist.sys.camera.refocus.otp", otp, "0");
     property_get("persist.sys.cam.sbs.savefile", dump, "0");
 
@@ -1091,8 +1129,8 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
 
     // read otp from sensor
     mDevMain->hwi->getDualOtpData(&otp_data, &otp_size, &has_read_otp);
-    HAL_LOGD("OTP INFO:addr 0x%p, size = %d, have_read = %d", otp_data,
-             otp_size, has_read_otp);
+    HAL_LOGD("OTP INFO:addr %p, size = %d, have_read = %d", otp_data, otp_size,
+             has_read_otp);
 
     if (has_read_otp && strcmp(otp, "1")) {
         memcpy(Sensor_Otp_Data, (char *)otp_data, otp_size);
@@ -1132,9 +1170,12 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     inparam->input_height_sub = mSidebyside->mSubCaptureHeight;
     inparam->output_depthwidth = mSidebyside->mCapDepthWidth;
     inparam->output_depthheight = mSidebyside->mCapDepthHeight;
+    inparam->online_depthwidth = 0;
+    inparam->online_depthheight = 0;
+    inparam->online_threadNum = 0;
     inparam->imageFormat_main = YUV420_NV12;
     inparam->imageFormat_sub = YUV420_NV12;
-    inparam->threadNum = 1;
+    inparam->depth_threadNum = 1;
     if (has_read_otp && strcmp(otp, "1"))
         inparam->potpbuf = Sensor_Otp_Data;
     else
@@ -1153,9 +1194,40 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     HAL_LOGD("Disparity %p, subbuffer %p, mainbuffer %p", Depthoutbuffer,
              subbuffer, mainbuffer);
 
+    // get online out buffer
+    mDevMain->hwi->getOnlineBuffer(&cali_info);
+    HAL_LOGD("online buffer addr %p", &cali_info);
+    if (!cali_info.calbinfo_valid) {
+        cali_info.buffer = NULL;
+    }
+
     mSidebyside->mDepthState = 1;
+
+    static int index = 0;
+    char prop[PROPERTY_VALUE_MAX];
+    char filename[128];
+    property_get("save_onlinecalbinfo", prop, "no");
+    if (!strcmp(prop, "yes") && (NULL != cali_info.buffer)) {
+        sprintf(filename, "hal_save_onlineclab_%d.dump", index);
+        save_onlinecalbinfo(filename, (uint8_t *)cali_info.buffer,
+                            cali_info.size);
+        sprintf(filename, "%dx%d_onlinecalb_capture_sub_index%d.yuv",
+                mSidebyside->mSubCaptureWidth, mSidebyside->mSubCaptureHeight,
+                index);
+        savefile(filename, (uint8_t *)subbuffer, mSidebyside->mSubCaptureWidth,
+                 mSidebyside->mSubCaptureHeight);
+        sprintf(filename, "%dx%d_onlinecalb_capture_main_index%d.yuv",
+                mSidebyside->mMainCaptureWidth, mSidebyside->mMainCaptureHeight,
+                index);
+        savefile(filename, (uint8_t *)mainbuffer,
+                 mSidebyside->mMainCaptureWidth,
+                 mSidebyside->mMainCaptureHeight);
+        index++;
+    }
+
     ret = sprd_depth_Run(depth_handle, (void *)Depthoutbuffer,
-                         (void *)subbuffer, (void *)mainbuffer, wParams);
+                         (void *)cali_info.buffer, (void *)subbuffer,
+                         (void *)mainbuffer, wParams);
     if (ret)
         HAL_LOGE("sprd_depth_Run fail, ret %d", ret);
     mSidebyside->mDepthState = 0;

@@ -37,13 +37,16 @@ extern "C" {
 
 	struct depth_init_inputparam
 	{
-		int input_width_main;    
+		int input_width_main;
 		int input_height_main;
-		int input_width_sub;    
+		int input_width_sub;
 		int input_height_sub;
-		int output_depthwidth;   
+		int output_depthwidth;
 		int output_depthheight;
-		int threadNum;
+		int online_depthwidth;
+		int online_depthheight;
+		int depth_threadNum;
+		int online_threadNum;
 		ImageYUVFormat imageFormat_main;
 		ImageYUVFormat imageFormat_sub;
 		void* potpbuf;
@@ -82,10 +85,12 @@ extern "C" {
 
 	void* sprd_depth_Init(struct depth_init_inputparam *inparam , struct depth_init_outputparam *outputinfo,depth_mode mode,outFormat format);
 
-	int sprd_depth_Run(void*handle , void * a_pOutDisparity,void* a_pInSub_YCC420NV21,void* a_pInMain_YCC420NV21,weightmap_param *wParams);
+	int sprd_depth_Run(void*handle , void * a_pOutDisparity, void * a_pOutMaptable,void* a_pInSub_YCC420NV21,void* a_pInMain_YCC420NV21,weightmap_param *wParams);
 
-	int sprd_depth_Run_distance(void* handle , void * a_pOutDisparity, void* a_pInSub_YCC420NV21, void* a_pInMain_YCC420NV21,weightmap_param *wParams,distanceRet *distance);
-	
+	int sprd_depth_Run_distance(void* handle , void * a_pOutDisparity, void * a_pOutMaptable, void* a_pInSub_YCC420NV21, void* a_pInMain_YCC420NV21,weightmap_param *wParams,distanceRet *distance);
+
+	int sprd_depth_OnlineCalibration(void* handle , void * a_pOutMaptable, void* a_pInSub_YCC420NV21, void* a_pInMain_YCC420NV21);
+
 	int sprd_depth_rotate(void * a_pOutDisparity,int width,int height,int angle);
 
 	int sprd_depth_distancemeasurement(int *distance , void* disparity , DistanceTwoPointInfo *points_info);

@@ -29,7 +29,8 @@
 
 #ifndef _SPRD_DEPTH_CONFIGURABLE_PARA_H_
 #define _SPRD_DEPTH_CONFIGURABLE_PARA_H_
-
+#define CAMERA_TAKEPIC_DEPTH_WIDTH      800
+#define CAMERA_TAKEPIC_DEPTH_HEIGHT     600
 struct sprd_depth_configurable_para {
     unsigned char SensorDirection; // sensor arrangement mode: 0-->Horizontal, 1 -->Vertical
     unsigned char DepthScaleMin;   // Min Value when we Scale Depth Result

@@ -49,12 +49,15 @@
 //#include "ts_makeup_api.h"
 #include "SprdCamera3MultiBase.h"
 #include "SGM_SPRD.h"
+#include "sprd_depth_configurable_param_sbs.h"
 #include "sprdbokeh.h"
 #include <unistd.h>
+#include <cutils/ashmem.h>
+#include "gralloc_buffer_priv.h"
 
 namespace sprdcamera {
 
-#define SBS_LOCAL_CAPBUFF_NUM 13
+#define SBS_LOCAL_CAPBUFF_NUM 14
 #define SBS_MAX_NUM_STREAMS 3
 #define SBS_THREAD_TIMEOUT 50e6
 #define SBS_REFOCUS_COMMON_PARAM_NUM (18)
@@ -97,7 +100,9 @@ typedef enum {
     SBS_FILE_DEPTH,
     SBS_FILE_RAW,
     SBS_FILE_JPEG,
-    SBS_FILE_OTP
+    SBS_FILE_OTP,
+    SBS_FILE_ISPINFO,
+    SBS_FILE_MAX
 } SideBySideFileType;
 
 typedef struct {
@@ -180,6 +185,7 @@ class SprdCamera3SideBySideCamera : SprdCamera3MultiBase {
     int mRealtimeBokeh;
     int mBokehPointX;
     int mBokehPointY;
+    int mIspdebuginfosize;
     bool mIommuEnabled;
     new_mem_t mLocalCapBuffer[SBS_LOCAL_CAPBUFF_NUM];
     uint32_t mRotation;
@@ -188,6 +194,7 @@ class SprdCamera3SideBySideCamera : SprdCamera3MultiBase {
     List<request_saved_sidebyside_t> mSavedRequestList;
     List<camera3_notify_msg_t> mNotifyListMain;
     Mutex mNotifyLockMain;
+    Mutex mResultLock;
     camera3_stream_t *mSavedReqStreams[SBS_MAX_NUM_STREAMS];
     request_saved_sidebyside_t mPrevOutReq;
     int mPreviewStreamsNum;
@@ -231,6 +238,9 @@ class SprdCamera3SideBySideCamera : SprdCamera3MultiBase {
         void saveCaptureBokehParams(buffer_handle_t *mSavedResultBuff,
                                     unsigned char *buffer,
                                     unsigned char *disparity_bufer);
+        void Save3dVerificationParam(buffer_handle_t *mSavedResultBuff,
+                                     unsigned char *main_yuv,
+                                     unsigned char *sub_yuv);
         // This queue stores matched buffer as frame_matched_info_t
         List<sidebyside_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -248,7 +258,10 @@ class SprdCamera3SideBySideCamera : SprdCamera3MultiBase {
         uint8_t mCaptureStreamsNum;
         bool mReprocessing;
         bool mBokehConfigParamState;
+        int32_t m3dVerificationEnable;
+        int mRealtimeBokehNum;
         int32_t mFaceInfo[4];
+        int8_t mOtpData[OTP_DUALCAM_DATA_SIZE];
 
       private:
         void waitMsgAvailable();

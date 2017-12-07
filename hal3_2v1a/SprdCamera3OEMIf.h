@@ -237,6 +237,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void getIspDebugInfo(void **addr, int *size);
     int autoFocusToFaceFocus();
     void getDualOtpData(void **addr, int *size, int *read);
+    void getOnlineBuffer(void *cali_info);
     bool isNeedAfFullscan();
     bool isVideoCopyFromPreview();
 

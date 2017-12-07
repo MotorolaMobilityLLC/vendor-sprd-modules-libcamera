@@ -34,7 +34,7 @@
 #include "isp_bridge.h"
 #include "pdaf_ctrl.h"
 #include "sprd_realtimebokeh.h"
-
+#include "sprd_depth_configurable_param_sbs.h"
 static struct soft_isp_block_param isp_block_param;
 static struct soft_isp_block_param *global_isp_block_param;
 
@@ -263,6 +263,7 @@ struct isp_alg_fw_context {
 	cmr_u32 is_multi_mode;
 	void *sw_isp_handle;
 	struct soft_isp_frm_param sw_isp_reserved_frm;
+	struct isp_depth_cali_info depth_cali_info;
 	cmr_int bokeh_status;
 	cmr_u32 zsl_flag;
 	struct isp_statis_info afl_stat_info;
@@ -3520,14 +3521,48 @@ cmr_int isp_alg_sw_stop(cmr_handle isp_alg_handle)
 	if(cxt->is_master)
 	{
 		slv_cxt = isp_br_get_3a_handle(cxt->camera_id + 2);
-		if (slv_cxt && slv_cxt->is_real_bokeh)
+		if (slv_cxt && slv_cxt->is_real_bokeh) {
 			ret = sprd_realtimebokeh_stop(slv_cxt->sw_isp_handle);
+			if (ret)
+				goto exit;
+		//	ISP_LOGI("yzl add before sprd_realtimebokeh_ioctl swisphandle:%p , caliinfo:%p"  , slv_cxt->sw_isp_handle,
+		//		(void*)(&cxt->depth_cali_info));
+			ret = sprd_realtimebokeh_ioctl(slv_cxt->sw_isp_handle,
+				REALTIMEBOKEH_CMD_GET_ONLINECALBINFO ,
+				(void *)&cxt->depth_cali_info);
+			if (ret)
+				goto exit;
+		}
 	}
 
 exit:
 	ISP_LOGI("X ret %ld", ret);
 	return ret;
 }
+
+cmr_int isp_alg_sw_get_depth_cali_info(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt;
+	struct isp_depth_cali_info *cali_info = (struct isp_depth_cali_info *)param_ptr;
+
+	if(!isp_alg_handle || !param_ptr) {
+		ret = -ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	memcpy(cali_info, &cxt->depth_cali_info, sizeof(struct isp_depth_cali_info));
+
+	ISP_LOGI("valid %d, size %d, buffer %p",
+		cali_info->calbinfo_valid, cali_info->size, cali_info->buffer);
+
+exit:
+	ISP_LOGI("X ret %ld", ret);
+	return ret;
+}
+
 
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
@@ -4395,6 +4430,8 @@ exit:
 				sw_isp_input.ynr_control = sw_ynr_ioctrl;
 				sw_isp_input.potp_buf = (uint8_t *)global_otp_info.data_addr;
 				sw_isp_input.otp_size = global_otp_info.data_size;
+				sw_isp_input.online_calb_width = CAMERA_TAKEPIC_DEPTH_WIDTH;
+				sw_isp_input.online_calb_height = CAMERA_TAKEPIC_DEPTH_HEIGHT;
 				ISP_LOGI("otp size: %d", global_otp_info.data_size);
 
 				ret = sprd_realtimebokeh_init(&sw_isp_input, (void **)(&cxt->sw_isp_handle));

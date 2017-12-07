@@ -155,24 +155,23 @@ struct depth_init_inputparam {
     int input_height_sub;
     int output_depthwidth;
     int output_depthheight;
-    int threadNum;
+    int online_depthwidth;
+    int online_depthheight;
+    int depth_threadNum;
+    int online_threadNum;
     ImageYUVFormat imageFormat_main;
     ImageYUVFormat imageFormat_sub;
     void *potpbuf;
     int otpsize;
     char *config_param;
 };
-typedef enum
-{
-    DISTANCE_OK=0,
+typedef enum { DISTANCE_OK = 0,
     DISTANCE_FAR,
-    DISTANCE_CLOSE
-}distanceRet;
-typedef enum
-{
-    DEPTH_NORMAL=0,
+    DISTANCE_CLOSE } distanceRet;
+typedef enum {
+    DEPTH_NORMAL = 0,
     DEPTH_STOP,
-}depth_stop_flag;
+} depth_stop_flag;
 typedef struct {
     int outputsize;
     int calibration_width;
@@ -203,12 +202,15 @@ typedef struct {
                              depth_mode mode, outFormat format);
 
     int (*sprd_depth_Run)(void *handle, void *a_pOutDisparity,
-                          void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
-                          weightmap_param *wParams);
+                          void *a_pOutMaptable, void *a_pInSub_YCC420NV21,
+                          void *a_pInMain_YCC420NV21, weightmap_param *wParams);
 
     int (*sprd_depth_Run_distance)(void *handle, void *a_pOutDisparity,
-                          void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
-                          weightmap_param *wParams, distanceRet *distance);
+                                   void *a_pOutMaptable,
+                                   void *a_pInSub_YCC420NV21,
+                                   void *a_pInMain_YCC420NV21,
+                                   weightmap_param *wParams,
+                                   distanceRet *distance);
 
     int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
                              int angle);

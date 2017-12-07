@@ -1643,6 +1643,14 @@ void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     return;
 }
 
+void SprdCamera3OEMIf::getOnlineBuffer(void *cali_info) {
+
+    mHalOem->ops->camera_get_online_buffer(mCameraHandle, cali_info);
+
+    HAL_LOGD("online buffer addr %p", cali_info);
+    return;
+}
+
 void SprdCamera3OEMIf::getIspDebugInfo(void **addr, int *size) {
 
     void *ispInioAddr = NULL;

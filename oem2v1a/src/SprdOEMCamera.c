@@ -920,6 +920,23 @@ exit:
     return ret;
 }
 
+cmr_uint camera_get_online_buffer(cmr_handle camera_handle, void *cali_info) {
+    cmr_uint ret = CMR_CAMERA_SUCCESS;
+
+    if (!camera_handle || !cali_info) {
+        CMR_LOGE("error 0x%lx info=%p", (cmr_uint)camera_handle, cali_info);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ret = camera_get_onlinebuffer(camera_handle, cali_info);
+    CMR_LOGV("online buffer_ptr %p", cali_info);
+
+exit:
+    CMR_LOGI("done %ld", ret);
+    return ret;
+}
+
 cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle, cmr_u32 camera_id,
                                     cmr_u32 *vcm_step) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1229,7 +1246,7 @@ static oem_ops_t oem_module_ops = {
     camera_transfer_caf_to_af, camera_transfer_af_to_caf, dump_jpeg_file,
     camera_get_gain_thrs, camera_set_sensor_info_to_af,
     camera_get_sensor_max_fps, camera_snapshot_is_need_flash,
-    camera_get_sensor_otp_info, camera_get_sensor_vcm_step,
+    camera_get_sensor_otp_info, camera_get_online_buffer, camera_get_sensor_vcm_step,
     camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
     camera_start_capture, camera_stop_capture, camera_set_largest_picture_size,
     camera_ioctrl, camera_reprocess_yuv_for_jpeg, camera_get_focus_point,

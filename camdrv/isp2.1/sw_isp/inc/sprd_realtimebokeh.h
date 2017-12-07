@@ -51,7 +51,10 @@ enum soft_isp_evt_id {
 	SOFT_BUFFER_RELEASE,
 	SOFT_ISP_EVT_MAX,
 };
-
+typedef enum realtimebokeh_cmd {
+	REALTIMEBOKEH_CMD_GET_ONLINECALBINFO,
+	REALTIMEBOKEH_CMD_MAX,
+}sprd_realtimebokeh_cmd;
 struct soft_isp_init_param {
 	cmr_handle isp_handle;
 	soft_isp_evt_cb evt_cb;
@@ -67,6 +70,8 @@ struct soft_isp_init_param {
 #ifdef YNR_CONTROL_INTERNAL
 	ynr_ioctl_fun ynr_control;
 #endif
+	uint32_t online_calb_width;
+	uint32_t online_calb_height;
 };
 
 typedef struct soft_isp_startparam
@@ -143,6 +148,7 @@ void sprd_realtimebokeh_ynr_callback(void* handle);
 #endif
 int sprd_realtimebokeh_stop(void* handle);
 int sprd_realtimebokeh_start(void* handle , struct soft_isp_startparam *startparam);
+int sprd_realtimebokeh_ioctl(void *handle, sprd_realtimebokeh_cmd cmd , void *outinfo);
 #ifdef __cplusplus
 }
 #endif

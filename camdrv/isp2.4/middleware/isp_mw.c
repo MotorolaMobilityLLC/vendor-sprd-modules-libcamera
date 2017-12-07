@@ -253,6 +253,23 @@ exit:
 	return ret;
 }
 
+cmr_int isp_sw_get_depth_cali_info(cmr_handle handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
+
+	if (!handle) {
+		ret = -ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	ret = isp_alg_sw_get_depth_cali_info(cxt->alg_fw_handle, param_ptr);
+
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;

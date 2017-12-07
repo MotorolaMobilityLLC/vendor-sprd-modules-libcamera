@@ -1061,7 +1061,8 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                         mRealBokeh->mUpdateDepthFlag = true;
                         mPrevAfState = currAfState;
                     }
-                    if (mRealBokeh->mIsSupportPBokeh && mRealBokeh->mUpdateDepthFlag) {
+                    if (mRealBokeh->mIsSupportPBokeh &&
+                        mRealBokeh->mUpdateDepthFlag) {
                         rc = depthPreviewHandle(depth_output_buffer,
                                                 muxer_msg.combo_frame.buffer1,
                                                 muxer_msg.combo_frame.buffer2);
@@ -1153,7 +1154,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
         int64_t depthRun = systemTime();
         distanceRet distance;
         rc = mRealBokeh->mDepthApi->sprd_depth_Run_distance(
-            mPrevDepthhandle, (void *)(depth_handle->base),
+            mPrevDepthhandle, (void *)(depth_handle->base), NULL,
             (void *)(input_handle2->base), (void *)(input_handle1->base),
             &(mPreviewbokehParam.depth_param), &distance);
         if (rc != ALRNB_ERR_SUCCESS) {
@@ -2045,7 +2046,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         weightParams.sel_y = mCapbokehParam.sel_y;
         weightParams.DisparityImage = NULL;
         rc = mRealBokeh->mDepthApi->sprd_depth_Run(
-            mCapDepthhandle, (void *)(depth_handle->base),
+            mCapDepthhandle, (void *)(depth_handle->base), NULL,
             (void *)(input_handle2->base), (void *)(scaled_handle->base),
             &weightParams);
         if (rc != ALRNB_ERR_SUCCESS) {
@@ -2768,8 +2769,9 @@ int SprdCamera3RealBokeh::loadDepthApi() {
     }
 
     mDepthApi->sprd_depth_Run_distance =
-        (int (*)(void *handle, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
-                 void *a_pInMain_YCC420NV21, weightmap_param *wParams,
+        (int (*)(void *handle, void *a_pOutDisparity, void *a_pOutMaptable,
+                 void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
+                 weightmap_param *wParams,
                  distanceRet *distance))dlsym(mDepthApi->handle,
                                               "sprd_depth_Run_distance");
     if (mDepthApi->sprd_depth_Run_distance == NULL) {
@@ -2780,8 +2782,8 @@ int SprdCamera3RealBokeh::loadDepthApi() {
 
     HAL_LOGD("load mDepth Api succuss.");
     mDepthApi->sprd_depth_Run =
-        (int (*)(void *handle, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
-                 void *a_pInMain_YCC420NV21,
+        (int (*)(void *handle, void *a_pOutDisparity, void *a_pOutMaptable,
+                 void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
                  weightmap_param *wParams))dlsym(mDepthApi->handle,
                                                  "sprd_depth_Run");
     if (mDepthApi->sprd_depth_Run == NULL) {
@@ -3105,7 +3107,10 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     prev_input_param.input_height_sub = mDepthPrevImageHeight;
     prev_input_param.output_depthwidth = mDepthOutWidth;
     prev_input_param.output_depthheight = mDepthOutHeight;
-    prev_input_param.threadNum = 1;
+    prev_input_param.online_depthwidth = 0;
+    prev_input_param.online_depthheight = 0;
+    prev_input_param.depth_threadNum = 1;
+    prev_input_param.online_threadNum = 0;
     prev_input_param.imageFormat_main = YUV420_NV12;
     prev_input_param.imageFormat_sub = YUV420_NV12;
     prev_input_param.potpbuf = mOtpData;
@@ -3126,7 +3131,10 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     cap_input_param.input_height_sub = mDepthSnapImageHeight;
     cap_input_param.output_depthwidth = mDepthSnapOutWidth;
     cap_input_param.output_depthheight = mDepthSnapOutHeight;
-    cap_input_param.threadNum = 2;
+    cap_input_param.online_depthwidth = 0;
+    cap_input_param.online_depthheight = 0;
+    cap_input_param.depth_threadNum = 2;
+    cap_input_param.online_threadNum = 0;
     cap_input_param.imageFormat_main = YUV420_NV12;
     cap_input_param.imageFormat_sub = YUV420_NV12;
     cap_input_param.potpbuf = mOtpData;

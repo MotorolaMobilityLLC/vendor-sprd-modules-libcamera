@@ -449,6 +449,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
                                             cmr_u32 *is_need_flash);
 cmr_int camera_get_otpinfo(cmr_handle oem_handle,
                            struct sensor_otp_cust_info *otp_data);
+cmr_int camera_get_onlinebuffer(cmr_handle oem_handle, void *cali_info);
 cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id,
                           void *data);
 cmr_int cmr_get_sensor_vcm_step(cmr_handle oem_handle, cmr_u32 camera_id,

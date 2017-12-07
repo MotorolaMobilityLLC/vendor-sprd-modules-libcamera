@@ -564,6 +564,12 @@ struct soft_isp_frm_param {
 	uint32_t af_status;
 };
 
+struct isp_depth_cali_info {
+	uint8_t calbinfo_valid;
+	uint32_t size;
+	void *buffer;
+};
+
 struct isp_flash_element {
 	cmr_u16 index;
 	cmr_u16 val;
@@ -828,6 +834,7 @@ cmr_int isp_sw_proc(cmr_handle handle, void *param_ptr);
 cmr_int isp_sw_check_buf(cmr_handle handle, void *param_ptr);
 cmr_int isp_sw_get_bokeh_status(cmr_handle handle);
 cmr_int isp_sw_stop(cmr_handle handle);
+cmr_int isp_sw_get_depth_cali_info(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_ynr_post_proc(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);

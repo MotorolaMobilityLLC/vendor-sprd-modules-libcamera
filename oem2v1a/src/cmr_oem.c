@@ -2628,6 +2628,28 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_onlinebuffer(cmr_handle oem_handle, void *cali_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (NULL == oem_handle || NULL == cali_info) {
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        CMR_LOGE("in parm error");
+        goto exit;
+    }
+
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
+
+    ret = isp_sw_get_depth_cali_info(isp_cxt->isp_handle, cali_info);
+    if (ret) {
+        CMR_LOGE("get sensor dual otp info failed %ld", ret);
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
+
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define CMR_ISP_OTP_MAX_SIZE (100 * 1024)

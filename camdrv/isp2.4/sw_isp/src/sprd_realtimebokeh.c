@@ -58,6 +58,7 @@ typedef struct misc_thread_arg
 	struct isp_img_frm s_yuv_depth;
 	struct isp_img_frm s_yuv_sw_out;
 	struct soft_isp_block_param isp_blockparam;
+	uint32_t need_onlinecalb;
 }misc_thread_arg_t;
 
 typedef struct sw_isp_handle
@@ -69,10 +70,18 @@ typedef struct sw_isp_handle
 	struct soft_isp_block_param isp_block_param;
 	CThread_pool *threadpool; //swisp ynr depth thread , misc thread
 	uint8_t misc_calculating; //misc thread processing?
+	uint8_t misc_depthcalculating;
+	uint8_t online_calbr_valid;
+	uint8_t online_calbr_calculating;
+	uint8_t online_calbr_forceinvalid;
+	uint32_t online_calbinfo_size;
+	uint32_t online_calbinfo_width;
+	uint32_t online_calbinfo_height;
 	misc_thread_arg_t misc_arg;
 	uint16_t * depth_weight_ptr[3];
 	uint8_t depth_weight_valid_index;
 	uint8_t* otp_data;
+	void *ponline_calbinfo;
 	int32_t otp_size;
 	WeightParams_t weight_param;
 	uint8_t process_flag;
@@ -177,7 +186,11 @@ static void set_misc_flag(void* handle , uint8_t flag)
 	SWISP_LOGI("---------set_misc_flag flag:%d\n" , flag);
 	pthread_mutex_unlock(&phandle->control_misc_mutex);
 }
-
+static void set_misc_depthcalculating(void *handle , uint8_t flag)
+{
+	sw_isp_handle_t* phandle = (sw_isp_handle_t*)handle;
+	phandle->misc_depthcalculating  = flag;
+}
 static int wait_condition_miscprocess(void* handle)
 {
 	sw_isp_handle_t* phandle = (sw_isp_handle_t*)handle;
@@ -234,6 +247,10 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 	pthread_mutex_init(&phandle->control_mutex , NULL);
 	memset(phandle , 0 , sizeof(sw_isp_handle_t));
 	phandle->misc_calculating = 0;
+	phandle->misc_depthcalculating = 0;
+	phandle->online_calbr_valid = 0;
+	phandle->online_calbr_forceinvalid = 1;
+	phandle->online_calbr_calculating = 1;
 	phandle->stopflag = 0;
 	phandle->process_flag = 0;
 	phandle->depth_weight_valid_index = 0;
@@ -247,6 +264,20 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 		return -1;
 	}
 	memcpy(phandle->otp_data , param->potp_buf , param->otp_size);
+	/*online calibration width height, buffer is width*height*8 */
+	phandle->ponline_calbinfo = (void*)malloc(param->online_calb_width * param->online_calb_height * sizeof(int));
+	if(NULL == phandle->ponline_calbinfo)
+	{
+		SWISP_LOGE("alloc ponline calbration info failed");
+		free(phandle->otp_data);
+		free(phandle);
+		return -1;
+	}
+	SWISP_LOGI("yzl ad online_calbinfo_size w:%d , h:%d" , param->online_calb_width , param->online_calb_height);
+	phandle->online_calbinfo_size = param->online_calb_width * param->online_calb_height * sizeof(int);
+	phandle->online_calbinfo_width = param->online_calb_width;
+	phandle->online_calbinfo_height = param->online_calb_height;
+
 	//init sw_isp
 	startTime();
 	sw_isp_handle = init_sw_isp(/*SW_ISP_IMG_WIDTH , SW_ISP_IMG_HEIGHT , SW_ISP_IMG_WIDTH , */param);
@@ -255,6 +286,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 	{
 		SWISP_LOGE("init sw isp error null handle");
 		free(phandle->otp_data);
+		free(phandle->ponline_calbinfo);
 		free(phandle);
 		return -1;
 	}
@@ -286,7 +318,60 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 	*handle = phandle;
 	return 0;
 }
-
+/*ioctl must be called after sprd_realtimebokeh_stop*/
+__attribute__ ((visibility("default"))) int sprd_realtimebokeh_ioctl(void *handle, sprd_realtimebokeh_cmd cmd , void *outinfo)
+{
+	int ret = 0;
+	sw_isp_handle_t* phandle = (sw_isp_handle_t*) handle;
+	switch(cmd)
+	{
+	case REALTIMEBOKEH_CMD_GET_ONLINECALBINFO:
+	{
+		struct isp_depth_cali_info *pinfo;
+		pinfo = outinfo;
+		uint8_t value = phandle->online_calbr_valid;
+		if(phandle->online_calbr_forceinvalid == 0)
+		{
+			pinfo->calbinfo_valid = phandle->online_calbr_valid;
+		}
+		else
+		{
+			phandle->online_calbr_valid = 0;
+			pinfo->calbinfo_valid = 0;
+		}
+		SWISP_LOGI("yzl add online_calbr_forceinvalid:%d , online_calbr_valid:%d,\
+				not corrected online_calbr_valid:%d" , phandle->online_calbr_forceinvalid , phandle->online_calbr_valid, value);
+		pinfo->buffer = phandle->ponline_calbinfo;
+		pinfo->size = phandle->online_calbinfo_size;
+		SWISP_LOGI("get online calibration info valid:%d, buffer:%p" , pinfo->calbinfo_valid , pinfo->buffer);
+		break;
+	}
+	default:
+		SWISP_LOGE("sprd_realtimebokeh_ioctl cmd error");
+		ret = -1;
+		break;
+	}
+	return ret;
+}
+static int save_onlinecalbinfo(char *filename , uint8_t *input , uint32_t size)
+{
+	char file_name[256];
+	FILE *fp;
+        time_t timep;
+        struct tm *p;
+        time(&timep);
+        p = localtime(&timep);
+	sprintf(file_name , "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s" ,(1900+p->tm_year),
+                        (1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec , filename);
+	fp = fopen(file_name , "wb");
+	if(fp)
+	{
+		fwrite(input , size ,1 , fp);
+		fclose(fp);
+		return 0;
+	}
+	return -1;
+}
 static int savefile(char* filename , uint8_t* ptr , int width , int height, int yuv)
 {
 	int i;
@@ -313,6 +398,7 @@ static int savefile(char* filename , uint8_t* ptr , int width , int height, int 
 			uint16_t* rawptr = (uint16_t*)ptr;
 			fwrite(rawptr, 1 ,width*height*sizeof(uint16_t) , fp);
 		}
+		else
 #endif
 		fclose(fp);
 	}
@@ -369,8 +455,8 @@ static void* misc_process(void* handle)
 //	printf("---------micro raw data addr:%p , data:%hx,%hx,%hx,%hx\n" , ptemp , *ptemp ,*(ptemp+1),*(ptemp+2), *(ptemp+3));
 	framenum++;
 //	startTime();
-	int64_t time = systemTime(CLOCK_MONOTONIC);
-	int64_t timestart = time;
+	long long time = systemTime(CLOCK_MONOTONIC);
+	long long timestart = time;
 	update_param_to_internal(phandle->swisp_handle , &(phandle->misc_arg.isp_blockparam));
 
 	ret = sw_isp_process(phandle->swisp_handle , (uint16_t*)phandle->misc_arg.raw.img_addr_vir.chn0+
@@ -382,11 +468,13 @@ static void* misc_process(void* handle)
 	{
 		SWISP_LOGE("sw_isp_process failed ret:%d" , ret);
 		event_callback(phandle , SOFT_BUFFER_RELEASE , &phandle->misc_arg.raw ,&phandle->misc_arg.m_yuv_pre , 0,0);
+		set_misc_depthcalculating(handle , 0);
 		set_misc_flag(phandle , 0);
 		return NULL;
 	}
 	else
 	{
+		event_callback(phandle , SOFT_IRQ_AEM_STATIS , NULL ,NULL , aem_addr , aem_size);
 		property_get(SAVE_SWISP_PROP , value , "no");
 		if(0 == strcmp(value , "yes"))
 		{
@@ -410,6 +498,7 @@ static void* misc_process(void* handle)
 	{
 		SWISP_LOGI("after sw_isp_process detect stop flag\n");
 		event_callback(phandle , SOFT_BUFFER_RELEASE , &phandle->misc_arg.raw ,&phandle->misc_arg.m_yuv_pre , 0,0);
+		set_misc_depthcalculating(handle , 0);
 		set_misc_flag(phandle , 0);
 		return NULL;
 	}
@@ -421,6 +510,7 @@ static void* misc_process(void* handle)
 		{
 			SWISP_LOGE("ynr process failed ret:%d" , ret);
 			event_callback(phandle , SOFT_BUFFER_RELEASE , &phandle->misc_arg.raw ,&phandle->misc_arg.m_yuv_pre , 0,0);
+			set_misc_depthcalculating(handle , 0);
 			set_misc_flag(phandle , 0);
 			return NULL;
 		}
@@ -443,6 +533,7 @@ static void* misc_process(void* handle)
 	{
 		SWISP_LOGE("after ynr process detect stop flag");
 		event_callback(phandle , SOFT_BUFFER_RELEASE , &phandle->misc_arg.raw ,&phandle->misc_arg.m_yuv_pre , 0,0);
+		set_misc_depthcalculating(handle , 0);
 		set_misc_flag(phandle , 0);
 		return NULL;
 	}
@@ -464,7 +555,7 @@ static void* misc_process(void* handle)
 
 
 	// input: phandle->misc_arg.m_yuv_pre +  phandle->misc_arg.s_yuv_depth ; output:phandle->misc_arg.m_yuv_depth;
-	ret = sprd_depth_Run_distance(phandle->depth_handle , (void*)phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] ,
+	ret = sprd_depth_Run_distance(phandle->depth_handle , (void*)phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] , NULL ,
 					(void*)phandle->misc_arg.s_yuv_depth.img_addr_vir.chn0 , (void*)phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0 ,&wParams , &distance);
 	distance = DISTANCE_OK;
 //	memset(phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] , 0 , 960*720);
@@ -507,10 +598,42 @@ static void* misc_process(void* handle)
 		phandle->distance_state = BOKEH_DISTANCE_ERROR;
 		break;
 	}
-	//set misc_calculating flag false;
+	set_misc_depthcalculating(handle , 0);
+
+	//add depth online calibration
+	if(1 == phandle->misc_arg.need_onlinecalb)
+	{
+		time = systemTime(CLOCK_MONOTONIC);
+		ret = sprd_depth_OnlineCalibration(phandle->depth_handle , phandle->ponline_calbinfo , (void*)phandle->misc_arg.s_yuv_depth.img_addr_vir.chn0 , 
+		(void*)phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0);
+		SWISP_LOGI("online calibration info cost time:%lld ms" , (systemTime(CLOCK_MONOTONIC) - time)/1000000);
+		if(ret == 0)
+		{
+			char value[128];
+			char filename[128];
+			static int index = 0;
+			//set misc_calculating flag true;
+			phandle->online_calbr_valid = 1;
+			SWISP_LOGI("yzl add set phandle->online_calbr_valid 1");
+			phandle->online_calbr_calculating = 0;
+			property_get("save_onlinecalbinfo" , value , "no");
+			if(!strcmp(value , "yes"))
+			{
+				sprintf(filename , "online_calibration_info_%d.dump" , index);
+				save_onlinecalbinfo(filename , phandle->ponline_calbinfo , phandle->online_calbinfo_size);
+				sprintf(filename , "%dx%d_online_inputslave_index%d.yuv" , phandle->misc_arg.s_yuv_depth.img_size.w , phandle->misc_arg.s_yuv_depth.img_size.h , index);
+				savefile(filename , (void*)phandle->misc_arg.s_yuv_depth.img_addr_vir.chn0 , phandle->misc_arg.s_yuv_depth.img_size.w , phandle->misc_arg.s_yuv_depth.img_size.h , 1);
+				sprintf(filename , "%dx%d_online_inputmain_index%d.yuv" , phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_size.w , phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_size.h , index);
+				savefile(filename , (void*)phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0 ,phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_size.w , phandle->misc_arg.m_yuv_pre.cpu_frminfo.img_size.h , 1);
+				index++;
+			}
+		}
+		else{
+			SWISP_LOGE("calculate online calibration error");
+		}
+	}
 	set_misc_flag(phandle , 0);
 	event_callback(phandle , SOFT_BUFFER_RELEASE , &phandle->misc_arg.raw ,&phandle->misc_arg.m_yuv_pre , 0,0);
-	event_callback(phandle , SOFT_IRQ_AEM_STATIS , NULL ,NULL , aem_addr , aem_size);
 	SWISP_LOGI("misc_process cost time:%zd ms" , (systemTime(CLOCK_MONOTONIC) - timestart)/1000000);
 	return NULL;
 }
@@ -577,7 +700,10 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_start(void* handl
 		inparam.output_depthheight = DEPTH_OUTPUT_HEIGHT;//PREVIEW_HEIGHT;
 		inparam.imageFormat_main = YUV420_NV12;
 		inparam.imageFormat_sub = YUV420_NV12;
-		inparam.threadNum = 1;
+		inparam.depth_threadNum = 1;
+		inparam.online_depthwidth =  phandle->online_calbinfo_width;
+		inparam.online_depthheight = phandle->online_calbinfo_height;
+		inparam.online_threadNum = 2;
 		inparam.potpbuf = phandle->otp_data;//(uint8_t*)malloc(256); //may change later
 		inparam.otpsize = phandle->otp_size;
 		//		inparam.potpbuf = (uint8_t*)malloc(256);
@@ -585,8 +711,10 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_start(void* handl
 		//      	memset(inparam.potpbuf , 0x23 , 232);
 		inparam.config_param = (char*)(&sprd_depth_config_para);
 		struct depth_init_outputparam outparam;
-		SWISP_LOGI("-----depth init param otp:%p , size:%d , prreview width:%d ,height:%d , depth:%d,%d, thread:%d\n" , inparam.potpbuf , inparam.otpsize ,
-			   inparam.input_width_main , inparam.input_height_main , inparam.output_depthwidth , inparam.output_depthheight , inparam.threadNum);
+		SWISP_LOGI("-----depth init param otp:%p , size:%d , prreview width:%d ,height:%d , depth:%d,%d, thread:%d \
+				, online threadnum:%d, online depth w:%d, h:%d\n" , inparam.potpbuf , inparam.otpsize ,
+			   inparam.input_width_main , inparam.input_height_main , inparam.output_depthwidth , inparam.output_depthheight , inparam.depth_threadNum,
+				inparam.online_threadNum , inparam.online_depthwidth , inparam.online_depthheight);
 		phandle->depth_handle = sprd_depth_Init(&inparam , &outparam , MODE_CAPTURE , MODE_WEIGHTMAP);
 		if(phandle->depth_handle == NULL)
 		{
@@ -616,8 +744,13 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 	//set_process_flag(1);
 	pthread_mutex_lock(&phandle->control_mutex);
 	isp_param->bokeh_status = BOKEHCALCULATE_DISANCE_ERROR; //invalid
-	SWISP_LOGI("-------- sprd_realtimebokeh_process enter , misc_calculating:%d , afstatus:%d\n" , phandle->misc_calculating,
-		   isp_param->af_status);
+	SWISP_LOGI("-------- sprd_realtimebokeh_process enter , misc_calculating:%d , misc_depthcalculating:%d , afstatus:%d\n" , phandle->misc_calculating,
+		   phandle->misc_depthcalculating , isp_param->af_status);
+	if(isp_param->af_status == 1)
+	{
+		phandle->online_calbr_valid = 0;
+		phandle->online_calbr_forceinvalid = 1;
+	}
 	if((phandle->stopflag == 1) || phandle->start_flag != 1)
 	{
 		SWISP_LOGI("-----------sprd_realtimebokeh_process stop flag return\n");
@@ -641,6 +774,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 	if(isp_param->af_status == 1)
 	{
 		phandle->af_state = BOKEH_AF_FOCUSING;
+//		phandle->online_calbr_valid = 0;
 		memcpy((void*)isp_param->m_yuv_bokeh.cpu_frminfo.img_addr_vir.chn0 ,(void*)isp_param->m_yuv_pre.cpu_frminfo.img_addr_vir.chn0 ,
 		       isp_param->m_yuv_pre.cpu_frminfo.img_size.h*isp_param->m_yuv_pre.cpu_frminfo.img_size.w*3/2);
 		event_callback(phandle , SOFT_BUFFER_RELEASE , &isp_param->raw ,&isp_param->m_yuv_pre , 0,0);
@@ -653,7 +787,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 		phandle->af_state = BOKEH_AF_RESUMSTATE1;
 		SWISP_LOGI("af_state from FOCUSING TO STATE1");
 	}
-	if((phandle->misc_calculating == 0) && (phandle->af_state == BOKEH_AF_RESUMSTATE2))
+	if((phandle->misc_depthcalculating == 0) && (phandle->af_state == BOKEH_AF_RESUMSTATE2))
 	{
 		phandle->af_state = BOKEH_AF_NORMAL;
 		SWISP_LOGI("af_state from STATE2 to NORMAL");
@@ -666,11 +800,19 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 		//start sw isp
 		SWISP_LOGI("----------afstate:%d , fnumber_changed:%d" , phandle->af_state , phandle->fnumber_changed);
 		phandle->misc_calculating = 1;
+		phandle->misc_depthcalculating = 1;
 		phandle->fnumber_changed = 0;
 		if(phandle->af_state == BOKEH_AF_RESUMSTATE1)
 		{
 			phandle->af_state = BOKEH_AF_RESUMSTATE2;
+			phandle->misc_arg.need_onlinecalb = 1;
+			phandle->online_calbr_calculating = 1;
+			phandle->online_calbr_forceinvalid = 0;
 			SWISP_LOGI("af_state from STATE1 to STATE2");
+		}
+		else
+		{
+			phandle->misc_arg.need_onlinecalb = 0;
 		}
 		SWISP_LOGI("--------------sprd_sw_isp_process misc calculate over af_state:%d\n" , phandle->af_state);
 		//memcpy(&phandle->isp_block_param , &isp_param->block , sizeof(struct soft_isp_block_param));
@@ -694,7 +836,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 	}
 #if 1
 	//startTime();
-	int64_t time = systemTime(CLOCK_MONOTONIC);
+	long long time = systemTime(CLOCK_MONOTONIC);
 	//bokeh input
 	distancestate = phandle->distance_state;
 	if((phandle->af_state == BOKEH_AF_NORMAL) && (distancestate == BOKEH_DISTANCE_OK))
@@ -711,7 +853,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 		}
 		ret = iBokehBlurImage(phandle->bokeh_handle , (void*)isp_param->m_yuv_pre.graphicbuffer ,
 				      (void*)isp_param->m_yuv_bokeh.graphicbuffer);
-		SWISP_LOGI("bokeh cost time:%zd ms ret:%d\n" , (systemTime(CLOCK_MONOTONIC)-time)/1000000 , ret);
+		SWISP_LOGI("bokeh cost time:%lld ms ret:%d\n" , (systemTime(CLOCK_MONOTONIC)-time)/1000000 , ret);
 		if(ret != 0)
 		{
 			SWISP_LOGE("iBokehBlurImage failed ret:%d" , ret);
@@ -719,6 +861,10 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 			return -1;
 		}
 		isp_param->bokeh_status = BOKEHCALCULATE_DISANCE_OK;
+#if 0
+		if(phandle->online_calbr_calculating == 0)
+			phandle->online_calbr_valid = 1;
+#endif
 	}
 	else
 	{
@@ -803,6 +949,11 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_deinit(void* hand
 	{
 		SWISP_LOGI("free otp data");
 		free(phandle->otp_data);
+	}
+	if(phandle->ponline_calbinfo)
+	{
+		SWISP_LOGI("free ponline calibration info");
+		free(phandle->ponline_calbinfo);
 	}
 #ifdef YNR_CONTROL_INTERNAL
 	sem_destroy(&phandle->ynr_sem);

@@ -1027,8 +1027,8 @@ int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
         }
 
         mDepthApi->sprd_depth_Run =
-            (int (*)(void *, void *a_pOutDisparity, void *a_pInSub_YCC420NV21,
-                     void *a_pInMain_YCC420NV21,
+            (int (*)(void *, void *a_pOutDisparity, void *a_pOutMaptable,
+                     void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
                      weightmap_param *wParams))dlsym(mDepthApi->handle,
                                                      "sprd_depth_Run");
         if (mDepthApi->sprd_depth_Run == NULL) {
@@ -1395,7 +1395,7 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
         }
     } else {
         rc = mDepthApi->sprd_depth_Run(
-            mDepthInitParam.handle, (void *)puwDisparityBuf,
+            mDepthInitParam.handle, (void *)puwDisparityBuf, NULL,
             (void *)pucBufSub_YCC420NV21, (void *)pucBufMain_YCC420NV21, NULL);
         if (rc == 0) {
             HAL_LOGD("sprd_depth_Run ok");
@@ -1705,6 +1705,10 @@ int SprdCamera3RangeFinder::configureStreams(
         init_parm.input_height_sub = mDepthHeight;
         init_parm.output_depthwidth = mDepthWidth;
         init_parm.output_depthheight = mDepthHeight;
+        init_parm.online_depthwidth = 0;
+        init_parm.online_depthheight = 0;
+        init_parm.depth_threadNum = 1;
+        init_parm.online_threadNum = 0;
         init_parm.imageFormat_main = YUV420_NV12;
         init_parm.imageFormat_sub = YUV420_NV12;
         init_parm.potpbuf = mMeasureThread->mOtpData;
