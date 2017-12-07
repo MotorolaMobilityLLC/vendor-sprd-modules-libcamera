@@ -128,10 +128,12 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     m_flashOn[0] = mode ? SPRD_FLASH_STATUS_ON : SPRD_FLASH_STATUS_OFF;
     if (mode) {
         bytes = snprintf(buffer, sizeof(buffer), "0x%x",
-                         (default_light_level << 8) | 0x0016);
+                         (default_light_level << 8) | 0x0016 |
+                             ((camera_id & 0x0001) << 15));
         wr_ret = write(fd, buffer, bytes);
     }
-    bytes = snprintf(buffer, sizeof(buffer), "0x%x", 0x11 ^ mode);
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x",
+                     (0x11 ^ mode) | ((camera_id & 0x0001) << 15));
     wr_ret = write(fd, buffer, bytes);
 
     if (-1 == wr_ret) {

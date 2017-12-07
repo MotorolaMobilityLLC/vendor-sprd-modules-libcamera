@@ -33,15 +33,7 @@
 #define SPRD_CAMERA_MAX_NUM_SENSORS 3
 
 #include <hardware/camera_common.h>
-#ifdef CONFIG_CAMERA_FLASH_LED_SWITCH
-#define SPRD_FLASH_CMD_OFF "0x21"
-#define SPRD_FLASH_CMD_ON "0x20"
-#define SPRD_FLASH_CFG_CURRENT "0x1026"
-#else
-#define SPRD_FLASH_CMD_OFF "0x11"
-#define SPRD_FLASH_CMD_ON "0x10"
-#define SPRD_FLASH_CFG_CURRENT "0x1016"
-#endif
+
 enum flash_status {
     SPRD_FLASH_STATUS_OFF,
     SPRD_FLASH_STATUS_ON,
