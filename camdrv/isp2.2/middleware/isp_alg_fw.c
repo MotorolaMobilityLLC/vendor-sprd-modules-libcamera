@@ -2263,9 +2263,6 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
 	struct af_log_info af_param = {NULL, 0};
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	if (NULL == cxt || NULL == cxt->ioctrl_ptr)
 		return ret;
@@ -2283,27 +2280,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.af_set_cb = ispalg_af_set_cb;
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
+	af_input.handle_pm = cxt->handle_pm;
 	af_input.is_supoprt = is_af_support;
-
-	//get af tuning parameters
-	memset((void *)&output, 0, sizeof(output));
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &output);
-	af_input.aftuning_data = output.param_data[0].data_ptr;
-	af_input.aftuning_data_len = output.param_data[0].data_size;
-
-	//get af trigger tuning parameters
-	memset((void *)&output, 0, sizeof(output));
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &output);
-	af_input.afttuning_data = output.param_data[0].data_ptr;
-	af_input.afttuning_data_len = output.param_data[0].data_size;
-
-	//get pdaf tuning parameters
-	memset((void *)&output, 0, sizeof(output));
-	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-	af_input.pdaftuning_data = output.param_data[0].data_ptr;
-	af_input.pdaftuning_data_len = output.param_data[0].data_size;
 
 	if (NULL != cxt->otp_data) {
 		af_input.otp_info_ptr = cxt->otp_data->single_otp.af_info;

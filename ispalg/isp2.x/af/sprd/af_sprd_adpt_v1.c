@@ -976,15 +976,17 @@ static cmr_s32 unload_af_lib(af_ctrl_t * af)
 }
 
 /* initialization */
-static void *af_init(af_ctrl_t * af)
+static void *af_init(af_ctrl_t * af, struct isp_pm_ioctl_output *af_pm_output, struct isp_haf_tune_param *pdaf_tune_data)
 {
 	//tuning data from common_mode
 	af_tuning_block_param af_tuning_data;
 	AF_Ctrl_Ops AF_Ops;
-	struct isp_haf_tune_param *pdaf_tune_data;
-	haf_tuning_param_t haf_tuning_data;
 	void *alg_cxt = NULL;
 	cmr_u32 i;
+	if (PNULL == af_pm_output->param_data || PNULL == af_pm_output->param_data[0].data_ptr) {
+		ISP_LOGE("sensor tuning param data null");
+		return alg_cxt;
+	}
 
 	AF_Ops.cookie = af;
 	AF_Ops.statistics_wait_cal_done = if_statistics_wait_cal_done;
@@ -1020,10 +1022,11 @@ static void *af_init(af_ctrl_t * af)
 	//SharkLE Only --
 
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
-	af_tuning_data.data = af->aftuning_data;
-	af_tuning_data.data_len = af->aftuning_data_len;
+	af_tuning_data.data = (cmr_u8 *) af_pm_output->param_data[0].data_ptr;
+	af_tuning_data.data_len = af_pm_output->param_data[0].data_size;
 
-	pdaf_tune_data = (struct isp_haf_tune_param *)af->pdaftuning_data;
+	haf_tuning_param_t haf_tuning_data;
+
 	if (pdaf_tune_data != NULL) {
 		ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps,
 			 pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
@@ -1059,19 +1062,23 @@ static void *af_init(af_ctrl_t * af)
 static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 {
 	struct aft_tuning_block_param aft_in;
+	struct isp_pm_ioctl_output aft_pm_output;
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 
 	if (0 != load_trigger_lib(af, lib_name))
 		return -1;
 
-	if (NULL == af->afttuning_data || 0 == af->afttuning_data_len) {
+	memset((void *)&aft_pm_output, 0, sizeof(aft_pm_output));
+	isp_pm_ioctl(af->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &aft_pm_output);
+
+	if (PNULL == aft_pm_output.param_data || PNULL == aft_pm_output.param_data[0].data_ptr || 0 == aft_pm_output.param_data[0].data_size) {
 		ISP_LOGW("aft tuning param error ");
 		aft_in.data_len = 0;
 		aft_in.data = NULL;
 	} else {
 		ISP_LOGI("aft tuning param ok ");
-		aft_in.data_len = af->afttuning_data_len;
-		aft_in.data = af->afttuning_data;
+		aft_in.data_len = aft_pm_output.param_data[0].data_size;
+		aft_in.data = aft_pm_output.param_data[0].data_ptr;
 
 		property_get(AF_SAVE_MLOG_STR, value, "no");
 		if (!strcmp(value, "save")) {
@@ -2551,8 +2558,10 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGI("Enter");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
+	struct isp_pm_ioctl_output af_pm_output;
+	cmr_s32 rtn = AFV1_SUCCESS;
 
-	if (NULL == init_param) {
+	if (NULL == init_param || NULL == init_param->handle_pm) {
 		ISP_LOGE("fail to init param:%p, result:%p", init_param, result);
 		return NULL;
 	}
@@ -2576,7 +2585,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", init_param->otp_info.gldn_data.infinite_cali, init_param->otp_info.gldn_data.macro_cali,
 		 init_param->otp_info.rdm_data.infinite_cali, init_param->otp_info.rdm_data.macro_cali);
 
-	if (NULL == init_param->aftuning_data || 0 == init_param->aftuning_data_len) {
+	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
+	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &af_pm_output);
+	if (rtn != 0 || PNULL == af_pm_output.param_data || PNULL == af_pm_output.param_data[0].data_ptr) {
 		ISP_LOGE("fail to get sensor tuning param data");
 		return NULL;
 	}
@@ -2587,6 +2598,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		return NULL;
 	}
 	memset(af, 0, sizeof(*af));
+	af->handle_pm = init_param->handle_pm;
 	af->isp_info.width = init_param->src.w;
 	af->isp_info.height = init_param->src.h;
 	af->isp_info.win_num = afm_get_win_num(init_param);
@@ -2623,19 +2635,33 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	//SharkLE Only --
 #endif
 
-	//set tuning buffer pointer
-	af->aftuning_data = init_param->aftuning_data;
-	af->aftuning_data_len = init_param->aftuning_data_len;
-	af->pdaftuning_data = init_param->pdaftuning_data;
-	af->pdaftuning_data_len = init_param->pdaftuning_data_len;
-	af->afttuning_data = init_param->afttuning_data;
-	af->afttuning_data_len = init_param->afttuning_data_len;
-
 	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGI("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)", af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali,
 		 af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
 
-	af->af_alg_cxt = af_init(af);
+	//PDAF Tuning Data
+	struct isp_haf_tune_param *isp_pdaf_tune_data = NULL;
+#ifndef CONFIG_ISP_2_4
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	memset(&param_data, 0, sizeof(param_data));
+#ifdef CONFIG_ISP_2_3
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+#else
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
+#endif
+	rtn = isp_pm_ioctl(init_param->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (AFV1_SUCCESS == rtn && 1 == output.param_num) {
+		isp_pdaf_tune_data = (struct isp_haf_tune_param *)output.param_data->data_ptr;
+	} else {
+		ISP_LOGE("fail to get sensor HAF tuning param data");
+		//return NULL;
+	}
+#endif
+	af->af_alg_cxt = af_init(af, &af_pm_output, isp_pdaf_tune_data);
 	if (NULL == af->af_alg_cxt) {
 		ISP_LOGE("fail to init lib func AF_init");
 		free(af);
