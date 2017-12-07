@@ -30,6 +30,7 @@
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
 
 char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
+	"pdaf_correction",
 	"bayer_nr",
 	"vst",
 	"ivst",
@@ -175,6 +176,7 @@ static cmr_handle isp_pm_context_create(void)
 static void isp_pm_check_param(cmr_u32 id, cmr_u32 * update_flag)
 {
 	switch (id) {
+	case ISP_BLK_PDAF_CORRECT:
 	case ISP_BLK_NLM:
 	case ISP_BLK_RGB_DITHER:
 	case ISP_BLK_BPC:
@@ -760,6 +762,12 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 					memcpy((void *)(dst_data_ptr + src_header[j].size), (void *)(fix_data_ptr->lnc.lnc_param.lnc), add_lnc_len);
 				}
 				break;
+			case ISP_BLK_PDAF_CORRECT:{
+					isp_blk_nr_type = ISP_BLK_PDAF_CORRECT_T;
+					nr_set_addr = (intptr_t) (fix_data_ptr->nr.nr_set_group.pdaf_correct);
+					nr_set_size = sizeof(struct sensor_pdaf_correction_level);
+				}
+				break;
 			case ISP_BLK_NLM:{
 					nr_param_update_info.param_type = ISP_BLK_NLM_T;
 					nr_param_update_info.nr_param_ptr = (cmr_uint *) (fix_data_ptr->nr.nr_set_group.nlm);
@@ -882,7 +890,8 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			default:
 				break;
 			}
-			if (src_header[j].block_id == ISP_BLK_RGB_DITHER
+			if (src_header[j].block_id == ISP_BLK_PDAF_CORRECT
+			    || src_header[j].block_id == ISP_BLK_RGB_DITHER
 			    || src_header[j].block_id == ISP_BLK_BPC
 			    || src_header[j].block_id == ISP_BLK_GRGB
 			    || src_header[j].block_id == ISP_BLK_CFA
@@ -1155,9 +1164,6 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr,
 	}
 
 	id = param_data_ptr->id;
-	/* LE no support pdaf correct block yet */
-	if (id == ISP_BLK_PDAF_CORRECT)
-		return rtn;
 	blk_cfg_ptr = isp_pm_get_block_cfg(id);
 	blk_header_ptr = isp_pm_get_block_header(mode_ptr, id, &tmp_idx);
 	if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
