@@ -127,7 +127,8 @@ static cmr_s32 afl_statistic_save_to_file(cmr_s32 height, cmr_s32 * addr)
 	return 0;
 }
 
-static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr)
+static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_proc_in *in_ptr,
+			       struct afl_ctrl_proc_out *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_int ret = 0;
@@ -155,7 +156,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cmr_s32 algo_width;
 	cmr_s32 algo_height;
 
-	void * afl_stat =  malloc(in_ptr->private_len);
+	void *afl_stat = malloc(in_ptr->private_len);
 	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
 
 	if (!cxt_ptr || !in_ptr) {
@@ -167,12 +168,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cur_flicker = in_ptr->cur_flicker;
 	cur_exp_flag = in_ptr->cur_exp_flag;
 	ae_exp_flag = in_ptr->ae_exp_flag;
-	addr = (cmr_s32 *)(cmr_uint)in_ptr->vir_addr;
+	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
 
 #ifdef CONFIG_ISP_2_2
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_ANTI_FLICKER,
-			NULL, 0);
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_ANTI_FLICKER, NULL, 0);
 	ret = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		afl_param = (struct isp_antiflicker_param *)output.param_data->data_ptr;
@@ -205,7 +204,9 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 		if (cur_flicker) {
 			ret = _set_afl_thr(thr);
 			if (0 == ret) {
-				ISP_LOGV("%d %d %d %d %d %d %d %d %d", thr[0], thr[1], thr[2], thr[3], thr[4], thr[5], thr[6], thr[7], thr[8]);
+				ISP_LOGV("%d %d %d %d %d %d %d %d %d",
+					 thr[0], thr[1], thr[2], thr[3], thr[4],
+					 thr[5], thr[6], thr[7], thr[8]);
 				ISP_LOGV("60Hz setting working");
 			} else {
 				thr[0] = 200;
@@ -222,7 +223,9 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 		} else {
 			ret = _set_afl_thr(thr);
 			if (0 == ret) {
-				ISP_LOGV("%d %d %d %d %d %d %d %d %d", thr[0], thr[1], thr[2], thr[3], thr[4], thr[5], thr[6], thr[7], thr[8]);
+				ISP_LOGV("%d %d %d %d %d %d %d %d %d",
+					 thr[0], thr[1], thr[2], thr[3], thr[4],
+					 thr[5], thr[6], thr[7], thr[8]);
 				ISP_LOGV("50Hz setting working");
 			} else {
 				thr[0] = 200;
@@ -239,10 +242,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 		}
 
 		if (cxt_ptr->version) {
-			algo_width= 640;
+			algo_width = 640;
 			algo_height = 480;
 		} else {
-			algo_width= cxt_ptr->width;
+			algo_width = cxt_ptr->width;
 			algo_height = cxt_ptr->height;
 		}
 
@@ -250,15 +253,21 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 		for (i = 0; i < cxt_ptr->frame_num; i++) {
 			if (cur_flicker) {
 				flag = antiflcker_sw_process_v2p2(algo_width,
-							     algo_height, addr, 0, thr[0], thr[1],
-							     thr[2], thr[3], thr[4], thr[5], thr[6],
-							     thr[7], thr[8], (cmr_s32 *) ae_stat_ptr->r_info, (cmr_s32 *) ae_stat_ptr->g_info, (cmr_s32 *) ae_stat_ptr->b_info);
+								  algo_height, addr, 0, thr[0], thr[1],
+								  thr[2], thr[3], thr[4], thr[5], thr[6],
+								  thr[7], thr[8],
+								  (cmr_s32 *)ae_stat_ptr->r_info,
+								  (cmr_s32 *)ae_stat_ptr->g_info,
+								  (cmr_s32 *)ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "60Hz");
 			} else {
 				flag = antiflcker_sw_process_v2p2(algo_width,
-							     algo_height, addr, 1, thr[0], thr[1],
-							     thr[2], thr[3], thr[4], thr[5], thr[6],
-							     thr[7], thr[8], (cmr_s32 *) ae_stat_ptr->r_info, (cmr_s32 *) ae_stat_ptr->g_info, (cmr_s32 *) ae_stat_ptr->b_info);
+								  algo_height, addr, 1, thr[0], thr[1],
+								  thr[2], thr[3], thr[4], thr[5], thr[6],
+								  thr[7], thr[8],
+								  (cmr_s32 *)ae_stat_ptr->r_info,
+								  (cmr_s32 *)ae_stat_ptr->g_info,
+								  (cmr_s32 *)ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "50Hz");
 			}
 			if (flag)
@@ -275,13 +284,19 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				flag = antiflcker_sw_process(algo_width,
 							     algo_height, addr, 0, thr[0], thr[1],
 							     thr[2], thr[3], thr[4], thr[5], thr[6],
-							     thr[7], thr[8], (cmr_s32 *) ae_stat_ptr->r_info, (cmr_s32 *) ae_stat_ptr->g_info, (cmr_s32 *) ae_stat_ptr->b_info);
+							     thr[7], thr[8],
+							     (cmr_s32 *)ae_stat_ptr->r_info,
+							     (cmr_s32 *)ae_stat_ptr->g_info,
+							     (cmr_s32 *)ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "60Hz");
 			} else {
 				flag = antiflcker_sw_process(algo_width,
 							     algo_height, addr, 1, thr[0], thr[1],
 							     thr[2], thr[3], thr[4], thr[5], thr[6],
-							     thr[7], thr[8], (cmr_s32 *) ae_stat_ptr->r_info, (cmr_s32 *) ae_stat_ptr->g_info, (cmr_s32 *) ae_stat_ptr->b_info);
+							     thr[7], thr[8],
+							     (cmr_s32 *)ae_stat_ptr->r_info,
+							     (cmr_s32 *)ae_stat_ptr->g_info,
+							     (cmr_s32 *)ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "50Hz");
 			}
 			if (flag)
@@ -293,7 +308,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				addr += cxt_ptr->vheight;
 		}
 #endif
-
 	}
 
 	pthread_mutex_lock(&cxt_ptr->status_lock);
@@ -312,11 +326,9 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	else
 		bypass = 1;
 
-
-
 #ifdef CONFIG_ISP_2_3
 	if (cxt_ptr->afl_set_cb) {
-			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
+		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
 	}
 #else
 	if (cxt_ptr->afl_set_cb) {
@@ -327,10 +339,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	}
 #endif
 
-
 exit:
-
-	if(afl_stat)
+	if (afl_stat)
 		free(afl_stat);
 
 	ISP_LOGV("done %ld", rtn);
@@ -380,6 +390,7 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_anti_flicker_cfg *cxt_ptr = NULL;
+
 	if (!input_ptr || !isp_afl_handle) {
 		rtn = ISP_PARAM_NULL;
 		goto exit;
@@ -465,13 +476,13 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	afl_info_v3.bypass = cxt_ptr->bypass;
 	afl_info_v3.mode = cxt_ptr->mode;
 	afl_info_v3.skip_frame_num = cxt_ptr->skip_frame_num;
-	afl_info_v3.afl_stepx = (cmr_u64)cxt_ptr->width *0x100000/640;
-	afl_info_v3.afl_stepy = (cmr_u64)cxt_ptr->height*0x100000/480;
+	afl_info_v3.afl_stepx = (cmr_u64) cxt_ptr->width * 0x100000 / 640;
+	afl_info_v3.afl_stepy = (cmr_u64) cxt_ptr->height * 0x100000 / 480;
 	afl_info_v3.frame_num = cxt_ptr->frame_num;
 	afl_info_v3.start_col = cxt_ptr->start_col;
 	afl_info_v3.end_col = cxt_ptr->end_col;
-	afl_info_v3.step_x_region = (cmr_u64)cxt_ptr->width *0x100000/640;
-	afl_info_v3.step_y_region = (cmr_u64)cxt_ptr->height*0x100000/480;
+	afl_info_v3.step_x_region = (cmr_u64) cxt_ptr->width * 0x100000 / 640;
+	afl_info_v3.step_y_region = (cmr_u64) cxt_ptr->height * 0x100000 / 480;
 	afl_info_v3.step_x_start_region = 0;
 	afl_info_v3.step_x_end_region = cxt_ptr->width;
 
@@ -482,12 +493,10 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 		cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_CFG_PARAM, &afl_info_v3, NULL);
 	}
 
-	ISP_LOGI("done:afl_stepx: 0x%x, stepy: 0x%x, x_region %x, y_region:0x%x, x_start_region:0x%x, x_end_region:0x%x",
-					afl_info_v3.afl_stepx, afl_info_v3.afl_stepy,
-					afl_info_v3.step_x_region,
-					afl_info_v3.step_y_region,
-					afl_info_v3.step_x_start_region,
-					afl_info_v3.step_x_end_region);
+	ISP_LOGI("done:stepx: 0x%x, y: 0x%x, x_region %x, y 0x%x, x_start_region 0x%x, x_end 0x%x",
+		 afl_info_v3.afl_stepx, afl_info_v3.afl_stepy,
+		 afl_info_v3.step_x_region, afl_info_v3.step_y_region,
+		 afl_info_v3.step_x_start_region, afl_info_v3.step_x_end_region);
 	return rtn;
 }
 
@@ -578,10 +587,10 @@ exit:
 static cmr_u32 _afl_get_info(struct isp_anti_flicker_cfg *cxt, void *result)
 {
 	cmr_u32 rtn = ISP_SUCCESS;
-	struct afl_ctrl_proc_out * param = (struct afl_ctrl_proc_out *) result;
+	struct afl_ctrl_proc_out *param = (struct afl_ctrl_proc_out *)result;
 
 	param->cur_flicker = cxt->cur_flicker;
-	param->flag= cxt->flag;
+	param->flag = cxt->flag;
 
 	return rtn;
 }
@@ -605,21 +614,19 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_pt
 		rtn = _afl_get_info(cxt_ptr, in_ptr);
 		break;
 	case AFL_SET_BYPASS:
-		if (cxt_ptr->afl_set_cb){
-			if(cxt_ptr->version){
+		if (cxt_ptr->afl_set_cb) {
+			if (cxt_ptr->version) {
 				cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, in_ptr, NULL);
-			}else{
+			} else {
 				cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_SET_BYPASS, in_ptr, NULL);
 			}
 		}
 		break;
 	case AFL_NEW_SET_BYPASS:
-		if (cxt_ptr->afl_set_cb){
+		if (cxt_ptr->afl_set_cb) {
 			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, in_ptr, NULL);
 		}
 		break;
-
-
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);
 		rtn = ISP_ERROR;
@@ -628,14 +635,14 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_pt
 	pthread_mutex_unlock(&cxt_ptr->status_lock);
 
 	return rtn;
-
 }
 
-cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in * in_ptr, struct afl_ctrl_proc_out * out_ptr)
+cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	UNUSED(out_ptr);
 	struct isp_anti_flicker_cfg *cxt_ptr = (struct isp_anti_flicker_cfg *)isp_afl_handle;
+
+	UNUSED(out_ptr);
 	if (!isp_afl_handle || !in_ptr) {
 		rtn = ISP_PARAM_ERROR;
 		goto exit;
