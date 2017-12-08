@@ -209,8 +209,14 @@ struct ispalg_lsc_ctrl_ops {
 	cmr_int (*deinit)(cmr_handle *handle_lsc);
 	cmr_int (*process)(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
 	cmr_int (*ioctrl)(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
-	cmr_int (*get_lsc_otp)(struct sensor_otp_lsc_info *lsc_otp_info, struct sensor_otp_optCenter_info *optical_center_info,cmr_s32 height, cmr_s32 width, cmr_s32 grid, struct lsc_adv_init_param *lsc_param);
-	cmr_s32 (*table_transform)(struct lsc_table_transf_info* src, struct lsc_table_transf_info* dst, enum lsc_transform_action action, void* action_info);
+	cmr_int (*get_lsc_otp)(struct sensor_otp_lsc_info *lsc_otp_info,
+			       struct sensor_otp_optCenter_info *optical_center_info,
+			       cmr_s32 height, cmr_s32 width,
+			       cmr_s32 grid, struct lsc_adv_init_param *lsc_param);
+	cmr_s32 (*table_transform)(struct lsc_table_transf_info* src,
+				   struct lsc_table_transf_info* dst,
+				   enum lsc_transform_action action,
+				   void* action_info);
 };
 
 struct ispalg_lib_ops {
@@ -1279,8 +1285,9 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 						binning_dst.gain_height = isp_lsc_info->gain_h;
 						binning_dst.pm_tab0 = isp_lsc_tab_ptr->map_tab[0].param_addr;
 						binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
-						cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
-								LSC_BINNING, &binning);
+						if (cxt->ops.lsc_ops.table_transform)
+							cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
+											 LSC_BINNING, &binning);
 						ISP_LOGV("Zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:%p, tab:%p",
 								binning_dst.img_width,
 								binning_dst.img_height,
@@ -1289,8 +1296,9 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 								binning_dst.gain_height,
 								binning_dst.pm_tab0,
 								binning_dst.tab);
-					} else
+					} else {
 						memcpy(isp_lsc_info->data_ptr, update_info.lsc_buffer_addr, isp_lsc_info->len);
+					}
 				}
 				io_pm_input.param_num = ISP_MODE_MAX;
 			} else {
@@ -1316,8 +1324,9 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					binning_dst.gain_height = isp_lsc_info->gain_h;
 					binning_dst.pm_tab0 = isp_lsc_tab_ptr->map_tab[0].param_addr;
 					binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
-					cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
-							LSC_BINNING, &binning);
+					if (cxt->ops.lsc_ops.table_transform)
+						cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
+										 LSC_BINNING, &binning);
 					ISP_LOGV("None zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:%p, tab:%p",
 							binning_dst.img_width,
 							binning_dst.img_height,
@@ -1326,8 +1335,9 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 							binning_dst.gain_height,
 							binning_dst.pm_tab0,
 							binning_dst.tab);
-				} else
+				} else {
 					memcpy(isp_lsc_info->data_ptr, update_info.lsc_buffer_addr, isp_lsc_info->len);
+				}
 			}
 			/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 			io_pm_input.param_data_ptr = pm_param;
@@ -3792,17 +3802,21 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 				binning_dst.pm_tab0 = isp_lsc_tab_ptr->map_tab[0].param_addr;
 				binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 
-				cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst, LSC_BINNING, &binning);
+				if (cxt->ops.lsc_ops.table_transform)
+					cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst, LSC_BINNING, &binning);
 				ISP_LOGV("Zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:[%d,%d,%d,%d], tab:[%d,%d,%d,%d]",
 						binning_dst.img_width,
 						binning_dst.img_height,
 						binning_dst.grid,
 						binning_dst.gain_width,
 						binning_dst.gain_height,
-						binning_dst.pm_tab0[0], binning_dst.pm_tab0[1], binning_dst.pm_tab0[2], binning_dst.pm_tab0[3],
-						binning_dst.tab[0], binning_dst.tab[1], binning_dst.tab[2], binning_dst.tab[3]);
-			} else
+						binning_dst.pm_tab0[0], binning_dst.pm_tab0[1],
+						binning_dst.pm_tab0[2], binning_dst.pm_tab0[3],
+						binning_dst.tab[0], binning_dst.tab[1],
+						binning_dst.tab[2], binning_dst.tab[3]);
+			} else {
 				memcpy(isp_lsc_info->data_ptr, dst_gain_tmp, isp_lsc_info->len);
+			}
 		}
 		input.param_num = ISP_MODE_MAX;
 	} else {
@@ -3827,17 +3841,21 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 			binning_dst.pm_tab0 = isp_lsc_tab_ptr->map_tab[0].param_addr;
 			binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 
-			cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,LSC_BINNING, &binning);
+			if (cxt->ops.lsc_ops.table_transform)
+				cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,LSC_BINNING, &binning);
 			ISP_LOGV("None zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:[%d,%d,%d,%d], tab:[%d,%d,%d,%d]",
 					binning_dst.img_width,
 					binning_dst.img_height,
 					binning_dst.grid,
 					binning_dst.gain_width,
 					binning_dst.gain_height,
-					binning_dst.pm_tab0[0], binning_dst.pm_tab0[1], binning_dst.pm_tab0[2], binning_dst.pm_tab0[3],
-					binning_dst.tab[0], binning_dst.tab[1], binning_dst.tab[2], binning_dst.tab[3]);
-		} else
+					binning_dst.pm_tab0[0], binning_dst.pm_tab0[1],
+					binning_dst.pm_tab0[2], binning_dst.pm_tab0[3],
+					binning_dst.tab[0], binning_dst.tab[1],
+					binning_dst.tab[2], binning_dst.tab[3]);
+		} else {
 			memcpy(isp_lsc_info->data_ptr, dst_gain_tmp, isp_lsc_info->len);
+		}
 	}
 	/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 	input.param_data_ptr = pm_param;
