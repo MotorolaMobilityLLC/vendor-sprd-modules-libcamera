@@ -234,7 +234,6 @@ typedef struct _af_ctrl {
 	cmr_u8 test_loop_quit;
 	pthread_t test_loop_handle;
 	cmr_handle caller;
-	cmr_handle handle_pm;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
@@ -245,7 +244,12 @@ typedef struct _af_ctrl {
 	char AF_MODE[PROPERTY_VALUE_MAX];
 	struct af_ctrl_otp_info otp_info;
 	cmr_u32 is_multi_mode;
-	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
+	cmr_u8 *aftuning_data;
+	cmr_u32 aftuning_data_len;
+	cmr_u8 *pdaftuning_data;
+	cmr_u32 pdaftuning_data_len;
+	cmr_u8 *afttuning_data;
+	cmr_u32 afttuning_data_len;
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
