@@ -121,6 +121,7 @@ struct afl_info {
 	cmr_uint mfd;
 	cmr_int buf_property;
 	void *buffer_client_data;
+	struct isp_awb_statistic_info ae_stats;
 };
 
 struct af_info {
@@ -2026,7 +2027,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
 	cmr_u32 u_addr = 0;
-	struct isp_awb_statistic_info ae_stat_ptr;
 	struct afl_proc_in afl_input;
 	struct isp_u_blocks_info afl_block_info;
 
@@ -2038,7 +2038,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_block_info.scene_id = ISP_MODE_PRV;
 	memcpy(&cxt->afl_stat_info, data, sizeof(struct isp_statis_info));
 	u_addr = cxt->afl_stat_info.vir_addr;
-	ae_stat_ptr = cxt->aem_stats;
+	cxt->afl_cxt.ae_stats = cxt->aem_stats;
 
 	if (cxt->afl_cxt.sw_bypass) {
 		ret = ispalg_set_stats_buffer(cxt, &cxt->afl_stat_info, ISP_AFL_BLOCK);
@@ -2078,7 +2078,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
 
-	afl_input.ae_stat_ptr = &ae_stat_ptr;
+	afl_input.ae_stat_ptr = &cxt->afl_cxt.ae_stats;
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
