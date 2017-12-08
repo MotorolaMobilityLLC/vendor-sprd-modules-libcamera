@@ -4798,16 +4798,6 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
              enc_in_param.src_addr_vir.addr_y, enc_in_param.out_size.width,
              enc_in_param.out_size.height);
 
-    if (pic_enc.size.height == 1952 && pic_enc.size.width == 2592) {
-        enc_in_param.out_size.height = 1944;
-    } else if (pic_enc.size.height == 1840 && pic_enc.size.width == 3264) {
-        enc_in_param.out_size.height = 1836;
-    } else if (pic_enc.size.height == 368 && pic_enc.size.width == 640) {
-        enc_in_param.out_size.height = 360;
-    } else if (pic_enc.size.height == 1088 && pic_enc.size.width == 1920) {
-        enc_in_param.out_size.height = 1080;
-    }
-
     // 2.call jpeg interface
     ret = jpeg_enc_start(&enc_in_param);
 

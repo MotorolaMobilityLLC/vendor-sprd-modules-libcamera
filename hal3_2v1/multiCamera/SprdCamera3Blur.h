@@ -53,14 +53,24 @@
 
 namespace sprdcamera {
 
+#define YUV_CONVERT_TO_JPEG
+
+#ifdef YUV_CONVERT_TO_JPEG
+#define BLUR_LOCAL_CAPBUFF_NUM 4
+#define BLUR3_REFOCUS_COMMON_PARAM_NUM (11)
+#else
 #define BLUR_LOCAL_CAPBUFF_NUM 2
+#define BLUR3_REFOCUS_COMMON_PARAM_NUM (9)
+#endif
+
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
 #define BLUR_MAX_NUM_STREAMS 3
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
 #define BLUR_LIB_BOKEH_CAPTURE2 "libBokeh2Frames.so"
 #define BLUR_LIB_BOKEH_NUM (2)
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
+
 #define BLUR_REFOCUS_2_PARAM_NUM (17)
 #define BLUR_AF_WINDOW_NUM (9)
 #define BLUR_MAX_ROI (10)
@@ -292,6 +302,15 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mPreviewStreamsNum;
     Mutex mRequestLock;
     int mjpegSize;
+    void *m_pNearYuvBuffer;
+    void *m_pFarYuvBuffer;
+#ifdef YUV_CONVERT_TO_JPEG
+    int mNearJpegSize;
+    int mFarJpegSize;
+    buffer_handle_t *m_pNearJpegBuffer;
+    buffer_handle_t *m_pFarJpegBuffer;
+#endif
+    void *weight_map;
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
     int mCoverValue;
@@ -319,8 +338,11 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void initBlurWeightParams();
         bool isBlurInitParamsChanged();
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
-        void saveCaptureBlurParams(buffer_handle_t *mSavedResultBuff,
-                                   buffer_handle_t *buffer);
+        void saveCaptureBlurParams(buffer_handle_t *result_buff,
+                                   uint32_t jpeg_size);
+        void getOutWeightMap(buffer_handle_t *yuv_addr);
+        void dumpSaveImages(buffer_handle_t *result_buff, uint32_t use_size,
+                            uint32_t jpeg_size);
         uint8_t getIspAfFullscanInfo();
         int blurHandle(struct private_handle_t *input1, void *input2,
                        struct private_handle_t *output);
@@ -365,7 +387,6 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mIsGalleryBlur;
         bool mIsBlurAlways;
         blur_isp_info_t mIspInfo;
-        void *mNearYuv;
         unsigned short *mOutWeightMap;
 
       private:
