@@ -4398,6 +4398,7 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     sem_init(&cxt->share_path_sm, 0, 0);
     sem_init(&cxt->access_sm, 0, 1);
     sem_init(&cxt->sbs_sync_sm, 0, 0);
+    sem_init(&cxt->snapshot_sm, 0, 1);
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
     /*create thread*/
@@ -4481,6 +4482,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
 
     sem_destroy(&cxt->share_path_sm);
     sem_destroy(&cxt->access_sm);
+    sem_destroy(&cxt->snapshot_sm);
     // for sbs mode capture
     sem_destroy(&cxt->sbs_sync_sm);
 
@@ -8631,6 +8633,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGI("re-initialize share_path_sm");
     }
 
+    sem_wait(&cxt->snapshot_sm);
     if (CAMERA_ZSL_MODE != mode) {
         ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
         if (ret) {
@@ -8835,6 +8838,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
 
 exit:
+    sem_post(&cxt->snapshot_sm);
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
     return ret;
@@ -8848,6 +8852,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
+    sem_wait(&cxt->snapshot_sm);
     if (camera_get_3dnr_flag(cxt)) {
 #ifdef OEM_HANDLE_3DNR
         if (0 != cxt->ipm_cxt.frm_num) {
@@ -8901,6 +8906,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     cxt->snp_cxt.status = IDLE;
 
 exit:
+    sem_post(&cxt->snapshot_sm);
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
     return ret;
