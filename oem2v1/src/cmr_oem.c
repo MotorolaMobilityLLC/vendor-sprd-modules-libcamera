@@ -3307,11 +3307,17 @@ cmr_s32 camera_isp_set_next_vcm_pos(void *handler, cmr_s32 pos) {
         vcm_param.vcm_i2c_count = info.cmd_len;
         memcpy(vcm_param.vcm_i2c_data, info.cmd_val, info.cmd_len);
         vcm_param.vcm_slave_addr = info.slave_addr;
+
+        if ((0 == info.slave_addr) && (0 == info.cmd_len)) {
+            CMR_LOGE("warning! fail to get vcm info");
+            goto exit;
+        }
     } else {
         vcm_param.next_vcm_pos = pos;
     }
 
     ret = cmr_grab_set_next_vcm_pos(cxt->grab_cxt.grab_handle, &vcm_param);
+exit:
     return ret;
 }
 
@@ -3547,10 +3553,10 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.is_multi_mode = ISP_SINGLE;
 
-        if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
-            isp_param.is_master = 1;
-        CMR_LOGI("is_multi_mode %d: isp mode:%d", cxt->is_multi_mode,
-                 isp_param.is_multi_mode);
+    if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
+        isp_param.is_master = 1;
+    CMR_LOGI("is_multi_mode %d: isp mode:%d", cxt->is_multi_mode,
+             isp_param.is_multi_mode);
 
     CMR_LOGI(
         "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
@@ -6067,12 +6073,13 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         lsc_buf_num = isp_param.lsc_buf_num;
         if (cxt->hal_malloc) {
             ret = cxt->hal_malloc(CAMERA_ISP_LSC, &lsc_buf_size, &lsc_buf_num,
-                            &cxt->isp_lsc_phys_addr, &cxt->isp_lsc_virt_addr,
-                            &cxt->lsc_mfd, cxt->client_data);
-	    if (ret) {
-		    CMR_LOGE("fail to malloc lsc buff.");
-		    goto exit;
-	    }
+                                  &cxt->isp_lsc_phys_addr,
+                                  &cxt->isp_lsc_virt_addr, &cxt->lsc_mfd,
+                                  cxt->client_data);
+            if (ret) {
+                CMR_LOGE("fail to malloc lsc buff.");
+                goto exit;
+            }
             cxt->lsc_malloc_flag = 1;
         } else {
             ret = -CMR_CAMERA_NO_MEM;
@@ -6428,7 +6435,7 @@ exit:
 }
 
 cmr_int camera_channel_dcam_size(cmr_handle oem_handle,
-                                struct sprd_dcam_path_size *dcam_cfg) {
+                                 struct sprd_dcam_path_size *dcam_cfg) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
