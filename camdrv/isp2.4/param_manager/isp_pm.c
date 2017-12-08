@@ -1533,7 +1533,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			break;
 		case ISP_PM_CMD_GET_INIT_AF:
 		case ISP_PM_CMD_GET_INIT_AF_NEW:
-			block_id = ISP_BLK_RGB_AFM;
+			block_id = ISP_BLK_AF_NEW;
 			break;
 		case ISP_PM_CMD_GET_INIT_SMART:
 			block_id = ISP_BLK_SMART;
