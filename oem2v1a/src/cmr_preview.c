@@ -242,6 +242,7 @@ struct prev_context {
     struct channel_start_param restart_chn_param;
     cmr_uint cap_channel_id;
     cmr_uint cap_channel_status;
+    cmr_uint zsl_channel_status;
     struct img_data_end cap_data_endian;
     cmr_uint cap_frm_cnt;
     cmr_uint cap_skip_num;
@@ -291,6 +292,7 @@ struct prev_context {
     cmr_int cap_zsl_mem_valid_num;
 
     cmr_uint is_reprocessing;
+    cmr_uint capture_scene_mode;
 
     /*depthmap*/
     cmr_uint depthmap_cnt;
@@ -3420,8 +3422,12 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }
-        prev_cxt->cap_channel_status = PREV_CHN_IDLE;
 
+        if (CMR_CAP0_ID_BASE == (data->frame_id & CMR_CAP0_ID_BASE)) {
+            prev_cxt->cap_channel_status = PREV_CHN_IDLE;
+        } else if (CMR_CAP1_ID_BASE == (data->frame_id & CMR_CAP1_ID_BASE)) {
+            prev_cxt->zsl_channel_status = PREV_CHN_IDLE;
+        }
         /*stop isp*/
         if (PREV_ISP_COWORK == prev_cxt->isp_status) {
             ret = handle->ops.isp_stop_video(handle->oem_handle);
@@ -3954,6 +3960,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
             (1 << prev_cxt->prev_channel_id) | (1 << prev_cxt->cap_channel_id);
         prev_cxt->prev_channel_status = PREV_CHN_IDLE;
         prev_cxt->cap_channel_status = PREV_CHN_IDLE;
+        prev_cxt->zsl_channel_status = PREV_CHN_IDLE;
 
     } else if (preview_enable) {
 
@@ -4051,6 +4058,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->video_frm_cnt = 0;
     prev_cxt->cap_zsl_frm_cnt = 0;
     prev_cxt->pdaf_frm_cnt = 0;
+    prev_cxt->capture_scene_mode = 0;
     if (!is_restart) {
         prev_cxt->cap_frm_cnt = 0;
     }
@@ -8046,6 +8054,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     else
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE;
 
+    prev_cxt->capture_scene_mode = chn_param.cap_inf_cfg.cfg.sence_mode;
     /*config capture ability*/
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
                            &chn_param.cap_inf_cfg.cfg);
@@ -8127,7 +8136,13 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         }
         prev_cxt->cap_channel_id = channel_id;
         CMR_LOGD("cap chn id is %ld", prev_cxt->cap_channel_id);
-        prev_cxt->cap_channel_status = PREV_CHN_BUSY;
+        if (chn_param.cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_CAPTURE) {
+            prev_cxt->cap_channel_status = PREV_CHN_BUSY;
+        } else if (chn_param.cap_inf_cfg.cfg.sence_mode ==
+                   DCAM_SCENE_MODE_CAPTURE_CALLBACK) {
+            prev_cxt->zsl_channel_status = PREV_CHN_BUSY;
+        }
+
         prev_cxt->cap_data_endian = endian;
 
         /* for capture, not skip frame for now, for cts
@@ -10282,8 +10297,11 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGD("don't need to set buffer");
         return ret;
     }
-    if (PREV_CHN_IDLE == prev_cxt->cap_channel_status) {
-        CMR_LOGD("cap_channel_status idle");
+    if ((PREV_CHN_IDLE == prev_cxt->zsl_channel_status) &&
+        (prev_cxt->capture_scene_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK)) {
+        return ret;
+    } else if ((PREV_CHN_IDLE == prev_cxt->cap_channel_status) &&
+               (prev_cxt->capture_scene_mode == DCAM_SCENE_MODE_CAPTURE)) {
         return ret;
     }
     valid_num = prev_cxt->cap_zsl_mem_valid_num;
@@ -11258,7 +11276,12 @@ cmr_int prev_restart_cap_channel(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
         CMR_LOGD("cap chn id is %ld", prev_cxt->cap_channel_id);
-        prev_cxt->cap_channel_status = PREV_CHN_BUSY;
+        if (prev_cxt->capture_scene_mode == DCAM_SCENE_MODE_CAPTURE) {
+            prev_cxt->cap_channel_status = PREV_CHN_BUSY;
+        } else if (prev_cxt->capture_scene_mode ==
+                   DCAM_SCENE_MODE_CAPTURE_CALLBACK) {
+            prev_cxt->zsl_channel_status = PREV_CHN_BUSY;
+        }
 
         /* for capture, not skip frame for now, for cts
          * testMandatoryOutputCombinations issue */
@@ -12110,7 +12133,7 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
 }
 
 cmr_int cmr_preview_flush_cashe(cmr_handle preview_handle,
-                                 struct img_frm *img) {
+                                struct img_frm *img) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     CMR_MSG_INIT(message);
     struct prev_cb_info cb_data_info;
