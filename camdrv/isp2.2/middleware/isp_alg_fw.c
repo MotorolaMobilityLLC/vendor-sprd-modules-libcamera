@@ -1242,7 +1242,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
-	struct isp_awb_statistic_info ae_stat_ptr;
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
@@ -1256,7 +1255,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 	//memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
-	ae_stat_ptr = cxt->aem_stats;
+	cxt->afl_cxt.ae_stats = cxt->aem_stats;
 
 	bypass = 1;
 	if (cxt->ops.afl_ops.ioctrl) {
@@ -1281,7 +1280,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
 
-	afl_input.ae_stat_ptr = &ae_stat_ptr;
+	afl_input.ae_stat_ptr = &cxt->afl_cxt.ae_stats;
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;

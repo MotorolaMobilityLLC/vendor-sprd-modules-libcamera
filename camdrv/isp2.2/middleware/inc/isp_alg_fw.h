@@ -115,6 +115,7 @@ struct afl_info {
 	cmr_uint mfd;
 	cmr_int buf_property;
 	void *buffer_client_data;
+	struct isp_awb_statistic_info ae_stats;
 };
 
 struct af_info {
