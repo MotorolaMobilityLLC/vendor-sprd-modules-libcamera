@@ -62,7 +62,6 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		statis_mem_info->cb_of_malloc = in_ptr->cb_of_malloc;
 		statis_mem_info->cb_of_free = in_ptr->cb_of_free;
 		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE +
-							ISP_AEM_STATIS_BUF_SIZE +
 							ISP_AFM_STATIS_BUF_SIZE +
 							ISP_AFL_STATIS_BUF_SIZE +
 							ISP_HIST_STATIS_BUF_SIZE +
@@ -83,7 +82,6 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 				  statis_mem_info->buffer_client_data)) {
 					ISP_LOGE("fail to malloc statis_bq buffer");
 					return ISP_ALLOC_ERROR;
-
 				  }
 		} else {
 			ISP_LOGE("fail to malloc statis_bq buffer");
