@@ -49,13 +49,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -121,13 +121,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -193,13 +193,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -265,13 +265,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -337,13 +337,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -409,13 +409,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -481,13 +481,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -553,13 +553,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -625,13 +625,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -697,13 +697,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -769,13 +769,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -841,13 +841,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -913,13 +913,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -985,13 +985,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1057,13 +1057,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1129,13 +1129,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1201,13 +1201,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1273,13 +1273,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1345,13 +1345,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1417,13 +1417,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1489,13 +1489,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1561,13 +1561,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1633,13 +1633,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1705,13 +1705,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 
@@ -1777,13 +1777,13 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x03,
-		/*mask_mode*/
-		0x03,
-		/*map_done_sel*/
-		0x0A,
-		/*new_old_sel*/
 		0x00,
+		/*mask_mode*/
+		0x00,
+		/*map_done_sel*/
+		0x01,
+		/*new_old_sel*/
+		0x01,
 		/*dtol*/
 		0.00,
 

@@ -1,4 +1,4 @@
-/*versionid=0x00040004*/
+/*versionid=0x00080006*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sensor_flat_offset_level*/

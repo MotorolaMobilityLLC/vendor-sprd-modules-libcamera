@@ -787,9 +787,7 @@ struct sensor_rgb_precdn_level{
 	uint16_t thrv0;
 	uint16_t thrv1;
 	uint16_t median_mode;
-	uint16_t blk_mode;
 	uint16_t median_thr;
-	uint16_t reserved;
 	uint32_t bypass;
 };
 

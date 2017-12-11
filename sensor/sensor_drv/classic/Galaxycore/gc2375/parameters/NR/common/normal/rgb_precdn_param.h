@@ -11,12 +11,8 @@
 	0x0000,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -34,12 +30,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -57,12 +49,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -80,12 +68,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -103,12 +87,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -126,12 +106,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -149,12 +125,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -172,12 +144,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -195,12 +163,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -218,12 +182,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -241,12 +201,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -264,12 +220,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -287,12 +239,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -310,12 +258,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -333,12 +277,8 @@
 	0x001E,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -356,12 +296,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -379,12 +315,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -402,12 +334,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -425,12 +353,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -448,12 +372,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -471,12 +391,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -494,12 +410,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -517,12 +429,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -540,12 +448,8 @@
 	0x00C8,
 	/*median_mode*/
 	0x0001,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }
@@ -563,12 +467,8 @@
 	0x0000,
 	/*median_mode*/
 	0x0000,
-	/*blk_mode*/
-	0x0000,
 	/*median_thr*/
 	0x00A0,
-	/*reserved*/
-	0x0000,
 	/*bypass*/
 	0x00000000,
 }

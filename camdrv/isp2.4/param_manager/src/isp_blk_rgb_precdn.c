@@ -35,7 +35,7 @@ static cmr_u32 _pm_rgb_precdn_convert_param(void *dst_param, cmr_u32 strength_le
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 	if (precdn_param != NULL) {
 		dst_ptr->cur.median_mode = precdn_param[strength_level].median_mode;
-		dst_ptr->cur.blk_mode = precdn_param[strength_level].blk_mode;
+		dst_ptr->cur.blk_mode = 0;
 		dst_ptr->cur.median_thr = precdn_param[strength_level].median_thr;
 		dst_ptr->cur.thru0 = precdn_param[strength_level].thru0;
 		dst_ptr->cur.thru1 = precdn_param[strength_level].thru1;
