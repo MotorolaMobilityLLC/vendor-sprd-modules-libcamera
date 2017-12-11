@@ -3886,6 +3886,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     SENSOR_Tag sensorInfo;
 
     mSetting->getSENSORTag(&sensorInfo);
+    ret = mHalOem->ops->camera_get_rolling_shutter(
+        mCameraHandle, &(sensorInfo.rollingShutterSkew));
+    if (ret)
+        CMR_LOGE("Failed to update rolling shutter skew");
     sensorInfo.sensor_timestamp = buffer_timestamp;
     // use boottime not monotonic time for AR
     buffer_timestamp = frame->monoboottime;
@@ -5350,6 +5354,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
 
     HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCaptureState()));
+    int32_t ret = 0;
 
     switch (cb) {
     case CAMERA_RSP_CB_SUCCESS:
@@ -5357,6 +5362,13 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("CAMERA_EXIT_CB_DONE");
+        SENSOR_Tag sensorInfo;
+        mSetting->getSENSORTag(&sensorInfo);
+        ret = mHalOem->ops->camera_get_rolling_shutter(
+            mCameraHandle, &(sensorInfo.rollingShutterSkew));
+        if (ret)
+            CMR_LOGE("Failed to update rolling shutter skew");
+        mSetting->setSENSORTag(sensorInfo);
         if (!WaitForCaptureJpegState()) {
             // HAL_LOGE("state error");
             break;
