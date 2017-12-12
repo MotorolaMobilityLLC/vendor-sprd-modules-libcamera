@@ -283,14 +283,14 @@ static struct sensor_res_tab_info s_ov8856_resolution_tab_raw[VENDOR_NUM] = {
            .height = 0, .xclk_to_sensor = EX_MCLK,
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-/*          {ADDR_AND_LEN_OF_ARRAY(ov8856_video_setting), PNULL, 0,
+          {ADDR_AND_LEN_OF_ARRAY(ov8856_video_setting), PNULL, 0,
            .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
           {ADDR_AND_LEN_OF_ARRAY(ov8856_preview_setting), PNULL, 0,
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-*/
+
           {ADDR_AND_LEN_OF_ARRAY(ov8856_snapshot_setting), PNULL, 0,
            .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
@@ -303,7 +303,7 @@ static SENSOR_TRIM_T s_ov8856_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-/*
+
              {.trim_start_x = VIDEO_TRIM_X,
               .trim_start_y = VIDEO_TRIM_Y,
               .trim_width = VIDEO_TRIM_W,
@@ -327,7 +327,7 @@ static SENSOR_TRIM_T s_ov8856_resolution_trim_tab[VENDOR_NUM] = {
                               .y = PREVIEW_TRIM_Y,
                               .w = PREVIEW_TRIM_W,
                               .h = PREVIEW_TRIM_H}},
-*/
+
              {.trim_start_x = SNAPSHOT_TRIM_X,
               .trim_start_y = SNAPSHOT_TRIM_Y,
               .trim_width = SNAPSHOT_TRIM_W,
