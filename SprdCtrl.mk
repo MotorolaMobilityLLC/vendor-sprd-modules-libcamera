@@ -700,7 +700,7 @@ ifeq ($(PLATFORM_VERSION),4.4.4)
 LOCAL_CFLAGS += -DANDROID_VERSION_KK_BRINGUP
 endif
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9850ka sc9850kh),)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9850ka sc9850kh sp9832e),)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MEET_JPG_ALIGNMENT
 endif
 
