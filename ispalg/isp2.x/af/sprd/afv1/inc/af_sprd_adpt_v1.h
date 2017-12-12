@@ -272,6 +272,7 @@ typedef struct _af_ctrl {
 	//SharkLE Only ++
 	 cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
 	 cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
+	 cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
 	 cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
 	//SharkLE Only --
 } af_ctrl_t;

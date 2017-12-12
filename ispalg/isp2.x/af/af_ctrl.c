@@ -341,8 +341,6 @@ static cmr_s32 af_set_next_vcm_pos(cmr_handle handle_af, cmr_u32 pos)
 #ifdef CONFIG_ISP_2_3
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 	ISP_LOGD("af_set_next_vcm_pos = %d",pos);
-	//ISP_LOGD(" (void *)&pos = %p",(void *)&pos);
-
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_NEXT_VCM_POS, (void *)&pos, NULL);
@@ -351,6 +349,19 @@ static cmr_s32 af_set_next_vcm_pos(cmr_handle handle_af, cmr_u32 pos)
 	return 0;
 }
 
+static cmr_s32 af_set_pulse_log(cmr_handle handle_af, cmr_u32 flag)
+{
+	UNUSED(handle_af);
+	UNUSED(flag);
+#ifdef CONFIG_ISP_2_3
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+	//ISP_LOGD("af_set_pulse_log = %d",flag);
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_PULSE_LOG, (void *)&flag, NULL);
+	}
+#endif
+	return 0;
+}
 static cmr_s32 af_set_clear_next_vcm_pos(cmr_handle handle_af)
 {
 	UNUSED(handle_af);
@@ -600,6 +611,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	//SharkLE Only ++
 	input_ptr->af_set_pulse_line         = af_set_pulse_line;
 	input_ptr->af_set_next_vcm_pos       = af_set_next_vcm_pos;
+	input_ptr->af_set_pulse_log          = af_set_pulse_log;
 	input_ptr->af_set_clear_next_vcm_pos = af_set_clear_next_vcm_pos;
 	//SharkLE Only --
 

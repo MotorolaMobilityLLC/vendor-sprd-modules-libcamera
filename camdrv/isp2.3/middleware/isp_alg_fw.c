@@ -2140,6 +2140,14 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 					 statis_info->dac_info.vcm_mv_sec,
 					 statis_info->dac_info.vcm_mv_usec
 					 );
+
+			//SharkLE Only ++
+			if (cxt->ops.af_ops.ioctrl) {
+				ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DAC_INFO, (void *)&(statis_info->dac_info), NULL);
+				ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_DAC_INFO"));
+			}
+			//SharkLE Only --
+
 				break;
 			}
 			u_addr = statis_info->vir_addr;

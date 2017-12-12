@@ -1109,6 +1109,7 @@ typedef struct _AF_Ctrl_Ops {
 	//SharkLE Only ++
 	 cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
 	 cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
+	 cmr_u8(*set_pulse_log) (cmr_u32 flag, void *cookie);
 	 cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
 	//SharkLE Only --
 } AF_Ctrl_Ops;
@@ -1172,6 +1173,17 @@ typedef struct _af_history_info_s {
 	cmr_u32 reserved[100];
 } _af_history_info_t;
 
+//SharkLE Only ++
+typedef struct _le_dac_info {
+	cmr_u32 pulse_line;
+	cmr_u32 dac;
+	cmr_u32 pulse_sec;
+	cmr_u32 pulse_usec;
+	cmr_u32 vcm_mv_sec;
+	cmr_u32 vcm_mv_usec;
+} le_dac_info;
+//SharkLE Only --
+
 typedef struct _AF_Data {
 	cmr_s8 AF_Version[40];
 	cmr_s8 AF_sub_version[40];
@@ -1230,8 +1242,13 @@ typedef struct _AF_Data {
 	cmr_u32 SAF_Softlanding_enable;
 	cmr_u32 Tuning_Buffer_checksum;
 	cmr_u32 is_flash;
+	//SharkLE Only ++
+	le_dac_info le_dac_info_his[MAX_TIME_SAMPLE_NUM];
+	cmr_u32 le_dac_info_his_cont;
+	//SharkLE Only --
 	cmr_u32 reserved[500];
 	AF_Ctrl_Ops AF_Ops;
+
 } AF_Data;
 
 typedef struct _AF_Bokeh_Test {

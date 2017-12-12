@@ -802,6 +802,18 @@ static cmr_u8 if_af_set_next_vcm_pos(cmr_u32 pos, void *cookie)
 	 */
 }
 
+static cmr_u8 if_af_set_pulse_log(cmr_u32 flag, void *cookie)
+{
+
+	af_ctrl_t *af = cookie;
+	ISP_LOGD(" if_af_set_pulse_log = %d", flag);
+
+	if (NULL != af->af_set_pulse_log)
+		af->af_set_pulse_log(af->caller, flag);
+
+	return 0;
+}
+
 static cmr_u8 if_af_set_clear_next_vcm_pos(void *cookie)
 {
 
@@ -1016,6 +1028,7 @@ static void *af_init(af_ctrl_t * af)
 	//SharkLE Only ++
 	AF_Ops.set_pulse_line = if_af_set_pulse_line;
 	AF_Ops.set_next_vcm_pos = if_af_set_next_vcm_pos;
+	AF_Ops.set_pulse_log = if_af_set_pulse_log;
 	AF_Ops.set_clear_next_vcm_pos = if_af_set_clear_next_vcm_pos;
 	//SharkLE Only --
 
@@ -2406,6 +2419,16 @@ static cmr_s32 af_sprd_get_fullscan_info(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
+//SharkLE Only ++
+static cmr_s32 af_sprd_set_dac_info(cmr_handle handle, void *param0)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Dac_info, param0);
+
+	return AFV1_SUCCESS;
+}
+//SharkLE Only --
+
 cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
 	UNUSED(param1);
@@ -2493,7 +2516,11 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	case AF_CMD_SET_DCAM_TIMESTAMP:
 		rtn = af_sprd_set_dcam_timestamp(handle, param0);
 		break;
-
+	//SharkLE Only ++
+	case AF_CMD_SET_DAC_INFO:
+		rtn = af_sprd_set_dac_info(handle, param0);
+		break;
+	//SharkLE Only --
 	default:
 		ISP_LOGW("set cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -2619,6 +2646,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	//SharkLE Only ++
 	af->af_set_pulse_line = init_param->af_set_pulse_line;
 	af->af_set_next_vcm_pos = init_param->af_set_next_vcm_pos;
+	af->af_set_pulse_log = init_param->af_set_pulse_log;
 	af->af_set_clear_next_vcm_pos = init_param->af_set_clear_next_vcm_pos;
 	//SharkLE Only --
 #endif

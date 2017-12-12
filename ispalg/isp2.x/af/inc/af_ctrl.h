@@ -79,7 +79,11 @@ extern "C" {
 		AF_CMD_SET_DCAM_TIMESTAMP = 0x1015,
 		AF_CMD_SET_PD_INFO = 0x1016,
 		AF_CMD_SET_UPDATE_AUX_SENSOR = 0x1017,
-		AF_CMD_SET_MAX,
+		//SharkLE Only ++
+		AF_CMD_SET_DAC_INFO = 0x1018,
+		//SharkLE Only --
+		AF_CMD_SET_MAX ,
+
 
 		AF_CMD_GET_BASE = 0x2000,
 		AF_CMD_GET_AF_MODE = 0X2001,
@@ -245,6 +249,7 @@ extern "C" {
 		 //SharkLE Only ++
 		 cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
 		 cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
+		 cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
 		 cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
 		 //SharkLE Only --
 	};

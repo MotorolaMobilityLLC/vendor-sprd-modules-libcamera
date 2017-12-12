@@ -58,6 +58,7 @@ typedef enum _AF_IOCTRL_CMD {
 	AF_IOCTRL_Set_Time_Stamp,
 	AF_IOCTRL_Set_Pre_Trigger_Data,
 	AF_IOCTRL_Record_FV,
+	AF_IOCTRL_Set_Dac_info,
 	AF_IOCTRL_MAX,
 } AF_IOCTRL_CMD;
 
