@@ -115,7 +115,7 @@ static cmr_s32 is_print_log(void)
 	return is_print;
 }
 
-#define SENSOR_NUM 3
+#define SENSOR_NUM 5
 #define SMART_STASH_FILE "data/misc/cameraserver/smart.file"
 
 static cmr_s32 smart_ctl_save_stash(struct smart_context *cxt, void *in_param)
@@ -126,22 +126,26 @@ static cmr_s32 smart_ctl_save_stash(struct smart_context *cxt, void *in_param)
 	cmr_u32 smart_camera_id = 0;
 	cmr_s32 smart_stash_s[SENSOR_NUM][3];
 
-	ISP_LOGE("save_smart  camera_id = %d",cxt->camera_id);
-
 	if (NULL == cxt) {
 		ISP_LOGE("fail to get valid input param, in: %p\n", cxt);
 		goto ERROR_EXIT;
 	}
 
+	ISP_LOGD("save_smart  camera_id = %d",cxt->camera_id);
+
 	smart_camera_id = cxt->camera_id;
+
+	if(smart_camera_id >= SENSOR_NUM){
+		goto ERROR_EXIT;
+	}
 
 	memset((cmr_s32*)smart_stash_s, 0, sizeof(smart_stash_s));
 
 	FILE* fp = NULL;
 	fp = fopen(SMART_STASH_FILE, "rb");
 	if (fp) {
-		ISP_LOGE("read smart  file");
-		fread((cmr_s32*)smart_stash_s,sizeof(cmr_s32),sizeof(smart_stash_s)/sizeof(smart_stash_s[0][0]), fp);
+		ISP_LOGD("read smart  file");
+		fread((cmr_s32*)smart_stash_s,1,sizeof(smart_stash_s), fp);
 		fclose(fp);
 		fp = NULL;
 
@@ -156,19 +160,17 @@ SAVE_BIN:
 	smart_stash_s[smart_camera_id][1] =cxt->smart_stash_param.bv_gain;
 	smart_stash_s[smart_camera_id][2] =cxt->smart_stash_param.ct;
 
-
 	fp = fopen(SMART_STASH_FILE, "wb");
 	if (fp) {
-		fwrite((cmr_s32*)smart_stash_s,sizeof(cmr_s32),sizeof(smart_stash_s)/sizeof(smart_stash_s[0][0]), fp);
+		fwrite((cmr_s32*)smart_stash_s,1,sizeof(smart_stash_s), fp);
 		fclose(fp);
 		fp = NULL;
-		ISP_LOGE("save smart file ok ");
+		ISP_LOGD("save smart file ok ");
 	}
 
 	for(i = 0; i < 3;i++){
-		ISP_LOGE("camera[%d] = smart_save[%d] = %d ",cxt->camera_id,i,smart_stash_s[cxt->camera_id][i]);
+		ISP_LOGD("camera[%d] = smart_save[%d] = %d ",cxt->camera_id,i,smart_stash_s[cxt->camera_id][i]);
 	}
-
 
 ERROR_EXIT:
 
@@ -180,11 +182,10 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 	UNUSED(in_param);
 	cmr_s32 rtn = ISP_SUCCESS;
 
-	cmr_u32 i = 0;
 	cmr_u32 smart_camera_id = 0;
 	cmr_s32 smart_stash_r[SENSOR_NUM][3];
 
-	ISP_LOGE("apply smart");
+	ISP_LOGD("apply smart");
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to get valid input param, in: %p\n", cxt);
@@ -193,12 +194,15 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 
 	smart_camera_id = cxt->camera_id;
 
+	if(smart_camera_id >= SENSOR_NUM){
+		goto ERROR_EXIT;
+	}
+
 	FILE* fp = NULL;
 	fp = fopen(SMART_STASH_FILE, "rb");
 	if (fp) {
 		memset((void*)smart_stash_r, 0, sizeof(smart_stash_r));
-		fread((cmr_s32*)smart_stash_r,sizeof(cmr_s32),sizeof(smart_stash_r)/sizeof(smart_stash_r[0][0]), fp);
-
+		fread((cmr_s32*)smart_stash_r,1,sizeof(smart_stash_r), fp);
 		fclose(fp);
 		fp = NULL;
 
@@ -211,9 +215,9 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 		goto ERROR_EXIT;
 	}
 
-	for(i = 0; i < 3;i++){
-		ISP_LOGE("camera[%d] = stash[%d] = %d ",cxt->camera_id,i,smart_stash_r[cxt->camera_id][i]);
-	}
+ 	ISP_LOGD("camera[%d].bv = %d ",smart_camera_id,smart_stash_r[smart_camera_id][0]);
+	ISP_LOGD("camera[%d].bv_gain = %d ",smart_camera_id,smart_stash_r[smart_camera_id][1]);
+ 	ISP_LOGD("camera[%d].ct = %d ",smart_camera_id,smart_stash_r[smart_camera_id][2]);
 
 
 ERROR_EXIT:
