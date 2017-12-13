@@ -1100,7 +1100,7 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 						ISP_BLK_RGB_GAMC,
 						cxt->mode_id[j],
 						gamma_cur,
-						sizeof(struct sensor_gamma_curve));
+						sizeof(struct sensor_rgbgamma_curve));
 			}
 			io_pm_input.param_num = param_num;
 			io_pm_input.param_data_ptr = &pm_param[0];
@@ -1694,7 +1694,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 			cmr_s32 i = 0;
 
 			for (i = 0; i < 256; i++) {
-				out_ptr->gamma[i] = (gamma_info->nodes[i].node_y + gamma_info->nodes[i + 1].node_y) / 2;
+				out_ptr->gamma[i] = (gamma_info->gamc_nodes.nodes_r[i].node_y
+									+ gamma_info->gamc_nodes.nodes_r[i + 1].node_y) / 2;
 			}
 		}
 	}
