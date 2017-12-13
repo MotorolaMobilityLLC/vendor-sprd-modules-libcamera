@@ -130,7 +130,7 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	dst_ptr->resolution = *img_size_ptr;
 	dst_ptr->is_init = ISP_ONE;
 
-	dst_ptr->cur.bypass = 1;//header_ptr->bypass;
+	dst_ptr->cur.bypass = header_ptr->bypass;
 	header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 	return rtn;
 }
