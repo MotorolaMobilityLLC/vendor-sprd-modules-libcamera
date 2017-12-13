@@ -166,6 +166,7 @@ extern otp_drv_entry_t ov8856_shine_otp_entry;
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
 extern struct sns_af_drv_entry dw9714a_drv_entry;
+extern struct sns_af_drv_entry dw9714p_drv_entry;
 extern struct sns_af_drv_entry dw9718s_drv_entry;
 extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
@@ -237,7 +238,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // ov area
 #ifdef OV8856_SHINE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, &ov8856_shine_otp_entry},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, &ov8856_shine_otp_entry},
 #endif
 #ifdef OV8856
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8856_cmk_drv_entry},

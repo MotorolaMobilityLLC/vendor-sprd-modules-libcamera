@@ -57,24 +57,38 @@ static void ov8856_drv_write_reg2sensor(cmr_handle handle, struct sensor_i2c_reg
  *============================================================================*/
 static void ov8856_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag *aec_info , cmr_u32 gain)
 {
-	if (SENSOR_MAX_GAIN < (cmr_u16)gain) {
-        gain = SENSOR_MAX_GAIN;
-    }
+	float gain_a = gain;
+	float gain_d = 0x400; // spec p70, X1 = 15bit
 	SENSOR_IC_CHECK_PTR_VOID(aec_info);
 	SENSOR_IC_CHECK_HANDLE_VOID(handle);
 	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+	if (SENSOR_MAX_GAIN < (cmr_u16)gain_a) {
+        gain_a = SENSOR_MAX_GAIN;
+
+        gain_d = (float)1.0f *gain * 0x400 / gain_a;
+        if ((cmr_u16)gain_d > (0x8 * 0x400 - 1))
+            gain_d = 0x8 * 0x400 - 1;
+    }
+
+	SENSOR_LOGI("(cmr_u16)gain_a = %f ,(cmr_u16)gain_d = %f", gain_a ,gain_d);
 	if(aec_info->again->size){
 		/*TODO*/
-	    aec_info->again->settings[2].reg_value = ((cmr_u16)gain >> 8) & 0x1f;
-		aec_info->again->settings[3].reg_value = (cmr_u16)gain & 0xff;
+		aec_info->again->settings[2].reg_value = ((cmr_u16)gain_a >> 8) & 0x1f;
+		aec_info->again->settings[3].reg_value = (cmr_u16)gain_a & 0xff;
 		/*END*/
        }
 
 	if(aec_info->dgain->size){
-
 		/*TODO*/
-
+		aec_info->dgain->settings[0].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+		aec_info->dgain->settings[1].reg_value = (cmr_u16)gain_d & 0xff;
+		aec_info->dgain->settings[2].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+		aec_info->dgain->settings[3].reg_value = (cmr_u16)gain_d & 0xff;
+		aec_info->dgain->settings[4].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+		aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;
+		aec_info->dgain->settings[6].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+		aec_info->dgain->settings[7].reg_value = (cmr_u16)gain_d & 0xff;
 		/*END*/
 	}
 }
@@ -189,8 +203,6 @@ static void ov8856_drv_calc_gain(cmr_handle handle,cmr_uint isp_gain, struct sen
 
 	sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
 	sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
-	if (SENSOR_MAX_GAIN < sensor_gain)
-			sensor_gain = SENSOR_MAX_GAIN;
 
 	SENSOR_LOGI("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)isp_gain,sensor_gain);
 
@@ -510,7 +522,7 @@ static cmr_int ov8856_drv_before_snapshot(cmr_handle handle, cmr_uint param)
 	sns_drv_cxt->sensor_ev_info.preview_gain=cap_gain;
 	ov8856_drv_write_gain(handle, &ov8856_aec_info, cap_gain);
 	ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.again);
-	//ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.dgain);
+	ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.dgain);
 
 snapshot_info:
     if(sns_drv_cxt->ops_cb.set_exif_info) {
