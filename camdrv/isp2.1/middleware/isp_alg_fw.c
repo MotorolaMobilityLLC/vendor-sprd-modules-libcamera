@@ -119,6 +119,7 @@ struct afl_info {
 	cmr_uint mfd;
 	cmr_int buf_property;
 	void *buffer_client_data;
+	struct isp_awb_statistic_info ae_stats;
 };
 
 struct af_info {
@@ -1742,7 +1743,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
-	struct isp_awb_statistic_info ae_stat_ptr;
 	struct afl_proc_in afl_input;
 	cmr_uint u_addr = 0;
 	struct isp_pm_param_data pm_afl_data;
@@ -1755,7 +1755,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	memcpy(&cxt->afl_stat_info, data, sizeof(struct isp_statis_info));
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, &cxt->afl_stat_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
-	ae_stat_ptr = cxt->aem_stats;
+	cxt->afl_cxt.ae_stats = cxt->aem_stats;
 
 	if (cxt->afl_cxt.sw_bypass) {
 		ret = ispalg_set_stats_buffer(cxt, &cxt->afl_stat_info, ISP_AFL_BLOCK);
@@ -1805,7 +1805,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		afl_input.pm_param_num = 0;
 	}
 
-	afl_input.ae_stat_ptr = &ae_stat_ptr;
+	afl_input.ae_stat_ptr = &cxt->afl_cxt.ae_stats;
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
