@@ -266,6 +266,7 @@ struct isp_alg_fw_context {
 	cmr_int bokeh_status;
 	cmr_u32 zsl_flag;
 	struct isp_statis_info afl_stat_info;
+	struct awb_ctrl_calc_param awb_param;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -1427,34 +1428,30 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
-	struct awb_ctrl_calc_param param;
-	struct awb_ctrl_calc_result  awb_output_info;
 
 	if (!isp_alg_handle || !awb_output) {
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
 
-	memset((void *)&param, 0, sizeof(param));
+	memset((void *)&cxt->awb_param, 0, sizeof(struct awb_ctrl_calc_result));
 
-	ret = ispalg_awb_pre_process((cmr_handle) cxt, ae_in, &param);
+	ret = ispalg_awb_pre_process((cmr_handle) cxt, ae_in, &cxt->awb_param);
 
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.awb_ops.process) {
-		ret = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &param, awb_output);
+		ret = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &cxt->awb_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb process"));
 	}
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
 
 	if (cxt->ops.awb_ops.ioctrl) {
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_RESULT_INFO, (void *)&awb_output_info, NULL);
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_RESULT_INFO, (void *)awb_output, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
 	}
 
-	memcpy(awb_output, &awb_output_info, sizeof(struct awb_ctrl_calc_result));
-
-	ret = ispalg_awb_post_process((cmr_handle) cxt, &awb_output_info);
+	ret = ispalg_awb_post_process((cmr_handle) cxt, awb_output);
 
 exit:
 	ISP_LOGV("done %ld", ret);

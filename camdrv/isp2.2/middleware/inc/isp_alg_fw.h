@@ -249,6 +249,7 @@ struct isp_alg_fw_context {
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
 	cmr_u16 *binning_statis_ptr;
 	struct isp_statis_buf_input afl_stat_buf;
+	struct awb_ctrl_calc_param awb_param;
 };
 
 struct isp_alg_fw_init_in {

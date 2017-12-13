@@ -36,7 +36,6 @@ struct awbctrl_work_lib {
 struct awbctrl_cxt {
 	cmr_handle thr_handle;
 	struct awbctrl_work_lib work_lib;
-	struct awb_ctrl_calc_result proc_out;
 };
 
 static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
@@ -168,7 +167,7 @@ static cmr_int awbctrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 		rtn = awbctrl_ioctrl(cxt_ptr,((struct awb_ctrl_msg_ctrl*)message->data)->cmd,((struct awb_ctrl_msg_ctrl*)message->data)->in,((struct awb_ctrl_msg_ctrl*)message->data)->out);
 		break;
 	case AWBCTRL_EVT_PROCESS:
-		rtn = awbctrl_process(cxt_ptr, (struct awb_ctrl_calc_param *)message->data, &cxt_ptr->proc_out);
+		rtn = awbctrl_process(cxt_ptr, (struct awb_ctrl_calc_param *)message->data, NULL);
 		break;
 	default:
 		ISP_LOGE("fail to check param, don't support msg");
@@ -322,11 +321,11 @@ cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param * in_
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handle_awb;
-
+	UNUSED(result);
 	ISP_CHECK_HANDLE_VALID(handle_awb);
 
 	CMR_MSG_INIT(message);
-	if (!handle_awb || !in_ptr || !result) {
+	if (!handle_awb || !in_ptr) {
 		ISP_LOGE("fail to check param, param is NULL!");
 		rtn = AWB_ERROR;
 		goto exit;
