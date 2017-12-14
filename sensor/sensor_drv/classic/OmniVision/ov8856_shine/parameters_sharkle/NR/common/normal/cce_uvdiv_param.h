@@ -180,9 +180,9 @@
 		/*ratio*/
 		0x40,
 		/*ratio_uv_min*/
-		0x20,
+		0x38,
 		/*ratio_y_min0*/
-		0x28,
+		0x30,
 		/*ratio_y_min1*/
 		0x40,
 		/*reserved*/
