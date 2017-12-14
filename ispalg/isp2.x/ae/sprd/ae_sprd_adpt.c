@@ -46,7 +46,8 @@
 #define AE_START_ID 0x71717567
 #define AE_END_ID 	0x69656E64
 
-#define AE_EXP_GAIN_PARAM_FILE_NAME "/data/misc/cameraserver/ae.file"
+#define AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/misc/cameraserver/ae.file"
+#define AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA "/data/misc/media/ae.file"
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100     /*temp macro for flash, remove later, Andy.lin*/
@@ -3238,33 +3239,66 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 {
 	cmr_u32 i = 0;
 	FILE* pf = NULL;
-	pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME, "wb");
-	if (pf) {
-		for (i = 0; i < num; ++i) {
-			ISP_LOGV("write:[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
-		}
+	char version[1024];
+	property_get("ro.build.version.release", version, "");
+	if(version[0] > '6'){
+		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "wb");
+		if (pf) {
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("write:[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
+			}
 
-		fwrite((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
-		fclose(pf);
-		pf = NULL;
+			fwrite((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fclose(pf);
+			pf = NULL;
+		}
+	}else{
+		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, "wb");
+		if (pf) {
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("write:[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
+			}
+
+			fwrite((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fclose(pf);
+			pf = NULL;
+		}
 	}
+
 }
 
 static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 {
 	cmr_u32 i = 0;
 	FILE* pf = NULL;
-	pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME, "rb");
-	if (pf) {
-		memset((void*)param, 0, sizeof(struct ae_exposure_param) * num);
-		fread((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
-		fclose(pf);
-		pf = NULL;
+	char version[1024];
+	property_get("ro.build.version.release", version, "");
+	if(version[0] > '6'){
+		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
+		if (pf) {
+			memset((void*)param, 0, sizeof(struct ae_exposure_param) * num);
+			fread((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fclose(pf);
+			pf = NULL;
 
-		for (i = 0; i < num; ++i) {
-			ISP_LOGV("read[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("read[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
+			}
+		}
+	}else{
+		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
+		if (pf) {
+			memset((void*)param, 0, sizeof(struct ae_exposure_param) * num);
+			fread((char*)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fclose(pf);
+			pf = NULL;
+
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("read[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
+			}
 		}
 	}
+
 }
 static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 {
