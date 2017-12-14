@@ -53,6 +53,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
 
+	memset(kaddr, 0, sizeof(kaddr));
 	statis_mem_info->oem_handle = in_ptr->oem_handle;
 	if (statis_mem_info->isp_lsc_alloc_flag == 0) {
 		statis_mem_info->isp_lsc_mem_num = ISP_LSC_BUF_NUM;
@@ -280,7 +281,11 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	statis_info = malloc(sizeof(*statis_info));
+	statis_info = (struct isp_statis_info *)malloc(sizeof(*statis_info));
+	if (NULL == statis_info) {
+		ISP_LOGE("fail to malloc");
+		return;
+	}
 
 	statis_info->phy_addr = irq_info->phy_addr;
 	statis_info->vir_addr = irq_info->vir_addr;
