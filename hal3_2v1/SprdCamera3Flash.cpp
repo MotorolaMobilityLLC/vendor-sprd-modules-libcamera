@@ -242,6 +242,43 @@ int32_t SprdCamera3Flash::releaseFlashFromCamera(const int cameraId) {
 exit:
     return retVal;
 }
+
+int32_t SprdCamera3Flash::reserveFlashForCameraForKK(const int cameraId) {
+    int32_t retVal = 0;
+    int32_t bytes = 0;
+    char buffer[16];
+    const char *const flashInterface =
+        "/sys/devices/virtual/misc/sprd_flash/test";
+    ssize_t wr_ret;
+    LOGV("open flash driver interface");
+
+    if (m_cameraOpen[cameraId]) {
+        LOGV("FLash already reserved for camera ");
+    } else {
+        m_cameraOpen[cameraId] = true;
+        if (cameraId == 0) {
+            int fd = open(flashInterface, O_WRONLY);
+            /* open sysfs file parition */
+            if (-1 == fd) {
+                LOGE("Failed to open: flash_light_interface, %s", flashInterface);
+                return -EINVAL;
+            }
+            bytes = snprintf(buffer, sizeof(buffer), "0x%x", 0x11);
+            wr_ret = write(fd, buffer, bytes);
+
+            if (-1 == wr_ret) {
+                LOGE("WRITE FAILED \n");
+                retVal = -EINVAL;
+            }
+
+            close(fd);
+            LOGV("Close file");
+        }
+    }
+    return retVal;
+
+}
+
 int32_t SprdCamera3Flash::setTorchMode(const char *cameraIdStr, bool on) {
     int retVal = 0;
     if (_instance)
@@ -250,8 +287,13 @@ int32_t SprdCamera3Flash::setTorchMode(const char *cameraIdStr, bool on) {
 }
 int32_t SprdCamera3Flash::reserveFlash(const int cameraId) {
     int retVal = 0;
-    if (_instance)
+    if (_instance) {
+#ifndef ANDROID_VERSION_KK
         retVal = _instance->reserveFlashForCamera(cameraId);
+#else
+        retVal = _instance->reserveFlashForCameraForKK(cameraId);
+#endif
+    }
     return retVal;
 }
 int32_t SprdCamera3Flash::releaseFlash(const int cameraId) {

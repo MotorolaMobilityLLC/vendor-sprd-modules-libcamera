@@ -55,6 +55,7 @@ class SprdCamera3Flash {
     static SprdCamera3Flash *getInstance();
     int32_t setFlashMode(const int camera_id, const bool on);
     int32_t reserveFlashForCamera(const int camera_id);
+    int32_t reserveFlashForCameraForKK(const int camera_id);
     int32_t releaseFlashFromCamera(const int camera_id);
     // const camera_module_callbacks_t *m_callbacks;
     int32_t set_torch_mode(const char *, bool);
