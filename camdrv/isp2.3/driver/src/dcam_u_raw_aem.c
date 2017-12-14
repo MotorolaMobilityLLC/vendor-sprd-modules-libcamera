@@ -99,6 +99,7 @@ cmr_s32 dcam_u_raw_aem_shift(cmr_handle handle, void *shift)
 		ISP_LOGE("handle is null error.");
 		return -1;
 	}
+
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.sub_block = DCAM_BLOCK_RAW_AEM;

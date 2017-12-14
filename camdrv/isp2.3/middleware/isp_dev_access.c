@@ -462,36 +462,6 @@ exit:
 	return ret;
 }
 
-static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_info)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct isp_u_blocks_info dev_block_info;
-
-	memset(&dev_block_info, 0x0, sizeof(dev_block_info));
-	switch (block_info->stats_info.stats_mode) {
-	case ISP_DEV_AE_STATS_MODE_SINGLE:
-		dev_block_info.enable = 1;
-		dev_block_info.scene_id = block_info->scene_id;
-		isp_u_3a_ctrl(cxt->isp_driver_handle, (void *)&dev_block_info);
-
-		block_info->stats_info.mode = 0;
-		isp_u_raw_aem_mode(cxt->isp_driver_handle, (void *)block_info);
-		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, (void *)block_info);
-		break;
-	case ISP_DEV_AE_STATS_MODE_CONTINUE:
-		block_info->stats_info.mode = 1;
-		isp_u_raw_aem_mode(cxt->isp_driver_handle, (void *)block_info);
-
-		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, (void *)block_info);
-		break;
-	default:
-		break;
-	}
-
-	return ret;
-}
-
 static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -557,14 +527,34 @@ static cmr_int ispdev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp
 	return ret;
 }
 
-static cmr_int ispdev_access_set_aem_win(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
+static cmr_int ispdev_access_aem_stats_info(cmr_handle isp_dev_handle,  struct isp_u_blocks_info *block_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
+
+	if (!cxt || !block_ptr) {
+		ISP_LOGE("fail to get ptr:%p, %p", cxt, block_ptr);
+		return -ISP_PARAM_NULL;
+	}
+
+	/* set aem bypass */
+	isp_u_raw_aem_bypass(cxt->isp_driver_handle, (void *)block_ptr);
+	ISP_TRACE_IF_FAIL(ret, ("fail to set aem bypass."));
+
+	/* set aem skip num */
+	ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, (void *)block_ptr);
+	ISP_TRACE_IF_FAIL(ret, ("fail to set aem skip num."));
+
+	/* set single mode :0 or continue mode: 1 */
+	isp_u_raw_aem_mode(cxt->isp_driver_handle, (void *)block_ptr);
+	ISP_TRACE_IF_FAIL(ret, ("fail to set aem mode."));
+
+	/* set aem offset */
 	ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, (void *)block_ptr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
 
+	/* set aem blk_size */
 	ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, (void *)block_ptr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to aem blk"));
 
@@ -591,18 +581,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	switch (cmd) {
-	case ISP_DEV_SET_AE_MONITOR:
-		ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, in);
-		break;
-	case ISP_DEV_SET_AE_MONITOR_WIN:
-		ret = ispdev_access_set_aem_win(cxt, in);
-		break;
-	case ISP_DEV_SET_AE_MONITOR_BYPASS:
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in);
-		break;
-	case ISP_DEV_SET_AE_STATISTICS_MODE:
-		ret = ispdev_access_ae_set_stats_mode(cxt, in);
-		break;
+	case ISP_DEV_SET_AE_STATS_MONITOR:
+		ret = ispdev_access_aem_stats_info(cxt, in);
 	case ISP_DEV_SET_RGB_GAIN:
 		ret = ispdev_access_ae_set_rgb_gain(cxt, in);
 		break;

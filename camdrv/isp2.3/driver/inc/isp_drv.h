@@ -37,12 +37,9 @@ struct isp_file {
 };
 
 struct isp_aem_stats_info {
-	cmr_u8 stats_mode;
 	cmr_u32 mode;
+	cmr_u32 bypass;
 	cmr_u32 skip_num;
-};
-
-struct isp_aem_win_info {
 	struct isp_img_offset offset;
 	struct isp_img_size size;
 };
@@ -61,12 +58,8 @@ struct isp_u_blocks_info {
 		cmr_u32 bypass;
 		cmr_u32 enable;
 		cmr_u32 type;
-		cmr_u32 phy_addr;
-		cmr_u32 info;
 		cmr_u32 factor;
 		void *block_info;
-		struct sprd_aem_avgshf shift;
-		struct isp_img_offset offset;
 		struct isp_img_size size;
 		/*rgb gain block*/
 		cmr_u32 rgb_gain_coeff;
@@ -87,8 +80,9 @@ struct isp_u_blocks_info {
 		cmr_u16 *l_node_ptr;
 		/*aem block*/
 		void *statis;
+		struct isp_img_offset offset;
+		struct sprd_aem_avgshf shift;
 		struct isp_aem_stats_info stats_info;
-		struct isp_aem_win_info  win_info;
 		/*afm block*/
 		cmr_u32 clear;
 		cmr_u32 sel_filter;

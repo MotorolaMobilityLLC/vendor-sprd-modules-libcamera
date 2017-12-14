@@ -449,87 +449,6 @@ exit:
 	return ret;
 }
 
-static cmr_int ispalg_set_ae_stats_mode(cmr_handle isp_alg_handle, cmr_u32 mode, cmr_u32 skip_number)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_u_blocks_info ae_block_info;
-	cmr_u32 i;
-	cmr_u32 param_num = 0;
-
-	if (cxt->zsl_flag)
-		param_num = ISP_MODE_MAX;
-	else
-		param_num = 1;
-
-	switch (mode) {
-	case AE_STATISTICS_MODE_SINGLE:
-		for (i = 0; i < param_num; i++) {
-			memset(&ae_block_info, 0x0, sizeof(ae_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				ae_block_info.scene_id = ISP_MODE_CAP;
-			else
-				ae_block_info.scene_id = ISP_MODE_PRV;
-
-			ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_SINGLE;
-			ae_block_info.stats_info.skip_num = skip_number;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-					ISP_DEV_SET_AE_STATISTICS_MODE,
-					&ae_block_info,
-					NULL);
-		}
-		break;
-	case AE_STATISTICS_MODE_CONTINUE:
-		for (i = 0; i < param_num; i++) {
-			memset(&ae_block_info, 0x0, sizeof(ae_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				ae_block_info.scene_id = ISP_MODE_CAP;
-			else
-				ae_block_info.scene_id = ISP_MODE_PRV;
-
-			ae_block_info.stats_info.stats_mode = ISP_DEV_AE_STATS_MODE_CONTINUE;
-			ae_block_info.stats_info.skip_num = skip_number;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-					ISP_DEV_SET_AE_STATISTICS_MODE,
-					&ae_block_info,
-					NULL);
-		}
-		break;
-	}
-	return ret;
-}
-
-static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_info *aem_info)
-{
-	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 i;
-	cmr_u32 param_num = 0;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_u_blocks_info aem_block_info;
-
-	if (cxt->zsl_flag)
-		param_num = ISP_MODE_MAX;
-	else
-		param_num = 1;
-	for (i = 0; i < param_num; i++) {
-		memset(&aem_block_info, 0x0, sizeof(aem_block_info));
-		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-			aem_block_info.scene_id = ISP_MODE_CAP;
-		else
-			aem_block_info.scene_id = ISP_MODE_PRV;
-
-		aem_block_info.win_info.offset.x = aem_info->trim.x;
-		aem_block_info.win_info.offset.y = aem_info->trim.y;
-		aem_block_info.win_info.size.width = aem_info->win_size.w;
-		aem_block_info.win_info.size.height = aem_info->win_size.h;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_block_info, NULL);
-	}
-	return ret;
-}
-
 static cmr_int ispalg_get_k_timestamp(cmr_handle isp_alg_handle, cmr_u32 *sec, cmr_u32 *usec)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -546,6 +465,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct ae_stats_monitor_cfg *stats_cfg_ptr = NULL;
 	struct isp_u_blocks_info aem_block_info;
 	cmr_u32 i;
 	cmr_u32 param_num = 0;
@@ -555,6 +475,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	else
 		param_num = 1;
 
+	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 	switch (type) {
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
@@ -565,37 +486,25 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case ISP_AE_EX_SET_EXPOSURE:
 		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_uint) param0);
 		break;
-	case ISP_AE_SET_MONITOR:
-		for (i = 0; i < param_num; i++) {
-			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				aem_block_info.scene_id = ISP_MODE_CAP;
-			else
-				aem_block_info.scene_id = ISP_MODE_PRV;
-
-			aem_block_info.stats_info.skip_num = *(cmr_u32 *)param0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR, &aem_block_info, NULL);
-		}
-		break;
-	case ISP_AE_SET_MONITOR_WIN:
-		ret = ispalg_set_aem_win(cxt, param0);
-		break;
-	case ISP_AE_SET_MONITOR_BYPASS:
-		for (i = 0; i < param_num; i++) {
-			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				aem_block_info.scene_id = ISP_MODE_CAP;
-			else
-				aem_block_info.scene_id = ISP_MODE_PRV;
-
-			aem_block_info.bypass = *(cmr_u32 *)param0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, &aem_block_info, NULL);
-		}
-		break;
-	case ISP_AE_SET_STATISTICS_MODE:
-		ret = ispalg_set_ae_stats_mode(cxt, *(cmr_u32 *)param0, *(cmr_u32 *)param1);
+	case ISP_AE_SET_STATS_MONITOR:
+		aem_block_info.scene_id = ISP_MODE_PRV;
+		stats_cfg_ptr = (struct ae_stats_monitor_cfg *)param0;
+		aem_block_info.stats_info.bypass = stats_cfg_ptr->bypass;
+		aem_block_info.stats_info.skip_num = stats_cfg_ptr->skip_num;
+		aem_block_info.stats_info.mode = stats_cfg_ptr->mode;
+		aem_block_info.stats_info.offset.x = stats_cfg_ptr->trim.x;
+		aem_block_info.stats_info.offset.y = stats_cfg_ptr->trim.y;
+		aem_block_info.stats_info.size.width = stats_cfg_ptr->blk_size.w;
+		aem_block_info.stats_info.size.height = stats_cfg_ptr->blk_size.h;
+		ISP_LOGV("bypass:%d, skip_num:%d, mode:%d, offset.x:%d, offset.y:%d, w:%d, h:%d",
+				stats_cfg_ptr->bypass,
+				stats_cfg_ptr->skip_num,
+				stats_cfg_ptr->mode,
+				stats_cfg_ptr->trim.x,
+				stats_cfg_ptr->trim.y,
+				stats_cfg_ptr->blk_size.w,
+				stats_cfg_ptr->blk_size.h);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_STATS_MONITOR, &aem_block_info, NULL);
 		break;
 	case ISP_AE_SET_AE_CALLBACK:
 		ret = ispalg_ae_callback(cxt, *(cmr_int *) param0, param1);
@@ -3510,6 +3419,11 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 				cxt->zsl_flag,
 				sub_block_info.scene_id,
 				sub_block_info.block_info);
+		if (sub_block_info.scene_id == ISP_MODE_CAP &&
+				param_data->id == ISP_BLK_AE_NEW) {
+			param_data++;
+			continue;
+		}
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 
 		param_data++;
@@ -3537,15 +3451,9 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	struct ae_set_work_param ae_param;
 	struct isp_u_blocks_info aem_block_info;
 	enum ae_work_mode ae_mode = 0;
-	cmr_u32 i;
-	cmr_u32 param_num = 0;
-
-	if (cxt->zsl_flag)
-		param_num = ISP_MODE_MAX;
-	else
-		param_num = 1;
 
 	memset(&ae_param, 0x0, sizeof(ae_param));
+	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
 	case ISP_MODE_ID_PRV_1:
@@ -3609,19 +3517,12 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 		ISP_TRACE_IF_FAIL(ret, ("AE_VIDEO_START fail"));
 	}
 
-	for (i = 0; i < param_num; i++) {
-		memset(&aem_block_info, 0x0, sizeof(aem_block_info));
-		if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-				cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-			aem_block_info.scene_id = ISP_MODE_CAP;
-		else
-			aem_block_info.scene_id = ISP_MODE_PRV;
-		aem_block_info.shift.aem_h_avgshf = ae_param.shift;
-		aem_block_info.shift.aem_l_avgshf = ae_param.shift;
-		aem_block_info.shift.aem_m_avgshf = ae_param.shift;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &aem_block_info, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));
-	}
+	aem_block_info.scene_id = BLOCK_SCENE_DEF;
+	aem_block_info.shift.aem_h_avgshf = ae_param.shift;
+	aem_block_info.shift.aem_l_avgshf = ae_param.shift;
+	aem_block_info.shift.aem_m_avgshf = ae_param.shift;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &aem_block_info, NULL);
+	ISP_TRACE_IF_FAIL(ret, ("ISP_DEV_SET_AE_SHIFT fail"));
 
 	return ret;
 }

@@ -78,7 +78,7 @@ cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *param_ptr)
 	struct isp_u_blocks_info *raw_aem_ptr = NULL;
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	return dcam_u_raw_aem_bypass(handle, &raw_aem_ptr->bypass);
+	return dcam_u_raw_aem_bypass(handle, &raw_aem_ptr->stats_info.bypass);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -98,7 +98,7 @@ cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *param_ptr)
 	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_BYPASS;
-	param.property_param = &raw_aem_ptr->bypass;
+	param.property_param = &raw_aem_ptr->stats_info.bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -249,7 +249,7 @@ cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *param_ptr)
 	param.scene_id = raw_aem_ptr->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_SHIFT;
-	param.property_param = raw_aem_ptr->shift;
+	param.property_param = &raw_aem_ptr->shift;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -264,8 +264,8 @@ cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, void *param_ptr)
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	return dcam_u_raw_aem_offset(handle,
-			raw_aem_ptr->win_info.offset.x,
-			raw_aem_ptr->win_info.offset.y);
+			raw_aem_ptr->stats_info.offset.x,
+			raw_aem_ptr->stats_info.offset.y);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -281,8 +281,8 @@ cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, void *param_ptr)
 	file = (struct isp_file *)(handle);
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	offset.x = raw_aem_ptr->win_info.offset.x;
-	offset.y = raw_aem_ptr->win_info.offset.y;
+	offset.x = raw_aem_ptr->stats_info.offset.x;
+	offset.y = raw_aem_ptr->stats_info.offset.y;
 
 	param.isp_id = file->isp_id;
 	param.scene_id = raw_aem_ptr->scene_id;
@@ -303,8 +303,8 @@ cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, void *param_ptr)
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	return dcam_u_raw_aem_blk_size(handle,
-			raw_aem_ptr->win_info.size.width,
-			raw_aem_ptr->win_info.size.height);
+			raw_aem_ptr->stats_info.size.width,
+			raw_aem_ptr->stats_info.size.height);
 #else
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -320,8 +320,8 @@ cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, void *param_ptr)
 	file = (struct isp_file *)(handle);
 	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
-	size.width = raw_aem_ptr->win_info.size.width;
-	size.height = raw_aem_ptr->win_info.size.height;
+	size.width = raw_aem_ptr->stats_info.size.width;
+	size.height = raw_aem_ptr->stats_info.size.height;
 
 	param.isp_id = file->isp_id;
 	param.scene_id = raw_aem_ptr->scene_id;
