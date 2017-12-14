@@ -584,13 +584,25 @@ exit:
 	return rtn;
 }
 
-static cmr_u32 _afl_get_info(struct isp_anti_flicker_cfg *cxt, void *result)
+static cmr_u32 aflctrl_get_info(struct isp_anti_flicker_cfg *cxt, void *result)
 {
 	cmr_u32 rtn = ISP_SUCCESS;
 	struct afl_ctrl_proc_out *param = (struct afl_ctrl_proc_out *)result;
 
 	param->cur_flicker = cxt->cur_flicker;
 	param->flag = cxt->flag;
+
+	return rtn;
+}
+
+static cmr_u32 aflctrl_set_img_size(cmr_handle handle, void *in)
+{
+	cmr_u32 rtn = ISP_SUCCESS;
+	struct isp_anti_flicker_cfg *cxt = (struct isp_anti_flicker_cfg *)handle;
+	struct isp_size *size = (struct isp_size *)in;
+
+	cxt->width = size->w;
+	cxt->height = size->h;
 
 	return rtn;
 }
@@ -611,7 +623,7 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_pt
 
 	switch (cmd) {
 	case AFL_GET_INFO:
-		rtn = _afl_get_info(cxt_ptr, in_ptr);
+		rtn = aflctrl_get_info(cxt_ptr, in_ptr);
 		break;
 	case AFL_SET_BYPASS:
 		if (cxt_ptr->afl_set_cb) {
@@ -626,6 +638,9 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_pt
 		if (cxt_ptr->afl_set_cb) {
 			cxt_ptr->afl_set_cb(cxt_ptr->caller_handle, ISP_AFL_NEW_SET_BYPASS, in_ptr, NULL);
 		}
+		break;
+	case AFL_SET_IMG_SIZE:
+		rtn = aflctrl_set_img_size(cxt_ptr, in_ptr);
 		break;
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);

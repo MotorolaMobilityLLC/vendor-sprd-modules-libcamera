@@ -30,7 +30,8 @@ struct afl_ctrl_init_in {
 enum afl_io_ctrl_cmd {
 	AFL_GET_INFO = 0x00,
 	AFL_SET_BYPASS,
-	AFL_NEW_SET_BYPASS
+	AFL_NEW_SET_BYPASS,
+	AFL_SET_IMG_SIZE,
 };
 
 struct afl_proc_in {
@@ -47,6 +48,12 @@ struct afl_proc_in {
 #endif
 	void *private_data;
 	cmr_u32 private_len;
+};
+
+struct afl_ctrl_param_in {
+	union {
+		struct isp_size img_size;
+	};
 };
 
 cmr_int afl_ctrl_init(cmr_handle *isp_afl_handle, struct afl_ctrl_init_in *input_ptr);
