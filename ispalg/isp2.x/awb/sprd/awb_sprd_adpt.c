@@ -35,7 +35,8 @@
 #define AWB_CTRL_SCENEMODE_NUM	10
 #define AWBV_WEIGHT_UNIT 256
 
-#define AWB_GAIN_PARAM_FILE_NAME "/data/misc/cameraserver/awb.file"
+#define AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/misc/cameraserver/awb.file"
+#define AWB_GAIN_PARAM_FILE_NAME_MEDIA "/data/misc/media/awb.file"
 
 #define AWB_CTRL_TRUE			1
 #define AWB_CTRL_FALSE			0
@@ -396,31 +397,63 @@ static void _awb_save_gain(struct awb_save_gain*cxt, cmr_u32 num)
 {
 	cmr_u32 i = 0;
 	FILE* fp = NULL;
-	fp = fopen(AWB_GAIN_PARAM_FILE_NAME, "wb");
-	if (fp) {
-		for (i = 0; i < num; ++i) {
-			ISP_LOGD("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
-		}
-		fwrite((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
-		fclose(fp);
-		fp = NULL;
-	}
+	char version[1024];
+	property_get("ro.build.version.release", version, "");
 
+	if (version[0] > '6') {
+		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "wb");
+		if (fp) {
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+			}
+			fwrite((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			fclose(fp);
+			fp = NULL;
+		}
+	}
+	else {
+		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_MEDIA, "wb");
+		if (fp) {
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+			}
+			fwrite((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			fclose(fp);
+			fp = NULL;
+		}
+	}
 }
 
 static void _awb_read_gain(struct awb_save_gain*cxt, cmr_u32 num)
 {
 	cmr_u32 i = 0;
 	FILE* fp = NULL;
-	fp = fopen(AWB_GAIN_PARAM_FILE_NAME, "rb");
-	if (fp) {
-		memset((void*)cxt, 0, sizeof(struct awb_save_gain) * num);
-		fread((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
-		fclose(fp);
-		fp = NULL;
+	char version[1024];
+	property_get("ro.build.version.release", version, "");
 
-		for (i = 0; i < num; ++i) {
-			ISP_LOGD("[%d]: %d, %d, %d, %d\n", i, cxt->r, cxt->g, cxt->b, cxt->ct);
+	if (version[0] > '6') {
+		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
+		if (fp) {
+			memset((void*)cxt, 0, sizeof(struct awb_save_gain) * num);
+			fread((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			fclose(fp);
+			fp = NULL;
+
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+			}
+		}
+	}else {
+		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
+		if (fp) {
+			memset((void*)cxt, 0, sizeof(struct awb_save_gain) * num);
+			fread((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			fclose(fp);
+			fp = NULL;
+
+			for (i = 0; i < num; ++i) {
+				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+			}
 		}
 	}
 }
