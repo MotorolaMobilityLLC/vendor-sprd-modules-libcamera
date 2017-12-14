@@ -1988,7 +1988,11 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         if (!strcmp(value, "false") && !mFixedFpsEnabled &&
             controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
             fps_param.min_fps = CONFIG_MIN_CAMRECORDER_FPS;
+#ifdef CONFIG_MAX_CAMRECORDER_FPS
+            fps_param.max_fps = CONFIG_MAX_CAMRECORDER_FPS;
+#else
             fps_param.max_fps = 30;
+#endif
         }
 #endif
 
