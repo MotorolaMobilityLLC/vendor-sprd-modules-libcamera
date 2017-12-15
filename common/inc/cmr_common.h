@@ -651,7 +651,7 @@ struct cap_cfg {
     cmr_u32 chn_deci_factor;
     cmr_u32 frm_num;
     cmr_u32 buffer_cfg_isp;
-    cmr_u32 slowmotion_enabled;
+    cmr_u32 hdr_cap;
     cmr_u32 video_enabled;
     cmr_u32 sensor_id;
     struct img_frm_cap cfg;

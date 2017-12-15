@@ -7262,10 +7262,10 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.src_img_rect.height =
         sensor_mode_info->scaler_trim.height;
     chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_PREVIEW;
-    if (prev_cxt->prev_param.video_slowmotion_eb)
-        chn_param.cap_inf_cfg.slowmotion_enabled = 1;
+    if (FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl)
+        chn_param.cap_inf_cfg.hdr_cap = 1;
     else
-        chn_param.cap_inf_cfg.slowmotion_enabled = 0;
+        chn_param.cap_inf_cfg.hdr_cap = 0;
 
     CMR_LOGD("skip_mode %ld, skip_num %ld, image_format %d",
              prev_cxt->skip_mode, prev_cxt->prev_skip_num,
@@ -7689,10 +7689,6 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_RECORDING;
-    if (prev_cxt->prev_param.video_slowmotion_eb)
-        chn_param.cap_inf_cfg.slowmotion_enabled = 1;
-    else
-        chn_param.cap_inf_cfg.slowmotion_enabled = 0;
     if (prev_cxt->prev_param.video_slowmotion_eb &&
         prev_cxt->prev_param.video_eb) {
         chn_param.cap_inf_cfg.cfg.slowmotion = 1;
@@ -8098,6 +8094,11 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_CALLBACK;
     else
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE;
+
+    if (FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl)
+        chn_param.cap_inf_cfg.hdr_cap = 1;
+    else
+        chn_param.cap_inf_cfg.hdr_cap = 0;
 
     /*config capture ability*/
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,

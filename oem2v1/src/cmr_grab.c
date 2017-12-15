@@ -662,7 +662,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.reserved[0] = config->cfg.src_img_change;
     parm.reserved[1] = config->cfg.src_img_size.width;
     parm.reserved[2] = config->cfg.src_img_size.height;
-    parm.reserved[3] = config->slowmotion_enabled;
+    parm.reserved[3] = config->hdr_cap;
     parm.scene_mode = config->cfg.sence_mode;
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_OUTPUT_SIZE, &parm);
