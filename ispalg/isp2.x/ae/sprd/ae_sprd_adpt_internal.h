@@ -68,14 +68,14 @@ struct flash_cali_data {
 	cmr_s8 used;
 };
 
-struct ae_monitor_unit {
+/*struct ae_monitor_unit {
 	cmr_u32 mode;
 	struct ae_size win_num;
 	struct ae_size win_size;
 	struct ae_trim trim;
 	struct ae_monitor_cfg cfg;
 	cmr_u32 is_stop_monitor;
-};
+};*/
 
 struct flash_swith_param {
 	cmr_s16 led_thr_up;
@@ -128,7 +128,7 @@ struct ae_ctrl_cxt {
 	/*
 	 * ae stat monitor config
 	 */
-	struct ae_monitor_unit monitor_unit;
+	//struct ae_monitor_unit monitor_unit;
 	/*
 	 * ae slow motion info
 	 */
@@ -144,6 +144,7 @@ struct ae_ctrl_cxt {
 	/*
 	 * for ae tuning parameters
 	 */
+	struct ae_stats_monitor_cfg monitor_cfg;
 	struct ae_tuning_param tuning_param[AE_MAX_PARAM_NUM];
 	cmr_s8 tuning_param_enable[AE_MAX_PARAM_NUM];
 	struct ae_tuning_param *cur_param;

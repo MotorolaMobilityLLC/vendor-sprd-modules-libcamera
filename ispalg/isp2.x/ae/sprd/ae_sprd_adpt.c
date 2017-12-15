@@ -699,19 +699,19 @@ static cmr_u32 ae_calc_target_lum(cmr_u32 cur_target_lum, enum ae_level level, s
 static cmr_s32 ae_update_monitor_unit(struct ae_ctrl_cxt *cxt, struct ae_trim *trim)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	struct ae_monitor_unit *unit = NULL;
+	struct ae_stats_monitor_cfg *unit = NULL;
 
 	if (NULL == cxt || NULL == trim) {
 		ISP_LOGE("fail to update monitor unit, cxt=%p, work_info=%p", cxt, trim);
 		return AE_ERROR;
 	}
-	unit = &cxt->monitor_unit;
+	unit = &cxt->monitor_cfg;
 
 	if (unit) {
-		unit->win_size.w = ((trim->w / unit->win_num.w) / 2) * 2;
-		unit->win_size.h = ((trim->h / unit->win_num.h) / 2) * 2;
-		unit->trim.w = unit->win_size.w * unit->win_num.w;
-		unit->trim.h = unit->win_size.h * unit->win_num.h;
+		unit->blk_size.w = ((trim->w / unit->blk_num.w) / 2) * 2;
+		unit->blk_size.h = ((trim->h / unit->blk_num.h) / 2) * 2;
+		unit->trim.w = unit->blk_size.w * unit->blk_num.w;
+		unit->trim.h = unit->blk_size.h * unit->blk_num.h;
 		unit->trim.x = trim->x + (trim->w - unit->trim.w) / 2;
 		unit->trim.x = (unit->trim.x / 2) * 2;
 		unit->trim.y = trim->y + (trim->h - unit->trim.h) / 2;
@@ -995,8 +995,8 @@ static cmr_s32 ae_cfg_monitor_win(struct ae_ctrl_cxt *cxt)
 	if (cxt->isp_ops.set_monitor_win) {
 		struct ae_monitor_info info;
 
-		info.win_size = cxt->monitor_unit.win_size;
-		info.trim = cxt->monitor_unit.trim;
+		info.win_size = cxt->monitor_cfg.blk_size;
+		info.trim = cxt->monitor_cfg.trim;
 
 		/*TBD remove it */
 		cxt->cur_status.monitor_shift = 0;
@@ -1013,7 +1013,7 @@ static cmr_s32 ae_cfg_monitor_bypass(struct ae_ctrl_cxt *cxt)
 	if (cxt->isp_ops.set_monitor_bypass) {
 		cmr_u32 is_bypass = 0;
 
-		is_bypass = cxt->monitor_unit.is_stop_monitor;
+		is_bypass = cxt->monitor_cfg.bypass;
 		rtn = cxt->isp_ops.set_monitor_bypass(cxt->isp_ops.isp_handler, is_bypass);
 	}
 
@@ -1025,7 +1025,7 @@ static cmr_s32 ae_cfg_set_aem_mode(struct ae_ctrl_cxt *cxt)
 	cmr_s32 ret = AE_SUCCESS;
 
 	if (cxt->isp_ops.set_statistics_mode) {
-		cxt->isp_ops.set_statistics_mode(cxt->isp_ops.isp_handler, cxt->monitor_unit.mode, cxt->monitor_unit.cfg.skip_num);
+		cxt->isp_ops.set_statistics_mode(cxt->isp_ops.isp_handler, cxt->monitor_cfg.mode, cxt->monitor_cfg.skip_num);
 	} else {
 		ISP_LOGE("fail to set aem mode");
 		ret = AE_ERROR;
@@ -1068,6 +1068,37 @@ static cmr_s32 ae_set_scaler_trim(struct ae_ctrl_cxt *cxt, struct ae_trim *trim)
 		rtn = AE_ERROR;
 	}
 EXIT:
+	return rtn;
+}
+
+static cmr_s32 ae_set_monitor(struct ae_ctrl_cxt *cxt, struct ae_trim *trim)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	struct ae_stats_monitor_cfg *monitor_cfg = NULL;
+
+	if (NULL == cxt || NULL == trim) {
+		ISP_LOGE("fail to update monitor unit, cxt=%p, work_info=%p", cxt, trim);
+		return AE_ERROR;
+	}
+	monitor_cfg = &cxt->monitor_cfg;
+
+	if (monitor_cfg) {
+		monitor_cfg->blk_size.w = ((trim->w / monitor_cfg->blk_num.w) / 2) * 2;
+		monitor_cfg->blk_size.h = ((trim->h / monitor_cfg->blk_num.h) / 2) * 2;
+		monitor_cfg->trim.w = monitor_cfg->blk_size.w * monitor_cfg->blk_num.w;
+		monitor_cfg->trim.h = monitor_cfg->blk_size.h * monitor_cfg->blk_num.h;
+		monitor_cfg->trim.x = trim->x + (trim->w - monitor_cfg->trim.w) / 2;
+		monitor_cfg->trim.x = (monitor_cfg->trim.x / 2) * 2;
+		monitor_cfg->trim.y = trim->y + (trim->h - monitor_cfg->trim.h) / 2;
+		monitor_cfg->trim.y = (monitor_cfg->trim.y / 2) * 2;
+	}
+
+	if (cxt->isp_ops.set_stats_monitor) {
+		cxt->isp_ops.set_stats_monitor(cxt->isp_ops.isp_handler, monitor_cfg);
+	} else {
+		ISP_LOGE("fail to set aem mode");
+		return AE_ERROR;
+		}
 	return rtn;
 }
 
@@ -1217,12 +1248,12 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	return rtn;
 }
 
-static cmr_s32 ae_cfg_monitor_skip(struct ae_ctrl_cxt *cxt, struct ae_monitor_cfg *cfg)
+static cmr_s32 ae_cfg_monitor_skip(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 
 	if (cxt->isp_ops.set_monitor) {
-		rtn = cxt->isp_ops.set_monitor(cxt->isp_ops.isp_handler, cfg);
+		rtn = cxt->isp_ops.set_monitor(cxt->isp_ops.isp_handler, cxt->monitor_cfg.skip_num);
 	}
 
 	return rtn;
@@ -1234,7 +1265,7 @@ static cmr_s32 ae_cfg_monitor(struct ae_ctrl_cxt *cxt)
 
 	ae_cfg_monitor_win(cxt);
 
-	ae_cfg_monitor_skip(cxt, &cxt->monitor_unit.cfg);
+	ae_cfg_monitor_skip(cxt);
 
 	ae_cfg_monitor_bypass(cxt);
 
@@ -1352,7 +1383,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
-		cxt->monitor_unit.win_num = init_param->monitor_win_num;
+		cxt->monitor_cfg.blk_num = init_param->monitor_win_num;
 		cxt->snr_info = init_param->resolution_info;
 		cxt->cur_status.frame_size = init_param->resolution_info.frame_size;
 		cxt->cur_status.line_time = init_param->resolution_info.line_time;
@@ -1374,11 +1405,12 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 
 	cxt->start_id = AE_START_ID;
 
-	cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
-	cxt->monitor_unit.cfg.skip_num = 0;
-	cxt->monitor_unit.is_stop_monitor = 0;
+	cxt->monitor_cfg.mode = AE_STATISTICS_MODE_CONTINUE;
+	cxt->monitor_cfg.skip_num = 0;
+	cxt->monitor_cfg.bypass = 0;
 	/* set cxt->monitor_unit.trim & cxt->monitor_unit.win_size */
 	ae_update_monitor_unit(cxt, &trim);
+
 
 	cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
@@ -1417,8 +1449,8 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	cxt->cur_status.log_level = g_isp_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
-	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
-	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
+	cxt->cur_status.win_size = cxt->monitor_cfg.blk_size;
+	cxt->cur_status.win_num = cxt->monitor_cfg.blk_num;
 	cxt->cur_status.awb_gain.r = 1024;
 	cxt->cur_status.awb_gain.g = 1024;
 	cxt->cur_status.awb_gain.b = 1024;
@@ -2108,9 +2140,9 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.bGain = current_status->awb_cur_gain.b;
 	in.isFlash = 0;/*need to check the meaning*/
 	in.flickerMode = current_status->settings.flicker;
-	in.staW = cxt->monitor_unit.win_num.w;
-	in.staH = cxt->monitor_unit.win_num.h;
-	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
+	in.staW = cxt->monitor_cfg.blk_num.w;
+	in.staH = cxt->monitor_cfg.blk_num.h;
+	blk_num = cxt->monitor_cfg.blk_num.w * cxt->monitor_cfg.blk_num.h;
 	in.rSta = (cmr_u16*)&cxt->aem_stat_rgb[0];
 	in.gSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num;
 	in.bSta = (cmr_u16*)&cxt->aem_stat_rgb[0] + 2 * blk_num;
@@ -2185,12 +2217,12 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	if (cxt->aem_effect_delay == cxt->cur_param->flash_control_param.aem_effect_delay) {
 		cxt->aem_effect_delay = 0;
 
-	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
+	blk_num = cxt->monitor_cfg.blk_num.w * cxt->monitor_cfg.blk_num.h;
 	in = &cxt->flash_esti_input;
 	in->aeExposure = current_status->effect_expline * current_status->line_time / SENSOR_LINETIME_BASE;
 	in->aeGain = current_status->effect_gain;
-	in->staW = cxt->monitor_unit.win_num.w;
-	in->staH = cxt->monitor_unit.win_num.h;
+	in->staW = cxt->monitor_cfg.blk_num.w;
+	in->staH = cxt->monitor_cfg.blk_num.h;
 	in->isFlash = 1;/*need to check the meaning*/
 	memcpy((cmr_handle*)&in->rSta[0], (cmr_u16*)&cxt->aem_stat_rgb[0], sizeof(in->rSta));
 	memcpy((cmr_handle*)&in->gSta[0], ((cmr_u16*)&cxt->aem_stat_rgb[0] + blk_num), sizeof(in->gSta));
@@ -2235,9 +2267,9 @@ static cmr_s32 flash_high_flash_reestimation(struct ae_ctrl_cxt *cxt)
 	struct Flash_mfCalcInput *input = &cxt->flash_main_esti_input;
 	struct Flash_mfCalcOutput *output = &cxt->flash_main_esti_result;
 	memset((void*)input, 0, sizeof(struct Flash_mfCalcInput));
-	blk_num = cxt->monitor_unit.win_num.w * cxt->monitor_unit.win_num.h;
-	input->staW = cxt->monitor_unit.win_num.w;
-	input->staH= cxt->monitor_unit.win_num.h;
+	blk_num = cxt->monitor_cfg.blk_num.w * cxt->monitor_cfg.blk_num.h;
+	input->staW = cxt->monitor_cfg.blk_num.w;
+	input->staH= cxt->monitor_cfg.blk_num.h;
 	input->rGain = cxt->cur_status.awb_gain.r;
 	input->gGain = cxt->cur_status.awb_gain.g;
 	input->bGain = cxt->cur_status.awb_gain.b;
@@ -2362,8 +2394,8 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 			(FLASH_PRE == current_status->settings.flash)) {
 			rtn = ae_stats_data_preprocess((cmr_u32*)&cxt->sync_aem[0],
 									   (cmr_u16*)&cxt->aem_stat_rgb[0],
-									    cxt->monitor_unit.win_size,
-									    cxt->monitor_unit.win_num,
+									    cxt->monitor_cfg.blk_size,
+									    cxt->monitor_cfg.blk_num,
 									    current_status->monitor_shift);
 		}
 
@@ -2390,8 +2422,8 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 			if (FLASH_MAIN == current_status->settings.flash) {
 				 rtn = ae_stats_data_preprocess((cmr_u32*)&cxt->sync_aem[0],
 				                                                                           (cmr_u16*)&cxt->aem_stat_rgb[0],
-				                                                                            cxt->monitor_unit.win_size,
-				                                                                            cxt->monitor_unit.win_num,
+				                                                                            cxt->monitor_cfg.blk_size,
+				                                                                            cxt->monitor_cfg.blk_num,
 				                                                                            current_status->monitor_shift);
 				flash_high_flash_reestimation(cxt);
 				ISP_LOGV("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
@@ -2708,9 +2740,9 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt,
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 
 	result->is_skip_cur_frame = 0;
-	result->monitor_info.trim = cxt->monitor_unit.trim;
-	result->monitor_info.win_num = cxt->monitor_unit.win_num;
-	result->monitor_info.win_size = cxt->monitor_unit.win_size;
+	result->monitor_info.trim = cxt->monitor_cfg.trim;
+	result->monitor_info.win_num = cxt->monitor_cfg.blk_num;
+	result->monitor_info.win_size = cxt->monitor_cfg.blk_size;
 	result->ae_ev.ev_index = cxt->cur_status.settings.ev_index;
 	result->flash_param.captureFlashEnvRatio = cxt->flash_esti_result.captureFlashRatio;
 	result->flash_param.captureFlash1ofALLRatio = cxt->flash_esti_result.captureFlash1Ratio;
@@ -2743,9 +2775,9 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt,
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 
 	result->is_skip_cur_frame = 0;
-	result->monitor_info.trim = cxt->monitor_unit.trim;
-	result->monitor_info.win_num = cxt->monitor_unit.win_num;
-	result->monitor_info.win_size = cxt->monitor_unit.win_size;
+	result->monitor_info.trim = cxt->monitor_cfg.trim;
+	result->monitor_info.win_num = cxt->monitor_cfg.blk_num;
+	result->monitor_info.win_size = cxt->monitor_cfg.blk_size;
 	result->ae_ev.ev_index = cxt->cur_status.settings.ev_index;
 	result->flash_param.captureFlashEnvRatio = cxt->flash_esti_result.captureFlashRatio;
 	result->flash_param.captureFlash1ofALLRatio = cxt->flash_esti_result.captureFlash1Ratio;
@@ -3426,20 +3458,20 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 
 
 	cxt->start_id = AE_START_ID;
-	cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
-	cxt->monitor_unit.cfg.skip_num = 0;
-	cxt->monitor_unit.is_stop_monitor = 0;
+	cxt->monitor_cfg.mode = AE_STATISTICS_MODE_CONTINUE;
+	cxt->monitor_cfg.skip_num = 0;
+	cxt->monitor_cfg.bypass= 0;
 	cxt->high_fps_info.is_high_fps = work_info->sensor_fps.is_high_fps;
 
 	if (work_info->sensor_fps.is_high_fps) {
 		ae_skip_num = work_info->sensor_fps.high_fps_skip_num - 1;
 		if (ae_skip_num > 0) {
-			cxt->monitor_unit.cfg.skip_num = ae_skip_num;
+			cxt->monitor_cfg.skip_num = ae_skip_num;
 			cxt->high_fps_info.min_fps = work_info->sensor_fps.max_fps;
 			cxt->high_fps_info.max_fps = work_info->sensor_fps.max_fps;
 		} else {
-			cxt->monitor_unit.cfg.skip_num = 0;
-			ISP_LOGV("cxt->monitor_unit.cfg.skip_num %d", cxt->monitor_unit.cfg.skip_num);
+			cxt->monitor_cfg.skip_num = 0;
+			ISP_LOGV("cxt->monitor_cfg.skip_num %d", cxt->monitor_cfg.skip_num);
 		}
 	}
 
@@ -3450,12 +3482,14 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	ae_update_monitor_unit(cxt, &trim);
 	ae_cfg_set_aem_mode(cxt);
 	ae_cfg_monitor(cxt);
+	/*for sharkle monitor*/
+	ae_set_monitor(cxt, &trim);
 
-	cxt->calc_results.monitor_info.trim = cxt->monitor_unit.trim;
-	cxt->calc_results.monitor_info.win_num  = cxt->monitor_unit.win_num;
-	cxt->calc_results.monitor_info.win_size = cxt->monitor_unit.win_size;
-	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
-	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
+	cxt->calc_results.monitor_info.trim = cxt->monitor_cfg.trim;
+	cxt->calc_results.monitor_info.win_num  = cxt->monitor_cfg.blk_num;
+	cxt->calc_results.monitor_info.win_size = cxt->monitor_cfg.blk_size;
+	cxt->cur_status.win_size = cxt->monitor_cfg.blk_size;
+	cxt->cur_status.win_num = cxt->monitor_cfg.blk_num;
 	mode = AE_WORK_MODE_COMMON;//AE block only be in common
 	cxt->cur_status.settings.iso_special_mode = 1;
 
@@ -3983,9 +4017,9 @@ static cmr_s32 ae_get_monitor_info(struct ae_ctrl_cxt *cxt, void *result)
 {
 	if (result) {
 		struct ae_monitor_info *info = result;
-		info->win_size = cxt->monitor_unit.win_size;
-		info->win_num = cxt->monitor_unit.win_num;
-		info->trim = cxt->monitor_unit.trim;
+		info->win_size = cxt->monitor_cfg.blk_size;
+		info->win_num = cxt->monitor_cfg.blk_num;
+		info->trim = cxt->monitor_cfg.trim;
 	}
 
 	return AE_SUCCESS;
@@ -4239,7 +4273,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.effect_gain = cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
 #if CONFIG_ISP_2_3
 	/*it will be enable lately*/
-	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
+	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_cfg.blk_num, cxt->exp_data.actual_data.isp_gain);
 #endif
 	cxt->cur_result.face_lum = current_result->face_lum;	//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
@@ -4419,7 +4453,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
 #if CONFIG_ISP_2_3
 	/*it will be enable lately*/
-	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_unit.win_num, cxt->exp_data.actual_data.isp_gain);
+	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_cfg.blk_num, cxt->exp_data.actual_data.isp_gain);
 #endif
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
@@ -5134,8 +5168,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	/* HJW_S: dual flash algorithm init */
 	flash_in.debug_level = 1;/*it will be removed in the future, and get it from dual flash tuning parameters*/
 	flash_in.tune_info = &cxt->dflash_param[0];
-	flash_in.statH  = cxt->monitor_unit.win_num.h;
-	flash_in.statW = cxt->monitor_unit.win_num.w;
+	flash_in.statH  = cxt->monitor_cfg.blk_num.h;
+	flash_in.statW = cxt->monitor_cfg.blk_num.w;
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
 	flash_out.version = 1;//remove later
 	cxt->flash_ver  = flash_out.version;

@@ -389,12 +389,22 @@ struct ae_awb_gain {
 	cmr_u32 b;
 };
 
+struct ae_stats_monitor_cfg {
+	cmr_u32 bypass;
+	cmr_u32 skip_num;
+	cmr_u32 shift;
+	cmr_u32 mode;
+	struct ae_size blk_size;
+	struct ae_size blk_num;
+	struct ae_trim trim;
+};
+
 struct ae_isp_ctrl_ops {
 	cmr_handle isp_handler;
 
 	 cmr_s32(*set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
 	 cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
-	 cmr_s32(*set_monitor) (cmr_handle handler, struct ae_monitor_cfg * in_param);
+	 cmr_s32(*set_monitor) (cmr_handle handler, cmr_u32 skip_number);
 	 cmr_s32(*set_monitor_win) (cmr_handle handler, struct ae_monitor_info * in_param);
 	 cmr_s32(*callback) (cmr_handle handler, cmr_int cb_type, cmr_handle param);
 	 cmr_s32(*set_monitor_bypass) (cmr_handle handler, cmr_u32 is_bypass);
@@ -413,6 +423,7 @@ struct ae_isp_ctrl_ops {
 	 cmr_s32(*set_wbc_gain)(cmr_handle handler, struct ae_alg_rgb_gain *awb_gain);
 	 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
 	 cmr_int (*write_multi_ae)(cmr_handle handler, void *ae_info);
+	  cmr_s32(*set_stats_monitor) (cmr_handle handler, struct ae_stats_monitor_cfg * in_param);
 };
 
 struct ae_stat_img_info {

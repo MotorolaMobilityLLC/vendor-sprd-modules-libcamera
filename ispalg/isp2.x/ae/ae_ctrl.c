@@ -88,12 +88,12 @@ static cmr_int ae_write_multi_ae(cmr_handle handler, cmr_handle dualsnyc_ptr)
 	return 0;
 }
 
-static cmr_s32 ae_set_monitor(cmr_handle handler, struct ae_monitor_cfg *in_param)
+static cmr_s32 ae_set_monitor(cmr_handle handler, cmr_u32 skip_number)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 
 	if (cxt_ptr->ae_set_cb) {
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_MONITOR, &in_param->skip_num, NULL);
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_MONITOR, &skip_number, NULL);
 	}
 
 	return 0;
@@ -116,6 +116,17 @@ static cmr_s32 ae_set_monitor_bypass(cmr_handle handler, cmr_u32 is_bypass)
 
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_MONITOR_BYPASS, &is_bypass, NULL);
+	}
+
+	return 0;
+}
+
+static cmr_s32 ae_set_stats_monitor(cmr_handle handler, struct ae_stats_monitor_cfg * in_param)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_STATS_MONITOR,  in_param, NULL);
 	}
 
 	return 0;
@@ -503,6 +514,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_ha
 	input_ptr->isp_ops.set_shutter_gain_delay_info = ae_set_shutter_gain_delay_info;
 	input_ptr->isp_ops.set_wbc_gain = ae_set_wbc_gain;
 	input_ptr->isp_ops.write_multi_ae = ae_write_multi_ae;
+	input_ptr->isp_ops.set_stats_monitor = ae_set_stats_monitor;
 
 	cxt_ptr = (struct aectrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
