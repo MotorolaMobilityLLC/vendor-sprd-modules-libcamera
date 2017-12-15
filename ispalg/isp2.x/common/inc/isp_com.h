@@ -46,7 +46,11 @@
 extern "C" {
 #endif
 
+#ifdef CONFIG_USE_CAMERASERVER_PROC
 #define CAMERA_DUMP_PATH  "/data/misc/cameraserver/"
+#else
+#define CAMERA_DUMP_PATH  "/data/misc/media/"
+#endif
 #define ISP_SLICE_WIN_NUM 0x0b
 #define ISP_SLICE_WIN_NUM_V1 0x18
 #define ISP_CMC_NUM 0x09

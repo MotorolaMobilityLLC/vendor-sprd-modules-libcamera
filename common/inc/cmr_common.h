@@ -32,7 +32,11 @@ extern "C" {
 #include "cmr_log.h"
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
+#ifdef CONFIG_USE_CAMERASERVER_PROC
 #define CAMERA_DUMP_PATH "/data/misc/cameraserver/"
+#else
+#define CAMERA_DUMP_PATH "/data/misc/media/"
+#endif
 
 #define UNUSED(x) (void) x
 
