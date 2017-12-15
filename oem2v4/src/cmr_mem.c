@@ -928,12 +928,13 @@ int arrange_misc_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     uint32_t size_pixel;
     uint32_t mem_res = 0, mem_end = 0;
-    uint32_t i = 0;
+    uint32_t i = 0, tmp_mem_end = 0;
     struct cmr_cap_mem *cap_mem = capture_mem; /*&capture_mem[0];*/
     struct img_frm img_frame[BUF_TYPE_NUM];
 
     mem_res = *io_mem_res;
     mem_end = *io_mem_end;
+    tmp_mem_end = mem_end;
 
     for (i = THUM_YUV; i < BUF_TYPE_NUM; i++) {
         /* calculate the address of target_jpeg, start */
@@ -943,6 +944,11 @@ int arrange_misc_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
                  size_pixel);
         if (mem_res >= size_pixel) {
             img_frame[i].buf_size = size_pixel;
+
+        // to make buf start address page size aligned
+        if (mem_end & (PAGE_SIZE - 1))
+            mem_end = ((mem_end + PAGE_SIZE) >> 12) << 12;
+
             img_frame[i].addr_phy.addr_y =
                 cap_2_frm->mem_frm.addr_phy.addr_y + mem_end;
             img_frame[i].addr_vir.addr_y =
@@ -952,7 +958,7 @@ int arrange_misc_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
             img_frame[i].addr_vir.addr_u =
                 img_frame[i].addr_vir.addr_y + size_pixel * 2 / 3;
             img_frame[i].fd = cap_2_frm->mem_frm.fd;
-            mem_res -= size_pixel;
+            mem_res -= (size_pixel + (mem_end - tmp_mem_end));
             mem_end += size_pixel;
         } else {
             break;
