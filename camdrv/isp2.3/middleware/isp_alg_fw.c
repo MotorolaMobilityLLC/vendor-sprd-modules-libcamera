@@ -2883,16 +2883,16 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	if(1 == is_af_support) {
 		//get af tuning parameters
 		memset((void *)&output, 0, sizeof(output));
-		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &output);
-		if(NULL != output.param_data){
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &output);
+		if(ISP_SUCCESS == ret && NULL != output.param_data){
 			af_input.aftuning_data = output.param_data[0].data_ptr;
 			af_input.aftuning_data_len = output.param_data[0].data_size;
 		}
 
 		//get af trigger tuning parameters
 		memset((void *)&output, 0, sizeof(output));
-		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &output);
-		if(NULL != output.param_data){
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &output);
+		if(ISP_SUCCESS == ret && NULL != output.param_data){
 			af_input.afttuning_data = output.param_data[0].data_ptr;
 			af_input.afttuning_data_len = output.param_data[0].data_size;
 		}
@@ -2903,8 +2903,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
 		input.param_num = 1;
 		input.param_data_ptr = &param_data;
-		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-		if(NULL != output.param_data){
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+		if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
 			af_input.pdaftuning_data = output.param_data[0].data_ptr;
 			af_input.pdaftuning_data_len = output.param_data[0].data_size;
 		}
