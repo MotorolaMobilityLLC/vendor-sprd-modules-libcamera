@@ -115,6 +115,8 @@ struct ae_ctrl_cxt {
 	cmr_u32 zsl_flag;
 	cmr_u32 skip_update_param_flag;
 	cmr_u32 skip_update_param_cnt;
+	cmr_u32 backup_rgb_gain;
+	double ob_rgb_gain;
 	/*
 	 * camera id: front camera or rear camera
 	 */

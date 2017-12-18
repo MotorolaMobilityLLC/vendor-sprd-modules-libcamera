@@ -533,12 +533,15 @@ cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_ha
 		goto exit;
 	}
 
+	ae_get_rgb_gain(cxt_ptr, &cxt_ptr->bakup_rgb_gain);
+	ISP_LOGV("bakup_rgb_gain %d", cxt_ptr->bakup_rgb_gain);
+
+	input_ptr->bakup_rgb_gain = cxt_ptr->bakup_rgb_gain;
+
 	rtn = aectrl_init_adpt(cxt_ptr, input_ptr, result);
 	if (rtn) {
 		goto error_adpt_init;
 	}
-
-	ae_get_rgb_gain(cxt_ptr, &cxt_ptr->bakup_rgb_gain);
 
 	*handle_ae = (cmr_handle) cxt_ptr;
 

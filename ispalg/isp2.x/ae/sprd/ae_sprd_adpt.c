@@ -2088,7 +2088,6 @@ static cmr_s32 ae_set_soft_gain(struct  ae_ctrl_cxt *cxt,
 	cmr_u32 *dst_r_ptr = NULL;
 	cmr_u32 *dst_g_ptr = NULL;
 	cmr_u32 *dst_b_ptr = NULL;
-	UNUSED(cxt);
 
 	num = aem_blk_num.w * aem_blk_num.h;
 	src_r_ptr = (cmr_u32*)src_aem_stat;
@@ -2098,9 +2097,9 @@ static cmr_s32 ae_set_soft_gain(struct  ae_ctrl_cxt *cxt,
 	dst_g_ptr = (cmr_u32*)dst_aem_stat + num;
 	dst_b_ptr = (cmr_u32*)dst_aem_stat + 2 * num;
 	for (i = 0; i < num; ++i) {
-		*dst_r_ptr = (cmr_u32)(1.0 * (*src_r_ptr) * isp_dgain / 4096 + 0.5);
-		*dst_g_ptr = (cmr_u32)(1.0 * (*src_g_ptr) * isp_dgain / 4096 + 0.5);
-		*dst_b_ptr = (cmr_u32)(1.0 * (*src_b_ptr) * isp_dgain / 4096 + 0.5);
+		*dst_r_ptr = (cmr_u32)((1.0 * (*src_r_ptr) * isp_dgain / 4096) * cxt->ob_rgb_gain + 0.5);
+		*dst_g_ptr = (cmr_u32)((1.0 * (*src_g_ptr) * isp_dgain / 4096) * cxt->ob_rgb_gain + 0.5);
+		*dst_b_ptr = (cmr_u32)((1.0 * (*src_b_ptr) * isp_dgain / 4096) * cxt->ob_rgb_gain + 0.5);
 		src_r_ptr++;
 		src_g_ptr++;
 		src_b_ptr++;
@@ -3127,40 +3126,47 @@ EXIT:
 	return;
 }
 
-static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_line, cmr_u32 in_min_frame_line, cmr_u32 in_exposure, cmr_u32 base_gain, cmr_u32 *exp_l)
+static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_line, cmr_u32 in_min_frame_line, cmr_u32 in_exposure, cmr_u32 in_gain, cmr_u32 *out_gain, cmr_u32 *out_exp_l)
 {
 	cmr_u32 exp_line = 0;
 	cmr_u32 exp_time = 0;
+	cmr_u32 gain = in_gain;
 	cmr_u32 exposure = in_exposure;
 	cmr_u32 max_frame_line = in_max_frame_line;
 	cmr_u32 min_frame_line = in_min_frame_line;
 
 	if (cxt->cur_flicker == 0){
+		if (exposure > (max_frame_line * cxt->cur_status.line_time))
+			exposure = max_frame_line * cxt->cur_status.line_time;
+		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
+			exposure = min_frame_line * cxt->cur_status.line_time;
+		
 		if (exposure >= 10000000){
 			exp_time = (cmr_u32)(1.0 * exposure / 10000000 + 0.5) * 10000000;
 			exp_line = (cmr_u32)(1.0 * exp_time / cxt->cur_status.line_time + 0.5);
-				if(exp_line < min_frame_line) exp_line = min_frame_line;
-					else if(exp_line > max_frame_line){
-						exp_line = max_frame_line;
-						base_gain =  (cmr_u32)(exp_time * base_gain / (1.0 * max_frame_line * cxt->cur_status.line_time) + 0.5);
-						}
+			gain = (cmr_u32)(1.0 * exposure * gain / exp_time + 0.5);
 			}
-		else exp_line = (cmr_u32)(1.0 * exposure / cxt->cur_status.line_time + 0.5);
+		else 
+			exp_line = (cmr_u32)(1.0 * exposure / cxt->cur_status.line_time + 0.5); 
 		}
+	
 	if (cxt->cur_flicker == 1){
+		if (exposure > (max_frame_line * cxt->cur_status.line_time))
+			exposure = max_frame_line * cxt->cur_status.line_time;
+		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
+			exposure = min_frame_line * cxt->cur_status.line_time;
+
 		if (exposure >= 8333333){
 			exp_time = (cmr_u32)(1.0 * exposure / 8333333 + 0.5) * 8333333;
 			exp_line = (cmr_u32)(1.0 * exp_time / cxt->cur_status.line_time + 0.5);
-				if(exp_line < min_frame_line) exp_line = min_frame_line;
-					else if(exp_line > max_frame_line){
-						exp_line = max_frame_line;
-						base_gain =  (cmr_u32)(exp_time * base_gain / (1.0 * max_frame_line * cxt->cur_status.line_time) + 0.5);
-						}
+			gain = (cmr_u32)(1.0 * exposure * gain / exp_time + 0.5);
 			}
-		else exp_line = (cmr_u32)(1.0 * exposure / cxt->cur_status.line_time + 0.5);
+		else 
+			exp_line = (cmr_u32)(1.0 * exposure / cxt->cur_status.line_time + 0.5);
 		}
 
-	*exp_l = exp_line;
+	*out_exp_l = exp_line;
+	*out_gain = gain;
 
 	ISP_LOGV("exposure %d, max_frame_line %d, min_frame_line %d, exp_time %d, exp_line %d\n", in_exposure, in_max_frame_line, in_min_frame_line, exp_time, exp_line);
 }
@@ -3178,6 +3184,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	cmr_u32 min_frame_line = 0;
 	cmr_u32 min_index = cxt->cur_status.ae_table->min_index;
 	cmr_u32 exp_line = 0;
+	cmr_u32 gain = 0;
 	cmr_s32 counts = 0;
 	cmr_u32 skip_num = 0;
 	cmr_s8 hdr_callback_flag = 0;
@@ -3230,11 +3237,11 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 					base_gain = cxt->cur_status.ae_table->again[base_idx];
 					down_exposure = 1.0 / pow(2 , down_EV_offset / 100.0) * base_exposure_line * cxt->cur_status.line_time;
 					ISP_LOGV("down_ev_offset %f, pow2 %f\n", down_EV_offset / 100.0, pow(2 , down_EV_offset / 100.0));
-					ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_gain, &exp_line);
+					ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_gain, &gain, &exp_line);
 					ISP_LOGV("base_idx: %d, base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_idx, base_exposure_line, base_gain, down_exposure, exp_line);
 					cxt->cur_status.settings.manual_mode = 0;
 					cxt->cur_status.settings.exp_line = exp_line;
-					cxt->cur_status.settings.gain = base_gain;
+					cxt->cur_status.settings.gain = gain;
 					cxt->hdr_flag--;
 					ISP_LOGI("_isp_hdr_3: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 				} else if (2 == cxt->hdr_flag) {
@@ -3243,11 +3250,11 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 					base_gain = cxt->cur_status.ae_table->again[base_idx];
 					up_exposure = pow(2 , up_EV_offset / 100.0) * base_exposure_line * cxt->cur_status.line_time;
 					ISP_LOGV("up_ev_offset %f, pow2 %f\n", up_EV_offset / 100.0, pow(2 , up_EV_offset / 100.0));
-					ae_hdr_calculation(cxt, max_frame_line, min_frame_line, up_exposure, base_gain, &exp_line);
+					ae_hdr_calculation(cxt, max_frame_line, min_frame_line, up_exposure, base_gain, &gain, &exp_line);
 					ISP_LOGV("base_idx: %d, base_exposure: %d, base_gain: %d, up_exposure: %d, exp_line: %d", base_idx, base_exposure_line, base_gain, up_exposure, exp_line);
 					cxt->cur_status.settings.manual_mode = 0;
 					cxt->cur_status.settings.exp_line = exp_line;
-					cxt->cur_status.settings.gain = base_gain;
+					cxt->cur_status.settings.gain = gain;
 					cxt->hdr_flag--;
 					ISP_LOGI("_isp_hdr_2: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 				} else if (1 == cxt->hdr_flag) {
@@ -5072,6 +5079,9 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	}
 	init_param = (struct ae_init_in *)param;
 	ae_init_out = (struct ae_init_out *)in_param;
+	cxt->backup_rgb_gain = init_param->bakup_rgb_gain;
+	cxt->ob_rgb_gain = 1.0 * cxt->backup_rgb_gain / 4096;
+	ISP_LOGV("bakup_rgb_gain %d, ob_rgb_gain %f", cxt->backup_rgb_gain, cxt->ob_rgb_gain);
 
 	cxt->ptr_isp_br_ioctrl = init_param->ptr_isp_br_ioctrl;
 

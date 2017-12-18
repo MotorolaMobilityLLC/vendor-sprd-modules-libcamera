@@ -60,6 +60,7 @@ struct ae_init_in {
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 	struct sensor_otp_section_info *otp_info_ptr;
+	cmr_u32 bakup_rgb_gain;
 };
 
 struct ae_init_out {
