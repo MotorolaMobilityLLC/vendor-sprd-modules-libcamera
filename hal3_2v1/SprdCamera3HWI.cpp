@@ -1469,6 +1469,17 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     int receive_req_max = SprdCamera3RegularChannel::kMaxBuffers;
     int32_t width = 0, height = 0;
 
+#define GET_MIN_FRAME_DURATION(minDuration)                                    \
+    SCALER_Tag scalerInfo;                                                     \
+    mSetting->getSCALERTag(&scalerInfo);                                       \
+    for (int j = 0; j < CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4; j = (j + 4)) {   \
+        if (scalerInfo.min_frame_durations[j + 1] == stream->width &&          \
+            scalerInfo.min_frame_durations[j + 2] == stream->height) {         \
+            minDuration = scalerInfo.min_frame_durations[j + 3];               \
+            break;                                                             \
+        }                                                                      \
+    }
+
     for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
          i != mPendingRequestsList.end();) {
         camera3_capture_result_t result;
@@ -1514,6 +1525,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                         sensor_timestamp - prev_timestamp;
                 else
                     resultInfo.frame_duration = resultInfo.exposure_time;
+                int64_t minFrameDuration = resultInfo.frame_duration;
+                GET_MIN_FRAME_DURATION(minFrameDuration)
+                // Frame duration must be less than minimum frame duration.
+                if (resultInfo.frame_duration < minFrameDuration)
+                    resultInfo.frame_duration = minFrameDuration;
                 prev_timestamp = sensor_timestamp;
                 mSetting->setResultSENSORTag(resultInfo);
                 mSetting->getREQUESTTag(&requestInfo);
@@ -1568,6 +1584,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                         sensor_timestamp - prev_timestamp;
                 else
                     resultInfo.frame_duration = resultInfo.exposure_time;
+                int64_t minFrameDuration = resultInfo.frame_duration;
+                GET_MIN_FRAME_DURATION(minFrameDuration)
+                // Frame duration must be less than minimum frame duration.
+                if (resultInfo.frame_duration < minFrameDuration)
+                    resultInfo.frame_duration = minFrameDuration;
                 prev_timestamp = sensor_timestamp;
                 mSetting->setResultSENSORTag(resultInfo);
                 mSetting->setSENSORTag(sensorInfo);
