@@ -26,7 +26,7 @@
 
 #define LNC_MAP_NUM 9
 #define SCENE_INFO_NUM 10
-#define ISP_PARAM_VERSION_V21 0x0005
+#define ISP_PARAM_VERSION_V24 0x0006
 
 extern cmr_s8 nr_mode_name[MAX_MODE_NUM][8];
 
@@ -1237,7 +1237,7 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 		ISP_LOGI("the param file is %s,version = %d", filename, version);
 	}
 
-	if (ISP_PARAM_VERSION_V21 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
+	if (ISP_PARAM_VERSION_V24 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
 		rtn = update_param_v21(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
 			ISP_LOGE("fail to update param!");
