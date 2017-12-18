@@ -363,7 +363,7 @@ static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
-	//statis_buf.addr_offset = statis_info->addr_offset;
+	statis_buf.addr_offset = statis_info->addr_offset;
 	statis_buf.kaddr[0] = statis_info->kaddr[0];
 	statis_buf.kaddr[1] = statis_info->kaddr[1];
 	statis_buf.buf_property = buf_property;
