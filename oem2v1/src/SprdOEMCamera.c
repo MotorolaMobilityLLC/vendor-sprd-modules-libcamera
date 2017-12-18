@@ -1131,6 +1131,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = cmr_img_debug(param, NULL);
         break;
     }
+    case CAMERA_IOCTRL_GET_GRAB_CAPABILITY:
+        ret = camera_get_grab_capability(handle,
+                                         (struct cmr_path_capability *)param);
+        break;
     default:
         break;
     }

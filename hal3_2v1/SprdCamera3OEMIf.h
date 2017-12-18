@@ -151,7 +151,7 @@ typedef struct {
 
 #define USE_ONE_RESERVED_BUF 1
 
-//9820e_4.4.4_NULL
+// 9820e_4.4.4_NULL
 #ifdef ANDROID_VERSION_KK_BRINGUP
 #define SPRD_NULL (0)
 #else
@@ -280,7 +280,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     // sw 3dnr solution used
-    bool mUsingSW3DNR; // only for blacksesame 3dnr (sw solution)
+    bool mUsingSW3DNR;               // only for blacksesame 3dnr (sw solution)
     bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
   private:
     inline void print_time();
@@ -830,6 +830,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
+    // grab capability
+    struct cmr_path_capability grab_capability;
 
     int64_t mLastCafDoneTime;
 };

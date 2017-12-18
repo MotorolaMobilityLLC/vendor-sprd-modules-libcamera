@@ -118,8 +118,10 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
                                  cmr_u32 channel_id);
 cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg);
-cmr_int cmr_grab_dcam_size(cmr_handle grab_handle, struct sprd_dcam_path_size *dcam_cfg);
-cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle, struct sprd_img_3dnr_param *threednr);
+cmr_int cmr_grab_dcam_size(cmr_handle grab_handle,
+                           struct sprd_dcam_path_size *dcam_cfg);
+cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
+                             struct sprd_img_3dnr_param *threednr);
 
 cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num);
 cmr_int cmr_grab_cap_stop(cmr_handle grab_handle);
@@ -141,7 +143,8 @@ cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner,
                                 cmr_u32 val);
 cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt);
 cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line);
-cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle, struct sprd_img_vcm_param *info);
+cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle,
+                                  struct sprd_img_vcm_param *info);
 cmr_int cmr_grab_set_pulse_log(cmr_handle grab_handle, cmr_u32 enable);
 cmr_u32 cmr_grab_get_dcam_endian(struct img_data_end *in_endian,
                                  struct img_data_end *out_endian);
@@ -157,6 +160,9 @@ cmr_int cmr_grab_deinit_notice(cmr_handle grab_handle);
 cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
                                struct sprd_img_capture_param capture_param);
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
+// for hw 3dnr
+cmr_int cmr_grab_set_function_mode(cmr_handle grab_handle,
+                           struct sprd_img_function_mode *function_mode);
 
 #ifdef __cplusplus
 }

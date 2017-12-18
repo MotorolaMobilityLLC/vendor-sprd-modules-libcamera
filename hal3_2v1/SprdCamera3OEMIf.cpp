@@ -279,6 +279,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #ifdef CONFIG_FACE_BEAUTY
     memset(&face_beauty, 0, sizeof(face_beauty));
 #endif
+    memset(&grab_capability, 0, sizeof(grab_capability));
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI(":hal3: E cameraId: %d.", cameraId);
 
@@ -2541,6 +2542,10 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             mParameters.setZSLSupport("false");
         }
 
+        // get grab capability, which contains 3dnr capability
+        mHalOem->ops->camera_ioctrl(
+            mCameraHandle, CAMERA_IOCTRL_GET_GRAB_CAPABILITY, &grab_capability);
+
         /*get sensor and lens info from oem layer*/
         mHalOem->ops->camera_get_sensor_exif_info(mCameraHandle, &exif_info);
         mSetting->getLENSTag(&lensInfo);
@@ -3118,14 +3123,19 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
+            // 0 for 3dnr sw process , 1 for 3dnr hw process.
+            if (grab_capability.support_3dnr_mode == 1) {
+                mVideoProcessedWithPreview = false;
+                mVideoCopyFromPreviewFlag = false;
+            } else {
+                if (mUsingSW3DNR)
+                    mVideoProcessedWithPreview = true;
+                else
+                    mVideoCopyFromPreviewFlag = true;
 
-            if (mUsingSW3DNR)
-                mVideoProcessedWithPreview = true;
-            else
-                mVideoCopyFromPreviewFlag = true;
-
-            on_off = VIDEO_ON;
-            camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
+                on_off = VIDEO_ON;
+                camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
+            }
         }
 
         setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
@@ -6490,8 +6500,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
     } break;
 
-    case ANDROID_SPRD_ADJUST_FLASH_LEVEL:
-    {
+    case ANDROID_SPRD_ADJUST_FLASH_LEVEL: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         HAL_LOGD("sprddefInfo.sprd_adjust_flash_level=%d ",
@@ -8160,15 +8169,16 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
     } else if (CAMERA_SNAPSHOT_PATH == type) {
         ret = camera->Callback_CapturePathMalloc(size, sum, phy_addr, vir_addr,
                                                  fd);
-    } else if (
-        CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type ||
-        CAMERA_ISP_FIRMWARE == type || CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
-        CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
-        CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
-        CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
-        CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
-        CAMERA_SNAPSHOT_3DNR_DST == type || CAMERA_PREVIEW_3DNR == type ||
-        CAMERA_PREVIEW_SCALE_3DNR == type) {
+    } else if (CAMERA_PREVIEW_RESERVED == type ||
+               CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
+               CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
+               CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
+               CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
+               CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
+               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
+               CAMERA_SNAPSHOT_3DNR_DST == type ||
+               CAMERA_PREVIEW_3DNR == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
     }

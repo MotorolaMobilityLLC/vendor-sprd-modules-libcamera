@@ -682,6 +682,7 @@ struct cmr_path_capability {
     uint32_t capture_no_trim;
     uint32_t capture_pause;
     uint32_t zoom_post_proc;
+    uint32_t support_3dnr_mode;
 };
 
 struct dual_sensor_luma_info {
@@ -1433,6 +1434,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
     CAMERA_IOCTRL_GET_BLUR_COVERED,
     CAMERA_IOCTRL_DEBUG_IMG,
+    CAMERA_IOCTRL_GET_GRAB_CAPABILITY,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 
@@ -1504,7 +1506,7 @@ typedef struct oem_ops {
                                      cmr_uint *is_change);
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
-                                              cmr_u32 *mem_size);
+                                               cmr_u32 *mem_size);
 #else
     int (*camera_pre_capture_get_buffer_id)(cmr_u32 camera_id, cmr_u16 width,
                                             cmr_u16 height);
@@ -1636,6 +1638,7 @@ typedef struct oem_ops {
     cmr_int (*camera_start_capture)(cmr_handle camera_handle);
     cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #endif
+
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id,
                                                cmr_u16 width,

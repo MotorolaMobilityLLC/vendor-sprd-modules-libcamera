@@ -911,6 +911,29 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle) {
     return ret;
 }
 
+cmr_int cmr_grab_set_function_mode(cmr_handle grab_handle,
+                           struct sprd_img_function_mode *function_mode) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    if (NULL == function_mode) {
+        CMR_LOGE("failed to set function mode for function_mode is :%p",
+                 function_mode);
+        goto exit;
+    }
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, function_mode);
+    CMR_RTN_IF_ERR(ret);
+    CMR_LOGI("SPRD_IMG_IO_SET_FUNCTION_MODE = %ld", ret);
+exit:
+    CMR_LOGI("ret = %ld", ret);
+    return ret;
+}
+
 cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner,
                                 cmr_u32 val) {
     struct cmr_grab *p_grab;
@@ -1123,12 +1146,13 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         capability->zoom_post_proc = ZOOM_BY_CAP;
     }
     capability->capture_pause = 1;
+    capability->support_3dnr_mode = op.parm.capability.support_3dnr_mode;
 
     CMR_LOGV("video prev %d scale %d capture_no_trim %d capture_pause %d "
-             "zoom_post_proc %d",
+             "zoom_post_proc %d, support_3dnr_mode %d",
              capability->is_video_prev_diff, capability->hw_scale_available,
              capability->capture_no_trim, capability->capture_pause,
-             capability->zoom_post_proc);
+             capability->zoom_post_proc, capability->support_3dnr_mode);
 
     ATRACE_END();
     return ret;
