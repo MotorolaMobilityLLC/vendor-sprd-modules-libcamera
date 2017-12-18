@@ -448,11 +448,6 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_u_blocks_info *block_pt
 	slice_ptr = (struct isp_drv_slice_param *)block_ptr->block_info;
 	ISP_CHECK_HANDLE_VALID(slice_ptr);
 
-	block_ptr->size.width = slice_ptr->size[ISP_DRV_LSC].w;
-	block_ptr->size.height = slice_ptr->size[ISP_DRV_LSC].h;
-	ret = isp_u_1d_lsc_slice_size(handle, (void *)block_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 1d lsc slice size"));
-
 	block_ptr->size.width = slice_ptr->size[ISP_DRV_LENS].w;
 	block_ptr->size.height = slice_ptr->size[ISP_DRV_LENS].h;
 	ret = isp_u_2d_lsc_slice_size(handle, (void *)block_ptr);

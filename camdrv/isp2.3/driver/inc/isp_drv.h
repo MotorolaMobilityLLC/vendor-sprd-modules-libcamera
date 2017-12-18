@@ -73,11 +73,6 @@ struct isp_u_blocks_info {
 		cmr_u32 pos;
 		cmr_u32 auto_shadow;
 		cmr_u32 shadow_done;
-		/*nlc block*/
-		cmr_u16 *r_node_ptr;
-		cmr_u16 *g_node_ptr;
-		cmr_u16 *b_node_ptr;
-		cmr_u16 *l_node_ptr;
 		/*aem block*/
 		void *statis;
 		struct isp_img_offset offset;
@@ -185,18 +180,10 @@ enum isp_endian {
 };
 
 enum isp_drv_slice_type {
-	ISP_DRV_LSC = 0x00,
-	ISP_DRV_CSC,
-	ISP_DRV_BDN,
-	ISP_DRV_PWD,
-	ISP_DRV_LENS,
+	ISP_DRV_LENS = 0x0,
 	ISP_DRV_AEM,
-	ISP_DRV_Y_AEM,
 	ISP_DRV_RGB_AFM,
-	ISP_DRV_Y_AFM,
-	ISP_DRV_HISTS,
 	ISP_DRV_DISPATCH,
-	ISP_DRV_FETCH,
 	ISP_DRV_STORE,
 	ISP_DRV_SLICE_TYPE_MAX
 };
@@ -276,8 +263,6 @@ cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_1d_lsc_pos(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: AWBM*/
 cmr_s32 isp_u_awb_block(cmr_handle handle, void *param_ptr);
@@ -348,11 +333,6 @@ cmr_s32 isp_u_store_slice_size(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: NLC*/
 cmr_s32 isp_u_nlc_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_nlc_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_nlc_r_node(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_nlc_g_node(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_nlc_b_node(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_nlc_l_node(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Bing4awb*/
 cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *param_ptr);
