@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 #define LOG_TAG "smart_ctrl"
-#include <math.h>
 #include "smart_ctrl.h"
 #include "isp_pm.h"
 #include "lsc_adv.h"
 #include "lib_ctrl.h"
 #include "sensor_drv_u.h"
 #include "debug_file.h"
-#if __STDC_VERSION__ >= 199901L
-#include <stdbool.h>
-#else
-typedef int bool;
-#define false   (0)
-#define true    (1)
-#endif
-#include "atm.h"
-#include "isp_atm.h"
-#include "isp_com_alg.h"
 #include <stdio.h>
 #include <cutils/properties.h>
 
@@ -39,7 +28,6 @@ typedef int bool;
 
 #define DEBUG_BUF_SIZE (5 * 1024)
 #define DEBUG_FILE_NAME "/data/mlog/smart.txt"
-#define GATM_ENABLE
 
 struct block_name_map {
 	cmr_u32 block_id;
@@ -96,7 +84,6 @@ struct smart_stash{
 struct smart_context {
 	cmr_u32 magic_flag;
 	pthread_mutex_t status_lock;
-	struct atmctrl_cxt *handle_atm;
 	struct tuning_param tuning_param[SMART_MAX_WORK_MODE];
 	struct tuning_param tuning_param_org[SMART_MAX_WORK_MODE];
 	struct tuning_param *cur_param;
@@ -109,13 +96,9 @@ struct smart_context {
 	struct nr_data nr_param;
 	cmr_handle caller_handle;
 	isp_smart_cb smart_set_cb;
-
 	cmr_u32 camera_id;
 	struct smart_stash smart_stash_param;
 	cmr_u32 smart_lock_frame;
-    // new debug
-	smart_debuginfo smt_dbginfo;
-
 };
 
 static cmr_s32 is_print_log(void)
@@ -1050,21 +1033,12 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 		goto parse_tuning_failed;
 	}
 
-
 	rtn = smart_ctl_apply_stash(cxt, NULL);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to apply smart, rtn %d", rtn);
 		goto parse_tuning_failed;
 	}
 
-
-#ifdef GATM_ENABLE
-	{ // ATM
-	    struct atm_init_in atm_param_in;
-	    isp_atm_init(&atm_param_in, (cmr_handle*)&cxt->handle_atm);
-	}
-#endif
-#if 0
 	cxt->nr_param.ppi[0] = 0;
 	cxt->nr_param.ppi[1] = 9;
 	cxt->nr_param.ppi[2] = 0;
@@ -1119,63 +1093,6 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->nr_param.noisefilter[0] = 0;
 	cxt->nr_param.noisefilter[1] = 26;
 	cxt->nr_param.noisefilter[2] = 0;
-#else
-	cxt->smt_dbginfo.nr_param.ppi[0] = 0;
-	cxt->smt_dbginfo.nr_param.ppi[1] = 9;
-	cxt->smt_dbginfo.nr_param.ppi[2] = 0;
-	cxt->smt_dbginfo.nr_param.bayer_nr[0] = 0;
-	cxt->smt_dbginfo.nr_param.bayer_nr[1] = 10;
-	cxt->smt_dbginfo.nr_param.bayer_nr[2] = 0;
-	cxt->smt_dbginfo.nr_param.rgb_dither[0] = 0;
-	cxt->smt_dbginfo.nr_param.rgb_dither[1] = 11;
-	cxt->smt_dbginfo.nr_param.rgb_dither[2] = 0;
-	cxt->smt_dbginfo.nr_param.bpc[0] = 0;
-	cxt->smt_dbginfo.nr_param.bpc[1] = 12;
-	cxt->smt_dbginfo.nr_param.bpc[2] = 0;
-	cxt->smt_dbginfo.nr_param.grgb[0] = 0;
-	cxt->smt_dbginfo.nr_param.grgb[1] = 13;
-	cxt->smt_dbginfo.nr_param.grgb[2] = 0;
-	cxt->smt_dbginfo.nr_param.cfae[0] = 0;
-	cxt->smt_dbginfo.nr_param.cfae[1] = 14;
-	cxt->smt_dbginfo.nr_param.cfae[2] = 0;
-	cxt->smt_dbginfo.nr_param.rgb_afm[0] = 0;
-	cxt->smt_dbginfo.nr_param.rgb_afm[1] = 15;
-	cxt->smt_dbginfo.nr_param.rgb_afm[2] = 0;
-	cxt->smt_dbginfo.nr_param.uvdiv[0] = 0;
-	cxt->smt_dbginfo.nr_param.uvdiv[1] = 16;
-	cxt->smt_dbginfo.nr_param.uvdiv[2] = 0;
-	cxt->smt_dbginfo.nr_param.dnr3_pre[0] = 0;
-	cxt->smt_dbginfo.nr_param.dnr3_pre[1] = 17;
-	cxt->smt_dbginfo.nr_param.dnr3_pre[2] = 0;
-	cxt->smt_dbginfo.nr_param.dnr3_cap[0] = 0;
-	cxt->smt_dbginfo.nr_param.dnr3_cap[1] = 18;
-	cxt->smt_dbginfo.nr_param.dnr3_cap[2] = 0;
-	cxt->smt_dbginfo.nr_param.edge[0] = 0;
-	cxt->smt_dbginfo.nr_param.edge[1] = 19;
-	cxt->smt_dbginfo.nr_param.edge[2] = 0;
-	cxt->smt_dbginfo.nr_param.precdn[0] = 0;
-	cxt->smt_dbginfo.nr_param.precdn[1] = 20;
-	cxt->smt_dbginfo.nr_param.precdn[2] = 0;
-	cxt->smt_dbginfo.nr_param.ynr[0] = 0;
-	cxt->smt_dbginfo.nr_param.ynr[1] = 21;
-	cxt->smt_dbginfo.nr_param.ynr[2] = 0;
-	cxt->smt_dbginfo.nr_param.cdn[0] = 0;
-	cxt->smt_dbginfo.nr_param.cdn[1] = 22;
-	cxt->smt_dbginfo.nr_param.cdn[2] = 0;
-	cxt->smt_dbginfo.nr_param.postcdn[0] = 0;
-	cxt->smt_dbginfo.nr_param.postcdn[1] = 23;
-	cxt->smt_dbginfo.nr_param.postcdn[2] = 0;
-	cxt->smt_dbginfo.nr_param.ccnr[0] = 0;
-	cxt->smt_dbginfo.nr_param.ccnr[1] = 24;
-	cxt->smt_dbginfo.nr_param.ccnr[2] = 0;
-	cxt->smt_dbginfo.nr_param.iir_yrandom[0] = 0;
-	cxt->smt_dbginfo.nr_param.iir_yrandom[1] = 25;
-	cxt->smt_dbginfo.nr_param.iir_yrandom[2] = 0;
-	cxt->smt_dbginfo.nr_param.noisefilter[0] = 0;
-	cxt->smt_dbginfo.nr_param.noisefilter[1] = 26;
-	cxt->smt_dbginfo.nr_param.noisefilter[2] = 0;
-#endif	
-	
 	cxt->magic_flag = ISP_SMART_MAGIC_FLAG;
 	cxt->work_mode = 0;
 	cxt->flash_mode = SMART_CTRL_FLASH_CLOSE;
@@ -1267,7 +1184,6 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 		blk = &result->block_result[i];
 		if (blk->smart_id > 8) {
 			switch (blk->smart_id) {
-#if 0
 			case 9:
 				cxt->nr_param.ppi[0] = 1;
 				cxt->nr_param.ppi[2] = blk->component[0].fix_data[0];
@@ -1342,82 +1258,6 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 				break;
 			default:
 				break;
-#else
-			case 9:
-			    cxt->smt_dbginfo.nr_param.ppi[0] = 1;
-			    cxt->smt_dbginfo.nr_param.ppi[2] = blk->component[0].fix_data[0];
-			    break;
-			case 10:
-			    cxt->smt_dbginfo.nr_param.bayer_nr[0] = 1;
-			    cxt->smt_dbginfo.nr_param.bayer_nr[2] = blk->component[0].fix_data[0];
-			    break;
-			case 11:
-			    cxt->smt_dbginfo.nr_param.rgb_dither[0] = 1;
-			    cxt->smt_dbginfo.nr_param.rgb_dither[2] = blk->component[0].fix_data[0];
-			    break;
-			case 12:
-			    cxt->smt_dbginfo.nr_param.bpc[0] = 1;
-			    cxt->smt_dbginfo.nr_param.bpc[2] = blk->component[0].fix_data[0];
-			    break;
-			case 13:
-			    cxt->smt_dbginfo.nr_param.grgb[0] = 1;
-			    cxt->smt_dbginfo.nr_param.grgb[2] = blk->component[0].fix_data[0];
-			    break;
-			case 14:
-			    cxt->smt_dbginfo.nr_param.cfae[0] = 1;
-			    cxt->smt_dbginfo.nr_param.cfae[2] = blk->component[0].fix_data[0];
-			    break;
-			case 15:
-			    cxt->smt_dbginfo.nr_param.rgb_afm[0] = 1;
-			    cxt->smt_dbginfo.nr_param.rgb_afm[2] = blk->component[0].fix_data[0];
-			    break;
-			case 16:
-			    cxt->smt_dbginfo.nr_param.uvdiv[0] = 1;
-			    cxt->smt_dbginfo.nr_param.uvdiv[2] = blk->component[0].fix_data[0];
-			    break;
-			case 17:
-			    cxt->smt_dbginfo.nr_param.dnr3_pre[0] = 1;
-			    cxt->smt_dbginfo.nr_param.dnr3_pre[2] = blk->component[0].fix_data[0];
-			    break;
-			case 18:
-			    cxt->smt_dbginfo.nr_param.dnr3_cap[0] = 1;
-			    cxt->smt_dbginfo.nr_param.dnr3_cap[2] = blk->component[0].fix_data[0];
-			    break;
-			case 19:
-			    cxt->smt_dbginfo.nr_param.edge[0] = 1;
-			    cxt->smt_dbginfo.nr_param.edge[2] = blk->component[0].fix_data[0];
-			    break;
-			case 20:
-			    cxt->smt_dbginfo.nr_param.precdn[0] = 1;
-			    cxt->smt_dbginfo.nr_param.precdn[2] = blk->component[0].fix_data[0];
-			    break;
-			case 21:
-			    cxt->smt_dbginfo.nr_param.ynr[0] = 1;
-			    cxt->smt_dbginfo.nr_param.ynr[2] = blk->component[0].fix_data[0];
-			    break;
-			case 22:
-			    cxt->smt_dbginfo.nr_param.cdn[0] = 1;
-			    cxt->smt_dbginfo.nr_param.cdn[2] = blk->component[0].fix_data[0];
-			    break;
-			case 23:
-			    cxt->smt_dbginfo.nr_param.postcdn[0] = 1;
-			    cxt->smt_dbginfo.nr_param.postcdn[2] = blk->component[0].fix_data[0];
-			    break;
-			case 24:
-			    cxt->smt_dbginfo.nr_param.ccnr[0] = 1;
-			    cxt->smt_dbginfo.nr_param.ccnr[2] = blk->component[0].fix_data[0];
-			    break;
-			case 25:
-			    cxt->smt_dbginfo.nr_param.iir_yrandom[0] = 1;
-			    cxt->smt_dbginfo.nr_param.iir_yrandom[2] = blk->component[0].fix_data[0];
-			    break;
-			case 26:
-			    cxt->smt_dbginfo.nr_param.noisefilter[0] = 1;
-			    cxt->smt_dbginfo.nr_param.noisefilter[2] = blk->component[0].fix_data[0];
-			    break;
-			default:
-			    break;
-#endif
 			}
 		}
 	}
@@ -1441,11 +1281,6 @@ cmr_s32 smart_ctl_deinit(smart_handle_t * handle, void *param, void *result)
 		rtn = ISP_ERROR;
 		goto ERROR_EXIT;
 	}
-#ifdef GATM_ENABLE
-	if (NULL != cxt_ptr->handle_atm) {
-	    isp_atm_deinit((cmr_handle*)&cxt_ptr->handle_atm);
-	}
-#endif
 
 	rtn = smart_ctl_save_stash(cxt_ptr, NULL);
 	if (ISP_SUCCESS != rtn) {
@@ -1730,542 +1565,6 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 	return rtn;
 }
 
-void _get_8bitX_Y(int i4Bits, int i4InputLen, short *inputX, short *inputY, unsigned char *i4outputY) {
-    short i2StartX = 0;
-    int i, j;
-    for ( i = 0; i < 256;i++) {
-        for ( j = i2StartX; j < i4InputLen; j++) {
-            if (inputX[j] >= (i<<(i4Bits-8))) {
-                i2StartX = min(j+1, i4InputLen);
-                if (j == 0) {
-                    i4outputY[i] = inputY[j];
-                } else {
-                    int X1 = inputX[j-1];
-                    int X2 = inputX[j];
-                    int Y1 = inputY[j-1];
-                    int Y2 = inputY[j];
-                    int X = (i<<(i4Bits-8));
-                    if (X2 <= X1) {
-                        i4outputY[i] = Y1;
-                        ISP_LOGI("X2/X1 %d/%d\n", X2, X1);
-                    } else
-                        i4outputY[i] = max(min(Y1 + (X-X1)*(Y2-Y1)/(X2-X1), 255),0);
-                }
-                break;
-            }
-        }
-    }
-}
-
-#if 0
-cmr_int _get_atm_curve_v1(cmr_handle *handle,
-        struct smart_proc_input *smart_proc_in,
-        int i4BV, struct isp_pm_ioctl_output *io_pm_output,
-        smart_gamma_debuginfo *dbginfo) {
-    char value[PROPERTY_VALUE_MAX];
-    property_get("debug.camera.atm.update", value, "1");
-    bool bATMUpdate = strtol(value, NULL, 10);
-    property_get("debug.camera.atm.dump", value, "0");
-    bool bATMDump = strtol(value, NULL, 10);
-    property_get("debug.camera.atm.hist", value, "0");
-    bool bATMDumpHist = strtol(value, NULL, 10);
-    int ret;
-    unsigned long long hist[256] = {0};
-    static unsigned char uConvCurY[256] = {0},
-            uOutGamma[3][256],
-            uPrevGamma[3][256];
-    unsigned short
-            u2CurX[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}},
-            u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
-    struct atm_calc_param ATMInput;
-    struct atm_calc_result ATMOutput;
-    bool bAEMBinning = (smart_proc_in->win_size_w == 1 && smart_proc_in->win_size_h == 1);
-    if (io_pm_output->param_data != NULL) {
-#if defined(CONFIG_ISP_2_3)
-        struct sensor_gamma_curve *gamma_info = io_pm_output->param_data->data_ptr;
-#else
-        struct sensor_rgbgamma_curve *gamma_info = io_pm_output->param_data->data_ptr;
-#endif
-        if (gamma_info != NULL) {
-            cmr_s32 i;
-            for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
-#if defined(CONFIG_ISP_2_3)
-                u2CurY[1][i] = gamma_info->points[i].y;
-                u2CurX[1][i] = gamma_info->points[i].x;
-#else
-                u2CurY[0][i] = gamma_info->points_r[i].y;
-                u2CurX[0][i] = gamma_info->points_r[i].x;
-                u2CurY[1][i] = gamma_info->points_g[i].y;
-                u2CurX[1][i] = gamma_info->points_g[i].x;
-                u2CurY[2][i] = gamma_info->points_b[i].y;
-                u2CurX[2][i] = gamma_info->points_b[i].x;
-                if (i == 0||i == 64 || i == 128 || i == 255)
-                    ISP_LOGI("%d x/y %d/%d\n", i, u2CurX[0][i], u2CurY[0][i]);
-#endif
-            }
-        }
-        ret = isp_histAEM(smart_proc_in->r_info,
-                smart_proc_in->g_info, smart_proc_in->b_info, hist, bAEMBinning,
-                smart_proc_in->aem_shift,
-                smart_proc_in->win_num_w, smart_proc_in->win_num_h,
-                smart_proc_in->win_size_w, smart_proc_in->win_size_h);
-        if (ret == -1) {
-            ISP_LOGE("ATM ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
-                    smart_proc_in->r_info,
-                    smart_proc_in->g_info,
-                    smart_proc_in->b_info,
-                    smart_proc_in->win_num_w, smart_proc_in->win_num_h,
-                    smart_proc_in->win_size_w, smart_proc_in->win_size_h,
-                    smart_proc_in->aem_shift);
-            return -1;
-        }
-        if (bATMDumpHist == true) {
-            for (i = 0; i < 256; i+=4)
-                ISP_LOGE("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
-        }
-        if (bATMDump == true) {
-            for (int i = 0; i < 16; i++)
-                ISP_LOGE("Orig Gamma [%d] = %d\n",u2CurX[1][i], u2CurY[1][i]);
-        }
-        _get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
-        if (bATMDump == true) {
-            for (int i = 0; i < 16; i++)
-                ISP_LOGE("Conv Gamma [%d] = %d\n",i, uConvCurY[i]);
-        }
-        {
-            ATMInput.stAlgoParams.i4BV = i4BV;
-            ATMInput.stAlgoParams.i4LowPT = round(0.30 * pow(2, -4.5) * 255);
-            ATMInput.stAlgoParams.i4LowPcentThd = 2;
-            ATMInput.stAlgoParams.i4LowRightThd   = 10;
-            ATMInput.stAlgoParams.i4LowLeftThd     = 0;
-            ATMInput.stAlgoParams.i4HighPT = round(pow(2, -0.3) * 255);
-            ATMInput.stAlgoParams.i4HighPcentThd = 10;
-            ATMInput.stAlgoParams.i4HighLeftThd  = 30;
-            ATMInput.stAlgoParams.i4HighRightThd = 0;
-            ATMInput.stAlgoParams.strBVLut.i4Len = 4;
-            int X[] = { 0, 0, 512, 1024 };
-            int Y[] = { 0, 800, 1000, 1200 };
-            memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, X, sizeof(X));
-            memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, Y, sizeof(Y));
-            ATMInput.pHist = hist;
-            ATMInput.u4Bins = 256;
-            ATMInput.uBaseGamma = uConvCurY;
-            ATMInput.uModGamma = uConvCurY;
-            ATMInput.bHistB4Gamma = true;
-            ATMOutput.uGamma = uOutGamma[1];
-            isp_atm((cmr_handle*)handle, ATMInput, &ATMOutput);
-            if (uOutGamma[1][255]) {
-                memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
-            }
-            isp_atm_smooth(200, 256, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
-            memcpy(uPrevGamma[1], uOutGamma[1], sizeof(char)*256);
-            if (bATMDump == true) {
-                for (int i = 0; i < 16; i++)
-                    ISP_LOGE("Out Gamma [%d] = %d\n",i, uOutGamma[1][i]);
-            }
-            // rev to HW gamma curve
-            if (io_pm_output->param_data != NULL && bATMUpdate == true) {
-#if defined(CONFIG_ISP_2_3)
-                struct sensor_gamma_curve *gamma_info = io_pm_output->param_data->data_ptr;
-#else
-                struct sensor_rgbgamma_curve *gamma_info = io_pm_output->param_data->data_ptr;
-#endif
-                if (gamma_info != NULL) {
-                    for (int i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
-#if defined(CONFIG_ISP_2_3)
-                        gamma_info->points[i].y =
-                                (cmr_s16)uOutGamma[gamma_info->points[i].x>>2];
-#else
-                        gamma_info->points_r[i].y =
-                                uOutGamma[1][min(gamma_info->points_r[i].x>>2, 255)];
-                        gamma_info->points_g[i].y =
-                                uOutGamma[1][min(gamma_info->points_g[i].x>>2, 255)];
-                        gamma_info->points_b[i].y =
-                                uOutGamma[1][min(gamma_info->points_b[i].x>>2, 255)];
-#endif
-                    }
-
-                    // check write out
-                    if (bATMDump == true) {
-                        for (int i = 0; i < 16; i++) {
-#if defined(CONFIG_ISP_2_3)
-                            ISP_LOGE("Final Gamma [%d] = %d\n",
-                                    gamma_info->points[i].x,
-                                    gamma_info->points[i].y);
-#else
-                            ISP_LOGE("Final Gamma [%d] = %d\n",
-                                    gamma_info->points_g[i].x,
-                                    gamma_info->points_g[i].y);
-#endif
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // fill debug info
-    memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
-    memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-    memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], 256);
-    memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], 256);
-    memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], 256);
-    dbginfo->uLowPT         = ATMOutput.uLowPT;
-    dbginfo->uHighPT        = ATMOutput.uHighPT;
-    dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
-    dbginfo->uFinalHighBin  = ATMOutput.uFinalHighBin;
-    return 0;
-}
-#endif
-
-cmr_int _get_atm_curve(cmr_handle *handle,
-        struct smart_proc_input *smart_proc_in,
-        int i4BV, void *in_gamma, void *out_gamma,
-        smart_gamma_debuginfo *dbginfo) {
-    char value[PROPERTY_VALUE_MAX];
-    property_get("debug.camera.atm.update", value, "1");
-    bool bATMUpdate = strtol(value, NULL, 10);
-    property_get("debug.camera.atm.dump", value, "0");
-    bool bATMDump = strtol(value, NULL, 10);
-    property_get("debug.camera.atm.hist", value, "0");
-    bool bATMDumpHist = strtol(value, NULL, 10);
-    int ret, i;
-    unsigned int u4GammaSize = 0;
-    unsigned long long hist[256] = {0};
-    unsigned char uConvCurY[256] = {0},
-            uOutGamma[3][256];
-    static unsigned char uPrevGamma[3][256];
-    unsigned short
-            u2CurX[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}},
-            u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
-    struct atm_calc_param ATMInput;
-    struct atm_calc_result ATMOutput;
-    bool bAEMBinning = (smart_proc_in->win_size_w == 1 && smart_proc_in->win_size_h == 1);
-    if (in_gamma == NULL || out_gamma == NULL)
-        return ISP_ERROR;
-#if defined(CONFIG_ISP_2_3)
-    struct sensor_gamma_curve *gamma_info = (struct sensor_gamma_curve *)in_gamma;
-    u4GammaSize = sizeof(struct sensor_gamma_curve);
-#else
-    struct sensor_rgbgamma_curve *gamma_info = (struct sensor_rgbgamma_curve *)in_gamma;
-    u4GammaSize = sizeof(struct sensor_rgbgamma_curve);
-#endif
-    {
-        cmr_s32 i;
-        for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
-#if defined(CONFIG_ISP_2_3)
-            u2CurY[1][i] = gamma_info->points[i].y;
-            u2CurX[1][i] = gamma_info->points[i].x;
-            if (i == 0||i == 64 || i == 128 || i == 255)
-                ISP_LOGI("%d x/y %d/%d\n", i, u2CurX[1][i], u2CurY[1][i]);
-#else
-            u2CurY[0][i] = gamma_info->points_r[i].y;
-            u2CurX[0][i] = gamma_info->points_r[i].x;
-            u2CurY[1][i] = gamma_info->points_g[i].y;
-            u2CurX[1][i] = gamma_info->points_g[i].x;
-            u2CurY[2][i] = gamma_info->points_b[i].y;
-            u2CurX[2][i] = gamma_info->points_b[i].x;
-            if (i == 0||i == 64 || i == 128 || i == 255)
-                ISP_LOGI("%d x/y %d/%d\n", i, u2CurX[0][i], u2CurY[0][i]);
-#endif
-        }
-    }
-    ret = isp_histAEM(smart_proc_in->r_info,
-            smart_proc_in->g_info, smart_proc_in->b_info, hist, bAEMBinning,
-            smart_proc_in->aem_shift,
-            smart_proc_in->win_num_w, smart_proc_in->win_num_h,
-            smart_proc_in->win_size_w, smart_proc_in->win_size_h);
-    if (ret == -1) {
-        ISP_LOGE("ATM aem_ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
-                smart_proc_in->r_info,
-                smart_proc_in->g_info,
-                smart_proc_in->b_info,
-                smart_proc_in->win_num_w, smart_proc_in->win_num_h,
-                smart_proc_in->win_size_w, smart_proc_in->win_size_h,
-                smart_proc_in->aem_shift);
-        return -1;
-    }
-    if (bATMDumpHist == true) {
-        ISP_LOGV("aem num w/h %d/%d, size w/h %d/%d, shift %d\n",
-                smart_proc_in->win_num_w, smart_proc_in->win_num_h,
-                smart_proc_in->win_size_w, smart_proc_in->win_size_h,
-                smart_proc_in->aem_shift);
-        for (i = 0; i < 256; i+=4)
-            ISP_LOGV("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
-    }
-    if (bATMDump == true) {
-        for (i = 0; i < 256; i+=4)
-            ISP_LOGV("Orig Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
-                    u2CurX[1][i], u2CurY[1][i],
-                    u2CurX[1][i+1], u2CurY[1][i+1],
-                    u2CurX[1][i+2], u2CurY[1][i+2],
-                    u2CurX[1][i+3], u2CurY[1][i+3]);
-    }
-    _get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
-    if (bATMDump == true) {
-        for (i = 0; i < 32; i+=4)
-            ISP_LOGV("Conv Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
-                    i, uConvCurY[i],
-                    i+1, uConvCurY[i+1],
-                    i+2, uConvCurY[i+2],
-                    i+3, uConvCurY[i+3]);
-    }
-
-    ISP_LOGV("atm Out Gamma %p \n", out_gamma);
-    {
-        ATMInput.stAlgoParams.i4BV = i4BV;
-        ATMInput.stAlgoParams.i4LowPT = round(0.30 * pow(2, -4.5) * 255);
-        ATMInput.stAlgoParams.i4LowPcentThd = 2;
-        ATMInput.stAlgoParams.i4LowRightThd   = 10;
-        ATMInput.stAlgoParams.i4LowLeftThd     = 0;
-        ATMInput.stAlgoParams.i4HighPT = round(pow(2, -0.3) * 255);
-        ATMInput.stAlgoParams.i4HighPcentThd = 10;
-        ATMInput.stAlgoParams.i4HighLeftThd  = 30;
-        ATMInput.stAlgoParams.i4HighRightThd = 0;
-        ATMInput.stAlgoParams.strBVLut.i4Len = 4;
-        int X[] = { 0, 0, 512, 1024 };
-        int Y[] = { 0, 800, 1000, 1200 };
-        memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, X, sizeof(X));
-        memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, Y, sizeof(Y));
-        ATMInput.pHist = hist;
-        ATMInput.u4Bins = 256;
-        ATMInput.uBaseGamma = uConvCurY;
-        ATMInput.uModGamma = uConvCurY;
-        ATMInput.bHistB4Gamma = true;
-        ATMOutput.uGamma = uOutGamma[1];
-        isp_atm((cmr_handle*)handle, ATMInput, &ATMOutput);
-
-        if (uOutGamma[1][255]) {
-            memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
-        }
-
-        isp_atm_smooth(200, 256, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
-        memcpy(uPrevGamma[1], uOutGamma[1], sizeof(char)*256);
-        if (bATMDump == true) {
-            for (i = 0; i < 256; i+=4)
-                ISP_LOGV("Out Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
-                        i, uOutGamma[1][i],
-                        i+1, uOutGamma[1][i+1],
-                        i+2, uOutGamma[1][i+2],
-                        i+3, uOutGamma[1][i+3]);
-        }
-
-        // rev to HW gamma curve
-        memcpy(out_gamma, in_gamma, u4GammaSize);
-        if (bATMUpdate == true) {
-#if defined(CONFIG_ISP_2_3)
-            struct sensor_gamma_curve *gamma_info = (struct sensor_gamma_curve *)out_gamma;
-#else
-            struct sensor_rgbgamma_curve *gamma_info = (struct sensor_rgbgamma_curve *)out_gamma;
-#endif
-            {
-                for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
-#if defined(CONFIG_ISP_2_3)
-                    gamma_info->points[i].y =
-                            uOutGamma[1][min(gamma_info->points[i].x>>2, 255)];
-#else
-                    gamma_info->points_r[i].y =
-                            uOutGamma[1][min(gamma_info->points_r[i].x>>2, 255)];
-                    gamma_info->points_g[i].y =
-                            uOutGamma[1][min(gamma_info->points_g[i].x>>2, 255)];
-                    gamma_info->points_b[i].y =
-                            uOutGamma[1][min(gamma_info->points_b[i].x>>2, 255)];
-#endif
-                }
-
-                // check write out
-                if (bATMDump == true) {
-                    for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i+=4) {
-#if defined(CONFIG_ISP_2_3)
-                        ISP_LOGV("Final Gamma 2.3 [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d] \n",
-                                gamma_info->points[i].x,
-                                gamma_info->points[i].y,
-                                gamma_info->points[i+1].x,
-                                gamma_info->points[i+1].y,
-                                gamma_info->points[i+2].x,
-                                gamma_info->points[i+2].y,
-                                gamma_info->points[i+3].x,
-                                gamma_info->points[i+3].y);
-#else
-                        ISP_LOGV("Final Gamma [%d] = %d\n",
-                                gamma_info->points_g[i].x,
-                                gamma_info->points_g[i].y);
-#endif
-                    }
-                } else {
-#if defined(CONFIG_ISP_2_3)
-                    ISP_LOGV("Final Gamma %p [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d] \n",
-                            out_gamma,
-                            gamma_info->points[0].x,
-                            gamma_info->points[0].y,
-                            gamma_info->points[64].x,
-                            gamma_info->points[64].y,
-                            gamma_info->points[128].x,
-                            gamma_info->points[128].y,
-                            gamma_info->points[255].x,
-                            gamma_info->points[255].y);
-#else
-                ISP_LOGV("Final Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d] \n",
-                        gamma_info->points_g[0].x,
-                        gamma_info->points_g[0].y,
-                        gamma_info->points_g[64].x,
-                        gamma_info->points_g[64].y,
-                        gamma_info->points_g[128].x,
-                        gamma_info->points_g[128].y,
-                        gamma_info->points_g[255].x,
-                        gamma_info->points_g[255].y);
-#endif
-                }
-            }
-        }
-    }
-
-    // fill debug info
-    memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
-    memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-    memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], 256);
-    memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], 256);
-    memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], 256);
-    dbginfo->uLowPT         = ATMOutput.uLowPT;
-    dbginfo->uHighPT        = ATMOutput.uHighPT;
-    dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
-    dbginfo->uFinalHighBin  = ATMOutput.uFinalHighBin;
-    return ISP_SUCCESS;
-}
-
-cmr_int _smart_write_gamma(struct smart_context *cxt, struct isp_pm_param_data *pm_param, void *gamma) {
-    if (cxt->smart_set_cb) {
-        cxt->smart_set_cb(cxt->caller_handle, ISP_SMART_SET_GAMMA_CUR, gamma, NULL);
-        return ISP_SUCCESS;
-    } else
-        return ISP_ERROR;
-    if (pm_param != NULL) {
-    }
-}
-cmr_int _smart_read_gamma(struct smart_proc_input *inptr, int idx, void *gamma) {
-    int i;
-    if (NULL != inptr->cal_para.gamma_tab) {
-#if defined(CONFIG_ISP_2_3)
-        struct sensor_gamma_curve *gamma_cur[SENSOR_GAMMA_NUM];
-        gamma_cur[0] = (struct sensor_gamma_curve *)inptr->cal_para.gamma_tab;
-#else
-        struct sensor_rgbgamma_curve *gamma_cur[SENSOR_GAMMA_NUM];
-        gamma_cur[0] = (struct sensor_rgbgamma_curve *)inptr->cal_para.gamma_tab;
-#endif
-        for (i = 1; i < SENSOR_GAMMA_NUM; i++)
-            gamma_cur[i] = gamma_cur[i-1] + 1;
-#if defined(CONFIG_ISP_2_3)
-        memcpy(gamma, gamma_cur[idx], sizeof(struct sensor_gamma_curve));
-#else
-        memcpy(gamma, gamma_cur[idx], sizeof(struct sensor_rgbgamma_curve));
-#endif
-        return ISP_SUCCESS;
-    } else
-        return ISP_ERROR;
-}
-cmr_int _smart_gamma(struct smart_proc_input *inptr,
-        struct smart_block_result *block_result,
-        void *output) {
-    cmr_s32 rtn = ISP_SUCCESS;
-    struct isp_weight_value gamc_value = { {0}, {0} };
-    struct isp_range val_range = { 0, 0 };
-#if defined(CONFIG_ISP_2_3)
-        struct sensor_gamma_curve gamma_curve[2];
-        struct sensor_gamma_curve *gamma_info = output;
-#else
-        struct sensor_rgbgamma_curve gamma_curve[2];
-        struct sensor_rgbgamma_curve *gamma_info = output;
-#endif
-    val_range.min = 0;
-    val_range.max = SENSOR_GAMMA_NUM - 1;
-    struct isp_weight_value *weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
-    if ((cmr_s32) weight_value->value[0] < val_range.min || (cmr_s32) weight_value->value[0] > val_range.max) {
-        ISP_LOGE("fail to value range: %d ([%d, %d])\n", weight_value->value[0], val_range.min, val_range.max);
-        return ISP_ERROR;
-    }
-    if ((cmr_s32) weight_value->value[1] < val_range.min || (cmr_s32) weight_value->value[1] > val_range.max) {
-        ISP_LOGE("fail to value range: %d ([%d, %d])\n", weight_value->value[1], val_range.min, val_range.max);
-        return ISP_ERROR;
-    }
-    weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
-    gamc_value = *weight_value;
-    gamc_value.weight[0] = gamc_value.weight[0] / (SMART_WEIGHT_UNIT / 16)
-                                    * (SMART_WEIGHT_UNIT / 16);
-    gamc_value.weight[1] = SMART_WEIGHT_UNIT - gamc_value.weight[0];
-    ISP_LOGV("atm gamc_value wght %d/%d, value %d/%d\n",
-            gamc_value.weight[0],
-            gamc_value.weight[1],
-            gamc_value.value[0],
-            gamc_value.value[1]);
-
-    // read orig gamma
-    _smart_read_gamma(inptr, gamc_value.value[0], &gamma_curve[0]);
-    _smart_read_gamma(inptr, gamc_value.value[1], &gamma_curve[1]);
-
-#if defined(CONFIG_ISP_2_3)
-    {
-        void *src_g[2] = { NULL };
-        void *dst_g = NULL;
-
-        src_g[0] = &gamma_curve[0].points[0].x;
-        src_g[1] = &gamma_curve[1].points[0].x;
-        dst_g = &gamma_info->points;
-        rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
-
-
-        ISP_LOGV("atm orig gamma, value %d/%d, x/y %d/%d\n",
-                gamc_value.value[0],
-                gamc_value.value[1],
-                gamma_curve[0].points[256].x,
-                gamma_curve[0].points[256].y);
-
-        if (ISP_SUCCESS != rtn) {
-            ISP_LOGE("fail to interp gamc_g data\n");
-            return rtn;
-        }
-    }
-#else
-    {
-        void *src_r[2] = { NULL };
-        void *src_g[2] = { NULL };
-        void *src_b[2] = { NULL };
-
-        void *dst_r = NULL;
-        void *dst_g = NULL;
-        void *dst_b = NULL;
-
-        src_r[0] = &gamma_curve[0].points_r[0].x;
-        src_r[1] = &gamma_curve[1].points_r[0].x;
-        dst_r = &gamma_info->points_r;
-
-        src_g[0] = &gamma_curve[0].points_g[0].x;
-        src_g[1] = &gamma_curve[1].points_g[0].x;
-        dst_g = &gamma_info->points_g;
-
-        src_b[0] = &gamma_curve[0].points_b[0].x;
-        src_b[1] = &gamma_curve[1].points_b[0].x;
-        dst_b = &gamma_info->points_b;
-
-        rtn = isp_interp_data(dst_r, src_r, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
-
-        rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
-
-        rtn = isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
-
-        ISP_LOGV("atm orig gamma, value %d/%d, x/y %d/%d\n",
-                gamc_value.value[0],
-                gamc_value.value[1],
-                gamma_curve[0].points_g[256].x,
-                gamma_curve[0].points_g[256].y);
-
-        if (ISP_SUCCESS != rtn) {
-            ISP_LOGE("fail to interp gamc_g data\n");
-            return rtn;
-        }
-    }
-#endif
-    return rtn;
-}
 cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -2292,13 +1591,8 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 	}
 
 	cxt = (struct smart_context *)handle_smart;
-#if 0
 	in_ptr->log = (cmr_u8 *) & (cxt->nr_param);
 	in_ptr->size = (sizeof(cxt->nr_param));
-#else
-	in_ptr->log = (cmr_u8 *) & (cxt->smt_dbginfo);
-	in_ptr->size = (sizeof(cxt->smt_dbginfo));
-#endif
 
 	//use LSC_SPD_VERSION to control the output of smart lsc
 	if (in_ptr->lsc_sprd_version >= 3) {
@@ -2392,9 +1686,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 		case ISP_SMART_SATURATION_DEPRESS:
 			smart_calc_result.block_result[i].block_id = ISP_BLK_SATURATION;
 			break;
-//		case ISP_SMART_GAMMA:
-//		    smart_calc_result.block_result[i].update = 0;
-//		    break;
 		default:
 			break;
 		}
@@ -2407,9 +1698,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			block_result->mode_flag = in_ptr->mode_flag;
 			block_result->scene_flag = in_ptr->scene_flag;
 		}
-
-		if (block_result->block_id == ISP_BLK_RGB_GAMC)
-		    block_result->update = 0;
 
 		/* If mw implements cb, then set pm in callback. */
 		if (cxt->smart_set_cb)
@@ -2438,50 +1726,6 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 		rtn = cxt->smart_set_cb(cxt->caller_handle, ISP_SMART_SET_COMMON, &smart_calc_result, NULL);
 	}
 
-#if !defined(CONFIG_ISP_2_4)
-	// reset to modified gamma
-	for (i = 0; i < smart_calc_result.counts; i++) {
-	    ISP_LOGV("do ATM");
-	    block_result = &smart_calc_result.block_result[i];
-	    if (block_result->block_id == ISP_BLK_RGB_GAMC) {
-	        if ((block_result->mode_flag != in_ptr->mode_flag) || (block_result->scene_flag != in_ptr->scene_flag)) {
-	            block_result->mode_flag_changed = 1;
-	            block_result->mode_flag = in_ptr->mode_flag;
-	            block_result->scene_flag = in_ptr->scene_flag;
-	        }
-	        int ret = 0;
-	        char value[PROPERTY_VALUE_MAX];
-	        property_get("debug.camera.atm.enable", value, "0");
-	        bool bATMEnable = strtol(value, NULL, 10);
-#if defined(CONFIG_ISP_2_3)
-	        struct sensor_gamma_curve sm_gamma_out;
-	        struct sensor_gamma_curve atm_gamma_out;
-#else
-	        struct sensor_rgbgamma_curve sm_gamma_out;
-	        struct sensor_rgbgamma_curve atm_gamma_out;
-#endif
-	        struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
-	        if (bATMEnable) {
-	            _smart_gamma(in_ptr, block_result, &sm_gamma_out);
-	            ret = _get_atm_curve((cmr_handle *)cxt->handle_atm,
-	                    in_ptr, smart_calc_param->bv,
-	                    &sm_gamma_out, &atm_gamma_out, &cxt->smt_dbginfo.smt_gma);
-
-	            if (ret == ISP_SUCCESS)
-	                _smart_write_gamma(cxt, io_pm_output.param_data, &atm_gamma_out);
-	            else {
-	                _smart_write_gamma(cxt, io_pm_output.param_data, &sm_gamma_out);
-	            }
-	            ISP_LOGV("ATM Enabled\n");
-	        } else {
-	            ISP_LOGV("ATM Disabled");
-	            _smart_gamma(in_ptr, block_result, &sm_gamma_out);
-	            _smart_write_gamma(cxt, io_pm_output.param_data, &sm_gamma_out);
-	        }
-	    } else
-	        continue;
-	}
-  #endif // !defined(CONFIG_ISP_2_4)
 exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;

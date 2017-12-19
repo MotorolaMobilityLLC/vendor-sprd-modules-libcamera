@@ -112,14 +112,6 @@ struct smart_proc_input {
 	cmr_u32 mode_flag;
 	cmr_u32 scene_flag;
 	cmr_u32 lsc_sprd_version;	// LSC version of Spreadtrum
-    cmr_u32 *r_info;
-    cmr_u32 *g_info;
-    cmr_u32 *b_info;
-    cmr_u32 win_num_w;
-    cmr_u32 win_num_h;
-    cmr_u32 win_size_w;
-    cmr_u32 win_size_h;
-    cmr_u32 aem_shift;
 	cmr_u8 *log;
 	cmr_u32 size;
 	cmr_u8 lock_nlm;
@@ -156,21 +148,6 @@ struct nr_data {
 	cmr_u32 iir_yrandom[3];
 	cmr_u32 noisefilter[3];
 };
-
-typedef struct {
-    cmr_u64     u8Hist[256];
-    cmr_u32     u4RespCurve[256];
-    cmr_u8      uOutputGamma[3][256];
-    cmr_u8      uLowPT;
-    cmr_u8      uHighPT;
-    cmr_u8      uFinalLowBin;
-    cmr_u8      uFinalHighBin;
-} smart_gamma_debuginfo;
-
-typedef struct {
-    struct nr_data          nr_param;
-    smart_gamma_debuginfo   smt_gma;
-} smart_debuginfo;
 
 cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *result);
 cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb);

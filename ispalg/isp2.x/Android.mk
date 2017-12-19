@@ -74,7 +74,6 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/flash/inc \
-	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/atm/sprd/inc\
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/alc_awb/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/sprd/inc \
@@ -115,7 +114,7 @@ endif
 LOCAL_SHARED_LIBRARIES += libcutils libutils libdl libcamcommon
 #LOCAL_SHARED_LIBRARIES := libcamcommon
 
-LOCAL_SHARED_LIBRARIES += libawb1 liblsc libae libflash libsprdlsc libatm
+LOCAL_SHARED_LIBRARIES += libawb1 liblsc libae libflash libsprdlsc
 #LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
 #LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor
