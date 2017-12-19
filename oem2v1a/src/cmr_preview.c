@@ -12149,8 +12149,8 @@ cmr_int cmr_preview_flush_cashe(cmr_handle preview_handle,
     }
 
     ion_buf.fd = img->fd;
-    ion_buf.addr_phy = (void *)&(img->addr_phy);
-    ion_buf.addr_vir = (void *)&(img->addr_vir);
+    ion_buf.addr_phy = (void *)(img->addr_phy.addr_y);
+    ion_buf.addr_vir = (void *)(img->addr_vir.addr_y);
     ion_buf.size = img->size.width * img->size.height * 3 / 2;
 
     cb_data_info.cb_type = PREVIEW_EVT_CB_FLUSH;
