@@ -61,10 +61,6 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
-ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
-LOCAL_SHARED_LIBRARIES += libamipengine
-endif
-
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libBokeh2Frames
 endif

@@ -23,8 +23,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
-	$(LOCAL_PATH)/../sensor/otp_drv \
-	$(LOCAL_PATH)/../arithmetic/filter/inc
+	$(LOCAL_PATH)/../sensor/otp_drv
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -78,7 +77,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
 	src/cmr_focus.c \
-	src/cmr_img_debug.c
+	src/cmr_img_debug.c \
+	src/cmr_filter.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \
@@ -115,8 +115,19 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
-ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
-	LOCAL_SHARED_LIBRARIES += libamipengine
+LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_filter/inc
+LOCAL_SRC_FILES+= src/sprd_filter.c
+LOCAL_SHARED_LIBRARIES += libSprdImageFilter
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=1
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/filter/inc
+LOCAL_SRC_FILES+= src/arcsoft_filter.c
+LOCAL_SHARED_LIBRARIES += libamipengine
+else
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
 endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
@@ -189,8 +200,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
-	$(LOCAL_PATH)/../sensor/otp_drv \
-	$(LOCAL_PATH)/../arithmetic/filter/inc
+	$(LOCAL_PATH)/../sensor/otp_drv
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
@@ -243,7 +253,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
 	src/cmr_focus.c \
-	src/cmr_img_debug.c
+	src/cmr_img_debug.c \
+	src/cmr_filter.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \
@@ -280,8 +291,19 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
-ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
-	LOCAL_SHARED_LIBRARIES += libamipengine
+LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_filter/inc
+LOCAL_SRC_FILES+= src/sprd_filter.c
+LOCAL_SHARED_LIBRARIES += libSprdImageFilter
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=1
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/filter/inc
+LOCAL_SRC_FILES+= src/arcsoft_filter.c
+LOCAL_SHARED_LIBRARIES += libamipengine
+else
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
 endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
@@ -353,8 +375,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
-	$(LOCAL_PATH)/../sensor/otp_drv \
-	$(LOCAL_PATH)/../arithmetic/filter/inc
+	$(LOCAL_PATH)/../sensor/otp_drv
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -407,7 +428,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
 	src/cmr_focus.c \
-	src/cmr_img_debug.c
+	src/cmr_img_debug.c \
+	src/cmr_filter.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \
@@ -438,8 +460,19 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
-ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
-	LOCAL_SHARED_LIBRARIES += libamipengine
+LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_filter/inc
+LOCAL_SRC_FILES+= src/sprd_filter.c
+LOCAL_SHARED_LIBRARIES += libSprdImageFilter
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=1
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/filter/inc
+LOCAL_SRC_FILES+= src/arcsoft_filter.c
+LOCAL_SHARED_LIBRARIES += libamipengine
+else
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
 endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_

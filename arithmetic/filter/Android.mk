@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifneq ($(PLATFORM_VERSION),4.4.4)
-#ifneq ($(strip $(TARGET_BOARD_ARCSOFT_FILTER)),false)
-LOCAL_PATH := $(call my-dir)
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
+LOCAL_PATH := $(call my-dir)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
@@ -32,6 +31,10 @@ LOCAL_MODULE_STEM_64 := libamipengine.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libamipengine.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libamipengine.so
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_PREBUILT)
 
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_PREBUILT)
 endif

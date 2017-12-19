@@ -895,6 +895,7 @@ enum ipm_class_type {
     IPM_TYPE_REFOCUS = 0x00000010,
     IPM_TYPE_3DNR = 0x00000020,
     IPM_TYPE_3DNR_PRE = 0x00000040,
+    IPM_TYPE_FILTER = 0x00000080,
 };
 
 enum img_fmt {
