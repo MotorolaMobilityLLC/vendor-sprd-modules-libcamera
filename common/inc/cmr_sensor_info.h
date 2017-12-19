@@ -459,18 +459,24 @@ struct sensor_single_otp_info {
 struct sensor_dual_otp_info {
     cmr_u8 dual_flag; /*for 3ddata calibration flag*/
     struct sensor_data_info data_3d;
+
+    struct sensor_otp_module_info master_module_info;
+    struct sensor_otp_af_info master_af_info;
     struct sensor_otp_iso_awb_info master_iso_awb_info;
     struct sensor_otp_lsc_info master_lsc_info;
     struct sensor_otp_optCenter_info master_optical_center_info;
-    struct sensor_otp_module_info master_module_info;
     struct sensor_otp_ae_info master_ae_info;
+    struct sensor_otp_pdaf_info master_pdaf_info;
+
     struct sensor_otp_lsc_info master_lsc_golden_info;
     struct sensor_otp_iso_awb_info master_awb_golden_info;
+
+    struct sensor_otp_module_info slave_module_info;
     struct sensor_otp_iso_awb_info slave_iso_awb_info;
     struct sensor_otp_lsc_info slave_lsc_info;
     struct sensor_otp_optCenter_info slave_optical_center_info;
-    struct sensor_otp_module_info slave_module_info;
     struct sensor_otp_ae_info slave_ae_info;
+
     struct sensor_otp_lsc_info slave_lsc_golden_info;
     struct sensor_otp_iso_awb_info slave_awb_golden_info;
 };

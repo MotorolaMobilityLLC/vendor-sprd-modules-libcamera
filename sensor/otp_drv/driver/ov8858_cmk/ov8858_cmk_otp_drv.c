@@ -542,13 +542,17 @@ static cmr_int ov8858_cmk_compatible_convert(cmr_handle otp_drv_handle,
     cmr_bzero(convert_data, sizeof(*convert_data));
     single_otp = &convert_data->single_otp;
     /*otp vendor type*/
-    convert_data->otp_vendor = OTP_VENDOR_DUAL_CAM_DUAL;
+    convert_data->otp_vendor = OTP_VENDOR_SINGLE_CAM_DUAL;
     /*otp raw data*/
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
     /*module data*/
     convert_data->dual_otp.master_module_info =
         (struct sensor_otp_section_info *)&format_data->module_dat;
+
+    /*af convert*/
+    convert_data->dual_otp.master_af_info =
+        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
 
     /*awb convert*/
     convert_data->dual_otp.master_iso_awb_info =
@@ -566,12 +570,8 @@ static cmr_int ov8858_cmk_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.master_ae_info =
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
-    /*af convert*/
-    single_otp->af_info =
-        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
-
     /*pdaf convert*/
-    single_otp->pdaf_info =
+    convert_data->dual_otp.master_pdaf_info =
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
     /*dual camera*/

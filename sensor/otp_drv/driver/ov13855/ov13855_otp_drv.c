@@ -393,6 +393,8 @@ static cmr_int ov13855_compatible_convert(cmr_handle otp_drv_handle,
     convert_data = malloc(sizeof(struct sensor_otp_cust_info));
     cmr_bzero(convert_data, sizeof(*convert_data));
     single_otp = &convert_data->single_otp;
+    /*otp vendor type*/
+    convert_data->otp_vendor = OTP_VENDOR_SINGLE;
     /*otp raw data*/
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;

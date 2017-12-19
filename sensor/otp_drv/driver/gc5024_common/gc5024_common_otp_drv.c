@@ -645,6 +645,10 @@ static cmr_int _gc5024_common_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.master_module_info =
         (struct sensor_otp_section_info *)&format_data->module_dat;
 
+    /*af convert*/
+    convert_data->dual_otp.master_af_info =
+        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
+
     /*awb convert*/
     convert_data->dual_otp.master_iso_awb_info =
         (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
@@ -660,14 +664,6 @@ static cmr_int _gc5024_common_compatible_convert(cmr_handle otp_drv_handle,
     /*ae convert*/
     convert_data->dual_otp.master_ae_info =
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
-
-    /*af convert*/
-    single_otp->af_info =
-        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
-
-    /*pdaf convert*/
-    single_otp->pdaf_info =
-        (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
     /*dual camera*/
     convert_data->dual_otp.dual_flag = 1;

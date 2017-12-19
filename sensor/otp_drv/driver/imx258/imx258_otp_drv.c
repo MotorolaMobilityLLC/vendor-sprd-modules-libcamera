@@ -398,6 +398,8 @@ static cmr_int imx258_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_otp_cust_info *convert_data =
         malloc(sizeof(struct sensor_otp_cust_info));
     cmr_bzero(convert_data, sizeof(*convert_data));
+    /*otp vendor type*/
+    convert_data->otp_vendor = OTP_VENDOR_SINGLE;
     /*otp raw data*/
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;

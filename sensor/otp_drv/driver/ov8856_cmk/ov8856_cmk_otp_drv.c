@@ -494,9 +494,13 @@ static cmr_int ov8856_cmk_compatible_convert(cmr_handle otp_drv_handle,
     }
     cmr_bzero(convert_data, sizeof(*convert_data));
     single_otp = &convert_data->single_otp;
+    /*otp vendor type*/
+    convert_data->otp_vendor = OTP_VENDOR_SINGLE_CAM_DUAL;
     /*otp raw data*/
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
+
+    /*dual_otp convert*/
     /*module data*/
     convert_data->dual_otp.master_module_info =
         (struct sensor_otp_section_info *)&format_data->module_dat;
@@ -521,10 +525,16 @@ static cmr_int ov8856_cmk_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.master_ae_info =
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
+    /*single_otp convert*/
+    /*module data*/
+    single_otp->module_info =
+        (struct sensor_otp_section_info *)&format_data->module_dat;
+
     /*af convert*/
     single_otp->af_info =
         (struct sensor_otp_section_info *)&format_data->af_cali_dat;
 
+    /*awb convert*/
     single_otp->iso_awb_info =
         (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
 
@@ -535,10 +545,6 @@ static cmr_int ov8856_cmk_compatible_convert(cmr_handle otp_drv_handle,
     /*lsc convert*/
     single_otp->lsc_info =
         (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
-
-    /*ae convert*/
-    single_otp->ae_info =
-        (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
     /*pdaf convert*/
     single_otp->pdaf_info =
