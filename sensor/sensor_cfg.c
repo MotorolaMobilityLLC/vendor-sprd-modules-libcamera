@@ -98,6 +98,9 @@ extern SENSOR_INFO_T g_imx230_mipi_raw_info;
 #ifdef IMX258
 extern SENSOR_INFO_T g_imx258_mipi_raw_info;
 #endif
+#ifdef IMX351
+extern SENSOR_INFO_T g_imx351_mipi_raw_info;
+#endif
 
 // cista area
 #ifdef C2390
@@ -283,6 +286,10 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef IMX230
     {MODULE_SUNNY ,"imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, NULL},
 #endif
+#ifdef IMX351
+    {MODULE_SUNNY ,"imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, NULL},
+#endif
+
 // cista area
 #ifdef C2390
     {MODULE_SUNNY, "c2390", &g_c2390_mipi_raw_info, {NULL, 0}, NULL},
@@ -342,6 +349,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef OV8856
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef OV8856_SHINE
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, NULL},
+#endif
 #ifdef OV8858
     {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8858_cmk_drv_entry},
 #endif
@@ -384,6 +394,9 @@ const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
 #endif
 #ifdef OV5675_DUAL
     {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
+#endif
+#ifdef OV8856_SHINE
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
 // gc area

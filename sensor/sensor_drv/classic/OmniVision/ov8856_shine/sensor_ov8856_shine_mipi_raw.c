@@ -19,10 +19,12 @@
 *
 */
 
-#define LOG_TAG "9850ka_ov8856"
-
-#define MIPI_NUM_4LANE // MIPI_NUM_4LANE
-
+#define LOG_TAG "ov8856_shine"
+#ifdef CONFIG_CAMERA_ISP_DIR_2_5
+#define MIPI_NUM_2LANE
+#else
+#define MIPI_NUM_4LANE
+#endif
 #ifdef MIPI_NUM_2LANE
 #include "sensor_ov8856_shine_mipi_raw_2lane.h"
 #else
