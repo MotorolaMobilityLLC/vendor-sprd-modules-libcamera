@@ -728,10 +728,10 @@ int SprdCamera3HWI::configureStreams(
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
             } else if (sprddefInfo.sprd_eis_enabled) {
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
-            } else if (sprddefInfo.sprd_3dnr_enabled) {
+            } /*else if (sprddefInfo.sprd_3dnr_enabled) {
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
-                    SprdCamera3RegularChannel::kMaxBuffers = 8;
-            } else
+                    SprdCamera3RegularChannel::kMaxBuffers = 4;
+            }*/ else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
             HAL_LOGD("slowmotion=%d, kMaxBuffers=%d", sprddefInfo.slowmotion,
                      SprdCamera3RegularChannel::kMaxBuffers);
@@ -1604,7 +1604,6 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     result_buffers->status = buffer_status;
                     result_buffers->acquire_fence = -1;
                     result_buffers->release_fence = -1;
-
                     result.result = NULL;
                     result.frame_number = i->frame_number;
                     result.num_output_buffers = 1;

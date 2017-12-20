@@ -984,7 +984,6 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     sem_wait(&threednr_prev_handle->sem_3dnr);
     int64_t time_1 = systemTime(CLOCK_MONOTONIC);
 
-    CMR_LOGI("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
     addr = &in->dst_frame.addr_vir;
     size = in->src_frame.size;
 
@@ -997,7 +996,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 #if 1
     {
         char flag[PROPERTY_VALUE_MAX];
-	static int index;
+        static int index;
         property_get("post_3dnr_save_scl_data", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_prev_handle->g_num: %d.", index,
@@ -1014,14 +1013,14 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             save_yuv(filename, (char *)in->dst_frame.addr_vir.addr_y,
                      threednr_prev_handle->small_width,
                      threednr_prev_handle->small_height);
-		index++;
+            index++;
         }
     }
 #endif
 
 
     // call 3dnr function
-    CMR_LOGD("Call the threednr_function(). before. cnt: %d, fd: 0x%x",
+    CMR_LOGV("Call the threednr_function(). before. cnt: %d, fd: 0x%x",
              threednr_prev_handle->common.save_frame_count, in->src_frame.fd);
 //    memcpy(pbig , (unsigned char*)(in->src_frame.addr_vir.addr_y) , threednr_prev_handle->width * threednr_prev_handle->height*3/2);
     big_buf.cpu_buffer.bufferY = (unsigned char*)(in->src_frame.addr_vir.addr_y);
@@ -1051,8 +1050,8 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
         return CMR_CAMERA_FAIL;
     }
     int64_t time_2;// = systemTime(CLOCK_MONOTONIC);
-    CMR_LOGI("yzl add threednr_function_pre smallbuf:%p , bigbuf:%p , video_buf:%p"  , small_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY ,
-		video_buf.cpu_buffer.bufferY);
+    /*CMR_LOGI("yzl add threednr_function_pre smallbuf:%p , bigbuf:%p , video_buf:%p"  , small_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY ,
+		video_buf.cpu_buffer.bufferY);*/
 //    if(video_buf.cpu_buffer.bufferY != NULL)
 //	memset(video_buf.cpu_buffer.bufferY , 0x89 , threednr_prev_handle->width* threednr_prev_handle->height*3/2);
 #if 0
@@ -1086,8 +1085,8 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 	{
 	if(video_buf.cpu_buffer.bufferY != NULL)
 	{
-                CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p , video buffer:%p" ,
-                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY , video_buf.cpu_buffer.bufferY);
+                /*CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p , video buffer:%p" ,
+                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY , video_buf.cpu_buffer.bufferY);*/
 		ret = threednr_function_pre(&small_buf, &big_buf, &video_buf);
 //                memset(video_buf.cpu_buffer.bufferY , 0x98 , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
                 //ANNOTATE_END();
@@ -1128,8 +1127,8 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
         		}
 			
 		}
-                 CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p" ,
-                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);
+                 /*CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p" ,
+                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);*/
 		ret = threednr_function_pre(&small_buf, &big_buf, NULL);
 		if(!strcmp(value , "1"))
                 {
@@ -1141,8 +1140,8 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                 	fclose(fp);
         		}
 		}
-		 CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p" ,
-                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);
+		 /*CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p" ,
+                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);*/
 		index++;
     	}
 }
@@ -1157,10 +1156,10 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
-     CMR_LOGI("temp:%d,%d,%d,%d" , ptemp2[0] , ptemp[1], ptemp1[2] , ptemp3[4]);
+    //CMR_LOGI("temp:%d,%d,%d,%d" , ptemp2[0] , ptemp[1], ptemp1[2] , ptemp3[4]);
 //    threednr_prev_handle->g_num++;
-    CMR_LOGI("yzl add 3dnr cost time:%lld ms , threednr_function_pre cost time:%lld ms" , (systemTime(CLOCK_MONOTONIC) - time_1)/1000000 , (systemTime(CLOCK_MONOTONIC)-time_2)/1000000);
-    CMR_LOGI("post sem");
+    //CMR_LOGI("yzl add 3dnr cost time:%lld ms , threednr_function_pre cost time:%lld ms" , (systemTime(CLOCK_MONOTONIC) - time_1)/1000000 , (systemTime(CLOCK_MONOTONIC)-time_2)/1000000);
+    //CMR_LOGI("post sem");
     sem_post(&threednr_prev_handle->sem_3dnr);
 
 	return ret;
@@ -1184,9 +1183,9 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGD("src fd 0x%x , dst fd 0x%x", src->fd, dst->fd);
+    /*CMR_LOGD("src fd 0x%x , dst fd 0x%x", src->fd, dst->fd);
     CMR_LOGD("src 0x%lx 0x%lx , dst 0x%lx 0x%lx", src->addr_phy.addr_y,
-             src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);
+             src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);*/
     CMR_LOGV(
         "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
         src->size.width, src->size.height, dst->size.width, dst->size.height,
@@ -1400,14 +1399,13 @@ static cmr_int threednr_process_prevthread_proc(struct cmr_msg *message,
         CMR_LOGI("3dnr thread inited.");
         break;
     case CMR_EVT_3DNR_PREV_START:
-        CMR_LOGD("CMR_EVT_3DNR_PREV_START.");
+        CMR_LOGV("CMR_EVT_3DNR_PREV_START.");
         struct class_3dnr_pre *threednr_prev_handle = (struct class_3dnr_pre *)class_handle;
         struct ipm_frame_out frame_out;
         info = *((struct process_pre_3dnr_info*)(message->data));
         threednr_process_prev_frame(class_handle ,&info.in , &info.out);
         //threednr_prev_handle->small_buf_info.used[info.small_buf_index] = 0;
         queue_preview_smallbufer(&(threednr_prev_handle->small_buf_queue) , &(info.smallbuf_node));
-	CMR_LOGD("CMR_EVT_3DNR_PREV_START after process small buff vir is index:%p set 0." , info.smallbuf_node.buf_vir);
         struct prev_threednr_info threednr_info;
         //threednr_info.frm_preview = info.in.src_frame;
         threednr_info = info.threednr_info;
@@ -1465,7 +1463,7 @@ static cmr_int dequeue_preview_smallbuffer(struct preview_smallbuf_queue *psmall
             psmall_buf_queue->tail = NULL;
         }
         
-	CMR_LOGI("yzl add dequeue small buff vir addr:%p" , pnode->buf_vir);
+		//CMR_LOGI("yzl add dequeue small buff vir addr:%p" , pnode->buf_vir);
         pthread_mutex_unlock(&psmall_buf_queue->mutex);
         return 0;
     }

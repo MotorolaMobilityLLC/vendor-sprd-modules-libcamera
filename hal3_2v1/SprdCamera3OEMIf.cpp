@@ -3008,7 +3008,7 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
 
     Callback_CapturePathFree(0, 0, 0, 0);
 
-    if (mUsingSW3DNR) {
+    if ((mUsingSW3DNR)&&(mVideoProcessedWithPreview)) {
         Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     }
