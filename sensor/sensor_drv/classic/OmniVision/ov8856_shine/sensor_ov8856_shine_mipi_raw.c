@@ -67,8 +67,8 @@ static void ov8856_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag *
         gain_a = SENSOR_MAX_GAIN;
 
         gain_d = (float)1.0f *gain * 0x400 / gain_a;
-        if ((cmr_u16)gain_d > (0x8 * 0x400 - 1))
-            gain_d = 0x8 * 0x400 - 1;
+        if ((cmr_u16)gain_d > (0x4 * 0x400 - 1))
+            gain_d = 0x4 * 0x400 - 1;
     }
 
 	SENSOR_LOGI("(cmr_u16)gain_a = %f ,(cmr_u16)gain_d = %f", gain_a ,gain_d);

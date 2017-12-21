@@ -401,7 +401,7 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
      .static_info = {.f_num = 200,
                      .focal_length = 354,
                      .max_fps = 30,
-                     .max_adgain = 128,
+                     .max_adgain = 62,
                      .ois_supported = 0,
                      .pdaf_supported = 0,
                      .exp_valid_frame_num = 1,
