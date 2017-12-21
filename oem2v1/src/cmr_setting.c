@@ -190,7 +190,6 @@ struct setting_hal_param {
     cmr_uint exif_mime_type;
     cmr_uint sprd_filter_type;
     cmr_uint sprd_flash_level;
-    EXIF_RATIONAL_T ExposureTime;
 };
 
 struct setting_camera_info {
@@ -1693,12 +1692,6 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             CMR_LOGV("set DateTimeOriginal.");
         }
     }
-    if ((NULL != p_exif_info->spec_ptr) &&
-        (NULL != p_exif_info->spec_ptr->pic_taking_cond_ptr) &&
-        hal_param->ExposureTime.denominator != 0) {
-        p_exif_info->spec_ptr->pic_taking_cond_ptr->ExposureTime =
-            hal_param->ExposureTime;
-    }
 
     parm->exif_all_info_ptr = p_exif_info;
 
@@ -2201,19 +2194,6 @@ setting_get_yuv_callback_enable(struct setting_component *cpt,
     parm->cmd_type_value = hal_param->sprd_yuv_callback_enable;
     CMR_LOGD("sprd_yuv_callback_enable=%ld",
              hal_param->sprd_yuv_callback_enable);
-
-    return ret;
-}
-
-static cmr_int
-setting_set_exif_exposure_time(struct setting_component *cpt,
-                               struct setting_cmd_parameter *parm) {
-    cmr_int ret = 0;
-    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-    hal_param->ExposureTime = *((EXIF_RATIONAL_T *)parm->cmd_type_value);
-    CMR_LOGD("ExposureTime %d %d", hal_param->ExposureTime.numerator,
-             hal_param->ExposureTime.denominator);
 
     return ret;
 }
@@ -3599,8 +3579,6 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_flash_level);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_GET_FLASH_LEVEL,
                              setting_get_flash_level);
-    cmr_add_cmd_fun_to_table(SETTING_SET_EXIF_EXPOSURE_TIME,
-                             setting_set_exif_exposure_time);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_TYPE_MAX, NULL);
     cmr_add_cmd_fun_to_table(SETTING_GET_PREVIEW_ANGLE,
                              setting_get_preview_angle);
