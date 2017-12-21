@@ -996,7 +996,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 #if 1
     {
         char flag[PROPERTY_VALUE_MAX];
-        static int index;
+        static int index=0;
         property_get("post_3dnr_save_scl_data", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_prev_handle->g_num: %d.", index,
@@ -1022,22 +1022,22 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     // call 3dnr function
     CMR_LOGV("Call the threednr_function(). before. cnt: %d, fd: 0x%x",
              threednr_prev_handle->common.save_frame_count, in->src_frame.fd);
-//    memcpy(pbig , (unsigned char*)(in->src_frame.addr_vir.addr_y) , threednr_prev_handle->width * threednr_prev_handle->height*3/2);
+    //memcpy(pbig , (unsigned char*)(in->src_frame.addr_vir.addr_y) , threednr_prev_handle->width * threednr_prev_handle->height*3/2);
     big_buf.cpu_buffer.bufferY = (unsigned char*)(in->src_frame.addr_vir.addr_y);
     big_buf.cpu_buffer.bufferU =
         big_buf.cpu_buffer.bufferY + threednr_prev_handle->width * threednr_prev_handle->height;
     big_buf.cpu_buffer.bufferV = big_buf.cpu_buffer.bufferU;
     big_buf.cpu_buffer.fd = in->src_frame.fd;
-//    memcpy(psmall , (unsigned char *)in->dst_frame.addr_vir.addr_y , threednr_prev_handle->small_width * threednr_prev_handle->small_height*3/2);
-    small_buf.cpu_buffer.bufferY = 
+    //memcpy(psmall , (unsigned char *)in->dst_frame.addr_vir.addr_y , threednr_prev_handle->small_width * threednr_prev_handle->small_height*3/2);
+    small_buf.cpu_buffer.bufferY =
         (unsigned char *)in->dst_frame.addr_vir.addr_y;//small_buf_vir[cur_frm_idx];
     small_buf.cpu_buffer.bufferU =
         small_buf.cpu_buffer.bufferY +
         threednr_prev_handle->small_width * threednr_prev_handle->small_height;
     small_buf.cpu_buffer.bufferV = small_buf.cpu_buffer.bufferU;
     small_buf.cpu_buffer.fd = 0;//threednr_prev_handle->small_buf_fd[cur_frm_idx];
-//    if(0 != out->dst_frame.addr_vir.addr_y)
-//    memcpy(pvideo , (unsigned char *)out->dst_frame.addr_vir.addr_y , threednr_prev_handle->width * threednr_prev_handle->height*3/2);
+    //if(0 != out->dst_frame.addr_vir.addr_y)
+    //memcpy(pvideo , (unsigned char *)out->dst_frame.addr_vir.addr_y , threednr_prev_handle->width * threednr_prev_handle->height*3/2);
     video_buf.cpu_buffer.bufferY = (unsigned char *)out->dst_frame.addr_vir.addr_y;
     video_buf.cpu_buffer.bufferU = video_buf.cpu_buffer.bufferY + threednr_prev_handle->width * threednr_prev_handle->height;
     video_buf.cpu_buffer.bufferV = video_buf.cpu_buffer.bufferU;
@@ -1052,112 +1052,91 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     int64_t time_2;// = systemTime(CLOCK_MONOTONIC);
     /*CMR_LOGI("yzl add threednr_function_pre smallbuf:%p , bigbuf:%p , video_buf:%p"  , small_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY ,
 		video_buf.cpu_buffer.bufferY);*/
-//    if(video_buf.cpu_buffer.bufferY != NULL)
-//	memset(video_buf.cpu_buffer.bufferY , 0x89 , threednr_prev_handle->width* threednr_prev_handle->height*3/2);
+    //if(video_buf.cpu_buffer.bufferY != NULL)
+    //memset(video_buf.cpu_buffer.bufferY , 0x89 , threednr_prev_handle->width* threednr_prev_handle->height*3/2);
 #if 0
 	 FILE *fp;
-        char filename[256];
-        static int index = 0;
-	sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_before_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
-	fp = fopen(filename , "wb");
-        if(fp)
-        {
-                fwrite(big_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->width*threednr_prev_handle->height*3/2 , fp);
-                fclose(fp);
-        }	
-#endif	
-	static int index_total = 0;
-	int cycle_index;
-	static int64_t time_total = 0;
-	cycle_index = index_total%100;
-	if(cycle_index == 0)
+     char filename[256];
+     static int index = 0;
+	 sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_before_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
+	 fp = fopen(filename , "wb");
+     if(fp) {
+         fwrite(big_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->width*threednr_prev_handle->height*3/2 , fp);
+         fclose(fp);
+     }
+#endif
+    static int index_total = 0;
+    int cycle_index;
+    static int64_t time_total = 0;
+    cycle_index = index_total%100;
+    if(cycle_index == 0)
 	   time_total = systemTime(CLOCK_MONOTONIC);
-	if(cycle_index == 99)
-	{
-		CMR_LOGI("yzl add costtime:%lld ms , index_total:%d" , (systemTime(CLOCK_MONOTONIC) - time_total)/1000000 , index_total);
-	}
-	index_total++;
-	time_2 = systemTime(CLOCK_MONOTONIC);
-	
+	if(cycle_index == 99) {
+       CMR_LOGI("3dnr effect costtime:%lld ms , index_total:%d" , (systemTime(CLOCK_MONOTONIC) - time_total)/1000000 , index_total);
+    }
+    index_total++;
+    time_2 = systemTime(CLOCK_MONOTONIC);
+
 	char value[128];
 	property_get("3dnrclose" , value , "0");
-	if(!strcmp(value , "0"))
-	{
-	if(video_buf.cpu_buffer.bufferY != NULL)
-	{
-                /*CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p , video buffer:%p" ,
-                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY , video_buf.cpu_buffer.bufferY);*/
-		ret = threednr_function_pre(&small_buf, &big_buf, &video_buf);
-//                memset(video_buf.cpu_buffer.bufferY , 0x98 , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
-                //ANNOTATE_END();
-       //         memcpy(video_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
-       //         memcpy((void*)ptemp , (uint8_t*)big_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
-       //         memcpy((void*)ptemp1 , (uint8_t*)small_buf.cpu_buffer.bufferY , threednr_prev_handle->small_width*threednr_prev_handle->small_height*3/2);
-       //         memcpy( (void*)ptemp2 , (uint8_t*)video_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
-       //         memcpy((void*)ptemp3 , (uint8_t*)video_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
-       //         if(ptemp2[6] || ptemp[1] || ptemp1[0] || ptemp3[5])
-                {
-        //         CMR_LOGI("test");
+    if(!strcmp(value , "0")) {
+        if(video_buf.cpu_buffer.bufferY != NULL) {
+            CMR_LOGV("add threednr_function_pre previewbuffer with video :%p , small:%p , video buffer:%p" , 
+                big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY , video_buf.cpu_buffer.bufferY);
+
+            if((small_buf.cpu_buffer.bufferY != NULL) && (big_buf.cpu_buffer.bufferY != NULL))
+               ret = threednr_function_pre(&small_buf, &big_buf, &video_buf);
+            else{
+               CMR_LOGE("preview or scale image is null, direct copy video buffer");
+               memcpy(video_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
+            }
+        } else {
+			static int index = 0;
+            ptemp[0] = 1;
+		    property_get("3dnr_save" , value , "0");
+		    FILE *fp;
+		    sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
+            if(!strcmp(value , "1")) {
+                sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
+			    fp = fopen(filename , "wb");
+                if(fp) {
+                    fwrite(big_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->width*threednr_prev_handle->height*3/2 , fp);
+                    fclose(fp);
                 }
-	}
-     
-	else
-	{
-                
-		static int index = 0;
-                ptemp[0] = 1;
-		property_get("3dnr_save" , value , "0");
-		FILE *fp;
-		sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
-		if(!strcmp(value , "1"))
-		{
-			 sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
-			 fp = fopen(filename , "wb");
-			 if(fp)
-        		{
-                	fwrite(big_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->width*threednr_prev_handle->height*3/2 , fp);
-                	fclose(fp);
-        		}
-			sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_index%d.yuv" , threednr_prev_handle->small_width , threednr_prev_handle->small_height , index);
-                         fp = fopen(filename , "wb");
-			if(fp)
-        		{
-                	fwrite(small_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->small_width*threednr_prev_handle->small_height*3/2 , fp);
-                	fclose(fp);
-        		}
-			
-		}
-                 /*CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p" ,
-                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);*/
-		ret = threednr_function_pre(&small_buf, &big_buf, NULL);
-		if(!strcmp(value , "1"))
-                {
-                         sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_result_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
-                         fp = fopen(filename , "wb");
-                         if(fp)
-        		{
-               	 	fwrite(big_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->width*threednr_prev_handle->height*3/2 , fp);
-                	fclose(fp);
-        		}
-		}
-		 /*CMR_LOGI("yzl add threednr_function_pre previewbuffer:%p , small:%p" ,
-                         big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);*/
-		index++;
-    	}
-}
-#if 1
-	else
-        {
-                CMR_LOGI("yzl add close 3dnr");
-                if(video_buf.cpu_buffer.bufferY != NULL)
-                        memcpy(video_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
+			    sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_index%d.yuv" , threednr_prev_handle->small_width , threednr_prev_handle->small_height , index); 
+                fp = fopen(filename , "wb");
+
+                if(fp) {
+                    fwrite(small_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->small_width*threednr_prev_handle->small_height*3/2 , fp);
+                    fclose(fp);
+                }
+            }
+
+            if((small_buf.cpu_buffer.bufferY != NULL) && (big_buf.cpu_buffer.bufferY != NULL))
+                ret = threednr_function_pre(&small_buf, &big_buf, NULL);
+
+            if(!strcmp(value , "1")) {
+                sprintf(filename , "/data/misc/cameraserver/%dx%d_preview_result_index%d.yuv" , threednr_prev_handle->width , threednr_prev_handle->height , index);
+                fp = fopen(filename , "wb");
+                if(fp){
+                    fwrite(big_buf.cpu_buffer.bufferY , 1 , threednr_prev_handle->width*threednr_prev_handle->height*3/2 , fp);
+                    fclose(fp);
+                }
+            }
+		    CMR_LOGV("add threednr_function_pre previewbuffer:%p , small:%p" , big_buf.cpu_buffer.bufferY ,  small_buf.cpu_buffer.bufferY);
+            index++;
         }
-#endif
+    }else {
+        CMR_LOGI("force to close 3dnr, only by pass");
+        if(video_buf.cpu_buffer.bufferY != NULL)
+             memcpy(video_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY , threednr_prev_handle->width*threednr_prev_handle->height*3/2);
+    }
+
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
     //CMR_LOGI("temp:%d,%d,%d,%d" , ptemp2[0] , ptemp[1], ptemp1[2] , ptemp3[4]);
-//    threednr_prev_handle->g_num++;
+    //threednr_prev_handle->g_num++;
     //CMR_LOGI("yzl add 3dnr cost time:%lld ms , threednr_function_pre cost time:%lld ms" , (systemTime(CLOCK_MONOTONIC) - time_1)/1000000 , (systemTime(CLOCK_MONOTONIC)-time_2)/1000000);
     //CMR_LOGI("post sem");
     sem_post(&threednr_prev_handle->sem_3dnr);
@@ -1167,14 +1146,11 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 
 static cmr_int threednr_post_proc(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-	//threednr_callback();
     return ret;
 }
 
 cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
                                     struct img_frm *dst) {
-    //ATRACE_BEGIN(__FUNCTION__);
-
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
@@ -1183,9 +1159,7 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    /*CMR_LOGD("src fd 0x%x , dst fd 0x%x", src->fd, dst->fd);
-    CMR_LOGD("src 0x%lx 0x%lx , dst 0x%lx 0x%lx", src->addr_phy.addr_y,
-             src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);*/
+
     CMR_LOGV(
         "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
         src->size.width, src->size.height, dst->size.width, dst->size.height,
@@ -1201,7 +1175,6 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
 exit:
     CMR_LOGI("done %ld", ret);
 
-    //ATRACE_END();
     return ret;
 }
 
