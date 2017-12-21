@@ -32,7 +32,7 @@ cmr_s32 isp_u_yuv_precdn_block(cmr_handle handle, void *block_info)
 	file = (struct isp_file *)(handle);
 
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_PRE_CDN;
+	param.sub_block = ISP_BLOCK_YUV_PRECDN;
 	param.property = ISP_PRO_PRE_CDN_BLOCK;
 	param.property_param = block_info;
 

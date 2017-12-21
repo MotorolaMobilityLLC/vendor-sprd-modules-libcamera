@@ -878,6 +878,13 @@ struct isp_iircnr_iir_param {
 
 struct isp_iircnr_yrandom_param {
 	struct isp_dev_yrandom_info cur;
+#if defined(CONFIG_ISP_2_4)
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+#endif
 };
 
 

@@ -57,10 +57,11 @@ cmr_u32 _pm_uv_postcdn_convert_param(void *dst_postcdn_param, cmr_u32 strength_l
 
 		dst_ptr->cur.uvthr0 = postcdn_param[strength_level].thruv.thr0;
 		dst_ptr->cur.uvthr1 = postcdn_param[strength_level].thruv.thr1;
-		dst_ptr->cur.thr_uv.thru0 = postcdn_param[strength_level].thru.thr0;
-		dst_ptr->cur.thr_uv.thru1 = postcdn_param[strength_level].thru.thr1;
-		dst_ptr->cur.thr_uv.thrv0 = postcdn_param[strength_level].thrv.thr0;
-		dst_ptr->cur.thr_uv.thrv1 = postcdn_param[strength_level].thrv.thr1;
+		dst_ptr->cur.thru0 = postcdn_param[strength_level].thru.thr0;
+		dst_ptr->cur.thru1 = postcdn_param[strength_level].thru.thr1;
+		dst_ptr->cur.thrv0 = postcdn_param[strength_level].thrv.thr0;
+		dst_ptr->cur.thrv1 = postcdn_param[strength_level].thrv.thr1;
+		dst_ptr->cur.start_row_mod4 = 0;
 		dst_ptr->cur.bypass = postcdn_param[strength_level].bypass;
 	}
 	return rtn;

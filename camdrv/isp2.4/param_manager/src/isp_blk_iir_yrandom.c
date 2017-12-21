@@ -16,22 +16,60 @@
 #define LOG_TAG "isp_blk_yrandom"
 #include "isp_blocks_cfg.h"
 
+static cmr_s32 _pm_iir_yrandom_convert_param(void *dst_iir_yrandom_param, cmr_s32 strength_level, cmr_s32 mode_flag, cmr_s32 scene_flag)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
+	cmr_u32 total_offset_units = 0;
+	struct isp_iircnr_yrandom_param *dst_ptr = (struct isp_iircnr_yrandom_param*)dst_iir_yrandom_param;
+	struct sensor_iircnr_yrandom_level *iir_yrandom_param = PNULL;
+
+	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
+		iir_yrandom_param = (struct sensor_iircnr_yrandom_level*)(dst_ptr->param_ptr);
+	} else {
+		cmr_u32 *multi_nr_map_ptr = PNULL;
+		multi_nr_map_ptr = (cmr_u32 *)dst_ptr->scene_ptr;
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		iir_yrandom_param = (struct sensor_iircnr_yrandom_level*)((cmr_u8 *) dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_iircnr_yrandom_level));
+	}
+
+	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
+	if (iir_yrandom_param != NULL) {
+		dst_ptr->cur.seed = iir_yrandom_param[strength_level].yrandom_seed;
+		dst_ptr->cur.offset = iir_yrandom_param[strength_level].yrandom_offset;
+		dst_ptr->cur.shift =  iir_yrandom_param[strength_level].yrandom_shift;
+		for (i = 0; i < 8; i++) {
+			dst_ptr->cur.takeBit[i] =  iir_yrandom_param[strength_level].yrandom_takebit[i];
+		}
+		dst_ptr->cur.bypass =  iir_yrandom_param[strength_level].bypass;
+	} else {
+		ISP_LOGE("error: the subscript is out of bounds-array");
+	}
+
+	return rtn;
+}
+
 cmr_s32 _pm_iircnr_yrandom_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0;
 	struct isp_iircnr_yrandom_param *dst_ptr = (struct isp_iircnr_yrandom_param *)dst_iircnr_param;
-	struct sensor_iircnr_yrandom_param *src_ptr = (struct sensor_iircnr_yrandom_param *)src_iircnr_param;
+	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_iircnr_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
 
-	dst_ptr->cur.seed = src_ptr->iircnr_yrandom_level.yrandom_seed;
-	dst_ptr->cur.offset = src_ptr->iircnr_yrandom_level.yrandom_offset;
-	dst_ptr->cur.shift = src_ptr->iircnr_yrandom_level.yrandom_shift;
-	for (i = 0; i < 8; i++) {
-		dst_ptr->cur.takeBit[i] = src_ptr->iircnr_yrandom_level.yrandom_takebit[i];
+	dst_ptr->param_ptr = src_ptr->param_ptr;
+	dst_ptr->cur_level = src_ptr->default_strength_level;
+	dst_ptr->level_num = src_ptr->level_number;
+	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
+	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
+
+	rtn = _pm_iir_yrandom_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	dst_ptr->cur.bypass |= header_ptr->bypass;
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to convert pm iircnr iir param !");
+		return rtn;
 	}
 	header_ptr->is_update = ISP_ONE;
 
@@ -44,10 +82,50 @@ cmr_s32 _pm_iircnr_yrandom_set_param(void *iircnr_param, cmr_u32 cmd, void *para
 
 	struct isp_iircnr_yrandom_param *dst_ptr = (struct isp_iircnr_yrandom_param *)iircnr_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
-	UNUSED(cmd);
 
-	header_ptr->is_update = ISP_ONE;
-	dst_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
+	switch (cmd) {
+	case ISP_PM_BLK_IIR_YRANDOM_BYPASS:
+		dst_ptr->cur.bypass = *((cmr_u32 *)param_ptr0);
+		/*header_ptr->is_update = ISP_ONE;*/
+		break;
+
+	case ISP_PM_BLK_SMART_SETTING:
+		{
+			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
+			struct isp_range val_range = { 0, 0 };
+			cmr_u32 cur_level = 0;
+
+			val_range.min = 0;
+			val_range.max = 255;
+
+			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to check pm smart param !");
+				return rtn;
+			}
+
+			cur_level = (cmr_u32) block_result->component[0].fix_data[0];
+
+			if (cur_level != dst_ptr->cur_level || nr_tool_flag[6] || block_result->mode_flag_changed) {
+				dst_ptr->cur_level = cur_level;
+				header_ptr->is_update = ISP_ONE;
+				nr_tool_flag[6] = 0;
+				block_result->mode_flag_changed = 0;
+				rtn = _pm_iircnr_iir_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
+				dst_ptr->cur.bypass |= header_ptr->bypass;
+				if (ISP_SUCCESS != rtn) {
+					ISP_LOGE("fail to convert pm iircnr iir param !");
+					return rtn;
+				}
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ccnr_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }
@@ -68,10 +146,7 @@ cmr_s32 _pm_iircnr_yrandom_get_param(void *iircnr_param, cmr_u32 cmd, void *rtn_
 		param_data_ptr->data_size = sizeof(iircnr_ptr->cur);
 		*update_flag = 0;
 		break;
-	case ISP_PM_BLK_GRGB_BYPASS:
-		param_data_ptr->data_ptr = (void *)&iircnr_ptr->cur.bypass;
-		param_data_ptr->data_size = sizeof(iircnr_ptr->cur.bypass);
-		break;
+
 	default:
 		break;
 	}

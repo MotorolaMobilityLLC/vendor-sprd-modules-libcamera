@@ -889,6 +889,18 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 					nr_set_size = sizeof(struct sensor_iircnr_level);
 				}
 				break;
+			case ISP_BLK_IIRCNR_YRANDOM:{
+					isp_blk_nr_type = ISP_BLK_IIRCNR_YRANDOM_T;
+					nr_set_addr = (intptr_t) (fix_data_ptr->nr.nr_set_group.iircnr_yrandom);
+					nr_set_size = sizeof(struct sensor_iircnr_yrandom_level);
+				}
+				break;
+			case ISP_BLK_UV_PREFILTER:{
+					isp_blk_nr_type = ISP_BLK_PREF_T;
+					nr_set_addr = (intptr_t) (fix_data_ptr->nr.nr_set_group.prfy);
+					nr_set_size = sizeof(struct sensor_prfy_level);
+				}
+				break;
 #ifdef NOT_EXIST_IN_ISP2_0
 			case ISP_BLK_YUV_NOISEFILTER:{
 					isp_blk_nr_type = ISP_BLK_YUV_NOISEFILTER_T;
@@ -918,7 +930,10 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			    || src_header[j].block_id == ISP_BLK_RGB_PRECDN
 			    || src_header[j].block_id == ISP_BLK_UV_CDN
 			    || src_header[j].block_id == ISP_BLK_UV_POSTCDN
-			    || src_header[j].block_id == ISP_BLK_EDGE || src_header[j].block_id == ISP_BLK_IIRCNR_IIR) {
+			    || src_header[j].block_id == ISP_BLK_EDGE
+			    || src_header[j].block_id == ISP_BLK_IIRCNR_IIR
+			    || src_header[j].block_id == ISP_BLK_IIRCNR_YRANDOM
+			    || src_header[j].block_id == ISP_BLK_UV_PREFILTER) {
 				nr_param_update_info.param_type = isp_blk_nr_type;
 				nr_param_update_info.nr_param_ptr = (cmr_uint *) nr_set_addr;
 				nr_param_update_info.size_of_per_unit = nr_set_size * nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
