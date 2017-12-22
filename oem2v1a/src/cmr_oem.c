@@ -8034,6 +8034,11 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         CMR_LOGE("failed to get rot angle %ld", ret);
         goto exit;
     }
+    if (0 == out_ptr->post_proc_setting.chn_out_frm[0].fd) {
+        ret = CMR_CAMERA_FAIL;
+        CMR_LOGE("failed to get cap mem(fd is NULL) %ld", ret);
+        goto exit;
+    }
     out_ptr->camera_id = cxt->camera_id;
     out_ptr->is_hdr = camera_get_hdr_flag(cxt);
     out_ptr->is_3dnr = camera_get_3dnr_flag(cxt);
