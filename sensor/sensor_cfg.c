@@ -306,6 +306,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef S5K3P8SM
     {MODULE_SUNNY ,"s5k3p8sm", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &s5k3p8sm_truly_drv_entry},
 #endif
+#ifdef S5K5E8YX
+    {MODULE_SUNNY ,"s5k3p8sm", &g_s5k5e8yx_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#endif
 
     {0, "0", NULL, {NULL, 0}, NULL}};
 
