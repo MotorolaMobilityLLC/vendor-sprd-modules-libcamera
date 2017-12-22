@@ -117,6 +117,27 @@ cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *p
 	return ret;
 }
 
+cmr_s32 isp_dev_mask_3a_int(cmr_handle handle)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	cmr_u32 mask = 0;
+
+	if (!handle) {
+		ISP_LOGE("fail to check handle");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_MASK_3A, mask);
+	if (ret) {
+		ISP_LOGE("fail to set mask %d", ret);
+	}
+
+	return ret;
+}
+
 cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
 {
 	cmr_s32 ret = 0;

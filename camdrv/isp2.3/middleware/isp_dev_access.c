@@ -410,6 +410,12 @@ cmr_int isp_dev_access_deinit(cmr_handle handle)
 	cmr_uint type = 0;
 
 	ISP_CHECK_HANDLE_VALID(handle);
+	ISP_LOGI("X");
+
+	ret = isp_dev_mask_3a_int(cxt->isp_driver_handle);
+	if (ret) {
+		ISP_LOGW("fail to mask 3a but deinit can continue");
+	}
 
 	if (statis_mem_info->isp_statis_alloc_flag == 1) {
 		type = CAMERA_ISP_STATIS;

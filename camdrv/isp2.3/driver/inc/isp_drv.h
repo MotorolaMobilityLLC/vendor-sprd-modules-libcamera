@@ -245,11 +245,12 @@ cmr_s32 isp_dev_close(cmr_handle handle);
 cmr_s32 isp_dev_reset(cmr_handle handle);
 cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *param);
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param);
+cmr_s32 isp_dev_mask_3a_int(cmr_handle handle);
 
 /*ISP 3DNR*/
 cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
-cmr_s32 isp_u_3dnr_cap_block(isp_handle handle, void *param_ptr);
-cmr_s32 isp_u_3dnr_pre_block(isp_handle handle, void *param_ptr);
+cmr_s32 isp_u_3dnr_cap_block(cmr_handle handle, void *param_ptr);
+cmr_s32 isp_u_3dnr_pre_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Capability*/
 cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height);
