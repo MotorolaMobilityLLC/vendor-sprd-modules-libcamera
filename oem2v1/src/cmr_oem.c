@@ -351,7 +351,7 @@ static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle,
 static void camera_filter_doeffect(cmr_handle oem_handle, struct img_frm *src,
                                    cmr_s32 type);
 static cmr_int camera_set_flash_level(void *handler, cmr_uint target_level);
-
+static void camera_set_exif_exposure_time(cmr_handle oem_handle);
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info,
                                         struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param,
@@ -6935,6 +6935,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         if (param_ptr->cmd_value == FLASH_TORCH) {
             // get current flash level
             struct setting_cmd_parameter setting_param;
+            setting_param.camera_id = cxt->camera_id;
             cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                               CAMERA_PARAM_SPRD_GET_FLASH_LEVEL,
                               &setting_param);
@@ -7731,6 +7732,25 @@ void camera_get_iso_value(cmr_handle oem_handle) {
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_ISOSPEEDRATINGS, isp_param);
     }
+}
+void camera_set_exif_exposure_time(cmr_handle oem_handle) {
+
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
+    struct exif_spec_pic_taking_cond_tag exif_pic_info;
+    EXIF_RATIONAL_T exposure_time;
+    cmr_sensor_get_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                        &exif_pic_info);
+    exposure_time.numerator = exif_pic_info.ExposureTime.numerator;
+    exposure_time.denominator = exif_pic_info.ExposureTime.denominator;
+
+    setting_param.camera_id = cxt->camera_id;
+    setting_param.cmd_type_value = (cmr_uint)&exposure_time;
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                      SETTING_SET_EXIF_EXPOSURE_TIME, &setting_param);
+
+    CMR_LOGD("exposure_time_numerator %d exposure_time_denominator %d",
+             exposure_time.numerator, exposure_time.denominator);
 }
 
 cmr_int camera_get_ae_lum_value(cmr_handle oem_handle) {
@@ -9098,8 +9118,6 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             CMR_LOGE("failed to set preview param %ld", ret);
             goto exit;
         }
-    } else {
-        camera_get_iso_value(oem_handle);
     }
 
     cmr_bzero(&snp_param, sizeof(struct snapshot_param));
@@ -9178,6 +9196,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
     camera_snapshot_started((cmr_handle)cxt);
+    camera_set_exif_exposure_time(oem_handle);
+    camera_get_iso_value(oem_handle);
     ret = camera_get_cap_time((cmr_handle)cxt);
     cxt->snp_cxt.status = SNAPSHOTING;
     cxt->snp_cxt.post_proc_setting.actual_snp_size =
@@ -11065,7 +11085,6 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
     return ret;
 }
 
-
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -11076,7 +11095,6 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
 
     return ret;
 }
-
 
 cmr_int camera_set_flash_level(void *handler, cmr_uint target_level) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
