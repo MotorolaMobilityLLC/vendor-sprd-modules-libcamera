@@ -1309,6 +1309,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.cur_flicker = cur_flicker;
 	afl_input.vir_addr = u_addr;
 	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
+	afl_input.handle_pm = cxt->handle_pm;
 
 	memset((void *)&cxt->afl_stat_buf, 0, sizeof(cxt->afl_stat_buf));
 	cxt->afl_stat_buf.buf_size = statis_info->buf_size;
