@@ -265,7 +265,11 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		lsc_param->lsc_otp_table_height = gain_h;
 		lsc_param->lsc_otp_grid = lsc_otp_grid;
 		lsc_param->lsc_otp_table_addr = lsc_table;
+#ifdef CONFIG_ISP_2_3
+		lsc_param->lsc_otp_table_en = 0;
+#else
 		lsc_param->lsc_otp_table_en = 1;
+#endif
 
 		ISP_LOGI("init_lsc_otp, lsc_otp_width=%d, lsc_otp_height=%d, gain_w=%d, gain_h=%d, lsc_otp_grid=%d", lsc_otp_width, lsc_otp_height, gain_w, gain_h, lsc_otp_grid);
 		ISP_LOGI("init_lsc_otp, lsc_table0_RGGB=[%d,%d,%d,%d]", lsc_table[0], lsc_table[gain_w*gain_h], lsc_table[gain_w*gain_h*2], lsc_table[gain_w*gain_h*3]);
