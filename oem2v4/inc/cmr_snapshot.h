@@ -22,7 +22,7 @@ extern "C" {
 
 #include "cmr_common.h"
 #include "SprdOEMCamera.h"
-#include "jpeg_codec.h"
+#include "cmr_jpeg.h"
 
 enum snapshot_cb_type {
     SNAPSHOT_RSP_CB_SUCCESS,

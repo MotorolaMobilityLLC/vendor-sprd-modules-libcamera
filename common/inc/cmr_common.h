@@ -502,7 +502,9 @@ struct cmr_op_mean {
     cmr_u32 slice_num;
     cmr_u32 is_sync;
     cmr_u32 is_thumb;
-    cmr_u32 rot;
+    cmr_u8 mirror;
+    cmr_u8 flip;
+    cmr_u8 rot;
     cmr_u32 quality_level;
     cmr_uint out_param;
     struct img_frm temp_buf;
@@ -949,24 +951,6 @@ struct img_depth_map {
 };
 
 /*************************** ipm data type **************************/
-
-/******************************* jpeg data type *******************************/
-struct jpeg_enc_cb_param {
-    cmr_uint stream_buf_phy;
-    cmr_uint stream_buf_vir;
-    cmr_u32 stream_size;
-    cmr_u32 slice_height;
-    cmr_u32 total_height;
-    cmr_u32 is_thumbnail;
-};
-
-struct jpeg_dec_cb_param {
-    cmr_u32 slice_height;
-    cmr_u32 total_height;
-    struct img_frm *src_img;
-    struct img_data_end data_endian;
-};
-/******************************* jpeg data type *******************************/
 
 /*********************** camera_takepic_step timestamp  ***********************/
 enum CAMERA_TAKEPIC_STEP {

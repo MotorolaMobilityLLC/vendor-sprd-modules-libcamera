@@ -11,8 +11,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/src \
 	$(LOCAL_PATH)/sensor/inc \
 	$(LOCAL_PATH)/sensor \
-	$(LOCAL_PATH)/jpeg/inc \
-	$(LOCAL_PATH)/jpeg/src \
+	$(LOCAL_PATH)/jpeg \
 	$(LOCAL_PATH)/common/inc \
 	$(LOCAL_PATH)/hal1.0/inc \
 	$(LOCAL_PATH)/tool/auto_test/inc \

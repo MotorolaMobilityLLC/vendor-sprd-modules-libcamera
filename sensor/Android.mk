@@ -55,7 +55,7 @@ endif
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../common/inc \
-	$(LOCAL_PATH)/../jpeg/inc \
+	$(LOCAL_PATH)/../jpeg \
 	$(LOCAL_PATH)/../vsp/inc \
 	$(LOCAL_PATH)/../tool/mtrace \
 	$(LOCAL_PATH)/dummy \

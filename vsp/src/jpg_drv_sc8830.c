@@ -17,7 +17,6 @@
 **---------------------------------------------------------------------------*/
 #include "sci_types.h"
 #include "jpg_drv_sc8830.h"
-#include "jpegcodec_global.h"
 #if !defined(_VSP_)
 #include "common_global.h"
 #include "bsm_global.h"

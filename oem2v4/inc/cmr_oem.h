@@ -27,7 +27,7 @@ extern "C" {
 #include "cmr_sensor.h"
 #include "isp_app.h"
 #include "cmr_cvt.h"
-#include "jpeg_codec.h"
+#include "cmr_jpeg.h"
 #include "jpeg_exif_header.h"
 #include "SprdOEMCamera.h"
 #include "cmr_snapshot.h"

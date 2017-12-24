@@ -51,7 +51,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/inc \
 	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/isp_calibration/inc \
-	$(LOCAL_PATH)/../../jpeg/inc \
+	$(LOCAL_PATH)/../../jpeg \
 	$(LOCAL_PATH)/../../vsp/inc \
 	$(LOCAL_PATH)/../../tool/mtrace
 
