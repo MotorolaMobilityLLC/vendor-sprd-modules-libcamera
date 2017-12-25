@@ -78,13 +78,13 @@
 #define SNAPSHOT_MIPI_PER_LANE_BPS 776 /* 2*Mipi clk */
 
 /*line time unit: ns*/
-#define VIDEO_LINE_TIME 13416
-#define PREVIEW_LINE_TIME 13416
-#define SNAPSHOT_LINE_TIME 13416
+#define VIDEO_LINE_TIME 13417
+#define PREVIEW_LINE_TIME 26833
+#define SNAPSHOT_LINE_TIME 13417
 
 /* frame length*/
 #define VIDEO_FRAME_LENGTH 828
-#define PREVIEW_FRAME_LENGTH 2482
+#define PREVIEW_FRAME_LENGTH 1246
 #define SNAPSHOT_FRAME_LENGTH 2482
 
 /* please ref your spec */
