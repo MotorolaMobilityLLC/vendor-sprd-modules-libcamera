@@ -12101,6 +12101,15 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
         return is_need_scaling;
     }
 
+    // isp tool no scale condition
+    if ((!is_raw_capture) && (ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) &&
+        (prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) &&
+        (prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height) &&
+        prev_cxt->prev_param.tool_eb) {
+        is_need_scaling = 0;
+        return is_need_scaling;
+    }
+
     // no raw data no scale condition
     if ((!is_raw_capture) && (ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) &&
         (prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) &&
