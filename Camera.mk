@@ -232,6 +232,10 @@ LOCAL_SHARED_LIBRARIES += liblog libsensorndkbridge
 LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8
 endif
 
+ifeq ($(strip $(CONFIG_HAS_CAMERA_HINTS_VERSION)),801)
+LOCAL_SHARED_LIBRARIES += libhidlbase libhidltransport libutils vendor.sprd.hardware.power@2.0_vendor
+endif
+
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 

@@ -41,17 +41,22 @@
 #include <sys/socket.h>
 #include "SprdCamera3HALHeader.h"
 
-#define ANDROID_VERSION_O_ISHARKL2 (801)
-#define ANDROID_VERSION_N_ISHARKL2 (701)
+#define ANDROID_VERSION_O (801)
+#define ANDROID_VERSION_N (701)
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N_ISHARKL2)
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
 #include <binder/BinderService.h>
 #include <binder/IInterface.h>
 #include <powermanager/IPowerManager.h>
 #include <powermanager/PowerManager.h>
 #include <hardware/power.h>
-#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O_ISHARKL2)
+#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
 #include <hardware/power.h>
+#include <vendor/sprd/hardware/power/2.0/IPower.h>
+#include <vendor/sprd/hardware/power/2.0/types.h>
+using ::vendor::sprd::hardware::power::V2_0::IPower;
+using ::android::hidl::base::V1_0::IBase;
+using ::vendor::sprd::hardware::power::V2_0::PowerHint;
 #endif
 
 /*CONFIG_HAS_CAMERA_HINTS_VERSION
@@ -120,9 +125,15 @@ class SprdCameraSystemPerformance {
     bool mPowermanageInited;
     sys_performance_camera_scene mCurSence[2]; // 1.main camera  2.sub camera.
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O_ISHARKL2)
-    power_module_t *m_pPowerModule;
-#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N_ISHARKL2)
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
+    void acquirePowerHint(sp<IPower> powermanager, PowerHint id);
+    void releasePowerHint(sp<IPower> powermanager, PowerHint id);
+
+    sp<IPower> mPowerManager;
+    sp<IPower> mPowerManagerLowPower;
+    sp<IBase> mPrfmLock;
+    sp<IBase> mPrfmLockLowPower;
+#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
     void thermalEnabled(bool flag);
 
     void enablePowerHintExt(sp<IPowerManager> powermanager,
