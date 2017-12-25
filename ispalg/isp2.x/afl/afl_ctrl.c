@@ -218,7 +218,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[6] = (cxt_ptr->version == 1) ? 50 : 30;
 				thr[7] = 20;
 				thr[8] = 120;
-				ISP_LOGI("60Hz using default threshold");
+				ISP_LOGV("60Hz using default threshold");
 			}
 		} else {
 			ret = _set_afl_thr(thr);
@@ -237,7 +237,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				thr[6] = (cxt_ptr->version == 1) ? 50 : 30;
 				thr[7] = 20;
 				thr[8] = 120;
-				ISP_LOGI("50Hz using default threshold");
+				ISP_LOGV("50Hz using default threshold");
 			}
 		}
 
