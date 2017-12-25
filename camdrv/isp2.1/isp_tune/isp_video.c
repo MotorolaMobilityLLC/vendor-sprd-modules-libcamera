@@ -2247,6 +2247,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	case MODE_AE_SCENE_TABLE:
 		{
 			if (0 == flag) {
+				if (NULL == sensor_raw_fix) {
+					ISP_LOGE("fail to check param!");
+					rtn = 0x01;
+					return rtn;
+				}
 				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
@@ -2281,6 +2286,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	case MODE_AE_AUTO_ISO_TABLE:
 		{
 			if (0 == flag) {
+				if (NULL == sensor_raw_fix) {
+					ISP_LOGE("fail to check param!");
+					rtn = 0x01;
+					return rtn;
+				}
 				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
@@ -3340,12 +3350,10 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					fun_ptr->stop_preview(0, 0);
 				}
 			}
-			if (!ret) {
-				memset(&eng_rsp_diag[rsp_len], 0, len);
-			} else {
-				memset(&eng_rsp_diag[rsp_len], 0, len);
-				eng_rsp_diag[rsp_len] = 0x01;
-			}
+
+			memset(&eng_rsp_diag[rsp_len], 0, len);
+			eng_rsp_diag[rsp_len] = 0x01;
+
 			rsp_len += len;
 			eng_rsp_diag[rsp_len] = 0x7e;
 			msg_ret->len = rsp_len - 1;
