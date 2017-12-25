@@ -3008,7 +3008,9 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
 
     Callback_CapturePathFree(0, 0, 0, 0);
 
-    if ((mUsingSW3DNR)&&(mVideoProcessedWithPreview)) {
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+    if ((mUsingSW3DNR)&&(sprddefInfo.sprd_3dnr_enabled)) {
         Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     }
@@ -7410,7 +7412,6 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
                                                      cmr_uint *vir_addr,
                                                      cmr_s32 *fd, cmr_u32 sum) {
     uint32_t i = 0;
-
     Callback_CapturePathFree(0, 0, 0, 0);
 
     for (i = 0; i < m3dnrGraphicPathHeapNum; i++) {
