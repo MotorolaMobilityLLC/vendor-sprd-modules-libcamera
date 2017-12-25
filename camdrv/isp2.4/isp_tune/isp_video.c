@@ -1517,7 +1517,6 @@ cmr_s32 get_lnc_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u1
 
 	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
 	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].lnc_len;
-	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].weight_info_len;
 	return rtn;
 }
 
@@ -1531,8 +1530,6 @@ cmr_s32 get_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_t
 		memcpy((void *)data_addr, (void *)sensor_raw_fix->lnc.map[lnc_ct].map_info, sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr, sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info, sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
 	}
 	return rtn;
 }
@@ -1854,10 +1851,9 @@ cmr_s32 down_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_
 	}
 	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].map_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 	offset_tmp += sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
-	sensor_raw_fix->lnc.map[lnc_ct].lnc_len = data_len - sensor_raw_fix->lnc.map[lnc_ct].map_info_len - sensor_raw_fix->lnc.map[lnc_ct].weight_info_len;
+	sensor_raw_fix->lnc.map[lnc_ct].lnc_len = data_len - sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
 	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr, (void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
 	offset_tmp += sensor_raw_fix->lnc.map[lnc_ct].lnc_len;
-	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
 	return rtn;
 }
 

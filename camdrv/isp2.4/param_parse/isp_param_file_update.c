@@ -797,44 +797,6 @@ cmr_s32 read_lnc_map_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 	return rtn;
 }
 
-cmr_s32 read_lnc_weight_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
-{
-	cmr_s32 rtn = 0x00;
-	cmr_s32 i;
-	char line_buff[512];
-	cmr_u16 *param_buf = PNULL;
-	param_buf = lnc_map_ptr->weight_info;
-	while (!feof(fp)) {
-		cmr_u32 c[16];
-		cmr_s32 n = 0;
-
-		if (fgets(line_buff, 512, fp) == NULL) {
-			break;
-		}
-
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "},") != NULL) {
-			break;
-		}
-
-		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10],
-			   &c[11], &c[12], &c[13], &c[14], &c[15]);
-		for (i = 0; i < n; i++) {
-			*param_buf++ = (cmr_u16) c[i];
-		}
-	}
-
-	lnc_map_ptr->weight_info_len = (cmr_int) param_buf - (cmr_int) (lnc_map_ptr->weight_info);
-
-	return rtn;
-}
 
 cmr_s32 read_lnc_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 {
@@ -885,7 +847,6 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 	cmr_s32 i;
 
 	char lnc_map_info[50];
-	char lnc_weight_info[50];
 	char lnc_info[20];
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
@@ -903,18 +864,6 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 				sprintf(lnc_map_info, "_lnc_map_info_0%d", i);
 				if (strstr(line_buf, lnc_map_info) != NULL) {
 					rtn = read_lnc_map_info(fp, &lnc_ptr->map[i]);
-					if (0x00 != rtn) {
-						return rtn;
-					}
-					break;
-				}
-			}
-		}
-		if (NULL != strstr(line_buf, "_lnc_weight_0")) {
-			for (i = 0; i < LNC_MAP_NUM; i++) {
-				sprintf(lnc_weight_info, "_lnc_weight_0%d", i);
-				if (strstr(line_buf, lnc_weight_info) != NULL) {
-					rtn = read_lnc_weight_info(fp, &lnc_ptr->map[i]);
 					if (0x00 != rtn) {
 						return rtn;
 					}

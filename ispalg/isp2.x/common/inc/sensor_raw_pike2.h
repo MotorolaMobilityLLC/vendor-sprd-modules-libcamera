@@ -410,7 +410,6 @@ struct sensor_lsc_2d_map_info {
 };
 struct sensor_lsc_2d_tab_info_param {
 	struct sensor_lsc_2d_map_info lsc_2d_map_info;
-	cmr_u16 lsc_2d_weight[LNC_WEIGHT_LEN];
 	cmr_u32 lsc_2d_len;
 	cmr_u32 lsc_2d_offset;
 };
@@ -1635,8 +1634,6 @@ struct sensor_lens_map_info{
 struct sensor_lens_map {
 	cmr_u32 *map_info;
 	cmr_u32 map_info_len;
-	cmr_u16 *weight_info;
-	cmr_u32 weight_info_len;
 	cmr_u32 *lnc_map_tab_len;
 	cmr_u32 *lnc_map_tab_offset;
 	cmr_u16 *lnc_addr;

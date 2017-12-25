@@ -104,20 +104,12 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	dst_ptr->final_lsc_param.size = src_ptr->tab_info.lsc_2d_info[index].lsc_2d_len;
 	memcpy((void *)dst_ptr->final_lsc_param.data_ptr, (void *)dst_ptr->map_tab[index].param_addr, dst_ptr->map_tab[index].len);
 	dst_ptr->cur.buf_len = dst_ptr->final_lsc_param.size;
-	dst_ptr->cur.weight_num = sizeof(src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
 #if __WORDSIZE == 64
 	dst_ptr->cur.buf_addr[0] = (cmr_uint) (dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
 	dst_ptr->cur.buf_addr[1] = (cmr_uint) (dst_ptr->final_lsc_param.data_ptr) >> 32;
 #else
 	dst_ptr->cur.buf_addr[0] = (cmr_uint) (dst_ptr->final_lsc_param.data_ptr);
 	dst_ptr->cur.buf_addr[1] = 0;
-#endif
-#if __WORDSIZE == 64
-	dst_ptr->cur.data_ptr[0] = (cmr_uint) ((void *)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) & 0xffffffff;
-	dst_ptr->cur.data_ptr[1] = (cmr_uint) ((void *)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) >> 32;
-#else
-	dst_ptr->cur.data_ptr[0] = (cmr_uint) ((void *)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
-	dst_ptr->cur.data_ptr[1] = 0;
 #endif
 	dst_ptr->cur.slice_size.width = img_size_ptr->w;
 	dst_ptr->cur.slice_size.height = img_size_ptr->h;
