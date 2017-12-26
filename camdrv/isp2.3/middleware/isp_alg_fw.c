@@ -2830,15 +2830,17 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		}
 
 		//get pdaf tuning parameters
-		memset((void *)&output, 0, sizeof(output));
-		memset(&param_data, 0, sizeof(param_data));
-		BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
-		input.param_num = 1;
-		input.param_data_ptr = &param_data;
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-		if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
-			af_input.pdaftuning_data = output.param_data[0].data_ptr;
-			af_input.pdaftuning_data_len = output.param_data[0].data_size;
+		if (cxt->pdaf_cxt.pdaf_support) {
+			memset((void *)&output, 0, sizeof(output));
+			memset(&param_data, 0, sizeof(param_data));
+			BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, 0, NULL, 0);
+			input.param_num = 1;
+			input.param_data_ptr = &param_data;
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+			if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
+				af_input.pdaftuning_data = output.param_data[0].data_ptr;
+				af_input.pdaftuning_data_len = output.param_data[0].data_size;
+			}
 		}
 	}
 
