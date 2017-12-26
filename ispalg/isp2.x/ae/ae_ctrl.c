@@ -329,7 +329,7 @@ static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_io_ctrl_cmd cmd
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 

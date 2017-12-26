@@ -181,7 +181,7 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 			ISP_LOGV("master linetime %d", info_master.line_time);
 			ISP_LOGV("slave linetime %d", info_slave.line_time);
 
-			ISP_LOGI("AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
+			ISP_LOGV("AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
 
 			if (ae_info[0].exp.exposure < (cmr_u32)info_master.min_exp_line) {
 				ae_info[0].exp.exposure = (cmr_u32)info_master.min_exp_line;
@@ -209,7 +209,7 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 					ae_otp_slave.gain_1x_exp = atoi(value);
 				}
 			}
-			ISP_LOGI("AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
+			ISP_LOGV("AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
 
 			float iso_ratio = ((float)ae_otp_slave.gain_1x_exp) / ((float)ae_otp_master.gain_1x_exp);
 			if (ae_info[0].gain > 128*8) {
@@ -1115,7 +1115,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	mode = flash_notice->mode;
 	switch (mode) {
 	case AE_FLASH_PRE_BEFORE:
-		ISP_LOGI("ae_flash_status FLASH_PRE_BEFORE");
+		ISP_LOGV("ae_flash_status FLASH_PRE_BEFORE");
 		cxt->cur_flicker = cxt->sync_cur_status.settings.flicker;/*backup the flicker flag before flash
 														* and will lock flicker result
 														*/
@@ -1132,7 +1132,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_PRE_LIGHTING:
-		ISP_LOGI("ae_flash_status FLASH_PRE_LIGHTING");
+		ISP_LOGV("ae_flash_status FLASH_PRE_LIGHTING");
 		cxt->cur_status.settings.flash_target = cxt->cur_param->flash_param.target_lum;
 		if (0 != cxt->flash_ver) {
 			/*lock AE algorithm*/
@@ -1143,7 +1143,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_PRE_AFTER:
-		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
+		ISP_LOGV("ae_flash_status FLASH_PRE_AFTER");
 		cxt->cur_status.settings.flash = FLASH_PRE_AFTER;
 		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
 		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
@@ -1172,14 +1172,14 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_BEFORE:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_BEFORE");
+		ISP_LOGV("ae_flash_status FLASH_MAIN_BEFORE");
 		if (0 != cxt->flash_ver)
 			rtn = ae_set_force_pause(cxt, 1);
 		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
 		break;
 
 	case AE_FLASH_MAIN_AFTER:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_AFTER");
+		ISP_LOGV("ae_flash_status FLASH_MAIN_AFTER");
 		cxt->cur_status.settings.flicker = cxt->cur_flicker;
 		if (cxt->camera_id && cxt->fdae.pause)
 			cxt->fdae.pause = 0;
@@ -1213,11 +1213,11 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_AE_MEASURE:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_AE_MEASURE");
+		ISP_LOGV("ae_flash_status FLASH_MAIN_AE_MEASURE");
 		break;
 
 	case AE_FLASH_MAIN_LIGHTING:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_LIGHTING");
+		ISP_LOGV("ae_flash_status FLASH_MAIN_LIGHTING");
 		if (0 != cxt->flash_ver) {
 			cxt->cur_status.settings.flash = FLASH_MAIN;
 		}
@@ -1232,13 +1232,13 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	case AE_LED_FLASH_OFF:
 		cxt->cur_status.led_state = 0;
 		cxt->cur_status.settings.flash = FLASH_NONE;
-		ISP_LOGI("ae_flash_status FLASH_LED_OFF");
+		ISP_LOGV("ae_flash_status FLASH_LED_OFF");
 		break;
 
 	case AE_LED_FLASH_AUTO:
 		cxt->cur_status.led_state = 0;
 		cxt->cur_status.settings.flash = FLASH_LED_AUTO;
-		ISP_LOGI("ae_flash_status FLASH_LED_AUTO");
+		ISP_LOGV("ae_flash_status FLASH_LED_AUTO");
 		break;
 
 	default:
@@ -3252,7 +3252,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 					cxt->cur_status.settings.exp_line = exp_line;
 					cxt->cur_status.settings.gain = gain;
 					cxt->hdr_flag--;
-					ISP_LOGI("_isp_hdr_3: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+					ISP_LOGV("_isp_hdr_3: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 				} else if (2 == cxt->hdr_flag) {
 					base_idx = cxt->hdr_base_ae_idx;
 					base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
@@ -3265,7 +3265,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 					cxt->cur_status.settings.exp_line = exp_line;
 					cxt->cur_status.settings.gain = gain;
 					cxt->hdr_flag--;
-					ISP_LOGI("_isp_hdr_2: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+					ISP_LOGV("_isp_hdr_2: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 				} else if (1 == cxt->hdr_flag) {
 					base_idx = cxt->hdr_base_ae_idx;
 					base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
@@ -3274,7 +3274,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 					cxt->cur_status.settings.exp_line = base_exposure_line;
 					cxt->cur_status.settings.gain = base_gain;
 					cxt->hdr_flag--;
-					ISP_LOGI("_isp_hdr_1: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+					ISP_LOGV("_isp_hdr_1: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 				} else {
 						;
 				}
@@ -3809,7 +3809,7 @@ static cmr_s32 ae_set_flicker(struct ae_ctrl_cxt *cxt, void *param)
 				cmr_u32 i= 0;
 				struct ae_scene_info *scene_info = &cxt->cur_param->scene_info[0];
 				for (i = 0; i < AE_SCENE_NUM; ++i) {
-					ISP_LOGI("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
+					ISP_LOGV("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
 					if ((1 == scene_info[i].enable) && ((cmr_u32)cxt->sync_cur_status.settings.scene_mode == scene_info[i].scene_mode)) {
 						break;
 					}
@@ -4476,7 +4476,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->sync_aem[3 * 1024 + 2] = cxt->cur_status.effect_dummy;
 	cxt->sync_aem[3 * 1024 + 3] = cxt->cur_status.effect_gain;
 
-	ISP_LOGI("exp: %d, gain:%d line time: %d\n",
+	ISP_LOGV("exp: %d, gain:%d line time: %d\n",
 		cxt->cur_status.settings.exp_line,
 		cxt->cur_status.settings.gain,
 		cxt->cur_status.line_time);
