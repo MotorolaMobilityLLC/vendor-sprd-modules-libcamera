@@ -836,7 +836,7 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
     *width = default_sensor_max_sizes[cameraId].width;
     *height = default_sensor_max_sizes[cameraId].height;
 #endif
-    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
+    HAL_LOGV("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
              *height);
     return 0;
 }
