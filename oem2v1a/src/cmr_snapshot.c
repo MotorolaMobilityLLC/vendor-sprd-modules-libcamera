@@ -5444,6 +5444,37 @@ exit:
     return ret;
 }
 
+cmr_int cmr_snapshot_invalidate_cache(cmr_handle snapshot_handle,
+                                      struct img_frm *img) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct snp_context *cxt = (struct snp_context *)snapshot_handle;
+    cam_ion_buffer_t ion_buf;
+
+    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
+    CHECK_HANDLE_VALID(snapshot_handle);
+
+    if (img == NULL) {
+        CMR_LOGE("img = %p", img);
+        goto exit;
+    }
+
+    ion_buf.fd = img->fd;
+    ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
+    ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
+    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+
+    ret = snp_send_msg_notify_thr(snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                  SNAPSHOT_EVT_CB_INVALIDATE_CACHE,
+                                  (void *)&ion_buf, sizeof(cam_ion_buffer_t));
+    if (ret) {
+        CMR_LOGE("SNAPSHOT_EVT_CB_FLUSH failed, ret = %ld", ret);
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
+
 cmr_int camera_open_uvde(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                          struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

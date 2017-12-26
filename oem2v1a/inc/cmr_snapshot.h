@@ -56,6 +56,7 @@ enum snapshot_cb_type {
     SNAPSHOT_EVT_RETURN_ZSL_BUF,
     SNAPSHOT_EXIT_CB_PREPARE,
     SNAPSHOT_EVT_THUMB_YUV_PROC,
+    SNAPSHOT_EVT_CB_INVALIDATE_CACHE,
     SNAPSHOT_CB_MAX
 };
 
@@ -250,6 +251,9 @@ cmr_int cmr_snapshot_format_convert(cmr_handle snapshot_handle, void *data,
 
 cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
                                   struct img_frm *img);
+
+cmr_int cmr_snapshot_invalidate_cache(cmr_handle snapshot_handle,
+                                      struct img_frm *img);
 
 /* performance optimization, use zsl buf to postprocess, not copy */
 cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle,

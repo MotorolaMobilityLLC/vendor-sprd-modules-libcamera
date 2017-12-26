@@ -1126,6 +1126,7 @@ enum camera_cb_type {
     CAMERA_EVT_SENSOR_DATATYPE,
     CAMERA_EVT_HDR_PLUS,
     CAMERA_EVT_CB_AE_FLASH_FIRED,
+    CAMERA_EVT_CB_INVALIDATE_CACHE,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1640,8 +1641,7 @@ typedef struct oem_ops {
 #endif
 
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
-    cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id,
-                                               cmr_u16 width,
+    cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id, cmr_u16 width,
                                                cmr_u16 height);
 #else
     cmr_int (*camera_pre_capture_set_buffer_size)(cmr_u32 camera_id,

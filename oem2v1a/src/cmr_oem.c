@@ -1513,6 +1513,9 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
     case SNAPSHOT_EVT_CB_FLUSH:
         oem_cb_type = CAMERA_EVT_CB_FLUSH;
         break;
+    case SNAPSHOT_EVT_CB_INVALIDATE_CACHE:
+        oem_cb_type = CAMERA_EVT_CB_INVALIDATE_CACHE;
+        break;
     case SNAPSHOT_EVT_CB_ZSL_NEW_FRM:
         oem_cb_type = CAMERA_EVT_CB_ZSL_FRM;
         break;
@@ -1557,7 +1560,8 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
 
     // TBD: remove camera_frame_type and cam_ion_buffer_t, only data and size
     if (param) {
-        if (oem_cb_type == CAMERA_EVT_CB_FLUSH) {
+        if (oem_cb_type == CAMERA_EVT_CB_FLUSH ||
+            oem_cb_type == CAMERA_EVT_CB_INVALIDATE_CACHE) {
             message.data = malloc(sizeof(cam_ion_buffer_t));
             if (!message.data) {
                 CMR_LOGE("malloc failed");
@@ -4873,7 +4877,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         CMR_LOGE("failed to enc start %ld", ret);
         goto exit;
     }
-
+    cmr_snapshot_invalidate_cache(cxt->snp_cxt.snapshot_handle, dst);
 exit:
     sem_post(&cxt->access_sm);
     ATRACE_END();

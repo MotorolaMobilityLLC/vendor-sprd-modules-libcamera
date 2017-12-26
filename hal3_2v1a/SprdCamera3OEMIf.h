@@ -168,6 +168,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     };
 
     int flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr, size_t size);
+    int invalidateCache(int buffer_fd, void *v_addr, void *p_addr, size_t size);
     sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
                                          uint32_t is_cache);
     sprd_camera_memory_t *allocReservedMem(int buf_size, int num_bufs,
@@ -201,7 +202,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-#ifdef  CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
     void bindcoreEnabled();
     void acquireCore(int mode);
 #endif
@@ -382,10 +383,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
         STATE_SET_PARAMS,
     };
 
-#ifdef  CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-    enum acquirecore_mode {
-        LOWPOWER_MODE,
-        PERFORMENCE_MODE,
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+    enum acquirecore_mode{
+        LOWPOWER_MODE, PERFORMENCE_MODE,
     };
 #endif
 
@@ -823,7 +823,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sp<IPowerManager> mPowerManager;
     Mutex mPowerManagerLock;
     sp<IBinder> mPrfmLock;
-#ifdef  CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
     bool mBindcoreFlag;
     int mBindcorePreivewFrameCount;
 #endif
