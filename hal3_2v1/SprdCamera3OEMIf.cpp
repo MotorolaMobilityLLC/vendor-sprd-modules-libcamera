@@ -9775,23 +9775,27 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     ASensorEventQueue *sensorEventQueue =
         ASensorManager_createEventQueue(mSensorManager, mLooper, 0, NULL, NULL);
 
-    if (ASensorEventQueue_registerSensor(sensorEventQueue, accelerometerSensor,
-                                         RATE_FAST, GsensorRate) < 0) {
-        HAL_LOGE("Unable to register sensorUnable to register sensor %d with "
-                 "rate %d and report latency %d" PRId64 "",
-                 ASENSOR_TYPE_ACCELEROMETER, RATE_FAST, GsensorRate);
-        goto exit;
-    } else {
-        Gsensor_flag = 1;
+    if (accelerometerSensor != NULL) {
+        if (ASensorEventQueue_registerSensor(sensorEventQueue, accelerometerSensor,
+                                             RATE_FAST, GsensorRate) < 0) {
+            HAL_LOGE("Unable to register sensorUnable to register sensor %d with "
+                     "rate %d and report latency %d" PRId64 "",
+                     ASENSOR_TYPE_ACCELEROMETER, RATE_FAST, GsensorRate);
+            goto exit;
+        } else {
+            Gsensor_flag = 1;
+        }
     }
-    if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
-                                         RATE_FAST, GyroRate) < 0) {
-        HAL_LOGE("Unable to register sensorUnable to register sensor %d with "
-                 "rate %d and report latency %d" PRId64 "",
-                 ASENSOR_TYPE_GYROSCOPE, RATE_FAST, GsensorRate);
-        goto exit;
-    } else {
-        Gyro_flag = 1;
+    if (gyroSensor != NULL) {
+        if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
+                                             RATE_FAST, GyroRate) < 0) {
+            HAL_LOGE("Unable to register sensorUnable to register sensor %d with "
+                     "rate %d and report latency %d" PRId64 "",
+                     ASENSOR_TYPE_GYROSCOPE, RATE_FAST, GsensorRate);
+            goto exit;
+        } else {
+            Gyro_flag = 1;
+        }
     }
     struct cmr_af_aux_sensor_info sensor_info;
     while (true == obj->mGyroInit) {
