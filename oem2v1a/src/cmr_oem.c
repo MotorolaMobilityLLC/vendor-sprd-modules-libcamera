@@ -1272,6 +1272,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     case PREVIEW_EVT_CB_FLUSH:
         oem_cb_type = CAMERA_EVT_CB_FLUSH;
         break;
+    case PREVIEW_EVT_CB_INVALIDATE_CACHE:
+        oem_cb_type = CAMERA_EVT_CB_INVALIDATE_CACHE;
+        break;
     case PREVIEW_EVT_CB_FD:
         oem_cb_type = CAMERA_EVT_CB_FD;
         if (param) {

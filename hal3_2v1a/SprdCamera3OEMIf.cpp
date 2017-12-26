@@ -7872,7 +7872,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     } else if (type == CAMERA_PREVIEW_3DNR) {
         for (i = 0; i < sum; i++) {
             if (m3DNRPrevHeapReserverd[i] == NULL) {
-                memory = allocCameraMem(size, 1, false);
+                memory = allocCameraMem(size, 1, true);
                 if (NULL == memory) {
                     HAL_LOGE("error memory is null,malloced type %d", type);
                     goto mem_fail;

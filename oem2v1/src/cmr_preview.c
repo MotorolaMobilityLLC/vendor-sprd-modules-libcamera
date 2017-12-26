@@ -733,6 +733,11 @@ cmr_int threednr_sw_prev_callback(cmr_u32 class_type,
                                   struct ipm_frame_out *cb_parm);
 cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_parm);
 
+static cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
+                                 struct img_frm *img);
+static cmr_int cmr_preview_invalidate_cache(cmr_handle preview_handle,
+                                struct img_frm *img);
+
 /**************************FUNCTION
  * ***************************************************************************/
 cmr_int cmr_preview_init(struct preview_init_param *init_param_ptr,
@@ -12132,4 +12137,68 @@ cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_param) {
     cb_data_info.frame_data = &threednr_info->framtype;
     prev_cb_start(prev_handle, &cb_data_info);
     return CMR_CAMERA_SUCCESS;
+}
+
+cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
+                                struct img_frm *img) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CMR_MSG_INIT(message);
+    struct prev_cb_info cb_data_info;
+    struct prev_handle *handle = NULL;
+    cam_ion_buffer_t ion_buf;
+
+    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
+    CHECK_HANDLE_VALID(preview_handle);
+
+    if (NULL == img) {
+        CMR_LOGE("img = %p", img);
+        goto exit;
+    }
+
+    handle = (struct prev_handle *)preview_handle;
+
+    ion_buf.fd = img->fd;
+    ion_buf.addr_phy = (void *)(img->addr_phy.addr_y);
+    ion_buf.addr_vir = (void *)(img->addr_vir.addr_y);
+    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+
+    cb_data_info.cb_type = PREVIEW_EVT_CB_FLUSH;
+    cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+    cb_data_info.frame_data = (struct camera_frame_type *)&ion_buf;
+    prev_cb_start(handle, &cb_data_info);
+
+exit:
+    return ret;
+}
+
+cmr_int cmr_preview_invalidate_cache(cmr_handle preview_handle,
+                                struct img_frm *img) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CMR_MSG_INIT(message);
+    struct prev_cb_info cb_data_info;
+    struct prev_handle *handle = NULL;
+    cam_ion_buffer_t ion_buf;
+
+    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
+    CHECK_HANDLE_VALID(preview_handle);
+
+    if (NULL == img) {
+        CMR_LOGE("img = %p", img);
+        goto exit;
+    }
+
+    handle = (struct prev_handle *)preview_handle;
+
+    ion_buf.fd = img->fd;
+    ion_buf.addr_phy = (void *)(img->addr_phy.addr_y);
+    ion_buf.addr_vir = (void *)(img->addr_vir.addr_y);
+    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+
+    cb_data_info.cb_type = PREVIEW_EVT_CB_INVALIDATE_CACHE;
+    cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+    cb_data_info.frame_data = (struct camera_frame_type *)&ion_buf;
+    prev_cb_start(handle, &cb_data_info);
+
+exit:
+    return ret;
 }
