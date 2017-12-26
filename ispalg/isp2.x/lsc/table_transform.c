@@ -155,11 +155,11 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 {
 	int rtn = 0;
 
-	ISP_LOGI("src_info[%d,%d,%d,%d,%d]", src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height);
-	ISP_LOGI("src->pm_tab0[%d,%d,%d,%d]", src->pm_tab0[0], src->pm_tab0[1], src->pm_tab0[2], src->pm_tab0[3]);
-	ISP_LOGI("src->tab[%d,%d,%d,%d]", src->tab[0], src->tab[1], src->tab[2], src->tab[3]);
-	ISP_LOGI("dst_info[%d,%d,%d,%d,%d]", dst->img_width, dst->img_height, dst->grid, dst->gain_width, dst->gain_height);
-	ISP_LOGI("dst->pm_tab0[%d,%d,%d,%d]", dst->pm_tab0[0], dst->pm_tab0[1], dst->pm_tab0[2], dst->pm_tab0[3]);
+	ISP_LOGV("src_info[%d,%d,%d,%d,%d]", src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height);
+	ISP_LOGV("src->pm_tab0[%d,%d,%d,%d]", src->pm_tab0[0], src->pm_tab0[1], src->pm_tab0[2], src->pm_tab0[3]);
+	ISP_LOGV("src->tab[%d,%d,%d,%d]", src->tab[0], src->tab[1], src->tab[2], src->tab[3]);
+	ISP_LOGV("dst_info[%d,%d,%d,%d,%d]", dst->img_width, dst->img_height, dst->grid, dst->gain_width, dst->gain_height);
+	ISP_LOGV("dst->pm_tab0[%d,%d,%d,%d]", dst->pm_tab0[0], dst->pm_tab0[1], dst->pm_tab0[2], dst->pm_tab0[3]);
 
 	unsigned int gain_pattern_tmp = 3;
 	unsigned short* src_r = (unsigned short*)malloc( src->gain_width*src->gain_height*sizeof(unsigned short) );
@@ -201,7 +201,7 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 
 	case LSC_BINNING:
 		binning = (struct binning_info*)action_info;
-		ISP_LOGI("binning_info->ratio=%f, src->grid=%d, dst->grid=%d", binning->ratio, src->grid, dst->grid);
+		ISP_LOGV("binning_info->ratio=%f, src->grid=%d, dst->grid=%d", binning->ratio, src->grid, dst->grid);
 
 		if(src->gain_width != dst->gain_width
 		|| src->gain_height != dst->gain_height
@@ -228,7 +228,7 @@ int lsc_table_transform(struct lsc_table_transf_info* src, struct lsc_table_tran
 
 	case LSC_CROP:
 		crop = (struct crop_info*)action_info;
-		ISP_LOGI("crop_info[%d,%d,%d,%d]", crop->start_x, crop->start_y, crop->width, crop->height);
+		ISP_LOGV("crop_info[%d,%d,%d,%d]", crop->start_x, crop->start_y, crop->width, crop->height);
 
 		if(crop->start_x > src->img_width
 		|| crop->start_y > src->img_height
