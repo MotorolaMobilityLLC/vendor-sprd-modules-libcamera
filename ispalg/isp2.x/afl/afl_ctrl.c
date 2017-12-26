@@ -155,14 +155,15 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 #endif
 	cmr_s32 algo_width;
 	cmr_s32 algo_height;
-
-	void *afl_stat = malloc(in_ptr->private_len);
-	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
+	void *afl_stat = NULL;
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
+
+	afl_stat = malloc(in_ptr->private_len);
+	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
 
 	ae_stat_ptr = in_ptr->ae_stat_ptr;
 	cur_flicker = in_ptr->cur_flicker;
@@ -362,8 +363,11 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AFLCTRL_EVT_PROCESS:
 		rtn = aflctrl_process(cxt_ptr, (struct afl_proc_in *)message->data, &cxt_ptr->proc_out);
 		break;
+	case AFLCTRL_EVT_DEINIT:
+		ISP_LOGV("msg done");
+		break;
 	default:
-		ISP_LOGE("fail to proc,don't support msg");
+		ISP_LOGE("fail to proc, don't support msg 0x%x", message->msg_type);
 		break;
 	}
 
