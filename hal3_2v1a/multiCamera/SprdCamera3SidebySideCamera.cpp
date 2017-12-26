@@ -520,6 +520,34 @@ int SprdCamera3SideBySideCamera::allocateBuffer(int w, int h, uint32_t is_cache,
         new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION, 0x130,
                              mem_size, (unsigned char *)pHeapIon->getBase(), 0);
 
+#if defined(CONFIG_SPRD_ANDROID_8)
+    if (NULL == buffer) {
+        HAL_LOGE("alloc buffer failed");
+        goto getpmem_fail;
+    }
+
+    if (buffer->share_attr_fd < 0) {
+        buffer->share_attr_fd =
+            ashmem_create_region("camera_gralloc_shared_attr", PAGE_SIZE);
+        if (buffer->share_attr_fd < 0) {
+            HAL_LOGE("Failed to allocate page for shared attribute region");
+            goto getpmem_fail;
+        }
+    }
+
+    buffer->attr_base = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
+                             MAP_SHARED, buffer->share_attr_fd, 0);
+    if (buffer->attr_base != MAP_FAILED) {
+        attr_region *region = (attr_region *)buffer->attr_base;
+        memset(buffer->attr_base, 0xff, PAGE_SIZE);
+        munmap(buffer->attr_base, PAGE_SIZE);
+        buffer->attr_base = MAP_FAILED;
+    } else {
+        HAL_LOGE("Failed to mmap shared attribute region");
+        goto getpmem_fail;
+    }
+#endif
+
     buffer->share_fd = pHeapIon->getHeapID();
     buffer->format = format;
     buffer->byte_stride = w;
@@ -533,7 +561,8 @@ int SprdCamera3SideBySideCamera::allocateBuffer(int w, int h, uint32_t is_cache,
     new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGD("fd=0x%x, size=%d, heap=%p", buffer->share_fd, mem_size, pHeapIon);
+    HAL_LOGD("fd=0x%x, size=%d, heap=%p, share_attr_fd=0x%x", buffer->share_fd,
+             mem_size, pHeapIon, buffer->share_attr_fd);
 
     return result;
 
@@ -1843,15 +1872,20 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                                             .native_handle))
                                       ->base);
 
-            // GPU buffer
+// GPU buffer
+#if defined(CONFIG_SPRD_ANDROID_8)
+            uint32_t inLayCount = 1;
+            uint64_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                                    GraphicBuffer::USAGE_SW_READ_OFTEN |
+                                    GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+#else
             uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                                     GraphicBuffer::USAGE_SW_READ_OFTEN |
                                     GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+#endif
             int32_t yuvTextFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
             uint32_t inWidth = 0, inHeight = 0, inStride = 0;
-#if defined(CONFIG_SPRD_ANDROID_8)
-            uint32_t inLayCount = 1;
-#endif
+
             inWidth = mSidebyside->mPreviewWidth;
             inHeight = mSidebyside->mPreviewHeight;
             inStride = mSidebyside->mPreviewWidth;
@@ -1869,11 +1903,11 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 raw_buffer = Raw_buffer_2;
 #if defined(CONFIG_SPRD_ANDROID_8)
                 srcBuffer = new GraphicBuffer(
-                    inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
-                    inStride,
                     (native_handle_t *)(*(
                         &mSidebyside->mLocalCapBuffer[9].native_handle)),
-                    0);
+                    GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth,
+                    inHeight, yuvTextFormat, inLayCount, yuvTextUsage,
+                    inStride);
 #else
                 srcBuffer = new GraphicBuffer(
                     inWidth, inHeight, yuvTextFormat, yuvTextUsage, inStride,
@@ -1886,11 +1920,11 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                 raw_buffer = Raw_buffer_1;
 #if defined(CONFIG_SPRD_ANDROID_8)
                 srcBuffer = new GraphicBuffer(
-                    inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
-                    inStride,
                     (native_handle_t *)(*(
                         &mSidebyside->mLocalCapBuffer[8].native_handle)),
-                    0);
+                    GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth,
+                    inHeight, yuvTextFormat, inLayCount, yuvTextUsage,
+                    inStride);
 #else
                 srcBuffer = new GraphicBuffer(
                     inWidth, inHeight, yuvTextFormat, yuvTextUsage, inStride,
@@ -1901,10 +1935,9 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
             }
 #if defined(CONFIG_SPRD_ANDROID_8)
             dstBuffer = new GraphicBuffer(
-                inWidth, inHeight, yuvTextFormat, yuvTextUsage, inLayCount,
-                inStride,
                 (native_handle_t *)(*capture_msg.prev_combo_buff.prev_buffer),
-                0);
+                GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth,
+                inHeight, yuvTextFormat, inLayCount, yuvTextUsage, inStride);
 #else
             dstBuffer = new GraphicBuffer(
                 inWidth, inHeight, yuvTextFormat, yuvTextUsage, inStride,

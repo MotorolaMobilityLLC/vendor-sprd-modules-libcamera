@@ -52,6 +52,8 @@
 #include "sprd_depth_configurable_param_sbs.h"
 #include "sprdbokeh.h"
 #include <unistd.h>
+#include <cutils/ashmem.h>
+#include "gralloc_buffer_priv.h"
 
 namespace sprdcamera {
 
