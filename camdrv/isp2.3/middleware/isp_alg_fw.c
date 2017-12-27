@@ -55,6 +55,7 @@ struct commn_info_t {
 	struct isp_ops ops;
 	struct isp_drv_interface_param interface_param;
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
+	cmr_u32 aux_sensor_skip_num;
 };
 
 struct ae_info_t {
@@ -252,7 +253,6 @@ struct isp_alg_fw_context {
 	cmr_u8 is_master;
 	cmr_u32 is_multi_mode;
 	struct isp_statis_info afl_stat_info;
-	struct awb_ctrl_calc_param awb_param;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -1655,6 +1655,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct awb_ctrl_calc_param awb_param;
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 
@@ -1663,13 +1664,13 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 		goto exit;
 	}
 
-	memset((void *)&cxt->awb_param, 0, sizeof(struct awb_ctrl_calc_result));
+	memset((void *)&awb_param, 0, sizeof(struct awb_ctrl_calc_result));
 
-	ret = ispalg_awb_pre_process((cmr_handle) cxt, ae_in, &cxt->awb_param);
+	ret = ispalg_awb_pre_process((cmr_handle)cxt, ae_in, &awb_param);
 
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.awb_ops.process) {
-		ret = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &cxt->awb_param, NULL);
+		ret = cxt->ops.awb_ops.process(cxt->awb_cxt.handle, &awb_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb process"));
 	}
 	time_end = ispalg_get_sys_timestamp();
