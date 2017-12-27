@@ -124,7 +124,7 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 			hsv_value = *weight_value;
 
-			ISP_LOGI("ISP_SMART: value=(%d, %d), weight=(%d, %d)", hsv_value.value[0], hsv_value.value[1], hsv_value.weight[0], hsv_value.weight[1]);
+			ISP_LOGV("ISP_SMART: value=(%d, %d), weight=(%d, %d)", hsv_value.value[0], hsv_value.value[1], hsv_value.weight[0], hsv_value.weight[1]);
 
 			hsv_value.weight[0] = hsv_value.weight[0] / (SMART_WEIGHT_UNIT / 16)
 			    * (SMART_WEIGHT_UNIT / 16);
