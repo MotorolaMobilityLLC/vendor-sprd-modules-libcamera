@@ -1,6 +1,6 @@
 #include <utils/Log.h>
-#if defined (CONFIG_CAMERA_ISP_DIR_2_1)
-#if defined (CONFIG_CAMERA_ISP_DIR_2_1_A)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1_A)
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"
 #else
@@ -8,11 +8,11 @@
 #include "hal3_2v1/SprdCamera3Setting.h"
 #endif
 #endif
-#if defined (CONFIG_CAMERA_ISP_DIR_2_4)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_4)
 #include "hal3_2v4/SprdCamera3OEMIf.h"
 #include "hal3_2v4/SprdCamera3Setting.h"
 #endif
-#if defined (CONFIG_CAMERA_ISP_DIR_3)
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 #include "hal3_3v0/SprdCamera3AutotestMem.h"
 #include "hal3_3v0/SprdCamera3Setting.h"
 #endif
@@ -42,35 +42,6 @@ typedef enum enumYUVFormat {
     FMT_NV12,
 } YUVFormat;
 
-typedef struct {
-    int width;
-    int height;
-    int row_bytes;
-    int pixel_bytes;
-    unsigned char *data;
-} GRSurface;
-
-typedef GRSurface *gr_surface;
-
-typedef struct minui_backend {
-    // Initializes the backend and returns a gr_surface to draw into.
-    gr_surface (*init)(struct minui_backend *);
-
-    // Causes the current drawing surface (returned by the most recent
-    // call to flip() or init()) to be displayed, and returns a new
-    // drawing surface.
-    gr_surface (*flip)(struct minui_backend *);
-
-    // Blank (or unblank) the screen.
-    void (*blank)(struct minui_backend *, bool);
-
-    // Device cleanup when drawing is done.
-    void (*exit)(struct minui_backend *);
-} minui_backend;
-
-static minui_backend *gr_backend = NULL;
-static GRSurface *gr_draw = NULL;
-
 /*yuv->rgb*/
 #define RGB565(r, g, b)                                                        \
     ((unsigned short)((((unsigned char)(r) >> 3) |                             \
@@ -87,18 +58,8 @@ static int previewvalid = 0;        /*preview flag*/
 static int s_mem_method = 0;        /*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
-/*data processing useful*/
-#if defined(CONFIG_CAMERA_MMITEST_PREVIEWSIZE_320X240)
-#define PREVIEW_WIDTH 320
-#define PREVIEW_HIGHT 240
-#elif defined(CONFIG_CAMERA_MMITEST_PREVIEWSIZE_640X480)
-#define PREVIEW_WIDTH 640
-#define PREVIEW_HIGHT 480
-#else
-#define PREVIEW_WIDTH 960  // 1280//640//
-#define PREVIEW_HIGHT 720  // 960//480//
-#endif
-
+static int g_preview_width = 0;
+static int g_preview_height = 0;
 #define PREVIEW_BUFF_NUM 8 /*preview buffer*/
 #define SPRD_MAX_PREVIEW_BUF PREVIEW_BUFF_NUM
 struct frame_buffer_t {
@@ -109,8 +70,7 @@ struct frame_buffer_t {
 static char af_tuning_path[] = "/data/misc/cameraserver/af_tuning_default.bin";
 static char sensor_para_path[] = "/data/misc/cameraserver/sensor.file";
 static struct frame_buffer_t fb_buf[SPRD_MAX_PREVIEW_BUF + 1];
-static uint8_t *tmpbuf2, *tmpbuf3; //*tmpbuf1, *tmpbuf,
-static uint32_t post_preview_buf[PREVIEW_WIDTH * PREVIEW_HIGHT];
+static uint32_t *post_preview_buf = NULL;
 static struct fb_var_screeninfo var;
 static uint32_t frame_num = 0; /*record frame number*/
 
@@ -130,17 +90,17 @@ static sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
 #endif
 static sprd_camera_memory_t
     *previewHeapArray[PREVIEW_BUFF_NUM]; /*preview heap arrary*/
-static int target_buffer_id;
+static int target_buffer_id = 0;
 
-static oem_module_t *mHalOem;
+static oem_module_t *mHalOem = NULL;
+void (*factorytest_callback)(int preview_width, int preview_height,
+                             unsigned char *rgb_data);
 
 struct client_t {
     int reserved;
 };
 static struct client_t client_data;
 static cmr_handle oem_handle = 0;
-
-uint32_t lcd_w = 0, lcd_h = 0;
 
 int IommuIsEnabled(void) {
     int ret;
@@ -159,12 +119,6 @@ int IommuIsEnabled(void) {
 
     iommuIsEnabled = 1;
     return iommuIsEnabled;
-}
-
-bool getLcdSize(uint32_t *width, uint32_t *height) {
-    *width = (uint32_t)gr_draw->width;
-    *height = (uint32_t)gr_draw->height;
-    return true;
 }
 
 static void RGBRotate90_anticlockwise(void *pDest, int nDestWidth,
@@ -530,43 +484,6 @@ static int eng_test_rotation(uint32_t agree, uint32_t width, uint32_t height,
     return 0;
 }
 
-static int eng_test_fb_open(void) {
-    int i;
-    void *bits;
-    int offset_page_align;
-
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
-
-    var.yres = lcd_h;
-    var.xres = lcd_w;
-    var.bits_per_pixel = (8 * gr_draw->pixel_bytes);
-    ALOGI("Native MMI Test: var.yres = %d, var.xres = %d, var.bits_per_pixel = "
-          "%d\n",
-          var.yres, var.xres, var.bits_per_pixel);
-    /* set framebuffer address */
-    memset(&fb_buf, 0, sizeof(fb_buf));
-
-    fb_buf[0].virt_addr = (size_t)gr_draw->data;
-
-    fb_buf[1].virt_addr =
-        (size_t)var.yres * var.xres * (var.bits_per_pixel / 8);
-
-    fb_buf[2].virt_addr = (size_t)tmpbuf2;
-
-    fb_buf[3].virt_addr = (size_t)tmpbuf3;
-
-    /*
-            for(i = 0; i < 6; i++){
-                    ALOGD("DCAM: buf[%d] virt_addr=0x%x, phys_addr=0x%x,
-       length=%d", \
-                            i,
-       fb_buf[i].virt_addr,fb_buf[i].phys_addr,fb_buf[i].length);
-            }
-    */
-
-    return 0;
-}
-
 static unsigned int getPreviewBufferIDForFd(cmr_s32 fd) {
     unsigned int i = 0;
 
@@ -582,12 +499,11 @@ static unsigned int getPreviewBufferIDForFd(cmr_s32 fd) {
         if (previewHeapArray[i]->fd == fd)
             return i;
     }
-
+    ALOGE("%s: buffer id not found!\n", __func__);
     return 0xFFFFFFFF;
 }
 
 static void eng_test_fb_update(const camera_frame_type *frame) {
-    // int width, height;
     int crtc = 0;
     unsigned int buffer_id;
 
@@ -598,13 +514,6 @@ static void eng_test_fb_update(const camera_frame_type *frame) {
 
     buffer_id = getPreviewBufferIDForFd(frame->fd);
 
-    //	memcpy(gr_draw->data, (uint8_t *)(fb_buf[!(frame_num % 2)].virt_addr),
-    // lcd_w*lcd_h*4);
-
-    gr_draw = gr_backend->flip(gr_backend);
-    fb_buf[0].virt_addr = (size_t)gr_draw->data;
-
-    /*  */
     if (!previewHeapArray[buffer_id]) {
         ALOGI("Native MMI Test: %s,%d preview heap array empty, do nothing\n",
               __func__, __LINE__);
@@ -621,11 +530,6 @@ static void eng_test_fb_update(const camera_frame_type *frame) {
         oem_handle, (cmr_uint)previewHeapArray[buffer_id]->phys_addr,
         (cmr_uint)previewHeapArray[buffer_id]->data,
         (cmr_s32)previewHeapArray[buffer_id]->fd);
-}
-
-void eng_test_camera_close(void) {
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
-    return;
 }
 
 int eng_test_flashlight_ctrl(uint32_t flash_status) {
@@ -675,26 +579,26 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
                        enum camera_func_type func, void *parm4) {
     struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
     int num;
+    struct timeval startTime, endTime;
+    float Timeuse;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("enter %s,%d IN\n", __func__, __LINE__);
 
     if (!frame) {
-        ALOGI("Native MMI Test: %s,%d, camera call back parm4 error: NULL, do "
-              "nothing\n",
+        ALOGI("%s,%d, camera call back parm4 error: NULL, do nothing\n",
               __func__, __LINE__);
         return;
     }
 
     if (CAMERA_FUNC_START_PREVIEW != func) {
-        ALOGI(
-            "Native MMI Test: %s,%d, camera func type error: %d, do nothing\n",
-            __func__, __LINE__, func);
+        ALOGI("%s,%d, camera func type error: %d, do nothing\n", __func__,
+              __LINE__, func);
         return;
     }
 
     if (CAMERA_EVT_CB_FRAME != cb) {
-        ALOGI("Native MMI Test: %s,%d, camera cb type error: %d, do nothing\n",
-              __func__, __LINE__, cb);
+        ALOGI("%s,%d, camera cb type error: %d, do nothing\n", __func__,
+              __LINE__, cb);
         return;
     }
 
@@ -703,8 +607,8 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
 
     /*empty preview arry, do nothing*/
     if (!previewHeapArray[frame->buf_id]) {
-        ALOGI("Native MMI Test: %s,%d, preview heap array empty, do nothine\n",
-              __func__, __LINE__);
+        ALOGI("%s,%d, preview heap array empty, do nothine\n", __func__,
+              __LINE__);
         previewLock.unlock();
         return;
     }
@@ -714,8 +618,7 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
 
     /*preview enable or disable?*/
     if (!previewvalid) {
-        ALOGI("Native MMI Test: %s,%d, preview disabled, do nothing\n",
-              __func__, __LINE__);
+        ALOGI("%s,%d, preview disabled, do nothing\n", __func__, __LINE__);
         previewLock.unlock();
         return;
     }
@@ -725,99 +628,24 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
 #else
     unsigned int format = FMT_NV21;
 #endif
-    // 1.yuv -> rgb
-    yuv420_to_rgb(PREVIEW_WIDTH, PREVIEW_HIGHT,
+
+    // yuv -> rgb
+    yuv420_to_rgb(g_preview_width, g_preview_height,
                   (unsigned char *)previewHeapArray[frame->buf_id]->data,
                   post_preview_buf, format);
 
-    /*unlock*/
     previewLock.unlock();
+    gettimeofday(&startTime, NULL);
+    factorytest_callback(g_preview_width, g_preview_height,
+                         (unsigned char *)post_preview_buf);
+    gettimeofday(&endTime, NULL);
+    Timeuse = (endTime.tv_sec - startTime.tv_sec) * 1000 +
+              (endTime.tv_usec - startTime.tv_usec) / 1000;
+    ALOGI("Timeuse after= %3.1f", Timeuse);
 
-    /* fore && back camera: istrech,mirror,rotate*/
-    if (0 == camera_id) {
-        // 2. stretch
-        StretchColors((void *)(fb_buf[2].virt_addr), var.yres, var.xres,
-                      var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH,
-                      PREVIEW_HIGHT, var.bits_per_pixel);
-        /*FIXME: here need 2 or 3 framebuffer pingpang ??*/
-        if (!(frame_num % 2)) {
-
-            // 3. rotation
-            RGBRotate90_anticlockwise(
-                (void *)(fb_buf[0].virt_addr), var.xres, var.yres,
-                var.bits_per_pixel, (void *)fb_buf[2].virt_addr, PREVIEW_WIDTH,
-                PREVIEW_HIGHT, var.bits_per_pixel);
-        } else {
-
-            // 3. rotation
-            RGBRotate90_anticlockwise(
-                (void *)(fb_buf[0].virt_addr), var.xres, var.yres,
-                var.bits_per_pixel, (void *)fb_buf[2].virt_addr, PREVIEW_WIDTH,
-                PREVIEW_HIGHT, var.bits_per_pixel);
-            // RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr),
-            // (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres,
-            // var.bits_per_pixel);
-        }
-    } else if (1 == camera_id) {
-        // 2. stretch
-        StretchColors((void *)(fb_buf[2].virt_addr), var.yres, var.xres,
-                      var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH,
-                      PREVIEW_HIGHT, var.bits_per_pixel);
-        if (!(frame_num % 2)) {
-            RGBRotate90_clockwise((void *)(fb_buf[0].virt_addr), var.xres,
-                                  var.yres, var.bits_per_pixel,
-                                  (void *)fb_buf[2].virt_addr, PREVIEW_WIDTH,
-                                  PREVIEW_HIGHT, var.bits_per_pixel);
-        } else {
-            RGBRotate90_clockwise((void *)(fb_buf[0].virt_addr), var.xres,
-                                  var.yres, var.bits_per_pixel,
-                                  (void *)fb_buf[2].virt_addr, PREVIEW_WIDTH,
-                                  PREVIEW_HIGHT, var.bits_per_pixel);
-            // RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr),
-            // (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres,
-            // var.bits_per_pixel);
-        }
-    } else if (2 == camera_id) {
-        // 2. stretch
-        StretchColors((void *)(fb_buf[2].virt_addr), var.yres, var.xres,
-                      var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH,
-                      PREVIEW_HIGHT, var.bits_per_pixel);
-
-        /*FIXME: here need 2 or 3 framebuffer pingpang ??*/
-        if (!(frame_num % 2)) {
-
-            // 3. rotation
-            RGBRotate90_anticlockwise(
-                (void *)(fb_buf[0].virt_addr), var.xres, var.yres,
-                var.bits_per_pixel, (void *)fb_buf[2].virt_addr, PREVIEW_WIDTH,
-                PREVIEW_HIGHT, var.bits_per_pixel);
-        } else {
-
-            // 3. rotation
-            RGBRotate90_anticlockwise(
-                (void *)(fb_buf[0].virt_addr), var.xres, var.yres,
-                var.bits_per_pixel, (void *)fb_buf[2].virt_addr, PREVIEW_WIDTH,
-                PREVIEW_HIGHT, var.bits_per_pixel);
-            // RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr),
-            // (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres,
-            // var.bits_per_pixel);
-        }
-    }
-
-    /*lock*/
     previewLock.lock();
-    ALOGI("Native MMI Test: "
-          "fb_buf[0].virt_addr=0x%lx,var.xres=%d,var.yres=%d,var.bits_per_"
-          "pixel=%d\n",
-          fb_buf[0].virt_addr, var.xres, var.yres, var.bits_per_pixel);
-
-    // 4. update
     eng_test_fb_update(frame);
-
-    /*unlock*/
     previewLock.unlock();
-
-    frame_num++;
 }
 
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
@@ -1480,14 +1308,14 @@ static void eng_tst_camera_startpreview(void) {
     ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
 
     /*  */
-    preview_size.width = PREVIEW_WIDTH;
-    preview_size.height = PREVIEW_HIGHT;
+    preview_size.width = g_preview_width;
+    preview_size.height = g_preview_height;
 
     zoom_param.mode = 1;
     zoom_param.zoom_level = 1;
     zoom_param.zoom_info.zoom_ratio = 1.00000;
     zoom_param.zoom_info.prev_aspect_ratio =
-        (float)PREVIEW_WIDTH / PREVIEW_HIGHT;
+        (float)g_preview_width / g_preview_height;
 
     fps_param.is_recording = 0;
     fps_param.min_fps = 5;
@@ -1549,6 +1377,10 @@ static int eng_tst_camera_stoppreview(void) {
 }
 
 extern "C" {
+void eng_test_camera_close(void) {
+    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    return;
+}
 int eng_tst_camera_deinit() {
     cmr_int ret;
 
@@ -1559,10 +1391,6 @@ int eng_tst_camera_deinit() {
     if (oem_handle != NULL && mHalOem != NULL && mHalOem->ops != NULL) {
         ret = mHalOem->ops->camera_deinit(oem_handle);
     }
-
-    //	memcpy(gr_draw->data, tmpbuf1, lcd_w*lcd_h*4);
-    //	gr_draw = gr_backend->flip(gr_backend);
-    //	memcpy(gr_draw->data, tmpbuf1, lcd_w*lcd_h*4);
 
     if (NULL != mHalOem && NULL != mHalOem->dso) {
         dlclose(mHalOem->dso);
@@ -1581,10 +1409,10 @@ int eng_tst_camera_deinit() {
               "\n",
               __func__, __LINE__);
     }
-    //	free(tmpbuf);
-    //	free(tmpbuf1);
-    free(tmpbuf2);
-    free(tmpbuf3);
+    if (post_preview_buf) {
+        free(post_preview_buf);
+        post_preview_buf = NULL;
+    }
     return ret;
 }
 cmr_int autotest_load_hal_lib(void) {
@@ -1631,32 +1459,46 @@ loaderror:
     mHalOem = NULL;
     return ret;
 }
-int eng_tst_camera_init(int cameraId, minui_backend *backend, GRSurface *draw) {
+
+int eng_tst_camera_init(int cameraId, int preview_window_width,
+                        int preview_window_height, int bits,
+                        void (*draw_callback)(int preview_width,
+                                              int preview_height,
+                                              unsigned char *rgb_data)) {
     int ret = 0;
 
-    ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
-    //	gr_init();
-    gr_backend = backend;
-    gr_draw = draw;
+    ALOGI("%s preview_window_width=%d, preview_window_height=%d", __func__,
+          preview_window_width, preview_window_height);
+    if (preview_window_width < 16 || preview_window_height < 16) {
+        ALOGE("%s camera_init with wrong param!", __func__);
+        return -1;
+    }
+    if (preview_window_width < preview_window_height) {
+        g_preview_width = (preview_window_height >> 4) << 4;
+        g_preview_height = (preview_window_width >> 4) << 4;
+    } else {
+        g_preview_width = (preview_window_width >> 4) << 4;
+        g_preview_height = (preview_window_height >> 4) << 4;
+    }
+    ALOGI("%s preview_width=%d preview_height=%d", __func__, g_preview_width,
+          g_preview_height);
+
+    factorytest_callback = draw_callback;
+    post_preview_buf = (uint32_t *)malloc(sizeof(uint32_t) * g_preview_height *
+                                          g_preview_width);
+
     if (2 == cameraId)
         camera_id = 2; // auxiliary camera
     else if (1 == cameraId || 3 == cameraId)
         camera_id = 1; // fore camera
     else
         camera_id = 0; // back camera
-    if (getLcdSize(&lcd_w, &lcd_h)) {
-        /*update preivew size by lcd*/
-        ALOGI("%s Native MMI Test: lcd_w=%d,lcd_h=%d\n", __func__, lcd_w,
-              lcd_h);
-    }
-    //	tmpbuf = (uint8_t*)malloc(lcd_w*lcd_h*4);
-    //	tmpbuf1 = (uint8_t*)malloc(lcd_w*lcd_h*4);
-    tmpbuf2 = (uint8_t *)malloc(lcd_w * lcd_h * 4);
-    tmpbuf3 = (uint8_t *)malloc(lcd_w * lcd_h * 4);
-    //	memcpy(tmpbuf1, gr_draw->data, lcd_w*lcd_h*4);
-    eng_test_fb_open();
-    if (autotest_load_hal_lib()) {
-        return -1;
+
+    var.bits_per_pixel = bits * 8;
+
+    ret = autotest_load_hal_lib();
+    if (ret) {
+        goto exit;
     }
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     AutotestMem = new SprdCamera3AutotestMem(camera_id, target_buffer_id,
@@ -1680,6 +1522,8 @@ int eng_tst_camera_init(int cameraId, minui_backend *backend, GRSurface *draw) {
           __LINE__, s_mem_method);
 
     eng_tst_camera_startpreview();
+
+    ALOGI("Native MMI Test: %s Exit", __func__);
 
 exit:
     return ret;
@@ -1743,23 +1587,23 @@ int eng_tst_covered_camera_deinit(void) {
     cmr_int ret = 0;
     int sensor_stream_on = 0;
 
-    ALOGI("Native MMI Test: eng_tst_covered_camera_deinit E");
+    ALOGI("%s: E", __func__);
 
     ret = mHalOem->ops->camera_ioctrl(oem_handle,
                                       CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
                                       &sensor_stream_on);
     if (ret) {
-        ALOGE("Native MMI Test: SENSOR_STREAM_CTRL failed, ret=%ld", ret);
+        ALOGE("%s: SENSOR_STREAM_CTRL failed, ret=%ld", __func__, ret);
         goto exit;
     }
 
     ret = mHalOem->ops->camera_deinit(oem_handle);
     if (ret) {
-        ALOGE("Native MMI Test: camera_deinit failed, ret=%ld", ret);
+        ALOGE("%s: camera_deinit failed, ret=%ld", __func__, ret);
         goto exit;
     }
 
-    ALOGI("Native MMI Test: eng_tst_covered_camera_deinit X");
+    ALOGI("%s: X", __func__);
 
 exit:
     return ret;
