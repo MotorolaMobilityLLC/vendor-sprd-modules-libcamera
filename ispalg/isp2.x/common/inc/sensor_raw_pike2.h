@@ -132,6 +132,29 @@ struct ae_table_param_2 {
 };
 #endif
 
+struct bokeh_micro_depth_tune_param{
+	cmr_u32 tuning_exist;
+	cmr_u32 enable;
+	cmr_u32 fir_mode;
+	cmr_u32 fir_len;
+	cmr_s32 hfir_coeff[7];
+	cmr_s32 vfir_coeff[7];
+	cmr_u32 fir_channel;
+	cmr_u32 fir_cal_mode;
+	cmr_s32 fir_edge_factor;
+	cmr_u32 depth_mode;
+	cmr_u32 smooth_thr;
+	cmr_u32 touch_factor;
+	cmr_u32 scale_factor;
+	cmr_u32 refer_len;
+	cmr_u32 merge_factor;
+	cmr_u32 similar_factor;
+	cmr_u32 similar_coeff[3];
+	cmr_u32 tmp_mode;
+	cmr_s32 tmp_coeff[8];
+	cmr_u32 tmp_thr;
+	cmr_u32 reserved[100];
+};
 struct isp_alsc_param {
 	// add for buid warning, isp owners shoud complete the struct
 	cmr_s32 dummy;
