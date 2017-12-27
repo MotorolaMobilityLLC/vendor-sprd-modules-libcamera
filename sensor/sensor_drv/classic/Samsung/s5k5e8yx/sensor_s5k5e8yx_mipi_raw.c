@@ -784,11 +784,11 @@ static cmr_int s5k5e8yx_drv_stream_on(cmr_handle handle, cmr_u32 param) {
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     /*delay*/
     // usleep(30 * 1000);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c16, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C0D, 0x04);
+    //hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c16, 0x00);
+    //hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C0D, 0x04);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
-    // Sensor_WriteReg(0x3C22, 0x00);
-    // Sensor_WriteReg(0x3C22, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C22, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C22, 0x00);
     usleep(500);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C0D, 0x00);
 

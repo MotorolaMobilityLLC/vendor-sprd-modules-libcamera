@@ -165,6 +165,7 @@ extern otp_drv_entry_t ov2680_cmk_drv_entry;
 extern otp_drv_entry_t sp8407_otp_entry;
 extern otp_drv_entry_t sp8407_cmk_otp_entry;
 extern otp_drv_entry_t ov8856_shine_otp_entry;
+extern otp_drv_entry_t s5k5e8yx_jd_otp_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -180,6 +181,7 @@ extern struct sns_af_drv_entry vcm_zc524_drv_entry;
 extern struct sns_af_drv_entry ad5823_drv_entry;
 extern struct sns_af_drv_entry vm242_drv_entry;
 extern struct sns_af_drv_entry dw9763r_drv_entry;
+extern struct sns_af_drv_entry ces6301_drv_entry;
 
 /**
  * NOTE: the interface can only be used by sensor ic.
@@ -313,7 +315,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY ,"s5k3p8sm", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &s5k3p8sm_truly_drv_entry},
 #endif
 #ifdef S5K5E8YX
-    {MODULE_SUNNY ,"s5k3p8sm", &g_s5k5e8yx_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+    {MODULE_SUNNY ,"s5k5e8yx", &g_s5k5e8yx_mipi_raw_info, {&ces6301_drv_entry, 0}, &s5k5e8yx_jd_otp_entry},
 #endif
 
     {0, "0", NULL, {NULL, 0}, NULL}};
@@ -321,7 +323,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 // gc area
 #ifdef GC030A_F
-    {MODULE_SUNNY, "gc030af", &g_gc030af_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "gc030a_f", &g_gc030af_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #ifdef GC2375
     {MODULE_SUNNY, "gc2375", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
