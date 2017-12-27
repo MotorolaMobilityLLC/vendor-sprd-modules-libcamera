@@ -307,7 +307,7 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -400,7 +400,7 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 		rtn = ISP_ERROR;
 	}
 
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -423,7 +423,7 @@ static cmr_int aectrl_destroy_thread(struct aectrl_cxt *cxt_ptr)
 		}
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -444,7 +444,7 @@ static cmr_int aectrl_init_lib(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in
 		ISP_LOGI("adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -466,7 +466,7 @@ static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *i
 
 	rtn = aectrl_init_lib(cxt_ptr, in_ptr, out_ptr);
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
@@ -545,7 +545,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_ha
 
 	*handle_ae = (cmr_handle) cxt_ptr;
 
-	ISP_LOGI("done %d", rtn);
+	ISP_LOGV("done %d", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -592,7 +592,7 @@ exit:
 		*handle_ae = NULL;
 	}
 
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
 
