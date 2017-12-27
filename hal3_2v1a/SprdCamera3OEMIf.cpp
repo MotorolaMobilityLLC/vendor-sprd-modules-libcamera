@@ -1837,8 +1837,7 @@ void SprdCamera3OEMIf::bindcoreEnabled() {
     }
     mBindcoreFlag = false;
     mBindcorePreivewFrameCount = 0;
-    HAL_LOGV("bind:%d,%d,%d", ret, mBindcoreFlag,
-             mBindcorePreivewFrameCount);
+    HAL_LOGV("bind:%d,%d,%d", ret, mBindcoreFlag, mBindcorePreivewFrameCount);
 }
 #endif
 
@@ -4147,11 +4146,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     }
 
 #ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-    HAL_LOGV("bind core :%d,%d,mBindcorePreivewFrameCount:%d",
-            mBindcoreFlag, sysconf(_SC_NPROCESSORS_ONLN),
-            mBindcorePreivewFrameCount);
-    if ((mBindcoreFlag == true) &&
-        sysconf(_SC_NPROCESSORS_ONLN) == 3) {
+    HAL_LOGV("bind core :%d,%d,mBindcorePreivewFrameCount:%d", mBindcoreFlag,
+             sysconf(_SC_NPROCESSORS_ONLN), mBindcorePreivewFrameCount);
+    if ((mBindcoreFlag == true) && sysconf(_SC_NPROCESSORS_ONLN) == 3) {
         mBindcorePreivewFrameCount++;
         if (mBindcorePreivewFrameCount == 3) {
             bindcoreEnabled();
@@ -4696,22 +4693,28 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width,
         if (pre_stream) {
             if (pic_stream) {
                 ret = pic_stream->getQBuffFirstNum(&frame_num);
-                if (ret != NO_ERROR)
-                    ret = pre_stream->getQBuffFirstVir(&addr_vir);
-                else
-                    ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
-                                                        &addr_phy, &ion_fd);
+                if (ret != NO_ERROR) {
+                    pre_stream->getQBuffFirstVir(&addr_vir);
+                    pre_stream->getQBuffFirstFd(&ion_fd);
+                } else
+                    pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
+                                                  &addr_phy, &ion_fd);
             } else {
                 ret = pre_stream->getQBuffFirstVir(&addr_vir);
-                if (ret == NO_ERROR)
+                if (ret == NO_ERROR) {
                     ret = pre_stream->getQBuffFirstNum(&frame_num);
+                }
+                pre_stream->getQBuffFirstFd(&ion_fd);
             }
             HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d, ret = %d", addr_vir,
                      frame_num, ret);
             if (ret == NO_ERROR) {
-                if (addr_vir != 0 && virtual_addr != NULL)
+                if (addr_vir != 0 && virtual_addr != NULL && ion_fd != 0) {
                     memcpy((char *)addr_vir, (char *)virtual_addr,
                            (width * height * 3) / 2);
+                    flushIonBuffer(ion_fd, (void *)addr_vir, NULL,
+                                   width * height * 3 / 2);
+                }
                 regular_channel->channelCbRoutine(frame_num, timestamp,
                                                   CAMERA_STREAM_TYPE_PREVIEW);
             }
@@ -5189,7 +5192,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
 #ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-       acquireCore(LOWPOWER_MODE);
+    acquireCore(LOWPOWER_MODE);
 #endif
 
 exit:
