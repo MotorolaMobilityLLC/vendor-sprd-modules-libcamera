@@ -69,12 +69,11 @@ typedef struct c3dnr_param_info
     int thread_num;
     int thread_num_acc;
     int preview_cpyBuf;
-    int videoflag;     // 0 : output orig_image only ; 1: ouput orig_image && out_image ; 
 }c3dnr_param_info_t;
 
 int threednr_init(c3dnr_param_info_t *param);
 int threednr_function(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image);
-int threednr_function_pre(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image, c3dnr_buffer_t *out_image);
+int threednr_function_pre(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image , c3dnr_buffer_t *video_image);
 int threednr_deinit();
 int threednr_callback();
 
@@ -97,5 +96,11 @@ int threednr_callback();
 #define CTRL_FUNC1_EN (1<<24) //
 #define CTRL_FUNC2_EN (2<<24) //
 #define CTRL_FUNC3_EN (3<<24) //
+
+#define RET_3DNR_OK                 0
+#define RET_3DNR_FAIL               -1
+#define RET_3DNR_WRONG_PARAM        -2
+#define RET_3DNR_NO_ENOUGH_MEMORY   -3
+
 
 #endif
