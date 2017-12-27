@@ -3153,6 +3153,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
         CMR_LOGI("volte incall, don't need to configure zsl ");
     }
+#ifdef CONFIG_CAMERA_CAPTURE_NOZSL
+    mSprdZslEnabled = false;
+#endif
     HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
 
     if (!initPreview()) {
