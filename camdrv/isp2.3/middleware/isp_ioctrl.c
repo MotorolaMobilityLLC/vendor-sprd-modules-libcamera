@@ -306,12 +306,12 @@ static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 	afl_block_info.scene_id = ISP_MODE_PRV;
 	afl_block_info.bypass = bypass;
 
-	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO)
+	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO || cxt->sensor_fps.is_high_fps == 1)
 		afl_block_info.bypass = 1;
 
-	if (cxt->ops.afl_ops.ioctrl) {
-			ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_NEW_SET_BYPASS, &afl_block_info, NULL);
-			ISP_TRACE_IF_FAIL(ret, ("fail to AFL_NEW_SET_BYPASS"));
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, NULL);
+	if(ret) {
+		ISP_LOGE("fail to set afl bypass");
 	}
 
 	return ret;

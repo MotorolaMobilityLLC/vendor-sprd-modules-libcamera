@@ -1960,17 +1960,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 			ISP_LOGE("fail to set statis buf");
 		}
 		afl_block_info.bypass = 0;
-		if (cxt->ops.afl_ops.ioctrl) {
-			ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_NEW_SET_BYPASS, &afl_block_info, NULL);
-			ISP_TRACE_IF_FAIL(ret, ("fail to AFL_NEW_SET_BYPASS"));
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, NULL);
+		if(ret) {
+			ISP_LOGE("fail to set afl bypass");
 		}
 		goto exit;
-	}
-
-	afl_block_info.bypass = 1;
-	if (cxt->ops.afl_ops.ioctrl) {
-		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_NEW_SET_BYPASS, &afl_block_info, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_NEW_SET_BYPASS"));
 	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
@@ -3384,9 +3378,11 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	struct isp_pm_param_data *param_data = NULL;
 	struct isp_u_blocks_info sub_block_info;
 	struct afl_ctrl_param_in afl_in;
+	struct isp_u_blocks_info afl_block_info;
 	cmr_u32 i = 0;
 
 	memset(&sub_block_info, 0x0, sizeof(sub_block_info));
+	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
@@ -3429,6 +3425,10 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 
 	afl_in.img_size.w = cxt->dcam_size.w;
 	afl_in.img_size.h = cxt->dcam_size.h;
+	if(cxt->sensor_fps.is_high_fps == 1)
+		afl_block_info.bypass = 1;
+	else
+		afl_block_info.bypass = 0;
 
 	if (cxt->ops.afl_ops.ioctrl) {
 		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_SET_IMG_SIZE, &afl_in, NULL);
@@ -3439,6 +3439,10 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 		ret = cxt->ops.afl_ops.config(cxt->afl_cxt.handle);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do anti_flicker param update"));
 
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, NULL);
+	if(ret) {
+		ISP_LOGE("fail to set afl bypass");
+	}
 	return ret;
 }
 
