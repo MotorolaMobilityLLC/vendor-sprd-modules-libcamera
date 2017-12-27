@@ -91,6 +91,9 @@ static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 #if defined(CONFIG_CAMERA_MMITEST_PREVIEWSIZE_320X240)
 #define PREVIEW_WIDTH 320
 #define PREVIEW_HIGHT 240
+#elif defined(CONFIG_CAMERA_MMITEST_PREVIEWSIZE_640X480)
+#define PREVIEW_WIDTH 640
+#define PREVIEW_HIGHT 480
 #else
 #define PREVIEW_WIDTH 960  // 1280//640//
 #define PREVIEW_HIGHT 720  // 960//480//
