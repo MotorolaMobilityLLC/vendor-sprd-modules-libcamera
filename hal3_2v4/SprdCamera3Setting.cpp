@@ -3344,9 +3344,9 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
-        s_setting[mCameraId].controlInfo.ae_lock =
-            frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
-        pushAndroidParaTag(ANDROID_CONTROL_AE_LOCK);
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_lock, valueU8,
+                         ANDROID_CONTROL_AE_LOCK)
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_SCENE_MODE)) {
