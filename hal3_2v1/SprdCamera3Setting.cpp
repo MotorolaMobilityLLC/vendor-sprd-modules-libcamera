@@ -3237,6 +3237,12 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("android tonemap mode %d", valueU8);
     }
 
+    if (frame_settings.exists(ANDROID_FLASH_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
+                         ANDROID_FLASH_MODE)
+    }
+
     if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
         HAL_LOGV("ae mode %d", valueU8);
@@ -3421,12 +3427,6 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGD("GPS timestamp %lld",
                  s_setting[mCameraId].jpgInfo.gps_timestamp);
         pushAndroidParaTag(ANDROID_JPEG_GPS_TIMESTAMP);
-    }
-
-    if (frame_settings.exists(ANDROID_FLASH_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
-                         ANDROID_FLASH_MODE)
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
