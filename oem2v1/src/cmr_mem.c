@@ -99,7 +99,7 @@ struct cap_size_to_mem {
 };
 
 static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_0P3_MEGA, (3 << 20)},   {PIXEL_1P3_MEGA, (18 << 20)},
+    {PIXEL_0P3_MEGA, (2 << 20)},   {PIXEL_1P3_MEGA, (18 << 20)},
     {PIXEL_2P0_MEGA, (18 << 20)},  {PIXEL_3P0_MEGA, (18 << 20)},
     {PIXEL_4P0_MEGA, (18 << 20)},  {PIXEL_5P0_MEGA, (18 << 20)},
     {PIXEL_6P0_MEGA, (26 << 20)},  {PIXEL_7P0_MEGA, (26 << 20)},
@@ -120,7 +120,7 @@ static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
 * * 3(bytes);
 */
 static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
-    {PIXEL_0P3_MEGA, (3 << 20)},   {PIXEL_1P3_MEGA, (18 << 20)},
+    {PIXEL_0P3_MEGA, (2 << 20)},   {PIXEL_1P3_MEGA, (18 << 20)},
     {PIXEL_2P0_MEGA, (18 << 20)},  {PIXEL_3P0_MEGA, (18 << 20)},
     {PIXEL_4P0_MEGA, (18 << 20)},  {PIXEL_5P0_MEGA, (18 << 20)},
     {PIXEL_6P0_MEGA, (26 << 20)},  {PIXEL_7P0_MEGA, (26 << 20)},
