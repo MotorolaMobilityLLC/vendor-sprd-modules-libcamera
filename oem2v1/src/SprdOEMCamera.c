@@ -525,21 +525,6 @@ cmr_s32 camera_get_iommu_status(cmr_handle camera_handle) {
     return camera_local_get_iommu_status(camera_handle);
 }
 
-cmr_int camera_get_rolling_shutter(cmr_handle camera_handle,
-                                   cmr_s64 *rolling_shutter_skew) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (!camera_handle || !rolling_shutter_skew) {
-        CMR_LOGE("error 0x%lx rolling_shutter_skew=0x%lx",
-                 (cmr_uint)camera_handle, (cmr_uint)rolling_shutter_skew);
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    ret = camera_get_rolling_shutter_skew_value(camera_handle,
-                                                rolling_shutter_skew);
-exit:
-    return ret;
-}
-
 void camera_fd_enable(cmr_handle camera_handle, cmr_u32 is_enable) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)camera_handle;
@@ -1249,12 +1234,12 @@ static oem_ops_t oem_module_ops = {
     camera_reprocess_yuv_for_jpeg,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
-    camera_raw_post_proc, camera_get_tuning_param,
+    camera_raw_post_proc, camera_get_tuning_param
 #endif
 #if defined(CONFIG_ISP_2_3)
-    camera_set_gpu_mem_ops,
+                              camera_set_gpu_mem_ops
 #endif
-    camera_get_rolling_shutter};
+};
 
 struct oem_module OEM_MODULE_INFO_SYM = {
     .tag = 0, .ops = &oem_module_ops, .dso = NULL};

@@ -96,7 +96,7 @@ cmr_int camera_get_sensor_trim(cmr_handle camera_handle,
                                struct img_rect *sn_trim);
 
 cmr_int camera_get_sensor_trim2(cmr_handle camera_handle,
-                                struct img_rect *sn_trim);
+                               struct img_rect *sn_trim);
 
 cmr_uint camera_get_preview_rot_angle(cmr_handle camera_handle);
 
@@ -191,8 +191,6 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
                                       struct frm_info *frm_data);
-cmr_int camera_get_rolling_shutter(cmr_handle camera_handle,
-                                   cmr_s64 *rolling_shutter_skew);
 
 #ifdef __cplusplus
 }
