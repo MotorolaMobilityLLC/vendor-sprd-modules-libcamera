@@ -1672,6 +1672,10 @@ typedef struct oem_ops {
     cmr_int (*camera_set_gpu_mem_ops)(cmr_handle camera_handle,
                                       void *cb_of_malloc, void *cb_of_free);
 #endif
+#ifdef CAMERA_SUPPORT_ROLLING_SHUTTER_SKEW // Added only for HAL3_2v1 and oem2v1
+    cmr_int (*camera_get_rolling_shutter)(cmr_handle camera_handle,
+                                          cmr_s64 *rolling_shutter_skew);
+#endif
 } oem_ops_t;
 
 typedef struct oem_module {

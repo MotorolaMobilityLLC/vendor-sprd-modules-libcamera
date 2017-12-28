@@ -731,3 +731,7 @@ endif
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
 endif
+
+ifeq ($(ISP_HW_VER),2v1)
+LOCAL_CFLAGS += -DCAMERA_SUPPORT_ROLLING_SHUTTER_SKEW
+endif

@@ -488,6 +488,8 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
                                          struct enc_exif_param *param);
 cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
                                      void *cb_of_free);
+cmr_int camera_get_rolling_shutter_skew_value(cmr_handle oem_handle,
+                                              cmr_s64 *rolling_shutter_skew);
 
 cmr_int camera_get_grab_capability(cmr_handle oem_handle,
                                    struct cmr_path_capability *capability);

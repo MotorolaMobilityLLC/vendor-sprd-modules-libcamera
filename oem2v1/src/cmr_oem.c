@@ -7754,6 +7754,46 @@ void camera_set_exif_exposure_time(cmr_handle oem_handle) {
              exposure_time.numerator, exposure_time.denominator);
 }
 
+cmr_int camera_get_rolling_shutter_skew_value(cmr_handle oem_handle,
+                                              cmr_s64 *rolling_shutter_skew) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_exp_info *sensor_info;
+    cmr_u32 sensor_mode = SENSOR_MODE_MAX;
+    if (!oem_handle || !rolling_shutter_skew) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    sensor_info =
+        (struct sensor_exp_info *)malloc(sizeof(struct sensor_exp_info));
+    if (!sensor_info) {
+        CMR_LOGE("No mem!");
+        ret = CMR_CAMERA_NO_MEM;
+        goto exit;
+    }
+    ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                              &sensor_mode);
+    if (ret) {
+        CMR_LOGE("Failed to get sensor mode %d", ret);
+        free(sensor_info);
+        goto exit;
+    }
+    ret = cmr_sensor_get_info(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                              sensor_info);
+    if (ret) {
+        CMR_LOGE("failed to get sensor info %d", ret);
+        free(sensor_info);
+        goto exit;
+    }
+    *rolling_shutter_skew = (sensor_info->mode_info[sensor_mode].line_time *
+                             sensor_info->mode_info[sensor_mode].height);
+    free(sensor_info);
+    CMR_LOGV("rolling_shutter_skew %d", *rolling_shutter_skew);
+exit:
+    return ret;
+}
+
 cmr_int camera_get_ae_lum_value(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_int lum_val = 0;
