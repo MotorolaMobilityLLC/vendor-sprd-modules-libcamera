@@ -358,7 +358,7 @@ static SENSOR_REG_T ov8856_again_reg[] = {
 
     {0x3508, 0x00}, {0x3509, 0x00},
 
-    {0x3208, 0x11}, {0x3208, 0xA1},
+    //{0x3208, 0x11}, {0x3208, 0xA1},
 };
 
 static struct sensor_i2c_reg_tab ov8856_again_tab = {
@@ -366,6 +366,10 @@ static struct sensor_i2c_reg_tab ov8856_again_tab = {
 };
 
 static SENSOR_REG_T ov8856_dgain_reg[] = {
+    {0x5019, 0x00}, {0x501a, 0x00}, {0x501b, 0x00}, {0x501c, 0x00},
+    {0x501d, 0x00}, {0x501e, 0x00}, {0x501f, 0x00}, {0x5020, 0x00},
+
+    {0x3208, 0x11}, {0x3208, 0xA1},
 
 };
 
@@ -397,7 +401,7 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
      .static_info = {.f_num = 200,
                      .focal_length = 354,
                      .max_fps = 30,
-                     .max_adgain = 15,
+                     .max_adgain = 62,
                      .ois_supported = 0,
                      .pdaf_supported = 0,
                      .exp_valid_frame_num = 1,
