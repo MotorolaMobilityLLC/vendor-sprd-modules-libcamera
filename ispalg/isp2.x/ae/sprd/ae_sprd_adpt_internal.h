@@ -118,6 +118,7 @@ struct ae_ctrl_cxt {
 	cmr_u32 delay_cnt;
 	cmr_u32 backup_rgb_gain;
 	double ob_rgb_gain;
+	pthread_mutex_t data_sync_lock;
 	/*
 	 * camera id: front camera or rear camera
 	 */

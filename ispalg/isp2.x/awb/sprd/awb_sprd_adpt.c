@@ -1350,8 +1350,6 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		}
 	}
 
-	pthread_mutex_lock(&cxt->status_lock);
-
 	struct awb_calc_param calc_param;
 	struct awb_calc_result calc_result;
 	memset(&calc_param, 0x00, sizeof(calc_param));
@@ -1546,7 +1544,9 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
 	}
-
+	
+	pthread_mutex_lock(&cxt->status_lock);
+	
 	memcpy(&cxt->awb_result, &result, sizeof(struct awb_ctrl_calc_result));
 
 	pthread_mutex_unlock(&cxt->status_lock);

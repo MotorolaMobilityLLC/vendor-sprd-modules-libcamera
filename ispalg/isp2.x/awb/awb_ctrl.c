@@ -231,6 +231,7 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle, enum awb_ctrl_cmd cmd, cmr_handle in_
 
 	ISP_CHECK_HANDLE_VALID(handle);
 	CMR_MSG_INIT(message);
+	if ((AWB_SYNC_MSG_BEGIN < cmd) && (AWB_SYNC_MSG_END > cmd)) {
 	msg_ctrl.cmd = cmd;
 	msg_ctrl.in = in_ptr;
 	msg_ctrl.out = out_ptr;
@@ -238,6 +239,9 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle, enum awb_ctrl_cmd cmd, cmr_handle in_
 	message.msg_type = AWBCTRL_EVT_IOCTRL;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
+	} else if ((AWB_DIRECT_MSG_BEGIN < cmd) && (AWB_DIRECT_MSG_END > cmd)) {
+		rtn = awbctrl_ioctrl(cxt_ptr, cmd, in_ptr, out_ptr);
+		}
 
 exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);

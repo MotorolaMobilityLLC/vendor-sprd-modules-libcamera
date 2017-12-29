@@ -2760,7 +2760,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt,
 	}
 
 	ae_get_iso(cxt, &result->ae_output.cur_iso);
-
+	
 	return rtn;
 }
 
@@ -3694,6 +3694,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle *param)
 	}
 #endif
 
+	ae_make_calc_result(cxt, &cxt->sync_cur_result, &cxt->calc_results);
+
 	/*update parameters to sensor*/
 	memset((void*)&cxt->exp_data, 0, sizeof(cxt->exp_data));
 	cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
@@ -4549,10 +4551,12 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			cxt->cur_status.settings.max_fps = val_max;
 		}
 	}
+	pthread_mutex_lock(&cxt->data_sync_lock);
 	current_status = &cxt->sync_cur_status;
 	current_result = &cxt->sync_cur_result;
 	memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
 	memcpy(&cxt->cur_result, current_result, sizeof(struct ae_alg_calc_result));
+	pthread_mutex_unlock(&cxt->data_sync_lock);
 
 /***********************************************************/
 	current_status->ae_start_delay = 0;
@@ -4561,7 +4565,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 	if(0 == cxt->skip_update_param_flag){
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
-		}
+	}
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
 	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ",(cmr_s32) ((ae_time1 - ae_time0) / 1000));
@@ -4651,8 +4655,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			current_result->wts.exposure_time);
 	}
 #endif
+
+	pthread_mutex_lock(&cxt->data_sync_lock);
 	memcpy(&cur_calc_result->ae_result, current_result, sizeof(struct ae_alg_calc_result));
 	ae_make_calc_result(cxt, current_result, cur_calc_result);
+	pthread_mutex_unlock(&cxt->data_sync_lock);
 
 /*update parameters to sensor*/
 	cxt->exp_data.lib_data.exp_line = current_result->wts.cur_exp_line;
@@ -4732,15 +4739,10 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 	}
 
 	cxt = (struct ae_ctrl_cxt *)handle;
+	pthread_mutex_lock(&cxt->data_sync_lock);
 	switch (cmd) {
-	case AE_SET_PROC:
-		break;
-
 	case AE_SET_DC_DV:
 		rtn = ae_set_dc_dv_mode(cxt, param);
-		break;
-
-	case AE_SET_WORK_MODE:
 		break;
 
 	case AE_SET_SCENE_MODE:
@@ -4753,10 +4755,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_SET_MANUAL_ISO:
 		rtn = ae_set_manual_iso(cxt, param);
-		break;
-
-	case AE_GET_ISO:
-		rtn = ae_get_iso(cxt, (cmr_u32*)result);
 		break;
 
 	case AE_SET_FLICKER:
@@ -4799,6 +4797,89 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_set_flash_notice(cxt, param);
 		break;
 
+	case AE_SET_STAT_TRIM:
+		rtn = ae_set_scaler_trim(cxt, (struct ae_trim *)param);
+		break;
+
+	case AE_SET_G_STAT:
+		rtn = ae_set_g_stat(cxt, (struct ae_stat_mode *)param);
+		break;
+
+	case AE_SET_TARGET_LUM:
+		rtn = ae_set_target_luma(cxt, param);
+		break;
+
+	case AE_SET_ONLINE_CTRL:
+		rtn = ae_tool_online_ctrl(cxt, param, result);
+		break;
+
+	case AE_SET_EXP_GAIN:
+		break;	
+
+	case AE_SET_FD_PARAM:
+		rtn = ae_set_fd_param(cxt, param);
+		break;
+
+	case AE_SET_NIGHT_MODE:
+		break;
+
+	case AE_SET_BYPASS:
+		rtn = ae_bypass_algorithm(cxt, param);
+		break;
+
+	case AE_SET_FORCE_QUICK_MODE:
+		break;
+
+	case AE_SET_MANUAL_MODE:
+		rtn = ae_set_manual_mode(cxt, param);
+		break;
+
+	case AE_SET_EXP_TIME:
+		rtn = ae_set_exp_time(cxt, param);
+		break;	
+
+	case AE_SET_SENSITIVITY:
+		rtn = ae_set_gain(cxt, param);
+		break;
+
+	case AE_VIDEO_STOP:
+		ae_set_video_stop(cxt);
+		break;
+
+	case AE_VIDEO_START:
+		rtn = ae_set_video_start(cxt, param);
+		break;
+
+	case AE_HDR_START:
+		rtn = ae_set_hdr_start(cxt, param);
+		break;
+
+	case AE_CAF_LOCKAE_START:
+		rtn = ae_set_caf_lockae_start(cxt);
+		break;
+
+	case AE_CAF_LOCKAE_STOP:
+		rtn = ae_set_caf_lockae_stop(cxt);
+		break;
+		
+	case AE_SET_RGB_GAIN:
+#ifndef CONFIG_ISP_2_2
+		rtn = ae_set_isp_gain(cxt);
+#endif
+		break;
+
+	case AE_SET_UPDATE_AUX_SENSOR:
+		rtn = ae_set_aux_sensor(cxt, param, result);
+		break;
+
+	case AE_GET_CALC_RESULTS:
+		rtn = ae_get_calc_reuslts(cxt, result);
+		break;
+
+	case AE_GET_ISO:
+		rtn = ae_get_iso(cxt, (cmr_u32*)result);
+		break;
+
 	case AE_GET_FLASH_EFFECT:
 		rtn = ae_get_flash_effect(cxt, result);
 		break;
@@ -4810,10 +4891,9 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_get_flash_enable(cxt, result);
 		break;
 
-	case AE_SET_TUNING_EB:
-		break;
-
 	case AE_GET_BV_BY_GAIN:
+		break;
+		
 	case AE_GET_BV_BY_GAIN_NEW:
 		rtn = ae_get_gain(cxt, result);
 		break;
@@ -4821,9 +4901,11 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 	case AE_GET_FLASH_ENV_RATIO:
 		rtn = ae_get_flash_env_ratio(cxt, result);
 		break;
+		
 	case AE_GET_FLASH_ONE_OF_ALL_RATIO:
 		rtn = ae_get_flash_one_in_all_ratio(cxt, result);
 		break;
+		
 	case AE_GET_EV:
 		rtn = ae_get_ev(cxt, result);
 		break;
@@ -4836,20 +4918,8 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_get_bv_by_lum_new(cxt, (cmr_s32 *) result);
 		break;
 
-	case AE_SET_STAT_TRIM:
-		rtn = ae_set_scaler_trim(cxt, (struct ae_trim *)param);
-		break;
-
-	case AE_SET_G_STAT:
-		rtn = ae_set_g_stat(cxt, (struct ae_stat_mode *)param);
-		break;
-
 	case AE_GET_LUM:
 		rtn = ae_get_luma(cxt, result);
-		break;
-
-	case AE_SET_TARGET_LUM:
-		rtn = ae_set_target_luma(cxt, param);
 		break;
 
 	case AE_SET_SNAPSHOT_NOTICE:
@@ -4861,20 +4931,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_GET_FLICKER_MODE:
 		rtn = ae_get_flicker_mode(cxt, result);
-		break;
-
-	case AE_SET_ONLINE_CTRL:
-		rtn = ae_tool_online_ctrl(cxt, param, result);
-		break;
-
-	case AE_SET_EXP_GAIN:
-		break;
-
-	case AE_SET_EXP_ANIT:
-		break;
-
-	case AE_SET_FD_PARAM:
-		rtn = ae_set_fd_param(cxt, param);
 		break;
 
 	case AE_GET_GAIN:
@@ -4891,40 +4947,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 	case AE_GET_CUR_WEIGHT:
 		rtn = ae_get_metering_mode(cxt, result);
-		break;
-
-	case AE_SET_NIGHT_MODE:
-		break;
-
-	case AE_SET_NORMAL_MODE:
-		break;
-
-	case AE_SET_BYPASS:
-		rtn = ae_bypass_algorithm(cxt, param);
-		break;
-
-	case AE_SET_SPORT_MODE:
-		break;
-
-	case AE_SET_PANORAMA_START:
-		break;
-
-	case AE_SET_PANORAMA_STOP:
-		break;
-
-	case AE_SET_FORCE_QUICK_MODE:
-		break;
-
-       case AE_SET_MANUAL_MODE:
-		rtn = ae_set_manual_mode(cxt, param);
-		break;
-
-	case AE_SET_EXP_TIME:
-		rtn = ae_set_exp_time(cxt, param);
-		break;
-
-	case AE_SET_SENSITIVITY:
-		rtn = ae_set_gain(cxt, param);
 		break;
 
 	case AE_GET_EXP_TIME:
@@ -4947,18 +4969,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_get_debug_info_for_display(cxt, result);
 		break;
 
-	case AE_VIDEO_STOP:
-		ae_set_video_stop(cxt);
-		break;
-
-	case AE_VIDEO_START:
-		rtn = ae_set_video_start(cxt, param);
-		break;
-
-	case AE_HDR_START:
-		rtn = ae_set_hdr_start(cxt, param);
-		break;
-
 	case AE_GET_FLASH_WB_GAIN:
 		rtn = ae_get_flash_wb_gain(cxt, result);
 		break;
@@ -4967,36 +4977,15 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		rtn = ae_get_fps(cxt, result);
 		break;
 
-	case AE_CAF_LOCKAE_START:
-		rtn = ae_set_caf_lockae_start(cxt);
-		break;
-
-	case AE_CAF_LOCKAE_STOP:
-		rtn = ae_set_caf_lockae_stop(cxt);
-		break;
-
 	case AE_GET_LEDS_CTRL:
 		rtn = ae_get_led_ctrl(cxt, result);
 		break;
 
-	case AE_SET_RGB_GAIN:
-#ifndef CONFIG_ISP_2_2
-		rtn = ae_set_isp_gain(cxt);
-#endif
-		break;
-
-	case AE_SET_UPDATE_AUX_SENSOR:
-		rtn = ae_set_aux_sensor(cxt, param, result);
-		break;
-
-	case AE_GET_CALC_RESULTS:
-		rtn = ae_get_calc_reuslts(cxt, result);
-		break;
 	default:
 		rtn = AE_ERROR;
 		break;
 	}
-
+	pthread_mutex_unlock(&cxt->data_sync_lock);
 	return rtn;
 }
 
@@ -5049,7 +5038,7 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 
 	}
 #endif
-
+	pthread_mutex_destroy(&cxt->data_sync_lock);
 	ISP_LOGI("cam-id %d", cxt->camera_id);
 	free(cxt);
 	ISP_LOGI("done");
@@ -5209,6 +5198,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	misc_init_in.size = sizeof(cxt->cur_status);
 	cxt->misc_handle = ae_misc_init(&misc_init_in, &misc_init_out);
 	memcpy(cxt->alg_id, misc_init_out.alg_id, sizeof(cxt->alg_id));
+
+	pthread_mutex_init(&cxt->data_sync_lock, NULL);
 
 	/* set sensor exp/gain validate information */
 	{
