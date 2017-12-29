@@ -59,8 +59,10 @@ struct isp_u_blocks_info {
 		cmr_u32 enable;
 		cmr_u32 type;
 		cmr_u32 factor;
+		void *statis;
 		void *block_info;
 		struct isp_img_size size;
+		struct isp_img_offset offset;
 		/*rgb gain block*/
 		cmr_u32 rgb_gain_coeff;
 		/*gamma block*/
@@ -74,8 +76,6 @@ struct isp_u_blocks_info {
 		cmr_u32 auto_shadow;
 		cmr_u32 shadow_done;
 		/*aem block*/
-		void *statis;
-		struct isp_img_offset offset;
 		struct sprd_aem_avgshf shift;
 		struct isp_aem_stats_info stats_info;
 		/*afm block*/
@@ -266,16 +266,7 @@ cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: AWBM*/
 cmr_s32 isp_u_awb_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_mode(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_skip_num(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_block_offset(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_block_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_shift(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbc_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_awbc_gain(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbc_thrd(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbc_gain_offset(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: BPC*/
 cmr_s32 isp_u_bpc_block(cmr_handle handle, void *param_ptr);
@@ -370,7 +361,6 @@ cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_aem_offset(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_aem_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_aem_statistics(cmr_handle handle, cmr_u32 * r_info, cmr_u32 * g_info, cmr_u32 * b_info);
 
 /*Nlm*/
 cmr_s32 isp_u_nlm_block(cmr_handle handle, void *param_ptr);
