@@ -617,8 +617,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mVideoHeight;
     int mCaptureWidth;
     int mCaptureHeight;
-    cmr_u16 mLargestSensorWidth;
-    cmr_u16 mLargestSensorHeight;
+    cmr_u16 mLargestPictureWidth;
+    cmr_u16 mLargestPictureHeight;
     camera_data_format_type_t mPreviewFormat; // 0:YUV422;1:YUV420;2:RGB
     int mPictureFormat;                       // 0:YUV422;1:YUV420;2:RGB;3:JPEG
     int mPreviewStartFlag;

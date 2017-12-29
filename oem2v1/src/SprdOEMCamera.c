@@ -673,30 +673,11 @@ cmr_int camera_takepicture_process(cmr_handle camera_handle,
     return ret;
 }
 
-int camera_pre_capture_get_buffer_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                                       cmr_u32 *mem_size, cmr_u32 *mem_sum) {
+int camera_get_postprocess_capture_size(cmr_u32 camera_id, cmr_u32 *mem_size) {
     int ret = CMR_CAMERA_SUCCESS;
 
-    ret =
-        camera_pre_capture_buf_size(camera_id, mem_size_id, mem_size, mem_sum);
+    ret = camera_get_postproc_capture_size(camera_id, mem_size);
     return ret;
-}
-
-int camera_get_reserve_buffer_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                                   cmr_u32 *mem_size, cmr_u32 *mem_sum) {
-    int ret = CMR_CAMERA_SUCCESS;
-
-    ret = camera_reserve_buf_size(camera_id, mem_size_id, mem_size, mem_sum);
-    return ret;
-}
-
-int camera_pre_capture_get_buffer_id(cmr_u32 camera_id, cmr_u16 width,
-                                     cmr_u16 height) {
-    int buffer_id = 0;
-
-    buffer_id = camera_pre_capture_buf_id(camera_id, width, height);
-
-    return buffer_id;
 }
 
 uint32_t camera_get_size_align_page(uint32_t size) { return size; }
@@ -989,11 +970,11 @@ exit:
     return ret;
 }
 
-cmr_int camera_pre_capture_set_buffer_size(cmr_u32 camera_id, cmr_u16 width,
-                                           cmr_u16 height) {
+cmr_int camera_set_largest_picture_size(cmr_u32 camera_id, cmr_u16 width,
+                                        cmr_u16 height) {
     cmr_int ret = 0;
 
-    ret = camera_pre_capture_sensor_size_set(camera_id, width, height);
+    ret = camera_set_largest_pict_size(camera_id, width, height);
 
     return ret;
 }
@@ -1228,8 +1209,7 @@ static oem_ops_t oem_module_ops = {
     // camera_safe_scale_th,
     NULL, camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,
-    camera_pre_capture_get_buffer_id, camera_get_reserve_buffer_size,
-    camera_pre_capture_get_buffer_size, camera_get_preview_rect,
+    camera_get_postprocess_capture_size, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
     camera_get_sensor_trim, camera_get_sensor_trim2,
     camera_get_preview_rot_angle, camera_fd_enable, camera_flip_enable,
@@ -1249,7 +1229,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_otp_info, camera_get_sensor_vcm_step,
     camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
     camera_start_capture, camera_stop_capture,
-    camera_pre_capture_set_buffer_size, camera_ioctrl,
+    camera_set_largest_picture_size, camera_ioctrl,
     camera_reprocess_yuv_for_jpeg,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,

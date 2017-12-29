@@ -72,14 +72,7 @@ cmr_int camera_is_change_size(cmr_handle camera_handle, cmr_u32 cap_width,
                               cmr_u32 preview_height, cmr_u32 video_width,
                               cmr_u32 video_height, cmr_uint *is_change);
 
-int camera_pre_capture_get_buffer_id(cmr_u32 camera_id, cmr_u16 width,
-                                     cmr_u16 height);
-
-int camera_get_reserve_buffer_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                                   cmr_u32 *mem_size, cmr_u32 *mem_sum);
-
-int camera_pre_capture_get_buffer_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
-                                       cmr_u32 *mem_size, cmr_u32 *mem_sum);
+int camera_get_postprocess_capture_size(cmr_u32 camera_id, cmr_u32 *mem_size);
 
 cmr_int camera_get_preview_rect(cmr_handle camera_handle, cmr_uint *rect_x,
                                 cmr_uint *rect_y, cmr_uint *rect_width,
@@ -180,8 +173,8 @@ cmr_int camera_set_reprocess_picture_size(
     cmr_u32 width,
     cmr_u32 height); /**add for 3d capture to reset reprocessing capture size*/
 
-cmr_int camera_pre_capture_set_buffer_size(cmr_u32 camera_id, cmr_u16 width,
-                                           cmr_u16 height);
+cmr_int camera_set_largest_picture_size(cmr_u32 camera_id, cmr_u16 width,
+                                        cmr_u16 height);
 
 cmr_int camera_start_capture(cmr_handle camera_handle);
 cmr_int camera_stop_capture(cmr_handle camera_handle);

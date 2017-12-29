@@ -846,7 +846,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
                                               cmr_u16 *height) {
     *width = largest_picture_size[cameraId].width;
     *height = largest_picture_size[cameraId].height;
-    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
+    HAL_LOGV("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
              *height);
     return 0;
 }

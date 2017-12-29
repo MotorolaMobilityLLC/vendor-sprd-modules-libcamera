@@ -4703,16 +4703,12 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     is_need_scaling = prev_is_need_scaling(handle, camera_id);
     /*caculate memory size for capture*/
 
-    cmr_u16 width, height;
-    camera_pre_capture_sensor_size_get(camera_id, &width, &height);
-    CMR_LOGI("get capture size width = %d, height = %d", width, height);
-    buffer_id = camera_pre_capture_buf_id(camera_id, width, height);
-    ret = camera_pre_capture_buf_size(camera_id, buffer_id, &total_mem_size,
-                                      &sum);
+    ret = camera_get_postproc_capture_size(camera_id, &total_mem_size);
     if (ret) {
         CMR_LOGE("get mem size err");
         return CMR_CAMERA_FAIL;
     }
+    sum = 1;
 
     /*alloc capture buffer*/
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
