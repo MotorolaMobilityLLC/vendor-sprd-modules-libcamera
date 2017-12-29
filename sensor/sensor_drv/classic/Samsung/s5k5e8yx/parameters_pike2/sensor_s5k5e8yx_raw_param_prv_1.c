@@ -868,10 +868,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			{
 				0x00000000,0x00011388,0x00000011,0x0000000E,0x00000060
 			},
-			/* _s5k5e8yx_prv_1_lnc_weight_00 */
-			{
-				0x00,
-			},
 			LSC_2D_MAP_0,
 			LSC_2D_MAP_0_OFFSET
 		},
@@ -880,10 +876,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			/* _s5k5e8yx_prv_1_lnc_map_info_01 */
 			{
 				0x00000002,0x00020B28,0x00000011,0x0000000E,0x00000060
-			},
-			/* _s5k5e8yx_prv_1_lnc_weight_01 */
-			{
-				0x00,
 			},
 			LSC_2D_MAP_1,
 			LSC_2D_MAP_1_OFFSET
@@ -894,10 +886,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			{
 				0x00000002,0x00020FA0,0x00000011,0x0000000E,0x00000060
 			},
-			/* _s5k5e8yx_prv_1_lnc_weight_02 */
-			{
-				0x00,
-			},
 			LSC_2D_MAP_2,
 			LSC_2D_MAP_2_OFFSET
 		},
@@ -906,10 +894,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			/* _s5k5e8yx_prv_1_lnc_map_info_03 */
 			{
 				0x00000002,0x00021964,0x00000011,0x0000000E,0x00000060
-			},
-			/* _s5k5e8yx_prv_1_lnc_weight_03 */
-			{
-				0x00,
 			},
 			LSC_2D_MAP_3,
 			LSC_2D_MAP_3_OFFSET
@@ -920,10 +904,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			{
 				0x00000003,0x00021036,0x00000011,0x0000000E,0x00000060
 			},
-			/* _s5k5e8yx_prv_1_lnc_weight_04 */
-			{
-				0x00,
-			},
 			LSC_2D_MAP_4,
 			LSC_2D_MAP_4_OFFSET
 		},
@@ -932,10 +912,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			/* _s5k5e8yx_prv_1_lnc_map_info_05 */
 			{
 				0x00000001,0x00051388,0x00000011,0x0000000E,0x00000060
-			},
-			/* _s5k5e8yx_prv_1_lnc_weight_05 */
-			{
-				0x00,
 			},
 			LSC_2D_MAP_5,
 			LSC_2D_MAP_5_OFFSET
@@ -946,10 +922,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			{
 				0x00000005,0x00061388,0x00000011,0x0000000E,0x00000060
 			},
-			/* _s5k5e8yx_prv_1_lnc_weight_06 */
-			{
-				0x00,
-			},
 			LSC_2D_MAP_6,
 			LSC_2D_MAP_6_OFFSET
 		},
@@ -959,10 +931,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			{
 				0x00000000,0x0003157C,0x00000011,0x0000000E,0x00000060
 			},
-			/* _s5k5e8yx_prv_1_lnc_weight_07 */
-			{
-				0x00,
-			},
 			LSC_2D_MAP_7,
 			LSC_2D_MAP_7_OFFSET
 		},
@@ -971,10 +939,6 @@ static struct sensor_lsc_2d_table_param s_s5k5e8yx_prv_1_lsc_2d_table_param =
 			/* _s5k5e8yx_prv_1_lnc_map_info_08 */
 			{
 				0x00000002,0x00071388,0x00000011,0x0000000E,0x00000060
-			},
-			/* _s5k5e8yx_prv_1_lnc_weight_08 */
-			{
-				0x00,
 			},
 			LSC_2D_MAP_8,
 			LSC_2D_MAP_8_OFFSET
@@ -6342,8 +6306,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_0_OFFSET/2]),
@@ -6352,8 +6314,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_1_OFFSET/2]),
@@ -6362,8 +6322,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_2_OFFSET/2]),
@@ -6372,8 +6330,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_3_OFFSET/2]),
@@ -6382,8 +6338,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_4_OFFSET/2]),
@@ -6392,8 +6346,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_5_OFFSET/2]),
@@ -6402,8 +6354,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_6_OFFSET/2]),
@@ -6412,8 +6362,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_7_OFFSET/2]),
@@ -6422,8 +6370,6 @@ static struct sensor_raw_fix_info s_s5k5e8yx_fix_info_prv_1=
 			{
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_map_info),
 				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_map_info),
-				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_weight),
-				sizeof(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_weight),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_len),
 				(uint32_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_offset),
 				(uint16_t*)&(s_s5k5e8yx_prv_1_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_8_OFFSET/2]),
