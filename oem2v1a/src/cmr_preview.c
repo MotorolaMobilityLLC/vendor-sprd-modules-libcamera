@@ -727,11 +727,6 @@ static cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle,
 cmr_int prev_get_frm_index(struct img_frm *frame, struct frm_info *data);
 cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id);
 
-static cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
-                                 struct img_frm *img);
-static cmr_int cmr_preview_invalidate_cache(cmr_handle preview_handle,
-                                struct img_frm *img);
-
 /**************************FUNCTION
  * ***************************************************************************/
 cmr_int cmr_preview_init(struct preview_init_param *init_param_ptr,
@@ -9653,12 +9648,6 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->actual_prev_size.height;
     prev_cxt->prev_mem_valid_num++;
 
-    ret = cmr_preview_invalidate_cache(handle, &prev_cxt->prev_frm[valid_num]);
-    if (ret) {
-        CMR_LOGE("cmr_preview_invalidate_cache failed");
-        goto exit;
-    }
-
     buf_cfg.channel_id = prev_cxt->prev_channel_id;
     buf_cfg.base_id = CMR_PREV_ID_BASE;
     buf_cfg.count = 1;
@@ -11703,7 +11692,7 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    ret = cmr_preview_flush_cache(handle, &ipm_in_param.src_frame);
+    ret = cmr_preview_flush_cashe(handle, &ipm_in_param.src_frame);
     if (ret) {
         goto exit;
     }
@@ -12152,12 +12141,12 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
     return is_need_scaling;
 }
 
-cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
+cmr_int cmr_preview_flush_cashe(cmr_handle preview_handle,
                                 struct img_frm *img) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     CMR_MSG_INIT(message);
     struct prev_cb_info cb_data_info;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     cam_ion_buffer_t ion_buf;
 
     cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
@@ -12167,8 +12156,6 @@ cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
         CMR_LOGE("img = %p", img);
         goto exit;
     }
-
-    handle = (struct prev_handle *)preview_handle;
 
     ion_buf.fd = img->fd;
     ion_buf.addr_phy = (void *)(img->addr_phy.addr_y);
@@ -12176,38 +12163,6 @@ cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
     ion_buf.size = img->size.width * img->size.height * 3 / 2;
 
     cb_data_info.cb_type = PREVIEW_EVT_CB_FLUSH;
-    cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
-    cb_data_info.frame_data = (struct camera_frame_type *)&ion_buf;
-    prev_cb_start(handle, &cb_data_info);
-
-exit:
-    return ret;
-}
-
-cmr_int cmr_preview_invalidate_cache(cmr_handle preview_handle,
-                                struct img_frm *img) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    CMR_MSG_INIT(message);
-    struct prev_cb_info cb_data_info;
-    struct prev_handle *handle = NULL;
-    cam_ion_buffer_t ion_buf;
-
-    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
-    CHECK_HANDLE_VALID(preview_handle);
-
-    if (NULL == img) {
-        CMR_LOGE("img = %p", img);
-        goto exit;
-    }
-
-    handle = (struct prev_handle *)preview_handle;
-
-    ion_buf.fd = img->fd;
-    ion_buf.addr_phy = (void *)(img->addr_phy.addr_y);
-    ion_buf.addr_vir = (void *)(img->addr_vir.addr_y);
-    ion_buf.size = img->size.width * img->size.height * 3 / 2;
-
-    cb_data_info.cb_type = PREVIEW_EVT_CB_INVALIDATE_CACHE;
     cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
     cb_data_info.frame_data = (struct camera_frame_type *)&ion_buf;
     prev_cb_start(handle, &cb_data_info);
