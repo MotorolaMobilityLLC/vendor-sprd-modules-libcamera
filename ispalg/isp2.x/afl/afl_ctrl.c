@@ -383,9 +383,15 @@ static cmr_int aflctrl_create_thread(struct isp_anti_flicker_cfg *cxt_ptr)
 	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, aflctrl_ctrl_thr_proc, (void *)cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread ");
-		rtn = ISP_ERROR;
+		rtn = -ISP_ERROR;
+		goto exit;
 	}
-
+	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "aflctrl");
+	if (CMR_MSG_SUCCESS != rtn) {
+		ISP_LOGE("fail to set aflctrl name");
+		rtn = CMR_MSG_SUCCESS;
+	}
+exit:
 	ISP_LOGI("afl_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
