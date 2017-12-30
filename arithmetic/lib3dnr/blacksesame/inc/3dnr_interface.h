@@ -1,3 +1,5 @@
+/*add RET_3DNR_CANCELED state*/
+
 #ifndef _3DNR_INTERFACE_H
 #define _3DNR_INTERFACE_H
 
@@ -101,6 +103,6 @@ int threednr_callback();
 #define RET_3DNR_FAIL               -1
 #define RET_3DNR_WRONG_PARAM        -2
 #define RET_3DNR_NO_ENOUGH_MEMORY   -3
-
+#define RET_3DNR_CANCELED          -4
 
 #endif
