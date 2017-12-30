@@ -9851,6 +9851,7 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     }
 
 exit:
+    ASensorManager_destroyEventQueue(mSensorManager, sensorEventQueue);
     sem_post(&obj->mGyro_sem);
     obj->mGyroExit = 1;
     HAL_LOGD("X");
