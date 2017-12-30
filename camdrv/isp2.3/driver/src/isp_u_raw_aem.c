@@ -24,27 +24,24 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
 	struct isp_u_blocks_info *raw_aem_ptr = NULL;
-	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_dev_raw_aem_info aem_info;
-	struct isp_dev_raw_aem_info *aem_info_ptr;
 	struct sprd_aem_info dcam_aem_info;
-
 
 	if (!handle || !param_ptr) {
 		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
+	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
 
 	memset(&dcam_aem_info, 0x00, sizeof(dcam_aem_info));
-	aem_info_ptr = (struct isp_dev_raw_aem_info *)raw_aem_ptr->block_info;
-	dcam_aem_info.skip_num = aem_info_ptr->skip_num;
-	dcam_aem_info.mode = 1;
-	dcam_aem_info.offset.x = aem_info_ptr->offset.x;
-	dcam_aem_info.offset.y = aem_info_ptr->offset.y;
-	dcam_aem_info.blk_size.width = aem_info_ptr->blk_size.width;
-	dcam_aem_info.blk_size.height = aem_info_ptr->blk_size.height;
+	dcam_aem_info.skip_num = raw_aem_ptr->stats_info.skip_num;
+	dcam_aem_info.mode = raw_aem_ptr->stats_info.mode;
+	dcam_aem_info.offset.x = raw_aem_ptr->stats_info.offset.x;
+	dcam_aem_info.offset.y = raw_aem_ptr->stats_info.offset.y;
+	dcam_aem_info.blk_size.width = raw_aem_ptr->stats_info.size.width;
+	dcam_aem_info.blk_size.height = raw_aem_ptr->stats_info.size.height;
 	dcam_aem_info.aem_avgshf.aem_h_avgshf = 0;
 	dcam_aem_info.aem_avgshf.aem_l_avgshf = 0;
 	dcam_aem_info.aem_avgshf.aem_m_avgshf = 0;
@@ -58,15 +55,16 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *param_ptr)
 	ret = dcam_u_raw_aem_block(handle, &dcam_aem_info);
 
 	file = (struct isp_file *)(handle);
-	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
-
 	aem_info.bypass = 1;
 	param.isp_id = file->isp_id;
-	param.scene_id = raw_aem_ptr->scene_id;
+	param.scene_id = 0;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_BLOCK;
 	param.property_param = &aem_info;
 
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	param.scene_id = 1;
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;

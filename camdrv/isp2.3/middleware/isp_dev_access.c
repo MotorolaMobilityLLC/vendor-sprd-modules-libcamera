@@ -544,6 +544,9 @@ static cmr_int ispdev_access_aem_stats_info(cmr_handle isp_dev_handle,  struct i
 		return -ISP_PARAM_NULL;
 	}
 
+	isp_u_raw_aem_block(cxt->isp_driver_handle, (void *)block_ptr);
+	ISP_TRACE_IF_FAIL(ret, ("fail to set aem block."));
+
 	/* set aem bypass */
 	isp_u_raw_aem_bypass(cxt->isp_driver_handle, (void *)block_ptr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set aem bypass."));

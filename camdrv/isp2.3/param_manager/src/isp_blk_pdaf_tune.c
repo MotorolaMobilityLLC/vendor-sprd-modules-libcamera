@@ -73,6 +73,7 @@ cmr_s32 _pm_pdaf_tune_get_param(void *pdaf_tune_param, cmr_u32 cmd, void *rtn_pa
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	struct isp_haf_tune_param *pdaf_tune_ptr = (struct isp_haf_tune_param *)pdaf_tune_param;
+	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	UNUSED(rtn_param1);
 	param_data_ptr->id = ISP_BLK_PDAF_TUNE;
@@ -82,6 +83,7 @@ cmr_s32 _pm_pdaf_tune_get_param(void *pdaf_tune_param, cmr_u32 cmd, void *rtn_pa
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = pdaf_tune_ptr;
 		param_data_ptr->data_size = sizeof(struct isp_haf_tune_param);
+		*update_flag = ISP_ZERO;
 		break;
 
 	default:

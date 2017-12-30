@@ -107,6 +107,7 @@ cmr_s32 _pm_flashlight_get_param(void *flash_param, cmr_u32 cmd, void *rtn_param
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = &flash_ptr->cur;
 		param_data_ptr->data_size = sizeof(flash_ptr->cur);
+		*update_flag = ISP_ZERO;
 		break;
 
 	default:

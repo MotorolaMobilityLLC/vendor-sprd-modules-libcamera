@@ -3413,11 +3413,6 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 				cxt->zsl_flag,
 				sub_block_info.scene_id,
 				sub_block_info.block_info);
-		if (sub_block_info.scene_id == ISP_MODE_CAP &&
-				param_data->id == ISP_BLK_AE_NEW) {
-			param_data++;
-			continue;
-		}
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 
 		param_data++;
