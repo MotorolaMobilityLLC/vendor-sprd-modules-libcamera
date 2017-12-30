@@ -476,8 +476,14 @@ static cmr_s32 _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = LSC_ERROR;
+		goto exit;
 	}
-
+	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "lscctrl");
+	if (CMR_MSG_SUCCESS != rtn) {
+		ISP_LOGE("fail to set lscctrl name");
+		rtn = CMR_MSG_SUCCESS;
+	}
+exit:
 	ISP_LOGI("lsc_ctrl thread rtn %ld", rtn);
 	return rtn;
 }

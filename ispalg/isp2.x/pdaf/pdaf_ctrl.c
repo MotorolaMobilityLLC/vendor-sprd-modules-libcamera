@@ -284,8 +284,14 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create main thread %ld", ret);
 		ret = ISP_ERROR;
+		goto exit;
 	}
-
+	ret = cmr_thread_set_name(cxt->thread_cxt.ctrl_thr_handle, "pdafctrl");
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to set pdafctrl name");
+		ret = CMR_MSG_SUCCESS;
+	}
+exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }

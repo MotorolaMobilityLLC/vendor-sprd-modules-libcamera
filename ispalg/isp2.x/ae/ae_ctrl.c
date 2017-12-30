@@ -398,8 +398,14 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
+		goto exit;
 	}
-
+	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "aectrl");
+	if (CMR_MSG_SUCCESS != rtn) {
+		ISP_LOGE("fail to set aectrl name");
+		rtn = CMR_MSG_SUCCESS;
+	}
+exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }

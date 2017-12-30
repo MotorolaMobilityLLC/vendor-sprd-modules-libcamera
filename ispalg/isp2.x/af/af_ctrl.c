@@ -499,8 +499,14 @@ static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
+		goto exit;
 	}
-
+	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "afctrl");
+	if (CMR_MSG_SUCCESS != rtn) {
+		ISP_LOGE("fail to set afctrl name");
+		rtn = CMR_MSG_SUCCESS;
+	}
+exit:
 	ISP_LOGI("af_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
