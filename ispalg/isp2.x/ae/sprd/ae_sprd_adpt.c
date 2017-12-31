@@ -4173,6 +4173,76 @@ static cmr_s32 ae_set_isp_gain(struct ae_ctrl_cxt *cxt)
 }
 #endif
 
+static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	struct sensor_otp_section_info *ae_otp_info_ptr = NULL;
+	struct sensor_otp_section_info *module_info_ptr = NULL;
+	struct sensor_otp_ae_info info;
+	cmr_u8 *rdm_otp_data;
+	cmr_u16 rdm_otp_len;
+	cmr_u8 *module_info;
+
+	if(NULL != init_param->otp_info_ptr){
+		if (init_param->is_master){
+			ae_otp_info_ptr = init_param->otp_info_ptr->dual_otp.master_ae_info;
+			module_info_ptr = init_param->otp_info_ptr->dual_otp.master_module_info;
+			ISP_LOGV("pass ae otp, dual cam master");
+		}else{
+			ae_otp_info_ptr = init_param->otp_info_ptr->dual_otp.slave_ae_info;
+			module_info_ptr = init_param->otp_info_ptr->dual_otp.slave_module_info;
+			ISP_LOGV("pass ae otp, dual cam slave");
+		}
+	}else{
+		ae_otp_info_ptr = NULL;
+		module_info_ptr = NULL;
+		ISP_LOGE("ae otp_info_ptr is NULL");
+	}
+
+	if(NULL!=ae_otp_info_ptr && NULL!=module_info_ptr){
+		rdm_otp_len = ae_otp_info_ptr->rdm_info.data_size;
+		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
+
+		if((module_info[4]==4 && module_info[5]==0)
+			||(module_info[4]==0 && module_info[5]==4)){
+			ISP_LOGV("ae otp map v0.4");
+			rdm_otp_data = (cmr_u8*)ae_otp_info_ptr->rdm_info.data_addr;
+		}else if(module_info[4]==1 && module_info[5]==0){
+			ISP_LOGV("ae otp map v1.0");
+			rdm_otp_data = (cmr_u8*)ae_otp_info_ptr->rdm_info.data_addr + 1;
+		}else{
+			rdm_otp_data = NULL;
+			ISP_LOGE("ae otp map version error");
+		}
+
+		if(NULL != rdm_otp_data && 0 != rdm_otp_len){
+			info.ae_target_lum = (rdm_otp_data[1]<<8) | rdm_otp_data[0];
+			info.gain_1x_exp = (rdm_otp_data[5] <<24) | (rdm_otp_data[4]<<16) | (rdm_otp_data[3]<<8) | rdm_otp_data[2];
+			info.gain_2x_exp = (rdm_otp_data[9] <<24) | (rdm_otp_data[8]<<16) | (rdm_otp_data[7]<<8) | rdm_otp_data[6];
+			info.gain_4x_exp = (rdm_otp_data[13] <<24) | (rdm_otp_data[12]<<16) | (rdm_otp_data[11]<<8) | rdm_otp_data[10];
+			info.gain_8x_exp = (rdm_otp_data[17] <<24) | (rdm_otp_data[16]<<16) | (rdm_otp_data[15]<<8) | rdm_otp_data[14];
+
+			#ifdef CONFIG_ISP_2_2
+			if (init_param->sensor_role) {
+				rtn = init_param->ptr_isp_br_ioctrl(init_param->camera_id,SET_MASTER_OTP_AE,&info,NULL);
+			} else {
+				rtn = init_param->ptr_isp_br_ioctrl(init_param->camera_id,SET_SLAVE_OTP_AE,&info,NULL);
+			}
+			#else
+				rtn= init_param->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
+			#endif
+
+			//ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
+		}else{
+			ISP_LOGE("ae rdm_otp_data = %p, rdm_otp_len = %d. Parser fail", rdm_otp_data, rdm_otp_len);
+		}
+	}else{
+		ISP_LOGE("ae ae_otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", ae_otp_info_ptr, module_info_ptr);
+	}
+
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_set_aux_sensor(struct ae_ctrl_cxt *cxt, cmr_handle param0, cmr_handle param1)
 {
 	struct ae_aux_sensor_info *aux_sensor_info_ptr = (struct ae_aux_sensor_info *)param0;
@@ -5088,34 +5158,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
 
 	// parser ae otp info
-	if(NULL!=init_param->otp_info_ptr){
-		cmr_u8 *rdm_otp_data = (cmr_u8*)init_param->otp_info_ptr->rdm_info.data_addr;
-		cmr_u16 rdm_otp_len = init_param->otp_info_ptr->rdm_info.data_size;
-		struct sensor_otp_ae_info info;
-		if(NULL != rdm_otp_data && 0 != rdm_otp_len){
-			info.ae_target_lum = (rdm_otp_data[1]<<8) | rdm_otp_data[0];
-			info.gain_1x_exp = (rdm_otp_data[5] <<24) | (rdm_otp_data[4]<<16) | (rdm_otp_data[3]<<8) | rdm_otp_data[2];
-			info.gain_2x_exp = (rdm_otp_data[9] <<24) | (rdm_otp_data[8]<<16) | (rdm_otp_data[7]<<8) | rdm_otp_data[6];
-			info.gain_4x_exp = (rdm_otp_data[13] <<24) | (rdm_otp_data[12]<<16) | (rdm_otp_data[11]<<8) | rdm_otp_data[10];
-			info.gain_8x_exp = (rdm_otp_data[17] <<24) | (rdm_otp_data[16]<<16) | (rdm_otp_data[15]<<8) | rdm_otp_data[14];
-
-			#ifdef CONFIG_ISP_2_2
-			if (cxt->sensor_role) {
-				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_MASTER_OTP_AE,&info,NULL);
-			} else {
-				rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id,SET_SLAVE_OTP_AE,&info,NULL);
-			}
-			#else
-				rtn= cxt->ptr_isp_br_ioctrl(init_param->camera_id, SET_OTP_AE, &info, NULL);
-			#endif
-
-			//ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
-		}else{
-			ISP_LOGE("rdm_otp_data = %p, rdm_otp_len = %d. Parser fail", rdm_otp_data, rdm_otp_len);
-		}
-	}else{
-		ISP_LOGE("ae otp_info_ptr is NULL . Parser fail !");
-	}
+	ae_parser_otp_info(init_param);
 
 	work_param.mode = AE_WORK_MODE_COMMON;
 	work_param.fly_eb = 1;

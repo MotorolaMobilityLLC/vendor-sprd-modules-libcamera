@@ -209,6 +209,56 @@ static cmr_int pdaf_setup(cmr_handle pdaf)
 	return rtn;
 }
 
+cmr_s32 pdaf_otp_info_parser(struct pdaf_ctrl_init_in *in_p)
+{
+	struct sensor_otp_section_info *pdaf_otp_info_ptr = NULL;
+	struct sensor_otp_section_info *module_info_ptr = NULL;
+
+	if(NULL!=in_p->otp_info_ptr){
+		if (in_p->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
+			pdaf_otp_info_ptr = in_p->otp_info_ptr->single_otp.pdaf_info;
+			module_info_ptr = in_p->otp_info_ptr->single_otp.module_info;
+			ISP_LOGV("pass pdaf otp, single cam");
+		} else if(in_p->otp_info_ptr->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || in_p->otp_info_ptr->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL){
+			if (in_p->is_master == 1) {
+				pdaf_otp_info_ptr = in_p->otp_info_ptr->dual_otp.master_pdaf_info;
+				module_info_ptr = in_p->otp_info_ptr->dual_otp.master_module_info;
+				ISP_LOGV("pass pdaf otp, dual cam master");
+			} else {
+				pdaf_otp_info_ptr = NULL;
+				module_info_ptr = NULL;
+				ISP_LOGV("dual cam slave pdaf is NULL");
+			}
+		}
+	}else{
+		pdaf_otp_info_ptr = NULL;
+		module_info_ptr = NULL;
+		ISP_LOGE("pdaf otp_info_ptr is NULL");
+	}
+
+	if(NULL != pdaf_otp_info_ptr && NULL!= module_info_ptr){
+		cmr_u8 *module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
+		if((module_info[4]==4 && module_info[5]==0)
+			||(module_info[4]==0 && module_info[5]==4)){
+			ISP_LOGV("pdaf otp map v0.4");
+			in_p->pdaf_otp.otp_data = pdaf_otp_info_ptr->rdm_info.data_addr;
+			in_p->pdaf_otp.size = pdaf_otp_info_ptr->rdm_info.data_size;
+		}else if(module_info[4]==1 && module_info[5]==0){
+			ISP_LOGV("pdaf otp map v1.0");
+			in_p->pdaf_otp.otp_data = (void *)((cmr_u8 *)pdaf_otp_info_ptr->rdm_info.data_addr + 1);
+			in_p->pdaf_otp.size = pdaf_otp_info_ptr->rdm_info.data_size -1;
+		}else{
+			in_p->pdaf_otp.otp_data = NULL;
+			in_p->pdaf_otp.size = 0;
+			ISP_LOGE("pdaf otp map version error");
+		}
+	}else{
+		ISP_LOGE("pfaf pdaf_otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", pdaf_otp_info_ptr, module_info_ptr);
+	}
+
+	return ISP_SUCCESS;
+}
+
 cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -225,13 +275,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	}
 
 	// parser pdaf otp info
-	if(NULL != in_p->otp_info_ptr){
-		in_p->pdaf_otp.otp_data = in_p->otp_info_ptr->rdm_info.data_addr;
-		in_p->pdaf_otp.size = in_p->otp_info_ptr->rdm_info.data_size;
-	}else{
-		ISP_LOGE("Pdaf otp_info_ptr is NULL . Parser fail !");
-	}
-
+	pdaf_otp_info_parser(in_p);
 
 	char otp_pdaf_name[1024];
 

@@ -543,8 +543,7 @@ struct lsc_adv_init_param {
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
 
-	struct sensor_otp_section_info *otp_info_lsc_ptr;
-	struct sensor_otp_section_info *otp_info_optical_center_ptr;
+	void *otp_info_ptr;
 
 	//add lsc buffer addr
 	cmr_u16* lsc_buffer_addr;

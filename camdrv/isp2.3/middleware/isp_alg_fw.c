@@ -2622,6 +2622,32 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	cxt->ae_cxt.win_num.h = 32;
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE:
+		ae_input.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+
+	case ISP_DUAL_NORMAL:
+		ae_input.is_multi_mode = ISP_ALG_DUAL_NORMAL;
+		break;
+
+	case ISP_DUAL_SBS:
+		ae_input.is_multi_mode = ISP_ALG_DUAL_SBS;
+		break;
+
+	default:
+		ae_input.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
+		cxt->is_master, cxt->is_multi_mode);
+
+	if (cxt->is_multi_mode) {
+		ae_input.otp_info_ptr = cxt->otp_data;
+		ae_input.is_master = cxt->is_master;
+	}
+
+	ae_input.ptr_isp_br_ioctrl = isp_br_ioctrl;
 
 	if (cxt->ops.ae_ops.init) {
 		ret = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle)&result);
@@ -2639,7 +2665,6 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output output;
 	struct awb_ctrl_init_param param;
 	struct ae_monitor_info info;
-	struct sensor_otp_section_info *awb_otp_info = NULL;
 
 	memset((void *)&output, 0, sizeof(output));
 	memset((void *)&param, 0, sizeof(param));
@@ -2674,22 +2699,10 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.param_size = output.param_data->data_size;
 	param.lib_param = cxt->lib_use_info->awb_lib_info;
 	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
-	if (NULL != cxt->otp_data) {
-		if (cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE) {
-			awb_otp_info = cxt->otp_data->single_otp.iso_awb_info;
-			ISP_LOGI("pass awb otp, single cam");
-		} else if (cxt->otp_data->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL ||
-				cxt->otp_data->otp_vendor == OTP_VENDOR_DUAL_CAM_DUAL) {
-			if (cxt->is_master == 1) {
-				awb_otp_info = cxt->otp_data->dual_otp.master_iso_awb_info;
-				ISP_LOGI("pass awb otp, dual cam master");
-			} else {
-				awb_otp_info = cxt->otp_data->dual_otp.slave_iso_awb_info;
-				ISP_LOGI("pass awb otp, dual cam slave");
-			}
-		}
-		param.otp_info_ptr = awb_otp_info;
-	}
+
+	param.otp_info_ptr = cxt->otp_data;
+	param.is_master = cxt->is_master;
+
 	if (cxt->ops.awb_ops.init) {
 		ret = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
@@ -2769,7 +2782,6 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
 	struct af_log_info aft_param = {NULL, 0};
-	struct sensor_otp_section_info *otp_info_af = NULL;
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
@@ -2824,10 +2836,9 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
-	if (NULL != cxt->otp_data) {
-		otp_info_af = cxt->otp_data->single_otp.af_info;
-		af_input.otp_info_ptr = otp_info_af;
-	}
+	af_input.otp_info_ptr = cxt->otp_data;
+	af_input.is_master = cxt->is_master;
+
 	if (cxt->ops.af_ops.init) {
 		ret = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do af_ctrl_init"));
@@ -2852,7 +2863,6 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	cmr_int ret = ISP_SUCCESS;
 	struct pdaf_ctrl_init_in pdaf_input;
 	struct pdaf_ctrl_init_out pdaf_output;
-	struct sensor_otp_section_info *otp_info_pdaf = NULL;
 
 	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
 	memset(&pdaf_output, 0x00, sizeof(pdaf_output));
@@ -2866,8 +2876,8 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	pdaf_input.handle_pm = cxt->handle_pm;
 
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support) {
-		otp_info_pdaf = input_ptr->otp_data->single_otp.pdaf_info;
-		pdaf_input.otp_info_ptr = otp_info_pdaf;
+		pdaf_input.otp_info_ptr = cxt->otp_data;
+		pdaf_input.is_master= cxt->is_master;
 	}
 
 	if (cxt->ops.pdaf_ops.init)
@@ -2945,31 +2955,8 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 
 	//_alsc_set_param(&lsc_param);   // for LSC2.X neet to reopen
 
-	//get lsc & optical center otp data
-	if (cxt->otp_data != NULL) {
-		struct sensor_otp_cust_info *otp_data = (struct sensor_otp_cust_info *)cxt->otp_data;
-		struct sensor_otp_section_info *otp_info_lsc = NULL;
-		struct sensor_otp_section_info *otp_info_optical_center = NULL;
-
-		if (otp_data->otp_vendor == OTP_VENDOR_SINGLE) {
-			otp_info_lsc = otp_data->single_otp.lsc_info;
-			otp_info_optical_center = otp_data->single_otp.optical_center_info;
-			ISP_LOGI("init_lsc_otp, single cam");
-		} else if (otp_data->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL ||
-				otp_data->otp_vendor == OTP_VENDOR_DUAL_CAM_DUAL) {
-			if (cxt->is_master == 1) {
-				otp_info_lsc = otp_data->dual_otp.master_lsc_info;
-				otp_info_optical_center = otp_data->dual_otp.master_optical_center_info;
-				ISP_LOGI("init_lsc_otp, dual cam master");
-			} else {
-				otp_info_lsc = otp_data->dual_otp.slave_lsc_info;
-				otp_info_optical_center = otp_data->dual_otp.slave_optical_center_info;
-				ISP_LOGI("init_lsc_otp, dual cam slave");
-			}
-		}
-		lsc_param.otp_info_lsc_ptr = otp_info_lsc;
-		lsc_param.otp_info_optical_center_ptr = otp_info_optical_center;
-	}
+	lsc_param.otp_info_ptr = cxt->otp_data;
+	lsc_param.is_master = cxt->is_master;
 
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;

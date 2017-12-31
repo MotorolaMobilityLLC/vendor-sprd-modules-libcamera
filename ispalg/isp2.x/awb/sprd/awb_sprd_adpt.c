@@ -983,12 +983,63 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 	cmr_u16 awb_rdm_otp_len = 0;
 	cmr_u16 *awb_golden_otp_data  = NULL;
 	cmr_u16 awb_golden_otp_len = 0;
+	cmr_u32 otp_map_version = 0;
+	cmr_u8 *module_info = NULL;
+	cmr_u8 *awb_golden_otp_data_v1 = NULL;
+	struct sensor_otp_section_info *awb_otp_info_ptr = NULL;
+	struct sensor_otp_section_info *module_info_ptr = NULL;
 
-	if(NULL != param->otp_info_ptr){
-		awb_rdm_otp_data = (cmr_u8 *)param->otp_info_ptr->rdm_info.data_addr;
-		awb_rdm_otp_len = param->otp_info_ptr->rdm_info.data_size;
-		awb_golden_otp_data = (cmr_u16 *)param->otp_info_ptr->gld_info.data_addr;
-		awb_golden_otp_len = param->otp_info_ptr->gld_info.data_size;
+	if(NULL!=param->otp_info_ptr){
+		if (param->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
+			awb_otp_info_ptr = param->otp_info_ptr->single_otp.iso_awb_info;
+			module_info_ptr = param->otp_info_ptr->single_otp.module_info;
+			ISP_LOGV("pass awb otp, single cam");
+		}  else if(param->otp_info_ptr->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || param->otp_info_ptr->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL){
+			if (param->is_master == 1) {
+				awb_otp_info_ptr = param->otp_info_ptr->dual_otp.master_iso_awb_info;
+				module_info_ptr = param->otp_info_ptr->dual_otp.master_module_info;
+				ISP_LOGV("pass awb otp, dual cam master");
+			} else {
+				awb_otp_info_ptr = param->otp_info_ptr->dual_otp.slave_iso_awb_info;
+				module_info_ptr = param->otp_info_ptr->dual_otp.slave_module_info;
+				ISP_LOGV("pass awb otp, dual cam slave");
+			}
+		}else{
+			awb_otp_info_ptr = NULL;
+			module_info_ptr = NULL;
+			ISP_LOGE("awb otp otp_vendor = %d", param->otp_info_ptr->otp_vendor);
+		}
+	}else{
+			awb_otp_info_ptr = NULL;
+			module_info_ptr = NULL;
+			ISP_LOGE("awb otp info ptr is NULL");
+	}
+
+	if(NULL != awb_otp_info_ptr && NULL!=module_info_ptr){
+		module_info =  (cmr_u8 *)module_info_ptr->rdm_info.data_addr;
+
+		if((module_info[4]==4 && module_info[5]==0)
+			||(module_info[4]==0 && module_info[5]==4)){
+			ISP_LOGV("awb otp map v0.4");
+			otp_map_version = 4;
+			awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr;
+			awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+			awb_golden_otp_data = (cmr_u16 *)awb_otp_info_ptr->gld_info.data_addr;
+			awb_golden_otp_len = awb_otp_info_ptr->gld_info.data_size;
+		}else if(module_info[4]==1 && module_info[5]==0){
+			ISP_LOGV("awb otp map v1.0");
+			otp_map_version= 1;
+			awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1;
+			awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+			awb_golden_otp_data_v1 = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1 + 6;
+			awb_golden_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+		}else{
+			ISP_LOGE("awb otp map version error");
+			awb_rdm_otp_data = NULL;
+			awb_golden_otp_data = NULL;
+			awb_golden_otp_data_v1 = NULL;
+		}
+
 		if(NULL!=awb_rdm_otp_data && 0!=awb_rdm_otp_len){
 			param->otp_info.rdm_stat_info.r = (awb_rdm_otp_data[1]<<8) | awb_rdm_otp_data[0];
 			param->otp_info.rdm_stat_info.g = (awb_rdm_otp_data[3]<<8) | awb_rdm_otp_data[2];
@@ -1001,10 +1052,15 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 			ISP_LOGE("awb_rdm_otp_data = %p, awb_rdm_otp_len = %d. Parser fail", awb_rdm_otp_data, awb_rdm_otp_len);
 		}
 
-		if(NULL!=awb_golden_otp_data && 0!=awb_golden_otp_len){
+		if(otp_map_version == 4 && NULL!=awb_golden_otp_data && 0!=awb_golden_otp_len){
 			param->otp_info.gldn_stat_info.r = awb_golden_otp_data[0];
 			param->otp_info.gldn_stat_info.g = awb_golden_otp_data[1];
 			param->otp_info.gldn_stat_info.b = awb_golden_otp_data[2];
+			ISP_LOGV("awb otp golden [%d %d %d]",param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g,param->otp_info.gldn_stat_info.b);
+		}else if(otp_map_version == 1 && NULL!=awb_golden_otp_data_v1 && 0!=awb_golden_otp_len){
+			param->otp_info.gldn_stat_info.r = (awb_golden_otp_data_v1[1]<<8) | awb_golden_otp_data_v1[0];
+			param->otp_info.gldn_stat_info.g = (awb_golden_otp_data_v1[3]<<8) | awb_golden_otp_data_v1[2];
+			param->otp_info.gldn_stat_info.b = (awb_golden_otp_data_v1[5]<<8) | awb_golden_otp_data_v1[4];
 			ISP_LOGV("awb otp golden [%d %d %d]",param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g,param->otp_info.gldn_stat_info.b);
 		}else{
 			param->otp_info.gldn_stat_info.r = 0;
@@ -1013,7 +1069,7 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 			ISP_LOGE("awb_golden_otp_data = %p, awb_golden_otp_len = %d. Parser fail", awb_golden_otp_data, awb_golden_otp_len);
 		}
 	}else{
-		ISP_LOGE("awb otp_info_ptr is NULL . Parser fail !");
+		ISP_LOGE("awb awb_otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", awb_otp_info_ptr, module_info_ptr);
 		param->otp_info.rdm_stat_info.r = 0;
 		param->otp_info.rdm_stat_info.g = 0;
 		param->otp_info.rdm_stat_info.b = 0;

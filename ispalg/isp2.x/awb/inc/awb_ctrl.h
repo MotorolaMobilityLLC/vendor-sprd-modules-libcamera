@@ -221,7 +221,8 @@ struct awb_ctrl_init_param {
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 
-	struct sensor_otp_section_info *otp_info_ptr;
+	struct sensor_otp_cust_info *otp_info_ptr;
+	cmr_u8 is_master;
 };
 
 struct awb_ctrl_init_result {

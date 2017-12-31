@@ -508,6 +508,7 @@ struct sensor_dual_otp_info {
     struct sensor_otp_section_info *master_module_info;
     struct sensor_otp_section_info *master_ae_info;
     struct sensor_otp_section_info *master_af_info;
+    struct sensor_otp_section_info *master_pdaf_info;
     struct sensor_otp_section_info *slave_iso_awb_info;
     struct sensor_otp_section_info *slave_lsc_info;
     struct sensor_otp_section_info *slave_optical_center_info;

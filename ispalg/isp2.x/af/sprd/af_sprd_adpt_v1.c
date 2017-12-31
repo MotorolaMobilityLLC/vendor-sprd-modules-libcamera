@@ -2571,6 +2571,67 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 	return rtn;
 }
 
+cmr_s32 af_otp_info_parser(struct afctrl_init_in *init_param)
+{
+	struct sensor_otp_section_info *af_otp_info_ptr = NULL;
+	struct sensor_otp_section_info *module_info_ptr = NULL;
+	cmr_u16 af_rdm_otp_len = 0;
+	cmr_u8 *module_info = NULL;
+	cmr_u8 *af_rdm_otp_data = NULL;
+
+	if(NULL != init_param->otp_info_ptr){
+		if (init_param->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
+			af_otp_info_ptr = init_param->otp_info_ptr->single_otp.af_info;
+			module_info_ptr = init_param->otp_info_ptr->single_otp.module_info;
+			ISP_LOGV("pass af otp, single cam");
+		} else if(init_param->otp_info_ptr->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || init_param->otp_info_ptr->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL){
+			if (init_param->is_master == 1) {
+				af_otp_info_ptr = init_param->otp_info_ptr->dual_otp.master_af_info;
+				module_info_ptr = init_param->otp_info_ptr->dual_otp.master_module_info;
+				ISP_LOGV("pass af otp, dual cam master");
+			} else {
+				af_otp_info_ptr = init_param->otp_info_ptr->dual_otp.slave_af_info;
+				module_info_ptr = init_param->otp_info_ptr->dual_otp.slave_module_info;
+				ISP_LOGV("pass af otp, dual cam slave");
+			}
+		}
+	}else{
+		af_otp_info_ptr = NULL;
+		module_info_ptr = NULL;
+		ISP_LOGE("af otp_info_ptr is NULL");
+	}
+
+	if (NULL != af_otp_info_ptr && NULL!=module_info_ptr) {
+		af_rdm_otp_len = af_otp_info_ptr->rdm_info.data_size;
+		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
+
+		if((module_info[4]==4 && module_info[5]==0)
+			||(module_info[4]==0 && module_info[5]==4)){
+			ISP_LOGV("af otp map v0.4");
+			af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr;
+		}else if(module_info[4]==1 && module_info[5]==0){
+			ISP_LOGV("af otp map v1.0");
+			af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr + 1;
+		}else{
+			af_rdm_otp_data = NULL;
+			ISP_LOGE("af otp map version error");
+		}
+
+		if (NULL != af_rdm_otp_data && 0 != af_rdm_otp_len) {
+			init_param->otp_info.rdm_data.infinite_cali = (af_rdm_otp_data[1] << 8) | af_rdm_otp_data[0];
+			init_param->otp_info.rdm_data.macro_cali = (af_rdm_otp_data[3] << 8) | af_rdm_otp_data[2];
+		} else {
+			ISP_LOGE("af_rdm_otp_data = %p, af_rdm_otp_len = %d. Parser fail !", af_rdm_otp_data, af_rdm_otp_len);
+			init_param->otp_info.rdm_data.infinite_cali = 0;
+			init_param->otp_info.rdm_data.macro_cali = 0;
+		}
+	} else {
+		ISP_LOGE("af otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", af_otp_info_ptr, module_info_ptr);
+	}
+
+	return AFV1_SUCCESS;
+}
+
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
@@ -2584,20 +2645,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		return NULL;
 	}
 	// parser af otp info
-	if (NULL != init_param->otp_info_ptr) {
-		cmr_u8 *af_rdm_otp_data = (cmr_u8 *) init_param->otp_info_ptr->rdm_info.data_addr;
-		cmr_u16 af_rdm_otp_len = init_param->otp_info_ptr->rdm_info.data_size;
-		if (NULL != af_rdm_otp_data && 0 != af_rdm_otp_len) {
-			init_param->otp_info.rdm_data.infinite_cali = (af_rdm_otp_data[1] << 8) | af_rdm_otp_data[0];
-			init_param->otp_info.rdm_data.macro_cali = (af_rdm_otp_data[3] << 8) | af_rdm_otp_data[2];
-		} else {
-			ISP_LOGE("af_rdm_otp_data = %p, af_rdm_otp_len = %d. Parser fail !", af_rdm_otp_data, af_rdm_otp_len);
-			init_param->otp_info.rdm_data.infinite_cali = 0;
-			init_param->otp_info.rdm_data.macro_cali = 0;
-		}
-	} else {
-		ISP_LOGE("af otp_info_ptr is NULL . Parser fail !");
-	}
+	af_otp_info_parser(init_param);
+
 	init_param->otp_info.gldn_data.infinite_cali = 0;
 	init_param->otp_info.gldn_data.macro_cali = 0;
 	ISP_LOGV("af otp golden [%d %d]  rdm [%d %d]", init_param->otp_info.gldn_data.infinite_cali, init_param->otp_info.gldn_data.macro_cali,
