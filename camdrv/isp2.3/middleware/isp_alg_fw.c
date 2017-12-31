@@ -143,6 +143,13 @@ struct lsc_info_t {
 	cmr_u32 lsc_sprd_version;
 };
 
+struct binning_info_t {
+	cmr_u32 binnng_w;
+	cmr_u32 binnng_h;
+	cmr_u16 *binning_img_data;
+	struct isp_binning_statistic_info binning_stats;
+};
+
 struct ispalg_ae_ctrl_ops {
 	cmr_s32 (*init)(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_handle result);
 	cmr_int (*deinit)(cmr_handle *isp_afl_handle);
@@ -218,7 +225,6 @@ struct ispalg_lib_ops {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
-	struct isp_binning_statistic_info binning_stats;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info_t commn_cxt;
@@ -231,6 +237,7 @@ struct isp_alg_fw_context {
 	struct lsc_info_t lsc_cxt;
 	struct afl_info_t afl_cxt;
 	struct pdaf_info_t pdaf_cxt;
+	struct binning_info_t binning_cxt;
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
 	struct isp_size dcam_size;
@@ -320,7 +327,7 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 		*param = 4096;
 	}
 
-	ISP_LOGV("D-gain global gain ori: %d\n", *param);
+	ISP_LOGV("D-gain global gain ori: %d", *param);
 
 	return ret;
 }
@@ -1460,11 +1467,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 		in_param.stat_img = (cmr_u32 *)&cxt->ae_cxt.aem_stats.r_info[0];
 	}
 
-	in_param.binning_stat_info.r_info = cxt->binning_stats.r_info;
-	in_param.binning_stat_info.g_info = cxt->binning_stats.g_info;
-	in_param.binning_stat_info.b_info = cxt->binning_stats.b_info;
-	in_param.binning_stat_info.binning_size.w = cxt->binning_stats.binning_size.w;
-	in_param.binning_stat_info.binning_size.h = cxt->binning_stats.binning_size.h;
+	in_param.binning_stat_info.r_info = cxt->binning_cxt.binning_stats.r_info;
+	in_param.binning_stat_info.g_info = cxt->binning_cxt.binning_stats.g_info;
+	in_param.binning_stat_info.b_info = cxt->binning_cxt.binning_stats.b_info;
+	in_param.binning_stat_info.binning_size.w =
+		cxt->binning_cxt.binning_stats.binning_size.w;
+	in_param.binning_stat_info.binning_size.h =
+		cxt->binning_cxt.binning_stats.binning_size.h;
 	in_param.is_update = cxt->aem_is_update;
 	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
 	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
@@ -1514,11 +1523,11 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	out_ptr->stat_img.chn_img.g = cxt->ae_cxt.aem_stats.g_info;
 	out_ptr->stat_img.chn_img.b = cxt->ae_cxt.aem_stats.b_info;
 
-	out_ptr->stat_img_awb.chn_img.r = cxt->binning_stats.r_info;
-	out_ptr->stat_img_awb.chn_img.g = cxt->binning_stats.g_info;
-	out_ptr->stat_img_awb.chn_img.b = cxt->binning_stats.b_info;
-	out_ptr->stat_width_awb = cxt->binning_stats.binning_size.w;
-	out_ptr->stat_height_awb = cxt->binning_stats.binning_size.h;
+	out_ptr->stat_img_awb.chn_img.r = cxt->binning_cxt.binning_stats.r_info;
+	out_ptr->stat_img_awb.chn_img.g = cxt->binning_cxt.binning_stats.g_info;
+	out_ptr->stat_img_awb.chn_img.b = cxt->binning_cxt.binning_stats.b_info;
+	out_ptr->stat_width_awb = cxt->binning_cxt.binning_stats.binning_size.w;
+	out_ptr->stat_height_awb = cxt->binning_cxt.binning_stats.binning_size.h;
 	out_ptr->bv = ae_in->ae_output.cur_bv;
 
 	out_ptr->ae_info.bv = ae_in->ae_output.cur_bv;
@@ -1694,17 +1703,17 @@ static cmr_int ispalg_prepare_atm_param(cmr_handle isp_alg_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	smart_proc_in->r_info = cxt->binning_stats.r_info;
-	smart_proc_in->g_info = cxt->binning_stats.g_info;
-	smart_proc_in->b_info = cxt->binning_stats.b_info;
-	smart_proc_in->win_num_w = cxt->binning_stats.binning_size.w;
-	smart_proc_in->win_num_h = cxt->binning_stats.binning_size.h;
+	smart_proc_in->r_info = cxt->binning_cxt.binning_stats.r_info;
+	smart_proc_in->g_info = cxt->binning_cxt.binning_stats.g_info;
+	smart_proc_in->b_info = cxt->binning_cxt.binning_stats.b_info;
+	smart_proc_in->win_num_w = cxt->binning_cxt.binning_stats.binning_size.w;
+	smart_proc_in->win_num_h = cxt->binning_cxt.binning_stats.binning_size.h;
 	smart_proc_in->aem_shift = 0;
 	smart_proc_in->win_size_w = 1;
 	smart_proc_in->win_size_h = 1;
 
 	if (smart_proc_in->r_info == NULL)
-		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
+		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p",
 			smart_proc_in->r_info,
 			smart_proc_in->g_info,
 			smart_proc_in->b_info);
@@ -1899,7 +1908,7 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 	memset(&ae_ctrl_calc_result, 0, sizeof(ae_ctrl_calc_result));
 
 	if (0 == cxt->aem_is_update) {
-		ISP_LOGV("aem is not update\n");
+		ISP_LOGV("aem is not update");
 		goto exit;
 	}
 
@@ -2120,7 +2129,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	if (cxt->ops.pdaf_ops.ioctrl)
 		cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
 
-	ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
+	ISP_LOGV("pdaf_is_busy=%d", pdaf_param_out.is_busy);
 	if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
 		if (cxt->ops.pdaf_ops.process)
 			ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
@@ -2190,58 +2199,20 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	cmr_u32 val = 0;
 	cmr_u32 last_val0 = 0;
 	cmr_u32 last_val1 = 0;
-	cmr_u32 src_w = cxt->dcam_size.w;
-	cmr_u32 src_h = cxt->dcam_size.h;
-	cmr_u32 binnng_w = 0;
-	cmr_u32 binnng_h = 0;
 	cmr_u32 double_binning_num = 0;
 	cmr_u32 remainder = 0;
-	cmr_u16 *binning_img_data = NULL;
 	cmr_u16 *binning_img_ptr = NULL;
 	cmr_u32 bayermode = cxt->commn_cxt.image_pattern;
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
-	struct isp_dev_binning4awb_info *binning_info = NULL;
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	u_addr = statis_info->vir_addr;
 
-	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_BINNING4AWB,
-			cxt->mode_id[0],
-			NULL, 0);
-	input.param_num = 1;
-	input.param_data_ptr = &param_data;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	double_binning_num = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h / 6 * 2;
 
-	if (ISP_SUCCESS != ret || NULL == output.param_data) {
-		ISP_LOGE("fail to check output.param_data\n");
-		return ret;
-	}
-
-	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
-	if (NULL == binning_info) {
-		ISP_LOGE("fail to get binning_info");
-		return ISP_ERROR;
-	}
-
-	ISP_LOGV("bayer: %d, src_size=(%d,%d), hx=%d, vx=%d\n",
-		 bayermode, src_w, src_h, binning_info->hx, binning_info->vx);
-
-	binnng_w = (src_w >> binning_info->hx) & ~0x1;
-	binnng_h = (src_h >> binning_info->vx) & ~0x1;
-	double_binning_num = binnng_w * binnng_h / 6 * 2;
-
-	binning_img_data = (cmr_u16 *) malloc(binnng_w * binnng_h * 2);
-	if (binning_img_data == NULL) {
-		ISP_LOGE("fail to malloc binning img data\n");
-		return -1;
-	}
-	memset(binning_img_data, 0, binnng_w * binnng_h * 2);
-	binning_img_ptr = binning_img_data;
+	memset(cxt->binning_cxt.binning_img_data, 0,
+	       cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h * 2);
+	binning_img_ptr = cxt->binning_cxt.binning_img_data;
 
 	for (i = 0; i < double_binning_num; i++) {
 		val = *((cmr_u32 *) u_addr + i);
@@ -2249,57 +2220,53 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 		*binning_img_ptr++ = (val >> 10) & 0x3FF;
 		*binning_img_ptr++ = (val >> 20) & 0x3FF;
 	}
-	remainder = binnng_w * binnng_h % 6;
+	remainder = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h % 6;
 	last_val0 = *((cmr_u32 *) u_addr + i);
 	last_val1 = *((cmr_u32 *) u_addr + i + 1);
 
 	switch (remainder) {
-	case 1:{
+	case 1:
 		*binning_img_ptr++ = last_val0 & 0x3FF;
 		break;
-	}
-	case 2:{
+	case 2:
 		*binning_img_ptr++ = last_val0 & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
 		break;
-	}
-	case 3:{
+	case 3:
 		*binning_img_ptr++ = last_val0 & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
 		break;
-	}
-	case 4:{
+	case 4:
 		*binning_img_ptr++ = last_val0 & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
 		*binning_img_ptr++ = last_val1 & 0x3FF;
 		break;
-	}
-	case 5:{
+	case 5:
 		*binning_img_ptr++ = last_val0 & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
 		*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
 		*binning_img_ptr++ = last_val1 & 0x3FF;
 		*binning_img_ptr++ = (last_val1 >> 10) & 0x3FF;
 		break;
-	}
 	default:
 		break;
 	}
 
-	ispalg_binning_data_cvt(bayermode, binnng_w, binnng_h, binning_img_data, &cxt->binning_stats);
+	ispalg_binning_data_cvt(bayermode,
+				cxt->binning_cxt.binnng_w,
+				cxt->binning_cxt.binnng_h,
+				cxt->binning_cxt.binning_img_data,
+				&cxt->binning_cxt.binning_stats);
 
-	ISP_LOGV("binning_stats_size=(%d, %d)\n", cxt->binning_stats.binning_size.w, cxt->binning_stats.binning_size.h);
+	ISP_LOGV("binning_stats_size=(%d, %d)",
+		 cxt->binning_cxt.binning_stats.binning_size.w,
+		 cxt->binning_cxt.binning_stats.binning_size.h);
 
 	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_BINNING_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
-	}
-
-	if (binning_img_data != NULL) {
-		free(binning_img_data);
-		binning_img_data = NULL;
 	}
 
 	ISP_LOGV("done %ld", ret);
@@ -2313,7 +2280,7 @@ static cmr_int ispalg_evt_process_cb(cmr_handle isp_alg_handle)
 	struct ips_out_param callback_param = { 0x00 };
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 
-	ISP_LOGV("isp start raw proc callback\n");
+	ISP_LOGV("isp start raw proc callback");
 	if (NULL != cxt->commn_cxt.callback) {
 		callback_param.output_height = interface_ptr->data.input_size.h;
 		ISP_LOGV("callback ISP_PROC_CALLBACK");
@@ -2323,7 +2290,7 @@ static cmr_int ispalg_evt_process_cb(cmr_handle isp_alg_handle)
 					sizeof(struct ips_out_param));
 	}
 
-	ISP_LOGV("isp end raw proc callback\n");
+	ISP_LOGV("isp end raw proc callback");
 	return ret;
 }
 
@@ -2652,8 +2619,8 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.stat_win_size.w = info.win_size.w;
 	param.stat_win_size.h = info.win_size.h;
 
-	param.stat_img_size.w = cxt->binning_stats.binning_size.w;
-	param.stat_img_size.h = cxt->binning_stats.binning_size.h;
+	param.stat_img_size.w = cxt->binning_cxt.binning_stats.binning_size.w;
+	param.stat_img_size.h = cxt->binning_cxt.binning_stats.binning_size.h;
 
 	param.tuning_param = output.param_data->data_ptr;
 	param.param_size = output.param_data->data_size;
@@ -3824,6 +3791,45 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	return ret;
 }
 
+static cmr_int ispalg_awbbin_init(cmr_handle isp_alg_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 src_w = cxt->dcam_size.w;
+	cmr_u32 src_h = cxt->dcam_size.h;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_dev_binning4awb_info *binning_info = NULL;
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_BINNING4AWB,
+			cxt->mode_id[0],
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+
+	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
+	if (NULL == binning_info) {
+		ISP_LOGE("fail to get binning_info");
+		return ISP_ERROR;
+	}
+
+	cxt->binning_cxt.binnng_w = (src_w >> binning_info->hx) & ~0x1;
+	cxt->binning_cxt.binnng_h = (src_h >> binning_info->vx) & ~0x1;
+
+	cxt->binning_cxt.binning_img_data =
+		(cmr_u16 *)malloc(cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h * 2);
+	if (cxt->binning_cxt.binning_img_data == NULL) {
+		ISP_LOGE("fail to malloc binning img data");
+		return -1;
+	}
+
+	return ret;
+}
+
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3991,6 +3997,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
+
+	ret = ispalg_awbbin_init(cxt);
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -4195,7 +4203,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START_END, (void *)&fwprocstart_info, NULL);
 
-	ISP_LOGV("isp start raw proc\n");
+	ISP_LOGV("isp start raw proc");
 	ret = ispalg_slice_raw_proc(cxt, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to isp_slice_raw_proc"));
 
@@ -4319,9 +4327,10 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 		goto exit;
 	}
 	memset(binning_info, 0, max_binning_num * 3 * sizeof(cmr_u32));
-	cxt->binning_stats.r_info = binning_info;
-	cxt->binning_stats.g_info = binning_info + max_binning_num;
-	cxt->binning_stats.b_info = cxt->binning_stats.g_info + max_binning_num;
+	cxt->binning_cxt.binning_stats.r_info = binning_info;
+	cxt->binning_cxt.binning_stats.g_info = binning_info + max_binning_num;
+	cxt->binning_cxt.binning_stats.b_info =
+		cxt->binning_cxt.binning_stats.g_info + max_binning_num;
 
 	cmr_u32 binning_hx = 4;
 	cmr_u32 binning_vx = 4;
@@ -4329,8 +4338,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	cmr_u32 src_h = cxt->commn_cxt.src.h;
 	cmr_u32 binnng_w = (src_w >> binning_hx) & ~0x1;
 	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
-	cxt->binning_stats.binning_size.w = binnng_w / 2;
-	cxt->binning_stats.binning_size.h = binnng_h / 2;
+	cxt->binning_cxt.binning_stats.binning_size.w = binnng_w / 2;
+	cxt->binning_cxt.binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
@@ -4389,6 +4398,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
 
+	if (cxt->binning_cxt.binning_img_data) {
+		free(cxt->binning_cxt.binning_img_data);
+		cxt->binning_cxt.binning_img_data = NULL;
+	}
+
 	isp_br_deinit(cxt->camera_id);
 
 	if (cxt->ae_cxt.log_alc) {
@@ -4401,9 +4415,9 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->commn_cxt.log_isp = NULL;
 	}
 
-	if (cxt->binning_stats.r_info) {
-		free((void *)cxt->binning_stats.r_info);
-		cxt->binning_stats.r_info = NULL;
+	if (cxt->binning_cxt.binning_stats.r_info) {
+		free((void *)cxt->binning_cxt.binning_stats.r_info);
+		cxt->binning_cxt.binning_stats.r_info = NULL;
 	}
 
 	if (cxt->ispalg_lib_handle) {
