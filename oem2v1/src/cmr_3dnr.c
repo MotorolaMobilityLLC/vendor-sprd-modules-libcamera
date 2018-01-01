@@ -980,6 +980,11 @@ static cmr_int threednr_thread_create(struct class_3dnr *class_handle) {
             ret = CMR_CAMERA_FAIL;
             return ret;
         }
+        ret = cmr_thread_set_name(class_handle->threednr_thread, "threednr");
+        if (CMR_MSG_SUCCESS != ret) {
+            CMR_LOGE("fail to set 3dnr name");
+            ret = CMR_MSG_SUCCESS;
+        }
         class_handle->is_inited = 1;
     }
 
