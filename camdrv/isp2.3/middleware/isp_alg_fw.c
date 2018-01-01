@@ -3352,7 +3352,7 @@ static cmr_int ispalg_libops_init(cmr_handle adpt_handle)
 	return ret;
 }
 
-static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
+static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -3362,11 +3362,9 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	struct isp_pm_param_data *param_data = NULL;
 	struct isp_u_blocks_info sub_block_info;
 	struct afl_ctrl_param_in afl_in;
-	struct isp_u_blocks_info afl_block_info;
 	cmr_u32 i = 0;
 
 	memset(&sub_block_info, 0x0, sizeof(sub_block_info));
-	memset(&afl_block_info, 0x0, sizeof(afl_block_info));
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
@@ -3405,9 +3403,9 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	afl_in.img_size.w = cxt->dcam_size.w;
 	afl_in.img_size.h = cxt->dcam_size.h;
 	if(cxt->sensor_fps.is_high_fps == 1)
-		afl_block_info.bypass = 1;
+		sub_block_info.bypass = 1;
 	else
-		afl_block_info.bypass = 0;
+		sub_block_info.bypass = 0;
 
 	if (cxt->ops.afl_ops.ioctrl) {
 		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_SET_IMG_SIZE, &afl_in, NULL);
@@ -3418,7 +3416,7 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 		ret = cxt->ops.afl_ops.config(cxt->afl_cxt.handle);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do anti_flicker param update"));
 
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, NULL);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &sub_block_info, NULL);
 	if(ret) {
 		ISP_LOGE("fail to set afl bypass");
 	}
@@ -4198,7 +4196,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 			cxt->commn_cxt.image_pattern,
 			lsc_info_new->grid,
 			cxt->camera_id);
-
 
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);

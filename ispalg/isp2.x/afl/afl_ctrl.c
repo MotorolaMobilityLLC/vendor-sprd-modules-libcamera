@@ -325,18 +325,12 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	else
 		bypass = 1;
 
-#ifdef CONFIG_ISP_2_3
-	if (cxt->afl_set_cb) {
-		cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
-	}
-#else
 	if (cxt->afl_set_cb) {
 		if (cxt->version)
 			cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
 		else
 			cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_SET_BYPASS, &bypass, NULL);
 	}
-#endif
 
 exit:
 	if (afl_stat)
