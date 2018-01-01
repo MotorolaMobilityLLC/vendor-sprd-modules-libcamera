@@ -3830,6 +3830,16 @@ static cmr_int ispalg_awbbin_init(cmr_handle isp_alg_handle)
 	return ret;
 }
 
+static void ispalg_awbbin_deinit(cmr_handle isp_alg_handle)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->binning_cxt.binning_img_data) {
+		free(cxt->binning_cxt.binning_img_data);
+		cxt->binning_cxt.binning_img_data = NULL;
+	}
+}
+
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -4027,7 +4037,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
 
-	ISP_RETURN_IF_FAIL(ret, ("fail to stop isp alg fw"));
+	ispalg_awbbin_deinit(cxt);
 
 exit:
 	ISP_LOGV("done %ld", ret);
@@ -4397,11 +4407,6 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
-
-	if (cxt->binning_cxt.binning_img_data) {
-		free(cxt->binning_cxt.binning_img_data);
-		cxt->binning_cxt.binning_img_data = NULL;
-	}
 
 	isp_br_deinit(cxt->camera_id);
 
