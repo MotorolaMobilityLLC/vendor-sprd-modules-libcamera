@@ -384,45 +384,6 @@ cmr_int hw_sensor_set_mclk(cmr_handle hw_handle, cmr_u32 mclk) {
     return ret;
 }
 
-static cmr_u32 _hw_get_mipi_phy_id(cmr_handle hw_handle) {
-    cmr_u32 phy_id = 0;
-    CHECK_HANDLE(hw_handle);
-    struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt *)hw_handle;
-
-    SENSOR_ID_E sensor_id = hw_drv_cxt->sensor_id;
-    HW_LOGI("sensor_id:%x \n", sensor_id);
-
-    if (SENSOR_MAIN == sensor_id) {
-#if defined(CONFIG_BACK_CAMERA_MIPI_PHYA)
-        phy_id = 0x01;
-#elif defined(CONFIG_BACK_CAMERA_MIPI_PHYB)
-        phy_id = 0x02;
-#elif defined(CONFIG_BACK_CAMERA_MIPI_PHYAB)
-        phy_id = 0x03;
-#endif
-        HW_LOGI("main phy_id:%x \n", phy_id);
-    } else if (SENSOR_SUB == sensor_id) {
-#if defined(CONFIG_FRONT_CAMERA_MIPI_PHYA)
-        phy_id = 0x01;
-#elif defined(CONFIG_FRONT_CAMERA_MIPI_PHYB)
-        phy_id = 0x02;
-#elif defined(CONFIG_FRONT_CAMERA_MIPI_PHYAB)
-        phy_id = 0x03;
-#elif defined(CONFIG_FRONT_CAMERA_MIPI_PHYC)
-        phy_id = 0x04;
-#endif
-        HW_LOGI("sub phy_id:%x \n", phy_id);
-    } else if (SENSOR_DEVICE2 == sensor_id) {
-        phy_id = 0x03;
-        HW_LOGI("main2 phy_id:%x \n", phy_id);
-    } else if (SENSOR_DEVICE3 == sensor_id) {
-        phy_id = 0x03;
-        HW_LOGI("sub2 phy_id:%x \n", phy_id);
-    }
-
-    return phy_id;
-}
-
 cmr_int hw_sensor_mipi_init(cmr_handle hw_handle,
                             struct hw_mipi_init_param init_param) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -440,10 +401,9 @@ cmr_int hw_sensor_mipi_init(cmr_handle hw_handle,
     if_cfg.if_type = INTERFACE_MIPI;
     if_cfg.is_open = INTERFACE_OPEN;
     if_cfg.lane_num = lane_num;
-    if_cfg.phy_id = _hw_get_mipi_phy_id(hw_handle);
     if_cfg.bps_per_lane = bps;
 
-    HW_LOGI("Lane num %d, bps %d phy id %d", lane_num, bps, if_cfg.phy_id);
+    HW_LOGI("Lane num %d, bps %d", lane_num, bps);
     ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_IF_CFG, &if_cfg);
     if (0 != ret) {
         HW_LOGE("failed, ret=%ld, lane=%d, bps=%d,fd=%d", ret, lane_num, bps,
@@ -469,9 +429,7 @@ cmr_int hw_sensor_mipi_switch(cmr_handle hw_handle,
     cmr_u32 bps = init_param.bps_per_lane;
 
     cmr_bzero((void *)&if_cfg, sizeof(SENSOR_IF_CFG_T));
-    if_cfg.phy_id = _hw_get_mipi_phy_id(hw_handle);
 
-    HW_LOGI("phy id %d", if_cfg.phy_id);
     ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_IF_SWITCH, &if_cfg);
     if (0 != ret) {
         HW_LOGE("failed, ret=%ld, fd=%d", ret, hw_drv_cxt->fd_sensor);
@@ -492,8 +450,6 @@ cmr_int hw_sensor_mipi_deinit(cmr_handle hw_handle) {
     cmr_bzero((void *)&if_cfg, sizeof(SENSOR_IF_CFG_T));
     if_cfg.if_type = INTERFACE_MIPI;
     if_cfg.is_open = INTERFACE_CLOSE;
-    if_cfg.phy_id = _hw_get_mipi_phy_id(hw_handle);
-    HW_LOGI("phy id %d", if_cfg.phy_id);
 
     ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_IF_CFG, &if_cfg);
     if (0 != ret) {
