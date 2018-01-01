@@ -324,7 +324,6 @@ struct isp_anti_flicker_cfg {
 	void *addr;
 	cmr_handle thr_handle;
 	cmr_handle caller_handle;
-	cmr_handle dev_handle;
 	cmr_uint vir_addr;
 	cmr_uint height;
 	cmr_uint width;
