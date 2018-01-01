@@ -2141,7 +2141,8 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	return ret;
 }
 
-static cmr_u32 ispalg_binning_data_cvt(cmr_u32 bayermode, cmr_u32 width, cmr_u32 height, cmr_u16 *raw_in, struct isp_binning_statistic_info *binning_info)
+static cmr_u32 ispalg_binning_data_cvt(cmr_u32 bayermode, cmr_u32 width, cmr_u32 height,
+				       cmr_u16 *raw_in, struct isp_binning_statistic_info *binning_info)
 {
 	cmr_u32 ret = 0;
 	cmr_u32 i, j;
@@ -2153,7 +2154,7 @@ static cmr_u32 ispalg_binning_data_cvt(cmr_u32 bayermode, cmr_u32 width, cmr_u32
 	cmr_u16 pixel_type;
 
 	if (NULL == raw_in || NULL == binning_r || NULL == binning_g || NULL == binning_b) {
-		ISP_LOGE("fail to check input param");
+		ISP_LOGE("fail to check input param raw %p r %p", raw_in, binning_r);
 		return -1;
 	}
 
@@ -2206,10 +2207,21 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	cmr_u32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+
+	if (cxt->sensor_fps.is_high_fps) {
+		if (0 != statis_info->frame_id %
+		    (cxt->sensor_fps.high_fps_skip_num)) {
+			goto exit;
+		}
+	}
 	u_addr = statis_info->vir_addr;
 
 	double_binning_num = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h / 6 * 2;
 
+	if (NULL == cxt->binning_cxt.binning_img_data) {
+		ISP_LOGE("fail to get binning_img_data");
+		goto exit;
+	}
 	memset(cxt->binning_cxt.binning_img_data, 0,
 	       cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h * 2);
 	binning_img_ptr = cxt->binning_cxt.binning_img_data;
@@ -2264,6 +2276,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 		 cxt->binning_cxt.binning_stats.binning_size.w,
 		 cxt->binning_cxt.binning_stats.binning_size.h);
 
+exit:
 	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_BINNING_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
