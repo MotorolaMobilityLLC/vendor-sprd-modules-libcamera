@@ -2197,7 +2197,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	cmr_uint u_addr = 0;
-	cmr_u32 val = 0;
+	cmr_u64 val = 0;
 	cmr_u32 last_val0 = 0;
 	cmr_u32 last_val1 = 0;
 	cmr_u32 double_binning_num = 0;
@@ -2216,8 +2216,6 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	}
 	u_addr = statis_info->vir_addr;
 
-	double_binning_num = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h / 6 * 2;
-
 	if (NULL == cxt->binning_cxt.binning_img_data) {
 		ISP_LOGE("fail to get binning_img_data");
 		goto exit;
@@ -2226,12 +2224,18 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	       cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h * 2);
 	binning_img_ptr = cxt->binning_cxt.binning_img_data;
 
+	double_binning_num = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h / 6;
 	for (i = 0; i < double_binning_num; i++) {
-		val = *((cmr_u32 *) u_addr + i);
+		val = *((cmr_u64 *) u_addr + i);
 		*binning_img_ptr++ = val & 0x3FF;
 		*binning_img_ptr++ = (val >> 10) & 0x3FF;
 		*binning_img_ptr++ = (val >> 20) & 0x3FF;
+
+		*binning_img_ptr++ = (val >> 32) & 0x3FF;
+		*binning_img_ptr++ = (val >> 42) & 0x3FF;
+		*binning_img_ptr++ = (val >> 52) & 0x3FF;
 	}
+
 	remainder = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h % 6;
 	last_val0 = *((cmr_u32 *) u_addr + i);
 	last_val1 = *((cmr_u32 *) u_addr + i + 1);
