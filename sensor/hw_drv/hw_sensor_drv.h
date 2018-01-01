@@ -3,8 +3,6 @@
 #include "cmr_common.h"
 #include <fcntl.h>
 
-
-
 /*kernel type redefine*/
 typedef struct sensor_i2c_tag SENSOR_I2C_T, *SENSOR_I2C_T_PTR;
 typedef struct sensor_reg_tag SENSOR_REG_T, *SENSOR_REG_T_PTR;
@@ -21,10 +19,9 @@ typedef struct sensor_version_info VERSION_INFO_T;
 #define HW_LOGV SENSOR_LOGV
 
 #define HW_SUCCESS CMR_CAMERA_SUCCESS
-#define HW_FAILED  CMR_CAMERA_FAIL
+#define HW_FAILED CMR_CAMERA_FAIL
 
 #define HW_SENSOR_DEV_NAME "/dev/sprd_sensor"
-
 
 #define SENSOR_FD_INIT CMR_CAMERA_FD_INIT
 
@@ -150,8 +147,8 @@ struct hw_mipi_init_param {
 };
 struct hw_drv_init_para {
     cmr_u32 sensor_id;
-	/*sensor module handle,will be delete later*/
-	cmr_handle caller_handle;
+    /*sensor module handle,will be delete later*/
+    cmr_handle caller_handle;
     /*add some items*/
 };
 
@@ -162,14 +159,16 @@ struct hw_drv_cfg_param {
 
 /*create & delete hw_drv instance interface*/
 cmr_int hw_sensor_drv_create(struct hw_drv_init_para *input_ptr,
-                                 cmr_handle* hw_drv_handle);
+                             cmr_handle *hw_drv_handle);
 cmr_int hw_sensor_drv_delete(cmr_handle hw_handle);
 
-cmr_int hw_sensor_drv_cfg(cmr_handle hw_handle,struct hw_drv_cfg_param *input_ptr);
+cmr_int hw_sensor_drv_cfg(cmr_handle hw_handle,
+                          struct hw_drv_cfg_param *input_ptr);
 
 /*reset,mclk,power down control signal interface*/
 cmr_int hw_sensor_set_reset_level(cmr_handle handle, cmr_u32 plus_level);
-#define Sensor_SetResetLevel(plus_level)  hw_sensor_set_reset_level(handle,plus_level)
+#define Sensor_SetResetLevel(plus_level)                                       \
+    hw_sensor_set_reset_level(handle, plus_level)
 
 cmr_int hw_sensor_reset(cmr_handle handle, cmr_u32 level, cmr_u32 pulse_width);
 #define Sensor_Reset(level) hw_sensor_reset(handle, level, pulse_width)
@@ -181,40 +180,38 @@ cmr_int hw_sensor_power_down(cmr_handle handle, cmr_u32 power_level);
 #define Sensor_PowerDown(power_level) hw_sensor_power_down(handle, power_level)
 
 cmr_int hw_sensor_power_config(cmr_handle handle,
-                         struct sensor_power_info_tag power_cfg);
+                               struct sensor_power_info_tag power_cfg);
 
 /* sensor hardware power config interface */
-cmr_int hw_sensor_set_voltage(cmr_handle handle,
-                             SENSOR_AVDD_VAL_E dvdd_val,
-                             SENSOR_AVDD_VAL_E avdd_val,
-                             SENSOR_AVDD_VAL_E iodd_val);
+cmr_int hw_sensor_set_voltage(cmr_handle handle, SENSOR_AVDD_VAL_E dvdd_val,
+                              SENSOR_AVDD_VAL_E avdd_val,
+                              SENSOR_AVDD_VAL_E iodd_val);
 #define Sensor_SetVoltage(dvdd_val, avdd_val, iodd_val)                        \
     hw_sensor_set_voltage(handle, dvdd_val, avdd_val, iodd_val)
 
-cmr_int hw_sensor_set_avdd_val(cmr_handle handle,
-                                 SENSOR_AVDD_VAL_E vdd_val);
+cmr_int hw_sensor_set_avdd_val(cmr_handle handle, SENSOR_AVDD_VAL_E vdd_val);
 #define Sensor_SetAvddVoltage(vdd_val) hw_sensor_set_avdd_val(handle, vdd_val)
 
-cmr_int hw_sensor_set_dvdd_val(cmr_handle handle,
-                                 SENSOR_AVDD_VAL_E vdd_val);
+cmr_int hw_sensor_set_dvdd_val(cmr_handle handle, SENSOR_AVDD_VAL_E vdd_val);
 #define Sensor_SetDvddVoltage(vdd_val) hw_sensor_set_dvdd_val(handle, vdd_val)
 
-cmr_int hw_sensor_set_iovdd_val(cmr_handle handle,
-                                  SENSOR_AVDD_VAL_E vdd_val);
+cmr_int hw_sensor_set_iovdd_val(cmr_handle handle, SENSOR_AVDD_VAL_E vdd_val);
 #define Sensor_SetIovddVoltage(vdd_val) hw_sensor_set_iovdd_val(handle, vdd_val)
 
 cmr_int hw_sensor_set_monitor_val(cmr_handle handle, SENSOR_AVDD_VAL_E vdd_val);
-#define Sensor_SetMonitorVoltage(vdd_val) hw_sensor_set_monitor_val(handle, vdd_val)
+#define Sensor_SetMonitorVoltage(vdd_val)                                      \
+    hw_sensor_set_monitor_val(handle, vdd_val)
 
 /*i2c and mipi hardware interface init,deinit,control*/
 cmr_int hw_sensor_mipi_init(cmr_handle handle,
-                                    struct hw_mipi_init_param init_param);
+                            struct hw_mipi_init_param init_param);
 cmr_int hw_sensor_mipi_switch(cmr_handle hw_handle,
-                                    struct hw_mipi_init_param init_param);
+                              struct hw_mipi_init_param init_param);
 cmr_int hw_sensor_mipi_deinit(cmr_handle handle);
 
 cmr_int hw_sensor_set_mipi_level(cmr_handle handle, cmr_u32 plus_level);
-#define Sensor_SetMIPILevel(plus_level)  hw_sensor_set_mipi_level(handle, plus_level)
+#define Sensor_SetMIPILevel(plus_level)                                        \
+    hw_sensor_set_mipi_level(handle, plus_level)
 
 cmr_int hw_sensor_i2c_init(cmr_handle handle, cmr_u32 sensor_id);
 
@@ -238,14 +235,17 @@ cmr_int hw_sensor_write_data(cmr_handle handle, cmr_u8 *regPtr, cmr_u32 length);
  *       not for otp and vcm device.
  **/
 cmr_int hw_sensor_write_reg(cmr_handle handle, cmr_u16 subaddr, cmr_u16 data);
-#define hw_Sensor_WriteReg(handle, subaddr, data) hw_sensor_write_reg(handle, subaddr, data)
+#define hw_Sensor_WriteReg(handle, subaddr, data)                              \
+    hw_sensor_write_reg(handle, subaddr, data)
 #define Sensor_WriteReg(subaddr, data) hw_Sensor_WriteReg(handle, subaddr, data)
 
 cmr_int hw_sensor_write_reg_8bits(cmr_handle handle, cmr_u16 reg_addr,
-                                 cmr_u8 value);
-#define Sensor_WriteReg_8bits(reg_addr, value) hw_sensor_write_reg_8bits(handle, reg_addr, value)
+                                  cmr_u8 value);
+#define Sensor_WriteReg_8bits(reg_addr, value)                                 \
+    hw_sensor_write_reg_8bits(handle, reg_addr, value)
 
-cmr_int hw_Sensor_SendRegTabToSensor(cmr_handle handle,
+cmr_int
+hw_Sensor_SendRegTabToSensor(cmr_handle handle,
                              SENSOR_REG_TAB_INFO_T *sensor_reg_tab_info_ptr);
 cmr_int hw_Sensor_Device_WriteRegTab(cmr_handle handle,
                                      SENSOR_REG_TAB_PTR reg_tab);
@@ -262,15 +262,15 @@ cmr_int hw_Sensor_Device_WriteRegTab(cmr_handle handle,
  * NOTE: the interface can only be used by vcm and otp device,not for
  *       sensor ic.
  **/
-cmr_int hw_sensor_write_i2c(cmr_handle handle, cmr_u16 slave_addr,
-                           cmr_u8 *cmd, cmr_u16 cmd_length);
+cmr_int hw_sensor_write_i2c(cmr_handle handle, cmr_u16 slave_addr, cmr_u8 *cmd,
+                            cmr_u16 cmd_length);
 #define hw_Sensor_WriteI2C(handle, slave_addr, cmd, cmd_length)                \
     hw_sensor_write_i2c(handle, slave_addr, cmd, cmd_length)
 #define Sensor_WriteI2C(slave_addr, cmd, cmd_length)                           \
     hw_Sensor_WriteI2C(handle, slave_addr, cmd, cmd_length)
 
 cmr_int hw_sensor_muti_i2c_write(cmr_handle handle,
-                               struct sensor_muti_aec_i2c_tag *aec_i2c_info);
+                                 struct sensor_muti_aec_i2c_tag *aec_i2c_info);
 
 cmr_u16 hw_sensor_grc_write_i2c(cmr_handle handle, cmr_u16 slave_addr,
                                 cmr_u16 addr, cmr_u16 reg, cmr_int bits);
@@ -288,17 +288,18 @@ cmr_u16 hw_sensor_grc_write_i2c(cmr_handle handle, cmr_u16 slave_addr,
  *       not for otp and vcm device.
  **/
 cmr_int hw_sensor_read_reg(cmr_handle handle, cmr_u16 reg_addr);
-#define hw_Sensor_ReadReg(handle,reg_addr) hw_sensor_read_reg(handle, reg_addr)
+#define hw_Sensor_ReadReg(handle, reg_addr) hw_sensor_read_reg(handle, reg_addr)
 #define Sensor_ReadReg(reg_addr) hw_Sensor_ReadReg(handle, reg_addr)
 
-cmr_int hw_sensor_read_reg_8bits(cmr_handle handle, cmr_u8 reg_addr, cmr_u8 *reg_val);
+cmr_int hw_sensor_read_reg_8bits(cmr_handle handle, cmr_u8 reg_addr,
+                                 cmr_u8 *reg_val);
 #define Sensor_ReadReg_8bits(reg_addr, reg_val)                                \
-        hw_sensor_read_reg_8bits(handle, reg_addr, reg_val)
+    hw_sensor_read_reg_8bits(handle, reg_addr, reg_val)
 
 cmr_u16 hw_sensor_grc_read_i2c(cmr_handle handle, cmr_u16 slave_addr,
-                                                    cmr_u16 addr, cmr_int bits);
+                               cmr_u16 addr, cmr_int bits);
 #define sensor_grc_read_i2c(slave_addr, addr, bits)                            \
-        hw_sensor_grc_read_i2c(handle, slave_addr, addr, bits)
+    hw_sensor_grc_read_i2c(handle, slave_addr, addr, bits)
 /**
  * hw_sensor_read_i2c - vcm and otp device read register interface
  * @handle: hardware object.
@@ -312,7 +313,7 @@ cmr_u16 hw_sensor_grc_read_i2c(cmr_handle handle, cmr_u16 slave_addr,
  *       sensor ic.
  **/
 cmr_int hw_sensor_read_i2c(cmr_handle handle, cmr_u16 slave_addr,
-                          cmr_u8 *cmd_buffer, cmr_u32 cmd_length);
+                           cmr_u8 *cmd_buffer, cmr_u32 cmd_length);
 #define hw_Sensor_ReadI2C(handle, slave_addr, cmd, cmd_length)                 \
     hw_sensor_read_i2c(handle, slave_addr, cmd, cmd_length)
 
@@ -323,9 +324,9 @@ cmr_int hw_sensor_read_i2c(cmr_handle handle, cmr_u16 slave_addr,
     hw_Sensor_ReadI2C(handle, slave_addr, cmd, reg_len | (read_len << 16))
 
 cmr_int hw_sensor_get_flash_level(cmr_handle handle,
-                                struct sensor_flash_level *level);
+                                  struct sensor_flash_level *level);
 
 /*expend interface,if you need to add some other function ,please add you cmd */
-cmr_int hw_sensor_drv_ioctl(cmr_handle handle, int cmd, void* param);
+cmr_int hw_sensor_drv_ioctl(cmr_handle handle, int cmd, void *param);
 
 #endif
