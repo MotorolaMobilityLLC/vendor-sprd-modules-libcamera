@@ -1394,6 +1394,29 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
+cmr_int ispalg_write_exp_gain(cmr_handle isp_alg_handle, struct sensor_ex_exposure exp, cmr_u32 gain)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if(cxt->ioctrl_ptr->set_gain)
+		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, gain);
+		if(ret) {
+			ISP_LOGE("fail to write gain");
+			return ret;
+		}
+
+	if(cxt->ioctrl_ptr->ex_set_exposure) {
+		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_uint)&exp);
+		if(ret) {
+			ISP_LOGE("fail to write exposure");
+			return ret;
+		}
+	}
+
+	return ret;
+}
+
 cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3922,6 +3945,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size org_size;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct sensor_ex_exposure default_exp;
+	cmr_u32 default_gain = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -4080,6 +4105,17 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	}
 
 	ret = ispalg_get_awbbin_size(cxt);
+
+	if(cxt->ae_cxt.sw_bypass == 1) {
+		memset(&default_exp, 0 ,sizeof(default_exp));
+		default_exp.dummy = 0;
+		default_exp.exposure = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
+		default_exp.size_index = cxt->commn_cxt.param_index;
+		default_gain = 1000;
+		ISP_LOGI("index %d frame_line %d", default_exp.exposure, default_exp.size_index);
+		ispalg_write_exp_gain(isp_alg_handle, default_exp, default_gain);
+		cxt->ops.ae_ops.ioctrl = NULL;
+	}
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
