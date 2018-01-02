@@ -1984,8 +1984,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         fps_param.video_mode = 1;
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
-        property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false") && !mFixedFpsEnabled &&
+        if (!mFixedFpsEnabled &&
             controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
             fps_param.min_fps = CONFIG_MIN_CAMRECORDER_FPS;
 #ifdef CONFIG_MAX_CAMRECORDER_FPS
@@ -3019,7 +3018,7 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
-    if ((mUsingSW3DNR)&&(sprddefInfo.sprd_3dnr_enabled)) {
+    if ((mUsingSW3DNR) && (sprddefInfo.sprd_3dnr_enabled)) {
         Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     }
@@ -3161,11 +3160,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
     } else {
         mSprdZslEnabled = false;
-    }
-    property_get("volte.incall.camera.enable", value, "false");
-    if (!strcmp(value, "true")) {
-        mSprdZslEnabled = false;
-        CMR_LOGI("volte incall, don't need to configure zsl ");
     }
 #ifdef CONFIG_CAMERA_CAPTURE_NOZSL
     mSprdZslEnabled = false;
@@ -5694,10 +5688,8 @@ int SprdCamera3OEMIf::openCamera() {
 
     GET_START_TIME;
 
-    mSetting->getLargestPictureSize(mCameraId, &picW,
-                                    &picH);
-    mSetting->getLargestSensorSize(mCameraId, &snsW,
-                                    &snsH);
+    mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
+    mSetting->getLargestSensorSize(mCameraId, &snsW, &snsH);
     if (picH * picH > snsW * snsH) {
         mLargestPictureWidth = picW;
         mLargestPictureHeight = picH;
@@ -9803,11 +9795,13 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
         ASensorManager_createEventQueue(mSensorManager, mLooper, 0, NULL, NULL);
 
     if (accelerometerSensor != NULL) {
-        if (ASensorEventQueue_registerSensor(sensorEventQueue, accelerometerSensor,
-                                             RATE_FAST, GsensorRate) < 0) {
-            HAL_LOGE("Unable to register sensorUnable to register sensor %d with "
-                     "rate %d and report latency %d" PRId64 "",
-                     ASENSOR_TYPE_ACCELEROMETER, RATE_FAST, GsensorRate);
+        if (ASensorEventQueue_registerSensor(sensorEventQueue,
+                                             accelerometerSensor, RATE_FAST,
+                                             GsensorRate) < 0) {
+            HAL_LOGE(
+                "Unable to register sensorUnable to register sensor %d with "
+                "rate %d and report latency %d" PRId64 "",
+                ASENSOR_TYPE_ACCELEROMETER, RATE_FAST, GsensorRate);
             goto exit;
         } else {
             Gsensor_flag = 1;
@@ -9816,9 +9810,10 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     if (gyroSensor != NULL) {
         if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
                                              RATE_FAST, GyroRate) < 0) {
-            HAL_LOGE("Unable to register sensorUnable to register sensor %d with "
-                     "rate %d and report latency %d" PRId64 "",
-                     ASENSOR_TYPE_GYROSCOPE, RATE_FAST, GsensorRate);
+            HAL_LOGE(
+                "Unable to register sensorUnable to register sensor %d with "
+                "rate %d and report latency %d" PRId64 "",
+                ASENSOR_TYPE_GYROSCOPE, RATE_FAST, GsensorRate);
             goto exit;
         } else {
             Gyro_flag = 1;

@@ -669,16 +669,6 @@ int SprdCamera3HWI::configureStreams(
             newStream->height = 360;
         }
 #endif
-
-        char value[PROPERTY_VALUE_MAX];
-        property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "true") &&
-            stream_type == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
-            channel_type == CAMERA_CHANNEL_TYPE_PICTURE) {
-            newStream->width = 0;
-            newStream->height = 0;
-        }
-
         // for CTS MultiViewTest
         if (stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
             if (preview_stream_flag == false)
