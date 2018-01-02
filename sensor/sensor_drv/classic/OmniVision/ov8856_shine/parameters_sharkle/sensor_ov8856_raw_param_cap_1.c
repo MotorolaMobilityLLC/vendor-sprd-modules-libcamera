@@ -854,7 +854,7 @@ static uint8_t s_ov8856_tune_info_cap_1[]=
 	0x09,0x00,0x00,0x00,
 #endif /* LSC_2D END */
 #if 1 /* mode_name=cap_1, block_name=BIN, version_id=0, param_id=0 */
-	0x03,0x00,0x03,0x00,
+	0x04,0x00,0x04,0x00,
 #endif /* BIN END */
 
 };
