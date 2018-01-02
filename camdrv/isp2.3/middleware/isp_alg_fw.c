@@ -33,6 +33,10 @@
 #include "pdaf_ctrl.h"
 #include "isp_bridge.h"
 
+#define ISP_BINNING_STATIS_SIZE (256 * 256 * 2)
+#define ISP_BINNING_MAX_STAT_W     640
+#define ISP_BINNING_MAX_STAT_H     480
+
 enum {
 	ISP_MODE_PRV = 0x0,
 	ISP_MODE_CAP,
@@ -144,8 +148,8 @@ struct lsc_info_t {
 };
 
 struct binning_info_t {
-	cmr_u32 binnng_w;
-	cmr_u32 binnng_h;
+	cmr_u32 binnig_w;
+	cmr_u32 binnig_h;
 	cmr_u16 *binning_img_data;
 	struct isp_binning_statistic_info binning_stats;
 };
@@ -2221,10 +2225,10 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 		goto exit;
 	}
 	memset(cxt->binning_cxt.binning_img_data, 0,
-	       cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h * 2);
+	       cxt->binning_cxt.binnig_w * cxt->binning_cxt.binnig_h * 2);
 	binning_img_ptr = cxt->binning_cxt.binning_img_data;
 
-	double_binning_num = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h / 6;
+	double_binning_num = cxt->binning_cxt.binnig_w * cxt->binning_cxt.binnig_h / 6;
 	for (i = 0; i < double_binning_num; i++) {
 		val = *((cmr_u64 *) u_addr + i);
 		*binning_img_ptr++ = val & 0x3FF;
@@ -2236,7 +2240,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 		*binning_img_ptr++ = (val >> 52) & 0x3FF;
 	}
 
-	remainder = cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h % 6;
+	remainder = cxt->binning_cxt.binnig_w * cxt->binning_cxt.binnig_h % 6;
 	last_val0 = *((cmr_u32 *) u_addr + i);
 	last_val1 = *((cmr_u32 *) u_addr + i + 1);
 
@@ -2271,8 +2275,8 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	}
 
 	ispalg_binning_data_cvt(bayermode,
-				cxt->binning_cxt.binnng_w,
-				cxt->binning_cxt.binnng_h,
+				cxt->binning_cxt.binnig_w,
+				cxt->binning_cxt.binnig_h,
 				cxt->binning_cxt.binning_img_data,
 				&cxt->binning_cxt.binning_stats);
 
@@ -3034,6 +3038,102 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	return ISP_SUCCESS;
 }
 
+static cmr_int ispalg_get_awbbin_size(cmr_handle isp_alg_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 src_w = cxt->dcam_size.w;
+	cmr_u32 src_h = cxt->dcam_size.h;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_dev_binning4awb_info *binning_info = NULL;
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_BINNING4AWB,
+			cxt->mode_id[0],
+			NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+
+	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
+	if (NULL == binning_info) {
+		ISP_LOGE("fail to get binning_info");
+		return ISP_ERROR;
+	}
+
+	cxt->binning_cxt.binnig_w = (src_w >> binning_info->hx) & ~0x1;
+	cxt->binning_cxt.binnig_h = (src_h >> binning_info->vx) & ~0x1;
+
+	ISP_LOGV("binning w h %d %d", cxt->binning_cxt.binnig_w, cxt->binning_cxt.binnig_h);
+	if (ISP_BINNING_STATIS_SIZE <=
+		(cxt->binning_cxt.binnig_w * cxt->binning_cxt.binnig_h * 2)) {
+		ISP_LOGE("fail to match awbbin buffer size");
+		return ISP_ERROR;
+	}
+
+	return ret;
+}
+
+static cmr_int ispalg_awbbin_init(cmr_handle isp_alg_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 *binning_info = NULL;
+	cmr_u32 max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
+	cmr_u32 binning_hx = 4;
+	cmr_u32 binning_vx = 4;
+	cmr_u32 src_w = cxt->commn_cxt.src.w;
+	cmr_u32 src_h = cxt->commn_cxt.src.h;
+
+	binning_info = (cmr_u32 *)malloc(max_binning_num * 3 * sizeof(cmr_u32));
+	if (!binning_info) {
+		ISP_LOGE("fail to malloc binning buf");
+		ret = ISP_ALLOC_ERROR;
+		goto exit;
+	}
+	memset(binning_info, 0, max_binning_num * 3 * sizeof(cmr_u32));
+	cxt->binning_cxt.binning_stats.r_info = binning_info;
+	cxt->binning_cxt.binning_stats.g_info = binning_info + max_binning_num;
+	cxt->binning_cxt.binning_stats.b_info =
+		cxt->binning_cxt.binning_stats.g_info + max_binning_num;
+	cxt->binning_cxt.binnig_w = (src_w >> binning_hx) & ~0x1;
+	cxt->binning_cxt.binnig_h = (src_h >> binning_vx) & ~0x1;
+	cxt->binning_cxt.binning_stats.binning_size.w = cxt->binning_cxt.binnig_w / 2;
+	cxt->binning_cxt.binning_stats.binning_size.h = cxt->binning_cxt.binnig_h / 2;
+
+	cxt->binning_cxt.binning_img_data = (cmr_u16 *)malloc(ISP_BINNING_STATIS_SIZE);
+	if (!cxt->binning_cxt.binning_img_data) {
+		ISP_LOGE("fail to malloc binning img data");
+		ret = ISP_ALLOC_ERROR;
+		goto exit;
+	}
+
+	return ret;
+exit:
+	if (binning_info) {
+		free(binning_info);
+		binning_info = NULL;
+	}
+	if (cxt->binning_cxt.binning_img_data) {
+		free(cxt->binning_cxt.binning_img_data);
+		cxt->binning_cxt.binning_img_data = NULL;
+	}
+	return ret;
+}
+
+static void ispalg_awbbin_deinit(cmr_handle isp_alg_handle)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->binning_cxt.binning_img_data) {
+		free(cxt->binning_cxt.binning_img_data);
+		cxt->binning_cxt.binning_img_data = NULL;
+	}
+}
+
 static cmr_u32 ispalg_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3043,6 +3143,9 @@ static cmr_u32 ispalg_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_ini
 
 	ret = ispalg_afl_init(cxt, input_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do afl_init"));
+
+	ret = ispalg_awbbin_init(cxt);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do awbbin_init"));
 
 	ret = ispalg_awb_init(cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_init"));
@@ -3135,6 +3238,8 @@ static cmr_u32 ispalg_deinit(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.awb_ops.deinit)
 		cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
+
+	ispalg_awbbin_deinit(cxt);
 
 	if (cxt->ops.afl_ops.deinit)
 		cxt->ops.afl_ops.deinit(&cxt->afl_cxt.handle);
@@ -3806,55 +3911,6 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	return ret;
 }
 
-static cmr_int ispalg_awbbin_init(cmr_handle isp_alg_handle)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_u32 src_w = cxt->dcam_size.w;
-	cmr_u32 src_h = cxt->dcam_size.h;
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
-	struct isp_dev_binning4awb_info *binning_info = NULL;
-
-	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_BINNING4AWB,
-			cxt->mode_id[0],
-			NULL, 0);
-	input.param_num = 1;
-	input.param_data_ptr = &param_data;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-
-	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
-	if (NULL == binning_info) {
-		ISP_LOGE("fail to get binning_info");
-		return ISP_ERROR;
-	}
-
-	cxt->binning_cxt.binnng_w = (src_w >> binning_info->hx) & ~0x1;
-	cxt->binning_cxt.binnng_h = (src_h >> binning_info->vx) & ~0x1;
-
-	cxt->binning_cxt.binning_img_data =
-		(cmr_u16 *)malloc(cxt->binning_cxt.binnng_w * cxt->binning_cxt.binnng_h * 2);
-	if (cxt->binning_cxt.binning_img_data == NULL) {
-		ISP_LOGE("fail to malloc binning img data");
-		return -1;
-	}
-
-	return ret;
-}
-
-static void ispalg_awbbin_deinit(cmr_handle isp_alg_handle)
-{
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
-	if (cxt->binning_cxt.binning_img_data) {
-		free(cxt->binning_cxt.binning_img_data);
-		cxt->binning_cxt.binning_img_data = NULL;
-	}
-}
-
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -4023,7 +4079,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
 
-	ret = ispalg_awbbin_init(cxt);
+	ret = ispalg_get_awbbin_size(cxt);
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -4051,8 +4107,6 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
-
-	ispalg_awbbin_deinit(cxt);
 
 exit:
 	ISP_LOGV("done %ld", ret);
@@ -4307,8 +4361,6 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	struct isp_alg_fw_context *cxt = NULL;
 	struct isp_alg_sw_init_in isp_alg_input;
 	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
-	cmr_u32 *binning_info = NULL;
-	cmr_u32 max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
 
 	if (!input_ptr || !isp_alg_handle) {
 		ISP_LOGE("fail to check input param, 0x%lx", (cmr_uint) input_ptr);
@@ -4344,26 +4396,6 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
-	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));
-	if (!binning_info) {
-		ISP_LOGE("fail to malloc binning buf");
-		ret = ISP_ALLOC_ERROR;
-		goto exit;
-	}
-	memset(binning_info, 0, max_binning_num * 3 * sizeof(cmr_u32));
-	cxt->binning_cxt.binning_stats.r_info = binning_info;
-	cxt->binning_cxt.binning_stats.g_info = binning_info + max_binning_num;
-	cxt->binning_cxt.binning_stats.b_info =
-		cxt->binning_cxt.binning_stats.g_info + max_binning_num;
-
-	cmr_u32 binning_hx = 4;
-	cmr_u32 binning_vx = 4;
-	cmr_u32 src_w = cxt->commn_cxt.src.w;
-	cmr_u32 src_h = cxt->commn_cxt.src.h;
-	cmr_u32 binnng_w = (src_w >> binning_hx) & ~0x1;
-	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
-	cxt->binning_cxt.binning_stats.binning_size.w = binnng_w / 2;
-	cxt->binning_cxt.binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
@@ -4386,10 +4418,6 @@ exit:
 			ispalg_destroy_thread_proc((cmr_handle)cxt);
 			ispalg_deinit((cmr_handle)cxt);
 			pthread_mutex_destroy(&cxt->stats_buf_lock);
-			if (binning_info) {
-				free((void *)binning_info);
-				binning_info = NULL;
-			}
 			free((void *)cxt);
 		}
 	} else {

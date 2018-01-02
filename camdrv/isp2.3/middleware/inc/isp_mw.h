@@ -27,8 +27,6 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 
 #define ISP_FLASH_MAX_CELL	40
 #define ISP_MODE_NUM_MAX 16
-#define ISP_BINNING_MAX_STAT_W    640
-#define ISP_BINNING_MAX_STAT_H     480
 
 #define ISP_CTRL_EVT_TX                      (1 << 9)
 #define ISP_CTRL_EVT_SOF                     (1 << 10)
