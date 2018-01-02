@@ -3724,7 +3724,6 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     }
     CMR_LOGD("camera_id %d, prev_status %ld, preview_eb %d, snapshot_eb %d",
              camera_id, prev_cxt->prev_status, preview_enable, snapshot_enable);
-
     if (preview_enable && PREVIEWING == prev_cxt->prev_status) {
         CMR_LOGE("is previewing now, do nothing");
         return ret;
@@ -4779,11 +4778,13 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->threednr_cap_smallheight = CMR_3DNR_4_3_SMALL_HEIGHT;
                 channel_buffer_size += (CMR_3DNR_4_3_SMALL_WIDTH *
                                         CMR_3DNR_4_3_SMALL_HEIGHT * 3 / 2);
-            } else if (((real_width * 10) / real_height) <= 17) {
+            } else if (((real_width * 10) / real_height) <= 18) {
                 prev_cxt->threednr_cap_smallwidth = CMR_3DNR_16_9_SMALL_WIDTH;
                 prev_cxt->threednr_cap_smallheight = CMR_3DNR_16_9_SMALL_HEIGHT;
                 channel_buffer_size += (CMR_3DNR_16_9_SMALL_WIDTH *
                                         CMR_3DNR_16_9_SMALL_HEIGHT * 3 / 2);
+            } else {
+                CMR_LOGE("incorrect 3dnr small image mapping!");
             }
             // alloc buffer for 3dnr YUV
             if (prev_cxt->prev_param.is_3dnr &&
@@ -10034,7 +10035,8 @@ cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
     valid_num = prev_cxt->video_mem_valid_num;
 
     if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
-        CMR_LOGE("wrong valid_num %ld", valid_num);
+        if(prev_cxt->prev_param.video_eb)
+            CMR_LOGE("wrong valid_num %ld", valid_num);
         return CMR_CAMERA_INVALID_PARAM;
     }
     if (/*(prev_cxt->video_frm[0].fd == (cmr_s32)data->fd) &&*/ valid_num > 0) {

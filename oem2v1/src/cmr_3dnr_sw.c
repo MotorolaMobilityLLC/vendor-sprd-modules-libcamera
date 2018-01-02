@@ -117,6 +117,7 @@ struct class_3dnr {
     cmr_s32 small_buf_fd[CAP_3DNR_NUM];
     sem_t sem_3dnr;
     cmr_u32 g_num;
+    cmr_u32 g_totalnum;
     cmr_uint is_stop;
 };
 typedef struct process_pre_3dnr_info {
@@ -287,7 +288,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_handle->reg_cb = in->reg_cb;
     threednr_handle->g_num = 0;
     threednr_handle->is_stop = 0;
-
+    threednr_handle->g_totalnum = 0;
     ret = threednr_thread_create(threednr_handle);
     if (ret) {
         CMR_LOGE("3dnr error: create thread");
@@ -557,7 +558,7 @@ void *thread_3dnr(void *p_data) {
     struct img_frm *src, dst;
     cmr_u32 cur_frm;
     char filename[128];
-    // static unsigned char*ptemp;
+
     if (threednr_handle->is_stop) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
@@ -566,8 +567,7 @@ void *thread_3dnr(void *p_data) {
 
     cur_frm = threednr_handle->common.save_frame_count;
     CMR_LOGD("wait sem. cur_frm: %d", cur_frm);
-
-    CMR_LOGI("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
+    CMR_LOGD("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
     if (NULL == in->private_data) {
         CMR_LOGE("private_data is ptr of camera_context, now is null");
         goto exit;
@@ -630,17 +630,17 @@ void *thread_3dnr(void *p_data) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-    CMR_LOGI("yzl add before smallbuf addry:%x , big_buf addry:%x , size:%d,%d",
-             small_buf.cpu_buffer.bufferY, big_buf.cpu_buffer.bufferY,
-             threednr_handle->width, threednr_handle->height);
+    /*CMR_LOGI("yzl add before smallbuf addry:%x , big_buf addry:%x ,
+    size:%d,%d", small_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY,
+    threednr_handle->width , threednr_handle->height);*/
     ret = threednr_function(&small_buf, &big_buf);
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
-    CMR_LOGI("yzl add after threednr_function smallbuf addry:%x , big_buf "
-             "addry:%x , size:%d,%d",
-             small_buf.cpu_buffer.bufferY, big_buf.cpu_buffer.bufferY,
-             threednr_handle->width, threednr_handle->height);
+    /*CMR_LOGI("yzl add after threednr_function smallbuf addry:%x , big_buf
+       addry:%x , size:%d,%d", small_buf.cpu_buffer.bufferY ,
+       big_buf.cpu_buffer.bufferY,
+        threednr_handle->width , threednr_handle->height);*/
     if (threednr_handle->is_stop) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
@@ -668,11 +668,11 @@ index++;*/
         cmr_bzero(&out->dst_frame, sizeof(struct img_frm));
         oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
         threednr_handle->frame_in = *in;
-        CMR_LOGI("yzl add all 3dnr frame is ready");
+        // CMR_LOGI("yzl add all 3dnr frame is ready");
         ret = req_3dnr_do(threednr_handle, addr, size);
     }
 exit:
-    CMR_LOGI("post sem");
+    CMR_LOGD("post sem");
     sem_post(&threednr_handle->sem_3dnr);
     return NULL;
 }
@@ -789,7 +789,6 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
         } else {
             CMR_LOGD("OK to malloc buffers for small image");
         }
-
     } else {
         CMR_LOGE("cam_cxt->hal_malloc is NULL");
     }
@@ -816,7 +815,6 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.small_width = threednr_prev_handle->small_width;
     param.small_height = threednr_prev_handle->small_height;
     param.total_frame_num = PRE_3DNR_NUM;
-
     // need release
     threednr_prev_handle->out_image =
         (union c3dnr_buffer *)malloc(sizeof(union c3dnr_buffer));
@@ -846,10 +844,10 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.recur_str = 3;
     param.control_en = 0x0;
     param.preview_cpyBuf = 1;
-    //	param.videoflag = 1;
-    CMR_LOGI("yzl add small width:%d ,height:%d , big width:%d ,height:%d",
+    // param.videoflag = 1;
+    /*CMR_LOGI("add small width:%d ,height:%d , big width:%d ,height:%d",
              param.small_width, param.small_height, param.orig_width,
-             param.orig_height);
+             param.orig_height);*/
     ret = threednr_init(&param);
     if (ret < 0) {
         CMR_LOGE("Fail to call preview threednr_init");
@@ -947,7 +945,7 @@ cmr_int threednr_transfer_prev_frame(cmr_handle class_handle,
                                       &smallbuf_node);
     if (ret != 0) {
         CMR_LOGE(
-            "yzl add threednr_transfer_prev_frame failed no free small buffer");
+            "add threednr_transfer_prev_frame failed no free small buffer");
         return -1;
     }
     // CMR_LOGI("yzl add get_free_smallbuffer cur_frm_idx is id:%d" ,
@@ -1260,7 +1258,7 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         CMR_LOGE("failed to start scaler, ret %ld", ret);
     }
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGV("done %ld", ret);
 
     return ret;
 }
@@ -1300,15 +1298,21 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
         return 0;
     }
 
-    CMR_LOGD("get one frame, num %d", cur_num);
-    threednr_handle->g_info_3dnr[cur_num].class_handle = class_handle;
-    memcpy(&threednr_handle->g_info_3dnr[cur_num].in, in,
-           sizeof(struct ipm_frame_in));
-    memcpy(&threednr_handle->g_info_3dnr[cur_num].out, out,
-           sizeof(struct ipm_frame_out));
-    create_3dnr_thread(&threednr_handle->g_info_3dnr[cur_num]);
+    CMR_LOGD("get one frame, num %d, %d", cur_num, threednr_handle->g_totalnum);
+    if (threednr_handle->g_totalnum < CAP_3DNR_NUM) {
+        threednr_handle->g_info_3dnr[cur_num].class_handle = class_handle;
+        memcpy(&threednr_handle->g_info_3dnr[cur_num].in, in,
+               sizeof(struct ipm_frame_in));
+        memcpy(&threednr_handle->g_info_3dnr[cur_num].out, out,
+               sizeof(struct ipm_frame_out));
+        create_3dnr_thread(&threednr_handle->g_info_3dnr[cur_num]);
+    } else {
+        CMR_LOGE("got more than %d 3dnr capture images, now got %d images",
+                 CAP_3DNR_NUM, threednr_handle->g_totalnum);
+    }
     threednr_handle->g_num++;
     threednr_handle->g_num = threednr_handle->g_num % CAP_3DNR_NUM;
+    threednr_handle->g_totalnum++;
 
     return ret;
 }
@@ -1444,8 +1448,8 @@ req_3dnr_preview_frame(cmr_handle class_handle, struct ipm_frame_in *in,
     message.msg_type = CMR_EVT_3DNR_PREV_START;
     message.sync_flag = CMR_MSG_SYNC_RECEIVED;
     message.alloc_flag = 1;
-    CMR_LOGI("yzl add cmr_thread_msg_send threednr_prevthread:%p",
-             threednr_prev_handle->threednr_prevthread);
+    /*CMR_LOGI("add cmr_thread_msg_send threednr_prevthread:%p",
+             threednr_prev_handle->threednr_prevthread);*/
     ret = cmr_thread_msg_send(threednr_prev_handle->threednr_prevthread,
                               &message);
     if (ret) {
@@ -1501,6 +1505,7 @@ static cmr_int threednr_process_prevthread_proc(struct cmr_msg *message,
 
     return ret;
 }
+
 cmr_int threednr_pre_getinfo(void *class_handle,
                              struct threednr_pre_miscinfo *pre_info) {
     struct class_3dnr_pre *threednr_prev_handle =
@@ -1543,8 +1548,7 @@ dequeue_preview_smallbuffer(struct preview_smallbuf_queue *psmall_buf_queue,
         if (NULL == psmall_buf_queue->head) {
             psmall_buf_queue->tail = NULL;
         }
-
-        // CMR_LOGI("yzl add dequeue small buff vir addr:%p" , pnode->buf_vir);
+        // CMR_LOGI("add dequeue small buff vir addr:%p" , pnode->buf_vir);
         pthread_mutex_unlock(&psmall_buf_queue->mutex);
         return 0;
     }
@@ -1555,7 +1559,7 @@ queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
     struct preview_smallbuf_node *pnewnode =
         (struct preview_smallbuf_node *)malloc(
             sizeof(struct preview_smallbuf_node));
-    CMR_LOGI("yzl add new node:%p , smallbffqueue:%p", pnewnode,
+    CMR_LOGV("add new node:%p , smallbffqueue:%p", pnewnode,
              psmall_buf_queue);
     pthread_mutex_lock(&psmall_buf_queue->mutex);
     if ((NULL == pnewnode) || (NULL == pnode)) {
@@ -1583,7 +1587,7 @@ static cmr_int deinit_queue_preview_smallbufer(
     pnode = psmall_buf_queue->head;
     while (pnode != NULL) {
         psmall_buf_queue->head = psmall_buf_queue->head->next;
-        CMR_LOGI("yzl add free pnode:%p , smallbffqueue:%p", pnode,
+        CMR_LOGV("add free pnode:%p , smallbffqueue:%p", pnode,
                  psmall_buf_queue);
         free(pnode);
         pnode = psmall_buf_queue->head;
