@@ -134,7 +134,8 @@ struct ae_flash_control_param {
 	cmr_u8 pre_close_count;
 	cmr_u8 main_flash_set_count;
 	cmr_u8 main_capture_count;
-	cmr_u16 reserved;
+	cmr_u8 main_flash_notify_delay;
+	cmr_u8 reserved;
 };
 
 struct ae_video_set_fps_param {

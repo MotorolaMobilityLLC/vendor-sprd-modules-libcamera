@@ -2663,8 +2663,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->sync_cur_status.flash_fired,
 			cxt->delay_cnt);
 
-		if ((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) &&
-			(cxt->sync_cur_status.flash_fired == 0)) {
+		if (cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) {
 			cxt->delay_cnt = 0;
 			flash_fired = 1;
 			cxt->cur_status.flash_fired = 1;
@@ -2675,7 +2674,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 
 		if ((cxt->sync_cur_result.cur_bv > cxt->flash_swith.led_thr_up) &&
 			(cxt->sync_cur_status.flash_fired == 1)) {
-			if(cxt->delay_cnt == 4) {
+			if(cxt->delay_cnt == cxt->cur_param->flash_control_param.main_flash_notify_delay) {
 				flash_fired = 0;
 				cxt->cur_status.flash_fired = 0;
 				cb_type = AE_CB_FLASH_FIRED;
@@ -5171,6 +5170,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			cxt->cur_param->flash_control_param.main_flash_set_count = 1;
 		if(0 == cxt->cur_param->flash_control_param.main_capture_count)
 			cxt->cur_param->flash_control_param.main_capture_count = 5;
+		if(0 == cxt->cur_param->flash_control_param.main_flash_notify_delay)
+			cxt->cur_param->flash_control_param.main_flash_notify_delay = 6;
 	/*end to read flash control tuning param*/
 
 	/* HJW_S: dual flash algorithm init */
