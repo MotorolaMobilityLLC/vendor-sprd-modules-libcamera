@@ -1063,7 +1063,8 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         ret = cnt;
 
     for (i = 0; i < (cmr_int)(op.parm.capability.count); i++) {
-        if (op.parm.capability.path_info[i].support_yuv) {
+        /* pike2 path0 can support yuv, but can not support scaling/trim, so mask path0 yuv */
+        if (op.parm.capability.path_info[i].support_yuv && (i != 0)) {
             yuv_cnt++;
             if (p_grab->chn_status[i] == CHN_IDLE) {
                 capability->yuv_available_cnt++;
