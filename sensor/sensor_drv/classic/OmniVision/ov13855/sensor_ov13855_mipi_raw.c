@@ -28,6 +28,9 @@
 #define MODULE_INFO s_ov13855_module_info_tab
 #define RES_TAB_RAW s_ov13855_resolution_tab_raw
 #define RES_TRIM_TAB s_ov13855_resolution_trim_tab
+#define RES_TAB_RAW_NEW s_ov13855_resolution_tab_raw_new
+#define RES_TRIM_TAB_NEW s_ov13855_resolution_trim_tab_new
+
 #define MIPI_RAW_INFO g_ov13855_mipi_raw_info
 
 /*==============================================================================
@@ -232,7 +235,7 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-         usleep(500);
+        usleep(500);
     } else {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
@@ -923,6 +926,7 @@ ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
     void *pri_data = NULL;
+    char value[255];
 
     ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
     sns_drv_cxt = *sns_ic_drv_handle;
@@ -936,10 +940,21 @@ ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
-    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW),
-                                        RES_TAB_RAW);
-    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
-                                  RES_TRIM_TAB);
+
+	/*change value when use sharkle new setting*/
+    property_get("debug.camera.setting", value, "0");
+    if (atoi(value) == 1) {
+        sensor_ic_set_match_resolution_info(
+            sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW_NEW), RES_TAB_RAW_NEW);
+        sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB_NEW),
+                                      RES_TRIM_TAB_NEW);
+		SENSOR_LOGI("debug.camera.setting!!!");
+    } else {
+        sensor_ic_set_match_resolution_info(
+            sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
+        sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
+                                      RES_TRIM_TAB);
+    }
     sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO),
                                     STATIC_INFO);
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
