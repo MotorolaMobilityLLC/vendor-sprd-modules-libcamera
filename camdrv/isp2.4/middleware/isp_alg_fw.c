@@ -1727,7 +1727,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
 	BLOCK_PARAM_CFG(pm_afl_input, pm_afl_data, ISP_PM_BLK_ISP_SETTING,
-		ISP_BLK_ANTI_FLICKER,
+		ISP_BLK_YIQ_AFL_V3,
 		NULL, 0);
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &pm_afl_input, &pm_afl_output);
@@ -4116,7 +4116,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
     /*0:afl_old mode, 1:afl_new mode*/
-	cxt->afl_cxt.version = 0;
+	cxt->afl_cxt.version = 1;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);

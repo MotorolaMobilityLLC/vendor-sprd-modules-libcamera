@@ -387,6 +387,7 @@ cmr_s32 isp_u_arbiter_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done);
 cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable);
+cmr_s32 isp_u_afl_ctrl(cmr_handle handle, cmr_u32 afl_sel);
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block);
 cmr_s32 isp_set_arbiter(cmr_handle handle);
 cmr_s32 isp_set_dispatch(cmr_handle handle);

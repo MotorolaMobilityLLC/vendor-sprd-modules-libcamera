@@ -85,3 +85,26 @@ cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable)
 
 	return ret;
 }
+
+cmr_s32 isp_u_afl_ctrl(cmr_handle handle, cmr_u32 afl_sel)
+{
+	cmr_s32 ret = 0;
+
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_COMMON;
+	param.property = ISP_PRO_COMMON_AFL_SEL;
+	param.property_param = &afl_sel;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}

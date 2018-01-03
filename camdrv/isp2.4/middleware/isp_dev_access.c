@@ -629,6 +629,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in);
 		break;
 	case ISP_DEV_SET_AFL_NEW_CFG_PARAM:
+		ret = isp_u_afl_ctrl(cxt->isp_driver_handle, ISP_DEV_ANTI_FLICKER_NEW);
 		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in);
 		break;
 	case ISP_DEV_SET_AFL_BYPASS:
