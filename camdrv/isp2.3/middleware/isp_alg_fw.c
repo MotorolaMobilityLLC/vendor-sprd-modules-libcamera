@@ -4255,6 +4255,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	/* isp param index */
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->src_frame.img_size);
+
+	ret = ispalg_update_alg_param(cxt);
+	ISP_RETURN_IF_FAIL(ret, ("fail to isp smart param calc"));
+
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 
