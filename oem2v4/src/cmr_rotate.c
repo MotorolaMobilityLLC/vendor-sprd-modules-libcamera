@@ -22,9 +22,11 @@
 #include "cmr_cvt.h"
 #include "sprd_rot_k.h"
 
-static char rot_dev_name[50] = "/dev/sprd_rotation";
+#define SW_ROT_THRESHOLD     (320 * 240)
 
+static char rot_dev_name[50] = "/dev/sprd_rotation";
 extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
+cmr_int cmr_sw_rotate_nv21(struct cmr_rot_param *rot_param);
 
 struct rot_file {
     cmr_int fd;
@@ -169,15 +171,18 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param) {
     rot_cfg.src_endian = src_img->data_end.uv_endian;
     rot_cfg.dst_endian = dst_img->data_end.uv_endian;
 
-	ret = ioctl(fd, ROT_IO_START, &rot_cfg);
-    if (ret) {
-		CMR_LOGE("src y=%x u=%x v=%x", rot_cfg.src_addr.y_addr, rot_cfg.src_addr.u_addr, rot_cfg.src_addr.v_addr);
-		CMR_LOGE("dst y=%x u=%x v=%x", rot_cfg.dst_addr.y_addr, rot_cfg.dst_addr.u_addr, rot_cfg.dst_addr.v_addr);
-		CMR_LOGE("Unsupported format %d, %d", src_img->fmt, rot_cfg.format);
-        ret = -CMR_CAMERA_FAIL;
-        goto rot_exit;
+	if (rot_cfg.img_size.w * rot_cfg.img_size.h <= SW_ROT_THRESHOLD) {
+		ret = cmr_sw_rotate_nv21(rot_param);
+	} else {
+		ret = ioctl(fd, ROT_IO_START, &rot_cfg);
+	    if (ret) {
+			CMR_LOGE("src y=%x u=%x v=%x", rot_cfg.src_addr.y_addr, rot_cfg.src_addr.u_addr, rot_cfg.src_addr.v_addr);
+			CMR_LOGE("dst y=%x u=%x v=%x", rot_cfg.dst_addr.y_addr, rot_cfg.dst_addr.u_addr, rot_cfg.dst_addr.v_addr);
+			CMR_LOGE("Unsupported format %d, %d", src_img->fmt, rot_cfg.format);
+	        ret = -CMR_CAMERA_FAIL;
+	        goto rot_exit;
+	    }
     }
-
 rot_exit:
     CMR_LOGI("X ret=%ld", ret);
     return ret;
@@ -200,7 +205,7 @@ cmr_int cmr_rot_close(cmr_handle rot_handle) {
 
     /*    if (ret)
             ret = -CMR_CAMERA_FAIL;*/
-    CMR_LOGI("rotation fd: %d", file->fd);
+    CMR_LOGI("rotation fd: %ld", file->fd);
     close(file->fd);
 
 close_free:
@@ -208,5 +213,77 @@ close_free:
 out:
 
     CMR_LOGI("ret=%ld", ret);
+    return ret;
+}
+
+cmr_int cmr_sw_rotate_nv21(struct cmr_rot_param *rot_param)
+{
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_uint width = 0, height = 0, rotation = 0;
+    cmr_u8 *src_y, *src_u, *dst_y, *dst_u;
+
+    if (rot_param == NULL) {
+        ret = -CMR_CAMERA_FAIL;
+        goto exit;
+    }
+    if (rot_param->angle == 0 || rot_param->angle > IMG_ANGLE_180) {
+        CMR_LOGE("Wrong angle %ld", (cmr_int)rot_param->angle);
+        ret = -CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    switch(rot_param->angle) {
+        case IMG_ANGLE_0:
+            rotation = 0;
+            break;
+        case IMG_ANGLE_90:
+            rotation = 90;
+            break;
+        case IMG_ANGLE_180:
+            rotation = 180;
+            break;
+        case IMG_ANGLE_270:
+            rotation = 270;
+            break;
+         default:
+           break;
+    }
+
+    src_y = (cmr_u8 *)rot_param->src_img.addr_vir.addr_y;
+    src_u = (cmr_u8 *)rot_param->src_img.addr_vir.addr_u;
+    dst_y = (cmr_u8 *)rot_param->dst_img.addr_vir.addr_y;
+    dst_u = (cmr_u8 *)rot_param->dst_img.addr_vir.addr_u;
+    width = rot_param->src_img.size.width;
+    height = rot_param->src_img.size.height;
+    cmr_int swap      = rotation % 180 != 0;
+    cmr_int xflip     = rotation % 270 != 0;
+    cmr_int yflip     = rotation >= 180;
+
+    CMR_LOGE("src_y %p src_u %p,dst_y %p dst_u %p, w %ld h %ld", src_y, src_u, dst_y, dst_u, width, height);
+    for (cmr_uint j = 0; j < height; j++) {
+        for (cmr_uint i = 0; i < width; i++) {
+          cmr_int yIn = j * width + i;
+          cmr_int uIn = (j >> 1) * width + (i & ~1);
+          cmr_int vIn = uIn       + 1;
+
+          cmr_int wOut     = swap  ? height              : width;
+          cmr_int hOut     = swap  ? width               : height;
+          cmr_int iSwapped = swap  ? j                   : i;
+          cmr_int jSwapped = swap  ? i                   : j;
+          cmr_int iOut     = xflip ? wOut - iSwapped - 1 : iSwapped;
+          cmr_int jOut     = yflip ? hOut - jSwapped - 1 : jSwapped;
+
+          cmr_int yOut = jOut * wOut + iOut;
+          cmr_int uOut = (jOut >> 1) * wOut + (iOut & ~1);
+          cmr_int vOut = uOut + 1;
+
+          dst_y[yOut] = (cmr_u8)(0xff & src_y[yIn]);
+          dst_u[uOut] = (cmr_u8)(0xff & src_u[uIn]);
+          dst_u[vOut] = (cmr_u8)(0xff & src_u[vIn]);
+        }
+  }
+
+exit:
+    CMR_LOGI("X ret=%ld", ret);
     return ret;
 }
