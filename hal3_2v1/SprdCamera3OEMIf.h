@@ -152,7 +152,7 @@ typedef struct {
 #define USE_ONE_RESERVED_BUF 1
 
 // 9820e_4.4.4_NULL
-#ifdef ANDROID_VERSION_KK_BRINGUP
+#ifdef ANDROID_VERSION_KK
 #define SPRD_NULL (0)
 #else
 #define SPRD_NULL (void *)0

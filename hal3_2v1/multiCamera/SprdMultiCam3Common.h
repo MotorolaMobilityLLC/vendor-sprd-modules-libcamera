@@ -31,7 +31,7 @@
 #define SPRDMULTICAMERACOMMON_H_HEADER
 
 #include "../SprdCamera3HWI.h"
-#ifdef ANDROID_VERSION_KK_BRINGUP
+#ifdef ANDROID_VERSION_KK
 #include <cstring>
 #else
 #include <string>

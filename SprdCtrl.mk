@@ -652,7 +652,7 @@ endif
 
 # for 4.4 mocor5 bringup
 ifeq ($(PLATFORM_VERSION),4.4.4)
-LOCAL_CFLAGS += -DANDROID_VERSION_KK_BRINGUP
+LOCAL_CFLAGS += -DANDROID_VERSION_KK
 endif
 
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9850ka sc9850kh sp9832e),)

@@ -74,7 +74,7 @@ volatile uint32_t gHALLogLevel = 4;
 camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
     .initialize = SprdCamera3HWI::initialize,
     .configure_streams = SprdCamera3HWI::configure_streams,
-#ifdef ANDROID_VERSION_KK_BRINGUP
+#ifdef ANDROID_VERSION_KK
     .register_stream_buffers = SprdCamera3HWI::register_stream_buffers,
 #else
     .register_stream_buffers = NULL, // SprdCamera3HWI::register_stream_buffers,
