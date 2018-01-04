@@ -92,8 +92,6 @@ struct isp_u_blocks_info {
 		/*pdaf block*/
 		void *roi_info;
 		void *ppi_info;
-		/*grgb block*/
-		struct isp_grgb_thrd grgb_thrd;
 		/*awbc block*/
 		struct isp_awbc_rgb awbc_rgb;
 	};
@@ -273,8 +271,6 @@ cmr_s32 isp_u_bpc_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: GRGB*/
 cmr_s32 isp_u_grgb_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_grgb_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_grgb_thrd(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CFA*/
 cmr_s32 isp_u_cfa_block(cmr_handle handle, void *param_ptr);
@@ -453,7 +449,6 @@ cmr_s32 isp_u_ynr_bypass(cmr_handle handle, void *param_ptr);
 
 /*Noise filter*/
 cmr_s32 isp_u_noise_filter_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_noise_fliter_bypass(cmr_handle handle, void *param_ptr);
 
 /*Rarius Lsc*/
 cmr_s32 isp_u_rarius_lsc_block(cmr_handle handle, void *param_ptr);
