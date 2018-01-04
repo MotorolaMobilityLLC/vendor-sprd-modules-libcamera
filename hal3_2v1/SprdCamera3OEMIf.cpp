@@ -7293,6 +7293,14 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
     for (i = 0; i < m3dnrGraphicHeapNum; i++) {
         if (m3DNRGraphicArray[i].bufferhandle == NULL) {
             if (m3DNRGraphicArray[i].private_handle != NULL) {
+                struct private_handle_t* pHandle = (private_handle_t *)m3DNRGraphicArray[i].private_handle;
+                if (pHandle->attr_base != MAP_FAILED) {
+                    LOGW("Warning shared attribute region mapped at free. Unmapping");
+                    munmap(pHandle->attr_base, PAGE_SIZE);
+                    pHandle->attr_base = MAP_FAILED;
+                }
+                close(pHandle->share_attr_fd);
+                pHandle->share_attr_fd = -1;
                 delete (
                     (private_handle_t *)m3DNRGraphicArray[i].private_handle);
                 m3DNRGraphicArray[i].private_handle = NULL;
@@ -7446,6 +7454,14 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
     for (i = 0; i < m3dnrGraphicPathHeapNum; i++) {
         if (m3DNRGraphicPathArray[i].bufferhandle == NULL) {
             if (m3DNRGraphicPathArray[i].private_handle != NULL) {
+                struct private_handle_t* pHandle = (private_handle_t *)m3DNRGraphicPathArray[i].private_handle;
+                if (pHandle->attr_base != MAP_FAILED) {
+                    LOGW("Warning shared attribute region mapped at free. Unmapping");
+                    munmap(pHandle->attr_base, PAGE_SIZE);
+                    pHandle->attr_base = MAP_FAILED;
+                }
+                close(pHandle->share_attr_fd);
+                pHandle->share_attr_fd = -1;
                 delete ((private_handle_t *)m3DNRGraphicPathArray[i]
                             .private_handle);
                 m3DNRGraphicPathArray[i].private_handle = NULL;
