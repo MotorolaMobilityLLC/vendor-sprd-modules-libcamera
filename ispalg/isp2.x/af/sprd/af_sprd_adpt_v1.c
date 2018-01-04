@@ -2262,6 +2262,9 @@ static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 	struct afctrl_ae_info *ae_info = (struct afctrl_ae_info *)param0;
 	struct af_img_blk_statistic *ae_stat_ptr = (struct af_img_blk_statistic *)ae_info->img_blk_info.data;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	if((0 == af->isp_info.width) || (0 == af->isp_info.height)) {
+		return AFV1_ERROR;
+	}
 
 	set_af_RGBY(af, (void *)ae_stat_ptr);
 	memcpy(&(af->ae.ae_report), &(ae_info->ae_rlt_info), sizeof(struct af_ae_calc_out));
