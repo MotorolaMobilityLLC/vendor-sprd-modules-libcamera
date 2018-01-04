@@ -587,20 +587,20 @@ void *thread_3dnr(void *p_data) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-#if 1
+
     {
         char flag[PROPERTY_VALUE_MAX];
-        property_get("post_3dnr_save_scl_data", flag, "0");
+        property_get("3dnr_save_capture_frame", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
             sprintf(filename,
-                    "/data/misc/cameraserver/scl_in_%dx%d_index_%d.yuv",
+                    "/data/misc/cameraserver/big_in_%dx%d_index_%d.yuv",
                     threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
             sprintf(filename,
-                    "/data/misc/cameraserver/scl_out_%dx%d_index_%d.yuv",
+                    "/data/misc/cameraserver/small_in_%dx%d_index_%d.yuv",
                     threednr_handle->small_width, threednr_handle->small_height,
                     cur_frm);
             save_yuv(filename, (char *)dst.addr_vir.addr_y,
@@ -608,7 +608,7 @@ void *thread_3dnr(void *p_data) {
                      threednr_handle->small_height);
         }
     }
-#endif
+
     // call 3dnr function
     CMR_LOGD("Call the threednr_function(). before. cnt: %d",
              threednr_handle->common.save_frame_count);
@@ -645,25 +645,19 @@ void *thread_3dnr(void *p_data) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-    if (1 == threednr_handle->common.save_frame_count) {
-#if 1
-/*FILE *fp;
-char filename[256];
-static int index = 0;
-sprintf(filename ,
-"/data/misc/cameraserver/%dx%d_3dnr_extra_addr_%p_firstframe_index%d.yuv" ,
-threednr_handle->width ,
-        threednr_handle->height , ptemp , index);
-fp = fopen(filename , "wb");
-if(fp)
-{
-        fwrite(ptemp , 1 , threednr_handle->width*threednr_handle->height*3/2 ,
-fp);
-        fclose(fp);
-}
-index++;*/
-#endif
+
+
+    {
+        char flag[PROPERTY_VALUE_MAX];
+        property_get("3dnr_save_capture_frame", flag, "0");
+        if (!strcmp(flag, "1")) { // save output image.
+            sprintf(filename , "/data/misc/cameraserver/%dx%d_3dnr_handle_frame_index%d.yuv",
+                threednr_handle->width , threednr_handle->height, cur_frm);
+            save_yuv(filename, (char *)in->dst_frame.addr_vir.addr_y,
+                threednr_handle->width, threednr_handle->height);
+        }
     }
+
     if (CAP_3DNR_NUM == threednr_handle->common.save_frame_count) {
         cmr_bzero(&out->dst_frame, sizeof(struct img_frm));
         oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
