@@ -3022,16 +3022,19 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	property_get("persist.sys.camera.bypass.ae", value, "0");
 	if (1 == atoi(value)) {
 		cxt->ae_cxt.sw_bypass = 1;
+		cxt->ops.ae_ops.ioctrl = NULL;
 		ISP_LOGI("ae sw bypass");
 	}
 	property_get("persist.sys.camera.bypass.af", value, "0");
 	if (1 == atoi(value)) {
 		cxt->af_cxt.sw_bypass = 1;
+		cxt->ops.af_ops.ioctrl = NULL;
 		ISP_LOGI("af sw bypass");
 	}
 	property_get("persist.sys.camera.bypass.awb", value, "0");
 	if (1 == atoi(value)) {
 		cxt->awb_cxt.sw_bypass = 1;
+		cxt->ops.awb_ops.ioctrl = NULL;
 		ISP_LOGI("awb sw bypass");
 	}
 	property_get("persist.sys.camera.bypass.lsc", value, "0");
@@ -3651,9 +3654,15 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
 	}
-	awbc_cfg.r_gain = result.r;
-	awbc_cfg.g_gain = result.g;
-	awbc_cfg.b_gain = result.b;
+	if (cxt->awb_cxt.sw_bypass) {
+		awbc_cfg.r_gain = 1800;
+		awbc_cfg.g_gain = 1024;
+		awbc_cfg.b_gain = 1536;
+	} else {
+		awbc_cfg.r_gain = result.r;
+		awbc_cfg.g_gain = result.g;
+		awbc_cfg.b_gain = result.b;
+	}
 	awbc_cfg.r_offset = 0;
 	awbc_cfg.g_offset = 0;
 	awbc_cfg.b_offset = 0;
@@ -4100,15 +4109,14 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 
 	ret = ispalg_get_awbbin_size(cxt);
 
-	if(cxt->ae_cxt.sw_bypass == 1) {
+	if (cxt->ae_cxt.sw_bypass) {
 		memset(&default_exp, 0 ,sizeof(default_exp));
 		default_exp.dummy = 0;
 		default_exp.exposure = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
 		default_exp.size_index = cxt->commn_cxt.param_index;
 		default_gain = 1000;
-		ISP_LOGI("index %d frame_line %d", default_exp.exposure, default_exp.size_index);
+		ISP_LOGV("index %d frame_line %d", default_exp.size_index, default_exp.exposure);
 		ispalg_write_exp_gain(isp_alg_handle, default_exp, default_gain);
-		cxt->ops.ae_ops.ioctrl = NULL;
 	}
 exit:
 	ISP_LOGV("done %ld", ret);
