@@ -24,9 +24,9 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x00010666,
+	0x00000AAA,
 	/*iircnr_ymd_v*/
-	0x00010666,
+	0x00000AAA,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
