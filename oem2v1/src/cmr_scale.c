@@ -108,13 +108,14 @@ cmr_int cmr_scaling_down(struct img_frm *src, struct img_frm *dst) {
     cmr_u32 ratio_w;
     cmr_u32 ratio_h;
     uint16_t i, j;
-    if (NULL == dst || NULL == src) {
+    if (NULL == dst || NULL == src || src->fmt != IMG_DATA_TYPE_YUV420) {
         return -1;
     }
+
     dst_y_buf = (cmr_u8 *)dst->addr_vir.addr_y;
-    dst_uv_buf = (cmr_u8 *)dst->addr_vir.addr_u;
+    dst_uv_buf = (cmr_u8 *)(dst->addr_vir.addr_y + dst->size.width * dst->size.height);
     src_y_buf = (cmr_u8 *)src->addr_vir.addr_y;
-    src_uv_buf = (cmr_u8 *)src->addr_vir.addr_u;
+    src_uv_buf = (cmr_u8 *)(src->addr_vir.addr_y + src->size.width * src->size.height);
     src_w = src->size.width;
     src_h = src->size.height;
     dst_w = dst->size.width;
