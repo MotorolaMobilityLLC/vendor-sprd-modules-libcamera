@@ -2063,16 +2063,20 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		statis_info = (struct isp_statis_info *)in_ptr;
 
 		if (IRQ_DCAM_PULSE == statis_info->irq_property) {
-			ISP_LOGV("pulse_line %d dac %d psec %d pusec %d mvsec %d mvuse %d",
+			ISP_LOGV("id %08d pulse_line %08d dac %04d psec %12ld mvsec %12ld",
+				 statis_info->dac_info.frame_id,
 				 statis_info->dac_info.pulse_line,
 				 statis_info->dac_info.dac,
-				 statis_info->dac_info.pulse_sec,
+				 statis_info->dac_info.pulse_sec * 1000000L +
 				 statis_info->dac_info.pulse_usec,
-				 statis_info->dac_info.vcm_mv_sec,
+				 statis_info->dac_info.vcm_mv_sec * 1000000L +
 				 statis_info->dac_info.vcm_mv_usec);
 
 			if (cxt->ops.af_ops.ioctrl) {
-				ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DAC_INFO, (void *)&(statis_info->dac_info), NULL);
+				ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
+							     AF_CMD_SET_DAC_INFO,
+							     (void *)&(statis_info->dac_info),
+							     NULL);
 				ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_DAC_INFO"));
 			}
 
