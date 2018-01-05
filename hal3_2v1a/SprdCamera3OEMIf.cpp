@@ -1085,14 +1085,6 @@ int SprdCamera3OEMIf::VideoTakePicture() {
         deinitCapture(mIsPreAllocCapMem);
     }
 
-    mSetting->getJPEGTag(&jpgInfo);
-    HAL_LOGD("JPEG quality = %d", jpgInfo.quality);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
-             jpgInfo.quality);
-    HAL_LOGD("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
-             jpgInfo.thumbnail_quality);
-
     if (isCapturing()) {
         WaitForCaptureDone();
     }
@@ -1134,6 +1126,22 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter() {
                  (int32_t)(lensInfo.focal_length * 1000));
         HAL_LOGD("lensInfo.focal_length = %f", lensInfo.focal_length);
     }
+
+     JPEG_Tag jpgInfo;
+     struct img_size jpeg_thumb_size;
+     mSetting->getJPEGTag(&jpgInfo);
+     HAL_LOGD("JPEG quality = %d", jpgInfo.quality);
+     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
+             jpgInfo.quality);
+     HAL_LOGD("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
+     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
+              jpgInfo.thumbnail_quality);
+     jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+     jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+     HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width,
+              jpeg_thumb_size.height);
+     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
+             (cmr_uint)&jpeg_thumb_size);
 
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
