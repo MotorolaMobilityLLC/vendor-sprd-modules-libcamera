@@ -2846,7 +2846,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		return 0;
 	}
 
-	system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
+	system_time0 = systemTime(CLOCK_MONOTONIC);
 
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 	switch (inparam->data_type) {
@@ -2893,8 +2893,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 	}
 
-	system_time_trigger = systemTime(CLOCK_MONOTONIC) / 1000000LL;
-	ISP_LOGV("SYSTEM_TEST-trigger:%" PRIu64 " ms", system_time_trigger - system_time0);
+	system_time_trigger = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32)((system_time_trigger - system_time0)/1000));
 
 	if (AF_DATA_AF == inparam->data_type) {
 		switch (af->state) {
@@ -2939,8 +2939,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 	}
 
-	system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
-	ISP_LOGV("SYSTEM_TEST-af:%" PRId64 " ms", system_time1 - system_time0);
+	system_time1 = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32)((system_time1 - system_time0)/1000));
 
 	return rtn;
 }
