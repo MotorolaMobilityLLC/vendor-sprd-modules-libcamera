@@ -21,6 +21,7 @@
 #endif
 
 #include "isp_mw.h"
+#include "isp_blocks_cfg.h"
 struct isp_alg_fw_init_in {
 	cmr_handle dev_access_handle;
 	struct isp_init_param *init_param;

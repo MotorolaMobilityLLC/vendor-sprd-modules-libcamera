@@ -15,7 +15,6 @@
  */
 #define LOG_TAG "isp_blk_2d_lsc"
 #include "isp_blocks_cfg.h"
-#include "isp_com.h"
 
 cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, void *param2)
 {

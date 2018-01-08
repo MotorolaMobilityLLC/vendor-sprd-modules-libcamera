@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#include "isp_com.h"
+#include "isp_blocks_cfg.h"
 
 
 #ifdef __cplusplus

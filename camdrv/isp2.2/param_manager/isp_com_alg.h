@@ -28,6 +28,10 @@ enum isp_interp_type {
 	ISP_INTERP_UINT20 = 4,
 };
 
+struct isp_gamma_curve_info {
+	cmr_u32 axis[2][ISP_GAMMA_SAMPLE_NUM];
+};
+
 cmr_s32 isp_gamma_adjust(struct isp_gamma_curve_info *src_ptr0, struct isp_gamma_curve_info *src_ptr1, struct isp_gamma_curve_info *dst_ptr, struct isp_weight_value *point_ptr);
 
 cmr_s32 isp_cmc_adjust(cmr_u16 src0[9], cmr_u16 src1[9], struct isp_sample_point_info *point_ptr, cmr_u16 dst[9]);

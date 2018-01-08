@@ -32,6 +32,7 @@
 #include "isp_awb_types.h"
 #include "ae_ctrl_types.h"
 #include "isp_dev_access.h"
+#include "isp_blocks_cfg.h"
 
 
 struct commn_info {
