@@ -22,7 +22,6 @@
 
 #include "af_ctrl.h"
 #include "af_sprd_adpt_v1.h"
-#include "isp_adpt.h"
 
 #ifndef UNUSED
 #define     UNUSED(param)  (void)(param)
@@ -59,7 +58,7 @@ static const char *focus_state_str[] = {
 
 static char AFlog_buffer[2048] = { 0 };
 
-static struct af_iir_nr_info af_iir_nr[3] = {
+static struct af_iir_nr_info_u af_iir_nr[3] = {
 	{			//weak
 	 .iir_nr_en = 1,
 	 .iir_g0 = 378,
@@ -107,11 +106,20 @@ static struct af_iir_nr_info af_iir_nr[3] = {
 	 },
 };
 
-static char fv1_coeff[36] = {
-	-2, -2, -2, -2, 16, -2, -2, -2, -2,
-	-3, 5, 3, 5, 0, -5, 3, -5, -3,
-	3, 5, -3, -5, 0, 5, -3, -5, 3,
-	0, -8, 0, -8, 16, 0, 0, 0, 0
+static struct af_enhanced_module_info_u af_enhanced_module = {
+	.chl_sel = 0,
+	.nr_mode = 2,
+	.center_weight = 2,
+	.fv_enhanced_mode = {5, 5},
+	.clip_en = {0, 0},
+	.max_th = {131071, 131071},
+	.min_th = {100, 100},
+	.fv_shift = {0, 0},
+	.fv1_coeff = {
+		      -2, -2, -2, -2, 16, -2, -2, -2, -2,
+		      -3, 5, 3, 5, 0, -5, 3, -5, -3,
+		      3, 5, -3, -5, 0, 5, -3, -5, 3,
+		      0, -8, 0, -8, 16, 0, 0, 0, 0},
 };
 
 char libafv1_path[][20] = {
@@ -146,48 +154,39 @@ static cmr_u64 get_systemtime_ns()
 // afm hardware
 static void afm_enable(af_ctrl_t * af)
 {
-	int bypass = 0;
+	cmr_u32 bypass = 0;
 
-	af->af_monitor_bypass(af->caller, (void *)&bypass);
+	af->cb_ops.af_monitor_bypass(af->caller, (void *)&bypass);
 }
 
 static void afm_disable(af_ctrl_t * af)
 {
-	int bypass = 1;
-	af->af_monitor_bypass(af->caller, (void *)&bypass);
+	cmr_u32 bypass = 1;
+	af->cb_ops.af_monitor_bypass(af->caller, (void *)&bypass);
 }
 
 static void afm_setup(af_ctrl_t * af)
 {
-	memcpy(&(af->af_iir_nr), &(af_iir_nr[af->afm_tuning.iir_level]), sizeof(struct af_iir_nr_info));
-	af->af_enhanced_module.chl_sel = 0;
-	af->af_enhanced_module.nr_mode = af->afm_tuning.nr_mode;
-	af->af_enhanced_module.center_weight = af->afm_tuning.cw_mode;
-	af->af_enhanced_module.fv_enhanced_mode[0] = af->afm_tuning.fv0_e;
-	af->af_enhanced_module.fv_enhanced_mode[1] = af->afm_tuning.fv1_e;
-	af->af_enhanced_module.clip_en[0] = 0;
-	af->af_enhanced_module.clip_en[1] = 0;
-	af->af_enhanced_module.max_th[0] = 131071;
-	af->af_enhanced_module.max_th[1] = 131071;
-	af->af_enhanced_module.min_th[0] = 100;
-	af->af_enhanced_module.min_th[1] = 100;
-	af->af_enhanced_module.fv_shift[0] = 0;
-	af->af_enhanced_module.fv_shift[1] = 0;
-	memcpy(&(af->af_enhanced_module.fv1_coeff), &fv1_coeff, sizeof(fv1_coeff));
+	struct af_enhanced_module_info_u afm_enhanced_module;
+	cmr_u32 mode = 1;
 
-	int mode = 1;
-	af->af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
-	af->af_monitor_mode(af->caller, (void *)&mode);
-	af->af_monitor_iir_nr_cfg(af->caller, (void *)&(af->af_iir_nr));
-	af->af_monitor_module_cfg(af->caller, (void *)&(af->af_enhanced_module));
+	af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
+	af->cb_ops.af_monitor_mode(af->caller, (void *)&mode);
+	af->cb_ops.af_monitor_iir_nr_cfg(af->caller, (void *)&(af_iir_nr[af->afm_tuning.iir_level]));
+
+	memcpy(&(afm_enhanced_module), &af_enhanced_module, sizeof(struct af_enhanced_module_info_u));
+	afm_enhanced_module.nr_mode = af->afm_tuning.nr_mode;
+	afm_enhanced_module.center_weight = af->afm_tuning.cw_mode;
+	afm_enhanced_module.fv_enhanced_mode[0] = af->afm_tuning.fv0_e;
+	afm_enhanced_module.fv_enhanced_mode[1] = af->afm_tuning.fv1_e;
+	af->cb_ops.af_monitor_module_cfg(af->caller, (void *)&(afm_enhanced_module));
 }
 
 static cmr_u32 afm_get_win_num(struct afctrl_init_in *input_param)
 {
 	cmr_u32 num;
 	struct afctrl_init_in *input_ptr = input_param;
-	//isp_u_raw_afm_win_num(isp->handle_device, &num);
-	input_ptr->get_monitor_win_num(input_ptr->caller, &num);
+	input_ptr->cb_ops.get_monitor_win_num(input_ptr->caller, &num);
 	ISP_LOGI("win_num %d", num);
 	return num;
 }
@@ -207,7 +206,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 
 	winparam.win_pos = (struct af_win_rect *)win;	//todo : compare with kernel type
 
-	af->set_monitor_win(af->caller, &winparam);
+	af->cb_ops.set_monitor_win(af->caller, &winparam);
 }
 
 static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr_s32 roi_num)
@@ -234,15 +233,31 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 	return 0;
 }
 
+// start hardware
+static cmr_s32 do_start_af(af_ctrl_t * af)
+{
+	afm_set_win(af, af->roi.win, af->roi.num, af->isp_info.win_num);
+	afm_setup(af);
+	afm_enable(af);
+	return 0;
+}
+
+// stop hardware
+static cmr_s32 do_stop_af(af_ctrl_t * af)
+{
+	afm_disable(af);
+	return 0;
+}
+
 // len
 static cmr_u16 lens_get_pos(af_ctrl_t * af)
 {
 	cmr_u16 pos = 0;
 
-	if (NULL == af->af_get_motor_pos) {
+	if (NULL == af->cb_ops.af_get_motor_pos) {
 		ISP_LOGE("af->af_get_motor_pos null");
 	} else {
-		af->af_get_motor_pos(af->caller, &pos);
+		af->cb_ops.af_get_motor_pos(af->caller, &pos);
 	}
 	if (0 == pos || pos > 1023) {
 		pos = af->lens.pos;
@@ -256,15 +271,15 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 {
 	cmr_u16 last_pos = 0;
 
-	if (NULL == af->af_lens_move) {
-		ISP_LOGE("af->af_lens_move null error");
+	if (NULL == af->cb_ops.af_set_motor_pos) {
+		ISP_LOGE("af->af_set_motor_pos null error");
 		return;
 	}
 
 	last_pos = lens_get_pos(af);
 	if (last_pos != pos) {
 		ISP_LOGI("pos = %d", pos);
-		af->af_lens_move(af->caller, pos);
+		af->cb_ops.af_set_motor_pos(af->caller, pos);
 		af->lens.pos = pos;
 	} else {
 		ISP_LOGV("pos %d was set last time", pos);
@@ -298,22 +313,6 @@ static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE al
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Hw_Wins, &hw_wins);
 }
 
-// start hardware
-static cmr_s32 do_start_af(af_ctrl_t * af)
-{
-	afm_set_win(af, af->roi.win, af->roi.num, af->isp_info.win_num);
-	afm_setup(af);
-	afm_enable(af);
-	return 0;
-}
-
-// stop hardware
-static cmr_s32 do_stop_af(af_ctrl_t * af)
-{
-	afm_disable(af);
-	return 0;
-}
-
 static cmr_s32 compare_timestamp(af_ctrl_t * af)
 {
 
@@ -328,7 +327,7 @@ static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 	ISP_LOGI(".");
 	struct af_result_param af_result;
 	af_result.focus_type = focus_type;
-	af->start_notice(af->caller, &af_result);
+	af->cb_ops.start_notice(af->caller, &af_result);
 }
 
 static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
@@ -338,7 +337,7 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
 	af_result.focus_type = focus_type;
 	ISP_LOGI(". %s ", (win_num) ? "Suc" : "Fail");
 
-	af->end_notice(af->caller, &af_result);
+	af->cb_ops.end_notice(af->caller, &af_result);
 }
 
 // i/f to AF model
@@ -460,12 +459,12 @@ static cmr_u8 if_lock_partial_ae(cmr_u32 lock, void *cookie)
 
 	if (LOCK == ! !lock) {
 		if (0 == af->ae_partial_lock_num) {
-			af->lock_module(af->caller, AF_LOCKER_AE_CAF);
+			af->cb_ops.lock_module(af->caller, AF_LOCKER_AE_CAF);
 			af->ae_partial_lock_num++;
 		}
 	} else {
 		if (af->ae_partial_lock_num) {
-			af->unlock_module(af->caller, AF_LOCKER_AE_CAF);
+			af->cb_ops.unlock_module(af->caller, AF_LOCKER_AE_CAF);
 			af->ae_partial_lock_num--;
 		}
 	}
@@ -480,12 +479,12 @@ static cmr_u8 if_lock_ae(e_LOCK lock, void *cookie)
 
 	if (LOCK == lock) {
 		if (0 == af->ae_lock_num) {
-			af->lock_module(af->caller, AF_LOCKER_AE);
+			af->cb_ops.lock_module(af->caller, AF_LOCKER_AE);
 			af->ae_lock_num++;
 		}
 	} else {
 		if (af->ae_lock_num) {
-			af->unlock_module(af->caller, AF_LOCKER_AE);
+			af->cb_ops.unlock_module(af->caller, AF_LOCKER_AE);
 			af->ae_lock_num--;
 		}
 	}
@@ -500,12 +499,12 @@ static cmr_u8 if_lock_awb(e_LOCK lock, void *cookie)
 
 	if (LOCK == lock) {
 		if (0 == af->awb_lock_num) {
-			af->lock_module(af->caller, AF_LOCKER_AWB);
+			af->cb_ops.lock_module(af->caller, AF_LOCKER_AWB);
 			af->awb_lock_num++;
 		}
 	} else {
 		if (af->awb_lock_num) {
-			af->unlock_module(af->caller, AF_LOCKER_AWB);
+			af->cb_ops.unlock_module(af->caller, AF_LOCKER_AWB);
 			af->awb_lock_num--;
 		}
 	}
@@ -520,12 +519,12 @@ static cmr_u8 if_lock_lsc(e_LOCK lock, void *cookie)
 
 	if (LOCK == lock) {
 		if (0 == af->lsc_lock_num) {
-			af->lock_module(af->caller, AF_LOCKER_LSC);
+			af->cb_ops.lock_module(af->caller, AF_LOCKER_LSC);
 			af->lsc_lock_num++;
 		}
 	} else {
 		if (af->lsc_lock_num) {
-			af->unlock_module(af->caller, AF_LOCKER_LSC);
+			af->cb_ops.unlock_module(af->caller, AF_LOCKER_LSC);
 			af->lsc_lock_num--;
 		}
 	}
@@ -540,12 +539,12 @@ static cmr_u8 if_lock_nlm(e_LOCK lock, void *cookie)
 
 	if (LOCK == lock) {
 		if (0 == af->nlm_lock_num) {
-			af->lock_module(af->caller, AF_LOCKER_NLM);
+			af->cb_ops.lock_module(af->caller, AF_LOCKER_NLM);
 			af->nlm_lock_num++;
 		}
 	} else {
 		if (af->nlm_lock_num) {
-			af->unlock_module(af->caller, AF_LOCKER_NLM);
+			af->cb_ops.unlock_module(af->caller, AF_LOCKER_NLM);
 			af->nlm_lock_num--;
 		}
 	}
@@ -558,7 +557,7 @@ static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 	cmr_u32 sec, usec;
 
-	af->af_get_system_time(af->caller, &sec, &usec);
+	af->cb_ops.af_get_system_time(af->caller, &sec, &usec);
 	*time = (cmr_u64) sec *1000000000 + (cmr_u64) usec *1000;
 	//*time = get_systemtime_ns();
 	return 0;
@@ -661,8 +660,8 @@ static cmr_u8 if_set_motor_sacmode(void *cookie)
 {
 	af_ctrl_t *af = cookie;
 
-	if (NULL != af->af_set_motor_bestmode)
-		af->af_set_motor_bestmode(af->caller);
+	if (NULL != af->cb_ops.af_set_motor_bestmode)
+		af->cb_ops.af_set_motor_bestmode(af->caller);
 
 	return 0;
 }
@@ -750,7 +749,7 @@ static void lens_move_to_sharkle(af_ctrl_t * af, cmr_u16 pos)
 
 	cmr_u16 last_pos = 0;
 
-	if (NULL == af->af_set_next_vcm_pos) {
+	if (NULL == af->cb_ops.af_set_next_vcm_pos) {
 		ISP_LOGE("af->af_set_next_vcm_pos null error");
 		return;
 	}
@@ -759,7 +758,7 @@ static void lens_move_to_sharkle(af_ctrl_t * af, cmr_u16 pos)
 	ISP_LOGD(" lens_move_to_sharkle, last_pos= %d", last_pos);
 
 	if (last_pos != pos) {
-		af->af_set_next_vcm_pos(af->caller, pos);
+		af->cb_ops.af_set_next_vcm_pos(af->caller, pos);
 		af->lens.pos = pos;
 	} else {
 		ISP_LOGV("pos %d was set last time", pos);
@@ -773,8 +772,8 @@ static cmr_u8 if_af_set_pulse_line(cmr_u32 line, void *cookie)
 	af_ctrl_t *af = cookie;
 	ISP_LOGD(" if_af_set_pulse_line = %d", line);
 
-	if (NULL != af->af_set_pulse_line)
-		af->af_set_pulse_line(af->caller, line);
+	if (NULL != af->cb_ops.af_set_pulse_line)
+		af->cb_ops.af_set_pulse_line(af->caller, line);
 
 	return 0;
 }
@@ -808,8 +807,8 @@ static cmr_u8 if_af_set_pulse_log(cmr_u32 flag, void *cookie)
 	af_ctrl_t *af = cookie;
 	ISP_LOGD(" if_af_set_pulse_log = %d", flag);
 
-	if (NULL != af->af_set_pulse_log)
-		af->af_set_pulse_log(af->caller, flag);
+	if (NULL != af->cb_ops.af_set_pulse_log)
+		af->cb_ops.af_set_pulse_log(af->caller, flag);
 
 	return 0;
 }
@@ -819,8 +818,8 @@ static cmr_u8 if_af_set_clear_next_vcm_pos(void *cookie)
 
 	af_ctrl_t *af = cookie;
 
-	if (NULL != af->af_set_clear_next_vcm_pos)
-		af->af_set_clear_next_vcm_pos(af->caller);
+	if (NULL != af->cb_ops.af_set_clear_next_vcm_pos)
+		af->cb_ops.af_set_clear_next_vcm_pos(af->caller);
 
 	return 0;
 }
@@ -1247,8 +1246,8 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 
 static void set_vcm_mode(af_ctrl_t * af, char *vcm_mode)
 {
-	if (NULL != af->af_set_test_vcm_mode)
-		af->af_set_test_vcm_mode(af->caller, vcm_mode);
+	if (NULL != af->cb_ops.af_set_test_vcm_mode)
+		af->cb_ops.af_set_test_vcm_mode(af->caller, vcm_mode);
 
 	return;
 }
@@ -1256,8 +1255,8 @@ static void set_vcm_mode(af_ctrl_t * af, char *vcm_mode)
 static void get_vcm_mode(af_ctrl_t * af, char *vcm_mode)
 {
 	UNUSED(vcm_mode);
-	if (NULL != af->af_get_test_vcm_mode)
-		af->af_get_test_vcm_mode(af->caller);
+	if (NULL != af->cb_ops.af_get_test_vcm_mode)
+		af->cb_ops.af_get_test_vcm_mode(af->caller);
 
 	return;
 }
@@ -1481,7 +1480,7 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
-	notify_start(af, CAM_AF_FOCUS_FAF);
+	notify_start(af, AF_FOCUS_FAF);
 }
 
 static cmr_s32 faf_process_frame(af_ctrl_t * af)
@@ -1494,7 +1493,7 @@ static cmr_s32 faf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == alg_mode) {
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
 
-		notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, CAM_AF_FOCUS_FAF);
+		notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_FAF);
 		ISP_LOGI("notify_stop, result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
 		return 1;
 	} else {
@@ -1525,7 +1524,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == alg_mode) {
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
 
-		notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, CAM_AF_FOCUS_SAF);
+		notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_SAF);
 		ISP_LOGI("notify_stop, result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
 		return 1;
 	} else {
@@ -1582,7 +1581,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	do_start_af(af);
 	if (AFT_TRIG_CB == p_aft_result->is_caf_trig) {
 		af->cb_trigger = AFV1_TRUE;
-		notify_start(af, CAM_AF_FOCUS_CAF);
+		notify_start(af, AF_FOCUS_CAF);
 	}
 	af->vcm_stable = 0;
 }
@@ -1599,7 +1598,7 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 		ISP_LOGI("result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
 
 		if (AFV1_TRUE == af->cb_trigger) {
-			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, CAM_AF_FOCUS_CAF);
+			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_CAF);
 			ISP_LOGI("notify_stop.");
 			af->cb_trigger = AFV1_FALSE;
 		}
@@ -1697,7 +1696,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
-	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state)){
+	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state)) {
 		caf_monitor_trigger(af, prm, &res);
 	}
 }
@@ -1785,21 +1784,21 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *
 	caf_monitor_calc(af, prm);
 }
 
-static void caf_monitor_process_sensor(af_ctrl_t * af, struct af_aux_sensor_info_t *in)
+static void caf_monitor_process_sensor(af_ctrl_t * af, struct afctrl_sensor_info_t *in)
 {
-	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
+	struct afctrl_sensor_info_t *aux_sensor_info = (struct afctrl_sensor_info_t *)in;
 	uint32_t sensor_type = aux_sensor_info->type;
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
 
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
 	switch (sensor_type) {
-	case AF_ACCELEROMETER:
+	case AF_SENSOR_ACCELEROMETER:
 		prm->sensor_info.sensor_type = AFT_POSTURE_ACCELEROMETER;
 		prm->sensor_info.x = aux_sensor_info->gsensor_info.vertical_down;
 		prm->sensor_info.y = aux_sensor_info->gsensor_info.vertical_up;
 		prm->sensor_info.z = aux_sensor_info->gsensor_info.horizontal;
 		break;
-	case AF_GYROSCOPE:
+	case AF_SENSOR_GYROSCOPE:
 		prm->sensor_info.sensor_type = AFT_POSTURE_GYRO;
 		prm->sensor_info.x = aux_sensor_info->gyro_info.x;
 		prm->sensor_info.y = aux_sensor_info->gyro_info.y;
@@ -1883,8 +1882,8 @@ static void caf_monitor_process(af_ctrl_t * af)
 	}
 
 	if (af->trigger_source_type & AF_DATA_G) {
-		struct af_aux_sensor_info_t aux_sensor_info;
-		aux_sensor_info.type = AF_ACCELEROMETER;
+		struct afctrl_sensor_info_t aux_sensor_info;
+		aux_sensor_info.type = AF_SENSOR_ACCELEROMETER;
 		aux_sensor_info.gsensor_info.vertical_up = af->gsensor_info.vertical_up;
 		aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
 		aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
@@ -2028,16 +2027,16 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 
 	ISP_LOGV("flash_status %u", flash_status);
 	switch (flash_status) {
-	case ISP_FLASH_PRE_BEFORE:
-	case ISP_FLASH_PRE_LIGHTING:
-	case ISP_FLASH_MAIN_BEFORE:
-	case ISP_FLASH_MAIN_LIGHTING:
+	case AF_FLASH_PRE_BEFORE:
+	case AF_FLASH_PRE_LIGHTING:
+	case AF_FLASH_MAIN_BEFORE:
+	case AF_FLASH_MAIN_LIGHTING:
 		if (0 == af->flash_on) {
 			af->flash_on = 1;
 		}
 		break;
-	case ISP_FLASH_MAIN_AFTER:
-	case ISP_FLASH_PRE_AFTER:
+	case AF_FLASH_MAIN_AFTER:
+	case AF_FLASH_PRE_AFTER:
 		if (1 == af->flash_on) {
 			af->flash_on = 0;
 		}
@@ -2049,7 +2048,7 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 	return rtn;
 }
 
-static void ae_calc_win_size(af_ctrl_t * af, struct isp_video_start *param)
+static void ae_calc_win_size(af_ctrl_t * af, struct afctrl_fwstart_info *param)
 {
 	cmr_u32 w, h;
 	if (param->size.w && param->size.h) {
@@ -2064,7 +2063,7 @@ static void ae_calc_win_size(af_ctrl_t * af, struct isp_video_start *param)
 static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct isp_video_start *in_ptr = (struct isp_video_start *)param0;
+	struct afctrl_fwstart_info *in_ptr = (struct afctrl_fwstart_info *)param0;
 
 	ae_calc_win_size(af, in_ptr);
 	af->isp_info.width = in_ptr->size.w;
@@ -2082,7 +2081,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		trigger_start(af);	// for hdr capture no af mode update at whole procedure
 	}
 
-	if(STATE_RECORD_CAF == af->state) {
+	if (STATE_RECORD_CAF == af->state) {
 		af->force_trigger = AFV1_TRUE;
 	}
 
@@ -2107,7 +2106,7 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
-static void ae_calibration(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
+static void ae_calibration(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 {
 	cmr_u32 i, j, r_sum[9], g_sum[9], b_sum[9];
 
@@ -2185,7 +2184,7 @@ static void ae_calibration(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
 	ISP_LOGV("(r,g,b) in block4 is (%d,%d,%d)", af->ae_cali_data.r_avg[4], af->ae_cali_data.g_avg[4], af->ae_cali_data.b_avg[4]);
 }
 
-static void set_af_RGBY(af_ctrl_t * af, struct isp_awb_statistic_info *rgb)
+static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 {
 #define AE_BLOCK_W 32
 #define AE_BLOCK_H 32
@@ -2261,7 +2260,7 @@ static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_ae_info *ae_info = (struct afctrl_ae_info *)param0;
-	struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)ae_info->img_blk_info.data;
+	struct af_img_blk_statistic *ae_stat_ptr = (struct af_img_blk_statistic *)ae_info->img_blk_info.data;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
 	set_af_RGBY(af, (void *)ae_stat_ptr);
@@ -2284,10 +2283,10 @@ static cmr_s32 af_sprd_set_awb_info(cmr_handle handle, void *param0)
 static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct isp_face_area *face = (struct isp_face_area *)param0;
+	struct afctrl_face_info *face = (struct afctrl_face_info *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	if (NULL != face && 0 != face->face_num) {
-		memcpy(&af->face_info, face, sizeof(struct isp_face_area));
+		memcpy(&af->face_info, face, sizeof(struct afctrl_face_info));
 		af->trigger_source_type |= AF_DATA_FD;
 	}
 	return rtn;
@@ -2296,7 +2295,7 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct isp_af_ts *af_ts = (struct isp_af_ts *)param0;
+	struct afctrl_ts_info *af_ts = (struct afctrl_ts_info *)param0;
 	cmr_s32 timecompare = 0;
 	cmr_u16 pos[2] = { 0 };
 	AF_Timestamp timestamp;
@@ -2362,10 +2361,10 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)param0;
+	struct afctrl_sensor_info_t *aux_sensor_info = (struct afctrl_sensor_info_t *)param0;
 
 	switch (aux_sensor_info->type) {
-	case AF_ACCELEROMETER:
+	case AF_SENSOR_ACCELEROMETER:
 		ISP_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f", aux_sensor_info->gsensor_info.vertical_up,
 			 aux_sensor_info->gsensor_info.vertical_down, aux_sensor_info->gsensor_info.horizontal);
 		af->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
@@ -2375,16 +2374,16 @@ static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 		af->gsensor_info.valid = 1;
 		af->trigger_source_type |= AF_DATA_G;
 		break;
-	case AF_MAGNETIC_FIELD:
+	case AF_SENSOR_MAGNETIC_FIELD:
 		ISP_LOGV("magnetic field E");
 		break;
-	case AF_GYROSCOPE:
+	case AF_SENSOR_GYROSCOPE:
 		ISP_LOGV("gyro E");
 		break;
-	case AF_LIGHT:
+	case AF_SENSOR_LIGHT:
 		ISP_LOGV("light E");
 		break;
-	case AF_PROXIMITY:
+	case AF_SENSOR_PROXIMITY:
 		ISP_LOGV("proximity E");
 		break;
 	default:
@@ -2427,6 +2426,7 @@ static cmr_s32 af_sprd_set_dac_info(cmr_handle handle, void *param0)
 
 	return AFV1_SUCCESS;
 }
+
 //SharkLE Only --
 
 cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
@@ -2437,8 +2437,8 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 
 	switch (cmd) {
 	case AF_CMD_SET_AF_POS:
-		if (NULL != af->af_lens_move) {
-			af->af_lens_move(af->caller, *(cmr_u16 *) param0);
+		if (NULL != af->cb_ops.af_set_motor_pos) {
+			af->cb_ops.af_set_motor_pos(af->caller, *(cmr_u16 *) param0);
 		}
 		break;
 
@@ -2516,11 +2516,11 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	case AF_CMD_SET_DCAM_TIMESTAMP:
 		rtn = af_sprd_set_dcam_timestamp(handle, param0);
 		break;
-	//SharkLE Only ++
+		//SharkLE Only ++
 	case AF_CMD_SET_DAC_INFO:
 		rtn = af_sprd_set_dac_info(handle, param0);
 		break;
-	//SharkLE Only --
+		//SharkLE Only --
 	default:
 		ISP_LOGW("set cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -2571,7 +2571,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 	return rtn;
 }
 
-cmr_s32 af_otp_info_parser(struct afctrl_init_in *init_param)
+cmr_s32 af_otp_info_parser(struct afctrl_init_in * init_param)
 {
 	struct sensor_otp_section_info *af_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *module_info_ptr = NULL;
@@ -2579,12 +2579,12 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in *init_param)
 	cmr_u8 *module_info = NULL;
 	cmr_u8 *af_rdm_otp_data = NULL;
 
-	if(NULL != init_param->otp_info_ptr){
+	if (NULL != init_param->otp_info_ptr) {
 		if (init_param->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
 			af_otp_info_ptr = init_param->otp_info_ptr->single_otp.af_info;
 			module_info_ptr = init_param->otp_info_ptr->single_otp.module_info;
 			ISP_LOGV("pass af otp, single cam");
-		} else if(init_param->otp_info_ptr->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || init_param->otp_info_ptr->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL){
+		} else if (init_param->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL || init_param->otp_info_ptr->otp_vendor == OTP_VENDOR_DUAL_CAM_DUAL) {
 			if (init_param->is_master == 1) {
 				af_otp_info_ptr = init_param->otp_info_ptr->dual_otp.master_af_info;
 				module_info_ptr = init_param->otp_info_ptr->dual_otp.master_module_info;
@@ -2595,24 +2595,24 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in *init_param)
 				ISP_LOGV("pass af otp, dual cam slave");
 			}
 		}
-	}else{
+	} else {
 		af_otp_info_ptr = NULL;
 		module_info_ptr = NULL;
 		ISP_LOGE("af otp_info_ptr is NULL");
 	}
 
-	if (NULL != af_otp_info_ptr && NULL!=module_info_ptr) {
+	if (NULL != af_otp_info_ptr && NULL != module_info_ptr) {
 		af_rdm_otp_len = af_otp_info_ptr->rdm_info.data_size;
 		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if((module_info[4]==4 && module_info[5]==0)
-			||(module_info[4]==0 && module_info[5]==4)){
+		if ((module_info[4] == 4 && module_info[5] == 0)
+		    || (module_info[4] == 0 && module_info[5] == 4)) {
 			ISP_LOGV("af otp map v0.4");
 			af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr;
-		}else if(module_info[4]==1 && module_info[5]==0){
+		} else if (module_info[4] == 1 && module_info[5] == 0) {
 			ISP_LOGV("af otp map v1.0");
 			af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr + 1;
-		}else{
+		} else {
 			af_rdm_otp_data = NULL;
 			ISP_LOGE("af otp map version error");
 		}
@@ -2672,33 +2672,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->otp_info.rdm_data.infinite_cali = init_param->otp_info.rdm_data.infinite_cali;
 	af->otp_info.rdm_data.macro_cali = init_param->otp_info.rdm_data.macro_cali;
 	af->is_multi_mode = init_param->is_multi_mode;
-	af->end_notice = init_param->end_notice;
-	af->start_notice = init_param->start_notice;
-	af->set_monitor = init_param->set_monitor;
-	af->set_monitor_win = init_param->set_monitor_win;
-	af->get_monitor_win_num = init_param->get_monitor_win_num;
-	af->lock_module = init_param->lock_module;
-	af->unlock_module = init_param->unlock_module;
-	af->af_lens_move = init_param->af_lens_move;
-	af->af_get_motor_pos = init_param->af_get_motor_pos;
-	af->af_get_otp = init_param->af_get_otp;
-	af->af_set_motor_bestmode = init_param->af_set_motor_bestmode;
-	af->af_set_test_vcm_mode = init_param->af_set_test_vcm_mode;
-	af->af_get_test_vcm_mode = init_param->af_get_test_vcm_mode;
-	af->af_monitor_bypass = init_param->af_monitor_bypass;
-	af->af_monitor_skip_num = init_param->af_monitor_skip_num;
-	af->af_monitor_mode = init_param->af_monitor_mode;
-	af->af_monitor_iir_nr_cfg = init_param->af_monitor_iir_nr_cfg;
-	af->af_monitor_module_cfg = init_param->af_monitor_module_cfg;
-	af->af_get_system_time = init_param->af_get_system_time;
-#ifdef CONFIG_ISP_2_3
-	//SharkLE Only ++
-	af->af_set_pulse_line = init_param->af_set_pulse_line;
-	af->af_set_next_vcm_pos = init_param->af_set_next_vcm_pos;
-	af->af_set_pulse_log = init_param->af_set_pulse_log;
-	af->af_set_clear_next_vcm_pos = init_param->af_set_clear_next_vcm_pos;
-	//SharkLE Only --
-#endif
+	af->cb_ops = init_param->cb_ops;
 
 	//set tuning buffer pointer
 	af->aftuning_data = init_param->aftuning_data;
@@ -2874,6 +2848,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			if (afm_skip_num != af->afm_skip_num) {
 				af->afm_skip_num = afm_skip_num;
 				ISP_LOGI("af.skip_num %d", af->afm_skip_num);
+				af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 			}
 		} else {
 			af->afm_skip_num = 0;
@@ -2894,7 +2869,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 
 	system_time_trigger = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32)((system_time_trigger - system_time0)/1000));
+	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32) ((system_time_trigger - system_time0) / 1000));
 
 	if (AF_DATA_AF == inparam->data_type) {
 		switch (af->state) {
@@ -2940,7 +2915,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 
 	system_time1 = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32)((system_time1 - system_time0)/1000));
+	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time1 - system_time0) / 1000));
 
 	return rtn;
 }

@@ -16,7 +16,6 @@
 #define LOG_TAG "af_ctrl"
 
 #include "af_ctrl.h"
-#include "isp_adpt.h"
 #include <cutils/properties.h>
 
 #define AFCTRL_EVT_BASE				0x2000
@@ -36,7 +35,7 @@ struct afctrl_cxt {
 	cmr_handle caller_handle;
 	struct afctrl_work_lib work_lib;
 	struct afctrl_calc_out proc_out;
-	isp_af_cb af_set_cb;
+	af_ctrl_cb af_set_cb;
 };
 
 struct af_ctrl_msg_ctrl {
@@ -45,34 +44,23 @@ struct af_ctrl_msg_ctrl {
 	void *out;
 };
 
-static cmr_s32 af_set_pos(void *handle_af, struct af_motor_pos *in_param)
-{
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-
-	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_POS, &in_param->motor_pos, NULL);
-	}
-
-	return ISP_SUCCESS;
-}
-
-static uint32_t af_lens_move(void *handle_af, cmr_u16 in_param)
-{
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-
-	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LENS_SET_POS, (void *)&in_param, NULL);
-	}
-
-	return ISP_SUCCESS;
-}
-
 static uint32_t af_get_otp(void *handle_af, uint16_t * inf, uint16_t * macro)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LENS_GET_OTP, inf, macro);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static uint32_t af_set_motor_pos(void *handle_af, cmr_u16 in_param)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LENS_SET_POS, (void *)&in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -286,7 +274,7 @@ static cmr_s32 af_monitor_mode(void *handle_af, cmr_u32 * afm_mode)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_monitor_iir_nr_cfg(void *handle_af, struct af_iir_nr_info *af_iir_nr)
+static cmr_s32 af_monitor_iir_nr_cfg(void *handle_af, void *af_iir_nr)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
@@ -297,7 +285,7 @@ static cmr_s32 af_monitor_iir_nr_cfg(void *handle_af, struct af_iir_nr_info *af_
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_monitor_module_cfg(void *handle_af, struct af_enhanced_module_info *af_enhanced_module)
+static cmr_s32 af_monitor_module_cfg(void *handle_af, void *af_enhanced_module)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
@@ -340,7 +328,7 @@ static cmr_s32 af_set_next_vcm_pos(cmr_handle handle_af, cmr_u32 pos)
 	UNUSED(pos);
 #ifdef CONFIG_ISP_2_3
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	ISP_LOGD("af_set_next_vcm_pos = %d",pos);
+	ISP_LOGD("af_set_next_vcm_pos = %d", pos);
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_NEXT_VCM_POS, (void *)&pos, NULL);
@@ -362,6 +350,7 @@ static cmr_s32 af_set_pulse_log(cmr_handle handle_af, cmr_u32 flag)
 #endif
 	return 0;
 }
+
 static cmr_s32 af_set_clear_next_vcm_pos(cmr_handle handle_af)
 {
 	UNUSED(handle_af);
@@ -374,15 +363,15 @@ static cmr_s32 af_set_clear_next_vcm_pos(cmr_handle handle_af)
 #endif
 	return 0;
 }
-//SharkLE Only --
 
+//SharkLE Only --
 
 static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in *in_ptr, struct af_result_param *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
 	cmr_s8 value[PROPERTY_VALUE_MAX];
-	struct af_motor_pos pos = { 0, 0, 0 };
+	cmr_u16 motor_pos = 0;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param!");
@@ -392,8 +381,8 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 	if (1 == atoi((char *)value)) {
 		property_get("persist.sys.isp.vcm.position", (char *)value, "0");
-		pos.motor_pos = atoi((char *)value);
-		af_set_pos(cxt_ptr, &pos);
+		motor_pos = (cmr_u16) atoi((char *)value);
+		af_set_motor_pos(cxt_ptr, motor_pos);
 		goto exit;
 	}
 
@@ -593,35 +582,32 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 		return rtn;
 	}
 	memset((void *)&result, 0, sizeof(result));
-	input_ptr->go_position = af_set_pos;
-	input_ptr->end_notice = af_end_notice;
-	input_ptr->start_notice = af_start_notice;
-	input_ptr->set_monitor = af_set_monitor;
-	input_ptr->set_monitor_win = af_set_monitor_win;
-	input_ptr->get_monitor_win_num = af_get_monitor_win_num;
-	input_ptr->lock_module = af_lock_module;
-	input_ptr->unlock_module = af_unlock_module;
-	input_ptr->af_lens_move = af_lens_move;
-	input_ptr->af_get_otp = af_get_otp;
-	input_ptr->af_get_motor_pos = af_get_motor_pos;
-	input_ptr->af_set_motor_bestmode = af_set_motor_bestmode;
-	input_ptr->af_set_test_vcm_mode = af_set_vcm_test_mode;
-	input_ptr->af_get_test_vcm_mode = af_get_vcm_test_mode;
-	input_ptr->af_monitor_bypass = af_monitor_bypass;
-	input_ptr->af_monitor_skip_num = af_monitor_skip_num;
-	input_ptr->af_monitor_mode = af_monitor_mode;
-	input_ptr->af_monitor_iir_nr_cfg = af_monitor_iir_nr_cfg;
-	input_ptr->af_monitor_module_cfg = af_monitor_module_cfg;
-	input_ptr->af_get_system_time = af_get_system_time;
+	input_ptr->cb_ops.start_notice = af_start_notice;
+	input_ptr->cb_ops.end_notice = af_end_notice;
+	input_ptr->cb_ops.set_monitor = af_set_monitor;
+	input_ptr->cb_ops.set_monitor_win = af_set_monitor_win;
+	input_ptr->cb_ops.get_monitor_win_num = af_get_monitor_win_num;
+	input_ptr->cb_ops.lock_module = af_lock_module;
+	input_ptr->cb_ops.unlock_module = af_unlock_module;
+	input_ptr->cb_ops.af_get_otp = af_get_otp;
+	input_ptr->cb_ops.af_set_motor_pos = af_set_motor_pos;
+	input_ptr->cb_ops.af_get_motor_pos = af_get_motor_pos;
+	input_ptr->cb_ops.af_set_motor_bestmode = af_set_motor_bestmode;
+	input_ptr->cb_ops.af_set_test_vcm_mode = af_set_vcm_test_mode;
+	input_ptr->cb_ops.af_get_test_vcm_mode = af_get_vcm_test_mode;
+	input_ptr->cb_ops.af_monitor_bypass = af_monitor_bypass;
+	input_ptr->cb_ops.af_monitor_skip_num = af_monitor_skip_num;
+	input_ptr->cb_ops.af_monitor_mode = af_monitor_mode;
+	input_ptr->cb_ops.af_monitor_iir_nr_cfg = af_monitor_iir_nr_cfg;
+	input_ptr->cb_ops.af_monitor_module_cfg = af_monitor_module_cfg;
+	input_ptr->cb_ops.af_get_system_time = af_get_system_time;
 
 	//SharkLE Only ++
-	input_ptr->af_set_pulse_line         = af_set_pulse_line;
-	input_ptr->af_set_next_vcm_pos       = af_set_next_vcm_pos;
-	input_ptr->af_set_pulse_log          = af_set_pulse_log;
-	input_ptr->af_set_clear_next_vcm_pos = af_set_clear_next_vcm_pos;
+	input_ptr->cb_ops.af_set_pulse_line = af_set_pulse_line;
+	input_ptr->cb_ops.af_set_next_vcm_pos = af_set_next_vcm_pos;
+	input_ptr->cb_ops.af_set_pulse_log = af_set_pulse_log;
+	input_ptr->cb_ops.af_set_clear_next_vcm_pos = af_set_clear_next_vcm_pos;
 	//SharkLE Only --
-
-
 
 	cxt_ptr = (struct afctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {

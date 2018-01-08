@@ -17,8 +17,8 @@
 #ifndef _ISP_AF_H_
 #define _ISP_AF_H_
 
-#include "isp_pm.h"
-#include "cmr_common.h"
+#include "isp_adpt.h"
+#include "isp_com.h"
 
 #ifdef WIN32
 #include "sci_type.h"
@@ -82,8 +82,7 @@ extern "C" {
 		//SharkLE Only ++
 		AF_CMD_SET_DAC_INFO = 0x1018,
 		//SharkLE Only --
-		AF_CMD_SET_MAX ,
-
+		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
 		AF_CMD_GET_AF_MODE = 0X2001,
@@ -107,6 +106,29 @@ extern "C" {
 		AF_DATA_MAX
 	};
 
+	enum af_sensor_type {
+		AF_SENSOR_ACCELEROMETER,
+		AF_SENSOR_MAGNETIC_FIELD,
+		AF_SENSOR_GYROSCOPE,
+		AF_SENSOR_LIGHT,
+		AF_SENSOR_PROXIMITY,
+	};
+
+	enum af_flash_status {
+		AF_FLASH_PRE_BEFORE,
+		AF_FLASH_PRE_LIGHTING,
+		AF_FLASH_PRE_AFTER,
+		AF_FLASH_MAIN_BEFORE,
+		AF_FLASH_MAIN_LIGHTING,
+		AF_FLASH_MAIN_AE_MEASURE,
+		AF_FLASH_MAIN_AFTER,
+		AF_FLASH_AF_DONE,
+		AF_FLASH_SLAVE_FLASH_OFF,
+		AF_FLASH_SLAVE_FLASH_TORCH,
+		AF_FLASH_SLAVE_FLASH_AUTO,
+		AF_FLASH_MODE_MAX
+	};
+
 	enum af_locker_type {
 		AF_LOCKER_AE,
 		AF_LOCKER_AE_CAF,
@@ -116,12 +138,62 @@ extern "C" {
 		AF_LOCKER_MAX
 	};
 
+	enum af_focus_type {
+		AF_FOCUS_SAF,
+		AF_FOCUS_CAF,
+		AF_FOCUS_FAF,
+		AF_FOCUS_MAX
+	};
+
+	enum af_cb_cmd {
+		AF_CB_CMD_SET_START_NOTICE = 0x1000,
+		AF_CB_CMD_SET_END_NOTICE,
+		AF_CB_CMD_SET_AE_LOCK,
+		AF_CB_CMD_SET_AE_UNLOCK,
+		AF_CB_CMD_SET_AE_CAF_LOCK,
+		AF_CB_CMD_SET_AE_CAF_UNLOCK,
+		AF_CB_CMD_SET_AWB_LOCK,
+		AF_CB_CMD_SET_AWB_UNLOCK,
+		AF_CB_CMD_SET_LSC_LOCK,
+		AF_CB_CMD_SET_LSC_UNLOCK,
+		AF_CB_CMD_SET_NLM_LOCK,
+		AF_CB_CMD_SET_NLM_UNLOCK,
+		AF_CB_CMD_SET_MOTOR_POS,
+		AF_CB_CMD_SET_PULSE_LINE,
+		AF_CB_CMD_SET_NEXT_VCM_POS,
+		AF_CB_CMD_SET_CLEAR_NEXT_VCM_POS,
+		AF_CB_CMD_SET_PULSE_LOG,
+		AF_CB_CMD_SET_MOTOR_BESTMODE,
+		AF_CB_CMD_SET_VCM_TEST_MODE,
+		AF_CB_CMD_SET_MONITOR,
+		AF_CB_CMD_SET_MONITOR_WIN,
+		AF_CB_CMD_SET_AFM_BYPASS,
+		AF_CB_CMD_SET_AFM_SKIP_NUM,
+		AF_CB_CMD_SET_AFM_MODE,
+		AF_CB_CMD_SET_AFM_IIR_NR_CFG,
+		AF_CB_CMD_SET_AFM_MODULES_CFG,
+		AF_CB_CMD_SET_MAX,
+
+		AF_CB_CMD_GET_MONITOR_WIN_NUM = 0x2000,
+		AF_CB_CMD_GET_LENS_OTP,
+		AF_CB_CMD_GET_MOTOR_POS,
+		AF_CB_CMD_GET_VCM_TEST_MODE,
+		AF_CB_CMD_GET_SYSTEM_TIME,
+		AF_CB_CMD_GET_MAX,
+	};
+
 	struct af_img_blk_info {
 		cmr_u32 block_w;
 		cmr_u32 block_h;
 		cmr_u32 pix_per_blk;
 		cmr_u32 chn_num;
 		cmr_u32 *data;
+	};
+
+	struct af_img_blk_statistic {
+		cmr_u32 r_info[1024];
+		cmr_u32 g_info[1024];
+		cmr_u32 b_info[1024];
 	};
 
 	struct af_ae_calc_out {
@@ -153,6 +225,62 @@ extern "C" {
 		cmr_u32 r_gain;
 		cmr_u32 g_gain;
 		cmr_u32 b_gain;
+	};
+
+	struct afctrl_gyro_info {
+		cmr_s64 timestamp;
+		float x;
+		float y;
+		float z;
+	};
+
+	struct afctrl_gsensor_info {
+		cmr_s64 timestamp;
+		float vertical_up;
+		float vertical_down;
+		float horizontal;
+		cmr_u32 valid;
+	};
+
+	struct afctrl_sensor_info_t {
+		enum af_sensor_type type;
+		union {
+			struct afctrl_gyro_info gyro_info;
+			struct afctrl_gsensor_info gsensor_info;
+		};
+	};
+
+	struct afctrl_face_area {
+		cmr_u32 sx;
+		cmr_u32 sy;
+		cmr_u32 ex;
+		cmr_u32 ey;
+		cmr_u32 brightness;
+		cmr_s32 pose;
+		cmr_s32 angle;
+	};
+
+	struct afctrl_face_info {
+		cmr_u16 type;	//focus or ae,
+		cmr_u16 face_num;
+		cmr_u16 frame_width;
+		cmr_u16 frame_height;
+		struct afctrl_face_area face_info[10];
+	};
+
+	struct afctrl_fwstart_info {
+		struct isp_size size;
+		cmr_u32 reserved[10];
+	};
+
+	struct afctrl_ts_info {
+		cmr_u64 timestamp;
+		cmr_u32 capture;
+	};
+
+	struct afctrl_fps_info {
+		cmr_u32 is_high_fps;
+		cmr_u32 high_fps_skip_num;
 	};
 
 	struct af_motor_pos {
@@ -199,9 +327,37 @@ extern "C" {
 		cmr_u16 macro_cali;
 	};
 
-	struct af_ctrl_otp_info {
+	struct afctrl_otp_info {
 		struct af_otp_data gldn_data;
 		struct af_otp_data rdm_data;
+	};
+
+	struct afctrl_cb_ops {
+		cmr_s32(*start_notice) (void *handle, struct af_result_param * in_param);
+		cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
+		cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
+		cmr_s32(*set_monitor_win) (void *handle, struct af_monitor_win * in_param);
+		cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
+		cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
+		cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
+		cmr_u32(*af_get_otp) (void *handle, uint16_t * inf, uint16_t * macro);
+		cmr_u32(*af_set_motor_pos) (void *handle, cmr_u16 pos);
+		cmr_u32(*af_get_motor_pos) (void *handle, cmr_u16 * motor_pos);
+		cmr_u32(*af_set_motor_bestmode) (void *handle);
+		cmr_u32(*af_get_test_vcm_mode) (void *handle);
+		cmr_u32(*af_set_test_vcm_mode) (void *handle, char *vcm_mode);
+		cmr_s32(*af_monitor_bypass) (void *handle, cmr_u32 * bypass);
+		cmr_s32(*af_monitor_skip_num) (void *handle, cmr_u32 * afm_skip_num);
+		cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
+		cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, void *af_iir_nr);
+		cmr_s32(*af_monitor_module_cfg) (void *handle, void *af_enhanced_module);
+		cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
+		//SharkLE Only ++
+		cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
+		cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
+		cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
+		cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
+		//SharkLE Only --
 	};
 
 	struct af_log_info {
@@ -209,14 +365,16 @@ extern "C" {
 		cmr_u32 log_len;
 	};
 
+	typedef cmr_int(*af_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+
 	struct afctrl_init_in {
 		cmr_handle caller_handle;	//struct isp_alg_fw_context *cxt
-		isp_af_cb af_set_cb;
+		af_ctrl_cb af_set_cb;
 		cmr_u32 camera_id;
 		struct third_lib_info lib_param;
 		struct isp_size src;
 		cmr_handle caller;	//struct afctrl_cxt *cxt_ptr
-		struct af_ctrl_otp_info otp_info;
+		struct afctrl_otp_info otp_info;
 		cmr_u32 is_multi_mode;
 		cmr_u32 is_supoprt;
 		cmr_u8 *aftuning_data;
@@ -225,34 +383,9 @@ extern "C" {
 		cmr_u32 pdaftuning_data_len;
 		cmr_u8 *afttuning_data;
 		cmr_u32 afttuning_data_len;
-		 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
-		 cmr_s32(*start_notice) (void *handle, struct af_result_param *in_param);
-		 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
-		 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
-		 cmr_s32(*set_monitor_win) (void *handle, struct af_monitor_win * in_param);
-		 cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
-		 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
-		 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
-		 uint32_t(*af_lens_move) (void *handle, cmr_u16 pos);
-		 uint32_t(*af_get_otp) (void *handle, uint16_t * inf, uint16_t * macro);
-		 uint32_t(*af_get_motor_pos) (void *handle, cmr_u16 * motor_pos);
-		 uint32_t(*af_set_motor_bestmode) (void *handle);
-		 uint32_t(*af_get_test_vcm_mode) (void *handle);
-		 uint32_t(*af_set_test_vcm_mode) (void *handle, char *vcm_mode);
-		 cmr_s32(*af_monitor_bypass) (void *handle, cmr_u32 * bypass);
-		 cmr_s32(*af_monitor_skip_num) (void *handle, cmr_u32 * afm_skip_num);
-		 cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
-		 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
-		 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
-		 cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
-		 struct sensor_otp_cust_info *otp_info_ptr;
-		 cmr_u8 is_master;
-		 //SharkLE Only ++
-		 cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
-		 cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
-		 cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
-		 cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
-		 //SharkLE Only --
+		struct sensor_otp_cust_info *otp_info_ptr;
+		cmr_u8 is_master;
+		struct afctrl_cb_ops cb_ops;
 	};
 
 	struct afctrl_init_out {
@@ -263,7 +396,7 @@ extern "C" {
 	struct afctrl_calc_in {
 		cmr_u32 data_type;
 		void *data;
-		struct isp_sensor_fps_info sensor_fps;
+		struct afctrl_fps_info sensor_fps;
 	};
 
 	struct afctrl_calc_out {

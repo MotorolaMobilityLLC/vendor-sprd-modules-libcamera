@@ -165,11 +165,6 @@ typedef struct _ae_cali {
 	cmr_u32 b_avg_all;
 } ae_cali_t;
 
-typedef struct _focus_stat {
-	cmr_u32 force_write;
-	cmr_u32 reg_param[10];
-} focus_stat_reg_t;
-
 typedef struct _af_fv_info {
 	cmr_u64 af_fv0[10];	//[10]:10 ROI, sum of FV0
 	cmr_u64 af_fv1[10];	//[10]:10 ROI, sum of FV1
@@ -183,6 +178,34 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 fv1_e;
 	cmr_u8 dummy[3];	// 4 bytes align
 } afm_tuning_sharkl2;
+
+struct af_enhanced_module_info_u {
+	cmr_u8 chl_sel;
+	cmr_u8 nr_mode;
+	cmr_u8 center_weight;
+	cmr_u8 fv_enhanced_mode[2];
+	cmr_u8 clip_en[2];
+	cmr_u32 max_th[2];
+	cmr_u32 min_th[2];
+	cmr_u8 fv_shift[2];
+	cmr_s8 fv1_coeff[36];
+};
+
+struct af_iir_nr_info_u {
+	cmr_u8 iir_nr_en;
+	cmr_s16 iir_g0;
+	cmr_s16 iir_c1;
+	cmr_s16 iir_c2;
+	cmr_s16 iir_c3;
+	cmr_s16 iir_c4;
+	cmr_s16 iir_c5;
+	cmr_s16 iir_g1;
+	cmr_s16 iir_c6;
+	cmr_s16 iir_c7;
+	cmr_s16 iir_c8;
+	cmr_s16 iir_c9;
+	cmr_s16 iir_c10;
+};
 
 typedef struct _af_ctrl {
 	void *af_alg_cxt;	//AF_Data fv;
@@ -200,11 +223,8 @@ typedef struct _af_ctrl {
 	cmr_u32 Y_sum_normalize;
 	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
-	struct af_iir_nr_info af_iir_nr;
-	struct af_enhanced_module_info af_enhanced_module;
-	struct afm_thrd_rgb thrd;
-	struct af_gsensor_info gsensor_info;
-	struct isp_face_area face_info;
+	struct afctrl_gsensor_info gsensor_info;
+	struct afctrl_face_info face_info;
 	isp_info_t isp_info;
 	lens_info_t lens;
 	cmr_s32 flash_on;
@@ -224,7 +244,6 @@ typedef struct _af_ctrl {
 	af_lib_ops_t af_ops;
 	ae_cali_t ae_cali_data;
 	cmr_u32 vcm_stable;
-	focus_stat_reg_t stat_reg;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
 	cmr_u32 force_trigger;
@@ -242,7 +261,7 @@ typedef struct _af_ctrl {
 	isp_awb_statistic_hist_info_t rgb_stat;
 	cmr_u32 trigger_source_type;
 	char AF_MODE[PROPERTY_VALUE_MAX];
-	struct af_ctrl_otp_info otp_info;
+	struct afctrl_otp_info otp_info;
 	cmr_u32 is_multi_mode;
 	cmr_u8 *aftuning_data;
 	cmr_u32 aftuning_data_len;
@@ -250,31 +269,7 @@ typedef struct _af_ctrl {
 	cmr_u32 pdaftuning_data_len;
 	cmr_u8 *afttuning_data;
 	cmr_u32 afttuning_data_len;
-	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
-	 cmr_s32(*start_notice) (void *handle, struct af_result_param * in_param);
-	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
-	 cmr_s32(*set_monitor_win) (void *handler, struct af_monitor_win * in_param);
-	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
-	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
-	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
-	 cmr_u32(*af_lens_move) (void *handle, cmr_u16 pos);
-	 cmr_u32(*af_get_motor_pos) (void *handle, cmr_u16 * motor_pos);
-	 cmr_u32(*af_get_otp) (void *handle, uint16_t * inf, uint16_t * macro);
-	 cmr_u32(*af_set_motor_bestmode) (void *handle);
-	 cmr_u32(*af_get_test_vcm_mode) (void *handle);
-	 cmr_u32(*af_set_test_vcm_mode) (void *handle, char *vcm_mode);
-	 cmr_s32(*af_monitor_bypass) (void *handle, cmr_u32 * bypass);
-	 cmr_s32(*af_monitor_skip_num) (void *handle, cmr_u32 * afm_skip_num);
-	 cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
-	 cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, struct af_iir_nr_info * af_iir_nr);
-	 cmr_s32(*af_monitor_module_cfg) (void *handle, struct af_enhanced_module_info * af_enhanced_module);
-	 cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
-	//SharkLE Only ++
-	 cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
-	 cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
-	 cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
-	 cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
-	//SharkLE Only --
+	struct afctrl_cb_ops cb_ops;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

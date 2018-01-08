@@ -1785,7 +1785,8 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				af_temp[i] = (cmr_u32)*((cmr_uint *) u_addr + i);
 			}
 			calc_param.data_type = AF_DATA_AF;
-			calc_param.sensor_fps = cxt->sensor_fps;
+			calc_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
+			calc_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
 			calc_param.data = (void *)(af_temp);
 			if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
 				ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
@@ -3378,6 +3379,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct afctrl_fwstart_info af_start_info;
 	struct soft_isp_startparam sw_isp_start_param;
 	struct isp_alg_fw_context *slv_cxt = NULL;
 	cmr_s32 slv_isp_work_mode = 0;
@@ -3498,10 +3500,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_start(cxt->dev_access_handle, interface_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
 
+	memset(&af_start_info, 0, sizeof(struct afctrl_fwstart_info));
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
-			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, in_ptr, NULL);
-			ISP_TRACE_IF_FAIL(ret, ("fail to set_af_isp_start_info"));
+			af_start_info.size = in_ptr->size;
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, (void *)&af_start_info, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to set af_start_info"));
 		}
 	}
 
