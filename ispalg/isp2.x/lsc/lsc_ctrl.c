@@ -254,8 +254,16 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	if(NULL!=module_info_ptr){
 		module_info = (cmr_u8 *)module_info_ptr->rdm_info.data_addr;
 
+		if(NULL==module_info){
+			ISP_LOGE("lsc module_info is NULL");
+			goto EXIT;
+		}
+
 		if((module_info[4]==4 && module_info[5]==0)
-			||(module_info[4]==0 && module_info[5]==4)){
+			||(module_info[4]==0 && module_info[5]==4)
+			||(module_info[4]==0 && module_info[5]==1)
+		        ||(module_info[4]==0 && module_info[5]==2)
+		        ||(module_info[4]==0 && module_info[5]==3)){
 			ISP_LOGV("lsc otp map v0.4");
 			if(NULL!=lsc_otp_info_ptr && NULL!=oc_otp_info_ptr ){
 				lsc_otp_info = &lsc_otp_info_ptr->rdm_info;
@@ -270,7 +278,7 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				ISP_LOGE("lsc otp_info_lsc_ptr = %p, otp_info_optical_center_ptr = %p. Parser fail !", lsc_otp_info_ptr,  oc_otp_info_ptr);
 				goto EXIT;
 			}
-		}else if(module_info[4]==1 && module_info[5]==0){
+		}else if(module_info[4]==1 && module_info[5]==0 && module_info[0]==0x53 &&module_info[1]==0x50 && module_info[2]==0x52 && module_info[3]==0x44){
 			ISP_LOGV("lsc otp map v1.0");
 			if(NULL!=lsc_otp_info_ptr){
 				otp_data_ptr = lsc_otp_info_ptr->rdm_info.data_addr;

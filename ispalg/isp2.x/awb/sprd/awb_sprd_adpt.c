@@ -1018,23 +1018,33 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 	if(NULL != awb_otp_info_ptr && NULL!=module_info_ptr){
 		module_info =  (cmr_u8 *)module_info_ptr->rdm_info.data_addr;
 
-		if((module_info[4]==4 && module_info[5]==0)
-			||(module_info[4]==0 && module_info[5]==4)){
-			ISP_LOGV("awb otp map v0.4");
-			otp_map_version = 4;
-			awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr;
-			awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
-			awb_golden_otp_data = (cmr_u16 *)awb_otp_info_ptr->gld_info.data_addr;
-			awb_golden_otp_len = awb_otp_info_ptr->gld_info.data_size;
-		}else if(module_info[4]==1 && module_info[5]==0){
-			ISP_LOGV("awb otp map v1.0");
-			otp_map_version= 1;
-			awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1;
-			awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
-			awb_golden_otp_data_v1 = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1 + 6;
-			awb_golden_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+		if(NULL !=module_info){
+			if((module_info[4]==4 && module_info[5]==0)
+				||(module_info[4]==0 && module_info[5]==4)
+				||(module_info[4]==0 && module_info[5]==1)
+				||(module_info[4]==0 && module_info[5]==2)
+				||(module_info[4]==0 && module_info[5]==3)){
+				ISP_LOGV("awb otp map v0.4");
+				otp_map_version = 4;
+				awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr;
+				awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+				awb_golden_otp_data = (cmr_u16 *)awb_otp_info_ptr->gld_info.data_addr;
+				awb_golden_otp_len = awb_otp_info_ptr->gld_info.data_size;
+			}else if(module_info[4]==1 && module_info[5]==0 && module_info[0]==0x53 &&module_info[1]==0x50 && module_info[2]==0x52 && module_info[3]==0x44){
+				ISP_LOGV("awb otp map v1.0");
+				otp_map_version= 1;
+				awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1;
+				awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+				awb_golden_otp_data_v1 = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1 + 6;
+				awb_golden_otp_len = awb_otp_info_ptr->rdm_info.data_size;
+			}else{
+				ISP_LOGE("awb otp map version error");
+				awb_rdm_otp_data = NULL;
+				awb_golden_otp_data = NULL;
+				awb_golden_otp_data_v1 = NULL;
+			}
 		}else{
-			ISP_LOGE("awb otp map version error");
+			ISP_LOGE("awb module_info is NULL");
 			awb_rdm_otp_data = NULL;
 			awb_golden_otp_data = NULL;
 			awb_golden_otp_data_v1 = NULL;

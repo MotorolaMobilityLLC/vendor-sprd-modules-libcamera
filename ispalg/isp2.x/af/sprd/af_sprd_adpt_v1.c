@@ -2605,16 +2605,24 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in * init_param)
 		af_rdm_otp_len = af_otp_info_ptr->rdm_info.data_size;
 		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if ((module_info[4] == 4 && module_info[5] == 0)
-		    || (module_info[4] == 0 && module_info[5] == 4)) {
-			ISP_LOGV("af otp map v0.4");
-			af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr;
-		} else if (module_info[4] == 1 && module_info[5] == 0) {
-			ISP_LOGV("af otp map v1.0");
-			af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr + 1;
-		} else {
+		if(NULL!=module_info){
+			if ((module_info[4] == 4 && module_info[5] == 0)
+			    || (module_info[4] == 0 && module_info[5] == 4)
+			    ||(module_info[4]==0 && module_info[5]==1)
+			    ||(module_info[4]==0 && module_info[5]==2)
+			    ||(module_info[4]==0 && module_info[5]==3)) {
+				ISP_LOGV("af otp map v0.4");
+				af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr;
+			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0]==0x53 &&module_info[1]==0x50 && module_info[2]==0x52 && module_info[3]==0x44) {
+				ISP_LOGV("af otp map v1.0");
+				af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr + 1;
+			} else {
+				af_rdm_otp_data = NULL;
+				ISP_LOGE("af otp map version error");
+			}
+		}else{
 			af_rdm_otp_data = NULL;
-			ISP_LOGE("af otp map version error");
+			ISP_LOGE("af module_info is NULL");
 		}
 
 		if (NULL != af_rdm_otp_data && 0 != af_rdm_otp_len) {
