@@ -257,16 +257,6 @@ cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int dat
 	return ret;
 }
 
-cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_u_2d_lsc_param_update(cxt->isp_driver_handle, (void *)block_ptr);
-
-	return ret;
-}
-
 cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;

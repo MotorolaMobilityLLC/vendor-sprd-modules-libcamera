@@ -65,8 +65,6 @@ struct isp_u_blocks_info {
 		struct isp_img_offset offset;
 		/*rgb gain block*/
 		cmr_u32 rgb_gain_coeff;
-		/*gamma block*/
-		cmr_u16 *node_ptr;
 		/*fetch block*/
 		cmr_u32 fetch_start;
 		/*lsc block*/
@@ -255,10 +253,6 @@ cmr_s32 isp_u_blc_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: lens shading calibration*/
 cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_2d_lsc_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_2d_lsc_slice_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *param_ptr);
 
@@ -280,8 +274,6 @@ cmr_s32 isp_u_cmc_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: GAMMA*/
 cmr_s32 isp_u_gamma_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_gamma_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_gamma_node(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CCE*/
 cmr_s32 isp_u_cce_matrix_block(cmr_handle handle, void *param_ptr);

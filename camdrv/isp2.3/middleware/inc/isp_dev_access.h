@@ -70,7 +70,6 @@ cmr_int isp_dev_set_interface(struct isp_drv_interface_param *in_ptr);
 cmr_int isp_dev_start(cmr_handle isp_dev_handle, cmr_u32 mode_id, struct isp_drv_interface_param *in_ptr);
 cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
-cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 
 cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id);

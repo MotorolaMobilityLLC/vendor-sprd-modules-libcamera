@@ -231,21 +231,7 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 		ISP_LOGE("ISP_GenerateQValues param_address error addr=0x%lx grid_num=%d \n", param_address, grid_num);
 		return -1;
 	}
-#if 0
-	for (i = 0; i < 5; i++) {
-		A0 = (cmr_u16) * (addr + i * 2) & 0xFFFF;
-		B0 = (cmr_u16) * (addr + i * 2 + grid_w * 2) & 0xFFFF;
-		C0 = (cmr_u16) * (addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
-		D0 = (cmr_u16) * (addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
-		A1 = (cmr_u16) (*(addr + i * 2) >> 16);
-		B1 = (cmr_u16) (*(addr + i * 2 + grid_w * 2) >> 16);
-		C1 = (cmr_u16) (*(addr + i * 2 + grid_w * 2 * 2) >> 16);
-		D1 = (cmr_u16) (*(addr + i * 2 + grid_w * 2 * 3) >> 16);
-		q_val[0][i] = ISP_Cubic1D(A0, B0, C0, D0, u, grid_num);
-		q_val[1][i] = ISP_Cubic1D(A1, B1, C1, D1, u, grid_num);
-	}
-#endif
-#if 1
+
 	for (i = 0; i < 5; i++) {
 		if (1 == word_endian) {	// ABCD = 1 word
 			a0 = *(addr + i * 2) >> 16;	// AB
@@ -287,7 +273,6 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 		q_val[0][i] = ISP_Cubic1D(a0, b0, c0, d0, u, grid_num);
 		q_val[1][i] = ISP_Cubic1D(a1, b1, c1, d1, u, grid_num);
 	}
-#endif
 
 	return 0;
 }
@@ -341,118 +326,6 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 	param.sub_block = ISP_BLOCK_2D_LSC;
 	param.property = ISP_PRO_2D_LSC_BLOCK;
 	param.property_param = lens_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_2d_lsc_bypass(cmr_handle handle, void *param_ptr)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !param_ptr) {
-		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
-
-	param.isp_id = file->isp_id;
-	param.scene_id = lsc_2d_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_BYPASS;
-	param.property_param = &lsc_2d_ptr->bypass;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_2d_lsc_param_update(cmr_handle handle, void *param_ptr)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !param_ptr) {
-		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
-
-	param.isp_id = file->isp_id;
-	param.scene_id = lsc_2d_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_PARAM_UPDATE;
-	param.property_param = &lsc_2d_ptr->flag;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_2d_lsc_pos(cmr_handle handle, void *param_ptr)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
-	struct isp_io_param param;
-	struct isp_img_offset offset;
-
-	if (!handle || !param_ptr) {
-		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
-
-	offset.x = lsc_2d_ptr->offset.x;
-	offset.y = lsc_2d_ptr->offset.y;
-
-	param.isp_id = file->isp_id;
-	param.scene_id = lsc_2d_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_POS;
-	param.property_param = &offset;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_2d_lsc_grid_size(cmr_handle handle, void *param_ptr)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
-	struct isp_io_param param;
-	struct isp_img_size size;
-
-	if (!handle || !param_ptr) {
-		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	lsc_2d_ptr = (struct isp_u_blocks_info *)param_ptr;
-
-	size.width = lsc_2d_ptr->size.width;
-	size.height = lsc_2d_ptr->size.height;
-
-	param.isp_id = file->isp_id;
-	param.scene_id = lsc_2d_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_2D_LSC;
-	param.property = ISP_PRO_2D_LSC_GRID_SIZE;
-	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
