@@ -878,6 +878,7 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
                 out_param.addr_phy.addr_y = frame->yaddr;
                 out_param.addr_phy.addr_u = frame->uaddr;
                 out_param.addr_phy.addr_v = frame->vaddr;
+		out_param.fmt = frame->fmt;
                 if (ret) {
                     CMR_LOGE("failed to get hdr buffer %ld", ret);
                     goto exit;
