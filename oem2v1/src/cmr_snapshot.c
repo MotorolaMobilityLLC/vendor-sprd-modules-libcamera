@@ -2017,7 +2017,8 @@ cmr_int snp_create_main_thread(cmr_handle snp_handle) {
     ret = cmr_thread_set_name(cxt->thread_cxt.main_thr_handle, "snp_main");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 exit:
     CMR_LOGV("done %ld", ret);
@@ -2391,7 +2392,8 @@ cmr_int snp_create_redisplay_thread(cmr_handle snp_handle) {
                               "snp_redisplay");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 exit:
     CMR_LOGV("done %ld", ret);
