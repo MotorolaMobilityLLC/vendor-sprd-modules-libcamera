@@ -202,7 +202,7 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 	cmr_u32 smart_camera_id = 0;
 	cmr_s32 smart_stash_r[SENSOR_NUM][3];
 
-	ISP_LOGD("apply smart");
+	ISP_LOGV("apply smart");
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to get valid input param, in: %p\n", cxt);
@@ -232,9 +232,9 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 		goto ERROR_EXIT;
 	}
 
- 	ISP_LOGD("camera[%d].bv = %d ",smart_camera_id,smart_stash_r[smart_camera_id][0]);
-	ISP_LOGD("camera[%d].bv_gain = %d ",smart_camera_id,smart_stash_r[smart_camera_id][1]);
- 	ISP_LOGD("camera[%d].ct = %d ",smart_camera_id,smart_stash_r[smart_camera_id][2]);
+	ISP_LOGV("camera[%d].bv = %d ",smart_camera_id,smart_stash_r[smart_camera_id][0]);
+	ISP_LOGV("camera[%d].bv_gain = %d ",smart_camera_id,smart_stash_r[smart_camera_id][1]);
+	ISP_LOGV("camera[%d].ct = %d ",smart_camera_id,smart_stash_r[smart_camera_id][2]);
 
 
 ERROR_EXIT:

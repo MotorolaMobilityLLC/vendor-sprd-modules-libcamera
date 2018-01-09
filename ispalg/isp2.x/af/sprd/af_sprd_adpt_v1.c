@@ -2802,7 +2802,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	af->dcam_timestamp = 0xffffffffffffffff;
 	af->test_loop_quit = 1;
-	property_set("af_mode", "none");
+	//property_set("af_mode", "none");
 
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
