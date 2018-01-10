@@ -236,8 +236,10 @@ int32_t SprdCamera3Flash::releaseFlashFromCamera(const int cameraId) {
         LOGV(" Flash unit is already released");
     } else {
         m_cameraOpen[cameraId] = false;
+#ifndef ANDROID_VERSION_KK
         m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
                                               TORCH_MODE_STATUS_AVAILABLE_OFF);
+#endif
     }
 exit:
     return retVal;
