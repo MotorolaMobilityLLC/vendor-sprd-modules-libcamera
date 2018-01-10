@@ -9241,7 +9241,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         ret = camera_hdr_set_ev(oem_handle);
         if (ret)
             CMR_LOGE("fail to set hdr ev");
-    } else if (1 == camera_get_3dnr_flag(cxt)) {
+    } else if (1 == camera_get_3dnr_flag(cxt) && (0 == camera_get_sw_3dnr_flag(cxt))) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
         ret = camera_3dnr_set_ev(oem_handle, 1);
         if (ret)
