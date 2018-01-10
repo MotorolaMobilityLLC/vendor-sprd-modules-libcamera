@@ -29,10 +29,10 @@
 
 
 /* Begin Include */
-#include "sensor_sp2509_raw_param_common.c"
-#include "sensor_sp2509_raw_param_prv_0.c"
-#include "sensor_sp2509_raw_param_cap_0.c"
-#include "sensor_sp2509_raw_param_video_0.c"
+#include "sensor_sp0a09_raw_param_common.c"
+#include "sensor_sp0a09_raw_param_prv_0.c"
+#include "sensor_sp0a09_raw_param_cap_0.c"
+#include "sensor_sp0a09_raw_param_video_0.c"
 
 /* End Include */
 
@@ -46,14 +46,14 @@
 
 
 /* Capture Sizes:
-	1600x1200
+	640x480
 */
 
 
 /************************************************************************/
 
 
-static struct sensor_raw_resolution_info_tab s_sp2509_trim_info=
+static struct sensor_raw_resolution_info_tab s_sp0a09_trim_info=
 {
 	0x00,
 	{
@@ -74,7 +74,7 @@ static struct sensor_raw_resolution_info_tab s_sp2509_trim_info=
 /************************************************************************/
 
 
-static struct sensor_raw_ioctrl s_sp2509_ioctrl=
+static struct sensor_raw_ioctrl s_sp0a09_ioctrl=
 {
 	0,
 	0,
@@ -99,12 +99,12 @@ static struct sensor_raw_ioctrl s_sp2509_ioctrl=
 /************************************************************************/
 
 
-static struct sensor_version_info s_sp2509_version_info=
+static struct sensor_version_info s_sp0a09_version_info=
 {
 	0x00080006,
 	{
 		{
-			0x35327073,
+			0x61307073,
 			0x00003930,
 			0x00000000,
 			0x00000000,
@@ -131,7 +131,7 @@ static struct sensor_version_info s_sp2509_version_info=
 /************************************************************************/
 
 
-static uint32_t s_sp2509_libuse_info[]=
+static uint32_t s_sp0a09_libuse_info[]=
 {
 	0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
 	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
@@ -147,60 +147,60 @@ static uint32_t s_sp2509_libuse_info[]=
 /************************************************************************/
 
 
-static struct sensor_raw_info s_sp2509_mipi_raw_info=
+static struct sensor_raw_info s_sp0a09_mipi_raw_info=
 {
-	&s_sp2509_version_info,
+	&s_sp0a09_version_info,
 	{
-		{s_sp2509_tune_info_common, sizeof(s_sp2509_tune_info_common)},
-		{s_sp2509_tune_info_prv_0, sizeof(s_sp2509_tune_info_prv_0)},
+		{s_sp0a09_tune_info_common, sizeof(s_sp0a09_tune_info_common)},
+		{s_sp0a09_tune_info_prv_0, sizeof(s_sp0a09_tune_info_prv_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_sp2509_tune_info_cap_0, sizeof(s_sp2509_tune_info_cap_0)},
+		{s_sp0a09_tune_info_cap_0, sizeof(s_sp0a09_tune_info_cap_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_sp2509_tune_info_video_0, sizeof(s_sp2509_tune_info_video_0)},
+		{s_sp0a09_tune_info_video_0, sizeof(s_sp0a09_tune_info_video_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 	},
-	&s_sp2509_trim_info,
-	&s_sp2509_ioctrl,
-	(struct sensor_libuse_info *)s_sp2509_libuse_info,
+	&s_sp0a09_trim_info,
+	&s_sp0a09_ioctrl,
+	(struct sensor_libuse_info *)s_sp0a09_libuse_info,
 	{
-		&s_sp2509_fix_info_common,
-		&s_sp2509_fix_info_prv_0,
+		&s_sp0a09_fix_info_common,
+		&s_sp0a09_fix_info_prv_0,
 		NULL,
 		NULL,
 		NULL,
-		&s_sp2509_fix_info_cap_0,
+		&s_sp0a09_fix_info_cap_0,
 		NULL,
 		NULL,
 		NULL,
-		&s_sp2509_fix_info_video_0,
+		&s_sp0a09_fix_info_video_0,
 		NULL,
 		NULL,
 		NULL,
 	},
 	{
-		{s_sp2509_common_tool_ui_input, sizeof(s_sp2509_common_tool_ui_input)},
-		{s_sp2509_prv_0_tool_ui_input, sizeof(s_sp2509_prv_0_tool_ui_input)},
+		{s_sp0a09_common_tool_ui_input, sizeof(s_sp0a09_common_tool_ui_input)},
+		{s_sp0a09_prv_0_tool_ui_input, sizeof(s_sp0a09_prv_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_sp2509_cap_0_tool_ui_input, sizeof(s_sp2509_cap_0_tool_ui_input)},
+		{s_sp0a09_cap_0_tool_ui_input, sizeof(s_sp0a09_cap_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_sp2509_video_0_tool_ui_input, sizeof(s_sp2509_video_0_tool_ui_input)},
+		{s_sp0a09_video_0_tool_ui_input, sizeof(s_sp0a09_video_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 	},
 	{
-		&s_sp2509_nr_scene_map_param,
-		&s_sp2509_nr_level_number_map_param,
-		&s_sp2509_default_nr_level_map_param,
+		&s_sp0a09_nr_scene_map_param,
+		&s_sp0a09_nr_level_number_map_param,
+		&s_sp0a09_default_nr_level_map_param,
 	},
 };
