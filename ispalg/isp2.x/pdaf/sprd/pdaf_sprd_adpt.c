@@ -240,11 +240,14 @@ cmr_s32 pdaf_otp_info_parser(struct pdaf_ctrl_init_in *in_p)
 		cmr_u8 *module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
 		if(NULL!=module_info){
-			if((module_info[4]==4 && module_info[5]==0)
+			if((module_info[4]==0 && module_info[5]==1)
+				||(module_info[4]==0 && module_info[5]==2)
+				||(module_info[4]==0 && module_info[5]==3)
 				||(module_info[4]==0 && module_info[5]==4)
-				||(module_info[4]==0 && module_info[5]==1)
-			        ||(module_info[4]==0 && module_info[5]==2)
-			        ||(module_info[4]==0 && module_info[5]==3)){
+				||(module_info[4]==1 && module_info[5]==0 && (module_info[0]!=0x53 ||module_info[1]!=0x50 || module_info[2]!=0x52 || module_info[3]!=0x44))
+				||(module_info[4]==2 && module_info[5]==0)
+				||(module_info[4]==3 && module_info[5]==0)
+				||(module_info[4]==4 && module_info[5]==0)){
 				ISP_LOGV("pdaf otp map v0.4");
 				in_p->pdaf_otp.otp_data = pdaf_otp_info_ptr->rdm_info.data_addr;
 				in_p->pdaf_otp.size = pdaf_otp_info_ptr->rdm_info.data_size;
