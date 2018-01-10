@@ -40,16 +40,20 @@
 
 /* Face beautify options */
 typedef struct {
-    unsigned char removeBlemishFlag; /* Flag for removing blemish; 0 --> OFF; 1 --> ON    */
-    unsigned char skinSmoothLevel;   /* Smooth skin level. Value range [0, 10]            */
-    unsigned char skinColorType;     /* The target skin color: white, rosy, or wheat      */
-    unsigned char skinColorLevel;    /* The level to tune skin color. Value range [0, 10] */
-    unsigned char skinBrightLevel;   /* Skin brightness level. Value range [0, 10]        */
-    unsigned char lipColorType;      /* The target lip color: crimson, pink or fuchsia    */ 
-    unsigned char lipColorLevel;     /* Red lips level. Value range [0, 10]               */
-    unsigned char slimFaceLevel;     /* Slim face level. Value range [0, 10]              */
-    unsigned char largeEyeLevel;     /* Enlarge eye level. Value range [0, 10]            */
-    unsigned char debugMode;         /* Debug mode. 0 --> OFF; 1 --> ON                   */
+    unsigned char removeBlemishFlag;       /* Flag for removing blemish; 0 --> OFF; 1 --> ON    */
+    unsigned char skinSmoothLevel;         /* Smooth skin level. Value range [0, 10]            */
+	unsigned char skinTextureHiFreqLevel;  /* Skin Texture high freq level. Value range [0, 10] */
+	unsigned char skinTextureLoFreqLevel;  /* Skin Texture low freq level. Value range [0, 10]  */
+	unsigned char skinSmoothRadiusCoeff;   /* Smooth skin radius coeff. Value range [1, 255]    */
+    unsigned char skinColorType;           /* The target skin color: white, rosy, or wheat      */
+    unsigned char skinColorLevel;          /* The level to tune skin color. Value range [0, 10] */
+    unsigned char skinBrightLevel;         /* Skin brightness level. Value range [0, 10]        */
+    unsigned char lipColorType;            /* The target lip color: crimson, pink or fuchsia    */ 
+    unsigned char lipColorLevel;           /* Red lips level. Value range [0, 10]               */
+    unsigned char slimFaceLevel;           /* Slim face level. Value range [0, 10]              */
+    unsigned char largeEyeLevel;           /* Enlarge eye level. Value range [0, 10]            */
+    unsigned char debugMode;               /* Debug mode. 0 --> OFF; 1 --> ON                   */
+	unsigned char bokehON;                 /* Flag for bokeh processing. 0 --> OFF; 1 --> ON    */
 } FB_BEAUTY_OPTION;
 
 
@@ -79,6 +83,17 @@ typedef struct
 
 /* The face beauty handle */
 typedef void * FB_BEAUTY_HANDLE;
+
+/*Bokeh data structure*/
+typedef struct {
+	int weightMapWidth;              /* WeightMap width                           */
+	int weightMapHeight;             /* WeightMap height                          */
+	unsigned short *weightMapImage;  /* WeightMap image pointer                   */
+
+	int disparityWidth;              /* Disparity width                           */
+	int disparityHeight;             /* Disparity height                          */
+	unsigned char *disparityImage;   /* Disparity image pointer                   */
+} BOKEH_DATA;
 
 #ifdef  __cplusplus
 extern "C" {
@@ -115,7 +130,8 @@ FBAPI(int) FB_FaceBeauty_YUV420SP(FB_BEAUTY_HANDLE hFB,
                                   FB_IMAGE_YUV420SP *imageYUV,
                                   const FB_BEAUTY_OPTION *option,
                                   const FB_FACEINFO *faceInfo,
-                                  int faceCount);
+                                  int faceCount,
+								  BOKEH_DATA *bokehData);
 
 
 
