@@ -20,10 +20,6 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
 
-#AE_WORK_MOD_V0: Old ae algorithm + slow converge
-#AE_WORK_MOD_V1: new ae algorithm + slow converge
-#AE_WORK_MOD_V2: new ae algorithm + fast converge
-LOCAL_CFLAGS += -DAE_WORK_MOD_V0
 
 # ************************************************
 # external header file
@@ -103,22 +99,25 @@ include $(LOCAL_PATH)/../../SprdCtrl.mk
 LOCAL_MODULE := libispalg
 
 LOCAL_MODULE_TAGS := optional
-#LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 
-LOCAL_SHARED_LIBRARIES += libcampm
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
+LOCAL_SHARED_LIBRARIES += libcampm
 LOCAL_SHARED_LIBRARIES += libcutils libutils libdl libcamcommon
-#LOCAL_SHARED_LIBRARIES := libcamcommon
 
-LOCAL_SHARED_LIBRARIES += libawb1 liblsc libae libflash libsprdlsc libatm
-#LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
-#LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor
+
+LOCAL_SHARED_LIBRARIES += libdeflicker
+
+LOCAL_SHARED_LIBRARIES += libae libflash
+LOCAL_SHARED_LIBRARIES += libawb1
+LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc
+LOCAL_SHARED_LIBRARIES += libatm
+LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
 
 LOCAL_SHARED_LIBRARIES += libspcaftrigger
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
@@ -126,9 +125,6 @@ LOCAL_SHARED_LIBRARIES += libspafv1_le
 else
 LOCAL_SHARED_LIBRARIES += libspafv1
 endif
-
-LOCAL_SHARED_LIBRARIES += libdeflicker
-LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
 
 
 

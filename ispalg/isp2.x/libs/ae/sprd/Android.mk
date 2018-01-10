@@ -43,12 +43,18 @@ endif
 include $(BUILD_PREBUILT)
 
 
+
+
 include $(CLEAR_VARS)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := x86_lib
+endif
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
 endif
 
 LOCAL_MODULE := libflash
