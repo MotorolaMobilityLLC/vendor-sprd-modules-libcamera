@@ -2262,7 +2262,7 @@ static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 	struct afctrl_ae_info *ae_info = (struct afctrl_ae_info *)param0;
 	struct af_img_blk_statistic *ae_stat_ptr = (struct af_img_blk_statistic *)ae_info->img_blk_info.data;
 	cmr_s32 rtn = AFV1_SUCCESS;
-	if((0 == af->isp_info.width) || (0 == af->isp_info.height)) {
+	if ((0 == af->isp_info.width) || (0 == af->isp_info.height)) {
 		return AFV1_ERROR;
 	}
 
@@ -2400,7 +2400,7 @@ static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 static cmr_s32 af_sprd_get_fullscan_info(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct isp_af_fullscan_info *af_fullscan_info = (struct isp_af_fullscan_info *)param0;
+	struct af_fullscan_info *af_fullscan_info = (struct af_fullscan_info *)param0;
 	Bokeh_Result result;
 	result.win_peak_pos_num = sizeof(af->win_peak_pos) / sizeof(af->win_peak_pos[0]);
 	result.win_peak_pos = af->win_peak_pos;
@@ -2608,25 +2608,27 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in * init_param)
 		af_rdm_otp_len = af_otp_info_ptr->rdm_info.data_size;
 		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if(NULL!=module_info){
-			if ((module_info[4]==0 && module_info[5]==1)
-				||(module_info[4]==0 && module_info[5]==2)
-				||(module_info[4]==0 && module_info[5]==3)
-				||(module_info[4]==0 && module_info[5]==4)
-				||(module_info[4]==1 && module_info[5]==0 && (module_info[0]!=0x53 ||module_info[1]!=0x50 || module_info[2]!=0x52 || module_info[3]!=0x44))
-				||(module_info[4]==2 && module_info[5]==0)
-				||(module_info[4]==3 && module_info[5]==0)
-				||(module_info[4]==4 && module_info[5]==0)) {
+		if (NULL != module_info) {
+			if ((module_info[4] == 0 && module_info[5] == 1)
+			    || (module_info[4] == 0 && module_info[5] == 2)
+			    || (module_info[4] == 0 && module_info[5] == 3)
+			    || (module_info[4] == 0 && module_info[5] == 4)
+			    || (module_info[4] == 1 && module_info[5] == 0
+				&& (module_info[0] != 0x53 || module_info[1] != 0x50 || module_info[2] != 0x52 || module_info[3] != 0x44))
+			    || (module_info[4] == 2 && module_info[5] == 0)
+			    || (module_info[4] == 3 && module_info[5] == 0)
+			    || (module_info[4] == 4 && module_info[5] == 0)) {
 				ISP_LOGV("af otp map v0.4");
 				af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr;
-			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0]==0x53 &&module_info[1]==0x50 && module_info[2]==0x52 && module_info[3]==0x44) {
+			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52
+				   && module_info[3] == 0x44) {
 				ISP_LOGV("af otp map v1.0");
 				af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr + 1;
 			} else {
 				af_rdm_otp_data = NULL;
 				ISP_LOGE("af otp map version error");
 			}
-		}else{
+		} else {
 			af_rdm_otp_data = NULL;
 			ISP_LOGE("af module_info is NULL");
 		}

@@ -203,29 +203,6 @@ struct isp_anti_flicker_cfg {
 	cmr_s8 version;
 };
 
-struct isp_pdaf_tune_param {
-	cmr_u32 min_pd_vcm_steps;
-	cmr_u32 max_pd_vcm_steps;
-	cmr_u32 coc_range;
-	cmr_u32 far_tolerance;
-	cmr_u32 near_tolerance;
-	cmr_u32 err_limit;
-	cmr_u32 pd_converge_thr;
-	cmr_u32 pd_converge_thr_2nd;
-	cmr_u32 pd_focus_times_thr;
-	cmr_u32 pd_thread_sync_frm;
-	cmr_u32 pd_thread_sync_frm_init;
-	cmr_u32 min_process_frm;
-	cmr_u32 max_process_frm;
-	cmr_u32 pd_conf_thr;
-	cmr_u32 pd_conf_thr_2nd;
-};
-
-struct isp_haf_tune_param {
-	//default param for outdoor/indoor/dark
-	struct isp_pdaf_tune_param isp_pdaf_tune_data[3];
-};
-
 struct isp_antiflicker_param {
 	cmr_u32 normal_50hz_thrd;
 	cmr_u32 lowlight_50hz_thrd;

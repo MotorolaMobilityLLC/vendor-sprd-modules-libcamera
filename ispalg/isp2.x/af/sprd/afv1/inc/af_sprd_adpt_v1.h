@@ -165,6 +165,22 @@ typedef struct _ae_cali {
 	cmr_u32 b_avg_all;
 } ae_cali_t;
 
+struct af_fullscan_info {
+	/* Register Parameters */
+	/* These params will depend on the AF setting */
+	cmr_u8 row_num;		/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
+	cmr_u8 column_num;	/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
+	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
+	cmr_u16 vcm_dac_up_bound;
+	cmr_u16 vcm_dac_low_bound;
+	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
+	cmr_u32 af_peak_pos;
+	cmr_u32 near_peak_pos;
+	cmr_u32 far_peak_pos;
+	cmr_u32 distance_reminder;
+	cmr_u32 reserved[16];
+};
+
 typedef struct _af_fv_info {
 	cmr_u64 af_fv0[10];	//[10]:10 ROI, sum of FV0
 	cmr_u64 af_fv1[10];	//[10]:10 ROI, sum of FV1

@@ -18,7 +18,7 @@
 #define _ISP_AF_H_
 
 #include "isp_adpt.h"
-#include "isp_com.h"
+#include "sensor_raw.h"
 
 #ifdef WIN32
 #include "sci_type.h"
@@ -170,7 +170,7 @@ extern "C" {
 		AF_CB_CMD_SET_AFM_BYPASS,
 		AF_CB_CMD_SET_AFM_SKIP_NUM,
 		AF_CB_CMD_SET_AFM_MODE,
-		AF_CB_CMD_SET_AFM_IIR_NR_CFG,
+		AF_CB_CMD_SET_AFM_NR_CFG,
 		AF_CB_CMD_SET_AFM_MODULES_CFG,
 		AF_CB_CMD_SET_MAX,
 
@@ -180,6 +180,12 @@ extern "C" {
 		AF_CB_CMD_GET_VCM_TEST_MODE,
 		AF_CB_CMD_GET_SYSTEM_TIME,
 		AF_CB_CMD_GET_MAX,
+	};
+
+	enum af_move_mode {
+		AF_MOVE_START = 0x00,
+		AF_MOVE_END,
+		AF_MOVE_MAX
 	};
 
 	struct af_img_blk_info {
@@ -292,6 +298,13 @@ extern "C" {
 	struct af_result_param {
 		cmr_u32 motor_pos;
 		cmr_u32 suc_win;
+		cmr_u32 focus_type;
+		cmr_u32 reserved[10];
+	};
+
+	struct af_notice {
+		cmr_u32 mode;
+		cmr_u32 valid_win;
 		cmr_u32 focus_type;
 		cmr_u32 reserved[10];
 	};

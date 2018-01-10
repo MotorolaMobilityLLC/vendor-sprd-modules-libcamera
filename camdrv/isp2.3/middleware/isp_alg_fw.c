@@ -576,42 +576,42 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = cxt->ioctrl_ptr->set_focus(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		}
 		break;
-	case ISP_AF_END_NOTICE:
+	case AF_CB_CMD_SET_END_NOTICE:
 		if (ISP_ZERO == cxt->commn_cxt.isp_callback_bypass) {
 			ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK, param0, sizeof(struct isp_af_notice));
 		}
 		break;
-	case ISP_AF_LENS_SET_POS:
+	case AF_CB_CMD_SET_MOTOR_POS:
 		if (cxt->ioctrl_ptr->set_pos) {
 			ret = cxt->ioctrl_ptr->set_pos(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		}
 		break;
-	case ISP_AF_LENS_GET_OTP:
+	case AF_CB_CMD_GET_LENS_OTP:
 		if (cxt->ioctrl_ptr->get_otp) {
 			ret = cxt->ioctrl_ptr->get_otp(cxt->ioctrl_ptr->caller_handler, param0, param1);
 		}
 		break;
-	case ISP_AF_SET_MOTOR_BESTMODE:
+	case AF_CB_CMD_SET_MOTOR_BESTMODE:
 		if (cxt->ioctrl_ptr->set_motor_bestmode) {
 			ret = cxt->ioctrl_ptr->set_motor_bestmode(cxt->ioctrl_ptr->caller_handler);
 		}
 		break;
-	case ISP_AF_GET_MOTOR_POS:
+	case AF_CB_CMD_GET_MOTOR_POS:
 		if (cxt->ioctrl_ptr->get_motor_pos) {
 			ret = cxt->ioctrl_ptr->get_motor_pos(cxt->ioctrl_ptr->caller_handler, param0);
 		}
 		break;
-	case ISP_AF_SET_VCM_TEST_MODE:
+	case AF_CB_CMD_SET_VCM_TEST_MODE:
 		if (cxt->ioctrl_ptr->set_test_vcm_mode) {
 			ret = cxt->ioctrl_ptr->set_test_vcm_mode(cxt->ioctrl_ptr->caller_handler, (char *)param0);
 		}
 		break;
-	case ISP_AF_GET_VCM_TEST_MODE:
+	case AF_CB_CMD_GET_VCM_TEST_MODE:
 		if (cxt->ioctrl_ptr->get_test_vcm_mode) {
 			ret = cxt->ioctrl_ptr->get_test_vcm_mode(cxt->ioctrl_ptr->caller_handler);
 		}
 		break;
-	case ISP_AF_START_NOTICE:
+	case AF_CB_CMD_SET_START_NOTICE:
 		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK, param0, sizeof(struct isp_af_notice));
 		break;
 	case ISP_AF_AE_AWB_LOCK:
@@ -626,45 +626,45 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		if (cxt->ops.awb_ops.ioctrl)
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 		break;
-	case ISP_AF_AE_LOCK:
+	case AF_CB_CMD_SET_AE_LOCK:
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, param1);
 		break;
-	case ISP_AF_AE_UNLOCK:
+	case AF_CB_CMD_SET_AE_UNLOCK:
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
 		break;
-	case ISP_AF_AE_CAF_LOCK:
+	case AF_CB_CMD_SET_AE_CAF_LOCK:
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CAF_LOCKAE_START, NULL, param1);
 		break;
-	case ISP_AF_AE_CAF_UNLOCK:
+	case AF_CB_CMD_SET_AE_CAF_UNLOCK:
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CAF_LOCKAE_STOP, NULL, param1);
 		break;
-	case ISP_AF_AWB_LOCK:
+	case AF_CB_CMD_SET_AWB_LOCK:
 		if (cxt->ops.awb_ops.ioctrl)
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 		break;
-	case ISP_AF_AWB_UNLOCK:
+	case AF_CB_CMD_SET_AWB_UNLOCK:
 		if (cxt->ops.awb_ops.ioctrl)
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 		break;
-	case ISP_AF_LSC_LOCK:
+	case AF_CB_CMD_SET_LSC_LOCK:
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 		break;
-	case ISP_AF_LSC_UNLOCK:
+	case AF_CB_CMD_SET_LSC_UNLOCK:
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
 		break;
-	case ISP_AF_NLM_LOCK:
+	case AF_CB_CMD_SET_NLM_LOCK:
 		cxt->smart_cxt.lock_nlm_en = 1;
 		break;
-	case ISP_AF_NLM_UNLOCK:
+	case AF_CB_CMD_SET_NLM_UNLOCK:
 		cxt->smart_cxt.lock_nlm_en = 0;
 		break;
-	case ISP_AF_SET_MONITOR:
+	case AF_CB_CMD_SET_MONITOR:
 		for (i = 0; i < param_num; i++) {
 			struct af_monitor_set *monitor_set = (struct af_monitor_set *)param0;
 
@@ -680,7 +680,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, &afm_block_info, NULL);
 		}
 		break;
-	case ISP_AF_SET_MONITOR_WIN:
+	case AF_CB_CMD_SET_MONITOR_WIN:
 		for (i = 0; i < param_num; i++) {
 			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -692,7 +692,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR_WIN, &afm_block_info, NULL);
 		}
 		break;
-	case ISP_AF_GET_MONITOR_WIN_NUM:
+	case AF_CB_CMD_GET_MONITOR_WIN_NUM:
 		memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 		if (cxt->mode_id[0] >= ISP_MODE_ID_CAP_0 &&
 				cxt->mode_id[0] <= ISP_MODE_ID_CAP_3)
@@ -702,7 +702,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		afm_block_info.win_num = (cmr_u32 *)param0;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, NULL, &afm_block_info);
 		break;
-	case ISP_AFM_BYPASS:
+	case AF_CB_CMD_SET_AFM_BYPASS:
 		for (i = 0; i < param_num; i++) {
 			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -714,7 +714,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_AFM_BYPASS, &afm_block_info, param1);
 		}
 		break;
-	case ISP_AFM_SKIP_NUM:
+	case AF_CB_CMD_SET_AFM_SKIP_NUM:
 		for (i = 0; i < param_num; i++) {
 			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -726,7 +726,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_SKIP_NUM, &afm_block_info, param1);
 		}
 		break;
-	case ISP_AFM_MODE:
+	case AF_CB_CMD_SET_AFM_MODE:
 		for (i = 0; i < param_num; i++) {
 			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -738,7 +738,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, &afm_block_info, param1);
 		}
 		break;
-	case ISP_AFM_IIR_NR_CFG:
+	case AF_CB_CMD_SET_AFM_NR_CFG:
 		for (i = 0; i < param_num; i++) {
 			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -750,7 +750,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, &afm_block_info, param1);
 		}
 		break;
-	case ISP_AFM_MODULES_CFG:
+	case AF_CB_CMD_SET_AFM_MODULES_CFG:
 		for (i = 0; i < param_num; i++) {
 			memset(&afm_block_info, 0x0, sizeof(afm_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -762,7 +762,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, &afm_block_info, param1);
 		}
 		break;
-	case ISP_AF_GET_SYSTEM_TIME: {
+	case AF_CB_CMD_GET_SYSTEM_TIME: {
 		cmr_u32 sec = 0;
 		cmr_u32 usec = 0;
 
@@ -771,16 +771,16 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		*(cmr_u32 *)param1 = usec;
 		}
 		break;
-	case ISP_AF_SET_PULSE_LINE:
+	case AF_CB_CMD_SET_PULSE_LINE:
 		ret = cxt->commn_cxt.ops.set_pulse_line(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
 		break;
-	case ISP_AF_SET_NEXT_VCM_POS:
+	case AF_CB_CMD_SET_NEXT_VCM_POS:
 		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
 		break;
-	case ISP_AF_SET_PULSE_LOG:
+	case AF_CB_CMD_SET_PULSE_LOG:
 		ret = cxt->commn_cxt.ops.set_pulse_log(cxt->commn_cxt.caller_id, *(cmr_u32 *) param0);
 		break;
-	case ISP_AF_SET_CLEAR_NEXT_VCM_POS:
+	case AF_CB_CMD_SET_CLEAR_NEXT_VCM_POS:
 		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, -1);
 		break;
 	default:
