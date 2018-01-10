@@ -169,17 +169,6 @@ getpmem_fail:
 
 void SprdCamera3MultiBase::freeOneBuffer(new_mem_t *buffer) {
     if (buffer->native_handle != NULL) {
-#if defined(CONFIG_SPRD_ANDROID_8)
-        struct private_handle_t *private_buffer =
-            (struct private_handle_t *)(buffer->native_handle);
-        if (private_buffer->attr_base != MAP_FAILED) {
-            ALOGW("Warning shared attribute region mapped at free. Unmapping");
-            munmap(private_buffer->attr_base, PAGE_SIZE);
-            private_buffer->attr_base = MAP_FAILED;
-        }
-        close(private_buffer->share_attr_fd);
-        private_buffer->share_attr_fd = -1;
-#endif
         delete (private_handle_t *)*(&buffer->native_handle);
         buffer->native_handle = NULL;
     }

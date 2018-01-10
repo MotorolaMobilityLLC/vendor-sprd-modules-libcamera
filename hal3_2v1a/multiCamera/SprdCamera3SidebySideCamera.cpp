@@ -621,6 +621,19 @@ getpmem_fail:
 void SprdCamera3SideBySideCamera::freeLocalCapBuffer() {
     for (size_t i = 0; i < SBS_LOCAL_CAPBUFF_NUM; i++) {
         new_mem_t *localBuffer = &mLocalCapBuffer[i];
+#if defined(CONFIG_SPRD_ANDROID_8)
+        if (localBuffer->native_handle != NULL) {
+            struct private_handle_t *private_buffer =
+                (struct private_handle_t *)(localBuffer->native_handle);
+            if (private_buffer->attr_base != MAP_FAILED) {
+            ALOGW("Warning shared attribute region mapped at free. Unmapping");
+            munmap(private_buffer->attr_base, PAGE_SIZE);
+            private_buffer->attr_base = MAP_FAILED;
+        }
+        close(private_buffer->share_attr_fd);
+        private_buffer->share_attr_fd = -1;
+        }
+#endif
         freeOneBuffer(localBuffer);
     }
 }
