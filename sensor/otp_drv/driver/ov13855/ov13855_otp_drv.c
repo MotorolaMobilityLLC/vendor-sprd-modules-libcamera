@@ -18,7 +18,8 @@ static cmr_int _ov13855_section_checksum(cmr_u8 *buf, cmr_uint offset,
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
-    if ((sum % 255 + 1) == buf[check_sum_offset] || (sum % 256) == buf[check_sum_offset]) {
+    if ((sum % 255 + 1) == buf[check_sum_offset] ||
+        (sum % 256) == buf[check_sum_offset]) {
         ret = OTP_CAMERA_SUCCESS;
     } else {
         ret = CMR_CAMERA_FAIL;
@@ -48,6 +49,26 @@ static cmr_int _ov13855_buffer_init(cmr_handle otp_drv_handle) {
     OTP_LOGV("out");
     return ret;
 }
+
+static cmr_int _ov13855_parse_module_data(cmr_handle otp_drv_handle) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    CHECK_PTR(otp_drv_handle);
+    OTP_LOGV("in");
+
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    otp_section_info_t *module_dat = &(otp_cxt->otp_data->module_dat);
+    cmr_u8 *module_info = NULL;
+
+    module_info = (cmr_u8 *)(otp_cxt->otp_raw_data.buffer + MODULE_INFO_OFFSET);
+    module_dat->rdm_info.buffer = module_info;
+    module_dat->rdm_info.size = MODULE_INFO_CHECKSUM - MODULE_INFO_OFFSET;
+    module_dat->gld_info.buffer = NULL;
+    module_dat->gld_info.size = 0;
+
+    OTP_LOGV("out");
+    return ret;
+}
+
 static cmr_int _ov13855_parse_af_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
@@ -57,9 +78,9 @@ static cmr_int _ov13855_parse_af_data(cmr_handle otp_drv_handle) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_section_info_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
-    ret =
-        _ov13855_section_checksum(otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
-                                  AF_INFO_CHECKSUM - AF_INFO_OFFSET, AF_INFO_CHECKSUM);
+    ret = _ov13855_section_checksum(
+        otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
+        AF_INFO_CHECKSUM - AF_INFO_OFFSET, AF_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("auto focus checksum error,parse failed");
         return ret;
@@ -333,6 +354,7 @@ static cmr_int ov13855_otp_drv_parse(cmr_handle otp_drv_handle, void *params) {
         return ret;
     } else if (otp_raw_data->buffer) {
         OTP_LOGI("drver has read otp raw data,start parsed.");
+        _ov13855_parse_module_data(otp_drv_handle);
         _ov13855_parse_af_data(otp_drv_handle);
         _ov13855_parse_awb_data(otp_drv_handle);
         _ov13855_parse_lsc_data(otp_drv_handle);

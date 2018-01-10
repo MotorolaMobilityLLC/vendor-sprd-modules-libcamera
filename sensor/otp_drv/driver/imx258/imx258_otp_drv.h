@@ -31,7 +31,7 @@
     WB_DATA_SIZE + AF_DATA_SIZE + GAIN_WIDTH *GAIN_WIDTH * 4 * 2 * 2
 /*module base info*/
 #define MODULE_INFO_OFFSET 0x0000
-#define MODULE_INFO_CHECK_SUM 0x000F
+#define MODULE_INFO_CHECKSUM 0x000F
 /**/
 #define AWB_INFO_OFFSET 0x0016
 #define AWB_INFO_SIZE 6 /*byte*/
@@ -74,7 +74,8 @@ typedef struct {
 } module_info_t;
 
 static cmr_int _imx258_section_checksum(unsigned char *buf, unsigned int first,
-                                    unsigned int last, unsigned int position);
+                                        unsigned int last,
+                                        unsigned int position);
 static cmr_int _imx258_buffer_init(cmr_handle otp_drv_handle);
 static cmr_int _imx258_parse_awb_data(cmr_handle otp_drv_handle);
 static cmr_int _imx258_parse_lsc_data(cmr_handle otp_drv_handle);
@@ -86,14 +87,14 @@ static cmr_int _imx258_lsc_calibration(cmr_handle otp_drv_handle);
 static cmr_int _imx258_pdaf_calibration(cmr_handle otp_drv_handle);
 
 static cmr_int imx258_otp_drv_create(otp_drv_init_para_t *input_para,
-                             cmr_handle* sns_af_drv_handle);
+                                     cmr_handle *sns_af_drv_handle);
 static cmr_int imx258_otp_drv_delete(cmr_handle otp_drv_handle);
 static cmr_int imx258_otp_drv_read(cmr_handle otp_drv_handle, void *p_data);
 static cmr_int imx258_otp_drv_write(cmr_handle otp_drv_handle, void *p_data);
 static cmr_int imx258_otp_drv_parse(cmr_handle otp_drv_handle, void *P_params);
 static cmr_int imx258_otp_drv_calibration(cmr_handle otp_drv_handle);
-static cmr_int imx258_otp_drv_ioctl(cmr_handle otp_drv_handle,
-                                            int cmd, void *params);
+static cmr_int imx258_otp_drv_ioctl(cmr_handle otp_drv_handle, int cmd,
+                                    void *params);
 
 otp_drv_entry_t imx258_drv_entry = {
     .otp_cfg =

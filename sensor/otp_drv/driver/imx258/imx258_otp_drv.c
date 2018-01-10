@@ -47,6 +47,26 @@ static cmr_int _imx258_buffer_init(cmr_handle otp_drv_handle) {
     OTP_LOGV("out");
     return ret;
 }
+static cmr_int _imx258_parse_module_data(cmr_handle otp_drv_handle) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    CHECK_PTR(otp_drv_handle);
+    OTP_LOGV("in");
+
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    otp_section_info_t *module_dat = &(otp_cxt->otp_data->module_dat);
+    cmr_u8 *module_info = NULL;
+
+    /*begain read raw data, save module info */
+    module_info = (cmr_u8 *)(otp_cxt->otp_raw_data.buffer + MODULE_INFO_OFFSET);
+    module_dat->rdm_info.buffer = module_info;
+    module_dat->rdm_info.size = MODULE_INFO_CHECKSUM - MODULE_INFO_OFFSET;
+    module_dat->gld_info.buffer = NULL;
+    module_dat->gld_info.size = 0;
+
+    OTP_LOGV("out");
+    return ret;
+}
+
 static cmr_int _imx258_parse_af_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
@@ -339,6 +359,7 @@ static cmr_int imx258_otp_drv_parse(cmr_handle otp_drv_handle, void *params) {
     } else if (otp_raw_data->buffer) {
         /*begain read raw data, save module info */
         OTP_LOGI("drver has read otp raw data,start parsed.");
+        _imx258_parse_module_data(otp_drv_handle);
         _imx258_parse_af_data(otp_drv_handle);
         _imx258_parse_awb_data(otp_drv_handle);
         _imx258_parse_lsc_data(otp_drv_handle);

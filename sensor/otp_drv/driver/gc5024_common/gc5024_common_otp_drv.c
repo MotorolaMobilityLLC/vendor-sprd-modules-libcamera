@@ -637,40 +637,29 @@ static cmr_int _gc5024_common_compatible_convert(cmr_handle otp_drv_handle,
     cmr_bzero(convert_data, sizeof(*convert_data));
     single_otp = &convert_data->single_otp;
     /*otp vendor type*/
-    // convert_data->otp_vendor = OTP_VENDOR_DUAL_CAM_DUAL;
+    convert_data->otp_vendor = OTP_VENDOR_SINGLE;
     /*otp raw data*/
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
     /*module data*/
-    convert_data->dual_otp.master_module_info =
+    single_otp->module_info =
         (struct sensor_otp_section_info *)&format_data->module_dat;
 
     /*af convert*/
-    convert_data->dual_otp.master_af_info =
+    single_otp->af_info =
         (struct sensor_otp_section_info *)&format_data->af_cali_dat;
 
     /*awb convert*/
-    convert_data->dual_otp.master_iso_awb_info =
+    single_otp->iso_awb_info =
         (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
 
     /*optical center*/
-    convert_data->dual_otp.master_optical_center_info =
+    single_otp->optical_center_info =
         (struct sensor_otp_section_info *)&format_data->opt_center_dat;
 
     /*lsc convert*/
-    convert_data->dual_otp.master_lsc_info =
+    single_otp->lsc_info =
         (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
-
-    /*ae convert*/
-    convert_data->dual_otp.master_ae_info =
-        (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
-
-    /*dual camera*/
-    convert_data->dual_otp.dual_flag = 1;
-    convert_data->dual_otp.data_3d.data_ptr =
-        format_data->dual_cam_cali_dat.rdm_info.buffer;
-    convert_data->dual_otp.data_3d.size =
-        format_data->dual_cam_cali_dat.rdm_info.size;
 
 #ifdef SENSOR_OTP
 #else
