@@ -6444,6 +6444,9 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         param_ptr->cap_inf_cfg.cfg.pdaf_ctrl.mode = 0;
 #endif
     param_ptr->cap_inf_cfg.sensor_id = camera_id;
+    param_ptr->cap_inf_cfg.cfg.need_3dnr =
+        (2 == camera_get_3dnr_flag(cxt)) ? 1 : 0;
+
     if (!param_ptr->is_lightly) {
         ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,
                                &param_ptr->cap_inf_cfg, channel_id, endian);
@@ -6572,12 +6575,6 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     }
     CMR_LOGI("skip num %ld %d", skip_number, channel_bits);
     camera_take_snapshot_step(CMR_STEP_CAP_S);
-
-    // enable 3dnr hw process if 3dnr_flag is 2,  and disbable if 3dnr_flag is 0
-    // or 1
-    cmr_bzero(&img_func_mode, sizeof(img_func_mode));
-    img_func_mode.need_3dnr = (2 == camera_get_3dnr_flag(cxt)) ? 1 : 0;
-    cmr_grab_set_function_mode(cxt->grab_cxt.grab_handle, &img_func_mode);
 
     ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
     if (ret) {

@@ -622,6 +622,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     struct cmr_grab *p_grab;
     struct sprd_img_parm parm;
     cmr_u32 ch_id;
+    struct sprd_img_function_mode function_mode;
+    cmr_bzero(&function_mode, sizeof(struct sprd_img_function_mode));
 
     if (NULL == config || NULL == channel_id)
         return -1;
@@ -670,6 +672,9 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_CH_ID, &ch_id);
     CMR_RTN_IF_ERR(ret);
+
+    function_mode.need_3dnr = config->cfg.need_3dnr;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, &function_mode);
 
     *channel_id = ch_id;
     ret = cmr_grab_cap_cfg_common(grab_handle, config, *channel_id, endian);
@@ -908,29 +913,6 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle) {
     }
     CMR_LOGI("ret = %ld", ret);
 
-    return ret;
-}
-
-cmr_int cmr_grab_set_function_mode(cmr_handle grab_handle,
-                           struct sprd_img_function_mode *function_mode) {
-    cmr_int ret = 0;
-    struct cmr_grab *p_grab;
-
-    if (NULL == function_mode) {
-        CMR_LOGE("failed to set function mode for function_mode is :%p",
-                 function_mode);
-        goto exit;
-    }
-
-    p_grab = (struct cmr_grab *)grab_handle;
-    CMR_CHECK_HANDLE;
-    CMR_CHECK_FD;
-
-    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, function_mode);
-    CMR_RTN_IF_ERR(ret);
-    CMR_LOGI("SPRD_IMG_IO_SET_FUNCTION_MODE = %ld", ret);
-exit:
-    CMR_LOGI("ret = %ld", ret);
     return ret;
 }
 

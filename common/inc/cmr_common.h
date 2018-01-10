@@ -622,6 +622,7 @@ struct img_frm_cap {
     cmr_u32 need_isp;
     cmr_u32 need_binning;
     cmr_u32 need_isp_tool;
+    cmr_u32 need_3dnr;
     struct dcam_regular_desc regular_desc;
     cmr_u32 flip_on;
     cmr_u32 pdaf_type3;
