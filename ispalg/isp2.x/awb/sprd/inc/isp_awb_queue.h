@@ -26,36 +26,36 @@ extern "C" {
 
 #define AWBL_MAX_QUEUE_SIZE	64
 
-typedef void *queue_handle_t;
+	typedef void *queue_handle_t;
 
-struct awbl_cyc_queue {
-	cmr_u32 q[AWBL_MAX_QUEUE_SIZE];
-	cmr_u32 size;
-	cmr_u32 cur_index;
-	cmr_s32 gradient;
-};
+	struct awbl_cyc_queue {
+		cmr_u32 q[AWBL_MAX_QUEUE_SIZE];
+		cmr_u32 size;
+		cmr_u32 cur_index;
+		cmr_s32 gradient;
+	};
 
 //queue functions
-cmr_s32 _initQueue(struct awbl_cyc_queue *queue, cmr_u32 size);
+	cmr_s32 _initQueue(struct awbl_cyc_queue *queue, cmr_u32 size);
 
-void _addToCycQueue(struct awbl_cyc_queue *queue, cmr_u32 value);
+	void _addToCycQueue(struct awbl_cyc_queue *queue, cmr_u32 value);
 
-cmr_s32 _isQueueFull(struct awbl_cyc_queue *queue);
+	cmr_s32 _isQueueFull(struct awbl_cyc_queue *queue);
 
-cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue *queue);
+	cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue *queue);
 
-cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue *queue);
+	cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue *queue);
 
-queue_handle_t queue_init(cmr_u32 size);
-void queue_add(queue_handle_t queue, cmr_u32 value);
-cmr_u32 queue_average(queue_handle_t queue);
-cmr_u32 queue_max(queue_handle_t queue);
-cmr_u32 queue_min(queue_handle_t queue);
-cmr_u32 queue_delta(queue_handle_t queue);
-cmr_u32 queue_statis(queue_handle_t queue, cmr_u32 statis_value);
-cmr_u32 queue_weighted_average(queue_handle_t queue_value, queue_handle_t queue_weight);
-void queue_deinit(queue_handle_t queue);
-void queue_clear(queue_handle_t queue);
+	queue_handle_t queue_init(cmr_u32 size);
+	void queue_add(queue_handle_t queue, cmr_u32 value);
+	cmr_u32 queue_average(queue_handle_t queue);
+	cmr_u32 queue_max(queue_handle_t queue);
+	cmr_u32 queue_min(queue_handle_t queue);
+	cmr_u32 queue_delta(queue_handle_t queue);
+	cmr_u32 queue_statis(queue_handle_t queue, cmr_u32 statis_value);
+	cmr_u32 queue_weighted_average(queue_handle_t queue_value, queue_handle_t queue_weight);
+	void queue_deinit(queue_handle_t queue);
+	void queue_clear(queue_handle_t queue);
 
 #ifdef __cplusplus
 }

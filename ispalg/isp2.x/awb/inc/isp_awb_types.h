@@ -41,86 +41,86 @@ extern "C" {
 #define AWB_TRUE	1
 #define AWB_FALSE	0
 
-typedef void *awb_handle_t;
+	typedef void *awb_handle_t;
 
-enum awb_cmd {
-	AWB_CMD_SET_BASE = 0x1000,
-	AWB_CMD_SET_INIT_PARAM = (AWB_CMD_SET_BASE + 1),
-	AWB_CMD_GET_BASE = 0x2000,
-	AWB_CMD_GET_INIT_PARAM = (AWB_CMD_GET_BASE + 1),
-	AWB_CMD_GET_CALC_DETAIL = (AWB_CMD_GET_BASE + 2),
+	enum awb_cmd {
+		AWB_CMD_SET_BASE = 0x1000,
+		AWB_CMD_SET_INIT_PARAM = (AWB_CMD_SET_BASE + 1),
+		AWB_CMD_GET_BASE = 0x2000,
+		AWB_CMD_GET_INIT_PARAM = (AWB_CMD_GET_BASE + 1),
+		AWB_CMD_GET_CALC_DETAIL = (AWB_CMD_GET_BASE + 2),
 
-	AWB_CMD_UNKNOWN = 0xffffffff
-};
+		AWB_CMD_UNKNOWN = 0xffffffff
+	};
 
-struct awb_size {
-	cmr_u16 w;
-	cmr_u16 h;
-};
+	struct awb_size {
+		cmr_u16 w;
+		cmr_u16 h;
+	};
 
-struct awb_range {
-	cmr_u16 min;
-	cmr_u16 max;
-};
+	struct awb_range {
+		cmr_u16 min;
+		cmr_u16 max;
+	};
 
-struct awb_point {
-	cmr_u16 x;
-	cmr_u16 y;
-};
+	struct awb_point {
+		cmr_u16 x;
+		cmr_u16 y;
+	};
 
-struct awb_rect {
-	struct awb_point begin;
-	struct awb_point end;
-};
+	struct awb_rect {
+		struct awb_point begin;
+		struct awb_point end;
+	};
 
-struct awb_gain {
-	cmr_u16 r;
-	cmr_u16 g;
-	cmr_u16 b;
-};
+	struct awb_gain {
+		cmr_u16 r;
+		cmr_u16 g;
+		cmr_u16 b;
+	};
 
-struct awb_save_gain {
-	cmr_u16 r;
-	cmr_u16 g;
-	cmr_u16 b;
-	cmr_u16 ct;
-};
-struct awb_linear_func {
-	cmr_s32 a;
-	cmr_s32 b;
-	cmr_u32 shift;
-};
+	struct awb_save_gain {
+		cmr_u16 r;
+		cmr_u16 g;
+		cmr_u16 b;
+		cmr_u16 ct;
+	};
+	struct awb_linear_func {
+		cmr_s32 a;
+		cmr_s32 b;
+		cmr_u32 shift;
+	};
 
-struct awb_sample {
-	/* input value of the sample point */
-	cmr_s32 x;
-	/* output value of the sample point */
-	cmr_s32 y;
-};
+	struct awb_sample {
+		/* input value of the sample point */
+		cmr_s32 x;
+		/* output value of the sample point */
+		cmr_s32 y;
+	};
 
 /* piecewise linear function */
-struct awb_piecewise_func {
-	/* sample points of the piecewise linear function, the x value
-	   of the samples must be in an ascending sort  order */
-	struct awb_sample samples[AWB_MAX_PIECEWISE_NUM];
-	/* number of the samples */
-	cmr_u16 num;
-	cmr_u16 base;
-};
+	struct awb_piecewise_func {
+		/* sample points of the piecewise linear function, the x value
+		   of the samples must be in an ascending sort  order */
+		struct awb_sample samples[AWB_MAX_PIECEWISE_NUM];
+		/* number of the samples */
+		cmr_u16 num;
+		cmr_u16 base;
+	};
 
 /* scanline */
-struct awb_scanline {
-	cmr_u16 y;
-	cmr_u16 x0;
-	cmr_u16 x1;
-};
+	struct awb_scanline {
+		cmr_u16 y;
+		cmr_u16 x0;
+		cmr_u16 x1;
+	};
 
 /* scanline of the window */
-struct awb_win_scanline {
-	/* scanline number */
-	cmr_u16 num;
-	struct awb_scanline scanline;
-};
+	struct awb_win_scanline {
+		/* scanline number */
+		cmr_u16 num;
+		struct awb_scanline scanline;
+	};
 
 #ifdef __cplusplus
 }

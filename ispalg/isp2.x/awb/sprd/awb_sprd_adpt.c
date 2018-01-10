@@ -31,17 +31,13 @@
 #define AWB_CTRL_MAGIC_BEGIN		0xe5a55e5a
 #define AWB_CTRL_MAGIC_END		0x5e5ae5a5
 #define AWB_CTRL_RESOLUTION_NUM 	8
-#define AWB_CTRL_MWB_NUM		20
 #define AWB_CTRL_SCENEMODE_NUM	10
-#define AWBV_WEIGHT_UNIT 256
 
 #define AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/misc/cameraserver/awb.file"
 #define AWB_GAIN_PARAM_FILE_NAME_MEDIA "/data/misc/media/awb.file"
 
 #define AWB_CTRL_TRUE			1
 #define AWB_CTRL_FALSE			0
-#define AWB_CTRL_WORK_MODE_NUM		(ISP_MODE_ID_VIDEO_3+1)
-#define AWB_CTRL_ENABLE 1
 #define AWB_CTRL_LOCKMODE 1
 #define AWB_CTRL_UNLOCKMODE 0
 #define AWB_CTRL_SAFE_FREE(_p) \
@@ -54,7 +50,6 @@ do { \
 
 #define __MIN(a,b) (((a)<(b))?(a):(b))
 
-
 char libawb_path[][20] = {
 	"libawb.so",
 	"libawb1.so",
@@ -64,36 +59,13 @@ char libawb_path[][20] = {
 	"libawb_v5.so",
 };
 
-struct awb_ctrl_tuning_param {
-	 /**/ cmr_u32 enable;
-	/*window size of statistic image */
-	struct awb_ctrl_size stat_win_size;
-	/*start position of statistic area */
-	struct awb_ctrl_pos stat_start_pos;
-	/*compensate gain for each resolution */
-	struct awb_ctrl_gain compensate_gain[AWB_CTRL_RESOLUTION_NUM];
-	/*gain for each manual white balance */
-	struct awb_ctrl_gain mwb_gain[AWB_CTRL_MWB_NUM];
-	/*gain for each scenemode gain */
-	struct awb_ctrl_gain scene_gain[AWB_CTRL_SCENEMODE_NUM];
-	/*bv value range for awb */
-	struct awb_ctrl_bv bv_range;
-	/*init gain and ct */
-	struct awb_ctrl_gain init_gain;
-	cmr_u32 init_ct;
-	/*algorithm param */
-	void *alg_param;
-	/*algorithm param size */
-	cmr_u32 alg_param_size;
-};
-
 struct awbsprd_lib_ops {
 	void *(*awb_init_v1) (struct awb_init_param * init_param, struct awb_rgb_gain * gain);
 	 cmr_s32(*awb_calc_v1) (void *awb_handle, struct awb_calc_param * calc_param, struct awb_calc_result * calc_result);
 	 cmr_s32(*awb_ioctrl_v1) (void *awb_handle, cmr_s32 cmd, void *param);
 	 cmr_s32(*awb_deinit_v1) (void *awb_handle);
-	 cmr_s32(*awb_sync_gain) (struct awb_sync_info *sync_info, cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master,
-		cmr_u32* gain_r_slave, cmr_u32* gain_g_slave, cmr_u32* gain_b_slave);
+	 cmr_s32(*awb_sync_gain) (struct awb_sync_info * sync_info, cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master,
+							  cmr_u32 * gain_r_slave, cmr_u32 * gain_g_slave, cmr_u32 * gain_b_slave);
 };
 
 struct awb_gain_queue {
@@ -114,21 +86,13 @@ struct awb_ctrl_cxt {
 	/*initialize parameter */
 	struct awb_ctrl_init_param init_param;
 	struct awb_init_param awb_init_param;
-	/*tuning parameter for each work mode */
-	struct awb_ctrl_tuning_param tuning_param[AWB_CTRL_WORK_MODE_NUM];
-	/*whether initialized */
-	cmr_u32 init;
 	/*camera id */
-	cmr_u32 camera_id;	/* 0: back camera, 1: front camera */
-	void *lsc_otp_random;
-	void *lsc_otp_golden;
-	cmr_u32 lsc_otp_width;
-	cmr_u32 lsc_otp_height;
+	cmr_u32 camera_id;			/* 0: back camera, 1: front camera */
 	/*work mode */
-	cmr_u32 work_mode;	/* 0: preview, 1:capture, 2:video */
-	cmr_u32 param_index;	/* tuning param index */
-	cmr_u32 last_enable;	/* record nonzsl video stop	*/
-	cmr_u32 snap_lock;	/* record lock awb frames after snapshot	*/
+	cmr_u32 work_mode;			/* 0: preview, 1:capture, 2:video */
+	cmr_u32 param_index;		/* tuning param index */
+	cmr_u32 last_enable;		/* record nonzsl video stop */
+	cmr_u32 snap_lock;			/* record lock awb frames after snapshot    */
 	/*white balance mode: auto or manual */
 	enum awb_ctrl_wb_mode wb_mode;
 	/*scene mode */
@@ -141,14 +105,10 @@ struct awb_ctrl_cxt {
 
 	cmr_u32 flash_update_awb;
 	struct awb_ctrl_opt_info otp_info;
-	/*previous gain */
-	struct awb_ctrl_gain prv_gain;
 	/*flash info */
 	struct awb_flash_info flash_info;
 	/* ctrl touch flash awb */
 	cmr_u32 flash_pre_state;
-	/*previous ct */
-	cmr_u32 prv_ct;
 	/*current gain */
 	struct awb_ctrl_gain cur_gain;
 	/*output gain */
@@ -165,14 +125,8 @@ struct awb_ctrl_cxt {
 	struct awb_ctrl_lock_info lock_info;
 	/*current ct */
 	cmr_u32 cur_ct;
-	/*whether to update awb gain */
-	cmr_u32 update;
 	/*algorithm handle */
 	void *alg_handle;
-	/*statistic image buffer */
-	void *stat_img_buf;
-	/*statistic image buffer size */
-	cmr_u32 stat_img_buf_size;
 	void *lib_handle;
 	struct awbsprd_lib_ops lib_ops;
 	struct third_lib_info *lib_info;
@@ -188,26 +142,13 @@ struct awb_ctrl_cxt {
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 
-	/*must be the last one */
-	cmr_u32 magic_end;
 	struct awb_ctrl_calc_result awb_result;
 
+	/*must be the last one */
+	cmr_u32 magic_end;
 };
 
 static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param);
-static cmr_u32 _awb_log_level()
-{
-	char value[PROPERTY_VALUE_MAX] = { 0 };
-	cmr_u32 log_level = 0;
-
-	property_get("debug.camera.isp.awb", value, "0");
-
-	if (!strcmp(value, "1")) {
-		log_level = 1;
-	}
-
-	return log_level;
-}
 
 static void _deinit_gain_queue(struct awb_gain_queue *queue)
 {
@@ -297,7 +238,7 @@ static cmr_s32 _init_gain_queue(struct awb_gain_queue *queue, cmr_u32 size)
 
 	return AWB_SUCCESS;
 
-ERROR_EXIT:
+  ERROR_EXIT:
 	_deinit_gain_queue(queue);
 	return AWB_ERROR;
 }
@@ -345,58 +286,12 @@ static cmr_u32 _check_init_param(struct awb_ctrl_init_param *param)
 	return rtn;
 }
 
-static cmr_u32 _awb_get_param_index(struct awb_ctrl_cxt *cxt, cmr_u32 work_mode)
-{
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 i = 0;
+struct awb_save_gain s_save_awb_param[4] = { {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} };
 
-	if (!cxt) {
-		ISP_LOGE("fail to get awb param index");
-		return AWB_CTRL_ERROR;
-	}
-	if (work_mode > 2) {
-		ISP_LOGE("fail to get work_mode %d", work_mode);
-		return AWB_CTRL_ERROR;
-	}
-
-	ISP_LOGI("work mode is %d", work_mode);
-	switch (work_mode) {
-	case 0:
-		for (i = ISP_MODE_ID_PRV_0; i < ISP_MODE_ID_PRV_3; i++) {
-			if (1 == cxt->tuning_param[i].enable) {
-				cxt->param_index = i;
-				break;
-			}
-		}
-		break;
-	case 1:
-		for (i = ISP_MODE_ID_CAP_0; i < ISP_MODE_ID_CAP_3; i++) {
-			if (1 == cxt->tuning_param[i].enable) {
-				cxt->param_index = i;
-				break;
-			}
-		}
-		break;
-	case 2:
-		for (i = ISP_MODE_ID_VIDEO_0; i < ISP_MODE_ID_VIDEO_3; i++) {
-			if (1 == cxt->tuning_param[i].enable) {
-				cxt->param_index = i;
-				break;
-			}
-		}
-		break;
-	default:
-		break;
-	}
-	ISP_LOGI("param index is %d", cxt->param_index);
-	return rtn;
-}
-
-struct awb_save_gain s_save_awb_param[4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
-static void _awb_save_gain(struct awb_save_gain*cxt, cmr_u32 num)
+static void _awb_save_gain(struct awb_save_gain *cxt, cmr_u32 num)
 {
 	cmr_u32 i = 0;
-	FILE* fp = NULL;
+	FILE *fp = NULL;
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
 
@@ -406,36 +301,35 @@ static void _awb_save_gain(struct awb_save_gain*cxt, cmr_u32 num)
 			for (i = 0; i < num; ++i) {
 				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
-			fwrite((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			fwrite((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
 			fclose(fp);
 			fp = NULL;
 		}
-	}
-	else {
+	} else {
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_MEDIA, "wb");
 		if (fp) {
 			for (i = 0; i < num; ++i) {
 				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
-			fwrite((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			fwrite((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
 			fclose(fp);
 			fp = NULL;
 		}
 	}
 }
 
-static void _awb_read_gain(struct awb_save_gain*cxt, cmr_u32 num)
+static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 {
 	cmr_u32 i = 0;
-	FILE* fp = NULL;
+	FILE *fp = NULL;
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
 
 	if (version[0] > '6') {
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
 		if (fp) {
-			memset((void*)cxt, 0, sizeof(struct awb_save_gain) * num);
-			fread((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			memset((void *)cxt, 0, sizeof(struct awb_save_gain) * num);
+			fread((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
 			fclose(fp);
 			fp = NULL;
 
@@ -443,11 +337,11 @@ static void _awb_read_gain(struct awb_save_gain*cxt, cmr_u32 num)
 				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
 		}
-	}else {
+	} else {
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
 		if (fp) {
-			memset((void*)cxt, 0, sizeof(struct awb_save_gain) * num);
-			fread((char*)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			memset((void *)cxt, 0, sizeof(struct awb_save_gain) * num);
+			fread((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
 			fclose(fp);
 			fp = NULL;
 
@@ -457,6 +351,7 @@ static void _awb_read_gain(struct awb_save_gain*cxt, cmr_u32 num)
 		}
 	}
 }
+
 static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -464,7 +359,7 @@ static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 
 	cxt->wb_mode = awb_mode;
 
-	if(cxt->wb_mode == 0){
+	if (cxt->wb_mode == 0) {
 		cxt->recover_gain.r = cxt->cur_gain.r;
 		cxt->recover_gain.g = cxt->cur_gain.g;
 		cxt->recover_gain.b = cxt->cur_gain.b;
@@ -480,8 +375,8 @@ static cmr_u32 _awb_get_wbmode(struct awb_ctrl_cxt *cxt, void *out_param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 
-	*(cmr_u32 *) out_param = cxt->wb_mode ;
-	ISP_LOGV("AWB get mode = %d", *(cmr_u32 *) out_param );
+	*(cmr_u32 *) out_param = cxt->wb_mode;
+	ISP_LOGV("AWB get mode = %d", *(cmr_u32 *) out_param);
 	return rtn;
 }
 
@@ -491,27 +386,6 @@ static cmr_u32 _awb_set_workmode(struct awb_ctrl_cxt *cxt, void *in_param)
 	cmr_u32 work_mode = *(cmr_u32 *) in_param;
 
 	cxt->work_mode = work_mode;
-	_awb_get_param_index(cxt, work_mode);
-
-	return rtn;
-}
-
-static cmr_u32 _awb_set_flashratio(struct awb_ctrl_cxt *cxt, void *in_param)
-{
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 flash_ratio = *(cmr_u32 *) in_param;
-
-	cxt->flash_info.effect = flash_ratio;
-
-	return rtn;
-}
-
-static cmr_u32 _awb_set_scenemode(struct awb_ctrl_cxt *cxt, void *in_param)
-{
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 scene_mode = *(cmr_u32 *) in_param;
-
-	cxt->scene_mode = scene_mode;
 	return rtn;
 }
 
@@ -534,12 +408,12 @@ static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 
 	ISP_LOGV("FLASH_TAG: awb flash recover gain = (%d, %d, %d), recover mode = %d", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_mode);
 
-	if(cxt->wb_mode == 0 && cxt->last_enable == 0  && cxt->flash_info.flash_enable== 0){
+	if (cxt->wb_mode == 0 && cxt->last_enable == 0 && cxt->flash_info.flash_enable == 0) {
 		s_save_awb_param[cxt->camera_id].r = awb_gain.r;
 		s_save_awb_param[cxt->camera_id].g = awb_gain.g;
 		s_save_awb_param[cxt->camera_id].b = awb_gain.b;
 		s_save_awb_param[cxt->camera_id].ct = cxt->cur_ct;
-		_awb_save_gain(&s_save_awb_param[0], sizeof(s_save_awb_param)/sizeof(struct awb_save_gain));
+		_awb_save_gain(&s_save_awb_param[0], sizeof(s_save_awb_param) / sizeof(struct awb_save_gain));
 	}
 	return rtn;
 
@@ -610,23 +484,6 @@ static cmr_u32 _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 }
 
-static cmr_u32 _awb_get_winsize(struct awb_ctrl_cxt *cxt, void *param)
-{
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	struct awb_size *win_size = (struct awb_size *)param;
-	cmr_u32 param_index = cxt->param_index;
-
-	if (param_index >= AWB_CTRL_WORK_MODE_NUM) {
-		param_index = 0;
-	}
-	win_size->w = cxt->tuning_param[param_index].stat_win_size.w;
-	win_size->h = cxt->tuning_param[param_index].stat_win_size.h;
-
-	ISP_LOGV("_awb_get_winsize = (%d,%d), param_index=%d", win_size->w, win_size->h, param_index);
-
-	return rtn;
-}
-
 static cmr_u32 _awb_get_ct(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -667,37 +524,7 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 
 }
-#if 0
-static cmr_u32 _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
-{
-	UNUSED(param);
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	struct awb_flash_info *flash_info = (struct awb_flash_info *)param;
 
-	cxt->flash_info.patten = 0;
-	cxt->flash_info.effect = flash_info->effect;
-	cxt->flash_info.flash_ratio.r = flash_info->flash_ratio.r;
-	cxt->flash_info.flash_ratio.g = flash_info->flash_ratio.g;
-	cxt->flash_info.flash_ratio.b = flash_info->flash_ratio.b;
-	ISP_LOGV("FLASH_TAG: flashing mode = %d", cxt->flash_info.flash_mode);
-	//flash change awb gain
-	if ((AWB_CTRL_WB_MODE_AUTO == cxt->wb_mode) && (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode)) {
-		if (0 == cxt->flash_info.patten) {
-			//alpha padding
-			ISP_LOGV("FLASH_TAG:before flash rgb(%d,%d,%d)", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b);
-			if (cxt->flash_info.flash_ratio.r > 0 && cxt->flash_info.flash_ratio.g > 0 && cxt->flash_info.flash_ratio.b > 0) {
-				cxt->output_gain.r = ((cxt->recover_gain.r * (1024 - cxt->flash_info.effect)) + cxt->flash_info.flash_ratio.r * cxt->flash_info.effect) >> 0x0a;
-				cxt->output_gain.g = ((cxt->recover_gain.g * (1024 - cxt->flash_info.effect)) + cxt->flash_info.flash_ratio.g * cxt->flash_info.effect) >> 0x0a;
-				cxt->output_gain.b = ((cxt->recover_gain.b * (1024 - cxt->flash_info.effect)) + cxt->flash_info.flash_ratio.b * cxt->flash_info.effect) >> 0x0a;
-			}
-		}
-		ISP_LOGV("FLASH_TAG:cap flash effect= %d  rgb(%d,%d,%d)", cxt->flash_info.effect, cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
-	}
-
-	return rtn;
-
-}
-#endif
 static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 #if 1
 {
@@ -718,8 +545,7 @@ static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 		cxt->lock_info.lock_ct = cxt->output_ct;
 	}
-	ISP_LOGV("AWB_TEST _awb_set_lock1: luck=%d, mode:%d   rgb[%d %d %d]", cxt->lock_info.lock_num, cxt->lock_info.lock_mode, cxt->output_gain.r,
-		      cxt->output_gain.g, cxt->output_gain.b);
+	ISP_LOGV("AWB_TEST _awb_set_lock1: luck=%d, mode:%d   rgb[%d %d %d]", cxt->lock_info.lock_num, cxt->lock_info.lock_mode, cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 	return rtn;
 
 }
@@ -790,7 +616,7 @@ static cmr_u32 _awb_flash_snopshot_recovery(struct awb_ctrl_cxt *cxt, void *para
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 
 	cxt->flash_info.main_flash_enable = 1;
-	cxt->lock_info.lock_flash_frame= 10;
+	cxt->lock_info.lock_flash_frame = 10;
 
 	return rtn;
 }
@@ -803,15 +629,15 @@ static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->flash_info.flash_status = *flash_status;
 
-	if(cxt->flash_info.flash_status == 4){
+	if (cxt->flash_info.flash_status == 4) {
 		cxt->flash_update_awb = 0;
-	}else{
+	} else {
 		cxt->flash_update_awb = 1;
 	}
 
-	if(cxt->flash_info.flash_status == 2 ){
+	if (cxt->flash_info.flash_status == 2) {
 		cxt->flash_pre_state = 10;
-	}else{
+	} else {
 		cxt->flash_pre_state = 0;
 	}
 
@@ -849,7 +675,7 @@ static cmr_u32 awbsprd_unload_lib(struct awb_ctrl_cxt *cxt)
 		cxt->lib_handle = NULL;
 	}
 
-exit:
+  exit:
 	return rtn;
 }
 
@@ -917,9 +743,9 @@ static cmr_u32 awbsprd_load_lib(struct awb_ctrl_cxt *cxt)
 	}
 
 	return AWB_CTRL_SUCCESS;
-load_error:
+  load_error:
 	awbsprd_unload_lib(cxt);
-exit:
+  exit:
 	return rtn;
 }
 
@@ -949,7 +775,7 @@ static cmr_u32 awb_get_debug_info(struct awb_ctrl_cxt *cxt, void *result)
 static cmr_u32 _awb_get_flash_ct_table(struct awb_ctrl_cxt *cxt, void *result)
 {
 	cmr_u32 rtn = AWB_SUCCESS;
-	struct awb_ct_table * param = (struct awb_ct_table *) result;
+	struct awb_ct_table *param = (struct awb_ct_table *)result;
 	rtn = cxt->lib_ops.awb_ioctrl_v1(cxt->alg_handle, AWB_IOCTRL_GET_CTTABLE20, param);
 	return rtn;
 }
@@ -976,12 +802,12 @@ static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *re
 	return rtn;
 }
 
-cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
+cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param * param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	cmr_u8 *awb_rdm_otp_data = NULL;
 	cmr_u16 awb_rdm_otp_len = 0;
-	cmr_u16 *awb_golden_otp_data  = NULL;
+	cmr_u16 *awb_golden_otp_data = NULL;
 	cmr_u16 awb_golden_otp_len = 0;
 	cmr_u32 otp_map_version = 0;
 	cmr_u8 *module_info = NULL;
@@ -989,12 +815,12 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 	struct sensor_otp_section_info *awb_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *module_info_ptr = NULL;
 
-	if(NULL!=param->otp_info_ptr){
+	if (NULL != param->otp_info_ptr) {
 		if (param->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
 			awb_otp_info_ptr = param->otp_info_ptr->single_otp.iso_awb_info;
 			module_info_ptr = param->otp_info_ptr->single_otp.module_info;
 			ISP_LOGV("pass awb otp, single cam");
-		}  else if(param->otp_info_ptr->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || param->otp_info_ptr->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL){
+		} else if (param->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL || param->otp_info_ptr->otp_vendor == OTP_VENDOR_DUAL_CAM_DUAL) {
 			if (param->is_master == 1) {
 				awb_otp_info_ptr = param->otp_info_ptr->dual_otp.master_iso_awb_info;
 				module_info_ptr = param->otp_info_ptr->dual_otp.master_module_info;
@@ -1004,84 +830,84 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param *param)
 				module_info_ptr = param->otp_info_ptr->dual_otp.slave_module_info;
 				ISP_LOGV("pass awb otp, dual cam slave");
 			}
-		}else{
+		} else {
 			awb_otp_info_ptr = NULL;
 			module_info_ptr = NULL;
 			ISP_LOGE("awb otp otp_vendor = %d", param->otp_info_ptr->otp_vendor);
 		}
-	}else{
-			awb_otp_info_ptr = NULL;
-			module_info_ptr = NULL;
-			ISP_LOGE("awb otp info ptr is NULL");
+	} else {
+		awb_otp_info_ptr = NULL;
+		module_info_ptr = NULL;
+		ISP_LOGE("awb otp info ptr is NULL");
 	}
 
-	if(NULL != awb_otp_info_ptr && NULL!=module_info_ptr){
-		module_info =  (cmr_u8 *)module_info_ptr->rdm_info.data_addr;
+	if (NULL != awb_otp_info_ptr && NULL != module_info_ptr) {
+		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if(NULL !=module_info){
-			if((module_info[4]==0 && module_info[5]==1)
-				||(module_info[4]==0 && module_info[5]==2)
-				||(module_info[4]==0 && module_info[5]==3)
-				||(module_info[4]==0 && module_info[5]==4)
-				||(module_info[4]==1 && module_info[5]==0 && (module_info[0]!=0x53 ||module_info[1]!=0x50 || module_info[2]!=0x52 || module_info[3]!=0x44))
-				||(module_info[4]==2 && module_info[5]==0)
-				||(module_info[4]==3 && module_info[5]==0)
-				||(module_info[4]==4 && module_info[5]==0)){
+		if (NULL != module_info) {
+			if ((module_info[4] == 0 && module_info[5] == 1)
+				|| (module_info[4] == 0 && module_info[5] == 2)
+				|| (module_info[4] == 0 && module_info[5] == 3)
+				|| (module_info[4] == 0 && module_info[5] == 4)
+				|| (module_info[4] == 1 && module_info[5] == 0 && (module_info[0] != 0x53 || module_info[1] != 0x50 || module_info[2] != 0x52 || module_info[3] != 0x44))
+				|| (module_info[4] == 2 && module_info[5] == 0)
+				|| (module_info[4] == 3 && module_info[5] == 0)
+				|| (module_info[4] == 4 && module_info[5] == 0)) {
 				ISP_LOGV("awb otp map v0.4");
 				otp_map_version = 4;
-				awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr;
+				awb_rdm_otp_data = (cmr_u8 *) awb_otp_info_ptr->rdm_info.data_addr;
 				awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
-				awb_golden_otp_data = (cmr_u16 *)awb_otp_info_ptr->gld_info.data_addr;
+				awb_golden_otp_data = (cmr_u16 *) awb_otp_info_ptr->gld_info.data_addr;
 				awb_golden_otp_len = awb_otp_info_ptr->gld_info.data_size;
-			}else if(module_info[4]==1 && module_info[5]==0 && module_info[0]==0x53 &&module_info[1]==0x50 && module_info[2]==0x52 && module_info[3]==0x44){
+			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52 && module_info[3] == 0x44) {
 				ISP_LOGV("awb otp map v1.0");
-				otp_map_version= 1;
-				awb_rdm_otp_data = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1;
+				otp_map_version = 1;
+				awb_rdm_otp_data = (cmr_u8 *) awb_otp_info_ptr->rdm_info.data_addr + 1;
 				awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
-				awb_golden_otp_data_v1 = (cmr_u8 *)awb_otp_info_ptr->rdm_info.data_addr + 1 + 6;
+				awb_golden_otp_data_v1 = (cmr_u8 *) awb_otp_info_ptr->rdm_info.data_addr + 1 + 6;
 				awb_golden_otp_len = awb_otp_info_ptr->rdm_info.data_size;
-			}else{
+			} else {
 				ISP_LOGE("awb otp map version error");
 				awb_rdm_otp_data = NULL;
 				awb_golden_otp_data = NULL;
 				awb_golden_otp_data_v1 = NULL;
 			}
-		}else{
+		} else {
 			ISP_LOGE("awb module_info is NULL");
 			awb_rdm_otp_data = NULL;
 			awb_golden_otp_data = NULL;
 			awb_golden_otp_data_v1 = NULL;
 		}
 
-		if(NULL!=awb_rdm_otp_data && 0!=awb_rdm_otp_len){
-			param->otp_info.rdm_stat_info.r = (awb_rdm_otp_data[1]<<8) | awb_rdm_otp_data[0];
-			param->otp_info.rdm_stat_info.g = (awb_rdm_otp_data[3]<<8) | awb_rdm_otp_data[2];
-			param->otp_info.rdm_stat_info.b = (awb_rdm_otp_data[5]<<8) | awb_rdm_otp_data[4];
-			ISP_LOGV("awb otp random [%d %d %d ]",param->otp_info.rdm_stat_info.r, param->otp_info.rdm_stat_info.g, param->otp_info.rdm_stat_info.b);
-		}else{
+		if (NULL != awb_rdm_otp_data && 0 != awb_rdm_otp_len) {
+			param->otp_info.rdm_stat_info.r = (awb_rdm_otp_data[1] << 8) | awb_rdm_otp_data[0];
+			param->otp_info.rdm_stat_info.g = (awb_rdm_otp_data[3] << 8) | awb_rdm_otp_data[2];
+			param->otp_info.rdm_stat_info.b = (awb_rdm_otp_data[5] << 8) | awb_rdm_otp_data[4];
+			ISP_LOGV("awb otp random [%d %d %d ]", param->otp_info.rdm_stat_info.r, param->otp_info.rdm_stat_info.g, param->otp_info.rdm_stat_info.b);
+		} else {
 			param->otp_info.rdm_stat_info.r = 0;
 			param->otp_info.rdm_stat_info.g = 0;
 			param->otp_info.rdm_stat_info.b = 0;
 			ISP_LOGE("awb_rdm_otp_data = %p, awb_rdm_otp_len = %d. Parser fail", awb_rdm_otp_data, awb_rdm_otp_len);
 		}
 
-		if(otp_map_version == 4 && NULL!=awb_golden_otp_data && 0!=awb_golden_otp_len){
+		if (otp_map_version == 4 && NULL != awb_golden_otp_data && 0 != awb_golden_otp_len) {
 			param->otp_info.gldn_stat_info.r = awb_golden_otp_data[0];
 			param->otp_info.gldn_stat_info.g = awb_golden_otp_data[1];
 			param->otp_info.gldn_stat_info.b = awb_golden_otp_data[2];
-			ISP_LOGV("awb otp golden [%d %d %d]",param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g,param->otp_info.gldn_stat_info.b);
-		}else if(otp_map_version == 1 && NULL!=awb_golden_otp_data_v1 && 0!=awb_golden_otp_len){
-			param->otp_info.gldn_stat_info.r = (awb_golden_otp_data_v1[1]<<8) | awb_golden_otp_data_v1[0];
-			param->otp_info.gldn_stat_info.g = (awb_golden_otp_data_v1[3]<<8) | awb_golden_otp_data_v1[2];
-			param->otp_info.gldn_stat_info.b = (awb_golden_otp_data_v1[5]<<8) | awb_golden_otp_data_v1[4];
-			ISP_LOGV("awb otp golden [%d %d %d]",param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g,param->otp_info.gldn_stat_info.b);
-		}else{
+			ISP_LOGV("awb otp golden [%d %d %d]", param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g, param->otp_info.gldn_stat_info.b);
+		} else if (otp_map_version == 1 && NULL != awb_golden_otp_data_v1 && 0 != awb_golden_otp_len) {
+			param->otp_info.gldn_stat_info.r = (awb_golden_otp_data_v1[1] << 8) | awb_golden_otp_data_v1[0];
+			param->otp_info.gldn_stat_info.g = (awb_golden_otp_data_v1[3] << 8) | awb_golden_otp_data_v1[2];
+			param->otp_info.gldn_stat_info.b = (awb_golden_otp_data_v1[5] << 8) | awb_golden_otp_data_v1[4];
+			ISP_LOGV("awb otp golden [%d %d %d]", param->otp_info.gldn_stat_info.r, param->otp_info.gldn_stat_info.g, param->otp_info.gldn_stat_info.b);
+		} else {
 			param->otp_info.gldn_stat_info.r = 0;
 			param->otp_info.gldn_stat_info.g = 0;
 			param->otp_info.gldn_stat_info.b = 0;
 			ISP_LOGE("awb_golden_otp_data = %p, awb_golden_otp_len = %d. Parser fail", awb_golden_otp_data, awb_golden_otp_len);
 		}
-	}else{
+	} else {
 		ISP_LOGE("awb awb_otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", awb_otp_info_ptr, module_info_ptr);
 		param->otp_info.rdm_stat_info.r = 0;
 		param->otp_info.rdm_stat_info.g = 0;
@@ -1132,12 +958,11 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		goto ERROR_EXIT;
 	}
 
-	cxt->snap_lock = 0; // recovery snapshot awb continus frames
+	cxt->snap_lock = 0;			// recovery snapshot awb continus frames
 	cxt->last_enable = 0;
 	cxt->flash_info.flash_enable = 0;
 	cxt->lock_info.lock_flash_frame = 0;
-	cxt->flash_info.main_flash_enable =0;
-	cxt->init = AWB_CTRL_TRUE;
+	cxt->flash_info.main_flash_enable = 0;
 	cxt->magic_begin = AWB_CTRL_MAGIC_BEGIN;
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
 	cxt->flash_update_awb = 1;
@@ -1164,12 +989,11 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 
 	memcpy(&cxt->awb_init_param.tuning_param, param->tuning_param, sizeof(cxt->awb_init_param.tuning_param));
 
-	struct awbParaGenIn* awb_ui_data = (struct awbParaGenIn*)&cxt->awb_init_param.tuning_param.ui_data[0];
+	struct awbParaGenIn *awb_ui_data = (struct awbParaGenIn *)&cxt->awb_init_param.tuning_param.ui_data[0];
 	cxt->awb_init_param.otp_golden_r = awb_ui_data->otp_golden_r;
 	cxt->awb_init_param.otp_golden_g = awb_ui_data->otp_golden_g;
 	cxt->awb_init_param.otp_golden_b = awb_ui_data->otp_golden_b;
-	if ((cxt->awb_init_param.otp_golden_r == 0) || (cxt->awb_init_param.otp_golden_g == 0) || (cxt->awb_init_param.otp_golden_b == 0))
-	{
+	if ((cxt->awb_init_param.otp_golden_r == 0) || (cxt->awb_init_param.otp_golden_g == 0) || (cxt->awb_init_param.otp_golden_b == 0)) {
 		cxt->awb_init_param.otp_golden_r = param->otp_info.gldn_stat_info.r;
 		cxt->awb_init_param.otp_golden_g = param->otp_info.gldn_stat_info.g;
 		cxt->awb_init_param.otp_golden_b = param->otp_info.gldn_stat_info.b;
@@ -1221,30 +1045,28 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	otp_info.otp_random_b = cxt->otp_info.rdm_stat_info.b;
 
 #ifndef CONFIG_ISP_2_2
-	if(cxt->ptr_isp_br_ioctrl != NULL){
-		rtn= cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_OTP_AWB, &otp_info, NULL);
+	if (cxt->ptr_isp_br_ioctrl != NULL) {
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_OTP_AWB, &otp_info, NULL);
 	}
 #endif
-	_awb_read_gain(&s_save_awb_param[0], sizeof(s_save_awb_param)/sizeof(struct awb_save_gain));
+	_awb_read_gain(&s_save_awb_param[0], sizeof(s_save_awb_param) / sizeof(struct awb_save_gain));
 
-	if(0 != s_save_awb_param[cxt->camera_id].r \
-		&& 0 != s_save_awb_param[cxt->camera_id].g \
-		&&0 != s_save_awb_param[cxt->camera_id].b)
-	{
+	if (0 != s_save_awb_param[cxt->camera_id].r && 0 != s_save_awb_param[cxt->camera_id].g && 0 != s_save_awb_param[cxt->camera_id].b) {
 		cxt->output_gain.r = s_save_awb_param[cxt->camera_id].r;
 		cxt->output_gain.g = s_save_awb_param[cxt->camera_id].g;
 		cxt->output_gain.b = s_save_awb_param[cxt->camera_id].b;
-		cxt->output_ct= s_save_awb_param[cxt->camera_id].ct;
+		cxt->output_ct = s_save_awb_param[cxt->camera_id].ct;
 	}
 
 	ISP_LOGV("AWB init: (%d,%d,%d), AWB_OTP rr = %d, rg = %d, rb = %d, gr = %d, gg = %d, gb = %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b,
-		cxt->awb_init_param.otp_random_r , cxt->awb_init_param.otp_random_g, cxt->awb_init_param.otp_random_b , cxt->awb_init_param.otp_golden_r, cxt->awb_init_param.otp_golden_g, cxt->awb_init_param.otp_golden_b );
+			 cxt->awb_init_param.otp_random_r, cxt->awb_init_param.otp_random_g, cxt->awb_init_param.otp_random_b, cxt->awb_init_param.otp_golden_r, cxt->awb_init_param.otp_golden_g,
+			 cxt->awb_init_param.otp_golden_b);
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 	ISP_LOGI("done");
 	return (awb_ctrl_handle_t) cxt;
 
-ERROR_EXIT:
+  ERROR_EXIT:
 	awbsprd_unload_lib(cxt);
 	AWB_CTRL_SAFE_FREE(cxt);
 	ISP_LOGE("fail to init awb %d", rtn);
@@ -1294,7 +1116,7 @@ cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *in, void *out)
 
 	ISP_LOGI("done");
 	return rtn;
-EXIT:
+  EXIT:
 	memset(cxt, 0, sizeof(*cxt));
 	AWB_CTRL_SAFE_FREE(cxt);
 	ISP_LOGE("fail to deinit awb");
@@ -1313,11 +1135,11 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 {
 	cmr_s32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
-	struct awb_ctrl_calc_param param ;
+	struct awb_ctrl_calc_param param;
 	struct awb_ctrl_calc_result result;
 	UNUSED(out);
 
-	if (NULL == in ) {
+	if (NULL == in) {
 		ISP_LOGE("fail to calc awb, invalid param: param=%p", in);
 		return AWB_CTRL_ERROR;
 	}
@@ -1330,18 +1152,17 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		ISP_LOGE("fail to check handle");
 		return AWB_CTRL_ERROR;
 	}
-
 #ifndef CONFIG_ISP_2_2
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL)) {
 		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 			struct awb_sync_info awb_sync;
 
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_STAT_AWB_DATA, NULL, &awb_sync.stat_master_info);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_STAT_AWB_DATA, NULL, &awb_sync.stat_master_info);
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_STAT_AWB_DATA, NULL, &awb_sync.stat_slave_info);
 
 			struct awb_ctrl_gain gain_master;
 			struct awb_ctrl_gain gain_slave;
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_GAIN_AWB_DATA, NULL, &gain_master);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_GAIN_AWB_DATA, NULL, &gain_master);
 
 			awb_sync.stat_master_info.height = 32;
 			awb_sync.stat_master_info.width = 32;
@@ -1350,16 +1171,16 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 
 			awb_sync.master_fov = 0;
 			awb_sync.slave_fov = 0;
-			awb_sync.master_pix_cnt = ((1600/awb_sync.stat_master_info.width) * (1200/awb_sync.stat_master_info.height)) / 4;
-			awb_sync.slave_pix_cnt = ((1600/awb_sync.stat_slave_info.width) * (1200/awb_sync.stat_slave_info.height)) / 4;
+			awb_sync.master_pix_cnt = ((1600 / awb_sync.stat_master_info.width) * (1200 / awb_sync.stat_master_info.height)) / 4;
+			awb_sync.slave_pix_cnt = ((1600 / awb_sync.stat_slave_info.width) * (1200 / awb_sync.stat_slave_info.height)) / 4;
 
 			cmr_u32 ct;
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_MATCH_AWB_DATA, NULL, &ct);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_MATCH_AWB_DATA, NULL, &ct);
 
 			struct sensor_otp_awb_info master_otp_info;
 			struct sensor_otp_awb_info slave_otp_info;
 
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id-2, GET_OTP_AWB, NULL, &master_otp_info);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_OTP_AWB, NULL, &master_otp_info);
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_OTP_AWB, NULL, &slave_otp_info);
 
 			awb_sync.master_gldn_stat_info.r = master_otp_info.otp_golden_r;
@@ -1370,8 +1191,8 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			awb_sync.master_rdm_stat_info.b = master_otp_info.otp_random_b;
 
 			awb_sync.slave_gldn_stat_info.r = slave_otp_info.otp_golden_r;
-			awb_sync.slave_gldn_stat_info.g  = slave_otp_info.otp_golden_g;
-			awb_sync.slave_gldn_stat_info.b  = slave_otp_info.otp_golden_b;
+			awb_sync.slave_gldn_stat_info.g = slave_otp_info.otp_golden_g;
+			awb_sync.slave_gldn_stat_info.b = slave_otp_info.otp_golden_b;
 			awb_sync.slave_rdm_stat_info.r = slave_otp_info.otp_random_r;
 			awb_sync.slave_rdm_stat_info.g = slave_otp_info.otp_random_g;
 			awb_sync.slave_rdm_stat_info.b = slave_otp_info.otp_random_b;
@@ -1390,8 +1211,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			cxt->output_gain.b = result.gain.b;
 			cxt->output_ct = result.ct;
 
-			if (ret == 0)
-			{
+			if (ret == 0) {
 				result.update_gain = 1;
 				return AWB_CTRL_SUCCESS;
 			}
@@ -1423,8 +1243,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	struct awb_calc_result calc_result;
 	memset(&calc_param, 0x00, sizeof(calc_param));
 	memset(&calc_result, 0x00, sizeof(calc_result));
-	if (cxt->awb_init_param.tuning_param.stat_type)
-	{
+	if (cxt->awb_init_param.tuning_param.stat_type) {
 		calc_param.stat_img.r = param.stat_img.chn_img.r;
 		calc_param.stat_img.g = param.stat_img.chn_img.g;
 		calc_param.stat_img.b = param.stat_img.chn_img.b;
@@ -1433,7 +1252,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		calc_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
 		calc_param.stat_img_w = 32;
 		calc_param.stat_img_h = 32;
-	}else{
+	} else {
 		calc_param.stat_img.r = param.stat_img_awb.chn_img.r;
 		calc_param.stat_img.g = param.stat_img_awb.chn_img.g;
 		calc_param.stat_img.b = param.stat_img_awb.chn_img.b;
@@ -1454,8 +1273,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
-		      calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
-
+			 calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
 
 	result.gain.r = calc_result.awb_gain[0].r_gain;
 	result.gain.g = calc_result.awb_gain[0].g_gain;
@@ -1474,13 +1292,10 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cxt->log = calc_result.log_buffer;
 	cxt->size = calc_result.log_size;
 
-	if (cxt->frame_count > smooth_buffer_num)
-	{
+	if (cxt->frame_count > smooth_buffer_num) {
 		_gain_queue_add(&cxt->gain_queue, &cxt->cur_gain, cxt->cur_ct, 256);
 		_gain_queue_average(&cxt->gain_queue, &cxt->output_gain, &cxt->output_ct);
-	}
-	else
-	{
+	} else {
 		cxt->output_gain = cxt->cur_gain;
 		cxt->output_ct = cxt->cur_ct;
 	}
@@ -1488,25 +1303,23 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	ISP_LOGV("AWB smooth output: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 
 	//lock awb after snapshot
-	if (cxt->snap_lock != 0){
+	if (cxt->snap_lock != 0) {
 		cxt->output_gain.r = cxt->recover_gain.r;
 		cxt->output_gain.g = cxt->recover_gain.g;
 		cxt->output_gain.b = cxt->recover_gain.b;
 		cxt->output_ct = cxt->recover_ct;
-		cxt->snap_lock-=1;
+		cxt->snap_lock -= 1;
 	}
-
 	//scenemode & mwb change
 	if (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode) {
 		cmr_u32 mawb_id = cxt->wb_mode;
 		if (AWB_CTRL_WB_MODE_AUTO != cxt->wb_mode) {
-			if (mawb_id == AWB_CTRL_AWB_MODE_OFF)
-			{
+			if (mawb_id == AWB_CTRL_AWB_MODE_OFF) {
 				cxt->output_gain.r = 1024;
 				cxt->output_gain.g = 1024;
 				cxt->output_gain.b = 1024;
-				cxt->output_ct  = 5000;
-			}else if ((mawb_id > 0) && (mawb_id < 10))	// return mwb by mwb mode id
+				cxt->output_ct = 5000;
+			} else if ((mawb_id > 0) && (mawb_id < 10))	// return mwb by mwb mode id
 			{
 				cmr_s32 index = 0;
 
@@ -1521,7 +1334,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 				cxt->output_gain.g = cxt->awb_init_param.tuning_param.wbMode_gain[index].g_gain;
 				cxt->output_gain.b = cxt->awb_init_param.tuning_param.wbMode_gain[index].b_gain;
 				cxt->output_ct = cxt->awb_init_param.tuning_param.wbMode_gain[index].ct;
-			} else	// return mwb by ct, (100K <= ct < 10000K)
+			} else				// return mwb by ct, (100K <= ct < 10000K)
 			{
 				if (mawb_id >= 10000) {
 					cmr_s32 index = 100;
@@ -1540,30 +1353,24 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 					cmr_u32 index2 = mawb_id / 100 + 1;
 					cmr_u32 weight1 = index2 * 100 - mawb_id;
 					cmr_u32 weight2 = mawb_id - index1 * 100;
-					cxt->output_gain.r =
-					    (cxt->awb_init_param.tuning_param.mwb_gain[index1].r_gain * weight1 +
-					     cxt->awb_init_param.tuning_param.mwb_gain[index2].r_gain * weight2 + 50) / 100;
-					cxt->output_gain.g =
-					    (cxt->awb_init_param.tuning_param.mwb_gain[index1].g_gain * weight1 +
-					     cxt->awb_init_param.tuning_param.mwb_gain[index2].g_gain * weight2 + 50) / 100;
-					cxt->output_gain.b =
-					    (cxt->awb_init_param.tuning_param.mwb_gain[index1].b_gain * weight1 +
-					     cxt->awb_init_param.tuning_param.mwb_gain[index2].b_gain * weight2 + 50) / 100;
+					cxt->output_gain.r = (cxt->awb_init_param.tuning_param.mwb_gain[index1].r_gain * weight1 + cxt->awb_init_param.tuning_param.mwb_gain[index2].r_gain * weight2 + 50) / 100;
+					cxt->output_gain.g = (cxt->awb_init_param.tuning_param.mwb_gain[index1].g_gain * weight1 + cxt->awb_init_param.tuning_param.mwb_gain[index2].g_gain * weight2 + 50) / 100;
+					cxt->output_gain.b = (cxt->awb_init_param.tuning_param.mwb_gain[index1].b_gain * weight1 + cxt->awb_init_param.tuning_param.mwb_gain[index2].b_gain * weight2 + 50) / 100;
 					cxt->output_ct = mawb_id;
 				}
 			}
-			if((cxt->otp_info.gldn_stat_info.r != 0 ) && (cxt->otp_info.gldn_stat_info.g != 0) && (cxt->otp_info.gldn_stat_info.b != 0)){
+			if ((cxt->otp_info.gldn_stat_info.r != 0) && (cxt->otp_info.gldn_stat_info.g != 0) && (cxt->otp_info.gldn_stat_info.b != 0)) {
 				double otp_g_coef = (double)cxt->otp_info.rdm_stat_info.g / cxt->otp_info.gldn_stat_info.g;
 				double otp_r_coef = (double)cxt->otp_info.rdm_stat_info.r / cxt->otp_info.gldn_stat_info.r;
 				double otp_b_coef = (double)cxt->otp_info.rdm_stat_info.b / cxt->otp_info.gldn_stat_info.b;
 
-				if(otp_g_coef != 0){
+				if (otp_g_coef != 0) {
 					otp_r_coef = otp_r_coef / otp_g_coef;
 					otp_b_coef = otp_b_coef / otp_g_coef;
-					cxt->output_gain.r = cxt->output_gain.r * otp_r_coef ;
+					cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
 					cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
-				 }
-                    }
+				}
+			}
 		}
 	} else {
 		cmr_u32 scene_mode = cxt->scene_mode;
@@ -1583,26 +1390,25 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_ct = cxt->lock_info.lock_ct;
 	}
 	//only pre flash after
-	if(cxt->flash_pre_state !=0 && cxt->wb_mode == 0){
+	if (cxt->flash_pre_state != 0 && cxt->wb_mode == 0) {
 		cxt->output_gain.r = cxt->recover_gain.r;
 		cxt->output_gain.g = cxt->recover_gain.g;
 		cxt->output_gain.b = cxt->recover_gain.b;
 		cxt->output_ct = cxt->recover_ct;
-		cxt->flash_pre_state -=1;
+		cxt->flash_pre_state -= 1;
 	}
-
 	//lock awb after flash
-	if(cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0 && cxt->wb_mode == 0){
-		cxt->output_gain.r = cxt->recover_gain.r ;
+	if (cxt->flash_info.main_flash_enable == 1 && cxt->lock_info.lock_flash_frame != 0 && cxt->wb_mode == 0) {
+		cxt->output_gain.r = cxt->recover_gain.r;
 		cxt->output_gain.g = cxt->recover_gain.g;
 		cxt->output_gain.b = cxt->recover_gain.b;
 		cxt->output_ct = cxt->recover_ct;
-		cxt->lock_info.lock_flash_frame -=1;
-	}else{
+		cxt->lock_info.lock_flash_frame -= 1;
+	} else {
 		cxt->flash_info.main_flash_enable = 0;
 	}
 
-//	ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
+//  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
 	ISP_LOGV("AWB result : (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 
 	result.gain.r = cxt->output_gain.r;
@@ -1613,9 +1419,9 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
 	}
-	
+
 	pthread_mutex_lock(&cxt->status_lock);
-	
+
 	memcpy(&cxt->awb_result, &result, sizeof(struct awb_ctrl_calc_result));
 
 	pthread_mutex_unlock(&cxt->status_lock);
@@ -1655,22 +1461,18 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_SET_WORK_MODE:
-//		ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+//      ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
 		if (cxt->last_enable == 2 && cxt->flash_info.flash_enable == 0) {
 			rtn = _awb_get_recgain(cxt, in);
 			if (AWB_CTRL_SUCCESS != rtn) {
 				ISP_LOGE("fail to _awb_get_recgain");
 				return AWB_CTRL_ERROR;
 			}
-			cxt->snap_lock =0;  //lock awb N frames after snapshot
+			cxt->snap_lock = 0;	//lock awb N frames after snapshot
 			cxt->last_enable = 0;
 		}
 		cxt->flash_info.flash_enable = 0;
 		rtn = _awb_set_workmode(cxt, in);
-		break;
-
-	case AWB_CTRL_CMD_SET_SCENE_MODE:
-		rtn = _awb_set_scenemode(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_GET_GAIN:
@@ -1702,7 +1504,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_FLASH_CLOSE:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_CLOSE");
-		if(cxt->wb_mode == 0){
+		if (cxt->wb_mode == 0) {
 			if ((AWB_CTRL_FLASH_PRE == cxt->flash_info.flash_mode) || (AWB_CTRL_FLASH_MAIN == cxt->flash_info.flash_mode)) {
 				rtn = _awb_get_recgain(cxt, in);
 			}
@@ -1715,7 +1517,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_FLASH_BEFORE_P:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_BEFORE_P");
 		cxt->flash_info.flash_enable = 1;
-		if(cxt->wb_mode == 0){
+		if (cxt->wb_mode == 0) {
 			rtn = _awb_set_recgain(cxt, in);
 		}
 		break;
@@ -1740,10 +1542,6 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		rtn = _awb_get_pix_cnt(cxt, in);
 		break;
 
-	case AWB_CTRL_CMD_GET_WIN_SIZE:
-		rtn = _awb_get_winsize(cxt, in);
-		break;
-
 	case AWB_CTRL_CMD_GET_CT:
 		rtn = _awb_get_ct(cxt, in);
 		break;
@@ -1766,8 +1564,8 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case AWB_CTRL_CMD_VIDEO_STOP_NOTIFY:
-//		ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
-		if (cxt->last_enable == 0  && cxt->flash_info.flash_enable == 0){
+//      ISP_LOGV("AWB_CTRL_CMD_VIDEO_STOP_NOTIFY  cxt->lock_info.lock_mode =%d  cxt->last_enable =%d  flash_mode =%d ",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+		if (cxt->last_enable == 0 && cxt->flash_info.flash_enable == 0) {
 			rtn = _awb_set_recgain(cxt, in);
 		}
 		cxt->last_enable++;
@@ -1776,7 +1574,6 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_GET_CT_TABLE20:
 		rtn = _awb_get_flash_ct_table(cxt, out);
 		break;
-
 
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);

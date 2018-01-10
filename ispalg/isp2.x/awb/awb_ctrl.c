@@ -27,7 +27,6 @@
 #define AWBCTRL_EVT_PROCESS         (AWBCTRL_EVT_BASE + 3)
 #define AWBCTRL_EVT_EXIT            (AWBCTRL_EVT_BASE + 4)
 
-
 struct awbctrl_work_lib {
 	cmr_handle lib_handle;
 	struct adpt_ops_type *adpt_ops;
@@ -56,7 +55,7 @@ static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -77,7 +76,7 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -99,12 +98,12 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	}
 
 	rtn = awbctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 
-cmr_int awbctrl_ioctrl(struct awbctrl_cxt *cxt_ptr, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
+cmr_int awbctrl_ioctrl(struct awbctrl_cxt * cxt_ptr, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct awbctrl_work_lib *lib_ptr = NULL;
@@ -120,7 +119,7 @@ cmr_int awbctrl_ioctrl(struct awbctrl_cxt *cxt_ptr, enum awb_ctrl_cmd cmd, void 
 	} else {
 		ISP_LOGI("ioctrl fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
@@ -139,7 +138,7 @@ static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc
 	} else {
 		ISP_LOGI("process fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -164,7 +163,7 @@ static cmr_int awbctrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 	case AWBCTRL_EVT_EXIT:
 		break;
 	case AWBCTRL_EVT_IOCTRL:
-		rtn = awbctrl_ioctrl(cxt_ptr,((struct awb_ctrl_msg_ctrl*)message->data)->cmd,((struct awb_ctrl_msg_ctrl*)message->data)->in,((struct awb_ctrl_msg_ctrl*)message->data)->out);
+		rtn = awbctrl_ioctrl(cxt_ptr, ((struct awb_ctrl_msg_ctrl *)message->data)->cmd, ((struct awb_ctrl_msg_ctrl *)message->data)->in, ((struct awb_ctrl_msg_ctrl *)message->data)->out);
 		break;
 	case AWBCTRL_EVT_PROCESS:
 		rtn = awbctrl_process(cxt_ptr, (struct awb_ctrl_calc_param *)message->data, NULL);
@@ -174,11 +173,10 @@ static cmr_int awbctrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 		break;
 	}
 
-exit:
+  exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
-
 
 static cmr_int awbctrl_create_thread(struct awbctrl_cxt *cxt_ptr)
 {
@@ -195,7 +193,7 @@ static cmr_int awbctrl_create_thread(struct awbctrl_cxt *cxt_ptr)
 		ISP_LOGE("fail to set awbctrl name");
 		rtn = CMR_MSG_SUCCESS;
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -218,7 +216,7 @@ static cmr_int awbctrl_destroy_thread(struct awbctrl_cxt *cxt_ptr)
 			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -232,22 +230,21 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle, enum awb_ctrl_cmd cmd, cmr_handle in_
 	ISP_CHECK_HANDLE_VALID(handle);
 	CMR_MSG_INIT(message);
 	if ((AWB_SYNC_MSG_BEGIN < cmd) && (AWB_SYNC_MSG_END > cmd)) {
-	msg_ctrl.cmd = cmd;
-	msg_ctrl.in = in_ptr;
-	msg_ctrl.out = out_ptr;
-	message.data = &msg_ctrl;
-	message.msg_type = AWBCTRL_EVT_IOCTRL;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
+		msg_ctrl.cmd = cmd;
+		msg_ctrl.in = in_ptr;
+		msg_ctrl.out = out_ptr;
+		message.data = &msg_ctrl;
+		message.msg_type = AWBCTRL_EVT_IOCTRL;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 	} else if ((AWB_DIRECT_MSG_BEGIN < cmd) && (AWB_DIRECT_MSG_END > cmd)) {
 		rtn = awbctrl_ioctrl(cxt_ptr, cmd, in_ptr, out_ptr);
-		}
+	}
 
-exit:
+  exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
-
 
 cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handle_awb)
 {
@@ -279,11 +276,11 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handl
 
 	return rtn;
 
-error_adpt_init:
+  error_adpt_init:
 	awbctrl_destroy_thread(cxt_ptr);
-exit:
+  exit:
 	if (cxt_ptr) {
-		free((cmr_handle)cxt_ptr);
+		free((cmr_handle) cxt_ptr);
 		cxt_ptr = NULL;
 	}
 	ISP_LOGI("done %ld", rtn);
@@ -317,7 +314,7 @@ cmr_int awb_ctrl_deinit(cmr_handle * handle_awb)
 		goto exit;
 	}
 
-exit:
+  exit:
 	if (cxt_ptr) {
 		free((cmr_handle) cxt_ptr);
 		*handle_awb = NULL;
@@ -361,7 +358,7 @@ cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param * in_
 		goto exit;
 	}
 
-exit:
+  exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
