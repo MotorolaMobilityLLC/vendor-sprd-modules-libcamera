@@ -1,6 +1,7 @@
 #include "mv_interface.h"
 #include "3dnr_module.h"
 #include <time.h>
+#include <errno.h>
 #include <cutils/properties.h>
 #include <semaphore.h>
 
@@ -777,15 +778,16 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_init(c3dnr_param_info_t
 
 __attribute__ ((visibility("default"))) cmr_s32 threednr_deinit()
 {
-	cmr_s32 ret = 0, num = 0;
+	cmr_s32 ret = 0, num = 0, is_timeout = 0;
 	while (1) {
 		if (C3DNR_STATUS_BUSY == p3dnr_info->status) {
 			usleep(1000 * 10);
 			BL_LOGI("wait 10ms: the 3dnr is busy.");
 			num++;
-			if (num > 20) {
+			if (num > 50) {
 				post_blend();
 				BL_LOGI("wait too long, post blend.");
+				is_timeout = 1;
 				break;
 			}
 		} else {
@@ -817,7 +819,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_deinit()
 	ret = DNR_destroy_threadPool();
 	if (ret < 0) {
 		BL_LOGE("DNR_destroy_threadPool fail\n");
-		return -1;
+		goto exit;
 	}
 #if DUMP_IMG_ENABLE
 	if (NULL != g_buf_blend_pre) {
@@ -829,6 +831,13 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_deinit()
 		g_buf_blend_post = NULL;
 	}
 #endif
+
+exit:
+	if (is_timeout) {
+		ret = -ETIMEDOUT;
+		return ret;
+	}
+
 	return ret;
 }
 
