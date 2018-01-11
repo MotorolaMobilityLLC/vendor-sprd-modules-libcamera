@@ -68,6 +68,7 @@ struct ipm_open_in {
     struct img_otp_data otp_data;
     cmr_u32 adgain_valid_frame_num;
     cmr_uint is_plus;
+    cmr_u32 adgain;
 };
 
 struct ipm_open_out {

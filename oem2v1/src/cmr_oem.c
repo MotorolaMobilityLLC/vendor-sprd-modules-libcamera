@@ -1754,6 +1754,7 @@ cmr_int camera_open_3dnr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                        &cxt->ipm_cxt.threednr_handle);
     sem_post(&cxt->threednr_flag_sm);
     CMR_LOGI("end");
+
     return ret;
 }
 
@@ -8204,9 +8205,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
         }
     }
+
     if (1 == camera_get_3dnr_flag(cxt) && 1 != cxt->is_3dnr_video) {
         struct ipm_open_in in_param;
         struct ipm_open_out out_param;
+        struct isp_adgain_exp_info adgain_exp_info;
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
         in_param.frame_rect.start_x = 0;
@@ -8214,6 +8217,17 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
+        in_param.adgain = 16;
+        if(1 == camera_get_sw_3dnr_flag(cxt)) {
+            ret = camera_get_tuning_info((cmr_handle)cxt, &adgain_exp_info);
+            if (ret) {
+                CMR_LOGE("failed to get gain %ld, and using default gain", ret);
+            } else {
+                in_param.adgain = adgain_exp_info.adgain/128;
+            }
+            CMR_LOGI("SW 3DRN, Get Gain from ISP: %d", in_param.adgain);
+        }
+
         ret = camera_open_3dnr(cxt, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to open 3dnr %ld", ret);

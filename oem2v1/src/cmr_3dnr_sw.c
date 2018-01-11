@@ -296,9 +296,9 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
-
     cam_cxt = (struct camera_context *)oem_handle;
     isp_cxt = (struct isp_context *)&(cam_cxt->isp_cxt);
+
     buf_size = threednr_handle->width * threednr_handle->height * 3 / 2;
     buf_num = 1;
     small_buf_size =
@@ -316,7 +316,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.small_width = threednr_handle->small_width;
     param.small_height = threednr_handle->small_height;
     param.total_frame_num = CAP_3DNR_NUM;
-    param.gain = 16;
+    param.gain = in->adgain;
     param.SearchWindow_x = 21;
     param.SearchWindow_y = 21;
     param.low_thr = 100;
@@ -1263,8 +1263,8 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         dst->data_end.uv_endian);
 
     CMR_LOGD(
-        "src fd: 0x%x, yaddr: 0x%x dst fd: 0x%x, yaddr: 0x%x",
-        src->fd, src->addr_vir.addr_y, dst->fd, dst->addr_vir.addr_y);
+        "src fd: 0x%x, yaddr: 0x%x, fmt: %d dst fd: 0x%x, yaddr: 0x%x, fmt: %d",
+        src->fd, src->addr_vir.addr_y, src->fmt, dst->fd, dst->addr_vir.addr_y, dst->fmt);
     ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
                           (cmr_evt_cb)NULL, NULL);
     if (ret) {
