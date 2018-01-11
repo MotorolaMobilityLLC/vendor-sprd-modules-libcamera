@@ -80,7 +80,8 @@ int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
     return ret;
 }
 
-int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem) {
+int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
+                                      int type) {
 
     int result = 0;
     size_t mem_size = 0;
@@ -90,6 +91,14 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem) {
 
     HAL_LOGI("E");
     mem_size = w * h * 3 / 2;
+
+    if (type == DEPTH_OUT_BUFFER) {
+        mem_size = w * h + 68;
+    } else if (type == DEPTH_OUT_WEIGHTMAP) {
+        mem_size = w * h * 2;
+    } else {
+        mem_size = w * h * 3 / 2;
+    }
     // to make it page size aligned
     //  mem_size = (mem_size + 4095U) & (~4095U);
 
@@ -476,13 +485,13 @@ void SprdCamera3MultiBase::dumpFps() {
 
 void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
                                     int param1, int param2, int param3,
-                                    int param4) {
+                                    const char param4[20]) {
     HAL_LOGD(" E %p %d %d %d %d", addr, type, size, param1, param2);
     char name[128];
     FILE *fp = NULL;
     switch (type) {
     case 1: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%d.yuv",
+        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%s.yuv",
                  param1, param2, param3, param4);
         fp = fopen(name, "w");
         if (fp == NULL) {
@@ -493,7 +502,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fclose(fp);
     } break;
     case 2: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%d.jpg",
+        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%s.jpg",
                  param1, param2, param3, param4);
         fp = fopen(name, "wb");
         if (fp == NULL) {
@@ -507,7 +516,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         int i = 0;
         int j = 0;
         snprintf(name, sizeof(name),
-                 "/data/misc/cameraserver/refocus_%d_params_%d.txt", size,
+                 "/data/misc/cameraserver/refocus_%d_params_%s.txt", size,
                  param4);
         fp = fopen(name, "w+");
         if (fp == NULL) {
@@ -577,6 +586,56 @@ hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
 
     return pushout;
 }
+
+int SprdCamera3MultiBase::convertToImg_frm(private_handle_t *in, img_frm *out,
+                                           cmr_u32 format) {
+    HAL_LOGD("in:%p, out:%p format:%u", in, out, format);
+    int ret = 0;
+    out->addr_phy.addr_y = 0;
+    out->addr_phy.addr_u = out->addr_phy.addr_y + in->width * in->height;
+    out->addr_phy.addr_v = out->addr_phy.addr_u;
+    HAL_LOGD("in->width:%d, in->height:%d", in->width, in->height);
+
+    out->addr_vir.addr_y = (cmr_uint)in->base;
+    out->addr_vir.addr_u = (cmr_uint)in->base + in->width * in->height;
+    HAL_LOGD("out->addr_vir.addr_y:%lx", out->addr_vir.addr_y);
+    out->buf_size = in->size;
+    HAL_LOGD("out->buf_size:%d", out->buf_size);
+    out->fd = in->share_fd;
+    out->fmt = format;
+    out->rect.start_x = 0;
+    out->rect.start_y = 0;
+    out->rect.width = in->width;
+    out->rect.height = in->height;
+    out->size.width = in->width;
+    out->size.height = in->height;
+    return ret;
+}
+
+int SprdCamera3MultiBase::convertToImg_frm(void *phy_addr, void *vir_addr,
+                                           int width, int height, int fd,
+                                           cmr_u32 format, img_frm *out) {
+
+    int ret = 0;
+    out->addr_phy.addr_y = (cmr_uint)phy_addr;
+    out->addr_phy.addr_u = out->addr_phy.addr_y + width * height;
+    out->addr_phy.addr_v = out->addr_phy.addr_u;
+
+    out->addr_vir.addr_y = (cmr_uint)vir_addr;
+    out->addr_vir.addr_u = out->addr_vir.addr_y + width * height;
+    out->buf_size = width * height * 3 >> 1;
+    out->fd = fd;
+    out->fmt = format;
+    out->rect.start_x = 0;
+    out->rect.start_y = 0;
+    out->rect.width = width;
+    out->rect.height = height;
+    out->size.width = width;
+    out->size.height = height;
+
+    return ret;
+}
+
 /*
 #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3MultiBase::convert_face_info(int *ptr_cam_face_inf, int width,
@@ -700,5 +759,127 @@ bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
     delete[] uwHPos;
     delete[] uwVPos;
     return true;
+}
+
+void SprdCamera3MultiBase::setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
+                                       uint32_t jpeg_size) {
+    if (jpeg_base == NULL) {
+        HAL_LOGE("jpeg_base is NULL");
+        return;
+    }
+    camera3_jpeg_blob *jpegBlob = NULL;
+    jpegBlob = (camera3_jpeg_blob *)(jpeg_base + (max_jpeg_size -
+                                                  sizeof(camera3_jpeg_blob)));
+    jpegBlob->jpeg_size = jpeg_size;
+    jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
+    HAL_LOGI("max_jpeg_size %d, jpeg_size %d", max_jpeg_size, jpeg_size);
+}
+
+uint32_t SprdCamera3MultiBase::getJpegSize(uint8_t *jpegBuffer,
+                                           uint32_t maxSize) {
+    uint32_t size = 0;
+    uint8_t *header = jpegBuffer + (maxSize - sizeof(camera3_jpeg_blob));
+    camera3_jpeg_blob *blob = (camera3_jpeg_blob *)(header);
+
+    if (blob->jpeg_blob_id == CAMERA3_JPEG_BLOB_ID) {
+        size = blob->jpeg_size;
+    }
+    HAL_LOGI("Jpeg size %d, maxSize %d", size, maxSize);
+    return size;
+}
+
+int SprdCamera3MultiBase::jpeg_encode_exif_simplify(img_frm *src_img,
+                                                    img_frm *pic_enc_img,
+                                                    struct img_frm *dst_img,
+                                                    SprdCamera3HWI *hwi) {
+    HAL_LOGI("E");
+
+    int ret = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    struct enc_exif_param encode_exif_param;
+
+    if (hwi == NULL || src_img == NULL || pic_enc_img == NULL) {
+        HAL_LOGE("para is NULL");
+        return BAD_VALUE;
+    }
+
+    memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
+
+    memcpy(&encode_exif_param.src, src_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, pic_enc_img, sizeof(struct img_frm));
+    if (dst_img != NULL)
+        memcpy(&encode_exif_param.last_dst, dst_img, sizeof(struct img_frm));
+
+    ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
+                             &encode_exif_param, NULL);
+
+    if (ret == NO_ERROR)
+        ret = encode_exif_param.stream_real_size;
+    else
+        ret = UNKNOWN_ERROR;
+    property_get("bokeh.dump.encode_exif", prop, "0");
+    if (atoi(prop) == 1) {
+        unsigned char *vir_jpeg =
+            (unsigned char *)(pic_enc_img->addr_vir.addr_y);
+        dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
+                 src_img->size.width, src_img->size.height, 0, "jpegEncode");
+    }
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
+int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
+    private_handle_t *src_private_handle,
+    private_handle_t *pic_enc_private_handle,
+    private_handle_t *dst_private_handle, SprdCamera3HWI *hwi) {
+
+    int ret = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    struct enc_exif_param encode_exif_param;
+    struct img_frm src_img;
+    struct img_frm pic_enc_img;
+    struct img_frm dst_img;
+
+    HAL_LOGI("src_private_handle :%p, pic_enc_private_handle:%p",
+             src_private_handle, pic_enc_private_handle);
+    if (hwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+
+    memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&pic_enc_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+
+    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420);
+    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG);
+    if (dst_private_handle != NULL) {
+        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG);
+    }
+
+    memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
+
+    ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
+                             &encode_exif_param, NULL);
+
+    if (ret == NO_ERROR)
+        ret = encode_exif_param.stream_real_size;
+    else
+        ret = UNKNOWN_ERROR;
+    property_get("bokeh.dump.encode_exif", prop, "0");
+    if (atoi(prop) == 1) {
+        unsigned char *vir_jpeg = (unsigned char *)pic_enc_private_handle->base;
+        dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
+                 src_img.size.width, src_img.size.height, 0, "jpegEncode");
+    }
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
 }
 };

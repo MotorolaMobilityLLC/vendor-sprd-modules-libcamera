@@ -1092,9 +1092,13 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                         (struct snp_thumb_yuv_param *)param);
         break;
     }
+    case CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC: {
+        ret = camera_jpeg_encode_exif_simplify(handle,
+                                               (struct enc_exif_param *)param);
+        break;
+    }
     case CAMERA_IOCTRL_GET_BLUR_COVERED: {
-        ret = camera_get_blur_covered_type(handle,
-                                        (cmr_s32 *)param);
+        ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
         break;
     }
     default:
@@ -1131,8 +1135,8 @@ cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
                              struct img_sbs_info *sbs_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!camera_handle || !raw_buff || !yuv_buff || !sbs_info) {
-        CMR_LOGE("error %p raw_buff=%p, yuv_buff=%p",
-                 camera_handle, raw_buff, yuv_buff);
+        CMR_LOGE("error %p raw_buff=%p, yuv_buff=%p", camera_handle, raw_buff,
+                 yuv_buff);
         ret = -1;
         goto exit;
     }
@@ -1210,10 +1214,11 @@ static oem_ops_t oem_module_ops = {
     camera_get_redisplay_data, camera_is_change_size,
     camera_get_postprocess_capture_size, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
-    camera_get_sensor_trim, NULL, camera_get_preview_rot_angle, camera_fd_enable,
-    camera_flip_enable, camera_fd_start, camera_is_need_stop_preview,
-    camera_takepicture_process, camera_get_size_align_page, camera_fast_ctrl,
-    camera_start_preflash, camera_get_viewangle, camera_get_sensor_exif_info,
+    camera_get_sensor_trim, NULL, camera_get_preview_rot_angle,
+    camera_fd_enable, camera_flip_enable, camera_fd_start,
+    camera_is_need_stop_preview, camera_takepicture_process,
+    camera_get_size_align_page, camera_fast_ctrl, camera_start_preflash,
+    camera_get_viewangle, camera_get_sensor_exif_info,
     camera_get_sensor_result_exif_info, camera_get_iommu_status,
     camera_set_preview_buffer, camera_set_video_buffer, camera_set_zsl_buffer,
     camera_set_video_snapshot_buffer, camera_set_zsl_snapshot_buffer,
@@ -1229,8 +1234,7 @@ static oem_ops_t oem_module_ops = {
     camera_start_capture, camera_stop_capture, camera_set_largest_picture_size,
     camera_ioctrl, camera_reprocess_yuv_for_jpeg, camera_get_focus_point,
     camera_isp_sw_check_buf, camera_isp_sw_proc, camera_raw_post_proc,
-    camera_get_tuning_param
-};
+    camera_get_tuning_param};
 
 struct oem_module OEM_MODULE_INFO_SYM = {
     .tag = 0, .ops = &oem_module_ops, .dso = NULL};

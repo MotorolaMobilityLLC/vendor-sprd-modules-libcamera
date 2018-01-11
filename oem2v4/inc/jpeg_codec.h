@@ -46,6 +46,7 @@ struct jpeg_enc_in_param {
     cmr_uint stream_buf_phy;
     cmr_uint stream_buf_vir;
     cmr_u32 stream_buf_size;
+    cmr_u32 stream_real_size;
     cmr_uint stream_buf_fd;
     cmr_u32 padding;
     cmr_handle jpeg_handle;
@@ -58,6 +59,7 @@ struct jpeg_enc_in_param {
     cmr_u8 mirror;
     cmr_u8 flip;
     cmr_u8 rotation;
+    cmr_u8 no_need_callback;
 };
 
 struct jpeg_enc_next_param {

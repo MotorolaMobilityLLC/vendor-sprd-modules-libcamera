@@ -67,6 +67,17 @@ typedef enum { MATCH_FAILED = 0, MATCH_SUCCESS } matchResult;
 typedef enum { NOTIFY_SUCCESS = 0, NOTIFY_ERROR, NOTIFY_NOT_FOUND } notifytype;
 
 typedef enum {
+    PREVIEW_MAIN_BUFFER = 0,
+    PREVIEW_DEPTH_BUFFER,
+    SNAPSHOT_MAIN_BUFFER,
+    SNAPSHOT_DEPTH_BUFFER,
+    SNAPSHOT_TRANSFORM_BUFFER,
+    DEPTH_OUT_BUFFER,
+    DEPTH_OUT_WEIGHTMAP,
+    YUV420
+} camera_buffer_type_t;
+
+typedef enum {
     CAMERA_LEFT = 0,
     CAMERA_RIGHT,
     MAX_CAMERA_PER_BUNDLE

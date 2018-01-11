@@ -53,14 +53,41 @@
 
 namespace sprdcamera {
 
+#define YUV_CONVERT_TO_JPEG
+#define ISP_SUPPORT_MICRODEPTH
+
+#ifdef YUV_CONVERT_TO_JPEG
+#define BLUR_LOCAL_CAPBUFF_NUM (4)
+#else
 #define BLUR_LOCAL_CAPBUFF_NUM 2
-#define BLUR_MAX_NUM_STREAMS 3
+#endif
+
+#ifdef ISP_SUPPORT_MICRODEPTH
+#ifdef YUV_CONVERT_TO_JPEG
+#define BLUR3_REFOCUS_COMMON_PARAM_NUM (27)
+#define BLUR_REFOCUS_PARAM2_NUM (52)
+#else
+#define BLUR3_REFOCUS_COMMON_PARAM_NUM (25)
+#define BLUR_REFOCUS_PARAM2_NUM (50)
+#endif
+#else
+#ifdef YUV_CONVERT_TO_JPEG
+#define BLUR3_REFOCUS_COMMON_PARAM_NUM (11)
+#define BLUR_REFOCUS_PARAM2_NUM (11)
+#else
+#define BLUR3_REFOCUS_COMMON_PARAM_NUM (9)
+#define BLUR_REFOCUS_PARAM2_NUM (9)
+#endif
+#endif
+
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
+#define BLUR_MAX_NUM_STREAMS (3)
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
 #define BLUR_LIB_BOKEH_CAPTURE2 "libBokeh2Frames.so"
 #define BLUR_LIB_BOKEH_NUM (2)
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
+
 #define BLUR_REFOCUS_2_PARAM_NUM (17)
 #define BLUR_AF_WINDOW_NUM (9)
 #define BLUR_MAX_ROI (10)
@@ -69,7 +96,6 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM_NUM                                                 \
     (BLUR_AF_WINDOW_NUM + BLUR_REFOCUS_2_PARAM_NUM +                           \
      BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_MAX_ROI * 5 + BLUR_CALI_SEQ_LEN)
-#define BLUR_REFOCUS_PARAM2_NUM (50)
 
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
@@ -231,16 +257,18 @@ typedef struct {
     cmr_u32 tmp_thr;
 } capture2_init_params_t;
 
+#ifdef ISP_SUPPORT_MICRODEPTH
+typedef struct {
+    cmr_u8 *microdepth_buffer;
+    cmr_u32 microdepth_size;
+} MicrodepthBoke2Frames;
+#endif
+
 typedef struct {
     int f_number;         // 1 ~ 20
     unsigned short sel_x; /* The point which be touched */
     unsigned short sel_y; /* The point which be touched */
 } capture2_weight_params_t;
-
-typedef struct {
-    cmr_u8 *microdepth_buffer;
-    cmr_u32 microdepth_size;
-} MicrodepthBoke2Frames;
 
 typedef struct {
     void *handle;
@@ -252,8 +280,10 @@ typedef struct {
                                  void *handle);
     int (*Bokeh2Frames_Process)(void *img0_src, void *img_rslt, void *dis_map,
                                 void *handle, capture2_weight_params_t *params);
+#ifdef ISP_SUPPORT_MICRODEPTH
     int (*BokehFrames_ParamInfo_Get)(void *handle,
                                      MicrodepthBoke2Frames **microdepthInfo);
+#endif
     int (*BokehFrames_Deinit)(void *handle);
     void *mHandle;
 } BlurAPI2_t;
@@ -305,6 +335,15 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mPreviewStreamsNum;
     Mutex mRequestLock;
     int mjpegSize;
+    void *m_pNearYuvBuffer;
+    void *m_pFarYuvBuffer;
+#ifdef YUV_CONVERT_TO_JPEG
+    int mNearJpegSize;
+    int mFarJpegSize;
+    buffer_handle_t *m_pNearJpegBuffer;
+    buffer_handle_t *m_pFarJpegBuffer;
+#endif
+    void *weight_map;
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
     int mCoverValue;
@@ -332,8 +371,11 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void initBlurWeightParams();
         bool isBlurInitParamsChanged();
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
-        void saveCaptureBlurParams(buffer_handle_t *mSavedResultBuff,
-                                   buffer_handle_t *buffer);
+        void saveCaptureBlurParams(buffer_handle_t *result_buff,
+                                   uint32_t jpeg_size);
+        void getOutWeightMap(buffer_handle_t *yuv_addr);
+        void dumpSaveImages(buffer_handle_t *result_buff, uint32_t use_size,
+                            uint32_t jpeg_size);
         uint8_t getIspAfFullscanInfo();
         int blurHandle(struct private_handle_t *input1, void *input2,
                        struct private_handle_t *output);
@@ -351,7 +393,6 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         uint8_t mCaptureStreamsNum;
         BlurAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
         BlurAPI2_t *mBlurApi2;
-        MicrodepthBoke2Frames *mMicrodepthInfo;
         int mLastMinScope;
         int mLastMaxScope;
         int mLastAdjustRati;
@@ -369,7 +410,9 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         capture_weight_params_t mCaptureWeightParams;
         capture2_init_params_t mCapture2InitParams;
         capture2_weight_params_t mCapture2WeightParams;
+#ifdef ISP_SUPPORT_MICRODEPTH
         bokeh_micro_depth_tune_param mIspCapture2InitParams;
+#endif
         int32_t mFaceInfo[4];
         uint32_t mRotation;
         int32_t mLastTouchX;
@@ -380,9 +423,10 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mIsGalleryBlur;
         bool mIsBlurAlways;
         blur_isp_info_t mIspInfo;
-        void *mNearYuv;
         unsigned short *mOutWeightMap;
-
+#ifdef ISP_SUPPORT_MICRODEPTH
+        MicrodepthBoke2Frames *mMicrodepthInfo;
+#endif
       private:
         void waitMsgAvailable();
         void BlurFaceMakeup(private_handle_t *private_handle);

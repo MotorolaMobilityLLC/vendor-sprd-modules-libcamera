@@ -686,7 +686,13 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
       mUpdateCaptureWeightParams(false), mUpdatePreviewWeightParams(false),
       mLastFaceNum(0), mSkipFaceNum(0), mRotation(0), mLastTouchX(0),
       mLastTouchY(0), mBlurBody(true), mUpdataTouch(false), mVersion(0),
-      mIsGalleryBlur(false), mIsBlurAlways(false), mOutWeightMap(NULL) {
+      mIsGalleryBlur(false), mIsBlurAlways(false),
+#ifdef ISP_SUPPORT_MICRODEPTH
+      mOutWeightMap(NULL), mMicrodepthInfo(NULL)
+#else
+      mOutWeightMap(NULL)
+#endif
+{
     HAL_LOGI(" E");
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
@@ -701,6 +707,9 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
     memset(mFaceInfo, 0, sizeof(int32_t) * 4);
     memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     memset(&mIspInfo, 0, sizeof(blur_isp_info_t));
+#ifdef ISP_SUPPORT_MICRODEPTH
+    memset(&mIspCapture2InitParams, 0, sizeof(bokeh_micro_depth_tune_param));
+#endif
     mCaptureMsgList.clear();
 }
 
@@ -937,6 +946,16 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
         HAL_LOGE("sym Bokeh2Frames_Process failed.error = %s", error);
         return -1;
     }
+#ifdef ISP_SUPPORT_MICRODEPTH
+    mBlurApi2->BokehFrames_ParamInfo_Get =
+        (int (*)(void *handle, MicrodepthBoke2Frames **microdepthInfo))dlsym(
+            mBlurApi2->handle, "BokehFrames_ParamInfo_Get");
+    if (mBlurApi2->BokehFrames_ParamInfo_Get == NULL) {
+        error = dlerror();
+        HAL_LOGE("sym BokehFrames_ParamInfo_Get failed.error = %s", error);
+        return -1;
+    }
+#endif
     mBlurApi2->BokehFrames_Deinit =
         (int (*)(void *handle))dlsym(mBlurApi2->handle, "BokehFrames_Deinit");
     if (mBlurApi2->BokehFrames_Deinit == NULL) {
@@ -1021,6 +1040,9 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
     unsigned char *srcYUV = NULL;
     unsigned char *destYUV = NULL;
     int libid = 0;
+#ifdef ISP_SUPPORT_MICRODEPTH
+    SprdCamera3HWI *hwiMain = mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+#endif
 
     if (input1 != NULL) {
         srcYUV = (unsigned char *)(input1->base);
@@ -1071,15 +1093,138 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
                          ns2ms(systemTime() - deinitStart));
             }
             int64_t initStart = systemTime();
-            ret = mBlurApi2->BokehFrames_Init(&(mBlurApi2->mHandle),
-                                              mCaptureInitParams.width,
-                                              mCaptureInitParams.height, NULL);
-            HAL_LOGD("Bokeh2Frames iSmoothInit cost %lld ms",
-                     ns2ms(systemTime() - initStart));
+#ifdef ISP_SUPPORT_MICRODEPTH
+            ret =
+                hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_MICRODEPTH_PARAM,
+                                       (void *)(&mIspCapture2InitParams), NULL);
+            if (ret != 0 || mIspCapture2InitParams.tuning_exist == 0) {
+
+                HAL_LOGD("Bokeh2Frames git isp param error,use default init "
+                         "param Err:%d",
+                         ret);
+                ret = mBlurApi2->BokehFrames_Init(
+                    &(mBlurApi2->mHandle), mCaptureInitParams.width,
+                    mCaptureInitParams.height, NULL);
+            } else {
+                HAL_LOGD(
+                    "Bokeh2Frames git isp param success,use isp init param:");
+                HAL_LOGD("enable:%d", mIspCapture2InitParams.enable);
+                HAL_LOGD("fir_mode:%d", mIspCapture2InitParams.fir_mode);
+                HAL_LOGD("fir_len:%d", mIspCapture2InitParams.fir_len);
+                HAL_LOGD("fir_channel:%d", mIspCapture2InitParams.fir_channel);
+                HAL_LOGD("fir_cal_mode:%d",
+                         mIspCapture2InitParams.fir_cal_mode);
+                HAL_LOGD("fir_edge_factor:%d",
+                         mIspCapture2InitParams.fir_edge_factor);
+                HAL_LOGD("depth_mode:%d", mIspCapture2InitParams.depth_mode);
+                HAL_LOGD("smooth_thr:%d", mIspCapture2InitParams.smooth_thr);
+                HAL_LOGD("touch_factor:%d",
+                         mIspCapture2InitParams.touch_factor);
+                HAL_LOGD("scale_factor:%d",
+                         mIspCapture2InitParams.scale_factor);
+                HAL_LOGD("refer_len:%d", mIspCapture2InitParams.refer_len);
+                HAL_LOGD("merge_factor:%d",
+                         mIspCapture2InitParams.merge_factor);
+                HAL_LOGD("similar_factor:%d",
+                         mIspCapture2InitParams.similar_factor);
+                HAL_LOGD("tmp_mode:%d", mIspCapture2InitParams.tmp_mode);
+                HAL_LOGD("tmp_thr:%d", mIspCapture2InitParams.tmp_thr);
+                for (uint32_t i = 0;
+                     i < ARRAY_SIZE(mIspCapture2InitParams.hfir_coeff); i++) {
+                    HAL_LOGD("hfir_coeff[%d]:%d", i,
+                             mIspCapture2InitParams.hfir_coeff[i]);
+                }
+                for (uint32_t i = 0;
+                     i < ARRAY_SIZE(mIspCapture2InitParams.vfir_coeff); i++) {
+                    HAL_LOGD("vfir_coeff[%d]:%d", i,
+                             mIspCapture2InitParams.vfir_coeff[i]);
+                }
+                for (uint32_t i = 0;
+                     i < ARRAY_SIZE(mIspCapture2InitParams.similar_coeff);
+                     i++) {
+                    HAL_LOGD("similar_coeff[%d]:%d", i,
+                             mIspCapture2InitParams.similar_coeff[i]);
+                }
+                for (uint32_t i = 0;
+                     i < ARRAY_SIZE(mIspCapture2InitParams.tmp_coeff); i++) {
+                    HAL_LOGD("tmp_coeff[%d]:%d", i,
+                             mIspCapture2InitParams.tmp_coeff[i]);
+                }
+
+                mCapture2InitParams.enable = mIspCapture2InitParams.enable;
+                mCapture2InitParams.fir_mode = mIspCapture2InitParams.fir_mode;
+                mCapture2InitParams.fir_len = mIspCapture2InitParams.fir_len;
+                memcpy(mCapture2InitParams.hfir_coeff,
+                       mIspCapture2InitParams.hfir_coeff,
+                       ARRAY_SIZE(mCapture2InitParams.hfir_coeff) *
+                           sizeof(cmr_s32));
+                memcpy(mCapture2InitParams.vfir_coeff,
+                       mIspCapture2InitParams.vfir_coeff,
+                       ARRAY_SIZE(mCapture2InitParams.vfir_coeff) *
+                           sizeof(cmr_s32));
+                mCapture2InitParams.fir_channel =
+                    mIspCapture2InitParams.fir_channel;
+                mCapture2InitParams.fir_cal_mode =
+                    mIspCapture2InitParams.fir_cal_mode;
+                mCapture2InitParams.fir_edge_factor =
+                    mIspCapture2InitParams.fir_edge_factor;
+                mCapture2InitParams.depth_mode =
+                    mIspCapture2InitParams.depth_mode;
+                mCapture2InitParams.smooth_thr =
+                    mIspCapture2InitParams.smooth_thr;
+                mCapture2InitParams.touch_factor =
+                    mIspCapture2InitParams.touch_factor;
+                mCapture2InitParams.scale_factor =
+                    mIspCapture2InitParams.scale_factor;
+                mCapture2InitParams.refer_len =
+                    mIspCapture2InitParams.refer_len;
+                mCapture2InitParams.merge_factor =
+                    mIspCapture2InitParams.merge_factor;
+                mCapture2InitParams.similar_factor =
+                    mIspCapture2InitParams.similar_factor;
+                memcpy(mCapture2InitParams.similar_coeff,
+                       mIspCapture2InitParams.similar_coeff,
+                       ARRAY_SIZE(mCapture2InitParams.similar_coeff) *
+                           sizeof(cmr_u32));
+                mCapture2InitParams.tmp_mode = mIspCapture2InitParams.tmp_mode;
+                memcpy(mCapture2InitParams.tmp_coeff,
+                       mIspCapture2InitParams.tmp_coeff,
+                       ARRAY_SIZE(mCapture2InitParams.tmp_coeff) *
+                           sizeof(cmr_s32));
+                mCapture2InitParams.tmp_thr = mIspCapture2InitParams.tmp_thr;
+                ret = mBlurApi2->BokehFrames_Init(
+                    &(mBlurApi2->mHandle), mCaptureInitParams.width,
+                    mCaptureInitParams.height, &mCapture2InitParams);
+            }
 
             if (ret != 0) {
                 HAL_LOGE("Bokeh2Frames iSmoothInit Err:%d", ret);
             }
+            mBlurApi2->BokehFrames_ParamInfo_Get(mBlurApi2->mHandle,
+                                                 &mMicrodepthInfo);
+            if (ret != 0) {
+                HAL_LOGE("Bokeh2Frames ParamInfo_Get Err:%d", ret);
+            } else {
+                HAL_LOGD("Bokeh2Frames ParamInfo_Get :%d   %p ",
+                         mMicrodepthInfo->microdepth_size,
+                         mMicrodepthInfo->microdepth_buffer);
+                ret = hwiMain->camera_ioctrl(
+                    CAMERA_IOCTRL_SET_MICRODEPTH_DEBUG_INFO,
+                    (void *)mMicrodepthInfo, NULL);
+                if (ret != 0) {
+                    HAL_LOGE("isp set microdepth debug info Err:%d", ret);
+                }
+            }
+#else
+            ret = mBlurApi2->BokehFrames_Init(&(mBlurApi2->mHandle),
+                                              mCaptureInitParams.width,
+                                              mCaptureInitParams.height, NULL);
+            if (ret != 0) {
+                HAL_LOGE("Bokeh2Frames iSmoothInit Err:%d", ret);
+            }
+#endif
+            HAL_LOGD("Bokeh2Frames iSmoothInit cost %lld ms",
+                     ns2ms(systemTime() - initStart));
 
             if (mBlurApi[1]->mHandle != NULL) {
                 int64_t deinitStart = systemTime();
@@ -2567,7 +2712,20 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
              mCaptureWeightParams.roi_type);
 
     if (mVersion == 3) {
+#ifdef ISP_SUPPORT_MICRODEPTH
+        uint32_t hfir_coeff_size =
+            ARRAY_SIZE(mCapture2InitParams.hfir_coeff) * 4;
+        uint32_t vfir_coeff_size =
+            ARRAY_SIZE(mCapture2InitParams.vfir_coeff) * 4;
+        uint32_t similar_coeff_size =
+            ARRAY_SIZE(mCapture2InitParams.similar_coeff) * 4;
+        uint32_t tmp_coeff_size = ARRAY_SIZE(mCapture2InitParams.tmp_coeff) * 4;
+
+        para_size += BLUR3_REFOCUS_COMMON_PARAM_NUM * 4 + hfir_coeff_size +
+                     vfir_coeff_size + similar_coeff_size + tmp_coeff_size;
+#else
         para_size += BLUR3_REFOCUS_COMMON_PARAM_NUM * 4;
+#endif
     } else {
         para_size += BLUR_REFOCUS_COMMON_PARAM_NUM * 4 +
                      BLUR_REFOCUS_2_PARAM_NUM * 4 + BLUR_AF_WINDOW_NUM * 4 +
@@ -2605,7 +2763,6 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
     }
 #endif
     if (mVersion == 3) {
-        // blur3.0, use a new lib
         uint32_t orientation = mCaptureWeightParams.rotate_angle;
         uint32_t width = mBlur->mCaptureWidth;
         uint32_t height = mBlur->mCaptureHeight;
@@ -2614,8 +2771,67 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t SelCoordY = mCapture2WeightParams.sel_y;
         uint32_t isGalleryBlur = (uint32_t)mIsGalleryBlur;
         uint32_t version = mVersion;
-
         unsigned char BlurFlag[] = {'B', 'L', 'U', 'R'};
+#ifdef ISP_SUPPORT_MICRODEPTH
+        // blur3.0, use a new lib
+        uint32_t enable = mCapture2InitParams.enable;
+        uint32_t fir_mode = mCapture2InitParams.fir_mode;
+        uint32_t fir_len = mCapture2InitParams.fir_len;
+        uint32_t fir_channel = mCapture2InitParams.fir_channel;
+        uint32_t fir_cal_mode = mCapture2InitParams.fir_cal_mode;
+        uint32_t fir_edge_factor = mCapture2InitParams.fir_edge_factor;
+        uint32_t depth_mode = mCapture2InitParams.depth_mode;
+        uint32_t smooth_thr = mCapture2InitParams.smooth_thr;
+        uint32_t touch_factor = mCapture2InitParams.touch_factor;
+        uint32_t scale_factor = mCapture2InitParams.scale_factor;
+        uint32_t refer_len = mCapture2InitParams.refer_len;
+        uint32_t merge_factor = mCapture2InitParams.merge_factor;
+        uint32_t similar_factor = mCapture2InitParams.similar_factor;
+        uint32_t tmp_mode = mCapture2InitParams.tmp_mode;
+        uint32_t tmp_thr = mCapture2InitParams.tmp_thr;
+        uint32_t tuning_exist = mIspCapture2InitParams.tuning_exist;
+
+        unsigned char *p1[] = {
+            (unsigned char *)&enable,         (unsigned char *)&fir_mode,
+            (unsigned char *)&fir_len,        (unsigned char *)&fir_channel,
+            (unsigned char *)&fir_cal_mode,   (unsigned char *)&fir_edge_factor,
+            (unsigned char *)&depth_mode,     (unsigned char *)&smooth_thr,
+            (unsigned char *)&touch_factor,   (unsigned char *)&scale_factor,
+            (unsigned char *)&refer_len,      (unsigned char *)&merge_factor,
+            (unsigned char *)&similar_factor, (unsigned char *)&tmp_mode,
+            (unsigned char *)&tmp_thr,        (unsigned char *)&orientation,
+#ifdef YUV_CONVERT_TO_JPEG
+            (unsigned char *)&near_jpeg_size, (unsigned char *)&far_jpeg_size,
+#endif
+            (unsigned char *)&width,          (unsigned char *)&height,
+            (unsigned char *)&FNum,           (unsigned char *)&SelCoordX,
+            (unsigned char *)&SelCoordY,      (unsigned char *)&isGalleryBlur,
+            (unsigned char *)&tuning_exist,   (unsigned char *)&version,
+            (unsigned char *)&BlurFlag};
+
+        buffer_base += (use_size - BLUR3_REFOCUS_COMMON_PARAM_NUM * 4);
+        for (i = 0; i < BLUR3_REFOCUS_COMMON_PARAM_NUM; i++) {
+            memcpy(buffer_base + i * 4, p1[i], 4);
+        }
+
+        buffer_base -= ARRAY_SIZE(mCapture2InitParams.hfir_coeff) * 4;
+        for (i = 0; i < ARRAY_SIZE(mCapture2InitParams.hfir_coeff); i++) {
+            memcpy(buffer_base + i * 4, mCapture2InitParams.hfir_coeff + i, 4);
+        }
+        buffer_base -= ARRAY_SIZE(mCapture2InitParams.vfir_coeff) * 4;
+        for (i = 0; i < ARRAY_SIZE(mCapture2InitParams.vfir_coeff); i++) {
+            memcpy(buffer_base + i * 4, mCapture2InitParams.vfir_coeff + i, 4);
+        }
+        buffer_base -= ARRAY_SIZE(mCapture2InitParams.similar_coeff) * 4;
+        for (i = 0; i < ARRAY_SIZE(mCapture2InitParams.similar_coeff); i++) {
+            memcpy(buffer_base + i * 4, mCapture2InitParams.similar_coeff + i,
+                   4);
+        }
+        buffer_base -= ARRAY_SIZE(mCapture2InitParams.tmp_coeff) * 4;
+        for (i = 0; i < ARRAY_SIZE(mCapture2InitParams.tmp_coeff); i++) {
+            memcpy(buffer_base + i * 4, mCapture2InitParams.tmp_coeff + i, 4);
+        }
+#else
         unsigned char *p1[] = {
             (unsigned char *)&orientation,
 #ifdef YUV_CONVERT_TO_JPEG
@@ -2630,6 +2846,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         for (i = 0; i < BLUR3_REFOCUS_COMMON_PARAM_NUM; i++) {
             memcpy(buffer_base + i * 4, p1[i], 4);
         }
+#endif
     } else {
         // blur1.0 and blur2.0 commom
         uint32_t orientation = mCaptureWeightParams.rotate_angle;
@@ -2857,8 +3074,21 @@ void SprdCamera3Blur::CaptureThread::dumpSaveImages(
 #endif
 
     if (mVersion == 3) {
+#ifdef ISP_SUPPORT_MICRODEPTH
+        uint32_t hfir_coeff_size =
+            ARRAY_SIZE(mCapture2InitParams.hfir_coeff) * 4;
+        uint32_t vfir_coeff_size =
+            ARRAY_SIZE(mCapture2InitParams.vfir_coeff) * 4;
+        uint32_t similar_coeff_size =
+            ARRAY_SIZE(mCapture2InitParams.similar_coeff) * 4;
+        uint32_t tmp_coeff_size = ARRAY_SIZE(mCapture2InitParams.tmp_coeff) * 4;
+
+        para_size += BLUR3_REFOCUS_COMMON_PARAM_NUM * 4 + hfir_coeff_size +
+                     vfir_coeff_size + similar_coeff_size + tmp_coeff_size;
+#else
         para_num += BLUR3_REFOCUS_COMMON_PARAM_NUM;
         para_size = para_num * 4;
+#endif
     } else {
         para_num += BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_REFOCUS_2_PARAM_NUM +
                     BLUR_AF_WINDOW_NUM + BLUR_MAX_ROI * 5 +

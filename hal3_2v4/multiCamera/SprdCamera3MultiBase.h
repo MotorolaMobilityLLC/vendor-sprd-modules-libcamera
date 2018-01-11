@@ -64,7 +64,7 @@ class SprdCamera3MultiBase {
     SprdCamera3MultiBase();
     virtual ~SprdCamera3MultiBase();
     int initialize(multiCameraMode mode);
-    virtual int allocateOne(int w, int h, new_mem_t *new_mem);
+    virtual int allocateOne(int w, int h, new_mem_t *new_mem, int type);
     virtual void freeOneBuffer(new_mem_t *buffer);
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
@@ -76,13 +76,18 @@ class SprdCamera3MultiBase {
     virtual int getStreamType(camera3_stream_t *new_stream);
     virtual void dumpFps();
     virtual void dumpData(unsigned char *addr, int type, int size, int param1,
-                          int param2, int param3, int param4);
+                          int param2, int param3, const char param4[20]);
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
                                hwi_frame_buffer_info_t *result2);
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
+    virtual int convertToImg_frm(private_handle_t *in, img_frm *out,
+                                 cmr_u32 format);
+    virtual int convertToImg_frm(void *phy_addr, void *vir_addr, int width,
+                                 int height, int fd, cmr_u32 format,
+                                 img_frm *out);
     /*
 #ifdef CONFIG_FACE_BEAUTY
 virtual void doFaceMakeup(struct camera_frame_type *frame,
@@ -97,6 +102,15 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                    uint32_t a_udFileSize);
     int flushIonBuffer(int buffer_fd, void *v_addr, size_t size);
+    uint32_t getJpegSize(uint8_t *jpegBuffer, uint32_t maxSize);
+    void setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
+                     uint32_t jpeg_size);
+    int jpeg_encode_exif_simplify(img_frm *src_img, img_frm *pic_enc_img,
+                                  struct img_frm *dst_img, SprdCamera3HWI *hwi);
+    int jpeg_encode_exif_simplify(private_handle_t *src_private_handle,
+                                  private_handle_t *pic_enc_private_handle,
+                                  private_handle_t *dst_private_handle,
+                                  SprdCamera3HWI *hwi);
 
   private:
     bool mIommuEnabled;

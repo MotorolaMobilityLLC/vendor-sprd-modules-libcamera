@@ -1092,6 +1092,11 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                         (struct snp_thumb_yuv_param *)param);
         break;
     }
+    case CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC: {
+        ret = camera_jpeg_encode_exif_simplify(handle,
+                                               (struct enc_exif_param *)param);
+        break;
+    }
     case CAMERA_IOCTRL_GET_BLUR_COVERED: {
         ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
         break;

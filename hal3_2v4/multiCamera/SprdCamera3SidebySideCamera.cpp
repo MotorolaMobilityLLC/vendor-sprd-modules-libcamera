@@ -2633,10 +2633,10 @@ int SprdCamera3SideBySideCamera::thumbYuvProc(buffer_handle_t *src_buffer) {
     if (atoi(prop) == 1) {
         dumpData((unsigned char *)thumb_param.src_img.addr_vir.addr_y, 1,
                  thumb_param.src_img.buf_size, thumb_param.src_img.size.width,
-                 thumb_param.src_img.size.height, 5, 1);
+                 thumb_param.src_img.size.height, 5, "src");
         dumpData((unsigned char *)thumb_param.dst_img.addr_vir.addr_y, 1,
                  thumb_param.dst_img.buf_size, thumb_param.dst_img.size.width,
-                 thumb_param.dst_img.size.height, 5, 2);
+                 thumb_param.dst_img.size.height, 5, "dst");
     }
 
     HAL_LOGI("x,angle=%d JpegOrientation=%d", thumb_param.angle,
