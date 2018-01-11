@@ -309,36 +309,42 @@ static cmr_int threednr_close(cmr_handle class_handle) {
 
     ret = threednr_deinit();
     if (ret) {
-        CMR_LOGE("3dnr failed to threednr_deinit");
+        CMR_LOGE("threednr_deinit timeout or failed");
+        sem_destroy(&threednr_handle->sem_3dnr);
+        goto exit;
     }
 
     CMR_LOGI("OK to threednr_deinit");
 
     sem_destroy(&threednr_handle->sem_3dnr);
+
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
-    if (NULL != cam_cxt->hal_malloc) {
-        if (0 !=
-            cam_cxt->hal_free(
-                CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
-                &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
-                cam_cxt->client_data)) {
-            CMR_LOGE("Fail to free the output buffer");
-        } else {
-            CMR_LOGD("OK to free the output buffer");
-        }
-        if (0 !=
-            cam_cxt->hal_free(CAMERA_SNAPSHOT_3DNR,
-                              (cmr_uint *)threednr_handle->small_buf_phy,
-                              (cmr_uint *)threednr_handle->small_buf_vir,
-                              threednr_handle->small_buf_fd, CAP_3DNR_NUM,
-                              cam_cxt->client_data)) {
-            CMR_LOGE("Fail to free the small image buffers");
-        }
-    } else {
-        CMR_LOGD("cam_cxt->hal_free is NULL");
+
+    if (cam_cxt->hal_free == NULL) {
+        CMR_LOGE("cam_cxt->hal_free is NULL");
+        goto exit;
     }
 
+    ret = cam_cxt->hal_free(
+                        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
+                        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
+                        cam_cxt->client_data);
+
+    if (ret) {
+        CMR_LOGE("Fail to free the output buffer");
+    }
+
+    ret = cam_cxt->hal_free(CAMERA_SNAPSHOT_3DNR,
+                            (cmr_uint *)threednr_handle->small_buf_phy,
+                            (cmr_uint *)threednr_handle->small_buf_vir,
+                            threednr_handle->small_buf_fd, CAP_3DNR_NUM,
+                            cam_cxt->client_data);
+    if (ret) {
+        CMR_LOGE("Fail to free the small image buffers");
+    }
+
+exit:
     ret = threednr_thread_destroy(threednr_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
