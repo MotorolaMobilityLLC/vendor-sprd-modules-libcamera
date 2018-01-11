@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #define LOG_TAG "af_sprd_adpt_v1"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
+#include <cutils/trace.h>
 
 #include <assert.h>
 #include <cutils/properties.h>
@@ -2902,7 +2904,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 
 	system_time0 = systemTime(CLOCK_MONOTONIC);
-
+	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
@@ -2999,7 +3001,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			break;
 		}
 	}
-
+	ATRACE_END();
 	system_time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time1 - system_time0) / 1000));
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #define LOG_TAG "lsc_ctrl"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
+#include <cutils/trace.h>
 #include "lsc_adv.h"
 #include "isp_adpt.h"
 #include <dlfcn.h>
@@ -800,9 +802,11 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	cxt = (struct lsc_ctrl_context *)handle;
 
 	result->dst_gain = cxt->dst_gain;
+	ATRACE_BEGIN(__FUNCTION__);
 	cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
+	ATRACE_END();
 	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ",(cmr_s32) ((ae_time1 - ae_time0) / 1000));
 	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
 	if(update_info.can_update_dest == 1){

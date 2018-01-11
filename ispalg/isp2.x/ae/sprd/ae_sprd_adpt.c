@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #define LOG_TAG "ae_sprd_adpt"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include <cutils/trace.h>
 #include "ae_sprd_adpt.h"
 #include "ae_sprd_adpt_internal.h"
@@ -4642,11 +4643,13 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	current_status->ae_start_delay = 0;
 	misc_calc_in.sync_settings = current_status;
 	misc_calc_out.ae_output = &cxt->cur_result;
+	ATRACE_BEGIN(__FUNCTION__);
 	cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 	if(0 == cxt->skip_update_param_flag){
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 	}
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
+	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
 	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ",(cmr_s32) ((ae_time1 - ae_time0) / 1000));
 
