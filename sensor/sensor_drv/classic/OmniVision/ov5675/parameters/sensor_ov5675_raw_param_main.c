@@ -27,7 +27,6 @@
 #undef _NR_MAP_PARAM_
 
 
-
 /* Begin Include */
 #include "sensor_ov5675_raw_param_common.c"
 #include "sensor_ov5675_raw_param_prv_0.c"
@@ -48,11 +47,11 @@
 /************************************************************************/
 
 
-/* IspToolVersion=1.15.46.2 */
+/* IspToolVersion=R1.17.5001 */
 
 
 /* Capture Sizes:
-	2592x1944,1296x972,648x486
+	640x480,1296x972,2592x1944
 */
 
 
