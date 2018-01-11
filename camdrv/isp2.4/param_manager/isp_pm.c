@@ -47,7 +47,7 @@ char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"yuv_postcdn",
 	"iircnr",
 	"iir_yrandom",
-	"uvdiv",
+	"cce_uv",
 	"rgb_afm",
 };
 
