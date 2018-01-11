@@ -9801,8 +9801,9 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     ASensorManager *mSensorManager;
     int mNumSensors;
     ASensorList mSensorList;
-    uint32_t GyroRate = 10 * 1000;    //  us
+    uint32_t GyroRate = 10 * 1000;    // us
     uint32_t GsensorRate = 50 * 1000; // us
+    uint32_t delayTime = 10 * 1000;   // us
     uint32_t Gyro_flag = 0;
     uint32_t Gsensor_flag = 0;
     ASensorEvent buffer[8];
@@ -9831,12 +9832,12 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
 
     if (accelerometerSensor != NULL) {
         if (ASensorEventQueue_registerSensor(sensorEventQueue,
-                                             accelerometerSensor, RATE_FAST,
-                                             GsensorRate) < 0) {
+                                             accelerometerSensor, GsensorRate,
+                                             0) < 0) {
             HAL_LOGE(
                 "Unable to register sensorUnable to register sensor %d with "
                 "rate %d and report latency %d" PRId64 "",
-                ASENSOR_TYPE_ACCELEROMETER, RATE_FAST, GsensorRate);
+                ASENSOR_TYPE_ACCELEROMETER, GsensorRate, 0);
             goto exit;
         } else {
             Gsensor_flag = 1;
@@ -9844,11 +9845,11 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     }
     if (gyroSensor != NULL) {
         if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
-                                             RATE_FAST, GyroRate) < 0) {
+                                             GyroRate, 0) < 0) {
             HAL_LOGE(
                 "Unable to register sensorUnable to register sensor %d with "
                 "rate %d and report latency %d" PRId64 "",
-                ASENSOR_TYPE_GYROSCOPE, RATE_FAST, GsensorRate);
+                ASENSOR_TYPE_GYROSCOPE, GyroRate, 0);
             goto exit;
         } else {
             Gyro_flag = 1;
@@ -9860,6 +9861,7 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
             0) {
             gyro_get_data(p_data, buffer, n, &sensor_info);
         }
+        usleep(delayTime);
     }
 
     if (Gsensor_flag) {
