@@ -78,12 +78,8 @@ struct isp_u_blocks_info {
 		struct isp_aem_stats_info stats_info;
 		/*afm block*/
 		cmr_u32 clear;
-		cmr_u32 sel_filter;
 		cmr_u32 *win_num;
 		void *win_range;
-		void *thr_rgb;
-		struct afm_subfilter subfilter;
-		struct afm_shift afm_shift;
 		struct isp_afm_info afm_info;
 		/*edge block*/
 		struct isp_edge_thrd edge_thrd;
@@ -287,15 +283,6 @@ cmr_s32 isp_u_contrast_block(cmr_handle handle, void *param_ptr);
 /*ISP Sub Block: HIST*/
 cmr_s32 isp_u_hist_block(cmr_handle handle, void *param_ptr);
 
-/*ISP Sub Block: AFM*/
-cmr_s32 isp_u_raw_afm_statistic_r6p9(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_square_en(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_overflow_protect(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_subfilter(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_touch_mode(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_shfit(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_threshold_rgb(cmr_handle handle, void *param_ptr);
-
 /*ISP Sub Block: EDGE*/
 cmr_s32 isp_u_edge_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_edge_bypass(cmr_handle handle, void *param_ptr);
@@ -362,23 +349,12 @@ cmr_s32 isp_u_posterize_block(cmr_handle handle, void *param_ptr);
 /*Raw Afm*/
 cmr_s32 isp_u_raw_afm_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_type1_statistic(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_type2_statistic(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_mode(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_skip_num(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_iir_nr_cfg(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_modules_cfg(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_skip_num_clr(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_rtgbot_enable(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_diagonal_enable(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_cal_mode(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_sel_filter1(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_sel_filter2(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_sobel_type(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_type(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_sobel_threshold(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_raw_afm_spsmd_threshold(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_win(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, void *param_ptr);
 

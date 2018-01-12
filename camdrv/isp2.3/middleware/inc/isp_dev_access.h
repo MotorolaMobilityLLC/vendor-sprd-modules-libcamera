@@ -63,7 +63,6 @@ enum isp_dev_access_ae_stats_mode {
 
 typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
 
-cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr);
 cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info *in_ptr);
 cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle);
 cmr_int isp_dev_set_interface(struct isp_drv_interface_param *in_ptr);

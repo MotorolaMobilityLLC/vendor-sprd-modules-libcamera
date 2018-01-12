@@ -1785,17 +1785,11 @@ static cmr_int ispctl_af_info(cmr_handle isp_alg_handle, void *param_ptr)
 	} else if (ISP_CTRL_GET == af_ctrl_ptr->mode) {
 		cmr_u32 cur_pos = 0;
 		struct isp_af_statistic_info afm_stat;
-		cmr_u32 i;
+
 		memset((void *)&afm_stat, 0, sizeof(afm_stat));
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_CUR_POS, (void *)&cur_pos, NULL);
-		afm_block_info.statis = afm_stat.info_tshark3;
-		ret = isp_dev_raw_afm_type1_statistic(cxt->dev_access_handle, &afm_block_info);
 		af_ctrl_ptr->step = cur_pos;
-		af_ctrl_ptr->num = 9;
-		for (i = 0; i < af_ctrl_ptr->num; i++) {
-			af_ctrl_ptr->stat_value[i] = afm_stat.info_tshark3[i];
-		}
 	} else {
 		isp_tool_af_test = 0;
 		afm_block_info.bypass = 1;

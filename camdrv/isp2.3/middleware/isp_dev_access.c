@@ -228,15 +228,6 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, cmr_u32 mode_id, struct isp_drv
 	return ret;
 }
 
-cmr_int isp_dev_raw_afm_type1_statistic(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_u_raw_afm_type1_statistic(cxt->isp_driver_handle, (void *)block_ptr);
-	return ret;
-}
-
 cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
