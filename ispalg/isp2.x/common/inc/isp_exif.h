@@ -44,7 +44,7 @@ struct exif_lnc_param {
 
 struct exif_awb_map {
 	cmr_u16 *addr;
-	cmr_u32 len;		//by bytes
+	cmr_u32 len;				//by bytes
 };
 
 struct exif_ae_param {

@@ -27,7 +27,7 @@
 #include "cmr_types.h"
 
 #ifdef  __cplusplus
-//extern "C" {
+// extern "C" {
 #endif
 
 #define AFT_INVALID_HANDLE NULL
@@ -35,7 +35,7 @@
 #define MAX_AF_WIN 32
 #define PD_MAX_AREA 16
 
-enum aft_isp_mode{
+enum aft_isp_mode {
 	AFT_ISP_SINGLE = 0,
 	AFT_ISP_DUAL_NORMAL,
 	AFT_ISP_DUAL_SBS,
@@ -269,7 +269,7 @@ cmr_s32 caf_trigger_calculation(aft_proc_handle_t * handle, struct aft_proc_calc
 cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t * handle, enum aft_cmd cmd, void *param0, void *param1);
 
 #ifdef	 __cplusplus
-//}
+// }
 #endif
 
 #endif

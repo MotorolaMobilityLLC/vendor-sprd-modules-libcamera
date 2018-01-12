@@ -29,7 +29,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #ifdef	 __cplusplus
 extern "C" {
 #endif
@@ -50,165 +49,165 @@ extern "C" {
 #define ISP_CCE_COEF_COLOR_CAST 0
 #define ISP_CCE_COEF_GAIN_OFFSET 1
 #define CLIP(in, bottom, top) {if(in<bottom) in=bottom; if(in>top) in=top;}
-typedef cmr_int(*io_fun) (cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ());
+	typedef cmr_int(*io_fun) (cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ());
 
-enum {
-	ISP_ALG_SINGLE = 0,
-	ISP_ALG_DUAL_NORMAL,
-	ISP_ALG_DUAL_SBS,
-	ISP_ALG_CAMERA_MAX
-};
+	enum {
+		ISP_ALG_SINGLE = 0,
+		ISP_ALG_DUAL_NORMAL,
+		ISP_ALG_DUAL_SBS,
+		ISP_ALG_CAMERA_MAX
+	};
 
-struct isp_awb_statistic_info {
-	cmr_u32 r_info[1024];
-	cmr_u32 g_info[1024];
-	cmr_u32 b_info[1024];
-};
+	struct isp_awb_statistic_info {
+		cmr_u32 r_info[1024];
+		cmr_u32 g_info[1024];
+		cmr_u32 b_info[1024];
+	};
 
-struct isp_system {
-	isp_handle caller_id;
-	proc_callback callback;
-	cmr_u32 isp_callback_bypass;
-	pthread_t monitor_thread;
-	isp_handle monitor_queue;
-	cmr_u32 monitor_status;
+	struct isp_system {
+		isp_handle caller_id;
+		proc_callback callback;
+		cmr_u32 isp_callback_bypass;
+		pthread_t monitor_thread;
+		isp_handle monitor_queue;
+		cmr_u32 monitor_status;
 
-	isp_handle thread_ctrl;
-	isp_handle thread_afl_proc;
-	isp_handle thread_af_proc;
-	isp_handle thread_awb_proc;
-	struct isp_ops ops;
-};
+		isp_handle thread_ctrl;
+		isp_handle thread_afl_proc;
+		isp_handle thread_af_proc;
+		isp_handle thread_awb_proc;
+		struct isp_ops ops;
+	};
 
-struct isp_otp_info {
-	struct isp_data_info lsc;
-	struct isp_data_info awb;
+	struct isp_otp_info {
+		struct isp_data_info lsc;
+		struct isp_data_info awb;
 
-	void *lsc_random;
-	void *lsc_golden;
-	cmr_u32 width;
-	cmr_u32 height;
-};
+		void *lsc_random;
+		void *lsc_golden;
+		cmr_u32 width;
+		cmr_u32 height;
+	};
 
-struct isp_ae_info {
-	cmr_s32 bv;
-	float gain;
-	float exposure;
-	float f_value;
-	cmr_u32 stable;
-};
+	struct isp_ae_info {
+		cmr_s32 bv;
+		float gain;
+		float exposure;
+		float f_value;
+		cmr_u32 stable;
+	};
 
-
-typedef struct {
-	/* isp_ctrl private */
+	typedef struct {
+		/* isp_ctrl private */
 #ifndef WIN32
-	struct isp_system system;
+		struct isp_system system;
 #endif
-	cmr_u32 camera_id;
-	uint isp_mode;
+		cmr_u32 camera_id;
+		uint isp_mode;
 
-	//new param
-	void *dev_access_handle;
-	void *alg_fw_handle;
-	//void *isp_otp_handle;
+		//new param
+		void *dev_access_handle;
+		void *alg_fw_handle;
+		//void *isp_otp_handle;
 
-	/* isp_driver */
-	void *handle_device;
+		/* isp_driver */
+		void *handle_device;
 
-	/* 4A algorithm */
-	void *handle_ae;
-	void *handle_af;
-	void *handle_awb;
-	void *handle_smart;
-	void *handle_lsc_adv;
+		/* 4A algorithm */
+		void *handle_ae;
+		void *handle_af;
+		void *handle_awb;
+		void *handle_smart;
+		void *handle_lsc_adv;
 
-	/* isp param manager */
-	void *handle_pm;
+		/* isp param manager */
+		void *handle_pm;
 
-	/* sensor param */
-	cmr_u32 param_index;
-	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
-	struct sensor_raw_ioctrl *ioctrl_ptr;
+		/* sensor param */
+		cmr_u32 param_index;
+		struct sensor_raw_resolution_info
+		 input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
+		struct sensor_raw_ioctrl *ioctrl_ptr;
 
-	cmr_u32 alc_awb;
-	cmr_s32 awb_pg_flag;
-	cmr_u8 *log_alc_awb;
-	cmr_u32 log_alc_awb_size;
-	cmr_u8 *log_alc_lsc;
-	cmr_u32 log_alc_lsc_size;
-	cmr_u8 *log_alc;
-	cmr_u32 log_alc_size;
-	cmr_u8 *log_alc_ae;
-	cmr_u32 log_alc_ae_size;
+		cmr_u32 alc_awb;
+		cmr_s32 awb_pg_flag;
+		cmr_u8 *log_alc_awb;
+		cmr_u32 log_alc_awb_size;
+		cmr_u8 *log_alc_lsc;
+		cmr_u32 log_alc_lsc_size;
+		cmr_u8 *log_alc;
+		cmr_u32 log_alc_size;
+		cmr_u8 *log_alc_ae;
+		cmr_u32 log_alc_ae_size;
 
-	struct awb_lib_fun *awb_lib_fun;
-	struct ae_lib_fun *ae_lib_fun;
-	struct af_lib_fun *af_lib_fun;
+		struct awb_lib_fun *awb_lib_fun;
+		struct ae_lib_fun *ae_lib_fun;
+		struct af_lib_fun *af_lib_fun;
 
-	struct isp_ops ops;
+		struct isp_ops ops;
 
-	struct sensor_raw_info *sn_raw_info;
+		struct sensor_raw_info *sn_raw_info;
 
-	/*for new param struct */
-	struct isp_data_info isp_init_data[MAX_MODE_NUM];
-	struct isp_data_info isp_update_data[MAX_MODE_NUM];	/*for isp_tool */
+		/*for new param struct */
+		struct isp_data_info isp_init_data[MAX_MODE_NUM];
+		struct isp_data_info isp_update_data[MAX_MODE_NUM];	/*for isp_tool */
 
-	cmr_u32 gamma_sof_cnt;
-	cmr_u32 gamma_sof_cnt_eb;
-	cmr_u32 update_gamma_eb;
-	cmr_u32 mode_flag;
-	cmr_u32 scene_flag;
-	cmr_u32 multi_nr_flag;
-	cmr_s8 *sensor_name;
-} isp_ctrl_context;
+		cmr_u32 gamma_sof_cnt;
+		cmr_u32 gamma_sof_cnt_eb;
+		cmr_u32 update_gamma_eb;
+		cmr_u32 mode_flag;
+		cmr_u32 scene_flag;
+		cmr_u32 multi_nr_flag;
+		cmr_s8 *sensor_name;
+	} isp_ctrl_context;
 
 #define ISP_NLC_POINTER_NUM 29
 #define ISP_NLC_POINTER_L_NUM 27
 
-struct isp_blc_offset {
-	cmr_u16 r;
-	cmr_u16 gr;
-	cmr_u16 gb;
-	cmr_u16 b;
-};
+	struct isp_blc_offset {
+		cmr_u16 r;
+		cmr_u16 gr;
+		cmr_u16 gb;
+		cmr_u16 b;
+	};
 
-struct afl_ctrl_proc_out {
-	cmr_int flag;
-	cmr_int cur_flicker;
-};
+	struct afl_ctrl_proc_out {
+		cmr_int flag;
+		cmr_int cur_flicker;
+	};
 
-struct isp_anti_flicker_cfg {
-	cmr_u32 bypass;
-	pthread_mutex_t status_lock;
-	cmr_u32 mode;
-	cmr_u32 skip_frame_num;
-	cmr_u32 line_step;
-	cmr_u32 frame_num;
-	cmr_u32 vheight;
-	cmr_u32 start_col;
-	cmr_u32 end_col;
-	void *addr;
-	cmr_handle thr_handle;
-	cmr_handle caller_handle;
-	cmr_uint vir_addr;
-	cmr_uint height;
-	cmr_uint width;
-	cmr_uint skip_num_clr;
-	cmr_uint afl_glb_total_num;
-	cmr_uint afl_region_total_num;
-	struct afl_ctrl_proc_out proc_out;
-	isp_afl_cb afl_set_cb;
-	cmr_int flag;
-	cmr_int cur_flicker;
-	cmr_s8 version;
-};
+	struct isp_anti_flicker_cfg {
+		cmr_u32 bypass;
+		pthread_mutex_t status_lock;
+		cmr_u32 mode;
+		cmr_u32 skip_frame_num;
+		cmr_u32 line_step;
+		cmr_u32 frame_num;
+		cmr_u32 vheight;
+		cmr_u32 start_col;
+		cmr_u32 end_col;
+		void *addr;
+		cmr_handle thr_handle;
+		cmr_handle caller_handle;
+		cmr_uint vir_addr;
+		cmr_uint height;
+		cmr_uint width;
+		cmr_uint skip_num_clr;
+		cmr_uint afl_glb_total_num;
+		cmr_uint afl_region_total_num;
+		struct afl_ctrl_proc_out proc_out;
+		isp_afl_cb afl_set_cb;
+		cmr_int flag;
+		cmr_int cur_flicker;
+		cmr_s8 version;
+	};
 
-struct isp_antiflicker_param {
-	cmr_u32 normal_50hz_thrd;
-	cmr_u32 lowlight_50hz_thrd;
-	cmr_u32 normal_60hz_thrd;
-	cmr_u32 lowlight_60hz_thrd;
-};
+	struct isp_antiflicker_param {
+		cmr_u32 normal_50hz_thrd;
+		cmr_u32 lowlight_50hz_thrd;
+		cmr_u32 normal_60hz_thrd;
+		cmr_u32 lowlight_60hz_thrd;
+	};
 
 #ifdef	 __cplusplus
 }

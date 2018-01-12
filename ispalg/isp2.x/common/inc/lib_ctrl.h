@@ -93,30 +93,30 @@ struct af_lib_fun {
 	 cmr_s32(*af_calc_interface) (isp_ctrl_context * handle);
 	 cmr_s32(*af_deinit_interface) (void *handle);
 	 cmr_int(*af_ioctrl_interface) (void *handle, cmr_int cmd, void *param0, void *param1);
-	 cmr_s32(*af_ioctrl_set_flash_notice) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_set_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_get_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_get_af_value) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_burst_notice) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_set_af_mode) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_get_af_mode) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_ioread) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_iowrite) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_af_start) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_set_flash_notice) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_value) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_burst_notice) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_mode) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_mode) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_ioread) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_iowrite) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_af_start) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
 	 cmr_s32(*af_ioctrl_set_isp_start_info) (isp_handle isp_handler, struct isp_video_start * param_ptr);
-	 cmr_s32(*af_ioctrl_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_af_info) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
 	 cmr_s32(*af_ioctrl_set_isp_stop_info) (isp_handle isp_handler);
 	 cmr_s32(*af_ioctrl_set_ae_awb_info) (isp_ctrl_context * handle, void *ae_result, void *awb_result, void *bv, void *rgb_statistics);
 
 	 cmr_s32(*af_ioctrl_thread_msg_send) (isp_ctrl_context * handle, struct ae_calc_out * ae_result, struct cmr_msg * msg);
 
-	 cmr_s32(*sft_af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*sft_af_ioctrl_set_fd_update) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
 	 cmr_s32(*af_image_data_update) (isp_ctrl_context * handle);
-	 cmr_s32(*af_ioctrl_get_af_cur_pos) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_set_af_pos) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_set_af_bypass) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
-	 cmr_s32(*af_ioctrl_set_af_stop) (isp_handle isp_handler, void *param_ptr, cmr_s32 (*call_back) ());
+	 cmr_s32(*af_ioctrl_get_af_cur_pos) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_pos) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_bypass) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
+	 cmr_s32(*af_ioctrl_set_af_stop) (isp_handle isp_handler, void *param_ptr, cmr_s32(*call_back) ());
 	 cmr_s32(*af_ioctrl_set_af_param) (isp_handle isp_handler);
 	// if af_posture_support be set ,af_posture_set_handle and af_posture_info_update must also be set
 	 cmr_s32(*af_posture_support) (isp_ctrl_context * handle, void *sensordevice);

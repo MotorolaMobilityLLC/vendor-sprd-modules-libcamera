@@ -176,30 +176,30 @@ struct sensor_flash_cali_param {
 };
 
 struct dual_flash_tune_param {
-	cmr_u8 version;/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1*/
+	cmr_u8 version;				/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1 */
 	cmr_u8 alg_id;
 	cmr_u8 flashLevelNum1;
-	cmr_u8 flashLevelNum2;/*1 * 4bytes*/
+	cmr_u8 flashLevelNum2;		/*1 * 4bytes */
 	cmr_u8 preflahLevel1;
 	cmr_u8 preflahLevel2;
-	cmr_u16 preflashBrightness;/*1 * 4bytes*/
+	cmr_u16 preflashBrightness;	/*1 * 4bytes */
 
-	cmr_u16 brightnessTarget; //10bit
-	cmr_u16 brightnessTargetMax; //10bit
-	/*1 * 4bytes*/
+	cmr_u16 brightnessTarget;	//10bit
+	cmr_u16 brightnessTargetMax;	//10bit
+	/*1 * 4bytes */
 
-	cmr_u32 foregroundRatioHigh;/*fix data: 1x-->100*/
-	cmr_u32 foregroundRatioLow;/*fix data: 1x-->100*/
-	/*2 * 4bytes*/
-	cmr_u8 flashMask[1024];/*256 * 4bytes*/
-	cmr_u16 brightnessTable[1024];/*512 * 4bytes*/
-	cmr_u16 rTable[1024]; //g: 1024 /*512 * 4bytes*/
-	cmr_u16 bTable[1024];/*512 * 4bytes*/
+	cmr_u32 foregroundRatioHigh;	/*fix data: 1x-->100 */
+	cmr_u32 foregroundRatioLow;	/*fix data: 1x-->100 */
+	/*2 * 4bytes */
+	cmr_u8 flashMask[1024];		/*256 * 4bytes */
+	cmr_u16 brightnessTable[1024];	/*512 * 4bytes */
+	cmr_u16 rTable[1024];		//g: 1024 /*512 * 4bytes*/
+	cmr_u16 bTable[1024];		/*512 * 4bytes */
 
-	cmr_u8 reserved1[1024];/*256 * 4bytes*/
-};/*2053 * 4 bypes*/
+	cmr_u8 reserved1[1024];		/*256 * 4bytes */
+};								/*2053 * 4 bypes */
 
-struct bokeh_micro_depth_tune_param{
+struct bokeh_micro_depth_tune_param {
 	cmr_u32 tuning_exist;
 	cmr_u32 enable;
 	cmr_u32 fir_mode;
@@ -365,7 +365,7 @@ struct sensor_pdaf_correction_level {
 	cmr_u16 hot_pixel_th[3];
 	cmr_u16 dead_pixel_th[3];
 	cmr_u16 phase_map_corr_eb;
-	cmr_u8 pdaf_grid;	//0:1/32, 1:1/64
+	cmr_u8 pdaf_grid;			//0:1/32, 1:1/64
 	cmr_u8 gfilter_flag;
 	cmr_u8 flat_smt_index;
 	cmr_u8 txt_smt_index;
@@ -464,9 +464,10 @@ struct sensor_multi_curve_discription {
 
 struct sensor_1d_lsc_map {
 	cmr_u32 rlsc_radius_step;
-	struct sensor_multi_curve_discription curve_distcptn[SENSOR_LNC_RC_NUM];
-	cmr_u32 len;		// indirect parameter
-	cmr_u32 offset;	//indirect parameter
+	struct sensor_multi_curve_discription
+	 curve_distcptn[SENSOR_LNC_RC_NUM];
+	cmr_u32 len;				// indirect parameter
+	cmr_u32 offset;				//indirect parameter
 };
 
 struct sensor_1d_lsc_param {
@@ -539,9 +540,9 @@ struct sensor_bpc_rules {
 };
 
 struct sensor_bpc_comm {
-	cmr_u8 bpc_mode;	//0:normal,1:map,2:both
+	cmr_u8 bpc_mode;			//0:normal,1:map,2:both
 	cmr_u8 hv_mode;
-	cmr_u8 rd_mode;	//0:3x3,1:5x5,2:line mask
+	cmr_u8 rd_mode;				//0:3x3,1:5x5,2:line mask
 	cmr_u8 reserved;
 	cmr_u16 lut_level[8];
 	cmr_u16 slope_k[8];
@@ -600,7 +601,7 @@ struct sensor_ynr_den_str {
 	cmr_u8 sal_offset[8];
 	cmr_u8 subthresh[9];
 	cmr_u8 lut_thresh[7];
-	cmr_u8 addback[9];	//filter_ratio in ISP TOOL
+	cmr_u8 addback[9];			//filter_ratio in ISP TOOL
 	cmr_u8 reserved[3];
 	struct sensor_ynr_layer_str layer1;
 	struct sensor_ynr_layer_str layer2;
@@ -776,8 +777,8 @@ struct sensor_nlm_flat_degree {
 	cmr_u8 flat_inc_str;
 	cmr_u8 flat_match_cnt;
 	cmr_u16 flat_thresh;
-	cmr_u16 addback0;	//for G channel
-	cmr_u16 addback1;	//for R and B channel
+	cmr_u16 addback0;			//for G channel
+	cmr_u16 addback1;			//for R and B channel
 	cmr_u16 addback_clip_max;	//plus noise
 	cmr_u16 addback_clip_min;	//minus noise
 };
@@ -916,7 +917,7 @@ struct sensor_cfai_level {
 	cmr_u16 rb_high_sat_thr;
 	struct sensor_cfai_gref_thr gref_thr;
 	struct sensor_cfai_wgtctrl cfai_dir_intplt;
-	cmr_u32 cfa_bypass;	//cfa interpolatin control, always open!!!
+	cmr_u32 cfa_bypass;			//cfa interpolatin control, always open!!!
 };
 
 struct sensor_cfa_param_level {
@@ -942,13 +943,13 @@ struct sensor_rgb_afm_enhanced_fv {
 };
 
 struct sensor_rgb_afm_enhanced_pre {
-	cmr_u8 channel_sel;	//R/G/B for calc
+	cmr_u8 channel_sel;			//R/G/B for calc
 	cmr_u8 denoise_mode;
-	cmr_u8 center_wgt;	//2^n
+	cmr_u8 center_wgt;			//2^n
 };
 
 struct sensor_rgb_afm_enhanced_process {
-	cmr_u8 fv1_coeff[4][9];	//4x3x3, fv0 is fixed in the code
+	cmr_u8 fv1_coeff[4][9];		//4x3x3, fv0 is fixed in the code
 };
 
 struct sensor_rgb_afm_enhanced_post {
@@ -1054,8 +1055,8 @@ struct sensor_y_afl_param_v1 {
 	cmr_u8 reserved0;
 	cmr_u16 v_height;
 	cmr_u16 reserved1;
-	cmr_u16 col_st;	//x st
-	cmr_u16 col_ed;	//x end
+	cmr_u16 col_st;				//x st
+	cmr_u16 col_ed;				//x end
 };
 
 struct sensor_y_afl_param_v3 {
@@ -1073,11 +1074,11 @@ struct sensor_y_afl_param_v3 {
 struct sensor_y_afm_level {
 	cmr_u32 iir_bypass;
 	cmr_u8 skip_num;
-	cmr_u8 afm_format;	//filter choose control
+	cmr_u8 afm_format;			//filter choose control
 	cmr_u8 afm_position_sel;	//choose afm after CFA or auto contrust adjust
 	cmr_u8 shift;
 	cmr_u16 win[25][4];
-	cmr_u16 coef[11];	//int16
+	cmr_u16 coef[11];			//int16
 	cmr_u16 reserved1;
 };
 
@@ -1102,10 +1103,10 @@ struct sensor_yuv_precdn_level {
 	float sigma_d;
 	float sigma_u;
 	float sigma_v;
-	cmr_u8 r_segu[2][7];	// param1
-	cmr_u8 r_segv[2][7];	// param2
-	cmr_u8 r_segy[2][7];	// param3
-	cmr_u8 dist_w[25];	// param4
+	cmr_u8 r_segu[2][7];		// param1
+	cmr_u8 r_segv[2][7];		// param2
+	cmr_u8 r_segy[2][7];		// param3
+	cmr_u8 dist_w[25];			// param4
 	cmr_u8 reserved0;
 	cmr_u32 bypass;
 };
@@ -1311,9 +1312,9 @@ struct ae_new_tuning_param {	//total bytes must be 263480
 	struct ae_face_tune_param face_info;
 
 	/*13 * 4bytes */
-	cmr_u8 monitor_mode;	/*0: single, 1: continue */
-	cmr_u8 ae_tbl_exp_mode;	/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
-	cmr_u8 enter_skip_num;	/*AE alg skip frame as entering camera */
+	cmr_u8 monitor_mode;		/*0: single, 1: continue */
+	cmr_u8 ae_tbl_exp_mode;		/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
+	cmr_u8 enter_skip_num;		/*AE alg skip frame as entering camera */
 	cmr_u8 cnvg_stride_ev_num;
 	cmr_s8 cnvg_stride_ev[32];
 	cmr_s8 stable_zone_ev[16];
@@ -1334,7 +1335,7 @@ struct ae_new_tuning_param {	//total bytes must be 263480
 };
 
 typedef struct _af_tuning_param {
-	cmr_u8 flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
+	cmr_u8 flag;				// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
 	filter_clip_t filter_clip[SCENE_NUM][GAIN_TOTAL];	// AF filter threshold
 	cmr_s32 bv_threshold[SCENE_NUM][SCENE_NUM];	//BV threshold
 	AF_Window_Config SAF_win;	// SAF window config
@@ -1342,7 +1343,7 @@ typedef struct _af_tuning_param {
 	AF_Window_Config VAF_win;	// VAF window config
 	// default param for indoor/outdoor/dark
 	AF_Tuning AF_Tuning_Data[SCENE_NUM];	// Algorithm related parameter
-	cmr_u8 dummy[101];	// for 4-bytes alignment issue
+	cmr_u8 dummy[101];			// for 4-bytes alignment issue
 } af_tuning_param_t;
 
 #endif
@@ -1524,10 +1525,10 @@ struct awb_tuning_param {
 	cmr_s32 reserved[20160 / 4];
 };
 struct alsc_alg0_turn_para {
-	float pa;		//threshold for seg
+	float pa;					//threshold for seg
 	float pb;
-	cmr_u32 fft_core_id;	//fft param ID
-	cmr_u32 con_weight;	//convergence rate
+	cmr_u32 fft_core_id;		//fft param ID
+	cmr_u32 con_weight;			//convergence rate
 	cmr_u32 bv;
 	cmr_u32 ct;
 	cmr_u32 pre_ct;
@@ -1578,11 +1579,11 @@ struct isp_smart_component_cfg {
 	cmr_u32 offset;
 	cmr_u32 size;
 
-	cmr_u32 x_type;	// isp_smart_x_type
-	cmr_u32 y_type;	// isp_smart_y_type
+	cmr_u32 x_type;				// isp_smart_x_type
+	cmr_u32 y_type;				// isp_smart_y_type
 	cmr_s32 default_val;
 	cmr_s32 use_flash_val;
-	cmr_s32 flash_val;	//use this value when flash is open
+	cmr_s32 flash_val;			//use this value when flash is open
 
 	cmr_u32 section_num;
 	struct isp_range bv_range[ISP_SMART_MAX_BV_SECTION];
@@ -1591,8 +1592,8 @@ struct isp_smart_component_cfg {
 
 struct isp_smart_block_cfg {
 	cmr_u32 enable;
-	cmr_u32 smart_id;	//id to identify the smart block
-	cmr_u32 block_id;	//id to identify the isp block (destination block)
+	cmr_u32 smart_id;			//id to identify the smart block
+	cmr_u32 block_id;			//id to identify the isp block (destination block)
 	cmr_u32 component_num;
 	struct isp_smart_component_cfg component[ISP_SMART_MAX_VALUE_NUM];
 };
@@ -1621,8 +1622,8 @@ struct sensor_hue_param {
 
 //post-color denoise
 struct sensor_postcdn_thr {
-	cmr_u16 thr0;		//algorithm reserved
-	cmr_u16 thr1;		//algorithm reserved
+	cmr_u16 thr0;				//algorithm reserved
+	cmr_u16 thr1;				//algorithm reserved
 };
 
 struct sensor_postcdn_r_seg {
@@ -1731,10 +1732,10 @@ struct sensor_iircnr_yrandom_param {
 
 //alsc
 struct alsc_alg0_turn_param {
-	float pa;		//threshold for seg
+	float pa;					//threshold for seg
 	float pb;
-	cmr_u32 fft_core_id;	//fft param ID
-	cmr_u32 con_weight;	//convergence rate
+	cmr_u32 fft_core_id;		//fft param ID
+	cmr_u32 con_weight;			//convergence rate
 	cmr_u32 bv;
 	cmr_u32 ct;
 	cmr_u32 pre_ct;
@@ -1972,7 +1973,7 @@ struct sensor_nr_param {
 
 struct sensor_awb_map {
 	cmr_u16 *addr;
-	cmr_u32 len;		//by bytes
+	cmr_u32 len;				//by bytes
 };
 
 struct sensor_awb_weight {

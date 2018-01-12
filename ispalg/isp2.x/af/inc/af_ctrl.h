@@ -38,8 +38,8 @@ extern "C" {
 
 	enum scene {
 		OUT_SCENE = 0,
-		INDOOR_SCENE,	//INDOOR_SCENE,
-		DARK_SCENE,	//DARK_SCENE,
+		INDOOR_SCENE,			// INDOOR_SCENE,
+		DARK_SCENE,				// DARK_SCENE,
 		SCENE_NUM,
 	};
 
@@ -79,9 +79,9 @@ extern "C" {
 		AF_CMD_SET_DCAM_TIMESTAMP = 0x1015,
 		AF_CMD_SET_PD_INFO = 0x1016,
 		AF_CMD_SET_UPDATE_AUX_SENSOR = 0x1017,
-		//SharkLE Only ++
+		// SharkLE Only ++
 		AF_CMD_SET_DAC_INFO = 0x1018,
-		//SharkLE Only --
+		// SharkLE Only --
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
@@ -97,12 +97,12 @@ extern "C" {
 
 	enum af_calc_data_type {
 		AF_DATA_AFM_STAT = 0,
-		AF_DATA_AF = (1 << 0),	//0x1
-		AF_DATA_IMG_BLK = (1 << 1),	//0x2
-		AF_DATA_AE = (1 << 2),	//0x4
-		AF_DATA_FD = (1 << 3),	//0x8
-		AF_DATA_PD = (1 << 4),	//0x10
-		AF_DATA_G = (1 << 5),	//0x20
+		AF_DATA_AF = (1 << 0),	// 0x1
+		AF_DATA_IMG_BLK = (1 << 1),	// 0x2
+		AF_DATA_AE = (1 << 2),	// 0x4
+		AF_DATA_FD = (1 << 3),	// 0x8
+		AF_DATA_PD = (1 << 4),	// 0x10
+		AF_DATA_G = (1 << 5),	// 0x20
 		AF_DATA_MAX
 	};
 
@@ -267,7 +267,7 @@ extern "C" {
 	};
 
 	struct afctrl_face_info {
-		cmr_u16 type;	//focus or ae,
+		cmr_u16 type;			// focus or ae,
 		cmr_u16 face_num;
 		cmr_u16 frame_width;
 		cmr_u16 frame_height;
@@ -365,12 +365,12 @@ extern "C" {
 		cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, void *af_iir_nr);
 		cmr_s32(*af_monitor_module_cfg) (void *handle, void *af_enhanced_module);
 		cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
-		//SharkLE Only ++
+		// SharkLE Only ++
 		cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
 		cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
 		cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
 		cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
-		//SharkLE Only --
+		// SharkLE Only --
 	};
 
 	struct af_log_info {
@@ -381,12 +381,12 @@ extern "C" {
 	typedef cmr_int(*af_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
 	struct afctrl_init_in {
-		cmr_handle caller_handle;	//struct isp_alg_fw_context *cxt
+		cmr_handle caller_handle;	// struct isp_alg_fw_context *cxt
 		af_ctrl_cb af_set_cb;
 		cmr_u32 camera_id;
 		struct third_lib_info lib_param;
 		struct isp_size src;
-		cmr_handle caller;	//struct afctrl_cxt *cxt_ptr
+		cmr_handle caller;		// struct afctrl_cxt *cxt_ptr
 		struct afctrl_otp_info otp_info;
 		cmr_u32 is_multi_mode;
 		cmr_u32 is_supoprt;
@@ -420,7 +420,9 @@ extern "C" {
 #define AREA_LOOP 4
 
 	struct pd_result {
-		/*TBD get reset from */
+		/*
+		 * TBD get reset from 
+		 */
 		cmr_s32 pdConf[AREA_LOOP + 1];
 		double pdPhaseDiff[AREA_LOOP + 1];
 		cmr_s32 pdGetFrameID;

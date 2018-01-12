@@ -97,7 +97,7 @@ cmr_u32 al_awb_lib_open(cmr_u32 version_id)
 
 	return ISP_SUCCESS;
 
-load_error:
+  load_error:
 
 	if (NULL != handle) {
 		dlclose(handle);

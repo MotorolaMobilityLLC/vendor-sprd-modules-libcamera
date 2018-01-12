@@ -25,7 +25,6 @@
 #include "cmr_sensor_info.h"
 #include "../../ae/sprd/ae/inc/ae_tuning_type.h"
 
-
 #define MAX_MODE_NUM 16
 #define MAX_NR_NUM 32
 
@@ -39,7 +38,6 @@
 #define RAW_INFO_END_ID 0x71717567
 #define SENSOR_MULTI_MODE_FLAG  0xAA55
 #define SENSOR_DEFAULT_MODE_FLAG  0x00000000
-
 
 #define AE_FLICKER_NUM 2
 #define AE_ISO_NUM_NEW 8
@@ -262,38 +260,35 @@ typedef struct isp_aft_param {
 	cmr_u32 reserved[16];
 } isp_aft_param_t;
 
-
-
 //sft af
 struct isp_sft_af_param {
 	// add for buid warning, isp owners shoud complete the struct
 	cmr_s32 dummy;
 };
 
-
 struct dual_flash_tune_param {
-	cmr_u8 version;/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1*/
+	cmr_u8 version;				/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1 */
 	cmr_u8 alg_id;
 	cmr_u8 flashLevelNum1;
-	cmr_u8 flashLevelNum2;/*1 * 4bytes*/
+	cmr_u8 flashLevelNum2;		/*1 * 4bytes */
 	cmr_u8 preflahLevel1;
 	cmr_u8 preflahLevel2;
-	cmr_u16 preflashBrightness;/*1 * 4bytes*/
+	cmr_u16 preflashBrightness;	/*1 * 4bytes */
 
-	cmr_u16 brightnessTarget; //10bit
-	cmr_u16 brightnessTargetMax; //10bit
-	/*1 * 4bytes*/
+	cmr_u16 brightnessTarget;	//10bit
+	cmr_u16 brightnessTargetMax;	//10bit
+	/*1 * 4bytes */
 
-	cmr_u32 foregroundRatioHigh;/*fix data: 1x-->100*/
-	cmr_u32 foregroundRatioLow;/*fix data: 1x-->100*/
-	/*2 * 4bytes*/
-	cmr_u8 flashMask[1024];/*256 * 4bytes*/
-	cmr_u16 brightnessTable[1024];/*512 * 4bytes*/
-	cmr_u16 rTable[1024]; //g: 1024 /*512 * 4bytes*/
-	cmr_u16 bTable[1024];/*512 * 4bytes*/
+	cmr_u32 foregroundRatioHigh;	/*fix data: 1x-->100 */
+	cmr_u32 foregroundRatioLow;	/*fix data: 1x-->100 */
+	/*2 * 4bytes */
+	cmr_u8 flashMask[1024];		/*256 * 4bytes */
+	cmr_u16 brightnessTable[1024];	/*512 * 4bytes */
+	cmr_u16 rTable[1024];		//g: 1024 /*512 * 4bytes*/
+	cmr_u16 bTable[1024];		/*512 * 4bytes */
 
-	cmr_u8 reserved1[1024];/*256 * 4bytes*/
-};/*2053 * 4 bypes*/
+	cmr_u8 reserved1[1024];		/*256 * 4bytes */
+};								/*2053 * 4 bypes */
 
 struct sensor_flash_attrib_param {
 	uint32_t r_sum;
@@ -302,12 +297,12 @@ struct sensor_flash_attrib_param {
 	uint32_t b_sum;
 };
 
-struct sensor_flash_attrib_cali{
+struct sensor_flash_attrib_cali {
 	struct sensor_flash_attrib_param global;
 	struct sensor_flash_attrib_param random;
 };
 
-struct sensor_flash_cali_param{
+struct sensor_flash_cali_param {
 	uint16_t auto_threshold;
 	uint16_t r_ratio;
 	uint16_t g_ratio;
@@ -318,14 +313,11 @@ struct sensor_flash_cali_param{
 	uint32_t reserved0[19];
 };
 
-
 struct sensor_envi_detect_param {
 	uint32_t enable;
 	uint32_t num;
 	struct isp_range envi_range[SENSOR_ENVI_NUM];
 };
-
-
 
 ////////////////////////////////////////////////////////////
 /********** shark2 tuning paramater **********/
@@ -348,7 +340,6 @@ struct sensor_envi_detect_param {
 #define SENSOR_SMART_LEVEL_NUM 25
 #define SENSOR_SMART_LEVEL_DEFAULT 15
 
-
 struct sensor_gamma_curve {
 	struct isp_point points[SENSOR_GAMMA_POINT_NUM];
 };
@@ -360,7 +351,6 @@ struct sensor_rgbgamma_curve {
 	struct isp_point points_g[SENSOR_GAMMA_POINT_NUM];
 	struct isp_point points_b[SENSOR_GAMMA_POINT_NUM];
 };
-
 
 /***********************************************************************************/
 enum isp_nr_mode_type {
@@ -400,7 +390,6 @@ struct sensor_blc_param {
 	struct sensor_blc_offset tab[SENSOR_BLC_NUM];
 };
 
-
 /************************************************************************************/
 //rgb gain
 struct sensor_rgb_gain_param {
@@ -410,7 +399,6 @@ struct sensor_rgb_gain_param {
 	uint16_t b_gain;
 };
 
-
 /************************************************************************************/
 //non-linear correction
 struct sensor_nlc_param {
@@ -419,8 +407,6 @@ struct sensor_nlc_param {
 	uint16_t b_node[29];
 	uint16_t l_node[27];
 };
-
-
 
 /************************************************************************************/
 // 2D mesh-grid lens shading correction
@@ -446,25 +432,24 @@ struct sensor_2d_lsc_param {
 	struct sensor_lsc_2d_table_param tab_info;
 };
 
-
 /************************************************************************************/
 // 1D-lens shading correction
 struct sensor_multi_curve_discription {
 	struct isp_pos center_pos;
 	struct isp_pos delta_square;
-	struct isp_curve_coeff coef;//p1:[-32768 32767]
+	struct isp_curve_coeff coef;	//p1:[-32768 32767]
 };
 
 struct sensor_1d_lsc_map {
-	uint32_t gain_thrs1;			//wavelet_denoise_thrs1 value
-	struct sensor_multi_curve_discription curve_distcptn[SENSOR_LNC_RC_NUM];
+	uint32_t gain_thrs1;		//wavelet_denoise_thrs1 value
+	struct sensor_multi_curve_discription
+	 curve_distcptn[SENSOR_LNC_RC_NUM];
 };
 
 struct sensor_1d_lsc_param {
 	struct isp_sample_point_info cur_idx;
 	struct sensor_1d_lsc_map map[SENSOR_LENS_NUM];
 };
-
 
 /************************************************************************************/
 //Auto white balance block parameters
@@ -516,17 +501,13 @@ struct sensor_awb_param {
 	struct sensor_awbm_param awbm;
 };
 
-
-
 /************************************************************************************/
 //Auto-exposure monitor in RGB domain
 struct sensor_rgb_aem_param {
-	uint32_t  aem_skip_num;
+	uint32_t aem_skip_num;
 	struct isp_pos win_start;
 	struct isp_size win_size;
 };
-
-
 
 /************************************************************************************/
 //Bad Pixel Correction
@@ -575,7 +556,6 @@ struct sensor_bpc_level {
 	uint32_t bypass;
 };
 
-
 /************************************************************************************/
 //GrGb Correction
 struct sensor_grgb_level {
@@ -597,9 +577,6 @@ struct sensor_rgb_gain2_param {
 	uint16_t b_offset;
 };
 
-
-
-
 /************************************************************************************/
 /*
 	1. have 3 sets for low light,normal light and high light;
@@ -616,7 +593,7 @@ struct sensor_nlm_flat_degree {
 */
 struct sensor_nlm_flat {
 	uint8_t flat_opt_bypass;
-	uint8_t flat_thresh_bypass;//algorithm reserved
+	uint8_t flat_thresh_bypass;	//algorithm reserved
 	uint16_t flat_opt_mode;
 	struct sensor_nlm_flat_degree dgr_ctl[5];
 };
@@ -648,7 +625,7 @@ struct sensor_nlm_den_strength {
 	2.these parameters should be changed under different iso value;
 */
 
-struct sensor_nlm_level{
+struct sensor_nlm_level {
 	struct sensor_nlm_flat nlm_flat;
 	struct sensor_nlm_direction nlm_dic;
 	struct sensor_nlm_den_strength nlm_den;
@@ -659,15 +636,15 @@ struct sensor_nlm_level{
 	uint32_t bypass;
 };
 
-struct sensor_vst_level{
+struct sensor_vst_level {
 	uint32_t vst_param[1024];
 };
 
-struct sensor_ivst_level{
+struct sensor_ivst_level {
 	uint32_t ivst_param[1024];
 };
 
-struct sensor_flat_offset_level{
+struct sensor_flat_offset_level {
 	uint32_t flat_offset_param[1024];
 };
 
@@ -732,28 +709,24 @@ struct sensor_cmc10_param {
 	uint16_t buffer[SENSOR_CMC_NUM][9];
 };
 
-
 /************************************************************************************/
 //Gamma Correction in full RGB domain
 struct sensor_frgb_gammac_param {
 	struct isp_sample_point_info cur_idx_info;
 #if defined(CONFIG_ISP_2_3)
-		struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
+	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
 #else
-		struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];
+	struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];
 #endif
 };
-
 
 /************************************************************************************/
 //for ctm
 struct sensor_ctm_param {
 	struct isp_sample_point_info cur_idx;
 	struct isp_data_bin_info map[SENSOR_CTM_NUM];
-	void* data_area;
+	void *data_area;
 };
-
-
 
 /************************************************************************************/
 // CCE
@@ -771,19 +744,15 @@ struct sensor_cce_param {
 	struct sensor_cce_matrix_info specialeffect[MAX_SPECIALEFFECT_NUM];
 };
 
-
-
 /************************************************************************************/
 //for hsv
 struct sensor_hsv_param {
 	struct isp_sample_point_info cur_idx;
 	struct isp_data_bin_info map[SENSOR_HSV_NUM];
-	void* data_area;
+	void *data_area;
 	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
-	void* specialeffect_data_area;
+	void *specialeffect_data_area;
 };
-
-
 
 /************************************************************************************/
 // radial color denoise
@@ -803,7 +772,7 @@ struct sensor_radial_csc_param {
 /************************************************************************************/
 //pre-color noise remove in rgb domain
 
-struct sensor_rgb_precdn_level{
+struct sensor_rgb_precdn_level {
 	uint16_t thru0;
 	uint16_t thru1;
 	uint16_t thrv0;
@@ -825,12 +794,10 @@ struct sensor_posterize_param {
 	uint8_t specialeffect_out[MAX_SPECIALEFFECT_NUM][8];
 };
 
-
-
 /************************************************************************************/
 //AF monitor in rgb domain
 struct sensor_rgb_afm_sobel {
-	uint32_t af_sobel_type;			//sobel filter win control
+	uint32_t af_sobel_type;		//sobel filter win control
 	struct isp_range sobel;		// filter thresholds
 };
 
@@ -840,9 +807,8 @@ struct sensor_rgb_afm_filter_sel {
 	uint8_t reserved[2];
 };
 
-
 struct sensor_rgb_afm_spsmd {
-	uint8_t af_spsmd_rtgbot;		//filter data mode control
+	uint8_t af_spsmd_rtgbot;	//filter data mode control
 	uint8_t af_spsmd_diagonal;	//filter data mode control
 	uint8_t af_spsmd_cal_mode;	//data output mode control
 	uint8_t af_spsmd_type;		//data output mode control
@@ -869,10 +835,8 @@ struct sensor_y_aem_param {
 	uint32_t cur_index;
 	struct isp_pos win_start;
 	struct isp_size win_size;
-	struct sensor_gamma_curve gamma_tab[9];		////should change to struct sensor_y_gamma tab;  (yangyang.liu)
+	struct sensor_gamma_curve gamma_tab[9];	////should change to struct sensor_y_gamma tab;  (yangyang.liu)
 };
-
-
 
 /************************************************************************************/
 //Anti-flicker
@@ -897,18 +861,16 @@ struct sensor_y_afl_param_v3 {
 	struct isp_pos afl_step_region;
 };
 
-
-
 /************************************************************************************/
 // AF monitor in YUV domain
 struct sensor_y_afm_level {
 	uint32_t iir_bypass;
 	uint8_t skip_num;
-	uint8_t afm_format;	//filter choose control
+	uint8_t afm_format;			//filter choose control
 	uint8_t afm_position_sel;	//choose afm after CFA or auto contrust adjust
 	uint8_t shift;
 	uint16_t win[25][4];
-	uint16_t coef[11];		//int16
+	uint16_t coef[11];			//int16
 	uint16_t reserved1;
 };
 
@@ -929,12 +891,12 @@ struct sensor_yuv_precdn_comm {
 	uint8_t reserved[3];
 };
 
-struct sensor_yuv_precdn_level{
+struct sensor_yuv_precdn_level {
 	struct sensor_yuv_precdn_comm precdn_comm;
-	uint8_t r_segu[2][7];							// param1
-	uint8_t r_segv[2][7];							// param2
-	uint8_t r_segy[2][7];							// param3
-	uint8_t dist_w[25];							// param4
+	uint8_t r_segu[2][7];		// param1
+	uint8_t r_segv[2][7];		// param2
+	uint8_t r_segy[2][7];		// param3
+	uint8_t dist_w[25];			// param4
 	uint8_t reserved0;
 	uint32_t bypass;
 };
@@ -946,7 +908,6 @@ struct sensor_prfy_level {
 	uint32_t bypass;
 };
 
-
 /************************************************************************************/
 //Brightness
 struct sensor_bright_param {
@@ -955,8 +916,6 @@ struct sensor_bright_param {
 
 	int8_t scenemode[MAX_SCENEMODE_NUM];
 };
-
-
 
 /************************************************************************************/
 //Contrast
@@ -967,14 +926,11 @@ struct sensor_contrast_param {
 	uint8_t scenemode[MAX_SCENEMODE_NUM];
 };
 
-
-
-
 /************************************************************************************/
 //Hist in YUV domain
 struct sensor_yuv_hists_param {
 	uint8_t hist_skip_num;
-	uint8_t pof_rst_en;		// use pof signle reset buf
+	uint8_t pof_rst_en;			// use pof signle reset buf
 	uint8_t version_sel1;		// 0: new version 1: old version
 	uint8_t version_sel2;		// 0: old version 1: new version
 	uint16_t high_sum_ratio;
@@ -992,8 +948,6 @@ struct sensor_yuv_hists2_param {
 	struct isp_pos_rect roi_point[SENSOR_HIST2_ROI_NUM];
 };
 
-
-
 /************************************************************************************/
 //Auto-contrast
 struct sensor_auto_contrast_param_v1 {
@@ -1002,8 +956,6 @@ struct sensor_auto_contrast_param_v1 {
 	struct isp_range out;
 	struct isp_range in;
 };
-
-
 
 /************************************************************************************/
 //Color Denoise
@@ -1116,7 +1068,7 @@ ee_mode, sigma and chip_after_smooth_en are Algo reserved.
 There will be at least 3 sets of edge_thr_d for low light, normal light and high light.
 */
 
-struct sensor_ee_level{
+struct sensor_ee_level {
 	struct sensor_ee_pn ee_str_m;
 	struct sensor_ee_pn ee_str_d;
 	struct sensor_ee_pn ee_incr_d;
@@ -1139,7 +1091,6 @@ struct sensor_ee_level{
 	uint8_t reserved0;
 	uint32_t bypass;
 };
-
 
 /************************************************************************************/
 //Emboss
@@ -1167,18 +1118,17 @@ enum isp_smart_y_type {
 	ISP_SMART_Y_TYPE_WEIGHT_VALUE = 1,
 };
 
-
 struct isp_smart_component_cfg {
 	uint32_t id;
 	uint32_t type;
 	uint32_t offset;
 	uint32_t size;
 
-	uint32_t x_type;	// isp_smart_x_type
-	uint32_t y_type;	// isp_smart_y_type
+	uint32_t x_type;			// isp_smart_x_type
+	uint32_t y_type;			// isp_smart_y_type
 	int32_t default_val;
 	int32_t use_flash_val;
-	int32_t flash_val;	//use this value when flash is open
+	int32_t flash_val;			//use this value when flash is open
 
 	uint32_t section_num;
 	struct isp_range bv_range[ISP_SMART_MAX_BV_SECTION];
@@ -1187,8 +1137,8 @@ struct isp_smart_component_cfg {
 
 struct isp_smart_block_cfg {
 	uint32_t enable;
-	uint32_t smart_id;	//id to identify the smart block
-	uint32_t block_id;	//id to identify the isp block (destination block)
+	uint32_t smart_id;			//id to identify the smart block
+	uint32_t block_id;			//id to identify the isp block (destination block)
 	uint32_t component_num;
 	struct isp_smart_component_cfg component[ISP_SMART_MAX_VALUE_NUM];
 };
@@ -1199,7 +1149,6 @@ struct isp_smart_param {
 	struct isp_smart_block_cfg block[ISP_SMART_MAX_BLOCK_NUM];
 };
 /*smart param end*/
-
 
 /************************************************************************************/
 //CSS
@@ -1242,8 +1191,6 @@ struct sensor_css_v1_param {
 	uint8_t reserved[3];
 };
 
-
-
 /************************************************************************************/
 //Saturation
 struct sensor_saturation_param {
@@ -1261,7 +1208,6 @@ struct sensor_y_delay_param {
 	cmr_u16 ydelay_step;
 };
 
-
 /************************************************************************************/
 //Hue
 struct sensor_hue_param {
@@ -1269,13 +1215,11 @@ struct sensor_hue_param {
 	uint32_t cur_index;
 };
 
-
-
 /************************************************************************************/
 //post-color denoise
 struct sensor_postcdn_thr {
-	uint16_t thr0;//algorithm reserved
-	uint16_t thr1;//algorithm reserved
+	uint16_t thr0;				//algorithm reserved
+	uint16_t thr1;				//algorithm reserved
 };
 
 struct sensor_postcdn_r_seg {
@@ -1295,7 +1239,7 @@ uint8_t r_segu[2][7];
 uint8_t r_segv[2][7];
 uint8_t r_distw[15][5];
 */
-struct sensor_uv_postcdn_level{
+struct sensor_uv_postcdn_level {
 	struct sensor_postcdn_r_seg r_segu;
 	struct sensor_postcdn_r_seg r_segv;
 	struct sensor_postcdn_distw r_distw;
@@ -1311,7 +1255,6 @@ struct sensor_uv_postcdn_level{
 	uint32_t bypass;
 };
 
-
 /************************************************************************************/
 //Gamma Correction in YUV domain
 struct sensor_y_gamma_param {
@@ -1319,8 +1262,6 @@ struct sensor_y_gamma_param {
 	struct sensor_gamma_curve curve_tab[SENSOR_GAMMA_NUM];
 	struct sensor_gamma_curve specialeffect[MAX_SPECIALEFFECT_NUM];
 };
-
-
 
 /************************************************************************************/
 //IIR Noise Remove
@@ -1347,10 +1288,10 @@ iircnr_alpha_low_v
 
 */
 
-struct sensor_iircnr_level{
-	uint8_t   iircnr_iir_mode;
-	uint8_t   iircnr_y_th;
-	uint8_t   reserved0[2];
+struct sensor_iircnr_level {
+	uint8_t iircnr_iir_mode;
+	uint8_t iircnr_y_th;
+	uint8_t reserved0[2];
 	uint16_t iircnr_uv_th;
 	uint16_t iircnr_uv_dist;
 	uint16_t iircnr_uv_pg_th;
@@ -1359,9 +1300,9 @@ struct sensor_iircnr_level{
 	uint16_t reserved1;
 	uint32_t iircnr_ymd_u;
 	uint32_t iircnr_ymd_v;
-	uint8_t   iircnr_uv_s_th;
-	uint8_t   iircnr_slope;
-	uint8_t   reserved2[2];
+	uint8_t iircnr_uv_s_th;
+	uint8_t iircnr_slope;
+	uint8_t reserved2[2];
 	uint16_t iircnr_alpha_low_u;
 	uint16_t iircnr_alpha_low_v;
 	uint32_t iircnr_middle_factor;
@@ -1373,12 +1314,12 @@ struct sensor_iircnr_level{
 sensor_iircnr_yrandom:All parameters are Algo reserved
 */
 struct sensor_iircnr_yrandom_level {
-	uint8_t   yrandom_shift;
-	uint8_t   reserved0[3];
+	uint8_t yrandom_shift;
+	uint8_t reserved0[3];
 	uint32_t yrandom_seed;
 	uint16_t yrandom_offset;
 	uint16_t reserved1;
-	uint8_t   yrandom_takebit[8];
+	uint8_t yrandom_takebit[8];
 	uint32_t bypass;
 };
 struct sensor_iircnr_yrandom_param {
@@ -1406,7 +1347,7 @@ uvdiv:
 1. All uvdiv parameters are reserved.
 2. There will be at least 2 sets of uvdiv parameters for different illuminance.
 */
-struct sensor_cce_uvdiv_level{
+struct sensor_cce_uvdiv_level {
 	uint8_t lum_th_h_len;
 	uint8_t lum_th_h;
 	uint8_t lum_th_l_len;
@@ -1454,8 +1395,8 @@ struct sensor_rgb_afm_level {
 	uint32_t afm_mode;
 	uint32_t afm_skip_num;
 	uint32_t afm_skip_num_clear;
-	uint32_t frame_width; // may not need
-	uint32_t frame_height; // may not need
+	uint32_t frame_width;		// may not need
+	uint32_t frame_height;		// may not need
 	struct isp_coor coord[10];
 	uint32_t oflow_protect_en;
 
@@ -1478,7 +1419,6 @@ struct sensor_rgb_afm_level {
 //////////////////////////////////////////////////
 /********** parameter block definition **********/
 //////////////////////////////////////////////////
-
 
 enum {
 	ISP_BLK_PRE_WAVELET_T = 0,
@@ -1532,8 +1472,8 @@ enum {
 struct isp_block_param {
 	struct isp_block_header block_header;
 
-	unsigned int* data_ptr;
-	unsigned int  data_size;
+	unsigned int *data_ptr;
+	unsigned int data_size;
 };
 
 union sensor_version_name {
@@ -1557,9 +1497,8 @@ struct sensor_version_info {
 	cmr_u32 reserve6;
 };
 
-
 /*************new***************************/
-struct sensor_fix_param_mode_info{
+struct sensor_fix_param_mode_info {
 	uint32_t version_id;
 	uint32_t mode_id;
 	uint32_t width;
@@ -1567,37 +1506,36 @@ struct sensor_fix_param_mode_info{
 	uint32_t reserved[8];
 };
 
-struct sensor_fix_param_block_info{
+struct sensor_fix_param_block_info {
 	uint32_t version;
 	uint32_t block_id;
 	uint32_t reserved[8];
 };
 
-struct sensor_mode_fix_param{
-uint32_t *mode_info;
-uint32_t   len;
+struct sensor_mode_fix_param {
+	uint32_t *mode_info;
+	uint32_t len;
 };
 
-struct sensor_block_fix_param{
-uint32_t *block_info;
-uint32_t   len;
+struct sensor_block_fix_param {
+	uint32_t *block_info;
+	uint32_t len;
 };
 
- struct ae_exp_gain_tab {
-	 cmr_u32 *index;
-	 cmr_u32 index_len;
-	 cmr_u32 *exposure;
-	 cmr_u32 exposure_len;
-	 cmr_u32 *dummy;
-	 cmr_u32 dummy_len;
-	 cmr_u16 *again;
-	 cmr_u32 again_len;
-	 cmr_u16 *dgain;
-	 cmr_u32 dgain_len;
- };
+struct ae_exp_gain_tab {
+	cmr_u32 *index;
+	cmr_u32 index_len;
+	cmr_u32 *exposure;
+	cmr_u32 exposure_len;
+	cmr_u32 *dummy;
+	cmr_u32 dummy_len;
+	cmr_u16 *again;
+	cmr_u32 again_len;
+	cmr_u16 *dgain;
+	cmr_u32 dgain_len;
+};
 
-
-  struct ae_scene_exp_gain_tab{
+struct ae_scene_exp_gain_tab {
 	uint32_t *scene_info;
 	uint32_t scene_info_len;
 	uint32_t *index;
@@ -1612,15 +1550,15 @@ uint32_t   len;
 	uint32_t dgain_len;
 };
 
- struct ae_weight_tab{
+struct ae_weight_tab {
 	uint8_t *weight_table;
 	uint32_t len;
- };
+};
 
- struct ae_auto_iso_tab_v1{
-	 uint16_t *auto_iso_tab;
-	 uint32_t len;
- };
+struct ae_auto_iso_tab_v1 {
+	uint16_t *auto_iso_tab;
+	uint32_t len;
+};
 
 struct sensor_ae_tab_param {
 	cmr_u8 *ae;
@@ -1636,7 +1574,6 @@ struct sensor_ae_tab {
 	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
 };
 
-
 /*******************************new***************/
 struct sensor_2d_lsc_param_v1 {
 	struct isp_sample_point_info cur_idx;
@@ -1645,8 +1582,7 @@ struct sensor_2d_lsc_param_v1 {
 	//void *data_area;
 };
 
-
-struct sensor_lens_map_info{
+struct sensor_lens_map_info {
 	uint32_t envi;
 	uint32_t ct;
 	uint32_t width;
@@ -1673,13 +1609,12 @@ struct sensor_lsc_map {
 	struct sensor_lens_map map[LNC_MAP_COUNT];
 };
 
-
-struct sensor_awb_map{
+struct sensor_awb_map {
 	uint16_t *addr;
-	uint32_t len;		//by bytes
+	uint32_t len;				//by bytes
 };
 
-struct sensor_awb_weight{
+struct sensor_awb_weight {
 	uint8_t *addr;
 	uint32_t weight_len;
 	uint16_t *size;
@@ -1701,7 +1636,6 @@ struct nr_set_group_unit {
 	cmr_u8 *nr_ptr;
 	cmr_u32 nr_len;
 };
-
 
 struct sensor_nr_set_group_param {
 	//cmr_u8 *pwd;
@@ -1757,7 +1691,7 @@ struct sensor_raw_fix_info {
 	struct sensor_nr_param nr;
 };
 
-struct sensor_raw_note_info{
+struct sensor_raw_note_info {
 	uint8_t *note;
 	uint32_t node_len;
 };
@@ -1791,8 +1725,8 @@ struct sensor_raw_info {
 struct raw_param_info_tab {
 	uint32_t param_id;
 	struct sensor_raw_info *info_ptr;
-	uint32_t(*identify_otp) (void *param_ptr);
-	uint32_t(*cfg_otp) (void *param_ptr);
+	 uint32_t(*identify_otp) (void *param_ptr);
+	 uint32_t(*cfg_otp) (void *param_ptr);
 };
 #endif
 
