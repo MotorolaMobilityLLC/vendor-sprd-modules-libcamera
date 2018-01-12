@@ -1583,8 +1583,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            sizeof(camera3_default_info.common.availableFaceDetectModes));
     s_setting[cameraId].sprddefInfo.flash_mode_support = 1;
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
+
+#ifdef CONFIG_VIDEO_SNAPSHOT_NOT_SUPPORT
+    s_setting[cameraId].sprddefInfo.rec_snap_support =
+        ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_OFF;
+#else
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
+#endif
+
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
     s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
 
