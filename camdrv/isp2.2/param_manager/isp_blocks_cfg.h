@@ -109,6 +109,11 @@ struct isp_binning_statistic_info {
 	struct isp_size binning_size;
 };
 
+struct isp_afm_statistic_info {
+	cmr_u64 afm_fv0[10];
+	cmr_u64 afm_fv1[10];
+};
+
 struct isp_blc_param {
 	struct isp_sample_point_info cur_idx;
 	struct isp_dev_blc_info cur;

@@ -409,6 +409,7 @@ extern "C" {
 	struct afctrl_calc_in {
 		cmr_u32 data_type;
 		void *data;
+		cmr_u32 data_len;
 		struct afctrl_fps_info sensor_fps;
 	};
 

@@ -878,7 +878,7 @@ static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 	FILE *fp = NULL;
 
 	if (0 == access(aft_tuning_path, R_OK)) {	// read request successs
-		cmr_u16 len = 0;
+		cmr_s32 len = 0;
 
 		fp = fopen(aft_tuning_path, "rb");
 		if (NULL == fp) {
@@ -888,7 +888,7 @@ static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
-		if (len != af->trig_ops.handle.tuning_param_len) {
+		if (len < 0 || (cmr_u32) len != af->trig_ops.handle.tuning_param_len) {
 			ISP_LOGW("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.handle.tuning_param_len);
 			fclose(fp);
 			*is_exist = 0;
@@ -1264,9 +1264,7 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 			("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %"
 			 PRIu64 "\n", pos, i, af->ae_cali_data.r_avg[i],
 			 af->ae_cali_data.g_avg[i], af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
-		fprintf(fp,
-				"pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %"
-				PRIu64 "\n", pos, i, af->ae_cali_data.r_avg[i],
+		fprintf(fp, "pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n", pos, i, af->ae_cali_data.r_avg[i],
 				af->ae_cali_data.g_avg[i], af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
 	}
 	fclose(fp);
@@ -1327,7 +1325,8 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 	char *p1 = NULL;
 	char *p2 = NULL;
 	char *string = NULL;
-	cmr_u32 len = 0;
+	cmr_s32 len = 0;
+	cmr_u32 read_len = 0;
 	cmr_u8 num = 0;
 	roi_info_t *r = &af->roi;
 	FILE *fp = NULL;
@@ -1342,6 +1341,11 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
+		if (len < 0) {
+			ISP_LOGI("fail to get offset");
+			fclose(fp);
+			return;
+		}
 		string = malloc(len);
 		if (NULL == string) {
 			ISP_LOGI("malloc len of file AF_roi.bin fails");
@@ -1349,7 +1353,10 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 			return;
 		}
 		fseek(fp, 0, SEEK_SET);
-		fread(string, 1, len, fp);
+		read_len = fread(string, 1, len, fp);
+		if (read_len != (cmr_u32) len) {
+			ISP_LOGE("fail to read bin.");
+		}
 		fclose(fp);
 		// parsing argumets start
 		p1 = p2 = string;
@@ -2421,9 +2428,8 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	af->trigger_source_type |= AF_DATA_PD;
 	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n", pd_calc_result->pdPhaseDiff[0], pd_calc_result->pdPhaseDiff[1], pd_calc_result->pdPhaseDiff[2], pd_calc_result->pdPhaseDiff[3]);
 	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n", pd_calc_result->pdConf[0], pd_calc_result->pdConf[1], pd_calc_result->pdConf[2], pd_calc_result->pdConf[3], af->pd.pd_roi_num);
-	ISP_LOGV
-		("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d",
-		 pd_calc_result->pdGetFrameID, pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
+	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d", pd_calc_result->pdGetFrameID,
+			 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
 
 	return AFV1_SUCCESS;
 }
@@ -2866,10 +2872,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
-	cmr_u32 *af_fv_val = NULL;
 	cmr_u32 afm_skip_num = 0;
 	cmr_s32 rtn = AFV1_SUCCESS;
-	cmr_u8 i = 0;
 	UNUSED(out);
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -2908,28 +2912,11 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
-		af_fv_val = (cmr_u32 *) (inparam->data);
-#ifdef CONFIG_ISP_2_4
-		for (i = 0; i < 10; i++) {
-			cmr_u64 high = af_fv_val[95 + i / 2];
-			high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
-			af->af_fv_val.af_fv0[i] = af_fv_val[61 + i * 3] + high;	// spsmd 
-			// g 
-			// channels
-
-			high = af_fv_val[95 + i / 2];
-			high = (i & 0x01) ? ((high & 0x0F000000) << 12) : ((high & 0x00000F00) << 24);
-			af->af_fv_val.af_fv1[i] = af_fv_val[31 + i * 3] + high;	// soble9x9 
-			// g 
-			// channels
+		if (inparam->data_len == sizeof(struct af_fv_info)) {
+			memcpy(&af->af_fv_val, (void *)inparam->data, sizeof(struct af_fv_info));
+		} else {
+			ISP_LOGI("af stats length error");
 		}
-#else							// ISP2.1/2.2/2.3 share same AFM filter,
-		// so share same FV statistic format
-		for (i = 0; i < 10; i++) {
-			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
-			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
-		}
-#endif
 
 		if (inparam->sensor_fps.is_high_fps) {
 			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;

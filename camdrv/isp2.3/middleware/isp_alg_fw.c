@@ -2052,6 +2052,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	cmr_uint u_addr = 0;
 	cmr_s32 i = 0;
 	cmr_u32 af_temp[ISP_AFM_WIN_NUM * 3];
+	struct isp_afm_statistic_info af_stats;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
@@ -2088,10 +2089,15 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		for (i = 0; i < ISP_AFM_WIN_NUM * 3; i++) {
 			af_temp[i] = *((cmr_u32 *) u_addr + i);
 		}
+		for (i = 0; i < ISP_AFM_WIN_NUM; i++) {
+			af_stats.afm_fv0[i] = ((((cmr_u64) af_temp[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_temp[i]));
+			af_stats.afm_fv1[i] = (((((cmr_u64) af_temp[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_temp[10 + i]);
+		}
 		calc_param.data_type = AF_DATA_AF;
 		calc_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 		calc_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
-		calc_param.data = (void *)(af_temp);
+		calc_param.data = (void *)(&af_stats);
+		calc_param.data_len = sizeof(af_stats);
 		if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
 			ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
 			ISP_TRACE_IF_FAIL(ret, ("fail to af process"));

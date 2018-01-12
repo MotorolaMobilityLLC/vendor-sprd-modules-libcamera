@@ -195,10 +195,10 @@ struct af_fullscan_info {
 	cmr_u32 reserved[16];
 };
 
-typedef struct _af_fv_info {
-	cmr_u64 af_fv0[10];			// [10]:10 ROI, sum of FV0
-	cmr_u64 af_fv1[10];			// [10]:10 ROI, sum of FV1
-} af_fv;
+struct af_fv_info {
+	cmr_u64 af_fv0[10];			//[10]:10 ROI, sum of FV0
+	cmr_u64 af_fv1[10];			//[10]:10 ROI, sum of FV1
+};
 
 typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 iir_level;
@@ -252,7 +252,7 @@ typedef struct _af_ctrl {
 	cmr_u32 Y_sum_trigger;
 	cmr_u32 Y_sum_normalize;
 	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
-	af_fv af_fv_val;
+	struct af_fv_info af_fv_val;
 	struct afctrl_gsensor_info gsensor_info;
 	struct afctrl_face_info face_info;
 	isp_info_t isp_info;
