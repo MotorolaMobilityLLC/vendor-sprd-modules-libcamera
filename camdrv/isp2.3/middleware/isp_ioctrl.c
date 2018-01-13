@@ -2264,6 +2264,8 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 		return ret;
 	}
 
+	smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
+	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
 	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
 	smart_proc_in.cal_para.ct = scene_parm->smart_ct;

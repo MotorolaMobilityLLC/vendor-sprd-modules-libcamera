@@ -582,6 +582,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	switch (cmd) {
 	case ISP_DEV_SET_AE_STATS_MONITOR:
 		ret = ispdev_access_aem_stats_info(cxt, in);
+		break;
 	case ISP_DEV_SET_RGB_GAIN:
 		ret = ispdev_access_ae_set_rgb_gain(cxt, in);
 		break;
