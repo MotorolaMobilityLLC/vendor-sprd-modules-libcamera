@@ -19,7 +19,7 @@
 #include "cmr_types.h"
 #include "cmr_log.h"
 
-cmr_int g_isp_log_level = LEVEL_OVER_LOGD;
+cmr_int g_isp_log_level = LEVEL_OVER_LOGW;
 cmr_int g_oem_log_level = LEVEL_OVER_LOGD;
 cmr_int g_sensor_log_level = LEVEL_OVER_LOGD;
 
