@@ -27,7 +27,6 @@
 #include "isp_pm_com_type.h"
 #include "isp_com_alg.h"
 #include "smart_ctrl.h"
-#include "isp_otp_calibration.h"
 #include <cutils/properties.h>
 #include "isp_video.h"
 #include "cmr_types.h"
@@ -788,7 +787,6 @@ cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *
 cmr_s32 _pm_nlm_deinit(void *nlm_param);
 
 cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, void *param2);
-cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param *lsc_ptr, struct isp_cali_lsc_info *cali_lsc_ptr);
 cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_2d_lsc_deinit(void *lnc_param);

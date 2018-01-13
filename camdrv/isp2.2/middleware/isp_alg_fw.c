@@ -2088,25 +2088,6 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w ;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 
-	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
-		//AIS needs AWB infomation at Init
-		struct isp_otp_info *otp_info = (struct isp_otp_info *)cxt->handle_otp;
-		if (NULL != otp_info) {
-			struct isp_cali_awb_info *awb_cali_info = otp_info->awb.data_ptr;
-			ae_input.lsc_otp_golden = otp_info->lsc_golden;
-			ae_input.lsc_otp_random = otp_info->lsc_random;
-			ae_input.lsc_otp_width = otp_info->width;
-			ae_input.lsc_otp_height = otp_info->height;
-			if (NULL != awb_cali_info) {
-				ae_input.otp_info.gldn_stat_info.r = awb_cali_info->golden_avg[0];
-				ae_input.otp_info.gldn_stat_info.g = awb_cali_info->golden_avg[1];
-				ae_input.otp_info.gldn_stat_info.b = awb_cali_info->golden_avg[2];
-				ae_input.otp_info.rdm_stat_info.r = awb_cali_info->ramdon_avg[0];
-				ae_input.otp_info.rdm_stat_info.g = awb_cali_info->ramdon_avg[1];
-				ae_input.otp_info.rdm_stat_info.b = awb_cali_info->ramdon_avg[2];
-			}
-		}
-	}
 
 	if (cxt->is_multi_mode == ISP_DUAL_NORMAL) {
 		// TODO: change ae_role here
@@ -2522,12 +2503,10 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	struct sensor_version_info *version_info = PNULL;
 	struct isp_pm_init_input input;
 	struct isp_pm_init_output output;
-	struct isp_otp_init_in otp_input;
 	cmr_u32 i = 0;
 
 	memset(&input, 0, sizeof(input));
 	memset(&output, 0, sizeof(output));
-	memset(&otp_input, 0, sizeof(otp_input));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
 
@@ -2560,12 +2539,6 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	       ISP_INPUT_SIZE_NUM_MAX * sizeof(struct sensor_raw_resolution_info));
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &input_ptr->size);
 
-	/*Notice: otp_init must be called before _ispAlgInit */
-	otp_input.handle_pm = cxt->handle_pm;
-	otp_input.lsc_golden_data = input_ptr->sensor_lsc_golden_data;
-	otp_input.calibration_param = input_ptr->calibration_param;
-	ret = otp_ctrl_init(&cxt->handle_otp, &otp_input);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do _otp_init"));
 
 	return ret;
 }
@@ -2939,7 +2912,6 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_STOP, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_stop"));
 
-	otp_ctrl_deinit(cxt->handle_otp);
 
 	if (cxt->ae_cxt.log_alc) {
 		free(cxt->ae_cxt.log_alc);

@@ -147,96 +147,6 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	return rtn;
 }
 
-cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param * lsc_ptr, struct isp_cali_lsc_info * cali_lsc_ptr)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, j = 0, num = 0;
-	cmr_u32 buf_size = 0;
-	cmr_u32 ct_min = 0, ct_max = 0, ct = 0;
-	cmr_u16 *tmp_buf = PNULL;
-	cmr_u16 *data_addr = PNULL, *dst_ptr = PNULL;
-	cmr_u16 *addr_array[ISP_CALIBRATION_MAX_LSC_NUM];
-	cmr_u32 is_print_log = _is_print_log();
-
-	if (NULL == lsc_ptr || NULL == cali_lsc_ptr) {
-		ISP_LOGE("fail to check valid parameter");
-		return ISP_ERROR;
-	}
-
-	if (is_print_log) {
-		ISP_LOGV("calibration lsc map num=%d", cali_lsc_ptr->num);
-
-		for (i = 0; i < cali_lsc_ptr->num; i++) {
-			ISP_LOGV("[%d], envi=%d, ct=%d, size(%d, %d), grid=%d, offset=%d, len=%d", i,
-				 cali_lsc_ptr->map[i].ct >> 16, cali_lsc_ptr->map[i].ct & 0xffff,
-				 cali_lsc_ptr->map[i].width, cali_lsc_ptr->map[i].height, cali_lsc_ptr->map[i].grid, cali_lsc_ptr->map[i].offset, cali_lsc_ptr->map[i].len);
-		}
-
-		ISP_LOGV("origin lsc map num=%d", lsc_ptr->tab_num);
-		for (i = 0; i < lsc_ptr->tab_num; i++) {
-			ISP_LOGV("[%d], envi=%d, ct=%d, grid=%d, offset=%d, len=%d", i,
-				 lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.envi, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.ct,
-				 lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset,
-				 lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_len);
-		}
-	}
-
-	for (i = 0; i < cali_lsc_ptr->num; i++) {
-		cmr_u32 src_envi = cali_lsc_ptr->map[i].ct >> 16;
-		cmr_u32 src_ct = cali_lsc_ptr->map[i].ct & 0xffff;
-		cmr_u16 *src_data = (cmr_u16 *) ((cmr_u8 *) & cali_lsc_ptr->data_area + cali_lsc_ptr->map[i].offset);
-		cmr_u32 src_data_size = cali_lsc_ptr->map[i].len;
-		cmr_u32 j = 0;
-		cmr_u32 dst_index = 0xfff;
-		cmr_u32 min_ct_diff = 0xffff;
-
-		if (is_print_log)
-			ISP_LOGV("%d: ------------------", i);
-
-		for (j = 0; j < lsc_ptr->tab_num; j++) {
-			cmr_u32 dst_envi = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.envi;
-			cmr_u32 dst_ct = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.ct;
-
-			if (dst_envi == src_envi) {
-				cmr_u32 ct_diff = abs((cmr_s32) dst_ct - (cmr_s32) src_ct);
-				if (ct_diff < min_ct_diff) {
-					min_ct_diff = ct_diff;
-					dst_index = j;
-				}
-			}
-		}
-
-		//find useful one
-		if (min_ct_diff <= 1000 && dst_index < lsc_ptr->tab_num) {
-			struct isp_size src_size = { 0, 0 };
-			struct isp_size dst_size = { 0, 0 };
-
-			if (is_print_log)
-				ISP_LOGV("suitable lsc find! min index = %d, min ct diff=%d", dst_index, min_ct_diff);
-
-			src_size.w = cali_lsc_ptr->map[dst_index].width;
-			src_size.h = cali_lsc_ptr->map[dst_index].height;
-			dst_size.w = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.width;
-			dst_size.h = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.height;
-			cmr_u16 *dst_data = (cmr_u16 *) ((cmr_u8 *) & lsc_ptr->tab_info.lsc_2d_map + lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_offset);
-			cmr_u32 dst_data_size = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_len;
-
-			if (src_size.w == dst_size.w && src_size.h == dst_size.h && src_data_size == dst_data_size) {
-				memcpy(dst_data, src_data, dst_data_size);
-				if (is_print_log)
-					ISP_LOGV("size is the same, just copy!");
-			} else {
-				/*need scaling */
-				//isp_scaling_lsc_gain(dst_data, src_data, &dst_size, &src_size);
-				if (is_print_log)
-					ISP_LOGV("src size=%dX%d, dst size=%dX%d, need scaling", src_size.w, src_size.h, dst_size.w, dst_size.h);
-			}
-		}
-
-	}
-
-	return rtn;
-}
 
 cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
@@ -348,35 +258,6 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
 			memcpy(dst_lnc_ptr->final_lsc_param.param_ptr, dst, dst_lnc_ptr->cur.buf_len);
 
-		}
-		break;
-
-	case ISP_PM_BLK_LSC_OTP:
-		{
-			void *src[2] = { NULL };
-			void *dst = NULL;
-			cmr_u32 data_num;
-			cmr_u16 weight[2] = { 0 };
-			struct sensor_2d_lsc_param *lsc_ptr = (struct sensor_2d_lsc_param *)lnc_header_ptr->absolute_addr;
-			struct isp_cali_lsc_info *cali_lsc_ptr = (struct isp_cali_lsc_info *)param_ptr0;
-
-			rtn = _pm_2d_lsc_otp_active(lsc_ptr, cali_lsc_ptr);
-
-			if (ISP_ONE == dst_lnc_ptr->is_init) {
-				src[0] = (void *)dst_lnc_ptr->map_tab[dst_lnc_ptr->cur_index_info.x0].param_addr;
-				src[1] = (void *)dst_lnc_ptr->map_tab[dst_lnc_ptr->cur_index_info.x1].param_addr;
-				dst = (void *)dst_lnc_ptr->final_lsc_param.data_ptr;
-				data_num = dst_lnc_ptr->cur.buf_len / sizeof(cmr_u16);
-
-				weight[0] = dst_lnc_ptr->cur_index_info.weight0;
-				weight[1] = dst_lnc_ptr->cur_index_info.weight1;
-
-				rtn = isp_interp_data(dst, src, (cmr_u16 *) weight, data_num, ISP_INTERP_UINT16);
-				if (ISP_SUCCESS == rtn) {
-					lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
-					dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
-				}
-			}
 		}
 		break;
 

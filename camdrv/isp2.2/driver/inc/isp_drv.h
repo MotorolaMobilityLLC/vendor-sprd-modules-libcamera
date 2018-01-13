@@ -28,6 +28,7 @@
 #include "isp_com.h"
 #endif
 #include "isp_type.h"
+#include "isp_blocks_cfg.h"
 
 typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
 

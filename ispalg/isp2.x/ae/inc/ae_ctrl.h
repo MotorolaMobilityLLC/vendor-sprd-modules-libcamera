@@ -27,9 +27,6 @@
 #include "isp_match.h"
 #endif
 
-#ifdef CONFIG_ISP_2_2
-#include "isp_otp_calibration.h"
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -78,7 +78,7 @@ LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libcampm
 
 LOCAL_SHARED_LIBRARIES += liblog
 
-LOCAL_SHARED_LIBRARIES += libcamsensor libcalibration
+LOCAL_SHARED_LIBRARIES += libcamsensor
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

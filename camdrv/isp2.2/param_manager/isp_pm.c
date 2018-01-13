@@ -25,7 +25,6 @@
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"
 #include "isp_pm_com_type.h"
-#include "isp_otp_calibration.h"
 #include "isp_drv.h"
 #include "cmr_types.h"
 
