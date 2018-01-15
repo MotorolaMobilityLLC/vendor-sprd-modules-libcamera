@@ -152,9 +152,9 @@
 		/*flat_factor*/
 		0x02,
 		/*spike_coeff*/
-		0x05,
+		0x02,
 		/*dead_coeff*/
-		0x00,
+		0x02,
 		/*reserved*/
 		0x00,
 		/*lut_level*/
@@ -175,17 +175,17 @@
 		/*k_val*/
 		{
 			/*min*/
-			0x0000,
+			0x0005,
 			/*max*/
-			0x0000,
+			0x0005,
 
 		},
 		/*ktimes*/
-		0x01,
+		0x03,
 		/*delt34*/
-		0x06,
+		0x03,
 		/*safe_factor*/
-		0x05,
+		0x0A,
 		/*reserved*/
 		0x00,
 
