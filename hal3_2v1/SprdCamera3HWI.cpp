@@ -1245,8 +1245,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     if (request->num_output_buffers == 2 &&
                         request->output_buffers[(i + 1) % 2].stream->priv ==
                             mCallbackChan &&
-                        (max_cpp_size.width > max_sensor_width) &&
-                        (max_cpp_size.height > max_sensor_height)) {
+                        (((max_cpp_size.width > max_sensor_width) &&
+                          (max_cpp_size.height > max_sensor_height)) ||
+                         (stream->width >= request->output_buffers[(i + 1) % 2]
+                                               .stream->width &&
+                          stream->height >= request->output_buffers[(i + 1) % 2]
+                                                .stream->height))) {
                         mOEMIf->setCapturePara(
                             CAMERA_CAPTURE_MODE_CALLBACK_SNAPSHOT, frameNumber);
                         mFirstRegularRequest = false;
@@ -1273,8 +1277,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     request->num_output_buffers == 2 &&
                     request->output_buffers[(i + 1) % 2].stream->priv ==
                         mPicChan &&
-                    (max_cpp_size.width > max_sensor_width) &&
-                    (max_cpp_size.height > max_sensor_height)) {
+                    (((max_cpp_size.width > max_sensor_width) &&
+                      (max_cpp_size.height > max_sensor_height)) ||
+                     (stream->width <=
+                          request->output_buffers[(i + 1) % 2].stream->width &&
+                      stream->height <= request->output_buffers[(i + 1) % 2]
+                                            .stream->height))) {
+
                     ret = mPicChan->request(stream, output.buffer, frameNumber);
                     if (ret) {
                         HAL_LOGE("mPicChan->request failed %p (%d)",
