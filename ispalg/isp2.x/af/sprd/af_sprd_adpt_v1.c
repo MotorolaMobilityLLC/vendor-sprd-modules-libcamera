@@ -206,9 +206,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		win[i].end_y = 2;
 	}
 
-	winparam.win_pos = (struct af_win_rect *)win;	// todo : compare
-	// with kernel
-	// type
+	winparam.win_pos = (struct af_win_rect *)win;	//todo : compare with kernel type
 
 	af->cb_ops.set_monitor_win(af->caller, &winparam);
 }
@@ -229,8 +227,7 @@ static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr
 
 	if (filter_mask & ENHANCED_BIT) {
 		for (i = 0; i < roi_num; ++i) {
-			// ISP_LOGI("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".",
-			// i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
+			//ISP_LOGI("fv0[%d]:%15" PRIu64 ", fv1[%d]:%15" PRIu64 ".", i, af->af_fv_val.af_fv0[i], i, af->af_fv_val.af_fv1[i]);
 			*p++ = af->af_fv_val.af_fv0[i];
 		}
 	}
@@ -398,10 +395,8 @@ static cmr_u8 if_statistics_get_data(cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_d
 		fv[T_SPSMD] = sum;
 		break;
 	default:
-		sum = spsmd[9];			// 3///3x3 windows,the 9th window is
-		// biggest covering all the other window
-		// sum = spsmd[1] + 8 * spsmd[2]; /// the 0th window cover 1st and 
-		// 2nd window,1st window cover 2nd window
+		sum = spsmd[9];			//3///3x3 windows,the 9th window is biggest covering all the other window
+		//sum = spsmd[1] + 8 * spsmd[2];        /// the 0th window cover 1st and 2nd window,1st window cover 2nd window
 		fv[T_SPSMD] = sum;
 		break;
 	}
@@ -798,10 +793,11 @@ static cmr_u8 if_af_set_next_vcm_pos(cmr_u32 pos, void *cookie)
 	return 0;
 
 	/*
-	 * af_ctrl_t *af = cookie; if (NULL != af->af_set_next_vcm_pos)
-	 * af->af_set_next_vcm_pos(af->caller, pos);
-	 * 
-	 * return 0; 
+	   af_ctrl_t *af = cookie;
+	   if (NULL != af->af_set_next_vcm_pos)
+	   af->af_set_next_vcm_pos(af->caller, pos);
+
+	   return 0;
 	 */
 }
 
@@ -990,9 +986,7 @@ static cmr_s32 unload_af_lib(af_ctrl_t * af)
 	return 0;
 }
 
-/*
- * initialization 
- */
+/* initialization */
 static void *af_init(af_ctrl_t * af)
 {
 	// tuning data from common_mode
@@ -1043,8 +1037,8 @@ static void *af_init(af_ctrl_t * af)
 
 	pdaf_tune_data = (struct isp_haf_tune_param *)af->pdaftuning_data;
 	if (pdaf_tune_data != NULL) {
-		ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ",
-				 pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
+		ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps,
+				 pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
 		for (i = 0; i < 3; i++) {
 			haf_tuning_data.PDAF_Tuning_Data[i].min_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].min_pd_vcm_steps;
 			haf_tuning_data.PDAF_Tuning_Data[i].max_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].max_pd_vcm_steps;
@@ -1064,9 +1058,7 @@ static void *af_init(af_ctrl_t * af)
 		}
 	} else {
 		ISP_LOGI("PDAF Tuning NULL!");
-		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1;	// Use 
-		// Default 
-		// Setting
+		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1;	//Use Default Setting
 	}
 
 	if (0 != load_af_lib(af, AF_LIB))
@@ -1179,8 +1171,7 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 		p3++;
 	*p3++ = '\0';
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-	af->request_mode = AF_MODE_NORMAL;	// not need trigger to work when
-	// caf_start_monitor
+	af->request_mode = AF_MODE_NORMAL;	//not need trigger to work when caf_start_monitor
 	af->state = STATE_CAF;
 	af->focus_state = AF_SEARCHING;
 	af->algo_mode = CAF;
@@ -1192,26 +1183,7 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	aft_in.defocus_param.per_steps = (atoi(p3) > 0 && atoi(p3) < 200) ? (atoi(p3)) : (0);
 
 	trigger_stop(af);
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);	// test_param 
-	// is 
-	// in 
-	// _eAF_Triger_Type, 
-	// RF_NORMAL 
-	// = 
-	// 0, 
-	// //noraml 
-	// R/F 
-	// search 
-	// for 
-	// AFT 
-	// RF_FAST 
-	// = 
-	// 3, 
-	// //Fast 
-	// R/F 
-	// search 
-	// for 
-	// AFT
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);	//test_param is in _eAF_Triger_Type,     RF_NORMAL = 0,        //noraml R/F search for AFT RF_FAST = 3,              //Fast R/F search for AFT
 	do_start_af(af);
 }
 
@@ -1230,10 +1202,9 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	if (AF_SEARCHING == af->focus_state) {
 		af_stop_search(af);
 	}
-	// af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
-	// saf_start(af, NULL); //SAF, win is NULL using default
-	// ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS :
-	// RF_NORMAL);
+	//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
+	//saf_start(af, NULL);  //SAF, win is NULL using default
+	//ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
 	af->algo_mode = SAF;
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1261,11 +1232,13 @@ static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Record_FV, &af->fv_combine[T_SPSMD]);
 	for (i = 0; i < 9; i++) {
 		ISP_LOGV
-			("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %"
-			 PRIu64 "\n", pos, i, af->ae_cali_data.r_avg[i],
-			 af->ae_cali_data.g_avg[i], af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
-		fprintf(fp, "pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n", pos, i, af->ae_cali_data.r_avg[i],
-				af->ae_cali_data.g_avg[i], af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
+			("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n",
+			 pos, i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
+			 af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
+		fprintf(fp,
+				"pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %" PRIu64 "\n",
+				pos, i, af->ae_cali_data.r_avg[i], af->ae_cali_data.g_avg[i],
+				af->ae_cali_data.b_avg[i], af->ae_cali_data.r_avg_all, af->ae_cali_data.g_avg_all, af->ae_cali_data.b_avg_all, af->fv_combine[T_SPSMD]);
 	}
 	fclose(fp);
 
@@ -1442,15 +1415,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 		i++;
 	}
 
-	if (sizeof(test_mode_set) / sizeof(test_mode_set[0]) <= i) {	// out 
-		// of 
-		// range 
-		// in 
-		// test 
-		// mode,so 
-		// initialize 
-		// its 
-		// ops
+	if (sizeof(test_mode_set) / sizeof(test_mode_set[0]) <= i) {	// out of range in test mode,so initialize its ops
 		ISP_LOGV("AF test mode Command is undefined,start af test mode initialization");
 		i = 0;
 		while (i < sizeof(test_mode_set) / sizeof(test_mode_set[0])) {
@@ -1468,9 +1433,7 @@ static void set_af_test_mode(af_ctrl_t * af, char *af_mode)
 		test_mode_set[i].command_func(af, p1 + 1);
 }
 
-/*
- * called each frame 
- */
+/* called each frame */
 static cmr_s32 af_test_lens(af_ctrl_t * af, cmr_u16 pos)
 {
 	cmr_u32 force_stop;
@@ -1660,13 +1623,7 @@ static void af_stop_search(af_ctrl_t * af)
 
 	force_stop = AFV1_TRUE;
 	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	// modifiy 
-	// for 
-	// force 
-	// stop 
-	// to 
-	// SAF/Flow 
-	// control
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	//modifiy for force stop to SAF/Flow control
 	af->af_ops.calc(af->af_alg_cxt);
 	af->focus_state = AF_IDLE;
 }
@@ -1762,20 +1719,7 @@ static void caf_monitor_process_af(af_ctrl_t * af)
 	afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num);
 
 	prm->afm_info.win_cfg.win_cnt = af->roi.num;
-	memcpy(prm->afm_info.win_cfg.win_pos, af->roi.win, af->roi.num * sizeof(win_coord_t));	// be 
-	// carefull 
-	// that 
-	// the 
-	// af->roi.num 
-	// should 
-	// be 
-	// less 
-	// than 
-	// af->roi.win 
-	// number 
-	// and 
-	// prm->afm_info.win_cfg.win_pos 
-	// number
+	memcpy(prm->afm_info.win_cfg.win_pos, af->roi.win, af->roi.num * sizeof(win_coord_t));	// be carefull that the af->roi.num should be less than af->roi.win number and prm->afm_info.win_cfg.win_pos number
 	prm->afm_info.filter_info.filter_num = 1;
 	prm->afm_info.filter_info.filter_data[0].data = fv;
 	prm->afm_info.filter_info.filter_data[0].type = 1;
@@ -1843,9 +1787,7 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = OUT_SCENE;
 	prm->ae_info.registor_pos = (cmr_u32) lens_get_pos(af);
-	// ISP_LOGI("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d,
-	// bv = %d", prm->ae_info.exp_time, prm->ae_info.gain,
-	// prm->ae_info.cur_lum, prm->ae_info.is_stable, prm->ae_info.bv);
+	//ISP_LOGI("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d, bv = %d", prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable, prm->ae_info.bv);
 
 	caf_monitor_calc(af, prm);
 }
@@ -2023,10 +1965,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct af_trig_info *win = (struct af_trig_info *)param0;	// win =
-	// (struct 
-	// isp_af_win 
-	// *)param;
+	struct af_trig_info *win = (struct af_trig_info *)param0;	//win = (struct isp_af_win *)param;
 	AF_Trigger_Data aft_in;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
@@ -2147,8 +2086,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	calc_roi(af, NULL, af->algo_mode);
 	do_start_af(af);
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
-		trigger_start(af);		// for hdr capture no af mode update at
-		// whole procedure
+		trigger_start(af);		// for hdr capture no af mode update at whole procedure
 	}
 
 	if (STATE_RECORD_CAF == af->state) {
@@ -2170,9 +2108,7 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 
 	if (AF_SEARCHING == af->focus_state) {
 		ISP_LOGW("serious problem, current af is not done, af state %s", STATE_STRING(af->state));
-		af_stop_search(af);		// wait saf/caf done, caf : for camera
-		// enter, switch to manual; saf : normal
-		// non zsl
+		af_stop_search(af);		//wait saf/caf done, caf : for camera enter, switch to manual; saf : normal non zsl
 	}
 	do_stop_af(af);
 	return AFV1_SUCCESS;
@@ -2381,8 +2317,7 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 		timestamp.type = AF_TIME_DCAM;
 		timestamp.time_stamp = af->dcam_timestamp;
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Time_Stamp, &timestamp);
-		// ISP_LOGI("dcam_timestamp %" PRIu64 " ", (cmr_s64)
-		// af->dcam_timestamp);
+		//ISP_LOGI("dcam_timestamp %" PRIu64 " ", (cmr_s64) af->dcam_timestamp);
 		if (AF_IDLE == af->focus_state && DCAM_AFTER_VCM_YES == timecompare && 0 == af->vcm_stable) {
 			af->vcm_stable = 1;
 		}
@@ -2391,8 +2326,7 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 		timestamp.type = AF_TIME_CAPTURE;
 		timestamp.time_stamp = af->takepic_timestamp;
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Time_Stamp, &timestamp);
-		// ISP_LOGI("takepic_timestamp %" PRIu64 " ", (cmr_s64)
-		// af->takepic_timestamp);
+		//ISP_LOGI("takepic_timestamp %" PRIu64 " ", (cmr_s64) af->takepic_timestamp);
 		ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
 
 		if (0 == af->ts_counter) {
@@ -2441,9 +2375,8 @@ static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 
 	switch (aux_sensor_info->type) {
 	case AF_SENSOR_ACCELEROMETER:
-		ISP_LOGV
-			("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
-			 aux_sensor_info->gsensor_info.vertical_up, aux_sensor_info->gsensor_info.vertical_down, aux_sensor_info->gsensor_info.horizontal);
+		ISP_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f", aux_sensor_info->gsensor_info.vertical_up,
+				 aux_sensor_info->gsensor_info.vertical_down, aux_sensor_info->gsensor_info.horizontal);
 		af->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
 		af->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
 		af->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;

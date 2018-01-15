@@ -1,28 +1,20 @@
 /*
- * 
- * ******************************************************************************
- * $Header$  Copyright (c) 2016-2025 Spreadtrum Inc. All rights reserved. 
- * +-----------------------------------------------------------------+ | THIS
- * SOFTWARE IS FURNISHED UNDER A LICENSE AND MAY ONLY BE USED | | AND COPIED IN
- * ACCORDANCE WITH THE TERMS AND CONDITIONS OF SUCH | | A LICENSE AND WITH THE
- * INCLUSION OF THE THIS COPY RIGHT NOTICE. | | THIS SOFTWARE OR ANY OTHER COPIES
- * OF THIS SOFTWARE MAY NOT BE | | PROVIDED OR OTHERWISE MADE AVAILABLE TO ANY
- * OTHER PERSON. THE | | OWNERSHIP AND TITLE OF THIS SOFTWARE IS NOT TRANSFERRED.
- * | | | | THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT | | ANY 
- * PRIOR NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY | | SPREADTRUM INC. 
- * | +-----------------------------------------------------------------+ 
- * $History$ 
- * ****************************************************************************** 
- */  
+ *******************************************************************************
+ * $Header$ * *  Copyright (c) 2016-2025 Spreadtrum Inc. All rights reserved. *
+ *  +-----------------------------------------------------------------+ *  | THIS SOFTWARE IS FURNISHED UNDER A LICENSE AND MAY ONLY BE USED | *  | AND COPIED IN ACCORDANCE WITH THE TERMS AND CONDITIONS OF SUCH  | *  | A LICENSE AND WITH THE INCLUSION OF THE THIS COPY RIGHT NOTICE. | *  | THIS SOFTWARE OR ANY OTHER COPIES OF THIS SOFTWARE MAY NOT BE   |
+ *  | PROVIDED OR OTHERWISE MADE AVAILABLE TO ANY OTHER PERSON. THE   |
+ *  | OWNERSHIP AND TITLE OF THIS SOFTWARE IS NOT TRANSFERRED.        |
+ *  |                                                                 | *  | THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT   | *  | ANY PRIOR NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY | *  | SPREADTRUM INC.                                                 |
+ *  +-----------------------------------------------------------------+ *
+ * $History$ *
+ ******************************************************************************* */  
 	
-	/*
-	 * !
-	 * ******************************************************************************
-	 * Copyright 2016-2025 Spreadtrum, Inc. All rights reserved.  \file
-	 * AF_Interface.h  \brief Interface for AF  \date 2016/01/03  \author
-	 * Galen Tsai  
-	 * ****************************************************************************** 
-	 */ 
+/*!
+ *******************************************************************************
+ * Copyright 2016-2025 Spreadtrum, Inc. All rights reserved. * * \file
+ * AF_Interface.h * * \brief * Interface for AF * * \date * 2016/01/03 * * \author
+ * Galen Tsai * *
+ ******************************************************************************* */ 
 	
 #ifndef __AFV1_INTERFACE_H__
 #define  __AFV1_INTERFACE_H__
@@ -63,5 +55,5 @@ void *AF_init(AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, haf_
 cmr_u8 AF_deinit(void *handle);
 cmr_u8 AF_Process_Frame(void *handle);
 cmr_u8 AF_IOCtrl_process(void *handle, AF_IOCTRL_CMD cmd, void *param);
- 
-#endif							/*  */
+
+#endif	/*  */

@@ -558,9 +558,7 @@ static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct afctrl_init_i
 		goto exit;
 	}
 
-	/*
-	 * find vendor adpter 
-	 */
+	/* find vendor adpter */
 	rtn = adpt_get_ops(ADPT_LIB_AF, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
 		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);

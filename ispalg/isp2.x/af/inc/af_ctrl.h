@@ -421,9 +421,7 @@ extern "C" {
 #define AREA_LOOP 4
 
 	struct pd_result {
-		/*
-		 * TBD get reset from 
-		 */
+		/*TBD get reset from */
 		cmr_s32 pdConf[AREA_LOOP + 1];
 		double pdPhaseDiff[AREA_LOOP + 1];
 		cmr_s32 pdGetFrameID;

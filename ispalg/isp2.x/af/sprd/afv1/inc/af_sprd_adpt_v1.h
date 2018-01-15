@@ -26,10 +26,9 @@
 #include "aft_interface.h"
 
 #define AF_SYS_VERSION "-20171130-00"
-#define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/* save/no */
-#define AF_WAIT_CAF_SEC 3		// 1s == (1000 * 1000 * 1000)ns
-#define AF_WAIT_CAF_NSEC 0		// this macro should be less than 1000 *
-				// 1000 * 1000
+#define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
+#define AF_WAIT_CAF_SEC 3		//1s == (1000 * 1000 * 1000)ns
+#define AF_WAIT_CAF_NSEC 0		//this macro should be less than 1000 * 1000 * 1000
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -170,21 +169,11 @@ typedef struct _ae_cali {
 } ae_cali_t;
 
 struct af_fullscan_info {
-	/*
-	 * Register Parameters 
-	 */
-	/*
-	 * These params will depend on the AF setting 
-	 */
-	cmr_u8 row_num;				/* The number of AF windows with row (i.e. * vertical) *//* 
-								 * depend on the AF Scanning 
-								 */
-	cmr_u8 column_num;			/* The number of AF windows with row (i.e. * horizontal) *//* 
-								 * depend on the AF Scanning 
-								 */
-	cmr_u32 *win_peak_pos;		/* The seqence of peak position * which be provided via struct * isp_af_fullscan_info *//* 
-								 * depend on the AF Scanning 
-								 */
+	/* Register Parameters */
+	/* These params will depend on the AF setting */
+	cmr_u8 row_num;				/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
+	cmr_u8 column_num;			/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
+	cmr_u32 *win_peak_pos;		/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
 	cmr_u16 boundary_ratio;		/* (Unit : Percentage) *//* depend on the AF Scanning */
