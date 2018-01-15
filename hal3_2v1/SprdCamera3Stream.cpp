@@ -36,6 +36,7 @@
 #include "SprdCamera3Stream.h"
 #include "SprdCamera3Channel.h"
 #include "gralloc_priv.h"
+#include "../../external/drivers/gpu/gralloc_public.h"
 
 using namespace android;
 
@@ -238,16 +239,13 @@ int SprdCamera3Stream::buffFirstDoneDQ(uint32_t *frameNumber,
 
 int SprdCamera3Stream::getHeapSize(uint32_t *mm_heap_size) {
     Vector<hal_buff_list_t *>::iterator iter = mBufferList.begin();
-    const private_handle_t *priv_handle = NULL;
 
     if ((*iter) == NULL) {
         HAL_LOGE("stream has no buffer");
         return BAD_VALUE;
     }
 
-    priv_handle =
-        reinterpret_cast<const private_handle_t *>(*((*iter)->buffer_handle));
-    *mm_heap_size = priv_handle->size;
+    *mm_heap_size = ADP_BUFSIZE(*((*iter)->buffer_handle));
 
     return NO_ERROR;
 }

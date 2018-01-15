@@ -40,6 +40,9 @@
 #include <sprd_ion.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Mem.h"
+#include <ui/GraphicBufferMapper.h>
+#include <ui/Rect.h>
+#include "../../external/drivers/gpu/gralloc_public.h"
 
 using namespace android;
 
@@ -186,7 +189,6 @@ SprdCamera3GrallocMemory::~SprdCamera3GrallocMemory() {}
 int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
                                   hal_mem_info_t *mem_info) {
     int ret = NO_ERROR;
-    struct private_handle_t *private_handle = NULL;
     int fd = 0;
 
     if (NULL == mem_info || NULL == buffer_handle) {
@@ -194,25 +196,31 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
         return -EINVAL;
     }
 
-    private_handle = (struct private_handle_t *)(*buffer_handle);
-    if (NULL == private_handle) {
-        HAL_LOGE("NULL buffer handle!");
-        ret = -EINVAL;
-        goto err_out;
-    }
-
-    fd = private_handle->share_fd;
+    fd = ADP_BUFFD(*buffer_handle);
 
     mem_info->fd = fd;
     // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
-    mem_info->addr_vir = (void *)private_handle->base;
-    // need to 4k alignment
-    mem_info->size = private_handle->size;
+    mem_info->size = ADP_BUFSIZE(*buffer_handle);
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    int width = ADP_WIDTH(*buffer_handle);
+    int height = ADP_HEIGHT(*buffer_handle);
+    Rect bounds(width, height);
+    void *vaddr = NULL;
+    int usage;
 
-    HAL_LOGV("fd=0x%x, offset =%p, buf size=%d", mem_info->fd,
-             mem_info->addr_phy, mem_info->size);
-    return 0;
+    usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+    ret = mapper.lock((const native_handle_t *)*buffer_handle, usage, bounds,
+                      &vaddr);
+    if (ret != NO_ERROR) {
+        ALOGE("onQueueFilled, mapper.lock fail %p, ret %d", *buffer_handle,
+              ret);
+    }
+    mem_info->addr_vir = vaddr;
+    HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
+             "%d,height =%d",
+             mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
+             mem_info->size, width, height);
 
 err_out:
     return ret;
@@ -221,7 +229,6 @@ err_out:
 int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
                                    hal_mem_info_t *mem_info) {
     int ret = NO_ERROR;
-    struct private_handle_t *private_handle = NULL;
     int fd = 0;
 
     if (NULL == mem_info || NULL == buffer_handle) {
@@ -229,23 +236,31 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
         return -EINVAL;
     }
 
-    private_handle = (struct private_handle_t *)(*buffer_handle);
-    if (NULL == private_handle) {
-        HAL_LOGE("NULL buffer handle!");
-        ret = -EINVAL;
-        goto err_out;
-    }
+    fd = ADP_BUFFD(*buffer_handle);
 
-    fd = private_handle->share_fd;
     mem_info->fd = fd;
     // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
-    mem_info->addr_vir = (void *)private_handle->base;
-    HAL_LOGD("dont need iommu addr, mem_info->fd = %d, mem_info->addr_phy =%p, "
-             "mem_info->addr_vir=%p",
-             mem_info->fd, mem_info->addr_phy, mem_info->addr_vir);
+    mem_info->size = ADP_BUFSIZE(*buffer_handle);
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    int width = ADP_WIDTH(*buffer_handle);
+    int height = ADP_HEIGHT(*buffer_handle);
+    Rect bounds(width, height);
+    void *vaddr = NULL;
+    int usage;
 
-    return 0;
+    usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+    ret = mapper.lock((const native_handle_t *)*buffer_handle, usage, bounds,
+                      &vaddr);
+    if (ret != NO_ERROR) {
+        ALOGE("onQueueFilled, mapper.lock fail %p, ret %d", *buffer_handle,
+              ret);
+    }
+    mem_info->addr_vir = vaddr;
+    HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
+             "%d,height =%d",
+             mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
+             mem_info->size, width, height);
 
 err_out:
     return ret;
@@ -262,8 +277,12 @@ err_out:
  *==========================================================================*/
 int SprdCamera3GrallocMemory::unmap(buffer_handle_t *buffer_handle,
                                     hal_mem_info_t *mem_info) {
-    int ret = 0;
-
+    int ret = NO_ERROR;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    ret = mapper.unlock((const native_handle_t *)*buffer_handle);
+    if (ret != NO_ERROR) {
+        ALOGE("onQueueFilled, mapper.unlock fail %p", *buffer_handle);
+    }
     return ret;
 }
 
@@ -283,5 +302,4 @@ int SprdCamera3GrallocMemory::unmap(buffer_handle_t *buffer_handle,
 int SprdCamera3GrallocMemory::cacheOps(int index, unsigned int cmd) {
     return cacheOpsInternal(index, cmd, NULL);
 }
-
 }; // namespace sprdcamera
