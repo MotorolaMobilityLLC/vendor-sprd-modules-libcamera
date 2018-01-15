@@ -27,6 +27,8 @@
 #define MODULE_INFO s_ov5675_module_info_tab
 #define RES_TAB_RAW s_ov5675_resolution_tab_raw
 #define RES_TRIM_TAB s_ov5675_resolution_trim_tab
+#define RES_TAB_RAW_NEW s_ov5675_resolution_tab_raw_new
+#define RES_TRIM_TAB_NEW s_ov5675_resolution_trim_tab_new
 #define MIPI_RAW_INFO g_ov5675_dual_mipi_raw_info
 
 /*==============================================================================
@@ -856,6 +858,7 @@ ov5675_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
     void *pri_data = NULL;
+    char value[255];
 
     ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
     sns_drv_cxt = *sns_ic_drv_handle;
@@ -875,10 +878,18 @@ ov5675_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
-    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW),
-                                        RES_TAB_RAW);
-    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
-                                  RES_TRIM_TAB);
+    property_get("debug.camera.setting", value, "0");
+    if (atoi(value) == 1) {
+        sensor_ic_set_match_resolution_info(
+            sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW_NEW), RES_TAB_RAW_NEW);
+        sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB_NEW),
+                                      RES_TRIM_TAB_NEW);
+    } else {
+        sensor_ic_set_match_resolution_info(
+            sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
+        sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
+                                      RES_TRIM_TAB);
+    }
     sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO),
                                     STATIC_INFO);
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
