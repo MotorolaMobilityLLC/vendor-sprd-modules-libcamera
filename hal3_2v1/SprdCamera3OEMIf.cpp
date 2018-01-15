@@ -4362,17 +4362,16 @@ void SprdCamera3OEMIf::FreeReDisplayMem() {
     }
 }
 
-bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width,
-                                                 uint32_t height, int fd,
-                                                 cmr_uint phy_addr,
-                                                 char *virtual_addr) {
+bool SprdCamera3OEMIf::displayOneFrameForCapture(
+    uint32_t width, uint32_t height, int fd, cmr_uint phy_addr,
+    char *virtual_addr, struct camera_frame_type *frame) {
     ATRACE_CALL();
 
     HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = %p", width,
              height, phy_addr, virtual_addr);
 
     Mutex::Autolock cbLock(&mPreviewCbLock);
-    int64_t timestamp = systemTime();
+    int64_t timestamp = frame->timestamp;
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     SprdCamera3PicChannel *pic_channel =
@@ -4728,7 +4727,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
         }
 
         displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr,
-                                  (char *)mReDisplayHeap->data);
+                                  (char *)mReDisplayHeap->data, frame);
         FreeReDisplayMem();
     }
 
@@ -7308,15 +7307,17 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
             m3DNRGraphicArray[i].bufferhandle = NULL;
         }
         if (m3DNRGraphicArray[i].private_handle != NULL) {
-            struct private_handle_t* pHandle = (private_handle_t *)m3DNRGraphicArray[i].private_handle;
+            struct private_handle_t *pHandle =
+                (private_handle_t *)m3DNRGraphicArray[i].private_handle;
             if (pHandle->attr_base != MAP_FAILED) {
-                 LOGW("Warning shared attribute region mapped at free. Unmapping");
-                 munmap(pHandle->attr_base, PAGE_SIZE);
-                 pHandle->attr_base = MAP_FAILED;
+                LOGW("Warning shared attribute region mapped at free. "
+                     "Unmapping");
+                munmap(pHandle->attr_base, PAGE_SIZE);
+                pHandle->attr_base = MAP_FAILED;
             }
             close(pHandle->share_attr_fd);
             pHandle->share_attr_fd = -1;
-            delete((private_handle_t *)m3DNRGraphicArray[i].private_handle);
+            delete ((private_handle_t *)m3DNRGraphicArray[i].private_handle);
             m3DNRGraphicArray[i].private_handle = NULL;
         }
     }
@@ -7465,16 +7466,19 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
             m3DNRGraphicPathArray[i].bufferhandle.clear();
             m3DNRGraphicPathArray[i].bufferhandle = NULL;
         }
-            if (m3DNRGraphicPathArray[i].private_handle != NULL) {
-            struct private_handle_t* pHandle = (private_handle_t *)m3DNRGraphicPathArray[i].private_handle;
+        if (m3DNRGraphicPathArray[i].private_handle != NULL) {
+            struct private_handle_t *pHandle =
+                (private_handle_t *)m3DNRGraphicPathArray[i].private_handle;
             if (pHandle->attr_base != MAP_FAILED) {
-                LOGW("Warning shared attribute region mapped at free. Unmapping");
-                    munmap(pHandle->attr_base, PAGE_SIZE);
-                    pHandle->attr_base = MAP_FAILED;
+                LOGW("Warning shared attribute region mapped at free. "
+                     "Unmapping");
+                munmap(pHandle->attr_base, PAGE_SIZE);
+                pHandle->attr_base = MAP_FAILED;
             }
             close(pHandle->share_attr_fd);
             pHandle->share_attr_fd = -1;
-            delete ((private_handle_t *)m3DNRGraphicPathArray[i].private_handle);
+            delete (
+                (private_handle_t *)m3DNRGraphicPathArray[i].private_handle);
             m3DNRGraphicPathArray[i].private_handle = NULL;
         }
     }

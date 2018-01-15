@@ -431,7 +431,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setCameraPreviewMode(bool isRecordMode);
     bool setCameraPreviewFormat();
     bool displayOneFrameForCapture(uint32_t width, uint32_t height, int fd,
-                                   cmr_uint phy_addr, char *virtual_addr);
+                                   cmr_uint phy_addr, char *virtual_addr,
+                                   struct camera_frame_type *frame);
     bool iSDisplayCaptureFrame();
     bool iSCallbackCaptureFrame();
     bool iSZslMode();
