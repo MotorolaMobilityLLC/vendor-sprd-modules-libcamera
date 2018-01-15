@@ -1392,7 +1392,8 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
-	cxt->aem_is_update = 1;
+	if (statis_info->frame_id > 0 && cxt->camera_id == 1)
+		cxt->aem_is_update = 1;
 	return ret;
 }
 
