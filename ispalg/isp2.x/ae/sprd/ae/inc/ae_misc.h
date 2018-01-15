@@ -23,33 +23,32 @@
 extern "C" {
 #endif
 
-struct ae_misc_init_in {
-	cmr_u32 alg_id;
-	cmr_u32 flash_version;
-	cmr_u32 start_index;
-	cmr_handle param_ptr;
-	cmr_u32 size;
-};
+	struct ae_misc_init_in {
+		cmr_u32 alg_id;
+		cmr_u32 flash_version;
+		cmr_u32 start_index;
+		cmr_handle param_ptr;
+		cmr_u32 size;
+	};
 
-struct ae_misc_init_out {
-	cmr_u32 start_index;
-	char alg_id[32];
-};
+	struct ae_misc_init_out {
+		cmr_u32 start_index;
+		char alg_id[32];
+	};
 
-struct ae_misc_calc_in {
-	cmr_handle sync_settings;
-};
+	struct ae_misc_calc_in {
+		cmr_handle sync_settings;
+	};
 
-struct ae_misc_calc_out {
-	cmr_handle ae_output;
-};
+	struct ae_misc_calc_out {
+		cmr_handle ae_output;
+	};
 
-cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
-cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
-cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
+	cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
+	cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
+	cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

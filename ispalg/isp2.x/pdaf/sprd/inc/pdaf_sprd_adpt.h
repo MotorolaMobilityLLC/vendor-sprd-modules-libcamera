@@ -61,7 +61,7 @@ typedef struct {
 //static cmr_u16 Reg[256];
 
 typedef struct {
-	cmr_s32 dSensorID;	//0:for SamSung 1: for Sony
+	cmr_s32 dSensorID;			//0:for SamSung 1: for Sony
 	double uwInfVCM;
 	double uwMacroVCM;
 } SensorInfo;

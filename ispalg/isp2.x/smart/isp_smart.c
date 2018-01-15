@@ -107,7 +107,7 @@ static cmr_s16 _calc_piecewise_func1(struct isp_smart_interplate_piecewise_func 
 
 				if (0 != samples[i + 1].x - samples[i].x)
 					y = samples[i].y + (x - samples[i].x) * (samples[i + 1].y - samples[i].y)
-					    / (samples[i + 1].x - samples[i].x);
+						/ (samples[i + 1].x - samples[i].x);
 				else
 					y = samples[i].y;
 
@@ -158,7 +158,7 @@ isp_smart_handle_t isp_smart_init(void *in_ptr, void *out_ptr)
 	memset((void *)alg_cxt_ptr, 0x00, sizeof(struct isp_smart_alg_context));
 	alg_cxt_ptr->magic_flag = ISP_SMART_ALG_MAGIC_FLAG;
 
-_smart_init_error_exit:
+  _smart_init_error_exit:
 
 	return (isp_smart_handle_t) alg_cxt_ptr;
 }
@@ -171,8 +171,8 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 	cmr_u32 i = 0;
 
 	if ((NULL == cur_func)
-	    || (NULL == smart_cur_info_in)
-	    || (NULL == smart_calc_param_out)) {
+		|| (NULL == smart_cur_info_in)
+		|| (NULL == smart_calc_param_out)) {
 		ISP_LOGE("fail to get valid input pointer, func:%p, input:%p, output:%p\n", cur_func, smart_cur_info_in, smart_calc_param_out);
 
 		rtn = ISP_ERROR;
@@ -197,7 +197,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 			rtn = _calc_piecewise_func0(func, input_ptr->x, output_ptr->index, output_ptr->weight);
 
 			ISP_LOGI("ISP_SMART: func=%d, input=%d, output=(%d, %d), (%d, %d)", inter_func_type,
-				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
+					 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
 		}
 		break;
 
@@ -211,7 +211,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 			output_ptr->weight[0] = ISP_SMART_WEIGHT_UNIT;
 			output_ptr->weight[1] = 0;
 			ISP_LOGI("ISP_SMART: func=%d, input=%d, output=(%d, %d), (%d, %d)", inter_func_type,
-				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
+					 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
 		}
 		break;
 
@@ -225,7 +225,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 			output_ptr->weight[0] = ISP_SMART_WEIGHT_UNIT;
 			output_ptr->weight[1] = 0;
 			ISP_LOGI("ISP_SMART: func=%d, input=%d, output=(%d, %d), (%d, %d)", inter_func_type,
-				 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
+					 input_ptr->x, output_ptr->index[0], output_ptr->index[1], output_ptr->weight[0], output_ptr->weight[1]);
 		}
 		break;
 
@@ -236,7 +236,7 @@ cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_pie
 
 	ISP_LOGI("isp_smart_adjust_interplate: X\n");
 
-_smart_calc_error_exit:
+  _smart_calc_error_exit:
 
 	return rtn;
 

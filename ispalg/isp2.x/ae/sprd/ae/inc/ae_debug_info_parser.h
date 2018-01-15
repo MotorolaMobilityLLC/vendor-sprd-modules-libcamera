@@ -22,36 +22,35 @@
 extern "C" {
 #endif
 
-struct ae_debug_info_packet_in {
-	char id[32];
-	cmr_handle aem_stats;
-	cmr_handle alg_status;
-	cmr_handle alg_results;
-	cmr_handle packet_buf;
-};
+	struct ae_debug_info_packet_in {
+		char id[32];
+		cmr_handle aem_stats;
+		cmr_handle alg_status;
+		cmr_handle alg_results;
+		cmr_handle packet_buf;
+	};
 
-struct ae_debug_info_packet_out {
-	cmr_u32 size;
-};
+	struct ae_debug_info_packet_out {
+		cmr_u32 size;
+	};
 
-struct ae_debug_info_unpacket_in {
-	char alg_id[32];
-	cmr_handle packet_buf;
-	cmr_u32 packet_len;
-	cmr_handle unpacket_buf;
-	cmr_u32 unpacket_len;
-};
+	struct ae_debug_info_unpacket_in {
+		char alg_id[32];
+		cmr_handle packet_buf;
+		cmr_u32 packet_len;
+		cmr_handle unpacket_buf;
+		cmr_u32 unpacket_len;
+	};
 
-struct ae_debug_info_unpacket_out {
-	cmr_u32 reserved;
-};
+	struct ae_debug_info_unpacket_out {
+		cmr_u32 reserved;
+	};
 
-cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);
-cmr_s32 ae_debug_info_unpacket(cmr_handle input, cmr_handle output);
-cmr_handle ae_debug_info_get_lib_version(void);
+	cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);
+	cmr_s32 ae_debug_info_unpacket(cmr_handle input, cmr_handle output);
+	cmr_handle ae_debug_info_get_lib_version(void);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

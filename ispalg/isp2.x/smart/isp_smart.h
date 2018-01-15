@@ -23,43 +23,43 @@
 extern "C" {
 #endif
 
-enum isp_smart_interplate_func_type {
-	ISP_SMART_INTERPLATE_FUNC0 = 0,
-	ISP_SMART_INTERPLATE_FUNC1,
-	ISP_SMART_INTERPLATE_FUNC2,
-	ISP_SMART_INTERPLATE_FUNC_MAX = 0xffff,
-};
+	enum isp_smart_interplate_func_type {
+		ISP_SMART_INTERPLATE_FUNC0 = 0,
+		ISP_SMART_INTERPLATE_FUNC1,
+		ISP_SMART_INTERPLATE_FUNC2,
+		ISP_SMART_INTERPLATE_FUNC_MAX = 0xffff,
+	};
 
-struct isp_smart_interplate_input0 {
-	cmr_s32 x;
-};
+	struct isp_smart_interplate_input0 {
+		cmr_s32 x;
+	};
 
-struct isp_smart_interplate_output0 {
-	cmr_s32 index[2];
-	cmr_u32 weight[2];
-};
+	struct isp_smart_interplate_output0 {
+		cmr_s32 index[2];
+		cmr_u32 weight[2];
+	};
 
-struct isp_smart_interplate_input1 {
-	cmr_s32 x;
-};
+	struct isp_smart_interplate_input1 {
+		cmr_s32 x;
+	};
 
-struct isp_smart_interplate_output1 {
-	cmr_u32 y;
-};
+	struct isp_smart_interplate_output1 {
+		cmr_u32 y;
+	};
 
-struct isp_smart_interplate_input2 {
-	cmr_s32 x;
-};
+	struct isp_smart_interplate_input2 {
+		cmr_s32 x;
+	};
 
-struct isp_smart_interplate_output2 {
-	cmr_u32 y;
-};
+	struct isp_smart_interplate_output2 {
+		cmr_u32 y;
+	};
 
-isp_smart_handle_t isp_smart_init(void *in_ptr, void *out_ptr);
+	isp_smart_handle_t isp_smart_init(void *in_ptr, void *out_ptr);
 
-cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_piecewise_func *cur_func, void *smart_cur_info_in, void *smart_calc_param_out);
+	cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_piecewise_func *cur_func, void *smart_cur_info_in, void *smart_calc_param_out);
 
-cmr_s32 isp_smart_deinit(isp_smart_handle_t handle);
+	cmr_s32 isp_smart_deinit(isp_smart_handle_t handle);
 
 #ifdef	 __cplusplus
 }

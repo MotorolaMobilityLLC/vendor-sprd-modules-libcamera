@@ -67,7 +67,7 @@ static cmr_u32 pdaf_set_pdinfo_to_af(void *handle, struct pd_result *in_param)
 	return ISP_SUCCESS;
 }
 
-static cmr_u32 pdaf_set_cfg_param (void *handle, struct isp_dev_pdaf_info *in_param)
+static cmr_u32 pdaf_set_cfg_param(void *handle, struct isp_dev_pdaf_info *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
@@ -100,6 +100,7 @@ static cmr_u32 pdaf_set_work_mode(void *handle, cmr_u32 in_param)
 
 	return ISP_SUCCESS;
 }
+
 static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
@@ -110,6 +111,7 @@ static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
 
 	return ISP_SUCCESS;
 }
+
 static cmr_u32 pdaf_set_ppi_info(void *handle, struct pdaf_ppi_info *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
@@ -120,6 +122,7 @@ static cmr_u32 pdaf_set_ppi_info(void *handle, struct pdaf_ppi_info *in_param)
 
 	return ISP_SUCCESS;
 }
+
 static cmr_u32 pdaf_set_roi(void *handle, struct pdaf_roi_info *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
@@ -160,7 +163,7 @@ static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *i
 		ISP_LOGI("adpt_init fun is NULL");
 	}
 
-exit:
+  exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -184,7 +187,7 @@ static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -207,7 +210,7 @@ static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 
-exit:
+  exit:
 	ISP_LOGI("cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 
@@ -229,7 +232,7 @@ static cmr_int pdafctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *
 	} else {
 		ISP_LOGI("ioctrl fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 
@@ -270,7 +273,7 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to proc,don't support msg");
 		break;
 	}
-exit:
+  exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -291,7 +294,7 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 		ISP_LOGE("fail to set pdafctrl name");
 		ret = CMR_MSG_SUCCESS;
 	}
-exit:
+  exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -310,7 +313,7 @@ static cmr_int pdafctrl_destroy_thread(cmr_handle handle)
 		}
 		pdaf_thread_cxt->ctrl_thr_handle = NULL;
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -333,7 +336,7 @@ static cmr_int pdafctrl_init_adapt(struct pdafctrl_context *cxt, struct pdaf_ctr
 		goto exit;
 	}
 
-exit:
+  exit:
 	ISP_LOGI("done ret = %ld", ret);
 	return ret;
 }
@@ -351,7 +354,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	}
 
 	in->pdaf_set_pdinfo_to_af = pdaf_set_pdinfo_to_af;
-	in->pdaf_set_cfg_param  = pdaf_set_cfg_param;
+	in->pdaf_set_cfg_param = pdaf_set_cfg_param;
 	in->pdaf_set_bypass = pdaf_set_bypass;
 	in->pdaf_set_work_mode = pdaf_set_work_mode;
 	in->pdaf_set_skip_num = pdaf_set_skip_num;
@@ -403,14 +406,14 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 		ISP_LOGE("fail to init adapter layer ret = %ld", ret);
 		goto error_adpt_init;
 	}
-sucess_exit:
+  sucess_exit:
 	ISP_LOGI("done ret=%ld", ret);
 	*handle = (cmr_handle) cxt;
 	return ret;
-error_adpt_init:
+  error_adpt_init:
 
 	pdafctrl_destroy_thread(cxt);
-exit:
+  exit:
 	if (cxt) {
 		free(cxt);
 		cxt = NULL;
@@ -444,7 +447,7 @@ cmr_int pdaf_ctrl_deinit(cmr_handle * handle)
 	if (ret)
 		ISP_LOGE("fail to destroy thread ret = %ld", ret);
 
-exit:
+  exit:
 	if (cxt_ptr) {
 		free((void *)cxt_ptr);
 		*handle = NULL;
@@ -488,7 +491,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in * in, s
 		goto exit;
 	}
 	return ISP_SUCCESS;
-exit:
+  exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -525,6 +528,6 @@ cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_
 		}
 	}
 
-exit:
+  exit:
 	return ret;
 }

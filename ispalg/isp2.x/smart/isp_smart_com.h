@@ -29,48 +29,48 @@ extern "C" {
 #define ISP_SMART_WEIGHT_UNIT 256
 #define ISP_SMART_INTERPLATE_PIECEWISE_SAMPLE_NUM 16
 
-typedef cmr_s32(*isp_func) (cmr_u32 handler_id, void *in_param, void *out_param);
+	typedef cmr_s32(*isp_func) (cmr_u32 handler_id, void *in_param, void *out_param);
 
-struct isp_smart_interplate_sample {
-	cmr_s16 x;
-	cmr_s16 y;
-};
+	struct isp_smart_interplate_sample {
+		cmr_s16 x;
+		cmr_s16 y;
+	};
 
-struct isp_smart_interplate_piecewise_func {
-	cmr_u32 num;
-	struct isp_smart_interplate_sample samples[ISP_SMART_INTERPLATE_PIECEWISE_SAMPLE_NUM];
-};
+	struct isp_smart_interplate_piecewise_func {
+		cmr_u32 num;
+		struct isp_smart_interplate_sample samples[ISP_SMART_INTERPLATE_PIECEWISE_SAMPLE_NUM];
+	};
 
-struct isp_smart_property_cfg {
-	cmr_u32 enable;
-	cmr_u32 func_type;
-	struct isp_smart_interplate_piecewise_func func[ISP_SMART_ENVI_NUM];
-	cmr_u32 is_update;
-};
+	struct isp_smart_property_cfg {
+		cmr_u32 enable;
+		cmr_u32 func_type;
+		struct isp_smart_interplate_piecewise_func func[ISP_SMART_ENVI_NUM];
+		cmr_u32 is_update;
+	};
 
-struct isp_smart_envi_id_result {
-	cmr_u32 envi_id[ISP_SMART_WEIGHT_NUM];
-	cmr_u32 weight[ISP_SMART_WEIGHT_NUM];
-	cmr_u32 is_update;
-};
+	struct isp_smart_envi_id_result {
+		cmr_u32 envi_id[ISP_SMART_WEIGHT_NUM];
+		cmr_u32 weight[ISP_SMART_WEIGHT_NUM];
+		cmr_u32 is_update;
+	};
 
-struct isp_smart_envi_detect_module {
-	cmr_u32 enable;
-	struct isp_range envi_range[ISP_SMART_ENVI_NUM];
-	struct isp_smart_envi_id_result envi_id_result;
-};
+	struct isp_smart_envi_detect_module {
+		cmr_u32 enable;
+		struct isp_range envi_range[ISP_SMART_ENVI_NUM];
+		struct isp_smart_envi_id_result envi_id_result;
+	};
 
-struct isp_module_cfg {
-	cmr_u32 module_id;
-	cmr_u32 version_id;
-	cmr_u32 param_id;
-	cmr_u32 func_num;
-	struct isp_sample_point_info cur_index_info[ISP_SMART_FUNC_NUM];
-	struct isp_smart_property_cfg smart_cfg[ISP_SMART_FUNC_NUM];
-	intptr_t tuning_param_addr;
-};
+	struct isp_module_cfg {
+		cmr_u32 module_id;
+		cmr_u32 version_id;
+		cmr_u32 param_id;
+		cmr_u32 func_num;
+		struct isp_sample_point_info cur_index_info[ISP_SMART_FUNC_NUM];
+		struct isp_smart_property_cfg smart_cfg[ISP_SMART_FUNC_NUM];
+		intptr_t tuning_param_addr;
+	};
 
-typedef isp_handle isp_smart_handle_t;
+	typedef isp_handle isp_smart_handle_t;
 
 #ifdef	 __cplusplus
 }

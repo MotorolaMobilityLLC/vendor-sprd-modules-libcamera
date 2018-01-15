@@ -135,8 +135,7 @@ enum ae_flicker_mode {
 
 typedef cmr_handle ae_handle_t;
 
-struct ae_ct_table
-{
+struct ae_ct_table {
 	float ct[20];
 	float rg[20];
 };
@@ -184,25 +183,25 @@ struct ae1_face {
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
-	cmr_u32 end_y;	/*4 x 4bytes */
-	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */
+	cmr_u32 end_y;				/*4 x 4bytes */
+	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
 };
 
 struct ae1_face_info {
 	cmr_u16 face_num;
-	cmr_u16 reserved;	/*1 x 4bytes */
-	cmr_u32 rect[1024];	/*1024 x 4bytes */
+	cmr_u16 reserved;			/*1 x 4bytes */
+	cmr_u32 rect[1024];			/*1024 x 4bytes */
 	struct ae1_face face_area[20];	/*20 x 5 * 4bytes */
-};			/*1125 x 4bytes */
+};								/*1125 x 4bytes */
 
 struct ae1_fd_param {
 	struct ae1_face_info cur_info;	/*1125 x 4bytes */
 	cmr_u8 update_flag;
 	cmr_u8 enable_flag;
-	cmr_u16 reserved;/*1 x 4bytes */
+	cmr_u16 reserved;			/*1 x 4bytes */
 	cmr_u16 img_width;
-	cmr_u16 img_height;/*1 x 4bytes */
-};	/*1127 x 4bytes */
+	cmr_u16 img_height;			/*1 x 4bytes */
+};								/*1127 x 4bytes */
 
 struct ae_param {
 	cmr_handle param;
@@ -216,8 +215,8 @@ struct ae_exp_gain_delay_info {
 };
 
 struct ae_set_fps {
-	cmr_u32 min_fps;	// min fps
-	cmr_u32 max_fps;	// fix fps flag
+	cmr_u32 min_fps;			// min fps
+	cmr_u32 max_fps;			// fix fps flag
 };
 
 struct ae_exp_gain_table {
@@ -260,8 +259,8 @@ struct ae_flash_tuning {
 };
 
 struct ae_stat_req {
-	cmr_u32 mode;		//0:normal, 1:G(center area)
-	cmr_u32 G_width;	//100:G mode(100x100)
+	cmr_u32 mode;				//0:normal, 1:G(center area)
+	cmr_u32 G_width;			//100:G mode(100x100)
 };
 
 struct ae_auto_iso_tab {
@@ -276,7 +275,7 @@ struct ae_ev_cali_param {
 
 struct ae_ev_cali {
 	cmr_u32 num;
-	cmr_u32 min_lum;	// close all the module of after awb module
+	cmr_u32 min_lum;			// close all the module of after awb module
 	struct ae_ev_cali_param tab[16];	// cali EV sequence is low to high
 };
 
@@ -316,13 +315,13 @@ struct ae_convergence_parm {
 struct ae_flash_tuning_param {
 	cmr_u8 skip_num;
 	cmr_u8 target_lum;
-	cmr_u8 adjust_ratio;	/* 1x --> 32 */
+	cmr_u8 adjust_ratio;		/* 1x --> 32 */
 	cmr_u8 reserved;
 };
 
 struct ae_sensor_cfg {
-	cmr_u16 max_gain;/*sensor max gain*/
-	cmr_u16 min_gain;/*sensor min gain*/
+	cmr_u16 max_gain;			/*sensor max gain */
+	cmr_u16 min_gain;			/*sensor min gain */
 	cmr_u8 gain_precision;
 	cmr_u8 exp_skip_num;
 	cmr_u8 gain_skip_num;
@@ -367,7 +366,7 @@ struct ae_alg_rgb_gain {
 	cmr_u32 b;
 };
 
-struct ae_stats_gyro_info{
+struct ae_stats_gyro_info {
 	/* Gyro data in float */
 	cmr_u32 validate;
 	cmr_s64 timestamp;
@@ -393,36 +392,36 @@ struct ae_stats_sensor_info {
 struct ae_settings {
 	cmr_u16 ver;
 	cmr_u8 force_lock_ae;
-	cmr_s8 lock_ae;	/* 0:unlock 1:lock 2:pause 3:wait-lock */
+	cmr_s8 lock_ae;				/* 0:unlock 1:lock 2:pause 3:wait-lock */
 	cmr_s32 pause_cnt;
-	cmr_s8 manual_mode;	/* 0:exp&gain       1:table-index */
-	cmr_u32 exp_line;	/* set exposure lines */
-	cmr_u16 gain;	/* set gain: 128 means 1 time gain , user can set any value to it */
-	cmr_u16 table_idx;	/* set ae-table-index */
-	cmr_s16 min_fps;	/* e.g. 2000 means 20.00fps , 0 means Auto */
+	cmr_s8 manual_mode;			/* 0:exp&gain       1:table-index */
+	cmr_u32 exp_line;			/* set exposure lines */
+	cmr_u16 gain;				/* set gain: 128 means 1 time gain , user can set any value to it */
+	cmr_u16 table_idx;			/* set ae-table-index */
+	cmr_s16 min_fps;			/* e.g. 2000 means 20.00fps , 0 means Auto */
 	cmr_s16 max_fps;
-	cmr_u8 sensor_max_fps;	/*the fps of sensor setting: it always is 30fps in normal setting */
-	cmr_s8 flash;	/*flash */
-	cmr_s16 flash_ration;	/* mainflash : preflash -> 1x = 32 */
+	cmr_u8 sensor_max_fps;		/*the fps of sensor setting: it always is 30fps in normal setting */
+	cmr_s8 flash;				/*flash */
+	cmr_s16 flash_ration;		/* mainflash : preflash -> 1x = 32 */
 	cmr_s16 flash_target;
 	cmr_s8 iso;
 	cmr_s8 touch_scrn_status;	//touch screen,1: touch;0:no touch
 	cmr_s8 touch_tuning_enable;	//for touch ae
-	cmr_s8 ev_index;	/* not real value , just index !! */
-	cmr_s8 flicker;	/* 50hz 0 60hz 1 */
-	cmr_s8 flicker_mode;	/* auto 0 manual 1,2 */
-	cmr_s8 FD_AE;	/* 0:off; 1:on */
+	cmr_s8 ev_index;			/* not real value , just index !! */
+	cmr_s8 flicker;				/* 50hz 0 60hz 1 */
+	cmr_s8 flicker_mode;		/* auto 0 manual 1,2 */
+	cmr_s8 FD_AE;				/* 0:off; 1:on */
 	cmr_s8 metering_mode;
-	cmr_s8 work_mode;	/* DC DV */
-	cmr_s8 scene_mode;	/* pano sports night */
+	cmr_s8 work_mode;			/* DC DV */
+	cmr_s8 scene_mode;			/* pano sports night */
 	cmr_s16 intelligent_module;	/* pano sports night */
-	cmr_s8 af_info;	/*AF trigger info */
+	cmr_s8 af_info;				/*AF trigger info */
 	cmr_s8 reserve_case;
 	cmr_u32 iso_special_mode;
-	cmr_u32 iso_manual_status;/*iso manual setting*/
-	cmr_u32 ev_manual_status;/*ev manual setting*/
-	cmr_u8 *reserve_info;	/* reserve for future */
-	cmr_s16 reserve_len;	/*len for reserve */
+	cmr_u32 iso_manual_status;	/*iso manual setting */
+	cmr_u32 ev_manual_status;	/*ev manual setting */
+	cmr_u8 *reserve_info;		/* reserve for future */
+	cmr_s16 reserve_len;		/*len for reserve */
 };
 
 struct ae_alg_calc_param {
@@ -438,9 +437,9 @@ struct ae_alg_calc_param {
 	cmr_u32 *stat_img;
 	cmr_u16 *binning_stat_data;
 	struct ae_size binnig_stat_size;
-	cmr_u8 monitor_shift;	//for ae monitor data overflow
-	cmr_u8 win1_weight;	//for touch ae
-	cmr_u8 win2_weight;	//for touch ae
+	cmr_u8 monitor_shift;		//for ae monitor data overflow
+	cmr_u8 win1_weight;			//for touch ae
+	cmr_u8 win2_weight;			//for touch ae
 	cmr_s8 target_offset;
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;
@@ -457,8 +456,8 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_expline;
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
-	cmr_u8	led_state;	//0:off, 1:on
-	cmr_u8	flash_fired;	//just notify APP in flash auto
+	cmr_u8 led_state;			//0:off, 1:on
+	cmr_u8 flash_fired;			//just notify APP in flash auto
 //caliberation for bv match with lv
 	float lv_cali_lv;
 	float lv_cali_bv;
@@ -493,27 +492,27 @@ struct ae_alg_calc_param {
 struct ae1_senseor_out {
 	cmr_s8 stable;
 	cmr_s8 f_stable;
-	cmr_s16 cur_index;	/*the current index of ae table in ae now: 1~1024 */
-	cmr_u32 exposure_time;	/*exposure time, unit: 0.1us */
-	float cur_fps;	/*current fps:1~120 */
-	cmr_u16 cur_exp_line;	/*current exposure line: the value is related to the resolution */
-	cmr_u16 cur_dummy;	/*dummy line: the value is related to the resolution & fps */
-	cmr_s16 cur_again;	/*current analog gain */
-	cmr_s16 cur_dgain;	/*current digital gain */
+	cmr_s16 cur_index;			/*the current index of ae table in ae now: 1~1024 */
+	cmr_u32 exposure_time;		/*exposure time, unit: 0.1us */
+	float cur_fps;				/*current fps:1~120 */
+	cmr_u16 cur_exp_line;		/*current exposure line: the value is related to the resolution */
+	cmr_u16 cur_dummy;			/*dummy line: the value is related to the resolution & fps */
+	cmr_s16 cur_again;			/*current analog gain */
+	cmr_s16 cur_dgain;			/*current digital gain */
 	cmr_s32 cur_bv;
 };
 
 struct ae_alg_calc_result {
-	cmr_u32 version;	/*version No. for this structure */
-	cmr_s16 cur_lum;	/*the average of image:0 ~255 */
-	cmr_s16 target_lum;	/*the ae target lum: 0 ~255 */
-	cmr_s16 target_zone;	/*ae target lum stable zone: 0~255 */
-	cmr_s16 target_lum_ori;	/*the ae target lum(original): 0 ~255 */
+	cmr_u32 version;			/*version No. for this structure */
+	cmr_s16 cur_lum;			/*the average of image:0 ~255 */
+	cmr_s16 target_lum;			/*the ae target lum: 0 ~255 */
+	cmr_s16 target_zone;		/*ae target lum stable zone: 0~255 */
+	cmr_s16 target_lum_ori;		/*the ae target lum(original): 0 ~255 */
 	cmr_s16 target_zone_ori;	/*the ae target lum stable zone(original):0~255 */
 	cmr_u32 frame_id;
-	cmr_s16 cur_bv;	/*bv parameter */
+	cmr_s16 cur_bv;				/*bv parameter */
 	cmr_s16 cur_bv_nonmatch;
-	cmr_s16 *histogram;	/*luma histogram of current frame */
+	cmr_s16 *histogram;			/*luma histogram of current frame */
 	//for flash
 	cmr_s32 flash_effect;
 	cmr_s8 flash_status;
@@ -528,12 +527,12 @@ struct ae_alg_calc_result {
 	void *pmulaes;
 	void *pflat;
 	void *pregion;
-	void *ptc;	/*Bethany add touch info to debug info */
+	void *ptc;					/*Bethany add touch info to debug info */
 	void *pface_ae;
 	struct ae1_senseor_out wts;
 	cmr_handle log;
 	cmr_u32 flag4idx;
-	cmr_u32 *reserved;	/*resurve for future */
+	cmr_u32 *reserved;			/*resurve for future */
 };
 
 struct ae_alg_fun_tab {

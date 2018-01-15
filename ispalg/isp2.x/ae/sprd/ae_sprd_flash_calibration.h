@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-void flash_calibration_script(cmr_handle ae_cxt);
+	void flash_calibration_script(cmr_handle ae_cxt);
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,6 @@
 #include "isp_mw.h"
 #include <utils/Timers.h>
 
-
 #define SMART_LSC_VERSION 1
 
 struct lsc_ctrl_work_lib {
@@ -175,31 +174,31 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 
 	lsc_ops.lsc2d_table_postproc(tbl_chn, w, h, sx, sy, &calib_param);
 
-error_dlsym:
+  error_dlsym:
 	dlclose(lsc_handle);
 	lsc_handle = NULL;
 
 	return lsc_table;
 }
 
-void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr_s32* lsc_otp_width, cmr_s32* lsc_otp_height, cmr_s32 lsc_otp_grid)
+void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr_s32 * lsc_otp_width, cmr_s32 * lsc_otp_height, cmr_s32 lsc_otp_grid)
 {
-	*lsc_otp_width  = 0;
+	*lsc_otp_width = 0;
 	*lsc_otp_height = 0;
 
-	*lsc_otp_width  = (int)( full_img_width  / ( 2*lsc_otp_grid) ) + 1;
-	*lsc_otp_height = (int)( full_img_height / ( 2*lsc_otp_grid) ) + 1;
+	*lsc_otp_width = (int)(full_img_width / (2 * lsc_otp_grid)) + 1;
+	*lsc_otp_height = (int)(full_img_height / (2 * lsc_otp_grid)) + 1;
 
-	if ( full_img_width % ( 2*lsc_otp_grid ) !=0 ){
+	if (full_img_width % (2 * lsc_otp_grid) != 0) {
 		*lsc_otp_width += 1;
 	}
 
-	if ( full_img_height % ( 2*lsc_otp_grid ) !=0 ){
+	if (full_img_height % (2 * lsc_otp_grid) != 0) {
 		*lsc_otp_height += 1;
 	}
 }
 
-cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
+cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 {
 	struct sensor_otp_data_info *lsc_otp_info;
 	struct sensor_otp_data_info *oc_otp_info;
@@ -226,14 +225,14 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 
 	_lsc_get_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
 
-	if(NULL!=lsc_param->otp_info_ptr){
-		struct sensor_otp_cust_info * otp_info_ptr = (struct sensor_otp_cust_info *)lsc_param->otp_info_ptr;
+	if (NULL != lsc_param->otp_info_ptr) {
+		struct sensor_otp_cust_info *otp_info_ptr = (struct sensor_otp_cust_info *)lsc_param->otp_info_ptr;
 		if (otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
 			lsc_otp_info_ptr = otp_info_ptr->single_otp.lsc_info;
 			oc_otp_info_ptr = otp_info_ptr->single_otp.optical_center_info;
 			module_info_ptr = otp_info_ptr->single_otp.module_info;
 			ISP_LOGV("init_lsc_otp, single cam");
-		}  else if(otp_info_ptr->otp_vendor== OTP_VENDOR_SINGLE_CAM_DUAL || otp_info_ptr->otp_vendor==OTP_VENDOR_DUAL_CAM_DUAL){
+		} else if (otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL || otp_info_ptr->otp_vendor == OTP_VENDOR_DUAL_CAM_DUAL) {
 			if (lsc_param->is_master == 1) {
 				lsc_otp_info_ptr = otp_info_ptr->dual_otp.master_lsc_info;
 				oc_otp_info_ptr = otp_info_ptr->dual_otp.master_optical_center_info;
@@ -246,88 +245,88 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				ISP_LOGV("init_lsc_otp, dual cam slave");
 			}
 		}
-	}else{
+	} else {
 		lsc_otp_info_ptr = NULL;
 		oc_otp_info_ptr = NULL;
 		module_info_ptr = NULL;
 		ISP_LOGE("lsc otp_info_ptr is NULL");
 	}
 
-	if(NULL!=module_info_ptr){
-		module_info = (cmr_u8 *)module_info_ptr->rdm_info.data_addr;
+	if (NULL != module_info_ptr) {
+		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if(NULL==module_info){
+		if (NULL == module_info) {
 			ISP_LOGE("lsc module_info is NULL");
 			goto EXIT;
 		}
 
-		if((module_info[4]==0 && module_info[5]==1)
-			||(module_info[4]==0 && module_info[5]==2)
-			||(module_info[4]==0 && module_info[5]==3)
-			||(module_info[4]==0 && module_info[5]==4)
-			||(module_info[4]==1 && module_info[5]==0 && (module_info[0]!=0x53 ||module_info[1]!=0x50 || module_info[2]!=0x52 || module_info[3]!=0x44))
-			||(module_info[4]==2 && module_info[5]==0)
-			||(module_info[4]==3 && module_info[5]==0)
-			||(module_info[4]==4 && module_info[5]==0)){
+		if ((module_info[4] == 0 && module_info[5] == 1)
+			|| (module_info[4] == 0 && module_info[5] == 2)
+			|| (module_info[4] == 0 && module_info[5] == 3)
+			|| (module_info[4] == 0 && module_info[5] == 4)
+			|| (module_info[4] == 1 && module_info[5] == 0 && (module_info[0] != 0x53 || module_info[1] != 0x50 || module_info[2] != 0x52 || module_info[3] != 0x44))
+			|| (module_info[4] == 2 && module_info[5] == 0)
+			|| (module_info[4] == 3 && module_info[5] == 0)
+			|| (module_info[4] == 4 && module_info[5] == 0)) {
 			ISP_LOGV("lsc otp map v0.4");
-			if(NULL!=lsc_otp_info_ptr && NULL!=oc_otp_info_ptr ){
+			if (NULL != lsc_otp_info_ptr && NULL != oc_otp_info_ptr) {
 				lsc_otp_info = &lsc_otp_info_ptr->rdm_info;
 				oc_otp_info = &oc_otp_info_ptr->rdm_info;
-				lsc_otp_addr = (cmr_u8 *)lsc_otp_info->data_addr;
-				lsc_otp_len =  lsc_otp_info->data_size;
+				lsc_otp_addr = (cmr_u8 *) lsc_otp_info->data_addr;
+				lsc_otp_len = lsc_otp_info->data_size;
 				lsc_otp_len_chn = lsc_otp_len / 4;
 				lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
-				oc_otp_data = (cmr_u8 *)oc_otp_info->data_addr;
+				oc_otp_data = (cmr_u8 *) oc_otp_info->data_addr;
 				oc_otp_len = oc_otp_info->data_size;
-			}else{
-				ISP_LOGE("lsc otp_info_lsc_ptr = %p, otp_info_optical_center_ptr = %p. Parser fail !", lsc_otp_info_ptr,  oc_otp_info_ptr);
+			} else {
+				ISP_LOGE("lsc otp_info_lsc_ptr = %p, otp_info_optical_center_ptr = %p. Parser fail !", lsc_otp_info_ptr, oc_otp_info_ptr);
 				goto EXIT;
 			}
-		}else if(module_info[4]==1 && module_info[5]==0 && module_info[0]==0x53 &&module_info[1]==0x50 && module_info[2]==0x52 && module_info[3]==0x44){
+		} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52 && module_info[3] == 0x44) {
 			ISP_LOGV("lsc otp map v1.0");
-			if(NULL!=lsc_otp_info_ptr){
+			if (NULL != lsc_otp_info_ptr) {
 				otp_data_ptr = lsc_otp_info_ptr->rdm_info.data_addr;
 				otp_data_len = lsc_otp_info_ptr->rdm_info.data_size;
 				lsc_otp_addr = otp_data_ptr + 1 + 16 + 5;
-				lsc_otp_len =  otp_data_len -1 -16 - 5;
+				lsc_otp_len = otp_data_len - 1 - 16 - 5;
 
-				resolution = (full_img_width*full_img_height + 500000)/1000000;
-				switch(resolution){
-					case 16:
-						lsc_otp_len_chn = 526;
-						break;
-					case 13:
-						lsc_otp_len_chn = 726;
-						break;
-					case 12:
-						lsc_otp_len_chn = 656;
-						break;
-					case 8:
-						lsc_otp_len_chn = 442;
-						break;
-					case 5:
-						lsc_otp_len_chn = 656;
-						break;
-					case 2:
-						lsc_otp_len_chn = 270;
-						break;
-					default:
-						lsc_otp_len_chn = 0;
-						break;
+				resolution = (full_img_width * full_img_height + 500000) / 1000000;
+				switch (resolution) {
+				case 16:
+					lsc_otp_len_chn = 526;
+					break;
+				case 13:
+					lsc_otp_len_chn = 726;
+					break;
+				case 12:
+					lsc_otp_len_chn = 656;
+					break;
+				case 8:
+					lsc_otp_len_chn = 442;
+					break;
+				case 5:
+					lsc_otp_len_chn = 656;
+					break;
+				case 2:
+					lsc_otp_len_chn = 270;
+					break;
+				default:
+					lsc_otp_len_chn = 0;
+					break;
 				}
 				lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
 
 				oc_otp_data = otp_data_ptr + 1;
 				oc_otp_len = 16;
-			}else{
+			} else {
 				ISP_LOGE("lsc lsc_otp_info_ptr = %p. Parser fail !", lsc_otp_info_ptr);
 				goto EXIT;
 			}
-		}else{
+		} else {
 			ISP_LOGE("lsc otp map version error");
 			goto EXIT;
 		}
-	}else{
+	} else {
 		ISP_LOGE("lsc module_info_ptr = %p. Parser fail !", module_info_ptr);
 		goto EXIT;
 	}
@@ -335,13 +334,14 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	ISP_LOGV("init_lsc_otp, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
 	ISP_LOGV("init_lsc_otp, before, lsc_otp_chn_gain_num=%d", lsc_otp_chn_gain_num);
 
-	if( lsc_otp_chn_gain_num < 100 || lsc_otp_grid < 32 || lsc_otp_grid > 256 || full_img_width < 800 || full_img_height < 600){
+	if (lsc_otp_chn_gain_num < 100 || lsc_otp_grid < 32 || lsc_otp_grid > 256 || full_img_width < 800 || full_img_height < 600) {
 		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", lsc_otp_len, full_img_width, full_img_height, lsc_otp_grid);
 		goto EXIT;
 	}
 
-	if( lsc_otp_chn_gain_num != lsc_otp_width*lsc_otp_height){
-		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
+	if (lsc_otp_chn_gain_num != lsc_otp_width * lsc_otp_height) {
+		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width,
+				 lsc_otp_height, lsc_otp_grid);
 		goto EXIT;
 	}
 
@@ -350,23 +350,17 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
 		uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0),
-						 lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1),
-						 lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2),
-						 lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3),
-						 lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
 
-		lsc_table = _lsc_table_wrapper(lsc_16_bits, lsc_otp_grid,
-						     full_img_width,
-						     full_img_height,
-						     &gain_w, &gain_h);	//  wrapper otp table
+		lsc_table = _lsc_table_wrapper(lsc_16_bits, lsc_otp_grid, full_img_width, full_img_height, &gain_w, &gain_h);	//  wrapper otp table
 
 		free(lsc_16_bits);
 		if (lsc_table == NULL) {
-			ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
+			ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num,
+					 lsc_otp_width, lsc_otp_height, lsc_otp_grid);
 			goto EXIT;
 		}
 		lsc_param->lsc_otp_table_width = gain_w;
@@ -376,42 +370,39 @@ cmr_int  _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		lsc_param->lsc_otp_table_en = 1;
 
 		ISP_LOGV("init_lsc_otp, lsc_otp_width=%d, lsc_otp_height=%d, gain_w=%d, gain_h=%d, lsc_otp_grid=%d", lsc_otp_width, lsc_otp_height, gain_w, gain_h, lsc_otp_grid);
-		ISP_LOGV("init_lsc_otp, lsc_table0_RGGB=[%d,%d,%d,%d]", lsc_table[0], lsc_table[gain_w*gain_h], lsc_table[gain_w*gain_h*2], lsc_table[gain_w*gain_h*3]);
-		ISP_LOGV("init_lsc_otp, lsc_table1_RGGB=[%d,%d,%d,%d]", lsc_table[gain_w+1], lsc_table[gain_w*gain_h + gain_w+1], lsc_table[gain_w*gain_h*2 + gain_w+1], lsc_table[gain_w*gain_h*3 + gain_w+1]);
-	}else{
+		ISP_LOGV("init_lsc_otp, lsc_table0_RGGB=[%d,%d,%d,%d]", lsc_table[0], lsc_table[gain_w * gain_h], lsc_table[gain_w * gain_h * 2], lsc_table[gain_w * gain_h * 3]);
+		ISP_LOGV("init_lsc_otp, lsc_table1_RGGB=[%d,%d,%d,%d]", lsc_table[gain_w + 1], lsc_table[gain_w * gain_h + gain_w + 1], lsc_table[gain_w * gain_h * 2 + gain_w + 1],
+				 lsc_table[gain_w * gain_h * 3 + gain_w + 1]);
+	} else {
 		ISP_LOGE("lsc_otp_addr = %p, lsc_otp_len = %d. Parser lsc otp fail", lsc_otp_addr, lsc_otp_len);
-		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
+		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width,
+				 lsc_otp_height, lsc_otp_grid);
 		goto EXIT;
 	}
 
-	if(NULL!=oc_otp_data && 0!=oc_otp_len){
-		lsc_param->lsc_otp_oc_r_x = (oc_otp_data[1]<<8) | oc_otp_data[0];
-		lsc_param->lsc_otp_oc_r_y = (oc_otp_data[3]<<8) | oc_otp_data[2];
-		lsc_param->lsc_otp_oc_gr_x = (oc_otp_data[5]<<8) | oc_otp_data[4];
-		lsc_param->lsc_otp_oc_gr_y = (oc_otp_data[7]<<8) | oc_otp_data[6];
-		lsc_param->lsc_otp_oc_gb_x = (oc_otp_data[9]<<8) | oc_otp_data[8];
-		lsc_param->lsc_otp_oc_gb_y = (oc_otp_data[11]<<8) | oc_otp_data[10];
-		lsc_param->lsc_otp_oc_b_x = (oc_otp_data[13]<<8) | oc_otp_data[12];
-		lsc_param->lsc_otp_oc_b_y = (oc_otp_data[15]<<8) | oc_otp_data[14];
+	if (NULL != oc_otp_data && 0 != oc_otp_len) {
+		lsc_param->lsc_otp_oc_r_x = (oc_otp_data[1] << 8) | oc_otp_data[0];
+		lsc_param->lsc_otp_oc_r_y = (oc_otp_data[3] << 8) | oc_otp_data[2];
+		lsc_param->lsc_otp_oc_gr_x = (oc_otp_data[5] << 8) | oc_otp_data[4];
+		lsc_param->lsc_otp_oc_gr_y = (oc_otp_data[7] << 8) | oc_otp_data[6];
+		lsc_param->lsc_otp_oc_gb_x = (oc_otp_data[9] << 8) | oc_otp_data[8];
+		lsc_param->lsc_otp_oc_gb_y = (oc_otp_data[11] << 8) | oc_otp_data[10];
+		lsc_param->lsc_otp_oc_b_x = (oc_otp_data[13] << 8) | oc_otp_data[12];
+		lsc_param->lsc_otp_oc_b_y = (oc_otp_data[15] << 8) | oc_otp_data[14];
 		lsc_param->lsc_otp_oc_en = 1;
 
 		ISP_LOGV("init_lsc_otp, lsc_otp_oc_r=[%d,%d], lsc_otp_oc_gr=[%d,%d], lsc_otp_oc_gb=[%d,%d], lsc_otp_oc_b=[%d,%d] ",
-			lsc_param->lsc_otp_oc_r_x,
-			lsc_param->lsc_otp_oc_r_y,
-			lsc_param->lsc_otp_oc_gr_x,
-			lsc_param->lsc_otp_oc_gr_y,
-			lsc_param->lsc_otp_oc_gb_x,
-			lsc_param->lsc_otp_oc_gb_y,
-			lsc_param->lsc_otp_oc_b_x,
-			lsc_param->lsc_otp_oc_b_y);
-	}else{
+				 lsc_param->lsc_otp_oc_r_x,
+				 lsc_param->lsc_otp_oc_r_y,
+				 lsc_param->lsc_otp_oc_gr_x, lsc_param->lsc_otp_oc_gr_y, lsc_param->lsc_otp_oc_gb_x, lsc_param->lsc_otp_oc_gb_y, lsc_param->lsc_otp_oc_b_x, lsc_param->lsc_otp_oc_b_y);
+	} else {
 		ISP_LOGE("oc_otp_data = %p, oc_otp_len = %d, Parser OC otp fail", oc_otp_data, oc_otp_len);
 		goto EXIT;
 	}
 
 	return LSC_SUCCESS;
 
-EXIT:
+  EXIT:
 	lsc_param->lsc_otp_table_addr = NULL;
 	lsc_param->lsc_otp_table_en = 0;
 	lsc_param->lsc_otp_oc_en = 0;
@@ -445,7 +436,7 @@ static cmr_s32 _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
 		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -468,7 +459,7 @@ static cmr_s32 _lscctrl_destroy_thread(struct lsc_ctrl_cxt *cxt_ptr)
 			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -488,7 +479,7 @@ static cmr_s32 _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_cal
 	} else {
 		ISP_LOGI("process fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -498,7 +489,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *handle = (struct lsc_ctrl_cxt *)p_data;
 
-	if(NULL == handle) {
+	if (NULL == handle) {
 		ISP_LOGE("Error: handle is NULL");
 		return rtn;
 	}
@@ -525,7 +516,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		break;
 	}
 
-exit:
+  exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -546,7 +537,7 @@ static cmr_s32 _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_in
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -568,7 +559,7 @@ static cmr_s32 _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_i
 	}
 
 	rtn = _lscctrl_init_lib(cxt_ptr, in_ptr);
-exit:
+  exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -588,7 +579,7 @@ static cmr_s32 _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 		ISP_LOGE("fail to set lscctrl name");
 		rtn = CMR_MSG_SUCCESS;
 	}
-exit:
+  exit:
 	ISP_LOGI("lsc_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
@@ -608,7 +599,7 @@ static cmr_s32 _lscsprd_unload_lib(struct lsc_ctrl_context *cxt)
 		cxt->lib_handle = NULL;
 	}
 
-exit:
+  exit:
 	return rtn;
 }
 
@@ -668,10 +659,10 @@ static cmr_s32 _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 
 	return LSC_SUCCESS;
 
-error_dlsym:
+  error_dlsym:
 	rtn = _lscsprd_unload_lib(cxt);
 
-exit:
+  exit:
 	ISP_LOGE("fail to load lsc lib ret = %d", rtn);
 	return rtn;
 }
@@ -696,14 +687,14 @@ static void *lsc_sprd_init(void *in, void *out)
 
 	memset(cxt, 0, sizeof(*cxt));
 
-	cxt->dst_gain = (cmr_u16 *)malloc(32*32*4*sizeof(cmr_u16));
+	cxt->dst_gain = (cmr_u16 *) malloc(32 * 32 * 4 * sizeof(cmr_u16));
 	if (NULL == cxt->dst_gain) {
 		rtn = LSC_ALLOC_ERROR;
 		ISP_LOGE("fail to alloc dst_gain!");
 		goto EXIT;
 	}
 
-	cxt->lsc_buffer = (cmr_u16 *)malloc(32*32*4*sizeof(cmr_u16));
+	cxt->lsc_buffer = (cmr_u16 *) malloc(32 * 32 * 4 * sizeof(cmr_u16));
 	if (NULL == cxt->lsc_buffer) {
 		rtn = LSC_ALLOC_ERROR;
 		ISP_LOGE("fail to alloc lsc_buffer!");
@@ -733,7 +724,7 @@ static void *lsc_sprd_init(void *in, void *out)
 	ISP_LOGI("lsc init success rtn = %d", rtn);
 	return (void *)cxt;
 
-EXIT:
+  EXIT:
 
 	if (NULL != cxt) {
 		rtn = _lscsprd_unload_lib(cxt);
@@ -792,7 +783,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	struct lsc_adv_calc_param *param = (struct lsc_adv_calc_param *)in;
 	struct lsc_adv_calc_result *result = (struct lsc_adv_calc_result *)out;
 	struct alsc_update_info update_info = { 0, 0, NULL };
-	cmr_s32 dst_gain_size = param->gain_width*param->gain_height*4*sizeof(cmr_u16);
+	cmr_s32 dst_gain_size = param->gain_width * param->gain_height * 4 * sizeof(cmr_u16);
 
 	if (!handle) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -807,9 +798,9 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ",(cmr_s32) ((ae_time1 - ae_time0) / 1000));
+	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
 	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
-	if(update_info.can_update_dest == 1){
+	if (update_info.can_update_dest == 1) {
 		memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
 		rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
 	}
@@ -910,7 +901,7 @@ cmr_int lsc_ctrl_init(struct lsc_adv_init_param * input_ptr, cmr_handle * handle
 		goto exit;
 	}
 
-exit:
+  exit:
 	if (rtn) {
 		if (cxt_ptr) {
 			free(cxt_ptr);
@@ -951,7 +942,7 @@ cmr_int lsc_ctrl_deinit(cmr_handle * handle_lsc)
 		goto exit;
 	}
 
-exit:
+  exit:
 	if (cxt_ptr) {
 		free((void *)cxt_ptr);
 		*handle_lsc = NULL;
@@ -971,7 +962,6 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 		rtn = LSC_HANDLER_NULL;
 		goto exit;
 	}
-
 	//cxt_ptr->proc_out.dst_gain = result->dst_gain;
 
 	CMR_MSG_INIT(message);
@@ -995,7 +985,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 		goto exit;
 	}
 
-exit:
+  exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -1018,7 +1008,7 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 	} else {
 		ISP_LOGI("ioctrl fun is NULL");
 	}
-exit:
+  exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }

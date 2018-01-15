@@ -23,46 +23,45 @@
 extern "C" {
 #endif
 
-struct q_item {
-	cmr_u32 exp_time;
-	cmr_u32 exp_line;
-	cmr_u32 dumy_line;
-	cmr_u32 sensor_gain;
-	cmr_u32 isp_gain;
-};
+	struct q_item {
+		cmr_u32 exp_time;
+		cmr_u32 exp_line;
+		cmr_u32 dumy_line;
+		cmr_u32 sensor_gain;
+		cmr_u32 isp_gain;
+	};
 
-struct s_q_open_param {
-	cmr_s32 exp_valid_num;
-	cmr_s32 sensor_gain_valid_num;
-	cmr_s32 isp_gain_valid_num;
-};
+	struct s_q_open_param {
+		cmr_s32 exp_valid_num;
+		cmr_s32 sensor_gain_valid_num;
+		cmr_s32 isp_gain_valid_num;
+	};
 
-struct s_q_init_in {
-	cmr_u32 exp_line;
-	cmr_u32 exp_time;
-	cmr_u32 dmy_line;
-	cmr_u32 sensor_gain;
-	cmr_u32 isp_gain;
+	struct s_q_init_in {
+		cmr_u32 exp_line;
+		cmr_u32 exp_time;
+		cmr_u32 dmy_line;
+		cmr_u32 sensor_gain;
+		cmr_u32 isp_gain;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	cmr_u32 slave_exp_line;	//it is invalid value while 0
-	cmr_u32 slave_gain;	//it is invalid value while 0
-	cmr_u32 slave_exp_time;
-	cmr_u32 slave_dummy;
+		cmr_u32 slave_exp_line;	//it is invalid value while 0
+		cmr_u32 slave_gain;		//it is invalid value while 0
+		cmr_u32 slave_exp_time;
+		cmr_u32 slave_dummy;
 #endif
-};
+	};
 
-struct s_q_init_out {
-	struct q_item actual_item;
-	struct q_item write_item;
-};
+	struct s_q_init_out {
+		struct q_item actual_item;
+		struct q_item write_item;
+	};
 
-cmr_handle s_q_open(struct s_q_open_param *param);
-cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_out *out);
-cmr_s32 s_q_put(cmr_handle q_handle, struct q_item *input_item, struct q_item *write_2_sensor, struct q_item *actual_item);
-cmr_s32 s_q_close(cmr_handle q_handle);
+	cmr_handle s_q_open(struct s_q_open_param *param);
+	cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_out *out);
+	cmr_s32 s_q_put(cmr_handle q_handle, struct q_item *input_item, struct q_item *write_2_sensor, struct q_item *actual_item);
+	cmr_s32 s_q_close(cmr_handle q_handle);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

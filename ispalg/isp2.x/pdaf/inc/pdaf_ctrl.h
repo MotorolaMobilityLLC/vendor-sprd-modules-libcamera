@@ -16,7 +16,6 @@
 #ifndef _PDAF_CTRL_H_
 #define _PDAF_CTRL_H_
 
-
 #include <sys/types.h>
 #include "isp_com.h"
 #include "af_ctrl.h"
@@ -101,8 +100,8 @@ struct pdaf_ctrl_param_out {
 #define ISP_PRODUCT_NAME_LEN				20
 
 struct isp_lib_config {
-	cmr_u32 product_id;	//lib owner
-	cmr_u32 version_id;	//lib version
+	cmr_u32 product_id;			//lib owner
+	cmr_u32 version_id;			//lib version
 	cmr_s8 product_name_low[ISP_PRODUCT_NAME_LEN];
 	cmr_s8 product_name_high[ISP_PRODUCT_NAME_LEN];
 };
@@ -124,14 +123,14 @@ struct pdaf_ctrl_init_in {
 	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
 	cmr_handle handle_pm;
-	cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
-	cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info *pd_info);
-	cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
-	cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
-	cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
-	cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
-	cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
-	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
+	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info * pd_info);
+	 cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
+	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
+	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
+	 cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
+	 cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
+	 cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 	struct sensor_otp_cust_info *otp_info_ptr;
 	cmr_u8 is_master;
 };

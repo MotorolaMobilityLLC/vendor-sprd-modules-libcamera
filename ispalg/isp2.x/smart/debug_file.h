@@ -24,17 +24,15 @@ extern "C" {
 
 #define DEBUG_FILE_BUF_SIZE	4096
 
-typedef void *debug_handle_t;
+	typedef void *debug_handle_t;
 
-
-extern debug_handle_t smart_debug_file_init(const char file_name[], const char open_mode[]);
-extern void smart_debug_file_deinit(debug_handle_t handle);
-extern cmr_u32 smart_debug_file_open(debug_handle_t handle);
-extern void smart_debug_file_close(debug_handle_t handle);
-extern void smart_debug_file_print(debug_handle_t handle, char *str);
+	extern debug_handle_t smart_debug_file_init(const char file_name[], const char open_mode[]);
+	extern void smart_debug_file_deinit(debug_handle_t handle);
+	extern cmr_u32 smart_debug_file_open(debug_handle_t handle);
+	extern void smart_debug_file_close(debug_handle_t handle);
+	extern void smart_debug_file_print(debug_handle_t handle, char *str);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

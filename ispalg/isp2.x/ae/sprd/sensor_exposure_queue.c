@@ -28,7 +28,7 @@
 
 struct q_head {
 	cmr_u32 num;
-	struct q_item* queue_ptr;
+	struct q_item *queue_ptr;
 };
 
 struct q_item_index {
@@ -49,9 +49,9 @@ struct queue_context {
 	cmr_s32 isp_gain_valid_num;
 	cmr_s32 max_valid_num;
 
-	cmr_s32 exp_valid_offset;/*according to max validata num*/
-	cmr_s32 sensor_gain_valid_offset;/*according to max validata num*/
-	cmr_s32 isp_gain_valid_offset;/*according to max validata num*/
+	cmr_s32 exp_valid_offset;	/*according to max validata num */
+	cmr_s32 sensor_gain_valid_offset;	/*according to max validata num */
+	cmr_s32 isp_gain_valid_offset;	/*according to max validata num */
 
 	struct q_item_index cur_idx;
 	struct q_item_index write_idx;
@@ -103,7 +103,7 @@ static void s_q_update_write_idx(struct queue_context *q_cxt, struct q_item_inde
 {
 	UNUSED(q_cxt);
 
-	/*init write-index: exp_line/exp_time/dummy_line*/
+	/*init write-index: exp_line/exp_time/dummy_line */
 	write_idx->idx_exp_l = cur_idx->idx_exp_l + q_cxt->exp_valid_offset;
 	write_idx->idx_exp_l = (write_idx->idx_exp_l + S_Q_LENGTH) % S_Q_LENGTH;
 
@@ -113,11 +113,11 @@ static void s_q_update_write_idx(struct queue_context *q_cxt, struct q_item_inde
 	write_idx->idx_dmy = cur_idx->idx_dmy + q_cxt->exp_valid_offset;
 	write_idx->idx_dmy = (write_idx->idx_dmy + S_Q_LENGTH) % S_Q_LENGTH;
 
-	/*init write-index: sensor gain*/
+	/*init write-index: sensor gain */
 	write_idx->idx_sensor_gain = cur_idx->idx_sensor_gain + q_cxt->sensor_gain_valid_offset;
 	write_idx->idx_sensor_gain = (write_idx->idx_sensor_gain + S_Q_LENGTH) % S_Q_LENGTH;
 
-	/*init write-index: isp gain*/
+	/*init write-index: isp gain */
 	write_idx->idx_isp_gain = cur_idx->idx_isp_gain + q_cxt->isp_gain_valid_offset;
 	write_idx->idx_isp_gain = (write_idx->idx_isp_gain + S_Q_LENGTH) % S_Q_LENGTH;
 }
@@ -151,7 +151,7 @@ cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_ou
 		return ret;
 	}
 
-	q_cxt = (struct queue_context*)q_handle;
+	q_cxt = (struct queue_context *)q_handle;
 	for (i = 0; i < q_cxt->q_pool.num; ++i) {
 		q_cxt->q_pool.queue_ptr[i].exp_line = in->exp_line;
 		q_cxt->q_pool.queue_ptr[i].exp_time = in->exp_time;
@@ -160,44 +160,44 @@ cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_ou
 		q_cxt->q_pool.queue_ptr[i].isp_gain = in->isp_gain;
 	}
 
-	/*init cur-index*/
+	/*init cur-index */
 	q_cxt->cur_idx.idx_exp_l = 0;
 	q_cxt->cur_idx.idx_exp_t = 0;
 	q_cxt->cur_idx.idx_sensor_gain = 0;
 	q_cxt->cur_idx.idx_isp_gain = 0;
 	q_cxt->cur_idx.idx_dmy = 0;
 
-	/*init actual index*/
+	/*init actual index */
 	s_q_update_actual_idx(q_cxt, &q_cxt->cur_idx, &q_cxt->actual_idx);
 	s_q_get_item(q_cxt, &q_cxt->write_idx, &out->actual_item);
-	/*init write-index*/
+	/*init write-index */
 	s_q_update_write_idx(q_cxt, &q_cxt->cur_idx, &q_cxt->write_idx);
 	s_q_get_item(q_cxt, &q_cxt->write_idx, &out->write_item);
-	/*update cur index flag*/
+	/*update cur index flag */
 	s_q_increase_idx(q_cxt, &q_cxt->cur_idx, 1);
 
 	return ret;
 }
 
-cmr_handle s_q_open(struct s_q_open_param *param)
+cmr_handle s_q_open(struct s_q_open_param * param)
 {
 	struct queue_context *q_cxt = NULL;
 
-	q_cxt = (struct queue_context*)malloc(sizeof(struct queue_context));
+	q_cxt = (struct queue_context *)malloc(sizeof(struct queue_context));
 	if (NULL == q_cxt) {
 		ISP_LOGE("malloc cxt fail\n");
 		goto q_init_error_exit;
 	}
 
-	memset((void*)q_cxt, 0, sizeof(struct queue_context));
+	memset((void *)q_cxt, 0, sizeof(struct queue_context));
 
-	q_cxt->q_pool.queue_ptr = (struct q_item*)malloc(S_Q_LENGTH * sizeof(struct q_item));
+	q_cxt->q_pool.queue_ptr = (struct q_item *)malloc(S_Q_LENGTH * sizeof(struct q_item));
 	if (NULL == q_cxt->q_pool.queue_ptr) {
 		ISP_LOGE("malloc pool fail\n");
 		goto q_init_error_exit;
 	}
 
-	memset((void*)q_cxt->q_pool.queue_ptr, 0, S_Q_LENGTH * sizeof(struct q_item));
+	memset((void *)q_cxt->q_pool.queue_ptr, 0, S_Q_LENGTH * sizeof(struct q_item));
 	q_cxt->q_pool.num = S_Q_LENGTH;
 
 	q_cxt->exp_valid_num = param->exp_valid_num;
@@ -213,9 +213,9 @@ cmr_handle s_q_open(struct s_q_open_param *param)
 
 	ISP_LOGI("valid num: exp: %d, sensor gain: %d, isp gain: %d\n", q_cxt->exp_valid_num, q_cxt->sensor_gain_valid_num, q_cxt->isp_gain_valid_num);
 
-	return (cmr_handle)q_cxt;
+	return (cmr_handle) q_cxt;
 
-q_init_error_exit:
+  q_init_error_exit:
 	if (q_cxt) {
 		if (q_cxt->q_pool.queue_ptr) {
 			free(q_cxt->q_pool.queue_ptr);
@@ -227,7 +227,7 @@ q_init_error_exit:
 	return q_cxt;
 }
 
-cmr_s32 s_q_put(cmr_handle q_handle, struct q_item *input_item, struct q_item *write_2_sensor, struct q_item *actual_item)
+cmr_s32 s_q_put(cmr_handle q_handle, struct q_item * input_item, struct q_item * write_2_sensor, struct q_item * actual_item)
 {
 	cmr_s32 ret = 0;
 	struct queue_context *q_cxt = NULL;
@@ -238,7 +238,7 @@ cmr_s32 s_q_put(cmr_handle q_handle, struct q_item *input_item, struct q_item *w
 		return ret;
 	}
 
-	q_cxt = (struct queue_context*)q_handle;
+	q_cxt = (struct queue_context *)q_handle;
 	s_q_add_item(q_cxt, input_item, &q_cxt->cur_idx);
 
 	s_q_update_write_idx(q_cxt, &q_cxt->cur_idx, &q_cxt->write_idx);
@@ -263,7 +263,7 @@ cmr_s32 s_q_close(cmr_handle q_handle)
 		return ret;
 	}
 
-	cxt_ptr = (struct queue_context*)q_handle;
+	cxt_ptr = (struct queue_context *)q_handle;
 
 	if (cxt_ptr->q_pool.queue_ptr) {
 		free(cxt_ptr->q_pool.queue_ptr);
@@ -275,4 +275,3 @@ cmr_s32 s_q_close(cmr_handle q_handle)
 
 	return ret;
 }
-
