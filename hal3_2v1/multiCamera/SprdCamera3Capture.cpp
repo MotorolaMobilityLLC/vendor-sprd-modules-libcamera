@@ -477,91 +477,7 @@ SprdCamera3Capture::popRequestList(List<buffer_handle_t *> &list) {
 
     return ret;
 }
-/*===========================================================================
- * FUNCTION   :allocateOne
- *
- * DESCRIPTION: deconstructor of SprdCamera3Capture
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int SprdCamera3Capture::allocateOne(int w, int h, uint32_t is_cache,
-                                    new_mem_t *new_mem) {
 
-    int result = 0;
-    size_t mem_size = 0;
-    MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
-
-    mem_size = w * h * 3 / 2;
-    // to make it page size aligned
-    //  mem_size = (mem_size + 4095U) & (~4095U);
-
-    if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_MM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM);
-        }
-    } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM);
-        }
-    }
-
-    if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
-        HAL_LOGE("pHeapIon is null or getHeapID failed");
-        goto getpmem_fail;
-    }
-
-    if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
-        HAL_LOGE("error getBase is null.");
-        goto getpmem_fail;
-    }
-
-    if (new_mem == NULL) {
-        HAL_LOGE("error new_mem is null.");
-        goto getpmem_fail;
-    }
-
-    buffer =
-        new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION, 0x130,
-                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
-    if (buffer == NULL) {
-        HAL_LOGE("error buffer is null.");
-        goto getpmem_fail;
-    }
-
-    buffer->share_fd = pHeapIon->getHeapID();
-    buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->byte_stride = w;
-    buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->width = w;
-    buffer->height = h;
-    buffer->stride = w;
-    buffer->internalWidth = w;
-    buffer->internalHeight = h;
-
-    new_mem->native_handle = buffer;
-    new_mem->pHeapIon = pHeapIon;
-
-    HAL_LOGD("fd=0x%x, size=%d, heap=%p", buffer->share_fd, mem_size, pHeapIon);
-    HAL_LOGV("X");
-
-    return result;
-
-getpmem_fail:
-    delete pHeapIon;
-
-    return -1;
-}
 /*===========================================================================
  * FUNCTION         : freeLocalBuffer
  *
@@ -574,6 +490,8 @@ getpmem_fail:
  * RETURN             :  NONE
  *==========================================================================*/
 void SprdCamera3Capture::freeLocalBuffer(new_mem_t *pLocalBuffer) {
+// private_handle_t free buffer for tmp
+#if 0
     for (size_t i = 0; i < MAX_CAP_QEQUEST_BUF; i++) {
         if (pLocalBuffer[i].native_handle != NULL) {
             delete ((private_handle_t *)*(&(pLocalBuffer[i].native_handle)));
@@ -586,6 +504,7 @@ void SprdCamera3Capture::freeLocalBuffer(new_mem_t *pLocalBuffer) {
             pLocalBuffer[i].pHeapIon = NULL;
         }
     }
+#endif
 }
 /*===========================================================================
  * FUNCTION         : freeLocalCapBuffer
@@ -599,6 +518,8 @@ void SprdCamera3Capture::freeLocalBuffer(new_mem_t *pLocalBuffer) {
  * RETURN             :  NONE
  *==========================================================================*/
 void SprdCamera3Capture::freeLocalCapBuffer(new_mem_t *pLocalCapBuffer) {
+// private_handle_t free buffer for tmp
+#if 0
     for (size_t i = 0; i < LOCAL_CAPBUFF_NUM; i++) {
         if (pLocalCapBuffer[i].native_handle != NULL) {
             delete ((private_handle_t *)*(&(pLocalCapBuffer[i].native_handle)));
@@ -612,6 +533,7 @@ void SprdCamera3Capture::freeLocalCapBuffer(new_mem_t *pLocalCapBuffer) {
             pLocalCapBuffer[i].pHeapIon = NULL;
         }
     }
+#endif
 }
 /*===========================================================================
  * FUNCTION   :validateCaptureRequest
@@ -938,7 +860,7 @@ void SprdCamera3Capture::CaptureThread::
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup(
-    private_handle_t *private_handle, int perfect_level, int *face_info) {
+    buffer_handle_t *buffer_handle, int perfect_level, int *face_info) {
     // init the parameters table. save the value until the process is restart or
     // the device is restart.
     /*
@@ -947,9 +869,9 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup(
     struct camera_frame_type cap_3d_frame;
     bzero(&cap_3d_frame, sizeof(struct camera_frame_type));
     struct camera_frame_type *frame = &cap_3d_frame;
-    frame->y_vir_addr = (cmr_uint)private_handle->base;
-    frame->width = private_handle->width;
-    frame->height = private_handle->height;
+    frame->y_vir_addr = (cmr_uint)(mCapture->map(buffer_handle));
+    frame->width = ADP_WIDTH(*buffer_handle);
+    frame->height = ADP_HEIGHT(*buffer_handle);
 
     TSRect Tsface;
     YuvFormat yuvFormat = TSFB_FMT_NV21;
@@ -1028,10 +950,8 @@ void SprdCamera3Capture::CaptureThread::reProcessFrame(
     HAL_LOGD("perfectskinlevel=%d face:sx %d sy %d ex %d ey %d",
              perfectskinlevel, face_info[0], face_info[1], face_info[2],
              face_info[3]);
-    private_handle_t *private_handle =
-        (struct private_handle_t *)(*frame_buffer);
     if (perfectskinlevel > 0)
-        cap_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+        cap_3d_doFaceMakeup(frame_buffer, perfectskinlevel, face_info);
 
     return;
 }
@@ -1395,22 +1315,6 @@ bool SprdCamera3Capture::CaptureThread::threadLoop() {
                          request.frame_number);
                 HAL_LOGD("capture combined success: cmbbuff %p", output_buffer);
 
-                HAL_LOGD(
-                    "reprocess request input buff %p, stream:%p, yaddr_v:%p, "
-                    "width:%d, height:%d",
-                    request.input_buffer->buffer, request.input_buffer->stream,
-                    ((struct private_handle_t *)(*request.input_buffer->buffer))
-                        ->base,
-                    input_buffer->stream->width, input_buffer->stream->height);
-                HAL_LOGD("reprocess request output buff %p, stream:%p, "
-                         "yaddr_v:%p, width:%d, height:%d",
-                         request.output_buffers[0].buffer,
-                         request.output_buffers[0].stream,
-                         ((struct private_handle_t *)(*request.output_buffers[0]
-                                                           .buffer))
-                             ->base,
-                         request.output_buffers[0].stream->width,
-                         request.output_buffers[0].stream->height);
                 if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
                                                                &request)) {
                     HAL_LOGE("failed. process capture request!");
@@ -1534,9 +1438,9 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(
     output_buf = &(mCapture->mLocalCapBuffer[mCaptureStreamsNum].native_handle);
     dcam_info_t dcam;
 
-    dcam.left_buf = (struct private_handle_t *)*input_buf1;
-    dcam.right_buf = (struct private_handle_t *)*input_buf2;
-    dcam.dst_buf = (struct private_handle_t *)*output_buf;
+    dcam.left_buf = input_buf1;
+    dcam.right_buf = input_buf2;
+    dcam.dst_buf = output_buf;
     dcam.rot_angle = ROT_90;
 
     metaSettings = mSavedCapReqsettings;
@@ -1563,15 +1467,12 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(
         }
     }
     HAL_LOGD(" combine rot_angle:%d", dcam.rot_angle);
-    HAL_LOGD(" before cmb yaddr_v:%p",
-             ((struct private_handle_t *)output_buf)->base);
     if (mGpuApi->imageStitchingWithGPU == NULL) {
         HAL_LOGE("mGpuApi imageStitchingWithGPU is null.");
         return -1;
     }
-    mGpuApi->imageStitchingWithGPU(&dcam);
-    HAL_LOGD(" after cmb yaddr_v:%p",
-             ((struct private_handle_t *)output_buf)->base);
+    // abandon private_handle_t
+    // mGpuApi->imageStitchingWithGPU(&dcam);
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
@@ -1581,24 +1482,26 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(
             static int nCont = 0;
             struct img_addr imgadd;
             bzero(&imgadd, sizeof(img_addr));
-            imgadd.addr_y =
-                (cmr_uint)(((struct private_handle_t *)*input_buf1)->base);
+            mCapture->map(dcam.left_buf, (void **)&imgadd.addr_y);
             imgadd.addr_u = imgadd.addr_y + m3DCaptureWidth * m3DCaptureHeight;
             save_yuv_to_file(100 + nCont, IMG_DATA_TYPE_YUV420, m3DCaptureWidth,
                              m3DCaptureHeight, &imgadd);
+            mCapture->unmap(dcam.leftright_buf_buf);
 
-            imgadd.addr_y =
-                (cmr_uint)(((struct private_handle_t *)*input_buf2)->base);
+            mCapture->map(dcam.right_buf, (void **)&imgadd.addr_y);
+            imgadd.addr_y = (cmr_int)(mCapture->map(dcam.right_buf));
             imgadd.addr_u = imgadd.addr_y + 1632 * 1224;
             save_yuv_to_file(200 + nCont, IMG_DATA_TYPE_YUV420, m3DCaptureWidth,
                              m3DCaptureHeight, &imgadd);
+            mCapture->unmap(dcam.right_buf);
 
-            imgadd.addr_y =
-                (cmr_uint)(((struct private_handle_t *)*output_buf)->base);
+            mCapture->map(dcam.dst_buf, (void **)&imgadd.addr_y);
             imgadd.addr_u = imgadd.addr_y + 1920 * 1080;
             save_yuv_to_file(300 + nCont, IMG_DATA_TYPE_YUV420,
                              mCapture->mCaptureWidth, mCapture->mCaptureHeight,
                              &imgadd);
+
+            mCapture->unmap(dcam.dst_buf);
             nCont = nCont % 100 + 1;
         }
     }
@@ -1777,7 +1680,7 @@ int SprdCamera3Capture::configureStreams(
                 freeLocalBuffer(mLocalBuffer);
 
                 for (size_t j = 0; j < MAX_CAP_QEQUEST_BUF; j++) {
-                    int tmp = allocateOne(w, h, 1, &(mLocalBuffer[j]));
+                    int tmp = allocateOne(w, h, &(mLocalBuffer[j]), YUV420);
                     if (tmp < 0) {
                         HAL_LOGE("request one buf failed.");
                         continue;
@@ -1800,15 +1703,15 @@ int SprdCamera3Capture::configureStreams(
 
                 for (size_t j = 0; j < LOCAL_CAPBUFF_NUM - 1; j++) {
                     if (0 > allocateOne(mCaptureThread->m3DCaptureWidth,
-                                        mCaptureThread->m3DCaptureHeight, 1,
-                                        &(mLocalCapBuffer[j]))) {
+                                        mCaptureThread->m3DCaptureHeight,
+                                        &(mLocalCapBuffer[j]), YUV420)) {
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
                 }
-                if (0 >
-                    allocateOne(w, h, 1,
-                                &(mLocalCapBuffer[stream_list->num_streams]))) {
+                if (0 > allocateOne(
+                            w, h, &(mLocalCapBuffer[stream_list->num_streams]),
+                            YUV420)) {
                     HAL_LOGE("request one buf failed.");
                     continue;
                 }
@@ -2081,12 +1984,6 @@ int SprdCamera3Capture::processCaptureRequest(
             CameraMetadata meta;
             HAL_LOGD(" orgtype:%d", req->output_buffers[i].stream->format);
             mCaptureThread->mSavedResultBuff = NULL;
-            HAL_LOGD("org snp request output buff %p, stream:%p, yaddr_v:%p",
-                     request->output_buffers[i].buffer,
-                     request->output_buffers[i].stream,
-                     ((struct private_handle_t *)(*request->output_buffers[i]
-                                                       .buffer))
-                         ->base);
             memcpy(&mCaptureThread->mSavedCapRequest, req,
                    sizeof(camera3_capture_request_t));
             memcpy(&mCaptureThread->mSavedCapReqstreambuff,

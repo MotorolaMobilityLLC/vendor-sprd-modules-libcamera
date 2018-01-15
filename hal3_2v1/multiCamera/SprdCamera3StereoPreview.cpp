@@ -171,6 +171,7 @@ SprdCamera3StereoPreview::~SprdCamera3StereoPreview() {
 void SprdCamera3StereoPreview::freeLocalBuffer(
     new_mem_t *LocalBuffer, List<buffer_handle_t *> &bufferList,
     int bufferNum) {
+#if 0 // fot tmp
     HAL_LOGD("free local buffer,bufferNum=%d", bufferNum);
     bufferList.clear();
     if (LocalBuffer != NULL) {
@@ -187,6 +188,7 @@ void SprdCamera3StereoPreview::freeLocalBuffer(
     } else {
         HAL_LOGD("Not allocated, No need to free");
     }
+#endif
 }
 /*===========================================================================
  * FUNCTION         : getCameraMuxer
@@ -491,90 +493,7 @@ SprdCamera3StereoPreview::popRequestList(List<buffer_handle_t *> &list) {
     list.erase(j);
     return ret;
 }
-/*===========================================================================
- * FUNCTION   :allocateOne
- *
- * DESCRIPTION: deconstructor of SprdCamera3StereoPreview
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int SprdCamera3StereoPreview::allocateOne(int w, int h, uint32_t is_cache,
-                                          new_mem_t *new_mem) {
-    int result = 0;
-    size_t mem_size = 0;
-    MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
 
-    HAL_LOGI("E");
-    mem_size = w * h * 3 / 2;
-    // to make it page size aligned
-    //  mem_size = (mem_size + 4095U) & (~4095U);
-
-    if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_MM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM);
-        }
-    } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM);
-        }
-    }
-
-    if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
-        HAL_LOGE("pHeapIon is null or getHeapID failed");
-        goto getpmem_fail;
-    }
-
-    if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
-        HAL_LOGE("error getBase is null.");
-        goto getpmem_fail;
-    }
-
-    if (new_mem == NULL) {
-        HAL_LOGE("error new_mem is null.");
-        goto getpmem_fail;
-    }
-
-    buffer =
-        new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION, 0x130,
-                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
-    if (buffer == NULL) {
-        HAL_LOGE("error buffer is null.");
-        goto getpmem_fail;
-    }
-
-    buffer->share_fd = pHeapIon->getHeapID();
-    buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->byte_stride = w;
-    buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->width = w;
-    buffer->height = h;
-    buffer->stride = w;
-    buffer->internalWidth = w;
-    buffer->internalHeight = h;
-
-    new_mem->native_handle = buffer;
-    new_mem->pHeapIon = pHeapIon;
-
-    HAL_LOGI("X");
-
-    return result;
-
-getpmem_fail:
-    delete pHeapIon;
-
-    return -1;
-}
 /*===========================================================================
  * FUNCTION   :validateCaptureRequest
  *
@@ -926,8 +845,8 @@ void SprdCamera3StereoPreview::ReProcessThread::preview_3d_convert_face_info(
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3StereoPreview::ReProcessThread::preview_3d_doFaceMakeup(
-    private_handle_t *private_handle, int perfect_level, int *face_info) {
-   /*
+    buffer_handle_t *buffer_handle, int perfect_level, int *face_info) {
+    /*
     // init the parameters table. save the value until the process is restart or
     // the device is restart.
     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
@@ -935,9 +854,9 @@ void SprdCamera3StereoPreview::ReProcessThread::preview_3d_doFaceMakeup(
     struct camera_frame_type preview_3d_frame;
     bzero(&preview_3d_frame, sizeof(struct camera_frame_type));
     struct camera_frame_type *frame = &preview_3d_frame;
-    frame->y_vir_addr = (cmr_uint)private_handle->base;
-    frame->width = private_handle->width;
-    frame->height = private_handle->height;
+    frame->y_vir_addr = (cmr_uint)(mPreviewMuxer->map(buffer_handle));
+    frame->width = ADP_WIDTH(*buffer_handle);
+    frame->height = ADP_HEIGHT(*buffer_handle);
 
     TSRect Tsface;
     YuvFormat yuvFormat = TSFB_FMT_NV21;
@@ -1028,10 +947,8 @@ int SprdCamera3StereoPreview::ReProcessThread::reProcessFrame(
             itor++;
         }
     }
-    private_handle_t *private_handle =
-        (struct private_handle_t *)(*frame_buffer);
-    //if (perfectskinlevel > 0)
-        //preview_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+    // if (perfectskinlevel > 0)
+    // preview_3d_doFaceMakeup(frame_buffer, perfectskinlevel, face_info);
 
     return rc;
 }
@@ -1054,6 +971,9 @@ void SprdCamera3StereoPreview::ReProcessThread::CallBackResult(
     camera3_capture_result_t result;
     List<old_request>::iterator itor;
     camera3_stream_buffer_t result_buffers;
+    void *src_addr = NULL;
+    void *dst_addr = NULL;
+
     {
         Mutex::Autolock l(mPreviewMuxer->mRequest);
         itor = mPreviewMuxer->mOldPreviewRequestList.begin();
@@ -1092,10 +1012,13 @@ void SprdCamera3StereoPreview::ReProcessThread::CallBackResult(
         camera3_stream_buffer_t callback_result_buffers;
 
         if (itor->stream && itor->buffer) {
-            memcpy(((struct private_handle_t *)(*itor->callback_buffer))->base,
-                   ((struct private_handle_t *)(*result_buffers.buffer))->base,
-                   ((struct private_handle_t *)(*result_buffers.buffer))->size);
+            mPreviewMuxer->map(itor->callback_buffer, &src_addr);
+            mPreviewMuxer->map(result_buffers.buffer, &dst_addr);
+            memcpy(src_addr, dst_addr, ADP_BUFSIZE(*result_buffers.buffer));
+            mPreviewMuxer->unmap(itor->callback_buffer);
+            mPreviewMuxer->unmap(result_buffers.buffer);
             callback_result_buffers.buffer = itor->callback_buffer;
+
         } else {
             result_buffers.buffer = combPreviewResult->buffer1;
         }
@@ -1533,9 +1456,9 @@ int SprdCamera3StereoPreview::MuxerThread::muxerTwoFrame(
 
     dcam_info_t dcam;
 
-    dcam.left_buf = (struct private_handle_t *)*input_buf1;
-    dcam.right_buf = (struct private_handle_t *)*input_buf2;
-    dcam.dst_buf = (struct private_handle_t *)*output_buf;
+    dcam.left_buf = input_buf1;
+    dcam.right_buf = input_buf2;
+    dcam.dst_buf = output_buf;
     if (rotation >= 0) {
         switch (rotation) {
         case 0:
@@ -1558,28 +1481,32 @@ int SprdCamera3StereoPreview::MuxerThread::muxerTwoFrame(
     }
 
     dcam.rot_angle = s_rotation;
-    mGpuApi->imageStitchingWithGPU(&dcam);
+    // abandon private_handle_t
+    // mGpuApi->imageStitchingWithGPU(&dcam);
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
         };
         property_get("debug.camera.3dpreview.saveyuv", prop, "0");
         if (1 == atoi(prop)) {
-            addr = dcam.left_buf->base;
-            size = dcam.left_buf->size;
-            mPreviewMuxer->dumpImg(addr, size, dcam.left_buf->width,
-                                   dcam.left_buf->height,
+            mPreviewMuxer->map(dcam.left_buf, &addr);
+            size = ADP_BUFSIZE(*dcam.left_buf);
+            mPreviewMuxer->dumpImg(addr, size, ADP_WIDTH(*dcam.left_buf),
+                                   ADP_HEIGHT(*dcam.left_buf),
                                    combPreviewResult->frame_number, 1);
-            addr = dcam.right_buf->base;
-            size = dcam.right_buf->size;
-            mPreviewMuxer->dumpImg(addr, size, dcam.right_buf->width,
-                                   dcam.right_buf->height,
+            mPreviewMuxer->unmap(dcam.left_buf);
+            mPreviewMuxer->map(dcam.right_buf, &addr);
+            size = ADP_BUFSIZE(*dcam.right_buf);
+            mPreviewMuxer->dumpImg(addr, size, ADP_WIDTH(*dcam.right_buf),
+                                   ADP_HEIGHT(*dcam.right_buf),
                                    combPreviewResult->frame_number, 2);
-            addr = dcam.dst_buf->base;
-            size = dcam.dst_buf->size;
-            mPreviewMuxer->dumpImg(addr, size, dcam.dst_buf->width,
-                                   dcam.dst_buf->height,
+            mPreviewMuxer->unmap(dcam.right_buf);
+            mPreviewMuxer->map(dcam.dst_buf, &addr);
+            size = ADP_BUFSIZE(*dcam.dst_buf);
+            mPreviewMuxer->dumpImg(addr, size, ADP_WIDTH(*dcam.dst_buf),
+                                   ADP_HEIGHT(*dcam.dst_buf),
                                    combPreviewResult->frame_number, 3);
+            mPreviewMuxer->unmap(dcam.dst_buf);
         }
     }
     {
@@ -1933,8 +1860,8 @@ int SprdCamera3StereoPreview::configureStreams(
                                  &mPreviewSize.stereoPreviewHeight);
                 for (size_t j = 0; j < mMaxLocalBufferNum;) {
                     int tmp = allocateOne(mPreviewSize.stereoPreviewWidth,
-                                          mPreviewSize.stereoPreviewHeight, 1,
-                                          &(mLocalBuffer[j]));
+                                          mPreviewSize.stereoPreviewHeight,
+                                          &(mLocalBuffer[j]), YUV420);
                     if (tmp < 0) {
                         HAL_LOGE("request one buf failed.");
                         continue;

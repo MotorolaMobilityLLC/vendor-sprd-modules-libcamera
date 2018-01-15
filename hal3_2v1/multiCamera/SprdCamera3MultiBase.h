@@ -92,11 +92,19 @@ class SprdCamera3MultiBase {
                          List<hwi_frame_buffer_info_t> &queue);
     virtual bool alignTransform(void *src, int w_old, int h_old, int w_new,
                                 int h_new, void *dest);
-    virtual int convertToImg_frm(private_handle_t *in, img_frm *out,
-                                 cmr_u32 format);
     virtual int convertToImg_frm(void *phy_addr, void *vir_addr, int width,
                                  int height, int fd, cmr_u32 format,
                                  img_frm *out);
+    virtual int convertToImg_frm(buffer_handle_t *in, img_frm *out,
+                                 cmr_u32 format, void *vir_addr);
+    virtual int findGraphicBuf(List<new_mem_t *> &list,
+                               native_handle_t *native_handle,
+                               sp<GraphicBuffer> &pbuffer);
+    virtual int findWidthHeigth(List<new_mem_t *> &list,
+                                native_handle_t *native_handle, int *width,
+                                int *height);
+    virtual int map(buffer_handle_t *buffer, void **vir_addr);
+    virtual int unmap(buffer_handle_t *buffer);
     /*
 #ifdef CONFIG_FACE_BEAUTY
 virtual void doFaceMakeup(struct camera_frame_type *frame,
@@ -128,10 +136,13 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                      uint32_t jpeg_size);
     int jpeg_encode_exif_simplify(img_frm *src_img, img_frm *pic_enc_img,
                                   struct img_frm *dst_img, SprdCamera3HWI *hwi);
-    int jpeg_encode_exif_simplify(private_handle_t *src_private_handle,
-                                  private_handle_t *pic_enc_private_handle,
-                                  private_handle_t *dst_private_handle,
-                                  SprdCamera3HWI *hwi);
+
+    int jpeg_encode_exif_simplify(buffer_handle_t *src_private_handle,
+                                  void *src_vir_addr,
+                                  buffer_handle_t *pic_enc_private_handle,
+                                  void *pic_vir_addr,
+                                  buffer_handle_t *dst_private_handle,
+                                  void *dst_vir_addr, SprdCamera3HWI *hwi);
 
   private:
     Mutex mBufferListLock;

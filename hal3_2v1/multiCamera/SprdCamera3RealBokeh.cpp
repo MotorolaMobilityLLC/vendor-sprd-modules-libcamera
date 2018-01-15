@@ -202,11 +202,6 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
-    if (mDepthPrevFormat == MODE_WEIGHTMAP) {
-        mDepthPrevbufType = DEPTH_OUT_WEIGHTMAP;
-    } else {
-        mDepthPrevbufType = DEPTH_OUT_BUFFER;
-    }
     HAL_LOGI("X");
 }
 
@@ -654,21 +649,24 @@ int SprdCamera3RealBokeh::allocateBuff() {
             w = mDepthOutWidth;
             h = mDepthOutHeight;
         }
-        if (0 > allocateOne(w, h, &(mLocalBuffer[count]), mDepthPrevbufType)) {
-            HAL_LOGE("request one buf failed.");
+
+        mSprdDepthBuffer[0] = malloc(w * h * 2);
+        if (mSprdDepthBuffer[0] == NULL) {
+            HAL_LOGE("mSprdDepthBuffer[0]  malloc failed.");
             goto mem_fail;
+        } else {
+            memset(mSprdDepthBuffer[0], 0, sizeof(w * h * 2));
         }
-        mLocalBuffer[count].type = mDepthPrevbufType;
-        mLocalBufferList.push_back(&(mLocalBuffer[count]));
-        count++;
-        if (0 > allocateOne(mDepthSnapOutWidth, mDepthSnapOutHeight,
-                            &(mLocalBuffer[count]), DEPTH_OUT_BUFFER)) {
-            HAL_LOGE("request one buf failed.");
+
+        mSprdDepthBuffer[1] =
+            malloc(mDepthSnapOutWidth * mDepthSnapOutHeight + 68);
+        if (mSprdDepthBuffer[1] == NULL) {
+            HAL_LOGE("mSprdDepthBuffer[1] malloc failed.");
             goto mem_fail;
+        } else {
+            memset(mSprdDepthBuffer[1], 0,
+                   sizeof(mDepthSnapOutWidth * mDepthSnapOutHeight + 68));
         }
-        mLocalBuffer[count].type = DEPTH_OUT_BUFFER;
-        mLocalBufferList.push_back(&(mLocalBuffer[count]));
-        count++;
     }
 
     HAL_LOGI(":X");
@@ -695,6 +693,17 @@ mem_fail:
 void SprdCamera3RealBokeh::freeLocalBuffer() {
     for (int i = 0; i < mLocalBufferNumber; i++) {
         freeOneBuffer(&mLocalBuffer[i]);
+    }
+
+    if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
+        if (mSprdDepthBuffer[0] != NULL) {
+            free(mSprdDepthBuffer[0]);
+            mSprdDepthBuffer[0] = NULL;
+        }
+        if (mSprdDepthBuffer[1] != NULL) {
+            free(mSprdDepthBuffer[1]);
+            mSprdDepthBuffer[1] = NULL;
+        }
     }
 }
 
@@ -784,7 +793,6 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
         if (loadBokehPreviewApi() < 0) {
             HAL_LOGE("load bokeh preview api failed.");
         }
-        mLocalBufferNumber = LOCAL_BUFFER_NUM;
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         mArcSoftBokehApi =
             (ArcSoftBokehAPI_t *)malloc(sizeof(ArcSoftBokehAPI_t));
@@ -796,8 +804,8 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
         if (loadBokehApi() < 0) {
             HAL_LOGE("load arcsoft bokeh api failed.");
         }
-        mLocalBufferNumber = LOCAL_BUFFER_NUM - LOCAL_DEPTH_OUTBUFF_NUM;
     }
+    mLocalBufferNumber = LOCAL_BUFFER_NUM;
     HAL_LOGI("X");
     return rc;
 }
@@ -1001,7 +1009,7 @@ SprdCamera3RealBokeh::PreviewMuxerThread::~PreviewMuxerThread() {
 bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
     muxer_queue_msg_t muxer_msg;
     buffer_handle_t *output_buffer = NULL;
-    buffer_handle_t *depth_output_buffer = NULL;
+    void *depth_output_buffer = NULL;
     uint32_t frame_number = 0;
     int rc = 0;
 
@@ -1046,12 +1054,18 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                 }
             }
             if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                depth_output_buffer =
-                    (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
-                                               mRealBokeh->mDepthPrevbufType));
+                depth_output_buffer = mRealBokeh->mSprdDepthBuffer[0];
             }
 
             if (output_buffer != NULL) {
+                void *input_buf1_addr = NULL;
+                rc = mRealBokeh->map(muxer_msg.combo_frame.buffer1,
+                                     &input_buf1_addr);
+                if (rc != NO_ERROR) {
+                    HAL_LOGE("fail to map input buffer1");
+                    return false;
+                }
+
                 if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
                     CONTROL_Tag controlInfo;
                     mRealBokeh->m_pPhyCamera[CAM_TYPE_MAIN]
@@ -1063,30 +1077,35 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                     }
                     if (mRealBokeh->mIsSupportPBokeh &&
                         mRealBokeh->mUpdateDepthFlag) {
-                        rc = depthPreviewHandle(depth_output_buffer,
+                        rc = depthPreviewHandle(depth_output_buffer, NULL,
                                                 muxer_msg.combo_frame.buffer1,
+                                                input_buf1_addr,
                                                 muxer_msg.combo_frame.buffer2);
                         if (rc != NO_ERROR) {
                             HAL_LOGE("depthPreviewHandle failed");
+                            mRealBokeh->unmap(muxer_msg.combo_frame.buffer1);
                             return false;
                         }
                     }
-                    rc = bokehPreviewHandle(output_buffer,
-                                            muxer_msg.combo_frame.buffer1,
-                                            depth_output_buffer);
+                    rc = bokehPreviewHandle(
+                        output_buffer, muxer_msg.combo_frame.buffer1,
+                        input_buf1_addr, depth_output_buffer);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("bokehPreviewHandle failed");
+                        mRealBokeh->unmap(muxer_msg.combo_frame.buffer1);
                         return false;
                     }
                 } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-                    rc = depthPreviewHandle(output_buffer,
-                                            muxer_msg.combo_frame.buffer1,
-                                            muxer_msg.combo_frame.buffer2);
+                    rc = depthPreviewHandle(
+                        NULL, output_buffer, muxer_msg.combo_frame.buffer1,
+                        input_buf1_addr, muxer_msg.combo_frame.buffer2);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("depthPreviewHandle failed");
+                        mRealBokeh->unmap(muxer_msg.combo_frame.buffer1);
                         return false;
                     }
                 }
+                mRealBokeh->unmap(muxer_msg.combo_frame.buffer1);
                 mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer,
                                            muxer_msg.combo_frame.buffer1,
                                            mRealBokeh->mLocalBufferNumber,
@@ -1095,12 +1114,6 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                                            muxer_msg.combo_frame.buffer2,
                                            mRealBokeh->mLocalBufferNumber,
                                            mRealBokeh->mLocalBufferList);
-                if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                    mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer,
-                                               depth_output_buffer,
-                                               mRealBokeh->mLocalBufferNumber,
-                                               mRealBokeh->mLocalBufferList);
-                }
                 mRealBokeh->CallBackResult(frame_number,
                                            CAMERA3_BUFFER_STATUS_OK);
             }
@@ -1125,41 +1138,52 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
  * RETURN     : None
  *==========================================================================*/
 int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
-    buffer_handle_t *output_bufer, buffer_handle_t *input_buf1,
+    void *depth_output_buffer, buffer_handle_t *output_buffer,
+    buffer_handle_t *input_buf1, void *input_buf1_addr,
     buffer_handle_t *input_buf2) {
     int rc = NO_ERROR;
+    void *output_buffer_addr = NULL;
+    void *input_buf2_addr = NULL;
+
     char acVersion[256] = {
         0,
     };
 
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        if (input_buf1 == NULL || input_buf2 == NULL || output_bufer == NULL) {
+        if (input_buf1 == NULL || input_buf2 == NULL ||
+            depth_output_buffer == NULL) {
             HAL_LOGE("buffer is NULL!");
-            return -1;
+            return BAD_VALUE;
         }
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-        if (input_buf1 == NULL || input_buf2 == NULL || output_bufer == NULL) {
+        if (input_buf1 == NULL || input_buf2 == NULL || output_buffer == NULL) {
             HAL_LOGE("buffer is NULL!");
-            return -1;
+            return BAD_VALUE;
         }
     }
-    struct private_handle_t *input_handle1 =
-        (struct private_handle_t *)(*input_buf1);
-    struct private_handle_t *input_handle2 =
-        (struct private_handle_t *)(*input_buf2);
-    struct private_handle_t *depth_handle =
-        (struct private_handle_t *)(*output_bufer);
+
+    if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
+        rc = mRealBokeh->map(output_buffer, &output_buffer_addr);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to map output buffer");
+            goto fail_map_output;
+        }
+    }
+    rc = mRealBokeh->map(input_buf2, &input_buf2_addr);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("fail to map input buffer2");
+        goto fail_map_input2;
+    }
 
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
         int64_t depthRun = systemTime();
         distanceRet distance;
         rc = mRealBokeh->mDepthApi->sprd_depth_Run_distance(
-            mPrevDepthhandle, (void *)(depth_handle->base), NULL,
-            (void *)(input_handle2->base), (void *)(input_handle1->base),
-            &(mPreviewbokehParam.depth_param), &distance);
+            mPrevDepthhandle, depth_output_buffer, NULL, input_buf2_addr,
+            input_buf1_addr, &(mPreviewbokehParam.depth_param), &distance);
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("sprd_depth_Run failed! %d", rc);
-            return rc;
+            goto fail_depth_run;
         }
 
         HAL_LOGD("depth run cost %lld ms", ns2ms(systemTime() - depthRun));
@@ -1169,18 +1193,18 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
             };
             property_get("persist.sys.camera.savyuv", prop9, "0");
             if (1 == atoi(prop9)) {
-                mRealBokeh->dumpData((unsigned char *)(depth_handle->base), 1,
-                                     depth_handle->size,
-                                     mRealBokeh->mDepthOutWidth,
-                                     mRealBokeh->mDepthOutHeight,
-                                     mRealBokeh->mPrevFrameNumber, "output");
-                mRealBokeh->dumpData((unsigned char *)(input_handle2->base), 1,
-                                     input_handle2->size,
+                mRealBokeh->dumpData(
+                    (unsigned char *)depth_output_buffer, 1,
+                    mRealBokeh->mPreviewWidth * mRealBokeh->mPreviewHeight * 2,
+                    mRealBokeh->mPreviewWidth, mRealBokeh->mPreviewHeight,
+                    mRealBokeh->mPrevFrameNumber, "output");
+                mRealBokeh->dumpData((unsigned char *)(input_buf2_addr), 1,
+                                     ADP_BUFSIZE(*input_buf2),
                                      mRealBokeh->mDepthPrevImageWidth,
                                      mRealBokeh->mDepthPrevImageHeight,
                                      mRealBokeh->mPrevFrameNumber, "prevSub");
-                mRealBokeh->dumpData((unsigned char *)(input_handle1->base), 1,
-                                     input_handle1->size,
+                mRealBokeh->dumpData((unsigned char *)(input_buf1_addr), 1,
+                                     ADP_BUFSIZE(*input_buf1),
                                      mRealBokeh->mPreviewWidth,
                                      mRealBokeh->mPreviewHeight,
                                      mRealBokeh->mPrevFrameNumber, "prevMain");
@@ -1199,13 +1223,13 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
 
         lWidth = (MLong)(mRealBokeh->mPreviewWidth);
         lHeight = (MLong)(mRealBokeh->mPreviewHeight);
-        pLeftImgDataY = (MByte *)input_handle1->base;
+        pLeftImgDataY = (MByte *)(input_buf1_addr);
         pLeftImgDataUV = pLeftImgDataY + lWidth * lHeight;
 
-        pRightImgDataY = (MByte *)input_handle2->base;
+        pRightImgDataY = (MByte *)(input_buf2_addr);
         pRightImgDataUV = pRightImgDataY + lWidth * lHeight;
 
-        pDstDataY = (MByte *)depth_handle->base;
+        pDstDataY = (MByte *)(output_buffer_addr);
         pDstDataUV = pDstDataY + lWidth * lHeight;
 
         memset(&leftImg, 0, sizeof(ASVLOFFSCREEN));
@@ -1242,12 +1266,13 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
         if ((rc != MOK) && (rc == MERR_BAD_STATE)) {
             HAL_LOGW("there is no calibration file");
             // if no calibration file just return left image.
-            memcpy(pDstDataY, pLeftImgDataY, input_handle1->size);
+            memcpy(pDstDataY, pLeftImgDataY, ADP_BUFSIZE(*input_buf1));
         } else {
             HAL_LOGV("arcsoft ARC_DCVR_PrevProcess ,rc = %ld", rc);
         }
-        mRealBokeh->flushIonBuffer(depth_handle->share_fd, depth_handle->base,
-                                   depth_handle->size);
+        mRealBokeh->flushIonBuffer(ADP_BUFFD(*output_buffer),
+                                   output_buffer_addr,
+                                   ADP_BUFSIZE(*output_buffer));
         HAL_LOGD("arcsoftprevRun cost %lld ms",
                  ns2ms(systemTime() - arcsoftprevRun));
         {
@@ -1257,22 +1282,30 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
             property_get("persist.sys.camera.savyuv", prop9, "0");
             if (1 == atoi(prop9)) {
                 mRealBokeh->dumpData(
-                    (unsigned char *)(depth_handle->base), 1,
-                    depth_handle->size, mRealBokeh->mPreviewWidth,
+                    (unsigned char *)output_buffer_addr, 1,
+                    ADP_BUFSIZE(*output_buffer), mRealBokeh->mPreviewWidth,
                     mRealBokeh->mPreviewHeight, arcsoftprevRun, "output");
-                mRealBokeh->dumpData((unsigned char *)(input_handle2->base), 1,
-                                     input_handle2->size,
+                mRealBokeh->dumpData((unsigned char *)(input_buf2_addr), 1,
+                                     ADP_BUFSIZE(*input_buf2),
                                      mRealBokeh->mDepthPrevImageWidth,
                                      mRealBokeh->mDepthPrevImageHeight,
                                      arcsoftprevRun, "PrevSub");
                 mRealBokeh->dumpData(
-                    (unsigned char *)(input_handle1->base), 1,
-                    input_handle1->size, mRealBokeh->mPreviewWidth,
+                    (unsigned char *)(input_buf1_addr), 1,
+                    ADP_BUFSIZE(*input_buf1), mRealBokeh->mPreviewWidth,
                     mRealBokeh->mPreviewHeight, arcsoftprevRun, "PrevMain");
             }
         }
         HAL_LOGV("arcsoft preview bokeh run end");
     }
+
+fail_depth_run:
+    mRealBokeh->unmap(input_buf2);
+fail_map_input2:
+    if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
+        mRealBokeh->unmap(output_buffer);
+    }
+fail_map_output:
 
     return rc;
 }
@@ -1288,14 +1321,20 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::depthPreviewHandle(
  *==========================================================================*/
 int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
     buffer_handle_t *output_buf, buffer_handle_t *input_buf1,
-    buffer_handle_t *depth_bufer) {
+    void *input_buf1_addr, void *depth_buffer) {
     int rc = NO_ERROR;
+    void *output_buf_addr = NULL;
     Mutex::Autolock l(mLock);
     HAL_LOGI(":E");
 
-    if (output_buf == NULL || input_buf1 == NULL || depth_bufer == NULL) {
+    if (output_buf == NULL || input_buf1 == NULL || depth_buffer == NULL) {
         HAL_LOGE("buffer is NULL!");
-        return -1;
+        return BAD_VALUE;
+    }
+    rc = mRealBokeh->map(output_buf, &output_buf_addr);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("fail to map output buffer");
+        goto fail_map_output;
     }
     if (mRealBokeh->mIsSupportPBokeh) {
         /*Bokeh GPU interface start*/
@@ -1312,8 +1351,6 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
         inHeight = mRealBokeh->mPreviewHeight;
         inStride = mRealBokeh->mPreviewWidth;
 #if defined(CONFIG_SPRD_ANDROID_8)
-        struct private_handle_t *depth_handle =
-            (struct private_handle_t *)(*depth_bufer);
         sp<GraphicBuffer> srcBuffer = new GraphicBuffer(
             (native_handle_t *)(*input_buf1),
             GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth, inHeight,
@@ -1323,8 +1360,6 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
             GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, inWidth, inHeight,
             yuvTextFormat, inLayCount, yuvTextUsage, inStride);
 #else
-        struct private_handle_t *depth_handle =
-            (struct private_handle_t *)(*depth_bufer);
         sp<GraphicBuffer> srcBuffer =
             new GraphicBuffer(inWidth, inHeight, yuvTextFormat, yuvTextUsage,
                               inStride, (native_handle_t *)(*input_buf1), 0);
@@ -1333,7 +1368,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
                               inStride, (native_handle_t *)(*output_buf), 0);
 #endif
         mPreviewbokehParam.weight_params.DisparityImage =
-            (unsigned char *)(depth_handle->base);
+            (unsigned char *)depth_buffer;
 
         int64_t bokehCreateWeightMap = systemTime();
         rc = mRealBokeh->mBokehPrevApi->iBokehCreateWeightMap(
@@ -1341,7 +1376,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
             &(mPreviewbokehParam.weight_params));
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("iBokehCreateWeightMap failed!");
-            return rc;
+            goto fail_create_weightmap;
         }
         HAL_LOGD("iBokehCreateWeightMap cost %lld ms",
                  ns2ms(systemTime() - bokehCreateWeightMap));
@@ -1351,7 +1386,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
 
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("iBokehBlurImage failed!");
-            return rc;
+            goto fail_blur_image;
         }
         HAL_LOGD("iBokehBlurImage cost %lld ms",
                  ns2ms(systemTime() - bokehBlurImage));
@@ -1361,23 +1396,22 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::bokehPreviewHandle(
             };
             property_get("persist.sys.camera.bokeh8", prop8, "0");
             if (1 == atoi(prop8)) {
-                struct private_handle_t *output_handle =
-                    (struct private_handle_t *)(*output_buf);
-                mRealBokeh->dumpData((unsigned char *)(output_handle->base), 1,
-                                     output_handle->size,
+                mRealBokeh->dumpData((unsigned char *)(output_buf_addr), 1,
+                                     ADP_BUFSIZE(*output_buf),
                                      mRealBokeh->mPreviewWidth,
                                      mRealBokeh->mPreviewHeight, 0, "bokeh");
             }
         }
 
     } else {
-        struct private_handle_t *input_handle =
-            (struct private_handle_t *)(*input_buf1);
-        struct private_handle_t *output_handle1 =
-            (struct private_handle_t *)(*output_buf);
-        memcpy(output_handle1->base, input_handle->base, input_handle->size);
+        memcpy(output_buf_addr, input_buf1_addr, ADP_BUFSIZE(*input_buf1));
     }
     HAL_LOGI(":X");
+
+fail_blur_image:
+fail_create_weightmap:
+    mRealBokeh->unmap(output_buf);
+fail_map_output:
 
     return rc;
 }
@@ -1483,32 +1517,39 @@ SprdCamera3RealBokeh::BokehCaptureThread::~BokehCaptureThread() {
  *
  * RETURN     : none
  *==========================================================================*/
-void SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
-    buffer_handle_t *result_buff, size_t jpeg_size) {
+int SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
+    unsigned char *result_buffer_addr, uint32_t result_buffer_size,
+    size_t jpeg_size) {
     int i = 0;
+    int ret = NO_ERROR;
     uint32_t depth_size = 0;
     int para_size = 0;
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        if (result_buff == NULL) {
+        if (result_buffer_addr == NULL) {
             HAL_LOGE("result_buff is NULL!");
-            return;
+            return BAD_VALUE;
         }
         para_size = BOKEH_REFOCUS_COMMON_PARAM_NUM * 4;
         depth_size =
             mRealBokeh->mDepthSnapOutWidth * mRealBokeh->mDepthSnapOutHeight +
             DEPTH_DATA_SIZE;
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-        if (result_buff == NULL) {
+        if (result_buffer_addr == NULL) {
             HAL_LOGE("result_buff is NULL!");
-            return;
+            return BAD_VALUE;
         }
         para_size = ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM * 4;
         depth_size = mArcSoftDepthSize;
     }
 
-    unsigned char *buffer_base =
-        (unsigned char *)((struct private_handle_t *)*result_buff)->base;
-    uint32_t total_size = ((struct private_handle_t *)*result_buff)->size;
+    unsigned char *buffer_base = result_buffer_addr;
+    ;
+    unsigned char *depth_yuv = NULL;
+#ifdef YUV_CONVERT_TO_JPEG
+    unsigned char *orig_jpeg_data = NULL;
+#else
+    unsigned char *orig_yuv_data = NULL;
+#endif
     uint32_t orig_yuv_size =
         mRealBokeh->mCaptureWidth * mRealBokeh->mCaptureHeight * 3 / 2;
 #ifdef YUV_CONVERT_TO_JPEG
@@ -1519,12 +1560,8 @@ void SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
 #else
     uint32_t use_size = para_size + depth_size + orig_yuv_size + jpeg_size;
 #endif
-    unsigned char *depth_yuv = NULL;
-
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        struct private_handle_t *addr =
-            (struct private_handle_t *)(*mRealBokeh->m_pSprdDepthBuffer);
-        depth_yuv = (unsigned char *)addr->base;
+        depth_yuv = (unsigned char *)mRealBokeh->m_pSprdDepthBuffer;
 
         // refocus commom param
         uint32_t main_width = mRealBokeh->mCaptureWidth;
@@ -1605,24 +1642,38 @@ void SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
 
 #ifdef YUV_CONVERT_TO_JPEG
     // cpoy original jpeg
-    struct private_handle_t *addr =
-        (struct private_handle_t *)(*mRealBokeh->m_pDstJpegBuffer);
-    unsigned char *orig_jpeg_data = (unsigned char *)addr->base;
+    ret =
+        mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer, (void **)&orig_jpeg_data);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map dst jpeg buffer");
+        goto fail_map_dst;
+    }
     buffer_base -= orig_jpeg_size;
     memcpy(buffer_base, orig_jpeg_data, orig_jpeg_size);
 #else
     // cpoy original yuv
-    struct private_handle_t *addr =
-        (struct private_handle_t *)(*mRealBokeh->m_pMainSnapBuffer);
-    unsigned char *orig_yuv_data = (unsigned char *)addr->base;
+    ret =
+        mRealBokeh->map(mRealBokeh->m_pMainSnapBuffer, (void **)&orig_yuv_data);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map snap buffer");
+        goto fail_map_dst;
+    }
     buffer_base -= orig_yuv_size;
     memcpy(buffer_base, orig_yuv_data, orig_yuv_size);
 #endif
 
     // blob to indicate all image size(use_size)
-    buffer_base =
-        (unsigned char *)((struct private_handle_t *)*result_buff)->base;
-    mRealBokeh->setJpegSize((char *)buffer_base, total_size, use_size);
+    mRealBokeh->setJpegSize((char *)result_buffer_addr, result_buffer_size,
+                            use_size);
+
+#ifdef YUV_CONVERT_TO_JPEG
+    mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
+#else
+    mRealBokeh->unmap(mRealBokeh->m_pMainSnapBuffer);
+#endif
+fail_map_dst:
+
+    return ret;
 }
 
 /*===========================================================================
@@ -1639,7 +1690,7 @@ void SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
  *==========================================================================*/
 void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
     buffer_handle_t *output_buffer, capture_queue_msg_t_bokeh capture_msg,
-    buffer_handle_t *depth_output_buffer, buffer_handle_t *scaled_buffer) {
+    void *depth_output_buffer, buffer_handle_t *scaled_buffer) {
     camera3_capture_request_t request = mSavedCapRequest;
     camera3_stream_buffer_t output_buffers;
     camera3_stream_buffer_t input_buffer;
@@ -1666,20 +1717,21 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
     if (mRealBokeh->mTransformWidth != 0) {
         transform_buffer = (mRealBokeh->popBufferList(
             mRealBokeh->mLocalBufferList, SNAPSHOT_TRANSFORM_BUFFER));
-        struct private_handle_t *output_handle = NULL;
+        buffer_handle_t *output_handle = NULL;
+        void *output_handle_addr = NULL;
+        void *transform_buffer_addr = NULL;
         if (!mAbokehGallery && mBokehResult) {
-            output_handle = (struct private_handle_t *)(*output_buffer);
+            output_handle = output_buffer;
         } else {
-            output_handle =
-                (struct private_handle_t *)(*capture_msg.combo_buff.buffer1);
+            output_handle = capture_msg.combo_buff.buffer1;
         }
-        struct private_handle_t *transform_handle =
-            (struct private_handle_t *)(*transform_buffer);
+        mRealBokeh->map(output_handle, &output_handle_addr);
+        mRealBokeh->map(transform_buffer, &transform_buffer_addr);
         int64_t alignTransform = systemTime();
         mRealBokeh->alignTransform(
-            (void *)output_handle->base, mRealBokeh->mCaptureWidth,
+            output_handle_addr, mRealBokeh->mCaptureWidth,
             mRealBokeh->mCaptureHeight, mRealBokeh->mTransformWidth,
-            mRealBokeh->mTransformHeight, (void *)transform_handle->base);
+            mRealBokeh->mTransformHeight, transform_buffer_addr);
         HAL_LOGD("alignTransform run cost %lld ms",
                  ns2ms(systemTime() - alignTransform));
 
@@ -1688,6 +1740,9 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
         input_buffer.buffer = transform_buffer;
         output_buffers.stream->width = mRealBokeh->mTransformWidth;
         output_buffers.stream->height = mRealBokeh->mTransformHeight;
+
+        mRealBokeh->unmap(output_handle);
+        mRealBokeh->unmap(transform_buffer);
     } else {
         input_buffer.stream->width = mRealBokeh->mCaptureWidth;
         input_buffer.stream->height = mRealBokeh->mCaptureHeight;
@@ -1719,26 +1774,32 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
     mReprocessing = true;
 
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        ((struct private_handle_t *)(*request.output_buffers[0].buffer))->size =
-            ((struct private_handle_t *)*mSavedResultBuff)->size -
-            (mRealBokeh->mCaptureWidth * mRealBokeh->mCaptureHeight * 3 / 2 +
-             (mRealBokeh->mDepthSnapOutWidth * mRealBokeh->mDepthSnapOutHeight +
-              DEPTH_DATA_SIZE) +
-             BOKEH_REFOCUS_COMMON_PARAM_NUM * 4);
+        ADP_FAKESETBUFATTR_CAMERAONLY(
+            *request.output_buffers[0].buffer,
+            ADP_BUFSIZE(*mSavedResultBuff) -
+                (mRealBokeh->mCaptureWidth * mRealBokeh->mCaptureHeight * 3 /
+                     2 +
+                 (mRealBokeh->mDepthSnapOutWidth *
+                      mRealBokeh->mDepthSnapOutHeight +
+                  DEPTH_DATA_SIZE) +
+                 BOKEH_REFOCUS_COMMON_PARAM_NUM * 4),
+            ADP_WIDTH(*request.output_buffers[0].buffer),
+            ADP_HEIGHT(*request.output_buffers[0].buffer));
         HAL_LOGD("capture combined success: framenumber %d",
                  request.frame_number);
-        mRealBokeh->pushBufferList(
-            mRealBokeh->mLocalBuffer, depth_output_buffer,
-            mRealBokeh->mLocalBufferNumber, mRealBokeh->mLocalBufferList);
         mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer, scaled_buffer,
                                    mRealBokeh->mLocalBufferNumber,
                                    mRealBokeh->mLocalBufferList);
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-        ((struct private_handle_t *)(*request.output_buffers[0].buffer))->size =
-            ((struct private_handle_t *)*mSavedResultBuff)->size -
-            (mRealBokeh->mCaptureWidth * mRealBokeh->mCaptureHeight * 3 / 2 +
-             (ARCSOFT_DEPTH_DATA_SIZE) +
-             ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM * 4);
+        ADP_FAKESETBUFATTR_CAMERAONLY(
+            *request.output_buffers[0].buffer,
+            ADP_BUFSIZE(*mSavedResultBuff) -
+                (mRealBokeh->mCaptureWidth * mRealBokeh->mCaptureHeight * 3 /
+                     2 +
+                 (ARCSOFT_DEPTH_DATA_SIZE) +
+                 ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM * 4),
+            ADP_WIDTH(*request.output_buffers[0].buffer),
+            ADP_HEIGHT(*request.output_buffers[0].buffer));
         HAL_LOGD("capture combined success: framenumber %d",
                  request.frame_number);
     }
@@ -1789,9 +1850,11 @@ exit:
 bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     buffer_handle_t *main_buffer = NULL;
-    buffer_handle_t *depth_output_buffer = NULL;
+    void *depth_output_buffer = NULL;
     buffer_handle_t *scaled_buffer = NULL;
     capture_queue_msg_t_bokeh capture_msg;
+    void *src_vir_addr = NULL;
+    void *pic_vir_addr = NULL;
     int rc = 0;
     int mime_type = 0;
 
@@ -1814,22 +1877,24 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             return false;
         }
         case BOKEH_MSG_DATA_PROC: {
+            void *input_buf1_addr = NULL;
+            rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
+                                 &input_buf1_addr);
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to map input buffer1");
+                return false;
+            }
 #ifdef CONFIG_FACE_BEAUTY
             if (mRealBokeh->mPerfectskinlevel.smoothLevel > 0 &&
                 mRealBokeh->mFaceInfo[2] - mRealBokeh->mFaceInfo[0] > 0 &&
                 mRealBokeh->mFaceInfo[3] - mRealBokeh->mFaceInfo[1] > 0) {
-                mRealBokeh->bokehFaceMakeup((struct private_handle_t *)*(
-                    capture_msg.combo_buff.buffer1));
+                mRealBokeh->bokehFaceMakeup(capture_msg.combo_buff.buffer1,
+                                            input_buf1_addr);
             }
 #endif
             mBokehResult = true;
             mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
                 mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
-
-            struct private_handle_t *input_handle =
-                (struct private_handle_t *)(*capture_msg.combo_buff.buffer1);
-            struct private_handle_t *output_handle =
-                (struct private_handle_t *)(*mRealBokeh->m_pDstJpegBuffer);
 
             if (!mAbokehGallery) {
                 output_buffer = (mRealBokeh->popBufferList(
@@ -1837,24 +1902,25 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             }
 
             if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                depth_output_buffer = (mRealBokeh->popBufferList(
-                    mRealBokeh->mLocalBufferList, DEPTH_OUT_BUFFER));
+                depth_output_buffer = mRealBokeh->mSprdDepthBuffer[1];
                 scaled_buffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_DEPTH_BUFFER));
 
-                rc = depthCaptureHandle(depth_output_buffer, scaled_buffer,
-                                        capture_msg.combo_buff.buffer1,
-                                        capture_msg.combo_buff.buffer2);
+                rc = depthCaptureHandle(
+                    depth_output_buffer, NULL, scaled_buffer,
+                    capture_msg.combo_buff.buffer1, input_buf1_addr,
+                    capture_msg.combo_buff.buffer2);
                 if (rc != NO_ERROR) {
                     HAL_LOGE("depthCaptureHandle failed");
                     mBokehResult = false;
+                    mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
                     return false;
                 }
 
                 if (!mAbokehGallery) {
-                    rc = bokehCaptureHandle(output_buffer,
-                                            capture_msg.combo_buff.buffer1,
-                                            depth_output_buffer);
+                    rc = bokehCaptureHandle(
+                        output_buffer, capture_msg.combo_buff.buffer1,
+                        input_buf1_addr, depth_output_buffer);
                     if (rc != NO_ERROR) {
                         mRealBokeh->mOrigJpegSize = 0;
                         mBokehResult = false;
@@ -1866,18 +1932,22 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     mime_type = (1 << 8) | (int)MODE_BOKEH;
                 }
 #ifdef YUV_CONVERT_TO_JPEG
+                mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer, &pic_vir_addr);
+
                 mRealBokeh->mOrigJpegSize =
                     mRealBokeh->jpeg_encode_exif_simplify(
-                        input_handle, output_handle, NULL,
+                        capture_msg.combo_buff.buffer1, input_buf1_addr,
+                        mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
                         mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #else
                 mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
 #endif
                 mRealBokeh->m_pSprdDepthBuffer = depth_output_buffer;
             } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-                rc = depthCaptureHandle(output_buffer, NULL,
-                                        capture_msg.combo_buff.buffer1,
-                                        capture_msg.combo_buff.buffer2);
+                rc = depthCaptureHandle(
+                    NULL, output_buffer, NULL, capture_msg.combo_buff.buffer1,
+                    input_buf1_addr, capture_msg.combo_buff.buffer2);
                 if (rc != NO_ERROR) {
                     HAL_LOGW("depthCaptureHandle error");
                     mRealBokeh->mOrigJpegSize = 0;
@@ -1890,10 +1960,15 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                         mime_type = (int)MODE_BOKEH;
                     }
 #ifdef YUV_CONVERT_TO_JPEG
+                    mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
+                                    &pic_vir_addr);
                     mRealBokeh->mOrigJpegSize =
                         mRealBokeh->jpeg_encode_exif_simplify(
-                            input_handle, output_handle, NULL,
+                            capture_msg.combo_buff.buffer1, input_buf1_addr,
+                            mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL,
+                            NULL,
                             mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                    mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #else
                     mRealBokeh->m_pMainSnapBuffer =
                         capture_msg.combo_buff.buffer1;
@@ -1901,6 +1976,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 }
             }
 
+            mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
             mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                          &mime_type, NULL);
             reprocessReq(output_buffer, capture_msg, depth_output_buffer,
@@ -1921,33 +1997,30 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
  *
  * DESCRIPTION: get the size of yuv convert to jpeg
  *
- * PARAMETERS : the private_handle_t of yuv
+ * PARAMETERS : the buffer_handle_t of yuv
  *
  * RETURN     : jpeg size
  *==========================================================================*/
-cmr_uint
-SprdCamera3RealBokeh::yuvToJpeg(struct private_handle_t *input_handle) {
+cmr_uint SprdCamera3RealBokeh::yuvToJpeg(buffer_handle_t *input_handle) {
     img_frm src_img, pic_enc_img;
     cmr_uint size = 0;
     memset(&src_img, 0, sizeof(struct img_frm));
     memset(&pic_enc_img, 0, sizeof(struct img_frm));
     void *temp;
-
+#if 0
     cmr_u8 *addr =
-        (cmr_u8 *)((struct private_handle_t *)*mCaptureThread->mSavedResultBuff)
-            ->base;
+        (cmr_u8 *)(mRealBokeh->map(mCaptureThread->mSavedResultBuff));
     cmr_uint offset = mCallbackWidth * mCallbackHeight * 3 / 2;
     temp = (void *)(addr + mjpegSize - offset);
     cmr_uint addr_phy = (cmr_uint)(mjpegSize - offset);
 
-    convertToImg_frm(
-        (void *)addr_phy, temp, mCallbackWidth, mCallbackHeight,
-        ((struct private_handle_t *)*mCaptureThread->mSavedResultBuff)
-            ->share_fd,
-        IMG_DATA_TYPE_JPEG, &pic_enc_img);
+    convertToImg_frm((void *)addr_phy, temp, mCallbackWidth, mCallbackHeight,
+                     ADP_BUFFD(*mCaptureThread->mSavedResultBuff),
+                     IMG_DATA_TYPE_JPEG, &pic_enc_img);
     convertToImg_frm(input_handle, &src_img, IMG_DATA_TYPE_YUV420);
     size = jpeg_encode_exif_simplify(&src_img, &pic_enc_img, NULL,
                                      m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+#endif
     return size;
 }
 #endif
@@ -1997,48 +2070,61 @@ void SprdCamera3RealBokeh::BokehCaptureThread::waitMsgAvailable() {
  * RETURN     : None
  *==========================================================================*/
 int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
-    buffer_handle_t *output_bufer, buffer_handle_t *scaled_buffer,
-    buffer_handle_t *input_buf1, buffer_handle_t *input_buf2) {
+    void *depth_output_buffer, buffer_handle_t *output_buffer,
+    buffer_handle_t *scaled_buffer, buffer_handle_t *input_buf1,
+    void *input_buf1_addr, buffer_handle_t *input_buf2) {
     int rc = NO_ERROR;
+    void *output_buffer_addr = NULL;
+    void *input_buf2_addr = NULL;
+    void *scaled_buffer_addr = NULL;
     char acVersion[256] = {
         0,
     };
     HAL_LOGI(":E");
 
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        if (input_buf1 == NULL || input_buf2 == NULL || output_bufer == NULL ||
-            scaled_buffer == NULL) {
+        if (input_buf1 == NULL || input_buf2 == NULL || scaled_buffer == NULL) {
             HAL_LOGE("buffer is NULL!");
-            return -1;
+            return BAD_VALUE;
         }
     } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         if (input_buf1 == NULL || input_buf2 == NULL) {
             HAL_LOGE("buffer is NULL!");
-            return -1;
+            return BAD_VALUE;
         }
-        if ((!mAbokehGallery) && (output_bufer == NULL)) {
-            HAL_LOGE("output_bufer is NULL!");
-            return -1;
+        if ((!mAbokehGallery) && (output_buffer == NULL)) {
+            HAL_LOGE("output_buffer is NULL!");
+            return BAD_VALUE;
         }
     }
-    struct private_handle_t *input_handle1 =
-        (struct private_handle_t *)(*input_buf1);
-    struct private_handle_t *input_handle2 =
-        (struct private_handle_t *)(*input_buf2);
-    struct private_handle_t *depth_handle = NULL;
-    if (!mAbokehGallery || (mRealBokeh->mApiVersion == SPRD_API_MODE)) {
-        depth_handle = (struct private_handle_t *)(*output_bufer);
+
+    if (!mAbokehGallery) {
+        if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
+            rc = mRealBokeh->map(output_buffer, &output_buffer_addr);
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to map output buffer");
+                goto fail_map_output;
+            }
+        }
+    }
+
+    rc = mRealBokeh->map(input_buf2, &input_buf2_addr);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("fail to map output buffer");
+        goto fail_map_input2;
     }
 
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        struct private_handle_t *scaled_handle =
-            (struct private_handle_t *)(*scaled_buffer);
-
+        rc = mRealBokeh->map(scaled_buffer, &scaled_buffer_addr);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to map output buffer");
+            goto fail_map_scale;
+        }
         mRealBokeh->ScaleNV21(
-            (uint8_t *)(scaled_handle->base), mRealBokeh->mDepthSnapImageWidth,
-            mRealBokeh->mDepthSnapImageHeight, (uint8_t *)(input_handle1->base),
+            (uint8_t *)scaled_buffer_addr, mRealBokeh->mDepthSnapImageWidth,
+            mRealBokeh->mDepthSnapImageHeight, (uint8_t *)(input_buf1_addr),
             mRealBokeh->mCaptureWidth, mRealBokeh->mCaptureHeight,
-            input_handle1->size);
+            ADP_BUFSIZE(*input_buf1));
         int64_t depthRun = systemTime();
         weightmap_param weightParams;
         weightParams.F_number = mCapbokehParam.bokeh_level;
@@ -2046,9 +2132,8 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         weightParams.sel_y = mCapbokehParam.sel_y;
         weightParams.DisparityImage = NULL;
         rc = mRealBokeh->mDepthApi->sprd_depth_Run(
-            mCapDepthhandle, (void *)(depth_handle->base), NULL,
-            (void *)(input_handle2->base), (void *)(scaled_handle->base),
-            &weightParams);
+            mCapDepthhandle, depth_output_buffer, NULL, input_buf2_addr,
+            scaled_buffer_addr, &weightParams);
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("sprd_depth_Run failed! %d", rc);
             goto exit;
@@ -2068,10 +2153,10 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         LHeight = (MLong)(mRealBokeh->mCaptureHeight);
         RWidth = (MLong)(mRealBokeh->mDepthSnapImageWidth);
         RHeight = (MLong)(mRealBokeh->mDepthSnapImageHeight);
-        pLeftImgDataY = (MByte *)input_handle1->base;
+        pLeftImgDataY = (MByte *)input_buf1_addr;
         pLeftImgDataUV = pLeftImgDataY + LWidth * LHeight;
 
-        pRightImgDataY = (MByte *)input_handle2->base;
+        pRightImgDataY = (MByte *)input_buf2_addr;
         pRightImgDataUV = pRightImgDataY + RWidth * RHeight;
 
         memset(&leftImg, 0, sizeof(ASVLOFFSCREEN));
@@ -2095,7 +2180,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
         if (!mAbokehGallery) {
             MByte *pDstDataY = NULL, *pDstDataUV = NULL;
             memset(&dstImg, 0, sizeof(ASVLOFFSCREEN));
-            pDstDataY = (MByte *)depth_handle->base;
+            pDstDataY = (MByte *)output_buffer_addr;
             pDstDataUV = pDstDataY + LWidth * LHeight;
 
             dstImg.i32Width = LWidth;
@@ -2208,8 +2293,9 @@ int SprdCamera3RealBokeh::BokehCaptureThread::depthCaptureHandle(
             if (rc != MOK) {
                 HAL_LOGE("arcsoft ARC_DCIR_CapProcess failed");
             }
-            mRealBokeh->flushIonBuffer(depth_handle->share_fd,
-                                       depth_handle->base, depth_handle->size);
+            mRealBokeh->flushIonBuffer(ADP_BUFFD(*output_buffer),
+                                       output_buffer_addr,
+                                       ADP_BUFSIZE(*output_buffer));
             HAL_LOGD("ARC_DCIR_CapProcess cost %lld ms",
                      ns2ms(systemTime() - bokehRun));
         }
@@ -2225,48 +2311,61 @@ exit : { // dump yuv data
     };
     property_get("persist.sys.camera.bokeh.data", prop6, "0");
     if (1 == atoi(prop6)) {
-        int width = 0;
-        int height = 0;
         // input_handle1 or left image
-        mRealBokeh->dumpData((unsigned char *)(input_handle1->base), 1,
-                             input_handle1->size, mRealBokeh->mCaptureWidth,
-                             mRealBokeh->mCaptureHeight,
-                             mRealBokeh->mCapFrameNumber, "Main");
+        mRealBokeh->dumpData(
+            (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
+            mRealBokeh->mCaptureWidth, mRealBokeh->mCaptureHeight,
+            mRealBokeh->mCapFrameNumber, "Main");
 
         // input_handle2 or right image
         mRealBokeh->dumpData(
-            (unsigned char *)(input_handle2->base), 1, input_handle2->size,
+            (unsigned char *)input_buf2_addr, 1, ADP_BUFSIZE(*input_buf2),
             mRealBokeh->mDepthSnapImageWidth, mRealBokeh->mDepthSnapImageHeight,
             mRealBokeh->mCapFrameNumber, "Sub");
 
         if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-            width = mRealBokeh->mDepthSnapOutWidth;
-            height = mRealBokeh->mDepthSnapOutHeight;
+            mRealBokeh->dumpData((unsigned char *)depth_output_buffer, 1,
+                                 mRealBokeh->mDepthSnapOutWidth *
+                                         mRealBokeh->mDepthSnapOutHeight +
+                                     68,
+                                 mRealBokeh->mDepthSnapOutWidth,
+                                 mRealBokeh->mDepthSnapOutHeight,
+                                 mRealBokeh->mCapFrameNumber, "output");
 
-            struct private_handle_t *scaled_handle =
-                (struct private_handle_t *)(*scaled_buffer);
-            mRealBokeh->dumpData((unsigned char *)(scaled_handle->base), 1,
-                                 scaled_handle->size,
+            mRealBokeh->dumpData((unsigned char *)scaled_buffer_addr, 1,
+                                 ADP_BUFSIZE(*scaled_buffer),
                                  mRealBokeh->mDepthSnapImageWidth,
                                  mRealBokeh->mDepthSnapImageHeight,
                                  mRealBokeh->mCapFrameNumber, "MainScale");
 
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-            width = mRealBokeh->mCaptureWidth;
-            height = mRealBokeh->mCaptureHeight;
+            if (!mAbokehGallery) {
+                mRealBokeh->dumpData((unsigned char *)output_buffer_addr, 1,
+                                     ADP_BUFSIZE(*output_buffer),
+                                     mRealBokeh->mCaptureWidth,
+                                     mRealBokeh->mCaptureHeight,
+                                     mRealBokeh->mCapFrameNumber, "output");
+            }
             mRealBokeh->dumpData((unsigned char *)(mArcSoftDepthMap), 1,
                                  mArcSoftDepthSize, mRealBokeh->mCaptureWidth,
                                  mRealBokeh->mCaptureHeight,
                                  mRealBokeh->mCapFrameNumber, "depth");
         }
-        if (!mAbokehGallery || (mRealBokeh->mApiVersion == SPRD_API_MODE)) {
-            mRealBokeh->dumpData((unsigned char *)(depth_handle->base), 1,
-                                 depth_handle->size, width, height,
-                                 mRealBokeh->mCapFrameNumber, "output");
-        }
     }
 }
     HAL_LOGI(":X");
+    if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
+        mRealBokeh->unmap(scaled_buffer);
+    }
+fail_map_scale:
+    mRealBokeh->unmap(input_buf2);
+fail_map_input2:
+    if (!mAbokehGallery) {
+        if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
+            mRealBokeh->unmap(output_buffer);
+        }
+    }
+fail_map_output:
 
     return rc;
 }
@@ -2282,42 +2381,44 @@ exit : { // dump yuv data
  *==========================================================================*/
 int SprdCamera3RealBokeh::BokehCaptureThread::bokehCaptureHandle(
     buffer_handle_t *output_buf, buffer_handle_t *input_buf1,
-    buffer_handle_t *depth_bufer) {
+    void *input_buf1_addr, void *depth_buffer) {
     int rc = NO_ERROR;
+    void *output_buf_addr = NULL;
+    int64_t bokehReFocusGen;
+    int64_t bokehInit;
+    int64_t bokehReFocusProcess;
     char acVersion[256] = {
         0,
     };
     HAL_LOGI("E");
-    if (output_buf == NULL || input_buf1 == NULL || depth_bufer == NULL) {
+    if (output_buf == NULL || input_buf1 == NULL || depth_buffer == NULL) {
         HAL_LOGE("buffer is NULL!");
-        return -1;
+        return BAD_VALUE;
     }
-    struct private_handle_t *input_handle1 =
-        (struct private_handle_t *)(*input_buf1);
-    struct private_handle_t *output_handle =
-        (struct private_handle_t *)(*output_buf);
-    struct private_handle_t *depth_handle =
-        (struct private_handle_t *)(*depth_bufer);
+    rc = mRealBokeh->map(output_buf, &output_buf_addr);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("fail to map output buffer");
+        goto fail_map_output;
+    }
 
     mRealBokeh->mBokehCapApi->sprd_bokeh_VersionInfo_Get(acVersion, 256);
     HAL_LOGD("Bokeh Api Version [%s]", acVersion);
-    int64_t bokehInit = systemTime();
+    bokehInit = systemTime();
 
-    int64_t bokehReFocusProcess = systemTime();
+    bokehReFocusProcess = systemTime();
     rc = mRealBokeh->mBokehCapApi->sprd_bokeh_ReFocusPreProcess(
-        (void *)mRealBokeh->mBokehCapApi->muti_handle,
-        (void *)(input_handle1->base), (void *)(depth_handle->base));
+        (void *)mRealBokeh->mBokehCapApi->muti_handle, input_buf1_addr,
+        depth_buffer);
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("sprd_bokeh_ReFocusPreProcess failed!");
-        return rc;
+        goto exit;
     }
     HAL_LOGD("bokeh ReFocusProcess cost %lld ms",
              ns2ms(systemTime() - bokehReFocusProcess));
-    int64_t bokehReFocusGen = systemTime();
+    bokehReFocusGen = systemTime();
     rc = mRealBokeh->mBokehCapApi->sprd_bokeh_ReFocusGen(
-        (void *)mRealBokeh->mBokehCapApi->muti_handle,
-        (void *)(output_handle->base), mCapbokehParam.bokeh_level,
-        mCapbokehParam.sel_x, mCapbokehParam.sel_y);
+        (void *)mRealBokeh->mBokehCapApi->muti_handle, output_buf_addr,
+        mCapbokehParam.bokeh_level, mCapbokehParam.sel_x, mCapbokehParam.sel_y);
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("sprd_bokeh_ReFocusGen failed!,rc=%d", rc);
         rc = ALRNB_ERR_SUCCESS;
@@ -2330,13 +2431,17 @@ int SprdCamera3RealBokeh::BokehCaptureThread::bokehCaptureHandle(
         };
         property_get("persist.sys.camera.bokeh.data", prop5, "0");
         if (1 == atoi(prop5)) {
-            mRealBokeh->dumpData((unsigned char *)(output_handle->base), 1,
-                                 output_handle->size, mRealBokeh->mCaptureWidth,
+            mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
+                                 ADP_BUFSIZE(*output_buf),
+                                 mRealBokeh->mCaptureWidth,
                                  mRealBokeh->mCaptureHeight, 20, "bokeh");
         }
     }
 
     HAL_LOGI(":X");
+exit:
+    mRealBokeh->unmap(output_buf);
+fail_map_output:
 
     return rc;
 }
@@ -3114,7 +3219,7 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     prev_input_param.imageFormat_main = YUV420_NV12;
     prev_input_param.imageFormat_sub = YUV420_NV12;
     prev_input_param.potpbuf = mOtpData;
-    prev_input_param.otpsize = SPRD_DUAL_OTP_SIZE;
+    prev_input_param.otpsize = mOtpSize;
     prev_input_param.config_param = NULL;
     prev_mode = MODE_PREVIEW;
     prev_outformat = mDepthPrevFormat;
@@ -3439,7 +3544,8 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3RealBokeh::bokehFaceMakeup(private_handle_t *private_handle) {
+void SprdCamera3RealBokeh::bokehFaceMakeup(buffer_handle_t *buffer_handle,
+                                           void *input_buf1_addr) {
 
     struct camera_frame_type cap_3d_frame;
     struct camera_frame_type *frame = NULL;
@@ -3447,9 +3553,9 @@ void SprdCamera3RealBokeh::bokehFaceMakeup(private_handle_t *private_handle) {
     FACE_Tag newFace;
     bzero(&cap_3d_frame, sizeof(struct camera_frame_type));
     frame = &cap_3d_frame;
-    frame->y_vir_addr = (cmr_uint)private_handle->base;
-    frame->width = private_handle->width;
-    frame->height = private_handle->height;
+    frame->y_vir_addr = (cmr_uint)input_buf1_addr;
+    frame->width = ADP_WIDTH(*buffer_handle);
+    frame->height = ADP_HEIGHT(*buffer_handle);
 
     faceInfo[0] = mFaceInfo[0] * mCaptureWidth / mPreviewWidth;
     faceInfo[1] = mFaceInfo[1] * mCaptureWidth / mPreviewWidth;
@@ -3903,6 +4009,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
     }
     CameraMetadata metadata;
     metadata = fwk_metadata;
+    mOtpExist = false;
     if (metadata.exists(ANDROID_SPRD_OTP_DATA)) {
         uint8_t otpType;
         int otpSize;
@@ -3912,7 +4019,6 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
         otpSize = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
                       .otpInfo.otp_size;
         HAL_LOGI("otpType %d, otpSize %d", otpType, otpSize);
-
         mOtpExist = true;
         mOtpType = otpType;
         mOtpSize = otpSize;
@@ -3943,10 +4049,9 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
                 HAL_LOGE("Unknown otp calibration type");
             }
         }
-    } else {
-        HAL_LOGI("use default otp calibration.bin");
-        checkOtpInfo();
     }
+
+    loadDebugOtp();
     HAL_LOGI("X");
 
     return fwk_metadata;
@@ -3963,7 +4068,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
  *                  0  : success
  *                  other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3RealBokeh::checkOtpInfo() {
+int SprdCamera3RealBokeh::loadDebugOtp() {
     int rc = 0;
     if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
         mCaliData.i32CalibDataSize = ARCSOFT_CALIB_DATA_SIZE;
@@ -3977,9 +4082,28 @@ int SprdCamera3RealBokeh::checkOtpInfo() {
             fclose(fid);
             mOtpExist = true;
         } else {
-            mOtpExist = false;
-            HAL_LOGW("open calibration file error");
+            HAL_LOGW("no calibration file ");
             rc = -1;
+        }
+    } else {
+        FILE *fid = fopen("/data/misc/cameraserver/calibration.txt", "rb");
+
+        if (NULL == fid) {
+            HAL_LOGD("dualotp read failed!");
+            rc = -1;
+        } else {
+            uint32_t read_byte = 0;
+            cmr_u8 *otp_data = (cmr_u8 *)mOtpData;
+
+            while (!feof(fid)) {
+                fscanf(fid, "%d\n", otp_data);
+                otp_data += 4;
+                read_byte += 4;
+            }
+            fclose(fid);
+            mOtpSize = read_byte;
+            mOtpExist = true;
+            HAL_LOGD("dualotp read_bytes=%d ", read_byte);
         }
     }
     return rc;
@@ -4132,7 +4256,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             mCapFrameNumber = request->frame_number;
             mCaptureThread->mSavedResultBuff =
                 request->output_buffers[i].buffer;
-            mjpegSize = ((struct private_handle_t *)*new_buffer)->size;
+            mjpegSize = ADP_BUFSIZE(*new_buffer);
             // sencond step:construct callback Request
             out_streams_main[main_buffer_index] = req->output_buffers[i];
             if (!mFlushing) {
@@ -4351,61 +4475,68 @@ void SprdCamera3RealBokeh::notifyMain(const camera3_notify_msg_t *msg) {
  *==========================================================================*/
 
 int SprdCamera3RealBokeh::thumbYuvProc(buffer_handle_t *src_buffer) {
-    int ret = 0;
+    int ret = NO_ERROR;
     int angle = 0;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     struct img_frm src_img;
     struct img_frm dst_img;
     struct snp_thumb_yuv_param thumb_param;
-    struct private_handle_t *src_private_handle =
-        (struct private_handle_t *)(*src_buffer);
-    struct private_handle_t *dst_private_handle =
-        (struct private_handle_t *)*(mThumbReq.buffer);
+    void *src_buffer_addr = NULL;
+    void *thumb_req_addr = NULL;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
     HAL_LOGI(" E");
 
+    ret = mRealBokeh->map(src_buffer, &src_buffer_addr);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map src buffer");
+        goto fail_map_src;
+    }
+    ret = mRealBokeh->map(mThumbReq.buffer, &thumb_req_addr);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map thumb buffer");
+        goto fail_map_thumb;
+    }
+
     memset(&src_img, 0, sizeof(struct img_frm));
     memset(&dst_img, 0, sizeof(struct img_frm));
     src_img.addr_phy.addr_y = 0;
-    src_img.addr_phy.addr_u =
-        src_img.addr_phy.addr_y +
-        src_private_handle->width * src_private_handle->height;
+    src_img.addr_phy.addr_u = src_img.addr_phy.addr_y +
+                              ADP_WIDTH(*src_buffer) * ADP_HEIGHT(*src_buffer);
     src_img.addr_phy.addr_v = src_img.addr_phy.addr_u;
-    src_img.addr_vir.addr_y = (cmr_uint)src_private_handle->base;
-    src_img.addr_vir.addr_u =
-        (cmr_uint)src_private_handle->base +
-        src_private_handle->width * src_private_handle->height;
-    src_img.buf_size = src_private_handle->size;
-    src_img.fd = src_private_handle->share_fd;
+    src_img.addr_vir.addr_y = (cmr_uint)src_buffer_addr;
+    src_img.addr_vir.addr_u = (cmr_uint)src_buffer_addr +
+                              ADP_WIDTH(*src_buffer) * ADP_HEIGHT(*src_buffer);
+    src_img.buf_size = ADP_BUFSIZE(*src_buffer);
+    src_img.fd = ADP_BUFFD(*src_buffer);
     src_img.fmt = IMG_DATA_TYPE_YUV420;
     src_img.rect.start_x = 0;
     src_img.rect.start_y = 0;
-    src_img.rect.width = src_private_handle->width;
-    src_img.rect.height = src_private_handle->height;
-    src_img.size.width = src_private_handle->width;
-    src_img.size.height = src_private_handle->height;
+    src_img.rect.width = ADP_WIDTH(*src_buffer);
+    src_img.rect.height = ADP_HEIGHT(*src_buffer);
+    src_img.size.width = ADP_WIDTH(*src_buffer);
+    src_img.size.height = ADP_HEIGHT(*src_buffer);
 
     dst_img.addr_phy.addr_y = 0;
     dst_img.addr_phy.addr_u =
         dst_img.addr_phy.addr_y +
-        dst_private_handle->width * dst_private_handle->height;
+        ADP_WIDTH(*mThumbReq.buffer) * ADP_HEIGHT(*mThumbReq.buffer);
     dst_img.addr_phy.addr_v = dst_img.addr_phy.addr_u;
 
-    dst_img.addr_vir.addr_y = (cmr_uint)dst_private_handle->base;
+    dst_img.addr_vir.addr_y = (cmr_uint)thumb_req_addr;
     dst_img.addr_vir.addr_u =
-        (cmr_uint)dst_private_handle->base +
-        dst_private_handle->width * dst_private_handle->height;
-    dst_img.buf_size = dst_private_handle->size;
-    dst_img.fd = dst_private_handle->share_fd;
+        (cmr_uint)thumb_req_addr +
+        ADP_WIDTH(*mThumbReq.buffer) * ADP_HEIGHT(*mThumbReq.buffer);
+    dst_img.buf_size = ADP_BUFSIZE(*mThumbReq.buffer);
+    dst_img.fd = ADP_BUFFD(*mThumbReq.buffer);
     dst_img.fmt = IMG_DATA_TYPE_YUV420;
     dst_img.rect.start_x = 0;
     dst_img.rect.start_y = 0;
-    dst_img.rect.width = dst_private_handle->width;
-    dst_img.rect.height = dst_private_handle->height;
-    dst_img.size.width = dst_private_handle->width;
-    dst_img.size.height = dst_private_handle->height;
+    dst_img.rect.width = ADP_WIDTH(*mThumbReq.buffer);
+    dst_img.rect.height = ADP_HEIGHT(*mThumbReq.buffer);
+    dst_img.size.width = ADP_WIDTH(*mThumbReq.buffer);
+    dst_img.size.height = ADP_HEIGHT(*mThumbReq.buffer);
 
     memcpy(&thumb_param.src_img, &src_img, sizeof(struct img_frm));
     memcpy(&thumb_param.dst_img, &dst_img, sizeof(struct img_frm));
@@ -4445,10 +4576,15 @@ int SprdCamera3RealBokeh::thumbYuvProc(buffer_handle_t *src_buffer) {
     HAL_LOGI(" x,angle=%d JpegOrientation=%d", thumb_param.angle,
              mJpegOrientation);
 
+    mRealBokeh->unmap(mThumbReq.buffer);
+fail_map_thumb:
+    mRealBokeh->unmap(src_buffer);
+fail_map_src:
     return ret;
 }
 
-void SprdCamera3RealBokeh::dumpCaptureBokeh(uint32_t jpeg_size) {
+void SprdCamera3RealBokeh::dumpCaptureBokeh(unsigned char *result_buffer_addr,
+                                            uint32_t jpeg_size) {
     char prop1[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -4475,9 +4611,7 @@ void SprdCamera3RealBokeh::dumpCaptureBokeh(uint32_t jpeg_size) {
         }
         uint32_t orig_yuv_size =
             mRealBokeh->mCaptureWidth * mRealBokeh->mCaptureHeight * 3 / 2;
-        struct private_handle_t *addr =
-            (struct private_handle_t *)(*mCaptureThread->mSavedResultBuff);
-        unsigned char *buffer_base = (unsigned char *)addr->base;
+        unsigned char *buffer_base = result_buffer_addr;
         dumpData(buffer_base, 2, jpeg_size, mCaptureWidth, mCaptureHeight, 0,
                  "bokehJpeg");
 
@@ -4555,8 +4689,6 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         }
     }
     int currStreamType = getStreamType(result_buffer->stream);
-    struct private_handle_t *input_handle =
-        (struct private_handle_t *)(*result->output_buffers->buffer);
     if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
         if (mhasCallbackStream && mThumbReq.frame_number) {
             thumbYuvProc(result->output_buffers->buffer);
@@ -4595,23 +4727,36 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         newResult.result = NULL;
         newResult.partial_result = 0;
         newResult.output_buffers = &newOutput_buffers;
-        struct private_handle_t *output_addr =
-            (struct private_handle_t *)(*result->output_buffers->buffer);
-        uint8_t *jpeg_addr = (uint8_t *)output_addr->base;
-        uint32_t jpeg_size = getJpegSize(jpeg_addr, output_addr->size);
-        output_addr->size = mjpegSize;
+        int rc = NO_ERROR;
+        unsigned char *result_buffer_addr = NULL;
+        uint32_t result_buffer_size =
+            ADP_BUFSIZE(*result->output_buffers->buffer);
+        rc = mRealBokeh->map(result->output_buffers->buffer,
+                             (void **)&result_buffer_addr);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to map result buffer");
+            return;
+        }
+        uint32_t jpeg_size =
+            getJpegSize(result_buffer_addr, result_buffer_size);
+        ADP_FAKESETBUFATTR_CAMERAONLY(
+            *result->output_buffers->buffer, mjpegSize,
+            ADP_WIDTH(*result->output_buffers->buffer),
+            ADP_HEIGHT(*result->output_buffers->buffer));
+
 #ifdef YUV_CONVERT_TO_JPEG
         if ((mCaptureThread->mBokehResult == true) &&
             (mRealBokeh->mOrigJpegSize > 0)) {
 #else
         if (mCaptureThread->mBokehResult == true) {
 #endif
-            mCaptureThread->saveCaptureBokehParams(
-                result->output_buffers->buffer, jpeg_size);
+            mCaptureThread->saveCaptureBokehParams(result_buffer_addr,
+                                                   mjpegSize, jpeg_size);
 
-            dumpCaptureBokeh(jpeg_size);
+            dumpCaptureBokeh(result_buffer_addr, jpeg_size);
         } else {
-            mRealBokeh->setJpegSize((char *)jpeg_addr, mjpegSize, jpeg_size);
+            mRealBokeh->setJpegSize((char *)result_buffer_addr, mjpegSize,
+                                    jpeg_size);
         }
 
         mRealBokeh->pushBufferList(
@@ -4621,6 +4766,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         mCallbackOps->process_capture_result(mCallbackOps, &newResult);
         mCaptureThread->mReprocessing = false;
         mIsCapturing = false;
+        mRealBokeh->unmap(result->output_buffers->buffer);
     } else if (currStreamType == CALLBACK_STREAM) {
         if (!mIsSupportPBokeh) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK);

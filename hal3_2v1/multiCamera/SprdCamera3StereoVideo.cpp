@@ -134,7 +134,6 @@ SprdCamera3StereoVideo::SprdCamera3StereoVideo()
     mWaitFrameNumber = 0;
     mHasSendFrameNumber = 0;
     mPreviewLocalBuffer.native_handle = NULL;
-    mPreviewLocalBuffer.pHeapIon = NULL;
     mPerfectskinlevel = 0;
     mVideoSize.srcWidth = 0;
     mVideoSize.srcHeight = 0;
@@ -181,6 +180,7 @@ SprdCamera3StereoVideo::~SprdCamera3StereoVideo() {
 void SprdCamera3StereoVideo::freeLocalBuffer(
     new_mem_t *LocalBuffer, List<buffer_handle_t *> &bufferList,
     int bufferNum) {
+#if 0 // for tmp
     HAL_LOGD("free local buffer,bufferNum=%d", bufferNum);
     bufferList.clear();
     if (LocalBuffer != NULL) {
@@ -197,6 +197,7 @@ void SprdCamera3StereoVideo::freeLocalBuffer(
     } else {
         HAL_LOGD("Not allocated, No need to free");
     }
+#endif
 }
 /*===========================================================================
  * FUNCTION         : getCameraMuxer
@@ -521,91 +522,7 @@ SprdCamera3StereoVideo::popRequestList(List<buffer_handle_t *> &list) {
 
     return ret;
 }
-/*===========================================================================
- * FUNCTION   :allocateOne
- *
- * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int SprdCamera3StereoVideo::allocateOne(int w, int h, uint32_t is_cache,
-                                        new_mem_t *new_mem) {
 
-    int result = 0;
-    size_t mem_size = 0;
-    MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
-
-    HAL_LOGI("E");
-    mem_size = w * h * 3 / 2;
-    // to make it page size aligned
-    //  mem_size = (mem_size + 4095U) & (~4095U);
-
-    if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_MM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM);
-        }
-    } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM);
-        }
-    }
-
-    if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
-        HAL_LOGE("pHeapIon is null or getHeapID failed");
-        goto getpmem_fail;
-    }
-
-    if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
-        HAL_LOGE("error getBase is null.");
-        goto getpmem_fail;
-    }
-
-    if (new_mem == NULL) {
-        HAL_LOGE("error new_mem is null.");
-        goto getpmem_fail;
-    }
-
-    buffer =
-        new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION, 0x130,
-                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
-    if (buffer == NULL) {
-        HAL_LOGE("error buffer is null.");
-        goto getpmem_fail;
-    }
-
-    buffer->share_fd = pHeapIon->getHeapID();
-    buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->byte_stride = w;
-    buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->width = w;
-    buffer->height = h;
-    buffer->stride = w;
-    buffer->internalWidth = w;
-    buffer->internalHeight = h;
-
-    new_mem->native_handle = buffer;
-    new_mem->pHeapIon = pHeapIon;
-
-    HAL_LOGI("X");
-
-    return result;
-
-getpmem_fail:
-    delete pHeapIon;
-
-    return -1;
-}
 /*===========================================================================
  * FUNCTION   :validateCaptureRequest
  *
@@ -957,74 +874,81 @@ void SprdCamera3StereoVideo::ReProcessThread::
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
-/*
-    private_handle_t *private_handle, int perfect_level, int *face_info) {
+    buffer_handle_t *buffer_handle, int perfect_level, int *face_info) {
+    /*
 
-    // init the parameters table. save the value until the process is restart or
-    // the device is restart.
-    int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
-    int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
-    struct camera_frame_type video_3d_frame;
-    bzero(&video_3d_frame, sizeof(camera_frame_type));
-    struct camera_frame_type *frame = &video_3d_frame;
-    frame->y_vir_addr = (cmr_uint)private_handle->base;
-    frame->width = private_handle->width;
-    frame->height = private_handle->height;
+        // init the parameters table. save the value until the process is
+       restart or
+        // the device is restart.
+        int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
+        int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
+        struct camera_frame_type video_3d_frame;
+        bzero(&video_3d_frame, sizeof(camera_frame_type));
+        struct camera_frame_type *frame = &video_3d_frame;
+        frame->y_vir_addr = (cmr_uint)(mMuxer->map(buffer_handle));
+        frame->width = ADP_WIDTH(*buffer_handle);
+        frame->height = ADP_HEIGHT(*buffer_handle);
 
-    TSRect Tsface;
-    YuvFormat yuvFormat = TSFB_FMT_NV21;
-    if (face_info[0] != 0 || face_info[1] != 0 || face_info[2] != 0 ||
-        face_info[3] != 0) {
-        video_3d_convert_face_info_from_preview2video(face_info, frame->width,
-                                                      frame->height);
-        Tsface.left = face_info[0];
-        Tsface.top = face_info[1];
-        Tsface.right = face_info[2];
-        Tsface.bottom = face_info[3];
-        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left, Tsface.top,
-                 Tsface.right, Tsface.bottom);
+        TSRect Tsface;
+        YuvFormat yuvFormat = TSFB_FMT_NV21;
+        if (face_info[0] != 0 || face_info[1] != 0 || face_info[2] != 0 ||
+            face_info[3] != 0) {
+            video_3d_convert_face_info_from_preview2video(face_info,
+       frame->width,
+                                                          frame->height);
+            Tsface.left = face_info[0];
+            Tsface.top = face_info[1];
+            Tsface.right = face_info[2];
+            Tsface.bottom = face_info[3];
+            HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left,
+       Tsface.top,
+                     Tsface.right, Tsface.bottom);
 
-        int level = perfect_level;
-        int skinWhitenLevel = 0;
-        int skinCleanLevel = 0;
-        int level_num = 0;
-        // convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel
-        // according to the table saved.
-        level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
-        level_num = level / 10;
-        skinWhitenLevel = tab_skinWhitenLevel[level_num];
-        skinCleanLevel = tab_skinCleanLevel[level_num];
-        HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d "
-                 "frame->height %d frame->width %d",
-                 skinWhitenLevel, skinCleanLevel, frame->height, frame->width);
+            int level = perfect_level;
+            int skinWhitenLevel = 0;
+            int skinCleanLevel = 0;
+            int level_num = 0;
+            // convert the skin_level set by APP to skinWhitenLevel &
+       skinCleanLevel
+            // according to the table saved.
+            level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
+            level_num = level / 10;
+            skinWhitenLevel = tab_skinWhitenLevel[level_num];
+            skinCleanLevel = tab_skinCleanLevel[level_num];
+            HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d "
+                     "frame->height %d frame->width %d",
+                     skinWhitenLevel, skinCleanLevel, frame->height,
+       frame->width);
 
-        TSMakeupData inMakeupData;
-        unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
-        unsigned char *uvBuf =
-            (unsigned char *)(frame->y_vir_addr) + frame->width * frame->height;
+            TSMakeupData inMakeupData;
+            unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
+            unsigned char *uvBuf =
+                (unsigned char *)(frame->y_vir_addr) + frame->width *
+       frame->height;
 
-        inMakeupData.frameWidth = frame->width;
-        inMakeupData.frameHeight = frame->height;
-        inMakeupData.yBuf = yBuf;
-        inMakeupData.uvBuf = uvBuf;
+            inMakeupData.frameWidth = frame->width;
+            inMakeupData.frameHeight = frame->height;
+            inMakeupData.yBuf = yBuf;
+            inMakeupData.uvBuf = uvBuf;
 
-        if (frame->width > 0 && frame->height > 0) {
-            int ret_val =
-                ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
-                                skinWhitenLevel, &Tsface, 0, yuvFormat);
-            if (ret_val != TS_OK) {
-                HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
+            if (frame->width > 0 && frame->height > 0) {
+                int ret_val =
+                    ts_face_beautify(&inMakeupData, &inMakeupData,
+       skinCleanLevel,
+                                    skinWhitenLevel, &Tsface, 0, yuvFormat);
+                if (ret_val != TS_OK) {
+                    HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
+                } else {
+                    HAL_LOGD("UCAM ts_face_beautify return OK");
+                }
             } else {
-                HAL_LOGD("UCAM ts_face_beautify return OK");
+                HAL_LOGE("No face beauty! frame size If size is not zero, then "
+                         "outMakeupData.yBuf is null!");
             }
         } else {
-            HAL_LOGE("No face beauty! frame size If size is not zero, then "
-                     "outMakeupData.yBuf is null!");
+            HAL_LOGD("Not detect face!");
         }
-    } else {
-        HAL_LOGD("Not detect face!");
-    }
-    */
+        */
 }
 
 /*===========================================================================
@@ -1061,10 +985,8 @@ int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(
             itor++;
         }
     }
-    private_handle_t *private_handle =
-        (struct private_handle_t *)(*frame_buffer);
-    //if (perfectskinlevel > 0)
-      //  video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+    // if (perfectskinlevel > 0)
+    // video_3d_doFaceMakeup(frame_buffer, perfectskinlevel, face_info);
 
     return rc;
 }
@@ -1529,9 +1451,9 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(
 
     dcam_info_t dcam;
 
-    dcam.left_buf = (struct private_handle_t *)*input_buf1;
-    dcam.right_buf = (struct private_handle_t *)*input_buf2;
-    dcam.dst_buf = (struct private_handle_t *)*output_buf;
+    dcam.left_buf = input_buf1;
+    dcam.right_buf = input_buf2;
+    dcam.dst_buf = output_buf;
     if (rotation >= 0) {
         switch (rotation) {
         case 0:
@@ -1554,28 +1476,34 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(
     }
 
     dcam.rot_angle = s_rotation;
-    mGpuApi->imageStitchingWithGPU(&dcam);
+    // abandon private_handle_t
+    // mGpuApi->imageStitchingWithGPU(&dcam);
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
         };
         property_get("debug.camera.3dvideo.saveyuv", prop, "0");
         if (1 == atoi(prop)) {
-            addr = dcam.left_buf->base;
-            size = dcam.left_buf->size;
-            mMuxer->dumpImg(addr, size, dcam.left_buf->width,
-                            dcam.left_buf->height,
+            mMuxer->map(dcam.left_buf, &addr);
+            size = ADP_BUFSIZE(*dcam.left_buf);
+            mMuxer->dumpImg(addr, size, ADP_WIDTH(*dcam.left_buf),
+                            ADP_HEIGHT(*dcam.left_buf),
                             combVideoResult->frame_number, 1);
-            addr = dcam.right_buf->base;
-            size = dcam.right_buf->size;
-            mMuxer->dumpImg(addr, size, dcam.right_buf->width,
-                            dcam.right_buf->height,
+            mMuxer->unmap(dcam.left_buf);
+
+            mMuxer->map(dcam.right_buf, &addr);
+            size = ADP_BUFSIZE(*dcam.right_buf);
+            mMuxer->dumpImg(addr, size, ADP_WIDTH(*dcam.right_buf),
+                            ADP_HEIGHT(*dcam.right_buf),
                             combVideoResult->frame_number, 2);
-            addr = dcam.dst_buf->base;
-            size = dcam.dst_buf->size;
-            mMuxer->dumpImg(addr, size, dcam.dst_buf->width,
-                            dcam.dst_buf->height, combVideoResult->frame_number,
-                            3);
+            mMuxer->unmap(dcam.right_buf);
+
+            mMuxer->map(dcam.dst_buf, &addr);
+            size = ADP_BUFSIZE(*dcam.dst_buf);
+            mMuxer->dumpImg(addr, size, ADP_WIDTH(*dcam.dst_buf),
+                            ADP_HEIGHT(*dcam.dst_buf),
+                            combVideoResult->frame_number, 3);
+            mMuxer->unmap(dcam.dst_buf);
         }
     }
     {
@@ -1897,8 +1825,8 @@ int SprdCamera3StereoVideo::configureStreams(
                                &mVideoSize.stereoVideoHeight);
                 for (size_t j = 0; j < mMaxLocalBufferNum;) {
                     int tmp = allocateOne(mVideoSize.stereoVideoWidth,
-                                          mVideoSize.stereoVideoHeight, 1,
-                                          &(mVideoLocalBuffer[j]));
+                                          mVideoSize.stereoVideoHeight,
+                                          &(mVideoLocalBuffer[j]), YUV420);
                     if (tmp < 0) {
                         HAL_LOGE("request one buf failed.");
                         continue;
@@ -2212,8 +2140,8 @@ int SprdCamera3StereoVideo::processCaptureRequest(
                 mFirstConfig = false;
                 mFirstFrameNum = request->frame_number;
                 mFirstShowPreviewDeviceId = mShowPreviewDeviceId;
-                int tmp = allocateOne(preview_width, preview_height, 1,
-                                      &mPreviewLocalBuffer);
+                int tmp = allocateOne(preview_width, preview_height,
+                                      &mPreviewLocalBuffer, YUV420);
                 if (tmp < 0) {
                     HAL_LOGE("request preview buf failed.");
                 }
@@ -2249,8 +2177,8 @@ int SprdCamera3StereoVideo::processCaptureRequest(
                 mFirstConfig = false;
                 mFirstFrameNum = request->frame_number;
                 mFirstShowPreviewDeviceId = mShowPreviewDeviceId;
-                int tmp = allocateOne(preview_width, preview_height, 1,
-                                      &mPreviewLocalBuffer);
+                int tmp = allocateOne(preview_width, preview_height,
+                                      &mPreviewLocalBuffer, YUV420);
                 if (tmp < 0) {
                     HAL_LOGE("request preview buf failed.");
                 }
@@ -2445,10 +2373,8 @@ void SprdCamera3StereoVideo::processCaptureResultMain(
     if (cur_frame_number == mFirstFrameNum &&
         mFirstShowPreviewDeviceId == CAM_TYPE_AUX) {
         if (result->output_buffers != NULL) {
-            delete ((private_handle_t *)*(&mPreviewLocalBuffer.native_handle));
-            delete mPreviewLocalBuffer.pHeapIon;
-            mPreviewLocalBuffer.native_handle = NULL;
-            mPreviewLocalBuffer.pHeapIon = NULL;
+            // before delete private_handle_t
+            freeOneBuffer(&mPreviewLocalBuffer);
             HAL_LOGD("first frame is from aux device,free main buffer");
         }
         return;
@@ -2635,11 +2561,8 @@ void SprdCamera3StereoVideo::processCaptureResultAux(
         if (cur_frame_number == mFirstFrameNum &&
             mFirstShowPreviewDeviceId == CAM_TYPE_MAIN) {
             if (result->output_buffers != NULL) {
-                delete (
-                    (private_handle_t *)*(&mPreviewLocalBuffer.native_handle));
-                delete mPreviewLocalBuffer.pHeapIon;
-                mPreviewLocalBuffer.native_handle = NULL;
-                mPreviewLocalBuffer.pHeapIon = NULL;
+                // before delete private_handle_t
+                freeOneBuffer(&mPreviewLocalBuffer);
                 HAL_LOGD("first frame is from main device,free aux buffer");
             }
             return;

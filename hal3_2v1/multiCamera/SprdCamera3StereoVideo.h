@@ -46,6 +46,7 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
+#include "SprdCamera3MultiBase.h"
 //#include "ts_makeup_api.h"
 
 namespace sprdcamera {
@@ -72,7 +73,7 @@ typedef struct {
     int stereoVideoHeight;
 } video_size;
 
-class SprdCamera3StereoVideo {
+class SprdCamera3StereoVideo : SprdCamera3MultiBase {
   public:
     static void getCameraMuxer(SprdCamera3StereoVideo **pMuxer);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -187,7 +188,7 @@ class SprdCamera3StereoVideo {
         void
         video_3d_convert_face_info_from_preview2video(int *ptr_cam_face_inf,
                                                       int width, int height);
-        void video_3d_doFaceMakeup(private_handle_t *private_handle,
+        void video_3d_doFaceMakeup(buffer_handle_t *buffer_handle,
                                    int perfect_level, int *face_info);
     };
 
@@ -237,7 +238,6 @@ class SprdCamera3StereoVideo {
     Condition mRequestSignal;
     void freeLocalBuffer(new_mem_t *LocalBuffer,
                          List<buffer_handle_t *> &bufferList, int bufferNum);
-    int allocateOne(int w, int h, uint32_t is_cache, new_mem_t *new_mem);
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);

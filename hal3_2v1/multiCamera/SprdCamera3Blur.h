@@ -373,12 +373,12 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
         void saveCaptureBlurParams(buffer_handle_t *result_buff,
                                    uint32_t jpeg_size);
-        void getOutWeightMap(buffer_handle_t *yuv_addr);
-        void dumpSaveImages(buffer_handle_t *result_buff, uint32_t use_size,
+        //        void getOutWeightMap(buffer_handle_t *output_buffer);
+        void dumpSaveImages(void *result_buff, uint32_t use_size,
                             uint32_t jpeg_size);
         uint8_t getIspAfFullscanInfo();
-        int blurHandle(struct private_handle_t *input1, void *input2,
-                       struct private_handle_t *output);
+        int blurHandle(buffer_handle_t *input1, void *input2,
+                       buffer_handle_t *output);
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -423,13 +423,14 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mIsGalleryBlur;
         bool mIsBlurAlways;
         blur_isp_info_t mIspInfo;
-        unsigned short *mOutWeightMap;
+        unsigned short *mOutWeightBuff;
+//        unsigned short *mOutWeightMap;
 #ifdef ISP_SUPPORT_MICRODEPTH
         MicrodepthBoke2Frames *mMicrodepthInfo;
 #endif
       private:
         void waitMsgAvailable();
-        void BlurFaceMakeup(private_handle_t *private_handle);
+        void BlurFaceMakeup(buffer_handle_t *buffer_handle, void *buffer_addr);
     };
     sp<CaptureThread> mCaptureThread;
     Mutex mMergequeueFinishMutex;

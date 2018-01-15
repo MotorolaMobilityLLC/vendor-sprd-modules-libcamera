@@ -46,6 +46,7 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
+#include "SprdCamera3MultiBase.h"
 //#include "ts_makeup_api.h"
 
 namespace sprdcamera {
@@ -83,7 +84,7 @@ typedef struct {
     buffer_combination_t combo_buff;
 } capture_queue_msg_t;
 
-class SprdCamera3Capture {
+class SprdCamera3Capture : SprdCamera3MultiBase {
   public:
     static void getCameraCapture(SprdCamera3Capture **pCapture);
     static int camera_device_open(__unused const struct hw_module_t *module,
@@ -153,7 +154,6 @@ class SprdCamera3Capture {
     int getStreamType(camera3_stream_t *new_stream);
     void freeLocalBuffer(new_mem_t *pLocalBuffer);
     void freeLocalCapBuffer(new_mem_t *pLocalCapBuffer);
-    int allocateOne(int w, int h, uint32_t is_cache, new_mem_t *new_mem);
     int validateCaptureRequest(camera3_capture_request_t *request);
     void saveRequest(camera3_capture_request_t *request,
                      uint32_t showPreviewDeviceId);
@@ -209,7 +209,7 @@ class SprdCamera3Capture {
                             uint32_t cur_frameid);
         void cap_3d_convert_face_info_from_preview2cap(int *ptr_cam_face_inf,
                                                        int width, int height);
-        void cap_3d_doFaceMakeup(private_handle_t *private_handle,
+        void cap_3d_doFaceMakeup(buffer_handle_t *private_handle,
                                  int perfect_level, int *face_info);
     };
     sp<CaptureThread> mCaptureThread;

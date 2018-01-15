@@ -37,6 +37,7 @@
 #include <string>
 #endif
 #include "spreadst/sprd_depth_configurable_param.h"
+#include "../../external/drivers/gpu/gralloc_public.h"
 
 namespace sprdcamera {
 
@@ -165,9 +166,7 @@ struct depth_init_inputparam {
     int otpsize;
     char *config_param;
 };
-typedef enum { DISTANCE_OK = 0,
-    DISTANCE_FAR,
-    DISTANCE_CLOSE } distanceRet;
+typedef enum { DISTANCE_OK = 0, DISTANCE_FAR, DISTANCE_CLOSE } distanceRet;
 typedef enum {
     DEPTH_NORMAL = 0,
     DEPTH_STOP,
@@ -220,7 +219,6 @@ typedef struct {
 
     int (*sprd_depth_Close)(void *handle);
 } depth_api_t;
-
 typedef struct {
     uint32_t frame_number;
     int32_t vcm_steps;
@@ -305,14 +303,17 @@ typedef struct {
 
 typedef struct {
     const native_handle_t *native_handle;
-    MemIon *pHeapIon;
+    sp<GraphicBuffer> graphicBuffer;
+    int width;
+    int height;
+    void *vir_addr;
     camera_buffer_type_t type;
 } new_mem_t;
 
 typedef struct {
-    struct private_handle_t *left_buf;
-    struct private_handle_t *right_buf;
-    struct private_handle_t *dst_buf;
+    buffer_handle_t *left_buf;
+    buffer_handle_t *right_buf;
+    buffer_handle_t *dst_buf;
     int rot_angle;
 } dcam_info_t;
 

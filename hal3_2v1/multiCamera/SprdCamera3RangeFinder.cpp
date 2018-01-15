@@ -1236,14 +1236,23 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
     HAL_LOGD("calculate depth value for frame number:%d",
              combDepthResult->frame_number);
 
-    int dPVImgW = ((private_handle_t *)*(input_buf1))->width;
-    int dPVImgH = ((private_handle_t *)*(input_buf1))->height;
+    int dPVImgW = ADP_WIDTH(*input_buf1);
+    int dPVImgH = ADP_HEIGHT(*input_buf1);
 
     vcmSteps = combDepthResult->vcmSteps;
-    void *pucBufMain_YCC420NV21 =
-        (void *)((private_handle_t *)*(input_buf1))->base;
-    void *pucBufSub_YCC420NV21 =
-        (void *)((private_handle_t *)*(input_buf2))->base;
+    void *pucBufMain_YCC420NV21 = NULL;
+    void *pucBufSub_YCC420NV21 = NULL;
+
+    rc = gRangeFinder->map(input_buf1, &pucBufMain_YCC420NV21);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("map main buffer failed.");
+        return rc;
+    }
+    rc = gRangeFinder->map(input_buf2, &pucBufSub_YCC420NV21);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("sub main buffer failed");
+        goto MAP_fail1;
+    }
     if (gRangeFinder->mApiLibVersion == 0) {
         depth_buffer_size = dPVImgW * dPVImgH * 2;
     } else {
@@ -1426,16 +1435,12 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
         }
     }
     if (atoi(prop) == 1) {
-        addr = (unsigned char *)((struct private_handle_t *)*(
-                                     combDepthResult->buffer1))
-                   ->base;
-        size = ((struct private_handle_t *)*(combDepthResult->buffer1))->size;
+        addr = (unsigned char *)pucBufMain_YCC420NV21;
+        size = ADP_BUFSIZE(*combDepthResult->buffer1);
         gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
                                combDepthResult->frame_number, "main");
-        addr = (unsigned char *)((struct private_handle_t *)*(
-                                     combDepthResult->buffer2))
-                   ->base;
-        size = ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+        addr = (unsigned char *)pucBufSub_YCC420NV21;
+        size = ADP_BUFSIZE(*combDepthResult->buffer2);
         gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
                                combDepthResult->frame_number, "sub");
         addr = (unsigned char *)puwDisparityBuf;
@@ -1444,13 +1449,11 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
                                combDepthResult->frame_number, "depth");
         if (gRangeFinder->mApiLibVersion == 0) {
             addr = (unsigned char *)mainRotate;
-            size =
-                ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+            size = ADP_BUFSIZE(*combDepthResult->buffer2);
             gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
                                    combDepthResult->frame_number, "mainRotate");
             addr = (unsigned char *)auxRotate;
-            size =
-                ((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+            size = ADP_BUFSIZE(*combDepthResult->buffer2);
             gRangeFinder->dumpData(addr, 1, size, dPVImgW, dPVImgH,
                                    combDepthResult->frame_number, "subRotate");
         }
@@ -1473,6 +1476,10 @@ getpmem_fail:
         gRangeFinder->mUwDepthAccuracy = DEPTH_RESULT_ACCURACY_NO;
         gRangeFinder->mUwDepth = 0;
     }
+MAP_fail2:
+    gRangeFinder->unmap(input_buf2);
+MAP_fail1:
+    gRangeFinder->unmap(input_buf1);
 
     return rc;
 }
@@ -1799,6 +1806,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
         mCurrentState = STATE_BUSY;
         mSyncThread->mGetNewestFrameForMeasure = true;
     }
+    HAL_LOGE("number=");
 
     /*config main camera*/
     req_main = *req;
@@ -1880,6 +1888,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
         HAL_LOGE("failed, idx:%d", req_aux.frame_number);
         goto req_fail;
     }
+    HAL_LOGE("ok");
 
 req_fail:
 

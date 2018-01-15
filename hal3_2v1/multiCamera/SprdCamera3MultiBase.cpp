@@ -33,6 +33,11 @@
 #include <sys/mman.h>
 #include "gralloc_priv.h"
 #include "gralloc_buffer_priv.h"
+#if defined(CONFIG_SPRD_ANDROID_8)
+#include <ui/GraphicBuffer.h>
+#endif
+
+#include <ui/GraphicBufferMapper.h>
 
 using namespace android;
 namespace sprdcamera {
@@ -98,124 +103,88 @@ int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
 
 int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                                       int type) {
-    int result = 0;
-    size_t mem_size = 0;
-    MemIon *pHeapIon = NULL;
-    private_handle_t *buffer = NULL;
 
-    HAL_LOGI("E");
-    if (type == DEPTH_OUT_BUFFER) {
-        mem_size = w * h + 68;
-    } else if (type == DEPTH_OUT_WEIGHTMAP) {
-        mem_size = w * h * 2;
-    } else {
-        mem_size = w * h * 3 / 2;
+    sp<GraphicBuffer> graphicBuffer = NULL;
+    native_handle_t *native_handle = NULL;
+    void *vir_addr = 0;
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+#if defined(CONFIG_SPRD_ANDROID_8)
+    graphicBuffer = new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
+                                      yuvTextUsage, "allocateOne");
+#else
+    graphicBuffer =
+        new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage);
+#endif
+    native_handle = (native_handle_t *)graphicBuffer->handle;
+    new_mem->native_handle = native_handle;
+    new_mem->graphicBuffer = graphicBuffer;
+    new_mem->width = w;
+    new_mem->height = h;
+    new_mem->type = (camera_buffer_type_t)type;
+
+    return 0;
+}
+
+int SprdCamera3MultiBase::findGraphicBuf(List<new_mem_t *> &list,
+                                         native_handle_t *native_handle,
+                                         sp<GraphicBuffer> &pbuffer) {
+    int ret = NO_ERROR;
+    if (list.empty()) {
+        HAL_LOGE("list is NULL");
+        return -EINVAL;
     }
-    // to make it page size aligned
-    //  mem_size = (mem_size + 4095U) & (~4095U);
-
-    if (!mIommuEnabled) {
-    #if IS_CASHE
-        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                              (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
-    #else
-        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                              ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
-    #endif
-    } else {
-    #if IS_CASHE
-        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                              (1 << 31) | ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
-    #else
-        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                               ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
-    #endif
-    }
-
-    if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
-        HAL_LOGE("pHeapIon is null or getHeapID failed");
-        goto getpmem_fail;
-    }
-
-    if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
-        HAL_LOGE("error getBase is null.");
-        goto getpmem_fail;
-    }
-
-    if (new_mem == NULL) {
-        HAL_LOGE("error new_mem is null.");
-        goto getpmem_fail;
-    }
-
-    buffer =
-        new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION, 0x130,
-                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
-    if (buffer == NULL) {
-        HAL_LOGE("error buffer is null.");
-        goto getpmem_fail;
-    }
-
-    if (buffer->share_attr_fd < 0) {
-        buffer->share_attr_fd =
-            ashmem_create_region("camera_gralloc_shared_attr", PAGE_SIZE);
-        if (buffer->share_attr_fd < 0) {
-            ALOGE("Failed to allocate page for shared attribute region");
-            goto getpmem_fail;
+    Mutex::Autolock l(mBufferListLock);
+    List<new_mem_t *>::iterator j = list.begin();
+    for (; j != list.end(); j++) {
+        if ((*j)->native_handle == native_handle) {
+            pbuffer = (*j)->graphicBuffer;
+            list.erase(j);
+            return ret;
         }
     }
-    buffer->attr_base = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
-                             MAP_SHARED, buffer->share_attr_fd, 0);
-    if (buffer->attr_base != MAP_FAILED) {
-        attr_region *region = (attr_region *)buffer->attr_base;
-        memset(buffer->attr_base, 0xff, PAGE_SIZE);
-        munmap(buffer->attr_base, PAGE_SIZE);
-        buffer->attr_base = MAP_FAILED;
-    } else {
-        ALOGE("Failed to mmap shared attribute region");
-        goto getpmem_fail;
+    list.erase(j);
+    return UNKNOWN_ERROR;
+}
+
+int SprdCamera3MultiBase::findWidthHeigth(List<new_mem_t *> &list,
+                                          native_handle_t *native_handle,
+                                          int *width, int *height) {
+    int ret = NO_ERROR;
+    if (list.empty()) {
+        HAL_LOGE("list is NULL");
+        return -EINVAL;
     }
-
-    buffer->share_fd = pHeapIon->getHeapID();
-    buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->byte_stride = w;
-    buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-    buffer->width = w;
-    buffer->height = h;
-    buffer->stride = w;
-    buffer->internalWidth = w;
-    buffer->internalHeight = h;
-
-    new_mem->native_handle = buffer;
-    new_mem->pHeapIon = pHeapIon;
-    HAL_LOGI("X");
-    return result;
-getpmem_fail:
-    delete pHeapIon;
-    if (buffer)
-        delete buffer;
-
-    return -1;
+    Mutex::Autolock l(mBufferListLock);
+    List<new_mem_t *>::iterator j = list.begin();
+    for (; j != list.end(); j++) {
+        if ((*j)->native_handle == native_handle) {
+            *width = (*j)->width;
+            *height = (*j)->height;
+            list.erase(j);
+            return ret;
+        }
+    }
+    list.erase(j);
+    return UNKNOWN_ERROR;
 }
 
 void SprdCamera3MultiBase::freeOneBuffer(new_mem_t *buffer) {
-    if (buffer->native_handle != NULL) {
-        struct private_handle_t *private_buffer =
-            (struct private_handle_t *)(buffer->native_handle);
-        if (private_buffer->attr_base != MAP_FAILED) {
-            ALOGW("Warning shared attribute region mapped at free. Unmapping");
-            munmap(private_buffer->attr_base, PAGE_SIZE);
-            private_buffer->attr_base = MAP_FAILED;
-        }
-        close(private_buffer->share_attr_fd);
-        private_buffer->share_attr_fd = -1;
 
-        delete (private_handle_t *)*(&buffer->native_handle);
+    if (buffer != NULL) {
+        if (buffer->graphicBuffer != NULL) {
+            buffer->graphicBuffer.clear();
+            buffer->graphicBuffer = NULL;
+        }
         buffer->native_handle = NULL;
+        buffer->vir_addr = NULL;
+    } else {
+        HAL_LOGD("Not allocated, No need to free");
     }
-    if (buffer->pHeapIon != NULL) {
-        delete buffer->pHeapIon;
-        buffer->pHeapIon = NULL;
-    }
+    HAL_LOGI("X");
+    return;
 }
 
 int SprdCamera3MultiBase::validateCaptureRequest(
@@ -514,6 +483,31 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
     }
     return;
 }
+int SprdCamera3MultiBase::map(buffer_handle_t *buffer, void **vaddr) {
+    int ret = NO_ERROR;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    int width = ADP_WIDTH(*buffer);
+    int height = ADP_HEIGHT(*buffer);
+    Rect bounds(width, height);
+    int usage;
+
+    usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+    ret = mapper.lock((const native_handle_t *)*buffer, usage, bounds, vaddr);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("onQueueFilled, mapper.lock fail %p, ret %d", *buffer, ret);
+    }
+    return ret;
+}
+
+int SprdCamera3MultiBase::unmap(buffer_handle_t *buffer) {
+    int ret = NO_ERROR;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    ret = mapper.unlock((const native_handle_t *)*buffer);
+    if (ret != NO_ERROR) {
+        ALOGE("onQueueFilled, mapper.unlock fail %p", *buffer);
+    }
+    return ret;
+}
 
 int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
     int stream_type = 0;
@@ -749,28 +743,29 @@ bool SprdCamera3MultiBase::alignTransform(void *src, int w_old, int h_old,
     return true;
 }
 
-int SprdCamera3MultiBase::convertToImg_frm(private_handle_t *in, img_frm *out,
-                                           cmr_u32 format) {
+int SprdCamera3MultiBase::convertToImg_frm(buffer_handle_t *in, img_frm *out,
+                                           cmr_u32 format, void *vir_addr) {
     HAL_LOGD("in:%p, out:%p format:%u", in, out, format);
     int ret = 0;
     out->addr_phy.addr_y = 0;
-    out->addr_phy.addr_u = out->addr_phy.addr_y + in->width * in->height;
+    out->addr_phy.addr_u =
+        out->addr_phy.addr_y + ADP_WIDTH(*in) * ADP_HEIGHT(*in);
     out->addr_phy.addr_v = out->addr_phy.addr_u;
-    HAL_LOGD("in->width:%d, in->height:%d", in->width, in->height);
-
-    out->addr_vir.addr_y = (cmr_uint)in->base;
-    out->addr_vir.addr_u = (cmr_uint)in->base + in->width * in->height;
+    HAL_LOGD("in->width:%d, in->height:%d", ADP_WIDTH(*in), ADP_HEIGHT(*in));
+    out->addr_vir.addr_y = (cmr_uint)vir_addr;
+    out->addr_vir.addr_u =
+        out->addr_vir.addr_y + ADP_WIDTH(*in) * ADP_HEIGHT(*in);
     HAL_LOGD("out->addr_vir.addr_y:%lx", out->addr_vir.addr_y);
-    out->buf_size = in->size;
+    out->buf_size = ADP_BUFSIZE(*in);
     HAL_LOGD("out->buf_size:%d", out->buf_size);
-    out->fd = in->share_fd;
+    out->fd = ADP_BUFFD(*in);
     out->fmt = format;
     out->rect.start_x = 0;
     out->rect.start_y = 0;
-    out->rect.width = in->width;
-    out->rect.height = in->height;
-    out->size.width = in->width;
-    out->size.height = in->height;
+    out->rect.width = ADP_WIDTH(*in);
+    out->rect.height = ADP_HEIGHT(*in);
+    out->size.width = ADP_WIDTH(*in);
+    out->size.height = ADP_HEIGHT(*in);
     return ret;
 }
 
@@ -1106,10 +1101,11 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(img_frm *src_img,
 }
 
 int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
-    private_handle_t *src_private_handle,
-    private_handle_t *pic_enc_private_handle,
-    private_handle_t *dst_private_handle, SprdCamera3HWI *hwi) {
-
+    buffer_handle_t *src_private_handle, void *src_vir_addr,
+    buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
+    buffer_handle_t *dst_private_handle, void *dst_vir_addr,
+    SprdCamera3HWI *hwi) {
+    void *vir_addr = NULL;
     int ret = NO_ERROR;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
@@ -1130,11 +1126,14 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     memset(&src_img, 0, sizeof(struct img_frm));
     memset(&pic_enc_img, 0, sizeof(struct img_frm));
     memset(&dst_img, 0, sizeof(struct img_frm));
+    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420,
+                     src_vir_addr);
 
-    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420);
-    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG);
+    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG,
+                     pic_vir_addr);
     if (dst_private_handle != NULL) {
-        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG);
+        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG,
+                         dst_vir_addr);
     }
 
     memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
@@ -1150,7 +1149,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
         ret = UNKNOWN_ERROR;
     property_get("bokeh.dump.encode_exif", prop, "0");
     if (atoi(prop) == 1) {
-        unsigned char *vir_jpeg = (unsigned char *)pic_enc_private_handle->base;
+        unsigned char *vir_jpeg = (unsigned char *)(pic_vir_addr);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
                  src_img.size.width, src_img.size.height, 0, "jpegEncode");
     }
