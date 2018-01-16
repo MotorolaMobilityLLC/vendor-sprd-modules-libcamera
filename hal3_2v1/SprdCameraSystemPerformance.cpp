@@ -203,7 +203,7 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
         HAL_LOGI("camera scene not support");
     }
 
-    HAL_LOGD("x camera scene:%d,mode=%d,id=%d", camera_scene, camera_id);
+    HAL_LOGD("x camera scene:%d,id=%d", camera_scene, camera_id);
 }
 
 void SprdCameraSystemPerformance::initPowerHint() {

@@ -271,7 +271,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
       miSBindcorePreviewFrame(false), mBindcorePreivewFrameCount(0),
-      mHDRPowerHint(0), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false),
+      mHDRPowerHint(0), m3DNRPowerHint(0), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false),
       mEisVideoInit(false), mGyroNum(0), mSprdEisEnabled(false),
       mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
       mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
@@ -672,7 +672,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         if (getMultiCameraMode() == MODE_BLUR ||
             getMultiCameraMode() == MODE_BOKEH) {
             setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HH);
-        } else if (1 == mHDRPowerHint) {
+        } else if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
             setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HN);
         } else {
             setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_NH);
@@ -1063,7 +1063,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(frm_info *frm_data) {
         goto exit;
     }
 
-    if (1 == mHDRPowerHint) {
+    if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
         setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HN);
     }
 
@@ -3830,7 +3830,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-        if (mHDRPowerHint || getMultiCameraMode() == MODE_BLUR ||
+        if (mHDRPowerHint || m3DNRPowerHint || getMultiCameraMode() == MODE_BLUR ||
             getMultiCameraMode() == MODE_BOKEH) {
             setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_N);
         } else {
@@ -4909,7 +4909,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NH);
     } else if (mRecordingMode == true) {
         setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
-    } else if (1 == mHDRPowerHint) {
+    } else if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
         setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NN);
     } else {
         setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LL);
@@ -6000,6 +6000,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mHDRPowerHint = 1;
         } else {
             mHDRPowerHint = 0;
+        }
+        if ((mUsingSW3DNR == true) && (CAMERA_SCENE_MODE_NIGHT == drvSceneMode)) {
+            m3DNRPowerHint = 1;
+        } else {
+            m3DNRPowerHint = 0;
         }
 #endif
     } break;

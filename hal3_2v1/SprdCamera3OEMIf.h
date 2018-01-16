@@ -776,6 +776,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
+    /* enable/disable powerhint for SW3DNR (only for capture)*/
+    uint32_t m3DNRPowerHint;
     SprdCameraSystemPerformance *mSysPerformace;
 
     /* 1- start acceleration, 0 - finish acceleration*/
