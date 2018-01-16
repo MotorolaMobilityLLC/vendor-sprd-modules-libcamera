@@ -2011,7 +2011,12 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         // 3dnr video recording on
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
             fps_param.min_fps = 5;
-            fps_param.max_fps = 30;
+            if(mUsingSW3DNR) {
+                HAL_LOGD("sw 3dnr mode, adjust max fps to 20");
+                fps_param.max_fps = 20;
+            }
+            else
+                fps_param.max_fps = 30;
         }
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];
@@ -7317,7 +7322,7 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
             }
             close(pHandle->share_attr_fd);
             pHandle->share_attr_fd = -1;
-            delete ((private_handle_t *)m3DNRGraphicArray[i].private_handle);
+            delete pHandle;
             m3DNRGraphicArray[i].private_handle = NULL;
         }
     }
@@ -7477,8 +7482,7 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
             }
             close(pHandle->share_attr_fd);
             pHandle->share_attr_fd = -1;
-            delete (
-                (private_handle_t *)m3DNRGraphicPathArray[i].private_handle);
+            delete pHandle;
             m3DNRGraphicPathArray[i].private_handle = NULL;
         }
     }
