@@ -9812,6 +9812,7 @@ cmr_int camera_local_redisplay_data(
     struct img_rect rect;
     enum img_angle angle = IMG_ANGLE_0;
     cmr_uint img_len = (cmr_uint)(output_width * output_height);
+    cmr_uint img_len_input = (cmr_uint)(input_width * input_height);
     struct setting_context *setting_cxt;
     struct setting_cmd_parameter setting_param;
 
@@ -9835,7 +9836,7 @@ cmr_int camera_local_redisplay_data(
     src_img.addr_phy.addr_y = input_addr_y;
     src_img.addr_phy.addr_u = input_addr_uv;
     src_img.addr_vir.addr_y = input_vir_addr;
-    src_img.addr_vir.addr_u = input_vir_addr + img_len;
+    src_img.addr_vir.addr_u = input_vir_addr + img_len_input;
     if (IMG_ANGLE_90 == cxt->snp_cxt.cfg_cap_rot ||
         IMG_ANGLE_270 == cxt->snp_cxt.cfg_cap_rot) {
         dst_img.size.width = output_height;
