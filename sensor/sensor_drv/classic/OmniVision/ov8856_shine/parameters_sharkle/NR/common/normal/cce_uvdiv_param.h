@@ -408,7 +408,7 @@
 		/*lum_th_h_len*/
 		0x03,
 		/*lum_th_h*/
-		0x00,
+		0xC8,
 		/*lum_th_l_len*/
 		0x06,
 		/*lum_th_l*/
@@ -418,7 +418,7 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x64,
+		0xFA,
 		/*chroma_min_l*/
 		0x0F,
 		/*chroma_max_h*/
@@ -430,9 +430,9 @@
 	/*u_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xF4,
+		0x92,
 		/*uvdiv_th_h*/
-		0x0C,
+		0x6E,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -441,9 +441,9 @@
 	/*u_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xFB,
+		0xCE,
 		/*uvdiv_th_h*/
-		0x05,
+		0x32,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -452,9 +452,9 @@
 	/*v_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xFB,
+		0xCE,
 		/*uvdiv_th_h*/
-		0x05,
+		0x32,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -463,9 +463,9 @@
 	/*v_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xF4,
+		0x92,
 		/*uvdiv_th_h*/
-		0x0C,
+		0x6E,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -474,11 +474,11 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x30,
+		0x2D,
 		/*ratio_1*/
-		0x30,
+		0x2D,
 		/*ratio*/
-		0x3F,
+		0x3A,
 		/*ratio_uv_min*/
 		0x38,
 		/*ratio_y_min0*/
