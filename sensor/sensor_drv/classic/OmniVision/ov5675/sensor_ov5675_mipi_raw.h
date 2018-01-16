@@ -431,9 +431,9 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw_new[VENDOR_NUM] =
                       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-                     {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting1), PNULL, 0,
+                    /* {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting1), PNULL, 0,
                       .width = 640, .height = 480, .xclk_to_sensor = EX_MCLK,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
 
                      {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting1), PNULL, 0,
                       .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -453,14 +453,14 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab_new[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-             {.trim_start_x = 0,
+             /*{.trim_start_x = 0,
               .trim_start_y = 0,
               .trim_width = 640,
               .trim_height = 480,
               .line_time = 66667,
               .bps_per_lane = 906,
               .frame_line = 500,
-              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},
+              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},*/
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
               .trim_width = PREVIEW_TRIM_W,
@@ -490,9 +490,9 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw[VENDOR_NUM] = {
                   .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
                   .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-                 {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting), PNULL, 0,
+                 /*{ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting), PNULL, 0,
                   .width = 640, .height = 480, .xclk_to_sensor = EX_MCLK,
-                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
 
                  {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting), PNULL, 0,
                   .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -512,14 +512,14 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-             {.trim_start_x = 0,
+/*             {.trim_start_x = 0,
               .trim_start_y = 0,
               .trim_width = 640,
               .trim_height = 480,
               .line_time = 66667,
               .bps_per_lane = 900,
               .frame_line = 500,
-              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},
+              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},*/
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
               .trim_width = PREVIEW_TRIM_W,
