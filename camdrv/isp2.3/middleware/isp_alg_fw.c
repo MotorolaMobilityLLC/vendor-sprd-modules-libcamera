@@ -1386,7 +1386,8 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ae_stat_ptr->b_info[j] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
 		j++;
 	}
-
+	ae_stat_ptr->sec = ae_stat_ptr->sec;
+	ae_stat_ptr->usec = ae_stat_ptr->usec;
 	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_AEM_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
@@ -1493,6 +1494,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	if (AE_AEM_FMT_RGB & in_param.stat_fmt) {
 		in_param.rgb_stat_img = (cmr_u32 *)&cxt->ae_cxt.aem_stats.r_info[0];
 		in_param.stat_img = (cmr_u32 *)&cxt->ae_cxt.aem_stats.r_info[0];
+		in_param.sec = cxt->ae_cxt.aem_stats.sec;
+		in_param.usec = cxt->ae_cxt.aem_stats.usec;
 	}
 
 	in_param.binning_stat_info.r_info = cxt->binning_cxt.binning_stats.r_info;

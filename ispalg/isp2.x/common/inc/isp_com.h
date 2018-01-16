@@ -62,6 +62,8 @@ extern "C" {
 		cmr_u32 r_info[1024];
 		cmr_u32 g_info[1024];
 		cmr_u32 b_info[1024];
+		cmr_u32 sec;
+		cmr_u32 usec;
 	};
 
 	struct isp_system {

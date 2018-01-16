@@ -1116,6 +1116,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->flash_backup.bv = cxt->cur_result.cur_bv;
 		if (0 != cxt->flash_ver)
 			rtn = ae_set_force_pause(cxt, 1);
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_BEFORE;
 		break;
 
@@ -1156,6 +1157,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		if (0 != cxt->flash_ver) {
 			rtn = ae_set_force_pause(cxt, 0);
 		}
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_AFTER;
 		break;
 
@@ -1197,6 +1199,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 		if (0 != cxt->flash_ver)
 			rtn = ae_set_force_pause(cxt, 0);
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 		cxt->cur_status.settings.flash = FLASH_MAIN_AFTER;
 		break;
 
@@ -2495,7 +2498,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 
 		if ((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash)
 			|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash)) {
-			ISP_LOGI("ae_flash1_status shake_4 %d", cxt->send_once[2]);
+			ISP_LOGI("ae_flash1_status shake_4 %d, %d, cnt: %d\n", cxt->send_once[2], cxt->send_once[4], main_flash_set_counts);
 			if (1 > cxt->send_once[4]) {
 				ISP_LOGI("ae_flash1 wait-main-flash!\r\n");
 			} else if (cxt->cur_param->flash_control_param.main_flash_set_count == cxt->send_once[4]) {
@@ -4479,7 +4482,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
-	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32)((ae_time1 - ae_time0) / 1000));
 
 	if (rtn) {
 		ISP_LOGE("fail to calc ae misc");
