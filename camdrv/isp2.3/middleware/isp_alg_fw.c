@@ -32,6 +32,7 @@
 #include "lsc_adv.h"
 #include "pdaf_ctrl.h"
 #include "isp_bridge.h"
+#include "isp_file_debug.h"
 
 #define ISP_BINNING_STATIS_SIZE (256 * 256 * 2)
 #define ISP_BINNING_MAX_STAT_W     640
@@ -269,6 +270,7 @@ struct isp_alg_fw_context {
 	cmr_u8 is_master;
 	cmr_u32 is_multi_mode;
 	struct isp_statis_info afl_stat_info;
+	cmr_handle handle_file_debug;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -3307,6 +3309,9 @@ static cmr_u32 ispalg_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_ini
 	ret = ispalg_bypass_init(cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do bypass_init"));
 
+	ret = isp_file_init(&cxt->handle_file_debug);
+	ISP_TRACE_IF_FAIL(ret, ("fail to open debug file"));
+
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -3385,6 +3390,8 @@ static cmr_u32 ispalg_deinit(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.afl_ops.deinit)
 		cxt->ops.afl_ops.deinit(&cxt->afl_cxt.handle);
+
+	isp_file_deinit(cxt->handle_file_debug);
 
 	ISP_LOGI("done");
 	return ISP_SUCCESS;
