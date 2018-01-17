@@ -79,12 +79,12 @@
 #define PREVIEW_MIPI_PER_LANE_BPS 836
 
 /*line time unit: 0.1us*/
-#define SNAPSHOT_LINE_TIME 17000
-#define PREVIEW_LINE_TIME 17000
+#define SNAPSHOT_LINE_TIME 16830
+#define PREVIEW_LINE_TIME 30640
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH 0x07B0
-#define PREVIEW_FRAME_LENGTH 0x07B0
+#define PREVIEW_FRAME_LENGTH 0x0426
 
 /* please ref your spec */
 #define FRAME_OFFSET 8
