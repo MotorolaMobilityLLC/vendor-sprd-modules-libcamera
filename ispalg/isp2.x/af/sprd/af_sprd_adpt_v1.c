@@ -2362,8 +2362,9 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	af->trigger_source_type |= AF_DATA_PD;
 	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n", pd_calc_result->pdPhaseDiff[0], pd_calc_result->pdPhaseDiff[1], pd_calc_result->pdPhaseDiff[2], pd_calc_result->pdPhaseDiff[3]);
 	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n", pd_calc_result->pdConf[0], pd_calc_result->pdConf[1], pd_calc_result->pdConf[2], pd_calc_result->pdConf[3], af->pd.pd_roi_num);
-	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d", pd_calc_result->pdGetFrameID,
-			 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
+	ISP_LOGV
+		("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d",
+		 pd_calc_result->pdGetFrameID, pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
 
 	return AFV1_SUCCESS;
 }
@@ -2805,8 +2806,10 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
+	cmr_u32 *af_fv_val = NULL;
 	cmr_u32 afm_skip_num = 0;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	cmr_u8 i = 0;
 	UNUSED(out);
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -2845,11 +2848,24 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
-		if (inparam->data_len == sizeof(struct af_fv_info)) {
-			memcpy(&af->af_fv_val, (void *)inparam->data, sizeof(struct af_fv_info));
-		} else {
-			ISP_LOGI("af stats length error");
+		af_fv_val = (cmr_u32 *) (inparam->data);
+#ifdef CONFIG_ISP_2_4
+		for (i = 0; i < 10; i++) {
+			cmr_u64 high = af_fv_val[95 + i / 2];
+			high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
+			af->af_fv_val.af_fv0[i] = af_fv_val[61 + i * 3] + high;	// spsmd g channels
+
+			high = af_fv_val[95 + i / 2];
+			high = (i & 0x01) ? ((high & 0x0F000000) << 12) : ((high & 0x00000F00) << 24);
+			af->af_fv_val.af_fv1[i] = af_fv_val[31 + i * 3] + high;	// soble9x9 g channels
 		}
+#else							// ISP2.1/2.2/2.3 share same AFM filter,
+		// so share same FV statistic format
+		for (i = 0; i < 10; i++) {
+			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
+			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
+		}
+#endif
 
 		if (inparam->sensor_fps.is_high_fps) {
 			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
