@@ -3035,7 +3035,7 @@ static cmr_int cmr_setting_clear_sem(struct setting_component *cpt) {
     }
     pthread_mutex_lock(&cpt->isp_mutex);
     sem_getvalue(&cpt->isp_sem, &tmpVal);
-    while (0 < tmpVal && FLASH_OPEN == cpt->flash_need_quit) {
+    while (0 < tmpVal && cpt->flash_need_quit != FLASH_NEED_QUIT) {
         sem_wait(&cpt->isp_sem);
         sem_getvalue(&cpt->isp_sem, &tmpVal);
     }
