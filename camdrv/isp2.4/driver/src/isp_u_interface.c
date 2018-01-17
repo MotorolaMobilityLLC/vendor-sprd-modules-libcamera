@@ -352,7 +352,7 @@ static enum isp_store_format isp_get_store_format(enum isp_format in_format)
 		format = ISP_STORE_UYVY;
 		break;
 	case IMG_DATA_TYPE_YUV420:
-		format = ISP_STORE_YUV420_2FRAME;
+		format = ISP_STORE_YVU420_2FRAME;
 		break;
 	case ISP_DATA_YVU422_2FRAME:
 		format = ISP_STORE_YVU422_2FRAME;
