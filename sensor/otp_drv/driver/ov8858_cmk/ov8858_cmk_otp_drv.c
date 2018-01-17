@@ -334,6 +334,10 @@ static cmr_int ov8858_cmk_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     cmr_u8 cmd_val[3];
     cmr_uint i = 0;
     char value[255];
+    char value2[255];
+    char otp_bin_ext_path[255];
+    FILE *fp = NULL;
+
     CHECK_PTR(otp_drv_handle);
     OTP_LOGV("E");
 
@@ -361,21 +365,36 @@ static cmr_int ov8858_cmk_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         }
         goto exit;
     }
-    /*	for (i = 0; i < 8192; i++) {
-            cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-            cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-            hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               (cmr_u8 *)&cmd_val[0], 2);
-            otp_raw_data->buffer[i] = cmd_val[0];
-        }*/
-    /*in burst mode,otp data read from kernel one time*/
-    //	memset(otp_raw_data->buffer, 0, 8192);
-    otp_raw_data->buffer[0] = 0x00;
-    otp_raw_data->buffer[1] = 0x00;
-    ret = hw_sensor_read_i2c(otp_cxt->hw_handle, 0xb0 >> 1,
-                             (cmr_u8 *)otp_raw_data->buffer,
-                             SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
-    OTP_LOGI("malloc otp raw buffer OTP_LEN %d\n", OTP_LEN);
+
+    property_get("debug.camera.read.otp.from.bin", value2, "0");
+    if (atoi(value2) == 1) {
+        /* read otp from bin file */
+        snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path), "%s%s_otp.bin",
+                 "/data/misc/cameraserver/", "dual_master");
+        OTP_LOGD("otp_data_read_path:%s", otp_bin_ext_path);
+        if (-1 == access(otp_bin_ext_path, 0)) {
+            OTP_LOGE("otp bin file don't exist");
+            ret = OTP_CAMERA_FAIL;
+            goto exit;
+        }
+        fp = fopen(otp_bin_ext_path, "rb");
+        if (fp == NULL) {
+            OTP_LOGE("fp is null!!,read otp bin failed");
+            ret = OTP_CAMERA_FAIL;
+            goto exit;
+        }
+        fread((cmr_u8 *)otp_raw_data->buffer, 1, OTP_LEN, fp);
+        fclose(fp);
+        fp = NULL;
+    } else {
+        /* read otp from eeprom */
+        otp_raw_data->buffer[0] = 0x00;
+        otp_raw_data->buffer[1] = 0x00;
+        ret = hw_sensor_read_i2c(otp_cxt->hw_handle, 0xb0 >> 1,
+                                 (cmr_u8 *)otp_raw_data->buffer,
+                                 SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+        OTP_LOGI("malloc otp raw buffer OTP_LEN %d\n", OTP_LEN);
+    }
 
 exit:
     property_get("debug.camera.save.otp.raw.data", value, "0");
