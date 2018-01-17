@@ -189,34 +189,66 @@ SprdCamera3GrallocMemory::~SprdCamera3GrallocMemory() {}
 int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
                                   hal_mem_info_t *mem_info) {
     int ret = NO_ERROR;
-    int fd = 0;
 
     if (NULL == mem_info || NULL == buffer_handle) {
         HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
         return -EINVAL;
     }
+    HAL_LOGD("E");
 
-    fd = ADP_BUFFD(*buffer_handle);
-
-    mem_info->fd = fd;
-    // mem_info->addr_phy is offset, always set to 0 for yaddr
-    mem_info->addr_phy = (void *)0;
-    mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
     int width = ADP_WIDTH(*buffer_handle);
     int height = ADP_HEIGHT(*buffer_handle);
+    int format = ADP_FORMAT(*buffer_handle);
+    android_ycbcr ycbcr;
     Rect bounds(width, height);
     void *vaddr = NULL;
     int usage;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
 
+    bzero((void *)&ycbcr, sizeof(ycbcr));
     usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
-    ret = mapper.lock((const native_handle_t *)*buffer_handle, usage, bounds,
-                      &vaddr);
-    if (ret != NO_ERROR) {
-        ALOGE("onQueueFilled, mapper.lock fail %p, ret %d", *buffer_handle,
-              ret);
+
+    if (format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
+        ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
+                               bounds, &ycbcr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
+                     "lockycbcr. %p, ret %d",
+                     *buffer_handle, ret);
+            ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
+                              bounds, &vaddr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = vaddr;
+            }
+        } else {
+            mem_info->addr_vir = ycbcr.y;
+        }
+    } else {
+        ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
+                          bounds, &vaddr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
+                     "ret %d",
+                     *buffer_handle, ret);
+            ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle,
+                                   usage, bounds, &ycbcr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = ycbcr.y;
+            }
+        } else {
+            mem_info->addr_vir = vaddr;
+        }
     }
-    mem_info->addr_vir = vaddr;
+    mem_info->fd = ADP_BUFFD(*buffer_handle);
+    // mem_info->addr_phy is offset, always set to 0 for yaddr
+    mem_info->addr_phy = (void *)0;
+    mem_info->size = ADP_BUFSIZE(*buffer_handle);
     HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
              "%d,height =%d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
@@ -229,34 +261,66 @@ err_out:
 int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
                                    hal_mem_info_t *mem_info) {
     int ret = NO_ERROR;
-    int fd = 0;
 
     if (NULL == mem_info || NULL == buffer_handle) {
         HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
         return -EINVAL;
     }
+    HAL_LOGD("E");
 
-    fd = ADP_BUFFD(*buffer_handle);
-
-    mem_info->fd = fd;
-    // mem_info->addr_phy is offset, always set to 0 for yaddr
-    mem_info->addr_phy = (void *)0;
-    mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
     int width = ADP_WIDTH(*buffer_handle);
     int height = ADP_HEIGHT(*buffer_handle);
+    int format = ADP_FORMAT(*buffer_handle);
+    android_ycbcr ycbcr;
     Rect bounds(width, height);
     void *vaddr = NULL;
     int usage;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
 
+    bzero((void *)&ycbcr, sizeof(ycbcr));
     usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
-    ret = mapper.lock((const native_handle_t *)*buffer_handle, usage, bounds,
-                      &vaddr);
-    if (ret != NO_ERROR) {
-        ALOGE("onQueueFilled, mapper.lock fail %p, ret %d", *buffer_handle,
-              ret);
+
+    if (format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
+        ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
+                               bounds, &ycbcr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
+                     "lockycbcr. %p, ret %d",
+                     *buffer_handle, ret);
+            ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
+                              bounds, &vaddr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = vaddr;
+            }
+        } else {
+            mem_info->addr_vir = ycbcr.y;
+        }
+    } else {
+        ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
+                          bounds, &vaddr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
+                     "ret %d",
+                     *buffer_handle, ret);
+            ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle,
+                                   usage, bounds, &ycbcr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = ycbcr.y;
+            }
+        } else {
+            mem_info->addr_vir = vaddr;
+        }
     }
-    mem_info->addr_vir = vaddr;
+    mem_info->fd = ADP_BUFFD(*buffer_handle);
+    // mem_info->addr_phy is offset, always set to 0 for yaddr
+    mem_info->addr_phy = (void *)0;
+    mem_info->size = ADP_BUFSIZE(*buffer_handle);
     HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
              "%d,height =%d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
