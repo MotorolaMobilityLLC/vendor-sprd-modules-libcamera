@@ -8789,6 +8789,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     cmr_int flash_status = FLASH_CLOSE;
     cmr_s32 sm_val = 0;
+    cmr_uint video_snapshot_type;
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
@@ -8877,10 +8878,21 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         }
     }
 
-    ret = camera_local_start_capture(oem_handle);
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
     if (ret) {
-        CMR_LOGE("camera_start_capture failed");
+        CMR_LOGE("failed to get VIDEO_SNAPSHOT_TYPE %ld", ret);
         goto exit;
+    }
+    video_snapshot_type = setting_param.cmd_type_value;
+
+    if (video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
+        ret = camera_local_start_capture(oem_handle);
+        if (ret) {
+            CMR_LOGE("camera_start_capture failed");
+            goto exit;
+        }
     }
 
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
