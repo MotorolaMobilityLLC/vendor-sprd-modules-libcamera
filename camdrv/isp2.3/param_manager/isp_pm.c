@@ -144,6 +144,8 @@ struct isp_pm_write_param {
 	cmr_u32 size;
 };
 
+static cmr_s32 isp_pm_deinit_second_mode(cmr_handle handle, cmr_u32 mode_id);
+
 static cmr_s32 isp_pm_handle_check(cmr_handle handle)
 {
 	struct isp_pm_context *cxt_ptr = (struct isp_pm_context *)handle;
@@ -400,7 +402,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 	pm_cxt_ptr = (struct isp_pm_context *)handle;
 
 	for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
-		isp_cxt_ptr = (struct isp_context *)pm_cxt_ptr->cxt_array[j];
+		isp_cxt_ptr = (j == 0) ? pm_cxt_ptr->second_cxt : (struct isp_context *)pm_cxt_ptr->cxt_array[j];
 		if (PNULL == isp_cxt_ptr || isp_cxt_ptr->is_validate == ISP_CXT_VALID_DEFAULT) {
 			continue;
 		}
@@ -420,13 +422,9 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 				}
 			}
 		}
+		isp_cxt_ptr->is_validate == ISP_CXT_VALID_DEFAULT;
 	}
 	pm_cxt_ptr->active_cxt_ptr = PNULL;
-
-	if (pm_cxt_ptr->second_cxt) {
-		free(pm_cxt_ptr->second_cxt);
-		pm_cxt_ptr->second_cxt = PNULL;
-	}
 
 	return rtn;
 }
@@ -515,10 +513,15 @@ static void isp_pm_mode_list_deinit(cmr_handle handle)
 			free(cxt_ptr->merged_mode_array[i]);
 			cxt_ptr->merged_mode_array[i] = PNULL;
 		}
-		if (cxt_ptr->cxt_array[i]) {
+		if (cxt_ptr->cxt_array[i] && cxt_ptr->cxt_array[i] != cxt_ptr->second_cxt) {
 			free(cxt_ptr->cxt_array[i]);
 			cxt_ptr->cxt_array[i] = PNULL;
 		}
+	}
+
+	if (cxt_ptr->second_cxt) {
+		free(cxt_ptr->second_cxt);
+		cxt_ptr->second_cxt = PNULL;
 	}
 
 	if (PNULL != cxt_ptr->tmp_param_data_ptr) {
@@ -1368,6 +1371,12 @@ static cmr_s32 isp_pm_set_second_mode(cmr_handle handle, cmr_u32 mode_id)
 		memset(isp_cxt_ptr, 0, sizeof(struct isp_context));
 		pm_cxt_ptr->second_cxt  = isp_cxt_ptr;
 		pm_cxt_ptr->cxt_num++;
+	} else if (pm_cxt_ptr->second_cxt->is_validate != ISP_CXT_VALID_DEFAULT) {
+		/* process abnormal control flow: zsl capture cxt is not deinit because no video stop */
+		ISP_LOGE("error: abnormal control flow happened.");
+		isp_cxt_ptr = pm_cxt_ptr->second_cxt;
+		pm_cxt_ptr->cxt_array[isp_cxt_ptr->mode_id] = isp_cxt_ptr;
+		isp_pm_deinit_second_mode(handle, isp_cxt_ptr->mode_id);
 	}
 
 	if (pm_cxt_ptr->cxt_array[mode_id] != NULL)
@@ -1457,6 +1466,7 @@ static cmr_s32 isp_pm_deinit_second_mode(cmr_handle handle, cmr_u32 mode_id)
 				}
 			}
 		}
+		isp_cxt_ptr->is_validate = ISP_CXT_VALID_DEFAULT;
 	}
 	pm_cxt_ptr->cxt_array[mode_id] = PNULL;
 
