@@ -361,7 +361,7 @@ static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 
 	cxt->wb_mode = awb_mode;
 
-	if (cxt->wb_mode == 0) {
+	if (cxt->wb_mode == 0 && cxt->last_enable == 0) {
 		cxt->recover_gain.r = cxt->cur_gain.r;
 		cxt->recover_gain.g = cxt->cur_gain.g;
 		cxt->recover_gain.b = cxt->cur_gain.b;
