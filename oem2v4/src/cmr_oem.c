@@ -5600,8 +5600,11 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
             ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                     SETTING_CTRL_FLASH, &setting_param);
             if (ret) {
+                cxt->snp_high_flash_time = 0;
                 CMR_LOGE("failed to open flash");
             }
+            cxt->snp_high_flash_time = systemTime(CLOCK_MONOTONIC);
+            CMR_LOGV("snp_high_flash_time %lld", cxt->snp_high_flash_time);
         }
     }
 
@@ -9013,7 +9016,6 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
-
     sem_wait(&cxt->snapshot_sm);
     if (camera_get_3dnr_flag(cxt)) {
 #ifdef OEM_HANDLE_3DNR
@@ -9066,7 +9068,6 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     }
 
     cxt->snp_cxt.status = IDLE;
-
 exit:
     sem_post(&cxt->snapshot_sm);
     CMR_LOGV("done %ld", ret);

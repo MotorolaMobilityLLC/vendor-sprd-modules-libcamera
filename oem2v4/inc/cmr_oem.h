@@ -324,6 +324,7 @@ struct camera_context {
     cmr_uint swisp_out_phys_addr;
     cmr_uint swisp_out_virt_addr;
     cmr_s32 swisp_out_mfd;
+    nsecs_t snp_high_flash_time;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,

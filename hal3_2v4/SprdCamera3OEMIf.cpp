@@ -8666,6 +8666,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     struct camera_frame_type zsl_frame;
     uint32_t cnt = 0;
     int64_t diff_ms = 0;
+    int64_t flash_timestamp = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
         obj->mZslShotPushFlag == 0) {
@@ -8688,7 +8689,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     // this is for real zsl flash capture, like sharkls/sharklt8, not
     // sharkl2-like
     // obj->skipZslFrameForFlashCapture();
-
+    flash_timestamp = ((struct camera_context *)(obj->mCameraHandle))->snp_high_flash_time;
     while (1) {
         // for exception exit
         if (obj->mZslCaptureExitLoop == true) {
@@ -8743,6 +8744,16 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                     zsl_frame.y_vir_addr, zsl_frame.fd);
                 continue;
             }
+        }
+
+        if (flash_timestamp != 0 && zsl_frame.timestamp <= flash_timestamp ) {
+            HAL_LOGD("zsl frame is not invaild sof with flashing");
+            mHalOem->ops->camera_set_zsl_buffer(
+                obj->mCameraHandle, zsl_frame.y_phy_addr,
+                zsl_frame.y_vir_addr, zsl_frame.fd);
+            flash_timestamp = 0;
+            ((struct camera_context *)(obj->mCameraHandle))->snp_high_flash_time = 0;
+            continue;
         }
 
         // single capture wait the caf focused frame
