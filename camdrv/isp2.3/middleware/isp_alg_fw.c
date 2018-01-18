@@ -1388,11 +1388,19 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	}
 	ae_stat_ptr->sec = ae_stat_ptr->sec;
 	ae_stat_ptr->usec = ae_stat_ptr->usec;
+
+	if (cxt->camera_id == 1) {
+		if (statis_info->frame_id > 0)
+			cxt->aem_is_update = 1;
+	} else {
+		cxt->aem_is_update = 1;
+	}
+
 	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_AEM_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
 	}
-	cxt->aem_is_update = 1;
+
 	return ret;
 }
 
