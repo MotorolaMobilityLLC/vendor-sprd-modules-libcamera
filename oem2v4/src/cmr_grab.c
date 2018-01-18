@@ -1576,3 +1576,52 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
     }
     return ret;
 }
+
+cmr_int cmr_grab_get_sg(cmr_handle grab_handle,
+                           struct sprd_img_iova *iommu_map_data) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    CMR_LOGD("get sg: fd 0x%x size 0x%x", iommu_map_data->fd, iommu_map_data->size);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_SG, iommu_map_data);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+
+cmr_int cmr_grab_map_iommu(cmr_handle grab_handle,
+                           struct sprd_img_iova *iommu_map_data) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    CMR_LOGD("map: fd 0x%x size 0x%x", iommu_map_data->fd, iommu_map_data->size);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_MAP_IOVA, iommu_map_data);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+
+cmr_int cmr_grab_unmap_iommu(cmr_handle grab_handle,
+                           struct sprd_img_iova *iommu_map_data) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    CMR_LOGD("unmap: fd 0x%x size 0x%x", iommu_map_data->fd, iommu_map_data->size);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_UNMAP_IOVA, iommu_map_data);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+

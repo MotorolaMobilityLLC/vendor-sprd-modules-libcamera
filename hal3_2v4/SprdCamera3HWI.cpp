@@ -147,6 +147,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mReciveQeqMax = 0;
     mHDRProcessFlag = 0;
     mCurFrameTimeStamp = 0;
+    mIommuBufMapList.clear();
 
     HAL_LOGI(":hal3: X");
 }
@@ -183,6 +184,25 @@ SprdCamera3HWI::~SprdCamera3HWI() {
         delete mMetadataChannel;
         mMetadataChannel = NULL;
     }
+
+    for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
+        i != mIommuBufMapList.end(); i++) {
+        struct private_handle_t *private_handle = NULL;
+        struct sprd_img_iova iommu_data;
+        private_handle = (struct private_handle_t *)(*i->buffer);
+
+        iommu_data.fd = i->fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+            &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    mIommuBufMapList.clear();
 
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);
@@ -608,6 +628,25 @@ int SprdCamera3HWI::configureStreams(
         mMetadataChannel->stop(mFrameNum);
     }
 
+    for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
+        i != mIommuBufMapList.end(); i++) {
+        struct private_handle_t *private_handle = NULL;
+        struct sprd_img_iova iommu_data;
+        private_handle = (struct private_handle_t *)(*i->buffer);
+
+        iommu_data.fd = i->fd;//private_handle->share_fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+            &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    mIommuBufMapList.clear();
+
     // regular channel
     if (mRegularChan == NULL) {
         mRegularChan = new SprdCamera3RegularChannel(
@@ -961,6 +1000,25 @@ void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
         reinterpret_cast<SprdCamera3PicChannel *>(mPicChan);
     int64_t timestamp = 0;
 
+    for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
+        i != mIommuBufMapList.end(); i++) {
+        struct private_handle_t *private_handle = NULL;
+        struct sprd_img_iova iommu_data;
+        private_handle = (struct private_handle_t *)(*i->buffer);
+
+        iommu_data.fd = i->fd;//private_handle->share_fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+            &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    mIommuBufMapList.clear();
+
     if (mMetadataChannel)
         mMetadataChannel->stop(mFrameNum);
     if (mRegularChan)
@@ -1189,6 +1247,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         CONTROL_Tag controlInfo;
         PendingRequestInfo pendingRequest;
         int32_t buf_num = 0, buf_num1 = 0;
+        size_t cnt = 0;
+        struct sprd_img_iova iommu_data;
+        struct private_handle_t *private_handle = NULL;//*private_handle_temp = NULL;
+        iommu_buf_map iommu_buf;
 
         mSetting->getFLASHTag(&flashInfo);
         mSetting->getCONTROLTag(&controlInfo);
@@ -1284,6 +1346,76 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             requestedBuf.stream = output.stream;
             requestedBuf.buffer = output.buffer;
             pendingRequest.buffers.push_back(requestedBuf);
+
+        {
+            private_handle = (struct private_handle_t *)(*output.buffer);
+            if (NULL == private_handle) {
+                HAL_LOGE("NULL buffer handle!");
+                goto exit;
+            }
+
+            if (mIommuBufMapList.empty()) {
+                int ret = 0;
+                iommu_data.fd = private_handle->share_fd;
+                ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
+                if (ret) {
+                    HAL_LOGE("iommu_workaround: first req get sg failed, fd 0x%x",
+                        iommu_data.fd);
+                    goto exit;
+                }
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
+                        &iommu_data, NULL);
+                iommu_buf.fd = private_handle->share_fd;
+                iommu_buf.sg_table = iommu_data.sg_table;
+                iommu_buf.size = iommu_data.size;
+                iommu_buf.buffer = output.buffer;
+                iommu_buf.map_flag = BUF_MAPED;
+                mIommuBufMapList.push_back(iommu_buf);
+                HAL_LOGE("iommu_workaround: first req buf private_handle %p fd 0x%x sg %p",
+                    private_handle, iommu_buf.fd, iommu_buf.sg_table);
+            } else {
+                int ret = 0;
+                cnt = 0;
+                HAL_LOGE("iommu_workaround: List size %d,cur_fd 0x%x size 0x%x private_handle %p",
+                    mIommuBufMapList.size(),
+                    private_handle->share_fd, (uint32_t)private_handle->size, private_handle);
+
+                iommu_data.fd = private_handle->share_fd;
+                ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
+                if (ret) {
+                    HAL_LOGE("iommu_workaround: get sg failed, fd 0x%x", iommu_data.fd);
+                    goto exit;
+                }
+
+                for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
+                    i != mIommuBufMapList.end();i++) {
+                    //private_handle_temp = (struct private_handle_t *)(*i->buffer);
+                    if (private_handle->share_fd == i->fd && iommu_data.sg_table == i->sg_table) {
+                        HAL_LOGE("iommu_workaround: fd 0x%x sg %p has been mapped",
+                            private_handle->share_fd, i->sg_table);
+                        break;
+                    } else {
+                        cnt++;
+                    }
+                }
+                HAL_LOGV("iommu_workaround:cnt %d list_size %d", cnt,
+                    mIommuBufMapList.size());
+                if (cnt == mIommuBufMapList.size()) {
+                    HAL_LOGE("iommu_workaround: map new fd 0x%x size 0x%x sg %p",
+                        private_handle->share_fd, (uint32_t)private_handle->size,
+                        iommu_data.sg_table);
+                    camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF, &iommu_data, NULL);
+
+                    iommu_buf.fd = private_handle->share_fd;
+                    iommu_buf.buffer = output.buffer;
+                    iommu_buf.map_flag = BUF_MAPED;
+                    iommu_buf.sg_table = iommu_data.sg_table;
+                    iommu_buf.size = iommu_data.size;
+                    mIommuBufMapList.push_back(iommu_buf);
+                }
+            }
+        }
+
         }
         pendingRequest.receive_req_max = receive_req_max;
 
@@ -1698,6 +1830,25 @@ int SprdCamera3HWI::flush() {
 
     mFlush = true;
     Mutex::Autolock l(mLock);
+
+    for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
+        i != mIommuBufMapList.end(); i++) {
+        struct private_handle_t *private_handle = NULL;
+        struct sprd_img_iova iommu_data;
+        private_handle = (struct private_handle_t *)(*i->buffer);
+
+        iommu_data.fd = i->fd;//private_handle->share_fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+            &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    mIommuBufMapList.clear();
 
     // for performance tuning: close camera
     mOEMIf->setSensorCloseFlag();

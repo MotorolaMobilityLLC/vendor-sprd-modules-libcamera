@@ -1101,6 +1101,18 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
         break;
     }
+    case CAMERA_IOCTRL_GET_SG: {
+        ret = camera_get_sg(handle, (struct sprd_img_iova *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_MAP_IOMMU_BUF: {
+        ret = camera_map_iommu(handle, (struct sprd_img_iova *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_UNMAP_IOMMU_BUF: {
+        ret =  camera_unmap_iommu(handle, (struct sprd_img_iova *)param);
+        break;
+    }
     default:
         break;
     }

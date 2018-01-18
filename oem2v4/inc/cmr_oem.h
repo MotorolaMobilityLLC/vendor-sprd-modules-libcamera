@@ -492,6 +492,9 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
 cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param);
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
                                          struct enc_exif_param *param);
+cmr_int camera_get_sg(cmr_handle oem_handle, struct sprd_img_iova *param);
+cmr_int camera_map_iommu(cmr_handle oem_handle, struct sprd_img_iova *param);
+cmr_int camera_unmap_iommu(cmr_handle oem_handle, struct sprd_img_iova *param);
 
 #ifdef __cplusplus
 }

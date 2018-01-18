@@ -6323,6 +6323,60 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_sg(cmr_handle oem_handle, struct sprd_img_iova *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = cmr_grab_get_sg(cxt->grab_cxt.grab_handle, param);
+
+    if (ret) {
+        CMR_LOGE("buf get sg failed fd 0x%x size 0x%x.", param->fd, param->size);
+    }
+
+exit:
+    return ret;
+}
+
+cmr_int camera_map_iommu(cmr_handle oem_handle, struct sprd_img_iova *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = cmr_grab_map_iommu(cxt->grab_cxt.grab_handle, param);
+
+    if (ret) {
+        CMR_LOGE("buf map failed fd 0x%x size 0x%x.", param->fd, param->size);
+    }
+
+exit:
+    return ret;
+}
+
+cmr_int camera_unmap_iommu(cmr_handle oem_handle, struct sprd_img_iova *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = cmr_grab_unmap_iommu(cxt->grab_cxt.grab_handle, param);
+
+    if (ret) {
+        CMR_LOGE("buf unmap failed fd 0x%x size 0x%x.", param->fd, param->size);
+    }
+
+exit:
+    return ret;
+}
+
 cmr_int camera_isp_buff_cfg(cmr_handle oem_handle, struct buffer_cfg *buf_cfg) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct isp_img_param isp_buf_cfg;

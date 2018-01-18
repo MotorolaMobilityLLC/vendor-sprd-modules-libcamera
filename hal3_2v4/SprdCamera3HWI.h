@@ -59,6 +59,16 @@ typedef struct {
 
 #define MIN_MULTI_CAMERA_FAKE_ID 5
 #define MAX_MULTI_CAMERA_FAKE_ID 50
+#define BUF_MAPED           0xff
+#define BUF_UNMAP         0
+
+typedef struct {
+    buffer_handle_t *buffer;
+    int fd;
+    int map_flag;
+    void *sg_table;
+    size_t size;
+} iommu_buf_map;
 
 class SprdCamera3HWI {
   public:
@@ -212,6 +222,7 @@ class SprdCamera3HWI {
     uint64_t mCurFrameTimeStamp;
     int mSprdCameraLowpower;
     bool mFirstRequestGet;
+    List<iommu_buf_map> mIommuBufMapList;
 };
 
 }; // namespace sprdcamera

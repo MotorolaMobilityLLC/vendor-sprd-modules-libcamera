@@ -156,6 +156,12 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
 cmr_int cmr_grab_set_sidebyside_flag(cmr_handle grab_handle,
                                      cmr_u32 is_sidebyside);
+cmr_int cmr_grab_get_sg(cmr_handle grab_handle,
+                           struct sprd_img_iova *iommu_map_data);
+cmr_int cmr_grab_map_iommu(cmr_handle grab_handle,
+                           struct sprd_img_iova *iommu_map_data);
+cmr_int cmr_grab_unmap_iommu(cmr_handle grab_handle,
+                           struct sprd_img_iova *iommu_map_data);
 
 #ifdef __cplusplus
 }

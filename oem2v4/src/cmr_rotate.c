@@ -22,7 +22,7 @@
 #include "cmr_cvt.h"
 #include "sprd_rot_k.h"
 
-#define SW_ROT_THRESHOLD     (320 * 240)
+#define SW_ROT_THRESHOLD     0//(320 * 240)
 
 static char rot_dev_name[50] = "/dev/sprd_rotation";
 extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
