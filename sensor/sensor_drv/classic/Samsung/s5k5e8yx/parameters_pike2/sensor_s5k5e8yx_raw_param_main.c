@@ -32,13 +32,10 @@
 #include "sensor_s5k5e8yx_raw_param_common.c"
 #include "sensor_s5k5e8yx_raw_param_prv_0.c"
 #include "sensor_s5k5e8yx_raw_param_prv_1.c"
-#include "sensor_s5k5e8yx_raw_param_prv_2.c"
 #include "sensor_s5k5e8yx_raw_param_cap_0.c"
 #include "sensor_s5k5e8yx_raw_param_cap_1.c"
-#include "sensor_s5k5e8yx_raw_param_cap_2.c"
 #include "sensor_s5k5e8yx_raw_param_video_0.c"
 #include "sensor_s5k5e8yx_raw_param_video_1.c"
-#include "sensor_s5k5e8yx_raw_param_video_2.c"
 
 /* End Include */
 
@@ -160,15 +157,15 @@ static struct sensor_raw_info s_s5k5e8yx_mipi_raw_info=
 		{s_s5k5e8yx_tune_info_common, sizeof(s_s5k5e8yx_tune_info_common)},
 		{s_s5k5e8yx_tune_info_prv_0, sizeof(s_s5k5e8yx_tune_info_prv_0)},
 		{s_s5k5e8yx_tune_info_prv_1, sizeof(s_s5k5e8yx_tune_info_prv_1)},
-		{s_s5k5e8yx_tune_info_prv_2, sizeof(s_s5k5e8yx_tune_info_prv_2)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_s5k5e8yx_tune_info_cap_0, sizeof(s_s5k5e8yx_tune_info_cap_0)},
 		{s_s5k5e8yx_tune_info_cap_1, sizeof(s_s5k5e8yx_tune_info_cap_1)},
-		{s_s5k5e8yx_tune_info_cap_2, sizeof(s_s5k5e8yx_tune_info_cap_2)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_s5k5e8yx_tune_info_video_0, sizeof(s_s5k5e8yx_tune_info_video_0)},
 		{s_s5k5e8yx_tune_info_video_1, sizeof(s_s5k5e8yx_tune_info_video_1)},
-		{s_s5k5e8yx_tune_info_video_2, sizeof(s_s5k5e8yx_tune_info_video_2)},
+		{NULL, 0},
 		{NULL, 0},
 	},
 	&s_s5k5e8yx_trim_info,
@@ -178,30 +175,30 @@ static struct sensor_raw_info s_s5k5e8yx_mipi_raw_info=
 		&s_s5k5e8yx_fix_info_common,
 		&s_s5k5e8yx_fix_info_prv_0,
 		&s_s5k5e8yx_fix_info_prv_1,
-		&s_s5k5e8yx_fix_info_prv_2,
+		NULL,
 		NULL,
 		&s_s5k5e8yx_fix_info_cap_0,
 		&s_s5k5e8yx_fix_info_cap_1,
-		&s_s5k5e8yx_fix_info_cap_2,
+		NULL,
 		NULL,
 		&s_s5k5e8yx_fix_info_video_0,
 		&s_s5k5e8yx_fix_info_video_1,
-		&s_s5k5e8yx_fix_info_video_2,
+		NULL,
 		NULL,
 	},
 	{
 		{s_s5k5e8yx_common_tool_ui_input, sizeof(s_s5k5e8yx_common_tool_ui_input)},
 		{s_s5k5e8yx_prv_0_tool_ui_input, sizeof(s_s5k5e8yx_prv_0_tool_ui_input)},
 		{s_s5k5e8yx_prv_1_tool_ui_input, sizeof(s_s5k5e8yx_prv_1_tool_ui_input)},
-		{s_s5k5e8yx_prv_2_tool_ui_input, sizeof(s_s5k5e8yx_prv_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_s5k5e8yx_cap_0_tool_ui_input, sizeof(s_s5k5e8yx_cap_0_tool_ui_input)},
 		{s_s5k5e8yx_cap_1_tool_ui_input, sizeof(s_s5k5e8yx_cap_1_tool_ui_input)},
-		{s_s5k5e8yx_cap_2_tool_ui_input, sizeof(s_s5k5e8yx_cap_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_s5k5e8yx_video_0_tool_ui_input, sizeof(s_s5k5e8yx_video_0_tool_ui_input)},
 		{s_s5k5e8yx_video_1_tool_ui_input, sizeof(s_s5k5e8yx_video_1_tool_ui_input)},
-		{s_s5k5e8yx_video_2_tool_ui_input, sizeof(s_s5k5e8yx_video_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 	},
 	{
