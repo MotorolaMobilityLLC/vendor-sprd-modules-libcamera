@@ -208,7 +208,7 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
     bzero((void *)&ycbcr, sizeof(ycbcr));
     usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
 
-    if (format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
+    if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
         ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
                                bounds, &ycbcr);
         if (ret != NO_ERROR) {
@@ -280,7 +280,7 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
     bzero((void *)&ycbcr, sizeof(ycbcr));
     usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
 
-    if (format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
+    if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
         ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
                                bounds, &ycbcr);
         if (ret != NO_ERROR) {
