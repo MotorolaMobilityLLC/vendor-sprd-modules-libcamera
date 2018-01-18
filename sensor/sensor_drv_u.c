@@ -228,6 +228,11 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
     struct module_cfg_info *mod_cfg_info =
         sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_MODULE_CFG);
 
+    if (!res_info_ptr || !res_trim_ptr || !mod_cfg_info) {
+        SENSOR_LOGE("res_info_ptr, res_trim_ptr or mod_cfg_info is NULL");
+        goto exit;
+    }
+
     SENSOR_MEMSET(exp_info_ptr, 0x00, sizeof(SENSOR_EXP_INFO_T));
     exp_info_ptr->name = sns_info->name;
     exp_info_ptr->image_format = sns_info->image_format;
@@ -259,22 +264,21 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
     exp_info_ptr->step_count = sns_info->step_count;
     exp_info_ptr->ext_info_ptr = sns_info->ext_info_ptr;
 
-    if (mod_cfg_info) {
-        exp_info_ptr->preview_skip_num = mod_cfg_info->preview_skip_num;
-        exp_info_ptr->capture_skip_num = mod_cfg_info->capture_skip_num;
-        exp_info_ptr->flash_capture_skip_num =
-            mod_cfg_info->flash_capture_skip_num;
-        exp_info_ptr->mipi_cap_skip_num = mod_cfg_info->mipi_cap_skip_num;
-        exp_info_ptr->preview_deci_num = mod_cfg_info->preview_deci_num;
-        exp_info_ptr->change_setting_skip_num =
-            mod_cfg_info->change_setting_skip_num;
-        exp_info_ptr->video_preview_deci_num =
-            mod_cfg_info->video_preview_deci_num;
-        exp_info_ptr->threshold_eb = mod_cfg_info->threshold_eb;
-        exp_info_ptr->threshold_mode = mod_cfg_info->threshold_mode;
-        exp_info_ptr->threshold_start = mod_cfg_info->threshold_start;
-        exp_info_ptr->threshold_end = mod_cfg_info->threshold_end;
-    }
+    exp_info_ptr->preview_skip_num = mod_cfg_info->preview_skip_num;
+    exp_info_ptr->capture_skip_num = mod_cfg_info->capture_skip_num;
+    exp_info_ptr->flash_capture_skip_num =
+        mod_cfg_info->flash_capture_skip_num;
+    exp_info_ptr->mipi_cap_skip_num = mod_cfg_info->mipi_cap_skip_num;
+    exp_info_ptr->preview_deci_num = mod_cfg_info->preview_deci_num;
+    exp_info_ptr->change_setting_skip_num =
+        mod_cfg_info->change_setting_skip_num;
+    exp_info_ptr->video_preview_deci_num =
+        mod_cfg_info->video_preview_deci_num;
+    exp_info_ptr->threshold_eb = mod_cfg_info->threshold_eb;
+    exp_info_ptr->threshold_mode = mod_cfg_info->threshold_mode;
+    exp_info_ptr->threshold_start = mod_cfg_info->threshold_start;
+    exp_info_ptr->threshold_end = mod_cfg_info->threshold_end;
+
     exp_info_ptr->sns_ops = sns_info->sns_ops;
 
     for (i = SENSOR_MODE_COMMON_INIT; i < SENSOR_MODE_MAX; i++) {
@@ -414,15 +418,16 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
         exp_info_ptr->sensor_mode_info[i].out_height =
             exp_info_ptr->sensor_mode_info[i].trim_height;
     }
-    if (mod_cfg_info) {
-        exp_info_ptr->sensor_interface = mod_cfg_info->sensor_interface;
-        exp_info_ptr->change_setting_skip_num =
-            mod_cfg_info->change_setting_skip_num;
-        exp_info_ptr->horizontal_view_angle =
-            mod_cfg_info->horizontal_view_angle;
-        exp_info_ptr->vertical_view_angle = mod_cfg_info->vertical_view_angle;
-        exp_info_ptr->sensor_version_info = sns_info->sensor_version_info;
-    }
+
+    exp_info_ptr->sensor_interface = mod_cfg_info->sensor_interface;
+    exp_info_ptr->change_setting_skip_num =
+        mod_cfg_info->change_setting_skip_num;
+    exp_info_ptr->horizontal_view_angle =
+        mod_cfg_info->horizontal_view_angle;
+    exp_info_ptr->vertical_view_angle = mod_cfg_info->vertical_view_angle;
+    exp_info_ptr->sensor_version_info = sns_info->sensor_version_info;
+
+exit:
     SENSOR_LOGI("X");
 }
 
@@ -2958,6 +2963,7 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
     struct sensor_drv_context *sensor_cxt =
         (struct sensor_drv_context *)sns_module_handle;
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
+    SENSOR_DRV_CHECK_ZERO(module);
 
     sensor_cxt->sensor_info_ptr->focus_eb =
         (module->af_dev_info.af_drv_entry != NULL);
@@ -2994,8 +3000,7 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
         }
     }
 
-    if (module && module->af_dev_info.af_drv_entry &&
-        (!sensor_cxt->af_drv_handle)) {
+    if (module->af_dev_info.af_drv_entry && !sensor_cxt->af_drv_handle) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
         hw_sensor_set_monitor_val(
             sensor_cxt->hw_drv_handle,
@@ -3014,6 +3019,8 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
                     module ? module->af_dev_info.af_drv_entry : NULL, af_ops);
         return SENSOR_FAIL;
     }
+
+exit:
     return ret;
 }
 

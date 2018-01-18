@@ -4540,7 +4540,7 @@ int SprdCamera3Setting::androidAntibandingModeToDrvAntibandingMode(
     uint8_t androidAntibandingMode, int8_t *convertAntibandingMode) {
     int ret = 0;
 
-    HAL_LOGD("awbMode %d", androidAntibandingMode);
+    HAL_LOGD("antibanding Mode %d", androidAntibandingMode);
     switch (androidAntibandingMode) {
     case ANDROID_CONTROL_AE_ANTIBANDING_MODE_50HZ:
         *convertAntibandingMode = 0;

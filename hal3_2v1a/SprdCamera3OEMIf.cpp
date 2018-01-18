@@ -358,24 +358,22 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
             HAL_LOGE("mHalOem is NULL");
         } else {
             memset(mHalOem, 0, sizeof(*mHalOem));
-        }
 
-        mHalOem->dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
-        if (NULL == mHalOem->dso) {
-            char const *err_str = dlerror();
-            HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
-        }
+            mHalOem->dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
+            if (NULL == mHalOem->dso) {
+                char const *err_str = dlerror();
+                HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
+            }
 
-        /* Get the address of the struct hal_module_info. */
-        if (mHalOem) {
+            /* Get the address of the struct hal_module_info. */
             const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
             omi = (oem_module_t *)dlsym(mHalOem->dso, sym);
             if (omi) {
                 mHalOem->ops = omi->ops;
             }
-        }
 
-        HAL_LOGI("loaded libcamoem.so mHalOem->dso = %p", mHalOem->dso);
+            HAL_LOGI("loaded libcamoem.so mHalOem->dso = %p", mHalOem->dso);
+        }
     }
 
     mCameraId = cameraId;
@@ -7839,7 +7837,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     } else if (type == CAMERA_PREVIEW_3DNR) {
         for (i = 0; i < sum; i++) {
             if (m3DNRPrevHeapReserverd[i] == NULL) {
-                memory = allocCameraMem(size, 1, false);
+                memory = allocCameraMem(size, 1, true);
                 if (NULL == memory) {
                     HAL_LOGE("error memory is null,malloced type %d", type);
                     goto mem_fail;

@@ -54,6 +54,7 @@ SprdCameraSystemPerformance::SprdCameraSystemPerformance() {
     mCurrentPowerHint = CAM_POWER_NORMAL;
     mCameraDfsPolicyCur = CAM_EXIT;
     mPowermanageInited = false;
+    memset(&mCurSence, 0, sizeof(sys_performance_camera_scene));
 
     initPowerHint();
 #if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O_ISHARKL2)

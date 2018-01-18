@@ -727,6 +727,9 @@ static cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle,
 cmr_int prev_get_frm_index(struct img_frm *frame, struct frm_info *data);
 cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id);
 
+static cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
+                                 struct img_frm *img);
+
 /**************************FUNCTION
  * ***************************************************************************/
 cmr_int cmr_preview_init(struct preview_init_param *init_param_ptr,
@@ -11692,7 +11695,7 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    ret = cmr_preview_flush_cashe(handle, &ipm_in_param.src_frame);
+    ret = cmr_preview_flush_cache(handle, &ipm_in_param.src_frame);
     if (ret) {
         goto exit;
     }
@@ -12141,7 +12144,7 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
     return is_need_scaling;
 }
 
-cmr_int cmr_preview_flush_cashe(cmr_handle preview_handle,
+cmr_int cmr_preview_flush_cache(cmr_handle preview_handle,
                                 struct img_frm *img) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     CMR_MSG_INIT(message);
@@ -12149,6 +12152,7 @@ cmr_int cmr_preview_flush_cashe(cmr_handle preview_handle,
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     cam_ion_buffer_t ion_buf;
 
+    cmr_bzero(&cb_data_info, sizeof(struct prev_cb_info));
     cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
     CHECK_HANDLE_VALID(preview_handle);
 
