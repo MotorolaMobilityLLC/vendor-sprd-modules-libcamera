@@ -41,6 +41,16 @@
 #define GAIN_MASK_12BITS (0xfff)
 #define GAIN_MASK_14BITS (0x3fff)
 
+enum otp_version_t {
+    VER_ERROR = 0,
+    OTP_0_1 = 1,  /*otp 0.1*/
+    OTP_0_2 = 2,  /*otp 0.2*/
+    OTP_0_3 = 3,  /*otp 0.3*/
+    OTP_0_4 = 4,  /*otp 0.4*/
+    OTP_0_5 = 5,  /*otp 0.5*/
+    OTP_1_0 = 10, /*otp 1.0*/
+};
+
 enum otp_main_cmd {
     OTP_READ_RAW_DATA,
     OTP_READ_PARSE_DATA,
@@ -70,14 +80,14 @@ enum awb_light_type {
     AWB_OUTDOOR_SUNLIGHT = 0, /* D65 */
     AWB_OUTDOOR_CLOUDY,       /* D75 */
 #if 0
-	AWB_INDOOR_INCANDESCENT,    /* A */
-	AWB_INDOOR_WARM_FLO,        /* TL84 */
-	AWB_INDOOR_COLD_FLO,        /* CW */
-	AWB_HORIZON,                /* H */
-	AWB_OUTDOOR_SUNLIGHT1,      /* D50 */
-	AWB_INDOOR_CUSTOM_FLO,      /* CustFlo */
-	AWB_OUTDOOR_NOON,           /* Noon */
-	AWB_HYBRID,                 /* Daylight */
+    AWB_INDOOR_INCANDESCENT,    /* A */
+    AWB_INDOOR_WARM_FLO,        /* TL84 */
+    AWB_INDOOR_COLD_FLO,        /* CW */
+    AWB_HORIZON,                /* H */
+    AWB_OUTDOOR_SUNLIGHT1,      /* D50 */
+    AWB_INDOOR_CUSTOM_FLO,      /* CustFlo */
+    AWB_OUTDOOR_NOON,           /* Noon */
+    AWB_HYBRID,                 /* Daylight */
 #endif
     AWB_MAX_LIGHT,
 };

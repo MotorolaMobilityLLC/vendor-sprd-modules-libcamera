@@ -1,5 +1,5 @@
 /**
- *      Copyright (c) 2016 Spreadtrum Technologies, Inc.
+ *      Copyright (c) 2018 Spreadtrum Technologies, Inc.
  *      All Rights Reserved.
  *     Confidential and Proprietary - Spreadtrum Technologies, Inc.
  **/
@@ -29,67 +29,59 @@
 /*Don't forget truly lsc otp data*/
 #define FORMAT_DATA_LEN                                                        \
     WB_DATA_SIZE + AF_DATA_SIZE + GAIN_WIDTH *GAIN_WIDTH * 4 * 2 * 2
+
 /*module base info*/
 #define MODULE_INFO_OFFSET 0x0000
-#define MODULE_INFO_CHECK_SUM 0x000F
 #define MODULE_INFO_CHECKSUM 0x000F
+#define MODULE_INFO_CHECKSUM_1V0 0x0050
+
+/*AF*/
+#define AF_INFO_OFFSET 0x0010
+#define AF_INFO_CHECKSUM 0x0015
+#define AF_INFO_OFFSET_1V0 0x1000
+#define AF_INFO_CHECKSUM_1V0 0x100A
 
 /*AWB*/
 #define AWB_INFO_OFFSET 0x0016
-#define AWB_INFO_END_OFFSET 0x0022
 #define AWB_INFO_CHECKSUM 0x0022
-#define AWB_INFO_SIZE 6
-#define AWB_SECTION_NUM 1
-/*AF*/
-#define AF_INFO_OFFSET 0x0010
-#define AF_INFO_END_OFFSET 0x0015
-#define AF_INFO_CHECKSUM 0x0015
-/*AE*/
-#define AE_INFO_OFFSET 0x0A74
-#define AE_INFO_END_OFFSET 0x0A8C
-#define AE_INFO_CHECKSUM 0x0A8C
-/*Lens shading calibration*/
+#define AWB_INFO_OFFSET_1V0 0x100B
+#define AWB_INFO_CHECKSUM_1V0 0x1018
 
+/*Lens shading calibration*/
 #define OPTICAL_INFO_OFFSET 0x0023
 #define LSC_INFO_OFFSET 0x0033
-#define LSC_INFO_END_OFFSET 0x0A73
-#define LSC_INFO_CHANNEL_SIZE 656
 #define LSC_INFO_CHECKSUM 0xA73
-#define LSC_DATA_SIZE 2624
+#define LSC_INFO_CHANNEL_SIZE 656
+#define LSC_INFO_OFFSET_1V0 0x1019
+#define LSC_INFO_CHECKSUM_1V0 0x1A6F
 
-/*reserve*/
-#define RES_INFO_OFFSET 0x0A8D
-#define RES_INFO_END_OFFSET 0x0FFF
-#define RES_INFO_CHECKSUM 0x0FFE
-#define RES_DATA_SIZE 1393
+/*AE*/
+#define AE_INFO_OFFSET 0x0A74
+#define AE_INFO_CHECKSUM 0x0A8C
+#define AE_INFO_OFFSET_1V0 0x1A70
+#define AE_INFO_CHECKSUM_1V0 0x1A89
+
 /**/
 #define TOTAL_CHECKSUM_OFFSET 0x0FFF
 
-#define LSC_GRID_SIZE 64 // 726
+#define LSC_GRID_SIZE 64
 
 #define LSC_FORMAT_SIZE                                                        \
     GAIN_WIDTH *GAIN_HEIGHT * 2 * 4 * 2 /*include truly and random data*/
 #define OTP_COMPRESSED_FLAG OTP_COMPRESSED_14BITS
 
 typedef struct {
-    unsigned char factory_id;
-    unsigned char moule_id;
-    unsigned char cali_version;
-    unsigned char year;
-    unsigned char month;
-    unsigned char day;
-    unsigned char sensor_id;
-    unsigned char lens_id;
-    unsigned char vcm_id;
-    unsigned char drvier_ic_id;
-    unsigned char ir_bg_id;
-    unsigned char fw_ver;
-    unsigned char af_cali_dir;
+    cmr_u16 calib_version;
+    enum otp_version_t otp_version;
+    cmr_u8 year;
+    cmr_u8 month;
+    cmr_u8 day;
 } module_info_t;
 
-static cmr_int _ov5675_sunny_section_checksum(cmr_u8 *buf, cmr_uint first,
-                                              cmr_uint last, cmr_uint position,
-                                              cmr_uint module_idx);
+static cmr_int _ov5675_sunny_section_checksum(cmr_u8 *buffer, cmr_uint offset,
+                                              cmr_uint size,
+                                              cmr_uint checksum_offset,
+                                              enum otp_version_t otp_version);
 static cmr_int _ov5675_sunny_buffer_init(cmr_handle otp_drv_handle);
 static cmr_int _ov5675_sunny_parse_awb_data(cmr_handle otp_drv_handle);
 static cmr_int _ov5675_sunny_parse_lsc_data(cmr_handle otp_drv_handle);
@@ -108,7 +100,7 @@ static cmr_int ov5675_sunny_otp_drv_read(cmr_handle otp_drv_handle,
 static cmr_int ov5675_sunny_otp_drv_write(cmr_handle otp_drv_handle,
                                           void *p_data);
 static cmr_int ov5675_sunny_otp_drv_parse(cmr_handle otp_drv_handle,
-                                          void *P_params);
+                                          void *params);
 static cmr_int ov5675_sunny_otp_drv_calibration(cmr_handle otp_drv_handle);
 static cmr_int ov5675_sunny_otp_drv_ioctl(cmr_handle otp_drv_handle,
                                           cmr_uint cmd, void *params);
@@ -118,7 +110,7 @@ otp_drv_entry_t ov5675_sunny_drv_entry = {
         {
             .cali_items =
                 {
-                    .is_self_cal = TRUE,
+                    .is_self_cal = FALSE,
                     .is_dul_camc = FALSE,
                     .is_awbc = TRUE,
                     .is_lsc = TRUE,
