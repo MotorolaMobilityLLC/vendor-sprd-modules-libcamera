@@ -201,7 +201,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-#ifdef  CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
     void bindcoreEnabled();
     void acquireCore(int mode);
 #endif
@@ -280,8 +280,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static void *gyro_monitor_thread_proc(void *p_data);
 #endif
 
-    int mBurstVideoSnapshot;
-    int mVideoParameterSetFlag;
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     cmr_uint mVideo3dnrFlag;
@@ -383,10 +381,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
         STATE_SET_PARAMS,
     };
 
-#ifdef  CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-    enum acquirecore_mode {
-        LOWPOWER_MODE,
-        PERFORMENCE_MODE,
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+    enum acquirecore_mode{
+        LOWPOWER_MODE, PERFORMENCE_MODE,
     };
 #endif
 
@@ -466,7 +463,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int zslTakePicture();
     int reprocessYuvForJpeg();
     int VideoTakePicture();
-    int setVideoSnapshotParameter();
     int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);
 
     int timer_stop();
@@ -824,7 +820,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sp<IPowerManager> mPowerManager;
     Mutex mPowerManagerLock;
     sp<IBinder> mPrfmLock;
-#ifdef  CONFIG_CAMERA_POWERHINT_ACQUIRECORE
+#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
     bool mBindcoreFlag;
     int mBindcorePreivewFrameCount;
 #endif

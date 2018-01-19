@@ -194,7 +194,6 @@ class SprdCamera3HWI {
 
     SprdCamera3RegularChannel *mRegularChan;
     bool mFirstRegularRequest;
-    bool mVideoSnapshotHint;
     // int32_t		mRegularWaitBuffNum;
 
     SprdCamera3PicChannel *mPicChan;
