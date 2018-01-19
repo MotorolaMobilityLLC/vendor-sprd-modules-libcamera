@@ -2095,6 +2095,20 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 
 	in.minExposure = current_status->ae_table->exposure[current_status->ae_table->min_index] * current_status->line_time / SENSOR_LINETIME_BASE;
 	in.maxExposure = current_status->ae_table->exposure[current_status->ae_table->max_index] * current_status->line_time / SENSOR_LINETIME_BASE;
+	if(cxt->cur_flicker == 0) {
+		if(in.maxExposure > 600000) {
+			in.maxExposure = 600000;
+		} else {
+			in.maxExposure = in.maxExposure;
+		}
+	} else if(cxt->cur_flicker == 1) {
+		if(in.maxExposure > 500000) {
+			in.maxExposure = 500000;
+		} else {
+			in.maxExposure = in.maxExposure;
+		}
+	}
+	ISP_LOGV("flash_cur_flicker %d, max_exp %f", cxt->cur_flicker, in.maxExposure);
 	in.minGain = current_status->ae_table->again[current_status->ae_table->min_index];
 	in.maxGain = current_status->ae_table->again[current_status->ae_table->max_index];
 	in.minCapGain = current_status->ae_table->again[current_status->ae_table->min_index];
