@@ -37,6 +37,7 @@
 #ifdef SPRD_PERFORMANCE
 #include <androidfw/SprdIlog.h>
 #endif
+#include "../../external/drivers/gpu/gralloc_public.h"
 #include <gralloc_priv.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
@@ -4832,7 +4833,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-    maxJpegSize = ((private_handle_t *)(*jpeg_buff_handle))->width;
+    maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
     if ((uint32_t)maxJpegSize > heap_size) {
         maxJpegSize = heap_size;
     }
@@ -7307,6 +7308,7 @@ mem_fail:
 int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
                                                  cmr_uint *vir_addr,
                                                  cmr_s32 *fd, cmr_u32 sum) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
     uint32_t i = 0;
 
     Callback_CaptureFree(0, 0, 0, 0);
@@ -7332,12 +7334,15 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
         }
     }
     m3dnrGraphicHeapNum = 0;
+#else
+#endif
     return 0;
 }
 
 int SprdCamera3OEMIf::Callback_Sw3DNRCaptureMalloc(
     cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,
     cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
 
@@ -7457,6 +7462,8 @@ cap_malloc:
 
     mCapBufIsAvail = 1;
     mCapBufLock.unlock();
+#else
+#endif
     return 0;
 
 mem_fail:
@@ -7468,6 +7475,7 @@ mem_fail:
 int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
                                                      cmr_uint *vir_addr,
                                                      cmr_s32 *fd, cmr_u32 sum) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
     uint32_t i = 0;
     Callback_CapturePathFree(0, 0, 0, 0);
 
@@ -7492,12 +7500,15 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
         }
     }
     m3dnrGraphicPathHeapNum = 0;
+#else
+#endif
     return 0;
 }
 
 int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
     cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,
     cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
     private_handle_t *buffer = NULL;
@@ -7620,6 +7631,8 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
             goto mem_fail;
         }
     }
+#else
+#endif
     return 0;
 
 mem_fail:
