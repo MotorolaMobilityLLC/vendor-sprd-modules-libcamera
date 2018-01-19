@@ -1295,6 +1295,12 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		else if (param_data->mod_id != ISP_MODE_ID_MAX)
 			sub_block_info.scene_id = ISP_MODE_PRV;
 
+		if (cxt->zsl_flag && param_data->id == DCAM_BLK_2D_LSC
+			&& sub_block_info.scene_id == ISP_MODE_CAP ) {
+			param_data++;
+			continue;
+		}
+
 		ISP_LOGV("get the zsl flag is:%d, scene id is:%d, blk_id: 0x%x, block info:%p",
 				cxt->zsl_flag,
 				sub_block_info.scene_id,
@@ -3525,6 +3531,12 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 			sub_block_info.scene_id = ISP_MODE_CAP;
 		else if (param_data->mod_id != ISP_MODE_ID_MAX)
 			sub_block_info.scene_id = ISP_MODE_PRV;
+
+		if (cxt->zsl_flag && param_data->id == DCAM_BLK_2D_LSC
+			&& sub_block_info.scene_id == ISP_MODE_CAP ) {
+			param_data++;
+			continue;
+		}
 
 		ISP_LOGV("get the zsl flag is:%d, scene id is:%d, blk_id: %x, block info:%p",
 				cxt->zsl_flag,
