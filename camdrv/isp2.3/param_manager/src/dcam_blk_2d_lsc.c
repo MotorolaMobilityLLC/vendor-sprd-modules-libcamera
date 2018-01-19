@@ -41,16 +41,14 @@ cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1
 			dst_ptr->map_tab[i].param_addr = NULL;
 		}
 		dst_ptr->map_tab[i].grid = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
-		dst_ptr->map_tab[i].grid_mode = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
 		dst_ptr->map_tab[i].grid_pitch = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->w, ISP_ONE);
 
 		dst_ptr->map_tab[i].gain_w = dst_ptr->map_tab[i].grid_pitch;
 		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->h, ISP_ONE);
 
 		max_len = (max_len < dst_ptr->map_tab[i].len) ? dst_ptr->map_tab[i].len : max_len;
-		ISP_LOGV("%d, %p, %d, %d, %d, %d, %d, %d\n", i, dst_ptr->map_tab[i].param_addr,
-			dst_ptr->map_tab[i].len, dst_ptr->map_tab[i].grid,
-			dst_ptr->map_tab[i].grid_mode, dst_ptr->map_tab[i].grid_pitch,
+		ISP_LOGV("%d, %p, %d,  %d, %d, %d, %d\n", i, dst_ptr->map_tab[i].param_addr,
+			dst_ptr->map_tab[i].len, dst_ptr->map_tab[i].grid, dst_ptr->map_tab[i].grid_pitch,
 			dst_ptr->map_tab[i].gain_w, dst_ptr->map_tab[i].gain_h);
 	}
 
@@ -124,7 +122,11 @@ cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1
 	dst_ptr->final_lsc_param.size = src_ptr->tab_info.lsc_2d_info[index].lsc_2d_len;
 	memcpy((void *)dst_ptr->final_lsc_param.data_ptr, (void *)dst_ptr->map_tab[index].param_addr, dst_ptr->map_tab[index].len);
 	dst_ptr->cur.buf_len = dst_ptr->final_lsc_param.size;
-	dst_ptr->cur.weight_num = sizeof(src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
+
+	memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
+	_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, dst_ptr->map_tab[index].grid);
+	dst_ptr->cur.weight_num =  (dst_ptr->map_tab[index].grid / 2 + 1) * 3 * sizeof(cmr_s16);
+
 #if __WORDSIZE == 64
 	dst_ptr->cur.buf_addr[0] = (cmr_uint) (dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
 	dst_ptr->cur.buf_addr[1] = (cmr_uint) (dst_ptr->final_lsc_param.data_ptr) >> 32;
@@ -133,13 +135,14 @@ cmr_s32 _pm_dcam_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1
 	dst_ptr->cur.buf_addr[1] = 0;
 #endif
 #if __WORDSIZE == 64
-	dst_ptr->cur.data_ptr[0] = (cmr_uint) ((void *)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) & 0xffffffff;
-	dst_ptr->cur.data_ptr[1] = (cmr_uint) ((void *)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) >> 32;
+	dst_ptr->cur.data_ptr[0] = (cmr_uint) ((void *)dst_ptr->weight_tab) & 0xffffffff;
+	dst_ptr->cur.data_ptr[1] = (cmr_uint) ((void *)dst_ptr->weight_tab) >> 32;
 #else
-	dst_ptr->cur.data_ptr[0] = (cmr_uint) ((void *)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
+	dst_ptr->cur.data_ptr[0] = (cmr_uint) ((void *)dst_ptr->weight_tab);
 	dst_ptr->cur.data_ptr[1] = 0;
 #endif
-	dst_ptr->cur.grid_width = dst_ptr->map_tab[index].grid_mode;
+
+	dst_ptr->cur.grid_width = dst_ptr->map_tab[index].grid;
 
 	/* grid_x_num = Ceiling(image_width/2/grid_width, 1) +1 +2; */
 	/* grid_y_num = Ceiling(image_height/2/grid_width, 1) +1 +2; */

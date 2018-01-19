@@ -16,6 +16,7 @@
 #define LOG_TAG "isp_blk_com"
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
+#include "math.h"
 
 #define ISP_NR_AUTO_MODE_BIT (0x01 << ISP_SCENEMODE_AUTO)
 #define ISP_NR_NIGHT_MODE_BIT (0x01 << ISP_SCENEMODE_NIGHT)
@@ -245,10 +246,10 @@ cmr_u16 _pm_get_lens_grid_pitch(cmr_u32 grid_pitch, cmr_u32 width, cmr_u32 flag)
 		return pitch;
 	}
 
-	if (ISP_ZERO != ((width / ISP_TWO - ISP_ONE) % grid_pitch)) {
-		pitch = ((width / ISP_TWO - ISP_ONE) / grid_pitch + ISP_TWO);
+	if (ISP_ZERO != ((width / ISP_TWO - ISP_ZERO) % grid_pitch)) {
+		pitch = ((width / ISP_TWO - ISP_ZERO) / grid_pitch + ISP_TWO);
 	} else {
-		pitch = ((width / ISP_TWO - ISP_ONE) / grid_pitch + ISP_ONE);
+		pitch = ((width / ISP_TWO - ISP_ZERO) / grid_pitch + ISP_ONE);
 	}
 
 	if (ISP_ONE == flag) {
@@ -256,6 +257,36 @@ cmr_u16 _pm_get_lens_grid_pitch(cmr_u32 grid_pitch, cmr_u32 width, cmr_u32 flag)
 	}
 
 	return pitch;
+}
+
+
+void _pm_generate_bicubic_weight_table(cmr_s16 * lnc_bicubic_weight_t_simple, cmr_u32 lsc_grid)
+{
+	double PRECISION = 1024;
+	double param[4][4] =
+	{
+		{0, 2, 0, 0},
+		{-1,0, 1, 0},
+		{2, -5, 4, -1},
+		{-1, 3, -3, 1},
+	};
+
+	double t,matrix_result;
+	cmr_u32 relative;
+
+	//generate weight table based on current lsc_grid
+	for (relative = 0; relative < ((lsc_grid/2)+1); relative++) {
+		t = relative * 1.0 / lsc_grid;
+
+		matrix_result = 1*param[0][0] + t*param[1][0] + t*t*param[2][0] + t*t*t*param[3][0];
+		lnc_bicubic_weight_t_simple[relative*3+0] = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+
+		matrix_result = 1*param[0][1] + t*param[1][1] + t*t*param[2][1] + t*t*t*param[3][1];
+		lnc_bicubic_weight_t_simple[relative*3+1]  = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+
+		matrix_result = 1*param[0][2] + t*param[1][2] + t*t*param[2][2] + t*t*t*param[3][2];
+		lnc_bicubic_weight_t_simple[relative*3+2] = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+	}
 }
 
 cmr_u32 _ispLog2n(cmr_u32 index)

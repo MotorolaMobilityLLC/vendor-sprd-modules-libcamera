@@ -22,8 +22,6 @@
 
 /*use to cal Q value, the code from kernel*/
 #define CLIP1(input,top, bottom) {if (input>top) input = top; if (input < bottom) input = bottom;}
-#define TABLE_LEN_128	128
-#define TABLE_LEN_96	96
 
 typedef struct lnc_bicubic_weight_t_64_tag {
 	cmr_s16 w0;
@@ -31,196 +29,51 @@ typedef struct lnc_bicubic_weight_t_64_tag {
 	cmr_s16 w2;
 } LNC_BICUBIC_WEIGHT_TABLE_T;
 
-static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_96_simple[] = {
-	{0, 1024, 0},
-	{-5, 1024, 6},
-	{-10, 1023, 12},
-	{-15, 1022, 18},
-	{-20, 1020, 25},
-	{-24, 1017, 32},
-	{-28, 1014, 40},
-	{-32, 1011, 48},
-	{-36, 1007, 56},
-	{-39, 1003, 65},
-	{-43, 998, 74},
-	{-46, 993, 83},
-	{-49, 987, 93},
-	{-52, 981, 103},
-	{-54, 974, 113},
-	{-57, 967, 124},
-	{-59, 960, 135},
-	{-61, 952, 146},
-	{-63, 944, 158},
-	{-65, 936, 170},
-	{-67, 927, 182},
-	{-68, 918, 194},
-	{-70, 908, 206},
-	{-71, 898, 219},
-	{-72, 888, 232},
-	{-73, 878, 245},
-	{-74, 867, 258},
-	{-74, 856, 272},
-	{-75, 844, 285},
-	{-75, 833, 299},
-	{-76, 821, 313},
-	{-76, 809, 327},
-	{-76, 796, 341},
-	{-76, 784, 356},
-	{-76, 771, 370},
-	{-75, 758, 384},
-	{-75, 745, 399},
-	{-75, 732, 414},
-	{-74, 718, 428},
-	{-73, 704, 443},
-	{-73, 691, 458},
-	{-72, 677, 473},
-	{-71, 663, 487},
-	{-70, 648, 502},
-	{-69, 634, 517},
-	{-68, 620, 532},
-	{-67, 605, 547},
-	{-65, 591, 561},
-	{-64, 576, 576},
-};
-
-static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_128_simple[] = {
-	{0, 1024, 0},
-	{-4, 1024, 4},
-	{-8, 1023, 8},
-	{-11, 1023, 13},
-	{-15, 1022, 18},
-	{-18, 1020, 23},
-	{-22, 1019, 28},
-	{-25, 1017, 34},
-	{-28, 1014, 40},
-	{-31, 1012, 46},
-	{-34, 1009, 52},
-	{-37, 1006, 58},
-	{-39, 1003, 65},
-	{-42, 999, 72},
-	{-44, 995, 78},
-	{-47, 991, 86},
-	{-49, 987, 93},
-	{-51, 982, 101},
-	{-53, 978, 108},
-	{-55, 973, 116},
-	{-57, 967, 124},
-	{-59, 962, 132},
-	{-60, 956, 141},
-	{-62, 950, 149},
-	{-63, 944, 158},
-	{-65, 938, 167},
-	{-66, 931, 176},
-	{-67, 925, 185},
-	{-68, 918, 194},
-	{-69, 910, 203},
-	{-70, 903, 213},
-	{-71, 896, 222},
-	{-72, 888, 232},
-	{-73, 880, 242},
-	{-73, 872, 252},
-	{-74, 864, 262},
-	{-74, 856, 272},
-	{-75, 847, 282},
-	{-75, 839, 292},
-	{-75, 830, 303},
-	{-76, 821, 313},
-	{-76, 812, 324},
-	{-76, 803, 334},
-	{-76, 793, 345},
-	{-76, 784, 356},
-	{-76, 774, 366},
-	{-76, 765, 377},
-	{-75, 755, 388},
-	{-75, 745, 399},
-	{-75, 735, 410},
-	{-74, 725, 421},
-	{-74, 715, 432},
-	{-73, 704, 443},
-	{-73, 694, 454},
-	{-72, 684, 465},
-	{-72, 673, 476},
-	{-71, 663, 487},
-	{-70, 652, 498},
-	{-69, 641, 510},
-	{-69, 631, 521},
-	{-68, 620, 532},
-	{-67, 609, 543},
-	{-66, 598, 554},
-	{-65, 587, 565},
-	{-64, 576, 576},
-};
-
-static cmr_u16 ISP_Cubic1D(cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16 box)
+cmr_u16 cubic_1D( cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16 box, void *weight_tab)
 {
 	cmr_s32 out_value;
-	cmr_u16 out_value_uint16_t;
+	cmr_u16 out_value_uint16;
 	cmr_s16 w0, w1, w2, w3;
+
 	cmr_u32 out_value_tmp;
 	cmr_s16 sub_tmp0;
 	cmr_s16 sub_tmp1;
 	cmr_s16 sub_tmp2;
 
-	if (box == 96) {
-		//use simple table
-		if (u < (TABLE_LEN_96 / 2 + 1)) {
-			w0 = lnc_bicubic_weight_t_96_simple[u].w0;
-			w1 = lnc_bicubic_weight_t_96_simple[u].w1;
-			w2 = lnc_bicubic_weight_t_96_simple[u].w2;
+	LNC_BICUBIC_WEIGHT_TABLE_T *lnc_bicubic_weight_t_simple = (LNC_BICUBIC_WEIGHT_TABLE_T *)weight_tab;
 
-			sub_tmp0 = a - d;
-			sub_tmp1 = b - d;
-			sub_tmp2 = c - d;
-			out_value_tmp = ((cmr_u32) d) << 10;
-			out_value = out_value_tmp + sub_tmp0 * w0 + sub_tmp1 * w1 + sub_tmp2 * w2;
-		} else {
-			w1 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w2;
-			w2 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w1;
-			w3 = lnc_bicubic_weight_t_96_simple[TABLE_LEN_96 - u].w0;
+	//use simple table
+	if (u < (box/2 + 1)) {
+		w0 = lnc_bicubic_weight_t_simple[u].w0;
+		w1 = lnc_bicubic_weight_t_simple[u].w1;
+		w2 = lnc_bicubic_weight_t_simple[u].w2;
 
-			sub_tmp0 = b - a;
-			sub_tmp1 = c - a;
-			sub_tmp2 = d - a;
-			out_value_tmp = ((cmr_u32) a) << 10;
-			out_value = out_value_tmp + sub_tmp0 * w1 + sub_tmp1 * w2 + sub_tmp2 * w3;
-		}
-
+		sub_tmp0 = a-d;
+		sub_tmp1 = b-d;
+		sub_tmp2 = c-d;
+		out_value_tmp = ((cmr_u32)d)<<10;
+		out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
 	} else {
-		u = u * (TABLE_LEN_128 / box);
+		w1 = lnc_bicubic_weight_t_simple[box - u].w2;
+		w2 = lnc_bicubic_weight_t_simple[box - u].w1;
+		w3 = lnc_bicubic_weight_t_simple[box - u].w0;
 
-		//use simple table
-		if (u < (TABLE_LEN_128 / 2 + 1)) {
-			w0 = lnc_bicubic_weight_t_128_simple[u].w0;
-			w1 = lnc_bicubic_weight_t_128_simple[u].w1;
-			w2 = lnc_bicubic_weight_t_128_simple[u].w2;
-
-			sub_tmp0 = a - d;
-			sub_tmp1 = b - d;
-			sub_tmp2 = c - d;
-			out_value_tmp = ((cmr_u32) d) << 10;
-			out_value = out_value_tmp + sub_tmp0 * w0 + sub_tmp1 * w1 + sub_tmp2 * w2;
-		} else {
-			w1 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w2;
-			w2 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w1;
-			w3 = lnc_bicubic_weight_t_128_simple[TABLE_LEN_128 - u].w0;
-
-			sub_tmp0 = b - a;
-			sub_tmp1 = c - a;
-			sub_tmp2 = d - a;
-			out_value_tmp = ((cmr_u32) a) << 10;
-			out_value = out_value_tmp + sub_tmp0 * w1 + sub_tmp1 * w2 + sub_tmp2 * w3;
-		}
+		sub_tmp0 = b-a;
+		sub_tmp1 = c-a;
+		sub_tmp2 = d-a;
+		out_value_tmp = ((cmr_u32)a)<<10;
+		out_value = out_value_tmp + sub_tmp0 * w1  + sub_tmp1 * w2 + sub_tmp2 * w3;
 	}
 
-	//CLIP(out_value, 4095*1024*2, 1024*1024);      // for LSC gain, 1024 = 1.0, 4095 = 4.0 ; 4095*2 is for boundary extension.
-	CLIP1(out_value, 16383 * 1024, 1024 * 1024);	// for LSC gain, 1024 = 1.0, 16383 = 16.0 ; 16383 is for boundary extension, 14 bit parameter is used.
+	CLIP1(out_value, 16383*1024, 1024*1024);	// for LSC gain, 1024 = 1.0, 16383 = 16.0 ; 16383 is for boundary extension, 14 bit parameter is used.
 
-	out_value_uint16_t = (cmr_u16) ((out_value + 512) >> 10);
+	out_value_uint16 = (cmr_u16)((out_value + 512) >> 10);
 
-	return out_value_uint16_t;
+	return out_value_uint16;
 }
 
-static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_uint param_address, cmr_u16 grid_w, cmr_u16 grid_num, cmr_u16 u)
+static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_uint param_address,
+	cmr_u16 grid_w, cmr_u16 grid_num, cmr_u16 u,  cmr_s16 * weight_tab)
 {
 	cmr_u8 i;
 	cmr_u16 a0 = 0, b0 = 0, c0 = 0, d0 = 0;
@@ -270,8 +123,9 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 			c1 = ((*(addr + i * 2 + grid_w * 2 * 2) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 2) >> 8) & 0x000000FF);
 			d1 = ((*(addr + i * 2 + grid_w * 2 * 3) << 8) & 0x0000FF00) | ((*(addr + i * 2 + grid_w * 2 * 3) >> 8) & 0x000000FF);
 		}
-		q_val[0][i] = ISP_Cubic1D(a0, b0, c0, d0, u, grid_num);
-		q_val[1][i] = ISP_Cubic1D(a1, b1, c1, d1, u, grid_num);
+
+		q_val[0][i] = cubic_1D(a0, b0, c0, d0, u, grid_num, weight_tab);
+		q_val[1][i] = cubic_1D(a1, b1, c1, d1, u, grid_num, weight_tab);
 	}
 
 	return 0;
@@ -286,6 +140,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 	struct isp_file *file = NULL;
 	struct isp_u_blocks_info *lsc_2d_ptr = NULL;
 	struct isp_dev_2d_lsc_info *lens_info = NULL;
+	cmr_s16 *weight_tab;
 
 	if (!handle || !param_ptr) {
 		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
@@ -303,19 +158,21 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 
 #if __WORDSIZE == 64
 	buf_addr = ((cmr_uint) lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
+	weight_tab = (cmr_s16 *)((cmr_uint) lens_info->data_ptr[1] << 32) | lens_info->data_ptr[0];
 #else
 	buf_addr = lens_info->buf_addr[0];
+	weight_tab = (cmr_s16 *)lens_info->data_ptr[0];
 #endif
 
-	if (0 == buf_addr || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
-		ISP_LOGE("lsc memory error:%lx %x", buf_addr, lens_info->buf_len);
+	if (0 == buf_addr || NULL == weight_tab || ISP_LSC_BUF_SIZE < lens_info->buf_len) {
+		ISP_LOGE("lsc memory error:%lx, %p, %x", buf_addr, weight_tab, lens_info->buf_len);
 		return -1;
 	}
 
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,
 			((cmr_u16) lens_info->grid_x_num & 0xFF) + 2,
 			(lens_info->grid_width & 0xFF),
-			(lens_info->relative_y & 0xFF) >> 1);
+			(lens_info->relative_y & 0xFF) >> 1, weight_tab);
 	if (0 != ret) {
 		ISP_LOGE("ISP_GenerateQValues is error");
 		return ret;

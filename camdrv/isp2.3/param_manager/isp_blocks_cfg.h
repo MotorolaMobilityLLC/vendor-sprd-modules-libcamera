@@ -131,24 +131,12 @@ struct isp_lsc_ctrl_in {
 
 struct isp_lnc_map {
 	cmr_u32 ct;
-	cmr_u32 grid_mode;
 	cmr_u32 grid_pitch;
 	cmr_u32 gain_w;
 	cmr_u32 gain_h;
 	cmr_u32 grid;
 	void *param_addr;
 	cmr_u32 len;
-};
-
-struct isp_lnc_param {
-	cmr_u32 update_flag;
-	struct isp_dev_lsc_info cur;
-	struct isp_sample_point_info cur_index_info;	/*for two lsc parameters to interplate */
-	struct isp_lnc_map map;	//current lsc map
-	struct isp_lnc_map map_tab[ISP_COLOR_TEMPRATURE_NUM];
-	struct isp_size resolution;
-	cmr_u32 tab_num;
-	cmr_u32 lnc_param_max_size;
 };
 
 struct isp_awbc_cfg {
@@ -352,6 +340,7 @@ struct isp_2d_lsc_param {
 	cmr_u32 tab_num;
 	struct isp_lsc_info lsc_info;
 	struct isp_size resolution;
+	cmr_s16 weight_tab[LNC_WEIGHT_LEN];
 	cmr_u32 update_flag;
 	cmr_u32 is_init;
 
@@ -739,6 +728,8 @@ cmr_s32 _pm_common_rest(void *blk_addr, cmr_u32 size);
 cmr_u32 _pm_get_lens_grid_mode(cmr_u32 grid);
 
 cmr_u16 _pm_get_lens_grid_pitch(cmr_u32 grid_pitch, cmr_u32 width, cmr_u32 flag);
+
+void _pm_generate_bicubic_weight_table(cmr_s16 * lnc_bicubic_weight_t_simple, cmr_u32 lsc_grid);
 
 cmr_u32 _ispLog2n(cmr_u32 index);
 
