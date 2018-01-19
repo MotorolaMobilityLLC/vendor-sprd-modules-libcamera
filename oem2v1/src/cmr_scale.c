@@ -256,16 +256,16 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
 
             //if cpp hw don't support, do software scaling and return
             if (!is_hw_scaling) {
-                if (!(ret = cmr_scale_sw_start(cfg_params, file))) {
-                    break;
+                if (cmr_scale_sw_start(cfg_params, file)) {
+                    CMR_PERROR;
+                    CMR_LOGE("software scaling failed");
                 }
-                CMR_PERROR;
-                CMR_LOGE("software scaling failed");
+                break;
             }
 
             ret = ioctl(file->handle, SPRD_CPP_IO_START_SCALE, frame_params);
             if (ret) {
-                CMR_LOGI("CPP error ret %ld; SW scaler also not working", ret);
+                CMR_LOGI("CPP error ret %ld; HW scaler also not working", ret);
             }
             CMR_LOGI("scale started");
 
