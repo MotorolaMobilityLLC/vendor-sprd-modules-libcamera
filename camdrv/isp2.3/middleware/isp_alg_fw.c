@@ -937,6 +937,7 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct smart_calc_result *smart_result = NULL;
 	struct smart_block_result *block_result = NULL;
+	struct smart_block_result  block_result_zsl;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
 	UNUSED(param1);
@@ -957,6 +958,12 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 			memset(pm_param, 0, sizeof(pm_param));
 			for (j = 0; j < param_num; j++) {
 				/*zsl mode_id[0]: prev, mode_id[1]: cap;  none zsl mode_id[0]: prev, cap, video etc*/
+				if (j == 1) {
+					block_result_zsl = *block_result;
+					block_result_zsl.mode_flag = cxt->mode_id[1];
+					block_result_zsl.mode_flag_changed = 1;
+					block_result = &block_result_zsl;
+				}
 				BLOCK_PARAM_CFG(pm_param[j], ISP_PM_BLK_SMART_SETTING,
 						block_result->block_id,
 						cxt->mode_id[j],
