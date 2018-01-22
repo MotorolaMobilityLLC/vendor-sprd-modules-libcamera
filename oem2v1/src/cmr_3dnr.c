@@ -332,18 +332,17 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     }
 
     ret = cam_cxt->hal_free(
-                        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
-                        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
-                        cam_cxt->client_data);
+        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
+        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
+        cam_cxt->client_data);
     if (ret) {
         CMR_LOGE("Fail to free the output buffer");
     }
 
-    ret = cam_cxt->hal_free(CAMERA_SNAPSHOT_3DNR,
-                            (cmr_uint *)threednr_handle->small_buf_phy,
-                            (cmr_uint *)threednr_handle->small_buf_vir,
-                            threednr_handle->small_buf_fd, CAP_3DNR_NUM,
-                            cam_cxt->client_data);
+    ret = cam_cxt->hal_free(
+        CAMERA_SNAPSHOT_3DNR, (cmr_uint *)threednr_handle->small_buf_phy,
+        (cmr_uint *)threednr_handle->small_buf_vir,
+        threednr_handle->small_buf_fd, CAP_3DNR_NUM, cam_cxt->client_data);
     if (ret) {
         CMR_LOGE("Fail to free the small image buffers");
     }
@@ -772,7 +771,7 @@ void *thread_3dnr(void *p_data) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-
+    LAUNCHLOGS(CMR_THREEDNR_DO_T);
     ret = threednr_function(&small_buf, &big_buf);
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
@@ -781,6 +780,7 @@ void *thread_3dnr(void *p_data) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
+    LAUNCHLOGE(CMR_THREEDNR_DO_T);
     if (CAP_3DNR_NUM == threednr_handle->common.save_frame_count) {
         cmr_bzero(&out->dst_frame, sizeof(struct img_frm));
         oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;

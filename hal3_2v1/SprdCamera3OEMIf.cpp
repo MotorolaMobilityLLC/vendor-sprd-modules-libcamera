@@ -3059,6 +3059,7 @@ int SprdCamera3OEMIf::chooseDefaultThumbnailSize(uint32_t *thumbWidth,
 
 int SprdCamera3OEMIf::startPreviewInternal() {
     ATRACE_CALL();
+    LAUNCHLOGS(CMR_PREV_START_T);
 
     cmr_int ret = 0;
     bool is_volte = false;
@@ -3209,12 +3210,16 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     HAL_LOGI("X camera id %d", mCameraId);
 
+    LAUNCHLOGE(CMR_PREV_START_T);
+    LAUNCHLOGS(CMR_PREV_RECEIVE_FIRST_FRAME_T);
+    LAUNCHLOGS(CMR_VIDEO_RECEIVE_FIRST_FRAME_T);
+
     return NO_ERROR;
 }
 
 void SprdCamera3OEMIf::stopPreviewInternal() {
     ATRACE_CALL();
-
+    LAUNCHLOGS(CMR_PREV_STOP_T);
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
     mUpdateRangeFpsCount = 0;
@@ -3261,6 +3266,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     deinit_fb_handle(&face_beauty);
 #endif
 
+    LAUNCHLOGE(CMR_PREV_STOP_T);
     HAL_LOGI("X Time:%lld(ms). camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
 }
@@ -4012,6 +4018,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         ATRACE_BEGIN("video_frame");
+
         HAL_LOGD("record:fd=0x%x, vir=0x%lx, num=%d, time=%lld, rec=%lld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp,
                  mSlowPara.rec_timestamp);
@@ -5358,6 +5365,8 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
         HAL_LOGV("CAMERA_EXIT_CB_DONE");
         SENSOR_Tag sensorInfo;
         mSetting->getSENSORTag(&sensorInfo);
+        LAUNCHLOGS(CMR_CAPTURE_HAL_CB_T);
+
         ret = mHalOem->ops->camera_get_rolling_shutter(
             mCameraHandle, &(sensorInfo.rollingShutterSkew));
         if (ret)
@@ -9079,6 +9088,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         HAL_LOGD("fd=0x%x", zsl_frame.fd);
+        LAUNCHLOGE(CMR_CAPTURE_RECEIVE_FRAME_T);
         mHalOem->ops->camera_set_zsl_snapshot_buffer(
             obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
             zsl_frame.fd);

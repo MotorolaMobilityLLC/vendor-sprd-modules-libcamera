@@ -878,7 +878,7 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
                 out_param.addr_phy.addr_y = frame->yaddr;
                 out_param.addr_phy.addr_u = frame->uaddr;
                 out_param.addr_phy.addr_v = frame->vaddr;
-		out_param.fmt = frame->fmt;
+                out_param.fmt = frame->fmt;
                 if (ret) {
                     CMR_LOGE("failed to get hdr buffer %ld", ret);
                     goto exit;
@@ -2202,7 +2202,7 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle) {
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
     if (cxt->camera_id == 1)
         goto exit;
-
+    LAUNCHLOGS(CMR_PRE_FLASH_T);
     // set focus flag to 1
     cxt->is_enter_focus = 1;
 
@@ -2338,6 +2338,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     cxt->is_enter_focus = 0;
 
 exit:
+    LAUNCHLOGE(CMR_PRE_FLASH_T);
     return ret;
 }
 
@@ -2375,6 +2376,7 @@ cmr_int camera_sensor_init(cmr_handle oem_handle, cmr_uint is_autotest) {
         CMR_LOGD("sensor has been intialized");
         goto exit;
     }
+    LAUNCHLOGS(CMR_SENSOR_INIT_T);
     cmr_bzero(&init_param, sizeof(init_param));
     init_param.oem_handle = oem_handle;
     init_param.is_autotest = is_autotest;
@@ -2423,6 +2425,7 @@ sensor_exit:
 exit:
     CMR_LOGD("done %ld", ret);
     ATRACE_END();
+    LAUNCHLOGE(CMR_SENSOR_INIT_T);
     return ret;
 }
 
@@ -2474,6 +2477,7 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(oem_handle);
     grab_cxt = &cxt->grab_cxt;
     CHECK_HANDLE_VALID(grab_cxt);
+    LAUNCHLOGS(CMR_GRAB_INIT_T);
 
     if (0 == grab_cxt->inited) {
         grab_param.oem_handle = oem_handle;
@@ -2496,6 +2500,8 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
 exit:
     CMR_LOGD("done %ld", ret);
     ATRACE_END();
+    LAUNCHLOGE(CMR_GRAB_INIT_T);
+
     return ret;
 }
 
@@ -3522,6 +3528,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(sn_cxt);
     grab_cxt = &(cxt->grab_cxt);
     CHECK_HANDLE_VALID(grab_cxt);
+    LAUNCHLOGS(CMR_ISP_INIT_T);
 
     if (1 == isp_cxt->inited) {
         CMR_LOGD("isp has been intialized");
@@ -3759,6 +3766,8 @@ exit:
 #endif
     CMR_LOGD("done %ld", ret);
     ATRACE_END();
+    LAUNCHLOGE(CMR_ISP_INIT_T);
+
     return ret;
 }
 
@@ -3767,6 +3776,7 @@ cmr_int camera_isp_deinit_notice(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     CMR_LOGI("E");
+    LAUNCHLOGS(CMR_ISP_DEINIT_T);
 
     ret = cmr_setting_deinit_notice(cxt->setting_cxt.setting_handle);
     ret = cmr_focus_deinit_notice(cxt->focus_cxt.focus_handle);
@@ -3819,6 +3829,7 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
     CMR_LOGI("X");
 
 exit:
+    LAUNCHLOGE(CMR_ISP_DEINIT_T);
     ATRACE_END();
     return ret;
 }
@@ -4516,6 +4527,7 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
     CMR_PRINT_TIME;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
+    LAUNCHLOGS(CMR_RES_INIT_T);
     /*for multicamera mode,when open convered sensor,only need to init setting*/
     if (CONVERED_CAMERA_INIT) {
         ret = camera_setting_init(oem_handle);
@@ -4589,6 +4601,7 @@ exit:
         camera_res_deinit_internal(oem_handle);
     }
 
+    LAUNCHLOGE(CMR_RES_INIT_T);
     return ret;
 }
 
@@ -8219,12 +8232,12 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
         in_param.adgain = 16;
-        if(1 == camera_get_sw_3dnr_flag(cxt)) {
+        if (1 == camera_get_sw_3dnr_flag(cxt)) {
             ret = camera_get_tuning_info((cmr_handle)cxt, &adgain_exp_info);
             if (ret) {
                 CMR_LOGE("failed to get gain %ld, and using default gain", ret);
             } else {
-                in_param.adgain = adgain_exp_info.adgain/128;
+                in_param.adgain = adgain_exp_info.adgain / 128;
             }
             CMR_LOGI("SW 3DRN, Get Gain from ISP: %d", in_param.adgain);
         }
@@ -9254,7 +9267,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         ret = camera_hdr_set_ev(oem_handle);
         if (ret)
             CMR_LOGE("fail to set hdr ev");
-    } else if (1 == camera_get_3dnr_flag(cxt) && (0 == camera_get_sw_3dnr_flag(cxt))) {
+    } else if (1 == camera_get_3dnr_flag(cxt) &&
+               (0 == camera_get_sw_3dnr_flag(cxt))) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
         ret = camera_3dnr_set_ev(oem_handle, 1);
         if (ret)
@@ -10106,7 +10120,6 @@ cmr_int camera_local_pre_flash(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
-
 /*start preflash*/
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)

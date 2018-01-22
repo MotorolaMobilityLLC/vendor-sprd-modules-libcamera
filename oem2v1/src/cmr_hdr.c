@@ -514,6 +514,8 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
     /*save_input_data(width,height);*/
 
     if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
+        LAUNCHLOGE(CMR_CAPTURE_RECEIVE_FRAME_T);
+        LAUNCHLOGS(CMR_HDR_DO_T);
         ret = HDR_Function(temp_addr0, temp_addr1, temp_addr2, temp_addr0,
                            height, width, p_format);
         if (ret != 0) {
@@ -538,6 +540,8 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
     if (CMR_CAMERA_SUCCESS == ret) {
         CMR_LOGD("hdr done.");
     }
+
+    LAUNCHLOGE(CMR_HDR_DO_T);
     return ret;
 }
 

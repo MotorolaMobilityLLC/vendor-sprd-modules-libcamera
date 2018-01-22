@@ -220,6 +220,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
         closeCamera();
 
     timer_stop();
+    LAUNCHLOGE(CMR_CLOSE_T);
 
     HAL_LOGI(":hal3: X");
 }
@@ -310,6 +311,7 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
 
     int ret = 0;
     Mutex::Autolock l(mLock);
+    LAUNCHLOGS(CMR_HAL_INIT_T);
 
     // single camera mode can only open one camera .multicamera mode can only
     // open two cameras.
@@ -394,6 +396,7 @@ int SprdCamera3HWI::openCamera() {
 
 int SprdCamera3HWI::closeCamera() {
     ATRACE_CALL();
+    LAUNCHLOGS(CMR_CLOSE_T);
 
     HAL_LOGI(":hal3: E");
     int ret = NO_ERROR;
@@ -700,6 +703,7 @@ int SprdCamera3HWI::configureStreams(
                 preview_size.width = newStream->width;
                 preview_size.height = newStream->height;
             } else if (stream_type == CAMERA_STREAM_TYPE_VIDEO) {
+                LAUNCHLOGS(CMR_RECORDING_START_T);
                 video_size.width = newStream->width;
                 video_size.height = newStream->height;
             } else if (stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
@@ -827,6 +831,7 @@ int SprdCamera3HWI::configureStreams(
     mFirstRequestGet = false;
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
+    LAUNCHLOGE(CMR_HAL_INIT_T);
 
     return ret;
 }
@@ -1110,7 +1115,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                                    mFrameNum);
             mPictureRequest = true;
         }
-
+        LAUNCHLOGS(CMR_CAPTURE_PATH_START_T);
         break;
     case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT:
         // for CTS
@@ -1723,7 +1728,7 @@ void SprdCamera3HWI::dump(int /*fd */) {
 
 int SprdCamera3HWI::flush() {
     ATRACE_CALL();
-
+    LAUNCHLOGS(CMR_FLUSH_T);
     HAL_LOGI(":hal3: E");
 
     /*Enable lock when we implement this function */
@@ -1784,6 +1789,8 @@ int SprdCamera3HWI::flush() {
 #endif
 
     HAL_LOGI(":hal3: X");
+    LAUNCHLOGE(CMR_FLUSH_T);
+
     return 0;
 }
 

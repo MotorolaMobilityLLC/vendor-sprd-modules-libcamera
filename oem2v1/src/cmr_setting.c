@@ -3412,6 +3412,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
         }
 
         if (setting_is_need_flash(cpt, parm)) {
+            LAUNCHLOGS(CMR_PRE_FLASH_T);
             CMR_LOGD("preflash low open");
             hal_param->flash_param.flash_opened = 1;
             hal_param->flash_param.has_preflashed = 1;
@@ -3437,6 +3438,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
             }
             CMR_LOGD("preflash low close");
+            LAUNCHLOGE(CMR_PRE_FLASH_T);
             hal_param->flash_param.flash_opened = 0;
         }
     }

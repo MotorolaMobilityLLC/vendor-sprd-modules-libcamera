@@ -20,6 +20,7 @@
 #include <cutils/trace.h>
 #include <stdlib.h>
 #include "cmr_common.h"
+#include <cutils/properties.h>
 
 #define CAMERA_ZOOM_LEVEL_MAX 8
 #define ZOOM_STEP(x) (((x) - (x) / CMR_ZOOM_FACTOR) / CAMERA_ZOOM_LEVEL_MAX)
@@ -38,6 +39,36 @@ struct CAMERA_TAKEPIC_STAT cap_stp[CMR_STEP_MAX] = {
     {"cvt thumb end", 0, 0, 0},  {"thumb enc start", 0, 0, 0},
     {"thumb enc end", 0, 0, 0},  {"write exif start", 0, 0, 0},
     {"write exif end", 0, 0, 0}, {"call back", 0, 0, 0},
+};
+
+struct CAMERA_LAUNCH_TIME cmr_launch_time[CMR_LAUNCH_MAX_T] = {
+    {"hal_init", 0, 0, 0},
+    {"sensor_init", 0, 0, 0},
+    {"grab_init", 0, 0, 0},
+    {"isp_init", 0, 0, 0},
+    {"res_init", 0, 0, 0},
+    {"oem_others_init", 0, 0, 0},
+    {"prev_start", 0, 0, 0},
+    {"receive_frist_frame_preview", 0, 0, 0},
+    {"receive_frist_frame_video", 0, 0, 0},
+    {"send_first_frame_hal", 0, 0, 0},
+    {"open_total", 0, 0, 0},
+    {"flush", 0, 0, 0},
+    {"close", 0, 0, 0},
+    {"prev_stop", 0, 0, 0},
+    {"isp_deinit", 0, 0, 0},
+    {"close_total", 0, 0, 0},
+    {"recording_start", 0, 0, 0},
+
+    {"capture:path_start", 0, 0, 0},
+    {"grab_cap_start", 0, 0, 0},
+    {"capture:receive_frame", 0, 0, 0},
+    {"arithmetic:hdr_do", 0, 0, 0},
+    {"arithmetic:3dnr_do", 0, 0, 0},
+    {"arithmetic:filter_do", 0, 0, 0},
+    {"capture:hal_cb", 0, 0, 0},
+    {"capture:total", 0, 0, 0},
+    {"capture:pre_flash", 0, 0, 0},
 };
 
 // for hal1.0 calculate crop
@@ -546,17 +577,12 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
 void camera_snapshot_step_statisic(struct img_size *image_size) {
     cmr_int i = 0, time_delta = 0;
 
-    if (NULL == image_size) {
-        ALOGE("image_size is null,para invalid");
-        return;
-    }
-    ALOGI("*********************Take picture "
-          "statistic*******Start****%4d*%4d*****",
-          image_size->width, image_size->height);
+    CMR_LOGE("[Camera_HAL_Time]***************Take picture "
+             "statistic*******Start****");
 
     for (i = 0; i < CMR_STEP_MAX; i++) {
         if (i == 0) {
-            ALOGI("%20s, %10d", cap_stp[i].step_name, 0);
+            CMR_LOGE("[Camera_HAL_Time]%20s, %10d", cap_stp[i].step_name, 0);
             continue;
         }
 
@@ -564,12 +590,13 @@ void camera_snapshot_step_statisic(struct img_size *image_size) {
             time_delta = (int)((cap_stp[i].timestamp -
                                 cap_stp[CMR_STEP_TAKE_PIC].timestamp) /
                                1000000);
-            ALOGI("%20s, %10ld", cap_stp[i].step_name, time_delta);
+            CMR_LOGE("[Camera_HAL_Time]%20s, %10ld", cap_stp[i].step_name,
+                     time_delta);
             cap_stp[i].valid = 0;
         }
     }
-    ALOGI("*********************Take picture "
-          "statistic********End*******************");
+    CMR_LOGE("[Camera_HAL_Time]***************Take picture "
+             "statistic********End****");
 }
 
 void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step) {
@@ -579,4 +606,101 @@ void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step) {
     }
     cap_stp[step].timestamp = systemTime(CLOCK_MONOTONIC);
     cap_stp[step].valid = 1;
+}
+void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
+    char value[PROPERTY_VALUE_MAX];
+
+    if (step >= CMR_LAUNCH_MAX_T)
+        CMR_LOGE("error %d", step);
+
+    property_get("persist.hal.camera.launch.time", value, "false");
+    if (!strcmp(value, "false")) {
+        return;
+    }
+
+    nsecs_t timestamp_now = systemTime(CLOCK_MONOTONIC);
+    // during open camera,first frame will process.
+    if (cmr_launch_time[CMR_OPEN_TOTAL_T].valid != 1 &&
+        (step == CMR_PREV_RECEIVE_FIRST_FRAME_T ||
+         step == CMR_HAL_SEND_FIRST_FRAME_T)) {
+        return;
+    } else if (cmr_launch_time[CMR_PRE_FLASH_T].valid == 1 &&
+               step == CMR_PRE_FLASH_T) {
+        // pre_flash only once.
+        return;
+    } else {
+        cmr_launch_time[step].timestamp_start = timestamp_now;
+        cmr_launch_time[step].valid = 1;
+    }
+
+    if (step == CMR_HAL_INIT_T) {
+        cmr_launch_time[CMR_OPEN_TOTAL_T].timestamp_start = timestamp_now;
+        cmr_launch_time[CMR_OPEN_TOTAL_T].valid = 1;
+    } else if (step == CMR_FLUSH_T /*&&
+               cmr_launch_time[CMR_CLOSE_TOTAL_T].valid != 1*/) {
+        cmr_launch_time[CMR_CLOSE_TOTAL_T].timestamp_start = timestamp_now;
+        cmr_launch_time[CMR_CLOSE_TOTAL_T].valid = 1;
+    } else if (step == CMR_CLOSE_T &&
+               cmr_launch_time[CMR_CLOSE_TOTAL_T].valid != 1) {
+        cmr_launch_time[CMR_CLOSE_TOTAL_T].timestamp_start = timestamp_now;
+        cmr_launch_time[CMR_CLOSE_TOTAL_T].valid = 1;
+    } else if (step == CMR_CAPTURE_PATH_START_T &&
+               cmr_launch_time[CMR_CAPTURE_TOTAL_T].valid != 1) {
+        cmr_launch_time[CMR_CAPTURE_TOTAL_T].timestamp_start = timestamp_now;
+        cmr_launch_time[CMR_CAPTURE_TOTAL_T].valid = 1;
+    } else if (step == CMR_PRE_FLASH_T &&
+               cmr_launch_time[CMR_CAPTURE_TOTAL_T].valid != 1) {
+        CMR_LOGE("flash open with auto focus.total time start form pre flash");
+        cmr_launch_time[CMR_CAPTURE_TOTAL_T].timestamp_start = timestamp_now;
+        cmr_launch_time[CMR_CAPTURE_TOTAL_T].valid = 1;
+    }
+}
+
+void LAUNCHLOGE(enum CAMERA_LAUNCH_STEP step) {
+    char value[PROPERTY_VALUE_MAX];
+
+    if (step >= CMR_LAUNCH_MAX_T)
+        CMR_LOGE("error %d", step);
+
+    property_get("persist.hal.camera.launch.time", value, "false");
+    if (!strcmp(value, "false")) {
+        return;
+    }
+    nsecs_t timestamp_now = systemTime(CLOCK_MONOTONIC);
+
+    if (cmr_launch_time[step].valid == 1) {
+        cmr_launch_time[step].timestamp_result =
+            ns2ms(timestamp_now - cmr_launch_time[step].timestamp_start);
+        LAUNCHPLOG(step);
+        cmr_launch_time[step].valid = 0;
+        if (step == CMR_HAL_SEND_FIRST_FRAME_T &&
+            cmr_launch_time[CMR_OPEN_TOTAL_T].valid == 1) {
+            cmr_launch_time[CMR_OPEN_TOTAL_T].timestamp_result =
+                ns2ms(timestamp_now -
+                      cmr_launch_time[CMR_OPEN_TOTAL_T].timestamp_start);
+            LAUNCHPLOG(CMR_OPEN_TOTAL_T);
+            cmr_launch_time[CMR_OPEN_TOTAL_T].valid = 0;
+        } else if (step == CMR_CLOSE_T &&
+                   cmr_launch_time[CMR_CLOSE_TOTAL_T].valid == 1) {
+            cmr_launch_time[CMR_CLOSE_TOTAL_T].timestamp_result =
+                ns2ms(timestamp_now -
+                      cmr_launch_time[CMR_CLOSE_TOTAL_T].timestamp_start);
+            LAUNCHPLOG(CMR_CLOSE_TOTAL_T);
+            cmr_launch_time[CMR_CLOSE_TOTAL_T].valid = 0;
+        } else if (step == CMR_CAPTURE_HAL_CB_T &&
+                   cmr_launch_time[CMR_CAPTURE_TOTAL_T].valid == 1) {
+            cmr_launch_time[CMR_CAPTURE_TOTAL_T].timestamp_result =
+                ns2ms(timestamp_now -
+                      cmr_launch_time[CMR_CAPTURE_TOTAL_T].timestamp_start);
+            LAUNCHPLOG(CMR_CAPTURE_TOTAL_T);
+            cmr_launch_time[CMR_CAPTURE_TOTAL_T].valid = 0;
+            camera_snapshot_step_statisic(NULL);
+        }
+    }
+}
+
+void LAUNCHPLOG(enum CAMERA_LAUNCH_STEP step) {
+    CMR_LOGE("[Camera_HAL_Time]******[%28s]    cost time:    [%4d ms]",
+             cmr_launch_time[step].step_name,
+             cmr_launch_time[step].timestamp_result);
 }

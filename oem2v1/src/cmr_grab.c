@@ -819,6 +819,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
+    LAUNCHLOGS(CMR_GRAB_CAP_START_T);
 
     num = skip_num;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CAP_SKIP_NUM, &num);
@@ -841,6 +842,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
 exit:
     CMR_LOGI("ret = %ld", ret);
     ATRACE_END();
+    LAUNCHLOGE(CMR_GRAB_CAP_START_T);
     return ret;
 }
 
@@ -887,6 +889,8 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
+    LAUNCHLOGE(CMR_CAPTURE_PATH_START_T);
+    LAUNCHLOGS(CMR_CAPTURE_RECEIVE_FRAME_T);
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_START_CAPTURE, &capture_param);
 
@@ -895,6 +899,7 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
     }
     CMR_LOGI("ret = %ld,capture_status %ld,timestamp=%lld", ret,
              capture_param.type, capture_param.timestamp);
+
     return ret;
 }
 

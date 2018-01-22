@@ -195,6 +195,13 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 #endif
     result_info.msg_type = CAMERA3_MSG_SHUTTER;
 
+    if (stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
+        LAUNCHLOGE(CMR_HAL_SEND_FIRST_FRAME_T);
+    } else if (stream_type == CAMERA_STREAM_TYPE_VIDEO) {
+        LAUNCHLOGE(CMR_VIDEO_RECEIVE_FIRST_FRAME_T);
+        LAUNCHLOGE(CMR_RECORDING_START_T);
+    }
+
     mChannelCB(&result_info, mUserData);
 
 #ifdef CONFIG_CAMERA_EIS
@@ -559,6 +566,7 @@ int SprdCamera3PicChannel::channelCbRoutine(uint32_t frame_number,
     result_info.timestamp = timestamp;
     result_info.buff_status = CAMERA3_BUFFER_STATUS_OK;
     result_info.msg_type = CAMERA3_MSG_SHUTTER;
+    LAUNCHLOGE(CMR_CAPTURE_HAL_CB_T);
 
     mChannelCB(&result_info, mUserData);
 

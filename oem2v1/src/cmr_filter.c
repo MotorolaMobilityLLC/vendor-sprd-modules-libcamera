@@ -186,13 +186,13 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
         camera_save_yuv_to_file(0, IMG_DATA_TYPE_YUV420, width, height, addr);
     }
     CMR_LOGI("w=%d,h=%d,type=%d", width, height, filter_handle->filter_type);
-
+    LAUNCHLOGS(CMR_FILTER_DO_T);
     ret = filter_arithmetic_do(class_handle, addr, width, height);
     if (ret) {
         CMR_LOGE("failed to filter_arithmetic_do");
         goto exit;
     }
-
+    LAUNCHLOGE(CMR_FILTER_DO_T);
     out->dst_frame = in->src_frame;
     out->private_data = in->private_data;
 

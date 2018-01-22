@@ -238,8 +238,8 @@ cmr_int isp_ioctl_for_3dnr(cmr_handle isp_handle, c3dnr_io_info_t *io_info) {
     return ret;
 }
 
-static void read_param_from_file(char* parafile) {
-    //char parafile[] = "/data/misc/cameraserver/bst_tdns_settings_image.txt";
+static void read_param_from_file(char *parafile) {
+    // char parafile[] = "/data/misc/cameraserver/bst_tdns_settings_image.txt";
     FILE *pFile = fopen(parafile, "rt");
     char line[256];
 
@@ -254,40 +254,36 @@ static void read_param_from_file(char* parafile) {
 
             if (!strcmp(ss, "-th0")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &threthold[0][0],
-                       &threthold[0][1], &threthold[0][2],
-                       &threthold[0][3], &threthold[0][4],
-                       &threthold[0][5]);
+                       &threthold[0][1], &threthold[0][2], &threthold[0][3],
+                       &threthold[0][4], &threthold[0][5]);
             } else if (!strcmp(ss, "-th1")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &threthold[1][0],
-                       &threthold[1][1], &threthold[1][2],
-                       &threthold[1][3], &threthold[1][4],
-                       &threthold[1][5]);
+                       &threthold[1][1], &threthold[1][2], &threthold[1][3],
+                       &threthold[1][4], &threthold[1][5]);
             } else if (!strcmp(ss, "-th2")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &threthold[2][0],
-                       &threthold[2][1], &threthold[2][2],
-                       &threthold[2][3], &threthold[2][4],
-                       &threthold[2][5]);
+                       &threthold[2][1], &threthold[2][2], &threthold[2][3],
+                       &threthold[2][4], &threthold[2][5]);
             } else if (!strcmp(ss, "-th3")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &threthold[3][0],
-                       &threthold[3][1], &threthold[3][2],
-                       &threthold[3][3], &threthold[3][4],
-                       &threthold[3][5]);
+                       &threthold[3][1], &threthold[3][2], &threthold[3][3],
+                       &threthold[3][4], &threthold[3][5]);
             } else if (!strcmp(ss, "-sl0")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &slope[0][0],
-                       &slope[0][1], &slope[0][2], &slope[0][3],
-                       &slope[0][4], &slope[0][5]);
+                       &slope[0][1], &slope[0][2], &slope[0][3], &slope[0][4],
+                       &slope[0][5]);
             } else if (!strcmp(ss, "-sl1")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &slope[1][0],
-                       &slope[1][1], &slope[1][2], &slope[1][3],
-                       &slope[1][4], &slope[1][5]);
+                       &slope[1][1], &slope[1][2], &slope[1][3], &slope[1][4],
+                       &slope[1][5]);
             } else if (!strcmp(ss, "-sl2")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &slope[2][0],
-                       &slope[2][1], &slope[2][2], &slope[2][3],
-                       &slope[2][4], &slope[2][5]);
+                       &slope[2][1], &slope[2][2], &slope[2][3], &slope[2][4],
+                       &slope[2][5]);
             } else if (!strcmp(ss, "-sl3")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &slope[3][0],
-                       &slope[3][1], &slope[3][2], &slope[3][3],
-                       &slope[3][4], &slope[3][5]);
+                       &slope[3][1], &slope[3][2], &slope[3][3], &slope[3][4],
+                       &slope[3][5]);
             } else if (!strcmp(ss, "-srx"))
                 sscanf(line, "%s %d", ss, &g_SearchWindow_x);
             else if (!strcmp(ss, "-sry"))
@@ -333,7 +329,8 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     property_get("3dnr_setting_from_file", flag, "0");
     if (!strcmp(flag, "1")) {
-        char cap_parafile[] = "/data/misc/cameraserver/bst_tdns_settings_image_cap.txt";
+        char cap_parafile[] =
+            "/data/misc/cameraserver/bst_tdns_settings_image_cap.txt";
         read_param_from_file(cap_parafile);
     }
 
@@ -405,7 +402,8 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         param.SearchWindow_x = 21;
         param.SearchWindow_y = 21;
     }
-    CMR_LOGD("set SearWindow : %d, %d", param.SearchWindow_x, param.SearchWindow_y);
+    CMR_LOGD("set SearWindow : %d, %d", param.SearchWindow_x,
+             param.SearchWindow_y);
 
     param.low_thr = 100;
     param.ratio = 2;
@@ -723,10 +721,12 @@ void *thread_3dnr(void *p_data) {
     /*CMR_LOGI("add before smallbuf addry:%x , big_buf addry:%x ,
     size:%d,%d", small_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY,
     threednr_handle->width , threednr_handle->height);*/
+    LAUNCHLOGS(CMR_THREEDNR_DO_T);
     ret = threednr_function(&small_buf, &big_buf);
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
+    LAUNCHLOGE(CMR_THREEDNR_DO_T);
     /*CMR_LOGI("add after threednr_function smallbuf addry:%x , big_buf
        addry:%x , size:%d,%d", small_buf.cpu_buffer.bufferY ,
        big_buf.cpu_buffer.bufferY,
@@ -808,7 +808,8 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     property_get("3dnr_setting_from_file", flag, "0");
     if (!strcmp(flag, "1")) {
-        char pre_parafile[] = "/data/misc/cameraserver/bst_tdns_settings_image_pre.txt";
+        char pre_parafile[] =
+            "/data/misc/cameraserver/bst_tdns_settings_image_pre.txt";
         read_param_from_file(pre_parafile);
     }
 
@@ -930,7 +931,8 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
         param.SearchWindow_x = 7;
         param.SearchWindow_y = 7;
     }
-    CMR_LOGD("set SearWindow : %d, %d", param.SearchWindow_x, param.SearchWindow_y);
+    CMR_LOGD("set SearWindow : %d, %d", param.SearchWindow_x,
+             param.SearchWindow_y);
 
     param.low_thr = 100;
     param.ratio = 2;

@@ -593,7 +593,7 @@ enum cmr_v4l2_evt {
     CMR_GRAB_CANCELED_BUF,
     CMR_GRAB_MAX,
 };
-enum channel_num { CHN_0 = 0, CHN_1, CHN_2, CHN_3, CHN_MAX = GRAB_CHANNEL_MAX};
+enum channel_num { CHN_0 = 0, CHN_1, CHN_2, CHN_3, CHN_MAX = GRAB_CHANNEL_MAX };
 
 enum cmr_buf_flag { BUF_FLAG_INIT, BUF_FLAG_RUNNING, BUF_FLAG_MAX };
 
@@ -1013,8 +1013,50 @@ enum video_snapshot_tpye {
     VIDEO_SNAPSHOT_PREVIEW,
     VIDEO_SNAPSHOT_MAX
 };
+/******************************************************************************/
 
-/**********************************************************8*******************/
+/*********************** camera_launch_time ***********************************/
+struct CAMERA_LAUNCH_TIME {
+    cmr_u8 step_name[40];
+    cmr_u32 valid;
+    nsecs_t timestamp_start;
+    cmr_u32 timestamp_result;
+};
+
+enum CAMERA_LAUNCH_STEP {
+    CMR_HAL_INIT_T = 0, // init hal total time
+    CMR_SENSOR_INIT_T,
+    CMR_GRAB_INIT_T,
+    CMR_ISP_INIT_T,
+    CMR_RES_INIT_T,
+    CMR_OEM_OTHERS_INIT_T,
+    CMR_PREV_START_T,
+    CMR_PREV_RECEIVE_FIRST_FRAME_T,
+    CMR_VIDEO_RECEIVE_FIRST_FRAME_T,
+    CMR_HAL_SEND_FIRST_FRAME_T,
+    CMR_OPEN_TOTAL_T,
+    CMR_FLUSH_T,
+    CMR_CLOSE_T, // close total time.
+    CMR_PREV_STOP_T,
+    CMR_ISP_DEINIT_T,
+    CMR_CLOSE_TOTAL_T,
+    CMR_RECORDING_START_T,
+    CMR_CAPTURE_PATH_START_T,
+    CMR_GRAB_CAP_START_T,
+    CMR_CAPTURE_RECEIVE_FRAME_T,
+    CMR_HDR_DO_T = 20,
+    CMR_THREEDNR_DO_T,
+    CMR_FILTER_DO_T,
+    CMR_CAPTURE_HAL_CB_T,
+    CMR_CAPTURE_TOTAL_T,
+    CMR_PRE_FLASH_T,
+    CMR_LAUNCH_MAX_T
+};
+void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step);
+void LAUNCHLOGE(enum CAMERA_LAUNCH_STEP step);
+void LAUNCHPLOG(enum CAMERA_LAUNCH_STEP step);
+
+/******************************************************************************/
 cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect,
                              cmr_uint zoom_level, struct img_size *dst_size);
 

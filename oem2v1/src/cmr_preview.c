@@ -6765,6 +6765,8 @@ cmr_int prev_construct_frame(
                  info->frame_id);
     }
 
+    LAUNCHLOGE(CMR_PREV_RECEIVE_FIRST_FRAME_T);
+    LAUNCHLOGS(CMR_HAL_SEND_FIRST_FRAME_T);
     ATRACE_END();
     return ret;
 }
@@ -10038,7 +10040,7 @@ cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
     valid_num = prev_cxt->video_mem_valid_num;
 
     if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
-        if(prev_cxt->prev_param.video_eb)
+        if (prev_cxt->prev_param.video_eb)
             CMR_LOGE("wrong valid_num %ld", valid_num);
         return CMR_CAMERA_INVALID_PARAM;
     }
@@ -11585,7 +11587,7 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         if (ret)
             CMR_LOGE("failed to get ae info, using default!");
         else
-            ipm_in_param.adgain = adgain_exp_info.adgain/128;
+            ipm_in_param.adgain = adgain_exp_info.adgain / 128;
         CMR_LOGI("SW 3DRN, Get Gain from ISP: %d", ipm_in_param.adgain);
         ret = ipm_transfer_frame(prev_cxt->prev_3dnr_handle, &ipm_in_param,
                                  &imp_out_param);
