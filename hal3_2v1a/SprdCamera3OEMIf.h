@@ -50,9 +50,13 @@ extern "C" {
 #include <hardware/power.h>
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
+#ifdef CONFIG_SPRD_ANDROID_8
+#include <sensor/Sensor.h>
+#else
 #include <gui/Sensor.h>
 #include <gui/SensorManager.h>
 #include <gui/SensorEventQueue.h>
+#endif
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
 #include <utils/Looper.h>
@@ -87,6 +91,13 @@ typedef enum {
     SNAPSHOT_ONLY_MODE,
     SNAPSHOT_VIDEO_MODE,
 } snapshot_mode_type_t;
+
+typedef enum {
+    RATE_STOP = 0,
+    RATE_NORMAL,
+    RATE_FAST,
+    RATE_VERY_FAST,
+} sensor_rate_level_t;
 
 /*
 *  fd:         ion fd
@@ -278,6 +289,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static int gyro_monitor_thread_init(void *p_data);
     static int gyro_monitor_thread_deinit(void *p_data);
     static void *gyro_monitor_thread_proc(void *p_data);
+    static void *gyro_ASensorManager_process(void *p_data);
+    static void *gyro_SensorManager_process(void *p_data);
+    static int gyro_get_data(void *p_data, ASensorEvent *buffer, int n,
+                             struct cmr_af_aux_sensor_info *sensor_info);
 #endif
 
     bool mSetCapRatioFlag;
