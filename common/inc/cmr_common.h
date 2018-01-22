@@ -593,7 +593,7 @@ enum cmr_v4l2_evt {
     CMR_GRAB_CANCELED_BUF,
     CMR_GRAB_MAX,
 };
-enum channel_num { CHN_0 = 0, CHN_1, CHN_2, CHN_3, CHN_MAX };
+enum channel_num { CHN_0 = 0, CHN_1, CHN_2, CHN_3, CHN_MAX = GRAB_CHANNEL_MAX};
 
 enum cmr_buf_flag { BUF_FLAG_INIT, BUF_FLAG_RUNNING, BUF_FLAG_MAX };
 
