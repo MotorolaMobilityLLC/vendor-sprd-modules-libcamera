@@ -1243,7 +1243,7 @@ static void *cmr_grab_thread_proc(void *data) {
             continue;
         } else {
             // normal irq
-            if (op.evt == IMG_TX_ERR ||op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
+            if (op.evt == IMG_TX_ERR  || op.evt == IMG_TIMEOUT ||op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
                 evt_id = cmr_grab_evt_id(op.evt);
                 if (CMR_GRAB_MAX == evt_id) {
                     continue;
