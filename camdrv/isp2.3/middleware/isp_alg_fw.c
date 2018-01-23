@@ -3668,6 +3668,30 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	return ret;
 }
 
+static cmr_int ispalg_awb_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, struct isp_video_start *in_ptr)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 awb_work_mode = 0;
+
+	if (new_mode >= ISP_MODE_ID_PRV_0 && new_mode <= ISP_MODE_ID_PRV_3) {
+		awb_work_mode = 0;
+	} else if(new_mode >= ISP_MODE_ID_CAP_0 && new_mode <= ISP_MODE_ID_CAP_3) {
+		awb_work_mode = 1;
+	} else if(new_mode >= ISP_MODE_ID_VIDEO_0 && new_mode <= ISP_MODE_ID_VIDEO_3) {
+		awb_work_mode = 2;
+	}
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, (void *)&awb_work_mode, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));
+	}
+
+	return ret;
+}
+
 static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -4103,12 +4127,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 
 	ret = ispalg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
-	if (cxt->ops.awb_ops.ioctrl) {
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
-		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_work_mode"));
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
-		ISP_RETURN_IF_FAIL(ret, ("fail to get_awb_pix_cnt"));
-	}
+
+	ret = ispalg_awb_set_work_mode(cxt, cxt->commn_cxt.isp_mode, in_ptr);
+	ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));
 
 	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
