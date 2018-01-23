@@ -25,7 +25,11 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
+#ifdef _SENSOR_RAW_SHARKL3_H_
+#include "parameters_sharkl3/sensor_imx351_raw_param_main.c"
+#else
 #include "parameters_sharkle/sensor_imx351_raw_param_main.c"
+#endif
 
 //#include "parameters/sensor_imx351_otp_truly.h"
 

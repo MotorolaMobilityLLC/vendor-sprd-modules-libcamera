@@ -29,11 +29,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 #include "isp_com.h"
-#ifndef _SENSOR_RAW_PIKE2_H_
-#include "parameters_sharkle/sensor_ov8856_raw_param_main.c"
-#else
-#include "paramerers_4lane/sensor_ov8856_raw_param_main.c"
-#endif
+
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
@@ -794,7 +790,7 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov8856_ops_tab;
-struct sensor_raw_info *s_ov8856_shine_mipi_raw_info_ptr = &s_ov8856_mipi_raw_info;
+struct sensor_raw_info *s_ov8856_shine_mipi_raw_info_ptr = PNULL;//&s_ov8856_mipi_raw_info;
 
 
 /*==============================================================================
