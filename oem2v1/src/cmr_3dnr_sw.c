@@ -281,7 +281,11 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     if ((threednr_handle->width * 10) / threednr_handle->height <= 13) {
         threednr_handle->small_height = CMR_3DNR_4_3_SMALL_HEIGHT;
         threednr_handle->small_width = CMR_3DNR_4_3_SMALL_WIDTH;
-    } else if ((threednr_handle->width * 10) / threednr_handle->height <= 17) {
+    } else if ((threednr_handle->width * 10) / threednr_handle->height <= 18) {
+        threednr_handle->small_height = CMR_3DNR_16_9_SMALL_HEIGHT;
+        threednr_handle->small_width = CMR_3DNR_16_9_SMALL_WIDTH;
+    } else {
+        CMR_LOGE("incorrect 3dnr small image mapping, using 16*9 as the default setting");
         threednr_handle->small_height = CMR_3DNR_16_9_SMALL_HEIGHT;
         threednr_handle->small_width = CMR_3DNR_16_9_SMALL_WIDTH;
     }
