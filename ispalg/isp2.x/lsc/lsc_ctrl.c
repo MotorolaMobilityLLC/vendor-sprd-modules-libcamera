@@ -264,11 +264,13 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 			|| (module_info[4] == 0 && module_info[5] == 2)
 			|| (module_info[4] == 0 && module_info[5] == 3)
 			|| (module_info[4] == 0 && module_info[5] == 4)
+			|| (module_info[4] == 0 && module_info[5] == 5)
 			|| (module_info[4] == 1 && module_info[5] == 0 && (module_info[0] != 0x53 || module_info[1] != 0x50 || module_info[2] != 0x52 || module_info[3] != 0x44))
 			|| (module_info[4] == 2 && module_info[5] == 0)
 			|| (module_info[4] == 3 && module_info[5] == 0)
-			|| (module_info[4] == 4 && module_info[5] == 0)) {
-			ISP_LOGV("lsc otp map v0.4");
+			|| (module_info[4] == 4 && module_info[5] == 0)
+			|| (module_info[4] == 5 && module_info[5] == 0)) {
+			ISP_LOGV("lsc otp map v0.4 or v0.5");
 			if (NULL != lsc_otp_info_ptr && NULL != oc_otp_info_ptr) {
 				lsc_otp_info = &lsc_otp_info_ptr->rdm_info;
 				oc_otp_info = &oc_otp_info_ptr->rdm_info;

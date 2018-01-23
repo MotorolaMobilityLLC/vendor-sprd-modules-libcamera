@@ -852,11 +852,13 @@ cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param * param)
 				|| (module_info[4] == 0 && module_info[5] == 2)
 				|| (module_info[4] == 0 && module_info[5] == 3)
 				|| (module_info[4] == 0 && module_info[5] == 4)
+				|| (module_info[4] == 0 && module_info[5] == 5)
 				|| (module_info[4] == 1 && module_info[5] == 0 && (module_info[0] != 0x53 || module_info[1] != 0x50 || module_info[2] != 0x52 || module_info[3] != 0x44))
 				|| (module_info[4] == 2 && module_info[5] == 0)
 				|| (module_info[4] == 3 && module_info[5] == 0)
-				|| (module_info[4] == 4 && module_info[5] == 0)) {
-				ISP_LOGV("awb otp map v0.4");
+				|| (module_info[4] == 4 && module_info[5] == 0)
+				|| (module_info[4] == 5 && module_info[5] == 0)) {
+				ISP_LOGV("awb otp map v0.4 or v0.5");
 				otp_map_version = 4;
 				awb_rdm_otp_data = (cmr_u8 *) awb_otp_info_ptr->rdm_info.data_addr;
 				awb_rdm_otp_len = awb_otp_info_ptr->rdm_info.data_size;
