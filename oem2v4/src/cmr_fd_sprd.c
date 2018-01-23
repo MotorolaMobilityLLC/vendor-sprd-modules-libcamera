@@ -30,6 +30,7 @@
 #include "sprdfdapi.h"
 #include "facealignapi.h"
 #include "faceattributeapi.h"
+#include <cutils/properties.h>
 
 #define FD_MAX_FACE_NUM 10
 #define FD_RUN_FAR_INTERVAL                                                    \
@@ -46,7 +47,7 @@ struct class_faceattr {
 };
 
 struct class_faceattr_array {
-    int count;          /* face count      */
+    int count;     /* face count      */
     cmr_uint frame_idx; /* The frame when the face attributes are updated */
     struct class_faceattr face[FD_MAX_FACE_NUM + 1]; /* face attricutes */
 };
@@ -585,10 +586,9 @@ static cmr_int fd_get_face_overlap(const struct face_finder_data *i_face1,
     return percent;
 }
 
-static void
-fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
-                    const struct class_faceattr_array *i_faceattr_arr,
-                    struct face_finder_data *io_curr_face) {
+static void fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
+                                const struct class_faceattr_array *i_faceattr_arr,
+                                struct face_finder_data *io_curr_face) {
     cmr_int overlap_thr = 0;
     cmr_uint trust_curr_face = 0;
     cmr_uint prevIdx = 0;
@@ -646,7 +646,8 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
     for (prevIdx = 0; prevIdx < i_face_area_prev->face_count; prevIdx++) {
         const struct face_finder_data *prev_face =
             &(i_face_area_prev->range[prevIdx]);
-        cmr_int overlap_percent = fd_get_face_overlap(prev_face, io_curr_face);
+        cmr_int overlap_percent =
+            fd_get_face_overlap(prev_face, io_curr_face);
 
         if (overlap_percent >= overlap_thr) {
             io_curr_face->sx = prev_face->sx;
@@ -676,7 +677,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
     cmr_int valid_count = 0;
     struct face_finder_data *face_ptr = NULL;
     const struct class_faceattr_array *curr_faceattr =
-        (i_curr_frame_idx == i_faceattr_arr->frame_idx) ? i_faceattr_arr : NULL;
+         (i_curr_frame_idx == i_faceattr_arr->frame_idx) ? i_faceattr_arr : NULL;
 
     face_num = FdGetFaceCount(hDT);
     for (face_idx = 0; face_idx < face_num; face_idx++) {
@@ -738,9 +739,21 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
         /* set smile detection result */
         {
             const cmr_int app_smile_thr = 30;  // smile threshold in APP
-            const cmr_int algo_smile_thr = 10; // smile threshold by algorithm;
+            //const cmr_int algo_smile_thr = 10; // smile threshold by algorithm;
                                                // it is a tuning parameter, must
                                                // be in [1, 50]
+            char algo_smile_thr_char[PROPERTY_VALUE_MAX];
+            property_get("persist.sys.camera.smile.thr", algo_smile_thr_char, "1");
+            cmr_int algo_smile_threshold = atoi(algo_smile_thr_char);
+            if (algo_smile_threshold <= 0 || algo_smile_threshold > 50) {
+               CMR_LOGW("algo smile threadhold is %d out of range: [1, 50], "
+                        "set to defualt value 1.",
+                        algo_smile_threshold);
+               algo_smile_threshold = 1;
+            }
+            CMR_LOGV("get algo smile threadhold:%d", algo_smile_threshold);
+            const cmr_int algo_smile_thr = algo_smile_threshold;
+
             cmr_int i = 0;
             for (i = 0; i < i_faceattr_arr->count; i++) {
                 const struct class_faceattr *fattr = &(i_faceattr_arr->face[i]);
@@ -932,7 +945,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.src_frame.size.height;
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
-        CMR_LOGI("%dx%d, face_num=%ld, time=%d ms",
+        CMR_LOGI("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms",
                  class_handle->frame_in.src_frame.size.width,
                  class_handle->frame_in.src_frame.size.height,
                  class_handle->frame_out.face_area.face_count, duration);
