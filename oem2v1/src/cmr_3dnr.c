@@ -309,7 +309,10 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     CMR_LOGI("E");
     CHECK_HANDLE_VALID(threednr_handle);
 
+    oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
+    cam_cxt = (struct camera_context *)oem_handle;
     threednr_handle->is_stop = 1;
+
     threednr_cancel();
     CMR_LOGI("OK to threednr_cancel");
 
@@ -322,8 +325,6 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     CMR_LOGI("OK to threednr_deinit");
 
     sem_wait(&threednr_handle->sem_3dnr);
-    oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
-    cam_cxt = (struct camera_context *)oem_handle;
 
     if (cam_cxt->hal_free == NULL) {
         CMR_LOGE("cam_cxt->hal_free is NULL");
@@ -356,10 +357,11 @@ exit:
     }
 
     sem_destroy(&threednr_handle->sem_3dnr);
-    if (NULL != threednr_handle)
-        free(threednr_handle);
 
     sem_post(&cam_cxt->threednr_proc_sm);
+
+    if (NULL != threednr_handle)
+        free(threednr_handle);
 
     CMR_LOGI("X");
 
