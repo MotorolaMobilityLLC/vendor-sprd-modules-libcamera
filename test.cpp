@@ -1328,7 +1328,7 @@ static void eng_tst_camera_startpreview(void) {
     /*  */
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_PREVIEW_SIZE,
              (cmr_uint)&preview_size);
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
+#if defined(CONFIG_CAMERA_ISP_DIR_3) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_CAF);
 #endif
     // SET_PARM(oem_handle , CAMERA_PARAM_VIDEO_SIZE     ,
