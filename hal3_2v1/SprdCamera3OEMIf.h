@@ -275,8 +275,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #endif
     void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
 
-    int mBurstVideoSnapshot;
-    int mVideoParameterSetFlag;
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     // sw 3dnr solution used
@@ -458,7 +456,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int reprocessYuvForJpeg();
     int reprocessYuvForJpeg(frm_info *frm_data);
     int VideoTakePicture();
-    int setVideoSnapshotParameter();
     int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);
 
     int timer_stop();

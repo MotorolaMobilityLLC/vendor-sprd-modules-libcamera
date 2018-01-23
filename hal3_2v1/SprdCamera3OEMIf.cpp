@@ -271,12 +271,13 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
       miSBindcorePreviewFrame(false), mBindcorePreivewFrameCount(0),
-      mHDRPowerHint(0), m3DNRPowerHint(0), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false),
-      mEisVideoInit(false), mGyroNum(0), mSprdEisEnabled(false),
-      mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
-      mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
-      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFixedFpsEnabled(0), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
+      mHDRPowerHint(0), m3DNRPowerHint(0), mGyroInit(0), mGyroExit(0),
+      mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
+      mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
+      mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
+      mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
+      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
+      mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mLastCafDoneTime(0)
 
@@ -478,8 +479,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslChannelStatus = 1;
     mZSLQueue.clear();
 
-    mBurstVideoSnapshot = 0;
-    mVideoParameterSetFlag = false;
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
 
@@ -655,17 +654,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
 #endif
 
         ret = startPreviewInternal();
-        if ((mVideoSnapshotType == 1) &&
-            (mCaptureWidth != 0 && mCaptureHeight != 0) &&
-            mVideoParameterSetFlag == 0) {
-            mPicCaptureCnt = 1;
-            if (mVideoCopyFromPreviewFlag) {
-                HAL_LOGV("no need to setVideoSnapshotParameter");
-            } else {
-                ret = setVideoSnapshotParameter();
-            }
-            mVideoParameterSetFlag = true;
-        }
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
@@ -697,10 +685,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
                 ret = zslTakePicture();
             }
         } else if (mTakePictureMode == SNAPSHOT_VIDEO_MODE) {
-            if (mVideoParameterSetFlag == false &&
-                mBurstVideoSnapshot == false) {
-                setVideoSnapshotParameter();
-            }
             mVideoSnapshotFrameNum = frame_number;
             ret = VideoTakePicture();
         }
@@ -728,7 +712,6 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
         stopPreviewInternal();
-        mVideoParameterSetFlag = false;
         mSlowPara.rec_timestamp = 0;
         mSlowPara.last_frm_timestamp = 0;
         mIsRecording = false;
@@ -1208,47 +1191,9 @@ int SprdCamera3OEMIf::VideoTakePicture() {
         deinitCapture(mIsPreAllocCapMem);
     }
 
-    mSetting->getJPEGTag(&jpgInfo);
-    HAL_LOGD("JPEG quality = %d", jpgInfo.quality);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
-             jpgInfo.quality);
-    HAL_LOGD("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
-             jpgInfo.thumbnail_quality);
-
     if (isCapturing()) {
         WaitForCaptureDone();
     }
-    mVideoParameterSetFlag = false;
-    if (mBurstVideoSnapshot == true) {
-        mBurstVideoSnapshot = false;
-        setVideoSnapshotParameter();
-    }
-    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
-    mVideoShotPushFlag = 1;
-    mVideoShotWait.signal();
-    print_time();
-
-exit:
-    HAL_LOGI("X");
-    return NO_ERROR;
-}
-
-int SprdCamera3OEMIf::setVideoSnapshotParameter() {
-    HAL_LOGI("E");
-    GET_START_TIME;
-    print_time();
-    int result = 0;
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        goto exit;
-    }
-    if (SPRD_ERROR == mCameraState.capture_state) {
-        HAL_LOGE("in error status, deinit capture at first ");
-        deinitCapture(mIsPreAllocCapMem);
-    }
-
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
 
     LENS_Tag lensInfo;
     mSetting->getLENSTag(&lensInfo);
@@ -1258,6 +1203,21 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter() {
         HAL_LOGD("lensInfo.focal_length = %f", lensInfo.focal_length);
     }
 
+    struct img_size jpeg_thumb_size;
+    mSetting->getJPEGTag(&jpgInfo);
+    HAL_LOGD("JPEG quality = %d", jpgInfo.quality);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
+             jpgInfo.quality);
+    HAL_LOGD("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
+             jpgInfo.thumbnail_quality);
+    jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+    jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+    HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width,
+             jpeg_thumb_size.height);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
+             (cmr_uint)&jpeg_thumb_size);
+
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -1265,7 +1225,11 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter() {
         goto exit;
     }
 
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+    mVideoShotPushFlag = 1;
+    mVideoShotWait.signal();
     print_time();
+
 exit:
     HAL_LOGI("X");
     return NO_ERROR;
@@ -2017,11 +1981,10 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         // 3dnr video recording on
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
             fps_param.min_fps = 5;
-            if(mUsingSW3DNR) {
+            if (mUsingSW3DNR) {
                 HAL_LOGD("sw 3dnr mode, adjust max fps to 20");
                 fps_param.max_fps = 20;
-            }
-            else
+            } else
                 fps_param.max_fps = 30;
         }
         // to set recording fps by setprop
@@ -3830,7 +3793,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-        if (mHDRPowerHint || m3DNRPowerHint || getMultiCameraMode() == MODE_BLUR ||
+        if (mHDRPowerHint || m3DNRPowerHint ||
+            getMultiCameraMode() == MODE_BLUR ||
             getMultiCameraMode() == MODE_BOKEH) {
             setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_N);
         } else {
@@ -6001,7 +5965,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         } else {
             mHDRPowerHint = 0;
         }
-        if ((mUsingSW3DNR == true) && (CAMERA_SCENE_MODE_NIGHT == drvSceneMode)) {
+        if ((mUsingSW3DNR == true) &&
+            (CAMERA_SCENE_MODE_NIGHT == drvSceneMode)) {
             m3DNRPowerHint = 1;
         } else {
             m3DNRPowerHint = 0;
@@ -9849,9 +9814,8 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
         ASensorManager_createEventQueue(mSensorManager, mLooper, 0, NULL, NULL);
 
     if (accelerometerSensor != NULL) {
-        if (ASensorEventQueue_registerSensor(sensorEventQueue,
-                                             accelerometerSensor, GsensorRate,
-                                             0) < 0) {
+        if (ASensorEventQueue_registerSensor(
+                sensorEventQueue, accelerometerSensor, GsensorRate, 0) < 0) {
             HAL_LOGE(
                 "Unable to register sensorUnable to register sensor %d with "
                 "rate %d and report latency %d" PRId64 "",

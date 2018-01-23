@@ -41,7 +41,7 @@
 using namespace android;
 
 #ifndef UINT32_MAX
-#define UINT32_MAX             (4294967295U)
+#define UINT32_MAX (4294967295U)
 #endif
 
 namespace sprdcamera {
@@ -176,13 +176,12 @@ class SprdCamera3HWI {
     bool mIsSkipFrm;
 
     static unsigned int mCameraSessionActive;
-    static const int64_t kPendingTime = 1000000;       // 1ms
+    static const int64_t kPendingTime = 1000000;        // 1ms
     static const uint64_t kPendingTimeOut = 5000000000; // 5s
     bool mFlush;
 
     SprdCamera3RegularChannel *mRegularChan;
     bool mFirstRegularRequest;
-    bool mVideoSnapshotHint;
     // int32_t		mRegularWaitBuffNum;
 
     SprdCamera3PicChannel *mPicChan;
