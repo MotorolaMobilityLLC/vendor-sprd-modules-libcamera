@@ -158,7 +158,7 @@ cmr_s32 isp_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 
 #if __WORDSIZE == 64
 	buf_addr = ((cmr_uint) lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
-	weight_tab = (cmr_s16 *)((cmr_uint) lens_info->data_ptr[1] << 32) | lens_info->data_ptr[0];
+	weight_tab = (cmr_s16 *)(((cmr_uint) lens_info->data_ptr[1] << 32) | lens_info->data_ptr[0]);
 #else
 	buf_addr = lens_info->buf_addr[0];
 	weight_tab = (cmr_s16 *)lens_info->data_ptr[0];
