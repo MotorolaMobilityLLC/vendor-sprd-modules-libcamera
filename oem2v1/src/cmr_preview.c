@@ -11552,8 +11552,9 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     struct ipm_frame_in ipm_in_param;
     struct ipm_frame_out imp_out_param;
     struct prev_threednr_info threednr_info;
-    prev_cxt = &handle->prev_cxt[camera_id];
+    struct isp_adgain_exp_info adgain_exp_info;
 
+    prev_cxt = &handle->prev_cxt[camera_id];
     if (!prev_cxt->prev_3dnr_handle) {
         CMR_LOGE("3dnr closed");
         ret = CMR_CAMERA_INVALID_PARAM;
@@ -11579,6 +11580,13 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         threednr_info.camera_id = (unsigned long)camera_id;
         threednr_info.data = *frm_info;
         threednr_info.framtype = *frame_type;
+        ipm_in_param.adgain = 16;
+        ret = handle->ops.get_tuning_info(handle->oem_handle, &adgain_exp_info);
+        if (ret)
+            CMR_LOGE("failed to get ae info, using default!");
+        else
+            ipm_in_param.adgain = adgain_exp_info.adgain/128;
+        CMR_LOGI("SW 3DRN, Get Gain from ISP: %d", ipm_in_param.adgain);
         ret = ipm_transfer_frame(prev_cxt->prev_3dnr_handle, &ipm_in_param,
                                  &imp_out_param);
     } else {

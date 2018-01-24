@@ -1,5 +1,4 @@
 /*add RET_3DNR_CANCELED state*/
-
 #ifndef _3DNR_INTERFACE_H
 #define _3DNR_INTERFACE_H
 
@@ -73,9 +72,14 @@ typedef struct c3dnr_param_info
     int preview_cpyBuf;
 }c3dnr_param_info_t;
 
+typedef struct c3dnr_pre_inparam
+{
+    uint16_t gain;
+}c3dnr_pre_inparam_t;
+
 int threednr_init(c3dnr_param_info_t *param);
 int threednr_function(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image);
-int threednr_function_pre(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image , c3dnr_buffer_t *video_image);
+int threednr_function_pre(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image , c3dnr_buffer_t *video_image , c3dnr_pre_inparam_t* inputparam);
 int threednr_deinit();
 int threednr_callback();
 
