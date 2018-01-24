@@ -695,8 +695,6 @@ ov8856_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     void *pri_data = NULL;
 
     ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
-    if (SENSOR_SUCCESS != ret)
-        return SENSOR_FAIL;
     sns_drv_cxt = *sns_ic_drv_handle;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
@@ -705,6 +703,14 @@ ov8856_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+
+    ov8856_drv_write_frame_length(
+        sns_drv_cxt, &ov8856_aec_info,
+        sns_drv_cxt->sensor_ev_info.preview_framelength);
+    ov8856_drv_write_gain(sns_drv_cxt, &ov8856_aec_info,
+                          sns_drv_cxt->sensor_ev_info.preview_gain);
+    ov8856_drv_write_shutter(sns_drv_cxt, &ov8856_aec_info,
+                             sns_drv_cxt->sensor_ev_info.preview_shutter);
 
     sensor_ic_set_match_module_info(sns_drv_cxt,
                                     ARRAY_SIZE(s_ov8856_module_info_tab),
