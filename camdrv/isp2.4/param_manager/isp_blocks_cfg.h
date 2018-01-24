@@ -108,6 +108,16 @@ struct isp_binning_statistic_info {
 	struct isp_size binning_size;
 };
 
+#define ISP_NLC_POINTER_NUM 29
+#define ISP_NLC_POINTER_L_NUM 27
+
+struct isp_blc_offset {
+	cmr_u16 r;
+	cmr_u16 gr;
+	cmr_u16 gb;
+	cmr_u16 b;
+};
+
 struct isp_blc_param {
 	struct isp_sample_point_info cur_idx;
 	struct isp_dev_blc_info cur;

@@ -163,16 +163,6 @@ extern "C" {
 		cmr_s8 *sensor_name;
 	} isp_ctrl_context;
 
-#define ISP_NLC_POINTER_NUM 29
-#define ISP_NLC_POINTER_L_NUM 27
-
-	struct isp_blc_offset {
-		cmr_u16 r;
-		cmr_u16 gr;
-		cmr_u16 gb;
-		cmr_u16 b;
-	};
-
 	struct afl_ctrl_proc_out {
 		cmr_int flag;
 		cmr_int cur_flicker;

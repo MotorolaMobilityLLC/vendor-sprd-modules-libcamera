@@ -64,6 +64,7 @@ static const char *focus_state_str[] = {
 
 static char AFlog_buffer[2048] = { 0 };
 
+#ifndef CONFIG_ISP_2_5
 static struct af_iir_nr_info_u af_iir_nr[3] = {
 	{							// weak
 	 .iir_nr_en = 1,
@@ -127,6 +128,7 @@ static struct af_enhanced_module_info_u af_enhanced_module = {
 				  3, 5, -3, -5, 0, 5, -3, -5, 3,
 				  0, -8, 0, -8, 16, 0, 0, 0, 0},
 };
+#endif
 
 char libafv1_path[][20] = {
 	"libspafv1.so",
@@ -173,11 +175,14 @@ static void afm_disable(af_ctrl_t * af)
 
 static void afm_setup(af_ctrl_t * af)
 {
+#ifndef CONFIG_ISP_2_5
 	struct af_enhanced_module_info_u afm_enhanced_module;
+#endif
 	cmr_u32 mode = 1;
 
 	af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 	af->cb_ops.af_monitor_mode(af->caller, (void *)&mode);
+#ifndef CONFIG_ISP_2_5
 	af->cb_ops.af_monitor_iir_nr_cfg(af->caller, (void *)&(af_iir_nr[af->afm_tuning.iir_level]));
 
 	memcpy(&(afm_enhanced_module), &af_enhanced_module, sizeof(struct af_enhanced_module_info_u));
@@ -186,6 +191,7 @@ static void afm_setup(af_ctrl_t * af)
 	afm_enhanced_module.fv_enhanced_mode[0] = af->afm_tuning.fv0_e;
 	afm_enhanced_module.fv_enhanced_mode[1] = af->afm_tuning.fv1_e;
 	af->cb_ops.af_monitor_module_cfg(af->caller, (void *)&(afm_enhanced_module));
+#endif
 }
 
 static cmr_u32 afm_get_win_num(struct afctrl_init_in *input_param)
@@ -2956,6 +2962,14 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
+
+#ifdef CONFIG_ISP_2_5
+		for (i = 0; i < 10; i++) {
+			af->af_fv_val.af_fv0[i] = af_fv_val[6 * (i >> 1) + (i & 0x01) + 4];
+			af->af_fv_val.af_fv1[i] = af_fv_val[6 * (i >> 1) + (i & 0x01) + 2];
+		}
+#endif
+
 #ifdef CONFIG_ISP_2_4
 		for (i = 0; i < 10; i++) {
 			cmr_u64 high = af_fv_val[95 + i / 2];
@@ -2966,8 +2980,9 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			high = (i & 0x01) ? ((high & 0x0F000000) << 12) : ((high & 0x00000F00) << 24);
 			af->af_fv_val.af_fv1[i] = af_fv_val[31 + i * 3] + high;	// soble9x9 g channels
 		}
-#else							// ISP2.1/2.2/2.3 share same AFM filter,
-		// so share same FV statistic format
+#endif
+
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3)// ISP2.1/2.2/2.3 share same AFM filter,
 		for (i = 0; i < 10; i++) {
 			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
 			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);

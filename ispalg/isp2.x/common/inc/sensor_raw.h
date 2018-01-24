@@ -88,6 +88,14 @@ enum ISP_BLK_ID {
 	ISP_BLK_CSS = 0x4053,
 	ISP_BLK_UV_PREFILTER = 0x4054,	// ISP_BLK_PREF , prfy
 
+	// sharkl3
+	DCAM_BLK_PDAF_EXTRACT = 0x5000,
+	DCAM_BLK_BPC = 0x5001,
+	DCAM_BLK_RGB_AFM = 0x5002,
+	DCAM_BLK_NLM = 0x5003,
+	DCAM_BLK_3DNR_PRE = 0x5004,
+	DCAM_BLK_3DNR_CAP = 0x5005,
+
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };
@@ -130,6 +138,8 @@ enum isp_smart_id {
 
 #ifdef CONFIG_CAMERA_ISP_DIR_2_4
 #include "sensor_raw_pike2.h"
+#elif defined CONFIG_ISP_2_5
+#include "sensor_raw_sharkl3.h"
 #else
 #include "sensor_raw_isp2.1.h"
 #endif

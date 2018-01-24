@@ -44,6 +44,9 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
 ISP_DIR := ../../camdrv/isp2.4
 ISP_HW_VER = 2v4
 endif
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
+ISP_DIR := ../../camdrv/isp2.5
+endif
 
 
 LOCAL_C_INCLUDES := \
