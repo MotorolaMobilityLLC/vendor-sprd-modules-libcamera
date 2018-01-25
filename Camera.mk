@@ -92,6 +92,18 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
+TARGET_BOARD_CAMERA_ISP_3AMOD:=1  # TBD only test
+ISP_HW_VER = 2v1
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.5
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
+	$(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 ISP_HW_VER = 3v0
 LOCAL_C_INCLUDES += \

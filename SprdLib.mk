@@ -17,6 +17,10 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
+LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamisp
 LOCAL_CFLAGS += -DCONFIG_ISP_3
