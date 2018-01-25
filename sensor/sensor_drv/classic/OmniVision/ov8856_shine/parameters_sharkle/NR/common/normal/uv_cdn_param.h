@@ -151,7 +151,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x003C,
+	0x002D,
 	/*bypass*/
 	0x00000000,
 }

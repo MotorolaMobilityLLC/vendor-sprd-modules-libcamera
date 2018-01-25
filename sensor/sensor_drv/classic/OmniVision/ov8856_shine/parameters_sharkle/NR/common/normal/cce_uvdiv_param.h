@@ -97,7 +97,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -197,7 +197,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param2.&BasePoint=1&*/
@@ -297,7 +297,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param3.&BasePoint=1&*/
@@ -397,7 +397,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -418,13 +418,13 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x50,
+		0x5A,
 		/*chroma_min_l*/
-		0x0A,
+		0x19,
 		/*chroma_max_h*/
 		0x7F,
 		/*chroma_max_l*/
-		0x7F,
+		0x73,
 
 	},
 	/*u_th_1*/
@@ -474,9 +474,9 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x32,
+		0x36,
 		/*ratio_1*/
-		0x32,
+		0x36,
 		/*ratio*/
 		0x32,
 		/*ratio_uv_min*/
@@ -518,13 +518,13 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x7F,
+		0x5A,
 		/*chroma_min_l*/
-		0x7F,
+		0x19,
 		/*chroma_max_h*/
 		0x7F,
 		/*chroma_max_l*/
-		0x7F,
+		0x73,
 
 	},
 	/*u_th_1*/
@@ -578,7 +578,7 @@
 		/*ratio_1*/
 		0x30,
 		/*ratio*/
-		0x38,
+		0x30,
 		/*ratio_uv_min*/
 		0x3D,
 		/*ratio_y_min0*/
@@ -618,13 +618,13 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x7F,
+		0x5F,
 		/*chroma_min_l*/
-		0x7F,
+		0x1E,
 		/*chroma_max_h*/
 		0x7F,
 		/*chroma_max_l*/
-		0x7F,
+		0x6E,
 
 	},
 	/*u_th_1*/
@@ -674,11 +674,11 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x30,
+		0x2D,
 		/*ratio_1*/
-		0x30,
+		0x2D,
 		/*ratio*/
-		0x3E,
+		0x28,
 		/*ratio_uv_min*/
 		0x3A,
 		/*ratio_y_min0*/
@@ -718,21 +718,21 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x78,
+		0x5A,
 		/*chroma_min_l*/
-		0x0F,
+		0x14,
 		/*chroma_max_h*/
 		0x7F,
 		/*chroma_max_l*/
-		0x7F,
+		0x6E,
 
 	},
 	/*u_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0x92,
+		0xF4,
 		/*uvdiv_th_h*/
-		0x6E,
+		0x0C,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -741,9 +741,9 @@
 	/*u_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xCE,
+		0xFB,
 		/*uvdiv_th_h*/
-		0x32,
+		0x05,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -752,9 +752,9 @@
 	/*v_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xCE,
+		0xFB,
 		/*uvdiv_th_h*/
-		0x32,
+		0x05,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -763,9 +763,9 @@
 	/*v_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0x92,
+		0xF4,
 		/*uvdiv_th_h*/
-		0x6E,
+		0xF4,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -778,9 +778,9 @@
 		/*ratio_1*/
 		0x2D,
 		/*ratio*/
-		0x30,
+		0x2A,
 		/*ratio_uv_min*/
-		0x38,
+		0x30,
 		/*ratio_y_min0*/
 		0x30,
 		/*ratio_y_min1*/

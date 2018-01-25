@@ -574,7 +574,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x1C,
+				0x08,
 				/*ee_r3_cfg*/
 				0x32,
 				/*reserved*/

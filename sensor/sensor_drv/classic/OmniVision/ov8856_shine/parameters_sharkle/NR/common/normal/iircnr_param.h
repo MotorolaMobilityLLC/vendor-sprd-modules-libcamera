@@ -695,13 +695,13 @@
 			0x0014,0x0022,0x0022,0x0022,0x0022,0x0022,0x0022,0x0022/*0-7*/
 		},
 		/*iircnr_alpha_hl_diff_u*/
-		0x01F4,
+		0x0000,
 		/*iircnr_alpha_hl_diff_v*/
-		0x01F4,
+		0x0000,
 		/*iircnr_alpha_low_u*/
-		0x00003DF8,
+		0x00003FFF,
 		/*iircnr_alpha_low_v*/
-		0x00003DF8,
+		0x00003FFF,
 		/*cnr_uv_thr2*/
 		{
 			/*[0x0]*/
@@ -773,7 +773,7 @@
 	/*css_lum_thr*/
 	{
 		/*iircnr_css_lum_thr*/
-		0x000000C8,
+		0x000000B4,
 
 	},
 	/*bypass*/

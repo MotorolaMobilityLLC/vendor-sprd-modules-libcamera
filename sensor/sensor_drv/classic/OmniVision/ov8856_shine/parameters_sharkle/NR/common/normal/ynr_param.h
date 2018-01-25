@@ -703,10 +703,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x07,
+			0x08,
 			/*eurodist*/
 			{
-				0x0F,0x04,0x01/*0-2*/
+				0x0F,0x04,0x02/*0-2*/
 			},
 			/*reserved*/
 			{

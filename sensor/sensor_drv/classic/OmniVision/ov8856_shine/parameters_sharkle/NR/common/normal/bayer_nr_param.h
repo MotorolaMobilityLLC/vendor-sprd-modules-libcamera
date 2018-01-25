@@ -297,9 +297,9 @@
 	/*imp_opt_bypass*/
 	0x01,
 	/*vst_bypass*/
-	0x00,
+	0x01,
 	/*nlm_bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -5164,11 +5164,11 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x01F4,
+						0x02BC,
 						/*addback0*/
-						0x0020,
+						0x0014,
 						/*addback1*/
-						0x0020,
+						0x0014,
 						/*addback_clip_max*/
 						0x0006,
 						/*addback_clip_min*/
@@ -5182,11 +5182,11 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0258,
+						0x02EE,
 						/*addback0*/
-						0x0024,
+						0x0016,
 						/*addback1*/
-						0x0024,
+						0x0016,
 						/*addback_clip_max*/
 						0x0004,
 						/*addback_clip_min*/
@@ -5200,11 +5200,11 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x028A,
+						0x0320,
 						/*addback0*/
-						0x0024,
+						0x0019,
 						/*addback1*/
-						0x0024,
+						0x0019,
 						/*addback_clip_max*/
 						0x0006,
 						/*addback_clip_min*/
@@ -5427,13 +5427,13 @@
 		}
 	},
 	/*nlm_den_strenth*/
+	0x0A,
+	/*imp_opt_bypass*/
 	0x00,
 	/*imp_opt_bypass*/
 	0x01,
-	/*vst_bypass*/
-	0x00,
 	/*nlm_bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param18.&BasePoint=1&*/
