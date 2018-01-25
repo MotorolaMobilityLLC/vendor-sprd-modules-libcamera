@@ -241,13 +241,14 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         cpp_cap.src_format = frame_params->input_format;
         cpp_cap.dst_size = frame_params->output_size;
         cpp_cap.dst_format = frame_params->output_format;
-        cpp_cap.is_supported = (void *)&is_hw_scaling;
+        cpp_cap.is_supported = is_hw_scaling;
 
         //check if cpp hw support the requested size
         ret = ioctl(file->handle, SPRD_CPP_IO_SCALE_CAPABILITY, &cpp_cap);
         if (ret) {
             CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_SIZE failed");
         }
+	is_hw_scaling = cpp_cap.is_supported;
 
         while ((restart_cnt < SCALE_RESTART_SUM) &&
                (CMR_CAMERA_SUCCESS == file->err_code)) {
