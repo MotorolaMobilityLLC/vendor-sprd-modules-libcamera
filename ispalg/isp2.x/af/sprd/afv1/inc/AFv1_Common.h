@@ -1079,6 +1079,13 @@ typedef struct _af_stat_data_s {
 	cmr_u64 *p_stat;
 } _af_stat_data_t;
 
+typedef struct _IO_Face_area_s {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+} IO_Face_area_t;
+
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
@@ -1086,6 +1093,8 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
 	 cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
 	 cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
+	 cmr_u8(*clear_fd_stop_counter) (cmr_u32 * FD_count, void *cookie);
+	 cmr_u8(*face_detection_get_data) (IO_Face_area_t * FD_IO, void *cookie);
 	 cmr_u8(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
 	 cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
 	 cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
@@ -1257,7 +1266,10 @@ typedef struct _AF_Data {
 	le_dac_info le_dac_info_his[MAX_TIME_SAMPLE_NUM];
 	cmr_u32 le_dac_info_his_cont;
 	// SharkLE Only --
-	cmr_u32 reserved[500];
+	cmr_u32 AF_error_code;
+	IO_Face_area_t FD_info[10];
+	cmr_u32 FD_stop_counter;
+	cmr_u32 reserved[458];
 	AF_Ctrl_Ops AF_Ops;
 
 } AF_Data;

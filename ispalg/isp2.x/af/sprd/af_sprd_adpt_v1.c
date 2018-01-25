@@ -39,6 +39,10 @@
 #define  MIN( _x, _y ) ( ((_x) < (_y)) ? (_x) : (_y) )
 #endif
 
+#ifndef ABS_AB
+#define ABS_AB(a, b)    ((a)>(b)? (a)-(b): (b)-(a))
+#endif
+
 static const char *state_string[] = {
 	"manual",
 	"normal_af",
@@ -714,6 +718,32 @@ static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, void *cookie)
 	return 0;
 }
 
+static cmr_u8 if_clear_fd_stop_counter(cmr_u32 * FD_count, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+
+	*FD_count = af->face_trigger_area.counter_face_force_stop;
+	af->face_trigger_area.counter_face_force_stop = 0;
+
+	return 0;
+}
+
+static cmr_u8 if_face_detection_get_data(IO_Face_area_t * FD, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+	cmr_u8 i = 0;
+
+	while (i < af->face_info.face_num) {
+		FD[i].sx = af->face_info.face_info[i].sx;
+		FD[i].sy = af->face_info.face_info[i].sy;
+		FD[i].ex = af->face_info.face_info[i].ex;
+		FD[i].ey = af->face_info.face_info[i].ey;
+		i++;
+	}
+
+	return 0;
+}
+
 static cmr_u8 if_phase_detection_get_data(pd_algo_result_t * pd_result, void *cookie)
 {
 	af_ctrl_t *af = cookie;
@@ -1023,6 +1053,8 @@ static void *af_init(af_ctrl_t * af)
 	AF_Ops.set_wins = if_set_wins;
 	AF_Ops.get_win_info = if_get_win_info;
 	AF_Ops.lock_ae_partial = if_lock_partial_ae;
+	AF_Ops.face_detection_get_data = if_face_detection_get_data;
+	AF_Ops.clear_fd_stop_counter = if_clear_fd_stop_counter;
 
 	// SharkLE Only ++
 	AF_Ops.set_pulse_line = if_af_set_pulse_line;
@@ -1492,6 +1524,51 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	notify_start(af, AF_FOCUS_FAF);
 }
 
+static cmr_u8 check_force_retrigger(af_ctrl_t * af)
+{
+	double diff_x = 0.0, diff_y = 0.0;	//, diff_area = 0.0;
+	double diff_x_ratio = 0.0, diff_y_ratio = 0.0;	//, diff_area_ratio = 0.0;
+	cmr_u8 i = 0, max_index = 0;
+	cmr_u32 area = 0, max_area = 0, sx = 0, sy = 0, ex = 0, ey = 0;
+	struct afctrl_face_info *face = &(af->face_info);
+
+	if (STATE_FAF == af->state && AF_SEARCHING == af->focus_state && (af->trigger_source_type & AF_DATA_FD)) {
+		while (i < af->face_info.face_num) {	// pick face of maximum size
+			area = (face->face_info[i].ex - face->face_info[i].sx) * (face->face_info[i].ey - face->face_info[i].sy);
+			if (max_area < area) {
+				max_index = i;
+				max_area = area;
+			}
+			i++;
+		}
+
+		sx = af->face_info.face_info[max_index].sx;
+		ex = af->face_info.face_info[max_index].ex;
+		sy = af->face_info.face_info[max_index].sy;
+		ey = af->face_info.face_info[max_index].ey;
+
+		diff_x = ABS_AB(((sx) + (ex)), ((af->face_trigger_area.sx + af->face_trigger_area.ex)));
+		diff_y = ABS_AB(((sy) + (ey)), ((af->face_trigger_area.sy + af->face_trigger_area.ey)));
+		//diff_area = diff_x * diff_y;
+
+		ISP_LOGV("check_force_retrigger [ethan]IOin dx=%f, dy=%f, sx=%d, sy=%d, ex=%d, ey=%d", diff_x, diff_y, af->face_info.face_info[max_index].sx, af->face_info.face_info[max_index].sy,
+				 af->face_info.face_info[max_index].ex, af->face_info.face_info[max_index].ey);
+		ISP_LOGV("check_force_retrigger [ethan]rec sx=%d, sy=%d, ex=%d, ey=%d", af->face_trigger_area.sx, af->face_trigger_area.sy, af->face_trigger_area.ex, af->face_trigger_area.ey);
+		diff_x_ratio = (diff_x / 2) / ((af->face_trigger_area.ex - af->face_trigger_area.sx) + 1);
+		diff_y_ratio = (diff_y / 2) / ((af->face_trigger_area.ey - af->face_trigger_area.sy) + 1);
+
+		if (diff_x_ratio > 0.25 || diff_y_ratio > 0.25) {
+			af->face_trigger_area.sx = af->face_info.face_info[max_index].sx;
+			af->face_trigger_area.ex = af->face_info.face_info[max_index].ex;
+			af->face_trigger_area.sy = af->face_info.face_info[max_index].sy;
+			af->face_trigger_area.ey = af->face_info.face_info[max_index].ey;
+
+			return AFV1_TRUE;
+		}
+	}
+	return AFV1_FALSE;
+}
+
 static cmr_s32 faf_process_frame(af_ctrl_t * af)
 {
 	cmr_u32 alg_mode;
@@ -1645,6 +1722,10 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
 				win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
 				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex, win.win_pos[0].ey);
+				af->face_trigger_area.sx = win.win_pos[0].sx;
+				af->face_trigger_area.ex = win.win_pos[0].ex;
+				af->face_trigger_area.sy = win.win_pos[0].sy;
+				af->face_trigger_area.ey = win.win_pos[0].ey;
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
@@ -1679,6 +1760,10 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 					win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
 					win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
 					win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
+					af->face_trigger_area.sx = win.win_pos[0].sx;
+					af->face_trigger_area.ex = win.win_pos[0].ex;
+					af->face_trigger_area.sy = win.win_pos[0].sy;
+					af->face_trigger_area.ey = win.win_pos[0].ey;
 					ISP_LOGI("retrigger face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex, win.win_pos[0].ey);
 					af->algo_mode = FAF;
 					af->state = STATE_FAF;
@@ -1688,9 +1773,21 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				do_start_af(af);
 				ISP_LOGI("AF retrigger start \n");
 			} else {
-				cmr_u32 alg_mode;
-				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
-				ISP_LOGI("AF retrigger no support @%d \n", alg_mode);
+				if (af->face_trigger_area.face_force_stop == AFV1_TRUE && af->face_trigger_area.counter_face_force_stop <= 4) {
+
+					af->force_trigger = AFV1_FALSE;
+					af->face_trigger_area.face_force_stop = AFV1_FALSE;
+					force_stop = AFV1_TRUE;
+					af->face_trigger_area.counter_face_force_stop++;
+
+					if (AFV1_SUCCESS == af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop)) {
+						af->af_ops.calc(af->af_alg_cxt);
+					}
+				} else {
+					cmr_u32 alg_mode;
+					af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
+					ISP_LOGI("AF retrigger no support @%d \n", alg_mode);
+				}
 			}
 		}
 	}
@@ -1704,7 +1801,7 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
-	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state)) {
+	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state)) {
 		caf_monitor_trigger(af, prm, &res);
 	}
 }
@@ -2846,6 +2943,16 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time0 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
+
+	if (AFV1_TRUE == check_force_retrigger(af)) {
+		af->face_trigger_area.face_force_stop = AFV1_TRUE;
+		af->force_trigger = AFV1_TRUE;
+		if (inparam->data_type != AF_DATA_IMG_BLK) {
+			ISP_LOGV("check_force_retrigger 2");
+			caf_monitor_process(af);
+		}
+	}
+
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
@@ -2881,7 +2988,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 
 	case AF_DATA_IMG_BLK:
-		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
+		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state || STATE_FAF == af->state) {
 			caf_monitor_process(af);
 		}
 		break;
