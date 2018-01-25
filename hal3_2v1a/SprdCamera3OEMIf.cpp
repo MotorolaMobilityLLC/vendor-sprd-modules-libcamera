@@ -5904,7 +5904,7 @@ int SprdCamera3OEMIf::openCamera() {
 
     mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
     mSetting->getLargestSensorSize(mCameraId, &snsW, &snsH);
-    if (picH * picH > snsW * snsH) {
+    if (picW * picH > snsW * snsH) {
         mLargestPictureWidth = picW;
         mLargestPictureHeight = picH;
     } else {
