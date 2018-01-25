@@ -174,9 +174,9 @@
 		/*ee_r1_cfg*/
 		0x0A,
 		/*ee_r2_cfg*/
-		0x96,
+		0x32,
 		/*ee_r3_cfg*/
-		0xB4,
+		0x50,
 		/*reserved*/
 		0x00,
 
@@ -367,9 +367,9 @@
 		/*ee_r1_cfg*/
 		0x0A,
 		/*ee_r2_cfg*/
-		0x64,
+		0x32,
 		/*ee_r3_cfg*/
-		0x96,
+		0x46,
 		/*reserved*/
 		0x00,
 
