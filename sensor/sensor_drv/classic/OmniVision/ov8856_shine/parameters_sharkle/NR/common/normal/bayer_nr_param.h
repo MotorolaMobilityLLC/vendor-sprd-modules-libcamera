@@ -5430,10 +5430,10 @@
 	0x0A,
 	/*imp_opt_bypass*/
 	0x00,
-	/*imp_opt_bypass*/
-	0x01,
+	/*vst_bypass*/
+	0x00,
 	/*nlm_bypass*/
-	0x01,
+	0x00,
 }
 ,
 /*param18.&BasePoint=1&*/
