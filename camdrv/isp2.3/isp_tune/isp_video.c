@@ -3594,9 +3594,15 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					scene_param.height = img_height;
 
 					bzero(raw_filename, sizeof(raw_filename));
+#ifdef CONFIG_USE_CAMERASERVER_PROC
 					sprintf(raw_filename + 1, "/data/misc/cameraserver/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
 						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
 						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
+#else
+					sprintf(raw_filename + 1, "/data/misc/media/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
+						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
+						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
+#endif
 
 					ISP_LOGV("simulation raw filename %s", raw_filename + 1);
 					raw_filename[0] = 1;
