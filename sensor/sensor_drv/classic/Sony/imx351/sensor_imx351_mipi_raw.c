@@ -460,8 +460,8 @@ snapshot_info:
     sns_drv_cxt->hdr_info.capture_max_shutter = 1000000 / cap_linetime;
 
     if(sns_drv_cxt->ops_cb.set_exif_info) {
-        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                             SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+    //    sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+   //                          SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
     } else {
         sns_drv_cxt->exif_info.exposure_line = cap_shutter;
     }
