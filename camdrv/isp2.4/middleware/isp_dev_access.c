@@ -647,12 +647,6 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_SET_AF_SKIP_NUM:
 		ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in);
 		break;
-	case ISP_DEV_SET_AF_IIR_CFG:
-		ret = isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, in);
-		break;
-	case ISP_DEV_SET_AF_MODULES_CFG:
-		ret = isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, in);
-		break;
 	case ISP_DEV_POST_3DNR:
 		ret = isp_dev_3dnr(cxt->isp_driver_handle, in);
 		break;

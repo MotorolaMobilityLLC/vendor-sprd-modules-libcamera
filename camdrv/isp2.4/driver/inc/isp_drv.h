@@ -358,9 +358,6 @@ cmr_s32 isp_u_raw_afm_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 heigh
 cmr_s32 isp_u_raw_afm_bypass(cmr_handle handle, cmr_u32 bypass);
 cmr_s32 isp_u_raw_afm_mode(cmr_handle handle, cmr_u32 mode);
 cmr_s32 isp_u_raw_afm_skip_num(cmr_handle handle, cmr_u32 skip_num);
-cmr_s32 isp_u_raw_afm_iir_nr_cfg(cmr_handle handle, void *block_info);
-cmr_s32 isp_u_raw_afm_modules_cfg(cmr_handle handle, void *block_info);
-
 cmr_s32 isp_u_raw_afm_skip_num_clr(cmr_handle handle, cmr_u32 clear);
 cmr_s32 isp_u_raw_afm_win(cmr_handle handle, void *win_range);
 cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, cmr_u32 * win_num);

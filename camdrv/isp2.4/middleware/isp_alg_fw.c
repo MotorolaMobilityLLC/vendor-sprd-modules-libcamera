@@ -716,12 +716,6 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	case AF_CB_CMD_SET_AFM_MODE:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_WORK_MODE, param0, param1);
 		break;
-	case AF_CB_CMD_SET_AFM_NR_CFG:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_IIR_CFG, param0, param1);
-		break;
-	case AF_CB_CMD_SET_AFM_MODULES_CFG:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MODULES_CFG, param0, param1);
-		break;
 	case AF_CB_CMD_GET_SYSTEM_TIME: {
 		cmr_u32 sec = 0;
 		cmr_u32 usec = 0;

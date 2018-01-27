@@ -62,50 +62,6 @@ cmr_s32 isp_u_raw_afm_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 heigh
 	return ret;
 }
 
-cmr_s32 isp_u_raw_afm_iir_nr_cfg(cmr_handle handle, void *block_info)
-{
-	cmr_s32 ret = 0;
-
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !block_info) {
-		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
-		return -1;
-	}
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_RAW_AFM;
-	param.property = ISP_PRO_RGB_AFM_IIR_NR_CFG;
-	param.property_param = block_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_raw_afm_modules_cfg(cmr_handle handle, void *block_info)
-{
-	cmr_s32 ret = 0;
-
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !block_info) {
-		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
-		return -1;
-	}
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_RAW_AFM;
-	param.property = ISP_PRO_RGB_AFM_MODULE_CFG;
-	param.property_param = block_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
 cmr_s32 isp_u_raw_afm_bypass(cmr_handle handle, cmr_u32 bypass)
 {
 	cmr_s32 ret = 0;
