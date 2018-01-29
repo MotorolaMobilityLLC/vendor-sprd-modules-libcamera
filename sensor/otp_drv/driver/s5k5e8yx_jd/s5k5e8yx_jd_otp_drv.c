@@ -406,28 +406,8 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->total_otp.data_ptr = otp_cxt->otp_raw_data.buffer;
     convert_data->total_otp.size = otp_cxt->otp_raw_data.num_bytes;
     /*module data*/
-    convert_data->dual_otp.master_module_info =
+    single_otp->module_info =
         (struct sensor_otp_section_info *)&format_data->module_dat;
-
-    /*af convert*/
-    convert_data->dual_otp.master_af_info =
-        (struct sensor_otp_section_info *)&format_data->af_cali_dat;
-
-    /*awb convert*/
-    convert_data->dual_otp.master_iso_awb_info =
-        (struct sensor_otp_section_info *)&format_data->awb_cali_dat;
-
-    /*optical center*/
-    convert_data->dual_otp.master_optical_center_info =
-        (struct sensor_otp_section_info *)&format_data->opt_center_dat;
-
-    /*lsc convert*/
-    convert_data->dual_otp.master_lsc_info =
-        (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
-
-    /*ae convert*/
-    convert_data->dual_otp.master_ae_info =
-        (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
     /*af convert*/
     single_otp->af_info =
