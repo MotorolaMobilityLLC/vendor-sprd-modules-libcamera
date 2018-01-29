@@ -132,7 +132,7 @@ struct ae_flash_control_param {
 	cmr_u8 aem_effect_delay;
 	cmr_u8 pre_open_count;
 	cmr_u8 pre_close_count;
-	cmr_u8 main_flash_set_count;
+	cmr_u8 main_set_count;
 	cmr_u8 main_capture_count;
 	cmr_u8 main_flash_notify_delay;
 	cmr_u8 reserved;
