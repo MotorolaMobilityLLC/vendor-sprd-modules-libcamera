@@ -1060,6 +1060,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		io_pm_input.param_num = 1;
 		io_pm_input.param_data_ptr = &pm_param[0];
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
+		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
 		struct isp_lsc_info *dcam_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 
@@ -1158,8 +1159,8 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					(void *)&param_data_alsc_input,
 					(void *)&param_data_alsc_output);
 			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-
-			isp_lsc_tab_ptr = (struct isp_2d_lsc_param *)(param_data_alsc_output.param_data->data_ptr);
+			if (ISP_SUCCESS == ret && param_data_alsc_output.param_data != NULL)
+				isp_lsc_tab_ptr = (struct isp_2d_lsc_param *)(param_data_alsc_output.param_data->data_ptr);
 			if (!isp_lsc_tab_ptr) {
 				ISP_LOGE("fail to get isp binning lsc tab.");
 				return ISP_ERROR;
@@ -1175,7 +1176,9 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					io_pm_input.param_num = 1;
 					io_pm_input.param_data_ptr = &pm_param[i];
 					ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
-					isp_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
+					ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+					if (ISP_SUCCESS == ret && io_pm_output.param_data != NULL)
+						isp_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 					if (!isp_lsc_info) {
 						ISP_LOGI("fail to get isp lsc info.");
 						return ISP_ERROR;
@@ -1214,6 +1217,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				io_pm_input.param_num = 1;
 				io_pm_input.param_data_ptr = &pm_param[0];
 				ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
+				ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
 				isp_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 				if (!isp_lsc_info) {
 					ISP_LOGI("fail to get isp lsc info.");
@@ -1247,7 +1251,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 			io_pm_input.param_data_ptr = pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-
+			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
 			memset(pm_param, 0, sizeof(pm_param));
 			BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_MEM_ADDR,
 					DCAM_BLK_2D_LSC,
@@ -1257,6 +1261,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param[0];
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
 		}
 	}
 	return ret;
@@ -1845,9 +1850,10 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 				   (void *)&param_data_alsc_input,
 				   (void *)&param_data_alsc_output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-		cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
-		cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
-
+		if (ret == ISP_SUCCESS && param_data_alsc_output.param_data != NULL) {
+			cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
+			cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
+		}
 		/*send message to alsc process */
 		struct isp_alsc_calc_info alsc_info;
 
@@ -2577,6 +2583,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		cxt->pm_flash_info = (struct isp_flash_param *)output.param_data->data_ptr;
 	} else {
 		ret = ISP_ERROR;
+		return ret;
 	}
 
 	ISP_LOGI("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
@@ -2834,7 +2841,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		//get af tuning parameters
 		memset((void *)&output, 0, sizeof(output));
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &output);
-		if(ISP_SUCCESS == ret && NULL != output.param_data){
+		if (ISP_SUCCESS == ret && NULL != output.param_data) {
 			af_input.aftuning_data = output.param_data[0].data_ptr;
 			af_input.aftuning_data_len = output.param_data[0].data_size;
 		}
@@ -2842,7 +2849,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		//get af trigger tuning parameters
 		memset((void *)&output, 0, sizeof(output));
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AFT, NULL, &output);
-		if(ISP_SUCCESS == ret && NULL != output.param_data){
+		if (ISP_SUCCESS == ret && NULL != output.param_data) {
 			af_input.afttuning_data = output.param_data[0].data_ptr;
 			af_input.afttuning_data_len = output.param_data[0].data_size;
 		}
@@ -2855,7 +2862,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 			input.param_num = 1;
 			input.param_data_ptr = &param_data;
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-			if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
+			if (ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data) {
 				af_input.pdaftuning_data = output.param_data[0].data_ptr;
 				af_input.pdaftuning_data_len = output.param_data[0].data_size;
 			}
@@ -3100,8 +3107,8 @@ static cmr_int ispalg_get_awbbin_size(cmr_handle isp_alg_handle)
 	input.param_num = 1;
 	input.param_data_ptr = &param_data;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-
-	binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
+	if (ret == ISP_SUCCESS && output.param_data != NULL)
+		binning_info = (struct isp_dev_binning4awb_info *)output.param_data->data_ptr;
 	if (NULL == binning_info) {
 		ISP_LOGE("fail to get binning_info");
 		return ISP_ERROR;
