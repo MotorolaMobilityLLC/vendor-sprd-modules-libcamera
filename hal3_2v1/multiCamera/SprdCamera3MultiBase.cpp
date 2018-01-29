@@ -31,8 +31,6 @@
 #include <linux/ion.h>
 #include <cutils/ashmem.h>
 #include <sys/mman.h>
-#include "gralloc_priv.h"
-#include "gralloc_buffer_priv.h"
 #if defined(CONFIG_SPRD_ANDROID_8)
 #include <ui/GraphicBuffer.h>
 #endif

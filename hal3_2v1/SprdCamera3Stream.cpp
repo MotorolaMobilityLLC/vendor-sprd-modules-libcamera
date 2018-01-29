@@ -35,7 +35,6 @@
 #include "SprdCamera3HWI.h"
 #include "SprdCamera3Stream.h"
 #include "SprdCamera3Channel.h"
-#include "gralloc_priv.h"
 #include "../../external/drivers/gpu/gralloc_public.h"
 
 using namespace android;

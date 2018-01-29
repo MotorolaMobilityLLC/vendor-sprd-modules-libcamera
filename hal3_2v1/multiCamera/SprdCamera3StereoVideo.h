@@ -42,7 +42,6 @@
 #include <system/camera.h>
 #include <sys/mman.h>
 #include <sprd_ion.h>
-#include <gralloc_priv.h>
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"

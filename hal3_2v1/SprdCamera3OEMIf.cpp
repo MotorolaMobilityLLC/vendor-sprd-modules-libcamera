@@ -38,7 +38,6 @@
 #include <androidfw/SprdIlog.h>
 #endif
 #include "../../external/drivers/gpu/gralloc_public.h"
-#include <gralloc_priv.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
 #include "SprdCamera3Flash.h"
@@ -46,8 +45,10 @@
 #include <linux/ion.h>
 #include <ui/GraphicBuffer.h>
 #include <cutils/ashmem.h>
+#ifdef CAMERA_3DNR_CAPTURE_GPU
 #include "gralloc_buffer_priv.h"
-
+#include <gralloc_priv.h>
+#endif
 extern "C" {
 #include "isp_video.h"
 }

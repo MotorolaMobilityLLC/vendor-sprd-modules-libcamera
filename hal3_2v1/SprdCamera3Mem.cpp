@@ -34,7 +34,6 @@
 #include <sys/mman.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
-#include <gralloc_priv.h>
 #include "MemIon.h"
 #include <binder/MemoryHeapBase.h>
 #include <sprd_ion.h>

@@ -42,11 +42,6 @@
 #include <system/camera.h>
 #include <sys/mman.h>
 #include <sprd_ion.h>
-#ifdef CONFIG_GPU_PLATFORM_ROGUE
-#include <gralloc_public.h>
-#else
-#include <gralloc_priv.h>
-#endif
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
