@@ -682,6 +682,7 @@ static cmr_int ov8856_drv_stream_off(cmr_handle handle, cmr_uint param) {
     }
 
     sns_drv_cxt->is_sensor_close = 0;
+    usleep(100*1000);
     SENSOR_LOGI("X");
 
     return SENSOR_SUCCESS;
