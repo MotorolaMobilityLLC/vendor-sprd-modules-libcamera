@@ -2016,23 +2016,25 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
         module = sensor_cxt->current_module;
         if ((SENSOR_IMAGE_FORMAT_RAW ==
              sensor_cxt->sensor_info_ptr->image_format) &&
-            module && module->otp_drv_info) {
+            module) {
+            cmr_u8 vendor_id = 0;
+            if (module->otp_drv_info) {
             /*if property debug.dualcamera.write.otp is false do nothing*/
             sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
             sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
 #if 1 // def CONFIG_ISP_TUNING_PARAM_UPDATE
             sensor_otp_ops_t *otp_ops = PNULL;
-            cmr_u8 vendor_id = 0;
             otp_ops = &module->otp_drv_info->otp_ops;
             otp_ops->sensor_otp_ioctl(sensor_cxt->otp_drv_handle,
                                       CMD_SNS_OTP_GET_VENDOR_ID,
                                       (void *)&vendor_id);
-            sensor_set_raw_infor(sensor_cxt, vendor_id);
 #endif
-        } else {
-            SENSOR_LOGE("don't support otp:mod:%p,otp_drv:%p", module,
-                        module ? module->otp_drv_info : NULL);
-        }
+            } else {
+                SENSOR_LOGE("don't support otp:mod:%p,otp_drv:%p", module,
+                            module ? module->otp_drv_info : NULL);
+            }
+            sensor_set_raw_infor(sensor_cxt, vendor_id);
+         }
         sensor_set_export_Info(sensor_cxt);
 
         sensor_cxt->stream_on = 1;

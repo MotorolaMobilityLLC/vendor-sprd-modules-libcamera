@@ -27,13 +27,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "parameters/sensor_ov5675_dual_raw_param_main.c"
-#else
-#include "sensor_ov5675_dual_raw_param.c"
-#endif
-
 #define VENDOR_NUM 2
 
 #define CAMERA_IMAGE_180
@@ -117,8 +110,8 @@
 #define EX_MCLK 24
 
 static struct sensor_ic_ops s_ov5675_ops_tab;
-struct sensor_raw_info *s_ov5675_dual_mipi_raw_info_ptr =
-    &s_ov5675_dual_mipi_raw_info;
+struct sensor_raw_info *s_ov5675_dual_mipi_raw_info_ptr = PNULL;
+//    &s_ov5675_dual_mipi_raw_info;
 
 
 static const SENSOR_REG_T ov5675_init_setting[] = {

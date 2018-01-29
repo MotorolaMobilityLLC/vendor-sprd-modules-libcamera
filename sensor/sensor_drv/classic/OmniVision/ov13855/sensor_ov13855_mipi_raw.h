@@ -23,14 +23,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#if defined(CONFIG_CAMERA_FLASH_OCP8137)
-#include "parameters_sharkle/sensor_ov13855_raw_param_main.c"
-#elif defined(CONFIG_DUAL_MODULE)
-#include "parameters_dual/sensor_ov13855_raw_param_main.c"
-#else
-#include "parameters/sensor_ov13855_raw_param_main.c"
-#endif
-
 #define SENSOR_NAME "ov13855_mipi_raw"
 #if defined(CONFIG_DUAL_MODULE)
 #define I2C_SLAVE_ADDR 0x20 /* 16bit slave address*/
@@ -896,7 +888,7 @@ static struct sensor_module_info s_ov13855_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov13855_ops_tab;
-struct sensor_raw_info *s_ov13855_mipi_raw_info_ptr = &s_ov13855_mipi_raw_info;
+struct sensor_raw_info *s_ov13855_mipi_raw_info_ptr = PNULL;//&s_ov13855_mipi_raw_info;
 
 SENSOR_INFO_T g_ov13855_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |

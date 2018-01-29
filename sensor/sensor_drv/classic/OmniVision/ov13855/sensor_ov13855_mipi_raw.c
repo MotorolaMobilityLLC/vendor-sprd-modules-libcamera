@@ -464,6 +464,16 @@ static cmr_int ov13855_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
+#include "parameters/param_manager.c"
+static cmr_int ov13855_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_ov13855_mipi_raw_info_ptr = ov13855_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
 
 /*==============================================================================
  * Description:
@@ -490,6 +500,9 @@ static cmr_int ov13855_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = ov13855_drv_get_pdaf_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        ov13855_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
         break;
