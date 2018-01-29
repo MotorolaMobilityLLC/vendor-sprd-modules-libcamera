@@ -96,7 +96,7 @@ extern "C" {
 #define INVALID_FORMAT_PATTERN 255
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
 
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4) || defined(CONFIG_ISP_2_5)
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
 #ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
