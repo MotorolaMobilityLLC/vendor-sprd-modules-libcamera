@@ -1531,9 +1531,10 @@ typedef struct oem_ops {
                                      cmr_u32 preview_height,
                                      cmr_u32 video_width, cmr_u32 video_height,
                                      cmr_uint *is_change);
-#if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4) ||\
-    defined(CONFIG_ISP_2_3) ||defined(CONFIG_ISP_2_5)
-int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4) ||           \
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_2)
+    int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
                                                cmr_u32 *mem_size);
 #else
     int (*camera_pre_capture_get_buffer_id)(cmr_u32 camera_id, cmr_u16 width,
@@ -1671,10 +1672,10 @@ int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
     cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #endif
 
-#if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4) || \
-      defined(CONFIG_ISP_2_3) ||defined(CONFIG_ISP_2_5)
-    cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id,
-                                               cmr_u16 width,
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4) ||           \
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_2)
+    cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id, cmr_u16 width,
                                                cmr_u16 height);
 #else
     cmr_int (*camera_pre_capture_set_buffer_size)(cmr_u32 camera_id,
