@@ -1373,16 +1373,11 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
-		cxt->monitor_cfg.blk_num = init_param->monitor_win_num;
 		cxt->snr_info = init_param->resolution_info;
 		cxt->cur_status.frame_size = init_param->resolution_info.frame_size;
 		cxt->cur_status.line_time = init_param->resolution_info.line_time;
-		trim.x = 0;
-		trim.y = 0;
-		trim.w = init_param->resolution_info.frame_size.w;
-		trim.h = init_param->resolution_info.frame_size.h;
-
 		cxt->cur_status.frame_id = 0;
+
 		memset(&cxt->cur_result, 0, sizeof(struct ae_alg_calc_result));
 	} else if (AE_PARAM_NON_INIT == init) {
 		;
@@ -1394,14 +1389,37 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	}
 
 	cxt->start_id = AE_START_ID;
+	cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
+
+	if(0 == init_param->monitor_win_num.w) {
+		if(0 != cxt->cur_param->monitor_param.ae_monitor_win_num_w) {
+			cxt->monitor_cfg.blk_num.w = cxt->cur_param->monitor_param.ae_monitor_win_num_w;
+			cxt->monitor_cfg.blk_num.w = (128 < cxt->monitor_cfg.blk_num.w) ? 128 : cxt->monitor_cfg.blk_num.w;
+		} else {
+			cxt->monitor_cfg.blk_num.w = 32;
+		}
+	} else {
+		cxt->monitor_cfg.blk_num.w = init_param->monitor_win_num.w;
+	}
+
+	if(0 == init_param->monitor_win_num.h) {
+		if(0 != cxt->cur_param->monitor_param.ae_monitor_win_num_h) {
+			cxt->monitor_cfg.blk_num.h = cxt->cur_param->monitor_param.ae_monitor_win_num_h;
+			cxt->monitor_cfg.blk_num.h = (128 < cxt->monitor_cfg.blk_num.h) ? 128 : cxt->monitor_cfg.blk_num.h;
+		} else {
+			cxt->monitor_cfg.blk_num.w = 32;
+		}
+	} else {
+		cxt->monitor_cfg.blk_num.h = init_param->monitor_win_num.h;
+	}
+
+	ISP_LOGV("monitor_blk_num_w %d, num_h %d", cxt->monitor_cfg.blk_num.w, cxt->monitor_cfg.blk_num.h);
 
 	cxt->monitor_cfg.mode = AE_STATISTICS_MODE_CONTINUE;
 	cxt->monitor_cfg.skip_num = 0;
 	cxt->monitor_cfg.bypass = 0;
 	/* set cxt->monitor_unit.trim & cxt->monitor_unit.win_size */
 	ae_update_monitor_unit(cxt, &trim);
-
-	cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
 	for (i = 0; i < 16; ++i) {
 		cxt->stable_zone_ev[i] = cxt->cur_param->stable_zone_ev[i];
@@ -4821,9 +4839,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		break;
 
 	case AE_GET_BV_BY_GAIN:
-		break;
-
-	case AE_GET_BV_BY_GAIN_NEW:
 		rtn = ae_get_gain(cxt, result);
 		break;
 

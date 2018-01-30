@@ -143,6 +143,16 @@ struct ae_video_set_fps_param {
 	cmr_s32 ae_video_fps_thr_high;
 };
 
+struct ae_monitor_tuning_param {
+	cmr_s32 ae_monitor_win_num_w;
+	cmr_s32 ae_monitor_win_num_h;
+	cmr_s32 ae_monitor_win_size_w;
+	cmr_s32 ae_monitor_win_size_h;
+	cmr_s32 ae_trim_start_x;
+	cmr_s32 ae_trim_start_y;
+	cmr_s32 reserved;
+};
+
 struct ae_tuning_param {		//total bytes must be 263480
 	cmr_u32 version;
 	cmr_u32 verify;
@@ -195,7 +205,8 @@ struct ae_tuning_param {		//total bytes must be 263480
 	struct ae_flash_swith_param flash_swith_param;
 	struct ae_flash_control_param flash_control_param;
 	struct ae_video_set_fps_param ae_video_fps;
-	cmr_u32 reserved[2018];
+	struct ae_monitor_tuning_param monitor_param;
+	cmr_u32 reserved[2011];
 };
 
 #endif
