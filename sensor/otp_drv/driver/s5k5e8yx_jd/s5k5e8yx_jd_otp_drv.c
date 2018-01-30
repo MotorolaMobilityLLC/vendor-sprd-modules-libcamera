@@ -97,7 +97,6 @@ static cmr_int _s5k5e8yx_jd_parse_af_data(cmr_handle otp_drv_handle) {
 static cmr_int _s5k5e8yx_jd_parse_awb_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_uint data_count_rdm = 0;
-    cmr_uint data_count_gld = 0;
 
     CHECK_PTR(otp_drv_handle);
     OTP_LOGI("in");
@@ -114,11 +113,10 @@ static cmr_int _s5k5e8yx_jd_parse_awb_data(cmr_handle otp_drv_handle) {
         return ret;
     } else {
         data_count_rdm = AWB_SECTION_NUM * AWB_INFO_SIZE;
-        data_count_gld = AWB_SECTION_NUM * (sizeof(awb_target_packet_t));
         awb_cali_dat->rdm_info.buffer = awb_src_dat;
         awb_cali_dat->rdm_info.size = data_count_rdm;
-        awb_cali_dat->gld_info.buffer = golden_awb;
-        awb_cali_dat->gld_info.size = data_count_gld;
+        awb_cali_dat->gld_info.buffer = NULL;
+        awb_cali_dat->gld_info.size = 0;
     }
     OTP_LOGI("out");
     return ret;
@@ -149,11 +147,11 @@ static cmr_int _s5k5e8yx_jd_parse_lsc_data(cmr_handle otp_drv_handle) {
         opt_dst->gld_info.size = 0;
 
         /*lsc data*/
-        cmr_u8 *rdm_dst = otp_cxt->otp_raw_data.buffer + LSC_INFO_OFFSET;
+        cmr_u8 *rdm_dst = otp_cxt->otp_raw_data.buffer + OPTICAL_INFO_OFFSET;
         lsc_dst->rdm_info.buffer = rdm_dst;
-        lsc_dst->rdm_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
-        lsc_dst->gld_info.buffer = golden_lsc;
-        lsc_dst->gld_info.size = LSC_INFO_CHECKSUM - LSC_INFO_OFFSET;
+        lsc_dst->rdm_info.size = LSC_INFO_CHECKSUM - OPTICAL_INFO_OFFSET;
+        lsc_dst->gld_info.buffer = NULL;
+        lsc_dst->gld_info.size = 0;
     }
 
     OTP_LOGI("out");

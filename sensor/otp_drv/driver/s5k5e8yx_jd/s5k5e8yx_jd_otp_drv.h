@@ -10,7 +10,6 @@
 #include <utils/Log.h>
 #include "sensor_drv_u.h"
 #include "otp_common.h"
-#include "s5k5e8yx_jd_golden_otp.h"
 #include "cmr_sensor_info.h"
 
 #define GT24C64A_I2C_ADDR 0xA0 >> 1
