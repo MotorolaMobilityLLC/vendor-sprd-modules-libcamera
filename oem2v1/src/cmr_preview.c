@@ -3588,6 +3588,9 @@ cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
 
         ret = prev_start(handle, camera_id, 1, 1);
 
+        if (1 == prev_cxt->prev_param.snapshot_eb)
+            handle->ops.start_capture(handle->oem_handle);
+
         break;
 
     default:

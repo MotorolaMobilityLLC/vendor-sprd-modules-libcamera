@@ -3886,6 +3886,7 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.set_3dnr_ev = camera_3dnr_set_ev;
     init_param.ops.sw_3dnr_info_cfg = camera_sw_3dnr_info_cfg;
     init_param.ops.get_tuning_info = camera_get_tuning_info;
+    init_param.ops.start_capture = camera_local_start_capture;
     init_param.oem_cb = camera_preview_cb;
 
     init_param.private_data = NULL;

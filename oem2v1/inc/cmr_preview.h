@@ -143,6 +143,7 @@ struct preview_md_ops {
                                 struct sprd_img_3dnr_param *threednr_info);
     cmr_int (*get_tuning_info)(cmr_handle oem_handle,
                                struct isp_adgain_exp_info *adgain_exp_info_ptr);
+    cmr_int (*start_capture)(cmr_handle oem_handle);
 };
 
 struct preview_init_param {
