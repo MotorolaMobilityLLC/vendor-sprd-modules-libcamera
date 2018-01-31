@@ -33,6 +33,7 @@
 #include <pthread.h>
 #include <utils/Mutex.h>
 #include <utils/List.h>
+#include <utils/Vector.h>
 #include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
@@ -604,8 +605,8 @@ class SprdCamera3Setting {
     void pushAndroidParaTag(sprd_camera_metadata_tag_t tag);
 
     Mutex mLock;
-    List<camera_metadata_tag_t> mParaChangedTagQueue;
-    List<sprd_camera_metadata_tag_t> mSprdParaChangedTagQueue;
+    Vector<camera_metadata_tag_t> mParaChangedTagQueue;
+    Vector<sprd_camera_metadata_tag_t> mSprdParaChangedTagQueue;
     uint8_t mCameraId;
 
     static int parse_int(const char *str, int *data, char delim,

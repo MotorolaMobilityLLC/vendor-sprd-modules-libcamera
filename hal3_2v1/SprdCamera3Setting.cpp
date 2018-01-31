@@ -3035,27 +3035,23 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 }
 
 int SprdCamera3Setting::popAndroidParaTag() {
-    List<camera_metadata_tag_t>::iterator tag;
     int ret;
 
     if (mParaChangedTagQueue.size() == 0)
         return -1;
 
-    tag = mParaChangedTagQueue.begin()++;
-    ret = static_cast<int>(*tag);
-    mParaChangedTagQueue.erase(tag);
+    ret = mParaChangedTagQueue.top();
+    mParaChangedTagQueue.pop();
     return ret;
 }
 int SprdCamera3Setting::popSprdParaTag() {
-    List<sprd_camera_metadata_tag_t>::iterator tag;
     int ret;
 
     if (mSprdParaChangedTagQueue.size() == 0)
         return -1;
 
-    tag = mSprdParaChangedTagQueue.begin()++;
-    ret = static_cast<int>(*tag);
-    mSprdParaChangedTagQueue.erase(tag);
+    ret = mSprdParaChangedTagQueue.top();
+    mSprdParaChangedTagQueue.pop();
     return ret;
 }
 
@@ -3067,13 +3063,9 @@ void SprdCamera3Setting::pushAndroidParaTag(sprd_camera_metadata_tag_t tag) {
 }
 
 void SprdCamera3Setting::releaseAndroidParaTag() {
-    List<camera_metadata_tag_t>::iterator round;
     HAL_LOGD("para changed.size : %d", mParaChangedTagQueue.size());
 
-    while (mParaChangedTagQueue.size() > 0) {
-        round = mParaChangedTagQueue.begin()++;
-        mParaChangedTagQueue.erase(round);
-    }
+    mParaChangedTagQueue.clear();
 }
 
 int SprdCamera3Setting::updateWorkParameters(
