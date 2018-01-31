@@ -6477,7 +6477,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_SENSOR_EXPOSURE_TIME:
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
-            HAL_LOGD("exposure_time %ld", sensorInfo.exposure_time);
+            HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
                      (cmr_uint)(sensorInfo.exposure_time));
         }
@@ -6499,7 +6499,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             controlInfo.ae_target_fps_range[1] = fps_param.max_fps;
 
             mSetting->setCONTROLTag(&controlInfo);
-            HAL_LOGD("fps:%lu, frame_duration:%ld", fps_param.min_fps,
+            HAL_LOGD("fps:%lu, frame_duration:%lld", fps_param.min_fps,
                      sensorInfo.frame_duration);
 
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
@@ -7417,7 +7417,7 @@ cap_malloc:
                 buffer, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, width,
                 height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, width);
             *handle = pbuffer.get();
-            HAL_LOGD("add alloc graphic buffer in CaptureMalloc index:%d , "
+            HAL_LOGD("add alloc graphic buffer in CaptureMalloc index:%ld , "
                      "buffer:%p",
                      i, *handle);
 #else
@@ -7590,7 +7590,7 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
                 height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, width);
             *handle = pbuffer.get();
             HAL_LOGD("add alloc graphic buffer in CapturePathMalloc "
-                     "index:%d , buffer:%p",
+                     "index:%ld , buffer:%p",
                      i, *handle);
 #else
             sp<GraphicBuffer> pbuffer =
