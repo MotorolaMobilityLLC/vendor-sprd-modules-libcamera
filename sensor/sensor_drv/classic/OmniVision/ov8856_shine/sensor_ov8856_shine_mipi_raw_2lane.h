@@ -82,7 +82,7 @@
 /* frame length*/
 #define VIDEO_FRAME_LENGTH			963
 #define PREVIEW_FRAME_LENGTH		1246
-#define SNAPSHOT_FRAME_LENGTH		2482
+#define SNAPSHOT_FRAME_LENGTH		2496
 
 /* please ref your spec */
 #define FRAME_OFFSET			6
@@ -451,7 +451,7 @@ static const SENSOR_REG_T ov8856_snapshot_setting[] = {
     {0x380c, 0x07},
     {0x380d, 0x8c},
     {0x380e, 0x09},
-    {0x380f, 0xb2},
+    {0x380f, 0xc0},
     {0x3811, 0x10},
     {0x3813, 0x04},
     {0x3814, 0x01},
