@@ -8295,6 +8295,12 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size) {
     if (mVideoWidth > 0 && mVideoWidth >= mCaptureWidth &&
         sprddefInfo.slowmotion <= 1) {
         mVideoSnapshotType = 1;
+    } else if (mVideoWidth > 0 && sprddefInfo.slowmotion <= 1) {
+#ifdef ANDROID_VERSION_KK
+        mVideoSnapshotType = 1;
+#else
+        mVideoSnapshotType = 0;
+#endif
     } else {
         mVideoSnapshotType = 0;
     }
