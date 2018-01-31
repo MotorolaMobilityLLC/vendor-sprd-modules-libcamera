@@ -14,40 +14,56 @@ extern "C" {
 typedef void *IFENGINE;
 #define IFLUT64_SIZE 512
 
+#define SIMPLIFIED_VERSION
+
 typedef enum { // optional params
+#ifndef SIMPLIFIED_VERSION
     NoneFilter = 0,
-    // ColorMapFilter = 1,			// param1:IFMap256
-    // PixelFilter = 2,				// param1:IFSize
-    // InvertColorFilter = 3,
+    ColorMapFilter = 1, // param1:IFMap256
+    PixelFilter = 2,    // param1:IFSize
+    InvertColorFilter = 3,
     MonoFilter = 4,
     MonoChromeFilter = 5,
-    // ColorMatrixFilter = 6,		// param1:IFMatrix3x3
-    // GrayFilter = 7,
+    ColorMatrixFilter = 6, // param1:IFMatrix3x3
+    GrayFilter = 7,
     NostalgiaFilter = 8,
-    // LookupFilter = 9,				// param1:IFLUT64
+    LookupFilter = 9, // param1:IFLUT64
     Strip2Filter = 10,
-    Strip3Filter,
-    BerylFilter,
-    BrannanFilter,
-    CrispWarmFilter,
-    CrispWinterFilter,
-    EarlybirdFilter,
-    FallColorsFilter,
-    Filmstock50Filter,
-    GothamFilter,
-    HefeFilter,
-    HorrorBlueFilter,
-    InkwellFilter,
-    LomofiFilter,
-    LordKelvinFilter,
-    NashvilleFilter,
-    SoftWarmingFilter,
-    SutroFilter,
-    TealOrangePlusContrastFilter,
-    TensionGreenFilter,
-    ToasterFilter,
-    WaldenFilter,
-    XProIIFilter,
+    Strip3Filter = 11,
+    BerylFilter = 12,
+    BrannanFilter = 13,
+    CrispWarmFilter = 14,
+    FallColorsFilter = 17,
+    GothamFilter = 19,
+    HefeFilter = 20,
+    InkwellFilter = 22,
+    LomofiFilter = 23,
+    LordKelvinFilter = 24,
+    SutroFilter = 27,
+    TealOrangePlusContrastFilter = 28,
+    TensionGreenFilter = 29,
+    ToasterFilter = 30,
+    WaldenFilter = 31,
+    XProIIFilter = 32,
+    CalciteFilter = 34,
+    ColdLBB25Filter = 35,
+    ColdLBB50Filter = 36,
+    ColdLBB75Filter = 37,
+    ColdQing25Filter = 38,
+    ColdQing50Filter = 39,
+    ColdQing75Filter = 40,
+    WarmLBA25Filter = 41,
+    WarmLBA50Filter = 42,
+#endif
+    CrispWinterFilter = 15,
+    EarlybirdFilter = 16,
+    Filmstock50Filter = 18,
+    HorrorBlueFilter = 21,
+    NashvilleFilter = 25,
+    SoftWarmingFilter = 26,
+    BismuthFilter = 33,
+    WarmLBA75Filter = 43,
+    HistoryFilter = 44,
 } IFFilterType;
 
 typedef enum {

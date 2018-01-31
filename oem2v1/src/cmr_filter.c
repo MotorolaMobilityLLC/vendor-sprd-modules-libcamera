@@ -23,13 +23,6 @@
 #define SPRD_FILTER_VERSION (0)
 #define ARCSOFT_FILTER_VERSION (1)
 
-#define CHECK_HANDLE_VALID(handle)                                             \
-    do {                                                                       \
-        if (!handle) {                                                         \
-            return -CMR_CAMERA_INVALID_PARAM;                                  \
-        }                                                                      \
-    } while (0)
-
 static cmr_int filter_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                            struct ipm_open_out *out, cmr_handle *class_handle);
 static cmr_int filter_close(cmr_handle class_handle);
@@ -130,7 +123,6 @@ exit:
 static cmr_int filter_close(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
-    CHECK_HANDLE_VALID(filter_handle);
     if (!filter_handle) {
         CMR_LOGE("filter_handle is null");
         return CMR_CAMERA_INVALID_PARAM;
@@ -185,18 +177,20 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     if (!strcmp(value, "true")) {
         camera_save_yuv_to_file(0, IMG_DATA_TYPE_YUV420, width, height, addr);
     }
-    CMR_LOGI("w=%d,h=%d,type=%d", width, height, filter_handle->filter_type);
+    CMR_LOGI("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);
     LAUNCHLOGS(CMR_FILTER_DO_T);
+
     ret = filter_arithmetic_do(class_handle, addr, width, height);
     if (ret) {
         CMR_LOGE("failed to filter_arithmetic_do");
         goto exit;
     }
     LAUNCHLOGE(CMR_FILTER_DO_T);
+
     out->dst_frame = in->src_frame;
     out->private_data = in->private_data;
 
-    CMR_LOGI("x,private_data=%p,type=%d", out->private_data,
+    CMR_LOGI("x,private_data=%p,type=%lu", out->private_data,
              filter_handle->filter_type);
 exit:
     sem_post(&filter_handle->sem);
@@ -286,7 +280,7 @@ static cmr_int filter_arithmetic_do(cmr_handle class_handle,
         clock_gettime(CLOCK_BOOTTIME, &end_time);
         duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
-        CMR_LOGD("do effect time = %d", duration);
+        CMR_LOGD("do effect time = %lu", duration);
     } else {
         CMR_LOGE("filter_ops or doeffect is null");
         ret = CMR_CAMERA_FAIL;
