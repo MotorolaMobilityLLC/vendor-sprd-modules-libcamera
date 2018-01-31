@@ -302,7 +302,11 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #elif defined(CONFIG_CAMERA_SUPPORT_16M)
     {4608, 3456},
 #elif defined(CONFIG_CAMERA_SUPPORT_13M)
+#if defined(CAMERA_SERNSOR_SUPPORT_4224)
+    {4224, 3136},
+#else
     {4160, 3120},
+#endif
 #elif defined(CONFIG_CAMERA_SUPPORT_8M)
     {3264, 2448},
 #elif defined(CONFIG_CAMERA_SUPPORT_5M)
@@ -389,6 +393,9 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 const cam_stream_info_t stream_info[] = {
     {{5312, 3984}, 41666666L, 41666666L},
     {{4608, 3456}, 33331760L, 33331760L},
+#if defined(CAMERA_SERNSOR_SUPPORT_4224)
+    {{4224, 3136}, 33331760L, 33331760L},
+#endif
     {{4160, 3120}, 33331760L, 33331760L},
     //{{3840, 2160}, 33331760L, 33331760L},
     {{3264, 2448}, 33331760L, 33331760L},
@@ -801,7 +808,11 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
         jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else if (width * height <= 4160 * 3120) {
         // 13M
+#if defined(CAMERA_SERNSOR_SUPPORT_4224)
+	jpeg_stream_size = (4224 * 3136 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+#else
         jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+#endif
     } else if (width * height <= 4608 * 3456) {
         // 16M
         jpeg_stream_size = (4608 * 3456 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
