@@ -181,7 +181,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	} else {
 		normal_50hz_thrd = 280;
 		lowlight_50hz_thrd = 100;
-		normal_60hz_thrd = 140;
+		normal_60hz_thrd = 200;
 		lowlight_60hz_thrd = 100;
 	}
 #else
@@ -194,7 +194,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	} else {
 		normal_50hz_thrd = 280;
 		lowlight_50hz_thrd = 100;
-		normal_60hz_thrd = 140;
+		normal_60hz_thrd = 200;
 		lowlight_60hz_thrd = 100;
 	}
 #endif
@@ -214,7 +214,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 				thr[3] = (ae_exp_flag == 1) ? lowlight_60hz_thrd : normal_60hz_thrd;
 				thr[4] = 100;
 				thr[5] = 4;
-				thr[6] = (cxt->version == 1) ? 50 : 30;
+				thr[6] = 20;
 				thr[7] = 20;
 				thr[8] = 120;
 				ISP_LOGV("60Hz using default threshold");
@@ -233,7 +233,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 				thr[3] = (ae_exp_flag == 1) ? lowlight_50hz_thrd : normal_50hz_thrd;
 				thr[4] = 100;
 				thr[5] = 4;
-				thr[6] = (cxt->version == 1) ? 50 : 30;
+				thr[6] = 20;
 				thr[7] = 20;
 				thr[8] = 120;
 				ISP_LOGV("50Hz using default threshold");
