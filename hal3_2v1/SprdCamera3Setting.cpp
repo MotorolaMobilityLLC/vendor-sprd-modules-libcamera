@@ -184,10 +184,10 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,  24, 24, 24, 5,
-                                              30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,  30, 15,
-                                               30, 30, 30};
+const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,
+                                              24, 24, 24, 5,  30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,
+                                               30, 15, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-3, 3};
 // const int32_t kavailable_processed_sizes[16] = {/*must order from bigger to
@@ -1283,24 +1283,24 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<int32_t> available_stream_configs;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-		if ((stream_info[i].stream_sizes_tbl.width <=
-                     largest_sensor_width) &&
-                    (stream_info[i].stream_sizes_tbl.height <=
-                     largest_sensor_height)) {
-                    available_stream_configs.add(scaler_formats[j]);
-                    available_stream_configs.add(
-                        stream_info[i].stream_sizes_tbl.width);
-                    available_stream_configs.add(
-                        stream_info[i].stream_sizes_tbl.height);
-                    available_stream_configs.add(
-                        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
-                    /* keep largest */
-                    if (stream_info[i].stream_sizes_tbl.width >=
-                            largest_picture_size[cameraId].width &&
-                        stream_info[i].stream_sizes_tbl.height >=
-                            largest_picture_size[cameraId].height)
-                        largest_picture_size[cameraId] =
-                            stream_info[i].stream_sizes_tbl;
+            if ((stream_info[i].stream_sizes_tbl.width <=
+                 largest_sensor_width) &&
+                (stream_info[i].stream_sizes_tbl.height <=
+                 largest_sensor_height)) {
+                available_stream_configs.add(scaler_formats[j]);
+                available_stream_configs.add(
+                    stream_info[i].stream_sizes_tbl.width);
+                available_stream_configs.add(
+                    stream_info[i].stream_sizes_tbl.height);
+                available_stream_configs.add(
+                    ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+                /* keep largest */
+                if (stream_info[i].stream_sizes_tbl.width >=
+                        largest_picture_size[cameraId].width &&
+                    stream_info[i].stream_sizes_tbl.height >=
+                        largest_picture_size[cameraId].height)
+                    largest_picture_size[cameraId] =
+                        stream_info[i].stream_sizes_tbl;
             }
         }
     }
@@ -4923,11 +4923,13 @@ int SprdCamera3Setting::getNOISETag(NOISE_Tag *noiseInfo) {
 }
 
 int SprdCamera3Setting::setSENSORTag(SENSOR_Tag sensorInfo) {
+    Mutex::Autolock l(mLock);
     s_setting[mCameraId].sensorInfo = sensorInfo;
     return 0;
 }
 
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
+    Mutex::Autolock l(mLock);
     *sensorInfo = s_setting[mCameraId].sensorInfo;
     return 0;
 }
