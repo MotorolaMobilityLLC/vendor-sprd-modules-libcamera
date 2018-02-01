@@ -138,6 +138,17 @@ static cmr_int _s5k5e8yx_jd_parse_lsc_data(cmr_handle otp_drv_handle) {
         LSC_INFO_CHECKSUM - OPTICAL_INFO_OFFSET, LSC_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGI("lsc otp data checksum error,parse failed.\n");
+        /*optical center data*/
+        opt_dst->rdm_info.buffer = NULL;
+        opt_dst->rdm_info.size = 0;
+        opt_dst->gld_info.buffer = NULL;
+        opt_dst->gld_info.size = 0;
+
+        /*lsc data*/
+        lsc_dst->rdm_info.buffer = NULL;
+        lsc_dst->rdm_info.size = 0;
+        lsc_dst->gld_info.buffer = NULL;
+        lsc_dst->gld_info.size = 0;
     } else {
         /*optical center data*/
         cmr_u8 *opt_src = otp_cxt->otp_raw_data.buffer + OPTICAL_INFO_OFFSET;
@@ -390,6 +401,7 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
     SENSOR_VAL_T *p_val = (SENSOR_VAL_T *)p_data;
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
+    otp_section_info_t *lsc_dst = &(format_data->lsc_cali_dat);
 
     convert_data = malloc(sizeof(struct sensor_otp_cust_info));
     if (NULL == convert_data) {
@@ -421,7 +433,8 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
     /*lsc convert*/
     single_otp->lsc_info =
         (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
-
+    if (lsc_dst->rdm_info.buffer == NULL)
+        single_otp->lsc_info = NULL;
     /*ae convert*/
     single_otp->ae_info =
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
