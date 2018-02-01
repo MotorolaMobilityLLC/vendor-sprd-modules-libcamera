@@ -151,6 +151,14 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	dst_ptr->resolution = *img_size_ptr;
 	dst_ptr->is_init = ISP_ONE;
 
+	dst_ptr->lsc_info.cur_idx = dst_ptr->cur_index_info;
+	dst_ptr->lsc_info.gain_w = dst_ptr->map_tab[dst_ptr->lsc_info.cur_idx.x0].gain_w;
+	dst_ptr->lsc_info.gain_h = dst_ptr->map_tab[dst_ptr->lsc_info.cur_idx.x0].gain_h;
+	dst_ptr->lsc_info.grid = dst_ptr->map_tab[dst_ptr->lsc_info.cur_idx.x0].grid;
+	dst_ptr->lsc_info.data_ptr = dst_ptr->final_lsc_param.data_ptr;
+	dst_ptr->lsc_info.len = dst_ptr->final_lsc_param.size;
+	dst_ptr->lsc_info.param_ptr = dst_ptr->final_lsc_param.param_ptr;
+
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 	return rtn;
@@ -200,25 +208,44 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 		dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
 		break;
 
-	case ISP_PM_BLK_LSC_INFO:
+	case ISP_PM_BLK_LSC_UPDATE_GRID:
 		{
-			cmr_u32 i;
-			i = dst_lnc_ptr->lsc_info.cur_idx.x0;
-			dst_lnc_ptr->cur.buf_len = dst_lnc_ptr->map_tab[i].gain_w * dst_lnc_ptr->map_tab[i].gain_h * 4 * sizeof(cmr_u16);
+			cmr_u32 i = 0;
+			cmr_u32* adaptive_size_info = (cmr_u32 *) param_ptr0;
+			cmr_u32 cur_resolution_w = adaptive_size_info[0];
+			cmr_u32 cur_resolution_h = adaptive_size_info[1];
+			cmr_u32 lsc_grid = adaptive_size_info[2];
+			struct isp_2d_lsc_param *dst_ptr = dst_lnc_ptr;
 
-			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
-			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
-			ISP_LOGV("ISP_PM_BLK_LSC_INFO");
+			ISP_LOGV("ISP_PM_BLK_LSC_UPDATE_GRID, new_grid=%d, orig=%d",
+						lsc_grid, dst_lnc_ptr->cur.grid_width);
 
-			{
-				cmr_u16 *ptr = NULL;
-#if __WORDSIZE == 64
-				ptr = (void *)((cmr_uint) dst_lnc_ptr->cur.buf_addr[1] << 32 | dst_lnc_ptr->cur.buf_addr[0]);
-#else
-				ptr = (void *)(dst_lnc_ptr->cur.buf_addr[0]);
-#endif
-				ISP_LOGV("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
-				ISP_LOGV("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
+			if (lsc_grid != dst_lnc_ptr->cur.grid_width) {
+				ISP_LOGV("ISP_PM_BLK_LSC_UPDATE_GRID, new_resolution[%d,%d], orig[%d,%d]",
+						cur_resolution_w, cur_resolution_h,
+						dst_ptr->resolution.w, dst_ptr->resolution.h);
+
+				memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
+				_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, lsc_grid);
+
+				dst_ptr->lsc_info.grid = lsc_grid;
+				dst_ptr->resolution.w = cur_resolution_w;
+				dst_ptr->resolution.h = cur_resolution_h;
+				dst_ptr->lsc_info.gain_w = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.w, ISP_ONE);
+				dst_ptr->lsc_info.gain_h = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.h, ISP_ONE);
+
+				dst_ptr->cur.slice_size.width = dst_ptr->resolution.w;
+				dst_ptr->cur.slice_size.height = dst_ptr->resolution.h;
+				dst_ptr->cur.grid_width = lsc_grid;
+				dst_ptr->cur.grid_x_num = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.w, ISP_ZERO);
+				dst_ptr->cur.grid_y_num = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.h, ISP_ZERO);
+				dst_ptr->cur.grid_num_t = (dst_ptr->cur.grid_x_num + 2) * (dst_ptr->cur.grid_y_num + 2);
+				dst_ptr->cur.grid_pitch = dst_ptr->cur.grid_x_num + 2;
+
+				dst_ptr->cur.weight_num =  (lsc_grid / 2 + 1) * 3 * sizeof(cmr_s16);
+				dst_ptr->cur.buf_len = dst_ptr->lsc_info.gain_w * dst_ptr->lsc_info.gain_h * 4 * sizeof(cmr_u16);
+
+				lnc_header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 			}
 		}
 		break;
@@ -226,9 +253,6 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 	default:
 		break;
 	}
-
-	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, value=(%d, %d), weight=(%d, %d)\n", cmd, lnc_header_ptr->is_update,
-		 dst_lnc_ptr->cur_index_info.x0, dst_lnc_ptr->cur_index_info.x1, dst_lnc_ptr->cur_index_info.weight0, dst_lnc_ptr->cur_index_info.weight1);
 
 	return rtn;
 }
@@ -265,13 +289,6 @@ cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, voi
 		break;
 
 	case ISP_PM_BLK_LSC_INFO:
-		lnc_ptr->lsc_info.cur_idx = lnc_ptr->cur_index_info;
-		lnc_ptr->lsc_info.gain_w = lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_w;
-		lnc_ptr->lsc_info.gain_h = lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_h;
-		lnc_ptr->lsc_info.grid = lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].grid;
-		lnc_ptr->lsc_info.data_ptr = lnc_ptr->final_lsc_param.data_ptr;
-		lnc_ptr->lsc_info.len = lnc_ptr->final_lsc_param.size;
-		lnc_ptr->lsc_info.param_ptr = lnc_ptr->final_lsc_param.param_ptr;
 		param_data_ptr->data_ptr = (void *)&lnc_ptr->lsc_info;
 		param_data_ptr->data_size = sizeof(lnc_ptr->lsc_info);
 		break;

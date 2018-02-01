@@ -145,6 +145,9 @@ struct lsc_info_t {
 	cmr_u32 log_lsc_size;
 	struct isp_awb_statistic_info ae_out_stats;
 	cmr_u32 lsc_sprd_version;
+	cmr_u32 full_size_width;
+	cmr_u32 full_size_height;
+	cmr_u32 full_size_grid;
 };
 
 struct binning_info_t {
@@ -3004,6 +3007,12 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
 
+	cxt->lsc_cxt.full_size_width = lsc_tab_param_ptr->resolution.w;
+	cxt->lsc_cxt.full_size_height = lsc_tab_param_ptr->resolution.h;
+	cxt->lsc_cxt.full_size_grid = lsc_info->grid;
+
+	ISP_LOGV("_alsc_init: lsc_cxt_full_size[%d,%d,%d]", cxt->lsc_cxt.full_size_width, cxt->lsc_cxt.full_size_height, cxt->lsc_cxt.full_size_grid);
+
 	switch (cxt->commn_cxt.image_pattern) {
 	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
 		lsc_param.gain_pattern = LSC_GAIN_PATTERN_RGGB;
@@ -3807,8 +3816,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
+	struct isp_pm_ioctl_input input2 = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
+	struct isp_pm_param_data param_data_grid;
 	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
 	struct isp_lsc_info *lsc_info_new = NULL;
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
@@ -3822,10 +3833,80 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	cmr_s32 i = 0;
 	cmr_s32 dst_gain_size = 0;
 	cmr_u16 *dst_gain_tmp = NULL;
+	cmr_u32 adaptive_size_info[3] = {0, 0, 0};  // cur_width, cur_height, adaptive_grid
 
 	memset(&binning_src, 0x0, sizeof(binning_src));
 	memset(&binning_dst, 0x0, sizeof(binning_dst));
 	memset(&binning, 0x0, sizeof(binning));
+
+	ISP_LOGV("alsc_fw_start, sensor_size[%d,%d], isp_size[%d,%d]",
+			cxt->dcam_size.w, cxt->dcam_size.h,
+			cxt->commn_cxt.src.w, cxt->commn_cxt.src.h);
+	// update grid & weight table first, for binning case first
+	if((float)cxt->lsc_cxt.full_size_width / cxt->dcam_size.w == (float)cxt->lsc_cxt.full_size_height / cxt->dcam_size.h) {
+		if (cxt->zsl_flag) {
+			for (i = 0; i < ISP_MODE_MAX; i++) {
+				if(i==0){  //isp preview
+					adaptive_size_info[0] = cxt->dcam_size.w;
+					adaptive_size_info[1] = cxt->dcam_size.h;
+					adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->dcam_size.w / cxt->lsc_cxt.full_size_width;
+					ISP_LOGV("alsc_fw_start, zsl_preview full_size_width=%d, full_size_grid=%d, isp_width=%d, isp_grid=%d",
+							cxt->lsc_cxt.full_size_width,
+							cxt->lsc_cxt.full_size_grid,
+							adaptive_size_info[0],
+							adaptive_size_info[2]);
+					memset(&param_data_grid, 0, sizeof(param_data_grid));
+					BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, cxt->mode_id[i], &adaptive_size_info[0], 0);
+					input2.param_num = 1;
+					input2.param_data_ptr = &param_data_grid;
+					ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input2, NULL);
+				} else {  //isp capture
+					adaptive_size_info[0] = cxt->commn_cxt.src.w;
+					adaptive_size_info[1] = cxt->commn_cxt.src.h;
+					adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->commn_cxt.src.w / cxt->lsc_cxt.full_size_width;
+					ISP_LOGV("alsc_fw_start, zsl_capture full_size_width=%d, full_size_grid=%d, isp_width=%d, isp_grid=%d",
+							cxt->lsc_cxt.full_size_width,
+							cxt->lsc_cxt.full_size_grid,
+							adaptive_size_info[0],
+							adaptive_size_info[2]);
+					memset(&param_data_grid, 0, sizeof(param_data_grid));
+					BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, cxt->mode_id[i], &adaptive_size_info[0], 0);
+					input2.param_num = 1;
+					input2.param_data_ptr = &param_data_grid;
+					ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input2, NULL);
+				}
+			}
+		} else {
+			adaptive_size_info[0] = cxt->dcam_size.w;
+			adaptive_size_info[1] = cxt->dcam_size.h;
+			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->dcam_size.w / cxt->lsc_cxt.full_size_width;
+			ISP_LOGV("alsc_fw_start, nzsl_mode full_size_width=%d, full_size_grid=%d, isp_width=%d, isp_grid=%d",
+					cxt->lsc_cxt.full_size_width,
+					cxt->lsc_cxt.full_size_grid,
+					adaptive_size_info[0],
+					adaptive_size_info[2]);
+			memset(&param_data_grid, 0, sizeof(param_data_grid));
+			BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, cxt->mode_id[0], &adaptive_size_info[0], 0);
+			input2.param_num = 1;
+			input2.param_data_ptr = &param_data_grid;
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input2, NULL);
+		}
+		adaptive_size_info[0] = cxt->commn_cxt.src.w;
+		adaptive_size_info[1] = cxt->commn_cxt.src.h;
+		adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->commn_cxt.src.w / cxt->lsc_cxt.full_size_width;
+		ISP_LOGV("alsc_fw_start, dcam_compute full_size_width=%d, full_size_grid=%d, dcam_width=%d, dcam_grid=%d",
+				cxt->lsc_cxt.full_size_width,
+				cxt->lsc_cxt.full_size_grid,
+				adaptive_size_info[0],
+				adaptive_size_info[2]);
+
+		memset(&param_data_grid, 0, sizeof(param_data_grid));
+		BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, DCAM_BLK_2D_LSC, cxt->mode_id[0], &adaptive_size_info[0], 0);
+		input2.param_num = 1;
+		input2.param_data_ptr = &param_data_grid;
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input2, NULL);
+	}
+
 
 	/* get DCAM lsc table */
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
