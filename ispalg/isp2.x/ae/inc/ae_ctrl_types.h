@@ -90,7 +90,6 @@ extern "C" {
 		AE_SET_EV_OFFSET,
 		AE_SET_WEIGHT,
 		AE_SET_STAT_TRIM,
-		AE_SET_TOUCH_ZONE,
 		AE_SET_INDEX,
 		AE_SET_EXP_GAIN,
 		AE_SET_CAP_EXP,
@@ -105,6 +104,7 @@ extern "C" {
 		 * please add msg id below here
 		 */
 		AE_DIRECT_MSG_BEGIN,
+		AE_SET_TOUCH_ZONE,
 		AE_GET_LUM,
 		AE_GET_INDEX,
 		AE_GET_EXP_GAIN,
