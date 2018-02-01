@@ -413,7 +413,6 @@ cmr_s32 isp_u_post_blc_block(cmr_handle handle, void *param_ptr);
 
 /*Ynr*/
 cmr_s32 isp_u_ynr_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_ynr_bypass(cmr_handle handle, void *param_ptr);
 
 /*Noise filter*/
 cmr_s32 isp_u_noise_filter_block(cmr_handle handle, void *param_ptr);
