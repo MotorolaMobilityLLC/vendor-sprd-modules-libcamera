@@ -474,13 +474,13 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x36,
+		0x3E,
 		/*ratio_1*/
-		0x36,
+		0x3E,
 		/*ratio*/
-		0x36,
+		0x3E,
 		/*ratio_uv_min*/
-		0x3D,
+		0x40,
 		/*ratio_y_min0*/
 		0x40,
 		/*ratio_y_min1*/
@@ -574,13 +574,13 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x34,
+		0x3C,
 		/*ratio_1*/
-		0x34,
+		0x3C,
 		/*ratio*/
-		0x34,
+		0x3C,
 		/*ratio_uv_min*/
-		0x3D,
+		0x40,
 		/*ratio_y_min0*/
 		0x40,
 		/*ratio_y_min1*/
@@ -674,11 +674,11 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x33,
+		0x36,
 		/*ratio_1*/
-		0x33,
+		0x36,
 		/*ratio*/
-		0x33,
+		0x36,
 		/*ratio_uv_min*/
 		0x3A,
 		/*ratio_y_min0*/
@@ -774,11 +774,11 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x32,
+		0x30,
 		/*ratio_1*/
-		0x32,
+		0x30,
 		/*ratio*/
-		0x32,
+		0x30,
 		/*ratio_uv_min*/
 		0x37,
 		/*ratio_y_min0*/
