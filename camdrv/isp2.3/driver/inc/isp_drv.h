@@ -81,8 +81,6 @@ struct isp_u_blocks_info {
 		cmr_u32 *win_num;
 		void *win_range;
 		struct isp_afm_info afm_info;
-		/*edge block*/
-		struct isp_edge_thrd edge_thrd;
 		/*pdaf block*/
 		void *roi_info;
 		void *ppi_info;
@@ -285,8 +283,6 @@ cmr_s32 isp_u_hist_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: EDGE*/
 cmr_s32 isp_u_edge_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_edge_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_edge_param(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CSA*/
 cmr_s32 isp_u_csa_block(cmr_handle handle, void *param_ptr);
