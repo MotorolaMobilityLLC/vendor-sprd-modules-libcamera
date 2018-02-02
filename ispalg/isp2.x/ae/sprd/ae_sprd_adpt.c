@@ -2561,6 +2561,15 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					ISP_LOGI("ae_flash1 wait-capture!\r\n");
 				}
 			}
+			if (1 == cxt->flash_esti_result.isEnd ) {
+				if (cxt->isp_ops.set_wbc_gain) {
+					struct ae_alg_rgb_gain awb_m_b_flash_gain;
+					awb_m_b_flash_gain.r = cxt->flash_esti_result.captureRGain;
+					awb_m_b_flash_gain.g = cxt->flash_esti_result.captureGGain;
+					awb_m_b_flash_gain.b = cxt->flash_esti_result.captureBGain;
+					cxt->isp_ops.set_wbc_gain(cxt->isp_ops.isp_handler, &awb_m_b_flash_gain);
+				}
+			}
 			if (0 >= main_flash_counts) {
 				cxt->send_once[4]++;
 			}
@@ -2568,6 +2577,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash) {
+			cxt->flash_esti_result.isEnd = 0;
 			ISP_LOGI("ae_flash1_status shake_5 %d", cxt->send_once[3]);
 			if (1 == cxt->flash_main_esti_result.isEnd) {
 				if (cxt->isp_ops.set_wbc_gain) {
