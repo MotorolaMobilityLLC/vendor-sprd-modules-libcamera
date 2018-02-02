@@ -324,12 +324,12 @@ static cmr_int imx258_otp_drv_write(cmr_handle otp_drv_handle, void *p_data) {
     otp_params_t *otp_write_data = (otp_params_t *)p_data;
 
     if (NULL != otp_write_data->buffer) {
-        int i;
+        cmr_u32 i;
         for (i = 0; i < otp_write_data->num_bytes; i++) {
             hw_sensor_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
                                 &otp_write_data->buffer[i], 2);
         }
-        OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
+        OTP_LOGI("write %s dev otp,buffer:0x%p,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
     } else {
         OTP_LOGE("ERROR:buffer pointer is null");
@@ -462,7 +462,6 @@ static cmr_int imx258_otp_drv_ioctl(cmr_handle otp_drv_handle, int cmd,
     CHECK_PTR(otp_drv_handle);
     OTP_LOGV("in");
 
-    params = params;
     /*you can add you command*/
     switch (cmd) {
     case CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT:

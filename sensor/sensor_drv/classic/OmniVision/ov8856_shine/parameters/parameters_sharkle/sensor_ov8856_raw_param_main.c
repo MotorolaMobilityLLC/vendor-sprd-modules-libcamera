@@ -99,6 +99,7 @@ static struct sensor_raw_ioctrl s_ov8856_ioctrl=
 	0,
 	0,
 	0,
+	0,
 	0
 };
 

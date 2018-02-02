@@ -12,7 +12,7 @@ static cmr_int _ov13855_section_checksum(cmr_u8 *buf, cmr_uint offset,
                                          cmr_uint data_count,
                                          cmr_uint check_sum_offset) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    cmr_int i = 0, sum = 0;
+    cmr_uint i = 0, sum = 0;
 
     OTP_LOGV("in");
     for (i = offset; i < offset + data_count; i++) {
@@ -24,7 +24,7 @@ static cmr_int _ov13855_section_checksum(cmr_u8 *buf, cmr_uint offset,
     } else {
         ret = CMR_CAMERA_FAIL;
     }
-    OTP_LOGI("out: offset:%d, checksum:%d buf: %d", check_sum_offset, sum,
+    OTP_LOGI("out: offset:%ld, checksum:%lu buf: %d", check_sum_offset, sum,
              buf[check_sum_offset]);
     return ret;
 }
@@ -325,12 +325,12 @@ static cmr_int ov13855_otp_drv_write(cmr_handle otp_drv_handle, void *p_data) {
     otp_params_t *otp_write_data = p_data;
 
     if (NULL != otp_write_data->buffer) {
-        int i;
+        cmr_u32 i;
         for (i = 0; i < otp_write_data->num_bytes; i++) {
             hw_sensor_write_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
                                 &otp_write_data->buffer[i], 2);
         }
-        OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
+        OTP_LOGI("write %s dev otp,buffer:0x%p,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
     } else {
         OTP_LOGE("ERROR:buffer pointer is null");

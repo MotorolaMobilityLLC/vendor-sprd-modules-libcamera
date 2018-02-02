@@ -1920,7 +1920,7 @@ cmr_int read_txt_file(const char *file_name, void *data) {
     }
 
     while (!feof(pf)) {
-        fscanf(pf, "%d\n", otp_data);
+        fscanf(pf, "%s\n", otp_data);
         otp_data += 4;
         read_byte += 4;
     }
@@ -1944,7 +1944,7 @@ LOCAL cmr_int sensor_write_dualcam_otpdata(
         const char *psPath_OtpData = "data/misc/cameraserver/otp.txt";
 
         otp_params_t pdata;
-        char *dual_data = (char *)malloc(num_byte);
+        cmr_u8 * dual_data = (cmr_u8 *)malloc(num_byte);
         int otp_ret = read_txt_file(psPath_OtpData, dual_data);
         pdata.buffer = dual_data;
         pdata.num_bytes = num_byte;

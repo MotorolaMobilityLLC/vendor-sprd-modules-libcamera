@@ -20,7 +20,9 @@
 #define LOG_TAG "af_lc898214"
 
 #define LC898214_VCM_SLAVE_ADDR (0xE4 >> 1)
+#ifndef SENSOR_SUCCESS
 #define SENSOR_SUCCESS           0
+#endif
 #define POSE_UP_HORIZONTAL       32
 #define POSE_DOWN_HORIZONTAL     37
 

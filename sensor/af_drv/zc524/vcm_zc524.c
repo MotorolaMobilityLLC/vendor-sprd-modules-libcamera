@@ -101,7 +101,7 @@ static int vcm_zc524_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
     struct sns_af_drv_cxt *af_drv_cxt =
         (struct sns_af_drv_cxt *)sns_af_drv_handle;
     CHECK_PTR(sns_af_drv_handle);
-    CMR_LOGI("cmd is ", cmd);
+    CMR_LOGI("cmd is %u", cmd);
     switch (cmd) {
     case CMD_SNS_AF_SET_BEST_MODE:
         break;

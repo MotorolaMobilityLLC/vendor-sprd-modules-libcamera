@@ -14,7 +14,7 @@ static cmr_int _ov13855_sunny_section_checksum(cmr_u8 *buf, cmr_uint offset,
                                                cmr_uint check_sum_offset,
                                                cmr_uint module_idx) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    cmr_int i = 0, sum = 0;
+    cmr_uint i = 0, sum = 0;
     cmr_u32 check_sum = 0;
 
     OTP_LOGV("in");
@@ -29,7 +29,7 @@ static cmr_int _ov13855_sunny_section_checksum(cmr_u8 *buf, cmr_uint offset,
     } else {
         ret = CMR_CAMERA_FAIL;
     }
-    OTP_LOGI("module_idx:%d,out: offset:%d, checksum:%d buf: %d", module_idx,
+    OTP_LOGI("module_idx:%ld,out: offset:%ld, checksum:%ld buf: %d", module_idx,
              check_sum_offset, sum, buf[check_sum_offset]);
     return ret;
 }
@@ -473,7 +473,7 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
     if (NULL != otp_write_data->buffer) {
         unsigned char *buffer = (unsigned char *)malloc(DUAL_DATA_SIZE);
         otp_write_data->reg_addr = DUAL_INFO_OFFSET;
-        int i;
+        cmr_u32 i;
 
         for (i = 0; i < otp_write_data->num_bytes; i++) {
             bSum += otp_write_data->buffer[i];
@@ -496,9 +496,9 @@ static cmr_int ov13855_sunny_otp_drv_write(cmr_handle otp_drv_handle,
 
         } else {
             ret = OTP_CAMERA_FAIL;
-            OTP_LOGI("crc failed bSum = 0x%x,aSum=0x%x", bSum, aSum);
+            OTP_LOGI("crc failed bSum = 0x%lx,aSum=0x%lx", bSum, aSum);
         }
-        OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
+        OTP_LOGI("write %s dev otp,buffer:0x%p,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
         free(buffer);
     } else {

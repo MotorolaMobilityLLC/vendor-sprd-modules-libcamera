@@ -620,7 +620,7 @@ static cmr_int ov13855_altek_otp_drv_write(cmr_handle otp_drv_handle,
     otp_params_t *otp_write_data = p_params;
 
     if (NULL != otp_write_data->buffer) {
-        OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
+        OTP_LOGI("write %s dev otp,buffer:0x%p,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
         /*TODO*/
 
@@ -644,7 +644,7 @@ static cmr_int ov13855_altek_otp_drv_parse(cmr_handle otp_drv_handle,
     otp_base_info_cfg_t *base_info =
         &(ov13855_altek_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
-    module_data_t *module_dat = &(otp_cxt->otp_data->module_dat);
+    module_data_t *module_dat =  (module_data_t *)&(otp_cxt->otp_data->module_dat);
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
         OTP_LOGI("otp has parse before,return directly");

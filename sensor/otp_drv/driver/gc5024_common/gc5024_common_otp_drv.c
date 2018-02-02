@@ -753,7 +753,7 @@ static cmr_int gc5024_common_otp_drv_write(cmr_handle otp_drv_handle,
     otp_params_t *otp_write_data = p_params;
 
     if (NULL != otp_write_data->buffer) {
-        OTP_LOGI("write %s dev otp,buffer:0x%x,size:%d", otp_cxt->dev_name,
+        OTP_LOGI("write %s dev otp,buffer:0x%p,size:%d", otp_cxt->dev_name,
                  otp_write_data->buffer, otp_write_data->num_bytes);
 
         /*TODO*/

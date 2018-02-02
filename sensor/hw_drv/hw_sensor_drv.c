@@ -40,7 +40,7 @@ static cmr_int _hw_sensor_dev_init(cmr_handle hw_handle, cmr_u32 sensor_id) {
 
     if (SENSOR_FD_INIT == hw_drv_cxt->fd_sensor) {
         hw_drv_cxt->fd_sensor = open(HW_SENSOR_DEV_NAME, O_RDWR, 0);
-        HW_LOGI("fd 0x%lx", hw_drv_cxt->fd_sensor);
+        HW_LOGI("fd 0x%x", hw_drv_cxt->fd_sensor);
         if (SENSOR_FD_INIT == hw_drv_cxt->fd_sensor) {
             HW_LOGE("Failed to open sensor device.errno : %d", errno);
             fprintf(stderr, "Cannot open '%s': %d, %s", sensor_dev_name, errno,
@@ -471,7 +471,7 @@ cmr_int hw_sensor_set_mipi_level(cmr_handle hw_handle, cmr_u32 plus_level) {
 
     ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_SET_MIPI_SWITCH, &plus_level);
     if (0 != ret) {
-        HW_LOGE("failed,  level = %d, ret=%ld ", plus_level, ret);
+        HW_LOGE("failed,  level = %d, ret=%d ", plus_level, ret);
         ret = HW_FAILED;
     }
 
@@ -1002,7 +1002,7 @@ hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
             sensor_reg_tab_info_ptr->sensor_ext_reg_tab_ptr;
         ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
     }
-    HW_LOGI("reg_count %d, senosr_id: %ld", sensor_reg_tab_info_ptr->reg_count,
+    HW_LOGI("reg_count %d, senosr_id: %d", sensor_reg_tab_info_ptr->reg_count,
             hw_drv_cxt->sensor_id);
 
     HW_LOGV("X");

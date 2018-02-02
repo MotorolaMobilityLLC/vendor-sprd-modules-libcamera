@@ -101,7 +101,7 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void **exif_info_in) {
     cmr_int sensor_num =
         sizeof(exif_info_ptr) / sizeof(EXIF_SPEC_PIC_TAKING_COND_T *);
     if (sns_drv_cxt->sensor_id >= sensor_num) {
-        SENSOR_LOGE("sensor id is invalid,support sensor count:%d", sensor_num);
+        SENSOR_LOGE("sensor id is invalid,support sensor count:%ld", sensor_num);
         ret = SENSOR_IC_FAILED;
         goto exit;
     }

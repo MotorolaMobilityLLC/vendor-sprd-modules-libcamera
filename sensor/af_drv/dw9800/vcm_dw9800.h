@@ -19,7 +19,9 @@
 #include "sns_af_drv.h"
 
 #define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
+#ifndef SENSOR_SUCCESS
 #define SENSOR_SUCCESS      0
+#endif
 /* accroding to vcm module spec */
 #define POSE_UP_HORIZONTAL   32
 #define POSE_DOWN_HORIZONTAL 37
