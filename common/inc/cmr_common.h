@@ -1071,6 +1071,7 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
 cmr_int camera_parse_raw_filename(char *file_name,
                                   struct isptool_scene_param *scene_param);
 
+cmr_int camera_get_snap_postproc_time();
 void camera_snapshot_step_statisic(struct img_size *img_size);
 
 void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step);

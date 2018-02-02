@@ -61,6 +61,8 @@
 #define SNP_EVT_CHANNEL_VIDEO_DONE (SNP_EVT_BASE + 46)
 #define SNP_EVT_3DNR_DONE (SNP_EVT_BASE + 47) /*SNAPSHOT_EVT_3DNR_DONE*/
 
+#define SNP_POSTPROC_MIN_TIME 70 /*ms*/
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -1753,6 +1755,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     cmr_u32 index = 0;
     struct camera_frame_type frame_type;
     cmr_s32 sm_val = 0;
+    cmr_int postproc_time = 0;
     struct snp_channel_param *chn_param_ptr = &cxt->chn_param;
     struct camera_frame_type zsl_frame;
     struct img_frm rot_src, scale_src;
@@ -1874,7 +1877,14 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
              cxt->req_param.total_num);
     camera_take_snapshot_step(CMR_STEP_CALL_BACK);
     // just for perf tuning
-    // camera_snapshot_step_statisic(&image_size);
+    //camera_snapshot_step_statisic(&image_size);
+
+#ifdef CONFIG_CAMERA_OFFLINE
+    postproc_time = camera_get_snap_postproc_time();
+    if (postproc_time < SNP_POSTPROC_MIN_TIME)
+        usleep((SNP_POSTPROC_MIN_TIME - postproc_time)*1000);
+#endif
+
     frame_type.timestamp = frame->sec * 1000000000LL + frame->usec * 1000;
     frame_type.monoboottime = frame->monoboottime;
     memcpy((void *)&frame_type.jpeg_param, (void *)&enc_param,

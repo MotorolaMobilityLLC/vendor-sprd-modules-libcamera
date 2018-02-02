@@ -704,3 +704,11 @@ void LAUNCHPLOG(enum CAMERA_LAUNCH_STEP step) {
              cmr_launch_time[step].step_name,
              cmr_launch_time[step].timestamp_result);
 }
+
+cmr_int camera_get_snap_postproc_time() {
+    cmr_int postproc_time = 0;
+    postproc_time = (int)((cap_stp[CMR_STEP_CALL_BACK].timestamp -
+                            cap_stp[CMR_STEP_CAP_E].timestamp) /
+                           1000000);
+    return postproc_time;
+}
