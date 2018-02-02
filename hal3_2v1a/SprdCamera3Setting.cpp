@@ -2966,8 +2966,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprd3dnrEnabled = 0;
     requestInfo.update(ANDROID_SPRD_3DNR_ENABLED, &sprd3dnrEnabled, 1);
 
-    uint8_t sprdFixedFPS = 0;
-    requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFPS, 1);
+    int32_t sprdAppmodeId = -1;
+    requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
     uint8_t sprdFilterType = 0;
     requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
@@ -3767,12 +3767,12 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
     }
 
-    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
-            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-        HAL_LOGV("sprd fixed fps enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+    if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
+        s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
+            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
+        HAL_LOGD("sprd app mode id is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
     }
     HAL_LOGD(
         "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "

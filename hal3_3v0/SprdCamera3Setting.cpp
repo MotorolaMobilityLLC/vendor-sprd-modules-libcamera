@@ -3667,8 +3667,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdEisEnabled = 0;
     requestInfo.update(ANDROID_SPRD_EIS_ENABLED, &sprdEisEnabled, 1);
 
-    uint8_t sprdFixedFpsEnabled = 0;
-    requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
+    int32_t sprdAppmodeId= 0;
+    requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
     uint8_t sprdBurstModeEnabled = 0;
     requestInfo.update(ANDROID_SPRD_BURSTMODE_ENABLED, &sprdBurstModeEnabled,
@@ -4594,12 +4594,12 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGD("sprd high iso enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_highiso_enabled);
     }
-    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)){
-       s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
-            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-       pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-       HAL_LOGD("sprd fixed fps enabled is %d",
-            s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+    if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)){
+       s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
+            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+       pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
+       HAL_LOGD("sprd app mode id is %d",
+            s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
     }
 #undef GET_VALUE_IF_DIF
     return rc;

@@ -264,7 +264,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
       mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFixedFPSEnabled(0), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
+      mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mIsCameraClearQBuf(0), mPowerManager(NULL), mPrfmLock(NULL),
       mLastCafDoneTime(0)
@@ -2180,8 +2180,12 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         fps_param.video_mode = 1;
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
+        bool needFixedFPS = false;
+        if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE) {
+            needFixedFPS = true;
+        }
         property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false") && !mFixedFPSEnabled) {
+        if (!strcmp(value, "false") && !needFixedFPS) {
             fps_param.min_fps = 15;
         }
 #endif
@@ -6549,10 +6553,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
                  sprddefInfo.sprd_3dnr_enabled);
     } break;
-    case ANDROID_SPRD_FIXED_FPS_ENABLED: {
+    case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        mFixedFPSEnabled = sprddefInfo.sprd_fixedfps_enabled;
+        mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;

@@ -349,7 +349,7 @@ typedef struct {
     uint8_t sprd_3dcapture_enabled;
     int32_t max_preview_size[2];
     uint8_t sprd_3dnr_enabled;
-    uint8_t sprd_fixedfps_enabled;
+    int32_t sprd_appmode_id;
     uint8_t is_takepicture_with_flash;
     uint32_t sprd_filter_type;
     uint8_t sprd_available_flash_level;

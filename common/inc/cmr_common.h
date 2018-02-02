@@ -1118,6 +1118,37 @@ enum cmr_flash_mode {
     CAMERA_FLASH_MODE_MAX
 };
 
+/*
+ * dont edit the enum alone, sprd-camera app has the same list.
+ * this is for camera hal recognize sprd-camera app mode,
+ * and can do power and other things.
+ */
+enum sprd_camera_app_mode {
+    CAMERA_MODE_AUTO_PHOTO = 0,
+    CAMERA_MODE_MANUAL,
+    CAMERA_MODE_CONTINUE,
+    CAMERA_MODE_INTERVAL,
+    CAMERA_MODE_PANORAMA,
+    CAMERA_MODE_REFOCUS,
+    CAMERA_MODE_SCENE,
+    CAMERA_MODE_PIP,
+    CAMERA_MODE_GCAM,
+    CAMERA_MODE_AUTO_VIDEO,
+    CAMERA_MODE_VIV,
+    CAMERA_MODE_TIMELAPSE,
+    CAMERA_MODE_SLOWMOTION,
+    CAMERA_MODE_AUDIO_PICTURE,
+    CAMERA_MODE_FILTER,
+    CAMERA_MODE_QRCODE,
+    CAMERA_MODE_VIDEO_TD,
+    CAMERA_MODE_PHOTO_TD,
+    CAMERA_MODE_FRONT_BLURREFOCUS,
+    CAMERA_MODE_TD_RANGE_FIND,
+    CAMERA_MODE_3DNR_PHOTO,
+    CAMERA_MODE_3DNR_VIDEO,
+    CAMERA_MODE_MAX
+};
+
 enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_AUTO = 0,
     CAMERA_FOCUS_MODE_AUTO_MULTI = 1,

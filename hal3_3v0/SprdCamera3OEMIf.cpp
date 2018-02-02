@@ -273,7 +273,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
       mPrvMinFps(0), mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFlagMultiLayerStart(false), mFixedFpsEnabled(0), mTempStates(CAMERA_NORMAL_TEMP),
+      mFlagMultiLayerStart(false), mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP),
       mIsTempChanged(0) {
     int i = 0;
     ATRACE_CALL();
@@ -1987,7 +1987,11 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
         property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false") && !mFixedFpsEnabled) {
+        bool needFixedFPS = false;
+        if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE) {
+            needFixedFPS = true;
+        }
+        if (!strcmp(value, "false") && !needFixedFPS) {
             fps_param.min_fps = 16;
             fps_param.max_fps = 25;
         }
@@ -6162,10 +6166,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
         HAL_LOGD("mSprdBurstModeEnabled=%d", mSprdBurstModeEnabled);
     } break;
-    case ANDROID_SPRD_FIXED_FPS_ENABLED: {
+    case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        mFixedFpsEnabled = sprddefInfo.sprd_fixedfps_enabled;
+        mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;

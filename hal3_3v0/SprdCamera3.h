@@ -194,7 +194,7 @@ static tags_info_t
         {"maxPreviewSize", TYPE_INT32},
         {"sprd3BlurSensorRotation", TYPE_INT32},
         {"sprdHdrPlusEnabled", TYPE_BYTE},
-        {"sprdFixedFpsEnabled", TYPE_BYTE},
+        {"sprdAppmodeId", TYPE_INT32},
         {"sprd3dnrEnabled", TYPE_BYTE},
         {"sprdfiltertype", TYPE_BYTE},
         {"isTakePictureWithFlash", TYPE_BYTE},

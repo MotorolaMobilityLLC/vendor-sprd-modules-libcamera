@@ -3004,8 +3004,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdHdrPlusEnabled = 0;
     requestInfo.update(ANDROID_SPRD_HDR_PLUS_ENABLED, &sprdHdrPlusEnabled, 1);
 
-    uint8_t sprdFixedFpsEnabled = 0;
-    requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
+    int32_t sprdAppmodeId= -1;
+    requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
     uint8_t sprd3dnrEnabled = 0;
     requestInfo.update(ANDROID_SPRD_3DNR_ENABLED, &sprd3dnrEnabled, 1);
@@ -3809,12 +3809,12 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd pipviv enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
     }
-    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
-            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-        HAL_LOGV("sprd fixed fps enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+    if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
+        s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
+            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
+        HAL_LOGV("sprd sprd app mode id is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
     }
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
         s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
