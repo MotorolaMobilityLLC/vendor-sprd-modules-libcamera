@@ -337,7 +337,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void receiveTakePictureError(void);
     void receiveJpegPictureError(void);
     bool receiveCallbackPicture(uint32_t width, uint32_t height, cmr_s32 fd,
-                                cmr_uint phy_addr, char *virtual_addr);
+                                cmr_uint phy_addr, char *virtual_addr,
+                                struct camera_frame_type *frame);
     void HandleStopCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartPreview(enum camera_cb_type cb, void *parm4);

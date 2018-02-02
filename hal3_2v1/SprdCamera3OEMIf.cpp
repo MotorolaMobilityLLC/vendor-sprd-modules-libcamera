@@ -277,9 +277,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
       mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
       mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
-      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFixedFpsEnabled(0), mSprdAppmodeId(-1),
-      mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
+      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
+      mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mLastCafDoneTime(0)
 
@@ -4370,7 +4369,7 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(
              height, phy_addr, virtual_addr);
 
     Mutex::Autolock cbLock(&mPreviewCbLock);
-    int64_t timestamp = frame->timestamp;
+    int64_t timestamp = frame->monoboottime;
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     SprdCamera3PicChannel *pic_channel =
@@ -4439,14 +4438,15 @@ bool SprdCamera3OEMIf::iSCallbackCaptureFrame() {
 
 bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
                                               cmr_s32 fd, cmr_uint phy_addr,
-                                              char *virtual_addr) {
+                                              char *virtual_addr,
+                                              struct camera_frame_type *frame) {
     ATRACE_CALL();
 
     HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = %p", width,
              height, phy_addr, virtual_addr);
 
     Mutex::Autolock cbLock(&mPreviewCbLock);
-    int64_t timestamp = systemTime();
+    int64_t timestamp = frame->monoboottime;
     SprdCamera3PicChannel *pic_channel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
     SprdCamera3Stream *stream = NULL;
@@ -4671,8 +4671,8 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
 
         if (dst_width == frame->width && dst_height == frame->height) {
             receiveCallbackPicture(frame->width, frame->height, frame->fd,
-                                   frame->y_phy_addr,
-                                   (char *)frame->y_vir_addr);
+                                   frame->y_phy_addr, (char *)frame->y_vir_addr,
+                                   frame);
         } else {
             dst_fd = getRedisplayMem(dst_width, dst_height);
             if (0 == dst_fd) {
@@ -4700,7 +4700,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
             }
 
             receiveCallbackPicture(dst_width, dst_height, dst_fd, dst_paddr,
-                                   (char *)mReDisplayHeap->data);
+                                   (char *)mReDisplayHeap->data, frame);
             FreeReDisplayMem();
         }
     }
