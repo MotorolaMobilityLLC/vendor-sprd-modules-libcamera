@@ -985,7 +985,6 @@ static cmr_s32 ae_cfg_monitor_win(struct ae_ctrl_cxt *cxt)
 
 		info.win_size = cxt->monitor_cfg.blk_size;
 		info.trim = cxt->monitor_cfg.trim;
-
 		/*TBD remove it */
 		cxt->cur_status.monitor_shift = 0;
 		rtn = cxt->isp_ops.set_monitor_win(cxt->isp_ops.isp_handler, &info);
@@ -1419,6 +1418,10 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->monitor_cfg.skip_num = 0;
 	cxt->monitor_cfg.bypass = 0;
 	/* set cxt->monitor_unit.trim & cxt->monitor_unit.win_size */
+	trim.x = 0;
+	trim.y = 0;
+	trim.w = init_param->resolution_info.frame_size.w;
+	trim.h = init_param->resolution_info.frame_size.h;
 	ae_update_monitor_unit(cxt, &trim);
 
 	for (i = 0; i < 16; ++i) {
