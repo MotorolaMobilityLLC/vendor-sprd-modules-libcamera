@@ -274,12 +274,18 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 			if (NULL != lsc_otp_info_ptr && NULL != oc_otp_info_ptr) {
 				lsc_otp_info = &lsc_otp_info_ptr->rdm_info;
 				oc_otp_info = &oc_otp_info_ptr->rdm_info;
-				lsc_otp_addr = (cmr_u8 *) lsc_otp_info->data_addr;
-				lsc_otp_len = lsc_otp_info->data_size;
-				lsc_otp_len_chn = lsc_otp_len / 4;
-				lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
-				oc_otp_data = (cmr_u8 *) oc_otp_info->data_addr;
-				oc_otp_len = oc_otp_info->data_size;
+
+					if(lsc_otp_info != NULL && oc_otp_info != NULL){
+					lsc_otp_addr = (cmr_u8 *) lsc_otp_info->data_addr;
+					lsc_otp_len = lsc_otp_info->data_size;
+					lsc_otp_len_chn = lsc_otp_len / 4;
+					lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
+					oc_otp_data = (cmr_u8 *) oc_otp_info->data_addr;
+					oc_otp_len = oc_otp_info->data_size;
+					}else{
+						ISP_LOGE("lsc lsc_otp_info = %p, oc_otp_info = %p. Parser fail !", lsc_otp_info, oc_otp_info);
+						goto EXIT;
+						}
 			} else {
 				ISP_LOGE("lsc otp_info_lsc_ptr = %p, otp_info_optical_center_ptr = %p. Parser fail !", lsc_otp_info_ptr, oc_otp_info_ptr);
 				goto EXIT;
@@ -289,8 +295,14 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 			if (NULL != lsc_otp_info_ptr) {
 				otp_data_ptr = lsc_otp_info_ptr->rdm_info.data_addr;
 				otp_data_len = lsc_otp_info_ptr->rdm_info.data_size;
+
+				if(otp_data_ptr != NULL && otp_data_len != 0 ){
 				lsc_otp_addr = otp_data_ptr + 1 + 16 + 5;
 				lsc_otp_len = otp_data_len - 1 - 16 - 5;
+					}else{
+					ISP_LOGE("lsc otp_data_ptr = %p, otp_data_len = %d. Parser fail !", otp_data_ptr, otp_data_len);
+					goto EXIT;
+						}
 
 				resolution = (full_img_width * full_img_height + 500000) / 1000000;
 				switch (resolution) {
