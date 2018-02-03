@@ -897,7 +897,7 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
     if (ret) {
         CMR_LOGE("failed to start capture.");
     }
-    CMR_LOGI("ret = %ld,capture_status %ld,timestamp=%lld", ret,
+    CMR_LOGI("ret = %ld,capture_status %d,timestamp=%lld", ret,
              capture_param.type, capture_param.timestamp);
 
     return ret;
@@ -1563,7 +1563,7 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle,
     if (ret) {
         CMR_LOGE("error");
     }
-    CMR_LOGI("out ret:%d", ret);
+    CMR_LOGI("out ret:%ld", ret);
     return ret;
 }
 
@@ -1649,6 +1649,6 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
     if (ret) {
         CMR_LOGE("error");
     }
-    CMR_LOGI("out ret:%d", ret);
+    CMR_LOGI("out ret:%ld", ret);
     return ret;
 }

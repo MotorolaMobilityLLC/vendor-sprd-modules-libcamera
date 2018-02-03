@@ -2707,7 +2707,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle,
     }
 
     CMR_LOGV("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d "
-             "yaddr 0x%x depthmap_timestamp %lld, data->yaddr_vir 0x%x",
+             "yaddr 0x%lx depthmap_timestamp %lld, data->yaddr_vir 0x%lx",
              data->frame_id, data->frame_real_id, data->channel_id, data->yaddr,
              prev_cxt->depthmap_timestamp, data->yaddr_vir);
 
@@ -4819,7 +4819,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
             /*check memory valid*/
             for (i = 0; i < threednr_cap_sum; i++) {
-                CMR_LOGD("%d, phy_addr 0x%x virt_addr 0x%lx, fd 0x%x", i,
+                CMR_LOGD("%d, phy_addr 0x%p virt_addr 0x%lx, fd 0x%x", i,
                          prev_cxt->cap_3dnr_phys_addr_path_array,
                          prev_cxt->cap_3dnr_virt_addr_path_array[i],
                          prev_cxt->cap_3dnr_fd_path_array[i]);
@@ -9703,7 +9703,7 @@ cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->depthmap_mem_valid_num--;
     } else {
         ret = CMR_CAMERA_INVALID_FRAME;
-        CMR_LOGE("error yaddr 0x%x uaddr 0x%x yaddr 0x%lx uaddr 0x%lx,  "
+        CMR_LOGE("error yaddr 0x%lx uaddr 0x%lx yaddr 0x%lx uaddr 0x%lx,  "
                  "prev_cxt->depthmap_frm[0].fd 0x%x",
                  data->yaddr, data->uaddr,
                  prev_cxt->depthmap_frm[0].addr_phy.addr_y,
@@ -9816,7 +9816,7 @@ cmr_int prev_pop_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt = &handle->prev_cxt[camera_id];
     valid_num = prev_cxt->pdaf_mem_valid_num;
 
-    CMR_LOGD("addr 0x%x 0x%x fd 0x%x", data->yaddr_vir, data->uaddr_vir,
+    CMR_LOGD("addr 0x%lx 0x%lx fd 0x%x", data->yaddr_vir, data->uaddr_vir,
              data->fd);
 
     if (valid_num > PDAF_FRM_CNT || valid_num <= 0) {
@@ -9848,7 +9848,7 @@ cmr_int prev_pop_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("done cnt %ld yaddr_vir 0x%x fd 0x%x",
+    CMR_LOGD("done cnt %ld yaddr_vir 0x%lx fd 0x%x",
              prev_cxt->pdaf_mem_valid_num, data->yaddr_vir, data->fd);
     ATRACE_END();
     return ret;
@@ -10700,7 +10700,7 @@ cmr_int prev_start_rotate(struct prev_handle *handle, cmr_u32 camera_id,
         rot_param.angle = prev_cxt->prev_param.prev_rot;
         ;
 
-        CMR_LOGD("frm_id %d, rot_frm_id %d", frm_id, rot_frm_id);
+        CMR_LOGD("frm_id %u, rot_frm_id %ld", frm_id, rot_frm_id);
 
         op_mean.rot = rot_param.angle;
 
@@ -11479,7 +11479,7 @@ cmr_int prev_3dnr_open(struct prev_handle *handle, cmr_u32 camera_id) {
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    CMR_LOGD("is_support_3dnr %ld", prev_cxt->prev_param.is_3dnr);
+    CMR_LOGD("is_support_3dnr %d", prev_cxt->prev_param.is_3dnr);
 
     if (prev_cxt->prev_param.is_3dnr == 0) {
         CMR_LOGD("not support preview 3dnr");
@@ -11532,7 +11532,7 @@ cmr_int prev_3dnr_close(struct prev_handle *handle, cmr_u32 camera_id) {
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    CMR_LOGD("is_support_3dnr%ld", prev_cxt->prev_param.is_3dnr);
+    CMR_LOGD("is_support_3dnr%d", prev_cxt->prev_param.is_3dnr);
 
     CMR_LOGV("3dnr_handle 0x%p", prev_cxt->prev_3dnr_handle);
     if (prev_cxt->prev_3dnr_handle) {
@@ -11732,7 +11732,7 @@ cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     CMR_LOGD("refocus_eb %d frm %p addr_vir.addr_y 0x%lx, touchX %d,touchY %d, "
-             "depthmap_frm->yaddr_vir 0x%x",
+             "depthmap_frm->yaddr_vir 0x%lx",
              prev_cxt->prev_param.refocus_eb, frm, frm->addr_vir.addr_y,
              prev_cxt->touch_info.touchX, prev_cxt->touch_info.touchY,
              depthmap_frm->yaddr_vir);

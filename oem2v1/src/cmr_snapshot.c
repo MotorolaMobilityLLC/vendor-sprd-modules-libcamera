@@ -1850,7 +1850,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
                                      &exif_in_ptr->thumb_stream_src, NULL,
                                      &exif_in_ptr->dst, &enc_out_param);
     if (ret) {
-        CMR_LOGE("start_exif_encode failed, ret=%d", ret);
+        CMR_LOGE("start_exif_encode failed, ret=%ld", ret);
     }
     ATRACE_END();
     camera_take_snapshot_step(CMR_STEP_WR_EXIF_E);
@@ -4170,7 +4170,7 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     CMR_PRINT_TIME;
     CMR_LOGD(
         "3dcalibration yuv take done in picture: width:%d, height:%d, fd:%d, "
-        "yaddp:%d, uaddp:%d, vaddp:%d, yaddv:%d, uaddv:%d, vaddv:%d",
+        "yaddp:%ld, uaddp:%ld, vaddp:%ld, yaddv:%ld, uaddv:%ld, vaddv:%ld",
         cxt->req_param.post_proc_setting.dealign_actual_snp_size.width,
         data->height, data->fd, data->yaddr, data->uaddr, data->vaddr,
         data->yaddr_vir, data->uaddr_vir, data->vaddr_vir);
@@ -4432,7 +4432,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
 
     ret = snp_send_msg_write_exif_thr(snp_handle, SNP_EVT_WRITE_EXIF, data);
     if (ret) {
-        CMR_LOGE("snp_send_msg_write_exif_thr failed, ret=%d", ret);
+        CMR_LOGE("snp_send_msg_write_exif_thr failed, ret=%ld", ret);
         goto exit;
     }
 
@@ -5181,7 +5181,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
     switch (evt) {
     case SNAPSHOT_EVT_CHANNEL_DONE:
         malloc_len = sizeof(struct frm_info);
-        CMR_LOGD("video %d zsl %d yaddr_vir 0x%x",
+        CMR_LOGD("video %d zsl %d yaddr_vir 0x%lx",
                  cxt->req_param.is_video_snapshot,
                  cxt->req_param.is_zsl_snapshot, frame_info_ptr->yaddr_vir);
         buffer_id = snp_get_buffer_id(snapshot_handle, data);
@@ -5468,7 +5468,7 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
     ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
     ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
     ion_buf.size = img->size.width * img->size.height * 3 / 2;
-    CMR_LOGD("flush buf info: fd=%d,  addr_vir=%p, size=%ld", ion_buf.fd,
+    CMR_LOGD("flush buf info: fd=%d,  addr_vir=%p, size=%zu", ion_buf.fd,
              ion_buf.addr_vir, ion_buf.size);
     ret = snp_send_msg_notify_thr(snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                   SNAPSHOT_EVT_CB_FLUSH, (void *)&ion_buf,

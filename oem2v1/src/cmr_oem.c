@@ -602,8 +602,8 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
                          sizeof(struct frm_info));
                 ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
                                                cxt->camera_id, evt, data);
-                CMR_LOGV("camera id = %d,  cur_chn_data.yaddr_vir 0x%x, "
-                         "yaddr_vir 0x%x",
+                CMR_LOGV("camera id = %d,  cur_chn_data.yaddr_vir 0x%lx, "
+                         "yaddr_vir 0x%lx",
                          cxt->camera_id, cxt->snp_cxt.cur_chn_data.yaddr_vir,
                          frm_ptr->yaddr_vir);
             } else {
@@ -1054,10 +1054,10 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
 
     if (NULL == data || !privdata ||
         CMR_EVT_JPEG_BASE != (CMR_EVT_JPEG_BASE & evt)) {
-        CMR_LOGE("err, param, 0x%lx 0x%lx", (cmr_uint)data, evt);
+        CMR_LOGE("err, param, 0x%lx 0x%x", (cmr_uint)data, evt);
         return;
     }
-    CMR_LOGI("evt 0x%lx, handle 0x%lx", evt, (cmr_uint)privdata);
+    CMR_LOGI("evt 0x%x, handle 0x%lx", evt, (cmr_uint)privdata);
 
     switch (evt) {
     case CMR_JPEG_ENC_DONE:
@@ -1075,7 +1075,7 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
         break;
     default:
         ret = -CMR_CAMERA_NO_SUPPORT;
-        CMR_LOGE("err, don't support evt 0x%lx", evt);
+        CMR_LOGE("err, don't support evt 0x%x", evt);
     }
     if (ret) {
         CMR_LOGE("done %ld", ret);
@@ -2263,7 +2263,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     }
 
     flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num + offset;
-    CMR_LOGI("flash_capture_skip_num = %d");
+    CMR_LOGI("flash_capture_skip_num = %d",flash_capture_skip_num);
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -4955,7 +4955,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 
     if (ret) {
         cxt->jpeg_cxt.enc_caller_handle = (cmr_handle)0;
-        CMR_LOGE("failed to jpeg enc %ld", ret);
+        CMR_LOGE("failed to jpeg enc %d", ret);
         goto exit;
     }
 
@@ -4967,14 +4967,14 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
         ret = camera_start_exif_encode_simplify(oem_handle, &pic_enc, &dst,
                                                 &enc_out_param);
         if (ret) {
-            CMR_LOGE("failed to camera_start_exif_encode %ld", ret);
+            CMR_LOGE("failed to camera_start_exif_encode %d", ret);
             goto exit;
         }
     }
 
 exit:
     sem_post(&cxt->access_sm);
-    CMR_LOGD("done %ld", ret);
+    CMR_LOGD("done %d", ret);
     ATRACE_END();
     return ret;
 }
@@ -6919,7 +6919,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                               CAMERA_PARAM_SPRD_GET_FLASH_LEVEL,
                               &setting_param);
             cmr_uint flash_level = setting_param.cmd_type_value;
-            CMR_LOGD("flash_level:%d", flash_level);
+            CMR_LOGD("flash_level:%ld", flash_level);
 
             struct sprd_flash_cfg_param cfg;
             cfg.real_cell.type = FLASH_TYPE_TORCH;
@@ -7753,21 +7753,21 @@ cmr_int camera_get_rolling_shutter_skew_value(cmr_handle oem_handle,
     ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                               &sensor_mode);
     if (ret) {
-        CMR_LOGE("Failed to get sensor mode %d", ret);
+        CMR_LOGE("Failed to get sensor mode %ld", ret);
         free(sensor_info);
         goto exit;
     }
     ret = cmr_sensor_get_info(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                               sensor_info);
     if (ret) {
-        CMR_LOGE("failed to get sensor info %d", ret);
+        CMR_LOGE("failed to get sensor info %ld", ret);
         free(sensor_info);
         goto exit;
     }
     *rolling_shutter_skew = (sensor_info->mode_info[sensor_mode].line_time *
                              sensor_info->mode_info[sensor_mode].height);
     free(sensor_info);
-    CMR_LOGV("rolling_shutter_skew %d", *rolling_shutter_skew);
+    CMR_LOGV("rolling_shutter_skew %lld", *rolling_shutter_skew);
 exit:
     return ret;
 }
@@ -11073,7 +11073,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         snp_param.post_proc_setting.actual_snp_size.width == 0) {
         cmr_bzero(&setting_param, sizeof(setting_param));
         setting_param.camera_id = cxt->camera_id;
-        CMR_LOGI("camera id: %d", setting_param.camera_id);
+        CMR_LOGI("camera id: %ld", setting_param.camera_id);
 
         /*get snapshot size*/
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -11166,7 +11166,7 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
 cmr_int camera_set_flash_level(void *handler, cmr_uint target_level) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_uint flash_level_trans;
-    CMR_LOGI("in target_level:%d", target_level);
+    CMR_LOGI("in target_level:%ld", target_level);
 
     if (target_level < MIN_FLASH_LEVEL || target_level > MAX_FLASH_LEVEL) {
         CMR_LOGE("flash level out of range");

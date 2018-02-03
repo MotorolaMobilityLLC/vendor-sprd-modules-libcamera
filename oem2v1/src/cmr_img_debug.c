@@ -79,8 +79,8 @@ cmr_int cmr_img_debug(void *param1, void *param2) {
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGD("img_debug->input.addr_y:0x%x,  img_debug->input.addr_u:0x%x,  "
-             "img_debug->output.addr_y:0x%x, img_debug->size.width:%d, "
+    CMR_LOGD("img_debug->input.addr_y:0x%lx,  img_debug->input.addr_u:0x%lx,  "
+             "img_debug->output.addr_y:0x%lx, img_debug->size.width:%d, "
              "img_debug->size.height:%d,   img_debug->format:%d",
              img_debug->input.addr_y, img_debug->input.addr_u,
              img_debug->output.addr_y, img_debug->size.width,

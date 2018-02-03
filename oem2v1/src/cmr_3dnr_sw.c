@@ -296,9 +296,9 @@ static void read_pre_param_from_file() {
                        &pre_slope[3][1], &pre_slope[3][2], &pre_slope[3][3], &pre_slope[3][4],
                        &pre_slope[3][5]);
             } else if (!strcmp(ss, "-srx"))
-                sscanf(line, "%s %d", ss, &pre_SearchWindow_x);
+                sscanf(line, "%s %hd", ss, &pre_SearchWindow_x);
             else if (!strcmp(ss, "-sry"))
-                sscanf(line, "%s %d", ss, &pre_SearchWindow_y);
+                sscanf(line, "%s %hd", ss, &pre_SearchWindow_y);
 
             fgets(line, 256, pFile);
         }
@@ -355,9 +355,9 @@ static void read_cap_param_from_file() {
                        &cap_slope[3][1], &cap_slope[3][2], &cap_slope[3][3], &cap_slope[3][4],
                        &cap_slope[3][5]);
             } else if (!strcmp(ss, "-srx"))
-                sscanf(line, "%s %d", ss, &cap_SearchWindow_x);
+                sscanf(line, "%s %hd", ss, &cap_SearchWindow_x);
             else if (!strcmp(ss, "-sry"))
-                sscanf(line, "%s %d", ss, &cap_SearchWindow_y);
+                sscanf(line, "%s %hd", ss, &cap_SearchWindow_y);
 
             fgets(line, 256, pFile);
         }
@@ -749,12 +749,12 @@ void *thread_3dnr(void *p_data) {
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
             sprintf(filename,
-                    "/data/misc/cameraserver/big_in_%dx%d_index_%d.yuv",
+                    "/data/misc/cameraserver/big_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
             sprintf(filename,
-                    "/data/misc/cameraserver/small_in_%dx%d_index_%d.yuv",
+                    "/data/misc/cameraserver/small_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->small_width, threednr_handle->small_height,
                     cur_frm);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y +
@@ -766,7 +766,7 @@ void *thread_3dnr(void *p_data) {
     }
 
     // call 3dnr function
-    CMR_LOGD("Call the threednr_function(). before. cnt: %d",
+    CMR_LOGD("Call the threednr_function(). before. cnt: %ld",
              threednr_handle->common.save_frame_count);
     big_buf.gpu_buffer.handle =
         out->private_data; //(unsigned char *)in->src_frame.addr_vir.addr_y;
@@ -810,7 +810,7 @@ void *thread_3dnr(void *p_data) {
         if (!strcmp(flag, "1")) { // save output image.
             sprintf(
                 filename,
-                "/data/misc/cameraserver/%dx%d_3dnr_handle_frame_index%d.yuv",
+                "/data/misc/cameraserver/%ldx%ld_3dnr_handle_frame_index%d.yuv",
                 threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)in->dst_frame.addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
@@ -1219,13 +1219,13 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             CMR_LOGI("save pic: %d, threednr_prev_handle->g_num: %d.", index,
                      threednr_prev_handle->g_num);
             sprintf(filename,
-                    "/data/misc/cameraserver/scl_in_%dx%d_index_%d.yuv",
+                    "/data/misc/cameraserver/scl_in_%ldx%ld_index_%d.yuv",
                     threednr_prev_handle->width, threednr_prev_handle->height,
                     index);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y,
                      threednr_prev_handle->width, threednr_prev_handle->height);
             sprintf(filename,
-                    "/data/misc/cameraserver/scl_out_%dx%d_index_%d.yuv",
+                    "/data/misc/cameraserver/scl_out_%ldx%ld_index_%d.yuv",
                     threednr_prev_handle->small_width,
                     threednr_prev_handle->small_height, index);
             save_yuv(filename, (char *)in->dst_frame.addr_vir.addr_y,
@@ -1236,7 +1236,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     }
 
     // call 3dnr function
-    CMR_LOGV("Call the threednr_function(). before. cnt: %d, fd: 0x%x",
+    CMR_LOGV("Call the threednr_function(). before. cnt: %ld, fd: 0x%x",
              threednr_prev_handle->common.save_frame_count, in->src_frame.fd);
     // memcpy(pbig , (unsigned char*)(in->src_frame.addr_vir.addr_y) ,
     // threednr_prev_handle->width * threednr_prev_handle->height*3/2);
@@ -1333,12 +1333,12 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             property_get("3dnr_save", value, "0");
             FILE *fp;
             sprintf(filename,
-                    "/data/misc/cameraserver/%dx%d_preview_index%d.yuv",
+                    "/data/misc/cameraserver/%ldx%ld_preview_index%d.yuv",
                     threednr_prev_handle->width, threednr_prev_handle->height,
                     index);
             if (!strcmp(value, "1")) {
                 sprintf(filename,
-                        "/data/misc/cameraserver/%dx%d_preview_index%d.yuv",
+                        "/data/misc/cameraserver/%ldx%ld_preview_index%d.yuv",
                         threednr_prev_handle->width,
                         threednr_prev_handle->height, index);
                 fp = fopen(filename, "wb");
@@ -1350,7 +1350,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                     fclose(fp);
                 }
                 sprintf(filename,
-                        "/data/misc/cameraserver/%dx%d_preview_index%d.yuv",
+                        "/data/misc/cameraserver/%ldx%ld_preview_index%d.yuv",
                         threednr_prev_handle->small_width,
                         threednr_prev_handle->small_height, index);
                 fp = fopen(filename, "wb");
@@ -1372,7 +1372,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             if (!strcmp(value, "1")) {
                 sprintf(
                     filename,
-                    "/data/misc/cameraserver/%dx%d_preview_result_index%d.yuv",
+                    "/data/misc/cameraserver/%ldx%ld_preview_result_index%d.yuv",
                     threednr_prev_handle->width, threednr_prev_handle->height,
                     index);
                 fp = fopen(filename, "wb");
@@ -1428,7 +1428,7 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         dst->data_end.uv_endian);
 
     CMR_LOGD(
-        "src fd: 0x%x, yaddr: 0x%x, fmt: %d dst fd: 0x%x, yaddr: 0x%x, fmt: %d",
+        "src fd: 0x%x, yaddr: 0x%lx, fmt: %d dst fd: 0x%x, yaddr: 0x%lx, fmt: %d",
         src->fd, src->addr_vir.addr_y, src->fmt, dst->fd, dst->addr_vir.addr_y,
         dst->fmt);
     ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,

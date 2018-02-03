@@ -746,12 +746,12 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
             property_get("persist.sys.camera.smile.thr", algo_smile_thr_char, "1");
             cmr_int algo_smile_threshold = atoi(algo_smile_thr_char);
             if (algo_smile_threshold <= 0 || algo_smile_threshold > 50) {
-               CMR_LOGW("algo smile threadhold is %d out of range: [1, 50], "
+               CMR_LOGW("algo smile threadhold is %ld out of range: [1, 50], "
                         "set to defualt value 1.",
                         algo_smile_threshold);
                algo_smile_threshold = 1;
             }
-            CMR_LOGV("get algo smile threadhold:%d", algo_smile_threshold);
+            CMR_LOGV("get algo smile threadhold:%ld", algo_smile_threshold);
             const cmr_int algo_smile_thr = algo_smile_threshold;
 
             cmr_int i = 0;

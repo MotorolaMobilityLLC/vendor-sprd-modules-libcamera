@@ -122,7 +122,7 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
     }
     *jpeg_handle = (cmr_handle)jcxt;
 
-    CMR_LOGD("ret %d", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -144,7 +144,7 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGD("ret %d", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -167,7 +167,7 @@ cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGD("ret %d", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -263,7 +263,7 @@ cmr_int cmr_stop_codec(cmr_handle jpeg_handle) {
         CMR_LOGE("stop codec error");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGD("ret %d", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -292,6 +292,6 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
         free(jcxt);
         jcxt = NULL;
     }
-    CMR_LOGD("ret %d", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
