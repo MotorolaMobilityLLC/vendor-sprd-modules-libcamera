@@ -117,6 +117,13 @@ extern SENSOR_INFO_T g_sp0a09_mipi_raw_info;
 #ifdef SP2509
 extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
 #endif
+#ifdef SP0A09Z
+extern SENSOR_INFO_T g_sp0a09z_mipi_raw_info;
+#endif
+#ifdef SP2509Z
+extern SENSOR_INFO_T g_sp2509z_mipi_raw_info;
+#endif
+
 #ifdef SP2509R
 extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
 #endif
@@ -299,6 +306,10 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef SP2509
     {MODULE_SUNNY, "sp2509", &g_sp2509_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef SP2509Z
+    {MODULE_SUNNY, "sp2509z", &g_sp2509z_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
 #ifdef SP8407
 #ifdef SBS_SENSOR_FRONT
     {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, &sp8407_cmk_otp_entry},
@@ -363,6 +374,10 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef SP0A09
     {MODULE_SUNNY, "sp0a09", &g_sp0a09_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef SP0A09Z
+    {MODULE_SUNNY, "sp0a09z", &g_sp0a09z_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
 #ifdef SP8407
 #ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
     {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, &sp8407_cmk_otp_entry},
