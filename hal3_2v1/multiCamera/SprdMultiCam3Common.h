@@ -85,7 +85,8 @@ typedef enum {
     SNAPSHOT_TRANSFORM_BUFFER,
     DEPTH_OUT_BUFFER,
     DEPTH_OUT_WEIGHTMAP,
-    YUV420
+    YUV420,
+    SNAPSHOT_SCALE_BUFFER
 } camera_buffer_type_t;
 
 typedef enum {
@@ -210,7 +211,9 @@ typedef struct {
                                    void *a_pInMain_YCC420NV21,
                                    weightmap_param *wParams,
                                    distanceRet *distance);
-
+    int (*sprd_depth_OnlineCalibration)(void *handle, void *a_pOutMaptable,
+                                        void *a_pInSub_YCC420NV21,
+                                        void *a_pInMain_YCC420NV21);
     int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
                              int angle);
 

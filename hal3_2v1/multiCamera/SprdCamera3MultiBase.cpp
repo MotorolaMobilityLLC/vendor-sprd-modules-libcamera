@@ -445,8 +445,8 @@ SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
     Mutex::Autolock l(mBufferListLock);
     List<new_mem_t *>::iterator j = list.begin();
     for (; j != list.end(); j++) {
-        if ((*j)->type == type) {
-            ret = &((*j)->native_handle);
+        ret = &((*j)->native_handle);
+        if (ret && (*j)->type == type) {
             break;
         }
     }

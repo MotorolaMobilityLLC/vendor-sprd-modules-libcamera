@@ -66,7 +66,8 @@ namespace sprdcamera {
 #define YUV_CONVERT_TO_JPEG
 
 #define LOCAL_PREVIEW_NUM (20)
-#define SNAP_DEPTH_NUM 2
+#define SNAP_DEPTH_NUM 1
+#define SNAP_SCALE_NUM 1
 #define LOCAL_CAPBUFF_NUM 3
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
@@ -75,9 +76,9 @@ namespace sprdcamera {
 #define SNAP_TRANSF_NUM 0
 #endif
 
-#define SPRD_DEPTH_BUF_NUM 2
 #define LOCAL_BUFFER_NUM                                                       \
-    LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + SNAP_DEPTH_NUM + SNAP_TRANSF_NUM
+    LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + SNAP_SCALE_NUM + SNAP_TRANSF_NUM + \
+        SNAP_DEPTH_NUM
 
 #define REAL_BOKEH_MAX_NUM_STREAMS 3
 #define ARCSOFT_CALIB_DATA_SIZE (2048)
@@ -91,6 +92,7 @@ typedef enum {
 typedef enum { CAM_TYPE_BOKEH_MAIN = 0, CAM_TYPE_DEPTH } BokehCameraDeviceType;
 typedef enum { PREVIEW_MODE = 0, CAPTURE_MODE } CameraMode;
 typedef enum { SPRD_API_MODE = 0, ARCSOFT_API_MODE } ApiMode;
+typedef enum { DEPTH_DONING = 0, DEPTH_DONE, DEPTH_INVALID } DepthStatus;
 
 typedef enum {
     /* Main camera device id*/
@@ -178,6 +180,41 @@ typedef struct {
                                                       MFloat leftDis[],
                                                       MFloat rightDis[]);
 } ArcSoftBokehAPI_t;
+typedef struct {
+    int preview_w;
+    int preview_h;
+    int callback_w;
+    int callback_h;
+    int capture_w;
+    int capture_h;
+    int transform_w;
+    int transform_h;
+    int depth_prev_out_w;
+    int depth_prev_out_h;
+    int depth_snap_out_w;
+    int depth_snap_out_h;
+    int depth_prev_sub_w;
+    int depth_prev_sub_h;
+    int depth_snap_sub_w;
+    int depth_snap_sub_h;
+    int depth_snap_main_w;
+    int depth_snap_main_h;
+    int depth_prev_size;
+    int depth_weight_map_size;
+    int depth_snap_size;
+} BokehSize;
+typedef struct {
+    void *prev_depth_buffer;
+    void *snap_depth_buffer;
+    void *depth_out_map_table;
+} DepthBuffer;
+
+typedef struct {
+    bool otp_exist;
+    int otp_size;
+    int otp_type;
+    uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
+} OtpData;
 
 class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
@@ -221,7 +258,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     camera_metadata_t *mStaticMetadata;
 
     new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
-    void *mSprdDepthBuffer[SPRD_DEPTH_BUF_NUM];
     bool mFirstArcBokeh;
     bool mFirstArcBokehReset;
     bool mFirstSprdBokeh;
@@ -241,19 +277,15 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     face_beauty_levels mPerfectskinlevel;
     bool mFlushing;
     bool mIsSupportPBokeh;
-    bool mOtpExist;
     int mVcmSteps;
-    int mOtpSize;
-    int mOtpType;
     int mApiVersion;
     int mJpegOrientation;
-    buffer_handle_t *m_pMainSnapBuffer;
-    void *m_pSprdDepthBuffer;
 #ifdef YUV_CONVERT_TO_JPEG
     buffer_handle_t *m_pDstJpegBuffer;
     cmr_uint mOrigJpegSize;
+#else
+    buffer_handle_t *m_pMainSnapBuffer;
 #endif
-    bool mUpdateDepthFlag;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -281,15 +313,16 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         int saveCaptureBokehParams(unsigned char *result_buffer_addr,
                                    uint32_t result_buffer_size,
                                    size_t jpeg_size);
-        int bokehCaptureHandle(buffer_handle_t *output_buf,
-                               buffer_handle_t *input_buf1,
-                               void *input_buf1_addr, void *depth_buffer);
-        int depthCaptureHandle(void *depth_output_buffer,
-                               buffer_handle_t *output_buffer,
-                               buffer_handle_t *scaled_buffer,
-                               buffer_handle_t *input_buf1,
-                               void *input_buf1_addr,
-                               buffer_handle_t *input_buf2);
+        int sprdBokehCaptureHandle(buffer_handle_t *output_buf,
+                                   buffer_handle_t *input_buf1,
+                                   void *input_buf1_addr);
+        int sprdDepthCaptureHandle(buffer_handle_t *input_buf1,
+                                   void *input_buf1_addr,
+                                   buffer_handle_t *input_buf2);
+        int arcSoftBokehCaptureHandle(buffer_handle_t *output_bufer,
+                                      buffer_handle_t *input_buf1,
+                                      void *input_buf1_addr,
+                                      buffer_handle_t *input_buf2);
         // This queue stores matched buffer as frame_matched_info_t
         List<capture_queue_msg_t_bokeh> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -314,9 +347,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mAbokehGallery;
         bool mBokehResult;
         void reprocessReq(buffer_handle_t *output_buffer,
-                          capture_queue_msg_t_bokeh capture_msg,
-                          void *depth_output_buffer,
-                          buffer_handle_t *scaled_buffer);
+                          capture_queue_msg_t_bokeh capture_msg);
 
       private:
         void waitMsgAvailable();
@@ -329,23 +360,18 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         ~PreviewMuxerThread();
         virtual bool threadLoop();
         virtual void requestExit();
-        int bokehPreviewHandle(buffer_handle_t *output_buf,
-                               buffer_handle_t *input_buf1,
-                               void *input_buf1_addr, void *depth_buffer);
-        int depthPreviewHandle(void *depth_output_buffer,
-                               buffer_handle_t *output_buffer,
-                               buffer_handle_t *input_buf1,
-                               void *input_buf1_addr,
-                               buffer_handle_t *input_buf2);
+        int sprdBokehPreviewHandle(buffer_handle_t *output_buf,
+                                   buffer_handle_t *input_buf1);
+        int arcsoftBokehPreviewHandle(buffer_handle_t *output_bufer,
+                                      buffer_handle_t *input_buf1,
+                                      buffer_handle_t *input_buf2);
+        bool sprdDepthHandle(muxer_queue_msg_t *muxer_msg);
 
         List<muxer_queue_msg_t> mPreviewMuxerMsgList;
         Mutex mMergequeueMutex;
         Condition mMergequeueSignal;
-        bokeh_prev_params_t mPreviewbokehParam;
-        void *mPrevDepthhandle;
         MHandle mArcSoftPrevHandle;
         ARC_DCVR_PARAM mArcSoftPrevParam;
-        int mPrevAfState;
 
       private:
         Mutex mLock;
@@ -353,27 +379,32 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     };
 
     sp<PreviewMuxerThread> mPreviewMuxerThread;
+
+    class DepthMuxerThread : public Thread {
+      public:
+        DepthMuxerThread();
+        ~DepthMuxerThread();
+        virtual bool threadLoop();
+        virtual void requestExit();
+        int sprdDepthDo(buffer_handle_t *input_buf1,
+                        buffer_handle_t *input_buf2);
+
+        List<muxer_queue_msg_t> mDepthMuxerMsgList;
+        Mutex mMergequeueMutex;
+        Condition mMergequeueSignal;
+        void *mPrevDepthhandle;
+
+      private:
+        Mutex mLock;
+        void waitMsgAvailable();
+    };
+
+    sp<DepthMuxerThread> mDepthMuxerThread;
+
     camera3_stream_t mMainStreams[REAL_BOKEH_MAX_NUM_STREAMS];
     camera3_stream_t mAuxStreams[REAL_BOKEH_MAX_NUM_STREAMS];
     int32_t mFaceInfo[4];
-    int mCaptureWidth;
-    int mCaptureHeight;
-#ifdef BOKEH_YUV_DATA_TRANSFORM
-    int mTransformWidth;
-    int mTransformHeight;
-#endif
-    int mPreviewWidth;
-    int mPreviewHeight;
-    int mCallbackWidth;
-    int mCallbackHeight;
-    int mDepthOutWidth;
-    int mDepthOutHeight;
-    int mDepthSnapOutWidth;
-    int mDepthSnapOutHeight;
-    int mDepthPrevImageWidth;
-    int mDepthPrevImageHeight;
-    int mDepthSnapImageWidth;
-    int mDepthSnapImageHeight;
+    BokehSize mBokehSize;
     outFormat mDepthPrevFormat;
     camera_buffer_type_t mDepthPrevbufType;
     uint8_t mCaptureStreamsNum;
@@ -393,7 +424,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     ArcSoftBokehAPI_t *mArcSoftBokehApi;
     ARC_REFOCUSCAMERAIMAGE_PARAM mArcSoftInfo;
     ARC_DC_CALDATA mCaliData;
-    uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
     char mArcSoftCalibData[THIRD_OTP_SIZE];
     ArcParam mArcParam;
     int mMaxPendingCount;
@@ -402,6 +432,14 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     Condition mRequestSignal;
     bool mhasCallbackStream;
     multi_request_saved_t mThumbReq;
+    bokeh_prev_params_t mPreviewbokehParam;
+    DepthStatus mDepthStatus;
+    Mutex mDepthStatusLock;
+    bool mDepthTrigger;
+    uint8_t mCurAFStatus;
+    uint8_t mCurAFMode;
+    DepthBuffer mDepthBuffer;
+    OtpData mOtpData;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
@@ -440,11 +478,13 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int closeCameraDevice();
     void bokehThreadExit();
 #ifdef YUV_CONVERT_TO_JPEG
-    cmr_uint yuvToJpeg(buffer_handle_t *input_handle);
+    cmr_uint yuvToJpeg(struct private_handle_t *input_handle);
 #endif
 #ifdef CONFIG_ALTEK_ZTE_CALI
     int createArcSoftCalibrationData(unsigned char *pBuffer, int nBufSize);
 #endif
+    void setDepthStatus(DepthStatus status);
+    void setDepthTrigger(uint8_t af_status);
 };
 };
 
