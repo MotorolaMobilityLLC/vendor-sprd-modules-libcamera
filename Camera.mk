@@ -256,7 +256,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9853i)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)), $(filter $(TARGET_BOARD_PLATFORM), sp9863a sp9853i))
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MAX_PREVSIZE_1080P
 endif
 
