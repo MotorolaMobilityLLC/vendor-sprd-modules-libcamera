@@ -98,6 +98,7 @@ extern "C" {
 		AE_SET_RESTORE,
 		AE_SET_FLASH_NOTICE,
 		AE_SET_RGB_GAIN,
+		AE_SET_UPDATE_AUX_SENSOR,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -135,7 +136,6 @@ extern "C" {
 		AE_GET_FLASH_WB_GAIN,
 		AE_GET_LEDS_CTRL,
 		AE_GET_CALC_RESULTS,
-		AE_SET_UPDATE_AUX_SENSOR,
 		AE_DIRECT_MSG_END,
 		AE_IO_MAX
 	};
