@@ -4154,8 +4154,8 @@ exit:
 	if (ret) {
 		if (cxt) {
 			ispalg_destroy_thread_proc((cmr_handle) cxt);
-			pthread_mutex_destroy(&cxt->stats_buf_lock);
 			ispalg_deinit((cmr_handle) cxt);
+			pthread_mutex_destroy(&cxt->stats_buf_lock);
 			if (binning_info) {
 				free((void *)binning_info);
 			}
@@ -4237,10 +4237,10 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
 
-	pthread_mutex_destroy(&cxt->stats_buf_lock);
-
 	ret = ispalg_deinit((cmr_handle) cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do ispalg_deinit"));
+
+	pthread_mutex_destroy(&cxt->stats_buf_lock);
 
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
