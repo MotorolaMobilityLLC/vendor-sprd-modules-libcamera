@@ -280,6 +280,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // sw 3dnr solution used
     bool mUsingSW3DNR;               // only for blacksesame 3dnr (sw solution)
     bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
+#ifdef CONFIG_CAMERA_OFFLINE
+    bool mCallbackZslEnabled;
+#endif
   private:
     inline void print_time();
 

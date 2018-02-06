@@ -512,7 +512,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mPreviewInst = NULL;
     mVideoInst = NULL;
 #endif
-
+#ifdef CONFIG_CAMERA_OFFLINE
+    mCallbackZslEnabled = false;
+#endif
     HAL_LOGI(":hal3: X cameraId: %d", cameraId);
 
 exit:
@@ -3155,6 +3157,12 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 #endif
     HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
 
+#ifdef CONFIG_CAMERA_OFFLINE
+    if (mCallbackZslEnabled == true) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CALLBACK_ENABLE_ZSL,
+                 mCallbackZslEnabled);
+    }
+#endif
     if (!initPreview()) {
         HAL_LOGE("initPreview failed.  Not starting preview.");
         deinitPreview();
@@ -3253,7 +3261,9 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         HAL_LOGD("Preview not in progress! stopPreviewInternal X");
         return;
     }
-
+#ifdef CONFIG_CAMERA_OFFLINE
+    mCallbackZslEnabled = false;
+#endif
     mIsStoppingPreview = 1;
     setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
     if (CMR_CAMERA_SUCCESS !=

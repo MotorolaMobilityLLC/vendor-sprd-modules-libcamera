@@ -352,6 +352,9 @@ struct prev_context {
     cmr_uint vcm_step;
     cmr_uint threednr_cap_smallwidth;
     cmr_uint threednr_cap_smallheight;
+#ifdef CONFIG_CAMERA_OFFLINE
+    int callback_zsl_flag;
+#endif
 };
 
 struct prev_thread_cxt {
@@ -959,7 +962,6 @@ cmr_int cmr_preview_stop(cmr_handle preview_handle, cmr_u32 camera_id) {
         CMR_LOGE("send msg failed!");
         return CMR_CAMERA_FAIL;
     }
-
     CMR_LOGI("out");
     return ret;
 }
@@ -4056,8 +4058,10 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->video_restart_skip_en = 0;
     prev_cxt->cap_zsl_restart_skip_cnt = 0;
     prev_cxt->cap_zsl_restart_skip_en = 0;
+#ifdef CONFIG_CAMERA_OFFLINE
+    prev_cxt->callback_zsl_flag = 0;
+#endif
     pthread_mutex_unlock(&handle->thread_cxt.prev_mutex);
-
 exit:
 
     CMR_LOGI("out");
@@ -7211,7 +7215,6 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->prev_preflash_skip_en = 0;
     prev_cxt->prev_skip_num = sensor_info->preview_skip_num;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
-
     chn_param.is_lightly = 0;
     chn_param.frm_num = -1;
     chn_param.skip_num = sensor_info->mipi_cap_skip_num;
@@ -7453,11 +7456,14 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
         video_param.lv_size = prev_cxt->lv_size;
         video_param.video_size = prev_cxt->video_size;
+
 #ifdef CONFIG_CAMERA_OFFLINE
-        if (prev_cxt->prev_param.sprd_zsl_enabled)
+        if ((prev_cxt->prev_param.sprd_zsl_enabled) ||
+            (prev_cxt->callback_zsl_flag == 1)) {
             video_param.sprd_zsl_flag = 1;
-        else
+        } else {
             video_param.sprd_zsl_flag = 0;
+        }
 #endif
         ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
         if (ret) {
@@ -12147,3 +12153,17 @@ cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_param) {
     prev_cb_start(prev_handle, &cb_data_info);
     return CMR_CAMERA_SUCCESS;
 }
+#ifdef CONFIG_CAMERA_OFFLINE
+void cmr_preview_set_callback_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
+                                  cmr_uint *set_flag) {
+
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
+    prev_cxt->callback_zsl_flag = 0;
+    if (*set_flag) {
+        prev_cxt->callback_zsl_flag = 1;
+    }
+
+    return;
+}
+#endif

@@ -30,7 +30,9 @@
 #define LOG_TAG "Cam3HWI"
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
-
+#ifdef CONFIG_CAMERA_OFFLINE
+#define ISP_PATH2_MAX_CAPABILITY 2592
+#endif
 #include <cutils/properties.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
@@ -1227,7 +1229,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 HAL_LOGE("invalid channel pointer for stream");
                 continue;
             }
-
+#ifdef CONFIG_CAMERA_OFFLINE
+            if (request->num_output_buffers == 1 &&
+                stream->priv == mCallbackChan &&
+                (stream->width > ISP_PATH2_MAX_CAPABILITY)) {
+                mOEMIf->mCallbackZslEnabled = true;
+            }
+#endif
             if (channel != mCallbackChan) {
                 ret = channel->request(stream, output.buffer, frameNumber);
                 if (ret) {

@@ -96,7 +96,8 @@ extern "C" {
 #define INVALID_FORMAT_PATTERN 255
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
 
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4) || defined(CONFIG_ISP_2_5)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1) ||                                      \
+    defined(CONFIG_CAMERA_ISP_DIR_2_4) || defined(CONFIG_ISP_2_5)
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
 #ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
@@ -1285,6 +1286,9 @@ enum camera_param_type {
     CAMERA_PARAM_LENS_FOCUS_DISTANCE,
     CAMERA_PARAM_SPRD_ADJUST_FLASH_LEVEL,
     CAMERA_PARAM_SPRD_GET_FLASH_LEVEL,
+#ifdef CONFIG_CAMERA_OFFLINE
+    CAMERA_PARAM_CALLBACK_ENABLE_ZSL,
+#endif
     CAMERA_PARAM_TYPE_MAX
 };
 

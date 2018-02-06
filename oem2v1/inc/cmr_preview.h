@@ -315,6 +315,10 @@ cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 
 cmr_int cal_dcam_output_size(cmr_u16 *src_w, cmr_u16 *src_h, cmr_u32 *dst_w,
                              cmr_u32 *dst_h);
+#ifdef CONFIG_CAMERA_OFFLINE
+void cmr_preview_set_callback_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
+                                  cmr_uint *set_flag);
+#endif
 
 #ifdef __cplusplus
 }

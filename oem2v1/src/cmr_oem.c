@@ -9982,7 +9982,6 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CHECK_HANDLE_VALID(oem_handle);
-
     switch (id) {
     case CAMERA_PARAM_FOCUS_RECT:
         CMR_LOGI("set focus rect 0x%lx", param);
@@ -10037,6 +10036,14 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         cxt->setting_cxt.iso_value = param;
         ret = camera_set_setting(oem_handle, id, param);
         break;
+#ifdef CONFIG_CAMERA_OFFLINE
+    case CAMERA_PARAM_CALLBACK_ENABLE_ZSL: {
+        cmr_uint cb_zsl_enable = param;
+        cmr_preview_set_callback_zsl(cxt->prev_cxt.preview_handle,
+                                     cxt->camera_id, &cb_zsl_enable);
+        break;
+    }
+#endif
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;
