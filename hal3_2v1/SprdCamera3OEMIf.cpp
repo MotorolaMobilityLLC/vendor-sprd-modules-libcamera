@@ -277,7 +277,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
       mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
       mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
-      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mSprdAppmodeId(-1),
+      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
+      mFixedFpsEnabled(0), mSprdAppmodeId(-1),
       mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mLastCafDoneTime(0)
@@ -1964,7 +1965,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
         bool needFixedFPS = false;
-        if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE) {
+        if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE || mFixedFpsEnabled) {
             needFixedFPS = true;
         }
         if (!needFixedFPS &&
@@ -6444,6 +6445,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         HAL_LOGD("sprd_hdr_plus_enable=%d", sprddefInfo.sprd_hdr_plus_enable);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
                  sprddefInfo.sprd_hdr_plus_enable);
+    } break;
+    case ANDROID_SPRD_FIXED_FPS_ENABLED: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        mFixedFpsEnabled = sprddefInfo.sprd_fixedfps_enabled;
     } break;
     case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag sprddefInfo;

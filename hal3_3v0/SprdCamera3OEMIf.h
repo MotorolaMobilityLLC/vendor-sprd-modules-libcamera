@@ -790,6 +790,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSprdBurstModeEnabled;
     bool mUhdRecodingEnabled;
     bool mUhdVideoSnapshotSupport;
+    bool mFixedFpsEnabled;
     int32_t mSprdAppmodeId;
     int mTempStates;
     int mIsTempChanged;

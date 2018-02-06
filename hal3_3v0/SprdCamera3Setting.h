@@ -387,6 +387,7 @@ typedef struct {
                                                    capture size*/
     uint8_t sprd_burstmode_enable;
     uint8_t sprd_3dcapture_enabled; /**add for 3d capture enable flag*/
+    uint8_t sprd_fixedfps_enabled;
     int32_t sprd_appmode_id;
     uint32_t sprd_filter_type;
     uint8_t is_takepicture_with_flash;

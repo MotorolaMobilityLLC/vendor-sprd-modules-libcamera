@@ -957,6 +957,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_HDR_PLUS_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_HDR_PLUS_ENABLED);
             break;
+        case ANDROID_SPRD_FIXED_FPS_ENABLED:
+            HAL_LOGV("ANDROID_SPRD_FIXED_FPS_ENABLED");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
+            break;
         case ANDROID_SPRD_APP_MODE_ID:
             HAL_LOGV("ANDROID_SPRD_APP_MODE_ID");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_APP_MODE_ID);
