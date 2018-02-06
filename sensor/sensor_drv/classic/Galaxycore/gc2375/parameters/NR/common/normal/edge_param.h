@@ -739,13 +739,13 @@
 	/*ee_tx_cfg*/
 	{
 		/*ee_t1_cfg*/
-		0x0014,
+		0x001E,
 		/*ee_t2_cfg*/
-		0x0054,
+		0x005E,
 		/*ee_t3_cfg*/
-		0x0062,
+		0x006C,
 		/*ee_t4_cfg*/
-		0x0082,
+		0x008C,
 
 	},
 	/*ee_rx_cfg*/
