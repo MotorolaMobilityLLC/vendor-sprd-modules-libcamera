@@ -129,7 +129,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_CCE, array_offset(struct isp_context, cce), sizeof(struct isp_cce_param), &s_cce_ops},
 	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, frgb_gamc), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
 	{ISP_BLK_RGB_AEM, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},
-	{ISP_BLK_RGB_AFM, array_offset(struct isp_context, afm), sizeof(struct isp_rgb_afm_param), &s_rgb_afm_ops},
+	{DCAM_BLK_RGB_AFM, array_offset(struct isp_context, afm), sizeof(struct isp_rgb_afm_param), &s_rgb_afm_ops},
 	{ISP_BLK_YIQ_AFL_V3, array_offset(struct isp_context, yiq_afl_v3), sizeof(struct isp_yiq_afl_param_v3), &s_yiq_afl_ops_v3},
 	{ISP_BLK_YUV_NOISEFILTER, array_offset(struct isp_context, yuv_noisefilter), sizeof(struct isp_dev_noise_filter_param), &s_yuv_noisefilter_ops},
 	{ISP_BLK_YUV_PRECDN, array_offset(struct isp_context, yuv_pre_cdn), sizeof(struct isp_yuv_pre_cdn_param), &s_yuv_precdn_ops},

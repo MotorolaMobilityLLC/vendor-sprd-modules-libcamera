@@ -485,16 +485,21 @@ static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	cmr_u32 rgb_gain_offset = 4096;
 	struct isp_dev_rgb_gain_info gain_info;
+	struct isp_u_blocks_info block_info;
 
+	memset(&gain_info, 0x00, sizeof(gain_info));
+	memset(&block_info, 0x00, sizeof(block_info));
 	gain_info.bypass = 0;
 	gain_info.global_gain = *rgb_gain_coeff;
 	gain_info.r_gain = rgb_gain_offset;
 	gain_info.g_gain = rgb_gain_offset;
 	gain_info.b_gain = rgb_gain_offset;
 
+	block_info.block_info = &gain_info;
+	block_info.scene_id = 0;
 	ISP_LOGV("d-gain--global_gain: %d\n", gain_info.global_gain);
 
-	isp_u_rgb_gain_block(cxt->isp_driver_handle, &gain_info);
+	isp_u_rgb_gain_block(cxt->isp_driver_handle, &block_info);
 
 	return ret;
 }
@@ -644,10 +649,10 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
 		break;
 	case ISP_DEV_SET_AF_IIR_CFG:
-		ret = isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, in);
+		ret = isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AF_MODULES_CFG:
-		ret = isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, in);
+		ret = isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_POST_3DNR:
 		ret = isp_dev_3dnr(cxt->isp_driver_handle, in);

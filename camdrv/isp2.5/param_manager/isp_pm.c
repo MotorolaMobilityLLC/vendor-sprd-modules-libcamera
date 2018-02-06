@@ -75,7 +75,7 @@ static void isp_pm_check_param(cmr_u32 id, cmr_u32 *update_flag)
 	case ISP_BLK_BPC:
 	case ISP_BLK_GRGB:
 	case ISP_BLK_CFA:
-	case ISP_BLK_RGB_AFM:
+	case DCAM_BLK_RGB_AFM:
 	case ISP_BLK_UVDIV:
 	case ISP_BLK_3DNR_PRE:
 	case ISP_BLK_3DNR_CAP:
@@ -1144,7 +1144,7 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				nr_set_size = sizeof(struct sensor_cfa_param_level);
 				break;
 			}
-			case ISP_BLK_RGB_AFM:
+			case DCAM_BLK_RGB_AFM:
 			{
 				isp_blk_nr_type = ISP_BLK_RGB_AFM_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_afm);
@@ -1230,7 +1230,7 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				|| src_header[j].block_id == ISP_BLK_BPC
 				|| src_header[j].block_id == ISP_BLK_GRGB
 				|| src_header[j].block_id == ISP_BLK_CFA
-				|| src_header[j].block_id == ISP_BLK_RGB_AFM
+				|| src_header[j].block_id == DCAM_BLK_RGB_AFM
 				|| src_header[j].block_id == ISP_BLK_UVDIV
 				|| src_header[j].block_id == ISP_BLK_3DNR_PRE
 				|| src_header[j].block_id == ISP_BLK_3DNR_CAP

@@ -2037,7 +2037,7 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		case ISP_BLK_CFA:
 			update_param->cfae_level_ptr = (struct sensor_cfai_level *)fix_data_ptr->nr.nr_set_group.cfa;
 			break;
-		case ISP_BLK_RGB_AFM:
+		case DCAM_BLK_RGB_AFM:
 			update_param->rgb_afm_level_ptr = (struct sensor_rgb_afm_level *)fix_data_ptr->nr.nr_set_group.rgb_afm;
 			break;
 		case ISP_BLK_UVDIV:
