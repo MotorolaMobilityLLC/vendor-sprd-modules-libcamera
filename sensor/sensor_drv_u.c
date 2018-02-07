@@ -2489,8 +2489,8 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
                               sensor_exif_info_ptr->ExposureTime.numerator /
                               sensor_exif_info_ptr->ExposureTime.denominator;
 // To check within range of CTS
-        if (((orig_exposure_time - regen_exposure_time) > 100000) ||
-            ((regen_exposure_time - orig_exposure_time) > 100000)) {
+        if ((0x00 != exposure_time) && (((orig_exposure_time - regen_exposure_time) > 100000) ||
+            ((regen_exposure_time - orig_exposure_time) > 100000))) {
             sensor_exif_info_ptr->ExposureTime.denominator =
                 (1000000.00 / exposure_time) * 1000 + 0.5;
             sensor_exif_info_ptr->ExposureTime.numerator = 1000;
