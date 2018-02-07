@@ -44,7 +44,7 @@ namespace sprdcamera {
 #ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
 #define MATCH_FRAME_TIME_DIFF (40)
 #else
-#define MATCH_FRAME_TIME_DIFF (30)
+#define MATCH_FRAME_TIME_DIFF (60) /*30*/
 #endif
 
 #define LUMA_SOOMTH_COEFF (5)
@@ -1151,6 +1151,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
                  src_img.size.width, src_img.size.height, 0, "jpegEncode");
     }
+
     HAL_LOGI("out,ret=%d", ret);
     return ret;
 }

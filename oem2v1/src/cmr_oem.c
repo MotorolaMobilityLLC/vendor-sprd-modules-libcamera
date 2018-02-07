@@ -2263,7 +2263,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     }
 
     flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num + offset;
-    CMR_LOGI("flash_capture_skip_num = %d",flash_capture_skip_num);
+    CMR_LOGI("flash_capture_skip_num = %d", flash_capture_skip_num);
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -4944,11 +4944,13 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 
     sem_wait(&cxt->access_sm);
     // 1.construct param
+    memset(&mean, 0, sizeof(struct cmr_op_mean));
     mean.quality_level = SUPER_FINE;
     mean.slice_mode = JPEG_YUV_SLICE_ONE_BUF;
     mean.slice_height = pic_enc.size.height;
     mean.is_sync = 1;
-
+    src.data_end.y_endian = 0;
+    src.data_end.uv_endian = 2;
     // 2.call jpeg interface
     ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &src, &pic_enc,
                           (struct jpg_op_mean *)&mean);
@@ -5190,15 +5192,14 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             }
 #endif
         }
-
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
                               (struct jpg_op_mean *)mean);
         if (ret) {
             CMR_LOGE("failed to jpeg codec %ld", ret);
         }
     } else {
-      	dst->buf_size = (dst->size.height * dst->size.width) * 3;
-      	dst->buf_size = dst->buf_size / 2;
+        dst->buf_size = (dst->size.height * dst->size.width) * 3;
+        dst->buf_size = dst->buf_size / 2;
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
                               (struct jpg_op_mean *)mean);
         if (ret) {
@@ -9317,7 +9318,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
                                            cxt->camera_id);
         if (raw_filename[0]) {
-            // only copy the filename without the path
+// only copy the filename without the path
 #ifdef CONFIG_USE_CAMERASERVER_PROC
             memcpy(value, raw_filename + 25, PROPERTY_VALUE_MAX);
 #else
