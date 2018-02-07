@@ -275,8 +275,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static void *gyro_monitor_thread_proc(void *p_data);
 #endif
 
-    int mBurstVideoSnapshot;
-    int mVideoParameterSetFlag;
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     cmr_uint mVideo3dnrFlag;
@@ -454,7 +452,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int zslTakePicture();
     int reprocessYuvForJpeg();
     int VideoTakePicture();
-    int setVideoSnapshotParameter();
     int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);
 
     int timer_stop();

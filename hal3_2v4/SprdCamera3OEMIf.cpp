@@ -469,8 +469,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslChannelStatus = 1;
     mZSLQueue.clear();
 
-    mBurstVideoSnapshot = 0;
-    mVideoParameterSetFlag = false;
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
 
@@ -644,17 +642,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
 #endif
 
         ret = startPreviewInternal();
-        if ((mVideoSnapshotType == 1) &&
-            (mCaptureWidth != 0 && mCaptureHeight != 0) &&
-            mVideoParameterSetFlag == 0) {
-            mPicCaptureCnt = 1;
-            if (mVideoCopyFromPreviewFlag) {
-                HAL_LOGV("no need to setVideoSnapshotParameter");
-            } else {
-                ret = setVideoSnapshotParameter();
-            }
-            mVideoParameterSetFlag = true;
-        }
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
@@ -673,10 +660,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
                 ret = zslTakePicture();
             }
         } else if (mTakePictureMode == SNAPSHOT_VIDEO_MODE) {
-            if (mVideoParameterSetFlag == false &&
-                mBurstVideoSnapshot == false) {
-                setVideoSnapshotParameter();
-            }
             mVideoSnapshotFrameNum = frame_number;
             ret = VideoTakePicture();
         }
@@ -704,7 +687,6 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
         stopPreviewInternal();
-        mVideoParameterSetFlag = false;
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
             video_stab_close(mPreviewInst);
@@ -1081,47 +1063,9 @@ int SprdCamera3OEMIf::VideoTakePicture() {
         deinitCapture(mIsPreAllocCapMem);
     }
 
-    mSetting->getJPEGTag(&jpgInfo);
-    HAL_LOGD("JPEG quality = %d", jpgInfo.quality);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
-             jpgInfo.quality);
-    HAL_LOGD("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
-             jpgInfo.thumbnail_quality);
-
     if (isCapturing()) {
         WaitForCaptureDone();
     }
-    mVideoParameterSetFlag = false;
-    if (mBurstVideoSnapshot == true) {
-        mBurstVideoSnapshot = false;
-        setVideoSnapshotParameter();
-    }
-    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
-    mVideoShotPushFlag = 1;
-    mVideoShotWait.signal();
-    print_time();
-
-exit:
-    HAL_LOGI("X");
-    return NO_ERROR;
-}
-
-int SprdCamera3OEMIf::setVideoSnapshotParameter() {
-    HAL_LOGI("E");
-    GET_START_TIME;
-    print_time();
-    int result = 0;
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        goto exit;
-    }
-    if (SPRD_ERROR == mCameraState.capture_state) {
-        HAL_LOGE("in error status, deinit capture at first ");
-        deinitCapture(mIsPreAllocCapMem);
-    }
-
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
 
     LENS_Tag lensInfo;
     mSetting->getLENSTag(&lensInfo);
@@ -1131,6 +1075,21 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter() {
         HAL_LOGD("lensInfo.focal_length = %f", lensInfo.focal_length);
     }
 
+    struct img_size jpeg_thumb_size;
+    mSetting->getJPEGTag(&jpgInfo);
+    HAL_LOGD("JPEG quality = %d", jpgInfo.quality);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
+             jpgInfo.quality);
+    HAL_LOGD("JPEG thumbnail quality = %d", jpgInfo.thumbnail_quality);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY,
+             jpgInfo.thumbnail_quality);
+    jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+    jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+    HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width,
+             jpeg_thumb_size.height);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
+             (cmr_uint)&jpeg_thumb_size);
+
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -1138,6 +1097,9 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter() {
         goto exit;
     }
 
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+    mVideoShotPushFlag = 1;
+    mVideoShotWait.signal();
     print_time();
 exit:
     HAL_LOGI("X");
@@ -2058,9 +2020,9 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
                 if (mVideoWidth != 0 &&
                     mVideoHeight !=
                         0) { // capture size must equal with video size
-                    if (mCaptureWidth != 0 && mCaptureHeight != 0) {
-                        capture_size.width = (cmr_u32)mCaptureWidth;
-                        capture_size.height = (cmr_u32)mCaptureHeight;
+                    if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
+                        capture_size.width = (cmr_u32)mVideoWidth;
+                        capture_size.height = (cmr_u32)mVideoHeight;
                     } else {
                         capture_size.width = (cmr_u32)mPreviewWidth;
                         capture_size.height = (cmr_u32)mPreviewHeight;
@@ -7961,7 +7923,7 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    if (mVideoWidth > 0 && mVideoWidth >= mCaptureWidth &&
+    if (mVideoWidth > 0 && mCaptureWidth > 0 &&
         sprddefInfo.slowmotion <= 1) {
         mVideoSnapshotType = 1;
     } else {
