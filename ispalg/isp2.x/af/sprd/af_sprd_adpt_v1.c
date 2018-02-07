@@ -1563,7 +1563,7 @@ static cmr_u8 check_force_retrigger(af_ctrl_t * af)
 		diff_x_ratio = (diff_x / 2) / ((af->face_trigger_area.ex - af->face_trigger_area.sx) + 1);
 		diff_y_ratio = (diff_y / 2) / ((af->face_trigger_area.ey - af->face_trigger_area.sy) + 1);
 
-		if (diff_x_ratio > 0.25 || diff_y_ratio > 0.25) {
+		if (diff_x_ratio > 0.35 || diff_y_ratio > 0.35) {
 			af->face_trigger_area.sx = af->face_info.face_info[max_index].sx;
 			af->face_trigger_area.ex = af->face_info.face_info[max_index].ex;
 			af->face_trigger_area.sy = af->face_info.face_info[max_index].sy;
@@ -1779,7 +1779,8 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				do_start_af(af);
 				ISP_LOGI("AF retrigger start \n");
 			} else {
-				if (af->face_trigger_area.face_force_stop == AFV1_TRUE && af->face_trigger_area.counter_face_force_stop <= 4) {
+			#if 0
+				if (af->face_trigger_area.face_force_stop == AFV1_TRUE && af->face_trigger_area.counter_face_force_stop <= 2) {
 
 					af->force_trigger = AFV1_FALSE;
 					af->face_trigger_area.face_force_stop = AFV1_FALSE;
@@ -1794,6 +1795,11 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 					af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
 					ISP_LOGI("AF retrigger no support @%d \n", alg_mode);
 				}
+			#else
+				cmr_u32 alg_mode;
+				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
+				ISP_LOGI("AF retrigger no support @%d \n", alg_mode);
+			#endif
 			}
 		}
 	}
@@ -2951,6 +2957,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 
+	/*
 	if (AFV1_TRUE == check_force_retrigger(af)) {
 		af->face_trigger_area.face_force_stop = AFV1_TRUE;
 		af->force_trigger = AFV1_TRUE;
@@ -2958,7 +2965,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			ISP_LOGV("check_force_retrigger 2");
 			caf_monitor_process(af);
 		}
-	}
+	}*/
 
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
@@ -3004,7 +3011,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		break;
 
 	case AF_DATA_IMG_BLK:
-		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state || STATE_FAF == af->state) {
+		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state ) {
 			caf_monitor_process(af);
 		}
 		break;
