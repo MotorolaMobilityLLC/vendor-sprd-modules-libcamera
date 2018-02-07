@@ -1426,10 +1426,10 @@ extern uint32_t isp_cur_bv;
 extern uint32_t isp_cur_ct;
 
 /* dump mipi raw */
-static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
-                                        uint32_t img_fmt, uint32_t width,
-                                        uint32_t height,
-                                        struct img_addr *addr) {
+static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
+                                          uint32_t img_fmt, uint32_t width,
+                                          uint32_t height,
+                                          struct img_addr *addr) {
     struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
 #define FILE_NAME_LEN 200
     int ret = CMR_CAMERA_SUCCESS;
@@ -1518,6 +1518,14 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 
     strcat(file_name, ".mipi_raw");
     CMR_LOGD("file name %s", file_name);
+    if (IMG_DATA_TYPE_RAW == img_fmt) {
+        strcat(file_name, ".mipi_raw");
+        CMR_LOGD("file name %s", file_name);
+
+    } else {
+        strcat(file_name, ".yuv");
+        CMR_LOGD("file name %s", file_name);
+    }
 
     fp = fopen(file_name, "wb");
     if (NULL == fp) {
@@ -1525,7 +1533,11 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
         return -1;
     }
 
-    fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 5 / 4, fp);
+    if (img_fmt == IMG_DATA_TYPE_RAW) {
+        fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 5 / 4, fp);
+    } else if (img_fmt == IMG_DATA_TYPE_YUV420) {
+        fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 3 / 2, fp);
+    }
     fclose(fp);
 
     return 0;
@@ -1587,10 +1599,10 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         char datetime[15] = {0};
         CMR_LOGD("save mipi raw to file");
         camera_get_system_time(datetime);
-        camera_save_mipi_raw_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
-                                     mem_ptr->cap_raw.size.width,
-                                     mem_ptr->cap_raw.size.height,
-                                     &mem_ptr->cap_raw.addr_vir);
+        camera_save_raw_or_yuv_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
+                                       mem_ptr->cap_raw.size.width,
+                                       mem_ptr->cap_raw.size.height,
+                                       &mem_ptr->cap_raw.addr_vir);
     }
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
@@ -1876,13 +1888,13 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
              enc_param.need_free, enc_param.size, cxt->cap_cnt,
              cxt->req_param.total_num);
     camera_take_snapshot_step(CMR_STEP_CALL_BACK);
-    // just for perf tuning
-    //camera_snapshot_step_statisic(&image_size);
+// just for perf tuning
+// camera_snapshot_step_statisic(&image_size);
 
 #ifdef CONFIG_CAMERA_OFFLINE
     postproc_time = camera_get_snap_postproc_time();
     if (postproc_time < SNP_POSTPROC_MIN_TIME)
-        usleep((SNP_POSTPROC_MIN_TIME - postproc_time)*1000);
+        usleep((SNP_POSTPROC_MIN_TIME - postproc_time) * 1000);
 #endif
 
     frame_type.timestamp = frame->sec * 1000000000LL + frame->usec * 1000;
@@ -4422,10 +4434,11 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     camera_take_snapshot_step(CMR_STEP_CAP_E);
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 1 || atoi(value) == 100 || (atoi(value) & (1 << 1))) {
-        struct camera_context *cam_ctx = cxt->oem_handle;
-        camera_save_yuv_to_file(
-            FORM_DUMPINDEX(SNP_CHN_OUT_DATA, cam_ctx->dump_cnt, 0),
-            IMG_DATA_TYPE_YUV420,
+        char datetime[15] = {0};
+        CMR_LOGD("save yuv to file");
+        camera_get_system_time(datetime);
+        camera_save_raw_or_yuv_to_file(
+            snp_handle, datetime, IMG_DATA_TYPE_YUV420,
             chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
                 .size.width,
             chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
