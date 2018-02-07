@@ -69,10 +69,6 @@ struct isp_u_blocks_info {
 		cmr_u32 fetch_start;
 		/*lsc block*/
 		cmr_u32 flag;
-		/*common block*/
-		cmr_u32 pos;
-		cmr_u32 auto_shadow;
-		cmr_u32 shadow_done;
 		/*aem block*/
 		struct sprd_aem_avgshf shift;
 		struct isp_aem_stats_info stats_info;
@@ -238,9 +234,6 @@ cmr_s32 isp_u_fetch_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_fetch_slice_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_fetch_raw_transaddr(cmr_handle handle, struct isp_dev_block_addr *addr);
 cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_fetch_yuv_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_fetch_yuv_slice_size(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_fetch_yuv_start_isp(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: BLC*/
 cmr_s32 isp_u_blc_block(cmr_handle handle, void *param_ptr);
@@ -302,15 +295,6 @@ cmr_s32 isp_u_pgg_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: COMMON*/
 cmr_s32 isp_u_comm_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_comm_channel0_y_aem_pos(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_comm_channel1_y_aem_pos(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_shadow_ctrl_all(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_awbm_shadow_ctrl(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_ae_shadow_ctrl(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_af_shadow_ctrl(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_afl_shadow_ctrl(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_3a_ctrl(cmr_handle handle, void *param_ptr);
 
 /*Rgb Gain*/
 cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *param_ptr);

@@ -256,16 +256,6 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, struct isp_u_blocks_info *bl
 	return ret;
 }
 
-cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, struct isp_u_blocks_info *block_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_u_comm_shadow_ctrl(cxt->isp_driver_handle, (void *)block_ptr);
-
-	return ret;
-}
-
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata)
 {
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
