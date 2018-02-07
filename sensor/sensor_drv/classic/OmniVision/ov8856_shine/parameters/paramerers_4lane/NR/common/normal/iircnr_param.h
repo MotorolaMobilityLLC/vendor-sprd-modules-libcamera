@@ -59,21 +59,21 @@
 		0x00,0x00/*0-1*/
 	},
 	/*iircnr_uv_th*/
-	0x00C8,
+	0x0014,
 	/*iircnr_uv_dist*/
-	0x02BC,
+	0x000A,
 	/*iircnr_uv_pg_th*/
 	0x03C0,
 	/*iircnr_uv_low_thr1*/
-	0x3A98,
+	0x0240,
 	/*iircnr_uv_low_thr2*/
-	0x2760,
+	0x0780,
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x00000000,
+	0x0008E000,
 	/*iircnr_ymd_v*/
-	0x00000000,
+	0x0008E000,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
@@ -83,13 +83,13 @@
 		0x00,0x00/*0-1*/
 	},
 	/*iircnr_alpha_low_u*/
-	0x3FFF,
+	0x370A,
 	/*iircnr_alpha_low_v*/
 	0x370A,
 	/*iircnr_middle_factor*/
 	0x00000000,
 	/*iircnr_uv_high_thr2*/
-	0x00002760,
+	0x00000780,
 	/*bypass*/
 	0x00000000,
 }
