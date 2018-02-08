@@ -2972,9 +2972,13 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		af_fv_val = (cmr_u32 *) (inparam->data);
 
 #ifdef CONFIG_ISP_2_5
-		for (i = 0; i < 10; i++) {
-			af->af_fv_val.af_fv0[i] = af_fv_val[6 * (i >> 1) + (i & 0x01) + 4];
-			af->af_fv_val.af_fv1[i] = af_fv_val[6 * (i >> 1) + (i & 0x01) + 2];
+		af->af_fv_val.af_fv0[9] = 0;
+		af->af_fv_val.af_fv1[9] = 0;
+		for (i = 0; i < 9; i++) {
+			af->af_fv_val.af_fv0[i] = af_fv_val[6 * ((2 * i) >> 1) + ((2 * i) & 0x01) + 4] + af_fv_val[6 * ((2 * i + 1) >> 1) + ((2 * i + 1) & 0x01) + 4];
+			af->af_fv_val.af_fv1[i] = af_fv_val[6 * ((2 * i) >> 1) + ((2 * i) & 0x01) + 2] + af_fv_val[6 * ((2 * i + 1) >> 1) + ((2 * i + 1) & 0x01) + 2];
+			af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i];
+			af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i];
 		}
 #endif
 

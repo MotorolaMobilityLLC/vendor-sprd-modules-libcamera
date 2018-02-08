@@ -1897,7 +1897,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct isp_statis_info *statis_info = NULL;
 	cmr_uint u_addr = 0;
 	cmr_s32 i = 0;
-	cmr_u32 af_temp[30];
+	cmr_u32 af_temp[54];
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	memset((void *)&calc_param, 0, sizeof(calc_param));
@@ -1911,7 +1911,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 			ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
 
-			for (i = 0; i < 30; i++) {
+			for (i = 0; i < 54; i++) {
 				af_temp[i] = (cmr_u32)*((cmr_uint *) u_addr + i);
 			}
 			calc_param.data_type = AF_DATA_AF;
