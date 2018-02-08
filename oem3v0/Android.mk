@@ -3,6 +3,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -ldl
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../sensor/inc
 
@@ -15,7 +16,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/inc \
 	$(LOCAL_PATH)/isp_calibration/inc \
 	$(LOCAL_PATH)/../common/inc \
-	$(LOCAL_PATH)/../jpeg/inc \
+	$(LOCAL_PATH)/../jpeg \
 	$(LOCAL_PATH)/../vsp/inc \
 	$(LOCAL_PATH)/../tool/mtrace \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
@@ -32,33 +33,6 @@ LOCAL_C_INCLUDES += \
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 LOCAL_SRC_FILES+= \
-	../vsp/src/jpg_drv_sc8830.c \
-	../jpeg/src/jpegcodec_bufmgr.c \
-	../jpeg/src/jpegcodec_global.c \
-	../jpeg/src/jpegcodec_table.c \
-	../jpeg/src/jpegenc_bitstream.c \
-	../jpeg/src/jpegenc_frame.c \
-	../jpeg/src/jpegenc_header.c \
-	../jpeg/src/jpegenc_init.c \
-	../jpeg/src/jpegenc_interface.c \
-	../jpeg/src/jpegenc_malloc.c \
-	../jpeg/src/jpegenc_api.c \
-	../jpeg/src/jpegdec_bitstream.c \
-	../jpeg/src/jpegdec_frame.c \
-	../jpeg/src/jpegdec_init.c \
-	../jpeg/src/jpegdec_interface.c \
-	../jpeg/src/jpegdec_malloc.c \
-	../jpeg/src/jpegdec_dequant.c	\
-	../jpeg/src/jpegdec_out.c \
-	../jpeg/src/jpegdec_parse.c \
-	../jpeg/src/jpegdec_pvld.c \
-	../jpeg/src/jpegdec_vld.c \
-	../jpeg/src/jpegdec_api.c \
-	../jpeg/src/exif_writer.c \
-	../jpeg/src/jpeg_stream.c
-
-
-LOCAL_SRC_FILES+= \
 	src/SprdOEMCamera.c \
 	src/cmr_common.c \
 	src/cmr_oem.c \
@@ -68,12 +42,14 @@ LOCAL_SRC_FILES+= \
 	src/cmr_scale.c \
 	src/cmr_rotate.c \
 	src/cmr_grab.c \
-	src/jpeg_codec.c \
+	src/cmr_jpeg.c \
 	src/cmr_exif.c \
 	src/cmr_preview.c \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
-	src/cmr_focus.c
+	src/cmr_focus.c \
+	src/exif_writer.c \
+	src/jpeg_stream.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \

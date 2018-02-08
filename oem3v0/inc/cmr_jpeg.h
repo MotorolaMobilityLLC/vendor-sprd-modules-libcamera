@@ -13,29 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _JPEG_CODEC_H_
-#define _JPEG_CODEC_H_
+#ifndef _CMR_JPEG_H_
+#define _CMR_JPEG_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "jpeg_api.h"
 #include "cmr_common.h"
-#include "jpeg_exif_header.h"
 
-enum cmr_jpeg_evt {
-    CMR_JPEG_ENC_DONE = CMR_EVT_JPEG_BASE,
-    CMR_JPEG_DEC_DONE,
-    CMR_JPEG_WEXIF_DONE,
-    CMR_JPEG_ENC_ERR,
-    CMR_JPEG_DEC_ERR,
-    CMR_JPEG_ERR,
+struct jpeg_lib_ops {
+    jpg_int (*jpeg_init)(JPEG_CODEC_CALLER_T *oem_handle,
+                         jpg_evt_cb_ptr jpg_evt_cb);
+    jpg_int (*jpeg_deinit)(JPEG_CODEC_CALLER_T *oem_handle);
+    jpg_int (*jpeg_encode)(JPEG_CODEC_CALLER_T *oem_handle,
+                           struct yuvbuf_frm *src, struct yuvbuf_frm *dst,
+                           struct jpg_op_mean *mean);
+    jpg_int (*jpeg_decode)(JPEG_CODEC_CALLER_T *oem_handle,
+                           struct yuvbuf_frm *src, struct yuvbuf_frm *dst,
+                           struct jpg_op_mean *mean);
+    jpg_int (*jpeg_stop)(JPEG_CODEC_CALLER_T *oem_handle);
+    jpg_int (*jpeg_get_iommu_status)(JPEG_CODEC_CALLER_T *oem_handle);
+    jpg_int (*jpeg_dec_get_resolution)(unsigned char *jpg_src,
+                                       unsigned int *wdith,
+                                       unsigned int *height,
+                                       unsigned int *yuv_buffer_size);
+    jpg_int (*jpeg_set_resolution)(void *jpg_buf, int jpg_size, int width,
+                                   int height);
+};
+
+struct jpeg_lib_cxt {
+    void *mLibHandle;
+    struct jpeg_codec_caller_handle *codec_handle;
+    struct jpeg_lib_ops ops;
+};
+
+enum cmr_jpeg_ret {
+    JPEG_CODEC_SUCCESS = 0,
+    JPEG_CODEC_PARAM_ERR,
+    JPEG_CODEC_INVALID_HANDLE,
+    JPEG_CODEC_NO_MEM,
+    JPEG_CODEC_ENC_WAIT_SRC,
+    JPEG_CODEC_ERROR,
+    JPEG_CODEC_STOP
 };
 
 struct jpeg_wexif_cb_param {
     cmr_uint output_buf_virt_addr;
     cmr_uint output_buf_size;
 };
+#define JPEG_WEXIF_TEMP_MARGIN (21 * 1024)
 
 // only support YUV slice, do not support stream slice for simplicity.
 struct jpeg_enc_in_param {
@@ -55,9 +83,6 @@ struct jpeg_enc_in_param {
     struct img_addr src_addr_vir;
     cmr_u32 src_fd;
     struct img_data_end src_endian;
-    cmr_u32 flip;
-    cmr_u32 mirror;
-    cmr_u32 rotation;
 };
 
 struct jpeg_enc_next_param {
@@ -112,20 +137,17 @@ struct jpeg_enc_exif_param {
     EXIF_ISP_DEBUG_INFO_T exif_isp_debug_info;
 };
 
-cmr_int jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle);
-cmr_int jpeg_enc_start(struct jpeg_enc_in_param *start_in_parm_ptr);
-cmr_int jpeg_enc_next(struct jpeg_enc_next_param *nxt_param_ptr);
-cmr_int jpeg_dec_start(struct jpeg_dec_in_param *start_in_parm_ptr);
-cmr_int jpeg_dec_next(struct jpeg_dec_next_param *next_param_ptr);
-cmr_int jpeg_stop(cmr_handle jpeg_handle);
-cmr_int jpeg_deinit(cmr_handle jpeg_handle);
-cmr_int jpeg_enc_add_eixf(struct jpeg_enc_exif_param *param_ptr,
-                          struct jpeg_wexif_cb_param *output_ptr);
-cmr_int jpeg_enc_thumbnail(struct jpeg_enc_in_param *in_parm_ptr,
-                           cmr_uint *stream_size_ptr);
-cmr_int jpeg_dec_start_sync(struct jpeg_dec_in_param *in_parm_ptr,
-                            struct jpeg_dec_cb_param *out_parm_ptr);
-void jpeg_evt_reg(cmr_handle jpeg_handle, cmr_evt_cb adp_event_cb);
+cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
+                      jpg_evt_cb_ptr adp_event_cb);
+cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle);
+cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
+                        struct img_frm *dst, struct jpg_op_mean *mean);
+cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
+                        struct img_frm *dst, struct jpg_op_mean *mean);
+cmr_int cmr_jpeg_enc_add_eixf(cmr_handle jpeg_handle,
+                              struct jpeg_enc_exif_param *param_ptr,
+                              struct jpeg_wexif_cb_param *output_ptr);
+cmr_int cmr_stop_codec(cmr_handle jpeg_handle);
 
 #ifdef __cplusplus
 }

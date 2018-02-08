@@ -88,7 +88,8 @@ static cmr_int camera_is_need_change_fmt(cmr_handle oem_handle,
                                          struct frm_info *data_ptr);
 static void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata);
 static void camera_scaler_evt_cb(cmr_int evt, void *data, void *privdata);
-static void camera_jpeg_evt_cb(cmr_int evt, void *data, void *privdata);
+static void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data,
+                               void *privdata);
 static cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                                  cmr_u32 data_len);
 static void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param,
@@ -981,17 +982,17 @@ void camera_scaler_evt_cb(cmr_int evt, void *data, void *privdata) {
     ATRACE_END();
 }
 
-void camera_jpeg_evt_cb(cmr_int evt, void *data, void *privdata) {
+void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)privdata;
     cmr_u32 temp_evt;
 
     if (NULL == data || !privdata ||
         CMR_EVT_JPEG_BASE != (CMR_EVT_JPEG_BASE & evt)) {
-        CMR_LOGE("err, param, 0x%lx 0x%lx", (cmr_uint)data, evt);
+        CMR_LOGE("err, param, 0x%lx 0x%x", (cmr_uint)data, evt);
         return;
     }
-    CMR_LOGI("evt 0x%lx, handle 0x%lx", evt, (cmr_uint)privdata);
+    CMR_LOGI("evt 0x%x, handle 0x%lx", evt, (cmr_uint)privdata);
 
     switch (evt) {
     case CMR_JPEG_ENC_DONE:
@@ -1009,7 +1010,7 @@ void camera_jpeg_evt_cb(cmr_int evt, void *data, void *privdata) {
         break;
     default:
         ret = -CMR_CAMERA_NO_SUPPORT;
-        CMR_LOGE("err, don't support evt 0x%lx", evt);
+        CMR_LOGE("err, don't support evt 0x%x", evt);
     }
     if (ret) {
         CMR_LOGE("done %ld", ret);
@@ -2247,9 +2248,9 @@ cmr_int camera_jpeg_init(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(jpeg_cxt);
 
     if (0 == jpeg_cxt->inited) {
-        ret = jpeg_init(oem_handle, &jpeg_cxt->jpeg_handle);
+        ret = cmr_jpeg_init(oem_handle, &jpeg_cxt->jpeg_handle,
+                            camera_jpeg_evt_cb);
         if (CMR_CAMERA_SUCCESS == ret) {
-            jpeg_evt_reg(jpeg_cxt->jpeg_handle, camera_jpeg_evt_cb);
             jpeg_cxt->inited = 1;
         } else {
             CMR_LOGE("failed to init jpeg codec %ld", ret);
@@ -2266,7 +2267,7 @@ cmr_int camera_jpeg_deinit(cmr_handle oem_handle) {
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct jpeg_context *jpeg_cxt;
+    struct jpeg_context *jpeg_cxt = NULL;
 
     CHECK_HANDLE_VALID(oem_handle);
     jpeg_cxt = &cxt->jpeg_cxt;
@@ -2277,7 +2278,7 @@ cmr_int camera_jpeg_deinit(cmr_handle oem_handle) {
         goto exit;
     }
 
-    ret = jpeg_deinit(jpeg_cxt->jpeg_handle);
+    ret = cmr_jpeg_deinit(jpeg_cxt->jpeg_handle);
     if (ret) {
         CMR_LOGE("failed to de-init jpeg codec %ld", ret);
         goto exit;
@@ -4491,38 +4492,30 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     }
 
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct jpeg_enc_in_param enc_in_param;
+    struct jpeg_context *jpeg_cxt = NULL;
     cmr_uint stream_size;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
 
-    cmr_bzero((void *)&enc_in_param, sizeof(enc_in_param));
     cmr_bzero((void *)&setting_param, sizeof(setting_param));
 
     setting_param.camera_id = cxt->camera_id;
 
+    jpeg_cxt = &cxt->jpeg_cxt;
+    CHECK_HANDLE_VALID(jpeg_cxt);
+    cxt->jpeg_cxt.enc_caller_handle = caller_handle;
     sem_wait(&cxt->access_sm);
-
-    enc_in_param.slice_height = mean->slice_height;
-    enc_in_param.slice_mod = mean->slice_mode;
-    enc_in_param.quality_level = mean->quality_level;
-    enc_in_param.stream_buf_phy = dst->addr_phy.addr_y;
-    enc_in_param.stream_buf_vir = dst->addr_vir.addr_y;
-    enc_in_param.stream_buf_size = dst->buf_size;
-    enc_in_param.stream_buf_fd = dst->fd;
-    enc_in_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
-    enc_in_param.size = src->size;
-    enc_in_param.out_size = dst->size; /*actual picture size*/
-    enc_in_param.src_addr_phy = src->addr_phy;
-    enc_in_param.src_addr_vir = src->addr_vir;
-    enc_in_param.src_fd = src->fd;
-    enc_in_param.src_endian = src->data_end;
 
     cmr_get_mirror(&mirror_type);
     property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
+
+    mean->flip = 0;
+    mean->rot = 0;
+    mean->mirror = 0;
+
     if ((is_raw_capture == 0) && (CMR_MIRROR_JPG == mirror_type)) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_GET_ENCODE_ROTATION, &setting_param);
@@ -4539,28 +4532,28 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         flip_on = setting_param.cmd_type_value;
         if (0 != rotation) {
             if (90 == rotation)
-                enc_in_param.rotation = 1;
+                mean->rot = 1;
             else if (180 == rotation) {
-                enc_in_param.flip = 1;
-                enc_in_param.mirror = 1;
+                mean->flip = 1;
+                mean->mirror = 1;
             } else if (270 == rotation) {
-                enc_in_param.rotation = 1;
-                enc_in_param.flip = 1;
-                enc_in_param.mirror = 1;
+                mean->rot = 1;
+                mean->flip = 1;
+                mean->mirror = 1;
             }
         }
 
         if (flip_on) {
-            if (enc_in_param.mirror)
-                enc_in_param.mirror = 0;
+            if (mean->mirror)
+                mean->mirror = 0;
             else
-                enc_in_param.mirror = 1;
+                mean->mirror = 1;
         }
 
         if ((90 == rotation || 270 == rotation)) {
-            int temp = enc_in_param.out_size.width;
-            enc_in_param.out_size.width = enc_in_param.out_size.height;
-            enc_in_param.out_size.height = temp;
+            int temp = dst->size.width;
+            dst->size.width = dst->size.height;
+            dst->size.height = temp;
         }
         memset(&isp_param, 0x00, sizeof(isp_param));
         isp_param.isp_dbg_info.ex_jpg_exif.mirror = flip_on;
@@ -4575,26 +4568,25 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     // altek high iso mode need set uv_endian as IMG_DATA_ENDIAN_2PLANE_UVUV for
     // jpeg enc
     if (HIGHISO_CAP_MODE == cxt->highiso_mode) {
-        enc_in_param.src_endian.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
+        src->data_end.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
     }
     cxt->jpeg_cxt.enc_caller_handle = caller_handle;
 
     CMR_LOGI("src: fd=0x%x, y_offset=0x%lx, u_offset=0x%lx, virt_y=0x%lx, "
              "virt_u=0x%lx",
-             enc_in_param.src_fd, enc_in_param.src_addr_phy.addr_y,
-             enc_in_param.src_addr_phy.addr_u, enc_in_param.src_addr_vir.addr_y,
-             enc_in_param.src_addr_vir.addr_u);
+             src->fd, src->addr_phy.addr_y,
+             src->addr_phy.addr_u, src->addr_vir.addr_y,
+             src->addr_vir.addr_u);
     CMR_LOGI("src: width=%d, height=%d, y_endian=%d, uv_endian=%d, mirror=%d, "
              "flip=%d,rotation=%d",
-             enc_in_param.size.width, enc_in_param.size.height,
-             enc_in_param.src_endian.y_endian,
-             enc_in_param.src_endian.uv_endian, enc_in_param.mirror,
-             enc_in_param.flip, enc_in_param.rotation);
-    CMR_LOGI("dst: fd=0x%lx, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, "
+             src->size.width, src->size.height,
+             src->data_end.y_endian,
+             src->data_end.uv_endian, mean->mirror,
+             mean->flip, mean->rot);
+    CMR_LOGI("dst: fd=0x%x, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, "
              "height=%d",
-             enc_in_param.stream_buf_fd, enc_in_param.stream_buf_phy,
-             enc_in_param.stream_buf_vir, enc_in_param.out_size.width,
-             enc_in_param.out_size.height);
+             dst->fd, dst->addr_phy.addr_y, dst->addr_vir.addr_y,
+             dst->size.width, dst->size.height);
 
     if (1 != mean->is_thumb) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,SETTING_GET_FILTER_TEYP,&setting_param);
@@ -4671,10 +4663,19 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 #endif
             }
         }
-        ret = jpeg_enc_start(&enc_in_param);
+        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
+                              (struct jpg_op_mean *)mean);
+        if (ret) {
+            CMR_LOGE("failed to jpeg codec %ld", ret);
+        }
     } else {
-        ret = jpeg_enc_thumbnail(&enc_in_param, &stream_size);
-        dst->reserved = (void *)stream_size;
+        dst->buf_size = (dst->size.height * dst->size.width) * 3;
+        dst->buf_size = dst->buf_size / 2;
+        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
+                              (struct jpg_op_mean *)mean);
+        if (ret) {
+            CMR_LOGE("failed to jpeg codec %ld", ret);
+        }
     }
     if (ret) {
         cxt->jpeg_cxt.enc_caller_handle = (cmr_handle)0;
@@ -4757,6 +4758,10 @@ cmr_int camera_start_decode(cmr_handle oem_handle, cmr_handle caller_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct jpeg_dec_in_param dec_in_param;
+    struct jpeg_context *jpeg_cxt = NULL;
+
+    jpeg_cxt = &cxt->jpeg_cxt;
+    CHECK_HANDLE_VALID(jpeg_cxt);
 
     if (!caller_handle || !oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
@@ -4773,32 +4778,11 @@ cmr_int camera_start_decode(cmr_handle oem_handle, cmr_handle caller_handle,
     CMR_LOGI("temp size %d", mean->temp_buf.buf_size);
     CMR_LOGD("caller_handle 0x%lx", (cmr_uint)caller_handle);
     mean->out_param = 0;
-    dec_in_param.stream_buf_phy = src->addr_phy.addr_y;
-    dec_in_param.stream_buf_vir = src->addr_vir.addr_y;
-    dec_in_param.stream_buf_size = (cmr_uint)src->reserved;
-    dec_in_param.stream_buf_fd = src->fd;
-    dec_in_param.slice_height = mean->slice_height;
-    dec_in_param.slice_mod = mean->slice_mode;
-    dec_in_param.dst_fmt = dst->fmt;
-    dec_in_param.temp_buf_phy = mean->temp_buf.addr_phy.addr_y;
-    dec_in_param.temp_buf_vir = mean->temp_buf.addr_vir.addr_y;
-    dec_in_param.temp_buf_size = mean->temp_buf.buf_size;
-    dec_in_param.temp_buf_mfd = mean->temp_buf.fd;
-    dec_in_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
-    dec_in_param.size = dst->size;
-    dec_in_param.dst_addr_phy = dst->addr_phy;
-    dec_in_param.dst_addr_vir = dst->addr_vir;
-    dec_in_param.dst_endian = dst->data_end;
-    dec_in_param.dst_fd = dst->fd;
 
     cxt->jpeg_cxt.dec_caller_handle = caller_handle;
-    if (1 != mean->is_sync) {
-        ret = jpeg_dec_start(&dec_in_param);
-    } else {
-        struct jpeg_dec_cb_param out_param;
-        ret = jpeg_dec_start_sync(&dec_in_param, &out_param);
-        mean->out_param = out_param.data_endian.uv_endian;
-    }
+
+    ret = cmr_jpeg_decode(jpeg_cxt->jpeg_handle, src, dst,
+                          (struct jpg_op_mean *)mean);
     if (ret) {
         cxt->jpeg_cxt.dec_caller_handle = (cmr_handle)0;
         CMR_LOGE("dec start fail ret %ld", ret);
@@ -4811,8 +4795,17 @@ exit:
 cmr_int camera_stop_codec(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct jpeg_context *jpeg_cxt = NULL;
 
-    ret = jpeg_stop(cxt->jpeg_cxt.jpeg_handle);
+    CHECK_HANDLE_VALID(oem_handle);
+    jpeg_cxt = &cxt->jpeg_cxt;
+    CHECK_HANDLE_VALID(jpeg_cxt);
+
+    ret = cmr_stop_codec(jpeg_cxt->jpeg_handle);
+    if (ret) {
+        CMR_LOGE("failed to stop codec %ld", ret);
+    }
+
     CMR_LOGI("done %ld", ret);
     return ret;
 }
@@ -4833,6 +4826,7 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     struct common_isp_cmd_param isp_param;
     char value[PROPERTY_VALUE_MAX];
+    struct jpeg_context *jpeg_cxt = NULL;
 
     if (!caller_handle || !oem_handle || !pic_src || !dst || !thumb_src ||
         !out_ptr) {
@@ -4840,10 +4834,13 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    cmr_bzero((void*)&enc_exif_param, sizeof(struct jpeg_enc_exif_param));
-    cmr_bzero((void*)&out_pram, sizeof(struct jpeg_wexif_cb_param));
-    cmr_bzero((void*)&setting_param, sizeof(struct setting_cmd_parameter));
-    cmr_bzero((void*)&isp_param, sizeof(struct common_isp_cmd_param));
+
+    jpeg_cxt = &cxt->jpeg_cxt;
+    CHECK_HANDLE_VALID(jpeg_cxt);
+    cmr_bzero(&enc_exif_param, sizeof(struct jpeg_enc_exif_param));
+    cmr_bzero(&out_pram, sizeof(struct jpeg_wexif_cb_param));
+    cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
 
     enc_exif_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
     enc_exif_param.src_jpeg_addr_virt = pic_src->addr_vir.addr_y;
@@ -4885,7 +4882,8 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     enc_exif_param.padding = 0;
     out_pram.output_buf_virt_addr = 0;
     out_pram.output_buf_size = 0;
-    ret = jpeg_enc_add_eixf(&enc_exif_param, &out_pram);
+    ret = cmr_jpeg_enc_add_eixf(jpeg_cxt->jpeg_handle, &enc_exif_param,
+                                &out_pram);
     if (!ret) {
         *out_ptr = out_pram;
         CMR_LOGI("out addr 0x%lx size %ld", out_ptr->output_buf_virt_addr,
