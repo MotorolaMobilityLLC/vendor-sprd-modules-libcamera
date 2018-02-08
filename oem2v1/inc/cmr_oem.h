@@ -493,6 +493,9 @@ cmr_int camera_get_rolling_shutter_skew_value(cmr_handle oem_handle,
 
 cmr_int camera_get_grab_capability(cmr_handle oem_handle,
                                    struct cmr_path_capability *capability);
+
+cmr_int camera_get_isp_handle_raw(cmr_handle, void **isp_handle);
+
 #ifdef __cplusplus
 }
 #endif
