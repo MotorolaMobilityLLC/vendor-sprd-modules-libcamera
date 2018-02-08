@@ -15,11 +15,6 @@ static struct sensor_nr_scene_map_param s_ov8856_back_nr_scene_map_param = {{
 }};
 #endif
 
-#ifdef _NR_IIR_YRANDOM_PARAM_
-#include "NR/common/normal/iir_yrandom_param.h"
-#endif
-
-
 #ifdef _NR_BAYER_NR_PARAM_
 #include "NR/common/normal/bayer_nr_param.h"
 #endif
