@@ -3647,6 +3647,10 @@ static cmr_s32 ae_touch_ae_process(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_r
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_alg_calc_result *current_result = (struct ae_alg_calc_result *)result;
 
+	if(cxt->is_snapshot) {
+		return rtn;
+	}
+
 	/*****touch status0:touch before/release;1:touch doing; 2: toch done and AE stable*****/
 	ISP_LOGV("TCAECTL_status and ae_stable is %d,%d", current_result->tcAE_status, current_result->wts.stable);
 	if (1 == current_result->tcAE_status && 1 == current_result->wts.stable) {
