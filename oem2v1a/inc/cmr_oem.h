@@ -106,6 +106,7 @@ struct rotation_context {
 struct ipm_context {
     cmr_handle ipm_handle;
     cmr_handle hdr_handle;
+    cmr_handle filter_handle;
     cmr_handle uvde_handle;
     cmr_handle yde_handle;
     cmr_handle refocus_handle;
@@ -115,6 +116,7 @@ struct ipm_context {
     cmr_u32 hdr_num;
     cmr_u32 threednr_num;
     cmr_u32 padding;
+    cmr_u32 filter_inited;
 };
 
 struct preview_context {
@@ -144,6 +146,7 @@ struct snapshot_context {
     cmr_u32 skip_num;
     cmr_u32 channel_bits;
     cmr_u32 is_hdr;
+    cmr_u32 filter_type;
     cmr_u32 is_3dnr;
     cmr_u32 total_num;
     cmr_u32 snp_mode;
@@ -251,6 +254,7 @@ struct camera_context {
     sem_t hdr_flag_sm;
     sem_t threednr_flag_sm;
     sem_t threednr_proc_sm;
+    sem_t filter_sm;
     sem_t share_path_sm;
     sem_t access_sm;
     sem_t sbs_sync_sm;

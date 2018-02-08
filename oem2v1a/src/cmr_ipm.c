@@ -38,6 +38,9 @@ extern struct class_tab_t refocus_tab_info;
 extern struct class_tab_t threednr_tab_info;
 extern struct class_tab_t threednr_prev_tab_info;
 #endif
+#ifdef CONFIG_CAMERA_FILTER
+extern struct class_tab_t filter_tab_info;
+#endif
 
 struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_NONE, NULL},
@@ -60,7 +63,9 @@ struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_3DNR, &threednr_tab_info},
     {IPM_TYPE_3DNR_PRE, &threednr_prev_tab_info},
 #endif
-
+#ifdef CONFIG_CAMERA_FILTER
+    {IPM_TYPE_FILTER, &filter_tab_info},
+#endif
 };
 
 #define CHECK_HANDLE_VALID(handle)                                             \
