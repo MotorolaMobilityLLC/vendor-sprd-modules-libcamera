@@ -1721,9 +1721,10 @@ dequeue_preview_smallbuffer(struct preview_smallbuf_queue *psmall_buf_queue,
         pthread_cond_wait(&psmall_buf_queue->cond, &psmall_buf_queue->mutex);
     }
     {
+        ptemp = psmall_buf_queue->head;
         *pnode = *(psmall_buf_queue->head);
-        free(psmall_buf_queue->head);
         psmall_buf_queue->head = psmall_buf_queue->head->next;
+        free(ptemp);
         if (NULL == psmall_buf_queue->head) {
             psmall_buf_queue->tail = NULL;
         }
