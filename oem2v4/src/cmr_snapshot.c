@@ -199,6 +199,7 @@ struct snp_context {
     sem_t scaler_sync_sm;
     sem_t takepic_callback_sem;
     sem_t hdr_sync_sm;
+    sem_t filter_sync_sm;
     sem_t redisplay_sm;
     sem_t writer_exif_sm;
     struct snp_cvt_context cvt;
@@ -336,6 +337,7 @@ static cmr_int camera_start_refocus(struct camera_context *cxt,
                                     struct img_frm *src);
 static int32_t snp_img_padding(struct img_frm *src, struct img_frm *dst,
                                struct cmr_op_mean *mean);
+static cmr_int snp_filter_process(cmr_handle snp_handle, void *data);
 
 cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -2638,6 +2640,7 @@ void snp_local_init(cmr_handle snp_handle) {
     sem_init(&cxt->scaler_sync_sm, 0, 0);
     sem_init(&cxt->redisplay_sm, 0, 0);
     sem_init(&cxt->writer_exif_sm, 0, 0);
+    sem_init(&cxt->filter_sync_sm, 0, 1);
 }
 
 void snp_local_deinit(cmr_handle snp_handle) {
@@ -2652,6 +2655,7 @@ void snp_local_deinit(cmr_handle snp_handle) {
     sem_destroy(&cxt->hdr_sync_sm);
     sem_destroy(&cxt->redisplay_sm);
     sem_destroy(&cxt->writer_exif_sm);
+    sem_destroy(&cxt->filter_sync_sm);
     cxt->is_inited = 0;
 }
 
@@ -3787,8 +3791,12 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
 
     if (0 == snp_get_request(snp_handle)) {
         if (IPM_WORKING == snp_get_status(snp_handle)) {
-            sem_post(&cxt->hdr_sync_sm);
-            CMR_LOGD("post hdr sm");
+            if (cxt->req_param.filter_type) {
+                sem_wait(&cxt->filter_sync_sm);
+            } else {
+                sem_post(&cxt->hdr_sync_sm);
+                CMR_LOGD("post hdr sm");
+            }
         }
         if (CODEC_WORKING == snp_get_status(snp_handle)) {
             if (cxt->ops.stop_codec) {
@@ -4321,6 +4329,47 @@ exit:
     return ret;
 }
 
+static cmr_int snp_filter_process(cmr_handle snp_handle, void *data) {
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct frm_info *frame = (struct frm_info *)data;
+    struct snp_context *snap_cxt = (struct snp_context *)snp_handle;
+    struct camera_context *oem_cxt = snap_cxt->oem_handle;
+    struct ipm_context *ipm_cxt = &oem_cxt->ipm_cxt;
+    struct ipm_frame_in ipm_in_param;
+    struct ipm_frame_out imp_out_param;
+    struct img_frm img_frame;
+    CMR_LOGD("E");
+    cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
+    cmr_bzero(&imp_out_param, sizeof(imp_out_param));
+
+    snp_set_status(snp_handle, IPM_WORKING);
+    sem_wait(&snap_cxt->filter_sync_sm);
+
+    img_frame.fd = frame->fd;
+    img_frame.size.height =
+        oem_cxt->snp_cxt.post_proc_setting.actual_snp_size.height;
+    img_frame.size.width =
+        oem_cxt->snp_cxt.post_proc_setting.actual_snp_size.width;
+    img_frame.addr_vir.addr_y = frame->yaddr_vir;
+    img_frame.addr_vir.addr_u =
+        frame->yaddr_vir + img_frame.size.height * img_frame.size.width;
+
+    ipm_cxt->frm_num++;
+    ipm_in_param.src_frame = img_frame;
+    ipm_in_param.private_data = (void *)oem_cxt;
+    imp_out_param.dst_frame = img_frame;
+    imp_out_param.private_data = (void *)(snap_cxt->req_param.filter_type);
+    ret = ipm_transfer_frame(ipm_cxt->filter_handle, &ipm_in_param,
+                             &imp_out_param);
+    cmr_snapshot_memory_flush(snp_handle, &img_frame);
+
+    sem_post(&snap_cxt->filter_sync_sm);
+    snp_set_status(snp_handle, POST_PROCESSING);
+    CMR_LOGD("X.w:%d,h:%d", img_frame.size.width, img_frame.size.height);
+    return ret;
+}
+
 cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -4357,6 +4406,9 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
 
     snp_set_status(snp_handle, POST_PROCESSING);
 
+    if (cxt->req_param.filter_type) {
+        snp_filter_process(snp_handle, data);
+    }
     if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
         cxt->req_param.is_pipviv_mode || cxt->req_param.is_3dcalibration_mode ||
         cxt->req_param.is_yuv_callback_mode) {

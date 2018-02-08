@@ -22,7 +22,6 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
 	$(LOCAL_PATH)/../sensor/otp_drv \
-	$(LOCAL_PATH)/../arithmetic/filter/inc \
 	$(LOCAL_PATH)/../sensor/inc
 
 LOCAL_C_INCLUDES += \
@@ -51,7 +50,8 @@ LOCAL_SRC_FILES+= \
 	src/cmr_ipm.c \
 	src/cmr_focus.c \
 	src/exif_writer.c \
-	src/jpeg_stream.c
+	src/jpeg_stream.c \
+	src/cmr_filter.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	LOCAL_C_INCLUDES += \
@@ -88,8 +88,20 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_filter/inc
+LOCAL_SRC_FILES+= src/sprd_filter.c
+LOCAL_SHARED_LIBRARIES += libSprdImageFilter
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=1
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/filter/inc
+LOCAL_SRC_FILES+= src/arcsoft_filter.c
 LOCAL_SHARED_LIBRARIES += libamipengine
+else
+LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
 endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
