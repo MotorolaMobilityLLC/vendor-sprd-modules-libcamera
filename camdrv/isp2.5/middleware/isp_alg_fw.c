@@ -779,6 +779,15 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	struct alsc_ver_info lsc_ver = { 0 };
+
+	struct isp_pm_ioctl_input pm_tab_input;
+	struct isp_pm_ioctl_output pm_tab_output;
+	struct isp_pm_param_data pm_tab_param;
+
+	memset(&pm_tab_input, 0, sizeof(struct isp_pm_ioctl_input));
+	memset(&pm_tab_output, 0, sizeof(struct isp_pm_ioctl_output));
+	memset(&pm_tab_param, 0, sizeof(struct isp_pm_param_data));
+
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
 	if (ISP_SUCCESS != ret) {
@@ -794,12 +803,20 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			return ISP_ERROR;
 		}
 
+		BLOCK_PARAM_CFG(pm_tab_input, pm_tab_param, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
+		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&pm_tab_input, (void *)&pm_tab_output);
+		cxt->lsc_cxt.lsc_tab_address = pm_tab_output.param_data->data_ptr;
+		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+		if (NULL == lsc_tab_param_ptr || ISP_SUCCESS != ret) {
+			ISP_LOGE("fail to get lsc tab");
+			return ISP_ERROR;
+		}
+
 		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
 		struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
-		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-		if (NULL == lsc_tab_param_ptr || NULL == lsc_info || ISP_SUCCESS != ret) {
-			ISP_LOGE("fail to get param");
+		if (NULL == lsc_info || ISP_SUCCESS != ret) {
+			ISP_LOGE("fail to get lsc info");
 			return ISP_ERROR;
 		}
 
@@ -3443,25 +3460,40 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
-	struct isp_lsc_info *lsc_info_new = NULL;
-	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info *fwstart_info = (struct alsc_fwstart_info *)out_ptr;
 	cmr_s32 i =0;
 
+	struct isp_pm_ioctl_input pm_tab_input;
+	struct isp_pm_ioctl_output pm_tab_output;
+	struct isp_pm_param_data pm_tab_param;
+
+	memset(&pm_tab_input, 0, sizeof(struct isp_pm_ioctl_input));
+	memset(&pm_tab_output, 0, sizeof(struct isp_pm_ioctl_output));
+	memset(&pm_tab_param, 0, sizeof(struct isp_pm_param_data));
+
 	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+
+	BLOCK_PARAM_CFG(pm_tab_input, pm_tab_param, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&pm_tab_input, (void *)&pm_tab_output);
+	cxt->lsc_cxt.lsc_tab_address = pm_tab_output.param_data->data_ptr;
+	struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	if (NULL == lsc_tab_param_ptr || ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to get lsc tab");
+		return ISP_ERROR;
+	}
+
 	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
-	if (ISP_SUCCESS != ret || NULL == output.param_data) {
-		ISP_LOGE("fail to check output.param_data");
+	struct isp_lsc_info *lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	if (NULL == lsc_info_new || ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to get lsc info");
 		return ISP_PARAM_ERROR;
 	}
 
-	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
-	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	fwstart_info->lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for (i = 0; i < 9; i++)
-		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+		fwstart_info->lsc_tab_address_new[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
 	fwstart_info->gain_width_new = lsc_info_new->gain_w;
 	fwstart_info->gain_height_new = lsc_info_new->gain_h;
 	fwstart_info->image_pattern_new = cxt->commn_cxt.image_pattern;
@@ -3617,6 +3649,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		} else {
 			cxt->commn_cxt.mode_flag = mode;
 		}
+
 		if (cxt->commn_cxt.mode_flag != (cmr_u32) cxt->commn_cxt.isp_mode) {
 			cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
 			cxt->work_mode_cxt.mode_id = cxt->commn_cxt.mode_flag;
@@ -3787,14 +3820,21 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	cmr_s32 i = 0;
 	cmr_s32 mode = 0;
 
-	ISP_LOGV("isp proc start\n");
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
 	struct isp_lsc_info *lsc_info_new = NULL;
 	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
-	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 
+	struct isp_pm_ioctl_input pm_tab_input;
+	struct isp_pm_ioctl_output pm_tab_output;
+	struct isp_pm_param_data pm_tab_param;
+
+	memset(&pm_tab_input, 0, sizeof(struct isp_pm_ioctl_input));
+	memset(&pm_tab_output, 0, sizeof(struct isp_pm_ioctl_output));
+	memset(&pm_tab_param, 0, sizeof(struct isp_pm_param_data));
+
+	ISP_LOGV("isp proc start\n");
 
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
@@ -3873,10 +3913,19 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&input, (void *)&output);
 	ISP_TRACE_IF_FAIL(ret, ("ISP_PM_CMD_GET_SINGLE_SETTING fail"));
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
-	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+
+	BLOCK_PARAM_CFG(pm_tab_input, pm_tab_param, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&pm_tab_input, (void *)&pm_tab_output);
+	cxt->lsc_cxt.lsc_tab_address = pm_tab_output.param_data->data_ptr;
+	struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+	if (NULL == lsc_tab_param_ptr || ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to get lsc tab");
+		return ISP_ERROR;
+	}
+
 	fwprocstart_info.lsc_result_address_new = (cmr_u16 *) lsc_info_new->data_ptr;
 	for (i = 0; i < 9; i++)
-		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
+		fwprocstart_info.lsc_tab_address_new[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
 	fwprocstart_info.gain_width_new = lsc_info_new->gain_w;
 	fwprocstart_info.gain_height_new = lsc_info_new->gain_h;
 	fwprocstart_info.image_pattern_new = cxt->commn_cxt.image_pattern;
