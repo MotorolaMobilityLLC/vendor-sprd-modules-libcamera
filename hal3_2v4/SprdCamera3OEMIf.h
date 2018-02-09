@@ -33,8 +33,6 @@ extern "C" {
 #include <binder/MemoryHeapBase.h>
 #include <binder/IInterface.h>
 #include <binder/BinderService.h>
-#include <powermanager/IPowerManager.h>
-#include <powermanager/PowerManager.h>
 #include <hardware/camera.h>
 #include <hardware/gralloc.h>
 #include <camera/CameraParameters.h>
@@ -46,7 +44,7 @@ extern "C" {
 #include "SprdCamera3Setting.h"
 #include "SprdCamera3Stream.h"
 #include "SprdCamera3Channel.h"
-
+#include "SprdCameraSystemPerformance.h"
 #include <hardware/power.h>
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
@@ -201,13 +199,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-
-    void initPowerManager();
-    void acquirePrfmLock(int type);
-    void releasePrfmLock();
-    int changeDfsPolicy(int dfs_policy);
-    int setDfsPolicy(int dfs_policy);
-    int releaseDfsPolicy(int dfs_policy);
     int IommuIsEnabled(void);
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
@@ -274,6 +265,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static int gyro_monitor_thread_deinit(void *p_data);
     static void *gyro_monitor_thread_proc(void *p_data);
 #endif
+    void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
 
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
@@ -744,9 +736,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
 
-    power_module_t *m_pPowerModule;
     /* enable/disable powerhint for hdr */
     uint32_t mHDRPowerHint;
+    SprdCameraSystemPerformance *mSysPerformace;
     /* 1- start acceleration, 0 - finish acceleration*/
     bool mHDRPowerHintFlag;
 
@@ -805,11 +797,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_SPRD_LCD_FLASH
     int mResetBrightness;
 #endif
-
-    sp<IPowerManager> mPowerManager;
-    Mutex mPowerManagerLock;
-    sp<IBinder> mPrfmLock;
-
     int64_t mLastCafDoneTime;
 };
 
