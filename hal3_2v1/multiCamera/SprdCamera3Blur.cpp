@@ -3451,7 +3451,7 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
 #endif
     mFlushing = false;
     mReqState = PREVIEW_REQUEST_STATE;
-    SprdCamera3MultiBase::initialize(MODE_BLUR);
+    SprdCamera3MultiBase::initialize(MODE_BLUR, hwiMain);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -3548,6 +3548,7 @@ int SprdCamera3Blur::configureStreams(
 
             if (mCaptureWidth != w && mCaptureHeight != h) {
                 freeLocalCapBuffer();
+
                 for (size_t j = 0; j < BLUR_LOCAL_CAPBUFF_NUM; j++) {
                     if (0 > allocateOne(w, h, &(mLocalCapBuffer[j]), YUV420)) {
                         HAL_LOGE("request one buf failed.");

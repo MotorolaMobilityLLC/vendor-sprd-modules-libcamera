@@ -561,7 +561,7 @@ int SprdCamera3PageTurn::initialize(
     HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
-    SprdCamera3MultiBase::initialize(MODE_PAGE_TURN);
+    SprdCamera3MultiBase::initialize(MODE_PAGE_TURN, hwiMain);
     hwiMain->camera_ioctrl(CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL, &on_off,
                            NULL);
     mCoveredValue = 0;

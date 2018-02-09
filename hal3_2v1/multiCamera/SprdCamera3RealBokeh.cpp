@@ -3822,6 +3822,7 @@ int SprdCamera3RealBokeh::initialize(
         m_pPhyCamera[CAM_TYPE_BOKEH_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
     CHECK_HWI_ERROR(hwiMain);
+    SprdCamera3MultiBase::initialize(MODE_BOKEH, hwiMain);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {

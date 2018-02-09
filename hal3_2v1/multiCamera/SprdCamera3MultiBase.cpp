@@ -68,11 +68,12 @@ SprdCamera3MultiBase::SprdCamera3MultiBase()
     mCameraMode = MODE_SINGLE_CAMERA;
     mReqState = PREVIEW_REQUEST_STATE;
     /* forcibly set to enabled */
-    mIommuEnabled = true;
+    mIommuEnabled = 1;
 }
 
 SprdCamera3MultiBase::~SprdCamera3MultiBase() {}
-int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
+int SprdCamera3MultiBase::initialize(multiCameraMode mode,
+                                     SprdCamera3HWI *hwi) {
     int rc = 0;
 
     mLumaList.clear();
@@ -83,6 +84,10 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode) {
     mBrightConut = 0;
     mLowConut = 0;
     mDarkConut = 0;
+    if (hwi) {
+        hwi->camera_ioctrl(CAMERA_IOCTRL_GET_IOMMU_AVAILABLE, &mIommuEnabled,
+                           NULL);
+    }
 
     return rc;
 }
@@ -108,10 +113,13 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+    if (!mIommuEnabled) {
+        yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+    }
 
 #if defined(CONFIG_SPRD_ANDROID_8)
     graphicBuffer = new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
-                                      yuvTextUsage, "allocateOne");
+                                      yuvTextUsage, "dualcamera");
 #else
     graphicBuffer =
         new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage);
@@ -122,6 +130,7 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     new_mem->width = w;
     new_mem->height = h;
     new_mem->type = (camera_buffer_type_t)type;
+    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d", w, h, mIommuEnabled);
 
     return 0;
 }
@@ -481,19 +490,59 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
     }
     return;
 }
-int SprdCamera3MultiBase::map(buffer_handle_t *buffer, void **vaddr) {
-    int ret = NO_ERROR;
-    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
-    int width = ADP_WIDTH(*buffer);
-    int height = ADP_HEIGHT(*buffer);
-    Rect bounds(width, height);
-    int usage;
 
+int SprdCamera3MultiBase::map(buffer_handle_t *buffer_handle, void **vaddr1) {
+    int ret = NO_ERROR;
+    int width = ADP_WIDTH(*buffer_handle);
+    int height = ADP_HEIGHT(*buffer_handle);
+    int format = ADP_FORMAT(*buffer_handle);
+    android_ycbcr ycbcr;
+    Rect bounds(width, height);
+    void *vaddr = NULL;
+    int usage;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+
+    bzero((void *)&ycbcr, sizeof(ycbcr));
     usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
-    ret = mapper.lock((const native_handle_t *)*buffer, usage, bounds, vaddr);
-    if (ret != NO_ERROR) {
-        HAL_LOGE("onQueueFilled, mapper.lock fail %p, ret %d", *buffer, ret);
+
+    if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+        ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
+                               bounds, &ycbcr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
+                     "lockycbcr. %p, ret %d",
+                     *buffer_handle, ret);
+            ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
+                              bounds, &vaddr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                *vaddr1 = vaddr;
+            }
+        } else {
+            *vaddr1 = ycbcr.y;
+        }
+    } else {
+        ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
+                          bounds, &vaddr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
+                     "ret %d",
+                     *buffer_handle, ret);
+            ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle,
+                                   usage, bounds, &ycbcr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                *vaddr1 = ycbcr.y;
+            }
+        } else {
+            *vaddr1 = vaddr;
+        }
     }
+
     return ret;
 }
 

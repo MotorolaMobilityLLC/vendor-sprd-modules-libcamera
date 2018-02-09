@@ -1546,7 +1546,12 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         setMimeType(type);
         break;
     }
+    case CAMERA_IOCTRL_GET_IOMMU_AVAILABLE: {
+        *(int *)param1 = IommuIsEnabled();
+        return ret;
     }
+    }
+
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
     return ret;

@@ -1555,6 +1555,7 @@ int SprdCamera3RangeFinder::initialize(
     mApiLibinit = false;
     mUwDepthAccuracy = DEPTH_INVALID_VALUE;
     mUwDepth = DEPTH_INVALID_VALUE;
+    SprdCamera3MultiBase::initialize(MODE_RANGE_FINDER, hwiMain);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {

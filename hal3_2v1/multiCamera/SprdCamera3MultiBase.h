@@ -63,9 +63,8 @@ class SprdCamera3MultiBase {
     request_state mReqState;
     SprdCamera3MultiBase();
     virtual ~SprdCamera3MultiBase();
-
     virtual int allocateOne(int w, int h, new_mem_t *new_mem, int type);
-    int initialize(multiCameraMode mode);
+    int initialize(multiCameraMode mode, SprdCamera3HWI *hwi);
     virtual void freeOneBuffer(new_mem_t *buffer);
     virtual int validateCaptureRequest(camera3_capture_request_t *request);
     virtual void convertToRegions(int32_t *rect, int32_t *region, int weight);
@@ -145,7 +144,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
 
   private:
     Mutex mBufferListLock;
-    bool mIommuEnabled;
+    int mIommuEnabled;
     int mVFrameCount;
     int mVLastFrameCount;
     nsecs_t mVLastFpsTime;
