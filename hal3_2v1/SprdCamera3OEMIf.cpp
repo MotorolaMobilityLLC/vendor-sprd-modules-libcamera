@@ -3817,7 +3817,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         miSPreviewFirstFrame = 0;
         if (mHDRPowerHint || m3DNRPowerHint ||
             getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_BOKEH) {
+            getMultiCameraMode() == MODE_BOKEH ||
+            mSprdAppmodeId == CAMERA_MODE_PANORAMA) {
             setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_N);
         } else {
             setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_L);
