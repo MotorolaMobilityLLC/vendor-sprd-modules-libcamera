@@ -849,7 +849,7 @@ cmr_int create_3dnr_thread(struct thread_3dnr_info *info) {
     return rtn;
 }
 
-static volatile uint8_t *ptemp, *ptemp1, *ptemp2, *ptemp3;
+//static volatile uint8_t *ptemp, *ptemp1, *ptemp2, *ptemp3;
 cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
                            struct ipm_open_out *out, cmr_handle *class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -952,14 +952,14 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else {
         CMR_LOGE("cam_cxt->hal_malloc is NULL");
     }
-    ptemp = malloc(threednr_prev_handle->width * threednr_prev_handle->height *
+    /*ptemp = malloc(threednr_prev_handle->width * threednr_prev_handle->height *
                    3 / 2);
     ptemp2 = malloc(threednr_prev_handle->width * threednr_prev_handle->height *
                     3 / 2);
     ptemp1 = malloc(threednr_prev_handle->small_width *
                     threednr_prev_handle->small_height * 3 / 2);
     ptemp3 = malloc(threednr_prev_handle->width * threednr_prev_handle->height *
-                    3 / 2);
+                    3 / 2);*/
     for (int i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
         smallbuff_node.buf_vir =
             (uint8_t *)threednr_prev_handle->small_buf_info.small_buf_vir[i];
@@ -1024,12 +1024,6 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
     *class_handle = (cmr_handle)threednr_prev_handle;
 
-    // pbig = (uint8_t*)
-    // malloc(threednr_prev_handle->height*threednr_prev_handle->width*3/2);
-    // psmall = (uint8_t*)
-    // malloc(threednr_prev_handle->small_height*threednr_prev_handle->small_width*3/2);
-    // pvideo = (uint8_t*)
-    // malloc(threednr_prev_handle->height*threednr_prev_handle->width*3/2);
     CMR_LOGI("X");
     return ret;
 }
@@ -1329,7 +1323,6 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             }
         } else {
             static int index = 0;
-            ptemp[0] = 1;
             property_get("3dnr_save", value, "0");
             FILE *fp;
             sprintf(filename,
@@ -1728,7 +1721,7 @@ dequeue_preview_smallbuffer(struct preview_smallbuf_queue *psmall_buf_queue,
         if (NULL == psmall_buf_queue->head) {
             psmall_buf_queue->tail = NULL;
         }
-        // CMR_LOGI("add dequeue small buff vir addr:%p" , pnode->buf_vir);
+        CMR_LOGI("dequeue small buff vir addr:%p, fd:%p" , pnode->buf_vir, pnode->buf_fd);
         pthread_mutex_unlock(&psmall_buf_queue->mutex);
         return 0;
     }
@@ -1739,6 +1732,7 @@ queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
     struct preview_smallbuf_node *pnewnode =
         (struct preview_smallbuf_node *)malloc(
             sizeof(struct preview_smallbuf_node));
+
     CMR_LOGV("add new node:%p , smallbffqueue:%p", pnewnode, psmall_buf_queue);
     pthread_mutex_lock(&psmall_buf_queue->mutex);
     if ((NULL == pnewnode) || (NULL == pnode)) {
@@ -1755,6 +1749,7 @@ queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
         psmall_buf_queue->tail->next = pnewnode;
         psmall_buf_queue->tail = pnewnode;
     }
+    CMR_LOGI("queue small buff vir addr:%p, fd:%p" , pnode->buf_vir, pnode->buf_fd);
     pthread_cond_signal(&psmall_buf_queue->cond);
     pthread_mutex_unlock(&psmall_buf_queue->mutex);
     return 0;
