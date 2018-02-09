@@ -30,7 +30,6 @@
     }
 #endif
 
-
 #define SENSOR_I2C_VAL_8BIT 0x00
 #define SENSOR_I2C_VAL_16BIT 0x01
 #define SENSOR_I2C_REG_8BIT (0x00 << 1)
@@ -402,4 +401,135 @@ typedef struct {
     cmr_uint otp_data_module_index;
 } otp_drv_cxt_t;
 
+/*for otp v1.0*/
+struct module_id_info_t {
+    cmr_u8 master_vendor_id;
+    cmr_u8 master_lens_id;
+    cmr_u8 master_vcm_id;
+    cmr_u8 slave_vendor_id;
+    cmr_u8 slave_lens_id;
+    cmr_u8 slave_vcm_id;
+    cmr_u8 year;
+    cmr_u8 month;
+    cmr_u8 day;
+    cmr_u16 work_station_id;
+    cmr_u16 env_record;
+};
+
+struct sensor_setting_t {
+    cmr_u8 eeprom_info;
+    cmr_u8 master_setting;
+    cmr_u8 master_ob;
+    cmr_u8 slave_setting;
+    cmr_u8 slave_ob;
+};
+
+struct master_start_addr_t {
+    cmr_u16 master_af_addr;
+    cmr_u16 master_awb_addr;
+    cmr_u16 master_lsc_addr;
+    cmr_u16 master_sprd_3rd_pdaf_addr;
+    cmr_u16 master_sensor_vendor_pdaf_addr;
+    cmr_u16 master_ae_addr;
+    cmr_u16 master_dualcam_addr;
+};
+
+struct slave_start_addr_t {
+    cmr_u16 slave_af_addr;
+    cmr_u16 slave_awb_addr;
+    cmr_u16 slave_lsc_addr;
+    cmr_u16 slave_ae_addr;
+};
+
+struct master_size_t {
+    cmr_u8 master_af_size;
+    cmr_u8 master_awb_size;
+    cmr_u16 master_lsc_size;
+    cmr_u16 master_sprd_3rd_pdaf_size;
+    cmr_u16 master_sensor_vendor_pdaf_size;
+    cmr_u8 master_ae_size;
+    cmr_u16 master_dualcam_size;
+};
+
+struct slave_size_t {
+    cmr_u8 slave_af_size;
+    cmr_u8 slave_awb_size;
+    cmr_u16 slave_lsc_size;
+    cmr_u8 slave_ae_size;
+};
+
+struct module_info_t {
+    cmr_u32 otp_tag;
+    cmr_u16 calib_version;
+    float otp_version;
+    cmr_u32 otp_map_index;
+    struct module_id_info_t module_id_info;
+    struct sensor_setting_t sensor_setting;
+    struct master_start_addr_t master_start_addr;
+    struct slave_start_addr_t slave_start_addr;
+    struct master_size_t master_size;
+    struct slave_size_t slave_size;
+    cmr_u16 lsc_img_width;
+    cmr_u16 lsc_img_height;
+    cmr_u8 lsc_grid;
+    cmr_u32 resolution;
+};
+
+struct af_data_t {
+    cmr_u8 af_version;
+    cmr_u16 af_infinity_position;
+    cmr_u16 af_macro_position;
+    cmr_u8 af_posture;
+    cmr_u16 af_temperature_start;
+    cmr_u16 af_temperature_end;
+    cmr_u8 af_checksum;
+};
+
+struct awb_data_t {
+    cmr_u8 awb_version;
+    cmr_u16 awb_random_r;
+    cmr_u16 awb_random_g;
+    cmr_u16 awb_random_b;
+    cmr_u16 awb_golden_r;
+    cmr_u16 awb_golden_g;
+    cmr_u16 awb_golden_b;
+    cmr_u8 awb_checksum;
+};
+
+struct lsc_data_t {
+    cmr_u8 lsc_version;
+    cmr_u16 lsc_oc_r_x;
+    cmr_u16 lsc_oc_r_y;
+    cmr_u16 lsc_oc_gr_x;
+    cmr_u16 lsc_oc_gr_y;
+    cmr_u16 lsc_oc_gb_x;
+    cmr_u16 lsc_oc_gb_y;
+    cmr_u16 lsc_oc_b_x;
+    cmr_u16 lsc_oc_b_y;
+    cmr_u16 lsc_img_width;
+    cmr_u16 lsc_img_height;
+    cmr_u8 lsc_grid;
+    cmr_u8 lsc_checksum;
+    cmr_u32 resolution;
+    cmr_u32 lsc_channel_size;
+    cmr_u32 lsc_width;
+    cmr_u32 lsc_height;
+};
+
+struct ae_data_t {
+    cmr_u8 ae_version;
+    cmr_u16 ae_target_lum;
+    cmr_u32 ae_gain_1x_exp;
+    cmr_u32 ae_gain_2x_exp;
+    cmr_u32 ae_gain_4x_exp;
+    cmr_u32 ae_gain_8x_exp;
+    cmr_u8 ae_checksum;
+};
+
+struct dualcam_data_t {
+    cmr_u8 dualcam_version;
+    cmr_u16 dualcam_vcm_position;
+    cmr_u8 dualcam_location;
+    cmr_u8 dualcam_checksum;
+};
 #endif

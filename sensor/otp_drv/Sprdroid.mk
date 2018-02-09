@@ -42,5 +42,8 @@ LOCAL_SRC_FILES += \
 	otp_drv/driver/ov8858_cmk/ov8858_cmk_otp_drv.c \
 	otp_drv/driver/sp8407/sp8407_otp_drv.c \
 	otp_drv/driver/sp8407_cmk/sp8407_cmk_otp_drv.c \
-	otp_drv/driver/s5k5e8yx_jd/s5k5e8yx_jd_otp_drv.c
+	otp_drv/driver/s5k5e8yx_jd/s5k5e8yx_jd_otp_drv.c \
+	otp_drv/driver/dual_master_2e/dual_master_2e_otp_drv_1v0.c \
+	otp_drv/driver/dual_slave_2e/dual_slave_2e_otp_drv_1v0.c \
+	otp_drv/driver/single_1e/single_1e_otp_drv_1v0.c
 endif

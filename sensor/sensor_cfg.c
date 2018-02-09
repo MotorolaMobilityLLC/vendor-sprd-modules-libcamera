@@ -181,6 +181,9 @@ extern otp_drv_entry_t sp8407_otp_entry;
 extern otp_drv_entry_t sp8407_cmk_otp_entry;
 extern otp_drv_entry_t ov8856_shine_otp_entry;
 extern otp_drv_entry_t s5k5e8yx_jd_otp_entry;
+extern otp_drv_entry_t dual_master_2e_otp_entry;
+extern otp_drv_entry_t dual_slave_2e_otp_entry;
+extern otp_drv_entry_t single_1e_otp_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -299,7 +302,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY ,"imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, NULL},
 #endif
 #ifdef IMX351
-    {MODULE_SUNNY ,"imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, NULL},
+    {MODULE_SUNNY ,"imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, &dual_master_2e_otp_entry},
 #endif
 
 // cista area
@@ -371,7 +374,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #ifdef OV8856_SHINE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, &single_1e_otp_entry},
 #endif
 #ifdef OV8858
     {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, &ov8858_cmk_drv_entry},
@@ -421,7 +424,7 @@ const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
     {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, &ov5675_sunny_drv_entry},
 #endif
 #ifdef OV8856_SHINE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, &dual_slave_2e_otp_entry},
 #endif
 
 // gc area

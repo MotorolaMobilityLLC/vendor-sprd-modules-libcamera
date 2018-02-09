@@ -176,7 +176,8 @@ struct sensor_raw_resolution_info_tab {
 struct sensor_raw_ioctrl {
     cmr_handle caller_handler;
     cmr_int (*set_focus)(cmr_handle caller_handler, cmr_u32 param);
-    cmr_int (*get_pos)(cmr_handle caller_handler, struct sensor_vcm_info *param);
+    cmr_int (*get_pos)(cmr_handle caller_handler,
+                       struct sensor_vcm_info *param);
     cmr_int (*set_exposure)(cmr_handle caller_handler, cmr_u32 param);
     cmr_int (*set_gain)(cmr_handle caller_handler, cmr_u32 param);
     cmr_int (*ext_fuc)(cmr_handle caller_handler, void *param);
@@ -391,12 +392,12 @@ struct sensor_otp_ae_info {
 };
 
 struct sensor_otp_awb_info {
-	cmr_u32 otp_golden_r;
-	cmr_u32 otp_golden_g;
-	cmr_u32 otp_golden_b;
-	cmr_u32 otp_random_r;
-	cmr_u32 otp_random_g;
-	cmr_u32 otp_random_b;
+    cmr_u32 otp_golden_r;
+    cmr_u32 otp_golden_g;
+    cmr_u32 otp_golden_b;
+    cmr_u32 otp_random_r;
+    cmr_u32 otp_random_g;
+    cmr_u32 otp_random_b;
 };
 
 struct sensor_otp_af_info {
@@ -508,19 +509,20 @@ struct sensor_single_otp_info {
 struct sensor_dual_otp_info {
     cmr_u8 dual_flag; /*for 3ddata calibration flag*/
     struct sensor_data_info data_3d;
-    struct sensor_otp_section_info *master_iso_awb_info;
-    struct sensor_otp_section_info *master_lsc_info;
-    struct sensor_otp_section_info *master_optical_center_info;
     struct sensor_otp_section_info *master_module_info;
-    struct sensor_otp_section_info *master_ae_info;
     struct sensor_otp_section_info *master_af_info;
+    struct sensor_otp_section_info *master_iso_awb_info;
+    struct sensor_otp_section_info *master_optical_center_info;
+    struct sensor_otp_section_info *master_lsc_info;
     struct sensor_otp_section_info *master_pdaf_info;
-    struct sensor_otp_section_info *slave_iso_awb_info;
-    struct sensor_otp_section_info *slave_lsc_info;
-    struct sensor_otp_section_info *slave_optical_center_info;
+    struct sensor_otp_section_info *master_ae_info;
+    struct sensor_otp_section_info *master_dualcam_info;
     struct sensor_otp_section_info *slave_module_info;
-    struct sensor_otp_section_info *slave_ae_info;
     struct sensor_otp_section_info *slave_af_info;
+    struct sensor_otp_section_info *slave_iso_awb_info;
+    struct sensor_otp_section_info *slave_optical_center_info;
+    struct sensor_otp_section_info *slave_lsc_info;
+    struct sensor_otp_section_info *slave_ae_info;
 };
 #endif
 struct sensor_otp_cust_info {

@@ -1,3 +1,4 @@
+#define LOG_TAG "otp_common"
 #include "otp_common.h"
 #include <string.h>
 
