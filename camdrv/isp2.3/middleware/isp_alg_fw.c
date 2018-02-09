@@ -232,6 +232,7 @@ struct ispalg_lib_ops {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
+	cmr_u8 is_stream_off;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info_t commn_cxt;
@@ -2435,7 +2436,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
 
 	if (!message || !p_data) {
-		ISP_LOGE("fail to check input param ");
+		ISP_LOGE("fail to check input param");
 		goto exit;
 	}
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
@@ -2448,6 +2449,10 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_SOF:
+		if (cxt->is_stream_off) {
+			ISP_LOGW("sensor was stream off");
+			break;
+		}
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
@@ -2480,7 +2485,8 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM, ispalg_thread_proc, (void *)cxt);
+	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
+				ispalg_thread_proc, (void *)cxt);
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create isp algfw  process thread");
@@ -4099,6 +4105,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		goto exit;
 	}
 
+	cxt->is_stream_off = 0;
 	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -4269,6 +4276,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
+	cxt->is_stream_off = 1;
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_STOP"));
@@ -4337,6 +4345,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_video_start param;
 	struct alsc_fwstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 
+	cxt->is_stream_off = 0;
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
 	cxt->commn_cxt.src.w = in_ptr->src_frame.img_size.w;
