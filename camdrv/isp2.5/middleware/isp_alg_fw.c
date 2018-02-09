@@ -1856,6 +1856,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
 	afl_input.vir_addr = u_addr;
+	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
@@ -4419,7 +4420,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
     /*0:afl_old mode, 1:afl_new mode*/
-	cxt->afl_cxt.version = 0;
+	cxt->afl_cxt.version = 1;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
