@@ -377,7 +377,7 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
             ioctl->set_exposure = sensor_ic_write_ae_value;
             ioctl->set_gain = sensor_ic_write_gain;
             ioctl->ext_fuc = NULL;
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) | defined(CONFIG_CAMERA_ISP_DIR_2_4)
+#if 1//defined(CONFIG_CAMERA_ISP_DIR_2_1) | defined(CONFIG_CAMERA_ISP_DIR_2_4)
             if (module && module->af_dev_info.af_drv_entry) {
                 ioctl->set_pos = sensor_af_set_pos;
                 ioctl->get_otp = NULL;
