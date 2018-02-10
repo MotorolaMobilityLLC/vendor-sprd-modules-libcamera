@@ -661,10 +661,12 @@ static struct sensor_res_tab_info s_ov13855_resolution_tab_raw_new[VENDOR_NUM] =
               {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting1), PNULL, 0,
                .width = 2112, .height = 1568, .xclk_to_sensor = 24,
                .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+#ifndef CONFIG_ISP_2_5
               {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting1), PNULL,
                0, .width = 4224, .height = 3136, .xclk_to_sensor = 24,
-               .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
+               .image_format = SENSOR_IMAGE_FORMAT_RAW}
+#endif
+	}}
         /*If there are multiple modules,please add here*/
 };
 
@@ -697,6 +699,7 @@ static SENSOR_TRIM_T
                       .bps_per_lane = 546,
                       .frame_line = 1608,
                       .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+#ifndef CONFIG_ISP_2_5
                      {.trim_start_x = 0,
                       .trim_start_y = 0,
                       .trim_width = 4224,
@@ -705,6 +708,7 @@ static SENSOR_TRIM_T
                       .bps_per_lane = 1092,
                       .frame_line = 3214,
                       .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
+#endif
                  }}
 
             /*If there are multiple modules,please add here*/
@@ -764,10 +768,12 @@ static struct sensor_res_tab_info s_ov13855_resolution_tab_raw[VENDOR_NUM] = {
           {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting), PNULL, 0,
            .width = 2112, .height = 1568, .xclk_to_sensor = 24,
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+#ifndef CONFIG_ISP_2_5
           {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting), PNULL, 0,
            .width = 4224, .height = 3136, .xclk_to_sensor = 24,
-           .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
+           .image_format = SENSOR_IMAGE_FORMAT_RAW}
+#endif
+	}}
     /*If there are multiple modules,please add here*/
 };
 
@@ -800,6 +806,7 @@ static SENSOR_TRIM_T
                       .bps_per_lane = 540,
                       .frame_line = 1608,
                       .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+#ifndef CONFIG_ISP_2_5
                      {.trim_start_x = 0,
                       .trim_start_y = 0,
                       .trim_width = 4224,
@@ -808,6 +815,7 @@ static SENSOR_TRIM_T
                       .bps_per_lane = 1080,
                       .frame_line = 3214,
                       .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
+#endif
                  }}
 
             /*If there are multiple modules,please add here*/

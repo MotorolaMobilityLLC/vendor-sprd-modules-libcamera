@@ -432,11 +432,13 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw_new[VENDOR_NUM] =
                       .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
                       .xclk_to_sensor = EX_MCLK,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+#ifndef CONFIG_ISP_2_5
                      {ADDR_AND_LEN_OF_ARRAY(ov5675_snapshot_setting1), PNULL, 0,
                       .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
                       .xclk_to_sensor = EX_MCLK,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW}}},
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW}
+#endif
+                      }},
 
         /*If there are multiple modules,please add here*/
 };
@@ -463,6 +465,7 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab_new[VENDOR_NUM] = {
               .frame_line = 1000,
               .scaler_trim =
                   {.x = 0, .y = 0, .w = PREVIEW_TRIM_W, .h = PREVIEW_TRIM_H}},
+#ifndef CONFIG_ISP_2_5
              {.trim_start_x = SNAPSHOT_TRIM_X,
               .trim_start_y = SNAPSHOT_TRIM_Y,
               .trim_width = SNAPSHOT_TRIM_W,
@@ -472,6 +475,7 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab_new[VENDOR_NUM] = {
               .frame_line = SNAPSHOT_FRAME_LENGTH,
               .scaler_trim =
                   {.x = 0, .y = 0, .w = SNAPSHOT_TRIM_W, .h = SNAPSHOT_TRIM_H}},
+#endif
          }},
 
     /*If there are multiple modules,please add here*/
@@ -491,11 +495,13 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw[VENDOR_NUM] = {
                   .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
                   .xclk_to_sensor = EX_MCLK,
                   .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+#ifndef CONFIG_ISP_2_5
                  {ADDR_AND_LEN_OF_ARRAY(ov5675_snapshot_setting), PNULL, 0,
                   .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
                   .xclk_to_sensor = EX_MCLK,
-                  .image_format = SENSOR_IMAGE_FORMAT_RAW}}},
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW}
+#endif
+                  }},
 
     /*If there are multiple modules,please add here*/
 };
@@ -522,6 +528,7 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[VENDOR_NUM] = {
               .frame_line = PREVIEW_FRAME_LENGTH,
               .scaler_trim =
                   {.x = 0, .y = 0, .w = PREVIEW_TRIM_W, .h = PREVIEW_TRIM_H}},
+#ifndef CONFIG_ISP_2_5
              {.trim_start_x = SNAPSHOT_TRIM_X,
               .trim_start_y = SNAPSHOT_TRIM_Y,
               .trim_width = SNAPSHOT_TRIM_W,
@@ -531,6 +538,7 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[VENDOR_NUM] = {
               .frame_line = SNAPSHOT_FRAME_LENGTH,
               .scaler_trim =
                   {.x = 0, .y = 0, .w = SNAPSHOT_TRIM_W, .h = SNAPSHOT_TRIM_H}},
+#endif
          }},
 
     /*If there are multiple modules,please add here*/
