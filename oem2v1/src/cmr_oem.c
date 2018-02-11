@@ -6577,6 +6577,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         is_zsl_enable = setting_param.cmd_type_value;
 
         cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
         ret =
             cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                               SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
@@ -6585,7 +6586,8 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
             goto exit;
         }
         video_snapshot_type = setting_param.cmd_type_value;
-        CMR_LOGI("is_zsl_enable:%d, video_snapshot_type:%d\n", is_zsl_enable, video_snapshot_type);
+        CMR_LOGI("is_zsl_enable:%d, video_snapshot_type:%d\n", is_zsl_enable,
+                 video_snapshot_type);
         /* for sharkl2 offline path */
         if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
             video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
@@ -6809,21 +6811,18 @@ exit:
     return ret;
 }
 
-cmr_int camera_get_isp_handle_raw(cmr_handle oem_handle,
-		void **isp_handle ) {
+cmr_int camera_get_isp_handle_raw(cmr_handle oem_handle, void **isp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt =
-	    (struct camera_context *)oem_handle;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
-    *isp_handle = (void*)isp_cxt->isp_handle;
+    *isp_handle = (void *)isp_cxt->isp_handle;
 
     if (*isp_handle == NULL) {
-	    CMR_LOGE("isp handle null!!");
-	    ret = CMR_CAMERA_FAIL;
+        CMR_LOGE("isp handle null!!");
+        ret = CMR_CAMERA_FAIL;
     }
     return ret;
 }
-
 
 cmr_int
 camera_get_tuning_info(cmr_handle oem_handle,
@@ -10770,6 +10769,7 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
+    setting_param.camera_id = cxt->camera_id;
     if (1 == camera_get_hdr_flag(cxt)) {
         ret = cmr_ipm_pre_proc(cxt->ipm_cxt.hdr_handle);
         if (ret) {
@@ -10927,8 +10927,7 @@ exit:
     return ret;
 }
 
-cmr_int camera_local_start_capture_restart(cmr_handle oem_handle)
-{
+cmr_int camera_local_start_capture_restart(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     if (TAKE_PICTURE_NO == camera_get_snp_req(oem_handle)) {
