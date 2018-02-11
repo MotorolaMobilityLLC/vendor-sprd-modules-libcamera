@@ -261,6 +261,7 @@ static void s5k5e8yx_drv_write_gain(cmr_handle handle, float gain) {
                 (cmr_u32)real_gain, (cmr_u32)a_gain, (cmr_u32)d_gain);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x204, (int)a_gain >> 8 & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x205, (int)a_gain & 0xff);
+#if 0
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20e, (int)d_gain >> 8 & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20f, (int)d_gain & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x210, (int)d_gain >> 8 & 0xff);
@@ -269,7 +270,7 @@ static void s5k5e8yx_drv_write_gain(cmr_handle handle, float gain) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x213, (int)d_gain & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x214, (int)d_gain >> 8 & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x215, (int)d_gain & 0xff);
-
+#endif
     // s5k5e8yx_drv_group_hold_off();
 }
 
@@ -784,8 +785,8 @@ static cmr_int s5k5e8yx_drv_stream_on(cmr_handle handle, cmr_u32 param) {
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     /*delay*/
     // usleep(30 * 1000);
-    //hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c16, 0x00);
-    //hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C0D, 0x04);
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c16, 0x00);
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C0D, 0x04);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C22, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C22, 0x00);
