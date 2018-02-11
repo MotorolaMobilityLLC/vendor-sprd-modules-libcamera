@@ -71,7 +71,7 @@ static uint8_t s_ov8856_tune_info_common[]=
 #if 1 /* version_id=0x00070005, mode_name=COMMON, mode_id=0, size=3264x2448 */
 	0x05,0x00,0x07,0x00,0x43,0x4F,0x4D,0x4D,0x4F,0x4E,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x33,0x00,0x00,0x00,0xB4,0x54,0x04,0x00,0xC0,0x0C,0x00,0x00,0x90,0x09,0x00,0x00,
-	0x00,0x00,0x00,0x00,0xC1,0xAB,0x68,0x6B,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x73,0x0B,0x6A,0x6B,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x50,0x52,0x45,0x47,0x4C,0x42,0x47,0x00,0x01,0x40,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x30,0x30,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -12312,7 +12312,7 @@ static uint8_t s_ov8856_tune_info_common[]=
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x03,0x02,0x03,0x00,0x01,0x04,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -28717,9 +28717,9 @@ static uint8_t s_ov8856_common_tool_ui_input[]=
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 #endif /* END: ModeName=common, MainType=AE_SCENE_TABLE, SubType=AE1_SCENE4_60Hz */
-#if 1 /* BEGIN: ModeName=common, MainType=NR, SubType=BAYER_NR */
+#if 1 /* BEGIN: ModeName=common, MainType=NR, SubType=V21BAYER_NR */
 	0x04,0x00,0x00,0x00,0x01,0x00,0x15,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-#endif /* END: ModeName=common, MainType=NR, SubType=BAYER_NR */
+#endif /* END: ModeName=common, MainType=NR, SubType=V21BAYER_NR */
 #if 1 /* BEGIN: Reserve Data */
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -33451,7 +33451,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_0_OFFSET/2]),
-				LSC_2D_MAP_0,//2560,
+				LSC_2D_MAP_0,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_map_info),
@@ -33461,7 +33461,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_1_OFFSET/2]),
-				LSC_2D_MAP_1,//2560,
+				LSC_2D_MAP_1,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_map_info),
@@ -33471,7 +33471,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_2_OFFSET/2]),
-				LSC_2D_MAP_2,//2560,
+				LSC_2D_MAP_2,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_map_info),
@@ -33481,7 +33481,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_3_OFFSET/2]),
-				LSC_2D_MAP_3,//2560,
+				LSC_2D_MAP_3,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_map_info),
@@ -33491,7 +33491,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_4_OFFSET/2]),
-				LSC_2D_MAP_4,//2560,
+				LSC_2D_MAP_4,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_map_info),
@@ -33501,7 +33501,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_5_OFFSET/2]),
-				LSC_2D_MAP_5,//2560,
+				LSC_2D_MAP_5,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_map_info),
@@ -33511,7 +33511,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_6_OFFSET/2]),
-				LSC_2D_MAP_6,//2560,
+				LSC_2D_MAP_6,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_map_info),
@@ -33521,7 +33521,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_7_OFFSET/2]),
-				LSC_2D_MAP_7,//2560,
+				LSC_2D_MAP_7,
 			},
 			{
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_map_info),
@@ -33531,7 +33531,7 @@ static struct sensor_raw_fix_info s_ov8856_fix_info_common=
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_len),
 				(uint32_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_offset),
 				(uint16_t*)&(s_ov8856_common_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_8_OFFSET/2]),
-				LSC_2D_MAP_8,//2560,
+				LSC_2D_MAP_8,
 			},
 		}
 	},

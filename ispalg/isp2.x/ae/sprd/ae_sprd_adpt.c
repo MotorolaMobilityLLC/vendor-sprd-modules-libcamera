@@ -5143,8 +5143,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 		cxt->cur_param->flash_control_param.aem_effect_delay = 2;
 	if (0 == cxt->cur_param->flash_control_param.pre_open_count)
 		cxt->cur_param->flash_control_param.pre_open_count = 3;
-	if (0 == cxt->cur_param->flash_control_param.main_set_count)
-		cxt->cur_param->flash_control_param.main_set_count = 1;
+	//if (0 == cxt->cur_param->flash_control_param.main_set_count)
+	//	cxt->cur_param->flash_control_param.main_set_count = 1;/*the mini value of main set count can be 0 */
 	if (0 == cxt->cur_param->flash_control_param.main_capture_count)
 		cxt->cur_param->flash_control_param.main_capture_count = 5;
 	if (0 == cxt->cur_param->flash_control_param.main_flash_notify_delay)
