@@ -52,31 +52,17 @@
 
 namespace sprdcamera {
 
-#define YUV_CONVERT_TO_JPEG
+//#define YUV_CONVERT_TO_JPEG
 //#define ISP_SUPPORT_MICRODEPTH
 
-#ifdef YUV_CONVERT_TO_JPEG
 #define BLUR_LOCAL_CAPBUFF_NUM (4)
-#else
-#define BLUR_LOCAL_CAPBUFF_NUM 2
-#endif
 
 #ifdef ISP_SUPPORT_MICRODEPTH
-#ifdef YUV_CONVERT_TO_JPEG
 #define BLUR3_REFOCUS_COMMON_PARAM_NUM (27)
 #define BLUR_REFOCUS_PARAM2_NUM (52)
 #else
-#define BLUR3_REFOCUS_COMMON_PARAM_NUM (25)
-#define BLUR_REFOCUS_PARAM2_NUM (50)
-#endif
-#else
-#ifdef YUV_CONVERT_TO_JPEG
 #define BLUR3_REFOCUS_COMMON_PARAM_NUM (11)
 #define BLUR_REFOCUS_PARAM2_NUM (11)
-#else
-#define BLUR3_REFOCUS_COMMON_PARAM_NUM (9)
-#define BLUR_REFOCUS_PARAM2_NUM (9)
-#endif
 #endif
 
 #define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
@@ -125,6 +111,13 @@ typedef struct {
     const camera3_stream_buffer_t *input_buffer;
     buffer_handle_t *buffer;
 } buffer_combination_blur_t;
+
+typedef struct {
+    void *buffer_addr;
+    uint32_t frame_number;
+    uint32_t use_size;
+    uint32_t jpeg_size;
+} dump_blur_t;
 
 typedef struct {
     blurMsgType msg_type;
@@ -287,6 +280,14 @@ typedef struct {
     void *mHandle;
 } BlurAPI2_t;
 
+typedef enum {
+    DUMP_BLUR_COMBO,  //process start
+    DUMP_BLUR_OUTPUT,  //preocess end
+    DUMP_BLUR_RESULT,  //dump image and params
+    DUMP_BLUR_TYPE_MAX
+}dump_type ;
+
+
 class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
     static void getCameraBlur(SprdCamera3Blur **pBlur);
@@ -336,12 +337,10 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mjpegSize;
     void *m_pNearYuvBuffer;
     void *m_pFarYuvBuffer;
-#ifdef YUV_CONVERT_TO_JPEG
     int mNearJpegSize;
     int mFarJpegSize;
     buffer_handle_t *m_pNearJpegBuffer;
     buffer_handle_t *m_pFarJpegBuffer;
-#endif
     void *weight_map;
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
@@ -373,11 +372,23 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void saveCaptureBlurParams(buffer_handle_t *result_buff,
                                    uint32_t jpeg_size);
         //        void getOutWeightMap(buffer_handle_t *output_buffer);
-        void dumpSaveImages(void *result_buff, uint32_t use_size,
-                            uint32_t jpeg_size);
+        bool yuvReprocessCaptureRequest(buffer_handle_t *combe_buffer,
+                            buffer_handle_t *output_buffer);
+        int blurProcessVer1(buffer_handle_t *combo_buffer, void *combo_buff_addr,
+                            buffer_handle_t *output_buffer, void *output_buff_addr,
+                            uint32_t combo_frm_num);
+        int blurProcessVerN(buffer_handle_t *combo_buffer, void *combo_buff_addr,
+                            buffer_handle_t *output_buffer, void *output_buff_addr,
+                            uint32_t combo_frm_num);
+        int blurProcessVer3(buffer_handle_t *combo_buffer, void *combo_buff_addr,
+                            buffer_handle_t *output_buffer, void *output_buff_addr,
+                            uint32_t combo_frm_num);
+        void dumpBlurIMG(dump_type type,
+                        dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX]);
         uint8_t getIspAfFullscanInfo();
-        int blurHandle(buffer_handle_t *input1, void *input2,
-                       buffer_handle_t *output);
+        int blurHandle(buffer_handle_t *input1, void *input1_addr,
+                void *input2,
+                buffer_handle_t *output, void *output_addr);
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;

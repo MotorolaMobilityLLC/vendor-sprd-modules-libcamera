@@ -1028,6 +1028,9 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
         HAL_LOGE("fail to camera_take_picture.");
         goto exit;
     }
+    if(getMultiCameraMode() == MODE_BLUR) {
+        mFlagOffLineZslStart = true;
+    }
 
     PushZslSnapShotbuff();
     print_time();
