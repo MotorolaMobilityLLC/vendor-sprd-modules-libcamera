@@ -619,7 +619,7 @@ static cmr_int gc2375_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     gc2375_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,
                              &gc2375_aec_info);
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
-    // gc2375_drv_write_reg2sensor(handle,gc2375_aec_info.frame_length);
+    gc2375_drv_write_reg2sensor(handle,gc2375_aec_info.frame_length);
     gc2375_drv_write_reg2sensor(handle, gc2375_aec_info.shutter);
 
     return ret_value;
