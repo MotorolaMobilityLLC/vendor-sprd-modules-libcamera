@@ -358,6 +358,7 @@ static void camera_filter_doeffect(cmr_handle oem_handle, struct img_frm *src,
                                    cmr_s32 type);
 static cmr_int camera_set_flash_level(void *handler, cmr_uint target_level);
 static void camera_set_exif_exposure_time(cmr_handle oem_handle);
+static cmr_int camera_local_start_capture_restart(cmr_handle oem_handle);
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info,
                                         struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param,
@@ -3886,7 +3887,7 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.set_3dnr_ev = camera_3dnr_set_ev;
     init_param.ops.sw_3dnr_info_cfg = camera_sw_3dnr_info_cfg;
     init_param.ops.get_tuning_info = camera_get_tuning_info;
-    init_param.ops.start_capture = camera_local_start_capture;
+    init_param.ops.start_capture = camera_local_start_capture_restart;
     init_param.oem_cb = camera_preview_cb;
 
     init_param.private_data = NULL;
@@ -6584,7 +6585,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
             goto exit;
         }
         video_snapshot_type = setting_param.cmd_type_value;
-
+        CMR_LOGI("is_zsl_enable:%d, video_snapshot_type:%d\n", is_zsl_enable, video_snapshot_type);
         /* for sharkl2 offline path */
         if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
             video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
@@ -10922,6 +10923,20 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         goto exit;
     }
 
+exit:
+    return ret;
+}
+
+cmr_int camera_local_start_capture_restart(cmr_handle oem_handle)
+{
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (TAKE_PICTURE_NO == camera_get_snp_req(oem_handle)) {
+        CMR_LOGI("do noting\n");
+        goto exit;
+    }
+
+    ret = camera_local_start_capture(oem_handle);
 exit:
     return ret;
 }
