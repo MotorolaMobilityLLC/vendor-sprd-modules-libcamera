@@ -101,7 +101,8 @@ struct smart_info_t {
 	cmr_u8 lock_postcdn_en;
 	cmr_u8 lock_ccnr_en;
 	cmr_u8 lock_ynr_en;
-	void *tunning_gamma_cur;
+	cmr_u32 mode_id;
+	void *tunning_gamma_cur[2];
 };
 
 struct afl_info_t {
@@ -936,20 +937,13 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 i, j;
-	cmr_u32 param_num = 0;
+	cmr_u32 i;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct smart_calc_result *smart_result = NULL;
 	struct smart_block_result *block_result = NULL;
-	struct smart_block_result  block_result_zsl;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
 	UNUSED(param1);
-
-	if (cxt->zsl_flag)
-		param_num = ISP_MODE_MAX;
-	else
-		param_num = 1;
 
 	switch (type) {
 	case ISP_SMART_SET_COMMON:
@@ -960,34 +954,18 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 				continue;
 
 			memset(pm_param, 0, sizeof(pm_param));
-			for (j = 0; j < param_num; j++) {
-				/*zsl mode_id[0]: prev, mode_id[1]: cap;  none zsl mode_id[0]: prev, cap, video etc*/
-				if (j == 1) {
-					block_result_zsl = *block_result;
-					block_result_zsl.mode_flag = cxt->mode_id[1];
-					block_result_zsl.mode_flag_changed = 1;
-					block_result = &block_result_zsl;
-				}
-				BLOCK_PARAM_CFG(pm_param[j], ISP_PM_BLK_SMART_SETTING,
-						block_result->block_id,
-						cxt->mode_id[j],
-						block_result,
-						sizeof(*block_result));
-			}
-			io_pm_input.param_num = param_num;
+			BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_SMART_SETTING,
+					block_result->block_id,
+					block_result->mode_flag,
+					block_result,
+					sizeof(*block_result));
+			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param[0];
 
-			ISP_LOGV("set param %d, id=%x, data=%p", i, block_result->block_id, block_result);
+			ISP_LOGV("set param %d, id=%x, mode: %d, %d, data=%p", i, block_result->block_id,
+				block_result->mode_flag,  block_result->mode_flag_changed, block_result);
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
-#ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
-			if (ISP_BLK_RGB_GAMC == block_result->block_id) {
-				pm_param[0].id = ISP_BLK_Y_GAMMC;
-				pm_param[1].id = ISP_BLK_Y_GAMMC;
-				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
-				ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
-			}
-#endif
 		}
 
 		break;
@@ -998,14 +976,12 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 			void *gamma_cur = param0;
 
 			memset(pm_param, 0, sizeof(pm_param));
-			for (j = 0; j < param_num; j++) {
-				BLOCK_PARAM_CFG(pm_param[j], ISP_PM_BLK_GAMMA_CUR,
-						ISP_BLK_RGB_GAMC,
-						cxt->mode_id[j],
-						gamma_cur,
-						sizeof(struct sensor_rgbgamma_curve));
-			}
-			io_pm_input.param_num = param_num;
+			BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_GAMMA_CUR,
+					ISP_BLK_RGB_GAMC,
+					cxt->smart_cxt.mode_id,
+					gamma_cur,
+					sizeof(struct sensor_rgbgamma_curve));
+			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param[0];
 
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
@@ -1787,6 +1763,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					 struct awb_ctrl_calc_result *awb_output)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i, num;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct smart_proc_input smart_proc_in;
 	struct ae_monitor_info info;
@@ -1832,9 +1809,29 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
 		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
 		ispalg_prepare_atm_param(isp_alg_handle, &smart_proc_in);
-		if (cxt->ops.smart_ops.calc)
-			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
-		ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
+
+		num = cxt->zsl_flag ? 2 : 1;
+		for (i = 0; i < num; i++) {
+			cxt->smart_cxt.mode_id = cxt->mode_id[i];
+			smart_proc_in.mode_flag = cxt->mode_id[i];
+			smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
+			if (cxt->ops.smart_ops.ioctrl) {
+				ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+								ISP_SMART_IOCTL_SET_WORK_MODE,
+								&smart_proc_in.mode_flag, NULL);
+				ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+			}
+			if (cxt->ops.smart_ops.calc)
+				ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+		}
+
+		if (cxt->ops.smart_ops.ioctrl) {
+			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+							ISP_SMART_IOCTL_SET_WORK_MODE,
+							(void *)&cxt->mode_id[0], NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+		}
+
 		cxt->smart_cxt.log_smart = smart_proc_in.log;
 		cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
@@ -3787,32 +3784,54 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	}
 	cxt->lsc_cxt.lsc_sprd_version = lsc_ver.LSC_SPD_VERSION;
 
-	BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_GAMMA_TAB,
-				ISP_BLK_RGB_GAMC,
-				cxt->mode_id[0],
-				PNULL, 0);
-	ioctl_input.param_num = 1;
-	ioctl_input.param_data_ptr = ioctl_data;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get GAMMA TAB"));
-
-	if (ioctl_output.param_num > 0 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr) {
-		cxt->smart_cxt.tunning_gamma_cur = ioctl_output.param_data_ptr->data_ptr;
-	}
-
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
-		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
+		int num = (cxt->zsl_flag) ? 2 : 1;
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
 		ispalg_prepare_atm_param(isp_alg_handle, &smart_proc_in);
-		if (cxt->ops.smart_ops.calc)
-			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+		for (i = 0; i < num; i++) {
+			BLOCK_PARAM_CFG(ioctl_data[0], ISP_PM_BLK_GAMMA_TAB,
+						ISP_BLK_RGB_GAMC,
+						cxt->mode_id[i],
+						PNULL, 0);
+			ioctl_input.param_num = 1;
+			ioctl_input.param_data_ptr = ioctl_data;
+			ret = isp_pm_ioctl(cxt->handle_pm,
+							ISP_PM_CMD_GET_SINGLE_SETTING,
+							(void *)&ioctl_input, (void *)&ioctl_output);
+			ISP_TRACE_IF_FAIL(ret, ("fail to get GAMMA TAB"));
+
+			if (ioctl_output.param_num > 0
+				&& ioctl_output.param_data_ptr
+				&& ioctl_output.param_data_ptr->data_ptr) {
+				cxt->smart_cxt.tunning_gamma_cur[i] = ioctl_output.param_data_ptr->data_ptr;
+			} else
+				cxt->smart_cxt.tunning_gamma_cur[i] = NULL;
+
+			cxt->smart_cxt.mode_id = cxt->mode_id[i];
+			smart_proc_in.mode_flag = cxt->mode_id[i];
+			smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
+			if (cxt->ops.smart_ops.ioctrl) {
+				ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+								ISP_SMART_IOCTL_SET_WORK_MODE,
+								&smart_proc_in.mode_flag, NULL);
+				ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+			}
+			if (cxt->ops.smart_ops.calc)
+				ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+		}
+
+		if (cxt->ops.smart_ops.ioctrl) {
+			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+							ISP_SMART_IOCTL_SET_WORK_MODE,
+							(void *)&cxt->mode_id[0], NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+		}
 	}
 
 	return ret;
@@ -4297,6 +4316,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 
 	if (cxt->zsl_flag==1) {
 		ISP_LOGV("zsl deinit: %d", cxt->mode_id[1]);
+		cxt->zsl_flag = 0;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_RESET_SECOND, &cxt->mode_id[1], NULL);
 	}
 
