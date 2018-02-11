@@ -23,8 +23,6 @@
 #include <utils/Timers.h>
 #include <semaphore.h>
 #include <cutils/properties.h>
-#define DEPTH_OUTPUT_WIDTH 320
-#define DEPTH_OUTPUT_HEIGHT 240
 
 #define SAVE_SWISP_PROP "realbokeh.debugdump"
 #define SAVE_PATH "/data/misc/cameraserver"
@@ -386,7 +384,6 @@ static int savefile(char* filename , uint8_t* ptr , int width , int height, int 
 	//if(inum < 5)
 	FILE* fp = fopen(file_name , "wb");
 	if (fp) {
-#if 1
 		//yuv
 		if(yuv == 1)
 			fwrite(ptr , 1 , width*height*3/2 , fp);
@@ -398,8 +395,6 @@ static int savefile(char* filename , uint8_t* ptr , int width , int height, int 
 			uint16_t* rawptr = (uint16_t*)ptr;
 			fwrite(rawptr, 1 ,width*height*sizeof(uint16_t) , fp);
 		}
-		else
-#endif
 		fclose(fp);
 	}
 //}
@@ -696,8 +691,8 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_start(void* handl
 		inparam.input_height_main = startparam->preview_height;//120;
 		inparam.input_width_sub = startparam->preview_width;//160;
 		inparam.input_height_sub = startparam->preview_height;//120;
-		inparam.output_depthwidth = DEPTH_OUTPUT_WIDTH;//PREVIEW_WIDTH;
-		inparam.output_depthheight = DEPTH_OUTPUT_HEIGHT;//PREVIEW_HEIGHT;
+		inparam.output_depthwidth = CAMERA_REALTIME_DEPTH_OUTPUT_WIDTH;//PREVIEW_WIDTH;
+		inparam.output_depthheight = CAMERA_REALTIME_DEPTH_OUTPUT_HEIGHT;//PREVIEW_HEIGHT;
 		inparam.imageFormat_main = YUV420_NV12;
 		inparam.imageFormat_sub = YUV420_NV12;
 		inparam.depth_threadNum = 1;
