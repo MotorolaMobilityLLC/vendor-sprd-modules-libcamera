@@ -2736,7 +2736,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_re
 	result->ae_output.cur_lum = alg_rt->cur_lum;
 	result->ae_output.cur_again = alg_rt->wts.cur_again;
 	result->ae_output.cur_exp_line = alg_rt->wts.cur_exp_line;
-	result->ae_output.line_time = alg_rt->wts.exposure_time / alg_rt->wts.cur_exp_line;
+	result->ae_output.line_time = cxt->cur_status.line_time;
 	result->ae_output.is_stab = alg_rt->wts.stable;
 	result->ae_output.target_lum = alg_rt->target_lum;
 	result->ae_output.target_lum_ori = alg_rt->target_lum_ori;
