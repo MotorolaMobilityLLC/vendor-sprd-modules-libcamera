@@ -2195,6 +2195,26 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
     }
     if (0 == err) {
         sensor_cxt->stream_on = 1;
+        char value[PROPERTY_VALUE_MAX];
+
+        property_get("persist.sys.cam.sensor.info", value, "0");
+        if (!strcmp(value, "trigger")) {
+                SENSOR_LOGI("trigger E\n");
+                char value1[255] = {0x00};
+                int mode = sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)];
+                SENSOR_REG_TAB_INFO_T *res_info_ptr = PNULL;
+                struct sensor_trim_tag *res_trim_ptr = PNULL;
+                struct module_cfg_info *mod_cfg_info = PNULL;
+
+                mod_cfg_info = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_MODULE_CFG);
+                res_trim_ptr = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_TRIM_TAB);
+                res_info_ptr = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_RESOLUTION);
+                sprintf(value1,"%s mode: %d %dlanes size: %dx%d bps per lane: %dMbps", sensor_cxt->sensor_info_ptr->name,
+                sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)], mod_cfg_info[mode].sensor_interface.bus_width,
+                res_trim_ptr[mode].trim_width, res_trim_ptr[mode].trim_height,res_trim_ptr[mode].bps_per_lane);
+                SENSOR_LOGI("trigger %s\n", value1);
+                property_set("persist.sys.cam.sensor.info", value1);
+        }
     }
     SENSOR_LOGI("X");
     ATRACE_END();
