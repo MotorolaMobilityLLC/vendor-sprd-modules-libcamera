@@ -1553,6 +1553,11 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
 
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_RESULT_INFO, (void *)awb_output, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
 	ret = ispalg_awb_post_process((cmr_handle) cxt, awb_output);
 
 exit:
