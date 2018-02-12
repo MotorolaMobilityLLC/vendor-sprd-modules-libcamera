@@ -49,6 +49,9 @@ extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
 #ifdef GC030A_F
 extern SENSOR_INFO_T g_gc030af_mipi_raw_info;
 #endif
+#ifdef GC030A_T
+extern SENSOR_INFO_T g_gc030at_mipi_raw_info;
+#endif
 #ifdef GC2385
 extern SENSOR_INFO_T g_gc2385_mipi_raw_info;
 #endif
@@ -123,7 +126,9 @@ extern SENSOR_INFO_T g_sp0a09z_mipi_raw_info;
 #ifdef SP2509Z
 extern SENSOR_INFO_T g_sp2509z_mipi_raw_info;
 #endif
-
+#ifdef SP250A
+extern SENSOR_INFO_T g_sp250a_mipi_raw_info;
+#endif
 #ifdef SP2509R
 extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
 #endif
@@ -309,7 +314,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef SP2509Z
     {MODULE_SUNNY, "sp2509z", &g_sp2509z_mipi_raw_info, {NULL, 0}, NULL},
 #endif
-
+#ifdef SP250A
+    {MODULE_SUNNY, "sp250a", &g_sp250a_mipi_raw_info, {NULL, 0}, NULL},
+#endif
 #ifdef SP8407
 #ifdef SBS_SENSOR_FRONT
     {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, &sp8407_cmk_otp_entry},
@@ -342,6 +349,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 // gc area
 #ifdef GC030A_F
     {MODULE_SUNNY, "gc030a_f", &g_gc030af_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#ifdef GC030A_T
+    {MODULE_SUNNY, "gc030a_t", &g_gc030at_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #ifdef GC2375
     {MODULE_SUNNY, "gc2375", &g_gc2375_mipi_raw_info, {NULL, 0}, NULL},
