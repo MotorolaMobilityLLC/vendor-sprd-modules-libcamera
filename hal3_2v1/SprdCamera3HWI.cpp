@@ -809,7 +809,7 @@ int SprdCamera3HWI::configureStreams(
         } else if (capture_size.height == 360 && capture_size.width == 640) {
             capture_size.height = 368;
         } else if (capture_size.height == 1080 && capture_size.width == 1920) {
-#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
+#if defined(CONFIG_CAMERA_MEET_JPG_ALIGNMENT) || defined(CONFIG_CAMERA_1080_JPG_ALIGNMENT)
             capture_size.height = 1088;
 #endif
         }
