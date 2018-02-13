@@ -807,9 +807,9 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
         // 8M
         jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else if (width * height <= 4160 * 3120) {
-// 13M
+        // 13M
 #if defined(CAMERA_SERNSOR_SUPPORT_4224)
-        jpeg_stream_size = (4224 * 3136 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+	jpeg_stream_size = (4224 * 3136 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #else
         jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #endif
@@ -1507,11 +1507,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // flash_info
     // s_setting[cameraId].flash_InfoInfo.available = (cameraId == 0) ? 1 : 0;
     if (cameraId == 0) {
-#ifndef CONFIG_CAMERA_FLASH_CTRL
         s_setting[cameraId].flash_InfoInfo.available = 1;
-#else
-        s_setting[cameraId].flash_InfoInfo.available = 0;
-#endif
     } else if (cameraId == 1) {
 #ifdef CONFIG_FRONT_FLASH_SUPPORT
         s_setting[cameraId].flash_InfoInfo.available = 1;
@@ -3022,7 +3018,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdFixedFpsEnabled = 0;
     requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
 
-    int32_t sprdAppmodeId = -1;
+    int32_t sprdAppmodeId= -1;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
     uint8_t sprd3dnrEnabled = 0;
