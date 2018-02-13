@@ -82,6 +82,7 @@ extern "C" {
 		// SharkLE Only ++
 		AF_CMD_SET_DAC_INFO = 0x1018,
 		// SharkLE Only --
+		AF_CMD_SET_TYPE1_PD_INFO = 0x1019,
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,

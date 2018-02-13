@@ -652,6 +652,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_SET_PDAF_ROI:
 		ret = isp_u_pdaf_roi(cxt->isp_driver_handle, in);
 		break;
+	case ISP_DEV_SET_PDAF_TYPE1_CFG:
+		ret = isp_u_pdaf_type1_block(cxt->isp_driver_handle, in);
+		break;
 	case ISP_DEV_SET_PDAF_PPI_INFO:
 		ret = isp_u_pdaf_ppi_info(cxt->isp_driver_handle, in);
 		break;

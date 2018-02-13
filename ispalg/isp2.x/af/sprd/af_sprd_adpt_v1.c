@@ -2508,6 +2508,15 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
+static cmr_s32 af_sprd_set_type1_pd_info(cmr_handle handle, void *param0)
+{
+	UNUSED(handle);
+	//UNUSED(param0);
+
+	ISP_LOGI("af_sprd_set_type1_pd_info E %p", param0);
+	return AFV1_SUCCESS;
+}
+
 static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -2650,7 +2659,10 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		rtn = af_sprd_set_pd_info(handle, param0);
 		ISP_LOGV("pdaf set callback end");
 		break;
-
+	case AF_CMD_SET_TYPE1_PD_INFO:
+		rtn = af_sprd_set_type1_pd_info(handle, param0);
+		ISP_LOGI("pdaf type1 set pd info");
+		break;
 	case AF_CMD_SET_UPDATE_AUX_SENSOR:
 		rtn = af_sprd_set_update_aux_sensor(handle, param0);
 		break;

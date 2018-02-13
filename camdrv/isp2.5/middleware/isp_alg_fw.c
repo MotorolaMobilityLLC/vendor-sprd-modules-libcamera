@@ -264,6 +264,7 @@ struct isp_alg_fw_context {
 	cmr_int bokeh_status;
 	cmr_u32 zsl_flag;
 	struct work_mode_info work_mode_cxt;
+	cmr_u32 pd_dump;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -2040,6 +2041,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
 	cmr_uint u_addr = 0;
+	char value[PROPERTY_VALUE_MAX];
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct pdaf_ctrl_param_out pdaf_param_out;
 	UNUSED(data_type);
@@ -2052,19 +2054,38 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
 
 	pdaf_param_in.u_addr = u_addr;
+	void *pdaf_info = (cmr_s32 *)(u_addr);
+	cxt->pd_dump ++;
 
-	if (cxt->ops.pdaf_ops.ioctrl)
-		cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
+	if (cxt->ops.af_ops.ioctrl) {
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_TYPE1_PD_INFO, pdaf_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_TYPE1_PD_INFO"));
+	}
 
-	ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
-	if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
-		if (cxt->ops.pdaf_ops.process)
-			ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
+	if(atoi(value)) {
+		if(cxt->pd_dump >1000)
+			cxt->pd_dump  = 1000;
+		ISP_LOGI(":ISP:cxt->pd_dump = %d",cxt->pd_dump);
+		if ((cxt->pd_dump < 1000) && (cxt->pd_dump%100 == 0))
+		{
+		ISP_LOGI(":ISP:(cxt->pd_dump/100 =%d",(cxt->pd_dump/100));
+		#define MLOG_BUF_SIZE 1024
+		#define MLOG_FILE_NAME_SIZE 200
+			char file_name[MLOG_FILE_NAME_SIZE] = {0};
+			FILE *fp = NULL;
+			sprintf(file_name, "/data/misc/cameraserver/pdaf_%d.txt", (cxt->pd_dump/100));
+
+			fp = fopen(file_name, "wb");
+			fwrite((void*)pdaf_info, 1, 0x4000, fp);
+			fclose(fp);
+			fp = NULL;
+		}
 	}
 
 	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_PDAF_BLOCK);
 
-	ISP_LOGV("done %ld", ret);
+	ISP_LOGV("done %ld, statis_info->phy_addr = 0x%x", ret, statis_info->phy_addr);
 	return ret;
 }
 
@@ -3710,6 +3731,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct afctrl_fwstart_info af_start_info;
 	struct soft_isp_startparam sw_isp_start_param;
 	struct isp_alg_fw_context *slv_cxt = NULL;
+	struct dev_dcam_vc2_control vch2_info;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	cmr_s32 slv_isp_work_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
@@ -3802,6 +3825,15 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		}
 	}
 
+	property_get("debug.camera.pdaf.type1.supprot", (char *)value, "0");
+	if (1 == atoi(value)) {
+		ISP_LOGI("open pdaf type1");
+		vch2_info.bypass = 0;
+		vch2_info.vch2_vc = 0;
+		vch2_info.vch2_data_type = 0x36;
+		vch2_info.vch2_mode = 0x01;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_TYPE1_CFG, &vch2_info, 0);
+	}
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
 

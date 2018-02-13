@@ -425,6 +425,5 @@ cmr_s32 isp_u_pdaf_roi(cmr_handle handle, void *roi);
 cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *correction_param);
 cmr_s32 isp_u_3dnr_cap_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_3dnr_pre_block(cmr_handle handle, void *block_info);
-
-
+cmr_s32 isp_u_pdaf_type1_block(cmr_handle handle, void *block_info);
 #endif
