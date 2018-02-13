@@ -807,9 +807,9 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
         // 8M
         jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else if (width * height <= 4160 * 3120) {
-        // 13M
+// 13M
 #if defined(CAMERA_SERNSOR_SUPPORT_4224)
-	jpeg_stream_size = (4224 * 3136 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+        jpeg_stream_size = (4224 * 3136 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #else
         jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #endif
@@ -3018,7 +3018,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdFixedFpsEnabled = 0;
     requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
 
-    int32_t sprdAppmodeId= -1;
+    int32_t sprdAppmodeId = -1;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
     uint8_t sprd3dnrEnabled = 0;
@@ -3258,14 +3258,6 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sensitivity is %d", valueI32);
     }
 
-    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
-        s_setting[mCameraId].sprddefInfo.sensor_orientation =
-            frame_settings.find(ANDROID_SPRD_SENSOR_ORIENTATION).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_SENSOR_ORIENTATION);
-        HAL_LOGV("orien %d",
-                 s_setting[mCameraId].sprddefInfo.sensor_orientation);
-    }
-
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
         int32_t rotation =
             frame_settings.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];
@@ -3275,6 +3267,14 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].sprddefInfo.sensor_rotation = rotation;
         pushAndroidParaTag(ANDROID_SPRD_SENSOR_ROTATION);
         HAL_LOGV("rot %d", s_setting[mCameraId].sprddefInfo.sensor_rotation);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
+        s_setting[mCameraId].sprddefInfo.sensor_orientation =
+            frame_settings.find(ANDROID_SPRD_SENSOR_ORIENTATION).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_SENSOR_ORIENTATION);
+        HAL_LOGV("orien %d",
+                 s_setting[mCameraId].sprddefInfo.sensor_orientation);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
