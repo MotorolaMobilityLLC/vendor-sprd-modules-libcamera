@@ -4989,7 +4989,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct jpeg_enc_in_param enc_in_param;
+    struct img_frm enc_src, enc_dst;
+    struct cmr_op_mean enc_mean;
     cmr_uint stream_size;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
@@ -5020,17 +5021,21 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     }
 
     cmr_bzero((void *)&setting_param, sizeof(setting_param));
+    cmr_copy(&enc_src, src, sizeof(struct img_frm));
+    cmr_copy(&enc_dst, dst, sizeof(struct img_frm));
+    cmr_copy(&enc_mean, mean, sizeof(struct cmr_op_mean));
+
     setting_param.camera_id = cxt->camera_id;
 
     // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
     // we will remove these code
     if (is_raw_capture == 0) {
         if (dst->size.height == 1952 && dst->size.width == 2592) {
-            dst->size.height = 1944;
+            enc_dst.size.height = 1944;
         } else if (dst->size.height == 1840 && dst->size.width == 3264) {
-            dst->size.height = 1836;
+            enc_dst.size.height = 1836;
         } else if (dst->size.height == 368 && dst->size.width == 640) {
-            dst->size.height = 360;
+            enc_dst.size.height = 360;
         }
     }
 
@@ -5038,9 +5043,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
  * jpeg if jpeg support it */
 #ifdef MIRROR_FLIP_ROTATION_BY_JPEG
     /* raw capture not support mirror/flip/rotation*/
-    mean->flip = 0;
-    mean->rot = 0;
-    mean->mirror = 0;
+    enc_mean.flip = 0;
+    enc_mean.rot = 0;
+    enc_mean.mirror = 0;
 
     if (is_raw_capture == 0) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -5063,28 +5068,28 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
         if (0 != rotation) {
             if (90 == rotation)
-                mean->rot = 1;
+                enc_mean.rot = 1;
             else if (180 == rotation) {
-                mean->flip = 1;
-                mean->mirror = 1;
+                enc_mean.flip = 1;
+                enc_mean.mirror = 1;
             } else if (270 == rotation) {
-                mean->rot = 1;
-                mean->flip = 1;
-                mean->mirror = 1;
+                enc_mean.rot = 1;
+                enc_mean.flip = 1;
+                enc_mean.mirror = 1;
             }
         }
 
         if (flip_on) {
-            if (mean->mirror)
-                mean->mirror = 0;
+            if (enc_mean.mirror)
+                enc_mean.mirror = 0;
             else
-                mean->mirror = 1;
+                enc_mean.mirror = 1;
         }
 
         if ((90 == rotation || 270 == rotation)) {
-            tmp = dst->size.height;
-            dst->size.height = dst->size.width;
-            dst->size.width = tmp;
+            tmp = enc_dst.size.height;
+            enc_dst.size.height = enc_dst.size.width;
+            enc_dst.size.width = tmp;
         }
     }
 #endif
@@ -5097,11 +5102,12 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     CMR_LOGI("src: width=%d, height=%d, y_endian=%d, uv_endian=%d, "
              "mirror=%d,flip=%d,rot=%d",
              src->size.width, src->size.height, src->data_end.y_endian,
-             src->data_end.uv_endian, mean->mirror, mean->flip, mean->rot);
+             src->data_end.uv_endian, enc_mean.mirror, enc_mean.flip,
+             enc_mean.rot);
     CMR_LOGI("dst: fd=0x%x, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, "
              "height=%d",
-             dst->fd, dst->addr_phy.addr_y, dst->addr_vir.addr_y,
-             dst->size.width, dst->size.height);
+             enc_dst.fd, enc_dst.addr_phy.addr_y, enc_dst.addr_vir.addr_y,
+             enc_dst.size.width, enc_dst.size.height);
 
     cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, dst);
 
@@ -5193,16 +5199,23 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             }
 #endif
         }
-        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
-                              (struct jpg_op_mean *)mean);
+        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
+                              (struct jpg_op_mean *)&enc_mean);
+        if (0 != mean->is_sync) {
+            dst->buf_size = enc_dst.buf_size;
+        }
         if (ret) {
             CMR_LOGE("failed to jpeg codec %ld", ret);
         }
     } else {
-        dst->buf_size = (dst->size.height * dst->size.width) * 3;
-        dst->buf_size = dst->buf_size / 2;
-        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
-                              (struct jpg_op_mean *)mean);
+        enc_dst.buf_size = (enc_dst.size.height * enc_dst.size.width) * 3;
+        enc_dst.buf_size = enc_dst.buf_size / 2;
+        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
+                              (struct jpg_op_mean *)&enc_mean);
+        if (0 != mean->is_sync) {
+            dst->reserved = enc_dst.reserved;
+            dst->buf_size = enc_dst.buf_size;
+        }
         if (ret) {
             CMR_LOGE("failed to jpeg codec %ld", ret);
         }
