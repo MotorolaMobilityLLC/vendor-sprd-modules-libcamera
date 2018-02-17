@@ -26,7 +26,7 @@
 
 #define LNC_MAP_NUM 9
 #define SCENE_INFO_NUM 10
-#define ISP_PARAM_VERSION_V21 0x0005
+#define ISP_PARAM_VERSION_V25 0x0007
 
 char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"bayer_nr",
@@ -74,14 +74,6 @@ char nr_scene_name[MAX_SCENEMODE_NUM][16] = {
 	"landscape",
 	"panorama",
 };
-
-cmr_s32 update_param_v1(struct sensor_raw_info *sensor_raw_info_ptr, const char *sensor_name)
-{
-	cmr_s32 rtn = 0x00;
-	UNUSED(sensor_raw_info_ptr);
-	UNUSED(sensor_name);
-	return rtn;
-}
 
 cmr_s32 read_nr_level_number_info(FILE * fp, cmr_u8 * data_ptr)
 {
@@ -1131,7 +1123,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 						sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name,
 							nr_mode_name[i], nr_scene_name[j], nr_param_name[k]);
 						if (0 != access(filename, R_OK)) {
-							ISP_LOGE("No such file : %s",filename);
+							ISP_LOGI("no such file : %s",filename);
 						} else {
 							if (NULL != (fp = fopen(filename, "rb"))) {
 								rtn = fread((void *)nr_param_ptr, 1, size_of_per_unit, fp);
@@ -1155,7 +1147,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	return rtn;
 }
 
-cmr_s32 update_param_v21(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
+cmr_s32 update_param_v25(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_s32 i = 0;
@@ -1364,13 +1356,13 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 	sprintf(filename1, "%ssensor_%s_raw_param_common.c", CAMERA_DUMP_PATH, sensor_name);
 
 	if (-1 != access(filename0, 0)) {
-		ISP_LOGE("fail to access %s!\n", filename0);
+		ISP_LOGV("access %s!\n", filename0);
 		filename = filename0;
 		version = 1;
 	}
 	if (NULL == filename) {
 		if (-1 != access(filename1, 0)) {
-			ISP_LOGE("fail to access %s!\n", filename1);
+			ISP_LOGV("access %s!\n", filename1);
 			filename = filename1;
 			version = 2;
 		}
@@ -1379,17 +1371,11 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 		ISP_LOGI("there is no param file!\n");
 		return rtn;
 	} else {
-		ISP_LOGI("the param file is %s,version = %d", filename, version);
+		ISP_LOGI("the param file is %s, version = %d", filename, version);
 	}
 
-	if (ISP_PARAM_VERSION_V21 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
-		rtn = update_param_v21(sensor_raw_info_ptr, sensor_name);
-		if (0x00 != rtn) {
-			ISP_LOGE("fail to update param!");
-			return rtn;
-		}
-	} else {
-		rtn = update_param_v1(sensor_raw_info_ptr, sensor_name);
+	if (ISP_PARAM_VERSION_V25 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
+		rtn = update_param_v25(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
 			ISP_LOGE("fail to update param!");
 			return rtn;

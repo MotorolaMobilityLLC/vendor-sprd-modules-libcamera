@@ -31,7 +31,7 @@
 #define MAX_MODE_NUM 16
 #define MAX_NR_NUM 32
 
-#define MAX_NRTYPE_NUM 19
+#define MAX_NRTYPE_NUM 18
 
 #define MAX_SCENEMODE_NUM 16
 #define MAX_SPECIALEFFECT_NUM 16
