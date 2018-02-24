@@ -18,6 +18,37 @@
 
 #include "isp_drv.h"
 
+cmr_s32 isp_u_reg_isr(cmr_handle handle, uint32_t *mode)
+{
+       cmr_s32 ret = 0;
+       struct isp_file *file = NULL;
+
+       if (!handle) {
+               ISP_LOGE("failed to get handle");
+               return -1;
+       }
+
+       file = (struct isp_file *)handle;
+
+       ret = ioctl(file->fd, SPRD_ISP_IO_REG_ISP_ISR, mode);
+       return ret;
+}
+
+/*add this code to ensure isp isr user func is registered*/
+/*in isp ddr_in_ddr_out mode, so store done will be handled*/
+/*and send to user space*/
+cmr_s32 isp_u_raw_proc_start(cmr_handle handle)
+{
+	uint32_t mode = 1;
+	return isp_u_reg_isr(handle, &mode);
+}
+
+cmr_s32 isp_u_raw_proc_end(cmr_handle handle)
+{
+	uint32_t mode = 0;
+	return isp_u_reg_isr(handle, &mode);
+}
+
 cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
@@ -104,6 +135,7 @@ cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, cmr_u32 fetch_start)
 	param.property = ISP_PRO_FETCH_START_ISP;
 	param.property_param = &fetch_start;
 
+	ret = isp_u_raw_proc_start(handle);
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 	return ret;
 }

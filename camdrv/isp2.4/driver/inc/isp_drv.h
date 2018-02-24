@@ -281,6 +281,8 @@ cmr_s32 isp_u_csa_block(cmr_handle handle, void *block_info);
 
 cmr_s32 isp_u_store_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_store_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h);
+cmr_s32 isp_u_raw_proc_start(cmr_handle handle);
+cmr_s32 isp_u_raw_proc_end(cmr_handle handle);
 
 cmr_s32 isp_u_nlc_block(cmr_handle handle, void *block_info);
 
