@@ -470,7 +470,8 @@ static cmr_int ov13855_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     cmr_u8 vendor_id = (cmr_u8)*param;
     SENSOR_LOGI("*param %x %x", *param, vendor_id);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov13855_mipi_raw_info_ptr = ov13855_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+    s_ov13855_mipi_raw_info_ptr =
+        ov13855_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
 
     return rtn;
 }
@@ -567,6 +568,10 @@ static cmr_int ov13855_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
         sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
 
     SENSOR_LOGI("capture_mode = %d", capture_mode);
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
@@ -576,12 +581,6 @@ static cmr_int ov13855_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
-
-    if (sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
-
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
     cap_shutter = ov13855_drv_write_exposure_dummy(handle, cap_shutter, 0, 0);
@@ -954,14 +953,14 @@ ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
 
-	/*change value when use sharkle new setting*/
+    /*change value when use sharkle new setting*/
     property_get("debug.camera.setting", value, "0");
     if (atoi(value) == 1) {
         sensor_ic_set_match_resolution_info(
             sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW_NEW), RES_TAB_RAW_NEW);
         sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB_NEW),
                                       RES_TRIM_TAB_NEW);
-		SENSOR_LOGI("debug.camera.setting!!!");
+        SENSOR_LOGI("debug.camera.setting!!!");
     } else {
         sensor_ic_set_match_resolution_info(
             sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
