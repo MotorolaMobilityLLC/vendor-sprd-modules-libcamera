@@ -113,9 +113,11 @@ cmr_int cmr_scaling_down(struct img_frm *src, struct img_frm *dst) {
     }
 
     dst_y_buf = (cmr_u8 *)dst->addr_vir.addr_y;
-    dst_uv_buf = (cmr_u8 *)(dst->addr_vir.addr_y + dst->size.width * dst->size.height);
+    dst_uv_buf =
+        (cmr_u8 *)(dst->addr_vir.addr_y + dst->size.width * dst->size.height);
     src_y_buf = (cmr_u8 *)src->addr_vir.addr_y;
-    src_uv_buf = (cmr_u8 *)(src->addr_vir.addr_y + src->size.width * src->size.height);
+    src_uv_buf =
+        (cmr_u8 *)(src->addr_vir.addr_y + src->size.width * src->size.height);
     src_w = src->size.width;
     src_h = src->size.height;
     dst_w = dst->size.width;
@@ -166,12 +168,12 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
         frame_params->input_size.h >= frame_params->output_size.h) {
         src.addr_vir.addr_y = frame_params->input_addr_vir.y;
         src.addr_vir.addr_u = frame_params->input_addr_vir.u;
-        //src.addr_vir.addr_v = frame_params->input_addr_vir.v;
+        // src.addr_vir.addr_v = frame_params->input_addr_vir.v;
         src.size.width = frame_params->input_size.w;
         src.size.height = frame_params->input_size.h;
         dst.addr_vir.addr_y = frame_params->output_addr_vir.y;
         dst.addr_vir.addr_u = frame_params->output_addr_vir.u;
-        //dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
+        // dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
         dst.size.width = frame_params->output_size.w;
         dst.size.height = frame_params->output_size.h;
         ret = cmr_scaling_down(&src, &dst);
@@ -243,22 +245,26 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         cpp_cap.dst_format = frame_params->output_format;
         cpp_cap.is_supported = is_hw_scaling;
 
-        //check if cpp hw support the requested size
+        // check if cpp hw support the requested size
         ret = ioctl(file->handle, SPRD_CPP_IO_SCALE_CAPABILITY, &cpp_cap);
         if (ret) {
             CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_SIZE failed");
         }
-	is_hw_scaling = cpp_cap.is_supported;
+        is_hw_scaling = cpp_cap.is_supported;
 
         while ((restart_cnt < SCALE_RESTART_SUM) &&
                (CMR_CAMERA_SUCCESS == file->err_code)) {
             file->err_code = CMR_CAMERA_SUCCESS;
 
-            //if cpp hw don't support, do software scaling and return
+            // if cpp hw don't support, do software scaling and return
             if (!is_hw_scaling) {
                 if (cmr_scale_sw_start(cfg_params, file)) {
                     CMR_PERROR;
                     CMR_LOGE("software scaling failed");
+                    file->err_code = CMR_CAMERA_FAIL;
+                    if (cfg_params->scale_cb) {
+                        sem_post(&file->sync_sem);
+                    }
                 }
                 break;
             }
