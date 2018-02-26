@@ -20,7 +20,8 @@
 #define VIDEO_GAMMA_INDEX                    (8)
 
 #define COPY_LOG(l, L) \
-{size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, cxt->l##_cxt.log_##l##_size, L##_START, L##_END); \
+{size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, \
+cxt->l##_cxt.log_##l##_size, L##_START, L##_END, off, total_size); \
 if (len) {log.l##_off = off; off += len; log.l##_len = len;} else {log.l##_off = 0;}}
 
 typedef cmr_int(*isp_io_fun) (cmr_handle isp_alg_handle, void *param_ptr);
@@ -971,12 +972,20 @@ static size_t calc_log_size(const void *log, size_t size, const char *begin_magi
 #define COPY_MAGIC(m) \
 {size_t len; len = strlen(m); memcpy((char *)dst + off, m, len); off += len;}
 
-static size_t copy_log(void *dst, const void *log, size_t size, const char *begin_magic, const char *end_magic)
+static size_t copy_log(void *dst, const void *log, size_t size,
+			const char *begin_magic, const char *end_magic,
+			size_t offset, cmr_u32 total_size)
 {
 	size_t off = 0;
 
 	if (!log || !size)
 		return 0;
+
+	if ((offset + size + strlen(begin_magic) + strlen(end_magic)) >
+			(size_t)total_size) {
+		ISP_LOGE("fail to mempcy");
+		return ISP_ERROR;
+	}
 
 	COPY_MAGIC(begin_magic);
 	memcpy((char *)dst + off, log, size);
@@ -1086,7 +1095,10 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(smart, SMART);
 
 		if (cxt->otp_data != NULL) {
-			size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->otp_data->total_otp.data_ptr, cxt->otp_data->total_otp.size, OTP_START, OTP_END);
+			size_t len = copy_log(cxt->commn_cxt.log_isp + off,
+					cxt->otp_data->total_otp.data_ptr,
+					cxt->otp_data->total_otp.size,
+					OTP_START, OTP_END, off, total_size);
 			if (len) {
 				log.otp_off = off;
 				off += len;
