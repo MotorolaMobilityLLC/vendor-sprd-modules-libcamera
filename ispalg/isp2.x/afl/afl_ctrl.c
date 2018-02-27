@@ -248,7 +248,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 			algo_height = cxt->height;
 		}
 
-#ifdef CONFIG_ISP_2_3
 		for (i = 0; i < cxt->frame_num; i++) {
 			if (cur_flicker) {
 				flag = antiflcker_sw_process_v2p2(algo_width,
@@ -277,36 +276,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 			else
 				addr += cxt->vheight;
 		}
-#else
-		for (i = 0; i < cxt->frame_num; i++) {
-			if (cur_flicker) {
-				flag = antiflcker_sw_process(algo_width,
-							     algo_height, addr, 0, thr[0], thr[1],
-							     thr[2], thr[3], thr[4], thr[5], thr[6],
-							     thr[7], thr[8],
-							     (cmr_s32 *)ae_stat_ptr->r_info,
-							     (cmr_s32 *)ae_stat_ptr->g_info,
-							     (cmr_s32 *)ae_stat_ptr->b_info);
-				ISP_LOGV("flag %ld %s", flag, "60Hz");
-			} else {
-				flag = antiflcker_sw_process(algo_width,
-							     algo_height, addr, 1, thr[0], thr[1],
-							     thr[2], thr[3], thr[4], thr[5], thr[6],
-							     thr[7], thr[8],
-							     (cmr_s32 *)ae_stat_ptr->r_info,
-							     (cmr_s32 *)ae_stat_ptr->g_info,
-							     (cmr_s32 *)ae_stat_ptr->b_info);
-				ISP_LOGV("flag %ld %s", flag, "50Hz");
-			}
-			if (flag)
-				break;
-
-			if (cxt->version)
-				addr += algo_height;
-			else
-				addr += cxt->vheight;
-		}
-#endif
 	}
 
 	pthread_mutex_lock(&cxt->status_lock);
