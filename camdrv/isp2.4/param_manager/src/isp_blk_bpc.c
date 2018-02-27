@@ -35,6 +35,7 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
 	if (bpc_param != NULL) {
+		dst_ptr->cur.bypass = bpc_param[strength_level].bypass;
 		dst_ptr->cur.pvd_bypass = bpc_param[strength_level].bpc_pvd.bypass_pvd;
 		dst_ptr->cur.cntr_threshold = bpc_param[strength_level].bpc_pvd.cntr_theshold;
 

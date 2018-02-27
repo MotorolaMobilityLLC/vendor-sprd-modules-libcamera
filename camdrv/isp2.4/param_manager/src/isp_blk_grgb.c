@@ -35,6 +35,7 @@ cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
 	if (grgb_param != NULL) {
+		dst_ptr->cur.bypass = grgb_param[strength_level].bypass;
 		dst_ptr->cur.diff_thd = grgb_param[strength_level].diff_thd;
 		dst_ptr->cur.edge_thd = grgb_param[strength_level].edge_thd;
 		dst_ptr->cur.grid_thd = grgb_param[strength_level].grid_thd;
