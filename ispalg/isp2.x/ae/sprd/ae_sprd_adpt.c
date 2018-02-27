@@ -3976,10 +3976,17 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 		if (cxt->hdr_enable) {
 			cxt->hdr_flag = 3;
 			cxt->hdr_base_ae_idx = cxt->sync_cur_result.wts.cur_index;
+			ae_set_force_pause(cxt, 1);
 		} else {
+			ae_set_force_pause(cxt, 0);
 			cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 		}
-		ISP_LOGV("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, base_ae_idx %d", cxt->hdr_enable, cxt->hdr_cb_cnt, cxt->hdr_base_ae_idx);
+		ISP_LOGV("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, base_ae_idx %d, lock_ae_state %d, force_lock_ae_state %d",
+			cxt->hdr_enable,
+			cxt->hdr_cb_cnt,
+			cxt->hdr_base_ae_idx,
+			cxt->cur_status.settings.lock_ae,
+			cxt->cur_status.settings.force_lock_ae);
 	}
 
 	return AE_SUCCESS;
