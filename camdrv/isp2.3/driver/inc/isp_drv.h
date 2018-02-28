@@ -286,8 +286,6 @@ cmr_s32 isp_u_edge_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: CSA*/
 cmr_s32 isp_u_csa_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_csa_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_csa_factor(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Store*/
 cmr_s32 isp_u_store_block(cmr_handle handle, void *param_ptr);
@@ -320,8 +318,6 @@ cmr_s32 isp_u_rgb_dither_block(cmr_handle handle, void *param_ptr);
 
 /*Hue*/
 cmr_s32 isp_u_hue_block(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hue_bypass(cmr_handle handle, void *param_ptr);
-cmr_s32 isp_u_hue_Factor(cmr_handle handle, void *param_ptr);
 
 /*Aem*/
 cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *param_ptr);
