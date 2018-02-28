@@ -681,7 +681,7 @@ static cmr_int gc2375_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     /*TODO*/
 
-    usleep(100 * 1000);
+    //usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
     /*delay*/
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xef, 0x90);
@@ -711,7 +711,7 @@ static cmr_int gc2375_drv_stream_off(cmr_handle handle, cmr_uint param) {
     /*delay*/
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xef, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
-    usleep(100 * 1000);
+    usleep(20 * 1000);
 
     return SENSOR_SUCCESS;
 }
