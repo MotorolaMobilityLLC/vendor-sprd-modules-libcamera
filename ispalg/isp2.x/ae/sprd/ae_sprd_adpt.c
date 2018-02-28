@@ -4111,7 +4111,12 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 	} else {
 		ae_otp_info_ptr = NULL;
 		module_info_ptr = NULL;
-		ISP_LOGE("ae otp_info_ptr is NULL");
+
+		if(init_param->is_multi_mode == ISP_ALG_SINGLE ){
+			ISP_LOGI("single camera,dual ae sync no exist.\n");
+		}else{
+			ISP_LOGE("ae otp_info_ptr is NULL.\n");
+		}
 	}
 
 	if (NULL != ae_otp_info_ptr && NULL != module_info_ptr) {
@@ -4165,7 +4170,11 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 			ISP_LOGE("ae rdm_otp_data = %p, rdm_otp_len = %d. Parser fail", rdm_otp_data, rdm_otp_len);
 		}
 	} else {
-		ISP_LOGE("ae ae_otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", ae_otp_info_ptr, module_info_ptr);
+		if(init_param->is_multi_mode == ISP_ALG_SINGLE ){
+			ISP_LOGI("single camera,dual ae sync no exist.\n");
+		}else{
+			ISP_LOGE("ae ae_otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", ae_otp_info_ptr, module_info_ptr);
+		}
 	}
 
 	return AE_SUCCESS;
