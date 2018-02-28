@@ -1856,15 +1856,16 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
+	cmr_s32 lock;
+	lock = !(*(cmr_u32 *) param);
+	
 	if (param) {
 		if (0 == *(cmr_u32 *) param) {
-			ae_set_pause(cxt);
 			cxt->cur_status.settings.manual_mode = 0;
 			cxt->manual_exp_time = 0;
 			cxt->manual_iso_value = 0;
-		} else if (1 == *(cmr_u32 *) param) {
-			ae_set_restore_cnt(cxt);
 		}
+		ae_set_force_pause(cxt, lock);
 		ISP_LOGV("AE_SET_MANUAL_MODE: %d, manual: 0, auto: 1\n", *(cmr_u32 *) param);
 	}
 	return rtn;
