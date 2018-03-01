@@ -250,6 +250,29 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 		}
 		break;
 
+		case ISP_PM_BLK_LSC_INFO:
+		{
+			cmr_u32 i;
+			i = dst_lnc_ptr->lsc_info.cur_idx.x0;
+			dst_lnc_ptr->cur.buf_len = dst_lnc_ptr->map_tab[i].gain_w * dst_lnc_ptr->map_tab[i].gain_h * 4 * sizeof(cmr_u16);
+
+			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
+			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
+			ISP_LOGV("ISP_PM_BLK_LSC_INFO");
+
+			{
+				cmr_u16 *ptr = NULL;
+#if __WORDSIZE == 64
+				ptr = (void *)((cmr_uint) dst_lnc_ptr->cur.buf_addr[1] << 32 | dst_lnc_ptr->cur.buf_addr[0]);
+#else
+				ptr = (void *)(dst_lnc_ptr->cur.buf_addr[0]);
+#endif
+				ISP_LOGV("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
+				ISP_LOGV("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
+			}
+		}
+		break;
+
 	default:
 		break;
 	}
