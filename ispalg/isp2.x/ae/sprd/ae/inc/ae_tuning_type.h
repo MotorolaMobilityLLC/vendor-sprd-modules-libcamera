@@ -97,7 +97,8 @@ struct face_tuning_param {
 	cmr_u8 face_tuning_lum1;	// scope is [0,256]
 	cmr_u8 face_tuning_lum2;	//if face lum > this value, offset will set to be 0
 	cmr_u16 cur_offset_weight;	//10~100 will trans 0~1
-	cmr_u16 reserved[41];		//?
+	cmr_u16 max_face_offset;	//limit max face offset
+	cmr_u16 reserved[40];	//?
 };
 
 struct ae_touch_param {
