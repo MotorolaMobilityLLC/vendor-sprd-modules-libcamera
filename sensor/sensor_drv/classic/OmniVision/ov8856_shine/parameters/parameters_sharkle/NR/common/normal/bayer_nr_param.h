@@ -5164,7 +5164,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x02BC,
+						0x01C2,
 						/*addback0*/
 						0x0014,
 						/*addback1*/
@@ -5182,7 +5182,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x02EE,
+						0x0226,
 						/*addback0*/
 						0x0016,
 						/*addback1*/
@@ -5200,7 +5200,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0320,
+						0x0258,
 						/*addback0*/
 						0x0019,
 						/*addback1*/
@@ -5236,7 +5236,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x36,
+						0x28,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -5254,7 +5254,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x23,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -5272,7 +5272,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2E,
+						0x24,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -5764,15 +5764,15 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x3F,
+						0x3C,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x01F4,
+						0x0208,
 						/*addback0*/
-						0x0000,
+						0x000A,
 						/*addback1*/
-						0x0000,
+						0x000A,
 						/*addback_clip_max*/
 						0x0006,
 						/*addback_clip_min*/
@@ -5840,15 +5840,15 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x2D,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0226,
+						0x023A,
 						/*addback0*/
-						0x0005,
+						0x000A,
 						/*addback1*/
-						0x0005,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -5858,7 +5858,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x23,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -5876,7 +5876,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2E,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -5920,11 +5920,11 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0258,
+						0x026C,
 						/*addback0*/
-						0x0005,
+						0x000F,
 						/*addback1*/
-						0x0005,
+						0x000F,
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -5952,7 +5952,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x24,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/

@@ -474,11 +474,11 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x3E,
+		0x3F,
 		/*ratio_1*/
-		0x3E,
+		0x3F,
 		/*ratio*/
-		0x3E,
+		0x3F,
 		/*ratio_uv_min*/
 		0x40,
 		/*ratio_y_min0*/
@@ -574,11 +574,11 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x3C,
+		0x40,
 		/*ratio_1*/
-		0x3C,
+		0x40,
 		/*ratio*/
-		0x3C,
+		0x40,
 		/*ratio_uv_min*/
 		0x40,
 		/*ratio_y_min0*/
