@@ -266,7 +266,7 @@ static SENSOR_STATIC_INFO_T s_s5k5e8yx_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{2.929f, 2.188f}, 2.39f}}}
+                     .fov_info = {{2.929f, 2.188f}, 2.538f}}}
     /*If there are multiple modules,please add here*/
 };
 
