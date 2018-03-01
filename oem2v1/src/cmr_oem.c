@@ -6442,7 +6442,8 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     param_ptr->cap_inf_cfg.sensor_id = camera_id;
     param_ptr->cap_inf_cfg.cfg.need_3dnr =
         (2 == camera_get_3dnr_flag(cxt)) ? 1 : 0;
-
+    param_ptr->cap_inf_cfg.cfg.dual_cam =
+        (cxt->is_multi_mode == MODE_BOKEH) ? 1 : 0;
     if (!param_ptr->is_lightly) {
         ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,
                                &param_ptr->cap_inf_cfg, channel_id, endian);

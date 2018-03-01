@@ -674,6 +674,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     CMR_RTN_IF_ERR(ret);
 
     function_mode.need_3dnr = config->cfg.need_3dnr;
+    function_mode.dual_cam = config->cfg.dual_cam;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, &function_mode);
 
     *channel_id = ch_id;
