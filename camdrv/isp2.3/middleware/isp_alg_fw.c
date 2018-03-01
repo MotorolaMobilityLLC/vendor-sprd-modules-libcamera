@@ -1343,6 +1343,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cnt_b_ue = 0;
 	cmr_u32 cnt_g_oe = 0;
 	cmr_u32 cnt_g_ue = 0;
+	cmr_u32 sum = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	u_addr = (cmr_u64)statis_info->vir_addr;
@@ -1382,21 +1383,23 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ae_stat_ptr->r_info[j] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
 		ae_stat_ptr->g_info[j] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
 		ae_stat_ptr->b_info[j] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
+
+		sum += ae_stat_ptr->r_info[j] + ae_stat_ptr->g_info[j] + ae_stat_ptr->b_info[j];
 		j++;
 	}
 	ae_stat_ptr->sec = ae_stat_ptr->sec;
 	ae_stat_ptr->usec = ae_stat_ptr->usec;
 
-	if (cxt->camera_id == 1) {
-		if (statis_info->frame_id > 0)
-			cxt->aem_is_update = 1;
-	} else {
-		cxt->aem_is_update = 1;
-	}
-
 	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_AEM_BLOCK);
 	if (ret) {
 		ISP_LOGE("fail to set statis buf");
+	}
+
+	if (sum != 0) {
+		cxt->aem_is_update = 1;
+	} else {
+		cxt->aem_is_update = 0;
+		ISP_LOGE("fail to parse the aem stats info");
 	}
 
 	return ret;
