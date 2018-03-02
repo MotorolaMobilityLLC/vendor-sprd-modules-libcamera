@@ -4398,7 +4398,7 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(
                     pre_stream->getQBuffFirstVir(&addr_vir);
                     pre_stream->getQBuffFirstFd(&ion_fd);
                 } else
-                    pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
+                    ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
                                                   &addr_phy, &ion_fd);
             } else {
                 ret = pre_stream->getQBuffFirstVir(&addr_vir);
