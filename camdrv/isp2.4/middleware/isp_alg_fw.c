@@ -4098,8 +4098,16 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	isp_alg_input.size.h = input_ptr->init_param->size.h;
 	cxt->lib_use_info = sensor_raw_info_ptr->libuse_info;
 
-	cxt->otp_data = input_ptr->init_param->otp_data;
-	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
+	if (input_ptr->init_param->otp_data) {
+		cxt->otp_data = (struct sensor_otp_cust_info *)malloc(sizeof(struct sensor_otp_cust_info));
+		if (!cxt->otp_data) {
+			ISP_LOGE("fail to malloc otp_data");
+			ret = ISP_ALLOC_ERROR;
+			goto exit;
+		}
+		memcpy(cxt->otp_data, input_ptr->init_param->otp_data, sizeof(struct sensor_otp_cust_info));
+		isp_alg_input.otp_data = cxt->otp_data;
+	}
 
 	cxt->is_master = input_ptr->init_param->is_master;
 	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
@@ -4159,6 +4167,8 @@ exit:
 			if (binning_info) {
 				free((void *)binning_info);
 			}
+			if (cxt->otp_data)
+				free(cxt->otp_data);
 			free((void *)cxt);
 		}
 	} else {
@@ -4273,6 +4283,8 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		}
 		memset(&global_otp_info, 0, sizeof(struct sensor_otp_data_info));
 	}
+	if (cxt->otp_data)
+		free(cxt->otp_data);
 	free((void *)cxt);
 	cxt = NULL;
 
