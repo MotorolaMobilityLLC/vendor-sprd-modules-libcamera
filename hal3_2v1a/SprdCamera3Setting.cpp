@@ -1418,8 +1418,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     {
-        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -6;
-        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 6;
+        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -127;
+        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 127;
     }
     {
         // s_setting[cameraId].controlInfo.available_effects[0] =
@@ -3406,11 +3406,8 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].controlInfo.org_ae_exposure_compensation =
             org_ae_compensat;
         ae_compensat =
-            (frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-                 .data.i32[0] +
-             s_setting[mCameraId].controlInfo.ae_compensation_range[1]) /
-            2;
-        ae_compensat = ae_compensat < 0 ? 0 : ae_compensat;
+             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+                 .data.i32[0];
         // GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation,
         // ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
@@ -3474,12 +3471,14 @@ int SprdCamera3Setting::updateWorkParameters(
         pushAndroidParaTag(ANDROID_SPRD_ISO);
     } else {
         /*no tag ,in auto mode now,set EV value to 17 */
-        HAL_LOGV("not exists ANDROID_SPRD_ISO ");
         s_setting[mCameraId].sprddefInfo.iso = CAMERA_ISO_AUTO;
         pushAndroidParaTag(ANDROID_SPRD_ISO);
-        s_setting[mCameraId].controlInfo.ae_exposure_compensation =
-            CAMERA_AE_LEVEL_AUTO;
-        pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
+        if (!s_setting[mCameraId].controlInfo.ae_lock) {
+            s_setting[mCameraId].controlInfo.ae_exposure_compensation =
+                CAMERA_AE_LEVEL_AUTO;
+            pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
+        }
+
     }
     if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
         s_setting[mCameraId].sprddefInfo.slowmotion =

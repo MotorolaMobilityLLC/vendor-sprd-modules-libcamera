@@ -116,6 +116,7 @@ struct setting_cmd_parameter {
                                                    type coercion*/
         struct exif_info_tag *exif_all_info_ptr;
         struct cmr_ae_param ae_param;
+        struct cmr_ae_compensation_param ae_compensation_param;
         struct cmr_range_fps_param range_fps;
         struct touch_coordinate touch_param;
     };

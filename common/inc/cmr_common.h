@@ -853,6 +853,7 @@ struct common_isp_cmd_param {
         struct isp_yimg_info isp_yimg;
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
+        struct cmr_ae_compensation_param ae_compensation_param;
     };
 };
 

@@ -5913,9 +5913,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         break;
 
     case ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION:
+        struct cmr_ae_compensation_param ae_compensation_param;
+        ae_compensation_param.ae_exposure_compensation =
+                           controlInfo.ae_exposure_compensation;
+        ae_compensation_param.ae_compensation_step =
+                           controlInfo.ae_compensation_step.denominator;
+        ae_compensation_param.ae_state =
+                           controlInfo.ae_state;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
-                 controlInfo.ae_exposure_compensation);
+                           (cmr_uint)&ae_compensation_param);
         break;
+
     case ANDROID_CONTROL_AF_TRIGGER:
         HAL_LOGV("AF_TRIGGER %d", controlInfo.af_trigger);
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
@@ -6085,9 +6093,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
                                      mFlashMode);
                         }
-                        controlInfo.ae_state =
-                            ANDROID_CONTROL_AE_STATE_SEARCHING;
-                        mSetting->setAeCONTROLTag(&controlInfo);
+                        if (controlInfo.ae_state !=
+                                ANDROID_CONTROL_AE_STATE_LOCKED) {
+                            controlInfo.ae_state =
+                                ANDROID_CONTROL_AE_STATE_SEARCHING;
+                            mSetting->setAeCONTROLTag(&controlInfo);
+                        }
                     }
                 }
             }
