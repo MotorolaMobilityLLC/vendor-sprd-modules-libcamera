@@ -1960,35 +1960,6 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
     request.output_buffers = &output_buffers;
     request.input_buffer = &input_buffer;
     mReprocessing = true;
-
-    if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        ADP_FAKESETBUFATTR_CAMERAONLY(
-            *request.output_buffers[0].buffer,
-            ADP_BUFSIZE(*mSavedResultBuff) -
-                (mRealBokeh->mBokehSize.capture_w *
-                     mRealBokeh->mBokehSize.capture_h * 3 / 2 +
-                 (mRealBokeh->mBokehSize.depth_snap_out_w *
-                      mRealBokeh->mBokehSize.depth_snap_out_h +
-                  DEPTH_DATA_SIZE) +
-                 BOKEH_REFOCUS_COMMON_PARAM_NUM * 4),
-            ADP_WIDTH(*request.output_buffers[0].buffer),
-            ADP_HEIGHT(*request.output_buffers[0].buffer));
-        HAL_LOGD("capture combined success: framenumber %d",
-                 request.frame_number);
-
-    } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
-        ADP_FAKESETBUFATTR_CAMERAONLY(
-            *request.output_buffers[0].buffer,
-            ADP_BUFSIZE(*mSavedResultBuff) -
-                (mRealBokeh->mBokehSize.capture_w *
-                     mRealBokeh->mBokehSize.capture_h * 3 / 2 +
-                 (ARCSOFT_DEPTH_DATA_SIZE) +
-                 ARCSOFT_BOKEH_REFOCUS_COMMON_PARAM_NUM * 4),
-            ADP_WIDTH(*request.output_buffers[0].buffer),
-            ADP_HEIGHT(*request.output_buffers[0].buffer));
-        HAL_LOGD("capture combined success: framenumber %d",
-                 request.frame_number);
-    }
     if (!mAbokehGallery) {
         mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer, output_buffer,
                                    mRealBokeh->mLocalBufferNumber,
@@ -4451,7 +4422,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             mCapFrameNumber = request->frame_number;
             mCaptureThread->mSavedResultBuff =
                 request->output_buffers[i].buffer;
-            mjpegSize = ADP_BUFSIZE(*new_buffer);
+            mjpegSize = ADP_WIDTH(*new_buffer);
             // sencond step:construct callback Request
             out_streams_main[main_buffer_index] = req->output_buffers[i];
             if (!mFlushing) {
@@ -4946,7 +4917,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         int rc = NO_ERROR;
         unsigned char *result_buffer_addr = NULL;
         uint32_t result_buffer_size =
-            ADP_BUFSIZE(*result->output_buffers->buffer);
+            ADP_WIDTH(*result->output_buffers->buffer);
         rc = mRealBokeh->map(result->output_buffers->buffer,
                              (void **)&result_buffer_addr);
         if (rc != NO_ERROR) {
@@ -4955,10 +4926,6 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
         }
         uint32_t jpeg_size =
             getJpegSize(result_buffer_addr, result_buffer_size);
-        ADP_FAKESETBUFATTR_CAMERAONLY(
-            *result->output_buffers->buffer, mjpegSize,
-            ADP_WIDTH(*result->output_buffers->buffer),
-            ADP_HEIGHT(*result->output_buffers->buffer));
 #ifdef YUV_CONVERT_TO_JPEG
         if ((mCaptureThread->mBokehResult == true) &&
             (mRealBokeh->mOrigJpegSize > 0)) {

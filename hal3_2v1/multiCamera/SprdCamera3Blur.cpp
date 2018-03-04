@@ -1460,6 +1460,8 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer1(
     void *nearJpegBufferAddr = NULL;
     dump_blur_t combo_buff, output_buff;
     dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX];
+    memset(&combo_buff, 0, sizeof(dump_blur_t));
+    memset(&output_buff, 0, sizeof(dump_blur_t));
 
     memset(&dump_buffs, 0, sizeof(dump_blur_t *) * DUMP_BLUR_TYPE_MAX);
     mBlur->m_pNearJpegBuffer =
@@ -1518,6 +1520,8 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
     SprdCamera3HWI *hwiMain = mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
 
     memset(&dump_buffs, 0, sizeof(dump_blur_t *) * DUMP_BLUR_TYPE_MAX);
+    memset(&combo_buff, 0, sizeof(dump_blur_t));
+    memset(&output_buff, 0, sizeof(dump_blur_t));
 
     if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
         m_pJpegBuffer =
@@ -1596,6 +1600,8 @@ int SprdCamera3Blur::CaptureThread::blurProcessVerN(
     dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX];
 
     memset(&dump_buffs, 0, sizeof(dump_blur_t *) * DUMP_BLUR_TYPE_MAX);
+    memset(&combo_buff, 0, sizeof(dump_blur_t));
+    memset(&output_buff, 0, sizeof(dump_blur_t));
     combo_buff.buffer_addr = combo_buff_addr;
     combo_buff.frame_number = combo_frm_num;
     dump_buffs[DUMP_BLUR_COMBO] = &combo_buff;
@@ -1682,13 +1688,7 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
         output_stream_buff.stream =
                 &mMainStreams[mCaptureStreamsNum - 1];
         request.input_buffer = &input_stream_buff;
-        ADP_FAKESETBUFATTR_CAMERAONLY(
-                *request.output_buffers[0].buffer,
-                ADP_BUFSIZE(*mSavedResultBuff) -
-                (mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2 +
-                BLUR_REFOCUS_PARAM_NUM * 4),
-                ADP_WIDTH(*request.output_buffers[0].buffer),
-                ADP_HEIGHT(*request.output_buffers[0].buffer));
+
         mBlur->mReqState = REPROCESS_STATE;
     }
     request.num_output_buffers = 1;
@@ -2949,7 +2949,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
     }
 
     unsigned char *buffer = (unsigned char *)buffer_base;
-    uint32_t buffer_size = ADP_BUFSIZE(*result_buff);
+    uint32_t buffer_size = ADP_WIDTH(*result_buff);
     uint32_t yuv_size1 =
         mCaptureInitParams.width * mCaptureInitParams.height * 3 / 2;
     uint32_t yuv_size2 =
@@ -3821,7 +3821,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
 
             mCaptureThread->mSavedResultBuff =
                 request->output_buffers[i].buffer;
-            mjpegSize = ADP_BUFSIZE(*request->output_buffers[i].buffer);
+            mjpegSize = ADP_WIDTH(*request->output_buffers[i].buffer);
             memcpy(&mCaptureThread->mSavedCapRequest, req,
                    sizeof(camera3_capture_request_t));
             memcpy(&mCaptureThread->mSavedCapReqstreambuff,
@@ -4043,11 +4043,8 @@ void SprdCamera3Blur::processCaptureResultMain(
         if (mBlur->map(result->output_buffers->buffer, (void **)(&jpeg_addr)) ==
             NO_ERROR) {
             jpeg_size = getJpegSize(
-                jpeg_addr, ADP_BUFSIZE(*result->output_buffers->buffer));
-            ADP_FAKESETBUFATTR_CAMERAONLY(
-                *result->output_buffers->buffer, mjpegSize,
-                ADP_WIDTH(*result->output_buffers->buffer),
-                ADP_HEIGHT(*result->output_buffers->buffer));
+                jpeg_addr, ADP_WIDTH(*result->output_buffers->buffer));
+
             mBlur->unmap(result->output_buffers->buffer);
             jpeg_addr = NULL;
         } else {
