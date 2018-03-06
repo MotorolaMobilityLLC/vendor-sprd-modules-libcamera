@@ -66,11 +66,11 @@
 #define PREVIEW_LINE_TIME 26900
 
 /* frame length*/
-#define SNAPSHOT_FRAME_LENGTH 1240
-#define PREVIEW_FRAME_LENGTH 1240
+#define SNAPSHOT_FRAME_LENGTH 1261
+#define PREVIEW_FRAME_LENGTH 1261
 
 /* please ref your spec */
-#define FRAME_OFFSET 0
+#define FRAME_OFFSET 2
 #define SENSOR_MAX_GAIN 0xabcd
 #define SENSOR_BASE_GAIN 0x40
 #define SENSOR_MIN_SHUTTER 6
@@ -362,11 +362,9 @@ static struct sensor_i2c_reg_tab gc2375_dgain_tab = {
 };
 
 static SENSOR_REG_T gc2375_frame_length_reg[] = {
-    /*
     {0xfe, 0x00},
-    {0x07, ((SNAPSHOT_FRAME_LENGTH-HIGHT_DUMMY)>>0x08)&0xff},
-    {0x08, ((SNAPSHOT_FRAME_LENGTH-HIGHT_DUMMY)&0xff},
-    */
+    {0x07, 0x00},
+    {0x08, 0x25},
 };
 
 static struct sensor_i2c_reg_tab gc2375_frame_length_tab = {

@@ -166,6 +166,22 @@ static void gc2375_drv_write_gain(struct sensor_aec_i2c_tag *aec_info,
     }
 }
 
+/*=============================================================================
+ * Description:
+ * read frame length from sensor registers
+ * please modify this function acording your spec
+ =============================================================================*/
+static cmr_u16 gc2375_drv_read_frame_length(cmr_handle handle)
+{
+    SENSOR_IC_CHECK_HANDLE(handle);
+	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+	cmr_u16 vb_current_h=0;
+	cmr_u16	vb_current_l=0;
+	vb_current_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x07)&0xff;
+	vb_current_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x08)&0xff;
+    return ((vb_current_h << 8) | vb_current_l);
+}
 /*==============================================================================
  * Description:
  * write frame length to sensor registers buffer
@@ -173,17 +189,18 @@ static void gc2375_drv_write_gain(struct sensor_aec_i2c_tag *aec_info,
  *============================================================================*/
 static void gc2375_drv_write_frame_length(struct sensor_aec_i2c_tag *aec_info,
                                           cmr_u32 frame_len) {
+	cmr_u16 vb = frame_len - 1224;
+	vb = vb > 37 ? vb : 37;
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
 
     if (aec_info->frame_length->size > 2) {
         /*TODO*/
-        aec_info->frame_length->settings[1].reg_value = (frame_len >> 8) & 0xff;
-        aec_info->frame_length->settings[2].reg_value = frame_len & 0xff;
+        aec_info->frame_length->settings[1].reg_value = (vb >> 8) & 0xff;
+        aec_info->frame_length->settings[2].reg_value = vb & 0xff;
 
         /*END*/
     }
 }
-
 /*==============================================================================
  * Description:
  * write shutter to sensor registers buffer
@@ -224,7 +241,7 @@ static void gc2375_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
-    cur_fr_len = sns_drv_cxt->sensor_ev_info.preview_framelength;
+    cur_fr_len = gc2375_drv_read_frame_length(handle);
     fr_len = sns_drv_cxt->frame_length_def;
     value = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
     dest_fr_len = ((shutter + value) > fr_len) ? (shutter + value) : fr_len;
