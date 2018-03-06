@@ -215,7 +215,7 @@ cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, voi
 
 	case ISP_PM_BLK_LSC_GET_LSCTAB:
 		param_data_ptr->data_ptr = (void *)lnc_ptr;
-		param_data_ptr->data_size = lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_w * lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_h * 4;
+		param_data_ptr->data_size = lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_w * lnc_ptr->map_tab[lnc_ptr->lsc_info.cur_idx.x0].gain_h * 4 * sizeof(cmr_u16);
 		break;
 
 	default:

@@ -607,6 +607,7 @@ struct LSC_Setting{
 		struct third_lib_info *lib_info;
 		cmr_u16 *dst_gain;
 		cmr_u16 *lsc_buffer;
+		cmr_u32 gain_pattern;
 	};
 
 	struct binning_info {

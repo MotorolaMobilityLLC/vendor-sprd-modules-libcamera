@@ -716,6 +716,8 @@ static void *lsc_sprd_init(void *in, void *out)
 	}
 	init_param->lsc_buffer_addr = cxt->lsc_buffer;
 
+	cxt->gain_pattern = init_param->gain_pattern;
+
 	cxt->lib_info = &init_param->lib_param;
 
 	rtn = _lscsprd_load_lib(cxt);
@@ -815,7 +817,47 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
 	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
 	if (update_info.can_update_dest == 1) {
+#ifndef CONFIG_ISP_2_5
 		memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
+#else
+		cmr_s32 i = 0;
+		switch (cxt->gain_pattern) {
+		case LSC_GAIN_PATTERN_RGGB:
+		{
+			for (i = 0; i < dst_gain_size / 8; i++) {
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
+			}
+			break;
+		}
+		case LSC_GAIN_PATTERN_GRBG:
+		{
+			for (i = 0; i < dst_gain_size / 8; i++) {
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
+			}
+			break;
+		}
+		case LSC_GAIN_PATTERN_GBRG:
+		{
+			for (i = 0; i < dst_gain_size / 8; i++) {
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
+				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
+			}
+			break;
+		}
+		case LSC_GAIN_PATTERN_BGGR:
+			break;
+		default:
+			break;
+		}
+#endif
 		rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
 	}
 
