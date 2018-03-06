@@ -18,13 +18,13 @@
 #define LOG_TAG "sensor_imx351"
 #include "sensor_imx351_mipi_raw.h"
 
-#define VIDEO_INFO      s_imx351_video_info
-#define STATIC_INFO     s_imx351_static_info
-#define FPS_INFO        s_imx351_mode_fps_info
-#define RES_TAB_RAW     s_imx351_resolution_tab_raw
-#define RES_TRIM_TAB    s_imx351_resolution_trim_tab
-#define MIPI_RAW_INFO   g_imx351_mipi_raw_info
-#define MODULE_INFO     s_imx351_module_info_tab
+#define VIDEO_INFO s_imx351_video_info
+#define STATIC_INFO s_imx351_static_info
+#define FPS_INFO s_imx351_mode_fps_info
+#define RES_TAB_RAW s_imx351_resolution_tab_raw
+#define RES_TRIM_TAB s_imx351_resolution_trim_tab
+#define MIPI_RAW_INFO g_imx351_mipi_raw_info
+#define MODULE_INFO s_imx351_module_info_tab
 
 /*==============================================================================
  * Description:
@@ -35,7 +35,7 @@ static cmr_int imx351_drv_set_video_mode(cmr_handle handle, cmr_u32 param) {
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_REG_T_PTR sensor_reg_ptr;
     cmr_u16 i = 0x00;
@@ -44,7 +44,7 @@ static cmr_int imx351_drv_set_video_mode(cmr_handle handle, cmr_u32 param) {
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;
 
-    if(sns_drv_cxt->ops_cb.get_mode) {
+    if (sns_drv_cxt->ops_cb.get_mode) {
         ret = sns_drv_cxt->ops_cb.get_mode(handle, &mode);
         if (SENSOR_SUCCESS != ret) {
             SENSOR_LOGI("fail.");
@@ -63,9 +63,10 @@ static cmr_int imx351_drv_set_video_mode(cmr_handle handle, cmr_u32 param) {
     }
 
     for (i = 0x00; (0xffff != sensor_reg_ptr[i].reg_addr) ||
-                   (0xff != sensor_reg_ptr[i].reg_value); i++) {
+                   (0xff != sensor_reg_ptr[i].reg_value);
+         i++) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, sensor_reg_ptr[i].reg_addr,
-                        sensor_reg_ptr[i].reg_value);
+                            sensor_reg_ptr[i].reg_value);
     }
 
     return 0;
@@ -87,18 +88,14 @@ static cmr_u32 imx351_drv_get_default_frame_length(cmr_handle handle,
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx351_drv_group_hold_on(cmr_handle handle) {
-    UNUSED(handle);
-}
+static void imx351_drv_group_hold_on(cmr_handle handle) { UNUSED(handle); }
 
 /*==============================================================================
  * Description:
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx351_drv_group_hold_off(cmr_handle handle) {
-    UNUSED(handle);
-}
+static void imx351_drv_group_hold_off(cmr_handle handle) { UNUSED(handle); }
 
 /*==============================================================================
  * Description:
@@ -107,7 +104,7 @@ static void imx351_drv_group_hold_off(cmr_handle handle) {
  *============================================================================*/
 static cmr_u16 imx351_drv_read_gain(cmr_handle handle) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u16 gain_a = 0;
     cmr_u16 gain_d = 0;
@@ -126,7 +123,7 @@ static cmr_u16 imx351_drv_read_gain(cmr_handle handle) {
 static void imx351_drv_write_gain(cmr_handle handle, float gain) {
 
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u32 sensor_again = 0;
     cmr_u32 sensor_dgain = 0;
@@ -140,7 +137,8 @@ static void imx351_drv_write_gain(cmr_handle handle, float gain) {
     else if (temp_gain > 16.0)
         temp_gain = 16.0;
     sensor_again = (cmr_u16)(1024.0 - 1024.0 / temp_gain);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0204, (sensor_again >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0204,
+                        (sensor_again >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, sensor_again & 0xFF);
 
     temp_gain = gain / 16;
@@ -149,13 +147,17 @@ static void imx351_drv_write_gain(cmr_handle handle, float gain) {
     else if (temp_gain < 1.0)
         temp_gain = 1.0;
     sensor_dgain = (cmr_u16)(256 * temp_gain);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020e, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020e,
+                        (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020f, sensor_dgain & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0210, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0210,
+                        (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0211, sensor_dgain & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0212, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0212,
+                        (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0213, sensor_dgain & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0214, (sensor_dgain >> 8) & 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0214,
+                        (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0215, sensor_dgain & 0xFF);
 
     SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
@@ -170,7 +172,7 @@ static void imx351_drv_write_gain(cmr_handle handle, float gain) {
  *============================================================================*/
 static cmr_u16 imx351_drv_read_frame_length(cmr_handle handle) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u16 frame_len_h = 0;
     cmr_u16 frame_len_l = 0;
@@ -187,11 +189,12 @@ static cmr_u16 imx351_drv_read_frame_length(cmr_handle handle) {
  * please modify this function acording your spec
  *============================================================================*/
 static void imx351_drv_write_frame_length(cmr_handle handle,
-                                      cmr_u32 frame_len) {
+                                          cmr_u32 frame_len) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, (frame_len >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340,
+                        (frame_len >> 8) & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0341, frame_len & 0xff);
 }
 
@@ -202,7 +205,7 @@ static void imx351_drv_write_frame_length(cmr_handle handle,
  *============================================================================*/
 static cmr_u32 imx351_drv_read_shutter(cmr_handle handle) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u16 shutter_h = 0;
     cmr_u16 shutter_l = 0;
@@ -221,7 +224,7 @@ static cmr_u32 imx351_drv_read_shutter(cmr_handle handle) {
  *============================================================================*/
 static void imx351_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (shutter >> 8) & 0xff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, shutter & 0xff);
@@ -233,14 +236,14 @@ static void imx351_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static cmr_u16 imx351_drv_update_exposure(cmr_handle handle,
-                                       cmr_u32 shutter, cmr_u32 dummy_line) {
+static cmr_u16 imx351_drv_update_exposure(cmr_handle handle, cmr_u32 shutter,
+                                          cmr_u32 dummy_line) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
     cmr_u32 offset = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     fr_len = sns_drv_cxt->frame_length_def;
 
@@ -270,7 +273,7 @@ write_sensor_shutter:
  *============================================================================*/
 static cmr_int imx351_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
     SENSOR_IC_CHECK_PTR(module_info);
 
@@ -284,10 +287,11 @@ static cmr_int imx351_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     if (SENSOR_TRUE == power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle,SENSOR_AVDD_CLOSED,
-                                  SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
+                              SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
         usleep(1 * 1000);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val, iovdd_val);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val,
+                              iovdd_val);
         usleep(1 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DEFALUT_MCLK);
         usleep(1 * 1000);
@@ -295,8 +299,8 @@ static cmr_int imx351_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     } else {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle,SENSOR_AVDD_CLOSED,
-                                SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
+                              SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
     }
     SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
@@ -311,7 +315,7 @@ static cmr_int imx351_drv_init_fps_info(cmr_handle handle) {
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
@@ -345,8 +349,8 @@ static cmr_int imx351_drv_init_fps_info(cmr_handle handle) {
             SENSOR_LOGI("mode %d,max_fps: %d ", i,
                         fps_info->sensor_mode_fps[i].max_fps);
             SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
-                fps_info->sensor_mode_fps[i].is_high_fps,
-                fps_info->sensor_mode_fps[i].high_fps_skip_num);
+                        fps_info->sensor_mode_fps[i].is_high_fps,
+                        fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
         fps_info->is_init = 1;
     }
@@ -359,8 +363,7 @@ static cmr_int imx351_drv_init_fps_info(cmr_handle handle) {
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int imx351_drv_identify(cmr_handle handle,
-                                           cmr_uint param) {
+static cmr_int imx351_drv_identify(cmr_handle handle, cmr_uint param) {
     cmr_u8 pid_value = 0x00;
     cmr_u8 ver_value = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
@@ -368,7 +371,7 @@ static cmr_int imx351_drv_identify(cmr_handle handle,
     UNUSED(param);
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("imx351 mipi raw identify");
 
@@ -396,8 +399,7 @@ static cmr_int imx351_drv_identify(cmr_handle handle,
  * get resolution trim
  *
  *============================================================================*/
-static cmr_uint imx351_drv_get_trim_tab(cmr_handle handle,
-                                                 cmr_uint param) {
+static cmr_uint imx351_drv_get_trim_tab(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
     UNUSED(handle);
     return (cmr_uint)RES_TRIM_TAB;
@@ -408,8 +410,7 @@ static cmr_uint imx351_drv_get_trim_tab(cmr_handle handle,
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int imx351_drv_before_snapshot(cmr_handle handle,
-                                            cmr_uint param) {
+static cmr_int imx351_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
     float gain = 0;
@@ -418,13 +419,20 @@ static cmr_int imx351_drv_before_snapshot(cmr_handle handle,
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt* sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
 
-    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
+    sns_drv_cxt->frame_length_def =
+        sns_drv_cxt->trim_tab_info[capture_mode].frame_line;
     SENSOR_LOGI("capture_mode = %d,preview_mode=%d\n", capture_mode,
                 preview_mode);
+
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
@@ -435,11 +443,6 @@ static cmr_int imx351_drv_before_snapshot(cmr_handle handle,
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    if(sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-
-    if(sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
     cap_shutter = imx351_drv_update_exposure(handle, cap_shutter, 0);
@@ -459,9 +462,10 @@ snapshot_info:
      */
     sns_drv_cxt->hdr_info.capture_max_shutter = 1000000 / cap_linetime;
 
-    if(sns_drv_cxt->ops_cb.set_exif_info) {
-    //    sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-   //                          SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          cap_shutter);
     } else {
         sns_drv_cxt->exif_info.exposure_line = cap_shutter;
     }
@@ -480,7 +484,7 @@ static cmr_int imx351_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = param & 0xffff;
     dummy_line = (param >> 0x10) & 0xfff;
@@ -493,12 +497,18 @@ static cmr_int imx351_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         imx351_drv_update_exposure(handle, exposure_line, dummy_line);
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          exposure_line);
+    } else {
+        sns_drv_cxt->exif_info.exposure_line = exposure_line;
+    }
 
     return ret_value;
 }
 
-static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle,
-                                                   cmr_uint param) {
+static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -506,7 +516,7 @@ static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle,
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(ex);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
@@ -518,6 +528,13 @@ static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle,
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         imx351_drv_update_exposure(handle, exposure_line, dummy_line);
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          exposure_line);
+    } else {
+        sns_drv_cxt->exif_info.exposure_line = exposure_line;
+    }
 
     return ret_value;
 }
@@ -554,7 +571,7 @@ static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
 static cmr_int imx351_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     float real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     real_gain = (float)param * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
 
@@ -572,9 +589,9 @@ static cmr_int imx351_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
  *
  *============================================================================*/
 static void imx351_drv_increase_hdr_exposure(cmr_handle handle,
-                                                          cmr_u8 ev_multiplier) {
+                                             cmr_u8 ev_multiplier) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u32 shutter_multiply = sns_drv_cxt->hdr_info.capture_max_shutter /
                                sns_drv_cxt->hdr_info.capture_shutter;
@@ -585,13 +602,13 @@ static void imx351_drv_increase_hdr_exposure(cmr_handle handle,
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
-        imx351_drv_update_exposure(handle,
-                    hdr_info->capture_shutter * ev_multiplier, 0);
+        imx351_drv_update_exposure(
+            handle, hdr_info->capture_shutter * ev_multiplier, 0);
         imx351_drv_write_gain(handle, hdr_info->capture_gain);
     } else {
         gain = hdr_info->capture_gain * ev_multiplier / shutter_multiply;
         imx351_drv_update_exposure(
-          handle, hdr_info->capture_shutter * shutter_multiply, 0);
+            handle, hdr_info->capture_shutter * shutter_multiply, 0);
         imx351_drv_write_gain(handle, gain);
     }
 }
@@ -602,11 +619,11 @@ static void imx351_drv_increase_hdr_exposure(cmr_handle handle,
  *
  *============================================================================*/
 static void imx351_drv_decrease_hdr_exposure(cmr_handle handle,
-                                                          cmr_u8 ev_divisor) {
+                                             cmr_u8 ev_divisor) {
     cmr_u16 gain_multiply = 0;
     cmr_u32 shutter = 0;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct hdr_info_t *hdr_info = &sns_drv_cxt->hdr_info;
 
     gain_multiply = hdr_info->capture_gain / SENSOR_BASE_GAIN;
@@ -627,8 +644,7 @@ static void imx351_drv_decrease_hdr_exposure(cmr_handle handle,
  * set hdr ev
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int imx351_drv_set_hdr_ev(cmr_handle handle,
-                                  cmr_uint param) {
+static cmr_int imx351_drv_set_hdr_ev(cmr_handle handle, cmr_uint param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR)param;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -716,7 +732,7 @@ static cmr_int imx351_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_LOGI("E");
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
 #if 1
     char value1[PROPERTY_VALUE_MAX];
@@ -728,7 +744,7 @@ static cmr_int imx351_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 #endif
 
-#if 1//defined(CONFIG_CAMERA_ISP_DIR_3)
+#if 1 // defined(CONFIG_CAMERA_ISP_DIR_3)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
 #endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
@@ -746,7 +762,7 @@ static cmr_int imx351_drv_stream_off(cmr_handle handle, cmr_uint param) {
     unsigned char value;
     unsigned int sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("E");
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
@@ -768,18 +784,19 @@ static cmr_int imx351_drv_stream_off(cmr_handle handle, cmr_uint param) {
 static cmr_int imx351_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = PNULL;
-    cmr_u32 up = 0 , down = 0, i = 0;
+    cmr_u32 up = 0, down = 0, i = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
 
-    if(!static_info || !module_info) {
-        SENSOR_LOGI("error:static_info:%p,module_info:%p",static_info, module_info);
+    if (!static_info || !module_info) {
+        SENSOR_LOGI("error:static_info:%p,module_info:%p", static_info,
+                    module_info);
         rtn = SENSOR_FAIL;
         goto exit;
     }
@@ -805,7 +822,8 @@ static cmr_int imx351_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
 
-    memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
+    memcpy(&ex_info->fov_info, &static_info->fov_info,
+           sizeof(static_info->fov_info));
 
 exit:
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
@@ -817,7 +835,7 @@ static cmr_int imx351_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_MODE_FPS_T *fps_info;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
     SENSOR_IC_CHECK_PTR(fps_data);
 
@@ -854,8 +872,7 @@ static const struct pd_pos_info _imx351_pd_pos_r[] = {
     {1, 8}, {17, 8}, {10, 21}, {26, 21},
 };
 
-static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle,
-                                         cmr_u32 *param) {
+static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
     cmr_u16 i = 0;
@@ -872,9 +889,11 @@ static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle,
     pd_pos_is_right_size = NUMBER_OF_ARRAY(imx351_pd_is_right);
     pd_pos_row_size = NUMBER_OF_ARRAY(imx351_pd_row);
     pd_pos_col_size = NUMBER_OF_ARRAY(imx351_pd_col);
-    if ((pd_pos_row_size != pd_pos_col_size) || (pd_pos_row_size != pd_pos_is_right_size) ||
-    (pd_pos_is_right_size != pd_pos_col_size)){
-        SENSOR_LOGE("pd_pos_row size,pd_pos_row size and pd_pos_is_right size are not match");
+    if ((pd_pos_row_size != pd_pos_col_size) ||
+        (pd_pos_row_size != pd_pos_is_right_size) ||
+        (pd_pos_is_right_size != pd_pos_col_size)) {
+        SENSOR_LOGE("pd_pos_row size,pd_pos_row size and pd_pos_is_right size "
+                    "are not match");
         return -1;
     }
 
@@ -906,7 +925,7 @@ static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle,
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx351_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx351_pd_pos_l;
-    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258;//351;
+    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258; // 351;
     pdaf_info->type2_info.data_type = 0x2f;
     pdaf_info->type2_info.data_format = DATA_BYTE2;
     if (DATA_BYTE2 == pdaf_info->type2_info.data_format) {
@@ -930,9 +949,9 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_u16 tmp;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param_ptr);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("ptr:%p,type:0x%x",param_ptr, param_ptr->type);
+    SENSOR_LOGI("ptr:%p,type:0x%x", param_ptr, param_ptr->type);
 
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
@@ -957,15 +976,15 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
 }
 
 static cmr_u16 imx351_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
-                                     cmr_u32 dummy_line,
-                                     struct sensor_aec_i2c_tag *aec_info) {
+                                        cmr_u32 dummy_line,
+                                        struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
     cmr_int offset = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(aec_info);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     fr_len = sns_drv_cxt->frame_length_def;
 
     if (dummy_line > FRAME_OFFSET)
@@ -987,7 +1006,8 @@ static cmr_u16 imx351_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     return shutter;
 }
 
-static void imx351_drv_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info) {
+static void imx351_drv_calc_gain(float gain,
+                                 struct sensor_aec_i2c_tag *aec_info) {
     uint8_t i = 0;
     cmr_u32 sensor_again = 0;
     cmr_u32 sensor_dgain = 0;
@@ -1023,7 +1043,7 @@ static void imx351_drv_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info
 }
 
 static unsigned long imx351_drv_read_aec_info(cmr_handle handle,
-                                          cmr_uint param) {
+                                              cmr_uint param) {
     unsigned long ret_value = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     cmr_u16 exposure_line = 0x00;
@@ -1033,7 +1053,7 @@ static unsigned long imx351_drv_read_aec_info(cmr_handle handle,
     cmr_u32 gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     info->aec_i2c_info_out = &imx351_aec_info;
 
@@ -1054,21 +1074,26 @@ static unsigned long imx351_drv_read_aec_info(cmr_handle handle,
     return ret_value;
 }
 
-static cmr_int imx351_drv_handle_create(
-    struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
+static cmr_int
+imx351_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
+                         cmr_handle *sns_ic_drv_handle) {
     cmr_int ret = SENSOR_SUCCESS;
-    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
 
-    ret = sensor_ic_drv_create(init_param,sns_ic_drv_handle);
-    if(ret != SENSOR_SUCCESS)
+    ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
+    if (ret != SENSOR_SUCCESS)
         return SENSOR_FAIL;
 
     sns_drv_cxt = (struct sensor_ic_drv_cxt *)*sns_ic_drv_handle;
 
-    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
-    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
-    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
-    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
+                                    MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW),
+                                        RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
+                                  RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO),
+                                    STATIC_INFO);
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
 
     /*add private here*/
@@ -1076,21 +1101,21 @@ static cmr_int imx351_drv_handle_create(
     return ret;
 }
 
-static cmr_int imx351_drv_handle_delete(cmr_handle handle, void* param) {
+static cmr_int imx351_drv_handle_delete(cmr_handle handle, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
     /*if has private data,you must release it here*/
 
-    ret = sensor_ic_drv_delete(handle,param);
+    ret = sensor_ic_drv_delete(handle, param);
     return ret;
 }
 
-static cmr_int imx351_drv_get_private_data(cmr_handle handle,
-                                                     cmr_uint cmd, void**param){
+static cmr_int imx351_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
+                                           void **param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
 
-    ret = sensor_ic_get_private_data(handle,cmd, param);
+    ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
 }
 
@@ -1107,15 +1132,14 @@ static struct sensor_ic_ops s_imx351_ops_tab = {
     /*get privage data*/
     .get_data = imx351_drv_get_private_data,
     /*common interface*/
-    .power  = imx351_drv_power_on,
+    .power = imx351_drv_power_on,
     .identify = imx351_drv_identify,
     .write_gain_value = imx351_drv_write_gain_value,
     .read_aec_info = imx351_drv_read_aec_info,
     .ex_write_exp = imx351_drv_ex_write_exposure,
     .ext_ops = {
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = imx351_drv_before_snapshot,
-        [SENSOR_IOCTL_STREAM_ON].ops = imx351_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = imx351_drv_stream_off,
-        [SENSOR_IOCTL_ACCESS_VAL].ops = imx351_drv_access_val,
-    }
-};
+            [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = imx351_drv_before_snapshot,
+            [SENSOR_IOCTL_STREAM_ON].ops = imx351_drv_stream_on,
+            [SENSOR_IOCTL_STREAM_OFF].ops = imx351_drv_stream_off,
+            [SENSOR_IOCTL_ACCESS_VAL].ops = imx351_drv_access_val,
+    }};
