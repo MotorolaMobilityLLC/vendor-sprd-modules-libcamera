@@ -4836,6 +4836,10 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		rtn = ae_get_led_ctrl(cxt, result);
 		break;
 
+	case AE_SET_TOUCH_ZONE:
+		rtn = ae_set_touch_zone(cxt, param);
+		break;
+
 	default:
 		rtn = AE_ERROR;
 		break;
@@ -4880,10 +4884,6 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_WEIGHT:
 		rtn = ae_set_weight(cxt, param);
-		break;
-
-	case AE_SET_TOUCH_ZONE:
-		rtn = ae_set_touch_zone(cxt, param);
 		break;
 
 	case AE_SET_EV_OFFSET:
