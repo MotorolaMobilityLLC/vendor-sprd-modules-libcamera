@@ -16,7 +16,7 @@
 			/*[0x0]*/
 			{
 				/*strength*/
-				0x23,
+				0x19,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -26,7 +26,7 @@
 			/*[0x1]*/
 			{
 				/*strength*/
-				0x19,
+				0x0F,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -132,7 +132,7 @@
 			/*[0x0]*/
 			{
 				/*strength*/
-				0x24,
+				0x1A,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -142,7 +142,7 @@
 			/*[0x1]*/
 			{
 				/*strength*/
-				0x1C,
+				0x12,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -248,7 +248,7 @@
 			/*[0x0]*/
 			{
 				/*strength*/
-				0x24,
+				0x1A,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -258,7 +258,7 @@
 			/*[0x1]*/
 			{
 				/*strength*/
-				0x20,
+				0x16,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -364,7 +364,7 @@
 			/*[0x0]*/
 			{
 				/*strength*/
-				0x24,
+				0x1A,
 				/*cnt*/
 				0x15,
 				/*thresh*/
@@ -374,7 +374,7 @@
 			/*[0x1]*/
 			{
 				/*strength*/
-				0x20,
+				0x16,
 				/*cnt*/
 				0x15,
 				/*thresh*/

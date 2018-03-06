@@ -44,7 +44,7 @@
 	/*iircnr_uv_high_thr2*/
 	0x00000780,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param1.&BasePoint=1&*/
