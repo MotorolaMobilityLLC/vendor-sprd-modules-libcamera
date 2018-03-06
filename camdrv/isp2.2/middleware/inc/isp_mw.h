@@ -351,6 +351,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_VCM_INFO,
 	ISP_CTRL_GET_FPS,
 	ISP_CTRL_GET_LEDS_CTRL,
+	ISP_CTRL_AE_EXP_COMPENSATION,
 	/* warning if you wanna send async msg
 	 * please add msg id below here */
 	ISP_CTRL_SYNC_NONE_MSG_BEGIN,
@@ -795,6 +796,11 @@ struct isp_3dnr_info
         cmr_s8 mv_x;
         cmr_s8 mv_y;
         cmr_u8 blending_no;
+};
+
+struct isp_exp_comprnsation {
+	cmr_u16 idx;
+	cmr_s16 value;
 };
 
 struct isp_ops {

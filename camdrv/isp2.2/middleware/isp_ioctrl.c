@@ -293,6 +293,30 @@ static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	return rtn;
 }
 
+static cmr_int ispctl_ae_exp_compensation(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_exp_comprnsation *exp_comprnsation = (struct isp_exp_comprnsation *)param_ptr;
+	cmr_u16 idx = 0;
+	cmr_s16 value = 0;
+	UNUSED(call_back);
+
+	if (NULL == exp_comprnsation) {
+		return ISP_PARAM_NULL;
+	}
+
+	idx = exp_comprnsation->idx;
+	value = exp_comprnsation->value;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXPOSURE_COMPENSATION, &idx, &value);
+
+	ISP_LOGV("ISP_AE: AE_SET_EXP_COMPENSATION idx=%d, value=%d", idx, value);
+
+	return ret;
+}
+
 static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2080,11 +2104,11 @@ static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, c
 	if (ISP_AE_LOCK == ae_mode) {	// AE & AWB Lock
 		ISP_LOGV("AE Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
-			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, (void *)&ae_result);
+			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_PAUSE, NULL, (void *)&ae_result);
 	} else if (ISP_AE_UNLOCK == ae_mode) {	// AE  Unlock
 		ISP_LOGV("AE Un-Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
-			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, (void *)&ae_result);
+			rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_RESTORE, NULL, (void *)&ae_result);
 	} else {
 		ISP_LOGV("Unsupported AE  mode (%d)\n", ae_mode);
 	}
@@ -2536,6 +2560,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, _ispSnapshotNoticeIOCtrl},
 	{ISP_CTRL_AE_MEASURE_LUM, _ispAeMeasureLumIOCtrl},
 	{ISP_CTRL_EV, _ispEVIOCtrl},
+	{ISP_CTRL_AE_EXP_COMPENSATION, ispctl_ae_exp_compensation},
 	{ISP_CTRL_FLICKER, _ispFlickerIOCtrl},
 	{ISP_CTRL_ISO, _ispIsoIOCtrl},
 	{ISP_CTRL_SENSITIVITY, _ispSensitivityIOCtrl},

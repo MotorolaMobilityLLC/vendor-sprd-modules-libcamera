@@ -82,6 +82,13 @@ extern "C" {
 		cmr_s16 led_thr_down;
 	};
 
+	struct ae_exposure_compensation {
+		cmr_u16 ae_base_idx;
+		cmr_u16 ae_step_idx;
+		cmr_s16 ae_change_value;
+		cmr_u8 ae_compensation_flag;
+	};
+
 /**************************************************************************/
 /*
 * BEGIN: FDAE related definitions
@@ -302,6 +309,7 @@ extern "C" {
 		 */
 		cmr_s32 binning_factor_before;
 		cmr_s32 binning_factor_after;
+		struct ae_exposure_compensation exposure_compensation;
 	};
 
 #endif

@@ -98,6 +98,7 @@ extern "C" {
 		AE_SET_FLASH_NOTICE,
 		AE_SET_RGB_GAIN,
 		AE_SET_UPDATE_AUX_SENSOR,
+		AE_SET_EXPOSURE_COMPENSATION,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

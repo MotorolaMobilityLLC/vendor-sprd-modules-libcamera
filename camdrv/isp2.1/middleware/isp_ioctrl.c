@@ -278,6 +278,29 @@ static cmr_int ispctl_ev(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_ae_exp_compensation(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_exp_comprnsation *exp_comprnsation = (struct isp_exp_comprnsation *)param_ptr;
+	cmr_u16 idx = 0;
+	cmr_s16 value = 0;
+
+	if (NULL == exp_comprnsation) {
+		return ISP_PARAM_NULL;
+	}
+
+	idx = exp_comprnsation->idx;
+	value = exp_comprnsation->value;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXPOSURE_COMPENSATION, &idx, &value);
+
+	ISP_LOGV("ISP_AE: AE_SET_EXP_COMPENSATION idx=%d, value=%d", idx, value);
+
+	return ret;
+}
+
 static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1968,11 +1991,11 @@ static cmr_int ispctl_set_ae_lock_unlock(cmr_handle isp_alg_handle, void *param_
 	if (ISP_AE_LOCK == ae_mode) {
 		ISP_LOGV("AE Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, (void *)&ae_result);
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_PAUSE, NULL, (void *)&ae_result);
 	} else if (ISP_AE_UNLOCK == ae_mode) {
 		ISP_LOGV("AE Un-Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, (void *)&ae_result);
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_RESTORE, NULL, (void *)&ae_result);
 	} else {
 		ISP_LOGV("Unsupported AE  mode (%d)\n", ae_mode);
 	}
@@ -2290,6 +2313,7 @@ static cmr_int ispctl_post_ynr(cmr_handle isp_alg_handle, void *param_ptr)
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
+	{ISP_CTRL_AE_EXP_COMPENSATION, ispctl_ae_exp_compensation},
 	{ISP_CTRL_FLICKER, ispctl_flicker},
 	{ISP_CTRL_ISO, ispctl_iso},
 	{ISP_CTRL_AE_TOUCH, ispctl_ae_touch},
