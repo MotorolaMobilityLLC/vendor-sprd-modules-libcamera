@@ -35,9 +35,8 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
 	if (bpc_param != NULL) {
-		dst_ptr->cur.pos_out_continue_mode = 0;
-		dst_ptr->cur.pos_out_skip_num = 1;
-		dst_ptr->cur.bpc_blk_mode =1;
+		dst_ptr->cur.pos_out_continue_mode = bpc_param[strength_level].bpc_pos.continuous_mode;
+		dst_ptr->cur.pos_out_skip_num = bpc_param[strength_level].bpc_pos.skip_num;
 		dst_ptr->cur.bpc_mode = bpc_param[strength_level].bpc_comm.bpc_mode;
 		dst_ptr->cur.edge_hv_mode = bpc_param[strength_level].bpc_comm.hv_mode;
 		dst_ptr->cur.edge_rd_mode = bpc_param[strength_level].bpc_comm.rd_mode;
@@ -80,6 +79,17 @@ cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, voi
 	struct isp_bpc_param *dst_ptr = (struct isp_bpc_param *)dst_bpc_param;
 	struct isp_pm_block_header *bpc_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
+
+#ifndef CONFIG_CAMERA_SHARKLE_BRINGUP
+	dst_ptr->cur.bpc_mode_en_gc = 1;
+	dst_ptr->cur.bpc_mode_en = 1;
+	dst_ptr->cur.bpc_gc_cg_dis = 0;
+#endif
+
+	dst_ptr->cur.rd_retain_num = 0xf;
+	dst_ptr->cur.rd_max_len_sel = 1;
+	dst_ptr->cur.wr_max_len_sel = 1;
+	dst_ptr->cur.bpc_blk_mode = 1;
 
 	dst_ptr->cur.bypass = bpc_header_ptr->bypass;
 	dst_ptr->cur_level = src_ptr->default_strength_level;
@@ -183,7 +193,7 @@ cmr_s32 _pm_bpc_get_param(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_BPC;
+	param_data_ptr->id = DCAM_BLK_BPC;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

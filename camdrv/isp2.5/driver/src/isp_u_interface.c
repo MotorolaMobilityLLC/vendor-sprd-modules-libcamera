@@ -26,7 +26,7 @@ struct isp_cfg_fun {
 static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_PRE_GBL_GAIN, isp_u_pgg_block},
 	{ISP_BLK_BLC, isp_u_blc_block},
-	{ISP_BLK_NLM, isp_u_nlm_block},
+	{DCAM_BLK_NLM, isp_u_nlm_block},
 	{ISP_BLK_POSTBLC, isp_u_post_blc_block},
 	{ISP_BLK_RGB_GAIN, isp_u_rgb_gain_block},
 	{ISP_BLK_RGB_DITHER,isp_u_rgb_dither_block},
@@ -34,7 +34,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_2D_LSC, isp_u_2d_lsc_block},
 	{ISP_BLK_1D_LSC, isp_u_1d_lsc_block},
 	{ISP_BLK_BINNING4AWB, isp_u_binning4awb_block},
-	{ISP_BLK_BPC, isp_u_bpc_block},
+	{DCAM_BLK_BPC, isp_u_bpc_block},
 	{ISP_BLK_GRGB, isp_u_grgb_block},
 	{ISP_BLK_CFA, isp_u_cfa_block},
 	{ISP_BLK_CMC10, isp_u_cmc_block},

@@ -122,6 +122,8 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	UNUSED(param_ptr2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
+	dst_ptr->cur.vst_bypass = header_ptr->bypass;
+	dst_ptr->cur.ivst_bypass = header_ptr->bypass;
 	dst_ptr->vst_map.size = 1024 * sizeof(cmr_u32);
 	if (PNULL == dst_ptr->vst_map.data_ptr) {
 		dst_ptr->vst_map.data_ptr = (void *)malloc(dst_ptr->vst_map.size);
@@ -171,6 +173,8 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 
 	rtn = _pm_nlm_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
+	dst_ptr->cur.vst_bypass = dst_ptr->cur.bypass;
+	dst_ptr->cur.ivst_bypass = dst_ptr->cur.bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to  convert pm nlm param!");
 		return rtn;
@@ -217,6 +221,8 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 
 				rtn = _pm_nlm_convert_param(nlm_ptr, nlm_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
 				nlm_ptr->cur.bypass |= nlm_header_ptr->bypass;
+				nlm_ptr->cur.vst_bypass = nlm_ptr->cur.bypass;
+				nlm_ptr->cur.ivst_bypass = nlm_ptr->cur.bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to  convert pm nlm param!");
 					return rtn;
@@ -241,7 +247,7 @@ cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_NLM;
+	param_data_ptr->id = DCAM_BLK_NLM;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
