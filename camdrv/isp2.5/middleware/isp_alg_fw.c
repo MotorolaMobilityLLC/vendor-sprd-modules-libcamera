@@ -3396,8 +3396,11 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_work_param ae_param;
 	enum ae_work_mode ae_mode = 0;
+	struct isp_range_thr shift;
 
 	memset(&ae_param, 0, sizeof(ae_param));
+	memset(&shift, 0, sizeof(shift));
+
 	switch (new_mode) {
 	case ISP_MODE_ID_PRV_0:
 	case ISP_MODE_ID_PRV_1:
@@ -3455,6 +3458,10 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	}
 	cxt->ae_cxt.shift = ae_param.shift;
 
+	shift.high = ae_param.shift;
+	shift.low = ae_param.shift;
+	shift.middle = ae_param.shift;
+
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&ae_param.ct_table);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_CT_TABLE20"));
@@ -3464,7 +3471,7 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_START"));
 	}
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &ae_param.shift, NULL);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &shift, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_DEV_SET_AE_SHIFT"));
 
 	return ret;
