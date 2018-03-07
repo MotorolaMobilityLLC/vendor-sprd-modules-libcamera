@@ -171,15 +171,14 @@ static void gc2375_drv_write_gain(struct sensor_aec_i2c_tag *aec_info,
  * read frame length from sensor registers
  * please modify this function acording your spec
  =============================================================================*/
-static cmr_u16 gc2375_drv_read_frame_length(cmr_handle handle)
-{
+static cmr_u16 gc2375_drv_read_frame_length(cmr_handle handle) {
     SENSOR_IC_CHECK_HANDLE(handle);
-	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-	cmr_u16 vb_current_h=0;
-	cmr_u16	vb_current_l=0;
-	vb_current_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x07)&0xff;
-	vb_current_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x08)&0xff;
+    cmr_u16 vb_current_h = 0;
+    cmr_u16 vb_current_l = 0;
+    vb_current_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x07) & 0xff;
+    vb_current_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x08) & 0xff;
     return ((vb_current_h << 8) | vb_current_l);
 }
 /*==============================================================================
@@ -189,8 +188,8 @@ static cmr_u16 gc2375_drv_read_frame_length(cmr_handle handle)
  *============================================================================*/
 static void gc2375_drv_write_frame_length(struct sensor_aec_i2c_tag *aec_info,
                                           cmr_u32 frame_len) {
-	cmr_u16 vb = frame_len - 1224;
-	vb = vb > 37 ? vb : 37;
+    cmr_u16 vb = frame_len - 1224;
+    vb = vb > 37 ? vb : 37;
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
 
     if (aec_info->frame_length->size > 2) {
@@ -638,7 +637,7 @@ static cmr_int gc2375_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     gc2375_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,
                              &gc2375_aec_info);
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
-    gc2375_drv_write_reg2sensor(handle,gc2375_aec_info.frame_length);
+    gc2375_drv_write_reg2sensor(handle, gc2375_aec_info.frame_length);
     gc2375_drv_write_reg2sensor(handle, gc2375_aec_info.shutter);
 
     return ret_value;
@@ -698,7 +697,7 @@ static cmr_int gc2375_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     /*TODO*/
 
-    //usleep(100 * 1000);
+    // usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
     /*delay*/
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xef, 0x90);

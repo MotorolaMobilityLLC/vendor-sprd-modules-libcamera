@@ -181,7 +181,7 @@ static const SENSOR_REG_T gc2375_init_setting[] = {
     {0x05, 0x03}, // 02
     {0x06, 0x19}, // 2c->19
     {0x07, 0x00},
-    {0x08, 0x25}, //10->25
+    {0x08, 0x25}, // 10->25
     {0x09, 0x00},
     {0x0a, 0x08},
     {0x0b, 0x00},
@@ -362,9 +362,7 @@ static struct sensor_i2c_reg_tab gc2375_dgain_tab = {
 };
 
 static SENSOR_REG_T gc2375_frame_length_reg[] = {
-    {0xfe, 0x00},
-    {0x07, 0x00},
-    {0x08, 0x25},
+    {0xfe, 0x00}, {0x07, 0x00}, {0x08, 0x25},
 };
 
 static struct sensor_i2c_reg_tab gc2375_frame_length_tab = {
