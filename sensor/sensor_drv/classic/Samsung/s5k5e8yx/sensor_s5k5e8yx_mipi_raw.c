@@ -811,6 +811,7 @@ static cmr_int s5k5e8yx_stream_off(cmr_handle handle, cmr_u32 param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     /*delay*/
     usleep(50 * 1000);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0103, 0x01);
 
     return 0;
 }
