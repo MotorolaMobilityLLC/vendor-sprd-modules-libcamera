@@ -3484,12 +3484,16 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
         }
 
         if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-            mPreviewbokehParam.weight_params.F_number =
-                fnum * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
-            fnum = (MAX_F_FUMBER + 1 - fnum) * 255 / MAX_F_FUMBER;
-            mCaptureThread->mCapbokehParam.bokeh_level = fnum;
-            mPreviewbokehParam.depth_param.F_number =
-                mPreviewbokehParam.weight_params.F_number;
+            int prev_fnum = fnum * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
+            int cap_fnum = (MAX_F_FUMBER + 1 - fnum) * 255 / MAX_F_FUMBER;
+            if (mPreviewbokehParam.weight_params.F_number != prev_fnum ||
+                mCaptureThread->mCapbokehParam.bokeh_level != cap_fnum ||
+                mPreviewbokehParam.depth_param.F_number != prev_fnum) {
+                mPreviewbokehParam.weight_params.F_number = prev_fnum;
+                mCaptureThread->mCapbokehParam.bokeh_level = cap_fnum;
+                mPreviewbokehParam.depth_param.F_number = prev_fnum;
+                mDepthTrigger = true;
+            }
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
             fnum = MAX_F_FUMBER + 1 - fnum;
             mPreviewMuxerThread->mArcSoftPrevParam.i32BlurLevel =
