@@ -3763,18 +3763,26 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	switch (in_ptr->work_mode) {
 	case 0:		/*preview */
-		if (cxt->is_zsl_flag) {
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION, in_ptr, &prv_mode);
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, in_ptr, &cap_mode);
+	{
+		if (in_ptr->dv_mode) {
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION, in_ptr, &prv_mode);
+			mode = prv_mode;
+			cap_mode = prv_mode;
 		} else {
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION, in_ptr, &prv_mode);
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, in_ptr, &cap_mode);
+			mode = prv_mode;
 		}
-		mode = prv_mode;
 		break;
+	}
 	case 1:		/*capture */
+	{
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION, in_ptr, &prv_mode);
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, in_ptr, &cap_mode);
 		mode = cap_mode;
+		prv_mode = cap_mode;
 		break;
+	}
 	case 2:
 		mode = ISP_MODE_ID_VIDEO_0;
 		break;
