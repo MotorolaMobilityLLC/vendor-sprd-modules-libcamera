@@ -553,6 +553,11 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
         new_stream->usage |= GRALLOC_USAGE_CAMERA_BUFFER;
     }
 
+    if ((*stream_type < 0) || (*stream_type >= CAMERA_STREAM_TYPE_MAX) ||
+        (*channel_type < 0) || (*channel_type >= CAMERA_CHANNEL_TYPE_MAX)) {
+        *stream_type = CAMERA_STREAM_TYPE_DEFAULT;
+        *channel_type = CAMERA_CHANNEL_TYPE_DEFAULT;
+    }
     HAL_LOGD("stream_type = %d, channel_type = %d w=%d h=%d", *stream_type,
              *channel_type, new_stream->width, new_stream->height);
 
