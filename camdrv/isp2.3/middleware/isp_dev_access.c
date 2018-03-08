@@ -50,6 +50,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
+	cmr_uint stats_buffer_size = 0;
 
 	statis_mem_info->isp_lsc_mem_size = in_ptr->isp_lsc_mem_size;
 	statis_mem_info->isp_lsc_mem_num = in_ptr->isp_lsc_mem_num;
@@ -57,17 +58,21 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	statis_mem_info->isp_lsc_virtaddr = in_ptr->isp_lsc_virtaddr;
 	statis_mem_info->lsc_mfd = in_ptr->lsc_mfd;
 
+	stats_buffer_size = ISP_AEM_STATIS_BUF_SIZE +
+		ISP_AFM_STATIS_BUF_SIZE +
+		ISP_AFL_STATIS_BUF_SIZE +
+		ISP_HIST_STATIS_BUF_SIZE +
+		ISP_HIST2_STATIS_BUF_SIZE +
+		ISP_BINNING_STATIS_BUF_SIZE;
+
+	if (in_ptr->pdaf_support)
+		stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE;
+
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
 		statis_mem_info->buffer_client_data = in_ptr->buffer_client_data;
 		statis_mem_info->cb_of_malloc = in_ptr->cb_of_malloc;
 		statis_mem_info->cb_of_free = in_ptr->cb_of_free;
-		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE +
-							ISP_AFM_STATIS_BUF_SIZE +
-							ISP_AFL_STATIS_BUF_SIZE +
-							ISP_HIST_STATIS_BUF_SIZE +
-							ISP_HIST2_STATIS_BUF_SIZE +
-							ISP_PDAF_STATIS_BUF_SIZE +
-							ISP_BINNING_STATIS_BUF_SIZE) * 5;
+		statis_mem_info->isp_statis_mem_size = stats_buffer_size * 5;
 		statis_mem_info->isp_statis_mem_num = 1;
 		if (statis_mem_info->cb_of_malloc) {
 			isp_cb_of_malloc cb_malloc = in_ptr->cb_of_malloc;

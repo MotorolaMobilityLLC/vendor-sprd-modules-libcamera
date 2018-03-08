@@ -4150,6 +4150,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	statis_mem_input.isp_lsc_physaddr = in_ptr->lsc_phys_addr;
 	statis_mem_input.isp_lsc_virtaddr = in_ptr->lsc_virt_addr;
 	statis_mem_input.lsc_mfd = in_ptr->lsc_mfd;
+	statis_mem_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
 
 	ret = isp_dev_statis_buf_malloc(cxt->dev_access_handle, &statis_mem_input);
 	ISP_RETURN_IF_FAIL(ret, ("fail to malloc buf"));
