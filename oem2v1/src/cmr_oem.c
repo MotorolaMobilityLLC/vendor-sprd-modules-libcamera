@@ -10915,7 +10915,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_WITH_FLASH;
     else if (1 == camera_get_hdr_flag(cxt))
         capture_param.type = DCAM_CAPTURE_START_HDR;
-    else if (1 == camera_get_3dnr_flag(cxt))
+    else if ((1 == camera_get_3dnr_flag(cxt)) || (2 == camera_get_3dnr_flag(cxt)))
         capture_param.type = DCAM_CAPTURE_START_3DNR;
     else if (cxt->is_multi_mode == MODE_BOKEH) {
         if (cxt->is_yuv_callback_mode) {
