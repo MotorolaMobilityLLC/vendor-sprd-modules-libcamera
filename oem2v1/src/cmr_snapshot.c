@@ -1424,7 +1424,6 @@ struct isp_awbc_cfg_test {
 
 extern uint32_t isp_cur_bv;
 extern uint32_t isp_cur_ct;
-
 /* dump mipi raw */
 static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
                                           uint32_t img_fmt, uint32_t width,
@@ -1452,8 +1451,8 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
 
     ret = camera_get_isp_handle_raw(snp_cxt->oem_handle, &isp_handle);
     if (ret != CMR_CAMERA_SUCCESS) {
-	    CMR_LOGE("cannot retreive isp handle");
-	    return -1;
+        CMR_LOGE("cannot retreive isp handle");
+        return -1;
     }
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
@@ -4215,13 +4214,16 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     frame_type.uv_phy_addr = data->uaddr;
     frame_type.format = data->fmt;
     property_get("debug.camera.save.3dcalfile", prop, "0");
-    if (atoi(prop) == 1) {
-        struct img_addr imgadd = {0, 0, 0};
-        imgadd.addr_y = data->yaddr_vir;
-        imgadd.addr_u = data->uaddr_vir;
-        imgadd.addr_v = data->vaddr_vir;
-        camera_save_yuv_to_file(8881, IMG_DATA_TYPE_YUV420, frame_type.width,
-                                frame_type.height, &imgadd);
+    if (atoi(prop) == 1 || atoi(prop) == 100 || (atoi(prop) & (1 << 1))) {
+        char datetime[15] = {0};
+        struct img_addr addr;
+        cmr_bzero(&addr, sizeof(struct img_addr));
+        addr.addr_y = frame_type.y_vir_addr;
+        CMR_LOGD("save yuv to file");
+        camera_get_system_time(datetime);
+        camera_save_raw_or_yuv_to_file(snp_handle, datetime,
+                                       IMG_DATA_TYPE_YUV420, frame_type.width,
+                                       frame_type.height, &addr);
     }
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                             SNAPSHOT_EVT_CB_SNAPSHOT_DONE, (void *)&frame_type,

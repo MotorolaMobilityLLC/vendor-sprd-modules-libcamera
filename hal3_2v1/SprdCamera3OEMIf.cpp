@@ -1028,7 +1028,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg() {
         HAL_LOGE("fail to camera_take_picture.");
         goto exit;
     }
-    if(getMultiCameraMode() == MODE_BLUR) {
+    if (getMultiCameraMode() == MODE_BLUR) {
         mFlagOffLineZslStart = true;
     }
 
@@ -2593,7 +2593,28 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 HAL_LOGD("camera_id: %d, dual_otp_flag %d", mCameraId,
                          otpInfo.dual_otp_flag);
             }
-            HAL_LOGD("save otp file");
+            {
+                FILE *fid =
+                    fopen("/data/misc/cameraserver/calibration.txt", "rb");
+                if (NULL == fid) {
+                    HAL_LOGV("calibration read failed!");
+                } else {
+                    int read_byte = 0;
+                    cmr_u8 *otp_data = (cmr_u8 *)otpInfo.otp_data;
+                    while (!feof(fid)) {
+                        fscanf(fid, "%d\n", otp_data);
+                        otp_data += 4;
+                        read_byte += 4;
+                    }
+                    fclose(fid);
+                    HAL_LOGD("calibration read_bytes=%d ", read_byte);
+                    if (read_byte) {
+                        otp_info.dual_otp.data_3d.size = read_byte;
+                        otpInfo.otp_type = 0; // OTP_CALI_SPRD;
+                        otpInfo.dual_otp_flag = 1;
+                    }
+                }
+            }
 
             if (otp_info.dual_otp.data_3d.size > 0) {
                 save_file("data/misc/cameraserver/dualcamera.bin",
@@ -4399,7 +4420,7 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(
                     pre_stream->getQBuffFirstFd(&ion_fd);
                 } else
                     ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
-                                                  &addr_phy, &ion_fd);
+                                                        &addr_phy, &ion_fd);
             } else {
                 ret = pre_stream->getQBuffFirstVir(&addr_vir);
                 if (ret == NO_ERROR) {
