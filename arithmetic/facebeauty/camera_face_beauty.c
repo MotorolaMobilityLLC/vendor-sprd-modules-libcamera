@@ -25,8 +25,8 @@
 #include "arcsoft_beautyshot_wrapper.h"
 
 #define NUM_LEVELS 11
+#define NUM_TYPES 3
 #define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
-
 void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
     property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
@@ -212,8 +212,8 @@ void construct_fb_level(struct class_fb *faceBeauty,
                                                 25, 30, 35, 40, 45};
     unsigned char eye_largeLevel[NUM_LEVELS] = {0,  8,  10, 15, 20, 25,
                                                 30, 40, 45, 50, 55};
-    unsigned char tab_skinWhitenLevel[NUM_LEVELS] = {0};
-    unsigned char tab_skinCleanLevel[NUM_LEVELS] = {0};
+    unsigned char tab_skinWhitenLevel[NUM_LEVELS];
+    unsigned char tab_skinCleanLevel[NUM_LEVELS];
     unsigned char tab_faceSlimLevel[NUM_LEVELS] = {0};
     unsigned char tab_eyeLargeLevel[NUM_LEVELS] = {0};
 
@@ -295,11 +295,9 @@ void construct_fb_level(struct class_fb *faceBeauty,
     }
 
     char isDebug[PROPERTY_VALUE_MAX];
-    char isAllFeature[PROPERTY_VALUE_MAX];
     property_get("persist.sys.camera.beauty.debug", isDebug, "0");
     property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
-    property_get("persist.sys.cam.beauty.fullfuc", isAllFeature, "false");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         unsigned char map_pictureSkinSmoothLevel[NUM_LEVELS] = {
             0, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7};
@@ -334,12 +332,12 @@ void construct_fb_level(struct class_fb *faceBeauty,
             map_skinColorLevel[beautyLevels.skinLevel];
 
         /* We don't use the following options */
+        faceBeauty->fb_option.removeBlemishFlag = 0;
         faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
         faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
         faceBeauty->fb_option.lipColorLevel = beautyLevels.lipLevel;
         faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
         faceBeauty->fb_option.skinColorLevel = beautyLevels.skinLevel;
-		faceBeauty->fb_option.bokehON = 0;
         if (faceBeauty->fb_mode == 1) {
             faceBeauty->fb_option.skinSmoothRadiusCoeff =
                 map_skinSmoothRadiusCoeff[beautyLevels.smoothLevel];
@@ -358,15 +356,15 @@ void construct_fb_level(struct class_fb *faceBeauty,
         }
         faceBeauty->fb_option.bokehON = 0;
 
-        if(!strcmp(isAllFeature, "false")) {
-            faceBeauty->fb_option.removeBlemishFlag = 0;
-            faceBeauty->fb_option.lipColorLevel = 0;
-            faceBeauty->fb_option.skinColorType = 0;
-            faceBeauty->fb_option.skinColorLevel = 0;
-        }
-
         if (!strcmp(isDebug, "1")) {
             faceBeauty->fb_option.debugMode = 1;
+            faceBeauty->fb_option.removeBlemishFlag = 1;
+            faceBeauty->fb_option.skinColorType = 1;
+            faceBeauty->fb_option.skinColorLevel = 7;
+            faceBeauty->fb_option.lipColorType = 2;
+            faceBeauty->fb_option.lipColorLevel = 5;
+            faceBeauty->fb_option.slimFaceLevel = 7;
+            faceBeauty->fb_option.largeEyeLevel = 7;
         } else {
             faceBeauty->fb_option.debugMode = 0;
         }
@@ -442,7 +440,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
         ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
         ALOGD("SPRD_FB: FB_FaceBeauty_YUV420SP duration is %d ms", duration);
-        if (faceBeauty->fb_mode == 0) {
+        if (faceBeauty->fb_mode == 0) { // this work mode is useless.
             int i = 0;
             for (i = 0; i < faceCount; i++) {
                 ALOGD("SPRD_FB: fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, "
@@ -480,10 +478,30 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                                           FEATURE_FACE_SLENDER_KEY,
                                           faceBeauty->faceSlender);
             clock_gettime(CLOCK_BOOTTIME, &start_time);
+            ALOGD("format : %d,w %d,h %d , white %d ,soft %d",
+                  faceBeauty->arc_fb_image.u32PixelArrayFormat,
+                  faceBeauty->arc_fb_image.i32Width,
+                  faceBeauty->arc_fb_image.i32Height, faceBeauty->faceSoften,
+                  faceBeauty->faceWhiten);
+            property_get("persist.sys.cam.beauty.dump", value, "off");
+            if (!strcmp(value, "on")) {
+                save_yuv_data(11, faceBeauty->arc_fb_image.i32Width,
+                              faceBeauty->arc_fb_image.i32Height,
+                              faceBeauty->arc_fb_image.ppu8Plane[0]);
+            }
+
             retVal = arcsoft_bsv_process(
                 faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
                 &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
-            /* Arcsoft issue, first frame is no effective, so process two times*/
+
+            property_get("persist.sys.cam.beauty.dump", value, "off");
+            if (!strcmp(value, "on")) {
+                save_yuv_data(22, faceBeauty->arc_fb_image.i32Width,
+                              faceBeauty->arc_fb_image.i32Height,
+                              faceBeauty->arc_fb_image.ppu8Plane[0]);
+            }
+            /* Arcsoft issue, first frame is no effective, so process two
+             * times*/
             if (1 == faceBeauty->firstFrm) {
                 ALOGD("do_facebeauty in the oem first frame!");
                 retVal = arcsoft_bsv_process(faceBeauty->hArcSoftFB,
