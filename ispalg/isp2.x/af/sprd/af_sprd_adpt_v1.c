@@ -216,7 +216,37 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		win[i].end_y = 2;
 	}
 
+#ifdef CONFIG_ISP_2_5
+{
+	// crop enable
+	cmr_u32 crop_eb = 1;
+	struct af_monitor_tile_num tile_num;
+	struct af_monitor_win_num win_num;
+	// crop size
+	winparam.win_rect.x = win[9].start_x;
+	winparam.win_rect.y = win[9].start_y;
+	winparam.win_rect.w = win[9].end_x - win[9].start_x;
+	winparam.win_rect.h = win[9].end_y - win[9].start_y;
+	// win num
+	win_num.x = 6;
+	win_num.y = 3;
+	// tile num
+	tile_num.x = win_num.x - 1;
+	tile_num.y = win_num.y - 1;
+
+	af->cb_ops.af_monitor_crop_eb(af->caller, &crop_eb);
+	af->cb_ops.af_monitor_crop_size(af->caller, &winparam.win_rect);
+	af->cb_ops.set_monitor_win_num(af->caller, &win_num);
+	af->cb_ops.af_monitor_done_tile_num(af->caller, &tile_num);
+	// the first roi in crop size
+	winparam.win_rect.x = 4;
+	winparam.win_rect.y = 4;
+	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 8)/6;
+	winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8)/3;
+}
+#else
 	winparam.win_pos = (struct af_win_rect *)win;	//todo : compare with kernel type
+#endif
 
 	af->cb_ops.set_monitor_win(af->caller, &winparam);
 }
@@ -2797,7 +2827,13 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	memset(af, 0, sizeof(*af));
 	af->isp_info.width = init_param->src.w;
 	af->isp_info.height = init_param->src.h;
+
+#ifdef CONFIG_ISP_2_5 // sharkl3 arch with many rois
+	af->isp_info.win_num = 10; // keep invariant as original
+#else
 	af->isp_info.win_num = afm_get_win_num(init_param);
+#endif
+
 	af->caller = init_param->caller;
 	af->otp_info.gldn_data.infinite_cali = init_param->otp_info.gldn_data.infinite_cali;
 	af->otp_info.gldn_data.macro_cali = init_param->otp_info.gldn_data.macro_cali;

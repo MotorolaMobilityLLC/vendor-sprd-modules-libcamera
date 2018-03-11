@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -31,6 +31,7 @@ cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_COMMON;
 	param.property = ISP_PRO_COMMON_BLOCK;
 	param.property_param = block_info;
@@ -40,7 +41,7 @@ cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
+cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 
@@ -54,6 +55,7 @@ cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_COMMON;
 	param.property = ISP_PRO_COMMON_COMM_SHADOW;
 	param.property_param = &shadow_done;
@@ -63,7 +65,7 @@ cmr_s32 isp_u_comm_shadow_ctrl(cmr_handle handle, cmr_u32 shadow_done)
 	return ret;
 }
 
-cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable)
+cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 
@@ -77,6 +79,7 @@ cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_COMMON;
 	param.property = ISP_PRO_COMMON_3A_SINGLE_FRAME_CTRL;
 	param.property_param = &enable;

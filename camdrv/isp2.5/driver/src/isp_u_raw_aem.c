@@ -194,12 +194,11 @@ cmr_s32 isp_u_raw_aem_blk_size(cmr_handle handle, cmr_u32 width, cmr_u32 height,
 	return ret;
 }
 
-cmr_s32 isp_u_raw_aem_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height, cmr_u32 scene_id)
+cmr_s32 isp_u_raw_aem_blk_num(cmr_handle handle, void *blk_num, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
-	struct isp_img_size size;
 
 	if (!handle) {
 		ISP_LOGE("fail to get handle.");
@@ -210,10 +209,55 @@ cmr_s32 isp_u_raw_aem_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 heigh
 	param.isp_id = file->isp_id;
 	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
-	param.property = ISP_PRO_RAW_AEM_SLICE_SIZE;
-	size.width = width;
-	size.height = height;
-	param.property_param = &size;
+	param.property = ISP_PRO_RAW_AEM_BLK_NUM;
+	param.property_param = blk_num;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+cmr_s32 isp_u_raw_aem_rgb_thr(cmr_handle handle, void *rgb_thr, cmr_u32 scene_id)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
+	param.sub_block = ISP_BLOCK_RAW_AEM;
+	param.property = ISP_PRO_RAW_AEM_RGB_THR;
+	param.property_param = rgb_thr;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+
+cmr_s32 isp_u_raw_aem_skip_num_clr(cmr_handle handle, void *is_clear, cmr_u32 scene_id)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
+	param.sub_block = ISP_BLOCK_RAW_AEM;
+	param.property = ISP_PRO_RAW_AEM_SKIP_NUM_CLR;
+	param.property_param = is_clear;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

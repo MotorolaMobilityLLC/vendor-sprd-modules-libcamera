@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -31,6 +31,7 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER_NEW;
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BYPASS;
 	param.property_param = block_info;
@@ -41,7 +42,7 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -54,6 +55,7 @@ cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER_NEW;
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BLOCK;
 	param.property_param = block_info;

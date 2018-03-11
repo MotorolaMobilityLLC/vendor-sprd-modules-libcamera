@@ -34,7 +34,6 @@ struct isp_pm_context {
 	cmr_u32 magic_flag;
 	cmr_u32 param_source;
 	pthread_mutex_t pm_mutex;
-	cmr_u32 multi_mode_flag;
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
 	cmr_u32 cap_mode_id;
@@ -579,23 +578,12 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 	}
 
 	switch (cmd) {
-	case ISP_PM_CMD_SET_MULTI_MODE_FLAG:
-	{
-		cmr_u32 multi_mode_flag = *((cmr_u32 *)param_ptr);
-		pm_cxt_ptr->multi_mode_flag = multi_mode_flag;
-		ISP_LOGV("multi_mode_flag = %d", pm_cxt_ptr->multi_mode_flag);
-		break;
-	}
 	case ISP_PM_CMD_SET_MODE:
 	{
 		struct work_mode_info *mode_info = (struct work_mode_info *)param_ptr;
-		if (pm_cxt_ptr->multi_mode_flag) {
-			pm_cxt_ptr->prv_mode_id = mode_info->prv_mode_id;
-			pm_cxt_ptr->cap_mode_id = mode_info->cap_mode_id;
-			pm_cxt_ptr->mode_id = mode_info->mode_id;
-		} else {
-			pm_cxt_ptr->mode_id = mode_info->mode_id;
-		}
+		pm_cxt_ptr->mode_id = mode_info->mode_id;
+		pm_cxt_ptr->prv_mode_id = mode_info->prv_mode_id;
+		pm_cxt_ptr->cap_mode_id = mode_info->cap_mode_id;
 		ISP_LOGV("mode_id = %d, prv_mode_id = %d, cap_mode_id = %d",
 			pm_cxt_ptr->mode_id, pm_cxt_ptr->prv_mode_id, pm_cxt_ptr->cap_mode_id);
 		break;
@@ -619,29 +607,18 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 			return rtn;
 		}
 
-		if (pm_cxt_ptr->multi_mode_flag) {
-			for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
-				rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->prv_mode_id);
-				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("fail to do isp_pm_set_block_param");
-					rtn = ISP_ERROR;
-					return rtn;
-				}
-				rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->cap_mode_id);
-				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("fail to do isp_pm_set_block_param");
-					rtn = ISP_ERROR;
-					return rtn;
-				}
+		for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
+			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->prv_mode_id);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to do isp_pm_set_block_param");
+				rtn = ISP_ERROR;
+				return rtn;
 			}
-		} else {
-			for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
-				rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->mode_id);
-				if (ISP_SUCCESS != rtn) {
-					ISP_LOGE("fail to do isp_pm_set_block_param");
-					rtn = ISP_ERROR;
-					return rtn;
-				}
+			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->cap_mode_id);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to do isp_pm_set_block_param");
+				rtn = ISP_ERROR;
+				return rtn;
 			}
 		}
 		break;
@@ -750,43 +727,29 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			all_setting_flag = 1;
 		}
 
-		if (pm_cxt_ptr->multi_mode_flag) {
-			param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[0];
-			rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
-				all_setting_flag, pm_cxt_ptr->prv_mode_id);
-			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_get_setting_param");
-				rtn = ISP_ERROR;
-				return rtn;
-			}
-			result_param_ptr->prv_param_data = pm_cxt_ptr->temp_param_data_ptr[0];
-			result_param_ptr->prv_param_num = param_counts;
-			result_param_ptr->prv_param_data->mode_id = pm_cxt_ptr->prv_mode_id;
-
-			param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[1];
-			rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
-				all_setting_flag, pm_cxt_ptr->cap_mode_id);
-			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_get_setting_param");
-				rtn = ISP_ERROR;
-				return rtn;
-			}
-			result_param_ptr->cap_param_data = pm_cxt_ptr->temp_param_data_ptr[1];
-			result_param_ptr->cap_param_num = param_counts;
-			result_param_ptr->cap_param_data->mode_id = pm_cxt_ptr->cap_mode_id;
-		} else {
-			param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[0];
-			rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
-				all_setting_flag, pm_cxt_ptr->mode_id);
-			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_get_setting_param");
-				rtn = ISP_ERROR;
-				return rtn;
-			}
-			result_param_ptr->param_data = pm_cxt_ptr->temp_param_data_ptr[0];
-			result_param_ptr->param_num = param_counts;
-			result_param_ptr->param_data->mode_id = pm_cxt_ptr->mode_id;
+		param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[0];
+		rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
+			all_setting_flag, pm_cxt_ptr->prv_mode_id);
+		if (ISP_SUCCESS != rtn) {
+			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			rtn = ISP_ERROR;
+			return rtn;
 		}
+		result_param_ptr->prv_param_data = pm_cxt_ptr->temp_param_data_ptr[0];
+		result_param_ptr->prv_param_num = param_counts;
+		result_param_ptr->prv_param_data->mode_id = pm_cxt_ptr->prv_mode_id;
+
+		param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[1];
+		rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
+			all_setting_flag, pm_cxt_ptr->cap_mode_id);
+		if (ISP_SUCCESS != rtn) {
+			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			rtn = ISP_ERROR;
+			return rtn;
+		}
+		result_param_ptr->cap_param_data = pm_cxt_ptr->temp_param_data_ptr[1];
+		result_param_ptr->cap_param_num = param_counts;
+		result_param_ptr->cap_param_data->mode_id = pm_cxt_ptr->cap_mode_id;
 		break;
 	}
 	case ISP_PM_CMD_GET_SINGLE_SETTING:

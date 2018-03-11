@@ -172,6 +172,10 @@ extern "C" {
 		AF_CB_CMD_SET_AFM_MODE,
 		AF_CB_CMD_SET_AFM_NR_CFG,
 		AF_CB_CMD_SET_AFM_MODULES_CFG,
+		AF_CB_CMD_SET_AFM_CROP_EB,
+		AF_CB_CMD_SET_AFM_CROP_SIZE,
+		AF_CB_CMD_SET_AFM_DONE_TILE_NUM,
+		AF_CB_CMD_SET_MONITOR_WIN_NUM,
 		AF_CB_CMD_SET_MAX,
 
 		AF_CB_CMD_GET_MONITOR_WIN_NUM = 0x2000,
@@ -324,9 +328,29 @@ extern "C" {
 		cmr_u32 ey;
 	};
 
+	struct af_monitor_win_rect {
+		cmr_u32 x;
+		cmr_u32 y;
+		cmr_u32 w;
+		cmr_u32 h;
+	};
+
 	struct af_monitor_win {
 		cmr_u32 type;
-		struct af_win_rect *win_pos;
+		union {
+			struct af_win_rect *win_pos;
+			struct af_monitor_win_rect win_rect;
+		};
+	};
+
+	struct af_monitor_win_num {
+		cmr_u32 x;
+		cmr_u32 y;
+	};
+
+	struct af_monitor_tile_num {
+		cmr_u32 x;
+		cmr_u32 y;
 	};
 
 	struct af_trig_info {
@@ -364,6 +388,10 @@ extern "C" {
 		cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
 		cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, void *af_iir_nr);
 		cmr_s32(*af_monitor_module_cfg) (void *handle, void *af_enhanced_module);
+		cmr_s32(*af_monitor_crop_eb) (void *handle, cmr_u32 *crop_eb);
+		cmr_s32(*af_monitor_crop_size) (void *handle, void *crop_size);
+		cmr_s32(*af_monitor_done_tile_num) (void *handle, struct af_monitor_tile_num *done_tile_num);
+		cmr_s32(*set_monitor_win_num) (void *handle, struct af_monitor_win_num *win_num);
 		cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
 		// SharkLE Only ++
 		cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);

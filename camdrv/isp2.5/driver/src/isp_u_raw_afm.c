@@ -24,109 +24,18 @@ cmr_s32 isp_u_raw_afm_block(cmr_handle handle, void *block_info)
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_u_blocks_info *block_param = (struct isp_u_blocks_info *)block_info;
-	struct isp_dev_rgb_afm_info *rafm_info =
-		(struct isp_dev_rgb_afm_info *)block_param->block_info;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
 
-	/*temp param*/
-	rafm_info->crop_eb = 1;
-	rafm_info->source_sel = 1;
-	rafm_info->lum_stat_chn_sel = 1;
-	rafm_info->iir_eb = 1;
-	rafm_info->clk_gate_dis = 0;
-	rafm_info->done_title_num.x = 3;
-	rafm_info->done_title_num.y = 2;
-	rafm_info->crop_size.x = 0x20;
-	rafm_info->crop_size.y = 0x20;
-	rafm_info->crop_size.w = 640 - 64;
-	rafm_info->crop_size.h = 480 - 64;
-	rafm_info->win.x = 4;
-	rafm_info->win.y = 4;
-	rafm_info->win.w = 32;
-	rafm_info->win.h = 32;
-	rafm_info->win_num.x = 4;
-	rafm_info->win_num.y = 3;
-
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.scene_id = block_param->scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_BLOCK;
-	param.property_param = rafm_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-	return ret;
-}
-
-cmr_s32 isp_u_raw_afm_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height, cmr_u32 scene_id)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_img_size size;
-
-	if (!handle) {
-		ISP_LOGE("fail to get handle.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.scene_id = scene_id;
-	param.sub_block = ISP_BLOCK_RAW_AFM;
-	param.property = ISP_PRO_RGB_AFM_FRAME_SIZE;
-	size.width = width;
-	size.height = height;
-	param.property_param = &size;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-	return ret;
-}
-
-cmr_s32 isp_u_raw_afm_iir_nr_cfg(cmr_handle handle, void *afm_iir_nr, cmr_u32 scene_id)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !afm_iir_nr) {
-		ISP_LOGE("fail to get handle: handle = %p, afm_iir_nr = %p.", handle, afm_iir_nr);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.scene_id = scene_id;
-	param.sub_block = ISP_BLOCK_RAW_AFM;
-	param.property = ISP_PRO_RGB_AFM_IIR_NR_CFG;
-	param.property_param = afm_iir_nr;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 isp_u_raw_afm_modules_cfg(cmr_handle handle, void *afm_modules, cmr_u32 scene_id)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !afm_modules) {
-		ISP_LOGE("fail to get handle: handle = %p, afm_modules = %p.", handle, afm_modules);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.scene_id = scene_id;
-	param.sub_block = ISP_BLOCK_RAW_AFM;
-	param.property = ISP_PRO_RGB_AFM_MODULE_CFG;
-	param.property_param = afm_modules;
+	param.property_param = block_param->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
@@ -232,59 +141,35 @@ cmr_s32 isp_u_raw_afm_win(cmr_handle handle, void *win_range, cmr_u32 scene_id)
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
-	struct isp_dev_rgb_afm_info rafm_info;
 
 	if (!handle) {
 		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
 
-	rafm_info.crop_eb = 1;
-	rafm_info.source_sel = 1;
-	rafm_info.lum_stat_chn_sel = 1;
-	rafm_info.iir_eb = 1;
-	rafm_info.clk_gate_dis = 0;
-	rafm_info.done_title_num.x = 5;
-	rafm_info.done_title_num.y = 2;
-	rafm_info.crop_size.x = *(uint32_t*)win_range;
-	rafm_info.crop_size.y = *((uint32_t*)win_range + 1);
-	rafm_info.crop_size.w = (*((uint32_t*)win_range + 2) - rafm_info.crop_size.x)*3;
-	rafm_info.crop_size.h = (*((uint32_t*)win_range + 3) - rafm_info.crop_size.y)*3;
-	rafm_info.win.x = 0;
-	rafm_info.win.y = 0;
-	rafm_info.win.w = (*((uint32_t*)win_range + 2) - rafm_info.crop_size.x)>>1;
-	rafm_info.win.h = *((uint32_t*)win_range + 3) - rafm_info.crop_size.y;
-	rafm_info.win_num.x = 6;
-	rafm_info.win_num.y = 3;
-
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
 	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AFM;
-	param.property = ISP_PRO_RGB_AFM_BLOCK;
+	param.property = ISP_PRO_RGB_AFM_WIN;
 	param.property_param = win_range;
-	param.property_param = &rafm_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }
 
-cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, cmr_u32 * win_num, cmr_u32 scene_id)
+cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, void *win_num, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
-	struct img_offset winnum;
 
 	if (!handle) {
 		ISP_LOGE("fail to get handle.");
 		return -1;
 	}
-
-	winnum.x = 6;
-	winnum.y = 3;
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
@@ -292,8 +177,76 @@ cmr_s32 isp_u_raw_afm_win_num(cmr_handle handle, cmr_u32 * win_num, cmr_u32 scen
 	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_WIN_NUM;
 	param.property_param = win_num;
-	param.property_param = &winnum;
-	*win_num = 10;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+cmr_s32 isp_u_raw_afm_crop_eb(cmr_handle handle, cmr_u32 crop_eb, cmr_u32 scene_id)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
+	param.property = ISP_PRO_RGB_AFM_CROP_EB;
+	param.property_param = &crop_eb;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+cmr_s32 isp_u_raw_afm_crop_size(cmr_handle handle, void *crop_size, cmr_u32 scene_id)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
+	param.property = ISP_PRO_RGB_AFM_CROP_SIZE;
+	param.property_param = crop_size;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+cmr_s32 isp_u_raw_afm_done_tile_num(cmr_handle handle, void *done_tile_num, cmr_u32 scene_id)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
+	param.property = ISP_PRO_RGB_AFM_DONE_TILE_NUM;
+	param.property_param = done_tile_num;
+
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;

@@ -60,6 +60,7 @@ cmr_u32 _pm_rgb_afm_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u
 		dst_ptr->cur.fv0_shift = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv0.fv_shift;
 		dst_ptr->cur.fv0_th.min = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv0.fv_min_th;
 		dst_ptr->cur.fv0_th.max = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv0.fv_max_th;
+		dst_ptr->cur.fv0_th.max = 1023547;// wait for tool ready
 
 		dst_ptr->cur.clip_en1 = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv1.clip_en;
 		dst_ptr->cur.fv1_shift = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv1.fv_shift;
@@ -114,6 +115,7 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 cur_level = 0;
+			cmr_u32 is_need_update = 0;
 
 			val_range.min = 0;
 			val_range.max = 255;
@@ -126,7 +128,7 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 
 			cur_level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (cur_level != dst_ptr->cur_level || nr_tool_flag[9] || block_result->mode_flag_changed) {
+			if (is_need_update && (cur_level != dst_ptr->cur_level || nr_tool_flag[9] || block_result->mode_flag_changed)) {
 				dst_ptr->cur_level = cur_level;
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[9] = 0;

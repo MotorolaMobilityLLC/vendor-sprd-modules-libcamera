@@ -126,7 +126,6 @@ cmr_s32 _pm_cfa_init(void *dst_cfae_param, void *src_cfae_param, void *param1, v
 cmr_s32 _pm_cfa_set_param(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 frame_width = 0;
 	struct isp_cfa_param *cfae_ptr = (struct isp_cfa_param *)cfae_param;
 	struct isp_pm_block_header *cfae_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
@@ -135,12 +134,6 @@ cmr_s32 _pm_cfa_set_param(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void 
 		cfae_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 		cfae_header_ptr->is_update = ISP_ONE;
 		break;
-
-	case ISP_PM_BLK_CFA_CFG:
-		frame_width = *((cmr_u32 *) param_ptr0);
-		cfae_header_ptr->is_update = ISP_ONE;
-		break;
-
 
 	case ISP_PM_BLK_SMART_SETTING:
 		{

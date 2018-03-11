@@ -454,24 +454,6 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_drv_slice_param *slice_
 				      0);
 	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 1d lsc slice size"));
 
-	ret = isp_u_2d_lsc_slice_size(handle,
-				      slice_ptr->size[ISP_DRV_LENS].w,
-				      slice_ptr->size[ISP_DRV_LENS].h,
-				      0);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 2d lsc slice size"));
-
-	ret = isp_u_raw_aem_slice_size(handle,
-				       slice_ptr->size[ISP_DRV_AEM].w,
-				       slice_ptr->size[ISP_DRV_AEM].h,
-				       0);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw aem slice size"));
-
-	ret = isp_u_raw_afm_slice_size(handle,
-				       slice_ptr->size[ISP_DRV_RGB_AFM].w,
-				       slice_ptr->size[ISP_DRV_RGB_AFM].h,
-				       0);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp raw afm slice size"));
-
 	ret = isp_u_hist_slice_size(handle,
 				    slice_ptr->size[ISP_DRV_HISTS].w,
 				    slice_ptr->size[ISP_DRV_HISTS].h,
@@ -552,7 +534,10 @@ cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_dev_common_info * param_
 {
 	cmr_s32 ret = ISP_SUCCESS;
 
-	ret = isp_u_comm_block(handle, (void *)param_ptr);
+	ret = isp_u_comm_block(handle, (void *)param_ptr, 1);
+	ISP_RETURN_IF_FAIL(ret, ("store block cfg error"));
+
+	ret = isp_u_comm_block(handle, (void *)param_ptr, 0);
 	ISP_RETURN_IF_FAIL(ret, ("store block cfg error"));
 
 	return ret;

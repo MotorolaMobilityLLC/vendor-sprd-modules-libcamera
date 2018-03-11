@@ -89,7 +89,7 @@ cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, voi
 	dst_ptr->cur.rd_retain_num = 0xf;
 	dst_ptr->cur.rd_max_len_sel = 1;
 	dst_ptr->cur.wr_max_len_sel = 1;
-	dst_ptr->cur.bpc_blk_mode = 1;
+	dst_ptr->cur.bpc_blk_mode = 0;
 
 	dst_ptr->cur.bypass = bpc_header_ptr->bypass;
 	dst_ptr->cur_level = src_ptr->default_strength_level;

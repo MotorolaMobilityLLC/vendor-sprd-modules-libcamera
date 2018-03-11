@@ -225,7 +225,11 @@ static cmr_s32 af_set_monitor_win(void *handle_af, struct af_monitor_win *in_par
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
+#ifdef CONFIG_ISP_2_5 // only set most up and left roi
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_MONITOR_WIN, (void *)&(in_param->win_rect), NULL);
+#else
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_MONITOR_WIN, (void *)(in_param->win_pos), NULL);
+#endif
 	}
 
 	return ISP_SUCCESS;
@@ -237,6 +241,17 @@ static cmr_s32 af_get_monitor_win_num(void *handle_af, cmr_u32 * win_num)
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_GET_MONITOR_WIN_NUM, (void *)win_num, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_set_monitor_win_num(void *handle_af, struct af_monitor_win_num *win_num)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_MONITOR_WIN_NUM, (void *)win_num, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -292,6 +307,39 @@ static cmr_s32 af_monitor_module_cfg(void *handle_af, void *af_enhanced_module)
 
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_AFM_MODULES_CFG, (void *)af_enhanced_module, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_crop_eb(void *handle_af, cmr_u32 *crop_eb)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_AFM_CROP_EB, (void *)crop_eb, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_crop_size(void *handle_af, void *crop_size)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_AFM_CROP_SIZE, (void *)crop_size, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
+static cmr_s32 af_monitor_done_tile_num(void *handle_af, struct af_monitor_tile_num *done_tile_num)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_AFM_DONE_TILE_NUM, (void *)done_tile_num, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -600,6 +648,10 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->cb_ops.af_monitor_mode = af_monitor_mode;
 	input_ptr->cb_ops.af_monitor_iir_nr_cfg = af_monitor_iir_nr_cfg;
 	input_ptr->cb_ops.af_monitor_module_cfg = af_monitor_module_cfg;
+	input_ptr->cb_ops.af_monitor_crop_eb = af_monitor_crop_eb;
+	input_ptr->cb_ops.af_monitor_crop_size = af_monitor_crop_size;
+	input_ptr->cb_ops.af_monitor_done_tile_num = af_monitor_done_tile_num;
+	input_ptr->cb_ops.set_monitor_win_num = af_set_monitor_win_num;
 	input_ptr->cb_ops.af_get_system_time = af_get_system_time;
 
 	// SharkLE Only ++
