@@ -422,6 +422,7 @@ struct ae_settings {
 	cmr_u32 ev_manual_status;	/*ev manual setting */
 	cmr_u8 *reserve_info;		/* reserve for future */
 	cmr_s16 reserve_len;		/*len for reserve */
+	cmr_u8 is_snapshot;
 };
 
 struct ae_alg_calc_param {

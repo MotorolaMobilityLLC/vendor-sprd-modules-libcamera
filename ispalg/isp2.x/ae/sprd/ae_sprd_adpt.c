@@ -3629,6 +3629,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			|| (FLASH_LED_OFF == cxt->cur_status.settings.flash))) {
 		if (0 == work_info->is_snapshot) {
 			cxt->last_enable = 0;
+			cxt->cur_status.settings.is_snapshot =  work_info->is_snapshot;
 			ae_set_restore_cnt(cxt);
 		} else {
 			ae_set_pause(cxt);
@@ -3636,6 +3637,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			cxt->cur_status.settings.table_idx = 0;
 			cxt->cur_status.settings.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
 			cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
+			cxt->cur_status.settings.is_snapshot =  work_info->is_snapshot;
 		}
 	}
 
