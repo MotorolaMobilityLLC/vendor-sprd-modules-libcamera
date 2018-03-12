@@ -3126,6 +3126,21 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
                  result_buffer->stream->format, result_buffer->stream->width,
                  result_buffer->stream->height, result_buffer->buffer);
 
+        sidebyside_queue_msg_t capture_msg;
+        capture_msg.msg_type = SBS_MSG_MAIN_PROC;
+        capture_msg.combo_buff.frame_number = result->frame_number;
+        capture_msg.combo_buff.main_buffer = result->output_buffers->buffer;
+        capture_msg.combo_buff.sub_buffer = NULL;
+        capture_msg.combo_buff.input_buffer = result->input_buffer;
+        hwiMain->setMultiCallBackYuvMode(false);
+        mRealtimeBokeh = 0;
+        {
+            Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
+            mCaptureThread->mCaptureMsgList.push_back(capture_msg);
+            mCaptureThread->mMergequeueSignal.signal();
+        }
+
+#if 0
         if (!mSidebyside->mFlushing) {
             sidebyside_queue_msg_t capture_msg;
             capture_msg.msg_type = SBS_MSG_MAIN_PROC;
@@ -3154,6 +3169,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
                 mCaptureThread->mMergequeueSignal.signal();
             }
         }
+#endif
     } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
         camera3_capture_result_t newResult = *result;
         camera3_stream_buffer_t newOutput_buffers = *(result->output_buffers);
