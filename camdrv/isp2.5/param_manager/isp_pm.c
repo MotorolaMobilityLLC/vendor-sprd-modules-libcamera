@@ -1446,6 +1446,7 @@ cmr_s32 isp_pm_deinit(cmr_handle handle)
 
 	if (PNULL != pm_cxt_ptr) {
 		pthread_mutex_destroy(&pm_cxt_ptr->pm_mutex);
+		isp_pm_context_deinit((cmr_handle)pm_cxt_ptr);
 		isp_pm_param_list_deinit((cmr_handle)pm_cxt_ptr);
 		free(pm_cxt_ptr);
 		pm_cxt_ptr = PNULL;
