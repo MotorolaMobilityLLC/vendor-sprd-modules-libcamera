@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #define LOG_TAG "cmr_scale"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
@@ -164,8 +163,8 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    if (frame_params->input_size.w >= frame_params->output_size.w &&
-        frame_params->input_size.h >= frame_params->output_size.h) {
+//    if (frame_params->input_size.w >= frame_params->output_size.w &&
+//        frame_params->input_size.h >= frame_params->output_size.h) {
         src.addr_vir.addr_y = frame_params->input_addr_vir.y;
         src.addr_vir.addr_u = frame_params->input_addr_vir.u;
         // src.addr_vir.addr_v = frame_params->input_addr_vir.v;
@@ -193,9 +192,9 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
             (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
                                     cfg_params->cb_handle);
         }
-    } else {
-        ret = CMR_CAMERA_FAIL;
-    }
+//    } else {
+//       ret = CMR_CAMERA_FAIL;
+//    }
 exit:
     CMR_LOGI("done ret %ld", ret);
     return ret;
