@@ -105,7 +105,7 @@ static struct sensor_version_info s_sp0a09z_version_info=
 	{
 		{
 			0x61307073,
-			0x00003930,
+			0x00663930,
 			0x00000000,
 			0x00000000,
 			0x00000000,
