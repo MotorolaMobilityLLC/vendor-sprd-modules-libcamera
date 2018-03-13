@@ -212,6 +212,33 @@ static int _dw9714_drv_set_mode(cmr_handle sns_af_drv_handle)
 		cmd_len = 2;
 		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 		break;
+	case 4:
+		/*Protection off */
+		cmd_val[0] = 0xec;
+		cmd_val[1] = 0xa3;
+		cmd_len = 2;
+		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+
+		/*DLC and MCLK[1:0] setting */
+		cmd_val[0] = 0xa1;
+		/*for better performace, cmd_val[1][1:0] should adjust to matching with Tvib of your camera VCM*/
+		cmd_val[1] = 0x0d;
+		cmd_len = 2;
+		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+
+		/*T_SRC[4:0] setting */
+		cmd_val[0] = 0xf2;
+		/*for better performace, cmd_val[1][7:3] should be adjusted to matching with Tvib of your camera VCM*/
+		cmd_val[1] = 0x48;
+		cmd_len = 2;
+		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+
+		/*Protection on */
+		cmd_val[0] = 0xdc;
+		cmd_val[1] = 0x51;
+		cmd_len = 2;
+		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+		break;
 	}
 
 	return ret_value;
