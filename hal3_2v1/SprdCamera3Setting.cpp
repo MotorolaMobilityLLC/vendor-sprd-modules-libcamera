@@ -3054,8 +3054,8 @@ int SprdCamera3Setting::popAndroidParaTag() {
     if (mParaChangedTagQueue.size() == 0)
         return -1;
 
-    ret = mParaChangedTagQueue.top();
-    mParaChangedTagQueue.pop();
+    ret = mParaChangedTagQueue.itemAt(0);
+    mParaChangedTagQueue.removeAt(0);
     return ret;
 }
 int SprdCamera3Setting::popSprdParaTag() {
@@ -3064,8 +3064,8 @@ int SprdCamera3Setting::popSprdParaTag() {
     if (mSprdParaChangedTagQueue.size() == 0)
         return -1;
 
-    ret = mSprdParaChangedTagQueue.top();
-    mSprdParaChangedTagQueue.pop();
+    ret = mSprdParaChangedTagQueue.itemAt(0);
+    mSprdParaChangedTagQueue.removeAt(0);
     return ret;
 }
 
