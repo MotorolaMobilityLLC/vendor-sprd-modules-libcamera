@@ -393,7 +393,7 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         usleep(1 * 1000);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(1 * 1000);
+        usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
 #if defined(CONFIG_DUAL_MODULE)
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
