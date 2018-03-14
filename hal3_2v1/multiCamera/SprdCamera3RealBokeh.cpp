@@ -3410,19 +3410,16 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     }
     rc = mDepthApi->sprd_depth_VersionInfo_Get(acVersion, 256);
     HAL_LOGD("depth api version [%s]", acVersion);
-    if (mIsSupportPBokeh) {
+    if (mDepthMuxerThread->mPrevDepthhandle == NULL) {
+        int64_t depthInit = systemTime();
+        mDepthMuxerThread->mPrevDepthhandle =
+            mDepthApi->sprd_depth_Init(&(prev_input_param), &(prev_output_info),
+                                       prev_mode, prev_outformat);
         if (mDepthMuxerThread->mPrevDepthhandle == NULL) {
-            int64_t depthInit = systemTime();
-            mDepthMuxerThread->mPrevDepthhandle = mDepthApi->sprd_depth_Init(
-                &(prev_input_param), &(prev_output_info), prev_mode,
-                prev_outformat);
-            if (mDepthMuxerThread->mPrevDepthhandle == NULL) {
-                HAL_LOGE("sprd_depth_Init failed!");
-                return;
-            }
-            HAL_LOGD("depth init cost %lld ms",
-                     ns2ms(systemTime() - depthInit));
+            HAL_LOGE("sprd_depth_Init failed!");
+            return;
         }
+        HAL_LOGD("depth init cost %lld ms", ns2ms(systemTime() - depthInit));
     }
     if (mCaptureThread->mCapDepthhandle == NULL) {
         int64_t depthInit = systemTime();
