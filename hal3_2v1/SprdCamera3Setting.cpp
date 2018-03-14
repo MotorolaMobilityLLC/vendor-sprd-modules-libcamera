@@ -203,7 +203,11 @@ const int32_t kexposureCompensationRange[2] = {-3, 3};
 //};
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {
-    0, 0, 256, 144, 320, 240, 432, 288};
+    0, 0, 256, 144, 320, 240, 432, 288
+#ifdef  CAMERA_SERNSOR_SUPPORT_4224
+    , 528, 392
+#endif
+};
 const int64_t kFrameDurationRange[2] = {
     33331760L, 500000000L}; //{33331760L,30000000000L}; // ~1/30 s - 1/5 sec
 camera_metadata_rational kexposureCompensationStep = {1, 1};
