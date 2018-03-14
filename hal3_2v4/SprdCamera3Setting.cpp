@@ -3031,6 +3031,14 @@ int SprdCamera3Setting::updateWorkParameters(
     int32_t valueI32 = 0;
     int64_t valueI64 = 0;
     int32_t is_capture = 0;
+
+    uint8_t is_raw_capture = 0;
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+
     Mutex::Autolock l(mLock);
 
 #define GET_VALUE_IF_DIF(x, y, tag)                                            \
@@ -3199,14 +3207,7 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
-        uint8_t is_raw_capture = 0;
-        char value[PROPERTY_VALUE_MAX];
         int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM];
-        property_get("persist.sys.camera.raw.mode", value, "jpeg");
-        if (!strcmp(value, "raw")) {
-            is_raw_capture = 1;
-        }
-
         if (is_raw_capture == 1) {
             memset(perfectskinlevel, 0,
                    sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
@@ -3559,13 +3560,17 @@ int SprdCamera3Setting::updateWorkParameters(
     /**add for 3d calibration update metadata end*/
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
-            frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
-        /**add for 3d calibration force set sprd zsl enable begin*/
-        if (s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled)
+        if (is_raw_capture == 1) {
+            s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 0;
+        } else {
             s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
-                s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
-        /**add for 3d calibration force set sprd zsl enable end*/
+                frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
+            /**add for 3d calibration force set sprd zsl enable begin*/
+            if (s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled)
+                s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
+                    s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
+            /**add for 3d calibration force set sprd zsl enable end*/
+        }
         pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
     }
 

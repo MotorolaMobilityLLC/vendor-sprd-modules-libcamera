@@ -1095,6 +1095,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mMetadataChannel->request(meta);
     mMetadataChannel->getCapRequestPara(meta, &capturePara);
 
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+
     // for BUG459753 HDR capture
     if (capturePara.cap_intent ==
             ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
@@ -1110,7 +1113,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     switch (capturePara.cap_intent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if (mOldCapIntent != capturePara.cap_intent) {
-            if (!capturePara.sprd_zsl_enabled) {
+            if (!sprddefInfo.sprd_zsl_enabled) {
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
                 mFirstRegularRequest = true;
             } else {
@@ -1139,7 +1142,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mPictureRequest = true;
         }
 
-        if (capturePara.sprd_zsl_enabled == true ||
+        if (sprddefInfo.sprd_zsl_enabled == true ||
             mMultiCameraMode == MODE_BLUR) {
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT,
                                    mFrameNum);

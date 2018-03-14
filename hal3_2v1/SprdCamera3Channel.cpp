@@ -1034,13 +1034,6 @@ int SprdCamera3MetadataChannel::getCapRequestPara(
         request_para->scene_mode = controlInfo.scene_mode;
     }
 
-    if (metadata.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-        request_para->sprd_zsl_enabled =
-            metadata.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
-    } else {
-        request_para->sprd_zsl_enabled = 0;
-    }
-
     if (metadata.exists(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE)) {
         request_para->sprd_refocus_enabled =
             metadata.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
@@ -1057,26 +1050,7 @@ int SprdCamera3MetadataChannel::getCapRequestPara(
                  request_para->sprd_refocus_enabled);
 #endif
     }
-    /**add for 3d calibration force set sprd zsl enable begin*/
-    if (metadata.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
-        request_para->sprd_zsl_enabled =
-            metadata.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
-        HAL_LOGD("3dcalibration exist, set sprd_zsl_enabled %d",
-                 request_para->sprd_zsl_enabled);
-    } else {
-        SPRD_DEF_Tag sprddefInfo;
-        memset(&sprddefInfo, 0, sizeof(SPRD_DEF_Tag));
 
-        mSetting->getSPRDDEFTag(&sprddefInfo);
-        if (sprddefInfo.sprd_3dcalibration_enabled) {
-            request_para->sprd_zsl_enabled =
-                sprddefInfo.sprd_3dcalibration_enabled;
-            HAL_LOGD("ANDROID_SPRD_3DCALIBRATION_ENABLED is NULL but 3d cal "
-                     "mode needed, force set sprd_zsl_enabled %d",
-                     request_para->sprd_zsl_enabled);
-        }
-    }
-    /**add for 3d calibration force set sprd zsl enable begin*/
     if (metadata.exists(ANDROID_SPRD_HDR_PLUS_ENABLED)) {
         request_para->sprd_hdr_plus_enable =
             metadata.find(ANDROID_SPRD_HDR_PLUS_ENABLED).data.u8[0];

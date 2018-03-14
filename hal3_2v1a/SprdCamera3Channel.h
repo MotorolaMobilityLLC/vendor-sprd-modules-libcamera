@@ -55,7 +55,6 @@ typedef struct {
     uint8_t cap_intent;
     uint8_t takepicture_cnt;
     uint8_t scene_mode;
-    uint8_t sprd_zsl_enabled;
     uint8_t sprd_refocus_enabled;
 } CapRequestPara;
 
