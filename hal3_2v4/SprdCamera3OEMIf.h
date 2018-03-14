@@ -736,11 +736,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
 
-    /* enable/disable powerhint for hdr */
-    uint32_t mHDRPowerHint;
+    /*Powerhint for camera power */
     SprdCameraSystemPerformance *mSysPerformace;
-    /* 1- start acceleration, 0 - finish acceleration*/
-    bool mHDRPowerHintFlag;
 
     /* for eis*/
     bool mGyroInit;

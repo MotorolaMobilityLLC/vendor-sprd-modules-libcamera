@@ -248,7 +248,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
-      mHDRPowerHint(0), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
+      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
       mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
       mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
       mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
@@ -704,9 +704,6 @@ int SprdCamera3OEMIf::takePicture() {
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
-    }
-    if (1 == mHDRPowerHint) {
-        setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HH);
     }
 
     if (SPRD_ERROR == mCameraState.capture_state) {
@@ -3156,7 +3153,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
@@ -3165,7 +3161,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
             mVideo3dnrFlag = VIDEO_ON;
             camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag, NULL);
         }
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -3173,14 +3168,12 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
     } else if (getMultiCameraMode() == MODE_BLUR ||
                getMultiCameraMode() == MODE_SBS) {
         mSprdZslEnabled = true;
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
     } else {
         mSprdZslEnabled = false;
     }
@@ -3871,13 +3864,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-        if (getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_SBS ) {
-            setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
-        } else {
-            setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
-        }
-
+        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
     }
 
     SPRD_DEF_Tag sprddefInfo;
@@ -4890,14 +4877,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             deinitCapture(mIsPreAllocCapMem);
         }
     }
-    if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_SBS) {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
-    } else if (mRecordingMode == true) {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
-    }else {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
-    }
+    setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
 
 exit:
     HAL_LOGD("X");
@@ -5920,11 +5900,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
-        if (CAMERA_SCENE_MODE_HDR == drvSceneMode) {
-            mHDRPowerHint = 1;
-        } else {
-            mHDRPowerHint = 0;
-        }
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {
