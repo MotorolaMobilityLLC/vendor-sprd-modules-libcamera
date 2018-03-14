@@ -811,13 +811,8 @@ int SprdCamera3Setting::setLargestSensorSize(int32_t cameraId, cmr_u16 width,
 
 int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                              cmr_u16 *height) {
-#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     *width = sensor_max_width[cameraId];
     *height = sensor_max_height[cameraId];
-#else
-    *width = default_sensor_max_sizes[cameraId].width;
-    *height = default_sensor_max_sizes[cameraId].height;
-#endif
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
@@ -1246,12 +1241,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
 
-    cmr_u16 largest_sensor_width, largest_sensor_height;
-    getLargestSensorSize(cameraId, &largest_sensor_width,
-                         &largest_sensor_height);
-
-    HAL_LOGD("camera ID = %d, getLargestSensorSize->width = %d, "
-             "getLargestSensorSize->height = %d",
+    cmr_u16 largest_sensor_width = 0;
+    cmr_u16 largest_sensor_height = 0;
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    largest_sensor_width = sensor_max_width[cameraId];
+    largest_sensor_height = sensor_max_height[cameraId];
+#else
+    largest_sensor_width = default_sensor_max_sizes[cameraId].width;
+    largest_sensor_height = default_sensor_max_sizes[cameraId].height;
+#endif
+    HAL_LOGD("camera ID = %d, largest_sensor_width = %d, "
+             "largest_sensor_width = %d",
              cameraId, largest_sensor_width, largest_sensor_height);
 
     /* Add input/output stream configurations for each scaler formats*/
