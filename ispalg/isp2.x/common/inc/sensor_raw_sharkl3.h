@@ -717,12 +717,11 @@ struct sensor_grgb_curve {
 };
 
 struct sensor_grgb_level {
-	cmr_u16 diff_th;
-	cmr_u16 hv_edge_thr;
+	cmr_u8 diff_th;
+	cmr_u8 hv_edge_thr;
 	cmr_u16 hv_flat_thr;
 	cmr_u16 slash_edge_thr;
 	cmr_u16 slash_flat_thr;
-	cmr_u16 reserved;
 	struct sensor_grgb_ratio grgb_ratio;
 	struct sensor_grgb_curve lum_curve_edge;
 	struct sensor_grgb_curve lum_curve_flat;

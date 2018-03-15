@@ -83,6 +83,14 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 		dst_ptr->cur.lum_th1 = nlm_param[strength_level].first_lum.lum_thr1;
 		for (i = 0; i < 3; i++) {
 			dst_ptr->cur.w_shift[i] = nlm_param[strength_level].nlm_dic.w_shift[i];
+
+			dst_ptr->cur.nlm_first_lum_flat_thresh_coef[i][0] = nlm_param[strength_level].first_lum.nlm_flat_thr[i].flat_thresh_coef0;
+			dst_ptr->cur.nlm_first_lum_flat_thresh_max[i][0] = nlm_param[strength_level].first_lum.nlm_flat_thr[i].flat_thresh_max0;
+			dst_ptr->cur.nlm_first_lum_flat_thresh_coef[i][1] = nlm_param[strength_level].first_lum.nlm_flat_thr[i].flat_thresh_coef1;
+			dst_ptr->cur.nlm_first_lum_flat_thresh_max[i][1] = nlm_param[strength_level].first_lum.nlm_flat_thr[i].flat_thresh_max1;
+			dst_ptr->cur.nlm_first_lum_flat_thresh_coef[i][2] = nlm_param[strength_level].first_lum.nlm_flat_thr[i].flat_thresh_coef2;
+			dst_ptr->cur.nlm_first_lum_flat_thresh_max[i][2] = nlm_param[strength_level].first_lum.nlm_flat_thr[i].flat_thresh_max2;
+
 			for (j = 0; j < 3; j++) {
 				dst_ptr->cur.lum_flat[i][j].inc_strength = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].flat_inc_str;
 				dst_ptr->cur.lum_flat[i][j].match_count = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].flat_match_cnt;
@@ -90,17 +98,43 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 			}
 		}
 		for (i = 0; i < 3; i++) {
+			dst_ptr->cur.nlm_direction_addback_mode_bypass = nlm_param[strength_level].first_lum.dal[i].mode_bypass;
 			for (j = 0; j < 3; j++) {
 				dst_ptr->cur.lum_flat_addback0[i][j] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].addback0;	//for G channel
 				dst_ptr->cur.lum_flat_addback1[i][j] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].addback1;	//for R and B channel
 				dst_ptr->cur.lum_flat_addback_max[i][j] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].addback_clip_max;	//plus noise
 				dst_ptr->cur.lum_flat_addback_min[i][j] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].addback_clip_min;	//minus noise
+
+				dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].radius_threshold_filter_ratio;
+				dst_ptr->cur.nlm_radial_1D_coef2[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].coef2;
+				dst_ptr->cur.nlm_radial_1D_protect_gain_min[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].protect_gain_min;
+
+				dst_ptr->cur.nlm_first_lum_direction_addback[i][j] = nlm_param[strength_level].first_lum.dal[i].da[j].direction_addback;
+				dst_ptr->cur.nlm_first_lum_direction_addback_noise_clip[i][j] = nlm_param[strength_level].first_lum.dal[i].da[j].direction_addback_noise_clip;
+
 			}
 			dst_ptr->cur.lum_flat_addback0[i][3] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_texture.addback30;
 			dst_ptr->cur.lum_flat_addback1[i][3] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_texture.addback31;
 			dst_ptr->cur.lum_flat_addback_max[i][3] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_texture.addback_clip_max;
 			dst_ptr->cur.lum_flat_addback_min[i][3] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_texture.addback_clip_min;
+
+			dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio[i][3] = nlm_param[strength_level].radius_1d.radius[i][3].radius_threshold_filter_ratio;
+			dst_ptr->cur.nlm_radial_1D_coef2[i][3] = nlm_param[strength_level].radius_1d.radius[i][3].coef2;
+			dst_ptr->cur.nlm_radial_1D_protect_gain_min[i][3] = nlm_param[strength_level].radius_1d.radius[i][3].protect_gain_min;
+
+			dst_ptr->cur.nlm_first_lum_direction_addback[i][3] = nlm_param[strength_level].first_lum.dal[i].da[3].direction_addback;
+			dst_ptr->cur.nlm_first_lum_direction_addback_noise_clip[i][3] = nlm_param[strength_level].first_lum.dal[i].da[3].direction_addback_noise_clip;
+
 		}
+
+		dst_ptr->cur.radius_bypass = nlm_param[strength_level].radius_1d.cal_radius_bypass;
+		dst_ptr->cur.nlm_radial_1D_bypass = nlm_param[strength_level].radius_1d.radial_1D_bypass;
+		dst_ptr->cur.update_flat_thr_bypass = nlm_param[strength_level].radius_1d.update_flat_thr_bypass;
+		dst_ptr->cur.nlm_radial_1D_center_x = nlm_param[strength_level].radius_1d.center_x;
+		dst_ptr->cur.nlm_radial_1D_center_y = nlm_param[strength_level].radius_1d.center_y;
+		dst_ptr->cur.nlm_radial_1D_radius_threshold = nlm_param[strength_level].radius_1d.radius_threshold;
+		dst_ptr->cur.nlm_radial_1D_protect_gain_max = nlm_param[strength_level].radius_1d.protect_gain_max;
+
 		dst_ptr->cur.simple_bpc_bypass = nlm_param[strength_level].simple_bpc.simple_bpc_bypass;
 		dst_ptr->cur.simple_bpc_lum_th = nlm_param[strength_level].simple_bpc.simple_bpc_lum_thr;
 		dst_ptr->cur.simple_bpc_th = nlm_param[strength_level].simple_bpc.simple_bpc_thr;

@@ -40,6 +40,10 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 		dst_ptr->cur.bpc_mode = bpc_param[strength_level].bpc_comm.bpc_mode;
 		dst_ptr->cur.edge_hv_mode = bpc_param[strength_level].bpc_comm.hv_mode;
 		dst_ptr->cur.edge_rd_mode = bpc_param[strength_level].bpc_comm.rd_mode;
+		dst_ptr->cur.double_bypass = bpc_param[strength_level].bpc_comm.double_bypass;
+		dst_ptr->cur.three_bypass = bpc_param[strength_level].bpc_comm.three_bypass;
+		dst_ptr->cur.four_bypass = bpc_param[strength_level].bpc_comm.four_bypass;
+		dst_ptr->cur.is_mono_sensor = bpc_param[strength_level].bpc_comm.isMonoSensor;
 		for (i = 0; i < 8; i++) {
 			dst_ptr->cur.lut_level[i] = bpc_param[strength_level].bpc_comm.lut_level[i];
 			dst_ptr->cur.slope_k[i] = bpc_param[strength_level].bpc_comm.slope_k[i];
