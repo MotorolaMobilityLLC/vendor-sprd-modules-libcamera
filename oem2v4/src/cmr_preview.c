@@ -7999,6 +7999,9 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->cap_zsl_frm_cnt = 0;
     }
 
+    cmr_bzero(prev_cxt->cap_zsl_rot_frm_is_lock,
+              PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+    prev_cxt->prev_rot_index = 0;
     chn_param.is_lightly = is_lightly;
     chn_param.sensor_mode = prev_cxt->cap_mode;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
