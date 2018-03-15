@@ -1008,6 +1008,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 i = 0;
+	cmr_u16 isp_gain_tmp = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	cmr_handle pm_handle = cxt->handle_pm;
@@ -1229,10 +1230,47 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					memcpy(isp_lsc_info->data_ptr, update_info.lsc_buffer_addr, isp_lsc_info->len);
 				}
 			}
+
+			/* for isp lsc image pattern conversion */
+			switch(cxt->commn_cxt.image_pattern) {
+			case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+				for (i = 0; i < isp_lsc_info->len / 8; i++) {
+					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3) = isp_gain_tmp;
+					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2) = isp_gain_tmp;
+				}
+				break;
+			case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+				for (i = 0; i < isp_lsc_info->len / 8; i++) {
+					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2) = isp_gain_tmp;
+					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3) = isp_gain_tmp;
+				}
+				break;
+			case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+				for (i = 0; i < isp_lsc_info->len / 8; i++) {
+					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1) = isp_gain_tmp;
+					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3);
+					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3) = isp_gain_tmp;
+				}
+				break;
+			default:
+				break;
+			}
 			/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 			io_pm_input.param_data_ptr = pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
+
 			memset(pm_param, 0, sizeof(pm_param));
 			BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_MEM_ADDR,
 					DCAM_BLK_2D_LSC,
@@ -3924,6 +3962,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	cmr_s32 dst_gain_size = 0;
 	cmr_u16 *dst_gain_tmp = NULL;
 	cmr_u32 adaptive_size_info[3] = {0, 0, 0};  // cur_width, cur_height, adaptive_grid
+	cmr_u16 lsc_param_tmp = 0;
 
 	memset(&binning_src, 0x0, sizeof(binning_src));
 	memset(&binning_dst, 0x0, sizeof(binning_dst));
@@ -4157,6 +4196,41 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	input.param_data_ptr = pm_param;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
 
+	/* dcam lsc image pattern conversion */
+	switch(cxt->commn_cxt.image_pattern) {
+	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+		for (i = 0; i < dst_gain_size / 8; i++) {
+			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 0);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 0) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 3);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 3) = lsc_param_tmp;
+			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 1);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 1) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 2);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 2) = lsc_param_tmp;
+		}
+		break;
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+		for (i = 0; i < dst_gain_size / 8; i++) {
+			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 0);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 0) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 2);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 2) = lsc_param_tmp;
+			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 1);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 1) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 3);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 3) = lsc_param_tmp;
+		}
+		break;
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+		for (i = 0; i < dst_gain_size / 8; i++) {
+			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 0);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 0) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 1);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 1) = lsc_param_tmp;
+			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 2);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 2) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 3);
+			*((cmr_u16 *)dst_gain_tmp + i * 4 + 3) = lsc_param_tmp;
+		}
+		break;
+	default:
+		break;
+	}
 	memset(&pm_param, 0, sizeof(pm_param));
 	BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_MEM_ADDR, DCAM_BLK_2D_LSC, cxt->mode_id[0], dst_gain_tmp, dst_gain_size);
 	input.param_num = 1;
