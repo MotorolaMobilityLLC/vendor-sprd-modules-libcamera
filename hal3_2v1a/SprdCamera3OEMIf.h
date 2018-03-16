@@ -33,8 +33,6 @@ extern "C" {
 #include <binder/MemoryHeapBase.h>
 #include <binder/IInterface.h>
 #include <binder/BinderService.h>
-#include <powermanager/IPowerManager.h>
-#include <powermanager/PowerManager.h>
 #include <hardware/camera.h>
 #include <hardware/gralloc.h>
 #include <camera/CameraParameters.h>
@@ -47,7 +45,7 @@ extern "C" {
 #include "SprdCamera3Stream.h"
 #include "SprdCamera3Channel.h"
 
-#include <hardware/power.h>
+#include "SprdCameraSystemPerformance.h"
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
 #ifdef CONFIG_SPRD_ANDROID_8
@@ -212,16 +210,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-    void bindcoreEnabled();
-    void acquireCore(int mode);
-#endif
-    void initPowerManager();
-    void acquirePrfmLock(int type);
-    void releasePrfmLock();
-    int changeDfsPolicy(int dfs_policy);
-    int setDfsPolicy(int dfs_policy);
-    int releaseDfsPolicy(int dfs_policy);
+
     int IommuIsEnabled(void);
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
@@ -294,6 +283,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static int gyro_get_data(void *p_data, ASensorEvent *buffer, int n,
                              struct cmr_af_aux_sensor_info *sensor_info);
 #endif
+
+    void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
 
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
@@ -395,12 +386,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
         STATE_FOCUS,
         STATE_SET_PARAMS,
     };
-
-#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-    enum acquirecore_mode{
-        LOWPOWER_MODE, PERFORMENCE_MODE,
-    };
-#endif
 
     typedef struct _camera_state {
         Sprd_camera_state camera_state;
@@ -647,7 +632,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mTimeCoeff;
     uint32_t mPreviewBufferUsage;
     uint32_t mOriginalPreviewBufferUsage;
-    uint32_t mCameraDfsPolicyCur;
 
     /*callback thread*/
     cmr_handle mCameraHandle;
@@ -770,11 +754,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
 
-    power_module_t *m_pPowerModule;
-    /* enable/disable powerhint for hdr */
-    uint32_t mHDRPowerHint;
-    /* 1- start acceleration, 0 - finish acceleration*/
-    bool mHDRPowerHintFlag;
+    SprdCameraSystemPerformance *mSysPerformace;
 
     /* for eis*/
     bool mGyroInit;
@@ -832,13 +812,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mResetBrightness;
 #endif
 
-    sp<IPowerManager> mPowerManager;
-    Mutex mPowerManagerLock;
-    sp<IBinder> mPrfmLock;
-#ifdef CONFIG_CAMERA_POWERHINT_ACQUIRECORE
-    bool mBindcoreFlag;
-    int mBindcorePreivewFrameCount;
-#endif
     int64_t mLastCafDoneTime;
 };
 

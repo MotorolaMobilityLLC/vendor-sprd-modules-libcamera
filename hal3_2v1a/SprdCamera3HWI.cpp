@@ -173,7 +173,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
     }
 
     if (mOEMIf) {
-        mOEMIf->acquirePrfmLock(POWER_HINT_VENDOR_CAMERA_PERFORMANCE);
+        mOEMIf->setCamPreformaceScene(CAM_EXIT_S);
         // for performance tuning: close camera
         mOEMIf->setSensorCloseFlag();
     }
