@@ -33,6 +33,7 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         if (faceBeauty->hSprdFB == 0) {
             ALOGD("init_fb_handle to FB_CreateBeautyHandle");
+            faceBeauty->firstFrm = 1;
             if (FB_OK != FB_CreateBeautyHandle(&(faceBeauty->hSprdFB), workMode,
                                                threadNum)) {
                 ALOGE("FB_CreateBeautyHandle() Error");
@@ -431,6 +432,23 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         clock_gettime(CLOCK_BOOTTIME, &start_time);
         BOKEH_DATA *bokehData = 0;
+
+        /*check first face frame*/
+        if (faceBeauty->firstFrm && faceCount > 0) {
+            faceBeauty->firstFrm = 0;
+        }
+        if (faceBeauty->firstFrm == 0) {
+            if (faceCount == 0) {
+                if (faceBeauty->noFaceFrmCnt < 100)
+                    faceBeauty->noFaceFrmCnt++;
+            } else
+                faceBeauty->noFaceFrmCnt = 0;
+
+            /*from face to no face.remain 10 frames to do face beauty*/
+            if (faceBeauty->noFaceFrmCnt < 10)
+                faceCount = faceCount > 0 ? faceCount : 1;
+        }
+
         retVal =
             FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
                                    &(faceBeauty->fb_option),

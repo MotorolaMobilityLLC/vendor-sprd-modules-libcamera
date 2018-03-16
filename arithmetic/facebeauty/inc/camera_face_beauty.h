@@ -14,6 +14,7 @@ extern "C" {
 struct class_fb {
     int fb_mode;
     int firstFrm;
+    int noFaceFrmCnt;
     char sprdAlgorithm[PROPERTY_VALUE_MAX];
     FB_BEAUTY_OPTION fb_option;
     FB_IMAGE_YUV420SP fb_image;
@@ -39,7 +40,7 @@ struct face_beauty_levels {
     unsigned char brightLevel; /* Skin brightness level. Value range [0, 10] */
     unsigned char lipColor; /* The target lip color: crimson, pink or fuchsia */
     unsigned char lipLevel; /* Red lips level. Value range [0, 10] */
-    unsigned char slimLevel; /* Slim face level. Value range [0, 10] */
+    unsigned char slimLevel;  /* Slim face level. Value range [0, 10] */
     unsigned char largeLevel; /* Enlarge eye level. Value range [0, 10] */
 };
 
