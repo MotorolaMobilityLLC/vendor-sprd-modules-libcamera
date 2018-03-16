@@ -178,6 +178,7 @@ struct ispalg_afl_ctrl_ops {
 	cmr_int (*process)(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr);
 	cmr_int (*config)(cmr_handle isp_afl_handle);
 	cmr_int (*config_new)(cmr_handle isp_afl_handle);
+	cmr_int (*ioctrl)(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 };
 
 struct ispalg_awb_ctrl_ops {
@@ -1282,9 +1283,12 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 	cmr_u32 awb_mode = 0;
+	struct afl_ctrl_proc_out afl_info;
+	cmr_int nxt_flicker = 0;
 
 	memset(&gain, 0, sizeof(gain));
 	memset(&cur_gain, 0, sizeof(cur_gain));
+	memset(&afl_info, 0, sizeof(afl_info));
 
 	if (cxt->ae_cxt.sw_bypass) {
 		return ret;
@@ -1303,6 +1307,21 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	if(cxt->ops.awb_ops.ioctrl){
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WB_MODE, NULL, (void *)&awb_mode);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_GET_INFO, (void *)&afl_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_GET_INFO"));
+	}
+
+	if (afl_info.flag) {
+		if (afl_info.cur_flicker) {
+			nxt_flicker = AE_FLICKER_50HZ;
+		} else {
+			nxt_flicker = AE_FLICKER_60HZ;
+		}
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &nxt_flicker, NULL);
 	}
 
 	memset((void *)&ae_result, 0, sizeof(ae_result));
@@ -1899,6 +1918,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.cur_flicker = cur_flicker;
 	afl_input.vir_addr = u_addr;
 	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
+	afl_input.private_len = sizeof(struct isp_statis_info);
+	afl_input.private_data = (struct isp_statis_info *)statis_info;
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
@@ -3149,6 +3170,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	cxt->ops.afl_ops.process = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_process");
 	if (!cxt->ops.afl_ops.process) {
 		ISP_LOGE("fail to dlsym afl_ops.process");
+		goto error_dlsym;
+	}
+	cxt->ops.afl_ops.ioctrl= dlsym(cxt->ispalg_lib_handle, "afl_ctrl_ioctrl");
+	if (!cxt->ops.afl_ops.ioctrl) {
+		ISP_LOGE("fail to dlsym afl_ops.afl_ctrl_ioctrl");
 		goto error_dlsym;
 	}
 	cxt->ops.afl_ops.config = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_cfg");

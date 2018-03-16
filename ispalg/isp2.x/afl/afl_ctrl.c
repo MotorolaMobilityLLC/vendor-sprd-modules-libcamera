@@ -169,6 +169,16 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	ae_exp_flag = in_ptr->ae_exp_flag;
 	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
 
+#ifdef CONFIG_ISP_2_5
+	cmr_s32 afl_stat_tmp[2] = { 0 };
+	for (i = 0; i < (480 * cxt->frame_num); i += 2) {
+		afl_stat_tmp[0] = (*(cmr_s32 *)(addr + i)) & 0x3ffff;
+		afl_stat_tmp[1] = (((*(cmr_s32 *)(addr + i)) & 0xffff3000) >> 18) | (((*(cmr_s32 *)(addr + i + 1)) & 0xf) << 14);
+		*(cmr_s32 *)(addr + i) = afl_stat_tmp[0];
+		*(cmr_s32 *)(addr + i + 1) = afl_stat_tmp[1];
+	}
+#endif
+
 #ifdef CONFIG_ISP_2_2
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_ANTI_FLICKER, NULL, 0);
 	ret = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
@@ -443,6 +453,11 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	cxt->vheight = cxt->height;
 	cxt->start_col = 0;
 	cxt->end_col = cxt->width;
+
+#ifdef CONFIG_ISP_2_5
+	afl_info_v3.bayer2y_chanel = 0;
+	afl_info_v3.bayer2y_mode = 2;
+#endif
 
 	afl_info_v3.bypass = cxt->bypass;
 	afl_info_v3.mode = cxt->mode;
