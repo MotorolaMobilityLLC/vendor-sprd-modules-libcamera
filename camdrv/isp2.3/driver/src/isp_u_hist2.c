@@ -18,6 +18,32 @@
 
 #include "isp_drv.h"
 
+cmr_s32 isp_u_hist2_bypass(cmr_handle handle, void *param_ptr)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_u_blocks_info *hist2_ptr = NULL;
+	struct isp_io_param param;
+
+	if (!handle || !param_ptr) {
+		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	hist2_ptr = (struct isp_u_blocks_info *)param_ptr;
+
+	param.isp_id = file->isp_id;
+	param.scene_id = hist2_ptr->scene_id;
+	param.sub_block = ISP_BLOCK_HIST2;
+	param.property = ISP_PRO_HIST2_BYPASS;
+	param.property_param = &hist2_ptr->bypass;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
 cmr_s32 isp_u_hist2_block(void *handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;

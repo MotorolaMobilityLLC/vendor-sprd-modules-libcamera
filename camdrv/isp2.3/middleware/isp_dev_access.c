@@ -58,14 +58,19 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	statis_mem_info->isp_lsc_virtaddr = in_ptr->isp_lsc_virtaddr;
 	statis_mem_info->lsc_mfd = in_ptr->lsc_mfd;
 
-	stats_buffer_size = ISP_AEM_STATIS_BUF_SIZE +
-		ISP_AFM_STATIS_BUF_SIZE +
-		ISP_AFL_STATIS_BUF_SIZE +
-		ISP_HIST_STATIS_BUF_SIZE +
-		ISP_HIST2_STATIS_BUF_SIZE +
-		ISP_BINNING_STATIS_BUF_SIZE;
-
-	if (in_ptr->pdaf_support)
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_AEM)
+		stats_buffer_size += ISP_AEM_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFM)
+		stats_buffer_size += ISP_AFM_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFL)
+		stats_buffer_size += ISP_AFL_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_BINNING)
+		stats_buffer_size += ISP_BINNING_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_HIST)
+		stats_buffer_size += ISP_HIST_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_HIST2)
+		stats_buffer_size += ISP_HIST2_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_PDAF)
 		stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE;
 
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
@@ -74,6 +79,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		statis_mem_info->cb_of_free = in_ptr->cb_of_free;
 		statis_mem_info->isp_statis_mem_size = stats_buffer_size * 5;
 		statis_mem_info->isp_statis_mem_num = 1;
+		statis_mem_info->statis_valid = in_ptr->statis_valid;
 		if (statis_mem_info->cb_of_malloc) {
 			isp_cb_of_malloc cb_malloc = in_ptr->cb_of_malloc;
 
@@ -136,6 +142,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_statis_buf.kaddr[1] = statis_mem_info->isp_statis_k_addr[1];
 	isp_statis_buf.vir_addr = statis_mem_info->isp_statis_u_addr;
 	isp_statis_buf.buf_flag = 0;
+	isp_statis_buf.statis_valid = statis_mem_info->statis_valid;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
 	isp_statis_buf.dev_fd = statis_mem_info->statis_buf_dev_fd;
 
@@ -625,6 +632,15 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		break;
 	case ISP_DEV_SET_AFL_NEW_BYPASS:
 		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in);
+		break;
+	case ISP_DEV_SET_BINNING_BYPASS:
+		ret = isp_u_binning_bypass(cxt->isp_driver_handle, in);
+		break;
+	case ISP_DEV_SET_HIST_BYPASS:
+		ret = isp_u_hist_bypass(cxt->isp_driver_handle, in);
+		break;
+	case ISP_DEV_SET_HIST2_BYPASS:
+		ret = isp_u_hist2_bypass(cxt->isp_driver_handle, in);
 		break;
 	case ISP_DEV_SET_AE_SHIFT:
 		ret = isp_u_raw_aem_shift(cxt->isp_driver_handle, in);

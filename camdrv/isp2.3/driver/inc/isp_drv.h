@@ -100,7 +100,7 @@ struct isp_statis_mem_info {
 	cmr_uint isp_lsc_virtaddr;
 	cmr_s32 lsc_mfd;
 
-	cmr_u32 pdaf_support;
+	cmr_u32 statis_valid;
 	void *buffer_client_data;
 	void *cb_of_malloc;
 	void *cb_of_free;
@@ -273,6 +273,7 @@ cmr_s32 isp_u_brightness_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_contrast_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: HIST*/
+cmr_s32 isp_u_hist_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_hist_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: EDGE*/
@@ -289,6 +290,7 @@ cmr_s32 isp_u_store_slice_size(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_nlc_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Bing4awb*/
+cmr_s32 isp_u_binning_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Sub Block: Pre Glb Gain*/
@@ -340,6 +342,7 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *param_ptr);
 
 /*Hist2*/
+cmr_s32 isp_u_hist2_bypass(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_hist2_block(cmr_handle handle, void *param_ptr);
 
 /*Pre Cdn*/

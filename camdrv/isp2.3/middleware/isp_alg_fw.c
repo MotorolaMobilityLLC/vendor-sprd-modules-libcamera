@@ -263,6 +263,7 @@ struct isp_alg_fw_context {
 	cmr_u32 lsc_flash_onoff;
 	cmr_u32 capture_mode;
 	cmr_u32 zsl_flag;
+	cmr_u32 statis_valid;
 	struct isp_flash_param *pm_flash_info;
 	cmr_u32 mode_id[ISP_MODE_MAX]; /*when none zsl: mode_id[0] for prev, cap, video etc*/
 	pthread_mutex_t stats_buf_lock;
@@ -3594,9 +3595,58 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 	ISP_TRACE_IF_FAIL(ret, ("fail to do anti_flicker param update"));
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &sub_block_info, NULL);
-	if(ret) {
+	if (ret) {
 		ISP_LOGE("fail to set afl bypass");
 	}
+
+	if (!(cxt->statis_valid & ISP_STATIS_VALID_BINNING)) {
+		sub_block_info.bypass = 1;
+		sub_block_info.scene_id = ISP_MODE_PRV;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_BINNING_BYPASS, &sub_block_info, NULL);
+		if (ret) {
+			ISP_LOGE("fail to set prv binning bypass");
+		}
+		if (cxt->zsl_flag) {
+			sub_block_info.scene_id = ISP_MODE_CAP;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_BINNING_BYPASS, &sub_block_info, NULL);
+			if (ret) {
+				ISP_LOGE("fail to set cap binning bypass");
+			}
+		}
+	}
+
+	if (!(cxt->statis_valid & ISP_STATIS_VALID_HIST)) {
+		sub_block_info.bypass = 1;
+		sub_block_info.scene_id = ISP_MODE_PRV;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_HIST_BYPASS, &sub_block_info, NULL);
+		if (ret) {
+			ISP_LOGE("fail to set prv hist bypass");
+		}
+		if (cxt->zsl_flag) {
+			sub_block_info.scene_id = ISP_MODE_CAP;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_HIST_BYPASS, &sub_block_info, NULL);
+			if (ret) {
+				ISP_LOGE("fail to set cap hist bypass");
+			}
+		}
+	}
+
+	if (!(cxt->statis_valid & ISP_STATIS_VALID_HIST2)) {
+		sub_block_info.bypass = 1;
+		sub_block_info.scene_id = ISP_MODE_PRV;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_HIST2_BYPASS, &sub_block_info, NULL);
+		if (ret) {
+			ISP_LOGE("fail to set prv hist2 bypass");
+		}
+		if (cxt->zsl_flag) {
+			sub_block_info.scene_id = ISP_MODE_CAP;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_HIST2_BYPASS, &sub_block_info, NULL);
+			if (ret) {
+				ISP_LOGE("fail to set cap hist2 bypass");
+			}
+		}
+	}
+
 	return ret;
 }
 
@@ -4150,7 +4200,18 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	statis_mem_input.isp_lsc_physaddr = in_ptr->lsc_phys_addr;
 	statis_mem_input.isp_lsc_virtaddr = in_ptr->lsc_virt_addr;
 	statis_mem_input.lsc_mfd = in_ptr->lsc_mfd;
-	statis_mem_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
+	statis_mem_input.statis_valid =
+		ISP_STATIS_VALID_AEM | ISP_STATIS_VALID_AFM | ISP_STATIS_VALID_AFL;
+
+#ifndef ECONOMIZE_MEMORY
+	statis_mem_input.statis_valid |=
+		ISP_STATIS_VALID_BINNING | ISP_STATIS_VALID_HIST | ISP_STATIS_VALID_HIST2;
+#endif
+
+	if (cxt->pdaf_cxt.pdaf_support)
+		statis_mem_input.statis_valid |= ISP_STATIS_VALID_PDAF;
+
+	cxt->statis_valid = statis_mem_input.statis_valid;
 
 	ret = isp_dev_statis_buf_malloc(cxt->dev_access_handle, &statis_mem_input);
 	ISP_RETURN_IF_FAIL(ret, ("fail to malloc buf"));
