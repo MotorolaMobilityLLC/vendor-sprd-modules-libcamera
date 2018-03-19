@@ -228,7 +228,7 @@ const uint8_t avail_effect_mode[] = {
     ANDROID_CONTROL_EFFECT_MODE_NEGATIVE, ANDROID_CONTROL_EFFECT_MODE_SOLARIZE,
     ANDROID_CONTROL_EFFECT_MODE_SEPIA,    ANDROID_CONTROL_EFFECT_MODE_AQUA};
 const uint8_t avail_scene_modes[] = {
-    //ANDROID_CONTROL_SCENE_MODE_DISABLED,
+// ANDROID_CONTROL_SCENE_MODE_DISABLED,
 #ifdef CONFIG_CAMERA_FACE_DETECT
     ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY,
 #endif
@@ -3270,6 +3270,14 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sensitivity is %d", valueI32);
     }
 
+    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
+        s_setting[mCameraId].sprddefInfo.sensor_orientation =
+            frame_settings.find(ANDROID_SPRD_SENSOR_ORIENTATION).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_SENSOR_ORIENTATION);
+        HAL_LOGD("orien %d",
+                 s_setting[mCameraId].sprddefInfo.sensor_orientation);
+    }
+
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
         int32_t rotation =
             frame_settings.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];
@@ -3278,15 +3286,7 @@ int SprdCamera3Setting::updateWorkParameters(
             rotation = 0;
         s_setting[mCameraId].sprddefInfo.sensor_rotation = rotation;
         pushAndroidParaTag(ANDROID_SPRD_SENSOR_ROTATION);
-        HAL_LOGV("rot %d", s_setting[mCameraId].sprddefInfo.sensor_rotation);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
-        s_setting[mCameraId].sprddefInfo.sensor_orientation =
-            frame_settings.find(ANDROID_SPRD_SENSOR_ORIENTATION).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_SENSOR_ORIENTATION);
-        HAL_LOGV("orien %d",
-                 s_setting[mCameraId].sprddefInfo.sensor_orientation);
+        HAL_LOGD("rot %d", s_setting[mCameraId].sprddefInfo.sensor_rotation);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
