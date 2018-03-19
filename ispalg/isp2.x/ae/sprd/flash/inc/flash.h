@@ -92,7 +92,7 @@ struct flash_tune_param {
 	uint16 rPf1[32];
 	uint16 gPf1[32];
 	uint16 rPf2[32];
-	uint16 gPf2[32];		
+	uint16 gPf2[32];
 	float rgTab[20];
 	float ctTab[20];
 	uint8 reserved1[60];/*255 * 4bytes*/
@@ -103,8 +103,14 @@ struct Flash_initInput
 	uint8 debug_level;
 	uint32 statW;/*stat block num in Width dir*/
 	uint32 statH;/*stat block num in Height dir*/
+#if defined(__i386)
+	uint32 tmpForPack1;
+#endif
 	double tmp4pack;
 	struct flash_tune_param *tune_info;/*flash algorithm tune param*/
+#if defined(__i386)
+	uint32 tmpForPack2;
+#endif
 };
 
 struct Flash_initOut
@@ -147,6 +153,9 @@ struct Flash_pfStartInput
 	uint16 *gSta;
 	double tmp4pack3;
 	uint16 *bSta;
+#if defined(__i386)
+	uint32 tmp4pack4[4];
+#endif
 };
 
 struct Flash_pfStartOutput
@@ -190,8 +199,14 @@ struct Flash_pfOneIterationOutput
 	bool isEnd;
 
 	uint32 debugSize;
+#if defined(__i386)
+	uint32 tmp4pack2;
+#endif
 	double tmp4pack;
 	void* debugBuffer;
+#if defined(__i386)
+	uint32 tmp4pack3;
+#endif
 };
 
 
