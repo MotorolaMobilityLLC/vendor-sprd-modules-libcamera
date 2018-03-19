@@ -2315,8 +2315,10 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			block_result->scene_flag = in_ptr->scene_flag;
 		}
 
+#if !defined(CONFIG_ISP_2_4)
 		if (block_result->block_id == ISP_BLK_RGB_GAMC)
 		    block_result->update = 0;
+#endif
 
 		/* If mw implements cb, then set pm in callback. */
 		if (cxt->smart_set_cb)
