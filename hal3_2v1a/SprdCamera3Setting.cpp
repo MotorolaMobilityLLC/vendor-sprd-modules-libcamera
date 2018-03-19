@@ -1255,30 +1255,26 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
 
-    cmr_u16 largest_sensor_width = 0;
-    cmr_u16 largest_sensor_height = 0;
-
+    cmr_u16 largest_sensor_w = 0;
+    cmr_u16 largest_sensor_h = 0;
 #ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
-    largest_sensor_width = sensor_max_width[cameraId];
-    largest_sensor_height = sensor_max_height[cameraId];
+    largest_sensor_w = sensor_max_width[cameraId];
+    largest_sensor_h = sensor_max_height[cameraId];
 #else
-    largest_sensor_width = default_sensor_max_sizes[cameraId].width;
-    largest_sensor_height = default_sensor_max_sizes[cameraId].height;
+    largest_sensor_w = default_sensor_max_sizes[cameraId].width;
+    largest_sensor_h = default_sensor_max_sizes[cameraId].height;
 #endif
-
-
-    HAL_LOGD("camera ID = %d, largest_sensor_width = %d, "
-             "largest_sensor_width = %d",
-             cameraId, largest_sensor_width, largest_sensor_height);
+    HAL_LOGD("cameraId=%d, largest_sensor_w=%d, largest_sensor_h=%d", cameraId,
+             largest_sensor_w, largest_sensor_h);
 
     /* Add input/output stream configurations for each scaler formats*/
     Vector<int32_t> available_stream_configs;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
+            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
+                (stream_info[i].stream_sizes_tbl.width == 480 &&
+                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
@@ -1286,6 +1282,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+
                 /* keep largest */
                 if (stream_info[i].stream_sizes_tbl.width >=
                         largest_picture_size[cameraId].width &&
@@ -1304,10 +1301,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<int64_t> available_min_durations;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
+            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
+                (stream_info[i].stream_sizes_tbl.width == 480 &&
+                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.width);
@@ -1325,10 +1322,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<int64_t> available_stall_durations;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
+            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
+                (stream_info[i].stream_sizes_tbl.width == 480 &&
+                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] ==
                     (HAL_PIXEL_FORMAT_BLOB ||
                      HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
@@ -3475,7 +3472,7 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         pushAndroidParaTag(ANDROID_SPRD_ISO);
-    }else{
+    } else {
         /*no tag ,in auto mode now,set EV value to 17 */
         HAL_LOGV("not exists ANDROID_SPRD_ISO ");
         s_setting[mCameraId].sprddefInfo.iso = CAMERA_ISO_AUTO;

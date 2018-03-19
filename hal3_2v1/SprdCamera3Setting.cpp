@@ -1286,22 +1286,26 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
 
-    cmr_u16 largest_sensor_width, largest_sensor_height;
-    getLargestSensorSize(cameraId, &largest_sensor_width,
-                         &largest_sensor_height);
-
-    HAL_LOGD("camera ID = %d, getLargestSensorSize->width = %d, "
-             "getLargestSensorSize->height = %d",
-             cameraId, largest_sensor_width, largest_sensor_height);
+    cmr_u16 largest_sensor_w = 0;
+    cmr_u16 largest_sensor_h = 0;
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    largest_sensor_w = sensor_max_width[cameraId];
+    largest_sensor_h = sensor_max_height[cameraId];
+#else
+    largest_sensor_w = default_sensor_max_sizes[cameraId].width;
+    largest_sensor_h = default_sensor_max_sizes[cameraId].height;
+#endif
+    HAL_LOGD("cameraId=%d, largest_sensor_w=%d, largest_sensor_h=%d", cameraId,
+             largest_sensor_w, largest_sensor_h);
 
     /* Add input/output stream configurations for each scaler formats*/
     Vector<int32_t> available_stream_configs;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
+            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
+                (stream_info[i].stream_sizes_tbl.width == 480 &&
+                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
@@ -1309,6 +1313,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+
                 /* keep largest */
                 if (stream_info[i].stream_sizes_tbl.width >=
                         largest_picture_size[cameraId].width &&
@@ -1327,10 +1332,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<int64_t> available_min_durations;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
+            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
+                (stream_info[i].stream_sizes_tbl.width == 480 &&
+                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.width);
@@ -1348,10 +1353,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<int64_t> available_stall_durations;
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <=
-                 largest_sensor_width) &&
-                (stream_info[i].stream_sizes_tbl.height <=
-                 largest_sensor_height)) {
+            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
+                (stream_info[i].stream_sizes_tbl.width == 480 &&
+                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] ==
                     (HAL_PIXEL_FORMAT_BLOB ||
                      HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
