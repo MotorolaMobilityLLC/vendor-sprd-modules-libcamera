@@ -1857,9 +1857,9 @@ static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_s32 lock;
-	lock = !(*(cmr_u32 *) param);
-	
+
 	if (param) {
+		lock = !(*(cmr_u32 *) param);
 		if (0 == *(cmr_u32 *) param) {
 			cxt->cur_status.settings.manual_mode = 0;
 			cxt->manual_exp_time = 0;
