@@ -688,19 +688,17 @@ static cmr_int ov8856_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
-    if (value != 0x00) {
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100) & 0x01;
+    if (value == 0x01) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = 50 * 1000;
             usleep(sleep_time);
         }
-    } else {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+        sns_drv_cxt->is_sensor_close = 0;
+        usleep(20 * 1000);
     }
 
-    sns_drv_cxt->is_sensor_close = 0;
-    usleep(20*1000);
     SENSOR_LOGI("X");
 
     return SENSOR_SUCCESS;

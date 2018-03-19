@@ -393,9 +393,9 @@ static cmr_int s5k5e8yx_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
-        usleep(10 * 1000);
+        // hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        // hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
+        // usleep(10 * 1000);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
@@ -807,12 +807,16 @@ static cmr_int s5k5e8yx_stream_off(cmr_handle handle, cmr_u32 param) {
     SENSOR_LOGI("E");
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u16 stream_status = 0;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-    /*delay*/
-    usleep(50 * 1000);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0103, 0x01);
+    stream_status = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100) & 0x01;
+    if (stream_status == 1) {
 
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+        /*delay*/
+        usleep(50 * 1000);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0103, 0x01);
+    }
     return 0;
 }
 

@@ -717,18 +717,22 @@ static cmr_int gc2375_drv_stream_off(cmr_handle handle, cmr_uint param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u16 stream_status = 0;
 
-    if (!sns_drv_cxt->is_sensor_close) {
-        usleep(5 * 1000);
+    stream_status = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0xef) & 0x90;
+    if (stream_status == 0x90) {
+
+        if (!sns_drv_cxt->is_sensor_close) {
+            usleep(5 * 1000);
+        }
+
+        usleep(20 * 1000);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+        /*delay*/
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xef, 0x00);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+        usleep(20 * 1000);
     }
-
-    usleep(20 * 1000);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
-    /*delay*/
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xef, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
-    usleep(20 * 1000);
-
     return SENSOR_SUCCESS;
 }
 
