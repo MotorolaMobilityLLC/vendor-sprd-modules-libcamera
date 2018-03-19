@@ -105,7 +105,7 @@ static struct sensor_version_info s_sp2509z_version_info=
 	{
 		{
 			0x35327073,
-			0x00003930,
+			0x007A3930,
 			0x00000000,
 			0x00000000,
 			0x00000000,
