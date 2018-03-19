@@ -60,8 +60,8 @@
 #include "cmr_types.h"
 
 /*1.System info*/
-#define VERSION             "2.127"
-#define SUB_VERSION             "-1201-cafdiv0crash"	//use the date code to naming
+#define VERSION             "2.128"
+#define SUB_VERSION             "-20180319-sync_AF_Common"	//use the date code to naming
 
 #define STRING(s) #s
 
@@ -249,7 +249,8 @@ typedef enum _eAF_Result {
 	AF_TOO_NEAR,
 	AF_REVERSE,
 	AF_SKY,
-	AF_UNKNOW
+	AF_UNKNOW,
+	AF_STRANGE_POS,
 } eAF_Result;
 
 typedef enum _e_LOCK {
@@ -1088,50 +1089,40 @@ typedef struct _IO_Face_area_s {
 
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
-	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
-
-	 cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
-	 cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
-	 cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
-	 cmr_u8(*clear_fd_stop_counter) (cmr_u32 * FD_count, void *cookie);
-	 cmr_u8(*face_detection_get_data) (IO_Face_area_t * FD_IO, void *cookie);
-	 cmr_u8(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
-	 cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
-	 cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
-	 cmr_u8(*lens_wait_stop) (void *cookie);
-	 cmr_u8(*lock_ae) (e_LOCK bisLock, void *cookie);
-	 cmr_u8(*lock_awb) (e_LOCK bisLock, void *cookie);
-	 cmr_u8(*lock_lsc) (e_LOCK bisLock, void *cookie);
-	 cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
-
-	 cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
-
-	 cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
-
-	 cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
-
-	 cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
-
-	 cmr_u8(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
-	 cmr_u8(*set_motor_sacmode) (void *cookie);
-
-	 cmr_u8(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
-	 cmr_u8(*get_vcm_param) (cmr_u32 * param, void *cookie);
-	 cmr_u8(*af_log) (const char *format, ...);
-
-	 cmr_u8(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
-
-	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
-
-	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
-	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
-	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
-	// SharkLE Only ++
-	 cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
-	 cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
-	 cmr_u8(*set_pulse_log) (cmr_u32 flag, void *cookie);
-	 cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
-	// SharkLE Only --
+	cmr_u8(*statistics_wait_cal_done) (void *cookie);
+	cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
+	cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
+	cmr_u8(*clear_fd_stop_counter)(cmr_u32 *FD_count, void *cookie);
+	cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
+	cmr_u8(*face_detection_get_data) (IO_Face_area_t *FD_IO, void *cookie);
+	cmr_u8(*motion_sensor_get_data)(motion_sensor_result_t * ms_result, void *cookie);
+	cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
+	cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
+	cmr_u8(*lens_wait_stop) (void *cookie);
+	cmr_u8(*lock_ae) (e_LOCK bisLock, void *cookie);
+	cmr_u8(*lock_awb) (e_LOCK bisLock, void *cookie);
+	cmr_u8(*lock_lsc) (e_LOCK bisLock, void *cookie);
+	cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
+	cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
+	cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
+	cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
+	cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
+	cmr_u8(*get_motor_pos) (cmr_u16 * motor_pos, void *cookie);
+	cmr_u8(*set_motor_sacmode) (void *cookie);
+	cmr_u8(*binfile_is_exist) (cmr_u8 * bisExist, void *cookie);
+	cmr_u8(*get_vcm_param) (cmr_u32 *param, void *cookie);
+	cmr_u8(*af_log) (const char *format, ...);
+	cmr_u8(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
+	cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
+	cmr_u8 (*set_wins)(cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
+	cmr_u8 (*get_win_info)(cmr_u32* hw_num, cmr_u32* isp_w, cmr_u32* isp_h, void *cookie);
+	cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
+	//SharkLE Only ++
+	cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
+	cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
+	cmr_u8(*set_pulse_log) (cmr_u32 flag, void *cookie);
+	cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
+	//SharkLE Only --
 } AF_Ctrl_Ops;
 
 typedef struct _AF_Trigger_Data {
