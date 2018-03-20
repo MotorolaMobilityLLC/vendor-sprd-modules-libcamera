@@ -137,7 +137,6 @@ static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 
-gralloc_module_t const *SprdCamera3OEMIf::mGrallocHal = NULL;
 // oem_module_t   * SprdCamera3OEMIf::mHalOem = NULL;
 sprd_camera_memory_t *SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
 uint32_t SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
@@ -324,15 +323,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
-
-#if (MINICAMERA != 1)
-    if (!mGrallocHal) {
-        int ret = hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
-                                (const hw_module_t **)&mGrallocHal);
-        if (ret)
-            HAL_LOGE("Fail on loading gralloc HAL");
-    }
-#endif
 
     if (!mHalOem) {
         oem_module_t *omi;
@@ -3532,29 +3522,6 @@ bool SprdCamera3OEMIf::getCameraLocation(camera_position_type *pt) {
        pt->longitude);
     */
     return result;
-}
-
-int SprdCamera3OEMIf::displayCopy(cmr_uint dst_phy_addr,
-                                  cmr_uint dst_virtual_addr,
-                                  cmr_uint src_phy_addr,
-                                  cmr_uint src_virtual_addr, uint32_t src_w,
-                                  uint32_t src_h) {
-    int ret = 0;
-
-#ifndef MINICAMERA
-    if (!mPreviewWindow || !mGrallocHal)
-        return -EOWNERDEAD;
-#endif
-
-    if (mIsDvPreview) {
-        memcpy((void *)dst_virtual_addr, (void *)src_virtual_addr,
-               SIZE_ALIGN(src_w) * SIZE_ALIGN(src_h) * 3 / 2);
-    } else {
-        memcpy((void *)dst_virtual_addr, (void *)src_virtual_addr,
-               src_w * src_h * 3 / 2);
-    }
-
-    return ret;
 }
 
 void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
