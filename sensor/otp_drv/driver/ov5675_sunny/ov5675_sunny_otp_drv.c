@@ -281,6 +281,8 @@ static cmr_int ov5675_sunny_otp_drv_read(cmr_handle otp_drv_handle,
             otp_raw_data->buffer[i] = cmd_val[0];
         }
     */
+
+exit:
     if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
@@ -289,8 +291,6 @@ static cmr_int ov5675_sunny_otp_drv_read(cmr_handle otp_drv_handle,
                 OTP_LOGE("dump failed");
         }
     }
-
-exit:
     OTP_LOGI("X");
     return ret;
 }

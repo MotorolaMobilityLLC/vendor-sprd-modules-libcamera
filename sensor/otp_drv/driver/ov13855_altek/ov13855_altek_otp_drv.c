@@ -597,6 +597,10 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
                 OTP_LOGE("get buffer is null");
             }
         }
+    }
+
+exit:
+    if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
             if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_RAW_DATA_LEN,
@@ -604,8 +608,7 @@ static cmr_int ov13855_altek_otp_drv_read(cmr_handle otp_drv_handle,
                 OTP_LOGE("dump failed");
         }
     }
-exit:
-    OTP_LOGI("out");
+    OTP_LOGI("X");
     return ret;
 }
 

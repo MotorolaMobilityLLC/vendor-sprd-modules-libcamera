@@ -493,6 +493,7 @@ static cmr_int s5k3l8xxm3_qtech_otp_drv_delete(cmr_handle otp_drv_handle) {
 static cmr_int s5k3l8xxm3_qtech_otp_drv_read(cmr_handle otp_drv_handle,
                                              void *p_params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     // CHECK_PTR(p_params);
     OTP_LOGI("in");
@@ -509,6 +510,7 @@ static cmr_int s5k3l8xxm3_qtech_otp_drv_read(cmr_handle otp_drv_handle,
         if (NULL == buffer) {
             OTP_LOGE("malloc otp raw buffer failed\n");
             ret = OTP_CAMERA_FAIL;
+            goto exit;
         } else {
             otp_raw_data->buffer = buffer;
             otp_raw_data->num_bytes = OTP_RAW_DATA_LEN;
@@ -522,7 +524,7 @@ static cmr_int s5k3l8xxm3_qtech_otp_drv_read(cmr_handle otp_drv_handle,
             p_data->buffer = otp_raw_data->buffer;
             p_data->num_bytes = otp_raw_data->num_bytes;
         }
-        return ret;
+        goto exit;
     } else {
         /*start read otp data one time*/
         /*TODO*/
@@ -539,9 +541,16 @@ static cmr_int s5k3l8xxm3_qtech_otp_drv_read(cmr_handle otp_drv_handle,
         /*END*/
     }
 
-    sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
-                             otp_cxt->dev_name);
-    OTP_LOGI("out");
+exit:
+    if (OTP_CAMERA_SUCCESS == ret) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
+                                         otp_cxt->dev_name))
+                OTP_LOGE("dump failed");
+        }
+    }
+    OTP_LOGI("X");
     return ret;
 }
 

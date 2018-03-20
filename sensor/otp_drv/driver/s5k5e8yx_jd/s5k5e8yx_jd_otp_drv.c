@@ -285,6 +285,8 @@ static cmr_int s5k5e8yx_jd_otp_drv_read(cmr_handle otp_drv_handle,
     ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
                              (cmr_u8 *)otp_raw_data->buffer,
                              SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+
+exit:
     if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
@@ -293,8 +295,6 @@ static cmr_int s5k5e8yx_jd_otp_drv_read(cmr_handle otp_drv_handle,
                 OTP_LOGE("dump failed");
         }
     }
-
-exit:
     OTP_LOGI("X");
     return ret;
 }

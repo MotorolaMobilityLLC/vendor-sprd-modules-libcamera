@@ -691,6 +691,7 @@ static cmr_int gc5024_common_otp_drv_read(cmr_handle otp_drv_handle,
                                           void *p_params) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     int i;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     // CHECK_PTR(p_params);
     OTP_LOGI("in");
@@ -735,10 +736,16 @@ static cmr_int gc5024_common_otp_drv_read(cmr_handle otp_drv_handle,
     }
     /*END*/
 
-    sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
-                             otp_cxt->dev_name);
 exit:
-    OTP_LOGI("out");
+    if (OTP_CAMERA_SUCCESS == ret) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
+                                         otp_cxt->dev_name))
+                OTP_LOGE("dump failed");
+        }
+    }
+    OTP_LOGI("X");
     return ret;
 }
 

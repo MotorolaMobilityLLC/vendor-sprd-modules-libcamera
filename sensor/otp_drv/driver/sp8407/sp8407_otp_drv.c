@@ -290,6 +290,7 @@ static cmr_int sp8407_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
     cmr_u8 cmd_val[3];
     cmr_uint i = 0;
+    char value[255];
     CHECK_PTR(otp_drv_handle);
     OTP_LOGV("E");
 
@@ -332,9 +333,16 @@ static cmr_int sp8407_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
             otp_raw_data->buffer[i] = cmd_val[0];
         }
     */
-    sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN, otp_cxt->dev_name);
 
 exit:
+    if (OTP_CAMERA_SUCCESS == ret) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
+                                         otp_cxt->dev_name))
+                OTP_LOGE("dump failed");
+        }
+    }
     OTP_LOGI("X");
     return ret;
 }

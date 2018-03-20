@@ -269,13 +269,15 @@ static cmr_int ov2680_cmk_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);*/
 
 exit:
-    property_get("debug.camera.save.otp.raw.data", value, "0");
-    if (atoi(value) == 1) {
-        if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
-                                     otp_cxt->dev_name))
-            OTP_LOGE("dump failed");
+    if (OTP_CAMERA_SUCCESS == ret) {
+        property_get("debug.camera.save.otp.raw.data", value, "0");
+        if (atoi(value) == 1) {
+            if (sensor_otp_dump_raw_data(otp_raw_data->buffer, OTP_LEN,
+                                         otp_cxt->dev_name))
+                OTP_LOGE("dump failed");
+        }
     }
-    OTP_LOGV("X");
+    OTP_LOGI("X");
     return ret;
 }
 
