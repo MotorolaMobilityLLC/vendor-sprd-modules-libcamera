@@ -31,6 +31,18 @@
 
 #define FOCUS_STAT_DATA_NUM 2
 
+#define IMX351_PD_AREA_NUMBER 192
+#define IMX351_PD_ROI_NUMBER 4
+#define IMX351_SPC_SIZE 140 //70*2bytes
+
+//IMX351 PD Result Array
+static double IMX351_phase_difference[IMX351_PD_AREA_NUMBER];
+static cmr_u32 IMX351_confidence_value[IMX351_PD_AREA_NUMBER];
+static cmr_u32 g_FrameID = 0;
+
+//IMX351 PD OTP Address
+static cmr_u8 *pdaf_rdm_otp_data = NULL;
+
 #ifndef MAX
 #define  MAX( _x, _y ) ( ((_x) > (_y)) ? (_x) : (_y) )
 #endif
@@ -786,6 +798,9 @@ static cmr_u8 if_phase_detection_get_data(pd_algo_result_t * pd_result, void *co
 
 	memcpy(pd_result, &(af->pd), sizeof(pd_algo_result_t));
 	// pd_result->pd_roi_dcc = 17;
+
+	ISP_LOGV("AF_Lib data1 Fr[%d]En[%d]PD[%f]CONF[%d]DCC5[%d] ", pd_result->effective_frmid, pd_result->pd_enable, 
+	pd_result->pd_value[4], pd_result->confidence[4], pd_result->pd_roi_dcc[5]);
 
 	return 0;
 }
@@ -1974,7 +1989,8 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 	prm->comm_info.otp_inf_pos = af->otp_info.rdm_data.infinite_cali;
 	prm->comm_info.otp_macro_pos = af->otp_info.rdm_data.macro_cali;
 	prm->comm_info.registor_pos = (cmr_u32) lens_get_pos(af);
-	ISP_LOGV("[%d] pd data in ", prm->pd_info.effective_frmid);
+	ISP_LOGV("F[%d]C[%d]PD[%f]DCC[%d] pd data in[%d] ", prm->pd_info.effective_frmid, af->pd.confidence[0],af->pd.pd_value[0],
+	 af->pd.pd_roi_dcc[0],prm->pd_info.pd_enable);
 	caf_monitor_calc(af, prm);
 
 	return;
@@ -2510,10 +2526,89 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 
 static cmr_s32 af_sprd_set_type1_pd_info(cmr_handle handle, void *param0)
 {
-	UNUSED(handle);
+    char prop[256];
+    int val = 0;
+
+    property_get("debug.isp.s3pdaf.enable", prop, "0");
+    val = atoi(prop);
+
+    if(val != 1){
+    	UNUSED(handle);
+    	ISP_LOGI("af_sprd_set_type1_pd_info Disable! E %p", param0);
+    	return AFV1_SUCCESS;
+    }
+
+	//UNUSED(handle);
 	//UNUSED(param0);
 
-	ISP_LOGI("af_sprd_set_type1_pd_info E %p", param0);
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	cmr_u32 i=0;
+	cmr_u32 index=0;
+	cmr_u8 sign_flag=0;
+	cmr_s32 raw=0;
+	cmr_u8 *pIMX351Buf = (cmr_u8 *) param0;
+
+	ISP_LOGI("af_sprd_set_type1_pd_info E %p %p", param0, pIMX351Buf);
+
+	for(i=10;i<970;i+=5){
+		IMX351_confidence_value[index] = (*(pIMX351Buf+i) << 3) | ((*(pIMX351Buf+i+1) & 0xE0) >> 5);
+
+		sign_flag = (*(pIMX351Buf+i+1) & 0x10) >> 4;
+		raw = ((*(pIMX351Buf+i+1) & 0x0F) << 6) | ((*(pIMX351Buf+i+2) & 0xFC) >> 2);
+
+		if(sign_flag) {
+			raw = -(((~raw) & 0x3FF)+1);
+		}
+
+		IMX351_phase_difference[index] = (double)raw / 16;
+		index++;
+	}
+
+	g_FrameID++;
+	af->pd.effective_frmid = g_FrameID;
+	af->pd.pd_enable = (af->pd.effective_frmid) ? 1 : 0;
+	af->pd.pd_roi_num = IMX351_PD_ROI_NUMBER+2;
+
+  // transfer full phase diff data value to algorithm (8*6 fixed area mode)
+  af->pd.confidence[0] = IMX351_confidence_value[35];
+  af->pd.confidence[1] = IMX351_confidence_value[36];
+  af->pd.confidence[2] = IMX351_confidence_value[51];
+  af->pd.confidence[3] = IMX351_confidence_value[52];
+  af->pd.confidence[4] = af->pd.confidence[0]; //TODO
+
+  af->pd.pd_value[0] = IMX351_phase_difference[35];
+  af->pd.pd_value[1] = IMX351_phase_difference[36];
+  af->pd.pd_value[2] = IMX351_phase_difference[51];
+  af->pd.pd_value[3] = IMX351_phase_difference[52];
+  af->pd.pd_value[4] = af->pd.pd_value[0]; //TODO
+
+  //PD OTP Address: pdaf_rdm_otp_data
+  af->pd.pd_roi_dcc[0] = (*(pdaf_rdm_otp_data+IMX351_SPC_SIZE+19*2)<<8) + *(pdaf_rdm_otp_data+IMX351_SPC_SIZE+19*2+1);
+  af->pd.pd_roi_dcc[1] = (*(pdaf_rdm_otp_data+IMX351_SPC_SIZE+20*2)<<8) + *(pdaf_rdm_otp_data+IMX351_SPC_SIZE+20*2+1);
+  af->pd.pd_roi_dcc[2] = (*(pdaf_rdm_otp_data+IMX351_SPC_SIZE+27*2)<<8) + *(pdaf_rdm_otp_data+IMX351_SPC_SIZE+27*2+1);
+  af->pd.pd_roi_dcc[3] = (*(pdaf_rdm_otp_data+IMX351_SPC_SIZE+28*2)<<8) + *(pdaf_rdm_otp_data+IMX351_SPC_SIZE+28*2+1);
+  af->pd.pd_roi_dcc[4] = af->pd.pd_roi_dcc[0];
+
+  //dcc[5]: Save Sensor Information for Tuning.
+  af->pd.pd_roi_dcc[5] = 1001; //IMX351: 1001
+
+  double DCC[4];
+  DCC[0] = (double)af->pd.pd_roi_dcc[0] / 512;
+  DCC[1] = (double)af->pd.pd_roi_dcc[1] / 512;
+  DCC[2] = (double)af->pd.pd_roi_dcc[2] / 512;
+  DCC[3] = (double)af->pd.pd_roi_dcc[3] / 512;
+
+	af->trigger_source_type |= AF_DATA_PD;
+	//ISP_LOGI("DCC[%d]\t[%d]\n", *(pdaf_rdm_otp_data+0), *(pdaf_rdm_otp_data+1));
+	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n", af->pd.pd_value[0], af->pd.pd_value[1], af->pd.pd_value[2], af->pd.pd_value[3]);
+	ISP_LOGV("Conf\t%d\t%d\t%d\t%d \n", af->pd.confidence[0], af->pd.confidence[1], af->pd.confidence[2], af->pd.confidence[3]);
+	ISP_LOGV("DCC\t%d\t%d\t%d\t%d \n", af->pd.pd_roi_dcc[0], af->pd.pd_roi_dcc[1], af->pd.pd_roi_dcc[2], af->pd.pd_roi_dcc[3]);
+	ISP_LOGV("DCC[u7.9]\t%lf\t%lf\t%lf\t%lf\n", DCC[0], DCC[1], DCC[2], DCC[3]);
+	ISP_LOGI
+		("Frame[%d]PD_GetResult pdPhaseDiff[4] = %lf, pdConf[4] = %d, pdDCCGain[4] = %d",
+		 af->pd.effective_frmid, af->pd.pd_value[4], af->pd.confidence[4] , af->pd.pd_roi_dcc[4]);
+
 	return AFV1_SUCCESS;
 }
 
@@ -2806,6 +2901,71 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in * init_param)
 	return AFV1_SUCCESS;
 }
 
+cmr_s32 pd_otp_info_parser(struct afctrl_init_in * in_p)
+{
+	struct sensor_otp_section_info *pdaf_otp_info_ptr = NULL;
+	struct sensor_otp_section_info *module_info_ptr = NULL;
+
+	cmr_u8 *module_info = NULL;
+
+	if (NULL != in_p->otp_info_ptr) {
+		if (in_p->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE) {
+			pdaf_otp_info_ptr = in_p->otp_info_ptr->single_otp.pdaf_info;
+			module_info_ptr = in_p->otp_info_ptr->single_otp.module_info;
+			ISP_LOGI("pass type1 pdaf otp, single cam");
+		} else if (in_p->otp_info_ptr->otp_vendor == OTP_VENDOR_SINGLE_CAM_DUAL || in_p->otp_info_ptr->otp_vendor == OTP_VENDOR_DUAL_CAM_DUAL) {
+			if (in_p->is_master == 1) {
+				pdaf_otp_info_ptr = in_p->otp_info_ptr->dual_otp.master_pdaf_info;
+				module_info_ptr = in_p->otp_info_ptr->dual_otp.master_module_info;
+				ISP_LOGI("pass type1 pdaf otp, dual cam master");
+			} else {
+				pdaf_otp_info_ptr = NULL;
+				module_info_ptr = NULL;
+				ISP_LOGI("dual cam slave type1 pdaf is NULL");
+			}
+		}
+	} else {
+		pdaf_otp_info_ptr = NULL;
+		module_info_ptr = NULL;
+		ISP_LOGE("type1 pdaf otp_info_ptr is NULL");
+	}
+
+	if (NULL != pdaf_otp_info_ptr && NULL != module_info_ptr) {
+		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
+
+		if (NULL != module_info) {
+			if ((module_info[4] == 0 && module_info[5] == 1)
+				|| (module_info[4] == 0 && module_info[5] == 2)
+				|| (module_info[4] == 0 && module_info[5] == 3)
+				|| (module_info[4] == 0 && module_info[5] == 4)
+				|| (module_info[4] == 0 && module_info[5] == 5)
+				|| (module_info[4] == 1 && module_info[5] == 0 && (module_info[0] != 0x53 || module_info[1] != 0x50 || module_info[2] != 0x52 || module_info[3] != 0x44))
+				|| (module_info[4] == 2 && module_info[5] == 0)
+				|| (module_info[4] == 3 && module_info[5] == 0)
+				|| (module_info[4] == 4 && module_info[5] == 0)
+				|| (module_info[4] == 5 && module_info[5] == 0)) {
+				pdaf_rdm_otp_data = (cmr_u8 *) pdaf_otp_info_ptr->rdm_info.data_addr;
+				ISP_LOGI("type1 pdaf otp map v0.4 or v0.5, Addr:%p", pdaf_rdm_otp_data);
+			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52 && module_info[3] == 0x44) {
+				pdaf_rdm_otp_data = (cmr_u8 *) pdaf_otp_info_ptr->rdm_info.data_addr + 1;
+				ISP_LOGI("type1 pdaf otp map v1.0, Addr:%p, 0:[%d]1:[%d]", pdaf_rdm_otp_data, *(pdaf_rdm_otp_data+0), *(pdaf_rdm_otp_data+1));
+			} else {
+				pdaf_rdm_otp_data = NULL;
+				ISP_LOGE("type1 pdaf otp map version error");
+			}
+		} else {
+			pdaf_rdm_otp_data = NULL;
+			ISP_LOGE("type1 pdaf module_info is NULL");
+		}
+
+	} else {
+		ISP_LOGE("type1 pdaf otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", pdaf_otp_info_ptr, module_info_ptr);
+	}
+
+	return AFV1_SUCCESS;
+}
+
+
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
@@ -2820,6 +2980,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	}
 	// parser af otp info
 	af_otp_info_parser(init_param);
+
+	// parser type1 pdaf otp info
+	pd_otp_info_parser(init_param);
 
 	init_param->otp_info.gldn_data.infinite_cali = 0;
 	init_param->otp_info.gldn_data.macro_cali = 0;
