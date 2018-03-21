@@ -697,33 +697,6 @@ static cmr_int imx351_drv_ext_func(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
-unsigned long imx351_SetMaster_FrameSync(SENSOR_HW_HANDLE handle,
-                                         unsigned long param) {
-    Sensor_WriteReg(0x5c0c, 0x01); // hi-active 0: low-active
-    Sensor_WriteReg(0x5c0d, 0x03); // puls width 2000 cycle
-
-    Sensor_WriteReg(0x5a5c, 0x01); // puls width 2000 cycle
-    Sensor_WriteReg(0x5a5d, 0x01); // puls width 2000 cycle
-
-    //  Sensor_WriteReg(0x5a90, 0x04);//puls width 2000 cycle
-    //  Sensor_WriteReg(0x5a92, 0x04);//puls width 2000 cycle
-    //  Sensor_WriteReg(0x5a93, 0x40);//puls width 2000 cycle
-
-    // pin settings: FSTPOBE v-sync output
-    Sensor_WriteReg(0x4635, 0x00); // XVS IO Control
-    Sensor_WriteReg(
-        0x463b,
-        0xff); // FFh: XVS(48pin)’s signal is selected by TEST_FSTRB[7:0]
-    Sensor_WriteReg(0x5a5b, 0x0f); // TEST_FSTRB
-
-    Sensor_WriteReg(0x4636, 0x00); // XVS IO Control
-    Sensor_WriteReg(
-        0x463a,
-        0xff); // FFh: XVS(48pin)’s signal is selected by TEST_FSTRB[7:0]
-    Sensor_WriteReg(0x5a5b, 0x0f); // TEST_FSTRB
-    return 0;
-}
-
 cmr_int imx351_drv_write_spcdata(cmr_handle handle,
                                          cmr_u8 *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -744,24 +717,32 @@ cmr_int imx351_drv_write_spcdata(cmr_handle handle,
 }
 static cmr_int imx351_drv_set_pdaf_mode(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
+    SENSOR_LOGI("E 0x%x", param);
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     if (param == 0x02) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a3, 0x02);
-    } else if (param == 0x01) {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a3, 0x01);//8x6 582x582
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a8, 0x02);//0x02
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a9, 0x46);//0x30
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038aa, 0x02);//0x0d
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038ab, 0x46);//0xa8
-    } else if (param == 0x00) {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a3, 0x00);//16x12 582x582
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a8, 0x01);//0x02
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a9, 0x23);//0x30
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038aa, 0x01);//0x0d
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038ab, 0x23);//0xa8
-       }
+        } else if (param == 0x31) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a3, 0x01);//8x6 582x582
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a8, 0x02);//0x02
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a9, 0x44);//0x30
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038aa, 0x02);//0x0d
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038ab, 0x40);//0xa8
+        } else if (param == 0x30 || param == 0x21) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a3, 0x00);//16x12 582x582
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a8, 0x01);//0x02
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a9, 0x22);//0x30
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038aa, 0x01);//0x0d
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038ab, 0x20);//0xa8
+           }else if (param == 0x20) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a3, 0x01);//8x6 582x582
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a8, 0x00);//0x02
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038a9, 0x91);//0x30
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038aa, 0x00);//0x0d
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x038ab, 0x90);//0xa8
+        }
+
 #if 0
         SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x38a3));
         SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3e37));
@@ -783,7 +764,13 @@ static cmr_int imx351_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_LOGI("E");
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    imx351_drv_set_pdaf_mode(handle, 1);
+    cmr_uint sensor_mode = 0;
+    sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
+    if(sensor_mode == 3)
+        imx351_drv_set_pdaf_mode(handle, 0x31);
+    else if(sensor_mode == 2)
+        imx351_drv_set_pdaf_mode(handle, 0x21);
+    //imx351_drv_set_pdaf_mode(handle, 1);
 
 #if 1
     char value1[PROPERTY_VALUE_MAX];
@@ -909,7 +896,7 @@ static cmr_int imx351_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
-
+/*
 static const cmr_u16 imx351_pd_is_right[] = {0, 0, 1, 1, 1, 1, 0, 0};
 
 static const cmr_u16 imx351_pd_row[] = {5, 5, 8, 8, 21, 21, 24, 24};
@@ -921,7 +908,8 @@ static const struct pd_pos_info _imx351_pd_pos_l[] = {
 
 static const struct pd_pos_info _imx351_pd_pos_r[] = {
     {1, 8}, {17, 8}, {10, 21}, {26, 21},
-};
+};*/
+static  const cmr_u32 pd_sns_mode[] = {0,0,1,1};
 
 static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -937,7 +925,7 @@ static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
         return -1;
     }
     pdaf_info = (struct sensor_pdaf_info *)param;
-    pd_pos_is_right_size = NUMBER_OF_ARRAY(imx351_pd_is_right);
+ /*   pd_pos_is_right_size = NUMBER_OF_ARRAY(imx351_pd_is_right);
     pd_pos_row_size = NUMBER_OF_ARRAY(imx351_pd_row);
     pd_pos_col_size = NUMBER_OF_ARRAY(imx351_pd_col);
     if ((pd_pos_row_size != pd_pos_col_size) ||
@@ -989,7 +977,12 @@ static cmr_int imx351_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
         pdaf_info->type2_info.height = 96;
         pdaf_info->type2_info.pd_size =
             pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
-    }
+    }*/
+   pdaf_info->vch2_info.bypass = 0;
+   pdaf_info->vch2_info.vch2_vc = 0;
+   pdaf_info->vch2_info.vch2_data_type = 0x36;
+   pdaf_info->vch2_info.vch2_mode = 0x01;
+   pdaf_info->sns_mode = pd_sns_mode;
 
 
     return rtn;

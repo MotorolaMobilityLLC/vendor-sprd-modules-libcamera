@@ -609,9 +609,9 @@ static struct sensor_res_tab_info s_ov8856_resolution_tab_raw[VENDOR_NUM] = {
         .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
         .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        /*{ADDR_AND_LEN_OF_ARRAY(ov8856_preview_setting), PNULL, 0,
+        {ADDR_AND_LEN_OF_ARRAY(ov8856_preview_setting), PNULL, 0,
         .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
+        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
         {ADDR_AND_LEN_OF_ARRAY(ov8856_snapshot_setting), PNULL, 0,
         .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
@@ -634,11 +634,11 @@ static SENSOR_TRIM_T s_ov8856_resolution_trim_tab[VENDOR_NUM] = {
         .frame_line = VIDEO_FRAME_LENGTH,
         .scaler_trim = {.x = VIDEO_TRIM_X, .y = VIDEO_TRIM_Y, .w = VIDEO_TRIM_W, .h = VIDEO_TRIM_H}},
 
-       /*{.trim_start_x = PREVIEW_TRIM_X, .trim_start_y = PREVIEW_TRIM_Y,
+       {.trim_start_x = PREVIEW_TRIM_X, .trim_start_y = PREVIEW_TRIM_Y,
         .trim_width = PREVIEW_TRIM_W,   .trim_height = PREVIEW_TRIM_H,
         .line_time = PREVIEW_LINE_TIME, .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
         .frame_line = PREVIEW_FRAME_LENGTH,
-        .scaler_trim = {.x = PREVIEW_TRIM_X, .y = PREVIEW_TRIM_Y, .w = PREVIEW_TRIM_W, .h = PREVIEW_TRIM_H}},*/
+        .scaler_trim = {.x = PREVIEW_TRIM_X, .y = PREVIEW_TRIM_Y, .w = PREVIEW_TRIM_W, .h = PREVIEW_TRIM_H}},
 
        {.trim_start_x = SNAPSHOT_TRIM_X, .trim_start_y = SNAPSHOT_TRIM_Y,
         .trim_width = SNAPSHOT_TRIM_W,   .trim_height = SNAPSHOT_TRIM_H,
@@ -749,8 +749,8 @@ static SENSOR_MODE_FPS_INFO_T s_ov8856_mode_fps_info[VENDOR_NUM] = {
 static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .module_info = {
-         .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-         .minor_i2c_addr = 0x20 >> 1,
+         .major_i2c_addr = 0x20 >> 1,
+         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
          .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
                                 SENSOR_I2C_FREQ_400,

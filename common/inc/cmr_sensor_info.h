@@ -573,6 +573,13 @@ struct sensor_pdaf_type2_info {
     cmr_u32 pd_size;
 };
 
+struct pd_vch2_info {
+    cmr_u32 bypass;
+    cmr_u32 vch2_vc;
+    cmr_u32 vch2_data_type;
+    cmr_u32 vch2_mode;
+};
+
 struct sensor_pdaf_info {
     cmr_u16 pd_offset_x;
     cmr_u16 pd_offset_y;
@@ -596,6 +603,8 @@ struct sensor_pdaf_info {
     cmr_u32 data_type;
     struct sensor_pdaf_type2_info type2_info;
     cmr_u32 sns_orientation; // 0: Normal, 1:Mirror+Flip
+    cmr_u32 *sns_mode;//sensor mode for pd
+    struct pd_vch2_info vch2_info;
 };
 
 struct sensor_ex_exposure {

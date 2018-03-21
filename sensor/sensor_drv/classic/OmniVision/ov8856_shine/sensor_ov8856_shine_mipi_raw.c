@@ -640,6 +640,19 @@ static cmr_int ov8856_drv_set_master_FrameSync(cmr_handle handle,
 
     return SENSOR_SUCCESS;
 }
+unsigned long ov8856s_SetSlave_FrameSync(cmr_handle handle,
+                                         unsigned long param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3000, 0x00); // bit 5 0 input 1 output 0x3003?
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3823, 0x58);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3824, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3825, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3826, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3827, 0x07);
+
+    return 0;
+}
 
 /*==============================================================================
  * Description:
@@ -659,6 +672,10 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
 
     SENSOR_LOGI("E");
+#if defined(CONFIG_DUAL_MODULE)
+        if (sns_drv_cxt->sensor_id == 2)
+	 ov8856s_SetSlave_FrameSync(handle, param);
+#endif
 
 #if 0 // defined(CONFIG_DUAL_MODULE)
 	ov8856_drv_set_master_FrameSync(handle, param);
