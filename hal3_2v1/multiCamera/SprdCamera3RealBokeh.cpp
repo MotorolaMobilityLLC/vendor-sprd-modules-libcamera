@@ -1067,16 +1067,17 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
             if (output_buffer != NULL) {
                 bool isDoDepth = false;
                 if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                    if (mRealBokeh->mDepthTrigger &&
-                        mRealBokeh->mOtpData.otp_exist) {
-                        isDoDepth = sprdDepthHandle(&muxer_msg);
-                    }
                     rc = sprdBokehPreviewHandle(output_buffer,
                                                 muxer_msg.combo_frame.buffer1);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("sprdBokehPreviewHandle failed");
                         return false;
                     }
+                    if (mRealBokeh->mDepthTrigger &&
+                        mRealBokeh->mOtpData.otp_exist) {
+                        isDoDepth = sprdDepthHandle(&muxer_msg);
+                    }
+
                 } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
                     rc = arcsoftBokehPreviewHandle(
                         output_buffer, muxer_msg.combo_frame.buffer1,
@@ -1292,17 +1293,6 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
         return BAD_VALUE;
     }
 
-    rc = mRealBokeh->map(output_buf, &output_buf_addr);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to map output buffer");
-        goto fail_map_output;
-    }
-    rc = mRealBokeh->map(input_buf1, &input_buf1_addr);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to map output buffer");
-        goto fail_map_input1;
-    }
-
     if (mRealBokeh->mIsSupportPBokeh &&
         mRealBokeh->mDepthStatus == DEPTH_DONE) {
         /*Bokeh GPU interface start*/
@@ -1311,6 +1301,9 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
                                 GraphicBuffer::USAGE_SW_WRITE_OFTEN;
         int32_t yuvTextFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
         uint32_t inWidth = 0, inHeight = 0, inStride = 0;
+        if (!mRealBokeh->mIommuEnabled) {
+            yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+        }
 
 #if defined(CONFIG_SPRD_ANDROID_8)
         uint32_t inLayCount = 1;
@@ -1344,7 +1337,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
             &(mRealBokeh->mPreviewbokehParam.weight_params));
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("iBokehCreateWeightMap failed!");
-            goto fail_map_input1;
+            return rc;
         }
         HAL_LOGD("iBokehCreateWeightMap cost %lld ms",
                  ns2ms(systemTime() - bokehCreateWeightMap));
@@ -1354,7 +1347,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
 
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("iBokehBlurImage failed!");
-            goto fail_map_input1;
+            return rc;
         }
         HAL_LOGD("iBokehBlurImage cost %lld ms",
                  ns2ms(systemTime() - bokehBlurImage));
@@ -1373,16 +1366,24 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
         }
 
     } else {
+
+        rc = mRealBokeh->map(output_buf, &output_buf_addr);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to map output buffer");
+        }
+        rc = mRealBokeh->map(input_buf1, &input_buf1_addr);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to map output buffer");
+        }
+
         memcpy(output_buf_addr, input_buf1_addr, ADP_BUFSIZE(*input_buf1));
         mRealBokeh->flushIonBuffer(ADP_BUFFD(*output_buf), output_buf_addr,
                                    ADP_BUFSIZE(*output_buf));
+
+        mRealBokeh->unmap(input_buf1);
+        mRealBokeh->unmap(output_buf);
     }
     HAL_LOGI("X");
-
-    mRealBokeh->unmap(input_buf1);
-fail_map_input1:
-    mRealBokeh->unmap(output_buf);
-fail_map_output:
 
     return rc;
 }

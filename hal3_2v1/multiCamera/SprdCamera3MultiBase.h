@@ -61,6 +61,7 @@ typedef enum {
 class SprdCamera3MultiBase {
   public:
     request_state mReqState;
+    int mIommuEnabled;
     SprdCamera3MultiBase();
     virtual ~SprdCamera3MultiBase();
     virtual int allocateOne(int w, int h, new_mem_t *new_mem, int type);
@@ -144,7 +145,6 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
 
   private:
     Mutex mBufferListLock;
-    int mIommuEnabled;
     int mVFrameCount;
     int mVLastFrameCount;
     nsecs_t mVLastFpsTime;
