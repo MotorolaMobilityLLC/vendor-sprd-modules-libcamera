@@ -851,13 +851,9 @@ int SprdCamera3Setting::setLargestSensorSize(int32_t cameraId, cmr_u16 width,
 
 int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                              cmr_u16 *height) {
-#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     *width = sensor_max_width[cameraId];
     *height = sensor_max_height[cameraId];
-#else
-    *width = default_sensor_max_sizes[cameraId].width;
-    *height = default_sensor_max_sizes[cameraId].height;
-#endif
+
     HAL_LOGV("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
              *height);
     return 0;
