@@ -2377,7 +2377,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		current_status->settings.min_fps = cxt->fps_range.min;
 	}
 
-	if (0 < cxt->cur_status.settings.flash) {
+	if ((0 < cxt->cur_status.settings.flash) && (cxt->cur_status.settings.flash < 13)) {
 		ISP_LOGV("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->settings.flash);
 		current_status->settings.flicker = cxt->cur_flicker;
 	}
