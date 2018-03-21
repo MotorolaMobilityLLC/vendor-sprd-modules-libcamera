@@ -244,6 +244,7 @@ struct isp_alg_fw_context {
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
+	struct sensor_pdaf_info *pdaf_info;
 	cmr_handle thr_handle;
 	cmr_handle thr_afhandle;
 	cmr_handle dev_access_handle;
@@ -3736,12 +3737,13 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct dev_dcam_vc2_control vch2_info;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	cmr_s32 slv_isp_work_mode = 0;
+	cmr_u32 sn_mode = 0;
+	struct sensor_pdaf_info *pdaf_info = NULL;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
-
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
 	cxt->sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
 	cxt->sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
@@ -3820,21 +3822,25 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
 			ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
 		}
-	} else {
-		if (cxt->ops.pdaf_ops.ioctrl) {
-			ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_DISABLE_PDAF, NULL, NULL);
-			ISP_RETURN_IF_FAIL(ret, ("fail to disable pdaf"));
-		}
 	}
 
 	property_get("debug.camera.pdaf.type1.supprot", (char *)value, "0");
-	if (1 == atoi(value)) {
-		ISP_LOGI("open pdaf type1");
-		vch2_info.bypass = 0;
-		vch2_info.vch2_vc = 0;
-		vch2_info.vch2_data_type = 0x36;
-		vch2_info.vch2_mode = 0x01;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_TYPE1_CFG, &vch2_info, 0);
+	sn_mode = in_ptr->resolution_info.size_index;
+	pdaf_info = cxt->pdaf_info;
+	ISP_LOGI("sn_mode = 0x%x", sn_mode);
+	if(pdaf_info && SENSOR_PDAF_TYPE1_ENABLE == cxt->pdaf_cxt.pdaf_support) {
+		if (pdaf_info->sns_mode) {
+			ISP_LOGI("cxt->pdaf_info->sns_mode[sn_mode] = %d", pdaf_info->sns_mode[sn_mode]);
+			if ((pdaf_info->sns_mode[sn_mode]) || (1 == atoi(value))) {
+				vch2_info.bypass = pdaf_info->vch2_info.bypass;
+				vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
+				vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
+				vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
+				ISP_LOGI("vch2_info.bypass = 0x%x, vch2_info.vch2_vc = 0x%x, vch2_info.vch2_data_type = 0x%x, vch2_info.vch2_mode = 0x%x",
+						vch2_info.bypass, vch2_info.vch2_vc, vch2_info.vch2_data_type, vch2_info.vch2_mode);
+				ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_TYPE1_CFG, &vch2_info, 0);
+			}
+		}
 	}
 	ret = isp_dev_trans_addr(cxt->dev_access_handle);
 	ISP_RETURN_IF_FAIL(ret, ("fail to trans isp buff"));
@@ -4531,6 +4537,14 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
     /*0:afl_old mode, 1:afl_new mode*/
 	cxt->afl_cxt.version = 1;
+	cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));
+	if (!cxt->pdaf_info) {
+		ISP_LOGE("fail to malloc pdaf_info buf");
+		ret = ISP_ALLOC_ERROR;
+		goto exit;
+	}
+	if (input_ptr->init_param->pdaf_info)
+		memcpy(cxt->pdaf_info, input_ptr->init_param->pdaf_info, sizeof(struct sensor_pdaf_info));
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
@@ -4561,6 +4575,7 @@ exit:
 			if (binning_info) {
 				free((void *)binning_info);
 			}
+			free((void *)cxt->pdaf_info);
 			free((void *)cxt);
 		}
 	} else {
@@ -4675,6 +4690,8 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		}
 		memset(&global_otp_info, 0, sizeof(struct sensor_otp_data_info));
 	}
+	free((void *)cxt->pdaf_info);
+	cxt->pdaf_info = NULL;
 	free((void *)cxt);
 	cxt = NULL;
 

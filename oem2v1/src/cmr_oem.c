@@ -3675,7 +3675,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.ex_info.pdaf_supported = 0;
     }
 
-    if (SENSOR_PDAF_TYPE3_ENABLE == isp_param.ex_info.pdaf_supported) {
+    if (SENSOR_PDAF_TYPE3_ENABLE == isp_param.ex_info.pdaf_supported ||
+		SENSOR_PDAF_TYPE1_ENABLE == isp_param.ex_info.pdaf_supported) {
 
         val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
         val.pval = &pdaf_info;
