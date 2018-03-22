@@ -60,6 +60,7 @@ SprdCameraSystemPerformance::SprdCameraSystemPerformance() {
     mPowerManagerLowPower = NULL;
     mPrfmLock = NULL;
     mPrfmLockLowPower = NULL;
+    mThermalManager = NULL;
 #endif
 
     initPowerHint();
@@ -210,7 +211,11 @@ void SprdCameraSystemPerformance::initPowerHint() {
 
     if (!mPowermanageInited) {
 #if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
+        mThermalManager = IExtThermal::getService();
         sp<IPower> mPowerManagerEnable = IPower::getService();
+        if (mThermalManager == NULL) {
+            HAL_LOGE("Thread cannot get the Thermal service");
+        }
 
         if (mPowerManagerEnable == NULL) {
             HAL_LOGE("Thread cannot get the power service");
@@ -277,6 +282,8 @@ void SprdCameraSystemPerformance::deinitPowerHint() {
             mPowerManagerLowPower.clear();
         if (mPrfmLockLowPower != NULL)
             mPrfmLockLowPower.clear();
+        if (mThermalManager != NULL)
+            mThermalManager.clear();
 #endif
         mPowermanageInited = false;
 
@@ -299,6 +306,7 @@ void SprdCameraSystemPerformance::setPowerHint(
     case CAM_POWER_NORMAL:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
             acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
+            thermalEnabled(false);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             acquirePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
@@ -317,9 +325,11 @@ void SprdCameraSystemPerformance::setPowerHint(
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             releasePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
             acquirePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
+            thermalEnabled(true);
             mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
         } else if (powerhint_id == CAM_POWER_NORMAL) {
             releasePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
+            thermalEnabled(true);
             mCurrentPowerHint = CAM_POWER_NORMAL;
         }
         break;
@@ -327,6 +337,7 @@ void SprdCameraSystemPerformance::setPowerHint(
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
             releasePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
             acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
+            thermalEnabled(false);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             HAL_LOGD("current power state is already CAM_POWER_LOWPOWER_ON,"
@@ -563,6 +574,18 @@ void SprdCameraSystemPerformance::releasePowerHint(
             mPrfmLockLowPower.clear();
         }
         HAL_LOGI("powerhint disable,%x", id);
+    }
+}
+void SprdCameraSystemPerformance::thermalEnabled(bool flag){
+    if (mThermalManager != NULL) {
+        if(flag == false){
+            if(!mThermalManager->getExtThermal(ExtThermalCmd::THMCMD_SET_PERF_EN))
+                mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_EN);
+        }else{
+            if(!mThermalManager->getExtThermal(ExtThermalCmd::THMCMD_SET_PERF_DIS))
+                mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_DIS);
+        }
+        HAL_LOGI("thermalEnabled done,flag is =%d", flag);
     }
 }
 #endif

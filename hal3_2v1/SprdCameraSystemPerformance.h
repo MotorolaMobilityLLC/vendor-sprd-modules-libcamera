@@ -57,6 +57,11 @@
 using ::vendor::sprd::hardware::power::V2_0::IPower;
 using ::android::hidl::base::V1_0::IBase;
 using ::vendor::sprd::hardware::power::V2_0::PowerHint;
+#include <hardware/thermal.h>
+#include <vendor/sprd/hardware/thermal/1.0/types.h>
+#include <vendor/sprd/hardware/thermal/1.0/IExtThermal.h>
+using vendor::sprd::hardware::thermal::V1_0::IExtThermal;
+using vendor::sprd::hardware::thermal::V1_0::ExtThermalCmd;
 #endif
 
 /*CONFIG_HAS_CAMERA_HINTS_VERSION
@@ -133,6 +138,8 @@ class SprdCameraSystemPerformance {
     sp<IPower> mPowerManagerLowPower;
     sp<IBase> mPrfmLock;
     sp<IBase> mPrfmLockLowPower;
+    sp<IExtThermal> mThermalManager;
+    void thermalEnabled(bool flag);
 #elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
     void thermalEnabled(bool flag);
 

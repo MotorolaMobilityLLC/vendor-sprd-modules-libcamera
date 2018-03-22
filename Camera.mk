@@ -245,6 +245,7 @@ endif
 
 ifeq ($(strip $(CONFIG_HAS_CAMERA_HINTS_VERSION)),801)
 LOCAL_SHARED_LIBRARIES += libhidlbase libhidltransport libutils vendor.sprd.hardware.power@2.0_vendor
+LOCAL_SHARED_LIBRARIES += vendor.sprd.hardware.thermal@1.0_vendor
 endif
 
 LOCAL_MODULE_RELATIVE_PATH := hw
