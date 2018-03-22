@@ -8311,8 +8311,8 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    if (mVideoWidth > 0 && mVideoHeight > 0 && mVideoWidth >= mCaptureWidth &&
-        mVideoHeight >= mCaptureHeight && sprddefInfo.slowmotion <= 1) {
+    if (mVideoWidth > 0 && mVideoWidth >= mCaptureWidth &&
+        sprddefInfo.slowmotion <= 1) {
         mVideoSnapshotType = 1;
     } else if (mVideoWidth > 0 && sprddefInfo.slowmotion <= 1) {
 #ifdef ANDROID_VERSION_KK
