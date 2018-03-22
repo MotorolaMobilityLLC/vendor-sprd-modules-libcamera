@@ -519,7 +519,7 @@ static cmr_s32 isp_pm_get_setting_param(struct isp_pm_context *pm_cxt_ptr,
 				blk_cfg_ptr = isp_pm_get_block_cfg(id);
 				blk_header_ptr = &blk_header_array[i];
 				if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-					is_update = 1;
+					is_update = 0;
 					if ((ISP_ZERO != all_setting_flag) || (ISP_ZERO != blk_header_ptr->is_update)) {
 						is_update = 1;
 					}
