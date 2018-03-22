@@ -484,6 +484,7 @@ static cmr_int s5k5e8yx_drv_init_exif_info(cmr_handle handle,
     exif_ptr->valid.FocalLength = 1;
     exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
+    exif_ptr->ExposureTime.denominator = 1000000;
 
     return ret;
 }
