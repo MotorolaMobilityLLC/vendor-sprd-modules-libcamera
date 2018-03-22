@@ -818,6 +818,8 @@ int SprdCamera3HWI::configureStreams(
 #if defined(CONFIG_CAMERA_MEET_JPG_ALIGNMENT) || defined(CONFIG_CAMERA_1080_JPG_ALIGNMENT)
             capture_size.height = 1088;
 #endif
+        } else if (capture_size.height == 1080 && capture_size.width == 1440) {
+            capture_size.height = 1088;
         }
     }
     mOEMIf->SetDimensionPreview(preview_size);
