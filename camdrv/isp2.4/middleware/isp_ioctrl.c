@@ -573,7 +573,6 @@ static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-#ifdef NOT_EXIST_IN_ISP2_0
 static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -591,7 +590,6 @@ static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 
 	return ret;
 }
-#endif
 
 static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 {
@@ -2343,9 +2341,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SCENE_MODE, ispctl_scene_mode},
 	{ISP_CTRL_SPECIAL_EFFECT, ispctl_special_effect},
 	{ISP_CTRL_BRIGHTNESS, ispctl_brightness},
-#ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_CTRL_CONTRAST, ispctl_contrast},
-#endif
 	{ISP_CTRL_SATURATION, ispctl_saturation},
 	{ISP_CTRL_SHARPNESS, ispctl_sharpness},
 	{ISP_CTRL_HDR, ispctl_hdr},

@@ -29,9 +29,7 @@
 #include "isp_video.h"
 
 struct isp_block_operations s_bright_ops = { _pm_brightness_init, _pm_brightness_set_param, _pm_brightness_get_param, PNULL, PNULL };
-#ifdef NOT_EXIST_IN_ISP2_0
 struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_set_param, _pm_contrast_get_param, PNULL, PNULL };
-#endif
 struct isp_block_operations s_flash_ops = { _pm_flashlight_init, _pm_flashlight_set_param, _pm_flashlight_get_param, PNULL, PNULL };
 struct isp_block_operations s_dual_flash_ops = { _pm_dualflash_init, _pm_dualflash_set_param, _pm_dualflash_get_param, PNULL, PNULL };
 struct isp_block_operations s_anti_flicker_ops = { _pm_antiflicker_init, _pm_antiflicker_set_param, _pm_antiflicker_get_param, PNULL, PNULL };
@@ -140,9 +138,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_HSV, array_offset(struct isp_context, hsv), sizeof(struct isp_hsv_param), &s_hsv_ops},
 	{ISP_BLK_POSTERIZE, array_offset(struct isp_context, posterize), sizeof(struct isp_posterize_param), &s_posterize_ops},
 	{ISP_BLK_BRIGHT, array_offset(struct isp_context, bright), sizeof(struct isp_bright_param), &s_bright_ops},
-#ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_BLK_CONTRAST, array_offset(struct isp_context, contrast), sizeof(struct isp_contrast_param), &s_contrast_ops},
-#endif
 	{ISP_BLK_HIST, array_offset(struct isp_context, hist), sizeof(struct isp_hist_param), &s_hist_ops},
 	{ISP_BLK_HIST2, array_offset(struct isp_context, hist2), sizeof(struct isp_hist2_param), &s_hist2_ops},
 	{ISP_BLK_UV_CDN, array_offset(struct isp_context, uv_cdn), sizeof(struct isp_uv_cdn_param), &s_uv_cdn_ops},

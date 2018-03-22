@@ -83,10 +83,36 @@ cmr_s32 _pm_contrast_get_param(void *contrast_param, cmr_u32 cmd, void *rtn_para
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
-		param_data_ptr->data_ptr = (void *)&contrast_ptr->cur;
-		param_data_ptr->data_size = sizeof(contrast_ptr->cur);
+	{
+		int j = 0;
+		int ygam_node[257] = {0};
+
+		if (contrast_ptr->cur.factor == 64)
+			contrast_ptr->gamma_info.bypass = 1;
+		else
+			contrast_ptr->gamma_info.bypass = contrast_ptr->cur.bypass;
+
+		if (0 == contrast_ptr->gamma_info.bypass) {
+			for(j = 0; j <= 255; j++)
+			{
+				ygam_node[j] = (((j - 128)*(cmr_s32)contrast_ptr->cur.factor)>> 6) + 128;
+				ygam_node[j] = ygam_node[j] < 0 ? 0 : ygam_node[j] > 255 ? 255 : ygam_node[j];
+			}
+			ygam_node[256] = ygam_node[255];
+
+			for (j = 0; j < ISP_PINGPANG_YUV_YGAMMA_NUM; j++) {
+				if (j < ISP_PINGPANG_YUV_YGAMMA_NUM - 1) {
+					contrast_ptr->gamma_info.nodes[j].node_y = (ygam_node[j * 2] + ygam_node[j * 2 + 1]) >> 1;
+				} else {
+					contrast_ptr->gamma_info.nodes[j].node_y = ygam_node[j * 2 - 1];
+				}
+			}
+		}
+		param_data_ptr->data_ptr = (void *)&contrast_ptr->gamma_info;
+		param_data_ptr->data_size = sizeof(contrast_ptr->gamma_info);
 		*update_flag = 0;
 		break;
+	}
 
 	case ISP_PM_BLK_CONTRAST_BYPASS:
 		param_data_ptr->data_ptr = (void *)&contrast_ptr->cur.bypass;

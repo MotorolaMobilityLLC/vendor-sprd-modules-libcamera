@@ -54,9 +54,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_YUV_PRECDN, isp_u_yuv_precdn_block},
 	{ISP_BLK_RGB_PRECDN, isp_u_frgb_precdn_block},
 	{ISP_BLK_BRIGHT, isp_u_brightness_block},
-#ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_BLK_CONTRAST, isp_u_contrast_block},
-#endif
 	{ISP_BLK_HIST, isp_u_hist_block},
 	{ISP_BLK_HIST2, isp_u_hist2_block},
 	{ISP_BLK_EDGE, isp_u_edge_block},

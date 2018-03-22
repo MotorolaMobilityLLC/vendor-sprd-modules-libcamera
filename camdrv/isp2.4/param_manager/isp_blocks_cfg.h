@@ -238,6 +238,7 @@ struct isp_contrast_cfg {
 struct isp_contrast_param {
 	cmr_u32 cur_index;
 	struct isp_dev_contrast_info cur;
+	struct isp_dev_ygamma_info gamma_info;
 	cmr_u8 tab[16];
 	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
 };
