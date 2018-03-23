@@ -1704,7 +1704,7 @@ sensor_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt) {
 cmr_int sensor_context_init(struct sensor_drv_context *sensor_cxt,
                             cmr_u32 sensor_id, cmr_uint is_autotest) {
     ATRACE_BEGIN(__FUNCTION__);
-    cmr_int ret_val = SENSOR_SUCCESS;
+    cmr_int ret_val = SENSOR_FAIL;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
     cmr_bzero((void *)sensor_cxt, sizeof(struct sensor_drv_context));
@@ -1715,6 +1715,7 @@ cmr_int sensor_context_init(struct sensor_drv_context *sensor_cxt,
     sensor_cxt->is_autotest = is_autotest;
 
     sensor_clean_info(sensor_cxt);
+    ret_val = sensor_init_defaul_exif(sensor_cxt);
 
     ATRACE_END();
 
@@ -1867,7 +1868,6 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
 
     sensor_save_idx_inf_file(sensor_cxt);
     sensor_rid_save_sensor_info(sensor_cxt);
-    ret_val = sensor_init_defaul_exif(sensor_cxt);
 
     if (sensor_cxt->sensor_info_ptr &&
         SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
@@ -2398,24 +2398,22 @@ LOCAL cmr_int sensor_init_defaul_exif(struct sensor_drv_context *sensor_cxt) {
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     exif_ptr = &sensor_cxt->default_exif;
     cmr_bzero(&sensor_cxt->default_exif, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)sensor_cxt->sns_ic_drv_handle;
-    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
 
     SENSOR_LOGV("E");
 
     exif_ptr->valid.FNumber = 1;
-    exif_ptr->FNumber.numerator =  static_info->f_num;
-    exif_ptr->FNumber.denominator = 100;
+    exif_ptr->FNumber.numerator = 14;
+    exif_ptr->FNumber.denominator = 5;
     exif_ptr->valid.ExposureProgram = 1;
     exif_ptr->ExposureProgram = 0x04;
     exif_ptr->valid.ApertureValue = 1;
-    exif_ptr->ApertureValue.numerator =  static_info->f_num;
-    exif_ptr->ApertureValue.denominator = 100;
+    exif_ptr->ApertureValue.numerator = 14;
+    exif_ptr->ApertureValue.denominator = 5;
     exif_ptr->valid.MaxApertureValue = 1;
-    exif_ptr->MaxApertureValue.numerator =  static_info->f_num;
-    exif_ptr->MaxApertureValue.denominator = 100;
+    exif_ptr->MaxApertureValue.numerator = 14;
+    exif_ptr->MaxApertureValue.denominator = 5;
     exif_ptr->valid.FocalLength = 1;
-    exif_ptr->FocalLength.numerator = static_info->focal_length;
+    exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
     exif_ptr->valid.FileSource = 1;
     exif_ptr->FileSource = 0x03;
@@ -2456,8 +2454,6 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
     case SENSOR_EXIF_CTRL_EXPOSURETIME: {
         enum sensor_mode img_sensor_mode =
             sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)];
-        if( 0 == img_sensor_mode)
-            img_sensor_mode = 1;
         cmr_u32 exposureline_time =
             sensor_info_ptr->sensor_mode_info[img_sensor_mode].line_time;
         cmr_u32 exposureline_num = param;
@@ -2489,11 +2485,9 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
             sensor_exif_info_ptr->ExposureTime.numerator =
                 sensor_exif_info_ptr->ExposureTime.denominator * second;
         }
-
-        if (0 != sensor_exif_info_ptr->ExposureTime.denominator)
-            regen_exposure_time = 1000000000ll *
-                                  sensor_exif_info_ptr->ExposureTime.numerator /
-                                  sensor_exif_info_ptr->ExposureTime.denominator;
+        regen_exposure_time = 1000000000ll *
+                              sensor_exif_info_ptr->ExposureTime.numerator /
+                              sensor_exif_info_ptr->ExposureTime.denominator;
 // To check within range of CTS
         if ((0x00 != exposure_time) && (((orig_exposure_time - regen_exposure_time) > 100000) ||
             ((regen_exposure_time - orig_exposure_time) > 100000))) {

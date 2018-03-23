@@ -98,8 +98,6 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void **exif_info_in) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
-
     cmr_int sensor_num =
         sizeof(exif_info_ptr) / sizeof(EXIF_SPEC_PIC_TAKING_COND_T *);
     if (sns_drv_cxt->sensor_id >= sensor_num) {
@@ -122,17 +120,17 @@ cmr_int sensor_ic_get_init_exif_info(cmr_handle handle, void **exif_info_in) {
         EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr =
             (EXIF_SPEC_PIC_TAKING_COND_T *)buffer;
         exif_ptr->valid.FNumber = 1;
-        exif_ptr->FNumber.numerator = static_info->f_num;
-        exif_ptr->FNumber.denominator = 100;
+        exif_ptr->FNumber.numerator = 14;
+        exif_ptr->FNumber.denominator = 5;
 
         exif_ptr->valid.ApertureValue = 1;
-        exif_ptr->ApertureValue.numerator = static_info->f_num;
-        exif_ptr->ApertureValue.denominator = 100;
+        exif_ptr->ApertureValue.numerator = 14;
+        exif_ptr->ApertureValue.denominator = 5;
         exif_ptr->valid.MaxApertureValue = 1;
-        exif_ptr->MaxApertureValue.numerator = static_info->f_num;
-        exif_ptr->MaxApertureValue.denominator = 100;
+        exif_ptr->MaxApertureValue.numerator = 14;
+        exif_ptr->MaxApertureValue.denominator = 5;
         exif_ptr->valid.FocalLength = 1;
-        exif_ptr->FocalLength.numerator = static_info->focal_length;
+        exif_ptr->FocalLength.numerator = 289;
         exif_ptr->FocalLength.denominator = 100;
 
         *exif_info_in = buffer;

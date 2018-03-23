@@ -541,8 +541,8 @@ static cmr_int ov8856_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
 snapshot_info:
     if (sns_drv_cxt->ops_cb.set_exif_info) {
-         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-         SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+        // sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
+        // SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
     } else {
         sns_drv_cxt->exif_info.exposure_line = cap_shutter;
     }
@@ -687,7 +687,7 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
     /*END*/
 
     /*delay*/
- //   usleep(1 * 1000);
+    usleep(1 * 1000);
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
 }
@@ -720,42 +720,6 @@ static cmr_int ov8856_drv_stream_off(cmr_handle handle, cmr_uint param) {
 
     return SENSOR_SUCCESS;
 }
-
-/*==============================================================================
- * Description:
- * Initialize Exif Info
- * please modify this function acording your spec
- *============================================================================*/
-static cmr_int ov8856_drv_init_exif_info(cmr_handle handle,
-                                          void **exif_info_in /*in*/) {
-    cmr_int ret = SENSOR_FAIL;
-    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
-    *exif_info_in = NULL;
-    SENSOR_IC_CHECK_HANDLE(handle);
-
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
-    ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
-    SENSOR_IC_CHECK_PTR(exif_ptr);
-    *exif_info_in = exif_ptr;
-
-    SENSOR_LOGI("Start");
-    exif_ptr->valid.FNumber = 1;
-    exif_ptr->FNumber.numerator = static_info->f_num;
-    exif_ptr->FNumber.denominator = 100;
-    exif_ptr->valid.ApertureValue = 1;
-    exif_ptr->ApertureValue.numerator = static_info->f_num;
-    exif_ptr->ApertureValue.denominator = 100;
-    exif_ptr->valid.MaxApertureValue = 1;
-    exif_ptr->MaxApertureValue.numerator = static_info->f_num;
-    exif_ptr->MaxApertureValue.denominator = 100;
-    exif_ptr->valid.FocalLength = 1;
-    exif_ptr->FocalLength.numerator = static_info->focal_length;
-    exif_ptr->FocalLength.denominator = 100;
-
-    return ret;
-}
-
 
 static cmr_int
 ov8856_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
@@ -799,8 +763,6 @@ ov8856_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     /*init exif info,this will be deleted in the future*/
     ov8856_drv_init_fps_info(sns_drv_cxt);
-   // sensor_ic_get_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
-   ov8856_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
 
     /*add private here*/
     return ret;
