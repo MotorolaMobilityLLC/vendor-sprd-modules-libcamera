@@ -1040,6 +1040,7 @@ static cmr_int dual_master_otp_compatible_convert(cmr_handle otp_drv_handle,
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_format_data_t *format_data = otp_cxt->otp_data;
+    struct module_info_t *module_info = &dual_master_module_info;
     struct sensor_otp_cust_info *convert_data = NULL;
     SENSOR_VAL_T *p_val = (SENSOR_VAL_T *)p_data;
 
@@ -1070,6 +1071,13 @@ static cmr_int dual_master_otp_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
     convert_data->dual_otp.master_dualcam_info =
         (struct sensor_otp_section_info *)&format_data->dual_cam_cali_dat;
+
+    convert_data->dual_otp.dual_flag = 1;
+    convert_data->dual_otp.data_3d.data_ptr =
+        otp_cxt->otp_raw_data.buffer +
+        module_info->master_start_addr.master_dualcam_addr;
+    convert_data->dual_otp.data_3d.size =
+        module_info->master_size.master_dualcam_size;
 
     otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
