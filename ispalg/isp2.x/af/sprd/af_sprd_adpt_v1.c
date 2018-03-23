@@ -2903,6 +2903,17 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in * init_param)
 
 cmr_s32 pd_otp_info_parser(struct afctrl_init_in * in_p)
 {
+    char prop[256];
+    int val = 0;
+
+    property_get("debug.isp.s3pdaf.enable", prop, "0");
+    val = atoi(prop);
+
+    if(val != 1){
+    	ISP_LOGI("pd_otp_info_parser Disable!");
+    	return AFV1_SUCCESS;
+    }
+
 	struct sensor_otp_section_info *pdaf_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *module_info_ptr = NULL;
 
