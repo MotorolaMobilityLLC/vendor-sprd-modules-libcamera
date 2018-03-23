@@ -46,6 +46,10 @@ enum isp_br_ioctl_cmd {
 	AE_POST_SEM,
 	AWB_WAIT_SEM,
 	AWB_POST_SEM,
+	SET_MASTER_AEM_STAT,/*aem sat*/ // 20171220
+	GET_MASTER_AEM_STAT,
+	SET_SLAVE_AEM_STAT,
+	GET_SLAVE_AEM_STAT,
 };
 
 struct awb_stat_data {

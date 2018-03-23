@@ -56,6 +56,12 @@
 #define AE_THREAD_QUEUE_NUM		(50)
 const char AE_MAGIC_TAG[] = "ae_debug_info";
 
+//Dynamic dualcam AE_sync debug
+#define DYNAMIC_AE_SYNC  1 // 1:enable dynamic AE_sync; 0:disable dynamic AE_sync
+#define AEM_MASTER_STAT_FILE "/data/misc/cameraserver/aem_master.file"
+#define AEM_SLAVE_STAT_FILE "/data/misc/cameraserver/aem_slave.file"
+#define AEM_Y_STAT_FILE "/data/misc/cameraserver/aem_y.file"
+
 /**************************************************************************/
 
 #define AE_PRINT_TIME \
@@ -145,6 +151,166 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 			 actual_item->exp_line, actual_item->dumy_line, actual_item->sensor_gain, actual_item->isp_gain);
 
 	return ISP_SUCCESS;
+
+}
+
+
+const cmr_u8 aem_weight_tbl[1024]=
+{0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,0 ,0 ,0 ,0,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+ 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
+};
+
+float ae_dynamic_sync(cmr_u32* master_sync_aem,cmr_u32* slave_sync_aem)
+{
+	/*****Dynamic AE_sync*****/
+	//, 1.param init
+	cmr_u32 i;
+
+	//stastic
+	cmr_u32 y_master_stat_aem[1024];
+	cmr_u32 y_master_ave = 0;
+	cmr_u32 y_slave_stat_aem[1024];
+	cmr_u32 y_slave_ave = 0;
+
+	//calculate
+	const cmr_u32 aem_weight_tbl_total = 720;//pre-calculate manual,if change "aem_weight_tbl",then change it
+	float y_ratio_current = 1.0f;
+	static float y_ratio_target = 1.0f;
+
+	//protcet thr
+	const float y_ratio_lthr = 0;
+	const float y_ratio_hthr = 4.0f;
+
+	//trigger
+	float y_ratio_err = 0;
+	static cmr_u32 y_ratio_cnt = 0;
+	static cmr_u8 isupdate = 0;
+
+	const float y_ratio_chg_thr = 0.07f;  //thr,cnt,speed 5 tuning param
+	const cmr_u32 y_ratio_chg_cnt = 10 ;
+	const float y_ratio_stb_thr = 0.05f;
+	const cmr_u32 y_ratio_stb_cnt = 15;
+
+	//adapt speed
+	const float adpt_speed = 0.05f;
+
+
+	ISP_LOGV("norma Dynamic AE_sync y_ratio_target:%f.\n",y_ratio_target);
+
+	//,2.grap master & slave aem data
+
+
+	//,3.calc y_stat_aem[1024]
+	if((master_sync_aem != NULL) && (slave_sync_aem != NULL))
+	{
+		for(i = 0; i < 1024; i++)
+		{
+			y_master_stat_aem[i] =  ((77 * master_sync_aem[i] + 150 * master_sync_aem[1024 + i] + 29 * master_sync_aem[2048 + i]) ) >> 8;
+			y_master_ave = y_master_ave + y_master_stat_aem[i] *aem_weight_tbl[i] ;
+
+			y_slave_stat_aem[i] =  ((77 * slave_sync_aem[i] + 150 * slave_sync_aem[1024 + i] + 29 * slave_sync_aem[2048 + i])) >> 8;
+			y_slave_ave = y_slave_ave + y_slave_stat_aem[i] * aem_weight_tbl[i];
+		}
+		y_master_ave = y_master_ave /aem_weight_tbl_total;
+		y_slave_ave = y_slave_ave /aem_weight_tbl_total;
+		ISP_LOGV("norma Dynamic AE_sync:master_Y_ave:%d,slave_Y_ave:%d",y_master_ave,y_slave_ave);
+	}
+	else
+	{
+		ISP_LOGE("norma Dynamic AE_sync:input AEM1 data err.\n");
+		return 1;
+	}
+
+	y_ratio_current =( (float) y_slave_ave)/( (float)y_master_ave);
+	if( (y_ratio_current > y_ratio_lthr)  && (y_ratio_current < y_ratio_hthr) )
+	{
+		y_ratio_err = ( (float)y_ratio_current - 1.0f > 0) ? ( (float)y_ratio_current - 1.0f ) : ( 1.0f -  (float)y_ratio_current);
+
+		//stable status  entry change status
+		if(isupdate == 0)
+		{
+			if(y_ratio_err > y_ratio_chg_thr)
+			{
+				y_ratio_cnt ++;
+			}
+			else
+			{
+				y_ratio_cnt = 0;
+			}
+
+			if((y_ratio_cnt > y_ratio_chg_cnt) &&(y_ratio_err > y_ratio_chg_thr) )
+			{
+				isupdate = 1;
+				y_ratio_cnt = 0;
+			}
+		}
+
+
+		//change status  entry  stable status
+		if (isupdate == 1)
+		{
+			if(y_ratio_err < y_ratio_stb_thr)
+			{
+				y_ratio_cnt ++;
+			}
+			else
+			{
+				y_ratio_cnt = 0;
+			}
+
+			if( (y_ratio_cnt > y_ratio_stb_cnt) && (y_ratio_err < y_ratio_stb_thr))
+			{
+				isupdate = 0;
+				y_ratio_cnt = 0;
+			}
+		}
+
+		if(isupdate == 1)
+		{
+			y_ratio_target = (float)y_ratio_target + ( (float)y_ratio_current - 1.0f ) * adpt_speed;
+			ISP_LOGV("norma Dynamic AE_sync isupdate: %d,y_ratio_current:%f,y_ratio_target:%f\n",isupdate,y_ratio_current,y_ratio_target);
+		}
+		else
+		{
+			ISP_LOGV("norma Dynamic AE_sync isupdate: %d,y_ratio_current:%f,y_ratio_target:%f\n",isupdate,y_ratio_current,y_ratio_target);
+		}
+		return y_ratio_target;
+	}
+	else
+	{
+		ISP_LOGE("norma Dynamic AE_sync:input AEM2 data err.\n");
+		return 1;
+	}
 
 }
 
@@ -282,6 +448,169 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 
 	return ISP_SUCCESS;
 }
+
+
+static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
+{
+	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
+	struct sensor_multi_ae_info ae_info[2];
+	struct sensor_info info_master;
+	struct sensor_info info_slave;
+	struct ae_match_data ae_match_data_master;
+	struct ae_match_data ae_match_data_slave;
+	struct sensor_otp_ae_info ae_otp_master;
+	struct sensor_otp_ae_info ae_otp_slave;
+	cmr_u32 exp_line_slave;
+
+	if (0 != write_param->exp_line && 0 != write_param->sensor_gain) {
+		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
+
+		if ((write_param->exp_line != prv_param->exp_line)
+			|| (write_param->dummy != prv_param->dummy)
+			|| (prv_param->sensor_gain != write_param->sensor_gain)) {
+			memset(&ae_info, 0, sizeof(ae_info));
+			ae_info[0].count = 2;
+			ae_info[0].exp.exposure = write_param->exp_line;
+			ae_info[0].exp.dummy = write_param->dummy;
+			ae_info[0].exp.size_index = size_index;
+			ae_info[0].gain = write_param->sensor_gain & 0xffff;
+			ISP_LOGV("(sharkl3)normal mode:ae_info[0] exposure %d dummy %d size_index %d gain %d", ae_info[0].exp.exposure, ae_info[0].exp.dummy, ae_info[0].exp.size_index, ae_info[0].gain);
+
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MODULE_INFO, NULL, &info_master);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id + 2, GET_MODULE_INFO, NULL, &info_slave);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_OTP_AE, NULL, &ae_otp_master);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id + 2, GET_OTP_AE, NULL, &ae_otp_slave);
+			ISP_LOGV("(sharkl3)normal mode:master linetime %d", info_master.line_time);
+			ISP_LOGV("(sharkl3)normal mode:slave linetime %d", info_slave.line_time);
+
+			if (ae_info[0].exp.exposure < (cmr_u32) info_master.min_exp_line) {
+				ae_info[0].exp.exposure = (cmr_u32) info_master.min_exp_line;
+			}
+
+			cmr_u32 exposure_time = ae_info[0].exp.exposure * info_master.line_time;
+			if (info_slave.line_time != 0) {
+				exp_line_slave = exposure_time / info_slave.line_time;
+			} else {
+				exp_line_slave = ae_info[0].exp.exposure;
+			}
+
+
+#if DYNAMIC_AE_SYNC
+	cmr_u32 master_sync_aem[3 * 1024] = {0};
+	cmr_u32 slave_sync_aem[3 * 1024] = {0};
+	float y_ratio_target;
+	cmr_u32 rtn;
+
+	if(cxt->is_multi_mode )
+	{
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MASTER_AEM_STAT, NULL,master_sync_aem);
+		if(rtn){
+			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio  master_sync_aem is NULL error!");
+		}
+
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AEM_STAT, NULL,slave_sync_aem );
+		if(rtn){
+			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio slave_sync_aem is NULL error!");
+		}
+	}
+
+	y_ratio_target = ae_dynamic_sync(master_sync_aem,slave_sync_aem);
+	float iso_ratio = 1.0f / y_ratio_target;
+
+#else
+
+			ISP_LOGV("(sharkl3)normal static mode:AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
+
+			if ((ae_otp_master.gain_1x_exp == 0) || (ae_otp_slave.gain_1x_exp == 0)) {
+				char value[PROPERTY_VALUE_MAX];
+				ae_otp_master.gain_1x_exp = 10000;
+				ae_otp_slave.gain_1x_exp = 7000;
+				property_get("persist.isp.ae.otp.master", value, "10000");
+				if (strcmp(value, "0") != 0) {
+					ae_otp_master.gain_1x_exp = atoi(value);
+				}
+				property_get("persist.isp.ae.otp.slave", value, "7000");
+				if (strcmp(value, "0") != 0) {
+					ae_otp_slave.gain_1x_exp = atoi(value);
+				}
+			}
+			ISP_LOGV("(sharkl3)normal static mode:AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
+
+			float iso_ratio = ((float)ae_otp_slave.gain_1x_exp) / ((float)ae_otp_master.gain_1x_exp);
+			if (ae_info[0].gain > 128 * 8) {
+				if ((ae_otp_master.gain_8x_exp != 0) && (ae_otp_slave.gain_8x_exp != 0)) {
+					iso_ratio = ((float)ae_otp_slave.gain_8x_exp) / ((float)ae_otp_master.gain_8x_exp);
+				}
+			} else if (ae_info[0].gain > 128 * 4) {
+				if ((ae_otp_master.gain_4x_exp != 0) && (ae_otp_slave.gain_4x_exp != 0)) {
+					iso_ratio = ((float)ae_otp_slave.gain_4x_exp) / ((float)ae_otp_master.gain_4x_exp);
+				}
+			} else if (ae_info[0].gain > 128 * 2) {
+				if ((ae_otp_master.gain_2x_exp != 0) && (ae_otp_slave.gain_2x_exp != 0)) {
+					iso_ratio = ((float)ae_otp_slave.gain_2x_exp) / ((float)ae_otp_master.gain_2x_exp);
+				}
+			}
+#endif
+
+			if (iso_ratio < 1.0f) {
+				if ((cmr_u32) (ae_info[0].gain * iso_ratio) > 128) {
+					ae_info[1].exp.exposure = exp_line_slave;
+					ae_info[1].gain = (cmr_u32) (ae_info[0].gain * iso_ratio + 0.5f);
+				} else {
+					ae_info[1].exp.exposure = (cmr_u32) (exp_line_slave * iso_ratio);
+					if (ae_info[1].exp.exposure >= (cmr_u32) info_slave.min_exp_line) {
+						ae_info[1].gain = (cmr_u32) (ae_info[0].gain * exp_line_slave * iso_ratio / ae_info[1].exp.exposure + 0.5f);
+					} else {
+						ae_info[1].exp.exposure = (cmr_u32) info_slave.min_exp_line;
+						ae_info[1].gain = (cmr_u32) (ae_info[0].gain * ae_info[0].exp.exposure * info_master.line_time * iso_ratio / (ae_info[1].exp.exposure * info_slave.line_time) + 0.5f);
+
+						if (ae_info[1].gain < 128) {	// master should sync with slave
+							ae_info[0].gain = (cmr_u32) (ae_info[0].gain * 128.0f / ae_info[1].gain + 0.5f);
+							ae_info[1].gain = 128;
+						}
+					}
+				}
+			} else {
+				ae_info[1].exp.exposure = exp_line_slave;
+				ae_info[1].gain = (cmr_u32) (ae_info[0].gain * iso_ratio + 0.5f);
+			}
+
+			ae_info[1].exp.dummy = write_param->dummy;
+			ae_info[1].exp.size_index = 2;
+			ISP_LOGV("(sharkl3)normal mode:ae_info[1] exposure %d dummy %d size_index %d gain %d", ae_info[1].exp.exposure, ae_info[1].exp.dummy, ae_info[1].exp.size_index, ae_info[1].gain);
+
+			if (cxt->isp_ops.write_multi_ae) {
+				(*cxt->isp_ops.write_multi_ae) (cxt->isp_ops.isp_handler, ae_info);
+			} else {
+				ISP_LOGV("(sharkl3)normal mode:write_multi_ae is NULL");
+			}
+			ae_match_data_master.exp = ae_info[0].exp;
+			ae_match_data_master.gain = ae_info[0].gain;
+			ae_match_data_master.isp_gain = write_param->isp_gain;
+			ae_match_data_slave.exp = ae_info[1].exp;
+			ae_match_data_slave.gain = ae_info[1].gain;
+			ae_match_data_slave.isp_gain = write_param->isp_gain;
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MATCH_AE_DATA, &ae_match_data_master, NULL);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id + 2, SET_MATCH_AE_DATA, &ae_match_data_slave, NULL);
+			ISP_LOGV("(sharkl3)normal mode:master: exp: %d, gain: %d\n", ae_match_data_master.exp.exposure, ae_match_data_master.gain);
+			ISP_LOGV("(sharkl3)normal mode:slave: exp: %d, gain: %d\n", ae_match_data_slave.exp.exposure, ae_match_data_slave.gain);
+		}
+	} else {
+		ISP_LOGE("(sharkl3)normal mode:exp data are invalidate: exp: %d, gain: %d\n", write_param->exp_line, write_param->gain);
+	}
+
+	if (0 != write_param->isp_gain) {
+		double rgb_coeff = write_param->isp_gain * 1.0 / 4096;
+		if (cxt->isp_ops.set_rgb_gain) {
+			cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
+		}
+	}
+
+	cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
+	cxt->ptr_isp_br_ioctrl(cxt->camera_id + 2, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
+
+	return ISP_SUCCESS;
+}
 #endif
 
 static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param_ptr)
@@ -384,6 +713,14 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 #ifndef CONFIG_ISP_2_2
 		if (cxt->sensor_role)
 			ae_sync_write_to_sensor(cxt, &write_param);
+#endif
+	}
+	else if (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL) {
+#ifndef CONFIG_ISP_2_2
+		if (cxt->sensor_role)
+		ae_sync_write_to_sensor_normal(cxt, &write_param);
+#else
+		ae_write_to_sensor(cxt, &write_param);
 #endif
 	} else {
 		ae_write_to_sensor(cxt, &write_param);
@@ -1488,6 +1825,9 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 		if (init_param->is_multi_mode == ISP_ALG_DUAL_SBS) {
 			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MODULE_INFO, &sensor_info, NULL);
 		}
+		else if(init_param->is_multi_mode == ISP_ALG_DUAL_NORMAL) {
+			rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MODULE_INFO, &sensor_info, NULL);
+		}
 #endif
 
 		ISP_LOGV("sensor info: role=%d, max_gain=%d, min_gain=%d, precision=%d, min_exp_line=%d, line_time=%d",
@@ -2377,7 +2717,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		current_status->settings.min_fps = cxt->fps_range.min;
 	}
 
-	if ((0 < cxt->cur_status.settings.flash) && (cxt->cur_status.settings.flash < 13)) {
+	if (0 < cxt->cur_status.settings.flash) {
 		ISP_LOGV("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->settings.flash);
 		current_status->settings.flicker = cxt->cur_flicker;
 	}
@@ -2771,6 +3111,74 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	struct ae_sync_out *slv_sync_result = NULL;
 	cmr_u32 gain_master = 0;
 	cmr_u32 gain_slave = 0;
+
+	cmr_u32 master_line_time = 0;
+	cmr_u32 slv_line_time = 0;
+	cmr_u32 exp_line_slave = 0;
+	cmr_u32 slave_dummy = 0;
+	cmr_u32 tmp = 0;
+
+	if (!cxt_ptr || !multicam_aesync) {
+		ISP_LOGE("Static AE_sync param is NULL error!");
+		return;
+	}
+	ISP_LOGV("Static  AE_sync mode!");
+	ae_master_calc_out = &multicam_aesync->master_ae_info.ae_calc_result;
+	slv_sync_result = &multicam_aesync->slave_ae_info.ae_sync_result;
+	ae_otp_master = &(multicam_aesync->module_info.module_otp_info.master_ae_otp.otp_info);
+	ae_otp_slave = &(multicam_aesync->module_info.module_otp_info.slave_ae_otp.otp_info);
+
+	gain_master = ae_master_calc_out->wts.cur_again;
+	gain_slave = gain_master;
+
+#if DYNAMIC_AE_SYNC
+	ISP_LOGV("Dynamic AE_sync :ae_mapping.\n");
+	cmr_u32 master_sync_aem[3 * 1024] = {0};
+	cmr_u32 slave_sync_aem[3 * 1024] = {0};
+	float y_ratio_target;
+	cmr_u32 rtn;
+
+	ISP_LOGV("Dynamic AE_sync is_multi_mode:%d.\n",cxt_ptr->is_multi_mode);
+	if(cxt_ptr->is_multi_mode )
+	{
+		rtn = cxt_ptr->ptr_isp_br_ioctrl(cxt_ptr->camera_id, GET_MASTER_AEM_STAT, NULL,master_sync_aem);
+		if(rtn){
+			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio  master_sync_aem is NULL error!");
+		}
+
+		rtn = cxt_ptr->ptr_isp_br_ioctrl(cxt_ptr->camera_id, GET_SLAVE_AEM_STAT, NULL,slave_sync_aem );
+		if(rtn){
+			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio slave_sync_aem is NULL error!");
+		}
+	}
+
+	y_ratio_target = ae_dynamic_sync(master_sync_aem,slave_sync_aem);
+	float iso_ratio = 1.0f / y_ratio_target;
+
+	gain_slave = gain_master * iso_ratio;
+
+
+	/* calculate exposure line */
+	master_line_time = multicam_aesync->module_info.module_sensor_info.master_sensor_info.line_time;
+	slv_line_time = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.line_time;
+
+	if (slv_line_time > 0)
+		exp_line_slave = ae_master_calc_out->wts.exposure_time / slv_line_time;
+	else
+		exp_line_slave = multicam_aesync->module_info.module_sensor_info.slave_sensor_info.min_exp_line;
+
+
+	if (iso_ratio < 1.0f) {
+		if ((cmr_u32) (gain_master * iso_ratio) > 128) {
+			gain_slave = (cmr_u32) (gain_master * iso_ratio);
+		} else {
+			exp_line_slave = (cmr_u32) (exp_line_slave * iso_ratio);
+		}
+	} else {
+		gain_slave = (cmr_u32) (gain_master * iso_ratio);
+	}
+#else
+	/* calculate gain */
 	cmr_u32 exp_master_1x = 0;
 	cmr_u32 exp_master_2x = 0;
 	cmr_u32 exp_master_4x = 0;
@@ -2779,25 +3187,7 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	cmr_u32 exp_slave_2x = 0;
 	cmr_u32 exp_slave_4x = 0;
 	cmr_u32 exp_slave_8x = 0;
-	cmr_u32 master_line_time = 0;
-	cmr_u32 slv_line_time = 0;
-	cmr_u32 exp_line_slave = 0;
-	cmr_u32 slave_dummy = 0;
-	cmr_u32 tmp = 0;
 
-	if (!cxt_ptr || !multicam_aesync) {
-		ISP_LOGE("param is NULL error!");
-		return;
-	}
-
-	ae_master_calc_out = &multicam_aesync->master_ae_info.ae_calc_result;
-	slv_sync_result = &multicam_aesync->slave_ae_info.ae_sync_result;
-	ae_otp_master = &(multicam_aesync->module_info.module_otp_info.master_ae_otp.otp_info);
-	ae_otp_slave = &(multicam_aesync->module_info.module_otp_info.slave_ae_otp.otp_info);
-
-	/* calculate gain */
-	gain_master = ae_master_calc_out->wts.cur_again;
-	gain_slave = gain_master;
 	exp_master_1x = ae_otp_master->gain_1x_exp;
 	exp_master_2x = ae_otp_master->gain_2x_exp;
 	exp_master_4x = ae_otp_master->gain_4x_exp;
@@ -2806,6 +3196,9 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	exp_slave_2x = ae_otp_slave->gain_2x_exp;
 	exp_slave_4x = ae_otp_slave->gain_4x_exp;
 	exp_slave_8x = ae_otp_slave->gain_8x_exp;
+	ISP_LOGV("Static AE_sync OTP master info:1x = %d,2x = %d,4x = %d,8x = %d.\n",exp_master_1x,exp_master_2x,exp_master_4x,exp_master_8x);
+	ISP_LOGV("Static AE_sync OTP slave info:1x = %d,2x = %d,4x = %d,8x = %d.\n",exp_slave_1x,exp_slave_2x,exp_slave_4x,exp_slave_8x);
+
 	if (exp_master_1x && exp_master_2x && exp_master_4x && exp_master_8x && exp_slave_1x && exp_slave_2x && exp_slave_4x && exp_slave_8x) {
 		if (gain_master >= 8 * 128) {
 			gain_slave = gain_master * exp_slave_8x / exp_master_8x;
@@ -2831,6 +3224,7 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	if ((exp_master_1x != 0) && (exp_slave_1x != 0)) {
 		iso_ratio = ((float)exp_slave_1x) / ((float)exp_master_1x);
 	}
+	ISP_LOGV("Static AE_sync iso_ratio:%f.\n",iso_ratio);
 
 	if (iso_ratio < 1.0f) {
 		if ((cmr_u32) (gain_master * iso_ratio) > 128) {
@@ -2841,6 +3235,7 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	} else {
 		gain_slave = (cmr_u32) (gain_master * iso_ratio);
 	}
+#endif
 
 	/* calculate dummy line */
 	tmp = master_line_time * (ae_master_calc_out->wts.cur_exp_line + ae_master_calc_out->wts.cur_dummy);
@@ -3388,6 +3783,21 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		sensor_info.line_time = cxt->cur_status.line_time;
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MODULE_INFO, &sensor_info, NULL);
 		ISP_LOGV("sensor info: role=%d, max_gain=%d, min_gain=%d, precision=%d, min_exp_line=%d, line_time=%d",
+				 cxt->sensor_role, sensor_info.max_again, sensor_info.min_again, sensor_info.sensor_gain_precision, sensor_info.min_exp_line, sensor_info.line_time);
+#endif
+	}
+
+	if (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL) {
+#ifndef CONFIG_ISP_2_2
+		/* save master & slave sensor info */
+		struct sensor_info sensor_info;
+		sensor_info.max_again = cxt->sensor_max_gain;
+		sensor_info.min_again = cxt->sensor_min_gain;
+		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
+		sensor_info.min_exp_line = cxt->min_exp_line;
+		sensor_info.line_time = cxt->cur_status.line_time;
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MODULE_INFO, &sensor_info, NULL);
+		ISP_LOGV("(sharkl3)normal mode:sensor info: role=%d, max_gain=%d, min_gain=%d, precision=%d, min_exp_line=%d, line_time=%d",
 				 cxt->sensor_role, sensor_info.max_again, sensor_info.min_again, sensor_info.sensor_gain_precision, sensor_info.min_exp_line, sensor_info.line_time);
 #endif
 	}
@@ -4080,7 +4490,19 @@ static cmr_s32 ae_set_isp_gain(struct ae_ctrl_cxt *cxt)
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
 			}
 		}
-	} else {
+	}
+	else if(cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL&& !cxt->sensor_role) {
+		struct ae_match_data ae_match_data_slave;
+		cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
+		cmr_u32 isp_gain = ae_match_data_slave.isp_gain;
+		if (0 != isp_gain) {
+			double rgb_coeff = isp_gain * 1.0 / 4096;
+			if (cxt->isp_ops.set_rgb_gain) {
+				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
+			}
+		}
+	}
+	else {
 		if (0 != cxt->exp_data.actual_data.isp_gain) {
 			double rgb_coeff = cxt->exp_data.actual_data.isp_gain * 1.0 / 4096.0;
 			if (cxt->isp_ops.set_rgb_gain)
@@ -4158,6 +4580,8 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 			info.gain_2x_exp = (rdm_otp_data[9] << 24) | (rdm_otp_data[8] << 16) | (rdm_otp_data[7] << 8) | rdm_otp_data[6];
 			info.gain_4x_exp = (rdm_otp_data[13] << 24) | (rdm_otp_data[12] << 16) | (rdm_otp_data[11] << 8) | rdm_otp_data[10];
 			info.gain_8x_exp = (rdm_otp_data[17] << 24) | (rdm_otp_data[16] << 16) | (rdm_otp_data[15] << 8) | rdm_otp_data[14];
+			ISP_LOGV("ae otp map:(gain_1x_exp:%d),(gain_2x_exp:%d),(gain_4x_exp:%d),(gain_8x_exp:%d).\n",
+					    (int)info.gain_1x_exp,(int)info.gain_2x_exp,(int)info.gain_4x_exp,(int)info.gain_8x_exp);
 
 #ifdef CONFIG_ISP_2_2
 			if (init_param->sensor_role) {
@@ -4467,6 +4891,146 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.binnig_stat_size.w = calc_in->binning_stat_info.binning_size.w;
 	cxt->cur_status.binnig_stat_size.h = calc_in->binning_stat_info.binning_size.h;
 
+	ISP_LOGV("AE_sync  is_multi_mode=%d, sensor_role=%d",cxt->is_multi_mode,cxt->sensor_role);
+
+#if DYNAMIC_AE_SYNC
+	cmr_s32 master_sync_aem[3*1024] = {0},slave_sync_aem[3*1024]= {0};
+	if(cxt->is_multi_mode && cxt->sensor_role)
+	{
+		for(int i = 0;i < 3*1024;i++)
+		{
+			master_sync_aem[i] = cxt->sync_aem[i] /(cxt->cur_status.win_size.h *  cxt->cur_status.win_size.w) ;
+		}
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AEM_STAT, master_sync_aem, NULL );
+		if(rtn)
+		{
+			ISP_LOGE("Dynamic AE_sync mode,  set master AEM data err.\n");
+		}
+		else
+		{
+			ISP_LOGV("Dynamic AE_sync mode,  master win_size.h=%d, win_size.w=%d",cxt->cur_status.win_size.h ,cxt->cur_status.win_size.w);
+		}
+	}
+
+	else  if(cxt->is_multi_mode && !cxt->sensor_role)
+	{
+		for(int i = 0;i < 3*1024;i++)
+		{
+			slave_sync_aem[i] = cxt->sync_aem[i] /(cxt->cur_status.win_size.h *  cxt->cur_status.win_size.w) ;
+		}
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_SLAVE_AEM_STAT,slave_sync_aem, NULL );
+
+		if(rtn)
+		{
+			ISP_LOGE("Dynamic AE_sync mode,  set slaves AEM data err.\n");
+		}
+		else
+		{
+			ISP_LOGV("Dynamic AE_sync mode,  slave win_size.h=%d, win_size.w=%d",cxt->cur_status.win_size.h ,cxt->cur_status.win_size.w);
+		}
+	}
+
+# if 0 //used for dump master & slave data20171221s
+	FILE *fp;
+	int i,j;
+	fp = fopen(AEM_MASTER_STAT_FILE,"w");
+
+	//R
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fp,"%d   ",master_sync_aem[j*32+i]  / 4);
+		}
+		fprintf(fp,"\n");
+	}
+
+	fprintf(fp,"\n\n");
+
+	//G
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fp,"%d   ",master_sync_aem[j*32+i+1024]   /4);
+		}
+		fprintf(fp,"\n");
+	}
+	fprintf(fp,"\n\n");
+
+	//B
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fp,"%d   ",master_sync_aem[j*32+i+2048]  /4);
+		}
+		fprintf(fp,"\n");
+	}
+	fprintf(fp,"\n\n");
+
+	fclose(fp);
+
+
+
+	fp = fopen(AEM_SLAVE_STAT_FILE,"w");
+
+	//R
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fp,"%d   ",slave_sync_aem[j*32+i]  /4);
+		}
+		fprintf(fp,"\n");
+	}
+	fprintf(fp,"\n\n");
+
+
+	//G
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fp,"%d   ",slave_sync_aem[j*32+i+1024]   /4);
+		}
+		fprintf(fp,"\n");
+	}
+	fprintf(fp,"\n\n");
+
+
+	//B
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fp,"%d   ",slave_sync_aem[j*32+i+2048]  /4);
+		}
+		fprintf(fp,"\n");
+	}
+	fprintf(fp,"\n\n");
+
+
+	fclose(fp);
+	#endif
+
+	#if 0
+	FILE *fpp;
+	fpp = fopen(AEM_Y_STAT_FILE,"w");
+	for( j=0;j<32;j++)
+	{
+		for( i=0;i<32;i++)
+		{
+			fprintf(fpp,"%3d /%3d = %f  ",y_slave_stat_aem[32*j+i],y_master_stat_aem[32*j+i],((float)y_slave_stat_aem[32*j+i] / (float)y_master_stat_aem[32*j+i]) );
+		}
+		fprintf(fpp,"\n");
+	}
+	fprintf(fpp,"\n\n");
+	fclose(fpp);
+	#endif
+
+#endif
+
 	// get effective E&g
 	cxt->cur_status.effect_expline = cxt->exp_data.actual_data.exp_line;
 	cxt->cur_status.effect_dummy = cxt->exp_data.actual_data.dummy;
@@ -4648,6 +5212,25 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->cur_result.wts.exposure_time = current_result->wts.exposure_time;
 		ISP_LOGV("cur_bv %d cur_again %d cur_exp_line %d exposure_time %d", current_result->cur_bv, current_result->wts.cur_again, current_result->wts.cur_exp_line, current_result->wts.exposure_time);
 	}
+	else if (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL&& (!cxt->sensor_role)) {
+		cmr_s16 bv;
+		cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_BV_DATA, NULL, &bv);
+		current_result->cur_bv = bv;
+
+		struct ae_match_data ae_match_data_slave;
+		cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
+
+		current_result->wts.cur_again = ae_match_data_slave.gain * ae_match_data_slave.isp_gain / 4096;
+		current_result->wts.cur_exp_line = ae_match_data_slave.exp.exposure;
+		current_result->wts.exposure_time = current_result->wts.cur_exp_line * current_status->line_time;
+
+		cxt->cur_result.cur_bv = current_result->cur_bv;
+		cxt->cur_result.wts.cur_again = current_result->wts.cur_again;
+		cxt->cur_result.wts.cur_exp_line = current_result->wts.cur_exp_line;
+		cxt->cur_result.wts.exposure_time = current_result->wts.exposure_time;
+		ISP_LOGV("(sharkl3)normal mode:[slave]cur_bv %d cur_again %d cur_exp_line %d exposure_time %d", current_result->cur_bv, current_result->wts.cur_again, current_result->wts.cur_exp_line, current_result->wts.exposure_time);
+	}
+
 #endif
 
 	memcpy(&cur_calc_result->ae_result, current_result, sizeof(struct ae_alg_calc_result));

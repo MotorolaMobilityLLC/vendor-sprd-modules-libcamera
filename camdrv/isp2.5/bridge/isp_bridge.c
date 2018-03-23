@@ -28,6 +28,8 @@ struct ispbr_context {
 	struct sensor_raw_ioctrl *ioctrl_ptr[SENSOR_NUM_MAX];
 	struct match_data_param match_param;
 	struct sensor_dual_otp_info *dual_otp[SENSOR_NUM_MAX];
+	cmr_u32 master_sync_aem[3 * 1024]; // add by hao.yue 20171220
+	cmr_u32 slave_sync_aem[3 * 1024];
 };
 
 static struct ispbr_context br_cxt;
@@ -157,6 +159,27 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		break;
 	case AWB_POST_SEM:
 		sem_post(&cxt->awb_wait_sm);
+		break;
+	// add 20172220
+	case SET_MASTER_AEM_STAT:
+		sem_wait(&cxt->ae_sm);
+		memcpy(cxt->master_sync_aem, in,3 * 1024 * sizeof(cmr_u32));
+		sem_post(&cxt->ae_sm);
+		break;
+	case GET_MASTER_AEM_STAT:
+		sem_wait(&cxt->ae_sm);
+		memcpy(out, cxt->master_sync_aem,3 * 1024 * sizeof(cmr_u32));
+		sem_post(&cxt->ae_sm);
+		break;
+	case SET_SLAVE_AEM_STAT:
+		sem_wait(&cxt->ae_sm);
+		memcpy(cxt->slave_sync_aem, in,3 * 1024 * sizeof(cmr_u32));
+		sem_post(&cxt->ae_sm);
+		break;
+	case GET_SLAVE_AEM_STAT:
+		sem_wait(&cxt->ae_sm);
+		memcpy(out, cxt->slave_sync_aem,3 * 1024 * sizeof(cmr_u32));
+		sem_post(&cxt->ae_sm);
 		break;
 	default:
 		break;
