@@ -117,6 +117,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                    uint16_t a_uwDstHeight, uint8_t *a_ucSrcBuf,
                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                    uint32_t a_udFileSize);
+    int hwScale(uint8_t *dst_buf, uint16_t dst_width, uint16_t dst_height,
+                uint16_t dst_fd, uint8_t *src_buf, uint16_t src_width,
+                uint16_t src_height, uint16_t src_fd);
     bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                           uint32_t a_udFileSize);
@@ -157,6 +160,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     uint8_t mBrightConut;
     uint8_t mLowConut;
     uint8_t mDarkConut;
+    SprdCamera3HWI *mHwi;
 };
 }
 #endif

@@ -1131,6 +1131,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_get_grab_capability(handle,
                                          (struct cmr_path_capability *)param);
         break;
+    case CAMERA_IOCTRL_START_SCALE: {
+        camera_local_start_scale(handle, (struct img_frm **)param);
+        break;
+    }
     default:
         break;
     }
@@ -1228,9 +1232,8 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_max_fps, camera_snapshot_is_need_flash,
     camera_get_sensor_otp_info, camera_get_sensor_vcm_step,
     camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
-    camera_start_capture, camera_stop_capture,
-    camera_set_largest_picture_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg,
+    camera_start_capture, camera_stop_capture, camera_set_largest_picture_size,
+    camera_ioctrl, camera_reprocess_yuv_for_jpeg,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,

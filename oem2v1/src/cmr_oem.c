@@ -10919,7 +10919,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_WITH_FLASH;
     else if (1 == camera_get_hdr_flag(cxt))
         capture_param.type = DCAM_CAPTURE_START_HDR;
-    else if ((1 == camera_get_3dnr_flag(cxt)) || (2 == camera_get_3dnr_flag(cxt)))
+    else if ((1 == camera_get_3dnr_flag(cxt)) ||
+             (2 == camera_get_3dnr_flag(cxt)))
         capture_param.type = DCAM_CAPTURE_START_3DNR;
     else if (cxt->is_multi_mode == MODE_BOKEH) {
         if (cxt->is_yuv_callback_mode) {
@@ -11200,6 +11201,34 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
         CMR_LOGE("snp_thumb_yuv_proc failed.");
     }
 
+    return ret;
+}
+
+cmr_int camera_local_start_scale(cmr_handle oem_handle,
+                                 struct img_frm **scale_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct img_frm *dst = NULL;
+    struct img_frm *src = NULL;
+
+    CMR_LOGI("E");
+    if (!scale_param) {
+        CMR_LOGI("invalid param,return");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    dst = scale_param[0];
+    src = scale_param[1];
+    if (!src || !dst) {
+        CMR_LOGI("invalid param,return");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
+                          (cmr_evt_cb)NULL, NULL);
+    if (ret) {
+        CMR_LOGE("scale failed.");
+    }
+
+    CMR_LOGI("x.ret=%d", ret);
     return ret;
 }
 

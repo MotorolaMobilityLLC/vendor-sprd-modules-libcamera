@@ -1664,7 +1664,7 @@ SprdCamera3RealBokeh::BokehCaptureThread::BokehCaptureThread() {
     char prop1[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.gallery.abokeh", prop1, "0");
+    property_get("persist.sys.gallery.abokeh", prop1, "1");
     if (1 == atoi(prop1)) {
         mAbokehGallery = true;
     } else {
@@ -2202,6 +2202,9 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
     int64_t depthRun = 0;
     int rc = NO_ERROR;
     HAL_LOGI("E");
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
 
     if (input_buf1 == NULL || input_buf2 == NULL) {
         HAL_LOGE("buffer is NULL!");
@@ -2221,12 +2224,22 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
         HAL_LOGE("fail to map input buffer2");
         goto fail_map_scale;
     }
-
-    mRealBokeh->ScaleNV21(
-        (uint8_t *)scaled_buffer_addr, mRealBokeh->mBokehSize.depth_snap_main_w,
-        mRealBokeh->mBokehSize.depth_snap_main_h, (uint8_t *)input_buf1_addr,
-        mRealBokeh->mBokehSize.capture_w, mRealBokeh->mBokehSize.capture_h,
-        ADP_BUFSIZE(*input_buf1));
+    property_get("persist.sys.camera.bokeh.scale", prop, "0");
+    if (!strcmp(prop, "sw")) {
+        mRealBokeh->ScaleNV21(
+            (uint8_t *)scaled_buffer_addr,
+            mRealBokeh->mBokehSize.depth_snap_main_w,
+            mRealBokeh->mBokehSize.depth_snap_main_h,
+            (uint8_t *)input_buf1_addr, mRealBokeh->mBokehSize.capture_w,
+            mRealBokeh->mBokehSize.capture_h, ADP_BUFSIZE(*input_buf1));
+    } else {
+        mRealBokeh->hwScale(
+            (uint8_t *)scaled_buffer_addr,
+            mRealBokeh->mBokehSize.depth_snap_main_w,
+            mRealBokeh->mBokehSize.depth_snap_main_h, ADP_BUFFD(*scaled_buffer),
+            (uint8_t *)input_buf1_addr, mRealBokeh->mBokehSize.capture_w,
+            mRealBokeh->mBokehSize.capture_h, ADP_BUFFD(*input_buf1));
+    }
     depthRun = systemTime();
     weightmap_param weightParams;
     weightParams.F_number = mCapbokehParam.bokeh_level;
@@ -2243,12 +2256,9 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
     }
     HAL_LOGD("depth run cost %lld ms", ns2ms(systemTime() - depthRun));
 exit : { // dump yuv data
-    char prop6[PROPERTY_VALUE_MAX] = {
-        0,
-    };
 
-    property_get("persist.sys.camera.bokeh.data", prop6, "0");
-    if (1 == atoi(prop6)) {
+    property_get("persist.sys.camera.bokeh.data", prop, "0");
+    if (1 == atoi(prop)) {
         // input_buf1 or left image
         mRealBokeh->dumpData(
             (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),

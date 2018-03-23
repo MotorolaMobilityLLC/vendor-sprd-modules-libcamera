@@ -63,7 +63,7 @@ namespace sprdcamera {
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(false), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
-      mBrightConut(0), mLowConut(0), mDarkConut(0) {
+      mBrightConut(0), mLowConut(0), mDarkConut(0), mHwi(NULL) {
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
     mReqState = PREVIEW_REQUEST_STATE;
@@ -85,8 +85,9 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
     mLowConut = 0;
     mDarkConut = 0;
     if (hwi) {
-        hwi->camera_ioctrl(CAMERA_IOCTRL_GET_IOMMU_AVAILABLE, &mIommuEnabled,
-                           NULL);
+        mHwi = hwi;
+        mHwi->camera_ioctrl(CAMERA_IOCTRL_GET_IOMMU_AVAILABLE, &mIommuEnabled,
+                            NULL);
     }
 
     return rc;
@@ -1200,6 +1201,34 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
                  src_img.size.width, src_img.size.height, 0, "jpegEncode");
     }
+
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
+int SprdCamera3MultiBase::hwScale(uint8_t *dst_buf, uint16_t dst_width,
+                                  uint16_t dst_height, uint16_t dst_fd,
+                                  uint8_t *src_buf, uint16_t src_width,
+                                  uint16_t src_height, uint16_t src_fd) {
+    int ret = NO_ERROR;
+    HAL_LOGI("in");
+    if (mHwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+    struct img_frm scale[2];
+    struct img_frm *pScale[2];
+    memset(&scale[0], 0, sizeof(struct img_frm));
+    memset(&scale[1], 0, sizeof(struct img_frm));
+    pScale[0] = &scale[0];
+    pScale[1] = &scale[1];
+
+    convertToImg_frm(NULL, dst_buf, dst_width, dst_height, dst_fd,
+                     IMG_DATA_TYPE_YUV420, pScale[0]);
+    convertToImg_frm(NULL, src_buf, src_width, src_height, src_fd,
+                     IMG_DATA_TYPE_YUV420, pScale[1]);
+
+    ret = mHwi->camera_ioctrl(CAMERA_IOCTRL_START_SCALE, pScale, NULL);
 
     HAL_LOGI("out,ret=%d", ret);
     return ret;
