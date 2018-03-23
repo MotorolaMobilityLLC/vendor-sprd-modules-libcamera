@@ -2454,6 +2454,8 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
     case SENSOR_EXIF_CTRL_EXPOSURETIME: {
         enum sensor_mode img_sensor_mode =
             sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)];
+        if (img_sensor_mode == 0)
+            img_sensor_mode = 1;
         cmr_u32 exposureline_time =
             sensor_info_ptr->sensor_mode_info[img_sensor_mode].line_time;
         cmr_u32 exposureline_num = param;
@@ -2485,9 +2487,10 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
             sensor_exif_info_ptr->ExposureTime.numerator =
                 sensor_exif_info_ptr->ExposureTime.denominator * second;
         }
-        regen_exposure_time = 1000000000ll *
-                              sensor_exif_info_ptr->ExposureTime.numerator /
-                              sensor_exif_info_ptr->ExposureTime.denominator;
+        if (0 != sensor_exif_info_ptr->ExposureTime.denominator)
+            regen_exposure_time = 1000000000ll *
+                                  sensor_exif_info_ptr->ExposureTime.numerator /
+                                  sensor_exif_info_ptr->ExposureTime.denominator;
 // To check within range of CTS
         if ((0x00 != exposure_time) && (((orig_exposure_time - regen_exposure_time) > 100000) ||
             ((regen_exposure_time - orig_exposure_time) > 100000))) {
