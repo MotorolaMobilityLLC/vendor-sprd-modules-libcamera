@@ -48,6 +48,9 @@ struct afl_proc_in {
 #endif
 	void *private_data;
 	cmr_u32 private_len;
+#ifdef CONFIG_ISP_2_2
+	cmr_u16 thr[9];
+#endif
 };
 
 struct afl_ctrl_param_in {

@@ -253,7 +253,8 @@ struct anti_flicker_tune_param {
 	cmr_u32 lowlight_50hz_thrd;
 	cmr_u32 normal_60hz_thrd;
 	cmr_u32 lowlight_60hz_thrd;
-	cmr_u32 reserved[16];
+	cmr_u16 thr[8];
+	cmr_u16 reserved[24];
 };
 
 //environment detec

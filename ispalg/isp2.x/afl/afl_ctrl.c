@@ -125,6 +125,147 @@ static cmr_s32 aflctrl_save_to_file(cmr_s32 height, cmr_s32 * addr, cmr_u32 cnt)
 	return 0;
 }
 
+#ifdef CONFIG_ISP_2_2
+static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc_in *in_ptr,
+			       struct afl_ctrl_proc_out *out_ptr)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	cmr_int ret = 0;
+	cmr_s32 thr[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
+	cmr_u32 cur_flicker = 0;
+	cmr_u32 cur_exp_flag = 0;
+	cmr_u32 i = 0;
+	cmr_int flag = 0;
+	cmr_s32 *addr = NULL;
+	cmr_int bypass = 0;
+	UNUSED(out_ptr);
+
+	cmr_s32 algo_width;
+	cmr_s32 algo_height;
+	void *afl_stat = NULL;
+
+	if (!cxt || !in_ptr) {
+		ISP_LOGE("fail to check param is NULL!");
+		goto exit;
+	}
+
+	afl_stat = malloc(in_ptr->private_len);
+	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
+
+	ae_stat_ptr = in_ptr->ae_stat_ptr;
+	cur_flicker = in_ptr->cur_flicker;
+	cur_exp_flag = in_ptr->cur_exp_flag;
+	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
+
+#ifdef CONFIG_ISP_2_5
+	cmr_s32 afl_stat_tmp[2] = { 0 };
+	for (i = 0; i < (480 * cxt->frame_num); i += 2) {
+		afl_stat_tmp[0] = (*(cmr_s32 *)(addr + i)) & 0x3ffff;
+		afl_stat_tmp[1] = (((*(cmr_s32 *)(addr + i)) & 0xffff3000) >> 18) | (((*(cmr_s32 *)(addr + i + 1)) & 0xf) << 14);
+		*(cmr_s32 *)(addr + i) = afl_stat_tmp[0];
+		*(cmr_s32 *)(addr + i + 1) = afl_stat_tmp[1];
+	}
+#endif
+	if (cur_exp_flag) {
+		if (cur_flicker) {
+			ret = _set_afl_thr(thr);
+			if (0 == ret) {
+				ISP_LOGV("%d %d %d %d %d %d %d %d %d",
+					 thr[0], thr[1], thr[2], thr[3], thr[4],
+					 thr[5], thr[6], thr[7], thr[8]);
+				ISP_LOGV("60Hz setting working");
+			} else {
+				for(i = 0; i < 9; i++) {
+					thr[i] = in_ptr->thr[i]; 
+				}
+				ISP_LOGV("60Hz using default threshold");
+			}
+		} else {
+			ret = _set_afl_thr(thr);
+			if (0 == ret) {
+				ISP_LOGV("%d %d %d %d %d %d %d %d %d",
+					 thr[0], thr[1], thr[2], thr[3], thr[4],
+					 thr[5], thr[6], thr[7], thr[8]);
+				ISP_LOGV("50Hz setting working");
+			} else {
+ 				for(i = 0; i < 9; i++) {
+					thr[i] = in_ptr->thr[i]; 
+				}
+				ISP_LOGV("50Hz using default threshold");
+			}
+		}
+
+		if (cxt->version) {
+			algo_width = 640;
+			algo_height = 480;
+		} else {
+			algo_width = cxt->width;
+			algo_height = cxt->height;
+		}
+
+		for (i = 0; i < cxt->frame_num; i++) {
+			if (cur_flicker) {
+				flag = antiflcker_sw_process_v2p2b(algo_width,
+								  algo_height, addr, 0, thr[0], thr[1],
+								  thr[2], thr[3], thr[4], thr[5], thr[6],
+								  thr[7], thr[8],
+								  (cmr_s32 *)ae_stat_ptr->r_info,
+								  (cmr_s32 *)ae_stat_ptr->g_info,
+								  (cmr_s32 *)ae_stat_ptr->b_info);
+				ISP_LOGV("flag %ld %s", flag, "60Hz");
+			} else {
+				flag = antiflcker_sw_process_v2p2b(algo_width,
+								  algo_height, addr, 1, thr[0], thr[1],
+								  thr[2], thr[3], thr[4], thr[5], thr[6],
+								  thr[7], thr[8],
+								  (cmr_s32 *)ae_stat_ptr->r_info,
+								  (cmr_s32 *)ae_stat_ptr->g_info,
+								  (cmr_s32 *)ae_stat_ptr->b_info);
+				ISP_LOGV("flag %ld %s", flag, "50Hz");
+			}
+			if (flag)
+				break;
+
+			if (cxt->version)
+				addr += algo_height;
+			else
+				addr += cxt->vheight;
+		}
+	}
+
+	pthread_mutex_lock(&cxt->status_lock);
+
+	cxt->flag = flag;
+	cxt->cur_flicker = cur_flicker;
+
+	pthread_mutex_unlock(&cxt->status_lock);
+
+	if (cxt->afl_set_cb) {
+		cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_SET_STATS_BUFFER, afl_stat, NULL);
+	}
+
+	if (in_ptr->afl_mode > AE_FLICKER_60HZ)
+		bypass = 0;
+	else
+		bypass = 1;
+
+	if (cxt->afl_set_cb) {
+		if (cxt->version)
+			cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_NEW_SET_BYPASS, &bypass, NULL);
+		else
+			cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_SET_BYPASS, &bypass, NULL);
+	}
+
+exit:
+	if (afl_stat)
+		free(afl_stat);
+
+	ISP_LOGV("done %ld", rtn);
+	return rtn;
+}
+
+#else
 static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc_in *in_ptr,
 			       struct afl_ctrl_proc_out *out_ptr)
 {
@@ -319,6 +460,9 @@ exit:
 	return rtn;
 }
 
+
+#endif
+
 static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -377,11 +521,21 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 		goto exit;
 	}
 	*isp_afl_handle = NULL;
+#ifdef CONFIG_ISP_2_2
+	rtn = antiflcker_sw_init_v2p2b();
+	if (rtn) {
+		ISP_LOGE("fail to do antiflcker_sw_init_v2p2b");
+		return ISP_ERROR;
+	}
+
+#else
 	rtn = antiflcker_sw_init();
 	if (rtn) {
 		ISP_LOGE("fail to do antiflcker_sw_init");
 		return ISP_ERROR;
 	}
+
+#endif
 
 	cxt = (struct isp_anti_flicker_cfg *)malloc(sizeof(struct isp_anti_flicker_cfg));
 	if (NULL == cxt) {

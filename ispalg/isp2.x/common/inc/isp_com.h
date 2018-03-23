@@ -199,6 +199,7 @@ extern "C" {
 		cmr_u32 lowlight_50hz_thrd;
 		cmr_u32 normal_60hz_thrd;
 		cmr_u32 lowlight_60hz_thrd;
+		cmr_u16 thr[8];
 	};
 
 #ifdef	 __cplusplus
