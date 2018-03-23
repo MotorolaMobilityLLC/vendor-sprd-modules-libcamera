@@ -3405,7 +3405,7 @@ void SprdCamera3RealBokeh::initDepthApiParams() {
     cap_input_param.imageFormat_main = YUV420_NV12;
     cap_input_param.imageFormat_sub = YUV420_NV12;
     cap_input_param.potpbuf = mOtpData.otp_data;
-    cap_input_param.otpsize = SPRD_DUAL_OTP_SIZE;
+    cap_input_param.otpsize = mOtpData.otp_size;
     cap_input_param.config_param = NULL;
     cap_mode = MODE_CAPTURE;
     cap_outformat = MODE_DISPARITY;
