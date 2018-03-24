@@ -3601,7 +3601,11 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 
 	if (!(cxt->statis_valid & ISP_STATIS_VALID_BINNING)) {
 		sub_block_info.bypass = 1;
-		sub_block_info.scene_id = ISP_MODE_PRV;
+		if (cxt->mode_id[0] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[0] <= ISP_MODE_ID_CAP_3)
+			sub_block_info.scene_id = ISP_MODE_CAP;
+		else
+			sub_block_info.scene_id = ISP_MODE_PRV;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_BINNING_BYPASS, &sub_block_info, NULL);
 		if (ret) {
 			ISP_LOGE("fail to set prv binning bypass");
@@ -3617,7 +3621,11 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 
 	if (!(cxt->statis_valid & ISP_STATIS_VALID_HIST)) {
 		sub_block_info.bypass = 1;
-		sub_block_info.scene_id = ISP_MODE_PRV;
+		if (cxt->mode_id[0] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[0] <= ISP_MODE_ID_CAP_3)
+			sub_block_info.scene_id = ISP_MODE_CAP;
+		else
+			sub_block_info.scene_id = ISP_MODE_PRV;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_HIST_BYPASS, &sub_block_info, NULL);
 		if (ret) {
 			ISP_LOGE("fail to set prv hist bypass");
@@ -3633,7 +3641,11 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 
 	if (!(cxt->statis_valid & ISP_STATIS_VALID_HIST2)) {
 		sub_block_info.bypass = 1;
-		sub_block_info.scene_id = ISP_MODE_PRV;
+		if (cxt->mode_id[0] >= ISP_MODE_ID_CAP_0 &&
+				cxt->mode_id[0] <= ISP_MODE_ID_CAP_3)
+			sub_block_info.scene_id = ISP_MODE_CAP;
+		else
+			sub_block_info.scene_id = ISP_MODE_PRV;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_HIST2_BYPASS, &sub_block_info, NULL);
 		if (ret) {
 			ISP_LOGE("fail to set prv hist2 bypass");
