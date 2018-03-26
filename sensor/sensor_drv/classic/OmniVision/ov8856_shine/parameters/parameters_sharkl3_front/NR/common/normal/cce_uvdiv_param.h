@@ -1,4 +1,4 @@
-/*versionid=0x00070005*/
+/*versionid=0x00090007*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_cce_uvdiv_level*/
@@ -197,7 +197,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param2.&BasePoint=1&*/
@@ -297,7 +297,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param3.&BasePoint=1&*/
@@ -397,7 +397,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -497,7 +497,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -597,7 +597,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param6.&BasePoint=1&*/
