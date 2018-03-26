@@ -1,6 +1,4 @@
-/*versionid=0x00080006*/
-/*maxGain=0.00*/
-/*param0.&BasePoint=1&*/
+/*param0.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -49,7 +47,7 @@
 	0x00000000,
 }
 ,
-/*param1.&BasePoint=1&*/
+/*param1.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -98,7 +96,7 @@
 	0x00000000,
 }
 ,
-/*param2.&BasePoint=1&*/
+/*param2.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -147,7 +145,7 @@
 	0x00000000,
 }
 ,
-/*param3.&BasePoint=1&*/
+/*param3.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -196,7 +194,7 @@
 	0x00000000,
 }
 ,
-/*param4.&BasePoint=1&*/
+/*param4.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -245,7 +243,7 @@
 	0x00000000,
 }
 ,
-/*param5.&BasePoint=1&*/
+/*param5.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -294,7 +292,7 @@
 	0x00000000,
 }
 ,
-/*param6.&BasePoint=1&*/
+/*param6.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -343,7 +341,7 @@
 	0x00000000,
 }
 ,
-/*param7.&BasePoint=1&*/
+/*param7.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -392,7 +390,7 @@
 	0x00000000,
 }
 ,
-/*param8.&BasePoint=1&*/
+/*param8.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -441,7 +439,7 @@
 	0x00000000,
 }
 ,
-/*param9.&BasePoint=1&*/
+/*param9.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -490,7 +488,7 @@
 	0x00000000,
 }
 ,
-/*param10.&BasePoint=1&*/
+/*param10.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -539,7 +537,7 @@
 	0x00000000,
 }
 ,
-/*param11.&BasePoint=1&*/
+/*param11.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -588,7 +586,7 @@
 	0x00000000,
 }
 ,
-/*param12.&BasePoint=1&*/
+/*param12.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -637,7 +635,7 @@
 	0x00000000,
 }
 ,
-/*param13.&BasePoint=1&*/
+/*param13.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -686,7 +684,7 @@
 	0x00000000,
 }
 ,
-/*param14.&BasePoint=1&*/
+/*param14.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -735,7 +733,7 @@
 	0x00000000,
 }
 ,
-/*param15.&BasePoint=1&*/
+/*param15.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -784,7 +782,7 @@
 	0x00000000,
 }
 ,
-/*param16.&BasePoint=1&*/
+/*param16.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -833,7 +831,7 @@
 	0x00000000,
 }
 ,
-/*param17.&BasePoint=1&*/
+/*param17.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -882,7 +880,7 @@
 	0x00000000,
 }
 ,
-/*param18.&BasePoint=1&*/
+/*param18.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -931,7 +929,7 @@
 	0x00000000,
 }
 ,
-/*param19.&BasePoint=1&*/
+/*param19.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -980,7 +978,7 @@
 	0x00000000,
 }
 ,
-/*param20.&BasePoint=1&*/
+/*param20.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -1029,7 +1027,7 @@
 	0x00000000,
 }
 ,
-/*param21.&BasePoint=1&*/
+/*param21.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -1078,7 +1076,7 @@
 	0x00000000,
 }
 ,
-/*param22.&BasePoint=1&*/
+/*param22.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -1127,7 +1125,7 @@
 	0x00000000,
 }
 ,
-/*param23.&BasePoint=1&*/
+/*param23.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/
@@ -1176,7 +1174,7 @@
 	0x00000000,
 }
 ,
-/*param24.&BasePoint=1&*/
+/*param24.*/
 /*sensor_cce_uvdiv_level*/
 {
 	/*lum_th_h_len*/

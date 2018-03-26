@@ -55,17 +55,12 @@ static void sp250a_drv_group_hold_off(cmr_handle handle) {
  * write gain to sensor registers buffer
  * please modify this function acording your spec
  *============================================================================*/
-static void sp250a_drv_write_gain(cmr_handle handle, float gain) {
-	  uint16_t reg_gain;
-	  float gain_d = 0x400; // spec p70, X1 = 15bit
-    if (gain < 1.0)
-        gain = 1.0;
+static void sp250a_drv_write_gain(cmr_handle handle, cmr_u32 gain) {
+	  cmr_u32 reg_gain;
 
-    if (gain > 10.0)
-        gain = 10.0;
-
-    reg_gain = (uint16_t)(gain * 16.0f);
-
+    reg_gain = gain;
+	if(reg_gain>=SENSOR_MAX_GAIN)
+	   reg_gain=SENSOR_MAX_GAIN;
 
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -556,16 +551,18 @@ static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
 static cmr_int sp250a_drv_write_gain_value(cmr_handle handle, cmr_uint param)
 {
 	cmr_int ret_value = SENSOR_SUCCESS;
-    float real_gain = 0;
+    cmr_u32 real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
 	//sp250a_drv_calc_gain(handle,param,&sp250a_aec_info);
-    param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
+	SENSOR_LOGI("param = 0x%x", param);
+    real_gain = param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    real_gain = (float)1.0f * param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+	if(real_gain <SENSOR_BASE_GAIN)
+		real_gain=SENSOR_BASE_GAIN;
 
-    SENSOR_LOGI("real_gain = %f", real_gain);
+    SENSOR_LOGI("real_gain = 0x%x", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     sp250a_drv_write_gain(handle, real_gain);

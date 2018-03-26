@@ -22,7 +22,6 @@
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
@@ -42,11 +41,11 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.3401 */
+/* IspToolVersion=R1.18.0201 */
 
 
 /* Capture Sizes:
-	640x480
+	640x480,640x480
 */
 
 
