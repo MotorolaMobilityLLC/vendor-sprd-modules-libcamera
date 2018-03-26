@@ -1265,13 +1265,18 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_pm_param_data pm_afl_data;
+	struct isp_pm_ioctl_input pm_afl_input = {NULL, 0};
+	struct isp_pm_ioctl_output pm_afl_output = {NULL, 0};
 	struct afl_proc_in afl_input;
 	struct isp_statis_info *statis_info = NULL;
 	cmr_u32 k_addr = 0;
 	cmr_u32 u_addr = 0;
+	struct isp_antiflicker_param *afl_param_ptr;
+	cmr_u16 *thr = NULL;
+
+	memset(&pm_afl_data, 0, sizeof(pm_afl_data));
+	memset(&afl_input, 0, sizeof(afl_input));
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	statis_info = (struct isp_statis_info *)data;
@@ -1301,6 +1306,22 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_SWITCH_FLAG, &cur_exp_flag, NULL);
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
+	}
+
+	BLOCK_PARAM_CFG(pm_afl_input, pm_afl_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_ANTI_FLICKER, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &pm_afl_input, &pm_afl_output);
+	if (ISP_SUCCESS == ret && 1 == pm_afl_output.param_num) {
+		afl_param_ptr = (struct isp_antiflicker_param *)pm_afl_output.param_data->data_ptr;
+		thr = (cmr_u16 *)afl_input.thr;
+		memcpy(thr, afl_param_ptr->thr, sizeof(cmr_u16)*3);
+		memcpy(&thr[4], &afl_param_ptr->thr[3], sizeof(cmr_u16)*5);
+		if (cur_flicker)
+				thr[3] = (ae_exp_flag == 1) ? afl_param_ptr->lowlight_60hz_thrd : afl_param_ptr->normal_60hz_thrd;
+		else
+				thr[3] = (ae_exp_flag == 1) ? afl_param_ptr->lowlight_50hz_thrd : afl_param_ptr->normal_50hz_thrd;
+	} else {
+		ISP_LOGE("pm ioctl error, ret = %ld, param_num:%d", ret,pm_afl_output.param_num);
+		goto exit;
 	}
 
 	afl_input.ae_stat_ptr = &cxt->afl_cxt.ae_stats;
