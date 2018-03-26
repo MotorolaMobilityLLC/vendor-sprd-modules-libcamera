@@ -402,6 +402,7 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
     otp_section_info_t *lsc_dst = &(format_data->lsc_cali_dat);
+    otp_section_info_t *pdaf_dst = &(format_data->pdaf_cali_dat);
 
     convert_data = malloc(sizeof(struct sensor_otp_cust_info));
     if (NULL == convert_data) {
@@ -431,17 +432,22 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->opt_center_dat;
 
     /*lsc convert*/
-    single_otp->lsc_info =
-        (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
     if (lsc_dst->rdm_info.buffer == NULL)
         single_otp->lsc_info = NULL;
+    else
+        single_otp->lsc_info =
+            (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
+
     /*ae convert*/
     single_otp->ae_info =
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
     /*pdaf convert*/
-    single_otp->pdaf_info =
-        (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
+    if (pdaf_dst->rdm_info.buffer == NULL)
+        single_otp->pdaf_info = NULL;
+    else
+        single_otp->pdaf_info =
+            (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
     /*dual camera*/
     convert_data->dual_otp.dual_flag = 0;
