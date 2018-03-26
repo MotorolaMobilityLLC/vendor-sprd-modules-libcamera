@@ -2271,13 +2271,14 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 	}
 
 	smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
-	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
+	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[0];
 	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
 	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
 	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
 	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 	smart_proc_in.handle_pm = cxt->handle_pm;
-	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+	smart_proc_in.mode_flag = cxt->mode_id[0];
+	cxt->smart_cxt.mode_id = cxt->mode_id[0];
 	if (cxt->ops.smart_ops.calc)
 		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 	if (ISP_SUCCESS != ret) {
