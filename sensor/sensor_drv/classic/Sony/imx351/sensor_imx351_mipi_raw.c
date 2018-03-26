@@ -1058,6 +1058,13 @@ static cmr_u16 imx351_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
 
+    cmr_u16 frame_interval = 0x00;
+    frame_interval = (cmr_u16)(
+        ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
+    SENSOR_LOGI(
+        "exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+         shutter, dummy_line, frame_interval);
+
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
     aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
     aec_info->shutter->settings[0].reg_value = (shutter >> 8) & 0xff;
