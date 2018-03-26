@@ -36,12 +36,13 @@ cmr_u32 _pm_3d_nr_pre_convert_param(void *dst_3d_nr_param, cmr_u32 strength_leve
 	if (nr_3d_param != NULL) {
 		dst_ptr->cur.fusion_mode = nr_3d_param[strength_level].fusion_mode;
 		dst_ptr->cur.filter_switch = nr_3d_param[strength_level].filter_swt_en;
+#if 0
 		for (i = 0; i < 4; i++) {
 			dst_ptr->cur.y_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.y_cfg.src_wgt[i];
 			dst_ptr->cur.u_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.u_cfg.src_wgt[i];
 			dst_ptr->cur.v_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.v_cfg.src_wgt[i];
 		}
-
+#endif
 		dst_ptr->cur.y_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_thr;
 		dst_ptr->cur.u_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_thr;
 		dst_ptr->cur.v_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_thr;
