@@ -349,6 +349,9 @@ static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_buf_input statis_buf;
 
+	if (cxt->is_stream_off)
+		return ret;
+
 	pthread_mutex_lock(&cxt->stats_buf_lock);
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
