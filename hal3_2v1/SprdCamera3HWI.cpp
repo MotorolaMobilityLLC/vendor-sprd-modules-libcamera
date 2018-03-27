@@ -1389,7 +1389,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         mFirstRegularRequest = false;
         mPictureRequest = false;
         timer_set(this, 1);
-        ret = mFlushInvReqSignal.waitRelative(mLock, 200000000); // 200ms
+        ret = mFlushInvReqSignal.waitRelative(mLock, 300000000); // 300ms
         if (ret == TIMED_OUT) {
             HAL_LOGE("Flush invalid request is timeout");
         }
