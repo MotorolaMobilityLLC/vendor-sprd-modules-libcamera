@@ -58,6 +58,11 @@ typedef enum {
     REPROCESS_STATE,       // encode yuv to jpeg
 } request_state;
 
+typedef struct cam_stream_info {
+    int width;
+    int height;
+} cam_stream_info_t;
+
 class SprdCamera3MultiBase {
   public:
     request_state mReqState;
@@ -111,6 +116,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                   private_handle_t *pic_enc_private_handle,
                                   private_handle_t *dst_private_handle,
                                   SprdCamera3HWI *hwi);
+    void addAvailableStreamSize(CameraMetadata &metadata,
+                                struct cam_stream_info *stream_info,
+                                size_t stream_cnt);
 
   private:
     bool mIommuEnabled;

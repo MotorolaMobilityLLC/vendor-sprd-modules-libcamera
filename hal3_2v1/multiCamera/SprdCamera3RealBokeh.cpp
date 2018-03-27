@@ -66,6 +66,8 @@ namespace sprdcamera {
 #define PENDINGTIME (1000000)
 #define PENDINGTIMEOUT (5000000000)
 
+static struct cam_stream_info cap_stream_info[] = {{2592, 1944}, {960, 720}};
+
 SprdCamera3RealBokeh *mRealBokeh = NULL;
 
 // Error Check Macros
@@ -867,10 +869,13 @@ int SprdCamera3RealBokeh::getCameraInfo(struct camera_info *info) {
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+
+    mRealBokeh->addAvailableStreamSize(metadata, cap_stream_info,
+                                       sizeof(cap_stream_info) /
+                                           sizeof(struct cam_stream_info));
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
-
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;

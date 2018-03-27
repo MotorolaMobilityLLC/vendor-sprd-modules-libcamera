@@ -881,4 +881,38 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     HAL_LOGI("out,ret=%d", ret);
     return ret;
 }
+
+void SprdCamera3MultiBase::addAvailableStreamSize(
+    CameraMetadata &metadata, struct cam_stream_info *stream_info,
+    size_t stream_cnt) {
+    int32_t scaler_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                HAL_PIXEL_FORMAT_BLOB,
+                                HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
+    size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
+    int array_size = 0;
+    Vector<int32_t> available_stream_configs;
+    int32_t
+        available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
+    memset(available_stream_configurations, 0,
+           CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
+    for (size_t j = 0; j < scaler_formats_count; j++) {
+        for (size_t i = 0; i < stream_cnt; i++) {
+            available_stream_configs.add(scaler_formats[j]);
+            available_stream_configs.add(stream_info[i].width);
+            available_stream_configs.add(stream_info[i].height);
+            available_stream_configs.add(
+                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+        }
+    }
+    memcpy(available_stream_configurations, &(available_stream_configs[0]),
+           available_stream_configs.size() * sizeof(int32_t));
+    for (array_size = 0; array_size < CAMERA_SETTINGS_CONFIG_ARRAYSIZE;
+         array_size++) {
+        if (available_stream_configurations[array_size * 4] == 0) {
+            break;
+        }
+    }
+    metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+                    available_stream_configurations, array_size * 4);
+}
 };

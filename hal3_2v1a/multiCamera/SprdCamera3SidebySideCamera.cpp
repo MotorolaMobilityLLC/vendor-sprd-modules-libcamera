@@ -54,6 +54,8 @@ SprdCamera3SideBySideCamera *mSidebyside = NULL;
         return -ENODEV;                                                        \
     }
 
+static struct cam_stream_info cap_stream_info[] = {{2592, 1944}, {960, 720}};
+
 camera3_device_ops_t SprdCamera3SideBySideCamera::mCameraCaptureOps = {
     .initialize = SprdCamera3SideBySideCamera::initialize,
     .configure_streams = SprdCamera3SideBySideCamera::configure_streams,
@@ -626,12 +628,13 @@ void SprdCamera3SideBySideCamera::freeLocalCapBuffer() {
             struct private_handle_t *private_buffer =
                 (struct private_handle_t *)(localBuffer->native_handle);
             if (private_buffer->attr_base != MAP_FAILED) {
-            ALOGW("Warning shared attribute region mapped at free. Unmapping");
-            munmap(private_buffer->attr_base, PAGE_SIZE);
-            private_buffer->attr_base = MAP_FAILED;
-        }
-        close(private_buffer->share_attr_fd);
-        private_buffer->share_attr_fd = -1;
+                ALOGW("Warning shared attribute region mapped at free. "
+                      "Unmapping");
+                munmap(private_buffer->attr_base, PAGE_SIZE);
+                private_buffer->attr_base = MAP_FAILED;
+            }
+            close(private_buffer->share_attr_fd);
+            private_buffer->share_attr_fd = -1;
         }
 #endif
         freeOneBuffer(localBuffer);
@@ -1019,6 +1022,9 @@ int SprdCamera3SideBySideCamera::getCameraInfo(int blur_camera_id,
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+    addAvailableStreamSize(metadata, cap_stream_info,
+                           sizeof(cap_stream_info) /
+                               sizeof(struct cam_stream_info));
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);

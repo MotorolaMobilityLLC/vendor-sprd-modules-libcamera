@@ -34,6 +34,11 @@ namespace sprdcamera {
 
 SprdCamera3Blur *mBlur = NULL;
 
+static struct cam_stream_info cap_stream_info_front[] = {{2592, 1944},
+                                                         {960, 720}};
+static struct cam_stream_info cap_stream_info_rear[] = {{2592, 1944},
+                                                        {960, 720}};
+
 // Error Check Macros
 #define CHECK_BLUR()                                                           \
     if (!mBlur) {                                                              \
@@ -626,6 +631,15 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+    if (blur_camera_id == MODE_BLUR_FRONT) {
+        mBlur->addAvailableStreamSize(metadata, cap_stream_info_front,
+                                      sizeof(cap_stream_info_front) /
+                                          sizeof(struct cam_stream_info));
+    } else {
+        mBlur->addAvailableStreamSize(metadata, cap_stream_info_rear,
+                                      sizeof(cap_stream_info_rear) /
+                                          sizeof(struct cam_stream_info));
+    }
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
@@ -1036,9 +1050,10 @@ void SprdCamera3Blur::CaptureThread::unLoadBlurApi() {
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3Blur::CaptureThread::blurHandle(buffer_handle_t *input1, void *input1_addr,
-                                               void *input2,
-                                               buffer_handle_t *output, void *output_addr) {
+int SprdCamera3Blur::CaptureThread::blurHandle(buffer_handle_t *input1,
+                                               void *input1_addr, void *input2,
+                                               buffer_handle_t *output,
+                                               void *output_addr) {
 
     int ret = 0;
     unsigned char *srcYUV = NULL;
@@ -1382,8 +1397,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                          capture_msg.combo_buff.buffer);
                 return false;
             }
-            if (mBlur->map(output_buffer, &output_buff_addr) !=
-                NO_ERROR) {
+            if (mBlur->map(output_buffer, &output_buff_addr) != NO_ERROR) {
                 HAL_LOGE("map output buffer(%p) failed", output_buffer);
                 return false;
             }
@@ -1398,46 +1412,46 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             }
 #endif
 
-            //blur process
-            switch(mVersion) {
-            case 1 : {
+            // blur process
+            switch (mVersion) {
+            case 1: {
                 blurProcessVer1(capture_msg.combo_buff.buffer, combo_buff_addr,
-                        output_buffer, output_buff_addr,
-                        capture_msg.combo_buff.frame_number);
+                                output_buffer, output_buff_addr,
+                                capture_msg.combo_buff.frame_number);
             } break;
 
-            case 2 : {
+            case 2: {
                 blurProcessVerN(capture_msg.combo_buff.buffer, combo_buff_addr,
-                        output_buffer, output_buff_addr,
-                        capture_msg.combo_buff.frame_number);
+                                output_buffer, output_buff_addr,
+                                capture_msg.combo_buff.frame_number);
             } break;
 
-            case 3 : {
+            case 3: {
                 blurProcessVer3(capture_msg.combo_buff.buffer, combo_buff_addr,
-                        output_buffer, output_buff_addr,
-                        capture_msg.combo_buff.frame_number);
+                                output_buffer, output_buff_addr,
+                                capture_msg.combo_buff.frame_number);
             } break;
 
             default:
                 HAL_LOGD("blur mVersion %d", mVersion);
                 blurProcessVerN(capture_msg.combo_buff.buffer, combo_buff_addr,
-                        output_buffer, output_buff_addr,
-                        capture_msg.combo_buff.frame_number);
+                                output_buffer, output_buff_addr,
+                                capture_msg.combo_buff.frame_number);
                 break;
             }
 
-            if(combo_buff_addr != NULL) {
+            if (combo_buff_addr != NULL) {
                 mBlur->unmap(capture_msg.combo_buff.buffer);
                 combo_buff_addr = NULL;
             }
-            if(output_buff_addr != NULL) {
+            if (output_buff_addr != NULL) {
                 mBlur->unmap(output_buffer);
                 output_buff_addr = NULL;
             }
 
-            //yuv reprocess
+            // yuv reprocess
             if (yuvReprocessCaptureRequest(capture_msg.combo_buff.buffer,
-                    output_buffer) == false) {
+                                           output_buffer) == false) {
                 HAL_LOGE("yuv reprocess false");
                 return false;
             }
@@ -1453,9 +1467,9 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
 }
 
 int SprdCamera3Blur::CaptureThread::blurProcessVer1(
-                buffer_handle_t *combo_buffer, void *combo_buff_addr,
-                buffer_handle_t *output_buffer, void *output_buff_addr,
-                uint32_t combe_frm_num) {
+    buffer_handle_t *combo_buffer, void *combo_buff_addr,
+    buffer_handle_t *output_buffer, void *output_buff_addr,
+    uint32_t combe_frm_num) {
     int ret = 0;
     void *nearJpegBufferAddr = NULL;
     dump_blur_t combo_buff, output_buff;
@@ -1464,39 +1478,35 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer1(
     memset(&output_buff, 0, sizeof(dump_blur_t));
 
     memset(&dump_buffs, 0, sizeof(dump_blur_t *) * DUMP_BLUR_TYPE_MAX);
-    mBlur->m_pNearJpegBuffer =
-            &mBlur->mLocalCapBuffer[2].native_handle;
+    mBlur->m_pNearJpegBuffer = &mBlur->mLocalCapBuffer[2].native_handle;
 
-    if (mBlur->map(mBlur->m_pNearJpegBuffer, &nearJpegBufferAddr) ==
-            NO_ERROR) {
+    if (mBlur->map(mBlur->m_pNearJpegBuffer, &nearJpegBufferAddr) == NO_ERROR) {
         mBlur->mNearJpegSize = mBlur->jpeg_encode_exif_simplify(
-                combo_buffer, combo_buff_addr,
-                mBlur->m_pNearJpegBuffer, nearJpegBufferAddr, NULL,
-                NULL, mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+            combo_buffer, combo_buff_addr, mBlur->m_pNearJpegBuffer,
+            nearJpegBufferAddr, NULL, NULL,
+            mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
 
         mBlur->unmap(mBlur->m_pNearJpegBuffer);
         nearJpegBufferAddr = NULL;
     } else {
-        HAL_LOGE("map m_pNearJpegBuffer(%p) failed",
-                mBlur->m_pNearJpegBuffer);
+        HAL_LOGE("map m_pNearJpegBuffer(%p) failed", mBlur->m_pNearJpegBuffer);
     }
 
     memcpy(mBlur->m_pNearYuvBuffer, combo_buff_addr,
-    mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
+           mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
 
     combo_buff.buffer_addr = combo_buff_addr;
     combo_buff.frame_number = combe_frm_num;
     dump_buffs[DUMP_BLUR_COMBO] = &combo_buff;
     dumpBlurIMG(DUMP_BLUR_COMBO, dump_buffs);
 
-    if(!mBlur->mFlushing) {
-        if(mCaptureWeightParams.roi_type == 2) {
-//                getOutWeightMap(mSavedResultBuff);
+    if (!mBlur->mFlushing) {
+        if (mCaptureWeightParams.roi_type == 2) {
+            //                getOutWeightMap(mSavedResultBuff);
         }
 
-        ret = blurHandle(combo_buffer, combo_buff_addr,
-                mBlur->m_pNearYuvBuffer,
-                output_buffer, output_buff_addr);
+        ret = blurHandle(combo_buffer, combo_buff_addr, mBlur->m_pNearYuvBuffer,
+                         output_buffer, output_buff_addr);
 
         output_buff.buffer_addr = output_buff_addr;
         output_buff.frame_number = combe_frm_num;
@@ -1508,9 +1518,9 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer1(
 }
 
 int SprdCamera3Blur::CaptureThread::blurProcessVer3(
-                buffer_handle_t *combo_buffer, void *combo_buff_addr,
-                buffer_handle_t *output_buffer, void *output_buff_addr,
-                uint32_t combo_frm_num) {
+    buffer_handle_t *combo_buffer, void *combo_buff_addr,
+    buffer_handle_t *output_buffer, void *output_buff_addr,
+    uint32_t combo_frm_num) {
     int ret = 0;
     buffer_handle_t *m_pJpegBuffer = NULL;
     void *m_pJpegBufferAddr = NULL;
@@ -1524,36 +1534,32 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
     memset(&output_buff, 0, sizeof(dump_blur_t));
 
     if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
-        m_pJpegBuffer =
-                &mBlur->mLocalCapBuffer[2].native_handle;
+        m_pJpegBuffer = &mBlur->mLocalCapBuffer[2].native_handle;
         m_pJpegSize = &mBlur->mNearJpegSize;
     } else if (mBlur->mReqState == WAIT_SECOND_YUV_STATE) {
-        m_pJpegBuffer =
-                &mBlur->mLocalCapBuffer[3].native_handle;
+        m_pJpegBuffer = &mBlur->mLocalCapBuffer[3].native_handle;
         m_pJpegSize = &mBlur->mFarJpegSize;
     }
 
-    if (mBlur->map(m_pJpegBuffer, &m_pJpegBufferAddr) ==
-            NO_ERROR) {
+    if (mBlur->map(m_pJpegBuffer, &m_pJpegBufferAddr) == NO_ERROR) {
         *m_pJpegSize = mBlur->jpeg_encode_exif_simplify(
-                combo_buffer, combo_buff_addr,
-                m_pJpegBuffer, m_pJpegBufferAddr, NULL, NULL,
-                mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+            combo_buffer, combo_buff_addr, m_pJpegBuffer, m_pJpegBufferAddr,
+            NULL, NULL, mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
 
         mBlur->unmap(m_pJpegBuffer);
         m_pJpegBufferAddr = NULL;
     } else {
         HAL_LOGE("map m_pNearJpegBuffer(%p) failed at mReqState(%d)",
-                m_pJpegBuffer, mBlur->mReqState);
+                 m_pJpegBuffer, mBlur->mReqState);
     }
 
     if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
         memcpy(mBlur->m_pNearYuvBuffer, combo_buff_addr,
-                mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
+               mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
     } else if (mBlur->mReqState == WAIT_SECOND_YUV_STATE) {
         if (mIsGalleryBlur) {
             memcpy(mBlur->m_pFarYuvBuffer, combo_buff_addr,
-                    mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
+                   mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
         }
     }
 
@@ -1562,18 +1568,18 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
     dump_buffs[DUMP_BLUR_COMBO] = &combo_buff;
     dumpBlurIMG(DUMP_BLUR_COMBO, dump_buffs);
 
-    if(!mBlur->mFlushing) {
+    if (!mBlur->mFlushing) {
         if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
             hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_AF_POS,
-                    &(mIspInfo.far_peak_pos), NULL);
+                                   &(mIspInfo.far_peak_pos), NULL);
         } else if (mBlur->mReqState == WAIT_SECOND_YUV_STATE) {
             hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_AF_POS,
-                    &(mIspInfo.af_peak_pos), NULL);
+                                   &(mIspInfo.af_peak_pos), NULL);
 
-            if(!mIsGalleryBlur) {
+            if (!mIsGalleryBlur) {
                 ret = blurHandle(combo_buffer, combo_buff_addr,
-                        mBlur->m_pNearYuvBuffer,
-                        output_buffer, output_buff_addr);
+                                 mBlur->m_pNearYuvBuffer, output_buffer,
+                                 output_buff_addr);
 
                 output_buff.buffer_addr = output_buff_addr;
                 output_buff.frame_number = combo_frm_num;
@@ -1582,7 +1588,7 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
             } else {
 #ifndef BLUR_V3_TAKE_3_YUV
                 memcpy(output_buff_addr, mBlur->m_pNearYuvBuffer,
-                        mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
+                       mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2);
 #endif
             }
         }
@@ -1592,9 +1598,9 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
 }
 
 int SprdCamera3Blur::CaptureThread::blurProcessVerN(
-                            buffer_handle_t *combo_buffer, void *combo_buff_addr,
-                            buffer_handle_t *output_buffer, void *output_buff_addr,
-                            uint32_t combo_frm_num) {
+    buffer_handle_t *combo_buffer, void *combo_buff_addr,
+    buffer_handle_t *output_buffer, void *output_buff_addr,
+    uint32_t combo_frm_num) {
     int ret = 0;
     dump_blur_t combo_buff, output_buff;
     dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX];
@@ -1607,14 +1613,13 @@ int SprdCamera3Blur::CaptureThread::blurProcessVerN(
     dump_buffs[DUMP_BLUR_COMBO] = &combo_buff;
     dumpBlurIMG(DUMP_BLUR_COMBO, dump_buffs);
 
-    if(!mBlur->mFlushing) {
-        if(mVersion == 2) {
+    if (!mBlur->mFlushing) {
+        if (mVersion == 2) {
             getIspAfFullscanInfo();
         }
 
-        ret = blurHandle(combo_buffer, combo_buff_addr,
-                mBlur->m_pNearYuvBuffer,
-                output_buffer, output_buff_addr);
+        ret = blurHandle(combo_buffer, combo_buff_addr, mBlur->m_pNearYuvBuffer,
+                         output_buffer, output_buff_addr);
 
         output_buff.buffer_addr = output_buff_addr;
         output_buff.frame_number = combo_frm_num;
@@ -1625,10 +1630,8 @@ int SprdCamera3Blur::CaptureThread::blurProcessVerN(
     return ret;
 }
 
-
 bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
-        buffer_handle_t *combe_buffer,
-        buffer_handle_t *output_buffer) {
+    buffer_handle_t *combe_buffer, buffer_handle_t *output_buffer) {
     int mime_type = (int)MODE_BLUR;
     camera3_capture_request_t request;
     camera3_stream_buffer_t output_stream_buff;
@@ -1639,11 +1642,11 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
     memset(&input_stream_buff, 0x00, sizeof(camera3_stream_buffer_t));
 
     memcpy((void *)&request, &mSavedCapRequest,
-            sizeof(camera3_capture_request_t));
+           sizeof(camera3_capture_request_t));
     request.settings = mSavedCapReqsettings;
 
     memcpy((void *)&input_stream_buff, &mSavedCapReqstreambuff,
-            sizeof(camera3_stream_buffer_t));
+           sizeof(camera3_stream_buffer_t));
     input_stream_buff.stream = &mMainStreams[mCaptureStreamsNum - 1];
     input_stream_buff.stream->width = mBlur->mCaptureWidth;
     input_stream_buff.stream->height = mBlur->mCaptureHeight;
@@ -1654,51 +1657,44 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
         input_stream_buff.buffer = output_buffer;
         mime_type = (int)MODE_BLUR;
     }
-    mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
-            &mime_type, NULL);
+    mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE, &mime_type, NULL);
 
     memcpy((void *)&output_stream_buff, &mSavedCapReqstreambuff,
-            sizeof(camera3_stream_buffer_t));
+           sizeof(camera3_stream_buffer_t));
     output_stream_buff.stream->width = mBlur->mCaptureWidth;
     output_stream_buff.stream->height = mBlur->mCaptureHeight;
     request.output_buffers = &output_stream_buff;
     if (mVersion == 3 && mBlur->mReqState == WAIT_FIRST_YUV_STATE &&
-            !mBlur->mFlushing) {
+        !mBlur->mFlushing) {
         output_stream_buff.stream = &mMainStreams[mCaptureStreamsNum];
-        output_stream_buff.buffer =
-                &mBlur->mLocalCapBuffer[0].native_handle;
+        output_stream_buff.buffer = &mBlur->mLocalCapBuffer[0].native_handle;
         request.input_buffer = NULL;
         mBlur->mReqState = WAIT_SECOND_YUV_STATE;
 #ifdef BLUR_V3_TAKE_3_YUV
-    } else if (mIsGalleryBlur &&
-            mBlur->mReqState == WAIT_SECOND_YUV_STATE &&
-            !mBlur->mFlushing) {
+    } else if (mIsGalleryBlur && mBlur->mReqState == WAIT_SECOND_YUV_STATE &&
+               !mBlur->mFlushing) {
         output_stream_buff.stream = &mMainStreams[mCaptureStreamsNum];
-        output_stream_buff.buffer =
-                &mBlur->mLocalCapBuffer[0].native_handle;
+        output_stream_buff.buffer = &mBlur->mLocalCapBuffer[0].native_handle;
         request.input_buffer = NULL;
         mBlur->mReqState = WAIT_THIRD_YUV_STATE;
-     } else {
+    } else {
         if (mBlur->mReqState == WAIT_THIRD_YUV_STATE) {
-        input_stream_buff.buffer = combe_buffer;
-     }
+            input_stream_buff.buffer = combe_buffer;
+        }
 #else
-     } else {
+    } else {
 #endif
-        output_stream_buff.stream =
-                &mMainStreams[mCaptureStreamsNum - 1];
+        output_stream_buff.stream = &mMainStreams[mCaptureStreamsNum - 1];
         request.input_buffer = &input_stream_buff;
 
         mBlur->mReqState = REPROCESS_STATE;
     }
     request.num_output_buffers = 1;
 
-    if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
-            &request)) {
+    if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev, &request)) {
         HAL_LOGE("failed. process capture request!");
     }
-    if (NULL != mSavedCapReqsettings &&
-            mBlur->mReqState == REPROCESS_STATE) {
+    if (NULL != mSavedCapReqsettings && mBlur->mReqState == REPROCESS_STATE) {
         free_camera_metadata(mSavedCapReqsettings);
         mSavedCapReqsettings = NULL;
     }
@@ -1707,25 +1703,27 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
     return true;
 }
 
-void SprdCamera3Blur::CaptureThread::dumpBlurIMG(dump_type type,
-        dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX]) {
+void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
+    dump_type type, dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX]) {
 
-    char prop[PROPERTY_VALUE_MAX] = {0, };
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     unsigned char *buffer_base = NULL;
     dump_blur_t *combo_buff = dump_buffs[DUMP_BLUR_COMBO];
     dump_blur_t *output_buff = dump_buffs[DUMP_BLUR_OUTPUT];
     dump_blur_t *result_buff = dump_buffs[DUMP_BLUR_RESULT];
 
-    switch(type) {
+    switch (type) {
     case DUMP_BLUR_COMBO:
         property_get("persist.sys.camera.blur1", prop, "0");
 
         if (1 == atoi(prop) && !mBlur->mFlushing && combo_buff != NULL) {
             buffer_base = (unsigned char *)combo_buff->buffer_addr;
-            mBlur->dumpData(buffer_base, 1,
-                    mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2,
-                    mBlur->mCaptureWidth, mBlur->mCaptureHeight,
-                    combo_buff->frame_number, "src");
+            mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
+                                                mBlur->mCaptureHeight * 3 / 2,
+                            mBlur->mCaptureWidth, mBlur->mCaptureHeight,
+                            combo_buff->frame_number, "src");
         }
         break;
 
@@ -1734,24 +1732,22 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(dump_type type,
 
         if (1 == atoi(prop) && combo_buff != NULL && output_buff != NULL) {
             buffer_base = (unsigned char *)output_buff->buffer_addr;
-            mBlur->dumpData(
-                    buffer_base, 1,
-                    mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2,
-                    mBlur->mCaptureWidth, mBlur->mCaptureHeight,
-                    output_buff->frame_number, "blur_output");
+            mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
+                                                mBlur->mCaptureHeight * 3 / 2,
+                            mBlur->mCaptureWidth, mBlur->mCaptureHeight,
+                            output_buff->frame_number, "blur_output");
 
             buffer_base = (unsigned char *)combo_buff->buffer_addr;
-            mBlur->dumpData(
-                        buffer_base, 1,
-                        mBlur->mCaptureWidth * mBlur->mCaptureHeight * 3 / 2,
-                        mBlur->mCaptureWidth, mBlur->mCaptureHeight,
-                        combo_buff->frame_number, "blur_yuv");
+            mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
+                                                mBlur->mCaptureHeight * 3 / 2,
+                            mBlur->mCaptureWidth, mBlur->mCaptureHeight,
+                            combo_buff->frame_number, "blur_yuv");
         }
         break;
 
     case DUMP_BLUR_RESULT: {
         property_get("persist.sys.camera.blur.dump", prop, "0");
-        if(1 != atoi(prop) || result_buff == NULL)
+        if (1 != atoi(prop) || result_buff == NULL)
             return;
 
         uint32_t para_num = 0;
@@ -1776,50 +1772,52 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(dump_type type,
                 ARRAY_SIZE(mCapture2InitParams.vfir_coeff) * 4;
             uint32_t similar_coeff_size =
                 ARRAY_SIZE(mCapture2InitParams.similar_coeff) * 4;
-            uint32_t tmp_coeff_size = ARRAY_SIZE(mCapture2InitParams.tmp_coeff) * 4;
+            uint32_t tmp_coeff_size =
+                ARRAY_SIZE(mCapture2InitParams.tmp_coeff) * 4;
 
             para_size += BLUR3_REFOCUS_COMMON_PARAM_NUM * 4 + hfir_coeff_size +
-                     vfir_coeff_size + similar_coeff_size + tmp_coeff_size;
+                         vfir_coeff_size + similar_coeff_size + tmp_coeff_size;
 #else
             para_num += BLUR3_REFOCUS_COMMON_PARAM_NUM;
             para_size = para_num * 4;
 #endif
         } else {
-            para_num += BLUR_REFOCUS_COMMON_PARAM_NUM + BLUR_REFOCUS_2_PARAM_NUM +
-                    BLUR_AF_WINDOW_NUM + BLUR_MAX_ROI * 5 +
-                    mCaptureInitParams.cali_seq_len * 2;
+            para_num += BLUR_REFOCUS_COMMON_PARAM_NUM +
+                        BLUR_REFOCUS_2_PARAM_NUM + BLUR_AF_WINDOW_NUM +
+                        BLUR_MAX_ROI * 5 + mCaptureInitParams.cali_seq_len * 2;
             para_size = para_num * 4;
         }
         // dump jpeg
-        mBlur->dumpData(buffer_base, 2, result_buff->jpeg_size, mBlur->mCaptureWidth,
-                    mBlur->mCaptureHeight, 0, "jpeg");
+        mBlur->dumpData(buffer_base, 2, result_buff->jpeg_size,
+                        mBlur->mCaptureWidth, mBlur->mCaptureHeight, 0, "jpeg");
         // dump para
         buffer_base += (result_buff->use_size - para_size);
         mBlur->dumpData(buffer_base, 3, para_num, 4, 0, 0, "parameter");
         // dump near jpeg
         buffer_base -= near_jpeg_size;
         mBlur->dumpData(buffer_base, 2, near_jpeg_size, mBlur->mCaptureWidth,
-                    mBlur->mCaptureHeight, 0, "nearJpeg");
+                        mBlur->mCaptureHeight, 0, "nearJpeg");
         // dump near yuv
         mBlur->dumpData((unsigned char *)(mBlur->m_pNearYuvBuffer), 1, yuv_size,
-                    mCaptureInitParams.width, mCaptureInitParams.height, 0,
-                    "nearYuv");
+                        mCaptureInitParams.width, mCaptureInitParams.height, 0,
+                        "nearYuv");
         if (mVersion == 3) {
             if (mIsGalleryBlur) {
                 // dump far jpeg
                 buffer_base -= far_jpeg_size;
-                mBlur->dumpData(buffer_base, 2, far_jpeg_size, mBlur->mCaptureWidth,
-                            mBlur->mCaptureHeight, 0, "farJpeg");
+                mBlur->dumpData(buffer_base, 2, far_jpeg_size,
+                                mBlur->mCaptureWidth, mBlur->mCaptureHeight, 0,
+                                "farJpeg");
                 // dump far yuv
                 mBlur->dumpData((unsigned char *)(mBlur->m_pFarYuvBuffer), 1,
-                            yuv_size, mCaptureInitParams.width,
-                            mCaptureInitParams.height, 0, "farYuv");
+                                yuv_size, mCaptureInitParams.width,
+                                mCaptureInitParams.height, 0, "farYuv");
             } else {
                 // dump weigth map
                 buffer_base -= weight_map_size;
                 mBlur->dumpData(buffer_base, 1, weight_map_size,
-                            mCaptureInitParams.width, mCaptureInitParams.height,
-                            0, "weightMap");
+                                mCaptureInitParams.width,
+                                mCaptureInitParams.height, 0, "weightMap");
             }
         }
         if ((mVersion == 1) && (mCaptureWeightParams.roi_type == 2)) {
@@ -1836,10 +1834,7 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(dump_type type,
     default:
         break;
     }
-
 }
-
-
 
 /*===========================================================================
  * FUNCTION   :initBlur20Params
@@ -3073,12 +3068,12 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         }
 #else
         unsigned char *p1[] = {
-            (unsigned char *)&orientation,
-            (unsigned char *)&near_jpeg_size, (unsigned char *)&far_jpeg_size,
-            (unsigned char *)&width,          (unsigned char *)&height,
-            (unsigned char *)&FNum,           (unsigned char *)&SelCoordX,
-            (unsigned char *)&SelCoordY,      (unsigned char *)&isGalleryBlur,
-            (unsigned char *)&version,        (unsigned char *)&BlurFlag};
+            (unsigned char *)&orientation,   (unsigned char *)&near_jpeg_size,
+            (unsigned char *)&far_jpeg_size, (unsigned char *)&width,
+            (unsigned char *)&height,        (unsigned char *)&FNum,
+            (unsigned char *)&SelCoordX,     (unsigned char *)&SelCoordY,
+            (unsigned char *)&isGalleryBlur, (unsigned char *)&version,
+            (unsigned char *)&BlurFlag};
 
         buffer += (use_size - BLUR3_REFOCUS_COMMON_PARAM_NUM * 4);
         for (i = 0; i < BLUR3_REFOCUS_COMMON_PARAM_NUM; i++) {
@@ -4042,8 +4037,8 @@ void SprdCamera3Blur::processCaptureResultMain(
         uint8_t *jpeg_addr = NULL;
         if (mBlur->map(result->output_buffers->buffer, (void **)(&jpeg_addr)) ==
             NO_ERROR) {
-            jpeg_size = getJpegSize(
-                jpeg_addr, ADP_WIDTH(*result->output_buffers->buffer));
+            jpeg_size = getJpegSize(jpeg_addr,
+                                    ADP_WIDTH(*result->output_buffers->buffer));
 
             mBlur->unmap(result->output_buffers->buffer);
             jpeg_addr = NULL;
@@ -4093,16 +4088,17 @@ void SprdCamera3Blur::processCaptureResultMain(
                               mCaptureThread->mLastFaceNum <= 0 &&
                               mCaptureThread->mSkipFaceNum >= 10)) {
                             void *buffer_addr = NULL;
-                            if(map(result->output_buffers->buffer, &buffer_addr) != NO_ERROR) {
+                            if (map(result->output_buffers->buffer,
+                                    &buffer_addr) != NO_ERROR) {
                                 HAL_LOGE("output buffer(%p) map error.",
-                                        result->output_buffers->buffer);
+                                         result->output_buffers->buffer);
                             } else {
                                 mCaptureThread->blurHandle(
                                     result->output_buffers->buffer, buffer_addr,
                                     NULL, NULL, NULL);
                             }
 
-                            if(buffer_addr != NULL) {
+                            if (buffer_addr != NULL) {
                                 unmap(result->output_buffers->buffer);
                                 buffer_addr = NULL;
                             }

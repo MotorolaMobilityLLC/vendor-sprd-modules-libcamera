@@ -34,6 +34,8 @@ namespace sprdcamera {
 
 SprdCamera3SideBySideCamera *mSidebyside = NULL;
 
+static struct cam_stream_info cap_stream_info[] = {{2592, 1944}, {960, 720}};
+
 // Error Check Macros
 #define CHECK_SIDEBYSIDE()                                                     \
     if (!mSidebyside) {                                                        \
@@ -1006,6 +1008,9 @@ int SprdCamera3SideBySideCamera::getCameraInfo(int blur_camera_id,
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+    addAvailableStreamSize(metadata, cap_stream_info,
+                           sizeof(cap_stream_info) /
+                               sizeof(struct cam_stream_info));
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
