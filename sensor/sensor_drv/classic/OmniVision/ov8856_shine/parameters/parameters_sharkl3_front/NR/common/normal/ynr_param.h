@@ -1,4 +1,4 @@
-/*versionid=0x00070005*/
+/*versionid=0x00090007*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_ynr_level*/
@@ -143,7 +143,7 @@
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00/*16-23*/
 	},
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -289,7 +289,7 @@
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00/*16-23*/
 	},
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param2.&BasePoint=1&*/
@@ -435,7 +435,7 @@
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00/*16-23*/
 	},
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param3.&BasePoint=1&*/
@@ -444,21 +444,21 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x0A3C,
+		0x07F8,
 		/*radius*/
-		0x0618,
+		0x04C8,
 		/*imgcetx*/
-		0x0840,
+		0x0660,
 		/*imgcety*/
-		0x0620,
+		0x04C8,
 		/*dist_interval*/
-		0x00000109,
+		0x000000CC,
 
 	},
 	/*ynr_txt_calc*/
 	{
 		/*ynr_lowlux_bypass*/
-		0x00,
+		0x01,
 		/*flat_thr*/
 		{
 			0x13,0x3F,0x5F,0x7F,0x9F,0xBF,0xDF/*0-6*/
@@ -559,10 +559,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x02,
+			0x04,
 			/*eurodist*/
 			{
-				0x0F,0x08,0x04/*0-2*/
+				0x0F,0x04,0x01/*0-2*/
 			},
 			/*reserved*/
 			{
@@ -590,15 +590,15 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x0A3C,
+		0x07F8,
 		/*radius*/
-		0x0618,
+		0x04C8,
 		/*imgcetx*/
-		0x0840,
+		0x0660,
 		/*imgcety*/
-		0x0620,
+		0x04C8,
 		/*dist_interval*/
-		0x00000109,
+		0x000000CC,
 
 	},
 	/*ynr_txt_calc*/
@@ -673,7 +673,7 @@
 		/*layer1*/
 		{
 			/*blf_en*/
-			0x00,
+			0x01,
 			/*wfindex*/
 			0x01,
 			/*eurodist*/
@@ -688,7 +688,7 @@
 		/*layer2*/
 		{
 			/*blf_en*/
-			0x00,
+			0x01,
 			/*wfindex*/
 			0x01,
 			/*eurodist*/
@@ -705,10 +705,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x05,
+			0x0A,
 			/*eurodist*/
 			{
-				0x0F,0x08,0x04/*0-2*/
+				0x0F,0x04,0x02/*0-2*/
 			},
 			/*reserved*/
 			{
@@ -736,15 +736,15 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x0A3C,
+		0x07F8,
 		/*radius*/
-		0x0618,
+		0x04C8,
 		/*imgcetx*/
-		0x0840,
+		0x0660,
 		/*imgcety*/
-		0x0620,
+		0x04C8,
 		/*dist_interval*/
-		0x00000109,
+		0x000000CC,
 
 	},
 	/*ynr_txt_calc*/
@@ -819,7 +819,7 @@
 		/*layer1*/
 		{
 			/*blf_en*/
-			0x00,
+			0x01,
 			/*wfindex*/
 			0x01,
 			/*eurodist*/
@@ -834,7 +834,7 @@
 		/*layer2*/
 		{
 			/*blf_en*/
-			0x00,
+			0x01,
 			/*wfindex*/
 			0x01,
 			/*eurodist*/
@@ -851,10 +851,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x07,
+			0x0A,
 			/*eurodist*/
 			{
-				0x0F,0x08,0x04/*0-2*/
+				0x0F,0x04,0x02/*0-2*/
 			},
 			/*reserved*/
 			{
