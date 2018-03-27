@@ -15,6 +15,7 @@ struct class_fb {
     int fb_mode;
     int firstFrm;
     int noFaceFrmCnt;
+    int isFaceGot;
     char sprdAlgorithm[PROPERTY_VALUE_MAX];
     FB_BEAUTY_OPTION fb_option;
     FB_IMAGE_YUV420SP fb_image;

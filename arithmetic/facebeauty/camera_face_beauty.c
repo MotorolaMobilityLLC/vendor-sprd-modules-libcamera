@@ -433,11 +433,11 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
         clock_gettime(CLOCK_BOOTTIME, &start_time);
         BOKEH_DATA *bokehData = 0;
 
-        /*check first face frame*/
-        if (faceBeauty->firstFrm && faceCount > 0) {
-            faceBeauty->firstFrm = 0;
+        /*wait first face frame*/
+        if (0 == faceBeauty->isFaceGot && faceCount > 0) {
+            faceBeauty->isFaceGot = 1;
         }
-        if (faceBeauty->firstFrm == 0) {
+        if (faceBeauty->isFaceGot == 1) {
             if (faceCount == 0) {
                 if (faceBeauty->noFaceFrmCnt < 100)
                     faceBeauty->noFaceFrmCnt++;
