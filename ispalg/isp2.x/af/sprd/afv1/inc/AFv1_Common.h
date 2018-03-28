@@ -61,7 +61,7 @@
 
 /*1.System info*/
 #define VERSION             "2.128"
-#define SUB_VERSION             "-20180319-sync_AF_Common"	//use the date code to naming
+#define SUB_VERSION             "-20180328-sync_AF_Common"//use the date code to naming
 
 #define STRING(s) #s
 
