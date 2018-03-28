@@ -498,6 +498,7 @@ LOCAL cmr_int sensor_set_id(struct sensor_drv_context *sensor_cxt,
             }
             sensor_cxt->is_main2_sensor = 1;
         }
+#if 0
         sensor_cxt->is_register_sensor = 0;
         if (hw_sensor_i2c_init(sensor_cxt->hw_drv_handle, sensor_id)) {
             if (SENSOR_MAIN == sensor_id) {
@@ -511,6 +512,7 @@ LOCAL cmr_int sensor_set_id(struct sensor_drv_context *sensor_cxt,
             SENSOR_LOGV("add I2C OK.");
             sensor_cxt->is_register_sensor = 1;
         }
+#endif
     }
 
     return SENSOR_SUCCESS;
@@ -747,7 +749,7 @@ static cmr_int sensor_ic_identify(struct sensor_drv_context *sensor_cxt,
             hw_sensor_i2c_set_clk(sensor_cxt->hw_drv_handle);
 
             /*Make sure kernel get match i2c-client*/
-            sensor_set_id(sensor_cxt, sensor_id);
+            //sensor_set_id(sensor_cxt, sensor_id);
             sensor_set_status(sensor_cxt, sensor_id);
             sensor_power_on(sensor_cxt, SCI_TRUE); /*power on*/
 
@@ -860,7 +862,7 @@ static void sensor_set_status(struct sensor_drv_context *sensor_cxt,
 #endif
         }
     }
-    sensor_set_id(sensor_cxt, sensor_id); /**/
+    //sensor_set_id(sensor_cxt, sensor_id); /**/
 
     ATRACE_END();
 }
