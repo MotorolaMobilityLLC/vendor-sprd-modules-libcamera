@@ -677,14 +677,16 @@ cmr_int afl_ctrl_deinit(cmr_handle * isp_afl_handle)
 		return rtn;
 	}
 
-	message.msg_type = AFLCTRL_EVT_DEINIT;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	message.data = NULL;
-	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
-	if (rtn) {
-		ISP_LOGE("fail to send msg to main thr %ld", rtn);
-		goto exit;
+	if (cxt->thr_handle) {
+		message.msg_type = AFLCTRL_EVT_DEINIT;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		message.alloc_flag = 0;
+		message.data = NULL;
+		rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
+		if (rtn) {
+			ISP_LOGE("fail to send msg to main thr %ld", rtn);
+			goto exit;
+		}
 	}
 
 	if (cxt->afl_set_cb) {
