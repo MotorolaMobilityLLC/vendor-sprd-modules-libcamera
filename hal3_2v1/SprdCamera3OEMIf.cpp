@@ -3151,7 +3151,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
             }
         }
 
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_N);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -3159,7 +3159,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_N);
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
@@ -3167,9 +3167,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                getMultiCameraMode() == MODE_BOKEH) {
         mSprdZslEnabled = true;
 
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_H);
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_N);
     } else {
         mSprdZslEnabled = false;
+        setCamPreformaceScene(CAM_OPEN_E_LEVEL_L);
     }
 #ifdef CONFIG_CAMERA_CAPTURE_NOZSL
     mSprdZslEnabled = false;
@@ -4894,7 +4895,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         getMultiCameraMode() == MODE_BOKEH) {
         setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NH);
     } else if (mRecordingMode == true) {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LH);
+        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LN);
     } else if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
         setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NN);
     } else {
