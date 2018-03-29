@@ -179,6 +179,8 @@ int SprdCamera3RegularChannel::channelCbRoutine(
                  eiscrop_Info.crop[1], eiscrop_Info.crop[2],
                  eiscrop_Info.crop[3]);
     }
+#else
+    stream->reserved[0] = NULL;
 #endif
 
     result_info.is_urgent = false;
@@ -557,6 +559,9 @@ int SprdCamera3PicChannel::channelCbRoutine(uint32_t frame_number,
         HAL_LOGE("dq error, stream_type = %d", stream_type);
         return BAD_VALUE;
     }
+
+    /*set default value for EIS*/
+    stream->reserved[0] = NULL;
 
     result_info.is_urgent = false;
     result_info.buffer = buffer;
