@@ -53,7 +53,7 @@
 #define SNAPSHOT_HEIGHT 1744 // 4016
 #else
 #define SNAPSHOT_WIDTH 4656  // 5344
-#define SNAPSHOT_HEIGHT 3496 // 4016
+#define SNAPSHOT_HEIGHT 3492 // 4016
 #endif
 #define PREVIEW_WIDTH 2328  // 2672
 #define PREVIEW_HEIGHT 1744 // 2008
@@ -636,7 +636,7 @@ static struct sensor_res_tab_info s_imx351_resolution_tab_raw[VENDOR_NUM] = {
            .width = 2328, .height = 1744, .xclk_to_sensor = EX_MCLK,
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
           {ADDR_AND_LEN_OF_ARRAY(imx351_4656x3496_setting), PNULL, 0,
-           .width = 4656, .height = 3496, .xclk_to_sensor = EX_MCLK,
+           .width = 4656, .height = 3492, .xclk_to_sensor = EX_MCLK,
            .image_format = SENSOR_IMAGE_FORMAT_RAW}}},
 };
 
@@ -646,7 +646,7 @@ static SENSOR_TRIM_T s_imx351_resolution_trim_tab[VENDOR_NUM] = {
                    /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
                    {0, 0, 1280, 720, 6098, 758, 1816, {0, 0, 1280, 720}},
                    {0, 0, 2328, 1744, 18364, 374, 1812, {0, 0, 2328, 1744}},
-                   {0, 0, 4656, 3496, 9343, 1316, 3564, {0, 0, 4656, 3496}}}},
+                   {0, 0, 4656, 3492, 9343, 1316, 3564, {0, 0, 4656, 3492}}}},
 };
 
 static const SENSOR_REG_T
