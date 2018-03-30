@@ -81,10 +81,6 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),1)
-LOCAL_SHARED_LIBRARIES += libamipengine
-endif
-
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
 include $(LOCAL_PATH)/../SprdCtrl.mk

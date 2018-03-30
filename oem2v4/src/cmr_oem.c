@@ -346,8 +346,6 @@ static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle,
 static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle,
                                              cmr_u32 camera_id,
                                              struct yuv_info_t *yuv);
-static void camera_filter_doeffect(cmr_handle oem_handle, struct img_frm *src,
-                                   cmr_s32 type);
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info,
                                         struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param,
