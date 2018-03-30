@@ -663,6 +663,30 @@ static cmr_u32 _awb_set_tuning_param(struct awb_ctrl_cxt *cxt, void *param0)
 	return rtn;
 }
 
+static cmr_u32 _awb_get_data_type(struct awb_ctrl_cxt *cxt, void *param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+
+	if (NULL == cxt) {
+		ISP_LOGE("fail to get awb cxt");
+		rtn = AWB_CTRL_ERROR;
+		goto exit;
+	}
+
+	if (NULL == param) {
+		ISP_LOGE("param is null");
+		rtn = AWB_CTRL_ERROR;
+		goto exit;
+	}
+
+	cmr_s32 *data_type = (cmr_s32 *)param;
+	*data_type = cxt->awb_init_param.tuning_param.stat_type;
+
+	ISP_LOGV("awb_get_data_type = %d", *data_type);
+  exit:
+	return rtn;
+}
+
 static cmr_u32 awbsprd_unload_lib(struct awb_ctrl_cxt *cxt)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -1584,6 +1608,9 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		rtn = _awb_get_flash_ct_table(cxt, out);
 		break;
 
+	case AWB_CTRL_CMD_GET_DATA_TYPE:
+		rtn = _awb_get_data_type(cxt, out);
+		break;
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);
 		rtn = AWB_CTRL_ERROR;
