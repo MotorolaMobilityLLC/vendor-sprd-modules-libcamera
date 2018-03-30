@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <utils/Log.h>
 #include "camera_face_beauty.h"
-#include "arcsoft_beautyshot_wrapper.h"
 
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
@@ -45,45 +44,7 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
         } else {
             faceBeauty->fb_mode = 0;
         }
-    } else {
-        MRESULT retint;
-        if (workMode == 1) {
-            faceBeauty->fb_mode = 1;
-            if (faceBeauty->hArcSoftFB == 0) {
-                ALOGD("init_fb_handle to arcsoft_bsv_create");
-                faceBeauty->firstFrm = 1;
-                if (arcsoft_bsv_create(&(faceBeauty->hArcSoftFB)) != MOK ||
-                    faceBeauty->hArcSoftFB == NULL) {
-                    ALOGE("arcsoft_bsv_create  fail");
-                    return;
-                }
-                /* Get arcsoft algorithm version
-                const MPBASE_Version* info =
-                arcsoft_bsv_get_version(faceBeauty->hArcSoftFB);
-                MChar *version = info->Version;
-                ALOGD("arcsoft_bsv_get_version : %s",version); */
-                retint = arcsoft_bsv_init(faceBeauty->hArcSoftFB);
-                if (MOK != retint) {
-                    ALOGE("arcsoft_bsv_init() new Error");
-                    return;
-                }
-            }
-        } else {
-            faceBeauty->fb_mode = 0;
-            if (faceBeauty->hArcSoftFB == 0) {
-                ALOGD("init_fb_handle to arcsoft_bsi_create");
-                if (arcsoft_bsi_create(&(faceBeauty->hArcSoftFB)) != MOK ||
-                    faceBeauty->hArcSoftFB == NULL) {
-                    ALOGE("arcsoft_bsi_create  fail");
-                    return;
-                }
-                if (MOK != arcsoft_bsi_init(faceBeauty->hArcSoftFB)) {
-                    ALOGE("arcsoft_bsi_init() Error");
-                    return;
-                }
-            }
-        }
-    }
+    } 
 }
 
 void deinit_fb_handle(struct class_fb *faceBeauty) {
@@ -93,34 +54,6 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
         if (faceBeauty->hSprdFB != 0) {
             FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
             faceBeauty->hSprdFB = NULL;
-        }
-    } else {
-        if (faceBeauty->fb_mode == 1) {
-            if (faceBeauty->hArcSoftFB != 0) {
-                ALOGD("deinit_fb_handle arcsoft_bsv_fini");
-                if (MOK != arcsoft_bsv_fini(faceBeauty->hArcSoftFB)) {
-                    ALOGE("arcsoft_bsv_fini() Error");
-                    return;
-                }
-                if (MOK != arcsoft_bsv_destroy(faceBeauty->hArcSoftFB)) {
-                    ALOGE("arcsoft_bsv_destroy() Error");
-                    return;
-                }
-                faceBeauty->hArcSoftFB = NULL;
-            }
-        } else {
-            if (faceBeauty->hArcSoftFB != 0) {
-                ALOGD("deinit_fb_handle arcsoft_bsi_fini");
-                if (MOK != arcsoft_bsi_fini(faceBeauty->hArcSoftFB)) {
-                    ALOGE("arcsoft_bsi_fini() Error");
-                    return;
-                }
-                if (MOK != arcsoft_bsi_destroy(faceBeauty->hArcSoftFB)) {
-                    ALOGE("arcsoft_bsi_destroy() Error");
-                    return;
-                }
-                faceBeauty->hArcSoftFB = NULL;
-            }
         }
     }
 }
@@ -145,21 +78,7 @@ void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
               j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
               faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
               angle, pose);
-    } else {
-        faceBeauty->arc_fb_face.prtFaces[j].left = sx;
-        faceBeauty->arc_fb_face.prtFaces[j].top = sy;
-        faceBeauty->arc_fb_face.prtFaces[j].right = ex;
-        faceBeauty->arc_fb_face.prtFaces[j].bottom = ey;
-        if (angle > 0) {
-            angle = -angle;
-            angle += 360;
-        } else {
-            angle = -angle;
-        }
-        faceBeauty->arc_fb_face.plFaceRolls[j] = angle;
-        ALOGD("acr_fb_face[%d]  angle: %d. rect: %d %d   %d %d.", j,
-              (int)faceBeauty->arc_fb_face.plFaceRolls[j], sx, sy, ex, ey);
-    }
+    } 
 }
 
 void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
@@ -179,18 +98,7 @@ void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
         faceBeauty->fb_image.format = (format == 1)
                                           ? YUV420_FORMAT_CBCR
                                           : YUV420_FORMAT_CRCB; // NV12 : NV21
-    } else {
-        faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV21;
-        if (format == 1) {
-            faceBeauty->arc_fb_image.u32PixelArrayFormat = ASVL_PAF_NV12;
-        }
-        faceBeauty->arc_fb_image.i32Width = picWidth;
-        faceBeauty->arc_fb_image.i32Height = picHeight;
-        faceBeauty->arc_fb_image.pi32Pitch[0] = picWidth;
-        faceBeauty->arc_fb_image.pi32Pitch[1] = picWidth;
-        faceBeauty->arc_fb_image.ppu8Plane[0] = addrY;
-        faceBeauty->arc_fb_image.ppu8Plane[1] = addrU;
-    }
+    } 
 }
 
 void construct_fb_level(struct class_fb *faceBeauty,
@@ -369,27 +277,6 @@ void construct_fb_level(struct class_fb *faceBeauty,
         } else {
             faceBeauty->fb_option.debugMode = 0;
         }
-    } else {
-        // convert the skin_level set by APP to skinLevel & smoothLevel
-        // according to
-        // the table saved.
-        beautyLevels.smoothLevel = tab_skinCleanLevel[beautyLevels.smoothLevel];
-        beautyLevels.brightLevel =
-            tab_skinWhitenLevel[beautyLevels.brightLevel];
-        beautyLevels.slimLevel = tab_faceSlimLevel[beautyLevels.slimLevel];
-        beautyLevels.largeLevel = tab_eyeLargeLevel[beautyLevels.largeLevel];
-
-        faceBeauty->faceSoften = (MInt32)beautyLevels.smoothLevel;
-        faceBeauty->faceWhiten = (MInt32)beautyLevels.brightLevel;
-        faceBeauty->eyeEnlargement = (MInt32)beautyLevels.largeLevel;
-        faceBeauty->faceSlender = (MInt32)beautyLevels.slimLevel;
-        if (!strcmp(isDebug, "1")) {
-            faceBeauty->eyeEnlargement = 50;
-            faceBeauty->faceSlender = 50;
-        }
-        ALOGD("arc_levels: %d %d %d %d.", faceBeauty->faceSoften,
-              faceBeauty->faceWhiten, faceBeauty->eyeEnlargement,
-              faceBeauty->faceSlender);
     }
 }
 
@@ -480,100 +367,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                   faceBeauty->fb_option.slimFaceLevel,
                   faceBeauty->fb_option.largeEyeLevel);
         }
-    } else {
-        faceBeauty->arc_fb_face.lFaceNum = faceCount;
-        if (faceBeauty->fb_mode == 1) {
-            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_FACE_SOFTEN_KEY,
-                                          faceBeauty->faceSoften);
-            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_FACE_WHITEN_KEY,
-                                          faceBeauty->faceWhiten);
-            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_EYE_ENLARGEMENT_KEY,
-                                          faceBeauty->eyeEnlargement);
-            arcsoft_bsv_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_FACE_SLENDER_KEY,
-                                          faceBeauty->faceSlender);
-            clock_gettime(CLOCK_BOOTTIME, &start_time);
-            ALOGD("format : %d,w %d,h %d , white %d ,soft %d",
-                  faceBeauty->arc_fb_image.u32PixelArrayFormat,
-                  faceBeauty->arc_fb_image.i32Width,
-                  faceBeauty->arc_fb_image.i32Height, faceBeauty->faceSoften,
-                  faceBeauty->faceWhiten);
-            property_get("persist.sys.cam.beauty.dump", value, "off");
-            if (!strcmp(value, "on")) {
-                save_yuv_data(11, faceBeauty->arc_fb_image.i32Width,
-                              faceBeauty->arc_fb_image.i32Height,
-                              faceBeauty->arc_fb_image.ppu8Plane[0]);
-            }
-
-            retVal = arcsoft_bsv_process(
-                faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
-                &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
-
-            property_get("persist.sys.cam.beauty.dump", value, "off");
-            if (!strcmp(value, "on")) {
-                save_yuv_data(22, faceBeauty->arc_fb_image.i32Width,
-                              faceBeauty->arc_fb_image.i32Height,
-                              faceBeauty->arc_fb_image.ppu8Plane[0]);
-            }
-            /* Arcsoft issue, first frame is no effective, so process two
-             * times*/
-            if (1 == faceBeauty->firstFrm) {
-                ALOGD("do_facebeauty in the oem first frame!");
-                retVal = arcsoft_bsv_process(faceBeauty->hArcSoftFB,
-                                             &(faceBeauty->arc_fb_image),
-                                             &(faceBeauty->arc_fb_image),
-                                             &(faceBeauty->arc_fb_face), MNull);
-                faceBeauty->firstFrm = 0;
-            }
-            clock_gettime(CLOCK_BOOTTIME, &end_time);
-            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
-                       (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
-            // for test
-            ALOGD("arcsoft_bsv_process duration is %d ms", duration);
-            ALOGV("arcsoft_bsv_process duration is %d ms", duration);
-        } else {
-            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_FACE_SOFTEN_KEY,
-                                          faceBeauty->faceSoften);
-            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_FACE_WHITEN_KEY,
-                                          faceBeauty->faceWhiten);
-            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_EYE_ENLARGEMENT_KEY,
-                                          faceBeauty->eyeEnlargement);
-            arcsoft_bsi_set_feature_level(faceBeauty->hArcSoftFB,
-                                          FEATURE_FACE_SLENDER_KEY,
-                                          faceBeauty->faceSlender);
-            clock_gettime(CLOCK_BOOTTIME, &start_time);
-            ALOGD("format : %d,w %d,h %d , white %d ,soft %d",
-                  faceBeauty->arc_fb_image.u32PixelArrayFormat,
-                  faceBeauty->arc_fb_image.i32Width,
-                  faceBeauty->arc_fb_image.i32Height, faceBeauty->faceSoften,
-                  faceBeauty->faceWhiten);
-            property_get("persist.sys.cam.beauty.dump", value, "off");
-            if (!strcmp(value, "on")) {
-                save_yuv_data(11, faceBeauty->arc_fb_image.i32Width,
-                              faceBeauty->arc_fb_image.i32Height,
-                              faceBeauty->arc_fb_image.ppu8Plane[0]);
-            }
-            retVal = arcsoft_bsi_process(
-                faceBeauty->hArcSoftFB, &(faceBeauty->arc_fb_image),
-                &(faceBeauty->arc_fb_image), &(faceBeauty->arc_fb_face), MNull);
-            property_get("persist.sys.cam.beauty.dump", value, "off");
-            if (!strcmp(value, "on")) {
-                save_yuv_data(22, faceBeauty->arc_fb_image.i32Width,
-                              faceBeauty->arc_fb_image.i32Height,
-                              faceBeauty->arc_fb_image.ppu8Plane[0]);
-            }
-            clock_gettime(CLOCK_BOOTTIME, &end_time);
-            duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
-                       (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
-            ALOGD("arcsoft_bsi_process duration is %d ms", duration);
-        }
-    }
+    } 
     if (retVal != 0) {
         ALOGE("FACE_BEAUTY ERROR!, ret is %d", retVal);
     }

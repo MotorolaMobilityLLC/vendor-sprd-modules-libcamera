@@ -31,35 +31,8 @@ LOCAL_MODULE_STEM_64 := libsprdfacebeauty.a
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty.a
 LOCAL_MODULE_TAGS := optional
-LOCAL_PROPRIETARY_MODULE := true
-
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libarcsoft_beautyshot
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libarcsoft_beautyshot.so
-LOCAL_MODULE_STEM_64 := libarcsoft_beautyshot.so
-LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot.so
-LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot.so
-LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
-LOCAL_PROPRIETARY_MODULE := true
-endif
-
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libarcsoft_beautyshot_wrapper
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libarcsoft_beautyshot_wrapper.so
-LOCAL_MODULE_STEM_64 := libarcsoft_beautyshot_wrapper.so
-LOCAL_SRC_FILES_32 := $(LIB_PATH)/libarcsoft_beautyshot_wrapper.so
-LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libarcsoft_beautyshot_wrapper.so
-LOCAL_MODULE_TAGS := optional
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+#LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -76,8 +49,6 @@ LOCAL_SHARED_LIBRARIES:= \
      liblog \
      libcutils \
      libmpbase \
-     libarcsoft_beautyshot \
-     libarcsoft_beautyshot_wrapper
 
 LOCAL_STATIC_LIBRARIES := \
      libsprdfacebeauty

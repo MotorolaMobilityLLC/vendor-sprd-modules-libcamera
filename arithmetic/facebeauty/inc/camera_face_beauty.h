@@ -8,7 +8,6 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include "sprdfacebeauty.h"
-#include "arcsoft_beautyshot_wrapper.h"
 #include <cutils/properties.h>
 
 struct class_fb {
@@ -21,14 +20,6 @@ struct class_fb {
     FB_IMAGE_YUV420SP fb_image;
     FB_FACEINFO fb_face[10];
     FB_BEAUTY_HANDLE hSprdFB;
-    // Arcsoft
-    MHandle hArcSoftFB;
-    ASVLOFFSCREEN arc_fb_image;
-    ABS_TFaces arc_fb_face;
-    MInt32 faceSoften;
-    MInt32 faceWhiten;
-    MInt32 eyeEnlargement;
-    MInt32 faceSlender;
 };
 
 struct face_beauty_levels {
