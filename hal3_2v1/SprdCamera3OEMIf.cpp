@@ -270,8 +270,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
-      miSBindcorePreviewFrame(false), mBindcorePreivewFrameCount(0),
-      mHDRPowerHint(0), m3DNRPowerHint(0), mGyroInit(0), mGyroExit(0),
+      mSysPerformace(NULL), mGyroInit(0), mGyroExit(0),
       mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
       mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
       mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
@@ -290,10 +289,13 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI(":hal3: E cameraId: %d.", cameraId);
 
-    SprdCameraSystemPerformance::getSysPerformance(&mSysPerformace);
-    if (mSysPerformace) {
-        setCamPreformaceScene(CAM_OPEN_S);
+    if (cameraId == 0 || cameraId == 1) {
+        SprdCameraSystemPerformance::getSysPerformance(&mSysPerformace);
+        if (mSysPerformace) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+        }
     }
+
 #if defined(LOWPOWER_DISPLAY_30FPS)
     property_set("lowpower.display.30fps", "true");
 #endif
@@ -524,7 +526,6 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
         closeCamera();
     }
 
-    setCamPreformaceScene(CAM_EXIT_E);
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
     property_get("lowpower.display.30fps", value, "false");
@@ -547,7 +548,9 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
     HAL_LOGI(":hal3: X cameraId: %d.", mCameraId);
     timer_stop();
 
-    SprdCameraSystemPerformance::freeSysPerformance(&mSysPerformace);
+    if (mSysPerformace) {
+        SprdCameraSystemPerformance::freeSysPerformance(&mSysPerformace);
+    }
 }
 
 void SprdCamera3OEMIf::closeCamera() {
@@ -655,14 +658,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
-        if (getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_BOKEH) {
-            setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HH);
-        } else if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
-            setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HN);
-        } else {
-            setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_NH);
-        }
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
 
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
             mTakePictureMode == SNAPSHOT_ONLY_MODE)
@@ -1045,10 +1041,6 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(frm_info *frm_data) {
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
-    }
-
-    if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
-        setCamPreformaceScene(CAM_CAPTURE_S_LEVEL_HN);
     }
 
     if (SPRD_ERROR == mCameraState.capture_state) {
@@ -1687,19 +1679,6 @@ static int set_camera_affinity(pid_t pid) {
         return -1;
     }
     return 0;
-}
-
-void SprdCamera3OEMIf::bindcoreEnabled() {
-    int pid = getpid();
-    int ret = 0;
-    ret = set_camera_affinity(pid);
-    if (ret < 0) {
-        HAL_LOGV("affinity,failed for pid:%d, error:%d", pid, ret);
-    }
-    miSBindcorePreviewFrame = false;
-    mBindcorePreivewFrameCount = 0;
-    HAL_LOGV("bind:%d,%d,%d", ret, miSBindcorePreviewFrame,
-             mBindcorePreivewFrameCount);
 }
 
 int SprdCamera3OEMIf::getCameraTemp() {
@@ -3135,7 +3114,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_L);
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
@@ -3154,8 +3132,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                 camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
             }
         }
-
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_N);
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
@@ -3163,18 +3139,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_N);
     } else if (mSprd3dCalibrationEnabled == true && mRawHeight != 0 &&
                mRawWidth != 0) {
         mSprdZslEnabled = true;
     } else if (getMultiCameraMode() == MODE_BLUR ||
                getMultiCameraMode() == MODE_BOKEH) {
         mSprdZslEnabled = true;
-
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_N);
     } else {
         mSprdZslEnabled = false;
-        setCamPreformaceScene(CAM_OPEN_E_LEVEL_L);
     }
 #ifdef CONFIG_CAMERA_CAPTURE_NOZSL
     mSprdZslEnabled = false;
@@ -3821,13 +3793,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-        if (mHDRPowerHint || m3DNRPowerHint ||
-            getMultiCameraMode() == MODE_BLUR ||
+
+        if (getMultiCameraMode() == MODE_BLUR ||
             getMultiCameraMode() == MODE_BOKEH ||
-            mSprdAppmodeId == CAMERA_MODE_PANORAMA) {
-            setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_N);
+            mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
+            mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+        } else if (mRecordingMode == true) {
+                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
         } else {
-            setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_L);
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
         }
     }
 
@@ -4311,18 +4286,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
         }
     }
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER_BINDCORE
-    HAL_LOGV("bind core :%d,%d,mBindcorePreivewFrameCount:%d",
-             miSBindcorePreviewFrame, sysconf(_SC_NPROCESSORS_ONLN),
-             mBindcorePreivewFrameCount);
-    if ((miSBindcorePreviewFrame == true) &&
-        sysconf(_SC_NPROCESSORS_ONLN) == 3) {
-        mBindcorePreivewFrameCount++;
-        if (mBindcorePreivewFrameCount == 3) {
-            bindcoreEnabled();
-        }
-    }
-#endif
 exit:
     HAL_LOGV("X");
 }
@@ -4901,14 +4864,13 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
     if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_BOKEH) {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NH);
+        getMultiCameraMode() == MODE_BOKEH ||
+        mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
     } else if (mRecordingMode == true) {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LN);
-    } else if (1 == mHDRPowerHint || 1 == m3DNRPowerHint) {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_NN);
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
     } else {
-        setCamPreformaceScene(CAM_CAPTURE_E_LEVEL_LL);
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
     }
 
 exit:
@@ -5771,7 +5733,7 @@ void SprdCamera3OEMIf::setCamPreformaceScene(
     sys_performance_camera_scene camera_scene) {
 
     if (mSysPerformace) {
-        mSysPerformace->setCamPreformaceScene(camera_scene, mCameraId);
+        mSysPerformace->setCamPreformaceScene(camera_scene);
     }
 }
 
@@ -5993,17 +5955,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
-        if (CAMERA_SCENE_MODE_HDR == drvSceneMode) {
-            mHDRPowerHint = 1;
-        } else {
-            mHDRPowerHint = 0;
-        }
-        if ((mUsingSW3DNR == true) &&
-            (CAMERA_SCENE_MODE_NIGHT == drvSceneMode)) {
-            m3DNRPowerHint = 1;
-        } else {
-            m3DNRPowerHint = 0;
-        }
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {

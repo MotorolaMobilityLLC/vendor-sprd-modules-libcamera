@@ -181,7 +181,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
     }
 
     if (mOEMIf) {
-        mOEMIf->setCamPreformaceScene(CAM_EXIT_S);
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         // for performance tuning: close camera
         mOEMIf->setSensorCloseFlag();
     }
@@ -1763,7 +1763,7 @@ int SprdCamera3HWI::flush() {
     int64_t timestamp = 0;
 // Mutex::Autolock l(mLock);
     if (mOEMIf) {
-        mOEMIf->setCamPreformaceScene(CAM_FLUSH_S);
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     }
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
@@ -1777,7 +1777,6 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = true;
-    mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     Mutex::Autolock l(mLock);
 
     // for performance tuning: close camera
@@ -1805,9 +1804,13 @@ int SprdCamera3HWI::flush() {
         return -ENODEV;
     }
 
+    if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD)
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+    else
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+
+    mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     mFlush = false;
-    if (mOEMIf)
-        mOEMIf->setCamPreformaceScene(CAM_FLUSH_E);
 
     HAL_LOGI(":hal3: X");
     LAUNCHLOGE(CMR_FLUSH_T);

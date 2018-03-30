@@ -218,7 +218,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
-    void bindcoreEnabled();
     int IommuIsEnabled(void);
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
@@ -772,13 +771,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /*ZSL Monitor Thread*/
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
-    bool miSBindcorePreviewFrame;
-    int mBindcorePreivewFrameCount;
 
-    /* enable/disable powerhint for hdr */
-    uint32_t mHDRPowerHint;
-    /* enable/disable powerhint for SW3DNR (only for capture)*/
-    uint32_t m3DNRPowerHint;
     SprdCameraSystemPerformance *mSysPerformace;
 
     /* 1- start acceleration, 0 - finish acceleration*/
