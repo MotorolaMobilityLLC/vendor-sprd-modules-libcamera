@@ -131,7 +131,7 @@ cmr_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, cmr_u32 cmd, 
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[15] = 0;
 
-				rtn = _pm_yuv_noisefilter_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
+				rtn = _pm_yuv_noisefilter_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
 				dst_ptr->cur.yrandom_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm yuv noisefilter param!");

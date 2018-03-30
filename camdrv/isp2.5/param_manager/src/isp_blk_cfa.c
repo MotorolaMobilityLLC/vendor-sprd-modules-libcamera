@@ -157,7 +157,7 @@ cmr_s32 _pm_cfa_set_param(void *cfae_param, cmr_u32 cmd, void *param_ptr0, void 
 				cfae_header_ptr->is_update = 1;
 				nr_tool_flag[3] = 0;
 
-				rtn = _pm_cfa_convert_param(cfae_ptr, cfae_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
+				rtn = _pm_cfa_convert_param(cfae_ptr, cfae_ptr->cur_level, cfae_header_ptr->mode_id, block_result->scene_flag);
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm cfa param");
 					return rtn;

@@ -253,7 +253,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 				nlm_header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[7] = 0;
 
-				rtn = _pm_nlm_convert_param(nlm_ptr, nlm_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
+				rtn = _pm_nlm_convert_param(nlm_ptr, nlm_ptr->cur_level, nlm_header_ptr->mode_id, block_result->scene_flag);
 				nlm_ptr->cur.bypass |= nlm_header_ptr->bypass;
 				nlm_ptr->cur.vst_bypass = nlm_ptr->cur.bypass;
 				nlm_ptr->cur.ivst_bypass = nlm_ptr->cur.bypass;

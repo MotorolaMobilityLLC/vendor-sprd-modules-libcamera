@@ -3805,6 +3805,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 
 	cxt->commn_cxt.isp_mode = mode;
+	cxt->commn_cxt.mode_flag = mode;
+
 	cxt->work_mode_cxt.mode_id = mode;
 	cxt->work_mode_cxt.prv_mode_id = prv_mode;
 	cxt->work_mode_cxt.cap_mode_id = cap_mode;
