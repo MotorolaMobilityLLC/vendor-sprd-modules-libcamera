@@ -4260,6 +4260,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	struct afctrl_fwstart_info af_start_info;
 	struct sensor_ex_exposure default_exp;
 	cmr_u32 default_gain = 0;
+	cmr_s32 binning_invalid = 1;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -4282,6 +4283,14 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	cxt->dcam_size.w = in_ptr->dcam_size.w;
 	cxt->dcam_size.h = in_ptr->dcam_size.h;
 
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+					      AWB_CTRL_CMD_GET_DATA_TYPE,
+					      NULL,
+					      (void *)&binning_invalid);
+		ISP_TRACE_IF_FAIL(ret, ("AWB_CTRL_CMD_GET_DATA_TYPE fail"));
+	}
+
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
 	statis_mem_input.buffer_client_data = in_ptr->buffer_client_data;
 	statis_mem_input.cb_of_malloc = in_ptr->cb_of_malloc;
@@ -4290,13 +4299,17 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	statis_mem_input.isp_lsc_virtaddr = in_ptr->lsc_virt_addr;
 	statis_mem_input.lsc_mfd = in_ptr->lsc_mfd;
 	statis_mem_input.statis_valid =
-		ISP_STATIS_VALID_AEM | ISP_STATIS_VALID_AFM | ISP_STATIS_VALID_AFL;
+		ISP_STATIS_VALID_AEM |
+		ISP_STATIS_VALID_AFM |
+		ISP_STATIS_VALID_AFL;
 
 #ifndef ECONOMIZE_MEMORY
 	statis_mem_input.statis_valid |=
-		ISP_STATIS_VALID_BINNING | ISP_STATIS_VALID_HIST | ISP_STATIS_VALID_HIST2;
+		ISP_STATIS_VALID_HIST |
+		ISP_STATIS_VALID_HIST2;
 #endif
-
+	if (binning_invalid)
+		statis_mem_input.statis_valid |= ISP_STATIS_VALID_BINNING;
 	if (cxt->pdaf_cxt.pdaf_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_PDAF;
 
