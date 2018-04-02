@@ -848,7 +848,7 @@ static void sensor_set_status(struct sensor_drv_context *sensor_cxt,
             continue;
         }
         if (SENSOR_TRUE == register_info->is_register[i]) {
-            sensor_set_id(sensor_cxt, i);
+            //sensor_set_id(sensor_cxt, i);
             sensor_info_ptr = sensor_cxt->sensor_list_ptr[i];
             sensor_set_cxt_common(sensor_cxt);
 #ifdef CONFIG_CAMERA_RT_REFOCUS
