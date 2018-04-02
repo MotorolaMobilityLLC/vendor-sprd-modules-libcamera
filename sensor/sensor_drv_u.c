@@ -1826,7 +1826,9 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
 init_exit:
     if (SENSOR_SUCCESS != ret_val) {
         sensor_destroy_ctrl_thread(sensor_cxt);
-        // sns_device_deinit(sensor_cxt);
+        hw_sensor_drv_delete(hw_drv_handle);
+        sensor_cxt->hw_drv_handle = NULL;
+        sensor_cxt->sensor_hw_handler = NULL;
     }
 
     ATRACE_END();
