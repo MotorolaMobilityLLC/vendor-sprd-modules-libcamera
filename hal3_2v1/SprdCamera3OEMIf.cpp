@@ -5983,7 +5983,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
-#ifdef POWER_HINT_USED
         if (CAMERA_SCENE_MODE_HDR == drvSceneMode) {
             mHDRPowerHint = 1;
         } else {
@@ -5995,7 +5994,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         } else {
             m3DNRPowerHint = 0;
         }
-#endif
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {

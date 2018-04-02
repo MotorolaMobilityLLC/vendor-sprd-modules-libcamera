@@ -305,8 +305,8 @@ void SprdCameraSystemPerformance::setPowerHint(
     switch (mCurrentPowerHint) {
     case CAM_POWER_NORMAL:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
             thermalEnabled(false);
+            acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             acquirePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
@@ -335,9 +335,9 @@ void SprdCameraSystemPerformance::setPowerHint(
         break;
     case CAM_POWER_LOWPOWER_ON:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
+            thermalEnabled(false);
             releasePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
             acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
-            thermalEnabled(false);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             HAL_LOGD("current power state is already CAM_POWER_LOWPOWER_ON,"
@@ -579,11 +579,9 @@ void SprdCameraSystemPerformance::releasePowerHint(
 void SprdCameraSystemPerformance::thermalEnabled(bool flag){
     if (mThermalManager != NULL) {
         if(flag == false){
-            if(!mThermalManager->getExtThermal(ExtThermalCmd::THMCMD_SET_PERF_EN))
-                mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_EN);
+           mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_EN);
         }else{
-            if(!mThermalManager->getExtThermal(ExtThermalCmd::THMCMD_SET_PERF_DIS))
-                mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_DIS);
+           mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_DIS);
         }
         HAL_LOGI("thermalEnabled done,flag is =%d", flag);
     }

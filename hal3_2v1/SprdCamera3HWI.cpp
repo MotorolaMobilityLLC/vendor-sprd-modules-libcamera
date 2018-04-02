@@ -1758,11 +1758,9 @@ int SprdCamera3HWI::flush() {
     int ret = NO_ERROR;
     int64_t timestamp = 0;
 // Mutex::Autolock l(mLock);
-#ifndef ANDROID_VERSION_O_BRINGUP
     if (mOEMIf) {
         mOEMIf->setCamPreformaceScene(CAM_FLUSH_S);
     }
-#endif
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
         if (mPicChan) {
@@ -1804,12 +1802,8 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = false;
-#ifndef ANDROID_VERSION_O_BRINGUP
-#ifdef POWER_HINT_USED
     if (mOEMIf)
         mOEMIf->setCamPreformaceScene(CAM_FLUSH_E);
-#endif
-#endif
 
     HAL_LOGI(":hal3: X");
     LAUNCHLOGE(CMR_FLUSH_T);
