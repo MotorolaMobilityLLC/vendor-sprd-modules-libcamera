@@ -2056,8 +2056,8 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
 
-	pdaf_param_in.u_addr = u_addr;
-	void *pdaf_info = (cmr_s32 *)(u_addr);
+	pdaf_param_in.u_addr = u_addr + ISP_PDAF_STATIS_BUF_SIZE/2;
+	void *pdaf_info = (cmr_s32 *)(u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
 	cxt->pd_dump ++;
 
 	if (cxt->ops.af_ops.ioctrl) {
@@ -4656,10 +4656,10 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
 
-	pthread_mutex_destroy(&cxt->stats_buf_lock);
-
 	ret = ispalg_deinit((cmr_handle) cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do ispalg_deinit"));
+
+	pthread_mutex_destroy(&cxt->stats_buf_lock);
 
 	ret = isp_pm_deinit(cxt->handle_pm);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
