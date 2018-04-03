@@ -4738,7 +4738,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
     print_time();
     Mutex::Autolock cbLock(&mCaptureCbLock);
-    Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
     struct camera_jpeg_param *encInfo = &frame->jpeg_param;
     int64_t temp = 0, temp1 = 0;
     ;
