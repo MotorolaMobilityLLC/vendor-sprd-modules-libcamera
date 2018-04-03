@@ -1009,19 +1009,40 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	cmr_u16 isp_gain_tmp = 0;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
-	cmr_handle pm_handle = cxt->handle_pm;
+	struct isp_alg_fw_context *cxt = NULL;
+	lsc_adv_handle_t lsc_adv_handle = NULL;
+	cmr_handle pm_handle = NULL;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
 	struct alsc_update_info update_info = { 0, 0, NULL };
-	cmr_u32 lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
+	cmr_u32 lsc_sprd_version = 0;
 	struct lsc_table_transf_info binning_src;
 	struct lsc_table_transf_info binning_dst;
 	struct binning_info binning;
 	struct lsc_adv_calc_param calc_param;
 	struct lsc_adv_calc_result calc_result = { 0 };
+	struct isp_2d_lsc_param *lsc_tab_param_ptr = NULL;
+	struct isp_lsc_info *dcam_lsc_info = NULL;
+
+	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	if (!cxt) {
+		ISP_LOGE("fail to get ispalg fw contex.");
+		return -ISP_PARAM_NULL;
+	}
+
+	lsc_adv_handle = cxt->lsc_cxt.handle;
+	lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
+	if (!lsc_adv_handle) {
+		ISP_LOGE("fail to get lsc adv handle.");
+		return -ISP_PARAM_NULL;
+	}
+
+	pm_handle = cxt->handle_pm;
+	if (!pm_handle) {
+		ISP_LOGE("fail to get pm handle.");
+		return -ISP_PARAM_NULL;
+	}
 
 	memset(&binning_src, 0x0, sizeof(binning_src));
 	memset(&binning_dst, 0x0, sizeof(binning_dst));
@@ -1033,6 +1054,12 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			return ISP_ERROR;
 		}
 
+		lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
+		if (!lsc_tab_param_ptr) {
+			ISP_LOGE("fail to get lsc tab addr.");
+			return -ISP_PARAM_NULL;
+		}
+
 		memset(pm_param, 0, sizeof(pm_param));
 		/*zsl mode_id[0]: prev; none zsl mode_id[0]: prev, cap, video etc*/
 		BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_INFO,
@@ -1042,17 +1069,19 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		io_pm_input.param_num = 1;
 		io_pm_input.param_data_ptr = &pm_param[0];
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-		struct isp_lsc_info *dcam_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
-		struct isp_2d_lsc_param *lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
-
-		if (NULL == lsc_tab_param_ptr || NULL == dcam_lsc_info || ISP_SUCCESS != ret) {
-			ISP_LOGE("fail to get param");
-			return ISP_ERROR;
+		ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+		if (io_pm_output.param_data) {
+			dcam_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
+			if (!dcam_lsc_info) {
+				ISP_LOGE("fail to get dcam lsc info.");
+				return -ISP_PARAM_NULL;
+			}
+		} else {
+			ISP_LOGE("fail to get param_data_alsc_output.param_data.");
+			return -ISP_PARAM_NULL;
 		}
 
 		memset(&calc_param, 0, sizeof(calc_param));
-
 		calc_result.dst_gain = (cmr_u16 *)dcam_lsc_info->data_ptr;
 		calc_param.stat_img.r = ae_stat_r;
 		calc_param.stat_img.gr = ae_stat_g;
@@ -1140,12 +1169,16 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,
 					(void *)&param_data_alsc_input,
 					(void *)&param_data_alsc_output);
-			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-			if (ISP_SUCCESS == ret && param_data_alsc_output.param_data != NULL)
+			ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+			if (param_data_alsc_output.param_data) {
 				isp_lsc_tab_ptr = (struct isp_2d_lsc_param *)(param_data_alsc_output.param_data->data_ptr);
-			if (!isp_lsc_tab_ptr) {
-				ISP_LOGE("fail to get isp binning lsc tab.");
-				return ISP_ERROR;
+				if (!isp_lsc_tab_ptr) {
+					ISP_LOGE("fail to get isp binning lsc tab.");
+					return -ISP_PARAM_NULL;
+				}
+			} else {
+				ISP_LOGE("fail to get param_data_alsc_output.param_data.");
+				return -ISP_PARAM_NULL;
 			}
 
 			memset(pm_param, 0, sizeof(pm_param));
@@ -1158,12 +1191,16 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					io_pm_input.param_num = 1;
 					io_pm_input.param_data_ptr = &pm_param[i];
 					ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
-					ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-					if (ISP_SUCCESS == ret && io_pm_output.param_data != NULL)
+					ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+					if (io_pm_output.param_data) {
 						isp_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
-					if (!isp_lsc_info) {
-						ISP_LOGI("fail to get isp lsc info.");
-						return ISP_ERROR;
+						if (!isp_lsc_info) {
+							ISP_LOGE("fail to get isp lsc info.");
+							return -ISP_PARAM_NULL;
+						}
+					} else {
+						ISP_LOGE("fail to get io_pm_output.param_data.");
+						return -ISP_PARAM_NULL;
 					}
 
 					binning.ratio = (float)cxt->dcam_size.w / calc_param.img_size.w;
@@ -1199,11 +1236,16 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				io_pm_input.param_num = 1;
 				io_pm_input.param_data_ptr = &pm_param[0];
 				ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&io_pm_input, (void *)&io_pm_output);
-				ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-				isp_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
-				if (!isp_lsc_info) {
-					ISP_LOGI("fail to get isp lsc info.");
-					return ISP_ERROR;
+				ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+				if (io_pm_output.param_data) {
+					isp_lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
+					if (!isp_lsc_info) {
+						ISP_LOGE("fail to get isp lsc info.");
+						return -ISP_PARAM_NULL;
+					}
+				} else {
+					ISP_LOGE("fail to get io_pm_output.param_data.");
+					return -ISP_PARAM_NULL;
 				}
 
 				binning.ratio = (float)cxt->dcam_size.w / calc_param.img_size.w;
@@ -1269,7 +1311,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 			io_pm_input.param_data_ptr = pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
+			ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
 
 			memset(pm_param, 0, sizeof(pm_param));
 			BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_MEM_ADDR,
@@ -1280,7 +1322,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			io_pm_input.param_num = 1;
 			io_pm_input.param_data_ptr = &pm_param[0];
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
-			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
+			ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_SET_OTHERS"));
 		}
 	}
 	return ret;

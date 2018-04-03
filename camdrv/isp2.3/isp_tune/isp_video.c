@@ -1007,6 +1007,10 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 				*data_status = 0x00;
 
 			ret = send(sockfd, tx_buf, msg_ret->len + 2, 0);
+			if (ret != msg_ret->len + 2)
+				return -1;
+			else
+				ret = ISP_SUCCESS;
 		}
 	}
 	if (0 != tail_len) {
@@ -1015,6 +1019,10 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 		*(tx_buf + msg_ret->len + 1) = 0x7e;
 		*data_status = 0x01;
 		ret = send(sockfd, tx_buf, msg_ret->len + 2, 0);
+		if (ret != msg_ret->len + 2)
+			return -1;
+		else
+			ret = ISP_SUCCESS;
 	}
 	ISP_LOGV("denoise send over! ret = %d", ret);
 	return ret;
@@ -1249,7 +1257,11 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 	}
 	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
 
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+	ret = denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+	if (ret) {
+		ISP_LOGE("fail to denoise param send.");
+		return ret;
+	}
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);
@@ -2722,11 +2734,11 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	MSG_HEAD_T *msg, *msg_ret;
 
 	ISP_DATA_HEADER_T isp_msg;
-	cmr_s32 preview_tmpflag = 0;
+	//cmr_s32 preview_tmpflag = 0;
 	memset(&isp_msg, 0, sizeof(ISP_DATA_HEADER_T));
 
 	struct camera_func *fun_ptr = ispvideo_GetCameraFunc();
-	cmr_s32 is_stop_preview = 0;
+	//cmr_s32 is_stop_preview = 0;
 
 	if (len < sizeof(MSG_HEAD_T) + 2) {
 		ISP_LOGE("fail to check param\n");
@@ -3525,43 +3537,45 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		}
 	case CMD_OTP_WRITE:
 		ISP_LOGV("ISP_OTP:CMD_OTP_WRITE \n");
-		preview_tmpflag = preview_flag;
 		len -= rsp_len;
+#if 0
+		preview_tmpflag = preview_flag;
 		if (is_stop_preview && preview_tmpflag) {
 			if (NULL != fun_ptr->stop_preview) {
 				fun_ptr->stop_preview(0, 0);
 			}
 		}
-		if (!ret) {
-			memset(&eng_rsp_diag[rsp_len], 0, len);
-		} else {
-			memset(&eng_rsp_diag[rsp_len], 0, len);
-			eng_rsp_diag[rsp_len] = 0x01;
-		}
+#endif
+		memset(&eng_rsp_diag[rsp_len], 0, len);
+		eng_rsp_diag[rsp_len] = 0x01;
+
 		rsp_len += len;
 		eng_rsp_diag[rsp_len] = 0x7e;
 		msg_ret->len = rsp_len - 1;
 
+#if 0
 		if (is_stop_preview && preview_tmpflag) {
 			if (NULL != fun_ptr->start_preview) {
 				fun_ptr->start_preview(0, 0);
 			}
 			preview_flag = preview_tmpflag;
 		}
-
+#endif
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 		ISP_LOGV("ISP_OTP:CMD_OTP_WRITE done\n");
 		break;
 
 	case CMD_OTP_READ:
 		ISP_LOGV("ISP_OTP:CMD_OTP_READ \n");
-		preview_tmpflag = preview_flag;
 		len -= rsp_len;
+#if 0
+		preview_tmpflag = preview_flag;
 		if (is_stop_preview && preview_tmpflag) {
 			if (NULL != fun_ptr->stop_preview) {
 				fun_ptr->stop_preview(0, 0);
 			}
 		}
+#endif
 
 		memcpy(eng_rsp_diag, buf, (msg_ret->len + 1));
 		ISP_LOGV("ISP_OTP:CMD_OTP_READ rsp_len %d len %d\n", rsp_len, len);
@@ -3569,12 +3583,14 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 		eng_rsp_diag[rsp_len] = 0x7e;
 		msg_ret->len = rsp_len - 1;
 
+#if 0
 		if (is_stop_preview && preview_tmpflag) {
 			if (NULL != fun_ptr->start_preview) {
 				fun_ptr->start_preview(0, 0);
 			}
 			preview_flag = preview_tmpflag;
 		}
+#endif
 		res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
 		ISP_LOGV("ISP_OTP:CMD_OTP_READ  done\n");
 

@@ -71,26 +71,11 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *param_ptr)
 cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_u_blocks_info *raw_aem_ptr = NULL;
-	struct isp_io_param param;
 
 	if (!handle || !param_ptr) {
 		ISP_LOGE("failed to get ptr: %p, %p", handle, param_ptr);
 		return -1;
 	}
-
-	return ret;
-	file = (struct isp_file *)(handle);
-	raw_aem_ptr = (struct isp_u_blocks_info *)param_ptr;
-
-	param.isp_id = file->isp_id;
-	param.scene_id = raw_aem_ptr->scene_id;
-	param.sub_block = ISP_BLOCK_RAW_AEM;
-	param.property = ISP_PRO_RAW_AEM_BYPASS;
-	param.property_param = &raw_aem_ptr->stats_info.bypass;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }

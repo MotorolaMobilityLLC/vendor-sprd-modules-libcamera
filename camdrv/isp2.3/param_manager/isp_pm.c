@@ -1253,7 +1253,7 @@ static cmr_s32 isp_pm_set_mode(cmr_handle handle, cmr_u32 mode_id)
 	struct isp_pm_mode_param *next_mode_param = PNULL;
 	struct isp_pm_tune_merge_param merged_mode_param;
 
-	if (ISP_TUNE_MODE_MAX < mode_id) {
+	if (ISP_TUNE_MODE_MAX <= mode_id) {
 		ISP_LOGE("fail to  get valid mode id , id=%d\n", mode_id);
 		rtn = ISP_ERROR;
 		return rtn;
@@ -1301,7 +1301,7 @@ static cmr_s32 isp_pm_change_mode(cmr_handle handle, cmr_u32 mode_id)
 	struct isp_pm_tune_merge_param merged_mode_param;
 	struct isp_pm_mode_param *org_mode_param = PNULL;
 
-	if (ISP_TUNE_MODE_MAX < mode_id) {
+	if (ISP_TUNE_MODE_MAX <= mode_id) {
 		ISP_LOGE("fail to  get valid  mode id , id=%d\n", mode_id);
 		rtn = ISP_ERROR;
 		return rtn;
@@ -1358,7 +1358,7 @@ static cmr_s32 isp_pm_set_second_mode(cmr_handle handle, cmr_u32 mode_id)
 	struct isp_pm_tune_merge_param merged_mode_param;
 	struct isp_pm_mode_param *org_mode_param = PNULL;
 
-	if (ISP_TUNE_MODE_MAX < mode_id) {
+	if (ISP_TUNE_MODE_MAX <= mode_id) {
 		ISP_LOGE("fail to  get valid  mode id , id=%d\n", mode_id);
 		rtn = ISP_ERROR;
 		return rtn;
