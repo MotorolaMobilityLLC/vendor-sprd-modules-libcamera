@@ -2066,10 +2066,10 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		case ISP_BLK_UVDIV:
 			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.uvdiv;
 			break;
-		case ISP_BLK_3DNR_PRE:
+		case DCAM_BLK_3DNR_PRE:
 			update_param->dnr_pre_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_pre;
 			break;
-		case ISP_BLK_3DNR_CAP:
+		case DCAM_BLK_3DNR_CAP:
 			update_param->dnr_cap_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_cap;
 			break;
 		case ISP_BLK_EDGE:
