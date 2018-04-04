@@ -5040,6 +5040,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             enc_dst.size.height = 360;
         } else if (dst->size.height == 1088 && dst->size.width == 1440) {
             enc_dst.size.height = 1080;
+        } else if (dst->size.height == 608 && dst->size.width == 800) {
+            enc_dst.size.height = 600;
         }
 #ifdef CONFIG_CAMERA_VIDEO_1920_1080
          else if (dst->size.height == 1088 && dst->size.width == 1920) {
