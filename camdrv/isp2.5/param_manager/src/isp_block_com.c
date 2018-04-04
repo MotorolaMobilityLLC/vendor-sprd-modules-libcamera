@@ -33,7 +33,7 @@
 #define ISP_NR_13_MODE_BIT (0x01 << 13)
 #define ISP_NR_14_MODE_BIT (0x01 << 14)
 #define ISP_NR_15_MODE_BIT (0x01 << 15)
-cmr_u8 nr_tool_flag[17] = { 0 };
+cmr_u8 nr_tool_flag[18] = { 0 };
 
 cmr_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
 	ISP_NR_AUTO_MODE_BIT,
@@ -166,11 +166,6 @@ cmr_s32 _pm_check_smart_param(struct smart_block_result * block_result, struct i
 
 	if (comp_num != block_result->component_num) {
 		ISP_LOGE("fail to component num : %d (%d)\n", block_result->component_num, comp_num);
-		return ISP_ERROR;
-	}
-
-	if (0 == block_result->update) {
-		ISP_LOGV("do not need update\n");
 		return ISP_ERROR;
 	}
 

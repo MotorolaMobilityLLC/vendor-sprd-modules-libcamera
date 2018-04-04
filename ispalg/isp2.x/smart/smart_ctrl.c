@@ -83,6 +83,7 @@ static const char *s_smart_block_name[] = {
 	"rgb_precdn",
 	"bdn",
 	"prfy",
+	"cnr2",
 
 	"unkown"
 };

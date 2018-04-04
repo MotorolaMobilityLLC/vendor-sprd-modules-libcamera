@@ -31,7 +31,7 @@
 #define MAX_MODE_NUM 16
 #define MAX_NR_NUM 32
 
-#define MAX_NRTYPE_NUM 18
+#define MAX_NRTYPE_NUM 19
 
 #define MAX_SCENEMODE_NUM 16
 #define MAX_SPECIALEFFECT_NUM 16
@@ -51,6 +51,8 @@
 #define AE_SCENE_NUM 8
 #define LNC_MAP_COUNT 9
 #define LNC_WEIGHT_LEN 4096
+
+#define CNR_LEVEL 4
 
 #define AE_VERSION    0x00000000
 #define AWB_VERSION   0x00000000
@@ -1293,6 +1295,21 @@ struct isp_haf_tune_param {
 	struct isp_pdaf_tune_param isp_pdaf_tune_data[3];
 };
 
+struct sensor_filter_weights
+{
+	cmr_u8 distWeight[9]; //distance weight for different scale
+	cmr_u8 reserved[3]; //alignment 4 byte with distWeight
+	cmr_u8 rangWeight[128]; //range weight for different scale
+};
+
+struct sensor_cnr_level {
+	cmr_u8 filter_en[CNR_LEVEL]; //enable control of filter
+	cmr_u8 rangTh[CNR_LEVEL][2]; //threshold for different scale(rangTh[CNR_LEVEL][0]:U threshold, rangTh[CNR_LEVEL][1]:V threshold)
+	struct sensor_filter_weights weight[CNR_LEVEL][2]; //weight table(wTable[CNR_LEVEL][0]:U weight table, wTable[CNR_LEVEL][1]:V weight table)
+	float dist_sigma[CNR_LEVEL][2];
+	float rang_sigma[CNR_LEVEL][2];
+};
+
 #if 0
 struct ae_new_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;
@@ -1773,6 +1790,7 @@ enum {
 	ISP_BLK_EDGE_T,
 	ISP_BLK_IIRCNR_T,
 	ISP_BLK_YUV_NOISEFILTER_T,
+	ISP_BLK_CNR2_T,
 	ISP_BLK_TYPE_MAX
 };
 
@@ -1972,6 +1990,8 @@ struct sensor_nr_set_group_param {
 	cmr_u32 iircnr_len;
 	cmr_u8 *yuv_noisefilter;
 	cmr_u32 yuv_noisefilter_len;
+	cmr_u8 *cnr2;
+	cmr_u32 cnr2_len;
 };
 struct sensor_nr_param {
 	struct sensor_nr_set_group_param nr_set_group;
@@ -2054,6 +2074,7 @@ struct denoise_param_update {
 	struct sensor_rgb_dither_level *rgb_dither_level_ptr;
 	struct sensor_ynr_level *ynr_level_ptr;
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_level_ptr;
+	struct sensor_cnr_level *cnr2_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;

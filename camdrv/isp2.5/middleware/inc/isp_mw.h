@@ -366,6 +366,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_MICRODEPTH_PARAM,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_SENSITIVITY,
+	ISP_CTRL_GET_CNR2_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -929,6 +930,18 @@ struct work_mode_info {
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
 	cmr_u32 cap_mode_id;
+};
+
+struct isp_sw_filter_weights
+{
+	cmr_u8 distWeight[9];
+	cmr_u8 rangWeight[128];
+};
+
+struct isp_sw_cnr2_info {
+	cmr_u8 filter_en[4];
+	cmr_u8 rangTh[4][2];
+	struct isp_sw_filter_weights weight[4][2];
 };
 
 typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,

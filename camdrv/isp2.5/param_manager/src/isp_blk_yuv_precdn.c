@@ -118,6 +118,11 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 			val_range.min = 0;
 			val_range.max = 255;
 
+			if (0 == block_result->update) {
+				ISP_LOGV("do not need update\n");
+				return ISP_SUCCESS;
+			}
+
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");

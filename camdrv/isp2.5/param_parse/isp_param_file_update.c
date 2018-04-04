@@ -47,6 +47,7 @@ char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"ee",
 	"iircnr",
 	"yuv_noisefilter",
+	"cnr",
 };
 
 char nr_mode_name[MAX_MODE_NUM][8] = {
@@ -1092,6 +1093,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	nr_set_size[ISP_BLK_POSTCDN_T] = sizeof(struct sensor_uv_postcdn_level);
 	nr_set_size[ISP_BLK_IIRCNR_T] = sizeof(struct sensor_iircnr_level);
 	nr_set_size[ISP_BLK_YUV_NOISEFILTER_T] = sizeof(struct sensor_yuv_noisefilter_level);
+	nr_set_size[ISP_BLK_CNR2_T] = sizeof(struct sensor_cnr_level);
 
 	nr_map_ptr = sensor_raw_ptr->nr_fix.nr_scene_ptr;
 	multi_nr_scene_map_ptr = (cmr_u32 *)&(nr_map_ptr->nr_scene_map[0]);

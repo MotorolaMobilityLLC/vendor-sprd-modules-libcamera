@@ -125,8 +125,13 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 
 				val_range.min = 0;
 				val_range.max = ISP_CMC_NUM - 1;
-				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 
+				if (0 == block_result->update) {
+					ISP_LOGV("do not need update\n");
+					return ISP_SUCCESS;
+				}
+
+				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to check pm smart param !");
 					return rtn;
@@ -199,6 +204,12 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, vo
 
 				val_range.min = 1;
 				val_range.max = 255;
+
+				if (0 == block_result->update) {
+					ISP_LOGV("do not need update\n");
+					return ISP_SUCCESS;
+				}
+
 				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to check pm smart param !");

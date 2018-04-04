@@ -92,6 +92,7 @@ static void isp_pm_check_param(cmr_u32 id, cmr_u32 *update_flag)
 	case ISP_BLK_UV_POSTCDN:
 	case ISP_BLK_IIRCNR_IIR:
 	case ISP_BLK_YUV_NOISEFILTER:
+	case ISP_BLK_CNR2:
 	{
 		*update_flag = ISP_PARAM_FROM_TOOL;
 		break;
@@ -1319,6 +1320,13 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				nr_set_size = sizeof(struct sensor_yuv_noisefilter_level);
 				break;
 			}
+			case ISP_BLK_CNR2:
+			{
+				isp_blk_nr_type = ISP_BLK_CNR2_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr2);
+				nr_set_size = sizeof(struct sensor_cnr_level);
+				break;
+			}
 			default:
 				break;
 			}
@@ -1338,7 +1346,8 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				|| src_header[j].block_id == ISP_BLK_UV_CDN
 				|| src_header[j].block_id == ISP_BLK_UV_POSTCDN
 				|| src_header[j].block_id == ISP_BLK_IIRCNR_IIR
-				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER) {
+				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER
+				|| src_header[j].block_id == ISP_BLK_CNR2) {
 
 				dst_blk_data = (struct isp_pm_nr_simple_header_param *)dst_data_ptr;
 				memset((void *)dst_blk_data, 0x00, sizeof(struct isp_pm_nr_simple_header_param));

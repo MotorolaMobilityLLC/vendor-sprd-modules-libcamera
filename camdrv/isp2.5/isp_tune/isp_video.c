@@ -130,6 +130,7 @@ typedef enum {
 	SHARKL3_RGBAFM,
 	SHARKL3_PRE3DNR,
 	SHARKL3_CAP3DNR,
+	SHARKL3_CNR20,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -1013,6 +1014,19 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[0] = 1;
 			break;
 		}
+	case SHARKL3_CNR20:
+		{
+			static cmr_u32 cnr2_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cnr2_level_ptr)) + nr_offset_addr + cnr2_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cnr2_ptr_offset += data_actual_len;
+			else
+				cnr2_ptr_offset = 0;
+			nr_tool_flag[17] = 1;
+			break;
+		}
 	default:
 		break;
 	}
@@ -1338,6 +1352,14 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_CNR20:
+		{
+			data_head_ptr->sub_type = SHARKL3_CNR20;
+			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
 			break;
 		}
 	default:
