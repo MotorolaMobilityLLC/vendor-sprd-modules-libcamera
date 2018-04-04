@@ -190,10 +190,19 @@ static const SENSOR_REG_T ov13855_2112x1568_setting[] = {
     {0x3809, 0x40},
     {0x380a, 0x06},
     {0x380b, 0x20},
+#ifndef CONFIG_SENSOR_LOWPOWER_MODE
+// hts 2244  vts 1608
     {0x380c, 0x08},
     {0x380d, 0xc4},
     {0x380e, 0x06},
     {0x380f, 0x48},
+#else
+// hts 1122  vts 3216
+    {0x380c, 0x04},
+    {0x380d, 0x62},
+    {0x380e, 0x0c},
+    {0x380f, 0x90},
+#endif
     {0x3811, 0x08},
     {0x3813, 0x02},
     {0x3814, 0x03},
@@ -792,6 +801,7 @@ static SENSOR_TRIM_T
                       .line_time = 10380, .bps_per_lane = 270,
                       .frame_line = 804,
                       .scaler_trim = {.x = 0, .y = 0, .w = 1024, .h = 768}},*/
+                      #ifndef CONFIG_SENSOR_LOWPOWER_MODE
                      {.trim_start_x = 0,
                       .trim_start_y = 0,
                       .trim_width = 2112,
@@ -800,6 +810,16 @@ static SENSOR_TRIM_T
                       .bps_per_lane = 540,
                       .frame_line = 1608,
                       .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+                      #else
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 2112,
+                      .trim_height = 1568,
+                      .line_time = 10380,
+                      .bps_per_lane = 540,
+                      .frame_line = 3216,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+                      #endif
                      {.trim_start_x = 0,
                       .trim_start_y = 0,
                       .trim_width = 4224,
