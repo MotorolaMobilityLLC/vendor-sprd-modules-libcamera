@@ -6,13 +6,13 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x16BC,
+		0x0A3C,
 		/*radius*/
-		0x06D4,
+		0x0618,
 		/*imgcetx*/
-		0x094E,
+		0x0840,
 		/*imgcety*/
-		0x06D4,
+		0x0620,
 		/*dist_interval*/
 		0x00000109,
 
