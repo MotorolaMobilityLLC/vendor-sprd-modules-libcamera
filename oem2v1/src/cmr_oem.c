@@ -7726,12 +7726,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("af_pos %d", param_ptr->cmd_value);
         break;
 
-    case COM_ISP_GET_CNR2_PARAM:
-        isp_cmd = ISP_CTRL_GET_CNR2_PARAM;
-        ptr_flag = 1;
-        isp_param_ptr = (void *)&param_ptr->cnr2_param;
-        break;
-
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;

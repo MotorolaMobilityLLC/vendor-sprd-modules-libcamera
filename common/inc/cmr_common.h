@@ -377,7 +377,6 @@ enum common_isp_cmd_type {
     COM_ISP_SET_SENSITIVITY,
     COM_ISP_SET_AF_BYPASS,
     COM_ISP_SET_AF_POS,
-    COM_ISP_GET_CNR2_PARAM,
     COM_ISP_TYPE_MAX
 };
 
@@ -855,7 +854,6 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
-        struct isp_sw_cnr2_info cnr2_param;
     };
 };
 
