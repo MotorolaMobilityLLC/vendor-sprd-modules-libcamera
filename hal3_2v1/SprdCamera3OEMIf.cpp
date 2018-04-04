@@ -3284,8 +3284,12 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 #ifdef CONFIG_CAMERA_OFFLINE
     mCallbackZslEnabled = false;
 #endif
-    mIsStoppingPreview = 1;
-    setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
+    {
+        Mutex::Autolock l(&mPreviewCbLock);
+        mIsStoppingPreview = 1;
+        setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
+    }
+
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_stop_preview(mCameraHandle)) {
         setCameraState(SPRD_ERROR, STATE_PREVIEW);
