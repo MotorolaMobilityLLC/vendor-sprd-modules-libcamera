@@ -23,6 +23,8 @@
 struct isp_mw_context {
 	cmr_handle alg_fw_handle;
 	cmr_handle dev_access_handle;
+	cmr_u32 is_stream_on;
+	pthread_mutex_t stream_lock;
 };
 
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
@@ -33,19 +35,33 @@ void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_c
 
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 {
-	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
 
-	isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);
+	pthread_mutex_lock(&cxt->stream_lock);
+
+	if (cxt->is_stream_on)
+		isp_dev_statis_info_proc(cxt->dev_access_handle, data);
+	else
+		ISP_LOGW("warn sensor is stream off");
+
+	pthread_mutex_unlock(&cxt->stream_lock);
 }
 
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
 {
-	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
 
-	ISP_LOGV("E");
-	isp_dev_irq_info_proc(mw_cxt->dev_access_handle, data);
+	ISP_LOGV("stream on %d", cxt->is_stream_on);
+	pthread_mutex_lock(&cxt->stream_lock);
+
+	if (cxt->is_stream_on)
+		isp_dev_irq_info_proc(cxt->dev_access_handle, data);
+	else
+		ISP_LOGW("warn sensor is stream off");
+
+	pthread_mutex_unlock(&cxt->stream_lock);
 }
 
 static cmr_s32 ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
@@ -99,6 +115,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *handle)
 		goto exit;
 	}
 	memset((void *)cxt, 0x00, sizeof(*cxt));
+	pthread_mutex_init(&cxt->stream_lock, NULL);
 
 	ret = isp_dev_access_init(input_ptr->dcam_fd, &cxt->dev_access_handle);
 	if (ret) {
@@ -114,6 +131,7 @@ exit:
 		if (cxt) {
 			ret = isp_alg_fw_deinit(cxt->alg_fw_handle);
 			ret = isp_dev_access_deinit(cxt->dev_access_handle);
+			pthread_mutex_destroy(&cxt->stream_lock);
 			free((void *)cxt);
 			cxt = NULL;
 		}
@@ -139,6 +157,8 @@ cmr_int isp_deinit(cmr_handle handle)
 	ret = isp_dev_access_deinit(cxt->dev_access_handle);
 	if (ret)
 		ISP_LOGE("fail to deinit access %ld", ret);
+
+	pthread_mutex_destroy(&cxt->stream_lock);
 
 	if (NULL != cxt) {
 		free(cxt);
@@ -198,6 +218,9 @@ cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr)
 		goto exit;
 	}
 
+	pthread_mutex_lock(&cxt->stream_lock);
+	cxt->is_stream_on = 1;
+	pthread_mutex_unlock(&cxt->stream_lock);
 	ret = isp_alg_fw_start(cxt->alg_fw_handle, param_ptr);
 
 exit:
@@ -215,6 +238,9 @@ cmr_int isp_video_stop(cmr_handle handle)
 		goto exit;
 	}
 
+	pthread_mutex_lock(&cxt->stream_lock);
+	cxt->is_stream_on = 0;
+	pthread_mutex_unlock(&cxt->stream_lock);
 	ret = isp_alg_fw_stop(cxt->alg_fw_handle);
 
 exit:
@@ -232,6 +258,9 @@ cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_ptr, struct ip
 		return ISP_PARAM_NULL;
 	}
 
+	pthread_mutex_lock(&cxt->stream_lock);
+	cxt->is_stream_on = 1;
+	pthread_mutex_unlock(&cxt->stream_lock);
 	ret = ispmw_check_proc_start_param(in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to check init param"));
 

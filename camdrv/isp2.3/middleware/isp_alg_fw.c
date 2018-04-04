@@ -233,7 +233,6 @@ struct ispalg_lib_ops {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
-	cmr_u8 is_stream_off;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info_t commn_cxt;
@@ -348,9 +347,6 @@ static cmr_int ispalg_set_stats_buffer(cmr_handle isp_alg_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_buf_input statis_buf;
-
-	if (cxt->is_stream_off)
-		return ret;
 
 	pthread_mutex_lock(&cxt->stats_buf_lock);
 
@@ -947,6 +943,7 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 	struct smart_block_result *block_result = NULL;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
+
 	UNUSED(param1);
 
 	switch (type) {
@@ -1330,7 +1327,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 			sub_block_info.scene_id = ISP_MODE_PRV;
 
 		if (cxt->zsl_flag && param_data->id == DCAM_BLK_2D_LSC
-			&& sub_block_info.scene_id == ISP_MODE_CAP ) {
+			&& sub_block_info.scene_id == ISP_MODE_CAP) {
 			param_data++;
 			continue;
 		}
@@ -1452,16 +1449,16 @@ cmr_int ispalg_write_exp_gain(cmr_handle isp_alg_handle, struct sensor_ex_exposu
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	if(cxt->ioctrl_ptr->set_gain)
+	if (cxt->ioctrl_ptr->set_gain)
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, gain);
-		if(ret) {
+		if (ret) {
 			ISP_LOGE("fail to write gain");
 			return ret;
 		}
 
-	if(cxt->ioctrl_ptr->ex_set_exposure) {
+	if (cxt->ioctrl_ptr->ex_set_exposure) {
 		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_uint)&exp);
-		if(ret) {
+		if (ret) {
 			ISP_LOGE("fail to write exposure");
 			return ret;
 		}
@@ -1780,7 +1777,7 @@ exit:
 }
 
 static cmr_int ispalg_prepare_atm_param(cmr_handle isp_alg_handle,
-                                     struct smart_proc_input *smart_proc_in)
+					struct smart_proc_input *smart_proc_in)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2074,7 +2071,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		}
 		afl_block_info.bypass = 0;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &afl_block_info, NULL);
-		if(ret) {
+		if (ret) {
 			ISP_LOGE("fail to set afl bypass");
 		}
 		goto exit;
@@ -2491,10 +2488,6 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_SOF:
-		if (cxt->is_stream_off) {
-			ISP_LOGW("sensor was stream off");
-			break;
-		}
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
@@ -2888,7 +2881,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.src.h = cxt->dcam_size.h;
 	af_input.is_supoprt = is_af_support;
 
-	if(1 == is_af_support) {
+	if (is_af_support) {
 		//get af tuning parameters
 		memset((void *)&output, 0, sizeof(output));
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &output);
@@ -2961,7 +2954,7 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support) {
 		pdaf_input.otp_info_ptr = cxt->otp_data;
-		pdaf_input.is_master= cxt->is_master;
+		pdaf_input.is_master = cxt->is_master;
 	}
 
 	if (cxt->ops.pdaf_ops.init)
@@ -3604,7 +3597,7 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 			sub_block_info.scene_id = ISP_MODE_PRV;
 
 		if (cxt->zsl_flag && param_data->id == DCAM_BLK_2D_LSC
-			&& sub_block_info.scene_id == ISP_MODE_CAP ) {
+			&& sub_block_info.scene_id == ISP_MODE_CAP) {
 			param_data++;
 			continue;
 		}
@@ -3621,7 +3614,7 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 
 	afl_in.img_size.w = cxt->dcam_size.w;
 	afl_in.img_size.h = cxt->dcam_size.h;
-	if(cxt->sensor_fps.is_high_fps == 1)
+	if (cxt->sensor_fps.is_high_fps == 1)
 		sub_block_info.bypass = 1;
 	else
 		sub_block_info.bypass = 0;
@@ -3794,9 +3787,9 @@ static cmr_int ispalg_awb_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_m
 
 	if (new_mode >= ISP_MODE_ID_PRV_0 && new_mode <= ISP_MODE_ID_PRV_3) {
 		awb_work_mode = 0;
-	} else if(new_mode >= ISP_MODE_ID_CAP_0 && new_mode <= ISP_MODE_ID_CAP_3) {
+	} else if (new_mode >= ISP_MODE_ID_CAP_0 && new_mode <= ISP_MODE_ID_CAP_3) {
 		awb_work_mode = 1;
-	} else if(new_mode >= ISP_MODE_ID_VIDEO_0 && new_mode <= ISP_MODE_ID_VIDEO_3) {
+	} else if (new_mode >= ISP_MODE_ID_VIDEO_0 && new_mode <= ISP_MODE_ID_VIDEO_3) {
 		awb_work_mode = 2;
 	}
 
@@ -3893,6 +3886,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
 		int num = (cxt->zsl_flag) ? 2 : 1;
+
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
@@ -3975,18 +3969,19 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 			cxt->dcam_size.w, cxt->dcam_size.h,
 			cxt->commn_cxt.src.w, cxt->commn_cxt.src.h);
 	// update grid & weight table first, for binning case first
-	if((float)cxt->lsc_cxt.full_size_width / cxt->dcam_size.w == (float)cxt->lsc_cxt.full_size_height / cxt->dcam_size.h) {
+	if ((float)cxt->lsc_cxt.full_size_width / cxt->dcam_size.w ==
+	    (float)cxt->lsc_cxt.full_size_height / cxt->dcam_size.h) {
 		if (cxt->zsl_flag) {
 			for (i = 0; i < ISP_MODE_MAX; i++) {
-				if(i==0){  //isp preview
+				if (i == 0) {  //isp preview
 					adaptive_size_info[0] = cxt->dcam_size.w;
 					adaptive_size_info[1] = cxt->dcam_size.h;
 					adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->dcam_size.w / cxt->lsc_cxt.full_size_width;
 					ISP_LOGV("alsc_fw_start, zsl_preview full_size_width=%d, full_size_grid=%d, isp_width=%d, isp_grid=%d",
-							cxt->lsc_cxt.full_size_width,
-							cxt->lsc_cxt.full_size_grid,
-							adaptive_size_info[0],
-							adaptive_size_info[2]);
+						 cxt->lsc_cxt.full_size_width,
+						 cxt->lsc_cxt.full_size_grid,
+						 adaptive_size_info[0],
+						 adaptive_size_info[2]);
 					memset(&param_data_grid, 0, sizeof(param_data_grid));
 					BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, cxt->mode_id[i], &adaptive_size_info[0], 0);
 					input2.param_num = 1;
@@ -3997,10 +3992,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 					adaptive_size_info[1] = cxt->commn_cxt.src.h;
 					adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->commn_cxt.src.w / cxt->lsc_cxt.full_size_width;
 					ISP_LOGV("alsc_fw_start, zsl_capture full_size_width=%d, full_size_grid=%d, isp_width=%d, isp_grid=%d",
-							cxt->lsc_cxt.full_size_width,
-							cxt->lsc_cxt.full_size_grid,
-							adaptive_size_info[0],
-							adaptive_size_info[2]);
+						 cxt->lsc_cxt.full_size_width,
+						 cxt->lsc_cxt.full_size_grid,
+						 adaptive_size_info[0],
+						 adaptive_size_info[2]);
 					memset(&param_data_grid, 0, sizeof(param_data_grid));
 					BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, cxt->mode_id[i], &adaptive_size_info[0], 0);
 					input2.param_num = 1;
@@ -4013,10 +4008,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 			adaptive_size_info[1] = cxt->dcam_size.h;
 			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->dcam_size.w / cxt->lsc_cxt.full_size_width;
 			ISP_LOGV("alsc_fw_start, nzsl_mode full_size_width=%d, full_size_grid=%d, isp_width=%d, isp_grid=%d",
-					cxt->lsc_cxt.full_size_width,
-					cxt->lsc_cxt.full_size_grid,
-					adaptive_size_info[0],
-					adaptive_size_info[2]);
+				 cxt->lsc_cxt.full_size_width,
+				 cxt->lsc_cxt.full_size_grid,
+				 adaptive_size_info[0],
+				 adaptive_size_info[2]);
 			memset(&param_data_grid, 0, sizeof(param_data_grid));
 			BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, cxt->mode_id[0], &adaptive_size_info[0], 0);
 			input2.param_num = 1;
@@ -4027,10 +4022,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 		adaptive_size_info[1] = cxt->commn_cxt.src.h;
 		adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->commn_cxt.src.w / cxt->lsc_cxt.full_size_width;
 		ISP_LOGV("alsc_fw_start, dcam_compute full_size_width=%d, full_size_grid=%d, dcam_width=%d, dcam_grid=%d",
-				cxt->lsc_cxt.full_size_width,
-				cxt->lsc_cxt.full_size_grid,
-				adaptive_size_info[0],
-				adaptive_size_info[2]);
+			 cxt->lsc_cxt.full_size_width,
+			 cxt->lsc_cxt.full_size_grid,
+			 adaptive_size_info[0],
+			 adaptive_size_info[2]);
 
 		memset(&param_data_grid, 0, sizeof(param_data_grid));
 		BLOCK_PARAM_CFG(param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, DCAM_BLK_2D_LSC, cxt->mode_id[0], &adaptive_size_info[0], 0);
@@ -4064,7 +4059,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	/* ALSC_FW_START io ctrl */
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	for (i = 0; i < 9; i++)
-		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;//tab
+		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
 	ISP_LOGD("mode %d, lsc_tab_new: %p", cxt->mode_id[0], fwstart_info->lsc_tab_address_new[0]);
 
 	dst_gain_size = lsc_info_new->gain_w*lsc_info_new->gain_h*4*sizeof(cmr_u16);
@@ -4268,7 +4263,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		goto exit;
 	}
 
-	cxt->is_stream_off = 0;
 	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -4449,7 +4443,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	ret = ispalg_get_awbbin_size(cxt);
 
 	if (cxt->ae_cxt.sw_bypass) {
-		memset(&default_exp, 0 ,sizeof(default_exp));
+		memset(&default_exp, 0, sizeof(default_exp));
 		default_exp.dummy = 0;
 		default_exp.exposure = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
 		default_exp.size_index = cxt->commn_cxt.param_index;
@@ -4467,7 +4461,6 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	cxt->is_stream_off = 1;
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_STOP"));
@@ -4486,7 +4479,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
 
-	if (cxt->zsl_flag==1) {
+	if (cxt->zsl_flag) {
 		ISP_LOGV("zsl deinit: %d", cxt->mode_id[1]);
 		cxt->zsl_flag = 0;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_RESET_SECOND, &cxt->mode_id[1], NULL);
@@ -4537,7 +4530,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_video_start param;
 	struct alsc_fwstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 
-	cxt->is_stream_off = 0;
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
 	cxt->commn_cxt.src.w = in_ptr->src_frame.img_size.w;
