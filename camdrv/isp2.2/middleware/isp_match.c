@@ -37,8 +37,7 @@ struct ispbr_context {
 	struct ae_calc_out  slave_out;
 	struct ae_calc_out  master_out;
 	struct sensor_dual_otp_info *dual_otp[SENSOR_NUM_MAX];
-	cmr_u32 master_sync_aem[3 * 1024]; //add by hao.yue 20171220
-	cmr_u32 slave_sync_aem[3 * 1024];
+	cmr_u32 aem_sync_stat[SENSOR_NUM_MAX][3 * 1024]; //add  20180405
 };
 
 static struct ispbr_context br_cxt;
@@ -242,26 +241,16 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		memcpy(out, &cxt->match_param.module_info, sizeof(cxt->match_param.module_info));
 		sem_post(&cxt->ae_sm);
 		break;
-	// add by 20172220
-	case SET_MASTER_AEM_STAT:
-		sem_wait(&cxt->ae_sm);
-		memcpy(cxt->master_sync_aem, in,3 * 1024 * sizeof(cmr_u32));
-		sem_post(&cxt->ae_sm);
+	// add 20180405
+	case SET_AEM_SYNC_STAT:
+		sem_wait(&cxt->module_sm);
+		memcpy(&cxt->aem_sync_stat[camera_id],in,3 * 1024 * sizeof(cmr_u32));
+		sem_post(&cxt->module_sm);
 		break;
-	case GET_MASTER_AEM_STAT:
-		sem_wait(&cxt->ae_sm);
-		memcpy(out, cxt->master_sync_aem,3 * 1024 * sizeof(cmr_u32));
-		sem_post(&cxt->ae_sm);
-		break;
-	case SET_SLAVE_AEM_STAT:
-		sem_wait(&cxt->ae_sm);
-		memcpy(cxt->slave_sync_aem, in,3 * 1024 * sizeof(cmr_u32));
-		sem_post(&cxt->ae_sm);
-		break;
-	case GET_SLAVE_AEM_STAT:
-		sem_wait(&cxt->ae_sm);
-		memcpy(out, cxt->slave_sync_aem,3 * 1024 * sizeof(cmr_u32));
-		sem_post(&cxt->ae_sm);
+	case GET_AEM_SYNC_STAT:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->aem_sync_stat[camera_id],3 * 1024 * sizeof(cmr_u32));
+		sem_post(&cxt->module_sm);
 		break;
 	}
 	ISP_LOGV("X");

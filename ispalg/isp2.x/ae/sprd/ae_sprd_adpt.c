@@ -243,7 +243,7 @@ float ae_dynamic_sync(cmr_u32* master_sync_aem,cmr_u32* slave_sync_aem)
 		}
 		y_master_ave = y_master_ave /aem_weight_tbl_total;
 		y_slave_ave = y_slave_ave /aem_weight_tbl_total;
-		ISP_LOGV("norma Dynamic AE_sync:master_Y_ave:%d,slave_Y_ave:%d",y_master_ave,y_slave_ave);
+		ISP_LOGI("norma Dynamic AE_sync:master_Y_ave:%d,slave_Y_ave:%d",y_master_ave,y_slave_ave);
 	}
 	else
 	{
@@ -298,11 +298,11 @@ float ae_dynamic_sync(cmr_u32* master_sync_aem,cmr_u32* slave_sync_aem)
 		if(isupdate == 1)
 		{
 			y_ratio_target = (float)y_ratio_target + ( (float)y_ratio_current - 1.0f ) * adpt_speed;
-			ISP_LOGV("norma Dynamic AE_sync isupdate: %d,y_ratio_current:%f,y_ratio_target:%f\n",isupdate,y_ratio_current,y_ratio_target);
+			ISP_LOGI("norma Dynamic AE_sync isupdate: %d,y_ratio_current:%f,y_ratio_target:%f\n",isupdate,y_ratio_current,y_ratio_target);
 		}
 		else
 		{
-			ISP_LOGV("norma Dynamic AE_sync isupdate: %d,y_ratio_current:%f,y_ratio_target:%f\n",isupdate,y_ratio_current,y_ratio_target);
+			ISP_LOGI("norma Dynamic AE_sync isupdate: %d,y_ratio_current:%f,y_ratio_target:%f\n",isupdate,y_ratio_current,y_ratio_target);
 		}
 		return y_ratio_target;
 	}
@@ -461,13 +461,20 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 	struct sensor_otp_ae_info ae_otp_master;
 	struct sensor_otp_ae_info ae_otp_slave;
 	cmr_u32 exp_line_slave;
+	cmr_u32 ae_dynamic_flag;
+
+#if DYNAMIC_AE_SYNC
+	ae_dynamic_flag = 1;
+#else
+	ae_dynamic_flag = 0;
+#endif
 
 	if (0 != write_param->exp_line && 0 != write_param->sensor_gain) {
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
 
 		if ((write_param->exp_line != prv_param->exp_line)
 			|| (write_param->dummy != prv_param->dummy)
-			|| (prv_param->sensor_gain != write_param->sensor_gain)) {
+			|| (prv_param->sensor_gain != write_param->sensor_gain) || (ae_dynamic_flag == 1)) {
 			memset(&ae_info, 0, sizeof(ae_info));
 			ae_info[0].count = 2;
 			ae_info[0].exp.exposure = write_param->exp_line;
@@ -503,12 +510,12 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 
 	if(cxt->is_multi_mode )
 	{
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MASTER_AEM_STAT, NULL,master_sync_aem);
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_AEM_SYNC_STAT, NULL,master_sync_aem);
 		if(rtn){
 			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio  master_sync_aem is NULL error!");
 		}
 
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SLAVE_AEM_STAT, NULL,slave_sync_aem );
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id + 2, GET_AEM_SYNC_STAT, NULL,slave_sync_aem);
 		if(rtn){
 			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio slave_sync_aem is NULL error!");
 		}
@@ -3149,17 +3156,16 @@ static void ae_mapping(struct ae_ctrl_cxt *cxt_ptr, struct match_data_param *mul
 	ISP_LOGV("Dynamic AE_sync is_multi_mode:%d.\n",cxt_ptr->is_multi_mode);
 	if(cxt_ptr->is_multi_mode )
 	{
-		rtn = cxt_ptr->ptr_isp_br_ioctrl(cxt_ptr->camera_id, GET_MASTER_AEM_STAT, NULL,master_sync_aem);
+		rtn = cxt_ptr->ptr_isp_br_ioctrl(cxt_ptr->camera_id, GET_AEM_SYNC_STAT, NULL,master_sync_aem);
 		if(rtn){
 			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio  master_sync_aem is NULL error!");
 		}
 
-		rtn = cxt_ptr->ptr_isp_br_ioctrl(cxt_ptr->camera_id, GET_SLAVE_AEM_STAT, NULL,slave_sync_aem );
+		rtn = cxt_ptr->ptr_isp_br_ioctrl(cxt_ptr->camera_id + 2, GET_AEM_SYNC_STAT, NULL,slave_sync_aem);
 		if(rtn){
 			ISP_LOGE("(sharkl3)norma Dynamic AE_sync y_ratio slave_sync_aem is NULL error!");
 		}
 	}
-
 	y_ratio_target = ae_dynamic_sync(master_sync_aem,slave_sync_aem);
 	float iso_ratio = 1.0f / y_ratio_target;
 
@@ -4937,7 +4943,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		{
 			master_sync_aem[i] = cxt->sync_aem[i] /(cxt->cur_status.win_size.h *  cxt->cur_status.win_size.w) ;
 		}
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MASTER_AEM_STAT, master_sync_aem, NULL );
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_AEM_SYNC_STAT, master_sync_aem, NULL );
 		if(rtn)
 		{
 			ISP_LOGE("Dynamic AE_sync mode,  set master AEM data err.\n");
@@ -4954,7 +4960,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		{
 			slave_sync_aem[i] = cxt->sync_aem[i] /(cxt->cur_status.win_size.h *  cxt->cur_status.win_size.w) ;
 		}
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_SLAVE_AEM_STAT,slave_sync_aem, NULL );
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_AEM_SYNC_STAT,slave_sync_aem, NULL );
 
 		if(rtn)
 		{
