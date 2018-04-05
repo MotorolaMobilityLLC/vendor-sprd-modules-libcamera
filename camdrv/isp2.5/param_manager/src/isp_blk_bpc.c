@@ -84,11 +84,9 @@ cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, voi
 	struct isp_pm_block_header *bpc_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-#ifndef CONFIG_CAMERA_SHARKLE_BRINGUP
 	dst_ptr->cur.bpc_mode_en_gc = 1;
 	dst_ptr->cur.bpc_mode_en = 1;
 	dst_ptr->cur.bpc_gc_cg_dis = 0;
-#endif
 
 	dst_ptr->cur.rd_retain_num = 0xf;
 	dst_ptr->cur.rd_max_len_sel = 1;
