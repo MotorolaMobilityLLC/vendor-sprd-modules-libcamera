@@ -4260,7 +4260,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	struct afctrl_fwstart_info af_start_info;
 	struct sensor_ex_exposure default_exp;
 	cmr_u32 default_gain = 0;
-	cmr_s32 binning_invalid = 1;
+	cmr_s32 binning_support = 1;
+	cmr_s32 awb_data_type = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
@@ -4287,8 +4288,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 					      AWB_CTRL_CMD_GET_DATA_TYPE,
 					      NULL,
-					      (void *)&binning_invalid);
-		ISP_TRACE_IF_FAIL(ret, ("AWB_CTRL_CMD_GET_DATA_TYPE fail"));
+					      (void *)&awb_data_type);
+		binning_support = !awb_data_type;
+		if (ret) {
+			ISP_LOGE("fail to AWB_CTRL_CMD_GET_DATA_TYPE");
+			binning_support = 1;
+		}
 	}
 
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
@@ -4308,7 +4313,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ISP_STATIS_VALID_HIST |
 		ISP_STATIS_VALID_HIST2;
 #endif
-	if (binning_invalid)
+	if (binning_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_BINNING;
 	if (cxt->pdaf_cxt.pdaf_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_PDAF;
