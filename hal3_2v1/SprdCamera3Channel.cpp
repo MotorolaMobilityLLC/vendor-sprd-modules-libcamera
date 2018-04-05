@@ -243,6 +243,7 @@ int SprdCamera3RegularChannel::channelClearInvalidQBuff(
 
         mCamera3Stream[index]->getStreamInfo(&stream);
         mCamera3Stream[index]->buffDoneDQ(buff_frame_number, &buffer);
+        stream->reserved[0] = NULL;
         result_info.is_urgent = false;
         result_info.buffer = buffer;
         result_info.frame_number = buff_frame_number;
@@ -290,7 +291,7 @@ int SprdCamera3RegularChannel::channelClearAllQBuff(
             HAL_LOGD("dq, bufId = %d", i);
             continue;
         }
-
+        stream->reserved[0] = NULL;
         result_info.is_urgent = false;
         result_info.buffer = buffer;
         result_info.frame_number = frame_number;
@@ -608,7 +609,7 @@ int SprdCamera3PicChannel::channelClearAllQBuff(
             HAL_LOGD("dq, bufId = %d", i);
             continue;
         }
-
+        stream->reserved[0] = NULL;
         result_info.is_urgent = false;
         result_info.buffer = buffer;
         result_info.frame_number = frame_number;

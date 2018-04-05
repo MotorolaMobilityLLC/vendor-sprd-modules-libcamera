@@ -281,12 +281,11 @@ typedef struct {
 } BlurAPI2_t;
 
 typedef enum {
-    DUMP_BLUR_COMBO,  //process start
-    DUMP_BLUR_OUTPUT,  //preocess end
-    DUMP_BLUR_RESULT,  //dump image and params
+    DUMP_BLUR_COMBO,  // process start
+    DUMP_BLUR_OUTPUT, // preocess end
+    DUMP_BLUR_RESULT, // dump image and params
     DUMP_BLUR_TYPE_MAX
-}dump_type ;
-
+} dump_type;
 
 class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
@@ -373,22 +372,25 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
                                    uint32_t jpeg_size);
         //        void getOutWeightMap(buffer_handle_t *output_buffer);
         bool yuvReprocessCaptureRequest(buffer_handle_t *combe_buffer,
-                            buffer_handle_t *output_buffer);
-        int blurProcessVer1(buffer_handle_t *combo_buffer, void *combo_buff_addr,
-                            buffer_handle_t *output_buffer, void *output_buff_addr,
-                            uint32_t combo_frm_num);
-        int blurProcessVerN(buffer_handle_t *combo_buffer, void *combo_buff_addr,
-                            buffer_handle_t *output_buffer, void *output_buff_addr,
-                            uint32_t combo_frm_num);
-        int blurProcessVer3(buffer_handle_t *combo_buffer, void *combo_buff_addr,
-                            buffer_handle_t *output_buffer, void *output_buff_addr,
-                            uint32_t combo_frm_num);
+                                        buffer_handle_t *output_buffer);
+        int blurProcessVer1(buffer_handle_t *combo_buffer,
+                            void *combo_buff_addr,
+                            buffer_handle_t *output_buffer,
+                            void *output_buff_addr, uint32_t combo_frm_num);
+        int blurProcessVerN(buffer_handle_t *combo_buffer,
+                            void *combo_buff_addr,
+                            buffer_handle_t *output_buffer,
+                            void *output_buff_addr, uint32_t combo_frm_num);
+        int blurProcessVer3(buffer_handle_t *combo_buffer,
+                            void *combo_buff_addr,
+                            buffer_handle_t *output_buffer,
+                            void *output_buff_addr, uint32_t combo_frm_num);
         void dumpBlurIMG(dump_type type,
-                        dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX]);
+                         dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX]);
         uint8_t getIspAfFullscanInfo();
-        int blurHandle(buffer_handle_t *input1, void *input1_addr,
-                void *input2,
-                buffer_handle_t *output, void *output_addr);
+        int blurHandle(buffer_handle_t *input1, void *input1_addr, void *input2,
+                       buffer_handle_t *output, void *output_addr);
+        void CallSnapBackResult(camera3_buffer_status_t buffer_status);
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -443,8 +445,6 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void BlurFaceMakeup(buffer_handle_t *buffer_handle, void *buffer_addr);
     };
     sp<CaptureThread> mCaptureThread;
-    Mutex mMergequeueFinishMutex;
-    Condition mMergequeueFinishSignal;
 
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,

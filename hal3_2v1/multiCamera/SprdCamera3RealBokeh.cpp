@@ -327,6 +327,10 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
 
     HAL_LOGI("E");
+    if (!mFlushing) {
+        mFlushing = true;
+        bokehThreadExit();
+    }
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = m_nPhyCameras; i > 0; i--) {
         sprdCam = &m_pPhyCamera[i - 1];
@@ -341,9 +345,6 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
         }
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
-    }
-    if (!mFlushing) {
-        bokehThreadExit();
     }
 
     freeLocalBuffer();
@@ -2141,8 +2142,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             }
 
             mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
-            mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
-                                         &mime_type, NULL);
+            if (!mRealBokeh->mFlushing)
+                mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
+                                             &mime_type, NULL);
             reprocessReq(output_buffer, capture_msg);
         } break;
         default:
@@ -4307,6 +4309,7 @@ void SprdCamera3RealBokeh::saveRequest(camera3_capture_request_t *request) {
     Mutex::Autolock l(mRequestLock);
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
+        newStream->reserved[0] = NULL;
         if (getStreamType(newStream) == CALLBACK_STREAM) {
             currRequest.buffer = request->output_buffers[i].buffer;
             currRequest.preview_stream = request->output_buffers[i].stream;
@@ -4435,6 +4438,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             mCaptureThread->mSavedCapRequest = *req;
             mCaptureThread->mSavedCapReqStreamBuff = req->output_buffers[i];
             mSavedCapStreams = req->output_buffers[i].stream;
+            mSavedCapStreams->reserved[0] = NULL;
             mCapFrameNumber = request->frame_number;
             mCaptureThread->mSavedResultBuff =
                 request->output_buffers[i].buffer;
@@ -5354,7 +5358,6 @@ void SprdCamera3RealBokeh::CallBackResult(
         result_buffers.stream = mRealBokeh->mSavedCapStreams;
         result_buffers.buffer = mCaptureThread->mSavedCapReqStreamBuff.buffer;
     }
-
     result_buffers.status = buffer_status;
     result_buffers.acquire_fence = -1;
     result_buffers.release_fence = -1;
