@@ -34,11 +34,6 @@ namespace sprdcamera {
 
 SprdCamera3Blur *mBlur = NULL;
 
-static struct cam_stream_info cap_stream_info_front[] = {{2592, 1944},
-                                                         {960, 720}};
-static struct cam_stream_info cap_stream_info_rear[] = {{2592, 1944},
-                                                        {960, 720}};
-
 // Error Check Macros
 #define CHECK_BLUR()                                                           \
     if (!mBlur) {                                                              \
@@ -631,15 +626,16 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+
     if (blur_camera_id == MODE_BLUR_FRONT) {
-        mBlur->addAvailableStreamSize(metadata, cap_stream_info_front,
-                                      sizeof(cap_stream_info_front) /
-                                          sizeof(struct cam_stream_info));
+        property_get("persist.sys.cam.res.blur.fr", prop, "1");
+        HAL_LOGI("blur front support cap resolution %d", atoi(prop));
     } else {
-        mBlur->addAvailableStreamSize(metadata, cap_stream_info_rear,
-                                      sizeof(cap_stream_info_rear) /
-                                          sizeof(struct cam_stream_info));
+        property_get("persist.sys.cam.res.blur.ba", prop, "1");
+        HAL_LOGI("blur back support cap resolution %d", atoi(prop));
     }
+    addAvailableStreamSize(metadata, atoi(prop));
+
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);

@@ -54,8 +54,6 @@ SprdCamera3SideBySideCamera *mSidebyside = NULL;
         return -ENODEV;                                                        \
     }
 
-static struct cam_stream_info cap_stream_info[] = {{2592, 1944}, {960, 720}};
-
 camera3_device_ops_t SprdCamera3SideBySideCamera::mCameraCaptureOps = {
     .initialize = SprdCamera3SideBySideCamera::initialize,
     .configure_streams = SprdCamera3SideBySideCamera::configure_streams,
@@ -1022,9 +1020,7 @@ int SprdCamera3SideBySideCamera::getCameraInfo(int blur_camera_id,
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
-    addAvailableStreamSize(metadata, cap_stream_info,
-                           sizeof(cap_stream_info) /
-                               sizeof(struct cam_stream_info));
+    addAvailableStreamSize(metadata, 1); // 5M
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);

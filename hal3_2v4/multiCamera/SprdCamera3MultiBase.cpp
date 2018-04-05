@@ -883,9 +883,27 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     return ret;
 }
 
-void SprdCamera3MultiBase::addAvailableStreamSize(
-    CameraMetadata &metadata, struct cam_stream_info *stream_info,
-    size_t stream_cnt) {
+#define SUPPORT_RES_NUM 6
+static struct cam_stream_info cap_stream_info[][SUPPORT_RES_NUM] = {
+    {{1600, 1200}, {960, 720}}, // 2M
+    {{2592, 1944}, {960, 720}}, // 5M
+    {{3264, 2448}, {960, 720}}, // 8M
+#if defined(CAMERA_SERNSOR_SUPPORT_4224)
+    {{4224, 3136}, {2592, 1944}, {960, 720}}, // 13M
+#else
+    {{4160, 3120}, {2592, 1944}, {960, 720}}, // 13M
+#endif
+#if defined(CAMERA_SERNSOR_SUPPORT_4224)
+    {{4224, 3136}, {3264, 2448}, {2592, 1944}, {960, 720}},
+#else
+    {{4160, 3120}, {3264, 2448}, {2592, 1944}, {960, 720}},
+#endif
+};
+
+void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
+                                                  int index) {
+    struct cam_stream_info *stream_info = cap_stream_info[index];
+    size_t stream_cnt = SUPPORT_RES_NUM;
     int32_t scaler_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
                                 HAL_PIXEL_FORMAT_BLOB,
                                 HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
@@ -898,6 +916,8 @@ void SprdCamera3MultiBase::addAvailableStreamSize(
            CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_cnt; i++) {
+            if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
+                break;
             available_stream_configs.add(scaler_formats[j]);
             available_stream_configs.add(stream_info[i].width);
             available_stream_configs.add(stream_info[i].height);
