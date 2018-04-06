@@ -2056,33 +2056,40 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
 
-	pdaf_param_in.u_addr = u_addr + ISP_PDAF_STATIS_BUF_SIZE/2;
-	void *pdaf_info = (cmr_s32 *)(u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
-	cxt->pd_dump ++;
-
-	if (cxt->ops.af_ops.ioctrl) {
-		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_TYPE1_PD_INFO, pdaf_info, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_TYPE1_PD_INFO"));
-	}
-
-	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
-	if(atoi(value)) {
-		if(cxt->pd_dump >1000)
-			cxt->pd_dump  = 1000;
-		ISP_LOGI(":ISP:cxt->pd_dump = %d",cxt->pd_dump);
-		if ((cxt->pd_dump < 1000) && (cxt->pd_dump%100 == 0))
-		{
-		ISP_LOGI(":ISP:(cxt->pd_dump/100 =%d",(cxt->pd_dump/100));
-		#define MLOG_BUF_SIZE 1024
-		#define MLOG_FILE_NAME_SIZE 200
-			char file_name[MLOG_FILE_NAME_SIZE] = {0};
-			FILE *fp = NULL;
-			sprintf(file_name, "/data/misc/cameraserver/pdaf_%d.txt", (cxt->pd_dump/100));
-
-			fp = fopen(file_name, "wb");
-			fwrite((void*)pdaf_info, 1, 0x4000, fp);
-			fclose(fp);
-			fp = NULL;
+	pdaf_param_in.u_addr = u_addr ;
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support){
+		if (cxt->ops.pdaf_ops.ioctrl)
+			cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
+		ISP_LOGI("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
+		if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
+			if (cxt->ops.pdaf_ops.process)
+				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+		}
+	} else if (SENSOR_PDAF_TYPE1_ENABLE == cxt->pdaf_cxt.pdaf_support){
+		void *pdaf_info = (cmr_s32 *)(u_addr + ISP_PDAF_STATIS_BUF_SIZE / 2);
+		cxt->pd_dump ++;
+		if (cxt->ops.af_ops.ioctrl) {
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_TYPE1_PD_INFO, pdaf_info, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_TYPE1_PD_INFO"));
+		}
+		property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
+		if(atoi(value)) {
+			if(cxt->pd_dump >1000)
+				cxt->pd_dump  = 1000;
+			ISP_LOGI(":ISP:cxt->pd_dump = %d",cxt->pd_dump);
+			if ((cxt->pd_dump < 1000) && (cxt->pd_dump%100 == 0))
+			{
+				ISP_LOGI(":ISP:(cxt->pd_dump/100 =%d",(cxt->pd_dump/100));
+				#define MLOG_BUF_SIZE 1024
+				#define MLOG_FILE_NAME_SIZE 200
+				char file_name[MLOG_FILE_NAME_SIZE] = {0};
+				FILE *fp = NULL;
+				sprintf(file_name, "/data/misc/cameraserver/pdaf_%d.txt", (cxt->pd_dump/100));
+				fp = fopen(file_name, "wb");
+				fwrite((void*)pdaf_info, 1, 0x4000, fp);
+				fclose(fp);
+				fp = NULL;
+			}
 		}
 	}
 
@@ -3820,6 +3827,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable);
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support && in_ptr->pdaf_enable) {
 		if (cxt->ops.pdaf_ops.ioctrl) {
+			ISP_LOGI("open pdaf type 3");
 			ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_PARAM, NULL, NULL);
 			ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
 		}
@@ -4106,7 +4114,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	param.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	param.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	ret = ispalg_ae_set_work_mode(cxt, mode, 0, &param);
-
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);

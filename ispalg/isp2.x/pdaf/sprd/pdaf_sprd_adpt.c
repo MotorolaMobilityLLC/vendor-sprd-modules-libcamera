@@ -415,23 +415,23 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	if (cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_1 ) {
 		cxt->roi_info.win.x = ROI_X_1;
-		cxt->roi_info.win.w = ROI_Y_1;
-		cxt->roi_info.win.y = ROI_X_1 + ROI_Width;
-		cxt->roi_info.win.h = ROI_Y_1 + ROI_Height;
+		cxt->roi_info.win.y = ROI_Y_1;
+		cxt->roi_info.win.w = ROI_Width;
+		cxt->roi_info.win.h = ROI_Height;
 		cxt->pd_gobal_setting.dBeginX = BEGIN_X_1;
 		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_1;
 	} else if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_2){
 		cxt->roi_info.win.x = ROI_X_2;
-		cxt->roi_info.win.w = ROI_Y_2;
-		cxt->roi_info.win.y = ROI_X_2 + ROI_Width;
-		cxt->roi_info.win.h = ROI_Y_2 + ROI_Height;
+		cxt->roi_info.win.y = ROI_Y_2;
+		cxt->roi_info.win.w = ROI_Width;
+		cxt->roi_info.win.h = ROI_Height;
 		cxt->pd_gobal_setting.dBeginX = BEGIN_X_2;
 		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_2;
 	} else {
 		cxt->roi_info.win.x = ROI_X_0;
-		cxt->roi_info.win.w = ROI_Y_0;
-		cxt->roi_info.win.y = ROI_X_0 + ROI_Width;
-		cxt->roi_info.win.h = ROI_Y_0 + ROI_Height;
+		cxt->roi_info.win.y = ROI_Y_0;
+		cxt->roi_info.win.w = ROI_Width;
+		cxt->roi_info.win.h = ROI_Height;
 		cxt->pd_gobal_setting.dBeginX = BEGIN_X_0;
 		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_0;
 	}
@@ -559,6 +559,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 otp_orientation = 0;
 	cmr_u8 OTPSensorStatus = 0;
 	cmr_s32 area_index;
+	char value[PROPERTY_VALUE_MAX];
 
 	UNUSED(out);
 	if (!in) {
@@ -590,6 +591,26 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		dRectY = ROI_Y_0;
 		dRectW = ROI_Width;
 		dRectH = ROI_Height;
+	}
+	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
+	if(atoi(value)) {
+			ISP_LOGE("wuyi :dum statistic");
+			#define MLOG_BUF_SIZE 1024
+			#define MLOG_FILE_NAME_SIZE 200
+			char file_name_r[MLOG_FILE_NAME_SIZE] = {0};
+			char file_name_l[MLOG_FILE_NAME_SIZE] = {0};
+			FILE *fp = NULL;
+			sprintf(file_name_l, "/data/misc/cameraserver/pdaf_l_%d.txt", 1);
+			sprintf(file_name_r, "/data/misc/cameraserver/pdaf_r_%d.txt", 1);
+
+			fp = fopen(file_name_l, "wb");
+			fwrite((void*)pInPhaseBuf_left, 1, 0x8100, fp);
+			fclose(fp);
+
+			fp = fopen(file_name_r, "wb");
+			fwrite((void*)pInPhaseBuf_right, 1, 0x8100, fp);
+			fclose(fp);
+			fp = NULL;
 	}
 
 	ucOTPBuffer = (cmr_u8 *) cxt->pd_gobal_setting.OTPBuffer;
