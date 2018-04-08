@@ -353,6 +353,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         mHalOem = (oem_module_t *)malloc(sizeof(oem_module_t));
         if (mHalOem == NULL) {
             HAL_LOGE("mHalOem is NULL");
+            goto getHalOem_fail;
         } else {
             memset(mHalOem, 0, sizeof(*mHalOem));
         }
@@ -369,12 +370,15 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
             if (omi) {
                 mHalOem->dso = handle;
                 mHalOem->ops = omi->ops;
+            } else {
+                dlclose(handle);
+                handle = NULL;
             }
         }
 
         HAL_LOGI("loaded libcamoem.so handle=%p", handle);
     }
-
+getHalOem_fail:
     mCameraId = cameraId;
     mMultiCameraMatchZsl->cam1_id = MULTI_CAMERA_MAIN_ID;
     mMultiCameraMatchZsl->cam3_id = MULTI_CAMERA_SUB_ID;
