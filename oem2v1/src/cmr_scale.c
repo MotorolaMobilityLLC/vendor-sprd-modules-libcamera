@@ -149,6 +149,7 @@ cmr_int cmr_scaling_down(struct img_frm *src, struct img_frm *dst) {
 static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
                                   struct scale_file *file) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int match_ratio = 0;
     struct img_frm src;
     struct img_frm dst;
     struct img_frm frame;
@@ -162,6 +163,22 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
         CMR_LOGE("scale erro: frame_params is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
+    //workaround prev and capture ratio do not match ,when sw zoom fix ,we will remove this code
+    if((frame_params->input_size.w /4 * 3) == frame_params->input_size.h || (frame_params->input_size.w / 4 * 3) == CAMERA_ALIGNED_16(frame_params->input_size.h)){
+        if((frame_params->output_size.w /4 * 3) == frame_params->output_size.h ||  (frame_params->input_size.w / 4 * 3) == CAMERA_ALIGNED_16(frame_params->output_size.h)){
+            match_ratio = 1;
+        }
+    }
+    if((frame_params->input_size.w /16 * 9) == frame_params->input_size.h || (frame_params->input_size.w / 16 * 9) == CAMERA_ALIGNED_16(frame_params->input_size.h)){
+        if((frame_params->output_size.w /16 * 9) == frame_params->output_size.h || (frame_params->output_size.w / 16 * 9) == CAMERA_ALIGNED_16(frame_params->output_size.h)){
+            match_ratio = 1;
+        }
+    }
+    if(!match_ratio){
+        CMR_LOGE("scale erro: cfg_params ratio does not match,skip redisplay");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    //end workaround
 
 //    if (frame_params->input_size.w >= frame_params->output_size.w &&
 //        frame_params->input_size.h >= frame_params->output_size.h) {
