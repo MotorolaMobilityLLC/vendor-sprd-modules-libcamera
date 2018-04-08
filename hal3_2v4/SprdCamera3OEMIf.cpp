@@ -4220,6 +4220,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     }
 
     if (callback_stream) {
+        uint32_t pic_frame_num;
+        bool isJpegRequest = false;
+        SprdCamera3Stream *local_pic_stream = NULL;
+        SprdCamera3PicChannel *local_pic_channel =
+            reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+
         ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
         if (ret) {
             goto bypass_callback;
@@ -4245,8 +4251,20 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
                                               CAMERA_STREAM_TYPE_CALLBACK);
         }
+        local_pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT,
+                                     &local_pic_stream);
+        if (NULL != local_pic_stream) {
+            local_pic_stream->getQBuffFirstNum(&pic_frame_num);
+            HAL_LOGI("frame_num %d, pic_frame_num %d", frame_num,
+                     pic_frame_num);
+            if (frame_num == pic_frame_num)
+                isJpegRequest = true;
+        } else {
+            isJpegRequest = false;
+        }
 
-        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
+        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE &&
+            (isJpegRequest == true)) {
             timer_set(this, 1, timer_hand_take);
         }
 
