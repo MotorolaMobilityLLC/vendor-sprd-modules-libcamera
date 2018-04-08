@@ -621,47 +621,6 @@ struct isp_iircnr_yrandom_param {
 	struct isp_dev_yrandom_info cur;
 };
 
-
-struct dcam_blc_param {
-	struct sprd_blc_info cur;
-	struct isp_sample_point_info cur_idx;
-	struct isp_blc_offset offset[SENSOR_BLC_NUM];
-};
-
-struct dcam_ae_stat_threshold {
-	cmr_u32 r_thr_high;
-	cmr_u32 r_thr_low;
-	cmr_u32 g_thr_high;
-	cmr_u32 g_thr_low;
-	cmr_u32 b_thr_high;
-	cmr_u32 b_thr_low;
-};
-
-struct dcam_ae_statistic_info {
-	cmr_u32 sum_r_ue[1024];
-	cmr_u32 sum_r_oe[1024];
-	cmr_u32 sum_r_ae[1024];
-	cmr_u32 cnt_r_ue[1024];
-	cmr_u32 cnt_r_oe[1024];
-
-	cmr_u32 sum_g_ue[1024];
-	cmr_u32 sum_g_oe[1024];
-	cmr_u32 sum_g_ae[1024];
-	cmr_u32 cnt_g_ue[1024];
-	cmr_u32 cnt_g_oe[1024];
-
-	cmr_u32 sum_b_ue[1024];
-	cmr_u32 sum_b_oe[1024];
-	cmr_u32 sum_b_ae[1024];
-	cmr_u32 cnt_b_ue[1024];
-	cmr_u32 cnt_b_oe[1024];
-};
-
-struct dcam_rgb_aem_param {
-	struct sprd_aem_info cur;
-	struct dcam_ae_statistic_info stat;
-};
-
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -731,10 +690,6 @@ struct isp_context {
 	struct isp_dev_noise_filter_param yuv_noisefilter;
 	struct isp_3d_nr_pre_param nr_3d_pre;
 	struct isp_3d_nr_cap_param nr_3d_cap;
-
-	struct dcam_blc_param dcam_blc;
-	struct isp_2d_lsc_param dcam_2d_lsc;
-	struct dcam_rgb_aem_param dcam_aem;
 };
 
 /*******************************isp_block_com******************************/
