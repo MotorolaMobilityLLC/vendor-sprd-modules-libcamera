@@ -2366,10 +2366,9 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_CTRL_EVT_AE:
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message);
-		if (cxt->is_multi_mode == ISP_DUAL_SBS) {
+		if ((cxt->is_multi_mode == ISP_DUAL_SBS) || (cxt->is_multi_mode == ISP_DUAL_NORMAL)) {
 			struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->aem_stats;
 			isp_br_ioctrl(cxt->camera_id, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
-
 			if (!cxt->is_master) {
 				ret = ispalg_ae_process((cmr_handle) cxt);
 				if (ret)

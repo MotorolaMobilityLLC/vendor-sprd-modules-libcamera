@@ -1192,6 +1192,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			struct awb_ctrl_gain gain_master;
 			struct awb_ctrl_gain gain_slave;
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_GAIN_AWB_DATA, NULL, &gain_master);
+			ISP_LOGI("awb_sync master RGB gain:%d,%d,%d.\n",gain_master.r,gain_master.g,gain_master.b);
 
 			awb_sync.stat_master_info.height = 32;
 			awb_sync.stat_master_info.width = 32;
@@ -1239,6 +1240,8 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			cxt->output_gain.g = result.gain.g;
 			cxt->output_gain.b = result.gain.b;
 			cxt->output_ct = result.ct;
+
+			ISP_LOGI("hao.yue awb_sync fixed master RGB gain(%d,%d,%d),slave RGB gain(%d,%d,%d).\n",gain_master.r, gain_master.g, gain_master.b,cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b);
 
 			if (ret == 0) {
 				result.update_gain = 1;
@@ -1447,6 +1450,10 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result.ct = cxt->output_ct;
 
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
+		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
+	}
+
+	if ((cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
 	}
 
