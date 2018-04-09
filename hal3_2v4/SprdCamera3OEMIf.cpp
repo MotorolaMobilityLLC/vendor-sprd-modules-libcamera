@@ -4004,6 +4004,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     0);
                 construct_fb_level(&face_beauty, beautyLevels);
                 do_face_beauty(&face_beauty, faceInfo.face_num);
+                flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
+                               frame->width * frame->height * 3 / 2);
             }
         }
     } else if (PREVIEW_ZSL_FRAME != frame->type) {
