@@ -250,11 +250,11 @@ struct prev_context {
 
     cmr_uint cap_phys_addr_array[CMR_CAPTURE_MEM_SUM];
     cmr_uint cap_virt_addr_array[CMR_CAPTURE_MEM_SUM];
-    void *cap_3dnr_handle_array[CMR_CAPTURE_MEM_SUM];
+    void *cap_3dnr_handle_array[CAP_3DNR_NUM];
     cmr_s32 cap_fd_array[CMR_CAPTURE_MEM_SUM];
     cmr_uint cap_phys_addr_path_array[CMR_CAPTURE_MEM_SUM];
     cmr_uint cap_virt_addr_path_array[CMR_CAPTURE_MEM_SUM];
-    void *cap_3dnr_handle_path_array[CMR_CAPTURE_MEM_SUM];
+    void *cap_3dnr_handle_path_array[CAP_3DNR_NUM];
     cmr_s32 cap_fd_path_array[CMR_CAPTURE_MEM_SUM];
     cmr_uint cap_hdr_phys_addr_path_array[HDR_CAP_NUM];
     cmr_uint cap_hdr_virt_addr_path_array[HDR_CAP_NUM];
@@ -1741,18 +1741,24 @@ cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
         goto exit;
     }
     if (0 == is_for_path) {
-        for (i = 0; i < CAP_3DNR_NUM; i++) {
+        for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
             if (in->fd == (cmr_u32)prev_cxt->cap_fd_array[i])
                 break;
         }
 
         if (i == CAP_3DNR_NUM) {
-            CMR_LOGE("search hdr buffer failed");
+            CMR_LOGE("search 3dnr buffer failed");
+            ret = CMR_CAMERA_FAIL;
+            goto exit;
+        }
+        *threednr_handle = prev_cxt->cap_3dnr_handle_array[i];
+
+        if(i >= CMR_CAPTURE_MEM_SUM) {
+            CMR_LOGE("out of bound 3dnr buffer");
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }
         *addr_vir_y = prev_cxt->cap_virt_addr_array[i];
-        *threednr_handle = prev_cxt->cap_3dnr_handle_array[i];
         CMR_LOGI("fd:%d", i);
     } else {
         for (i = 0; i < CAP_3DNR_NUM; i++) {
