@@ -124,11 +124,11 @@
 	/*fast_me*/
 	{
 		/*bypass*/
-		0x01,
+		0x00,
 		/*project_mode*/
-		0x01,
+		0x00,
 		/*channel_sel*/
-		0x01,
+		0x00,
 		/*reserved*/
 		0x00,
 
