@@ -610,8 +610,10 @@ void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step) {
 void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
     char value[PROPERTY_VALUE_MAX];
 
-    if (step >= CMR_LAUNCH_MAX_T)
+    if (step > CMR_LAUNCH_MAX_T - 1) {
         CMR_LOGE("error %d", step);
+        return;
+    }
 
     property_get("persist.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
@@ -659,9 +661,10 @@ void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
 void LAUNCHLOGE(enum CAMERA_LAUNCH_STEP step) {
     char value[PROPERTY_VALUE_MAX];
 
-    if (step >= CMR_LAUNCH_MAX_T)
+    if (step > CMR_LAUNCH_MAX_T - 1) {
         CMR_LOGE("error %d", step);
-
+        return;
+    }
     property_get("persist.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
         return;
@@ -708,7 +711,7 @@ void LAUNCHPLOG(enum CAMERA_LAUNCH_STEP step) {
 cmr_int camera_get_snap_postproc_time() {
     cmr_int postproc_time = 0;
     postproc_time = (int)((cap_stp[CMR_STEP_CALL_BACK].timestamp -
-                            cap_stp[CMR_STEP_CAP_E].timestamp) /
-                           1000000);
+                           cap_stp[CMR_STEP_CAP_E].timestamp) /
+                          1000000);
     return postproc_time;
 }
