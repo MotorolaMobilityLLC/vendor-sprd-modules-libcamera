@@ -3455,14 +3455,20 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 
     if (cxt->is_multi_mode == MODE_SBS)
         isp_param.is_multi_mode = ISP_DUAL_SBS;
-    else if (cxt->is_multi_mode)
+    else if (cxt->is_multi_mode == MODE_BOKEH ||
+             cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM ||
+             cxt->is_multi_mode == MODE_3D_CAPTURE ||
+             cxt->is_multi_mode == MODE_3D_VIDEO ||
+             cxt->is_multi_mode == MODE_3D_PREVIEW ||
+             cxt->is_multi_mode == MODE_TUNING)
         isp_param.is_multi_mode = ISP_DUAL_NORMAL;
     else
         isp_param.is_multi_mode = ISP_SINGLE;
 
-    // need modify,initialized by app,Similar to multi_mode
     if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
         isp_param.is_master = 1;
+    CMR_LOGI("is_multi_mode %d: isp mode:%d", cxt->is_multi_mode,
+             isp_param.is_multi_mode);
 
     CMR_LOGI(
         "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
