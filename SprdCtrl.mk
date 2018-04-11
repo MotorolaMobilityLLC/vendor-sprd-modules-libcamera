@@ -720,3 +720,9 @@ endif
 ifeq ($(strip $(TARGET_BOARD_ECONOMIZE_MEMORY)),true)
 LOCAL_CFLAGS += -DECONOMIZE_MEMORY
 endif
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
+LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/misc/cameraserver\"
+else
+LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/misc/media\"
+endif
