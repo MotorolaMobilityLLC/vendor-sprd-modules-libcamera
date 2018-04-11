@@ -48,7 +48,7 @@ namespace sprdcamera {
 extern volatile uint32_t gHALLogLevel;
 
 #define HAL_LOGE(fmt, args...)                                                 \
-    ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+    ALOGE("%d, %s: hal_err " fmt, __LINE__, __FUNCTION__, ##args)
 
 #define HAL_LOGW(fmt, args...)                                                 \
     ALOGW_IF(gHALLogLevel >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)

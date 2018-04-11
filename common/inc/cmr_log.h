@@ -33,6 +33,7 @@ enum {
 };
 
 #define DEBUG_STR "%d, %s: "
+#define ERROR_STR "%d, %s: hal_err "
 #define DEBUG_ARGS __LINE__, __FUNCTION__
 
 extern cmr_int g_isp_log_level;
@@ -62,7 +63,7 @@ extern cmr_int g_sensor_log_level;
 #define ISP_LOGV printf
 #endif
 
-#define CMR_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGE(format, ...) ALOGE(ERROR_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define CMR_LOGW(format, ...)                                                  \
     ALOGW_IF(g_oem_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, \
              ##__VA_ARGS__)
@@ -78,7 +79,7 @@ extern cmr_int g_sensor_log_level;
              ##__VA_ARGS__)
 
 #define SENSOR_LOGE(format, ...)                                               \
-    ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+    ALOGE(ERROR_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define SENSOR_LOGW(format, ...)                                               \
     ALOGW_IF(g_sensor_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format,          \
              DEBUG_ARGS, ##__VA_ARGS__)
