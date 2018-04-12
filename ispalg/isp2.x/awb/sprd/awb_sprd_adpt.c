@@ -442,7 +442,6 @@ static cmr_u32 _awb_get_result_info(struct awb_ctrl_cxt *cxt, void *param)
 	struct awb_ctrl_calc_result *awb_result = (struct awb_ctrl_calc_result *)param;
 
 	memcpy(awb_result, &cxt->awb_result, sizeof(struct awb_ctrl_calc_result));
-
 	return rtn;
 
 }
@@ -1204,8 +1203,9 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			awb_sync.master_pix_cnt = ((1600 / awb_sync.stat_master_info.width) * (1200 / awb_sync.stat_master_info.height)) / 4;
 			awb_sync.slave_pix_cnt = ((1600 / awb_sync.stat_slave_info.width) * (1200 / awb_sync.stat_slave_info.height)) / 4;
 
-			cmr_u32 ct;
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_MATCH_AWB_DATA, NULL, &ct);
+			cmr_u32 slave_ct;
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_AWB_DATA, NULL, &slave_ct );
+			ISP_LOGV("awb_sync slave_ct:%d.\n",slave_ct);
 
 			struct sensor_otp_awb_info master_otp_info;
 			struct sensor_otp_awb_info slave_otp_info;
@@ -1234,17 +1234,18 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			result.gain.r = gain_slave.r;
 			result.gain.g = gain_slave.g;
 			result.gain.b = gain_slave.b;
-			result.ct = ct;
+			result.ct = slave_ct;
 
 			cxt->output_gain.r = result.gain.r;
 			cxt->output_gain.g = result.gain.g;
 			cxt->output_gain.b = result.gain.b;
 			cxt->output_ct = result.ct;
 
-			ISP_LOGI("hao.yue awb_sync fixed master RGB gain(%d,%d,%d),slave RGB gain(%d,%d,%d).\n",gain_master.r, gain_master.g, gain_master.b,cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b);
+			ISP_LOGV(" awb_sync fixed master RGB gain(%d,%d,%d),slave RGB gain(%d,%d,%d).\n",gain_master.r, gain_master.g, gain_master.b,cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b);
 
 			if (ret == 0) {
 				result.update_gain = 1;
+				memcpy(&cxt->awb_result, &result, sizeof(struct awb_ctrl_calc_result));
 				return AWB_CTRL_SUCCESS;
 			}
 		}
@@ -1455,6 +1456,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
+		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MATCH_AWB_DATA, &result.ct , NULL);
 	}
 
 	pthread_mutex_lock(&cxt->status_lock);
