@@ -37,7 +37,8 @@ namespace sprdcamera {
 #define BOKEH_CIRCLE_SIZE_SCALE (3)
 #define BOKEH_SMOOTH_SIZE_SCALE (8)
 #define BOKEH_CIRCLE_VALUE_MIN (20)
-#define BOKEH_THREAD_TIMEOUT 50e6
+#define BOKEH_THREAD_TIMEOUT (50e6)
+#define CLEAR_PRE_FRAME_UNMATCH_TIMEOUT (1800) // 1.8s
 #define LIB_BOKEH_PATH "libsprdbokeh.so"
 #define LIB_DEPTH_PATH "libsprddepth.so"
 #define LIB_BOKEH_PREVIEW_PATH "libbokeh_depth.so"
@@ -135,6 +136,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mBokehPrevApi = NULL;
     mArcSoftBokehApi = NULL;
     mCapFrameNumber = 0;
+    mPrevBlurFrameNumber = 0;
     mPrevFrameNumber = 0;
     mIsCapturing = false;
     mjpegSize = 0;
@@ -158,7 +160,8 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     m_pMainSnapBuffer = NULL;
 #endif
     mDepthStatus = DEPTH_INVALID;
-    mDepthTrigger = true;
+    mDepthTrigger = TRIGGER_FNUM;
+    mReqTimestamp = 0;
     mSavedRequestList.clear();
     setupPhysicalCameras();
     mCaptureThread = new BokehCaptureThread();
@@ -355,6 +358,9 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
+    mReqTimestamp = 0;
+    mPrevFrameNumber = 0;
+    mCapFrameNumber = 0;
     if (mCaptureThread->mArcSoftDepthMap != NULL) {
         free(mCaptureThread->mArcSoftDepthMap);
         mCaptureThread->mArcSoftDepthMap = NULL;
@@ -545,6 +551,101 @@ void SprdCamera3RealBokeh::notifyAux(const struct camera3_callback_ops *ops,
 }
 
 /*===========================================================================
+ * FUNCTION   :intDepthPrevBufferFlag
+ *
+ * DESCRIPTION: for pingpang buffer init
+ *
+ * PARAMETERS :
+ *
+ * RETURN	  :
+ *==========================================================================*/
+void SprdCamera3RealBokeh::intDepthPrevBufferFlag() {
+    int index = 0;
+    for (; index < 2; index++) {
+        mDepthBuffer.prev_depth_buffer[index].w_flag = true;
+        mDepthBuffer.prev_depth_buffer[index].r_flag = false;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   :getPrevDepthBuffer
+ *
+ * DESCRIPTION: get pingpang buffer
+ *
+ * PARAMETERS :
+ *
+ * RETURN     :
+ *==========================================================================*/
+int SprdCamera3RealBokeh::getPrevDepthBuffer(BUFFER_FLAG need_flag) {
+    Mutex::Autolock l(mDepthBufferLock);
+    int index = 0;
+    int ret = -1;
+
+    switch (need_flag) {
+    case BUFFER_PING:
+        for (index = 0; index < 2; index++) {
+            if (mDepthBuffer.prev_depth_buffer[index].w_flag &&
+                !mDepthBuffer.prev_depth_buffer[index].r_flag) {
+                mDepthBuffer.prev_depth_buffer[index].w_flag = false;
+                mDepthBuffer.prev_depth_buffer[index].r_flag = false;
+                ret = index;
+                break;
+            }
+        }
+        break;
+    case BUFFER_PANG:
+        for (index = 0; index < 2; index++) {
+            if (mDepthBuffer.prev_depth_buffer[index].r_flag) {
+                mDepthBuffer.prev_depth_buffer[index].w_flag = false;
+                ret = index;
+                break;
+            }
+        }
+        break;
+    default:
+        HAL_LOGI("buffer flag err");
+        break;
+    }
+    HAL_LOGI("get buffer index=%d,flag=%d", ret, need_flag);
+
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   :setPrevDepthBufferFlag
+ *
+ * DESCRIPTION: set pingpang buffer flag
+ *
+ * PARAMETERS :
+ *
+ * RETURN     :
+ *==========================================================================*/
+void SprdCamera3RealBokeh::setPrevDepthBufferFlag(BUFFER_FLAG cur_flag,
+                                                  int index) {
+    Mutex::Autolock l(mDepthBufferLock);
+    int tmp = 0;
+
+    if (index < 0)
+        return;
+
+    switch (cur_flag) {
+    case BUFFER_PING:
+        mDepthBuffer.prev_depth_buffer[index].w_flag = true;
+        mDepthBuffer.prev_depth_buffer[index].r_flag = true;
+        tmp = index == 0 ? 1 : 0;
+        mDepthBuffer.prev_depth_buffer[tmp].w_flag = true;
+        mDepthBuffer.prev_depth_buffer[tmp].r_flag = false;
+        break;
+    case BUFFER_PANG:
+        mDepthBuffer.prev_depth_buffer[index].w_flag = true;
+        break;
+    default:
+        HAL_LOGI("buffer flag err");
+        break;
+    }
+}
+
+/*===========================================================================
  * FUNCTION   :allocatebuf
  *
  * DESCRIPTION: deconstructor of SprdCamera3RealBokeh
@@ -640,17 +741,17 @@ int SprdCamera3RealBokeh::allocateBuff() {
             mLocalBufferList.push_back(&(mLocalBuffer[count + j]));
         }
         count += SNAP_SCALE_NUM;
-
-        mDepthBuffer.prev_depth_buffer =
-            (void *)malloc(mBokehSize.depth_prev_size);
-        if (mDepthBuffer.prev_depth_buffer == NULL) {
-            HAL_LOGE("mDepthBuffer.prev_depth_buffer malloc failed");
-            goto mem_fail;
-        } else {
-            memset(mDepthBuffer.prev_depth_buffer, 0,
-                   mBokehSize.depth_prev_size);
+        for (j = 0; j < 2; j++) {
+            mDepthBuffer.prev_depth_buffer[j].buffer =
+                (void *)malloc(mBokehSize.depth_prev_size);
+            if (mDepthBuffer.prev_depth_buffer[j].buffer == NULL) {
+                HAL_LOGE("mDepthBuffer.prev_depth_buffer malloc failed");
+                goto mem_fail;
+            } else {
+                memset(mDepthBuffer.prev_depth_buffer[j].buffer, 0,
+                       mBokehSize.depth_prev_size);
+            }
         }
-
         mDepthBuffer.snap_depth_buffer =
             (void *)malloc(mBokehSize.depth_snap_size);
         if (mDepthBuffer.snap_depth_buffer == NULL) {
@@ -697,9 +798,12 @@ void SprdCamera3RealBokeh::freeLocalBuffer() {
         freeOneBuffer(&mLocalBuffer[i]);
     }
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-        if (mDepthBuffer.prev_depth_buffer != NULL) {
-            free(mDepthBuffer.prev_depth_buffer);
-            mDepthBuffer.prev_depth_buffer = NULL;
+
+        for (int i = 0; i < 2; i++) {
+            if (mDepthBuffer.prev_depth_buffer[i].buffer != NULL) {
+                free(mDepthBuffer.prev_depth_buffer[i].buffer);
+                mDepthBuffer.prev_depth_buffer[i].buffer = NULL;
+            }
         }
         if (mDepthBuffer.snap_depth_buffer != NULL) {
             free(mDepthBuffer.snap_depth_buffer);
@@ -1060,7 +1164,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                     if (itor->frame_number ==
                         muxer_msg.combo_frame.frame_number) {
                         output_buffer = itor->buffer;
-                        mRealBokeh->mPrevFrameNumber =
+                        mRealBokeh->mPrevBlurFrameNumber =
                             muxer_msg.combo_frame.frame_number;
                         frame_number = muxer_msg.combo_frame.frame_number;
                         break;
@@ -1078,7 +1182,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                         HAL_LOGE("sprdBokehPreviewHandle failed");
                         return false;
                     }
-                    if (mRealBokeh->mDepthTrigger &&
+                    if (mRealBokeh->mDepthTrigger != TRIGGER_FLASE &&
                         mRealBokeh->mOtpData.otp_exist) {
                         isDoDepth = sprdDepthHandle(&muxer_msg);
                     }
@@ -1251,17 +1355,17 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::arcsoftBokehPreviewHandle(
                                  ADP_BUFSIZE(*output_buf),
                                  mRealBokeh->mBokehSize.preview_w,
                                  mRealBokeh->mBokehSize.preview_h,
-                                 mRealBokeh->mPrevFrameNumber, "output");
+                                 mRealBokeh->mPrevBlurFrameNumber, "output");
             mRealBokeh->dumpData((unsigned char *)input_buf2_addr, 1,
                                  ADP_BUFSIZE(*input_buf2),
                                  mRealBokeh->mBokehSize.depth_prev_sub_w,
                                  mRealBokeh->mBokehSize.depth_prev_sub_h,
-                                 mRealBokeh->mPrevFrameNumber, "PrevSub");
+                                 mRealBokeh->mPrevBlurFrameNumber, "PrevSub");
             mRealBokeh->dumpData((unsigned char *)input_buf1_addr, 1,
                                  ADP_BUFSIZE(*input_buf1),
                                  mRealBokeh->mBokehSize.preview_w,
                                  mRealBokeh->mBokehSize.preview_h,
-                                 mRealBokeh->mPrevFrameNumber, "PrevMain");
+                                 mRealBokeh->mPrevBlurFrameNumber, "PrevMain");
         }
     }
     HAL_LOGV("arcsoft preview bokeh run end");
@@ -1290,16 +1394,25 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
     int rc = NO_ERROR;
     void *output_buf_addr = NULL;
     void *input_buf1_addr = NULL;
+    int buffer_index = 0;
     Mutex::Autolock l(mLock);
-    HAL_LOGI(":E");
+    HAL_LOGI("E");
 
     if (output_buf == NULL || input_buf1 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
     }
+    buffer_index = mRealBokeh->getPrevDepthBuffer(BUFFER_PANG);
 
     if (mRealBokeh->mIsSupportPBokeh &&
-        mRealBokeh->mDepthStatus == DEPTH_DONE) {
+        (mRealBokeh->mDepthStatus == DEPTH_DONE ||
+         (mRealBokeh->mDepthStatus == DEPTH_DONING &&
+          mRealBokeh->mDepthTrigger == TRIGGER_FNUM)) &&
+        buffer_index != -1) {
+        mRealBokeh->mPreviewbokehParam.weight_params.DisparityImage =
+            (unsigned char *)(mRealBokeh->mDepthBuffer
+                                  .prev_depth_buffer[buffer_index]
+                                  .buffer);
         /*Bokeh GPU interface start*/
         uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                                 GraphicBuffer::USAGE_SW_READ_OFTEN |
@@ -1366,9 +1479,10 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
                                      ADP_BUFSIZE(*output_buf),
                                      mRealBokeh->mBokehSize.preview_w,
                                      mRealBokeh->mBokehSize.preview_h,
-                                     mRealBokeh->mPrevFrameNumber, "bokeh");
+                                     mRealBokeh->mPrevBlurFrameNumber, "bokeh");
             }
         }
+        mRealBokeh->setPrevDepthBufferFlag(BUFFER_PANG, buffer_index);
 
     } else {
 
@@ -1424,6 +1538,18 @@ void SprdCamera3RealBokeh::PreviewMuxerThread::waitMsgAvailable() {
     while (mPreviewMuxerMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
         mMergequeueSignal.waitRelative(mMergequeueMutex, BOKEH_THREAD_TIMEOUT);
+        struct timespec t1;
+        clock_gettime(CLOCK_BOOTTIME, &t1);
+        uint64_t now_time_stamp = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
+        if (mRealBokeh->mReqTimestamp && mRealBokeh->mPrevFrameNumber > 5 &&
+            (ns2ms(now_time_stamp - mRealBokeh->mReqTimestamp) >
+             CLEAR_PRE_FRAME_UNMATCH_TIMEOUT)) {
+            HAL_LOGI(
+                "error.clear unmatch frame for monkey test force kill app");
+            mRealBokeh->clearFrameNeverMatched(mRealBokeh->mPrevFrameNumber + 1,
+                                               mRealBokeh->mPrevFrameNumber +
+                                                   1);
+        }
     }
 }
 
@@ -1537,7 +1663,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
     int64_t depthRun = 0;
     void *input_buf1_addr = NULL;
     void *input_buf2_addr = NULL;
-
+    int buffer_index = 0;
     if (input_buf1 == NULL || input_buf2 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
@@ -1565,8 +1691,13 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
 
     depthRun = systemTime();
     distanceRet distance;
+    buffer_index = mRealBokeh->getPrevDepthBuffer(BUFFER_PING);
+    if (buffer_index == -1) {
+        goto fail_map_input2;
+    }
     rc = mRealBokeh->mDepthApi->sprd_depth_Run_distance(
-        mPrevDepthhandle, mRealBokeh->mDepthBuffer.prev_depth_buffer, NULL,
+        mPrevDepthhandle,
+        mRealBokeh->mDepthBuffer.prev_depth_buffer[buffer_index].buffer, NULL,
         input_buf2_addr, input_buf1_addr,
         &(mRealBokeh->mPreviewbokehParam.depth_param), &distance);
 
@@ -1574,6 +1705,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
         goto fail_map_input2;
     }
+    mRealBokeh->setPrevDepthBufferFlag(BUFFER_PING, buffer_index);
 
     HAL_LOGD("depth run cost %lld ms", ns2ms(systemTime() - depthRun));
     {
@@ -1582,22 +1714,23 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
         };
         property_get("persist.sys.camera.savyuv", prop9, "0");
         if (1 == atoi(prop9)) {
-            mRealBokeh->dumpData(
-                (unsigned char *)mRealBokeh->mDepthBuffer.prev_depth_buffer, 1,
-                mRealBokeh->mBokehSize.depth_prev_size,
-                mRealBokeh->mBokehSize.preview_w,
-                mRealBokeh->mBokehSize.preview_h, mRealBokeh->mPrevFrameNumber,
-                "depth");
+            mRealBokeh->dumpData((unsigned char *)mRealBokeh->mDepthBuffer
+                                     .prev_depth_buffer[buffer_index]
+                                     .buffer,
+                                 1, mRealBokeh->mBokehSize.depth_prev_size,
+                                 mRealBokeh->mBokehSize.preview_w,
+                                 mRealBokeh->mBokehSize.preview_h,
+                                 mRealBokeh->mPrevBlurFrameNumber, "depth");
             mRealBokeh->dumpData((unsigned char *)input_buf2_addr, 1,
                                  ADP_BUFSIZE(*input_buf2),
                                  mRealBokeh->mBokehSize.depth_prev_sub_w,
                                  mRealBokeh->mBokehSize.depth_prev_sub_h,
-                                 mRealBokeh->mPrevFrameNumber, "prevSub");
+                                 mRealBokeh->mPrevBlurFrameNumber, "prevSub");
             mRealBokeh->dumpData((unsigned char *)input_buf1_addr, 1,
                                  ADP_BUFSIZE(*input_buf1),
                                  mRealBokeh->mBokehSize.preview_w,
                                  mRealBokeh->mBokehSize.preview_h,
-                                 mRealBokeh->mPrevFrameNumber, "prevMain");
+                                 mRealBokeh->mPrevBlurFrameNumber, "prevMain");
         }
     }
 
@@ -2027,14 +2160,19 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
         switch (capture_msg.msg_type) {
         case BOKEH_MSG_EXIT: {
             // flush queue
-            HAL_LOGI("E.BOKEH_MSG_EXIT");
+            HAL_LOGI("BOKEH_MSG_EXIT,mCapFrameNumber=%d",
+                     mRealBokeh->mCapFrameNumber);
+            if (mRealBokeh->mCapFrameNumber) {
+                HAL_LOGE("error.HAL don't send capture frame");
+                mRealBokeh->CallBackResult(mRealBokeh->mCapFrameNumber,
+                                           CAMERA3_BUFFER_STATUS_ERROR);
+            }
             memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
             memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
             if (NULL != mSavedCapReqsettings) {
                 free_camera_metadata(mSavedCapReqsettings);
                 mSavedCapReqsettings = NULL;
             }
-            HAL_LOGI("X.BOKEH_MSG_EXIT");
             return false;
         }
         case BOKEH_MSG_DATA_PROC: {
@@ -3172,8 +3310,7 @@ void SprdCamera3RealBokeh::initBokehApiParams() {
         mPreviewbokehParam.depth_param.F_number =
             mPreviewbokehParam.weight_params.F_number;
         mPreviewbokehParam.depth_param.DisparityImage = NULL;
-        mPreviewbokehParam.weight_params.DisparityImage =
-            (unsigned char *)(mDepthBuffer.prev_depth_buffer);
+
         // capture bokeh params
         mCaptureThread->mCapbokehParam.sel_x = mBokehSize.capture_w / 2;
         mCaptureThread->mCapbokehParam.sel_y = mBokehSize.capture_h / 2;
@@ -3506,7 +3643,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                 mPreviewbokehParam.weight_params.F_number = prev_fnum;
                 mCaptureThread->mCapbokehParam.bokeh_level = cap_fnum;
                 mPreviewbokehParam.depth_param.F_number = prev_fnum;
-                mDepthTrigger = true;
+                mDepthTrigger = TRIGGER_FNUM;
             }
         } else if (mRealBokeh->mApiVersion == ARCSOFT_API_MODE) {
             fnum = MAX_F_FUMBER + 1 - fnum;
@@ -3783,7 +3920,7 @@ int SprdCamera3RealBokeh::initialize(
     mCaptureThread->mReprocessing = false;
     mIsCapturing = false;
     mCapFrameNumber = 0;
-    mPrevFrameNumber = 0;
+    mPrevBlurFrameNumber = 0;
     mjpegSize = 0;
     mFlushing = false;
     mCallbackOps = callback_ops;
@@ -3875,6 +4012,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mBokehSize.depth_snap_out_h = DEPTH_SNAP_OUTPUT_HEIGHT;
     mFlushing = false;
     mhasCallbackStream = false;
+    mReqTimestamp = 0;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -4007,6 +4145,7 @@ int SprdCamera3RealBokeh::configureStreams(
     if (rc < 0) {
         HAL_LOGE("failed to allocateBuff.");
     }
+    intDepthPrevBufferFlag();
 
     camera3_stream_configuration mainconfig;
     mainconfig = *stream_list;
@@ -4591,7 +4730,10 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             HAL_LOGE("failed, idx:%d", req_aux.frame_number);
             goto req_fail;
         }
-
+        struct timespec t1;
+        clock_gettime(CLOCK_BOOTTIME, &t1);
+        mReqTimestamp = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
+        mPrevFrameNumber = request->frame_number;
         mMaxPendingCount =
             preview_stream->max_buffers - MAX_UNMATCHED_QUEUE_SIZE + 1;
         {
@@ -4924,16 +5066,8 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             }
         }
     } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
-        camera3_capture_result_t newResult = *result;
-        camera3_stream_buffer_t newOutput_buffers = *(result->output_buffers);
         bool save_param = false;
         HAL_LOGD("jpeg callback: framenumber %d", cur_frame_number);
-        newOutput_buffers.stream = mSavedCapStreams;
-        newResult.input_buffer = NULL;
-        newResult.result = NULL;
-        newResult.partial_result = 0;
-        newResult.output_buffers = &newOutput_buffers;
-
         int rc = NO_ERROR;
         unsigned char *result_buffer_addr = NULL;
         uint32_t result_buffer_size =
@@ -4969,8 +5103,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             mRealBokeh->mLocalBuffer, mRealBokeh->m_pDstJpegBuffer,
             mRealBokeh->mLocalBufferNumber, mRealBokeh->mLocalBufferList);
 #endif
-
-        mCallbackOps->process_capture_result(mCallbackOps, &newResult);
+        CallBackResult(mCapFrameNumber, CAMERA3_BUFFER_STATUS_OK);
         mCaptureThread->mReprocessing = false;
         mIsCapturing = false;
         mRealBokeh->unmap(result->output_buffers->buffer);
@@ -5382,6 +5515,8 @@ void SprdCamera3RealBokeh::CallBackResult(
                      mRealBokeh->mPendingRequest);
             mRealBokeh->mRequestSignal.signal();
         }
+    } else {
+        mRealBokeh->mCapFrameNumber = 0;
     }
 }
 
@@ -5523,7 +5658,7 @@ void SprdCamera3RealBokeh::setDepthStatus(DepthStatus state) {
     case DEPTH_DONING:
         mDepthStatus = state;
         if (state == DEPTH_DONE) {
-            mDepthTrigger = false;
+            mDepthTrigger = TRIGGER_FLASE;
         }
         break;
     case DEPTH_DONE:
@@ -5562,11 +5697,11 @@ void SprdCamera3RealBokeh::setDepthTrigger(uint8_t af_state) {
     switch (af_state) {
     case ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED:
         if (mCurAFStatus == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN)
-            mDepthTrigger = true;
+            mDepthTrigger = TRIGGER_AF;
         break;
     case ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED:
         if (mCurAFStatus == ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN)
-            mDepthTrigger = true;
+            mDepthTrigger = TRIGGER_AF;
         break;
     case ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN:
         setDepthStatus(DEPTH_INVALID);

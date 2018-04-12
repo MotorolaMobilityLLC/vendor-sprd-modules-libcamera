@@ -93,7 +93,8 @@ typedef enum { CAM_TYPE_BOKEH_MAIN = 0, CAM_TYPE_DEPTH } BokehCameraDeviceType;
 typedef enum { PREVIEW_MODE = 0, CAPTURE_MODE } CameraMode;
 typedef enum { SPRD_API_MODE = 0, ARCSOFT_API_MODE } ApiMode;
 typedef enum { DEPTH_DONING = 0, DEPTH_DONE, DEPTH_INVALID } DepthStatus;
-
+typedef enum { TRIGGER_FLASE = 0, TRIGGER_FNUM, TRIGGER_AF } DepthTrigger;
+typedef enum { BUFFER_PING = 0, BUFFER_PANG } BUFFER_FLAG;
 typedef enum {
     /* Main camera device id*/
     CAM_BOKEH_MAIN_ID = 0,
@@ -204,7 +205,13 @@ typedef struct {
     int depth_snap_size;
 } BokehSize;
 typedef struct {
-    void *prev_depth_buffer;
+    void *buffer;
+    bool w_flag;
+    bool r_flag;
+} PingPangBuffer;
+
+typedef struct {
+    PingPangBuffer prev_depth_buffer[2];
     void *snap_depth_buffer;
     void *depth_out_map_table;
 } DepthBuffer;
@@ -295,8 +302,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void saveRequest(camera3_capture_request_t *request);
 
     int allocateBuff();
-    void clearFrameNeverMatched(uint32_t main_frame_number,
-                                uint32_t sub_frame_number);
     int thumbYuvProc(buffer_handle_t *src_buffer);
 
   public:
@@ -412,10 +417,12 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     uint8_t mPreviewStreamsNum;
     List<multi_request_saved_t> mSavedRequestList;
     Mutex mMetatLock;
+    Mutex mDepthBufferLock;
     List<meta_save_t> mMetadataList;
     camera3_stream_t *mSavedCapStreams;
     uint32_t mCapFrameNumber;
     uint32_t mPrevFrameNumber;
+    uint32_t mPrevBlurFrameNumber;
     int mLocalBufferNumber;
     const camera3_callback_ops_t *mCallbackOps;
     BokehAPI_t *mBokehCapApi;
@@ -435,11 +442,12 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bokeh_prev_params_t mPreviewbokehParam;
     DepthStatus mDepthStatus;
     Mutex mDepthStatusLock;
-    bool mDepthTrigger;
+    DepthTrigger mDepthTrigger;
     uint8_t mCurAFStatus;
     uint8_t mCurAFMode;
     DepthBuffer mDepthBuffer;
     OtpData mOtpData;
+    uint64_t mReqTimestamp;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
@@ -476,6 +484,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void _dump(const struct camera3_device *device, int fd);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
+    void clearFrameNeverMatched(uint32_t main_frame_number,
+                                uint32_t sub_frame_number);
     void bokehThreadExit();
 #ifdef YUV_CONVERT_TO_JPEG
     cmr_uint yuvToJpeg(struct private_handle_t *input_handle);
@@ -485,6 +495,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 #endif
     void setDepthStatus(DepthStatus status);
     void setDepthTrigger(uint8_t af_status);
+    void intDepthPrevBufferFlag();
+    int getPrevDepthBuffer(BUFFER_FLAG need_flag);
+    void setPrevDepthBufferFlag(BUFFER_FLAG cur_flag, int index);
 };
 };
 
