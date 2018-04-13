@@ -32,6 +32,11 @@ enum pdaf_product_lib_id {
 	ADPT_MAX_PDAF_LIB,
 };
 
+enum aiproduct_lib_id {
+	ADPT_SPRD_AI_LIB,
+	ADPT_MAX_AI_LIB,
+};
+
 enum adpt_lib_type {
 	ADPT_LIB_AE,
 	ADPT_LIB_AF,
@@ -39,6 +44,7 @@ enum adpt_lib_type {
 	ADPT_LIB_LSC,
 	ADPT_LIB_AFL,
 	ADPT_LIB_PDAF,
+	ADPT_LIB_AI,
 	ADPT_LIB_MAX,
 };
 

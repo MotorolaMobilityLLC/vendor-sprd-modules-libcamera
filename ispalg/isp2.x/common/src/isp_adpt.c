@@ -25,6 +25,7 @@
 #include "af_log.h"
 #include "af_sprd_adpt_v1.h"
 #include "pdaf_sprd_adpt.h"
+#include "ai_sprd_adpt.h"
 #include <dlfcn.h>
 
 #ifdef CONFIG_USE_ALC_AE
@@ -210,12 +211,48 @@ static cmr_s32 adpt_get_pdaf_ops(struct third_lib_info *lib_info, struct adpt_op
 	return rtn;
 }
 
+extern struct adpt_ops_type sprd_ai_adpt_ops;
+static cmr_u32 *ai_sprd_version_ops[] = {
+	(cmr_u32 *) & sprd_ai_adpt_ops,
+};
+
+cmr_u32 get_sprd_ai_ops(cmr_u32 ai_lib_version, struct adpt_ops_type **ai_ops)
+{
+	cmr_u32 rtn = ISP_SUCCESS;
+	struct adpt_ops_type **table = (struct adpt_ops_type **)ai_sprd_version_ops;
+	*ai_ops = table[ai_lib_version];
+	return rtn;
+}
+
+static cmr_u32(*ai_product_ops[]) (cmr_u32, struct adpt_ops_type **) = {
+	[ADPT_SPRD_AI_LIB] = get_sprd_ai_ops,
+};
+
+static cmr_s32 adpt_get_ai_ops(struct third_lib_info *lib_info, struct adpt_ops_type **ops)
+{
+	cmr_s32 rtn = -1;
+	cmr_u32 ai_producer_id = 0;
+	cmr_u32 ai_lib_version = 0;
+
+	ai_producer_id = lib_info->product_id;
+	ai_lib_version = lib_info->version_id;
+
+	if (ADPT_MAX_AI_LIB > ai_producer_id) {
+		rtn = ai_product_ops[ai_producer_id] (ai_lib_version, ops);
+	} else {
+		rtn = ISP_ERROR;
+	}
+
+	return rtn;
+}
+
 static cmr_s32(*modules_ops[]) (struct third_lib_info *, struct adpt_ops_type **) = {
 	[ADPT_LIB_AE] = adpt_get_ae_ops,
 	[ADPT_LIB_AWB] = adpt_get_awb_ops,
 	[ADPT_LIB_AF] = adpt_get_af_ops,
 	[ADPT_LIB_LSC] = adpt_get_lsc_ops,
 	[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,
+	[ADPT_LIB_AI] = adpt_get_ai_ops,
 };
 
 cmr_s32 adpt_get_ops(cmr_s32 lib_type, struct third_lib_info *lib_info, struct adpt_ops_type **ops)

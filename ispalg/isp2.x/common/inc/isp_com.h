@@ -28,6 +28,7 @@
 #include "sensor_raw.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifdef	 __cplusplus
 extern "C" {
@@ -48,6 +49,13 @@ extern "C" {
 #define ISP_GAMMA_SAMPLE_NUM 26
 #define ISP_CCE_COEF_COLOR_CAST 0
 #define ISP_CCE_COEF_GAIN_OFFSET 1
+
+#define AI_FD_NUM (20)
+//#define AI_AE_STAT_SIZE (16384) /*128*128*/
+#define AI_AE_STAT_SIZE (1024) /*32*32*/
+
+typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+
 #define CLIP(in, bottom, top) {if(in<bottom) in=bottom; if(in>top) in=top;}
 	typedef cmr_int(*io_fun) (cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ());
 
@@ -224,6 +232,157 @@ extern "C" {
 
 	struct isp_rgb_aem_info {
 		struct isp_size blk_num;
+	};
+
+	enum ai_callback_type {
+		AI_CALLBACK_SCENE_INFO,
+		AI_CALLBACK_SET_CB,
+		AI_CALLBACK_MAX
+	};
+
+	enum ai_scene_type {
+		AI_SCENE_DEFAULT,
+		AI_SCENE_FOOD,
+		AI_SCENE_PORTRAIT,
+		AI_SCENE_FOLIAGE,
+		AI_SCENE_SKY,
+		AI_SCENE_NIGHT,
+		AI_SCENE_BACKLIGHT,
+		AI_SCENE_TEXT,
+		AI_SCENE_SUNRISE,
+		AI_SCENE_BUILDING,
+		AI_SCENE_LANDSCAPE,
+		AI_SCENE_SNOW,
+		AI_SCENE_FIREWORK,
+		AI_SCENE_BEACH,
+		AI_SCENE_PET,
+		AI_SCENE_FLOWER,
+		AI_SCENE_MAX
+	};
+
+	struct ai_rect {
+		cmr_u16 start_x;
+		cmr_u16 start_y;
+		cmr_u16 width;
+		cmr_u16 height;
+	};
+
+	struct ai_face_info {
+		struct ai_rect rect; /* Face rectangle */
+		cmr_s16 yaw_angle; /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees; */
+		cmr_s16 roll_angle; /* In-plane rotation angle (Roll); In (-180, +180] degrees; */
+		cmr_u16 score; /* Confidence score; In [0, 1000] */
+		cmr_u16 id; /* Human ID Number */
+	};
+
+	struct ai_fd_param {
+		cmr_u16 width;
+		cmr_u16 height;
+		cmr_u32 frame_id;
+		cmr_u64 timestamp;
+		struct ai_face_info face_area[AI_FD_NUM];
+		cmr_u16 face_num;
+	};
+
+	struct ai_ae_statistic_info {
+		cmr_u32 *r_info;
+		cmr_u32 *g_info;
+		cmr_u32 *b_info;
+	};
+
+	struct ai_ae_param {
+		cmr_u32 frame_id;
+		cmr_u64 timestamp;
+		cmr_u32 sec;
+		cmr_u32 usec;
+		struct ai_ae_statistic_info ae_stat;
+		struct ai_rect ae_rect;
+		struct img_offset ae_offset;
+		cmr_u16 blk_width;
+		cmr_u16 blk_height;
+		cmr_u16 blk_num_hor;
+		cmr_u16 blk_num_ver;
+		cmr_u32 zoom_ratio;
+	};
+
+	struct ai_img_buf {
+		cmr_u32 img_y;
+		cmr_u32 img_uv;
+	};
+
+	struct ai_img_param {
+		struct ai_img_buf img_buf;
+		cmr_u32 frame_id;
+		cmr_u64 timestamp;
+	};
+
+	enum ai_status {
+		AI_STATUS_IDLE,
+		AI_STATUS_PROCESSING,
+		AI_STATUS_MAX
+	};
+
+	enum ai_task_0 {
+		AI_SCENE_TASK0_INDOOR,
+		AI_SCENE_TASK0_OUTDOOR,
+		AI_SCENE_TASK0_MAX
+	};
+
+	enum ai_task_1 {
+		AI_SCENE_TASK1_NIGHT,
+		AI_SCENE_TASK1_BACKLIGHT,
+		AI_SCENE_TASK1_SUNRISESET,
+		AI_SCENE_TASK1_FIREWORK,
+		AI_SCENE_TASK1_OTHERS,
+		AI_SCENE_TASK1_MAX
+	};
+
+	enum ai_task_2 {
+		AI_SCENE_TASK2_FOOD,
+		AI_SCENE_TASK2_GREENPLANT,
+		AI_SCENE_TASK2_DOCUMENT,
+		AI_SCENE_TASK2_CATDOG,
+		AI_SCENE_TASK2_FLOWER,
+		AI_SCENE_TASK2_BLUESKY,
+		AI_SCENE_TASK2_BUILDING,
+		AI_SCENE_TASK2_SNOW,
+		AI_SCENE_TASK2_OTHERS,
+		AI_SCENE_TASK2_MAX
+	};
+
+	struct ai_task0_result {
+		enum ai_task_0 id;
+		cmr_u16 score;
+	};
+
+	struct ai_task1_result {
+		enum ai_task_1 id;
+		cmr_u16 score;
+	};
+
+	struct ai_task2_result {
+		enum ai_task_2 id;
+		cmr_u16 score;
+	};
+
+	struct ai_scene_detect_info {
+		cmr_u32 frame_id;
+		enum ai_scene_type cur_scene_id;
+		struct ai_task0_result task0[AI_SCENE_TASK0_MAX];
+		struct ai_task1_result task1[AI_SCENE_TASK1_MAX];
+		struct ai_task2_result task2[AI_SCENE_TASK2_MAX];
+	};
+
+	enum ai_img_flag {
+		IMAGE_DATA_NOT_REQUIRED,
+		IMAGE_DATA_REQUIRED,
+		IMAGE_DATA_MAX
+	};
+
+	struct ai_img_status {
+		cmr_u32 frame_id;
+		cmr_s32 frame_state;
+		enum ai_img_flag img_flag;
 	};
 
 #ifdef	 __cplusplus

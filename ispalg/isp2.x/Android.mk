@@ -80,7 +80,9 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/tof \
 	$(LOCAL_PATH)/$(ISP_DIR)/utility \
 	$(LOCAL_PATH)/$(ISP_DIR)/calibration/inc \
-	$(LOCAL_PATH)/../../sensor/inc
+	$(LOCAL_PATH)/../../sensor/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/sprd/inc
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
@@ -112,6 +114,7 @@ LOCAL_SHARED_LIBRARIES += libawb1
 LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc
 LOCAL_SHARED_LIBRARIES += libatm
 LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
+LOCAL_SHARED_LIBRARIES += libsprdaic libsprdscenedetect
 
 LOCAL_SHARED_LIBRARIES += libspcaftrigger
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)

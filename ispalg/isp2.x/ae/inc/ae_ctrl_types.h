@@ -102,6 +102,7 @@ extern "C" {
 		AE_SET_EXPOSURE_COMPENSATION,
 		AE_SET_AUTO_HDR,
 		AE_SET_CAP_FLAG,
+		AE_SET_SCENE_INFO,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -356,6 +357,11 @@ extern "C" {
 		struct ae_trim trim;
 		struct ae_rgb_l high_region_thrd;/*it will come from ae algorithm tuning parameter, not from AEM param*/
 		struct ae_rgb_l low_region_thrd;/*it will come from ae algorithm tuning parameter, not from AEM param*/
+	};
+
+	struct ae_blk_num {
+		cmr_u32 x;
+		cmr_u32 y;
 	};
 
 	struct ae_scene_mode_info {
