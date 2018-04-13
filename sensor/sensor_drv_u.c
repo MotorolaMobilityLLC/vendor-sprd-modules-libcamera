@@ -25,6 +25,7 @@
 #include "hw_sensor_drv.h"
 #include "sensor_cfg.h"
 #include "sensor_drv_u.h"
+#include "otp_info.h"
 
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
       defined(CONFIG_CAMERA_ISP_VERSION_V4))
@@ -127,6 +128,7 @@ extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
                                               SENSOR_ID_E sensor_id);
 cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
                              cmr_u8 vendor_id);
+cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt);
 
 void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt) {
     SENSOR_ID_E sensor_id = 0;
@@ -1963,6 +1965,7 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
                 /*if property debug.dualcamera.write.otp is false do nothing*/
                 sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
                 sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
+                sensor_set_spc_data(sensor_cxt);
 #if 1 // def CONFIG_ISP_TUNING_PARAM_UPDATE
                 sensor_otp_ops_t *otp_ops = PNULL;
                 otp_ops = &module->otp_drv_info->otp_ops;
@@ -2745,6 +2748,25 @@ cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
     val.pval = &vendor_id;
 
     SENSOR_LOGI("vendor id %x\n", vendor_id);
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops)
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                            (cmr_uint)&val);
+    return ret;
+}
+
+cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    SENSOR_VAL_T val;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)sensor_cxt->otp_drv_handle;
+
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    val.type = SENSOR_VAL_TYPE_SET_SPC_DATA;
+    val.pval = otp_cxt->otp_raw_data.buffer;
+
+    SENSOR_LOGI("otp_raw_data:%p", val.pval);
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     if (sns_ops)
         ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,

@@ -697,20 +697,19 @@ static cmr_int imx351_drv_ext_func(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
-cmr_int imx351_drv_write_spcdata(cmr_handle handle,
-                                         cmr_u8 *param) {
+cmr_int imx351_drv_write_spcdata(cmr_handle handle, cmr_u8 *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_LOGI("E");
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    //cmr_u8 *param_ptr = (cmr_u8 *)param;
-    cmr_u8 param_ptr[8192] = {0x00,0x00};
-    hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xA0 >> 1, param_ptr,8192 << 16 |SENSOR_I2C_REG_16BIT);
-
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u8 *param_ptr = (cmr_u8 *)param;
+    // cmr_u8 param_ptr[8192] = {0x00,0x00};
+    // hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xA0 >> 1, param_ptr,8192 << 16 |SENSOR_I2C_REG_16BIT);
+    // SENSOR_LOGI("otp_raw_data:%p",param_ptr);
     for(int i = 0; i < 70; i++){
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7500 + i,  param_ptr[0x08ba+i] & 0xFF);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7548 + i,  param_ptr[0x0900+i] & 0xFF);
-     //   SENSOR_LOGV("E1  0x%02x 0x%02x",  param_ptr[0x08ba+i],hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x34 >> 1,
-      //                         0x7500 + i, BITS_ADDR16_REG8) );
+        // SENSOR_LOGV("E1  0x%02x 0x%02x",  param_ptr[0x08ba+i],hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle,
+        //             0x34 >> 1, 0x7500 + i, BITS_ADDR16_REG8) );
      }
     return 0;
 
@@ -995,7 +994,6 @@ static cmr_int imx351_drv_set_spc_data(cmr_handle handle, cmr_u8 *param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     imx351_drv_write_spcdata(handle, spc_data);
 
-
     return rtn;
 }
 
@@ -1022,8 +1020,8 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = imx351_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-     case SENSOR_VAL_TYPE_SET_RAW_INFOR:
-         rtn = imx351_drv_set_spc_data(handle, param_ptr->pval) ;
+     case SENSOR_VAL_TYPE_SET_SPC_DATA:
+         rtn = imx351_drv_set_spc_data(handle, param_ptr->pval);
          break;
     default:
         break;
