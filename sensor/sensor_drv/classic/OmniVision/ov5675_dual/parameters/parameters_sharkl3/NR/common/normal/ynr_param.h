@@ -1,4 +1,4 @@
-/*versionid=0x00070005*/
+/*versionid=0x00090007*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_ynr_level*/
@@ -6,15 +6,15 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x0A3C,
+		0x0A20,
 		/*radius*/
-		0x0618,
+		0x06F6,
 		/*imgcetx*/
-		0x0840,
+		0x0510,
 		/*imgcety*/
-		0x0620,
+		0x03CC,
 		/*dist_interval*/
-		0x00000109,
+		0x000000CA,
 
 	},
 	/*ynr_txt_calc*/
@@ -124,7 +124,7 @@
 			0x01,
 			/*eurodist*/
 			{
-				0x0F,0x04,0x01/*0-2*/
+				0x0F,0x05,0x02/*0-2*/
 			},
 			/*reserved*/
 			{
