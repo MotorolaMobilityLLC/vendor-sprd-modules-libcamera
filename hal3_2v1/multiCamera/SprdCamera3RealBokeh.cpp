@@ -1536,16 +1536,18 @@ void SprdCamera3RealBokeh::PreviewMuxerThread::requestExit() {
  *==========================================================================*/
 void SprdCamera3RealBokeh::PreviewMuxerThread::waitMsgAvailable() {
     while (mPreviewMuxerMsgList.empty()) {
-        Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, BOKEH_THREAD_TIMEOUT);
+        {
+            Mutex::Autolock l(mMergequeueMutex);
+            mMergequeueSignal.waitRelative(mMergequeueMutex,
+                                           BOKEH_THREAD_TIMEOUT);
+        }
         struct timespec t1;
         clock_gettime(CLOCK_BOOTTIME, &t1);
         uint64_t now_time_stamp = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
         if (mRealBokeh->mReqTimestamp && mRealBokeh->mPrevFrameNumber > 5 &&
             (ns2ms(now_time_stamp - mRealBokeh->mReqTimestamp) >
              CLEAR_PRE_FRAME_UNMATCH_TIMEOUT)) {
-            HAL_LOGI(
-                "error.clear unmatch frame for monkey test force kill app");
+            HAL_LOGI("error.clear unmatch frame for force kill app");
             mRealBokeh->clearFrameNeverMatched(mRealBokeh->mPrevFrameNumber + 1,
                                                mRealBokeh->mPrevFrameNumber +
                                                    1);
@@ -5032,10 +5034,12 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     int currStreamType = getStreamType(result_buffer->stream);
 
     if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
-        if (mFlushing) {
+        if (mFlushing ||
+            result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
             return;
         }
+
         if (mhasCallbackStream && mThumbReq.frame_number) {
             thumbYuvProc(result->output_buffers->buffer);
             CallBackSnapResult();
@@ -5616,6 +5620,7 @@ void SprdCamera3RealBokeh::clearFrameNeverMatched(uint32_t main_frame_number,
                                                   uint32_t sub_frame_number) {
     List<hwi_frame_buffer_info_t>::iterator itor;
     uint32_t frame_num = 0;
+    Mutex::Autolock l(mClearBufferLock);
 
     itor = mUnmatchedFrameListMain.begin();
     while (itor != mUnmatchedFrameListMain.end()) {

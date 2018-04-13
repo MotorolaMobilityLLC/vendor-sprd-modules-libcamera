@@ -442,6 +442,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bokeh_prev_params_t mPreviewbokehParam;
     DepthStatus mDepthStatus;
     Mutex mDepthStatusLock;
+    Mutex mClearBufferLock;
     DepthTrigger mDepthTrigger;
     uint8_t mCurAFStatus;
     uint8_t mCurAFMode;
