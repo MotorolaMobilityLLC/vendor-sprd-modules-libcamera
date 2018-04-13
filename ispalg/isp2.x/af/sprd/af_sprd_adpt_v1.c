@@ -410,7 +410,7 @@ static cmr_u8 if_set_wins(cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u
 		roi->win[roi->num - 1].start_y = start_y;
 		roi->win[roi->num - 1].end_x = end_x;
 		roi->win[roi->num - 1].end_y = end_y;
-		ISP_LOGI("if_set_wins %d %d %d %d %d", roi->num - 1, roi->win[roi->num - 1].start_x, roi->win[roi->num - 1].start_y, roi->win[roi->num - 1].end_x, roi->win[roi->num - 1].end_y);
+		ISP_LOGV("if_set_wins %d %d %d %d %d", roi->num - 1, roi->win[roi->num - 1].start_x, roi->win[roi->num - 1].start_y, roi->win[roi->num - 1].end_x, roi->win[roi->num - 1].end_y);
 	}
 
 	return 0;

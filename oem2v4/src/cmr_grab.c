@@ -1097,7 +1097,7 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
     }
     capability->capture_pause = 1;
 
-    CMR_LOGI("video prev %d scale %d capture_no_trim %d capture_pause %d "
+    CMR_LOGV("video prev %d scale %d capture_no_trim %d capture_pause %d "
              "zoom_post_proc %d",
              capability->is_video_prev_diff, capability->hw_scale_available,
              capability->capture_no_trim, capability->capture_pause,
@@ -1303,7 +1303,7 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.sec = op.parm.frame.sec;
                 statis_info.usec = op.parm.frame.usec;
                 statis_info.frame_id = op.parm.frame.frame_id;
-                CMR_LOGI("got one frame statis buf_size 0x%x phy_addr 0x%x "
+                CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
                          "vir_addr 0x%x irq_property 0x%x, "
                          "op.parm.frame.vir_addr = 0x%x, "
                          "op.parm.frame.addr_offset = 0x%x",

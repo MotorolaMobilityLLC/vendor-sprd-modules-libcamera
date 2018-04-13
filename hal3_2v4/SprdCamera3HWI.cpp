@@ -1371,12 +1371,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 iommu_buf.buffer = output.buffer;
                 iommu_buf.map_flag = BUF_MAPED;
                 mIommuBufMapList.push_back(iommu_buf);
-                HAL_LOGE("iommu_workaround: first req buf private_handle %p fd 0x%x sg %p",
+                HAL_LOGI("iommu_workaround: first req buf private_handle %p fd 0x%x sg %p",
                     private_handle, iommu_buf.fd, iommu_buf.sg_table);
             } else {
                 int ret = 0;
                 cnt = 0;
-                HAL_LOGE("iommu_workaround: List size %d,cur_fd 0x%x size 0x%x private_handle %p",
+                HAL_LOGD("iommu_workaround: List size %d,cur_fd 0x%x size 0x%x private_handle %p",
                     mIommuBufMapList.size(),
                     private_handle->share_fd, (uint32_t)private_handle->size, private_handle);
 
@@ -1391,7 +1391,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     i != mIommuBufMapList.end();i++) {
                     //private_handle_temp = (struct private_handle_t *)(*i->buffer);
                     if (private_handle->share_fd == i->fd && iommu_data.sg_table == i->sg_table) {
-                        HAL_LOGE("iommu_workaround: fd 0x%x sg %p has been mapped",
+                        HAL_LOGV("iommu_workaround: fd 0x%x sg %p has been mapped",
                             private_handle->share_fd, i->sg_table);
                         break;
                     } else {
@@ -1401,7 +1401,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 HAL_LOGV("iommu_workaround:cnt %d list_size %d", cnt,
                     mIommuBufMapList.size());
                 if (cnt == mIommuBufMapList.size()) {
-                    HAL_LOGE("iommu_workaround: map new fd 0x%x size 0x%x sg %p",
+                    HAL_LOGD("iommu_workaround: map new fd 0x%x size 0x%x sg %p",
                         private_handle->share_fd, (uint32_t)private_handle->size,
                         iommu_data.sg_table);
                     camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF, &iommu_data, NULL);

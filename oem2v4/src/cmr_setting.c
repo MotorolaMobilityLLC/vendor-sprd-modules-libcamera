@@ -3269,7 +3269,7 @@ setting_set_highflash_ae_measure(struct setting_component *cpt,
 
 cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
     if (cmd < SETTING_TYPE_MAX) {
-        CMR_LOGD(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
+        CMR_LOGV(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
         setting_list[cmd] = (setting_ioctl_fun_ptr)fun_ptr;
     } else {
         CMR_LOGD(" out of cmd %lu", cmd);
