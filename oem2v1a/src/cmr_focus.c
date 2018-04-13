@@ -25,7 +25,6 @@
 #define CMR_EVT_AF_INIT (CMR_EVT_OEM_BASE + 12)
 #define CMR_EVT_CAF_MOVE_START (CMR_EVT_OEM_BASE + 13)
 #define CMR_EVT_CAF_MOVE_STOP (CMR_EVT_OEM_BASE + 14)
-#define CMR_EVT_AF_STOP (CMR_EVT_OEM_BASE + 15)
 
 #define CMR_AF_MSG_QUEUE_SIZE (5)
 #define ISP_PROCESS_SEC_TIMEOUT (2)
@@ -360,15 +359,7 @@ cmr_int cmr_focus_stop(cmr_handle af_handle, cmr_u32 camera_id,
 
     af_try_stop(af_handle, camera_id);
 
-    message.msg_type = CMR_EVT_AF_STOP;
-    message.sub_msg_type = is_need_abort_msg;
-    message.sync_flag = CMR_MSG_SYNC_NONE;
-    message.data = (void *)((unsigned long)camera_id);
-
-    ret = cmr_thread_msg_send(af_cxt->thread_handle, &message);
-    if (ret) {
-        CMR_LOGE("Faile to send one msg to af thread");
-    }
+    ret = af_stop(af_handle, camera_id, is_need_abort_msg);
 
     CMR_LOGD("ret= %ld X", ret);
 
@@ -528,16 +519,6 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
             af_cxt->evt_cb(AF_CB_FOCUS_MOVE, (cmr_uint)message->data,
                            af_cxt->oem_handle);
         }
-        break;
-
-    case CMR_EVT_AF_STOP:
-        CMR_LOGD("AF stop");
-        camera_id = (cmr_u32)((unsigned long)message->data);
-        is_need_abort_msg = message->sub_msg_type;
-        CMR_LOGI("camera_id = %d is_need_abort_msg = %d", camera_id,
-                 is_need_abort_msg);
-        af_stop(af_handle, camera_id, is_need_abort_msg);
-        CMR_PRINT_TIME;
         break;
 
     case CMR_EVT_AF_EXIT:
