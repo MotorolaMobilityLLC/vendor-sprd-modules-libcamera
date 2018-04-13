@@ -5030,7 +5030,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
     // we will remove these code
     if (is_raw_capture == 0) {
-        if (dst->size.height == 1952 && dst->size.width == 2592) {
+        if (dst->size.height == 3008 && dst->size.width == 4000) {
+            enc_dst.size.height = 3000;
+        } else if (dst->size.height == 1952 && dst->size.width == 2592) {
             enc_dst.size.height = 1944;
         } else if (dst->size.height == 1840 && dst->size.width == 3264) {
             enc_dst.size.height = 1836;

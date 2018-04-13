@@ -297,10 +297,14 @@ typedef struct cam_stream_info {
 const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #if defined(CONFIG_CAMERA_SUPPORT_21M)
     {5312, 3984},
+#elif defined(CONFIG_CAMERA_SUPPORT_20M)
+    {5120, 3840},
 #elif defined(CONFIG_CAMERA_SUPPORT_16M)
     {4608, 3456},
 #elif defined(CONFIG_CAMERA_SUPPORT_13M)
     {4160, 3120},
+#elif defined(CONFIG_CAMERA_SUPPORT_12M)
+    {4000, 3000},
 #elif defined(CONFIG_CAMERA_SUPPORT_8M)
     {3264, 2448},
 #elif defined(CONFIG_CAMERA_SUPPORT_5M)
@@ -317,10 +321,14 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)
     {5312, 3984},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_20M)
+    {5120, 3840},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_16M)
     {4608, 3456},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_13M)
     {4160, 3120},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_12M)
+    {4000, 3000},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_8M)
     {3264, 2448},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_5M)
@@ -337,10 +345,14 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 
 #if defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_21M)
     {5312, 3984},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_20M)
+    {5120, 3840},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_16M)
     {4608, 3456},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_13M)
     {4160, 3120},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_12M)
+    {4000, 3000},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_8M)
     {3264, 2448},
 #elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_5M)
@@ -357,10 +369,14 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)
     {5312, 3984},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_20M)
+    {5120, 3840},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_16M)
     {4608, 3456},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_13M)
     {4160, 3120},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_12M)
+    {4000, 3000},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_8M)
     {3264, 2448},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_5M)
@@ -378,8 +394,10 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 
 const cam_stream_info_t stream_info[] = {
     {{5312, 3984}, 41666666L, 41666666L},
+    {{5120, 3840}, 41666666L, 41666666L},
     {{4608, 3456}, 33331760L, 33331760L},
     {{4160, 3120}, 33331760L, 33331760L},
+    {{4000, 3000}, 33331760L, 33331760L},
     //{{3840, 2160}, 33331760L, 33331760L},
     {{3264, 2448}, 33331760L, 33331760L},
     {{3264, 1836}, 33331760L, 33331760L},

@@ -1507,7 +1507,10 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue, we will remove these code
         if (is_raw_capture == 0) {
-            if (exif_unit->picture_size.height == 1952 &&
+            if (exif_unit->picture_size.height == 3008 &&
+                exif_unit->picture_size.width == 4000) {
+                exif_unit->picture_size.height = 3000;
+            } else if (exif_unit->picture_size.height == 1952 &&
                 exif_unit->picture_size.width == 2592) {
                 exif_unit->picture_size.height = 1944;
             } else if (exif_unit->picture_size.height == 1840 &&
@@ -1518,7 +1521,10 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                 exif_unit->picture_size.height = 360;
             }
 
-            if (exif_unit->actual_picture_size.height == 1952 &&
+            if (exif_unit->actual_picture_size.height == 3008 &&
+                exif_unit->actual_picture_size.width == 4000) {
+                exif_unit->actual_picture_size.height = 3000;
+            } else if (exif_unit->actual_picture_size.height == 1952 &&
                 exif_unit->actual_picture_size.width == 2592) {
                 exif_unit->actual_picture_size.height = 1944;
             } else if (exif_unit->actual_picture_size.height == 1840 &&
