@@ -25,7 +25,6 @@
 #include <cutils/properties.h>
 
 #define SAVE_SWISP_PROP "realbokeh.debugdump"
-#define SAVE_PATH "/data/misc/cameraserver"
 #define CLOSE_REALBOKEH "close.realbokeh"
 #define BOKEHCALCULATE_DISANCE_OK 0
 #define BOKEHCALCULATE_DISANCE_TOOFAR 1
@@ -359,7 +358,7 @@ static int save_onlinecalbinfo(char *filename , uint8_t *input , uint32_t size)
         struct tm *p;
         time(&timep);
         p = localtime(&timep);
-	sprintf(file_name , "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s" ,(1900+p->tm_year),
+	sprintf(file_name , CAMERA_DATA_FILE"/%04d%02d%02d%02d%02d%02d_%s" ,(1900+p->tm_year),
                         (1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec , filename);
 	fp = fopen(file_name , "wb");
 	if(fp)
@@ -379,7 +378,7 @@ static int savefile(char* filename , uint8_t* ptr , int width , int height, int 
 	struct tm *p;
 	time(&timep);
 	p = localtime(&timep);
-	sprintf(file_name , "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s" ,(1900+p->tm_year),
+	sprintf(file_name , CAMERA_DATA_FILE"/%04d%02d%02d%02d%02d%02d_%s" ,(1900+p->tm_year),
 			(1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec , filename);
 	//if(inum < 5)
 	FILE* fp = fopen(file_name , "wb");
@@ -442,7 +441,7 @@ static void* misc_process(void* handle)
 	int ret;
 	char filename[256];
 	char value[128];
-	sprintf(filename , "/data/misc/cameraserver/%dx%d_afterswisp.yuv" , 2104,1560);
+	sprintf(filename , CAMERA_DATA_FILE"/%dx%d_afterswisp.yuv" , 2104,1560);
 	sw_isp_handle_t* phandle = (sw_isp_handle_t*)handle;
 	void* aem_addr;
 	int32_t aem_size;
