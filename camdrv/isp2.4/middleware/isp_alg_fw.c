@@ -946,7 +946,7 @@ static cmr_int ispalg_dump_block_param(cmr_handle isp_alg_handle,
 		ISP_LOGI("save lsc");
 		memset(name, 0, sizeof(name));
 		snprintf(name, sizeof(name),
-			"/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_lnc_table.bin",
+			CAMERA_DATA_FILE"/%04d%02d%02d%02d%02d%02d_lnc_table.bin",
 			(1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
 			p->tm_min, p->tm_sec);
 		fp = fopen(name, "wb");
@@ -964,7 +964,7 @@ static cmr_int ispalg_dump_block_param(cmr_handle isp_alg_handle,
 		ISP_LOGI("save awb");
 		memset(name, 0, sizeof(name));
 		snprintf(name, sizeof(name),
-			"/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_awbc_scale.txt",
+			CAMERA_DATA_FILE"/%04d%02d%02d%02d%02d%02d_awbc_scale.txt",
 			(1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
 			p->tm_min, p->tm_sec);
 		fp = fopen(name, "wt");
@@ -1049,12 +1049,10 @@ static cmr_int ispalg_handle_sw_isp_aem(cmr_handle isp_alg_handle, cmr_int type)
 	if (type == ISP_PM_CMD_GET_ISP_ALL_SETTING)
 	{
 		dump_flag = 1;
-		dump_fp = fopen("/data/misc/cameraserver/sw_isp_para.bin", "w");
-	}
-	else
-	{
+		dump_fp = fopen(CAMERA_DATA_FILE"/sw_isp_para.bin", "w");
+	} else {
 		dump_flag = 2;
-		dump_fp = fopen("/data/misc/cameraserver/sw_isp_para.bin", "a");
+		dump_fp = fopen(CAMERA_DATA_FILE"/sw_isp_para.bin", "a");
 	}
 
 	isp_block_param = global_isp_block_param;
@@ -4024,7 +4022,7 @@ static int read_otp_from_file(struct sensor_otp_data_info *otp_info)
 	unsigned int otp_num = 0;
 	int otp_value = 0;
 
-	fp = fopen("data/misc/cameraserver/otp.txt", "r");
+	fp = fopen(CAMERA_DATA_FILE"/otp.txt", "r");
 	if (fp == NULL) {
 		ISP_LOGE("file open fail");
 		ret = -ISP_PARAM_ERROR;

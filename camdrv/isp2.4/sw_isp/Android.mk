@@ -69,6 +69,8 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 LOCAL_SRC_FILES += $(call all-c-files-under, .)
 
+include $(LOCAL_PATH)/../../../SprdCtrl.mk
+
 LOCAL_MODULE := libcamrt
 
 LOCAL_MODULE_TAGS := optional
