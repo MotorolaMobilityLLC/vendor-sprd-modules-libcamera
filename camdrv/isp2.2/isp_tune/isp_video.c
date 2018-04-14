@@ -606,10 +606,10 @@ static cmr_s32 handle_img_data_sft(cmr_u32 format, cmr_u32 width, cmr_u32 height
 	FILE *fp = NULL;
 	switch (capture_format) {
 	case 8:		// the mipi
-		sprintf(name, "/data/misc/cameraserver/the_pic_%u.mipi_raw", g_af_pos);
+		sprintf(name, CAMERA_DATA_FILE"/the_pic_%u.mipi_raw", g_af_pos);
 		break;
 	case 16:		//jpeg
-		sprintf(name, "/data/misc/cameraserver/the_pic_%u.jpg", g_af_pos);
+		sprintf(name, CAMERA_DATA_FILE"/the_pic_%u.jpg", g_af_pos);
 		break;
 	}
 	fp = fopen(name, "wb");
@@ -1874,7 +1874,7 @@ static cmr_s32 save_param_to_file(cmr_s32 sn, cmr_u32 size, cmr_u8 * addr)
 	ISP_LOGV("size %d", size);
 
 	memset(file_name, 0, sizeof(file_name));
-	sprintf(file_name, "/data/misc/cameraserver/read_lnc_param_%d.txt", sn);
+	sprintf(file_name, CAMERA_DATA_FILE"/read_lnc_param_%d.txt", sn);
 
 	ISP_LOGV("file name %s", file_name);
 	fp = fopen(file_name, "wb");
@@ -3617,7 +3617,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					scene_param.height = img_height;
 
 					bzero(raw_filename, sizeof(raw_filename));
-					sprintf(raw_filename + 1, "/data/misc/cameraserver/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
+					sprintf(raw_filename + 1, CAMERA_DATA_FILE"/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
 						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
 						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
