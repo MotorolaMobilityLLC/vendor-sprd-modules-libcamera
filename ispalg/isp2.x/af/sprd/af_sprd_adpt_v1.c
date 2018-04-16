@@ -1753,6 +1753,25 @@ static void af_stop_search(af_ctrl_t * af)
 	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	//modifiy for force stop to SAF/Flow control
 	af->af_ops.calc(af->af_alg_cxt);
+
+	switch(af->state){
+	case STATE_CAF:
+	case STATE_RECORD_CAF:
+		if (AFV1_TRUE == af->cb_trigger) {
+			notify_stop(af, 0, AF_FOCUS_CAF);
+			af->cb_trigger = AFV1_FALSE;
+		}
+		break;
+	case STATE_FAF:
+		notify_stop(af, 0, AF_FOCUS_FAF);
+		break;
+	case STATE_NORMAL_AF:
+		notify_stop(af, 0, AF_FOCUS_SAF);
+		break;
+	default:
+		break;
+	}
+
 	af->focus_state = AF_IDLE;
 }
 
@@ -2155,6 +2174,11 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	ISP_LOGI("cancel af state = %s", STATE_STRING(af->state));
+
+	if (AF_SEARCHING == af->focus_state) {
+		ISP_LOGW("serious problem, current af is not done, af state %s", STATE_STRING(af->state));
+		af_stop_search(af);	//wait saf/caf done, caf : for camera enter, switch to manual; saf : normal non zsl
+	}
 
 	return rtn;
 }
