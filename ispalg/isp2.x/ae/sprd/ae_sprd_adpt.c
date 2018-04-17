@@ -582,7 +582,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 				ae_info[1].gain = (cmr_u32) (ae_info[0].gain * iso_ratio + 0.5f);
 			}
 
-			ae_info[1].exp.dummy = write_param->dummy;
+			ae_info[1].exp.dummy = (ae_info[0].exp.exposure + ae_info[0].exp.dummy)* info_master.line_time / info_slave.line_time - ae_info[1].exp.exposure;
 			ae_info[1].exp.size_index = 2;
 			ISP_LOGV("(sharkl3)normal mode:ae_info[1] exposure %d dummy %d size_index %d gain %d", ae_info[1].exp.exposure, ae_info[1].exp.dummy, ae_info[1].exp.size_index, ae_info[1].gain);
 
