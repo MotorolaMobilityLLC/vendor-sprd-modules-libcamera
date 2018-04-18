@@ -1591,9 +1591,11 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
     if (mBlur->mReqState == WAIT_FIRST_YUV_STATE) {
         m_pJpegBuffer = &mBlur->mLocalCapBuffer[2].native_handle;
         m_pJpegSize = &mBlur->mNearJpegSize;
+        mBlur->m_pNearJpegBuffer = m_pJpegBuffer;
     } else if (mBlur->mReqState == WAIT_SECOND_YUV_STATE) {
         m_pJpegBuffer = &mBlur->mLocalCapBuffer[3].native_handle;
         m_pJpegSize = &mBlur->mFarJpegSize;
+        mBlur->m_pFarJpegBuffer = m_pJpegBuffer;
     }
 
     if (mBlur->map(m_pJpegBuffer, &m_pJpegBufferAddr) == NO_ERROR) {
@@ -3084,6 +3086,8 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
     } else {
         use_size = para_size + near_jpeg_size + jpeg_size;
     }
+    /* memset space after jpeg*/
+    memset(buffer + jpeg_size, 0, use_size - jpeg_size);
     if (mVersion == 3) {
         uint32_t orientation = mCaptureWeightParams.rotate_angle;
         uint32_t width = mBlur->mCaptureWidth;

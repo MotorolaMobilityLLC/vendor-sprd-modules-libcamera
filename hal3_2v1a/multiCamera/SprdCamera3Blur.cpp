@@ -2813,6 +2813,8 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         use_size = para_size + yuv_size1 + jpeg_size;
     }
 #endif
+    /* memset space after jpeg*/
+    memset(buffer_base + jpeg_size, 0, use_size - jpeg_size);
     if (mVersion == 3) {
         uint32_t orientation = mCaptureWeightParams.rotate_angle;
         uint32_t width = mBlur->mCaptureWidth;
