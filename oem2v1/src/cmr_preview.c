@@ -1753,7 +1753,7 @@ cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
         }
         *threednr_handle = prev_cxt->cap_3dnr_handle_array[i];
 
-        if(i >= CMR_CAPTURE_MEM_SUM) {
+        if (i >= CMR_CAPTURE_MEM_SUM) {
             CMR_LOGE("out of bound 3dnr buffer");
             ret = CMR_CAMERA_FAIL;
             goto exit;
@@ -3564,6 +3564,7 @@ cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
                                 enum recovery_mode mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle->ops.sensor_open) {
         CMR_LOGE("ops is null");
@@ -3579,7 +3580,11 @@ cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGE("is idle now, do nothing");
         return ret;
     }
-
+    if (IDLE == cxt->snp_cxt.status && prev_cxt->prev_param.snapshot_eb &&
+        !prev_cxt->prev_param.preview_eb) {
+        CMR_LOGE("is idle now, do nothing");
+        return ret;
+    }
     switch (mode) {
     case RECOVERY_HEAVY:
     case RECOVERY_MIDDLE:
