@@ -109,10 +109,17 @@ cmr_int isp_file_ae_save_stats(cmr_handle *handle,
 		sum_b += b_info[i];
 	}
 
-	if (cxt->ae_debug_info.grap_frame_cnt < 5)
+	if (cxt->ae_debug_info.grap_frame_cnt < 5) {
+#if __WORDSIZE == 64
+		fprintf(cxt->ae_debug_info.stats_fp,
+			"R: 0x%016lx G: 0x%016lx B: 0x%016lx\n",
+			sum_r, sum_g, sum_b);
+#else
 		fprintf(cxt->ae_debug_info.stats_fp,
 			"R: 0x%016llx G: 0x%016llx B: 0x%016llx\n",
 			sum_r, sum_g, sum_b);
+#endif
+	}
 
 	cxt->ae_debug_info.grap_frame_cnt++;
 exit:
