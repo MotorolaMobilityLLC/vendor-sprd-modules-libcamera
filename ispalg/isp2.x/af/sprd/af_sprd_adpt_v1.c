@@ -2153,6 +2153,7 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	}
 
 	if (STATE_FULLSCAN == af->state) {
+		af->cb_trigger = AFV1_TRUE;
 		af->algo_mode = CAF;
 		memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 		aft_in.AFT_mode = af->algo_mode;
