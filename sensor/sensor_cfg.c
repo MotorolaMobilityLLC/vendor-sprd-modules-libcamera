@@ -55,6 +55,9 @@ extern SENSOR_INFO_T g_gc030at_mipi_raw_info;
 #ifdef GC2385
 extern SENSOR_INFO_T g_gc2385_mipi_raw_info;
 #endif
+#ifdef GC2145
+extern SENSOR_INFO_T g_gc2145_mipi_raw_info;
+#endif
 
 //hynix area
 #ifdef HI556
@@ -386,6 +389,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #endif
 #ifdef GC5024
     {MODULE_SUNNY, "gc5024", &g_gc5024_mipi_raw_info, {NULL, 0}, &gc5024_common_drv_entry},
+#endif
+#ifdef GC2145
+    {MODULE_SUNNY, "gc2145", &g_gc2145_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
 // ov area
