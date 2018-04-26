@@ -33,6 +33,7 @@
 #include <cutils/properties.h>
 #include <sprd_ion.h>
 #include <media/hardware/MetadataBufferType.h>
+#include <math.h>
 #include "cmr_common.h"
 #ifdef SPRD_PERFORMANCE
 #include <androidfw/SprdIlog.h>
@@ -4686,6 +4687,20 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
             goto exit;
         }
         dst_vaddr = (cmr_uint)mReDisplayHeap->data;
+
+	// workaround patch to skip rediplay if aspect ratio of prev and capture do not match
+	// when sw trim is fixed, we will remove this patch
+	cmr_int match_ratio = 0;
+	float input_ratio = (float)frame->width/frame->height;
+	float output_ratio = (float)dst_width/dst_height;
+	if(fabsf(input_ratio - output_ratio) < 0.015){
+		match_ratio = 1;
+	}
+	if (!match_ratio) {
+		HAL_LOGE("scale erro: cfg_params ratio does not match,skip redisplay");
+		goto exit;
+	}
+	//end workaround
 
         ret = mHalOem->ops->camera_get_redisplay_data(
             mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,

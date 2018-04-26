@@ -18,7 +18,6 @@
 
 #include <cutils/trace.h>
 #include <fcntl.h>
-#include <math.h>
 #include <sys/ioctl.h>
 #include "cmr_type.h"
 #include "cmr_msg.h"
@@ -164,17 +163,6 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
         CMR_LOGE("scale erro: frame_params is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    //workaround prev and capture ratio do not match ,when sw zoom fix ,we will remove this code
-    float input_ratio = (float)frame_params->input_size.w/frame_params->input_size.h;
-    float output_ratio = (float)frame_params->output_size.w/frame_params->output_size.h;
-    if(fabsf(input_ratio - output_ratio) < 0.015){
-            match_ratio = 1;
-    }
-    if(!match_ratio){
-        CMR_LOGE("scale erro: cfg_params ratio does not match,skip redisplay");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
-    //end workaround
 
 //    if (frame_params->input_size.w >= frame_params->output_size.w &&
 //        frame_params->input_size.h >= frame_params->output_size.h) {
