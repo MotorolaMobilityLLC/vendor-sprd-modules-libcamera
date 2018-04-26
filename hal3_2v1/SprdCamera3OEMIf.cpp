@@ -4821,6 +4821,19 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
             goto exit;
         }
         dst_vaddr = (cmr_uint)mReDisplayHeap->data;
+
+        cmr_int match_ratio = 0;
+        float input_ratio = (float)frame->width / frame->height;
+        float output_ratio = (float)dst_width / dst_height;
+        if (fabsf(input_ratio - output_ratio) < 0.015) {
+            match_ratio = 1;
+        }
+        if (!match_ratio) {
+            HAL_LOGE(
+                "scale erro: cfg_params ratio does not match,skip redisplay");
+            goto exit;
+        }
+
         ret = mHalOem->ops->camera_get_redisplay_data(
             mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
             frame->fd, frame->y_phy_addr, frame->uv_phy_addr, frame->y_vir_addr,

@@ -117,7 +117,7 @@ else
 LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
 endif
 
-ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0 P 9),)
         LOCAL_CFLAGS += -DCONFIG_LIBYUV
         LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc
         LOCAL_SRC_FILES += ../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c
