@@ -22,6 +22,7 @@
 
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include <utils/Trace.h>
+#include <errno.h>
 
 #include "Metadata.h"
 

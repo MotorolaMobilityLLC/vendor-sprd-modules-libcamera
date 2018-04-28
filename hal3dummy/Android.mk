@@ -35,6 +35,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libcamera_metadata \
 	libcutils \
 	liblog \
+	libhardware \
 	libsync \
 	libutils \
 
