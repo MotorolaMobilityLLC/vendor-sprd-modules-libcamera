@@ -1015,7 +1015,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
-                                    &jpeg_in_ptr->mean);
+                                    &jpeg_in_ptr->mean, NULL);
     if (ret) {
         CMR_LOGE("failed to start enc %ld", ret);
         goto exit;
@@ -1041,6 +1041,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     struct snp_jpeg_param *jpeg_in_ptr;
     cmr_u32 index = snp_cxt->index;
     struct jpeg_param quality_param;
+    struct jpeg_enc_cb_param out_enc_cb_param;
 
     if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
         CMR_LOGD("post proc has been cancel");
@@ -1074,7 +1075,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
 
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
-                                    &jpeg_in_ptr->mean);
+                                    &jpeg_in_ptr->mean, &out_enc_cb_param);
     if (ret) {
         CMR_LOGE("failed to start thumb enc %ld", ret);
         goto exit;
@@ -1082,7 +1083,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     camera_take_snapshot_step(CMR_STEP_THUM_ENC_E);
 
     snp_cxt->thumb_stream_size =
-        (cmr_u32)((unsigned long)jpeg_in_ptr->dst.reserved);
+        (cmr_u32)(out_enc_cb_param.stream_size);
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 7 || atoi(value) & (1 << 7)) {

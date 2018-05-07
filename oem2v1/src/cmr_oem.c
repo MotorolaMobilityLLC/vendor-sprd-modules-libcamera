@@ -181,7 +181,7 @@ static cmr_int camera_preview_post_proc(cmr_handle oem_handle,
 static cmr_int camera_start_encode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
-                                   struct cmr_op_mean *mean);
+                                   struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
@@ -4929,6 +4929,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     struct img_frm pic_enc = param->pic_enc;
     struct img_frm dst = param->last_dst;
     struct cmr_op_mean mean;
+    struct jpeg_enc_cb_param enc_cb_param;
     struct jpeg_context *jpeg_cxt = NULL;
     int ret = CMR_CAMERA_SUCCESS;
     int need_exif_flag = (dst.addr_vir.addr_y == 0) ? 0 : 1;
@@ -4954,7 +4955,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     src.data_end.uv_endian = 2;
     // 2.call jpeg interface
     ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &src, &pic_enc,
-                          (struct jpg_op_mean *)&mean);
+                          (struct jpg_op_mean *)&mean, &enc_cb_param);
 
     if (ret) {
         cxt->jpeg_cxt.enc_caller_handle = (cmr_handle)0;
@@ -4962,7 +4963,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
         goto exit;
     }
 
-    param->stream_real_size = pic_enc.buf_size;
+    param->stream_real_size = enc_cb_param.stream_size;
     CMR_LOGD("need_exif_flag:%d, param->stream_real_size:%u,is_sync=%d",
              need_exif_flag, param->stream_real_size, mean.is_sync);
     if (need_exif_flag) {
@@ -4984,7 +4985,7 @@ exit:
 
 cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
-                            struct cmr_op_mean *mean) {
+                            struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -5211,7 +5212,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 #endif
         }
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
-                              (struct jpg_op_mean *)&enc_mean);
+                              (struct jpg_op_mean *)&enc_mean, enc_cb_param);
         if (0 != mean->is_sync) {
             dst->buf_size = enc_dst.buf_size;
         }
@@ -5222,7 +5223,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         enc_dst.buf_size = (enc_dst.size.height * enc_dst.size.width) * 3;
         enc_dst.buf_size = enc_dst.buf_size / 2;
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
-                              (struct jpg_op_mean *)&enc_mean);
+                              (struct jpg_op_mean *)&enc_mean, enc_cb_param);
         if (0 != mean->is_sync) {
             dst->reserved = enc_dst.reserved;
             dst->buf_size = enc_dst.buf_size;

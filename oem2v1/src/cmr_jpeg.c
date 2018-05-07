@@ -142,7 +142,7 @@ pass:
 }
 
 cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
-                        struct img_frm *dst, struct jpg_op_mean *mean) {
+                        struct img_frm *dst, struct jpg_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct jpeg_codec_caller_handle *codec_handle = NULL;
     struct jpeg_lib_cxt *jcxt = NULL;
@@ -154,7 +154,7 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
 
     ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, (struct yuvbuf_frm *)src,
-                                (struct yuvbuf_frm *)dst, mean);
+                                (struct yuvbuf_frm *)dst, mean, enc_cb_param);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;

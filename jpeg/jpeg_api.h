@@ -158,7 +158,7 @@ jpg_int sprd_jpeg_init(JPEG_CODEC_CALLER_T *oem_handle,
                        jpg_evt_cb_ptr jpg_evt_cb);
 jpg_int sprd_jpeg_deinit(JPEG_CODEC_CALLER_T *oem_handle);
 jpg_int sprd_jpg_encode(JPEG_CODEC_CALLER_T *oem_handle, struct yuvbuf_frm *src,
-                        struct yuvbuf_frm *dst, struct jpg_op_mean *mean);
+                        struct yuvbuf_frm *dst, struct jpg_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
 jpg_int sprd_jpg_decode(JPEG_CODEC_CALLER_T *oem_handle, struct yuvbuf_frm *src,
                         struct yuvbuf_frm *dst, struct jpg_op_mean *mean);
 jpg_int sprd_stop_codec(JPEG_CODEC_CALLER_T *oem_handle);

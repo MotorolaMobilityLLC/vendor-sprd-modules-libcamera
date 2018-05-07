@@ -29,7 +29,7 @@ struct jpeg_lib_ops {
     jpg_int (*jpeg_deinit)(JPEG_CODEC_CALLER_T *oem_handle);
     jpg_int (*jpeg_encode)(JPEG_CODEC_CALLER_T *oem_handle,
                            struct yuvbuf_frm *src, struct yuvbuf_frm *dst,
-                           struct jpg_op_mean *mean);
+                           struct jpg_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
     jpg_int (*jpeg_decode)(JPEG_CODEC_CALLER_T *oem_handle,
                            struct yuvbuf_frm *src, struct yuvbuf_frm *dst,
                            struct jpg_op_mean *mean);
@@ -141,7 +141,7 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
                       jpg_evt_cb_ptr adp_event_cb);
 cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle);
 cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
-                        struct img_frm *dst, struct jpg_op_mean *mean);
+                        struct img_frm *dst, struct jpg_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
 cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
                         struct img_frm *dst, struct jpg_op_mean *mean);
 cmr_int cmr_jpeg_enc_add_eixf(cmr_handle jpeg_handle,
