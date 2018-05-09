@@ -18,6 +18,7 @@
 
 #define LOG_TAG "camera_fb"
 
+#include <time.h>
 #include <cutils/properties.h>
 #include <stdlib.h>
 #include <utils/Log.h>

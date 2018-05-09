@@ -31,6 +31,10 @@ LOCAL_C_INCLUDES += \
     $(TOP)/frameworks/native/libs/sensor/include
 endif
 
+LOCAL_HEADER_LIBRARIES += media_plugin_headers
+LOCAL_HEADER_LIBRARIES += libutils_headers
+
+LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
@@ -120,9 +124,9 @@ LOCAL_SRC_FILES+= \
 	common/src/cmr_msg.c \
 	tool/mtrace/mtrace.c
 
-LOCAL_SRC_FILES += \
-	tool/auto_test/src/SprdCamera_autest_Interface.cpp \
-	test.cpp
+#LOCAL_SRC_FILES += \
+#	tool/auto_test/src/SprdCamera_autest_Interface.cpp \
+#	test.cpp
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 	LOCAL_C_INCLUDES += \

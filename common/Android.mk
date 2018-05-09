@@ -14,7 +14,10 @@ LOCAL_MODULE := libcamcommon
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES := libcutils liblog
+LOCAL_HEADER_LIBRARIES += liblog_headers
+LOCAL_HEADER_LIBRARIES += libutils_headers
+
+LOCAL_SHARED_LIBRARIES := liblog libcutils
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

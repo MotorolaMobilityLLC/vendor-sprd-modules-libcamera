@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
+#include <sys/uio.h>
 //#include <cutils/logger.h>
 //#include <cutils/logd.h>
 #include <cutils/log.h>

@@ -136,6 +136,8 @@ LOCAL_MODULE := libcamsensor
 
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_HEADER_LIBRARIES += libutils_headers
+
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl
 
 LOCAL_SHARED_LIBRARIES += liblog

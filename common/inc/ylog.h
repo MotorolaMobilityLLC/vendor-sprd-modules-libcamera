@@ -37,9 +37,10 @@
 #include <time.h>
 #include <unistd.h>
 #ifdef ANDROID_VERSION_O_BRINGUP
-#include <log/log.h>
+#include <utils/Log.h>
 #else
-#include <log/logd.h>
+#include <utils/Log.h>
+//#include <log/logd.h>
 #endif
 #include <log/uio.h>
 

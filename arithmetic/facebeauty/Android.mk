@@ -39,7 +39,11 @@ endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc \
+
+LOCAL_HEADER_LIBRARIES += libutils_headers
+LOCAL_HEADER_LIBRARIES += liblog_headers
+
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
 
 LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
 
