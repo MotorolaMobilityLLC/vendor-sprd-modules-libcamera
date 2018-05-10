@@ -44,10 +44,9 @@
 struct sensor_drv_context s_local_sensor_cxt[6];
 
 static const int sensor_is_support[] = {
-    BACK_CAMERA_SENSOR_SUPPORT, FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
     BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
-    BACK3_CAMERA_SENSOR_SUPPORT,
-    FRONT3_CAMERA_SENSOR_SUPPORT,
+    BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
 };
 
 /**---------------------------------------------------------------------------*
@@ -1360,21 +1359,22 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
              sensor_cxt->sensor_info_ptr->image_format) &&
             module) {
             cmr_u8 vendor_id = 0;
-            if (module->otp_drv_info) {
+            if (module->otp_drv_info.otp_drv_entry) {
                 /*if property debug.dualcamera.write.otp is false do nothing*/
                 sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
                 sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
                 sensor_set_spc_data(sensor_cxt);
 #if 1 // def CONFIG_ISP_TUNING_PARAM_UPDATE
                 sensor_otp_ops_t *otp_ops = PNULL;
-                otp_ops = &module->otp_drv_info->otp_ops;
+                otp_ops = &module->otp_drv_info.otp_drv_entry->otp_ops;
                 otp_ops->sensor_otp_ioctl(sensor_cxt->otp_drv_handle,
                                           CMD_SNS_OTP_GET_VENDOR_ID,
                                           (void *)&vendor_id);
 #endif
             } else {
                 SENSOR_LOGI("otp_drv_entry not configured:mod:%p,otp_drv:%p",
-                            module, module ? module->otp_drv_info : NULL);
+                            module,
+                            module ? module->otp_drv_info.otp_drv_entry : NULL);
             }
             sensor_set_raw_infor(sensor_cxt, vendor_id);
         }
@@ -2178,14 +2178,16 @@ cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
             SENSOR_LOGI("failed to get 4in1 info");
         }
     }
-    SENSOR_IMAGE_FORMAT sensor_format = sensor_cxt->sensor_info_ptr->image_format;
-    SENSOR_LOGI("is_4in1_supported %d, sensor_format = %d", sn_4in1_info.is_4in1_supported, sensor_format);
+    SENSOR_IMAGE_FORMAT sensor_format =
+        sensor_cxt->sensor_info_ptr->image_format;
+    SENSOR_LOGI("is_4in1_supported %d, sensor_format = %d",
+                sn_4in1_info.is_4in1_supported, sensor_format);
     if (sn_4in1_info.is_4in1_supported) {
-        return FOURINONESENSOR; //4in1 sensor
+        return FOURINONESENSOR; // 4in1 sensor
     } else if (sensor_format == SENSOR_IMAGE_FORMAT_YUV422) {
-        return YUVSENSOR; //yuv sensor
+        return YUVSENSOR; // yuv sensor
     }
-    return NORMALSENSOR; //normal sensor
+    return NORMALSENSOR; // normal sensor
 }
 
 cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt) {
@@ -2253,33 +2255,34 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-    if (module && module->otp_drv_info && sensor_cxt->otp_drv_handle) {
+    if (module && module->otp_drv_info.otp_drv_entry &&
+        sensor_cxt->otp_drv_handle) {
         switch (cmd) {
         case OTP_READ_RAW_DATA:
-            ret = module->otp_drv_info->otp_ops.sensor_otp_read(
+            ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_read(
                 sensor_cxt->otp_drv_handle, data);
             break;
         case OTP_READ_PARSE_DATA:
-            module->otp_drv_info->otp_ops.sensor_otp_read(
+            module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_read(
                 sensor_cxt->otp_drv_handle, NULL);
-            ret = module->otp_drv_info->otp_ops.sensor_otp_parse(
+            ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_parse(
                 sensor_cxt->otp_drv_handle, data);
             if (ret == CMR_CAMERA_SUCCESS) {
-                ret = module->otp_drv_info->otp_ops.sensor_otp_calibration(
-                    sensor_cxt->otp_drv_handle);
+                ret = module->otp_drv_info.otp_drv_entry->otp_ops
+                          .sensor_otp_calibration(sensor_cxt->otp_drv_handle);
             } else {
                 SENSOR_LOGE("otp prase failed");
                 return ret;
             }
             break;
         case OTP_WRITE_DATA:
-            ret = module->otp_drv_info->otp_ops.sensor_otp_write(
+            ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_write(
                 sensor_cxt->otp_drv_handle, data);
             if (ret != CMR_CAMERA_SUCCESS)
                 return ret;
             break;
         case OTP_IOCTL:
-            ret = module->otp_drv_info->otp_ops.sensor_otp_ioctl(
+            ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_ioctl(
                 sensor_cxt->otp_drv_handle, sub_cmd, data);
             if (ret != CMR_CAMERA_SUCCESS)
                 return ret;
@@ -2341,17 +2344,17 @@ static void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
                 NULL &&
             strlen((const char *)sensor_cxt->sensor_list_ptr[SENSOR_MAIN2]
                        ->sensor_version_info) > 1)
-            sprintf(sensor_info, "%s %s ", sensor_info,
-                    sensor_cxt->sensor_list_ptr[SENSOR_MAIN2]
-                        ->sensor_version_info);
+            sprintf(
+                sensor_info, "%s %s ", sensor_info,
+                sensor_cxt->sensor_list_ptr[SENSOR_MAIN2]->sensor_version_info);
         if (sensor_cxt->sensor_list_ptr[SENSOR_SUB2] != NULL &&
             sensor_cxt->sensor_list_ptr[SENSOR_SUB2]->sensor_version_info !=
                 NULL &&
             strlen((const char *)sensor_cxt->sensor_list_ptr[SENSOR_SUB2]
                        ->sensor_version_info) > 1)
-            sprintf(sensor_info, "%s %s ", sensor_info,
-                    sensor_cxt->sensor_list_ptr[SENSOR_SUB2]
-                        ->sensor_version_info);
+            sprintf(
+                sensor_info, "%s %s ", sensor_info,
+                sensor_cxt->sensor_list_ptr[SENSOR_SUB2]->sensor_version_info);
         SENSOR_LOGI("WRITE srid %s \n", sensor_info);
 
         fd = open(sensorInterface0, O_WRONLY | O_TRUNC);
@@ -2549,14 +2552,23 @@ static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_LOGI("in");
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
-    otp_drv_init_para_t input_para = {0, NULL, 0, 0};
+    otp_drv_init_para_t input_para = {0, NULL, 0, 0, 0, 0, 0, 0, 0};
 
-    if (module && (module->otp_drv_info) && (!sensor_cxt->otp_drv_handle)) {
+    if (module && (module->otp_drv_info.otp_drv_entry) &&
+        (!sensor_cxt->otp_drv_handle)) {
         input_para.hw_handle = sensor_cxt->hw_drv_handle;
         input_para.sensor_name = (char *)sensor_cxt->sensor_info_ptr->name;
         input_para.sensor_id = sensor_cxt->sensor_register_info.cur_id;
         input_para.sensor_ic_addr = sensor_cxt->i2c_addr;
-        ret = module->otp_drv_info->otp_ops.sensor_otp_create(
+        input_para.eeprom_i2c_addr = module->otp_drv_info.eeprom_i2c_addr;
+        input_para.eeprom_num = module->otp_drv_info.eeprom_num;
+        input_para.eeprom_size = module->otp_drv_info.eeprom_size;
+        input_para.sensor_max_width =
+            sensor_cxt->sensor_info_ptr->source_width_max;
+        input_para.sensor_max_height =
+            sensor_cxt->sensor_info_ptr->source_height_max;
+
+        ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_create(
             &input_para, &sensor_cxt->otp_drv_handle);
     } else {
         SENSOR_LOGI("otp_drv_entry is not configured in sensor_cfg.c");
@@ -2572,8 +2584,9 @@ static cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt) {
     SENSOR_LOGI("in");
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
-    if (module && (module->otp_drv_info) && sensor_cxt->otp_drv_handle) {
-        ret = module->otp_drv_info->otp_ops.sensor_otp_delete(
+    if (module && (module->otp_drv_info.otp_drv_entry) &&
+        sensor_cxt->otp_drv_handle) {
+        ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_delete(
             sensor_cxt->otp_drv_handle);
         sensor_cxt->otp_drv_handle = NULL;
     } else {
@@ -2985,8 +2998,9 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
 
     switch (cmd >> 8) {
     case CMD_SNS_OTP:
-        if (module && (module->otp_drv_info) && sensor_cxt->otp_drv_handle) {
-            otp_ops = &module->otp_drv_info->otp_ops;
+        if (module && (module->otp_drv_info.otp_drv_entry) &&
+            sensor_cxt->otp_drv_handle) {
+            otp_ops = &module->otp_drv_info.otp_drv_entry->otp_ops;
             if (otp_ops && otp_ops->sensor_otp_ioctl) {
                 ret = otp_ops->sensor_otp_ioctl(sensor_cxt->otp_drv_handle, cmd,
                                                 param);

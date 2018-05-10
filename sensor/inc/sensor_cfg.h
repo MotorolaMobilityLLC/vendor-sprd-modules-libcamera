@@ -16,8 +16,8 @@
 #ifndef _SENSOR_CFG_H_
 #define _SENSOR_CFG_H_
 
-#include "otp_info.h"
 #include "sns_af_drv.h"
+#include "otp_info.h"
 
 /*boardconfig.mk sensor name len*/
 #define MAX_SENSOR_NAME_LEN 128
@@ -33,7 +33,7 @@ typedef struct sensor_match_tab {
     char sn_name[36];
     SENSOR_INFO_T *sensor_info;
     struct sns_af_drv_cfg af_dev_info;
-    otp_drv_entry_t *otp_drv_info;
+    otp_drv_info_t otp_drv_info;
 } SENSOR_MATCH_T;
 
 SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id);

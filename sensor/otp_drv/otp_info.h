@@ -51,6 +51,12 @@ enum otp_version_t {
     OTP_1_0 = 10, /*otp 1.0*/
 };
 
+enum eeprom_num_t {
+    SINGLE_CAM_ONE_EEPROM = 0,
+    DUAL_CAM_ONE_EEPROM = 1,
+    DUAL_CAM_TWO_EEPROM = 2,
+};
+
 enum otp_main_cmd {
     OTP_READ_RAW_DATA,
     OTP_READ_PARSE_DATA,
@@ -347,6 +353,11 @@ typedef struct otp_drv_init_para {
     cmr_u32 sensor_id;
     cmr_u8 sensor_ic_addr;
     /*you can add your param here*/
+    cmr_u8 eeprom_i2c_addr;
+    enum eeprom_num_t eeprom_num;
+    cmr_u32 eeprom_size; /* unit: Byte */
+    cmr_u16 sensor_max_width;
+    cmr_u16 sensor_max_height;
 } otp_drv_init_para_t;
 
 /*
@@ -371,27 +382,15 @@ typedef struct {
 } otp_drv_entry_t;
 
 typedef struct {
-    cmr_u32 sensor_id;
-    char dev_name[32];
-    /*sensor ic i2c address*/
-    cmr_u8 sensor_ic_addr;
+    otp_drv_entry_t *otp_drv_entry;
+    cmr_u8 eeprom_i2c_addr;
+    enum eeprom_num_t eeprom_num;
+    cmr_u32 eeprom_size; /* unit: Byte */
+} otp_drv_info_t;
 
-    cmr_handle hw_handle;
-
-    /*raw otp data buffer*/
-    otp_params_t otp_raw_data;
-
-    /*format otp data*/
-    otp_format_data_t *otp_data;
-
-    /*format otp data length*/
-    uint32_t otp_data_len;
-    void *compat_convert_data;
-
-    cmr_uint otp_data_module_index;
-} otp_drv_cxt_t;
-
-/*for otp v1.0*/
+/*==================================================
+                 for otp v1.0 start
+====================================================*/
 struct module_id_info_t {
     cmr_u8 master_vendor_id;
     cmr_u8 master_lens_id;
@@ -418,8 +417,8 @@ struct master_start_addr_t {
     cmr_u16 master_af_addr;
     cmr_u16 master_awb_addr;
     cmr_u16 master_lsc_addr;
-    cmr_u16 master_sprd_3rd_pdaf_addr;
-    cmr_u16 master_sensor_vendor_pdaf_addr;
+    cmr_u16 master_pdaf1_addr;
+    cmr_u16 master_pdaf2_addr;
     cmr_u16 master_ae_addr;
     cmr_u16 master_dualcam_addr;
 };
@@ -435,8 +434,8 @@ struct master_size_t {
     cmr_u8 master_af_size;
     cmr_u8 master_awb_size;
     cmr_u16 master_lsc_size;
-    cmr_u16 master_sprd_3rd_pdaf_size;
-    cmr_u16 master_sensor_vendor_pdaf_size;
+    cmr_u16 master_pdaf1_size;
+    cmr_u16 master_pdaf2_size;
     cmr_u8 master_ae_size;
     cmr_u16 master_dualcam_size;
 };
@@ -451,7 +450,7 @@ struct slave_size_t {
 struct module_info_t {
     cmr_u32 otp_tag;
     cmr_u16 calib_version;
-    float otp_version;
+    enum otp_version_t otp_version;
     cmr_u32 otp_map_index;
     struct module_id_info_t module_id_info;
     struct sensor_setting_t sensor_setting;
@@ -459,8 +458,8 @@ struct module_info_t {
     struct slave_start_addr_t slave_start_addr;
     struct master_size_t master_size;
     struct slave_size_t slave_size;
-    cmr_u16 lsc_img_width;
-    cmr_u16 lsc_img_height;
+    cmr_u16 sensor_max_width;
+    cmr_u16 sensor_max_height;
     cmr_u8 lsc_grid;
     cmr_u32 resolution;
 };
@@ -472,7 +471,6 @@ struct af_data_t {
     cmr_u8 af_posture;
     cmr_u16 af_temperature_start;
     cmr_u16 af_temperature_end;
-    cmr_u8 af_checksum;
 };
 
 struct awb_data_t {
@@ -483,7 +481,6 @@ struct awb_data_t {
     cmr_u16 awb_golden_r;
     cmr_u16 awb_golden_g;
     cmr_u16 awb_golden_b;
-    cmr_u8 awb_checksum;
 };
 
 struct lsc_data_t {
@@ -499,7 +496,6 @@ struct lsc_data_t {
     cmr_u16 lsc_img_width;
     cmr_u16 lsc_img_height;
     cmr_u8 lsc_grid;
-    cmr_u8 lsc_checksum;
     cmr_u32 resolution;
     cmr_u32 lsc_channel_size;
     cmr_u32 lsc_width;
@@ -513,13 +509,41 @@ struct ae_data_t {
     cmr_u32 ae_gain_2x_exp;
     cmr_u32 ae_gain_4x_exp;
     cmr_u32 ae_gain_8x_exp;
-    cmr_u8 ae_checksum;
 };
 
 struct dualcam_data_t {
     cmr_u8 dualcam_version;
     cmr_u16 dualcam_vcm_position;
     cmr_u8 dualcam_location;
-    cmr_u8 dualcam_checksum;
 };
+/*==================================================
+                 for otp v1.0 end
+====================================================*/
+
+typedef struct {
+    cmr_u32 sensor_id;
+    char dev_name[32];
+    /*sensor ic i2c address*/
+    cmr_u8 sensor_ic_addr;
+
+    cmr_u8 eeprom_i2c_addr;
+    enum eeprom_num_t eeprom_num;
+    cmr_u32 eeprom_size; /* unit: Byte */
+
+    cmr_handle hw_handle;
+
+    /*raw otp data buffer*/
+    otp_params_t otp_raw_data;
+
+    /*format otp data*/
+    otp_format_data_t *otp_data;
+
+    /*format otp data length*/
+    uint32_t otp_data_len;
+    void *compat_convert_data;
+
+    cmr_uint otp_data_module_index;
+
+    struct module_info_t otp_module_info;
+} otp_drv_cxt_t;
 #endif

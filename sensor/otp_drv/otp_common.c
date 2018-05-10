@@ -369,7 +369,16 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
     otp_cxt->hw_handle = input_para->hw_handle;
     otp_cxt->sensor_id = input_para->sensor_id;
     otp_cxt->sensor_ic_addr = input_para->sensor_ic_addr;
-    OTP_LOGV("out");
+    otp_cxt->eeprom_i2c_addr = input_para->eeprom_i2c_addr;
+    otp_cxt->eeprom_num = input_para->eeprom_num;
+    otp_cxt->eeprom_size = input_para->eeprom_size;
+    otp_cxt->otp_module_info.sensor_max_width = input_para->sensor_max_width;
+    otp_cxt->otp_module_info.sensor_max_height = input_para->sensor_max_height;
+
+    OTP_LOGI("X:sensor_id:%d, sensor_name:%s, eeprom_i2c_address:0x%x, "
+             "eeprom_size:%d bytes",
+             otp_cxt->sensor_id, otp_cxt->dev_name, otp_cxt->eeprom_i2c_addr,
+             otp_cxt->eeprom_size);
     *sns_otp_drv_handle = otp_cxt;
 
     return ret;

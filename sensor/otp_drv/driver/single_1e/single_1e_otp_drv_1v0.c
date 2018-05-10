@@ -31,9 +31,8 @@ static cmr_int _single_otp_section_checksum(cmr_u8 *buffer, cmr_uint start_addr,
                  "sum%%256=%d",
                  checksum_addr, buffer[checksum_addr], sum, sum % 256);
     } else {
-        OTP_LOGD("X:passed:checksum_addr=0x%lx, checksum_value=%d, sum=%d, "
-                 "sum%%256=%d",
-                 checksum_addr, buffer[checksum_addr], sum, sum % 256);
+        OTP_LOGD("X:passed:checksum_addr=0x%lx, checksum_value=%d, sum=%d",
+                 checksum_addr, buffer[checksum_addr], sum);
     }
     return ret;
 }
@@ -54,11 +53,12 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
     OTP_LOGI("calibration version is 0x%04x", module_info->calib_version);
     if (buffer[0] == 0x53 && buffer[1] == 0x50 && buffer[2] == 0x52 &&
         buffer[3] == 0x44 && module_info->calib_version == 0x0100) {
-        module_info->otp_version = 1;
+        module_info->otp_version = OTP_1_0;
         OTP_LOGI("this is SPRD otp map, otp version is 1.0");
     } else {
         OTP_LOGE("this isn't otp 1.0, please check otp config");
-        module_info->otp_version = 0.4; // include v0.1, v0.2, v0.3, v0.4, v0.5
+        /* include v0.1, v0.2, v0.3, v0.4, v0.5 */
+        module_info->otp_version = OTP_0_4;
 
         if ((module_info->calib_version == 0x0001) ||
             ((module_info->calib_version == 0x0100) &&
@@ -215,9 +215,6 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
     case 3:
         OTP_LOGI("master sensor raw image bayer pattern: Gb B  R  Gr");
         break;
-    default:
-        OTP_LOGI("invalid master sensor bayer pattern");
-        break;
     }
     switch ((module_info->sensor_setting.master_setting & 0x0c) >> 2) {
     case 0:
@@ -231,9 +228,6 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
         break;
     case 3:
         OTP_LOGI("master sensor with mirror & flip");
-        break;
-    default:
-        OTP_LOGI("invalid master sensor mirror & flip setting");
         break;
     }
 
@@ -253,9 +247,6 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
     case 3:
         OTP_LOGI("slave sensor raw image bayer pattern: Gb B  R  Gr");
         break;
-    default:
-        OTP_LOGI("invalid slave sensor bayer pattern");
-        break;
     }
     switch ((module_info->sensor_setting.slave_setting & 0x0c) >> 2) {
     case 0:
@@ -270,9 +261,6 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
     case 3:
         OTP_LOGI("slave sensor with mirror & flip");
         break;
-    default:
-        OTP_LOGI("invalid slave sensor mirror & flip setting");
-        break;
     }
 
     module_info->master_start_addr.master_af_addr =
@@ -281,9 +269,9 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
         (buffer[31] << 8) | buffer[30];
     module_info->master_start_addr.master_lsc_addr =
         (buffer[33] << 8) | buffer[32];
-    module_info->master_start_addr.master_sprd_3rd_pdaf_addr =
+    module_info->master_start_addr.master_pdaf1_addr =
         (buffer[35] << 8) | buffer[34];
-    module_info->master_start_addr.master_sensor_vendor_pdaf_addr =
+    module_info->master_start_addr.master_pdaf2_addr =
         (buffer[37] << 8) | buffer[36];
     module_info->master_start_addr.master_ae_addr =
         (buffer[39] << 8) | buffer[38];
@@ -302,10 +290,8 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
     module_info->master_size.master_af_size = buffer[56];
     module_info->master_size.master_awb_size = buffer[57];
     module_info->master_size.master_lsc_size = (buffer[59] << 8) | buffer[58];
-    module_info->master_size.master_sprd_3rd_pdaf_size =
-        (buffer[61] << 8) | buffer[60];
-    module_info->master_size.master_sensor_vendor_pdaf_size =
-        (buffer[63] << 8) | buffer[62];
+    module_info->master_size.master_pdaf1_size = (buffer[61] << 8) | buffer[60];
+    module_info->master_size.master_pdaf2_size = (buffer[63] << 8) | buffer[62];
     module_info->master_size.master_ae_size = buffer[64];
     module_info->master_size.master_dualcam_size =
         (buffer[66] << 8) | buffer[65];
@@ -315,51 +301,45 @@ static cmr_int _single_otp_parse_module_data(cmr_handle otp_drv_handle) {
     module_info->slave_size.slave_lsc_size = (buffer[74] << 8) | buffer[73];
     module_info->slave_size.slave_ae_size = buffer[75];
 
-    OTP_LOGD("master_af_addr = 0x%x, master_af_size = %d",
+    OTP_LOGD("master(addr, size): af(0x%x, %d), awb(0x%x, %d), lsc(0x%x, %d), "
+             "pdaf1(0x%x, %d), pdaf2(0x%x, %d), ae(0x%x, %d), dualcam(0x%x, "
+             "%d)",
              module_info->master_start_addr.master_af_addr,
-             module_info->master_size.master_af_size);
-    OTP_LOGD("master_awb_addr = 0x%x, master_awb_size = %d",
+             module_info->master_size.master_af_size,
              module_info->master_start_addr.master_awb_addr,
-             module_info->master_size.master_awb_size);
-    OTP_LOGD("master_lsc_addr = 0x%x, master_lsc_size = %d",
+             module_info->master_size.master_awb_size,
              module_info->master_start_addr.master_lsc_addr,
-             module_info->master_size.master_lsc_size);
-    OTP_LOGD("master_sprd_3rd_pdaf_addr = 0x%x, master_sprd_3rd_pdaf_size = %d",
-             module_info->master_start_addr.master_sprd_3rd_pdaf_addr,
-             module_info->master_size.master_sprd_3rd_pdaf_size);
-    OTP_LOGD("master_sensor_vendor_pdaf_addr = 0x%x, "
-             "master_sensor_vendor_pdaf_size = %d",
-             module_info->master_start_addr.master_sensor_vendor_pdaf_addr,
-             module_info->master_size.master_sensor_vendor_pdaf_size);
-    OTP_LOGD("master_ae_addr = 0x%x, master_ae_size = %d",
+             module_info->master_size.master_lsc_size,
+             module_info->master_start_addr.master_pdaf1_addr,
+             module_info->master_size.master_pdaf1_size,
+             module_info->master_start_addr.master_pdaf2_addr,
+             module_info->master_size.master_pdaf2_size,
              module_info->master_start_addr.master_ae_addr,
-             module_info->master_size.master_ae_size);
-    OTP_LOGD("master_dualcam_addr = 0x%x, master_dualcam_size = %d",
+             module_info->master_size.master_ae_size,
              module_info->master_start_addr.master_dualcam_addr,
              module_info->master_size.master_dualcam_size);
 
-    OTP_LOGD("slave_af_addr = 0x%x, slave_af_size = %d",
+    OTP_LOGD("slave(addr, size): af(0x%x, %d), awb(0x%x, %d), lsc(0x%x, %d), "
+             "ae(0x%x, %d)",
              module_info->slave_start_addr.slave_af_addr,
-             module_info->slave_size.slave_af_size);
-    OTP_LOGD("slave_awb_addr = 0x%x, slave_awb_size = %d",
+             module_info->slave_size.slave_af_size,
              module_info->slave_start_addr.slave_awb_addr,
-             module_info->slave_size.slave_awb_size);
-    OTP_LOGD("slave_lsc_addr = 0x%x, slave_lsc_size = %d",
+             module_info->slave_size.slave_awb_size,
              module_info->slave_start_addr.slave_lsc_addr,
-             module_info->slave_size.slave_lsc_size);
-    OTP_LOGD("slave_ae_addr = 0x%x, slave_ae_size = %d",
+             module_info->slave_size.slave_lsc_size,
              module_info->slave_start_addr.slave_ae_addr,
              module_info->slave_size.slave_ae_size);
 
-    module_info->lsc_img_width = (buffer[124] << 8) | buffer[123];
-    module_info->lsc_img_height = (buffer[126] << 8) | buffer[125];
+    module_info->sensor_max_width = (buffer[124] << 8) | buffer[123];
+    module_info->sensor_max_height = (buffer[126] << 8) | buffer[125];
     module_info->lsc_grid = buffer[127];
     module_info->resolution =
-        (module_info->lsc_img_width * module_info->lsc_img_height + 500000) /
+        (module_info->sensor_max_width * module_info->sensor_max_height +
+         500000) /
         1000000;
     OTP_LOGI("lsc_img_width = %d, lsc_img_height = %d, lsc_grid = %d, "
              "resolution = %dM",
-             module_info->lsc_img_width, module_info->lsc_img_height,
+             module_info->sensor_max_width, module_info->sensor_max_height,
              module_info->lsc_grid, module_info->resolution);
 
     module_dat->rdm_info.buffer = buffer;
@@ -420,7 +400,6 @@ static cmr_int _single_otp_parse_af_data(cmr_handle otp_drv_handle) {
         af_data.af_posture = af_src_dat[5];
         af_data.af_temperature_start = (af_src_dat[7] << 8) | af_src_dat[6];
         af_data.af_temperature_end = (af_src_dat[9] << 8) | af_src_dat[8];
-        af_data.af_checksum = af_src_dat[10];
 
         OTP_LOGI("af_version = %d", af_data.af_version);
         OTP_LOGI("af_infinity_position = %d, af_macro_position = %d",
@@ -499,7 +478,6 @@ static cmr_int _single_otp_parse_awb_data(cmr_handle otp_drv_handle) {
         awb_data.awb_golden_r = (awb_src_dat[8] << 8) | awb_src_dat[7];
         awb_data.awb_golden_g = (awb_src_dat[10] << 8) | awb_src_dat[9];
         awb_data.awb_golden_b = (awb_src_dat[12] << 8) | awb_src_dat[11];
-        awb_data.awb_checksum = awb_src_dat[13];
 
         OTP_LOGI("awb_version = %d", awb_data.awb_version);
         OTP_LOGI("awb_random_r = %d, awb_random_g = %d, awb_random_b = %d",
@@ -624,15 +602,18 @@ static cmr_int _single_otp_parse_lsc_data(cmr_handle otp_drv_handle) {
             OTP_LOGI("sensor resolution is unusual, there's no "
                      "lsc_channel_size info in list");
             lsc_data.lsc_channel_size = 0;
-            lsc_data.lsc_width =
-                (int)(lsc_data.lsc_img_width / (2 * lsc_data.lsc_grid)) + 1;
-            lsc_data.lsc_height =
-                (int)(lsc_data.lsc_img_height / (2 * lsc_data.lsc_grid)) + 1;
-            if (lsc_data.lsc_img_width % (2 * lsc_data.lsc_grid) != 0) {
-                lsc_data.lsc_width += 1;
-            }
-            if (lsc_data.lsc_img_height % (2 * lsc_data.lsc_grid) != 0) {
-                lsc_data.lsc_height += 1;
+            if (lsc_data.lsc_grid) {
+                lsc_data.lsc_width =
+                    (int)(lsc_data.lsc_img_width / (2 * lsc_data.lsc_grid)) + 1;
+                lsc_data.lsc_height =
+                    (int)(lsc_data.lsc_img_height / (2 * lsc_data.lsc_grid)) +
+                    1;
+                if (lsc_data.lsc_img_width % (2 * lsc_data.lsc_grid) != 0) {
+                    lsc_data.lsc_width += 1;
+                }
+                if (lsc_data.lsc_img_height % (2 * lsc_data.lsc_grid) != 0) {
+                    lsc_data.lsc_height += 1;
+                }
             }
             break;
         }
@@ -646,8 +627,6 @@ static cmr_int _single_otp_parse_lsc_data(cmr_handle otp_drv_handle) {
             OTP_LOGI("module info master_lsc_size doesn't match "
                      "lsc_channel_size rule");
         }
-        lsc_data.lsc_checksum =
-            lsc_src_dat[module_info->master_size.master_lsc_size];
     }
 
     OTP_LOGV("X");
@@ -662,17 +641,16 @@ static cmr_int _single_otp_parse_pdaf_data(cmr_handle otp_drv_handle) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     struct module_info_t *module_info = &single_module_info;
     otp_section_info_t *pdaf_cali_dat = &(otp_cxt->otp_data->pdaf_cali_dat);
-    cmr_u8 *pdaf_src_dat =
-        otp_cxt->otp_raw_data.buffer +
-        module_info->master_start_addr.master_sprd_3rd_pdaf_addr;
+    cmr_u8 *pdaf_src_dat = otp_cxt->otp_raw_data.buffer +
+                           module_info->master_start_addr.master_pdaf1_addr;
     char value[255];
 
-    if (!module_info->master_start_addr.master_sprd_3rd_pdaf_addr) {
+    if (!module_info->master_start_addr.master_pdaf1_addr) {
         OTP_LOGE("PDAF section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
-    if (!module_info->master_size.master_sprd_3rd_pdaf_size) {
+    if (!module_info->master_size.master_pdaf1_size) {
         OTP_LOGE("PDAF section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
@@ -680,18 +658,17 @@ static cmr_int _single_otp_parse_pdaf_data(cmr_handle otp_drv_handle) {
 
     ret = _single_otp_section_checksum(
         otp_cxt->otp_raw_data.buffer,
-        module_info->master_start_addr.master_sprd_3rd_pdaf_addr,
-        module_info->master_size.master_sprd_3rd_pdaf_size,
-        module_info->master_start_addr.master_sprd_3rd_pdaf_addr +
-            module_info->master_size.master_sprd_3rd_pdaf_size);
+        module_info->master_start_addr.master_pdaf1_addr,
+        module_info->master_size.master_pdaf1_size,
+        module_info->master_start_addr.master_pdaf1_addr +
+            module_info->master_size.master_pdaf1_size);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("PDAF checksum error");
         return ret;
     }
     OTP_LOGD("PDAF checksum passed");
     pdaf_cali_dat->rdm_info.buffer = pdaf_src_dat;
-    pdaf_cali_dat->rdm_info.size =
-        module_info->master_size.master_sprd_3rd_pdaf_size;
+    pdaf_cali_dat->rdm_info.size = module_info->master_size.master_pdaf1_size;
     pdaf_cali_dat->gld_info.buffer = NULL;
     pdaf_cali_dat->gld_info.size = 0;
 
@@ -730,21 +707,23 @@ static cmr_int single_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     char value2[255];
     char value3[255];
     FILE *fp = NULL;
+    cmr_u32 read_size = 0;
 
     if (!otp_cxt->otp_raw_data.buffer) {
         otp_cxt->otp_raw_data.buffer =
-            sensor_otp_get_raw_buffer(8192, otp_cxt->sensor_id);
+            sensor_otp_get_raw_buffer(otp_cxt->eeprom_size, otp_cxt->sensor_id);
 
         if (!otp_cxt->otp_raw_data.buffer) {
             OTP_LOGE("malloc otp raw buffer failed");
             ret = OTP_CAMERA_FAIL;
             goto exit;
         }
-        otp_cxt->otp_raw_data.num_bytes = 8192;
+        otp_cxt->otp_raw_data.num_bytes = otp_cxt->eeprom_size;
 
         if (!otp_cxt->otp_data) {
-            otp_cxt->otp_data = sensor_otp_get_formatted_buffer(
-                sizeof(otp_format_data_t), otp_cxt->sensor_id);
+            otp_cxt->otp_data =
+                (otp_format_data_t *)sensor_otp_get_formatted_buffer(
+                    sizeof(otp_format_data_t), otp_cxt->sensor_id);
 
             if (!otp_cxt->otp_data) {
                 OTP_LOGE("malloc otp section info buffer failed");
@@ -754,7 +733,7 @@ static cmr_int single_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         }
     }
 
-    property_get("debug.read.otp.every.open.camera", value1, "0");
+    property_get("debug.read.otp.open.camera", value1, "0");
     if (atoi(value1) == 0) {
         if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
             OTP_LOGD("otp raw data has been read before, is still in memory, "
@@ -780,12 +759,15 @@ static cmr_int single_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
             ret = OTP_CAMERA_FAIL;
             goto exit;
         }
-        if (fread(otp_cxt->otp_raw_data.buffer, 1, 8192, fp) != 8192) {
-            OTP_LOGE("read otp bin error, length is not 8192");
+        read_size =
+            fread(otp_cxt->otp_raw_data.buffer, 1, otp_cxt->eeprom_size, fp);
+        if (read_size != otp_cxt->eeprom_size) {
+            OTP_LOGE("read otp bin error, read_size is %d, otp size is %d",
+                     read_size, otp_cxt->eeprom_size);
             ret = OTP_CAMERA_FAIL;
         } else {
-            OTP_LOGD(
-                "read otp raw data from bin file successfully, length 8192");
+            OTP_LOGD("read otp raw data from bin file successfully, size %d",
+                     otp_cxt->eeprom_size);
         }
         fclose(fp);
         fp = NULL;
@@ -794,22 +776,24 @@ static cmr_int single_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         /* read otp from eeprom */
         otp_cxt->otp_raw_data.buffer[0] = 0;
         otp_cxt->otp_raw_data.buffer[1] = 0;
-        ret = hw_sensor_read_i2c(otp_cxt->hw_handle, EEPROM_I2C_ADDR,
-                                 otp_cxt->otp_raw_data.buffer,
-                                 8192 << 16 | SENSOR_I2C_REG_16BIT);
+        ret = hw_sensor_read_i2c(
+            otp_cxt->hw_handle, otp_cxt->eeprom_i2c_addr >> 1,
+            otp_cxt->otp_raw_data.buffer,
+            otp_cxt->eeprom_size << 16 | SENSOR_I2C_REG_16BIT);
         if (OTP_CAMERA_SUCCESS != ret) {
             OTP_LOGE("kernel read i2c error, failed to read eeprom");
             goto exit;
         } else {
-            OTP_LOGD("read otp raw data from eeprom successfully, length 8192");
+            OTP_LOGD("read otp raw data from eeprom successfully, size %d",
+                     otp_cxt->eeprom_size);
         }
     }
 exit:
     if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value3, "0");
         if (atoi(value3) == 1) {
-            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, 8192,
-                                         "single"))
+            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer,
+                                         otp_cxt->eeprom_size, "single"))
                 OTP_LOGE("dump otp bin file failed");
         }
     }
@@ -838,7 +822,7 @@ static cmr_int single_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     char value[255];
 
-    property_get("debug.parse.otp.every.open.camera", value, "0");
+    property_get("debug.parse.otp.open.camera", value, "0");
     if (atoi(value) == 0) {
         if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
             OTP_LOGD("otp data has been parsed before, is still in memory, "
@@ -890,9 +874,10 @@ static cmr_int single_otp_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_otp_cust_info *convert_data = NULL;
     SENSOR_VAL_T *p_val = (SENSOR_VAL_T *)p_data;
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    if (!convert_data) {
-        OTP_LOGE("malloc otp convert data buffer failed");
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
