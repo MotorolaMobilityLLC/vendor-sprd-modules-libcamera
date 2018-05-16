@@ -62,6 +62,7 @@ struct commn_info_t {
 	struct isp_drv_interface_param interface_param;
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 	cmr_u32 aux_sensor_skip_num;
+	cmr_u32 ebd_support;
 };
 
 struct ae_info_t {
@@ -73,6 +74,7 @@ struct ae_info_t {
 	cmr_u32 log_ae_size;
 	struct ae_size win_num;
 	struct isp_awb_statistic_info aem_stats;
+	struct ae_ctrl_ebd_info ebd_info;
 	cmr_u32 shift;
 	cmr_u32 flash_version;
 };
@@ -1538,6 +1540,54 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
+static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+	cmr_uint u_addr = 0;
+	struct sensor_embedded_info sensor_ebd_info;
+
+	u_addr = statis_info->vir_addr;
+	sensor_ebd_info.embedded_data = (cmr_u8 *)u_addr;
+
+	if (cxt->ioctrl_ptr->sns_ioctl) {
+		cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+					   CMD_SNS_IC_GET_EBD_PARSE_DATA,
+					   &sensor_ebd_info);
+	}
+	cxt->ae_cxt.ebd_info.frame_id = sensor_ebd_info.parse_data.frame_count;
+	cxt->ae_cxt.ebd_info.frame_id_valid =
+			sensor_ebd_info.frame_count_valid;
+	cxt->ae_cxt.ebd_info.exposure = sensor_ebd_info.parse_data.shutter;
+	cxt->ae_cxt.ebd_info.exposure_valid =
+			sensor_ebd_info.shutter_valid;
+	cxt->ae_cxt.ebd_info.again = sensor_ebd_info.parse_data.again;
+	cxt->ae_cxt.ebd_info.again_valid =
+			sensor_ebd_info.again_valid;
+
+	cxt->ae_cxt.ebd_info.dgain_gr = sensor_ebd_info.parse_data.dgain_gr;
+	cxt->ae_cxt.ebd_info.dgain_r = sensor_ebd_info.parse_data.dgain_r;
+	cxt->ae_cxt.ebd_info.dgain_b = sensor_ebd_info.parse_data.dgain_b;
+	cxt->ae_cxt.ebd_info.dgain_gb = sensor_ebd_info.parse_data.dgain_gb;
+	cxt->ae_cxt.ebd_info.gain = sensor_ebd_info.parse_data.gain;
+	cxt->ae_cxt.ebd_info.dgain_valid =
+			sensor_ebd_info.dgain_valid;
+	ISP_LOGV("frame id %x %d, shutter %x %d, again %x %d",
+		 cxt->ae_cxt.ebd_info.frame_id,
+		 cxt->ae_cxt.ebd_info.frame_id_valid,
+		 cxt->ae_cxt.ebd_info.exposure,
+		 cxt->ae_cxt.ebd_info.exposure_valid,
+		 cxt->ae_cxt.ebd_info.again,
+		 cxt->ae_cxt.ebd_info.again_valid);
+	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_EBD_BLOCK);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+
+	return ret;
+}
+
 cmr_int ispalg_write_exp_gain(cmr_handle isp_alg_handle, struct sensor_ex_exposure exp, cmr_u32 gain)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1653,6 +1703,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
+	memcpy(&in_param.ebd_info, &cxt->ae_cxt.ebd_info, sizeof(cxt->ae_cxt.ebd_info));
+	/* Fixing ISP dgain */
+	in_param.isp_dgain.global_gain = 4096;
+	in_param.isp_dgain.r_gain = 4096;
+	in_param.isp_dgain.g_gain = 4096;
+	in_param.isp_dgain.b_gain = 4096;
+
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.ae_ops.process) {
 		ret = cxt->ops.ae_ops.process(cxt->ae_cxt.handle, &in_param, &ae_result);
@@ -2308,16 +2365,14 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	return ret;
 }
 
-static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type, void *in_ptr)
+static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, void *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
-	cmr_u32 u_addr = 0;
+	cmr_uint u_addr = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct pdaf_ctrl_param_out pdaf_param_out;
-
-	UNUSED(data_type);
 
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
 	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
@@ -2599,7 +2654,10 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_binning_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_PDAF:
-		ret = ispalg_pdaf_process((cmr_handle) cxt, message->sub_msg_type, message->data);
+		ret = ispalg_pdaf_process((cmr_handle) cxt, message->data);
+		break;
+	case ISP_CTRL_EVT_EBD:
+		ret = ispalg_ebd_process((cmr_handle) cxt, message->data);
 		break;
 	default:
 		ISP_LOGV("don't support msg");
@@ -2794,6 +2852,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	cxt->ae_cxt.win_num.h = 32;
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
+	ae_input.ebd_support = cxt->commn_cxt.ebd_support;
+
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
@@ -4473,6 +4533,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_BINNING;
 	if (cxt->pdaf_cxt.pdaf_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_PDAF;
+	if (cxt->commn_cxt.ebd_support)
+		statis_mem_input.statis_valid |= ISP_STATIS_VALID_EBD;
 
 	cxt->statis_valid = statis_mem_input.statis_valid;
 
@@ -4897,6 +4959,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
+	cxt->commn_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
