@@ -83,6 +83,17 @@ extern "C" {
 		cmr_u16 b;
 	};
 
+	struct awb_offset {
+		cmr_u32 r_offset;
+		cmr_u32 g_offset;
+		cmr_u32 b_offset;
+	};
+
+	struct awb_gain_and_offset {
+		struct awb_gain gain;
+		struct awb_offset offset;
+	};
+
 	struct awb_save_gain {
 		cmr_u16 r;
 		cmr_u16 g;

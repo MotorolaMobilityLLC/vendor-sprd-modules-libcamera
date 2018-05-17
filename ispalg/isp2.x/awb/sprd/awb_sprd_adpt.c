@@ -118,6 +118,8 @@ struct awb_ctrl_cxt {
 	cmr_u32 flash_pre_state;
 	/*current gain */
 	struct awb_ctrl_gain cur_gain;
+	/*current offset */
+	struct awb_ctrl_offset cur_offset;
 	/*output gain */
 	struct awb_ctrl_gain output_gain;
 	/*output ct */
@@ -155,7 +157,8 @@ struct awb_ctrl_cxt {
 	cmr_u32 magic_end;
 
 	struct awb_ae_stat master_ae_stat;
-	struct awb_ae_stat slave_ae_stat; 
+	struct awb_ae_stat slave_ae_stat;
+	struct ai_scene_detect_info ai_scene_info;
 };
 
 struct isp_size g_src_size[4] = {{0,0},{0,0},{0,0},{0,0}};
@@ -530,6 +533,28 @@ static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
+static cmr_u32 _awb_get_gain_and_offset(struct awb_ctrl_cxt *cxt, void *param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+
+	if (param) {
+		struct awb_gain_and_offset *awb_result = (struct awb_gain_and_offset *)param;
+
+		awb_result->gain.r = cxt->cur_gain.r;
+		awb_result->gain.g = cxt->cur_gain.g;
+		awb_result->gain.b = cxt->cur_gain.b;
+		awb_result->offset.r_offset = cxt->cur_offset.r_offset;
+		awb_result->offset.g_offset = cxt->cur_offset.g_offset;
+		awb_result->offset.b_offset = cxt->cur_offset.b_offset;
+
+		ISP_LOGV("gain_r,g,b = (%d,%d,%d)", awb_result->gain.r, awb_result->gain.g, awb_result->gain.b);
+		ISP_LOGV("offset_r,g,b = (%d,%d,%d)", awb_result->offset.r_offset, awb_result->offset.g_offset, awb_result->offset.b_offset);
+	}
+
+	return rtn;
+
+}
+
 static cmr_u32 _awb_get_result_info(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
@@ -539,6 +564,18 @@ static cmr_u32 _awb_get_result_info(struct awb_ctrl_cxt *cxt, void *param)
 
 	return rtn;
 
+}
+
+static cmr_u32 _awb_set_scene_info(struct awb_ctrl_cxt *cxt, void *param)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+
+	if (param) {
+		memcpy(&cxt->ai_scene_info, param, sizeof(struct ai_scene_detect_info));
+		ISP_LOGV("done.");
+	}
+
+	return rtn;
 }
 
 static cmr_u32 _awb_get_cur_gain(struct awb_ctrl_cxt *cxt, void *param)
@@ -1438,6 +1475,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	calc_param.bv = param.bv;
 	calc_param.iso = param.ae_info.iso;
 
+	calc_param.ai_info = &cxt->ai_scene_info;
 	memcpy(calc_param.matrix, param.matrix, 9 * sizeof(cmr_s32));
 	memcpy(calc_param.gamma, param.gamma, 256);
 	ATRACE_BEGIN(__FUNCTION__);
@@ -1457,10 +1495,16 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result.log_awb.log = calc_result.log_buffer;
 	result.log_awb.size = calc_result.log_size;
 	result.update_gain = cxt->flash_update_awb;
+	result.offset.r_offset = calc_result.r_offset;
+	result.offset.g_offset = calc_result.g_offset;
+	result.offset.b_offset = calc_result.b_offset;
 
 	cxt->cur_gain.r = result.gain.r;
 	cxt->cur_gain.g = result.gain.g;
 	cxt->cur_gain.b = result.gain.b;
+	cxt->cur_offset.r_offset = result.offset.r_offset;
+	cxt->cur_offset.g_offset = result.offset.g_offset;
+	cxt->cur_offset.b_offset = result.offset.b_offset;
 	cxt->cur_ct = result.ct;
 	cxt->log = calc_result.log_buffer;
 	cxt->size = calc_result.log_size;
@@ -1670,12 +1714,20 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		rtn = _awb_get_gain(cxt, in);
 		break;
 
+	case AWB_CTRL_CMD_GET_GAIN_AND_OFFSET:
+		rtn = _awb_get_gain_and_offset(cxt, in);
+		break;
+
 	case AWB_CTRL_CMD_GET_CUR_GAIN:
 		rtn = _awb_get_cur_gain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_RESULT_INFO:
 		rtn = _awb_get_result_info(cxt, in);
+		break;
+
+	case AWB_CTRL_CMD_SET_SCENE_INFO:
+		rtn = _awb_set_scene_info(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASHING:

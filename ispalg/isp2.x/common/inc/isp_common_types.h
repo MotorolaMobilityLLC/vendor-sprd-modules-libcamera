@@ -15,6 +15,12 @@ struct awb_ctrl_gain {
 	cmr_u32 b;
 };
 
+struct awb_ctrl_offset {
+	cmr_u32 r_offset;
+	cmr_u32 g_offset;
+	cmr_u32 b_offset;
+};
+
 struct tg_awb_ctrl_alc_log {
 	cmr_u8 *log;
 	cmr_u32 size;
@@ -22,6 +28,7 @@ struct tg_awb_ctrl_alc_log {
 
 struct awb_ctrl_calc_result {
 	struct awb_ctrl_gain gain;
+	struct awb_ctrl_offset offset;
 	cmr_u32 ct;
 	cmr_u32 use_ccm;
 	cmr_u16 ccm[9];
