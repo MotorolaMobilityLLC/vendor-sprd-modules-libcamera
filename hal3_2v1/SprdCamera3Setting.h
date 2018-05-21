@@ -36,11 +36,12 @@
 #include <utils/Vector.h>
 #include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
-#include <camera/CameraMetadata.h>
+#include <CameraMetadata.h>
 #include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
 
+using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
 
 namespace sprdcamera {

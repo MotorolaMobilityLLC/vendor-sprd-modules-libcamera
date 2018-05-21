@@ -35,7 +35,7 @@ extern "C" {
 #include <binder/MemoryHeapBase.h>
 #include <hardware/camera.h>
 #include <hardware/gralloc.h>
-#include <camera/CameraParameters.h>
+#include <CameraParameters.h>
 #include "SprdCameraParameters.h"
 #include "cmr_common.h"
 #include "cmr_oem.h"

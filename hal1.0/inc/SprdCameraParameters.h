@@ -17,7 +17,9 @@
 #ifndef ANDROID_HARDWARE_SPRD_CAMERA_PARAMETERS_H
 #define ANDROID_HARDWARE_SPRD_CAMERA_PARAMETERS_H
 
-#include <camera/CameraParameters.h>
+#include <CameraMetadata.h>
+#include <CameraParameters.h>
+using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
 
 namespace android {
 

@@ -1,6 +1,8 @@
 LOCAL_SHARED_LIBRARIES := libutils libmemion libcutils libhardware
-LOCAL_SHARED_LIBRARIES += libcamera_client libcamera_metadata libpowermanager
+LOCAL_SHARED_LIBRARIES += libcamera_metadata
+#LOCAL_SHARED_LIBRARIES += libpowermanager
 LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor libcamoem
+LOCAL_STATIC_LIBRARIES += android.hardware.camera.common@1.0-helper
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
