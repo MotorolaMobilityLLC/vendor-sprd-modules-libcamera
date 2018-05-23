@@ -84,6 +84,7 @@ enum aft_calc_data_type {
 	AFT_DATA_CAF,
 	AFT_DATA_PD,
 	AFT_DATA_FD,
+	AFT_DATA_TOF,
 	AFT_DATA_MAX
 };
 
@@ -101,6 +102,7 @@ enum aft_trigger_type {
 	AFT_TRIG_CB,
 	AFT_TRIG_PD,
 	AFT_TRIG_FD,
+	AFT_TRIG_TOF,
 	AFT_TRIG_MAX
 };
 
@@ -152,6 +154,8 @@ struct aft_ae_info {
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
+	cmr_u32 face_stable;
+	cmr_u32 flag4idx;
 	cmr_u32 bv;
 	cmr_u32 y_sum;
 	cmr_u32 cur_scene;
@@ -175,6 +179,19 @@ struct aft_phase_diff_info {
 	cmr_u32 pd_roi_num;
 	cmr_u32 reserved[16];
 };
+
+//[TOF_+++]
+struct aft_tof_info {
+	cmr_u32 tof_enable;
+	cmr_u32 effective_pos;
+	cmr_u32 effective_frmid;
+	cmr_u32 status;
+	cmr_u32 distance;
+	cmr_u32 MAXdistance;
+	cmr_u32 reserved[20];
+};
+
+//[TOF_---]
 
 struct isp_face_coor {
 	cmr_u32 sx;
@@ -227,6 +244,7 @@ struct aft_proc_calc_param {
 	struct aft_phase_diff_info pd_info;
 	struct aft_common_info comm_info;
 	struct aft_face_info fd_info;
+	struct aft_tof_info tof_info;
 };
 
 struct aft_caf_stats_cfg {

@@ -52,16 +52,16 @@
 #include <string.h>
 #include <math.h>
 #ifdef ANDROID
-#include <jni.h>
+//#include <jni.h>
 #include <android/log.h>
 #include <sys/system_properties.h>
 #endif
-// #include "AFv1_Type.h"
+//#include "AFv1_Type.h"
 #include "cmr_types.h"
 
 /*1.System info*/
 #define VERSION             "2.128"
-#define SUB_VERSION             "-20180328-sync_AF_Common"//use the date code to naming
+#define SUB_VERSION             "-180521-ndkr17-c90"//use the date code to naming
 
 #define STRING(s) #s
 
@@ -75,7 +75,7 @@
 
 #define MAX_SAMPLE_NUM	    25
 #define TOTAL_SAMPLE_NUM	29
-#define ROUGH_SAMPLE_NUM	25	// MAX((ROUGH_SAMPLE_NUM_L3+ROUGH_SAMPLE_NUM_L2),(ROUGH_START_POS_L1+ROUGH_START_POS_L2))
+#define ROUGH_SAMPLE_NUM	25	//MAX((ROUGH_SAMPLE_NUM_L3+ROUGH_SAMPLE_NUM_L2),(ROUGH_START_POS_L1+ROUGH_START_POS_L2))
 #define FINE_SAMPLE_NUM		20
 #define MAX_TIME_SAMPLE_NUM	100
 #define G_SENSOR_Q_TOTAL (3)
@@ -104,33 +104,33 @@
 #define AE_GAIN_32x 5
 #define AE_GAIN_TOTAL 6
 
-#define BOKEH_BOUNDARY_RATIO 8000	// based on 10000
-#define BOKEH_SCAN_FROM 212		// limited in [0,1023]
-#define BOKEH_SCAN_TO 342		// limited in [0,1023]
-#define BOKEH_SCAN_STEP 12		// at least 20
+#define BOKEH_BOUNDARY_RATIO 8000	//based on 10000
+#define BOKEH_SCAN_FROM 212	//limited in [0,1023]
+#define BOKEH_SCAN_TO 342	//limited in [0,1023]
+#define BOKEH_SCAN_STEP 12	//at least 20
 
 #define PD_MAX_AREA 16
 #define PD_MAX_MOVECOUNT 6
 
-typedef struct _af_tuning_block_param {
-	cmr_u8 *data;
+typedef struct _af_tuning_block_param{
+	cmr_u8* data;
 	cmr_u32 data_len;
-} af_tuning_block_param;
+}af_tuning_block_param;
 
-typedef struct _Bokeh_Result {
-	cmr_u8 row_num;				/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
-	cmr_u8 column_num;			/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
+typedef struct _Bokeh_Result{
+	cmr_u8 row_num;		/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
+	cmr_u8 column_num;	/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
 	cmr_u32 win_peak_pos_num;
-	cmr_u32 *win_peak_pos;		/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
+	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;		/* (Unit : Percentage) *//* depend on the AF Scanning */
+	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
 	cmr_u32 af_peak_pos;
 	cmr_u32 near_peak_pos;
 	cmr_u32 far_peak_pos;
 	cmr_u32 distance_reminder;
 	cmr_u32 reserved[16];
-} Bokeh_Result;
+}Bokeh_Result;
 
 typedef enum _eAF_FILTER_TYPE {
 	T_SOBEL9 = 0,
@@ -158,23 +158,23 @@ typedef enum _eAF_FV_RATIO_TYPE {
 } eAF_FV_RATIO_TYPE;
 
 typedef enum _eAF_MODE {
-	SAF = 0,					// single zone AF
-	CAF,						// continue AF
-	VAF,						// Video CAF
-	FAF,						// Face AF
-	MAF,						// Multi zone AF
-	PDAF,						// PDAF
-	TMODE_1,					// Test mode 1
-	Wait_Trigger				// wait for AF trigger
+	SAF = 0,		//single zone AF
+	CAF,			//continue AF
+	VAF,			//Video CAF
+	FAF,			//Face AF
+	MAF,			//Multi zone AF
+	PDAF,			//PDAF
+	TMODE_1,		//Test mode 1
+	Wait_Trigger		//wait for AF trigger
 } eAF_MODE;
 
 typedef enum _eAF_Triger_Type {
-	RF_NORMAL = 0,				// noraml R/F search for AFT
-	R_NORMAL,					// noraml Rough search for AFT
-	F_NORMAL,					// noraml Fine search for AFT
-	RF_FAST,					// Fast R/F search for AFT
-	R_FAST,						// Fast Rough search for AFT
-	F_FAST,						// Fast Fine search for AFT
+	RF_NORMAL = 0,		//noraml R/F search for AFT
+	R_NORMAL,		//noraml Rough search for AFT
+	F_NORMAL,		//noraml Fine search for AFT
+	RF_FAST,		//Fast R/F search for AFT
+	R_FAST,			//Fast Rough search for AFT
+	F_FAST,			//Fast Fine search for AFT
 	DEFOCUS,
 	BOKEH,
 	RE_TRIGGER,
@@ -242,15 +242,14 @@ typedef enum _eCAF_Search_Process {
 
 typedef enum _eAF_Result {
 	AF_INIT = 0,
-	AF_FIND_HC_PEAK,			// high confidence peak
-	AF_FIND_LC_PEAK,			// low confidence peak
+	AF_FIND_HC_PEAK,	//high confidence peak
+	AF_FIND_LC_PEAK,	//low confidence peak
 	AF_NO_PEAK,
 	AF_TOO_FAR,
 	AF_TOO_NEAR,
 	AF_REVERSE,
 	AF_SKY,
-	AF_UNKNOW,
-	AF_STRANGE_POS,
+	AF_UNKNOW
 } eAF_Result;
 
 typedef enum _e_LOCK {
@@ -297,8 +296,8 @@ enum {
 enum {
 	SENSOR_X_AXIS,
 	SENSOR_Y_AXIS,
-	SENSOR_Z_AXIS,
-	SENSOR_AXIS_TOTAL,
+	SENSOR_Z_AXIS,	
+	SENSOR_AXIS_TOTAL,	
 };
 
 enum {
@@ -310,10 +309,10 @@ enum {
 	DISTANCE_60CM,
 	DISTANCE_70CM,
 	DISTANCE_80CM,
-	DISTANCE_90CM,
-	DISTANCE_120CM,
-	DISTANCE_200CM,
-	DISTANCE_500CM,
+	DISTANCE_90CM,	
+	DISTANCE_120CM,		
+	DISTANCE_200CM,	
+	DISTANCE_500CM,	
 	DISTANCE_MAP_TOTAL,
 };
 
@@ -323,19 +322,19 @@ enum {
 	AF_TIME_CAPTURE,
 	AF_TIME_TYPE_TOTAL,
 };
-// =========================================================================================//
+//=========================================================================================//
 // Public Structure Instance
-// =========================================================================================//
-// #pragma pack(push, 1)
+//=========================================================================================//
+//#pragma pack(push, 1)
 
 #pragma pack(push,4)
 typedef struct _AE_Report {
-	cmr_u8 bAEisConverge;		//flag: check AE is converged or not
-	cmr_s16 AE_BV;				//brightness value
-	cmr_u16 AE_EXP;				//exposure time (ms)
-	cmr_u16 AE_Gain;			//X128: gain1x = 128
-	cmr_u32 AE_Pixel_Sum;		//AE pixel sum which needs to match AF blcok
-	cmr_u16 AE_Idx;				//AE exposure level
+	cmr_u8 bAEisConverge;	//flag: check AE is converged or not
+	cmr_s16 AE_BV;		//brightness value
+	cmr_u16 AE_EXP;		//exposure time (ms)
+	cmr_u16 AE_Gain;		//X128: gain1x = 128
+	cmr_u32 AE_Pixel_Sum;	//AE pixel sum which needs to match AF blcok
+	cmr_u16 AE_Idx;		//AE exposure level
 	cmr_u32 cur_fps;
 	cmr_u32 cur_lum;
 	cmr_u32 cur_index;
@@ -345,7 +344,8 @@ typedef struct _AE_Report {
 	cmr_u32 target_lum_ori;
 	cmr_u32 flag4idx;
 	cmr_s32 bisFlashOn;
-	cmr_u32 reserved[10];
+	cmr_u8 ae_stable_cnt;
+	cmr_u8 reserved[39];
 } AE_Report;
 
 typedef struct _AF_FV_DATA {
@@ -365,7 +365,7 @@ typedef struct _AF_FV_DATA {
 	cmr_s8 APC[MAX_SAMPLE_NUM];	//ICAP - DCAP
 
 	cmr_u64 Val[MAX_SAMPLE_NUM];	//statistic value
-	cmr_u64 Start_Val;			//statistic value of start position
+	cmr_u64 Start_Val;	//statistic value of start position
 
 	cmr_u16 BP_R10000[T_R_SAMPLE_NUM][MAX_SAMPLE_NUM];	//FV ratio X 10000 before peak
 	cmr_u16 AP_R10000[T_R_SAMPLE_NUM][MAX_SAMPLE_NUM];	//FV ratio X 10000 after peak
@@ -387,7 +387,7 @@ typedef struct _AF_FV {
 typedef struct _AF_FILTER_TH {
 	cmr_u16 UB_Ratio_TH[T_R_SAMPLE_NUM];	//The Up bound threshold of FV ratio, [0]:total, [1]:3 sample, [2]:5 sample, [3]:7 sample
 	cmr_u16 LB_Ratio_TH[T_R_SAMPLE_NUM];	//The low bound threshold of FV ratio, [0]:total, [1]:3 sample, [2]:5 sample, [3]:7 sample
-	cmr_u32 MIN_FV_TH;			//The threshold of FV to check the real curve
+	cmr_u32 MIN_FV_TH;	//The threshold of FV to check the real curve
 } AF_FILTER_TH;
 
 typedef struct _AF_TH {
@@ -410,23 +410,23 @@ typedef struct _SAF_SearchData {
 	cmr_u8 SAF_RS_MaxSearchTableNum;	//maxima number of search table during rough search
 	cmr_u8 SAF_FS_MaxSearchTableNum;	//maxima number of search table during fine search
 
-	cmr_u8 SAF_RS_DIR;			//direction of rough search:Far to near or near to far
-	cmr_u8 SAF_FS_DIR;			//direction of fine search:Far to near or near to far
+	cmr_u8 SAF_RS_DIR;	//direction of rough search:Far to near or near to far
+	cmr_u8 SAF_FS_DIR;	//direction of fine search:Far to near or near to far
 
-	cmr_u8 SAF_Skip_Frame;		//skip this frame or not
+	cmr_u8 SAF_Skip_Frame;	//skip this frame or not
 
 	cmr_u16 SAF_RSearchTable[ROUGH_SAMPLE_NUM];
 	cmr_u16 SAF_RSearchTableByTuning[TOTAL_SAMPLE_NUM];
 	cmr_u16 SAF_FSearchTable[FINE_SAMPLE_NUM];
 
-	AF_FV SAF_RFV;				// The FV data of rough search
-	AF_FV SAF_FFV;				// The FV data of fine search
+	AF_FV SAF_RFV;		//The FV data of rough search
+	AF_FV SAF_FFV;		//The FV data of fine search
 
-	AF_FV SAF_Pre_RFV;			//The last time FV data of rough search
-	AF_FV SAF_Pre_FFV;			//The last time FV data of fine search
+	AF_FV SAF_Pre_RFV;	//The last time FV data of rough search
+	AF_FV SAF_Pre_FFV;	//The last time FV data of fine search
 
-	AF_TH SAF_RS_TH;			// The threshold of rough search
-	AF_TH SAF_FS_TH;			// The threshold of fine search
+	AF_TH SAF_RS_TH;	//The threshold of rough search
+	AF_TH SAF_FS_TH;	//The threshold of fine search
 
 } SAF_SearchData;
 
@@ -448,7 +448,7 @@ typedef struct _CAF_SearchData {
 
 #pragma pack(push,1)
 typedef struct _AF_Scan_Table {
-	// Rough search
+	//Rough search
 	cmr_u16 POS_L1;
 	cmr_u16 POS_L2;
 	cmr_u16 POS_L3;
@@ -461,7 +461,7 @@ typedef struct _AF_Scan_Table {
 	cmr_u16 Normal_Start_Idx;
 	cmr_u16 Rough_Sample_Num;
 
-	// Fine search
+	//Fine search
 	cmr_u16 Fine_Sample_Num;
 	cmr_u16 Fine_Search_Interval;
 	cmr_u16 Fine_Init_Num;
@@ -495,13 +495,13 @@ typedef struct aftuning_param_s {
 	cmr_u32 _temporal_flat_slop;
 	cmr_u32 _limit_search_interval;
 	cmr_u32 _sky_scene_thr;
-	cmr_u32 _min_fine_idx;
-	cmr_u8 reserve[128 - 4];
+	cmr_u32	_min_fine_idx;
+	cmr_u8 	reserve[128-4];
 } aftuning_param_t;
 
-typedef struct pdaftuning_param_s {
-	cmr_u32 min_pd_vcm_steps;
-	cmr_u32 max_pd_vcm_steps;
+typedef struct pdaftuning_param_s{
+    cmr_u32 min_pd_vcm_steps;
+    cmr_u32 max_pd_vcm_steps;
 	cmr_u32 coc_range;
 	cmr_u32 far_tolerance;
 	cmr_u32 near_tolerance;
@@ -516,7 +516,7 @@ typedef struct pdaftuning_param_s {
 	cmr_u32 pd_conf_thr;
 	cmr_u32 pd_conf_thr_2nd;
 	cmr_u32 reserved[52];
-} pdaftuning_param_t;
+}pdaftuning_param_t;
 
 typedef struct _AF_Tuning_Para {
 	//AF Scan Table
@@ -531,17 +531,17 @@ typedef struct _AF_Tuning_Para {
 
 typedef struct _Lens_Info {
 	//Lens Info
-	cmr_u16 Lens_MC_MIN;		//minimal mechenical position
-	cmr_u16 Lens_MC_MAX;		//maximal mechenical position
-	cmr_u16 Lens_INF;			//INF position
-	cmr_u16 Lens_MACRO;			//MACRO position
-	cmr_u16 Lens_Hyper;			//Hyper Focus position
+	cmr_u16 Lens_MC_MIN;	//minimal mechenical position
+	cmr_u16 Lens_MC_MAX;	//maximal mechenical position
+	cmr_u16 Lens_INF;	//INF position
+	cmr_u16 Lens_MACRO;	//MACRO position
+	cmr_u16 Lens_Hyper;	//Hyper Focus position
 	cmr_u16 One_Frame_Max_Move;	//skip one frame if move position is bigger than TH
 
 } Lens_Info;
 
 typedef struct _AF_Tuning {
-	// Lens Info
+	//Lens Info
 	Lens_Info Lens_Para;
 	AF_Tuning_Para SAFTuningPara;	//SAF parameters
 	AF_Tuning_Para CAFTuningPara;	//CAF parameters
@@ -566,8 +566,8 @@ typedef struct _afscan_status_s {
 	cmr_s32 bv_log[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 luma[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 gain[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 ae_state[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 exp[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 ae_state[AFAUTO_SCAN_STOP_NMAX];	
+	cmr_u32 exp[AFAUTO_SCAN_STOP_NMAX];	
 	cmr_u32 scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
 	cmr_u32 scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
@@ -634,7 +634,7 @@ typedef struct _afscan_status_s {
 	cmr_u32 localsum_idx;
 	cmr_u32 localluma_idx;
 	cmr_u32 lock_pos;
-	// multi AF
+	//multi AF
 	cmr_u32 multi_pkstat[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];
 	cmr_u32 multi_pkidx[MULTI_STATIC_TOTAL];
@@ -669,12 +669,12 @@ typedef struct _afscan_status_s {
 	cmr_u32 peak_calculate;
 	cmr_u32 peak_calc_cond;
 	cmr_s32 phase_diff_tbl[AFAUTO_SCAN_STOP_NMAX];
-	cmr_u32 pd_conf_tbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 pd_conf_tbl[AFAUTO_SCAN_STOP_NMAX];	
 	cmr_u32 pd_peak_idx;
 	cmr_u32 inverse_calc_pos;
 	cmr_u32 fit_peak_far_limit;
 	cmr_u32 fit_peak_near_limit;
-	cmr_u32 reserve[62];		// for temp debug
+	cmr_u32 reserve[62];	//for temp debug
 } afscan_status_t;
 
 typedef struct af_ctrl_pd_info_s {
@@ -711,7 +711,7 @@ typedef struct _af_control_status_s {
 	cmr_u32 lock_status;
 	cmr_u32 last_lock_status;
 	pd_info_t pd_info;
-	cmr_u32 reserve[64];		// for temp debug
+	cmr_u32 reserve[64];	//for temp debug
 } afctrl_status_t;
 
 typedef struct af_scan_env_info_s {
@@ -746,7 +746,7 @@ typedef struct af_scan_info_s {
 	cmr_u32 frmid_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 coast_result[AF_RESULT_DATA_SIZE];
 	cmr_u32 ma_count;
-	cmr_u32 reserve[32];		// for temp debug 
+	cmr_u32 reserve[32];	//for temp debug	
 } afscan_info_t;
 
 typedef struct af_prescan_info_s {
@@ -758,21 +758,21 @@ typedef struct af_prescan_info_s {
 /* ========================== Structure ============================ */
 typedef struct afstat_frame_buffer_s {
 	cmr_u32 curr_frm_stat[FOCUS_STAT_WIN_TOTAL];
-	// cmr_u32 curr_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//cmr_u32 curr_frm_y[FOCUS_STAT_WIN_TOTAL];
 	cmr_u32 last_frm_stat[FOCUS_STAT_WIN_TOTAL];
-	// cmr_u32 last_frm_y[FOCUS_STAT_WIN_TOTAL];
-	// cmr_u32 focus_block_idx;
-	// cmr_u32 peak_block_edge;
-	// cmr_u32 peak_block_y;
-	// cmr_s32 peak_block_edge_rela;
-	// cmr_s32 peak_block_y_rela;
-	// cmr_s32 peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
+	//cmr_u32 last_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//cmr_u32 focus_block_idx;
+	//cmr_u32 peak_block_edge;
+	//cmr_u32 peak_block_y;
+	//cmr_s32 peak_block_edge_rela;
+	//cmr_s32 peak_block_y_rela;
+	//cmr_s32 peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
 	cmr_u32 stat_weight;
 	cmr_u32 stat_sum;
 	cmr_u32 luma_avg;
-	// cmr_u32 multi_grid_sum[MULTI_STATIC_TOTAL];
-	cmr_u32 multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/* debug * info * of * defocus * function */
-	cmr_u32 reserve[32];		// for temp debug
+	//cmr_u32 multi_grid_sum[MULTI_STATIC_TOTAL];
+	cmr_u32 multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function */
+	cmr_u32 reserve[32];	//for temp debug
 } afstat_frmbuf_t;
 
 typedef struct defocus_param_s {
@@ -785,7 +785,7 @@ typedef struct afdbg_ctrl_s {
 	cmr_u32 alg_msg;
 	cmr_u32 dump_info;
 	defocus_param_t defocus;
-	cmr_u32 reserve[16];		// for temp debug
+	cmr_u32 reserve[16];	//for temp debug
 } afdbg_ctrl_t;
 
 typedef struct _af_process_s {
@@ -794,9 +794,9 @@ typedef struct _af_process_s {
 	afscan_info_t scan_info;
 	afstat_frmbuf_t stat_data;
 	afdbg_ctrl_t dbg_ctrl;
-	aftuning_param_t adapt_af_param;	// adapt AF parameter
+	aftuning_param_t adapt_af_param;	//adapt AF parameter
 	af_prescan_info_t pre_scan_info;
-	cmr_u32 reserve[128];		// for temp debug
+	cmr_u32 reserve[128];	//for temp debug
 } _af_process_t;
 
 typedef struct motion_sensor_result_s {
@@ -805,32 +805,33 @@ typedef struct motion_sensor_result_s {
 	uint32_t sensor_g_queue_cnt;
 	float g_sensor_queue[SENSOR_AXIS_TOTAL][G_SENSOR_Q_TOTAL];
 	cmr_u32 reserved[12];
-} motion_sensor_result_t;
+} motion_sensor_result_t;	
+
 
 typedef struct pd_algo_focuing_s {
 	cmr_u32 B_frmid;
 	cmr_u32 B_confidence[5];
-	double B_pd_value[5];
+	double  B_pd_value[5];
 	cmr_s32 B_delta_vcm;
-
+	
 	cmr_u32 frmid[PD_MAX_MOVECOUNT];
 	cmr_u32 Area0_confidence[PD_MAX_MOVECOUNT];
-	double Area0_pd_value[PD_MAX_MOVECOUNT];
+	double  Area0_pd_value[PD_MAX_MOVECOUNT];
 	cmr_u32 Area1_confidence[PD_MAX_MOVECOUNT];
-	double Area1_pd_value[PD_MAX_MOVECOUNT];
+	double  Area1_pd_value[PD_MAX_MOVECOUNT];
 	cmr_u32 Area2_confidence[PD_MAX_MOVECOUNT];
-	double Area2_pd_value[PD_MAX_MOVECOUNT];
+	double  Area2_pd_value[PD_MAX_MOVECOUNT];
 	cmr_u32 Area3_confidence[PD_MAX_MOVECOUNT];
-	double Area3_pd_value[PD_MAX_MOVECOUNT];
+	double  Area3_pd_value[PD_MAX_MOVECOUNT];
 	cmr_u32 Area4_confidence[PD_MAX_MOVECOUNT];
-	double Area4_pd_value[PD_MAX_MOVECOUNT];
+	double  Area4_pd_value[PD_MAX_MOVECOUNT];	
 	cmr_u32 cur_vcm_pos[PD_MAX_MOVECOUNT];
 	cmr_s32 delta_vcm[PD_MAX_MOVECOUNT];
 	cmr_u32 fv_info[PD_MAX_MOVECOUNT];
-	cmr_u32 af_frmid[PD_MAX_MOVECOUNT];
+	cmr_u32 af_frmid[PD_MAX_MOVECOUNT];	
 	cmr_u32 ae_stable[PD_MAX_MOVECOUNT];
-	cmr_u32 curr_luma[PD_MAX_MOVECOUNT];
-	cmr_u32 reserved[64 - (PD_MAX_MOVECOUNT * 2)];
+	cmr_u32 curr_luma[PD_MAX_MOVECOUNT];	
+	cmr_u32 reserved[64-(PD_MAX_MOVECOUNT*2)];
 } pd_algo_focusing_t;
 
 typedef struct pd_algo_result_s {
@@ -845,12 +846,11 @@ typedef struct pd_algo_result_s {
 } pd_algo_result_t;
 
 typedef struct _exposure_result_s {
-	cmr_u32 is_converge;		//flag: check AE is converged or not
-	// not
+	cmr_u32 is_converge;	//flag: check AE is converged or not
 	cmr_u32 cur_fps;
 	cmr_u32 cur_lum;
-	cmr_u32 cur_iso;
-	cmr_u32 cur_exp;
+	cmr_u32 cur_iso;	
+	cmr_u32 cur_exp;	
 	cmr_u32 target_lum;
 	cmr_u32 reserved[30];
 } exposure_result_t;
@@ -874,20 +874,20 @@ typedef struct _pdaf_process_s {
 	cmr_s32 predict_dir;
 	cmr_u32 predict_far;
 	cmr_u32 predict_near;
-	cmr_u32 roi_dcc;
-	cmr_s32 delta_vcm_pos;
-	cmr_u32 tc_en;
-	cmr_s32 tc_stat_th;
-	cmr_u32 tc_vcm_pos;
+    cmr_u32 roi_dcc;
+    cmr_s32 delta_vcm_pos;
+    cmr_u32 tc_en;
+    cmr_s32 tc_stat_th;
+    cmr_u32 tc_vcm_pos;
 	float tc_err_vcm_sum;
 	cmr_u32 tc_calc_idx;
-	cmr_u32 prv_vcm_pos;
-	cmr_u32 cur_vcm_pos;
+    cmr_u32 prv_vcm_pos;
+    cmr_u32 cur_vcm_pos;
 	cmr_u32 last_vcm_pos;
 	cmr_u32 vcm_moving_flag;
 	cmr_u32 vcm_move_count;
 	cmr_s32 vcm_delta_pos;
-	cmr_u32 pd_focus_times;
+    cmr_u32 pd_focus_times;
 	cmr_u32 period_a;
 	cmr_u32 period_b;
 	cmr_u32 err_count;
@@ -898,25 +898,25 @@ typedef struct _pdaf_process_s {
 	cmr_u32 hybrid_focus;
 	cmr_u32 fv_stat_sum;
 	cmr_u32 fv_stat_weight;
-	cmr_u32 init_pd_frmid;
+	cmr_u32 init_pd_frmid;	
 	cmr_u32 predict_vcm_pos;
 	cmr_u32 vcm_smooth_table[PD_MAX_MOVECOUNT];
 	cmr_u32 target_vcm_pos;
-	cmr_u32 statistics_dir;
+	cmr_u32 statistics_dir;	
 	cmr_u32 vcm_register_pos;
 	cmr_u32 curr_luma;
 	cmr_u32 target_luma;
 	cmr_u32 ae_stable;
 	cmr_u32 curr_bv;
-	cmr_u32 reserved[128 - 5];
-} _pdaf_process_t;
+	cmr_u32 reserved[128-5];
+}_pdaf_process_t;
 
 typedef struct motion_sensor_data_s {
 	cmr_u32 sensor_type;
 	float x;
 	float y;
 	float z;
-	cmr_u32 reserved[12];
+	cmr_u32 reserved[12];	
 } motion_sensor_data_t;
 
 typedef struct lens_distance_map_s {
@@ -924,7 +924,7 @@ typedef struct lens_distance_map_s {
 	cmr_u32 steps_table[DISTANCE_MAP_TOTAL];	//vcm step
 	cmr_u32 distance_table[DISTANCE_MAP_TOTAL];	//distance by mm, 10/20/30/40/50/60/70/80/90/120/200/Inf
 	cmr_u32 reserved[50];
-} lens_distance_map_t;
+} lens_distance_map_t;	
 
 typedef struct _filter_clip {
 	cmr_u32 spsmd_max;
@@ -940,12 +940,12 @@ typedef struct _win_coord_alg {
 	cmr_u32 end_y;
 } win_coord;
 
-typedef struct _AF_Softlanding_Config {
-	cmr_u32 anti_noise_pos;		//the point to which could jump directly
-	cmr_u32 SAF_max_jump_len;	//if cur_pos > anti_noise_pos, the max move step in one frame
-	cmr_u32 SAF_loop_oneframe[ALG_SCENE_NUM];	//in one frame the times could jump
-	cmr_u32 SAF_loop_step[ALG_SCENE_NUM];	//in one frame the step could jump in each time
-	cmr_u32 SAF_loop_sleep;		//in one frame the sleeptime after each little jump
+typedef struct _AF_Softlanding_Config{
+	cmr_u32 anti_noise_pos;//the point to which could jump directly
+	cmr_u32 SAF_max_jump_len;//if cur_pos > anti_noise_pos, the max move step in one frame
+	cmr_u32 SAF_loop_oneframe[ALG_SCENE_NUM];//in one frame the times could jump
+	cmr_u32 SAF_loop_step[ALG_SCENE_NUM];//in one frame the step could jump in each time
+	cmr_u32 SAF_loop_sleep;//in one frame the sleeptime after each little jump
 	cmr_u32 QUIT_max_step;
 	cmr_u32 QUIT_step;
 	cmr_u32 QUIT_sleep;
@@ -956,7 +956,7 @@ typedef struct _weight_setting_s {
 	cmr_u8 table_sum;
 	cmr_u8 weight_value[FOCUS_STAT_WIN_TOTAL];
 	cmr_u8 reserved[13];
-} _weight_setting_t;			// four byte aligment 
+}_weight_setting_t;	//four byte aligment 
 
 typedef struct _af_weight_table_s {
 	_weight_setting_t mode_0_weight_table[ALG_SCENE_NUM];
@@ -966,14 +966,14 @@ typedef struct _af_weight_table_s {
 } _weight_table_t;
 
 typedef struct _face_af_tuning_s {
-	cmr_u32 big_size_thr;		// big face thr
-	cmr_u32 middle_size_thr;	// middle face thr
-	cmr_u32 little_size_thr;	// little face thr
-	cmr_u32 absolute_thr;		// too little face thr
-	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
-	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
-	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];	// outdoor/indoor/dark
-	cmr_u32 absolute_thr_ratio;	// when fit in too little face thr ,then enlarge the face area
+	cmr_u32 big_size_thr; // big face thr
+	cmr_u32 middle_size_thr;// middle face thr
+	cmr_u32 little_size_thr; // little face thr
+	cmr_u32 absolute_thr; // too little face thr
+	cmr_u32 big_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 middle_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 little_reduce_ratio[ALG_SCENE_NUM];// outdoor/indoor/dark
+	cmr_u32 absolute_thr_ratio; // when fit in too little face thr ,then enlarge the face area
 	cmr_u32 reserved[9];
 } face_af_tuning_t;
 
@@ -983,42 +983,43 @@ typedef struct _microdepth_s {
 	cmr_u32 near_thr_up;
 	cmr_u32 far_thr_low;
 	cmr_u32 far_thr_up;
-	cmr_u32 golden_vcm_steps[DISTANCE_MAP_TOTAL * 2];	// 4*DISTANCE_MAP_TOTAL*2 =96 bytes
-	cmr_u32 golden_distance[DISTANCE_MAP_TOTAL * 2];	// 4*DISTANCE_MAP_TOTAL*2 =96 bytes
+	cmr_u32 golden_vcm_steps[DISTANCE_MAP_TOTAL*2]; // 4*DISTANCE_MAP_TOTAL*2 =96 bytes
+	cmr_u32 golden_distance[DISTANCE_MAP_TOTAL*2]; // 4*DISTANCE_MAP_TOTAL*2 =96 bytes
 	cmr_u32 reverved[40];
-} microdepth_t;
+}microdepth_t;
 
 typedef struct _haf_tuning_param_s {
 	// default param for outdoor/indoor/dark
 	pdaftuning_param_t PDAF_Tuning_Data[ALG_SCENE_NUM];
 	cmr_u32 reverved[256];
-} haf_tuning_param_t;
+}haf_tuning_param_t;
+
 
 typedef struct _af_tuning_param {
-	cmr_u8 flag;				// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
-#if 1							//16*18+4*9 = 324 bytes ,win config 502*3 = 1506 bytes
-	AF_Softlanding_Config Soft_landing_param;	// 192bytes
-	face_af_tuning_t face_param;	// 92 bytes
-	_weight_table_t weight_table;	//288 bytes
-	microdepth_t microdepth_param;	// 176bytes + 196 bytes
-	cmr_u8 dummy1[324 + 1506 - 192 - 92 - 288 - 372];
-#else							//long time for unused
+	cmr_u8 flag;            // Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
+	#if 1	//16*18+4*9 = 324 bytes ,win config 502*3 = 1506 bytes
+	AF_Softlanding_Config Soft_landing_param;// 192bytes
+	face_af_tuning_t face_param; // 92 bytes
+	_weight_table_t weight_table; //288 bytes
+	microdepth_t microdepth_param; // 176bytes + 196 bytes
+	cmr_u8 dummy1[324+1506-192-92-288-372];
+	#else	//long time for unused
 	//filter_clip_t filter_clip[ALG_SCENE_NUM][AE_GAIN_TOTAL];       // AF filter threshold, 
 	//cmr_s32 bv_threshold[ALG_SCENE_NUM][ALG_SCENE_NUM];     //BV threshold
 	//AF_Window_Config SAF_win;       // SAF window config ,502bytes
 	//AF_Window_Config CAF_win;       // CAF window config ,502bytes
 	//AF_Window_Config VAF_win;       // VAF window config ,502bytes
-#endif
+	#endif
 	// default param for indoor/outdoor/dark
-	AF_Tuning AF_Tuning_Data[ALG_SCENE_NUM];	// Algorithm related parameter
-#if 1							// 2 bytes
+	AF_Tuning AF_Tuning_Data[ALG_SCENE_NUM];    // Algorithm related parameter
+	#if 1 // 2 bytes
 	cmr_u8 dummy2[2];
-#else							// long time for unused
+	#else// long time for unused
 	//cmr_u8 soft_landing_dly;
 	//cmr_u8 soft_landing_step;
-#endif
+	#endif
 	cmr_u8 vcm_hysteresis;
-	cmr_u8 dummy[98];			// for 4-bytes alignment issue
+	cmr_u8 dummy[98];       // for 4-bytes alignment issue
 } af_tuning_param_t;
 #pragma pack(pop)
 
@@ -1028,24 +1029,24 @@ typedef struct _CAF_Tuning_Para {
 } CAF_Tuning_Para;
 
 typedef struct _SAF_INFO {
-	cmr_u32 Cur_AFT_Type;		//the search method
+	cmr_u32 Cur_AFT_Type;	//the search method
 	cmr_u8 SAF_Main_Process;	//the process state of SAF main
 	cmr_u8 SAF_Search_Process;	//the process state of SAF search
 	cmr_u8 SAF_Status;
-	cmr_u8 SAF_RResult;			//rough search result
-	cmr_u8 SAF_FResult;			//fine search result
+	cmr_u8 SAF_RResult;	//rough search result
+	cmr_u8 SAF_FResult;	//fine search result
 	cmr_u8 SAF_Total_work_frame;	//total work frames during SAF work
-	cmr_u8 SAF_AE_Gain;			//AE gain
-	cmr_u16 SAF_Start_POS;		//focus position before AF work
-	cmr_u16 SAF_Cur_POS;		//current focus positon
-	cmr_u16 SAF_Final_POS;		//final move positon
+	cmr_u8 SAF_AE_Gain;	//AE gain
+	cmr_u16 SAF_Start_POS;	//focus position before AF work
+	cmr_u16 SAF_Cur_POS;	//current focus positon
+	cmr_u16 SAF_Final_POS;	//final move positon
 	cmr_u16 SAF_Final_VCM_POS;	//final move positon load from VCM
-	cmr_u16 SAF_RPeak_POS;		//Peak positon of rough search
-	cmr_u16 SAF_FPeak_POS;		//Peak positon of fine search
+	cmr_u16 SAF_RPeak_POS;	//Peak positon of rough search
+	cmr_u16 SAF_FPeak_POS;	//Peak positon of fine search
 	cmr_u64 SAF_SYS_TIME_ENTER[MAX_TIME_SAMPLE_NUM];	//save each time while entering SAF search
 	cmr_u64 SAF_SYS_TIME_EXIT[MAX_TIME_SAMPLE_NUM];	//save each time while entering SAF search
 	cmr_u32 env_converge_frm;
-	Lens_Info Lens_Para;		//current lens parameters
+	Lens_Info Lens_Para;	//current lens parameters
 	AF_Scan_Table SAF_Scan_Table_Para;	//current scan table parameters
 } SAF_INFO;
 
@@ -1080,12 +1081,12 @@ typedef struct _af_stat_data_s {
 	cmr_u64 *p_stat;
 } _af_stat_data_t;
 
-typedef struct _IO_Face_area_s {
+typedef struct _IO_Face_area_s{
 	cmr_u32 sx;
 	cmr_u32 sy;
 	cmr_u32 ex;
 	cmr_u32 ey;
-} IO_Face_area_t;
+}IO_Face_area_t;
 
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
@@ -1131,17 +1132,17 @@ typedef struct _AF_Trigger_Data {
 	cmr_u32 AFT_mode;
 	defocus_param_t defocus_param;
 	cmr_u32 re_trigger;
-	cmr_u32 trigger_source;
+	cmr_u32 trigger_source;	
 	cmr_u32 reserved[6];
 } AF_Trigger_Data;
 
 typedef struct _AF_Win {
-	cmr_u16 Set_Zone_Num;		// FV zone number
+	cmr_u16 Set_Zone_Num;	//FV zone number
 	cmr_u16 AF_Win_X[FOCUS_STAT_WIN_TOTAL];
 	cmr_u16 AF_Win_Y[FOCUS_STAT_WIN_TOTAL];
 	cmr_u16 AF_Win_W[FOCUS_STAT_WIN_TOTAL];
 	cmr_u16 AF_Win_H[FOCUS_STAT_WIN_TOTAL];
-	cmr_u16 reserved[4 * 20];
+	cmr_u16 reserved[4*20];
 } AF_Win;
 
 typedef struct _AF_face_info {
@@ -1150,13 +1151,13 @@ typedef struct _AF_face_info {
 	cmr_u32 ex;
 	cmr_u32 ey;
 	cmr_u32 reserved[4];
-} AF_face_info;
+}AF_face_info;
 
 typedef struct _AF_face_area {
 	cmr_u32 face_num;
 	AF_face_info face_info[10];
 	cmr_u32 reserved[4];
-} AF_face_area;
+}AF_face_area;
 
 typedef struct _Bokeh_tuning_param {
 	cmr_u16 from_pos;
@@ -1164,7 +1165,7 @@ typedef struct _Bokeh_tuning_param {
 	cmr_u16 move_step;
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;		/* (Unit : Percentage) *//* depend on the AF Scanning */
+	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
 } Bokeh_tuning_param;
 
 typedef struct _af_time_info_s {
@@ -1184,7 +1185,7 @@ typedef struct _af_history_info_s {
 	cmr_u32 reserved[100];
 } _af_history_info_t;
 
-// SharkLE Only ++
+//SharkLE Only ++
 typedef struct _le_dac_info {
 	cmr_u32 pulse_line;
 	cmr_u32 dac;
@@ -1193,7 +1194,7 @@ typedef struct _le_dac_info {
 	cmr_u32 vcm_mv_sec;
 	cmr_u32 vcm_mv_usec;
 } le_dac_info;
-// SharkLE Only --
+//SharkLE Only --
 
 typedef struct _AF_Data {
 	cmr_s8 AF_Version[40];
@@ -1224,15 +1225,15 @@ typedef struct _AF_Data {
 	_pdaf_process_t pdaf_proc_data;
 	pdaftuning_param_t PDAF_Tuning_Data;
 	AF_Softlanding_Config Soft_landing_param;
-	face_af_tuning_t face_param;	// 92 bytes
-	_weight_table_t weight_table;	// 288 bytes
+	face_af_tuning_t face_param; // 92 bytes
+	_weight_table_t weight_table;	//288 bytes
 	_af_history_info_t history_data;
 	_af_history_info_t runtime_data;
 	cmr_u32 postpone_notice;
 	cmr_u32 distance_reminder;
 	cmr_u32 near_dist;
 	cmr_u32 far_dist;
-	// distance independant
+//distance independant
 	cmr_u32 category[9];
 	cmr_u32 near_thr_low;
 	cmr_u32 near_thr_up;
@@ -1247,30 +1248,29 @@ typedef struct _AF_Data {
 	cmr_s32 far_shift;
 	cmr_u32 face_delay;
 	cmr_u64 FV_record;
-	microdepth_t microdepth_param;	// 176bytes
-	cmr_u16 SAF_Softlanding_dac[MAX_SAMPLE_NUM * 2];
+	microdepth_t microdepth_param; // 176bytes
+	cmr_u16 SAF_Softlanding_dac[MAX_SAMPLE_NUM*2];
 	cmr_u32 SAF_Softlanding_index;
 	cmr_u32 SAF_Softlanding_enable;
 	cmr_u32 Tuning_Buffer_checksum;
 	cmr_u32 is_flash;
-	// SharkLE Only ++
+	//SharkLE Only ++
 	le_dac_info le_dac_info_his[MAX_TIME_SAMPLE_NUM];
 	cmr_u32 le_dac_info_his_cont;
-	// SharkLE Only --
+	//SharkLE Only --
 	cmr_u32 AF_error_code;
 	IO_Face_area_t FD_info[10];
 	cmr_u32 FD_stop_counter;
 	cmr_u32 reserved[458];
 	AF_Ctrl_Ops AF_Ops;
-
 } AF_Data;
 
-typedef struct _AF_Bokeh_Test {
-	cmr_u8(*bokeh_set_scan_range) (cmr_u32 * pos_from, cmr_u32 * pos_to, cmr_u32 * steps, cmr_u16 INF, cmr_u16 MACRO);
-	cmr_u8(*bokeh_set_window) (AF_Win * wins, cmr_u32 isp_w, cmr_u32 isp_h);
-	cmr_u8(*bokeh_calc) (const cmr_u32 multi_stat_tbl[][9], const cmr_u32 * multi_pkpos, const cmr_u32 * pos_tbl, cmr_u32 pkfrm_num, Bokeh_Result * result);
-	cmr_u8 Bokeh_Test_init_state;
-} AF_Bokeh_Test;
+typedef struct _AF_Bokeh_Test{
+    cmr_u8 (*bokeh_set_scan_range)(cmr_u32* pos_from, cmr_u32* pos_to, cmr_u32* steps, cmr_u16 INF, cmr_u16 MACRO);
+    cmr_u8 (*bokeh_set_window)(AF_Win *wins, cmr_u32 isp_w, cmr_u32 isp_h); 
+    cmr_u8 (*bokeh_calc)(const cmr_u32 multi_stat_tbl[][9],const  cmr_u32* multi_pkpos,const cmr_u32* pos_tbl, cmr_u32 pkfrm_num, Bokeh_Result* result);
+    cmr_u8 Bokeh_Test_init_state;
+}AF_Bokeh_Test;
 AF_Bokeh_Test Bokeh_Test;
 #pragma pack(pop)
 
