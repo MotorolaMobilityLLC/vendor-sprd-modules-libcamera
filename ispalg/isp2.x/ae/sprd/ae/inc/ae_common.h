@@ -459,6 +459,7 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_dummy;
 	cmr_u8 led_state;			//0:off, 1:on
 	cmr_u8 flash_fired;			//just notify APP in flash auto
+	cmr_s32 flash_mode;
 //caliberation for bv match with lv
 	float lv_cali_lv;
 	float lv_cali_bv;
@@ -536,10 +537,46 @@ struct ae_alg_calc_result {
 	cmr_u32 *reserved;			/*resurve for future */
 };
 
+struct otp_ae_info {
+    cmr_u16 ae_target_lum;
+    cmr_u64 gain_1x_exp;
+    cmr_u64 gain_2x_exp;
+    cmr_u64 gain_4x_exp;
+    cmr_u64 gain_8x_exp;
+    cmr_u64 reserve;
+};
+
+struct ae_sync_info{			//ae_dynamic_sync struct
+	cmr_s16 min_exp_line;
+	cmr_s16 max_again;
+	cmr_s16 min_again;
+	cmr_s16 sensor_gain_precision;
+	cmr_u32 line_time;
+	cmr_u32 aem[3 * 1024];
+	struct otp_ae_info ae_otp_info;
+	cmr_u32 exposure;
+	cmr_u32 gain;
+};
+
+//ae_sync_param
+ struct ae_sync_para{
+	cmr_u32 magic_first_num;
+	cmr_u32 version;
+	cmr_u32 mode ; //0: OTP mode;1:dynamic mode
+	cmr_u32 y_ratio_chg_thr; //thr,cnt
+	cmr_u32 y_ratio_chg_cnt ;
+	cmr_u32 y_ratio_stb_thr;
+	cmr_u32 y_ratio_stb_cnt;
+	cmr_u32 adpt_speed; //adapt speed
+	cmr_u32 reserve[7];
+	cmr_u32 magic_end_num;
+};
+
 struct ae_alg_fun_tab {
 	cmr_handle(*init) (cmr_handle, cmr_handle);
 	cmr_s32(*deinit) (cmr_handle, cmr_handle, cmr_handle);
 	cmr_s32(*calc) (cmr_handle, cmr_handle, cmr_handle);
+	cmr_s32(*sync_calc) (cmr_handle,cmr_handle, cmr_handle, cmr_handle);
 	cmr_s32(*ioctrl) (cmr_handle, cmr_u32, cmr_handle, cmr_handle);
 };
 #endif

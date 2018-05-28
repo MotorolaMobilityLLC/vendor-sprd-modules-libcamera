@@ -44,9 +44,22 @@ extern "C" {
 		cmr_handle ae_output;
 	};
 
+	struct ae_misc_sync_in{
+		cmr_handle master_ae_info;
+	};
+
+	struct ae_misc_sync_out{
+		cmr_handle slave_ae_info;
+	};
+
+	struct ae_misc_sync_param{
+		cmr_handle ae_sync_param;
+	};
+
 	cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
 	cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
 	cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
+	cmr_s32 ae_misc_sync_calculation(cmr_handle handle,struct ae_misc_sync_param * in_param, struct ae_misc_sync_in * master_param, struct ae_misc_sync_out * slave_param);
 
 #ifdef __cplusplus
 }
