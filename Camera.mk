@@ -124,9 +124,13 @@ LOCAL_SRC_FILES+= \
 	common/src/cmr_msg.c \
 	tool/mtrace/mtrace.c
 
-#LOCAL_SRC_FILES += \
-#	tool/auto_test/src/SprdCamera_autest_Interface.cpp \
-#	test.cpp
+LOCAL_SRC_FILES += \
+	tool/auto_test/auto_test.cpp \
+	test.cpp
+
+LOCAL_C_INCLUDES += \
+   $(TOP)/vendor/sprd/proprietories-source/engmode \
+   $(TOP)/vendor/sprd/proprietories-source/autotest/interface/include
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 	LOCAL_C_INCLUDES += \
@@ -268,5 +272,12 @@ endif
 ifeq ($(PLATFORM_VERSION),4.4.4)
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 endif
+
+CAMERA_NPI_FILE := /vendor/lib/hw/camera.$(TARGET_BOARD_PLATFORM).so
+SYMLINK := $(TARGET_OUT_VENDOR)/lib/npidevice/camera.$(TARGET_BOARD_PLATFORM).so
+LOCAL_POST_INSTALL_CMD := $(hide) \
+	mkdir -p $(TARGET_OUT_VENDOR)/lib/npidevice; \
+	rm -rf $(SYMLINK) ;\
+	ln -sf $(CAMERA_NPI_FILE) $(SYMLINK);
 
 include $(BUILD_SHARED_LIBRARY)
