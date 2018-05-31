@@ -131,6 +131,8 @@ typedef enum {
     SENSOR_VAL_TYPE_GET_BV,
     SENSOR_VAL_TYPE_SET_SENSOR_MULTI_MODE,
     SENSOR_VAL_TYPE_SET_RAW_INFOR,
+    SENSOR_VAL_TYPE_GET_EBDLINE_INFO,
+    SENSOR_VAL_TYPE_PARSE_EBD_DATA,
     SENSOR_VAL_TYPE_SET_SPC_DATA,
     SENSOR_VAL_TYPE_4IN1_INIT,
     SENSOR_VAL_TYPE_4IN1_PROC,
@@ -249,6 +251,9 @@ struct sensor_static_info {
 
     /* Whether support pdaf,1:support,0:none*/
     cmr_u32 pdaf_supported;
+
+    /* Whether embedded line enable,1:support,0:none*/
+    cmr_u32 embedded_line_enable;
 
     /* exp_valid_frame_num;N+2-1 */
     cmr_u32 exp_valid_frame_num;

@@ -44,6 +44,7 @@ enum sns_cmd {
 
     CMD_SNS_IC_DEFAULT = CMD_SNS_IC_START, /*include 256 sub IC cmd*/
     CMD_SNS_IC_WRITE_MULTI_AE,
+    CMD_SNS_IC_GET_EBD_PARSE_DATA,
 
     CMD_SNS_AF_SET_BEST_MODE = CMD_SNS_AF_START, /*include 256 sub AF cmd*/
     CMD_SNS_AF_GET_TEST_MODE,
@@ -150,6 +151,7 @@ struct sensor_ex_info {
     cmr_u32 max_adgain;
     cmr_u32 ois_supported;
     cmr_u32 pdaf_supported;
+    cmr_u32 embedded_line_enable;
     cmr_u32 exp_valid_frame_num;
     cmr_u32 clamp_level;
     cmr_u32 adgain_valid_frame_num;
@@ -353,6 +355,8 @@ enum sensor_vendor_type {
 
     SENSOR_VENDOR_IMX_BEGIN,
     SENSOR_VENDOR_IMX258,
+    SENSOR_VENDOR_IMX258_TYPE2,
+    SENSOR_VENDOR_IMX258_TYPE3,
     SENSOR_VENDOR_IMX_END,
 
     SENSOR_VENDOR_OV_BEGIN,
@@ -410,6 +414,42 @@ struct sensor_pdaf_info {
     cmr_u32 sns_orientation; // 0: Normal, 1:Mirror+Flip
     cmr_u32 *sns_mode;       // sensor mode for pd
     struct pd_vch2_info vch2_info;
+};
+
+struct sensor_ebd_data_info {
+    cmr_u32 data_type;
+    cmr_u32 data_format;
+    cmr_u32 data_size;
+};
+
+struct ebd_vch_info {
+    cmr_u32 bypass;
+    cmr_u32 vch_id;
+    cmr_u32 vch_data_type;
+    cmr_u32 vch_mode; // 0: none;for pdaf type3 1: use datatype 2:use vch
+};
+
+struct ebd_parse_data {
+    cmr_u8 frame_count;
+    cmr_u16 shutter;
+    cmr_u16 again;
+    cmr_u16 dgain_gr;
+    cmr_u16 dgain_r;
+    cmr_u16 dgain_b;
+    cmr_u16 dgain_gb;
+    cmr_uint gain;
+};
+
+struct sensor_embedded_info {
+    cmr_u16 frame_count_valid;
+    cmr_u16 shutter_valid;
+    cmr_u16 again_valid;
+    cmr_u16 dgain_valid;
+    struct ebd_parse_data parse_data;
+    struct ebd_vch_info vc_info;
+    struct sensor_ebd_data_info embedded_data_info;
+    cmr_u8 *embedded_data;
+    cmr_u32 *sns_mode; // sensor mode for ebd
 };
 
 struct sensor_4in1_info {

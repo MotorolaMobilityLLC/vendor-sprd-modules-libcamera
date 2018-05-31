@@ -197,7 +197,7 @@ static const SENSOR_REG_T imx351_init_setting[] = {
     {0xAC09, 0xC0}, {0xAC17, 0x0A},
     {0xAC19, 0x0A}, {0xAC1B, 0x0A},
     {0xAC1C, 0x01}, {0xAC1D, 0xC0},
-    {0xAC1F, 0xC0}, {0xBCF1, 0x00},
+    {0xAC1F, 0xC0}, {0xBCF1, 0x02},
 
 #if defined(CONFIG_DUAL_MODULE)
     {0x3F0B, 0x01}, {0x3041, 0x01},
@@ -580,6 +580,7 @@ static SENSOR_STATIC_INFO_T s_imx351_static_info[VENDOR_NUM] = {
                      .max_adgain = 16 * 16,
                      .ois_supported = 0,
                      .pdaf_supported = SENSOR_PDAF_TYPE1_ENABLE,
+                     .embedded_line_enable = 1,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
@@ -682,7 +683,7 @@ static SENSOR_VIDEO_INFO_T s_imx351_video_info[] = {
 static struct sensor_module_info s_imx351_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .module_info = {.major_i2c_addr = 0x34 >> 1,
-                     .minor_i2c_addr = 0x10 >> 1,
+                     .minor_i2c_addr = 0x20 >> 1,
                      .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
                                             SENSOR_I2C_VAL_8BIT |
                                             SENSOR_I2C_FREQ_400,

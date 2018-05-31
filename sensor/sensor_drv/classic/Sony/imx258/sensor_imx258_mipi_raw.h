@@ -25,9 +25,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_imx258_raw_param_main.c"
-#include "parameters/sensor_imx258_otp_truly.h"
-
 #define SENSOR_NAME "imx258_mipi_raw"
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
 #define I2C_SLAVE_ADDR 0x20
@@ -81,7 +78,7 @@
 // struct sensor_ev_info_t s_sensor_ev_info;
 
 static struct sensor_ic_ops s_imx258_ops_tab;
-struct sensor_raw_info *s_imx258_mipi_raw_info_ptr = &s_imx258_mipi_raw_info;
+struct sensor_raw_info *s_imx258_mipi_raw_info_ptr = PNULL;//&s_imx258_mipi_raw_info;
 
 static const SENSOR_REG_T imx258_init_setting[] = {
     /*Module common default setting*/
@@ -191,7 +188,7 @@ static const SENSOR_REG_T imx258_2096x1552_setting[] = {
     {0x3030, 0x00},
     {0x3032, 0x00}, // 0},//1},
     {0x0220, 0x00},
-    {0x4041, 0x00},
+    {0x4041, 0x02},
 
 #if 1 // CONFIG_CAMERA_DUAL_SYNC
     /*for sensor sync start*/
@@ -304,7 +301,7 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
 #endif
     {0x3032, 0x01}, // 0},//1},
     {0x0220, 0x00},
-    {0x4041, 0x00},
+    {0x4041, 0x02},
 #ifdef PDAF_TYPE3
     {0x3052, 0x00}, // 1},
     {0x7BCB, 0x00},
@@ -411,7 +408,8 @@ static const SENSOR_REG_T imx258_1040x768_setting[] = {
     {0x3030, 0x00},
     {0x3032, 0x00},
     {0x0220, 0x00},
-    {0x4041, 0x00}};
+    {0x4041, 0x02}
+};
 
 static const SENSOR_REG_T imx258_1280x720_setting[] = {
     /*4Lane
@@ -510,7 +508,7 @@ static const SENSOR_REG_T imx258_1280x720_setting[] = {
     {0x3030, 0x00},
     {0x3032, 0x00},
     {0x0220, 0x00},
-    {0x4041, 0x00},
+    {0x4041, 0x02},
 };
 
 static struct sensor_reg_tag imx258_shutter_reg[] = {
@@ -559,40 +557,65 @@ static struct sensor_aec_i2c_tag imx258_aec_info = {
 
 static SENSOR_STATIC_INFO_T s_imx258_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_TRULY,
-     .static_info = {.f_num = 220,
-                     .focal_length = 462,
-                     .max_fps = 0,
-                     .max_adgain = 16 * 16,
-                     .ois_supported = 0,
-                     .pdaf_supported = 0,
-                     .exp_valid_frame_num = 1,
-                     .clamp_level = 64,
-                     .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.712f, 3.494f}, 3.698f}}},
+     .static_info = {
+        .f_num = 220,
+        .focal_length = 462,
+        .max_fps = 0,
+        .max_adgain = 16 * 16,
+        .ois_supported = 0,
+#if defined PDAF_TYPE2
+        .pdaf_supported = 2,
+#elif defined PDAF_TYPE3
+          .pdaf_supported = 3,
+#else
+           .pdaf_supported = 0,
+#endif
+        .embedded_line_enable = 1,
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.712f, 3.494f}, 3.698f}}},
 
     {.module_id = MODULE_SUNNY,
-     .static_info = {.f_num = 220,
-                     .focal_length = 462,
-                     .max_fps = 0,
-                     .max_adgain = 16 * 16,
-                     .ois_supported = 0,
-                     .pdaf_supported = 0,
-                     .exp_valid_frame_num = 1,
-                     .clamp_level = 64,
-                     .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.712f, 3.494f}, 3.698f}}},
+     .static_info = {
+        .f_num = 220,
+        .focal_length = 462,
+        .max_fps = 0,
+        .max_adgain = 16 * 16,
+        .ois_supported = 0,
+#if defined PDAF_TYPE2
+         .pdaf_supported = 2,
+#elif defined PDAF_TYPE3
+          .pdaf_supported = 3,
+#else
+          .pdaf_supported = 0,
+#endif
+        .embedded_line_enable = 1,
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.712f, 3.494f}, 3.698f}}},
 
     {.module_id = MODULE_DARLING,
-     .static_info = {.f_num = 220,
-                     .focal_length = 462,
-                     .max_fps = 0,
-                     .max_adgain = 16 * 16,
-                     .ois_supported = 0,
-                     .pdaf_supported = 0,
-                     .exp_valid_frame_num = 1,
-                     .clamp_level = 64,
-                     .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.712f, 3.494f}, 3.698f}}}};
+     .static_info = {
+        .f_num = 220,
+        .focal_length = 462,
+        .max_fps = 0,
+        .max_adgain = 16 * 16,
+        .ois_supported = 0,
+#if defined PDAF_TYPE2
+         .pdaf_supported = 2,
+#elif defined PDAF_TYPE3
+          .pdaf_supported = 3,
+#else
+          .pdaf_supported = 0,
+#endif
+        .embedded_line_enable = 1,
+        .exp_valid_frame_num = 1,
+        .clamp_level = 64,
+        .adgain_valid_frame_num = 1,
+        .fov_info = {{4.712f, 3.494f}, 3.698f}}}
+};
 
 /*==============================================================================
  * Description:
@@ -756,105 +779,102 @@ static SENSOR_VIDEO_INFO_T s_imx258_video_info[] = {
      .setting_ptr = (struct sensor_reg_tag **)s_imx258_capture_size_video_tab},
 };
 
-static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] =
-    {
-        {.module_id = MODULE_TRULY,
-         .module_info = {.major_i2c_addr = 0x34 >> 1,
-                         .minor_i2c_addr = 0x10 >> 1,
+static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] = {
+    {.module_id = MODULE_TRULY,
+     .module_info = {
+        .major_i2c_addr = 0x34 >> 1,
+        .minor_i2c_addr = 0x20 >> 1,
 
-                         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
-                                                SENSOR_I2C_VAL_8BIT |
-                                                SENSOR_I2C_FREQ_400,
+        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                               SENSOR_I2C_FREQ_400,
 
-                         .avdd_val = SENSOR_AVDD_2800MV,
-                         .iovdd_val = SENSOR_AVDD_1800MV,
-                         .dvdd_val = SENSOR_AVDD_1200MV,
+        .avdd_val = SENSOR_AVDD_2800MV,
+        .iovdd_val = SENSOR_AVDD_1800MV,
+        .dvdd_val = SENSOR_AVDD_1200MV,
 
-                         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
-                         .preview_skip_num = 1,
-                         .capture_skip_num = 1,
-                         .flash_capture_skip_num = 6,
-                         .mipi_cap_skip_num = 0,
-                         .preview_deci_num = 0,
-                         .video_preview_deci_num = 0,
+        .preview_skip_num = 1,
+        .capture_skip_num = 1,
+        .flash_capture_skip_num = 6,
+        .mipi_cap_skip_num = 0,
+        .preview_deci_num = 0,
+        .video_preview_deci_num = 0,
 
-                         .sensor_interface =
-                             {
-                                 .type = SENSOR_INTERFACE_TYPE_CSI2,
-                                 .bus_width = 4,
-                                 .pixel_width = 10,
-                                 /*0:mipi_raw,1:normal_raw*/
-                                 .is_loose = 0,
-                             },
+        .sensor_interface = {
+            .type = SENSOR_INTERFACE_TYPE_CSI2,
+            .bus_width = 4,
+            .pixel_width = 10,
+            /*0:mipi_raw,1:normal_raw*/
+            .is_loose = 0,
+        },
 
-                         .change_setting_skip_num = 1,
-                         .horizontal_view_angle = 35,
-                         .vertical_view_angle = 35}},
-        {.module_id = MODULE_SUNNY,
-         .module_info =
-             {.major_i2c_addr = 0x34 >> 1,
-              .minor_i2c_addr = 0x10 >> 1,
-              .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
-                                     SENSOR_I2C_VAL_8BIT | SENSOR_I2C_FREQ_400,
+        .change_setting_skip_num = 1,
+        .horizontal_view_angle = 35,
+        .vertical_view_angle = 35
+    }},
+    {.module_id = MODULE_SUNNY,
+     .module_info = {
+        .major_i2c_addr = 0x34 >> 1,
+        .minor_i2c_addr = 0x20 >> 1,
+        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                               SENSOR_I2C_FREQ_400,
 
-              .avdd_val = SENSOR_AVDD_2800MV,
-              .iovdd_val = SENSOR_AVDD_1800MV,
-              .dvdd_val = SENSOR_AVDD_1200MV,
+        .avdd_val = SENSOR_AVDD_2800MV,
+        .iovdd_val = SENSOR_AVDD_1800MV,
+        .dvdd_val = SENSOR_AVDD_1200MV,
 
-              .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-              .preview_skip_num = 1,
-              .capture_skip_num = 1,
-              .flash_capture_skip_num = 6,
-              .mipi_cap_skip_num = 0,
-              .preview_deci_num = 0,
-              .video_preview_deci_num = 0,
+        .preview_skip_num = 1,
+        .capture_skip_num = 1,
+        .flash_capture_skip_num = 6,
+        .mipi_cap_skip_num = 0,
+        .preview_deci_num = 0,
+        .video_preview_deci_num = 0,
 
-              .sensor_interface =
-                  {
-                      .type = SENSOR_INTERFACE_TYPE_CSI2,
-                      .bus_width = 4,
-                      .pixel_width =
-                          10,
-                      .is_loose = 0,
-                  },
+        .sensor_interface = {
+            .type = SENSOR_INTERFACE_TYPE_CSI2,
+            .bus_width = 4,
+            .pixel_width = 10,
+            .is_loose = 0,
+        },
 
-              .change_setting_skip_num = 1,
-              .horizontal_view_angle = 35,
-              .vertical_view_angle = 35}},
-        {.module_id = MODULE_DARLING,
-         .module_info =
-             {.major_i2c_addr = 0x20 >> 1,
-              .minor_i2c_addr = 0x20 >> 1,
+        .change_setting_skip_num = 1,
+        .horizontal_view_angle = 35,
+        .vertical_view_angle = 35
+    }},
+    {.module_id = MODULE_DARLING,
+     .module_info = {
+        .major_i2c_addr = 0x20 >> 1,
+        .minor_i2c_addr = 0x20 >> 1,
 
-              .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
-                                     SENSOR_I2C_VAL_8BIT | SENSOR_I2C_FREQ_400,
+        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
+                               SENSOR_I2C_FREQ_400,
 
-              .avdd_val = SENSOR_AVDD_2800MV,
-              .iovdd_val = SENSOR_AVDD_1800MV,
-              .dvdd_val = SENSOR_AVDD_1200MV,
+        .avdd_val = SENSOR_AVDD_2800MV,
+        .iovdd_val = SENSOR_AVDD_1800MV,
+        .dvdd_val = SENSOR_AVDD_1200MV,
 
-              .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
-              .preview_skip_num = 1,
-              .capture_skip_num = 1,
-              .flash_capture_skip_num = 6,
-              .mipi_cap_skip_num = 0,
-              .preview_deci_num = 0,
-              .video_preview_deci_num = 0,
+        .preview_skip_num = 1,
+        .capture_skip_num = 1,
+        .flash_capture_skip_num = 6,
+        .mipi_cap_skip_num = 0,
+        .preview_deci_num = 0,
+        .video_preview_deci_num = 0,
 
-              .sensor_interface =
-                  {
-                      .type = SENSOR_INTERFACE_TYPE_CSI2,
-                      .bus_width = 4,
-                      .pixel_width =
-                          10,
-                      .is_loose = 0,
-                  },
-              .change_setting_skip_num = 1,
-              .horizontal_view_angle = 35,
-              .vertical_view_angle = 35}},
+        .sensor_interface = {
+            .type = SENSOR_INTERFACE_TYPE_CSI2,
+            .bus_width = 4,
+            .pixel_width = 10,
+            .is_loose = 0,
+        },
+        .change_setting_skip_num = 1,
+        .horizontal_view_angle = 35,
+        .vertical_view_angle = 35
+    }},
 };
 
 SENSOR_INFO_T g_imx258_mipi_raw_info = {

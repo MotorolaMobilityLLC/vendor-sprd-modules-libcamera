@@ -520,6 +520,17 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
         CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%ld", ret);
         return ret;
     }
+    if (1 == config->cfg.ebd_ctrl.mode) {
+        parm.channel_id = channel_id;
+        parm.ebd_ctrl.mode = config->cfg.ebd_ctrl.mode;
+        parm.ebd_ctrl.image_vc = config->cfg.ebd_ctrl.image_vc;
+        parm.ebd_ctrl.image_dt = config->cfg.ebd_ctrl.image_dt;
+        ret = ioctl(p_grab->fd, SPRD_IMG_IO_EBD_CONTROL, &parm);
+        if (ret) {
+            CMR_LOGE("SPRD_IMG_IO_EBD_CONTROL failed, ret=%ld", ret);
+            return ret;
+        }
+    }
 
     parm.channel_id = channel_id;
     parm.deci = config->chn_deci_factor;

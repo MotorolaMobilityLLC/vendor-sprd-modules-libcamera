@@ -110,7 +110,9 @@ static cmr_u16 imx258_drv_read_gain(cmr_handle handle) {
     cmr_u16 gain_d = 0;
 
     gain_a = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0205);
+    gain_a = gain_a << 8 | hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0204);
     gain_d = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0210);
+    gain_d = gain_d << 8 | hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0211);
 
     return gain_a * gain_d;
 }
@@ -120,25 +122,28 @@ static cmr_u16 imx258_drv_read_gain(cmr_handle handle) {
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx258_drv_write_gain(cmr_handle handle, float gain) {
+static void imx258_drv_write_gain(cmr_handle handle, double gain) {
 
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u32 sensor_again = 0;
     cmr_u32 sensor_dgain = 0;
-    float temp_gain;
+    double temp_gain;
 
-    gain = gain / 32.0;
+   // gain = gain / 32.0;
 
     temp_gain = gain;
     if (temp_gain < 1.0)
         temp_gain = 1.0;
     else if (temp_gain > 16.0)
         temp_gain = 16.0;
-    sensor_again = (cmr_u16)(512.0 - 512.0 / temp_gain);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0204,
-                        (sensor_again >> 8) & 0xFF);
+    else{
+        temp_gain = 1.0;
+        sensor_dgain = gain *256;
+     }
+   sensor_again = (cmr_u16)(512.0 - 512.0 / temp_gain);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0204, (sensor_again >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, sensor_again & 0xFF);
 
     temp_gain = gain / 16;
@@ -146,9 +151,8 @@ static void imx258_drv_write_gain(cmr_handle handle, float gain) {
         temp_gain = 16.0;
     else if (temp_gain < 1.0)
         temp_gain = 1.0;
-    sensor_dgain = (cmr_u16)(256 * temp_gain);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020e,
-                        (sensor_dgain >> 8) & 0xFF);
+    sensor_dgain = sensor_dgain == 0 ? (cmr_u16)(256 * temp_gain) : sensor_dgain;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020e, (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020f, sensor_dgain & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0210,
                         (sensor_dgain >> 8) & 0xFF);
@@ -542,13 +546,13 @@ static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
  * you can change this function if it's necessary
  *============================================================================*/
 static cmr_int imx258_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
-    float real_gain = 0;
+    double real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    real_gain = (float)param * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
+    real_gain = (double)param  / ISP_BASE_GAIN * 1.0;
 
-    SENSOR_LOGI("real_gain = %f", real_gain);
+    SENSOR_LOGI("real_gain = %f %d", real_gain,param);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     imx258_drv_write_gain(handle, real_gain);
@@ -716,6 +720,9 @@ static cmr_int imx258_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0601, 0x02);
     }
 #endif
+#if defined(_SENSOR_RAW_SHARKL3_H_)
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
+#endif
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
@@ -792,6 +799,7 @@ static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->embedded_line_enable = static_info->embedded_line_enable;
 
     memcpy(&ex_info->fov_info, &static_info->fov_info,
            sizeof(static_info->fov_info));
@@ -828,6 +836,67 @@ static cmr_int imx258_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_LOGI("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
     return rtn;
+}
+
+static  const cmr_u32 ebd_sns_mode[] = {0,1,1,1};
+
+static cmr_int imx258_drv_get_ebdline_info(cmr_handle handle,
+                                         cmr_u32 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct sensor_embedded_info *embedded_info = NULL;
+    /*TODO*/
+    if (param == NULL) {
+        SENSOR_LOGE("null input");
+        return -1;
+    }
+
+    embedded_info = (struct sensor_embedded_info *)param;
+    embedded_info->vc_info.bypass = 0;
+    embedded_info->vc_info.vch_id = 0;
+    embedded_info->vc_info.vch_data_type = 0x12;
+    embedded_info->vc_info.vch_mode = 0x01;
+    embedded_info->sns_mode = ebd_sns_mode;
+    SENSOR_LOGI("X");
+
+    return rtn;
+}
+
+static cmr_int imx258_drv_parse_ebd_data(cmr_handle handle,
+                                         cmr_u32 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct sensor_embedded_info *embedded_info = NULL;
+    struct ebd_parse_data *parse_data = NULL;
+    /*TODO*/
+    if (param == NULL) {
+        SENSOR_LOGE("null input");
+        return -1;
+    }
+
+    embedded_info = (struct sensor_embedded_info *)param;
+   if (embedded_info->embedded_data == NULL) {
+        SENSOR_LOGE("embedded_data err");
+        return -1;
+    }
+    parse_data = &embedded_info->parse_data;
+    cmr_u8 *embedded_data = (cmr_u8 *)embedded_info->embedded_data;
+    embedded_info->frame_count_valid = 1;
+    embedded_info->shutter_valid= 1;
+    embedded_info->again_valid=  1;
+    embedded_info->dgain_valid = 1;
+    parse_data->frame_count= *(embedded_data+6+ 6/4);
+    parse_data->shutter = *(embedded_data+38+38/4) << 8 |*(embedded_data+40+40/4);
+    parse_data->again =  *(embedded_data+42+42/4) << 8 | *(embedded_data+44+44/4);
+    parse_data->dgain_gr =*(embedded_data+48+48/4) <<8 |*(embedded_data+50+50/4);
+    parse_data->dgain_r = *(embedded_data+52+52/4) <<8 | *(embedded_data+54+54/4);
+    parse_data->dgain_b =  *(embedded_data+56+56/4) << 8 |*(embedded_data+58+58/4);
+    parse_data->dgain_gb =  *(embedded_data+60+60/4) << 8 | *(embedded_data+62+62/4);
+    parse_data->gain =  (double)512.0/(512.0-parse_data->again)*(double)(parse_data->dgain_r/256.0)*ISP_BASE_GAIN;
+    SENSOR_LOGI("X frame_count %x shutter: %d again %x %x %x %x %x %d", parse_data->frame_count,
+        parse_data->shutter, parse_data->again,parse_data->dgain_gr,parse_data->dgain_r,
+        parse_data->dgain_b,parse_data->dgain_gb,parse_data->gain);
+
+    return rtn;
+
 }
 
 static const cmr_u16 imx258_pd_is_right[] = {0, 0, 1, 1, 1, 1, 0, 0};
@@ -896,7 +965,12 @@ static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx258_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx258_pd_pos_l;
-    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258;
+#ifdef PDAF_TYPE3
+    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258_TYPE3;
+#endif
+#ifdef PDAF_TYPE2
+    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258_TYPE2;
+#endif
     pdaf_info->type2_info.data_type = 0x2f;
     pdaf_info->type2_info.data_format = DATA_BYTE2;
     if (DATA_BYTE2 == pdaf_info->type2_info.data_format) {
@@ -913,6 +987,18 @@ static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
+
+#include "parameters/param_manager.c"
+static cmr_int imx258_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_imx258_mipi_raw_info_ptr = imx258_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
+
 
 static cmr_int imx258_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -936,6 +1022,15 @@ static cmr_int imx258_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = imx258_drv_get_pdaf_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_GET_EBDLINE_INFO:
+        rtn = imx258_drv_get_ebdline_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_PARSE_EBD_DATA:
+        rtn = imx258_drv_parse_ebd_data(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        imx258_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -977,12 +1072,11 @@ static cmr_u16 imx258_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     return shutter;
 }
 
-static void imx258_drv_calc_gain(float gain,
-                                 struct sensor_aec_i2c_tag *aec_info) {
+static void imx258_drv_calc_gain(double gain, struct sensor_aec_i2c_tag *aec_info) {
     uint8_t i = 0;
     cmr_u32 sensor_again = 0;
     cmr_u32 sensor_dgain = 0;
-    float temp_gain;
+    double temp_gain;
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
 
     gain = gain / 32.0;
@@ -990,19 +1084,23 @@ static void imx258_drv_calc_gain(float gain,
     temp_gain = gain;
     if (temp_gain < 1.0)
         temp_gain = 1.0;
-    else if (temp_gain > 8.0)
-        temp_gain = 8.0;
+    else if (temp_gain > 16.0)
+        temp_gain = 16.0;
+    else{
+        temp_gain = 1.0;
+        sensor_dgain = (cmr_u16)(256 * gain);
+    }
     sensor_again = (cmr_u16)(512.0 - 512.0 / temp_gain);
 
     aec_info->again->settings[0].reg_value = (sensor_again >> 8) & 0xFF;
     aec_info->again->settings[1].reg_value = sensor_again & 0xFF;
 
-    temp_gain = gain / 8;
+    temp_gain = gain / 16;
     if (temp_gain > 16.0)
         temp_gain = 16.0;
     else if (temp_gain < 1.0)
         temp_gain = 1.0;
-    sensor_dgain = (cmr_u16)(256 * temp_gain);
+    sensor_dgain = sensor_dgain == 0 ? (cmr_u16)(256 * temp_gain) : sensor_dgain;
     aec_info->dgain->settings[0].reg_value = (sensor_dgain >> 8) & 0xFF;
     aec_info->dgain->settings[1].reg_value = sensor_dgain & 0xFF;
     aec_info->dgain->settings[2].reg_value = (sensor_dgain >> 8) & 0xFF;
@@ -1020,7 +1118,7 @@ static unsigned long imx258_drv_read_aec_info(cmr_handle handle,
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
-    float real_gain = 0;
+    double real_gain = 0;
     cmr_u32 gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
@@ -1039,7 +1137,7 @@ static unsigned long imx258_drv_read_aec_info(cmr_handle handle,
         handle, exposure_line, dummy_line, &imx258_aec_info);
 
     gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
-    real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
+    real_gain = (double)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
     imx258_drv_calc_gain(real_gain, &imx258_aec_info);
 #endif
     return ret_value;

@@ -2992,6 +2992,24 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     return ret;
 }
 
+static cmr_int sensor_ic_parse_ebd_data(cmr_handle handle, void *param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    cmr_handle sensor_handle;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
+    SENSOR_VAL_T val;
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    val.type = SENSOR_VAL_TYPE_PARSE_EBD_DATA;
+    val.pval = param;
+
+    SENSOR_LOGI("ebd ptr %p\n", param);
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops)
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                            (cmr_uint)&val);
+    return ret;
+}
+
 cmr_int sensor_ic_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
@@ -3001,6 +3019,9 @@ cmr_int sensor_ic_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
     switch (cmd) {
     case CMD_SNS_IC_WRITE_MULTI_AE:
         ret = sensor_ic_write_multi_ae_info(handle, param);
+        break;
+    case CMD_SNS_IC_GET_EBD_PARSE_DATA:
+        ret = sensor_ic_parse_ebd_data(handle, param);
         break;
     default:
         break;

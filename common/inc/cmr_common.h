@@ -671,6 +671,7 @@ struct img_frm_cap {
     cmr_u32 flip_on;
     cmr_u32 pdaf_type3;
     struct sprd_pdaf_control pdaf_ctrl;
+    struct sprd_ebd_control ebd_ctrl;
     cmr_u32 sence_mode;
     cmr_u32 slowmotion;
     cmr_u32 chn_skip_num;
