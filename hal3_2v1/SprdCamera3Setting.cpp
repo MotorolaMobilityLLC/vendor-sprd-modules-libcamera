@@ -566,6 +566,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
     ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
     ANDROID_SYNC_MAX_LATENCY,
+    ANDROID_SPRD_AVAILABLE_AUTO_HDR,
     ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
 };
 
@@ -1991,6 +1992,14 @@ int SprdCamera3Setting::initStaticMetadata(
         ANDROID_SPRD_AVAILABLE_FLASH_LEVEL,
         &(s_setting[cameraId].sprddefInfo.sprd_available_flash_level), 1);
 
+    staticInfo.update(
+        ANDROID_SPRD_IS_HDR_SCENE,
+        &(s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene), 1);
+
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_AUTO_HDR,
+        &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
+
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
 #undef FILL_CAM_INFO_ARRAY
@@ -3053,6 +3062,12 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t isTakePictureWithFlash = 0;
     requestInfo.update(ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
                        &isTakePictureWithFlash, 1);
+
+    uint8_t sprdAutoHdrEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_AUTO_HDR_ENABLED, &sprdAutoHdrEnabled, 1);
+
+    uint8_t sprdIsHdrScene = 0;
+    requestInfo.update(ANDROID_SPRD_IS_HDR_SCENE, &sprdIsHdrScene, 1);
 
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
@@ -4328,6 +4343,11 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash), 1);
+
+    HAL_LOGI("auto hdr scene report %d", s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
+    camMetadata.update(
+        ANDROID_SPRD_IS_HDR_SCENE,
+        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene), 1);
 
     resultMetadata = camMetadata.release();
     return resultMetadata;

@@ -374,6 +374,9 @@ typedef struct {
     uint8_t is_takepicture_with_flash;
     uint8_t sprd_available_flash_level;
     uint8_t sprd_adjust_flash_level;
+    uint8_t sprd_auto_hdr_enable;
+    uint8_t sprd_is_hdr_scene;
+    uint8_t availabe_auto_hdr;
 } SPRD_DEF_Tag;
 
 typedef struct {

@@ -201,7 +201,10 @@ static tags_info_t
         {"isTakePictureWithFlash", TYPE_BYTE},
         {"sprdfastthumb", TYPE_INT32},
         {"availableSprdFlashLevel", TYPE_BYTE},
-        {"adjustSprdFlashLevel", TYPE_BYTE}
+        {"adjustSprdFlashLevel", TYPE_BYTE},
+        {"sprdAutoHdrEnabled", TYPE_BYTE},
+        {"isHdrSceneForAuto", TYPE_BYTE},
+        {"sprdAvailableAutoHdr", TYPE_BYTE}
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
