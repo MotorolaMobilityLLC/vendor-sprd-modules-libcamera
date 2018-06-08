@@ -1395,63 +1395,47 @@ struct cmr_focus_param {
 
 typedef enum {
     MODE_SINGLE_CAMERA = 0,
-    MODE_3D_VIDEO = 5, // Camera2 apk open  camera id is MODE_3D_VIDEO,camera
-                       // hal transform to open physics Camera id is 1 and 3
-    MODE_RANGE_FINDER, // Camera2 apk open  camera id is
-                       // MODE_RANGE_FINDER,camera hal transform to open physics
-                       // Camera id is 1 and 3
-    MODE_3D_CAPTURE,   // Camera2 apk open  camera id is MODE_3D_CAPTURE,camera
-                       // hal transform to open physics Camera id is 1 and 3
-    MODE_3D_CALIBRATION = 8, // ValidationTools apk open  camera id is
-                             // MODE_3D_CALIBRATION and 3 ,camera hal transform
-                             // to open physics Camera id is 1 and 3
-    MODE_REFOCUS = 9, // Camera2 apk open  camera id is MODE_REFOCUS and 2
-                      // ,camera hal transform to open physics Camera id is 0
-                      // and 2
-    MODE_3D_PREVIEW = 10, // Camera2 apk open  camera id is
-                          // MODE_3D_PREVIEW,camera hal transform to open
-                          // physics Camera id is 1 and 3
-    MODE_SOFY_OPTICAL_ZOOM = 11,
-    MODE_BLUR = 12,
-    MODE_SELF_SHOT = 13, // Camera2 apk open  camera id is MODE_SELF_SHOT,camera
-                         // hal transform to open physics Camera id is 1 and 2
-    MODE_PAGE_TURN = 14, // Camera2 apk open  camera id is MODE_PAGE_TURN,camera
-                         // hal transform to open physics Camera id is 2
-    MODE_BLUR_FRONT = 15,
-    MODE_BOKEH = 16,
-    MODE_SBS = 17,
-    MODE_TUNING = 50,
+    MODE_3D_VIDEO,
+    MODE_RANGE_FINDER,
+    MODE_3D_CAPTURE,
+    MODE_3D_CALIBRATION,
+    MODE_REFOCUS,
+    MODE_3D_PREVIEW,
+    MODE_SOFY_OPTICAL_ZOOM,
+    MODE_BLUR,
+    MODE_SELF_SHOT,
+    MODE_PAGE_TURN,
+    MODE_BLUR_FRONT,
+    MODE_BOKEH,
+    MODE_SBS,
+    MODE_SINGLE_FACEID_REGISTER,
+    MODE_SINGLE_FACEID_UNLOCK,
+    MODE_DUAL_FACEID_REGISTER,
+    MODE_DUAL_FACEID_UNLOCK,
+    MODE_TUNING,
     MODE_CAMERA_MAX
 } multiCameraMode;
-typedef enum {
-    MODE_3D_VIDEO_ID = 5, // Camera2 apk open  camera id is MODE_3D_VIDEO,camera
-                          // hal transform to open physics Camera id is 1 and 3
-    MODE_RANGE_FINDER_ID = 6, // Camera2 apk open  camera id is
-    // MODE_RANGE_FINDER,camera hal transform to open physics
-    // Camera id is 1 and 3
-    MODE_3D_CAPTURE_ID =
-        7, // Camera2 apk open  camera id is MODE_3D_CAPTURE,camera
-           // hal transform to open physics Camera id is 1 and 3
-    MODE_3D_CALIBRATION_ID = 8, // ValidationTools apk open  camera id is
-    // MODE_3D_CALIBRATION and 3 ,camera hal transform
-    // to open physics Camera id is 1/0 and 3
-    MODE_REFOCUS_ID = 9, // Camera2 apk open  camera id is MODE_REFOCUS and 2
-                         // ,camera hal transform to open physics Camera id is 0
-                         // and 2
-    MODE_3D_PREVIEW_ID = 10, // Camera2 apk open  camera id is
-                             // MODE_3D_PREVIEW,camera hal transform to open
-                             // physics Camera id is 1 and 3
-    MODE_SOFY_OPTICAL_ZOOM_ID = 11,
-    MODE_BLUR_ID = 12,
-    MODE_SELF_SHOT_ID =
-        13, // Camera2 apk open  camera id is MODE_SELF_SHOT,camera
-            // hal transform to open physics Camera id is 1 and 2
-    MODE_PAGE_TURN_ID =
-        14, // Camera2 apk open  camera id is MODE_PAGE_TURN,camera
-            // hal transform to open physics Camera id is 2
-    MODE_BLUR_FRONT_ID = 15,
 
-    MODE_CAMERA_ID_MAX
+typedef enum {
+    SPRD_MULTI_CAMERA_BASE_ID = 16,
+    SPRD_3D_VIDEO_ID,
+    SPRD_RANGE_FINDER_ID,
+    SPRD_3D_CAPTURE_ID,
+    SPRD_3D_CALIBRATION_ID = 20,
+    SPRD_REFOCUS_ID,
+    SPRD_3D_PREVIEW_ID,
+    SPRD_SOFY_OPTICAL_ZOOM_ID,
+    SPRD_BLUR_ID,
+    SPRD_SELF_SHOT_ID = 25,
+    SPRD_PAGE_TURN_ID,
+    SPRD_BLUR_FRONT_ID,
+    SPRD_BOKEH_ID,
+    SPRD_SBS_ID,
+    SPRD_SINGLE_FACEID_REGISTER_ID = 30,
+    SPRD_SINGLE_FACEID_UNLOCK_ID,
+    SPRD_DUAL_FACEID_REGISTER_ID,
+    SPRD_DUAL_FACEID_UNLOCK_ID,
+    SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId; // hal and app interforce
 
 struct img_sbs_info {

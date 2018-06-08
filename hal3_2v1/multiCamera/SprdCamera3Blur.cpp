@@ -499,7 +499,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     };
     property_get("persist.sys.cam.blur.cov.id", prop, "3");
 
-    if (camera_id == MODE_BLUR_FRONT) {
+    if (camera_id == SPRD_BLUR_FRONT_ID) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
         if (atoi(prop) == 1 || atoi(prop) == 2) {
@@ -575,7 +575,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    if (blur_camera_id == MODE_BLUR_FRONT) {
+    if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
         property_get("persist.sys.cam.fr.blur.version", prop, "0");
     } else {
@@ -628,7 +628,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
 
-    if (blur_camera_id == MODE_BLUR_FRONT) {
+    if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
         property_get("persist.sys.cam.res.blur.fr", prop, "1");
         HAL_LOGI("blur front support cap resolution %d", atoi(prop));
     } else {

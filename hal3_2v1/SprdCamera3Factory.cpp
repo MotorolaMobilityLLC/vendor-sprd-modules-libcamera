@@ -294,17 +294,17 @@ ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
 */
 bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     /*Camera ID Expose To Camera Apk On MultiCameraMode*/
-    if ((MIN_MULTI_CAMERA_FAKE_ID > cameraId) ||
-        (cameraId > MAX_MULTI_CAMERA_FAKE_ID))
+    if ((SPRD_MULTI_CAMERA_BASE_ID > cameraId) ||
+        (cameraId > SPRD_MULTI_CAMERA_MAX_ID))
         return false;
 
-    if ((MODE_3D_VIDEO_ID == cameraId) || (MODE_RANGE_FINDER_ID == cameraId) ||
-        (MODE_3D_CAPTURE_ID == cameraId) || (MODE_3D_PREVIEW_ID == cameraId) ||
-        (MODE_BLUR_ID == cameraId) || (MODE_SELF_SHOT_ID == cameraId) ||
-        (MODE_PAGE_TURN_ID == cameraId) || (MODE_BLUR_FRONT_ID == cameraId)) {
+    if ((SPRD_3D_VIDEO_ID == cameraId) || (SPRD_RANGE_FINDER_ID == cameraId) ||
+        (SPRD_3D_CAPTURE_ID == cameraId) || (SPRD_3D_PREVIEW_ID == cameraId) ||
+        (SPRD_BLUR_ID == cameraId) || (SPRD_SELF_SHOT_ID == cameraId) ||
+        (SPRD_PAGE_TURN_ID == cameraId) || (SPRD_BLUR_FRONT_ID == cameraId)) {
         return true;
-    } else if (MODE_REFOCUS_ID == cameraId ||
-               (MODE_3D_CALIBRATION_ID == cameraId)) {
+    } else if (SPRD_REFOCUS_ID == cameraId ||
+               (SPRD_3D_CALIBRATION_ID == cameraId)) {
         return false;
     }
 
@@ -317,14 +317,14 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
     };
     if (MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
         return cameraId;
-    } else if (MODE_REFOCUS_ID == cameraId) { // Camera2 apk open  camera id is
-                                              // MODE_REFOCUS and 2 ,camera hal
-        // transform to open physics Camera
-        // id is 0 and 2
+    } else if (SPRD_REFOCUS_ID == cameraId) { // Camera2 apk open  camera id is
+                                              // SPRD_REFOCUS_ID and 2 ,camera hal
+                                              // transform to open physics Camera
+                                              // id is 0 and 2
         return 0;
-    } else if (MODE_3D_CALIBRATION_ID ==
+    } else if (SPRD_3D_CALIBRATION_ID ==
                cameraId) { // ValidationTools apk open  camera id is
-                           // MODE_3D_CALIBRATION and 3 ,camera hal transform to
+                           // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to
                            // open physics Camera id is 1 and 3
         property_get("persist.sys.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {

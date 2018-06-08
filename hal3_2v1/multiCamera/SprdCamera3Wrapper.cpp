@@ -80,26 +80,26 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 
     switch (atoi(id)) {
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
-    case MODE_3D_VIDEO_ID:
+    case SPRD_3D_VIDEO_ID:
         rc = mStereoVideo->camera_device_open(module, id, hw_device);
         break;
 #endif
 #ifdef CONFIG_RANGEFINDER_SUPPORT
-    case MODE_RANGE_FINDER_ID:
+    case SPRD_RANGE_FINDER_ID:
         rc = mRangeFinder->camera_device_open(module, id, hw_device);
         break;
 #endif
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
-    case MODE_3D_CAPTURE_ID:
+    case SPRD_3D_CAPTURE_ID:
         rc = mCapture->camera_device_open(module, id, hw_device);
         break;
 #endif
 #ifdef CONFIG_STEREOPREVIEW_SUPPORT
-    case MODE_3D_PREVIEW_ID:
+    case SPRD_3D_PREVIEW_ID:
         rc = mStereoPreview->camera_device_open(module, id, hw_device);
         break;
 #endif
-    case MODE_BLUR_ID:
+    case SPRD_BLUR_ID:
         property_get("persist.sys.camera.raw.mode", prop, "jpeg");
         if (!strcmp(prop, "raw")) {
             rc = mTCam->camera_device_open(module, id, hw_device);
@@ -125,15 +125,15 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 
         break;
 #ifdef CONFIG_BLUR_SUPPORT
-    case MODE_BLUR_FRONT_ID:
+    case SPRD_BLUR_FRONT_ID:
         rc = mBlur->camera_device_open(module, id, hw_device);
         break;
 #endif
 #ifdef CONFIG_COVERED_SENSOR
-    case MODE_SELF_SHOT_ID:
+    case SPRD_SELF_SHOT_ID:
         rc = mSelfShot->camera_device_open(module, id, hw_device);
         break;
-    case MODE_PAGE_TURN_ID:
+    case SPRD_PAGE_TURN_ID:
         rc = mPageturn->camera_device_open(module, id, hw_device);
         break;
 #endif
@@ -158,26 +158,26 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 
     switch (camera_id) {
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
-    case MODE_3D_VIDEO:
+    case SPRD_3D_VIDEO_ID:
         rc = mStereoVideo->get_camera_info(camera_id, info);
         break;
 #endif
 #ifdef CONFIG_RANGEFINDER_SUPPORT
-    case MODE_RANGE_FINDER_ID:
+    case SPRD_RANGE_FINDER_ID:
         rc = mRangeFinder->get_camera_info(camera_id, info);
         break;
 #endif
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
-    case MODE_3D_CAPTURE_ID:
+    case SPRD_3D_CAPTURE_ID:
         rc = mCapture->get_camera_info(camera_id, info);
         break;
 #endif
 #ifdef CONFIG_STEREOPREVIEW_SUPPORT
-    case MODE_3D_PREVIEW_ID:
+    case SPRD_3D_PREVIEW_ID:
         rc = mStereoPreview->get_camera_info(camera_id, info);
         break;
 #endif
-    case MODE_BLUR_ID:
+    case SPRD_BLUR_ID:
         property_get("persist.sys.camera.raw.mode", prop, "jpeg");
         if (!strcmp(prop, "raw")) {
             rc = mTCam->get_camera_info(camera_id, info);
@@ -200,15 +200,15 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         }
         break;
 #ifdef CONFIG_BLUR_SUPPORT
-    case MODE_BLUR_FRONT_ID:
+    case SPRD_BLUR_FRONT_ID:
         rc = mBlur->get_camera_info(camera_id, info);
         break;
 #endif
 #ifdef CONFIG_COVERED_SENSOR
-    case MODE_SELF_SHOT_ID:
+    case SPRD_SELF_SHOT_ID:
         rc = mSelfShot->get_camera_info(camera_id, info);
         break;
-    case MODE_PAGE_TURN_ID:
+    case SPRD_PAGE_TURN_ID:
         rc = mPageturn->get_camera_info(camera_id, info);
         break;
 #endif
