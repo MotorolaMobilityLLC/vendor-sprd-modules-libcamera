@@ -74,6 +74,8 @@ extern "C" {
 		AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
 		AWB_CTRL_CMD_GET_CT_TABLE20 = 0x500,
 		AWB_CTRL_CMD_GET_DATA_TYPE = 0x600,
+		AWB_CTRL_CMD_GET_OTP_INFO = 0x700,
+
 		AWB_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

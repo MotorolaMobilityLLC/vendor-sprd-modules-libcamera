@@ -889,6 +889,19 @@ static cmr_u32 _awb_get_flash_ct_table(struct awb_ctrl_cxt *cxt, void *result)
 	return rtn;
 }
 
+static cmr_u32 _awb_get_otp_info(struct awb_ctrl_cxt *cxt, void *result)
+{
+	cmr_u32 rtn = AWB_SUCCESS;
+	struct awb_ctrl_opt_info *param = (struct awb_ctrl_opt_info*)result;
+	
+	ISP_LOGI("HJW: gldn-(%d, %d, %d), rdm-(%d, %d, %d)\n",
+			cxt->otp_info.gldn_stat_info.r, cxt->otp_info.gldn_stat_info.g, cxt->otp_info.gldn_stat_info.b,
+			cxt->otp_info.rdm_stat_info.r, cxt->otp_info.rdm_stat_info.g, cxt->otp_info.rdm_stat_info.b);
+	*param = cxt->otp_info;
+
+	return rtn;
+}
+
 static cmr_u32 awb_get_debug_info_for_display(struct awb_ctrl_cxt *cxt, void *result)
 {
 	cmr_u32 rtn = AWB_SUCCESS;
@@ -1712,6 +1725,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_GET_CT_TABLE20:
 		rtn = _awb_get_flash_ct_table(cxt, out);
+		break;
+		
+	case AWB_CTRL_CMD_GET_OTP_INFO:
+		rtn = _awb_get_otp_info(cxt, out);
 		break;
 
 	case AWB_CTRL_CMD_GET_DATA_TYPE:

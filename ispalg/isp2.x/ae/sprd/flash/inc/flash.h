@@ -159,7 +159,6 @@ struct Flash_initOut
 	uint8 mainFlashEn;
 };
 
-
 enum Flash_flickerMode
 {
 

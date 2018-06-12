@@ -3648,6 +3648,8 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr
 	cxt->ae_cxt.shift = ae_param.shift;
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&ae_param.ct_table);
+		
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_OTP_INFO, NULL, (void *)&ae_param.awb_otp_info);
 	}
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);

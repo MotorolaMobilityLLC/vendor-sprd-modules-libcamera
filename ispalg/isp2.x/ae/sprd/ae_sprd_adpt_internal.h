@@ -221,6 +221,7 @@ extern "C" {
 		cmr_s32 flash_last_gain;
 		float ctTabRg[20];
 		float ctTab[20];
+		struct ae_opt_info awb_otp_info;
 		/*ED: for dual flash algorithm */
 		cmr_s16 flash_on_off_thr;
 		cmr_u32 flash_effect;

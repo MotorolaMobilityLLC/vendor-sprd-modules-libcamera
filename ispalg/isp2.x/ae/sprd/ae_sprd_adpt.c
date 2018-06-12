@@ -62,7 +62,7 @@ const char AE_MAGIC_TAG[] = "ae_debug_info";
 #define AEM_MASTER_STAT_FILE "/data/vendor/cameraserver/aem_master.file"
 #define AEM_SLAVE_STAT_FILE "/data/vendor/cameraserver/aem_slave.file"
 #define AEM_Y_STAT_FILE "/data/vendor/cameraserver/aem_y.file"
-
+#define EPSINON 0.00000001
 /**************************************************************************/
 
 #define AE_PRINT_TIME \
@@ -88,6 +88,16 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 /**---------------------------------------------------------------------------*
 ** 				Local Function Prototypes				*
 **---------------------------------------------------------------------------*/
+static cmr_u32 ae_is_equal (double a, double b)
+{
+	cmr_u32 is_equal = 0;
+
+	if (fabs(a - b) <= EPSINON) {
+		is_equal = 1;
+	}
+
+	return is_equal;
+}
 static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, struct q_item *write_item, struct q_item *actual_item, cmr_u32 is_force)
 {
 	float sensor_gain = 0.0;
@@ -2358,7 +2368,18 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 		in.ctTab[i] = cxt->ctTab[i];
 		in.ctTabRg[i] = cxt->ctTabRg[i];
 	}
-	ISP_LOGI("HJW: %d, %d--%f, %f\n", in.minGain, in.maxGain, in.minExposure, in.maxExposure);
+
+	in.otp_gldn_r = cxt->awb_otp_info.gldn_stat_info.r;
+	in.otp_gldn_g = cxt->awb_otp_info.gldn_stat_info.g;
+	in.otp_gldn_b = cxt->awb_otp_info.gldn_stat_info.b;
+	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.r;
+	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.g;
+	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.b;
+
+	ISP_LOGV("gldn-(%d, %d, %d), rdm-(%d, %d, %d)\n",
+			cxt->awb_otp_info.gldn_stat_info.r, cxt->awb_otp_info.gldn_stat_info.g, cxt->awb_otp_info.gldn_stat_info.b,
+			cxt->awb_otp_info.rdm_stat_info.r, cxt->awb_otp_info.rdm_stat_info.g, cxt->awb_otp_info.rdm_stat_info.b);
+	
 	rtn = flash_pfStart(cxt->flash_alg_handle, &in, &out);
 	out.nextExposure *= SENSOR_LINETIME_BASE;	//Andy.lin temp code!!!
 	current_status->settings.manual_mode = 0;
@@ -3565,10 +3586,16 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	else
 		cxt->cur_status.settings.work_mode = AE_WORK_MODE_COMMON;
 
-	for (k = 0; k < 20; k++) {
-		cxt->ctTab[k] = work_info->ct_table.ct[k];
-		cxt->ctTabRg[k] = work_info->ct_table.rg[k];
+	memset(&cxt->ctTab[0], 0, sizeof(cxt->ctTab));
+	memset(&cxt->ctTabRg[0], 0, sizeof(cxt->ctTabRg));
+	if (!ae_is_equal(work_info->ct_table.ct[0], 0.0)
+		&& !ae_is_equal(work_info->ct_table.rg[0], 0.0)) {
+		for (k = 0; k < 20; k++) {
+			cxt->ctTab[k] = work_info->ct_table.ct[k];
+			cxt->ctTabRg[k] = work_info->ct_table.rg[k];
+		}
 	}
+	cxt->awb_otp_info = work_info->awb_otp_info;
 
 	if (0 == work_info->is_snapshot) {
 		cxt->cur_status.frame_id = 0;

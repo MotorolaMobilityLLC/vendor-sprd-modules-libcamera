@@ -287,6 +287,7 @@ extern "C" {
 		struct ae_measure_highflash highflash_measure;
 		struct ae_sensor_fps_info sensor_fps;
 		struct ae_ct_table ct_table;
+		struct ae_opt_info awb_otp_info;
 		cmr_u32 capture_skip_num;
 		cmr_u32 zsl_flag;
 	};
