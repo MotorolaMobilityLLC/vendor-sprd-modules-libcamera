@@ -6695,6 +6695,7 @@ cmr_int prev_construct_frame(
     struct img_frm *video_frm_ptr = NULL;
     struct frm_info video_info;
     cmr_s64 ae_time = 0;
+    char scene_type[10] = "prev";
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -6761,10 +6762,10 @@ cmr_int prev_construct_frame(
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "preview")) {
             if (g_preview_frame_dump_cnt < 10) {
-                camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
+                camera_save_yuv_to_file_scene(prev_cxt->prev_frm_cnt,
                                         IMG_DATA_TYPE_YUV420, frame_type->width,
                                         frame_type->height,
-                                        &prev_cxt->prev_frm[frm_id].addr_vir);
+                                        &prev_cxt->prev_frm[frm_id].addr_vir, scene_type);
                 g_preview_frame_dump_cnt++;
             }
         }
@@ -6812,6 +6813,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
     struct prev_context *prev_cxt = NULL;
     struct img_frm *frm_ptr = NULL;
     cmr_s64 ae_time = 0;
+    char scene_type[10] = "video";
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -6875,10 +6877,10 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "video")) {
             if (g_video_frame_dump_cnt < 10) {
-                camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
+                camera_save_yuv_to_file_scene(prev_cxt->prev_frm_cnt,
                                         IMG_DATA_TYPE_YUV420, frame_type->width,
                                         frame_type->height,
-                                        &prev_cxt->video_frm[frm_id].addr_vir);
+                                        &prev_cxt->video_frm[frm_id].addr_vir, scene_type);
                 g_video_frame_dump_cnt++;
             }
         }

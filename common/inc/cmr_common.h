@@ -1058,6 +1058,9 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst);
 cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, struct img_addr *addr);
 
+cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
+                                cmr_u32 height, struct img_addr *addr, char *scene_type);
+
 cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
                                 struct img_addr *addr);
