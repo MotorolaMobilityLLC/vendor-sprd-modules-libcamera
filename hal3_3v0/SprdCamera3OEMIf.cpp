@@ -222,7 +222,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
     memcpy(&tmpShakeTest->diff_yuv_color, &tmp_diff_yuv_color,
            sizeof(tmp_diff_yuv_color));
     tmpShakeTest->mShakeTestColorCount = 0;
-    property_get("persist.sys.performance_camera", is_performance_camera_test,
+    property_get("persist.vendor.cam.performance_camera", is_performance_camera_test,
                  "0");
     if ((0 == strcmp("1", is_performance_camera_test)) &&
         mIsPerformanceTestable) {
@@ -289,7 +289,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     changeDfsPolicy(CAM_HIGH);
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
-    property_set("lowpower.display.30fps", "true");
+    property_set("vendor.cam.lowpower.display.30fps", "true");
 #endif
 
     shakeTestInit(&mShakeTest);
@@ -479,9 +479,9 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
-    property_get("lowpower.display.30fps", value, "false");
+    property_get("vendor.cam.lowpower.display.30fps", value, "false");
     if (!strcmp(value, "true")) {
-        property_set("lowpower.display.30fps", "false");
+        property_set("vendor.cam.lowpower.display.30fps", "false");
         HAL_LOGI("camera low power mode exit");
     }
 #endif
@@ -1986,7 +1986,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         fps_param.video_mode = 1;
 
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
-        property_get("volte.incall.camera.enable", value, "false");
+        property_get("vendor.cam.volte.incall.camera.enable", value, "false");
         bool needFixedFPS = false;
         if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE || mFixedFpsEnabled) {
             needFixedFPS = true;
@@ -2005,7 +2005,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         char prop[PROPERTY_VALUE_MAX];
         int val_max = 0;
         int val_min = 0;
-        property_get("persist.sys.camera.record.fps", prop, "0");
+        property_get("persist.vendor.cam.record.fps", prop, "0");
         if (atoi(prop) != 0) {
             val_min = atoi(prop) % 100;
             val_max = atoi(prop) / 100;
@@ -2022,7 +2022,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         char prop[PROPERTY_VALUE_MAX];
         int val_max = 0;
         int val_min = 0;
-        property_get("persist.sys.camera.preview.fps", prop, "0");
+        property_get("persist.vendor.cam.preview.fps", prop, "0");
         if (atoi(prop) != 0) {
             val_min = atoi(prop) % 100;
             val_max = atoi(prop) / 100;
@@ -2992,7 +2992,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     }
 
-    property_get("volte.incall.camera.enable", value, "false");
+    property_get("vendor.cam.volte.incall.camera.enable", value, "false");
     if (!strcmp(value, "true")) {
         mSprdZslEnabled = false;
         CMR_LOGI("volte incall, don't need to configure zsl ");
@@ -3017,7 +3017,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 1);
     if (!strcmp(value, "raw")) {
@@ -4598,8 +4598,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     uint32_t frame_num = 0;
     char value[PROPERTY_VALUE_MAX];
     char debug_value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    property_get("persist.sys.camera.debug.mode", debug_value, "non-debug");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.debug.mode", debug_value, "non-debug");
 
     if (picChannel && ((mCaptureMode != CAMERA_ISP_TUNING_MODE) ||
                        ((mCaptureMode == CAMERA_ISP_TUNING_MODE) &&
@@ -5751,7 +5751,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     int ret = 0;
     CONTROL_Tag controlInfo;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 
     HAL_LOGV("set camera para, tag is %ld", cameraParaTag);
 
@@ -6154,7 +6154,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.camera.raw.mode", value, "jpeg");
+        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 
         if (!strcmp(value, "raw")) {
             mSprdBurstModeEnabled = 0;
@@ -6205,7 +6205,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
                                      uint32_t frame_number) {
     char value[PROPERTY_VALUE_MAX];
     char value2[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     HAL_LOGD("cap_mode = %d", cap_mode);
 
     switch (cap_mode) {
@@ -7517,7 +7517,7 @@ int SprdCamera3OEMIf::SetDimensionRaw(cam_dimension_t raw_size) {
 
 int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     struct img_rect trim = {0, 0, 0, 0};
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
     int i;

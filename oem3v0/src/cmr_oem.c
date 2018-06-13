@@ -4502,7 +4502,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     sem_wait(&cxt->access_sm);
 
     cmr_get_mirror(&mirror_type);
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7240,7 +7240,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
     out_param_ptr->memory_setting.free_mem = camera_free;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7406,7 +7406,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     /*get pdaf enable flag*/
     ret = camera_get_pdaf_flag(cxt, mode, out_param_ptr, is_raw_capture);
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         out_param_ptr->pdaf_mode = 0;
         out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;

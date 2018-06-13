@@ -427,9 +427,9 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 		goto exit;
 	}
 
-	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
+	property_get("persist.vendor.cam.isp.vcm.tuning.mode", (char *)value, "0");
 	if (1 == atoi((char *)value)) {
-		property_get("persist.sys.isp.vcm.position", (char *)value, "0");
+		property_get("persist.vendor.cam.isp.vcm.position", (char *)value, "0");
 		motor_pos = (cmr_u16) atoi((char *)value);
 		af_set_motor_pos(cxt_ptr, motor_pos);
 		goto exit;

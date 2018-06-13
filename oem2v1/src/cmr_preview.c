@@ -6163,7 +6163,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_FAIL;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
@@ -6280,7 +6280,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_FAIL;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
@@ -8521,7 +8521,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     /*config capture ability*/
     chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "bin"))
         chn_param.cap_inf_cfg.cfg.need_isp_tool = 2;
     else
@@ -12005,7 +12005,7 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
     CHECK_CAMERA_ID(camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }

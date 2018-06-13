@@ -680,7 +680,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	init_param.width = param_ptr->common_in.resolution_info.sensor_size.w;
 	init_param.height = param_ptr->common_in.resolution_info.sensor_size.h;
 	init_param.camera_id = cxt->camera_id;
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
 		init_param.raw_mode = 1;
 	} else {
@@ -1079,7 +1079,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	init_param.width = input_ptr->src_frame.img_size.w;
 	init_param.height = input_ptr->src_frame.img_size.h;
 	init_param.camera_id = cxt->camera_id;
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
 		init_param.raw_mode = 1;
 	} else {

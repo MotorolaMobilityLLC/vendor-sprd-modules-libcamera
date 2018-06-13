@@ -26,7 +26,7 @@
 #include "aft_interface.h"
 
 #define AF_SYS_VERSION "-20171130-00"
-#define AF_SAVE_MLOG_STR "persist.sys.isp.af.mlog"	/*save/no */
+#define AF_SAVE_MLOG_STR "persist.vendor.cam.isp.af.mlog"	/*save/no */
 #define AF_WAIT_CAF_SEC 3		//1s == (1000 * 1000 * 1000)ns
 #define AF_WAIT_CAF_NSEC 0		//this macro should be less than 1000 * 1000 * 1000
 

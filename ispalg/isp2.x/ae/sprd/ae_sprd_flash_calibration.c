@@ -625,7 +625,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 	static struct FCData *caliData = 0;
 	int propValue[10];
 	int propRet;
-	propRet = get_prop_multi("persist.sys.isp.ae.flash_cali", 1, propValue);
+	propRet = get_prop_multi("persist.vendor.cam.isp.ae.flash_cali", 1, propValue);
 	if (propRet <= 0)
 		return;
 
@@ -1403,14 +1403,14 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 			int propValue[10];
 			int propRet;
-			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug", 1, propValue);
+			propRet = get_prop_multi("persist.vendor.cam.isp.ae.fc_debug", 1, propValue);
 
 			int debug1En = 0;
 			int debug2En = 0;
-			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug", 1, propValue);
+			propRet = get_prop_multi("persist.vendor.cam.isp.ae.fc_debug", 1, propValue);
 			if (propRet >= 1)
 				debug1En = propValue[0];
-			propRet = get_prop_multi("persist.sys.isp.ae.fc_debug2", 1, propValue);
+			propRet = get_prop_multi("persist.vendor.cam.isp.ae.fc_debug2", 1, propValue);
 			if (propRet >= 1)
 				debug2En = propValue[0];
 
@@ -1598,7 +1598,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 	static int led_led1 = 0;
 	static int led_led2 = 0;
 
-	ret = get_prop_multi("persist.sys.isp.ae.fc_led", 4, propValue);
+	ret = get_prop_multi("persist.vendor.cam.isp.ae.fc_led", 4, propValue);
 	if (ret > 0) {
 		if (led_onOff == propValue[0] && led_isMain == propValue[1] && led_led1 == propValue[2] && led_led2 == propValue[3]) {
 		} else {
@@ -1617,7 +1617,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 	static int exp_dummy = 0;
 	static int exp_isp_gain = 0;
 	static int exp_sensor_gain = 0;
-	ret = get_prop_multi("persist.sys.isp.ae.fc_exp", 5, propValue);
+	ret = get_prop_multi("persist.vendor.cam.isp.ae.fc_exp", 5, propValue);
 	if (ret > 0) {
 		if (exp_exp_line == propValue[0] && exp_exp_time == propValue[1] && exp_dummy == propValue[2] && exp_isp_gain == propValue[3] && exp_sensor_gain == propValue[4]) {
 		} else {
@@ -1635,7 +1635,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		}
 	}
 
-	ret = get_prop_multi("persist.sys.isp.ae.fc_lock", 1, propValue);
+	ret = get_prop_multi("persist.vendor.cam.isp.ae.fc_lock", 1, propValue);
 	if (ret > 0) {
 		if (lock_lock == propValue[0]) {
 		} else {
@@ -1650,7 +1650,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 	}
 
 	static int lock_unlock = 0;
-	ret = get_prop_multi("persist.sys.isp.ae.fc_unlock", 1, propValue);
+	ret = get_prop_multi("persist.vendor.cam.isp.ae.fc_unlock", 1, propValue);
 	if (ret > 0) {
 		if (lock_unlock == propValue[0]) {
 		} else {
@@ -1664,7 +1664,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 	}
 
 	static int exp2 = 0;
-	ret = get_prop_multi("persist.sys.isp.ae.fc_exp2", 1, propValue);
+	ret = get_prop_multi("persist.vendor.cam.isp.ae.fc_exp2", 1, propValue);
 	if (ret > 0) {
 		if (exp2 == propValue[0]) {
 		} else {
@@ -1679,7 +1679,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 	}
 
 	static int exp1 = 0;
-	ret = get_prop_multi("persist.sys.isp.ae.fc_exp1", 1, propValue);
+	ret = get_prop_multi("persist.vendor.cam.isp.ae.fc_exp1", 1, propValue);
 	if (ret > 0) {
 		if (exp1 == propValue[0]) {
 		} else {
@@ -1701,7 +1701,7 @@ void flash_calibration_script(cmr_handle ae_cxt)
 	char str[PROPERTY_VALUE_MAX];
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)ae_cxt;
 	memset((void *)&str[0], 0, sizeof(str));
-	property_get("persist.sys.isp.ae.fc_stript", str, "");
+	property_get("persist.vendor.cam.isp.ae.fc_stript", str, "");
 	if (!strcmp(str, "on")) {
 		flashCalibration(cxt);
 		_set_led2(cxt);

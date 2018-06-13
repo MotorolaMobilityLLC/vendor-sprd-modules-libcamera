@@ -389,7 +389,7 @@ static cmr_int ov8858_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     if (vendor_id == MODULE_DARLING) {
         SENSOR_LOGI("*param %x", vendor_id);
         char value1[PROPERTY_VALUE_MAX];
-        property_get("persist.camera.sbs.mode", value1, "0");
+        property_get("persist.vendor.cam.sbs.mode", value1, "0");
         if (!strcmp(value1, "slave"))
             return rtn;
         s_ov8858_mipi_raw_info_ptr = &s_ov8858_darling_mipi_raw_info;
@@ -464,7 +464,7 @@ static cmr_int ov8858_drv_identify(cmr_handle handle, cmr_uint param) {
             memcpy(ov2680_1600X1200_mipi_raw2, ov2680_1600X1200_mipi_raw4,
                    sizeof(ov2680_1600X1200_mipi_raw2));
             char value1[PROPERTY_VALUE_MAX];
-            property_get("persist.camera.sbs.mode", value1, "0");
+            property_get("persist.vendor.cam.sbs.mode", value1, "0");
             if (!strcmp(value1, "slave")) {
 #include "../ov2680_sbs/parameters/sensor_ov2680_raw_param_main.c"
                 s_ov8858_mipi_raw_info_ptr = &s_ov2680_mipi_raw_info;
@@ -575,7 +575,7 @@ static cmr_int ov8858_drv_write_exposure(cmr_handle handle, cmr_uint param) {
         sns_drv_cxt->trim_tab_info[size_index].line_time;
 
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.ae.master.manual", value1, "0");
+    property_get("persist.vendor.cam.ae.master.manual", value1, "0");
     if (!strcmp(value1, "0"))
         ret_value = ov8858_drv_write_exposure_dummy(handle, exposure_line,
                                                     dummy_line, size_index);
@@ -618,7 +618,7 @@ static cmr_int ov8858_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
 
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.ae.master.manual", value1, "0");
+    property_get("persist.vendor.cam.ae.master.manual", value1, "0");
     if (!strcmp(value1, "0"))
         ov8858_drv_write_gain(handle, real_gain);
 
@@ -972,11 +972,11 @@ static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }
-    property_get("persist.camera.ae.master.manual", value0, "0");
+    property_get("persist.vendor.cam.ae.master.manual", value0, "0");
     if (!strcmp(value0, "1")) {
         SENSOR_LOGI("test ae mode ");
 
-        property_get("persist.camera.ae.expos", value1, "100"); // us
+        property_get("persist.vendor.cam.ae.expos", value1, "100"); // us
         //_ov2680_set_shutter(handle,atoi(value1));
         // struct sensor_ex_exposure ex = {0x00};
         cmr_u32 exposure =
@@ -986,7 +986,7 @@ static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
         // dummy = exposure > sns_drv_cxt->trim_tab_info[1].frame_line
         // ?exposure- sns_drv_cxt->trim_tab_info[1].frame_line :0;
         // sensor_ic_ex_write_exposure((void *)sns_drv_cxt, (cmr_uint*)ex);
-        property_get("persist.camera.ae.master.gain", value1, "100");
+        property_get("persist.vendor.cam.ae.master.gain", value1, "100");
         ov8858_drv_write_exposure_dummy(handle, exposure, 0, 2);
         ov8858_drv_write_gain(handle, atoi(value1));
     }
@@ -1003,7 +1003,7 @@ static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
     // ov8858_drv_set_master_FrameSync(handle,param);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 #ifdef SBS_MODE_SENSOR
-    property_get("persist.camera.sbs.mode", value1, "0");
+    property_get("persist.vendor.cam.sbs.mode", value1, "0");
 
     if (param == 7 || !strcmp(value1, "sbs")) {
 #ifdef SBS_SENSOR_FRONT
@@ -1072,7 +1072,7 @@ static cmr_int ov8858_drv_stream_off(cmr_handle handle, cmr_uint param) {
     }
 #ifdef SBS_MODE_SENSOR
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.sbs.mode", value1, "0");
+    property_get("persist.vendor.cam.sbs.mode", value1, "0");
 
     if (param == 4 || 4 == ptr_sbs_ctl_info->sbs_mode ||
         !strcmp(value1, "dual")) {

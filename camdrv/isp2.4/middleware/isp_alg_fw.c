@@ -916,7 +916,7 @@ static cmr_int ispalg_dump_block_param(cmr_handle isp_alg_handle,
 	time_t timep;
 	struct tm *p;
 
-	property_get("persist.sys.save.isp.param", value, "0");
+	property_get("persist.vendor.cam.save.isp.param", value, "0");
 	if (cxt->is_multi_mode == ISP_DUAL_SBS &&
 			!cxt->is_master && (atoi(value) == 1)) {
 			ISP_LOGV("save param");
@@ -2722,32 +2722,32 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 {
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 
-	property_get("persist.sys.camera.bypass.ae", value, "0");
+	property_get("persist.vendor.cam.bypass.ae", value, "0");
 	if (1 == atoi(value)) {
 		cxt->ae_cxt.sw_bypass = 1;
 		ISP_LOGI("ae sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.af", value, "0");
+	property_get("persist.vendor.cam.bypass.af", value, "0");
 	if (1 == atoi(value)) {
 		cxt->af_cxt.sw_bypass = 1;
 		ISP_LOGI("af sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.awb", value, "0");
+	property_get("persist.vendor.cam.bypass.awb", value, "0");
 	if (1 == atoi(value)) {
 		cxt->awb_cxt.sw_bypass = 1;
 		ISP_LOGI("awb sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.lsc", value, "0");
+	property_get("persist.vendor.cam.bypass.lsc", value, "0");
 	if (1 == atoi(value)) {
 		cxt->lsc_cxt.sw_bypass = 1;
 		ISP_LOGI("lsc sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.pdaf", value, "0");
+	property_get("persist.vendor.cam.bypass.pdaf", value, "0");
 	if (1 == atoi(value)) {
 		cxt->pdaf_cxt.sw_bypass = 1;
 		ISP_LOGI("pdaf sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.afl", value, "0");
+	property_get("persist.vendor.cam.bypass.afl", value, "0");
 	if (1 == atoi(value)) {
 		cxt->afl_cxt.sw_bypass = 1;
 		ISP_LOGI("afl sw bypass");
@@ -4177,7 +4177,7 @@ exit:
 		{
 			if (cxt->is_master)
 			{
-				property_get("persist.sys.camera.refocus.otp", otp_prop, "0");
+				property_get("persist.vendor.cam.refocus.otp", otp_prop, "0");
 				memset(&global_otp_info, 0, sizeof(struct sensor_otp_data_info));
 				if (0 == strcmp(otp_prop, "1")) // read otp from file
 				{

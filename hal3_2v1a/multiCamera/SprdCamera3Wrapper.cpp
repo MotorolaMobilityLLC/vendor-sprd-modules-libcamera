@@ -97,7 +97,7 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 #endif
     case MODE_BLUR: {
         char prop[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
         if (atoi(prop) == 7) {
 #ifdef CONFIG_SIDEBYSIDE_SUPPORT
             rc = mSidebyside->camera_device_open(module, id, hw_device);
@@ -115,7 +115,7 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
     }
     case MODE_BLUR_FRONT: {
         char prop[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.cam.fr.blur.version", prop, "0");
+        property_get("persist.vendor.cam.fr.blur.version", prop, "0");
         if (atoi(prop) == 7) {
 #ifdef CONFIG_SIDEBYSIDE_SUPPORT
             rc = mSidebyside->camera_device_open(module, id, hw_device);
@@ -178,7 +178,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #endif
     case MODE_BLUR: {
         char prop[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
         if (atoi(prop) == 7) {
 #ifdef CONFIG_SIDEBYSIDE_SUPPORT
             rc = mSidebyside->get_camera_info(camera_id, info);
@@ -196,7 +196,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
     }
     case MODE_BLUR_FRONT: {
         char prop[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.cam.fr.blur.version", prop, "0");
+        property_get("persist.vendor.cam.fr.blur.version", prop, "0");
         if (atoi(prop) == 7) {
 #ifdef CONFIG_SIDEBYSIDE_SUPPORT
             rc = mSidebyside->get_camera_info(camera_id, info);

@@ -3145,35 +3145,35 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 {
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 
-	property_get("persist.sys.camera.bypass.ae", value, "0");
+	property_get("persist.vendor.cam.bypass.ae", value, "0");
 	if (1 == atoi(value)) {
 		cxt->ae_cxt.sw_bypass = 1;
 		cxt->ops.ae_ops.ioctrl = NULL;
 		ISP_LOGI("ae sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.af", value, "0");
+	property_get("persist.vendor.cam.bypass.af", value, "0");
 	if (1 == atoi(value)) {
 		cxt->af_cxt.sw_bypass = 1;
 		cxt->ops.af_ops.ioctrl = NULL;
 		ISP_LOGI("af sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.awb", value, "0");
+	property_get("persist.vendor.cam.bypass.awb", value, "0");
 	if (1 == atoi(value)) {
 		cxt->awb_cxt.sw_bypass = 1;
 		cxt->ops.awb_ops.ioctrl = NULL;
 		ISP_LOGI("awb sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.lsc", value, "0");
+	property_get("persist.vendor.cam.bypass.lsc", value, "0");
 	if (1 == atoi(value)) {
 		cxt->lsc_cxt.sw_bypass = 1;
 		ISP_LOGI("lsc sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.pdaf", value, "0");
+	property_get("persist.vendor.cam.bypass.pdaf", value, "0");
 	if (1 == atoi(value)) {
 		cxt->pdaf_cxt.sw_bypass = 1;
 		ISP_LOGI("pdaf sw bypass");
 	}
-	property_get("persist.sys.camera.bypass.afl", value, "0");
+	property_get("persist.vendor.cam.bypass.afl", value, "0");
 	if (1 == atoi(value)) {
 		cxt->afl_cxt.sw_bypass = 1;
 		ISP_LOGI("afl sw bypass");

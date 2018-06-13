@@ -100,12 +100,12 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         break;
 #endif
     case SPRD_BLUR_ID:
-        property_get("persist.sys.camera.raw.mode", prop, "jpeg");
+        property_get("persist.vendor.cam.raw.mode", prop, "jpeg");
         if (!strcmp(prop, "raw")) {
             rc = mTCam->camera_device_open(module, id, hw_device);
             return rc;
         }
-        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
 
         if (6 == atoi(prop)) {
 #ifdef CONFIG_BOKEH_SUPPORT
@@ -178,12 +178,12 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         break;
 #endif
     case SPRD_BLUR_ID:
-        property_get("persist.sys.camera.raw.mode", prop, "jpeg");
+        property_get("persist.vendor.cam.raw.mode", prop, "jpeg");
         if (!strcmp(prop, "raw")) {
             rc = mTCam->get_camera_info(camera_id, info);
             return rc;
         }
-        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
 #ifdef CONFIG_BOKEH_SUPPORT
            rc = mRealBokeh->get_camera_info(camera_id, info);

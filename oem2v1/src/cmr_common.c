@@ -615,7 +615,7 @@ void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
         return;
     }
 
-    property_get("persist.hal.camera.launch.time", value, "false");
+    property_get("persist.vendor.cam.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
         return;
     }
@@ -665,7 +665,7 @@ void LAUNCHLOGE(enum CAMERA_LAUNCH_STEP step) {
         CMR_LOGE("error %d", step);
         return;
     }
-    property_get("persist.hal.camera.launch.time", value, "false");
+    property_get("persist.vendor.cam.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
         return;
     }

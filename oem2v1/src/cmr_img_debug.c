@@ -86,7 +86,7 @@ cmr_int cmr_img_debug(void *param1, void *param2) {
              img_debug->output.addr_y, img_debug->size.width,
              img_debug->size.height, img_debug->format);
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.debug.type", value, "0");
+    property_get("persist.vendor.cam.debug.type", value, "0");
     int type = atoi(value);
     int i = 0;
     for (; i < NUMBER_DEBUG; i++) {

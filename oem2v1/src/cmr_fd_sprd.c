@@ -743,7 +743,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
                                                // it is a tuning parameter, must
                                                // be in [1, 50]
             char algo_smile_thr_char[PROPERTY_VALUE_MAX];
-            property_get("persist.sys.camera.smile.thr", algo_smile_thr_char, "1");
+            property_get("persist.vendor.cam.smile.thr", algo_smile_thr_char, "1");
             cmr_int algo_smile_threshold = atoi(algo_smile_thr_char);
             if (algo_smile_threshold <= 0 || algo_smile_threshold > 50) {
                CMR_LOGW("algo smile threadhold is %ld out of range: [1, 50], "

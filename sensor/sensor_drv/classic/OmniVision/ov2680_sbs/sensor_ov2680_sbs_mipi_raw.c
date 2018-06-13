@@ -530,7 +530,7 @@ static cmr_int ov2680_drv_write_exposure(cmr_handle handle, cmr_uint param) {
         sns_drv_cxt->trim_tab_info[size_index].line_time;
 
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.ae.slave.manual", value1, "0");
+    property_get("persist.vendor.cam.ae.slave.manual", value1, "0");
     if (!strcmp(value1, "0"))
         ret_value = ov2680_drv_write_exposure_dummy(handle, exposure_line,
                                                     dummy_line, size_index);
@@ -573,7 +573,7 @@ static cmr_int ov2680_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
 
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.ae.slave.manual", value1, "0");
+    property_get("persist.vendor.cam.ae.slave.manual", value1, "0");
     if (!strcmp(value1, "0"))
         ov2680_drv_write_gain(handle, real_gain);
 
@@ -756,11 +756,11 @@ static cmr_int ov2680_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }
-    property_get("persist.camera.ae.slave.manual", value1, "0");
+    property_get("persist.vendor.cam.ae.slave.manual", value1, "0");
 
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("test ae mode ");
-        property_get("persist.camera.ae.expos", value1, "100"); // us
+        property_get("persist.vendor.cam.ae.expos", value1, "100"); // us
         //_ov2680_set_shutter(handle,atoi(value1));
         // struct sensor_ex_exposure *ex={0x00};
         // memset(ex, 0, sizeof(struct sensor_ex_exposure));
@@ -772,7 +772,7 @@ static cmr_int ov2680_drv_stream_on(cmr_handle handle, cmr_uint param) {
         // ?exposure- sns_drv_cxt->trim_tab_info[1].frame_line :	0;
         // sensor_ic_ex_write_exposure((void *)sensor_cxt2, (cmr_uint) ex);
         ov2680_drv_write_exposure_dummy(handle, exposure, 0, 1);
-        property_get("persist.camera.ae.slave.gain", value1, "100");
+        property_get("persist.vendor.cam.ae.slave.gain", value1, "100");
         //_ov2680_write_gain(handle,atoi(value1));
         // sensor_ic_write_gain((void *)&sensor_cxt2, atoi(value1));
         ov2680_drv_write_gain(handle, atoi(value1));

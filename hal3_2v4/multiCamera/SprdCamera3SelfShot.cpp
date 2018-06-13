@@ -535,7 +535,7 @@ int SprdCamera3SelfShot::setupPhysicalCameras() {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.cam.blur.cov.id", prop, "3");
+    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     if (atoi(prop) == 0) {
         m_pPhyCamera[CAM_TYPE_AUX].id = CAM_BLUR_AUX_ID;
     } else {
@@ -696,7 +696,7 @@ int SprdCamera3SelfShot::processCaptureRequest(
         mAvailableSensorSelfSot =
             metadata.find(ANDROID_SPRD_AVAILABLE_SENSOR_SELF_SHOT).data.i32[0];
     }
-    property_get("camera.selfshot.enble", prop, "2");
+    property_get("vendor.cam.selfshot.enble", prop, "2");
     if (2 != atoi(prop)) {
         mAvailableSensorSelfSot = atoi(prop);
     }

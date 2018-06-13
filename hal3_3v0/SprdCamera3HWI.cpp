@@ -74,7 +74,7 @@ multiCameraMode SprdCamera3HWI::mMultiCameraMode = MODE_SINGLE_CAMERA;
 //   4 - show ALOGE, ALOGW, ALOGI and ALOGD
 //   5 - show ALOGE, ALOGW, ALOGI and ALOGD, ALOGV
 // use the following command to change gHALLogLevel:
-//   adb shell setprop persist.sys.camera.hal.log 1
+//   adb shell setprop persist.vendor.cam.hal.log 1
 volatile uint32_t gHALLogLevel = 4;
 
 camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
@@ -107,7 +107,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
 
     // for camera id 2&3 debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.id", value, "0");
+    property_get("persist.vendor.cam.id", value, "0");
     if (mCameraId == 0) {
         if (!strcmp(value, "2"))
             mCameraId = 2;
@@ -656,7 +656,7 @@ int SprdCamera3HWI::configureStreams(
         char value[PROPERTY_VALUE_MAX];
         char value1[PROPERTY_VALUE_MAX];
         property_get("debug.camera.save.refocus", value, "0");
-        property_get("persist.camera.save.refocus", value1, "0");
+        property_get("persist.vendor.cam.save.refocus", value1, "0");
         if ((atoi(value) == 2 || atoi(value1) == 2) &&
             stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
             newStream->width = 480;
@@ -665,7 +665,7 @@ int SprdCamera3HWI::configureStreams(
 #endif
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("volte.incall.camera.enable", value, "false");
+        property_get("vendor.cam.volte.incall.camera.enable", value, "false");
         if (!strcmp(value, "true") &&
             stream_type == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
             channel_type == CAMERA_CHANNEL_TYPE_PICTURE) {
@@ -979,7 +979,7 @@ void SprdCamera3HWI::getLogLevel() {
     char prop[PROPERTY_VALUE_MAX];
     int val = 0;
 
-    property_get("persist.sys.camera.hal.log", prop, "0");
+    property_get("persist.vendor.cam.hal.log", prop, "0");
     val = atoi(prop);
     if (val > 0) {
         gHALLogLevel = (uint32_t)val;

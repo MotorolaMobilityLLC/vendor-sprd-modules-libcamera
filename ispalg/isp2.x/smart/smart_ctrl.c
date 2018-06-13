@@ -912,7 +912,7 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 	cmr_s32 rtn = ISP_SUCCESS;
 	char value[PROPERTY_VALUE_MAX] = { 0 };
 
-	property_get("persist.sys.isp.smartdebug", value, "0");
+	property_get("persist.vendor.cam.isp.smartdebug", value, "0");
 
 	if (!strcmp(value, "0"))
 		return;

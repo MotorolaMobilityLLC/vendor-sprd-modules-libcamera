@@ -49,7 +49,7 @@
 
 #define AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/vendor/cameraserver/ae.file"
 #define AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA "/data/misc/media/ae.file"
-#define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
+#define AE_SAVE_MLOG     "persist.vendor.cam.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
 #define SENSOR_LINETIME_BASE   100	/*temp macro for flash, remove later, Andy.lin */
 #define AE_FLASH_CALC_TIMES	60	/* prevent flash_pfOneIteration time out */
@@ -365,11 +365,11 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 				char value[PROPERTY_VALUE_MAX];
 				ae_otp_master.gain_1x_exp = 10000;
 				ae_otp_slave.gain_1x_exp = 7000;
-				property_get("persist.isp.ae.otp.master", value, "10000");
+				property_get("persist.vendor.cam.isp.ae.otp.master", value, "10000");
 				if (strcmp(value, "0") != 0) {
 					ae_otp_master.gain_1x_exp = atoi(value);
 				}
-				property_get("persist.isp.ae.otp.slave", value, "7000");
+				property_get("persist.vendor.cam.isp.ae.otp.slave", value, "7000");
 				if (strcmp(value, "0") != 0) {
 					ae_otp_slave.gain_1x_exp = atoi(value);
 				}
@@ -532,11 +532,11 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 				char value[PROPERTY_VALUE_MAX];
 				ae_otp_master.gain_1x_exp = 10000;
 				ae_otp_slave.gain_1x_exp = 7000;
-				property_get("persist.isp.ae.otp.master", value, "10000");
+				property_get("persist.vendor.cam.isp.ae.otp.master", value, "10000");
 				if (strcmp(value, "0") != 0) {
 					ae_otp_master.gain_1x_exp = atoi(value);
 				}
-				property_get("persist.isp.ae.otp.slave", value, "7000");
+				property_get("persist.vendor.cam.isp.ae.otp.slave", value, "7000");
 				if (strcmp(value, "0") != 0) {
 					ae_otp_slave.gain_1x_exp = atoi(value);
 				}
@@ -3341,7 +3341,7 @@ static void ae_set_led(struct ae_ctrl_cxt *cxt)
 	struct ae_flash_element element;
 
 	memset(str, 0, sizeof(str));
-	property_get("persist.sys.isp.ae.manual", str, "");
+	property_get("persist.vendor.cam.isp.ae.manual", str, "");
 	if ((strcmp(str, "fasim") & strcmp(str, "facali") & strcmp(str, "facali-pre") & strcmp(str, "led"))) {
 		//ISP_LOGV("isp_set_led_noctl!\r\n");
 	} else {
@@ -3353,7 +3353,7 @@ static void ae_set_led(struct ae_ctrl_cxt *cxt)
 			type = AE_FLASH_TYPE_PREFLASH;
 
 		memset(str, 0, sizeof(str));
-		property_get("persist.sys.isp.ae.led", str, "");
+		property_get("persist.vendor.cam.isp.ae.led", str, "");
 		if ('\0' == str[i]) {
 			return;
 		} else {
@@ -3417,7 +3417,7 @@ static void ae_set_led(struct ae_ctrl_cxt *cxt)
 		}
 
 		memset(str, 0, sizeof(str));
-		property_get("persist.sys.isp.ae.facali.dump", str, "");
+		property_get("persist.vendor.cam.isp.ae.facali.dump", str, "");
 		if (!strcmp(str, "on")) {
 			FILE *p = NULL;
 			p = fopen("/data/vendor/cameraserver/flashcali.txt", "w+");
@@ -5148,7 +5148,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		char prop[PROPERTY_VALUE_MAX];
 		int val_max = 0;
 		int val_min = 0;
-		property_get("persist.sys.isp.ae.fps", prop, "0");
+		property_get("persist.vendor.cam.isp.ae.fps", prop, "0");
 		if (atoi(prop) != 0) {
 			val_min = atoi(prop) % 100;
 			val_max = atoi(prop) / 100;
@@ -5859,8 +5859,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_result.wts.exposure_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
 
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
-	property_get("persist.sys.isp.ae.manual", ae_property, "off");
-	//ISP_LOGV("persist.sys.isp.ae.manual: %s", ae_property);
+	property_get("persist.vendor.cam.isp.ae.manual", ae_property, "off");
+	//ISP_LOGV("persist.vendor.cam.isp.ae.manual: %s", ae_property);
 	if (!strcmp("on", ae_property)) {
 		cxt->manual_ae_on = 1;
 	} else {

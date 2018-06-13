@@ -661,7 +661,7 @@ static cmr_u8 if_set_af_exif(const void *data, void *cookie)
 {
 	af_ctrl_t *af = cookie;
 	UNUSED(data);
-	property_get("persist.sys.camera.isp.af.dump", af->AF_MODE, "none");
+	property_get("persist.vendor.cam.isp.af.dump", af->AF_MODE, "none");
 
 	if (0 == strcmp(af->AF_MODE, "on")) {
 		FILE *fp = NULL;
@@ -1226,11 +1226,11 @@ static void set_manual(af_ctrl_t * af, char *test_param)
 	UNUSED(test_param);
 	af->state = STATE_MANUAL;
 	af->focus_state = AF_IDLE;
-	// property_set("af_set_pos","0");// to fix lens to position 0
+	// property_set("vendor.cam.af_set_pos","0");// to fix lens to position 0
 	trigger_stop(af);
 
 	ISP_LOGV("Now is in ISP_FOCUS_MANUAL mode");
-	ISP_LOGV("pls adb shell setprop \"af_set_pos\" 0~1023 to fix lens position");
+	ISP_LOGV("pls adb shell setprop \"vendor.cam.af_set_pos\" 0~1023 to fix lens position");
 }
 
 static void trigger_caf(af_ctrl_t * af, char *test_param)
@@ -1240,7 +1240,7 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	char *p1 = test_param;
 	char *p2;
 	char *p3;
-	property_set("af_set_pos", "none");
+	property_set("vendor.cam.af_set_pos", "none");
 
 	while (*p1 != '~' && *p1 != '\0')
 		p1++;
@@ -1275,7 +1275,7 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
 	UNUSED(test_param);
-	property_set("af_set_pos", "none");
+	property_set("vendor.cam.af_set_pos", "none");
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;
@@ -1540,13 +1540,13 @@ static void *loop_for_test_mode(void *data_client)
 	af = data_client;
 
 	while (0 == af->test_loop_quit) {
-		property_get("af_mode", AF_MODE, "none");
+		property_get("vendor.cam.af_mode", AF_MODE, "none");
 		ISP_LOGV("test AF_MODE %s", AF_MODE);
 		if (0 != strcmp(AF_MODE, "none") && 0 != strcmp(AF_MODE, "ISP_DEFAULT")) {
 			set_af_test_mode(af, AF_MODE);
-			property_set("af_mode", "ISP_DEFAULT");
+			property_set("vendor.cam.af_mode", "ISP_DEFAULT");
 		}
-		property_get("af_set_pos", AF_POS, "none");
+		property_get("vendor.cam.af_set_pos", AF_POS, "none");
 		ISP_LOGV("test AF_POS %s", AF_POS);
 		if (0 != strcmp(AF_POS, "none")) {
 			af_test_lens(af, (cmr_u16) atoi(AF_POS));
@@ -1678,7 +1678,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	cmr_u32 scan_to = 0;
 	cmr_u32 per_steps = 0;
 
-	property_get("persist.sys.caf.enable", value, "1");
+	property_get("persist.vendor.cam.caf.enable", value, "1");
 	if (atoi(value) != 1)
 		return;
 
@@ -1690,7 +1690,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.trigger_source = p_aft_result->is_caf_trig;
-	property_get("persist.sys.isp.caf.defocus", value, "0");
+	property_get("persist.vendor.cam.isp.caf.defocus", value, "0");
 	if (atoi(value) == 0) {
 		aft_in.AF_Trigger_Type = (p_aft_result->is_need_rough_search) ? (RF_NORMAL) : (RF_FAST);
 	} else {
@@ -2087,7 +2087,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	cmr_u16 pos = 0;
 
 	ISP_LOGI("af state = %s, focus state = %s, set af_mode = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), af_mode);
-	property_get("af_mode", af->AF_MODE, "none");
+	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
 	if (0 != strcmp(af->AF_MODE, "none")) {
 		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
 		pos = lens_get_pos(af);
@@ -2144,7 +2144,7 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	cmr_s32 rtn = AFV1_SUCCESS;
 
 	ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
-	property_set("af_mode", "none");
+	property_set("vendor.cam.af_mode", "none");
 	af->test_loop_quit = 1;
 
 	if (AF_SEARCHING == af->focus_state) {
@@ -2196,7 +2196,7 @@ static cmr_s32 af_sprd_set_af_bypass(cmr_handle handle, void *param0)
 		return rtn;
 	}
 
-	property_get("persist.sys.isp.af.bypass", value, "0");
+	property_get("persist.vendor.cam.isp.af.bypass", value, "0");
 	if (atoi(value) == 0) {
 		ISP_LOGI("param = %d", *(cmr_u32 *) param0);
 		af->bypass = *(cmr_u32 *) param0;
@@ -2259,7 +2259,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	af->isp_info.height = in_ptr->size.h;
 	ISP_LOGI("af state = %s, focus state = %s; image width = %d, height = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), in_ptr->size.w, in_ptr->size.h);
 
-	property_get("af_mode", af->AF_MODE, "none");
+	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
 	if (0 != strcmp(af->AF_MODE, "none")) {
 		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
 		return AFV1_SUCCESS;
@@ -2438,7 +2438,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 		}
 	}
 
-	property_get("af_mode", af->AF_MODE, "none");
+	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
 	if (0 != strcmp(af->AF_MODE, "none")) {	// test mode only
 		ae_calibration(af, rgb);
 	}
@@ -3100,12 +3100,12 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	af->dcam_timestamp = 0xffffffffffffffff;
 	af->test_loop_quit = 1;
-	//property_set("af_mode", "none");
+	//property_set("vendor.cam.af_mode", "none");
 
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
 
-	property_get("persist.sys.isp.af.bypass", value, "0");
+	property_get("persist.vendor.cam.isp.af.bypass", value, "0");
 	af->bypass = ! !atoi(value);
 	ISP_LOGV("property af bypass %s[%d]", value, ! !atoi(value));
 
@@ -3136,8 +3136,8 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 		return AFV1_ERROR;
 	}
 
-	property_set("af_mode", "none");
-	property_set("af_set_pos", "none");
+	property_set("vendor.cam.af_mode", "none");
+	property_set("vendor.cam.af_set_pos", "none");
 	if (0 == af->test_loop_quit) {
 		af->test_loop_quit = 1;
 		pthread_join(af->test_loop_handle, NULL);
@@ -3181,7 +3181,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 	memset(af->AF_MODE, '\0', sizeof(af->AF_MODE));
 	if (1 == af->test_loop_quit) {
-		property_get("af_mode", af->AF_MODE, "none");
+		property_get("vendor.cam.af_mode", af->AF_MODE, "none");
 		if (0 == strcmp(af->AF_MODE, "ISP_FOCUS_MANUAL")) {
 			af->test_loop_quit = 0;
 			pthread_attr_t attr;

@@ -3936,8 +3936,8 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
 		cmr_bzero(ae_exp, sizeof(ae_exp));
 		cmr_bzero(ae_gain, sizeof(ae_gain));
-		property_get("persist.sys.isp.ae.exp_time", ae_exp, "100");
-		property_get("persist.sys.isp.ae.gain", ae_gain, "100");
+		property_get("persist.vendor.cam.isp.ae.exp_time", ae_exp, "100");
+		property_get("persist.vendor.cam.isp.ae.gain", ae_gain, "100");
 		in_est.cell.exp_time = atoi(ae_exp);
 		in_est.cell.exp_line = SENSOR_EXP_BASE*in_est.cell.exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 		in_est.cell.gain = atoi(ae_gain);
@@ -3951,7 +3951,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 
 	if (cxt_ptr->script_info.is_script_mode) {
 		cmr_bzero(ae_exp, sizeof(ae_exp));
-		property_get("persist.sys.isp.ae.script_mode", ae_exp, "none");
+		property_get("persist.vendor.cam.isp.ae.script_mode", ae_exp, "none");
 		if (!strcmp("ae", ae_exp)) {
 			cxt_ptr->script_info.script_mode = AE_SCRIPT_ON;
 		} else if (!strcmp("fe", ae_exp)) {
@@ -4665,13 +4665,13 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 	cmr_s32 gain_num = 0;
 
 	cmr_bzero(ae_property, sizeof(ae_property));
-	property_get("persist.sys.isp.ae.manual", ae_property, "off");
-	ISP_LOGI("persist.sys.isp.ae.manual: %s", ae_property);
+	property_get("persist.vendor.cam.isp.ae.manual", ae_property, "off");
+	ISP_LOGI("persist.vendor.cam.isp.ae.manual: %s", ae_property);
 	if (!strcmp("on", ae_property)) {
 		cxt_ptr->tuning_info.manual_ae_on = 1;
 		cmr_bzero(ae_property, sizeof(ae_property));
-		property_get("persist.sys.isp.ae.tuning.type", ae_property, "none");
-		ISP_LOGI("persist.sys.isp.ae.tuning.type: %s", ae_property);
+		property_get("persist.vendor.cam.isp.ae.tuning.type", ae_property, "none");
+		ISP_LOGI("persist.vendor.cam.isp.ae.tuning.type: %s", ae_property);
 		if (!strcmp("exposure_time", ae_property)) {
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_EXPOSURE;
 			sprintf(file_name, "/data/misc/media/exposure.txt");
@@ -4712,8 +4712,8 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 	}
 
 	cmr_bzero(ae_property, sizeof(ae_property));
-	property_get("persist.sys.isp.ae.script", ae_property, "off");
-	ISP_LOGI("persist.sys.isp.ae.script: %s", ae_property);
+	property_get("persist.vendor.cam.isp.ae.script", ae_property, "off");
+	ISP_LOGI("persist.vendor.cam.isp.ae.script: %s", ae_property);
 	if (!strcmp("on", ae_property)) {
 		cxt_ptr->script_info.is_script_mode = 1;
 	} else {

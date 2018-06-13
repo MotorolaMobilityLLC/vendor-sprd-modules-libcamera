@@ -6155,7 +6155,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_FAIL;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -6270,7 +6270,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_FAIL;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -12083,7 +12083,7 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
     prev_cxt = &handle->prev_cxt[camera_id];
     struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }

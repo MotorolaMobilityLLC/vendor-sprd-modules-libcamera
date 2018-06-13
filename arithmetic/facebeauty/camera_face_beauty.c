@@ -28,7 +28,7 @@
 #define NUM_TYPES 3
 #define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
 void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
-    property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
+    property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         if (faceBeauty->hSprdFB == 0) {
@@ -49,7 +49,7 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
 }
 
 void deinit_fb_handle(struct class_fb *faceBeauty) {
-    property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
+    property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         if (faceBeauty->hSprdFB != 0) {
@@ -66,7 +66,7 @@ void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
         return;
     }
 
-    property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
+    property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         faceBeauty->fb_face[j].x = sx;
@@ -89,7 +89,7 @@ void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
         ALOGE("construct_fb_image faceBeauty is null");
         return;
     }
-    property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
+    property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         faceBeauty->fb_image.width = picWidth;
@@ -164,15 +164,15 @@ void construct_fb_level(struct class_fb *faceBeauty,
         int adb_clean_val = 0;
         int adb_faceSlim_val = 0;
         int adb_eyeLarge_val = 0;
-        if ((property_get("persist.sys.camera.beauty.level", str_adb_level,
+        if ((property_get("persist.vendor.camera.beauty.level", str_adb_level,
                           "0")) &&
-            (property_get("persist.sys.camera.beauty.white", str_adb_white,
+            (property_get("persist.vendor.camera.beauty.white", str_adb_white,
                           "0")) &&
-            (property_get("persist.sys.camera.beauty.clean", str_adb_clean,
+            (property_get("persist.vendor.camera.beauty.clean", str_adb_clean,
                           "0")) &&
-            (property_get("persist.sys.camera.beauty.slim", str_adb_faceSlim,
+            (property_get("persist.vendor.camera.beauty.slim", str_adb_faceSlim,
                           "0")) &&
-            (property_get("persist.sys.camera.beauty.large", str_adb_eyeLarge,
+            (property_get("persist.vendor.camera.beauty.large", str_adb_eyeLarge,
                           "0"))) {
             adb_level_val = atoi(str_adb_level);
             adb_level_val = CLIP(adb_level_val, 0, 10);
@@ -205,8 +205,8 @@ void construct_fb_level(struct class_fb *faceBeauty,
     }
 
     char isDebug[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.beauty.debug", isDebug, "0");
-    property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
+    property_get("persist.vendor.cam.beauty.debug", isDebug, "0");
+    property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         unsigned char map_pictureSkinSmoothLevel[NUM_LEVELS] = {
@@ -315,7 +315,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
         ALOGE("do_face_beauty faceBeauty is null");
         return;
     }
-    property_get("persist.sys.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
+    property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         clock_gettime(CLOCK_BOOTTIME, &start_time);

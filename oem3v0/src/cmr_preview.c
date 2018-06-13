@@ -6740,7 +6740,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_FAIL;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -6864,7 +6864,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_height = target_size->height;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7636,7 +7636,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     if (handle->prev_cxt[camera_id].prev_param.pdaf_mode ==
         SENSOR_PDAF_TYPE2_ENABLE) {
         char value[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.camera.raw.mode", value, "jpeg");
+        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
         if (!strcmp(value, "raw")) {
             ret = prev_set_pdaf_param(handle, camera_id, out_param_ptr);
             if (ret) {
@@ -12743,7 +12743,7 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
     CHECK_CAMERA_ID(camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -12811,7 +12811,7 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id) {
     sprd_zsl_enabled = prev_cxt->prev_param.sprd_zsl_enabled;
     video_snapshot_type = prev_cxt->prev_param.video_snapshot_type;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }

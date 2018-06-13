@@ -3922,7 +3922,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
         uint8_t is_raw_capture = 0;
         char value[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.camera.raw.mode", value, "jpeg");
+        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
         if (!strcmp(value, "raw")) {
             is_raw_capture = 1;
         }
@@ -4257,7 +4257,7 @@ int SprdCamera3Setting::updateWorkParameters(
     } else {
         char prop[PROPERTY_VALUE_MAX];
         int val = 0;
-        property_get("persist.sys.camera.hal.3d", prop, "0");
+        property_get("persist.vendor.cam.hal.3d", prop, "0");
         val = atoi(prop);
         if (1 == val) {
             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = val;

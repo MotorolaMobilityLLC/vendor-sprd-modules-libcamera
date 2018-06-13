@@ -803,7 +803,7 @@ static cmr_int ov13855_sunny_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
     /*dual camera*/
-    property_get("persist.sys.cam.api.version", value, "0");
+    property_get("persist.vendor.cam.api.version", value, "0");
     convert_data->dual_otp.dual_flag = 1;
     if (atoi(value) == 0) {
         convert_data->dual_otp.data_3d.data_ptr =

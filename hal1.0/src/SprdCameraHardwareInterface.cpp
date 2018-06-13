@@ -223,7 +223,7 @@ int SprdCameraHardware::getPropertyAtv() {
 	char propBuf_atv[PROPERTY_VALUE_MAX] = {0};
 	int atv = 0;
 
-	property_get("sys.camera.atv", propBuf_atv, "0");
+	property_get("vendor.cam.atv", propBuf_atv, "0");
 
 	if (0 == strcmp(propBuf_atv, "1")) {
 		atv = 1;
@@ -368,7 +368,7 @@ void SprdCameraHardware::shakeTestInit(ShakeTest *tmpShakeTest) {
     memcpy(&tmpShakeTest->diff_yuv_color, &tmp_diff_yuv_color,
            sizeof(tmp_diff_yuv_color));
     tmpShakeTest->mShakeTestColorCount = 0;
-    property_get("persist.sys.performance_camera", is_performance_camera_test,
+    property_get("persist.vendor.cam.performance_camera", is_performance_camera_test,
                  "0");
     if ((0 == strcmp("1", is_performance_camera_test)) &&
         mIsPerformanceTestable) {
@@ -5446,7 +5446,7 @@ status_t SprdCameraHardware::startPreviewInternal(bool isRecording) {
         LOGI("startPreviewInternal X,mRecordingMode=%d.", isRecordingMode());
     }
 
-    property_get("persist.sys.face_detect", is_face_detect_test, "0");
+    property_get("persist.vendor.cam.face_detect", is_face_detect_test, "0");
     if (0 == strcmp("1", is_face_detect_test)) {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
         mHalOem->ops->camera_fd_start(mCameraHandle, 1);
@@ -5546,7 +5546,7 @@ takepicture_mode SprdCameraHardware::getCaptureMode() {
         (0 == strcmp("true", isZslSupport))) {
         is_zsl = 1;
     }
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 
 #ifdef CONFIG_CAMERA_FORCE_ZSL_CAPTURE
     if (0 == strcmp("hdr", mParameters.get_SceneMode()) &&
@@ -7822,7 +7822,7 @@ void SprdCameraHardware::receiveJpegPicture(struct camera_frame_type *frame) {
                 }
 
                 char debug_value[PROPERTY_VALUE_MAX];
-                property_get("persist.sys.camera.debug.mode", debug_value,
+                property_get("persist.vendor.cam.debug.mode", debug_value,
                              "non-debug");
                 if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
                     (!strcmp(debug_value, "debug"))) {

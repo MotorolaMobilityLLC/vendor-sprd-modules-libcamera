@@ -3416,7 +3416,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         CMR_LOGE("fail to get static info");
     }
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         isp_param.ex_info.pdaf_supported = 0;
     }
@@ -4780,7 +4780,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         goto exit;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -5847,7 +5847,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     struct sensor_exp_info exp_info;
 
     char prop[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.cam.dual.preview", prop, "0");
+    property_get("persist.vendor.cam.dual.preview", prop, "0");
 
     if (!param_ptr || !oem_handle) {
         CMR_LOGE("in parm error");
@@ -6148,7 +6148,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.cam.dual.preview", prop, "0");
+    property_get("persist.vendor.cam.dual.preview", prop, "0");
 
     if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
         CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
@@ -6748,7 +6748,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                                 SENSOR_EXIF_CTRL_FLASH, 1);
         }
         char value1[PROPERTY_VALUE_MAX];
-        property_get("persist.camera.flash.torch.cfg", value1, "06");
+        property_get("persist.vendor.cam.flash.torch.cfg", value1, "06");
 
         /*cfg torch value*/
         if (param_ptr->cmd_value == FLASH_TORCH) {
@@ -7595,7 +7595,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
     out_param_ptr->memory_setting.free_mem = camera_free;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7757,7 +7757,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     else if (1 == out_param_ptr->preview_eb)
         out_param_ptr->pdaf_eb = 0;
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         out_param_ptr->pdaf_eb = 0;
     }
@@ -10520,8 +10520,8 @@ cmr_int cmr_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *type) {
     // Just 4 bv test tmp
     char min_bv[PROPERTY_VALUE_MAX];
     char max_bv[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.cam.minbv.test", min_bv, "500");
-    property_get("persist.sys.cam.maxbv.test", max_bv, "700");
+    property_get("persist.vendor.cam.minbv.test", min_bv, "500");
+    property_get("persist.vendor.cam.maxbv.test", max_bv, "700");
 
     cmr_u32 Min_bv;
     cmr_u32 Max_bv;

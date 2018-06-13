@@ -133,7 +133,7 @@ cmr_int isp_file_init(cmr_handle *handle)
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 
 	*handle = NULL;
-	property_get("persist.sys.camera.ispfp.debug", value, "0");
+	property_get("persist.vendor.cam.ispfp.debug", value, "0");
 	if (1 != atoi(value)) {
 		goto exit;
 	}

@@ -1714,7 +1714,7 @@ void camera_set_3dnr_flag(struct camera_context *cxt, cmr_u32 threednr_flag) {
 
     cxt->snp_cxt.is_3dnr = threednr_flag;
     if (1 == cxt->snp_cxt.is_3dnr) {
-        property_get("persist.sys.cam.3dnr.version", value, "0");
+        property_get("persist.vendor.cam.3dnr.version", value, "0");
         if (0 == atoi(value))
             cxt->snp_cxt.is_sw_3dnr = 0;
         else
@@ -3669,7 +3669,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
              isp_param.ex_info.capture_skip_num);
     CMR_LOGD("w %d h %d", isp_param.size.w, isp_param.size.h);
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         isp_param.ex_info.pdaf_supported = 0;
     }
@@ -5016,7 +5016,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         goto exit;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
@@ -7918,7 +7918,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.free_mem = camera_free;
     out_param_ptr->memory_setting.gpu_alloc_mem = camera_gpu_malloc;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
@@ -8048,7 +8048,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         // out_param_ptr->is_3dnr = setting_param.cmd_type_value;
         out_param_ptr->is_3dnr = camera_get_3dnr_flag(cxt);
         if (1 == out_param_ptr->is_3dnr) {
-            property_get("persist.sys.cam.3dnr.version", value, "0");
+            property_get("persist.vendor.cam.3dnr.version", value, "0");
             if (0 == atoi(value))
                 out_param_ptr->is_sw_3dnr = 0;
             else
@@ -8077,7 +8077,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     else if (1 == out_param_ptr->preview_eb)
         out_param_ptr->pdaf_eb = 0;
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         out_param_ptr->pdaf_eb = 0;
     }

@@ -121,7 +121,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
 		init_param.raw_mode = 1;
 	} else {
@@ -2397,7 +2397,7 @@ cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *in
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
 		init_param.raw_mode = 1;
 	} else {

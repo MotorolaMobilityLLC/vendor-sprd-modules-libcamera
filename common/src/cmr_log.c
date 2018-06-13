@@ -27,7 +27,7 @@ void isp_init_log_level(void) {
     char prop[PROPERTY_VALUE_MAX];
     int val = 0;
 
-    property_get("persist.sys.camera.isp.log", prop, "0");
+    property_get("persist.vendor.cam.isp.log", prop, "0");
     val = atoi(prop);
     if (0 < val)
         g_isp_log_level = val;
@@ -38,7 +38,7 @@ void oem_init_log_level(void) {
     int val = 0;
     int turn_off_flag = 0;
 
-    property_get("persist.sys.camera.hal.log", value, "0");
+    property_get("persist.vendor.cam.hal.log", value, "0");
     val = atoi(value);
     if (0 < val)
         g_oem_log_level = val;
@@ -54,7 +54,7 @@ void sensor_init_log_level(void) {
     char prop[PROPERTY_VALUE_MAX];
     int val = 0;
 
-    property_get("persist.sys.camera.hal.log", prop, "0");
+    property_get("persist.vendor.cam.hal.log", prop, "0");
     val = atoi(prop);
     if (0 < val)
         g_sensor_log_level = val;

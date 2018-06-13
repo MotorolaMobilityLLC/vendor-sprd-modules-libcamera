@@ -491,7 +491,7 @@ int SprdCamera3PageTurn::setupPhysicalCameras() {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.cam.blur.cov.id", prop, "3");
+    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     if (atoi(prop) == 0) {
         m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_AUX_ID;
     } else {

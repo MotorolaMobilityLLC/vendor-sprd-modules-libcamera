@@ -140,7 +140,7 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 #ifdef CAMERA_POWER_DEBUG_ENABLE
     bool cam_not_disp;
     char value[PROPERTY_VALUE_MAX];
-    property_get("sys.camera.prenodisp", value, "false");
+    property_get("vendor.cam.prenodisp", value, "false");
     cam_not_disp = !strcmp(value, "true");
 #endif
 

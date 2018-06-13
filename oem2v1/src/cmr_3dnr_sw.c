@@ -397,7 +397,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         return CMR_CAMERA_NO_MEM;
     }
 
-    property_get("3dnr_setting_from_file", flag, "0");
+    property_get("vendor.cam.3dnr_setting_from_file", flag, "0");
     if (!strcmp(flag, "1")) {
         read_cap_param_from_file();
     }
@@ -744,7 +744,7 @@ void *thread_3dnr(void *p_data) {
 
     {
         char flag[PROPERTY_VALUE_MAX];
-        property_get("3dnr_save_capture_frame", flag, "0");
+        property_get("vendor.cam.3dnr_save_capture_frame", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
@@ -806,7 +806,7 @@ void *thread_3dnr(void *p_data) {
 
     {
         char flag[PROPERTY_VALUE_MAX];
-        property_get("3dnr_save_capture_frame", flag, "0");
+        property_get("vendor.cam.3dnr_save_capture_frame", flag, "0");
         if (!strcmp(flag, "1")) { // save output image.
             sprintf(
                 filename,
@@ -874,7 +874,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    property_get("3dnr_setting_from_file", flag, "0");
+    property_get("vendor.cam.3dnr_setting_from_file", flag, "0");
     if (!strcmp(flag, "1")) {
         read_pre_param_from_file();
     }
@@ -1208,7 +1208,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     {
         char flag[PROPERTY_VALUE_MAX];
         static int index = 0;
-        property_get("post_3dnr_save_scl_data", flag, "0");
+        property_get("vendor.cam.post_3dnr_save_scl_data", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_prev_handle->g_num: %d.", index,
                      threednr_prev_handle->g_num);
@@ -1302,7 +1302,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     time_2 = systemTime(CLOCK_MONOTONIC);
 
     char value[128];
-    property_get("3dnrclose", value, "0");
+    property_get("vendor.cam.3dnrclose", value, "0");
     if (!strcmp(value, "0")) {
         if (video_buf.cpu_buffer.bufferY != NULL) {
             CMR_LOGV("add threednr_function_pre previewbuffer with video :%p , "
@@ -1323,7 +1323,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             }
         } else {
             static int index = 0;
-            property_get("3dnr_save", value, "0");
+            property_get("vendor.cam.3dnr_save", value, "0");
             FILE *fp;
             sprintf(filename,
                     "/data/vendor/cameraserver/%ldx%ld_preview_index%d.yuv",

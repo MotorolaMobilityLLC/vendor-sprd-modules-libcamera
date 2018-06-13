@@ -326,7 +326,7 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
                cameraId) { // ValidationTools apk open  camera id is
                            // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to
                            // open physics Camera id is 1 and 3
-        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
             return 0;
         }

@@ -1524,7 +1524,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
              p_exif_info->spec_ptr->basic.PixelXDimension,
              p_exif_info->spec_ptr->basic.PixelYDimension);
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -1801,7 +1801,7 @@ setting_get_sprd_highiso_enabled(struct setting_component *cpt,
     char value[PROPERTY_VALUE_MAX];
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
-    property_get("persist.camera.highiso", value, "0");
+    property_get("persist.vendor.cam.highiso", value, "0");
     if (atoi(value) == 1)
         parm->cmd_type_value = 1;
     else

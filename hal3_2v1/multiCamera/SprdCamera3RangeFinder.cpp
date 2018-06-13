@@ -537,7 +537,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("sys.camera.rf.version", prop, "1");
+    property_get("vendor.cam.rf.version", prop, "1");
     mApiLibVersion = atoi(prop);
 
     if (mApiLibVersion == 0) {
@@ -1226,7 +1226,7 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(
 
     unsigned short *puwDisparityBuf = NULL, *disparityRotate = NULL;
     unsigned char *mainRotate = NULL, *auxRotate = NULL;
-    property_get("sys.camera.rf.debug", prop, "0");
+    property_get("vendor.cam.rf.debug", prop, "0");
 
     if (input_buf1 == NULL || input_buf2 == NULL) {
         HAL_LOGE("Error, null buffer detected! input_buf1:%p input_buf2:%p",

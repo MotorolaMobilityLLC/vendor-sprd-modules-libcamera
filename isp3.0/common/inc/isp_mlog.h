@@ -17,7 +17,7 @@
 #ifndef _ISP_MLOG_H_
 #define _ISP_MLOG_H_
 #include "isp_type.h"
-#define AF_SAVE_MLOG_STR       "persist.sys.isp.af.mlog" /*save/no*/
+#define AF_SAVE_MLOG_STR       "persist.vendor.cam.isp.af.mlog" /*save/no*/
 #define AE_SAVE_MLOG_STR       "persist.sys.isp.ae.mlog" /*save/no*/
 #define AWB_SAVE_MLOG_STR      "persist.sys.isp.awb.mlog" /*save/no*/
 #define IRP_SAVE_MLOG_STR      "persist.sys.isp.irp.mlog" /*save/no*/

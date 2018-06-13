@@ -21,7 +21,7 @@
 #include "isp_pm.h"
 
 #define ISP_AFL_BUFFER_LEN                   (3120 * 4 * 61)
-#define ISP_SET_AFL_THR                      "isp.afl.thr"
+#define ISP_SET_AFL_THR                      "vendor.cam.isp.afl.thr"
 
 #define AFLCTRL_EVT_BASE            0x2000
 #define AFLCTRL_EVT_INIT            AFLCTRL_EVT_BASE

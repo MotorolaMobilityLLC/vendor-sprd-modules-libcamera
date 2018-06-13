@@ -949,7 +949,7 @@ int SprdCamera3SideBySideCamera::cameraDeviceOpen(
 
         // choose real time bokeh
         char real[PROPERTY_VALUE_MAX];
-        property_get("persist.sys.cam.sbs.realtime", real, "1");
+        property_get("persist.vendor.cam.sbs.realtime", real, "1");
         if (!strcmp(real, "1")) {
             mRealtimeBokeh = 1;
         }
@@ -1136,8 +1136,8 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
         goto exit;
     }
     memset(&cali_info, 0, sizeof(isp_depth_cali_info));
-    property_get("persist.sys.camera.refocus.otp", otp, "0");
-    property_get("persist.sys.cam.sbs.savefile", dump, "0");
+    property_get("persist.vendor.cam.refocus.otp", otp, "0");
+    property_get("persist.vendor.cam.sbs.savefile", dump, "0");
 
     sprd_depth_VersionInfo_Get(acVersion, 256);
     HAL_LOGD("sprd_depthmap[%s]", acVersion);
@@ -1221,7 +1221,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     static int index = 0;
     char prop[PROPERTY_VALUE_MAX];
     char filename[128];
-    property_get("save_onlinecalbinfo", prop, "no");
+    property_get("vendor.cam.save_onlinecalbinfo", prop, "no");
     if (!strcmp(prop, "yes") && (NULL != cali_info.buffer)) {
         sprintf(filename, "hal_save_onlineclab_%d.dump", index);
         save_onlinecalbinfo(filename, (uint8_t *)cali_info.buffer,
@@ -1318,7 +1318,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::Save3dVerificationParam(
     unsigned char *sub_yuv) {
     int i = 0;
     char prop[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.cam.sbs.savefile", prop, "0");
+    property_get("persist.vendor.cam.sbs.savefile", prop, "0");
 
     unsigned char *buffer_base =
         (unsigned char *)((struct private_handle_t *)*mSavedResultBuff)->base;
@@ -1619,7 +1619,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                                       ->base);
 
             char prop[PROPERTY_VALUE_MAX];
-            property_get("persist.sys.cam.sbs.savefile", prop, "0");
+            property_get("persist.vendor.cam.sbs.savefile", prop, "0");
 
             HAL_LOGD("mFlushing:%d, stop preview and raw proc",
                      mSidebyside->mFlushing);
@@ -1750,7 +1750,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
 
             // FOR TEST:get 3d verification tag
             char verifi[PROPERTY_VALUE_MAX];
-            property_get("persist.sys.cam.tool.debug", verifi, "0");
+            property_get("persist.vendor.cam.tool.debug", verifi, "0");
             if (!strcmp(verifi, "1")) {
                 m3dVerificationEnable = 1;
             } else {
@@ -2959,7 +2959,7 @@ int SprdCamera3SideBySideCamera::thumbYuvProc(buffer_handle_t *src_buffer) {
 
     hwiMain->camera_ioctrl(CAMERA_IOCTRL_THUMB_YUV_PROC, &thumb_param, NULL);
 
-    property_get("persist.sys.sbs.dump.thumb", prop, "0");
+    property_get("persist.vendor.cam.sbs.dump.thumb", prop, "0");
     if (atoi(prop) == 1) {
         dumpData((unsigned char *)thumb_param.src_img.addr_vir.addr_y, 1,
                  thumb_param.src_img.buf_size, thumb_param.src_img.size.width,
@@ -3193,7 +3193,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
             mjpegSize;
         // dump jpeg
         char prop[PROPERTY_VALUE_MAX] = {0};
-        property_get("persist.sys.cam.sbs.savefile", prop, "0");
+        property_get("persist.vendor.cam.sbs.savefile", prop, "0");
         if (!strcmp(prop, "1")) {
             unsigned char *buffer_base =
                 (unsigned char *)(((struct private_handle_t *)*(

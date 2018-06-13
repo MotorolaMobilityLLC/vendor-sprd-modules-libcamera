@@ -396,7 +396,7 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
 #endif
 #ifdef SBS_MODE_SENSOR
             char value1[PROPERTY_VALUE_MAX];
-            property_get("persist.camera.sbs.mode", value1, "0");
+            property_get("persist.vendor.cam.sbs.mode", value1, "0");
             if (!strcmp(value1, "slave")) {
                 ioctl->set_pos = NULL;
                 ioctl->get_motor_pos = NULL;
@@ -2141,7 +2141,7 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
         sensor_cxt->stream_on = 1;
         char value[PROPERTY_VALUE_MAX];
 
-        property_get("persist.sys.cam.sensor.info", value, "0");
+        property_get("persist.vendor.cam.sensor.info", value, "0");
         if (!strcmp(value, "trigger")) {
                 SENSOR_LOGI("trigger E\n");
                 char value1[255] = {0x00};
@@ -2157,7 +2157,7 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
                 sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)], mod_cfg_info[mode].sensor_interface.bus_width,
                 res_trim_ptr[mode].trim_width, res_trim_ptr[mode].trim_height,res_trim_ptr[mode].bps_per_lane);
                 SENSOR_LOGI("trigger %s\n", value1);
-                property_set("persist.sys.cam.sensor.info", value1);
+                property_set("persist.vendor.cam.sensor.info", value1);
         }
     }
     SENSOR_LOGI("X");
@@ -2884,7 +2884,7 @@ static void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
     int fd;
     char value[PROPERTY_VALUE_MAX];
 
-    property_get("persist.sys.sensor.id", value, "0");
+    property_get("persist.vendor.cam.sensor.id", value, "0");
     if (!strcmp(value, "trigger_srid")) {
         SENSOR_LOGI("srid E\n");
         if (sensor_cxt->sensor_list_ptr[SENSOR_MAIN] != NULL &&
@@ -2932,8 +2932,8 @@ static void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
             close(fd);
             goto exit;
         }
-        property_set("sys.sensor.info", sensor_info);
-        property_set("persist.sys.sensor.id", "0");
+        property_set("vendor.cam.sensor.info", sensor_info);
+        property_set("persist.vendor.cam.sensor.id", "0");
         close(fd);
 
     exit:
@@ -3295,7 +3295,7 @@ cmr_int sensor_ic_write_gain(cmr_handle handle, cmr_u32 param) {
 
 #ifdef SBS_MODE_SENSOR
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.sbs.mode", value1, "0");
+    property_get("persist.vendor.cam.sbs.mode", value1, "0");
     if (!strcmp(value1, "slave")) {
 #ifdef SBS_SENSOR_FRONT
         sns_ops = sensor_cxt->sensor_list_ptr[3]->sns_ops;
@@ -3324,7 +3324,7 @@ static cmr_int sensor_ic_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
 #ifdef SBS_MODE_SENSOR
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.sbs.mode", value1, "0");
+    property_get("persist.vendor.cam.sbs.mode", value1, "0");
     if (!strcmp(value1, "slave")) {
 #ifdef SBS_SENSOR_FRONT
         sns_ops = sensor_cxt->sensor_list_ptr[3]->sns_ops;
@@ -3353,7 +3353,7 @@ static cmr_int sensor_ic_write_ae_value(cmr_handle handle, cmr_u32 param) {
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
 #ifdef SBS_MODE_SENSOR
     char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.sbs.mode", value1, "0");
+    property_get("persist.vendor.cam.sbs.mode", value1, "0");
     if (!strcmp(value1, "slave")) {
 #ifdef SBS_SENSOR_FRONT
         sns_ops = sensor_cxt->sensor_list_ptr[3]->sns_ops;

@@ -6,7 +6,7 @@
 #include <semaphore.h>
 
 #define SAVE_IMG
-#define SAVE_IMG_PROPERTY     "property.3dnr.save"
+#define SAVE_IMG_PROPERTY     "vendor.cam.property.3dnr.save"
 #define IMG_SAVE_H 1088
 #define DUMP_IMG_NUM 100
 #define DUMP_IMG_ENABLE 0
@@ -153,10 +153,10 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 	}
 #if DUMP_IMG_ENABLE
 	{	//save the preview frame for algo team.
-		property_get("save_3dnr_preview_data", save_flag, "no");
+		property_get("vendor.cam.save_3dnr_preview_data", save_flag, "no");
 		if (!strcmp(save_flag, "no")) {
 			p3dnr_info->status = C3DNR_STATUS_IDLE;
-			BL_LOGI("3DNR function off. need to set yes to property save_3dnr_preview_data");
+			BL_LOGI("3DNR function off. need to set yes to property vendor.cam.save_3dnr_preview_data");
 			return 0;
 		}
 	}
@@ -177,7 +177,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 
 #if DUMP_IMG_ENABLE
 		{	//save the preview frame for algo team.
-			property_get("save_3dnr_preview_data", save_flag, "no");
+			property_get("vendor.cam.save_3dnr_preview_data", save_flag, "no");
 			if (!strcmp(save_flag, "yes")) {
 				if (g_cur_num < DUMP_IMG_NUM) {
 					BL_LOGI("start to save the preview data before blending.");
@@ -244,7 +244,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 
 #if DUMP_IMG_ENABLE
 			{	//save the preview frame for algo team.
-				property_get("save_3dnr_preview_data", save_flag, "no");
+				property_get("vendor.cam.save_3dnr_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (g_cur_num < DUMP_IMG_NUM) {
 						cmr_s32 img_size = p3dnr_info->orig_width * p3dnr_info->orig_height * 3 / 2;
@@ -293,7 +293,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 #endif
 			{	//save the preview frame for debug.
 				static cmr_s32 num = 0;
-				property_get("save_preview_data", save_flag, "no");
+				property_get("vendor.cam.save_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (num < 10) {
 						sprintf(filename, "/data/vendor/cameraserver/%dx%d_ref_img_index_%d.yuv",
@@ -323,7 +323,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 			BL_LOGI("copy done.");
 			{	//save the preview frame for debug.
 				static cmr_s32 num0 = 0;
-				property_get("save_preview_data", save_flag, "no");
+				property_get("vendor.cam.save_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (num0 < 10) {
 						sprintf(filename, "/data/vendor/cameraserver/%dx%d_pre_img_index_%d.yuv",
@@ -344,7 +344,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 
 #if DUMP_IMG_ENABLE
 	{	//save the preview frame for algo team.
-		property_get("save_3dnr_preview_data", save_flag, "no");
+		property_get("vendor.cam.save_3dnr_preview_data", save_flag, "no");
 		if (!strcmp(save_flag, "yes")) {
 			g_cur_num++;
 		}
@@ -663,7 +663,7 @@ cmr_s32 initModule(cmr_s32 small_width, cmr_s32 small_height, cmr_s32 orig_width
 		free(p3dnr_info->intermedbuf.bufferY);
 		return -1;
 	}
-	property_get("3dnr_params", weight, "no");
+	property_get("vendor.cam.3dnr_params", weight, "no");
 	if (!strcmp(weight, "no")) {
 		BL_LOGI("user doesn't input weight table,please use default weight table\n");
 		ret = get_weight(weight_default, imageNum);

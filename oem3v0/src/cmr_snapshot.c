@@ -4534,7 +4534,7 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
         CMR_LOGE("failed to send start cvt msg to cvt thr %ld", ret);
     }
 
-    property_get("persist.sys.camera.alraw.mode", value, "0");
+    property_get("persist.vendor.camera.alraw.mode", value, "0");
     if (1 == atoi(value)) {
         if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
             char datetime[15] = {0};

@@ -1193,12 +1193,12 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 
 	cmr_bzero(&pos_info, sizeof(pos_info));
 	cmr_bzero(value, sizeof(value));
-	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
+	property_get("persist.vendor.cam.isp.vcm.tuning.mode", (char *)value, "0");
 
 	if (1 == atoi((char *)value)) {
 		cxt->vcm_tune.tuning_enable = 1;
 		cmr_bzero(pos, sizeof(pos));
-		property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
+		property_get("persist.vendor.cam.isp.vcm.position", (char *)pos, "0");
 		position = atoi((char *)pos);
 
 		if (position != cxt->vcm_tune.cur_pos) {
@@ -2169,7 +2169,7 @@ static cmr_u8 afaltek_adpt_aft_log(cmr_handle adpt_handle, cmr_u32 *is_save)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	char value[PROPERTY_VALUE_MAX] = { 0x0 };
 
-	property_get("persist.sys.isp.af.mlog", value, "no"); /*save/no*/
+	property_get("persist.vendor.cam.isp.af.mlog", value, "no"); /*save/no*/
 	if (!strcmp(value, "save"))
 		*is_save = 1;
 
