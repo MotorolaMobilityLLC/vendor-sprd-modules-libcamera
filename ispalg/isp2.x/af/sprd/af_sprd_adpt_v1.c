@@ -666,9 +666,9 @@ static cmr_u8 if_set_af_exif(const void *data, void *cookie)
 	if (0 == strcmp(af->AF_MODE, "on")) {
 		FILE *fp = NULL;
 		if (STATE_NORMAL_AF == af->state)
-			fp = fopen("/data/misc/cameraserver/saf_debug_info.jpg", "wb");
+			fp = fopen("/data/vendor/cameraserver/saf_debug_info.jpg", "wb");
 		else
-			fp = fopen("/data/misc/cameraserver/caf_debug_info.jpg", "wb");
+			fp = fopen("/data/vendor/cameraserver/caf_debug_info.jpg", "wb");
 
 		if (NULL == fp) {
 			ISP_LOGE("dump af_debug_info failure");
@@ -951,7 +951,7 @@ static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 {
 
 	af_ctrl_t *af = cookie;
-	char *aft_tuning_path = "/data/misc/cameraserver/aft_tuning.bin";
+	char *aft_tuning_path = "/data/vendor/cameraserver/aft_tuning.bin";
 	FILE *fp = NULL;
 
 	if (0 == access(aft_tuning_path, R_OK)) {	// read request successs
@@ -1171,7 +1171,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 		property_get(AF_SAVE_MLOG_STR, value, "no");
 		if (!strcmp(value, "save")) {
 			FILE *fp = NULL;
-			fp = fopen("/data/misc/cameraserver/aft_tuning_params.bin", "wb");
+			fp = fopen("/data/vendor/cameraserver/aft_tuning_params.bin", "wb");
 			fwrite(aft_in.data, 1, aft_in.data_len, fp);
 			fclose(fp);
 			ISP_LOGV("aft tuning size = %d", aft_in.data_len);
@@ -1301,7 +1301,7 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 
 static void calibration_ae_mean(af_ctrl_t * af, char *test_param)
 {
-	FILE *fp = fopen("/data/misc/cameraserver/calibration_ae_mean.txt", "ab");
+	FILE *fp = fopen("/data/vendor/cameraserver/calibration_ae_mean.txt", "ab");
 	cmr_u8 i = 0;
 	cmr_u16 pos = 0;
 
@@ -1388,8 +1388,8 @@ static void set_roi(af_ctrl_t * af, char *test_param)
 	FILE *fp = NULL;
 	UNUSED(test_param);
 
-	if (0 == access("/data/misc/cameraserver/AF_roi.bin", R_OK)) {
-		fp = fopen("/data/misc/cameraserver/AF_roi.bin", "rb");
+	if (0 == access("/data/vendor/cameraserver/AF_roi.bin", R_OK)) {
+		fp = fopen("/data/vendor/cameraserver/AF_roi.bin", "rb");
 		if (NULL == fp) {
 			ISP_LOGI("open file AF_roi.bin fails");
 			return;

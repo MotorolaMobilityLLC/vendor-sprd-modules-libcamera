@@ -2615,7 +2615,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle,
             "preview stopped, skip this frame,prev_status,prev_status %ld ",
             prev_cxt->prev_status);
 #if 0
-		char *psPath_depthData = "data/misc/cameraserver/depth.bin";
+		char *psPath_depthData = "data/vendor/cameraserver/depth.bin";
 		save_file(psPath_depthData, data->yaddr_vir, 480*360);
 #endif
         return ret;

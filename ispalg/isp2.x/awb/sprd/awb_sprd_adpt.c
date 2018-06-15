@@ -35,7 +35,7 @@
 #define AWB_CTRL_RESOLUTION_NUM 	8
 #define AWB_CTRL_SCENEMODE_NUM	10
 
-#define AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/misc/cameraserver/awb.file"
+#define AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/vendor/cameraserver/awb.file"
 #define AWB_GAIN_PARAM_FILE_NAME_MEDIA "/data/misc/media/awb.file"
 
 #define AWB_CTRL_TRUE			1

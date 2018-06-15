@@ -2569,7 +2569,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             }
             {
                 FILE *fid =
-                    fopen("/data/misc/cameraserver/calibration.txt", "rb");
+                    fopen("/data/vendor/cameraserver/calibration.txt", "rb");
                 if (NULL == fid) {
                     HAL_LOGV("calibration read failed!");
                 } else {
@@ -2591,7 +2591,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             }
 
             if (otp_info.dual_otp.data_3d.size > 0) {
-                save_file("data/misc/cameraserver/dualcamera.bin",
+                save_file("data/vendor/cameraserver/dualcamera.bin",
                           otpInfo.otp_data, otp_info.dual_otp.data_3d.size);
                 mSetting->setOTPTag(&otpInfo, otp_info.dual_otp.data_3d.size,
                                     otpInfo.otp_type);

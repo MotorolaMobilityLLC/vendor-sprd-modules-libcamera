@@ -134,7 +134,7 @@ static cmr_s32 is_print_log(void)
 }
 
 #define SENSOR_NUM 5
-#define SMART_STASH_FILE "data/misc/cameraserver/smart.file"
+#define SMART_STASH_FILE "data/vendor/cameraserver/smart.file"
 
 static cmr_s32 smart_ctl_save_stash(struct smart_context *cxt, void *in_param)
 {

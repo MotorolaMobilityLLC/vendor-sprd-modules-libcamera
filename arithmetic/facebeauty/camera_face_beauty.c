@@ -286,7 +286,7 @@ void save_yuv_data(int num, int width, int height, unsigned char *addr_y) {
     char tmp_str[20];
     FILE *fp = NULL;
     memset(file_name, '\0', 80);
-    strcpy(file_name, "/data/misc/cameraserver/");
+    strcpy(file_name, "/data/vendor/cameraserver/");
     sprintf(tmp_str, "%d-%d", num, width);
     strcat(file_name, tmp_str);
     strcat(file_name, "x");

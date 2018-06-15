@@ -490,7 +490,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
     FILE *fp = NULL;
     switch (type) {
     case 1: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%s.yuv",
+        snprintf(name, sizeof(name), "/data/vendor/cameraserver/%dx%d_%d_%s.yuv",
                  param1, param2, param3, param4);
         fp = fopen(name, "w");
         if (fp == NULL) {
@@ -501,7 +501,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fclose(fp);
     } break;
     case 2: {
-        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%s.jpg",
+        snprintf(name, sizeof(name), "/data/vendor/cameraserver/%dx%d_%d_%s.jpg",
                  param1, param2, param3, param4);
         fp = fopen(name, "wb");
         if (fp == NULL) {
@@ -515,7 +515,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         int i = 0;
         int j = 0;
         snprintf(name, sizeof(name),
-                 "/data/misc/cameraserver/refocus_%d_params_%s.txt", size,
+                 "/data/vendor/cameraserver/refocus_%d_params_%s.txt", size,
                  param4);
         fp = fopen(name, "w+");
         if (fp == NULL) {

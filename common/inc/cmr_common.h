@@ -33,7 +33,7 @@ extern "C" {
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
 #ifdef CONFIG_USE_CAMERASERVER_PROC
-#define CAMERA_DUMP_PATH "/data/misc/cameraserver/"
+#define CAMERA_DUMP_PATH "/data/vendor/cameraserver/"
 #else
 #define CAMERA_DUMP_PATH "/data/misc/media/"
 #endif

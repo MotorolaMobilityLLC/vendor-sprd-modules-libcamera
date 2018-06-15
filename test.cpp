@@ -67,8 +67,8 @@ struct frame_buffer_t {
     cmr_uint virt_addr;
     cmr_uint length; // buffer's length is different from cap_image_size
 };
-static char af_tuning_path[] = "/data/misc/cameraserver/af_tuning_default.bin";
-static char sensor_para_path[] = "/data/misc/cameraserver/sensor.file";
+static char af_tuning_path[] = "/data/vendor/cameraserver/af_tuning_default.bin";
+static char sensor_para_path[] = "/data/vendor/cameraserver/sensor.file";
 static struct frame_buffer_t fb_buf[SPRD_MAX_PREVIEW_BUF + 1];
 static uint32_t *post_preview_buf = NULL;
 static struct fb_var_screeninfo var;

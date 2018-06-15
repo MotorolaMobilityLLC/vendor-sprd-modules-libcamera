@@ -662,7 +662,7 @@ typedef enum {
 
 #define SENSOR_PARAM_NUM 8
 #ifdef CONFIG_USE_CAMERASERVER_PROC
-#define SENSOR_PARA "/data/misc/cameraserver/sensor.file"
+#define SENSOR_PARA "/data/vendor/cameraserver/sensor.file"
 #else
 #define SENSOR_PARA "/data/misc/media/sensor.file"
 #endif

@@ -3463,7 +3463,7 @@ int SprdCamera3RealBokeh::checkDepthPara(
     int rc = NO_ERROR;
     char para[50] = {0};
     FILE *fid =
-        fopen("/data/misc/cameraserver/depth_config_parameter.bin", "rb");
+        fopen("/data/vendor/cameraserver/depth_config_parameter.bin", "rb");
     if (fid != NULL) {
         HAL_LOGD("open depth_config_parameter.bin file success");
         rc = fread(para, sizeof(char),
@@ -3812,7 +3812,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             uint32_t size = 320;
 
             snprintf(OTPFileName, sizeof(OTPFileName),
-                     "/data/misc/cameraserver/bokeh_param.bin");
+                     "/data/vendor/cameraserver/bokeh_param.bin");
             uint32_t read_bytes =
                 read_file(OTPFileName, (void *)(&param_tune), size);
             HAL_LOGV("read_file %u", read_bytes);
@@ -4404,7 +4404,7 @@ int SprdCamera3RealBokeh::loadDebugOtp() {
             rc = -1;
         }
     } else {
-        FILE *fid = fopen("/data/misc/cameraserver/calibration.txt", "rb");
+        FILE *fid = fopen("/data/vendor/cameraserver/calibration.txt", "rb");
 
         if (NULL == fid) {
             HAL_LOGD("dualotp read failed!");

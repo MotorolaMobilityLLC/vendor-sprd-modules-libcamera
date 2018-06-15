@@ -1884,7 +1884,7 @@ LOCAL cmr_int sensor_write_dualcam_otpdata(
     SENSOR_LOGI("write dualotp ");
     property_get("debug.dualcamera.write.otp", value, "false");
     if (!strcmp(value, "true") && (sensor_id == 0)) {
-        const char *psPath_OtpData = "data/misc/cameraserver/otp.txt";
+        const char *psPath_OtpData = "data/vendor/cameraserver/otp.txt";
 
         otp_params_t pdata;
         cmr_u8 *dual_data = (cmr_u8 *)malloc(num_byte);

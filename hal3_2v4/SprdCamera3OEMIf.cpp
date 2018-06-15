@@ -2562,7 +2562,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
             char *psPath_OtpData =
-                "data/misc/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
+                "data/vendor/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
             OTP_Tag otpInfo = {0};
             mSetting->getOTPTag(&otpInfo);
@@ -2598,7 +2598,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d",
                          mCameraId, dual_otp_data, otpInfo.dual_otp_flag);
             }
-            save_file("data/misc/cameraserver/dualcamera.bin", dual_otp_data,
+            save_file("data/vendor/cameraserver/dualcamera.bin", dual_otp_data,
                       SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 
@@ -2631,7 +2631,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             }
             HAL_LOGD("save otp file");
 
-            save_file("data/misc/cameraserver/dualcamera.bin", otpInfo.otp_data,
+            save_file("data/vendor/cameraserver/dualcamera.bin", otpInfo.otp_data,
                       SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 #endif

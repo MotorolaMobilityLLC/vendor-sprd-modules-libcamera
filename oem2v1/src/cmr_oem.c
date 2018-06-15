@@ -9419,7 +9419,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         if (CMR_CAMERA_SUCCESS ==
             camera_parse_raw_filename(value, &scene_param)) {
 #ifdef CONFIG_USE_CAMERASERVER_PROC
-            sprintf(file_name, "/data/misc/cameraserver/%s", value);
+            sprintf(file_name, "/data/vendor/cameraserver/%s", value);
 #else
             sprintf(file_name, "/data/misc/media/%s", value);
 #endif

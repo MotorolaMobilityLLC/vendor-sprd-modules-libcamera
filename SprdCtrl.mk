@@ -747,7 +747,7 @@ LOCAL_CFLAGS += -DECONOMIZE_MEMORY
 endif
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
-LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/misc/cameraserver\"
+LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/vendor/cameraserver\"
 else
 LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/misc/media\"
 endif

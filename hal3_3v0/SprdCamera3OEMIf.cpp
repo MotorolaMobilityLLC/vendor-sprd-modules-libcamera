@@ -2599,7 +2599,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs otp begin*/
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
-            const char *psPath_OtpData = "data/misc/cameraserver/otp.bin";
+            const char *psPath_OtpData = "data/vendor/cameraserver/otp.bin";
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
             OTP_Tag otpInfo;
             mSetting->getOTPTag(&otpInfo);

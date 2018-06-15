@@ -47,7 +47,7 @@
 #define AE_START_ID 0x71717567
 #define AE_END_ID 	0x69656E64
 
-#define AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/misc/cameraserver/ae.file"
+#define AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER "/data/vendor/cameraserver/ae.file"
 #define AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA "/data/misc/media/ae.file"
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog"
 #define AE_SAVE_MLOG_DEFAULT ""
@@ -58,9 +58,9 @@ const char AE_MAGIC_TAG[] = "ae_debug_info";
 
 //Dynamic dualcam AE_sync debug
 #define DYNAMIC_AE_SYNC  1 // 1:enable dynamic AE_sync; 0:disable dynamic AE_sync
-#define AEM_MASTER_STAT_FILE "/data/misc/cameraserver/aem_master.file"
-#define AEM_SLAVE_STAT_FILE "/data/misc/cameraserver/aem_slave.file"
-#define AEM_Y_STAT_FILE "/data/misc/cameraserver/aem_y.file"
+#define AEM_MASTER_STAT_FILE "/data/vendor/cameraserver/aem_master.file"
+#define AEM_SLAVE_STAT_FILE "/data/vendor/cameraserver/aem_slave.file"
+#define AEM_Y_STAT_FILE "/data/vendor/cameraserver/aem_y.file"
 
 /**************************************************************************/
 
@@ -3420,7 +3420,7 @@ static void ae_set_led(struct ae_ctrl_cxt *cxt)
 		property_get("persist.sys.isp.ae.facali.dump", str, "");
 		if (!strcmp(str, "on")) {
 			FILE *p = NULL;
-			p = fopen("/data/misc/cameraserver/flashcali.txt", "w+");
+			p = fopen("/data/vendor/cameraserver/flashcali.txt", "w+");
 			if (!p) {
 				ISP_LOGW("Write flash cali file error!!\r\n");
 				goto EXIT;

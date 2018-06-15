@@ -476,8 +476,8 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
     void *refocus_out_buff_ptr = NULL;
     cmr_int face_num = 0;
     cmr_int k, min_refocus;
-    char *psPath_otpData = "data/misc/cameraserver/otp.bin";
-    char *psPath_depthData = "data/misc/cameraserver/depth.bin";
+    char *psPath_otpData = "data/vendor/cameraserver/otp.bin";
+    char *psPath_depthData = "data/vendor/cameraserver/depth.bin";
     struct refocus_init_parameter *init_param;
     struct refocus_start_parameter *start_param;
     cmr_s8 value[PROPERTY_VALUE_MAX];
@@ -534,7 +534,7 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
                     }
                 } else {
 #if 0
-									   char *psPath_OTP= "data/misc/cameraserver/packet.otp";
+									   char *psPath_OTP= "data/vendor/cameraserver/packet.otp";
 									   init_param->otp_data.otp_size = 0x2000;
 									   char *otp_data = malloc(init_param->otp_data.otp_size);
 									   read_file(psPath_otpData,  otp_data, init_param->otp_data.otp_size);

@@ -644,7 +644,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 			readFCConfig("fc_config.txt", caliData, "fc_config_check.txt");
 #else
-			readFCConfig("/data/misc/cameraserver/fc_config.txt", caliData, "/data/misc/cameraserver/fc_config_check.txt");
+			readFCConfig("/data/vendor/cameraserver/fc_config.txt", caliData, "/data/vendor/cameraserver/fc_config_check.txt");
 #endif
 			frameCount = 0;
 			cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;	//lock ae
@@ -1203,7 +1203,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flash_led_brightness.bin", "wb");
 #else
-				fp = fopen("/data/misc/cameraserver/flash_led_brightness.bin", "wb");
+				fp = fopen("/data/vendor/cameraserver/flash_led_brightness.bin", "wb");
 #endif
 				struct flash_led_brightness led_bri;
 				memset(&led_bri, 0, sizeof(struct flash_led_brightness));
@@ -1279,7 +1279,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flash_g_frames.bin", "wb");
 #else
-				fp = fopen("/data/misc/cameraserver/flash_g_frames.bin", "wb");
+				fp = fopen("/data/vendor/cameraserver/flash_g_frames.bin", "wb");
 #endif
 				fwrite(&gf, 1, sizeof(struct flash_g_frames), fp);
 				fclose(fp);
@@ -1418,7 +1418,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_frame_rgb.txt", "wt");
 #else
-				fp = fopen("/data/misc/cameraserver/fc_frame_rgb.txt", "wt");
+				fp = fopen("/data/vendor/cameraserver/fc_frame_rgb.txt", "wt");
 #endif
 				for (i = 0; i < caliData->testIndAll; i++) {
 					if (caliData->isMainTab[i] == 0)
@@ -1457,7 +1457,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_debug.txt", "wt");
 #else
-				fp = fopen("/data/misc/cameraserver/fc_debug.txt", "wt");
+				fp = fopen("/data/vendor/cameraserver/fc_debug.txt", "wt");
 #endif
 				fprintf(fp, "\ndriver_ind\n");
 				for (i = 0; i < caliData->numP1_alg; i++)
@@ -1537,7 +1537,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_debug.bin", "wb");
 #else
-				fp = fopen("/data/misc/cameraserver/fc_debug.bin", "wb");
+				fp = fopen("/data/vendor/cameraserver/fc_debug.bin", "wb");
 #endif
 				fwrite(caliData, 1, sizeof(struct FCData), fp);
 				fclose(fp);
@@ -1548,7 +1548,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_error.txt", "wt");
 #else
-				fp = fopen("/data/misc/cameraserver/fc_error.txt", "wt");
+				fp = fopen("/data/vendor/cameraserver/fc_error.txt", "wt");
 #endif
 				if (caliData->out.error == FlashCali_too_close) {
 					fprintf(fp, "error: chart to camera is to close!\n");
@@ -1559,7 +1559,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flashcalibration.bin", "wb");
 #else
-				fp = fopen("/data/misc/cameraserver/flashcalibration.bin", "wb");
+				fp = fopen("/data/vendor/cameraserver/flashcalibration.bin", "wb");
 #endif
 				fwrite(&caliData->out, 1, sizeof(struct flash_calibration_data), fp);
 				fclose(fp);

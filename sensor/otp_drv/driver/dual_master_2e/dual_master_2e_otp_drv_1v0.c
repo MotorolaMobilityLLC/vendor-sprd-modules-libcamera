@@ -916,7 +916,7 @@ static cmr_int dual_master_otp_drv_read(cmr_handle otp_drv_handle,
     if (atoi(value2) == 1) {
         /* read otp from bin file */
         snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path), "%s%s_otp.bin",
-                 "/data/misc/cameraserver/", "dual_master");
+                 "/data/vendor/cameraserver/", "dual_master");
         OTP_LOGD("otp_data_read_path:%s", otp_bin_ext_path);
         if (-1 == access(otp_bin_ext_path, 0)) {
             OTP_LOGE("otp bin file don't exist");

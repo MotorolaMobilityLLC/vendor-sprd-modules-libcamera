@@ -600,8 +600,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			char file_name_r[MLOG_FILE_NAME_SIZE] = {0};
 			char file_name_l[MLOG_FILE_NAME_SIZE] = {0};
 			FILE *fp = NULL;
-			sprintf(file_name_l, "/data/misc/cameraserver/pdaf_l_%d.txt", 1);
-			sprintf(file_name_r, "/data/misc/cameraserver/pdaf_r_%d.txt", 1);
+			sprintf(file_name_l, "/data/vendor/cameraserver/pdaf_l_%d.txt", 1);
+			sprintf(file_name_r, "/data/vendor/cameraserver/pdaf_r_%d.txt", 1);
 
 			fp = fopen(file_name_l, "wb");
 			fwrite((void*)pInPhaseBuf_left, 1, 0x8100, fp);

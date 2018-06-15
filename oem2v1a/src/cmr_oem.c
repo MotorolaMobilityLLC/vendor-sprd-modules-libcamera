@@ -9015,7 +9015,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGI("parse file_name = %s", value);
         if (CMR_CAMERA_SUCCESS ==
             camera_parse_raw_filename(value, &scene_param)) {
-            sprintf(file_name, "/data/misc/cameraserver/%s", value);
+            sprintf(file_name, "/data/vendor/cameraserver/%s", value);
             //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
             CMR_LOGI(

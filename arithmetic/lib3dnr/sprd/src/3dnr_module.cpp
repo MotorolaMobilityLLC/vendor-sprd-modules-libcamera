@@ -264,7 +264,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 						    p3dnr_info->orig_width * p3dnr_info->orig_height * 3 / 2 *
 						    DUMP_IMG_NUM;
 						BL_LOGI("start to save the preview file before blending.");
-						sprintf(filename, "/data/misc/cameraserver/%dx%d_img_preview_%d.yuv",
+						sprintf(filename, "/data/vendor/cameraserver/%dx%d_img_preview_%d.yuv",
 							p3dnr_info->orig_width, p3dnr_info->orig_height, DUMP_IMG_NUM);
 						if (NULL != (fp = fopen(filename, "wb"))) {
 							fwrite(g_buf_blend_pre, 1, size, fp);
@@ -274,7 +274,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 						}
 						BL_LOGI("start to save the preview file after blending.");
 						sprintf(filename,
-							"/data/misc/cameraserver/%dx%d_img_preview_after_blend_%d.yuv",
+							"/data/vendor/cameraserver/%dx%d_img_preview_after_blend_%d.yuv",
 							p3dnr_info->orig_width, p3dnr_info->orig_height,
 							DUMP_IMG_NUM - 1);
 						if (NULL != (fp = fopen(filename, "wb"))) {
@@ -296,18 +296,18 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 				property_get("save_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (num < 10) {
-						sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
+						sprintf(filename, "/data/vendor/cameraserver/%dx%d_ref_img_index_%d.yuv",
 							p3dnr_info->orig_width, p3dnr_info->orig_height, num);
 						save_yuv(filename, (char *)p3dnr_info->pfirst_blendimg->bufferY,
 							 p3dnr_info->orig_width, p3dnr_info->orig_height,
 							 p3dnr_info->orig_height);
-						sprintf(filename, "/data/misc/cameraserver/%dx%d_cur_img_index_%d.yuv",
+						sprintf(filename, "/data/vendor/cameraserver/%dx%d_cur_img_index_%d.yuv",
 							p3dnr_info->orig_width, p3dnr_info->orig_height, num);
 						save_yuv(filename, (char *)p3dnr_info->psecond_blendimg->bufferY,
 							 p3dnr_info->orig_width, p3dnr_info->orig_height,
 							 p3dnr_info->orig_height);
 						sprintf(filename,
-							"/data/misc/cameraserver/%dx%d_blend_img_index_%d.yuv",
+							"/data/vendor/cameraserver/%dx%d_blend_img_index_%d.yuv",
 							p3dnr_info->orig_width, p3dnr_info->orig_height, num);
 						save_yuv(filename, (char *)p3dnr_info->pout_blendimg->bufferY,
 							 p3dnr_info->orig_width, p3dnr_info->orig_height,
@@ -326,7 +326,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function_pre(c3dnr_buff
 				property_get("save_preview_data", save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
 					if (num0 < 10) {
-						sprintf(filename, "/data/misc/cameraserver/%dx%d_pre_img_index_%d.yuv",
+						sprintf(filename, "/data/vendor/cameraserver/%dx%d_pre_img_index_%d.yuv",
 							p3dnr_info->orig_width, p3dnr_info->orig_height, num0);
 						save_yuv(filename, (char *)orig_image->bufferY, p3dnr_info->orig_width,
 							 p3dnr_info->orig_height, p3dnr_info->orig_height);
@@ -376,11 +376,11 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 	{
 		property_get(SAVE_IMG_PROPERTY, save_flag, "no");
 		if (!strcmp(save_flag, "yes")) {
-			sprintf(filename, "/data/misc/cameraserver/%dx%d_big_img_index_%d.yuv", p3dnr_info->orig_width,
+			sprintf(filename, "/data/vendor/cameraserver/%dx%d_big_img_index_%d.yuv", p3dnr_info->orig_width,
 				IMG_SAVE_H /*p3dnr_info->orig_height */ , p3dnr_info->curr_frameno);
 			save_yuv(filename, (char *)orig_image->bufferY, p3dnr_info->orig_width,
 				 p3dnr_info->orig_height, IMG_SAVE_H);
-			sprintf(filename, "/data/misc/cameraserver/%dx%d_small_img_index_%d.yuv",
+			sprintf(filename, "/data/vendor/cameraserver/%dx%d_small_img_index_%d.yuv",
 				p3dnr_info->small_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
 				p3dnr_info->curr_frameno);
 			save_yuv(filename, (char *)small_image->bufferY, p3dnr_info->small_width,
@@ -437,7 +437,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 							buf = &p3dnr_info->porigimg[p3dnr_info->curr_frameno - 2];
 						}
 						sprintf(filename,
-							"/data/misc/cameraserver/%dx%d_blend_img_index_%d.yuv",
+							"/data/vendor/cameraserver/%dx%d_blend_img_index_%d.yuv",
 							p3dnr_info->orig_width,
 							IMG_SAVE_H /*p3dnr_info->orig_height */ ,
 							p3dnr_info->curr_frameno - 1);
@@ -464,12 +464,12 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 			{	//save blend image.
 				property_get(SAVE_IMG_PROPERTY, save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
-					sprintf(filename, "/data/misc/cameraserver/%dx%d_ref_img_index_%d.yuv",
+					sprintf(filename, "/data/vendor/cameraserver/%dx%d_ref_img_index_%d.yuv",
 						p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
 						p3dnr_info->curr_frameno - 1);
 					save_yuv(filename, (char *)p3dnr_info->pfirst_blendimg->bufferY,
 						 p3dnr_info->orig_width, p3dnr_info->orig_height, IMG_SAVE_H);
-					sprintf(filename, "/data/misc/cameraserver/%dx%d_cur_img_index_%d.yuv",
+					sprintf(filename, "/data/vendor/cameraserver/%dx%d_cur_img_index_%d.yuv",
 						p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
 						p3dnr_info->curr_frameno - 1);
 					save_yuv(filename, (char *)p3dnr_info->psecond_blendimg->bufferY,
@@ -501,7 +501,7 @@ __attribute__ ((visibility("default"))) cmr_s32 threednr_function(c3dnr_buffer_t
 #ifdef SAVE_IMG
 				property_get(SAVE_IMG_PROPERTY, save_flag, "no");
 				if (!strcmp(save_flag, "yes")) {
-					sprintf(filename, "/data/misc/cameraserver/%dx%d_blend_img_index_%d.yuv",
+					sprintf(filename, "/data/vendor/cameraserver/%dx%d_blend_img_index_%d.yuv",
 						p3dnr_info->orig_width, IMG_SAVE_H /*p3dnr_info->orig_height */ ,
 						p3dnr_info->curr_frameno);
 					save_yuv(filename, (char *)p3dnr_info->porigimg[0].bufferY,

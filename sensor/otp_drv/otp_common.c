@@ -8,7 +8,7 @@ static char *otp_lib_path = "/system/lib64/libcamotp.so";
 static char *otp_lib_path = "/system/lib/libcamotp.so";
 #endif
 
-static char *otp_bin_path = "/data/misc/cameraserver/";
+static char *otp_bin_path = "/data/vendor/cameraserver/";
 /**
  * NOTE: the pointer point otp raw data that not be parsed.
  *       General the data size is 8k,however it also depends

@@ -84,7 +84,7 @@ static int save_onlinecalbinfo(char *filename, uint8_t *input, uint32_t size) {
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
-    sprintf(file_name, "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
+    sprintf(file_name, "/data/vendor/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
             (1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
             p->tm_min, p->tm_sec, filename);
     fp = fopen(file_name, "wb");
@@ -103,7 +103,7 @@ static int savefile(char *filename, uint8_t *ptr, int width, int height) {
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
-    sprintf(file_name, "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
+    sprintf(file_name, "/data/vendor/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
             (1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
             p->tm_min, p->tm_sec, filename);
     // if(inum < 5)
@@ -654,7 +654,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         rc = mCaptureThread->mDevAux->hwi->getTuningParam(&tuning_info);
     }
 
-    strcpy(file_name, "/data/misc/cameraserver/");
+    strcpy(file_name, "/data/vendor/cameraserver/");
     sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
             (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
     strcat(file_name, tmp_str);
@@ -694,7 +694,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             strcat(name, file_name);
             strcat(name, ".NV21");
         } else if (param == 4) {
-            strcpy(name, "/data/misc/cameraserver/");
+            strcpy(name, "/data/vendor/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                     (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min,
@@ -708,7 +708,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             strcat(name, tmp_str);
             strcat(name, "_main.NV21");
         } else if (param == 5) {
-            strcpy(name, "/data/misc/cameraserver/");
+            strcpy(name, "/data/vendor/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                     (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min,
@@ -722,13 +722,13 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             strcat(name, tmp_str);
             strcat(name, "_sub.NV21");
         } else if (param == 6) {
-            strcpy(name, "/data/misc/cameraserver/");
+            strcpy(name, "/data/vendor/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%dx%d", width, height);
             strcat(name, tmp_str);
             strcat(name, "_left.NV21");
         } else if (param == 7) {
-            strcpy(name, "/data/misc/cameraserver/");
+            strcpy(name, "/data/vendor/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%dx%d", width, height);
             strcat(name, tmp_str);
@@ -756,7 +756,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp);
     } break;
     case SBS_FILE_DEPTH: {
-        strcpy(name, "/data/misc/cameraserver/");
+        strcpy(name, "/data/vendor/cameraserver/");
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
@@ -798,7 +798,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         rc = mCaptureThread->mDevAux->hwi->getTuningParam(&tuning_info);
         memset(file_name, 0, sizeof(file_name));
         memset(tmp_str, 0, sizeof(tmp_str));
-        strcpy(file_name, "/data/misc/cameraserver/");
+        strcpy(file_name, "/data/vendor/cameraserver/");
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
         strcat(file_name, tmp_str);
@@ -842,7 +842,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp2);
     } break;
     case SBS_FILE_JPEG: {
-        strcpy(name, "/data/misc/cameraserver/");
+        strcpy(name, "/data/vendor/cameraserver/");
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
@@ -857,7 +857,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp);
     } break;
     case SBS_FILE_OTP: {
-        strcpy(name, "/data/misc/cameraserver/");
+        strcpy(name, "/data/vendor/cameraserver/");
         strcat(name, "original_otp.bin");
         fp = fopen(name, "wb");
         if (fp == NULL) {
@@ -868,7 +868,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp);
     } break;
     case SBS_FILE_ISPINFO: {
-        strcpy(name, "/data/misc/cameraserver/");
+        strcpy(name, "/data/vendor/cameraserver/");
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
@@ -1141,7 +1141,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
                                   SBS_FILE_OTP, otp_size, 0, 0, 0, 0, 0);
         }
     } else {
-        fid = fopen("data/misc/cameraserver/otp.txt", "r");
+        fid = fopen("data/vendor/cameraserver/otp.txt", "r");
         if (fid == NULL) {
             HAL_LOGE("file open fail");
         } else {
@@ -1261,7 +1261,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessBokehImage(
         HAL_LOGE("buffer is null");
         goto exit;
     }
-    /*fid = fopen("/data/misc/cameraserver/bokeh_param.bin", "r");
+    /*fid = fopen("/data/vendor/cameraserver/bokeh_param.bin", "r");
     if(fid == NULL) {
         HAL_LOGE("file open fail");
         goto exit;
