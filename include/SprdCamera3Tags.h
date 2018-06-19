@@ -69,6 +69,7 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_AVAILABLE_AUTO_HDR,
     ANDROID_SPRD_TO_FACEIDSERVICE_PHYADDR,
     ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR,
+    ANDROID_SPRD_CAM_FEATURE_LIST,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

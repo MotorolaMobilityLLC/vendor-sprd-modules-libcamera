@@ -206,7 +206,9 @@ static tags_info_t
         {"isHdrSceneForAuto", TYPE_BYTE},
         {"sprdAvailableAutoHdr", TYPE_BYTE},
         {"sprdPhyAddrToFaceID", TYPE_INT64},
-        {"sprdPhyAddrFromFaceID", TYPE_INT64}
+        {"sprdPhyAddrFromFaceID", TYPE_INT64},
+        {"sprdCamFeatureList", TYPE_BYTE}
+
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

@@ -1661,6 +1661,27 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d", cameraId,
              s_setting[cameraId].sprddefInfo.sprd_available_flash_level);
 
+    Vector<uint8_t> available_cam_features;
+
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+
+    property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
+    available_cam_features.add(atoi(prop));
+    property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+    available_cam_features.add(atoi(prop));
+    property_get("persist.vendor.cam.fr.blur.version", prop, "0");
+    available_cam_features.add(atoi(prop));
+    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
+    available_cam_features.add(atoi(prop));
+
+    ALOGV("available_cam_features=%d", available_cam_features.size());
+
+    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+           &(available_cam_features[0]),
+           available_cam_features.size() * sizeof(uint8_t));
+
     return ret;
 }
 
@@ -1999,6 +2020,11 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_AUTO_HDR,
         &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
+
+    FILL_CAM_INFO_ARRAY(
+        s_setting[cameraId].sprddefInfo.sprd_cam_feature_list, 0,
+        CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
+        ANDROID_SPRD_CAM_FEATURE_LIST)
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
