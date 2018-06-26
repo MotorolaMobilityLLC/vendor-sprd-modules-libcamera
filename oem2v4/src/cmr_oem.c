@@ -2347,6 +2347,8 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
     if (0 == grab_cxt->inited) {
         grab_param.oem_handle = oem_handle;
         grab_param.sensor_id = cxt->camera_id;
+        grab_param.sensor_max_size.width = sn_cxt->sensor_info.source_width_max;
+        grab_param.sensor_max_size.height = sn_cxt->sensor_info.source_height_max;
         ret = cmr_grab_init(&grab_param, &grab_handle);
         if (ret) {
             CMR_LOGE("failed to init grab %ld", ret);
