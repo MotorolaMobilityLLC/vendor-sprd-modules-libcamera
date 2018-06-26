@@ -65,6 +65,10 @@
 #include "SprdCamera3PageTurn.h"
 #endif
 #include "SprdDualCamera3Tuning.h"
+#ifdef CONFIG_SINGLE_FACEID_SUPPORT
+#include "SprdCamera3SingleFaceIdRegister.h"
+#include "SprdCamera3SingleFaceIdUnlock.h"
+#endif
 
 namespace sprdcamera {
 
@@ -101,6 +105,10 @@ class SprdCamera3Wrapper {
     SprdCamera3PageTurn *mPageturn;
 #endif
     SprdDualCamera3Tuning *mTCam;
+#ifdef CONFIG_SINGLE_FACEID_SUPPORT
+    SprdCamera3SingleFaceIdRegister *mSingleFaceIdRegister;
+    SprdCamera3SingleFaceIdUnlock *mSingleFaceIdUnlock;
+#endif
 };
 };
 #endif

@@ -56,6 +56,10 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
     SprdCamera3PageTurn::getCameraMuxer(&mPageturn);
 #endif
     SprdDualCamera3Tuning::getTCamera(&mTCam);
+#ifdef CONFIG_SINGLE_FACEID_SUPPORT
+    SprdCamera3SingleFaceIdRegister::getCameraFaceId(&mSingleFaceIdRegister);
+    SprdCamera3SingleFaceIdUnlock::getCameraFaceId(&mSingleFaceIdUnlock);
+#endif
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper() {}
@@ -137,6 +141,14 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         rc = mPageturn->camera_device_open(module, id, hw_device);
         break;
 #endif
+#ifdef CONFIG_SINGLE_FACEID_SUPPORT
+    case SPRD_SINGLE_FACEID_REGISTER_ID:
+        rc = mSingleFaceIdRegister->camera_device_open(module, id, hw_device);
+        break;
+    case SPRD_SINGLE_FACEID_UNLOCK_ID:
+        rc = mSingleFaceIdUnlock->camera_device_open(module, id, hw_device);
+        break;
+#endif
     default:
 
         HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
@@ -210,6 +222,14 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         break;
     case SPRD_PAGE_TURN_ID:
         rc = mPageturn->get_camera_info(camera_id, info);
+        break;
+#endif
+#ifdef CONFIG_SINGLE_FACEID_SUPPORT
+    case SPRD_SINGLE_FACEID_REGISTER_ID:
+        rc = mSingleFaceIdRegister->get_camera_info(camera_id, info);
+        break;
+    case SPRD_SINGLE_FACEID_UNLOCK_ID:
+        rc = mSingleFaceIdUnlock->get_camera_info(camera_id, info);
         break;
 #endif
     default:

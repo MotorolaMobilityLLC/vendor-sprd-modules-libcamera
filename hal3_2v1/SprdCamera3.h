@@ -204,7 +204,9 @@ static tags_info_t
         {"adjustSprdFlashLevel", TYPE_BYTE},
         {"sprdAutoHdrEnabled", TYPE_BYTE},
         {"isHdrSceneForAuto", TYPE_BYTE},
-        {"sprdAvailableAutoHdr", TYPE_BYTE}
+        {"sprdAvailableAutoHdr", TYPE_BYTE},
+        {"sprdPhyAddrToFaceID", TYPE_INT64},
+        {"sprdPhyAddrFromFaceID", TYPE_INT64}
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
