@@ -115,7 +115,7 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
     if (!mIommuEnabled) {
-        yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+        yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
     }
 
 #if defined(CONFIG_SPRD_ANDROID_8)

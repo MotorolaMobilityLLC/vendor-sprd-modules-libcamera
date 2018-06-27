@@ -1420,7 +1420,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
         int32_t yuvTextFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
         uint32_t inWidth = 0, inHeight = 0, inStride = 0;
         if (!mRealBokeh->mIommuEnabled) {
-            yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+            yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
         }
 
 #if defined(CONFIG_SPRD_ANDROID_8)

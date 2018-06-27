@@ -550,7 +550,7 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
     }
 
     if (!mOEMIf->IommuIsEnabled()) {
-        new_stream->usage |= GRALLOC_USAGE_CAMERA_BUFFER;
+        new_stream->usage |= GRALLOC_USAGE_VIDEO_BUFFER;
     }
 
     if ((*stream_type < 0) || (*stream_type >= CAMERA_STREAM_TYPE_MAX) ||
