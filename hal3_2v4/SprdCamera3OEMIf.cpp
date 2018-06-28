@@ -676,7 +676,10 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 #endif
         break;
     case CAMERA_CHANNEL_TYPE_PICTURE:
-        cancelPictureInternal();
+        {
+            Mutex::Autolock l(&mLock);
+            cancelPictureInternal();
+        }
         break;
     default:
         break;
