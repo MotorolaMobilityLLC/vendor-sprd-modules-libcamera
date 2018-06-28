@@ -1752,7 +1752,6 @@ cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
             goto exit;
         }
         *threednr_handle = prev_cxt->cap_3dnr_handle_array[i];
-
         if (i >= CMR_CAPTURE_MEM_SUM) {
             CMR_LOGE("out of bound 3dnr buffer");
             ret = CMR_CAMERA_FAIL;
@@ -4000,6 +3999,17 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         }
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.is_3dnr == 1) {
+            struct sprd_img_3dnr_param stream_info;
+            stream_info.w = 0;
+            stream_info.h = 0;
+            stream_info.is_3dnr = 0;
+            CMR_LOGD("sw_3dnr_info_cfg, %d, %d, %d", stream_info.w, stream_info.h,
+                     stream_info.is_3dnr);
+            ret = handle->ops.sw_3dnr_info_cfg(handle->oem_handle, &stream_info);
+            if (ret) {
+                CMR_LOGE("sw 3dnr info cfg failed, ret %ld", ret);
+            }
+
             prev_3dnr_close(handle, camera_id);
         }
     }
