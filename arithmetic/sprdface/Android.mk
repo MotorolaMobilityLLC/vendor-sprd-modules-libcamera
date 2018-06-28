@@ -42,12 +42,12 @@ include $(BUILD_PREBUILT)
 # SPRD face alignment library
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsprdfa
-LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libsprdfa.a
-LOCAL_MODULE_STEM_64 := libsprdfa.a
-LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfa.a
-LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfa.a
+LOCAL_MODULE_STEM_32 := libsprdfa.so
+LOCAL_MODULE_STEM_64 := libsprdfa.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfa.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfa.so
 LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -58,12 +58,12 @@ include $(BUILD_PREBUILT)
 # SPRD face attribute recognition (smile detection) library
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsprdfar
-LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libsprdfar.a
-LOCAL_MODULE_STEM_64 := libsprdfar.a
-LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfar.a
-LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfar.a
+LOCAL_MODULE_STEM_32 := libsprdfar.so
+LOCAL_MODULE_STEM_64 := libsprdfar.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfar.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfar.so
 LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

@@ -127,7 +127,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-	LOCAL_STATIC_LIBRARIES += libsprdfa libsprdfar
+	LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfar
 	LOCAL_SHARED_LIBRARIES += libsprdfd
 endif
 
