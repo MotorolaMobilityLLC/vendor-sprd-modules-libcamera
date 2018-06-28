@@ -1025,7 +1025,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup(
     } else {
         HAL_LOGD("Not detect face!");
     }
-	*/
+        */
 }
 
 /*===========================================================================
@@ -1064,8 +1064,8 @@ int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(
     }
     private_handle_t *private_handle =
         (struct private_handle_t *)(*frame_buffer);
-    //if (perfectskinlevel > 0)
-        //video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+    // if (perfectskinlevel > 0)
+    // video_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
 
     return rc;
 }
@@ -2788,9 +2788,11 @@ void SprdCamera3StereoVideo::dumpImg(void *addr, int size, int w, int h,
     HAL_LOGD(" E");
 
     char name[128];
-    snprintf(name, sizeof(name), "/data/misc/media/%d_%d__%d_%d.yuv", w, h,
-             frameId, flag);
-
+    strcpy(name, CAMERA_DUMP_PATH);
+    char tmp_name[64];
+    snprintf(tmp_name, sizeof(tmp_name), "%d_%d__%d_%d.yuv", w, h, frameId,
+             flag);
+    strcat(name, tmp_name);
     FILE *file_fd = fopen(name, "w");
 
     if (file_fd != NULL) {

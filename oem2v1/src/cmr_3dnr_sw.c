@@ -150,9 +150,9 @@ static int slope_tmp[6] = {4};
 static int sigma_tmp[6] = {4};
 
 static int pre_threthold[4][6] = {{0, 2, 4, 9, 9, 9},
-                              {0, 1, 5, 9, 9, 9},
-                              {0, 1, 5, 9, 9, 9},
-                              {0, 1, 6, 9, 9, 9}};
+                                  {0, 1, 5, 9, 9, 9},
+                                  {0, 1, 5, 9, 9, 9},
+                                  {0, 1, 6, 9, 9, 9}};
 
 static int pre_slope[4][6] = {
     {255, 5, 6, 9, 9, 9},
@@ -164,9 +164,9 @@ uint16_t pre_SearchWindow_x = 11;
 uint16_t pre_SearchWindow_y = 11;
 
 static int cap_threthold[4][6] = {{3, 4, 6, 9, 9, 9},
-                              {3, 5, 6, 9, 9, 9},
-                              {3, 5, 6, 9, 9, 9},
-                              {2, 6, 7, 9, 9, 9}};
+                                  {3, 5, 6, 9, 9, 9},
+                                  {3, 5, 6, 9, 9, 9},
+                                  {2, 6, 7, 9, 9, 9}};
 
 static int cap_slope[4][6] = {
     {5, 6, 7, 9, 9, 9},
@@ -250,12 +250,14 @@ cmr_int isp_ioctl_for_3dnr(cmr_handle isp_handle, c3dnr_io_info_t *io_info) {
 }
 
 static void read_pre_param_from_file() {
-    char parafile[] = "/data/vendor/cameraserver/bst_tdns_settings_image_pre.txt";
-    FILE *pFile = fopen(parafile, "rt");
+    char file_name[128];
+    strcpy(file_name, CAMERA_DUMP_PATH);
+    strcat(file_name, "bst_tdns_settings_image_pre.txt");
+    FILE *pFile = fopen(file_name, "rt");
     char line[256];
 
     if (pFile == NULL) {
-        CMR_LOGE("open preview setting file  %s failed.\n", parafile);
+        CMR_LOGE("open preview setting file  %s failed.\n", file_name);
     } else {
         fgets(line, 256, pFile);
         char ss[256];
@@ -265,36 +267,40 @@ static void read_pre_param_from_file() {
 
             if (!strcmp(ss, "-th0")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_threthold[0][0],
-                       &pre_threthold[0][1], &pre_threthold[0][2], &pre_threthold[0][3],
-                       &pre_threthold[0][4], &pre_threthold[0][5]);
+                       &pre_threthold[0][1], &pre_threthold[0][2],
+                       &pre_threthold[0][3], &pre_threthold[0][4],
+                       &pre_threthold[0][5]);
             } else if (!strcmp(ss, "-th1")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_threthold[1][0],
-                       &pre_threthold[1][1], &pre_threthold[1][2], &pre_threthold[1][3],
-                       &pre_threthold[1][4], &pre_threthold[1][5]);
+                       &pre_threthold[1][1], &pre_threthold[1][2],
+                       &pre_threthold[1][3], &pre_threthold[1][4],
+                       &pre_threthold[1][5]);
             } else if (!strcmp(ss, "-th2")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_threthold[2][0],
-                       &pre_threthold[2][1], &pre_threthold[2][2], &pre_threthold[2][3],
-                       &pre_threthold[2][4], &pre_threthold[2][5]);
+                       &pre_threthold[2][1], &pre_threthold[2][2],
+                       &pre_threthold[2][3], &pre_threthold[2][4],
+                       &pre_threthold[2][5]);
             } else if (!strcmp(ss, "-th3")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_threthold[3][0],
-                       &pre_threthold[3][1], &pre_threthold[3][2], &pre_threthold[3][3],
-                       &pre_threthold[3][4], &pre_threthold[3][5]);
+                       &pre_threthold[3][1], &pre_threthold[3][2],
+                       &pre_threthold[3][3], &pre_threthold[3][4],
+                       &pre_threthold[3][5]);
             } else if (!strcmp(ss, "-sl0")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_slope[0][0],
-                       &pre_slope[0][1], &pre_slope[0][2], &pre_slope[0][3], &pre_slope[0][4],
-                       &pre_slope[0][5]);
+                       &pre_slope[0][1], &pre_slope[0][2], &pre_slope[0][3],
+                       &pre_slope[0][4], &pre_slope[0][5]);
             } else if (!strcmp(ss, "-sl1")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_slope[1][0],
-                       &pre_slope[1][1], &pre_slope[1][2], &pre_slope[1][3], &pre_slope[1][4],
-                       &pre_slope[1][5]);
+                       &pre_slope[1][1], &pre_slope[1][2], &pre_slope[1][3],
+                       &pre_slope[1][4], &pre_slope[1][5]);
             } else if (!strcmp(ss, "-sl2")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_slope[2][0],
-                       &pre_slope[2][1], &pre_slope[2][2], &pre_slope[2][3], &pre_slope[2][4],
-                       &pre_slope[2][5]);
+                       &pre_slope[2][1], &pre_slope[2][2], &pre_slope[2][3],
+                       &pre_slope[2][4], &pre_slope[2][5]);
             } else if (!strcmp(ss, "-sl3")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &pre_slope[3][0],
-                       &pre_slope[3][1], &pre_slope[3][2], &pre_slope[3][3], &pre_slope[3][4],
-                       &pre_slope[3][5]);
+                       &pre_slope[3][1], &pre_slope[3][2], &pre_slope[3][3],
+                       &pre_slope[3][4], &pre_slope[3][5]);
             } else if (!strcmp(ss, "-srx"))
                 sscanf(line, "%s %hd", ss, &pre_SearchWindow_x);
             else if (!strcmp(ss, "-sry"))
@@ -307,14 +313,15 @@ static void read_pre_param_from_file() {
         fclose(pFile);
 }
 
-
 static void read_cap_param_from_file() {
-    char parafile[] = "/data/vendor/cameraserver/bst_tdns_settings_image_cap.txt";
-    FILE *pFile = fopen(parafile, "rt");
+    char file_name[128];
+    strcpy(file_name, CAMERA_DUMP_PATH);
+    strcat(file_name, "bst_tdns_settings_image_cap.txt");
+    FILE *pFile = fopen(file_name, "rt");
     char line[256];
 
     if (pFile == NULL) {
-        CMR_LOGE("open setting file  %s failed.\n", parafile);
+        CMR_LOGE("open setting file  %s failed.\n", file_name);
     } else {
         fgets(line, 256, pFile);
         char ss[256];
@@ -324,36 +331,40 @@ static void read_cap_param_from_file() {
 
             if (!strcmp(ss, "-th0")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_threthold[0][0],
-                       &cap_threthold[0][1], &cap_threthold[0][2], &cap_threthold[0][3],
-                       &cap_threthold[0][4], &cap_threthold[0][5]);
+                       &cap_threthold[0][1], &cap_threthold[0][2],
+                       &cap_threthold[0][3], &cap_threthold[0][4],
+                       &cap_threthold[0][5]);
             } else if (!strcmp(ss, "-th1")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_threthold[1][0],
-                       &cap_threthold[1][1], &cap_threthold[1][2], &cap_threthold[1][3],
-                       &cap_threthold[1][4], &cap_threthold[1][5]);
+                       &cap_threthold[1][1], &cap_threthold[1][2],
+                       &cap_threthold[1][3], &cap_threthold[1][4],
+                       &cap_threthold[1][5]);
             } else if (!strcmp(ss, "-th2")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_threthold[2][0],
-                       &cap_threthold[2][1], &cap_threthold[2][2], &cap_threthold[2][3],
-                       &cap_threthold[2][4], &cap_threthold[2][5]);
+                       &cap_threthold[2][1], &cap_threthold[2][2],
+                       &cap_threthold[2][3], &cap_threthold[2][4],
+                       &cap_threthold[2][5]);
             } else if (!strcmp(ss, "-th3")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_threthold[3][0],
-                       &cap_threthold[3][1], &cap_threthold[3][2], &cap_threthold[3][3],
-                       &cap_threthold[3][4], &cap_threthold[3][5]);
+                       &cap_threthold[3][1], &cap_threthold[3][2],
+                       &cap_threthold[3][3], &cap_threthold[3][4],
+                       &cap_threthold[3][5]);
             } else if (!strcmp(ss, "-sl0")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_slope[0][0],
-                       &cap_slope[0][1], &cap_slope[0][2], &cap_slope[0][3], &cap_slope[0][4],
-                       &cap_slope[0][5]);
+                       &cap_slope[0][1], &cap_slope[0][2], &cap_slope[0][3],
+                       &cap_slope[0][4], &cap_slope[0][5]);
             } else if (!strcmp(ss, "-sl1")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_slope[1][0],
-                       &cap_slope[1][1], &cap_slope[1][2], &cap_slope[1][3], &cap_slope[1][4],
-                       &cap_slope[1][5]);
+                       &cap_slope[1][1], &cap_slope[1][2], &cap_slope[1][3],
+                       &cap_slope[1][4], &cap_slope[1][5]);
             } else if (!strcmp(ss, "-sl2")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_slope[2][0],
-                       &cap_slope[2][1], &cap_slope[2][2], &cap_slope[2][3], &cap_slope[2][4],
-                       &cap_slope[2][5]);
+                       &cap_slope[2][1], &cap_slope[2][2], &cap_slope[2][3],
+                       &cap_slope[2][4], &cap_slope[2][5]);
             } else if (!strcmp(ss, "-sl3")) {
                 sscanf(line, "%s %d %d %d %d %d %d", ss, &cap_slope[3][0],
-                       &cap_slope[3][1], &cap_slope[3][2], &cap_slope[3][3], &cap_slope[3][4],
-                       &cap_slope[3][5]);
+                       &cap_slope[3][1], &cap_slope[3][2], &cap_slope[3][3],
+                       &cap_slope[3][4], &cap_slope[3][5]);
             } else if (!strcmp(ss, "-srx"))
                 sscanf(line, "%s %hd", ss, &cap_SearchWindow_x);
             else if (!strcmp(ss, "-sry"))
@@ -748,13 +759,11 @@ void *thread_3dnr(void *p_data) {
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
-            sprintf(filename,
-                    "/data/vendor/cameraserver/big_in_%ldx%ld_index_%d.yuv",
+            sprintf(filename, "big_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
-            sprintf(filename,
-                    "/data/vendor/cameraserver/small_in_%ldx%ld_index_%d.yuv",
+            sprintf(filename, "small_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->small_width, threednr_handle->small_height,
                     cur_frm);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y +
@@ -808,10 +817,8 @@ void *thread_3dnr(void *p_data) {
         char flag[PROPERTY_VALUE_MAX];
         property_get("vendor.cam.3dnr_save_capture_frame", flag, "0");
         if (!strcmp(flag, "1")) { // save output image.
-            sprintf(
-                filename,
-                "/data/vendor/cameraserver/%ldx%ld_3dnr_handle_frame_index%d.yuv",
-                threednr_handle->width, threednr_handle->height, cur_frm);
+            sprintf(filename, "%ldx%ld_3dnr_handle_frame_index%d.yuv",
+                    threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)in->dst_frame.addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
         }
@@ -849,7 +856,7 @@ cmr_int create_3dnr_thread(struct thread_3dnr_info *info) {
     return rtn;
 }
 
-//static volatile uint8_t *ptemp, *ptemp1, *ptemp2, *ptemp3;
+// static volatile uint8_t *ptemp, *ptemp1, *ptemp2, *ptemp3;
 cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
                            struct ipm_open_out *out, cmr_handle *class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -952,7 +959,8 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else {
         CMR_LOGE("cam_cxt->hal_malloc is NULL");
     }
-    /*ptemp = malloc(threednr_prev_handle->width * threednr_prev_handle->height *
+    /*ptemp = malloc(threednr_prev_handle->width * threednr_prev_handle->height
+    *
                    3 / 2);
     ptemp2 = malloc(threednr_prev_handle->width * threednr_prev_handle->height *
                     3 / 2);
@@ -1185,6 +1193,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     struct img_frm *src, dst;
     cmr_u32 cur_frm_idx;
     char filename[128];
+    char tmp_name[64];
     struct c3dnr_pre_inparam preview_param;
 
     if (!class_handle || !in || !out) {
@@ -1212,14 +1221,12 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_prev_handle->g_num: %d.", index,
                      threednr_prev_handle->g_num);
-            sprintf(filename,
-                    "/data/vendor/cameraserver/scl_in_%ldx%ld_index_%d.yuv",
+            sprintf(filename, "scl_in_%ldx%ld_index_%d.yuv",
                     threednr_prev_handle->width, threednr_prev_handle->height,
                     index);
             save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y,
                      threednr_prev_handle->width, threednr_prev_handle->height);
-            sprintf(filename,
-                    "/data/vendor/cameraserver/scl_out_%ldx%ld_index_%d.yuv",
+            sprintf(filename, "scl_out_%ldx%ld_index_%d.yuv",
                     threednr_prev_handle->small_width,
                     threednr_prev_handle->small_height, index);
             save_yuv(filename, (char *)in->dst_frame.addr_vir.addr_y,
@@ -1325,15 +1332,15 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             static int index = 0;
             property_get("vendor.cam.3dnr_save", value, "0");
             FILE *fp;
-            sprintf(filename,
-                    "/data/vendor/cameraserver/%ldx%ld_preview_index%d.yuv",
+            sprintf(tmp_name, "%ldx%ld_preview_index%d.yuv",
                     threednr_prev_handle->width, threednr_prev_handle->height,
                     index);
             if (!strcmp(value, "1")) {
-                sprintf(filename,
-                        "/data/vendor/cameraserver/%ldx%ld_preview_index%d.yuv",
+                sprintf(tmp_name, "%ldx%ld_preview_index%d.yuv",
                         threednr_prev_handle->width,
                         threednr_prev_handle->height, index);
+                strcpy(filename, CAMERA_DUMP_PATH);
+                strcat(filename, tmp_name);
                 fp = fopen(filename, "wb");
                 if (fp) {
                     fwrite(big_buf.cpu_buffer.bufferY, 1,
@@ -1342,10 +1349,11 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                            fp);
                     fclose(fp);
                 }
-                sprintf(filename,
-                        "/data/vendor/cameraserver/%ldx%ld_preview_index%d.yuv",
+                sprintf(tmp_name, "%ldx%ld_preview_index%d.yuv",
                         threednr_prev_handle->small_width,
                         threednr_prev_handle->small_height, index);
+                strcpy(filename, CAMERA_DUMP_PATH);
+                strcat(filename, tmp_name);
                 fp = fopen(filename, "wb");
 
                 if (fp) {
@@ -1363,11 +1371,11 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                                             &preview_param);
 
             if (!strcmp(value, "1")) {
-                sprintf(
-                    filename,
-                    "/data/vendor/cameraserver/%ldx%ld_preview_result_index%d.yuv",
-                    threednr_prev_handle->width, threednr_prev_handle->height,
-                    index);
+                sprintf(tmp_name, "%ldx%ld_preview_result_index%d.yuv",
+                        threednr_prev_handle->width,
+                        threednr_prev_handle->height, index);
+                strcpy(filename, CAMERA_DUMP_PATH);
+                strcat(filename, tmp_name);
                 fp = fopen(filename, "wb");
                 if (fp) {
                     fwrite(big_buf.cpu_buffer.bufferY, 1,
@@ -1420,10 +1428,10 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         src->data_end.y_endian, src->data_end.uv_endian, dst->data_end.y_endian,
         dst->data_end.uv_endian);
 
-    CMR_LOGD(
-        "src fd: 0x%x, yaddr: 0x%lx, fmt: %d dst fd: 0x%x, yaddr: 0x%lx, fmt: %d",
-        src->fd, src->addr_vir.addr_y, src->fmt, dst->fd, dst->addr_vir.addr_y,
-        dst->fmt);
+    CMR_LOGD("src fd: 0x%x, yaddr: 0x%lx, fmt: %d dst fd: 0x%x, yaddr: 0x%lx, "
+             "fmt: %d",
+             src->fd, src->addr_vir.addr_y, src->fmt, dst->fd,
+             dst->addr_vir.addr_y, dst->fmt);
     ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
                           (cmr_evt_cb)NULL, NULL);
     if (ret) {
@@ -1437,8 +1445,11 @@ exit:
 
 static cmr_int save_yuv(char *filename, char *buffer, uint32_t width,
                         uint32_t height) {
+    char tmp_name[128];
+    strcpy(tmp_name, CAMERA_DUMP_PATH);
+    strcat(tmp_name, filename);
     FILE *fp;
-    fp = fopen(filename, "wb");
+    fp = fopen(tmp_name, "wb");
     if (fp) {
         fwrite(buffer, 1, width * height * 3 / 2, fp);
         fclose(fp);
@@ -1721,7 +1732,8 @@ dequeue_preview_smallbuffer(struct preview_smallbuf_queue *psmall_buf_queue,
         if (NULL == psmall_buf_queue->head) {
             psmall_buf_queue->tail = NULL;
         }
-        CMR_LOGI("dequeue small buff vir addr:%p, fd:%p" , pnode->buf_vir, pnode->buf_fd);
+        CMR_LOGI("dequeue small buff vir addr:%p, fd:%p", pnode->buf_vir,
+                 pnode->buf_fd);
         pthread_mutex_unlock(&psmall_buf_queue->mutex);
         return 0;
     }
@@ -1749,7 +1761,8 @@ queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
         psmall_buf_queue->tail->next = pnewnode;
         psmall_buf_queue->tail = pnewnode;
     }
-    CMR_LOGI("queue small buff vir addr:%p, fd:%p" , pnode->buf_vir, pnode->buf_fd);
+    CMR_LOGI("queue small buff vir addr:%p, fd:%p", pnode->buf_vir,
+             pnode->buf_fd);
     pthread_cond_signal(&psmall_buf_queue->cond);
     pthread_mutex_unlock(&psmall_buf_queue->mutex);
     return 0;

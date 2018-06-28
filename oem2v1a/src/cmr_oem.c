@@ -7074,8 +7074,8 @@ cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
 
     default:
         break;
-   }
-   return out_param;
+    }
+    return out_param;
 }
 
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
@@ -7232,7 +7232,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
-        if (param_ptr->ae_compensation_param.ae_state == 3) {//lock
+        if (param_ptr->ae_compensation_param.ae_state == 3) { // lock
             isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
             ptr_flag = 1;
             exp_comprnsation.idx =
@@ -7242,7 +7242,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             isp_param_ptr = (void *)&exp_comprnsation;
         } else {
             isp_cmd = ISP_CTRL_EV;
-            isp_param = camera_isp_ev_switch(param_ptr); //compatible manual
+            isp_param = camera_isp_ev_switch(param_ptr); // compatible manual
 #if defined(CONFIG_CAMERA_ISP_VERSION_V4)
             isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
 #endif
@@ -8995,7 +8995,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     if (CAMERA_ISP_SIMULATION_MODE == mode) {
         struct frm_info frame;
-        char file_name[200];
+        char file_name[128];
+        strcpy(file_name, CAMERA_DUMP_PATH);
+        char tmp_name[64];
         cmr_int read_size;
         cmr_u32 sec = 0;
         cmr_u32 usec = 0;
@@ -9015,7 +9017,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGI("parse file_name = %s", value);
         if (CMR_CAMERA_SUCCESS ==
             camera_parse_raw_filename(value, &scene_param)) {
-            sprintf(file_name, "/data/vendor/cameraserver/%s", value);
+            sprintf(tmp_name, "%s", value);
             //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
             CMR_LOGI(
@@ -9037,6 +9039,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 CMR_LOGE("get scene param error");
                 goto exit;
             }
+            strcat(file_name, tmp_name);
             read_size = camera_get_data_from_file(
                 file_name, IMG_DATA_TYPE_RAW, scene_param.width,
                 scene_param.height, &isp_cap_raw.addr_vir);

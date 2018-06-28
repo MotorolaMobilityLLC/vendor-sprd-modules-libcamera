@@ -181,7 +181,8 @@ static cmr_int camera_preview_post_proc(cmr_handle oem_handle,
 static cmr_int camera_start_encode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
-                                   struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
+                                   struct cmr_op_mean *mean,
+                                   struct jpeg_enc_cb_param *enc_cb_param);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
@@ -3675,7 +3676,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     }
 
     if (SENSOR_PDAF_TYPE3_ENABLE == isp_param.ex_info.pdaf_supported ||
-		SENSOR_PDAF_TYPE1_ENABLE == isp_param.ex_info.pdaf_supported) {
+        SENSOR_PDAF_TYPE1_ENABLE == isp_param.ex_info.pdaf_supported) {
 
         val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
         val.pval = &pdaf_info;
@@ -4985,7 +4986,8 @@ exit:
 
 cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
-                            struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param) {
+                            struct cmr_op_mean *mean,
+                            struct jpeg_enc_cb_param *enc_cb_param) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -5045,7 +5047,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             enc_dst.size.height = 600;
         }
 #ifdef CONFIG_CAMERA_VIDEO_1920_1080
-         else if (dst->size.height == 1088 && dst->size.width == 1920) {
+        else if (dst->size.height == 1088 && dst->size.width == 1920) {
             enc_dst.size.height = 1080;
         }
 #endif
@@ -7322,8 +7324,8 @@ cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
 
     default:
         break;
-   }
-   return out_param;
+    }
+    return out_param;
 }
 
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
@@ -7484,17 +7486,17 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
-        if (param_ptr->ae_compensation_param.ae_state == 3) {//lock
+        if (param_ptr->ae_compensation_param.ae_state == 3) { // lock
             isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
             ptr_flag = 1;
             exp_comprnsation.idx =
-                    param_ptr->ae_compensation_param.ae_compensation_step;
+                param_ptr->ae_compensation_param.ae_compensation_step;
             exp_comprnsation.value =
-                    param_ptr->ae_compensation_param.ae_exposure_compensation;
+                param_ptr->ae_compensation_param.ae_exposure_compensation;
             isp_param_ptr = (void *)&exp_comprnsation;
         } else {
             isp_cmd = ISP_CTRL_EV;
-            isp_param = camera_isp_ev_switch(param_ptr); //compatible manual
+            isp_param = camera_isp_ev_switch(param_ptr); // compatible manual
 #if defined(CONFIG_CAMERA_ISP_VERSION_V4)
             isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
 #endif
@@ -8734,7 +8736,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_EXPOSURE_COMPENSATION:
         setting_param.ae_compensation_param =
-             *(struct cmr_ae_compensation_param *)param;
+            *(struct cmr_ae_compensation_param *)param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
@@ -9418,11 +9420,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGI("parse file_name = %s", value);
         if (CMR_CAMERA_SUCCESS ==
             camera_parse_raw_filename(value, &scene_param)) {
-#ifdef CONFIG_USE_CAMERASERVER_PROC
-            sprintf(file_name, "/data/vendor/cameraserver/%s", value);
-#else
-            sprintf(file_name, "/data/misc/media/%s", value);
-#endif
+            char file_name[128];
+            strcpy(file_name, CAMERA_DUMP_PATH);
+            char tmp_name[64];
+            sprintf(tmp_name, "%s", value);
+            strcat(file_name, tmp_name);
             //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
             CMR_LOGI(

@@ -278,7 +278,10 @@ ARCCALI_API MRESULT Arc_CaliData_PrintArcParam(ArcParam *pParam) {
     LOGI("64 camera_layout2: %.3f\n", pParam->camera_layout2);
 
     FILE *fp = NULL;
-    fp = fopen("/data/vendor/cameraserver/dualcam_cali.data", "wb");
+    char file_name[128];
+    strcpy(file_name, CAMERA_DUMP_PATH);
+    strcat(file_name, "dualcam_cali.data");
+    fp = fopen(file_name, "wb");
     if (fp) {
         fwrite(pParam, 1, sizeof(ArcParam), fp);
         fclose(fp);

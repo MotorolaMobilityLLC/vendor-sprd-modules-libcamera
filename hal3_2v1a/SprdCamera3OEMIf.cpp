@@ -211,8 +211,8 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
     memcpy(&tmpShakeTest->diff_yuv_color, &tmp_diff_yuv_color,
            sizeof(tmp_diff_yuv_color));
     tmpShakeTest->mShakeTestColorCount = 0;
-    property_get("persist.vendor.cam.performance_camera", is_performance_camera_test,
-                 "0");
+    property_get("persist.vendor.cam.performance_camera",
+                 is_performance_camera_test, "0");
     if ((0 == strcmp("1", is_performance_camera_test)) &&
         mIsPerformanceTestable) {
         HAL_LOGD("SHAKE_TEST come in");
@@ -238,20 +238,18 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0), mFlashMask(false),
       mReleaseFLag(false), mTimeCoeff(1),
       mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
-      mIsPerformanceTestable(false),
-      mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
-      mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
-      mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
-      mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
-      mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
-      mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
-      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
-      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
-      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
-      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
-      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
-      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFixedFpsEnabled(0),
+      mIsPerformanceTestable(false), mIsAndroidZSL(false), mSetting(setting),
+      BurstCapCnt(0), mCapIntent(0), mPrvTimerID(NULL), mFlashMode(-1),
+      mIsAutoFocus(false), mIspToolStart(false), mSubRawHeapNum(0),
+      mSubRawHeapSize(0), mPathRawHeapNum(0), mPathRawHeapSize(0),
+      mPreviewDcamAllocBufferCnt(0), mPreviewFrameNum(0), mRecordFrameNum(0),
+      mIsRecording(false), mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
+      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mGyroInit(0),
+      mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
+      mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
+      mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
+      mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
+      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mIsCameraClearQBuf(0), mLastCafDoneTime(0)
@@ -2533,6 +2531,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
     cmr_uint is_support_zsl = 0;
     cmr_uint max_width = 0;
     cmr_uint max_height = 0;
+    char file_name[128];
     struct exif_info exif_info = {0, 0};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag sprddefInfo;
@@ -2588,21 +2587,24 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs otp begin*/
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
-            char *psPath_OtpData =
-                "data/vendor/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
+            bzero(file_name, sizeof(file_name));
+            strcpy(file_name, CAMERA_DUMP_PATH);
+            strcat(file_name, "ov13855_mipi_raw_parsed_otp.bin");
+            char *psPath_OtpData = file_name;
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
             OTP_Tag otpInfo = {0};
             mSetting->getOTPTag(&otpInfo);
             fseek(psPath_OtpData, 0xD26, 0);
-            int otp_ret =
-                read_file(psPath_OtpData, dual_otp_data, SPRD_DUAL_OTP_SIZE);
+            int otp_ret = read_file("ov13855_mipi_raw_parsed_otp.bin",
+                                    dual_otp_data, SPRD_DUAL_OTP_SIZE);
             if (otp_ret == 0) {
                 struct sensor_otp_cust_info otp_info = {0};
                 mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle,
                                                          &otp_info);
                 if (otp_info.total_otp.data_ptr != NULL &&
                     otp_info.dual_otp.dual_flag) {
-                    save_file(psPath_OtpData, otp_info.total_otp.data_ptr,
+                    save_file("ov13855_mipi_raw_parsed_otp.bin",
+                              otp_info.total_otp.data_ptr,
                               otp_info.total_otp.size);
                     HAL_LOGD(
                         "camera_id: %d,otp_info %p, data_ptr %p, size 0x%x",
@@ -2625,8 +2627,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d",
                          mCameraId, dual_otp_data, otpInfo.dual_otp_flag);
             }
-            save_file("data/vendor/cameraserver/dualcamera.bin", dual_otp_data,
-                      SPRD_DUAL_OTP_SIZE);
+            save_file("dualcamera.bin", dual_otp_data, SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 
             if (dual_otp_data != NULL) {
@@ -2657,9 +2658,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                          otpInfo.dual_otp_flag);
             }
             HAL_LOGD("save otp file");
-
-            save_file("data/vendor/cameraserver/dualcamera.bin", otpInfo.otp_data,
-                      SPRD_DUAL_OTP_SIZE);
+            save_file("dualcamera.bin", otpInfo.otp_data, SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 #endif
         }
@@ -3867,7 +3866,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         miSPreviewFirstFrame = 0;
 
         setCamPreformaceScene(CAM_PREVIEW_S_LEVEL_N);
-
     }
 
     SPRD_DEF_Tag sprddefInfo;
@@ -5976,11 +5974,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION:
         struct cmr_ae_compensation_param ae_compensation_param;
         ae_compensation_param.ae_exposure_compensation =
-                         controlInfo.ae_exposure_compensation;
+            controlInfo.ae_exposure_compensation;
         ae_compensation_param.ae_compensation_step =
-                         controlInfo.ae_compensation_step.denominator;
-        ae_compensation_param.ae_state =
-                         controlInfo.ae_state;
+            controlInfo.ae_compensation_step.denominator;
+        ae_compensation_param.ae_state = controlInfo.ae_state;
 
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
                  (cmr_uint)&ae_compensation_param);
@@ -6155,7 +6152,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                                      mFlashMode);
                         }
                         if (controlInfo.ae_state !=
-                                ANDROID_CONTROL_AE_STATE_LOCKED) {
+                            ANDROID_CONTROL_AE_STATE_LOCKED) {
                             controlInfo.ae_state =
                                 ANDROID_CONTROL_AE_STATE_SEARCHING;
                             mSetting->setAeCONTROLTag(&controlInfo);
@@ -9312,9 +9309,8 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
         ASensorManager_createEventQueue(mSensorManager, mLooper, 0, NULL, NULL);
 
     if (accelerometerSensor != NULL) {
-        if (ASensorEventQueue_registerSensor(sensorEventQueue,
-                                             accelerometerSensor, GsensorRate,
-                                             0) < 0) {
+        if (ASensorEventQueue_registerSensor(
+                sensorEventQueue, accelerometerSensor, GsensorRate, 0) < 0) {
             HAL_LOGE(
                 "Unable to register sensorUnable to register sensor %d with "
                 "rate %d and report latency %d" PRId64 "",

@@ -2715,9 +2715,11 @@ void SprdCamera3StereoVideo::dumpImg(void *addr, int size, int w, int h,
     HAL_LOGI(" E");
 
     char name[128];
-    snprintf(name, sizeof(name), "/data/misc/media/%d_%d__%d_%d.yuv", w, h,
-             frameId, flag);
-
+    strcpy(name, CAMERA_DUMP_PATH);
+    char tmp_name[64];
+    snprintf(tmp_name, sizeof(tmp_name), "%d_%d__%d_%d.yuv", w, h, frameId,
+             flag);
+    strcat(name, tmp_name);
     FILE *file_fd = fopen(name, "w");
 
     if (file_fd != NULL) {

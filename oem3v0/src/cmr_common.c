@@ -317,7 +317,10 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
     FILE *pf = NULL;
     uint32_t file_len = 0;
-    pf = fopen(file_name, "rb");
+    char tmp_name[128];
+    strcpy(tmp_name, CAMERA_DUMP_PATH);
+    strcat(tmp_name, file_name);
+    pf = fopen(tmp_name, "rb");
 
     if (NULL == pf || NULL == data_buf)
         return 0;
@@ -337,7 +340,10 @@ cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
 }
 
 cmr_int save_file(const char *file_name, void *data, uint32_t data_size) {
-    FILE *pf = fopen(file_name, "wb");
+    char tmp_name[128];
+    strcpy(tmp_name, CAMERA_DUMP_PATH);
+    strcat(tmp_name, file_name);
+    FILE *pf = fopen(tmp_name, "wb");
     uint32_t write_bytes = 0;
 
     if (NULL == pf)

@@ -487,13 +487,16 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
                                     int param1, int param2, int param3,
                                     const char param4[20]) {
     HAL_LOGD(" E %p %d %d %d %d", addr, type, size, param1, param2);
-    char name[128];
+    char filename[128];
+    strcpy(filename, CAMERA_DUMP_PATH);
+    char tmp_name[64];
     FILE *fp = NULL;
     switch (type) {
     case 1: {
-        snprintf(name, sizeof(name), "/data/vendor/cameraserver/%dx%d_%d_%s.yuv",
-                 param1, param2, param3, param4);
-        fp = fopen(name, "w");
+        snprintf(tmp_name, sizeof(tmp_name), "%dx%d_%d_%s.yuv", param1, param2,
+                 param3, param4);
+        strcat(filename, tmp_name);
+        fp = fopen(filename, "w");
         if (fp == NULL) {
             HAL_LOGE("open yuv file fail!\n");
             return;
@@ -502,9 +505,10 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fclose(fp);
     } break;
     case 2: {
-        snprintf(name, sizeof(name), "/data/vendor/cameraserver/%dx%d_%d_%s.jpg",
-                 param1, param2, param3, param4);
-        fp = fopen(name, "wb");
+        snprintf(tmp_name, sizeof(tmp_name), "%dx%d_%d_%s.jpg", param1, param2,
+                 param3, param4);
+        strcat(filename, tmp_name);
+        fp = fopen(filename, "wb");
         if (fp == NULL) {
             HAL_LOGE("can not open file: %s \n", name);
             return;
@@ -515,10 +519,10 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
     case 3: {
         int i = 0;
         int j = 0;
-        snprintf(name, sizeof(name),
-                 "/data/vendor/cameraserver/refocus_%d_params_%s.txt", size,
+        snprintf(tmp_name, sizeof(tmp_name), "refocus_%d_params_%s.txt", size,
                  param4);
-        fp = fopen(name, "w+");
+        strcat(filename, tmp_name);
+        fp = fopen(filename, "w+");
         if (fp == NULL) {
             HAL_LOGE("open txt file fail!\n");
             return;

@@ -222,8 +222,8 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
     memcpy(&tmpShakeTest->diff_yuv_color, &tmp_diff_yuv_color,
            sizeof(tmp_diff_yuv_color));
     tmpShakeTest->mShakeTestColorCount = 0;
-    property_get("persist.vendor.cam.performance_camera", is_performance_camera_test,
-                 "0");
+    property_get("persist.vendor.cam.performance_camera",
+                 is_performance_camera_test, "0");
     if ((0 == strcmp("1", is_performance_camera_test)) &&
         mIsPerformanceTestable) {
         HAL_LOGD("SHAKE_TEST come in");
@@ -282,7 +282,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI("openCameraHardware: E cameraId: %d.", cameraId);
-
 
     initPowerHint();
     enablePowerHint();
@@ -2599,19 +2598,18 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs otp begin*/
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
-            const char *psPath_OtpData = "data/vendor/cameraserver/otp.bin";
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
             OTP_Tag otpInfo;
             mSetting->getOTPTag(&otpInfo);
             int otp_ret =
-                read_file(psPath_OtpData, dual_otp_data, SPRD_DUAL_OTP_SIZE);
+                read_file("otp.bin", dual_otp_data, SPRD_DUAL_OTP_SIZE);
             if (otp_ret == 0) {
                 struct sensor_otp_cust_info otp_info;
                 mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle,
                                                          &otp_info);
                 if (otp_info.total_otp.data_ptr != NULL &&
                     otp_info.dual_otp.dual_flag) {
-                    save_file(psPath_OtpData, otp_info.total_otp.data_ptr,
+                    save_file("otp.bin", otp_info.total_otp.data_ptr,
                               otp_info.total_otp.size);
                     HAL_LOGD(
                         "camera_id: %d,otp_info %p, data_ptr %p, size 0x%x",
@@ -3045,7 +3043,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else {
         mUhdRecodingEnabled = false;
     }
-    //for cts
+    // for cts
     if (mUhdRecodingEnabled && (mCaptureWidth > UHD_WIDTH)) {
         mZslNum = 1;
     }
@@ -3140,9 +3138,9 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     deinitPreview();
     end_timestamp = systemTime();
-   #ifdef CONFIG_FACE_BEAUTY
-     deinit_fb_handle(&face_beauty);
-    #endif
+#ifdef CONFIG_FACE_BEAUTY
+    deinit_fb_handle(&face_beauty);
+#endif
     HAL_LOGD("X Time:%" PRId64 "(ms). camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
 }
@@ -3395,9 +3393,9 @@ int SprdCamera3OEMIf::displayCopy(uintptr_t dst_phy_addr,
 }
 
 bool SprdCamera3OEMIf::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
-    for (int i =0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
+    for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
         if (sprddefInfo.perfect_skin_level[i] != 0)
-               return true;
+            return true;
     }
     return false;
 }
@@ -3453,7 +3451,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d\n",
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
-                     faceInfo.face[k].rect[3],faceInfo.angle[k]);
+                     faceInfo.face[k].rect[3], faceInfo.angle[k]);
             CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
             /*When the half of face at the edge of the screen,the smile level
             returned by face detection library  can often more than 30.
@@ -3805,14 +3803,15 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
 #ifdef CONFIG_FACE_BEAUTY
-    int sx,sy,ex,ey,angle,pose;
+    int sx, sy, ex, ey, angle, pose;
     struct face_beauty_levels beautyLevels;
-    beautyLevels.blemishLevel = (unsigned char)sprddefInfo.perfect_skin_level[0];
-    beautyLevels.smoothLevel= (unsigned char)sprddefInfo.perfect_skin_level[1];
+    beautyLevels.blemishLevel =
+        (unsigned char)sprddefInfo.perfect_skin_level[0];
+    beautyLevels.smoothLevel = (unsigned char)sprddefInfo.perfect_skin_level[1];
     beautyLevels.skinColor = (unsigned char)sprddefInfo.perfect_skin_level[2];
     beautyLevels.skinLevel = (unsigned char)sprddefInfo.perfect_skin_level[3];
-    beautyLevels.brightLevel= (unsigned char)sprddefInfo.perfect_skin_level[4];
-    beautyLevels.lipColor =(unsigned char)sprddefInfo.perfect_skin_level[5];
+    beautyLevels.brightLevel = (unsigned char)sprddefInfo.perfect_skin_level[4];
+    beautyLevels.lipColor = (unsigned char)sprddefInfo.perfect_skin_level[5];
     beautyLevels.lipLevel = (unsigned char)sprddefInfo.perfect_skin_level[6];
     beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
     beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
@@ -3831,34 +3830,41 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                  rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-    if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
-        faceDectect(1);
-        if (isPreviewing() && frame->type == PREVIEW_FRAME) {
-            if (MODE_3D_VIDEO != mMultiCameraMode &&
-                MODE_3D_PREVIEW != mMultiCameraMode) {
-                FACE_Tag faceInfo;
-                mSetting->getFACETag(&faceInfo);
-                if (faceInfo.face_num>0) {
-                    for (int i = 0 ; i < faceInfo.face_num; i++) {
-                        CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
-                        sx = faceInfo.face[i].rect[0];
-                        sy = faceInfo.face[i].rect[1];
-                        ex = faceInfo.face[i].rect[2];
-                        ey = faceInfo.face[i].rect[3];
-                        angle = faceInfo.angle[i];
-                        pose = faceInfo.pose[i];
-                        construct_fb_face(&face_beauty, i, sx, sy, ex, ey,angle,pose);
+        if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
+            faceDectect(1);
+            if (isPreviewing() && frame->type == PREVIEW_FRAME) {
+                if (MODE_3D_VIDEO != mMultiCameraMode &&
+                    MODE_3D_PREVIEW != mMultiCameraMode) {
+                    FACE_Tag faceInfo;
+                    mSetting->getFACETag(&faceInfo);
+                    if (faceInfo.face_num > 0) {
+                        for (int i = 0; i < faceInfo.face_num; i++) {
+                            CameraConvertCoordinateFromFramework(
+                                faceInfo.face[i].rect);
+                            sx = faceInfo.face[i].rect[0];
+                            sy = faceInfo.face[i].rect[1];
+                            ex = faceInfo.face[i].rect[2];
+                            ey = faceInfo.face[i].rect[3];
+                            angle = faceInfo.angle[i];
+                            pose = faceInfo.pose[i];
+                            construct_fb_face(&face_beauty, i, sx, sy, ex, ey,
+                                              angle, pose);
+                        }
                     }
+                    init_fb_handle(&face_beauty, 1, 2);
+                    construct_fb_image(
+                        &face_beauty, frame->width, frame->height,
+                        (unsigned char *)(frame->y_vir_addr),
+                        (unsigned char *)(frame->y_vir_addr +
+                                          frame->width * frame->height),
+                        1);
+                    construct_fb_level(&face_beauty, beautyLevels);
+                    do_face_beauty(&face_beauty, faceInfo.face_num);
                 }
-                init_fb_handle(&face_beauty,1,2);
-                construct_fb_image(&face_beauty, frame->width, frame->height, (unsigned char *)(frame->y_vir_addr), (unsigned char *)(frame->y_vir_addr + frame->width * frame->height), 1);
-                construct_fb_level(&face_beauty, beautyLevels);
-                do_face_beauty(&face_beauty,faceInfo.face_num);
             }
+        } else if (PREVIEW_ZSL_FRAME != frame->type) {
+            deinit_fb_handle(&face_beauty);
         }
-    }else if (PREVIEW_ZSL_FRAME != frame->type){
-         deinit_fb_handle(&face_beauty);
-    }
 #endif
 
         // recording stream
@@ -5856,7 +5862,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         fb_param.lipLevel = sprddefInfo.perfect_skin_level[6];
         fb_param.slimLevel = sprddefInfo.perfect_skin_level[7];
         fb_param.largeLevel = sprddefInfo.perfect_skin_level[8];
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL, (cmr_uint)&(fb_param));
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL,
+                 (cmr_uint) & (fb_param));
     } break;
     case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6179,8 +6186,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        HAL_LOGD("sprddefInfo.sprd_filter_type: %d ", sprddefInfo.sprd_filter_type);
-        SET_PARM(mHalOem, mCameraHandle,CAMERA_PARAM_FILTER_TYPE,
+        HAL_LOGD("sprddefInfo.sprd_filter_type: %d ",
+                 sprddefInfo.sprd_filter_type);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FILTER_TYPE,
                  sprddefInfo.sprd_filter_type);
     } break;
     default:
@@ -9232,4 +9240,3 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 
 #endif
 }
-
