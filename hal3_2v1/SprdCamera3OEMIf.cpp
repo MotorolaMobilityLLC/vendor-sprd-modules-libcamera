@@ -911,6 +911,7 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     int rc = 0;
     HAL_LOGI("E");
 
+    setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
     if (isPreviewing()) {
         if (mCameraId == 0 ||
             !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
