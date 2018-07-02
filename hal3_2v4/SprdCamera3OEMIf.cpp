@@ -860,43 +860,10 @@ exit:
     return NO_ERROR;
 }
 
-int SprdCamera3OEMIf::zslTakePicture() {
-    ATRACE_CALL();
-
-    uint32_t ret = 0;
+int SprdCamera3OEMIf::zslTakePictureL() {
     int64_t tmp1, tmp2;
-    SPRD_DEF_Tag sprddefInfo;
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-
+    int rc = 0;
     HAL_LOGI("E");
-
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        goto exit;
-    }
-
-    if (SPRD_ERROR == mCameraState.capture_state) {
-        HAL_LOGE("in error status, deinit capture at first ");
-        deinitCapture(mIsPreAllocCapMem);
-    }
-
-#if defined(CONFIG_SPRD_LCD_FLASH)
-    int8_t flashMode;
-    CONTROL_Tag controlInfo;
-    mSetting->getCONTROLTag(&controlInfo);
-    mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &flashMode);
-    HAL_LOGI("flash mode %d for camera id %d", flashMode, mCameraId);
-    if ((flashMode == CAMERA_FLASH_MODE_AUTO) && (mCameraId == 1)) {
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                 CAMERA_FLASH_MODE_AUTO);
-    }
-#endif
-
-    mZslSnapshotTime = systemTime();
-
-    if (isCapturing()) {
-        WaitForCaptureDone();
-    }
 
     if (isPreviewing()) {
         if (mCameraId == 0 ||
@@ -959,9 +926,49 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 #endif
 
+exit:
+    HAL_LOGD("mFlashCaptureFlag=%d, thumb=%dx%d, mZslShotPushFlag=%d",
+             mFlashCaptureFlag, jpgInfo.thumbnail_size[0],
+             jpgInfo.thumbnail_size[1], mZslShotPushFlag);
+    HAL_LOGV("jpgInfo.quality=%d, thumb_quality=%d, focal_length=%f",
+             jpgInfo.quality, jpgInfo.thumbnail_quality, lensInfo.focal_length);
+    HAL_LOGI("X");
+    return rc;
+}
+int SprdCamera3OEMIf::zslTakePicture() {
+    ATRACE_CALL();
+    uint32_t ret = 0;
+    HAL_LOGI("E");
+
+    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        goto exit;
+    }
+
+    if (SPRD_ERROR == mCameraState.capture_state) {
+        HAL_LOGE("in error status, deinit capture at first ");
+        deinitCapture(mIsPreAllocCapMem);
+    }
+
+#if defined(CONFIG_SPRD_LCD_FLASH)
+    int8_t flashMode;
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
+    mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &flashMode);
+    HAL_LOGI("flash mode %d for camera id %d", flashMode, mCameraId);
+    if ((flashMode == CAMERA_FLASH_MODE_AUTO) && (mCameraId == 1)) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
+                 CAMERA_FLASH_MODE_AUTO);
+    }
+#endif
+
+    mZslSnapshotTime = systemTime();
+
+    if (isCapturing()) {
+        WaitForCaptureDone();
+    }
     if (mSprdZslEnabled == true) {
         CMR_MSG_INIT(message);
-        mZslShotPushFlag = 1;
         message.msg_type = CMR_EVT_ZSL_MON_SNP;
         message.sync_flag = CMR_MSG_SYNC_NONE;
         message.data = NULL;
@@ -974,11 +981,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 
 exit:
-    HAL_LOGD("mFlashCaptureFlag=%d, thumb=%dx%d, mZslShotPushFlag=%d",
-             mFlashCaptureFlag, jpgInfo.thumbnail_size[0],
-             jpgInfo.thumbnail_size[1], mZslShotPushFlag);
-    HAL_LOGV("jpgInfo.quality=%d, thumb_quality=%d, focal_length=%f",
-             jpgInfo.quality, jpgInfo.thumbnail_quality, lensInfo.focal_length);
     HAL_LOGI("X");
     return NO_ERROR;
 }
@@ -9509,7 +9511,12 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:
-        obj->snapshotZsl(p_data);
+        if (!(obj->zslTakePictureL())) {
+            obj->mZslShotPushFlag = 1;
+            obj->snapshotZsl(p_data);
+        } else {
+            obj->mZslShotPushFlag = 0;
+        }
         break;
     case CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH:
         ret = obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);

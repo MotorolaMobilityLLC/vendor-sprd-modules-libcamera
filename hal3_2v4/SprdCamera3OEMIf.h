@@ -463,6 +463,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     relaseOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr);
     int initDefaultParameters();
     int handleCbData(hal3_trans_info_t &result_info, void *userdata);
+    int zslTakePictureL();
     int zslTakePicture();
     int reprocessYuvForJpeg();
     int VideoTakePicture();
