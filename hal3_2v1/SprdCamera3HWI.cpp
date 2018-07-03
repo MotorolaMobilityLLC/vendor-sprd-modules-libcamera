@@ -692,7 +692,6 @@ int SprdCamera3HWI::configureStreams(
             }
         }
 
-        // for CTS
         if ((stream_type == CAMERA_STREAM_TYPE_DEFAULT) &&
             (channel_type == CAMERA_CHANNEL_TYPE_RAW_CALLBACK)) {
             if (streamList->num_streams == 2 &&
