@@ -4,8 +4,8 @@
 /*
  * for flash calibration
 */
-#define CALI_VERSION 4
-#define CALI_VERSION_SUB 20171004
+#define CALI_VERSION 5
+#define CALI_VERSION_SUB 20180626
 struct flash_led_brightness {
 	uint16 levelNumber_pf1;
 	uint16 levelNumber_pf2;
@@ -61,7 +61,7 @@ struct flash_calibration_data {
 	uint16 rTable[1024];		//g: 1024
 	uint16 bTable[1024];
 	uint16 preflashBrightness[1024];
-	uint16 preflashCt[1024];
+	uint16 rTable_preflash[1024];
 	int16 driverIndexP1[32];
 	int16 driverIndexP2[32];
 	int16 driverIndexM1[32];
@@ -81,14 +81,23 @@ struct flash_calibration_data {
 	uint16 mAMaxM1;
 	uint16 mAMaxM2;
 	uint16 mAMaxM12;
+	uint16 null_data[2];
 
 	float rgRatPf;
+	float null_data2;
 	uint16 rPf1[32];
 	uint16 gPf1[32];
 	uint16 rPf2[32];
 	uint16 gPf2[32];
 	float rgTab[20];
 	float ctTab[20];
+	uint16 otp_random_r;
+	uint16 otp_random_g;
+	uint16 otp_random_b;
+	uint16 otp_golden_r;
+	uint16 otp_golden_g;
+	uint16 otp_golden_b;
+	uint16 null_data3[2];
 
 };
 
@@ -1004,6 +1013,13 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			caliData->out.version = CALI_VERSION;
 			caliData->out.version_sub = CALI_VERSION_SUB;
 			strcpy(caliData->out.name, "flash_calibration_data");
+			caliData->out.otp_random_r = cxt->awb_otp_info.rdm_stat_info.r;
+			caliData->out.otp_random_g = cxt->awb_otp_info.rdm_stat_info.g;
+			caliData->out.otp_random_b = cxt->awb_otp_info.rdm_stat_info.b;
+			caliData->out.otp_golden_r = cxt->awb_otp_info.gldn_stat_info.r;
+			caliData->out.otp_golden_g = cxt->awb_otp_info.gldn_stat_info.g;
+			caliData->out.otp_golden_b = cxt->awb_otp_info.gldn_stat_info.b;
+
 
 			for (i = 0; i < 32; i++) {
 				caliData->out.driverIndexP1[i] = -1;
@@ -1043,11 +1059,11 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			//--------------------------
 			//@@
 
-			float rgtab[20];
-			float cttab[20];
+			//float rgtab[20];
+			//float cttab[20];
 			for (i = 0; i < 20; i++) {
-				rgtab[i] = cxt->ctTabRg[i];
-				cttab[i] = cxt->ctTab[i];
+				//rgtab[i] = cxt->ctTabRg[i];
+				//cttab[i] = cxt->ctTab[i];
 			}
 
 			//--------------------------
@@ -1055,7 +1071,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			//Preflash ct
 			//preflash brightness
 			for (i = 0; i < 1024; i++) {
-				caliData->out.preflashCt[i] = 0;
+				caliData->out.rTable_preflash[i] = 0;
 				caliData->out.preflashBrightness[i] = 0;
 			}
 
@@ -1086,8 +1102,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				caliData->out.gPf2[i] = ae_round(gTab2[i] * 65535.0 / maxRg);
 			}
 			for (i = 0; i < 20; i++) {
-				caliData->out.rgTab[i] = rgtab[i];
-				caliData->out.ctTab[i] = cttab[i];
+				caliData->out.rgTab[i] = cxt->ctTabRg[i];
+				caliData->out.ctTab[i] = cxt->ctTab[i];
 
 			}
 
@@ -1123,8 +1139,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					ma1 = ae_round(caliData->maHwP1_alg[i]);
 					ma2 = ae_round(caliData->maHwP1_alg[j]);
 					if (ma1 + ma2 <= ae_round(caliData->mAMaxP12)) {
-						double rg;
-						caliData->out.preflashCt[ind] = 0;
+						//double rg;
+						caliData->out.rTable_preflash[ind] = 0;
 
 						int rPf1;
 						int gPf1;
@@ -1134,13 +1150,22 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						gPf1 = caliData->out.gPf1[i];
 						rPf2 = caliData->out.rPf2[j];
 						gPf2 = caliData->out.gPf2[j];
-						if (gPf1 + gPf2 != 0) {
-							rg = (rPf1 + rPf2) / (double)(gPf1 + gPf2);
-							caliData->out.preflashCt[ind] = interpCt(rgtab, cttab, 20, rg);
+						double r;
+						double g;
+						//double b;
+						r = rPf1+rPf2;
+						g = gPf1 + gPf2;
+
+
+						if (r > 0 && g > 0) {
+							caliData->out.rTable_preflash[ind] = ae_round(1024 * g / r);
+						}
+						else {
+							caliData->out.rTable_preflash[ind] = 0;
 						}
 						caliData->out.preflashBrightness[ind] = ae_round((gPf1 + gPf2) * caliData->out.rgRatPf);
 					} else {
-						caliData->out.preflashCt[ind] = 0;
+						caliData->out.rTable_preflash[ind] = 0;
 						caliData->out.preflashBrightness[ind] = 0;
 					}
 				}
@@ -1521,12 +1546,12 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					}
 					fprintf(fp, "\n");
 				}
-				fprintf(fp, "\npre ct\n");
+				fprintf(fp, "\npre rtab\n");
 				for (j = 0; j < caliData->numP2_alg; j++) {
 					for (i = 0; i < caliData->numP1_alg; i++) {
 						int ind;
 						ind = j * caliData->numP1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.preflashCt[ind]);
+						fprintf(fp, "%d\t", (int)caliData->out.rTable_preflash[ind]);
 					}
 					fprintf(fp, "\n");
 				}
@@ -1701,6 +1726,7 @@ void flash_calibration_script(cmr_handle ae_cxt)
 	char str[PROPERTY_VALUE_MAX];
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)ae_cxt;
 	memset((void *)&str[0], 0, sizeof(str));
+
 	property_get("persist.vendor.cam.isp.ae.fc_stript", str, "");
 	if (!strcmp(str, "on")) {
 		flashCalibration(cxt);

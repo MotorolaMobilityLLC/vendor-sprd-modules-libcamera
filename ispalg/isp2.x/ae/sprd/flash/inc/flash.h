@@ -78,6 +78,36 @@ struct flash_tune_param {
 	int16 preflahLevel1_new;
 	int16 preflahLevel2_new;
 
+	//v5
+	float rgTab[20];
+	float ctTab[20];
+	//uint8 reserved1[60]; /*255 * 4bytes*/
+	int16 otp_golden_r_cali;
+	int16 otp_golden_g_cali;
+	int16 otp_golden_b_cali;
+	int16 otp_random_r_cali;
+	int16 otp_random_g_cali;
+	int16 otp_random_b_cali;
+	int16 otp_golden_r_ct;
+	int16 otp_golden_g_ct;
+	int16 otp_golden_b_ct;
+	int16 otp_random_r_ct;
+	int16 otp_random_g_ct;
+	int16 otp_random_b_ct;
+	int16 main_flash_en; //0: main flash awb¤£°µ
+	int16 with_ct_tab;  //1: tuning with ct table,  0: ct table from awb
+	uint32 max_pf_shutter; //0: from ae, others: assign max preflash shutter by tuning data
+	//v5 end
+	
+	uint32 alg_id_sub;
+
+	//
+	uint32 version_cali;
+	uint32 version_sub_cali;
+	uint32 alg_id_preParam;
+	uint32 alg_id_sub_preParam;
+
+	///
 
 	int16 preflash_max_ma;
 	int16 mainflash_max_ma;
@@ -104,9 +134,8 @@ struct flash_tune_param {
 	uint16 gPf1[32];
 	uint16 rPf2[32];
 	uint16 gPf2[32];
-	float rgTab[20];
-	float ctTab[20];
-	uint8 reserved1[60];/*255 * 4bytes*/
+	uint8 awbWithCtTab;
+	uint8 reserved1[7];
 };/*2053 * 4 bypes*/
 
 struct Flash_initInput
@@ -127,6 +156,7 @@ struct Flash_initInput
 struct Flash_initOut
 {
 	uint8 version;
+	uint8 mainFlashEn;
 };
 
 
@@ -164,6 +194,12 @@ struct Flash_pfStartInput
 	uint16 *gSta;
 	double tmp4pack3;
 	uint16 *bSta;
+	uint32 otp_gldn_r;
+	uint32 otp_gldn_g;
+	uint32 otp_gldn_b;
+	uint32 otp_rdm_r;
+	uint32 otp_rdm_g;
+	uint32 otp_rdm_b;
 #if defined(__i386)
 	uint32 tmp4pack4[4];
 #endif
