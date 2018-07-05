@@ -1395,7 +1395,7 @@ struct cmr_focus_param {
 
 typedef enum {
     MODE_SINGLE_CAMERA = 0,
-    MODE_3D_VIDEO,
+    MODE_3D_VIDEO = 5,
     MODE_RANGE_FINDER,
     MODE_3D_CAPTURE,
     MODE_3D_CALIBRATION,
