@@ -3746,11 +3746,12 @@ void SprdCamera3OEMIf::calculateTimestampForSlowmotion(int64_t frm_timestamp) {
     SPRD_DEF_Tag sprddefInfo;
 
     diff_timestamp = frm_timestamp - mSlowPara.last_frm_timestamp;
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    HAL_LOGV("diff time=%lld slow=%d", diff_timestamp, sprddefInfo.slowmotion);
-    tmp_slow_mot = sprddefInfo.slowmotion;
-    if (tmp_slow_mot == 0)
-        tmp_slow_mot = 1;
+    // Google handle slowmotion timestamp at framework, therefore, we don't multiply slowmotion ratio
+    //mSetting->getSPRDDEFTag(&sprddefInfo);
+    //HAL_LOGV("diff time=%lld slow=%d", diff_timestamp, sprddefInfo.slowmotion);
+    //tmp_slow_mot = sprddefInfo.slowmotion;
+    //if (tmp_slow_mot == 0)
+    //    tmp_slow_mot = 1;
 
     mSlowPara.rec_timestamp += diff_timestamp * tmp_slow_mot;
     mSlowPara.last_frm_timestamp = frm_timestamp;
