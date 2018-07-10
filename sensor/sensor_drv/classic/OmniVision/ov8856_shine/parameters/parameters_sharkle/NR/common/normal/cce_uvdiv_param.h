@@ -674,15 +674,15 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x38,
+		0x34,
 		/*ratio_1*/
-		0x38,
+		0x34,
 		/*ratio*/
-		0x38,
+		0x34,
 		/*ratio_uv_min*/
-		0x2D,
+		0x2A,
 		/*ratio_y_min0*/
-		0x2D,
+		0x2A,
 		/*ratio_y_min1*/
 		0x40,
 		/*reserved*/
