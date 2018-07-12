@@ -98,5 +98,9 @@ LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+include $(LOCAL_PATH)/otp_parser/Android.mk
 
 include $(wildcard $(LOCAL_PATH)/*/*/*/*/Android.mk)
+
+#include $(call all-subdir-makefiles)
+include $(call first-makefiles-under,$(LOCAL_PATH))
