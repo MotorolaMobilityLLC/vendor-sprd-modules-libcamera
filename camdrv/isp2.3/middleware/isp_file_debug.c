@@ -20,6 +20,7 @@
 #include "cmr_types.h"
 #include "cmr_log.h"
 #include "isp_type.h"
+#include "isp_drv.h"
 
 struct af_debug_info_t {
 	FILE *dac_fp;
@@ -34,8 +35,13 @@ struct ae_debug_info_t {
 	cmr_u32 grap_frame_cnt;
 };
 
+struct ebd_debug_info_t {
+	FILE *stats_fp;
+};
+
 struct isp_file_context {
 	struct ae_debug_info_t ae_debug_info;
+	struct ebd_debug_info_t ebd_debug_info;
 };
 
 static cmr_s32 g_isp_open_cnt;
@@ -126,6 +132,62 @@ exit:
 	return ret;
 }
 
+static cmr_int ispfile_ebd_init(cmr_handle handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+
+	cxt->ebd_debug_info.stats_fp =
+		ispfile_open_file("embed_line_stats", g_isp_open_cnt);
+
+	return ret;
+}
+
+static cmr_int ispfile_ebd_deinit(cmr_handle handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+
+	if (!cxt) {
+		ISP_LOGE("fail to get cxt NULL");
+		goto exit;
+	}
+
+	ispfile_close_file(cxt->ebd_debug_info.stats_fp);
+
+exit:
+	return ret;
+}
+
+cmr_int isp_file_ebd_save_info(cmr_handle *handle, void *info)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+	cmr_u32 i = 0;
+	cmr_uint u_addr = 0;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)info;
+
+	u_addr = statis_info->vir_addr;
+	cmr_u8 *emb = (cmr_u8 *)u_addr;
+
+	if (!cxt) {
+		ISP_LOGV("fail to get cxt NUL");
+		goto exit;
+	}
+	fprintf(cxt->ebd_debug_info.stats_fp, "id: %04d 0x%04x ",
+		statis_info->frame_id + 1,
+		statis_info->frame_id + 1);
+
+	for (i = 0; i < 20; i++) {
+		fprintf(cxt->ebd_debug_info.stats_fp,
+			"0x%02x ", emb[i]);
+	}
+	fprintf(cxt->ebd_debug_info.stats_fp, "\n");
+
+exit:
+	return ret;
+}
+
 cmr_int isp_file_init(cmr_handle *handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -147,6 +209,7 @@ cmr_int isp_file_init(cmr_handle *handle)
 	memset(cxt, 0, sizeof(*cxt));
 
 	ispfile_ae_init(cxt);
+	ispfile_ebd_init(cxt);
 	ISP_LOGI("g_isp_open_cnt %d", g_isp_open_cnt);
 
 	g_isp_open_cnt++;
@@ -166,6 +229,7 @@ cmr_int isp_file_deinit(cmr_handle handle)
 	}
 
 	ispfile_ae_deinit(cxt);
+	ispfile_ebd_deinit(cxt);
 	free((void *)cxt);
 	cxt = NULL;
 

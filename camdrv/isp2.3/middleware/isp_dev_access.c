@@ -72,6 +72,8 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		stats_buffer_size += ISP_HIST2_STATIS_BUF_SIZE;
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_PDAF)
 		stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_EBD)
+		stats_buffer_size += ISP_EBD_STATIS_BUF_SIZE;
 
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
 		statis_mem_info->buffer_client_data = in_ptr->buffer_client_data;
@@ -325,6 +327,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	} else if (irq_info->irq_property == IRQ_PDAF_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
+		}
+	} else if (irq_info->irq_property == IRQ_EBD_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
 		}
 	} else {
 		free((void *)statis_info);

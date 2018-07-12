@@ -33,7 +33,8 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CTRL_EVT_AE                      (1 << 12)
 #define ISP_CTRL_EVT_AF                      (1 << 14)
 #define ISP_CTRL_EVT_PDAF		     (1 << 17)
-#define ISP_CTRL_EVT_BINNING                     (1 << 18)
+#define ISP_CTRL_EVT_BINNING                 (1 << 18)
+#define ISP_CTRL_EVT_EBD                     (1 << 19)
 
 #define ISP_THREAD_QUEUE_NUM                 (100)
 
@@ -564,6 +565,7 @@ struct isp_sensor_ex_info {
 	cmr_u32 max_adgain;
 	cmr_u32 ois_supported;
 	cmr_u32 pdaf_supported;
+	cmr_u32 ebd_supported;
 	cmr_u32 exp_valid_frame_num;
 	cmr_u32 clamp_level;
 	cmr_u32 adgain_valid_frame_num;
