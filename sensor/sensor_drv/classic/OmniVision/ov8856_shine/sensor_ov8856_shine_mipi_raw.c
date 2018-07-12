@@ -254,6 +254,8 @@ static cmr_int ov8856_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         usleep(500);
         // hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_ON;
     } else {
         SENSOR_LOGI("off.");
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
@@ -265,6 +267,8 @@ static cmr_int ov8856_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_OFF;
     }
 
     SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
@@ -400,7 +404,8 @@ static cmr_int ov8856_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     cmr_u8 vendor_id = (cmr_u8)*param;
     SENSOR_LOGI("*param %x %x", *param, vendor_id);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov8856_shine_mipi_raw_info_ptr = ov8856_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+    s_ov8856_shine_mipi_raw_info_ptr =
+        ov8856_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
 
     return rtn;
 }
@@ -433,7 +438,7 @@ static cmr_int ov8856_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         // ret = ov8856_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-     case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
         ov8856_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
@@ -644,12 +649,13 @@ unsigned long ov8856s_SetSlave_FrameSync(cmr_handle handle,
                                          unsigned long param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3000, 0x00); // bit 5 0 input 1 output 0x3003?
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3823, 0x58);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3824, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3825, 0x20);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3826, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x3827, 0x07);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3000,
+                        0x00); // bit 5 0 input 1 output 0x3003?
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x58);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x07);
 
     return 0;
 }
@@ -663,6 +669,9 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
+        return 0;
+    }
 #if 1
     char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
@@ -673,8 +682,8 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 #if defined(CONFIG_DUAL_MODULE)
-        if (sns_drv_cxt->sensor_id == 2)
-	 ov8856s_SetSlave_FrameSync(handle, param);
+    if (sns_drv_cxt->sensor_id == 2)
+        ov8856s_SetSlave_FrameSync(handle, param);
 #endif
 
 #if 0 // defined(CONFIG_DUAL_MODULE)
@@ -688,6 +697,9 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     /*delay*/
     usleep(1 * 1000);
+
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_ON;
+
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
 }
@@ -700,23 +712,25 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
 static cmr_int ov8856_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
 
-    cmr_u8 value;
     cmr_u32 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100) & 0x01;
-    if (value == 0x01) {
+    /*
+    After sream off, it should sleep at least 1 frame time to avoid the
+    sensor is stream on quickly, otherwise the MIPI receiver will go to
+    error status and dcam timeout.
+    */
+    cmr_u16 delay_ms = (sns_drv_cxt->sensor_ev_info.preview_shutter *
+                        sns_drv_cxt->line_time_def / 1000000);
+    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-        if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 50 * 1000;
-            usleep(sleep_time);
-        }
-        sns_drv_cxt->is_sensor_close = 0;
-        usleep(20 * 1000);
+        SENSOR_LOGI("stream_off delay_ms %d", delay_ms);
+        usleep((delay_ms + 10) * 1000);
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_OFF;
     }
 
-    SENSOR_LOGI("X");
+    sns_drv_cxt->is_sensor_close = 0;
+    SENSOR_LOGV("X");
 
     return SENSOR_SUCCESS;
 }
@@ -737,6 +751,8 @@ ov8856_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
 
     ov8856_drv_write_frame_length(
         sns_drv_cxt, &ov8856_aec_info,
@@ -774,6 +790,7 @@ static cmr_int ov8856_drv_handle_delete(cmr_handle handle, void *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
     ret = sensor_ic_drv_delete(handle, param);
     return ret;
 }

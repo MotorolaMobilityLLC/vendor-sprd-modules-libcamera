@@ -469,6 +469,14 @@ static cmr_int _ov13855_altek_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
 
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    }
+
     convert_data = malloc(sizeof(struct sensor_otp_cust_info));
     cmr_bzero(convert_data, sizeof(*convert_data));
     single_otp = &convert_data->single_otp;
@@ -481,7 +489,7 @@ static cmr_int _ov13855_altek_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.master_module_info =
         (struct sensor_otp_section_info *)&format_data->module_dat;
 
-     /*af convert*/
+    /*af convert*/
     convert_data->dual_otp.master_af_info =
         (struct sensor_otp_section_info *)&format_data->af_cali_dat;
 
@@ -519,7 +527,6 @@ static cmr_int _ov13855_altek_compatible_convert(cmr_handle otp_drv_handle,
         convert_data->dual_otp.data_3d.size = otp_cxt->otp_raw_data.num_bytes;
         convert_data->dual_otp.data_3d.dualcam_cali_lib_type = OTP_CALI_ALTEK;
     }
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGI("out");
@@ -647,7 +654,8 @@ static cmr_int ov13855_altek_otp_drv_parse(cmr_handle otp_drv_handle,
     otp_base_info_cfg_t *base_info =
         &(ov13855_altek_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
-    module_data_t *module_dat =  (module_data_t *)&(otp_cxt->otp_data->module_dat);
+    module_data_t *module_dat =
+        (module_data_t *)&(otp_cxt->otp_data->module_dat);
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
         OTP_LOGI("otp has parse before,return directly");

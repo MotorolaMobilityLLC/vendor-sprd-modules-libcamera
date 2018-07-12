@@ -411,8 +411,14 @@ static cmr_int ov13855_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    cmr_bzero(convert_data, sizeof(*convert_data));
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    }
+
     single_otp = &convert_data->single_otp;
     /*otp vendor type*/
     convert_data->otp_vendor = OTP_VENDOR_SINGLE;
@@ -443,7 +449,6 @@ static cmr_int ov13855_compatible_convert(cmr_handle otp_drv_handle,
     single_otp->pdaf_info =
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGV("out");

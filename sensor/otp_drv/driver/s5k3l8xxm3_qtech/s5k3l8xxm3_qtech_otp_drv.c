@@ -424,8 +424,14 @@ static cmr_int _s5k3l8xxm3_qtech_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    cmr_bzero(convert_data, sizeof(*convert_data));
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    }
+
     single_otp = &convert_data->single_otp;
     /*otp vendor type*/
     convert_data->otp_vendor = OTP_VENDOR_DUAL_CAM_DUAL;
@@ -467,7 +473,6 @@ static cmr_int _s5k3l8xxm3_qtech_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.data_3d.size =
         format_data->dual_cam_cali_dat.rdm_info.size;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGI("out");
@@ -545,8 +550,8 @@ exit:
     if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
-            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
-                                         otp_cxt->dev_name))
+            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer,
+                                         OTP_RAW_DATA_LEN, otp_cxt->dev_name))
                 OTP_LOGE("dump failed");
         }
     }
@@ -590,7 +595,8 @@ static cmr_int s5k3l8xxm3_qtech_otp_drv_parse(cmr_handle otp_drv_handle,
     otp_base_info_cfg_t *base_info =
         &(s5k3l8xxm3_qtech_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
-    module_data_t *module_dat = (module_data_t *)&(otp_cxt->otp_data->module_dat);
+    module_data_t *module_dat =
+        (module_data_t *)&(otp_cxt->otp_data->module_dat);
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
         OTP_LOGI("otp has parse before,return directly");

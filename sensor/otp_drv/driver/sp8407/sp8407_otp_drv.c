@@ -325,14 +325,14 @@ static cmr_int sp8407_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
                        (cmr_u8 *)otp_raw_data->buffer,
                        SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
-    /*   for (i = 0; i < OTP_LEN; i++) {
-            cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
-            cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
-            hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                               (cmr_u8 *)&cmd_val[0], 2);
-            otp_raw_data->buffer[i] = cmd_val[0];
-        }
-    */
+/*   for (i = 0; i < OTP_LEN; i++) {
+        cmd_val[0] = ((OTP_START_ADDR + i) >> 8) & 0xff;
+        cmd_val[1] = (OTP_START_ADDR + i) & 0xff;
+        hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
+                           (cmr_u8 *)&cmd_val[0], 2);
+        otp_raw_data->buffer[i] = cmd_val[0];
+    }
+*/
 
 exit:
     if (OTP_CAMERA_SUCCESS == ret) {
@@ -448,12 +448,14 @@ static cmr_int sp8407_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    if (NULL == convert_data) {
-        OTP_LOGE("malloc otp convert_data failed.\n");
-        return CMR_CAMERA_FAIL;
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
     }
-    cmr_bzero(convert_data, sizeof(*convert_data));
+
     single_otp = &convert_data->single_otp;
 
     /*otp vendor type*/
@@ -486,7 +488,6 @@ static cmr_int sp8407_compatible_convert(cmr_handle otp_drv_handle,
     single_otp->pdaf_info =
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGV("out");

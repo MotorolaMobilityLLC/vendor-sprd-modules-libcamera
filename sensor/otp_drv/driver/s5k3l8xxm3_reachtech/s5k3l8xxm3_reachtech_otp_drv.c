@@ -298,7 +298,8 @@ _s5k3l8xxm3_reachtech_awb_calibration(cmr_handle otp_drv_handle) {
     CHECK_PTR(otp_drv_handle);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    awbcalib_data_t *awb_cali_dat =  (awbcalib_data_t *)&(otp_cxt->otp_data->awb_cali_dat);
+    awbcalib_data_t *awb_cali_dat =
+        (awbcalib_data_t *)&(otp_cxt->otp_data->awb_cali_dat);
 
     /*TODO*/
 
@@ -313,7 +314,8 @@ _s5k3l8xxm3_reachtech_lsc_calibration(cmr_handle otp_drv_handle) {
     OTP_LOGI("in");
     CHECK_PTR(otp_drv_handle);
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    lsccalib_data_t *lsc_dst =  (lsccalib_data_t *)&(otp_cxt->otp_data->lsc_cali_dat);
+    lsccalib_data_t *lsc_dst =
+        (lsccalib_data_t *)&(otp_cxt->otp_data->lsc_cali_dat);
     cmr_u8 *rdm_dst = (cmr_u8 *)lsc_dst + lsc_dst->lsc_calib_random.offset;
 
     /*TODO*/
@@ -415,8 +417,14 @@ _s5k3l8xxm3_reachtech_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    cmr_bzero(convert_data, sizeof(*convert_data));
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    }
+
     single_otp = &convert_data->single_otp;
 /*otp vendor type*/
 #if defined(CONFIG_DUAL_MODULE)
@@ -487,7 +495,6 @@ _s5k3l8xxm3_reachtech_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
 #endif
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGI("out");
@@ -566,8 +573,8 @@ exit:
     if (OTP_CAMERA_SUCCESS == ret) {
         property_get("debug.camera.save.otp.raw.data", value, "0");
         if (atoi(value) == 1) {
-            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer, OTP_RAW_DATA_LEN,
-                                         otp_cxt->dev_name))
+            if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer,
+                                         OTP_RAW_DATA_LEN, otp_cxt->dev_name))
                 OTP_LOGE("dump failed");
         }
     }
@@ -611,7 +618,8 @@ static cmr_int s5k3l8xxm3_reachtech_otp_drv_parse(cmr_handle otp_drv_handle,
     otp_base_info_cfg_t *base_info =
         &(s5k3l8xxm3_reachtech_drv_entry.otp_cfg.base_info_cfg);
     otp_params_t *otp_raw_data = &(otp_cxt->otp_raw_data);
-    module_data_t *module_dat = (module_data_t *)&(otp_cxt->otp_data->module_dat);
+    module_data_t *module_dat =
+        (module_data_t *)&(otp_cxt->otp_data->module_dat);
 
     if (sensor_otp_get_buffer_state(otp_cxt->sensor_id)) {
         OTP_LOGI("otp has parse before,return directly");

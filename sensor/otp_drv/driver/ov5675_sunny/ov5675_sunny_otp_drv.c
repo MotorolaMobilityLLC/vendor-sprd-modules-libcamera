@@ -505,8 +505,14 @@ static cmr_int ov5675_sunny_compatible_convert(cmr_handle otp_drv_handle,
                  buffer[1], buffer[2], buffer[3], calib_version);
     }
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    cmr_bzero(convert_data, sizeof(*convert_data));
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    }
+
     single_otp = &convert_data->single_otp;
     /*otp vendor tyep*/
     convert_data->otp_vendor = OTP_VENDOR_DUAL_CAM_DUAL;
@@ -534,7 +540,6 @@ static cmr_int ov5675_sunny_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->dual_otp.slave_ae_info =
         (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGV("out");

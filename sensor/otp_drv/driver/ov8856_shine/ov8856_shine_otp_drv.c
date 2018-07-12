@@ -13,7 +13,8 @@ static cmr_int _ov8856_shine_section_checksum(cmr_u8 *buf, cmr_uint offset,
     cmr_s32 ret = OTP_CAMERA_SUCCESS;
     cmr_u32 i = 0, sum = 0;
 
-    OTP_LOGV("in,offset:0x%lx,data_count:0x%lx,check_sum_offset:%lx",offset,data_count,check_sum_offset);
+    OTP_LOGV("in,offset:0x%lx,data_count:0x%lx,check_sum_offset:%lx", offset,
+             data_count, check_sum_offset);
     for (i = offset; i < offset + data_count; i++) {
         sum += buf[i];
     }
@@ -76,9 +77,9 @@ static cmr_int _ov8856_shine_parse_af_data(cmr_handle otp_drv_handle) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_section_info_t *af_cali_dat = &(otp_cxt->otp_data->af_cali_dat);
     cmr_u8 *af_src_dat = otp_cxt->otp_raw_data.buffer + AF_INFO_OFFSET;
-    ret = _ov8856_shine_section_checksum(otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
-                                         AF_INFO_CHECKSUM - AF_INFO_OFFSET,
-                                         AF_INFO_CHECKSUM);
+    ret = _ov8856_shine_section_checksum(
+        otp_cxt->otp_raw_data.buffer, AF_INFO_OFFSET,
+        AF_INFO_CHECKSUM - AF_INFO_OFFSET, AF_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("auto focus checksum error,parse failed");
         return ret;
@@ -105,9 +106,9 @@ static cmr_int _ov8856_shine_parse_awb_data(cmr_handle otp_drv_handle) {
     otp_section_info_t *awb_cali_dat = &(otp_cxt->otp_data->awb_cali_dat);
     cmr_u8 *awb_src_dat = otp_cxt->otp_raw_data.buffer + AWB_INFO_OFFSET;
 
-    ret = _ov8856_shine_section_checksum(otp_cxt->otp_raw_data.buffer, AWB_INFO_OFFSET,
-                                         AWB_INFO_CHECKSUM - AWB_INFO_OFFSET,
-                                         AWB_INFO_CHECKSUM);
+    ret = _ov8856_shine_section_checksum(
+        otp_cxt->otp_raw_data.buffer, AWB_INFO_OFFSET,
+        AWB_INFO_CHECKSUM - AWB_INFO_OFFSET, AWB_INFO_CHECKSUM);
     if (OTP_CAMERA_SUCCESS != ret) {
         OTP_LOGE("awb otp data checksum error,parse failed");
         return ret;
@@ -163,7 +164,7 @@ static cmr_int _ov8856_shine_parse_pdaf_data(cmr_handle otp_drv_handle) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
 
     CHECK_PTR(otp_drv_handle);
-    OTP_LOGV("in,%d\n",__LINE__);
+    OTP_LOGV("in,%d\n", __LINE__);
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     /*pdaf*/
@@ -305,8 +306,8 @@ static cmr_int ov8856_shine_otp_drv_read(cmr_handle otp_drv_handle,
     otp_raw_data->buffer[0] = 0x00;
     otp_raw_data->buffer[1] = 0x00;
     ret = hw_sensor_read_i2c(otp_cxt->hw_handle, GT24C64A_I2C_ADDR,
-                       (cmr_u8 *)otp_raw_data->buffer,
-                       SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
+                             (cmr_u8 *)otp_raw_data->buffer,
+                             SENSOR_I2C_REG_16BIT | OTP_LEN << 16);
 
 exit:
     if (OTP_CAMERA_SUCCESS == ret) {
@@ -425,12 +426,14 @@ static cmr_int ov8856_shine_compatible_convert(cmr_handle otp_drv_handle,
     struct sensor_single_otp_info *single_otp = NULL;
     struct sensor_otp_cust_info *convert_data = NULL;
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    if (NULL == convert_data) {
-        OTP_LOGE("malloc otp convert_data failed.\n");
-        return CMR_CAMERA_FAIL;
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
     }
-    cmr_bzero(convert_data, sizeof(*convert_data));
+
     single_otp = &convert_data->single_otp;
     /*otp vendor type*/
     convert_data->otp_vendor = OTP_VENDOR_SINGLE;
@@ -460,7 +463,6 @@ static cmr_int ov8856_shine_compatible_convert(cmr_handle otp_drv_handle,
     /*dual camera*/
     convert_data->dual_otp.dual_flag = 0;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGV("out");

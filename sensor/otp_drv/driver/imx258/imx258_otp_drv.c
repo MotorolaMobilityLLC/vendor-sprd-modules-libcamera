@@ -415,10 +415,16 @@ static cmr_int imx258_compatible_convert(cmr_handle otp_drv_handle,
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     otp_format_data_t *format_data = otp_cxt->otp_data;
     SENSOR_VAL_T *p_val = (SENSOR_VAL_T *)p_data;
+    struct sensor_otp_cust_info *convert_data = NULL;
 
-    struct sensor_otp_cust_info *convert_data =
-        malloc(sizeof(struct sensor_otp_cust_info));
-    cmr_bzero(convert_data, sizeof(*convert_data));
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
+    }
+
     /*otp vendor type*/
     convert_data->otp_vendor = OTP_VENDOR_SINGLE;
     /*otp raw data*/
@@ -448,7 +454,6 @@ static cmr_int imx258_compatible_convert(cmr_handle otp_drv_handle,
     convert_data->single_otp.pdaf_info =
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGV("out");

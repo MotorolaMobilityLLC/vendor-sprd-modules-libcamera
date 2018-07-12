@@ -404,12 +404,14 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
     otp_section_info_t *lsc_dst = &(format_data->lsc_cali_dat);
     otp_section_info_t *pdaf_dst = &(format_data->pdaf_cali_dat);
 
-    convert_data = malloc(sizeof(struct sensor_otp_cust_info));
-    if (NULL == convert_data) {
-        OTP_LOGE("malloc otp convert_data failed.\n");
-        return CMR_CAMERA_FAIL;
+    if (otp_cxt->compat_convert_data) {
+        convert_data = otp_cxt->compat_convert_data;
+    } else {
+        OTP_LOGE("otp convert data buffer is null");
+        ret = OTP_CAMERA_FAIL;
+        return ret;
     }
-    cmr_bzero(convert_data, sizeof(*convert_data));
+
     single_otp = &convert_data->single_otp;
     /*otp vendor type*/
     convert_data->otp_vendor = OTP_VENDOR_SINGLE;
@@ -452,7 +454,6 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
     /*dual camera*/
     convert_data->dual_otp.dual_flag = 0;
 
-    otp_cxt->compat_convert_data = convert_data;
     p_val->pval = convert_data;
     p_val->type = SENSOR_VAL_TYPE_PARSE_OTP;
     OTP_LOGV("out");

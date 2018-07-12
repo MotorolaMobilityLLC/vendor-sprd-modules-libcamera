@@ -236,6 +236,9 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         usleep(500);
+
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_ON;
+
     } else {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
@@ -244,6 +247,8 @@ static cmr_int ov13855_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_OFF;
     }
     SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
@@ -850,6 +855,9 @@ static cmr_int ov13855_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
+        return 0;
+    }
 #if 1
     char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
@@ -866,6 +874,8 @@ static cmr_int ov13855_drv_stream_on(cmr_handle handle, cmr_uint param) {
     /*delay*/
     usleep(10 * 1000);
 
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_ON;
+
     return 0;
 }
 
@@ -876,24 +886,24 @@ static cmr_int ov13855_drv_stream_on(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int ov13855_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
-    cmr_u8 value;
-    cmr_u32 sleep_time = 0, frame_time;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
-    if (value != 0x00) {
+    /*
+    After sream off, it should sleep at least 1 frame time to avoid the
+    sensor is stream on quickly, otherwise the MIPI receiver will go to
+    error status and dcam timeout.
+    */
+    cmr_u16 delay_ms = (sns_drv_cxt->sensor_ev_info.preview_shutter *
+                        sns_drv_cxt->line_time_def / 1000000);
+    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-        if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 50 * 1000;
-            usleep(sleep_time);
-        }
-    } else {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+        SENSOR_LOGI("stream_off delay_ms %d", delay_ms);
+        usleep((delay_ms + 10) * 1000);
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_OFF;
     }
 
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
+    SENSOR_LOGI("X");
     return 0;
 }
 
@@ -950,6 +960,8 @@ ov13855_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
+
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
 
@@ -985,6 +997,7 @@ static cmr_int ov13855_drv_handle_delete(cmr_handle handle, cmr_uint *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
     ret = sensor_ic_drv_delete(handle, param);
     return ret;
 }

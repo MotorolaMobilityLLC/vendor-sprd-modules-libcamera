@@ -190,6 +190,16 @@ enum camera_module_id {
     MODULE_MAX, /*NOTE:This must be the last line*/
 };
 
+typedef enum {
+    SENSOR_STATE_IDLE,
+    SENSOR_STATE_POWER_ON,
+    SENSOR_STATE_POWER_OFF,
+    SENSOR_STATE_STREAM_ON,
+    SENSOR_STATE_STREAM_OFF,
+
+    SENSOR_STATE_MAX,
+} SENSOR_IC_STATE_MACHINE;
+
 struct hdr_info_t {
     cmr_u32 capture_max_shutter;
     cmr_u32 capture_shutter;
@@ -652,6 +662,7 @@ struct sensor_ic_drv_cxt {
 
     struct sensor_ic_ctrl_cb ops_cb;
 
+    SENSOR_IC_STATE_MACHINE current_state_machine;
     /*if private data size is greater than 4 bytes
       you should mallc new buffer.*/
     union {

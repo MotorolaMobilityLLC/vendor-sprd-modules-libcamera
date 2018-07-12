@@ -350,9 +350,11 @@ static struct sensor_i2c_reg_tab ov8856_shutter_tab = {
 };
 
 static SENSOR_REG_T ov8856_again_reg[] = {
-    {0x320a, 0x01}, {0x3208, 0x01},
+    {0x320a, 0x01},
+    {0x3208, 0x01},
 
-    {0x3508, 0x00}, {0x3509, 0x00},
+    {0x3508, 0x00},
+    {0x3509, 0x00},
 
     //{0x3208, 0x11}, {0x3208, 0xA1},
 };
@@ -437,7 +439,7 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
 
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-                     .preview_skip_num = 0,
+                     .preview_skip_num = 3,
                      .capture_skip_num = 0,
                      .flash_capture_skip_num = 6,
                      .mipi_cap_skip_num = 0,
@@ -465,7 +467,7 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
 
 static struct sensor_ic_ops s_ov8856_ops_tab;
 struct sensor_raw_info *s_ov8856_shine_mipi_raw_info_ptr = PNULL;
-    //&s_ov8856_mipi_raw_info;
+//&s_ov8856_mipi_raw_info;
 
 /*==============================================================================
  * Description:
