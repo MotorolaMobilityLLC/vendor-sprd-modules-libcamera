@@ -363,7 +363,7 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
         return OTP_CAMERA_FAIL;
     }
     cmr_bzero(otp_cxt->compat_convert_data,
-              sizeof(*otp_cxt->compat_convert_data));
+              sizeof(struct sensor_otp_cust_info));
     otp_cxt->otp_raw_data.buffer = NULL;
     otp_cxt->otp_data = NULL;
     otp_cxt->hw_handle = input_para->hw_handle;
