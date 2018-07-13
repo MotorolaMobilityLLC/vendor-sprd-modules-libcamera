@@ -509,6 +509,9 @@ void SprdCamera3SingleFaceIdRegister::freeLocalCapBuffer() {
 
     buffer_num = SINGLE_FACEID_REGISTER_BUFFER_SUM;
 
+    mPhyAddrBufferList.clear();
+    mCreateBufferList.clear();
+
     for (size_t i = 0; i < buffer_num; i++) {
         single_faceid_register_alloc_mem_t *local_buffer = &mLocalBuffer[i];
 
@@ -710,7 +713,6 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::initialize(
 
     mFlushing = false;
     mRegisterPhyaddr = 0;
-    mNotifyListMain.clear();
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (NO_ERROR != rc) {
@@ -1039,7 +1041,6 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::processCaptureRequest(
 void SprdCamera3SingleFaceIdRegister::notifyMain(
     const camera3_notify_msg_t *msg) {
     Mutex::Autolock l(mNotifyLockMain);
-    mNotifyListMain.push_back(*msg);
 
     HAL_LOGD("preview timestamp %lld", msg->message.shutter.timestamp);
     mCallbackOps->notify(mCallbackOps, msg);

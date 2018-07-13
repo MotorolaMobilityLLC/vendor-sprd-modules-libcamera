@@ -130,7 +130,6 @@ class SprdCamera3SingleFaceIdUnlock : SprdCamera3MultiBase {
     Mutex mRequestLock;
     Mutex mResultLock;
     List<single_faceid_unlock_saved_request_t> mSavedRequestList;
-    List<camera3_notify_msg_t> mNotifyListMain;
     List<single_faceid_unlock_alloc_mem_t> mPhyAddrBufferList;
     List<buffer_handle_t *> mCreateBufferList;
     single_faceid_unlock_alloc_mem_t
