@@ -20,7 +20,7 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
 
-
+TARGET_BOARD_CAMERA_ISP_3AMOD:=1
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_3AMOD)),1)
 include $(call first-makefiles-under,$(LOCAL_PATH))
 endif

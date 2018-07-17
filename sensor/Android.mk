@@ -22,87 +22,37 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Wno-error=format#-We
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
-ISP_HW_VER = 3v0
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
-ISP_HW_VER = 2v1a
-else
-ISP_HW_VER = 2v1
-endif
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
-ISP_HW_VER = 2v1
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
-ISP_HW_VER = 2v1
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
-ISP_HW_VER = 3v0
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
-ISP_HW_VER = 2v4
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
-ISP_HW_VER = 2v1
-endif
-
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-	$(LOCAL_PATH)/../common/inc \
-	$(LOCAL_PATH)/../jpeg \
-	$(LOCAL_PATH)/../vsp/inc \
-	$(LOCAL_PATH)/../tool/mtrace \
-	$(LOCAL_PATH)/dummy \
-	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/inc \
-	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/isp_calibration/inc \
-	$(LOCAL_PATH)/inc
+    $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+    $(LOCAL_PATH)/../common/inc \
+    $(LOCAL_PATH)/../jpeg \
+    $(LOCAL_PATH)/../vsp/inc \
+    $(LOCAL_PATH)/../tool/mtrace \
+    $(LOCAL_PATH)/dummy \
+    $(LOCAL_PATH)/../$(OEM_DIR)/inc \
+    $(LOCAL_PATH)/inc
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../isp3.0/dummy \
-	$(LOCAL_PATH)/../isp3.0/common/inc \
-	$(LOCAL_PATH)/../isp3.0/middleware/inc \
-	$(LOCAL_PATH)/../isp3.0/vendor_common/altek/inc \
-	$(LOCAL_PATH)/../isp3.0/vendor_common/inc \
-	$(LOCAL_PATH)/../isp3.0/awb/inc \
-	$(LOCAL_PATH)/../isp3.0/awb/altek/inc \
-	$(LOCAL_PATH)/../isp3.0/af/inc \
-	$(LOCAL_PATH)/../isp3.0/af/altek/inc \
-	$(LOCAL_PATH)/../isp3.0/ae/inc \
-	$(LOCAL_PATH)/../isp3.0/ae/altek/inc \
-	$(LOCAL_PATH)/../isp3.0/afl/inc \
-	$(LOCAL_PATH)/../isp3.0/afl/altek/inc
-else
-ISPALG_DIR := ispalg/isp2.x
-ISPDRV_DIR := camdrv/isp$(TARGET_BOARD_CAMERA_ISP_DIR)
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/param_manager \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/ae/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd_ae/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/alc_awb/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/awb/sprd_awb/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/sprd_af/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/sft_af/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/af/alc_af/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/lsc/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc/ \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/afl/inc \
-	$(LOCAL_PATH)/../$(ISPALG_DIR)/smart \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/utility \
-	$(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration/inc
-endif
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/param_manager \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/ae/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd_ae/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/awb/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/awb/alc_awb/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/awb/sprd_awb/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/af/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/af/sprd_af/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/af/sft_af/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/af/alc_af/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/lsc/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc/ \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/afl/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/smart \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/utility \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration/inc
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
@@ -113,18 +63,16 @@ include $(LOCAL_PATH)/otp_drv/Sprdroid.mk
 include $(LOCAL_PATH)/sensor_drv/Sprdroid.mk
 
 LOCAL_SRC_FILES += \
-	dummy/isp_otp_calibration.c \
-	sensor_cfg.c \
-	sensor_drv_u.c
+    dummy/isp_otp_calibration.c \
+    sensor_cfg.c \
+    sensor_drv_u.c
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
-	LOCAL_C_INCLUDES += \
-						ois
-
-	LOCAL_SRC_FILES+= \
-						ois/OIS_func.c \
-						ois/OIS_user.c \
-						ois/OIS_main.c
+LOCAL_C_INCLUDES += ois
+LOCAL_SRC_FILES+= \
+    ois/OIS_func.c \
+    ois/OIS_user.c \
+    ois/OIS_main.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)

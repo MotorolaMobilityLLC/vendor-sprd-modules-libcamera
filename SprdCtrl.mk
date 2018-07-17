@@ -734,7 +734,8 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
 endif
 
-ifeq ($(ISP_HW_VER),2v1)
+# just for hal3_2v1 and oem2v1
+ifeq ($(OEM_DIR),oem2v1)
 LOCAL_CFLAGS += -DCAMERA_SUPPORT_ROLLING_SHUTTER_SKEW
 endif
 
@@ -754,4 +755,8 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/vendor/cameraserver\"
 else
 LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/misc/media\"
+endif
+
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)), $(filter $(TARGET_BOARD_PLATFORM), sp9863a sp9853i))
+LOCAL_CFLAGS += -DCONFIG_CAMERA_MAX_PREVSIZE_1080P
 endif
