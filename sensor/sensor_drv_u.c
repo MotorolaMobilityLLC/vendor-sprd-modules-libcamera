@@ -388,10 +388,9 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
             } else {
                 ioctl->set_pos = NULL;
                 ioctl->get_motor_pos = NULL;
-                CMR_LOGE("AF device driver has problem,please double check "
-                         "it.module:%p,af_dev:%p",
-                         module,
-                         module ? module->af_dev_info.af_drv_entry : NULL);
+                SENSOR_LOGI("af_drv_entry not configured:module:%p,af_dev:%p",
+                            module,
+                            module ? module->af_dev_info.af_drv_entry : NULL);
             }
 #endif
 #ifdef SBS_MODE_SENSOR
@@ -751,7 +750,7 @@ static cmr_int sensor_ic_identify(struct sensor_drv_context *sensor_cxt,
             hw_sensor_i2c_set_clk(sensor_cxt->hw_drv_handle);
 
             /*Make sure kernel get match i2c-client*/
-            //sensor_set_id(sensor_cxt, sensor_id);
+            // sensor_set_id(sensor_cxt, sensor_id);
             sensor_set_status(sensor_cxt, sensor_id);
             sensor_power_on(sensor_cxt, SCI_TRUE); /*power on*/
 
@@ -850,7 +849,7 @@ static void sensor_set_status(struct sensor_drv_context *sensor_cxt,
             continue;
         }
         if (SENSOR_TRUE == register_info->is_register[i]) {
-            //sensor_set_id(sensor_cxt, i);
+            // sensor_set_id(sensor_cxt, i);
             sensor_info_ptr = sensor_cxt->sensor_list_ptr[i];
             sensor_set_cxt_common(sensor_cxt);
 #ifdef CONFIG_CAMERA_RT_REFOCUS
@@ -864,7 +863,7 @@ static void sensor_set_status(struct sensor_drv_context *sensor_cxt,
 #endif
         }
     }
-    //sensor_set_id(sensor_cxt, sensor_id); /**/
+    // sensor_set_id(sensor_cxt, sensor_id); /**/
 
     ATRACE_END();
 }
@@ -1974,8 +1973,8 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
                                           (void *)&vendor_id);
 #endif
             } else {
-                SENSOR_LOGE("don't support otp:mod:%p,otp_drv:%p", module,
-                            module ? module->otp_drv_info : NULL);
+                SENSOR_LOGI("otp_drv_entry not configured:mod:%p,otp_drv:%p",
+                            module, module ? module->otp_drv_info : NULL);
             }
             sensor_set_raw_infor(sensor_cxt, vendor_id);
         }
@@ -2143,21 +2142,28 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
 
         property_get("persist.vendor.cam.sensor.info", value, "0");
         if (!strcmp(value, "trigger")) {
-                SENSOR_LOGI("trigger E\n");
-                char value1[255] = {0x00};
-                int mode = sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)];
-                SENSOR_REG_TAB_INFO_T *res_info_ptr = PNULL;
-                struct sensor_trim_tag *res_trim_ptr = PNULL;
-                struct module_cfg_info *mod_cfg_info = PNULL;
+            SENSOR_LOGI("trigger E\n");
+            char value1[255] = {0x00};
+            int mode = sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)];
+            SENSOR_REG_TAB_INFO_T *res_info_ptr = PNULL;
+            struct sensor_trim_tag *res_trim_ptr = PNULL;
+            struct module_cfg_info *mod_cfg_info = PNULL;
 
-                mod_cfg_info = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_MODULE_CFG);
-                res_trim_ptr = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_TRIM_TAB);
-                res_info_ptr = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_RESOLUTION);
-                sprintf(value1,"%s mode: %d %dlanes size: %dx%d bps per lane: %dMbps", sensor_cxt->sensor_info_ptr->name,
-                sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)], mod_cfg_info[mode].sensor_interface.bus_width,
-                res_trim_ptr[mode].trim_width, res_trim_ptr[mode].trim_height,res_trim_ptr[mode].bps_per_lane);
-                SENSOR_LOGI("trigger %s\n", value1);
-                property_set("persist.vendor.cam.sensor.info", value1);
+            mod_cfg_info =
+                sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_MODULE_CFG);
+            res_trim_ptr =
+                sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_TRIM_TAB);
+            res_info_ptr =
+                sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_RESOLUTION);
+            sprintf(
+                value1, "%s mode: %d %dlanes size: %dx%d bps per lane: %dMbps",
+                sensor_cxt->sensor_info_ptr->name,
+                sensor_cxt->sensor_mode[sensor_get_cur_id(sensor_cxt)],
+                mod_cfg_info[mode].sensor_interface.bus_width,
+                res_trim_ptr[mode].trim_width, res_trim_ptr[mode].trim_height,
+                res_trim_ptr[mode].bps_per_lane);
+            SENSOR_LOGI("trigger %s\n", value1);
+            property_set("persist.vendor.cam.sensor.info", value1);
         }
     }
     SENSOR_LOGI("X");
@@ -3003,8 +3009,9 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
                 return SENSOR_FAIL;
         }
     } else {
-        SENSOR_LOGE("ERROR:module:%p,entry:%p,af_ops:%p", module,
-                    module ? module->af_dev_info.af_drv_entry : NULL, af_ops);
+        SENSOR_LOGI("af_drv_entry not configured:module:%p,entry:%p,af_ops:%p",
+                    module, module ? module->af_dev_info.af_drv_entry : NULL,
+                    af_ops);
         return SENSOR_FAIL;
     }
 
@@ -3032,7 +3039,7 @@ static cmr_int sensor_af_deinit(cmr_handle sns_module_handle) {
                 return SENSOR_FAIL;
         }
     } else {
-        SENSOR_LOGE("AF_DEINIT:Don't register af driver,return directly'");
+        SENSOR_LOGI("AF_DEINIT:Don't register af driver,return directly");
         return SENSOR_FAIL;
     }
     SENSOR_LOGI("X:");
@@ -3132,7 +3139,7 @@ static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
         ret = module->otp_drv_info->otp_ops.sensor_otp_create(
             &input_para, &sensor_cxt->otp_drv_handle);
     } else {
-        SENSOR_LOGE("error:Don't register otp_driver please double check! ");
+        SENSOR_LOGI("otp_drv_entry is not configured in sensor_cfg.c");
     }
     SENSOR_LOGI("out");
     ATRACE_END();
@@ -3150,7 +3157,7 @@ static cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt) {
             sensor_cxt->otp_drv_handle);
         sensor_cxt->otp_drv_handle = NULL;
     } else {
-        SENSOR_LOGE("Don't has otp instance,no need to release.");
+        SENSOR_LOGI("Don't has otp instance,no need to release");
     }
     SENSOR_LOGI("out");
     return ret;
