@@ -33,7 +33,6 @@ using namespace android;
 
 namespace sprdcamera {
 
-//#define CAM_EXIT_STR          "exit"
 #define CAM_LOW_STR "camlow"
 #define CAM_NORMAL_STR "camhigh"
 #define CAM_VERYHIGH_STR "camveryhigh"
@@ -48,22 +47,19 @@ Mutex SprdCameraSystemPerformance::sLock;
     }
 
 SprdCameraSystemPerformance::SprdCameraSystemPerformance() {
-    HAL_LOGI(" E");
 
+    HAL_LOGI("E");
     mCurrentPowerHint = CAM_POWER_NORMAL;
     mCameraDfsPolicyCur = CAM_EXIT;
     mPowermanageInited = false;
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
     mPowerManager = NULL;
-    mPowerManagerLowPower = NULL;
-    mPrfmLock = NULL;
-    mPrfmLockLowPower = NULL;
-    mThermalManager = NULL;
+    mSceneLowPower = NULL;
+    mScenePerformance = NULL;
 #endif
 
     initPowerHint();
-
     HAL_LOGI("X");
 }
 
@@ -139,47 +135,18 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
 void SprdCameraSystemPerformance::initPowerHint() {
 
     if (!mPowermanageInited) {
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
-        mThermalManager = IExtThermal::getService();
-        sp<IPower> mPowerManagerEnable = IPower::getService();
-        if (mThermalManager == NULL) {
-            HAL_LOGE("Thread cannot get the Thermal service");
-        }
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
+        mPowerManager = new ::android::PowerHALManager();
+        if (mPowerManager) {
+            mPowerManager->init();
+            mSceneLowPower = mPowerManager->createPowerHintScene("camera", 0, "camera_lowpower");
+            mScenePerformance = mPowerManager->createPowerHintScene("camera", 0, "camera_perf");
 
-        if (mPowerManagerEnable == NULL) {
-            HAL_LOGE("Thread cannot get the power service");
-        } else {
-            mPowerManager = mPowerManagerEnable;
-            mPowerManagerLowPower = mPowerManagerEnable;
-        }
+            mPowermanageInited = true;
+            mCurrentPowerHint = CAM_POWER_NORMAL;
 
-        mPowermanageInited = true;
-        mCurrentPowerHint = CAM_POWER_NORMAL;
-#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
-        char value[PROPERTY_VALUE_MAX];
-        sp<IPowerManager> mPowerManagerEnable = NULL;
-        if (mPowerManagerEnable == NULL) {
-            // use checkService() to avoid blocking if power service is not up
-            // yet
-            sp<IBinder> binder =
-                defaultServiceManager()->checkService(String16("power"));
-            if (binder == NULL) {
-                HAL_LOGE("Thread cannot connect to the power manager service");
-            } else {
-                mPowerManagerEnable = interface_cast<IPowerManager>(binder);
-            }
+            HAL_LOGD("PowerHint init done");
         }
-        if (mPowerManagerEnable != NULL) {
-            mPowerManager = mPowerManagerEnable;
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
-            property_get("debug.camera.dis.lowpower", value, "0");
-            if (!atoi(value)) {
-                mPowerManagerLowPower = mPowerManagerEnable;
-            }
-#endif
-        }
-        mPowermanageInited = true;
-        mCurrentPowerHint = CAM_POWER_NORMAL;
 #endif
     }
 }
@@ -187,32 +154,13 @@ void SprdCameraSystemPerformance::initPowerHint() {
 void SprdCameraSystemPerformance::deinitPowerHint() {
 
     if (mPowermanageInited) {
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
-        mPowermanageInited = 0;
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
         if (mPowerManager != NULL)
             mPowerManager.clear();
-        if (mPrfmLock != NULL)
-            mPrfmLock.clear();
-#ifdef CONFIG_CAMERA_POWERHINT_LOWPOWER
-        if (mPowerManagerLowPower != NULL)
-            mPowerManagerLowPower.clear();
-        if (mPrfmLockLowPower != NULL)
-            mPrfmLockLowPower.clear();
-#endif
-#endif
-
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
-        mPowermanageInited = 0;
-        if (mPowerManager != NULL)
-            mPowerManager.clear();
-        if (mPrfmLock != NULL)
-            mPrfmLock.clear();
-        if (mPowerManagerLowPower != NULL)
-            mPowerManagerLowPower.clear();
-        if (mPrfmLockLowPower != NULL)
-            mPrfmLockLowPower.clear();
-        if (mThermalManager != NULL)
-            mThermalManager.clear();
+        if (mSceneLowPower != NULL)
+            mSceneLowPower.clear();
+        if (mScenePerformance != NULL)
+            mScenePerformance.clear();
 #endif
         mPowermanageInited = false;
 
@@ -230,15 +178,15 @@ void SprdCameraSystemPerformance::setPowerHint(
     }
     HAL_LOGI("IN, mCurrentPowerHint=%d", mCurrentPowerHint);
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
     switch (mCurrentPowerHint) {
     case CAM_POWER_NORMAL:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            thermalEnabled(false);
-            acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
+            //thermalEnabled(false);
+            acquirePowerHint(mScenePerformance);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            acquirePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
+            acquirePowerHint(mSceneLowPower);
             mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
         } else if (powerhint_id == CAM_POWER_NORMAL) {
             HAL_LOGD("current power state is already CAM_POWER_NORMAL,"
@@ -252,91 +200,28 @@ void SprdCameraSystemPerformance::setPowerHint(
                      "state are both 1, just return");
             goto exit;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            releasePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
-            acquirePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
-            thermalEnabled(true);
+            releasePowerHint(mScenePerformance);
+            acquirePowerHint(mSceneLowPower);
+            //thermalEnabled(true);
             mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
         } else if (powerhint_id == CAM_POWER_NORMAL) {
-            releasePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
-            thermalEnabled(true);
+            releasePowerHint(mScenePerformance);
+            //thermalEnabled(true);
             mCurrentPowerHint = CAM_POWER_NORMAL;
         }
         break;
     case CAM_POWER_LOWPOWER_ON:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            thermalEnabled(false);
-            releasePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
-            acquirePowerHint(mPowerManager, PowerHint::VENDOR_CAMERA_PERFORMANCE);
+            //thermalEnabled(false);
+            releasePowerHint(mSceneLowPower);
+            acquirePowerHint(mScenePerformance);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             HAL_LOGD("current power state is already CAM_POWER_LOWPOWER_ON,"
                      "state are both 0, just return");
             goto exit;
         } else if (powerhint_id == CAM_POWER_NORMAL) {
-            releasePowerHint(mPowerManagerLowPower, PowerHint::VENDOR_CAMERA_LOW_POWER);
-            mCurrentPowerHint = CAM_POWER_NORMAL;
-        }
-        break;
-    default:
-        HAL_LOGE("should not be here");
-        goto exit;
-    }
-#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
-    switch (mCurrentPowerHint) {
-    case CAM_POWER_NORMAL:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            enablePowerHintExt(mPowerManager, mPrfmLock,
-                               POWER_HINT_VENDOR_CAMERA_PERFORMANCE);
-            // disable thermal
-            thermalEnabled(false);
-            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
-                               POWER_HINT_VENDOR_CAMERA_LOW_POWER);
-            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            HAL_LOGD("current power state is already POWER_IDLE, just return");
-            goto exit;
-        }
-        break;
-    case CAM_POWER_PERFORMACE_ON:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            HAL_LOGI("current power state is already POWER_PERFORMACE_ON, "
-                     "just return");
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            // first, disable CAMERA_POWER_HINT_PERFORMANCE
-            disablePowerHintExt(mPowerManager, mPrfmLock);
-            thermalEnabled(true);
-
-            // second, enable CAMERA_POWER_HINT_LOWPOWER
-            enablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower,
-                               POWER_HINT_VENDOR_CAMERA_LOW_POWER);
-            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            disablePowerHintExt(mPowerManager, mPrfmLock);
-            thermalEnabled(true);
-            mCurrentPowerHint = CAM_POWER_NORMAL;
-        }
-        break;
-    case CAM_POWER_LOWPOWER_ON:
-        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            // first, disable CAMERA_POWER_HINT_LOWPOWER
-            disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower);
-
-            // second, enable POWER_HINT_VENDOR_CAMERA_HDR
-            enablePowerHintExt(mPowerManager, mPrfmLock,
-                               POWER_HINT_VENDOR_CAMERA_PERFORMANCE);
-            // disable thermal
-            thermalEnabled(false);
-            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
-        } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
-            HAL_LOGD("current power state is already POWER_LOWPOWER_ON,"
-                     "just return");
-            goto exit;
-        } else if (powerhint_id == CAM_POWER_NORMAL) {
-            // first, disable CAMERA_POWER_HINT_LOWPOWER
-            disablePowerHintExt(mPowerManagerLowPower, mPrfmLockLowPower);
+            releasePowerHint(mSceneLowPower);
             mCurrentPowerHint = CAM_POWER_NORMAL;
         }
         break;
@@ -474,108 +359,22 @@ int SprdCameraSystemPerformance::releaseDfsPolicy(int dfs_policy) {
     return NO_ERROR;
 }
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
 void SprdCameraSystemPerformance::acquirePowerHint(
-    sp<IPower> powermanager, PowerHint id) {
+    ::android::sp<::android::PowerHintScene> mScene) {
 
-    if (powermanager != NULL) {
-        sp<IBase> lock = new IBase();
-        powermanager->acquirePowerHintBySceneId(lock, "Camera", (int32_t)id);
-        HAL_LOGI("powerhint enabled,%x", id);
-
-        if (id == PowerHint::VENDOR_CAMERA_PERFORMANCE) {
-            mPrfmLock = lock;
-        } else if (id == PowerHint::VENDOR_CAMERA_LOW_POWER) {
-            mPrfmLockLowPower = lock;
-        }
+    if (mScene != NULL) {
+        mScene->acquire();
     }
 }
 
 void SprdCameraSystemPerformance::releasePowerHint(
-    sp<IPower> powermanager, PowerHint id) {
+    ::android::sp<::android::PowerHintScene> mScene) {
 
-    if (powermanager != NULL) {
-        if(id == PowerHint::VENDOR_CAMERA_PERFORMANCE) {
-            powermanager->releasePowerHintBySceneId(mPrfmLock, (int32_t)id);
-            mPrfmLock.clear();
-        } else if (id == PowerHint::VENDOR_CAMERA_LOW_POWER) {
-            powermanager->releasePowerHintBySceneId(mPrfmLockLowPower, (int32_t)id);
-            mPrfmLockLowPower.clear();
-        }
-        HAL_LOGI("powerhint disable,%x", id);
-    }
-}
-void SprdCameraSystemPerformance::thermalEnabled(bool flag){
-    if (mThermalManager != NULL) {
-        if(flag == false){
-           mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_EN);
-        }else{
-           mThermalManager->setExtThermal(ExtThermalCmd::THMCMD_SET_PERF_DIS);
-        }
-        HAL_LOGI("thermalEnabled done,flag is =%d", flag);
+    if (mScene != NULL) {
+        mScene->release();
     }
 }
 #endif
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
-void SprdCameraSystemPerformance::thermalEnabled(bool flag) {
-    int therm_fd = -1;
-    int i = 0;
-    char buf[20] = {0};
-    char *p = NULL;
-
-    therm_fd = socket_local_client(
-        "thermald", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
-    if (therm_fd < 0)
-        HAL_LOGI("%s open thermald  failed: %s\n", __func__, strerror(errno));
-    else {
-        p = buf;
-        if (flag) {
-            p += snprintf(p, 20, "%s", "SetPerfDis");
-        } else {
-            p += snprintf(p, 20, "%s", "SetPerfEn");
-        }
-        write(therm_fd, buf, strlen(buf));
-        close(therm_fd);
-        HAL_LOGI("%s, strlen of buf: %d, flag: %d", buf, strlen(buf), flag);
-    }
-}
-
-void SprdCameraSystemPerformance::enablePowerHintExt(
-    sp<IPowerManager> powermanager, sp<IBinder> prfmlock, int powerhint_id) {
-
-    if (prfmlock != NULL) {
-        if (powermanager != 0) {
-            HAL_LOGI("releaseWakeLock_l() - Prfmlock ");
-            powermanager->releasePrfmLock(prfmlock);
-        }
-        prfmlock.clear();
-    }
-    if (powermanager != NULL) {
-        sp<IBinder> binder = new BBinder();
-        powermanager->acquirePrfmLock(binder, String16("Camera"),
-                                      String16("CameraServer"), powerhint_id);
-        prfmlock = binder;
-        HAL_LOGI("powerhint enabled,%d", powerhint_id);
-    }
-
-    if (powerhint_id == POWER_HINT_VENDOR_CAMERA_PERFORMANCE) {
-        mPrfmLock = prfmlock;
-    } else if (powerhint_id == POWER_HINT_VENDOR_CAMERA_LOW_POWER) {
-        mPrfmLockLowPower = prfmlock;
-    }
-}
-
-void SprdCameraSystemPerformance::disablePowerHintExt(
-    sp<IPowerManager> powermanager, sp<IBinder> prfmlock) {
-
-    if (prfmlock != 0) {
-        if (powermanager != 0) {
-            HAL_LOGI("releaseWakeLock_l() - Prfmlock ");
-            powermanager->releasePrfmLock(prfmlock);
-        }
-        prfmlock.clear();
-    }
-}
-#endif
 };
