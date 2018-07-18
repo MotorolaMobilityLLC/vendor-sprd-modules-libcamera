@@ -69,7 +69,10 @@
 #ifdef CONFIG_DUAL_FACEID_SUPPORT
 #include "SprdCamera3DualFaceId.h"
 #endif
-
+#include "SprdCamera3Multi.h"
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+#include "SprdCamera3OpticsZoom.h"
+#endif
 namespace sprdcamera {
 
 class SprdCamera3Wrapper {
@@ -115,6 +118,9 @@ class SprdCamera3Wrapper {
 #endif
     static int mLogicalSensorNum;
     static int mPhysicalSensorNum;
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    SprdCamera3Multi *mZoom;
+#endif
 };
 };
 #endif

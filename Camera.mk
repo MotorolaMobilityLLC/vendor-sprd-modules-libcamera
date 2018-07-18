@@ -103,7 +103,11 @@ LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdDualCamera3Tuning.cpp
 endif
 LOCAL_SRC_FILES+= \
-	hal_common/multiCamera/SprdCamera3Multi.cpp
+    hal_common/multiCamera/SprdCamera3Multi.cpp
+ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+    hal_common/multiCamera/SprdCamera3OpticsZoom.cpp
+endif
 endif
 
 LOCAL_SRC_FILES += \

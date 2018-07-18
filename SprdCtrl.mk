@@ -313,6 +313,11 @@ ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_BLUR_SUPPORT
 endif
 
+ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_OPTICSZOOM_SUPPORT
+max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
+endif
+
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)
 LOCAL_CFLAGS += -DCONFIG_SIDEBYSIDE_SUPPORT
 endif
@@ -781,3 +786,4 @@ endif
 endif
 LOCAL_CFLAGS += -DCAMERA_SENSOR_NUM=$(max_sensor_num)
 LOCAL_CFLAGS += -DCAMERA_LOGICAL_SENSOR_NUM=$(max_logical_sensor_num)
+

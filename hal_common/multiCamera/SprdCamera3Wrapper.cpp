@@ -44,7 +44,11 @@ const multiCameraMode available_mutiCamera_mode[MODE_CAMERA_MAX] = {
 #endif
 
 #ifdef CONFIG_BOKEH_SUPPORT
-    MODE_BOKEH
+    MODE_BOKEH,
+#endif
+
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    MODE_SOFY_OPTICAL_ZOOM
 #endif
 
 };
@@ -60,7 +64,8 @@ const muti_camera_mode_map_t cameraid_map_mode[MODE_CAMERA_MAX] = {
     {SPRD_SINGLE_FACEID_REGISTER_ID, MODE_SINGLE_FACEID_REGISTER},
     {SPRD_DUAL_FACEID_REGISTER_ID, MODE_DUAL_FACEID_REGISTER},
     {SPRD_SINGLE_FACEID_UNLOCK_ID, MODE_SINGLE_FACEID_UNLOCK},
-    {SPRD_DUAL_FACEID_UNLOCK_ID, MODE_DUAL_FACEID_UNLOCK}};
+    {SPRD_DUAL_FACEID_UNLOCK_ID, MODE_DUAL_FACEID_UNLOCK},
+    {SPRD_SOFY_OPTICAL_ZOOM_ID, MODE_SOFY_OPTICAL_ZOOM}};
 
 int SprdCamera3Wrapper::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
 int SprdCamera3Wrapper::mPhysicalSensorNum = CAMERA_SENSOR_NUM;
@@ -91,6 +96,9 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
 #endif
 #ifdef CONFIG_DUAL_FACEID_SUPPORT
     SprdCamera3DualFaceId::getCameraFaceId(&mDualFaceId);
+#endif
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    SprdCamera3OpticsZoom::getCamera3dZoom(&mZoom);
 #endif
 }
 
@@ -208,9 +216,12 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         rc = mDualFaceId->camera_device_open(module, id, hw_device);
         break;
 #endif
-
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    case MODE_SOFY_OPTICAL_ZOOM:
+        rc = mZoom->camera_device_open(module, id, hw_device, mZoom);
+        break;
+#endif
     default:
-
         HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
         return -EINVAL;
     }
@@ -282,7 +293,11 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         rc = mDualFaceId->get_camera_info(camera_id, info);
         break;
 #endif
-
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    case MODE_SOFY_OPTICAL_ZOOM:
+        rc = mZoom->get_camera_info(camera_id, info, mZoom);
+        break;
+#endif
     default:
         HAL_LOGE("cameraId:%d not supported yet!", camera_id);
         return -EINVAL;
