@@ -795,6 +795,11 @@ exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
+cmr_s32 queue_buffer(cmr_handle camera_handle, cam_buffer_info_t buffer,
+                     int steam_type) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    return ret;
+}
 cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle,
                                          cmr_uint src_phy_addr,
                                          cmr_uint src_vir_addr, cmr_s32 fd) {
@@ -1258,18 +1263,19 @@ static oem_ops_t oem_module_ops = {
     camera_get_viewangle, camera_get_sensor_exif_info,
     camera_get_sensor_result_exif_info, camera_get_iommu_status,
     camera_set_preview_buffer, camera_set_video_buffer, camera_set_zsl_buffer,
-    camera_set_video_snapshot_buffer, camera_set_zsl_snapshot_buffer,
-    camera_zsl_snapshot_need_pause, camera_get_isp_handle, camera_lls_enable,
-    camera_is_lls_enabled, camera_vendor_hdr_enable, camera_is_vendor_hdr,
-    camera_set_lls_shot_mode, camera_get_lls_shot_mode, camera_get_isp_info,
-    camera_start_burst_notice, camera_end_burst_notice,
-    camera_transfer_caf_to_af, camera_transfer_af_to_caf, dump_jpeg_file,
-    camera_get_gain_thrs, camera_set_sensor_info_to_af,
-    camera_get_sensor_max_fps, camera_snapshot_is_need_flash,
-    camera_get_sensor_otp_info, camera_get_sensor_vcm_step,
-    camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
-    camera_start_capture, camera_stop_capture, camera_set_largest_picture_size,
-    camera_ioctrl, camera_reprocess_yuv_for_jpeg,
+    queue_buffer, camera_set_video_snapshot_buffer,
+    camera_set_zsl_snapshot_buffer, camera_zsl_snapshot_need_pause,
+    camera_get_isp_handle, camera_lls_enable, camera_is_lls_enabled,
+    camera_vendor_hdr_enable, camera_is_vendor_hdr, camera_set_lls_shot_mode,
+    camera_get_lls_shot_mode, camera_get_isp_info, camera_start_burst_notice,
+    camera_end_burst_notice, camera_transfer_caf_to_af,
+    camera_transfer_af_to_caf, dump_jpeg_file, camera_get_gain_thrs,
+    camera_set_sensor_info_to_af, camera_get_sensor_max_fps,
+    camera_snapshot_is_need_flash, camera_get_sensor_otp_info,
+    camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
+    camera_set_reprocess_picture_size, camera_start_capture,
+    camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
+    camera_reprocess_yuv_for_jpeg,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,

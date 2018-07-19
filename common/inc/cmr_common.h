@@ -474,6 +474,16 @@ enum hal_ai_scene_type {
     HAL_AI_SCENE_MAX
 };
 
+typedef enum {
+    SPRD_CAM_STREAM_NONE,
+    SPRD_CAM_STREAM_PREVIEW,
+    SPRD_CAM_STREAM_VIDEO,
+    SPRD_CAM_STREAM_CALLBACK,
+    SPRD_CAM_STREAM_PICTURE,
+    SPRD_CAM_STREAM_RAW,
+    CAMERA_STREAM_TYPE_MAX,
+} sprd_cam_stream_type_t;
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;
@@ -624,6 +634,18 @@ struct img_debug {
     cmr_u32 format;
     void *params;
 };
+
+typedef struct {
+    int fd;
+    size_t size;
+    // offset from fd, always set to 0
+    void *addr_phy;
+    void *addr_vir;
+    int width;
+    int height;
+    // format not used for now
+    int format;
+} cam_buffer_info_t;
 
 /********************************* v4l2 start *********************************/
 
@@ -1278,6 +1300,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_AF_MODE,
 #endif
     CAMERA_EVT_CB_INVALIDATE_CACHE,
+    CAMERA_EVT_CB_RAW_FRAME,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1345,15 +1368,20 @@ enum camera_param_type {
     CAMERA_PARAM_ROTATION_CAPTURE,
     CAMERA_PARAM_POSITION,
     CAMERA_PARAM_PREVIEW_SIZE,
-    CAMERA_PARAM_RAW_CAPTURE_SIZE,
     CAMERA_PARAM_PREVIEW_FORMAT,
+    CAMERA_PARAM_VIDEO_SIZE,
+    CAMERA_PARAM_VIDEO_FORMAT,
+    CAMERA_PARAM_YUV_CALLBACK_SIZE,
+    CAMERA_PARAM_YUV_CALLBACK_FORMAT,
+    CAMERA_PARAM_RAW_SIZE,
+    CAMERA_PARAM_RAW_FORMAT,
     CAMERA_PARAM_CAPTURE_SIZE,
     CAMERA_PARAM_CAPTURE_FORMAT,
+    CAMERA_PARAM_RAW_CAPTURE_SIZE,
     CAMERA_PARAM_CAPTURE_MODE,
+    CAMERA_PARAM_RANGE_FPS,
     CAMERA_PARAM_THUMB_SIZE,
     CAMERA_PARAM_ANDROID_ZSL,
-    CAMERA_PARAM_VIDEO_SIZE,
-    CAMERA_PARAM_RANGE_FPS,
     CAMERA_PARAM_ISP_FLASH,
     CAMERA_PARAM_SPRD_ZSL_ENABLED,
     CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
@@ -1735,6 +1763,8 @@ typedef struct oem_ops {
     cmr_int (*camera_set_zsl_buffer)(cmr_handle camera_handle,
                                      cmr_uint src_phy_addr,
                                      cmr_uint src_vir_addr, cmr_s32 fd);
+    cmr_s32 (*queue_buffer)(cmr_handle camera_handle, cam_buffer_info_t buffer,
+                            int steam_type);
     cmr_int (*camera_set_video_snapshot_buffer)(cmr_handle camera_handle,
                                                 cmr_uint src_phy_addr,
                                                 cmr_uint src_vir_addr,

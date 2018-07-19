@@ -124,6 +124,8 @@ cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
                                 cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
                               cmr_uint src_vir_addr, cmr_s32 fd);
+cmr_s32 queue_buffer(cmr_handle camera_handle, cam_buffer_info_t buffer,
+                     int steam_type);
 cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle,
                                          cmr_uint src_phy_addr,
                                          cmr_uint src_vir_addr, cmr_s32 fd);

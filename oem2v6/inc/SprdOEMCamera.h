@@ -88,9 +88,6 @@ cmr_int camera_get_sensor_info_for_raw(cmr_handle camera_handle,
 cmr_int camera_get_sensor_trim(cmr_handle camera_handle,
                                struct img_rect *sn_trim);
 
-cmr_int camera_get_sensor_trim2(cmr_handle camera_handle,
-                                struct img_rect *sn_trim);
-
 cmr_uint camera_get_preview_rot_angle(cmr_handle camera_handle);
 
 void camera_fd_enable(cmr_handle camera_handle, cmr_u32 is_enable);
@@ -127,8 +124,10 @@ cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
                                 cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
                               cmr_uint src_vir_addr, cmr_s32 fd);
+
 cmr_s32 queue_buffer(cmr_handle camera_handle, cam_buffer_info_t buffer,
                      int steam_type);
+
 cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle,
                                          cmr_uint src_phy_addr,
                                          cmr_uint src_vir_addr, cmr_s32 fd);
@@ -187,15 +186,21 @@ cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
                                       cmr_uint yaddr, cmr_uint yaddr_vir,
                                       cmr_uint fd);
-cmr_int camera_get_rolling_shutter(cmr_handle camera_handle,
-                                   cmr_s64 *rolling_shutter_skew);
 
-#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-cmr_uint
-camera_get_isp_perFrame_result(cmr_handle camera_handle,
-                               struct isp_pfc_per_frame_cxt *perFrame_res);
-#endif
-cmr_int camera_set_snp_face_detect(cmr_handle camera_handle, cmr_u16 enable);
+cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
+                               cmr_s32 *point_y);
+
+cmr_s32 camera_isp_sw_check_buf(cmr_handle camera_handle, cmr_uint *param_ptr);
+
+cmr_int camera_isp_sw_proc(cmr_handle camera_handle,
+                           struct soft_isp_frm_param *param_ptr);
+
+cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
+                             struct img_frm *yuv_buff,
+                             struct img_sbs_info *sbs_info);
+
+cmr_int camera_get_tuning_param(cmr_handle camera_handle,
+                                struct tuning_param_info *tuning_info);
 
 #ifdef __cplusplus
 }

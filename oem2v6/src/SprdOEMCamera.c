@@ -26,6 +26,7 @@
 #endif
 #include "cmr_oem.h"
 #include "SprdOEMCamera.h"
+#include "cmr_img_debug.h"
 
 cmr_int camera_init(cmr_u32 camera_id, camera_cb_of_type callback,
                     void *client_data, cmr_uint is_autotest,
@@ -245,7 +246,6 @@ cmr_int camera_take_picture(cmr_handle camera_handle,
     }
 
 exit:
-    CMR_LOGI("done");
     return ret;
 }
 
@@ -762,11 +762,14 @@ exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
+
 cmr_s32 queue_buffer(cmr_handle camera_handle, cam_buffer_info_t buffer,
                      int steam_type) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    ret = local_queue_buffer(camera_handle, buffer, steam_type);
     return ret;
 }
+
 cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle,
                                          cmr_uint src_phy_addr,
                                          cmr_uint src_vir_addr, cmr_s32 fd) {
@@ -976,7 +979,7 @@ cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width,
     strcat(str_buf, ".jpg");
 
     CMR_LOGD("file name %s", str_buf);
-    fp = fopen(str_buf, "ab+");
+    fp = fopen(str_buf, "wb");
     if (NULL == fp) {
         printf("open %s failed\n", str_buf);
         goto exit;
@@ -1092,6 +1095,20 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_local_set_capture_fb(handle, (cmr_u32 *)param);
         break;
     }
+    case CAMERA_IOCTRL_DEBUG_IMG: {
+        ret = cmr_img_debug(param, NULL);
+        break;
+    }
+    case CAMERA_IOCTRL_GET_GRAB_CAPABILITY:
+        ret = camera_get_grab_capability(handle,
+                                         (struct cmr_path_capability *)param);
+        break;
+    case CAMERA_IOCTRL_SET_MASTER_ID: {
+        int8_t *master_id = (int8_t *)param;
+        CMR_LOGD("master id %d", *master_id);
+        camera_set_oem_masterid(*master_id);
+        break;
+    }
     case CAMERA_IOCTRL_THUMB_YUV_PROC: {
         ret = camera_set_thumb_yuv_proc(handle,
                                         (struct snp_thumb_yuv_param *)param);
@@ -1105,27 +1122,6 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     case CAMERA_IOCTRL_GET_BLUR_COVERED: {
         ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
         break;
-    }
-    case CAMERA_IOCTRL_GET_SG: {
-        ret = camera_get_sg(handle, (struct sprd_img_iova *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_MAP_IOMMU_BUF: {
-        ret = camera_map_iommu(handle, (struct sprd_img_iova *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_UNMAP_IOMMU_BUF: {
-        ret = camera_unmap_iommu(handle, (struct sprd_img_iova *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_MASTER_ID: {
-        int8_t *master_id = (int8_t *)param;
-        CMR_LOGD("master id %d", *master_id);
-        camera_set_oem_masterid(*master_id);
-        break;
-    }
-    case CAMERA_IOCTRL_CB_FACE_DETECT: {
-        ret = camera_set_snp_face_detect_value(handle, *(cmr_u16 *)param);
     }
     default:
         break;
@@ -1232,17 +1228,6 @@ exit:
     return ret;
 }
 
-cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
-                               void *cb_of_free) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    ret = camera_local_set_gpu_mem_ops(camera_handle, cb_of_malloc, cb_of_free);
-    if (ret) {
-        ret = -CMR_CAMERA_FAIL;
-        CMR_LOGE("failed to set camera gpu callback %ld", ret);
-    }
-
-    return ret;
-}
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1271,9 +1256,11 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
     camera_set_reprocess_picture_size, camera_start_capture,
     camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg, camera_get_focus_point,
-    camera_isp_sw_check_buf, camera_isp_sw_proc, camera_raw_post_proc,
-    camera_get_tuning_param, camera_set_gpu_mem_ops,
+    camera_reprocess_yuv_for_jpeg,
+#if defined(CONFIG_ISP_2_1)
+    camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
+    camera_raw_post_proc, camera_get_tuning_param,
+#endif
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
