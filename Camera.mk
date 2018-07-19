@@ -3,55 +3,43 @@ include $(CLEAR_VARS)
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
-# TBD: will remove PLATFORM_VERSION_FILTER
-PLATFORM_VERSION_FILTER = sp9850ka sc9850kh
 ANDROID_MAJOR_VER := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
 
-# TBD: will remove this
-ISP_HW_VER = 2v1
-
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-ISP_HW_VER = 2v1
 HAL_DIR := hal3_2v1
 OEM_DIR := oem2v1
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.1
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
-ISP_HW_VER = 2v1
 HAL_DIR := hal3_2v1
 OEM_DIR := oem2v1
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.2
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
-ISP_HW_VER = 2v1
 HAL_DIR := hal3_2v1
 OEM_DIR := oem2v1
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.3
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
-ISP_HW_VER = 2v4
 HAL_DIR := hal3_2v4
 OEM_DIR := oem2v4
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.4
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
-ISP_HW_VER = 2v1
 HAL_DIR := hal3_2v1
 OEM_DIR := oem2v1
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.5
 endif
 
-LOCAL_SRC_FILES += common/src/cmr_msg.c
-
 # TBD: will remove hal1.0/src/SprdCameraParameters.cpp for hal3
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
-LOCAL_SRC_FILES += \
+LOCAL_SRC_FILES := \
     hal1.0/src/SprdCameraHardwareInterface.cpp \
     hal1.0/src/SprdCameraFlash.cpp \
     hal1.0/src/SprdCameraParameters.cpp
 else
-LOCAL_SRC_FILES+= \
+LOCAL_SRC_FILES := \
     $(HAL_DIR)/SprdCamera3Factory.cpp \
     $(HAL_DIR)/SprdCamera3Hal.cpp \
     $(HAL_DIR)/SprdCamera3HWI.cpp \

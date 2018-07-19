@@ -22,19 +22,13 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
-ISP_HW_VER = 2v1a
-else
-ISP_HW_VER = 2v1
-endif
-
 # ************************************************
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
-	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/inc \
+	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
