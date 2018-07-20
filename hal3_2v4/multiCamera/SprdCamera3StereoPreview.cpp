@@ -675,7 +675,7 @@ int SprdCamera3StereoPreview::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hw->setMultiCameraMode((multiCameraMode)camera_id);
+        hw->setMultiCameraMode(MODE_3D_PREVIEW);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

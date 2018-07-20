@@ -413,7 +413,7 @@ int SprdCamera3PageTurn::cameraDeviceOpen(__unused int camera_id,
     }
     hw_dev[0] = NULL;
 
-    hw->setMultiCameraMode((multiCameraMode)camera_id);
+    hw->setMultiCameraMode(MODE_PAGE_TURN);
     rc = hw->openCamera(&hw_dev[0]);
     if (rc != NO_ERROR) {
         HAL_LOGE("failed, camera id:%d", phyId);

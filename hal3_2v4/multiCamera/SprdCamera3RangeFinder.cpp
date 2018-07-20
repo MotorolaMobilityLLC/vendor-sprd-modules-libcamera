@@ -620,7 +620,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hw->setMultiCameraMode((multiCameraMode)camera_id);
+        hw->setMultiCameraMode(MODE_RANGE_FINDER);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

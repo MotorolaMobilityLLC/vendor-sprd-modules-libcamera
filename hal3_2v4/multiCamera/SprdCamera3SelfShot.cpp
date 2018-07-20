@@ -454,7 +454,7 @@ int SprdCamera3SelfShot::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hw->setMultiCameraMode((multiCameraMode)camera_id);
+        hw->setMultiCameraMode(MODE_SELF_SHOT);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

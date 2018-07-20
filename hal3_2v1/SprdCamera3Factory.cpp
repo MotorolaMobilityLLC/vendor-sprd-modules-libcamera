@@ -239,9 +239,6 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     }
     HAL_LOGD("SPRD Camera Hal");
     HAL_LOGD("camera_id=%d", camera_id);
-    if (hw->isMultiCameraMode(camera_id)) {
-        hw->setMultiCameraMode((multiCameraMode)camera_id);
-    }
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;

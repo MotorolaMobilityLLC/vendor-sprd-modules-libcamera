@@ -2130,18 +2130,18 @@ void SprdCamera3HWI::timer_handler(union sigval arg) {
     HAL_LOGD("X");
 }
 
-void SprdCamera3HWI::setMultiCameraMode(multiCameraMode multiCameraModeId) {
-    mMultiCameraMode = multiCameraModeId;
+void SprdCamera3HWI::setMultiCameraMode(multiCameraMode Mode) {
+    mMultiCameraMode = Mode;
     HAL_LOGD("mMultiCameraMode=%d ", mMultiCameraMode);
 }
 
-bool SprdCamera3HWI::isMultiCameraMode(int cameraId) {
-    HAL_LOGD("cameraId= %d ", cameraId);
-    if ((MIN_MULTI_CAMERA_FAKE_ID <= cameraId) &&
-        (cameraId <= MAX_MULTI_CAMERA_FAKE_ID))
-        return true;
-    else
-        return false;
+bool SprdCamera3HWI::isMultiCameraMode(int Mode) {
+    bool ret = false;
+    if (Mode > MODE_SINGLE_CAMERA && Mode < MODE_CAMERA_MAX) {
+        ret = true;
+    }
+
+    return ret;
 }
 
 void SprdCamera3HWI::setSprdCameraLowpower(int flag) {
