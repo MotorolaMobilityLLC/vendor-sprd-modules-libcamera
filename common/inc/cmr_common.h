@@ -1058,8 +1058,9 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst);
 cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, struct img_addr *addr);
 
-cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
-                                cmr_u32 height, struct img_addr *addr, char *scene_type);
+cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt,
+                                      cmr_u32 width, cmr_u32 height,
+                                      struct img_addr *addr, char *scene_type);
 
 cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
@@ -1279,6 +1280,7 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_3DCAL_ENABLE,
     CAMERA_PARAM_SPRD_BURSTMODE_ENABLED,
     CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
+    CAMERA_PARAM_SPRD_REPROCESS,
     CAMERA_PARAM_UHD_RECORDING_ENABLED,
     CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
     CAMERA_PARAM_AE_REGION,

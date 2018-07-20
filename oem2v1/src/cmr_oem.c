@@ -8976,6 +8976,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_SPRD_REPROCESS:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
@@ -9336,7 +9341,17 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 CMR_LOGE("open high flash fail");
         }
     }
-    if (snp_param.is_video_snapshot != 1) {
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_SPRD_REPROCESS, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get repocess mode %ld", ret);
+        // goto exit;
+    } else {
+        cxt->is_reprocess_mode = setting_param.cmd_type_value;
+    }
+
+    if ((snp_param.is_video_snapshot != 1) &&
+        !((cxt->is_multi_mode == MODE_BLUR) && (cxt->is_reprocess_mode == 1))) {
         ret = camera_local_start_capture(oem_handle);
         if (ret) {
             CMR_LOGE("camera_start_capture failed");

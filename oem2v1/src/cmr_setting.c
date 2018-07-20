@@ -185,6 +185,7 @@ struct setting_hal_param {
     cmr_uint video_snapshot_type;
     cmr_uint sprd_3dcalibration_enable;
     cmr_uint sprd_yuv_callback_enable;
+    cmr_uint sprd_is_reprocess;
     cmr_uint is_awb_lock;
     cmr_uint sprd_hdr_plus_enable;
     cmr_uint exif_mime_type;
@@ -1541,7 +1542,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                 exif_unit->picture_size.width == 4000) {
                 exif_unit->picture_size.height = 3000;
             } else if (exif_unit->picture_size.height == 1952 &&
-                exif_unit->picture_size.width == 2592) {
+                       exif_unit->picture_size.width == 2592) {
                 exif_unit->picture_size.height = 1944;
             } else if (exif_unit->picture_size.height == 1840 &&
                        exif_unit->picture_size.width == 3264) {
@@ -1564,7 +1565,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                 exif_unit->actual_picture_size.width == 4000) {
                 exif_unit->actual_picture_size.height = 3000;
             } else if (exif_unit->actual_picture_size.height == 1952 &&
-                exif_unit->actual_picture_size.width == 2592) {
+                       exif_unit->actual_picture_size.width == 2592) {
                 exif_unit->actual_picture_size.height = 1944;
             } else if (exif_unit->actual_picture_size.height == 1840 &&
                        exif_unit->actual_picture_size.width == 3264) {
@@ -2226,6 +2227,28 @@ setting_get_yuv_callback_enable(struct setting_component *cpt,
     parm->cmd_type_value = hal_param->sprd_yuv_callback_enable;
     CMR_LOGD("sprd_yuv_callback_enable=%ld",
              hal_param->sprd_yuv_callback_enable);
+
+    return ret;
+}
+
+static cmr_int setting_set_reprocess(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->sprd_is_reprocess = parm->cmd_type_value;
+    CMR_LOGD("sprd_is_reprocess=%ld", hal_param->sprd_is_reprocess);
+
+    return ret;
+}
+
+static cmr_int setting_get_reprocess(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->sprd_is_reprocess;
+    CMR_LOGD("sprd_is_reprocess=%ld", hal_param->sprd_is_reprocess);
 
     return ret;
 }
@@ -3615,6 +3638,9 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                              setting_set_yuv_callback_enable);
 
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_REPROCESS,
+                             setting_set_reprocess);
+
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
                              setting_set_awb_lock_unlock);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_REGION, setting_set_ae_region);
@@ -3702,6 +3728,7 @@ static cmr_int cmr_setting_parms_init() {
 
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_YUV_CALLBACK_ENABLE,
                              setting_get_yuv_callback_enable);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_REPROCESS, setting_get_reprocess);
     cmr_add_cmd_fun_to_table(SETTING_CTRL_HDR, setting_ctrl_hdr);
     cmr_add_cmd_fun_to_table(SETTING_CLEAR_HDR, setting_clear_hdr);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_HDR_NORMAL_ENABLED,
